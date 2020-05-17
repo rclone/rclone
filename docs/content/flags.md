@@ -1,7 +1,7 @@
 ---
 title: "Global Flags"
 description: "Rclone Global Flags"
-date: "2020-02-01T10:26:53Z"
+date: "2020-05-17T11:53:14+01:00"
 ---
 
 # Global Flags
@@ -31,6 +31,7 @@ These flags are available for every command.
       --contimeout duration                  Connect timeout (default 1m0s)
       --copy-dest string                     Implies --compare-dest but also copies files from path into destination.
       --cpuprofile string                    Write cpu profile to file
+      --cutoff-mode string                   Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default "HARD")
       --delete-after                         When synchronizing, delete files on destination after transferring (default)
       --delete-before                        When synchronizing, delete files on destination before transferring
       --delete-during                        When synchronizing, delete files during transfer
@@ -40,16 +41,19 @@ These flags are available for every command.
       --dump DumpFlags                       List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
       --dump-bodies                          Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers                         Dump HTTP headers - may contain sensitive info
+      --error-on-no-transfer                 Sets exit code 9 if no files are transferred, useful in scripts
       --exclude stringArray                  Exclude files matching pattern
-      --exclude-from stringArray             Read exclude patterns from file (use - to read from stdin).
+      --exclude-from stringArray             Read exclude patterns from file (use - to read from stdin)
       --exclude-if-present string            Exclude directories if filename is present
       --expect-continue-timeout duration     Timeout when using expect / 100-continue in HTTP (default 1s)
       --fast-list                            Use recursive list if available. Uses more memory but fewer transactions.
-      --files-from stringArray               Read list of source-file names from file (use - to read from stdin).
+      --files-from stringArray               Read list of source-file names from file (use - to read from stdin)
+      --files-from-raw stringArray           Read list of source-file names from file without any processing of lines (use - to read from stdin)
   -f, --filter stringArray                   Add a file-filtering rule
-      --filter-from stringArray              Read filtering patterns from a file (use - to read from stdin).
-      --header-download stringArray          Add HTTP header for download transactions
-      --header-upload stringArray            Add HTTP header for upload transactions
+      --filter-from stringArray              Read filtering patterns from a file (use - to read from stdin)
+      --header stringArray                   Set HTTP header for all transactions
+      --header-download stringArray          Set HTTP header for download transactions
+      --header-upload stringArray            Set HTTP header for upload transactions
       --ignore-case                          Ignore case in filters (case insensitive)
       --ignore-case-sync                     Ignore case when synchronizing
       --ignore-checksum                      Skip post copy check of checksums.
@@ -59,7 +63,7 @@ These flags are available for every command.
   -I, --ignore-times                         Don't skip files that match size and time - transfer all files
       --immutable                            Do not modify files. Fail if existing files have been modified.
       --include stringArray                  Include files matching pattern
-      --include-from stringArray             Read include patterns from file (use - to read from stdin).
+      --include-from stringArray             Read include patterns from file (use - to read from stdin)
       --log-file string                      Log everything to this file
       --log-format string                    Comma separated list of log format options (default "date,time")
       --log-level string                     Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
@@ -82,6 +86,7 @@ These flags are available for every command.
       --no-check-dest                        Don't check the destination, copy regardless.
       --no-gzip-encoding                     Don't set Accept-Encoding: gzip.
       --no-traverse                          Don't traverse destination file system on copy.
+      --no-unicode-normalization             Don't normalize unicode characters in filenames.
       --no-update-modtime                    Don't update destination mod-time if files identical.
       --order-by string                      Instructions on how to order the transfers, eg 'size,descending'
       --password-command SpaceSepList        Command for supplying password for encrypted configuration.
@@ -93,6 +98,7 @@ These flags are available for every command.
       --rc-baseurl string                    Prefix for URLs - leave blank for root.
       --rc-cert string                       SSL PEM key (concatenation of certificate and CA certificate)
       --rc-client-ca string                  Client certificate authority to verify clients with
+      --rc-enable-metrics                    Enable prometheus metrics on /metrics
       --rc-files string                      Path to local files to serve on the HTTP server.
       --rc-htpasswd string                   htpasswd file - if not provided no authentication is done
       --rc-job-expire-duration duration      expire finished async jobs older than this value (default 1m0s)
@@ -105,6 +111,7 @@ These flags are available for every command.
       --rc-serve                             Enable the serving of remote objects.
       --rc-server-read-timeout duration      Timeout for server reading data (default 1h0m0s)
       --rc-server-write-timeout duration     Timeout for server writing data (default 1h0m0s)
+      --rc-template string                   User Specified Template.
       --rc-user string                       User name for authentication.
       --rc-web-fetch-url string              URL to fetch the releases for webgui. (default "https://api.github.com/repos/rclone/rclone-webui-react/releases/latest")
       --rc-web-gui                           Launch WebGUI on localhost
@@ -130,14 +137,14 @@ These flags are available for every command.
       --tpslimit float                       Limit HTTP transactions per second to this.
       --tpslimit-burst int                   Max burst of transactions for --tpslimit. (default 1)
       --track-renames                        When synchronizing, track file renames and do a server side move if possible
-      --track-renames-strategy                  When tracking renames, use multiple strategies of hash, modtime
+      --track-renames-strategy string        Strategies to use when synchronizing using track-renames hash|modtime (default "hash")
       --transfers int                        Number of file transfers to run in parallel. (default 4)
   -u, --update                               Skip files that are newer on the destination.
       --use-cookies                          Enable session cookiejar.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.51.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.51.0-340-g9ba6ccef-new-docs-beta")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -158,10 +165,13 @@ and may be set in the config file.
       --azureblob-access-tier string                 Access tier of blob: hot, cool or archive.
       --azureblob-account string                     Storage Account Name (leave blank to use SAS URL or Emulator)
       --azureblob-chunk-size SizeSuffix              Upload chunk size (<= 100MB). (default 4M)
+      --azureblob-disable-checksum                   Don't store MD5 checksum with object metadata.
       --azureblob-encoding MultiEncoder              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
       --azureblob-endpoint string                    Endpoint for the service
       --azureblob-key string                         Storage Account Key (leave blank to use SAS URL or Emulator)
       --azureblob-list-chunk int                     Size of blob list. (default 5000)
+      --azureblob-memory-pool-flush-time Duration    How often internal memory buffer pools will be flushed. (default 1m0s)
+      --azureblob-memory-pool-use-mmap               Whether to use mmap buffers in internal memory pool.
       --azureblob-sas-url string                     SAS URL for container level access only
       --azureblob-upload-cutoff SizeSuffix           Cutoff for switching to chunked upload (<= 256MB). (default 256M)
       --azureblob-use-emulator                       Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)
@@ -183,6 +193,7 @@ and may be set in the config file.
       --box-client-secret string                     Box App Client Secret
       --box-commit-retries int                       Max number of times to try committing a multipart file. (default 100)
       --box-encoding MultiEncoder                    This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot)
+      --box-root-folder-id string                    Fill in for rclone to use a non root folder as its starting point.
       --box-upload-cutoff SizeSuffix                 Cutoff for switching to multipart upload (>= 50MB). (default 50M)
       --cache-chunk-clean-interval Duration          How often should the cache perform cleanups of the chunk storage. (default 1m0s)
       --cache-chunk-no-memory                        Disable the in-memory cache for storing chunks during streaming.
@@ -244,6 +255,7 @@ and may be set in the config file.
       --drive-size-as-quota                          Show sizes as storage quota usage, not actual size.
       --drive-skip-checksum-gphotos                  Skip MD5 checksum on Google photos and videos only.
       --drive-skip-gdocs                             Skip google documents in all listings.
+      --drive-skip-shortcuts                         If set skip shortcut files
       --drive-stop-on-upload-limit                   Make upload limit errors be fatal
       --drive-team-drive string                      ID of the Team Drive
       --drive-trashed-only                           Only show files that are in the trash.
@@ -283,6 +295,7 @@ and may be set in the config file.
       --gphotos-client-secret string                 Google Application Client Secret
       --gphotos-read-only                            Set to make the Google Photos backend read only.
       --gphotos-read-size                            Set to read the size of media items.
+      --gphotos-start-year int                       Year limits the photos to be downloaded to those which are uploaded after the given year (default 2000)
       --http-headers CommaSepList                    Set HTTP headers for all transactions
       --http-no-head                                 Don't use HEAD requests to find file sizes in dir listing
       --http-no-slash                                Set this if the site doesn't end directories with /
@@ -295,6 +308,7 @@ and may be set in the config file.
       --jottacloud-encoding MultiEncoder             This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
       --jottacloud-hard-delete                       Delete files permanently rather than putting them into the trash.
       --jottacloud-md5-memory-limit SizeSuffix       Files bigger than this will be cached on disk to calculate the MD5 if required. (default 10M)
+      --jottacloud-trashed-only                      Only show files that are in the trash.
       --jottacloud-unlink                            Remove existing public link to file/folder with link command rather than creating.
       --jottacloud-upload-resume-limit SizeSuffix    Files bigger than this can be resumed if the upload fail's. (default 10M)
       --koofr-encoding MultiEncoder                  This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
@@ -331,6 +345,7 @@ and may be set in the config file.
       --onedrive-drive-type string                   The type of the drive ( personal | business | documentLibrary )
       --onedrive-encoding MultiEncoder               This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --onedrive-expose-onenote-files                Set to make OneNote files show up in directory listings.
+      --onedrive-server-side-across-configs          Allow server side operations (eg copy) to work across different onedrive configs.
       --opendrive-chunk-size SizeSuffix              Files will be uploaded in chunks this size. (default 10M)
       --opendrive-encoding MultiEncoder              This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
       --opendrive-password string                    Password.
@@ -338,6 +353,7 @@ and may be set in the config file.
       --pcloud-client-id string                      Pcloud App Client Id
       --pcloud-client-secret string                  Pcloud App Client Secret
       --pcloud-encoding MultiEncoder                 This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --pcloud-root-folder-id string                 Fill in for rclone to use a non root folder as its starting point. (default "d0")
       --premiumizeme-encoding MultiEncoder           This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --putio-encoding MultiEncoder                  This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --qingstor-access-key-id string                QingStor Access Key ID
@@ -363,17 +379,29 @@ and may be set in the config file.
       --s3-leave-parts-on-error                      If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
       --s3-list-chunk int                            Size of listing chunk (response list for each ListObject S3 request). (default 1000)
       --s3-location-constraint string                Location constraint - must be set to match the Region.
+      --s3-memory-pool-flush-time Duration           How often internal memory buffer pools will be flushed. (default 1m0s)
+      --s3-memory-pool-use-mmap                      Whether to use mmap buffers in internal memory pool.
       --s3-provider string                           Choose your S3 provider.
       --s3-region string                             Region to connect to.
       --s3-secret-access-key string                  AWS Secret Access Key (password)
       --s3-server-side-encryption string             The server-side encryption algorithm used when storing this object in S3.
       --s3-session-token string                      An AWS session token
+      --s3-sse-customer-algorithm string             If using SSE-C, the server-side encryption algorithm used when storing this object in S3.
+      --s3-sse-customer-key string                   If using SSE-C you must provide the secret encyption key used to encrypt/decrypt your data.
+      --s3-sse-customer-key-md5 string               If using SSE-C you must provide the secret encryption key MD5 checksum.
       --s3-sse-kms-key-id string                     If using KMS ID you must provide the ARN of Key.
       --s3-storage-class string                      The storage class to use when storing new objects in S3.
       --s3-upload-concurrency int                    Concurrency for multipart uploads. (default 4)
       --s3-upload-cutoff SizeSuffix                  Cutoff for switching to chunked upload (default 200M)
       --s3-use-accelerate-endpoint                   If true use the AWS S3 accelerated endpoint.
       --s3-v2-auth                                   If true use v2 authentication.
+      --seafile-create-library                       Should create library if it doesn't exist
+      --seafile-encoding MultiEncoder                This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
+      --seafile-library string                       Name of the library. Leave blank to access all non-encrypted libraries.
+      --seafile-library-key string                   Library password (for encrypted libraries only). Leave blank if you pass it through the command line.
+      --seafile-pass string                          Password
+      --seafile-url string                           URL of seafile host to connect to
+      --seafile-user string                          User name
       --sftp-ask-password                            Allow asking for SFTP password when needed.
       --sftp-disable-hashcheck                       Disable the execution of SSH commands to determine if remote file hashing is available.
       --sftp-host string                             SSH host to connect to
@@ -427,7 +455,16 @@ and may be set in the config file.
       --swift-tenant-id string                       Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)
       --swift-user string                            User name to log in (OS_USERNAME).
       --swift-user-id string                         User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).
-      --union-remotes string                         List of space separated remotes.
+      --tardigrade-access-grant string               Access Grant.
+      --tardigrade-api-key string                    API Key.
+      --tardigrade-passphrase string                 Encryption Passphrase. To access existing objects enter passphrase used for uploading.
+      --tardigrade-provider string                   Choose an authentication method. (default "existing")
+      --tardigrade-satellite-address string          Satellite Address. Custom satellite address should match the format: <nodeid>@<address>:<port>. (default "us-central-1.tardigrade.io")
+      --union-action-policy string                   Policy to choose upstream on ACTION category. (default "epall")
+      --union-cache-time int                         Cache time of usage and free space (in seconds). This option is only useful when a path preserving policy is used. (default 120)
+      --union-create-policy string                   Policy to choose upstream on CREATE category. (default "epmfs")
+      --union-search-policy string                   Policy to choose upstream on SEARCH category. (default "ff")
+      --union-upstreams string                       List of space separated upstreams.
       --webdav-bearer-token string                   Bearer token instead of user/pass (eg a Macaroon)
       --webdav-bearer-token-command string           Command to run to get a bearer token
       --webdav-pass string                           Password.
