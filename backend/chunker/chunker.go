@@ -296,6 +296,8 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		ServerSideAcrossConfigs: true,
 	}).Fill(f).Mask(baseFs).WrapsFs(f, baseFs)
 
+	f.features.Disable("ListR") // Recursive listing may cause chunker skip files
+
 	return f, err
 }
 
