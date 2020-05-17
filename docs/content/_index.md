@@ -1,13 +1,106 @@
 ---
 title: "Rclone"
-description: "rclone syncs files to and from Google Drive, S3, Swift, Cloudfiles, Dropbox, Google Cloud Storage and Amazon Drive."
+description: "Rclone syncs your files to cloud storage: Google Drive, S3, Swift, Dropbox, Google Cloud Storage, Azure, Box and many more."
 type: page
-date: "2017-09-25"
+date: "2020-05-16"
 ---
 
-# Rclone - rsync for cloud storage
+# Rclone syncs your files to cloud storage
 
-Rclone is a command line program to sync files and directories to and from:
+<img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;">
+
+- [About rclone.](#about)
+- [What is rclone for.](#what)
+- [What features does rclone have.](#features)
+- [What providers does rclone support.](#providers)
+- [Download.](/downloads/)
+- [Install.](/install/)
+
+## About rclone {#about}
+
+Rclone is a command line tool to manage files on cloud storage. It is
+a feature rich alternative to cloud vendor's web storage
+interfaces. [Over 40 cloud storage products](#providers) are supported
+by rclone including S3 object stores, business & consumer file storage
+services, as well as standard transfer protocols.
+
+Rclone is a powerful tool being the cloud storage equivalent to the
+unix commands rsync, cp, mv, mount, ls, ncdu, tree, rm, and
+cat. Rclone's familiar syntax includes shell pipeline support, and
+`--dry-run` protection. It can be used at the command line, in scripts
+or via its [API](/rc).
+
+Rclone really cares about your data. It preserves your timestamps and
+verifies your data at all times. Transfers over limited bandwidth;
+intermittent connections, or subject to quota can be restarted, from
+the last good file transferred. You can
+[check](/commands/rclone_check/) the integrity of your files. Where
+possible, rclone employs server side transfers to minimise local
+bandwidth use and can transfer from one provider to another without
+using your local disk.
+
+Virtual backends can wrap local and cloud file systems to apply
+[encryption](/crypt/), 
+[caching](/cache/),
+[chunking](/chunker/) and
+[joining](/union/).
+
+Rclone can [mount](/commands/rclone_mount/) any local, cloud or
+virtual filesystem so it will appear as a local disk on your Windows,
+macOS, linux or FreeBSD computer. Rclone can also serve these over
+[SFTP](/commands/rclone_serve_sftp/),
+[HTTP](/commands/rclone_serve_http/),
+[WebDAV](/commands/rclone_serve_webdav/),
+[FTP](/commands/rclone_serve_ftp/) and
+[DLNA](/commands/rclone_serve_dlna/).
+
+Rclone is mature, open source software originally inspired by
+rsync. It is written in [Go](https://golang.org) and is energetically
+maintained, and supported by a welcoming community with a wide
+experience of varied use cases. Official repos such as Ubuntu, Debian,
+Brew, Chocolatey include rclone. For the latest version [download from
+rclone.org](/downloads/) is recommended.
+
+Rclone is widely used on Linux, Windows and Mac. Third party
+developers have built innovative backup, restore, GUI and business
+process solutions using the rclone command line or API.
+
+Let rclone do the heavy lifting of communicating with cloud cloud
+storage so you can concentrate on your problems.
+
+## What is rclone for {#what}
+
+Rclone is great for:-
+
+- Backup and encryption of files to cloud storage
+- Restore and decryption of files from cloud storage
+- Mirroring cloud data to other cloud services or locally
+- Migration of data to cloud, or between cloud storage vendors
+- Mounting multiple, encrypted, cached or diverse cloud storage
+- Union file systems presenting multiple local and/or cloud file systems
+- Analysing file data held on cloud storage
+
+## Features {#features}
+
+- On all transfers
+    - MD5, SHA1 hashes checked at all times for file integrity
+    - Timestamps preserved on files
+    - Operations can be restarted at any time
+    - Can sync to and from network, eg two different cloud accounts
+    - multi-threaded downloads to local disk
+- [Copy](/commands/rclone_copy/) new or changed files to cloud storage
+- [Sync](/commands/rclone_sync/) (one way) to make a directory identical
+- [Move](/commands/rclone_move/) move files to cloud storage deleting the local after verification
+- [Check](/commands/rclone_check/) check hashes and for missing/extra files
+- [Mount](/commands/rclone_mount/) your cloud storage as a network disk
+- [Serve](/commands/rclone_serve/) local or remote files over [HTTP](/commands/rclone_serve_http/)/[WebDav](/commands/rclone_serve_webdav/)/[FTP](/commands/rclone_serve_ftp/)/[SFTP](/commands/rclone_serve_sftp/)/[dlna](/commands/rclone_serve_dlna/)
+- Experimental [Web based GUI](/gui/)
+
+## Supported providers {#providers}
+
+Here is a list of providers that rclone supports. This isn't an
+exhaustive list as there are many more that support standard protocols
+such as WebDAV or S3 that work out of the box.
 
 * {{< provider name="1Fichier" home="https://1fichier.com/" config="/fichier/" >}}
 * {{< provider name="Alibaba Cloud (Aliyun) Object Storage System (OSS)" home="https://www.alibabacloud.com/product/oss/" config="/s3/#alibaba-oss" >}}
@@ -59,24 +152,6 @@ Rclone is a command line program to sync files and directories to and from:
 * {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 * {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
 * {{< provider name="The local filesystem" home="/local/" config="/local/" >}}
-
-Features
-
-  * MD5/SHA1 hashes checked at all times for file integrity
-  * Timestamps preserved on files
-  * Partial syncs supported on a whole file basis
-  * [Copy](/commands/rclone_copy/) mode to just copy new/changed files
-  * [Sync](/commands/rclone_sync/) (one way) mode to make a directory identical
-  * [Check](/commands/rclone_check/) mode to check for file hash equality
-  * Can sync to and from network, eg two different cloud accounts
-  * [Encryption](/crypt/) backend
-  * [Cache](/cache/) backend
-  * [Chunking](/chunker/) backend
-  * [Union](/union/) backend
-  * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
-  * Multi-threaded downloads to local disk
-  * Can [serve](/commands/rclone_serve/) local or remote files over [HTTP](/commands/rclone_serve_http/)/[WebDav](/commands/rclone_serve_webdav/)/[FTP](/commands/rclone_serve_ftp/)/[SFTP](/commands/rclone_serve_sftp/)/[dlna](/commands/rclone_serve_dlna/)
-  * Experimental [Web based GUI](/gui/)
 
 Links
 
