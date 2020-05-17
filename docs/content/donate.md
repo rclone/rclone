@@ -1,26 +1,54 @@
 ---
-title: "Flowers for My Wife"
-description: "Flowers for My Wife."
+title: "Donations"
+description: "Donations to the rclone project."
 type: page
-date: "2015-09-06"
+date: "2020-05-15"
 ---
 
-## <i class="fa fa-heart"></i> Flowers for My Wife ##
+# <i class="fa fa-heart heart"></i> Donations to the rclone project
 
-Rclone is a pure open source for love-not-money project.  However I've
-had requests for a donation page and coding rclone does take me away
-from something else I love - my wonderful wife.
+We're very pleased to receive donations, which allow us to continue
+developing rclone as free open source software.
 
-So if you would like to send a donation, I will use it to buy flowers
-(and other pretty things) for her which will make her very happy.
+Donations from individuals that rclone has helped make us very happy.
+Donations from companies that use rclone or bundle it in their
+products are very welcome too as are donations from cloud providers
+rclone supports.
 
-### New
+Maintaining rclone is a lot of work - easily a **full time
+job**. Nothing stands still in the world of cloud storage! We love
+doing the work and we'd like to spend more time doing it - your
+support helps make that possible.
 
-<div class="btn-group" role="group" aria-label="Basic example">
-  <button type="button" class="btn btn-secondary">Left</button>
-  <button type="button" class="btn btn-secondary">Middle</button>
-  <button type="button" class="btn btn-secondary">Right</button>
+## Contribute Monthly
+
+Monthly donations help keep rclone development sustainable in the long run.
+
+<div class="btn-group" role="group" aria-label="Monthly donations">
+  <div class="btn-group mr-2" role="group" aria-label="First group">
+  <button type="button" class="btn btn-secondary">
+    <a href="https://github.com/sponsors/ncw"><i class="fab fa-github" aria-hidden="true"></i> GitHub Sponsors</a>
+  </button>
+  </div>
+  <div class="btn-group mr-2" role="group" aria-label="First group">
+  <button type="button" class="btn btn-secondary">
+    <i class="fab fa-paypal" aria-hidden="true"></i> Paypal
+  </button>
+  </div>
+  <div class="btn-group mr-2" role="group" aria-label="First group">
+  <button type="button" class="btn btn-secondary">
+    <i class="fab fa-patreon" aria-hidden="true"></i> Patreon
+  </button>
+  </div>
+  <div class="btn-group mr-2" role="group" aria-label="First group">
+  <button type="button" class="btn btn-secondary">
+    Liberapay
+  </button>
+  </div>
 </div>
+
+## Contribute Once
+
 
 ### Paypal ###
 
