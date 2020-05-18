@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -131,28 +130,7 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 		return 0, ECLOSED
 	}
 	if fh.offset != off {
-		// Set a background timer so we don't wait forever
-		maxWait := fh.file.VFS().Opt.WriteWait
-		timeout := time.NewTimer(maxWait)
-		done := make(chan struct{})
-		abort := int32(0)
-		go func() {
-			select {
-			case <-timeout.C:
-				// set abort flag an give all the waiting goroutines a kick on timeout
-				atomic.StoreInt32(&abort, 1)
-				fh.cond.Broadcast()
-			case <-done:
-			}
-		}()
-		// Wait for an in-sequence write or abort
-		for fh.offset != off && atomic.LoadInt32(&abort) == 0 {
-			// fs.Debugf(fh.remote, "waiting for in-sequence write to %d", off)
-			fh.cond.Wait()
-		}
-		// tidy up end timer
-		close(done)
-		timeout.Stop()
+		waitSequential("write", fh.remote, fh.cond, fh.file.VFS().Opt.WriteWait, &fh.offset, off)
 	}
 	if fh.offset != off {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")
