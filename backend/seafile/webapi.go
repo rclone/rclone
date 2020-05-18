@@ -32,36 +32,43 @@ var (
 // ==================== Seafile API ====================
 
 func (f *Fs) getAuthorizationToken(ctx context.Context) (string, error) {
-	// API Socumentation
+	return getAuthorizationToken(ctx, f.srv, f.opt.User, f.opt.Password, "")
+}
+
+// getAuthorizationToken can be called outside of a fs (during configuration of the remote to get the authentication token)
+// it's doing a single call (no pacer involved)
+func getAuthorizationToken(ctx context.Context, srv *rest.Client, user, password, oneTimeCode string) (string, error) {
+	// API Documentation
 	// https://download.seafile.com/published/web-api/home.md#user-content-Quick%20Start
 	opts := rest.Opts{
 		Method:       "POST",
 		Path:         "api2/auth-token/",
 		ExtraHeaders: map[string]string{"Authorization": ""}, // unset the Authorization for this request
+		IgnoreStatus: true,                                   // so we can load the error messages back into result
+	}
+
+	// 2FA
+	if oneTimeCode != "" {
+		opts.ExtraHeaders["X-SEAFILE-OTP"] = oneTimeCode
 	}
 
 	request := api.AuthenticationRequest{
-		Username: f.opt.User,
-		Password: f.opt.Password,
+		Username: user,
+		Password: password,
 	}
 	result := api.AuthenticationResult{}
 
-	var resp *http.Response
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetryNoReauth(resp, err)
-	})
+	_, err := srv.CallJSON(ctx, &opts, &request, &result)
 	if err != nil {
-		if resp != nil {
-			if resp.StatusCode == 403 {
-				return "", fs.ErrorPermissionDenied
-			}
-		}
+		// This is only going to be http errors here
 		return "", errors.Wrap(err, "failed to authenticate")
 	}
-	if result.Errors != nil && len(result.Errors) > 1 {
+	if result.Errors != nil && len(result.Errors) > 0 {
 		return "", errors.New(strings.Join(result.Errors, ", "))
+	}
+	if result.Token == "" {
+		// No error in "non_field_errors" field but still empty token
+		return "", errors.New("failed to authenticate")
 	}
 	return result.Token, nil
 }
@@ -79,11 +86,11 @@ func (f *Fs) getServerInfo(ctx context.Context) (account *api.ServerInfo, err er
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
@@ -105,11 +112,11 @@ func (f *Fs) getUserAccountInfo(ctx context.Context) (account *api.AccountInfo, 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
@@ -132,11 +139,11 @@ func (f *Fs) getLibraries(ctx context.Context) ([]api.Library, error) {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
@@ -163,11 +170,11 @@ func (f *Fs) createLibrary(ctx context.Context, libraryName, password string) (l
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
@@ -190,11 +197,11 @@ func (f *Fs) deleteLibrary(ctx context.Context, libraryID string) error {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return fs.ErrorPermissionDenied
 			}
 		}
@@ -221,7 +228,7 @@ func (f *Fs) decryptLibrary(ctx context.Context, libraryID, password string) err
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -264,10 +271,13 @@ func (f *Fs) getDirectoryEntriesAPIv21(ctx context.Context, libraryID, dirPath s
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
+				return nil, fs.ErrorPermissionDenied
+			}
 			if resp.StatusCode == 404 {
 				return nil, fs.ErrorDirNotFound
 			}
@@ -306,11 +316,11 @@ func (f *Fs) getDirectoryDetails(ctx context.Context, libraryID, dirPath string)
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
@@ -348,11 +358,11 @@ func (f *Fs) createDir(ctx context.Context, libraryID, dirPath string) error {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return fs.ErrorPermissionDenied
 			}
 		}
@@ -388,11 +398,11 @@ func (f *Fs) renameDir(ctx context.Context, libraryID, dirPath, newName string) 
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return fs.ErrorPermissionDenied
 			}
 		}
@@ -428,11 +438,11 @@ func (f *Fs) moveDir(ctx context.Context, srcLibraryID, srcDir, srcName, dstLibr
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, nil)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
@@ -464,11 +474,11 @@ func (f *Fs) deleteDir(ctx context.Context, libraryID, filePath string) error {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, nil)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return fs.ErrorPermissionDenied
 			}
 		}
@@ -495,14 +505,14 @@ func (f *Fs) getFileDetails(ctx context.Context, libraryID, filePath string) (*a
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
 			if resp.StatusCode == 404 {
 				return nil, fs.ErrorObjectNotFound
 			}
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
@@ -529,7 +539,7 @@ func (f *Fs) deleteFile(ctx context.Context, libraryID, filePath string) error {
 	}
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, nil)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to delete file")
@@ -555,7 +565,7 @@ func (f *Fs) getDownloadLink(ctx context.Context, libraryID, filePath string) (s
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -604,7 +614,7 @@ func (f *Fs) download(ctx context.Context, url string, size int64, options ...fs
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -649,11 +659,11 @@ func (f *Fs) getUploadLink(ctx context.Context, libraryID string) (string, error
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return "", fs.ErrorPermissionDenied
 			}
 		}
@@ -693,7 +703,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 500 {
@@ -729,11 +739,11 @@ func (f *Fs) listShareLinks(ctx context.Context, libraryID, remote string) ([]ap
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
@@ -767,11 +777,11 @@ func (f *Fs) createShareLink(ctx context.Context, libraryID, remote string) (*ap
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
@@ -808,11 +818,11 @@ func (f *Fs) copyFile(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, 
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
@@ -850,11 +860,11 @@ func (f *Fs) moveFile(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, 
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
@@ -890,11 +900,11 @@ func (f *Fs) renameFile(ctx context.Context, libraryID, filePath, newname string
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
@@ -928,11 +938,11 @@ func (f *Fs) emptyLibraryTrash(ctx context.Context, libraryID string) error {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, nil)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
@@ -966,10 +976,13 @@ func (f *Fs) getDirectoryEntriesAPIv2(ctx context.Context, libraryID, dirPath st
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
+				return nil, fs.ErrorPermissionDenied
+			}
 			if resp.StatusCode == 404 {
 				return nil, fs.ErrorDirNotFound
 			}
@@ -1017,11 +1030,11 @@ func (f *Fs) copyFileAPIv2(ctx context.Context, srcLibraryID, srcPath, dstLibrar
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
@@ -1062,7 +1075,7 @@ func (f *Fs) renameFileAPIv2(ctx context.Context, libraryID, filePath, newname s
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -1070,7 +1083,7 @@ func (f *Fs) renameFileAPIv2(ctx context.Context, libraryID, filePath, newname s
 				// This is the normal response from the server
 				return nil
 			}
-			if resp.StatusCode == 403 {
+			if resp.StatusCode == 401 || resp.StatusCode == 403 {
 				return fs.ErrorPermissionDenied
 			}
 			if resp.StatusCode == 404 {
