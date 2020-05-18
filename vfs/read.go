@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -238,18 +237,22 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 		maxWait := fh.file.VFS().Opt.ReadWait
 		timeout := time.NewTimer(maxWait)
 		done := make(chan struct{})
-		abort := int32(0)
+		abort := false
 		go func() {
 			select {
 			case <-timeout.C:
-				// set abort flag an give all the waiting goroutines a kick on timeout
-				atomic.StoreInt32(&abort, 1)
+				// take the lock to make sure that fh.cond.Wait() is called before
+				// fh.cond.Broadcast. NB fh.cond.L == fh.mu
+				fh.mu.Lock()
+				// set abort flag and give all the waiting goroutines a kick on timeout
+				abort = true
 				fs.Debugf(fh.remote, "aborting in-sequence read wait, off=%d", off)
 				fh.cond.Broadcast()
+				fh.mu.Unlock()
 			case <-done:
 			}
 		}()
-		for fh.offset != off && atomic.LoadInt32(&abort) == 0 {
+		for fh.offset != off && !abort {
 			fs.Debugf(fh.remote, "waiting for in-sequence read to %d for %v", off, maxWait)
 			fh.cond.Wait()
 		}
