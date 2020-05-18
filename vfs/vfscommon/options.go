@@ -53,5 +53,5 @@ var DefaultOpt = Options{
 	CacheMaxSize:      -1,
 	CaseInsensitive:   runtime.GOOS == "windows" || runtime.GOOS == "darwin", // default to true on Windows and Mac, false otherwise
 	WriteWait:         1000 * time.Millisecond,
-	ReadWait:          5 * time.Millisecond,
+	ReadWait:          20 * time.Millisecond,
 }
