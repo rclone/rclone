@@ -1130,6 +1130,12 @@ func (c *chunkingReader) wrapStream(ctx context.Context, in io.Reader, src fs.Ob
 
 	switch {
 	case c.fs.useMD5:
+		srcObj := fs.UnWrapObjectInfo(src)
+		if srcObj != nil && srcObj.Fs().Features().SlowHash {
+			fs.Debugf(src, "skip slow MD5 on source file, hashing in-transit")
+			c.hasher = md5.New()
+			break
+		}
 		if c.md5, _ = src.Hash(ctx, hash.MD5); c.md5 == "" {
 			if c.fs.hashFallback {
 				c.sha1, _ = src.Hash(ctx, hash.SHA1)
@@ -1138,6 +1144,12 @@ func (c *chunkingReader) wrapStream(ctx context.Context, in io.Reader, src fs.Ob
 			}
 		}
 	case c.fs.useSHA1:
+		srcObj := fs.UnWrapObjectInfo(src)
+		if srcObj != nil && srcObj.Fs().Features().SlowHash {
+			fs.Debugf(src, "skip slow SHA1 on source file, hashing in-transit")
+			c.hasher = sha1.New()
+			break
+		}
 		if c.sha1, _ = src.Hash(ctx, hash.SHA1); c.sha1 == "" {
 			if c.fs.hashFallback {
 				c.md5, _ = src.Hash(ctx, hash.MD5)
