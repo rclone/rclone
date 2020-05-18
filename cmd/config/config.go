@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
@@ -70,7 +71,8 @@ var configShowCommand = &cobra.Command{
 		if len(args) == 0 {
 			config.ShowConfig()
 		} else {
-			config.ShowRemote(args[0])
+			name := strings.TrimRight(args[0], ":")
+			config.ShowRemote(name)
 		}
 	},
 }
