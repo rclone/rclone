@@ -32,8 +32,16 @@ import (
 )
 
 const (
-	librariesCacheKey = "all"
-	retryAfterHeader  = "Retry-After"
+	librariesCacheKey   = "all"
+	retryAfterHeader    = "Retry-After"
+	configURL           = "url"
+	configUser          = "user"
+	configPassword      = "pass"
+	config2FA           = "2fa"
+	configLibrary       = "library"
+	configLibraryKey    = "library_key"
+	configCreateLibrary = "create_library"
+	configAuthToken     = "auth_token"
 )
 
 // This is global to all instances of fs
@@ -49,8 +57,9 @@ func init() {
 		Name:        "seafile",
 		Description: "seafile",
 		NewFs:       NewFs,
+		Config:      Config,
 		Options: []fs.Option{{
-			Name:     "url",
+			Name:     configURL,
 			Help:     "URL of seafile host to connect to",
 			Required: true,
 			Examples: []fs.OptionExample{{
@@ -58,26 +67,35 @@ func init() {
 				Help:  "Connect to cloud.seafile.com",
 			}},
 		}, {
-			Name:     "user",
-			Help:     "User name",
+			Name:     configUser,
+			Help:     "User name (usually email address)",
 			Required: true,
 		}, {
-			Name:       "pass",
+			// Password is not required, it will be left blank for 2FA
+			Name:       configPassword,
 			Help:       "Password",
 			IsPassword: true,
-			Required:   true,
 		}, {
-			Name: "library",
+			Name:    config2FA,
+			Help:    "Two-factor authentication ('true' if the account has 2FA enabled)",
+			Default: false,
+		}, {
+			Name: configLibrary,
 			Help: "Name of the library. Leave blank to access all non-encrypted libraries.",
 		}, {
-			Name:       "library_key",
+			Name:       configLibraryKey,
 			Help:       "Library password (for encrypted libraries only). Leave blank if you pass it through the command line.",
 			IsPassword: true,
 		}, {
-			Name:     "create_library",
-			Help:     "Should create library if it doesn't exist",
+			Name:     configCreateLibrary,
+			Help:     "Should rclone create a library if it doesn't exist",
 			Advanced: true,
 			Default:  false,
+		}, {
+			// Keep the authentication token after entering the 2FA code
+			Name: configAuthToken,
+			Help: "Authentication token",
+			Hide: fs.OptionHideBoth,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -97,6 +115,8 @@ type Options struct {
 	URL           string               `config:"url"`
 	User          string               `config:"user"`
 	Password      string               `config:"pass"`
+	Is2FA         bool                 `config:"2fa"`
+	AuthToken     string               `config:"auth_token"`
 	LibraryName   string               `config:"library"`
 	LibraryKey    string               `config:"library_key"`
 	CreateLibrary bool                 `config:"create_library"`
@@ -205,10 +225,16 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		f.moveDirNotAvailable = true
 	}
 
-	err = f.authorizeAccount(ctx)
-	if err != nil {
-		return nil, err
+	// Take the authentication token from the configuration first
+	token := f.opt.AuthToken
+	if token == "" {
+		// If not available, send the user/password instead
+		token, err = f.authorizeAccount(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
+	f.setAuthorizationToken(token)
 
 	if f.libraryName != "" {
 		// Check if the library exists
@@ -270,26 +296,108 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	return f, nil
 }
 
+// Config callback for 2FA
+func Config(name string, m configmap.Mapper) {
+	serverURL, ok := m.Get(configURL)
+	if !ok || serverURL == "" {
+		// If there's no server URL, it means we're trying an operation at the backend level, like a "rclone authorize seafile"
+		fmt.Print("\nOperation not supported on this remote.\nIf you need a 2FA code on your account, use the command:\n\nrclone config reconnect <remote name>:\n\n")
+		return
+	}
+
+	// Stop if we are running non-interactive config
+	if fs.Config.AutoConfirm {
+		return
+	}
+
+	u, err := url.Parse(serverURL)
+	if err != nil {
+		fs.Errorf(nil, "Invalid server URL %s", serverURL)
+		return
+	}
+
+	is2faEnabled, _ := m.Get(config2FA)
+	if is2faEnabled != "true" {
+		fmt.Println("Two-factor authentication is not enabled on this account.")
+		return
+	}
+
+	username, _ := m.Get(configUser)
+	if username == "" {
+		fs.Errorf(nil, "A username is required")
+		return
+	}
+
+	password, _ := m.Get(configPassword)
+	if password != "" {
+		password, _ = obscure.Reveal(password)
+	}
+	// Just make sure we do have a password
+	for password == "" {
+		fmt.Print("Two-factor authentication: please enter your password (it won't be saved in the configuration)\npassword> ")
+		password = config.ReadPassword()
+	}
+
+	// Create rest client for getAuthorizationToken
+	url := u.String()
+	if !strings.HasPrefix(url, "/") {
+		url += "/"
+	}
+	srv := rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(url)
+
+	// We loop asking for a 2FA code
+	for {
+		code := ""
+		for code == "" {
+			fmt.Print("Two-factor authentication: please enter your 2FA code\n2fa code> ")
+			code = config.ReadLine()
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		fmt.Println("Authenticating...")
+		token, err := getAuthorizationToken(ctx, srv, username, password, code)
+		if err != nil {
+			fmt.Printf("Authentication failed: %v\n", err)
+			tryAgain := strings.ToLower(config.ReadNonEmptyLine("Do you want to try again (y/n)?"))
+			if tryAgain != "y" && tryAgain != "yes" {
+				// The user is giving up, we're done here
+				break
+			}
+		}
+		if token != "" {
+			fmt.Println("Success!")
+			// Let's save the token into the configuration
+			m.Set(configAuthToken, token)
+			// And delete any previous entry for password
+			m.Set(configPassword, "")
+			config.SaveConfig()
+			// And we're done here
+			break
+		}
+	}
+}
+
 // sets the AuthorizationToken up
 func (f *Fs) setAuthorizationToken(token string) {
 	f.srv.SetHeader("Authorization", "Token "+token)
 }
 
 // authorizeAccount gets the auth token.
-func (f *Fs) authorizeAccount(ctx context.Context) error {
+func (f *Fs) authorizeAccount(ctx context.Context) (string, error) {
 	f.authMu.Lock()
 	defer f.authMu.Unlock()
+
 	token, err := f.getAuthorizationToken(ctx)
 	if err != nil {
-		return err
+		return "", err
 	}
-	f.setAuthorizationToken(token)
-	return nil
+	return token, nil
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
-	401, // Unauthorized (eg "Token has expired")
 	408, // Request Timeout
 	429, // Rate exceeded.
 	500, // Get occasional 500 Internal Server Error
@@ -298,9 +406,9 @@ var retryErrorCodes = []int{
 	520, // Operation failed (We get them sometimes when running tests in parallel)
 }
 
-// shouldRetryNoAuth returns a boolean as to whether this resp and err
+// shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
+func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 	// For 429 errors look at the Retry-After: header and
 	// set the retry appropriately, starting with a minimum of 1
 	// second if it isn't set.
@@ -317,22 +425,6 @@ func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
 		return true, pacer.RetryAfterError(err, time.Duration(retryAfter)*time.Second)
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
-}
-
-// shouldRetry returns a boolean as to whether this resp and err
-// deserve to be retried.  It returns the err as a convenience
-func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
-	// It looks like seafile is using the 403 error code instead of the standard 401.
-	if resp != nil && (resp.StatusCode == 401 || resp.StatusCode == 403) {
-		fs.Debugf(f, "Unauthorized: %v", err)
-		// Reauth
-		authErr := f.authorizeAccount(ctx)
-		if authErr != nil {
-			err = authErr
-		}
-		return true, err
-	}
-	return f.shouldRetryNoReauth(resp, err)
 }
 
 func (f *Fs) shouldRetryUpload(ctx context.Context, resp *http.Response, err error) (bool, error) {
