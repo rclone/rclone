@@ -155,6 +155,38 @@ func TestPatternMatch(t *testing.T) {
 			wantPrefix:  "file.jpg/",
 			wantPattern: &patterns[5],
 		},
+		{
+			root:        "",
+			itemPath:    "feature",
+			isFile:      false,
+			wantMatch:   []string{"feature"},
+			wantPrefix:  "feature/",
+			wantPattern: &patterns[23],
+		},
+		{
+			root:        "feature/favorites",
+			itemPath:    "",
+			isFile:      false,
+			wantMatch:   []string{"feature/favorites"},
+			wantPrefix:  "",
+			wantPattern: &patterns[24],
+		},
+		{
+			root:        "feature",
+			itemPath:    "favorites",
+			isFile:      false,
+			wantMatch:   []string{"feature/favorites"},
+			wantPrefix:  "favorites/",
+			wantPattern: &patterns[24],
+		},
+		{
+			root:        "feature/favorites",
+			itemPath:    "file.jpg",
+			isFile:      true,
+			wantMatch:   []string{"feature/favorites/file.jpg", "file.jpg"},
+			wantPrefix:  "file.jpg/",
+			wantPattern: &patterns[25],
+		},
 	} {
 		t.Run(fmt.Sprintf("#%d,root=%q,itemPath=%q,isFile=%v", testNumber, test.root, test.itemPath, test.isFile), func(t *testing.T) {
 			gotMatch, gotPrefix, gotPattern := patterns.match(test.root, test.itemPath, test.isFile)
