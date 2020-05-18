@@ -117,7 +117,7 @@ type ListItem struct {
 	Name      string `json:"name"`
 	Home      string `json:"home"`
 	Size      int64  `json:"size"`
-	Mtime     int64  `json:"mtime,omitempty"`
+	Mtime     uint64 `json:"mtime,omitempty"`
 	Hash      string `json:"hash,omitempty"`
 	VirusScan string `json:"virus_scan,omitempty"`
 	Tree      string `json:"tree,omitempty"`

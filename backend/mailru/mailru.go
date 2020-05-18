@@ -656,9 +656,14 @@ func (f *Fs) itemToDirEntry(ctx context.Context, item *api.ListItem) (entry fs.D
 	if err != nil {
 		return nil, -1, err
 	}
+	mTime := int64(item.Mtime)
+	if mTime < 0 {
+		fs.Debugf(f, "Fixing invalid timestamp %d on mailru file %q", mTime, remote)
+		mTime = 0
+	}
 	switch item.Kind {
 	case "folder":
-		dir := fs.NewDir(remote, time.Unix(item.Mtime, 0)).SetSize(item.Size)
+		dir := fs.NewDir(remote, time.Unix(mTime, 0)).SetSize(item.Size)
 		dirSize := item.Count.Files + item.Count.Folders
 		return dir, dirSize, nil
 	case "file":
@@ -672,7 +677,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, item *api.ListItem) (entry fs.D
 			hasMetaData: true,
 			size:        item.Size,
 			mrHash:      binHash,
-			modTime:     time.Unix(item.Mtime, 0),
+			modTime:     time.Unix(mTime, 0),
 		}
 		return file, -1, nil
 	default:
