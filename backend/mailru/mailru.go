@@ -192,7 +192,7 @@ This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.
 Quirks will be removed when the backend grows stable.
-Supported quirks: atomicmkdir binlist`,
+Supported quirks: atomicmkdir binlist unknowndirs`,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -381,6 +381,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 type quirks struct {
 	binlist     bool
 	atomicmkdir bool
+	unknowndirs bool
 }
 
 func (q *quirks) parseQuirks(option string) {
@@ -401,6 +402,9 @@ func (q *quirks) parseQuirks(option string) {
 			// use mkdir as a locking primitive and depend on its atomicity.
 			// Remove this quirk when the above issue is investigated.
 			q.atomicmkdir = true
+		case "unknowndirs":
+			// Accepts unknown resource types as folders.
+			q.unknowndirs = true
 		default:
 			// Ignore unknown flags
 		}
@@ -518,7 +522,7 @@ func (f *Fs) relPath(absPath string) (string, error) {
 	return "", fmt.Errorf("path %q should be under %q", absPath, f.root)
 }
 
-// metaServer ...
+// metaServer returns URL of current meta server
 func (f *Fs) metaServer(ctx context.Context) (string, error) {
 	f.metaMu.Lock()
 	defer f.metaMu.Unlock()
@@ -623,33 +627,56 @@ func (f *Fs) itemToDirEntry(ctx context.Context, item *api.ListItem) (entry fs.D
 	if err != nil {
 		return nil, -1, err
 	}
+
 	mTime := int64(item.Mtime)
 	if mTime < 0 {
 		fs.Debugf(f, "Fixing invalid timestamp %d on mailru file %q", mTime, remote)
 		mTime = 0
 	}
-	switch item.Kind {
-	case "folder":
-		dir := fs.NewDir(remote, time.Unix(mTime, 0)).SetSize(item.Size)
-		dirSize := item.Count.Files + item.Count.Folders
-		return dir, dirSize, nil
-	case "file":
-		binHash, err := mrhash.DecodeString(item.Hash)
-		if err != nil {
-			return nil, -1, err
-		}
-		file := &Object{
-			fs:          f,
-			remote:      remote,
-			hasMetaData: true,
-			size:        item.Size,
-			mrHash:      binHash,
-			modTime:     time.Unix(mTime, 0),
-		}
-		return file, -1, nil
-	default:
-		return nil, -1, fmt.Errorf("Unknown resource type %q", item.Kind)
+	modTime := time.Unix(mTime, 0)
+
+	isDir, err := f.isDir(item.Kind, remote)
+	if err != nil {
+		return nil, -1, err
 	}
+	if isDir {
+		dir := fs.NewDir(remote, modTime).SetSize(item.Size)
+		return dir, item.Count.Files + item.Count.Folders, nil
+	}
+
+	binHash, err := mrhash.DecodeString(item.Hash)
+	if err != nil {
+		return nil, -1, err
+	}
+	file := &Object{
+		fs:          f,
+		remote:      remote,
+		hasMetaData: true,
+		size:        item.Size,
+		mrHash:      binHash,
+		modTime:     modTime,
+	}
+	return file, -1, nil
+}
+
+// isDir returns true for directories, false for files
+func (f *Fs) isDir(kind, path string) (bool, error) {
+	switch kind {
+	case "":
+		return false, errors.New("empty resource type")
+	case "file":
+		return false, nil
+	case "folder":
+		// fall thru
+	case "camera-upload", "mounted", "shared":
+		fs.Debugf(f, "[%s]: folder has type %q", path, kind)
+	default:
+		if !f.quirks.unknowndirs {
+			return false, fmt.Errorf("unknown resource type %q", kind)
+		}
+		fs.Errorf(f, "[%s]: folder has unknown type %q", path, kind)
+	}
+	return true, nil
 }
 
 // List the objects and directories in dir into entries.
@@ -717,7 +744,11 @@ func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) 
 		return nil, err
 	}
 
-	if info.Body.Kind != "folder" {
+	isDir, err := f.isDir(info.Body.Kind, dirPath)
+	if err != nil {
+		return nil, err
+	}
+	if !isDir {
 		return nil, fs.ErrorIsFile
 	}
 
