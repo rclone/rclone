@@ -173,6 +173,10 @@ into albums.
 - shared-album
     - album name
     - album name/sub
+- feature
+    - favorites
+        - file1.jpg
+        - file2.jpg
 ```
 
 There are two writable parts of the tree, the `upload` directory and
