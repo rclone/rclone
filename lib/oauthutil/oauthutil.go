@@ -87,7 +87,7 @@ type oldToken struct {
 func GetToken(name string, m configmap.Mapper) (*oauth2.Token, error) {
 	tokenString, ok := m.Get(config.ConfigToken)
 	if !ok || tokenString == "" {
-		return nil, errors.New("empty token found - please run rclone config again")
+		return nil, errors.Errorf("empty token found - please run \"rclone config reconnect %s:\"", name)
 	}
 	token := new(oauth2.Token)
 	err := json.Unmarshal([]byte(tokenString), token)
@@ -213,7 +213,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		time.Sleep(1 * time.Second)
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "couldn't fetch token - maybe it has expired? - refresh with \"rclone config reconnect %s:\"", ts.name)
 	}
 	changed = changed || (*token != *ts.token)
 	ts.token = token
@@ -224,7 +224,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		}
 		err = PutToken(ts.name, ts.m, token, false)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "couldn't store token")
 		}
 	}
 	return token, nil
