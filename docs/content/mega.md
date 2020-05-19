@@ -109,7 +109,7 @@ Use `rclone dedupe` to fix duplicated files.
 
 Mega remotes seem to get blocked (reject logins) under "heavy use".
 We haven't worked out the exact blocking rules but it seems to be
-related to fast paced, sucessive rclone commands.
+related to fast paced, successive rclone commands.
 
 For example, executing this command 90 times in a row `rclone link
 remote:file` will cause the remote to become "blocked". This is not an
@@ -140,7 +140,7 @@ approach.
 
 Note that once blocked, the use of other tools (such as megacmd) is
 not a sure workaround: following megacmd login times have been
-observed in sucession for blocked remote: 7 minutes, 20 min, 30min, 30
+observed in succession for blocked remote: 7 minutes, 20 min, 30min, 30
 min, 30min. Web access looks unaffected though.
 
 Investigation is continuing in relation to workarounds based on

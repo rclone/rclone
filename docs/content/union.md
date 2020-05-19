@@ -60,7 +60,7 @@ Some policies rely on quota information. These policies should be used only if y
 | lus, eplus | Used           |
 | lno, eplno | Objects        |
 
-To check if your upstream support the field, run `rclone about remote: [flags]` and see if the reuqired field exists.
+To check if your upstream supports the field, run `rclone about remote: [flags]` and see if the required field exists.
 
 #### Filters
 
@@ -74,7 +74,7 @@ If all remotes are filtered an error will be returned.
 
 #### Policy descriptions
 
-THe policies definition are inspired by [trapexit/mergerfs](https://github.com/trapexit/mergerfs) but not exactly the same. Some policy definition could be different due to the much larger latency of remote file systems.
+The policies definition are inspired by [trapexit/mergerfs](https://github.com/trapexit/mergerfs) but not exactly the same. Some policy definition could be different due to the much larger latency of remote file systems.
 
 | Policy           | Description                                                |
 |------------------|------------------------------------------------------------|

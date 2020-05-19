@@ -185,10 +185,10 @@ Affected settings:
 ##### Certificate Validation #####
 
 When the Plex server is configured to only accept secure connections, it is
-possible to use `.plex.direct` URL's to ensure certificate validation succeeds.
-These URL's are used by Plex internally to connect to the Plex server securely.
+possible to use `.plex.direct` URLs to ensure certificate validation succeeds.
+These URLs are used by Plex internally to connect to the Plex server securely.
 
-The format for this URL's is the following:
+The format for these URLs is the following:
 
 https://ip-with-dots-replaced.server-hash.plex.direct:32400/
 
@@ -241,7 +241,7 @@ there is a valid concern that the expiring cache listings can lead to cloud prov
 throttles or bans due to repeated queries on it for very large mounts.
 
 Some recommendations:
-- don't use a very small interval for entry informations (`--cache-info-age`)
+- don't use a very small interval for entry information (`--cache-info-age`)
 - while writes aren't yet optimised, you can still write through `cache` which gives you the advantage
 of adding the file in the cache at the same time if configured to do so.
 
@@ -405,7 +405,7 @@ The plex token for authentication - auto set normally
 
 #### --cache-plex-insecure
 
-Skip all certificate verifications when connecting to the Plex server
+Skip all certificate verification when connecting to the Plex server
 
 - Config:      plex_insecure
 - Env Var:     RCLONE_CACHE_PLEX_INSECURE

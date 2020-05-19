@@ -33,7 +33,7 @@ the remote does not support a server side directory move operation.
 
 If no filters are in use and if possible this will server side move
 ` + "`source:path`" + ` into ` + "`dest:path`" + `. After this ` + "`source:path`" + ` will no
-longer longer exist.
+longer exist.
 
 Otherwise for each file in ` + "`source:path`" + ` selected by the filters (if
 any) this will move it into ` + "`dest:path`" + `.  If possible a server side

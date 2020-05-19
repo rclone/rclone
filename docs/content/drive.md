@@ -678,7 +678,7 @@ videos.
 Setting this flag will cause Google photos and videos to return a
 blank MD5 checksum.
 
-Google photos are identifed by being in the "photos" space.
+Google photos are identified by being in the "photos" space.
 
 Corrupted checksums are caused by Google modifying the image/video but
 not updating the checksum.
@@ -877,7 +877,7 @@ Keep new head revision of each file forever.
 
 Show sizes as storage quota usage, not actual size.
 
-Show the size of a file as the the storage quota used. This is the
+Show the size of a file as the storage quota used. This is the
 current version plus any older versions that have been set to keep
 forever.
 
@@ -1028,7 +1028,7 @@ etc as rclone knows to ignore the size when doing the transfer.
 However an unfortunate consequence of this is that you may not be able
 to download Google docs using `rclone mount`. If it doesn't work you
 will get a 0 sized file.  If you try again the doc may gain its
-correct size and be downloadable. Whther it will work on not depends
+correct size and be downloadable. Whether it will work on not depends
 on the application accessing the mount and the OS you are running -
 experiment to find out if it does work for you!
 

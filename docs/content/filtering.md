@@ -308,7 +308,7 @@ This reads a list of file names from the file passed in and **only**
 these files are transferred.  The **filtering rules are ignored**
 completely if you use this option.
 
-`--files-from` expects a list of files as it's input. Leading / trailing
+`--files-from` expects a list of files as its input. Leading / trailing
 whitespace is stripped from the input lines and lines starting with `#`
 and `;` are ignored.
 
