@@ -376,3 +376,4 @@ put them back in again. -->
   * Caleb Case <caleb@storj.io>
   * Ben Zenker <imbenzenker@gmail.com>
   * Martin Michlmayr <tbm@cyrius.com>
+  * Brandon McNama <bmcnama@pagerduty.com>
