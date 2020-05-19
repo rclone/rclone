@@ -32,6 +32,10 @@ type ioStatusBlock struct {
 	Status, Information uintptr
 }
 
+// PreallocateImplemented is a constant indicating whether the
+// implementation of Preallocate actually does anything.
+const PreallocateImplemented = true
+
 // PreAllocate the file for performance reasons
 func PreAllocate(size int64, out *os.File) error {
 	if size <= 0 {
@@ -81,6 +85,10 @@ func PreAllocate(size int64, out *os.File) error {
 const (
 	FSCTL_SET_SPARSE = 0x000900c4
 )
+
+// SetSparseImplemented is a constant indicating whether the
+// implementation of SetSparse actually does anything.
+const SetSparseImplemented = true
 
 // SetSparse makes the file be a sparse file
 func SetSparse(out *os.File) error {
