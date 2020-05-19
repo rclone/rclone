@@ -55,7 +55,7 @@ func TestParse(t *testing.T) {
 		in, wantConfigName, wantFsPath string
 		wantErr                        error
 	}{
-		{"", "", "", nil},
+		{"", "", "", errCantBeEmpty},
 		{":", "", "", errInvalidCharacters},
 		{"::", ":", "", errInvalidCharacters},
 		{":/:", "", "/:", errInvalidCharacters},
@@ -91,7 +91,7 @@ func TestSplit(t *testing.T) {
 		remote, wantParent, wantLeaf string
 		wantErr                      error
 	}{
-		{"", "", "", nil},
+		{"", "", "", errCantBeEmpty},
 
 		{"remote:", "remote:", "", nil},
 		{"remote:potato", "remote:", "potato", nil},
