@@ -119,6 +119,16 @@ to override the default choice.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "no_sparse",
+			Help: `Disable sparse files for multi-thread downloads
+
+On Windows platforms rclone will make sparse files when doing
+multi-thread downloads. This avoids long pauses on large files where
+the OS zeros the file. However sparse files may be undesirable as they
+cause disk fragmentation and can be slow to work with.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -139,6 +149,7 @@ type Options struct {
 	OneFileSystem     bool                 `config:"one_file_system"`
 	CaseSensitive     bool                 `config:"case_sensitive"`
 	CaseInsensitive   bool                 `config:"case_insensitive"`
+	NoSparse          bool                 `config:"no_sparse"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -1095,6 +1106,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return o.lstat()
 }
 
+var sparseWarning sync.Once
+
 // OpenWriterAt opens with a handle for random access writes
 //
 // Pass in the remote desired and the size if known.
@@ -1122,10 +1135,15 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	if err != nil {
 		fs.Debugf(o, "Failed to pre-allocate: %v", err)
 	}
-	// Set the file to be a sparse file (important on Windows)
-	err = file.SetSparse(out)
-	if err != nil {
-		fs.Debugf(o, "Failed to set sparse: %v", err)
+	if !f.opt.NoSparse && file.SetSparseImplemented {
+		sparseWarning.Do(func() {
+			fs.Infof(nil, "Writing sparse files: use --local-no-sparse or --multi-thread-streams 0 to disable")
+		})
+		// Set the file to be a sparse file (important on Windows)
+		err = file.SetSparse(out)
+		if err != nil {
+			fs.Debugf(o, "Failed to set sparse: %v", err)
+		}
 	}
 
 	return out, nil
