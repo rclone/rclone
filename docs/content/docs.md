@@ -844,6 +844,12 @@ with any source.
 as they are faster without unless `--multi-thread-streams` is set
 explicitly.
 
+**NB** on Windows using multi-thread downloads will cause the
+resulting files to be [sparse](https://en.wikipedia.org/wiki/Sparse_file).
+Use `--local-no-sparse` to disable sparse files (which may cause long
+delays at the start of downloads) or disable multi-thread downloads
+with `--multi-thread-streams 0`
+
 ### --multi-thread-streams=N ###
 
 When using multi thread downloads (see above `--multi-thread-cutoff`)
