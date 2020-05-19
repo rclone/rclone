@@ -260,7 +260,7 @@ $ rclone rc job/list
 
 ### Assigning operations to groups with _group = <value>
 
-Each rc call has it's own stats group for tracking it's metrics. By default
+Each rc call has its own stats group for tracking its metrics. By default
 grouping is done by the composite group name from prefix `job/` and  id of the
 job like so `job/1`.
 
@@ -426,7 +426,7 @@ Eg
     }
 
 
-If the rate parameter is not suppied then the bandwidth is queried
+If the rate parameter is not supplied then the bandwidth is queried
 
     rclone rc core/bwlimit
     {

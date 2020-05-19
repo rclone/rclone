@@ -113,7 +113,7 @@ due to the different salt.
 
 Note that rclone does not encrypt
 
-  * file length - this can be calcuated within 16 bytes
+  * file length - this can be calculated within 16 bytes
   * modification time - used for syncing
 
 ## Specifying the remote ##
@@ -367,7 +367,7 @@ names, or for debugging purposes.
 
 ## Backing up a crypted remote ##
 
-If you wish to backup a crypted remote, it it recommended that you use
+If you wish to backup a crypted remote, it is recommended that you use
 `rclone sync` on the encrypted files, and make sure the passwords are
 the same in the new encrypted remote.
 
@@ -451,7 +451,7 @@ files.
 File names are encrypted segment by segment - the path is broken up
 into `/` separated strings and these are encrypted individually.
 
-File segments are padded using using PKCS#7 to a multiple of 16 bytes
+File segments are padded using PKCS#7 to a multiple of 16 bytes
 before encryption.
 
 They are then encrypted with EME using AES with 256 bit key. EME

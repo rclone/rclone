@@ -189,7 +189,7 @@ date: "2020-02-01"
     * copyurl
         * Add `--auto-filename` flag for using file name from URL in destination path (Denis)
     * serve dlna:
-        * Many compatability improvements (Dan Walters)
+        * Many compatibility improvements (Dan Walters)
         * Support for external srt subtitles (Dan Walters)
     * rc
         * Added command core/quit (Saksham Khanna)
@@ -220,7 +220,7 @@ date: "2020-02-01"
     * filter: Prevent mixing options when `--files-from` is in use (Michele Caci)
     * serve sftp: Fix crash on unsupported operations (eg Readlink) (Nick Craig-Wood)
 * Mount
-    * Allow files of unkown size to be read properly (Nick Craig-Wood)
+    * Allow files of unknown size to be read properly (Nick Craig-Wood)
     * Skip tests on <= 2 CPUs to avoid lockup (Nick Craig-Wood)
     * Fix panic on File.Open (Nick Craig-Wood)
     * Fix "mount_fusefs: -o timeout=: option not supported" on FreeBSD (Nick Craig-Wood)
@@ -259,7 +259,7 @@ date: "2020-02-01"
     * Fix signature v2_auth headers (Anthony Rusdi)
     * Fix encoding for control characters (Nick Craig-Wood)
     * Only ask for URL encoded directory listings if we need them on Ceph (Nick Craig-Wood)
-    * Add option for multipart failiure behaviour (Aleksandar Jankovic)
+    * Add option for multipart failure behaviour (Aleksandar Jankovic)
     * Support for multipart copy (庄天翼)
     * Fix nil pointer reference if no metadata returned for object (Nick Craig-Wood)
 * SFTP
@@ -695,7 +695,7 @@ date: "2020-02-01"
 * Jottacloud
     * Resume and deduplication support (Oliver Heyme)
     * Use token auth for all API requests Don't store password anymore (Sebastian Bünger)
-    * Add support for 2-factor authentification (Sebastian Bünger)
+    * Add support for 2-factor authentication (Sebastian Bünger)
 * Mega
     * Implement v2 account login which fixes logins for newer Mega accounts (Nick Craig-Wood)
     * Return error if an unknown length file is attempted to be uploaded (Nick Craig-Wood)
@@ -710,7 +710,7 @@ date: "2020-02-01"
     * Default `--qingstor-upload-concurrency` to 1 to work around bug (Nick Craig-Wood)
 * S3
     * Implement `--s3-upload-cutoff` for single part uploads below this (Nick Craig-Wood)
-    * Change `--s3-upload-concurrency` default to 4 to increase perfomance (Nick Craig-Wood)
+    * Change `--s3-upload-concurrency` default to 4 to increase performance (Nick Craig-Wood)
     * Add `--s3-bucket-acl` to control bucket ACL (Nick Craig-Wood)
     * Auto detect region for buckets on operation failure (Nick Craig-Wood)
     * Add GLACIER storage class (William Cocker)
@@ -892,7 +892,7 @@ date: "2020-02-01"
     * Add link sharing support (jackyzy823)
 * S3
     * Use custom pacer, to retry operations when reasonable (Craig Miskell)
-    * Use configured server-side-encryption and storace class options when calling CopyObject() (Paul Kohout)
+    * Use configured server-side-encryption and storage class options when calling CopyObject() (Paul Kohout)
     * Make `--s3-v2-auth` flag (Nick Craig-Wood)
     * Fix v2 auth on files with spaces (Nick Craig-Wood)
 * Union
@@ -1018,8 +1018,8 @@ Point release to fix hubic and azureblob backends.
     * Remove leading / from paths (Nick Craig-Wood)
 * Swift
     * Add `storage_policy` (Ruben Vandamme)
-    * Make it so just `storage_url` or `auth_token` can be overidden (Nick Craig-Wood)
-    * Fix server side copy bug for unusal file names (Nick Craig-Wood)
+    * Make it so just `storage_url` or `auth_token` can be overridden (Nick Craig-Wood)
+    * Fix server side copy bug for unusual file names (Nick Craig-Wood)
     * Remove leading / from paths (Nick Craig-Wood)
 * WebDAV
     * Ensure we call MKCOL with a URL with a trailing / for QNAP interop (Nick Craig-Wood)
@@ -1519,7 +1519,7 @@ Point release to fix hubic and azureblob backends.
         * --old-sync-method deprecated - the remaining uses are covered by --fast-list
         * This involved a major re-write of all the listing code
     * Add --tpslimit and --tpslimit-burst to limit transactions per second
-        * this is useful in conjuction with `rclone mount` to limit external apps
+        * this is useful in conjunction with `rclone mount` to limit external apps
     * Add --stats-log-level so can see --stats without -v
     * Print password prompts to stderr - Hraban Luyat
     * Warn about duplicate files when syncing
@@ -1853,7 +1853,7 @@ Point release to fix hubic and azureblob backends.
     * Add ap-northeast-2 (Seoul) and ap-south-1 (Mumbai) regions.
     * Skip setting the modified time for objects > 5GB as it isn't possible.
 * Backblaze B2
-    * Add --b2-versions flag so old versions can be listed and retreived.
+    * Add --b2-versions flag so old versions can be listed and retrieved.
     * Treat 403 errors (eg cap exceeded) as fatal.
     * Implement cleanup command for deleting old file versions.
     * Make error handling compliant with B2 integrations notes.
@@ -1979,7 +1979,7 @@ Point release to fix hubic and azureblob backends.
     * Add `--delete-before`, `--delete-during`, `--delete-after` flags.
     * Add `--memprofile` flag to debug memory use.
     * Warn the user about files with same name but different case
-    * Make `--include` rules add their implict exclude * at the end of the filter list
+    * Make `--include` rules add their implicit exclude * at the end of the filter list
     * Deprecate compiling with go1.3
 * Amazon Drive
     * Fix download of files > 10 GB

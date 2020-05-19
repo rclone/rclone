@@ -56,7 +56,7 @@ func init() {
 			Help: "QingStor Secret Access Key (password)\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "endpoint",
-			Help: "Enter a endpoint URL to connection QingStor API.\nLeave blank will use the default value \"https://qingstor.com:443\"",
+			Help: "Enter an endpoint URL to connection QingStor API.\nLeave blank will use the default value \"https://qingstor.com:443\"",
 		}, {
 			Name: "zone",
 			Help: "Zone to connect to.\nDefault is \"pek3a\".",
@@ -206,7 +206,7 @@ func (o *Object) split() (bucket, bucketPath string) {
 // Split an URL into three parts: protocol host and port
 func qsParseEndpoint(endpoint string) (protocol, host, port string, err error) {
 	/*
-	  Pattern to match a endpoint,
+	  Pattern to match an endpoint,
 	  eg: "http(s)://qingstor.com:443" --> "http(s)", "qingstor.com", 443
 	      "http(s)//qingstor.com"      --> "http(s)", "qingstor.com", ""
 	      "qingstor.com"               --> "", "qingstor.com", ""

@@ -7,7 +7,7 @@ date: "2015-10-14"
 <i class="fa fa-archive"></i> 1Fichier
 -----------------------------------------
 
-This is a backend for the [1ficher](https://1fichier.com) cloud
+This is a backend for the [1fichier](https://1fichier.com) cloud
 storage service. Note that a Premium subscription is required to use
 the API.
 

@@ -18,7 +18,7 @@ Currently it is recommended to disable 2FA on Mail.ru accounts intended for rclo
 - Deleted files are by default moved to the trash
 - Files and directories can be shared via public links
 - Partial uploads or streaming are not supported, file size must be known before upload
-- Maximum file size is limited to 2G for a free acount, unlimited for paid accounts
+- Maximum file size is limited to 2G for a free account, unlimited for paid accounts
 - Storage keeps hash for all files and performs transparent deduplication,
   the hash algorithm is a modified SHA1
 - If a particular file is already present in storage, one can quickly submit file hash

@@ -212,7 +212,7 @@ guarantee given hash for all files. If wrapped remote doesn't support it,
 chunker will then add metadata to all files, even small. However, this can
 double the amount of small files in storage and incur additional service charges.
 You can even use chunker to force md5/sha1 support in any other remote
-at expence of sidecar meta objects by setting eg. `chunk_type=sha1all`
+at expense of sidecar meta objects by setting eg. `chunk_type=sha1all`
 to force hashsums and `chunk_size=1P` to effectively disable chunking.
 
 Normally, when a file is copied to chunker controlled remote, chunker
@@ -293,7 +293,7 @@ Chunker will not automatically rename existing chunks when you run
 Beware that in result of this some files which have been treated as chunks
 before the change can pop up in directory listings as normal files
 and vice versa. The same warning holds for the chunk size.
-If you desperately need to change critical chunking setings, you should
+If you desperately need to change critical chunking settings, you should
 run data migration as described above.
 
 If wrapped remote is case insensitive, the chunker overlay will inherit

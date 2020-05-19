@@ -38,7 +38,7 @@ which pass through it.
 
 Since rclone doesn't currently have its own Amazon Drive credentials
 so you will either need to have your own `client_id` and
-`client_secret` with Amazon Drive, or use a a third party ouath proxy
+`client_secret` with Amazon Drive, or use a third party oauth proxy
 in which case you will need to enter `client_id`, `client_secret`,
 `auth_url` and `token_url`.
 
