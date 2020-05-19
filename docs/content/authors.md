@@ -375,3 +375,4 @@ put them back in again. -->
   * Maxime Suret <11944422+msuret@users.noreply.github.com>
   * Caleb Case <caleb@storj.io>
   * Ben Zenker <imbenzenker@gmail.com>
+  * Martin Michlmayr <tbm@cyrius.com>
