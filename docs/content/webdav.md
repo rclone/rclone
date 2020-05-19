@@ -222,7 +222,7 @@ First, you need to get your remote's URL:
 - Now take a look at your address bar, the URL should look like this:
   `https://[YOUR-DOMAIN]-my.sharepoint.com/personal/[YOUR-EMAIL]/_layouts/15/onedrive.aspx`
 
-You'll only need this URL upto the email address. After that, you'll
+You'll only need this URL up to the email address. After that, you'll
 most likely want to add "/Documents". That subdirectory contains
 the actual data stored on your OneDrive.
 

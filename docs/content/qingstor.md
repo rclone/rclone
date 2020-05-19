@@ -43,7 +43,7 @@ QingStor Access Key ID - leave blank for anonymous access or runtime credentials
 access_key_id> access_key
 QingStor Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
 secret_access_key> secret_key
-Enter a endpoint URL to connection QingStor API.
+Enter an endpoint URL to connection QingStor API.
 Leave blank will use the default value "https://qingstor.com:443"
 endpoint>
 Zone connect to. Default is "pek3a".
@@ -182,7 +182,7 @@ Leave blank for anonymous access or runtime credentials.
 
 #### --qingstor-endpoint
 
-Enter a endpoint URL to connection QingStor API.
+Enter an endpoint URL to connection QingStor API.
 Leave blank will use the default value "https://qingstor.com:443"
 
 - Config:      endpoint
@@ -260,7 +260,7 @@ Concurrency for multipart uploads.
 This is the number of chunks of the same file that are uploaded
 concurrently.
 
-NB if you set this to > 1 then the checksums of multpart uploads
+NB if you set this to > 1 then the checksums of multipart uploads
 become corrupted (the uploads themselves are not corrupted though).
 
 If you are uploading small numbers of large file over high speed link

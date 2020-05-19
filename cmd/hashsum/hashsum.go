@@ -25,7 +25,7 @@ func init() {
 
 var commandDefinition = &cobra.Command{
 	Use:   "hashsum <hash> remote:path",
-	Short: `Produces an hashsum file for all the objects in the path.`,
+	Short: `Produces a hashsum file for all the objects in the path.`,
 	Long: `
 Produces a hash file for all the objects in the path using the hash
 named.  The output is in the same format as the standard

@@ -103,7 +103,7 @@ https.  You will need to supply the --cert and --key flags.  If you
 wish to do client side certificate validation then you will need to
 supply --client-ca also.
 
---cert should be a either a PEM encoded certificate or a concatenation
+--cert should be either a PEM encoded certificate or a concatenation
 of that with the CA certificate.  --key should be the PEM encoded
 private key and --client-ca should be the PEM encoded client
 certificate authority certificate.

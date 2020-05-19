@@ -428,7 +428,7 @@ See: the [encoding section in the overview](/overview/#encoding) for more info.
 
 Here are the commands specific to the local backend.
 
-Run them with with
+Run them with
 
     rclone backend COMMAND remote:
 

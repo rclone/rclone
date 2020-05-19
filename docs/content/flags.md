@@ -344,7 +344,7 @@ and may be set in the config file.
       --qingstor-chunk-size SizeSuffix               Chunk size to use for uploading. (default 4M)
       --qingstor-connection-retries int              Number of connection retries. (default 3)
       --qingstor-encoding MultiEncoder               This sets the encoding for the backend. (default Slash,Ctl,InvalidUtf8)
-      --qingstor-endpoint string                     Enter a endpoint URL to connection QingStor API.
+      --qingstor-endpoint string                     Enter an endpoint URL to connection QingStor API.
       --qingstor-env-auth                            Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.
       --qingstor-secret-access-key string            QingStor Secret Access Key (password)
       --qingstor-upload-concurrency int              Concurrency for multipart uploads. (default 1)

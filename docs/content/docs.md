@@ -522,7 +522,7 @@ to disable server side move and server side copy use:
 
     --disable move,copy
 
-The features can be put in in any case.
+The features can be put in any case.
 
 To see a list of which features can be disabled use:
 
@@ -794,13 +794,13 @@ Rclone will exit with exit code 8 if the transfer limit is reached.
 This modifies the behavior of `--max-transfer`
 Defaults to `--cutoff-mode=hard`.
 
-Specifiying `--cutoff-mode=hard` will stop transferring immediately
+Specifying `--cutoff-mode=hard` will stop transferring immediately
 when Rclone reaches the limit.
 
-Specifiying `--cutoff-mode=soft` will stop starting new transfers
+Specifying `--cutoff-mode=soft` will stop starting new transfers
 when Rclone reaches the limit.
 
-Specifiying `--cutoff-mode=cautious` will try to prevent Rclone
+Specifying `--cutoff-mode=cautious` will try to prevent Rclone
 from reaching the limit.
 
 ### --modify-window=TIME ###
@@ -827,7 +827,7 @@ time) then each thread writes directly into the file at the correct
 place.  This means that rclone won't create fragmented or sparse files
 and there won't be any assembly time at the end of the transfer.
 
-The number of threads used to dowload is controlled by
+The number of threads used to download is controlled by
 `--multi-thread-streams`.
 
 Use `-vv` if you wish to see info about the threads.
@@ -1224,7 +1224,7 @@ Note also that `--track-renames` is incompatible with
 ### --track-renames-strategy (hash,modtime) ###
 
 This option changes the matching criteria for `--track-renames` to match
-by any combination of modtime, hash, size. Matchig by size is always enabled
+by any combination of modtime, hash, size. Matching by size is always enabled
 no matter what option is selected here. This also means
 that it enables `--track-renames` support for encrypted destinations.
 If nothing is specified, the default option is matching by hashes.
@@ -1371,7 +1371,7 @@ Prints the version number
 SSL/TLS options
 ---------------
 
-The outoing SSL/TLS connections rclone makes can be controlled with
+The outgoing SSL/TLS connections rclone makes can be controlled with
 these options.  For example this can be very useful with the HTTP or
 WebDAV backends. Rclone HTTP servers have their own set of
 configuration for SSL/TLS which you can find in their documentation.
