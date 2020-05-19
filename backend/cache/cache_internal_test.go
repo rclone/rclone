@@ -1009,6 +1009,15 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 		return nil, nil
 	}
 
+	// Config to pass to NewFs
+	m := configmap.Simple{}
+	for k, v := range r.runDefaultCfgMap {
+		m.Set(k, v)
+	}
+	for k, v := range flags {
+		m.Set(k, v)
+	}
+
 	// if the remote doesn't exist, create a new one with a local one for it
 	// identify which is the cache remote (it can be wrapped by a crypt too)
 	rootIsCrypt := false
@@ -1017,8 +1026,8 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 		localRemote := remote + "-local"
 		config.FileSet(localRemote, "type", "local")
 		config.FileSet(localRemote, "nounc", "true")
-		config.FileSet(remote, "type", "cache")
-		config.FileSet(remote, "remote", localRemote+":/var/tmp/"+localRemote)
+		m.Set("type", "cache")
+		m.Set("remote", localRemote+":"+filepath.Join(os.TempDir(), localRemote))
 	} else {
 		remoteType := config.FileGet(remote, "type", "")
 		if remoteType == "" {
@@ -1028,8 +1037,8 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 		if remoteType != "cache" {
 			if remoteType == "crypt" {
 				rootIsCrypt = true
-				config.FileSet(remote, "password", cryptPassword1)
-				config.FileSet(remote, "password2", cryptPassword2)
+				m.Set("password", cryptPassword1)
+				m.Set("password2", cryptPassword2)
 			}
 			remoteRemote := config.FileGet(remote, "remote", "")
 			if remoteRemote == "" {
@@ -1054,14 +1063,6 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	require.NoError(t, err)
 
 	fs.Config.LowLevelRetries = 1
-
-	m := configmap.Simple{}
-	for k, v := range r.runDefaultCfgMap {
-		m.Set(k, v)
-	}
-	for k, v := range flags {
-		m.Set(k, v)
-	}
 
 	// Instantiate root
 	if purge {
