@@ -18,6 +18,7 @@ const (
 
 var (
 	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain 0-9, A-Z ,a-z ,_ , - and space ")
+	errCantBeEmpty       = errors.New("can't use empty string as a path")
 
 	// urlMatcher is a pattern to match an rclone URL
 	// note that this matches invalid remoteNames
@@ -55,8 +56,12 @@ func CheckRemoteName(remoteName string) error {
 //
 // Note that this will turn \ into / in the fsPath on Windows
 //
-// An error may be returned if the remote name has invalid characters in it.
+// An error may be returned if the remote name has invalid characters
+// in it or if the path is empty.
 func Parse(path string) (configName, fsPath string, err error) {
+	if path == "" {
+		return "", "", errCantBeEmpty
+	}
 	parts := urlMatcher.FindStringSubmatch(path)
 	configName, fsPath = "", path
 	if parts != nil && !driveletter.IsDriveLetter(parts[1]) {
