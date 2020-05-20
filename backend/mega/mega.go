@@ -150,7 +150,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// parsePath parses an mega 'url'
+// parsePath parses a mega 'url'
 func parsePath(path string) (root string) {
 	root = strings.Trim(path, "/")
 	return

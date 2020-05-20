@@ -162,7 +162,7 @@ func TestCacheNew(t *testing.T) {
 
 	// try purging with file closed
 	c.purgeOld(10 * time.Second)
-	// ...nothing should happend
+	// ...nothing should happen
 	_, err = os.Stat(p)
 	assert.NoError(t, err)
 

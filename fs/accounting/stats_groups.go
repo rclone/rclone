@@ -166,7 +166,7 @@ Returns the following values:
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
 				"timestamp": integer representing millisecond unix epoch,
-				"error": string description of the error (empty if successfull),
+				"error": string description of the error (empty if successful),
 				"jobid": id of the job that this transfer belongs to
 			}
 		]

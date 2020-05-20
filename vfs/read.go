@@ -117,7 +117,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	fh.hash = nil
 	if !reopen {
 		ar := fh.r.GetAsyncReader()
-		// try to fullfill the seek with buffer discard
+		// try to fulfill the seek with buffer discard
 		if ar != nil && ar.SkipBytes(int(offset-fh.offset)) {
 			fh.offset = offset
 			return nil
@@ -252,7 +252,7 @@ func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Du
 // Implementation of ReadAt - call with lock held
 func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 	// defer log.Trace(fh.remote, "p[%d], off=%d", len(p), off)("n=%d, err=%v", &n, &err)
-	err = fh.openPending() // FIXME pending open could be more efficient in the presense of seek (and retries)
+	err = fh.openPending() // FIXME pending open could be more efficient in the presence of seek (and retries)
 	if err != nil {
 		return 0, err
 	}

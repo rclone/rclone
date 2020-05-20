@@ -105,7 +105,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 			}
 		}
 
-		// try to open a exising cache file
+		// try to open an existing cache file
 		fd, err = file.OpenFile(fh.file.osPath(), cacheFileOpenFlags&^os.O_CREATE, 0600)
 		if os.IsNotExist(err) {
 			// cache file does not exist, so need to fetch it if we have an object to fetch
@@ -151,7 +151,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 			}
 		}
 		// Windows doesn't seem to deal well with O_TRUNC and
-		// certain access modes so so truncate the file if it
+		// certain access modes so truncate the file if it
 		// exists in these cases.
 		if runtime.GOOS == "windows" && fh.flags&os.O_APPEND != 0 {
 			cacheFileOpenFlags &^= os.O_TRUNC

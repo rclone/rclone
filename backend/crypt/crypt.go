@@ -241,7 +241,7 @@ func (f *Fs) add(entries *fs.DirEntries, obj fs.Object) {
 	*entries = append(*entries, f.newObject(obj))
 }
 
-// Encrypt an directory file name to entries.
+// Encrypt a directory file name to entries.
 func (f *Fs) addDir(ctx context.Context, entries *fs.DirEntries, dir fs.Directory) {
 	remote := dir.Remote()
 	decryptedRemote, err := f.cipher.DecryptDirName(remote)
@@ -943,7 +943,7 @@ func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
 	if srcObj, ok = o.ObjectInfo.(fs.Object); ok {
 		// Prefer direct interface assertion
 	} else if do, ok := o.ObjectInfo.(fs.ObjectUnWrapper); ok {
-		// Otherwise likely is a operations.OverrideRemote
+		// Otherwise likely is an operations.OverrideRemote
 		srcObj = do.UnWrap()
 	} else {
 		return "", nil

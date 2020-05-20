@@ -418,7 +418,7 @@ command:
 
     rclone backend noop . -o echo=yes -o blue path1 path2
 
-Note that arguments must be preceeded by the "-a" flag
+Note that arguments must be preceded by the "-a" flag
 
 See the [backend](/commands/rclone_backend/) command for more information.
 `,

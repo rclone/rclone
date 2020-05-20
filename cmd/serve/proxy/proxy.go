@@ -89,7 +89,7 @@ that since |_obscure| is set to |pass|, rclone will obscure the |pass|
 parameter before creating the backend (which is required for sftp
 backends).
 
-The progam can manipulate the supplied |user| in any way, for example
+The program can manipulate the supplied |user| in any way, for example
 to make proxy to many different sftp backends, you could make the
 |user| be |user@example.com| and then set the |host| to |example.com|
 in the output and the user to |user|. For security you'd probably want

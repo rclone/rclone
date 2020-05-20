@@ -7,7 +7,7 @@ date: "2018-08-07"
 <i class="fa fa-cloud"></i> Jottacloud
 -----------------------------------------
 
-Jottacoud is a cloud storage service provider from a Norwegian company, using its own datacenters in Norway.
+Jottacloud is a cloud storage service provider from a Norwegian company, using its own datacenters in Norway.
 
 In addition to the official service at [jottacloud.com](https://www.jottacloud.com/), there are
 also several whitelabel versions which should work with this backend.

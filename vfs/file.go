@@ -54,7 +54,7 @@ type File struct {
 	appendMode        bool                            // file was opened with O_APPEND
 	sys               interface{}                     // user defined info to be attached here
 
-	muRW sync.Mutex // synchonize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
+	muRW sync.Mutex // synchronize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
 }
 
 // newFile creates a new File

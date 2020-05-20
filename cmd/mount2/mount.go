@@ -1,4 +1,4 @@
-// Package mount implents a FUSE mounting system for rclone remotes.
+// Package mount implements a FUSE mounting system for rclone remotes.
 
 // +build linux darwin,amd64
 

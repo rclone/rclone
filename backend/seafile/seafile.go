@@ -192,7 +192,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	fs.Debugf(nil, "Seafile server version %s", serverInfo.Version)
 
-	// We don't support bellow seafile v6.0 (version 6.0 is already more than 3 years old)
+	// We don't support lower than seafile v6.0 (version 6.0 is already more than 3 years old)
 	serverVersion := semver.New(serverInfo.Version)
 	if serverVersion.Major < 6 {
 		return nil, errors.New("unsupported Seafile server (version < 6.0)")

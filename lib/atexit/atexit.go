@@ -57,7 +57,7 @@ func Unregister(handle FnHandle) {
 	delete(fns, handle)
 }
 
-// IgnoreSignals disables the signal handler and prevents Run from beeing executed automatically
+// IgnoreSignals disables the signal handler and prevents Run from being executed automatically
 func IgnoreSignals() {
 	registerOnce.Do(func() {})
 	if exitChan != nil {

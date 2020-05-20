@@ -677,7 +677,7 @@ isn't set then "acl" is used instead.`,
 			}},
 		}, {
 			Name:     "sse_customer_key",
-			Help:     "If using SSE-C you must provide the secret encyption key used to encrypt/decrypt your data.",
+			Help:     "If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data.",
 			Provider: "AWS,Ceph,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{

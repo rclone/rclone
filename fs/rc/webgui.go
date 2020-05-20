@@ -202,7 +202,7 @@ func unzip(src, dest string) (err error) {
 	return nil
 }
 
-func exists(path string) (existance bool, stat os.FileInfo, err error) {
+func exists(path string) (existence bool, stat os.FileInfo, err error) {
 	stat, err = os.Stat(path)
 	if err == nil {
 		return true, stat, nil

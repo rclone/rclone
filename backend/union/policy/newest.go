@@ -15,7 +15,7 @@ func init() {
 }
 
 // Newest policy picks the file / directory with the largest mtime
-// It implies the existance of a path
+// It implies the existence of a path
 type Newest struct {
 	EpAll
 }
@@ -93,7 +93,7 @@ func (p *Newest) Action(ctx context.Context, upstreams []*upstream.Fs, path stri
 	return []*upstream.Fs{u}, err
 }
 
-// ActionEntries is ACTION category policy but receving a set of candidate entries
+// ActionEntries is ACTION category policy but receiving a set of candidate entries
 func (p *Newest) ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound
@@ -119,7 +119,7 @@ func (p *Newest) Create(ctx context.Context, upstreams []*upstream.Fs, path stri
 	return []*upstream.Fs{u}, err
 }
 
-// CreateEntries is CREATE category policy but receving a set of candidate entries
+// CreateEntries is CREATE category policy but receiving a set of candidate entries
 func (p *Newest) CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound
@@ -140,7 +140,7 @@ func (p *Newest) Search(ctx context.Context, upstreams []*upstream.Fs, path stri
 	return p.newest(ctx, upstreams, path)
 }
 
-// SearchEntries is SEARCH category policy but receving a set of candidate entries
+// SearchEntries is SEARCH category policy but receiving a set of candidate entries
 func (p *Newest) SearchEntries(entries ...upstream.Entry) (upstream.Entry, error) {
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound

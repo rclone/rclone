@@ -33,7 +33,7 @@ var commandDefinition = &cobra.Command{
 Download a URL's content and copy it to the destination without saving
 it in temporary storage.
 
-Setting --auto-filename will cause the file name to be retreived from
+Setting --auto-filename will cause the file name to be retrieved from
 the from URL (after any redirections) and used in the destination
 path.
 

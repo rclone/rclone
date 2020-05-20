@@ -360,7 +360,7 @@ func Cause(cause error) (retriable bool, err error) {
 }
 
 // retriableErrorStrings is a list of phrases which when we find it
-// in an an error, we know it is a networking error which should be
+// in an error, we know it is a networking error which should be
 // retried.
 //
 // This is incredibly ugly - if only errors.Cause worked for all

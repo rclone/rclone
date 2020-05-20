@@ -669,7 +669,7 @@ func (f *Fs) Rmdir(ctx context.Context, relative string) (err error) {
 // requirements. In particular, libuplink requires a trailing slash for
 // listings, but rclone does not always provide one. Further, depending on how
 // the path was initially path normalization may have removed it (e.g. a
-// trailing slash from the CLI is removed before it ever get's to the backend
+// trailing slash from the CLI is removed before it ever gets to the backend
 // code).
 func newPrefix(prefix string) string {
 	if prefix == "" {

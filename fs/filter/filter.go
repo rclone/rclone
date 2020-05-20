@@ -426,7 +426,7 @@ func (f *Filter) IncludeDirectory(ctx context.Context, fs fs.Fs) func(string) (b
 }
 
 // DirContainsExcludeFile checks if exclude file is present in a
-// directroy. If fs is nil, it works properly if ExcludeFile is an
+// directory. If fs is nil, it works properly if ExcludeFile is an
 // empty string (for testing).
 func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remote string) (bool, error) {
 	if len(f.Opt.ExcludeFile) > 0 {
