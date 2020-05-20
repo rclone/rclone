@@ -90,7 +90,24 @@ are being uploaded and aborts with a message which starts "can't copy
 
 However on some file systems this modification time check may fail (eg
 [Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this
-check can be disabled with this flag.`,
+check can be disabled with this flag.
+
+If this flag is set, rclone will use its best efforts to transfer a
+file which is being updated. If the file is only having things
+appended to it (eg a log) then rclone will transfer the log file with
+the size it had the first time rclone saw it.
+
+If the file is being modified throughout (not just appended to) then
+the transfer may fail with a hash check failure.
+
+In detail, once the file has had stat() called on it for the first
+time we:
+
+- Only transfer the size that stat gave
+- Only checksum the size that stat gave
+- Don't update the stat info for the file
+
+`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -809,6 +826,10 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		} else {
 			in, err = o.openTranslatedLink(0, -1)
 		}
+		// If not checking for updates, only read size given
+		if o.fs.opt.NoCheckUpdated {
+			in = readers.NewLimitedReadCloser(in, o.size)
+		}
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
@@ -953,6 +974,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
+	}
+
+	// If not checking updated then limit to current size.  This means if
+	// file is being extended, readers will read a o.Size() bytes rather
+	// than the new size making for a consistent upload.
+	if limit < 0 && o.fs.opt.NoCheckUpdated {
+		limit = o.size
 	}
 
 	// Handle a translated link
@@ -1151,6 +1179,10 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 
 // setMetadata sets the file info from the os.FileInfo passed in
 func (o *Object) setMetadata(info os.FileInfo) {
+	// if not checking updated then don't update the stat
+	if o.fs.opt.NoCheckUpdated && !o.modTime.IsZero() {
+		return
+	}
 	// Don't overwrite the info if we don't need to
 	// this avoids upsetting the race detector
 	if o.size != info.Size() {
