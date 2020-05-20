@@ -295,7 +295,9 @@ in it will be mapped to `？` instead.
 
 #### File sizes ####
 
-The largest allowed file sizes are 15GB for OneDrive for Business and 35GB for OneDrive Personal (Updated 4 Jan 2019).
+The largest allowed file sizes are 15GB for OneDrive for Business and 100GB for OneDrive Personal (Updated 19 May 2020).
+Source:
+https://support.office.com/en-us/article/upload-photos-and-files-to-onedrive-b00ad3fe-6643-4b16-9212-de00ef02b586
 
 #### Path length ####
 
