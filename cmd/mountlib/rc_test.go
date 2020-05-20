@@ -85,7 +85,7 @@ func TestRc(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(5), fi.Size())
 
-		// FIXME the OS somtimes appears to be using the mount
+		// FIXME the OS sometimes appears to be using the mount
 		// immediately after it appears so wait a moment
 		time.Sleep(100 * time.Millisecond)
 

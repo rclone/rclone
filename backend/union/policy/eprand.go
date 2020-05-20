@@ -38,7 +38,7 @@ func (p *EpRand) Action(ctx context.Context, upstreams []*upstream.Fs, path stri
 	return []*upstream.Fs{p.rand(upstreams)}, nil
 }
 
-// ActionEntries is ACTION category policy but receving a set of candidate entries
+// ActionEntries is ACTION category policy but receiving a set of candidate entries
 func (p *EpRand) ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
 	entries, err := p.EpAll.ActionEntries(entries...)
 	if err != nil {
@@ -56,7 +56,7 @@ func (p *EpRand) Create(ctx context.Context, upstreams []*upstream.Fs, path stri
 	return []*upstream.Fs{p.rand(upstreams)}, nil
 }
 
-// CreateEntries is CREATE category policy but receving a set of candidate entries
+// CreateEntries is CREATE category policy but receiving a set of candidate entries
 func (p *EpRand) CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
 	entries, err := p.EpAll.CreateEntries(entries...)
 	if err != nil {
@@ -77,7 +77,7 @@ func (p *EpRand) Search(ctx context.Context, upstreams []*upstream.Fs, path stri
 	return p.rand(upstreams), nil
 }
 
-// SearchEntries is SEARCH category policy but receving a set of candidate entries
+// SearchEntries is SEARCH category policy but receiving a set of candidate entries
 func (p *EpRand) SearchEntries(entries ...upstream.Entry) (upstream.Entry, error) {
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound

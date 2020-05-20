@@ -100,7 +100,7 @@ func New(remote, root string, cacheTime time.Duration) (*Fs, error) {
 	return f, err
 }
 
-// WrapDirectory wraps a fs.Directory to include the info
+// WrapDirectory wraps an fs.Directory to include the info
 // of the upstream Fs
 func (f *Fs) WrapDirectory(e fs.Directory) *Directory {
 	if e == nil {
@@ -112,7 +112,7 @@ func (f *Fs) WrapDirectory(e fs.Directory) *Directory {
 	}
 }
 
-// WrapObject wraps a fs.Object to include the info
+// WrapObject wraps an fs.Object to include the info
 // of the upstream Fs
 func (f *Fs) WrapObject(o fs.Object) *Object {
 	if o == nil {
@@ -124,7 +124,7 @@ func (f *Fs) WrapObject(o fs.Object) *Object {
 	}
 }
 
-// WrapEntry wraps a fs.DirEntry to include the info
+// WrapEntry wraps an fs.DirEntry to include the info
 // of the upstream Fs
 func (f *Fs) WrapEntry(e fs.DirEntry) (Entry, error) {
 	switch e.(type) {

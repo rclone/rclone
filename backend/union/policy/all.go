@@ -31,7 +31,7 @@ func (p *All) Create(ctx context.Context, upstreams []*upstream.Fs, path string)
 	return upstreams, nil
 }
 
-// CreateEntries is CREATE category policy but receving a set of candidate entries
+// CreateEntries is CREATE category policy but receiving a set of candidate entries
 func (p *All) CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound

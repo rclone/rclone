@@ -102,7 +102,7 @@ type UploadSpecification struct {
 	MaxNumberOfThreads int    `json:"MaxNumberOfThreads"` // Specifies the max number of chunks that can be sent simultaneously for threaded uploads
 }
 
-// UploadFinishResponse is returnes from calling UploadSpecification.FinishURI
+// UploadFinishResponse is returns from calling UploadSpecification.FinishURI
 type UploadFinishResponse struct {
 	Error        bool   `json:"error"`
 	ErrorMessage string `json:"errorMessage"`

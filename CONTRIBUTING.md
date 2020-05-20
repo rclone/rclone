@@ -158,7 +158,7 @@ with modules beneath.
     * fserrors - rclone specific error handling
     * fshttp - http handling for rclone
     * fspath - path handling for rclone
-    * hash - defines rclones hash types and functions
+    * hash - defines rclone's hash types and functions
     * list - list a remote
     * log - logging facilities
     * march - iterates directories in lock step
@@ -295,7 +295,7 @@ If you need to update a dependency then run
     GO111MODULE=on go get -u github.com/pkg/errors
     GO111MODULE=on go mod vendor
 
-Check in in a single commit as above.
+Check in a single commit as above.
 
 ## Updating all the dependencies ##
 

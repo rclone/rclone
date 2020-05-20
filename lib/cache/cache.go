@@ -95,7 +95,7 @@ func (c *Cache) Unpin(key string) {
 	c.addPin(key, -1)
 }
 
-// Put puts an value named key into the cache
+// Put puts a value named key into the cache
 func (c *Cache) Put(key string, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -159,7 +159,7 @@ func (c *Cache) cacheExpire() {
 	}
 }
 
-// Clear removes everything from the cahce
+// Clear removes everything from the cache
 func (c *Cache) Clear() {
 	c.mu.Lock()
 	for k := range c.cache {

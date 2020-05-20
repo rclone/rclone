@@ -48,7 +48,7 @@ var (
 // if matches then is definitely OK in the shell
 var shellOK = regexp.MustCompile("^[A-Za-z0-9./_:-]+$")
 
-// converts a argv style input into a shell command
+// converts an argv style input into a shell command
 func toShell(args []string) (result string) {
 	for _, arg := range args {
 		if result != "" {

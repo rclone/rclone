@@ -215,7 +215,7 @@ func NewClient(ci *fs.ConfigInfo) *http.Client {
 	return client
 }
 
-// Transport is a our http Transport which wraps an http.Transport
+// Transport is our http Transport which wraps an http.Transport
 // * Sets the User Agent
 // * Does logging
 type Transport struct {

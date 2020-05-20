@@ -1220,7 +1220,7 @@ func (f *Fs) getFileFields() (fields googleapi.Field) {
 	return fields
 }
 
-// newRegularObject creates a fs.Object for a normal drive.File
+// newRegularObject creates an fs.Object for a normal drive.File
 func (f *Fs) newRegularObject(remote string, info *drive.File) fs.Object {
 	// wipe checksum if SkipChecksumGphotos and file is type Photo or Video
 	if f.opt.SkipChecksumGphotos {
@@ -1239,7 +1239,7 @@ func (f *Fs) newRegularObject(remote string, info *drive.File) fs.Object {
 	}
 }
 
-// newDocumentObject creates a fs.Object for a google docs drive.File
+// newDocumentObject creates an fs.Object for a google docs drive.File
 func (f *Fs) newDocumentObject(remote string, info *drive.File, extension, exportMimeType string) (fs.Object, error) {
 	mediaType, _, err := mime.ParseMediaType(exportMimeType)
 	if err != nil {
@@ -1270,7 +1270,7 @@ func (f *Fs) newDocumentObject(remote string, info *drive.File, extension, expor
 	}, nil
 }
 
-// newLinkObject creates a fs.Object that represents a link a google docs drive.File
+// newLinkObject creates an fs.Object that represents a link a google docs drive.File
 func (f *Fs) newLinkObject(remote string, info *drive.File, extension, exportMimeType string) (fs.Object, error) {
 	t := linkTemplate(exportMimeType)
 	if t == nil {
@@ -1296,9 +1296,9 @@ func (f *Fs) newLinkObject(remote string, info *drive.File, extension, exportMim
 	}, nil
 }
 
-// newObjectWithInfo creates a fs.Object for any drive.File
+// newObjectWithInfo creates an fs.Object for any drive.File
 //
-// When the drive.File cannot be represented as a fs.Object it will return (nil, nil).
+// When the drive.File cannot be represented as an fs.Object it will return (nil, nil).
 func (f *Fs) newObjectWithInfo(remote string, info *drive.File) (fs.Object, error) {
 	// If item has MD5 sum or a length it is a file stored on drive
 	if info.Md5Checksum != "" || info.Size > 0 {
@@ -1309,9 +1309,9 @@ func (f *Fs) newObjectWithInfo(remote string, info *drive.File) (fs.Object, erro
 	return f.newObjectWithExportInfo(remote, info, extension, exportName, exportMimeType, isDocument)
 }
 
-// newObjectWithExportInfo creates a fs.Object for any drive.File and the result of findExportFormat
+// newObjectWithExportInfo creates an fs.Object for any drive.File and the result of findExportFormat
 //
-// When the drive.File cannot be represented as a fs.Object it will return (nil, nil).
+// When the drive.File cannot be represented as an fs.Object it will return (nil, nil).
 func (f *Fs) newObjectWithExportInfo(
 	remote string, info *drive.File,
 	extension, exportName, exportMimeType string, isDocument bool) (o fs.Object, err error) {
@@ -1629,7 +1629,7 @@ func (s listRSlices) Less(i, j int) bool {
 	return s.dirs[i] < s.dirs[j]
 }
 
-// listRRunner will read dirIDs from the in channel, perform the file listing an call cb with each DirEntry.
+// listRRunner will read dirIDs from the in channel, perform the file listing and call cb with each DirEntry.
 //
 // In each cycle it will read up to grouping entries from the in channel without blocking.
 // If an error occurs it will be send to the out channel and then return. Once the in channel is closed,
@@ -1788,7 +1788,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		for len(overflow) > 0 {
 			mu.Lock()
 			l := len(overflow)
-			// only fill half of the channel to prevent entries beeing put into overflow again
+			// only fill half of the channel to prevent entries being put into overflow again
 			if l > inputBuffer/2 {
 				l = inputBuffer / 2
 			}
@@ -1922,8 +1922,8 @@ func (f *Fs) resolveShortcut(item *drive.File) (newItem *drive.File, err error) 
 	return newItem, nil
 }
 
-// itemToDirEntry converts a drive.File to a fs.DirEntry.
-// When the drive.File cannot be represented as a fs.DirEntry
+// itemToDirEntry converts a drive.File to an fs.DirEntry.
+// When the drive.File cannot be represented as an fs.DirEntry
 // (nil, nil) is returned.
 func (f *Fs) itemToDirEntry(remote string, item *drive.File) (entry fs.DirEntry, err error) {
 	switch {
@@ -3144,7 +3144,7 @@ func (o *baseObject) httpResponse(ctx context.Context, url, method string, optio
 	return req, res, nil
 }
 
-// openDocumentFile represents an documentObject open for reading.
+// openDocumentFile represents a documentObject open for reading.
 // Updates the object size after read successfully.
 type openDocumentFile struct {
 	o       *documentObject // Object we are reading for

@@ -33,7 +33,7 @@ func (e Errors) FilterNil() Errors {
 	return ne
 }
 
-// Err returns a error interface that filtered nil,
+// Err returns an error interface that filtered nil,
 // or nil if no non-nil Error is presented.
 func (e Errors) Err() error {
 	ne := e.FilterNil()

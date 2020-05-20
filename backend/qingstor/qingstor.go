@@ -203,7 +203,7 @@ func (o *Object) split() (bucket, bucketPath string) {
 	return o.fs.split(o.remote)
 }
 
-// Split an URL into three parts: protocol host and port
+// Split a URL into three parts: protocol host and port
 func qsParseEndpoint(endpoint string) (protocol, host, port string, err error) {
 	/*
 	  Pattern to match an endpoint,

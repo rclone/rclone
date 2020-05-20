@@ -929,7 +929,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 		assert.Equal(t, 0, n)
 	}
 
-	// Now try decoding it with a open/seek
+	// Now try decoding it with an open/seek
 	for _, offset := range trials {
 		for _, limit := range limits {
 			if offset+limit > len(plaintext) {

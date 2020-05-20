@@ -26,13 +26,13 @@ type Policy interface {
 	// Search category policy, governing the access to files and directories
 	Search(ctx context.Context, upstreams []*upstream.Fs, path string) (*upstream.Fs, error)
 
-	// ActionEntries is ACTION category policy but receving a set of candidate entries
+	// ActionEntries is ACTION category policy but receiving a set of candidate entries
 	ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, error)
 
-	// CreateEntries is CREATE category policy but receving a set of candidate entries
+	// CreateEntries is CREATE category policy but receiving a set of candidate entries
 	CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, error)
 
-	// SearchEntries is SEARCH category policy but receving a set of candidate entries
+	// SearchEntries is SEARCH category policy but receiving a set of candidate entries
 	SearchEntries(entries ...upstream.Entry) (upstream.Entry, error)
 }
 

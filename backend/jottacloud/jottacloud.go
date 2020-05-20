@@ -235,7 +235,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// parsePath parses an box 'url'
+// parsePath parses a box 'url'
 func parsePath(path string) (root string) {
 	root = strings.Trim(path, "/")
 	return
@@ -454,7 +454,7 @@ func errorHandler(resp *http.Response) error {
 	return errResponse
 }
 
-// Jottacloud want's '+' to be URL encoded even though the RFC states it's not reserved
+// Jottacloud wants '+' to be URL encoded even though the RFC states it's not reserved
 func urlPathEscape(in string) string {
 	return strings.Replace(rest.URLPathEscape(in), "+", "%2B", -1)
 }
@@ -464,7 +464,7 @@ func (f *Fs) filePathRaw(file string) string {
 	return path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(path.Join(f.root, file)))
 }
 
-// filePath returns a escaped file path (f.root, file)
+// filePath returns an escaped file path (f.root, file)
 func (f *Fs) filePath(file string) string {
 	return urlPathEscape(f.filePathRaw(file))
 }
@@ -493,7 +493,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.New("Outdated config - please reconfigure this backend")
 	}
 
-	// if custome endpoints are set use them else stick with defaults
+	// if custom endpoints are set use them else stick with defaults
 	if tokenURL, ok := m.Get(configTokenURL); ok {
 		oauthConfig.Endpoint.TokenURL = tokenURL
 		// jottacloud is weird. we need to use the tokenURL as authURL
@@ -1105,7 +1105,7 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// filePath returns a escaped file path (f.root, remote)
+// filePath returns an escaped file path (f.root, remote)
 func (o *Object) filePath() string {
 	return o.fs.filePath(o.remote)
 }

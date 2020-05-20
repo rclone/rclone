@@ -143,7 +143,7 @@ func Tree(fsrc fs.Fs, outFile io.Writer, opts *tree.Options) error {
 	return nil
 }
 
-// FileInfo maps a fs.DirEntry into an os.FileInfo
+// FileInfo maps an fs.DirEntry into an os.FileInfo
 type FileInfo struct {
 	entry fs.DirEntry
 }

@@ -201,7 +201,7 @@ type Fs struct {
 	pool          *pool.Pool                      // memory pool
 }
 
-// Object describes a azure object
+// Object describes an azure object
 type Object struct {
 	fs         *Fs                   // what this object is part of
 	remote     string                // The remote path
@@ -338,7 +338,7 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 }
 
 // httpClientFactory creates a Factory object that sends HTTP requests
-// to a rclone's http.Client.
+// to an rclone's http.Client.
 //
 // copied from azblob.newDefaultHTTPClientFactory
 func httpClientFactory(client *http.Client) pipeline.Factory {

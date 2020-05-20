@@ -2,7 +2,7 @@
 Translate file names for usage on restrictive storage systems
 
 The restricted set of characters are mapped to a unicode equivalent version
-(most to their FULLWIDTH variant) to increase compatability with other
+(most to their FULLWIDTH variant) to increase compatibility with other
 storage systems.
 See: http://unicode-search.net/unicode-namesearch.pl?term=FULLWIDTH
 

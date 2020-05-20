@@ -18,13 +18,13 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%s (Error %d)", e.Info.Message, e.Info.Code)
 }
 
-// Account describes a OpenDRIVE account
+// Account describes an OpenDRIVE account
 type Account struct {
 	Username string `json:"username"`
 	Password string `json:"passwd"`
 }
 
-// UserSessionInfo describes a OpenDRIVE session
+// UserSessionInfo describes an OpenDRIVE session
 type UserSessionInfo struct {
 	Username string `json:"username"`
 	Password string `json:"passwd"`
@@ -45,7 +45,7 @@ type UserSessionInfo struct {
 	PartnerUsersDomain string          `json:"PartnerUsersDomain"`
 }
 
-// FolderList describes a OpenDRIVE listing
+// FolderList describes an OpenDRIVE listing
 type FolderList struct {
 	// DirUpdateTime    string   `json:"DirUpdateTime,string"`
 	Name             string   `json:"Name"`
@@ -56,7 +56,7 @@ type FolderList struct {
 	Files            []File   `json:"Files"`
 }
 
-// Folder describes a OpenDRIVE folder
+// Folder describes an OpenDRIVE folder
 type Folder struct {
 	FolderID      string `json:"FolderID"`
 	Name          string `json:"Name"`
@@ -109,7 +109,7 @@ type removeFolder struct {
 	FolderID  string `json:"folder_id"`
 }
 
-// File describes a OpenDRIVE file
+// File describes an OpenDRIVE file
 type File struct {
 	FileID            string `json:"FileId"`
 	FileHash          string `json:"FileHash"`

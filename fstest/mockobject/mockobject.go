@@ -102,7 +102,7 @@ type ContentMockObject struct {
 	unknownSize bool
 }
 
-// WithContent returns a fs.Object with the given content.
+// WithContent returns an fs.Object with the given content.
 func (o Object) WithContent(content []byte, mode SeekMode) *ContentMockObject {
 	return &ContentMockObject{
 		Object:   o,

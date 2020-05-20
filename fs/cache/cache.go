@@ -37,7 +37,7 @@ func addMapping(fsString, canonicalName string) {
 	mu.Unlock()
 }
 
-// GetFn gets a fs.Fs named fsString either from the cache or creates
+// GetFn gets an fs.Fs named fsString either from the cache or creates
 // it afresh with the create function
 func GetFn(fsString string, create func(fsString string) (fs.Fs, error)) (f fs.Fs, err error) {
 	fsString = canonicalize(fsString)
@@ -77,7 +77,7 @@ func Unpin(f fs.Fs) {
 	c.Pin(fs.ConfigString(f))
 }
 
-// Get gets a fs.Fs named fsString either from the cache or creates it afresh
+// Get gets an fs.Fs named fsString either from the cache or creates it afresh
 func Get(fsString string) (f fs.Fs, err error) {
 	return GetFn(fsString, fs.NewFs)
 }
@@ -89,7 +89,7 @@ func Put(fsString string, f fs.Fs) {
 	addMapping(fsString, canonicalName)
 }
 
-// Clear removes everything from the cahce
+// Clear removes everything from the cache
 func Clear() {
 	c.Clear()
 }

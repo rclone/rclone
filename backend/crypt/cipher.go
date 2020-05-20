@@ -217,7 +217,7 @@ func decodeFileName(in string) ([]byte, error) {
 // 2003 paper "A Parallelizable Enciphering Mode" by Halevi and
 // Rogaway.
 //
-// This makes for determinstic encryption which is what we want - the
+// This makes for deterministic encryption which is what we want - the
 // same filename must encrypt to the same thing.
 //
 // This means that

@@ -300,7 +300,7 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
 	}
 
 	// now try renaming it with the file open
-	// first open it and write to it but dont close it
+	// first open it and write to it but don't close it
 	fd, err := file.Open(os.O_WRONLY | os.O_TRUNC)
 	require.NoError(t, err)
 	newContents := []byte("this is some new contents")

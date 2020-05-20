@@ -224,7 +224,7 @@ func (ds dirPatterns) mustCompile() dirPatterns {
 	return ds
 }
 
-// match finds the path passed in in the matching structure and
+// match finds the path passed in the matching structure and
 // returns the parameters and a pointer to the match, or nil.
 func (ds dirPatterns) match(root string, itemPath string, isFile bool) (match []string, prefix string, pattern *dirPattern) {
 	itemPath = strings.Trim(itemPath, "/")

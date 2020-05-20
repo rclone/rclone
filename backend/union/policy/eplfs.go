@@ -65,7 +65,7 @@ func (p *EpLfs) Action(ctx context.Context, upstreams []*upstream.Fs, path strin
 	return []*upstream.Fs{u}, err
 }
 
-// ActionEntries is ACTION category policy but receving a set of candidate entries
+// ActionEntries is ACTION category policy but receiving a set of candidate entries
 func (p *EpLfs) ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
 	entries, err := p.EpAll.ActionEntries(entries...)
 	if err != nil {
@@ -85,7 +85,7 @@ func (p *EpLfs) Create(ctx context.Context, upstreams []*upstream.Fs, path strin
 	return []*upstream.Fs{u}, err
 }
 
-// CreateEntries is CREATE category policy but receving a set of candidate entries
+// CreateEntries is CREATE category policy but receiving a set of candidate entries
 func (p *EpLfs) CreateEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
 	entries, err := p.EpAll.CreateEntries(entries...)
 	if err != nil {
@@ -107,7 +107,7 @@ func (p *EpLfs) Search(ctx context.Context, upstreams []*upstream.Fs, path strin
 	return p.lfs(upstreams)
 }
 
-// SearchEntries is SEARCH category policy but receving a set of candidate entries
+// SearchEntries is SEARCH category policy but receiving a set of candidate entries
 func (p *EpLfs) SearchEntries(entries ...upstream.Entry) (upstream.Entry, error) {
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound

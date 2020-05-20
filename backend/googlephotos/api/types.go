@@ -17,7 +17,7 @@ type Error struct {
 	Details ErrorDetails `json:"error"`
 }
 
-// Error statisfies error interface
+// Error satisfies error interface
 func (e *Error) Error() string {
 	return fmt.Sprintf("%s (%d %s)", e.Details.Message, e.Details.Code, e.Details.Status)
 }

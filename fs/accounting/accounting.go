@@ -359,7 +359,7 @@ func (acc *Account) progress() (bytes, size int64) {
 }
 
 // speed returns the speed of the current file transfer
-// in bytes per second, as well a an exponentially weighted moving average
+// in bytes per second, as well an exponentially weighted moving average
 // If no read has completed yet, 0 is returned for both values.
 func (acc *Account) speed() (bps, current float64) {
 	if acc == nil {

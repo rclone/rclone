@@ -376,7 +376,7 @@ date: "2020-02-01"
     * march: Fix checking sub-directories when using `--no-traverse` (buengese)
     * rc
         * Fix unmarshalable http.AuthFn in options and put in test for marshalability (Nick Craig-Wood)
-        * Move job expire flags to rc to fix initalization problem (Nick Craig-Wood)
+        * Move job expire flags to rc to fix initialization problem (Nick Craig-Wood)
         * Fix `--loopback` with rc/list and others (Nick Craig-Wood)
     * rcat: Fix slowdown on systems with multiple hashes (Nick Craig-Wood)
     * rcd: Fix permissions problems on cache directory with web gui download (Nick Craig-Wood)
@@ -515,7 +515,7 @@ date: "2020-02-01"
 * Onedrive
     * More accurately check if root is found (Cnly)
 * S3
-    * Suppport S3 Accelerated endpoints with `--s3-use-accelerate-endpoint` (Nick Craig-Wood)
+    * Support S3 Accelerated endpoints with `--s3-use-accelerate-endpoint` (Nick Craig-Wood)
     * Add config info for Wasabi's EU Central endpoint (Robert Marko)
     * Make SetModTime work for GLACIER while syncing (Philip Harvey)
 * SFTP
@@ -1295,18 +1295,18 @@ Point release to fix hubic and azureblob backends.
     * Rclone no longer has any working keys - disable integration tests
     * Implement DirChangeNotify to notify cache/vfs/mount of changes
 * Azureblob
-    * Don't check for bucket/container presense if listing was OK
+    * Don't check for bucket/container presence if listing was OK
         * this makes rclone do one less request per invocation
     * Improve accounting for chunked uploads
 * Backblaze B2
-    * Don't check for bucket/container presense if listing was OK
+    * Don't check for bucket/container presence if listing was OK
         * this makes rclone do one less request per invocation
 * Box
     * Improve accounting for chunked uploads
 * Dropbox
     * Fix custom oauth client parameters
 * Google Cloud Storage
-    * Don't check for bucket/container presense if listing was OK
+    * Don't check for bucket/container presence if listing was OK
         * this makes rclone do one less request per invocation
 * Google Drive
     * Migrate to api v3 (Fabian Möller)
@@ -1329,13 +1329,13 @@ Point release to fix hubic and azureblob backends.
 * Pcloud
     * Remove unused chunked upload flag and code
 * Qingstor
-    * Don't check for bucket/container presense if listing was OK
+    * Don't check for bucket/container presence if listing was OK
         * this makes rclone do one less request per invocation
 * S3
     * Support hashes for multipart files (Chris Redekop)
     * Initial support for IBM COS (S3) (Giri Badanahatti)
     * Update docs to discourage use of v2 auth with CEPH and others
-    * Don't check for bucket/container presense if listing was OK
+    * Don't check for bucket/container presence if listing was OK
         * this makes rclone do one less request per invocation
     * Fix server side copy and set modtime on files with + in
 * SFTP
@@ -1350,7 +1350,7 @@ Point release to fix hubic and azureblob backends.
     * Fix refresh of authentication token
         * in v1.39 a bug was introduced which ignored new tokens - this fixes it
     * Fix extra HEAD transaction when uploading a new file
-    * Don't check for bucket/container presense if listing was OK
+    * Don't check for bucket/container presence if listing was OK
         * this makes rclone do one less request per invocation
 * Webdav
     * Add new time formats to support mydrive.ch and others
@@ -1375,7 +1375,7 @@ Point release to fix hubic and azureblob backends.
     * curl install for rclone (Filip Bartodziej)
     * --stats now shows percentage, size, rate and ETA in condensed form (Ishuah Kariuki)
     * --exclude-if-present to exclude a directory if a file is present (Iakov Davydov)
-    * rmdirs: add --leave-root flag (lewpam)
+    * rmdirs: add --leave-root flag (lewapm)
     * move: add --delete-empty-src-dirs flag to remove dirs after move (Ishuah Kariuki)
     * Add --dump flag, introduce --dump requests, responses and remove --dump-auth, --dump-filters
         * Obscure X-Auth-Token: from headers when dumping too
@@ -2086,7 +2086,7 @@ Point release to fix hubic and azureblob backends.
 * New features
     * Amazon Drive support
     * Oauth support redone - fix many bugs and improve usability
-        * Use "golang.org/x/oauth2" as oauth libary of choice
+        * Use "golang.org/x/oauth2" as oauth library of choice
         * Improve oauth usability for smoother initial signup
         * drive, googlecloudstorage: optionally use auto config for the oauth token
     * Implement --dump-headers and --dump-bodies debug flags

@@ -72,7 +72,7 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// The FTP protocal can't handle trailing spaces (for instance
+			// The FTP protocol can't handle trailing spaces (for instance
 			// pureftpd turns them into _)
 			//
 			// proftpd can't handle '*' in file names

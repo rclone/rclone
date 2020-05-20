@@ -141,7 +141,7 @@ func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 func FixRangeOption(options []OpenOption, size int64) {
 	if size == 0 {
 		// if size 0 then remove RangeOption~s
-		// replacing with an NullOptions~s which won't be rendered
+		// replacing with a NullOptions~s which won't be rendered
 		for i := range options {
 			if _, ok := options[i].(*RangeOption); ok {
 				options[i] = NullOption{}

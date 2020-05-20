@@ -200,12 +200,12 @@ func (f *Fs) setRoot(root string) {
 	f.diskRoot = diskRoot
 }
 
-// filePath returns a escaped file path (f.root, file)
+// filePath returns an escaped file path (f.root, file)
 func (f *Fs) filePath(file string) string {
 	return path.Join(f.diskRoot, file)
 }
 
-// dirPath returns a escaped file path (f.root, file) ending with '/'
+// dirPath returns an escaped file path (f.root, file) ending with '/'
 func (f *Fs) dirPath(file string) string {
 	return path.Join(f.diskRoot, file) + "/"
 }
@@ -502,7 +502,7 @@ func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 
 	if err = f.CreateDir(ctx, dirString); err != nil {
 		if apiErr, ok := err.(*api.ErrorResponse); ok {
-			// allready exists
+			// already exists
 			if apiErr.ErrorName != "DiskPathPointsToExistentDirectoryError" {
 				// 2 if it fails then create all directories in the path from root.
 				dirs := strings.Split(dirString, "/") //path separator
