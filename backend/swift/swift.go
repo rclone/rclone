@@ -1253,7 +1253,7 @@ func deleteChunks(o *Object, segmentsContainer string, segmentInfos []string) {
 			fs.Debugf(o, "Delete segment file %q on %q", v, segmentsContainer)
 			e := o.fs.c.ObjectDelete(segmentsContainer, v)
 			if e != nil {
-				fs.Errorf(o, "Error occurred in delete segment file %q on %q , error: %q", v, segmentsContainer, e)
+				fs.Errorf(o, "Error occurred in delete segment file %q on %q, error: %q", v, segmentsContainer, e)
 			}
 		}
 	}
