@@ -73,7 +73,7 @@ copy operations.`,
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "swift",
-		Description: "Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
+		Description: "OpenStack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
 		NewFs:       NewFs,
 		Options: append([]fs.Option{{
 			Name:    "env_auth",

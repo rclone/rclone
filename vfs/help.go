@@ -150,7 +150,7 @@ although existing files can be opened using any case, the exact case used
 to create the file is preserved and available for programs to query.
 It is not allowed for two files in the same directory to differ only by case.
 
-Usually file systems on MacOS are case-insensitive. It is possible to make MacOS
+Usually file systems on macOS are case-insensitive. It is possible to make macOS
 file systems case-sensitive but that is not the default
 
 The "--vfs-case-insensitive" mount flag controls how rclone handles these
@@ -172,6 +172,6 @@ may differ from case sensitivity of a file system mounted by rclone (the source)
 The flag controls whether "fixup" is performed to satisfy the target.
 
 If the flag is not provided on command line, then its default value depends
-on the operating system where rclone runs: "true" on Windows and MacOS, "false"
+on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
 `

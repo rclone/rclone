@@ -72,7 +72,7 @@ func init() {
 	// needs to be done early so we can use oauth during config
 	fs.Register(&fs.RegInfo{
 		Name:        "jottacloud",
-		Description: "JottaCloud",
+		Description: "Jottacloud",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
 			ctx := context.TODO()
