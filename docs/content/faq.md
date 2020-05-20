@@ -49,7 +49,7 @@ Server B> rclone sync /tmp/whatever remote:ServerB
 ```
 
 If you sync to the same directory then you should use rclone copy
-otherwise the two rclones may delete each others files, eg
+otherwise the two instances of rclone may delete each other's files, eg
 
 ```
 Server A> rclone copy /tmp/whatever remote:Backup

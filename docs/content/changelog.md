@@ -1702,7 +1702,7 @@ Point release to fix hubic and azureblob backends.
     * Allow overlapping directories in move when server side dir move is supported
     * Add --stats-unit option - thanks Scott McGillivray
 * Bug Fixes
-    * Fix the config file being overwritten when two rclones are running
+    * Fix the config file being overwritten when two rclone instances are running
     * Make rclone lsd obey the filters properly
     * Fix compilation on mips
     * Fix not transferring files that don't differ in size
