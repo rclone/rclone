@@ -284,7 +284,7 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
 func shouldRetry(err error) (bool, error) {
-	// If this is an swift.Error object extract the HTTP error code
+	// If this is a swift.Error object extract the HTTP error code
 	if swiftError, ok := err.(*swift.Error); ok {
 		for _, e := range retryErrorCodes {
 			if swiftError.StatusCode == e {
@@ -1253,7 +1253,7 @@ func deleteChunks(o *Object, segmentsContainer string, segmentInfos []string) {
 			fs.Debugf(o, "Delete segment file %q on %q", v, segmentsContainer)
 			e := o.fs.c.ObjectDelete(segmentsContainer, v)
 			if e != nil {
-				fs.Errorf(o, "Error occured in delete segment file %q on %q , error: %q", v, segmentsContainer, e)
+				fs.Errorf(o, "Error occurred in delete segment file %q on %q , error: %q", v, segmentsContainer, e)
 			}
 		}
 	}

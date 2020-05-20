@@ -7,7 +7,7 @@ import (
 	"github.com/rclone/rclone/fs/cache"
 )
 
-// GetFsNamed gets a fs.Fs named fsName either from the cache or creates it afresh
+// GetFsNamed gets an fs.Fs named fsName either from the cache or creates it afresh
 func GetFsNamed(in Params, fsName string) (f fs.Fs, err error) {
 	fsString, err := in.GetString(fsName)
 	if err != nil {
@@ -17,7 +17,7 @@ func GetFsNamed(in Params, fsName string) (f fs.Fs, err error) {
 	return cache.Get(fsString)
 }
 
-// GetFs gets a fs.Fs named "fs" either from the cache or creates it afresh
+// GetFs gets an fs.Fs named "fs" either from the cache or creates it afresh
 func GetFs(in Params) (f fs.Fs, err error) {
 	return GetFsNamed(in, "fs")
 }

@@ -222,7 +222,7 @@ There are a couple of issues with Windows `mount` functionality that still requi
 It should be considered as experimental thus far as fixes come in for this OS.
 
 Most of the issues seem to be related to the difference between filesystems
-on Linux flavors and Windows as cache is heavily dependant on them.
+on Linux flavors and Windows as cache is heavily dependent on them.
 
 Any reports or feedback on how cache behaves on this OS is greatly appreciated.
  

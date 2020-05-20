@@ -16,7 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 )
 
-// Job describes a asynchronous task started via the rc package
+// Job describes an asynchronous task started via the rc package
 type Job struct {
 	mu        sync.Mutex
 	ID        int64     `json:"id"`

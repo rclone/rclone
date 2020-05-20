@@ -192,7 +192,7 @@ func (fh *WriteFileHandle) close() (err error) {
 		fh.file.delWriter(fh, false)
 		fh.file.finishWriterClose()
 	}()
-	// If file not opened and not safe to truncate then then leave file intact
+	// If file not opened and not safe to truncate then leave file intact
 	if !fh.opened && !fh.safeToTruncate() {
 		return nil
 	}

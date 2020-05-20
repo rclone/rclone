@@ -421,7 +421,7 @@ func translateErrorsObject(err error) error {
 }
 
 // mkdir creates a directory at the given remote path. Creates ancestors if
-// neccessary
+// necessary
 func (f *Fs) mkdir(fullPath string) error {
 	if fullPath == "/" {
 		return nil

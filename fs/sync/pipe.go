@@ -76,7 +76,7 @@ func (p *pipe) Pop() interface{} {
 	return item
 }
 
-// Put an pair into the pipe
+// Put a pair into the pipe
 //
 // It returns ok = false if the context was cancelled
 //

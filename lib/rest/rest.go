@@ -111,7 +111,7 @@ func (api *Client) SetUserPass(UserName, Password string) *Client {
 	return api
 }
 
-// SetCookie creates an Cookies Header for all requests with the supplied
+// SetCookie creates a Cookies Header for all requests with the supplied
 // cookies passed in.
 // All cookies have to be supplied at once, all cookies will be overwritten
 // on a new call to the method
@@ -407,7 +407,7 @@ func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}
 	return api.callCodec(ctx, opts, request, response, json.Marshal, DecodeJSON, "application/json")
 }
 
-// CallXML runs Call and decodes the body as a XML object into response (if not nil)
+// CallXML runs Call and decodes the body as an XML object into response (if not nil)
 //
 // If request is not nil then it will be XML encoded as the body of the request
 //

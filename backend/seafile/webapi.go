@@ -1058,7 +1058,7 @@ func (f *Fs) renameFileAPIv2(ctx context.Context, libraryID, filePath, newname s
 	// No luck with JSON input with the older api2
 	postParameters := url.Values{
 		"operation": {"rename"},
-		"reloaddir": {"true"}, // This is an undocumented trick to avoid a http code 301 response (found in https://github.com/haiwen/seahub/blob/master/seahub/api2/views.py)
+		"reloaddir": {"true"}, // This is an undocumented trick to avoid an http code 301 response (found in https://github.com/haiwen/seahub/blob/master/seahub/api2/views.py)
 		"newname":   {f.opt.Enc.FromStandardName(newname)},
 	}
 

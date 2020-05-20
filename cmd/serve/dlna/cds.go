@@ -181,7 +181,7 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 // Given a list of nodes, separate them into potential media items and any associated resources (external subtitles,
 // for example.)
 //
-// The result is a a slice of potential media nodes (in their original order) and a map containing associated
+// The result is a slice of potential media nodes (in their original order) and a map containing associated
 // resources nodes of each media node, if any.
 func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	media, mediaResources := vfs.Nodes{}, make(map[vfs.Node]vfs.Nodes)

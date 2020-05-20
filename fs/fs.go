@@ -1079,7 +1079,7 @@ type CommandHelp struct {
 	Opts  map[string]string // maps option name to a single line help
 }
 
-// Commander is an iterface to wrap the Command function
+// Commander is an interface to wrap the Command function
 type Commander interface {
 	// Command the backend to run a named command
 	//
@@ -1137,7 +1137,7 @@ func UnWrapObject(o Object) Object {
 	return o
 }
 
-// Find looks for an RegInfo object for the name passed in.  The name
+// Find looks for a RegInfo object for the name passed in.  The name
 // can be either the Name or the Prefix.
 //
 // Services are looked up in the config file

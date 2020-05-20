@@ -616,7 +616,7 @@ func Run(t *testing.T, opt *Opt) {
 			}
 		})
 
-		// TestFsNewObjectNotFound tests not finding a object
+		// TestFsNewObjectNotFound tests not finding an object
 		t.Run("FsNewObjectNotFound", func(t *testing.T) {
 			skipIfNotOk(t)
 			// Object in an existing directory

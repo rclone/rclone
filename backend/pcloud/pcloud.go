@@ -152,7 +152,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// parsePath parses an pcloud 'url'
+// parsePath parses a pcloud 'url'
 func parsePath(path string) (root string) {
 	root = strings.Trim(path, "/")
 	return

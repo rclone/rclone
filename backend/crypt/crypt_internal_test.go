@@ -82,7 +82,7 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 
 	var oi fs.ObjectInfo = obj
 	if wrap {
-		// wrap the object in a fs.ObjectUnwrapper if required
+		// wrap the object in an fs.ObjectUnwrapper if required
 		oi = testWrapper{oi}
 	}
 

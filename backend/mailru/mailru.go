@@ -402,7 +402,7 @@ func (q *quirks) parseQuirks(option string) {
 			// "Accept-Encoding: gzip" header. However, enabling compression
 			// might be good for performance.
 			// Use this quirk to investigate the performance impact.
-			// Remove this quirk if perfomance does not improve.
+			// Remove this quirk if performance does not improve.
 			q.gzip = true
 		case "insecure":
 			// The mailru disk-o protocol is not documented. To compare HTTP

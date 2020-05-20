@@ -19,7 +19,7 @@ var _ io.ReadCloser = (*ReOpen)(nil)
 
 var errorTestError = errors.New("test error")
 
-// this is a wrapper for an mockobject with a custom Open function
+// this is a wrapper for a mockobject with a custom Open function
 //
 // breaks indicate the number of bytes to read before returning an
 // error

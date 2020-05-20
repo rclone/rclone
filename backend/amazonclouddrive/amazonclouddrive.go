@@ -169,7 +169,7 @@ type Fs struct {
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 }
 
-// Object describes a acd object
+// Object describes an acd object
 //
 // Will definitely have info but maybe not meta
 type Object struct {
@@ -229,7 +229,7 @@ func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 		}
 		// Work around receiving this error sporadically on authentication
 		//
-		// HTTP code 403: "403 Forbidden", reponse body: {"message":"Authorization header requires 'Credential' parameter. Authorization header requires 'Signature' parameter. Authorization header requires 'SignedHeaders' parameter. Authorization header requires existence of either a 'X-Amz-Date' or a 'Date' header. Authorization=Bearer"}
+		// HTTP code 403: "403 Forbidden", response body: {"message":"Authorization header requires 'Credential' parameter. Authorization header requires 'Signature' parameter. Authorization header requires 'SignedHeaders' parameter. Authorization header requires existence of either a 'X-Amz-Date' or a 'Date' header. Authorization=Bearer"}
 		if resp.StatusCode == 403 && strings.Contains(err.Error(), "Authorization header requires") {
 			fs.Debugf(f, "403 \"Authorization header requires...\" error received - retry")
 			return true, err

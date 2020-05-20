@@ -123,7 +123,7 @@ func (d *Directory) AddEntry(remote string, isDir bool) {
 	})
 }
 
-// Error logs the error and if a ResponseWriter is given it writes a http.StatusInternalServerError
+// Error logs the error and if a ResponseWriter is given it writes an http.StatusInternalServerError
 func Error(what interface{}, w http.ResponseWriter, text string, err error) {
 	err = fs.CountError(err)
 	fs.Errorf(what, "%s: %v", text, err)
@@ -132,7 +132,7 @@ func Error(what interface{}, w http.ResponseWriter, text string, err error) {
 	}
 }
 
-// ProcessQueryParams takes and sorts/orders based on the request sort/order parameters and defailt is namedirfist/asc
+// ProcessQueryParams takes and sorts/orders based on the request sort/order parameters and default is namedirfist/asc
 func (d *Directory) ProcessQueryParams(sortParm string, orderParm string) *Directory {
 	d.Sort = sortParm
 	d.Order = orderParm
