@@ -141,6 +141,9 @@ website:
 upload_website:	website
 	rclone -v sync docs/public memstore:www-rclone-org
 
+upload_test_website:	website
+	rclone -P sync docs/public test-rclone-org:
+
 tarball:
 	git archive -9 --format=tar.gz --prefix=rclone-$(TAG)/ -o build/rclone-$(TAG).tar.gz $(TAG)
 
