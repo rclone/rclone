@@ -46,7 +46,7 @@ the future.
 
 <div>
   <a  class="btn btn-secondary" role="button" href="https://github.com/sponsors/ncw" target="_blank"><i class="fab fa-github" aria-hidden="true"></i> GitHub Sponsors</a>
-  <div class="dropdown" style="display: inline; clear: none;">
+  <div class="dropdown" style="display: inline;">
     <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       <i class="fab fa-paypal" aria-hidden="true"></i> Paypal
     </a>
@@ -67,7 +67,7 @@ If you don't want to contribute monthly then of course we'd love a one
 off donation.
 
 <div>
-  <div class="dropdown" style="display: inline; clear: none;">
+  <div class="dropdown" style="display: inline;">
     <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       <i class="fab fa-paypal" aria-hidden="true"></i> Paypal
     </a>
@@ -78,7 +78,7 @@ off donation.
     </div>
   </div>
   <a  class="btn btn-secondary" role="button" href="https://www.paypal.me/nickcw" target="_blank"><i class="fab fa-paypal" aria-hidden="true"></i> Paypal.me</a>
-  <div class="dropdown" style="display: inline; clear: none;">
+  <div class="dropdown" style="display: inline;">
     <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
       <i class="fab fa-bitcoin" aria-hidden="true"></i> Bitcoin
     </a>
