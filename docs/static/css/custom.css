@@ -16,22 +16,22 @@ a:hover {
 }
 
 table {
-	background-color:#e0e0ff
+	background-color:#f0f0f0;
 }
 
 tbody td, th {
-	border: 1px solid black;
+	border: 1px solid #c0c0c0;
 	padding: 3px 7px 2px 7px;
 }
 
 thead td, th {
-	border: 1px solid black;
 	padding: 3px 7px 2px 7px;
 	font-weight: bold;
+	background-color:#e0e0e0;
 }
 
-tbody tr:nth-child(odd) {
-	background-color:#d0d0ff
+tbody tr:nth-child(even) {
+	background-color:#e8e8e8;
 }
 
 /* Preserve whitespace. Wrap text only at line breaks. */
