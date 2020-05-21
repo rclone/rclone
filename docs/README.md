@@ -46,12 +46,12 @@ so it is easy to tweak stuff.
 │   ├── index.html                - the index page of the whole site
 │   ├── page
 │   │   └── single.html           - the render of all "page" type markdown
-│   ├── partials                  - bits of HTML to include elsewhere
+│   ├── partials                  - bits of HTML to include into layout .html files
 │   │   └── version.html          - the current version number
 │   ├── rss.xml                   - template for the RSS output
 │   ├── section                   - rendering for sections
 │   │   └── commands.html         - rendering for /commands/index.html
-│   ├── shortcodes                - shortcodes for inserting bits of HTML
+│   ├── shortcodes                - shortcodes to call from markdown files
 │   │   ├── cdownload.html        - download the "current" version
 │   │   ├── download.html         - download a version with the partials/version.html number
 │   │   ├── provider.html         - used to make provider list on the front page
