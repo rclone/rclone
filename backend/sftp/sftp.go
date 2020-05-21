@@ -5,14 +5,17 @@
 package sftp
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/user"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,6 +36,7 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	sshagent "github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 const (
@@ -359,6 +363,139 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 	f.poolMu.Unlock()
 }
 
+// Additional data for sftpKeyCallback
+type keyCallbackOptions struct {
+	Testing bool
+}
+
+// Callback to be used with ssh.ClientConfig
+//
+// It is called to check for proper host public key. If key is missing,
+// user is prompted to accept/reject host key. If key has changed,
+// a warning is displayed and operation fails.
+func (ko *keyCallbackOptions) sftpKeyCallback(hostname string, remote net.Addr, key ssh.PublicKey) error {
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		return errors.Wrap(err, "cannot determine user home directory")
+	}
+
+	knownHostsFile := filepath.Join(homedir, ".ssh", "known_hosts")
+	hostnameStrip, _, err := net.SplitHostPort(hostname)
+	if err != nil {
+		return errors.Wrap(err, "cannot read hostname")
+	}
+
+	hostIP, err := net.LookupIP(hostnameStrip)
+	if err != nil {
+		return errors.Wrap(err, "unable to lookup IP address")
+	}
+
+	// Create .ssh directory if it doesn't exist
+	sshDir := filepath.Join(homedir, ".ssh")
+	if _, err := os.Stat(sshDir); os.IsNotExist(err) {
+		err = os.Mkdir(sshDir, 0755)
+		if err != nil {
+			return errors.Wrap(err, "unable to create .ssh directory")
+		}
+	}
+
+	// Check if key exists
+	f, err := os.OpenFile(knownHostsFile, os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return errors.Wrap(err, "cannot read known_hosts file")
+	}
+	defer func() {
+		cerr := f.Close()
+		if err != nil {
+			err = cerr
+		}
+	}()
+
+	// Read file line by line
+	scanner := bufio.NewScanner(f)
+	lineN := 1
+	for scanner.Scan() {
+		// Skip potential empty lines
+		if len(scanner.Text()) == 0 {
+			continue
+		}
+
+		_, hosts, khKey, _, _, err := ssh.ParseKnownHosts(scanner.Bytes())
+		if err != nil {
+			return errors.Wrap(err, "cannot read known_hosts file")
+		}
+
+		// Scan through hosts in a line
+		for _, host := range hosts {
+			if hostnameStrip == host {
+				if bytes.Equal(key.Marshal(), khKey.Marshal()) {
+					// Keys match, all good
+					return nil
+				}
+
+				// Keys do not match
+				fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+				fmt.Println("@       WARNING: POSSIBLE DNS SPOOFING DETECTED!          @")
+				fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+				fmt.Printf("The %s host key for %s has changed,\n", key.Type(), host)
+				fmt.Printf("and the key for the corresponding IP address %s\n", hostIP)
+				fmt.Println("has a different value. This could either mean that")
+				fmt.Println("DNS SPOOFING is happening or the IP address for the host")
+				fmt.Println("and its host key have changed at the same time.")
+				fmt.Printf("Offending key for IP in %s:%d\n", knownHostsFile, lineN)
+				fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+				fmt.Println("@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @")
+				fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+				fmt.Println("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!")
+				fmt.Println("Someone could be eavesdropping on you right now (man-in-the-middle attack)!")
+				fmt.Println("It is also possible that a host key has just been changed.")
+				fmt.Printf("The fingerprint for the %s key sent by the remote host is\n%s.\n", key.Type(), ssh.FingerprintSHA256(key))
+				fmt.Println("Please contact your system administrator.")
+				fmt.Printf("Add correct host key in %s to get rid of this message.\n", knownHostsFile)
+				fmt.Printf("Offending %s key in %s:%d\n", key.Type(), knownHostsFile, lineN)
+				fmt.Println("Host key verification failed.")
+				os.Exit(-1)
+			}
+		}
+		lineN++
+	}
+
+	// Key not found, ask user if they are happy to add it to known_hosts
+	fmt.Printf("The authenticity of host '%s %s' can't be established.\n", hostnameStrip, hostIP)
+	fmt.Printf("%s key fingerprint is %s\n", key.Type(), ssh.FingerprintSHA256(key))
+	fmt.Println("Are you sure you want to continue connecting (yes/no)?")
+
+	var choice string
+	if !ko.Testing { // Workaround for testing, as test runs without intermediate user input
+		for choice != "yes" && choice != "no" {
+			fmt.Print("Please type 'yes' or 'no': ")
+			fmt.Scanln(&choice)
+		}
+	} else {
+		fmt.Println("Please type 'yes' or 'no': yes")
+		choice = "yes"
+	}
+
+	if choice == "yes" {
+		// Write key to known_hosts and continue, if not in test environment
+		if !ko.Testing {
+			_, err = f.Seek(0, 2) // Append
+			if err != nil {
+				return errors.Wrap(err, "unable to seek to the end of known_hosts file")
+			}
+			_, err := f.Write([]byte(fmt.Sprintf("%s\n", knownhosts.Line([]string{hostname}, key))))
+			if err != nil {
+				return errors.Wrap(err, "cannot write to known_hosts")
+			}
+		}
+	} else if choice == "no" {
+		fmt.Println("Host key verification failed.")
+		os.Exit(-1)
+	}
+
+	return nil
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -375,10 +512,17 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if opt.Port == "" {
 		opt.Port = "22"
 	}
+
+	// Modify callback for testing environment
+	ko := keyCallbackOptions{}
+	if name == "TestSFTPOpenssh" || name == "TestSFTPRclone" {
+		ko.Testing = true
+	}
+
 	sshConfig := &ssh.ClientConfig{
 		User:            opt.User,
 		Auth:            []ssh.AuthMethod{},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		HostKeyCallback: ko.sftpKeyCallback,
 		Timeout:         fs.Config.ConnectTimeout,
 		ClientVersion:   "SSH-2.0-" + fs.Config.UserAgent,
 	}
