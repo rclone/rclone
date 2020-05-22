@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone serve"
 description: "Serve a remote over a protocol."
 slug: rclone_serve

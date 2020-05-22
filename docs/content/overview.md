@@ -260,7 +260,7 @@ will show you the defaults for the backends.
 | LtGt | `<`, `>` |
 | None | No characters are encoded |
 | Percent | `%` |
-| Pipe | <code>\|</code> |
+| Pipe | \| |
 | Question | `?` |
 | RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string |
 | RightPeriod | `.` on the right of a string |
