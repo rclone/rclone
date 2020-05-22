@@ -377,3 +377,4 @@ put them back in again. -->
   * Ben Zenker <imbenzenker@gmail.com>
   * Martin Michlmayr <tbm@cyrius.com>
   * Brandon McNama <bmcnama@pagerduty.com>
+  * Daniel Slyman <github@skylayer.eu>
