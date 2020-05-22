@@ -10,6 +10,22 @@ date: "2017-09-03"
 The `cache` remote wraps another existing remote and stores file structure
 and its data for long running tasks like `rclone mount`.
 
+## Status
+
+The cache backend code is working but it currently doesn't
+have a maintainer so there are [outstanding bugs](https://github.com/rclone/rclone/issues?q=is%3Aopen+is%3Aissue+label%3Abug+label%3A%22Remote%3A+Cache%22) which aren't getting fixed.
+
+The cache backend is due to be phased out in favour of the VFS caching
+layer eventually which is more tightly integrated into rclone.
+
+Until this happens we recommend only using the cache backend if you
+find you can't work without it. There are many docs online describing
+the use of the cache backend to minimize API hits and by-and-large
+these are out of date and the cache backend isn't needed in those
+scenarios any more.
+
+## Setup
+
 To get started you just need to have an existing remote which can be configured
 with `cache`.
 
