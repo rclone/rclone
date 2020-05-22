@@ -10,7 +10,7 @@ date: "2020-05-16"
 {{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >}}
 
 - [About rclone.](#about)
-- [What is rclone for.](#what)
+- [What can rclone do for you.](#what)
 - [What features does rclone have.](#features)
 - [What providers does rclone support.](#providers)
 - [Download.](/downloads/)
@@ -30,6 +30,9 @@ unix commands rsync, cp, mv, mount, ls, ncdu, tree, rm, and
 cat. Rclone's familiar syntax includes shell pipeline support, and
 `--dry-run` protection. It can be used at the command line, in scripts
 or via its [API](/rc).
+
+Users have called it "The swiss army knife of cloud storage" and
+"Technology indistinguishable from magic".
 
 Rclone really cares about your data. It preserves your timestamps and
 verifies your data at all times. Transfers over limited bandwidth;
@@ -59,27 +62,27 @@ Rclone is mature, open source software originally inspired by
 rsync. It is written in [Go](https://golang.org) and is energetically
 maintained, and supported by a welcoming community with a wide
 experience of varied use cases. Official repos such as Ubuntu, Debian,
-Brew, Chocolatey include rclone. For the latest version [download from
+Brew, Chocolatey include rclone. For the latest version [downloading from
 rclone.org](/downloads/) is recommended.
 
 Rclone is widely used on Linux, Windows and Mac. Third party
 developers have built innovative backup, restore, GUI and business
 process solutions using the rclone command line or API.
 
-Let rclone do the heavy lifting of communicating with cloud cloud
-storage so you can concentrate on your problems.
+Let rclone do the heavy lifting of communicating with cloud storage so
+you can concentrate on your problems.
 
-## What is rclone for {#what}
+## What can rclone do for you {#what}
 
-Rclone is great for:-
+Rclone can help you:
 
-- Backup and encryption of files to cloud storage
-- Restore and decryption of files from cloud storage
-- Mirroring cloud data to other cloud services or locally
-- Migration of data to cloud, or between cloud storage vendors
-- Mounting multiple, encrypted, cached or diverse cloud storage
-- Union file systems presenting multiple local and/or cloud file systems
-- Analysing file data held on cloud storage
+- Backup (and encrypt) files to cloud storage
+- Restore (and decrypt) files from cloud storage
+- Mirror cloud data to other cloud services or locally
+- Migrate data to cloud, or between cloud storage vendors
+- Mount multiple, encrypted, cached or diverse cloud storage as a disk
+- Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/), [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/),
+- Union file systems together to present multiple local and/or cloud file systems as one
 
 ## Features {#features}
 
