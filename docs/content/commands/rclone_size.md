@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone size"
 description: "Prints the total size and number of objects in remote:path."
 slug: rclone_size

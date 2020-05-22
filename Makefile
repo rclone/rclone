@@ -138,6 +138,7 @@ clean:
 website:
 	rm -rf docs/public
 	cd docs && hugo
+	@if grep -R "raw HTML omitted" docs/public ; then echo "ERROR: found unescaped HTML - fix the markdown source" ; fi
 
 upload_website:	website
 	rclone -v sync docs/public memstore:www-rclone-org

@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone config"
 description: "Enter an interactive configuration session."
 slug: rclone_config
@@ -33,7 +33,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone config create](/commands/rclone_config_create/)	 - Create a new remote with name, type and options.
-* [rclone config delete](/commands/rclone_config_delete/)	 - Delete an existing remote <name>.
+* [rclone config delete](/commands/rclone_config_delete/)	 - Delete an existing remote `name`.
 * [rclone config disconnect](/commands/rclone_config_disconnect/)	 - Disconnects user from remote
 * [rclone config dump](/commands/rclone_config_dump/)	 - Dump the config file as JSON.
 * [rclone config edit](/commands/rclone_config_edit/)	 - Enter an interactive configuration session.

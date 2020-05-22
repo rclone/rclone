@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone config create"
 description: "Create a new remote with name, type and options."
 slug: rclone_config_create
@@ -13,8 +13,8 @@ Create a new remote with name, type and options.
 ## Synopsis
 
 
-Create a new remote of <name> with <type> and options.  The options
-should be passed in in pairs of <key> <value>.
+Create a new remote of `name` with `type` and options.  The options
+should be passed in in pairs of `key` `value`.
 
 For example to make a swift remote of name myremote using auto config
 you would do:
@@ -45,7 +45,7 @@ using remote authorization you would do this:
 
 
 ```
-rclone config create <name> <type> [<key> <value>]* [flags]
+rclone config create `name` `type` [`key` `value`]* [flags]
 ```
 
 ## Options

@@ -103,7 +103,7 @@ func init() {
 			},
 			{
 				Name:     "satellite_address",
-				Help:     "Satellite Address. Custom satellite address should match the format: <nodeid>@<address>:<port>.",
+				Help:     "Satellite Address. Custom satellite address should match the format: `<nodeid>@<address>:<port>`.",
 				Required: false,
 				Provider: newProvider,
 				Default:  "us-central-1.tardigrade.io",

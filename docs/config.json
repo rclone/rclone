@@ -25,7 +25,7 @@
         "autoHeadingIDType": "blackfriday"
       },
       "renderer": {
-        "unsafe": true
+        "unsafe": false
       }
     }
   }

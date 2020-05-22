@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone serve restic"
 description: "Serve the remote for restic's REST API."
 slug: rclone_serve_restic
@@ -88,7 +88,7 @@ these **must** end with /.  Eg
 ### Private repositories ####
 
 The "--private-repos" flag can be used to limit users to repositories starting
-with a path of "/<username>/".
+with a path of `/<username>/`.
 
 ## Server options
 

@@ -5,7 +5,7 @@ type: page
 date: "2020-05-15"
 ---
 
-# <i class="fa fa-heart heart"></i> Donations to the rclone project
+# {{< icon "fa fa-heart heart" >}} Donations to the rclone project
 
 Donations help us continue to develop rclone as free open source
 software.
@@ -21,7 +21,7 @@ Nick Craig-Wood
 
 If you are a personal user and you would like to support the project
 with sponsorship as a way of saying thank you then that would be most
-appreciated <i class="fa fa-heart heart"></i>
+appreciated {{< icon "fa fa-heart heart" >}}
 
 ## Business users
 
@@ -32,7 +32,7 @@ project you rely on stays healthy and well maintained.
 
 If you run one of the cloud storage providers that rclone supports and
 rclone is driving revenue your way then you know it makes sense to
-sponsor the project <i class="far fa-smile"></i>
+sponsor the project {{< icon "far fa-smile" >}}
 
 Note that GitHub sponsors will provide proper tax invoices appropriate
 for your country.
@@ -44,53 +44,14 @@ run so this is our preferred option. A small amount every month is
 much better for us than a one off donation as it alows us to plan for
 the future.
 
-<div>
-  <a  class="btn btn-secondary" role="button" href="https://github.com/sponsors/ncw" target="_blank"><i class="fab fa-github" aria-hidden="true"></i> GitHub Sponsors</a>
-  <div class="dropdown" style="display: inline;">
-    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      <i class="fab fa-paypal" aria-hidden="true"></i> Paypal
-    </a>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-      <span class="dropdown-item"><small class="text-muted">Please check the "monthly" box</small></span>
-      <a class="dropdown-item" target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=B9JZV25DCP2SJ&source=url">Donate in $ USD</a>
-      <a class="dropdown-item" target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RGRFXCDDHK3LW&source=url">Donate in £ GBP</a>
-      <a class="dropdown-item" target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Y2AMZXSALFBR4&source=url">Donate in € EUR</a>
-    </div>
-  </div>
-  <a  class="btn btn-secondary" role="button" href="https://github.com/sponsors/ncw" target="_blank"><i class="fab fa-patreon" aria-hidden="true"></i> Patreon</a>
-  <a  class="btn btn-secondary" role="button" href="https://github.com/sponsors/ncw" target="_blank">Liberapay</a>
-</div>
+{{< monthly_donations >}}
 
 ## One off donations
 
 If you don't want to contribute monthly then of course we'd love a one
 off donation.
 
-<div>
-  <div class="dropdown" style="display: inline;">
-    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      <i class="fab fa-paypal" aria-hidden="true"></i> Paypal
-    </a>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-      <a class="dropdown-item" target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=B9JZV25DCP2SJ&source=url">Donate in $ USD</a>
-      <a class="dropdown-item" target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=RGRFXCDDHK3LW&source=url">Donate in £ GBP</a>
-      <a class="dropdown-item" target="_blank" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=Y2AMZXSALFBR4&source=url">Donate in € EUR</a>
-    </div>
-  </div>
-  <a  class="btn btn-secondary" role="button" href="https://www.paypal.me/nickcw" target="_blank"><i class="fab fa-paypal" aria-hidden="true"></i> Paypal.me</a>
-  <div class="dropdown" style="display: inline;">
-    <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      <i class="fab fa-bitcoin" aria-hidden="true"></i> Bitcoin
-    </a>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-      <span class="dropdown-item">Bitcoin: scan or click the image or copy the address</span>
-      <a class="dropdown-item" target="_blank" href="bitcoin:19j3oLUsqBcTRvZ2LSq2phVjsAAJ86xSnk"><img src="/img/ncw-bitcoin-address.png"></a>
-      <span class="dropdown-item">
-        <input type="text" value="19j3oLUsqBcTRvZ2LSq2phVjsAAJ86xSnk" size="30" readonly>
-        <button class="btn btn-secondary copy-to-clipboard" type="button" data-toggle="tooltip" data-placement="button" title="Copy to Clipboard"><i class="fas fa-copy" aria-hidden="true"></i></button></span>
-    </div>
-  </div>
-</div>
+{{< one_off_donations >}}
 
 If you require a receipt or wish to contribute in a different way then
-please <a href="mailto:nick@craig-wood.com">drop me an email</a>.
+please [drop me an email](mailto:nick@craig-wood.com).

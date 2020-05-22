@@ -118,7 +118,7 @@ these **must** end with /.  Eg
 #### Private repositories ####
 
 The "--private-repos" flag can be used to limit users to repositories starting
-with a path of "/<username>/".
+with a path of ` + "`/<username>/`" + `.
 ` + httplib.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

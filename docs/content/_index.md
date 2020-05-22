@@ -7,7 +7,7 @@ date: "2020-05-16"
 
 # Rclone syncs your files to cloud storage
 
-<img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;">
+{{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >}}
 
 - [About rclone.](#about)
 - [What is rclone for.](#what)
@@ -15,7 +15,7 @@ date: "2020-05-16"
 - [What providers does rclone support.](#providers)
 - [Download.](/downloads/)
 - [Install.](/install/)
-<!--MAINPAGELINK-->
+{{< rem MAINPAGELINK >}}
 
 ## About rclone {#about}
 
@@ -156,7 +156,7 @@ such as WebDAV or S3 that work out of the box.
 
 Links
 
-  * <i class="fa fa-home"></i> [Home page](https://rclone.org/)
-  * <i class="fab fa-github"></i> [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
-  * <i class="fa fa-comments"></i> [Rclone Forum](https://forum.rclone.org)
-  * <i class="fas fa-cloud-download-alt"></i>[Downloads](/downloads/)
+  * {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
+  * {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)
+  * {{< icon "fa fa-comments" >}} [Rclone Forum](https://forum.rclone.org)
+  * {{< icon "fas fa-cloud-download-alt" >}}[Downloads](/downloads/)

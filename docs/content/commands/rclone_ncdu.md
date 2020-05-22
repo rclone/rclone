@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone ncdu"
 description: "Explore a remote with a text based user interface."
 slug: rclone_ncdu
@@ -17,7 +17,7 @@ This displays a text based user interface allowing the navigation of a
 remote. It is most useful for answering the question - "What is using
 all my disk space?".
 
-<script src="https://asciinema.org/a/157793.js" id="asciicast-157793" async></script>
+{{< asciinema 157793 >}}
 
 To make the user interface it first scans the entire remote given and
 builds an in memory representation.  rclone ncdu can be used during
