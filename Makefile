@@ -217,7 +217,7 @@ fetch_binaries:
 	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
-	cd docs && hugo server -v -w
+	cd docs && hugo server -v -w --disableFastRender
 
 tag:	doc
 	@echo "Old tag is $(VERSION)"
