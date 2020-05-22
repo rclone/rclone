@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone config providers"
 description: "List in JSON format all the providers and options."
 slug: rclone_config_providers

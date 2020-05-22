@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone deletefile"
 description: "Remove a single file from remote."
 slug: rclone_deletefile

@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T09:52:00+01:00
+date: 2020-05-22T15:09:46+01:00
 title: "rclone config update"
 description: "Update options in an existing remote."
 slug: rclone_config_update
@@ -14,7 +14,7 @@ Update options in an existing remote.
 
 
 Update an existing remote's options. The options should be passed in
-in pairs of <key> <value>.
+in pairs of `key` `value`.
 
 For example to update the env_auth field of a remote of name myremote
 you would do:
@@ -41,7 +41,7 @@ require this add an extra parameter thus:
 
 
 ```
-rclone config update <name> [<key> <value>]+ [flags]
+rclone config update `name` [`key` `value`]+ [flags]
 ```
 
 ## Options
