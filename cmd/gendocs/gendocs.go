@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -120,6 +121,8 @@ rclone.org website.`,
 			return err
 		}
 
+		var outdentTitle = regexp.MustCompile(`(?m)^#(#+)`)
+
 		// Munge the files to add a link to the global flags page
 		err = filepath.Walk(out, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -135,6 +138,8 @@ rclone.org website.`,
 See the [global flags page](/flags/) for global options not listed here.
 
 ### SEE ALSO`, 1)
+				// outdent all the titles by one
+				doc = outdentTitle.ReplaceAllString(doc, `$1`)
 				err = ioutil.WriteFile(path, []byte(doc), 0777)
 				if err != nil {
 					return err
