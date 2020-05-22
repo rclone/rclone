@@ -1,13 +1,9 @@
-{{ if .Get "start"}}<ul class="list-group">{{end}}
 <li class="list-group-item d-flex justify-content-between">
   <span>
-    {{ .Get "name" }}
-    {{ if .Get "note"}} (<a href="{{ .Get "config" }}{{ .Get "note" }}">See note</a>) {{end}}
+    {{ .Get "name" }}{{ if .Get "note"}} (<a href="{{ .Get "config" }}{{ .Get "note" }}">See note</a>){{end}}
   </span>
   <span>
     <a class="badge badge-primary badge-pill" role="button btn-sm" href="{{ .Get "home" }}" target="_blank"><i class="fa fa-home" aria-hidden="true"></i> Home</a>
     <a class="badge badge-primary badge-pill" role="button btn-sm" href="{{ .Get "config" }}"><i class="fa fa-book" aria-hidden="true"></i> Config</a>
   </span>
 </li>
-{{ if .Get "end"}}</ul>{{end}}
-
