@@ -41,9 +41,18 @@ client_secret>
 Box App config.json location
 Leave blank normally.
 Enter a string value. Press Enter for the default ("").
-config_json>
-'enterprise' or 'user' depending on the type of token being requested.
+box_config_file>
+Box App Primary Access Token
+Leave blank normally.
+Enter a string value. Press Enter for the default ("").
+access_token>
+
 Enter a string value. Press Enter for the default ("user").
+Choose a number from below, or type in your own value
+ 1 / Rclone should act on behalf of a user
+   \ "user"
+ 2 / Rclone should act on behalf of a service account
+   \ "enterprise"
 box_sub_type>
 Remote config
 Use auto config?
