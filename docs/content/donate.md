@@ -7,15 +7,21 @@ date: "2020-05-15"
 
 # {{< icon "fa fa-heart heart" >}} Donations to the rclone project
 
-Donations help us continue to develop rclone as free open source
+Donations help keep the rclone project running as free open source
 software.
 
 Maintaining rclone is a lot of work - easily a **full time job** for
-me. Nothing stands still in the world of cloud storage! We love doing
-the work and we'd like to spend more time doing it - your support
-helps make that possible.
+me. Nothing stands still in the world of cloud storage so rclone needs
+constant attention to stay in good working order.
 
-Nick Craig-Wood
+I and my other contributors love doing the work and we'd like to spend
+more time doing it - your support helps make that possible.
+
+Thank you :-)
+
+-- Nick Craig-Wood
+
+{{< monthly_donations >}}
 
 ## Personal users
 
