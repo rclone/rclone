@@ -5,6 +5,8 @@
 // Package blake2b implements the BLAKE2b hash algorithm defined by RFC 7693
 // and the extendable output function (XOF) BLAKE2Xb.
 //
+// BLAKE2b is optimized for 64-bit platforms—including NEON-enabled ARMs—and
+// produces digests of any size between 1 and 64 bytes.
 // For a detailed specification of BLAKE2b see https://blake2.net/blake2.pdf
 // and for BLAKE2Xb see https://blake2.net/blake2x.pdf
 //

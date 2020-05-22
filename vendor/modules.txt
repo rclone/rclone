@@ -267,7 +267,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
 # goftp.io/server v0.3.2
 goftp.io/server
-# golang.org/x/crypto v0.0.0-20200221231518-2aa609cf4a9d
+# golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 golang.org/x/crypto/argon2
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blake2b
@@ -285,6 +285,7 @@ golang.org/x/crypto/scrypt
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+golang.org/x/crypto/ssh/knownhosts
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20200222125558-5a598a2470a0
 golang.org/x/net/bpf
