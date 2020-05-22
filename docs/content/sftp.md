@@ -12,8 +12,10 @@ Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol).
 
 The SFTP backend can be used with a number of different providers:
 
-{{< provider name="C14" home="https://www.online.net/en/storage/c14-cold-storage" config="/sftp/#c14" start="true">}}
-{{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" end="true">}}
+{{< provider_list >}}
+{{< provider name="C14" home="https://www.online.net/en/storage/c14-cold-storage" config="/sftp/#c14">}}
+{{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net">}}
+{{< /provider_list >}}
 
 SFTP runs over SSH v2 and is installed as standard with most modern
 SSH installations.

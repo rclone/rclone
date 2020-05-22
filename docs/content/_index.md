@@ -103,6 +103,7 @@ Here is a list of providers that rclone supports. This isn't an
 exhaustive list as there are many more that support standard protocols
 such as WebDAV or S3 that work out of the box.
 
+{{< provider_list >}}
 {{< provider name="1Fichier" home="https://1fichier.com/" config="/fichier/" start="true">}}
 {{< provider name="Alibaba Cloud (Aliyun) Object Storage System (OSS)" home="https://www.alibabacloud.com/product/oss/" config="/s3/#alibaba-oss" >}}
 {{< provider name="Amazon Drive" home="https://www.amazon.com/clouddrive" config="/amazonclouddrive/" note="#status">}}
@@ -153,6 +154,7 @@ such as WebDAV or S3 that work out of the box.
 {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}
+{{< /provider_list >}}
 
 Links
 
