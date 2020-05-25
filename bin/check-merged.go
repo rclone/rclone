@@ -55,7 +55,7 @@ func gitDiffDiff(rev1, rev2 string) {
 		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
 			// OK just different
 		} else {
-			log.Fatalf("git diff diff failed: %#v", err)
+			log.Fatalf("git diff failed: %#v", err)
 		}
 	}
 	_, _ = os.Stdout.Write(out)

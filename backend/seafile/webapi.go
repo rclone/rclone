@@ -35,7 +35,7 @@ func (f *Fs) getAuthorizationToken(ctx context.Context) (string, error) {
 	return getAuthorizationToken(ctx, f.srv, f.opt.User, f.opt.Password, "")
 }
 
-// getAuthorizationToken can be called outside of a fs (during configuration of the remote to get the authentication token)
+// getAuthorizationToken can be called outside of an fs (during configuration of the remote to get the authentication token)
 // it's doing a single call (no pacer involved)
 func getAuthorizationToken(ctx context.Context, srv *rest.Client, user, password, oneTimeCode string) (string, error) {
 	// API Documentation

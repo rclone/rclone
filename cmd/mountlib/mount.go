@@ -385,7 +385,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 	return commandDefinition
 }
 
-// ClipBlocks clips the blocks pointed to to the OS max
+// ClipBlocks clips the blocks pointed to the OS max
 func ClipBlocks(b *uint64) {
 	var max uint64
 	switch runtime.GOOS {

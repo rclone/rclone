@@ -33,7 +33,7 @@ Rclone uses the labels like this:
 * `duplicate` - normally close these and ask the user to subscribe to the original
 * `enhancement: new remote` - a new rclone backend
 * `enhancement` - a new feature
-* `FUSE` - do do with `rclone mount` command
+* `FUSE` - to do with `rclone mount` command
 * `good first issue` - mark these if you find a small self contained issue - these get shown to new visitors to the project
 * `help` wanted - mark these if you find a self contained issue - these get shown to new visitors to the project
 * `IMPORTANT` - note to maintainers not to forget to fix this for the release

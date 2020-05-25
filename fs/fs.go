@@ -82,7 +82,7 @@ type RegInfo struct {
 	// Prefix for command line flags for this fs - defaults to Name if not set
 	Prefix string
 	// Create a new file system.  If root refers to an existing
-	// object, then it should return a Fs which which points to
+	// object, then it should return an Fs which which points to
 	// the parent of that object and ErrorIsFile.
 	NewFs func(name string, root string, config configmap.Mapper) (Fs, error) `json:"-"`
 	// Function to call to help with config
@@ -191,7 +191,7 @@ func (o *Option) String() string {
 	return fmt.Sprint(o.GetValue())
 }
 
-// Set a Option from a string
+// Set an Option from a string
 func (o *Option) Set(s string) (err error) {
 	newValue, err := configstruct.StringToInterface(o.GetValue(), s)
 	if err != nil {
@@ -274,7 +274,7 @@ type Fs interface {
 
 	// Put in to the remote path with the modTime given of the given size
 	//
-	// When called from outside a Fs by rclone, src.Size() will always be >= 0.
+	// When called from outside an Fs by rclone, src.Size() will always be >= 0.
 	// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
 	// return an error or upload it properly (rather than e.g. calling panic).
 	//
@@ -327,7 +327,7 @@ type Object interface {
 
 	// Update in to the object with the modTime given of the given size
 	//
-	// When called from outside a Fs by rclone, src.Size() will always be >= 0.
+	// When called from outside an Fs by rclone, src.Size() will always be >= 0.
 	// But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 	// return an error or update the object properly (rather than e.g. calling panic).
 	Update(ctx context.Context, in io.Reader, src ObjectInfo, options ...OpenOption) error

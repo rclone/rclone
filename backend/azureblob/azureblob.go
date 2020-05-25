@@ -1455,7 +1455,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	httpHeaders.ContentType = fs.MimeType(ctx, o)
 	// Compute the Content-MD5 of the file, for multiparts uploads it
 	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
-	// Note: If multipart, a MD5 checksum will also be computed for each uploaded block
+	// Note: If multipart, an MD5 checksum will also be computed for each uploaded block
 	// 		 in order to validate its integrity during transport
 	if !o.fs.opt.DisableCheckSum {
 		if sourceMD5, _ := src.Hash(ctx, hash.MD5); sourceMD5 != "" {

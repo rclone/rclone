@@ -230,7 +230,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// parsePath parses an sugarsync 'url'
+// parsePath parses a sugarsync 'url'
 func parsePath(path string) (root string) {
 	root = strings.Trim(path, "/")
 	return

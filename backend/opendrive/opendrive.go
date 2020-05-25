@@ -63,7 +63,7 @@ func init() {
 			//   ? (question mark) -> '？' // FULLWIDTH QUESTION MARK
 			//   * (asterisk)      -> '＊' // FULLWIDTH ASTERISK
 			//
-			// Additionally names can't begin or end with a ASCII whitespace.
+			// Additionally names can't begin or end with an ASCII whitespace.
 			// List of replaced characters:
 			//     (space)           -> '␠'  // SYMBOL FOR SPACE
 			//     (horizontal tab)  -> '␉'  // SYMBOL FOR HORIZONTAL TABULATION

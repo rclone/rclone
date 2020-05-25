@@ -1164,7 +1164,7 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	}
 }
 
-// Stat a Object into info
+// Stat an Object into info
 func (o *Object) lstat() error {
 	info, err := o.fs.lstat(o.path)
 	if err == nil {

@@ -140,7 +140,7 @@ func showHelp(fsInfo *fs.RegInfo) error {
 	fmt.Printf("### Backend commands\n\n")
 	fmt.Printf(`Here are the commands specific to the %s backend.
 
-Run them with with
+Run them with
 
     rclone backend COMMAND remote:
 

@@ -94,7 +94,7 @@ when the ssh-agent contains many keys.`,
 			Name: "use_insecure_cipher",
 			Help: `Enable the use of insecure ciphers and key exchange methods. 
 
-This enables the use of the the following insecure ciphers and key exchange methods:
+This enables the use of the following insecure ciphers and key exchange methods:
 
 - aes128-cbc
 - aes192-cbc
