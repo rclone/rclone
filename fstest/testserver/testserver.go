@@ -118,6 +118,10 @@ func start(name string) error {
 // Start starts the named test server which can be stopped by the
 // function returned.
 func Start(remoteName string) (fn func(), err error) {
+	if remoteName == "" {
+		// don't start the local backend
+		return func() {}, nil
+	}
 	var name string
 	name, _, err = fspath.Parse(remoteName)
 	if err != nil {
