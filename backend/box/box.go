@@ -900,8 +900,9 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	}
 	// FIXME max upload size would be useful to use in Update
 	usage = &fs.Usage{
-		Used:  fs.NewUsageValue(user.SpaceUsed),   // bytes in use
-		Total: fs.NewUsageValue(user.SpaceAmount), // bytes total
+		Used:  fs.NewUsageValue(user.SpaceUsed),                    // bytes in use
+		Total: fs.NewUsageValue(user.SpaceAmount),                  // bytes total
+		Free:  fs.NewUsageValue(user.SpaceAmount - user.SpaceUsed), // bytes free
 	}
 	return usage, nil
 }
