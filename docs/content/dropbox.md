@@ -111,7 +111,7 @@ is checked for all transfers.
 | \         | 0x5C  | ＼           |
 
 File names can also not end with the following characters.
-These only get replaced if they are last character in the name:
+These only get replaced if they are the last character in the name:
 
 | Character | Value | Replacement |
 | --------- |:-----:|:-----------:|
