@@ -154,7 +154,7 @@ Stopping the mount manually:
 To run rclone ` + commandName + ` on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
 
-WinFsp is an [open source](https://github.com/billziss-gh/winfsp)
+[WinFsp](https://github.com/billziss-gh/winfsp) is an open source
 Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
 uses combination with
