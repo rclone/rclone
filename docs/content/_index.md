@@ -81,7 +81,7 @@ Rclone can help you:
 - Mirror cloud data to other cloud services or locally
 - Migrate data to cloud, or between cloud storage vendors
 - Mount multiple, encrypted, cached or diverse cloud storage as a disk
-- Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/), [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/),
+- Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/), [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/)
 - Union file systems together to present multiple local and/or cloud file systems as one
 
 ## Features {#features}

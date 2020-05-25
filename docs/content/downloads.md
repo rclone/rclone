@@ -17,7 +17,7 @@ Rclone Download {{< version >}}
 | MIPS - Big Endian | - | - | {{< download linux mips >}} | {{< download linux mips deb >}} | {{< download linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< download linux mipsle >}} | {{< download linux mipsle deb >}} | {{< download linux mipsle rpm >}} | - | - | - | - | - |
 
-You can also find a [mirror of the downloads on github](https://github.com/rclone/rclone/releases/tag/{{< version >}}).
+You can also find a [mirror of the downloads on GitHub](https://github.com/rclone/rclone/releases/tag/{{< version >}}).
 
 ## Script download and install ##
 
@@ -79,4 +79,4 @@ script) from a URL which doesn't change then you can use these links.
 Older Downloads
 ==============
 
-Older downloads can be found [here](https://downloads.rclone.org/)
+Older downloads can be found [here](https://downloads.rclone.org/).
