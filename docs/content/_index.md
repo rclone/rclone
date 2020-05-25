@@ -9,12 +9,12 @@ date: "2020-05-16"
 
 {{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >}}
 
-- [About rclone.](#about)
-- [What can rclone do for you.](#what)
-- [What features does rclone have.](#features)
-- [What providers does rclone support.](#providers)
-- [Download.](/downloads/)
-- [Install.](/install/)
+- [About rclone](#about)
+- [What can rclone do for you](#what)
+- [What features does rclone have](#features)
+- [What providers does rclone support](#providers)
+- [Download](/downloads/)
+- [Install](/install/)
 {{< rem MAINPAGELINK >}}
 
 ## About rclone {#about}
