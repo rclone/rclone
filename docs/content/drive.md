@@ -118,7 +118,7 @@ To copy a local directory to a drive directory called backup
 Rclone allows you to select which scope you would like for rclone to
 use.  This changes what type of token is granted to rclone.  [The
 scopes are defined
-here.](https://developers.google.com/drive/v3/web/about-auth).
+here](https://developers.google.com/drive/v3/web/about-auth).
 
 The scope are
 
