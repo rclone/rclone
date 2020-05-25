@@ -47,7 +47,7 @@ for your country.
 
 Monthly donations help keep rclone development sustainable in the long
 run so this is our preferred option. A small amount every month is
-much better for us than a one off donation as it alows us to plan for
+much better for us than a one off donation as it allows us to plan for
 the future.
 
 {{< monthly_donations >}}
