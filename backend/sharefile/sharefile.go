@@ -152,7 +152,10 @@ func init() {
 				oauthConfig.Endpoint.TokenURL = endpoint + tokenPath
 				return nil
 			}
-			err := oauthutil.ConfigWithCallback("sharefile", name, m, oauthConfig, checkAuth)
+			opt := oauthutil.Options{
+				CheckAuth: checkAuth,
+			}
+			err := oauthutil.Config("sharefile", name, m, oauthConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}

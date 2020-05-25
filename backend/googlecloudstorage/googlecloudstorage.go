@@ -82,7 +82,7 @@ func init() {
 			if saFile != "" || saCreds != "" {
 				return
 			}
-			err := oauthutil.Config("google cloud storage", name, m, storageConfig)
+			err := oauthutil.Config("google cloud storage", name, m, storageConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}

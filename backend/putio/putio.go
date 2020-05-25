@@ -60,7 +60,10 @@ func init() {
 		Description: "Put.io",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.ConfigNoOffline("putio", name, m, putioConfig)
+			opt := oauthutil.Options{
+				NoOffline: true,
+			}
+			err := oauthutil.Config("putio", name, m, putioConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
