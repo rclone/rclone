@@ -357,32 +357,25 @@ func (ar *AuthResult) Error() string {
 		status, ar.Name, ar.Code, ar.Description, ar.HelpURL)
 }
 
-// Config does the initial creation of the token
-//
-// It may run an internal webserver to receive the results
-func Config(id, name string, m configmap.Mapper, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, config, true, nil, opts)
-}
-
 // CheckAuthFn is called when a good Auth has been received
 type CheckAuthFn func(*oauth2.Config, *AuthResult) error
 
-// ConfigWithCallback does the initial creation of the token
+// Options for the oauth config
+type Options struct {
+	NoOffline  bool                    // If set then "access_type=offline" parameter is not passed
+	CheckAuth  CheckAuthFn             // When the AuthResult is known the checkAuth function is called if set
+	OAuth2Opts []oauth2.AuthCodeOption // extra oauth2 options
+}
+
+// Config does the initial creation of the token
+//
+// If opt is nil it will use the default Options
 //
 // It may run an internal webserver to receive the results
-//
-// When the AuthResult is known the checkAuth function is called if set
-func ConfigWithCallback(id, name string, m configmap.Mapper, config *oauth2.Config, checkAuth CheckAuthFn, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, config, true, checkAuth, opts)
-}
-
-// ConfigNoOffline does the same as Config but does not pass the
-// "access_type=offline" parameter.
-func ConfigNoOffline(id, name string, m configmap.Mapper, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, config, false, nil, opts)
-}
-
-func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, offline bool, checkAuth CheckAuthFn, opts []oauth2.AuthCodeOption) error {
+func Config(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt *Options) error {
+	if opt == nil {
+		opt = &Options{}
+	}
 	oauthConfig, changed := overrideCredentials(name, m, oauthConfig)
 	authorizeOnlyValue, ok := m.Get(config.ConfigAuthorize)
 	authorizeOnly := ok && authorizeOnlyValue != "" // set if being run by "rclone authorize"
@@ -461,7 +454,8 @@ version recommended):
 	}
 
 	// Generate oauth URL
-	if offline {
+	opts := opt.OAuth2Opts
+	if !opt.NoOffline {
 		opts = append(opts, oauth2.AccessTypeOffline)
 	}
 	authURL := oauthConfig.AuthCodeURL(state, opts...)
@@ -469,7 +463,7 @@ version recommended):
 	// Prepare webserver if needed
 	var server *authServer
 	if useWebServer {
-		server = newAuthServer(bindAddress, state, authURL)
+		server = newAuthServer(opt, bindAddress, state, authURL)
 		err := server.Init()
 		if err != nil {
 			return errors.Wrap(err, "failed to start auth webserver")
@@ -497,8 +491,8 @@ version recommended):
 			return auth
 		}
 		fmt.Printf("Got code\n")
-		if checkAuth != nil {
-			err = checkAuth(oauthConfig, auth)
+		if opt.CheckAuth != nil {
+			err = opt.CheckAuth(oauthConfig, auth)
 			if err != nil {
 				return err
 			}
@@ -529,6 +523,7 @@ version recommended):
 
 // Local web server for collecting auth
 type authServer struct {
+	opt         *Options
 	state       string
 	listener    net.Listener
 	bindAddress string
@@ -538,8 +533,9 @@ type authServer struct {
 }
 
 // newAuthServer makes the webserver for collecting auth
-func newAuthServer(bindAddress, state, authURL string) *authServer {
+func newAuthServer(opt *Options, bindAddress, state, authURL string) *authServer {
 	return &authServer{
+		opt:         opt,
 		state:       state,
 		bindAddress: bindAddress,
 		authURL:     authURL, // http://host/auth redirects to here

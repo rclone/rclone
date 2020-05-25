@@ -178,7 +178,7 @@ func init() {
 			}
 
 			if opt.ServiceAccountFile == "" {
-				err = oauthutil.Config("drive", name, m, driveConfig)
+				err = oauthutil.Config("drive", name, m, driveConfig, nil)
 				if err != nil {
 					log.Fatalf("Failed to configure token: %v", err)
 				}

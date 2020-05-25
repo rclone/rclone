@@ -61,7 +61,7 @@ func init() {
 		Description: "Yandex Disk",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.Config("yandex", name, m, oauthConfig)
+			err := oauthutil.Config("yandex", name, m, oauthConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 				return

@@ -93,7 +93,7 @@ func init() {
 					log.Fatalf("Failed to configure token with jwt authentication: %v", err)
 				}
 			} else {
-				err = oauthutil.Config("box", name, m, oauthConfig)
+				err = oauthutil.Config("box", name, m, oauthConfig, nil)
 				if err != nil {
 					log.Fatalf("Failed to configure token with oauth authentication: %v", err)
 				}

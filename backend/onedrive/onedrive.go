@@ -79,7 +79,7 @@ func init() {
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
 			ctx := context.TODO()
-			err := oauthutil.Config("onedrive", name, m, oauthConfig)
+			err := oauthutil.Config("onedrive", name, m, oauthConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 				return
