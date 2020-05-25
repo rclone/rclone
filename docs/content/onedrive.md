@@ -168,7 +168,7 @@ the following characters are also replaced:
 | %         | 0x25  | ％          |
 
 File names can also not end with the following characters.
-These only get replaced if they are last character in the name:
+These only get replaced if they are the last character in the name:
 
 | Character | Value | Replacement |
 | --------- |:-----:|:-----------:|
@@ -176,7 +176,7 @@ These only get replaced if they are last character in the name:
 | .         | 0x2E  | ．          |
 
 File names can also not begin with the following characters.
-These only get replaced if they are first character in the name:
+These only get replaced if they are the first character in the name:
 
 | Character | Value | Replacement |
 | --------- |:-----:|:-----------:|

@@ -142,7 +142,7 @@ the following characters are also replaced:
 | "         | 0x22  | ＂           |
 
 File names can also not start or end with the following characters.
-These only get replaced if they are first or last character in the
+These only get replaced if they are the first or last character in the
 name:
 
 | Character | Value | Replacement |

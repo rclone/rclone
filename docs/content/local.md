@@ -100,7 +100,7 @@ list is based on the [Windows file naming conventions](https://docs.microsoft.co
 | \|        | 0x7C  | ｜           |
 
 File names on Windows can also not end with the following characters.
-These only get replaced if they are last character in the name:
+These only get replaced if they are the last character in the name:
 
 | Character | Value | Replacement |
 | --------- |:-----:|:-----------:|
