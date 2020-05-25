@@ -115,7 +115,7 @@ In addition to the [default restricted characters set](/overview/#restricted-cha
 the following characters are also replaced:
 
 File names can also not end with the following characters.
-These only get replaced if they are last character in the name:
+These only get replaced if they are the last character in the name:
 
 | Character | Value | Replacement |
 | --------- |:-----:|:-----------:|
