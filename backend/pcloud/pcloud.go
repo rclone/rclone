@@ -67,7 +67,10 @@ func init() {
 		Description: "Pcloud",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.Config("pcloud", name, m, oauthConfig, nil)
+			opt := oauthutil.Options{
+				StateBlankOK: true, // pCloud seems to drop the state parameter now - see #4210
+			}
+			err := oauthutil.Config("pcloud", name, m, oauthConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}

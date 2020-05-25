@@ -362,9 +362,10 @@ type CheckAuthFn func(*oauth2.Config, *AuthResult) error
 
 // Options for the oauth config
 type Options struct {
-	NoOffline  bool                    // If set then "access_type=offline" parameter is not passed
-	CheckAuth  CheckAuthFn             // When the AuthResult is known the checkAuth function is called if set
-	OAuth2Opts []oauth2.AuthCodeOption // extra oauth2 options
+	NoOffline    bool                    // If set then "access_type=offline" parameter is not passed
+	CheckAuth    CheckAuthFn             // When the AuthResult is known the checkAuth function is called if set
+	OAuth2Opts   []oauth2.AuthCodeOption // extra oauth2 options
+	StateBlankOK bool                    // If set, state returned as "" is deemed to be OK
 }
 
 // Config does the initial creation of the token
@@ -580,7 +581,7 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 
 	// check state
 	state := req.Form.Get("state")
-	if state != s.state {
+	if state != s.state && !(state == "" && s.opt.StateBlankOK) {
 		reply(http.StatusBadRequest, &AuthResult{
 			Name:        "Auth state doesn't match",
 			Description: fmt.Sprintf("Expecting %q got %q", s.state, state),
