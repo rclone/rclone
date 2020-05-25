@@ -16,7 +16,7 @@ Rclone is a Go program and comes as a single binary file.
 
 See below for some expanded Linux / macOS instructions.
 
-See the [Usage section](/docs/) of the docs for how to use rclone, or
+See the [Usage section](/docs/#usage) of the docs for how to use rclone, or
 run `rclone -h`.
 
 ## Script installation ##
