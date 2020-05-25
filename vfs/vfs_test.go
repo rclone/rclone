@@ -295,7 +295,11 @@ func TestVFSStatfs(t *testing.T) {
 	if vfs.usage.Free != nil {
 		assert.Equal(t, *vfs.usage.Free, free)
 	} else {
-		assert.True(t, free >= int64(unknownFreeBytes))
+		if vfs.usage.Total != nil && vfs.usage.Used != nil {
+			assert.Equal(t, free, total-used)
+		} else {
+			assert.True(t, free >= int64(unknownFreeBytes))
+		}
 	}
 	if vfs.usage.Used != nil {
 		assert.Equal(t, *vfs.usage.Used, used)
