@@ -881,7 +881,7 @@ up, up to the maximum set with `--multi-thread-streams`.
 So if `--multi-thread-cutoff 250MB` and `--multi-thread-streams 4` are
 in effect (the defaults):
 
-- 0MB.250MB files will be downloaded with 1 stream
+- 0MB..250MB files will be downloaded with 1 stream
 - 250MB..500MB files will be downloaded with 2 streams
 - 500MB..750MB files will be downloaded with 3 streams
 - 750MB+ files will be downloaded with 4 streams
