@@ -1210,7 +1210,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // The cleanup function should be called when out is finished with
 // regardless of whether this function returned an error or not.
 func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader, cleanup func(), err error) {
-	// we need a MD5
+	// we need an MD5
 	md5Hasher := md5.New()
 	// use the teeReader to write to the local file AND calculate the MD5 while doing so
 	teeReader := io.TeeReader(in, md5Hasher)

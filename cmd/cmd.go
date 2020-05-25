@@ -76,7 +76,7 @@ func ShowVersion() {
 	fmt.Printf("- go version: %s\n", runtime.Version())
 }
 
-// NewFsFile creates a Fs from a name but may point to a file.
+// NewFsFile creates an Fs from a name but may point to a file.
 //
 // It returns a string with the file name if points to a file
 // otherwise "".
@@ -99,7 +99,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 	return nil, ""
 }
 
-// newFsFileAddFilter creates a src Fs from a name
+// newFsFileAddFilter creates an src Fs from a name
 //
 // This works the same as NewFsFile however it adds filters to the Fs
 // to limit it to a single file if the remote pointed to a file.

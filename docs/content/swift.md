@@ -513,7 +513,7 @@ investigate further with the `--dump-bodies` flag.
 This may also be caused by specifying the region when you shouldn't
 have (eg OVH).
 
-#### Rclone gives Failed to create file system: Response didn't have storage storage url and auth token ####
+#### Rclone gives Failed to create file system: Response didn't have storage url and auth token ####
 
 This is most likely caused by forgetting to specify your tenant when
 setting up a swift remote.

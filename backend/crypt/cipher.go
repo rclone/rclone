@@ -559,7 +559,7 @@ func (n *nonce) increment() {
 	n.carry(0)
 }
 
-// add an uint64 to the nonce
+// add a uint64 to the nonce
 func (n *nonce) add(x uint64) {
 	carry := uint16(0)
 	for i := 0; i < 8; i++ {

@@ -47,8 +47,8 @@ type File struct {
 	writers           []Handle                        // writers for this file
 	nwriters          int32                           // len(writers) which is read/updated with atomic
 	readWriters       int                             // how many RWFileHandle are open for writing
-	readWriterClosing bool                            // is a RWFileHandle currently cosing?
-	modified          bool                            // has the cache file be modified by a RWFileHandle?
+	readWriterClosing bool                            // is an RWFileHandle currently cosing?
+	modified          bool                            // has the cache file be modified by an RWFileHandle?
 	pendingModTime    time.Time                       // will be applied once o becomes available, i.e. after file was written
 	pendingRenameFun  func(ctx context.Context) error // will be run/renamed after all writers close
 	appendMode        bool                            // file was opened with O_APPEND

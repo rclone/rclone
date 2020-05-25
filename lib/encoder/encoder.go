@@ -1095,7 +1095,7 @@ func (i identity) ToStandardName(s string) string {
 	return ToStandardName(i, s)
 }
 
-// Identity returns a Encoder that always returns the input value
+// Identity returns an Encoder that always returns the input value
 func Identity() Encoder {
 	return identity{}
 }

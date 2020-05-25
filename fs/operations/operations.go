@@ -748,7 +748,7 @@ func checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHas
 	return false, false
 }
 
-// checkFn is the the type of the checking function used in CheckFn()
+// checkFn is the type of the checking function used in CheckFn()
 type checkFn func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool)
 
 // checkMarch is used to march over two Fses in the same way as
@@ -1080,7 +1080,7 @@ func hashSum(ctx context.Context, ht hash.Type, o fs.Object) (string, error) {
 	return sum, err
 }
 
-// HashLister does a md5sum equivalent for the hash type passed in
+// HashLister does an md5sum equivalent for the hash type passed in
 func HashLister(ctx context.Context, ht hash.Type, f fs.Fs, w io.Writer) error {
 	return ListFn(ctx, f, func(o fs.Object) {
 		sum, _ := hashSum(ctx, ht, o)
@@ -1088,7 +1088,7 @@ func HashLister(ctx context.Context, ht hash.Type, f fs.Fs, w io.Writer) error {
 	})
 }
 
-// HashListerBase64 does a md5sum equivalent for the hash type passed in with base64 encoded
+// HashListerBase64 does an md5sum equivalent for the hash type passed in with base64 encoded
 func HashListerBase64(ctx context.Context, ht hash.Type, f fs.Fs, w io.Writer) error {
 	return ListFn(ctx, f, func(o fs.Object) {
 		sum, err := hashSum(ctx, ht, o)

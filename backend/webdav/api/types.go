@@ -155,7 +155,7 @@ func (e *Error) Error() string {
 	return strings.Join(out, ": ")
 }
 
-// Time represents represents date and time information for the
+// Time represents date and time information for the
 // webdav API marshalling to and from timeFormat
 type Time time.Time
 

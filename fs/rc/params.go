@@ -103,7 +103,7 @@ func (p Params) GetString(key string) (string, error) {
 	return str, nil
 }
 
-// GetInt64 gets a int64 parameter from the input
+// GetInt64 gets an int64 parameter from the input
 //
 // If the parameter isn't found then error will be of type
 // ErrParamNotFound and the returned value will be 0.

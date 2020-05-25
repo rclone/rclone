@@ -87,7 +87,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "plex_insecure",
-			Help:     "Skip all certificate verifications when connecting to the Plex server",
+			Help:     "Skip all certificate verification when connecting to the Plex server",
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -339,7 +339,7 @@ func parseRootPath(path string) (string, error) {
 	return strings.Trim(path, "/"), nil
 }
 
-// NewFs constructs a Fs from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
