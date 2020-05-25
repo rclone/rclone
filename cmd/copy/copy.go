@@ -2,6 +2,7 @@ package copy
 
 import (
 	"context"
+	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -23,7 +24,8 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "copy source:path dest:path",
 	Short: `Copy files from source to dest, skipping already copied.`,
-	Long: `
+	// Note: "|" will be replaced by backticks below
+	Long: strings.ReplaceAll(`
 Copy the source to the destination.  Doesn't transfer
 unchanged files, testing by size and modification time or
 MD5SUM.  Doesn't delete files from the destination.
@@ -55,8 +57,8 @@ Not to
     destpath/sourcepath/one.txt
     destpath/sourcepath/two.txt
 
-If you are familiar with ` + "`rsync`" + `, rclone always works as if you had
-written a trailing / - meaning "copy the contents of this directory".
+If you are familiar with |rsync|, rclone always works as if you had
+written a trailing |/| - meaning "copy the contents of this directory".
 This applies to all commands and whether you are talking about the
 source or destination.
 
@@ -71,10 +73,10 @@ recently very efficiently like this:
 
     rclone copy --max-age 24h --no-traverse /path/to/src remote:
 
-**Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics.
+**Note**: Use the |-P|/|--progress| flag to view real-time transfer statistics.
 
-**Note**: Use the ` + "`--dry-run` or the `--interactive`/`-i`" + ` flag to test without copying anything.
-`,
+**Note**: Use the |--dry-run| or the |--interactive|/|-i| flag to test without copying anything.
+`, "|", "`"),
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
