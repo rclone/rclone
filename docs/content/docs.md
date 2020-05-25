@@ -836,7 +836,7 @@ This command line flag allows you to override that computed default.
 ### --multi-thread-cutoff=SIZE ###
 
 When downloading files to the local backend above this size, rclone
-will use multiple threads to download the file. (default 250M)
+will use multiple threads to download the file (default 250M).
 
 Rclone preallocates the file (using `fallocate(FALLOC_FL_KEEP_SIZE)`
 on unix or `NTSetInformationFile` on Windows both of which takes no
@@ -871,7 +871,7 @@ with `--multi-thread-streams 0`
 
 When using multi thread downloads (see above `--multi-thread-cutoff`)
 this sets the maximum number of streams to use.  Set to `0` to disable
-multi thread downloads. (Default 4)
+multi thread downloads (Default 4).
 
 Exactly how many streams rclone uses for the download depends on the
 size of the file. To calculate the number of download streams Rclone
@@ -1204,7 +1204,7 @@ See also `--tpslimit-burst`.
 
 ### --tpslimit-burst int ###
 
-Max burst of transactions for `--tpslimit`. (default `1`)
+Max burst of transactions for `--tpslimit` (default `1`).
 
 Normally `--tpslimit` will do exactly the number of transaction per
 second specified.  However if you supply `--tps-burst` then rclone can
