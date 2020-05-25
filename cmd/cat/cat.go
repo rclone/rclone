@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -35,7 +36,8 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "cat remote:path",
 	Short: `Concatenates any files and sends them to stdout.`,
-	Long: `
+	// Warning! "|" will be replaced by backticks below
+	Long: strings.ReplaceAll(`
 rclone cat sends any files to standard output.
 
 You can use it like this to output a single file
@@ -50,11 +52,11 @@ Or like this to output any .txt files in dir or its subdirectories.
 
     rclone --include "*.txt" cat remote:path/to/dir
 
-Use the --head flag to print characters only at the start, --tail for
-the end and --offset and --count to print a section in the middle.
+Use the |--head| flag to print characters only at the start, |--tail| for
+the end and |--offset| and |--count| to print a section in the middle.
 Note that if offset is negative it will count from the end, so
---offset -1 --count 1 is equivalent to --tail 1.
-`,
+|--offset -1 --count 1| is equivalent to |--tail 1|.
+`, "|", "`"),
 	Run: func(command *cobra.Command, args []string) {
 		usedOffset := offset != 0 || count >= 0
 		usedHead := head > 0

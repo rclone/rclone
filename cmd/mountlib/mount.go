@@ -159,34 +159,36 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 		Use:    commandName + " remote:path /path/to/mountpoint",
 		Hidden: hidden,
 		Short:  `Mount the remote as file system on a mountpoint.`,
-		Long: `
-rclone ` + commandName + ` allows Linux, FreeBSD, macOS and Windows to
+		// Warning! "|" will be replaced by backticks below
+		//          "@" will be replaced by the command name
+		Long: strings.ReplaceAll(strings.ReplaceAll(`
+rclone @ allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
 FUSE.
 
-First set up your remote using ` + "`rclone config`" + `.  Check it works with ` + "`rclone ls`" + ` etc.
+First set up your remote using |rclone config|.  Check it works with |rclone ls| etc.
 
 On Linux and OSX, you can either run mount in foreground mode or background (daemon) mode.
-Mount runs in foreground mode by default, use the ` + "`--daemon`" + ` flag to specify background mode.
+Mount runs in foreground mode by default, use the |--daemon| flag to specify background mode.
 You can only run mount in foreground mode on Windows.
 
-On Linux/macOS/FreeBSD start the mount like this, where ` + "`/path/to/local/mount`" + `
+On Linux/macOS/FreeBSD start the mount like this, where |/path/to/local/mount|
 is an **empty** **existing** directory:
 
-    rclone ` + commandName + ` remote:path/to/files /path/to/local/mount
+    rclone @ remote:path/to/files /path/to/local/mount
 
 On Windows you can start a mount in different ways. See [below](#mounting-modes-on-windows)
 for details. The following examples will mount to an automatically assigned drive,
-to specific drive letter ` + "`X:`" + `, to path ` + "`C:\\path\\to\\nonexistent\\directory`" + `
+to specific drive letter |X:|, to path |C:\path\to\nonexistent\directory|
 (which must be **non-existent** subdirectory of an **existing** parent directory or drive,
 and is not supported when [mounting as a network drive](#mounting-modes-on-windows)), and
-the last example will mount as network share ` + "`\\cloud\remote`" + ` and map it to an
+the last example will mount as network share |\\cloud\remote| and map it to an
 automatically assigned drive:
 
-    rclone ` + commandName + ` remote:path/to/files *
-    rclone ` + commandName + ` remote:path/to/files X:
-    rclone ` + commandName + ` remote:path/to/files C:\path\to\nonexistent\directory
-    rclone ` + commandName + ` remote:path/to/files \\cloud\remote
+    rclone @ remote:path/to/files *
+    rclone @ remote:path/to/files X:
+    rclone @ remote:path/to/files C:\path\to\nonexistent\directory
+    rclone @ remote:path/to/files \\cloud\remote
 
 When the program ends while in foreground mode, either via Ctrl+C or receiving
 a SIGINT or SIGTERM signal, the mount should be automatically stopped.
@@ -208,12 +210,12 @@ then an additional 1PB of free space is assumed. If the remote does not
 [support](https://rclone.org/overview/#optional-features) the about feature
 at all, then 1PB is set as both the total and the free size.
 
-**Note**: As of ` + "`rclone` 1.52.2, `rclone mount`" + ` now requires Go version 1.13
+**Note**: As of |rclone| 1.52.2, |rclone mount| now requires Go version 1.13
 or newer on some platforms depending on the underlying FUSE library in use.
 
 ### Installing on Windows
 
-To run rclone ` + commandName + ` on Windows, you will need to
+To run rclone @ on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
 
 [WinFsp](https://github.com/billziss-gh/winfsp) is an open source
@@ -221,7 +223,7 @@ Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
 uses combination with [cgofuse](https://github.com/billziss-gh/cgofuse).
 Both of these packages are by Bill Zissimopoulos who was very helpful
-during the implementation of rclone ` + commandName + ` for Windows.
+during the implementation of rclone @ for Windows.
 
 #### Mounting modes on windows
 
@@ -240,54 +242,54 @@ as a network drive instead.
 
 When mounting as a fixed disk drive you can either mount to an unused drive letter,
 or to a path - which must be **non-existent** subdirectory of an **existing** parent
-directory or drive. Using the special value ` + "`*`" + ` will tell rclone to
+directory or drive. Using the special value |*| will tell rclone to
 automatically assign the next available drive letter, starting with Z: and moving backward.
 Examples:
 
-    rclone ` + commandName + ` remote:path/to/files *
-    rclone ` + commandName + ` remote:path/to/files X:
-    rclone ` + commandName + ` remote:path/to/files C:\path\to\nonexistent\directory
-    rclone ` + commandName + ` remote:path/to/files X:
+    rclone @ remote:path/to/files *
+    rclone @ remote:path/to/files X:
+    rclone @ remote:path/to/files C:\path\to\nonexistent\directory
+    rclone @ remote:path/to/files X:
 
-Option ` + "`--volname`" + ` can be used to set a custom volume name for the mounted
+Option |--volname| can be used to set a custom volume name for the mounted
 file system. The default is to use the remote name and path.
 
-To mount as network drive, you can add option ` + "`--network-mode`" + `
-to your ` + commandName + ` command. Mounting to a directory path is not supported in
+To mount as network drive, you can add option |--network-mode|
+to your @ command. Mounting to a directory path is not supported in
 this mode, it is a limitation Windows imposes on junctions, so the remote must always
 be mounted to a drive letter.
 
-    rclone ` + commandName + ` remote:path/to/files X: --network-mode
+    rclone @ remote:path/to/files X: --network-mode
 
-A volume name specified with ` + "`--volname`" + ` will be used to create the network share path.
-A complete UNC path, such as ` + "`\\\\cloud\\remote`" + `, optionally with path
-` + "`\\\\cloud\\remote\\madeup\\path`" + `, will be used as is. Any other
-string will be used as the share part, after a default prefix ` + "`\\\\server\\`" + `.
-If no volume name is specified then ` + "`\\\\server\\share`" + ` will be used.
+A volume name specified with |--volname| will be used to create the network share path.
+A complete UNC path, such as |\\cloud\remote|, optionally with path
+|\\cloud\remote\madeup\path|, will be used as is. Any other
+string will be used as the share part, after a default prefix |\\server\|.
+If no volume name is specified then |\\server\share| will be used.
 You must make sure the volume name is unique when you are mounting more than one drive,
 or else the mount command will fail. The share name will treated as the volume label for
 the mapped drive, shown in Windows Explorer etc, while the complete
-` + "`\\\\server\\share`" + ` will be reported as the remote UNC path by
-` + "`net use`" + ` etc, just like a normal network drive mapping.
+|\\server\share| will be reported as the remote UNC path by
+|net use| etc, just like a normal network drive mapping.
 
-If you specify a full network share UNC path with ` + "`--volname`" + `, this will implicitely
-set the ` + "`--network-mode`" + ` option, so the following two examples have same result:
+If you specify a full network share UNC path with |--volname|, this will implicitely
+set the |--network-mode| option, so the following two examples have same result:
 
-    rclone ` + commandName + ` remote:path/to/files X: --network-mode
-    rclone ` + commandName + ` remote:path/to/files X: --volname \\server\share
+    rclone @ remote:path/to/files X: --network-mode
+    rclone @ remote:path/to/files X: --volname \\server\share
 
 You may also specify the network share UNC path as the mountpoint itself. Then rclone
-will automatically assign a drive letter, same as with ` + "`*`" + ` and use that as
+will automatically assign a drive letter, same as with |*| and use that as
 mountpoint, and instead use the UNC path specified as the volume name, as if it were
-specified with the ` + "`--volname`" + ` option. This will also implicitely set
-the ` + "`--network-mode`" + ` option. This means the following two examples have same result:
+specified with the |--volname| option. This will also implicitely set
+the |--network-mode| option. This means the following two examples have same result:
 
-    rclone ` + commandName + ` remote:path/to/files \\cloud\remote
-    rclone ` + commandName + ` remote:path/to/files * --volname \\cloud\remote
+    rclone @ remote:path/to/files \\cloud\remote
+    rclone @ remote:path/to/files * --volname \\cloud\remote
 
 There is yet another way to enable network mode, and to set the share path,
 and that is to pass the "native" libfuse/WinFsp option directly:
-` + "`--fuse-flag --VolumePrefix=\\server\\share`" + `. Note that the path
+|--fuse-flag --VolumePrefix=\server\share|. Note that the path
 must be with just a single backslash prefix in this case.
 
 
@@ -308,12 +310,12 @@ representing permissions for the POSIX permission scopes: Owner, group and other
 By default, the owner and group will be taken from the current user, and the built-in
 group "Everyone" will be used to represent others. The user/group can be customized
 with FUSE options "UserName" and "GroupName",
-e.g. ` + "`-o UserName=user123 -o GroupName=\"Authenticated Users\"`" + `.
+e.g. |-o UserName=user123 -o GroupName="Authenticated Users"|.
 
 The permissions on each entry will be set according to
-[options](#options) ` + "`--dir-perms`" + ` and ` + "`--file-perms`" + `,
+[options](#options) |--dir-perms| and |--file-perms|,
 which takes a value in traditional [numeric notation](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation),
-where the default corresponds to ` + "`--file-perms 0666 --dir-perms 0777`" + `.
+where the default corresponds to |--file-perms 0666 --dir-perms 0777|.
 
 Note that the mapping of permissions is not always trivial, and the result
 you see in Windows Explorer may not be exactly like you expected.
@@ -342,10 +344,10 @@ alternatively using [the nssm service manager](https://nssm.cc/usage).
 
 ### Limitations
 
-Without the use of ` + "`--vfs-cache-mode`" + ` this can only write files
+Without the use of |--vfs-cache-mode| this can only write files
 sequentially, it can only seek when reading.  This means that many
 applications won't work with their files on an rclone mount without
-` + "`--vfs-cache-mode writes`" + ` or ` + "`--vfs-cache-mode full`" + `.
+|--vfs-cache-mode writes| or |--vfs-cache-mode full|.
 See the [File Caching](#file-caching) section for more info.
 
 The bucket based remotes (e.g. Swift, S3, Google Compute Storage, B2,
@@ -355,21 +357,21 @@ the directory cache.
 
 Only supported on Linux, FreeBSD, OS X and Windows at the moment.
 
-### rclone ` + commandName + ` vs rclone sync/copy
+### rclone @ vs rclone sync/copy
 
 File systems expect things to be 100% reliable, whereas cloud storage
 systems are a long way from 100% reliable. The rclone sync/copy
-commands cope with this with lots of retries.  However rclone ` + commandName + `
+commands cope with this with lots of retries.  However rclone @
 can't use retries in the same way without making local copies of the
 uploads. Look at the [file caching](#file-caching)
-for solutions to make ` + commandName + ` more reliable.
+for solutions to make @ more reliable.
 
 ### Attribute caching
 
-You can use the flag ` + "`--attr-timeout`" + ` to set the time the kernel caches
+You can use the flag |--attr-timeout| to set the time the kernel caches
 the attributes (size, modification time, etc.) for directory entries.
 
-The default is "1s" which caches files just long enough to avoid
+The default is |1s| which caches files just long enough to avoid
 too many callbacks to rclone from the kernel.
 
 In theory 0s should be the correct value for filesystems which can
@@ -380,14 +382,14 @@ few problems such as
 and [excessive time listing directories](https://github.com/rclone/rclone/issues/2095#issuecomment-371141147).
 
 The kernel can cache the info about a file for the time given by
-` + "`--attr-timeout`" + `. You may see corruption if the remote file changes
+|--attr-timeout|. You may see corruption if the remote file changes
 length during this window.  It will show up as either a truncated file
-or a file with garbage on the end.  With ` + "`--attr-timeout 1s`" + ` this is
-very unlikely but not impossible.  The higher you set ` + "`--attr-timeout`" + `
+or a file with garbage on the end.  With |--attr-timeout 1s| this is
+very unlikely but not impossible.  The higher you set |--attr-timeout|
 the more likely it is.  The default setting of "1s" is the lowest
 setting which mitigates the problems above.
 
-If you set it higher ('10s' or '1m' say) then the kernel will call
+If you set it higher (|10s| or |1m| say) then the kernel will call
 back to rclone less often making it more efficient, however there is
 more chance of the corruption issue above.
 
@@ -403,28 +405,28 @@ files to be visible in the mount.
 
 ### systemd
 
-When running rclone ` + commandName + ` as a systemd service, it is possible
+When running rclone @ as a systemd service, it is possible
 to use Type=notify. In this case the service will enter the started state
 after the mountpoint has been successfully set up.
-Units having the rclone ` + commandName + ` service specified as a requirement
+Units having the rclone @ service specified as a requirement
 will see all files and folders immediately in this mode.
 
 ### chunked reading
 
-` + "`--vfs-read-chunk-size`" + ` will enable reading the source objects in parts.
+|--vfs-read-chunk-size| will enable reading the source objects in parts.
 This can reduce the used download quota for some remotes by requesting only chunks
 from the remote that are actually read at the cost of an increased number of requests.
 
-When ` + "`--vfs-read-chunk-size-limit`" + ` is also specified and greater than
-` + "`--vfs-read-chunk-size`" + `, the chunk size for each open file will get doubled
-for each chunk read, until the specified value is reached. A value of -1 will disable
+When |--vfs-read-chunk-size-limit| is also specified and greater than
+|--vfs-read-chunk-size|, the chunk size for each open file will get doubled
+for each chunk read, until the specified value is reached. A value of |-1| will disable
 the limit and the chunk size will grow indefinitely.
 
-With ` + "`--vfs-read-chunk-size 100M`" + ` and ` + "`--vfs-read-chunk-size-limit 0`" + `
+With |--vfs-read-chunk-size 100M| and |--vfs-read-chunk-size-limit 0|
 the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When ` + "`--vfs-read-chunk-size-limit 500M`" + ` is specified, the result would be
+When |--vfs-read-chunk-size-limit 500M| is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
-` + vfs.Help,
+`, "|", "`"), "@", commandName) + vfs.Help,
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
 			opt := Opt // make a copy of the options

@@ -45,7 +45,8 @@ func AddFlags(cmdFlags *pflag.FlagSet) {
 }
 
 // FlagsHelp describes the flags for the help
-var FlagsHelp = strings.Replace(`
+// Warning! "|" will be replaced by backticks below
+var FlagsHelp = strings.ReplaceAll(`
 If you supply the |--one-way| flag, it will only check that files in
 the source match the files in the destination, not the other way
 around. This means that extra files in the destination that are not in
@@ -66,7 +67,7 @@ you what happened to it. These are reminiscent of diff files.
 - |+ path| means path was missing on the destination, so only in the source
 - |* path| means path was present in source and destination but different.
 - |! path| means there was an error reading or hashing the source or dest.
-`, "|", "`", -1)
+`, "|", "`")
 
 // GetCheckOpt gets the options corresponding to the check flags
 func GetCheckOpt(fsrc, fdst fs.Fs) (opt *operations.CheckOpt, close func(), err error) {
@@ -130,19 +131,19 @@ func GetCheckOpt(fsrc, fdst fs.Fs) (opt *operations.CheckOpt, close func(), err 
 var commandDefinition = &cobra.Command{
 	Use:   "check source:path dest:path",
 	Short: `Checks the files in the source and destination match.`,
-	Long: `
+	Long: strings.ReplaceAll(`
 Checks the files in the source and destination match.  It compares
 sizes and hashes (MD5 or SHA1) and logs a report of files which don't
 match.  It doesn't alter the source or destination.
 
-If you supply the --size-only flag, it will only compare the sizes not
+If you supply the |--size-only| flag, it will only compare the sizes not
 the hashes as well.  Use this for a quick check.
 
-If you supply the --download flag, it will download the data from
+If you supply the |--download| flag, it will download the data from
 both remotes and check them against each other on the fly.  This can
 be useful for remotes that don't support hashes or if you really want
 to check all the data.
-` + FlagsHelp,
+`, "|", "`") + FlagsHelp,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)

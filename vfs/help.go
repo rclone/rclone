@@ -1,8 +1,14 @@
 package vfs
 
+import (
+	"strings"
+)
+
 // Help contains text describing file and directory caching to add to
 // the command help.
-var Help = `
+// Warning: "!" (sic) will be replaced by backticks below,
+//          but the pipe character "|" can be used as is.
+var Help = strings.ReplaceAll(`
 ### VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects
@@ -19,7 +25,7 @@ about files and directories (but not the data) in memory.
 
 ### VFS Directory Cache
 
-Using the ` + "`--dir-cache-time`" + ` flag, you can control how long a
+Using the !--dir-cache-time! flag, you can control how long a
 directory should be considered up to date and not refreshed from the
 backend. Changes made through the mount will appear immediately or
 invalidate the cache.
@@ -33,7 +39,7 @@ the directory cache expires if the backend configured does not support
 polling for changes. If the backend supports polling, changes will be
 picked up within the polling interval.
 
-You can send a ` + "`SIGHUP`" + ` signal to rclone for it to flush all
+You can send a !SIGHUP! signal to rclone for it to flush all
 directory caches, regardless of how old they are.  Assuming only one
 rclone instance is running, you can reset the cache like this:
 
@@ -50,7 +56,7 @@ Or individual files or directories:
 
 ### VFS File Buffering
 
-The ` + "`--buffer-size`" + ` flag determines the amount of memory,
+The !--buffer-size! flag determines the amount of memory,
 that will be used to buffer data in advance.
 
 Each open file will try to keep the specified amount of data in memory
@@ -63,7 +69,7 @@ yet read. If the buffer is empty, only a small amount of memory will
 be used.
 
 The maximum memory used by rclone for buffering can be up to
-` + "`--buffer-size * open files`" + `.
+!--buffer-size * open files!.
 
 ### VFS File Caching
 
@@ -84,12 +90,12 @@ find that you need one or the other or both.
     --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
     --vfs-write-back duration            Time to writeback files after last use when using cache. (default 5s)
 
-If run with ` + "`-vv`" + ` rclone will print the location of the file cache.  The
+If run with !-vv! rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
-can be controlled with ` + "`--cache-dir`" + ` or setting the appropriate
+can be controlled with !--cache-dir! or setting the appropriate
 environment variable.
 
-The cache has 4 different modes selected by ` + "`--vfs-cache-mode`" + `.
+The cache has 4 different modes selected by !--vfs-cache-mode!.
 The higher the cache mode the more compatible rclone becomes at the
 cost of using disk space.
 
@@ -99,9 +105,9 @@ second. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using --vfs-cache-max-size note that the cache may exceed this size
+If using !--vfs-cache-max-size! note that the cache may exceed this size
 for two reasons.  Firstly because it is only checked every
---vfs-cache-poll-interval.  Secondly because open files cannot be
+!--vfs-cache-poll-interval!.  Secondly because open files cannot be
 evicted from the cache.
 
 #### --vfs-cache-mode off
@@ -225,7 +231,7 @@ It is not allowed for two files in the same directory to differ only by case.
 Usually file systems on macOS are case-insensitive. It is possible to make macOS
 file systems case-sensitive but that is not the default
 
-The "--vfs-case-insensitive" mount flag controls how rclone handles these
+The !--vfs-case-insensitive! mount flag controls how rclone handles these
 two cases. If its value is "false", rclone passes file names to the mounted
 file system as-is. If the flag is "true" (or appears without a value on
 command line), rclone may perform a "fixup" as explained below.
@@ -246,4 +252,4 @@ The flag controls whether "fixup" is performed to satisfy the target.
 If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
-`
+`, "!", "`")
