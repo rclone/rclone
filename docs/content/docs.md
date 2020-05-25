@@ -359,10 +359,10 @@ For example, to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
 
 It is also possible to specify a "timetable" of limits, which will cause
 certain limits to be applied at certain times. To specify a timetable, format your
-entries as "WEEKDAY-HH:MM,BANDWIDTH WEEKDAY-HH:MM,BANDWIDTH..." where:
-WEEKDAY is optional element.
+entries as `WEEKDAY-HH:MM,BANDWIDTH WEEKDAY-HH:MM,BANDWIDTH...` where:
+`WEEKDAY` is optional element.
 It could be written as whole world or only using 3 first characters.
-HH:MM is an hour from 00:00 to 23:59.
+`HH:MM` is an hour from 00:00 to 23:59.
 
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
@@ -375,7 +375,7 @@ At 6pm, the bandwidth limit will be set to 30MBytes/s, and at 11pm it will be
 completely disabled (full speed). Anything between 11pm and 8am will remain
 unlimited.
 
-An example of timetable with WEEKDAY could be:
+An example of timetable with `WEEKDAY` could be:
 
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
 
@@ -424,7 +424,7 @@ When using `mount` or `cmount` each open file descriptor will use this much
 memory for buffering.
 See the [mount](/commands/rclone_mount/#file-buffering) documentation for more details.
 
-Set to 0 to disable the buffering for the minimum memory usage.
+Set to `0` to disable the buffering for the minimum memory usage.
 
 Note that the memory allocation of the buffers is influenced by the
 [--use-mmap](#use-mmap) flag.
@@ -567,7 +567,7 @@ Zero means no timeout and causes the body to be sent immediately,
 without waiting for the server to approve.  This time does not include
 the time to send the request header.
 
-The default is `1s`.  Set to 0 to disable.
+The default is `1s`.  Set to `0` to disable.
 
 ### --error-on-no-transfer ###
 
@@ -1064,7 +1064,7 @@ Disable retries with `--retries 1`.
 
 This sets the interval between each retry specified by `--retries` 
 
-The default is 0. Use 0 to disable.
+The default is `0`. Use `0` to disable.
 
 ### --size-only ###
 
@@ -1084,7 +1084,7 @@ their progress.
 
 This sets the interval.
 
-The default is `1m`. Use 0 to disable.
+The default is `1m`. Use `0` to disable.
 
 If you set the stats interval then all commands can show stats.  This
 can be useful when running other commands, `check` or `mount` for
@@ -1204,7 +1204,7 @@ See also `--tpslimit-burst`.
 
 ### --tpslimit-burst int ###
 
-Max burst of transactions for `--tpslimit`. (default 1)
+Max burst of transactions for `--tpslimit`. (default `1`)
 
 Normally `--tpslimit` will do exactly the number of transaction per
 second specified.  However if you supply `--tps-burst` then rclone can
@@ -1312,7 +1312,7 @@ rclone will just ignore it.
 This sets the IO idle timeout.  If a transfer has started but then
 becomes idle for this long it is considered broken and disconnected.
 
-The default is `5m`.  Set to 0 to disable.
+The default is `5m`.  Set to `0` to disable.
 
 ### --transfers=N ###
 
@@ -1771,7 +1771,7 @@ you must create the `..._TYPE` variable as above.
 
 ### Other environment variables ###
 
-  * RCLONE_CONFIG_PASS` set to contain your config file password (see [Configuration Encryption](#configuration-encryption) section)
-  * HTTP_PROXY, HTTPS_PROXY and NO_PROXY (or the lowercase versions thereof).
-    * HTTPS_PROXY takes precedence over HTTP_PROXY for https requests.
+  * `RCLONE_CONFIG_PASS` set to contain your config file password (see [Configuration Encryption](#configuration-encryption) section)
+  * `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` (or the lowercase versions thereof).
+    * `HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
     * The environment values may be either a complete URL or a "host[:port]" for, in which case the "http" scheme is assumed.
