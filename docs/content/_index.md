@@ -31,7 +31,7 @@ cat. Rclone's familiar syntax includes shell pipeline support, and
 `--dry-run` protection. It can be used at the command line, in scripts
 or via its [API](/rc).
 
-Users have called it "The swiss army knife of cloud storage" and
+Users have called it "The Swiss army knife of cloud storage" and
 "Technology indistinguishable from magic".
 
 Rclone really cares about your data. It preserves your timestamps and
