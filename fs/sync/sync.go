@@ -732,7 +732,7 @@ func (s *syncCopyMove) makeRenameMap() {
 	fs.Infof(s.fdst, "Finished making map for --track-renames")
 }
 
-// tryRename renames a src object when doing track renames if
+// tryRename renames an src object when doing track renames if
 // possible, it returns true if the object was renamed.
 func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	// Calculate the hash of the src object

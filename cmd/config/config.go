@@ -120,7 +120,7 @@ var configCreateCommand = &cobra.Command{
 	Short: `Create a new remote with name, type and options.`,
 	Long: `
 Create a new remote of <name> with <type> and options.  The options
-should be passed in in pairs of <key> <value>.
+should be passed in pairs of <key> <value>.
 
 For example to make a swift remote of name myremote using auto config
 you would do:
@@ -204,7 +204,7 @@ var configPasswordCommand = &cobra.Command{
 	Short: `Update password in an existing remote.`,
 	Long: `
 Update an existing remote's password. The password
-should be passed in in pairs of <key> <value>.
+should be passed in pairs of <key> <value>.
 
 For example to set password of a remote of name myremote you would do:
 

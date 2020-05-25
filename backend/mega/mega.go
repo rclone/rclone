@@ -871,7 +871,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 			return errors.Errorf("MergeDirs failed to find node for: %v", srcDir)
 		}
 
-		// list the the objects
+		// list the objects
 		infos := []*mega.Node{}
 		_, err := f.list(ctx, srcDirNode, func(info *mega.Node) bool {
 			infos = append(infos, info)

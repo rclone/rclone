@@ -80,7 +80,7 @@ type Fs struct {
 	searchPolicy policy.Policy  // policy for SEARCH
 }
 
-// Wrap candidate objects in to an union Object
+// Wrap candidate objects in to a union Object
 func (f *Fs) wrapEntries(entries ...upstream.Entry) (entry, error) {
 	e, err := f.searchEntries(entries...)
 	if err != nil {

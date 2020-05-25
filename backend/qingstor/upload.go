@@ -255,7 +255,7 @@ func (mu *multiUploader) readChunk(ch chan chunk) {
 	}
 }
 
-// initiate init an Multiple Object and obtain UploadID
+// initiate init a Multiple Object and obtain UploadID
 func (mu *multiUploader) initiate() error {
 	bucketInit, _ := mu.bucketInit()
 	req := qs.InitiateMultipartUploadInput{

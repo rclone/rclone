@@ -58,7 +58,7 @@ type accountValues struct {
 
 const averagePeriod = 16 // period to do exponentially weighted averages over
 
-// newAccountSizeName makes a Account reader for an io.ReadCloser of
+// newAccountSizeName makes an Account reader for an io.ReadCloser of
 // the given size and name
 func newAccountSizeName(stats *StatsInfo, in io.ReadCloser, size int64, name string) *Account {
 	acc := &Account{

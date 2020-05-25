@@ -79,7 +79,7 @@ type Options struct {
 	Enc      encoder.MultiEncoder `config:"encoding"`
 }
 
-// A Fs is a representation of a remote Koofr Fs
+// An Fs is a representation of a remote Koofr Fs
 type Fs struct {
 	name     string
 	mountID  string
@@ -250,7 +250,7 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
 }
 
-// fullPath constructs a full, absolute path from a Fs root relative path,
+// fullPath constructs a full, absolute path from an Fs root relative path,
 func (f *Fs) fullPath(part string) string {
 	return f.opt.Enc.FromStandardPath(path.Join("/", f.root, part))
 }

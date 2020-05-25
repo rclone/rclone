@@ -16,7 +16,7 @@ var (
 	ErrorInvalidSeek = errors.New("invalid seek position")
 )
 
-// ChunkedReader is a reader for a Object with the possibility
+// ChunkedReader is a reader for an Object with the possibility
 // of reading the source in chunks of given size
 //
 // An initialChunkSize of <= 0 will disable chunked reading.
