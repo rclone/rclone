@@ -14,8 +14,8 @@
   <tbody>
     {{ range .Data.Pages }}
     <tr>
-      <td><a href="{{ .RelPermalink }}">{{ .Title }}</a></td>
-      <td>{{ .Description }}</td>
+      <td><a href="{{ .RelPermalink }}">{{ .Title | markdownify }}</a></td>
+      <td>{{ .Description  | markdownify }}</td>
     </tr>
     {{ end }}
   </tbody>
