@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T15:09:46+01:00
+date: 2020-05-25T12:06:00+01:00
 title: "rclone copyurl"
 description: "Copy url content to dest."
 slug: rclone_copyurl
@@ -16,7 +16,7 @@ Copy url content to dest.
 Download a URL's content and copy it to the destination without saving
 it in temporary storage.
 
-Setting --auto-filename will cause the file name to be retreived from
+Setting --auto-filename will cause the file name to be retrieved from
 the from URL (after any redirections) and used in the destination
 path.
 

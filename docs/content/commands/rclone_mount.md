@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T15:09:46+01:00
+date: 2020-05-25T12:06:00+01:00
 title: "rclone mount"
 description: "Mount the remote as file system on a mountpoint."
 slug: rclone_mount
@@ -55,7 +55,7 @@ Stopping the mount manually:
 To run rclone mount on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
 
-WinFsp is an [open source](https://github.com/billziss-gh/winfsp)
+[WinFsp](https://github.com/billziss-gh/winfsp) is an open source
 Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
 uses combination with
@@ -342,7 +342,7 @@ although existing files can be opened using any case, the exact case used
 to create the file is preserved and available for programs to query.
 It is not allowed for two files in the same directory to differ only by case.
 
-Usually file systems on MacOS are case-insensitive. It is possible to make MacOS
+Usually file systems on macOS are case-insensitive. It is possible to make macOS
 file systems case-sensitive but that is not the default
 
 The "--vfs-case-insensitive" mount flag controls how rclone handles these
@@ -364,7 +364,7 @@ may differ from case sensitivity of a file system mounted by rclone (the source)
 The flag controls whether "fixup" is performed to satisfy the target.
 
 If the flag is not provided on command line, then its default value depends
-on the operating system where rclone runs: "true" on Windows and MacOS, "false"
+on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
 
 

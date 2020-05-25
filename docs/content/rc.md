@@ -316,7 +316,7 @@ command:
 
     rclone backend noop . -o echo=yes -o blue path1 path2
 
-Note that arguments must be preceeded by the "-a" flag
+Note that arguments must be preceded by the "-a" flag
 
 See the [backend](/commands/rclone_backend/) command for more information.
 
@@ -629,7 +629,7 @@ Returns the following values:
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
 				"timestamp": integer representing millisecond unix epoch,
-				"error": string description of the error (empty if successfull),
+				"error": string description of the error (empty if successful),
 				"jobid": id of the job that this transfer belongs to
 			}
 		]
