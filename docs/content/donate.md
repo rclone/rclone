@@ -26,8 +26,8 @@ Thank you :-)
 ## Personal users
 
 If you are a personal user and you would like to support the project
-with sponsorship as a way of saying thank you then that would be most
-appreciated {{< icon "fa fa-heart heart" >}}
+with sponsorship as a way of saying thank you that would be most
+appreciated. {{< icon "fa fa-heart heart" >}}
 
 ## Business users
 
@@ -38,7 +38,7 @@ project you rely on stays healthy and well maintained.
 
 If you run one of the cloud storage providers that rclone supports and
 rclone is driving revenue your way then you know it makes sense to
-sponsor the project {{< icon "far fa-smile" >}}
+sponsor the project. {{< icon "far fa-smile" >}}
 
 Note that GitHub sponsors will provide proper tax invoices appropriate
 for your country.
