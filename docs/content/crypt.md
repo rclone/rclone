@@ -221,7 +221,7 @@ Obfuscation
 
 This is a simple "rotate" of the filename, with each file having a rot
 distance based on the filename. We store the distance at the beginning
-of the filename. So a file called "hello" may become "53.jgnnq"
+of the filename. So a file called "hello" may become "53.jgnnq".
 
 This is not a strong encryption of filenames, but it may stop automated
 scanning tools from picking up on filename patterns. As such it's an
