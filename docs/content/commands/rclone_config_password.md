@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T15:09:46+01:00
+date: 2020-05-25T12:06:00+01:00
 title: "rclone config password"
 description: "Update password in an existing remote."
 slug: rclone_config_password
@@ -14,7 +14,7 @@ Update password in an existing remote.
 
 
 Update an existing remote's password. The password
-should be passed in in pairs of `key` `value`.
+should be passed in pairs of `key` `value`.
 
 For example to set password of a remote of name myremote you would do:
 

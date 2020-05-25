@@ -1,7 +1,7 @@
 ---
 title: "Global Flags"
 description: "Rclone Global Flags"
-date: "2020-05-22T15:09:46+01:00"
+date: "2020-05-25T12:06:00+01:00"
 ---
 
 # Global Flags
@@ -22,6 +22,7 @@ These flags are available for every command.
       --bwlimit BwTimetable                  Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.
       --ca-cert string                       CA certificate used to verify servers
       --cache-dir string                     Directory rclone will use for caching. (default "$HOME/.cache/rclone")
+      --check-first                          Do all the checks before starting transfers.
       --checkers int                         Number of checkers to run in parallel. (default 8)
   -c, --checksum                             Skip based on checksum (if available) & size, not mod-time & size
       --client-cert string                   Client SSL certificate (PEM) for mutual TLS auth
@@ -144,7 +145,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.51.0-383-g3bc9a985-new-docs-beta")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.51.0-411-gaebb535f-new-docs-beta")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -204,7 +205,7 @@ and may be set in the config file.
       --cache-db-purge                                           Clear all the cached data for this remote on start.
       --cache-db-wait-time Duration                              How long to wait for the DB to be available - 0 is unlimited (default 1s)
       --cache-info-age Duration                                  How long to cache file structure information (directory listings, file size, times etc). (default 6h0m0s)
-      --cache-plex-insecure string                               Skip all certificate verifications when connecting to the Plex server
+      --cache-plex-insecure string                               Skip all certificate verification when connecting to the Plex server
       --cache-plex-password string                               The password of the Plex user
       --cache-plex-url string                                    The URL of the Plex server
       --cache-plex-username string                               The username of the Plex user
@@ -388,7 +389,7 @@ and may be set in the config file.
       --s3-server-side-encryption string                         The server-side encryption algorithm used when storing this object in S3.
       --s3-session-token string                                  An AWS session token
       --s3-sse-customer-algorithm string                         If using SSE-C, the server-side encryption algorithm used when storing this object in S3.
-      --s3-sse-customer-key string                               If using SSE-C you must provide the secret encyption key used to encrypt/decrypt your data.
+      --s3-sse-customer-key string                               If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data.
       --s3-sse-customer-key-md5 string                           If using SSE-C you must provide the secret encryption key MD5 checksum.
       --s3-sse-kms-key-id string                                 If using KMS ID you must provide the ARN of Key.
       --s3-storage-class string                                  The storage class to use when storing new objects in S3.
@@ -396,13 +397,14 @@ and may be set in the config file.
       --s3-upload-cutoff SizeSuffix                              Cutoff for switching to chunked upload (default 200M)
       --s3-use-accelerate-endpoint                               If true use the AWS S3 accelerated endpoint.
       --s3-v2-auth                                               If true use v2 authentication.
-      --seafile-create-library                                   Should create library if it doesn't exist
+      --seafile-2fa                                              Two-factor authentication ('true' if the account has 2FA enabled)
+      --seafile-create-library                                   Should rclone create a library if it doesn't exist
       --seafile-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
       --seafile-library string                                   Name of the library. Leave blank to access all non-encrypted libraries.
       --seafile-library-key string                               Library password (for encrypted libraries only). Leave blank if you pass it through the command line.
       --seafile-pass string                                      Password
       --seafile-url string                                       URL of seafile host to connect to
-      --seafile-user string                                      User name
+      --seafile-user string                                      User name (usually email address)
       --sftp-ask-password                                        Allow asking for SFTP password when needed.
       --sftp-disable-hashcheck                                   Disable the execution of SSH commands to determine if remote file hashing is available.
       --sftp-host string                                         SSH host to connect to

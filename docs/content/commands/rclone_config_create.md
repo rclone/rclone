@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T15:09:46+01:00
+date: 2020-05-25T12:06:00+01:00
 title: "rclone config create"
 description: "Create a new remote with name, type and options."
 slug: rclone_config_create
@@ -14,7 +14,7 @@ Create a new remote with name, type and options.
 
 
 Create a new remote of `name` with `type` and options.  The options
-should be passed in in pairs of `key` `value`.
+should be passed in pairs of `key` `value`.
 
 For example to make a swift remote of name myremote using auto config
 you would do:

@@ -1,5 +1,5 @@
 ---
-date: 2020-05-22T15:09:46+01:00
+date: 2020-05-25T12:06:00+01:00
 title: "rclone config userinfo"
 description: "Prints info about logged in user of remote."
 slug: rclone_config_userinfo
