@@ -141,3 +141,33 @@ h5 {
 .menu {
     font-size: 95%;
 }
+
+/* Make primary buttons rclone colours. Should learn sass and do this the proper way! */
+.btn-primary {
+    background-color: #3f79ad;
+    border-color: #3f79ad;
+}
+.btn-primary:hover {
+    background-color: #70caf2;
+    border-color: #70caf2;
+}
+.btn-primary:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show>.btn-primary.dropdown-toggle {
+    background-color: #70caf2;
+    border-color: #70caf2;
+}
+.btn-primary.focus, .btn-primary:focus {
+    background-color: #3f79ad;
+    border-color: #3f79ad;
+    box-shadow: 0 0 0 0.2rem rgba(63,121,173,.5);
+}
+.badge-primary {
+    background-color: #3f79ad;
+    border-color: #3f79ad;
+}
+a.badge-primary:focus, a.badge-primary:hover {
+    background-color: #70caf2;
+}
+a.badge-primary.focus, a.badge-primary:focus {
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(112,202,242,.5);
+}
