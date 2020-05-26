@@ -19,20 +19,19 @@ date: "2020-05-16"
 
 ## About rclone {#about}
 
-Rclone is a command line tool to manage files on cloud storage. It is
-a feature rich alternative to cloud vendor's web storage
-interfaces. [Over 40 cloud storage products](#providers) are supported
-by rclone including S3 object stores, business & consumer file storage
+Rclone is a command line program to manage files on cloud storage. It
+is a feature rich alternative to cloud vendors' web storage
+interfaces. [Over 40 cloud storage products](#providers) support
+rclone including S3 object stores, business & consumer file storage
 services, as well as standard transfer protocols.
 
-Rclone is a powerful tool the cloud storage equivalent to the
-unix commands rsync, cp, mv, mount, ls, ncdu, tree, rm, and
-cat. Rclone's familiar syntax includes shell pipeline support, and
-`--dry-run` protection. It can be used at the command line, in scripts
-or via its [API](/rc).
+Rclone has powerful cloud equivalents to the unix commands rsync, cp,
+mv, mount, ls, ncdu, tree, rm, and cat. Rclone's familiar syntax
+includes shell pipeline support, and `--dry-run` protection. It can be
+used at the command line, in scripts or via its [API](/rc).
 
-Users have called it "The Swiss army knife of cloud storage" and
-"Technology indistinguishable from magic".
+Users have called rclone *"The Swiss army knife of cloud storage"* and
+*"Technology indistinguishable from magic"*.
 
 Rclone really looks after your data. It preserves timestamps and
 verifies your data at all times. Transfers over limited bandwidth;
@@ -40,37 +39,35 @@ intermittent connections, or subject to quota can be restarted, from
 the last good file transferred. You can
 [check](/commands/rclone_check/) the integrity of your files. Where
 possible, rclone employs server side transfers to minimise local
-bandwidth use and can transfer from one provider to another without
+bandwidth use and transfers from one provider to another without
 using your local disk.
 
-Virtual backends can wrap local and cloud file systems to apply
+Virtual backends wrap local and cloud file systems to apply
 [encryption](/crypt/), 
 [caching](/cache/),
 [chunking](/chunker/) and
 [joining](/union/).
 
 Rclone can [mount](/commands/rclone_mount/) any local, cloud or
-virtual filesystem so it will appear as a local disk on your Windows,
-macOS, linux or FreeBSD computer. Rclone can also serve these over
+virtual filesystem as a disk on Windows,
+macOS, linux and FreeBSD, and also serve these over
 [SFTP](/commands/rclone_serve_sftp/),
 [HTTP](/commands/rclone_serve_http/),
 [WebDAV](/commands/rclone_serve_webdav/),
 [FTP](/commands/rclone_serve_ftp/) and
 [DLNA](/commands/rclone_serve_dlna/).
 
-Rclone is mature, open source software originally inspired by
-rsync. It is written in [Go](https://golang.org) and is energetically
-maintained, and supported by a welcoming community with a wide
-experience of varied use cases. Official repos such as Ubuntu, Debian,
-Brew and Chocolatey include rclone. For the latest version [downloading from
-rclone.org](/downloads/) is recommended.
+Rclone is mature, open source software originally inspired by rsync
+and written in [Go](https://golang.org). The friendly support
+community are familiar with varied use cases. Official Ubuntu, Debian,
+Fedora, Brew and Chocolatey repos. include rclone. For the latest
+version [downloading from rclone.org](/downloads/) is recommended.
 
 Rclone is widely used on Linux, Windows and Mac. Third party
 developers have built innovative backup, restore, GUI and business
 process solutions using the rclone command line or API.
 
-Let rclone do the heavy lifting of communicating with cloud storage so
-you can concentrate on your problems.
+Let rclone do the heavy lifting of communicating with cloud storage.
 
 ## What can rclone do for you {#what}
 
@@ -102,9 +99,8 @@ Rclone can help you:
 
 ## Supported providers {#providers}
 
-Here is a list of providers that rclone supports. This isn't an
-exhaustive list as there are other providers which support a standard
-protocol (such as WebDav or S3) which work out of the box.
+(There are many other providers, built on standard protocols such as
+WebDAV or S3, that work out of the box.)
 
 {{< provider_list >}}
 {{< provider name="1Fichier" home="https://1fichier.com/" config="/fichier/" start="true">}}
