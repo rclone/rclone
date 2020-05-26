@@ -7,19 +7,25 @@ date: "2020-05-15"
 
 # {{< icon "fa fa-heart heart" >}} Donations to the rclone project
 
-Donations help keep the rclone project running as free open source
-software.
+Rclone is a free open source project with thousands of contributions
+from volunteers all round the world and I would like to thank all of
+you for donating your time to the project.
 
-Maintaining rclone is a lot of work - easily a **full time job** for
-me. Nothing stands still in the world of cloud storage so rclone needs
-constant attention to stay in good working order.
+However, maintaining rclone is a lot of work - easily the equivalent
+of a **full time job** - for me. Nothing stands still in the world of
+cloud storage.  Rclone needs constant attention adapting to changes by
+cloud providers, adding new providers, adding new features, keeping
+the integration tests working, fixing bugs and many more things!
 
-I and my other contributors love doing the work and we'd like to spend
-more time doing it - your support helps make that possible.
+I love doing the work and I'd like to spend more time doing it - your
+support helps make that possible.
 
 Thank you :-)
 
--- Nick Craig-Wood
+{{< nick >}}
+
+PS I'm available for rclone and object storage related consultancy -
+[email me](mailto:nick@craig-wood.com) for more info.
 
 {{< monthly_donations >}}
 
@@ -40,15 +46,15 @@ If you run one of the cloud storage providers that rclone supports and
 rclone is driving revenue your way then you know it makes sense to
 sponsor the project. {{< icon "far fa-smile" >}}
 
-Note that GitHub sponsors will provide proper tax invoices appropriate
-for your country.
+Note that if you choose the "GitHub Sponsors" option they will provide
+proper tax invoices appropriate for your country.
 
 ## Monthly donations
 
 Monthly donations help keep rclone development sustainable in the long
-run so this is our preferred option. A small amount every month is
-much better for us than a one off donation as it allows us to plan for
-the future.
+run so this is the preferred option. A small amount every month is
+much better than a one off donation as it allows planning for the
+future.
 
 {{< monthly_donations >}}
 

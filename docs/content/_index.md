@@ -25,7 +25,7 @@ interfaces. [Over 40 cloud storage products](#providers) are supported
 by rclone including S3 object stores, business & consumer file storage
 services, as well as standard transfer protocols.
 
-Rclone is a powerful tool being the cloud storage equivalent to the
+Rclone is a powerful tool the cloud storage equivalent to the
 unix commands rsync, cp, mv, mount, ls, ncdu, tree, rm, and
 cat. Rclone's familiar syntax includes shell pipeline support, and
 `--dry-run` protection. It can be used at the command line, in scripts
@@ -34,7 +34,7 @@ or via its [API](/rc).
 Users have called it "The Swiss army knife of cloud storage" and
 "Technology indistinguishable from magic".
 
-Rclone really cares about your data. It preserves your timestamps and
+Rclone really looks after your data. It preserves timestamps and
 verifies your data at all times. Transfers over limited bandwidth;
 intermittent connections, or subject to quota can be restarted, from
 the last good file transferred. You can
@@ -62,7 +62,7 @@ Rclone is mature, open source software originally inspired by
 rsync. It is written in [Go](https://golang.org) and is energetically
 maintained, and supported by a welcoming community with a wide
 experience of varied use cases. Official repos such as Ubuntu, Debian,
-Brew, Chocolatey include rclone. For the latest version [downloading from
+Brew and Chocolatey include rclone. For the latest version [downloading from
 rclone.org](/downloads/) is recommended.
 
 Rclone is widely used on Linux, Windows and Mac. Third party
@@ -82,20 +82,20 @@ Rclone can help you:
 - Migrate data to cloud, or between cloud storage vendors
 - Mount multiple, encrypted, cached or diverse cloud storage as a disk
 - Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/), [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/)
-- Union file systems together to present multiple local and/or cloud file systems as one
+- [Union](/union/) file systems together to present multiple local and/or cloud file systems as one
 
 ## Features {#features}
 
-- On all transfers
-    - MD5, SHA1 hashes checked at all times for file integrity
-    - Timestamps preserved on files
+- Transfers
+    - MD5, SHA1 hashes are checked at all times for file integrity
+    - Timestamps are preserved on files
     - Operations can be restarted at any time
-    - Can sync to and from network, eg two different cloud accounts
-    - multi-threaded downloads to local disk
+    - Can be to and from network, eg two different cloud providers
+    - Can use multi-threaded downloads to local disk
 - [Copy](/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](/commands/rclone_sync/) (one way) to make a directory identical
-- [Move](/commands/rclone_move/) move files to cloud storage deleting the local after verification
-- [Check](/commands/rclone_check/) check hashes and for missing/extra files
+- [Move](/commands/rclone_move/) files to cloud storage deleting the local after verification
+- [Check](/commands/rclone_check/) hashes and for missing/extra files
 - [Mount](/commands/rclone_mount/) your cloud storage as a network disk
 - [Serve](/commands/rclone_serve/) local or remote files over [HTTP](/commands/rclone_serve_http/)/[WebDav](/commands/rclone_serve_webdav/)/[FTP](/commands/rclone_serve_ftp/)/[SFTP](/commands/rclone_serve_sftp/)/[dlna](/commands/rclone_serve_dlna/)
 - Experimental [Web based GUI](/gui/)
@@ -103,8 +103,8 @@ Rclone can help you:
 ## Supported providers {#providers}
 
 Here is a list of providers that rclone supports. This isn't an
-exhaustive list as there are many more that support standard protocols
-such as WebDAV or S3 that work out of the box.
+exhaustive list as there are other providers which support a standard
+protocol (such as WebDav or S3) which work out of the box.
 
 {{< provider_list >}}
 {{< provider name="1Fichier" home="https://1fichier.com/" config="/fichier/" start="true">}}
