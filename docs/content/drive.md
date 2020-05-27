@@ -417,7 +417,7 @@ For shortcuts pointing to folders:
 - When deleting with `rclone rmdir` or `rclone purge` the shortcut is deleted not the linked folder.
 - **NB** When deleting with `rclone remove` or `rclone mount` the contents of the linked folder will be deleted.
 
-It isn't currently possible to create shortcuts with rclone.
+The [rclone backend](https://rclone.org/commands/rclone_backend/) command can be used to create shortcuts.  
 
 Shortcuts can be completely ignored with the `--drive-skip-shortcuts` flag
 or the corresponding `skip_shortcuts` configuration setting.
