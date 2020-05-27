@@ -1,5 +1,5 @@
 ---
-date: 2020-05-25T12:06:00+01:00
+date: 2020-05-27T16:09:49+01:00
 title: "rclone md5sum"
 description: "Produces an md5sum file for all the objects in the path."
 slug: rclone_md5sum

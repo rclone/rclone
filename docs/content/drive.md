@@ -678,7 +678,7 @@ videos.
 Setting this flag will cause Google photos and videos to return a
 blank MD5 checksum.
 
-Google photos are identifed by being in the "photos" space.
+Google photos are identified by being in the "photos" space.
 
 Corrupted checksums are caused by Google modifying the image/video but
 not updating the checksum.
@@ -1004,7 +1004,7 @@ See: the [encoding section in the overview](/overview/#encoding) for more info.
 
 Here are the commands specific to the drive backend.
 
-Run them with with
+Run them with
 
     rclone backend COMMAND remote:
 

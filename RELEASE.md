@@ -31,7 +31,7 @@ This file describes how to make the various kinds of releases
   * make upload_website
   * make upload_github
   * make startdev
-  * # announce with forum post, twitter post, G+ post
+  * # announce with forum post, twitter post, patreon post
 
 Early in the next release cycle update the vendored dependencies
 

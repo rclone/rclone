@@ -1,5 +1,5 @@
 ---
-date: 2020-05-25T12:06:00+01:00
+date: 2020-05-27T16:09:49+01:00
 title: "rclone cleanup"
 description: "Clean up the remote if possible"
 slug: rclone_cleanup
