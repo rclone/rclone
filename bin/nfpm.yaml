@@ -15,7 +15,8 @@ description: |
 vendor: "rclone"
 homepage: "https://rclone.org"
 license: "MIT"
-bindir: "/usr/bin"
+# No longer supported? See https://github.com/goreleaser/nfpm/issues/144
+# bindir: "/usr/bin"
 files:
   ./rclone: "/usr/bin/rclone"
   ./README.html: "/usr/share/doc/rclone/README.html"
