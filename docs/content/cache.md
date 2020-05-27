@@ -421,7 +421,7 @@ The plex token for authentication - auto set normally
 
 #### --cache-plex-insecure
 
-Skip all certificate verifications when connecting to the Plex server
+Skip all certificate verification when connecting to the Plex server
 
 - Config:      plex_insecure
 - Env Var:     RCLONE_CACHE_PLEX_INSECURE
@@ -621,7 +621,7 @@ If you set it to 0 then it will wait forever.
 
 Here are the commands specific to the cache backend.
 
-Run them with with
+Run them with
 
     rclone backend COMMAND remote:
 

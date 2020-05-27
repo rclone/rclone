@@ -156,17 +156,23 @@ def main():
 
     # Output combined changelog with new part
     sys.stdout.write(old_head)
+    today = datetime.date.today()
+    new_features = "\n".join(new_features_lines)
+    bugfixes = "\n".join(bugfix_lines)
+    backend_changes = "\n".join(backend_lines)
     sys.stdout.write("""
 
-## %s - %s
+## %(next_version)s - %(today)s
+
+[See commits](https://github.com/rclone/rclone/compare/%(version)s...%(next_version)s)
 
 * New backends
 * New commands
 * New Features
-%s
+%(new_features)s
 * Bug Fixes
-%s
-%s""" % (next_version, datetime.date.today(), "\n".join(new_features_lines), "\n".join(bugfix_lines), "\n".join(backend_lines)))
+%(bugfixes)s
+%(backend_changes)s""" % locals())
     sys.stdout.write(old_tail)
                 
 

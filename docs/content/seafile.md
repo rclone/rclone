@@ -284,7 +284,7 @@ URL of seafile host to connect to
 
 #### --seafile-user
 
-User name
+User name (usually email address)
 
 - Config:      user
 - Env Var:     RCLONE_SEAFILE_USER
@@ -299,6 +299,15 @@ Password
 - Env Var:     RCLONE_SEAFILE_PASS
 - Type:        string
 - Default:     ""
+
+#### --seafile-2fa
+
+Two-factor authentication ('true' if the account has 2FA enabled)
+
+- Config:      2fa
+- Env Var:     RCLONE_SEAFILE_2FA
+- Type:        bool
+- Default:     false
 
 #### --seafile-library
 
@@ -318,13 +327,22 @@ Library password (for encrypted libraries only). Leave blank if you pass it thro
 - Type:        string
 - Default:     ""
 
+#### --seafile-auth-token
+
+Authentication token
+
+- Config:      auth_token
+- Env Var:     RCLONE_SEAFILE_AUTH_TOKEN
+- Type:        string
+- Default:     ""
+
 ### Advanced Options
 
 Here are the advanced options specific to seafile (seafile).
 
 #### --seafile-create-library
 
-Should create library if it doesn't exist
+Should rclone create a library if it doesn't exist
 
 - Config:      create_library
 - Env Var:     RCLONE_SEAFILE_CREATE_LIBRARY

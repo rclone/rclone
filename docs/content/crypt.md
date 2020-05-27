@@ -369,7 +369,7 @@ names, or for debugging purposes.
 
 Here are the commands specific to the crypt backend.
 
-Run them with with
+Run them with
 
     rclone backend COMMAND remote:
 
