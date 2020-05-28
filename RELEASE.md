@@ -103,9 +103,9 @@ The rclone docker image should autobuild on docker hub.  If it doesn't
 or needs to be updated then rebuild like this.
 
 ```
-docker build -t rclone/rclone:1.49.1 -t rclone/rclone:1.49 -t rclone/rclone:1 -t rclone/rclone:latest .
-docker push rclone/rclone:1.49.1
-docker push rclone/rclone:1.49
+docker build --rm --ulimit memlock=67108864  -t rclone/rclone:1.52.0 -t rclone/rclone:1.52 -t rclone/rclone:1 -t rclone/rclone:latest .
+docker push rclone/rclone:1.52.0
+docker push rclone/rclone:1.52
 docker push rclone/rclone:1
 docker push rclone/rclone:latest
 ```
