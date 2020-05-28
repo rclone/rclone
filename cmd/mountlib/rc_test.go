@@ -78,7 +78,9 @@ func TestRc(t *testing.T) {
 
 		// mount
 		_, err = mount.Fn(ctx, in)
-		require.NoError(t, err)
+		if err != nil {
+			t.Skipf("Mount failed - skipping test: %v", err)
+		}
 
 		// check file.txt is there now
 		fi, err := os.Stat(filePath)
