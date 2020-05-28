@@ -9,9 +9,9 @@ type: page
 {{< img width="50%" src="/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >}}
 
 - [About rclone](#about)
-- [What can rclone do for you](#what)
-- [What features does rclone have](#features)
-- [What providers does rclone support](#providers)
+- [What can rclone do for you?](#what)
+- [What features does rclone have?](#features)
+- [What providers does rclone support?](#providers)
 - [Download](/downloads/)
 - [Install](/install/)
 {{< rem MAINPAGELINK >}}
@@ -26,20 +26,20 @@ services, as well as standard transfer protocols.
 
 Rclone has powerful cloud equivalents to the unix commands rsync, cp,
 mv, mount, ls, ncdu, tree, rm, and cat. Rclone's familiar syntax
-includes shell pipeline support, and `--dry-run` protection. It can be
+includes shell pipeline support, and `--dry-run` protection. It is
 used at the command line, in scripts or via its [API](/rc).
 
-Users have called rclone *"The Swiss army knife of cloud storage"* and
+Users call rclone *"The Swiss army knife of cloud storage"*, and
 *"Technology indistinguishable from magic"*.
 
 Rclone really looks after your data. It preserves timestamps and
-verifies your data at all times. Transfers over limited bandwidth;
+verifies checksums at all times. Transfers over limited bandwidth;
 intermittent connections, or subject to quota can be restarted, from
 the last good file transferred. You can
 [check](/commands/rclone_check/) the integrity of your files. Where
 possible, rclone employs server side transfers to minimise local
 bandwidth use and transfers from one provider to another without
-using your local disk.
+using local disk.
 
 Virtual backends wrap local and cloud file systems to apply
 [encryption](/crypt/), 
@@ -47,9 +47,9 @@ Virtual backends wrap local and cloud file systems to apply
 [chunking](/chunker/) and
 [joining](/union/).
 
-Rclone can [mount](/commands/rclone_mount/) any local, cloud or
+Rclone [mounts](/commands/rclone_mount/) any local, cloud or
 virtual filesystem as a disk on Windows,
-macOS, linux and FreeBSD, and also serve these over
+macOS, linux and FreeBSD, and also serves these over
 [SFTP](/commands/rclone_serve_sftp/),
 [HTTP](/commands/rclone_serve_http/),
 [WebDAV](/commands/rclone_serve_webdav/),
@@ -63,14 +63,14 @@ Fedora, Brew and Chocolatey repos. include rclone. For the latest
 version [downloading from rclone.org](/downloads/) is recommended.
 
 Rclone is widely used on Linux, Windows and Mac. Third party
-developers have built innovative backup, restore, GUI and business
+developers create innovative backup, restore, GUI and business
 process solutions using the rclone command line or API.
 
-Let rclone do the heavy lifting of communicating with cloud storage.
+Rclone does the heavy lifting of communicating with cloud storage.
 
-## What can rclone do for you {#what}
+## What can rclone do for you? {#what}
 
-Rclone can help you:
+Rclone helps you:
 
 - Backup (and encrypt) files to cloud storage
 - Restore (and decrypt) files from cloud storage
@@ -98,7 +98,7 @@ Rclone can help you:
 
 ## Supported providers {#providers}
 
-(There are many other providers, built on standard protocols such as
+(There are many others, built on standard protocols such as
 WebDAV or S3, that work out of the box.)
 
 {{< provider_list >}}
