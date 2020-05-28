@@ -1,0 +1,23 @@
+name: Build and publish develop image
+
+on:
+    push:
+      branches:
+        - master
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        name: Build image job
+        steps:
+            - name: Checkout master
+              uses: actions/checkout@master
+            - name: Build and publish image
+              uses: ilteoood/docker_buildx@master
+              with:
+                tag: beta
+                imageName: rclone/rclone
+                platform: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x,linux/386,linux/arm/v7
+                publish: true
+                dockerHubUser: ${{ secrets.DOCKER_HUB_USER }}
+                dockerHubPassword: ${{ secrets.DOCKER_HUB_PASSWORD }}
