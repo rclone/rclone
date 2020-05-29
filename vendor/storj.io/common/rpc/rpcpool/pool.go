@@ -23,7 +23,7 @@ var mon = monkit.Package()
 // we may want to keep. that adds quite a bit of complexity because channels
 // do not support removing buffered elements, so it didn't seem worth it.
 
-// expiringConn wraps a connection
+// expiringConn wraps a connection.
 type expiringConn struct {
 	conn  *drpcconn.Conn
 	timer *time.Timer
@@ -37,6 +37,11 @@ func newExpiringConn(conn *drpcconn.Conn, dur time.Duration) *expiringConn {
 		ex.timer = time.AfterFunc(dur, func() { _ = conn.Close() })
 	}
 	return ex
+}
+
+// Closed returns true if the connection is already closed.
+func (ex *expiringConn) Closed() bool {
+	return ex.conn.Closed()
 }
 
 // Cancel attempts to cancel the expiration timer and returns true if the
@@ -105,6 +110,16 @@ func (c *Conn) Close() (err error) {
 
 	<-c.done
 	return err
+}
+
+// Closed returns true if the connection is already closed.
+func (c *Conn) Closed() bool {
+	select {
+	case <-c.done:
+		return true
+	default:
+		return false
+	}
 }
 
 // newConn creates a new connection using the dialer.

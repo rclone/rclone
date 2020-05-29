@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// base 2 and base 10 sizes
+// base 2 and base 10 sizes.
 const (
 	B Size = 1 << (10 * iota)
 	KiB
@@ -28,55 +28,55 @@ const (
 	EB Size = 1e18
 )
 
-// Size implements flag.Value for collecting memory size in bytes
+// Size implements flag.Value for collecting memory size in bytes.
 type Size int64
 
-// Int returns bytes size as int
+// Int returns bytes size as int.
 func (size Size) Int() int { return int(size) }
 
-// Int32 returns bytes size as int32
+// Int32 returns bytes size as int32.
 func (size Size) Int32() int32 { return int32(size) }
 
-// Int64 returns bytes size as int64
+// Int64 returns bytes size as int64.
 func (size Size) Int64() int64 { return int64(size) }
 
-// Float64 returns bytes size as float64
+// Float64 returns bytes size as float64.
 func (size Size) Float64() float64 { return float64(size) }
 
-// KiB returns size in kibibytes
+// KiB returns size in kibibytes.
 func (size Size) KiB() float64 { return size.Float64() / KiB.Float64() }
 
-// MiB returns size in mebibytes
+// MiB returns size in mebibytes.
 func (size Size) MiB() float64 { return size.Float64() / MiB.Float64() }
 
-// GiB returns size in gibibytes
+// GiB returns size in gibibytes.
 func (size Size) GiB() float64 { return size.Float64() / GiB.Float64() }
 
-// TiB returns size in tebibytes
+// TiB returns size in tebibytes.
 func (size Size) TiB() float64 { return size.Float64() / TiB.Float64() }
 
-// PiB returns size in pebibytes
+// PiB returns size in pebibytes.
 func (size Size) PiB() float64 { return size.Float64() / PiB.Float64() }
 
-// EiB returns size in exbibytes
+// EiB returns size in exbibytes.
 func (size Size) EiB() float64 { return size.Float64() / EiB.Float64() }
 
-// KB returns size in kilobytes
+// KB returns size in kilobytes.
 func (size Size) KB() float64 { return size.Float64() / KB.Float64() }
 
-// MB returns size in megabytes
+// MB returns size in megabytes.
 func (size Size) MB() float64 { return size.Float64() / MB.Float64() }
 
-// GB returns size in gigabytes
+// GB returns size in gigabytes.
 func (size Size) GB() float64 { return size.Float64() / GB.Float64() }
 
-// TB returns size in terabytes
+// TB returns size in terabytes.
 func (size Size) TB() float64 { return size.Float64() / TB.Float64() }
 
-// PB returns size in petabytes
+// PB returns size in petabytes.
 func (size Size) PB() float64 { return size.Float64() / PB.Float64() }
 
-// EB returns size in exabytes
+// EB returns size in exabytes.
 func (size Size) EB() float64 { return size.Float64() / EB.Float64() }
 
 // String converts size to a string using base-2 prefixes, unless the number
@@ -99,7 +99,7 @@ func countZeros(num, base int64) (count int) {
 	return count
 }
 
-// Base2String converts size to a string using base-2 prefixes
+// Base2String converts size to a string using base-2 prefixes.
 func (size Size) Base2String() string {
 	if size == 0 {
 		return "0 B"
@@ -123,7 +123,7 @@ func (size Size) Base2String() string {
 	return strconv.FormatInt(size.Int64(), 10) + " B"
 }
 
-// Base10String converts size to a string using base-10 prefixes
+// Base10String converts size to a string using base-10 prefixes.
 func (size Size) Base10String() string {
 	if size == 0 {
 		return "0 B"
@@ -158,7 +158,7 @@ func isLetter(b byte) bool {
 	return ('a' <= b && b <= 'z') || ('A' <= b && b <= 'Z')
 }
 
-// Set updates value from string
+// Set updates value from string.
 func (size *Size) Set(s string) error {
 	if s == "" {
 		return errors.New("empty size")
@@ -219,7 +219,7 @@ func (size *Size) Set(s string) error {
 	return nil
 }
 
-// Type implements pflag.Value
+// Type implements pflag.Value.
 func (Size) Type() string { return "memory.Size" }
 
 // MarshalText returns size as a string.

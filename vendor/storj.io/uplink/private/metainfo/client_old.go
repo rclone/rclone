@@ -14,7 +14,7 @@ import (
 	"storj.io/common/uuid"
 )
 
-// CreateSegmentOld requests the order limits for creating a new segment
+// CreateSegmentOld requests the order limits for creating a new segment.
 func (client *Client) CreateSegmentOld(ctx context.Context, bucket string, path storj.Path, segmentIndex int64, redundancy *pb.RedundancyScheme, maxEncryptedSegmentSize int64, expiration time.Time) (limits []*pb.AddressedOrderLimit, rootPieceID storj.PieceID, piecePrivateKey storj.PiecePrivateKey, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -34,7 +34,7 @@ func (client *Client) CreateSegmentOld(ctx context.Context, bucket string, path 
 	return response.GetAddressedLimits(), response.RootPieceId, response.PrivateKey, nil
 }
 
-// CommitSegmentOld requests to store the pointer for the segment
+// CommitSegmentOld requests to store the pointer for the segment.
 func (client *Client) CommitSegmentOld(ctx context.Context, bucket string, path storj.Path, segmentIndex int64, pointer *pb.Pointer, originalLimits []*pb.OrderLimit) (savedPointer *pb.Pointer, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -53,7 +53,7 @@ func (client *Client) CommitSegmentOld(ctx context.Context, bucket string, path 
 	return response.GetPointer(), nil
 }
 
-// SegmentInfoOld requests the pointer of a segment
+// SegmentInfoOld requests the pointer of a segment.
 func (client *Client) SegmentInfoOld(ctx context.Context, bucket string, path storj.Path, segmentIndex int64) (pointer *pb.Pointer, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -73,7 +73,7 @@ func (client *Client) SegmentInfoOld(ctx context.Context, bucket string, path st
 	return response.GetPointer(), nil
 }
 
-// ReadSegmentOld requests the order limits for reading a segment
+// ReadSegmentOld requests the order limits for reading a segment.
 func (client *Client) ReadSegmentOld(ctx context.Context, bucket string, path storj.Path, segmentIndex int64) (pointer *pb.Pointer, limits []*pb.AddressedOrderLimit, piecePrivateKey storj.PiecePrivateKey, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -93,7 +93,7 @@ func (client *Client) ReadSegmentOld(ctx context.Context, bucket string, path st
 	return response.GetPointer(), sortLimits(response.GetAddressedLimits(), response.GetPointer()), response.PrivateKey, nil
 }
 
-// sortLimits sorts order limits and fill missing ones with nil values
+// sortLimits sorts order limits and fill missing ones with nil values.
 func sortLimits(limits []*pb.AddressedOrderLimit, pointer *pb.Pointer) []*pb.AddressedOrderLimit {
 	sorted := make([]*pb.AddressedOrderLimit, pointer.GetRemote().GetRedundancy().GetTotal())
 	for _, piece := range pointer.GetRemote().GetRemotePieces() {
@@ -111,7 +111,7 @@ func getLimitByStorageNodeID(limits []*pb.AddressedOrderLimit, storageNodeID sto
 	return nil
 }
 
-// DeleteSegmentOld requests the order limits for deleting a segment
+// DeleteSegmentOld requests the order limits for deleting a segment.
 func (client *Client) DeleteSegmentOld(ctx context.Context, bucket string, path storj.Path, segmentIndex int64) (limits []*pb.AddressedOrderLimit, piecePrivateKey storj.PiecePrivateKey, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -131,7 +131,7 @@ func (client *Client) DeleteSegmentOld(ctx context.Context, bucket string, path 
 	return response.GetAddressedLimits(), response.PrivateKey, nil
 }
 
-// ListSegmentsOld lists the available segments
+// ListSegmentsOld lists the available segments.
 func (client *Client) ListSegmentsOld(ctx context.Context, bucket string, prefix, startAfter, ignoredEndBefore storj.Path, recursive bool, limit int32, metaFlags uint32) (items []ListItem, more bool, err error) {
 	defer mon.Task()(&ctx)(&err)
 

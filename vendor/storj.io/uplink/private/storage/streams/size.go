@@ -5,13 +5,13 @@ package streams
 
 import "io"
 
-// SizeReader holds reader and size read so far
+// SizeReader holds reader and size read so far.
 type SizeReader struct {
 	reader io.Reader
 	size   int64
 }
 
-// NewSizeReader keeps track of how much bytes are read from the reader
+// NewSizeReader keeps track of how much bytes are read from the reader.
 func NewSizeReader(r io.Reader) *SizeReader {
 	return &SizeReader{reader: r}
 }
@@ -22,7 +22,7 @@ func (r *SizeReader) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
-// Size returns the number of bytes read so far
+// Size returns the number of bytes read so far.
 func (r *SizeReader) Size() int64 {
 	return r.size
 }

@@ -11,7 +11,7 @@ import "context"
 // other packages.
 type key int
 
-// temp is the context key for temp struct
+// temp is the context key for temp struct.
 const tempKey key = 0
 
 type temp struct {
@@ -19,7 +19,7 @@ type temp struct {
 	directory string
 }
 
-// WithTempData creates context with information how store temporary data, in memory or on disk
+// WithTempData creates context with information how store temporary data, in memory or on disk.
 func WithTempData(ctx context.Context, directory string, inmemory bool) context.Context {
 	temp := temp{
 		inmemory:  inmemory,
@@ -28,7 +28,7 @@ func WithTempData(ctx context.Context, directory string, inmemory bool) context.
 	return context.WithValue(ctx, tempKey, temp)
 }
 
-// GetTempData returns if temporary data should be stored in memory or on disk
+// GetTempData returns if temporary data should be stored in memory or on disk.
 func GetTempData(ctx context.Context) (string, bool, bool) {
 	tempValue, ok := ctx.Value(tempKey).(temp)
 	if !ok {

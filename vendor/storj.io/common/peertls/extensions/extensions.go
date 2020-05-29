@@ -64,7 +64,7 @@ var (
 type ExtensionID = asn1.ObjectIdentifier
 
 // Config is used to bind cli flags for determining which extensions will
-// be used by the server
+// be used by the server.
 type Config struct {
 	Revocation          bool `default:"true" help:"if true, client leaves may contain the most recent certificate revocation for the current certificate"`
 	WhitelistSignedLeaf bool `default:"false" help:"if true, client leaves must contain a valid \"signed certificate extension\" (NB: verified against certs in the peer ca whitelist; i.e. if true, a whitelist must be provided)"`

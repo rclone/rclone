@@ -28,7 +28,7 @@ type tee struct {
 	writerErr  error
 }
 
-// NewTeeFile returns a tee that uses file-system to offload memory
+// NewTeeFile returns a tee that uses file-system to offload memory.
 func NewTeeFile(readers int, tempdir string) ([]PipeReader, PipeWriter, error) {
 	file, err := tmpfile.New(tempdir, "tee")
 	if err != nil {
@@ -45,7 +45,7 @@ func NewTeeFile(readers int, tempdir string) ([]PipeReader, PipeWriter, error) {
 	return newTee(buffer, readers, &handles)
 }
 
-// NewTeeInmemory returns a tee that uses inmemory
+// NewTeeInmemory returns a tee that uses inmemory.
 func NewTeeInmemory(readers int, allocMemory int64) ([]PipeReader, PipeWriter, error) {
 	handles := int64(readers + 1) // +1 for the writer
 	memory := memory(make([]byte, allocMemory))
@@ -124,7 +124,7 @@ func (reader *teeReader) Read(data []byte) (n int, err error) {
 	return readAmount, err
 }
 
-// Write writes to the buffer returning io.ErrClosedPipe when limit is reached
+// Write writes to the buffer returning io.ErrClosedPipe when limit is reached.
 //
 // It will block until at least one reader require the data.
 func (writer *teeWriter) Write(data []byte) (n int, err error) {
@@ -163,13 +163,13 @@ func (writer *teeWriter) Write(data []byte) (n int, err error) {
 	return writeAmount, err
 }
 
-// Close implements io.Reader Close
+// Close implements io.Reader Close.
 func (reader *teeReader) Close() error { return reader.CloseWithError(nil) }
 
-// Close implements io.Writer Close
+// Close implements io.Writer Close.
 func (writer *teeWriter) Close() error { return writer.CloseWithError(nil) }
 
-// CloseWithError implements closing with error
+// CloseWithError implements closing with error.
 func (reader *teeReader) CloseWithError(reason error) (err error) {
 	tee := reader.tee
 	if atomic.CompareAndSwapInt32(&reader.closed, 0, 1) {
@@ -183,7 +183,7 @@ func (reader *teeReader) CloseWithError(reason error) (err error) {
 	return err
 }
 
-// CloseWithError implements closing with error
+// CloseWithError implements closing with error.
 func (writer *teeWriter) CloseWithError(reason error) error {
 	if reason == nil {
 		reason = io.EOF

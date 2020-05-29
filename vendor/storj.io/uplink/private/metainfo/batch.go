@@ -11,22 +11,22 @@ import (
 )
 
 var (
-	// ErrInvalidType error for inalid response type casting
+	// ErrInvalidType error for inalid response type casting.
 	ErrInvalidType = errs.New("invalid response type")
 )
 
-// BatchItem represents single request in batch
+// BatchItem represents single request in batch.
 type BatchItem interface {
 	BatchItem() *pb.BatchRequestItem
 }
 
-// BatchResponse single response from batch call
+// BatchResponse single response from batch call.
 type BatchResponse struct {
 	pbRequest  interface{}
 	pbResponse interface{}
 }
 
-// CreateBucket returns BatchResponse for CreateBucket request
+// CreateBucket returns BatchResponse for CreateBucket request.
 func (resp *BatchResponse) CreateBucket() (CreateBucketResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_BucketCreate)
 	if !ok {
@@ -40,7 +40,7 @@ func (resp *BatchResponse) CreateBucket() (CreateBucketResponse, error) {
 	return createResponse, nil
 }
 
-// GetBucket returns response for GetBucket request
+// GetBucket returns response for GetBucket request.
 func (resp *BatchResponse) GetBucket() (GetBucketResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_BucketGet)
 	if !ok {
@@ -53,7 +53,7 @@ func (resp *BatchResponse) GetBucket() (GetBucketResponse, error) {
 	return getResponse, nil
 }
 
-// ListBuckets returns response for ListBuckets request
+// ListBuckets returns response for ListBuckets request.
 func (resp *BatchResponse) ListBuckets() (ListBucketsResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_BucketList)
 	if !ok {
@@ -62,7 +62,7 @@ func (resp *BatchResponse) ListBuckets() (ListBucketsResponse, error) {
 	return newListBucketsResponse(item.BucketList), nil
 }
 
-// BeginObject returns response for BeginObject request
+// BeginObject returns response for BeginObject request.
 func (resp *BatchResponse) BeginObject() (BeginObjectResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_ObjectBegin)
 	if !ok {
@@ -77,7 +77,7 @@ func (resp *BatchResponse) BeginObject() (BeginObjectResponse, error) {
 	return newBeginObjectResponse(item.ObjectBegin, rs), nil
 }
 
-// BeginDeleteObject returns response for BeginDeleteObject request
+// BeginDeleteObject returns response for BeginDeleteObject request.
 func (resp *BatchResponse) BeginDeleteObject() (BeginDeleteObjectResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_ObjectBeginDelete)
 	if !ok {
@@ -86,7 +86,7 @@ func (resp *BatchResponse) BeginDeleteObject() (BeginDeleteObjectResponse, error
 	return newBeginDeleteObjectResponse(item.ObjectBeginDelete), nil
 }
 
-// GetObject returns response for GetObject request
+// GetObject returns response for GetObject request.
 func (resp *BatchResponse) GetObject() (GetObjectResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_ObjectGet)
 	if !ok {
@@ -95,7 +95,7 @@ func (resp *BatchResponse) GetObject() (GetObjectResponse, error) {
 	return newGetObjectResponse(item.ObjectGet), nil
 }
 
-// ListObjects returns response for ListObjects request
+// ListObjects returns response for ListObjects request.
 func (resp *BatchResponse) ListObjects() (ListObjectsResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_ObjectList)
 	if !ok {
@@ -110,7 +110,7 @@ func (resp *BatchResponse) ListObjects() (ListObjectsResponse, error) {
 	return newListObjectsResponse(item.ObjectList, requestItem.ObjectList.EncryptedPrefix, requestItem.ObjectList.Recursive), nil
 }
 
-// BeginSegment returns response for BeginSegment request
+// BeginSegment returns response for BeginSegment request.
 func (resp *BatchResponse) BeginSegment() (BeginSegmentResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_SegmentBegin)
 	if !ok {
@@ -120,7 +120,7 @@ func (resp *BatchResponse) BeginSegment() (BeginSegmentResponse, error) {
 	return newBeginSegmentResponse(item.SegmentBegin), nil
 }
 
-// BeginDeleteSegment returns response for BeginDeleteSegment request
+// BeginDeleteSegment returns response for BeginDeleteSegment request.
 func (resp *BatchResponse) BeginDeleteSegment() (BeginDeleteSegmentResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_SegmentBeginDelete)
 	if !ok {
@@ -130,7 +130,7 @@ func (resp *BatchResponse) BeginDeleteSegment() (BeginDeleteSegmentResponse, err
 	return newBeginDeleteSegmentResponse(item.SegmentBeginDelete), nil
 }
 
-// ListSegment returns response for ListSegment request
+// ListSegment returns response for ListSegment request.
 func (resp *BatchResponse) ListSegment() (ListSegmentsResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_SegmentList)
 	if !ok {
@@ -139,7 +139,7 @@ func (resp *BatchResponse) ListSegment() (ListSegmentsResponse, error) {
 	return newListSegmentsResponse(item.SegmentList), nil
 }
 
-// DownloadSegment returns response for DownloadSegment request
+// DownloadSegment returns response for DownloadSegment request.
 func (resp *BatchResponse) DownloadSegment() (DownloadSegmentResponse, error) {
 	item, ok := resp.pbResponse.(*pb.BatchResponseItem_SegmentDownload)
 	if !ok {

@@ -10,20 +10,20 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
-// ErrPieceKey is used when something goes wrong with a piece key
+// ErrPieceKey is used when something goes wrong with a piece key.
 var ErrPieceKey = errs.Class("piece key error")
 
-// PiecePublicKey is the unique identifier for pieces
+// PiecePublicKey is the unique identifier for pieces.
 type PiecePublicKey struct {
 	pub ed25519.PublicKey
 }
 
-// PiecePrivateKey is the unique identifier for pieces
+// PiecePrivateKey is the unique identifier for pieces.
 type PiecePrivateKey struct {
 	priv ed25519.PrivateKey
 }
 
-// NewPieceKey creates a piece key pair
+// NewPieceKey creates a piece key pair.
 func NewPieceKey() (PiecePublicKey, PiecePrivateKey, error) {
 	pub, priv, err := ed25519.GenerateKey(nil)
 
@@ -65,10 +65,10 @@ func (key PiecePublicKey) Verify(data, signature []byte) error {
 	return nil
 }
 
-// Bytes returns bytes of the piece public key
+// Bytes returns bytes of the piece public key.
 func (key PiecePublicKey) Bytes() []byte { return key.pub[:] }
 
-// Bytes returns bytes of the piece private key
+// Bytes returns bytes of the piece private key.
 func (key PiecePrivateKey) Bytes() []byte { return key.priv[:] }
 
 // IsZero returns whether the key is empty.
@@ -77,25 +77,25 @@ func (key PiecePublicKey) IsZero() bool { return len(key.pub) == 0 }
 // IsZero returns whether the key is empty.
 func (key PiecePrivateKey) IsZero() bool { return len(key.priv) == 0 }
 
-// Marshal serializes a piece public key
+// Marshal serializes a piece public key.
 func (key PiecePublicKey) Marshal() ([]byte, error) { return key.Bytes(), nil }
 
-// Marshal serializes a piece private key
+// Marshal serializes a piece private key.
 func (key PiecePrivateKey) Marshal() ([]byte, error) { return key.Bytes(), nil }
 
-// MarshalTo serializes a piece public key into the passed byte slice
+// MarshalTo serializes a piece public key into the passed byte slice.
 func (key *PiecePublicKey) MarshalTo(data []byte) (n int, err error) {
 	n = copy(data, key.Bytes())
 	return n, nil
 }
 
-// MarshalTo serializes a piece private key into the passed byte slice
+// MarshalTo serializes a piece private key into the passed byte slice.
 func (key *PiecePrivateKey) MarshalTo(data []byte) (n int, err error) {
 	n = copy(data, key.Bytes())
 	return n, nil
 }
 
-// Unmarshal deserializes a piece public key
+// Unmarshal deserializes a piece public key.
 func (key *PiecePublicKey) Unmarshal(data []byte) error {
 	// allow empty keys
 	if len(data) == 0 {
@@ -107,7 +107,7 @@ func (key *PiecePublicKey) Unmarshal(data []byte) error {
 	return err
 }
 
-// Unmarshal deserializes a piece private key
+// Unmarshal deserializes a piece private key.
 func (key *PiecePrivateKey) Unmarshal(data []byte) error {
 	// allow empty keys
 	if len(data) == 0 {
@@ -122,21 +122,21 @@ func (key *PiecePrivateKey) Unmarshal(data []byte) error {
 	return err
 }
 
-// Size returns the length of a piece public key (implements gogo's custom type interface)
+// Size returns the length of a piece public key (implements gogo's custom type interface).
 func (key *PiecePublicKey) Size() int { return len(key.pub) }
 
-// Size returns the length of a piece private key (implements gogo's custom type interface)
+// Size returns the length of a piece private key (implements gogo's custom type interface).
 func (key *PiecePrivateKey) Size() int { return len(key.priv) }
 
-// Value set a PiecePublicKey to a database field
+// Value set a PiecePublicKey to a database field.
 func (key PiecePublicKey) Value() (driver.Value, error) {
 	return key.Bytes(), nil
 }
 
-// Value set a PiecePrivateKey to a database field
+// Value set a PiecePrivateKey to a database field.
 func (key PiecePrivateKey) Value() (driver.Value, error) { return key.Bytes(), nil }
 
-// Scan extracts a PiecePublicKey from a database field
+// Scan extracts a PiecePublicKey from a database field.
 func (key *PiecePublicKey) Scan(src interface{}) (err error) {
 	b, ok := src.([]byte)
 	if !ok {
@@ -147,7 +147,7 @@ func (key *PiecePublicKey) Scan(src interface{}) (err error) {
 	return err
 }
 
-// Scan extracts a PiecePrivateKey from a database field
+// Scan extracts a PiecePrivateKey from a database field.
 func (key *PiecePrivateKey) Scan(src interface{}) (err error) {
 	b, ok := src.([]byte)
 	if !ok {

@@ -12,17 +12,17 @@ import (
 )
 
 var (
-	// ErrBucket is an error class for general bucket errors
+	// ErrBucket is an error class for general bucket errors.
 	ErrBucket = errs.Class("bucket")
 
-	// ErrNoBucket is an error class for using empty bucket name
+	// ErrNoBucket is an error class for using empty bucket name.
 	ErrNoBucket = errs.Class("no bucket specified")
 
-	// ErrBucketNotFound is an error class for non-existing bucket
+	// ErrBucketNotFound is an error class for non-existing bucket.
 	ErrBucketNotFound = errs.Class("bucket not found")
 )
 
-// Bucket contains information about a specific bucket
+// Bucket contains information about a specific bucket.
 type Bucket struct {
 	ID                          uuid.UUID
 	Name                        string

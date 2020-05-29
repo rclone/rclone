@@ -44,14 +44,14 @@ type ErasureScheme interface {
 	// from Decode.
 	StripeSize() int
 
-	// Encode will generate this many erasure shares and therefore this many pieces
+	// Encode will generate this many erasure shares and therefore this many pieces.
 	TotalCount() int
 
-	// Decode requires at least this many pieces
+	// Decode requires at least this many pieces.
 	RequiredCount() int
 }
 
-// RedundancyStrategy is an ErasureScheme with a repair and optimal thresholds
+// RedundancyStrategy is an ErasureScheme with a repair and optimal thresholds.
 type RedundancyStrategy struct {
 	ErasureScheme
 	repairThreshold  int
@@ -119,13 +119,13 @@ func NewRedundancyStrategyFromStorj(scheme storj.RedundancyScheme) (RedundancySt
 }
 
 // RepairThreshold is the number of available erasure pieces below which
-// the data must be repaired to avoid loss
+// the data must be repaired to avoid loss.
 func (rs *RedundancyStrategy) RepairThreshold() int {
 	return rs.repairThreshold
 }
 
 // OptimalThreshold is the number of available erasure pieces above which
-// there is no need for the data to be repaired
+// there is no need for the data to be repaired.
 func (rs *RedundancyStrategy) OptimalThreshold() int {
 	return rs.optimalThreshold
 }
@@ -271,7 +271,7 @@ func (er *EncodedRanger) OutputSize() int64 {
 	return blocks * int64(er.rs.ErasureShareSize())
 }
 
-// Range is like Ranger.Range, but returns a slice of Readers
+// Range is like Ranger.Range, but returns a slice of Readers.
 func (er *EncodedRanger) Range(ctx context.Context, offset, length int64) (_ []io.ReadCloser, err error) {
 	defer mon.Task()(&ctx)(&err)
 	// the offset and length given may not be block-aligned, so let's figure

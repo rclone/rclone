@@ -9,7 +9,7 @@ package vouchers;
 import "gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-// Voucher is a signed message verifying that a node has been vetted by a particular satellite
+// Voucher is a signed message verifying that a node has been vetted by a particular satellite.
 message Voucher {
     bytes satellite_id = 1 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
     bytes storage_node_id = 2 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];

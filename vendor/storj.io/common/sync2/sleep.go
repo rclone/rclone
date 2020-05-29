@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Sleep implements sleeping with cancellation
+// Sleep implements sleeping with cancellation.
 func Sleep(ctx context.Context, duration time.Duration) bool {
 	timer := time.NewTimer(duration)
 	defer timer.Stop()

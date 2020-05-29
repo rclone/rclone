@@ -7,5 +7,5 @@ import (
 	"github.com/zeebo/errs"
 )
 
-// Error is the errs class of standard segment errors
+// Error is the errs class of standard segment errors.
 var Error = errs.Class("segment error")

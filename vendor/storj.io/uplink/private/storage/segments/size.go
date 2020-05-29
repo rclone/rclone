@@ -18,7 +18,7 @@ func SizeReader(r io.Reader) *SizedReader {
 	return &SizedReader{r: r}
 }
 
-// Read implements io.Reader.Read
+// Read implements io.Reader.Read.
 func (r *SizedReader) Read(p []byte) (n int, err error) {
 	n, err = r.r.Read(p)
 	r.size += int64(n)

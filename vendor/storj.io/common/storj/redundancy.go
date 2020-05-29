@@ -3,7 +3,7 @@
 
 package storj
 
-// RedundancyScheme specifies the parameters and the algorithm for redundancy
+// RedundancyScheme specifies the parameters and the algorithm for redundancy.
 type RedundancyScheme struct {
 	// Algorithm determines the algorithm to be used for redundancy.
 	Algorithm RedundancyAlgorithm
@@ -25,7 +25,7 @@ type RedundancyScheme struct {
 	TotalShares int16
 }
 
-// IsZero returns true if no field in the struct is set to non-zero value
+// IsZero returns true if no field in the struct is set to non-zero value.
 func (scheme RedundancyScheme) IsZero() bool {
 	return scheme == (RedundancyScheme{})
 }
@@ -59,10 +59,10 @@ func (scheme RedundancyScheme) DownloadNodes() int32 {
 	return needed
 }
 
-// RedundancyAlgorithm is the algorithm used for redundancy
+// RedundancyAlgorithm is the algorithm used for redundancy.
 type RedundancyAlgorithm byte
 
-// List of supported redundancy algorithms
+// List of supported redundancy algorithms.
 const (
 	InvalidRedundancyAlgorithm = RedundancyAlgorithm(iota)
 	ReedSolomon

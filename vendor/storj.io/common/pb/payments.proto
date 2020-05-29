@@ -23,14 +23,26 @@ message PrepareInvoiceRecordsRequest {
 
 message PrepareInvoiceRecordsResponse {}
 
-message ApplyInvoiceRecordsRequest {}
+message ApplyInvoiceRecordsRequest {
+    google.protobuf.Timestamp period = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
 message ApplyInvoiceRecordsResponse {}
 
-message ApplyInvoiceCouponsRequest {}
+message ApplyInvoiceCouponsRequest {
+    google.protobuf.Timestamp period = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
 message ApplyInvoiceCouponsResponse {}
 
-message ApplyInvoiceCreditsRequest {}
+message ApplyInvoiceCreditsRequest {
+    google.protobuf.Timestamp period = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
 message ApplyInvoiceCreditsResponse {}
 
-message CreateInvoicesRequest {}
+message CreateInvoicesRequest {
+    google.protobuf.Timestamp period = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+}
+
 message CreateInvoicesResponse {}

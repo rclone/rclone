@@ -26,7 +26,7 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
-// PieceAction is an enumeration of all possible executed actions on storage node
+// PieceAction is an enumeration of all possible executed actions on storage node.
 type PieceAction int32
 
 const (
@@ -98,7 +98,7 @@ func (SettlementResponse_Status) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_e0f5d4cf0fc9e41b, []int{7, 0}
 }
 
-// OrderLimit is provided by satellite to execute specific action on storage node within some limits
+// OrderLimit is provided by satellite to execute specific action on storage node within some limits.
 type OrderLimit struct {
 	// unique serial to avoid replay attacks
 	SerialNumber SerialNumber `protobuf:"bytes,1,opt,name=serial_number,json=serialNumber,proto3,customtype=SerialNumber" json:"serial_number"`
@@ -200,7 +200,7 @@ func (m *OrderLimit) GetSatelliteAddress() *NodeAddress {
 	return nil
 }
 
-// OrderLimitSigning provides OrderLimit signing serialization
+// OrderLimitSigning provides OrderLimit signing serialization.
 //
 // It is never used for sending across the network, it is
 // used in signing to ensure that nullable=false fields get handled properly.
@@ -306,7 +306,7 @@ func (m *OrderLimitSigning) GetSatelliteAddress() *NodeAddress {
 	return nil
 }
 
-// Order is a one step of fullfilling Amount number of bytes from an OrderLimit with SerialNumber
+// Order is a one step of fullfilling Amount number of bytes from an OrderLimit with SerialNumber.
 type Order struct {
 	// serial of the order limit that was signed
 	SerialNumber SerialNumber `protobuf:"bytes,1,opt,name=serial_number,json=serialNumber,proto3,customtype=SerialNumber" json:"serial_number"`
@@ -357,7 +357,7 @@ func (m *Order) GetUplinkSignature() []byte {
 	return nil
 }
 
-// OrderSigning provides Order signing format
+// OrderSigning provides Order signing format.
 //
 // It is never used for sending across the network, it is
 // used in signing to ensure that nullable=false fields get handled properly.

@@ -10,7 +10,6 @@ import (
 
 	"github.com/zeebo/errs"
 
-	"storj.io/common/internal/grpchook"
 	"storj.io/drpc/drpcerr"
 )
 
@@ -55,13 +54,6 @@ func Code(err error) StatusCode {
 			return code
 		}
 
-		// If we have grpc attached try to get grpc code if possible.
-		if grpchook.HookedConvertToStatusCode != nil {
-			if code, ok := grpchook.HookedConvertToStatusCode(err); ok {
-				return StatusCode(code)
-			}
-		}
-
 		return Unknown
 	}
 }
@@ -70,11 +62,6 @@ func Code(err error) StatusCode {
 func Wrap(code StatusCode, err error) error {
 	if err == nil {
 		return nil
-	}
-
-	// Should we also handle grpc error status codes.
-	if grpchook.HookedErrorWrap != nil {
-		return grpchook.HookedErrorWrap(grpchook.StatusCode(code), err)
 	}
 
 	ce := &codeErr{
@@ -95,7 +82,7 @@ func Error(code StatusCode, msg string) error {
 	return Wrap(code, errs.New("%s", msg))
 }
 
-// Errorf : Error :: fmt.Sprintf : fmt.Sprint
+// Errorf : Error :: fmt.Sprintf : fmt.Sprint.
 func Errorf(code StatusCode, format string, a ...interface{}) error {
 	return Wrap(code, errs.New(format, a...))
 }

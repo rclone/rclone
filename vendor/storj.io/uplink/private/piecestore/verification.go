@@ -24,7 +24,7 @@ var (
 	ErrProtocol = errs.Class("protocol")
 	// ErrVerifyUntrusted is an error in case there is a trust issue.
 	ErrVerifyUntrusted = errs.Class("untrusted")
-	// ErrStorageNodeInvalidResponse is an error when a storage node returns a response with invalid data
+	// ErrStorageNodeInvalidResponse is an error when a storage node returns a response with invalid data.
 	ErrStorageNodeInvalidResponse = errs.Class("storage node has returned an invalid response")
 )
 

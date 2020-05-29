@@ -58,7 +58,6 @@ func (PieceHeader_FormatVersion) EnumDescriptor() ([]byte, []int) {
 //      Chunk ->
 //   PieceHash signed by uplink ->
 //      <- PieceHash signed by storage node
-//
 type PieceUploadRequest struct {
 	// first message to show that we are allowed to upload
 	Limit *OrderLimit `protobuf:"bytes,1,opt,name=limit,proto3" json:"limit,omitempty"`

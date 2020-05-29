@@ -15,11 +15,11 @@ import (
 )
 
 var (
-	// Error is the errs class of SetupProject
+	// Error is the errs class of SetupProject.
 	Error = errs.Class("SetupProject error")
 )
 
-// SetupProject creates a project with temporary values until we can figure out how to bypass encryption related setup
+// SetupProject creates a project with temporary values until we can figure out how to bypass encryption related setup.
 func SetupProject(m *metainfo.Client) (*Project, error) {
 	maxBucketMetaSize := 10 * memory.MiB
 	segment := segments.NewSegmentStore(m, nil)

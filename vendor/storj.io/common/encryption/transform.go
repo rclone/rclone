@@ -35,20 +35,20 @@ type transformedReader struct {
 	bytesRead    int
 }
 
-// NoopTransformer is a dummy Transformer that passes data through without modifying it
+// NoopTransformer is a dummy Transformer that passes data through without modifying it.
 type NoopTransformer struct{}
 
-// InBlockSize is 1
+// InBlockSize is 1.
 func (t *NoopTransformer) InBlockSize() int {
 	return 1
 }
 
-// OutBlockSize is 1
+// OutBlockSize is 1.
 func (t *NoopTransformer) OutBlockSize() int {
 	return 1
 }
 
-// Transform returns the input without modification
+// Transform returns the input without modification.
 func (t *NoopTransformer) Transform(out, in []byte, blockNum int64) ([]byte, error) {
 	return append(out, in...), nil
 }
@@ -137,7 +137,7 @@ func (t *transformedRanger) Size() int64 {
 
 // CalcEncompassingBlocks is a useful helper function that, given an offset,
 // length, and blockSize, will tell you which blocks contain the requested
-// offset and length
+// offset and length.
 func CalcEncompassingBlocks(offset, length int64, blockSize int) (
 	firstBlock, blockCount int64) {
 	firstBlock = offset / int64(blockSize)

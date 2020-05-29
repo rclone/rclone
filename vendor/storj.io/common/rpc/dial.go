@@ -37,6 +37,13 @@ func NewDefaultManagerOptions() drpcmanager.Options {
 	}
 }
 
+// Transport is a type that creates net.Conns, given an address.
+// net.Dialer implements this interface and is used by default.
+type Transport interface {
+	// DialContext is called to establish a connection.
+	DialContext(ctx context.Context, network, address string) (net.Conn, error)
+}
+
 // Dialer holds configuration for dialing.
 type Dialer struct {
 	// TLSOptions controls the tls options for dialing. If it is nil, only
@@ -65,6 +72,9 @@ type Dialer struct {
 	// socket option on dialed connections. Only valid on linux. Only set
 	// if positive.
 	TCPUserTimeout time.Duration
+
+	// Transport is how sockets are opened. If nil, net.Dialer is used.
+	Transport Transport
 }
 
 // NewDefaultDialer returns a Dialer with default timeouts set.
@@ -96,7 +106,12 @@ func (d Dialer) dialContext(ctx context.Context, address string) (net.Conn, erro
 		}
 	}
 
-	conn, err := new(net.Dialer).DialContext(ctx, "tcp", address)
+	dialer := d.Transport
+	if dialer == nil {
+		dialer = new(net.Dialer)
+	}
+
+	conn, err := dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
 		// N.B. this error is not wrapped on purpose! grpc code cares about inspecting
 		// it and it's not smart enough to attempt to do any unwrapping. :( Additionally
@@ -142,13 +157,24 @@ func (d Dialer) DialNode(ctx context.Context, node *pb.Node) (_ *Conn, err error
 
 // DialAddressID dials to the specified address and asserts it has the given node id.
 func (d Dialer) DialAddressID(ctx context.Context, address string, id storj.NodeID) (_ *Conn, err error) {
-	defer mon.Task()(&ctx)(&err)
+	defer mon.Task()(&ctx, "node: "+id.String()[0:8])(&err)
 
 	if d.TLSOptions == nil {
 		return nil, Error.New("tls options not set when required for this dial")
 	}
 
 	return d.dial(ctx, address, d.TLSOptions.ClientTLSConfig(id))
+}
+
+// DialNodeURL dials to the specified node url and asserts it has the given node id.
+func (d Dialer) DialNodeURL(ctx context.Context, nodeURL storj.NodeURL) (_ *Conn, err error) {
+	defer mon.Task()(&ctx, "node: "+nodeURL.ID.String()[0:8])(&err)
+
+	if d.TLSOptions == nil {
+		return nil, Error.New("tls options not set when required for this dial")
+	}
+
+	return d.dial(ctx, nodeURL.Address, d.TLSOptions.ClientTLSConfig(nodeURL.ID))
 }
 
 // DialAddressInsecureBestEffort is like DialAddressInsecure but tries to dial a node securely if
@@ -330,7 +356,7 @@ type tlsConnWrapper struct {
 	underlying net.Conn
 }
 
-// Close closes the underlying connection
+// Close closes the underlying connection.
 func (t *tlsConnWrapper) Close() error { return t.underlying.Close() }
 
 // drpcHeaderConn fulfills the net.Conn interface. On the first call to Write
@@ -340,7 +366,7 @@ type drpcHeaderConn struct {
 	once sync.Once
 }
 
-// newDrpcHeaderConn returns a new *drpcHeaderConn
+// newDrpcHeaderConn returns a new *drpcHeaderConn.
 func newDrpcHeaderConn(conn net.Conn) *drpcHeaderConn {
 	return &drpcHeaderConn{
 		Conn: conn,

@@ -22,7 +22,7 @@ var errClass = errs.Class("kvmetainfo")
 
 const defaultSegmentLimit = 8 // TODO
 
-// DB implements metainfo database
+// DB implements metainfo database.
 type DB struct {
 	project *Project
 
@@ -34,7 +34,7 @@ type DB struct {
 	encStore *encryption.Store
 }
 
-// New creates a new metainfo database
+// New creates a new metainfo database.
 func New(project *Project, metainfo *metainfo.Client, streams streams.Store, segments segments.Store, encStore *encryption.Store) *DB {
 	return &DB{
 		project:  project,
@@ -45,22 +45,22 @@ func New(project *Project, metainfo *metainfo.Client, streams streams.Store, seg
 	}
 }
 
-// CreateBucket creates a new bucket with the specified information
+// CreateBucket creates a new bucket with the specified information.
 func (db *DB) CreateBucket(ctx context.Context, bucketName string, info *storj.Bucket) (bucketInfo storj.Bucket, err error) {
 	return db.project.CreateBucket(ctx, bucketName, info)
 }
 
-// DeleteBucket deletes bucket
+// DeleteBucket deletes bucket.
 func (db *DB) DeleteBucket(ctx context.Context, bucketName string) (_ storj.Bucket, err error) {
 	return db.project.DeleteBucket(ctx, bucketName)
 }
 
-// GetBucket gets bucket information
+// GetBucket gets bucket information.
 func (db *DB) GetBucket(ctx context.Context, bucketName string) (bucketInfo storj.Bucket, err error) {
 	return db.project.GetBucket(ctx, bucketName)
 }
 
-// ListBuckets lists buckets
+// ListBuckets lists buckets.
 func (db *DB) ListBuckets(ctx context.Context, options storj.BucketListOptions) (list storj.BucketList, err error) {
 	return db.project.ListBuckets(ctx, options)
 }

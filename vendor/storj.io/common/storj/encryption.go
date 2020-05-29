@@ -9,7 +9,7 @@ import (
 	"github.com/zeebo/errs"
 )
 
-// EncryptionParameters is the cipher suite and parameters used for encryption
+// EncryptionParameters is the cipher suite and parameters used for encryption.
 type EncryptionParameters struct {
 	// CipherSuite specifies the cipher suite to be used for encryption.
 	CipherSuite CipherSuite
@@ -24,7 +24,7 @@ type EncryptionParameters struct {
 	BlockSize int32
 }
 
-// IsZero returns true if no field in the struct is set to non-zero value
+// IsZero returns true if no field in the struct is set to non-zero value.
 func (params EncryptionParameters) IsZero() bool {
 	return params == (EncryptionParameters{})
 }
@@ -45,11 +45,11 @@ const (
 	// by the NaCl cryptography library under the name "Secretbox".
 	EncSecretBox
 	// EncNullBase64URL is like EncNull but Base64 encodes/decodes the
-	// binary path data (URL-safe)
+	// binary path data (URL-safe).
 	EncNullBase64URL
 )
 
-// Constant definitions for key and nonce sizes
+// Constant definitions for key and nonce sizes.
 const (
 	KeySize   = 32
 	NonceSize = 24
@@ -66,29 +66,29 @@ func NewKey(humanReadableKey []byte) (*Key, error) {
 	return &key, nil
 }
 
-// Key represents the largest key used by any encryption protocol
+// Key represents the largest key used by any encryption protocol.
 type Key [KeySize]byte
 
-// Raw returns the key as a raw byte array pointer
+// Raw returns the key as a raw byte array pointer.
 func (key *Key) Raw() *[KeySize]byte {
 	return (*[KeySize]byte)(key)
 }
 
-// IsZero returns true if key is nil or it points to its zero value
+// IsZero returns true if key is nil or it points to its zero value.
 func (key *Key) IsZero() bool {
 	return key == nil || *key == (Key{})
 }
 
-// ErrNonce is used when something goes wrong with a stream ID
+// ErrNonce is used when something goes wrong with a stream ID.
 var ErrNonce = errs.Class("nonce error")
 
-// nonceEncoding is base32 without padding
+// nonceEncoding is base32 without padding.
 var nonceEncoding = base32.StdEncoding.WithPadding(base32.NoPadding)
 
-// Nonce represents the largest nonce used by any encryption protocol
+// Nonce represents the largest nonce used by any encryption protocol.
 type Nonce [NonceSize]byte
 
-// NonceFromString decodes an base32 encoded
+// NonceFromString decodes an base32 encoded.
 func NonceFromString(s string) (Nonce, error) {
 	nonceBytes, err := nonceEncoding.DecodeString(s)
 	if err != nil {
@@ -97,7 +97,7 @@ func NonceFromString(s string) (Nonce, error) {
 	return NonceFromBytes(nonceBytes)
 }
 
-// NonceFromBytes converts a byte slice into a nonce
+// NonceFromBytes converts a byte slice into a nonce.
 func NonceFromBytes(b []byte) (Nonce, error) {
 	if len(b) != len(Nonce{}) {
 		return Nonce{}, ErrNonce.New("not enough bytes to make a nonce; have %d, need %d", len(b), len(NodeID{}))
@@ -108,56 +108,56 @@ func NonceFromBytes(b []byte) (Nonce, error) {
 	return nonce, nil
 }
 
-// IsZero returns whether nonce is unassigned
+// IsZero returns whether nonce is unassigned.
 func (nonce Nonce) IsZero() bool {
 	return nonce == Nonce{}
 }
 
-// String representation of the nonce
+// String representation of the nonce.
 func (nonce Nonce) String() string { return nonceEncoding.EncodeToString(nonce.Bytes()) }
 
-// Bytes returns bytes of the nonce
+// Bytes returns bytes of the nonce.
 func (nonce Nonce) Bytes() []byte { return nonce[:] }
 
-// Raw returns the nonce as a raw byte array pointer
+// Raw returns the nonce as a raw byte array pointer.
 func (nonce *Nonce) Raw() *[NonceSize]byte {
 	return (*[NonceSize]byte)(nonce)
 }
 
-// Marshal serializes a nonce
+// Marshal serializes a nonce.
 func (nonce Nonce) Marshal() ([]byte, error) {
 	return nonce.Bytes(), nil
 }
 
-// MarshalTo serializes a nonce into the passed byte slice
+// MarshalTo serializes a nonce into the passed byte slice.
 func (nonce *Nonce) MarshalTo(data []byte) (n int, err error) {
 	n = copy(data, nonce.Bytes())
 	return n, nil
 }
 
-// Unmarshal deserializes a nonce
+// Unmarshal deserializes a nonce.
 func (nonce *Nonce) Unmarshal(data []byte) error {
 	var err error
 	*nonce, err = NonceFromBytes(data)
 	return err
 }
 
-// Size returns the length of a nonce (implements gogo's custom type interface)
+// Size returns the length of a nonce (implements gogo's custom type interface).
 func (nonce Nonce) Size() int {
 	return len(nonce)
 }
 
-// MarshalJSON serializes a nonce to a json string as bytes
+// MarshalJSON serializes a nonce to a json string as bytes.
 func (nonce Nonce) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + nonce.String() + `"`), nil
 }
 
-// UnmarshalJSON deserializes a json string (as bytes) to a nonce
+// UnmarshalJSON deserializes a json string (as bytes) to a nonce.
 func (nonce *Nonce) UnmarshalJSON(data []byte) error {
 	var err error
 	*nonce, err = NonceFromString(string(data))
 	return err
 }
 
-// EncryptedPrivateKey is a private key that has been encrypted
+// EncryptedPrivateKey is a private key that has been encrypted.
 type EncryptedPrivateKey []byte

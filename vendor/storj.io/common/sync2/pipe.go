@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-// pipe is a io.Reader/io.Writer pipe backed by ReadAtWriteAtCloser
+// pipe is a io.Reader/io.Writer pipe backed by ReadAtWriteAtCloser.
 type pipe struct {
 	noCopy noCopy // nolint: structcheck
 
@@ -30,7 +30,7 @@ type pipe struct {
 	readerErr  error
 }
 
-// NewPipeFile returns a pipe that uses file-system to offload memory
+// NewPipeFile returns a pipe that uses file-system to offload memory.
 func NewPipeFile(tempdir string) (PipeReader, PipeWriter, error) {
 	tempfile, err := ioutil.TempFile(tempdir, "filepipe")
 	if err != nil {
@@ -50,7 +50,7 @@ func NewPipeFile(tempdir string) (PipeReader, PipeWriter, error) {
 	return pipeReader{pipe}, pipeWriter{pipe}, nil
 }
 
-// NewPipeMemory returns a pipe that uses an in-memory buffer
+// NewPipeMemory returns a pipe that uses an in-memory buffer.
 func NewPipeMemory(pipeSize int64) (PipeReader, PipeWriter, error) {
 	pipe := &pipe{
 		buffer: make(memory, pipeSize),
@@ -63,13 +63,13 @@ func NewPipeMemory(pipeSize int64) (PipeReader, PipeWriter, error) {
 type pipeReader struct{ pipe *pipe }
 type pipeWriter struct{ pipe *pipe }
 
-// Close implements io.Reader Close
+// Close implements io.Reader Close.
 func (reader pipeReader) Close() error { return reader.CloseWithError(nil) }
 
-// Close implements io.Writer Close
+// Close implements io.Writer Close.
 func (writer pipeWriter) Close() error { return writer.CloseWithError(nil) }
 
-// CloseWithError implements closing with error
+// CloseWithError implements closing with error.
 func (reader pipeReader) CloseWithError(err error) error {
 	if err == nil {
 		err = io.ErrClosedPipe
@@ -88,7 +88,7 @@ func (reader pipeReader) CloseWithError(err error) error {
 	return pipe.buffer.Close()
 }
 
-// CloseWithError implements closing with error
+// CloseWithError implements closing with error.
 func (writer pipeWriter) CloseWithError(err error) error {
 	if err == nil {
 		err = io.EOF
@@ -108,7 +108,7 @@ func (writer pipeWriter) CloseWithError(err error) error {
 	return pipe.buffer.Close()
 }
 
-// Write writes to the pipe returning io.ErrClosedPipe when pipeSize is reached
+// Write writes to the pipe returning io.ErrClosedPipe when pipeSize is reached.
 func (writer pipeWriter) Write(data []byte) (n int, err error) {
 	pipe := writer.pipe
 	pipe.mu.Lock()
@@ -161,7 +161,7 @@ func (writer pipeWriter) Write(data []byte) (n int, err error) {
 	return writeAmount, err
 }
 
-// Read reads from the pipe returning io.EOF when writer is closed or pipeSize is reached
+// Read reads from the pipe returning io.EOF when writer is closed or pipeSize is reached.
 func (reader pipeReader) Read(data []byte) (n int, err error) {
 	pipe := reader.pipe
 	pipe.mu.Lock()
@@ -214,13 +214,13 @@ func (reader pipeReader) Read(data []byte) (n int, err error) {
 	return readAmount, err
 }
 
-// MultiPipe is a multipipe backed by a single file
+// MultiPipe is a multipipe backed by a single file.
 type MultiPipe struct {
 	pipes []pipe
 }
 
 // NewMultiPipeFile returns a new MultiPipe that is created in tempdir
-// if tempdir == "" the fill will be created it into os.TempDir
+// if tempdir == "" the fill will be created it into os.TempDir.
 func NewMultiPipeFile(tempdir string, pipeCount, pipeSize int64) (*MultiPipe, error) {
 	tempfile, err := ioutil.TempFile(tempdir, "multifilepipe")
 	if err != nil {
@@ -255,7 +255,7 @@ func NewMultiPipeFile(tempdir string, pipeCount, pipeSize int64) (*MultiPipe, er
 	return multipipe, nil
 }
 
-// NewMultiPipeMemory returns a new MultiPipe that is using a memory buffer
+// NewMultiPipeMemory returns a new MultiPipe that is using a memory buffer.
 func NewMultiPipeMemory(pipeCount, pipeSize int64) (*MultiPipe, error) {
 	buffer := make(memory, pipeCount*pipeSize)
 
@@ -273,7 +273,7 @@ func NewMultiPipeMemory(pipeCount, pipeSize int64) (*MultiPipe, error) {
 	return multipipe, nil
 }
 
-// Pipe returns the two ends of a block stream pipe
+// Pipe returns the two ends of a block stream pipe.
 func (multipipe *MultiPipe) Pipe(index int) (PipeReader, PipeWriter) {
 	pipe := &multipipe.pipes[index]
 	return pipeReader{pipe}, pipeWriter{pipe}

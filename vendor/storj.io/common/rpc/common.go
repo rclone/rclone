@@ -18,9 +18,6 @@ import (
 const (
 	// IsDRPC is true if drpc is being used.
 	IsDRPC = true
-
-	// IsGRPC is true if grpc is being used.
-	IsGRPC = false
 )
 
 var mon = monkit.Package()

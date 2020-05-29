@@ -6,7 +6,7 @@ option go_package = "storj.io/common/pb";
 
 package objects;
 
-// SerializableMeta is the object metadata that will be stored serialized
+// SerializableMeta is the object metadata that will be stored serialized.
 message SerializableMeta {
 	string content_type = 1;
 	map<string, string> user_defined = 2;

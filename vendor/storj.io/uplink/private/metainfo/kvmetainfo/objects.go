@@ -18,7 +18,7 @@ import (
 	"storj.io/uplink/private/storage/streams"
 )
 
-// DefaultRS default values for RedundancyScheme
+// DefaultRS default values for RedundancyScheme.
 var DefaultRS = storj.RedundancyScheme{
 	Algorithm:      storj.ReedSolomon,
 	RequiredShares: 20,
@@ -28,8 +28,8 @@ var DefaultRS = storj.RedundancyScheme{
 	ShareSize:      1 * memory.KiB.Int32(),
 }
 
-// DefaultES default values for EncryptionParameters
-// BlockSize should default to the size of a stripe
+// DefaultES default values for EncryptionParameters.
+// BlockSize should default to the size of a stripe.
 var DefaultES = storj.EncryptionParameters{
 	CipherSuite: storj.EncAESGCM,
 	BlockSize:   DefaultRS.StripeSize(),
@@ -37,7 +37,7 @@ var DefaultES = storj.EncryptionParameters{
 
 var contentTypeKey = "content-type"
 
-// GetObject returns information about an object
+// GetObject returns information about an object.
 func (db *DB) GetObject(ctx context.Context, bucket storj.Bucket, path storj.Path) (info storj.Object, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -46,7 +46,7 @@ func (db *DB) GetObject(ctx context.Context, bucket storj.Bucket, path storj.Pat
 	return info, err
 }
 
-// GetObjectStream returns interface for reading the object stream
+// GetObjectStream returns interface for reading the object stream.
 func (db *DB) GetObjectStream(ctx context.Context, bucket storj.Bucket, object storj.Object) (stream ReadOnlyStream, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -64,7 +64,7 @@ func (db *DB) GetObjectStream(ctx context.Context, bucket storj.Bucket, object s
 	}, nil
 }
 
-// CreateObject creates an uploading object and returns an interface for uploading Object information
+// CreateObject creates an uploading object and returns an interface for uploading Object information.
 func (db *DB) CreateObject(ctx context.Context, bucket storj.Bucket, path storj.Path, createInfo *CreateObject) (object MutableObject, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -115,13 +115,13 @@ func (db *DB) CreateObject(ctx context.Context, bucket storj.Bucket, path storj.
 	}, nil
 }
 
-// ModifyObject modifies a committed object
+// ModifyObject modifies a committed object.
 func (db *DB) ModifyObject(ctx context.Context, bucket storj.Bucket, path storj.Path) (object MutableObject, err error) {
 	defer mon.Task()(&ctx)(&err)
 	return nil, errors.New("not implemented")
 }
 
-// DeleteObject deletes an object from database
+// DeleteObject deletes an object from database.
 func (db *DB) DeleteObject(ctx context.Context, bucket storj.Bucket, path storj.Path) (_ storj.Object, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -147,19 +147,19 @@ func (db *DB) DeleteObject(ctx context.Context, bucket storj.Bucket, path storj.
 	return obj, err
 }
 
-// ModifyPendingObject creates an interface for updating a partially uploaded object
+// ModifyPendingObject creates an interface for updating a partially uploaded object.
 func (db *DB) ModifyPendingObject(ctx context.Context, bucket storj.Bucket, path storj.Path) (object MutableObject, err error) {
 	defer mon.Task()(&ctx)(&err)
 	return nil, errors.New("not implemented")
 }
 
-// ListPendingObjects lists pending objects in bucket based on the ListOptions
+// ListPendingObjects lists pending objects in bucket based on the ListOptions.
 func (db *DB) ListPendingObjects(ctx context.Context, bucket storj.Bucket, options storj.ListOptions) (list storj.ObjectList, err error) {
 	defer mon.Task()(&ctx)(&err)
 	return storj.ObjectList{}, errors.New("not implemented")
 }
 
-// ListObjects lists objects in bucket based on the ListOptions
+// ListObjects lists objects in bucket based on the ListOptions.
 func (db *DB) ListObjects(ctx context.Context, bucket storj.Bucket, options storj.ListOptions) (list storj.ObjectList, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -286,7 +286,7 @@ func (db *DB) ListObjects(ctx context.Context, bucket storj.Bucket, options stor
 	return list, nil
 }
 
-// ListObjectsExtended lists objects in bucket based on the ListOptions
+// ListObjectsExtended lists objects in bucket based on the ListOptions.
 func (db *DB) ListObjectsExtended(ctx context.Context, bucket storj.Bucket, options storj.ListOptions) (list storj.ObjectList, err error) {
 	defer mon.Task()(&ctx)(&err)
 

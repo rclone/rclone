@@ -50,7 +50,7 @@ func parseBucket(o string) (bucket, rest string) {
 	return "", o
 }
 
-// New creates new FPath from the given URL
+// New creates new FPath from the given URL.
 func New(p string) (FPath, error) {
 	fp := FPath{original: p}
 
@@ -101,7 +101,7 @@ func New(p string) (FPath, error) {
 	return fp, nil
 }
 
-// Join is appends the given segment to the path
+// Join is appends the given segment to the path.
 func (p FPath) Join(segment string) FPath {
 	if p.local {
 		p.original = filepath.Join(p.original, segment)
@@ -113,7 +113,7 @@ func (p FPath) Join(segment string) FPath {
 	return p
 }
 
-// Base returns the last segment of the path
+// Base returns the last segment of the path.
 func (p FPath) Base() string {
 	if p.local {
 		return filepath.Base(p.original)
@@ -124,12 +124,12 @@ func (p FPath) Base() string {
 	return path.Base(p.path)
 }
 
-// Bucket returns the first segment of path
+// Bucket returns the first segment of path.
 func (p FPath) Bucket() string {
 	return p.bucket
 }
 
-// Path returns the URL path without the scheme
+// Path returns the URL path without the scheme.
 func (p FPath) Path() string {
 	if p.local {
 		return p.original
@@ -137,12 +137,12 @@ func (p FPath) Path() string {
 	return p.path
 }
 
-// IsLocal returns whether the path refers to local or remote location
+// IsLocal returns whether the path refers to local or remote location.
 func (p FPath) IsLocal() bool {
 	return p.local
 }
 
-// String returns the entire URL (untouched)
+// String returns the entire URL (untouched).
 func (p FPath) String() string {
 	return p.original
 }

@@ -23,7 +23,7 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
-// InjuredSegment is the queue item used for the data repair queue
+// InjuredSegment is the queue item used for the data repair queue.
 type InjuredSegment struct {
 	Path                 []byte    `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
 	LostPieces           []int32   `protobuf:"varint,2,rep,packed,name=lost_pieces,json=lostPieces,proto3" json:"lost_pieces,omitempty"`
