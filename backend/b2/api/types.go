@@ -337,3 +337,11 @@ type CopyFileRequest struct {
 	Info              map[string]string `json:"fileInfo,omitempty"`            // This field stores the metadata that will be stored with the file. (REPLACE only)
 	DestBucketID      string            `json:"destinationBucketId,omitempty"` // The destination ID of the bucket if set, if not the source bucket will be used
 }
+
+// CopyPartRequest is the request for b2_copy_part - the response is UploadPartResponse
+type CopyPartRequest struct {
+	SourceID    string `json:"sourceFileId"`    // The ID of the source file being copied.
+	LargeFileID string `json:"largeFileId"`     // The ID of the large file the part will belong to, as returned by b2_start_large_file.
+	PartNumber  int64  `json:"partNumber"`      // Which part this is (starting from 1)
+	Range       string `json:"range,omitempty"` // The range of bytes to copy. If not provided, the whole source file will be copied.
+}
