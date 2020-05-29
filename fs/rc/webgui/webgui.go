@@ -1,6 +1,6 @@
 // Define the Web GUI helpers
 
-package rc
+package webgui
 
 import (
 	"archive/zip"
