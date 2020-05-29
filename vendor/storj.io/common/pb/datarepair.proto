@@ -8,7 +8,7 @@ import "google/protobuf/timestamp.proto";
 
 package repair;
 
-// InjuredSegment is the queue item used for the data repair queue
+// InjuredSegment is the queue item used for the data repair queue.
 message InjuredSegment {
     bytes path = 1;
     repeated int32 lost_pieces = 2;

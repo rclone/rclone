@@ -72,7 +72,7 @@ func VerifyUplinkPieceHashSignature(ctx context.Context, publicKey storj.PiecePu
 	return Error.Wrap(publicKey.Verify(bytes, signed.Signature))
 }
 
-// VerifyStreamID verifies that the signature inside stream ID belongs to the satellite
+// VerifyStreamID verifies that the signature inside stream ID belongs to the satellite.
 func VerifyStreamID(ctx context.Context, satellite Signee, signed *pb.SatStreamID) (err error) {
 	defer mon.Task()(&ctx)(&err)
 	bytes, err := EncodeStreamID(ctx, signed)
@@ -83,7 +83,7 @@ func VerifyStreamID(ctx context.Context, satellite Signee, signed *pb.SatStreamI
 	return satellite.HashAndVerifySignature(ctx, bytes, signed.SatelliteSignature)
 }
 
-// VerifySegmentID verifies that the signature inside segment ID belongs to the satellite
+// VerifySegmentID verifies that the signature inside segment ID belongs to the satellite.
 func VerifySegmentID(ctx context.Context, satellite Signee, signed *pb.SatSegmentID) (err error) {
 	defer mon.Task()(&ctx)(&err)
 	bytes, err := EncodeSegmentID(ctx, signed)
@@ -94,7 +94,7 @@ func VerifySegmentID(ctx context.Context, satellite Signee, signed *pb.SatSegmen
 	return satellite.HashAndVerifySignature(ctx, bytes, signed.SatelliteSignature)
 }
 
-// VerifyExitCompleted verifies that the signature inside ExitCompleted belongs to the satellite
+// VerifyExitCompleted verifies that the signature inside ExitCompleted belongs to the satellite.
 func VerifyExitCompleted(ctx context.Context, satellite Signee, signed *pb.ExitCompleted) (err error) {
 	defer mon.Task()(&ctx)(&err)
 	bytes, err := EncodeExitCompleted(ctx, signed)
@@ -105,7 +105,7 @@ func VerifyExitCompleted(ctx context.Context, satellite Signee, signed *pb.ExitC
 	return Error.Wrap(satellite.HashAndVerifySignature(ctx, bytes, signed.ExitCompleteSignature))
 }
 
-// VerifyExitFailed verifies that the signature inside ExitFailed belongs to the satellite
+// VerifyExitFailed verifies that the signature inside ExitFailed belongs to the satellite.
 func VerifyExitFailed(ctx context.Context, satellite Signee, signed *pb.ExitFailed) (err error) {
 	defer mon.Task()(&ctx)(&err)
 	bytes, err := EncodeExitFailed(ctx, signed)

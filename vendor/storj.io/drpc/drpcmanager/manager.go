@@ -11,6 +11,7 @@ import (
 	"github.com/zeebo/errs"
 
 	"storj.io/drpc"
+	"storj.io/drpc/drpccache"
 	"storj.io/drpc/drpcctx"
 	"storj.io/drpc/drpcdebug"
 	"storj.io/drpc/drpcmetadata"
@@ -170,6 +171,8 @@ func (m *Manager) NewServerStream(ctx context.Context) (stream *drpcstream.Strea
 		return nil, "", err
 	}
 
+	callerCache := drpccache.FromContext(ctx)
+
 	var metadata drpcwire.Packet
 
 	for {
@@ -192,6 +195,11 @@ func (m *Manager) NewServerStream(ctx context.Context) (stream *drpcstream.Strea
 
 			case drpcwire.KindInvoke:
 				streamCtx := m.ctx
+
+				if callerCache != nil {
+					streamCtx = drpccache.WithContext(streamCtx, callerCache)
+				}
+
 				if metadata.ID.Stream == pkt.ID.Stream {
 					md, err := drpcmetadata.Decode(metadata.Data)
 					if err != nil {
@@ -271,13 +279,6 @@ func (m *Manager) manageStream(ctx context.Context, stream *drpcstream.Stream) {
 	go m.manageStreamContext(ctx, wg, stream)
 	wg.Wait()
 
-	// always ensure the stream is terminated if we're done managing it. the
-	// stream should already be in a terminal state unless we're exiting due
-	// to the manager terminating. that only happens if the underlying transport
-	// died, so just assume the remote end issued a cancel by terminating
-	// the transport.
-	stream.Cancel(context.Canceled)
-
 	// release semaphore
 	<-m.sem
 }
@@ -294,6 +295,7 @@ func (m *Manager) manageStreamPackets(wg *sync.WaitGroup, stream *drpcstream.Str
 	for {
 		select {
 		case <-m.term.Signal():
+			stream.Cancel(context.Canceled)
 			return
 
 		case <-stream.Terminated():
@@ -321,6 +323,7 @@ func (m *Manager) manageStreamContext(ctx context.Context, wg *sync.WaitGroup, s
 
 	select {
 	case <-m.term.Signal():
+		stream.Cancel(context.Canceled)
 		return
 
 	case <-stream.Terminated():

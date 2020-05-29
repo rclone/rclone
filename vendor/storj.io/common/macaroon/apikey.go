@@ -16,40 +16,40 @@ import (
 )
 
 var (
-	// Error is a general API Key error
+	// Error is a general API Key error.
 	Error = errs.Class("api key error")
-	// ErrFormat means that the structural formatting of the API Key is invalid
+	// ErrFormat means that the structural formatting of the API Key is invalid.
 	ErrFormat = errs.Class("api key format error")
-	// ErrInvalid means that the API Key is improperly signed
+	// ErrInvalid means that the API Key is improperly signed.
 	ErrInvalid = errs.Class("api key invalid error")
-	// ErrUnauthorized means that the API key does not grant the requested permission
+	// ErrUnauthorized means that the API key does not grant the requested permission.
 	ErrUnauthorized = errs.Class("api key unauthorized error")
-	// ErrRevoked means the API key has been revoked
+	// ErrRevoked means the API key has been revoked.
 	ErrRevoked = errs.Class("api key revocation error")
 
 	mon = monkit.Package()
 )
 
-// ActionType specifies the operation type being performed that the Macaroon will validate
+// ActionType specifies the operation type being performed that the Macaroon will validate.
 type ActionType int
 
 const (
-	// not using iota because these values are persisted in macaroons
+	// not using iota because these values are persisted in macaroons.
 	_ ActionType = 0
 
-	// ActionRead specifies a read operation
+	// ActionRead specifies a read operation.
 	ActionRead ActionType = 1
-	// ActionWrite specifies a read operation
+	// ActionWrite specifies a read operation.
 	ActionWrite ActionType = 2
-	// ActionList specifies a read operation
+	// ActionList specifies a read operation.
 	ActionList ActionType = 3
-	// ActionDelete specifies a read operation
+	// ActionDelete specifies a read operation.
 	ActionDelete ActionType = 4
-	// ActionProjectInfo requests project-level information
+	// ActionProjectInfo requests project-level information.
 	ActionProjectInfo ActionType = 5
 )
 
-// Action specifies the specific operation being performed that the Macaroon will validate
+// Action specifies the specific operation being performed that the Macaroon will validate.
 type Action struct {
 	Op            ActionType
 	Bucket        []byte
@@ -86,8 +86,8 @@ func ParseRawAPIKey(data []byte) (*APIKey, error) {
 	return &APIKey{mac: mac}, nil
 }
 
-// NewAPIKey generates a brand new unrestricted API key given the provided
-// server project secret
+// NewAPIKey generates a brand new unrestricted API key given the provided.
+// server project secret.
 func NewAPIKey(secret []byte) (*APIKey, error) {
 	mac, err := NewUnrestricted(secret)
 	if err != nil {
@@ -134,13 +134,13 @@ func (a *APIKey) Check(ctx context.Context, secret []byte, action Action, revoke
 
 // AllowedBuckets stores information about which buckets are
 // allowed to be accessed, where `Buckets` stores names of buckets that are
-// allowed and `All` is a bool that indicates if all buckets are allowed or not
+// allowed and `All` is a bool that indicates if all buckets are allowed or not.
 type AllowedBuckets struct {
 	All     bool
 	Buckets map[string]struct{}
 }
 
-// GetAllowedBuckets returns a list of all the allowed bucket paths that match the Action operation
+// GetAllowedBuckets returns a list of all the allowed bucket paths that match the Action operation.
 func (a *APIKey) GetAllowedBuckets(ctx context.Context, action Action) (allowed AllowedBuckets, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -211,12 +211,12 @@ func (a *APIKey) Tail() []byte {
 	return a.mac.Tail()
 }
 
-// Serialize serializes the API Key to a string
+// Serialize serializes the API Key to a string.
 func (a *APIKey) Serialize() string {
 	return base58.CheckEncode(a.mac.Serialize(), 0)
 }
 
-// SerializeRaw serialize the API Key to raw bytes
+// SerializeRaw serialize the API Key to raw bytes.
 func (a *APIKey) SerializeRaw() []byte {
 	return a.mac.Serialize()
 }

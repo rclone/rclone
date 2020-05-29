@@ -9,7 +9,7 @@ import (
 )
 
 // closeTrackingConn wraps a net.Conn and keeps track of if it was closed
-// or if it was leaked (and closes it if it was leaked.)
+// or if it was leaked (and closes it if it was leaked).
 type closeTrackingConn struct {
 	net.Conn
 }

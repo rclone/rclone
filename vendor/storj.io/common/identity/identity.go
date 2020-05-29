@@ -295,12 +295,12 @@ func NewManageableFullIdentity(ident *FullIdentity, ca *FullCertificateAuthority
 	}
 }
 
-// Status returns the status of the identity cert/key files for the config
+// Status returns the status of the identity cert/key files for the config.
 func (is SetupConfig) Status() (TLSFilesStatus, error) {
 	return statTLSFiles(is.CertPath, is.KeyPath)
 }
 
-// Create generates and saves a CA using the config
+// Create generates and saves a CA using the config.
 func (is SetupConfig) Create(ca *FullCertificateAuthority) (*FullIdentity, error) {
 	fi, err := ca.NewIdentity()
 	if err != nil {
@@ -314,7 +314,7 @@ func (is SetupConfig) Create(ca *FullCertificateAuthority) (*FullIdentity, error
 	return fi, ic.Save(fi)
 }
 
-// FullConfig converts a `SetupConfig` to `Config`
+// FullConfig converts a `SetupConfig` to `Config`.
 func (is SetupConfig) FullConfig() Config {
 	return Config{
 		CertPath: is.CertPath,
@@ -322,7 +322,7 @@ func (is SetupConfig) FullConfig() Config {
 	}
 }
 
-// Load loads a FullIdentity from the config
+// Load loads a FullIdentity from the config.
 func (ic Config) Load() (*FullIdentity, error) {
 	c, err := ioutil.ReadFile(ic.CertPath)
 	if err != nil {
@@ -340,7 +340,7 @@ func (ic Config) Load() (*FullIdentity, error) {
 	return fi, nil
 }
 
-// Save saves a FullIdentity according to the config
+// Save saves a FullIdentity according to the config.
 func (ic Config) Save(fi *FullIdentity) error {
 	var (
 		certData, keyData                                              bytes.Buffer
@@ -371,7 +371,7 @@ func (ic Config) Save(fi *FullIdentity) error {
 	)
 }
 
-// SaveBackup saves the certificate of the config with a timestamped filename
+// SaveBackup saves the certificate of the config with a timestamped filename.
 func (ic Config) SaveBackup(fi *FullIdentity) error {
 	return Config{
 		CertPath: backupPath(ic.CertPath),
@@ -379,14 +379,14 @@ func (ic Config) SaveBackup(fi *FullIdentity) error {
 	}.Save(fi)
 }
 
-// PeerConfig converts a Config to a PeerConfig
+// PeerConfig converts a Config to a PeerConfig.
 func (ic Config) PeerConfig() *PeerConfig {
 	return &PeerConfig{
 		CertPath: ic.CertPath,
 	}
 }
 
-// Load loads a PeerIdentity from the config
+// Load loads a PeerIdentity from the config.
 func (ic PeerConfig) Load() (*PeerIdentity, error) {
 	c, err := ioutil.ReadFile(ic.CertPath)
 	if err != nil {
@@ -399,7 +399,7 @@ func (ic PeerConfig) Load() (*PeerIdentity, error) {
 	return pi, nil
 }
 
-// Save saves a PeerIdentity according to the config
+// Save saves a PeerIdentity according to the config.
 func (ic PeerConfig) Save(peerIdent *PeerIdentity) error {
 	chain := []*x509.Certificate{peerIdent.Leaf, peerIdent.CA}
 	chain = append(chain, peerIdent.RestChain...)
@@ -417,19 +417,19 @@ func (ic PeerConfig) Save(peerIdent *PeerIdentity) error {
 	return nil
 }
 
-// SaveBackup saves the certificate of the config with a timestamped filename
+// SaveBackup saves the certificate of the config with a timestamped filename.
 func (ic PeerConfig) SaveBackup(pi *PeerIdentity) error {
 	return PeerConfig{
 		CertPath: backupPath(ic.CertPath),
 	}.Save(pi)
 }
 
-// Chain returns the Identity's certificate chain
+// Chain returns the Identity's certificate chain.
 func (fi *FullIdentity) Chain() []*x509.Certificate {
 	return append([]*x509.Certificate{fi.Leaf, fi.CA}, fi.RestChain...)
 }
 
-// RawChain returns all of the certificate chain as a 2d byte slice
+// RawChain returns all of the certificate chain as a 2d byte slice.
 func (fi *FullIdentity) RawChain() [][]byte {
 	chain := fi.Chain()
 	rawChain := make([][]byte, len(chain))
@@ -439,7 +439,7 @@ func (fi *FullIdentity) RawChain() [][]byte {
 	return rawChain
 }
 
-// RawRestChain returns the rest (excluding leaf and CA) of the certificate chain as a 2d byte slice
+// RawRestChain returns the rest (excluding leaf and CA) of the certificate chain as a 2d byte slice.
 func (fi *FullIdentity) RawRestChain() [][]byte {
 	rawChain := make([][]byte, len(fi.RestChain))
 	for _, cert := range fi.RestChain {
@@ -448,7 +448,7 @@ func (fi *FullIdentity) RawRestChain() [][]byte {
 	return rawChain
 }
 
-// PeerIdentity converts a FullIdentity into a PeerIdentity
+// PeerIdentity converts a FullIdentity into a PeerIdentity.
 func (fi *FullIdentity) PeerIdentity() *PeerIdentity {
 	return &PeerIdentity{
 		CA:        fi.CA,
@@ -508,7 +508,7 @@ func backupPath(path string) string {
 	)
 }
 
-// EncodePeerIdentity encodes the complete identity chain to bytes
+// EncodePeerIdentity encodes the complete identity chain to bytes.
 func EncodePeerIdentity(pi *PeerIdentity) []byte {
 	var chain []byte
 	chain = append(chain, pi.Leaf.Raw...)
@@ -519,7 +519,7 @@ func EncodePeerIdentity(pi *PeerIdentity) []byte {
 	return chain
 }
 
-// DecodePeerIdentity Decodes the bytes into complete identity chain
+// DecodePeerIdentity Decodes the bytes into complete identity chain.
 func DecodePeerIdentity(ctx context.Context, chain []byte) (_ *PeerIdentity, err error) {
 	defer mon.Task()(&ctx)(&err)
 

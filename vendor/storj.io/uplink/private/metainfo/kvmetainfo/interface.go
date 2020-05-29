@@ -10,7 +10,7 @@ import (
 	"storj.io/common/storj"
 )
 
-// CreateObject has optional parameters that can be set
+// CreateObject has optional parameters that can be set.
 type CreateObject struct {
 	Metadata    map[string]string
 	ContentType string
@@ -20,7 +20,7 @@ type CreateObject struct {
 	storj.EncryptionParameters
 }
 
-// Object converts the CreateObject to an object with unitialized values
+// Object converts the CreateObject to an object with unitialized values.
 func (create CreateObject) Object(bucket storj.Bucket, path storj.Path) storj.Object {
 	return storj.Object{
 		Bucket:      bucket,
@@ -40,7 +40,7 @@ func (create CreateObject) Object(bucket storj.Bucket, path storj.Path) storj.Ob
 	}
 }
 
-// ReadOnlyStream is an interface for reading segment information
+// ReadOnlyStream is an interface for reading segment information.
 type ReadOnlyStream interface {
 	Info() storj.Object
 
@@ -52,23 +52,23 @@ type ReadOnlyStream interface {
 	Segments(ctx context.Context, index int64, limit int64) (infos []storj.Segment, more bool, err error)
 }
 
-// MutableObject is an interface for manipulating creating/deleting object stream
+// MutableObject is an interface for manipulating creating/deleting object stream.
 type MutableObject interface {
-	// Info gets the current information about the object
+	// Info gets the current information about the object.
 	Info() storj.Object
 
-	// CreateStream creates a new stream for the object
+	// CreateStream creates a new stream for the object.
 	CreateStream(ctx context.Context) (MutableStream, error)
 	// ContinueStream starts to continue a partially uploaded stream.
 	ContinueStream(ctx context.Context) (MutableStream, error)
-	// DeleteStream deletes any information about this objects stream
+	// DeleteStream deletes any information about this objects stream.
 	DeleteStream(ctx context.Context) error
 
-	// Commit commits the changes to the database
+	// Commit commits the changes to the database.
 	Commit(ctx context.Context) error
 }
 
-// MutableStream is an interface for manipulating stream information
+// MutableStream is an interface for manipulating stream information.
 type MutableStream interface {
 	BucketName() string
 	Path() string

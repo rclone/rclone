@@ -61,7 +61,7 @@ func (path Unencrypted) Iterator() Iterator {
 	return NewIterator(path.raw)
 }
 
-// Less returns true if 'path' should be sorted earlier than 'other'
+// Less returns true if 'path' should be sorted earlier than 'other'.
 func (path Unencrypted) Less(other Unencrypted) bool {
 	return path.raw < other.raw
 }
@@ -104,7 +104,7 @@ func (path Encrypted) Iterator() Iterator {
 	return NewIterator(path.raw)
 }
 
-// Less returns true if 'path' should be sorted earlier than 'other'
+// Less returns true if 'path' should be sorted earlier than 'other'.
 func (path Encrypted) Less(other Encrypted) bool {
 	return path.raw < other.raw
 }

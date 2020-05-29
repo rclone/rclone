@@ -15,7 +15,7 @@ import (
 	"github.com/zeebo/errs"
 )
 
-// IsRoot returns whether path is the root directory
+// IsRoot returns whether path is the root directory.
 func IsRoot(path string) bool {
 	abs, err := filepath.Abs(path)
 	if err == nil {
@@ -25,7 +25,7 @@ func IsRoot(path string) bool {
 	return filepath.Dir(path) == path
 }
 
-// ApplicationDir returns best base directory for specific OS
+// ApplicationDir returns best base directory for specific OS.
 func ApplicationDir(subdir ...string) string {
 	for i := range subdir {
 		if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
@@ -62,7 +62,7 @@ func ApplicationDir(subdir ...string) string {
 	return filepath.Join(append([]string{appdir}, subdir...)...)
 }
 
-// IsValidSetupDir checks if directory is valid for setup configuration
+// IsValidSetupDir checks if directory is valid for setup configuration.
 func IsValidSetupDir(name string) (ok bool, err error) {
 	_, err = os.Stat(name)
 	if err != nil {
@@ -100,7 +100,7 @@ func IsValidSetupDir(name string) (ok bool, err error) {
 	}
 }
 
-// IsWritable determines if a directory is writeable
+// IsWritable determines if a directory is writeable.
 func IsWritable(filepath string) (bool, error) {
 	info, err := os.Stat(filepath)
 	if err != nil {

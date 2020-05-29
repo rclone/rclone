@@ -12,7 +12,7 @@ import (
 	"storj.io/common/storj"
 )
 
-// Equal compares two Protobuf messages via serialization
+// Equal compares two Protobuf messages via serialization.
 func Equal(msg1, msg2 proto.Message) bool {
 	//reflect.DeepEqual and proto.Equal don't seem work in all cases
 	//todo:  see how slow this is compared to custom equality checks
@@ -33,7 +33,7 @@ func Equal(msg1, msg2 proto.Message) bool {
 	return bytes.Equal(msg1Bytes, msg2Bytes)
 }
 
-// NodesToIDs extracts Node-s into a list of ids
+// NodesToIDs extracts Node-s into a list of ids.
 func NodesToIDs(nodes []*Node) storj.NodeIDList {
 	ids := make(storj.NodeIDList, len(nodes))
 	for i, node := range nodes {
@@ -47,7 +47,7 @@ func NodesToIDs(nodes []*Node) storj.NodeIDList {
 // CopyNode returns a deep copy of a node
 // It would be better to use `proto.Clone` but it is curently incompatible
 // with gogo's customtype extension.
-// (see https://github.com/gogo/protobuf/issues/147)
+// (see https://github.com/gogo/protobuf/issues/147).
 func CopyNode(src *Node) (dst *Node) {
 	node := Node{Id: storj.NodeID{}}
 	copy(node.Id[:], src.Id[:])
@@ -62,7 +62,7 @@ func CopyNode(src *Node) (dst *Node) {
 	return &node
 }
 
-// AddressEqual compares two node addresses
+// AddressEqual compares two node addresses.
 func AddressEqual(a1, a2 *NodeAddress) bool {
 	if a1 == nil && a2 == nil {
 		return true

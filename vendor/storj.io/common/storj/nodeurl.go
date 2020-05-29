@@ -70,7 +70,7 @@ func (url NodeURL) IsZero() bool {
 	return url == NodeURL{}
 }
 
-// String converts NodeURL to a string
+// String converts NodeURL to a string.
 func (url NodeURL) String() string {
 	if url.ID.IsZero() {
 		return url.Address
@@ -78,7 +78,7 @@ func (url NodeURL) String() string {
 	return url.ID.String() + "@" + url.Address
 }
 
-// Set implements flag.Value interface
+// Set implements flag.Value interface.
 func (url *NodeURL) Set(s string) error {
 	parsed, err := ParseNodeURL(s)
 	if err != nil {
@@ -89,13 +89,13 @@ func (url *NodeURL) Set(s string) error {
 	return nil
 }
 
-// Type implements pflag.Value
+// Type implements pflag.Value.
 func (NodeURL) Type() string { return "storj.NodeURL" }
 
 // NodeURLs defines a comma delimited flag for defining a list node url-s.
 type NodeURLs []NodeURL
 
-// ParseNodeURLs parses comma delimited list of node urls
+// ParseNodeURLs parses comma delimited list of node urls.
 func ParseNodeURLs(s string) (NodeURLs, error) {
 	var urls NodeURLs
 	if s == "" {
@@ -113,7 +113,7 @@ func ParseNodeURLs(s string) (NodeURLs, error) {
 	return urls, nil
 }
 
-// String converts NodeURLs to a string
+// String converts NodeURLs to a string.
 func (urls NodeURLs) String() string {
 	var xs []string
 	for _, u := range urls {
@@ -122,7 +122,7 @@ func (urls NodeURLs) String() string {
 	return strings.Join(xs, ",")
 }
 
-// Set implements flag.Value interface
+// Set implements flag.Value interface.
 func (urls *NodeURLs) Set(s string) error {
 	parsed, err := ParseNodeURLs(s)
 	if err != nil {
@@ -133,5 +133,5 @@ func (urls *NodeURLs) Set(s string) error {
 	return nil
 }
 
-// Type implements pflag.Value
+// Type implements pflag.Value.
 func (NodeURLs) Type() string { return "storj.NodeURLs" }

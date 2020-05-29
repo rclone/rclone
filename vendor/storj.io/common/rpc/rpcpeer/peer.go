@@ -11,7 +11,6 @@ import (
 
 	"github.com/zeebo/errs"
 
-	"storj.io/common/internal/grpchook"
 	"storj.io/drpc/drpcctx"
 )
 
@@ -38,13 +37,8 @@ func FromContext(ctx context.Context) (*Peer, error) {
 		return peer, nil
 	} else if peer, drpcErr := drpcInternalFromContext(ctx); drpcErr == nil {
 		return peer, nil
-	} else if addr, state, grpcErr := grpchook.InternalFromContext(ctx); grpcErr == nil {
-		return &Peer{Addr: addr, State: state}, nil
 	} else {
-		if grpcErr == grpchook.ErrNotHooked {
-			grpcErr = nil
-		}
-		return nil, errs.Combine(drpcErr, grpcErr)
+		return nil, drpcErr
 	}
 }
 

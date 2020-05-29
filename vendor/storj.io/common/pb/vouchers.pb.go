@@ -54,7 +54,7 @@ func (VoucherResponse_Status) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_3659b9a115b8060d, []int{2, 0}
 }
 
-// Voucher is a signed message verifying that a node has been vetted by a particular satellite
+// Voucher is a signed message verifying that a node has been vetted by a particular satellite.
 type Voucher struct {
 	SatelliteId          NodeID    `protobuf:"bytes,1,opt,name=satellite_id,json=satelliteId,proto3,customtype=NodeID" json:"satellite_id"`
 	StorageNodeId        NodeID    `protobuf:"bytes,2,opt,name=storage_node_id,json=storageNodeId,proto3,customtype=NodeID" json:"storage_node_id"`

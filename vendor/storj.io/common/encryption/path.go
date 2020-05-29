@@ -397,7 +397,7 @@ func decryptPathComponent(comp string, cipher storj.CipherSuite, key *storj.Key)
 // `\xff` escapes to `\xfe\x02`
 // `\x00` escapes to `\x01\x01`
 // `\x01` escapes to `\x01\x02
-// for more details see docs/design/path-component-encoding.md
+// for more details see docs/design/path-component-encoding.md.
 func encodeSegment(segment []byte) []byte {
 	if len(segment) == 0 {
 		return emptyComponent

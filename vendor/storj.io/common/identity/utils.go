@@ -13,10 +13,10 @@ import (
 	"storj.io/common/fpath"
 )
 
-// TLSFilesStatus is the status of keys
+// TLSFilesStatus is the status of keys.
 type TLSFilesStatus int
 
-// Four possible outcomes for four files
+// Four possible outcomes for four files.
 const (
 	NoCertNoKey = TLSFilesStatus(iota)
 	CertNoKey
@@ -25,11 +25,11 @@ const (
 )
 
 var (
-	// ErrZeroBytes is returned for zero slice
+	// ErrZeroBytes is returned for zero slice.
 	ErrZeroBytes = errs.New("byte slice was unexpectedly empty")
 )
 
-// writeChainData writes data to path ensuring permissions are appropriate for a cert
+// writeChainData writes data to path ensuring permissions are appropriate for a cert.
 func writeChainData(path string, data []byte) error {
 	err := writeFile(path, 0744, 0644, data)
 	if err != nil {
@@ -38,7 +38,7 @@ func writeChainData(path string, data []byte) error {
 	return nil
 }
 
-// writeKeyData writes data to path ensuring permissions are appropriate for a cert
+// writeKeyData writes data to path ensuring permissions are appropriate for a cert.
 func writeKeyData(path string, data []byte) error {
 	err := writeFile(path, 0700, 0600, data)
 	if err != nil {
@@ -47,7 +47,7 @@ func writeKeyData(path string, data []byte) error {
 	return nil
 }
 
-// writeFile writes to path, creating directories and files with the necessary permissions
+// writeFile writes to path, creating directories and files with the necessary permissions.
 func writeFile(path string, dirmode, filemode os.FileMode, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), dirmode); err != nil {
 		return errs.Wrap(err)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/zeebo/errs"
 
-	"storj.io/common/internal/grpchook"
 	"storj.io/common/rpc/rpcstatus"
 )
 
@@ -16,7 +15,6 @@ import (
 func IsCanceled(err error) bool {
 	return errs.IsFunc(err, func(err error) bool {
 		return err == context.Canceled ||
-			grpchook.IsErrServerStopped(err) ||
 			rpcstatus.Code(err) == rpcstatus.Canceled
 	})
 }

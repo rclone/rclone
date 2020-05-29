@@ -80,17 +80,12 @@ func (meta CustomMetadata) Verify() error {
 
 // StatObject returns information about an object at the specific key.
 func (project *Project) StatObject(ctx context.Context, bucket, key string) (info *Object, err error) {
-	defer mon.Func().ResetTrace(&ctx)(&err)
+	defer mon.Func().RestartTrace(&ctx)(&err)
 
 	b := storj.Bucket{Name: bucket}
 	obj, err := project.db.GetObject(ctx, b, key)
 	if err != nil {
-		if storj.ErrNoPath.Has(err) {
-			return nil, errwrapf("%w (%q)", ErrObjectKeyInvalid, key)
-		} else if storj.ErrObjectNotFound.Has(err) {
-			return nil, errwrapf("%w (%q)", ErrObjectNotFound, key)
-		}
-		return nil, convertKnownErrors(err, bucket)
+		return nil, convertKnownErrors(err, bucket, key)
 	}
 
 	return convertObject(&obj), nil
@@ -98,17 +93,12 @@ func (project *Project) StatObject(ctx context.Context, bucket, key string) (inf
 
 // DeleteObject deletes the object at the specific key.
 func (project *Project) DeleteObject(ctx context.Context, bucket, key string) (deleted *Object, err error) {
-	defer mon.Func().ResetTrace(&ctx)(&err)
+	defer mon.Func().RestartTrace(&ctx)(&err)
 
 	b := storj.Bucket{Name: bucket}
 	obj, err := project.db.DeleteObject(ctx, b, key)
 	if err != nil {
-		if storj.ErrNoPath.Has(err) {
-			return nil, errwrapf("%w (%q)", ErrObjectKeyInvalid, key)
-		} else if storj.ErrObjectNotFound.Has(err) {
-			return nil, errwrapf("%w (%q)", ErrObjectNotFound, key)
-		}
-		return nil, convertKnownErrors(err, bucket)
+		return nil, convertKnownErrors(err, bucket, key)
 	}
 	return convertObject(&obj), nil
 }

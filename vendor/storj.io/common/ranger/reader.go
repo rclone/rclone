@@ -20,13 +20,13 @@ type Ranger interface {
 	Range(ctx context.Context, offset, length int64) (io.ReadCloser, error)
 }
 
-// ByteRanger turns a byte slice into a Ranger
+// ByteRanger turns a byte slice into a Ranger.
 type ByteRanger []byte
 
-// Size implements Ranger.Size
+// Size implements Ranger.Size.
 func (b ByteRanger) Size() int64 { return int64(len(b)) }
 
-// Range implements Ranger.Range
+// Range implements Ranger.Range.
 func (b ByteRanger) Range(ctx context.Context, offset, length int64) (_ io.ReadCloser, err error) {
 	defer mon.Task()(&ctx)(&err)
 	if offset < 0 {
@@ -75,7 +75,7 @@ func concat2(r1, r2 Ranger) Ranger {
 	return &concatReader{r1: r1, r2: r2}
 }
 
-// Concat concatenates Rangers
+// Concat concatenates Rangers.
 func Concat(r ...Ranger) Ranger {
 	switch len(r) {
 	case 0:

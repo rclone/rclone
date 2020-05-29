@@ -126,7 +126,7 @@ func (download *LockingDownload) Close() error {
 	return download.download.Close()
 }
 
-// GetHashAndLimit gets the download's hash and original order limit
+// GetHashAndLimit gets the download's hash and original order limit.
 func (download *LockingDownload) GetHashAndLimit() (*pb.PieceHash, *pb.OrderLimit) {
 	return download.download.GetHashAndLimit()
 }

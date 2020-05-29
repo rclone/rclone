@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// ObjectListItem represents listed object
+// ObjectListItem represents listed object.
 type ObjectListItem struct {
 	EncryptedPath          []byte
 	Version                int32

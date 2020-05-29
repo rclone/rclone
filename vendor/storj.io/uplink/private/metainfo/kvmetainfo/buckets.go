@@ -13,7 +13,7 @@ import (
 	"storj.io/uplink/private/metainfo"
 )
 
-// CreateBucket creates a new bucket
+// CreateBucket creates a new bucket.
 func (db *Project) CreateBucket(ctx context.Context, bucketName string, info *storj.Bucket) (_ storj.Bucket, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -78,7 +78,7 @@ func validateBlockSize(redundancyScheme storj.RedundancyScheme, blockSize int32)
 	return nil
 }
 
-// DeleteBucket deletes bucket
+// DeleteBucket deletes bucket.
 func (db *Project) DeleteBucket(ctx context.Context, bucketName string) (_ storj.Bucket, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -95,7 +95,7 @@ func (db *Project) DeleteBucket(ctx context.Context, bucketName string) (_ storj
 	return bucket, nil
 }
 
-// GetBucket gets bucket information
+// GetBucket gets bucket information.
 func (db *Project) GetBucket(ctx context.Context, bucketName string) (_ storj.Bucket, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -113,7 +113,7 @@ func (db *Project) GetBucket(ctx context.Context, bucketName string) (_ storj.Bu
 	return bucket, nil
 }
 
-// ListBuckets lists buckets
+// ListBuckets lists buckets.
 func (db *Project) ListBuckets(ctx context.Context, listOpts storj.BucketListOptions) (_ storj.BucketList, err error) {
 	defer mon.Task()(&ctx)(&err)
 

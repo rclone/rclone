@@ -33,18 +33,18 @@ var (
 	}
 )
 
-// GeneratePrivateKey returns a new PrivateKey for signing messages
+// GeneratePrivateKey returns a new PrivateKey for signing messages.
 func GeneratePrivateKey() (crypto.PrivateKey, error) {
 	return GeneratePrivateECDSAKey(authECCurve)
 	// return GeneratePrivateRSAKey(StorjRSAKeyBits)
 }
 
-// GeneratePrivateECDSAKey returns a new private ECDSA key for signing messages
+// GeneratePrivateECDSAKey returns a new private ECDSA key for signing messages.
 func GeneratePrivateECDSAKey(curve elliptic.Curve) (*ecdsa.PrivateKey, error) {
 	return ecdsa.GenerateKey(curve, rand.Reader)
 }
 
-// GeneratePrivateRSAKey returns a new private RSA key for signing messages
+// GeneratePrivateRSAKey returns a new private RSA key for signing messages.
 func GeneratePrivateRSAKey(bits int) (*rsa.PrivateKey, error) {
 	return rsa.GenerateKey(rand.Reader, bits)
 }

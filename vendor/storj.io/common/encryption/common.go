@@ -8,11 +8,11 @@ import (
 	"github.com/zeebo/errs"
 )
 
-// Error is the default encryption errs class
+// Error is the default encryption errs class.
 var Error = errs.Class("encryption error")
 
-// ErrDecryptFailed is the errs class when the decryption fails
+// ErrDecryptFailed is the errs class when the decryption fails.
 var ErrDecryptFailed = errs.Class("decryption failed, check encryption key")
 
-// ErrInvalidConfig is the errs class for invalid configuration
+// ErrInvalidConfig is the errs class for invalid configuration.
 var ErrInvalidConfig = errs.Class("invalid encryption configuration")

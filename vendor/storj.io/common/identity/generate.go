@@ -50,7 +50,7 @@ func GenerateKey(ctx context.Context, minDifficulty uint16, version storj.IDVers
 }
 
 // GenerateCallback indicates that key generation is done when done is true.
-// if err != nil key generation will stop with that error
+// if err != nil key generation will stop with that error.
 type GenerateCallback func(crypto.PrivateKey, storj.NodeID) (done bool, err error)
 
 // GenerateKeys continues to generate keys until found returns done == false,

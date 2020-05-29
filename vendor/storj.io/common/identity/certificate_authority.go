@@ -26,7 +26,7 @@ import (
 
 const minimumLoggableDifficulty = 8
 
-// PeerCertificateAuthority represents the CA which is used to validate peer identities
+// PeerCertificateAuthority represents the CA which is used to validate peer identities.
 type PeerCertificateAuthority struct {
 	RestChain []*x509.Certificate
 	// Cert is the x509 certificate of the CA
@@ -35,7 +35,7 @@ type PeerCertificateAuthority struct {
 	ID storj.NodeID
 }
 
-// FullCertificateAuthority represents the CA which is used to author and validate full identities
+// FullCertificateAuthority represents the CA which is used to author and validate full identities.
 type FullCertificateAuthority struct {
 	RestChain []*x509.Certificate
 	// Cert is the x509 certificate of the CA
@@ -46,7 +46,7 @@ type FullCertificateAuthority struct {
 	Key crypto.PrivateKey
 }
 
-// CASetupConfig is for creating a CA
+// CASetupConfig is for creating a CA.
 type CASetupConfig struct {
 	VersionNumber  uint   `default:"0" help:"which identity version to use (0 is latest)"`
 	ParentCertPath string `help:"path to the parent authority's certificate chain"`
@@ -59,7 +59,7 @@ type CASetupConfig struct {
 	Concurrency    uint   `help:"number of concurrent workers for certificate authority generation" default:"4"`
 }
 
-// NewCAOptions is used to pass parameters to `NewCA`
+// NewCAOptions is used to pass parameters to `NewCA`.
 type NewCAOptions struct {
 	// VersionNumber is the IDVersion to use for the identity
 	VersionNumber storj.IDVersionNumber
@@ -75,18 +75,18 @@ type NewCAOptions struct {
 	Logger io.Writer
 }
 
-// PeerCAConfig is for locating a CA certificate without a private key
+// PeerCAConfig is for locating a CA certificate without a private key.
 type PeerCAConfig struct {
 	CertPath string `help:"path to the certificate chain for this identity" default:"$IDENTITYDIR/ca.cert"`
 }
 
-// FullCAConfig is for locating a CA certificate and it's private key
+// FullCAConfig is for locating a CA certificate and it's private key.
 type FullCAConfig struct {
 	CertPath string `help:"path to the certificate chain for this identity" default:"$IDENTITYDIR/ca.cert"`
 	KeyPath  string `help:"path to the private key for this identity" default:"$IDENTITYDIR/ca.key"`
 }
 
-// NewCA creates a new full identity with the given difficulty
+// NewCA creates a new full identity with the given difficulty.
 func NewCA(ctx context.Context, opts NewCAOptions) (_ *FullCertificateAuthority, err error) {
 	defer mon.Task()(&ctx)(&err)
 	var (
@@ -201,12 +201,12 @@ func NewCA(ctx context.Context, opts NewCAOptions) (_ *FullCertificateAuthority,
 	return ca, nil
 }
 
-// Status returns the status of the CA cert/key files for the config
+// Status returns the status of the CA cert/key files for the config.
 func (caS CASetupConfig) Status() (TLSFilesStatus, error) {
 	return statTLSFiles(caS.CertPath, caS.KeyPath)
 }
 
-// Create generates and saves a CA using the config
+// Create generates and saves a CA using the config.
 func (caS CASetupConfig) Create(ctx context.Context, logger io.Writer) (*FullCertificateAuthority, error) {
 	var (
 		err    error
@@ -249,7 +249,7 @@ func (caS CASetupConfig) Create(ctx context.Context, logger io.Writer) (*FullCer
 	return ca, caC.Save(ca)
 }
 
-// FullConfig converts a `CASetupConfig` to `FullCAConfig`
+// FullConfig converts a `CASetupConfig` to `FullCAConfig`.
 func (caS CASetupConfig) FullConfig() FullCAConfig {
 	return FullCAConfig{
 		CertPath: caS.CertPath,
@@ -257,7 +257,7 @@ func (caS CASetupConfig) FullConfig() FullCAConfig {
 	}
 }
 
-// Load loads a CA from the given configuration
+// Load loads a CA from the given configuration.
 func (fc FullCAConfig) Load() (*FullCertificateAuthority, error) {
 	p, err := fc.PeerConfig().Load()
 	if err != nil {
@@ -281,14 +281,14 @@ func (fc FullCAConfig) Load() (*FullCertificateAuthority, error) {
 	}, nil
 }
 
-// PeerConfig converts a full ca config to a peer ca config
+// PeerConfig converts a full ca config to a peer ca config.
 func (fc FullCAConfig) PeerConfig() PeerCAConfig {
 	return PeerCAConfig{
 		CertPath: fc.CertPath,
 	}
 }
 
-// Save saves a CA with the given configuration
+// Save saves a CA with the given configuration.
 func (fc FullCAConfig) Save(ca *FullCertificateAuthority) error {
 	var (
 		keyData   bytes.Buffer
@@ -313,7 +313,7 @@ func (fc FullCAConfig) Save(ca *FullCertificateAuthority) error {
 	return writeErrs.Err()
 }
 
-// SaveBackup saves the certificate of the config wth a timestamped filename
+// SaveBackup saves the certificate of the config wth a timestamped filename.
 func (fc FullCAConfig) SaveBackup(ca *FullCertificateAuthority) error {
 	return FullCAConfig{
 		CertPath: backupPath(fc.CertPath),
@@ -321,7 +321,7 @@ func (fc FullCAConfig) SaveBackup(ca *FullCertificateAuthority) error {
 	}.Save(ca)
 }
 
-// Load loads a CA from the given configuration
+// Load loads a CA from the given configuration.
 func (pc PeerCAConfig) Load() (*PeerCertificateAuthority, error) {
 	chainPEM, err := ioutil.ReadFile(pc.CertPath)
 	if err != nil {
@@ -350,7 +350,7 @@ func (pc PeerCAConfig) Load() (*PeerCertificateAuthority, error) {
 	}, nil
 }
 
-// Save saves a peer CA (cert, no key) with the given configuration
+// Save saves a peer CA (cert, no key) with the given configuration.
 func (pc PeerCAConfig) Save(ca *PeerCertificateAuthority) error {
 	var (
 		certData  bytes.Buffer
@@ -373,7 +373,7 @@ func (pc PeerCAConfig) Save(ca *PeerCertificateAuthority) error {
 	return nil
 }
 
-// SaveBackup saves the certificate of the config wth a timestamped filename
+// SaveBackup saves the certificate of the config wth a timestamped filename.
 func (pc PeerCAConfig) SaveBackup(ca *PeerCertificateAuthority) error {
 	return PeerCAConfig{
 		CertPath: backupPath(pc.CertPath),
@@ -422,12 +422,12 @@ func (ca *FullCertificateAuthority) NewIdentity(exts ...pkix.Extension) (*FullId
 
 }
 
-// Chain returns the CA's certificate chain
+// Chain returns the CA's certificate chain.
 func (ca *FullCertificateAuthority) Chain() []*x509.Certificate {
 	return append([]*x509.Certificate{ca.Cert}, ca.RestChain...)
 }
 
-// RawChain returns the CA's certificate chain as a 2d byte slice
+// RawChain returns the CA's certificate chain as a 2d byte slice.
 func (ca *FullCertificateAuthority) RawChain() [][]byte {
 	chain := ca.Chain()
 	rawChain := make([][]byte, len(chain))
@@ -437,7 +437,7 @@ func (ca *FullCertificateAuthority) RawChain() [][]byte {
 	return rawChain
 }
 
-// RawRestChain returns the "rest" (excluding `ca.Cert`) of the certificate chain as a 2d byte slice
+// RawRestChain returns the "rest" (excluding `ca.Cert`) of the certificate chain as a 2d byte slice.
 func (ca *FullCertificateAuthority) RawRestChain() [][]byte {
 	var chain [][]byte
 	for _, cert := range ca.RestChain {
@@ -446,7 +446,7 @@ func (ca *FullCertificateAuthority) RawRestChain() [][]byte {
 	return chain
 }
 
-// PeerCA converts a FullCertificateAuthority to a PeerCertificateAuthority
+// PeerCA converts a FullCertificateAuthority to a PeerCertificateAuthority.
 func (ca *FullCertificateAuthority) PeerCA() *PeerCertificateAuthority {
 	return &PeerCertificateAuthority{
 		Cert:      ca.Cert,
@@ -455,7 +455,7 @@ func (ca *FullCertificateAuthority) PeerCA() *PeerCertificateAuthority {
 	}
 }
 
-// Sign signs the passed certificate with ca certificate
+// Sign signs the passed certificate with ca certificate.
 func (ca *FullCertificateAuthority) Sign(cert *x509.Certificate) (*x509.Certificate, error) {
 	signedCert, err := peertls.CreateCertificate(cert.PublicKey, ca.Key, cert, ca.Cert)
 	if err != nil {

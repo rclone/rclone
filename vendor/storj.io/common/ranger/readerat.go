@@ -13,7 +13,7 @@ type readerAtRanger struct {
 	size int64
 }
 
-// ReaderAtRanger converts a ReaderAt with a given size to a Ranger
+// ReaderAtRanger converts a ReaderAt with a given size to a Ranger.
 func ReaderAtRanger(r io.ReaderAt, size int64) Ranger {
 	return &readerAtRanger{
 		r:    r,

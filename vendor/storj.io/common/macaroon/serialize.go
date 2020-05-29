@@ -27,7 +27,7 @@ type packet struct {
 	data      []byte
 }
 
-// Serialize converts macaroon to binary format
+// Serialize converts macaroon to binary format.
 func (m *Macaroon) Serialize() (data []byte) {
 	// Start data from version int
 	data = append(data, version)
@@ -59,7 +59,7 @@ func (m *Macaroon) Serialize() (data []byte) {
 	return data
 }
 
-// serializePacket converts packet to binary
+// serializePacket converts packet to binary.
 func serializePacket(data []byte, p packet) []byte {
 	data = appendVarint(data, int(p.fieldType))
 	data = appendVarint(data, len(p.data))
@@ -75,7 +75,7 @@ func appendVarint(data []byte, x int) []byte {
 	return append(data, buf[:n]...)
 }
 
-// ParseMacaroon converts binary to macaroon
+// ParseMacaroon converts binary to macaroon.
 func ParseMacaroon(data []byte) (_ *Macaroon, err error) {
 	if len(data) < 2 {
 		return nil, errors.New("empty macaroon")
@@ -152,7 +152,7 @@ func ParseMacaroon(data []byte) (_ *Macaroon, err error) {
 	return &mac, nil
 }
 
-// parseSection returns data leftover and packet array
+// parseSection returns data leftover and packet array.
 func parseSection(data []byte) ([]byte, []packet, error) {
 	prevFieldType := fieldType(-1)
 	var packets []packet
@@ -176,7 +176,7 @@ func parseSection(data []byte) ([]byte, []packet, error) {
 	}
 }
 
-// parsePacket returns data leftover and packet
+// parsePacket returns data leftover and packet.
 func parsePacket(data []byte) ([]byte, packet, error) {
 	data, ft, err := parseVarint(data)
 	if err != nil {

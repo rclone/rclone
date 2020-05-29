@@ -3,18 +3,18 @@
 
 package storj
 
-// SegmentPosition segment position in object
+// SegmentPosition segment position in object.
 type SegmentPosition struct {
 	PartNumber int32
 	Index      int32
 }
 
-// SegmentListItem represents listed segment
+// SegmentListItem represents listed segment.
 type SegmentListItem struct {
 	Position SegmentPosition
 }
 
-// SegmentDownloadInfo represents segment download information inline/remote
+// SegmentDownloadInfo represents segment download information inline/remote.
 type SegmentDownloadInfo struct {
 	SegmentID           SegmentID
 	Size                int64
@@ -25,7 +25,7 @@ type SegmentDownloadInfo struct {
 	SegmentEncryption SegmentEncryption
 }
 
-// SegmentEncryption represents segment encryption key and nonce
+// SegmentEncryption represents segment encryption key and nonce.
 type SegmentEncryption struct {
 	EncryptedKeyNonce Nonce
 	EncryptedKey      EncryptedPrivateKey

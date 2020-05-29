@@ -11,7 +11,7 @@ import "orders.proto";
 
 package gracefulexit;
 
-// NodeGracefulExit is a private service on storagenodes
+// NodeGracefulExit is a private service on storagenodes.
 service NodeGracefulExit {
   // GetSatellitesList returns a list of satellites that the storagenode has not exited.
   rpc GetNonExitingSatellites(GetNonExitingSatellitesRequest) returns (GetNonExitingSatellitesResponse);
@@ -27,7 +27,7 @@ message InitiateGracefulExitRequest {
    bytes node_id = 1 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
 }
 
-// NonExitingSatellite contains information that's needed for a storagenode to start graceful exit
+// NonExitingSatellite contains information that's needed for a storagenode to start graceful exit.
 message NonExitingSatellite {
    bytes node_id = 1 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
    string domain_name = 2;
@@ -53,7 +53,7 @@ message ExitProgress {
 }
 
 service SatelliteGracefulExit {
- // Process is called by storage nodes to initiate the graceful exit, get pieces to transfer, and receive exit status.
+  // Process is called by storage nodes to initiate the graceful exit, get pieces to transfer, and receive exit status.
   rpc Process(stream StorageNodeMessage) returns (stream SatelliteMessage);
 }
 

@@ -11,28 +11,28 @@ import (
 )
 
 const (
-	// AESGCMNonceSize is the size of an AES-GCM nonce
+	// AESGCMNonceSize is the size of an AES-GCM nonce.
 	AESGCMNonceSize = 12
-	// unit32Size is the number of bytes in the uint32 type
+	// unit32Size is the number of bytes in the uint32 type.
 	uint32Size = 4
 )
 
-// AESGCMNonce represents the nonce used by the AES-GCM protocol
+// AESGCMNonce represents the nonce used by the AES-GCM protocol.
 type AESGCMNonce [AESGCMNonceSize]byte
 
-// ToAESGCMNonce returns the nonce as a AES-GCM nonce
+// ToAESGCMNonce returns the nonce as a AES-GCM nonce.
 func ToAESGCMNonce(nonce *storj.Nonce) *AESGCMNonce {
 	aes := new(AESGCMNonce)
 	copy((*aes)[:], nonce[:AESGCMNonceSize])
 	return aes
 }
 
-// Increment increments the nonce with the given amount
+// Increment increments the nonce with the given amount.
 func Increment(nonce *storj.Nonce, amount int64) (truncated bool, err error) {
 	return incrementBytes(nonce[:], amount)
 }
 
-// Encrypt encrypts data with the given cipher, key and nonce
+// Encrypt encrypts data with the given cipher, key and nonce.
 func Encrypt(data []byte, cipher storj.CipherSuite, key *storj.Key, nonce *storj.Nonce) (cipherData []byte, err error) {
 	// Don't encrypt empty slice
 	if len(data) == 0 {
@@ -53,7 +53,7 @@ func Encrypt(data []byte, cipher storj.CipherSuite, key *storj.Key, nonce *storj
 	}
 }
 
-// Decrypt decrypts cipherData with the given cipher, key and nonce
+// Decrypt decrypts cipherData with the given cipher, key and nonce.
 func Decrypt(cipherData []byte, cipher storj.CipherSuite, key *storj.Key, nonce *storj.Nonce) (data []byte, err error) {
 	// Don't decrypt empty slice
 	if len(cipherData) == 0 {
@@ -74,7 +74,7 @@ func Decrypt(cipherData []byte, cipher storj.CipherSuite, key *storj.Key, nonce 
 	}
 }
 
-// NewEncrypter creates a Transformer using the given cipher, key and nonce to encrypt data passing through it
+// NewEncrypter creates a Transformer using the given cipher, key and nonce to encrypt data passing through it.
 func NewEncrypter(cipher storj.CipherSuite, key *storj.Key, startingNonce *storj.Nonce, encryptedBlockSize int) (Transformer, error) {
 	switch cipher {
 	case storj.EncNull:
@@ -90,7 +90,7 @@ func NewEncrypter(cipher storj.CipherSuite, key *storj.Key, startingNonce *storj
 	}
 }
 
-// NewDecrypter creates a Transformer using the given cipher, key and nonce to decrypt data passing through it
+// NewDecrypter creates a Transformer using the given cipher, key and nonce to decrypt data passing through it.
 func NewDecrypter(cipher storj.CipherSuite, key *storj.Key, startingNonce *storj.Nonce, encryptedBlockSize int) (Transformer, error) {
 	switch cipher {
 	case storj.EncNull:
@@ -106,12 +106,12 @@ func NewDecrypter(cipher storj.CipherSuite, key *storj.Key, startingNonce *storj
 	}
 }
 
-// EncryptKey encrypts keyToEncrypt with the given cipher, key and nonce
+// EncryptKey encrypts keyToEncrypt with the given cipher, key and nonce.
 func EncryptKey(keyToEncrypt *storj.Key, cipher storj.CipherSuite, key *storj.Key, nonce *storj.Nonce) (storj.EncryptedPrivateKey, error) {
 	return Encrypt(keyToEncrypt[:], cipher, key, nonce)
 }
 
-// DecryptKey decrypts keyToDecrypt with the given cipher, key and nonce
+// DecryptKey decrypts keyToDecrypt with the given cipher, key and nonce.
 func DecryptKey(keyToDecrypt storj.EncryptedPrivateKey, cipher storj.CipherSuite, key *storj.Key, nonce *storj.Nonce) (*storj.Key, error) {
 	plainData, err := Decrypt(keyToDecrypt, cipher, key, nonce)
 	if err != nil {
@@ -124,7 +124,7 @@ func DecryptKey(keyToDecrypt storj.EncryptedPrivateKey, cipher storj.CipherSuite
 	return &decryptedKey, nil
 }
 
-// DeriveKey derives new key from the given key and message using HMAC-SHA512
+// DeriveKey derives new key from the given key and message using HMAC-SHA512.
 func DeriveKey(key *storj.Key, message string) (*storj.Key, error) {
 	mac := hmac.New(sha512.New, key[:])
 	_, err := mac.Write([]byte(message))

@@ -29,7 +29,6 @@ service Piecestore {
 //      Chunk ->
 //   PieceHash signed by uplink ->
 //      <- PieceHash signed by storage node
-//
 message PieceUploadRequest {
     // first message to show that we are allowed to upload
     orders.OrderLimit limit = 1;

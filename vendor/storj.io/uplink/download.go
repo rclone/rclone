@@ -19,7 +19,7 @@ type DownloadOptions struct {
 
 // DownloadObject starts a download from the specific key.
 func (project *Project) DownloadObject(ctx context.Context, bucket, key string, options *DownloadOptions) (download *Download, err error) {
-	defer mon.Func().ResetTrace(&ctx)(&err)
+	defer mon.Func().RestartTrace(&ctx)(&err)
 
 	if bucket == "" {
 		return nil, errwrapf("%w (%q)", ErrBucketNameInvalid, bucket)
@@ -39,12 +39,7 @@ func (project *Project) DownloadObject(ctx context.Context, bucket, key string, 
 
 	obj, err := project.db.GetObject(ctx, b, key)
 	if err != nil {
-		if storj.ErrNoPath.Has(err) {
-			return nil, errwrapf("%w (%q)", ErrObjectKeyInvalid, key)
-		} else if storj.ErrObjectNotFound.Has(err) {
-			return nil, errwrapf("%w (%q)", ErrObjectNotFound, key)
-		}
-		return nil, convertKnownErrors(err, bucket)
+		return nil, convertKnownErrors(err, bucket, key)
 	}
 
 	objectStream, err := project.db.GetObjectStream(ctx, b, obj)
@@ -71,8 +66,8 @@ func (download *Download) Info() *Object {
 
 // Read downloads up to len(p) bytes into p from the object's data stream.
 // It returns the number of bytes read (0 <= n <= len(p)) and any error encountered.
-func (download *Download) Read(data []byte) (n int, err error) {
-	return download.download.Read(data)
+func (download *Download) Read(p []byte) (n int, err error) {
+	return download.download.Read(p)
 }
 
 // Close closes the reader of the download.
