@@ -169,7 +169,7 @@ func (cycle *Cycle) Close() {
 	close(cycle.control)
 }
 
-// sendControl sends a control message
+// sendControl sends a control message.
 func (cycle *Cycle) sendControl(message interface{}) {
 	cycle.initialize()
 	select {
@@ -178,7 +178,7 @@ func (cycle *Cycle) sendControl(message interface{}) {
 	}
 }
 
-// Stop stops the cycle permanently
+// Stop stops the cycle permanently.
 func (cycle *Cycle) Stop() {
 	cycle.initialize()
 	if atomic.CompareAndSwapInt32(&cycle.stopsent, 0, 1) {

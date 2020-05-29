@@ -26,7 +26,6 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
-// ListSegments
 type ListIrreparableSegmentsRequest struct {
 	Limit                int32    `protobuf:"varint,1,opt,name=limit,proto3" json:"limit,omitempty"`
 	LastSeenSegmentPath  []byte   `protobuf:"bytes,2,opt,name=last_seen_segment_path,json=lastSeenSegmentPath,proto3" json:"last_seen_segment_path,omitempty"`
@@ -181,7 +180,6 @@ func (m *ListIrreparableSegmentsResponse) GetSegments() []*IrreparableSegment {
 	return nil
 }
 
-// CountNodes
 type CountNodesResponse struct {
 	Count                int64    `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`

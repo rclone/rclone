@@ -23,7 +23,7 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
-// NodeType is an enum of possible node types
+// NodeType is an enum of possible node types.
 type NodeType int32
 
 const (
@@ -58,7 +58,7 @@ func (NodeType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_0c843d59d2d938e7, []int{0}
 }
 
-// NodeTransport is an enum of possible transports for the overlay network
+// NodeTransport is an enum of possible transports for the overlay network.
 type NodeTransport int32
 
 const (
@@ -81,9 +81,8 @@ func (NodeTransport) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_0c843d59d2d938e7, []int{1}
 }
 
-// TODO move statdb.Update() stuff out of here
-// Node represents a node in the overlay network
-// Node is info for a updating a single storagenode, used in the Update rpc calls
+// Node represents a node in the overlay network.
+// Node is info for a updating a single storagenode, used in the Update rpc calls.
 type Node struct {
 	Id                   NodeID       `protobuf:"bytes,1,opt,name=id,proto3,customtype=NodeID" json:"id"`
 	Address              *NodeAddress `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
@@ -132,7 +131,7 @@ func (m *Node) GetDeprecatedLastIp() string {
 	return ""
 }
 
-// NodeAddress contains the information needed to communicate with a node on the network
+// NodeAddress contains the information needed to communicate with a node on the network.
 type NodeAddress struct {
 	Transport            NodeTransport `protobuf:"varint,1,opt,name=transport,proto3,enum=node.NodeTransport" json:"transport,omitempty"`
 	Address              string        `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
@@ -179,7 +178,7 @@ func (m *NodeAddress) GetAddress() string {
 	return ""
 }
 
-// NodeOperator contains info about the storage node operator
+// NodeOperator contains info about the storage node operator.
 type NodeOperator struct {
 	Email                string   `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Wallet               string   `protobuf:"bytes,2,opt,name=wallet,proto3" json:"wallet,omitempty"`
@@ -226,7 +225,7 @@ func (m *NodeOperator) GetWallet() string {
 	return ""
 }
 
-// NodeCapacity contains all relevant data about a nodes ability to store data
+// NodeCapacity contains all relevant data about a nodes ability to store data.
 type NodeCapacity struct {
 	FreeBandwidth        int64    `protobuf:"varint,1,opt,name=free_bandwidth,json=freeBandwidth,proto3" json:"free_bandwidth,omitempty"` // Deprecated: Do not use.
 	FreeDisk             int64    `protobuf:"varint,2,opt,name=free_disk,json=freeDisk,proto3" json:"free_disk,omitempty"`
@@ -274,7 +273,7 @@ func (m *NodeCapacity) GetFreeDisk() int64 {
 	return 0
 }
 
-// Deprecated: use NodeOperator instead
+// Deprecated: use NodeOperator instead.
 type NodeMetadata struct {
 	Email                string   `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
 	Wallet               string   `protobuf:"bytes,2,opt,name=wallet,proto3" json:"wallet,omitempty"`
@@ -321,7 +320,7 @@ func (m *NodeMetadata) GetWallet() string {
 	return ""
 }
 
-// Deprecated: use NodeCapacity instead
+// Deprecated: use NodeCapacity instead.
 type NodeRestrictions struct {
 	FreeBandwidth        int64    `protobuf:"varint,1,opt,name=free_bandwidth,json=freeBandwidth,proto3" json:"free_bandwidth,omitempty"`
 	FreeDisk             int64    `protobuf:"varint,2,opt,name=free_disk,json=freeDisk,proto3" json:"free_disk,omitempty"`
@@ -368,7 +367,7 @@ func (m *NodeRestrictions) GetFreeDisk() int64 {
 	return 0
 }
 
-// NodeVersion contains
+// NodeVersion contains version information about a node.
 type NodeVersion struct {
 	Version              string    `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	CommitHash           string    `protobuf:"bytes,2,opt,name=commit_hash,json=commitHash,proto3" json:"commit_hash,omitempty"`

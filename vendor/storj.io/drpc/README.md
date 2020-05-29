@@ -22,6 +22,9 @@ type Conn interface {
 	// Close closes the connection.
 	Close() error
 
+	// Closed returns true if the connection is definitely closed.
+	Closed() bool
+
 	// Transport returns the transport the connection is using.
 	Transport() Transport
 

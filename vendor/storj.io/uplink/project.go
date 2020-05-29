@@ -20,10 +20,11 @@ import (
 	"storj.io/uplink/private/metainfo/kvmetainfo"
 	"storj.io/uplink/private/storage/segments"
 	"storj.io/uplink/private/storage/streams"
+	"storj.io/uplink/private/testuplink"
 )
 
 // maxSegmentSize can be used to override max segment size with ldflags build parameter.
-// Example: go build -ldflags "-X 'storj.io/uplink.maxSegmentSize=1MiB'" storj.io/storj/cmd/uplink
+// Example: go build -ldflags "-X 'storj.io/uplink.maxSegmentSize=1MiB'" storj.io/storj/cmd/uplink.
 var maxSegmentSize string
 
 // Project provides access to managing buckets and objects.
@@ -47,7 +48,7 @@ func OpenProject(ctx context.Context, access *Access) (*Project, error) {
 
 // OpenProject opens a project with the specific access grant.
 func (config Config) OpenProject(ctx context.Context, access *Access) (project *Project, err error) {
-	defer mon.Func().ResetTrace(&ctx)(&err)
+	defer mon.Func().RestartTrace(&ctx)(&err)
 
 	if access == nil {
 		return nil, packageError.New("access grant is nil")
@@ -89,6 +90,11 @@ func (config Config) OpenProject(ctx context.Context, access *Access) (project *
 		segmentsSize, err = memory.ParseString(maxSegmentSize)
 		if err != nil {
 			return nil, packageError.Wrap(err)
+		}
+	} else {
+		s, ok := testuplink.GetMaxSegmentSize(ctx)
+		if ok {
+			segmentsSize = s.Int64()
 		}
 	}
 

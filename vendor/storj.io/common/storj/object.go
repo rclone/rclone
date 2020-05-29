@@ -10,14 +10,14 @@ import (
 )
 
 var (
-	// ErrNoPath is an error class for using empty path
+	// ErrNoPath is an error class for using empty path.
 	ErrNoPath = errs.Class("no path specified")
 
-	// ErrObjectNotFound is an error class for non-existing object
+	// ErrObjectNotFound is an error class for non-existing object.
 	ErrObjectNotFound = errs.Class("object not found")
 )
 
-// Object contains information about a specific object
+// Object contains information about a specific object.
 type Object struct {
 	Version  uint32
 	Bucket   Bucket
@@ -34,7 +34,7 @@ type Object struct {
 	Stream
 }
 
-// ObjectInfo contains information about a specific object
+// ObjectInfo contains information about a specific object.
 type ObjectInfo struct {
 	Version  uint32
 	Bucket   string
@@ -53,7 +53,7 @@ type ObjectInfo struct {
 	Stream
 }
 
-// Stream is information about an object stream
+// Stream is information about an object stream.
 type Stream struct {
 	ID StreamID
 
@@ -76,15 +76,16 @@ type Stream struct {
 	LastSegment LastSegment // TODO: remove
 }
 
-// LastSegment contains info about last segment
-// TODO: remove
+// LastSegment contains info about last segment.
+//
+// TODO: remove.
 type LastSegment struct {
 	Size              int64
 	EncryptedKeyNonce Nonce
 	EncryptedKey      EncryptedPrivateKey
 }
 
-// Segment is full segment information
+// Segment is full segment information.
 type Segment struct {
 	Index int64
 	// Size is the size of the content in bytes
@@ -101,7 +102,7 @@ type Segment struct {
 	EncryptedKey      EncryptedPrivateKey
 }
 
-// Piece is information where a piece is located
+// Piece is information where a piece is located.
 type Piece struct {
 	Number   byte
 	Location NodeID

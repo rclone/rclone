@@ -24,7 +24,7 @@ func (opts *Options) ClientTLSConfig(id storj.NodeID) *tls.Config {
 }
 
 // ClientTLSConfigPrefix returns a TSLConfig for use as a client in handshaking with a peer.
-// The peer node id is validated to match the given prefix
+// The peer node id is validated to match the given prefix.
 func (opts *Options) ClientTLSConfigPrefix(idPrefix string) *tls.Config {
 	return opts.tlsConfig(false, verifyIdentityPrefix(idPrefix))
 }

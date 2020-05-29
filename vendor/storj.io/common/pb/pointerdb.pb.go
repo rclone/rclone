@@ -364,7 +364,6 @@ func (m *Pointer) GetPieceHashesVerified() bool {
 	return false
 }
 
-// ListResponse is a response message for the List rpc call
 type ListResponse struct {
 	Items                []*ListResponse_Item `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
 	More                 bool                 `protobuf:"varint,2,opt,name=more,proto3" json:"more,omitempty"`

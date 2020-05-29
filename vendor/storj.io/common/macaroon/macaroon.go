@@ -10,14 +10,14 @@ import (
 	"crypto/subtle"
 )
 
-// Macaroon is a struct that determine contextual caveats and authorization
+// Macaroon is a struct that determine contextual caveats and authorization.
 type Macaroon struct {
 	head    []byte
 	caveats [][]byte
 	tail    []byte
 }
 
-// NewUnrestricted creates Macaroon with random Head and generated Tail
+// NewUnrestricted creates Macaroon with random Head and generated Tail.
 func NewUnrestricted(secret []byte) (*Macaroon, error) {
 	head, err := NewSecret()
 	if err != nil {
@@ -40,7 +40,7 @@ func sign(secret []byte, data []byte) []byte {
 	return signer.Sum(nil)
 }
 
-// NewSecret generates cryptographically random 32 bytes
+// NewSecret generates cryptographically random 32 bytes.
 func NewSecret() (secret []byte, err error) {
 	secret = make([]byte, 32)
 
@@ -52,7 +52,7 @@ func NewSecret() (secret []byte, err error) {
 	return secret, nil
 }
 
-// AddFirstPartyCaveat creates signed macaroon with appended caveat
+// AddFirstPartyCaveat creates signed macaroon with appended caveat.
 func (m *Macaroon) AddFirstPartyCaveat(c []byte) (macaroon *Macaroon, err error) {
 	macaroon = m.Copy()
 
@@ -63,7 +63,7 @@ func (m *Macaroon) AddFirstPartyCaveat(c []byte) (macaroon *Macaroon, err error)
 }
 
 // Validate reconstructs with all caveats from the secret and compares tails,
-// returning true if the tails match
+// returning true if the tails match.
 func (m *Macaroon) Validate(secret []byte) (ok bool) {
 	tail := sign(secret, m.head)
 	for _, cav := range m.caveats {
@@ -73,7 +73,7 @@ func (m *Macaroon) Validate(secret []byte) (ok bool) {
 	return subtle.ConstantTimeCompare(tail, m.tail) == 1
 }
 
-// Tails returns all ancestor tails up to and including the current tail
+// Tails returns all ancestor tails up to and including the current tail.
 func (m *Macaroon) Tails(secret []byte) [][]byte {
 	tails := make([][]byte, 0, len(m.caveats)+1)
 	tail := sign(secret, m.head)
@@ -85,7 +85,7 @@ func (m *Macaroon) Tails(secret []byte) [][]byte {
 	return tails
 }
 
-// Head returns copy of macaroon head
+// Head returns copy of macaroon head.
 func (m *Macaroon) Head() (head []byte) {
 	if len(m.head) == 0 {
 		return nil
@@ -93,12 +93,12 @@ func (m *Macaroon) Head() (head []byte) {
 	return append([]byte(nil), m.head...)
 }
 
-// CaveatLen returns the number of caveats this macaroon has
+// CaveatLen returns the number of caveats this macaroon has.
 func (m *Macaroon) CaveatLen() int {
 	return len(m.caveats)
 }
 
-// Caveats returns copy of macaroon caveats
+// Caveats returns copy of macaroon caveats.
 func (m *Macaroon) Caveats() (caveats [][]byte) {
 	if len(m.caveats) == 0 {
 		return nil
@@ -110,7 +110,7 @@ func (m *Macaroon) Caveats() (caveats [][]byte) {
 	return caveats
 }
 
-// Tail returns copy of macaroon tail
+// Tail returns copy of macaroon tail.
 func (m *Macaroon) Tail() (tail []byte) {
 	if len(m.tail) == 0 {
 		return nil
@@ -118,7 +118,7 @@ func (m *Macaroon) Tail() (tail []byte) {
 	return append([]byte(nil), m.tail...)
 }
 
-// Copy return copy of macaroon
+// Copy return copy of macaroon.
 func (m *Macaroon) Copy() *Macaroon {
 	return &Macaroon{
 		head:    m.Head(),

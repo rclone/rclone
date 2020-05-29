@@ -27,8 +27,17 @@ var ErrTooManyRequests = errors.New("too many requests")
 // ErrBandwidthLimitExceeded is returned when project will exceeded bandwidth limit.
 var ErrBandwidthLimitExceeded = errors.New("bandwidth limit exceeded")
 
-func convertKnownErrors(err error, bucket string) error {
-	if errs2.IsRPC(err, rpcstatus.ResourceExhausted) {
+func convertKnownErrors(err error, bucket, key string) error {
+	switch {
+	case storj.ErrNoBucket.Has(err):
+		return errwrapf("%w (%q)", ErrBucketNameInvalid, bucket)
+	case storj.ErrNoPath.Has(err):
+		return errwrapf("%w (%q)", ErrObjectKeyInvalid, key)
+	case storj.ErrBucketNotFound.Has(err):
+		return errwrapf("%w (%q)", ErrBucketNotFound, bucket)
+	case storj.ErrObjectNotFound.Has(err):
+		return errwrapf("%w (%q)", ErrObjectNotFound, key)
+	case errs2.IsRPC(err, rpcstatus.ResourceExhausted):
 		// TODO is a better way to do this?
 		message := errs.Unwrap(err).Error()
 		if message == "Exceeded Usage Limit" {
@@ -36,12 +45,12 @@ func convertKnownErrors(err error, bucket string) error {
 		} else if message == "Too Many Requests" {
 			return packageError.Wrap(ErrTooManyRequests)
 		}
-	} else if errs2.IsRPC(err, rpcstatus.NotFound) {
+	case errs2.IsRPC(err, rpcstatus.NotFound):
 		message := errs.Unwrap(err).Error()
 		if strings.HasPrefix(message, storj.ErrBucketNotFound.New("").Error()) {
 			return errwrapf("%w (%q)", ErrBucketNotFound, bucket)
 		} else if strings.HasPrefix(message, storj.ErrObjectNotFound.New("").Error()) {
-			return packageError.Wrap(ErrObjectNotFound)
+			return errwrapf("%w (%q)", ErrObjectNotFound, key)
 		}
 	}
 

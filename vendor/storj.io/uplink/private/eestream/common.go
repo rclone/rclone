@@ -7,5 +7,5 @@ import (
 	"github.com/zeebo/errs"
 )
 
-// Error is the default eestream errs class
+// Error is the default eestream errs class.
 var Error = errs.Class("eestream error")

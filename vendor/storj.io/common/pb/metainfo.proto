@@ -17,7 +17,7 @@ import "orders.proto";
 // * If someone will add stream_id or segment_id to existing or new message in this protobuf
 //   then Batch method (satellite/metainfo/batch.go) needs to be updated as well
 
-// Metainfo it's a satellite RPC service
+// Metainfo it's a satellite RPC service.
 service Metainfo {
     // Bucket
     rpc CreateBucket(BucketCreateRequest) returns (BucketCreateResponse);
@@ -392,7 +392,10 @@ message ObjectFinishDeleteRequest {
 message ObjectFinishDeleteResponse {
 }
 
-// only for satellite use
+//
+// Only for satellite use
+//
+
 message SatStreamID {
     bytes  bucket = 1;
     bytes  encrypted_path = 2;

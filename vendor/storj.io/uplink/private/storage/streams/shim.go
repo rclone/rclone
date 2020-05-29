@@ -20,7 +20,7 @@ type Metadata interface {
 	Metadata() ([]byte, error)
 }
 
-// Store interface methods for streams to satisfy to be a store
+// Store interface methods for streams to satisfy to be a store.
 type Store interface {
 	Get(ctx context.Context, path storj.Path, object storj.Object) (ranger.Ranger, error)
 	Put(ctx context.Context, path storj.Path, data io.Reader, metadata Metadata, expiration time.Time) (Meta, error)

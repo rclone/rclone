@@ -21,7 +21,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
-// SerializableMeta is the object metadata that will be stored serialized
+// SerializableMeta is the object metadata that will be stored serialized.
 type SerializableMeta struct {
 	ContentType          string            `protobuf:"bytes,1,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
 	UserDefined          map[string]string `protobuf:"bytes,2,rep,name=user_defined,json=userDefined,proto3" json:"user_defined,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`

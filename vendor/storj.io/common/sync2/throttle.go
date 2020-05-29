@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-// Throttle implements two-sided throttling, between a consumer and producer
+// Throttle implements two-sided throttling, between a consumer and producer.
 type Throttle struct {
 	noCopy noCopy // nolint: structcheck
 
@@ -24,7 +24,7 @@ type Throttle struct {
 	available int64
 }
 
-// NewThrottle returns a new Throttle primitive
+// NewThrottle returns a new Throttle primitive.
 func NewThrottle() *Throttle {
 	var throttle Throttle
 	throttle.consumer.L = &throttle.mu
@@ -32,7 +32,7 @@ func NewThrottle() *Throttle {
 	return &throttle
 }
 
-// Consume subtracts amount from the throttle
+// Consume subtracts amount from the throttle.
 func (throttle *Throttle) Consume(amount int64) error {
 	throttle.mu.Lock()
 	defer throttle.mu.Unlock()
@@ -41,7 +41,7 @@ func (throttle *Throttle) Consume(amount int64) error {
 	return throttle.combinedError()
 }
 
-// ConsumeOrWait tries to consume at most maxAmount
+// ConsumeOrWait tries to consume at most maxAmount.
 func (throttle *Throttle) ConsumeOrWait(maxAmount int64) (int64, error) {
 	throttle.mu.Lock()
 	defer throttle.mu.Unlock()
@@ -60,7 +60,7 @@ func (throttle *Throttle) ConsumeOrWait(maxAmount int64) (int64, error) {
 	return available, throttle.combinedError()
 }
 
-// WaitUntilAbove waits until availability drops below limit
+// WaitUntilAbove waits until availability drops below limit.
 func (throttle *Throttle) WaitUntilAbove(limit int64) error {
 	throttle.mu.Lock()
 	defer throttle.mu.Unlock()
@@ -70,7 +70,7 @@ func (throttle *Throttle) WaitUntilAbove(limit int64) error {
 	return throttle.combinedError()
 }
 
-// Produce adds amount to the throttle
+// Produce adds amount to the throttle.
 func (throttle *Throttle) Produce(amount int64) error {
 	throttle.mu.Lock()
 	defer throttle.mu.Unlock()
@@ -79,7 +79,7 @@ func (throttle *Throttle) Produce(amount int64) error {
 	return throttle.combinedError()
 }
 
-// ProduceAndWaitUntilBelow adds amount to the throttle and waits until it's below the given threshold
+// ProduceAndWaitUntilBelow adds amount to the throttle and waits until it's below the given threshold.
 func (throttle *Throttle) ProduceAndWaitUntilBelow(amount, limit int64) error {
 	throttle.mu.Lock()
 	defer throttle.mu.Unlock()
@@ -91,7 +91,7 @@ func (throttle *Throttle) ProduceAndWaitUntilBelow(amount, limit int64) error {
 	return throttle.combinedError()
 }
 
-// WaitUntilBelow waits until availability drops below limit
+// WaitUntilBelow waits until availability drops below limit.
 func (throttle *Throttle) WaitUntilBelow(limit int64) error {
 	throttle.mu.Lock()
 	defer throttle.mu.Unlock()
@@ -101,7 +101,7 @@ func (throttle *Throttle) WaitUntilBelow(limit int64) error {
 	return throttle.combinedError()
 }
 
-// Fail stops both consumer and allocator
+// Fail stops both consumer and allocator.
 func (throttle *Throttle) Fail(err error) {
 	throttle.mu.Lock()
 	defer throttle.mu.Unlock()
@@ -111,7 +111,7 @@ func (throttle *Throttle) Fail(err error) {
 	throttle.producer.Signal()
 }
 
-// must hold mutex when calling this
+// must hold mutex when calling this.
 func (throttle *Throttle) alive() bool { return len(throttle.errs) == 0 }
 
 func (throttle *Throttle) combinedError() error {
@@ -122,7 +122,7 @@ func (throttle *Throttle) combinedError() error {
 	return throttle.errs[0]
 }
 
-// Err returns the finishing error
+// Err returns the finishing error.
 func (throttle *Throttle) Err() error {
 	throttle.mu.Lock()
 	defer throttle.mu.Unlock()

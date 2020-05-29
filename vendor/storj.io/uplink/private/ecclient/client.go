@@ -28,16 +28,17 @@ import (
 
 var mon = monkit.Package()
 
-// Client defines an interface for storing erasure coded data to piece store nodes
+// Client defines an interface for storing erasure coded data to piece store nodes.
 type Client interface {
 	Put(ctx context.Context, limits []*pb.AddressedOrderLimit, privateKey storj.PiecePrivateKey, rs eestream.RedundancyStrategy, data io.Reader, expiration time.Time) (successfulNodes []*pb.Node, successfulHashes []*pb.PieceHash, err error)
+	PutSingleResult(ctx context.Context, limits []*pb.AddressedOrderLimit, privateKey storj.PiecePrivateKey, rs eestream.RedundancyStrategy, data io.Reader, expiration time.Time) (results []*pb.SegmentPieceUploadResult, err error)
 	Get(ctx context.Context, limits []*pb.AddressedOrderLimit, privateKey storj.PiecePrivateKey, es eestream.ErasureScheme, size int64) (ranger.Ranger, error)
 	WithForceErrorDetection(force bool) Client
 	// PutPiece is not intended to be used by normal uplinks directly, but is exported to support storagenode graceful exit transfers.
 	PutPiece(ctx, parent context.Context, limit *pb.AddressedOrderLimit, privateKey storj.PiecePrivateKey, data io.ReadCloser) (hash *pb.PieceHash, id *identity.PeerIdentity, err error)
 }
 
-type dialPiecestoreFunc func(context.Context, *pb.Node) (*piecestore.Client, error)
+type dialPiecestoreFunc func(context.Context, storj.NodeURL) (*piecestore.Client, error)
 
 type ecClient struct {
 	log                 *zap.Logger
@@ -46,7 +47,7 @@ type ecClient struct {
 	forceErrorDetection bool
 }
 
-// NewClient from the given identity and max buffer memory
+// NewClient from the given identity and max buffer memory.
 func NewClient(log *zap.Logger, dialer rpc.Dialer, memoryLimit int) Client {
 	return &ecClient{
 		log:         log,
@@ -60,9 +61,9 @@ func (ec *ecClient) WithForceErrorDetection(force bool) Client {
 	return ec
 }
 
-func (ec *ecClient) dialPiecestore(ctx context.Context, n *pb.Node) (*piecestore.Client, error) {
-	logger := ec.log.Named(n.Id.String())
-	return piecestore.Dial(ctx, ec.dialer, n, logger, piecestore.DefaultConfig)
+func (ec *ecClient) dialPiecestore(ctx context.Context, n storj.NodeURL) (*piecestore.Client, error) {
+	logger := ec.log.Named(n.ID.String())
+	return piecestore.DialNodeURL(ctx, ec.dialer, n, logger, piecestore.DefaultConfig)
 }
 
 func (ec *ecClient) Put(ctx context.Context, limits []*pb.AddressedOrderLimit, privateKey storj.PiecePrivateKey, rs eestream.RedundancyStrategy, data io.Reader, expiration time.Time) (successfulNodes []*pb.Node, successfulHashes []*pb.PieceHash, err error) {
@@ -175,6 +176,32 @@ func (ec *ecClient) Put(ctx context.Context, limits []*pb.AddressedOrderLimit, p
 	return successfulNodes, successfulHashes, nil
 }
 
+func (ec *ecClient) PutSingleResult(ctx context.Context, limits []*pb.AddressedOrderLimit, privateKey storj.PiecePrivateKey, rs eestream.RedundancyStrategy, data io.Reader, expiration time.Time) (results []*pb.SegmentPieceUploadResult, err error) {
+	successfulNodes, successfulHashes, err := ec.Put(ctx, limits, privateKey, rs, data, expiration)
+	if err != nil {
+		return nil, err
+	}
+
+	uploadResults := make([]*pb.SegmentPieceUploadResult, 0, len(successfulNodes))
+	for i := range successfulNodes {
+		if successfulNodes[i] == nil {
+			continue
+		}
+
+		uploadResults = append(uploadResults, &pb.SegmentPieceUploadResult{
+			PieceNum: int32(i),
+			NodeId:   successfulNodes[i].Id,
+			Hash:     successfulHashes[i],
+		})
+	}
+
+	if l := len(uploadResults); l < rs.OptimalThreshold() {
+		return nil, Error.New("uploaded results (%d) are below the optimal threshold (%d)", l, rs.OptimalThreshold())
+	}
+
+	return uploadResults, nil
+}
+
 func (ec *ecClient) PutPiece(ctx, parent context.Context, limit *pb.AddressedOrderLimit, privateKey storj.PiecePrivateKey, data io.ReadCloser) (hash *pb.PieceHash, peerID *identity.PeerIdentity, err error) {
 	nodeName := "nil"
 	if limit != nil {
@@ -190,9 +217,9 @@ func (ec *ecClient) PutPiece(ctx, parent context.Context, limit *pb.AddressedOrd
 
 	storageNodeID := limit.GetLimit().StorageNodeId
 	pieceID := limit.GetLimit().PieceId
-	ps, err := ec.dialPiecestore(ctx, &pb.Node{
-		Id:      storageNodeID,
-		Address: limit.GetStorageNodeAddress(),
+	ps, err := ec.dialPiecestore(ctx, storj.NodeURL{
+		ID:      storageNodeID,
+		Address: limit.GetStorageNodeAddress().Address,
 	})
 	if err != nil {
 		ec.log.Debug("Failed dialing for putting piece to node",
@@ -323,12 +350,12 @@ type lazyPieceRanger struct {
 	size           int64
 }
 
-// Size implements Ranger.Size
+// Size implements Ranger.Size.
 func (lr *lazyPieceRanger) Size() int64 {
 	return lr.size
 }
 
-// Range implements Ranger.Range to be lazily connected
+// Range implements Ranger.Range to be lazily connected.
 func (lr *lazyPieceRanger) Range(ctx context.Context, offset, length int64) (_ io.ReadCloser, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -374,9 +401,9 @@ func (lr *lazyPieceReader) Read(data []byte) (_ int, err error) {
 
 func (lr *lazyPieceRanger) dial(ctx context.Context, offset, length int64) (_ *piecestore.Client, _ piecestore.Downloader, err error) {
 	defer mon.Task()(&ctx)(&err)
-	ps, err := lr.dialPiecestore(ctx, &pb.Node{
-		Id:      lr.limit.GetLimit().StorageNodeId,
-		Address: lr.limit.GetStorageNodeAddress(),
+	ps, err := lr.dialPiecestore(ctx, storj.NodeURL{
+		ID:      lr.limit.GetLimit().StorageNodeId,
+		Address: lr.limit.GetStorageNodeAddress().Address,
 	})
 	if err != nil {
 		return nil, nil, err

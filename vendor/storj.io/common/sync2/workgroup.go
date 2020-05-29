@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-// WorkGroup implements waitable and closable group of workers
+// WorkGroup implements waitable and closable group of workers.
 type WorkGroup struct {
 	noCopy noCopy // nolint: structcheck
 
@@ -19,7 +19,7 @@ type WorkGroup struct {
 	workers     int
 }
 
-// init initializes work group
+// init initializes work group.
 func (group *WorkGroup) init() {
 	if !group.initialized {
 		group.cond.L = &group.mu
@@ -39,7 +39,7 @@ func (group *WorkGroup) Go(fn func()) bool {
 	return true
 }
 
-// Start returns true when work can be started
+// Start returns true when work can be started.
 func (group *WorkGroup) Start() bool {
 	group.mu.Lock()
 	defer group.mu.Unlock()
@@ -52,7 +52,7 @@ func (group *WorkGroup) Start() bool {
 	return true
 }
 
-// Done finishes a pending work item
+// Done finishes a pending work item.
 func (group *WorkGroup) Done() {
 	group.mu.Lock()
 	defer group.mu.Unlock()

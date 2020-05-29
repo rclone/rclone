@@ -10,7 +10,7 @@ import (
 	"storj.io/common/storj"
 )
 
-// Path is a representation of an object path within a bucket
+// Path is a representation of an object path within a bucket.
 type Path struct {
 	bucket    string
 	unencPath paths.Unencrypted

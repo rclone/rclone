@@ -108,6 +108,17 @@ func removeObserverFrom(parent **spanObserverTuple, ref *spanObserverTuple) (
 // Id returns the id of the Trace
 func (t *Trace) Id() int64 { return t.id }
 
+// GetAll returns values associated with a trace. See SetAll.
+func (t *Trace) GetAll() (val map[interface{}]interface{}) {
+	t.mtx.Lock()
+	defer t.mtx.Unlock()
+	new := make(map[interface{}]interface{}, len(t.vals))
+	for k, v := range t.vals {
+		new[k] = v
+	}
+	return new
+}
+
 // Get returns a value associated with a key on a trace. See Set.
 func (t *Trace) Get(key interface{}) (val interface{}) {
 	t.mtx.Lock()
@@ -127,6 +138,14 @@ func (t *Trace) Set(key, val interface{}) {
 		t.vals[key] = val
 	}
 	t.mtx.Unlock()
+}
+
+// copyFrom replace all key/value on a trace with a new sets of key/value.
+func (t *Trace) copyFrom(s *Trace) {
+	vals := s.GetAll()
+	t.mtx.Lock()
+	defer t.mtx.Unlock()
+	t.vals = vals
 }
 
 func (t *Trace) incrementSpans() { atomic.AddInt64(&t.spanCount, 1) }

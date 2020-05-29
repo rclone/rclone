@@ -43,7 +43,7 @@ func init() {
 	}
 }
 
-// KnownNodeID looks for a well-known node id for a given address
+// KnownNodeID looks for a well-known node id for a given address.
 func KnownNodeID(address string) (id storj.NodeID, known bool) {
 	id, known = knownNodeIDs[address]
 	if !known {
