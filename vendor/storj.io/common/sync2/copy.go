@@ -16,7 +16,7 @@ type readerFunc func(p []byte) (n int, err error)
 
 func (rf readerFunc) Read(p []byte) (n int, err error) { return rf(p) }
 
-// Copy implements copying with cancellation
+// Copy implements copying with cancellation.
 func Copy(ctx context.Context, dst io.Writer, src io.Reader) (written int64, err error) {
 	defer mon.Task()(&ctx)(&err)
 	written, err = io.Copy(dst, readerFunc(func(p []byte) (int, error) {

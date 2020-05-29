@@ -272,6 +272,33 @@ func (f *Func) ResetTrace(ctx *context.Context,
 	return exit
 }
 
+// RestartTrace is like Func.Task, except it always creates a new Trace and inherient
+// all tags from the existing trace.
+func (f *Func) RestartTrace(ctx *context.Context, args ...interface{}) func(*error) {
+	existingSpan := SpanFromCtx(*ctx)
+	if existingSpan == nil {
+		return f.ResetTrace(ctx, args)
+	}
+	existingTrace := existingSpan.Trace()
+	if existingTrace == nil {
+		return f.ResetTrace(ctx, args)
+	}
+
+	ctx = cleanCtx(ctx)
+	if ctx == &taskSecret && taskArgs(f, args) {
+		return nil
+	}
+	trace := NewTrace(NewId())
+	trace.copyFrom(existingTrace)
+	f.scope.r.observeTrace(trace)
+	s, exit := newSpan(*ctx, f, args, trace.Id(), trace)
+
+	if ctx != &unparented {
+		*ctx = s
+	}
+	return exit
+}
+
 var unparented = context.Background()
 
 func cleanCtx(ctx *context.Context) *context.Context {

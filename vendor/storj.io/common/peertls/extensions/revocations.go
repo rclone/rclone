@@ -27,16 +27,16 @@ var (
 	RevocationUpdateHandler = NewHandlerFactory(&RevocationExtID, revocationUpdater)
 )
 
-// ErrRevocation is used when an error occurs involving a certificate revocation
+// ErrRevocation is used when an error occurs involving a certificate revocation.
 var ErrRevocation = errs.Class("revocation processing error")
 
-// ErrRevocationDB is used when an error occurs involving the revocations database
+// ErrRevocationDB is used when an error occurs involving the revocations database.
 var ErrRevocationDB = errs.Class("revocation database error")
 
-// ErrRevokedCert is used when a certificate in the chain is revoked and not expected to be
+// ErrRevokedCert is used when a certificate in the chain is revoked and not expected to be.
 var ErrRevokedCert = ErrRevocation.New("a certificate in the chain is revoked")
 
-// ErrRevocationTimestamp is used when a revocation's timestamp is older than the last recorded revocation
+// ErrRevocationTimestamp is used when a revocation's timestamp is older than the last recorded revocation.
 var ErrRevocationTimestamp = Error.New("revocation timestamp is older than last known revocation")
 
 // Revocation represents a certificate revocation for storage in the revocation
@@ -161,12 +161,12 @@ func (r *Revocation) Sign(key crypto.PrivateKey) error {
 	return nil
 }
 
-// Marshal serializes a revocation to bytes
+// Marshal serializes a revocation to bytes.
 func (r Revocation) Marshal() ([]byte, error) {
 	return (&revocationEncoder{}).encode(r)
 }
 
-// Unmarshal deserializes a revocation from bytes
+// Unmarshal deserializes a revocation from bytes.
 func (r *Revocation) Unmarshal(data []byte) error {
 	revocation, err := (&revocationDecoder{}).decode(data)
 	if err != nil {

@@ -2581,7 +2581,6 @@ func (m *ObjectFinishDeleteResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ObjectFinishDeleteResponse proto.InternalMessageInfo
 
-// only for satellite use
 type SatStreamID struct {
 	Bucket               []byte            `protobuf:"bytes,1,opt,name=bucket,proto3" json:"bucket,omitempty"`
 	EncryptedPath        []byte            `protobuf:"bytes,2,opt,name=encrypted_path,json=encryptedPath,proto3" json:"encrypted_path,omitempty"`

@@ -92,8 +92,8 @@ func SignUplinkPieceHash(ctx context.Context, privateKey storj.PiecePrivateKey, 
 	return &signed, nil
 }
 
-// SignStreamID signs the stream ID using the specified signer
-// Signer is a satellite
+// SignStreamID signs the stream ID using the specified signer.
+// Signer is a satellite.
 func SignStreamID(ctx context.Context, signer Signer, unsigned *pb.SatStreamID) (_ *pb.SatStreamID, err error) {
 	defer mon.Task()(&ctx)(&err)
 	bytes, err := EncodeStreamID(ctx, unsigned)
@@ -110,8 +110,8 @@ func SignStreamID(ctx context.Context, signer Signer, unsigned *pb.SatStreamID) 
 	return &signed, nil
 }
 
-// SignSegmentID signs the segment ID using the specified signer
-// Signer is a satellite
+// SignSegmentID signs the segment ID using the specified signer.
+// Signer is a satellite.
 func SignSegmentID(ctx context.Context, signer Signer, unsigned *pb.SatSegmentID) (_ *pb.SatSegmentID, err error) {
 	defer mon.Task()(&ctx)(&err)
 	bytes, err := EncodeSegmentID(ctx, unsigned)
@@ -128,8 +128,8 @@ func SignSegmentID(ctx context.Context, signer Signer, unsigned *pb.SatSegmentID
 	return &signed, nil
 }
 
-// SignExitCompleted signs the ExitCompleted using the specified signer
-// Signer is a satellite
+// SignExitCompleted signs the ExitCompleted using the specified signer.
+// Signer is a satellite.
 func SignExitCompleted(ctx context.Context, signer Signer, unsigned *pb.ExitCompleted) (_ *pb.ExitCompleted, err error) {
 	defer mon.Task()(&ctx)(&err)
 	bytes, err := EncodeExitCompleted(ctx, unsigned)
@@ -146,8 +146,8 @@ func SignExitCompleted(ctx context.Context, signer Signer, unsigned *pb.ExitComp
 	return &signed, nil
 }
 
-// SignExitFailed signs the ExitFailed using the specified signer
-// Signer is a satellite
+// SignExitFailed signs the ExitFailed using the specified signer.
+// Signer is a satellite.
 func SignExitFailed(ctx context.Context, signer Signer, unsigned *pb.ExitFailed) (_ *pb.ExitFailed, err error) {
 	defer mon.Task()(&ctx)(&err)
 	bytes, err := EncodeExitFailed(ctx, unsigned)

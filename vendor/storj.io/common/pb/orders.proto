@@ -10,7 +10,7 @@ import "gogo.proto";
 import "google/protobuf/timestamp.proto";
 import "node.proto";
 
-// PieceAction is an enumeration of all possible executed actions on storage node
+// PieceAction is an enumeration of all possible executed actions on storage node.
 enum PieceAction {
     INVALID = 0;
     PUT = 1;
@@ -22,7 +22,7 @@ enum PieceAction {
     PUT_GRACEFUL_EXIT = 7;
 }
 
-// OrderLimit is provided by satellite to execute specific action on storage node within some limits
+// OrderLimit is provided by satellite to execute specific action on storage node within some limits.
 message OrderLimit {
     // unique serial to avoid replay attacks
     bytes serial_number = 1 [(gogoproto.customtype) = "SerialNumber", (gogoproto.nullable) = false];
@@ -51,7 +51,7 @@ message OrderLimit {
     node.NodeAddress satellite_address = 11;
 }
 
-// OrderLimitSigning provides OrderLimit signing serialization
+// OrderLimitSigning provides OrderLimit signing serialization.
 //
 // It is never used for sending across the network, it is
 // used in signing to ensure that nullable=false fields get handled properly.
@@ -85,7 +85,7 @@ message OrderLimitSigning {
     node.NodeAddress satellite_address = 11;
 }
 
-// Order is a one step of fullfilling Amount number of bytes from an OrderLimit with SerialNumber
+// Order is a one step of fullfilling Amount number of bytes from an OrderLimit with SerialNumber.
 message Order {
     // serial of the order limit that was signed
     bytes serial_number = 1 [(gogoproto.customtype) = "SerialNumber", (gogoproto.nullable) = false];
@@ -95,7 +95,7 @@ message Order {
     bytes uplink_signature = 3;
 }
 
-// OrderSigning provides Order signing format
+// OrderSigning provides Order signing format.
 //
 // It is never used for sending across the network, it is
 // used in signing to ensure that nullable=false fields get handled properly.

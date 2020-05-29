@@ -80,7 +80,7 @@ func DialNodeURL(ctx context.Context, dialer rpc.Dialer, nodeURL string, apiKey 
 		return nil, Error.New("node ID is required in node URL %q", nodeURL)
 	}
 
-	conn, err := dialer.DialAddressID(ctx, url.Address, url.ID)
+	conn, err := dialer.DialNodeURL(ctx, url)
 	if err != nil {
 		return nil, Error.Wrap(err)
 	}
@@ -457,7 +457,7 @@ func (params *BeginObjectParams) toRequest(header *pb.RequestHeader) *pb.ObjectB
 	}
 }
 
-// BatchItem returns single item for batch request....
+// BatchItem returns single item for batch request.
 func (params *BeginObjectParams) BatchItem() *pb.BatchRequestItem {
 	return &pb.BatchRequestItem{
 		Request: &pb.BatchRequestItem_ObjectBegin{

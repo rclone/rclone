@@ -8,7 +8,7 @@ import (
 	"storj.io/uplink/private/storage/streams"
 )
 
-// Project implements project management operations
+// Project implements project management operations.
 type Project struct {
 	metainfo           metainfo.Client
 	streams            streams.Store
@@ -16,7 +16,7 @@ type Project struct {
 	segmentsSize       int64
 }
 
-// NewProject constructs a *Project
+// NewProject constructs a *Project.
 func NewProject(streams streams.Store, encryptedBlockSize int32, segmentsSize int64, metainfo metainfo.Client) *Project {
 	return &Project{
 		metainfo:           metainfo,

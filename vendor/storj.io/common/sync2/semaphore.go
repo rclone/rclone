@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-// Semaphore implements a closable semaphore
+// Semaphore implements a closable semaphore.
 type Semaphore struct {
 	noCopy noCopy // nolint: structcheck
 

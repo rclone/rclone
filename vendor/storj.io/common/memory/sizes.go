@@ -5,13 +5,13 @@ package memory
 
 import "strings"
 
-// Sizes implements flag.Value for collecting memory size
+// Sizes implements flag.Value for collecting memory size.
 type Sizes struct {
 	Default []Size
 	Custom  []Size
 }
 
-// Sizes returns the loaded values
+// Sizes returns the loaded values.
 func (sizes Sizes) Sizes() []Size {
 	if len(sizes.Custom) > 0 {
 		return sizes.Custom
@@ -19,7 +19,7 @@ func (sizes Sizes) Sizes() []Size {
 	return sizes.Default
 }
 
-// String converts values to a string
+// String converts values to a string.
 func (sizes Sizes) String() string {
 	sz := sizes.Sizes()
 	xs := make([]string, len(sz))
@@ -29,7 +29,7 @@ func (sizes Sizes) String() string {
 	return strings.Join(xs, " ")
 }
 
-// Set adds values from byte values
+// Set adds values from byte values.
 func (sizes *Sizes) Set(s string) error {
 	for _, x := range strings.Fields(s) {
 		var size Size

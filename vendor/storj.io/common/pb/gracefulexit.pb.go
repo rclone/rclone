@@ -146,7 +146,7 @@ func (m *InitiateGracefulExitRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_InitiateGracefulExitRequest proto.InternalMessageInfo
 
-// NonExitingSatellite contains information that's needed for a storagenode to start graceful exit
+// NonExitingSatellite contains information that's needed for a storagenode to start graceful exit.
 type NonExitingSatellite struct {
 	NodeId               NodeID   `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3,customtype=NodeID" json:"node_id"`
 	DomainName           string   `protobuf:"bytes,2,opt,name=domain_name,json=domainName,proto3" json:"domain_name,omitempty"`

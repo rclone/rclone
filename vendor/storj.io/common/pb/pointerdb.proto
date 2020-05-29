@@ -61,7 +61,6 @@ message Pointer {
   bool piece_hashes_verified = 11;
 }
 
-// ListResponse is a response message for the List rpc call
 message ListResponse {
   message Item {
     string  path = 1;

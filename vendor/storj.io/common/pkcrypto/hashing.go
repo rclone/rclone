@@ -14,7 +14,7 @@ func NewHash() hash.Hash {
 	return sha256.New()
 }
 
-// SHA256Hash calculates the SHA256 hash of the input data
+// SHA256Hash calculates the SHA256 hash of the input data.
 func SHA256Hash(data []byte) []byte {
 	sum := sha256.Sum256(data)
 	return sum[:]

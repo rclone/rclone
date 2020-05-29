@@ -17,14 +17,14 @@ type Fence struct {
 	done    chan struct{}
 }
 
-// init sets up the initial lock into wait
+// init sets up the initial lock into wait.
 func (fence *Fence) init() {
 	fence.setup.Do(func() {
 		fence.done = make(chan struct{})
 	})
 }
 
-// Release releases everyone from Wait
+// Release releases everyone from Wait.
 func (fence *Fence) Release() {
 	fence.init()
 	fence.release.Do(func() { close(fence.done) })

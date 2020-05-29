@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-//EditFile opens the best OS-specific text editor we can find
+//EditFile opens the best OS-specific text editor we can find.
 func EditFile(fileToEdit string) error {
 	editorPath := getEditorPath()
 	if editorPath == "" {

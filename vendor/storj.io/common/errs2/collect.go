@@ -9,7 +9,7 @@ import (
 	"github.com/zeebo/errs"
 )
 
-// Collect returns first error from channel and all errors that happen within duration
+// Collect returns first error from channel and all errors that happen within duration.
 func Collect(errch chan error, duration time.Duration) error {
 	errch = discardNil(errch)
 	errlist := []error{<-errch}
@@ -24,7 +24,7 @@ func Collect(errch chan error, duration time.Duration) error {
 	}
 }
 
-// discard nil errors that are returned from services
+// discard nil errors that are returned from services.
 func discardNil(ch chan error) chan error {
 	r := make(chan error)
 	go func() {

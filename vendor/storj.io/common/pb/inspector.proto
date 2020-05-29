@@ -37,7 +37,6 @@ service HealthInspector {
   rpc SegmentHealth(SegmentHealthRequest) returns (SegmentHealthResponse) {}
 }
 
-// ListSegments
 message ListIrreparableSegmentsRequest {
   int32 limit = 1;
   bytes last_seen_segment_path = 2;
@@ -55,7 +54,6 @@ message ListIrreparableSegmentsResponse {
   repeated IrreparableSegment segments = 1;
 }
 
-// CountNodes
 message CountNodesResponse {
   int64 count = 1;
 }

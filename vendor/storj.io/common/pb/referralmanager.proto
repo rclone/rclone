@@ -5,7 +5,7 @@ import "gogo.proto";
 
 package referralmanager;
 
-// ReferralManager is a service for handling referrals
+// ReferralManager is a service for handling referrals.
 service ReferralManager {
   // GetTokens retrieves a list of unredeemed tokens for a user
   rpc GetTokens(GetTokensRequest) returns (GetTokensResponse);

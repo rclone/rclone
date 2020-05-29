@@ -17,7 +17,7 @@ type encryptionAccess struct {
 	store *encryption.Store
 }
 
-// newEncryptionAccess creates an encryption access context
+// newEncryptionAccess creates an encryption access context.
 func newEncryptionAccess() *encryptionAccess {
 	store := encryption.NewStore()
 	return &encryptionAccess{store: store}
@@ -25,7 +25,7 @@ func newEncryptionAccess() *encryptionAccess {
 
 // newEncryptionAccessWithDefaultKey creates an encryption access context with
 // a default key set.
-// Use (*Project).SaltedKeyFromPassphrase to generate a default key
+// Use (*Project).SaltedKeyFromPassphrase to generate a default key.
 func newEncryptionAccessWithDefaultKey(defaultKey *storj.Key) *encryptionAccess {
 	ec := newEncryptionAccess()
 	ec.setDefaultKey(defaultKey)
@@ -38,7 +38,7 @@ func (s *encryptionAccess) Store() *encryption.Store {
 }
 
 // setDefaultKey sets the default key for the encryption access context.
-// Use (*Project).SaltedKeyFromPassphrase to generate a default key
+// Use (*Project).SaltedKeyFromPassphrase to generate a default key.
 func (s *encryptionAccess) setDefaultKey(defaultKey *storj.Key) {
 	s.store.SetDefaultKey(defaultKey)
 }

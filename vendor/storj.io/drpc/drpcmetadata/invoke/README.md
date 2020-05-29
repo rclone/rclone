@@ -1,17 +1,17 @@
 # package invoke
 
-`import  "storj.io/drpc/drpcmetadata/invoke"`
+`import "storj.io/drpc/drpcmetadata/invoke"`
 
 Package invoke defines the proto messages exposed by drpc for sending metadata
 across the wire.
 
 ## Usage
 
-#### type InvokeMetadata
+#### type Metadata
 
 ```go
-type InvokeMetadata struct {
-	Data                 map[string]string `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+type Metadata struct {
+	Data                 map[string]string `protobuf:"bytes,1,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
 	XXX_sizecache        int32             `json:"-"`
@@ -19,62 +19,62 @@ type InvokeMetadata struct {
 ```
 
 
-#### func (*InvokeMetadata) Descriptor
+#### func (*Metadata) Descriptor
 
 ```go
-func (*InvokeMetadata) Descriptor() ([]byte, []int)
+func (*Metadata) Descriptor() ([]byte, []int)
 ```
 
-#### func (*InvokeMetadata) GetData
+#### func (*Metadata) GetData
 
 ```go
-func (m *InvokeMetadata) GetData() map[string]string
+func (m *Metadata) GetData() map[string]string
 ```
 
-#### func (*InvokeMetadata) ProtoMessage
+#### func (*Metadata) ProtoMessage
 
 ```go
-func (*InvokeMetadata) ProtoMessage()
+func (*Metadata) ProtoMessage()
 ```
 
-#### func (*InvokeMetadata) Reset
+#### func (*Metadata) Reset
 
 ```go
-func (m *InvokeMetadata) Reset()
+func (m *Metadata) Reset()
 ```
 
-#### func (*InvokeMetadata) String
+#### func (*Metadata) String
 
 ```go
-func (m *InvokeMetadata) String() string
+func (m *Metadata) String() string
 ```
 
-#### func (*InvokeMetadata) XXX_DiscardUnknown
+#### func (*Metadata) XXX_DiscardUnknown
 
 ```go
-func (m *InvokeMetadata) XXX_DiscardUnknown()
+func (m *Metadata) XXX_DiscardUnknown()
 ```
 
-#### func (*InvokeMetadata) XXX_Marshal
+#### func (*Metadata) XXX_Marshal
 
 ```go
-func (m *InvokeMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
+func (m *Metadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 ```
 
-#### func (*InvokeMetadata) XXX_Merge
+#### func (*Metadata) XXX_Merge
 
 ```go
-func (m *InvokeMetadata) XXX_Merge(src proto.Message)
+func (m *Metadata) XXX_Merge(src proto.Message)
 ```
 
-#### func (*InvokeMetadata) XXX_Size
+#### func (*Metadata) XXX_Size
 
 ```go
-func (m *InvokeMetadata) XXX_Size() int
+func (m *Metadata) XXX_Size() int
 ```
 
-#### func (*InvokeMetadata) XXX_Unmarshal
+#### func (*Metadata) XXX_Unmarshal
 
 ```go
-func (m *InvokeMetadata) XXX_Unmarshal(b []byte) error
+func (m *Metadata) XXX_Unmarshal(b []byte) error
 ```

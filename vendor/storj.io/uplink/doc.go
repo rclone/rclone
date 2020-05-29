@@ -89,7 +89,7 @@ items.
         return err
     }
 
-Objects
+Download Object
 
 Objects support a couple kilobytes of arbitrary key/value metadata, and arbitrary-size primary
 data streams with the ability to read at arbitrary offsets.
@@ -116,5 +116,17 @@ If you want to access only a small subrange of the data you uploaded, you can us
     _, err = io.Copy(w, object)
     return err
 
+List Objects
+
+Listing objects returns an iterator that allows to walk through all the items:
+
+    objects := project.ListObjects(ctx, "logs", nil)
+    for objects.Next() {
+        item := objects.Item()
+        fmt.Println(item.IsPrefix, item.Key)
+    }
+    if err := objects.Err(); err != nil {
+        return err
+    }
 */
 package uplink

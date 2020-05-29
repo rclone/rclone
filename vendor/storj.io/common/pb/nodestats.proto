@@ -21,6 +21,9 @@ message ReputationStats {
     double reputation_alpha = 3;
     double reputation_beta = 4;
     double reputation_score = 5;
+    double unknown_reputation_alpha = 6;
+    double unknown_reputation_beta = 7;
+    double unknown_reputation_score = 8;
 }
 
 message GetStatsRequest {}

@@ -7,5 +7,5 @@ import (
 	"github.com/zeebo/errs"
 )
 
-// Error is the errs class of stream errors
+// Error is the errs class of stream errors.
 var Error = errs.Class("stream error")

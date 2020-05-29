@@ -7,5 +7,5 @@ import (
 	"github.com/zeebo/errs"
 )
 
-// Error is the errs class of standard Ranger errors
+// Error is the errs class of standard Ranger errors.
 var Error = errs.Class("ecclient error")

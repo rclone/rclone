@@ -9,9 +9,8 @@ package node;
 import "gogo.proto";
 import "google/protobuf/timestamp.proto";
 
-// TODO move statdb.Update() stuff out of here
-// Node represents a node in the overlay network
-// Node is info for a updating a single storagenode, used in the Update rpc calls
+// Node represents a node in the overlay network.
+// Node is info for a updating a single storagenode, used in the Update rpc calls.
 message Node {
     bytes id = 1 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
     NodeAddress address = 2;
@@ -20,7 +19,7 @@ message Node {
     reserved "type", "restrictions", "reputation", "metadata", "latency_list", "audit_success", "is_up", "update_latency", "update_audit_success", "update_uptime", "version";
 }
 
-// NodeType is an enum of possible node types
+// NodeType is an enum of possible node types.
 enum NodeType {
     INVALID = 0;
     SATELLITE = 1;
@@ -29,42 +28,42 @@ enum NodeType {
     BOOTSTRAP = 4 [deprecated=true];
 }
 
-// NodeAddress contains the information needed to communicate with a node on the network
+// NodeAddress contains the information needed to communicate with a node on the network.
 message NodeAddress {
     NodeTransport transport = 1;
     string address = 2;
 }
 
-// NodeTransport is an enum of possible transports for the overlay network
+// NodeTransport is an enum of possible transports for the overlay network.
 enum NodeTransport {
     TCP_TLS_GRPC = 0;
 }
 
-// NodeOperator contains info about the storage node operator
+// NodeOperator contains info about the storage node operator.
 message NodeOperator {
     string email = 1;
     string wallet = 2;
 }
 
-// NodeCapacity contains all relevant data about a nodes ability to store data
+// NodeCapacity contains all relevant data about a nodes ability to store data.
 message NodeCapacity {
     int64 free_bandwidth = 1 [deprecated=true];
     int64 free_disk = 2;
 }
 
-// Deprecated: use NodeOperator instead
+// Deprecated: use NodeOperator instead.
 message NodeMetadata {
     string email = 1;
     string wallet = 2;
 }
 
-// Deprecated: use NodeCapacity instead
+// Deprecated: use NodeCapacity instead.
 message NodeRestrictions {
     int64 free_bandwidth = 1;
     int64 free_disk = 2;
 }
 
-// NodeVersion contains
+// NodeVersion contains version information about a node.
 message NodeVersion {
     string version = 1; // must be semver formatted
     string commit_hash = 2;

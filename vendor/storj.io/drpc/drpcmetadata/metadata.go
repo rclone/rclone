@@ -12,51 +12,30 @@ import (
 )
 
 // AddPairs attaches metadata onto a context and return the context.
-func AddPairs(ctx context.Context, md map[string]string) context.Context {
-	if len(md) < 1 {
-		return ctx
-	}
-
-	for key, val := range md {
+func AddPairs(ctx context.Context, metadata map[string]string) context.Context {
+	for key, val := range metadata {
 		ctx = Add(ctx, key, val)
 	}
-
 	return ctx
 }
 
 // Encode generates byte form of the metadata and appends it onto the passed in buffer.
-func Encode(buffer []byte, md map[string]string) ([]byte, error) {
-	if len(md) < 1 {
-		return buffer, nil
-	}
-
-	msg := invoke.Metadata{
-		Data: md,
-	}
-
-	msgBytes, err := proto.Marshal(&msg)
+func Encode(buffer []byte, metadata map[string]string) ([]byte, error) {
+	data, err := proto.Marshal(&invoke.Metadata{Data: metadata})
 	if err != nil {
 		return buffer, err
 	}
-
-	buffer = append(buffer, msgBytes...)
-
-	return buffer, nil
+	return append(buffer, data...), nil
 }
 
 // Decode translate byte form of metadata into key/value metadata.
 func Decode(data []byte) (map[string]string, error) {
-	if len(data) < 1 {
-		return map[string]string{}, nil
-	}
-
-	msg := invoke.Metadata{}
-	err := proto.Unmarshal(data, &msg)
+	var md invoke.Metadata
+	err := proto.Unmarshal(data, &md)
 	if err != nil {
 		return nil, err
 	}
-
-	return msg.Data, nil
+	return md.Data, nil
 }
 
 type metadataKey struct{}

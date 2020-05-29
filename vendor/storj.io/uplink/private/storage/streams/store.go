@@ -25,7 +25,7 @@ import (
 
 var mon = monkit.Package()
 
-// Meta info about a stream
+// Meta info about a stream.
 type Meta struct {
 	Modified   time.Time
 	Expiration time.Time
@@ -33,7 +33,7 @@ type Meta struct {
 	Data       []byte
 }
 
-// Store interface methods for streams to satisfy to be a store
+// Store interface methods for streams to satisfy to be a store.
 type typedStore interface {
 	Get(ctx context.Context, path Path, object storj.Object) (ranger.Ranger, error)
 	Put(ctx context.Context, path Path, data io.Reader, metadata Metadata, expiration time.Time) (Meta, error)
@@ -157,7 +157,7 @@ func (s *streamStore) Put(ctx context.Context, path Path, data io.Reader, metada
 
 		sizeReader := NewSizeReader(eofReader)
 		segmentReader := io.LimitReader(sizeReader, s.segmentSize)
-		peekReader := segments.NewPeekThresholdReader(segmentReader)
+		peekReader := NewPeekThresholdReader(segmentReader)
 		// If the data is larger than the inline threshold size, then it will be a remote segment
 		isRemote, err := peekReader.IsLargerThan(s.inlineThreshold)
 		if err != nil {
@@ -287,7 +287,7 @@ func (s *streamStore) Put(ctx context.Context, path Path, data io.Reader, metada
 		return Meta{}, err
 	}
 
-	// encrypt metadata with the content encryption key and zero nonce
+	// encrypt metadata with the content encryption key and zero nonce.
 	encryptedStreamInfo, err := encryption.Encrypt(streamInfo, s.cipher, &contentKey, &storj.Nonce{})
 	if err != nil {
 		return Meta{}, err
@@ -414,7 +414,7 @@ func (s *streamStore) Get(ctx context.Context, path Path, object storj.Object) (
 	return ranger.Concat(rangers...), nil
 }
 
-// Delete all the segments, with the last one last
+// Delete all the segments, with the last one last.
 func (s *streamStore) Delete(ctx context.Context, path Path) (_ storj.ObjectInfo, err error) {
 	defer mon.Task()(&ctx)(&err)
 
@@ -430,7 +430,7 @@ func (s *streamStore) Delete(ctx context.Context, path Path) (_ storj.ObjectInfo
 	return object, err
 }
 
-// ListItem is a single item in a listing
+// ListItem is a single item in a listing.
 type ListItem struct {
 	Path     string
 	Meta     Meta
@@ -522,7 +522,7 @@ func decryptRanger(ctx context.Context, rr ranger.Ranger, decryptedSize int64, c
 	return encryption.Unpad(rd, int(rd.Size()-decryptedSize))
 }
 
-// CancelHandler handles clean up of segments on receiving CTRL+C
+// CancelHandler handles clean up of segments on receiving CTRL+C.
 func (s *streamStore) cancelHandler(ctx context.Context, path Path) {
 	defer mon.Task()(&ctx)(nil)
 
@@ -544,7 +544,7 @@ func getEncryptedKeyAndNonce(m *pb.SegmentMeta) (storj.EncryptedPrivateKey, *sto
 	return m.EncryptedKey, &nonce
 }
 
-// TypedDecryptStreamInfo decrypts stream info
+// TypedDecryptStreamInfo decrypts stream info.
 func TypedDecryptStreamInfo(ctx context.Context, streamMetaBytes []byte, path Path, encStore *encryption.Store) (
 	_ *pb.StreamInfo, streamMeta pb.StreamMeta, err error) {
 	defer mon.Task()(&ctx)(&err)
