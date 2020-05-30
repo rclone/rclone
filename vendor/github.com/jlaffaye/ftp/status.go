@@ -25,6 +25,7 @@ const (
 	StatusLoggedIn              = 230
 	StatusLoggedOut             = 231
 	StatusLogoutAck             = 232
+	StatusAuthOK                = 234
 	StatusRequestedFileActionOK = 250
 	StatusPathCreated           = 257
 
@@ -73,6 +74,7 @@ var statusText = map[int]string{
 	StatusLoggedIn:              "User logged in, proceed.",
 	StatusLoggedOut:             "User logged out; service terminated.",
 	StatusLogoutAck:             "Logout command noted, will complete when transfer done.",
+	StatusAuthOK:                "AUTH command OK",
 	StatusRequestedFileActionOK: "Requested file action okay, completed.",
 	StatusPathCreated:           "Path created.",
 

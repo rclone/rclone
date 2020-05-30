@@ -50,6 +50,7 @@ r, err := c.Retr("test-file.txt")
 if err != nil {
 	panic(err)
 }
+defer r.Close()
 
 buf, err := ioutil.ReadAll(r)
 println(string(buf))

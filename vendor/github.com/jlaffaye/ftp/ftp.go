@@ -50,6 +50,7 @@ type dialOptions struct {
 	context     context.Context
 	dialer      net.Dialer
 	tlsConfig   *tls.Config
+	explicitTLS bool
 	conn        net.Conn
 	disableEPSV bool
 	location    *time.Location
@@ -90,7 +91,7 @@ func Dial(addr string, options ...DialOption) (*ServerConn, error) {
 
 		if do.dialFunc != nil {
 			tconn, err = do.dialFunc("tcp", addr)
-		} else if do.tlsConfig != nil {
+		} else if do.tlsConfig != nil && !do.explicitTLS {
 			tconn, err = tls.DialWithDialer(&do.dialer, "tcp", addr, do.tlsConfig)
 		} else {
 			ctx := do.context
@@ -111,15 +112,10 @@ func Dial(addr string, options ...DialOption) (*ServerConn, error) {
 	// If we use the domain name, we might not resolve to the same IP.
 	remoteAddr := tconn.RemoteAddr().(*net.TCPAddr)
 
-	var sourceConn io.ReadWriteCloser = tconn
-	if do.debugOutput != nil {
-		sourceConn = newDebugWrapper(tconn, do.debugOutput)
-	}
-
 	c := &ServerConn{
 		options:  do,
 		features: make(map[string]string),
-		conn:     textproto.NewConn(sourceConn),
+		conn:     textproto.NewConn(do.wrapConn(tconn)),
 		host:     remoteAddr.IP.String(),
 	}
 
@@ -127,6 +123,15 @@ func Dial(addr string, options ...DialOption) (*ServerConn, error) {
 	if err != nil {
 		c.Quit()
 		return nil, err
+	}
+
+	if do.explicitTLS {
+		if err := c.authTLS(); err != nil {
+			_ = c.Quit()
+			return nil, err
+		}
+		tconn = tls.Client(tconn, do.tlsConfig)
+		c.conn = textproto.NewConn(do.wrapConn(tconn))
 	}
 
 	err = c.feat()
@@ -198,6 +203,15 @@ func DialWithTLS(tlsConfig *tls.Config) DialOption {
 	}}
 }
 
+// DialWithExplicitTLS returns a DialOption that configures the ServerConn to be upgraded to TLS
+// See DialWithTLS for general TLS documentation
+func DialWithExplicitTLS(tlsConfig *tls.Config) DialOption {
+	return DialOption{func(do *dialOptions) {
+		do.explicitTLS = true
+		do.tlsConfig = tlsConfig
+	}}
+}
+
 // DialWithDebugOutput returns a DialOption that configures the ServerConn to write to the Writer
 // everything it reads from the server
 func DialWithDebugOutput(w io.Writer) DialOption {
@@ -216,6 +230,14 @@ func DialWithDialFunc(f func(network, address string) (net.Conn, error)) DialOpt
 	return DialOption{func(do *dialOptions) {
 		do.dialFunc = f
 	}}
+}
+
+func (o *dialOptions) wrapConn(netConn net.Conn) io.ReadWriteCloser {
+	if o.debugOutput == nil {
+		return netConn
+	}
+
+	return newDebugWrapper(netConn, o.debugOutput)
 }
 
 // Connect is an alias to Dial, for backward compatibility
@@ -266,6 +288,12 @@ func (c *ServerConn) Login(user, password string) error {
 		c.cmd(StatusCommandOK, "PROT P")
 	}
 
+	return err
+}
+
+// authTLS upgrades the connection to use TLS
+func (c *ServerConn) authTLS() error {
+	_, _, err := c.cmd(StatusAuthOK, "AUTH TLS")
 	return err
 }
 
@@ -629,6 +657,27 @@ func (c *ServerConn) StorFrom(path string, r io.Reader, offset uint64) error {
 	return err
 }
 
+// Append issues a APPE FTP command to store a file to the remote FTP server.
+// If a file already exists with the given path, then the content of the
+// io.Reader is appended. Otherwise, a new file is created with that content.
+//
+// Hint: io.Pipe() can be used if an io.Writer is required.
+func (c *ServerConn) Append(path string, r io.Reader) error {
+	conn, err := c.cmdDataConnFrom(0, "APPE %s", path)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(conn, r)
+	conn.Close()
+	if err != nil {
+		return err
+	}
+
+	_, _, err = c.conn.ReadResponse(StatusClosingDataConnection)
+	return err
+}
+
 // Rename renames a file on the remote FTP server.
 func (c *ServerConn) Rename(from, to string) error {
 	_, _, err := c.cmd(StatusRequestFilePending, "RNFR %s", from)
@@ -699,6 +748,20 @@ func (c *ServerConn) MakeDir(path string) error {
 func (c *ServerConn) RemoveDir(path string) error {
 	_, _, err := c.cmd(StatusRequestedFileActionOK, "RMD %s", path)
 	return err
+}
+
+//Walk prepares the internal walk function so that the caller can begin traversing the directory
+func (c *ServerConn) Walk(root string) *Walker {
+	w := new(Walker)
+	w.serverConn = c
+
+	if !strings.HasSuffix(root, "/") {
+		root += "/"
+	}
+
+	w.root = root
+
+	return w
 }
 
 // NoOp issues a NOOP FTP command.
