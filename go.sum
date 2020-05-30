@@ -208,6 +208,8 @@ github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M
 github.com/jlaffaye/ftp v0.0.0-20190624084859-c1312a7102bf/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
 github.com/jlaffaye/ftp v0.0.0-20191218041957-e1b8fdd0dcc3 h1:QyB6CQGLB65Al72mAIbqrkGRk56JdGMHgBziM3F0FCw=
 github.com/jlaffaye/ftp v0.0.0-20191218041957-e1b8fdd0dcc3/go.mod h1:PwUeyujmhaGohgOf0kJKxPfk3HcRv8QD/wAUN44go4k=
+github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122 h1:dzYWuozdWNaY7mTQh5ZdmoJt2BUMavwhiux0AfGwg90=
+github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122/go.mod h1:PwUeyujmhaGohgOf0kJKxPfk3HcRv8QD/wAUN44go4k=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
