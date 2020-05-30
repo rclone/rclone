@@ -141,7 +141,7 @@ github.com/hanwen/go-fuse/v2/internal/utimens
 github.com/hanwen/go-fuse/v2/splice
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
-# github.com/jlaffaye/ftp v0.0.0-20191218041957-e1b8fdd0dcc3
+# github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122
 ## explicit
 github.com/jlaffaye/ftp
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
