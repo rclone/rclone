@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
+
+	"github.com/rclone/rclone/fs"
 )
 
 // Params is the input and output type for the Func
@@ -211,4 +214,17 @@ func (p Params) GetStructMissingOK(key string, out interface{}) error {
 		return nil
 	}
 	return p.GetStruct(key, out)
+}
+
+// GetDuration get the duration parameters from in
+func (p Params) GetDuration(key string) (time.Duration, error) {
+	s, err := p.GetString(key)
+	if err != nil {
+		return 0, err
+	}
+	duration, err := fs.ParseDuration(s)
+	if err != nil {
+		return 0, ErrParamInvalid{errors.Wrap(err, "parse duration")}
+	}
+	return duration, nil
 }

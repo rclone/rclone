@@ -782,11 +782,14 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	absPath := f.opt.Enc.FromStandardPath(path.Join(f.slashRoot, remote))
 	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
+		Settings: &sharing.SharedLinkSettings{
+			Expires: time.Now().Add(time.Duration(expire)),
+		},
 	}
 	var linkRes sharing.IsSharedLinkMetadata
 	err = f.pacer.Call(func() (bool, error) {

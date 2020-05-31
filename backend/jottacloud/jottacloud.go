@@ -151,11 +151,6 @@ func init() {
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name:     "unlink",
-			Help:     "Remove existing public link to file/folder with link command rather than creating.\nDefault is false, meaning link command will create or retrieve public link.",
-			Default:  false,
-			Advanced: true,
-		}, {
 			Name:     "upload_resume_limit",
 			Help:     "Files bigger than this can be resumed if the upload fail's.",
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
@@ -181,7 +176,6 @@ type Options struct {
 	MD5MemoryThreshold fs.SizeSuffix        `config:"md5_memory_limit"`
 	TrashedOnly        bool                 `config:"trashed_only"`
 	HardDelete         bool                 `config:"hard_delete"`
-	Unlink             bool                 `config:"unlink"`
 	UploadThreshold    fs.SizeSuffix        `config:"upload_resume_limit"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 }
@@ -1002,14 +996,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       f.filePath(remote),
 		Parameters: url.Values{},
 	}
 
-	if f.opt.Unlink {
+	if unlink {
 		opts.Parameters.Set("mode", "disableShare")
 	} else {
 		opts.Parameters.Set("mode", "enableShare")
@@ -1029,12 +1023,12 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 		}
 	}
 	if err != nil {
-		if f.opt.Unlink {
+		if unlink {
 			return "", errors.Wrap(err, "couldn't remove public link")
 		}
 		return "", errors.Wrap(err, "couldn't create public link")
 	}
-	if f.opt.Unlink {
+	if unlink {
 		if result.PublicSharePath != "" {
 			return "", errors.Errorf("couldn't remove public link - %q", result.PublicSharePath)
 		}

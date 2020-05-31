@@ -192,7 +192,7 @@ func TestRcDeletefile(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2)
 }
 
-// operations/list: List the given remote and path in JSON format
+// operations/list: List the given remote and path in JSON format.
 func TestRcList(t *testing.T) {
 	r, call := rcNewRun(t, "operations/list")
 	defer r.Finalise()
@@ -402,6 +402,8 @@ func TestRcPublicLink(t *testing.T) {
 	in := rc.Params{
 		"fs":     r.FremoteName,
 		"remote": "",
+		"expire": "5m",
+		"unlink": false,
 	}
 	_, err := call.Fn(context.Background(), in)
 	require.Error(t, err)

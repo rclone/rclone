@@ -1357,7 +1357,7 @@ func (f *Fs) getDownloadAuthorization(ctx context.Context, bucket, remote string
 }
 
 // PublicLink returns a link for downloading without account
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	bucket, bucketPath := f.split(remote)
 	var RootURL string
 	if f.opt.DownloadURL == "" {

@@ -603,7 +603,7 @@ func createLink(c *koofrclient.KoofrClient, mountID string, path string) (*link,
 }
 
 // PublicLink creates a public link to the remote path
-func (f *Fs) PublicLink(ctx context.Context, remote string) (string, error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	linkData, err := createLink(f.client, f.mountID, f.fullPath(remote))
 	if err != nil {
 		return "", translateErrorsDir(err)
