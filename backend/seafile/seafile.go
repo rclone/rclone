@@ -972,7 +972,7 @@ func (f *Fs) UserInfo(ctx context.Context) (map[string]string, error) {
 // ==================== Optional Interface fs.PublicLinker ====================
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(ctx context.Context, remote string) (string, error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	libraryName, filePath := f.splitPath(remote)
 	if libraryName == "" {
 		// We cannot share the whole seafile server, we need at least a library

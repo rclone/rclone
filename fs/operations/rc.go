@@ -271,6 +271,8 @@ func init() {
 
 - fs - a remote name string eg "drive:"
 - remote - a path within that remote eg "dir"
+- unlink - boolean - if set removes the link rather than adding it (optional)
+- expire - string - the expiry time of the link eg "1d" (optional)
 
 Returns
 
@@ -287,7 +289,12 @@ func rcPublicLink(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	if err != nil {
 		return nil, err
 	}
-	url, err := PublicLink(ctx, f, remote)
+	unlink, _ := in.GetBool("unlink")
+	expire, err := in.GetDuration("expire")
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
+	url, err := PublicLink(ctx, f, remote, fs.Duration(expire), unlink)
 	if err != nil {
 		return nil, err
 	}

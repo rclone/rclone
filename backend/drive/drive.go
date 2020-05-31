@@ -2488,7 +2488,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	id, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == nil {
 		fs.Debugf(f, "attempting to share directory '%s'", remote)
