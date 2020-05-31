@@ -1340,7 +1340,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 	return result.Link.WebURL, nil
 }
 
-// PublicLink returns a link for downloading without account.
+// DownloadLink returns a link for downloading without account.
 func (f *Fs) DownloadLink(ctx context.Context, remote string) (link string, err error) {
 	info, _, err := f.readMetaDataForPath(ctx, f.rootPath(remote))
 	if err != nil {
