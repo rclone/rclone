@@ -325,6 +325,9 @@ func showBackend(name string) {
 			}
 			fmt.Printf("#### --%s%s\n\n", opt.FlagName(backend.Prefix), shortOpt)
 			fmt.Printf("%s\n\n", opt.Help)
+			if opt.IsPassword {
+				fmt.Printf("**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).\n\n")
+			}
 			fmt.Printf("- Config:      %s\n", opt.Name)
 			fmt.Printf("- Env Var:     %s\n", opt.EnvVarName(backend.Prefix))
 			fmt.Printf("- Type:        %s\n", opt.Type())
