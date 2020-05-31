@@ -15,7 +15,7 @@ var driveDirectLink bool
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &driveDirectLink, "drive-direct-link", "", true, "Drive Direct Link")
+	flags.BoolVarP(cmdFlags, &driveDirectLink, "direct-link", "", true, "Direct Link")
 }
 
 var commandDefinition = &cobra.Command{
