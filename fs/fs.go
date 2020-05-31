@@ -577,6 +577,9 @@ type Features struct {
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
 	PublicLink func(ctx context.Context, remote string) (string, error)
 
+	// DownloadLink generates a download link to the remote path (usually readable by anyone)
+	DownloadLink func(ctx context.Context, remote string) (string, error)
+
 	// Put in to the remote path with the modTime given of the given size
 	//
 	// May create the object even if it returns an error - if so
@@ -742,6 +745,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(PublicLinker); ok {
 		ft.PublicLink = do.PublicLink
 	}
+	if do, ok := f.(DownloadLinker); ok {
+		ft.DownloadLink = do.DownloadLink
+	}
 	if do, ok := f.(PutUncheckeder); ok {
 		ft.PutUnchecked = do.PutUnchecked
 	}
@@ -819,6 +825,9 @@ func (ft *Features) Mask(f Fs) *Features {
 	}
 	if mask.PublicLink == nil {
 		ft.PublicLink = nil
+	}
+	if mask.DownloadLink == nil {
+		ft.DownloadLink = nil
 	}
 	if mask.PutUnchecked == nil {
 		ft.PutUnchecked = nil
@@ -989,6 +998,12 @@ type PutStreamer interface {
 type PublicLinker interface {
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
 	PublicLink(ctx context.Context, remote string) (string, error)
+}
+
+// DownloadLinker is an optional interface for Fs
+type DownloadLinker interface {
+	// PublicLink generates a public link to the remote path (usually readable by anyone)
+	DownloadLink(ctx context.Context, remote string) (string, error)
 }
 
 // MergeDirser is an option interface for Fs

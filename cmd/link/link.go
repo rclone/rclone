@@ -5,12 +5,17 @@ import (
 	"fmt"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
+var driveDirectLink bool
+
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &driveDirectLink, "drive-direct-link", "", true, "Drive Direct Link")
 }
 
 var commandDefinition = &cobra.Command{
@@ -31,7 +36,11 @@ without account.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc, remote := cmd.NewFsFile(args[0])
 		cmd.Run(false, false, command, func() error {
-			link, err := operations.PublicLink(context.Background(), fsrc, remote)
+			do := operations.PublicLink
+			if driveDirectLink {
+				do = operations.DownloadLink
+			}
+			link, err := do(context.Background(), fsrc, remote)
 			if err != nil {
 				return err
 			}

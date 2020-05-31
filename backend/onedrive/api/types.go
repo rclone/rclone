@@ -160,22 +160,23 @@ type PackageFacet struct {
 
 // Item represents metadata for an item in OneDrive
 type Item struct {
-	ID                   string               `json:"id"`                   // The unique identifier of the item within the Drive. Read-only.
-	Name                 string               `json:"name"`                 // The name of the item (filename and extension). Read-write.
-	ETag                 string               `json:"eTag"`                 // eTag for the entire item (metadata + content). Read-only.
-	CTag                 string               `json:"cTag"`                 // An eTag for the content of the item. This eTag is not changed if only the metadata is changed. Read-only.
-	CreatedBy            IdentitySet          `json:"createdBy"`            // Identity of the user, device, and application which created the item. Read-only.
-	LastModifiedBy       IdentitySet          `json:"lastModifiedBy"`       // Identity of the user, device, and application which last modified the item. Read-only.
-	CreatedDateTime      Timestamp            `json:"createdDateTime"`      // Date and time of item creation. Read-only.
-	LastModifiedDateTime Timestamp            `json:"lastModifiedDateTime"` // Date and time the item was last modified. Read-only.
-	Size                 int64                `json:"size"`                 // Size of the item in bytes. Read-only.
-	ParentReference      *ItemReference       `json:"parentReference"`      // Parent information, if the item has a parent. Read-write.
-	WebURL               string               `json:"webUrl"`               // URL that displays the resource in the browser. Read-only.
-	Description          string               `json:"description"`          // Provide a user-visible description of the item. Read-write.
-	Folder               *FolderFacet         `json:"folder"`               // Folder metadata, if the item is a folder. Read-only.
-	File                 *FileFacet           `json:"file"`                 // File metadata, if the item is a file. Read-only.
-	RemoteItem           *RemoteItemFacet     `json:"remoteItem"`           // Remote Item metadata, if the item is a remote shared item. Read-only.
-	FileSystemInfo       *FileSystemInfoFacet `json:"fileSystemInfo"`       // File system information on client. Read-write.
+	ID                   string               `json:"id"`                           // The unique identifier of the item within the Drive. Read-only.
+	Name                 string               `json:"name"`                         // The name of the item (filename and extension). Read-write.
+	ETag                 string               `json:"eTag"`                         // eTag for the entire item (metadata + content). Read-only.
+	CTag                 string               `json:"cTag"`                         // An eTag for the content of the item. This eTag is not changed if only the metadata is changed. Read-only.
+	CreatedBy            IdentitySet          `json:"createdBy"`                    // Identity of the user, device, and application which created the item. Read-only.
+	LastModifiedBy       IdentitySet          `json:"lastModifiedBy"`               // Identity of the user, device, and application which last modified the item. Read-only.
+	CreatedDateTime      Timestamp            `json:"createdDateTime"`              // Date and time of item creation. Read-only.
+	LastModifiedDateTime Timestamp            `json:"lastModifiedDateTime"`         // Date and time the item was last modified. Read-only.
+	Size                 int64                `json:"size"`                         // Size of the item in bytes. Read-only.
+	ParentReference      *ItemReference       `json:"parentReference"`              // Parent information, if the item has a parent. Read-write.
+	WebURL               string               `json:"webUrl"`                       // URL that displays the resource in the browser. Read-only.
+	Description          string               `json:"description"`                  // Provide a user-visible description of the item. Read-write.
+	Folder               *FolderFacet         `json:"folder"`                       // Folder metadata, if the item is a folder. Read-only.
+	File                 *FileFacet           `json:"file"`                         // File metadata, if the item is a file. Read-only.
+	RemoteItem           *RemoteItemFacet     `json:"remoteItem"`                   // Remote Item metadata, if the item is a remote shared item. Read-only.
+	FileSystemInfo       *FileSystemInfoFacet `json:"fileSystemInfo"`               // File system information on client. Read-write.
+	DownloadURL          string               `json:"@microsoft.graph.downloadUrl"` // Public Download URL. Read-only
 	//	Image                *ImageFacet          `json:"image"`                // Image metadata, if the item is an image. Read-only.
 	//	Photo                *PhotoFacet          `json:"photo"`                // Photo metadata, if the item is a photo. Read-only.
 	//	Audio                *AudioFacet          `json:"audio"`                // Audio metadata, if the item is an audio file. Read-only.

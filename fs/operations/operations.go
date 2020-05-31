@@ -1424,6 +1424,15 @@ func PublicLink(ctx context.Context, f fs.Fs, remote string) (string, error) {
 	return doPublicLink(ctx, remote)
 }
 
+// DownloadLink get a direct link
+func DownloadLink(ctx context.Context, f fs.Fs, remote string) (string, error) {
+	doDownloadLink := f.Features().DownloadLink
+	if doDownloadLink == nil {
+		return "", errors.Errorf("%v doesn't support download links", f)
+	}
+	return doDownloadLink(ctx, remote)
+}
+
 // Rmdirs removes any empty directories (or directories only
 // containing empty directories) under f, including f.
 func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {

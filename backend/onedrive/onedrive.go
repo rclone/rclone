@@ -60,7 +60,11 @@ var (
 			AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
 			TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
 		},
-		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"},
+		Scopes: []string{
+			"Files.Read", "Files.ReadWrite",
+			"Files.Read.All", "Files.ReadWrite.All",
+			"offline_access", "Sites.Read.All",
+		},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -321,7 +325,7 @@ configurations.`,
 			// the same rules as the Windows naming conventions.
 			//
 			// https://docs.microsoft.com/en-us/onedrive/developer/rest-api/concepts/addressing-driveitems?view=odsp-graph-online#path-encoding
-			Default: (encoder.Display |
+			Default: encoder.Display |
 				encoder.EncodeBackSlash |
 				encoder.EncodeHashPercent |
 				encoder.EncodeLeftSpace |
@@ -329,7 +333,7 @@ configurations.`,
 				encoder.EncodeRightPeriod |
 				encoder.EncodeRightSpace |
 				encoder.EncodeWin |
-				encoder.EncodeInvalidUtf8),
+				encoder.EncodeInvalidUtf8,
 		}},
 	})
 }
@@ -1334,6 +1338,27 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 		return "", err
 	}
 	return result.Link.WebURL, nil
+}
+
+// PublicLink returns a link for downloading without account.
+func (f *Fs) DownloadLink(ctx context.Context, remote string) (link string, err error) {
+	info, _, err := f.readMetaDataForPath(ctx, f.rootPath(remote))
+	if err != nil {
+		return "", err
+	}
+	opts := newOptsCall(info.GetID(), "GET", "")
+
+	var resp *http.Response
+	var result api.Item
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	return result.DownloadURL, nil
 }
 
 // ------------------------------------------------------------
