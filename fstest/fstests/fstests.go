@@ -1467,29 +1467,29 @@ func Run(t *testing.T, opt *Opt) {
 				}
 
 				// if object not found
-				link, err := doPublicLink(ctx, file1.Path+"_does_not_exist")
+				link, err := doPublicLink(ctx, file1.Path+"_does_not_exist", fs.Duration(0), false)
 				require.Error(t, err, "Expected to get error when file doesn't exist")
 				require.Equal(t, "", link, "Expected link to be empty on error")
 
 				// sharing file for the first time
-				link1, err := doPublicLink(ctx, file1.Path)
+				link1, err := doPublicLink(ctx, file1.Path, fs.Duration(0), false)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link1, "Link should not be empty")
 
-				link2, err := doPublicLink(ctx, file2.Path)
+				link2, err := doPublicLink(ctx, file2.Path, fs.Duration(0), false)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link2, "Link should not be empty")
 
 				require.NotEqual(t, link1, link2, "Links to different files should differ")
 
 				// sharing file for the 2nd time
-				link1, err = doPublicLink(ctx, file1.Path)
+				link1, err = doPublicLink(ctx, file1.Path, fs.Duration(0), false)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link1, "Link should not be empty")
 
 				// sharing directory for the first time
 				path := path.Dir(file2.Path)
-				link3, err := doPublicLink(ctx, path)
+				link3, err := doPublicLink(ctx, path, fs.Duration(0), false)
 				if err != nil && errors.Cause(err) == fs.ErrorCantShareDirectories {
 					t.Log("skipping directory tests as not supported on this backend")
 				} else {
@@ -1497,7 +1497,7 @@ func Run(t *testing.T, opt *Opt) {
 					require.NotEqual(t, "", link3, "Link should not be empty")
 
 					// sharing directory for the second time
-					link3, err = doPublicLink(ctx, path)
+					link3, err = doPublicLink(ctx, path, fs.Duration(0), false)
 					require.NoError(t, err)
 					require.NotEqual(t, "", link3, "Link should not be empty")
 
@@ -1511,7 +1511,7 @@ func Run(t *testing.T, opt *Opt) {
 					_, err = subRemote.Put(ctx, buf, obji)
 					require.NoError(t, err)
 
-					link4, err := subRemote.Features().PublicLink(ctx, "")
+					link4, err := subRemote.Features().PublicLink(ctx, "", fs.Duration(0), false)
 					require.NoError(t, err, "Sharing root in a sub-remote should work")
 					require.NotEqual(t, "", link4, "Link should not be empty")
 				}

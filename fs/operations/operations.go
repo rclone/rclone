@@ -1416,12 +1416,12 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func PublicLink(ctx context.Context, f fs.Fs, remote string) (string, error) {
+func PublicLink(ctx context.Context, f fs.Fs, remote string, expire fs.Duration, unlink bool) (string, error) {
 	doPublicLink := f.Features().PublicLink
 	if doPublicLink == nil {
 		return "", errors.Errorf("%v doesn't support public links", f)
 	}
-	return doPublicLink(ctx, remote)
+	return doPublicLink(ctx, remote, expire, unlink)
 }
 
 // Rmdirs removes any empty directories (or directories only

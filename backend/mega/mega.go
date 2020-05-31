@@ -836,7 +836,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	root, err := f.findRoot(false)
 	if err != nil {
 		return "", errors.Wrap(err, "PublicLink failed to find root node")

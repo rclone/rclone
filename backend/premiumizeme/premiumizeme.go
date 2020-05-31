@@ -822,7 +822,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(ctx context.Context, remote string) (string, error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	_, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == nil {
 		return "", fs.ErrorCantShareDirectories

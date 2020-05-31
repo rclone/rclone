@@ -74,11 +74,6 @@ func init() {
 			Name: config.ConfigClientSecret,
 			Help: "Yandex Client Secret\nLeave blank normally.",
 		}, {
-			Name:     "unlink",
-			Help:     "Remove existing public link to file/folder with link command rather than creating.\nDefault is false, meaning link command will create or retrieve public link.",
-			Default:  false,
-			Advanced: true,
-		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -92,9 +87,8 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	Token  string               `config:"token"`
-	Unlink bool                 `config:"unlink"`
-	Enc    encoder.MultiEncoder `config:"encoding"`
+	Token string               `config:"token"`
+	Enc   encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote yandex
@@ -801,9 +795,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	var path string
-	if f.opt.Unlink {
+	if unlink {
 		path = "/resources/unpublish"
 	} else {
 		path = "/resources/publish"
@@ -830,7 +824,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 		}
 	}
 	if err != nil {
-		if f.opt.Unlink {
+		if unlink {
 			return "", errors.Wrap(err, "couldn't remove public link")
 		}
 		return "", errors.Wrap(err, "couldn't create public link")
