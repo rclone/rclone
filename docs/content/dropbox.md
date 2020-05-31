@@ -198,6 +198,12 @@ of this document](https://www.dropbox.com/en/help/145).  Rclone will
 issue an error message `File name disallowed - not uploading` if it
 attempts to upload one of those file names, but the sync won't fail.
 
+Some errors may occur if you try to sync copyright-protected files
+because Dropbox has its own [copyright detector](https://techcrunch.com/2014/03/30/how-dropbox-knows-when-youre-sharing-copyrighted-stuff-without-actually-looking-at-your-stuff/) that
+prevents this sort of file being downloaded. This will return the error `ERROR :
+/path/to/your/file: Failed to copy: failed to open source object:
+path/restricted_content/.`
+
 If you have more than 10,000 files in a directory then `rclone purge
 dropbox:dir` will return the error `Failed to purge: There are too
 many files involved in this operation`.  As a work-around do an
