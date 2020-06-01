@@ -1,4 +1,5 @@
-name: Build and publish release image
+name: Docker release build
+
 on:
   release:
     types: [published]
@@ -9,7 +10,9 @@ jobs:
         name: Build image job
         steps:
             - name: Checkout master
-              uses: actions/checkout@master
+              uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
             - name: Get actual patch version
               id: actual_patch_version
               run: echo ::set-output name=ACTUAL_PATCH_VERSION::$(echo $GITHUB_REF | cut -d / -f 3 | sed 's/v//g')
@@ -20,11 +23,11 @@ jobs:
               id: actual_major_version
               run: echo ::set-output name=ACTUAL_MAJOR_VERSION::$(echo $GITHUB_REF | cut -d / -f 3 | sed 's/v//g' | cut -d "." -f 1)
             - name: Build and publish image
-              uses: ilteoood/docker_buildx@master
+              uses: ilteoood/docker_buildx@@439099796bfc03dd9cedeb72a0c7cb92be5cc92c
               with:
                 tag: latest,${{ steps.actual_patch_version.outputs.ACTUAL_PATCH_VERSION }},${{ steps.actual_minor_version.outputs.ACTUAL_MINOR_VERSION }},${{ steps.actual_major_version.outputs.ACTUAL_MAJOR_VERSION }}
                 imageName: rclone/rclone
-                platform: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x,linux/386,linux/arm/v7
+                platform: linux/amd64,linux/386,linux/arm64,linux/arm/v7
                 publish: true
                 dockerHubUser: ${{ secrets.DOCKER_HUB_USER }}
                 dockerHubPassword: ${{ secrets.DOCKER_HUB_PASSWORD }}
