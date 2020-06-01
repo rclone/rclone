@@ -3,7 +3,6 @@ FROM golang AS builder
 COPY . /go/src/github.com/rclone/rclone/
 WORKDIR /go/src/github.com/rclone/rclone/
 
-RUN make quicktest
 RUN \
   CGO_ENABLED=0 \
   make
