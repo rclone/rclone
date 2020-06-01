@@ -1,7 +1,6 @@
 ---
 title: "Install"
 description: "Rclone Installation"
-date: "2018-08-28"
 ---
 
 # Install #

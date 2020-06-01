@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone ls"
 description: "List the objects in the path with size and path."
 slug: rclone_ls

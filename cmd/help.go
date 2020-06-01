@@ -245,7 +245,6 @@ Use "rclone help backends" for a list of supported services.
 var docFlagsTemplate = `---
 title: "Global Flags"
 description: "Rclone Global Flags"
-date: "YYYY-MM-DD"
 ---
 
 # Global Flags

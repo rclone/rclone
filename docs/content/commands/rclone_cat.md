@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone cat"
 description: "Concatenates any files and sends them to stdout."
 slug: rclone_cat

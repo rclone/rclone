@@ -1,7 +1,6 @@
 ---
 title: "WebDAV"
 description: "Rclone docs for WebDAV"
-date: "2017-10-01"
 ---
 
 {{< icon "fa fa-globe" >}} WebDAV

@@ -1,7 +1,6 @@
 ---
 title: "Tardigrade"
 description: "Rclone docs for Tardigrade"
-date: "2020-04-24"
 ---
 
 {{< icon "fas fa-dove" >}} Tardigrade

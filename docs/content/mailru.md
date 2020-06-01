@@ -1,7 +1,6 @@
 ---
 title: "Mailru"
 description: "Mail.ru Cloud"
-date: "2019-08-04"
 ---
 
 {{< icon "fas fa-at" >}} Mail.ru Cloud

@@ -1,7 +1,6 @@
 ---
 title: "Google drive"
 description: "Rclone docs for Google drive"
-date: "2016-04-12"
 ---
 
 {{< icon "fab fa-google" >}} Google Drive

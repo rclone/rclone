@@ -1,7 +1,6 @@
 ---
 title: "Microsoft Azure Blob Storage"
 description: "Rclone docs for Microsoft Azure Blob Storage"
-date: "2017-07-30"
 ---
 
 {{< icon "fab fa-windows" >}} Microsoft Azure Blob Storage

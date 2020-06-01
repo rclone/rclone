@@ -1,7 +1,6 @@
 ---
 title: "Local Filesystem"
 description: "Rclone docs for the local filesystem"
-date: "2014-04-26"
 ---
 
 {{< icon "fas fa-hdd" >}} Local Filesystem

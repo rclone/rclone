@@ -1,7 +1,6 @@
 ---
 title: "pCloud"
 description: "Rclone docs for pCloud"
-date: "2017-10-01"
 ---
 
 {{< icon "fa fa-cloud" >}} pCloud

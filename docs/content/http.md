@@ -1,7 +1,6 @@
 ---
 title: "HTTP Remote"
 description: "Read only remote for HTTP servers"
-date: "2017-06-19"
 ---
 
 {{< icon "fa fa-globe" >}} HTTP

@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone tree"
 description: "List the contents of the remote in a tree like fashion."
 slug: rclone_tree

@@ -1,7 +1,6 @@
 ---
 title: "Crypt"
 description: "Encryption overlay remote"
-date: "2016-07-28"
 ---
 
 {{< icon "fa fa-lock" >}}Crypt

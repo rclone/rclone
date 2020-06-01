@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone purge"
 description: "Remove the path and all of its contents."
 slug: rclone_purge

@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone serve http"
 description: "Serve the remote over HTTP."
 slug: rclone_serve_http

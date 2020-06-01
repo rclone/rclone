@@ -1,7 +1,6 @@
 ---
 title: "GUI"
 description: "Web based Graphical User Interface"
-date: "2019-08-25"
 ---
 
 # GUI (Experimental)

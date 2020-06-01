@@ -1,7 +1,6 @@
 ---
 title: "FAQ"
 description: "Rclone Frequently Asked Questions"
-date: "2015-08-27"
 ---
 
 Frequently Asked Questions

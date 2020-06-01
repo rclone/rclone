@@ -1,7 +1,6 @@
 ---
 title: "1Fichier"
 description: "Rclone docs for 1Fichier"
-date: "2015-10-14"
 ---
 
 {{< icon "fa fa-archive" >}} 1Fichier

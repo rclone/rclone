@@ -1,7 +1,6 @@
 ---
 title: "Amazon Drive"
 description: "Rclone docs for Amazon Drive"
-date: "2017-06-10"
 ---
 
 {{< icon "fab fa-amazon" >}} Amazon Drive

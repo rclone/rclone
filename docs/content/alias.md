@@ -1,7 +1,6 @@
 ---
 title: "Alias"
 description: "Remote Aliases"
-date: "2018-01-30"
 ---
 
 {{< icon "fa fa-link" >}} Alias

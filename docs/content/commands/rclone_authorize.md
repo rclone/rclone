@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone authorize"
 description: "Remote authorization."
 slug: rclone_authorize

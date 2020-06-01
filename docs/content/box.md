@@ -1,7 +1,6 @@
 ---
 title: "Box"
 description: "Rclone docs for Box"
-date: "2015-10-14"
 ---
 
 {{< icon "fa fa-archive" >}} Box

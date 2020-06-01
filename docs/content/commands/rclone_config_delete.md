@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone config delete"
 description: "Delete an existing remote `name`."
 slug: rclone_config_delete
