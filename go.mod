@@ -70,4 +70,4 @@ require (
 	storj.io/uplink v1.0.6
 )
 
-go 1.13
+go 1.14
