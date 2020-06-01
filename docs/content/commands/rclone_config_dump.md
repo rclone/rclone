@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone config dump"
 description: "Dump the config file as JSON."
 slug: rclone_config_dump

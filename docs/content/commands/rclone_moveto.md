@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone moveto"
 description: "Move file or directory from source to dest."
 slug: rclone_moveto

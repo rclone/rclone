@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone genautocomplete zsh"
 description: "Output zsh completion script for rclone."
 slug: rclone_genautocomplete_zsh

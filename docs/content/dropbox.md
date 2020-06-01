@@ -1,7 +1,6 @@
 ---
 title: "Dropbox"
 description: "Rclone docs for Dropbox"
-date: "2020-03-18"
 ---
 
 {{< icon "fab fa-dropbox" >}} Dropbox

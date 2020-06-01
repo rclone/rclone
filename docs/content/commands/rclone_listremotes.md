@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone listremotes"
 description: "List all the remotes in the config file."
 slug: rclone_listremotes

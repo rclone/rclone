@@ -1,7 +1,6 @@
 ---
 title: "OpenDrive"
 description: "Rclone docs for OpenDrive"
-date: "2017-08-07"
 ---
 
 {{< icon "fa fa-file" >}} OpenDrive

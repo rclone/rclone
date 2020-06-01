@@ -1,7 +1,6 @@
 ---
 title: "premiumize.me"
 description: "Rclone docs for premiumize.me"
-date: "2019-08-10"
 ---
 
 {{< icon "fa fa-user" >}} premiumize.me

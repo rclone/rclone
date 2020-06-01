@@ -2,7 +2,6 @@
 title: "Rclone downloads"
 description: "Download rclone binaries for your OS."
 type: page
-date: "2017-07-22"
 ---
 
 Rclone Download {{< version >}}

@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone lsf"
 description: "List directories and objects in remote:path formatted for parsing"
 slug: rclone_lsf

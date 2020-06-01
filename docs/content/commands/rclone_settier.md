@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone settier"
 description: "Changes storage class/tier of objects in remote."
 slug: rclone_settier

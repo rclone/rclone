@@ -1,7 +1,6 @@
 ---
 title: "Remote Setup"
 description: "Configuring rclone up on a remote / headless machine"
-date: "2020-05-04"
 ---
 
 # Configuring rclone on a remote / headless machine #

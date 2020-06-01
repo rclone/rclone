@@ -1,7 +1,6 @@
 ---
 title: "Licence"
 description: "Rclone Licence"
-date: "2019-08-24"
 ---
 
 License

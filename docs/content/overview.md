@@ -2,7 +2,6 @@
 title: "Overview of cloud storage systems"
 description: "Overview of cloud storage systems"
 type: page
-date: "2019-02-25"
 ---
 
 # Overview of cloud storage systems #

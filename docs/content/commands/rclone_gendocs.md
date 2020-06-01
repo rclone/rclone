@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone gendocs"
 description: "Output markdown docs for rclone to the directory supplied."
 slug: rclone_gendocs

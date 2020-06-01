@@ -1,7 +1,6 @@
 ---
 title: "Contact"
 description: "Contact the rclone project"
-date: "2014-04-26"
 ---
 
 # Contact the rclone project #

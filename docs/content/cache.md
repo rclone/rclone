@@ -1,7 +1,6 @@
 ---
 title: "Cache"
 description: "Rclone docs for cache remote"
-date: "2017-09-03"
 ---
 
 {{< icon "fa fa-archive" >}} Cache (BETA)

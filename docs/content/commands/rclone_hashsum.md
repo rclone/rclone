@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone hashsum"
 description: "Produces a hashsum file for all the objects in the path."
 slug: rclone_hashsum

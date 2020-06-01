@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone config providers"
 description: "List in JSON format all the providers and options."
 slug: rclone_config_providers

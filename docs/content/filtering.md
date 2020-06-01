@@ -1,7 +1,6 @@
 ---
 title: "Filtering"
 description: "Filtering, includes and excludes"
-date: "2016-02-09"
 ---
 
 # Filtering, includes and excludes #

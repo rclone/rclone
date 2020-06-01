@@ -1,7 +1,6 @@
 ---
 title: "Authors"
 description: "Rclone Authors and Contributors"
-date: "2016-11-02"
 ---
 
 Authors
