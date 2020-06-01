@@ -378,3 +378,4 @@ put them back in again.` >}}
   * Brandon McNama <bmcnama@pagerduty.com>
   * Daniel Slyman <github@skylayer.eu>
   * Alex Guerrero <guerrero@users.noreply.github.com>
+  * Matteo Pietro Dazzi <matteopietro.dazzi@gft.com>
