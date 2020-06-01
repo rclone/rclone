@@ -8,8 +8,8 @@ There are several related list commands
 
   * ` + "`ls`" + ` to list size and path of objects only
   * ` + "`lsl`" + ` to list modification time, size and path of objects only
-  * ` + "`lsd`" + ` to list directories only
-  * ` + "`lsf`" + ` to list objects and directories in easy to parse format
+  * ` + "`lsd`" + ` to list directories only, sorted ascending
+  * ` + "`lsf`" + ` to list objects and directories in easy to parse format, sorted ascending
   * ` + "`lsjson`" + ` to list objects and directories in JSON format
 
 ` + "`ls`,`lsl`,`lsd`" + ` are designed to be human readable.
