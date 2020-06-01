@@ -16,6 +16,7 @@
     "~$",
     "^\\."
   ],
+  "enableGitInfo": true,
   "markup": {
     "goldmark": {
       "extensions": {
