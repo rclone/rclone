@@ -10,12 +10,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var driveDirectLink bool
+var directLink bool
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &driveDirectLink, "direct-link", "", true, "Direct Link")
+	flags.BoolVarP(cmdFlags, &directLink, "direct-link", "", true, "Direct Link")
 }
 
 var commandDefinition = &cobra.Command{
@@ -37,7 +37,7 @@ without account.
 		fsrc, remote := cmd.NewFsFile(args[0])
 		cmd.Run(false, false, command, func() error {
 			do := operations.PublicLink
-			if driveDirectLink {
+			if directLink {
 				do = operations.DownloadLink
 			}
 			link, err := do(context.Background(), fsrc, remote)
