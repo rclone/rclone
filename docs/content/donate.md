@@ -2,7 +2,6 @@
 title: "Donations"
 description: "Donations to the rclone project."
 type: page
-date: "2020-05-15"
 ---
 
 # {{< icon "fa fa-heart heart" >}} Donations to the rclone project

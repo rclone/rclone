@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone lsl"
 description: "List the objects in path with modification time, size and path."
 slug: rclone_lsl

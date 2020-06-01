@@ -1,7 +1,6 @@
 ---
 title: "Hubic"
 description: "Rclone docs for Hubic"
-date: "2016-05-27"
 ---
 
 {{< icon "fa fa-space-shuttle" >}} Hubic

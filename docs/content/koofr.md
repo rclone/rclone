@@ -1,7 +1,6 @@
 ---
 title: "Koofr"
 description: "Rclone docs for Koofr"
-date: "2019-02-25"
 ---
 
 {{< icon "fa fa-suitcase" >}} Koofr

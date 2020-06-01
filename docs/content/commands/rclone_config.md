@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone config"
 description: "Enter an interactive configuration session."
 slug: rclone_config

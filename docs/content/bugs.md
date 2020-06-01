@@ -1,7 +1,6 @@
 ---
 title: "Bugs"
 description: "Rclone Bugs and Limitations"
-date: "2019-08-04"
 ---
 
 # Bugs and Limitations

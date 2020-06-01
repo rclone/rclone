@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone rc"
 description: "Run a command against a running rclone."
 slug: rclone_rc

@@ -1,7 +1,6 @@
 ---
 title: "Swift"
 description: "Swift"
-date: "2014-04-26"
 ---
 
 {{< icon "fa fa-space-shuttle" >}}Swift

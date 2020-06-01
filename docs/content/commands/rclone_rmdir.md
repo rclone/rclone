@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone rmdir"
 description: "Remove the path if empty."
 slug: rclone_rmdir

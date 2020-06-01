@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone genautocomplete"
 description: "Output completion script for a given shell."
 slug: rclone_genautocomplete

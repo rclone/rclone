@@ -1,7 +1,6 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2020-05-27"
 ---
 
 # Changelog

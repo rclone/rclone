@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone check"
 description: "Checks the files in the source and destination match."
 slug: rclone_check

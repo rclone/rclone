@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone rcd"
 description: "Run rclone listening to remote control commands only."
 slug: rclone_rcd

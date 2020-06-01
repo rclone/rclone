@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone about"
 description: "Get quota information from the remote."
 slug: rclone_about

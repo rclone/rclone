@@ -1,7 +1,6 @@
 ---
 title: "Yandex"
 description: "Yandex Disk"
-date: "2015-12-30"
 ---
 
 {{< icon "fa fa-space-shuttle" >}}Yandex Disk

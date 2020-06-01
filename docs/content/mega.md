@@ -1,7 +1,6 @@
 ---
 title: "Mega"
 description: "Rclone docs for Mega"
-date: "2018-04-09"
 ---
 
 {{< icon "fa fa-archive" >}} Mega

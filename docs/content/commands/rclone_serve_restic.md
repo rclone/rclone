@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone serve restic"
 description: "Serve the remote for restic's REST API."
 slug: rclone_serve_restic

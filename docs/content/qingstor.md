@@ -1,7 +1,6 @@
 ---
 title: "QingStor"
 description: "Rclone docs for QingStor Object Storage"
-date: "2017-06-26"
 ---
 
 {{< icon "fas fa-hdd" >}} QingStor

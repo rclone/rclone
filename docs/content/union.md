@@ -1,7 +1,6 @@
 ---
 title: "Union"
 description: "Remote Unification"
-date: "2020-01-25"
 ---
 
 {{< icon "fa fa-link" >}} Union

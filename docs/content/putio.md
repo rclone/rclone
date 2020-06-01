@@ -1,7 +1,6 @@
 ---
 title: "put.io"
 description: "Rclone docs for put.io"
-date: "2019-08-08"
 ---
 
 {{< icon "fas fa-parking" >}} put.io

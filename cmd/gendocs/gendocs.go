@@ -33,7 +33,6 @@ type frontmatter struct {
 }
 
 var frontmatterTemplate = template.Must(template.New("frontmatter").Parse(`---
-date: {{ .Date }}
 title: "{{ .Title }}"
 description: "{{ .Description }}"
 slug: {{ .Slug }}
@@ -70,8 +69,7 @@ rclone.org website.`,
 		if err != nil {
 			return err
 		}
-		flagsHelp := strings.Replace(buf.String(), "YYYY-MM-DD", now, -1)
-		err = ioutil.WriteFile(filepath.Join(root, "flags.md"), []byte(flagsHelp), 0777)
+		err = ioutil.WriteFile(filepath.Join(root, "flags.md"), buf.Bytes(), 0777)
 		if err != nil {
 			return err
 		}

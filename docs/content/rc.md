@@ -1,7 +1,6 @@
 ---
 title: "Remote Control / API"
 description: "Remote controlling rclone with its API"
-date: "2020-05-17"
 ---
 
 # Remote controlling rclone with its API

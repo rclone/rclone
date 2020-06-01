@@ -1,7 +1,6 @@
 ---
 title: "Google Photos"
 description: "Rclone docs for Google Photos"
-date: "2019-06-25"
 ---
 
 {{< icon "fa fa-images" >}} Google Photos

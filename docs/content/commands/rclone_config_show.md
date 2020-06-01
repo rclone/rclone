@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone config show"
 description: "Print (decrypted) config file, or the config for a single remote."
 slug: rclone_config_show

@@ -1,7 +1,6 @@
 ---
 title: "Documentation"
 description: "Rclone Usage"
-date: "2019-02-25"
 ---
 
 Configure

@@ -1,5 +1,4 @@
 ---
-date: 2020-05-27T16:09:49+01:00
 title: "rclone sha1sum"
 description: "Produces an sha1sum file for all the objects in the path."
 slug: rclone_sha1sum

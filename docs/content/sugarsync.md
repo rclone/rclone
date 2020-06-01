@@ -1,7 +1,6 @@
 ---
 title: "SugarSync"
 description: "Rclone docs for SugarSync"
-date: "2020-01-17"
 ---
 
 {{< icon "fas fa-dove" >}} SugarSync
