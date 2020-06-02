@@ -4,6 +4,7 @@ package vfscache
 import (
 	"context"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -78,9 +79,11 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options) (*Cache, er
 }
 
 // clean returns the cleaned version of name for use in the index map
+//
+// name should be a remote path not an osPath
 func clean(name string) string {
 	name = strings.Trim(name, "/")
-	name = filepath.Clean(name)
+	name = path.Clean(name)
 	if name == "." || name == "/" {
 		name = ""
 	}
@@ -94,9 +97,11 @@ func (c *Cache) ToOSPath(name string) string {
 
 // Mkdir makes the directory for name in the cache and returns an os
 // path for the file
+//
+// name should be a remote path not an osPath
 func (c *Cache) Mkdir(name string) (string, error) {
 	parent := vfscommon.FindParent(name)
-	leaf := filepath.Base(name)
+	leaf := path.Base(name)
 	parentPath := c.ToOSPath(parent)
 	err := os.MkdirAll(parentPath, 0700)
 	if err != nil {
@@ -244,7 +249,7 @@ func (c *Cache) Rename(name string, newName string) (err error) {
 		if !os.IsNotExist(err) {
 			return errors.Wrapf(err, "Failed to stat destination: %s", osNewPath)
 		}
-		parent := vfscommon.FindParent(osNewPath)
+		parent := vfscommon.OsFindParent(osNewPath)
 		err = os.MkdirAll(parent, 0700)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to create parent dir: %s", parent)
