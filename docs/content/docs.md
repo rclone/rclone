@@ -1770,7 +1770,8 @@ you must create the `..._TYPE` variable as above.
 
 ### Other environment variables ###
 
-  * `RCLONE_CONFIG_PASS` set to contain your config file password (see [Configuration Encryption](#configuration-encryption) section)
-  * `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` (or the lowercase versions thereof).
-    * `HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
-    * The environment values may be either a complete URL or a "host[:port]" for, in which case the "http" scheme is assumed.
+- `RCLONE_CONFIG_PASS` set to contain your config file password (see [Configuration Encryption](#configuration-encryption) section)
+- `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` (or the lowercase versions thereof).
+    - `HTTPS_PROXY` takes precedence over `HTTP_PROXY` for https requests.
+    - The environment values may be either a complete URL or a "host[:port]" for, in which case the "http" scheme is assumed.
+- `RCLONE_CONFIG_DIR` - rclone **sets** this variable for use in config files and sub processes to point to the directory holding the config file.
