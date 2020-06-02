@@ -213,6 +213,9 @@ func makeConfigPath() string {
 
 // LoadConfig loads the config file
 func LoadConfig() {
+	// Set RCLONE_CONFIG_DIR for backend config and subprocesses
+	_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(ConfigPath))
+
 	// Load configuration file.
 	var err error
 	configFile, err = loadConfigFile()
