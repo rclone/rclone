@@ -40,6 +40,8 @@ var (
 )
 
 // GOOS/GOARCH pairs we build for
+//
+// If the GOARCH contains a - it is a synthetic arch with more parameters
 var osarches = []string{
 	"windows/386",
 	"windows/amd64",
@@ -48,15 +50,18 @@ var osarches = []string{
 	"linux/386",
 	"linux/amd64",
 	"linux/arm",
+	"linux/arm-v7",
 	"linux/arm64",
 	"linux/mips",
 	"linux/mipsle",
 	"freebsd/386",
 	"freebsd/amd64",
 	"freebsd/arm",
+	"freebsd/arm-v7",
 	"netbsd/386",
 	"netbsd/amd64",
 	"netbsd/arm",
+	"netbsd/arm-v7",
 	"openbsd/386",
 	"openbsd/amd64",
 	"plan9/386",
@@ -69,6 +74,7 @@ var archFlags = map[string][]string{
 	"386":    {"GO386=387"},
 	"mips":   {"GOMIPS=softfloat"},
 	"mipsle": {"GOMIPS=softfloat"},
+	"arm-v7": {"GOARM=7"},
 }
 
 // runEnv - run a shell command with env
@@ -263,6 +269,15 @@ func cleanupResourceSyso(sysoFilePath string) {
 	}
 }
 
+// Trip a version suffix off the arch if present
+func stripVersion(goarch string) string {
+	i := strings.Index(goarch, "-")
+	if i < 0 {
+		return goarch
+	}
+	return goarch[:i]
+}
+
 // build the binary in dir returning success or failure
 func compileArch(version, goos, goarch, dir string) bool {
 	log.Printf("Compiling %s/%s", goos, goarch)
@@ -290,7 +305,7 @@ func compileArch(version, goos, goarch, dir string) bool {
 	}
 	env := []string{
 		"GOOS=" + goos,
-		"GOARCH=" + goarch,
+		"GOARCH=" + stripVersion(goarch),
 	}
 	if !*cgo {
 		env = append(env, "CGO_ENABLED=0")
