@@ -18,7 +18,6 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"sort"
 	"strconv"
@@ -41,6 +40,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -229,7 +229,7 @@ in with the ID of the root folder.
 `,
 		}, {
 			Name: "service_account_file",
-			Help: "Service Account Credentials JSON file path \nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Help: "Service Account Credentials JSON file path \nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
 		}, {
 			Name:     "service_account_credentials",
 			Help:     "Service Account Credentials JSON blob\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
@@ -1005,7 +1005,7 @@ func createOAuthClient(opt *Options, name string, m configmap.Mapper) (*http.Cli
 
 	// try loading service account credentials from env variable, then from a file
 	if len(opt.ServiceAccountCredentials) == 0 && opt.ServiceAccountFile != "" {
-		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(opt.ServiceAccountFile))
+		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServiceAccountFile))
 		if err != nil {
 			return nil, errors.Wrap(err, "error opening service account credentials file")
 		}

@@ -7,6 +7,9 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
+// ShellExpandHelp describes what ShellExpand does for inclusion into help
+const ShellExpandHelp = "\n\nLeading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.\n"
+
 // ShellExpand replaces a leading "~" with the home directory" and
 // expands all environment variables afterwards.
 func ShellExpand(s string) string {
