@@ -74,7 +74,7 @@ func init() {
 			Help: "Raw PEM-encoded private key, If specified, will override key_file parameter.",
 		}, {
 			Name: "key_file",
-			Help: "Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.",
+			Help: "Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent." + env.ShellExpandHelp,
 		}, {
 			Name: "key_file_pass",
 			Help: `The passphrase to decrypt the PEM-encoded private key file.

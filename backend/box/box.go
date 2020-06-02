@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/jwtutil"
 
 	"github.com/youmark/pkcs8"
@@ -112,7 +113,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name: "box_config_file",
-			Help: "Box App config.json location\nLeave blank normally.",
+			Help: "Box App config.json location\nLeave blank normally." + env.ShellExpandHelp,
 		}, {
 			Name:    "box_sub_type",
 			Default: "user",
@@ -153,6 +154,7 @@ func init() {
 }
 
 func refreshJWTToken(jsonFile string, boxSubType string, name string, m configmap.Mapper) error {
+	jsonFile = env.ShellExpand(jsonFile)
 	boxConfig, err := getBoxConfig(jsonFile)
 	if err != nil {
 		log.Fatalf("Failed to configure token: %v", err)
