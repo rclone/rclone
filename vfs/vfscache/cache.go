@@ -309,14 +309,16 @@ func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error
 }
 
 // Remove should be called if name is deleted
-func (c *Cache) Remove(name string) {
+//
+// This returns true if the file was in the transfer queue so may not
+// have completedly uploaded yet.
+func (c *Cache) Remove(name string) (wasWriting bool) {
 	name = clean(name)
 	c.mu.Lock()
 	item, _ := c._get(name)
 	delete(c.item, name)
 	c.mu.Unlock()
-	item.remove("file deleted")
-
+	return item.remove("file deleted")
 }
 
 // SetModTime should be called to set the modification time of the cache file

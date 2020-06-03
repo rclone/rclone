@@ -565,6 +565,11 @@ func TestRWFileHandleSizeCreateNew(t *testing.T) {
 func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 	fileName := "open-test-file"
 
+	// Make sure we delete the file on failure too
+	defer func() {
+		_ = vfs.Remove(fileName)
+	}()
+
 	// first try with file not existing
 	_, err := vfs.Stat(fileName)
 	require.True(t, os.IsNotExist(err))

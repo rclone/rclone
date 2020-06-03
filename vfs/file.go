@@ -527,7 +527,8 @@ func (f *File) Sync() error {
 }
 
 // Remove the file
-func (f *File) Remove() error {
+func (f *File) Remove() (err error) {
+	defer log.Trace(f.Path(), "")("err=%v", &err)
 	f.mu.RLock()
 	d := f.d
 	f.mu.RUnlock()
@@ -535,28 +536,33 @@ func (f *File) Remove() error {
 	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
-	f.muRW.Lock() // muRW must be locked before mu to avoid
-	f.mu.Lock()   // deadlock in RWFileHandle.openPending and .close
-	if f.o != nil {
-		err := f.o.Remove(context.TODO())
-		if err != nil {
-			fs.Debugf(f._path(), "File.Remove file error: %v", err)
-			f.mu.Unlock()
-			f.muRW.Unlock()
-			return err
-		}
+
+	// Remove the object from the cache
+	wasWriting := false
+	if d.vfs.cache != nil {
+		wasWriting = d.vfs.cache.Remove(f.Path())
 	}
-	f.mu.Unlock()
-	f.muRW.Unlock()
 
 	// Remove the item from the directory listing
 	// called with File.mu released
 	d.delObject(f.Name())
-	// Remove the object from the cache
-	if d.vfs.cache != nil {
-		d.vfs.cache.Remove(f.Path())
+
+	f.muRW.Lock() // muRW must be locked before mu to avoid
+	f.mu.Lock()   // deadlock in RWFileHandle.openPending and .close
+	if f.o != nil {
+		err = f.o.Remove(context.TODO())
 	}
-	return nil
+	f.mu.Unlock()
+	f.muRW.Unlock()
+	if err != nil {
+		if wasWriting {
+			// Ignore error deleting file if was writing it as it may not be uploaded yet
+			err = nil
+		} else {
+			fs.Debugf(f._path(), "File.Remove file error: %v", err)
+		}
+	}
+	return err
 }
 
 // RemoveAll the file - same as remove for files

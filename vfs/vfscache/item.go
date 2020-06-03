@@ -471,18 +471,22 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 
 	// Transfer the temp file to the remote
 	cacheObj, err := item.c.fcache.NewObject(ctx, item.name)
-	if err != nil {
+	if err != nil && err != fs.ErrorObjectNotFound {
 		return errors.Wrap(err, "vfs cache: failed to find cache file")
 	}
 
-	item.mu.Unlock()
-	o, err := operations.Copy(ctx, item.c.fremote, item.o, item.name, cacheObj)
-	item.mu.Lock()
-	if err != nil {
-		return errors.Wrap(err, "vfs cache: failed to transfer file from cache to remote")
+	// Object has disappeared if cacheObj == nil
+	if cacheObj != nil {
+		item.mu.Unlock()
+		o, err := operations.Copy(ctx, item.c.fremote, item.o, item.name, cacheObj)
+		item.mu.Lock()
+		if err != nil {
+			return errors.Wrap(err, "vfs cache: failed to transfer file from cache to remote")
+		}
+		item.o = o
+		item._updateFingerprint()
 	}
-	item.o = o
-	item._updateFingerprint()
+
 	item.info.Dirty = false
 	err = item._save()
 	if err != nil {
@@ -529,10 +533,12 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 		}
 		// save the metadata once more since it may be dirty
 		// after the downloader
+		item.mu.Lock()
 		saveErr := item._save()
 		if saveErr != nil && err == nil {
 			err = errors.Wrap(saveErr, "close failed to save item")
 		}
+		item.mu.Unlock()
 	}()
 	item.mu.Lock()
 	defer item.mu.Unlock()
@@ -582,7 +588,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 			err = item._store(context.Background(), storeFn)
 		} else {
 			// asynchronous writeback
-			item.c.writeback.add(item, storeFn)
+			item.c.writeback.add(item, item.name, storeFn)
 		}
 	}
 
@@ -666,10 +672,10 @@ func (item *Item) _removeFile(reason string) {
 	err := os.Remove(osPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			fs.Errorf(item.name, "Failed to remove cache file as %s: %v", reason, err)
+			fs.Errorf(item.name, "vfs cache: failed to remove cache file as %s: %v", reason, err)
 		}
 	} else {
-		fs.Infof(item.name, "Removed cache file as %s", reason)
+		fs.Infof(item.name, "vfs cache: removed cache file as %s", reason)
 	}
 }
 
@@ -681,28 +687,37 @@ func (item *Item) _removeMeta(reason string) {
 	err := os.Remove(osPathMeta)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			fs.Errorf(item.name, "Failed to remove metadata from cache as %s: %v", reason, err)
+			fs.Errorf(item.name, "vfs cache: failed to remove metadata from cache as %s: %v", reason, err)
 		}
 	} else {
-		fs.Infof(item.name, "Removed metadata from cache as %s", reason)
+		fs.Infof(item.name, "vfs cache: removed metadata from cache as %s", reason)
 	}
 }
 
 // remove the cached file and empty the metadata
 //
+// This returns true if the file was in the transfer queue so may not
+// have completedly uploaded yet.
+//
 // call with lock held
-func (item *Item) _remove(reason string) {
+func (item *Item) _remove(reason string) (wasWriting bool) {
+	// Cancel writeback, if any
+	wasWriting = item.c.writeback.cancel(item)
 	item.info.clean()
 	item.metaDirty = false
 	item._removeFile(reason)
 	item._removeMeta(reason)
+	return wasWriting
 }
 
 // remove the cached file and empty the metadata
-func (item *Item) remove(reason string) {
+//
+// This returns true if the file was in the transfer queue so may not
+// have completedly uploaded yet.
+func (item *Item) remove(reason string) (wasWriting bool) {
 	item.mu.Lock()
-	item._remove(reason)
-	item.mu.Unlock()
+	defer item.mu.Unlock()
+	return item._remove(reason)
 }
 
 // create a downloader for the item
