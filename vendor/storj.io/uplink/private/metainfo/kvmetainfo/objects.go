@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"storj.io/common/encryption"
-	"storj.io/common/memory"
 	"storj.io/common/paths"
 	"storj.io/common/pb"
 	"storj.io/common/storj"
@@ -17,23 +16,6 @@ import (
 	"storj.io/uplink/private/storage/segments"
 	"storj.io/uplink/private/storage/streams"
 )
-
-// DefaultRS default values for RedundancyScheme.
-var DefaultRS = storj.RedundancyScheme{
-	Algorithm:      storj.ReedSolomon,
-	RequiredShares: 20,
-	RepairShares:   30,
-	OptimalShares:  40,
-	TotalShares:    50,
-	ShareSize:      1 * memory.KiB.Int32(),
-}
-
-// DefaultES default values for EncryptionParameters.
-// BlockSize should default to the size of a stripe.
-var DefaultES = storj.EncryptionParameters{
-	CipherSuite: storj.EncAESGCM,
-	BlockSize:   DefaultRS.StripeSize(),
-}
 
 var contentTypeKey = "content-type"
 
@@ -91,23 +73,6 @@ func (db *DB) CreateObject(ctx context.Context, bucket storj.Bucket, path storj.
 
 	// TODO: autodetect content type from the path extension
 	// if info.ContentType == "" {}
-
-	if info.EncryptionParameters.IsZero() {
-		info.EncryptionParameters = storj.EncryptionParameters{
-			CipherSuite: DefaultES.CipherSuite,
-			BlockSize:   DefaultES.BlockSize,
-		}
-	}
-
-	if info.RedundancyScheme.IsZero() {
-		info.RedundancyScheme = DefaultRS
-
-		// If the provided EncryptionParameters.BlockSize isn't a multiple of the
-		// DefaultRS stripeSize, then overwrite the EncryptionParameters with the DefaultES values
-		if err := validateBlockSize(DefaultRS, info.EncryptionParameters.BlockSize); err != nil {
-			info.EncryptionParameters.BlockSize = DefaultES.BlockSize
-		}
-	}
 
 	return &mutableObject{
 		db:   db,
@@ -167,135 +132,8 @@ func (db *DB) ListObjects(ctx context.Context, bucket storj.Bucket, options stor
 		return storj.ObjectList{}, storj.ErrNoBucket.New("")
 	}
 
-	var startAfter string
-	switch options.Direction {
-	// TODO for now we are supporting only storj.After
-	// case storj.Forward:
-	// 	// forward lists forwards from cursor, including cursor
-	// 	startAfter = keyBefore(options.Cursor)
-	case storj.After:
-		// after lists forwards from cursor, without cursor
-		startAfter = options.Cursor
-	default:
-		return storj.ObjectList{}, errClass.New("invalid direction %d", options.Direction)
-	}
-
-	// TODO: we should let libuplink users be able to determine what metadata fields they request as well
-	// metaFlags := meta.All
-	// if db.pathCipher(bucket) == storj.EncNull || db.pathCipher(bucket) == storj.EncNullBase64URL {
-	// 	metaFlags = meta.None
-	// }
-
-	// TODO use flags with listing
-	// if metaFlags&meta.Size != 0 {
-	// Calculating the stream's size require also the user-defined metadata,
-	// where stream store keeps info about the number of segments and their size.
-	// metaFlags |= meta.UserDefined
-	// }
-
-	prefix := streams.ParsePath(storj.JoinPaths(bucket.Name, options.Prefix))
-	prefixKey, err := encryption.DerivePathKey(prefix.Bucket(), streams.PathForKey(prefix.UnencryptedPath().Raw()), db.encStore)
-	if err != nil {
-		return storj.ObjectList{}, errClass.Wrap(err)
-	}
-
-	encPrefix, err := encryption.EncryptPathWithStoreCipher(prefix.Bucket(), prefix.UnencryptedPath(), db.encStore)
-	if err != nil {
-		return storj.ObjectList{}, errClass.Wrap(err)
-	}
-
-	// If the raw unencrypted path ends in a `/` we need to remove the final
-	// section of the encrypted path. For example, if we are listing the path
-	// `/bob/`, the encrypted path results in `enc("")/enc("bob")/enc("")`. This
-	// is an incorrect list prefix, what we really want is `enc("")/enc("bob")`
-	if strings.HasSuffix(prefix.UnencryptedPath().Raw(), "/") {
-		lastSlashIdx := strings.LastIndex(encPrefix.Raw(), "/")
-		encPrefix = paths.NewEncrypted(encPrefix.Raw()[:lastSlashIdx])
-	}
-
-	// We have to encrypt startAfter but only if it doesn't contain a bucket.
-	// It contains a bucket if and only if the prefix has no bucket. This is why it is a raw
-	// string instead of a typed string: it's either a bucket or an unencrypted path component
-	// and that isn't known at compile time.
-	needsEncryption := prefix.Bucket() != ""
-	var base *encryption.Base
-	if needsEncryption {
-		_, _, base = db.encStore.LookupEncrypted(prefix.Bucket(), encPrefix)
-
-		startAfter, err = encryption.EncryptPathRaw(startAfter, db.pathCipher(base.PathCipher), prefixKey)
-		if err != nil {
-			return storj.ObjectList{}, errClass.Wrap(err)
-		}
-	}
-
-	items, more, err := db.metainfo.ListObjects(ctx, metainfo.ListObjectsParams{
-		Bucket:          []byte(bucket.Name),
-		EncryptedPrefix: []byte(encPrefix.Raw()),
-		EncryptedCursor: []byte(startAfter),
-		Limit:           int32(options.Limit),
-		Recursive:       options.Recursive,
-	})
-	if err != nil {
-		return storj.ObjectList{}, errClass.Wrap(err)
-	}
-
-	list = storj.ObjectList{
-		Bucket: bucket.Name,
-		Prefix: options.Prefix,
-		More:   more,
-		Items:  make([]storj.Object, len(items)),
-	}
-
-	for i, item := range items {
-		var path streams.Path
-		var itemPath string
-
-		if needsEncryption {
-			itemPath, err = encryption.DecryptPathRaw(string(item.EncryptedPath), db.pathCipher(base.PathCipher), prefixKey)
-			if err != nil {
-				return storj.ObjectList{}, errClass.Wrap(err)
-			}
-
-			// TODO(jeff): this shouldn't be necessary if we handled trailing slashes
-			// appropriately. there's some issues with list.
-			fullPath := prefix.UnencryptedPath().Raw()
-			if len(fullPath) > 0 && fullPath[len(fullPath)-1] != '/' {
-				fullPath += "/"
-			}
-			fullPath += itemPath
-
-			path = streams.CreatePath(prefix.Bucket(), paths.NewUnencrypted(fullPath))
-		} else {
-			itemPath = string(item.EncryptedPath)
-			path = streams.CreatePath(string(item.EncryptedPath), paths.Unencrypted{})
-		}
-
-		stream, streamMeta, err := streams.TypedDecryptStreamInfo(ctx, item.EncryptedMetadata, path, db.encStore)
-		if err != nil {
-			return storj.ObjectList{}, errClass.Wrap(err)
-		}
-
-		object, err := objectFromMeta(bucket, itemPath, item, stream, streamMeta)
-		if err != nil {
-			return storj.ObjectList{}, errClass.Wrap(err)
-		}
-
-		list.Items[i] = object
-	}
-
-	return list, nil
-}
-
-// ListObjectsExtended lists objects in bucket based on the ListOptions.
-func (db *DB) ListObjectsExtended(ctx context.Context, bucket storj.Bucket, options storj.ListOptions) (list storj.ObjectList, err error) {
-	defer mon.Task()(&ctx)(&err)
-
-	if bucket.Name == "" {
-		return storj.ObjectList{}, storj.ErrNoBucket.New("")
-	}
-
 	if options.Prefix != "" && !strings.HasSuffix(options.Prefix, "/") {
-		return storj.ObjectList{}, Error.New("prefix should end with slash")
+		return storj.ObjectList{}, errClass.New("prefix should end with slash")
 	}
 
 	var startAfter string

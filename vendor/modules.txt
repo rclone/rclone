@@ -177,7 +177,7 @@ github.com/mattn/go-isatty
 github.com/mattn/go-runewidth
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
-# github.com/minio/sha256-simd v0.0.0-20190328051042-05b4dd3047e5
+# github.com/minio/sha256-simd v0.1.1
 github.com/minio/sha256-simd
 # github.com/mitchellh/go-homedir v1.1.0
 ## explicit
@@ -465,7 +465,7 @@ google.golang.org/grpc/tap
 # gopkg.in/yaml.v2 v2.2.8
 ## explicit
 gopkg.in/yaml.v2
-# storj.io/common v0.0.0-20200519171747-3ff8acf78c46
+# storj.io/common v0.0.0-20200529121635-ef4a5bc8ec88
 storj.io/common/encryption
 storj.io/common/errs2
 storj.io/common/fpath
@@ -504,7 +504,7 @@ storj.io/drpc/drpcmux
 storj.io/drpc/drpcsignal
 storj.io/drpc/drpcstream
 storj.io/drpc/drpcwire
-# storj.io/uplink v1.0.6
+# storj.io/uplink v1.0.7
 ## explicit
 storj.io/uplink
 storj.io/uplink/internal/expose
