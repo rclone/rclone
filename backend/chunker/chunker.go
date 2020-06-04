@@ -1333,7 +1333,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.base.Rmdir(ctx, dir)
 }
 
-// Purge all files in the root and the root directory
+// Purge all files in the directory
 //
 // Implement this if you have a way of deleting all the files
 // quicker than just running Remove() on the result of List()
@@ -1344,12 +1344,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // As a result it removes not only composite chunker files with their
 // active chunks but also all hidden temporary chunks in the directory.
 //
-func (f *Fs) Purge(ctx context.Context) error {
+func (f *Fs) Purge(ctx context.Context, dir string) error {
 	do := f.base.Features().Purge
 	if do == nil {
 		return fs.ErrorCantPurge
 	}
-	return do(ctx)
+	return do(ctx, dir)
 }
 
 // Remove an object (chunks and metadata, if any)

@@ -921,20 +921,16 @@ func Rmdir(ctx context.Context, f fs.Fs, dir string) error {
 }
 
 // Purge removes a directory and all of its contents
-func Purge(ctx context.Context, f fs.Fs, dir string) error {
+func Purge(ctx context.Context, f fs.Fs, dir string) (err error) {
 	doFallbackPurge := true
-	var err error
-	if dir == "" {
-		// FIXME change the Purge interface so it takes a dir - see #1891
-		if doPurge := f.Features().Purge; doPurge != nil {
-			doFallbackPurge = false
-			if SkipDestructive(ctx, fs.LogDirName(f, dir), "purge directory") {
-				return nil
-			}
-			err = doPurge(ctx)
-			if err == fs.ErrorCantPurge {
-				doFallbackPurge = true
-			}
+	if doPurge := f.Features().Purge; doPurge != nil {
+		doFallbackPurge = false
+		if SkipDestructive(ctx, fs.LogDirName(f, dir), "purge directory") {
+			return nil
+		}
+		err = doPurge(ctx, dir)
+		if err == fs.ErrorCantPurge {
+			doFallbackPurge = true
 		}
 	}
 	if doFallbackPurge {

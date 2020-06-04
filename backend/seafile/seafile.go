@@ -584,27 +584,36 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return nil
 }
 
-// Rmdir removes the directory or library if empty
-//
-// Return an error if it doesn't exist or isn't empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+// purgeCheck removes the root directory, if check is set then it
+// refuses to do so if it has anything in
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	libraryName, dirPath := f.splitPath(dir)
 	libraryID, err := f.getLibraryID(ctx, libraryName)
 	if err != nil {
 		return err
 	}
 
-	directoryEntries, err := f.getDirectoryEntries(ctx, libraryID, dirPath, false)
-	if err != nil {
-		return err
+	if check {
+		directoryEntries, err := f.getDirectoryEntries(ctx, libraryID, dirPath, false)
+		if err != nil {
+			return err
+		}
+		if len(directoryEntries) > 0 {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
-	if len(directoryEntries) > 0 {
-		return fs.ErrorDirectoryNotEmpty
-	}
+
 	if dirPath == "" || dirPath == "/" {
 		return f.deleteLibrary(ctx, libraryID)
 	}
 	return f.deleteDir(ctx, libraryID, dirPath)
+}
+
+// Rmdir removes the directory or library if empty
+//
+// Return an error if it doesn't exist or isn't empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, true)
 }
 
 // ==================== Optional Interface fs.ListRer ====================
@@ -893,33 +902,14 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 // ==================== Optional Interface fs.Purger ====================
 
-// Purge all files in the root and the root directory
+// Purge all files in the directory
 //
 // Implement this if you have a way of deleting all the files
 // quicker than just running Remove() on the result of List()
 //
 // Return an error if it doesn't exist
-func (f *Fs) Purge(ctx context.Context) error {
-	if f.libraryName == "" {
-		return errors.New("Cannot delete from the root of the server. Please select a library")
-	}
-	libraryID, err := f.getLibraryID(ctx, f.libraryName)
-	if err != nil {
-		return err
-	}
-	if f.rootDirectory == "" {
-		// Delete library
-		err = f.deleteLibrary(ctx, libraryID)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	err = f.deleteDir(ctx, libraryID, f.rootDirectory)
-	if err != nil {
-		return err
-	}
-	return nil
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, false)
 }
 
 // ==================== Optional Interface fs.CleanUpper ====================

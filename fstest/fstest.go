@@ -482,7 +482,7 @@ func Purge(f fs.Fs) {
 	if doPurge := f.Features().Purge; doPurge != nil {
 		doFallbackPurge = false
 		fs.Debugf(f, "Purge remote")
-		err = doPurge(ctx)
+		err = doPurge(ctx, "")
 		if err == fs.ErrorCantPurge {
 			doFallbackPurge = true
 		}

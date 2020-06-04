@@ -946,7 +946,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	}
 
 	if purge {
-		_ = f.Features().Purge(context.Background())
+		_ = f.Features().Purge(context.Background(), "")
 		require.NoError(t, err)
 	}
 	err = f.Mkdir(context.Background(), "")
@@ -955,7 +955,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 }
 
 func (r *run) cleanupFs(t *testing.T, f fs.Fs, b *cache.Persistent) {
-	err := f.Features().Purge(context.Background())
+	err := f.Features().Purge(context.Background(), "")
 	require.NoError(t, err)
 	cfs, err := r.getCacheFs(f)
 	require.NoError(t, err)

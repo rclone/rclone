@@ -974,6 +974,43 @@ func Run(t *testing.T, opt *Opt) {
 				assert.NotNil(t, err)
 			})
 
+			// TestFsPurge tests Purge
+			t.Run("FsPurge", func(t *testing.T) {
+				skipIfNotOk(t)
+
+				// Check have Purge
+				doPurge := remote.Features().Purge
+				if doPurge == nil {
+					t.Skip("FS has no Purge interface")
+				}
+
+				// put up a file to purge
+				fileToPurge := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    "dirToPurge/fileToPurge.txt",
+				}
+				_, _ = testPut(ctx, t, remote, &fileToPurge)
+
+				fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file1, file2, fileToPurge}, []string{
+					"dirToPurge",
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(remote))
+
+				// Now purge it
+				err = operations.Purge(ctx, remote, "dirToPurge")
+				require.NoError(t, err)
+
+				fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file1, file2}, []string{
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(remote))
+			})
+
 			// TestFsCopy tests Copy
 			t.Run("FsCopy", func(t *testing.T) {
 				skipIfNotOk(t)

@@ -840,17 +840,21 @@ func (f *Fs) Precision() time.Duration {
 	return time.Nanosecond
 }
 
-// Purge deletes all the files and directories
+// Purge deletes all the files in the directory
 //
 // Implemented here so we can make sure we delete directory markers
-func (f *Fs) Purge(ctx context.Context) error {
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	container, directory := f.split(dir)
+	if container == "" {
+		return fs.ErrorListBucketRequired
+	}
 	// Delete all the files including the directory markers
 	toBeDeleted := make(chan fs.Object, fs.Config.Transfers)
 	delErr := make(chan error, 1)
 	go func() {
 		delErr <- operations.DeleteFiles(ctx, toBeDeleted)
 	}()
-	err := f.list(f.rootContainer, f.rootDirectory, f.rootDirectory, f.rootContainer == "", true, true, func(entry fs.DirEntry) error {
+	err := f.list(container, directory, f.rootDirectory, false, true, true, func(entry fs.DirEntry) error {
 		if o, ok := entry.(*Object); ok {
 			toBeDeleted <- o
 		}
@@ -864,7 +868,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return f.Rmdir(ctx, "")
+	return f.Rmdir(ctx, dir)
 }
 
 // Copy src to this remote using server side copy operations.
