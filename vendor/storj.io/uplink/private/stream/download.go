@@ -29,12 +29,15 @@ func NewDownload(ctx context.Context, stream kvmetainfo.ReadOnlyStream, streams 
 		ctx:     ctx,
 		stream:  stream,
 		streams: streams,
-		limit:   -1,
+		limit:   stream.Info().Size,
 	}
 }
 
 // NewDownloadRange creates new stream range download with range from offset to offset+limit.
 func NewDownloadRange(ctx context.Context, stream kvmetainfo.ReadOnlyStream, streams streams.Store, offset, limit int64) *Download {
+	if limit < 0 {
+		limit = stream.Info().Size - offset
+	}
 	return &Download{
 		ctx:     ctx,
 		stream:  stream,
@@ -56,22 +59,20 @@ func (download *Download) Read(data []byte) (n int, err error) {
 	}
 
 	if download.reader == nil {
-		err = download.resetReader(download.offset)
+		err = download.resetReader()
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	if download.limit == 0 {
+	if download.limit <= 0 {
 		return 0, io.EOF
 	}
-	if download.limit > 0 && download.limit < int64(len(data)) {
+	if download.limit < int64(len(data)) {
 		data = data[:download.limit]
 	}
 	n, err = download.reader.Read(data)
-	if download.limit >= 0 {
-		download.limit -= int64(n)
-	}
+	download.limit -= int64(n)
 	download.offset += int64(n)
 
 	return n, err
@@ -92,7 +93,7 @@ func (download *Download) Close() error {
 	return download.reader.Close()
 }
 
-func (download *Download) resetReader(offset int64) error {
+func (download *Download) resetReader() error {
 	if download.reader != nil {
 		err := download.reader.Close()
 		if err != nil {
@@ -107,12 +108,10 @@ func (download *Download) resetReader(offset int64) error {
 		return err
 	}
 
-	download.reader, err = rr.Range(download.ctx, offset, obj.Size-offset)
+	download.reader, err = rr.Range(download.ctx, download.offset, download.limit)
 	if err != nil {
 		return err
 	}
-
-	download.offset = offset
 
 	return nil
 }

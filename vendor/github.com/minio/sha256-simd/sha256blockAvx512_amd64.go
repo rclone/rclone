@@ -1,4 +1,4 @@
-//+build !noasm
+//+build !noasm,!appengine
 
 /*
  * Minio Cloud Storage, (C) 2017 Minio, Inc.
@@ -104,15 +104,16 @@ func (d *Avx512Digest) Sum(in []byte) (result []byte) {
 	}
 
 	trail := make([]byte, 0, 128)
+	trail = append(trail, d.x[:d.nx]...)
 
 	len := d.len
 	// Padding.  Add a 1 bit and 0 bits until 56 bytes mod 64.
 	var tmp [64]byte
 	tmp[0] = 0x80
 	if len%64 < 56 {
-		trail = append(d.x[:d.nx], tmp[0:56-len%64]...)
+		trail = append(trail, tmp[0:56-len%64]...)
 	} else {
-		trail = append(d.x[:d.nx], tmp[0:64+56-len%64]...)
+		trail = append(trail, tmp[0:64+56-len%64]...)
 	}
 	d.nx = 0
 
@@ -375,7 +376,7 @@ func (a512srv *Avx512Server) reset(uid uint64) {
 }
 
 // Invoke assembly and send results back
-func (a512srv *Avx512Server) blocks() (err error) {
+func (a512srv *Avx512Server) blocks() {
 
 	inputs := [16][]byte{}
 	for i := range inputs {
@@ -397,7 +398,6 @@ func (a512srv *Avx512Server) blocks() (err error) {
 			delete(a512srv.digests, uid) // Delete entry from hashmap
 		}
 	}
-	return
 }
 
 func (a512srv *Avx512Server) Write(uid uint64, p []byte) (nn int, err error) {

@@ -1,4 +1,4 @@
-//+build !noasm
+//+build !noasm,!appengine
 
 /*
  * Minio Cloud Storage, (C) 2016 Minio, Inc.
