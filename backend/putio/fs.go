@@ -458,10 +458,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	return err
 }
 
-// Rmdir deletes the container
-//
-// Returns an error if it isn't empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
+// purgeCheck removes the root directory, if check is set then it
+// refuses to do so if it has anything in
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error) {
 	// defer log.Trace(f, "dir=%v", dir)("err=%v", &err)
 
 	root := strings.Trim(path.Join(f.root, dir), "/")
@@ -478,18 +477,20 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	}
 	dirID := atoi(directoryID)
 
-	// check directory empty
-	var children []putio.File
-	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "listing files: %d", dirID)
-		children, _, err = f.client.Files.List(ctx, dirID)
-		return shouldRetry(err)
-	})
-	if err != nil {
-		return errors.Wrap(err, "Rmdir")
-	}
-	if len(children) != 0 {
-		return errors.New("directory not empty")
+	if check {
+		// check directory empty
+		var children []putio.File
+		err = f.pacer.Call(func() (bool, error) {
+			// fs.Debugf(f, "listing files: %d", dirID)
+			children, _, err = f.client.Files.List(ctx, dirID)
+			return shouldRetry(err)
+		})
+		if err != nil {
+			return errors.Wrap(err, "Rmdir")
+		}
+		if len(children) != 0 {
+			return errors.New("directory not empty")
+		}
 	}
 
 	// remove it
@@ -502,35 +503,26 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	return err
 }
 
+// Rmdir deletes the container
+//
+// Returns an error if it isn't empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
+	return f.purgeCheck(ctx, dir, true)
+}
+
 // Precision returns the precision
 func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
-// Purge deletes all the files and the container
+// Purge deletes all the files in the directory
 //
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context) (err error) {
+func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 	// defer log.Trace(f, "")("err=%v", &err)
-
-	if f.root == "" {
-		return errors.New("can't purge root directory")
-	}
-	rootIDs, err := f.dirCache.RootID(ctx, false)
-	if err != nil {
-		return err
-	}
-	rootID := atoi(rootIDs)
-	// Let putio delete the filesystem tree
-	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "deleting file: %d", rootID)
-		err = f.client.Files.Delete(ctx, rootID)
-		return shouldRetry(err)
-	})
-	f.dirCache.ResetRoot()
-	return err
+	return f.purgeCheck(ctx, dir, false)
 }
 
 // Copy src to this remote using server side copy operations.

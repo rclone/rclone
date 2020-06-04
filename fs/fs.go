@@ -518,13 +518,13 @@ type Features struct {
 	SlowModTime             bool // if calling ModTime() generally takes an extra transaction
 	SlowHash                bool // if calling Hash() generally takes an extra transaction
 
-	// Purge all files in the root and the root directory
+	// Purge all files in the directory specified
 	//
 	// Implement this if you have a way of deleting all the files
 	// quicker than just running Remove() on the result of List()
 	//
 	// Return an error if it doesn't exist
-	Purge func(ctx context.Context) error
+	Purge func(ctx context.Context, dir string) error
 
 	// Copy src to this remote using server side copy operations.
 	//
@@ -883,13 +883,13 @@ func (ft *Features) WrapsFs(f Fs, w Fs) *Features {
 
 // Purger is an optional interfaces for Fs
 type Purger interface {
-	// Purge all files in the root and the root directory
+	// Purge all files in the directory specified
 	//
 	// Implement this if you have a way of deleting all the files
 	// quicker than just running Remove() on the result of List()
 	//
 	// Return an error if it doesn't exist
-	Purge(ctx context.Context) error
+	Purge(ctx context.Context, dir string) error
 }
 
 // Copier is an optional interface for Fs

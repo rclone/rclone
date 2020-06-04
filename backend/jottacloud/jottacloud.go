@@ -1070,8 +1070,8 @@ func (f *Fs) Precision() time.Duration {
 }
 
 // Purge deletes all the files and the container
-func (f *Fs) Purge(ctx context.Context) error {
-	return f.purgeCheck(ctx, "", false)
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, false)
 }
 
 // copyOrMoves copies or moves directories or files depending on the method parameter

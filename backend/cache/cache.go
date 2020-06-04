@@ -1702,17 +1702,20 @@ func (f *Fs) Hashes() hash.Set {
 	return f.Fs.Hashes()
 }
 
-// Purge all files in the root and the root directory
-func (f *Fs) Purge(ctx context.Context) error {
-	fs.Infof(f, "purging cache")
-	f.cache.Purge()
+// Purge all files in the directory
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	if dir == "" {
+		// FIXME this isn't quite right as it should purge the dir prefix
+		fs.Infof(f, "purging cache")
+		f.cache.Purge()
+	}
 
 	do := f.Fs.Features().Purge
 	if do == nil {
-		return nil
+		return fs.ErrorCantPurge
 	}
 
-	err := do(ctx)
+	err := do(ctx, dir)
 	if err != nil {
 		return err
 	}

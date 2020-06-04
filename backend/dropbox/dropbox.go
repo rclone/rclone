@@ -611,10 +611,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return err
 }
 
-// Rmdir deletes the container
-//
-// Returns an error if it isn't empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+// purgeCheck removes the root directory, if check is set then it
+// refuses to do so if it has anything in
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error) {
 	root := path.Join(f.slashRoot, dir)
 
 	// can't remove root
@@ -622,31 +621,33 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return errors.New("can't remove root directory")
 	}
 
-	// check directory exists
-	_, err := f.getDirMetadata(root)
-	if err != nil {
-		return errors.Wrap(err, "Rmdir")
-	}
+	if check {
+		// check directory exists
+		_, err = f.getDirMetadata(root)
+		if err != nil {
+			return errors.Wrap(err, "Rmdir")
+		}
 
-	root = f.opt.Enc.FromStandardPath(root)
-	// check directory empty
-	arg := files.ListFolderArg{
-		Path:      root,
-		Recursive: false,
-	}
-	if root == "/" {
-		arg.Path = "" // Specify root folder as empty string
-	}
-	var res *files.ListFolderResult
-	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.ListFolder(&arg)
-		return shouldRetry(err)
-	})
-	if err != nil {
-		return errors.Wrap(err, "Rmdir")
-	}
-	if len(res.Entries) != 0 {
-		return errors.New("directory not empty")
+		root = f.opt.Enc.FromStandardPath(root)
+		// check directory empty
+		arg := files.ListFolderArg{
+			Path:      root,
+			Recursive: false,
+		}
+		if root == "/" {
+			arg.Path = "" // Specify root folder as empty string
+		}
+		var res *files.ListFolderResult
+		err = f.pacer.Call(func() (bool, error) {
+			res, err = f.srv.ListFolder(&arg)
+			return shouldRetry(err)
+		})
+		if err != nil {
+			return errors.Wrap(err, "Rmdir")
+		}
+		if len(res.Entries) != 0 {
+			return errors.New("directory not empty")
+		}
 	}
 
 	// remove it
@@ -655,6 +656,13 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return shouldRetry(err)
 	})
 	return err
+}
+
+// Rmdir deletes the container
+//
+// Returns an error if it isn't empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, true)
 }
 
 // Precision returns the precision
@@ -719,15 +727,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context) (err error) {
-	// Let dropbox delete the filesystem tree
-	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.DeleteV2(&files.DeleteArg{
-			Path: f.opt.Enc.FromStandardPath(f.slashRoot),
-		})
-		return shouldRetry(err)
-	})
-	return err
+func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
+	return f.purgeCheck(ctx, dir, false)
 }
 
 // Move src to this remote using server side move operations.

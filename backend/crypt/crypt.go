@@ -427,18 +427,18 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.Fs.Rmdir(ctx, f.cipher.EncryptDirName(dir))
 }
 
-// Purge all files in the root and the root directory
+// Purge all files in the directory specified
 //
 // Implement this if you have a way of deleting all the files
 // quicker than just running Remove() on the result of List()
 //
 // Return an error if it doesn't exist
-func (f *Fs) Purge(ctx context.Context) error {
+func (f *Fs) Purge(ctx context.Context, dir string) error {
 	do := f.Fs.Features().Purge
 	if do == nil {
 		return fs.ErrorCantPurge
 	}
-	return do(ctx)
+	return do(ctx, dir)
 }
 
 // Copy src to this remote using server side copy operations.

@@ -1162,12 +1162,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.purgeWithCheck(ctx, dir, true, "rmdir")
 }
 
-// Purge deletes all the files and the root directory
+// Purge deletes all the files in the directory
 // Optional interface: Only implement this if you have a way of deleting
 // all the files quicker than just running Remove() on the result of List()
-func (f *Fs) Purge(ctx context.Context) error {
+func (f *Fs) Purge(ctx context.Context, dir string) error {
 	// fs.Debugf(f, ">>> Purge")
-	return f.purgeWithCheck(ctx, "", false, "purge")
+	return f.purgeWithCheck(ctx, dir, false, "purge")
 }
 
 // purgeWithCheck() removes the root directory.

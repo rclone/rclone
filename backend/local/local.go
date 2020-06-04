@@ -616,20 +616,21 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 	return
 }
 
-// Purge deletes all the files and directories
+// Purge deletes all the files in the directory
 //
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context) error {
-	fi, err := f.lstat(f.root)
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	dir = f.localPath(dir)
+	fi, err := f.lstat(dir)
 	if err != nil {
 		return err
 	}
 	if !fi.Mode().IsDir() {
-		return errors.Errorf("can't purge non directory: %q", f.root)
+		return errors.Errorf("can't purge non directory: %q", dir)
 	}
-	return os.RemoveAll(f.root)
+	return os.RemoveAll(dir)
 }
 
 // Move src to this remote using server side move operations.

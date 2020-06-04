@@ -895,12 +895,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return dstObj, nil
 }
 
-// Purge deletes all the files and the container
+// Purge deletes all the files in the directory
 //
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context) error {
+func (f *Fs) Purge(ctx context.Context, dir string) error {
 	// Caution: Deleting a folder may orphan objects. It's important
 	// to remove the contents of the folder before you delete the
 	// folder. That's because removing a folder using DELETE does not
@@ -920,7 +920,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 	if f.opt.HardDelete {
 		return fs.ErrorCantPurge
 	}
-	return f.purgeCheck(ctx, "", false)
+	return f.purgeCheck(ctx, dir, false)
 }
 
 // moveFile moves a file server side
