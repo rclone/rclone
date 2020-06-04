@@ -495,7 +495,7 @@ func (dl *downloader) open(offset int64) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "vfs reader: failed to open source file")
 	}
-	dl.in = dl.tr.Account(in0).WithBuffer() // account and buffer the transfer
+	dl.in = dl.tr.Account(dl.dls.ctx, in0).WithBuffer() // account and buffer the transfer
 
 	dl.offset = offset
 

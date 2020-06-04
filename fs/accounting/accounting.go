@@ -36,6 +36,7 @@ type Account struct {
 	// shouldn't.
 	mu      sync.Mutex // mutex protects these values
 	in      io.Reader
+	ctx     context.Context // current context for transfer - may change
 	origIn  io.ReadCloser
 	close   io.Closer
 	size    int64
@@ -64,10 +65,11 @@ const averagePeriod = 16 // period to do exponentially weighted averages over
 
 // newAccountSizeName makes an Account reader for an io.ReadCloser of
 // the given size and name
-func newAccountSizeName(stats *StatsInfo, in io.ReadCloser, size int64, name string) *Account {
+func newAccountSizeName(ctx context.Context, stats *StatsInfo, in io.ReadCloser, size int64, name string) *Account {
 	acc := &Account{
 		stats:  stats,
 		in:     in,
+		ctx:    ctx,
 		close:  in,
 		origIn: in,
 		size:   size,
@@ -160,7 +162,7 @@ func (acc *Account) Abandon() {
 
 // UpdateReader updates the underlying io.ReadCloser stopping the
 // async buffer (if any) and re-adding it
-func (acc *Account) UpdateReader(in io.ReadCloser) {
+func (acc *Account) UpdateReader(ctx context.Context, in io.ReadCloser) {
 	acc.mu.Lock()
 	withBuf := acc.withBuf
 	if withBuf {
@@ -168,6 +170,7 @@ func (acc *Account) UpdateReader(in io.ReadCloser) {
 		acc.withBuf = false
 	}
 	acc.in = in
+	acc.ctx = ctx
 	acc.close = in
 	acc.origIn = in
 	acc.closed = false

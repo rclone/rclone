@@ -158,7 +158,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	mc.calculateChunks()
 
 	// Make accounting
-	mc.acc = tr.Account(nil)
+	mc.acc = tr.Account(ctx, nil)
 
 	// create write file handle
 	mc.wc, err = openWriterAt(gCtx, remote, mc.size)
