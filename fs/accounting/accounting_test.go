@@ -312,6 +312,25 @@ func TestAccountMaxTransferWriteTo(t *testing.T) {
 	assert.Equal(t, ErrorMaxTransferLimitReachedFatal, err)
 }
 
+func TestAccountReadCtx(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	in := ioutil.NopCloser(bytes.NewBuffer(make([]byte, 100)))
+	stats := NewStats()
+	acc := newAccountSizeName(ctx, stats, in, 1, "test")
+
+	var b = make([]byte, 10)
+
+	n, err := acc.Read(b)
+	assert.Equal(t, 10, n)
+	assert.NoError(t, err)
+
+	cancel()
+
+	n, err = acc.Read(b)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, context.Canceled, err)
+}
+
 func TestShortenName(t *testing.T) {
 	for _, test := range []struct {
 		in   string

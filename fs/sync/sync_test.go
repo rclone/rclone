@@ -1040,8 +1040,6 @@ func TestSyncWithMaxDuration(t *testing.T) {
 	startTime := time.Now()
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.Equal(t, context.DeadlineExceeded, errors.Cause(err))
-	err = accounting.GlobalStats().GetLastError()
-	require.NoError(t, err)
 
 	elapsed := time.Since(startTime)
 	maxTransferTime := (time.Duration(len(testFiles)) * 60 * time.Second) / time.Duration(bytesPerSecond)
