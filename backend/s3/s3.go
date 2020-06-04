@@ -53,6 +53,7 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
@@ -1900,21 +1901,19 @@ func (f *Fs) copyMultipart(ctx context.Context, req *s3.CopyObjectInput, dstBuck
 	}
 	uid := cout.UploadId
 
-	defer func() {
-		if err != nil {
-			// We can try to abort the upload, but ignore the error.
-			fs.Debugf(nil, "Cancelling multipart copy")
-			_ = f.pacer.Call(func() (bool, error) {
-				_, err := f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
-					Bucket:       &dstBucket,
-					Key:          &dstPath,
-					UploadId:     uid,
-					RequestPayer: req.RequestPayer,
-				})
-				return f.shouldRetry(err)
+	defer atexit.OnError(&err, func() {
+		// Try to abort the upload, but ignore the error.
+		fs.Debugf(nil, "Cancelling multipart copy")
+		_ = f.pacer.Call(func() (bool, error) {
+			_, err := f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
+				Bucket:       &dstBucket,
+				Key:          &dstPath,
+				UploadId:     uid,
+				RequestPayer: req.RequestPayer,
 			})
-		}
-	}()
+			return f.shouldRetry(err)
+		})
+	})()
 
 	partSize := int64(f.opt.CopyCutoff)
 	numParts := (srcSize-1)/partSize + 1
@@ -2306,27 +2305,24 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	}
 	uid := cout.UploadId
 
-	defer func() {
+	defer atexit.OnError(&err, func() {
 		if o.fs.opt.LeavePartsOnError {
 			return
 		}
-		if err != nil {
-			// We can try to abort the upload, but ignore the error.
-			fs.Debugf(o, "Cancelling multipart upload")
-			errCancel := f.pacer.Call(func() (bool, error) {
-				_, err := f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
-					Bucket:       req.Bucket,
-					Key:          req.Key,
-					UploadId:     uid,
-					RequestPayer: req.RequestPayer,
-				})
-				return f.shouldRetry(err)
+		fs.Debugf(o, "Cancelling multipart upload")
+		errCancel := f.pacer.Call(func() (bool, error) {
+			_, err := f.c.AbortMultipartUploadWithContext(context.Background(), &s3.AbortMultipartUploadInput{
+				Bucket:       req.Bucket,
+				Key:          req.Key,
+				UploadId:     uid,
+				RequestPayer: req.RequestPayer,
 			})
-			if errCancel != nil {
-				fs.Debugf(o, "Failed to cancel multipart upload: %v", errCancel)
-			}
+			return f.shouldRetry(err)
+		})
+		if errCancel != nil {
+			fs.Debugf(o, "Failed to cancel multipart upload: %v", errCancel)
 		}
-	}()
+	})()
 
 	var (
 		g, gCtx  = errgroup.WithContext(ctx)
