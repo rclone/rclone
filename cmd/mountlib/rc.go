@@ -4,29 +4,40 @@ import (
 	"context"
 	"log"
 	"sort"
+	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 )
 
+// MountInfo defines the configuration for a mount
+type MountInfo struct {
+	unmountFn  UnmountFn
+	MountPoint string    `json:"MountPoint"`
+	MountedOn  time.Time `json:"MountedOn"`
+	Fs         string    `json:"Fs"`
+}
+
 var (
 	// Mount functions available
-	mountFns map[string]MountFn
-	// Map of mounted path => unmount function
-	unmountFns map[string]UnmountFn
+	mountFns = map[string]MountFn{}
+	// mutex for mountFns
+	mountFnsMutex = &sync.Mutex{}
+
+	// Map of mounted path => MountInfo
+	liveMounts = map[string]MountInfo{}
+	// mutex for live mounts
+	liveMountsMutex = sync.Mutex{}
 )
 
 // AddRc adds mount and unmount functionality to rc
 func AddRc(mountUtilName string, mountFunction MountFn) {
-	if mountFns == nil {
-		mountFns = make(map[string]MountFn)
-	}
-	if unmountFns == nil {
-		unmountFns = make(map[string]UnmountFn)
-	}
+	mountFnsMutex.Lock()
 	// rcMount allows the mount command to be run from rc
 	mountFns[mountUtilName] = mountFunction
+	mountFnsMutex.Unlock()
 }
 
 func init() {
@@ -54,7 +65,7 @@ Eg
 	})
 }
 
-// rcMount allows the mount command to be run from rc
+// mountRc allows the mount command to be run from rc
 func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	mountPoint, err := in.GetString("mountPoint")
 	if err != nil {
@@ -80,7 +91,16 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	if mountFns[mountType] != nil {
-		_, _, unmountFns[mountPoint], err = mountFns[mountType](fdst, mountPoint)
+		_, _, unmountFn, err := mountFns[mountType](fdst, mountPoint)
+		liveMountsMutex.Lock()
+
+		liveMounts[mountPoint] = MountInfo{
+			unmountFn:  unmountFn,
+			MountedOn:  time.Now(),
+			Fs:         fdst.Name(),
+			MountPoint: mountPoint,
+		}
+		liveMountsMutex.Unlock()
 		if err != nil {
 			log.Printf("mount FAILED: %v", err)
 			return nil, err
@@ -96,7 +116,7 @@ func init() {
 		Path:         "mount/unmount",
 		AuthRequired: true,
 		Fn:           unMountRc,
-		Title:        "Unmount all active mounts",
+		Title:        "Unmount selected active mount",
 		Help: `
 rclone allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
@@ -113,24 +133,35 @@ Eg
 	})
 }
 
-// rcMount allows the umount command to be run from rc
+// unMountRc allows the umount command to be run from rc
 func unMountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	mountPoint, err := in.GetString("mountPoint")
 	if err != nil {
 		return nil, err
 	}
-
-	if unmountFns != nil && unmountFns[mountPoint] != nil {
-		err := unmountFns[mountPoint]()
-		if err != nil {
-			return nil, err
-		}
-		unmountFns[mountPoint] = nil
-	} else {
-		return nil, errors.New("mount not found")
+	err = performUnMount(mountPoint)
+	if err != nil {
+		return nil, err
 	}
-
 	return nil, nil
+}
+
+// performUnMount unmounts the specified mountPoint
+func performUnMount(mountPoint string) (err error) {
+	liveMountsMutex.Lock()
+	defer liveMountsMutex.Unlock()
+	mountInfo, ok := liveMounts[mountPoint]
+
+	if ok {
+		err := mountInfo.unmountFn()
+		if err != nil {
+			return err
+		}
+		delete(liveMounts, mountPoint)
+	} else {
+		return errors.New("mount not found")
+	}
+	return nil
 }
 
 func init() {
@@ -158,11 +189,45 @@ Eg
 // mountTypesRc returns a list of available mount types.
 func mountTypesRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	var mountTypes = []string{}
+	mountFnsMutex.Lock()
 	for mountType := range mountFns {
 		mountTypes = append(mountTypes, mountType)
 	}
+	mountFnsMutex.Unlock()
 	sort.Strings(mountTypes)
 	return rc.Params{
 		"mountTypes": mountTypes,
+	}, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "mount/listmounts",
+		AuthRequired: true,
+		Fn:           listMountsRc,
+		Title:        "Show current mount points",
+		Help: `This shows currently mounted points, which can be used for performing an unmount
+
+This takes no parameters and returns
+
+- mountPoints: list of current mount points
+
+Eg
+
+    rclone rc mount/listmounts
+`,
+	})
+}
+
+// listMountsRc returns a list of current mounts
+func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
+	var mountTypes = []MountInfo{}
+	liveMountsMutex.Lock()
+	for _, a := range liveMounts {
+		mountTypes = append(mountTypes, a)
+	}
+	liveMountsMutex.Unlock()
+	return rc.Params{
+		"mountPoints": mountTypes,
 	}, nil
 }
