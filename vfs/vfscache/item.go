@@ -43,14 +43,14 @@ type Item struct {
 	// read only
 	c *Cache // cache this is part of
 
-	mu         sync.Mutex  // protect the variables
-	name       string      // name in the VFS
-	opens      int         // number of times file is open
-	downloader *downloader // if the file is being downloaded to cache
-	o          fs.Object   // object we are caching - may be nil
-	fd         *os.File    // handle we are using to read and write to the file
-	metaDirty  bool        // set if the info needs writeback
-	info       Info        // info about the file to persist to backing store
+	mu          sync.Mutex   // protect the variables
+	name        string       // name in the VFS
+	opens       int          // number of times file is open
+	downloaders *downloaders // a record of the downloaders in action - may be nil
+	o           fs.Object    // object we are caching - may be nil
+	fd          *os.File     // handle we are using to read and write to the file
+	metaDirty   bool         // set if the info needs writeback
+	info        Info         // info about the file to persist to backing store
 
 }
 
@@ -453,6 +453,9 @@ func (item *Item) Open(o fs.Object) (err error) {
 	// Relock the Item.mu for the return
 	item.mu.Lock()
 
+	// Create the downloaders
+	item.downloaders = newDownloaders(item, item.c.fremote, item.name, item.o)
+
 	return err
 }
 
@@ -514,32 +517,9 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 func (item *Item) Close(storeFn StoreFn) (err error) {
 	defer log.Trace(item.o, "Item.Close")("err=%v", &err)
 	var (
-		downloader    *downloader
+		downloaders   *downloaders
 		syncWriteBack = item.c.opt.WriteBack <= 0
 	)
-	// FIXME need to unlock to kill downloader - should we
-	// re-arrange locking so this isn't necessary?  maybe
-	// downloader should use the item mutex for locking? or put a
-	// finer lock on Rs?
-	//
-	// close downloader with mutex unlocked
-	// downloader.Write calls ensure which needs the lock
-	defer func() {
-		if downloader != nil {
-			closeErr := downloader.close(nil)
-			if closeErr != nil && err == nil {
-				err = closeErr
-			}
-		}
-		// save the metadata once more since it may be dirty
-		// after the downloader
-		item.mu.Lock()
-		saveErr := item._save()
-		if saveErr != nil && err == nil {
-			err = errors.Wrap(saveErr, "close failed to save item")
-		}
-		item.mu.Unlock()
-	}()
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
@@ -554,21 +534,43 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 
 	// Update the size on close
 	_, _ = item._getSize()
-	err = item._save()
-	if err != nil {
-		return errors.Wrap(err, "close failed to save item")
+
+	// Accumulate and log errors
+	checkErr := func(e error) {
+		if e != nil {
+			fs.Errorf(item.o, "vfs cache item close failed: %v", e)
+			if err == nil {
+				err = e
+			}
+		}
 	}
 
-	// close the downloader
-	downloader = item.downloader
-	item.downloader = nil
+	// Close the downloaders
+	if downloaders = item.downloaders; downloaders != nil {
+		item.downloaders = nil
+		// FIXME need to unlock to kill downloader - should we
+		// re-arrange locking so this isn't necessary?  maybe
+		// downloader should use the item mutex for locking? or put a
+		// finer lock on Rs?
+		//
+		// downloader.Write calls ensure which needs the lock
+		// close downloader with mutex unlocked
+		item.mu.Unlock()
+		checkErr(downloaders.close(nil))
+		item.mu.Lock()
+	}
 
 	// close the file handle
 	if item.fd == nil {
-		return errors.New("vfs cache item: internal error: didn't Open file")
+		checkErr(errors.New("vfs cache item: internal error: didn't Open file"))
+	} else {
+		checkErr(item.fd.Close())
+		item.fd = nil
 	}
-	err = item.fd.Close()
-	item.fd = nil
+
+	// save the metadata once more since it may be dirty
+	// after the downloader
+	checkErr(item._save())
 
 	// if the item hasn't been changed but has been completed then
 	// set the modtime from the object otherwise set it from the info
@@ -585,7 +587,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 		fs.Debugf(item.name, "item changed - writeback in %v", item.c.opt.WriteBack)
 		if syncWriteBack {
 			// do synchronous writeback
-			err = item._store(context.Background(), storeFn)
+			checkErr(item._store(context.Background(), storeFn))
 		} else {
 			// asynchronous writeback
 			item.c.writeback.add(item, item.name, storeFn)
@@ -720,33 +722,31 @@ func (item *Item) remove(reason string) (wasWriting bool) {
 	return item._remove(reason)
 }
 
-// create a downloader for the item
-//
-// call with item mutex held
-func (item *Item) _newDownloader() (err error) {
-	// If no cached object then can't download
-	if item.o == nil {
-		return errors.New("vfs cache: internal error: tried to download nil object")
-	}
-	// If downloading the object already stop the downloader and restart it
-	if item.downloader != nil {
-		item.mu.Unlock()
-		_ = item.downloader.close(nil)
-		item.mu.Lock()
-		item.downloader = nil
-	}
-	item.downloader, err = newDownloader(item, item.c.fremote, item.name, item.o)
-	return err
-}
-
 // _present returns true if the whole file has been downloaded
 //
 // call with the lock held
 func (item *Item) _present() bool {
-	if item.downloader != nil && item.downloader.running() {
-		return false
-	}
 	return item.info.Rs.Present(ranges.Range{Pos: 0, Size: item.info.Size})
+}
+
+// hasRange returns true if the current ranges entirely include range
+func (item *Item) hasRange(r ranges.Range) bool {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item.info.Rs.Present(r)
+}
+
+// findMissing adjusts r returning a new ranges.Range which only
+// contains the range which needs to be downloaded. This could be
+// empty - check with IsEmpty. It also adjust this to make sure it is
+// not larger than the file.
+func (item *Item) findMissing(r ranges.Range) (outr ranges.Range) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	outr = item.info.Rs.FindMissing(r)
+	// Clip returned block to size of file
+	outr.Clip(item.info.Size)
+	return outr
 }
 
 // ensure the range from offset, size is present in the backing file
@@ -759,33 +759,21 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 	}
 	r := ranges.Range{Pos: offset, Size: size}
 	present := item.info.Rs.Present(r)
-	downloader := item.downloader
 	fs.Debugf(nil, "looking for range=%+v in %+v - present %v", r, item.info.Rs, present)
-	if present {
-		return nil
-	}
-	// FIXME pass in offset here to decide to seek?
-	err = item._newDownloader()
-	if err != nil {
-		return errors.Wrap(err, "Ensure: failed to start downloader")
-	}
-	downloader = item.downloader
-	if downloader == nil {
-		return errors.New("internal error: downloader is nil")
-	}
-	if !downloader.running() {
-		// FIXME need to make sure we start in the correct place because some of offset,size might exist
-		// FIXME this could stop an old download
-		item.mu.Unlock()
-		err = downloader.start(offset)
-		item.mu.Lock()
-		if err != nil {
-			return errors.Wrap(err, "Ensure: failed to run downloader")
-		}
-	}
 	item.mu.Unlock()
 	defer item.mu.Lock()
-	return item.downloader.ensure(r)
+	if present {
+		// This is a file we are writing so no downloaders needed
+		if item.downloaders == nil {
+			return nil
+		}
+		// Otherwise start the downloader for the future if required
+		return item.downloaders.ensureDownloader(r)
+	}
+	if item.downloaders == nil {
+		return errors.New("internal error: downloaders is nil")
+	}
+	return item.downloaders.ensure(r)
 }
 
 // _written marks the (offset, size) as present in the backing file
@@ -796,7 +784,7 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 // call with lock held
 func (item *Item) _written(offset, size int64) {
 	defer log.Trace(item.name, "offset=%d, size=%d", offset, size)("")
-	item.info.Rs.Insert(ranges.Range{Pos: offset, Size: offset + size})
+	item.info.Rs.Insert(ranges.Range{Pos: offset, Size: size})
 	item.metaDirty = true
 }
 
@@ -868,6 +856,9 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 	item.mu.Unlock()
 	// Do the writing with Item.mu unlocked
 	n, err = item.fd.WriteAt(b, off)
+	if err == nil && n != len(b) {
+		err = errors.Errorf("short write: tried to write %d but only %d written", len(b), n)
+	}
 	item.mu.Lock()
 	item._written(off, int64(n))
 	if n > 0 {
@@ -879,6 +870,60 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 	}
 	item.mu.Unlock()
 	return n, err
+}
+
+// writeAtNoOverwrite writes b to the file, but will not overwrite
+// already present ranges.
+//
+// This is used by the downloader to write bytes to the file
+//
+// It returns n the total bytes processed and skipped the number of
+// bytes which were processed but not actually written to the file.
+func (item *Item) writeAtNoOverwrite(b []byte, off int64) (n int, skipped int, err error) {
+	item.mu.Lock()
+
+	var (
+		// Range we wish to write
+		r = ranges.Range{Pos: off, Size: int64(len(b))}
+		// Ranges that we need to write
+		foundRanges = item.info.Rs.FindAll(r)
+		// Length of each write
+		nn int
+	)
+
+	// Write the range out ignoring already written chunks
+	fs.Debugf(item.name, "Ranges = %v", item.info.Rs)
+	for i := range foundRanges {
+		foundRange := &foundRanges[i]
+		fs.Debugf(item.name, "foundRange[%d] = %v", i, foundRange)
+		if foundRange.R.Pos != off {
+			err = errors.New("internal error: offset of range is wrong")
+			break
+		}
+		size := int(foundRange.R.Size)
+		if foundRange.Present {
+			// if present want to skip this range
+			fs.Debugf(item.name, "skip chunk offset=%d size=%d", off, size)
+			nn = size
+			skipped += size
+		} else {
+			// if range not present then we want to write it
+			fs.Debugf(item.name, "write chunk offset=%d size=%d", off, size)
+			nn, err = item.fd.WriteAt(b[:size], off)
+			if err == nil && nn != size {
+				err = errors.Errorf("downloader: short write: tried to write %d but only %d written", size, nn)
+			}
+			item._written(off, int64(nn))
+		}
+		off += int64(nn)
+		b = b[nn:]
+		n += nn
+		if err != nil {
+			break
+		}
+	}
+	item.mu.Unlock()
+	return n, skipped, err
 }
 
 // Sync commits the current contents of the file to stable storage. Typically,
@@ -904,11 +949,11 @@ func (item *Item) Sync() (err error) {
 
 // rename the item
 func (item *Item) rename(name string, newName string, newObj fs.Object) (err error) {
-	var downloader *downloader
+	var downloaders *downloaders
 	// close downloader with mutex unlocked
 	defer func() {
-		if downloader != nil {
-			_ = downloader.close(nil)
+		if downloaders != nil {
+			_ = downloaders.close(nil)
 		}
 	}()
 
@@ -916,8 +961,8 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 	defer item.mu.Unlock()
 
 	// stop downloader
-	downloader = item.downloader
-	item.downloader = nil
+	downloaders = item.downloaders
+	item.downloaders = nil
 
 	// Set internal state
 	item.name = newName
