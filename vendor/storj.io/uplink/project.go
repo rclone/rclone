@@ -73,11 +73,6 @@ func (config Config) OpenProject(ctx context.Context, access *Access) (project *
 		return nil, packageError.Wrap(err)
 	}
 
-	proj, err := kvmetainfo.SetupProject(metainfo)
-	if err != nil {
-		return nil, packageError.Wrap(err)
-	}
-
 	// TODO: All these should be controlled by the satellite and not configured by the uplink.
 	// For now we need to have these hard coded values that match the satellite configuration
 	// to be able to create the underlying ecclient, segement store and stream store.
@@ -122,6 +117,7 @@ func (config Config) OpenProject(ctx context.Context, access *Access) (project *
 		return nil, packageError.Wrap(err)
 	}
 
+	proj := kvmetainfo.NewProject(streamStore, encBlockSize, segmentsSize, *metainfo)
 	db := kvmetainfo.New(proj, metainfo, streamStore, segmentStore, access.encAccess.Store())
 
 	var eg errgroup.Group

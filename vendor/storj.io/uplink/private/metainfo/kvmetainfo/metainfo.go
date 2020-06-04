@@ -46,8 +46,8 @@ func New(project *Project, metainfo *metainfo.Client, streams streams.Store, seg
 }
 
 // CreateBucket creates a new bucket with the specified information.
-func (db *DB) CreateBucket(ctx context.Context, bucketName string, info *storj.Bucket) (bucketInfo storj.Bucket, err error) {
-	return db.project.CreateBucket(ctx, bucketName, info)
+func (db *DB) CreateBucket(ctx context.Context, bucketName string) (bucketInfo storj.Bucket, err error) {
+	return db.project.CreateBucket(ctx, bucketName)
 }
 
 // DeleteBucket deletes bucket.

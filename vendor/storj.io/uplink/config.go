@@ -5,6 +5,7 @@ package uplink
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"storj.io/common/identity"
@@ -22,6 +23,16 @@ type Config struct {
 	// DialTimeout defines how long client should wait for establishing
 	// a connection to peers.
 	DialTimeout time.Duration
+
+	// DialContext is how sockets are opened and is called to establish
+	// a connection. If unset, net.Dialer is used.
+	DialContext func(ctx context.Context, network, address string) (net.Conn, error)
+}
+
+type dialContextFunc func(ctx context.Context, network, address string) (net.Conn, error)
+
+func (f dialContextFunc) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	return f(ctx, network, address)
 }
 
 func (config Config) dial(ctx context.Context, satelliteAddress string, apiKey *macaroon.APIKey) (_ *metainfo.Client, _ rpc.Dialer, fullNodeURL string, err error) {
@@ -45,6 +56,9 @@ func (config Config) dial(ctx context.Context, satelliteAddress string, apiKey *
 
 	dialer := rpc.NewDefaultDialer(tlsOptions)
 	dialer.DialTimeout = config.DialTimeout
+	if config.DialContext != nil {
+		dialer.Transport = dialContextFunc(config.DialContext)
+	}
 
 	nodeURL, err := storj.ParseNodeURL(satelliteAddress)
 	if err != nil {

@@ -16,7 +16,6 @@ import (
 
 	"storj.io/common/memory"
 	"storj.io/common/netutil"
-	"storj.io/common/pb"
 	"storj.io/common/peertls/tlsopts"
 	"storj.io/common/rpc/rpcpool"
 	"storj.io/common/rpc/rpctracing"
@@ -138,32 +137,6 @@ func (d Dialer) dialContext(ctx context.Context, address string) (net.Conn, erro
 		Conn: netutil.TrackClose(conn),
 		rate: d.TransferRate,
 	}, nil
-}
-
-// DialNode creates an rpc connection to the specified node.
-func (d Dialer) DialNode(ctx context.Context, node *pb.Node) (_ *Conn, err error) {
-	if node == nil {
-		return nil, Error.New("node is nil")
-	}
-
-	defer mon.Task()(&ctx, "node: "+node.Id.String()[0:8])(&err)
-
-	if d.TLSOptions == nil {
-		return nil, Error.New("tls options not set when required for this dial")
-	}
-
-	return d.dial(ctx, node.GetAddress().GetAddress(), d.TLSOptions.ClientTLSConfig(node.Id))
-}
-
-// DialAddressID dials to the specified address and asserts it has the given node id.
-func (d Dialer) DialAddressID(ctx context.Context, address string, id storj.NodeID) (_ *Conn, err error) {
-	defer mon.Task()(&ctx, "node: "+id.String()[0:8])(&err)
-
-	if d.TLSOptions == nil {
-		return nil, Error.New("tls options not set when required for this dial")
-	}
-
-	return d.dial(ctx, address, d.TLSOptions.ClientTLSConfig(id))
 }
 
 // DialNodeURL dials to the specified node url and asserts it has the given node id.

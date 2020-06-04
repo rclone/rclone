@@ -11,7 +11,6 @@ import (
 	"github.com/zeebo/errs"
 
 	"storj.io/common/errs2"
-	"storj.io/common/memory"
 	"storj.io/common/rpc/rpcstatus"
 	"storj.io/common/storj"
 )
@@ -55,18 +54,7 @@ func (project *Project) StatBucket(ctx context.Context, bucket string) (info *Bu
 func (project *Project) CreateBucket(ctx context.Context, bucket string) (created *Bucket, err error) {
 	defer mon.Func().RestartTrace(&ctx)(&err)
 
-	// TODO remove bucket configuration when proper fix will be deployed on satellite
-	b, err := project.project.CreateBucket(ctx, bucket, &storj.Bucket{
-		PathCipher: storj.EncAESGCM,
-		DefaultRedundancyScheme: storj.RedundancyScheme{
-			Algorithm:      storj.ReedSolomon,
-			ShareSize:      256 * memory.B.Int32(),
-			RequiredShares: 29,
-			RepairShares:   35,
-			OptimalShares:  80,
-			TotalShares:    110,
-		},
-	})
+	b, err := project.project.CreateBucket(ctx, bucket)
 
 	if err != nil {
 		if storj.ErrNoBucket.Has(err) {

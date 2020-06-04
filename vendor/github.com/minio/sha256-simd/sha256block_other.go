@@ -1,4 +1,4 @@
-//+build noasm appengine ppc64 ppc64le mips mipsle mips64 mips64le s390x wasm
+//+build appengine noasm !amd64,!arm64
 
 /*
  * Minio Cloud Storage, (C) 2019 Minio, Inc.
