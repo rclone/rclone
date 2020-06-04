@@ -1,6 +1,7 @@
 package accounting
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"sync"
@@ -135,12 +136,12 @@ func (tr *Transfer) Reset() {
 }
 
 // Account returns reader that knows how to keep track of transfer progress.
-func (tr *Transfer) Account(in io.ReadCloser) *Account {
+func (tr *Transfer) Account(ctx context.Context, in io.ReadCloser) *Account {
 	tr.mu.Lock()
 	if tr.acc == nil {
-		tr.acc = newAccountSizeName(tr.stats, in, tr.size, tr.remote)
+		tr.acc = newAccountSizeName(ctx, tr.stats, in, tr.size, tr.remote)
 	} else {
-		tr.acc.UpdateReader(in)
+		tr.acc.UpdateReader(ctx, in)
 	}
 	tr.mu.Unlock()
 	return tr.acc

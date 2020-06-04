@@ -79,7 +79,7 @@ func (fh *ReadFileHandle) openPending() (err error) {
 	}
 	tr := accounting.GlobalStats().NewTransfer(o)
 	fh.done = tr.Done
-	fh.r = tr.Account(r).WithBuffer() // account the transfer
+	fh.r = tr.Account(context.TODO(), r).WithBuffer() // account the transfer
 	fh.opened = true
 
 	return nil
@@ -158,7 +158,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 			return err
 		}
 	}
-	fh.r.UpdateReader(r)
+	fh.r.UpdateReader(context.TODO(), r)
 	fh.offset = offset
 	return nil
 }

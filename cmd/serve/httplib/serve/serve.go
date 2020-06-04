@@ -79,7 +79,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	defer func() {
 		tr.Done(err)
 	}()
-	in := tr.Account(file) // account the transfer (no buffering)
+	in := tr.Account(r.Context(), file) // account the transfer (no buffering)
 
 	w.WriteHeader(code)
 

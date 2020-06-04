@@ -318,7 +318,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	defer func() {
 		tr1.Done(nil) // error handling is done by the caller
 	}()
-	in1 = tr1.Account(in1).WithBuffer() // account and buffer the transfer
+	in1 = tr1.Account(ctx, in1).WithBuffer() // account and buffer the transfer
 
 	in2, err := src.Open(ctx)
 	if err != nil {
@@ -328,7 +328,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	defer func() {
 		tr2.Done(nil) // error handling is done by the caller
 	}()
-	in2 = tr2.Account(in2).WithBuffer() // account and buffer the transfer
+	in2 = tr2.Account(ctx, in2).WithBuffer() // account and buffer the transfer
 
 	// To assign err variable before defer.
 	differ, err = CheckEqualReaders(in1, in2)

@@ -366,7 +366,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			return nil, accounting.ErrorMaxTransferLimitReachedFatal
 		}
 		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && f.Features().ServerSideAcrossConfigs)) {
-			in := tr.Account(nil) // account the transfer
+			in := tr.Account(ctx, nil) // account the transfer
 			in.ServerSideCopyStart()
 			newDst, err = doCopy(ctx, src, remote)
 			if err == nil {
@@ -421,7 +421,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						dst, err = Rcat(ctx, f, remote, in0, src.ModTime(ctx))
 						newDst = dst
 					} else {
-						in := tr.Account(in0).WithBuffer() // account and buffer the transfer
+						in := tr.Account(ctx, in0).WithBuffer() // account and buffer the transfer
 						var wrappedSrc fs.ObjectInfo = src
 						// We try to pass the original object if possible
 						if src.Remote() != remote {
@@ -1054,7 +1054,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		if count >= 0 {
 			in = &readCloser{Reader: &io.LimitedReader{R: in, N: count}, Closer: in}
 		}
-		in = tr.Account(in).WithBuffer() // account and buffer the transfer
+		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
 		// take the lock just before we output stuff, so at the last possible moment
 		mu.Lock()
 		defer mu.Unlock()
@@ -1072,7 +1072,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	defer func() {
 		tr.Done(err)
 	}()
-	in = tr.Account(in).WithBuffer()
+	in = tr.Account(ctx, in).WithBuffer()
 
 	readCounter := readers.NewCountingReader(in)
 	var trackingIn io.Reader
@@ -1420,7 +1420,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 			tr.Done(err)
 		}()
 		body := ioutil.NopCloser(in) // we let the server close the body
-		in := tr.Account(body)       // account the transfer (no buffering)
+		in := tr.Account(ctx, body)  // account the transfer (no buffering)
 
 		if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 			// prevents "broken pipe" errors
