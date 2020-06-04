@@ -1959,6 +1959,20 @@ func (f *Fs) getMemoryPool(size int64) *pool.Pool {
 	)
 }
 
+// PublicLink generates a public link to the remote path (usually readable by anyone)
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
+	if _, err := f.NewObject(ctx, remote); err != nil {
+		return "", err
+	}
+	bucket, bucketPath := f.split(remote)
+	httpReq, _ := f.c.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: &bucket,
+		Key:    &bucketPath,
+	})
+
+	return httpReq.Presign(time.Duration(expire))
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
