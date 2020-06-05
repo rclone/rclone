@@ -269,7 +269,9 @@ func (f *Fs) connect(ctx context.Context) (project *uplink.Project, err error) {
 	fs.Debugf(f, "connecting...")
 	defer fs.Debugf(f, "connected: %+v", err)
 
-	cfg := uplink.Config{}
+	cfg := uplink.Config{
+		UserAgent: "rclone",
+	}
 
 	project, err = cfg.OpenProject(ctx, f.access)
 	if err != nil {
