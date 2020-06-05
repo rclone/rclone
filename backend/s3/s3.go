@@ -59,6 +59,7 @@ import (
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/rclone/rclone/lib/structs"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -2241,19 +2242,12 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 
 	memPool := f.getMemoryPool(int64(partSize))
 
+	var mReq s3.CreateMultipartUploadInput
+	structs.SetFrom(&mReq, req)
 	var cout *s3.CreateMultipartUploadOutput
 	err = f.pacer.Call(func() (bool, error) {
 		var err error
-		cout, err = f.c.CreateMultipartUploadWithContext(ctx, &s3.CreateMultipartUploadInput{
-			Bucket:               req.Bucket,
-			ACL:                  req.ACL,
-			Key:                  req.Key,
-			ContentType:          req.ContentType,
-			Metadata:             req.Metadata,
-			ServerSideEncryption: req.ServerSideEncryption,
-			SSEKMSKeyId:          req.SSEKMSKeyId,
-			StorageClass:         req.StorageClass,
-		})
+		cout, err = f.c.CreateMultipartUploadWithContext(ctx, &mReq)
 		return f.shouldRetry(err)
 	})
 	if err != nil {
@@ -2466,6 +2460,35 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if o.fs.opt.StorageClass != "" {
 		req.StorageClass = &o.fs.opt.StorageClass
 	}
+	// Apply upload options
+	for _, option := range options {
+		key, value := option.Header()
+		lowerKey := strings.ToLower(key)
+		switch lowerKey {
+		case "":
+			// ignore
+		case "cache-control":
+			req.CacheControl = aws.String(value)
+		case "content-disposition":
+			req.ContentDisposition = aws.String(value)
+		case "content-encoding":
+			req.ContentEncoding = aws.String(value)
+		case "content-language":
+			req.ContentLanguage = aws.String(value)
+		case "content-type":
+			req.ContentType = aws.String(value)
+		case "x-amz-tagging":
+			req.Tagging = aws.String(value)
+		default:
+			const amzMetaPrefix = "x-amz-meta-"
+			if strings.HasPrefix(lowerKey, amzMetaPrefix) {
+				metaKey := lowerKey[len(amzMetaPrefix):]
+				req.Metadata[metaKey] = aws.String(value)
+			} else {
+				fs.Errorf(o, "Don't know how to set key %q on upload", key)
+			}
+		}
+	}
 
 	if multipart {
 		err = o.uploadMultipart(ctx, &req, size, in)
@@ -2505,18 +2528,6 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// set the headers we signed and the length
 		httpReq.Header = headers
 		httpReq.ContentLength = size
-
-		for _, option := range options {
-			switch option.(type) {
-			case *fs.HTTPOption:
-				key, value := option.Header()
-				httpReq.Header.Add(key, value)
-			default:
-				if option.Mandatory() {
-					fs.Logf(o, "Unsupported mandatory option: %v", option)
-				}
-			}
-		}
 
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			resp, err := o.fs.srv.Do(httpReq)
