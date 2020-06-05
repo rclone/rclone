@@ -21,23 +21,20 @@ type MountInfo struct {
 }
 
 var (
+	// mutex to protect all the variables in this block
+	mountMu sync.Mutex
 	// Mount functions available
 	mountFns = map[string]MountFn{}
-	// mutex for mountFns
-	mountFnsMutex = &sync.Mutex{}
-
 	// Map of mounted path => MountInfo
 	liveMounts = map[string]MountInfo{}
-	// mutex for live mounts
-	liveMountsMutex = sync.Mutex{}
 )
 
 // AddRc adds mount and unmount functionality to rc
 func AddRc(mountUtilName string, mountFunction MountFn) {
-	mountFnsMutex.Lock()
+	mountMu.Lock()
+	defer mountMu.Unlock()
 	// rcMount allows the mount command to be run from rc
 	mountFns[mountUtilName] = mountFunction
-	mountFnsMutex.Unlock()
 }
 
 func init() {
@@ -74,6 +71,9 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 	mountType, err := in.GetString("mountType")
 
+	mountMu.Lock()
+	defer mountMu.Unlock()
+
 	if err != nil || mountType == "" {
 		if mountFns["mount"] != nil {
 			mountType = "mount"
@@ -92,7 +92,6 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 	if mountFns[mountType] != nil {
 		_, _, unmountFn, err := mountFns[mountType](fdst, mountPoint)
-		liveMountsMutex.Lock()
 
 		liveMounts[mountPoint] = MountInfo{
 			unmountFn:  unmountFn,
@@ -100,7 +99,6 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 			Fs:         fdst.Name(),
 			MountPoint: mountPoint,
 		}
-		liveMountsMutex.Unlock()
 		if err != nil {
 			log.Printf("mount FAILED: %v", err)
 			return nil, err
@@ -139,29 +137,13 @@ func unMountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, err
 	}
+	mountMu.Lock()
+	defer mountMu.Unlock()
 	err = performUnMount(mountPoint)
 	if err != nil {
 		return nil, err
 	}
 	return nil, nil
-}
-
-// performUnMount unmounts the specified mountPoint
-func performUnMount(mountPoint string) (err error) {
-	liveMountsMutex.Lock()
-	defer liveMountsMutex.Unlock()
-	mountInfo, ok := liveMounts[mountPoint]
-
-	if ok {
-		err := mountInfo.unmountFn()
-		if err != nil {
-			return err
-		}
-		delete(liveMounts, mountPoint)
-	} else {
-		return errors.New("mount not found")
-	}
-	return nil
 }
 
 func init() {
@@ -189,11 +171,11 @@ Eg
 // mountTypesRc returns a list of available mount types.
 func mountTypesRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	var mountTypes = []string{}
-	mountFnsMutex.Lock()
+	mountMu.Lock()
+	defer mountMu.Unlock()
 	for mountType := range mountFns {
 		mountTypes = append(mountTypes, mountType)
 	}
-	mountFnsMutex.Unlock()
 	sort.Strings(mountTypes)
 	return rc.Params{
 		"mountTypes": mountTypes,
@@ -222,12 +204,58 @@ Eg
 // listMountsRc returns a list of current mounts
 func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	var mountTypes = []MountInfo{}
-	liveMountsMutex.Lock()
+	mountMu.Lock()
+	defer mountMu.Unlock()
 	for _, a := range liveMounts {
 		mountTypes = append(mountTypes, a)
 	}
-	liveMountsMutex.Unlock()
 	return rc.Params{
 		"mountPoints": mountTypes,
 	}, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "mount/unmountall",
+		AuthRequired: true,
+		Fn:           unmountAll,
+		Title:        "Show current mount points",
+		Help: `This shows currently mounted points, which can be used for performing an unmount
+
+This takes no parameters and returns error if unmount does not succeed.
+
+Eg
+
+    rclone rc mount/unmountall
+`,
+	})
+}
+
+// unmountAll unmounts all the created mounts
+func unmountAll(_ context.Context, in rc.Params) (out rc.Params, err error) {
+	mountMu.Lock()
+	defer mountMu.Unlock()
+	for key, mountInfo := range liveMounts {
+		err = performUnMount(mountInfo.MountPoint)
+		if err != nil {
+			fs.Debugf(nil, "Couldn't unmount : %s", key)
+			return nil, err
+		}
+	}
+	return nil, nil
+}
+
+// performUnMount unmounts the specified mountPoint
+func performUnMount(mountPoint string) (err error) {
+	mountInfo, ok := liveMounts[mountPoint]
+	if ok {
+		err := mountInfo.unmountFn()
+		if err != nil {
+			return err
+		}
+		delete(liveMounts, mountPoint)
+	} else {
+		return errors.New("mount not found")
+	}
+	return nil
 }
