@@ -44,7 +44,7 @@ outer:
 			newName = fmt.Sprintf("%s-%d%s", base, i+suffix, ext)
 			_, err = f.NewObject(ctx, newName)
 		}
-		if !skipDestructive(ctx, o, "rename") {
+		if !SkipDestructive(ctx, o, "rename") {
 			newObj, err := doMove(ctx, o, newName)
 			if err != nil {
 				err = fs.CountError(err)
@@ -253,7 +253,7 @@ func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]fs
 		return errors.Errorf("%v: can't flush dir cache", f)
 	}
 	for _, dirs := range duplicateDirs {
-		if !skipDestructive(ctx, dirs[0], "merge duplicate directories") {
+		if !SkipDestructive(ctx, dirs[0], "merge duplicate directories") {
 			fs.Infof(dirs[0], "Merging contents of duplicate directories")
 			err := mergeDirs(ctx, dirs)
 			if err != nil {

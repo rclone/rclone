@@ -1063,8 +1063,7 @@ func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
 	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && operations.SameConfig(fsrc, fdst) && filter.Active.InActive() {
-		if fs.Config.DryRun {
-			fs.Logf(fdst, "Not doing server side directory move as --dry-run")
+		if operations.SkipDestructive(ctx, fdst, "server side directory move") {
 			return nil
 		}
 		fs.Debugf(fdst, "Using server side directory move")
