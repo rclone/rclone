@@ -92,7 +92,8 @@ const SetSparseImplemented = true
 
 // SetSparse makes the file be a sparse file
 func SetSparse(out *os.File) error {
-	err := syscall.DeviceIoControl(syscall.Handle(out.Fd()), FSCTL_SET_SPARSE, nil, 0, nil, 0, nil, nil)
+	var bytesReturned uint32
+	err := syscall.DeviceIoControl(syscall.Handle(out.Fd()), FSCTL_SET_SPARSE, nil, 0, nil, 0, &bytesReturned, nil)
 	if err != nil {
 		return errors.Wrap(err, "DeviceIoControl FSCTL_SET_SPARSE")
 	}
