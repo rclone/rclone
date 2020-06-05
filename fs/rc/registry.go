@@ -22,6 +22,7 @@ type Call struct {
 	Title        string // help for the function
 	AuthRequired bool   // if set then this call requires authorisation to be set
 	Help         string // multi-line markdown formatted help
+	NeedsRequest bool   // if set then this call will be passed the original request object as _request
 }
 
 // Registry holds the list of all the registered remote control functions
