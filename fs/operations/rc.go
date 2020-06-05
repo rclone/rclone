@@ -138,10 +138,11 @@ func rcMoveOrCopyFile(ctx context.Context, in rc.Params, cp bool) (out rc.Params
 
 func init() {
 	for _, op := range []struct {
-		name     string
-		title    string
-		help     string
-		noRemote bool
+		name         string
+		title        string
+		help         string
+		noRemote     bool
+		needsRequest bool
 	}{
 		{name: "mkdir", title: "Make a destination directory or container"},
 		{name: "rmdir", title: "Remove an empty directory or container"},
@@ -160,6 +161,7 @@ func init() {
 		rc.Add(rc.Call{
 			Path:         "operations/" + op.name,
 			AuthRequired: true,
+			NeedsRequest: op.needsRequest,
 			Fn: func(ctx context.Context, in rc.Params) (rc.Params, error) {
 				return rcSingleCommand(ctx, in, op.name, op.noRemote)
 			},
