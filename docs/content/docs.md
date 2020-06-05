@@ -73,6 +73,9 @@ storage system in the config file then the sub path, eg
 
 You can define as many storage paths as you like in the config file.
 
+Please use the [`-i` / `--interactive`](#interactive) flag while
+learning rclone to avoid accidental data loss.
+
 Subcommands
 -----------
 
@@ -686,7 +689,45 @@ This can be useful as an additional layer of protection for immutable
 or append-only data sets (notably backup archives), where modification
 implies corruption and should not be propagated.
 
-## --leave-root ###
+### -i / --interactive {#interactive}
+
+This flag can be used to tell rclone that you wish a manual
+confirmation before destructive operations.
+
+It is **recommended** that you use this flag while learning rclone
+especially with `rclone sync`.
+
+For example
+
+```
+$ rclone delete -i /tmp/dir
+rclone: delete "important-file.txt"?
+y) Yes, this is OK (default)
+n) No, skip this
+s) Skip all delete operations with no more questions
+!) Do all delete operations with no more questions
+q) Exit rclone now.
+y/n/s/!/q> n
+```
+
+The options mean
+
+- `y`: **Yes**, this operation should go ahead. You can also press Return
+  for this to happen. You'll be asked every time unless you choose `s`
+  or `!`.
+- `n`: **No**, do not do this operation. You'll be asked every time unless
+  you choose `s` or `!`.
+- `s`: **Skip** all the following operations of this type with no more
+  questions. This takes effect until rclone exits. If there are any
+  different kind of operations you'll be prompted for them.
+- `!`: **Do all** the following operations with no more
+  questions. Useful if you've decided that you don't mind rclone doing
+  that kind of operation. This takes effect until rclone exits . If
+  there are any different kind of operations you'll be prompted for
+  them.
+- `q`: **Quit** rclone now, just in case!
+
+### --leave-root ####
 
 During rmdirs it will not remove root directory, even if it's empty.
 
