@@ -80,7 +80,7 @@ List the contents of a directory
 Sync `/home/local/directory` to the remote path, deleting any
 excess files in the path.
 
-    rclone sync /home/local/directory remote:directory
+    rclone sync -i /home/local/directory remote:directory
 
 Yandex paths may be as deep as required, eg `remote:directory/subdirectory`.
 

@@ -34,8 +34,10 @@ merged.
 
 The ` + "`" + `dedupe` + "`" + ` command will delete all but one of any identical (same
 md5sum) files it finds without confirmation.  This means that for most
-duplicated files the ` + "`" + `dedupe` + "`" + ` command will not be interactive.  You
-can use ` + "`" + `--dry-run` + "`" + ` to see what would happen without doing anything.
+duplicated files the ` + "`" + `dedupe` + "`" + ` command will not be interactive.
+
+**Important**: Since this can cause data loss, test first with the
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 
 Here is an example run.
 
