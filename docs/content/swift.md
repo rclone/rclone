@@ -132,7 +132,7 @@ List the contents of a container
 Sync `/home/local/directory` to the remote container, deleting any
 excess files in the container.
 
-    rclone sync /home/local/directory remote:container
+    rclone sync -i /home/local/directory remote:container
 
 ### Configuration from an OpenStack credentials file ###
 

@@ -45,6 +45,9 @@ Then delete
 
 That reads "delete everything with a minimum size of 100 MB", hence
 delete all files bigger than 100MBytes.
+
+**Important**: Since this can cause data loss, test first with the
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

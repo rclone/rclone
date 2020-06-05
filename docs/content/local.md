@@ -8,7 +8,7 @@ description: "Rclone docs for the local filesystem"
 
 Local paths are specified as normal filesystem paths, eg `/path/to/wherever`, so
 
-    rclone sync /home/source /tmp/destination
+    rclone sync -i /home/source /tmp/destination
 
 Will sync `/home/source` to `/tmp/destination`
 
