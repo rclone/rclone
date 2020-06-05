@@ -95,7 +95,7 @@ List the contents of a directory
 Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
-    rclone sync /home/local/directory remote:directory
+    rclone sync -i /home/local/directory remote:directory
 
 ### SSH Authentication ###
 
@@ -302,11 +302,11 @@ different. This issue affects among others Synology NAS boxes.
 
 Shared folders can be found in directories representing volumes
 
-    rclone sync /home/local/directory remote:/directory --ssh-path-override /volume2/directory
+    rclone sync -i /home/local/directory remote:/directory --ssh-path-override /volume2/directory
 
 Home directory can be found in a shared folder called "home"
 
-    rclone sync /home/local/directory remote:/home/directory --ssh-path-override /volume1/homes/USER/directory
+    rclone sync -i /home/local/directory remote:/home/directory --ssh-path-override /volume1/homes/USER/directory
 
 - Config:      path_override
 - Env Var:     RCLONE_SFTP_PATH_OVERRIDE

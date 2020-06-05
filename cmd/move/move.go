@@ -49,7 +49,7 @@ option when moving a small number of files into a large destination
 can speed transfers up greatly.
 
 **Important**: Since this can cause data loss, test first with the
---dry-run flag.
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics.
 `,
