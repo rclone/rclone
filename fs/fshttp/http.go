@@ -15,10 +15,13 @@ import (
 	"reflect"
 	"sync"
 	"time"
+	"syscall"
 
 	"github.com/rclone/rclone/fs"
 	"golang.org/x/net/publicsuffix"
 	"golang.org/x/time/rate"
+//	"golang.org/x/net/ipv4"
+//	"golang.org/x/net/ipv6"
 )
 
 const (
@@ -372,12 +375,33 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	return resp, err
 }
 
+// Dialer.Control interface implementation for setting DSCP from configuration
+func GetDSCPControlFunc(ci *fs.ConfigInfo) func(network, address string, c syscall.RawConn) error {
+	if ci.DSCP == 0 {
+		log.Printf("No DSCP value was configured, doing nothing")
+		return nil
+	}
+
+	return func(network, address string, c syscall.RawConn) error {
+		return c.Control(func(fd uintptr) {
+			tos := ((ci.DSCP & 0x3f) << 2)
+			err := syscall.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_TOS, int(tos))
+			if err == nil {
+				log.Printf("DSCP successfully set to %02X (TOS %02X)", ci.DSCP, tos)
+			} else {
+				log.Printf("Failed to set DSCP to %02X (TOS %02X): %v", ci.DSCP, tos, err)
+			}
+		})
+	}
+}
+
 // NewDialer creates a net.Dialer structure with Timeout, Keepalive
 // and LocalAddr set from rclone flags.
 func NewDialer(ci *fs.ConfigInfo) *net.Dialer {
 	dialer := &net.Dialer{
 		Timeout:   ci.ConnectTimeout,
 		KeepAlive: 30 * time.Second,
+		Control:   GetDSCPControlFunc(ci),
 	}
 	if ci.BindAddr != nil {
 		dialer.LocalAddr = &net.TCPAddr{IP: ci.BindAddr}

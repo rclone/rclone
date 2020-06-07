@@ -106,6 +106,14 @@ func Uint32VarP(flags *pflag.FlagSet, p *uint32, name, shorthand string, value u
 	setDefaultFromEnv(flags, name)
 }
 
+// Uint8VarP defines a flag which can be overridden by an environment variable
+//
+// It is a thin wrapper around pflag.Uint8VarP
+func Uint8VarP(flags *pflag.FlagSet, p *uint8, name, shorthand string, value uint8, usage string) {
+	flags.Uint8VarP(p, name, shorthand, value, usage)
+	setDefaultFromEnv(flags, name)
+}
+
 // Float64P defines a flag which can be overridden by an environment variable
 //
 // It is a thin wrapper around pflag.Float64P

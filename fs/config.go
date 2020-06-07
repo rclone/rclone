@@ -116,6 +116,7 @@ type ConfigInfo struct {
 	UploadHeaders          []*HTTPOption
 	DownloadHeaders        []*HTTPOption
 	Headers                []*HTTPOption
+	DSCP                   uint8
 }
 
 // NewConfig creates a new config with everything set to the default
