@@ -774,6 +774,21 @@ larger files then you will need to increase chunk_size.`,
 			Default:  minChunkSize,
 			Advanced: true,
 		}, {
+			Name: "max_upload_parts",
+			Help: `Maximum number of parts in a multipart upload.
+
+This option defines the maximum number of multipart chunks to use
+when doing a multipart upload.
+
+This can be useful if a service does not support the AWS S3
+specification of 10,000 chunks.
+
+Rclone will automatically increase the chunk size when uploading a
+large file of a known size to stay below this number of chunks limit.
+`,
+			Default:  maxUploadParts,
+			Advanced: true,
+		}, {
 			Name: "copy_cutoff",
 			Help: `Cutoff for switching to multipart copy
 
@@ -931,6 +946,7 @@ type Options struct {
 	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
 	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
 	ChunkSize             fs.SizeSuffix        `config:"chunk_size"`
+	MaxUploadParts        int64                `config:"max_upload_parts"`
 	DisableChecksum       bool                 `config:"disable_checksum"`
 	SessionToken          string               `config:"session_token"`
 	UploadConcurrency     int                  `config:"upload_concurrency"`
@@ -2197,6 +2213,13 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	}
 	tokens := pacer.NewTokenDispenser(concurrency)
 
+	uploadParts := f.opt.MaxUploadParts
+	if uploadParts < 1 {
+		uploadParts = 1
+	} else if uploadParts > maxUploadParts {
+		uploadParts = maxUploadParts
+	}
+
 	// calculate size of parts
 	partSize := int(f.opt.ChunkSize)
 
@@ -2206,13 +2229,13 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	if size == -1 {
 		warnStreamUpload.Do(func() {
 			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
-				f.opt.ChunkSize, fs.SizeSuffix(partSize*maxUploadParts))
+				f.opt.ChunkSize, fs.SizeSuffix(int64(partSize)*uploadParts))
 		})
 	} else {
 		// Adjust partSize until the number of parts is small enough.
-		if size/int64(partSize) >= maxUploadParts {
+		if size/int64(partSize) >= uploadParts {
 			// Calculate partition size rounded up to the nearest MB
-			partSize = int((((size / maxUploadParts) >> 20) + 1) << 20)
+			partSize = int((((size / uploadParts) >> 20) + 1) << 20)
 		}
 	}
 
