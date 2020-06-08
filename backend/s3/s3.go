@@ -775,15 +775,16 @@ larger files then you will need to increase chunk_size.`,
 			Advanced: true,
 		}, {
 			Name: "max_upload_parts",
-			Help: `Maximum amount of parts being used.
+			Help: `Maximum number of parts in a multipart upload.
 
-This option defined maximum amount of multipart chunks to upload files.
+This option defines the maximum number of multipart chunks to use
+when doing a multipart upload.
 
-This can be useful if service does support less amount of parts than AWS S3 specification.
-Maximum to be 10,000 chunks.
+This can be useful if a service does not support the AWS S3
+specification of 10,000 chunks.
 
 Rclone will automatically increase the chunk size when uploading a
-large file of known size to stay below that limit chunks limit.
+large file of a known size to stay below this number of chunks limit.
 `,
 			Default:  maxUploadParts,
 			Advanced: true,
