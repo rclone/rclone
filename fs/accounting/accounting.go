@@ -129,6 +129,13 @@ func (acc *Account) GetAsyncReader() *asyncreader.AsyncReader {
 // StopBuffering stops the async buffer doing any more buffering
 func (acc *Account) StopBuffering() {
 	if asyncIn, ok := acc.in.(*asyncreader.AsyncReader); ok {
+		asyncIn.StopBuffering()
+	}
+}
+
+// Abandon stops the async buffer doing any more buffering
+func (acc *Account) Abandon() {
+	if asyncIn, ok := acc.in.(*asyncreader.AsyncReader); ok {
 		asyncIn.Abandon()
 	}
 }
@@ -139,7 +146,7 @@ func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.mu.Lock()
 	withBuf := acc.withBuf
 	if withBuf {
-		acc.StopBuffering()
+		acc.Abandon()
 		acc.withBuf = false
 	}
 	acc.in = in
