@@ -248,7 +248,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		_ = resp.Body.Close()
 		return nil, fserrors.NoRetryError(err)
 	}
-	return resp.Body, err
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
 }
 
 // Update the already existing object
