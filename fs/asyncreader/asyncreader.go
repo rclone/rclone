@@ -268,9 +268,15 @@ func (a *AsyncReader) SkipBytes(skip int) (ok bool) {
 	}
 }
 
-// Abandon will ensure that the underlying async reader is shut down.
-// It will NOT close the input supplied on New.
-func (a *AsyncReader) Abandon() {
+// StopBuffering will ensure that the underlying async reader is shut
+// down so no more is read from the input.
+//
+// This does not free the memory so Abandon() or Close() need to be
+// called on the input.
+//
+// This does not wait for Read/WriteTo to complete so can be called
+// concurrently to those.
+func (a *AsyncReader) StopBuffering() {
 	select {
 	case <-a.exit:
 		// Do nothing if reader routine already exited
@@ -280,6 +286,14 @@ func (a *AsyncReader) Abandon() {
 	// Close and wait for go routine
 	close(a.exit)
 	<-a.exited
+}
+
+// Abandon will ensure that the underlying async reader is shut down
+// and memory is returned. It does everything but close the input.
+//
+// It will NOT close the input supplied on New.
+func (a *AsyncReader) Abandon() {
+	a.StopBuffering()
 	// take the lock to wait for Read/WriteTo to complete
 	a.mu.Lock()
 	defer a.mu.Unlock()
