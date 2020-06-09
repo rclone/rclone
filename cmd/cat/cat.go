@@ -20,6 +20,7 @@ var (
 	offset  = int64(0)
 	count   = int64(-1)
 	discard = false
+        file    = false
 )
 
 func init() {
@@ -30,6 +31,7 @@ func init() {
 	flags.Int64VarP(cmdFlags, &offset, "offset", "", offset, "Start printing at offset N (or from end if -ve).")
 	flags.Int64VarP(cmdFlags, &count, "count", "", count, "Only print N characters.")
 	flags.BoolVarP(cmdFlags, &discard, "discard", "", discard, "Discard the output instead of printing.")
+	flags.BoolVarP(cmdFlags, &file, "file", "", file, "Expect path to file. Error if directory is passed.")
 }
 
 var commandDefinition = &cobra.Command{
@@ -71,11 +73,12 @@ Note that if offset is negative it will count from the end, so
 			count = -1
 		}
 		cmd.CheckArgs(1, 1, command, args)
-		fsrc := cmd.NewFsSrc(args)
+		fsrc := cmd.NewFsSrcForceFile(args)
 		var w io.Writer = os.Stdout
 		if discard {
 			w = ioutil.Discard
 		}
+
 		cmd.Run(false, false, command, func() error {
 			return operations.Cat(context.Background(), fsrc, w, offset, count)
 		})

@@ -130,6 +130,14 @@ func NewFsSrc(args []string) fs.Fs {
 	return fsrc
 }
 
+func NewFsSrcForceFile(args []string) fs.Fs {
+	fsrc, fileName := newFsFileAddFilter(args[0])
+        if fileName == "" {
+                log.Fatal("Must provide path to file when --file is specified")
+        }
+	return fsrc
+}
+
 // newFsDir creates an Fs from a name
 //
 // This must point to a directory
