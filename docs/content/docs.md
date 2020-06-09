@@ -1324,13 +1324,25 @@ Note also that `--track-renames` is incompatible with
 `--delete-before` and will select `--delete-after` instead of
 `--delete-during`.
 
-### --track-renames-strategy (hash,modtime) ###
+### --track-renames-strategy (hash,modtime,leaf,size) ###
 
-This option changes the matching criteria for `--track-renames` to match
-by any combination of modtime, hash, size. Matching by size is always enabled
-no matter what option is selected here. This also means
-that it enables `--track-renames` support for encrypted destinations.
-If nothing is specified, the default option is matching by hashes.
+This option changes the matching criteria for `--track-renames`.
+
+The matching is controlled by a comma separated selection of these tokens:
+
+- `modtime` - the modification time of the file - not supported on all backends
+- `hash` - the hash of the file contents - not supported on all backends
+- `leaf` - the name of the file not including its directory name
+- `size` - the size of the file (this is always enabled)
+
+So using `--track-renames-strategy modtime,leaf` would match files
+based on modification time, the leaf of the file name and the size
+only.
+
+Using `--track-renames-strategy modtime` or `leaf` can enable
+`--track-renames` support for encrypted destinations.
+
+If nothing is specified, the default option is matching by `hash`es.
 
 ### --delete-(before,during,after) ###
 
