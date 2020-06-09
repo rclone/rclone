@@ -356,7 +356,7 @@ func (f *File) ModTime() (modTime time.Time) {
 		return pendingModTime
 	}
 	if o == nil {
-		return d.ModTime()
+		return time.Now()
 	}
 	return o.ModTime(context.TODO())
 }
