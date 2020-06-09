@@ -184,8 +184,6 @@ func (fh *RWFileHandle) String() string {
 	if fh == nil {
 		return "<nil *RWFileHandle>"
 	}
-	fh.mu.Lock()
-	defer fh.mu.Unlock()
 	if fh.file == nil {
 		return "<nil *RWFileHandle.file>"
 	}
