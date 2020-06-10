@@ -1523,7 +1523,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 			if req.Config.Credentials == credentials.AnonymousCredentials {
 				return
 			}
-			sign(v.AccessKeyID, v.SecretAccessKey, req.HTTPRequest)
+			v2sign(opt, req.HTTPRequest)
 		}
 		c.Handlers.Sign.Clear()
 		c.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)

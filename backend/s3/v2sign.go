@@ -9,7 +9,10 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"sync"
 	"time"
+
+	"github.com/rclone/rclone/fs"
 )
 
 // URL parameters that need to be added to the signature
@@ -35,10 +38,13 @@ var s3ParamsToSign = map[string]struct{}{
 	"response-content-encoding":    {},
 }
 
+// Warn once about empty endpoint
+var warnEmptyEndpointOnce sync.Once
+
 // sign signs requests using v2 auth
 //
 // Cobbled together from goamz and aws-sdk-go
-func sign(AccessKey, SecretKey string, req *http.Request) {
+func v2sign(opt *Options, req *http.Request) {
 	// Set date
 	date := time.Now().UTC().Format(time.RFC1123)
 	req.Header.Set("Date", date)
@@ -47,6 +53,21 @@ func sign(AccessKey, SecretKey string, req *http.Request) {
 	uri := req.URL.EscapedPath()
 	if uri == "" {
 		uri = "/"
+	}
+	// If not using path style then need to stick the bucket on
+	// the start of the requests if doing a bucket based query
+	if !opt.ForcePathStyle {
+		if opt.Endpoint == "" {
+			warnEmptyEndpointOnce.Do(func() {
+				fs.Logf(nil, "If using v2 auth with AWS and force_path_style=false, endpoint must be set in the config")
+			})
+		} else if req.URL.Host != opt.Endpoint {
+			// read the bucket off the start of the hostname
+			i := strings.IndexRune(req.URL.Host, '.')
+			if i >= 0 {
+				uri = "/" + req.URL.Host[:i] + uri
+			}
+		}
 	}
 
 	// Look through headers of interest
@@ -96,11 +117,11 @@ func sign(AccessKey, SecretKey string, req *http.Request) {
 
 	// Make signature
 	payload := req.Method + "\n" + md5 + "\n" + contentType + "\n" + date + "\n" + joinedHeadersToSign + uri
-	hash := hmac.New(sha1.New, []byte(SecretKey))
+	hash := hmac.New(sha1.New, []byte(opt.SecretAccessKey))
 	_, _ = hash.Write([]byte(payload))
 	signature := make([]byte, base64.StdEncoding.EncodedLen(hash.Size()))
 	base64.StdEncoding.Encode(signature, hash.Sum(nil))
 
 	// Set signature in request
-	req.Header.Set("Authorization", "AWS "+AccessKey+":"+string(signature))
+	req.Header.Set("Authorization", "AWS "+opt.AccessKeyID+":"+string(signature))
 }
