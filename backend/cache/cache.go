@@ -1829,6 +1829,19 @@ func (f *Fs) isRootInPath(p string) bool {
 	return strings.HasPrefix(p, f.Root()+"/")
 }
 
+// MergeDirs merges the contents of all the directories passed
+// in into the first one and rmdirs the other directories.
+func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
+	do := f.Fs.Features().MergeDirs
+	if do == nil {
+		return errors.New("MergeDirs not supported")
+	}
+	for _, dir := range dirs {
+		_ = f.cache.RemoveDir(dir.Remote())
+	}
+	return do(ctx, dirs)
+}
+
 // DirCacheFlush flushes the dir cache
 func (f *Fs) DirCacheFlush() {
 	_ = f.cache.RemoveDir("")
@@ -1926,4 +1939,5 @@ var (
 	_ fs.UserInfoer     = (*Fs)(nil)
 	_ fs.Disconnecter   = (*Fs)(nil)
 	_ fs.Commander      = (*Fs)(nil)
+	_ fs.MergeDirser    = (*Fs)(nil)
 )
