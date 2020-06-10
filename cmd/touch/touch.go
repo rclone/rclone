@@ -19,8 +19,11 @@ var (
 	localTime        bool
 )
 
-const defaultLayout string = "060102"
-const layoutDateWithTime = "2006-01-02T15:04:05"
+const (
+	defaultLayout          string = "060102"
+	layoutDateWithTime            = "2006-01-02T15:04:05"
+	layoutDateWithTimeNano        = "2006-01-02T15:04:05.999999999"
+)
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
@@ -45,6 +48,7 @@ time instead of the current time. Times may be specified as one of:
 
 - 'YYMMDD' - eg. 17.10.30
 - 'YYYY-MM-DDTHH:MM:SS' - eg. 2006-01-02T15:04:05
+- 'YYYY-MM-DDTHH:MM:SS.SSS' - eg. 2006-01-02T15:04:05.123456789
 
 Note that --timestamp is in UTC if you want local time then add the
 --localtime flag.
@@ -65,6 +69,8 @@ func Touch(ctx context.Context, fsrc fs.Fs, srcFileName string) (err error) {
 		layout := defaultLayout
 		if len(timeAsArgument) == len(layoutDateWithTime) {
 			layout = layoutDateWithTime
+		} else if len(timeAsArgument) > len(layoutDateWithTime) {
+			layout = layoutDateWithTimeNano
 		}
 		var timeAtrFromFlags time.Time
 		if localTime {
