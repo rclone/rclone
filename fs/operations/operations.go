@@ -830,6 +830,9 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 	case fs.Object:
 		dstX, ok := dst.(fs.Object)
 		if ok {
+			if SkipDestructive(ctx, src, "check") {
+				return false
+			}
 			differ, noHash := c.checkIdentical(ctx, dstX, srcX)
 			if differ {
 				atomic.AddInt32(&c.differences, 1)
