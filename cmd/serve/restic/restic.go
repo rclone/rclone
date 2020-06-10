@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/cmd/serve/httplib/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -33,9 +34,10 @@ var (
 
 func init() {
 	httpflags.AddFlags(Command.Flags())
-	Command.Flags().BoolVar(&stdio, "stdio", false, "run an HTTP2 server on stdin/stdout")
-	Command.Flags().BoolVar(&appendOnly, "append-only", false, "disallow deletion of repository data")
-	Command.Flags().BoolVar(&privateRepos, "private-repos", false, "users can only access their private repo")
+	flagSet := Command.Flags()
+	flags.BoolVarP(flagSet, &stdio, "stdio", "", false, "run an HTTP2 server on stdin/stdout")
+	flags.BoolVarP(flagSet, &appendOnly, "append-only", "", false, "disallow deletion of repository data")
+	flags.BoolVarP(flagSet, &privateRepos, "private-repos", "", false, "users can only access their private repo")
 }
 
 // Command definition for cobra

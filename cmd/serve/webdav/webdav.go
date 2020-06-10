@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/errors"
 	"github.com/rclone/rclone/vfs"
@@ -30,11 +31,12 @@ var (
 )
 
 func init() {
-	httpflags.AddFlags(Command.Flags())
-	vfsflags.AddFlags(Command.Flags())
-	proxyflags.AddFlags(Command.Flags())
-	Command.Flags().StringVar(&hashName, "etag-hash", "", "Which hash to use for the ETag, or auto or blank for off")
-	Command.Flags().BoolVar(&disableGETDir, "disable-dir-list", false, "Disable HTML directory list on GET request for a directory")
+	flagSet := Command.Flags()
+	httpflags.AddFlags(flagSet)
+	vfsflags.AddFlags(flagSet)
+	proxyflags.AddFlags(flagSet)
+	flags.StringVarP(flagSet, &hashName, "etag-hash", "", "", "Which hash to use for the ETag, or auto or blank for off")
+	flags.BoolVarP(flagSet, &disableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory")
 }
 
 // Command definition for cobra
