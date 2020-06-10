@@ -46,7 +46,7 @@ const (
 	decayConstant      = 2 // bigger for slower decay, exponential
 	defaultDevice      = "Jotta"
 	defaultMountpoint  = "Archive"
-	rootURL            = "https://www.jottacloud.com/jfs/"
+	rootURL            = "https://jfs.jottacloud.com/jfs/"
 	apiURL             = "https://api.jottacloud.com/"
 	baseURL            = "https://www.jottacloud.com/"
 	defaultTokenURL    = "https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token"
@@ -1088,7 +1088,8 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *ap
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, nil, &info)
-		return shouldRetry(resp, err)
+		retry, _ := shouldRetry(resp, err)
+		return (retry && resp.StatusCode != 500), err
 	})
 	if err != nil {
 		return nil, err
@@ -1192,6 +1193,18 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(srcPath))+"/", dstRemote)
 
+	// surprise! jottacloud fucked up dirmove - the api spits out an error but
+	// dir gets moved regardless
+	if apiErr, ok := err.(*api.Error); ok {
+		if apiErr.StatusCode == 500 {
+			_, err := f.NewObject(ctx, dstRemote)
+			if err == fs.ErrorNotAFile {
+				log.Printf("FIXME: ignoring DirMove error - move succeeded anyway\n")
+				return nil
+			}
+			return err
+		}
+	}
 	if err != nil {
 		return errors.Wrap(err, "couldn't move directory")
 	}
