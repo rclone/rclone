@@ -103,6 +103,7 @@ The rclone docker image should autobuild on via GitHub actions.  If it doesn't
 or needs to be updated then rebuild like this.
 
 ```
+docker pull golang
 docker build --rm --ulimit memlock=67108864  -t rclone/rclone:1.52.0 -t rclone/rclone:1.52 -t rclone/rclone:1 -t rclone/rclone:latest .
 docker push rclone/rclone:1.52.0
 docker push rclone/rclone:1.52
