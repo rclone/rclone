@@ -1,15 +1,15 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% May 27, 2020
+% Jun 10, 2020
 
 # Rclone syncs your files to cloud storage
 
 <img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" >
 
 - [About rclone](#about)
-- [What can rclone do for you](#what)
-- [What features does rclone have](#features)
-- [What providers does rclone support](#providers)
+- [What can rclone do for you?](#what)
+- [What features does rclone have?](#features)
+- [What providers does rclone support?](#providers)
 - [Download](https://rclone.org/downloads/)
 - [Install](https://rclone.org/install/)
 - [Donate.](https://rclone.org/donate/)
@@ -24,20 +24,20 @@ services, as well as standard transfer protocols.
 
 Rclone has powerful cloud equivalents to the unix commands rsync, cp,
 mv, mount, ls, ncdu, tree, rm, and cat. Rclone's familiar syntax
-includes shell pipeline support, and `--dry-run` protection. It can be
+includes shell pipeline support, and `--dry-run` protection. It is
 used at the command line, in scripts or via its [API](/rc).
 
-Users have called rclone *"The Swiss army knife of cloud storage"* and
+Users call rclone *"The Swiss army knife of cloud storage"*, and
 *"Technology indistinguishable from magic"*.
 
 Rclone really looks after your data. It preserves timestamps and
-verifies your data at all times. Transfers over limited bandwidth;
+verifies checksums at all times. Transfers over limited bandwidth;
 intermittent connections, or subject to quota can be restarted, from
 the last good file transferred. You can
 [check](https://rclone.org/commands/rclone_check/) the integrity of your files. Where
 possible, rclone employs server side transfers to minimise local
 bandwidth use and transfers from one provider to another without
-using your local disk.
+using local disk.
 
 Virtual backends wrap local and cloud file systems to apply
 [encryption](https://rclone.org/crypt/), 
@@ -45,9 +45,9 @@ Virtual backends wrap local and cloud file systems to apply
 [chunking](https://rclone.org/chunker/) and
 [joining](https://rclone.org/union/).
 
-Rclone can [mount](https://rclone.org/commands/rclone_mount/) any local, cloud or
+Rclone [mounts](https://rclone.org/commands/rclone_mount/) any local, cloud or
 virtual filesystem as a disk on Windows,
-macOS, linux and FreeBSD, and also serve these over
+macOS, linux and FreeBSD, and also serves these over
 [SFTP](https://rclone.org/commands/rclone_serve_sftp/),
 [HTTP](https://rclone.org/commands/rclone_serve_http/),
 [WebDAV](https://rclone.org/commands/rclone_serve_webdav/),
@@ -61,14 +61,14 @@ Fedora, Brew and Chocolatey repos. include rclone. For the latest
 version [downloading from rclone.org](https://rclone.org/downloads/) is recommended.
 
 Rclone is widely used on Linux, Windows and Mac. Third party
-developers have built innovative backup, restore, GUI and business
+developers create innovative backup, restore, GUI and business
 process solutions using the rclone command line or API.
 
-Let rclone do the heavy lifting of communicating with cloud storage.
+Rclone does the heavy lifting of communicating with cloud storage.
 
-## What can rclone do for you {#what}
+## What can rclone do for you? {#what}
 
-Rclone can help you:
+Rclone helps you:
 
 - Backup (and encrypt) files to cloud storage
 - Restore (and decrypt) files from cloud storage
@@ -96,7 +96,7 @@ Rclone can help you:
 
 ## Supported providers {#providers}
 
-(There are many other providers, built on standard protocols such as
+(There are many others, built on standard protocols such as
 WebDAV or S3, that work out of the box.)
 
 
@@ -3126,11 +3126,24 @@ See the [global flags page](https://rclone.org/flags/) for global options not li
 
 # rclone obscure
 
-Obscure password for use in the rclone.conf
+Obscure password for use in the rclone config file
 
 ## Synopsis
 
-Obscure password for use in the rclone.conf
+In the rclone config file, human readable passwords are
+obscured. Obscuring them is done by encrypting them and writing them
+out in base64. This is **not** a secure way of encrypting these
+passwords as rclone can decrypt them - it is to prevent "eyedropping"
+- namely someone seeing a password in the rclone config file by
+accident.
+
+Many equally important things (like access tokens) are not obscured in
+the config file. However it is very hard to shoulder surf a 64
+character hex token.
+
+If you want to encrypt the config file then please use config file
+encryption - see [rclone config](https://rclone.org/commands/rclone_config/) for more
+info.
 
 ```
 rclone obscure password [flags]
@@ -9670,7 +9683,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -9731,7 +9744,7 @@ and may be set in the config file.
       --cache-db-wait-time Duration                              How long to wait for the DB to be available - 0 is unlimited (default 1s)
       --cache-info-age Duration                                  How long to cache file structure information (directory listings, file size, times etc). (default 6h0m0s)
       --cache-plex-insecure string                               Skip all certificate verification when connecting to the Plex server
-      --cache-plex-password string                               The password of the Plex user
+      --cache-plex-password string                               The password of the Plex user (obscured)
       --cache-plex-url string                                    The URL of the Plex server
       --cache-plex-username string                               The username of the Plex user
       --cache-read-retries int                                   How many times to retry a read from a cache storage. (default 10)
@@ -9751,8 +9764,8 @@ and may be set in the config file.
   -L, --copy-links                                               Follow symlinks and copy the pointed to item.
       --crypt-directory-name-encryption                          Option to either encrypt directory names or leave them intact. (default true)
       --crypt-filename-encryption string                         How to encrypt the filenames. (default "standard")
-      --crypt-password string                                    Password or pass phrase for encryption.
-      --crypt-password2 string                                   Password or pass phrase for salt. Optional but recommended.
+      --crypt-password string                                    Password or pass phrase for encryption. (obscured)
+      --crypt-password2 string                                   Password or pass phrase for salt. Optional but recommended. (obscured)
       --crypt-remote string                                      Remote to encrypt/decrypt.
       --crypt-show-mapping                                       For all files listed show how the names encrypt.
       --drive-acknowledge-abuse                                  Set to allow files which return cannotDownloadAbusiveFile to be downloaded.
@@ -9803,7 +9816,7 @@ and may be set in the config file.
       --ftp-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,Del,Ctl,RightSpace,Dot)
       --ftp-host string                                          FTP host to connect to
       --ftp-no-check-certificate                                 Do not verify the TLS certificate of the server
-      --ftp-pass string                                          FTP password
+      --ftp-pass string                                          FTP password (obscured)
       --ftp-port string                                          FTP port, leave blank to use default (21)
       --ftp-tls                                                  Use FTP over TLS (Implicit)
       --ftp-user string                                          FTP username, leave blank for current username, $USER
@@ -9840,7 +9853,7 @@ and may be set in the config file.
       --koofr-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --koofr-endpoint string                                    The Koofr API endpoint to use (default "https://app.koofr.net")
       --koofr-mountid string                                     Mount ID of the mount to use. If omitted, the primary mount is used.
-      --koofr-password string                                    Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
+      --koofr-password string                                    Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password) (obscured)
       --koofr-setmtime                                           Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend. (default true)
       --koofr-user string                                        Your Koofr user name
   -l, --links                                                    Translate symlinks to/from regular files with a '.rclonelink' extension
@@ -9853,7 +9866,7 @@ and may be set in the config file.
       --local-nounc string                                       Disable UNC (long path names) conversion on Windows
       --mailru-check-hash                                        What should copy do if file checksum is mismatched or invalid (default true)
       --mailru-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,InvalidUtf8,Dot)
-      --mailru-pass string                                       Password
+      --mailru-pass string                                       Password (obscured)
       --mailru-speedup-enable                                    Skip full upload if there is another file with same data hash. (default true)
       --mailru-speedup-file-patterns string                      Comma separated list of file name patterns eligible for speedup (put by hash). (default "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf")
       --mailru-speedup-max-disk SizeSuffix                       This option allows you to disable speedup (put by hash) for large files (default 3G)
@@ -9862,7 +9875,7 @@ and may be set in the config file.
       --mega-debug                                               Output more debug from Mega.
       --mega-encoding MultiEncoder                               This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
       --mega-hard-delete                                         Delete files permanently rather than putting them into the trash.
-      --mega-pass string                                         Password.
+      --mega-pass string                                         Password. (obscured)
       --mega-user string                                         User name
   -x, --one-file-system                                          Don't cross filesystem boundaries (unix/macOS only).
       --onedrive-chunk-size SizeSuffix                           Chunk size to upload files with - must be multiple of 320k (327,680 bytes). (default 10M)
@@ -9875,7 +9888,7 @@ and may be set in the config file.
       --onedrive-server-side-across-configs                      Allow server side operations (eg copy) to work across different onedrive configs.
       --opendrive-chunk-size SizeSuffix                          Files will be uploaded in chunks this size. (default 10M)
       --opendrive-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
-      --opendrive-password string                                Password.
+      --opendrive-password string                                Password. (obscured)
       --opendrive-username string                                Username
       --pcloud-client-id string                                  Pcloud App Client Id
       --pcloud-client-secret string                              Pcloud App Client Secret
@@ -9926,19 +9939,19 @@ and may be set in the config file.
       --seafile-create-library                                   Should rclone create a library if it doesn't exist
       --seafile-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
       --seafile-library string                                   Name of the library. Leave blank to access all non-encrypted libraries.
-      --seafile-library-key string                               Library password (for encrypted libraries only). Leave blank if you pass it through the command line.
-      --seafile-pass string                                      Password
+      --seafile-library-key string                               Library password (for encrypted libraries only). Leave blank if you pass it through the command line. (obscured)
+      --seafile-pass string                                      Password (obscured)
       --seafile-url string                                       URL of seafile host to connect to
       --seafile-user string                                      User name (usually email address)
       --sftp-ask-password                                        Allow asking for SFTP password when needed.
       --sftp-disable-hashcheck                                   Disable the execution of SSH commands to determine if remote file hashing is available.
       --sftp-host string                                         SSH host to connect to
       --sftp-key-file string                                     Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.
-      --sftp-key-file-pass string                                The passphrase to decrypt the PEM-encoded private key file.
+      --sftp-key-file-pass string                                The passphrase to decrypt the PEM-encoded private key file. (obscured)
       --sftp-key-pem string                                      Raw PEM-encoded private key, If specified, will override key_file parameter.
       --sftp-key-use-agent                                       When set forces the usage of the ssh-agent.
       --sftp-md5sum-command string                               The command used to read md5 hashes. Leave blank for autodetect.
-      --sftp-pass string                                         SSH password, leave blank to use ssh-agent.
+      --sftp-pass string                                         SSH password, leave blank to use ssh-agent. (obscured)
       --sftp-path-override string                                Override path used by SSH connection.
       --sftp-port string                                         SSH port, leave blank to use default (22)
       --sftp-set-modtime                                         Set the modified time on the remote if set. (default true)
@@ -9996,7 +10009,7 @@ and may be set in the config file.
       --union-upstreams string                                   List of space separated upstreams.
       --webdav-bearer-token string                               Bearer token instead of user/pass (eg a Macaroon)
       --webdav-bearer-token-command string                       Command to run to get a bearer token
-      --webdav-pass string                                       Password.
+      --webdav-pass string                                       Password. (obscured)
       --webdav-url string                                        URL of http host to connect to
       --webdav-user string                                       User name
       --webdav-vendor string                                     Name of the Webdav site/service/software you are using
@@ -13622,6 +13635,8 @@ The username of the Plex user
 
 The password of the Plex user
 
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
+
 - Config:      plex_password
 - Env Var:     RCLONE_CACHE_PLEX_PASSWORD
 - Type:        string
@@ -14880,6 +14895,8 @@ NB If filename_encryption is "off" then this option will do nothing.
 
 Password or pass phrase for encryption.
 
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
+
 - Config:      password
 - Env Var:     RCLONE_CRYPT_PASSWORD
 - Type:        string
@@ -14889,6 +14906,8 @@ Password or pass phrase for encryption.
 
 Password or pass phrase for salt. Optional but recommended.
 Should be different to the previous password.
+
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
 
 - Config:      password2
 - Env Var:     RCLONE_CRYPT_PASSWORD2
@@ -15479,6 +15498,8 @@ FTP port, leave blank to use default (21)
 #### --ftp-pass
 
 FTP password
+
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
 
 - Config:      pass
 - Env Var:     RCLONE_FTP_PASS
@@ -16426,7 +16447,7 @@ For shortcuts pointing to folders:
 - When deleting with `rclone rmdir` or `rclone purge` the shortcut is deleted not the linked folder.
 - **NB** When deleting with `rclone remove` or `rclone mount` the contents of the linked folder will be deleted.
 
-It isn't currently possible to create shortcuts with rclone.
+The [rclone backend](https://rclone.org/commands/rclone_backend/) command can be used to create shortcuts.  
 
 Shortcuts can be completely ignored with the `--drive-skip-shortcuts` flag
 or the corresponding `skip_shortcuts` configuration setting.
@@ -18312,6 +18333,8 @@ Your Koofr user name
 
 Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
 
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
+
 - Config:      password
 - Env Var:     RCLONE_KOOFR_PASSWORD
 - Type:        string
@@ -18543,6 +18566,8 @@ User name (usually email)
 #### --mailru-pass
 
 Password
+
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
 
 - Config:      pass
 - Env Var:     RCLONE_MAILRU_PASS
@@ -18841,6 +18866,8 @@ User name
 #### --mega-pass
 
 Password.
+
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
 
 - Config:      pass
 - Env Var:     RCLONE_MEGA_PASS
@@ -19817,6 +19844,8 @@ Username
 #### --opendrive-password
 
 Password.
+
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
 
 - Config:      password
 - Env Var:     RCLONE_OPENDRIVE_PASSWORD
@@ -21394,6 +21423,8 @@ User name (usually email address)
 
 Password
 
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
+
 - Config:      pass
 - Env Var:     RCLONE_SEAFILE_PASS
 - Type:        string
@@ -21420,6 +21451,8 @@ Name of the library. Leave blank to access all non-encrypted libraries.
 #### --seafile-library-key
 
 Library password (for encrypted libraries only). Leave blank if you pass it through the command line.
+
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
 
 - Config:      library_key
 - Env Var:     RCLONE_SEAFILE_LIBRARY_KEY
@@ -21650,6 +21683,8 @@ SSH port, leave blank to use default (22)
 
 SSH password, leave blank to use ssh-agent.
 
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
+
 - Config:      pass
 - Env Var:     RCLONE_SFTP_PASS
 - Type:        string
@@ -21679,6 +21714,8 @@ The passphrase to decrypt the PEM-encoded private key file.
 
 Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys
 in the new OpenSSH format can't be used.
+
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
 
 - Config:      key_file_pass
 - Env Var:     RCLONE_SFTP_KEY_FILE_PASS
@@ -22778,6 +22815,8 @@ User name
 
 Password.
 
+**NB** Input to this must be obscured - see [rclone obscure](https://rclone.org/commands/rclone_obscure/).
+
 - Config:      pass
 - Env Var:     RCLONE_WEBDAV_PASS
 - Type:        string
@@ -23595,6 +23634,39 @@ Options:
 
 
 # Changelog
+
+## v1.52.1 - 2020-06-10
+
+[See commits](https://github.com/rclone/rclone/compare/v1.52.0...v1.52.1)
+
+* Bug Fixes
+    * lib/file: Fix SetSparse on Windows 7 which fixes downloads of files > 250MB (Nick Craig-Wood)
+    * build
+        * Update go.mod to go1.14 to enable -mod=vendor build (Nick Craig-Wood)
+        * Remove quicktest from Dockerfile (Nick Craig-Wood)
+        * Build Docker images with GitHub actions (Matteo Pietro Dazzi)
+        * Update Docker build workflows (Nick Craig-Wood)
+        * Set user_allow_other in /etc/fuse.conf in the Docker image (Nick Craig-Wood)
+        * Fix xgo build after go1.14 go.mod update (Nick Craig-Wood)
+    * docs
+        * Add link to source and modified time to footer of every page (Nick Craig-Wood)
+        * Remove manually set dates and use git dates instead (Nick Craig-Wood)
+        * Minor tense, punctuation, brevity and positivity changes for the home page (edwardxml)
+        * Remove leading slash in page reference in footer when present (Nick Craig-Wood)
+        * Note commands which need obscured input in the docs (Nick Craig-Wood)
+        * obscure: Write more help as we are referencing it elsewhere (Nick Craig-Wood)
+* VFS
+    * Fix OS vs Unix path confusion - fixes ChangeNotify on Windows (Nick Craig-Wood)
+* Drive
+    * Fix missing items when listing using --fast-list / ListR (Nick Craig-Wood)
+* Putio
+    * Fix panic on Object.Open (Cenk Alti)
+* S3
+    * Fix upload of single files into buckets without create permission (Nick Craig-Wood)
+    * Fix --header-upload (Nick Craig-Wood)
+* Tardigrade
+    * Fix listing bug by upgrading to v1.0.7
+    * Set UserAgent to rclone (Caleb Case)
 
 ## v1.52.0 - 2020-05-27
 

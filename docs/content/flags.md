@@ -144,7 +144,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -205,7 +205,7 @@ and may be set in the config file.
       --cache-db-wait-time Duration                              How long to wait for the DB to be available - 0 is unlimited (default 1s)
       --cache-info-age Duration                                  How long to cache file structure information (directory listings, file size, times etc). (default 6h0m0s)
       --cache-plex-insecure string                               Skip all certificate verification when connecting to the Plex server
-      --cache-plex-password string                               The password of the Plex user
+      --cache-plex-password string                               The password of the Plex user (obscured)
       --cache-plex-url string                                    The URL of the Plex server
       --cache-plex-username string                               The username of the Plex user
       --cache-read-retries int                                   How many times to retry a read from a cache storage. (default 10)
@@ -225,8 +225,8 @@ and may be set in the config file.
   -L, --copy-links                                               Follow symlinks and copy the pointed to item.
       --crypt-directory-name-encryption                          Option to either encrypt directory names or leave them intact. (default true)
       --crypt-filename-encryption string                         How to encrypt the filenames. (default "standard")
-      --crypt-password string                                    Password or pass phrase for encryption.
-      --crypt-password2 string                                   Password or pass phrase for salt. Optional but recommended.
+      --crypt-password string                                    Password or pass phrase for encryption. (obscured)
+      --crypt-password2 string                                   Password or pass phrase for salt. Optional but recommended. (obscured)
       --crypt-remote string                                      Remote to encrypt/decrypt.
       --crypt-show-mapping                                       For all files listed show how the names encrypt.
       --drive-acknowledge-abuse                                  Set to allow files which return cannotDownloadAbusiveFile to be downloaded.
@@ -277,7 +277,7 @@ and may be set in the config file.
       --ftp-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,Del,Ctl,RightSpace,Dot)
       --ftp-host string                                          FTP host to connect to
       --ftp-no-check-certificate                                 Do not verify the TLS certificate of the server
-      --ftp-pass string                                          FTP password
+      --ftp-pass string                                          FTP password (obscured)
       --ftp-port string                                          FTP port, leave blank to use default (21)
       --ftp-tls                                                  Use FTP over TLS (Implicit)
       --ftp-user string                                          FTP username, leave blank for current username, $USER
@@ -314,7 +314,7 @@ and may be set in the config file.
       --koofr-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --koofr-endpoint string                                    The Koofr API endpoint to use (default "https://app.koofr.net")
       --koofr-mountid string                                     Mount ID of the mount to use. If omitted, the primary mount is used.
-      --koofr-password string                                    Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
+      --koofr-password string                                    Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password) (obscured)
       --koofr-setmtime                                           Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend. (default true)
       --koofr-user string                                        Your Koofr user name
   -l, --links                                                    Translate symlinks to/from regular files with a '.rclonelink' extension
@@ -327,7 +327,7 @@ and may be set in the config file.
       --local-nounc string                                       Disable UNC (long path names) conversion on Windows
       --mailru-check-hash                                        What should copy do if file checksum is mismatched or invalid (default true)
       --mailru-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,InvalidUtf8,Dot)
-      --mailru-pass string                                       Password
+      --mailru-pass string                                       Password (obscured)
       --mailru-speedup-enable                                    Skip full upload if there is another file with same data hash. (default true)
       --mailru-speedup-file-patterns string                      Comma separated list of file name patterns eligible for speedup (put by hash). (default "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf")
       --mailru-speedup-max-disk SizeSuffix                       This option allows you to disable speedup (put by hash) for large files (default 3G)
@@ -336,7 +336,7 @@ and may be set in the config file.
       --mega-debug                                               Output more debug from Mega.
       --mega-encoding MultiEncoder                               This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
       --mega-hard-delete                                         Delete files permanently rather than putting them into the trash.
-      --mega-pass string                                         Password.
+      --mega-pass string                                         Password. (obscured)
       --mega-user string                                         User name
   -x, --one-file-system                                          Don't cross filesystem boundaries (unix/macOS only).
       --onedrive-chunk-size SizeSuffix                           Chunk size to upload files with - must be multiple of 320k (327,680 bytes). (default 10M)
@@ -349,7 +349,7 @@ and may be set in the config file.
       --onedrive-server-side-across-configs                      Allow server side operations (eg copy) to work across different onedrive configs.
       --opendrive-chunk-size SizeSuffix                          Files will be uploaded in chunks this size. (default 10M)
       --opendrive-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
-      --opendrive-password string                                Password.
+      --opendrive-password string                                Password. (obscured)
       --opendrive-username string                                Username
       --pcloud-client-id string                                  Pcloud App Client Id
       --pcloud-client-secret string                              Pcloud App Client Secret
@@ -400,19 +400,19 @@ and may be set in the config file.
       --seafile-create-library                                   Should rclone create a library if it doesn't exist
       --seafile-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
       --seafile-library string                                   Name of the library. Leave blank to access all non-encrypted libraries.
-      --seafile-library-key string                               Library password (for encrypted libraries only). Leave blank if you pass it through the command line.
-      --seafile-pass string                                      Password
+      --seafile-library-key string                               Library password (for encrypted libraries only). Leave blank if you pass it through the command line. (obscured)
+      --seafile-pass string                                      Password (obscured)
       --seafile-url string                                       URL of seafile host to connect to
       --seafile-user string                                      User name (usually email address)
       --sftp-ask-password                                        Allow asking for SFTP password when needed.
       --sftp-disable-hashcheck                                   Disable the execution of SSH commands to determine if remote file hashing is available.
       --sftp-host string                                         SSH host to connect to
       --sftp-key-file string                                     Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.
-      --sftp-key-file-pass string                                The passphrase to decrypt the PEM-encoded private key file.
+      --sftp-key-file-pass string                                The passphrase to decrypt the PEM-encoded private key file. (obscured)
       --sftp-key-pem string                                      Raw PEM-encoded private key, If specified, will override key_file parameter.
       --sftp-key-use-agent                                       When set forces the usage of the ssh-agent.
       --sftp-md5sum-command string                               The command used to read md5 hashes. Leave blank for autodetect.
-      --sftp-pass string                                         SSH password, leave blank to use ssh-agent.
+      --sftp-pass string                                         SSH password, leave blank to use ssh-agent. (obscured)
       --sftp-path-override string                                Override path used by SSH connection.
       --sftp-port string                                         SSH port, leave blank to use default (22)
       --sftp-set-modtime                                         Set the modified time on the remote if set. (default true)
@@ -470,7 +470,7 @@ and may be set in the config file.
       --union-upstreams string                                   List of space separated upstreams.
       --webdav-bearer-token string                               Bearer token instead of user/pass (eg a Macaroon)
       --webdav-bearer-token-command string                       Command to run to get a bearer token
-      --webdav-pass string                                       Password.
+      --webdav-pass string                                       Password. (obscured)
       --webdav-url string                                        URL of http host to connect to
       --webdav-user string                                       User name
       --webdav-vendor string                                     Name of the Webdav site/service/software you are using

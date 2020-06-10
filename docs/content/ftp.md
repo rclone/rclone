@@ -172,6 +172,8 @@ FTP port, leave blank to use default (21)
 
 FTP password
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      pass
 - Env Var:     RCLONE_FTP_PASS
 - Type:        string

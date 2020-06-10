@@ -5,6 +5,39 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.52.1 - 2020-06-10
+
+[See commits](https://github.com/rclone/rclone/compare/v1.52.0...v1.52.1)
+
+* Bug Fixes
+    * lib/file: Fix SetSparse on Windows 7 which fixes downloads of files > 250MB (Nick Craig-Wood)
+    * build
+        * Update go.mod to go1.14 to enable -mod=vendor build (Nick Craig-Wood)
+        * Remove quicktest from Dockerfile (Nick Craig-Wood)
+        * Build Docker images with GitHub actions (Matteo Pietro Dazzi)
+        * Update Docker build workflows (Nick Craig-Wood)
+        * Set user_allow_other in /etc/fuse.conf in the Docker image (Nick Craig-Wood)
+        * Fix xgo build after go1.14 go.mod update (Nick Craig-Wood)
+    * docs
+        * Add link to source and modified time to footer of every page (Nick Craig-Wood)
+        * Remove manually set dates and use git dates instead (Nick Craig-Wood)
+        * Minor tense, punctuation, brevity and positivity changes for the home page (edwardxml)
+        * Remove leading slash in page reference in footer when present (Nick Craig-Wood)
+        * Note commands which need obscured input in the docs (Nick Craig-Wood)
+        * obscure: Write more help as we are referencing it elsewhere (Nick Craig-Wood)
+* VFS
+    * Fix OS vs Unix path confusion - fixes ChangeNotify on Windows (Nick Craig-Wood)
+* Drive
+    * Fix missing items when listing using --fast-list / ListR (Nick Craig-Wood)
+* Putio
+    * Fix panic on Object.Open (Cenk Alti)
+* S3
+    * Fix upload of single files into buckets without create permission (Nick Craig-Wood)
+    * Fix --header-upload (Nick Craig-Wood)
+* Tardigrade
+    * Fix listing bug by upgrading to v1.0.7
+    * Set UserAgent to rclone (Caleb Case)
+
 ## v1.52.0 - 2020-05-27
 
 Special thanks to Martin Michlmayr for proof reading and correcting

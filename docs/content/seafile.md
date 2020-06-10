@@ -294,6 +294,8 @@ User name (usually email address)
 
 Password
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      pass
 - Env Var:     RCLONE_SEAFILE_PASS
 - Type:        string
@@ -320,6 +322,8 @@ Name of the library. Leave blank to access all non-encrypted libraries.
 #### --seafile-library-key
 
 Library password (for encrypted libraries only). Leave blank if you pass it through the command line.
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
 - Config:      library_key
 - Env Var:     RCLONE_SEAFILE_LIBRARY_KEY

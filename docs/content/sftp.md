@@ -192,6 +192,8 @@ SSH port, leave blank to use default (22)
 
 SSH password, leave blank to use ssh-agent.
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      pass
 - Env Var:     RCLONE_SFTP_PASS
 - Type:        string
@@ -221,6 +223,8 @@ The passphrase to decrypt the PEM-encoded private key file.
 
 Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys
 in the new OpenSSH format can't be used.
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
 - Config:      key_file_pass
 - Env Var:     RCLONE_SFTP_KEY_FILE_PASS

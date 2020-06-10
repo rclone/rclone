@@ -65,7 +65,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone move](/commands/rclone_move/)	 - Move files from source to dest.
 * [rclone moveto](/commands/rclone_moveto/)	 - Move file or directory from source to dest.
 * [rclone ncdu](/commands/rclone_ncdu/)	 - Explore a remote with a text based user interface.
-* [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone.conf
+* [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone config file
 * [rclone purge](/commands/rclone_purge/)	 - Remove the path and all of its contents.
 * [rclone rc](/commands/rclone_rc/)	 - Run a command against a running rclone.
 * [rclone rcat](/commands/rclone_rcat/)	 - Copies standard input to file on remote.

@@ -181,6 +181,8 @@ User name (usually email)
 
 Password
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      pass
 - Env Var:     RCLONE_MAILRU_PASS
 - Type:        string

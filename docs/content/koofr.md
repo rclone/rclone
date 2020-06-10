@@ -115,6 +115,8 @@ Your Koofr user name
 
 Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      password
 - Env Var:     RCLONE_KOOFR_PASSWORD
 - Type:        string
