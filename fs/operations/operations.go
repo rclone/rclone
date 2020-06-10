@@ -756,6 +756,8 @@ type checkFn func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool
 type checkMarch struct {
 	fdst, fsrc      fs.Fs
 	check           checkFn
+	wg              sync.WaitGroup
+	tokens          chan struct{}
 	oneway          bool
 	differences     int32
 	noHashes        int32
@@ -833,18 +835,26 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 			if SkipDestructive(ctx, src, "check") {
 				return false
 			}
-			differ, noHash := c.checkIdentical(ctx, dstX, srcX)
-			if differ {
-				atomic.AddInt32(&c.differences, 1)
-			} else {
-				atomic.AddInt32(&c.matches, 1)
-				if noHash {
-					atomic.AddInt32(&c.noHashes, 1)
-					fs.Debugf(dstX, "OK - could not check hash")
+			c.wg.Add(1)
+			c.tokens <- struct{}{} // put a token to limit concurrency
+			go func() {
+				defer func() {
+					<-c.tokens // get the token back to free up a slot
+					c.wg.Done()
+				}()
+				differ, noHash := c.checkIdentical(ctx, dstX, srcX)
+				if differ {
+					atomic.AddInt32(&c.differences, 1)
 				} else {
-					fs.Debugf(dstX, "OK")
+					atomic.AddInt32(&c.matches, 1)
+					if noHash {
+						atomic.AddInt32(&c.noHashes, 1)
+						fs.Debugf(dstX, "OK - could not check hash")
+					} else {
+						fs.Debugf(dstX, "OK")
+					}
 				}
-			}
+			}()
 		} else {
 			err := errors.Errorf("is file on %v but directory on %v", c.fsrc, c.fdst)
 			fs.Errorf(src, "%v", err)
@@ -883,6 +893,7 @@ func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) 
 		fsrc:   fsrc,
 		check:  check,
 		oneway: oneway,
+		tokens: make(chan struct{}, fs.Config.Checkers),
 	}
 
 	// set up a march over fdst and fsrc
@@ -895,6 +906,7 @@ func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) 
 	}
 	fs.Debugf(fdst, "Waiting for checks to finish")
 	err := m.Run()
+	c.wg.Wait() // wait for background go-routines
 
 	if c.dstFilesMissing > 0 {
 		fs.Logf(fdst, "%d files missing", c.dstFilesMissing)
