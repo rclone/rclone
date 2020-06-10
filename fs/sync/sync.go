@@ -58,6 +58,7 @@ type syncCopyMove struct {
 	noRetryErr             error                  // error with NoRetry set
 	fatalErr               error                  // fatal error
 	commonHash             hash.Type              // common hash type between src and dst
+	modifyWindow           time.Duration          // modify window between fsrc, fdst
 	renameMapMu            sync.Mutex             // mutex to protect the below
 	renameMap              map[string][]fs.Object // dst files by hash - only used by trackRenames
 	renamerWg              sync.WaitGroup         // wait for renamers
@@ -108,6 +109,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		deleteFilesCh:          make(chan fs.Object, fs.Config.Checkers),
 		trackRenames:           fs.Config.TrackRenames,
 		commonHash:             fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
+		modifyWindow:           fs.GetModifyWindow(fsrc, fdst),
 		trackRenamesCh:         make(chan fs.Object, fs.Config.Checkers),
 		checkFirst:             fs.Config.CheckFirst,
 	}
@@ -167,7 +169,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 			s.trackRenames = false
 		}
 
-		if s.trackRenamesStrategy.modTime() && fs.GetModifyWindow(fsrc, fdst) == fs.ModTimeNotSupported {
+		if s.trackRenamesStrategy.modTime() && s.modifyWindow == fs.ModTimeNotSupported {
 			fs.Errorf(fdst, "Ignoring --track-renames as either the source or destination do not support modtime")
 			s.trackRenames = false
 		}
@@ -639,30 +641,8 @@ func (s *syncCopyMove) renameID(obj fs.Object, renamesStrategy trackRenamesStrat
 		fmt.Fprintf(&builder, ",%s", hash)
 	}
 
-	if renamesStrategy.modTime() {
-		// We normally check precisions with
-		// dt = a - b
-		// if dt < precision && dt > -precision then times match
-		//
-		// We want to emulate this with a hash.
-		//
-		// hash(x) = floor((x + divisor/2 - 1)/divisor)
-		// for a given hash value, H
-		// x > H*divisor - divisor/2 &&
-		// x < H*divisor + divisor/2
-		//
-		// To match the normal check of +/- precision then we
-		// need to use 2*precision as the divisor
-		modTime := obj.ModTime(s.ctx)
-		divisor := precision.Nanoseconds() * 2
-		rounding := divisor / 2
-		if rounding > 0 {
-			rounding--
-		}
-		// NB modTime.Unix()*int64(time.Nanosecond) won't overflow an int64 until the year 2264
-		timeHash := (modTime.Unix()*int64(time.Nanosecond) + modTime.UnixNano() + rounding) / divisor
-		fmt.Fprintf(&builder, ",%d", timeHash)
-	}
+	// for renamesStrategy.modTime() we don't add to the hash but we check the times in
+	// popRenameMap
 
 	return builder.String()
 }
@@ -676,11 +656,34 @@ func (s *syncCopyMove) pushRenameMap(hash string, obj fs.Object) {
 
 // popRenameMap finds the object with hash and pop the first match from
 // renameMap or returns nil if not found.
-func (s *syncCopyMove) popRenameMap(hash string) (dst fs.Object) {
+func (s *syncCopyMove) popRenameMap(hash string, src fs.Object) (dst fs.Object) {
 	s.renameMapMu.Lock()
 	dsts, ok := s.renameMap[hash]
 	if ok && len(dsts) > 0 {
-		dst, dsts = dsts[0], dsts[1:]
+		// Element to remove
+		i := 0
+
+		// If using track renames strategy modtime then we need to check the modtimes here
+		if s.trackRenamesStrategy.modTime() {
+			i = -1
+			srcModTime := src.ModTime(s.ctx)
+			for j, dst := range dsts {
+				dstModTime := dst.ModTime(s.ctx)
+				dt := dstModTime.Sub(srcModTime)
+				if dt < s.modifyWindow && dt > -s.modifyWindow {
+					i = j
+					break
+				}
+			}
+			// If nothing matched then return nil
+			if i < 0 {
+				return nil
+			}
+		}
+
+		// Remove the entry and return it
+		dst = dsts[i]
+		dsts = append(dsts[:i], dsts[i+1:]...)
 		if len(dsts) > 0 {
 			s.renameMap[hash] = dsts
 		} else {
@@ -717,7 +720,7 @@ func (s *syncCopyMove) makeRenameMap() {
 				// only create hash for dst fs.Object if its size could match
 				if _, found := possibleSizes[obj.Size()]; found {
 					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj)
-					hash := s.renameID(obj, s.trackRenamesStrategy, fs.GetModifyWindow(s.fsrc, s.fdst))
+					hash := s.renameID(obj, s.trackRenamesStrategy, s.modifyWindow)
 
 					if hash != "" {
 						s.pushRenameMap(hash, obj)
@@ -743,7 +746,7 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	}
 
 	// Get a match on fdst
-	dst := s.popRenameMap(hash)
+	dst := s.popRenameMap(hash, src)
 	if dst == nil {
 		return false
 	}
