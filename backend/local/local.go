@@ -10,7 +10,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -1226,7 +1225,7 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 
 		if !noUNC {
 			// Convert to UNC
-			s = uncPath(s)
+			s = file.UNCPath(s)
 		}
 		return s
 	}
@@ -1238,28 +1237,6 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	}
 	s = enc.FromStandardPath(s)
 	return s
-}
-
-// Pattern to match a windows absolute path: "c:\" and similar
-var isAbsWinDrive = regexp.MustCompile(`^[a-zA-Z]\:\\`)
-
-// uncPath converts an absolute Windows path
-// to a UNC long path.
-func uncPath(l string) string {
-	// If prefix is "\\", we already have a UNC path or server.
-	if strings.HasPrefix(l, `\\`) {
-		// If already long path, just keep it
-		if strings.HasPrefix(l, `\\?\`) {
-			return l
-		}
-
-		// Trim "\\" from path and add UNC prefix.
-		return `\\?\UNC\` + strings.TrimPrefix(l, `\\`)
-	}
-	if isAbsWinDrive.MatchString(l) {
-		return `\\?\` + l
-	}
-	return l
 }
 
 // Check the interfaces are satisfied
