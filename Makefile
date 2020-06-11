@@ -85,6 +85,7 @@ check:	rclone
 # Get the build dependencies
 build_dep:
 	go run bin/get-github-release.go -extract golangci-lint golangci/golangci-lint 'golangci-lint-.*\.tar\.gz'
+	GO111MODULE=off go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
 
 # Get the release dependencies
 release_dep:

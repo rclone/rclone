@@ -5,6 +5,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -20,6 +21,8 @@ import (
 	"sync"
 	"text/template"
 	"time"
+
+	"github.com/coreos/go-semver/semver"
 )
 
 var (
@@ -168,12 +171,109 @@ func buildDebAndRpm(dir, version, goarch string) []string {
 	return artifacts
 }
 
+// generate system object (syso) file to be picked up by a following go build for embedding icon and version info resources into windows executable
+func buildWindowsResourceSyso(goarch string, versionTag string) (string) {
+	type M map[string]interface{}
+	version := strings.TrimPrefix(versionTag, "v")
+	semanticVersion := semver.New(version)
+
+	// Build json input to goversioninfo utility
+	bs, err := json.Marshal(M{
+		"FixedFileInfo": M{
+			"FileVersion": M{
+				"Major": semanticVersion.Major,
+				"Minor": semanticVersion.Minor,
+				"Patch": semanticVersion.Patch,
+			},
+			"ProductVersion": M{
+				"Major": semanticVersion.Major,
+				"Minor": semanticVersion.Minor,
+				"Patch": semanticVersion.Patch,
+			},
+		},
+		"StringFileInfo": M{
+			"CompanyName":      "https://rclone.org",
+			"ProductName":      "Rclone",
+			"FileDescription":  "Rsync for cloud storage",
+			"InternalName":     "rclone",
+			"OriginalFilename": "rclone.exe",
+			"LegalCopyright":   "The Rclone Authors",
+			"FileVersion":      version,
+			"ProductVersion":   version,
+		},
+		"IconPath": "../graphics/logo/ico/logo_symbol_color.ico",
+	})
+	if err != nil {
+		log.Printf("Failed to build version info json: %v", err)
+		return ""
+	}
+
+	// Write json to temporary file that will only be used by the goversioninfo command executed below.
+	jsonPath, err := filepath.Abs("versioninfo_windows_" + goarch + ".json") // Appending goos and goarch as suffix to avoid any race conditions
+	if err != nil {
+		log.Printf("Failed to resolve path: %v", err)
+		return ""
+	}
+	err = ioutil.WriteFile(jsonPath, bs, 0644)
+	if err != nil {
+		log.Printf("Failed to write %s: %v", jsonPath, err)
+		return ""
+	}
+	defer func() {
+		if err := os.Remove(jsonPath); err != nil {
+			if !os.IsNotExist(err) {
+				log.Printf("Warning: Couldn't remove generated %s: %v. Please remove it manually.", jsonPath, err)
+			}
+		}
+	}()
+
+	// Execute goversioninfo utility using the json file as input.
+	// It will produce a system object (syso) file that a following go build should pick up.
+	sysoPath, err := filepath.Abs("../resource_windows_" + goarch + ".syso") // Appending goos and goarch as suffix to avoid any race conditions, and also it is recognized by go build and avoids any builds for other systems considering it
+	if err != nil {
+		log.Printf("Failed to resolve path: %v", err)
+		return ""
+	}
+	args := []string{
+		"goversioninfo",
+		"-o",
+		sysoPath,
+		jsonPath,
+	}
+	if goarch == "amd64" {
+		args = append(args, "-64") // Make the syso a 64-bit coff file (but does not matter, results are identical)
+	}
+	err = runEnv(args, nil)
+	if err != nil {
+		return ""
+	}
+
+	return sysoPath
+}
+
+// delete generated system object (syso) resource file
+func cleanupResourceSyso(sysoFilePath string) {
+	if sysoFilePath == "" {
+		return
+	}
+	if err := os.Remove(sysoFilePath); err != nil {
+		if !os.IsNotExist(err) {
+			log.Printf("Warning: Couldn't remove generated %s: %v. Please remove it manually.", sysoFilePath, err)
+		}
+	}
+}
+
 // build the binary in dir returning success or failure
 func compileArch(version, goos, goarch, dir string) bool {
 	log.Printf("Compiling %s/%s", goos, goarch)
 	output := filepath.Join(dir, "rclone")
 	if goos == "windows" {
 		output += ".exe"
+		sysoPath := buildWindowsResourceSyso(goarch, version)
+		if sysoPath == "" {
+			log.Printf("Warning: Windows binaries will not have file information embedded")
+		}
+		defer cleanupResourceSyso(sysoPath)
 	}
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {
