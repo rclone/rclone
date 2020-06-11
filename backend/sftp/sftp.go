@@ -395,8 +395,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	keyFile := env.ShellExpand(opt.KeyFile)
 	//keyPem := env.ShellExpand(opt.KeyPem)
-	// Add ssh agent-auth if no password or file specified
-	if (opt.Pass == "" && keyFile == "" && !opt.AskPassword) || opt.KeyUseAgent {
+	// Add ssh agent-auth if no password or file or key PEM specified
+	if (opt.Pass == "" && keyFile == "" && !opt.AskPassword && opt.KeyPem == "") || opt.KeyUseAgent {
 		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't connect to ssh-agent")
