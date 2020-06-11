@@ -36,6 +36,11 @@ var s3ParamsToSign = map[string]struct{}{
 	"response-cache-control":       {},
 	"response-content-disposition": {},
 	"response-content-encoding":    {},
+	"lifecycle":                    {},
+	"website":                      {},
+	"delete":                       {},
+	"cors":                         {},
+	"restore":                      {},
 }
 
 // Warn once about empty endpoint
@@ -73,7 +78,7 @@ func v2sign(opt *Options, req *http.Request) {
 	// Look through headers of interest
 	var md5 string
 	var contentType string
-	var headersToSign []string
+	var headersToSign [][2]string // slice of key, value pairs
 	for k, v := range req.Header {
 		k = strings.ToLower(k)
 		switch k {
@@ -84,15 +89,26 @@ func v2sign(opt *Options, req *http.Request) {
 		default:
 			if strings.HasPrefix(k, "x-amz-") {
 				vall := strings.Join(v, ",")
-				headersToSign = append(headersToSign, k+":"+vall)
+				headersToSign = append(headersToSign, [2]string{k, vall})
 			}
 		}
 	}
 	// Make headers of interest into canonical string
 	var joinedHeadersToSign string
 	if len(headersToSign) > 0 {
-		sort.StringSlice(headersToSign).Sort()
-		joinedHeadersToSign = strings.Join(headersToSign, "\n") + "\n"
+		// sort by keys
+		sort.Slice(headersToSign, func(i, j int) bool {
+			return headersToSign[i][0] < headersToSign[j][0]
+		})
+		// join into key:value\n
+		var out strings.Builder
+		for _, kv := range headersToSign {
+			out.WriteString(kv[0])
+			out.WriteRune(':')
+			out.WriteString(kv[1])
+			out.WriteRune('\n')
+		}
+		joinedHeadersToSign = out.String()
 	}
 
 	// Look for query parameters which need to be added to the signature
