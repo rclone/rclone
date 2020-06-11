@@ -1972,9 +1972,10 @@ func (f *Fs) resolveShortcut(item *drive.File) (newItem *drive.File, err error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to resolve shortcut")
 	}
-	// make sure we use the Name and Parents from the original item
+	// make sure we use the Name, Parents and Trashed from the original item
 	newItem.Name = item.Name
 	newItem.Parents = item.Parents
+	newItem.Trashed = item.Trashed
 	// the new ID is a composite ID
 	newItem.Id = joinID(newItem.Id, item.Id)
 	return newItem, nil
