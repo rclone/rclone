@@ -3202,6 +3202,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Read the metadata from the newly created object
 	o.meta = nil // wipe old metadata
 	err = o.readMetaData(ctx)
+	// Empty an Etag which is a valid md5sum for multipart
+	// uploads. This works around a bug in KS3 where the ETag is a
+	// correctly formed md5sum for multpart uploads
+	if multipart && matchMd5.MatchString(strings.Trim(strings.ToLower(o.etag), `"`)) {
+		o.etag = ""
+	}
 	return err
 }
 
