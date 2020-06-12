@@ -329,6 +329,31 @@ func TestDelete(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file3)
 }
 
+func TestRetry(t *testing.T) {
+	var i int
+	var err error
+	fn := func() error {
+		i--
+		if i <= 0 {
+			return nil
+		}
+		return err
+	}
+
+	i, err = 3, io.EOF
+	assert.Equal(t, nil, operations.Retry(nil, 5, fn))
+	assert.Equal(t, 0, i)
+
+	i, err = 10, io.EOF
+	assert.Equal(t, io.EOF, operations.Retry(nil, 5, fn))
+	assert.Equal(t, 5, i)
+
+	i, err = 10, fs.ErrorObjectNotFound
+	assert.Equal(t, fs.ErrorObjectNotFound, operations.Retry(nil, 5, fn))
+	assert.Equal(t, 9, i)
+
+}
+
 func testCheck(t *testing.T, checkFunction func(ctx context.Context, fdst, fsrc fs.Fs, oneway bool) error) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
