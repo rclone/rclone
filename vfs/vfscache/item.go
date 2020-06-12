@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 	"time"
@@ -32,13 +33,11 @@ import (
 // NB Item and downloader are tightly linked so it is necessary to
 // have a total lock ordering between them. downloader.mu must always
 // be taken before Item.mu. downloader may call into Item but Item may
-// **not** call downloader methods with Item.mu held, except for
-//
-// - downloader.running
+// **not** call downloader methods with Item.mu held
 
 // Item is stored in the item map
 //
-// These are written to the backing store to store status
+// The Info field is written to the backing store to store status
 type Item struct {
 	// read only
 	c *Cache // cache this is part of
@@ -143,13 +142,6 @@ func (item *Item) getATime() time.Time {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	return item.info.ATime
-}
-
-// getName returns the name of the item
-func (item *Item) getName() string {
-	item.mu.Lock()
-	defer item.mu.Unlock()
-	return item.name
 }
 
 // getDiskSize returns the size on disk (approximately) of the item
@@ -276,6 +268,10 @@ func (item *Item) _truncateToCurrentSize() (err error) {
 func (item *Item) Truncate(size int64) (err error) {
 	item.mu.Lock()
 	defer item.mu.Unlock()
+
+	if item.fd == nil {
+		return errors.New("vfs cache item truncate: internal error: didn't Open file")
+	}
 
 	// Read old size
 	oldSize, err := item._getSize()
@@ -454,7 +450,9 @@ func (item *Item) Open(o fs.Object) (err error) {
 	item.mu.Lock()
 
 	// Create the downloaders
-	item.downloaders = newDownloaders(item, item.c.fremote, item.name, item.o)
+	if item.o != nil {
+		item.downloaders = newDownloaders(item, item.c.fremote, item.name, item.o)
+	}
 
 	return err
 }
@@ -465,12 +463,6 @@ func (item *Item) Open(o fs.Object) (err error) {
 // Call with lock held
 func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 	defer log.Trace(item.name, "item=%p", item)("err=%v", &err)
-
-	// Ensure any segments not transferred are brought in
-	err = item._ensure(0, item.info.Size)
-	if err != nil {
-		return errors.Wrap(err, "vfs cache: failed to download missing parts of cache file")
-	}
 
 	// Transfer the temp file to the remote
 	cacheObj, err := item.c.fcache.NewObject(ctx, item.name)
@@ -535,6 +527,19 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 	// Update the size on close
 	_, _ = item._getSize()
 
+	// If the file is dirty ensure any segments not transferred
+	// are brought in first.
+	//
+	// FIXME It would be nice to do this asynchronously howeve it
+	// would require keeping the downloaders alive after the item
+	// has been closed
+	if item.info.Dirty && item.o != nil {
+		err = item._ensure(0, item.info.Size)
+		if err != nil {
+			return errors.Wrap(err, "vfs cache: failed to download missing parts of cache file")
+		}
+	}
+
 	// Accumulate and log errors
 	checkErr := func(e error) {
 		if e != nil {
@@ -598,6 +603,8 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 }
 
 // reload is called with valid items recovered from a cache reload.
+//
+// If they are dirty then it makes sure they get uploaded
 //
 // it is called before the cache has started so opens will be 0 and
 // metaDirty will be false.
@@ -729,6 +736,13 @@ func (item *Item) _present() bool {
 	return item.info.Rs.Present(ranges.Range{Pos: 0, Size: item.info.Size})
 }
 
+// present returns true if the whole file has been downloaded
+func (item *Item) present() bool {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item._present()
+}
+
 // hasRange returns true if the current ranges entirely include range
 func (item *Item) hasRange(r ranges.Range) bool {
 	item.mu.Lock()
@@ -780,6 +794,10 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 //
 // This is called by the downloader downloading file segments and the
 // vfs layer writing to the file.
+//
+// This doesn't mark the item as Dirty - that the the responsibility
+// of the caller as we don't know here whether we are adding reads or
+// writes to the cache file.
 //
 // call with lock held
 func (item *Item) _written(offset, size int64) {
@@ -835,6 +853,10 @@ func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 		item.mu.Unlock()
 		return 0, errors.New("vfs cache item ReadAt: internal error: didn't Open file")
 	}
+	if off < 0 {
+		item.mu.Unlock()
+		return 0, io.EOF
+	}
 	err = item._ensure(off, int64(len(b)))
 	if err != nil {
 		item.mu.Unlock()
@@ -865,6 +887,14 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 		item._dirty()
 	}
 	end := off + int64(n)
+	// Writing off the end of the file so need to make some
+	// zeroes.  we do this by showing that we have written to the
+	// new parts of the file.
+	if off > item.info.Size {
+		item._written(item.info.Size, off-item.info.Size)
+		item._dirty()
+	}
+	// Update size
 	if end > item.info.Size {
 		item.info.Size = end
 	}
