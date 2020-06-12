@@ -97,6 +97,9 @@ func init() {
 				Value: "Netease",
 				Help:  "Netease Object Storage (NOS)",
 			}, {
+				Value: "Scaleway",
+				Help:  "Scaleway Object Storage",
+			}, {
 				Value: "StackPath",
 				Help:  "StackPath Object Storage",
 			}, {
@@ -178,8 +181,19 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region to connect to.",
+			Provider: "Scaleway",
+			Examples: []fs.OptionExample{{
+				Value: "nl-ams",
+				Help:  "Amsterdam, The Netherlands",
+			}, {
+				Value: "fr-par",
+				Help:  "Paris, France",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "Region to connect to.\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba",
+			Provider: "!AWS,Alibaba,Scaleway",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure. Will use v4 signatures and an empty region.",
@@ -363,6 +377,17 @@ func init() {
 			}},
 		}, {
 			Name:     "endpoint",
+			Help:     "Endpoint for Scaleway Object Storage.",
+			Provider: "Scaleway",
+			Examples: []fs.OptionExample{{
+				Value: "s3.nl-ams.scw.cloud",
+				Help:  "Amsterdam Endpoint",
+			}, {
+				Value: "s3.fr-par.scw.cloud",
+				Help:  "Paris Endpoint",
+			}},
+		}, {
+			Name:     "endpoint",
 			Help:     "Endpoint for StackPath Object Storage.",
 			Provider: "StackPath",
 			Examples: []fs.OptionExample{{
@@ -378,7 +403,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,Alibaba,StackPath",
+			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -565,7 +590,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,StackPath",
+			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -740,6 +765,21 @@ isn't set then "acl" is used instead.`,
 			}, {
 				Value: "STANDARD_IA",
 				Help:  "Infrequent access storage mode.",
+			}},
+		}, {
+			// Mapping from here: https://www.scaleway.com/en/docs/object-storage-glacier/#-Scaleway-Storage-Classes
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in S3.",
+			Provider: "Scaleway",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "STANDARD",
+				Help:  "The Standard class for any upload; suitable for on-demand content like streaming or CDN.",
+			}, {
+				Value: "GLACIER",
+				Help:  "Archived storage; prices are lower, but it needs to be restored first to be accessed.",
 			}},
 		}, {
 			Name: "upload_cutoff",
@@ -1149,8 +1189,11 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	if opt.Region == "" {
 		opt.Region = "us-east-1"
 	}
-	if opt.Provider == "AWS" || opt.Provider == "Alibaba" || opt.Provider == "Netease" || opt.UseAccelerateEndpoint {
+	if opt.Provider == "AWS" || opt.Provider == "Alibaba" || opt.Provider == "Netease" || opt.Provider == "Scaleway" || opt.UseAccelerateEndpoint {
 		opt.ForcePathStyle = false
+	}
+	if opt.Provider == "Scaleway" && opt.MaxUploadParts > 1000 {
+		opt.MaxUploadParts = 1000
 	}
 	awsConfig := aws.NewConfig().
 		WithMaxRetries(0). // Rely on rclone's retry logic
