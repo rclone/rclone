@@ -966,11 +966,38 @@ func CheckEqualReaders(in1, in2 io.Reader) (differ bool, err error) {
 	return false, nil
 }
 
-// CheckIdentical checks to see if dst and src are identical by
-// reading all their bytes if necessary.
+// Retry runs fn up to maxTries times if it returns a retriable error
+func Retry(o interface{}, maxTries int, fn func() error) (err error) {
+	for tries := 1; tries <= maxTries; tries++ {
+		// Call the function which might error
+		err = fn()
+		if err == nil {
+			break
+		}
+		// Retry if err returned a retry error
+		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
+			fs.Debugf(o, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
+			continue
+		}
+		break
+	}
+	return err
+}
+
+// CheckIdenticalDownload checks to see if dst and src are identical
+// by reading all their bytes if necessary.
 //
 // it returns true if differences were found
-func CheckIdentical(ctx context.Context, dst, src fs.Object) (differ bool, err error) {
+func CheckIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ bool, err error) {
+	err = Retry(src, fs.Config.LowLevelRetries, func() error {
+		differ, err = checkIdenticalDownload(ctx, dst, src)
+		return err
+	})
+	return differ, err
+}
+
+// Does the work for CheckIdenticalDownload
+func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ bool, err error) {
 	in1, err := dst.Open(ctx)
 	if err != nil {
 		return true, errors.Wrapf(err, "failed to open %q", dst)
@@ -1000,7 +1027,7 @@ func CheckIdentical(ctx context.Context, dst, src fs.Object) (differ bool, err e
 // and the actual contents of the files.
 func CheckDownload(ctx context.Context, fdst, fsrc fs.Fs, oneway bool) error {
 	check := func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool) {
-		differ, err := CheckIdentical(ctx, a, b)
+		differ, err := CheckIdenticalDownload(ctx, a, b)
 		if err != nil {
 			err = fs.CountError(err)
 			fs.Errorf(a, "Failed to download: %v", err)
