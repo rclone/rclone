@@ -93,16 +93,18 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	if mountFns[mountType] != nil {
 		_, _, unmountFn, err := mountFns[mountType](fdst, mountPoint)
 
+		if err != nil {
+			log.Printf("mount FAILED: %v", err)
+			return nil, err
+		}
+		// Add mount to list if mount point was successfully created
 		liveMounts[mountPoint] = MountInfo{
 			unmountFn:  unmountFn,
 			MountedOn:  time.Now(),
 			Fs:         fdst.Name(),
 			MountPoint: mountPoint,
 		}
-		if err != nil {
-			log.Printf("mount FAILED: %v", err)
-			return nil, err
-		}
+
 		fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), mountPoint, mountType)
 		return nil, nil
 	}
