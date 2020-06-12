@@ -915,7 +915,10 @@ func CheckFn(ctx context.Context, fdst, fsrc fs.Fs, check checkFn, oneway bool) 
 		fs.Logf(fsrc, "%d files missing", c.srcFilesMissing)
 	}
 
-	fs.Logf(fdst, "%d differences found", accounting.Stats(ctx).GetErrors())
+	fs.Logf(fdst, "%d differences found", c.differences)
+	if errs := accounting.Stats(ctx).GetErrors(); errs > 0 {
+		fs.Logf(fdst, "%d errors while checking", errs)
+	}
 	if c.noHashes > 0 {
 		fs.Logf(fdst, "%d hashes could not be checked", c.noHashes)
 	}
