@@ -2,7 +2,12 @@ package operations
 
 import (
 	"context"
+	"io"
+	"mime"
+	"mime/multipart"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
@@ -151,6 +156,7 @@ func init() {
 		{name: "delete", title: "Remove files in the path", noRemote: true},
 		{name: "deletefile", title: "Remove the single file pointed to"},
 		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n - autoFilename - boolean, set to true to retrieve destination file name from url"},
+		{name: "uploadfile", title: "Upload file using multiform/form-data", help: "- each part in body represents a file to be uploaded", needsRequest: true},
 		{name: "cleanup", title: "Remove trashed files in the remote or path", noRemote: true},
 	} {
 		op := op
@@ -221,6 +227,41 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 
 		_, err = CopyURL(ctx, f, remote, url, autoFilename, noClobber)
 		return nil, err
+	case "uploadfile":
+
+		var request *http.Request
+		request, err := in.GetHTTPRequest()
+
+		if err != nil {
+			return nil, err
+		}
+
+		contentType := request.Header.Get("Content-Type")
+		mediaType, params, err := mime.ParseMediaType(contentType)
+		if err != nil {
+			return nil, err
+		}
+
+		if strings.HasPrefix(mediaType, "multipart/") {
+			mr := multipart.NewReader(request.Body, params["boundary"])
+			for {
+				p, err := mr.NextPart()
+				if err == io.EOF {
+					return nil, nil
+				}
+				if err != nil {
+					return nil, err
+				}
+				if p.FileName() != "" {
+					obj, err := Rcat(ctx, f, p.FileName(), p, time.Now())
+					if err != nil {
+						return nil, err
+					}
+					fs.Debugf(obj, "Upload Succeeded")
+				}
+			}
+		}
+		return nil, nil
 	case "cleanup":
 		return nil, CleanUp(ctx, f)
 	}
