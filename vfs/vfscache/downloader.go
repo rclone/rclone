@@ -21,6 +21,8 @@ const (
 	maxDownloaderIdleTime = 5 * time.Second
 	// max number of bytes a reader should skip over before closing it
 	maxSkipBytes = 1024 * 1024
+	// time between background kicks of waiters to pick up errors
+	backgroundKickerInterval = 5 * time.Second
 )
 
 // downloaders is a number of downloader~s and a queue of waiters
@@ -28,11 +30,13 @@ const (
 type downloaders struct {
 	// Write once - no locking required
 	ctx    context.Context
+	cancel context.CancelFunc
 	item   *Item
 	src    fs.Object // source object
 	remote string
 	fcache fs.Fs // destination Fs
 	osPath string
+	wg     sync.WaitGroup
 
 	// Read write
 	mu      sync.Mutex
@@ -68,14 +72,35 @@ type downloader struct {
 }
 
 func newDownloaders(item *Item, fcache fs.Fs, remote string, src fs.Object) (dls *downloaders) {
+	if src == nil {
+		panic("internal error: newDownloaders called with nil src object")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
 	dls = &downloaders{
-		ctx:    context.Background(),
+		ctx:    ctx,
+		cancel: cancel,
 		item:   item,
 		src:    src,
 		remote: remote,
 		fcache: fcache,
 		osPath: item.c.toOSPath(remote),
 	}
+	dls.wg.Add(1)
+	go func() {
+		defer dls.wg.Done()
+		ticker := time.NewTicker(backgroundKickerInterval)
+		select {
+		case <-ticker.C:
+			err := dls.kickWaiters()
+			if err != nil {
+				fs.Errorf(dls.src, "Failed to kick waiters: %v", err)
+			}
+		case <-ctx.Done():
+			break
+		}
+		ticker.Stop()
+	}()
+
 	return dls
 }
 
@@ -146,6 +171,8 @@ func (dls *downloaders) close(inErr error) (err error) {
 			err = closeErr
 		}
 	}
+	dls.cancel()
+	dls.wg.Wait()
 	dls.dls = nil
 	dls._dispatchWaiters()
 	dls._closeWaiters(inErr)
@@ -296,8 +323,13 @@ func (dls *downloaders) kickWaiters() (err error) {
 	for _, waiter := range dls.waiters {
 		err = dls._ensureDownloader(waiter.r)
 		if err != nil {
+			// Failures here will be retried by background kicker
 			fs.Errorf(dls.src, "Restart download failed: %v", err)
 		}
+	}
+
+	if true {
+
 	}
 
 	return nil
