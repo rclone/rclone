@@ -26,11 +26,11 @@ type StatsInfo struct {
 	retryError        bool
 	retryAfter        time.Time
 	checks            int64
-	checking          *stringSet
+	checking          *transferMap
 	checkQueue        int
 	checkQueueSize    int64
 	transfers         int64
-	transferring      *stringSet
+	transferring      *transferMap
 	transferQueue     int
 	transferQueueSize int64
 	renames           int64
@@ -47,8 +47,8 @@ type StatsInfo struct {
 // NewStats creates an initialised StatsInfo
 func NewStats() *StatsInfo {
 	return &StatsInfo{
-		checking:     newStringSet(fs.Config.Checkers, "checking"),
-		transferring: newStringSet(fs.Config.Transfers, "transferring"),
+		checking:     newTransferMap(fs.Config.Checkers, "checking"),
+		transferring: newTransferMap(fs.Config.Transfers, "transferring"),
 		inProgress:   newInProgress(),
 	}
 }
@@ -81,11 +81,11 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 		s.transferring.mu.RLock()
 
 		var t []rc.Params
-		for name := range s.transferring.items {
+		for name, tr := range s.transferring.items {
 			if acc := s.inProgress.get(name); acc != nil {
 				t = append(t, acc.RemoteStats())
 			} else {
-				t = append(t, s.transferRemoteStats(name))
+				t = append(t, s.transferRemoteStats(tr))
 			}
 		}
 		out["transferring"] = t
@@ -108,18 +108,11 @@ func (s *StatsInfo) Speed() float64 {
 	return speed
 }
 
-func (s *StatsInfo) transferRemoteStats(name string) rc.Params {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	for _, tr := range s.startedTransfers {
-		if tr.remote == name {
-			return rc.Params{
-				"name": name,
-				"size": tr.size,
-			}
-		}
+func (s *StatsInfo) transferRemoteStats(tr *Transfer) rc.Params {
+	return rc.Params{
+		"name": tr.remote,
+		"size": tr.size,
 	}
-	return rc.Params{"name": name}
 }
 
 // timeRange is a start and end time of a transfer
@@ -558,8 +551,9 @@ func (s *StatsInfo) RetryAfter() time.Time {
 
 // NewCheckingTransfer adds a checking transfer to the stats, from the object.
 func (s *StatsInfo) NewCheckingTransfer(obj fs.Object) *Transfer {
-	s.checking.add(obj.Remote())
-	return newCheckingTransfer(s, obj)
+	tr := newCheckingTransfer(s, obj)
+	s.checking.add(tr)
+	return tr
 }
 
 // DoneChecking removes a check from the stats
@@ -579,14 +573,16 @@ func (s *StatsInfo) GetTransfers() int64 {
 
 // NewTransfer adds a transfer to the stats from the object.
 func (s *StatsInfo) NewTransfer(obj fs.Object) *Transfer {
-	s.transferring.add(obj.Remote())
-	return newTransfer(s, obj)
+	tr := newTransfer(s, obj)
+	s.transferring.add(tr)
+	return tr
 }
 
 // NewTransferRemoteSize adds a transfer to the stats based on remote and size.
 func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
-	s.transferring.add(remote)
-	return newTransferRemoteSize(s, remote, size, false)
+	tr := newTransferRemoteSize(s, remote, size, false)
+	s.transferring.add(tr)
+	return tr
 }
 
 // DoneTransferring removes a transfer from the stats
