@@ -226,6 +226,6 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 //  </d:response>
 // </d:multistatus>
 type Quota struct {
-	Available int64 `xml:"DAV: response>propstat>prop>quota-available-bytes"`
-	Used      int64 `xml:"DAV: response>propstat>prop>quota-used-bytes"`
+	Available string `xml:"DAV: response>propstat>prop>quota-available-bytes"`
+	Used      string `xml:"DAV: response>propstat>prop>quota-used-bytes"`
 }
