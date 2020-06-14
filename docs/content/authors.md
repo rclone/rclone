@@ -383,3 +383,4 @@ put them back in again.` >}}
   * Roman Kredentser <shareed2k@gmail.com>
   * Kamil Trzciński <ayufan@ayufan.eu>
   * Zac Rubin <z-0@users.noreply.github.com>
+  * Vincent Feltz <psycho@feltzv.fr>
