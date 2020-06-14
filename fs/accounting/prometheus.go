@@ -76,7 +76,7 @@ func (c *RcloneCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect is part of the Collector interface: https://godoc.org/github.com/prometheus/client_golang/prometheus#Collector
 func (c *RcloneCollector) Collect(ch chan<- prometheus.Metric) {
-	s := GlobalStats()
+	s := groups.sum()
 	s.mu.RLock()
 
 	ch <- prometheus.MustNewConstMetric(c.bytesTransferred, prometheus.CounterValue, float64(s.bytes))
