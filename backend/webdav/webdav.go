@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -975,10 +976,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
  </D:prop>
 </D:propfind>
 `))
-	var q = api.Quota{
-		Available: -1,
-		Used:      -1,
-	}
+	var q api.Quota
 	var resp *http.Response
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
@@ -989,14 +987,14 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return nil, errors.Wrap(err, "about call failed")
 	}
 	usage := &fs.Usage{}
-	if q.Used >= 0 {
-		usage.Used = fs.NewUsageValue(q.Used)
+	if i, err := strconv.ParseInt(q.Used, 10, 64); err == nil && i >= 0 {
+		usage.Used = fs.NewUsageValue(i)
 	}
-	if q.Available >= 0 {
-		usage.Free = fs.NewUsageValue(q.Available)
+	if i, err := strconv.ParseInt(q.Available, 10, 64); err == nil && i >= 0 {
+		usage.Free = fs.NewUsageValue(i)
 	}
-	if q.Available >= 0 && q.Used >= 0 {
-		usage.Total = fs.NewUsageValue(q.Available + q.Used)
+	if usage.Used != nil && usage.Free != nil {
+		usage.Total = fs.NewUsageValue(*usage.Used + *usage.Free)
 	}
 	return usage, nil
 }
