@@ -79,8 +79,15 @@ request](https://help.github.com/articles/creating-a-pull-request/).
 
 You patch will get reviewed and you might get asked to fix some stuff.
 
-If so, then make the changes in the same branch, squash the commits,
-rebase it to master then push it to GitHub with `--force`.
+If so, then make the changes in the same branch, squash the commits (make multiple commits one commit) by running:
+```
+git log # See how many commits you want to squash
+git reset --soft HEAD~2 # This squashes the 2 latest commits together.
+git status # Check what will happen, if you made a mistake resetting, you can run git reset 'HEAD@{1}' to undo.
+git commit # Add a new commit message.
+git push --force # Push the squashed commit to your GitHub repo.
+# For more, see Stack Overflow, Git docs, or generally Duck around the web. jtagcat also reccommends wizardzines.com
+```
 
 ## CI for your fork ##
 
