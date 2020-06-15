@@ -204,9 +204,6 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 
 	vfs.SetCacheMode(vfs.Opt.CacheMode)
 
-	// add the remote control
-	vfs.addRC()
-
 	// Pin the Fs into the cache so that when we use cache.NewFs
 	// with the same remote string we get this one. The Pin is
 	// removed by Shutdown
