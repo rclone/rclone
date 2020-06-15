@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"runtime"
 	"testing"
+
+	"github.com/rclone/rclone/fstest/testy"
 )
 
 func TestStatsGroupOperations(t *testing.T) {
@@ -71,6 +73,7 @@ func TestStatsGroupOperations(t *testing.T) {
 	})
 
 	t.Run("memory is reclaimed", func(t *testing.T) {
+		testy.SkipUnreliable(t)
 		var (
 			count      = 1000
 			start, end runtime.MemStats
