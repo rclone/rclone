@@ -558,6 +558,7 @@ func (f *File) Remove() (err error) {
 		if wasWriting {
 			// Ignore error deleting file if was writing it as it may not be uploaded yet
 			err = nil
+			fs.Debugf(f._path(), "Ignoring File.Remove file error as uploading: %v", err)
 		} else {
 			fs.Debugf(f._path(), "File.Remove file error: %v", err)
 		}

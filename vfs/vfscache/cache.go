@@ -315,9 +315,14 @@ func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error
 func (c *Cache) Remove(name string) (wasWriting bool) {
 	name = clean(name)
 	c.mu.Lock()
-	item, _ := c._get(name)
-	delete(c.item, name)
+	item := c.item[name]
+	if item != nil {
+		delete(c.item, name)
+	}
 	c.mu.Unlock()
+	if item == nil {
+		return false
+	}
 	return item.remove("file deleted")
 }
 
