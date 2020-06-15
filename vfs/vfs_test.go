@@ -128,14 +128,39 @@ func TestVFSbaseHandle(t *testing.T) {
 
 // TestNew sees if the New command works properly
 func TestVFSNew(t *testing.T) {
+	// Check active cache has this many entries
+	checkActiveCacheEntries := func(i int) {
+		_, count := activeCacheEntries()
+		assert.Equal(t, i, count)
+	}
+
+	checkActiveCacheEntries(0)
+
 	r, vfs, cleanup := newTestVFS(t)
-	defer cleanup()
 
 	// Check making a VFS with nil options
 	var defaultOpt = vfscommon.DefaultOpt
 	defaultOpt.DirPerms |= os.ModeDir
 	assert.Equal(t, vfs.Opt, defaultOpt)
 	assert.Equal(t, vfs.f, r.Fremote)
+
+	checkActiveCacheEntries(1)
+
+	// Check that we get the same VFS if we ask for it again with
+	// the same options
+	vfs2 := New(r.Fremote, nil)
+	assert.Equal(t, fmt.Sprintf("%p", vfs), fmt.Sprintf("%p", vfs2))
+
+	checkActiveCacheEntries(1)
+
+	// Shut the new VFS down and check the cache still has stuff in
+	vfs2.Shutdown()
+
+	checkActiveCacheEntries(1)
+
+	cleanup()
+
+	checkActiveCacheEntries(0)
 }
 
 // TestNew sees if the New command works properly

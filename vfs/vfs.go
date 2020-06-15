@@ -157,23 +157,31 @@ var (
 
 // VFS represents the top level filing system
 type VFS struct {
-	f         fs.Fs
-	root      *Dir
-	Opt       vfscommon.Options
-	cache     *vfscache.Cache
-	cancel    context.CancelFunc
-	usageMu   sync.Mutex
-	usageTime time.Time
-	usage     *fs.Usage
-	pollChan  chan time.Duration
+	f           fs.Fs
+	root        *Dir
+	Opt         vfscommon.Options
+	cache       *vfscache.Cache
+	cancelCache context.CancelFunc
+	usageMu     sync.Mutex
+	usageTime   time.Time
+	usage       *fs.Usage
+	pollChan    chan time.Duration
+	inUse       int32 // count of number of opens accessed with atomic
 }
+
+// Keep track of active VFS keyed on fs.ConfigString(f)
+var (
+	activeMu sync.Mutex
+	active   = map[string][]*VFS{}
+)
 
 // New creates a new VFS and root directory.  If opt is nil, then
 // DefaultOpt will be used
 func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	fsDir := fs.NewDir("", time.Now())
 	vfs := &VFS{
-		f: f,
+		f:     f,
+		inUse: int32(1),
 	}
 
 	// Make a copy of the options
@@ -189,6 +197,20 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 
 	// Make sure directories are returned as directories
 	vfs.Opt.DirPerms |= os.ModeDir
+
+	// Find a VFS with the same name and options and return it if possible
+	activeMu.Lock()
+	defer activeMu.Unlock()
+	configName := fs.ConfigString(f)
+	for _, activeVFS := range active[configName] {
+		if vfs.Opt == activeVFS.Opt {
+			fs.Debugf(f, "Re-using VFS from active cache")
+			atomic.AddInt32(&activeVFS.inUse, 1)
+			return activeVFS
+		}
+	}
+	// Put the VFS into the active cache
+	active[configName] = append(active[configName], vfs)
 
 	// Create root directory
 	vfs.root = newDir(vfs, f, nil, fsDir)
@@ -208,7 +230,22 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	// with the same remote string we get this one. The Pin is
 	// removed by Shutdown
 	cache.Pin(f)
+
 	return vfs
+}
+
+// Return the number of active cache entries and a VFS if any are in
+// the cache.
+func activeCacheEntries() (vfs *VFS, count int) {
+	activeMu.Lock()
+	for _, vfses := range active {
+		count += len(vfses)
+		if len(vfses) > 0 {
+			vfs = vfses[0]
+		}
+	}
+	activeMu.Unlock()
+	return vfs, count
 }
 
 // Fs returns the Fs passed into the New call
@@ -218,7 +255,7 @@ func (vfs *VFS) Fs() fs.Fs {
 
 // SetCacheMode change the cache mode
 func (vfs *VFS) SetCacheMode(cacheMode vfscommon.CacheMode) {
-	vfs.Shutdown()
+	vfs.shutdownCache()
 	vfs.cache = nil
 	if cacheMode > vfscommon.CacheModeOff {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -230,19 +267,43 @@ func (vfs *VFS) SetCacheMode(cacheMode vfscommon.CacheMode) {
 			return
 		}
 		vfs.Opt.CacheMode = cacheMode
-		vfs.cancel = cancel
+		vfs.cancelCache = cancel
 		vfs.cache = cache
 	}
 }
 
-// Shutdown stops any background go-routines
+// shutdown the cache if it was running
+func (vfs *VFS) shutdownCache() {
+	if vfs.cancelCache != nil {
+		vfs.cancelCache()
+		vfs.cancelCache = nil
+	}
+}
+
+// Shutdown stops any background go-routines and removes the VFS from
+// the active ache.
 func (vfs *VFS) Shutdown() {
+	if atomic.AddInt32(&vfs.inUse, -1) > 0 {
+		return
+	}
+
 	// Unpin the Fs from the cache
 	cache.Unpin(vfs.f)
-	if vfs.cancel != nil {
-		vfs.cancel()
-		vfs.cancel = nil
+
+	// Remove from active cache
+	activeMu.Lock()
+	configName := fs.ConfigString(vfs.f)
+	activeVFSes := active[configName]
+	for i, activeVFS := range activeVFSes {
+		if activeVFS == vfs {
+			activeVFSes[i] = nil
+			active[configName] = append(activeVFSes[:i], activeVFSes[i+1:]...)
+			break
+		}
 	}
+	activeMu.Unlock()
+
+	vfs.shutdownCache()
 }
 
 // CleanUp deletes the contents of the on disk cache
