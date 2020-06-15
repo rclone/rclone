@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -299,6 +300,7 @@ func TestInternalRemoteWrittenFileFoundInMount(t *testing.T) {
 }
 
 func TestInternalCachedWrittenContentMatches(t *testing.T) {
+	testy.SkipUnreliable(t)
 	id := fmt.Sprintf("ticwcm%v", time.Now().Unix())
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
@@ -342,6 +344,7 @@ func TestInternalDoubleWrittenContentMatches(t *testing.T) {
 }
 
 func TestInternalCachedUpdatedContentMatches(t *testing.T) {
+	testy.SkipUnreliable(t)
 	id := fmt.Sprintf("ticucm%v", time.Now().Unix())
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
