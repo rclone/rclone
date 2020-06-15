@@ -14,9 +14,9 @@ var (
 	remap = map[string]string{} // map user supplied names to canonical names
 )
 
-// Lookup fsString in the mapping from user supplied names to
-// canonical names and return the canonical form
-func canonicalize(fsString string) string {
+// Canonicalize looks up fsString in the mapping from user supplied
+// names to canonical names and return the canonical form
+func Canonicalize(fsString string) string {
 	mu.Lock()
 	canonicalName, ok := remap[fsString]
 	mu.Unlock()
@@ -40,7 +40,7 @@ func addMapping(fsString, canonicalName string) {
 // GetFn gets an fs.Fs named fsString either from the cache or creates
 // it afresh with the create function
 func GetFn(fsString string, create func(fsString string) (fs.Fs, error)) (f fs.Fs, err error) {
-	fsString = canonicalize(fsString)
+	fsString = Canonicalize(fsString)
 	created := false
 	value, err := c.Get(fsString, func(fsString string) (f interface{}, ok bool, err error) {
 		f, err = create(fsString)
