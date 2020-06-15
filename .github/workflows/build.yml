@@ -248,7 +248,7 @@ jobs:
 
       - name: Upload artifacts
         run: |
-          make circleci_upload
+          make ci_upload
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
         # Upload artifacts if not a PR && not a fork
