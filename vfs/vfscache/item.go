@@ -35,6 +35,11 @@ import (
 // be taken before Item.mu. downloader may call into Item but Item may
 // **not** call downloader methods with Item.mu held
 
+// NB Item and writeback are tightly linked so it is necessary to
+// have a total lock ordering between them. writeback.mu must always
+// be taken before Item.mu. writeback may call into Item but Item may
+// **not** call writeback methods with Item.mu held
+
 // Item is stored in the item map
 //
 // The Info field is written to the backing store to store status
@@ -49,6 +54,7 @@ type Item struct {
 	o           fs.Object    // object we are caching - may be nil
 	fd          *os.File     // handle we are using to read and write to the file
 	metaDirty   bool         // set if the info needs writeback
+	modified    bool         // set if the file has been modified since the last Open
 	info        Info         // info about the file to persist to backing store
 
 }
@@ -60,7 +66,7 @@ type Info struct {
 	Size        int64         // size of the file
 	Rs          ranges.Ranges // which parts of the file are present
 	Fingerprint string        // fingerprint of remote object
-	Dirty       bool          // set if the backing file has been modifed
+	Dirty       bool          // set if the backing file has been modified
 }
 
 // Items are a slice of *Item ordered by ATime
@@ -111,7 +117,7 @@ func newItem(c *Cache, name string) (item *Item) {
 		if os.IsNotExist(statErr) {
 			item._removeMeta("cache file doesn't exist")
 		} else {
-			item._remove(fmt.Sprintf("failed to stat cache file: %v", statErr))
+			item.remove(fmt.Sprintf("failed to stat cache file: %v", statErr))
 		}
 	}
 
@@ -120,7 +126,7 @@ func newItem(c *Cache, name string) (item *Item) {
 	if !exists {
 		item._removeFile("metadata doesn't exist")
 	} else if err != nil {
-		item._remove(fmt.Sprintf("failed to load metadata: %v", err))
+		item.remove(fmt.Sprintf("failed to load metadata: %v", err))
 	}
 
 	// Get size estimate (which is best we can do until Open() called)
@@ -361,6 +367,10 @@ func (item *Item) _dirty() {
 	item.info.ModTime = time.Now()
 	item.info.ATime = item.info.ModTime
 	item.metaDirty = true
+	if !item.modified {
+		item.modified = true
+		go item.c.writeback.cancelUpload(item)
+	}
 	if !item.info.Dirty {
 		item.info.Dirty = true
 		err := item._save()
@@ -410,6 +420,7 @@ func (item *Item) Open(o fs.Object) (err error) {
 	if item.fd != nil {
 		return errors.New("vfs cache item: internal error: didn't Close file")
 	}
+	item.modified = false
 
 	fd, err := file.OpenFile(osPath, os.O_RDWR, 0600)
 	if err != nil {
@@ -488,6 +499,7 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		fs.Errorf(item.name, "Failed to write metadata file: %v", err)
 	}
 	if storeFn != nil && item.o != nil {
+		fs.Debugf(item.name, "writeback object to VFS layer")
 		// Write the object back to the VFS layer as last
 		// thing we do with mutex unlocked
 		item.mu.Unlock()
@@ -595,9 +607,14 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 			checkErr(item._store(context.Background(), storeFn))
 		} else {
 			// asynchronous writeback
-			item.c.writeback.add(item, item.name, storeFn)
+			item.mu.Unlock()
+			item.c.writeback.add(item, item.name, item.modified, storeFn)
+			item.mu.Lock()
 		}
 	}
+
+	// mark as not modified now we have uploaded or queued for upload
+	item.modified = false
 
 	return err
 }
@@ -711,7 +728,9 @@ func (item *Item) _removeMeta(reason string) {
 // call with lock held
 func (item *Item) _remove(reason string) (wasWriting bool) {
 	// Cancel writeback, if any
-	wasWriting = item.c.writeback.cancel(item)
+	item.mu.Unlock()
+	wasWriting = item.c.writeback.remove(item)
+	item.mu.Lock()
 	item.info.clean()
 	item.metaDirty = false
 	item._removeFile(reason)
