@@ -29,8 +29,6 @@ type StartFn func(f fs.Fs) (configmap.Simple, func())
 // run runs the server then runs the unit tests for the remote against
 // it.
 func run(t *testing.T, name string, start StartFn, useProxy bool) {
-	fstest.Initialise()
-
 	fremote, _, clean, err := fstest.RandomRemote()
 	assert.NoError(t, err)
 	defer clean()
@@ -98,6 +96,7 @@ func run(t *testing.T, name string, start StartFn, useProxy bool) {
 // Run runs the server then runs the unit tests for the remote against
 // it.
 func Run(t *testing.T, name string, start StartFn) {
+	fstest.Initialise()
 	t.Run("Normal", func(t *testing.T) {
 		run(t, name, start, false)
 	})
