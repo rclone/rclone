@@ -10,14 +10,14 @@ import (
 var Help = `
 ### Server options
 
-Use --addr to specify which IP address and port the server should
-listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
+Use ` + "`--addr`" + ` to specify which IP address and port the server should
+listen on, eg ` + "`--addr 1.2.3.4:8000` or `--addr :8080`" + ` to listen to all
 IPs.
 
-Use --name to choose the friendly server name, which is by
+Use ` + "`--name`" + ` to choose the friendly server name, which is by
 default "rclone (hostname)".
 
-Use --log-trace in conjunction with -vv to enable additional debug
+Use ` + "`--log-trace` in conjunction with `-vv`" + ` to enable additional debug
 logging of all UPNP traffic.
 `
 
