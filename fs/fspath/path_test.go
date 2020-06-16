@@ -23,6 +23,9 @@ func TestCheckConfigName(t *testing.T) {
 		{"rem\\ote", errInvalidCharacters},
 		{"[remote", errInvalidCharacters},
 		{"*", errInvalidCharacters},
+		{"-remote", errCantStartWithDash},
+		{"r-emote-", nil},
+		{"_rem_ote_", nil},
 	} {
 		got := CheckConfigName(test.in)
 		assert.Equal(t, test.want, got, test.in)
