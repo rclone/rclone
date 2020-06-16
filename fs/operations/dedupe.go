@@ -316,7 +316,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode) error {
 
 	for remote, objs := range files {
 		if len(objs) > 1 {
-			fs.Logf(remote, "Found %d duplicates - deleting identical copies", len(objs))
+			fs.Logf(remote, "Found %d files with duplicate names", len(objs))
 			objs = dedupeDeleteIdentical(ctx, ht, remote, objs)
 			if len(objs) <= 1 {
 				fs.Logf(remote, "All duplicates removed")
@@ -342,7 +342,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode) error {
 				sortSmallestFirst(objs)
 				dedupeDeleteAllButOne(ctx, 0, remote, objs)
 			case DeduplicateSkip:
-				// skip
+				fs.Logf(remote, "Skipping %d files with duplicate names", len(objs))
 			default:
 				//skip
 			}
