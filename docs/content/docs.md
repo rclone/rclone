@@ -203,6 +203,11 @@ To copy files and directories in `https://example.com/path/to/dir` to `/tmp/dir`
 To copy files and directories from `example.com` in the relative
 directory `path/to/dir` to `/tmp/dir` using sftp.
 
+### Valid remote names
+
+ - Remote names may only contain 0-9, A-Z ,a-z ,_ , - and space.
+ - Remote names may not start with -.
+
 Quoting and the shell
 ---------------------
 
