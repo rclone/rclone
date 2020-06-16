@@ -239,8 +239,10 @@ func (fh *RWFileHandle) Stat() (os.FileInfo, error) {
 
 // _readAt bytes from the file at off
 //
+// if release is set then it releases the mutex just before doing the IO
+//
 // call with lock held
-func (fh *RWFileHandle) _readAt(b []byte, off int64) (n int, err error) {
+func (fh *RWFileHandle) _readAt(b []byte, off int64, release bool) (n int, err error) {
 	defer log.Trace(fh.logPrefix(), "size=%d, off=%d", len(b), off)("n=%d, err=%v", &n, &err)
 	if fh.closed {
 		return n, ECLOSED
@@ -254,21 +256,29 @@ func (fh *RWFileHandle) _readAt(b []byte, off int64) (n int, err error) {
 	if err = fh.openPending(); err != nil {
 		return n, err
 	}
-	return fh.item.ReadAt(b, off)
+	if release {
+		// Do the writing with fh.mu unlocked
+		fh.mu.Unlock()
+	}
+	n, err = fh.item.ReadAt(b, off)
+	if release {
+		fh.mu.Lock()
+	}
+	return n, err
 }
 
 // ReadAt bytes from the file at off
 func (fh *RWFileHandle) ReadAt(b []byte, off int64) (n int, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	return fh._readAt(b, off)
+	return fh._readAt(b, off, true)
 }
 
 // Read bytes from the file
 func (fh *RWFileHandle) Read(b []byte) (n int, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	n, err = fh._readAt(b, fh.offset)
+	n, err = fh._readAt(b, fh.offset, false)
 	fh.offset += int64(n)
 	return n, err
 }
@@ -297,8 +307,12 @@ func (fh *RWFileHandle) Seek(offset int64, whence int) (ret int64, err error) {
 	return fh.offset, nil
 }
 
-// WriteAt bytes to the file at off
-func (fh *RWFileHandle) _writeAt(b []byte, off int64) (n int, err error) {
+// _writeAt bytes to the file at off
+//
+// if release is set then it releases the mutex just before doing the IO
+//
+// call with lock held
+func (fh *RWFileHandle) _writeAt(b []byte, off int64, release bool) (n int, err error) {
 	defer log.Trace(fh.logPrefix(), "size=%d, off=%d", len(b), off)("n=%d, err=%v", &n, &err)
 	if fh.closed {
 		return n, ECLOSED
@@ -317,7 +331,14 @@ func (fh *RWFileHandle) _writeAt(b []byte, off int64) (n int, err error) {
 		off = fh.offset
 	}
 	fh.writeCalled = true
+	if release {
+		// Do the writing with fh.mu unlocked
+		fh.mu.Unlock()
+	}
 	n, err = fh.item.WriteAt(b, off)
+	if release {
+		fh.mu.Lock()
+	}
 	if err != nil {
 		return n, err
 	}
@@ -329,11 +350,11 @@ func (fh *RWFileHandle) _writeAt(b []byte, off int64) (n int, err error) {
 // WriteAt bytes to the file at off
 func (fh *RWFileHandle) WriteAt(b []byte, off int64) (n int, err error) {
 	fh.mu.Lock()
-	defer fh.mu.Unlock()
-	n, err = fh._writeAt(b, off)
+	n, err = fh._writeAt(b, off, true)
 	if fh.flags&os.O_APPEND != 0 {
 		fh.offset += int64(n)
 	}
+	fh.mu.Unlock()
 	return n, err
 }
 
@@ -341,7 +362,7 @@ func (fh *RWFileHandle) WriteAt(b []byte, off int64) (n int, err error) {
 func (fh *RWFileHandle) Write(b []byte) (n int, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	n, err = fh._writeAt(b, fh.offset)
+	n, err = fh._writeAt(b, fh.offset, false)
 	fh.offset += int64(n)
 	return n, err
 }
