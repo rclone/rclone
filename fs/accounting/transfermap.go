@@ -63,36 +63,48 @@ func (tm *transferMap) count() int {
 	return len(tm.items)
 }
 
+// sortedSlice returns all transfers sorted by start time
+func (tm *transferMap) sortedSlice() []*Transfer {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	s := make([]*Transfer, 0, len(tm.items))
+	for _, tr := range tm.items {
+		s = append(s, tr)
+	}
+	sort.Slice(s, func(i, j int) bool {
+		return s[i].startedAt.Before(s[j].startedAt)
+	})
+	return s
+}
+
 // String returns string representation of map items excluding any in
 // exclude (if set).
 func (tm *transferMap) String(progress *inProgress, exclude *transferMap) string {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
 	strngs := make([]string, 0, len(tm.items))
-	for name, _ := range tm.items {
+	for _, tr := range tm.sortedSlice() {
 		if exclude != nil {
 			exclude.mu.RLock()
-			_, found := exclude.items[name]
+			_, found := exclude.items[tr.remote]
 			exclude.mu.RUnlock()
 			if found {
 				continue
 			}
 		}
 		var out string
-		if acc := progress.get(name); acc != nil {
+		if acc := progress.get(tr.remote); acc != nil {
 			out = acc.String()
 		} else {
 			out = fmt.Sprintf("%*s: %s",
 				fs.Config.StatsFileNameLength,
-				shortenName(name, fs.Config.StatsFileNameLength),
+				shortenName(tr.remote, fs.Config.StatsFileNameLength),
 				tm.name,
 			)
 		}
 		strngs = append(strngs, " * "+out)
 	}
-	sorted := sort.StringSlice(strngs)
-	sorted.Sort()
-	return strings.Join(sorted, "\n")
+	return strings.Join(strngs, "\n")
 }
 
 // progress returns total bytes read as well as the size.
