@@ -81,7 +81,7 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 		obj.Class = "object.container.storageFolder"
 		obj.Title = fileInfo.Name()
 		return upnpav.Container{
-			Object: obj,
+			Object:     obj,
 			ChildCount: &defaultChildCount,
 		}, nil
 	}
