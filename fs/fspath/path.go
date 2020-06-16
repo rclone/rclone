@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain 0-9, A-Z ,a-z ,_ , - and space ")
+	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain 0-9, A-Z ,a-z ,_ , - and space")
 	errCantBeEmpty       = errors.New("can't use empty string as a path")
 	errCantStartWithDash = errors.New("config name starts with -")
 
