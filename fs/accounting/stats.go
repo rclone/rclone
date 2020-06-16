@@ -72,8 +72,8 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 		var c []string
 		s.checking.mu.RLock()
 		defer s.checking.mu.RUnlock()
-		for name := range s.checking.items {
-			c = append(c, name)
+		for _, tr := range s.checking.sortedSlice() {
+			c = append(c, tr.remote)
 		}
 		out["checking"] = c
 	}
@@ -81,8 +81,8 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 		s.transferring.mu.RLock()
 
 		var t []rc.Params
-		for name, tr := range s.transferring.items {
-			if acc := s.inProgress.get(name); acc != nil {
+		for _, tr := range s.transferring.sortedSlice() {
+			if acc := s.inProgress.get(tr.remote); acc != nil {
 				t = append(t, acc.RemoteStats())
 			} else {
 				t = append(t, s.transferRemoteStats(tr))
