@@ -19,6 +19,7 @@ const (
 var (
 	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain 0-9, A-Z ,a-z ,_ , - and space ")
 	errCantBeEmpty       = errors.New("can't use empty string as a path")
+	errCantStartWithDash = errors.New("config name starts with -")
 
 	// urlMatcher is a pattern to match an rclone URL
 	// note that this matches invalid remoteNames
@@ -35,6 +36,10 @@ var (
 func CheckConfigName(configName string) error {
 	if !configNameMatcher.MatchString(configName) {
 		return errInvalidCharacters
+	}
+	// Reject configName, if it starts with -, complicates usage. (#4261)
+	if strings.HasPrefix(configName, "-") {
+		return errCantStartWithDash
 	}
 	return nil
 }
