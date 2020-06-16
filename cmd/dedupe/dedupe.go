@@ -22,19 +22,32 @@ func init() {
 
 var commandDefinition = &cobra.Command{
 	Use:   "dedupe [mode] remote:path",
-	Short: `Interactively find duplicate files and delete/rename them.`,
+	Short: `Interactively find duplicate filenames and delete/rename them.`,
 	Long: `
-By default ` + "`" + `dedupe` + "`" + ` interactively finds duplicate files and offers to
-delete all but one or rename them to be different. Only useful with
-Google Drive which can have duplicate file names.
+
+By default ` + "`dedupe`" + ` interactively finds files with duplicate
+names and offers to delete all but one or rename them to be
+different.
+
+This is only useful with backends like Google Drive which can have
+duplicate file names. It can be run on wrapping backends (eg crypt) if
+they wrap a backend which supports duplicate file names.
 
 In the first pass it will merge directories with the same name.  It
-will do this iteratively until all the identical directories have been
-merged.
+will do this iteratively until all the identically named directories
+have been merged.
 
-The ` + "`" + `dedupe` + "`" + ` command will delete all but one of any identical (same
-md5sum) files it finds without confirmation.  This means that for most
-duplicated files the ` + "`" + `dedupe` + "`" + ` command will not be interactive.
+In the second pass, for every group of duplicate file names, it will
+delete all but one identical files it finds without confirmation.
+This means that for most duplicated files the ` + "`dedupe`" + `
+command will not be interactive.
+
+` + "`dedupe`" + ` considers files to be identical if they have the
+same hash. If the backend does not support hashes (eg crypt wrapping
+Google Drive) then they will never be found to be identical. If you
+use the ` + "`--size-only`" + ` flag then files will be considered
+identical if they have the same size (any hash will be ignored). This
+can be useful on crypt backends which do not support hashes.
 
 **Important**: Since this can cause data loss, test first with the
 ` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
@@ -52,26 +65,26 @@ Before - with duplicates
       1744073 2016-03-05 16:22:38.104000000 two.txt
        564374 2016-03-05 16:22:52.118000000 two.txt
 
-Now the ` + "`" + `dedupe` + "`" + ` session
+Now the ` + "`dedupe`" + ` session
 
     $ rclone dedupe drive:dupes
     2016/03/05 16:24:37 Google drive root 'dupes': Looking for duplicates using interactive mode.
-    one.txt: Found 4 duplicates - deleting identical copies
-    one.txt: Deleting 2/3 identical duplicates (md5sum "1eedaa9fe86fd4b8632e2ac549403b36")
+    one.txt: Found 4 files with duplicate names
+    one.txt: Deleting 2/3 identical duplicates (MD5 "1eedaa9fe86fd4b8632e2ac549403b36")
     one.txt: 2 duplicates remain
-      1:      6048320 bytes, 2016-03-05 16:23:16.798000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
-      2:       564374 bytes, 2016-03-05 16:23:06.731000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
+      1:      6048320 bytes, 2016-03-05 16:23:16.798000000, MD5 1eedaa9fe86fd4b8632e2ac549403b36
+      2:       564374 bytes, 2016-03-05 16:23:06.731000000, MD5 7594e7dc9fc28f727c42ee3e0749de81
     s) Skip and do nothing
     k) Keep just one (choose which in next step)
     r) Rename all to be different (by changing file.jpg to file-1.jpg)
     s/k/r> k
     Enter the number of the file to keep> 1
     one.txt: Deleted 1 extra copies
-    two.txt: Found 3 duplicates - deleting identical copies
+    two.txt: Found 3 files with duplicates names
     two.txt: 3 duplicates remain
-      1:       564374 bytes, 2016-03-05 16:22:52.118000000, md5sum 7594e7dc9fc28f727c42ee3e0749de81
-      2:      6048320 bytes, 2016-03-05 16:22:46.185000000, md5sum 1eedaa9fe86fd4b8632e2ac549403b36
-      3:      1744073 bytes, 2016-03-05 16:22:38.104000000, md5sum 851957f7fb6f0bc4ce76be966d336802
+      1:       564374 bytes, 2016-03-05 16:22:52.118000000, MD5 7594e7dc9fc28f727c42ee3e0749de81
+      2:      6048320 bytes, 2016-03-05 16:22:46.185000000, MD5 1eedaa9fe86fd4b8632e2ac549403b36
+      3:      1744073 bytes, 2016-03-05 16:22:38.104000000, MD5 851957f7fb6f0bc4ce76be966d336802
     s) Skip and do nothing
     k) Keep just one (choose which in next step)
     r) Rename all to be different (by changing file.jpg to file-1.jpg)
