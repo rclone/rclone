@@ -207,7 +207,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		fs.Debugf(src, "%v differ", ht)
 		return false
 	}
-	if ht == hash.None {
+	if ht == hash.None && !fs.Config.RefreshTimes {
 		// if couldn't check hash, return that they differ
 		return false
 	}

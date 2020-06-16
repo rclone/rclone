@@ -1096,6 +1096,41 @@ is fixed all non-ASCII characters will be replaced with `.` when
 
 This flag will limit rclone's output to error messages only.
 
+### --refresh-times ###
+
+The `--refresh-times` flag can be used to update modification times of
+existing files when they are out of sync on backends which don't
+support hashes.
+
+This is useful if you uploaded files with the incorrect timestamps and
+you now wish to correct them.
+
+This flag is **only** useful for destinations which don't support
+hashes (eg `crypt`).
+
+This can be used any of the sync commands `sync`, `copy` or `move`.
+
+To use this flag you will need to be doing a modification time sync
+(so not using `--size-only` or `--checksum`). The flag will have no
+effect when using `--size-only` or `--checksum`.
+
+If this flag is used when rclone comes to upload a file it will check
+to see if there is an existing file on the destination. If this file
+matches the source with size (and checksum if available) but has a
+differing timestamp then instead of re-uploading it, rclone will
+update the timestamp on the destination file. If the checksum does not
+match rclone will upload the new file. If the checksum is absent (eg
+on a `crypt` backend) then rclone will update the timestamp.
+
+Note that some remotes can't set the modification time without
+re-uploading the file so this flag is less useful on them.
+
+Normally if you are doing a modification time sync rclone will update
+modification times without `--refresh-times` provided that the remote
+supports checksums **and** the checksums match on the file. However if the
+checksums are absent then rclone will upload the file rather than
+setting the timestamp as this is the safe behaviour.
+
 ### --retries int ###
 
 Retry the entire sync if it fails this many times it fails (default 3).
