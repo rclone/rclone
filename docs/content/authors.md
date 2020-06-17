@@ -386,3 +386,4 @@ put them back in again.` >}}
   * Vincent Feltz <psycho@feltzv.fr>
   * Heiko Bornholdt <bornholdt@informatik.uni-hamburg.de>
   * Matteo Pietro Dazzi <matteopietro.dazzi@gmail.com>
+  * jtagcat <gitlab@c7.ee>
