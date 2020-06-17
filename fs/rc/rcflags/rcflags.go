@@ -19,6 +19,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.Enabled, "rc", "", false, "Enable the remote control server.")
 	flags.StringVarP(flagSet, &Opt.Files, "rc-files", "", "", "Path to local files to serve on the HTTP server.")
 	flags.BoolVarP(flagSet, &Opt.Serve, "rc-serve", "", false, "Enable the serving of remote objects.")
+	flags.BoolVarP(flagSet, &Opt.Share, "rc-share", "", false, "Enable share remote objects.")
 	flags.BoolVarP(flagSet, &Opt.NoAuth, "rc-no-auth", "", false, "Don't require auth for certain methods.")
 	flags.BoolVarP(flagSet, &Opt.WebUI, "rc-web-gui", "", false, "Launch WebGUI on localhost")
 	flags.BoolVarP(flagSet, &Opt.WebGUIUpdate, "rc-web-gui-update", "", false, "Check and update to latest version of web gui")

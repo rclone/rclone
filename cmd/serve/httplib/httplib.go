@@ -230,6 +230,10 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 				oldHandler.ServeHTTP(w, r)
 				return
 			}
+			if r.Method == "GET" && strings.HasPrefix(r.RequestURI, "/share/links") {
+				oldHandler.ServeHTTP(w, r)
+				return
+			}
 			unauthorized := func() {
 				w.Header().Set("Content-Type", "text/plain")
 				w.Header().Set("WWW-Authenticate", `Basic realm="`+s.Opt.Realm+`"`)

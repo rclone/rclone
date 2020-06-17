@@ -627,6 +627,151 @@ func makeMetricsTestCases(stats *accounting.StatsInfo) (tests []testRun) {
 	return
 }
 
+func TestShare(t *testing.T) {
+	tests := []testRun{
+		{
+			Name:   "share-object-randomToken-unlimited",
+			URL:    "share/create",
+			Method: "POST",
+			Body: `{
+				"fs": "testdata/files",
+				"remote": "file.txt"
+			}`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Contains: regexp.MustCompile(`{
+	"sharedLink": "share/links/.*/file.txt"
+}`),
+		}, {
+			Name:        "share-list",
+			URL:         "share/list",
+			Method:      "POST",
+			Body:        `{}`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Contains: regexp.MustCompile(`{
+	"sharedLinks": \[
+		{
+			"fs": "testdata/files",
+			"remote": "file.txt",
+			"sharedName": "file.txt",
+			"token": ".*"
+		}
+	\]
+}
+`),
+		}, {
+			Name:   "share-object-not-found",
+			URL:    "share/create",
+			Method: "POST",
+			Body: `{
+				"fs": "testdata/files",
+				"remote": "file2.txt"
+			}`,
+			ContentType: "application/json",
+			Status:      http.StatusNotFound,
+			Expected: `{
+	"error": "object not found",
+	"input": {
+		"fs": "testdata/files",
+		"remote": "file2.txt"
+	},
+	"path": "share/create",
+	"status": 404
+}
+`,
+		}, {
+			Name:   "share-specify-token",
+			URL:    "share/create",
+			Method: "POST",
+			Body: `{
+				"fs": "testdata/files",
+				"remote": "file.txt",
+				"token": "123456"
+			}`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Expected: `{
+	"sharedLink": "share/links/123456/file.txt"
+}
+`,
+		}, {
+			Name:     "share-get-content",
+			URL:      "share/links/123456/file.txt", // TODO: it can be fetched without Authentication Header, btw can't test that here
+			Status:   http.StatusOK,
+			Expected: "this is file1.txt\n",
+			Headers: map[string]string{
+				"Content-Length": "18",
+			},
+		}, {
+			Name:   "share-specify-expire",
+			URL:    "share/create",
+			Method: "POST",
+			Body: `{
+					 "fs": "testdata/files",
+					 "remote": "file.txt",
+					 "token": "abcdef",
+					 "expire": "0ms"
+				 }`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Expected: `{
+	"sharedLink": "share/links/abcdef/file.txt"
+}
+`,
+		}, {
+			Name:     "share-unable-access-expired-link",
+			URL:      "share/links/abcdef/file.txt",
+			Status:   http.StatusNotFound,
+			Expected: "Not Found\n",
+		}, {
+			Name:   "share-delete-by-token-and-name",
+			URL:    "share/delete",
+			Method: "POST",
+			Body: `{
+					 "token": "123456",
+					 "sharedName": "file.txt"
+				 }`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Expected:    "{}\n",
+		}, {
+			Name:   "share-delete-by-fs-and-remote",
+			URL:    "share/delete",
+			Method: "POST",
+			Body: `{
+					 "fs": "testdata/files",
+					 "remote": "file.txt"
+				 }`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Expected:    "{}\n",
+		}, {
+			Name:        "share-vialidate-delete",
+			URL:         "share/list",
+			Method:      "POST",
+			Body:        `{}`,
+			ContentType: "application/json",
+			Status:      http.StatusOK,
+			Contains: regexp.MustCompile(`{
+	"sharedLinks": \[\]
+}
+`),
+		}, {
+			Name:     "share-unable-access-deleted-link",
+			URL:      "share/links/123456/file.txt",
+			Status:   http.StatusNotFound,
+			Expected: "Not Found\n",
+		},
+	}
+	opt := newTestOpt()
+	opt.Share = true
+	opt.Files = testFs
+	opt.HTTPOptions.BasicUser = "user"
+	opt.HTTPOptions.BasicPass = "pass"
+	testServer(t, tests, &opt)
+}
+
 var matchRemoteDirListing = regexp.MustCompile(`<title>Directory listing of /</title>`)
 
 func TestServingRoot(t *testing.T) {

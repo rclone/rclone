@@ -21,6 +21,7 @@ type Options struct {
 	HTTPOptions              httplib.Options
 	Enabled                  bool   // set to enable the server
 	Serve                    bool   // set to serve files from remotes
+	Share                    bool   // set to enable share files from remotes
 	Files                    string // set to enable serving files locally
 	NoAuth                   bool   // set to disable auth checks on AuthRequired methods
 	WebUI                    bool   // set to launch the web ui

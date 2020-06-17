@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
 	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/fs/rc/rcshare"
 	"github.com/rclone/rclone/lib/random"
 )
 
@@ -197,6 +198,13 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	path := strings.TrimLeft(urlPath, "/")
+
+	// Serve /share/links/${token}/${shared name} files
+	// TODO: need Access-Control-Allow-Origin ?
+	if strings.HasPrefix(path, "share/links") {
+		s.handleGetShare(w, r, path)
+		return
+	}
 
 	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
 	if allowOrigin != "" {
@@ -405,6 +413,22 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		// Serve the root as a remote listing
 		s.serveRoot(w, r)
 		return
+	}
+	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+}
+
+// Match URLS of the form `share/links/${token}/${shared name}`
+var sharedMatch = regexp.MustCompile(`^share/links/(.*?)/(.*)$`)
+
+// Serve /share/links/${token}/${shared name} files
+func (s *Server) handleGetShare(w http.ResponseWriter, r *http.Request, path string) {
+	matchedShare := sharedMatch.FindStringSubmatch(path)
+	if matchedShare != nil && s.opt.Share {
+		link, ok := rcshare.GetSharedLink(matchedShare[1], matchedShare[2])
+		if ok && (link.Unlimited || link.Expire.After(time.Now())) {
+			s.serveRemote(w, r, link.Remote, link.Fs)
+			return
+		}
 	}
 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 }
