@@ -226,6 +226,12 @@ normally 8MB so increasing `--transfers` will increase memory use.
 Depending on the enterprise settings for your user, the item will
 either be actually deleted from Box or moved to the trash.
 
+Emptying the trash is supported via the rclone however cleanup command
+however this deletes every trashed file and folder individually so it
+may take a very long time. 
+Emptying the trash via the  WebUI does not have this limitation 
+so it is advised to empty the trash via the WebUI.
+
 ### Root folder ID ###
 
 You can set the `root_folder_id` for rclone.  This is the directory
