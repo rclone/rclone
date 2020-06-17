@@ -1411,6 +1411,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	leaf = f.opt.Enc.FromStandardName(leaf)
 	// fmt.Println("Making", path)
 	// Define the metadata for the directory we are going to create.
+	pathID = actualID(pathID)
 	createInfo := &drive.File{
 		Name:        leaf,
 		Description: leaf,
