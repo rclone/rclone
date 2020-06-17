@@ -385,3 +385,4 @@ put them back in again.` >}}
   * Zac Rubin <z-0@users.noreply.github.com>
   * Vincent Feltz <psycho@feltzv.fr>
   * Heiko Bornholdt <bornholdt@informatik.uni-hamburg.de>
+  * Matteo Pietro Dazzi <matteopietro.dazzi@gmail.com>
