@@ -15,7 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 )
 
-// SharedLink fd
+// SharedLink descripts a disposable shared file link of rclone server
 type SharedLink struct {
 	SharedName string
 	Token      string
@@ -26,7 +26,6 @@ type SharedLink struct {
 }
 
 var (
-	// sharedLinkTableMutex mutex for rcshare
 	sharedLinkTableMutex = sync.Mutex{}
 	sharedLinkTable      = map[string]SharedLink{}
 	letters              = []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
