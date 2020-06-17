@@ -1063,6 +1063,66 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return info.SharedLink.URL, err
 }
 
+// deletePermanently permenently deletes a trashed file
+func (f *Fs) deletePermanently(ctx context.Context, itemType, id string) error {
+	opts := rest.Opts{
+		Method:     "DELETE",
+		NoResponse: true,
+	}
+	if itemType == api.ItemTypeFile {
+		opts.Path = "/files/" + id + "/trash"
+	} else {
+		opts.Path = "/folders/" + id + "/trash"
+	}
+	return f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.Call(ctx, &opts)
+		return shouldRetry(resp, err)
+	})
+}
+
+// CleanUp empties the trash
+func (f *Fs) CleanUp(ctx context.Context) (err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/folders/trash/items",
+		Parameters: url.Values{
+			"fields": []string{"type", "id"},
+		},
+	}
+	opts.Parameters.Set("limit", strconv.Itoa(listChunks))
+	offset := 0
+	for {
+		opts.Parameters.Set("offset", strconv.Itoa(offset))
+
+		var result api.FolderItems
+		var resp *http.Response
+		err = f.pacer.Call(func() (bool, error) {
+			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+			return shouldRetry(resp, err)
+		})
+		if err != nil {
+			return errors.Wrap(err, "couldn't list trash")
+		}
+		for i := range result.Entries {
+			item := &result.Entries[i]
+			if item.Type == api.ItemTypeFolder || item.Type == api.ItemTypeFile {
+				err := f.deletePermanently(ctx, item.Type, item.ID)
+				if err != nil {
+					return errors.Wrap(err, "failed to delete file")
+				}
+			} else {
+				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
+				continue
+			}
+		}
+		offset += result.Limit
+		if offset >= result.TotalCount {
+			break
+		}
+	}
+	return
+}
+
 // DirCacheFlush resets the directory cache - used in testing as an
 // optional interface
 func (f *Fs) DirCacheFlush() {
@@ -1305,6 +1365,7 @@ var (
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 )
