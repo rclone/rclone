@@ -172,7 +172,7 @@ func buildDebAndRpm(dir, version, goarch string) []string {
 }
 
 // generate system object (syso) file to be picked up by a following go build for embedding icon and version info resources into windows executable
-func buildWindowsResourceSyso(goarch string, versionTag string) (string) {
+func buildWindowsResourceSyso(goarch string, versionTag string) string {
 	type M map[string]interface{}
 	version := strings.TrimPrefix(versionTag, "v")
 	semanticVersion := semver.New(version)
@@ -238,11 +238,11 @@ func buildWindowsResourceSyso(goarch string, versionTag string) (string) {
 		"goversioninfo",
 		"-o",
 		sysoPath,
-		jsonPath,
 	}
 	if goarch == "amd64" {
-		args = append(args, "-64") // Make the syso a 64-bit coff file (but does not matter, results are identical)
+		args = append(args, "-64") // Make the syso a 64-bit coff file
 	}
+	args = append(args, jsonPath)
 	err = runEnv(args, nil)
 	if err != nil {
 		return ""
