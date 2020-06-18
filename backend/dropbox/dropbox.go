@@ -787,9 +787,12 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
-		Settings: &sharing.SharedLinkSettings{
-			Expires: time.Now().Add(time.Duration(expire)),
-		},
+		// FIXME this gives settings_error/not_authorized/.. errors
+		// and the expires setting isn't in the documentation so remove
+		// for now.
+		// Settings: &sharing.SharedLinkSettings{
+		// 	Expires: time.Now().Add(time.Duration(expire)).UTC().Round(time.Second),
+		// },
 	}
 	var linkRes sharing.IsSharedLinkMetadata
 	err = f.pacer.Call(func() (bool, error) {
