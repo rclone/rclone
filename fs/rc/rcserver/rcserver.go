@@ -199,14 +199,22 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	}
 	path := strings.TrimLeft(urlPath, "/")
 
+	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
+
 	// Serve /share/links/${token}/${shared name} files
-	// TODO: need Access-Control-Allow-Origin ?
 	if strings.HasPrefix(path, "share/links") {
+		allowOriginShare := rcflags.Opt.AccessControlAllowOriginShare
+		if allowOriginShare != "" {
+			w.Header().Add("Access-Control-Allow-Origin", allowOriginShare)
+		} else if allowOrigin != "" {
+			w.Header().Add("Access-Control-Allow-Origin", allowOrigin)
+		} else {
+			w.Header().Add("Access-Control-Allow-Origin", s.URL())
+		}
 		s.handleGetShare(w, r, path)
 		return
 	}
 
-	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
 	if allowOrigin != "" {
 		onlyOnceWarningAllowOrigin.Do(func() {
 			if allowOrigin == "*" {
