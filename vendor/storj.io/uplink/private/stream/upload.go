@@ -12,14 +12,14 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"storj.io/common/storj"
-	"storj.io/uplink/private/metainfo/kvmetainfo"
+	"storj.io/uplink/private/metainfo"
 	"storj.io/uplink/private/storage/streams"
 )
 
 // Upload implements Writer and Closer for writing to stream.
 type Upload struct {
 	ctx      context.Context
-	stream   kvmetainfo.MutableStream
+	stream   metainfo.MutableStream
 	streams  streams.Store
 	writer   io.WriteCloser
 	closed   bool
@@ -31,7 +31,7 @@ type Upload struct {
 }
 
 // NewUpload creates new stream upload.
-func NewUpload(ctx context.Context, stream kvmetainfo.MutableStream, streams streams.Store) *Upload {
+func NewUpload(ctx context.Context, stream metainfo.MutableStream, streams streams.Store) *Upload {
 	reader, writer := io.Pipe()
 
 	upload := Upload{

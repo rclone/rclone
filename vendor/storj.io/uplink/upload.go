@@ -13,7 +13,7 @@ import (
 
 	"storj.io/common/pb"
 	"storj.io/common/storj"
-	"storj.io/uplink/private/metainfo/kvmetainfo"
+	"storj.io/uplink/private/metainfo"
 	"storj.io/uplink/private/stream"
 )
 
@@ -147,7 +147,7 @@ func (upload *Upload) SetCustomMetadata(ctx context.Context, custom CustomMetada
 }
 
 type dynamicMetadata struct {
-	kvmetainfo.MutableStream
+	metainfo.MutableStream
 	object  *Object
 	expires time.Time
 }

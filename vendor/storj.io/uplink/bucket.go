@@ -37,7 +37,7 @@ type Bucket struct {
 func (project *Project) StatBucket(ctx context.Context, bucket string) (info *Bucket, err error) {
 	defer mon.Func().RestartTrace(&ctx)(&err)
 
-	b, err := project.project.GetBucket(ctx, bucket)
+	b, err := project.db.GetBucket(ctx, bucket)
 	if err != nil {
 		return nil, convertKnownErrors(err, bucket, "")
 	}
@@ -54,7 +54,7 @@ func (project *Project) StatBucket(ctx context.Context, bucket string) (info *Bu
 func (project *Project) CreateBucket(ctx context.Context, bucket string) (created *Bucket, err error) {
 	defer mon.Func().RestartTrace(&ctx)(&err)
 
-	b, err := project.project.CreateBucket(ctx, bucket)
+	b, err := project.db.CreateBucket(ctx, bucket)
 
 	if err != nil {
 		if storj.ErrNoBucket.Has(err) {
@@ -97,7 +97,7 @@ func (project *Project) EnsureBucket(ctx context.Context, bucket string) (ensure
 func (project *Project) DeleteBucket(ctx context.Context, bucket string) (deleted *Bucket, err error) {
 	defer mon.Func().RestartTrace(&ctx)(&err)
 
-	existing, err := project.project.DeleteBucket(ctx, bucket)
+	existing, err := project.db.DeleteBucket(ctx, bucket)
 	if err != nil {
 		if errs2.IsRPC(err, rpcstatus.FailedPrecondition) {
 			return nil, errwrapf("%w (%q)", ErrBucketNotEmpty, bucket)

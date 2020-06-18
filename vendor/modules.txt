@@ -253,8 +253,6 @@ github.com/skratchdot/open-golang/open
 ## explicit
 # github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337
 ## explicit
-# github.com/spacemonkeygo/errors v0.0.0-20171212215202-9064522e9fd1
-github.com/spacemonkeygo/errors
 # github.com/spacemonkeygo/monkit/v3 v3.0.7-0.20200515175308-072401d8c752
 github.com/spacemonkeygo/monkit/v3
 github.com/spacemonkeygo/monkit/v3/monotime
@@ -272,7 +270,7 @@ github.com/stretchr/testify/require
 # github.com/t3rm1n4l/go-mega v0.0.0-20200117211730-79a813bb328d
 ## explicit
 github.com/t3rm1n4l/go-mega
-# github.com/vivint/infectious v0.0.0-20190108171102-2455b059135b
+# github.com/vivint/infectious v0.0.0-20200605153912-25a574ae18a3
 github.com/vivint/infectious
 # github.com/xanzy/ssh-agent v0.2.1
 ## explicit
@@ -381,7 +379,7 @@ golang.org/x/oauth2/jwt
 ## explicit
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae
+# golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 ## explicit
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
@@ -465,7 +463,7 @@ google.golang.org/grpc/tap
 # gopkg.in/yaml.v2 v2.2.8
 ## explicit
 gopkg.in/yaml.v2
-# storj.io/common v0.0.0-20200529121635-ef4a5bc8ec88
+# storj.io/common v0.0.0-20200611114417-9a3d012fdb62
 storj.io/common/encryption
 storj.io/common/errs2
 storj.io/common/fpath
@@ -504,7 +502,7 @@ storj.io/drpc/drpcmux
 storj.io/drpc/drpcsignal
 storj.io/drpc/drpcstream
 storj.io/drpc/drpcwire
-# storj.io/uplink v1.0.7
+# storj.io/uplink v1.1.1
 ## explicit
 storj.io/uplink
 storj.io/uplink/internal/expose
@@ -512,7 +510,6 @@ storj.io/uplink/internal/telemetryclient
 storj.io/uplink/private/ecclient
 storj.io/uplink/private/eestream
 storj.io/uplink/private/metainfo
-storj.io/uplink/private/metainfo/kvmetainfo
 storj.io/uplink/private/piecestore
 storj.io/uplink/private/storage/segments
 storj.io/uplink/private/storage/streams

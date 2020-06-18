@@ -5,6 +5,7 @@ package eestream
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -161,8 +162,8 @@ func (r *StripeReader) hasEnoughShares() bool {
 // for more erasure shares to attempt an error correction.
 func (r *StripeReader) shouldWaitForMore(err error) bool {
 	// check if the error is due to error detection
-	if !infectious.NotEnoughShares.Contains(err) &&
-		!infectious.TooManyErrors.Contains(err) {
+	if !errors.Is(err, infectious.NotEnoughShares) &&
+		!errors.Is(err, infectious.TooManyErrors) {
 		return false
 	}
 	// check if there are more input buffers to wait for

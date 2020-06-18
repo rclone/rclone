@@ -46,35 +46,6 @@ func (upload *BufferedUpload) Commit(ctx context.Context) (_ *pb.PieceHash, err 
 	return piece, errs.Combine(flushErr, closeErr)
 }
 
-// BufferedDownload implements buffering for download.
-type BufferedDownload struct {
-	buffer   bufio.Reader
-	download *Download
-}
-
-// NewBufferedDownload creates a buffered download with the specified size.
-func NewBufferedDownload(download *Download, size int) Downloader {
-	buffered := &BufferedDownload{}
-	buffered.download = download
-	buffered.buffer = *bufio.NewReaderSize(buffered.download, size)
-	return buffered
-}
-
-// Read reads from the buffer and downloading in batches once it's empty.
-func (download *BufferedDownload) Read(p []byte) (int, error) {
-	return download.buffer.Read(p)
-}
-
-// Close closes the buffered download.
-func (download *BufferedDownload) Close() error {
-	return download.download.Close()
-}
-
-// GetHashAndLimit gets the download's hash and original order limit.
-func (download *BufferedDownload) GetHashAndLimit() (*pb.PieceHash, *pb.OrderLimit) {
-	return download.download.GetHashAndLimit()
-}
-
 // LockingUpload adds a lock around upload making it safe to use concurrently.
 // TODO: this shouldn't be needed.
 type LockingUpload struct {

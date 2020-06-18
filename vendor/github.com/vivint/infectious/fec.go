@@ -33,7 +33,11 @@
 
 package infectious
 
-import "sort"
+import (
+	"errors"
+	"fmt"
+	"sort"
+)
 
 // FEC represents operations performed on a Reed-Solomon-based
 // forward error correction code. Make sure to construct using NewFEC.
@@ -50,7 +54,7 @@ type FEC struct {
 // exist, corrupted data can be detected and recovered from.
 func NewFEC(k, n int) (*FEC, error) {
 	if k <= 0 || n <= 0 || k > 256 || n > 256 || k > n {
-		return nil, Error.New("requires 1 <= k <= n <= 256")
+		return nil, errors.New("requires 1 <= k <= n <= 256")
 	}
 
 	enc_matrix := make([]byte, n*k)
@@ -127,7 +131,7 @@ func (f *FEC) Encode(input []byte, output func(Share)) error {
 	enc_matrix := f.enc_matrix
 
 	if size%k != 0 {
-		return Error.New("input length must be a multiple of %d", k)
+		return fmt.Errorf("input length must be a multiple of %d", k)
 	}
 
 	block_size := size / k
@@ -173,21 +177,21 @@ func (f *FEC) EncodeSingle(input, output []byte, num int) error {
 	enc_matrix := f.enc_matrix
 
 	if num < 0 {
-		return Error.New("num must be non-negative")
+		return errors.New("num must be non-negative")
 	}
 
 	if num >= n {
-		return Error.New("num must be less than %d", n)
+		return fmt.Errorf("num must be less than %d", n)
 	}
 
 	if size%k != 0 {
-		return Error.New("input length must be a multiple of %d", k)
+		return fmt.Errorf("input length must be a multiple of %d", k)
 	}
 
 	block_size := size / k
 
 	if len(output) != block_size {
-		return Error.New("output length must be %d", block_size)
+		return fmt.Errorf("output length must be %d", block_size)
 	}
 
 	if num < k {
@@ -246,7 +250,7 @@ func (f *FEC) Rebuild(shares []Share, output func(Share)) error {
 	enc_matrix := f.enc_matrix
 
 	if len(shares) < k {
-		return NotEnoughShares.New("")
+		return NotEnoughShares
 	}
 
 	share_size := len(shares[0].Data)
@@ -275,7 +279,7 @@ func (f *FEC) Rebuild(shares []Share, output func(Share)) error {
 		}
 
 		if share_id >= n {
-			return Error.New("invalid share id: %d", share_id)
+			return fmt.Errorf("invalid share id: %d", share_id)
 		}
 
 		if share_id < k {
