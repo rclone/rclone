@@ -208,6 +208,12 @@ github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M
 github.com/jlaffaye/ftp v0.0.0-20190624084859-c1312a7102bf/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
 github.com/jlaffaye/ftp v0.0.0-20191218041957-e1b8fdd0dcc3 h1:QyB6CQGLB65Al72mAIbqrkGRk56JdGMHgBziM3F0FCw=
 github.com/jlaffaye/ftp v0.0.0-20191218041957-e1b8fdd0dcc3/go.mod h1:PwUeyujmhaGohgOf0kJKxPfk3HcRv8QD/wAUN44go4k=
+github.com/jlaffaye/ftp v0.0.0-20191218041957-e1b8fdd0dcc3 h1:QyB6CQGLB65Al72mAIbqrkGRk56JdGMHgBziM3F0FCw=
+github.com/jlaffaye/ftp v0.0.0-20191218041957-e1b8fdd0dcc3/go.mod h1:PwUeyujmhaGohgOf0kJKxPfk3HcRv8QD/wAUN44go4k=
+github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122 h1:dzYWuozdWNaY7mTQh5ZdmoJt2BUMavwhiux0AfGwg90=
+github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122/go.mod h1:PwUeyujmhaGohgOf0kJKxPfk3HcRv8QD/wAUN44go4k=
+github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122 h1:dzYWuozdWNaY7mTQh5ZdmoJt2BUMavwhiux0AfGwg90=
+github.com/jlaffaye/ftp v0.0.0-20200422224957-b9f3ade29122/go.mod h1:PwUeyujmhaGohgOf0kJKxPfk3HcRv8QD/wAUN44go4k=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
@@ -354,8 +360,6 @@ github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c/go.mod h1:X
 github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 h1:WN9BUFbdyOsSH/XohnWpXOlq9NBD5sGAB2FciQMUEe8=
 github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
-github.com/spacemonkeygo/errors v0.0.0-20171212215202-9064522e9fd1 h1:xHQewZjohU9/wUsyC99navCjQDNHtTgUOM/J1jAbzfw=
-github.com/spacemonkeygo/errors v0.0.0-20171212215202-9064522e9fd1/go.mod h1:7NL9UAYQnRM5iKHUCld3tf02fKb5Dft+41+VckASUy0=
 github.com/spacemonkeygo/monkit/v3 v3.0.4/go.mod h1:JcK1pCbReQsOsMKF/POFSZCq7drXFybgGmbc27tuwes=
 github.com/spacemonkeygo/monkit/v3 v3.0.5/go.mod h1:JcK1pCbReQsOsMKF/POFSZCq7drXFybgGmbc27tuwes=
 github.com/spacemonkeygo/monkit/v3 v3.0.7-0.20200515175308-072401d8c752 h1:WcQDknqg0qajLNYKv3mXgbkWlYs5rPgZehGJFWePHVI=
@@ -392,8 +396,8 @@ github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5/go.mod h1
 github.com/tv42/httpunix v0.0.0-20191220191345-2ba4b9c3382c h1:u6SKchux2yDvFQnDHS3lPnIRmfVJ5Sxy3ao2SIdysLQ=
 github.com/tv42/httpunix v0.0.0-20191220191345-2ba4b9c3382c/go.mod h1:hzIxponao9Kjc7aWznkXaL4U4TWaDSs8zcsY4Ka08nM=
 github.com/ugorji/go v1.1.4/go.mod h1:uQMGLiO92mf5W77hV/PUCpI3pbzQx3CRekS0kk+RGrc=
-github.com/vivint/infectious v0.0.0-20190108171102-2455b059135b h1:dLkqBELopfQNhe8S9ucnSf+HhiUCgK/hPIjVG0f9GlY=
-github.com/vivint/infectious v0.0.0-20190108171102-2455b059135b/go.mod h1:5oyMAv4hrBEKqBwORFsiqIrCNCmL2qcZLQTdJLYeYIc=
+github.com/vivint/infectious v0.0.0-20200605153912-25a574ae18a3 h1:zMsHhfK9+Wdl1F7sIKLyx3wrOFofpb3rWFbA4HgcK5k=
+github.com/vivint/infectious v0.0.0-20200605153912-25a574ae18a3/go.mod h1:R0Gbuw7ElaGSLOZUSwBm/GgVwMd30jWxBDdAyMOeTuc=
 github.com/willf/bitset v1.1.9/go.mod h1:RjeCKbqT1RxIR/KWY6phxZiaY1IyutSBfGjNPySAYV4=
 github.com/xanzy/ssh-agent v0.2.1 h1:TCbipTQL2JiiCprBWx9frJ2eJlCYT00NmctrHxVAr70=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
@@ -535,8 +539,8 @@ golang.org/x/sys v0.0.0-20200107144601-ef85f5a75ddf/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200122134326-e047566fdf82/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200212091648-12a6c2dcc1e4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae h1:/WDfKMnPU+m5M4xB+6x4kaepxRw6jWvR5iDRdvjHgy8=
-golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd h1:xhmwyvizuTgC2qz7ZlMluP20uW+C3Rm0FD/WLDX8884=
+golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
@@ -655,9 +659,9 @@ honnef.co/go/tools v0.0.1-2019.2.3/go.mod h1:a3bituU0lyd329TUQxRnasdCoJDkEUEAqEt
 rsc.io/binaryregexp v0.2.0/go.mod h1:qTv7/COck+e2FymRvadv62gMdZztPaShugOCi3I+8D8=
 rsc.io/quote/v3 v3.1.0/go.mod h1:yEA65RcK8LyAZtP9Kv3t0HmxON59tX3rD+tICJqUlj0=
 rsc.io/sampler v1.3.0/go.mod h1:T1hPZKmBbMNahiBKFy5HrXp6adAjACjK9JXDnKaTXpA=
-storj.io/common v0.0.0-20200529121635-ef4a5bc8ec88 h1:8Gy0vjF4Kj1n94n6mQrDU8T50W/rpwMI03udkATCUN0=
-storj.io/common v0.0.0-20200529121635-ef4a5bc8ec88/go.mod h1:6S6Ub92/BB+ofU7hbyPcm96b4Q1ayyN0HLog+3u+wGc=
+storj.io/common v0.0.0-20200611114417-9a3d012fdb62 h1:y8vGNQ0HjtD79G8MfCwbs6hct40tSBoDaOnsxWOZpU4=
+storj.io/common v0.0.0-20200611114417-9a3d012fdb62/go.mod h1:6S6Ub92/BB+ofU7hbyPcm96b4Q1ayyN0HLog+3u+wGc=
 storj.io/drpc v0.0.12 h1:4ei1M4cnWlYxcQheX0Dg4+c12zCD+oJqfweVQVWarsA=
 storj.io/drpc v0.0.12/go.mod h1:82nfl+6YwRwF6UG31cEWWUqv/FaKvP5SGqUvoqTxCMA=
-storj.io/uplink v1.0.7 h1:vI0csamiYsN2vTj17x4QUUQ8xyyFVQvNzxJjUsSEi7U=
-storj.io/uplink v1.0.7/go.mod h1:PiLAqaFPUgsOs4u0xfVtm1jkWSQwdQmXv7KQUJUL/MU=
+storj.io/uplink v1.1.1 h1:oa5uoDtZDT58e3vy9yp24HKU1EaLs4TRM75DS+ICtqs=
+storj.io/uplink v1.1.1/go.mod h1:UkdYN/dfSgv+d8fBUoZTrX2oLdj9gzX6Q7tp3CojgKA=

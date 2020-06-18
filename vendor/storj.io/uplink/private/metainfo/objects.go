@@ -1,23 +1,29 @@
 // Copyright (C) 2019 Storj Labs, Inc.
 // See LICENSE for copying information.
 
-package kvmetainfo
+package metainfo
 
 import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"storj.io/common/encryption"
 	"storj.io/common/paths"
 	"storj.io/common/pb"
 	"storj.io/common/storj"
-	"storj.io/uplink/private/metainfo"
-	"storj.io/uplink/private/storage/segments"
-	"storj.io/uplink/private/storage/streams"
 )
 
 var contentTypeKey = "content-type"
+
+// Meta info about a segment.
+type Meta struct {
+	Modified   time.Time
+	Expiration time.Time
+	Size       int64
+	Data       []byte
+}
 
 // GetObject returns information about an object.
 func (db *DB) GetObject(ctx context.Context, bucket storj.Bucket, path storj.Path) (info storj.Object, err error) {
@@ -98,17 +104,20 @@ func (db *DB) DeleteObject(ctx context.Context, bucket storj.Bucket, path storj.
 		return storj.Object{}, storj.ErrNoPath.New("")
 	}
 
-	info, err := db.streams.Delete(ctx, storj.JoinPaths(bucket.Name, path))
-	if err != nil {
-		return storj.Object{}, err
-	}
-
 	encPath, err := encryption.EncryptPathWithStoreCipher(bucket.Name, paths.NewUnencrypted(path), db.encStore)
 	if err != nil {
 		return storj.Object{}, err
 	}
 
-	_, obj, err := objectFromInfo(ctx, bucket, path, encPath, info, db.encStore)
+	_, object, err := db.metainfo.BeginDeleteObject(ctx, BeginDeleteObjectParams{
+		Bucket:        []byte(bucket.Name),
+		EncryptedPath: []byte(encPath.Raw()),
+	})
+	if err != nil {
+		return storj.Object{}, err
+	}
+
+	_, obj, err := objectFromInfo(ctx, bucket, path, encPath, object, db.encStore)
 	return obj, err
 }
 
@@ -166,13 +175,13 @@ func (db *DB) ListObjects(ctx context.Context, bucket storj.Bucket, options stor
 	// Otherwise, if we the list prefix is `/bob/`, the encrypted list
 	// prefix results in `enc("")/enc("bob")/enc("")`. This is an incorrect
 	// encrypted prefix, what we really want is `enc("")/enc("bob")`.
-	prefix := streams.ParsePath(storj.JoinPaths(bucket.Name, strings.TrimSuffix(options.Prefix, "/")))
-	prefixKey, err := encryption.DerivePathKey(prefix.Bucket(), streams.PathForKey(prefix.UnencryptedPath().Raw()), db.encStore)
+	prefix := PathForKey(options.Prefix)
+	prefixKey, err := encryption.DerivePathKey(bucket.Name, prefix, db.encStore)
 	if err != nil {
 		return storj.ObjectList{}, errClass.Wrap(err)
 	}
 
-	encPrefix, err := encryption.EncryptPathWithStoreCipher(prefix.Bucket(), prefix.UnencryptedPath(), db.encStore)
+	encPrefix, err := encryption.EncryptPathWithStoreCipher(bucket.Name, prefix, db.encStore)
 	if err != nil {
 		return storj.ObjectList{}, errClass.Wrap(err)
 	}
@@ -181,10 +190,10 @@ func (db *DB) ListObjects(ctx context.Context, bucket storj.Bucket, options stor
 	// It contains a bucket if and only if the prefix has no bucket. This is why it is a raw
 	// string instead of a typed string: it's either a bucket or an unencrypted path component
 	// and that isn't known at compile time.
-	needsEncryption := prefix.Bucket() != ""
+	needsEncryption := bucket.Name != ""
 	var base *encryption.Base
 	if needsEncryption {
-		_, _, base = db.encStore.LookupEncrypted(prefix.Bucket(), encPrefix)
+		_, _, base = db.encStore.LookupEncrypted(bucket.Name, encPrefix)
 
 		startAfter, err = encryption.EncryptPathRaw(startAfter, db.pathCipher(base.PathCipher), prefixKey)
 		if err != nil {
@@ -192,7 +201,7 @@ func (db *DB) ListObjects(ctx context.Context, bucket storj.Bucket, options stor
 		}
 	}
 
-	items, more, err := db.metainfo.ListObjects(ctx, metainfo.ListObjectsParams{
+	items, more, err := db.metainfo.ListObjects(ctx, ListObjectsParams{
 		Bucket:          []byte(bucket.Name),
 		EncryptedPrefix: []byte(encPrefix.Raw()),
 		EncryptedCursor: []byte(startAfter),
@@ -211,7 +220,8 @@ func (db *DB) ListObjects(ctx context.Context, bucket storj.Bucket, options stor
 	}
 
 	for _, item := range items {
-		var path streams.Path
+		var bucketName string
+		var unencryptedKey paths.Unencrypted
 		var itemPath string
 
 		if needsEncryption {
@@ -226,19 +236,21 @@ func (db *DB) ListObjects(ctx context.Context, bucket storj.Bucket, options stor
 
 			// TODO(jeff): this shouldn't be necessary if we handled trailing slashes
 			// appropriately. there's some issues with list.
-			fullPath := prefix.UnencryptedPath().Raw()
+			fullPath := prefix.Raw()
 			if len(fullPath) > 0 && fullPath[len(fullPath)-1] != '/' {
 				fullPath += "/"
 			}
 			fullPath += itemPath
 
-			path = streams.CreatePath(prefix.Bucket(), paths.NewUnencrypted(fullPath))
+			bucketName = bucket.Name
+			unencryptedKey = paths.NewUnencrypted(fullPath)
 		} else {
 			itemPath = string(item.EncryptedPath)
-			path = streams.CreatePath(string(item.EncryptedPath), paths.Unencrypted{})
+			bucketName = string(item.EncryptedPath)
+			unencryptedKey = paths.Unencrypted{}
 		}
 
-		stream, streamMeta, err := streams.TypedDecryptStreamInfo(ctx, item.EncryptedMetadata, path, db.encStore)
+		stream, streamMeta, err := TypedDecryptStreamInfo(ctx, bucketName, unencryptedKey, item.EncryptedMetadata, db.encStore)
 		if err != nil {
 			// skip items that cannot be decrypted
 			if encryption.ErrDecryptFailed.Has(err) {
@@ -266,10 +278,9 @@ func (db *DB) pathCipher(pathCipher storj.CipherSuite) storj.CipherSuite {
 }
 
 type object struct {
-	fullpath        streams.Path
 	bucket          string
 	encPath         paths.Encrypted
-	lastSegmentMeta segments.Meta
+	lastSegmentMeta Meta
 	streamInfo      *pb.StreamInfo
 	streamMeta      pb.StreamMeta
 }
@@ -290,7 +301,7 @@ func (db *DB) getInfo(ctx context.Context, bucket storj.Bucket, path storj.Path)
 		return object{}, storj.Object{}, err
 	}
 
-	objectInfo, err := db.metainfo.GetObject(ctx, metainfo.GetObjectParams{
+	objectInfo, err := db.metainfo.GetObject(ctx, GetObjectParams{
 		Bucket:        []byte(bucket.Name),
 		EncryptedPath: []byte(encPath.Raw()),
 	})
@@ -306,15 +317,14 @@ func objectFromInfo(ctx context.Context, bucket storj.Bucket, path storj.Path, e
 		return object{}, storj.Object{}, nil
 	}
 
-	fullpath := streams.CreatePath(bucket.Name, paths.NewUnencrypted(path))
-	lastSegmentMeta := segments.Meta{
+	lastSegmentMeta := Meta{
 		Modified:   objectInfo.Created,
 		Expiration: objectInfo.Expires,
 		Size:       objectInfo.Size,
 		Data:       objectInfo.Metadata,
 	}
 
-	streamInfo, streamMeta, err := streams.TypedDecryptStreamInfo(ctx, lastSegmentMeta.Data, fullpath, encStore)
+	streamInfo, streamMeta, err := TypedDecryptStreamInfo(ctx, bucket.Name, paths.NewUnencrypted(path), lastSegmentMeta.Data, encStore)
 	if err != nil {
 		return object{}, storj.Object{}, err
 	}
@@ -325,7 +335,6 @@ func objectFromInfo(ctx context.Context, bucket storj.Bucket, path storj.Path, e
 	}
 
 	return object{
-		fullpath:        fullpath,
 		bucket:          bucket.Name,
 		encPath:         encPath,
 		lastSegmentMeta: lastSegmentMeta,
@@ -354,7 +363,7 @@ func objectFromMeta(bucket storj.Bucket, path storj.Path, listItem storj.ObjectL
 	return object, nil
 }
 
-func objectStreamFromMeta(bucket storj.Bucket, path storj.Path, streamID storj.StreamID, lastSegment segments.Meta, stream *pb.StreamInfo, streamMeta pb.StreamMeta, redundancyScheme storj.RedundancyScheme) (storj.Object, error) {
+func objectStreamFromMeta(bucket storj.Bucket, path storj.Path, streamID storj.StreamID, lastSegment Meta, stream *pb.StreamInfo, streamMeta pb.StreamMeta, redundancyScheme storj.RedundancyScheme) (storj.Object, error) {
 	var nonce storj.Nonce
 	var encryptedKey storj.EncryptedPrivateKey
 	if streamMeta.LastSegmentMeta != nil {
@@ -463,4 +472,62 @@ func numberOfSegments(stream *pb.StreamInfo, streamMeta pb.StreamMeta) int64 {
 		return streamMeta.NumberOfSegments
 	}
 	return stream.DeprecatedNumberOfSegments
+}
+
+// TypedDecryptStreamInfo decrypts stream info.
+func TypedDecryptStreamInfo(ctx context.Context, bucket string, unencryptedKey paths.Unencrypted, streamMetaBytes []byte, encStore *encryption.Store) (
+	_ *pb.StreamInfo, streamMeta pb.StreamMeta, err error) {
+	defer mon.Task()(&ctx)(&err)
+
+	err = pb.Unmarshal(streamMetaBytes, &streamMeta)
+	if err != nil {
+		return nil, pb.StreamMeta{}, err
+	}
+
+	if encStore.EncryptionBypass {
+		return nil, streamMeta, nil
+	}
+
+	derivedKey, err := encryption.DeriveContentKey(bucket, unencryptedKey, encStore)
+	if err != nil {
+		return nil, pb.StreamMeta{}, err
+	}
+
+	cipher := storj.CipherSuite(streamMeta.EncryptionType)
+	encryptedKey, keyNonce := getEncryptedKeyAndNonce(streamMeta.LastSegmentMeta)
+	contentKey, err := encryption.DecryptKey(encryptedKey, cipher, derivedKey, keyNonce)
+	if err != nil {
+		return nil, pb.StreamMeta{}, err
+	}
+
+	// decrypt metadata with the content encryption key and zero nonce
+	streamInfo, err := encryption.Decrypt(streamMeta.EncryptedStreamInfo, cipher, contentKey, &storj.Nonce{})
+	if err != nil {
+		return nil, pb.StreamMeta{}, err
+	}
+
+	var stream pb.StreamInfo
+	if err := pb.Unmarshal(streamInfo, &stream); err != nil {
+		return nil, pb.StreamMeta{}, err
+	}
+
+	return &stream, streamMeta, nil
+}
+
+func getEncryptedKeyAndNonce(m *pb.SegmentMeta) (storj.EncryptedPrivateKey, *storj.Nonce) {
+	if m == nil {
+		return nil, nil
+	}
+
+	var nonce storj.Nonce
+	copy(nonce[:], m.KeyNonce)
+
+	return m.EncryptedKey, &nonce
+}
+
+// PathForKey removes the trailing `/` from the raw path, which is required so
+// the derived key matches the final list path (which also has the trailing
+// encrypted `/` part of the path removed).
+func PathForKey(raw string) paths.Unencrypted {
+	return paths.NewUnencrypted(strings.TrimSuffix(raw, "/"))
 }

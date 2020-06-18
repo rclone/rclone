@@ -23,6 +23,7 @@
 package infectious
 
 import (
+	"errors"
 	"sort"
 )
 
@@ -50,7 +51,7 @@ func (f *FEC) Decode(dst []byte, shares []Share) ([]byte, error) {
 	}
 
 	if len(shares) == 0 {
-		return nil, Error.New("must specify at least one share")
+		return nil, errors.New("must specify at least one share")
 	}
 	piece_len := len(shares[0].Data)
 	result_len := piece_len * f.k
@@ -78,7 +79,7 @@ func (f *FEC) decode(shares []Share, output func(Share)) error {
 // mutating the underlying byte slices and reordering the shares
 func (fc *FEC) Correct(shares []Share) error {
 	if len(shares) < fc.k {
-		return Error.New("must specify at least the number of required shares")
+		return errors.New("must specify at least the number of required shares")
 	}
 
 	sort.Sort(byNumber(shares))
@@ -124,7 +125,7 @@ func (fc *FEC) berlekampWelch(shares []Share, index int) ([]byte, error) {
 	q := e + k       // def of Q polynomial
 
 	if e <= 0 {
-		return nil, NotEnoughShares.New("")
+		return nil, NotEnoughShares
 	}
 
 	const interp_base = gfVal(2)
@@ -194,7 +195,7 @@ func (fc *FEC) berlekampWelch(shares []Share, index int) ([]byte, error) {
 	}
 
 	if !rem.isZero() {
-		return nil, TooManyErrors.New("")
+		return nil, TooManyErrors
 	}
 
 	out := make([]byte, fc.n)

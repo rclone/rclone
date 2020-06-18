@@ -33,7 +33,10 @@
 
 package infectious
 
-import "bytes"
+import (
+	"bytes"
+	"errors"
+)
 
 type pivotSearcher struct {
 	k    int
@@ -66,7 +69,7 @@ func (p *pivotSearcher) search(col int, matrix []byte) (int, int, error) {
 		}
 	}
 
-	return 0, 0, Error.New("pivot not found")
+	return 0, 0, errors.New("pivot not found")
 }
 
 func swap(a, b *byte) {
@@ -100,7 +103,7 @@ func invertMatrix(matrix []byte, k int) error {
 		c := pivot_row[icol]
 
 		if c == 0 {
-			return Error.New("singular matrix")
+			return errors.New("singular matrix")
 		}
 
 		if c != 1 {

@@ -17,7 +17,6 @@ import (
 	"storj.io/uplink/internal/telemetryclient"
 	"storj.io/uplink/private/ecclient"
 	"storj.io/uplink/private/metainfo"
-	"storj.io/uplink/private/metainfo/kvmetainfo"
 	"storj.io/uplink/private/storage/segments"
 	"storj.io/uplink/private/storage/streams"
 	"storj.io/uplink/private/testuplink"
@@ -33,8 +32,7 @@ type Project struct {
 	access   *Access
 	dialer   rpc.Dialer
 	metainfo *metainfo.Client
-	project  *kvmetainfo.Project
-	db       *kvmetainfo.DB
+	db       *metainfo.DB
 	streams  streams.Store
 
 	eg        *errgroup.Group
@@ -68,7 +66,7 @@ func (config Config) OpenProject(ctx context.Context, access *Access) (project *
 		}()
 	}
 
-	metainfo, dialer, _, err := config.dial(ctx, access.satelliteAddress, access.apiKey)
+	metainfoClient, dialer, _, err := config.dial(ctx, access.satelliteAddress, access.apiKey)
 	if err != nil {
 		return nil, packageError.Wrap(err)
 	}
@@ -99,7 +97,7 @@ func (config Config) OpenProject(ctx context.Context, access *Access) (project *
 
 	// TODO: What is the correct way to derive a named zap.Logger from config.Log?
 	ec := ecclient.NewClient(zap.L().Named("ecclient"), dialer, 0)
-	segmentStore := segments.NewSegmentStore(metainfo, ec)
+	segmentStore := segments.NewSegmentStore(metainfoClient, ec)
 
 	encryptionParameters := storj.EncryptionParameters{
 		// TODO: the cipher should be provided by the Access, but we don't store it there yet.
@@ -112,13 +110,12 @@ func (config Config) OpenProject(ctx context.Context, access *Access) (project *
 		return nil, packageError.Wrap(err)
 	}
 
-	streamStore, err := streams.NewStreamStore(metainfo, segmentStore, segmentsSize, access.encAccess.Store(), int(encryptionParameters.BlockSize), encryptionParameters.CipherSuite, maxInlineSize, maxEncryptedSegmentSize)
+	streamStore, err := streams.NewStreamStore(metainfoClient, segmentStore, segmentsSize, access.encAccess.Store(), int(encryptionParameters.BlockSize), encryptionParameters.CipherSuite, maxInlineSize, maxEncryptedSegmentSize)
 	if err != nil {
 		return nil, packageError.Wrap(err)
 	}
 
-	proj := kvmetainfo.NewProject(streamStore, encBlockSize, segmentsSize, *metainfo)
-	db := kvmetainfo.New(proj, metainfo, streamStore, segmentStore, access.encAccess.Store())
+	db := metainfo.New(metainfoClient, access.encAccess.Store())
 
 	var eg errgroup.Group
 	if telemetry != nil {
@@ -132,8 +129,7 @@ func (config Config) OpenProject(ctx context.Context, access *Access) (project *
 		config:    config,
 		access:    access,
 		dialer:    dialer,
-		metainfo:  metainfo,
-		project:   proj,
+		metainfo:  metainfoClient,
 		db:        db,
 		streams:   streamStore,
 		eg:        &eg,

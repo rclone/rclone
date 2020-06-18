@@ -19,6 +19,12 @@ service NodeGracefulExit {
   rpc InitiateGracefulExit(InitiateGracefulExitRequest) returns (ExitProgress);
   // GetExitProgress returns graceful exit status on each satellite for a given storagenode.
   rpc GetExitProgress(GetExitProgressRequest) returns (GetExitProgressResponse);
+  // GracefulExitFeasibility returns node's join date and satellites config's amount of months required for graceful exit to be allowed.
+  rpc GracefulExitFeasibility(GracefulExitFeasibilityNodeRequest) returns (GracefulExitFeasibilityResponse);
+}
+
+message GracefulExitFeasibilityNodeRequest {
+    bytes node_id = 1 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
 }
 
 message GetNonExitingSatellitesRequest{}
@@ -55,6 +61,16 @@ message ExitProgress {
 service SatelliteGracefulExit {
   // Process is called by storage nodes to initiate the graceful exit, get pieces to transfer, and receive exit status.
   rpc Process(stream StorageNodeMessage) returns (stream SatelliteMessage);
+  // GracefulExitFeasibility returns node's join date and satellites config's amount of months required for graceful exit to be allowed.
+  rpc GracefulExitFeasibility(GracefulExitFeasibilityRequest) returns (GracefulExitFeasibilityResponse);
+}
+
+message GracefulExitFeasibilityRequest {}
+
+message GracefulExitFeasibilityResponse {
+    google.protobuf.Timestamp joined_at = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    int32 months_required = 2;
+    bool is_allowed = 3;
 }
 
 message TransferSucceeded {
