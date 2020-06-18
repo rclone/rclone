@@ -965,6 +965,7 @@ const (
 
 	memoryPoolFlushTime = fs.Duration(time.Minute) // flush the cached buffers after this long
 	memoryPoolUseMmap   = false
+	maxExpireDuration   = fs.Duration(7 * 24 * time.Hour) // max expiry is 1 week
 )
 
 // Options defines the configuration for this backend
@@ -2021,8 +2022,15 @@ func (f *Fs) getMemoryPool(size int64) *pool.Pool {
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
+	if strings.HasSuffix(remote, "/") {
+		return "", fs.ErrorCantShareDirectories
+	}
 	if _, err := f.NewObject(ctx, remote); err != nil {
 		return "", err
+	}
+	if expire > maxExpireDuration {
+		fs.Logf(f, "Public Link: Reducing expiry to %v as %v is greater than the max time allowed", maxExpireDuration, expire)
+		expire = maxExpireDuration
 	}
 	bucket, bucketPath := f.split(remote)
 	httpReq, _ := f.c.GetObjectRequest(&s3.GetObjectInput{
