@@ -42,10 +42,10 @@ var (
 	// Globals
 	matchProject = regexp.MustCompile(`^([\w-]+)/([\w-]+)$`)
 	osAliases    = map[string][]string{
-		"darwin": []string{"macos", "osx"},
+		"darwin": {"macos", "osx"},
 	}
 	archAliases = map[string][]string{
-		"amd64": []string{"x86_64"},
+		"amd64": {"x86_64"},
 	}
 )
 
