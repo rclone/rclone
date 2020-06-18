@@ -21,25 +21,25 @@ message GetHeldAmountRequest {
 message GetHeldAmountResponse {
     google.protobuf.Timestamp period = 1 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
     bytes node_id = 2 [(gogoproto.customtype) = "NodeID", (gogoproto.nullable) = false];
- 	google.protobuf.Timestamp created_at = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
- 	string codes = 4;
- 	float usage_at_rest = 5;
- 	int64 usage_get = 6;
- 	int64 usage_put = 7;
- 	int64 usage_get_repair = 8;
- 	int64 usage_put_repair = 9;
- 	int64 usage_get_audit = 10;
- 	int64 comp_at_rest = 11;
- 	int64 comp_get = 12;
- 	int64 comp_put = 13;
- 	int64 comp_get_repair = 14;
- 	int64 comp_put_repair = 15;
- 	int64 comp_get_audit = 16;
- 	int64 surge_percent = 17;
- 	int64 held = 18;
-    int64 owed = 19;
- 	int64 disposed = 20;
- 	int64 paid = 21;
+    google.protobuf.Timestamp created_at = 3 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
+    string  codes = 4;
+    double  usage_at_rest = 5;
+    int64   usage_get = 6;
+    int64   usage_put = 7;
+    int64   usage_get_repair = 8;
+    int64   usage_put_repair = 9;
+    int64   usage_get_audit = 10;
+    int64   comp_at_rest = 11;
+    int64   comp_get = 12;
+    int64   comp_put = 13;
+    int64   comp_get_repair = 14;
+    int64   comp_put_repair = 15;
+    int64   comp_get_audit = 16;
+    int64   surge_percent = 17;
+    int64   held = 18;
+    int64   owed = 19;
+    int64   disposed = 20;
+    int64   paid = 21;
 }
 
 message GetAllPaystubsRequest {}

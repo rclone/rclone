@@ -39,10 +39,10 @@ cost. This is not the case with our downstream repo,
 # License
 
 This library is distributed under the
-[MIT license](https://opensource.org/licenses/MIT) (also known as the Expat license).
+[BSD-2-clause license with an explicit patent grant](https://spdx.org/licenses/BSD-2-Clause-Patent.html).
+
+See https://writing.kemitchell.com/2019/11/07/BSD-Patents.html for more details.
 
 # Support
 
-If you have any questions or suggestions please reach out to us on
-[our community forum](https://forum.storj.io/) or
-email us at support@tardigrade.io.
+If you have any questions or suggestions please reach out to us on [our community forum](https://forum.storj.io/) or file a support ticket at https://support.tardigrade.io.

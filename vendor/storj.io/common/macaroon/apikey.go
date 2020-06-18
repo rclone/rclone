@@ -15,6 +15,12 @@ import (
 	"storj.io/common/pb"
 )
 
+// revoker is supplied when checking a macaroon for validation.
+type revoker interface {
+	// Check is intended to return a bool if any of the supplied tails are revoked.
+	Check(ctx context.Context, tails [][]byte) (bool, error)
+}
+
 var (
 	// Error is a general API Key error.
 	Error = errs.Class("api key error")
@@ -99,7 +105,7 @@ func NewAPIKey(secret []byte) (*APIKey, error) {
 // Check makes sure that the key authorizes the provided action given the root
 // project secret and any possible revocations, returning an error if the action
 // is not authorized. 'revoked' is a list of revoked heads.
-func (a *APIKey) Check(ctx context.Context, secret []byte, action Action, revoked [][]byte) (err error) {
+func (a *APIKey) Check(ctx context.Context, secret []byte, action Action, revoker revoker) (err error) {
 	defer mon.Task()(&ctx)(&err)
 	if !a.mac.Validate(secret) {
 		return ErrInvalid.New("macaroon unauthorized")
@@ -122,10 +128,13 @@ func (a *APIKey) Check(ctx context.Context, secret []byte, action Action, revoke
 		}
 	}
 
-	head := a.mac.Head()
-	for _, revokedID := range revoked {
-		if bytes.Equal(revokedID, head) {
-			return ErrRevoked.New("macaroon head revoked")
+	if revoker != nil {
+		revoked, err := revoker.Check(ctx, a.mac.Tails(secret))
+		if err != nil {
+			return ErrRevoked.Wrap(err)
+		}
+		if revoked {
+			return ErrRevoked.New("contains revoked tail")
 		}
 	}
 

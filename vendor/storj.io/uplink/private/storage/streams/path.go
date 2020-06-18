@@ -30,34 +30,14 @@ func (p Path) Raw() []byte { return append([]byte(nil), p.raw...) }
 func (p Path) String() string { return string(p.raw) }
 
 // ParsePath returns a new Path with the given raw bytes.
-func ParsePath(raw storj.Path) (path Path) {
+func ParsePath(raw storj.Path) Path {
 	// A path may contain a bucket and an unencrypted path.
 	parts := strings.SplitN(raw, "/", 2)
+	path := Path{}
 	path.bucket = parts[0]
 	if len(parts) > 1 {
 		path.unencPath = paths.NewUnencrypted(parts[1])
 	}
 	path.raw = []byte(raw)
 	return path
-}
-
-// CreatePath will create a Path for the provided information.
-func CreatePath(bucket string, unencPath paths.Unencrypted) (path Path) {
-	path.bucket = bucket
-	path.unencPath = unencPath
-
-	path.raw = append(path.raw, bucket...)
-	if unencPath.Valid() {
-		path.raw = append(path.raw, '/')
-		path.raw = append(path.raw, unencPath.Raw()...)
-	}
-
-	return path
-}
-
-// PathForKey removes the trailing `/` from the raw path, which is required so
-// the derived key matches the final list path (which also has the trailing
-// encrypted `/` part of the path removed).
-func PathForKey(raw string) paths.Unencrypted {
-	return paths.NewUnencrypted(strings.TrimSuffix(raw, "/"))
 }

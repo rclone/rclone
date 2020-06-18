@@ -24,14 +24,6 @@ var (
 	mon = monkit.Package()
 )
 
-// Meta info about a segment.
-type Meta struct {
-	Modified   time.Time
-	Expiration time.Time
-	Size       int64
-	Data       []byte
-}
-
 // Store for segments.
 type Store interface {
 	// Ranger creates a ranger for downloading erasure codes from piece store nodes.
