@@ -30,7 +30,7 @@ func TestAlbumsAdd(t *testing.T) {
 	albums.add(a1)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one": []*api.Album{a1},
+		"one": {a1},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"1": a1,
@@ -39,7 +39,7 @@ func TestAlbumsAdd(t *testing.T) {
 		"one": a1,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"": []string{"one"},
+		"": {"one"},
 	}, albums.path)
 
 	a2 := &api.Album{
@@ -49,8 +49,8 @@ func TestAlbumsAdd(t *testing.T) {
 	albums.add(a2)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one": []*api.Album{a1},
-		"two": []*api.Album{a2},
+		"one": {a1},
+		"two": {a2},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"1": a1,
@@ -61,7 +61,7 @@ func TestAlbumsAdd(t *testing.T) {
 		"two": a2,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"": []string{"one", "two"},
+		"": {"one", "two"},
 	}, albums.path)
 
 	// Add a duplicate
@@ -72,8 +72,8 @@ func TestAlbumsAdd(t *testing.T) {
 	albums.add(a2a)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one": []*api.Album{a1},
-		"two": []*api.Album{a2, a2a},
+		"one": {a1},
+		"two": {a2, a2a},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"1":  a1,
@@ -86,7 +86,7 @@ func TestAlbumsAdd(t *testing.T) {
 		"two {2a}": a2a,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"": []string{"one", "two {2}", "two {2a}"},
+		"": {"one", "two {2}", "two {2a}"},
 	}, albums.path)
 
 	// Add a sub directory
@@ -97,9 +97,9 @@ func TestAlbumsAdd(t *testing.T) {
 	albums.add(a1sub)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one":     []*api.Album{a1},
-		"two":     []*api.Album{a2, a2a},
-		"one/sub": []*api.Album{a1sub},
+		"one":     {a1},
+		"two":     {a2, a2a},
+		"one/sub": {a1sub},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"1":    a1,
@@ -114,8 +114,8 @@ func TestAlbumsAdd(t *testing.T) {
 		"two {2a}": a2a,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"":    []string{"one", "two {2}", "two {2a}"},
-		"one": []string{"sub"},
+		"":    {"one", "two {2}", "two {2a}"},
+		"one": {"sub"},
 	}, albums.path)
 
 	// Add a weird path
@@ -126,10 +126,10 @@ func TestAlbumsAdd(t *testing.T) {
 	albums.add(a0)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"{0}":     []*api.Album{a0},
-		"one":     []*api.Album{a1},
-		"two":     []*api.Album{a2, a2a},
-		"one/sub": []*api.Album{a1sub},
+		"{0}":     {a0},
+		"one":     {a1},
+		"two":     {a2, a2a},
+		"one/sub": {a1sub},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"0":    a0,
@@ -146,8 +146,8 @@ func TestAlbumsAdd(t *testing.T) {
 		"two {2a}": a2a,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"":    []string{"one", "two {2}", "two {2a}", "{0}"},
-		"one": []string{"sub"},
+		"":    {"one", "two {2}", "two {2a}", "{0}"},
+		"one": {"sub"},
 	}, albums.path)
 }
 
@@ -181,9 +181,9 @@ func TestAlbumsDel(t *testing.T) {
 	albums.add(a1sub)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one":     []*api.Album{a1},
-		"two":     []*api.Album{a2, a2a},
-		"one/sub": []*api.Album{a1sub},
+		"one":     {a1},
+		"two":     {a2, a2a},
+		"one/sub": {a1sub},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"1":    a1,
@@ -198,16 +198,16 @@ func TestAlbumsDel(t *testing.T) {
 		"two {2a}": a2a,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"":    []string{"one", "two {2}", "two {2a}"},
-		"one": []string{"sub"},
+		"":    {"one", "two {2}", "two {2a}"},
+		"one": {"sub"},
 	}, albums.path)
 
 	albums.del(a1)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one":     []*api.Album{a1},
-		"two":     []*api.Album{a2, a2a},
-		"one/sub": []*api.Album{a1sub},
+		"one":     {a1},
+		"two":     {a2, a2a},
+		"one/sub": {a1sub},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"2":    a2,
@@ -220,16 +220,16 @@ func TestAlbumsDel(t *testing.T) {
 		"two {2a}": a2a,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"":    []string{"one", "two {2}", "two {2a}"},
-		"one": []string{"sub"},
+		"":    {"one", "two {2}", "two {2a}"},
+		"one": {"sub"},
 	}, albums.path)
 
 	albums.del(a2)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one":     []*api.Album{a1},
-		"two":     []*api.Album{a2, a2a},
-		"one/sub": []*api.Album{a1sub},
+		"one":     {a1},
+		"two":     {a2, a2a},
+		"one/sub": {a1sub},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"2a":   a2a,
@@ -240,16 +240,16 @@ func TestAlbumsDel(t *testing.T) {
 		"two {2a}": a2a,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"":    []string{"one", "two {2a}"},
-		"one": []string{"sub"},
+		"":    {"one", "two {2a}"},
+		"one": {"sub"},
 	}, albums.path)
 
 	albums.del(a2a)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one":     []*api.Album{a1},
-		"two":     []*api.Album{a2, a2a},
-		"one/sub": []*api.Album{a1sub},
+		"one":     {a1},
+		"two":     {a2, a2a},
+		"one/sub": {a1sub},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{
 		"1sub": a1sub,
@@ -258,16 +258,16 @@ func TestAlbumsDel(t *testing.T) {
 		"one/sub": a1sub,
 	}, albums.byTitle)
 	assert.Equal(t, map[string][]string{
-		"":    []string{"one"},
-		"one": []string{"sub"},
+		"":    {"one"},
+		"one": {"sub"},
 	}, albums.path)
 
 	albums.del(a1sub)
 
 	assert.Equal(t, map[string][]*api.Album{
-		"one":     []*api.Album{a1},
-		"two":     []*api.Album{a2, a2a},
-		"one/sub": []*api.Album{a1sub},
+		"one":     {a1},
+		"two":     {a2, a2a},
+		"one/sub": {a1sub},
 	}, albums.dupes)
 	assert.Equal(t, map[string]*api.Album{}, albums.byID)
 	assert.Equal(t, map[string]*api.Album{}, albums.byTitle)
