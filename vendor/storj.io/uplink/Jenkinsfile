@@ -103,6 +103,7 @@ pipeline {
                 stage('Integration [storj/storj]') {
                     environment {
                         STORJ_POSTGRES_TEST = 'postgres://postgres@localhost/teststorj2?sslmode=disable'
+                        STORJ_COCKROACH_TEST = 'omit'
                     }
                     steps {
                         sh 'psql -U postgres -c \'create database teststorj2;\''

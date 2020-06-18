@@ -44,8 +44,8 @@ type ListItem struct {
 	IsPrefix bool
 }
 
-// New used as a public function.
-func New(client pb.DRPCMetainfoClient, apiKey *macaroon.APIKey, userAgent string) *Client {
+// NewClient creates Metainfo API client.
+func NewClient(client pb.DRPCMetainfoClient, apiKey *macaroon.APIKey, userAgent string) *Client {
 	return &Client{
 		client:    client,
 		apiKeyRaw: apiKey.SerializeRaw(),

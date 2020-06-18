@@ -1,7 +1,7 @@
 // Copyright (C) 2019 Storj Labs, Inc.
 // See LICENSE for copying information.
 
-package kvmetainfo
+package metainfo
 
 import (
 	"context"
@@ -12,7 +12,6 @@ import (
 	"storj.io/common/paths"
 	"storj.io/common/pb"
 	"storj.io/common/storj"
-	"storj.io/uplink/private/metainfo"
 )
 
 var _ ReadOnlyStream = (*readonlyStream)(nil)
@@ -47,7 +46,7 @@ func (stream *readonlyStream) segment(ctx context.Context, index int64) (segment
 	if isLastSegment {
 		index = -1
 	}
-	info, limits, err := stream.db.metainfo.DownloadSegment(ctx, metainfo.DownloadSegmentParams{
+	info, limits, err := stream.db.metainfo.DownloadSegment(ctx, DownloadSegmentParams{
 		StreamID: stream.Info().ID,
 		Position: storj.SegmentPosition{
 			Index: int32(index),

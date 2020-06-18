@@ -1,7 +1,7 @@
 // Copyright (C) 2019 Storj Labs, Inc.
 // See LICENSE for copying information.
 
-package kvmetainfo
+package metainfo
 
 // TODO: known issue:
 //   this is incorrect since there's no good way to get such a path
