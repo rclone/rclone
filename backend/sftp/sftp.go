@@ -500,6 +500,7 @@ func NewFsWithConnection(ctx context.Context, name string, root string, m config
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
+		SlowHash:                true,
 	}).Fill(f)
 	// Make a connection and pool it to return errors early
 	c, err := f.getSftpConnection()

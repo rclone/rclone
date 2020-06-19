@@ -1334,6 +1334,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		BucketBasedRootOK: true,
 		SetTier:           true,
 		GetTier:           true,
+		SlowModTime:       true,
 	}).Fill(f)
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the object exists

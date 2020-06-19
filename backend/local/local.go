@@ -231,6 +231,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		CaseInsensitive:         f.caseInsensitive(),
 		CanHaveEmptyDirectories: true,
 		IsLocal:                 true,
+		SlowHash:                true,
 	}).Fill(f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
