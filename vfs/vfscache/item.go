@@ -608,7 +608,9 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 		} else {
 			// asynchronous writeback
 			item.mu.Unlock()
-			item.c.writeback.add(item, item.name, item.modified, storeFn)
+			item.c.writeback.add(item, item.name, item.modified, func(ctx context.Context) error {
+				return item.store(ctx, storeFn)
+			})
 			item.mu.Lock()
 		}
 	}
