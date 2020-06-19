@@ -178,6 +178,20 @@ func (o *ContentMockObject) Size() int64 {
 	return int64(len(o.content))
 }
 
+// Hash returns the selected checksum of the file
+// If no checksum is available it returns ""
+func (o *ContentMockObject) Hash(ctx context.Context, t hash.Type) (string, error) {
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(t))
+	if err != nil {
+		return "", err
+	}
+	_, err = hasher.Write(o.content)
+	if err != nil {
+		return "", err
+	}
+	return hasher.Sums()[t], nil
+}
+
 type readCloser struct{ io.Reader }
 
 func (r *readCloser) Close() error { return nil }

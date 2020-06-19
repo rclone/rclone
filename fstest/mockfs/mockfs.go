@@ -18,6 +18,7 @@ type Fs struct {
 	root     string        // The root directory (OS path)
 	features *fs.Features  // optional features
 	rootDir  fs.DirEntries // directory listing of root
+	hashes   hash.Set      // which hashes we support
 }
 
 // ErrNotImplemented is returned by unimplemented methods
@@ -66,7 +67,12 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash types of the filesystem
 func (f *Fs) Hashes() hash.Set {
-	return hash.NewHashSet()
+	return f.hashes
+}
+
+// SetHashes sets the hashes that this supports
+func (f *Fs) SetHashes(hashes hash.Set) {
+	f.hashes = hashes
 }
 
 // Features returns the optional features of this Fs
