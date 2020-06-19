@@ -515,6 +515,8 @@ type Features struct {
 	GetTier                 bool // allows to retrieve storage tier of objects
 	ServerSideAcrossConfigs bool // can server side copy between different remotes of the same type
 	IsLocal                 bool // is the local backend
+	SlowModTime             bool // if calling ModTime() generally takes an extra transaction
+	SlowHash                bool // if calling Hash() generally takes an extra transaction
 
 	// Purge all files in the root and the root directory
 	//
@@ -792,6 +794,10 @@ func (ft *Features) Mask(f Fs) *Features {
 	ft.BucketBasedRootOK = ft.BucketBasedRootOK && mask.BucketBasedRootOK
 	ft.SetTier = ft.SetTier && mask.SetTier
 	ft.GetTier = ft.GetTier && mask.GetTier
+	ft.ServerSideAcrossConfigs = ft.ServerSideAcrossConfigs && mask.ServerSideAcrossConfigs
+	// ft.IsLocal = ft.IsLocal && mask.IsLocal Don't propagate IsLocal
+	ft.SlowModTime = ft.SlowModTime && mask.SlowModTime
+	ft.SlowHash = ft.SlowHash && mask.SlowHash
 
 	if mask.Purge == nil {
 		ft.Purge = nil

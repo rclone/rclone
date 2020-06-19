@@ -447,6 +447,7 @@ func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, n
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
+		SlowModTime:       true,
 	}).Fill(f)
 	if f.rootContainer != "" && f.rootDirectory != "" {
 		// Check to see if the object exists - ignoring directory markers
