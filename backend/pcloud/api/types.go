@@ -152,6 +152,14 @@ type ChecksumFileResult struct {
 	Metadata Item `json:"metadata"`
 }
 
+// PubLinkResult is returned from /getfilepublink and /getfolderpublink
+type PubLinkResult struct {
+	Error
+	LinkID   int    `json:"linkid"`
+	Link     string `json:"link"`
+	LinkCode string `json:"code"`
+}
+
 // UserInfo is returned from /userinfo
 type UserInfo struct {
 	Error

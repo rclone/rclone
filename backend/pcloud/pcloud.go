@@ -827,6 +827,61 @@ func (f *Fs) DirCacheFlush() {
 	f.dirCache.ResetRoot()
 }
 
+func (f *Fs) linkDir(ctx context.Context, dirID string, expire fs.Duration) (string, error) {
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/getfolderpublink",
+		Parameters: url.Values{},
+	}
+	var result api.PubLinkResult
+	opts.Parameters.Set("folderid", dirIDtoNumber(dirID))
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		err = result.Error.Update(err)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.Link, err
+}
+
+func (f *Fs) linkFile(ctx context.Context, path string, expire fs.Duration) (string, error) {
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/getfilepublink",
+		Parameters: url.Values{},
+	}
+	var result api.PubLinkResult
+	opts.Parameters.Set("path", path)
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
+		err = result.Error.Update(err)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.Link, nil
+}
+
+// PublicLink adds a "readable by anyone with link" permission on the given file or folder.
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
+	err := f.dirCache.FindRoot(ctx, false)
+	if err != nil {
+		return "", err
+	}
+
+	dirID, err := f.dirCache.FindDir(ctx, remote, false)
+	if err == fs.ErrorDirNotFound {
+		return f.linkFile(ctx, remote, expire)
+	}
+	if err != nil {
+		return "", err
+	}
+	return f.linkDir(ctx, dirID, expire)
+}
+
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	opts := rest.Opts{
@@ -1161,6 +1216,7 @@ var (
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.DirMover        = (*Fs)(nil)
 	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
