@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # defaults
-race=""
+buildflags=""
 binary="test.binary"
 flags=""
 iterations="100"
@@ -29,6 +29,8 @@ Flags this script understands
     the log files generated will start with NAME (default ${logprefix})
 -race
     build the binary with race testing enabled
+-tags=TAGS
+    build the binary with the tags supplied
 
 Any other flags will be past to go test.
 
@@ -62,8 +64,8 @@ do
             iterations="${i#*=}"
             shift # past argument=value
             ;;
-        -race|--race)
-            race="-race"
+        -race|--race|-tags=*|--tags=*)
+            buildflags="${buildflags} $i"
             shift # past argument with no value
             ;;
         *)
@@ -74,15 +76,15 @@ do
     esac
 done
 
-echo -n "Compiling ${race} ${binary} ... "
-go test ${race} -c -o "${binary}" || {
+echo -n "Compiling ${buildflags} ${binary} ... "
+go test ${buildflags} -c -o "${binary}" || {
     echo "build failed"
     exit 1
 }
 echo "OK"
 
 for i in $(seq -w ${iterations}); do
-    echo -n "Test ${race} ${flags} ${i} "
+    echo -n "Test ${buildflags} ${flags} ${i} "
     log="${logprefix}${i}.log"
     ./${binary} ${flags} > ${log} 2>&1
     ok=$?
