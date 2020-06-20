@@ -2,6 +2,7 @@
 package accounting
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"sync"
@@ -9,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/rclone/rclone/fs/rc"
+	"golang.org/x/time/rate"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
@@ -41,6 +43,8 @@ type Account struct {
 	closed  bool          // set if the file is closed
 	exit    chan struct{} // channel that will be closed when transfer is finished
 	withBuf bool          // is using a buffered in
+
+	tokenBucket *rate.Limiter // per file bandwidth limiter (may be nil)
 
 	values accountValues
 }
@@ -78,6 +82,12 @@ func newAccountSizeName(stats *StatsInfo, in io.ReadCloser, size int64, name str
 	if fs.Config.CutoffMode == fs.CutoffModeHard {
 		acc.values.max = int64((fs.Config.MaxTransfer))
 	}
+	currLimit := fs.Config.BwLimitFile.LimitAt(time.Now())
+	if currLimit.Bandwidth > 0 {
+		fs.Debugf(acc.name, "Limiting file transfer to %v", currLimit.Bandwidth)
+		acc.tokenBucket = newTokenBucket(currLimit.Bandwidth)
+	}
+
 	go acc.averageLoop()
 	stats.inProgress.set(acc.name, acc)
 	return acc
@@ -257,6 +267,20 @@ func (acc *Account) ServerSideCopyEnd(n int64) {
 	acc.stats.Bytes(n)
 }
 
+// Account for n bytes from the current file bandwidth limit (if any)
+func (acc *Account) limitPerFileBandwidth(n int) {
+	acc.values.mu.Lock()
+	tokenBucket := acc.tokenBucket
+	acc.values.mu.Unlock()
+
+	if tokenBucket != nil {
+		err := tokenBucket.WaitN(context.Background(), n)
+		if err != nil {
+			fs.Errorf(nil, "Token bucket error: %v", err)
+		}
+	}
+}
+
 // Account the read and limit bandwidth
 func (acc *Account) accountRead(n int) {
 	// Update Stats
@@ -268,6 +292,7 @@ func (acc *Account) accountRead(n int) {
 	acc.stats.Bytes(int64(n))
 
 	limitBandwidth(n)
+	acc.limitPerFileBandwidth(n)
 }
 
 // read bytes from the io.Reader passed in and account them

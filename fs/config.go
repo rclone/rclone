@@ -83,6 +83,7 @@ type ConfigInfo struct {
 	UseListR               bool
 	BufferSize             SizeSuffix
 	BwLimit                BwTimetable
+	BwLimitFile            BwTimetable
 	TPSLimit               float64
 	TPSLimitBurst          int
 	BindAddr               net.IP

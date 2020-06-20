@@ -422,6 +422,20 @@ change the bwlimit dynamically:
 
     rclone rc core/bwlimit rate=1M
 
+### --bwlimit-file=BANDWIDTH_SPEC ###
+
+This option controls per file bandwidth limit. For the options see the
+`--bwlimit` flag.
+
+For example use this to allow no transfers to be faster than 1MByte/s
+
+    --bwlimit-file 1M
+
+This can be used in conjunction with `--bwlimit`.
+
+Note that if a schedule is provided the file will use the schedule in
+effect at the start of the transfer.
+
 ### --buffer-size=SIZE ###
 
 Use this sized buffer to speed up file transfers.  Each `--transfer`
