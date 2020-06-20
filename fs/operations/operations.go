@@ -1004,7 +1004,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	}
 	tr1 := accounting.Stats(ctx).NewTransfer(dst)
 	defer func() {
-		tr1.Done(err)
+		tr1.Done(nil) // error handling is done by the caller
 	}()
 	in1 = tr1.Account(in1).WithBuffer() // account and buffer the transfer
 
@@ -1014,7 +1014,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	}
 	tr2 := accounting.Stats(ctx).NewTransfer(dst)
 	defer func() {
-		tr2.Done(err)
+		tr2.Done(nil) // error handling is done by the caller
 	}()
 	in2 = tr2.Account(in2).WithBuffer() // account and buffer the transfer
 
