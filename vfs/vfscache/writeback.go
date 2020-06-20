@@ -187,19 +187,24 @@ func (wb *writeBack) _peekItem() (wbItem *writeBackItem) {
 	return wb.items[0]
 }
 
+// stop the timer which runs the expiries
+func (wb *writeBack) _stopTimer() {
+	if wb.expiry.IsZero() {
+		return
+	}
+	wb.expiry = time.Time{}
+	fs.Debugf(nil, "resetTimer STOP")
+	if wb.timer != nil {
+		wb.timer.Stop()
+		wb.timer = nil
+	}
+}
+
 // reset the timer which runs the expiries
 func (wb *writeBack) _resetTimer() {
 	wbItem := wb._peekItem()
 	if wbItem == nil {
-		if wb.expiry.IsZero() {
-			return
-		}
-		wb.expiry = time.Time{}
-		fs.Debugf(nil, "resetTimer STOP")
-		if wb.timer != nil {
-			wb.timer.Stop()
-			wb.timer = nil
-		}
+		wb._stopTimer()
 	} else {
 		if wb.expiry.Equal(wbItem.expiry) {
 			return
@@ -377,6 +382,8 @@ func (wb *writeBack) processItems(ctx context.Context) {
 
 	if resetTimer {
 		wb._resetTimer()
+	} else {
+		wb._stopTimer()
 	}
 }
 
