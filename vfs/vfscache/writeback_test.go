@@ -72,6 +72,12 @@ func TestWriteBackItems(t *testing.T) {
 
 	wb.items._update(&wbItem1, now.Add(5*time.Second))
 	assert.Equal(t, "two,three,one", wb.string(t))
+
+	// Set all times the same - should sort in insertion order
+	wb.items._update(&wbItem1, now)
+	wb.items._update(&wbItem2, now)
+	wb.items._update(&wbItem3, now)
+	assert.Equal(t, "one,two,three", wb.string(t))
 }
 
 func checkOnHeap(t *testing.T, wb *writeBack, wbItem *writeBackItem) {
