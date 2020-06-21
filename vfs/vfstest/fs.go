@@ -419,7 +419,6 @@ func (r *Run) readFile(t *testing.T, filepath string) string {
 	filepath = r.path(filepath)
 	result, err := run.os.ReadFile(filepath)
 	require.NoError(t, err)
-	time.Sleep(100 * time.Millisecond) // FIXME wait for Release
 	return string(result)
 }
 

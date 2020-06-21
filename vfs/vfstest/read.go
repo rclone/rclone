@@ -4,7 +4,6 @@ import (
 	"io"
 	"io/ioutil"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -31,7 +30,6 @@ func TestReadByByte(t *testing.T) {
 		assert.NoError(t, err)
 	}
 
-	time.Sleep(100 * time.Millisecond) // FIXME wait for Release
 	run.rm(t, "testfile")
 }
 
