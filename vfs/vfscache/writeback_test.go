@@ -573,3 +573,35 @@ func TestWriteBackRemove(t *testing.T) {
 	checkNotInLookup(t, wb, wbItem)
 	assert.True(t, pi2.cancelled)
 }
+
+func TestWriteBackCancelUpload(t *testing.T) {
+	wb, cancel := newTestWriteBack(t)
+	defer cancel()
+
+	item := &Item{}
+
+	// cancel when not in writeback
+	assert.False(t, wb.cancelUpload(item))
+
+	// add item
+	pi := newPutItem(t)
+	wbItem := wb.add(item, "one", true, pi.put)
+	checkOnHeap(t, wb, wbItem)
+	checkInLookup(t, wb, wbItem)
+
+	// cancel when not uploading
+	assert.False(t, wb.cancelUpload(item))
+	checkOnHeap(t, wb, wbItem)
+	checkInLookup(t, wb, wbItem)
+
+	// wait for upload to start
+	<-pi.started
+	checkNotOnHeap(t, wb, wbItem)
+	checkInLookup(t, wb, wbItem)
+
+	// cancel when uploading
+	assert.True(t, wb.cancelUpload(item))
+	checkOnHeap(t, wb, wbItem)
+	checkInLookup(t, wb, wbItem)
+	assert.True(t, pi.cancelled)
+}
