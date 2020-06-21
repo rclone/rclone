@@ -24,7 +24,11 @@ func newTestWriteBack(t *testing.T) (wb *writeBack, cancel func()) {
 }
 
 // string for debugging - make a copy and pop the items out in order
-func (ws writeBackItems) string(t *testing.T) string {
+func (wb *writeBack) string(t *testing.T) string {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+	ws := wb.items
+
 	// check indexes OK first
 	for i := range ws {
 		assert.Equal(t, i, ws[i].index, ws[i].name)
@@ -50,22 +54,24 @@ func TestWriteBackItems(t *testing.T) {
 	wbItem2 := writeBackItem{name: "two", expiry: now.Add(2 * time.Second)}
 	wbItem3 := writeBackItem{name: "three", expiry: now.Add(4 * time.Second)}
 
-	ws := writeBackItems{}
+	wb := &writeBack{
+		items: writeBackItems{},
+	}
 
-	heap.Init(&ws)
-	assert.Equal(t, "", ws.string(t))
-	heap.Push(&ws, &wbItem2)
-	assert.Equal(t, "two", ws.string(t))
-	heap.Push(&ws, &wbItem3)
-	assert.Equal(t, "two,three", ws.string(t))
-	heap.Push(&ws, &wbItem1)
-	assert.Equal(t, "one,two,three", ws.string(t))
+	heap.Init(&wb.items)
+	assert.Equal(t, "", wb.string(t))
+	heap.Push(&wb.items, &wbItem2)
+	assert.Equal(t, "two", wb.string(t))
+	heap.Push(&wb.items, &wbItem3)
+	assert.Equal(t, "two,three", wb.string(t))
+	heap.Push(&wb.items, &wbItem1)
+	assert.Equal(t, "one,two,three", wb.string(t))
 
-	ws._update(&wbItem1, now.Add(3*time.Second))
-	assert.Equal(t, "two,one,three", ws.string(t))
+	wb.items._update(&wbItem1, now.Add(3*time.Second))
+	assert.Equal(t, "two,one,three", wb.string(t))
 
-	ws._update(&wbItem1, now.Add(5*time.Second))
-	assert.Equal(t, "two,three,one", ws.string(t))
+	wb.items._update(&wbItem1, now.Add(5*time.Second))
+	assert.Equal(t, "two,three,one", wb.string(t))
 }
 
 func checkOnHeap(t *testing.T, wb *writeBack, wbItem *writeBackItem) {
@@ -106,7 +112,6 @@ func checkNotInLookup(t *testing.T, wb *writeBack, wbItem *writeBackItem) {
 func TestWriteBackItemCRUD(t *testing.T) {
 	wb, cancel := newTestWriteBack(t)
 	defer cancel()
-	ws := &wb.items
 	item1, item2, item3 := &Item{}, &Item{}, &Item{}
 
 	// _peekItem empty
@@ -124,7 +129,7 @@ func TestWriteBackItemCRUD(t *testing.T) {
 	checkOnHeap(t, wb, wbItem3)
 	checkInLookup(t, wb, wbItem3)
 
-	assert.Equal(t, "one,two,three", ws.string(t))
+	assert.Equal(t, "one,two,three", wb.string(t))
 
 	// _delItem
 	wb._delItem(wbItem2)
@@ -142,31 +147,31 @@ func TestWriteBackItemCRUD(t *testing.T) {
 	assert.Equal(t, wbItem1, poppedWbItem)
 	checkNotOnHeap(t, wb, wbItem1)
 	checkInLookup(t, wb, wbItem1)
-	assert.Equal(t, "two,three", ws.string(t))
+	assert.Equal(t, "two,three", wb.string(t))
 
 	// _pushItem
 	wb._pushItem(wbItem1)
 	checkOnHeap(t, wb, wbItem1)
 	checkInLookup(t, wb, wbItem1)
-	assert.Equal(t, "one,two,three", ws.string(t))
+	assert.Equal(t, "one,two,three", wb.string(t))
 	// push twice
 	wb._pushItem(wbItem1)
-	assert.Equal(t, "one,two,three", ws.string(t))
+	assert.Equal(t, "one,two,three", wb.string(t))
 
 	// _peekItem
 	assert.Equal(t, wbItem1, wb._peekItem())
 
 	// _removeItem
-	assert.Equal(t, "one,two,three", ws.string(t))
+	assert.Equal(t, "one,two,three", wb.string(t))
 	wb._removeItem(wbItem2)
 	checkNotOnHeap(t, wb, wbItem2)
 	checkInLookup(t, wb, wbItem2)
-	assert.Equal(t, "one,three", ws.string(t))
+	assert.Equal(t, "one,three", wb.string(t))
 	// remove twice
 	wb._removeItem(wbItem2)
 	checkNotOnHeap(t, wb, wbItem2)
 	checkInLookup(t, wb, wbItem2)
-	assert.Equal(t, "one,three", ws.string(t))
+	assert.Equal(t, "one,three", wb.string(t))
 }
 
 func assertTimerRunning(t *testing.T, wb *writeBack, running bool) {
@@ -287,7 +292,7 @@ func TestWriteBackAddOK(t *testing.T) {
 	wbItem := wb.add(item, "one", true, pi.put)
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
-	assert.Equal(t, "one", wb.items.string(t))
+	assert.Equal(t, "one", wb.string(t))
 
 	<-pi.started
 	checkNotOnHeap(t, wb, wbItem)
@@ -310,7 +315,7 @@ func TestWriteBackAddFailRetry(t *testing.T) {
 	wbItem := wb.add(item, "one", true, pi.put)
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
-	assert.Equal(t, "one", wb.items.string(t))
+	assert.Equal(t, "one", wb.string(t))
 
 	<-pi.started
 	checkNotOnHeap(t, wb, wbItem)
@@ -343,7 +348,7 @@ func TestWriteBackAddUpdate(t *testing.T) {
 	wbItem := wb.add(item, "one", true, pi.put)
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
-	assert.Equal(t, "one", wb.items.string(t))
+	assert.Equal(t, "one", wb.string(t))
 
 	<-pi.started
 	checkNotOnHeap(t, wb, wbItem)
@@ -382,7 +387,7 @@ func TestWriteBackAddUpdateNotModified(t *testing.T) {
 	wbItem := wb.add(item, "one", false, pi.put)
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
-	assert.Equal(t, "one", wb.items.string(t))
+	assert.Equal(t, "one", wb.string(t))
 
 	<-pi.started
 	checkNotOnHeap(t, wb, wbItem)
@@ -421,7 +426,7 @@ func TestWriteBackAddUpdateNotStarted(t *testing.T) {
 	wbItem := wb.add(item, "one", true, pi.put)
 	checkOnHeap(t, wb, wbItem)
 	checkInLookup(t, wb, wbItem)
-	assert.Equal(t, "one", wb.items.string(t))
+	assert.Equal(t, "one", wb.string(t))
 
 	// Immediately add another upload before the first has started
 
