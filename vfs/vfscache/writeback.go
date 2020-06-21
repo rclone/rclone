@@ -30,6 +30,7 @@ type writeBack struct {
 	timer   *time.Timer              // next scheduled time for the uploader
 	expiry  time.Time                // time the next item exires or IsZero
 	uploads int                      // number of uploads in progress
+	id      uint64                   // id of the last writeBackItem created
 }
 
 // make a new writeBack
@@ -55,6 +56,7 @@ func newWriteBack(ctx context.Context, opt *vfscommon.Options) *writeBack {
 // writeBack.mu must be held to manipulate this
 type writeBackItem struct {
 	name      string             // name of the item so we don't have to read it from item
+	id        uint64             // id of the item
 	index     int                // index into the priority queue for update
 	item      *Item              // Item that needs writeback
 	expiry    time.Time          // When this expires we will write it back
@@ -74,7 +76,12 @@ type writeBackItems []*writeBackItem
 func (ws writeBackItems) Len() int { return len(ws) }
 
 func (ws writeBackItems) Less(i, j int) bool {
-	return ws[i].expiry.Sub(ws[j].expiry) < 0
+	a, b := ws[i], ws[j]
+	// If times are equal then use ID to disambiguate
+	if a.expiry.Equal(b.expiry) {
+		return a.id < b.id
+	}
+	return a.expiry.Before(b.expiry)
 }
 
 func (ws writeBackItems) Swap(i, j int) {
@@ -116,6 +123,7 @@ func (wb *writeBack) _newExpiry() time.Time {
 	if wb.opt.WriteBack > 0 {
 		expiry = expiry.Add(wb.opt.WriteBack)
 	}
+	// expiry = expiry.Round(time.Millisecond)
 	return expiry
 }
 
@@ -123,11 +131,13 @@ func (wb *writeBack) _newExpiry() time.Time {
 //
 // call with the lock held
 func (wb *writeBack) _newItem(item *Item, name string) *writeBackItem {
+	wb.id++
 	wbItem := &writeBackItem{
 		name:   name,
 		item:   item,
 		expiry: wb._newExpiry(),
 		delay:  wb.opt.WriteBack,
+		id:     wb.id,
 	}
 	wb._addItem(wbItem)
 	wb._pushItem(wbItem)
