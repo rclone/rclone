@@ -37,7 +37,6 @@ type downloaders struct {
 	src    fs.Object // source object
 	remote string
 	fcache fs.Fs // destination Fs
-	osPath string
 	wg     sync.WaitGroup
 
 	// Read write
@@ -87,7 +86,6 @@ func newDownloaders(item *Item, fcache fs.Fs, remote string, src fs.Object) (dls
 		src:    src,
 		remote: remote,
 		fcache: fcache,
-		osPath: item.c.toOSPath(remote),
 	}
 	dls.wg.Add(1)
 	go func() {
