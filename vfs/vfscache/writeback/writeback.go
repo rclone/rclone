@@ -1,11 +1,12 @@
-// This keeps track of the files which need to be written back
-
-package vfscache
+// Package writeback keeps track of the files which need to be written
+// back to storage
+package writeback
 
 import (
 	"container/heap"
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -17,30 +18,35 @@ const (
 	maxUploadDelay = 5 * time.Minute // max delay betwen upload attempts
 )
 
-// putFn is the interface that item provides to store the data
-type putFn func(context.Context) error
+// PutFn is the interface that item provides to store the data
+type PutFn func(context.Context) error
 
-// writeBack keeps track of the items which need to be written back to the disk at some point
-type writeBack struct {
+// Handle is returned for callers to keep track of writeback items
+type Handle uint64
+
+// WriteBack keeps track of the items which need to be written back to the disk at some point
+type WriteBack struct {
 	ctx     context.Context
 	mu      sync.Mutex
-	items   writeBackItems           // priority queue of *writeBackItem - writeBackItems are in here while awaiting transfer only
-	lookup  map[*Item]*writeBackItem // for getting a *writeBackItem from a *Item - writeBackItems are in here until cancelled
-	opt     *vfscommon.Options       // VFS options
-	timer   *time.Timer              // next scheduled time for the uploader
-	expiry  time.Time                // time the next item exires or IsZero
-	uploads int                      // number of uploads in progress
-	id      uint64                   // id of the last writeBackItem created
+	items   writeBackItems            // priority queue of *writeBackItem - writeBackItems are in here while awaiting transfer only
+	lookup  map[Handle]*writeBackItem // for getting a *writeBackItem from a Handle - writeBackItems are in here until cancelled
+	opt     *vfscommon.Options        // VFS options
+	timer   *time.Timer               // next scheduled time for the uploader
+	expiry  time.Time                 // time the next item exires or IsZero
+	uploads int                       // number of uploads in progress
+
+	// read and written with atomic
+	id Handle // id of the last writeBackItem created
 }
 
-// make a new writeBack
+// New make a new WriteBack
 //
-// cancel the context to stop the background goroutine
-func newWriteBack(ctx context.Context, opt *vfscommon.Options) *writeBack {
-	wb := &writeBack{
+// cancel the context to stop the background processing
+func New(ctx context.Context, opt *vfscommon.Options) *WriteBack {
+	wb := &WriteBack{
 		ctx:    ctx,
 		items:  writeBackItems{},
-		lookup: make(map[*Item]*writeBackItem),
+		lookup: make(map[Handle]*writeBackItem),
 		opt:    opt,
 	}
 	heap.Init(&wb.items)
@@ -56,15 +62,14 @@ func newWriteBack(ctx context.Context, opt *vfscommon.Options) *writeBack {
 // writeBack.mu must be held to manipulate this
 type writeBackItem struct {
 	name      string             // name of the item so we don't have to read it from item
-	id        uint64             // id of the item
+	id        Handle             // id of the item
 	index     int                // index into the priority queue for update
-	item      *Item              // Item that needs writeback
 	expiry    time.Time          // When this expires we will write it back
 	uploading bool               // True if item is being processed by upload() method
 	onHeap    bool               // true if this item is on the items heap
 	cancel    context.CancelFunc // To cancel the upload with
 	done      chan struct{}      // closed when the cancellation completes
-	putFn     putFn              // To write the object data
+	putFn     PutFn              // To write the object data
 	tries     int                // number of times we have tried to upload
 	delay     time.Duration      // delay between upload attempts
 }
@@ -118,7 +123,7 @@ func (ws *writeBackItems) _update(item *writeBackItem, expiry time.Time) {
 // return a new expiry time based from now until the WriteBack timeout
 //
 // call with lock held
-func (wb *writeBack) _newExpiry() time.Time {
+func (wb *WriteBack) _newExpiry() time.Time {
 	expiry := time.Now()
 	if wb.opt.WriteBack > 0 {
 		expiry = expiry.Add(wb.opt.WriteBack)
@@ -130,14 +135,13 @@ func (wb *writeBack) _newExpiry() time.Time {
 // make a new writeBackItem
 //
 // call with the lock held
-func (wb *writeBack) _newItem(item *Item, name string) *writeBackItem {
-	wb.id++
+func (wb *WriteBack) _newItem(id Handle, name string) *writeBackItem {
+	wb.SetID(&id)
 	wbItem := &writeBackItem{
 		name:   name,
-		item:   item,
 		expiry: wb._newExpiry(),
 		delay:  wb.opt.WriteBack,
-		id:     wb.id,
+		id:     id,
 	}
 	wb._addItem(wbItem)
 	wb._pushItem(wbItem)
@@ -147,21 +151,21 @@ func (wb *writeBack) _newItem(item *Item, name string) *writeBackItem {
 // add a writeBackItem to the lookup map
 //
 // call with the lock held
-func (wb *writeBack) _addItem(wbItem *writeBackItem) {
-	wb.lookup[wbItem.item] = wbItem
+func (wb *WriteBack) _addItem(wbItem *writeBackItem) {
+	wb.lookup[wbItem.id] = wbItem
 }
 
 // delete a writeBackItem from the lookup map
 //
 // call with the lock held
-func (wb *writeBack) _delItem(wbItem *writeBackItem) {
-	delete(wb.lookup, wbItem.item)
+func (wb *WriteBack) _delItem(wbItem *writeBackItem) {
+	delete(wb.lookup, wbItem.id)
 }
 
 // pop a writeBackItem from the items heap
 //
 // call with the lock held
-func (wb *writeBack) _popItem() (wbItem *writeBackItem) {
+func (wb *WriteBack) _popItem() (wbItem *writeBackItem) {
 	wbItem = heap.Pop(&wb.items).(*writeBackItem)
 	wbItem.onHeap = false
 	return wbItem
@@ -170,7 +174,7 @@ func (wb *writeBack) _popItem() (wbItem *writeBackItem) {
 // push a writeBackItem onto the items heap
 //
 // call with the lock held
-func (wb *writeBack) _pushItem(wbItem *writeBackItem) {
+func (wb *WriteBack) _pushItem(wbItem *writeBackItem) {
 	if !wbItem.onHeap {
 		heap.Push(&wb.items, wbItem)
 		wbItem.onHeap = true
@@ -180,7 +184,7 @@ func (wb *writeBack) _pushItem(wbItem *writeBackItem) {
 // remove a writeBackItem from the items heap
 //
 // call with the lock held
-func (wb *writeBack) _removeItem(wbItem *writeBackItem) {
+func (wb *WriteBack) _removeItem(wbItem *writeBackItem) {
 	if wbItem.onHeap {
 		heap.Remove(&wb.items, wbItem.index)
 		wbItem.onHeap = false
@@ -190,7 +194,7 @@ func (wb *writeBack) _removeItem(wbItem *writeBackItem) {
 // peek the oldest writeBackItem - may be nil
 //
 // call with the lock held
-func (wb *writeBack) _peekItem() (wbItem *writeBackItem) {
+func (wb *WriteBack) _peekItem() (wbItem *writeBackItem) {
 	if len(wb.items) == 0 {
 		return nil
 	}
@@ -198,7 +202,7 @@ func (wb *writeBack) _peekItem() (wbItem *writeBackItem) {
 }
 
 // stop the timer which runs the expiries
-func (wb *writeBack) _stopTimer() {
+func (wb *WriteBack) _stopTimer() {
 	if wb.expiry.IsZero() {
 		return
 	}
@@ -211,7 +215,7 @@ func (wb *writeBack) _stopTimer() {
 }
 
 // reset the timer which runs the expiries
-func (wb *writeBack) _resetTimer() {
+func (wb *WriteBack) _resetTimer() {
 	wbItem := wb._peekItem()
 	if wbItem == nil {
 		wb._stopTimer()
@@ -234,17 +238,31 @@ func (wb *writeBack) _resetTimer() {
 	}
 }
 
-// add adds an item to the writeback queue or resets its timer if it
+// SetID sets the Handle pointed to if it is non zero to the next
+// handle.
+func (wb *WriteBack) SetID(pid *Handle) {
+	if *pid == 0 {
+		*pid = Handle(atomic.AddUint64((*uint64)(&wb.id), 1))
+	}
+}
+
+// Add adds an item to the writeback queue or resets its timer if it
 // is already there.
 //
-// if modified is false then it it doesn't a pending upload
-func (wb *writeBack) add(item *Item, name string, modified bool, putFn putFn) *writeBackItem {
+// If id is 0 then a new item will always be created and the new
+// Handle will be returned.
+//
+// Use SetID to create Handles in advance of calling Add
+//
+// If modified is false then it it doesn't cancel a pending upload if
+// there is one as there is no need.
+func (wb *WriteBack) Add(id Handle, name string, modified bool, putFn PutFn) Handle {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 
-	wbItem, ok := wb.lookup[item]
+	wbItem, ok := wb.lookup[id]
 	if !ok {
-		wbItem = wb._newItem(item, name)
+		wbItem = wb._newItem(id, name)
 	} else {
 		if wbItem.uploading && modified {
 			// We are uploading already so cancel the upload
@@ -255,18 +273,19 @@ func (wb *writeBack) add(item *Item, name string, modified bool, putFn putFn) *w
 	}
 	wbItem.putFn = putFn
 	wb._resetTimer()
-	return wbItem
+	return wbItem.id
 }
 
-// Call when a file is removed. This cancels a writeback if there is
-// one and doesn't return the item to the queue.
-func (wb *writeBack) remove(item *Item) (found bool) {
+// Remove should be called when a file should be removed from the
+// writeback queue. This cancels a writeback if there is one and
+// doesn't return the item to the queue.
+func (wb *WriteBack) Remove(id Handle) (found bool) {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 
-	wbItem, found := wb.lookup[item]
+	wbItem, found := wb.lookup[id]
 	if found {
-		fs.Debugf(wbItem.name, "vfs cache: cancelling writeback (uploading %v) %p item %p", wbItem.uploading, wbItem, wbItem.item)
+		fs.Debugf(wbItem.name, "vfs cache: cancelling writeback (uploading %v) %p item %d", wbItem.uploading, wbItem, wbItem.id)
 		if wbItem.uploading {
 			// We are uploading already so cancel the upload
 			wb._cancelUpload(wbItem)
@@ -283,7 +302,7 @@ func (wb *writeBack) remove(item *Item) (found bool) {
 // upload the item - called as a goroutine
 //
 // uploading will have been incremented here already
-func (wb *writeBack) upload(ctx context.Context, wbItem *writeBackItem) {
+func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 	putFn := wbItem.putFn
@@ -327,7 +346,7 @@ func (wb *writeBack) upload(ctx context.Context, wbItem *writeBackItem) {
 // cancel the upload - the item should be on the heap after this returns
 //
 // call with lock held
-func (wb *writeBack) _cancelUpload(wbItem *writeBackItem) {
+func (wb *WriteBack) _cancelUpload(wbItem *writeBackItem) {
 	if !wbItem.uploading {
 		return
 	}
@@ -351,10 +370,10 @@ func (wb *writeBack) _cancelUpload(wbItem *writeBackItem) {
 // cancelUpload cancels the upload of the item if there is one in progress
 //
 // it returns true if there was an upload in progress
-func (wb *writeBack) cancelUpload(item *Item) bool {
+func (wb *WriteBack) cancelUpload(id Handle) bool {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
-	wbItem, ok := wb.lookup[item]
+	wbItem, ok := wb.lookup[id]
 	if !ok || !wbItem.uploading {
 		return false
 	}
@@ -363,7 +382,7 @@ func (wb *writeBack) cancelUpload(item *Item) bool {
 }
 
 // this uploads as many items as possible
-func (wb *writeBack) processItems(ctx context.Context) {
+func (wb *WriteBack) processItems(ctx context.Context) {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 
@@ -397,8 +416,8 @@ func (wb *writeBack) processItems(ctx context.Context) {
 	}
 }
 
-// return the number of uploads in progress
-func (wb *writeBack) getStats() (uploadsInProgress, uploadsQueued int) {
+// Stats return the number of uploads in progress and queued
+func (wb *WriteBack) Stats() (uploadsInProgress, uploadsQueued int) {
 	wb.mu.Lock()
 	defer wb.mu.Unlock()
 	return wb.uploads, len(wb.items)

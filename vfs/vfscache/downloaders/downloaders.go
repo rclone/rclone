@@ -1,4 +1,4 @@
-package vfscache
+package downloaders
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs/chunkedreader"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/ranges"
+	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
 // FIXME implement max downloaders
@@ -27,16 +28,37 @@ const (
 	maxErrorCount = 10
 )
 
-// downloaders is a number of downloader~s and a queue of waiters
-// waiting for segments to be downloaded.
-type downloaders struct {
+// Item is the interface that an item to download must obey
+type Item interface {
+	// FindMissing adjusts r returning a new ranges.Range which only
+	// contains the range which needs to be downloaded. This could be
+	// empty - check with IsEmpty. It also adjust this to make sure it is
+	// not larger than the file.
+	FindMissing(r ranges.Range) (outr ranges.Range)
+
+	// HasRange returns true if the current ranges entirely include range
+	HasRange(r ranges.Range) bool
+
+	// WriteAtNoOverwrite writes b to the file, but will not overwrite
+	// already present ranges.
+	//
+	// This is used by the downloader to write bytes to the file
+	//
+	// It returns n the total bytes processed and skipped the number of
+	// bytes which were processed but not actually written to the file.
+	WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, err error)
+}
+
+// Downloaders is a number of downloader~s and a queue of waiters
+// waiting for segments to be downloaded to a file.
+type Downloaders struct {
 	// Write once - no locking required
 	ctx    context.Context
 	cancel context.CancelFunc
-	item   *Item
+	item   Item
+	opt    *vfscommon.Options
 	src    fs.Object // source object
 	remote string
-	fcache fs.Fs // destination Fs
 	wg     sync.WaitGroup
 
 	// Read write
@@ -57,7 +79,7 @@ type waiter struct {
 // downloader represents a running download for part of a file.
 type downloader struct {
 	// Write once
-	dls  *downloaders   // parent structure
+	dls  *Downloaders   // parent structure
 	quit chan struct{}  // close to quit the downloader
 	wg   sync.WaitGroup // to keep track of downloader goroutine
 	kick chan struct{}  // kick the downloader when needed
@@ -74,18 +96,19 @@ type downloader struct {
 	stop      bool                // set to true if we have called _stop()
 }
 
-func newDownloaders(item *Item, fcache fs.Fs, remote string, src fs.Object) (dls *downloaders) {
+// New makes a downloader for item
+func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *Downloaders) {
 	if src == nil {
 		panic("internal error: newDownloaders called with nil src object")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
-	dls = &downloaders{
+	dls = &Downloaders{
 		ctx:    ctx,
 		cancel: cancel,
 		item:   item,
+		opt:    opt,
 		src:    src,
 		remote: remote,
-		fcache: fcache,
 	}
 	dls.wg.Add(1)
 	go func() {
@@ -114,7 +137,7 @@ func newDownloaders(item *Item, fcache fs.Fs, remote string, src fs.Object) (dls
 //   err is error from download
 //
 // call with lock held
-func (dls *downloaders) _countErrors(n int64, err error) {
+func (dls *Downloaders) _countErrors(n int64, err error) {
 	if err == nil && n != 0 {
 		if dls.errorCount != 0 {
 			fs.Infof(dls.src, "Resetting error count to 0")
@@ -130,7 +153,7 @@ func (dls *downloaders) _countErrors(n int64, err error) {
 	}
 }
 
-func (dls *downloaders) countErrors(n int64, err error) {
+func (dls *Downloaders) countErrors(n int64, err error) {
 	dls.mu.Lock()
 	dls._countErrors(n, err)
 	dls.mu.Unlock()
@@ -139,7 +162,7 @@ func (dls *downloaders) countErrors(n int64, err error) {
 // Make a new downloader, starting it to download r
 //
 // call with lock held
-func (dls *downloaders) _newDownloader(r ranges.Range) (dl *downloader, err error) {
+func (dls *Downloaders) _newDownloader(r ranges.Range) (dl *downloader, err error) {
 	defer log.Trace(dls.src, "r=%v", r)("err=%v", &err)
 
 	dl = &downloader{
@@ -180,7 +203,7 @@ func (dls *downloaders) _newDownloader(r ranges.Range) (dl *downloader, err erro
 // _removeClosed() removes any downloaders which are closed.
 //
 // Call with the mutex held
-func (dls *downloaders) _removeClosed() {
+func (dls *Downloaders) _removeClosed() {
 	newDownloaders := dls.dls[:0]
 	for _, dl := range dls.dls {
 		if !dl.closed() {
@@ -192,7 +215,7 @@ func (dls *downloaders) _removeClosed() {
 
 // Close all running downloaders and return any unfulfilled waiters
 // with inErr
-func (dls *downloaders) close(inErr error) (err error) {
+func (dls *Downloaders) Close(inErr error) (err error) {
 	dls.mu.Lock()
 	defer dls.mu.Unlock()
 	dls._removeClosed()
@@ -212,8 +235,9 @@ func (dls *downloaders) close(inErr error) (err error) {
 	return err
 }
 
-// Ensure a downloader is running to download r
-func (dls *downloaders) ensure(r ranges.Range) (err error) {
+// Download the range passed in returning when it has been downloaded
+// with an error from the downloading go routine.
+func (dls *Downloaders) Download(r ranges.Range) (err error) {
 	defer log.Trace(dls.src, "r=%+v", r)("err=%v", &err)
 
 	dls.mu.Lock()
@@ -238,7 +262,7 @@ func (dls *downloaders) ensure(r ranges.Range) (err error) {
 // close any waiters with the error passed in
 //
 // call with lock held
-func (dls *downloaders) _closeWaiters(err error) {
+func (dls *Downloaders) _closeWaiters(err error) {
 	for _, waiter := range dls.waiters {
 		waiter.errChan <- err
 	}
@@ -249,7 +273,7 @@ func (dls *downloaders) _closeWaiters(err error) {
 // then it starts it.
 //
 // call with lock held
-func (dls *downloaders) _ensureDownloader(r ranges.Range) (err error) {
+func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	// FIXME this window could be a different config var?
 	window := int64(fs.Config.BufferSize)
 
@@ -258,7 +282,7 @@ func (dls *downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	// read some stuff already.
 	//
 	// Clip r to stuff which needs downloading
-	r = dls.item.findMissing(r)
+	r = dls.item.FindMissing(r)
 
 	// If the range is entirely present then we only need to start a
 	// dowloader if the window isn't full.
@@ -269,7 +293,7 @@ func (dls *downloaders) _ensureDownloader(r ranges.Range) (err error) {
 			rWindow.Size = window
 		}
 		// Clip rWindow to stuff which needs downloading
-		rWindow = dls.item.findMissing(rWindow)
+		rWindow = dls.item.FindMissing(rWindow)
 		// If rWindow is empty then just return without starting a
 		// downloader as there is no data within the window which needs
 		// downloading.
@@ -310,9 +334,11 @@ func (dls *downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	return err
 }
 
-// ensure a downloader is running for offset if required.  If one
-// isn't found then it starts it
-func (dls *downloaders) ensureDownloader(r ranges.Range) (err error) {
+// EnsureDownloader makes sure a downloader is running for the range
+// passed in.  If one isn't found then it starts it.
+//
+// It does not wait for the range to be downloaded
+func (dls *Downloaders) EnsureDownloader(r ranges.Range) (err error) {
 	dls.mu.Lock()
 	defer dls.mu.Unlock()
 	return dls._ensureDownloader(r)
@@ -322,14 +348,14 @@ func (dls *downloaders) ensureDownloader(r ranges.Range) (err error) {
 // their callers.
 //
 // Call with the mutex held
-func (dls *downloaders) _dispatchWaiters() {
+func (dls *Downloaders) _dispatchWaiters() {
 	if len(dls.waiters) == 0 {
 		return
 	}
 
 	newWaiters := dls.waiters[:0]
 	for _, waiter := range dls.waiters {
-		if dls.item.hasRange(waiter.r) {
+		if dls.item.HasRange(waiter.r) {
 			waiter.errChan <- nil
 		} else {
 			newWaiters = append(newWaiters, waiter)
@@ -340,7 +366,7 @@ func (dls *downloaders) _dispatchWaiters() {
 
 // Send any waiters which have completed back to their callers and make sure
 // there is a downloader appropriate for each waiter
-func (dls *downloaders) kickWaiters() (err error) {
+func (dls *Downloaders) kickWaiters() (err error) {
 	dls.mu.Lock()
 	defer dls.mu.Unlock()
 
@@ -351,7 +377,7 @@ func (dls *downloaders) kickWaiters() (err error) {
 	}
 
 	// Make sure each waiter has a downloader
-	// This is an O(waiters*downloaders) algorithm
+	// This is an O(waiters*Downloaders) algorithm
 	// However the number of waiters and the number of downloaders
 	// are both expected to be small.
 	for _, waiter := range dls.waiters {
@@ -421,7 +447,7 @@ func (dl *downloader) Write(p []byte) (n int, err error) {
 		}
 	}
 
-	n, skipped, err := dl.dls.item.writeAtNoOverwrite(p, dl.offset)
+	n, skipped, err := dl.dls.item.WriteAtNoOverwrite(p, dl.offset)
 	if skipped == n {
 		dl.skipped += int64(skipped)
 	} else {
@@ -457,7 +483,7 @@ func (dl *downloader) open(offset int64) (err error) {
 	// }
 	// in0, err := operations.NewReOpen(dl.dls.ctx, dl.dls.src, fs.Config.LowLevelRetries, dl.dls.item.c.hashOption, rangeOption)
 
-	in0 := chunkedreader.New(context.TODO(), dl.dls.src, int64(dl.dls.item.c.opt.ChunkSize), int64(dl.dls.item.c.opt.ChunkSizeLimit))
+	in0 := chunkedreader.New(context.TODO(), dl.dls.src, int64(dl.dls.opt.ChunkSize), int64(dl.dls.opt.ChunkSizeLimit))
 	_, err = in0.Seek(offset, 0)
 	if err != nil {
 		return errors.Wrap(err, "vfs reader: failed to open source file")
