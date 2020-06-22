@@ -369,7 +369,9 @@ func (item *Item) _dirty() {
 	item.metaDirty = true
 	if !item.modified {
 		item.modified = true
-		go item.c.writeback.cancelUpload(item)
+		item.mu.Unlock()
+		item.c.writeback.remove(item)
+		item.mu.Lock()
 	}
 	if !item.info.Dirty {
 		item.info.Dirty = true
