@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/file"
+	"github.com/rclone/rclone/vfs/vfscache/writeback"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
@@ -35,15 +36,15 @@ import (
 // Cache opened files
 type Cache struct {
 	// read only - no locking needed to read these
-	fremote    fs.Fs              // fs for the remote we are caching
-	fcache     fs.Fs              // fs for the cache directory
-	fcacheMeta fs.Fs              // fs for the cache metadata directory
-	opt        *vfscommon.Options // vfs Options
-	root       string             // root of the cache directory
-	metaRoot   string             // root of the cache metadata directory
-	hashType   hash.Type          // hash to use locally and remotely
-	hashOption *fs.HashesOption   // corresponding OpenOption
-	writeback  *writeBack         // holds Items for writeback
+	fremote    fs.Fs                // fs for the remote we are caching
+	fcache     fs.Fs                // fs for the cache directory
+	fcacheMeta fs.Fs                // fs for the cache metadata directory
+	opt        *vfscommon.Options   // vfs Options
+	root       string               // root of the cache directory
+	metaRoot   string               // root of the cache metadata directory
+	hashType   hash.Type            // hash to use locally and remotely
+	hashOption *fs.HashesOption     // corresponding OpenOption
+	writeback  *writeback.WriteBack // holds Items for writeback
 
 	mu   sync.Mutex       // protects the following variables
 	item map[string]*Item // files/directories in the cache
@@ -88,7 +89,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options) (*Cache, er
 		item:       make(map[string]*Item),
 		hashType:   hashType,
 		hashOption: hashOption,
-		writeback:  newWriteBack(ctx, opt),
+		writeback:  writeback.New(ctx, opt),
 	}
 
 	// Make sure cache directories exist
@@ -510,7 +511,7 @@ func (c *Cache) clean() {
 		}
 	}
 	c.mu.Unlock()
-	uploadsInProgress, uploadsQueued := c.writeback.getStats()
+	uploadsInProgress, uploadsQueued := c.writeback.Stats()
 
 	fs.Infof(nil, "Cleaned the cache: objects %d (was %d) in use %d, to upload %d, uploading %d, total size %v (was %v)", newItems, oldItems, totalInUse, uploadsQueued, uploadsInProgress, newUsed, oldUsed)
 }

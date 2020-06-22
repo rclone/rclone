@@ -15,6 +15,8 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/ranges"
+	"github.com/rclone/rclone/vfs/vfscache/downloaders"
+	"github.com/rclone/rclone/vfs/vfscache/writeback"
 )
 
 // NB as Cache and Item are tightly linked it is necessary to have a
@@ -47,15 +49,16 @@ type Item struct {
 	// read only
 	c *Cache // cache this is part of
 
-	mu          sync.Mutex   // protect the variables
-	name        string       // name in the VFS
-	opens       int          // number of times file is open
-	downloaders *downloaders // a record of the downloaders in action - may be nil
-	o           fs.Object    // object we are caching - may be nil
-	fd          *os.File     // handle we are using to read and write to the file
-	metaDirty   bool         // set if the info needs writeback
-	modified    bool         // set if the file has been modified since the last Open
-	info        Info         // info about the file to persist to backing store
+	mu          sync.Mutex               // protect the variables
+	name        string                   // name in the VFS
+	opens       int                      // number of times file is open
+	downloaders *downloaders.Downloaders // a record of the downloaders in action - may be nil
+	o           fs.Object                // object we are caching - may be nil
+	fd          *os.File                 // handle we are using to read and write to the file
+	metaDirty   bool                     // set if the info needs writeback
+	modified    bool                     // set if the file has been modified since the last Open
+	info        Info                     // info about the file to persist to backing store
+	writeBackID writeback.Handle         // id of any writebacks in progress
 
 }
 
@@ -370,7 +373,7 @@ func (item *Item) _dirty() {
 	if !item.modified {
 		item.modified = true
 		item.mu.Unlock()
-		item.c.writeback.remove(item)
+		item.c.writeback.Remove(item.writeBackID)
 		item.mu.Lock()
 	}
 	if !item.info.Dirty {
@@ -464,7 +467,7 @@ func (item *Item) Open(o fs.Object) (err error) {
 
 	// Create the downloaders
 	if item.o != nil {
-		item.downloaders = newDownloaders(item, item.c.fremote, item.name, item.o)
+		item.downloaders = downloaders.New(item, item.c.opt, item.name, item.o)
 	}
 
 	return err
@@ -523,7 +526,7 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 func (item *Item) Close(storeFn StoreFn) (err error) {
 	defer log.Trace(item.o, "Item.Close")("err=%v", &err)
 	var (
-		downloaders   *downloaders
+		downloaders   *downloaders.Downloaders
 		syncWriteBack = item.c.opt.WriteBack <= 0
 	)
 	item.mu.Lock()
@@ -575,7 +578,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 		// downloader.Write calls ensure which needs the lock
 		// close downloader with mutex unlocked
 		item.mu.Unlock()
-		checkErr(downloaders.close(nil))
+		checkErr(downloaders.Close(nil))
 		item.mu.Lock()
 	}
 
@@ -609,8 +612,10 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 			checkErr(item._store(context.Background(), storeFn))
 		} else {
 			// asynchronous writeback
+			item.c.writeback.SetID(&item.writeBackID)
+			id := item.writeBackID
 			item.mu.Unlock()
-			item.c.writeback.add(item, item.name, item.modified, func(ctx context.Context) error {
+			item.c.writeback.Add(id, item.name, item.modified, func(ctx context.Context) error {
 				return item.store(ctx, storeFn)
 			})
 			item.mu.Lock()
@@ -733,7 +738,7 @@ func (item *Item) _removeMeta(reason string) {
 func (item *Item) _remove(reason string) (wasWriting bool) {
 	// Cancel writeback, if any
 	item.mu.Unlock()
-	wasWriting = item.c.writeback.remove(item)
+	wasWriting = item.c.writeback.Remove(item.writeBackID)
 	item.mu.Lock()
 	item.info.clean()
 	item.metaDirty = false
@@ -766,18 +771,18 @@ func (item *Item) present() bool {
 	return item._present()
 }
 
-// hasRange returns true if the current ranges entirely include range
-func (item *Item) hasRange(r ranges.Range) bool {
+// HasRange returns true if the current ranges entirely include range
+func (item *Item) HasRange(r ranges.Range) bool {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	return item.info.Rs.Present(r)
 }
 
-// findMissing adjusts r returning a new ranges.Range which only
+// FindMissing adjusts r returning a new ranges.Range which only
 // contains the range which needs to be downloaded. This could be
 // empty - check with IsEmpty. It also adjust this to make sure it is
 // not larger than the file.
-func (item *Item) findMissing(r ranges.Range) (outr ranges.Range) {
+func (item *Item) FindMissing(r ranges.Range) (outr ranges.Range) {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	outr = item.info.Rs.FindMissing(r)
@@ -805,12 +810,12 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 			return nil
 		}
 		// Otherwise start the downloader for the future if required
-		return item.downloaders.ensureDownloader(r)
+		return item.downloaders.EnsureDownloader(r)
 	}
 	if item.downloaders == nil {
 		return errors.New("internal error: downloaders is nil")
 	}
-	return item.downloaders.ensure(r)
+	return item.downloaders.Download(r)
 }
 
 // _written marks the (offset, size) as present in the backing file
@@ -925,14 +930,14 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 	return n, err
 }
 
-// writeAtNoOverwrite writes b to the file, but will not overwrite
+// WriteAtNoOverwrite writes b to the file, but will not overwrite
 // already present ranges.
 //
 // This is used by the downloader to write bytes to the file
 //
 // It returns n the total bytes processed and skipped the number of
 // bytes which were processed but not actually written to the file.
-func (item *Item) writeAtNoOverwrite(b []byte, off int64) (n int, skipped int, err error) {
+func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, err error) {
 	item.mu.Lock()
 
 	var (
@@ -1002,11 +1007,11 @@ func (item *Item) Sync() (err error) {
 
 // rename the item
 func (item *Item) rename(name string, newName string, newObj fs.Object) (err error) {
-	var downloaders *downloaders
+	var downloaders *downloaders.Downloaders
 	// close downloader with mutex unlocked
 	defer func() {
 		if downloaders != nil {
-			_ = downloaders.close(nil)
+			_ = downloaders.Close(nil)
 		}
 	}()
 
