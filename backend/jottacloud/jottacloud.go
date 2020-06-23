@@ -623,7 +623,6 @@ func (f *Fs) filePath(file string) string {
 // changes the case and then sends it on
 func grantTypeFilter(req *http.Request) {
 	if v1tokenURL == req.URL.String() {
-		fmt.Printf("grantFilter\n")
 		// read the entire body
 		refreshBody, err := ioutil.ReadAll(req.Body)
 		if err != nil {
