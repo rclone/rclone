@@ -127,33 +127,48 @@ func (d *Dir) Node() Node {
 	return d
 }
 
+// ForgetAll forgets directory entries for this directory and any children.
+//
+// It does not invalidate or clear the cache of the parent directory.
+//
+// It returns true if the directory or any of its children had virtual entries
+// so could not be forgotten. Children which didn't have virtual entries and
+// children with virtual entries will be forgotten even if true is returned.
+func (d *Dir) ForgetAll() (hasVirtual bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	fs.Debugf(d.path, "forgetting directory cache")
+	for _, node := range d.items {
+		if dir, ok := node.(*Dir); ok {
+			if dir.ForgetAll() {
+				hasVirtual = true
+			}
+		}
+	}
+	d.read = time.Time{}
+	// Check if this dir has virtual entries
+	if len(d.virtual) != 0 {
+		hasVirtual = true
+	}
+	// Don't clear directory entries if there are virtual entries in this
+	// directory or any children
+	if !hasVirtual {
+		d.items = make(map[string]Node)
+	}
+	return hasVirtual
+}
+
 // forgetDirPath clears the cache for itself and all subdirectories if
 // they match the given path. The path is specified relative from the
 // directory it is called from.
 //
 // It does not invalidate or clear the cache of the parent directory.
 func (d *Dir) forgetDirPath(relativePath string) {
-	if dir := d.cachedDir(relativePath); dir != nil {
-		dir.walk(func(dir *Dir) {
-			// this is called with the mutex held
-			fs.Debugf(dir.path, "forgetting directory cache")
-			dir.read = time.Time{}
-			// Don't clear directory entries if there are virtual
-			// items in there.
-			if len(dir.virtual) == 0 {
-				dir.items = make(map[string]Node)
-				dir.virtual = nil
-			}
-		})
+	dir := d.cachedDir(relativePath)
+	if dir == nil {
+		return
 	}
-}
-
-// ForgetAll ensures the directory and all its children are purged
-// from the cache.
-//
-// It does not invalidate or clear the cache of the parent directory.
-func (d *Dir) ForgetAll() {
-	d.forgetDirPath("")
+	dir.ForgetAll()
 }
 
 // invalidateDir invalidates the directory cache for absPath relative to the root

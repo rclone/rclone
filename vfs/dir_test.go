@@ -269,21 +269,17 @@ func TestDirReadDirAll(t *testing.T) {
 
 	node, err = vfs.Stat("")
 	require.NoError(t, err)
-	dir = node.(*Dir)
+	root := node.(*Dir)
 
-	checkListing(t, dir, []string{"dir,0,true"})
+	checkListing(t, root, []string{"dir,0,true"})
 
 	node, err = vfs.Stat("dir/subdir")
 	require.NoError(t, err)
-	dir = node.(*Dir)
+	subdir := node.(*Dir)
 
-	checkListing(t, dir, []string{"file3,16,false"})
+	checkListing(t, subdir, []string{"file3,16,false"})
 
 	t.Run("Virtual", func(t *testing.T) {
-		node, err := vfs.Stat("dir")
-		require.NoError(t, err)
-		dir := node.(*Dir)
-
 		// Add some virtual entries and check what happens
 		dir.AddVirtual("virtualFile", 17, false)
 		dir.AddVirtual("virtualDir", 0, true)
@@ -295,6 +291,11 @@ func TestDirReadDirAll(t *testing.T) {
 
 		// Force a directory reload...
 		dir.invalidateDir("dir")
+
+		checkListing(t, dir, []string{"file1,14,false", "virtualDir,0,true", "virtualFile,17,false"})
+
+		// Check that forgetting the root doesn't invalidate the virtual entries
+		root.ForgetAll()
 
 		checkListing(t, dir, []string{"file1,14,false", "virtualDir,0,true", "virtualFile,17,false"})
 
