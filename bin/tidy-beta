@@ -14,4 +14,7 @@ else
     echo "Use '$0 $version delete' to actually delete files"
 fi
 
-rclone ${dry_run} -P --fast-list --checkers 16 --transfers 16 delete --include "**${version}**" memstore:beta-rclone-org
+rclone ${dry_run} -vv -P --checkers 16 --transfers 16 delete \
+       --include "/${version}**" \
+       --include "/branch/${version}**" \
+       memstore:beta-rclone-org
