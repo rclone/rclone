@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -277,6 +278,45 @@ func TestDirReadDirAll(t *testing.T) {
 	dir = node.(*Dir)
 
 	checkListing(t, dir, []string{"file3,16,false"})
+
+	t.Run("Virtual", func(t *testing.T) {
+		node, err := vfs.Stat("dir")
+		require.NoError(t, err)
+		dir := node.(*Dir)
+
+		// Add some virtual entries and check what happens
+		dir.AddVirtual("virtualFile", 17, false)
+		dir.AddVirtual("virtualDir", 0, true)
+		// Remove some existing entries
+		dir.DelVirtual("file2")
+		dir.DelVirtual("subdir")
+
+		checkListing(t, dir, []string{"file1,14,false", "virtualDir,0,true", "virtualFile,17,false"})
+
+		// Force a directory reload...
+		dir.invalidateDir("dir")
+
+		checkListing(t, dir, []string{"file1,14,false", "virtualDir,0,true", "virtualFile,17,false"})
+
+		// Now action the deletes and uploads
+		_ = r.WriteObject(context.Background(), "dir/virtualFile", "virtualFile contents", t1)
+		_ = r.WriteObject(context.Background(), "dir/virtualDir/testFile", "testFile contents", t1)
+		o, err := r.Fremote.NewObject(context.Background(), "dir/file2")
+		require.NoError(t, err)
+		require.NoError(t, o.Remove(context.Background()))
+		require.NoError(t, operations.Purge(context.Background(), r.Fremote, "dir/subdir"))
+
+		// Force a directory reload...
+		dir.invalidateDir("dir")
+
+		checkListing(t, dir, []string{"file1,14,false", "virtualDir,0,true", "virtualFile,20,false"})
+
+		// check no virtuals left
+		dir.mu.Lock()
+		assert.Nil(t, dir.virtual)
+		dir.mu.Unlock()
+
+	})
 }
 
 func TestDirOpen(t *testing.T) {
