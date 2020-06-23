@@ -51,12 +51,30 @@ func assertPathExist(t *testing.T, path string) os.FileInfo {
 	return fi
 }
 
+type avInfo struct {
+	Remote string
+	Size   int64
+	IsDir  bool
+}
+
+var avInfos []avInfo
+
+func addVirtual(remote string, size int64, isDir bool) error {
+	avInfos = append(avInfos, avInfo{
+		Remote: remote,
+		Size:   size,
+		IsDir:  isDir,
+	})
+	return nil
+}
+
 func newTestCacheOpt(t *testing.T, opt vfscommon.Options) (r *fstest.Run, c *Cache, cleanup func()) {
 	r = fstest.NewRun(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	c, err := New(ctx, r.Fremote, &opt)
+	avInfos = nil
+	c, err := New(ctx, r.Fremote, &opt, addVirtual)
 	require.NoError(t, err)
 
 	cleanup = func() {

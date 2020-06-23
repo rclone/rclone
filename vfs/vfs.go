@@ -259,7 +259,7 @@ func (vfs *VFS) SetCacheMode(cacheMode vfscommon.CacheMode) {
 	vfs.cache = nil
 	if cacheMode > vfscommon.CacheModeOff {
 		ctx, cancel := context.WithCancel(context.Background())
-		cache, err := vfscache.New(ctx, vfs.f, &vfs.Opt) // FIXME pass on context or get from Opt?
+		cache, err := vfscache.New(ctx, vfs.f, &vfs.Opt, vfs.AddVirtual) // FIXME pass on context or get from Opt?
 		if err != nil {
 			fs.Errorf(nil, "Failed to create vfs cache - disabling: %v", err)
 			vfs.Opt.CacheMode = vfscommon.CacheModeOff
@@ -651,4 +651,14 @@ func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
 	}
 	defer fs.CheckClose(f, &err)
 	return ioutil.ReadAll(f)
+}
+
+// AddVirtual adds the object (file or dir) to the directory cache
+func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) error {
+	dir, leaf, err := vfs.StatParent(remote)
+	if err != nil {
+		return err
+	}
+	dir.AddVirtual(leaf, size, false)
+	return nil
 }
