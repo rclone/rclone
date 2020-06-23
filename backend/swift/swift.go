@@ -1124,6 +1124,9 @@ func (o *Object) removeSegments(except string) error {
 	// remove the segments container if empty, ignore errors
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ContainerDelete(segmentsContainer)
+		if err == swift.ContainerNotFound || err == swift.ContainerNotEmpty {
+			return false, err
+		}
 		return shouldRetry(err)
 	})
 	if err == nil {
