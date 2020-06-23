@@ -488,8 +488,9 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 
 	// Object has disappeared if cacheObj == nil
 	if cacheObj != nil {
+		o, name := item.o, item.name
 		item.mu.Unlock()
-		o, err := operations.Copy(ctx, item.c.fremote, item.o, item.name, cacheObj)
+		o, err := operations.Copy(ctx, item.c.fremote, o, name, cacheObj)
 		item.mu.Lock()
 		if err != nil {
 			return errors.Wrap(err, "vfs cache: failed to transfer file from cache to remote")
