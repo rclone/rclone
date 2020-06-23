@@ -343,6 +343,11 @@ func TestItemReload(t *testing.T) {
 
 	// And check the contents got written back to the remote
 	checkObject(t, r, "existing", contents[:95]+"THEENDMYFRIEND")
+
+	// And check that AddVirtual was called
+	assert.Equal(t, []avInfo{
+		{Remote: "existing", Size: 109, IsDir: false},
+	}, avInfos)
 }
 
 func TestItemReloadRemoteGone(t *testing.T) {

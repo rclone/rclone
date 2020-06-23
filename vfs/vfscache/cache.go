@@ -45,17 +45,26 @@ type Cache struct {
 	hashType   hash.Type            // hash to use locally and remotely
 	hashOption *fs.HashesOption     // corresponding OpenOption
 	writeback  *writeback.WriteBack // holds Items for writeback
+	avFn       AddVirtualFn         // if set, can be called to add dir entries
 
 	mu   sync.Mutex       // protects the following variables
 	item map[string]*Item // files/directories in the cache
 	used int64            // total size of files in the cache
 }
 
+// AddVirtualFn if registered by the WithAddVirtual method, can be
+// called to register the object or directory at remote as a virtual
+// entry in directory listings.
+//
+// This is used when reloading the Cache and uploading items need to
+// go into the directory tree.
+type AddVirtualFn func(remote string, size int64, isDir bool) error
+
 // New creates a new cache heirachy for fremote
 //
 // This starts background goroutines which can be cancelled with the
 // context passed in.
-func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options) (*Cache, error) {
+func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVirtualFn) (*Cache, error) {
 	fRoot := filepath.FromSlash(fremote.Root())
 	if runtime.GOOS == "windows" {
 		if strings.HasPrefix(fRoot, `\\?`) {
@@ -90,6 +99,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options) (*Cache, er
 		hashType:   hashType,
 		hashOption: hashOption,
 		writeback:  writeback.New(ctx, opt),
+		avFn:       avFn,
 	}
 
 	// Make sure cache directories exist
@@ -566,4 +576,13 @@ func (c *Cache) Dump() string {
 	}
 	out.WriteString("}\n")
 	return out.String()
+}
+
+// AddVirtual adds a virtual directory entry by calling the addVirtual
+// callback if one has been registered.
+func (c *Cache) AddVirtual(remote string, size int64, isDir bool) error {
+	if c.avFn == nil {
+		return errors.New("no AddVirtual function registered")
+	}
+	return c.avFn(remote, size, isDir)
 }

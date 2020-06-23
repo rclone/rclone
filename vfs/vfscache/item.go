@@ -31,6 +31,7 @@ import (
 // - Cache.toOSPathMeta
 // - Cache.mkdir
 // - Cache.objectFingerprint
+// - Cache.AddVirtual
 
 // NB Item and downloader are tightly linked so it is necessary to
 // have a total lock ordering between them. downloader.mu must always
@@ -653,6 +654,15 @@ func (item *Item) reload(ctx context.Context) error {
 	err = item.Close(nil)
 	if err != nil {
 		return err
+	}
+	// put the file into the directory listings
+	size, err := item._getSize()
+	if err != nil {
+		return errors.Wrap(err, "reload: failed to read size")
+	}
+	err = item.c.AddVirtual(item.name, size, false)
+	if err != nil {
+		return errors.Wrap(err, "reload: failed to add virtual dir entry")
 	}
 	return nil
 }
