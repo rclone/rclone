@@ -274,7 +274,7 @@ func (f *Fs) InternalTestShortcuts(t *testing.T) {
 	const (
 		// from fstest/fstests/fstests.go
 		existingDir    = "hello? sausage"
-		existingFile   = "file name.txt"
+		existingFile   = `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`
 		existingSubDir = "êé"
 	)
 	ctx := context.Background()
