@@ -45,7 +45,7 @@ destination that are not in the source will not trigger an error.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
-		cmd.Run(false, false, command, func() error {
+		cmd.Run(false, true, command, func() error {
 			if download {
 				return operations.CheckDownload(context.Background(), fdst, fsrc, oneway)
 			}
