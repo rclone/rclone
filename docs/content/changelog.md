@@ -5,6 +5,33 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.52.2 - 2020-06-24
+
+[See commits](https://github.com/rclone/rclone/compare/v1.52.1...v1.52.2)
+
+* Bug Fixes
+    * build
+        * Fix docker release build action (Nick Craig-Wood)
+        * Fix custom timezone in Docker image (NoLooseEnds)
+    * check: Fix misleading message which printed errors instead of differences (Nick Craig-Wood)
+    * errors: Add WSAECONNREFUSED and more to the list of retriable Windows errors (Nick Craig-Wood)
+    * rcd: Fix incorrect prometheus metrics (Gary Kim)
+    * serve restic: Fix flags so they use environment variables (Nick Craig-Wood)
+    * serve webdav: Fix flags so they use environment variables (Nick Craig-Wood)
+    * sync: Fix --track-renames-strategy modtime (Nick Craig-Wood)
+* Drive
+    * Fix not being able to delete a directory with a trashed shortcut (Nick Craig-Wood)
+    * Fix creating a directory inside a shortcut (Nick Craig-Wood)
+    * Fix --drive-impersonate with cached root_folder_id (Nick Craig-Wood)
+* SFTP
+    * Fix SSH key PEM loading (Zac Rubin)
+* Swift
+    * Speed up deletes by not retrying segment container deletes (Nick Craig-Wood)
+* Tardigrade
+    * Upgrade to uplink v1.1.1 (Caleb Case)
+* WebDAV
+    * Fix free/used display for rclone about/df for certain backends (Nick Craig-Wood)
+
 ## v1.52.1 - 2020-06-10
 
 [See commits](https://github.com/rclone/rclone/compare/v1.52.0...v1.52.1)

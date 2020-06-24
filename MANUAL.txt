@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Jun 10, 2020
+Jun 24, 2020
 
 
 
@@ -9752,7 +9752,7 @@ These flags are available for every command.
           --use-json-log                         Use json log format.
           --use-mmap                             Use mmap allocator (see docs).
           --use-server-modtime                   Use server modified time instead of object metadata
-          --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.1")
+          --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.2")
       -v, --verbose count                        Print lots more stuff (repeat for more)
 
 
@@ -16845,6 +16845,8 @@ Size of listing chunk 100-1000. 0 to disable.
 
 Impersonate this user when using a service account.
 
+Note that if this is used then “root_folder_id” will be ignored.
+
 -   Config: impersonate
 -   Env Var: RCLONE_DRIVE_IMPERSONATE
 -   Type: string
@@ -23632,6 +23634,42 @@ Options:
 
 
 CHANGELOG
+
+
+v1.52.2 - 2020-06-24
+
+See commits
+
+-   Bug Fixes
+    -   build
+        -   Fix docker release build action (Nick Craig-Wood)
+        -   Fix custom timezone in Docker image (NoLooseEnds)
+    -   check: Fix misleading message which printed errors instead of
+        differences (Nick Craig-Wood)
+    -   errors: Add WSAECONNREFUSED and more to the list of retriable
+        Windows errors (Nick Craig-Wood)
+    -   rcd: Fix incorrect prometheus metrics (Gary Kim)
+    -   serve restic: Fix flags so they use environment variables (Nick
+        Craig-Wood)
+    -   serve webdav: Fix flags so they use environment variables (Nick
+        Craig-Wood)
+    -   sync: Fix –track-renames-strategy modtime (Nick Craig-Wood)
+-   Drive
+    -   Fix not being able to delete a directory with a trashed shortcut
+        (Nick Craig-Wood)
+    -   Fix creating a directory inside a shortcut (Nick Craig-Wood)
+    -   Fix –drive-impersonate with cached root_folder_id (Nick
+        Craig-Wood)
+-   SFTP
+    -   Fix SSH key PEM loading (Zac Rubin)
+-   Swift
+    -   Speed up deletes by not retrying segment container deletes (Nick
+        Craig-Wood)
+-   Tardigrade
+    -   Upgrade to uplink v1.1.1 (Caleb Case)
+-   WebDAV
+    -   Fix free/used display for rclone about/df for certain backends
+        (Nick Craig-Wood)
 
 
 v1.52.1 - 2020-06-10

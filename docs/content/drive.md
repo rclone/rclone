@@ -802,6 +802,9 @@ Size of listing chunk 100-1000. 0 to disable.
 
 Impersonate this user when using a service account.
 
+Note that if this is used then "root_folder_id" will be ignored.
+
+
 - Config:      impersonate
 - Env Var:     RCLONE_DRIVE_IMPERSONATE
 - Type:        string

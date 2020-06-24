@@ -17,7 +17,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jun 10, 2020</p>
+<p class="date">Jun 24, 2020</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -5866,7 +5866,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.52.1&quot;)
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.52.2&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -11815,6 +11815,7 @@ trashed=false and &#39;c&#39; in parents</code></pre>
 </ul>
 <h4 id="drive-impersonate">–drive-impersonate</h4>
 <p>Impersonate this user when using a service account.</p>
+<p>Note that if this is used then “root_folder_id” will be ignored.</p>
 <ul>
 <li>Config: impersonate</li>
 <li>Env Var: RCLONE_DRIVE_IMPERSONATE</li>
@@ -17059,6 +17060,46 @@ $ tree /tmp/b
 <li>“error”: return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.52.2---2020-06-24">v1.52.2 - 2020-06-24</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.52.1...v1.52.2">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build
+<ul>
+<li>Fix docker release build action (Nick Craig-Wood)</li>
+<li>Fix custom timezone in Docker image (NoLooseEnds)</li>
+</ul></li>
+<li>check: Fix misleading message which printed errors instead of differences (Nick Craig-Wood)</li>
+<li>errors: Add WSAECONNREFUSED and more to the list of retriable Windows errors (Nick Craig-Wood)</li>
+<li>rcd: Fix incorrect prometheus metrics (Gary Kim)</li>
+<li>serve restic: Fix flags so they use environment variables (Nick Craig-Wood)</li>
+<li>serve webdav: Fix flags so they use environment variables (Nick Craig-Wood)</li>
+<li>sync: Fix –track-renames-strategy modtime (Nick Craig-Wood)</li>
+</ul></li>
+<li>Drive
+<ul>
+<li>Fix not being able to delete a directory with a trashed shortcut (Nick Craig-Wood)</li>
+<li>Fix creating a directory inside a shortcut (Nick Craig-Wood)</li>
+<li>Fix –drive-impersonate with cached root_folder_id (Nick Craig-Wood)</li>
+</ul></li>
+<li>SFTP
+<ul>
+<li>Fix SSH key PEM loading (Zac Rubin)</li>
+</ul></li>
+<li>Swift
+<ul>
+<li>Speed up deletes by not retrying segment container deletes (Nick Craig-Wood)</li>
+</ul></li>
+<li>Tardigrade
+<ul>
+<li>Upgrade to uplink v1.1.1 (Caleb Case)</li>
+</ul></li>
+<li>WebDAV
+<ul>
+<li>Fix free/used display for rclone about/df for certain backends (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.52.1---2020-06-10">v1.52.1 - 2020-06-10</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.52.0...v1.52.1">See commits</a></p>
 <ul>
