@@ -388,3 +388,4 @@ put them back in again.` >}}
   * Matteo Pietro Dazzi <matteopietro.dazzi@gmail.com>
   * jtagcat <gitlab@c7.ee>
   * Petri Salminen <petri@salminen.dev>
+  * Tim Burke <tim.burke@gmail.com>
