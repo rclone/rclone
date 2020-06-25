@@ -1625,41 +1625,22 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 		return nil, errors.New("unknown-sized upload not supported")
 	}
 
-	uploadURLChan := make(chan string, 1)
-	gracefulCancel := func() {
-		uploadURL, ok := <-uploadURLChan
-		// Reading from uploadURLChan blocks the atexit process until
-		// we are able to use uploadURL to cancel the upload
-		if !ok { // createUploadSession failed - no need to cancel upload
-			return
-		}
-
-		fs.Debugf(o, "Cancelling multipart upload")
-		cancelErr := o.cancelUploadSession(ctx, uploadURL)
-		if cancelErr != nil {
-			fs.Logf(o, "Failed to cancel multipart upload: %v", cancelErr)
-		}
-	}
-	cancelFuncHandle := atexit.Register(gracefulCancel)
-
 	// Create upload session
 	fs.Debugf(o, "Starting multipart upload")
 	session, err := o.createUploadSession(ctx, modTime)
 	if err != nil {
-		close(uploadURLChan)
-		atexit.Unregister(cancelFuncHandle)
 		return nil, err
 	}
 	uploadURL := session.UploadURL
-	uploadURLChan <- uploadURL
 
-	defer func() {
-		if err != nil {
-			fs.Debugf(o, "Error encountered during upload: %v", err)
-			gracefulCancel()
+	// Cancel the session if something went wrong
+	defer atexit.OnError(&err, func() {
+		fs.Debugf(o, "Cancelling multipart upload: %v", err)
+		cancelErr := o.cancelUploadSession(ctx, uploadURL)
+		if cancelErr != nil {
+			fs.Logf(o, "Failed to cancel multipart upload: %v", cancelErr)
 		}
-		atexit.Unregister(cancelFuncHandle)
-	}()
+	})()
 
 	// Upload the chunks
 	remaining := size
