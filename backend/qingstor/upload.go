@@ -15,6 +15,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/atexit"
 	qs "github.com/yunify/qingstor-sdk-go/v3/service"
 )
 
@@ -346,12 +347,15 @@ func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) (err error) {
 	if err = mu.initiate(); err != nil {
 		return err
 	}
-	defer func() {
-		// Abort the transfer if returning an error
-		if err != nil {
-			_ = mu.abort()
+
+	// Cancel the session if something went wrong
+	defer atexit.OnError(&err, func() {
+		fs.Debugf(mu, "Cancelling multipart upload: %v", err)
+		cancelErr := mu.abort()
+		if cancelErr != nil {
+			fs.Logf(mu, "Failed to cancel multipart upload: %v", cancelErr)
 		}
-	}()
+	})()
 
 	ch := make(chan chunk, mu.cfg.concurrency)
 	for i := 0; i < mu.cfg.concurrency; i++ {
