@@ -1127,7 +1127,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	// using impersonate which they shouldn't have done. It is possible
 	// someone is using impersonate and root_folder_id in which case this
 	// breaks their workflow. There isn't an easy way around that.
-	if opt.RootFolderID != "" && opt.Impersonate != "" {
+	if opt.RootFolderID != "" && opt.RootFolderID != "appDataFolder" && opt.Impersonate != "" {
 		fs.Logf(f, "Ignoring cached root_folder_id when using --drive-impersonate")
 		opt.RootFolderID = ""
 	}
