@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -182,15 +183,13 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	fs.Debugf(o, "Multipart upload session started for %d parts of size %v", session.TotalParts, fs.SizeSuffix(chunkSize))
 
 	// Cancel the session if something went wrong
-	defer func() {
-		if err != nil {
-			fs.Debugf(o, "Cancelling multipart upload: %v", err)
-			cancelErr := o.abortUpload(ctx, session.ID)
-			if cancelErr != nil {
-				fs.Logf(o, "Failed to cancel multipart upload: %v", err)
-			}
+	defer atexit.OnError(&err, func() {
+		fs.Debugf(o, "Cancelling multipart upload: %v", err)
+		cancelErr := o.abortUpload(ctx, session.ID)
+		if cancelErr != nil {
+			fs.Logf(o, "Failed to cancel multipart upload: %v", cancelErr)
 		}
-	}()
+	})()
 
 	// unwrap the accounting from the input, we use wrap to put it
 	// back on after the buffering
