@@ -387,3 +387,4 @@ put them back in again.` >}}
   * Heiko Bornholdt <bornholdt@informatik.uni-hamburg.de>
   * Matteo Pietro Dazzi <matteopietro.dazzi@gmail.com>
   * jtagcat <gitlab@c7.ee>
+  * Petri Salminen <petri@salminen.dev>
