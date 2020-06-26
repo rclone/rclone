@@ -37,6 +37,7 @@ func TestNewAccountSizeName(t *testing.T) {
 	assert.Equal(t, acc, stats.inProgress.get("test"))
 	acc.Done()
 	assert.Nil(t, stats.inProgress.get("test"))
+	assert.False(t, acc.HasBuffer())
 }
 
 func TestAccountWithBuffer(t *testing.T) {
@@ -44,7 +45,9 @@ func TestAccountWithBuffer(t *testing.T) {
 
 	stats := NewStats()
 	acc := newAccountSizeName(stats, in, -1, "test")
+	assert.False(t, acc.HasBuffer())
 	acc.WithBuffer()
+	assert.True(t, acc.HasBuffer())
 	// should have a buffer for an unknown size
 	_, ok := acc.in.(*asyncreader.AsyncReader)
 	require.True(t, ok)
