@@ -40,6 +40,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -1204,7 +1205,9 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 		WithCredentials(cred).
 		WithHTTPClient(fshttp.NewClient(fs.Config)).
 		WithS3ForcePathStyle(opt.ForcePathStyle).
-		WithS3UseAccelerate(opt.UseAccelerateEndpoint)
+		WithS3UseAccelerate(opt.UseAccelerateEndpoint).
+		WithS3UsEast1RegionalEndpoint(endpoints.RegionalS3UsEast1Endpoint)
+
 	if opt.Region != "" {
 		awsConfig.WithRegion(opt.Region)
 	}
