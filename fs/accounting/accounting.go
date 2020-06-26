@@ -109,6 +109,14 @@ func (acc *Account) WithBuffer() *Account {
 	return acc
 }
 
+// HasBuffer - returns true if this Account has an AsyncReader with a buffer
+func (acc *Account) HasBuffer() bool {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	_, ok := acc.in.(*asyncreader.AsyncReader)
+	return ok
+}
+
 // GetReader returns the underlying io.ReadCloser under any Buffer
 func (acc *Account) GetReader() io.ReadCloser {
 	acc.mu.Lock()
