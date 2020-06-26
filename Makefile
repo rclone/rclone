@@ -61,6 +61,10 @@ vars:
 	@echo GO_VERSION="'$(GO_VERSION)'"
 	@echo BETA_URL="'$(BETA_URL)'"
 
+btest:
+	@echo "[$(TAG)]($(BETA_URL)) on branch [$(BRANCH)](https://github.com/rclone/rclone/tree/$(BRANCH)) (uploaded in 15-30 mins)" | xclip -r -sel clip
+	@echo "Copied markdown of beta release to clip board"
+
 version:
 	@echo '$(TAG)'
 
