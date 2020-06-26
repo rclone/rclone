@@ -854,6 +854,31 @@ to start uploading.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "shared_credentials_file",
+			Help: `Path to the shared credentials file
+
+If env_auth = true then rclone can use a shared credentials file.
+
+If this variable is empty rclone will look for the
+"AWS_SHARED_CREDENTIALS_FILE" env variable. If the env value is empty
+it will default to the current user's home directory.
+
+    Linux/OSX: "$HOME/.aws/credentials"
+    Windows:   "%USERPROFILE%\.aws\credentials"
+`,
+			Advanced: true,
+		}, {
+			Name: "profile",
+			Help: `Profile to use in the shared credentials file
+
+If env_auth = true then rclone can use a shared credentials file. This
+variable controls which profile is used in that file.
+
+If empty it will default to the environment variable "AWS_PROFILE" or
+"default" if that environment variable is also not set.
+`,
+			Advanced: true,
+		}, {
 			Name:     "session_token",
 			Help:     "An AWS session token",
 			Advanced: true,
@@ -1003,6 +1028,8 @@ type Options struct {
 	ChunkSize             fs.SizeSuffix        `config:"chunk_size"`
 	MaxUploadParts        int64                `config:"max_upload_parts"`
 	DisableChecksum       bool                 `config:"disable_checksum"`
+	SharedCredentialsFile string               `config:"shared_credentials_file"`
+	Profile               string               `config:"profile"`
 	SessionToken          string               `config:"session_token"`
 	UploadConcurrency     int                  `config:"upload_concurrency"`
 	ForcePathStyle        bool                 `config:"force_path_style"`
@@ -1166,7 +1193,10 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 		// A SharedCredentialsProvider retrieves credentials
 		// from the current user's home directory.  It checks
 		// AWS_SHARED_CREDENTIALS_FILE and AWS_PROFILE too.
-		&credentials.SharedCredentialsProvider{},
+		&credentials.SharedCredentialsProvider{
+			Filename: opt.SharedCredentialsFile, // If empty will look for "AWS_SHARED_CREDENTIALS_FILE" env variable.
+			Profile:  opt.Profile,               // If empty will look gor "AWS_PROFILE" env var or "default" if not set.
+		},
 
 		// Pick up IAM role if we're in an ECS task
 		defaults.RemoteCredProvider(*def.Config, def.Handlers),
