@@ -460,6 +460,14 @@ func (dl *downloader) Write(p []byte) (n int, err error) {
 		fs.Debugf(dl.dls.src, "stopping download thread as it has skipped %d bytes", dl.skipped)
 		dl._stop()
 	}
+
+	// If running without a async buffer then stop now as
+	// StopBuffering has no effect if the Account wasn't buffered
+	// so we need to stop manually now rather than wait for the
+	// AsyncReader to stop.
+	if dl.stop && !dl.in.HasBuffer() {
+		err = asyncreader.ErrorStreamAbandoned
+	}
 	return n, err
 }
 
