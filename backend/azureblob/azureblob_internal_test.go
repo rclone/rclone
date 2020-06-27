@@ -1,4 +1,4 @@
-// +build !plan9,!solaris
+// +build !plan9,!solaris,go1.13
 
 package azureblob
 
