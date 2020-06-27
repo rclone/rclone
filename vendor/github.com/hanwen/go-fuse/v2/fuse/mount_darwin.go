@@ -92,6 +92,6 @@ func mount(mountPoint string, opts *MountOptions, ready chan<- error) (fd int, e
 	return syscall.Dup(int(f.Fd()))
 }
 
-func unmount(dir string) error {
+func unmount(dir string, opts *MountOptions) error {
 	return syscall.Unmount(dir, 0)
 }

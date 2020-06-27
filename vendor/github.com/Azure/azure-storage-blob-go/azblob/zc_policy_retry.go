@@ -240,6 +240,8 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 						} else {
 							action = "NoRetry: net.Error and in the non-retriable list"
 						}
+					} else if err == io.ErrUnexpectedEOF {
+						action = "Retry: unexpected EOF"
 					} else {
 						action = "NoRetry: unrecognized error"
 					}

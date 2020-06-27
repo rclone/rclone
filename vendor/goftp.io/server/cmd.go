@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// Command represents a Command interface to a ftp command
 type Command interface {
 	IsExtend() bool
 	RequireParam() bool
@@ -113,13 +114,16 @@ func (cmd commandAppe) Execute(conn *Conn, param string) {
 	targetPath := conn.buildPath(param)
 	conn.writeMessage(150, "Data transfer starting")
 
-	bytes, err := conn.driver.PutFile(targetPath, conn.dataConn, true)
+	conn.server.notifiers.BeforePutFile(conn, targetPath)
+	size, err := conn.driver.PutFile(targetPath, conn.dataConn, true)
+	conn.server.notifiers.AfterFilePut(conn, targetPath, size, err)
 	if err == nil {
-		msg := "OK, received " + strconv.Itoa(int(bytes)) + " bytes"
+		msg := fmt.Sprintf("OK, received %d bytes", size)
 		conn.writeMessage(226, msg)
 	} else {
 		conn.writeMessage(450, fmt.Sprint("error during transfer: ", err))
 	}
+
 }
 
 type commandOpts struct{}
@@ -225,9 +229,20 @@ func (cmd commandCwd) RequireAuth() bool {
 
 func (cmd commandCwd) Execute(conn *Conn, param string) {
 	path := conn.buildPath(param)
-	err := conn.driver.ChangeDir(path)
+	info, err := conn.driver.Stat(path)
+	if err != nil {
+		conn.writeMessage(550, fmt.Sprint("Directory change to ", path, " failed: ", err))
+		return
+	}
+	if !info.IsDir() {
+		conn.writeMessage(550, fmt.Sprint("Directory change to ", path, " is a file"))
+		return
+	}
+
+	conn.server.notifiers.BeforeChangeCurDir(conn, conn.curDir, path)
+	err = conn.changeCurDir(path)
+	conn.server.notifiers.AfterCurDirChanged(conn, conn.curDir, path, err)
 	if err == nil {
-		conn.namePrefix = path
 		conn.writeMessage(250, "Directory changed to "+path)
 	} else {
 		conn.writeMessage(550, fmt.Sprint("Directory change to ", path, " failed: ", err))
@@ -252,7 +267,9 @@ func (cmd commandDele) RequireAuth() bool {
 
 func (cmd commandDele) Execute(conn *Conn, param string) {
 	path := conn.buildPath(param)
+	conn.server.notifiers.BeforeDeleteFile(conn, path)
 	err := conn.driver.DeleteFile(path)
+	conn.server.notifiers.AfterFileDeleted(conn, path, err)
 	if err == nil {
 		conn.writeMessage(250, "File deleted")
 	} else {
@@ -377,14 +394,13 @@ func (cmd commandEpsv) RequireAuth() bool {
 }
 
 func (cmd commandEpsv) Execute(conn *Conn, param string) {
-	addr := conn.passiveListenIP()
-	socket, err := newPassiveSocket(addr, conn.PassivePort, conn.logger, conn.sessionID, conn.tlsConfig)
+	socket, err := conn.newPassiveSocket()
 	if err != nil {
 		log.Println(err)
 		conn.writeMessage(425, "Data connection failed")
 		return
 	}
-	conn.dataConn = socket
+
 	msg := fmt.Sprintf("Entering Extended Passive Mode (|||%d|)", socket.Port())
 	conn.writeMessage(229, msg)
 }
@@ -417,6 +433,7 @@ func (cmd commandList) Execute(conn *Conn, param string) {
 		conn.logger.Printf(conn.sessionID, "%s: no such file or directory.\n", path)
 		return
 	}
+
 	var files []FileInfo
 	if info.IsDir() {
 		err = conn.driver.ListDir(path, func(f FileInfo) error {
@@ -537,7 +554,9 @@ func (cmd commandMkd) RequireAuth() bool {
 
 func (cmd commandMkd) Execute(conn *Conn, param string) {
 	path := conn.buildPath(param)
+	conn.server.notifiers.BeforeCreateDir(conn, path)
 	err := conn.driver.MakeDir(path)
+	conn.server.notifiers.AfterDirCreated(conn, path, err)
 	if err == nil {
 		conn.writeMessage(257, "Directory created")
 	} else {
@@ -613,6 +632,7 @@ func (cmd commandPass) RequireAuth() bool {
 
 func (cmd commandPass) Execute(conn *Conn, param string) {
 	ok, err := conn.server.Auth.CheckPasswd(conn.reqUser, param)
+	conn.server.notifiers.AfterUserLogin(conn, conn.reqUser, param, ok, err)
 	if err != nil {
 		conn.writeMessage(550, "Checking password error")
 		return
@@ -647,14 +667,21 @@ func (cmd commandPasv) RequireAuth() bool {
 
 func (cmd commandPasv) Execute(conn *Conn, param string) {
 	listenIP := conn.passiveListenIP()
-	socket, err := newPassiveSocket(listenIP, conn.PassivePort, conn.logger, conn.sessionID, conn.tlsConfig)
+	// TODO: IPv6 for this command is not implemented
+	if strings.HasPrefix(listenIP, "::") {
+		conn.writeMessage(550, fmt.Sprint("Action not taken "))
+		return
+	}
+
+	socket, err := conn.newPassiveSocket()
 	if err != nil {
 		conn.writeMessage(425, "Data connection failed")
 		return
 	}
-	conn.dataConn = socket
+
 	p1 := socket.Port() / 256
 	p2 := socket.Port() - (p1 * 256)
+
 	quads := strings.Split(listenIP, ".")
 	target := fmt.Sprintf("(%s,%s,%s,%s,%d,%d)", quads[0], quads[1], quads[2], quads[3], p1, p2)
 	msg := "Entering Passive Mode " + target
@@ -712,7 +739,7 @@ func (cmd commandPwd) RequireAuth() bool {
 }
 
 func (cmd commandPwd) Execute(conn *Conn, param string) {
-	conn.writeMessage(257, "\""+conn.namePrefix+"\" is the current directory")
+	conn.writeMessage(257, "\""+conn.curDir+"\" is the current directory")
 }
 
 // CommandQuit responds to the QUIT FTP command. The client has requested the
@@ -758,15 +785,18 @@ func (cmd commandRetr) Execute(conn *Conn, param string) {
 		conn.lastFilePos = 0
 		conn.appendData = false
 	}()
-	bytes, data, err := conn.driver.GetFile(path, conn.lastFilePos)
+	conn.server.notifiers.BeforeDownloadFile(conn, path)
+	size, data, err := conn.driver.GetFile(path, conn.lastFilePos)
 	if err == nil {
 		defer data.Close()
-		conn.writeMessage(150, fmt.Sprintf("Data transfer starting %v bytes", bytes))
+		conn.writeMessage(150, fmt.Sprintf("Data transfer starting %d bytes", size))
 		err = conn.sendOutofBandDataWriter(data)
+		conn.server.notifiers.AfterFileDownloaded(conn, path, size, err)
 		if err != nil {
 			conn.writeMessage(551, "Error reading file")
 		}
 	} else {
+		conn.server.notifiers.AfterFileDownloaded(conn, path, size, err)
 		conn.writeMessage(551, "File not available")
 	}
 }
@@ -867,7 +897,9 @@ func (cmd commandRmd) RequireAuth() bool {
 
 func (cmd commandRmd) Execute(conn *Conn, param string) {
 	path := conn.buildPath(param)
+	conn.server.notifiers.BeforeDeleteDir(conn, path)
 	err := conn.driver.DeleteDir(path)
+	conn.server.notifiers.AfterDirDeleted(conn, path, err)
 	if err == nil {
 		conn.writeMessage(250, "Directory deleted")
 	} else {
@@ -1088,9 +1120,11 @@ func (cmd commandStor) Execute(conn *Conn, param string) {
 		conn.appendData = false
 	}()
 
-	bytes, err := conn.driver.PutFile(targetPath, conn.dataConn, conn.appendData)
+	conn.server.notifiers.BeforePutFile(conn, targetPath)
+	size, err := conn.driver.PutFile(targetPath, conn.dataConn, conn.appendData)
+	conn.server.notifiers.AfterFilePut(conn, targetPath, size, err)
 	if err == nil {
-		msg := "OK, received " + strconv.Itoa(int(bytes)) + " bytes"
+		msg := fmt.Sprintf("OK, received %d bytes", size)
 		conn.writeMessage(226, msg)
 	} else {
 		conn.writeMessage(450, fmt.Sprint("error during transfer: ", err))
@@ -1198,6 +1232,7 @@ func (cmd commandUser) RequireAuth() bool {
 
 func (cmd commandUser) Execute(conn *Conn, param string) {
 	conn.reqUser = param
+	conn.server.notifiers.BeforeLoginUser(conn, conn.reqUser)
 	if conn.tls || conn.tlsConfig == nil {
 		conn.writeMessage(331, "User name ok, password required")
 	} else {

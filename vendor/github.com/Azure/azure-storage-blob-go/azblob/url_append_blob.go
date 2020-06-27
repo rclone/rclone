@@ -42,6 +42,10 @@ func (ab AppendBlobURL) WithSnapshot(snapshot string) AppendBlobURL {
 	return NewAppendBlobURL(p.URL(), ab.blobClient.Pipeline())
 }
 
+func (ab AppendBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
+	return ab.blobClient.GetAccountInfo(ctx)
+}
+
 // Create creates a 0-length append blob. Call AppendBlock to append data to an append blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*AppendBlobCreateResponse, error) {
@@ -49,6 +53,7 @@ func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata 
 	return ab.abClient.Create(ctx, 0, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
+		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, nil)
 }
 
@@ -64,8 +69,11 @@ func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac 
 		return nil, err
 	}
 	return ab.abClient.AppendBlock(ctx, body, count, nil,
-		transactionalMD5, ac.LeaseAccessConditions.pointers(),
+		transactionalMD5,
+		nil, // CRC
+		ac.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
+		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
@@ -76,7 +84,9 @@ func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.UR
 	sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag := sourceAccessConditions.pointers()
 	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := destinationAccessConditions.AppendPositionAccessConditions.pointers()
 	return ab.abClient.AppendBlockFromURL(ctx, sourceURL.String(), 0, httpRange{offset: offset, count: count}.pointers(),
-		transactionalMD5, nil, destinationAccessConditions.LeaseAccessConditions.pointers(),
+		transactionalMD5, nil, nil, nil,
+		nil, nil, EncryptionAlgorithmNone, // CPK
+		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }

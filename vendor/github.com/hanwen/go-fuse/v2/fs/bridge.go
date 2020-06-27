@@ -7,6 +7,7 @@ package fs
 import (
 	"context"
 	"log"
+	"math/rand"
 	"sync"
 	"syscall"
 	"time"
@@ -36,10 +37,21 @@ type fileEntry struct {
 	wg sync.WaitGroup
 }
 
+// ServerCallbacks are calls into the kernel to manipulate the inode,
+// entry and page cache.  They are stubbed so filesystems can be
+// unittested without mounting them.
+type ServerCallbacks interface {
+	DeleteNotify(parent uint64, child uint64, name string) fuse.Status
+	EntryNotify(parent uint64, name string) fuse.Status
+	InodeNotify(node uint64, off int64, length int64) fuse.Status
+	InodeRetrieveCache(node uint64, offset int64, dest []byte) (n int, st fuse.Status)
+	InodeNotifyStoreCache(node uint64, offset int64, data []byte) fuse.Status
+}
+
 type rawBridge struct {
 	options Options
 	root    *Inode
-	server  *fuse.Server
+	server  ServerCallbacks
 
 	// mu protects the following data.  Locks for inodes must be
 	// taken before rawBridge.mu
@@ -76,6 +88,12 @@ func (b *rawBridge) newInodeUnlocked(ops InodeEmbedder, id StableAttr, persisten
 		}
 	}
 
+	// Only the file type bits matter
+	id.Mode = id.Mode & syscall.S_IFMT
+	if id.Mode == 0 {
+		id.Mode = fuse.S_IFREG
+	}
+
 	// the same node can be looked up through 2 paths in parallel, eg.
 	//
 	//	    root
@@ -87,19 +105,49 @@ func (b *rawBridge) newInodeUnlocked(ops InodeEmbedder, id StableAttr, persisten
 	// dir1.Lookup("file") and dir2.Lookup("file") are executed
 	// simultaneously.  The matching StableAttrs ensure that we return the
 	// same node.
-	old := b.nodes[id.Ino]
-	if old != nil {
-		return old
-	}
+	var t time.Duration
+	t0 := time.Now()
+	for i := 1; true; i++ {
+		old := b.nodes[id.Ino]
+		if old == nil {
+			break
+		}
+		if old.stableAttr == id {
+			return old
+		}
+		b.mu.Unlock()
 
-	id.Mode = id.Mode &^ 07777
-	if id.Mode == 0 {
-		id.Mode = fuse.S_IFREG
+		t = expSleep(t)
+		if i%5000 == 0 {
+			b.logf("blocked for %.0f seconds waiting for FORGET on i%d", time.Since(t0).Seconds(), id.Ino)
+		}
+		b.mu.Lock()
 	}
 
 	b.nodes[id.Ino] = ops.embed()
 	initInode(ops.embed(), ops, id, b, persistent)
 	return ops.embed()
+}
+
+func (b *rawBridge) logf(format string, args ...interface{}) {
+	if b.options.Logger != nil {
+		b.options.Logger.Printf(format, args...)
+	}
+}
+
+// expSleep sleeps for time `t` and returns an exponentially increasing value
+// for the next sleep time, capped at 1 ms.
+func expSleep(t time.Duration) time.Duration {
+	if t == 0 {
+		return time.Microsecond
+	}
+	time.Sleep(t)
+	// Next sleep is between t and 2*t
+	t += time.Duration(rand.Int63n(int64(t)))
+	if t >= time.Millisecond {
+		return time.Millisecond
+	}
+	return t
 }
 
 func (b *rawBridge) newInode(ctx context.Context, ops InodeEmbedder, id StableAttr, persistent bool) *Inode {
@@ -123,7 +171,13 @@ func (b *rawBridge) addNewChild(parent *Inode, name string, child *Inode, file F
 	parent.setEntry(name, child)
 	b.mu.Lock()
 
+	// Due to concurrent FORGETs, lookupCount may have dropped to zero.
+	// This means it MAY have been deleted from nodes[] already. Add it back.
+	if child.lookupCount == 0 {
+		b.nodes[child.stableAttr.Ino] = child
+	}
 	child.lookupCount++
+	child.changeCounter++
 
 	var fh uint32
 	if file != nil {
@@ -176,6 +230,7 @@ func (b *rawBridge) setAttrTimeout(out *fuse.AttrOut) {
 func NewNodeFS(root InodeEmbedder, opts *Options) fuse.RawFileSystem {
 	bridge := &rawBridge{
 		automaticIno: opts.FirstAutomaticIno,
+		server:       opts.ServerCallbacks,
 	}
 	if bridge.automaticIno == 1 {
 		bridge.automaticIno++
@@ -420,6 +475,9 @@ func (b *rawBridge) getattr(ctx context.Context, n *Inode, f FileHandle, out *fu
 	}
 
 	if errno == 0 {
+		if out.Ino != 0 && n.stableAttr.Ino > 1 && out.Ino != n.stableAttr.Ino {
+			b.logf("warning: rawBridge.getattr: overriding ino %d with %d", out.Ino, n.stableAttr.Ino)
+		}
 		out.Ino = n.stableAttr.Ino
 		out.Mode = (out.Attr.Mode & 07777) | n.stableAttr.Mode
 		b.setAttr(&out.Attr)
@@ -457,9 +515,8 @@ func (b *rawBridge) Rename(cancel <-chan struct{}, input *fuse.RenameIn, oldName
 			if input.Flags&RENAME_EXCHANGE != 0 {
 				p1.ExchangeChild(oldName, p2, newName)
 			} else {
-				if ok := p1.MvChild(oldName, p2, newName, true); !ok {
-					log.Println("MvChild failed")
-				}
+				// MvChild cannot fail with overwrite=true.
+				_ = p1.MvChild(oldName, p2, newName, true)
 			}
 		}
 		return errnoToStatus(errno)
@@ -763,7 +820,7 @@ func (b *rawBridge) Fallocate(cancel <-chan struct{}, input *fuse.FallocateIn) f
 	if a, ok := n.ops.(NodeAllocater); ok {
 		return errnoToStatus(a.Allocate(&fuse.Context{Caller: input.Caller, Cancel: cancel}, f.file, input.Offset, input.Length, input.Mode))
 	}
-	if a, ok := n.ops.(FileAllocater); ok {
+	if a, ok := f.file.(FileAllocater); ok {
 		return errnoToStatus(a.Allocate(&fuse.Context{Caller: input.Caller, Cancel: cancel}, input.Offset, input.Length, input.Mode))
 	}
 	return fuse.ENOTSUP
@@ -899,7 +956,7 @@ func (b *rawBridge) ReadDirPlus(cancel <-chan struct{}, input *fuse.ReadIn, out 
 			b.addNewChild(n, e.Name, child, nil, 0, entryOut)
 			child.setEntryOut(entryOut)
 			b.setEntryOutTimeout(entryOut)
-			if (e.Mode &^ 07777) != (child.stableAttr.Mode &^ 07777) {
+			if e.Mode&syscall.S_IFMT != child.stableAttr.Mode&syscall.S_IFMT {
 				// The file type has changed behind our back. Use the new value.
 				out.FixMode(child.stableAttr.Mode)
 			}

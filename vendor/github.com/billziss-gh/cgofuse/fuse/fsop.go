@@ -21,6 +21,11 @@
 // In order to expose the user mode file system to the OS, the file system must be hosted
 // (mounted) by a FileSystemHost. The FileSystemHost Mount() method is used for this
 // purpose.
+//
+// A note on thread-safety: In general FUSE file systems are expected to protect their
+// own data structures. Many FUSE implementations provide a -s command line option that
+// when used, it instructs the FUSE implementation to serialize requests. This option
+// can be passed to the FileSystemHost Mount() method, when the file system is mounted.
 package fuse
 
 import (
@@ -139,6 +144,25 @@ type Stat_t struct {
 
 	// BSD flags (UF_*). [OSX and Windows only]
 	Flags uint32
+}
+
+// FileInfo_t contains open file information.
+// This structure is analogous to the FUSE struct fuse_file_info.
+type FileInfo_t struct {
+	// Open flags: a combination of the fuse.O_* constants.
+	Flags int
+
+	// Use direct I/O on this file. [IGNORED on Windows]
+	DirectIo bool
+
+	// Do not invalidate file cache. [IGNORED on Windows]
+	KeepCache bool
+
+	// File is not seekable. [IGNORED on Windows]
+	NonSeekable bool
+
+	// File handle.
+	Fh uint64
 }
 
 /*
@@ -283,6 +307,16 @@ type FileSystemInterface interface {
 
 	// Listxattr lists extended attributes.
 	Listxattr(path string, fill func(name string) bool) int
+}
+
+// FileSystemOpenEx is the interface that wraps the OpenEx and CreateEx methods.
+//
+// OpenEx and CreateEx are similar to Open and Create except that they allow
+// direct manipulation of the FileInfo_t struct (which is analogous to the
+// FUSE struct fuse_file_info).
+type FileSystemOpenEx interface {
+	CreateEx(path string, mode uint32, fi *FileInfo_t) int
+	OpenEx(path string, fi *FileInfo_t) int
 }
 
 // FileSystemChflags is the interface that wraps the Chflags method.

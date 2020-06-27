@@ -36,9 +36,10 @@ func (d DirEntry) String() string {
 // DirEntryList holds the return value for READDIR and READDIRPLUS
 // opcodes.
 type DirEntryList struct {
-	buf    []byte
-	size   int
-	offset uint64
+	buf        []byte
+	size       int      // capacity of the underlying buffer
+	offset     uint64   // entry count (NOT a byte offset)
+	lastDirent *_Dirent // pointer to the last serialized _Dirent. Used by FixMode().
 }
 
 // NewDirEntryList creates a DirEntryList with the given data buffer
@@ -77,7 +78,7 @@ func (l *DirEntryList) Add(prefix int, name string, inode uint64, mode uint32) b
 	dirent.Off = l.offset + 1
 	dirent.Ino = inode
 	dirent.NameLen = uint32(len(name))
-	dirent.Typ = (mode & 0170000) >> 12
+	dirent.Typ = modeToType(mode)
 	oldLen += direntSize
 	copy(l.buf[oldLen:], name)
 	oldLen += len(name)
@@ -90,27 +91,42 @@ func (l *DirEntryList) Add(prefix int, name string, inode uint64, mode uint32) b
 	return true
 }
 
-// AddDirLookupEntry is used for ReadDirPlus. It serializes a DirEntry
-// and returns the space for entry. If no space is left, returns a nil
-// pointer.
+// AddDirLookupEntry is used for ReadDirPlus. If reserves and zeroizes space
+// for an EntryOut struct and serializes a DirEntry.
+// On success, it returns pointers to both structs.
+// If not enough space was left, it returns two nil pointers.
+//
+// The resulting READDIRPLUS output buffer looks like this in memory:
+// 1) EntryOut{}
+// 2) _Dirent{}
+// 3) Name (null-terminated)
+// 4) Padding to align to 8 bytes
+// [repeat]
 func (l *DirEntryList) AddDirLookupEntry(e DirEntry) *EntryOut {
-	lastStart := len(l.buf)
-	ok := l.Add(int(unsafe.Sizeof(EntryOut{})), e.Name,
-		e.Ino, e.Mode)
+	const entryOutSize = int(unsafe.Sizeof(EntryOut{}))
+	oldLen := len(l.buf)
+	ok := l.Add(entryOutSize, e.Name, e.Ino, e.Mode)
 	if !ok {
 		return nil
 	}
-	result := (*EntryOut)(unsafe.Pointer(&l.buf[lastStart]))
-	*result = EntryOut{}
-	return result
+	l.lastDirent = (*_Dirent)(unsafe.Pointer(&l.buf[oldLen+entryOutSize]))
+	entryOut := (*EntryOut)(unsafe.Pointer(&l.buf[oldLen]))
+	*entryOut = EntryOut{} // zeroize
+	return entryOut
 }
 
-// FixMode overrides the mode of the last direntry that was added. This can
+// modeToType converts a file *mode* (as used in syscall.Stat_t.Mode)
+// to a file *type* (as used in _Dirent.Typ).
+// Equivalent to IFTODT() in libc (see man 5 dirent).
+func modeToType(mode uint32) uint32 {
+	return (mode & 0170000) >> 12
+}
+
+// FixMode overrides the file mode of the last direntry that was added. This can
 // be needed when a directory changes while READDIRPLUS is running.
+// Only the file type bits of mode are considered, the rest is masked out.
 func (l *DirEntryList) FixMode(mode uint32) {
-	oldLen := len(l.buf) - int(unsafe.Sizeof(_Dirent{}))
-	dirent := (*_Dirent)(unsafe.Pointer(&l.buf[oldLen]))
-	dirent.Typ = (mode & 0170000) >> 12
+	l.lastDirent.Typ = modeToType(mode)
 }
 
 func (l *DirEntryList) bytes() []byte {

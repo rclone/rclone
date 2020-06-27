@@ -271,7 +271,11 @@ func doGetXAttr(server *Server, req *request) {
 		req.status = OK
 		out.Size = n
 	} else if req.status.Ok() {
-		req.flatData = req.flatData[:n]
+		// ListXAttr called with an empty buffer returns the current size of
+		// the list but does not touch the buffer (see man 2 listxattr).
+		if len(req.flatData) > 0 {
+			req.flatData = req.flatData[:n]
+		}
 		out.Size = n
 	} else {
 		req.flatData = req.flatData[:0]

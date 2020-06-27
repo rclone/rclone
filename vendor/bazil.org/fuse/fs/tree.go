@@ -76,7 +76,7 @@ func (t *tree) add(name string, n Node) {
 }
 
 func (t *tree) Attr(ctx context.Context, a *fuse.Attr) error {
-	a.Mode = os.ModeDir | 0555
+	a.Mode = os.ModeDir | 0o555
 	return nil
 }
 

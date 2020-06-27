@@ -159,3 +159,5 @@ Contributors
 - Bo <bo@4xi.com>
 - Thiago da Silva <thiagodasilva@users.noreply.github.com>
 - Brandon WELSCH <dev@brandon-welsch.eu>
+- Damien Tournoud <damien@platform.sh>
+- Pedro Kiefer <pedro@kiefer.com.br>

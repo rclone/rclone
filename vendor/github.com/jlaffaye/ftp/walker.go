@@ -1,7 +1,9 @@
 package ftp
 
 import (
-	pa "path"
+	"fmt"
+	"os"
+	"path"
 	"strings"
 )
 
@@ -9,14 +11,14 @@ import (
 type Walker struct {
 	serverConn *ServerConn
 	root       string
-	cur        item
-	stack      []item
+	cur        *item
+	stack      []*item
 	descend    bool
 }
 
 type item struct {
 	path  string
-	entry Entry
+	entry *Entry
 	err   error
 }
 
@@ -24,36 +26,59 @@ type item struct {
 // which will then be available through the Path, Stat, and Err methods.
 // It returns false when the walk stops at the end of the tree.
 func (w *Walker) Next() bool {
-	if w.descend && w.cur.err == nil && w.cur.entry.Type == EntryTypeFolder {
-		list, err := w.serverConn.List(w.cur.path)
-		if err != nil {
-			w.cur.err = err
-			w.stack = append(w.stack, w.cur)
-		} else {
-			for i := len(list) - 1; i >= 0; i-- {
-				if !strings.HasSuffix(w.cur.path, "/") {
-					w.cur.path += "/"
-				}
+	var isRoot bool
+	if w.cur == nil {
+		w.cur = &item{
+			path: strings.Trim(w.root, string(os.PathSeparator)),
+		}
 
-				var path string
-				if list[i].Type == EntryTypeFolder {
-					path = pa.Join(w.cur.path, list[i].Name)
-				} else {
-					path = w.cur.path
-				}
+		isRoot = true
+	}
 
-				w.stack = append(w.stack, item{path, *list[i], nil})
+	entries, err := w.serverConn.List(w.cur.path)
+	w.cur.err = err
+	if err == nil {
+		if len(entries) == 0 {
+			w.cur.err = fmt.Errorf("no such file or directory: %s", w.cur.path)
+
+			return false
+		}
+
+		if isRoot && len(entries) == 1 && entries[0].Type == EntryTypeFile {
+			w.cur.err = fmt.Errorf("root is not a directory: %s", w.cur.path)
+
+			return false
+		}
+
+		for i, entry := range entries {
+			if entry.Name == "." || (i == 0 && entry.Type == EntryTypeFile) {
+				entry.Name = path.Base(w.cur.path)
+				w.cur.entry = entry
+				continue
 			}
+
+			if entry.Name == ".." || !w.descend {
+				continue
+			}
+
+			item := &item{
+				path:  path.Join(w.cur.path, entry.Name),
+				entry: entry,
+			}
+
+			w.stack = append(w.stack, item)
 		}
 	}
 
 	if len(w.stack) == 0 {
 		return false
 	}
+
 	i := len(w.stack) - 1
 	w.cur = w.stack[i]
 	w.stack = w.stack[:i]
 	w.descend = true
+
 	return true
 }
 
@@ -71,7 +96,7 @@ func (w *Walker) Err() error {
 
 // Stat returns info for the most recent file or directory
 // visited by a call to Step.
-func (w *Walker) Stat() Entry {
+func (w *Walker) Stat() *Entry {
 	return w.cur.entry
 }
 

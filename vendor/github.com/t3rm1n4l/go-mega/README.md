@@ -23,7 +23,7 @@ This is an API client library for MEGA storage service. Currently, the library s
 
 ### API methods
 
-Please find full doc at [http://godoc.org/github.com/t3rm1n4l/go-mega](http://godoc.org/github.com/t3rm1n4l/go-mega)
+Please find full doc at [https://pkg.go.dev/github.com/t3rm1n4l/go-mega](https://pkg.go.dev/github.com/t3rm1n4l/go-mega)
 
 ### Testing
 

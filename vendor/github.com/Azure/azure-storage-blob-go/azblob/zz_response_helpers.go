@@ -45,7 +45,7 @@ func (dr downloadResponse) NewHTTPHeaders() BlobHTTPHeaders {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// DownloadResponse wraps AutoRest generated downloadResponse and helps to provide info for retry.
+// DownloadResponse wraps AutoRest generated DownloadResponse and helps to provide info for retry.
 type DownloadResponse struct {
 	r       *downloadResponse
 	ctx     context.Context

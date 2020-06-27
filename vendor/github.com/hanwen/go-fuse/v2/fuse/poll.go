@@ -9,16 +9,17 @@ const pollHackName = ".go-fuse-epoll-hack"
 const pollHackInode = ^uint64(0)
 
 func doPollHackLookup(ms *Server, req *request) {
+	attr := Attr{
+		Ino:   pollHackInode,
+		Mode:  S_IFREG | 0644,
+		Nlink: 1,
+	}
 	switch req.inHeader.Opcode {
 	case _OP_CREATE:
 		out := (*CreateOut)(req.outData())
 		out.EntryOut = EntryOut{
 			NodeId: pollHackInode,
-			Attr: Attr{
-				Ino:   pollHackInode,
-				Mode:  S_IFREG | 0644,
-				Nlink: 1,
-			},
+			Attr:   attr,
 		}
 		out.OpenOut = OpenOut{
 			Fh: pollHackInode,
@@ -28,7 +29,15 @@ func doPollHackLookup(ms *Server, req *request) {
 		out := (*EntryOut)(req.outData())
 		*out = EntryOut{}
 		req.status = ENOENT
+	case _OP_GETATTR:
+		out := (*AttrOut)(req.outData())
+		out.Attr = attr
+		req.status = OK
+	case _OP_POLL:
+		req.status = ENOSYS
 	default:
-		req.status = EIO
+		// We want to avoid switching off features through our
+		// poll hack, so don't use ENOSYS
+		req.status = ERANGE
 	}
 }

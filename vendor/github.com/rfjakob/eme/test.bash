@@ -1,5 +1,5 @@
 #!/bin/bash -eu
 
 go build
-go test . "$@"
-go tool vet -all -shadow .
+go test -v "$@"
+go vet -all .

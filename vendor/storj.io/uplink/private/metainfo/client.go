@@ -373,43 +373,6 @@ func convertProtoToBucket(pbBucket *pb.Bucket) (bucket storj.Bucket, err error) 
 	}, nil
 }
 
-// SetBucketAttributionParams parameters for SetBucketAttribution method.
-type SetBucketAttributionParams struct {
-	Bucket    string
-	PartnerID uuid.UUID
-}
-
-func (params *SetBucketAttributionParams) toRequest(header *pb.RequestHeader) *pb.BucketSetAttributionRequest {
-	var bytes []byte
-	if !params.PartnerID.IsZero() {
-		bytes = params.PartnerID[:]
-	}
-
-	return &pb.BucketSetAttributionRequest{
-		Header:    header,
-		Name:      []byte(params.Bucket),
-		PartnerId: bytes,
-	}
-}
-
-// BatchItem returns single item for batch request.
-func (params *SetBucketAttributionParams) BatchItem() *pb.BatchRequestItem {
-	return &pb.BatchRequestItem{
-		Request: &pb.BatchRequestItem_BucketSetAttribution{
-			BucketSetAttribution: params.toRequest(nil),
-		},
-	}
-}
-
-// SetBucketAttribution tries to set the attribution information on the bucket.
-func (client *Client) SetBucketAttribution(ctx context.Context, params SetBucketAttributionParams) (err error) {
-	defer mon.Task()(&ctx)(&err)
-
-	_, err = client.client.SetBucketAttribution(ctx, params.toRequest(client.header()))
-
-	return Error.Wrap(err)
-}
-
 // BeginObjectParams parmaters for BeginObject method.
 type BeginObjectParams struct {
 	Bucket               []byte

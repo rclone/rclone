@@ -19,7 +19,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/pmezard/go-difflib/difflib"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 //go:generate sh -c "cd ../_codegen && go build && cd - && ../_codegen/_codegen -output-package=assert -template=assertion_format.go.tmpl"
@@ -45,7 +45,7 @@ type BoolAssertionFunc func(TestingT, bool, ...interface{}) bool
 // for table driven tests.
 type ErrorAssertionFunc func(TestingT, error, ...interface{}) bool
 
-// Comparison a custom function that returns true on success and false on failure
+// Comparison is a custom function that returns true on success and false on failure
 type Comparison func() (success bool)
 
 /*
@@ -104,11 +104,11 @@ the problem actually occurred in calling code.*/
 // failed.
 func CallerInfo() []string {
 
-	pc := uintptr(0)
-	file := ""
-	line := 0
-	ok := false
-	name := ""
+	var pc uintptr
+	var ok bool
+	var file string
+	var line int
+	var name string
 
 	callers := []string{}
 	for i := 0; ; i++ {
@@ -429,14 +429,27 @@ func samePointers(first, second interface{}) bool {
 // to a type conversion in the Go grammar.
 func formatUnequalValues(expected, actual interface{}) (e string, a string) {
 	if reflect.TypeOf(expected) != reflect.TypeOf(actual) {
-		return fmt.Sprintf("%T(%#v)", expected, expected),
-			fmt.Sprintf("%T(%#v)", actual, actual)
+		return fmt.Sprintf("%T(%s)", expected, truncatingFormat(expected)),
+			fmt.Sprintf("%T(%s)", actual, truncatingFormat(actual))
 	}
 	switch expected.(type) {
 	case time.Duration:
 		return fmt.Sprintf("%v", expected), fmt.Sprintf("%v", actual)
 	}
-	return fmt.Sprintf("%#v", expected), fmt.Sprintf("%#v", actual)
+	return truncatingFormat(expected), truncatingFormat(actual)
+}
+
+// truncatingFormat formats the data and truncates it if it's too long.
+//
+// This helps keep formatted error messages lines from exceeding the
+// bufio.MaxScanTokenSize max line length that the go testing framework imposes.
+func truncatingFormat(data interface{}) string {
+	value := fmt.Sprintf("%#v", data)
+	max := bufio.MaxScanTokenSize - 100 // Give us some space the type info too if needed.
+	if len(value) > max {
+		value = value[0:max] + "<... truncated>"
+	}
+	return value
 }
 
 // EqualValues asserts that two objects are equal or convertable to the same types
@@ -483,11 +496,11 @@ func Exactly(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}
 //
 //    assert.NotNil(t, err)
 func NotNil(t TestingT, object interface{}, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
 	if !isNil(object) {
 		return true
+	}
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
 	}
 	return Fail(t, "Expected value not to be nil.", msgAndArgs...)
 }
@@ -529,11 +542,11 @@ func isNil(object interface{}) bool {
 //
 //    assert.Nil(t, err)
 func Nil(t TestingT, object interface{}, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
 	if isNil(object) {
 		return true
+	}
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
 	}
 	return Fail(t, fmt.Sprintf("Expected nil, but got: %#v", object), msgAndArgs...)
 }
@@ -571,12 +584,11 @@ func isEmpty(object interface{}) bool {
 //
 //  assert.Empty(t, obj)
 func Empty(t TestingT, object interface{}, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
-
 	pass := isEmpty(object)
 	if !pass {
+		if h, ok := t.(tHelper); ok {
+			h.Helper()
+		}
 		Fail(t, fmt.Sprintf("Should be empty, but was %v", object), msgAndArgs...)
 	}
 
@@ -591,12 +603,11 @@ func Empty(t TestingT, object interface{}, msgAndArgs ...interface{}) bool {
 //    assert.Equal(t, "two", obj[1])
 //  }
 func NotEmpty(t TestingT, object interface{}, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
-
 	pass := !isEmpty(object)
 	if !pass {
+		if h, ok := t.(tHelper); ok {
+			h.Helper()
+		}
 		Fail(t, fmt.Sprintf("Should NOT be empty, but was %v", object), msgAndArgs...)
 	}
 
@@ -639,16 +650,10 @@ func Len(t TestingT, object interface{}, length int, msgAndArgs ...interface{}) 
 //
 //    assert.True(t, myBool)
 func True(t TestingT, value bool, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
-	if h, ok := t.(interface {
-		Helper()
-	}); ok {
-		h.Helper()
-	}
-
-	if value != true {
+	if !value {
+		if h, ok := t.(tHelper); ok {
+			h.Helper()
+		}
 		return Fail(t, "Should be true", msgAndArgs...)
 	}
 
@@ -660,11 +665,10 @@ func True(t TestingT, value bool, msgAndArgs ...interface{}) bool {
 //
 //    assert.False(t, myBool)
 func False(t TestingT, value bool, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
-
-	if value != false {
+	if value {
+		if h, ok := t.(tHelper); ok {
+			h.Helper()
+		}
 		return Fail(t, "Should be false", msgAndArgs...)
 	}
 
@@ -693,6 +697,21 @@ func NotEqual(t TestingT, expected, actual interface{}, msgAndArgs ...interface{
 
 	return true
 
+}
+
+// NotEqualValues asserts that two objects are not equal even when converted to the same type
+//
+//    assert.NotEqualValues(t, obj1, obj2)
+func NotEqualValues(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+	if h, ok := t.(tHelper); ok {
+		h.Helper()
+	}
+
+	if ObjectsAreEqualValues(expected, actual) {
+		return Fail(t, fmt.Sprintf("Should not be: %#v\n", actual), msgAndArgs...)
+	}
+
+	return true
 }
 
 // containsElement try loop over the list check if the list includes the element.
@@ -747,10 +766,10 @@ func Contains(t TestingT, s, contains interface{}, msgAndArgs ...interface{}) bo
 
 	ok, found := includeElement(s, contains)
 	if !ok {
-		return Fail(t, fmt.Sprintf("\"%s\" could not be applied builtin len()", s), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("%#v could not be applied builtin len()", s), msgAndArgs...)
 	}
 	if !found {
-		return Fail(t, fmt.Sprintf("\"%s\" does not contain \"%s\"", s, contains), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("%#v does not contain %#v", s, contains), msgAndArgs...)
 	}
 
 	return true
@@ -881,26 +900,38 @@ func ElementsMatch(t TestingT, listA, listB interface{}, msgAndArgs ...interface
 		return true
 	}
 
-	aKind := reflect.TypeOf(listA).Kind()
-	bKind := reflect.TypeOf(listB).Kind()
-
-	if aKind != reflect.Array && aKind != reflect.Slice {
-		return Fail(t, fmt.Sprintf("%q has an unsupported type %s", listA, aKind), msgAndArgs...)
+	if !isList(t, listA, msgAndArgs...) || !isList(t, listB, msgAndArgs...) {
+		return false
 	}
 
-	if bKind != reflect.Array && bKind != reflect.Slice {
-		return Fail(t, fmt.Sprintf("%q has an unsupported type %s", listB, bKind), msgAndArgs...)
+	extraA, extraB := diffLists(listA, listB)
+
+	if len(extraA) == 0 && len(extraB) == 0 {
+		return true
 	}
 
+	return Fail(t, formatListDiff(listA, listB, extraA, extraB), msgAndArgs...)
+}
+
+// isList checks that the provided value is array or slice.
+func isList(t TestingT, list interface{}, msgAndArgs ...interface{}) (ok bool) {
+	kind := reflect.TypeOf(list).Kind()
+	if kind != reflect.Array && kind != reflect.Slice {
+		return Fail(t, fmt.Sprintf("%q has an unsupported type %s, expecting array or slice", list, kind),
+			msgAndArgs...)
+	}
+	return true
+}
+
+// diffLists diffs two arrays/slices and returns slices of elements that are only in A and only in B.
+// If some element is present multiple times, each instance is counted separately (e.g. if something is 2x in A and
+// 5x in B, it will be 0x in extraA and 3x in extraB). The order of items in both lists is ignored.
+func diffLists(listA, listB interface{}) (extraA, extraB []interface{}) {
 	aValue := reflect.ValueOf(listA)
 	bValue := reflect.ValueOf(listB)
 
 	aLen := aValue.Len()
 	bLen := bValue.Len()
-
-	if aLen != bLen {
-		return Fail(t, fmt.Sprintf("lengths don't match: %d != %d", aLen, bLen), msgAndArgs...)
-	}
 
 	// Mark indexes in bValue that we already used
 	visited := make([]bool, bLen)
@@ -918,11 +949,38 @@ func ElementsMatch(t TestingT, listA, listB interface{}, msgAndArgs ...interface
 			}
 		}
 		if !found {
-			return Fail(t, fmt.Sprintf("element %s appears more times in %s than in %s", element, aValue, bValue), msgAndArgs...)
+			extraA = append(extraA, element)
 		}
 	}
 
-	return true
+	for j := 0; j < bLen; j++ {
+		if visited[j] {
+			continue
+		}
+		extraB = append(extraB, bValue.Index(j).Interface())
+	}
+
+	return
+}
+
+func formatListDiff(listA, listB interface{}, extraA, extraB []interface{}) string {
+	var msg bytes.Buffer
+
+	msg.WriteString("elements differ")
+	if len(extraA) > 0 {
+		msg.WriteString("\n\nextra elements in list A:\n")
+		msg.WriteString(spewConfig.Sdump(extraA))
+	}
+	if len(extraB) > 0 {
+		msg.WriteString("\n\nextra elements in list B:\n")
+		msg.WriteString(spewConfig.Sdump(extraB))
+	}
+	msg.WriteString("\n\nlistA:\n")
+	msg.WriteString(spewConfig.Sdump(listA))
+	msg.WriteString("\n\nlistB:\n")
+	msg.WriteString(spewConfig.Sdump(listB))
+
+	return msg.String()
 }
 
 // Condition uses a Comparison to assert a complex condition.
@@ -1058,6 +1116,8 @@ func toFloat(x interface{}) (float64, bool) {
 	xok := true
 
 	switch xn := x.(type) {
+	case uint:
+		xf = float64(xn)
 	case uint8:
 		xf = float64(xn)
 	case uint16:
@@ -1079,7 +1139,7 @@ func toFloat(x interface{}) (float64, bool) {
 	case float32:
 		xf = float64(xn)
 	case float64:
-		xf = float64(xn)
+		xf = xn
 	case time.Duration:
 		xf = float64(xn)
 	default:
@@ -1193,12 +1253,18 @@ func calcRelativeError(expected, actual interface{}) (float64, error) {
 	if !aok {
 		return 0, fmt.Errorf("expected value %q cannot be converted to float", expected)
 	}
+	if math.IsNaN(af) {
+		return 0, errors.New("expected value must not be NaN")
+	}
 	if af == 0 {
 		return 0, fmt.Errorf("expected value must have a value other than zero to calculate the relative error")
 	}
 	bf, bok := toFloat(actual)
 	if !bok {
 		return 0, fmt.Errorf("actual value %q cannot be converted to float", actual)
+	}
+	if math.IsNaN(bf) {
+		return 0, errors.New("actual value must not be NaN")
 	}
 
 	return math.Abs(af-bf) / math.Abs(af), nil
@@ -1208,6 +1274,9 @@ func calcRelativeError(expected, actual interface{}) (float64, error) {
 func InEpsilon(t TestingT, expected, actual interface{}, epsilon float64, msgAndArgs ...interface{}) bool {
 	if h, ok := t.(tHelper); ok {
 		h.Helper()
+	}
+	if math.IsNaN(epsilon) {
+		return Fail(t, "epsilon must not be NaN")
 	}
 	actualEpsilon, err := calcRelativeError(expected, actual)
 	if err != nil {
@@ -1256,10 +1325,10 @@ func InEpsilonSlice(t TestingT, expected, actual interface{}, epsilon float64, m
 //	   assert.Equal(t, expectedObj, actualObj)
 //   }
 func NoError(t TestingT, err error, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
 	if err != nil {
+		if h, ok := t.(tHelper); ok {
+			h.Helper()
+		}
 		return Fail(t, fmt.Sprintf("Received unexpected error:\n%+v", err), msgAndArgs...)
 	}
 
@@ -1273,11 +1342,10 @@ func NoError(t TestingT, err error, msgAndArgs ...interface{}) bool {
 //	   assert.Equal(t, expectedError, err)
 //   }
 func Error(t TestingT, err error, msgAndArgs ...interface{}) bool {
-	if h, ok := t.(tHelper); ok {
-		h.Helper()
-	}
-
 	if err == nil {
+		if h, ok := t.(tHelper); ok {
+			h.Helper()
+		}
 		return Fail(t, "An error is expected but got nil.", msgAndArgs...)
 	}
 
@@ -1553,6 +1621,7 @@ var spewConfig = spew.ConfigState{
 	DisablePointerAddresses: true,
 	DisableCapacities:       true,
 	SortKeys:                true,
+	DisableMethods:          true,
 }
 
 type tHelper interface {

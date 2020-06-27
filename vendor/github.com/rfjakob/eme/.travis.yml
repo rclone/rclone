@@ -1,1 +1,11 @@
 language: go
+
+go:
+  - 1.11.x # Debian 10 "Buster"
+  - 1.12.x # Ubuntu 19.10
+  - 1.13.x # Debian 11 "Bullseye"
+  - stable
+
+script:
+  - go build
+  - ./test.bash

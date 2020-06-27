@@ -38,7 +38,7 @@
   "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/drive/",
-  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/UEl2PHBvsMjh3TSXQxSnNlF4wSs\"",
+  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/8mGFZfij4LCdDDUPC37xoa91ToE\"",
   "icons": {
     "x16": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_16.png",
     "x32": "https://ssl.gstatic.com/docs/doclist/images/drive_icon_32.png"
@@ -219,13 +219,13 @@
               "type": "string"
             },
             "driveId": {
-              "description": "The shared drive from which the change will be returned.",
+              "description": "The shared drive from which the change is returned.",
               "location": "query",
               "type": "string"
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -262,13 +262,13 @@
           "id": "drive.changes.getStartPageToken",
           "parameters": {
             "driveId": {
-              "description": "The ID of the shared drive for which the starting pageToken for listing future changes from that shared drive will be returned.",
+              "description": "The ID of the shared drive for which the starting pageToken for listing future changes from that shared drive is returned.",
               "location": "query",
               "type": "string"
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -305,7 +305,7 @@
           "id": "drive.changes.list",
           "parameters": {
             "driveId": {
-              "description": "The shared drive from which changes will be returned. If specified the change IDs will be reflective of the shared drive; use the combined drive ID and change ID as an identifier.",
+              "description": "The shared drive from which changes are returned. If specified the change IDs will be reflective of the shared drive; use the combined drive ID and change ID as an identifier.",
               "location": "query",
               "type": "string"
             },
@@ -323,13 +323,13 @@
             },
             "includeItemsFromAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether both My Drive and shared drive items should be included in results. This parameter will only be effective until June 1, 2020. Afterwards shared drive items will be included in the results.",
+              "description": "Whether both My Drive and shared drive items should be included in results.",
               "location": "query",
               "type": "boolean"
             },
             "includeSubscribed": {
               "default": "true",
-              "description": "Whether to include changes outside the My Drive hierarchy in the result. When set to false, changes to files such as those in the Application Data folder or shared files which have not been added to My Drive will be omitted from the result.",
+              "description": "Whether to include changes outside the My Drive hierarchy in the result. When set to false, changes to files such as those in the Application Data folder or shared files which have not been added to My Drive are omitted from the result.",
               "location": "query",
               "type": "boolean"
             },
@@ -365,7 +365,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -403,7 +403,7 @@
           "id": "drive.changes.watch",
           "parameters": {
             "driveId": {
-              "description": "The shared drive from which changes will be returned. If specified the change IDs will be reflective of the shared drive; use the combined drive ID and change ID as an identifier.",
+              "description": "The shared drive from which changes are returned. If specified the change IDs will be reflective of the shared drive; use the combined drive ID and change ID as an identifier.",
               "location": "query",
               "type": "string"
             },
@@ -421,13 +421,13 @@
             },
             "includeItemsFromAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether both My Drive and shared drive items should be included in results. This parameter will only be effective until June 1, 2020. Afterwards shared drive items will be included in the results.",
+              "description": "Whether both My Drive and shared drive items should be included in results.",
               "location": "query",
               "type": "boolean"
             },
             "includeSubscribed": {
               "default": "true",
-              "description": "Whether to include changes outside the My Drive hierarchy in the result. When set to false, changes to files such as those in the Application Data folder or shared files which have not been added to My Drive will be omitted from the result.",
+              "description": "Whether to include changes outside the My Drive hierarchy in the result. When set to false, changes to files such as those in the Application Data folder or shared files which have not been added to My Drive are omitted from the result.",
               "location": "query",
               "type": "boolean"
             },
@@ -463,7 +463,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -544,7 +544,7 @@
             },
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. If the item's last parent is removed, the item will be placed under its owner's root.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. If the item's last parent is removed, the item is placed under its owner's root.",
               "location": "query",
               "type": "boolean"
             },
@@ -607,7 +607,7 @@
           "parameters": {
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. If the child's owner makes the request, the child will be removed from all current folders and placed in the requested folder. Any other requests that increase the number of the child's parents will fail, except when the canAddMyDriveParent file capability is true and a single parent is being added.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. If the child's owner makes the request, the child is removed from all current folders and placed in the requested folder. Any other requests that increase the number of the child's parents fail, except when the canAddMyDriveParent file capability is true and a single parent is being added.",
               "location": "query",
               "type": "boolean"
             },
@@ -619,7 +619,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1128,7 +1128,7 @@
             },
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. Requests that specify more than one parent will fail.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. Requests that specify more than one parent fail.",
               "location": "query",
               "type": "boolean"
             },
@@ -1157,7 +1157,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1223,7 +1223,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1351,7 +1351,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1414,7 +1414,7 @@
             },
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. Requests that specify more than one parent will fail.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. Requests that specify more than one parent fail.",
               "location": "query",
               "type": "boolean"
             },
@@ -1437,7 +1437,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1524,7 +1524,7 @@
             },
             "includeItemsFromAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether both My Drive and shared drive items should be included in results. This parameter will only be effective until June 1, 2020. Afterwards shared drive items will be included in the results.",
+              "description": "Whether both My Drive and shared drive items should be included in results.",
               "location": "query",
               "type": "boolean"
             },
@@ -1577,7 +1577,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1629,7 +1629,7 @@
             },
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. If the item's owner makes a request to add a single parent, the item will be removed from all current folders and placed in the requested folder. Other requests that increase the number of parents will fail, except when the canAddMyDriveParent file capability is true and a single parent is being added.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. If the item's owner makes a request to add a single parent, the item is removed from all current folders and placed in the requested folder. Other requests that increase the number of parents fail, except when the canAddMyDriveParent file capability is true and a single parent is being added.",
               "location": "query",
               "type": "boolean"
             },
@@ -1696,7 +1696,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1761,7 +1761,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1800,7 +1800,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1838,7 +1838,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -1897,7 +1897,7 @@
             },
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. If the item's owner makes a request to add a single parent, the item will be removed from all current folders and placed in the requested folder. Other requests that increase the number of parents will fail, except when the canAddMyDriveParent file capability is true and a single parent is being added.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. If the item's owner makes a request to add a single parent, the item is removed from all current folders and placed in the requested folder. Other requests that increase the number of parents fail, except when the canAddMyDriveParent file capability is true and a single parent is being added.",
               "location": "query",
               "type": "boolean"
             },
@@ -1964,7 +1964,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -2054,7 +2054,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -2107,7 +2107,7 @@
           "parameters": {
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. If the item's last parent is removed, the item will be placed under its owner's root.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. If the item's last parent is removed, the item is placed under its owner's root.",
               "location": "query",
               "type": "boolean"
             },
@@ -2176,7 +2176,7 @@
           "parameters": {
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. If the child's owner makes the request, the child will be removed from all current folders and placed in the requested folder. Any other requests that increase the number of the child's parents will fail, except when the canAddMyDriveParent file capability is true and a single parent is being added.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. If the child's owner makes the request, the child is removed from all current folders and placed in the requested folder. Any other requests that increase the number of the child's parents fail, except when the canAddMyDriveParent file capability is true and a single parent is being added.",
               "location": "query",
               "type": "boolean"
             },
@@ -2188,7 +2188,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -2268,7 +2268,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -2314,7 +2314,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -2389,7 +2389,7 @@
             },
             "enforceSingleParent": {
               "default": "false",
-              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter will only take effect if the item is not in a shared drive. See moveToNewOwnersRoot for details.",
+              "description": "Set to true to opt in to API behavior that aims for all items to have exactly one parent. This parameter only takes effect if the item is not in a shared drive. See moveToNewOwnersRoot for details.",
               "location": "query",
               "type": "boolean"
             },
@@ -2401,7 +2401,7 @@
             },
             "moveToNewOwnersRoot": {
               "default": "false",
-              "description": "This parameter will only take effect if the item is not in a shared drive and the request is attempting to transfer the ownership of the item. When set to true, the item will be moved to the new owner's My Drive root folder and all prior parents removed. If set to false, when enforceSingleParent=true, parents are not changed. If set to false, when enforceSingleParent=false, existing parents are not changed; however, the file will be added to the new owner's My Drive root folder, unless it is already in the new owner's My Drive.",
+              "description": "This parameter only takes effect if the item is not in a shared drive and the request is attempting to transfer the ownership of the item. When set to true, the item will be moved to the new owner's My Drive root folder and all prior parents removed. If set to false, when enforceSingleParent=true, parents are not changed. If set to false, when enforceSingleParent=false, existing parents are not changed; however, the file will be added to the new owner's My Drive root folder, unless it is already in the new owner's My Drive.",
               "location": "query",
               "type": "boolean"
             },
@@ -2413,7 +2413,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -2471,7 +2471,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -2530,7 +2530,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -2594,7 +2594,7 @@
             },
             "supportsAllDrives": {
               "default": "false",
-              "description": "Deprecated - Whether the requesting application supports both My Drives and shared drives. This parameter will only be effective until June 1, 2020. Afterwards all applications are assumed to support shared drives.",
+              "description": "Whether the requesting application supports both My Drives and shared drives.",
               "location": "query",
               "type": "boolean"
             },
@@ -3442,7 +3442,7 @@
       }
     }
   },
-  "revision": "20200326",
+  "revision": "20200609",
   "rootUrl": "https://www.googleapis.com/",
   "schemas": {
     "About": {
@@ -5290,7 +5290,7 @@
           "type": "string"
         },
         "expirationDate": {
-          "description": "The time at which this permission will expire (RFC 3339 date-time). Expiration dates have the following restrictions:  \n- They can only be set on user and group permissions \n- The date must be in the future \n- The date cannot be more than a year in the future \n- The date can only be set on drive.permissions.update or drive.permissions.patch requests",
+          "description": "The time at which this permission will expire (RFC 3339 date-time). Expiration dates have the following restrictions:  \n- They cannot be set on shared drive items \n- They can only be set on user and group permissions \n- The date must be in the future \n- The date cannot be more than a year in the future \n- The date can only be set on drive.permissions.update or drive.permissions.patch requests",
           "format": "date-time",
           "type": "string"
         },

@@ -24,7 +24,7 @@ service Metainfo {
     rpc GetBucket(BucketGetRequest) returns (BucketGetResponse);
     rpc DeleteBucket(BucketDeleteRequest) returns (BucketDeleteResponse);
     rpc ListBuckets(BucketListRequest) returns (BucketListResponse);
-    rpc SetBucketAttribution(BucketSetAttributionRequest) returns (BucketSetAttributionResponse);
+
     // Object
     rpc BeginObject(ObjectBeginRequest) returns (ObjectBeginResponse);
     rpc CommitObject(ObjectCommitRequest) returns (ObjectCommitResponse);
@@ -43,15 +43,8 @@ service Metainfo {
 
     rpc Batch(BatchRequest) returns (BatchResponse);
 
-    rpc CreateSegmentOld(SegmentWriteRequestOld) returns (SegmentWriteResponseOld);
-    rpc CommitSegmentOld(SegmentCommitRequestOld) returns (SegmentCommitResponseOld);
-    rpc SegmentInfoOld(SegmentInfoRequestOld) returns (SegmentInfoResponseOld);
-    rpc DownloadSegmentOld(SegmentDownloadRequestOld) returns (SegmentDownloadResponseOld);
-    rpc DeleteSegmentOld(SegmentDeleteRequestOld) returns (SegmentDeleteResponseOld);
-    rpc ListSegmentsOld(ListSegmentsRequestOld) returns (ListSegmentsResponseOld);
-    rpc SetAttributionOld(SetAttributionRequestOld) returns (SetAttributionResponseOld);
-
     rpc ProjectInfo(ProjectInfoRequest) returns (ProjectInfoResponse);
+    rpc RevokeAPIKey(RevokeAPIKeyRequest) returns (RevokeAPIKeyResponse);
 }
 
 message RequestHeader {
@@ -139,109 +132,6 @@ message BucketSetAttributionResponse {
 message AddressedOrderLimit {
     orders.OrderLimit limit = 1;
     node.NodeAddress storage_node_address = 2;
-}
-
-message SegmentWriteRequestOld {
-    RequestHeader header = 15;
-
-    bytes bucket = 1;
-    bytes path = 2;
-    int64 segment = 3;
-    pointerdb.RedundancyScheme redundancy = 4;
-    int64 max_encrypted_segment_size = 5;
-    google.protobuf.Timestamp expiration = 6 [(gogoproto.stdtime) = true, (gogoproto.nullable) = false];
-}
-
-message SegmentWriteResponseOld {
-    repeated AddressedOrderLimit addressed_limits = 1;
-    bytes root_piece_id = 2 [(gogoproto.customtype) = "PieceID", (gogoproto.nullable) = false];
-    bytes private_key = 3 [(gogoproto.customtype) = "PiecePrivateKey", (gogoproto.nullable) = false];
-}
-
-message SegmentCommitRequestOld {
-    RequestHeader header = 15;
-
-    bytes bucket = 1;
-    bytes path = 2;
-    int64 segment = 3;
-    pointerdb.Pointer pointer = 4;
-    repeated orders.OrderLimit original_limits = 5;
-}
-
-message SegmentCommitResponseOld {
-    pointerdb.Pointer pointer = 1;
-}
-
-message SegmentDownloadRequestOld {
-    RequestHeader header = 15;
-
-    bytes bucket = 1;
-    bytes path = 2;
-    int64 segment = 3;
-}
-
-message SegmentDownloadResponseOld {
-    repeated AddressedOrderLimit addressed_limits = 1;
-    pointerdb.Pointer pointer = 2;
-    bytes private_key = 3 [(gogoproto.customtype) = "PiecePrivateKey", (gogoproto.nullable) = false];
-}
-
-message SegmentInfoRequestOld {
-    RequestHeader header = 15;
-
-    bytes bucket = 1;
-    bytes path = 2;
-    int64 segment = 3;
-}
-
-message SegmentInfoResponseOld {
-    pointerdb.Pointer pointer = 2;
-}
-
-message SegmentDeleteRequestOld {
-    RequestHeader header = 15;
-
-    bytes bucket = 1;
-    bytes path = 2;
-    int64 segment = 3;
-}
-
-message SegmentDeleteResponseOld {
-    repeated AddressedOrderLimit addressed_limits = 1;
-    bytes private_key = 2 [(gogoproto.customtype) = "PiecePrivateKey", (gogoproto.nullable) = false];
-}
-
-message ListSegmentsRequestOld {
-    RequestHeader header = 15;
-
-    bytes bucket = 1;
-    bytes prefix = 2;
-    bytes start_after = 3;
-    bytes end_before = 4 [deprecated=true];
-    bool recursive = 5;
-    int32 limit = 6;
-    fixed32 meta_flags = 7;
-}
-
-message ListSegmentsResponseOld {
-    message Item {
-        bytes path = 1;
-        pointerdb.Pointer pointer = 2;
-        bool is_prefix = 3;
-    }
-
-    repeated Item items = 1;
-    bool more = 2;
-}
-
-message SetAttributionRequestOld {
-    RequestHeader header = 15;
-
-    bytes bucket_name = 1;
-    bytes partner_id = 2 ;
-}
-
-message SetAttributionResponseOld {
 }
 
 message ProjectInfoRequest {
@@ -582,7 +472,6 @@ message BatchRequestItem {
         BucketGetRequest            bucket_get = 2;
         BucketDeleteRequest         bucket_delete = 3;
         BucketListRequest           bucket_list = 4;
-        BucketSetAttributionRequest bucket_set_attribution = 5;
 
         ObjectBeginRequest          object_begin = 6;
         ObjectCommitRequest         object_commit = 7;
@@ -600,6 +489,9 @@ message BatchRequestItem {
 
         SegmentListRequest     segment_list = 17;
         SegmentDownloadRequest segment_download = 18;
+
+        RevokeAPIKeyRequest revoke_api_key = 19;
+
     }
 }
 
@@ -613,7 +505,6 @@ message BatchResponseItem {
         BucketGetResponse            bucket_get = 2;
         BucketDeleteResponse         bucket_delete = 3;
         BucketListResponse           bucket_list = 4;
-        BucketSetAttributionResponse bucket_set_attribution = 5;
 
         ObjectBeginResponse          object_begin = 6;
         ObjectCommitResponse         object_commit = 7;
@@ -631,5 +522,15 @@ message BatchResponseItem {
 
         SegmentListResponse     segment_list = 17;
         SegmentDownloadResponse segment_download = 18;
+
+        RevokeAPIKeyResponse revoke_api_key = 19;
     }
 }
+
+message RevokeAPIKeyRequest {
+    RequestHeader header = 15;
+
+    bytes api_key = 1;
+}
+
+message RevokeAPIKeyResponse { }

@@ -6,6 +6,7 @@ package server
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/tls"
@@ -16,6 +17,7 @@ import (
 	mrand "math/rand"
 	"net"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -24,6 +26,7 @@ const (
 	defaultWelcomeMessage = "Welcome to the Go FTP Server"
 )
 
+// Conn represents a connection between ftp client and the server
 type Conn struct {
 	conn          net.Conn
 	controlReader *bufio.Reader
@@ -35,7 +38,7 @@ type Conn struct {
 	server        *Server
 	tlsConfig     *tls.Config
 	sessionID     string
-	namePrefix    string
+	curDir        string
 	reqUser       string
 	user          string
 	renameFrom    string
@@ -45,24 +48,36 @@ type Conn struct {
 	tls           bool
 }
 
+// RemoteAddr returns the remote ftp client's address
+func (conn *Conn) RemoteAddr() net.Addr {
+	return conn.conn.RemoteAddr()
+}
+
+// LoginUser returns the login user name if login
 func (conn *Conn) LoginUser() string {
 	return conn.user
 }
 
+// IsLogin returns if user has login
 func (conn *Conn) IsLogin() bool {
 	return len(conn.user) > 0
 }
 
-func (conn *Conn) PublicIp() string {
-	return conn.server.PublicIp
+// PublicIP returns the public ip of the server
+func (conn *Conn) PublicIP() string {
+	return conn.server.PublicIP
 }
 
 func (conn *Conn) passiveListenIP() string {
 	var listenIP string
-	if len(conn.PublicIp()) > 0 {
-		listenIP = conn.PublicIp()
+	if len(conn.PublicIP()) > 0 {
+		listenIP = conn.PublicIP()
 	} else {
 		listenIP = conn.conn.LocalAddr().(*net.TCPAddr).IP.String()
+	}
+
+	if listenIP == "::1" {
+		return listenIP
 	}
 
 	lastIdx := strings.LastIndex(listenIP, ":")
@@ -72,6 +87,7 @@ func (conn *Conn) passiveListenIP() string {
 	return listenIP[:lastIdx]
 }
 
+// PassivePort returns the port which could be used by passive mode.
 func (conn *Conn) PassivePort() int {
 	if len(conn.server.PassivePorts) > 0 {
 		portRange := strings.Split(conn.server.PassivePorts, "-")
@@ -136,6 +152,8 @@ func (conn *Conn) Serve() {
 func (conn *Conn) Close() {
 	conn.conn.Close()
 	conn.closed = true
+	conn.reqUser = ""
+	conn.user = ""
 	if conn.dataConn != nil {
 		conn.dataConn.Close()
 		conn.dataConn = nil
@@ -158,6 +176,25 @@ func (conn *Conn) upgradeToTLS() error {
 // receiveLine accepts a single line FTP command and co-ordinates an
 // appropriate response.
 func (conn *Conn) receiveLine(line string) {
+	defer func() {
+		if e := recover(); e != nil {
+			var buf bytes.Buffer
+			fmt.Fprintf(&buf, "Handler crashed with error: %v", e)
+
+			for i := 1; ; i++ {
+				_, file, line, ok := runtime.Caller(i)
+				if !ok {
+					break
+				} else {
+					fmt.Fprintf(&buf, "\n")
+				}
+				fmt.Fprintf(&buf, "%v:%v", file, line)
+			}
+
+			conn.logger.Print(conn.sessionID, buf.String())
+		}
+	}()
+
 	command, param := conn.parseLine(line)
 	conn.logger.PrintCommand(conn.sessionID, command, param)
 	cmdObj := commands[strings.ToUpper(command)]
@@ -221,9 +258,9 @@ func (conn *Conn) buildPath(filename string) (fullPath string) {
 	if len(filename) > 0 && filename[0:1] == "/" {
 		fullPath = filepath.Clean(filename)
 	} else if len(filename) > 0 && filename != "-a" {
-		fullPath = filepath.Clean(conn.namePrefix + "/" + filename)
+		fullPath = filepath.Clean(conn.curDir + "/" + filename)
 	} else {
-		fullPath = filepath.Clean(conn.namePrefix)
+		fullPath = filepath.Clean(conn.curDir)
 	}
 	fullPath = strings.Replace(fullPath, "//", "/", -1)
 	fullPath = strings.Replace(fullPath, string(filepath.Separator), "/", -1)
@@ -256,5 +293,10 @@ func (conn *Conn) sendOutofBandDataWriter(data io.ReadCloser) error {
 	conn.dataConn.Close()
 	conn.dataConn = nil
 
+	return nil
+}
+
+func (conn *Conn) changeCurDir(path string) error {
+	conn.curDir = path
 	return nil
 }

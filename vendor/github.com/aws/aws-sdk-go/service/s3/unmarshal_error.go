@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -45,17 +46,24 @@ func unmarshalError(r *request.Request) {
 
 	// Attempt to parse error from body if it is known
 	var errResp xmlErrorResponse
-	err := xmlutil.UnmarshalXMLError(&errResp, r.HTTPResponse.Body)
-	if err == io.EOF {
-		// Only capture the error if an unmarshal error occurs that is not EOF,
-		// because S3 might send an error without a error message which causes
-		// the XML unmarshal to fail with EOF.
-		err = nil
+	var err error
+	if r.HTTPResponse.StatusCode >= 200 && r.HTTPResponse.StatusCode < 300 {
+		err = s3unmarshalXMLError(&errResp, r.HTTPResponse.Body)
+	} else {
+		err = xmlutil.UnmarshalXMLError(&errResp, r.HTTPResponse.Body)
 	}
+
 	if err != nil {
+		var errorMsg string
+		if err == io.EOF {
+			errorMsg = "empty response payload"
+		} else {
+			errorMsg = "failed to unmarshal error message"
+		}
+
 		r.Error = awserr.NewRequestFailure(
 			awserr.New(request.ErrCodeSerialization,
-				"failed to unmarshal error message", err),
+				errorMsg, err),
 			r.HTTPResponse.StatusCode,
 			r.RequestID,
 		)
@@ -85,4 +93,22 @@ type RequestFailure interface {
 
 	// Host ID is the S3 Host ID needed for debug, and contacting support
 	HostID() string
+}
+
+// s3unmarshalXMLError is s3 specific xml error unmarshaler
+// for 200 OK errors and response payloads.
+// This function differs from the xmlUtil.UnmarshalXMLError
+// func. It does not ignore the EOF error and passes it up.
+// Related to bug fix for `s3 200 OK response with empty payload`
+func s3unmarshalXMLError(v interface{}, stream io.Reader) error {
+	var errBuf bytes.Buffer
+	body := io.TeeReader(stream, &errBuf)
+
+	err := xml.NewDecoder(body).Decode(v)
+	if err != nil && err != io.EOF {
+		return awserr.NewUnmarshalError(err,
+			"failed to unmarshal error message", errBuf.Bytes())
+	}
+
+	return err
 }

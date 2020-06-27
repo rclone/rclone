@@ -21,6 +21,7 @@
 package zap
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -31,10 +32,14 @@ import (
 // global CPU and I/O load that logging puts on your process while attempting
 // to preserve a representative subset of your logs.
 //
-// Values configured here are per-second. See zapcore.NewSampler for details.
+// If specified, the Sampler will invoke the Hook after each decision.
+//
+// Values configured here are per-second. See zapcore.NewSamplerWithOptions for
+// details.
 type SamplingConfig struct {
-	Initial    int `json:"initial" yaml:"initial"`
-	Thereafter int `json:"thereafter" yaml:"thereafter"`
+	Initial    int                                           `json:"initial" yaml:"initial"`
+	Thereafter int                                           `json:"thereafter" yaml:"thereafter"`
+	Hook       func(zapcore.Entry, zapcore.SamplingDecision) `json:"-" yaml:"-"`
 }
 
 // Config offers a declarative way to construct a logger. It doesn't do
@@ -174,6 +179,10 @@ func (cfg Config) Build(opts ...Option) (*Logger, error) {
 		return nil, err
 	}
 
+	if cfg.Level == (AtomicLevel{}) {
+		return nil, fmt.Errorf("missing Level")
+	}
+
 	log := New(
 		zapcore.NewCore(enc, sink, cfg.Level),
 		cfg.buildOptions(errSink)...,
@@ -203,9 +212,19 @@ func (cfg Config) buildOptions(errSink zapcore.WriteSyncer) []Option {
 		opts = append(opts, AddStacktrace(stackLevel))
 	}
 
-	if cfg.Sampling != nil {
+	if scfg := cfg.Sampling; scfg != nil {
 		opts = append(opts, WrapCore(func(core zapcore.Core) zapcore.Core {
-			return zapcore.NewSampler(core, time.Second, int(cfg.Sampling.Initial), int(cfg.Sampling.Thereafter))
+			var samplerOpts []zapcore.SamplerOption
+			if scfg.Hook != nil {
+				samplerOpts = append(samplerOpts, zapcore.SamplerHook(scfg.Hook))
+			}
+			return zapcore.NewSamplerWithOptions(
+				core,
+				time.Second,
+				cfg.Sampling.Initial,
+				cfg.Sampling.Thereafter,
+				samplerOpts...,
+			)
 		}))
 	}
 

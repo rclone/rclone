@@ -31,7 +31,6 @@ import (
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/encoding"
-	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/internal/balancerload"
 	"google.golang.org/grpc/internal/binarylog"
 	"google.golang.org/grpc/internal/channelz"
@@ -278,7 +277,6 @@ func newClientStream(ctx context.Context, desc *StreamDesc, cc *ClientConn, meth
 	}
 	cs.binlog = binarylog.GetMethodLogger(method)
 
-	cs.callInfo.stream = cs
 	// Only this initial attempt has stats/tracing.
 	// TODO(dfawley): move to newAttempt when per-attempt stats are implemented.
 	if err := cs.newAttemptLocked(sh, trInfo); err != nil {
@@ -366,6 +364,11 @@ func (a *csAttempt) newStream() error {
 	cs.callHdr.PreviousAttempts = cs.numRetries
 	s, err := a.t.NewStream(cs.ctx, cs.callHdr)
 	if err != nil {
+		if _, ok := err.(transport.PerformedIOError); ok {
+			// Return without converting to an RPC error so retry code can
+			// inspect.
+			return err
+		}
 		return toRPCErr(err)
 	}
 	cs.attempt.s = s
@@ -461,11 +464,21 @@ func (cs *clientStream) commitAttempt() {
 // shouldRetry returns nil if the RPC should be retried; otherwise it returns
 // the error that should be returned by the operation.
 func (cs *clientStream) shouldRetry(err error) error {
-	if cs.attempt.s == nil && !cs.callInfo.failFast {
-		// In the event of any error from NewStream (attempt.s == nil), we
-		// never attempted to write anything to the wire, so we can retry
-		// indefinitely for non-fail-fast RPCs.
-		return nil
+	unprocessed := false
+	if cs.attempt.s == nil {
+		pioErr, ok := err.(transport.PerformedIOError)
+		if ok {
+			// Unwrap error.
+			err = toRPCErr(pioErr.Err)
+		} else {
+			unprocessed = true
+		}
+		if !ok && !cs.callInfo.failFast {
+			// In the event of a non-IO operation error from NewStream, we
+			// never attempted to write anything to the wire, so we can retry
+			// indefinitely for non-fail-fast RPCs.
+			return nil
+		}
 	}
 	if cs.finished || cs.committed {
 		// RPC is finished or committed; cannot retry.
@@ -474,13 +487,12 @@ func (cs *clientStream) shouldRetry(err error) error {
 	// Wait for the trailers.
 	if cs.attempt.s != nil {
 		<-cs.attempt.s.Done()
+		unprocessed = cs.attempt.s.Unprocessed()
 	}
-	if cs.firstAttempt && (cs.attempt.s == nil || cs.attempt.s.Unprocessed()) {
+	if cs.firstAttempt && unprocessed {
 		// First attempt, stream unprocessed: transparently retry.
-		cs.firstAttempt = false
 		return nil
 	}
-	cs.firstAttempt = false
 	if cs.cc.dopts.disableRetry {
 		return err
 	}
@@ -498,13 +510,13 @@ func (cs *clientStream) shouldRetry(err error) error {
 		if len(sps) == 1 {
 			var e error
 			if pushback, e = strconv.Atoi(sps[0]); e != nil || pushback < 0 {
-				grpclog.Infof("Server retry pushback specified to abort (%q).", sps[0])
+				channelz.Infof(cs.cc.channelzID, "Server retry pushback specified to abort (%q).", sps[0])
 				cs.retryThrottler.throttle() // This counts as a failure for throttling.
 				return err
 			}
 			hasPushback = true
 		} else if len(sps) > 1 {
-			grpclog.Warningf("Server retry pushback specified multiple values (%q); not retrying.", sps)
+			channelz.Warningf(cs.cc.channelzID, "Server retry pushback specified multiple values (%q); not retrying.", sps)
 			cs.retryThrottler.throttle() // This counts as a failure for throttling.
 			return err
 		}
@@ -566,6 +578,7 @@ func (cs *clientStream) retryLocked(lastErr error) error {
 			cs.commitAttemptLocked()
 			return err
 		}
+		cs.firstAttempt = false
 		if err := cs.newAttemptLocked(nil, nil); err != nil {
 			return err
 		}
@@ -800,6 +813,15 @@ func (cs *clientStream) finish(err error) {
 	}
 	cs.finished = true
 	cs.commitAttemptLocked()
+	if cs.attempt != nil {
+		cs.attempt.finish(err)
+		// after functions all rely upon having a stream.
+		if cs.attempt.s != nil {
+			for _, o := range cs.opts {
+				o.after(cs.callInfo, cs.attempt)
+			}
+		}
+	}
 	cs.mu.Unlock()
 	// For binary logging. only log cancel in finish (could be caused by RPC ctx
 	// canceled or ClientConn closed). Trailer will be logged in RecvMsg.
@@ -819,15 +841,6 @@ func (cs *clientStream) finish(err error) {
 			cs.cc.incrCallsFailed()
 		} else {
 			cs.cc.incrCallsSucceeded()
-		}
-	}
-	if cs.attempt != nil {
-		cs.attempt.finish(err)
-		// after functions all rely upon having a stream.
-		if cs.attempt.s != nil {
-			for _, o := range cs.opts {
-				o.after(cs.callInfo)
-			}
 		}
 	}
 	cs.cancel()
@@ -1067,7 +1080,6 @@ func newNonRetryClientStream(ctx context.Context, desc *StreamDesc, method strin
 		t:        t,
 	}
 
-	as.callInfo.stream = as
 	s, err := as.t.NewStream(as.ctx, as.callHdr)
 	if err != nil {
 		err = toRPCErr(err)

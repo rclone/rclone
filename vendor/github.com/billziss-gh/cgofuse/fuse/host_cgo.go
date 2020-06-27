@@ -379,6 +379,18 @@ static inline void hostCstatFromFusestat(fuse_stat_t *stbuf,
 #endif
 }
 
+static inline void hostAsgnCfileinfo(struct fuse_file_info *fi,
+	bool direct_io,
+	bool keep_cache,
+	bool nonseekable,
+	uint64_t fh)
+{
+	fi->direct_io = direct_io;
+	fi->keep_cache = keep_cache;
+	fi->nonseekable = nonseekable;
+	fi->fh = fh;
+}
+
 static inline int hostFilldir(fuse_fill_dir_t filler, void *buf,
 	char *name, fuse_stat_t *stbuf, fuse_off_t off)
 {
@@ -686,6 +698,17 @@ func c_hostCstatFromFusestat(stbuf *c_fuse_stat_t,
 		birthtimSec,
 		birthtimNsec,
 		flags)
+}
+func c_hostAsgnCfileinfo(fi *c_struct_fuse_file_info,
+	direct_io c_bool,
+	keep_cache c_bool,
+	nonseekable c_bool,
+	fh c_uint64_t) {
+	C.hostAsgnCfileinfo(fi,
+		direct_io,
+		keep_cache,
+		nonseekable,
+		fh)
 }
 func c_hostFilldir(filler c_fuse_fill_dir_t,
 	buf unsafe.Pointer, name *c_char, stbuf *c_fuse_stat_t, off c_fuse_off_t) c_int {

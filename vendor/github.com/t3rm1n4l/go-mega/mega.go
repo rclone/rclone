@@ -1529,7 +1529,7 @@ func (u *Upload) Finish() (node *Node, err error) {
 }
 
 // Upload a file to the filesystem
-func (m *Mega) UploadFile(srcpath string, parent *Node, name string, progress *chan int) (*Node, error) {
+func (m *Mega) UploadFile(srcpath string, parent *Node, name string, progress *chan int) (node *Node, err error) {
 	defer func() {
 		if progress != nil {
 			close(*progress)
@@ -1548,6 +1548,12 @@ func (m *Mega) UploadFile(srcpath string, parent *Node, name string, progress *c
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		e := infile.Close()
+		if err == nil {
+			err = e
+		}
+	}()
 
 	if name == "" {
 		name = filepath.Base(srcpath)

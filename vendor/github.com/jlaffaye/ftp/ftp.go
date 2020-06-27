@@ -760,6 +760,7 @@ func (c *ServerConn) Walk(root string) *Walker {
 	}
 
 	w.root = root
+	w.descend = true
 
 	return w
 }

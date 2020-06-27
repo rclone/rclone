@@ -1,0 +1,4 @@
+*~
+*.test
+validator
+golangci-lint

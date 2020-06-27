@@ -222,7 +222,7 @@ func (c *Connection) LargeObjectDelete(container string, objectName string) erro
 		for i, obj := range objects {
 			filenames[i] = obj[0] + "/" + obj[1]
 		}
-		_, err = c.doBulkDelete(filenames)
+		_, err = c.doBulkDelete(filenames, nil)
 		// Don't fail on ObjectNotFound because eventual consistency
 		// makes this situation normal.
 		if err != nil && err != Forbidden && err != ObjectNotFound {

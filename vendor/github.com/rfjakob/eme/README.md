@@ -24,6 +24,8 @@ Figure 2 from the [[eme]](#eme) paper shows an overview of the transformation:
 This is an implementation of EME in Go, complete with test vectors from IEEE [[p1619-2]](#p1619-2)
 and Halevi [[eme-32-testvec]](#eme-32-testvec).
 
+It has no dependencies outside the standard library.
+
 Is it patentend?
 ----------------
 
@@ -96,6 +98,10 @@ and must be bought from IEEE.
 
 Package Changelog
 -----------------
+
+v1.1.1, 2020-04-13
+* Update `go vet` call in `test.bash` to work on recent Go versions
+* No code changes
 
 v1.1, 2017-03-05
 * Add eme.New() / \*EMECipher convenience wrapper
