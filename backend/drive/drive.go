@@ -57,6 +57,7 @@ const (
 	rcloneEncryptedClientSecret = "eX8GpZTVx3vxMWVkuuBdDWmAUE6rGhTwVrvG9GhllYccSdj2-mvHVg"
 	driveFolderType             = "application/vnd.google-apps.folder"
 	shortcutMimeType            = "application/vnd.google-apps.shortcut"
+	shortcutMimeTypeDangling    = "application/vnd.google-apps.shortcut.dangling" // synthetic mime type for internal use
 	timeFormatIn                = time.RFC3339
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
 	defaultMinSleep             = fs.Duration(100 * time.Millisecond)
@@ -1356,6 +1357,10 @@ func (f *Fs) newObjectWithExportInfo(
 		// and not from a listing. This is unlikely.
 		fs.Debugf(remote, "Ignoring shortcut as skip shortcuts is set")
 		return nil, fs.ErrorObjectNotFound
+	case info.MimeType == shortcutMimeTypeDangling:
+		// Pretend a dangling shortcut is a regular object
+		// It will error if used, but appear in listings so it can be deleted
+		return f.newRegularObject(remote, info), nil
 	case info.Md5Checksum != "" || info.Size > 0:
 		// If item has MD5 sum or a length it is a file stored on drive
 		return f.newRegularObject(remote, info), nil
@@ -1980,6 +1985,12 @@ func (f *Fs) resolveShortcut(item *drive.File) (newItem *drive.File, err error) 
 	}
 	newItem, err = f.getFile(item.ShortcutDetails.TargetId, f.fileFields)
 	if err != nil {
+		if gerr, ok := errors.Cause(err).(*googleapi.Error); ok && gerr.Code == 404 {
+			// 404 means dangling shortcut, so just return the shortcut with the mime type mangled
+			fs.Logf(nil, "Dangling shortcut %q detected", item.Name)
+			item.MimeType = shortcutMimeTypeDangling
+			return item, nil
+		}
 		return nil, errors.Wrap(err, "failed to resolve shortcut")
 	}
 	// make sure we use the Name, Parents and Trashed from the original item
@@ -3223,6 +3234,9 @@ func (o *baseObject) open(ctx context.Context, url string, options ...fs.OpenOpt
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	if o.mimeType == shortcutMimeTypeDangling {
+		return nil, errors.New("can't read dangling shortcut")
+	}
 	if o.v2Download {
 		var v2File *drive_v2.File
 		err = o.fs.pacer.Call(func() (bool, error) {
