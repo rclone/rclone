@@ -158,6 +158,15 @@ type MountOptions struct {
 	// If set, ask kernel not to do automatic data cache invalidation.
 	// The filesystem is fully responsible for invalidating data cache.
 	ExplicitDataCacheControl bool
+
+	// If set, fuse will first attempt to use syscall.Mount instead of
+	// fusermount to mount the filesystem. This will not update /etc/mtab
+	// but might be needed if fusermount is not available.
+	DirectMount bool
+
+	// Options passed to syscall.Mount, the default value used by fusermount
+	// is syscall.MS_NOSUID|syscall.MS_NODEV
+	DirectMountFlags uintptr
 }
 
 // RawFileSystem is an interface close to the FUSE wire protocol.

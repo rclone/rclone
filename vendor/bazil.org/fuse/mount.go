@@ -9,11 +9,7 @@ import (
 )
 
 var (
-	// ErrOSXFUSENotFound is returned from Mount when the OSXFUSE
-	// installation is not detected.
-	//
-	// Only happens on OS X. Make sure OSXFUSE is installed, or see
-	// OSXFUSELocations for customization.
+	// Deprecated: Never used, OS X remnant.
 	ErrOSXFUSENotFound = errors.New("cannot locate OSXFUSE")
 )
 

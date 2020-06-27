@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/internal/sdkio"
 )
 
 const (
@@ -24,30 +23,6 @@ const (
 
 	appendMD5TxEncoding = "append-md5"
 )
-
-// contentMD5 computes and sets the HTTP Content-MD5 header for requests that
-// require it.
-func contentMD5(r *request.Request) {
-	h := md5.New()
-
-	if !aws.IsReaderSeekable(r.Body) {
-		if r.Config.Logger != nil {
-			r.Config.Logger.Log(fmt.Sprintf(
-				"Unable to compute Content-MD5 for unseekable body, S3.%s",
-				r.Operation.Name))
-		}
-		return
-	}
-
-	if _, err := copySeekableBody(h, r.Body); err != nil {
-		r.Error = awserr.New("ContentMD5", "failed to compute body MD5", err)
-		return
-	}
-
-	// encode the md5 checksum in base64 and set the request header.
-	v := base64.StdEncoding.EncodeToString(h.Sum(nil))
-	r.HTTPRequest.Header.Set(contentMD5Header, v)
-}
 
 // computeBodyHashes will add Content MD5 and Content Sha256 hashes to the
 // request. If the body is not seekable or S3DisableContentMD5Validation set
@@ -90,7 +65,7 @@ func computeBodyHashes(r *request.Request) {
 		dst = io.MultiWriter(hashers...)
 	}
 
-	if _, err := copySeekableBody(dst, r.Body); err != nil {
+	if _, err := aws.CopySeekableBody(dst, r.Body); err != nil {
 		r.Error = awserr.New("BodyHashError", "failed to compute body hashes", err)
 		return
 	}
@@ -118,28 +93,6 @@ const (
 	md5Base64EncLen = (md5.Size + 2) / 3 * 4 // base64.StdEncoding.EncodedLen
 	sha256HexEncLen = sha256.Size * 2        // hex.EncodedLen
 )
-
-func copySeekableBody(dst io.Writer, src io.ReadSeeker) (int64, error) {
-	curPos, err := src.Seek(0, sdkio.SeekCurrent)
-	if err != nil {
-		return 0, err
-	}
-
-	// hash the body.  seek back to the first position after reading to reset
-	// the body for transmission.  copy errors may be assumed to be from the
-	// body.
-	n, err := io.Copy(dst, src)
-	if err != nil {
-		return n, err
-	}
-
-	_, err = src.Seek(curPos, sdkio.SeekStart)
-	if err != nil {
-		return n, err
-	}
-
-	return n, nil
-}
 
 // Adds the x-amz-te: append_md5 header to the request. This requests the service
 // responds with a trailing MD5 checksum.

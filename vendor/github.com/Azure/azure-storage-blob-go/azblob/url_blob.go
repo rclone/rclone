@@ -29,6 +29,10 @@ func (b BlobURL) String() string {
 	return u.String()
 }
 
+func (b BlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
+	return b.blobClient.GetAccountInfo(ctx)
+}
+
 // WithPipeline creates a new BlobURL object identical to the source but with the specified request policy pipeline.
 func (b BlobURL) WithPipeline(p pipeline.Pipeline) BlobURL {
 	return NewBlobURL(b.blobClient.URL(), p)
@@ -68,7 +72,8 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	dr, err := b.blobClient.Download(ctx, nil, nil,
 		httpRange{offset: offset, count: count}.pointers(),
-		ac.LeaseAccessConditions.pointers(), xRangeGetContentMD5,
+		ac.LeaseAccessConditions.pointers(), xRangeGetContentMD5, nil,
+		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 	if err != nil {
 		return nil, err
@@ -103,7 +108,7 @@ func (b BlobURL) Undelete(ctx context.Context) (*BlobUndeleteResponse, error) {
 // does not update the blob's ETag.
 // For detailed information about block blob level tiering see https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-storage-tiers.
 func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAccessConditions) (*BlobSetTierResponse, error) {
-	return b.blobClient.SetTier(ctx, tier, nil, nil, lac.pointers())
+	return b.blobClient.SetTier(ctx, tier, nil, RehydratePriorityNone, nil, lac.pointers())
 }
 
 // GetBlobProperties returns the blob's properties.
@@ -111,6 +116,7 @@ func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAcce
 func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions) (*BlobGetPropertiesResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.GetProperties(ctx, nil, nil, ac.LeaseAccessConditions.pointers(),
+		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
@@ -129,6 +135,7 @@ func (b BlobURL) SetHTTPHeaders(ctx context.Context, h BlobHTTPHeaders, ac BlobA
 func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAccessConditions) (*BlobSetMetadataResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.SetMetadata(ctx, nil, metadata, ac.LeaseAccessConditions.pointers(),
+		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
@@ -139,7 +146,9 @@ func (b BlobURL) CreateSnapshot(ctx context.Context, metadata Metadata, ac BlobA
 	// because checking this would be a performance hit for a VERY unusual path and I don't think the common case should suffer this
 	// performance hit.
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
-	return b.blobClient.CreateSnapshot(ctx, nil, metadata, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, ac.LeaseAccessConditions.pointers(), nil)
+	return b.blobClient.CreateSnapshot(ctx, nil, metadata,
+		nil, nil, EncryptionAlgorithmNone, // CPK
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, ac.LeaseAccessConditions.pointers(), nil)
 }
 
 // AcquireLease acquires a lease on the blob for write and delete operations. The lease duration must be between
@@ -202,7 +211,7 @@ func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata 
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
 
 	return b.blobClient.StartCopyFromURL(ctx, source.String(), nil, metadata,
-		srcIfModifiedSince, srcIfUnmodifiedSince,
+		AccessTierNone, RehydratePriorityNone, srcIfModifiedSince, srcIfUnmodifiedSince,
 		srcIfMatchETag, srcIfNoneMatchETag,
 		dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag,

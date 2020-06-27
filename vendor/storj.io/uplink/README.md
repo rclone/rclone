@@ -39,9 +39,7 @@ cost. This is not the case with our downstream repo,
 # License
 
 This library is distributed under the
-[BSD-2-clause license with an explicit patent grant](https://spdx.org/licenses/BSD-2-Clause-Patent.html).
-
-See https://writing.kemitchell.com/2019/11/07/BSD-Patents.html for more details.
+[MIT license](https://opensource.org/licenses/MIT) (also known as the Expat license).
 
 # Support
 

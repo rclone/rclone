@@ -43,27 +43,34 @@ func newBlockBlobClient(url url.URL, p pipeline.Pipeline) blockBlobClient {
 // blob and returned with a read request. blobContentLanguage is optional. Set the blob's content language. If
 // specified, this property is stored with the blob and returned with a read request. blobContentMD5 is optional. An
 // MD5 hash of the blob content. Note that this hash is not validated, as the hashes for the individual blocks were
-// validated when each was uploaded. metadata is optional. Specifies a user-defined name-value pair associated with the
-// blob. If no name-value pairs are specified, the operation will copy the metadata from the source blob or file to the
-// destination blob. If one or more name-value pairs are specified, the destination blob is created with the specified
-// metadata, and metadata is not copied from the source blob or file. Note that beginning with version 2009-09-19,
-// metadata names must adhere to the naming rules for C# identifiers. See Naming and Referencing Containers, Blobs, and
-// Metadata for more information. leaseID is if specified, the operation only succeeds if the resource's lease is
-// active and matches this ID. blobContentDisposition is optional. Sets the blob's Content-Disposition header.
-// ifModifiedSince is specify this header value to operate only on a blob if it has been modified since the specified
-// date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been modified
-// since the specified date/time. ifMatch is specify an ETag value to operate only on blobs with a matching value.
-// ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides a
-// client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
-// analytics logging is enabled.
-func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobCommitBlockListResponse, error) {
+// validated when each was uploaded. transactionalContentMD5 is specify the transactional md5 for the body, to be
+// validated by the service. transactionalContentCrc64 is specify the transactional crc64 for the body, to be validated
+// by the service. metadata is optional. Specifies a user-defined name-value pair associated with the blob. If no
+// name-value pairs are specified, the operation will copy the metadata from the source blob or file to the destination
+// blob. If one or more name-value pairs are specified, the destination blob is created with the specified metadata,
+// and metadata is not copied from the source blob or file. Note that beginning with version 2009-09-19, metadata names
+// must adhere to the naming rules for C# identifiers. See Naming and Referencing Containers, Blobs, and Metadata for
+// more information. leaseID is if specified, the operation only succeeds if the resource's lease is active and matches
+// this ID. blobContentDisposition is optional. Sets the blob's Content-Disposition header. encryptionKey is optional.
+// Specifies the encryption key to use to encrypt the data provided in the request. If not specified, encryption is
+// performed with the root account encryption key.  For more information, see Encryption at Rest for Azure Storage
+// Services. encryptionKeySha256 is the SHA-256 hash of the provided encryption key. Must be provided if the
+// x-ms-encryption-key header is provided. encryptionAlgorithm is the algorithm used to produce the encryption key
+// hash. Currently, the only accepted value is "AES256". Must be provided if the x-ms-encryption-key header is
+// provided. tier is optional. Indicates the tier to be set on the blob. ifModifiedSince is specify this header value
+// to operate only on a blob if it has been modified since the specified date/time. ifUnmodifiedSince is specify this
+// header value to operate only on a blob if it has not been modified since the specified date/time. ifMatch is specify
+// an ETag value to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only
+// on blobs without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character
+// limit that is recorded in the analytics logs when storage analytics logging is enabled.
+func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobCommitBlockListResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.commitBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, requestID)
+	req, err := client.commitBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, transactionalContentMD5, transactionalContentCrc64, metadata, leaseID, blobContentDisposition, encryptionKey, encryptionKeySha256, encryptionAlgorithm, tier, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +82,7 @@ func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockL
 }
 
 // commitBlockListPreparer prepares the CommitBlockList request.
-func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -101,6 +108,12 @@ func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, ti
 	if blobContentMD5 != nil {
 		req.Header.Set("x-ms-blob-content-md5", base64.StdEncoding.EncodeToString(blobContentMD5))
 	}
+	if transactionalContentMD5 != nil {
+		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(transactionalContentMD5))
+	}
+	if transactionalContentCrc64 != nil {
+		req.Header.Set("x-ms-content-crc64", base64.StdEncoding.EncodeToString(transactionalContentCrc64))
+	}
 	if metadata != nil {
 		for k, v := range metadata {
 			req.Header.Set("x-ms-meta-"+k, v)
@@ -111,6 +124,18 @@ func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, ti
 	}
 	if blobContentDisposition != nil {
 		req.Header.Set("x-ms-blob-content-disposition", *blobContentDisposition)
+	}
+	if encryptionKey != nil {
+		req.Header.Set("x-ms-encryption-key", *encryptionKey)
+	}
+	if encryptionKeySha256 != nil {
+		req.Header.Set("x-ms-encryption-key-sha256", *encryptionKeySha256)
+	}
+	if encryptionAlgorithm != EncryptionAlgorithmNone {
+		req.Header.Set("x-ms-encryption-algorithm", string(encryptionAlgorithm))
+	}
+	if tier != AccessTierNone {
+		req.Header.Set("x-ms-access-tier", string(tier))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
@@ -238,13 +263,19 @@ func (client blockBlobClient) getBlockListResponder(resp pipeline.Response) (pip
 // equal to 64 bytes in size. For a given blob, the length of the value specified for the blockid parameter must be the
 // same size for each block. contentLength is the length of the request. body is initial data body will be closed upon
 // successful return. Callers should ensure closure when receiving an error.transactionalContentMD5 is specify the
-// transactional md5 for the body, to be validated by the service. timeout is the timeout parameter is expressed in
+// transactional md5 for the body, to be validated by the service. transactionalContentCrc64 is specify the
+// transactional crc64 for the body, to be validated by the service. timeout is the timeout parameter is expressed in
 // seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
-// lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
-// limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, contentLength int64, body io.ReadSeeker, transactionalContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockResponse, error) {
+// lease is active and matches this ID. encryptionKey is optional. Specifies the encryption key to use to encrypt the
+// data provided in the request. If not specified, encryption is performed with the root account encryption key.  For
+// more information, see Encryption at Rest for Azure Storage Services. encryptionKeySha256 is the SHA-256 hash of the
+// provided encryption key. Must be provided if the x-ms-encryption-key header is provided. encryptionAlgorithm is the
+// algorithm used to produce the encryption key hash. Currently, the only accepted value is "AES256". Must be provided
+// if the x-ms-encryption-key header is provided. requestID is provides a client-generated, opaque value with a 1 KB
+// character limit that is recorded in the analytics logs when storage analytics logging is enabled.
+func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, contentLength int64, body io.ReadSeeker, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, requestID *string) (*BlockBlobStageBlockResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -253,7 +284,7 @@ func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, co
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.stageBlockPreparer(blockID, contentLength, body, transactionalContentMD5, timeout, leaseID, requestID)
+	req, err := client.stageBlockPreparer(blockID, contentLength, body, transactionalContentMD5, transactionalContentCrc64, timeout, leaseID, encryptionKey, encryptionKeySha256, encryptionAlgorithm, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +296,7 @@ func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, co
 }
 
 // stageBlockPreparer prepares the StageBlock request.
-func (client blockBlobClient) stageBlockPreparer(blockID string, contentLength int64, body io.ReadSeeker, transactionalContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) stageBlockPreparer(blockID string, contentLength int64, body io.ReadSeeker, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -281,8 +312,20 @@ func (client blockBlobClient) stageBlockPreparer(blockID string, contentLength i
 	if transactionalContentMD5 != nil {
 		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(transactionalContentMD5))
 	}
+	if transactionalContentCrc64 != nil {
+		req.Header.Set("x-ms-content-crc64", base64.StdEncoding.EncodeToString(transactionalContentCrc64))
+	}
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if encryptionKey != nil {
+		req.Header.Set("x-ms-encryption-key", *encryptionKey)
+	}
+	if encryptionKeySha256 != nil {
+		req.Header.Set("x-ms-encryption-key-sha256", *encryptionKeySha256)
+	}
+	if encryptionAlgorithm != EncryptionAlgorithmNone {
+		req.Header.Set("x-ms-encryption-algorithm", string(encryptionAlgorithm))
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
@@ -309,24 +352,30 @@ func (client blockBlobClient) stageBlockResponder(resp pipeline.Response) (pipel
 // equal to 64 bytes in size. For a given blob, the length of the value specified for the blockid parameter must be the
 // same size for each block. contentLength is the length of the request. sourceURL is specify a URL to the copy source.
 // sourceRange is bytes of source data in the specified range. sourceContentMD5 is specify the md5 calculated for the
+// range of bytes that must be read from the copy source. sourceContentcrc64 is specify the crc64 calculated for the
 // range of bytes that must be read from the copy source. timeout is the timeout parameter is expressed in seconds. For
 // more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
-// lease is active and matches this ID. sourceIfModifiedSince is specify this header value to operate only on a blob if
-// it has been modified since the specified date/time. sourceIfUnmodifiedSince is specify this header value to operate
-// only on a blob if it has not been modified since the specified date/time. sourceIfMatch is specify an ETag value to
-// operate only on blobs with a matching value. sourceIfNoneMatch is specify an ETag value to operate only on blobs
-// without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
-// recorded in the analytics logs when storage analytics logging is enabled.
-func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
+// Timeouts for Blob Service Operations.</a> encryptionKey is optional. Specifies the encryption key to use to encrypt
+// the data provided in the request. If not specified, encryption is performed with the root account encryption key.
+// For more information, see Encryption at Rest for Azure Storage Services. encryptionKeySha256 is the SHA-256 hash of
+// the provided encryption key. Must be provided if the x-ms-encryption-key header is provided. encryptionAlgorithm is
+// the algorithm used to produce the encryption key hash. Currently, the only accepted value is "AES256". Must be
+// provided if the x-ms-encryption-key header is provided. leaseID is if specified, the operation only succeeds if the
+// resource's lease is active and matches this ID. sourceIfModifiedSince is specify this header value to operate only
+// on a blob if it has been modified since the specified date/time. sourceIfUnmodifiedSince is specify this header
+// value to operate only on a blob if it has not been modified since the specified date/time. sourceIfMatch is specify
+// an ETag value to operate only on blobs with a matching value. sourceIfNoneMatch is specify an ETag value to operate
+// only on blobs without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character
+// limit that is recorded in the analytics logs when storage analytics logging is enabled.
+func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, leaseID *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.stageBlockFromURLPreparer(blockID, contentLength, sourceURL, sourceRange, sourceContentMD5, timeout, leaseID, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, requestID)
+	req, err := client.stageBlockFromURLPreparer(blockID, contentLength, sourceURL, sourceRange, sourceContentMD5, sourceContentcrc64, timeout, encryptionKey, encryptionKeySha256, encryptionAlgorithm, leaseID, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +387,7 @@ func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID str
 }
 
 // stageBlockFromURLPreparer prepares the StageBlockFromURL request.
-func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, leaseID *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -357,6 +406,18 @@ func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentL
 	}
 	if sourceContentMD5 != nil {
 		req.Header.Set("x-ms-source-content-md5", base64.StdEncoding.EncodeToString(sourceContentMD5))
+	}
+	if sourceContentcrc64 != nil {
+		req.Header.Set("x-ms-source-content-crc64", base64.StdEncoding.EncodeToString(sourceContentcrc64))
+	}
+	if encryptionKey != nil {
+		req.Header.Set("x-ms-encryption-key", *encryptionKey)
+	}
+	if encryptionKeySha256 != nil {
+		req.Header.Set("x-ms-encryption-key-sha256", *encryptionKeySha256)
+	}
+	if encryptionAlgorithm != EncryptionAlgorithmNone {
+		req.Header.Set("x-ms-encryption-algorithm", string(encryptionAlgorithm))
 	}
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
@@ -400,27 +461,33 @@ func (client blockBlobClient) stageBlockFromURLResponder(resp pipeline.Response)
 // error.contentLength is the length of the request. timeout is the timeout parameter is expressed in seconds. For more
 // information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> blobContentType is optional. Sets the blob's content type. If specified,
-// this property is stored with the blob and returned with a read request. blobContentEncoding is optional. Sets the
-// blob's content encoding. If specified, this property is stored with the blob and returned with a read request.
-// blobContentLanguage is optional. Set the blob's content language. If specified, this property is stored with the
-// blob and returned with a read request. blobContentMD5 is optional. An MD5 hash of the blob content. Note that this
-// hash is not validated, as the hashes for the individual blocks were validated when each was uploaded.
-// blobCacheControl is optional. Sets the blob's cache control. If specified, this property is stored with the blob and
-// returned with a read request. metadata is optional. Specifies a user-defined name-value pair associated with the
-// blob. If no name-value pairs are specified, the operation will copy the metadata from the source blob or file to the
-// destination blob. If one or more name-value pairs are specified, the destination blob is created with the specified
-// metadata, and metadata is not copied from the source blob or file. Note that beginning with version 2009-09-19,
-// metadata names must adhere to the naming rules for C# identifiers. See Naming and Referencing Containers, Blobs, and
-// Metadata for more information. leaseID is if specified, the operation only succeeds if the resource's lease is
-// active and matches this ID. blobContentDisposition is optional. Sets the blob's Content-Disposition header.
-// ifModifiedSince is specify this header value to operate only on a blob if it has been modified since the specified
-// date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been modified
-// since the specified date/time. ifMatch is specify an ETag value to operate only on blobs with a matching value.
-// ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides a
-// client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
-// analytics logging is enabled.
-func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobUploadResponse, error) {
+// Timeouts for Blob Service Operations.</a> transactionalContentMD5 is specify the transactional md5 for the body, to
+// be validated by the service. blobContentType is optional. Sets the blob's content type. If specified, this property
+// is stored with the blob and returned with a read request. blobContentEncoding is optional. Sets the blob's content
+// encoding. If specified, this property is stored with the blob and returned with a read request. blobContentLanguage
+// is optional. Set the blob's content language. If specified, this property is stored with the blob and returned with
+// a read request. blobContentMD5 is optional. An MD5 hash of the blob content. Note that this hash is not validated,
+// as the hashes for the individual blocks were validated when each was uploaded. blobCacheControl is optional. Sets
+// the blob's cache control. If specified, this property is stored with the blob and returned with a read request.
+// metadata is optional. Specifies a user-defined name-value pair associated with the blob. If no name-value pairs are
+// specified, the operation will copy the metadata from the source blob or file to the destination blob. If one or more
+// name-value pairs are specified, the destination blob is created with the specified metadata, and metadata is not
+// copied from the source blob or file. Note that beginning with version 2009-09-19, metadata names must adhere to the
+// naming rules for C# identifiers. See Naming and Referencing Containers, Blobs, and Metadata for more information.
+// leaseID is if specified, the operation only succeeds if the resource's lease is active and matches this ID.
+// blobContentDisposition is optional. Sets the blob's Content-Disposition header. encryptionKey is optional. Specifies
+// the encryption key to use to encrypt the data provided in the request. If not specified, encryption is performed
+// with the root account encryption key.  For more information, see Encryption at Rest for Azure Storage Services.
+// encryptionKeySha256 is the SHA-256 hash of the provided encryption key. Must be provided if the x-ms-encryption-key
+// header is provided. encryptionAlgorithm is the algorithm used to produce the encryption key hash. Currently, the
+// only accepted value is "AES256". Must be provided if the x-ms-encryption-key header is provided. tier is optional.
+// Indicates the tier to be set on the blob. ifModifiedSince is specify this header value to operate only on a blob if
+// it has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate only
+// on a blob if it has not been modified since the specified date/time. ifMatch is specify an ETag value to operate
+// only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a
+// matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded
+// in the analytics logs when storage analytics logging is enabled.
+func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobUploadResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -429,7 +496,7 @@ func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, co
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.uploadPreparer(body, contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, requestID)
+	req, err := client.uploadPreparer(body, contentLength, timeout, transactionalContentMD5, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, encryptionKey, encryptionKeySha256, encryptionAlgorithm, tier, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -441,7 +508,7 @@ func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, co
 }
 
 // uploadPreparer prepares the Upload request.
-func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -451,6 +518,9 @@ func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength i
 		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	req.URL.RawQuery = params.Encode()
+	if transactionalContentMD5 != nil {
+		req.Header.Set("Content-MD5", base64.StdEncoding.EncodeToString(transactionalContentMD5))
+	}
 	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
 	if blobContentType != nil {
 		req.Header.Set("x-ms-blob-content-type", *blobContentType)
@@ -477,6 +547,18 @@ func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength i
 	}
 	if blobContentDisposition != nil {
 		req.Header.Set("x-ms-blob-content-disposition", *blobContentDisposition)
+	}
+	if encryptionKey != nil {
+		req.Header.Set("x-ms-encryption-key", *encryptionKey)
+	}
+	if encryptionKeySha256 != nil {
+		req.Header.Set("x-ms-encryption-key-sha256", *encryptionKeySha256)
+	}
+	if encryptionAlgorithm != EncryptionAlgorithmNone {
+		req.Header.Set("x-ms-encryption-algorithm", string(encryptionAlgorithm))
+	}
+	if tier != AccessTierNone {
+		req.Header.Set("x-ms-access-tier", string(tier))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))

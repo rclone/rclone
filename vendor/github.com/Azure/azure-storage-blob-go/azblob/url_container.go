@@ -32,6 +32,10 @@ func (c ContainerURL) String() string {
 	return u.String()
 }
 
+func (c ContainerURL) GetAccountInfo(ctx context.Context) (*ContainerGetAccountInfoResponse, error) {
+	return c.client.GetAccountInfo(ctx)
+}
+
 // WithPipeline creates a new ContainerURL object identical to the source but with the specified request policy pipeline.
 func (c ContainerURL) WithPipeline(p pipeline.Pipeline) ContainerURL {
 	return NewContainerURL(c.URL(), p)

@@ -47,7 +47,7 @@ func isBoringMountFusefsError(err error) bool {
 	return false
 }
 
-func mount(dir string, conf *mountConfig, ready chan<- struct{}, errp *error) (*os.File, error) {
+func mount(dir string, conf *mountConfig) (*os.File, error) {
 	for k, v := range conf.options {
 		if strings.Contains(k, ",") || strings.Contains(v, ",") {
 			// Silly limitation but the mount helper does not
@@ -56,9 +56,8 @@ func mount(dir string, conf *mountConfig, ready chan<- struct{}, errp *error) (*
 		}
 	}
 
-	f, err := os.OpenFile("/dev/fuse", os.O_RDWR, 0000)
+	f, err := os.OpenFile("/dev/fuse", os.O_RDWR, 0o000)
 	if err != nil {
-		*errp = err
 		return nil, err
 	}
 
@@ -106,6 +105,5 @@ func mount(dir string, conf *mountConfig, ready chan<- struct{}, errp *error) (*
 		return nil, fmt.Errorf("mount_fusefs: %v", err)
 	}
 
-	close(ready)
 	return f, nil
 }

@@ -258,6 +258,12 @@ func (log *Logger) check(lvl zapcore.Level, msg string) *zapcore.CheckedEntry {
 	// (e.g., Check, Info, Fatal).
 	const callerSkipOffset = 2
 
+	// Check the level first to reduce the cost of disabled log calls.
+	// Since Panic and higher may exit, we skip the optimization for those levels.
+	if lvl < zapcore.DPanicLevel && !log.core.Enabled(lvl) {
+		return nil
+	}
+
 	// Create basic checked entry thru the core; this will be non-nil if the
 	// log message will actually be written somewhere.
 	ent := zapcore.Entry{

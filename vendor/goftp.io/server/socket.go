@@ -134,24 +134,25 @@ func isErrorAddressAlreadyInUse(err error) bool {
 	return false
 }
 
-func newPassiveSocket(host string, port func() int, logger Logger, sessionID string, tlsConfig *tls.Config) (DataSocket, error) {
+func (conn *Conn) newPassiveSocket() (DataSocket, error) {
 	socket := new(ftpPassiveSocket)
 	socket.ingress = make(chan []byte)
 	socket.egress = make(chan []byte)
-	socket.logger = logger
-	socket.host = host
-	socket.tlsConfig = tlsConfig
+	socket.logger = conn.logger
+	socket.host = conn.passiveListenIP()
+	socket.tlsConfig = conn.tlsConfig
 	const retries = 10
 	var err error
 	for i := 1; i <= retries; i++ {
-		socket.port = port()
-		err = socket.GoListenAndServe(sessionID)
+		socket.port = conn.PassivePort()
+		err = socket.GoListenAndServe(conn.sessionID)
 		if err != nil && socket.port != 0 && isErrorAddressAlreadyInUse(err) {
 			// choose a different port on error already in use
 			continue
 		}
 		break
 	}
+	conn.dataConn = socket
 	return socket, err
 }
 

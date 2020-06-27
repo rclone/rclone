@@ -1,12 +1,14 @@
 #!/bin/bash
 
-if [[ `uname -a` = *"Darwin"* ]]; then
-  echo "It seems you are running on Mac. This script does not work on Mac. See https://github.com/grpc/grpc-go/issues/2047"
-  exit 1
-fi
-
 set -ex  # Exit on error; debugging enabled.
 set -o pipefail  # Fail a pipe if any sub-command fails.
+
+# not makes sure the command passed to it does not exit with a return code of 0.
+not() {
+  # This is required instead of the earlier (! $COMMAND) because subshells and
+  # pipefail don't work the same on Darwin as in Linux.
+  ! "$@"
+}
 
 die() {
   echo "$@" >&2
@@ -14,7 +16,7 @@ die() {
 }
 
 fail_on_output() {
-  tee /dev/stderr | (! read)
+  tee /dev/stderr | not read
 }
 
 # Check to make sure it's safe to modify the user's git repo.
@@ -37,8 +39,7 @@ if [[ "$1" = "-install" ]]; then
       golang.org/x/lint/golint \
       golang.org/x/tools/cmd/goimports \
       honnef.co/go/tools/cmd/staticcheck \
-      github.com/client9/misspell/cmd/misspell \
-      github.com/golang/protobuf/protoc-gen-go
+      github.com/client9/misspell/cmd/misspell
     popd
   else
     # Ye olde `go get` incantation.
@@ -48,8 +49,7 @@ if [[ "$1" = "-install" ]]; then
       golang.org/x/lint/golint \
       golang.org/x/tools/cmd/goimports \
       honnef.co/go/tools/cmd/staticcheck \
-      github.com/client9/misspell/cmd/misspell \
-      github.com/golang/protobuf/protoc-gen-go
+      github.com/client9/misspell/cmd/misspell
   fi
   if [[ -z "${VET_SKIP_PROTO}" ]]; then
     if [[ "${TRAVIS}" = "true" ]]; then
@@ -60,7 +60,7 @@ if [[ "$1" = "-install" ]]; then
       unzip ${PROTOC_FILENAME}
       bin/protoc --version
       popd
-    elif ! which protoc > /dev/null; then
+    elif not which protoc > /dev/null; then
       die "Please install protoc into your path"
     fi
   fi
@@ -70,21 +70,24 @@ elif [[ "$#" -ne 0 ]]; then
 fi
 
 # - Ensure all source files contain a copyright message.
-(! git grep -L "\(Copyright [0-9]\{4,\} gRPC authors\)\|DO NOT EDIT" -- '*.go')
+not git grep -L "\(Copyright [0-9]\{4,\} gRPC authors\)\|DO NOT EDIT" -- '*.go'
 
 # - Make sure all tests in grpc and grpc/test use leakcheck via Teardown.
-(! grep 'func Test[^(]' *_test.go)
-(! grep 'func Test[^(]' test/*.go)
+not grep 'func Test[^(]' *_test.go
+not grep 'func Test[^(]' test/*.go
 
 # - Do not import x/net/context.
-(! git grep -l 'x/net/context' -- "*.go")
+not git grep -l 'x/net/context' -- "*.go"
 
 # - Do not import math/rand for real library code.  Use internal/grpcrand for
 #   thread safety.
-git grep -l '"math/rand"' -- "*.go" 2>&1 | (! grep -v '^examples\|^stress\|grpcrand\|^benchmark\|wrr_test')
+git grep -l '"math/rand"' -- "*.go" 2>&1 | not grep -v '^examples\|^stress\|grpcrand\|^benchmark\|wrr_test'
 
 # - Ensure all ptypes proto packages are renamed when importing.
-(! git grep "\(import \|^\s*\)\"github.com/golang/protobuf/ptypes/" -- "*.go")
+not git grep "\(import \|^\s*\)\"github.com/golang/protobuf/ptypes/" -- "*.go"
+
+# - Ensure all xds proto imports are renamed to *pb or *grpc.
+git grep '"github.com/envoyproxy/go-control-plane/envoy' -- '*.go' | not grep -v 'pb "\|grpc "'
 
 # - Check imports that are illegal in appengine (until Go 1.11).
 # TODO: Remove when we drop Go 1.10 support
@@ -92,9 +95,9 @@ go list -f {{.Dir}} ./... | xargs go run test/go_vet/vet.go
 
 # - gofmt, goimports, golint (with exceptions for generated code), go vet.
 gofmt -s -d -l . 2>&1 | fail_on_output
-goimports -l . 2>&1 | (! grep -vE "(_mock|\.pb)\.go")
-golint ./... 2>&1 | (! grep -vE "(_mock|\.pb)\.go:")
-go vet -all .
+goimports -l . 2>&1 | not grep -vE "(_mock|\.pb)\.go"
+golint ./... 2>&1 | not grep -vE "(_mock|\.pb)\.go:"
+go vet -all ./...
 
 misspell -error .
 
@@ -119,16 +122,15 @@ fi
 SC_OUT="$(mktemp)"
 staticcheck -go 1.9 -checks 'inherit,-ST1015' ./... > "${SC_OUT}" || true
 # Error if anything other than deprecation warnings are printed.
-(! grep -v "is deprecated:.*SA1019" "${SC_OUT}")
+not grep -v "is deprecated:.*SA1019" "${SC_OUT}"
 # Only ignore the following deprecated types/fields/functions.
-(! grep -Fv '.HandleResolvedAddrs
-.HandleSubConnStateChange
+not grep -Fv '.CredsBundle
 .HeaderMap
+.Metadata is deprecated: use Attributes
 .NewAddress
 .NewServiceConfig
-.Metadata is deprecated: use Attributes
 .Type is deprecated: use Attributes
-.UpdateBalancerState
+balancer.ErrTransientFailure
 balancer.Picker
 grpc.CallCustomCodec
 grpc.Code
@@ -140,9 +142,7 @@ grpc.NewGZIPCompressor
 grpc.NewGZIPDecompressor
 grpc.RPCCompressor
 grpc.RPCDecompressor
-grpc.RoundRobin
 grpc.ServiceConfig
-grpc.WithBalancer
 grpc.WithBalancerName
 grpc.WithCompressor
 grpc.WithDecompressor
@@ -151,9 +151,39 @@ grpc.WithMaxMsgSize
 grpc.WithServiceConfig
 grpc.WithTimeout
 http.CloseNotifier
-naming.Resolver
-naming.Update
-naming.Watcher
+info.SecurityVersion
 resolver.Backend
 resolver.GRPCLB' "${SC_OUT}"
-)
+
+# - special golint on package comments.
+lint_package_comment_per_package() {
+  # Number of files in this go package.
+  fileCount=$(go list -f '{{len .GoFiles}}' $1)
+  if [ ${fileCount} -eq 0 ]; then
+    return 0
+  fi
+  # Number of package errors generated by golint.
+  lintPackageCommentErrorsCount=$(golint --min_confidence 0 $1 | grep -c "should have a package comment")
+  # golint complains about every file that's missing the package comment. If the
+  # number of files for this package is greater than the number of errors, there's
+  # at least one file with package comment, good. Otherwise, fail.
+  if [ ${fileCount} -le ${lintPackageCommentErrorsCount} ]; then
+    echo "Package $1 (with ${fileCount} files) is missing package comment"
+    return 1
+  fi
+}
+lint_package_comment() {
+  set +ex
+
+  count=0
+  for i in $(go list ./...); do
+    lint_package_comment_per_package "$i"
+    ((count += $?))
+  done
+
+  set -ex
+  return $count
+}
+lint_package_comment
+
+echo SUCCESS

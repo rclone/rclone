@@ -426,6 +426,22 @@ func c_hostCstatFromFusestat(stbuf *c_fuse_stat_t,
 		stbuf.st_birthtim.tv_nsec = uintptr(ctimNsec)
 	}
 }
+func c_hostAsgnCfileinfo(fi *c_struct_fuse_file_info,
+	direct_io c_bool,
+	keep_cache c_bool,
+	nonseekable c_bool,
+	fh c_uint64_t) {
+	if direct_io {
+		fi.bits |= 1
+	}
+	if keep_cache {
+		fi.bits |= 2
+	}
+	if nonseekable {
+		fi.bits |= 8
+	}
+	fi.fh = fh
+}
 func c_hostFilldir(filler c_fuse_fill_dir_t,
 	buf unsafe.Pointer, name *c_char, stbuf *c_fuse_stat_t, off c_fuse_off_t) c_int {
 	var r uintptr

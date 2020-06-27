@@ -26,7 +26,7 @@
   "description": "Stores and retrieves potentially large, immutable data objects.",
   "discoveryVersion": "v1",
   "documentationLink": "https://developers.google.com/storage/docs/json_api/",
-  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/Hs4LXeoJXbMtbcM0DbLgg3CHzL4\"",
+  "etag": "\"u9GIe6H63LSGq-9_t39K2Zx_EAc/SMGMLKKvE-TZrla7d9TA_SDVTI0\"",
   "icons": {
     "x16": "https://www.google.com/images/icons/product/cloud_storage-16.png",
     "x32": "https://www.google.com/images/icons/product/cloud_storage-32.png"
@@ -3229,7 +3229,7 @@
       }
     }
   },
-  "revision": "20200326",
+  "revision": "20200430",
   "rootUrl": "https://storage.googleapis.com/",
   "schemas": {
     "Bucket": {
@@ -3405,6 +3405,21 @@
                         "format": "date",
                         "type": "string"
                       },
+                      "customTimeBefore": {
+                        "description": "A timestamp in RFC 3339 format. This condition is satisfied when the custom time on an object is before this timestamp.",
+                        "format": "date-time",
+                        "type": "string"
+                      },
+                      "daysSinceCustomTime": {
+                        "description": "Number of days elapsed since the user-specified timestamp set on an object. The condition is satisfied if the days elapsed is at least this number. If no custom timestamp is specified on an object, the condition does not apply.",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      "daysSinceNoncurrentTime": {
+                        "description": "Number of days elapsed since the noncurrent timestamp of an object. The condition is satisfied if the days elapsed is at least this number. This condition is relevant only for versioned objects. The value of the field must be a nonnegative integer. If it's zero, the object version will become eligible for Lifecycle action as soon as it becomes noncurrent.",
+                        "format": "int32",
+                        "type": "integer"
+                      },
                       "isLive": {
                         "description": "Relevant only for versioned objects. If the value is true, this condition matches live objects; if the value is false, it matches archived objects.",
                         "type": "boolean"
@@ -3419,6 +3434,11 @@
                           "type": "string"
                         },
                         "type": "array"
+                      },
+                      "noncurrentTimeBefore": {
+                        "description": "A timestamp in RFC 3339 format. This condition is satisfied when the noncurrent time on an object is before this timestamp. This condition is relevant only for versioned objects.",
+                        "format": "date-time",
+                        "type": "string"
                       },
                       "numNewerVersions": {
                         "description": "Relevant only for versioned objects. If the value is N, this condition is satisfied when there are at least N versions (including the live version) newer than this version of the object.",
@@ -4032,6 +4052,11 @@
         },
         "crc32c": {
           "description": "CRC32c checksum, as described in RFC 4960, Appendix B; encoded using base64 in big-endian byte order. For more information about using the CRC32c checksum, see Hashes and ETags: Best Practices.",
+          "type": "string"
+        },
+        "customTime": {
+          "description": "A timestamp in RFC 3339 format specified by the user for an object.",
+          "format": "date-time",
           "type": "string"
         },
         "customerEncryption": {

@@ -301,6 +301,10 @@ func DoBatchTransfer(ctx context.Context, o BatchTransferOptions) error {
 		return errors.New("ChunkSize cannot be 0")
 	}
 
+	if o.Parallelism == 0 {
+		o.Parallelism = 5 // default Parallelism
+	}
+
 	// Prepare and do parallel operations.
 	numChunks := uint16(((o.TransferSize - 1) / o.ChunkSize) + 1)
 	operationChannel := make(chan func() error, o.Parallelism) // Create the channel that release 'Parallelism' goroutines concurrently
@@ -309,9 +313,6 @@ func DoBatchTransfer(ctx context.Context, o BatchTransferOptions) error {
 	defer cancel()
 
 	// Create the goroutines that process each operation (in parallel).
-	if o.Parallelism == 0 {
-		o.Parallelism = 5 // default Parallelism
-	}
 	for g := uint16(0); g < o.Parallelism; g++ {
 		//grIndex := g
 		go func() {
@@ -352,192 +353,44 @@ func DoBatchTransfer(ctx context.Context, o BatchTransferOptions) error {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+const _1MiB = 1024 * 1024
+
 type UploadStreamToBlockBlobOptions struct {
-	BufferSize       int
+	// BufferSize sizes the buffer used to read data from source. If < 1 MiB, defaults to 1 MiB.
+	BufferSize int
+	// MaxBuffers defines the number of simultaneous uploads will be performed to upload the file.
 	MaxBuffers       int
 	BlobHTTPHeaders  BlobHTTPHeaders
 	Metadata         Metadata
 	AccessConditions BlobAccessConditions
 }
 
+func (u *UploadStreamToBlockBlobOptions) defaults() {
+	if u.MaxBuffers == 0 {
+		u.MaxBuffers = 1
+	}
+
+	if u.BufferSize < _1MiB {
+		u.BufferSize = _1MiB
+	}
+}
+
+// UploadStreamToBlockBlob copies the file held in io.Reader to the Blob at blockBlobURL.
+// A Context deadline or cancellation will cause this to error.
 func UploadStreamToBlockBlob(ctx context.Context, reader io.Reader, blockBlobURL BlockBlobURL,
 	o UploadStreamToBlockBlobOptions) (CommonResponse, error) {
-	result, err := uploadStream(ctx, reader,
-		UploadStreamOptions{BufferSize: o.BufferSize, MaxBuffers: o.MaxBuffers},
-		&uploadStreamToBlockBlobOptions{b: blockBlobURL, o: o, blockIDPrefix: newUUID()})
+	o.defaults()
+
+	result, err := copyFromReader(ctx, reader, blockBlobURL, o)
 	if err != nil {
 		return nil, err
 	}
-	return result.(CommonResponse), nil
+
+	return result, nil
 }
 
-type uploadStreamToBlockBlobOptions struct {
-	b             BlockBlobURL
-	o             UploadStreamToBlockBlobOptions
-	blockIDPrefix uuid   // UUID used with all blockIDs
-	maxBlockNum   uint32 // defaults to 0
-	firstBlock    []byte // Used only if maxBlockNum is 0
-}
-
-func (t *uploadStreamToBlockBlobOptions) start(ctx context.Context) (interface{}, error) {
-	return nil, nil
-}
-
-func (t *uploadStreamToBlockBlobOptions) chunk(ctx context.Context, num uint32, buffer []byte) error {
-	if num == 0 {
-		t.firstBlock = buffer
-
-		// If whole payload fits in 1 block, don't stage it; End will upload it with 1 I/O operation
-		// If the payload is exactly the same size as the buffer, there may be more content coming in.
-		if len(buffer) < t.o.BufferSize {
-			return nil
-		}
-	}
-	// Else, upload a staged block...
-	atomicMorphUint32(&t.maxBlockNum, func(startVal uint32) (val uint32, morphResult interface{}) {
-		// Atomically remember (in t.numBlocks) the maximum block num we've ever seen
-		if startVal < num {
-			return num, nil
-		}
-		return startVal, nil
-	})
-	blockID := newUuidBlockID(t.blockIDPrefix).WithBlockNumber(num).ToBase64()
-	_, err := t.b.StageBlock(ctx, blockID, bytes.NewReader(buffer), LeaseAccessConditions{}, nil)
-	return err
-}
-
-func (t *uploadStreamToBlockBlobOptions) end(ctx context.Context) (interface{}, error) {
-	// If the first block had the exact same size as the buffer
-	// we would have staged it as a block thinking that there might be more data coming
-	if t.maxBlockNum == 0 && len(t.firstBlock) != t.o.BufferSize {
-		// If whole payload fits in 1 block (block #0), upload it with 1 I/O operation
-		return t.b.Upload(ctx, bytes.NewReader(t.firstBlock),
-			t.o.BlobHTTPHeaders, t.o.Metadata, t.o.AccessConditions)
-	}
-	// Multiple blocks staged, commit them all now
-	blockID := newUuidBlockID(t.blockIDPrefix)
-	blockIDs := make([]string, t.maxBlockNum+1)
-	for bn := uint32(0); bn <= t.maxBlockNum; bn++ {
-		blockIDs[bn] = blockID.WithBlockNumber(bn).ToBase64()
-	}
-	return t.b.CommitBlockList(ctx, blockIDs, t.o.BlobHTTPHeaders, t.o.Metadata, t.o.AccessConditions)
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-type iTransfer interface {
-	start(ctx context.Context) (interface{}, error)
-	chunk(ctx context.Context, num uint32, buffer []byte) error
-	end(ctx context.Context) (interface{}, error)
-}
-
+// UploadStreamOptions (defunct) was used internally. This will be removed or made private in a future version.
 type UploadStreamOptions struct {
-	MaxBuffers int
 	BufferSize int
-}
-
-type firstErr struct {
-	lock       sync.Mutex
-	finalError error
-}
-
-func (fe *firstErr) set(err error) {
-	fe.lock.Lock()
-	if fe.finalError == nil {
-		fe.finalError = err
-	}
-	fe.lock.Unlock()
-}
-
-func (fe *firstErr) get() (err error) {
-	fe.lock.Lock()
-	err = fe.finalError
-	fe.lock.Unlock()
-	return
-}
-
-func uploadStream(ctx context.Context, reader io.Reader, o UploadStreamOptions, t iTransfer) (interface{}, error) {
-	firstErr := firstErr{}
-	ctx, cancel := context.WithCancel(ctx) // New context so that any failure cancels everything
-	defer cancel()
-	wg := sync.WaitGroup{} // Used to know when all outgoing messages have finished processing
-	type OutgoingMsg struct {
-		chunkNum uint32
-		buffer   []byte
-	}
-
-	// Create a channel to hold the buffers usable for incoming datsa
-	incoming := make(chan []byte, o.MaxBuffers)
-	outgoing := make(chan OutgoingMsg, o.MaxBuffers) // Channel holding outgoing buffers
-	if result, err := t.start(ctx); err != nil {
-		return result, err
-	}
-
-	numBuffers := 0 // The number of buffers & out going goroutines created so far
-	injectBuffer := func() {
-		// For each Buffer, create it and a goroutine to upload it
-		incoming <- make([]byte, o.BufferSize) // Add the new buffer to the incoming channel so this goroutine can from the reader into it
-		numBuffers++
-		go func() {
-			for outgoingMsg := range outgoing {
-				// Upload the outgoing buffer
-				err := t.chunk(ctx, outgoingMsg.chunkNum, outgoingMsg.buffer)
-				wg.Done() // Indicate this buffer was sent
-				if nil != err {
-					// NOTE: finalErr could be assigned to multiple times here which is OK,
-					// some error will be returned.
-					firstErr.set(err)
-					cancel()
-				}
-				incoming <- outgoingMsg.buffer // The goroutine reading from the stream can reuse this buffer now
-			}
-		}()
-	}
-	injectBuffer() // Create our 1st buffer & outgoing goroutine
-
-	// This goroutine grabs a buffer, reads from the stream into the buffer,
-	// and inserts the buffer into the outgoing channel to be uploaded
-	for c := uint32(0); true; c++ { // Iterate once per chunk
-		var buffer []byte
-		if numBuffers < o.MaxBuffers {
-			select {
-			// We're not at max buffers, see if a previously-created buffer is available
-			case buffer = <-incoming:
-				break
-			default:
-				// No buffer available; inject a new buffer & go routine to process it
-				injectBuffer()
-				buffer = <-incoming // Grab the just-injected buffer
-			}
-		} else {
-			// We are at max buffers, block until we get to reuse one
-			buffer = <-incoming
-		}
-		n, err := io.ReadFull(reader, buffer)
-		if err != nil { // Less than len(buffer) bytes were read
-			buffer = buffer[:n] // Make slice match the # of read bytes
-		}
-		if len(buffer) > 0 {
-			// Buffer not empty, upload it
-			wg.Add(1) // We're posting a buffer to be sent
-			outgoing <- OutgoingMsg{chunkNum: c, buffer: buffer}
-		}
-		if err != nil { // The reader is done, no more outgoing buffers
-			if err == io.EOF || err == io.ErrUnexpectedEOF {
-				err = nil // This function does NOT return an error if io.ReadFull returns io.EOF or io.ErrUnexpectedEOF
-			} else {
-				firstErr.set(err)
-			}
-			break
-		}
-	}
-	// NOTE: Don't close the incoming channel because the outgoing goroutines post buffers into it when they are done
-	close(outgoing) // Make all the outgoing goroutines terminate when this channel is empty
-	wg.Wait()       // Wait for all pending outgoing messages to complete
-	err := firstErr.get()
-	if err == nil {
-		// If no error, after all blocks uploaded, commit them to the blob & return the result
-		return t.end(ctx)
-	}
-	return nil, err
+	MaxBuffers int
 }

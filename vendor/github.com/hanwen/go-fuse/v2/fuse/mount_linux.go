@@ -7,6 +7,7 @@ package fuse
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -26,9 +27,59 @@ func unixgramSocketpair() (l, r *os.File, err error) {
 	return
 }
 
+// Create a FUSE FS on the specified mount point without using
+// fusermount.
+func mountDirect(mountPoint string, opts *MountOptions, ready chan<- error) (fd int, err error) {
+	fd, err = syscall.Open("/dev/fuse", os.O_RDWR, 0) // use syscall.Open since we want an int fd
+	if err != nil {
+		return
+	}
+
+	// managed to open dev/fuse, attempt to mount
+	source := opts.FsName
+	if source == "" {
+		source = opts.Name
+	}
+
+	var flags uintptr
+	flags |= syscall.MS_NOSUID | syscall.MS_NODEV
+
+	// some values we need to pass to mount, but override possible since opts.Options comes after
+	var r = []string{
+		fmt.Sprintf("fd=%d", fd),
+		"rootmode=40000",
+		"user_id=0",
+		"group_id=0",
+	}
+	r = append(r, opts.Options...)
+
+	if opts.AllowOther {
+		r = append(r, "allow_other")
+	}
+
+	err = syscall.Mount(opts.FsName, mountPoint, "fuse."+opts.Name, opts.DirectMountFlags, strings.Join(r, ","))
+	if err != nil {
+		syscall.Close(fd)
+		return
+	}
+
+	// success
+	close(ready)
+	return
+}
+
 // Create a FUSE FS on the specified mount point.  The returned
 // mount point is always absolute.
 func mount(mountPoint string, opts *MountOptions, ready chan<- error) (fd int, err error) {
+	if opts.DirectMount {
+		fd, err := mountDirect(mountPoint, opts, ready)
+		if err == nil {
+			return fd, nil
+		} else if opts.Debug {
+			log.Printf("mount: failed to do direct mount: %s", err)
+		}
+	}
+
 	local, remote, err := unixgramSocketpair()
 	if err != nil {
 		return
@@ -79,7 +130,15 @@ func mount(mountPoint string, opts *MountOptions, ready chan<- error) (fd int, e
 	return fd, err
 }
 
-func unmount(mountPoint string) (err error) {
+func unmount(mountPoint string, opts *MountOptions) (err error) {
+	if opts.DirectMount {
+		// Attempt to directly unmount, if fails fallback to fusermount method
+		err := syscall.Unmount(mountPoint, 0)
+		if err == nil {
+			return nil
+		}
+	}
+
 	bin, err := fusermountBinary()
 	if err != nil {
 		return err

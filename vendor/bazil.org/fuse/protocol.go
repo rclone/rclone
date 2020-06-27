@@ -26,50 +26,56 @@ func (a Protocol) GE(b Protocol) bool {
 		(a.Major == b.Major && a.Minor >= b.Minor)
 }
 
-func (a Protocol) is79() bool {
-	return a.GE(Protocol{7, 9})
-}
-
 // HasAttrBlockSize returns whether Attr.BlockSize is respected by the
 // kernel.
+//
+// Deprecated: Guaranteed to be true with our minimum supported
+// protocol version.
 func (a Protocol) HasAttrBlockSize() bool {
-	return a.is79()
+	return true
 }
 
 // HasReadWriteFlags returns whether ReadRequest/WriteRequest
 // fields Flags and FileFlags are valid.
+//
+// Deprecated: Guaranteed to be true with our minimum supported
+// protocol version.
 func (a Protocol) HasReadWriteFlags() bool {
-	return a.is79()
+	return true
 }
 
 // HasGetattrFlags returns whether GetattrRequest field Flags is
 // valid.
+//
+// Deprecated: Guaranteed to be true with our minimum supported
+// protocol version.
 func (a Protocol) HasGetattrFlags() bool {
-	return a.is79()
-}
-
-func (a Protocol) is710() bool {
-	return a.GE(Protocol{7, 10})
+	return true
 }
 
 // HasOpenNonSeekable returns whether OpenResponse field Flags flag
 // OpenNonSeekable is supported.
+//
+// Deprecated: Guaranteed to be true with our minimum supported
+// protocol version.
 func (a Protocol) HasOpenNonSeekable() bool {
-	return a.is710()
-}
-
-func (a Protocol) is712() bool {
-	return a.GE(Protocol{7, 12})
+	return true
 }
 
 // HasUmask returns whether CreateRequest/MkdirRequest/MknodRequest
 // field Umask is valid.
+//
+// Deprecated: Guaranteed to be true with our minimum supported
+// protocol version.
 func (a Protocol) HasUmask() bool {
-	return a.is712()
+	return true
 }
 
 // HasInvalidate returns whether InvalidateNode/InvalidateEntry are
 // supported.
+//
+// Deprecated: Guaranteed to be true with our minimum supported
+// protocol version.
 func (a Protocol) HasInvalidate() bool {
-	return a.is712()
+	return true
 }

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"sort"
 	"strings"
 	"sync"
@@ -64,9 +65,8 @@ type Inode struct {
 
 	// Following data is mutable.
 
-	// protected by bridge.mu
-
 	// file handles.
+	// protected by bridge.mu
 	openFiles []uint32
 
 	// mu protects the following mutable fields. When locking
@@ -78,6 +78,7 @@ type Inode struct {
 	// from the tree, even if there are no live references. This
 	// must be set on creation, and can only be changed to false
 	// by calling removeRef.
+	// When you change this, you MUST increment changeCounter.
 	persistent bool
 
 	// changeCounter increments every time the mutable state
@@ -90,10 +91,16 @@ type Inode struct {
 	changeCounter uint32
 
 	// Number of kernel refs to this node.
+	// When you change this, you MUST increment changeCounter.
 	lookupCount uint64
 
+	// Children of this Inode.
+	// When you change this, you MUST increment changeCounter.
 	children map[string]*Inode
-	parents  map[parentData]struct{}
+
+	// Parents of this Inode. Can be more than one due to hard links.
+	// When you change this, you MUST increment changeCounter.
+	parents map[parentData]struct{}
 }
 
 func (n *Inode) IsDir() bool {
@@ -261,7 +268,11 @@ func (n *Inode) Operations() InodeEmbedder {
 	return n.ops
 }
 
-// Path returns a path string to the inode relative to the root.
+// Path returns a path string to the inode relative to `root`.
+// Pass nil to walk the hierarchy as far up as possible.
+//
+// If you set `root`, Path() warns if it finds an orphaned Inode, i.e.
+// if it does not end up at `root` after walking the hierarchy.
 func (n *Inode) Path(root *Inode) string {
 	var segments []string
 	p := n
@@ -270,12 +281,18 @@ func (n *Inode) Path(root *Inode) string {
 
 		// We don't try to take all locks at the same time, because
 		// the caller won't use the "path" string under lock anyway.
+		found := false
 		p.mu.Lock()
 		// Select an arbitrary parent
 		for pd = range p.parents {
+			found = true
 			break
 		}
 		p.mu.Unlock()
+		if found == false {
+			p = nil
+			break
+		}
 		if pd.parent == nil {
 			break
 		}
@@ -284,9 +301,12 @@ func (n *Inode) Path(root *Inode) string {
 		p = pd.parent
 	}
 
-	if p == nil {
+	if root != nil && root != p {
+		deletedPlaceholder := fmt.Sprintf(".go-fuse.%d/deleted", rand.Uint64())
+		n.bridge.logf("warning: Inode.Path: inode i%d is orphaned, replacing segment with %q",
+			n.stableAttr.Ino, deletedPlaceholder)
 		// NOSUBMIT - should replace rather than append?
-		segments = append(segments, ".deleted")
+		segments = append(segments, deletedPlaceholder)
 	}
 
 	i := 0
@@ -568,7 +588,8 @@ retry:
 }
 
 // MvChild executes a rename. If overwrite is set, a child at the
-// destination will be overwritten, should it exist.
+// destination will be overwritten, should it exist. It returns false
+// if 'overwrite' is false, and the destination exists.
 func (n *Inode) MvChild(old string, newParent *Inode, newName string, overwrite bool) bool {
 	if len(newName) == 0 {
 		log.Panicf("empty newName for MvChild")

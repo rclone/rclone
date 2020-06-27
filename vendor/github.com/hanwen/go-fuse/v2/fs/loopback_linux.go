@@ -14,22 +14,22 @@ import (
 )
 
 func (n *loopbackNode) Getxattr(ctx context.Context, attr string, dest []byte) (uint32, syscall.Errno) {
-	sz, err := syscall.Getxattr(n.path(), attr, dest)
+	sz, err := unix.Lgetxattr(n.path(), attr, dest)
 	return uint32(sz), ToErrno(err)
 }
 
 func (n *loopbackNode) Setxattr(ctx context.Context, attr string, data []byte, flags uint32) syscall.Errno {
-	err := syscall.Setxattr(n.path(), attr, data, int(flags))
+	err := unix.Lsetxattr(n.path(), attr, data, int(flags))
 	return ToErrno(err)
 }
 
 func (n *loopbackNode) Removexattr(ctx context.Context, attr string) syscall.Errno {
-	err := syscall.Removexattr(n.path(), attr)
+	err := unix.Lremovexattr(n.path(), attr)
 	return ToErrno(err)
 }
 
 func (n *loopbackNode) Listxattr(ctx context.Context, dest []byte) (uint32, syscall.Errno) {
-	sz, err := syscall.Listxattr(n.path(), dest)
+	sz, err := unix.Llistxattr(n.path(), dest)
 	return uint32(sz), ToErrno(err)
 }
 

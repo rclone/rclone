@@ -42,22 +42,15 @@ func writeConf() {
 		autoDetect = ieCfg.fAutoDetect
 	}
 
-	if proxy == "" { // <- new. Only fallback if we got NO proxy
+	if proxy == "" && !autoDetect{
 		// Try WinHTTP default proxy.
 		if defaultCfg, err := getDefaultProxyConfiguration(); err == nil {
 			defer globalFreeWrapper(defaultCfg.lpszProxy)
 			defer globalFreeWrapper(defaultCfg.lpszProxyBypass)
 
-			// Changed, next 2 lines, so if that if we always set both of these (they are a pair, it doesn't make sense to set one here and keep the value of the other from above)
-			newProxy := StringFromUTF16Ptr(defaultCfg.lpszProxy)
-			if proxy == "" {
-				proxy = newProxy
-			}
-
-			newProxyByPass := StringFromUTF16Ptr(defaultCfg.lpszProxyBypass)
-			if proxyByPass == "" {
-				proxyByPass = newProxyByPass
-			}
+			// Always set both of these (they are a pair, it doesn't make sense to set one here and keep the value of the other from above)
+			proxy = StringFromUTF16Ptr(defaultCfg.lpszProxy)
+			proxyByPass = StringFromUTF16Ptr(defaultCfg.lpszProxyBypass)
 		}
 	}
 

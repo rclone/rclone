@@ -55,9 +55,9 @@ func (n *loopbackNode) Statfs(ctx context.Context, out *fuse.StatfsOut) syscall.
 	return OK
 }
 
-func (n *loopbackRoot) Getattr(ctx context.Context, f FileHandle, out *fuse.AttrOut) syscall.Errno {
+func (r *loopbackRoot) Getattr(ctx context.Context, f FileHandle, out *fuse.AttrOut) syscall.Errno {
 	st := syscall.Stat_t{}
-	err := syscall.Stat(n.rootPath, &st)
+	err := syscall.Stat(r.rootPath, &st)
 	if err != nil {
 		return ToErrno(err)
 	}
@@ -70,7 +70,7 @@ func (n *loopbackNode) root() *loopbackRoot {
 }
 
 func (n *loopbackNode) path() string {
-	path := n.Path(nil)
+	path := n.Path(n.Root())
 	return filepath.Join(n.root().rootPath, path)
 }
 
@@ -89,12 +89,26 @@ func (n *loopbackNode) Lookup(ctx context.Context, name string, out *fuse.EntryO
 	return ch, 0
 }
 
+// preserveOwner sets uid and gid of `path` according to the caller information
+// in `ctx`.
+func (n *loopbackNode) preserveOwner(ctx context.Context, path string) error {
+	if os.Getuid() != 0 {
+		return nil
+	}
+	caller, ok := fuse.FromContext(ctx)
+	if !ok {
+		return nil
+	}
+	return syscall.Lchown(path, int(caller.Uid), int(caller.Gid))
+}
+
 func (n *loopbackNode) Mknod(ctx context.Context, name string, mode, rdev uint32, out *fuse.EntryOut) (*Inode, syscall.Errno) {
 	p := filepath.Join(n.path(), name)
 	err := syscall.Mknod(p, mode, int(rdev))
 	if err != nil {
 		return nil, ToErrno(err)
 	}
+	n.preserveOwner(ctx, p)
 	st := syscall.Stat_t{}
 	if err := syscall.Lstat(p, &st); err != nil {
 		syscall.Rmdir(p)
@@ -115,6 +129,7 @@ func (n *loopbackNode) Mkdir(ctx context.Context, name string, mode uint32, out 
 	if err != nil {
 		return nil, ToErrno(err)
 	}
+	n.preserveOwner(ctx, p)
 	st := syscall.Stat_t{}
 	if err := syscall.Lstat(p, &st); err != nil {
 		syscall.Rmdir(p)
@@ -155,9 +170,9 @@ func (n *loopbackNode) Rename(ctx context.Context, name string, newParent InodeE
 	}
 
 	p1 := filepath.Join(n.path(), name)
-
 	p2 := filepath.Join(newParentLoopback.path(), newName)
-	err := os.Rename(p1, p2)
+
+	err := syscall.Rename(p1, p2)
 	return ToErrno(err)
 }
 
@@ -189,7 +204,7 @@ func (n *loopbackNode) Create(ctx context.Context, name string, flags uint32, mo
 	if err != nil {
 		return nil, nil, 0, ToErrno(err)
 	}
-
+	n.preserveOwner(ctx, p)
 	st := syscall.Stat_t{}
 	if err := syscall.Fstat(fd, &st); err != nil {
 		syscall.Close(fd)
@@ -210,8 +225,9 @@ func (n *loopbackNode) Symlink(ctx context.Context, target, name string, out *fu
 	if err != nil {
 		return nil, ToErrno(err)
 	}
+	n.preserveOwner(ctx, p)
 	st := syscall.Stat_t{}
-	if syscall.Lstat(p, &st); err != nil {
+	if err := syscall.Lstat(p, &st); err != nil {
 		syscall.Unlink(p)
 		return nil, ToErrno(err)
 	}
@@ -231,7 +247,7 @@ func (n *loopbackNode) Link(ctx context.Context, target InodeEmbedder, name stri
 		return nil, ToErrno(err)
 	}
 	st := syscall.Stat_t{}
-	if syscall.Lstat(p, &st); err != nil {
+	if err := syscall.Lstat(p, &st); err != nil {
 		syscall.Unlink(p)
 		return nil, ToErrno(err)
 	}
@@ -288,7 +304,7 @@ func (n *loopbackNode) Getattr(ctx context.Context, f FileHandle, out *fuse.Attr
 	}
 	p := n.path()
 
-	var err error = nil
+	var err error
 	st := syscall.Stat_t{}
 	err = syscall.Lstat(p, &st)
 	if err != nil {
@@ -371,7 +387,7 @@ func (n *loopbackNode) Setattr(ctx context.Context, f FileHandle, in *fuse.SetAt
 	return OK
 }
 
-// NewLoopback returns a root node for a loopback file system whose
+// NewLoopbackRoot returns a root node for a loopback file system whose
 // root is at the given root. This node implements all NodeXxxxer
 // operations available.
 func NewLoopbackRoot(root string) (InodeEmbedder, error) {

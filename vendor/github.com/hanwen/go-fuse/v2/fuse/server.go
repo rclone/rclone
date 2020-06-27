@@ -108,7 +108,7 @@ func (ms *Server) Unmount() (err error) {
 	}
 	delay := time.Duration(0)
 	for try := 0; try < 5; try++ {
-		err = unmount(ms.mountPoint)
+		err = unmount(ms.mountPoint, ms.opts)
 		if err == nil {
 			break
 		}
@@ -202,6 +202,10 @@ func NewServer(fs RawFileSystem, mountPoint string, opts *MountOptions) (*Server
 		// TODO - unmount as well?
 		return nil, fmt.Errorf("init: %s", code)
 	}
+
+	// This prepares for Serve being called somewhere, either
+	// synchronously or asynchronously.
+	ms.loops.Add(1)
 	return ms, nil
 }
 
@@ -360,7 +364,6 @@ func (ms *Server) recordStats(req *request) {
 //
 // Each filesystem operation executes in a separate goroutine.
 func (ms *Server) Serve() {
-	ms.loops.Add(1)
 	ms.loop(false)
 	ms.loops.Wait()
 
@@ -386,7 +389,8 @@ func (ms *Server) Serve() {
 	}
 }
 
-// Wait waits for the serve loop to exit
+// Wait waits for the serve loop to exit. This should only be called
+// after Serve has been called, or it will hang indefinitely.
 func (ms *Server) Wait() {
 	ms.loops.Wait()
 }
@@ -458,14 +462,8 @@ func (ms *Server) handleRequest(req *request) Status {
 		log.Println(req.InputDebug())
 	}
 
-	if req.inHeader.NodeId == pollHackInode {
-		// We want to avoid switching off features through our
-		// poll hack, so don't use ENOSYS
-		req.status = EIO
-		if req.inHeader.Opcode == _OP_POLL {
-			req.status = ENOSYS
-		}
-	} else if req.inHeader.NodeId == FUSE_ROOT_ID && len(req.filenames) > 0 && req.filenames[0] == pollHackName {
+	if req.inHeader.NodeId == pollHackInode ||
+		req.inHeader.NodeId == FUSE_ROOT_ID && len(req.filenames) > 0 && req.filenames[0] == pollHackName {
 		doPollHackLookup(ms, req)
 	} else if req.status.Ok() && req.handler.Func == nil {
 		log.Printf("Unimplemented opcode %v", operationName(req.inHeader.Opcode))
