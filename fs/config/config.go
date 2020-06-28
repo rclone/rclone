@@ -172,7 +172,7 @@ func makeConfigPath() string {
 	// Check to see if user supplied a --config variable or environment
 	// variable.  We can't use pflag for this because it isn't initialised
 	// yet so we search the command line manually.
-	_, configSupplied := os.LookupEnv("RCLONE_CONFIG")
+	_, configSupplied := fs.LookupEnv("RCLONE_CONFIG")
 	if !configSupplied {
 		for _, item := range os.Args {
 			if item == "--config" || strings.HasPrefix(item, "--config=") {
@@ -311,7 +311,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 		} else {
 			usingPasswordCommand = false
 
-			envpw := os.Getenv("RCLONE_CONFIG_PASS")
+			envpw := fs.Getenv("RCLONE_CONFIG_PASS")
 
 			if envpw != "" {
 				err := setConfigPassword(envpw)
@@ -1432,7 +1432,7 @@ func FileGetFlag(section, key string) (string, bool) {
 // It looks up defaults in the environment if they are present
 func FileGet(section, key string, defaultVal ...string) string {
 	envKey := fs.ConfigToEnv(section, key)
-	newValue, found := os.LookupEnv(envKey)
+	newValue, found := fs.LookupEnv(envKey)
 	if found {
 		defaultVal = []string{newValue}
 	}

@@ -4,7 +4,6 @@ package flags
 
 import (
 	"log"
-	"os"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -15,7 +14,7 @@ import (
 // sets the default from the environment if possible.
 func setDefaultFromEnv(flags *pflag.FlagSet, name string) {
 	key := fs.OptionToEnv(name)
-	newValue, found := os.LookupEnv(key)
+	newValue, found := fs.LookupEnv(key)
 	if found {
 		flag := flags.Lookup(name)
 		if flag == nil {

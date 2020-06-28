@@ -1193,9 +1193,25 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err e
 // A configmap.Getter to read from the environment RCLONE_CONFIG_backend_option_name
 type configEnvVars string
 
+// LookupEnv calls os.LookupEnv and Debugfs a message if the env var was found
+func LookupEnv(key string) (value string, ok bool) {
+	value, ok = os.LookupEnv(key)
+	if ok {
+		Debugf(nil, "Read env var %s", key)
+	}
+	return value, ok
+}
+
+// Getenv calls os.LookupEnv and Debugfs a message if the env var was
+// found. If the var wasn't round it returns empty string.
+func Getenv(key string) (value string) {
+	value, _ = LookupEnv(key)
+	return value
+}
+
 // Get a config item from the environment variables if possible
 func (configName configEnvVars) Get(key string) (value string, ok bool) {
-	return os.LookupEnv(ConfigToEnv(string(configName), key))
+	return LookupEnv(ConfigToEnv(string(configName), key))
 }
 
 // A configmap.Getter to read from the environment RCLONE_option_name
@@ -1211,12 +1227,12 @@ func (oev optionEnvVars) Get(key string) (value string, ok bool) {
 	}
 	// For options with NoPrefix set, check without prefix too
 	if opt.NoPrefix {
-		value, ok = os.LookupEnv(OptionToEnv(key))
+		value, ok = LookupEnv(OptionToEnv(key))
 		if ok {
 			return value, ok
 		}
 	}
-	return os.LookupEnv(OptionToEnv(oev.fsInfo.Prefix + "-" + key))
+	return LookupEnv(OptionToEnv(oev.fsInfo.Prefix + "-" + key))
 }
 
 // A configmap.Getter to read either the default value or the set
