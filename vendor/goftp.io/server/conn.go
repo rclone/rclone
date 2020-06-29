@@ -26,7 +26,6 @@ const (
 	defaultWelcomeMessage = "Welcome to the Go FTP Server"
 )
 
-// Conn represents a connection between ftp client and the server
 type Conn struct {
 	conn          net.Conn
 	controlReader *bufio.Reader
@@ -48,30 +47,22 @@ type Conn struct {
 	tls           bool
 }
 
-// RemoteAddr returns the remote ftp client's address
-func (conn *Conn) RemoteAddr() net.Addr {
-	return conn.conn.RemoteAddr()
-}
-
-// LoginUser returns the login user name if login
 func (conn *Conn) LoginUser() string {
 	return conn.user
 }
 
-// IsLogin returns if user has login
 func (conn *Conn) IsLogin() bool {
 	return len(conn.user) > 0
 }
 
-// PublicIP returns the public ip of the server
-func (conn *Conn) PublicIP() string {
-	return conn.server.PublicIP
+func (conn *Conn) PublicIp() string {
+	return conn.server.PublicIp
 }
 
 func (conn *Conn) passiveListenIP() string {
 	var listenIP string
-	if len(conn.PublicIP()) > 0 {
-		listenIP = conn.PublicIP()
+	if len(conn.PublicIp()) > 0 {
+		listenIP = conn.PublicIp()
 	} else {
 		listenIP = conn.conn.LocalAddr().(*net.TCPAddr).IP.String()
 	}
@@ -87,7 +78,6 @@ func (conn *Conn) passiveListenIP() string {
 	return listenIP[:lastIdx]
 }
 
-// PassivePort returns the port which could be used by passive mode.
 func (conn *Conn) PassivePort() int {
 	if len(conn.server.PassivePorts) > 0 {
 		portRange := strings.Split(conn.server.PassivePorts, "-")

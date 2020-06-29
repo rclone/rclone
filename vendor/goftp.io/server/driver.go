@@ -63,7 +63,6 @@ type MultipleDriver struct {
 	drivers map[string]Driver
 }
 
-// Stat implements Driver
 func (driver *MultipleDriver) Stat(path string) (FileInfo, error) {
 	for prefix, driver := range driver.drivers {
 		if strings.HasPrefix(path, prefix) {
@@ -73,7 +72,6 @@ func (driver *MultipleDriver) Stat(path string) (FileInfo, error) {
 	return nil, errors.New("Not a file")
 }
 
-// ListDir implements Driver
 func (driver *MultipleDriver) ListDir(path string, callback func(FileInfo) error) error {
 	for prefix, driver := range driver.drivers {
 		if strings.HasPrefix(path, prefix) {
@@ -83,7 +81,6 @@ func (driver *MultipleDriver) ListDir(path string, callback func(FileInfo) error
 	return errors.New("Not a directory")
 }
 
-// DeleteDir implements Driver
 func (driver *MultipleDriver) DeleteDir(path string) error {
 	for prefix, driver := range driver.drivers {
 		if strings.HasPrefix(path, prefix) {
@@ -93,7 +90,6 @@ func (driver *MultipleDriver) DeleteDir(path string) error {
 	return errors.New("Not a directory")
 }
 
-// DeleteFile implements Driver
 func (driver *MultipleDriver) DeleteFile(path string) error {
 	for prefix, driver := range driver.drivers {
 		if strings.HasPrefix(path, prefix) {
@@ -104,7 +100,6 @@ func (driver *MultipleDriver) DeleteFile(path string) error {
 	return errors.New("Not a file")
 }
 
-// Rename implements Driver
 func (driver *MultipleDriver) Rename(fromPath string, toPath string) error {
 	for prefix, driver := range driver.drivers {
 		if strings.HasPrefix(fromPath, prefix) {
@@ -115,7 +110,6 @@ func (driver *MultipleDriver) Rename(fromPath string, toPath string) error {
 	return errors.New("Not a file")
 }
 
-// MakeDir implements Driver
 func (driver *MultipleDriver) MakeDir(path string) error {
 	for prefix, driver := range driver.drivers {
 		if strings.HasPrefix(path, prefix) {
@@ -125,7 +119,6 @@ func (driver *MultipleDriver) MakeDir(path string) error {
 	return errors.New("Not a directory")
 }
 
-// GetFile implements Driver
 func (driver *MultipleDriver) GetFile(path string, offset int64) (int64, io.ReadCloser, error) {
 	for prefix, driver := range driver.drivers {
 		if strings.HasPrefix(path, prefix) {
@@ -136,7 +129,6 @@ func (driver *MultipleDriver) GetFile(path string, offset int64) (int64, io.Read
 	return 0, nil, errors.New("Not a file")
 }
 
-// PutFile implements Driver
 func (driver *MultipleDriver) PutFile(destPath string, data io.Reader, appendData bool) (int64, error) {
 	for prefix, driver := range driver.drivers {
 		if strings.HasPrefix(destPath, prefix) {
@@ -147,12 +139,10 @@ func (driver *MultipleDriver) PutFile(destPath string, data io.Reader, appendDat
 	return 0, errors.New("Not a file")
 }
 
-// MultipleDriverFactory implements a DriverFactory
 type MultipleDriverFactory struct {
 	drivers map[string]Driver
 }
 
-// NewDriver implements DriverFactory
 func (factory *MultipleDriverFactory) NewDriver() (Driver, error) {
 	return &MultipleDriver{factory.drivers}, nil
 }
