@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -20,7 +19,6 @@ import (
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fuseutil"
-	"golang.org/x/sys/unix"
 )
 
 const (
@@ -258,6 +256,7 @@ func nodeAttr(ctx context.Context, n Node, attr *fuse.Attr) error {
 	attr.Atime = startTime
 	attr.Mtime = startTime
 	attr.Ctime = startTime
+	attr.Crtime = startTime
 	if err := n.Attr(ctx, attr); err != nil {
 		return err
 	}
@@ -323,86 +322,6 @@ type HandleReleaser interface {
 	Release(ctx context.Context, req *fuse.ReleaseRequest) error
 }
 
-type HandlePoller interface {
-	// Poll checks whether the handle is currently ready for I/O, and
-	// may request a wakeup when it is.
-	//
-	// Poll should always return quickly. Clients waiting for
-	// readiness can be woken up by passing the return value of
-	// PollRequest.Wakeup to fs.Server.NotifyPollWakeup or
-	// fuse.Conn.NotifyPollWakeup.
-	//
-	// To allow supporting poll for only some of your Nodes/Handles,
-	// the default behavior is to report immediate readiness. If your
-	// FS does not support polling and you want to minimize needless
-	// requests and log noise, implement NodePoller and return
-	// syscall.ENOSYS.
-	//
-	// The Go runtime uses epoll-based I/O whenever possible, even for
-	// regular files.
-	Poll(ctx context.Context, req *fuse.PollRequest, resp *fuse.PollResponse) error
-}
-
-type NodePoller interface {
-	// Poll checks whether the node is currently ready for I/O, and
-	// may request a wakeup when it is. See HandlePoller.
-	Poll(ctx context.Context, req *fuse.PollRequest, resp *fuse.PollResponse) error
-}
-
-// HandleLocker contains the common operations for all kinds of file
-// locks. See also lock family specific interfaces: HandleFlockLocker,
-// HandlePOSIXLocker.
-type HandleLocker interface {
-	// Lock tries to acquire a lock on a byte range of the node. If a
-	// conflicting lock is already held, returns syscall.EAGAIN.
-	//
-	// LockRequest.LockOwner is a file-unique identifier for this
-	// lock, and will be seen in calls releasing this lock
-	// (UnlockRequest, ReleaseRequest, FlushRequest) and also
-	// in e.g. ReadRequest, WriteRequest.
-	Lock(ctx context.Context, req *fuse.LockRequest) error
-
-	// LockWait acquires a lock on a byte range of the node, waiting
-	// until the lock can be obtained (or context is canceled).
-	LockWait(ctx context.Context, req *fuse.LockWaitRequest) error
-
-	// Unlock releases the lock on a byte range of the node. Locks can
-	// be released also implicitly, see HandleFlockLocker and
-	// HandlePOSIXLocker.
-	Unlock(ctx context.Context, req *fuse.UnlockRequest) error
-
-	// QueryLock returns the current state of locks held for the byte
-	// range of the node.
-	//
-	// See QueryLockRequest for details on how to respond.
-	//
-	// To simplify implementing this method, resp.Lock is prefilled to
-	// have Lock.Type F_UNLCK, and the whole struct should be
-	// overwritten for in case of conflicting locks.
-	QueryLock(ctx context.Context, req *fuse.QueryLockRequest, resp *fuse.QueryLockResponse) error
-}
-
-// HandleFlockLocker describes locking behavior unique to flock (BSD)
-// locks. See HandleLocker.
-type HandleFlockLocker interface {
-	HandleLocker
-
-	// Flock unlocking can also happen implicitly as part of Release,
-	// in which case Unlock is not called, and Release will have
-	// ReleaseFlags bit ReleaseFlockUnlock set.
-	HandleReleaser
-}
-
-// HandlePOSIXLocker describes locking behavior unique to POSIX (fcntl
-// F_SETLK) locks. See HandleLocker.
-type HandlePOSIXLocker interface {
-	HandleLocker
-
-	// POSIX unlocking can also happen implicitly as part of Flush,
-	// in which case Unlock is not called.
-	HandleFlusher
-}
-
 type Config struct {
 	// Function to send debug log messages to. If nil, use fuse.Debug.
 	// Note that changing this or fuse.Debug may not affect existing
@@ -429,7 +348,6 @@ func New(conn *fuse.Conn, config *Config) *Server {
 		conn:         conn,
 		req:          map[fuse.RequestID]*serveRequest{},
 		nodeRef:      map[Node]fuse.NodeID{},
-		notifyWait:   map[fuse.RequestID]chan<- *fuse.NotifyReply{},
 		dynamicInode: GenerateDynamicInode,
 	}
 	if config != nil {
@@ -461,11 +379,6 @@ type Server struct {
 	freeNode   []fuse.NodeID
 	freeHandle []fuse.HandleID
 	nodeGen    uint64
-
-	// pending notify upcalls to kernel
-	notifyMu   sync.Mutex
-	notifySeq  fuse.RequestID
-	notifyWait map[fuse.RequestID]chan<- *fuse.NotifyReply
 
 	// Used to ensure worker goroutines finish before Serve returns
 	wg sync.WaitGroup
@@ -557,6 +470,12 @@ type serveHandle struct {
 	readData []byte
 }
 
+// NodeRef is deprecated. It remains here to decrease code churn on
+// FUSE library users. You may remove it from your program now;
+// returning the same Node values are now recognized automatically,
+// without needing NodeRef.
+type NodeRef struct{}
+
 func (c *Server) saveNode(inode uint64, node Node) (id fuse.NodeID, gen uint64) {
 	c.meta.Lock()
 	defer c.meta.Unlock()
@@ -603,14 +522,11 @@ type nodeRefcountDropBug struct {
 	Node fuse.NodeID
 }
 
-func (n nodeRefcountDropBug) String() string {
+func (n *nodeRefcountDropBug) String() string {
 	return fmt.Sprintf("bug: trying to drop %d of %d references to %v", n.N, n.Refs, n.Node)
 }
 
-// dropNode decreases reference count for node with id by n.
-// If reference count dropped to zero, returns true.
-// Note that node is not guaranteed to be non-nil.
-func (c *Server) dropNode(id fuse.NodeID, n uint64) (node Node, forget bool) {
+func (c *Server) dropNode(id fuse.NodeID, n uint64) (forget bool) {
 	c.meta.Lock()
 	defer c.meta.Unlock()
 	snode := c.node[id]
@@ -623,7 +539,7 @@ func (c *Server) dropNode(id fuse.NodeID, n uint64) (node Node, forget bool) {
 
 		// we may end up triggering Forget twice, but that's better
 		// than not even once, and that's the best we can do
-		return nil, true
+		return true
 	}
 
 	if n > snode.refs {
@@ -637,9 +553,9 @@ func (c *Server) dropNode(id fuse.NodeID, n uint64) (node Node, forget bool) {
 		c.node[id] = nil
 		delete(c.nodeRef, snode.node)
 		c.freeNode = append(c.freeNode, id)
-		return snode.node, true
+		return true
 	}
-	return nil, false
+	return false
 }
 
 func (c *Server) dropHandle(id fuse.HandleID) {
@@ -675,7 +591,9 @@ func (c *Server) getHandle(id fuse.HandleID) (shandle *serveHandle) {
 }
 
 type request struct {
-	In interface{} `json:",omitempty"`
+	Op      string
+	Request *fuse.Header
+	In      interface{} `json:",omitempty"`
 }
 
 func (r request) String() string {
@@ -749,57 +667,6 @@ func (n notification) String() string {
 			fmt.Fprintf(&buf, " [% x]", n.Out)
 		default:
 			fmt.Fprintf(&buf, " %s", n.Out)
-		}
-	}
-	if n.Err != "" {
-		fmt.Fprintf(&buf, " Err:%v", n.Err)
-	}
-	return buf.String()
-}
-
-type notificationRequest struct {
-	ID   fuse.RequestID
-	Op   string
-	Node fuse.NodeID
-	Out  interface{} `json:",omitempty"`
-}
-
-func (n notificationRequest) String() string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, ">> %s [ID=%d] %v", n.Op, n.ID, n.Node)
-	if n.Out != nil {
-		// make sure (seemingly) empty values are readable
-		switch n.Out.(type) {
-		case string:
-			fmt.Fprintf(&buf, " %q", n.Out)
-		case []byte:
-			fmt.Fprintf(&buf, " [% x]", n.Out)
-		default:
-			fmt.Fprintf(&buf, " %s", n.Out)
-		}
-	}
-	return buf.String()
-}
-
-type notificationResponse struct {
-	ID  fuse.RequestID
-	Op  string
-	In  interface{} `json:",omitempty"`
-	Err string      `json:",omitempty"`
-}
-
-func (n notificationResponse) String() string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "<< [ID=%d] %s", n.ID, n.Op)
-	if n.In != nil {
-		// make sure (seemingly) empty values are readable
-		switch n.In.(type) {
-		case string:
-			fmt.Fprintf(&buf, " %q", n.In)
-		case []byte:
-			fmt.Fprintf(&buf, " [% x]", n.In)
-		default:
-			fmt.Fprintf(&buf, " %s", n.In)
 		}
 	}
 	if n.Err != "" {
@@ -896,15 +763,6 @@ func initLookupResponse(s *fuse.LookupResponse) {
 	s.EntryValid = entryValidTime
 }
 
-type logDuplicateRequestID struct {
-	New fuse.Request
-	Old fuse.Request
-}
-
-func (m *logDuplicateRequestID) String() string {
-	return fmt.Sprintf("Duplicate request: new %v, old %v", m.New, m.Old)
-}
-
 func (c *Server) serve(r fuse.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -915,15 +773,11 @@ func (c *Server) serve(r fuse.Request) {
 
 	req := &serveRequest{Request: r, cancel: cancel}
 
-	switch r.(type) {
-	case *fuse.NotifyReply:
-		// don't log NotifyReply here, they're logged by the recipient
-		// as soon as we have decoded them to the right types
-	default:
-		c.debug(request{
-			In: r,
-		})
-	}
+	c.debug(request{
+		Op:      opName(r),
+		Request: r.Hdr(),
+		In:      r,
+	})
 	var node Node
 	var snode *serveNode
 	c.meta.Lock()
@@ -951,13 +805,15 @@ func (c *Server) serve(r fuse.Request) {
 		}
 		node = snode.node
 	}
-	if old, found := c.req[hdr.ID]; found {
-		c.debug(logDuplicateRequestID{
-			New: req.Request,
-			Old: old.Request,
-		})
+	if c.req[hdr.ID] != nil {
+		// This happens with OSXFUSE.  Assume it's okay and
+		// that we'll never see an interrupt for this one.
+		// Otherwise everything wedges.  TODO: Report to OSXFUSE?
+		//
+		// TODO this might have been because of missing done() calls
+	} else {
+		c.req[hdr.ID] = req
 	}
-	c.req[hdr.ID] = req
 	c.meta.Unlock()
 
 	// Call this before responding.
@@ -1314,43 +1170,11 @@ func (c *Server) handleRequest(ctx context.Context, node Node, snode *serveNode,
 		return nil
 
 	case *fuse.ForgetRequest:
-		_, forget := c.dropNode(r.Hdr().Node, r.N)
+		forget := c.dropNode(r.Hdr().Node, r.N)
 		if forget {
 			n, ok := node.(NodeForgetter)
 			if ok {
 				n.Forget()
-			}
-		}
-		done(nil)
-		r.Respond()
-		return nil
-
-	case *fuse.BatchForgetRequest:
-		// BatchForgetRequest is hard to unit test, as it
-		// fundamentally relies on something unprivileged userspace
-		// has little control over. A root-only, Linux-only test could
-		// be written with `echo 2 >/proc/sys/vm/drop_caches`, but
-		// that would still rely on timing, the number of batches and
-		// operation spread over them could vary, it wouldn't run in a
-		// typical container regardless of privileges, and it would
-		// degrade performance for the rest of the machine. It would
-		// still probably be worth doing, just not the most fun.
-
-		// node is nil here because BatchForget as a message is not
-		// aimed at a any one node
-		for _, item := range r.Forget {
-			node, forget := c.dropNode(item.NodeID, item.N)
-			// node can be nil here if kernel vs our refcount were out
-			// of sync and multiple Forgets raced each other
-			if node == nil {
-				// nothing we can do about that
-				continue
-			}
-			if forget {
-				n, ok := node.(NodeForgetter)
-				if ok {
-					n.Forget()
-				}
 			}
 		}
 		done(nil)
@@ -1552,128 +1376,16 @@ func (c *Server) handleRequest(ctx context.Context, node Node, snode *serveNode,
 		r.Respond()
 		return nil
 
-	case *fuse.PollRequest:
-		shandle := c.getHandle(r.Handle)
-		if shandle == nil {
-			return syscall.ESTALE
-		}
-		s := &fuse.PollResponse{}
-
-		if h, ok := shandle.handle.(HandlePoller); ok {
-			if err := h.Poll(ctx, r, s); err != nil {
-				return err
-			}
-			done(s)
-			r.Respond(s)
-			return nil
-		}
-
-		if n, ok := node.(NodePoller); ok {
-			if err := n.Poll(ctx, r, s); err != nil {
-				return err
-			}
-			done(s)
-			r.Respond(s)
-			return nil
-		}
-
-		// fallback to always claim ready
-		s.REvents = fuse.DefaultPollMask
-		done(s)
-		r.Respond(s)
-		return nil
-
-	case *fuse.NotifyReply:
-		c.notifyMu.Lock()
-		w, ok := c.notifyWait[r.Hdr().ID]
-		if ok {
-			delete(c.notifyWait, r.Hdr().ID)
-		}
-		c.notifyMu.Unlock()
-		if !ok {
-			c.debug(notificationResponse{
-				ID:  r.Hdr().ID,
-				Op:  "NotifyReply",
-				Err: "unknown ID",
-			})
-			return nil
-		}
-		w <- r
-		return nil
-
-	case *fuse.LockRequest:
-		shandle := c.getHandle(r.Handle)
-		if shandle == nil {
-			return syscall.ESTALE
-		}
-		h, ok := shandle.handle.(HandleLocker)
-		if !ok {
-			return syscall.ENOTSUP
-		}
-		if err := h.Lock(ctx, r); err != nil {
-			return err
-		}
-		done(nil)
-		r.Respond()
-		return nil
-
-	case *fuse.LockWaitRequest:
-		shandle := c.getHandle(r.Handle)
-		if shandle == nil {
-			return syscall.ESTALE
-		}
-		h, ok := shandle.handle.(HandleLocker)
-		if !ok {
-			return syscall.ENOTSUP
-		}
-		if err := h.LockWait(ctx, r); err != nil {
-			return err
-		}
-		done(nil)
-		r.Respond()
-		return nil
-
-	case *fuse.UnlockRequest:
-		shandle := c.getHandle(r.Handle)
-		if shandle == nil {
-			return syscall.ESTALE
-		}
-		h, ok := shandle.handle.(HandleLocker)
-		if !ok {
-			return syscall.ENOTSUP
-		}
-		if err := h.Unlock(ctx, r); err != nil {
-			return err
-		}
-		done(nil)
-		r.Respond()
-		return nil
-
-	case *fuse.QueryLockRequest:
-		shandle := c.getHandle(r.Handle)
-		if shandle == nil {
-			return syscall.ESTALE
-		}
-		h, ok := shandle.handle.(HandleLocker)
-		if !ok {
-			return syscall.ENOTSUP
-		}
-		s := &fuse.QueryLockResponse{
-			Lock: fuse.FileLock{
-				Type: unix.F_UNLCK,
-			},
-		}
-		if err := h.QueryLock(ctx, r, s); err != nil {
-			return err
-		}
-		done(s)
-		r.Respond(s)
-		return nil
-
 		/*	case *FsyncdirRequest:
 				return ENOSYS
 
+			case *GetlkRequest, *SetlkRequest, *SetlkwRequest:
+				return ENOSYS
+
 			case *BmapRequest:
+				return ENOSYS
+
+			case *SetvolnameRequest, *GetxtimesRequest, *ExchangeRequest:
 				return ENOSYS
 		*/
 	}
@@ -1805,132 +1517,6 @@ func (s *Server) InvalidateEntry(parent Node, name string) error {
 		Out: invalidateEntryDetail{
 			Name: name,
 		},
-		Err: errstr(err),
-	})
-	return err
-}
-
-type notifyStoreRetrieveDetail struct {
-	Off  uint64
-	Size uint64
-}
-
-func (i notifyStoreRetrieveDetail) String() string {
-	return fmt.Sprintf("Off:%d Size:%d", i.Off, i.Size)
-}
-
-type notifyRetrieveReplyDetail struct {
-	Size uint64
-}
-
-func (i notifyRetrieveReplyDetail) String() string {
-	return fmt.Sprintf("Size:%d", i.Size)
-}
-
-// NotifyStore puts data into the kernel page cache.
-//
-// Returns fuse.ErrNotCached if the kernel is not currently caching
-// the node.
-func (s *Server) NotifyStore(node Node, offset uint64, data []byte) error {
-	s.meta.Lock()
-	id, ok := s.nodeRef[node]
-	if ok {
-		snode := s.node[id]
-		snode.wg.Add(1)
-		defer snode.wg.Done()
-	}
-	s.meta.Unlock()
-	if !ok {
-		// This is what the kernel would have said, if we had been
-		// able to send this message; it's not cached.
-		return fuse.ErrNotCached
-	}
-	// Delay logging until after we can record the error too. We
-	// consider a /dev/fuse write to be instantaneous enough to not
-	// need separate before and after messages.
-	err := s.conn.NotifyStore(id, offset, data)
-	s.debug(notification{
-		Op:   "NotifyStore",
-		Node: id,
-		Out: notifyStoreRetrieveDetail{
-			Off:  offset,
-			Size: uint64(len(data)),
-		},
-		Err: errstr(err),
-	})
-	return err
-}
-
-// NotifyRetrieve gets data from the kernel page cache.
-//
-// Returns fuse.ErrNotCached if the kernel is not currently caching
-// the node.
-func (s *Server) NotifyRetrieve(node Node, offset uint64, size uint32) ([]byte, error) {
-	s.meta.Lock()
-	id, ok := s.nodeRef[node]
-	if ok {
-		snode := s.node[id]
-		snode.wg.Add(1)
-		defer snode.wg.Done()
-	}
-	s.meta.Unlock()
-	if !ok {
-		// This is what the kernel would have said, if we had been
-		// able to send this message; it's not cached.
-		return nil, fuse.ErrNotCached
-	}
-
-	ch := make(chan *fuse.NotifyReply, 1)
-	s.notifyMu.Lock()
-	const wraparoundThreshold = 1 << 63
-	if s.notifySeq > wraparoundThreshold {
-		s.notifyMu.Unlock()
-		return nil, errors.New("running out of notify sequence numbers")
-	}
-	s.notifySeq++
-	seq := s.notifySeq
-	s.notifyWait[seq] = ch
-	s.notifyMu.Unlock()
-
-	s.debug(notificationRequest{
-		ID:   seq,
-		Op:   "NotifyRetrieve",
-		Node: id,
-		Out: notifyStoreRetrieveDetail{
-			Off:  offset,
-			Size: uint64(size),
-		},
-	})
-	retrieval, err := s.conn.NotifyRetrieve(seq, id, offset, size)
-	if err != nil {
-		s.debug(notificationResponse{
-			ID:  seq,
-			Op:  "NotifyRetrieve",
-			Err: errstr(err),
-		})
-		return nil, err
-	}
-
-	reply := <-ch
-	data := retrieval.Finish(reply)
-	s.debug(notificationResponse{
-		ID: seq,
-		Op: "NotifyRetrieve",
-		In: notifyRetrieveReplyDetail{
-			Size: uint64(len(data)),
-		},
-	})
-	return data, nil
-}
-
-func (s *Server) NotifyPollWakeup(wakeup fuse.PollWakeup) error {
-	// Delay logging until after we can record the error too. We
-	// consider a /dev/fuse write to be instantaneous enough to not
-	// need separate before and after messages.
-	err := s.conn.NotifyPollWakeup(wakeup)
-	s.debug(notification{
-		Op:  "NotifyPollWakeup",
-		Out: wakeup,
 		Err: errstr(err),
 	})
 	return err
