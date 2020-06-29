@@ -229,12 +229,12 @@ jobs:
         run: |
           docker pull billziss/xgo-cgofuse
           GO111MODULE=off go get -v github.com/karalabe/xgo # don't add to go.mod
-          xgo \
-              -image=billziss/xgo-cgofuse \
-              -targets=darwin/386,darwin/amd64,linux/386,linux/amd64,windows/386,windows/amd64 \
-              -tags cmount \
-              -dest build \
-              .
+          # xgo \
+          #     -image=billziss/xgo-cgofuse \
+          #     -targets=darwin/386,darwin/amd64,linux/386,linux/amd64,windows/386,windows/amd64 \
+          #     -tags cmount \
+          #     -dest build \
+          #     .
           xgo \
               -image=billziss/xgo-cgofuse \
               -targets=android/*,ios/* \
