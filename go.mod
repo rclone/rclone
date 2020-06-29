@@ -3,7 +3,7 @@ module github.com/rclone/rclone
 go 1.14
 
 require (
-	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
+	bazil.org/fuse v0.0.0-20200407214033-5883e5a4b512
 	cloud.google.com/go v0.59.0 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.2
 	github.com/Azure/azure-storage-blob-go v0.10.0
@@ -20,6 +20,8 @@ require (
 	github.com/coreos/go-semver v0.3.0
 	github.com/djherbis/times v1.2.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
+	github.com/dvyukov/go-fuzz v0.0.0-20200318091601-be3528f3a813 // indirect
+	github.com/elazarl/go-bindata-assetfs v1.0.0 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hanwen/go-fuse/v2 v2.0.3
@@ -49,6 +51,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
+	github.com/stephens2424/writerset v1.0.2 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
 	github.com/xanzy/ssh-agent v0.2.1

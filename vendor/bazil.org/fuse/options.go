@@ -1,6 +1,7 @@
 package fuse
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -11,11 +12,10 @@ func dummyOption(conf *mountConfig) error {
 // mountConfig holds the configuration for a mount operation.
 // Use it by passing MountOption values to Mount.
 type mountConfig struct {
-	options             map[string]string
-	maxReadahead        uint32
-	initFlags           InitFlags
-	maxBackground       uint16
-	congestionThreshold uint16
+	options          map[string]string
+	maxReadahead     uint32
+	initFlags        InitFlags
+	osxfuseLocations []OSXFUSEPaths
 }
 
 func escapeComma(s string) string {
@@ -59,6 +59,7 @@ func FSName(name string) MountOption {
 // `fuse`. The type in a list of mounted file systems will look like
 // `fuse.foo`.
 //
+// OS X ignores this option.
 // FreeBSD ignores this option.
 func Subtype(fstype string) MountOption {
 	return func(conf *mountConfig) error {
@@ -67,40 +68,82 @@ func Subtype(fstype string) MountOption {
 	}
 }
 
-// Deprecated: Ignored, OS X remnant.
+// LocalVolume sets the volume to be local (instead of network),
+// changing the behavior of Finder, Spotlight, and such.
+//
+// OS X only. Others ignore this option.
 func LocalVolume() MountOption {
-	return dummyOption
+	return localVolume
 }
 
-// Deprecated: Ignored, OS X remnant.
+// VolumeName sets the volume name shown in Finder.
+//
+// OS X only. Others ignore this option.
 func VolumeName(name string) MountOption {
-	return dummyOption
+	return volumeName(name)
 }
 
-// Deprecated: Ignored, OS X remnant.
+// NoAppleDouble makes OSXFUSE disallow files with names used by OS X
+// to store extended attributes on file systems that do not support
+// them natively.
+//
+// Such file names are:
+//
+//     ._*
+//     .DS_Store
+//
+// OS X only.  Others ignore this option.
 func NoAppleDouble() MountOption {
-	return dummyOption
+	return noAppleDouble
 }
 
-// Deprecated: Ignored, OS X remnant.
+// NoAppleXattr makes OSXFUSE disallow extended attributes with the
+// prefix "com.apple.". This disables persistent Finder state and
+// other such information.
+//
+// OS X only.  Others ignore this option.
 func NoAppleXattr() MountOption {
-	return dummyOption
+	return noAppleXattr
 }
 
-// Deprecated: Ignored, OS X remnant.
+// NoBrowse makes OSXFUSE mark the volume as non-browsable, so that
+// Finder won't automatically browse it.
+//
+// OS X only.  Others ignore this option.
 func NoBrowse() MountOption {
-	return dummyOption
+	return noBrowse
 }
 
-// Deprecated: Ignored, OS X remnant.
+// ExclCreate causes O_EXCL flag to be set for only "truly" exclusive creates,
+// i.e. create calls for which the initiator explicitly set the O_EXCL flag.
+//
+// OSXFUSE expects all create calls to return EEXIST in case the file
+// already exists, regardless of whether O_EXCL was specified or not.
+// To ensure this behavior, it normally sets OpenExclusive for all
+// Create calls, regardless of whether the original call had it set.
+// For distributed filesystems, that may force every file create to be
+// a distributed consensus action, causing undesirable delays.
+//
+// This option makes the FUSE filesystem see the original flag value,
+// and better decide when to ensure global consensus.
+//
+// Note that returning EEXIST on existing file create is still
+// expected with OSXFUSE, regardless of the presence of the
+// OpenExclusive flag.
+//
+// For more information, see
+// https://github.com/osxfuse/osxfuse/issues/209
+//
+// OS X only. Others ignore this options.
+// Requires OSXFUSE 3.4.1 or newer.
 func ExclCreate() MountOption {
-	return dummyOption
+	return exclCreate
 }
 
 // DaemonTimeout sets the time in seconds between a request and a reply before
 // the FUSE mount is declared dead.
 //
-// FreeBSD only. Others ignore this option.
+// OS X and FreeBSD only. Others ignore this option.
 func DaemonTimeout(name string) MountOption {
 	return daemonTimeout(name)
 }
@@ -188,7 +231,8 @@ func WritebackCache() MountOption {
 	}
 }
 
-// Deprecated: Not used, OS X remnant.
+// OSXFUSEPaths describes the paths used by an installed OSXFUSE
+// version. See OSXFUSELocationV3 for typical values.
 type OSXFUSEPaths struct {
 	// Prefix for the device file. At mount time, an incrementing
 	// number is suffixed until a free FUSE device is found.
@@ -203,7 +247,7 @@ type OSXFUSEPaths struct {
 	DaemonVar string
 }
 
-// Deprecated: Not used, OS X remnant.
+// Default paths for OSXFUSE. See OSXFUSELocations.
 var (
 	OSXFUSELocationV3 = OSXFUSEPaths{
 		DevicePrefix: "/dev/osxfuse",
@@ -219,9 +263,24 @@ var (
 	}
 )
 
-// Deprecated: Ignored, OS X remnant.
+// OSXFUSELocations sets where to look for OSXFUSE files. The
+// arguments are all the possible locations. The previous locations
+// are replaced.
+//
+// Without this option, OSXFUSELocationV3 and OSXFUSELocationV2 are
+// used.
+//
+// OS X only. Others ignore this option.
 func OSXFUSELocations(paths ...OSXFUSEPaths) MountOption {
-	return dummyOption
+	return func(conf *mountConfig) error {
+		if len(paths) == 0 {
+			return errors.New("must specify at least one location for OSXFUSELocations")
+		}
+		// replace previous values, but make a copy so there's no
+		// worries about caller mutating their slice
+		conf.osxfuseLocations = append(conf.osxfuseLocations[:0], paths...)
+		return nil
+	}
 }
 
 // AllowNonEmptyMount allows the mounting over a non-empty directory.
@@ -232,57 +291,6 @@ func OSXFUSELocations(paths ...OSXFUSEPaths) MountOption {
 func AllowNonEmptyMount() MountOption {
 	return func(conf *mountConfig) error {
 		conf.options["nonempty"] = ""
-		return nil
-	}
-}
-
-// MaxBackground sets the maximum number of FUSE requests the kernel
-// will submit in the background. Background requests are used when an
-// immediate answer is not needed. This may help with request latency.
-//
-// On Linux, this can be adjusted on the fly with
-// /sys/fs/fuse/connections/CONN/max_background
-func MaxBackground(n uint16) MountOption {
-	return func(conf *mountConfig) error {
-		conf.maxBackground = n
-		return nil
-	}
-}
-
-// CongestionThreshold sets the number of outstanding background FUSE
-// requests beyond which the kernel considers the filesystem
-// congested. This may help with request latency.
-//
-// On Linux, this can be adjusted on the fly with
-// /sys/fs/fuse/connections/CONN/congestion_threshold
-func CongestionThreshold(n uint16) MountOption {
-	// TODO to test this, we'd have to figure out our connection id
-	// and read /sys
-	return func(conf *mountConfig) error {
-		conf.congestionThreshold = n
-		return nil
-	}
-}
-
-// LockingFlock enables flock-based (BSD) locking. This is mostly
-// useful for distributed filesystems with global locking. Without
-// this, kernel manages local locking automatically.
-func LockingFlock() MountOption {
-	return func(conf *mountConfig) error {
-		conf.initFlags |= InitFlockLocks
-		return nil
-	}
-}
-
-// LockingPOSIX enables flock-based (BSD) locking. This is mostly
-// useful for distributed filesystems with global locking. Without
-// this, kernel manages local locking automatically.
-//
-// Beware POSIX locks are a broken API with unintuitive behavior for
-// callers.
-func LockingPOSIX() MountOption {
-	return func(conf *mountConfig) error {
-		conf.initFlags |= InitPOSIXLocks
 		return nil
 	}
 }
