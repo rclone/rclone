@@ -261,7 +261,9 @@ func (s *server) CheckPasswd(user, pass string) (ok bool, err error) {
 		delete(s.pending, id)
 		s.pendingMu.Unlock()
 		if d == nil {
-			return false, errors.Errorf("proxy login failed: failed to find pending Driver under ID %q", id)
+			err := errors.Errorf("proxy login failed: failed to find pending Driver under ID %q", id)
+			fs.Errorf(nil, "Error %v", err)
+			return false, err
 		}
 		d.vfs = VFS
 	} else {
