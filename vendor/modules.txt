@@ -6,6 +6,8 @@ bazil.org/fuse/fuseutil
 # cloud.google.com/go v0.59.0
 ## explicit
 cloud.google.com/go/compute/metadata
+# code.gitea.io/log v0.0.0-20191208183219-f31613838113
+## explicit
 # github.com/Azure/azure-pipeline-go v0.2.2
 ## explicit
 github.com/Azure/azure-pipeline-go/pipeline
@@ -344,7 +346,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# goftp.io/server v0.3.3
+# goftp.io/server v0.3.5-0.20200630051340-d7b447417587
 ## explicit
 goftp.io/server
 # golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
@@ -520,6 +522,8 @@ google.golang.org/protobuf/types/known/timestamppb
 # gopkg.in/ini.v1 v1.57.0
 ## explicit
 gopkg.in/ini.v1
+# gopkg.in/src-d/go-git.v4 v4.13.1
+## explicit
 # gopkg.in/yaml.v2 v2.3.0
 ## explicit
 gopkg.in/yaml.v2
