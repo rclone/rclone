@@ -194,6 +194,13 @@ the rclone config file, you can set `service_account_credentials` with
 the actual contents of the file instead, or set the equivalent
 environment variable.
 
+### Anonymous Access ###
+
+For downloads of objects that permit public access you can configure rclone
+to use anonymous access by setting `anonymous` to `true`.
+With unauthorized access you can't write or create files but only read or list
+those buckets and objects that have public read access.
+
 ### Application Default Credentials ###
 
 If no other source of credentials is provided, rclone will fall back
