@@ -5,6 +5,7 @@ go 1.14
 require (
 	bazil.org/fuse v0.0.0-20200407214033-5883e5a4b512
 	cloud.google.com/go v0.59.0 // indirect
+	code.gitea.io/log v0.0.0-20191208183219-f31613838113 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.2
 	github.com/Azure/azure-storage-blob-go v0.10.0
 	github.com/Unknwon/goconfig v0.0.0-20191126170842-860a72fb44fd
@@ -60,7 +61,7 @@ require (
 	go.etcd.io/bbolt v1.3.5
 	go.opencensus.io v0.22.4 // indirect
 	go.uber.org/zap v1.15.0 // indirect
-	goftp.io/server v0.3.3
+	goftp.io/server v0.3.5-0.20200630051340-d7b447417587
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
@@ -73,6 +74,7 @@ require (
 	google.golang.org/grpc v1.30.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/ini.v1 v1.57.0 // indirect
+	gopkg.in/src-d/go-git.v4 v4.13.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	storj.io/common v0.0.0-20200624215549-bf610d22d466 // indirect

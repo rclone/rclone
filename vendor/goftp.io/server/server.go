@@ -35,7 +35,7 @@ type ServerOpts struct {
 	Hostname string
 
 	// Public IP of the server
-	PublicIp string
+	PublicIP string
 
 	// Passive ports
 	PassivePorts string
@@ -116,9 +116,10 @@ func serverOptsWithDefaults(opts *ServerOpts) *ServerOpts {
 		newOpts.Auth = opts.Auth
 	}
 
-	newOpts.Logger = &StdLogger{}
 	if opts.Logger != nil {
 		newOpts.Logger = opts.Logger
+	} else {
+		newOpts.Logger = &StdLogger{}
 	}
 
 	newOpts.TLS = opts.TLS
@@ -126,7 +127,7 @@ func serverOptsWithDefaults(opts *ServerOpts) *ServerOpts {
 	newOpts.CertFile = opts.CertFile
 	newOpts.ExplicitFTPS = opts.ExplicitFTPS
 
-	newOpts.PublicIp = opts.PublicIp
+	newOpts.PublicIP = opts.PublicIP
 	newOpts.PassivePorts = opts.PassivePorts
 
 	return &newOpts
@@ -155,6 +156,12 @@ func NewServer(opts *ServerOpts) *Server {
 	s.ServerOpts = opts
 	s.listenTo = net.JoinHostPort(opts.Hostname, strconv.Itoa(opts.Port))
 	s.logger = opts.Logger
+	var curFeats = featCmds
+	if opts.TLS {
+		curFeats += " AUTH TLS\n PBSZ\n PROT\n"
+	}
+	s.feats = fmt.Sprintf(feats, curFeats)
+
 	return s
 }
 
@@ -208,15 +215,12 @@ func simpleTLSConfig(certFile, keyFile string) (*tls.Config, error) {
 func (server *Server) ListenAndServe() error {
 	var listener net.Listener
 	var err error
-	var curFeats = featCmds
 
 	if server.ServerOpts.TLS {
 		server.tlsConfig, err = simpleTLSConfig(server.CertFile, server.KeyFile)
 		if err != nil {
 			return err
 		}
-
-		curFeats += " AUTH TLS\n PBSZ\n PROT\n"
 
 		if server.ServerOpts.ExplicitFTPS {
 			listener, err = net.Listen("tcp", server.listenTo)
@@ -229,7 +233,6 @@ func (server *Server) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
-	server.feats = fmt.Sprintf(feats, curFeats)
 
 	sessionID := ""
 	server.logger.Printf(sessionID, "%s listening on %d", server.Name, server.Port)

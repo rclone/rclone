@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// Command represents a Command interface to a ftp command
 type Command interface {
 	IsExtend() bool
 	RequireParam() bool
@@ -630,7 +631,12 @@ func (cmd commandPass) RequireAuth() bool {
 }
 
 func (cmd commandPass) Execute(conn *Conn, param string) {
-	ok, err := conn.server.Auth.CheckPasswd(conn.reqUser, param)
+	auth := conn.server.Auth
+	// If Driver implements Auth then call that instead of the Server version
+	if driverAuth, found := conn.driver.(Auth); found {
+		auth = driverAuth
+	}
+	ok, err := auth.CheckPasswd(conn.reqUser, param)
 	conn.server.notifiers.AfterUserLogin(conn, conn.reqUser, param, ok, err)
 	if err != nil {
 		conn.writeMessage(550, "Checking password error")
