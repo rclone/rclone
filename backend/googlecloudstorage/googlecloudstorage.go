@@ -79,7 +79,8 @@ func init() {
 		Config: func(name string, m configmap.Mapper) {
 			saFile, _ := m.Get("service_account_file")
 			saCreds, _ := m.Get("service_account_credentials")
-			if saFile != "" || saCreds != "" {
+			anonymous, _ := m.Get("anonymous")
+			if saFile != "" || saCreds != "" || anonymous == "true" {
 				return
 			}
 			err := oauthutil.Config("google cloud storage", name, m, storageConfig, nil)
@@ -103,6 +104,10 @@ func init() {
 			Name: "service_account_credentials",
 			Help: "Service Account Credentials JSON blob\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
 			Hide: fs.OptionHideBoth,
+		}, {
+			Name:    "anonymous",
+			Help:    "Access public buckets and objects without credentials\nSet to 'true' if you just want to download files and don't configure credentials.",
+			Default: false,
 		}, {
 			Name: "object_acl",
 			Help: "Access Control List for new objects.",
@@ -265,6 +270,7 @@ type Options struct {
 	ProjectNumber             string               `config:"project_number"`
 	ServiceAccountFile        string               `config:"service_account_file"`
 	ServiceAccountCredentials string               `config:"service_account_credentials"`
+	Anonymous                 bool                 `config:"anonymous"`
 	ObjectACL                 string               `config:"object_acl"`
 	BucketACL                 string               `config:"bucket_acl"`
 	BucketPolicyOnly          bool                 `config:"bucket_policy_only"`
@@ -411,7 +417,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		}
 		opt.ServiceAccountCredentials = string(loadedCreds)
 	}
-	if opt.ServiceAccountCredentials != "" {
+	if opt.Anonymous {
+		oAuthClient = &http.Client{}
+	} else if opt.ServiceAccountCredentials != "" {
 		oAuthClient, err = getServiceAccountClient([]byte(opt.ServiceAccountCredentials))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed configuring Google Cloud Storage Service Account")
