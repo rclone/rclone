@@ -1107,9 +1107,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	id, dstDriveID, _ := parseNormalizedID(directoryID)
 	_, srcObjDriveID, _ := parseNormalizedID(srcObj.id)
 
-	if dstDriveID != srcObjDriveID {
+	if f.canonicalDriveID(dstDriveID) != srcObj.fs.canonicalDriveID(srcObjDriveID) {
 		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
 		// "Items cannot be moved between Drives using this request."
+		fs.Debugf(f, "Can't move files between drives (%q != %q)", dstDriveID, srcObjDriveID)
 		return nil, fs.ErrorCantMove
 	}
 
@@ -1168,9 +1169,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	parsedDstDirID, dstDriveID, _ := parseNormalizedID(dstDirectoryID)
 	_, srcDriveID, _ := parseNormalizedID(srcID)
 
-	if dstDriveID != srcDriveID {
+	if f.canonicalDriveID(dstDriveID) != srcFs.canonicalDriveID(srcDriveID) {
 		// https://docs.microsoft.com/en-us/graph/api/driveitem-move?view=graph-rest-1.0
 		// "Items cannot be moved between Drives using this request."
+		fs.Debugf(f, "Can't move directories between drives (%q != %q)", dstDriveID, srcDriveID)
 		return fs.ErrorCantDirMove
 	}
 
@@ -1785,6 +1787,17 @@ func parseNormalizedID(ID string) (string, string, string) {
 		return s[1], s[0], graphURL + "/drives"
 	}
 	return ID, "", ""
+}
+
+// Returns the canonical form of the driveID
+func (f *Fs) canonicalDriveID(driveID string) (canonicalDriveID string) {
+	if driveID == "" {
+		canonicalDriveID = f.opt.DriveID
+	} else {
+		canonicalDriveID = driveID
+	}
+	canonicalDriveID = strings.ToLower(canonicalDriveID)
+	return canonicalDriveID
 }
 
 // getRelativePathInsideBase checks if `target` is inside `base`. If so, it
