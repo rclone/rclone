@@ -389,3 +389,4 @@ put them back in again.` >}}
   * jtagcat <gitlab@c7.ee>
   * Petri Salminen <petri@salminen.dev>
   * Tim Burke <tim.burke@gmail.com>
+  * Kai Lüke <kai@kinvolk.io>
