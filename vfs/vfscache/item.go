@@ -736,7 +736,7 @@ func (item *Item) _removeMeta(reason string) {
 			fs.Errorf(item.name, "vfs cache: failed to remove metadata from cache as %s: %v", reason, err)
 		}
 	} else {
-		fs.Infof(item.name, "vfs cache: removed metadata from cache as %s", reason)
+		fs.Debugf(item.name, "vfs cache: removed metadata from cache as %s", reason)
 	}
 }
 
