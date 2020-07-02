@@ -42,7 +42,7 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
-	rootURL                     = "https://api.pcloud.com"
+	defaultHostname             = "api.pcloud.com"
 )
 
 // Globals
@@ -51,8 +51,8 @@ var (
 	oauthConfig = &oauth2.Config{
 		Scopes: nil,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://my.pcloud.com/oauth2/authorize",
-			TokenURL: "https://api.pcloud.com/oauth2_token",
+			AuthURL: "https://my.pcloud.com/oauth2/authorize",
+			// TokenURL: "https://api.pcloud.com/oauth2_token", set by updateTokenURL
 		},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -60,17 +60,45 @@ var (
 	}
 )
 
+// Update the TokenURL with the actual hostname
+func updateTokenURL(oauthConfig *oauth2.Config, hostname string) {
+	oauthConfig.Endpoint.TokenURL = "https://" + hostname + "/oauth2_token"
+}
+
 // Register with Fs
 func init() {
+	updateTokenURL(oauthConfig, defaultHostname)
 	fs.Register(&fs.RegInfo{
 		Name:        "pcloud",
 		Description: "Pcloud",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+			optc := new(Options)
+			err := configstruct.Set(m, optc)
+			if err != nil {
+				fs.Errorf(nil, "Failed to read config: %v", err)
+			}
+			updateTokenURL(oauthConfig, optc.Hostname)
+			checkAuth := func(oauthConfig *oauth2.Config, auth *oauthutil.AuthResult) error {
+				if auth == nil || auth.Form == nil {
+					return errors.New("form not found in response")
+				}
+				hostname := auth.Form.Get("hostname")
+				if hostname == "" {
+					hostname = defaultHostname
+				}
+				// Save the hostname in the config
+				m.Set("hostname", hostname)
+				// Update the token URL
+				updateTokenURL(oauthConfig, hostname)
+				fs.Debugf(nil, "pcloud: got hostname %q", hostname)
+				return nil
+			}
 			opt := oauthutil.Options{
+				CheckAuth:    checkAuth,
 				StateBlankOK: true, // pCloud seems to drop the state parameter now - see #4210
 			}
-			err := oauthutil.Config("pcloud", name, m, oauthConfig, &opt)
+			err = oauthutil.Config("pcloud", name, m, oauthConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
@@ -96,6 +124,13 @@ func init() {
 			Help:     "Fill in for rclone to use a non root folder as its starting point.",
 			Default:  "d0",
 			Advanced: true,
+		}, {
+			Name: "hostname",
+			Help: `Hostname to connect to.
+
+This is normally set when rclone initially does the oauth connection.`,
+			Default:  defaultHostname,
+			Advanced: true,
 		}},
 	})
 }
@@ -104,6 +139,7 @@ func init() {
 type Options struct {
 	Enc          encoder.MultiEncoder `config:"encoding"`
 	RootFolderID string               `config:"root_folder_id"`
+	Hostname     string               `config:"hostname"`
 }
 
 // Fs represents a remote pcloud
@@ -253,12 +289,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure Pcloud")
 	}
+	updateTokenURL(oauthConfig, opt.Hostname)
 
 	f := &Fs{
 		name:  name,
 		root:  root,
 		opt:   *opt,
-		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
+		srv:   rest.NewClient(oAuthClient).SetRoot("https://" + opt.Hostname),
 		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
