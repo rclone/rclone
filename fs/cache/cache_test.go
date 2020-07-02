@@ -23,7 +23,7 @@ func mockNewFs(t *testing.T) (func(), func(path string) (fs.Fs, error)) {
 		switch path {
 		case "mock:/":
 			return mockfs.NewFs("mock", "/"), nil
-		case "mock:/file.txt":
+		case "mock:/file.txt", "mock:file.txt":
 			return mockfs.NewFs("mock", "/"), fs.ErrorIsFile
 		case "mock:/error":
 			return nil, errSentinel
@@ -64,10 +64,43 @@ func TestGetFile(t *testing.T) {
 	require.Equal(t, fs.ErrorIsFile, err)
 	require.NotNil(t, f)
 
-	assert.Equal(t, 1, c.Entries())
+	assert.Equal(t, 2, c.Entries())
 
 	f2, err := GetFn("mock:/file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
+	require.NotNil(t, f2)
+
+	assert.Equal(t, f, f2)
+
+	// check parent is there too
+	f2, err = GetFn("mock:/", create)
+	require.Nil(t, err)
+	require.NotNil(t, f2)
+
+	assert.Equal(t, f, f2)
+}
+
+func TestGetFile2(t *testing.T) {
+	cleanup, create := mockNewFs(t)
+	defer cleanup()
+
+	assert.Equal(t, 0, c.Entries())
+
+	f, err := GetFn("mock:file.txt", create)
+	require.Equal(t, fs.ErrorIsFile, err)
+	require.NotNil(t, f)
+
+	assert.Equal(t, 2, c.Entries())
+
+	f2, err := GetFn("mock:file.txt", create)
+	require.Equal(t, fs.ErrorIsFile, err)
+	require.NotNil(t, f2)
+
+	assert.Equal(t, f, f2)
+
+	// check parent is there too
+	f2, err = GetFn("mock:/", create)
+	require.Nil(t, err)
 	require.NotNil(t, f2)
 
 	assert.Equal(t, f, f2)
