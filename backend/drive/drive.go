@@ -929,17 +929,9 @@ func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name
 	if !config.Confirm(false) {
 		return nil
 	}
-	client, err := createOAuthClient(opt, name, m)
+	f, err := newFs(name, "", m)
 	if err != nil {
-		return errors.Wrap(err, "config team drive failed to create oauth client")
-	}
-	svc, err := drive.New(client)
-	if err != nil {
-		return errors.Wrap(err, "config team drive failed to make drive client")
-	}
-	f := &Fs{
-		svc:   svc,
-		pacer: newPacer(opt),
+		return errors.Wrap(err, "failed to make Fs to list teamdrives")
 	}
 	fmt.Printf("Fetching team drive list...\n")
 	teamDrives, err := f.listTeamDrives(ctx)
@@ -957,13 +949,10 @@ func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name
 	}
 	driveID := config.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
 	m.Set("team_drive", driveID)
+	m.Set("root_folder_id", "")
 	opt.TeamDriveID = driveID
+	opt.RootFolderID = ""
 	return nil
-}
-
-// newPacer makes a pacer configured for drive
-func newPacer(opt *Options) *fs.Pacer {
-	return fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(opt.PacerMinSleep), pacer.Burst(opt.PacerBurst)))
 }
 
 // getClient makes an http client according to the options
@@ -1048,9 +1037,11 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	return
 }
 
-// NewFs constructs an Fs from the path, container:path
-func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
-	ctx := context.Background()
+// newFs partially constructs Fs from the path
+//
+// It constructs a valid Fs but doesn't attempt to figure out whether
+// it is a file or a directory.
+func newFs(name, path string, m configmap.Mapper) (*Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -1080,7 +1071,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		name:         name,
 		root:         root,
 		opt:          *opt,
-		pacer:        newPacer(opt),
+		pacer:        fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(opt.PacerMinSleep), pacer.Burst(opt.PacerBurst))),
 		m:            m,
 		grouping:     listRGrouping,
 		listRmu:      new(sync.Mutex),
@@ -1110,21 +1101,32 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		}
 	}
 
+	return f, nil
+}
+
+// NewFs constructs an Fs from the path, container:path
+func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
+	ctx := context.Background()
+	f, err := newFs(name, path, m)
+	if err != nil {
+		return nil, err
+	}
+
 	// If impersonating warn about root_folder_id if set and unset it
 	//
 	// This is because rclone v1.51 and v1.52 cached root_folder_id when
 	// using impersonate which they shouldn't have done. It is possible
 	// someone is using impersonate and root_folder_id in which case this
 	// breaks their workflow. There isn't an easy way around that.
-	if opt.RootFolderID != "" && opt.RootFolderID != "appDataFolder" && opt.Impersonate != "" {
+	if f.opt.RootFolderID != "" && f.opt.RootFolderID != "appDataFolder" && f.opt.Impersonate != "" {
 		fs.Logf(f, "Ignoring cached root_folder_id when using --drive-impersonate")
-		opt.RootFolderID = ""
+		f.opt.RootFolderID = ""
 	}
 
 	// set root folder for a team drive or query the user root folder
-	if opt.RootFolderID != "" {
+	if f.opt.RootFolderID != "" {
 		// override root folder if set or cached in the config and not impersonating
-		f.rootFolderID = opt.RootFolderID
+		f.rootFolderID = f.opt.RootFolderID
 	} else if f.isTeamDrive {
 		f.rootFolderID = f.opt.TeamDriveID
 	} else {
@@ -1141,26 +1143,26 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		}
 		f.rootFolderID = rootID
 		// Don't cache the root folder ID if impersonating
-		if opt.Impersonate == "" {
+		if f.opt.Impersonate == "" {
 			m.Set("root_folder_id", rootID)
 		}
 	}
 
-	f.dirCache = dircache.New(root, f.rootFolderID, f)
+	f.dirCache = dircache.New(f.root, f.rootFolderID, f)
 
 	// Parse extensions
-	if opt.Extensions != "" {
-		if opt.ExportExtensions != defaultExportExtensions {
+	if f.opt.Extensions != "" {
+		if f.opt.ExportExtensions != defaultExportExtensions {
 			return nil, errors.New("only one of 'formats' and 'export_formats' can be specified")
 		}
-		opt.Extensions, opt.ExportExtensions = "", opt.Extensions
+		f.opt.Extensions, f.opt.ExportExtensions = "", f.opt.Extensions
 	}
-	f.exportExtensions, _, err = parseExtensions(opt.ExportExtensions, defaultExportExtensions)
+	f.exportExtensions, _, err = parseExtensions(f.opt.ExportExtensions, defaultExportExtensions)
 	if err != nil {
 		return nil, err
 	}
 
-	_, f.importMimeTypes, err = parseExtensions(opt.ImportExtensions)
+	_, f.importMimeTypes, err = parseExtensions(f.opt.ImportExtensions)
 	if err != nil {
 		return nil, err
 	}
@@ -1169,7 +1171,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	err = f.dirCache.FindRoot(ctx, false)
 	if err != nil {
 		// Assume it is a file
-		newRoot, remote := dircache.SplitPath(root)
+		newRoot, remote := dircache.SplitPath(f.root)
 		tempF := *f
 		tempF.dirCache = dircache.New(newRoot, f.rootFolderID, &tempF)
 		tempF.root = newRoot
