@@ -937,37 +937,25 @@ func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name
 	if err != nil {
 		return errors.Wrap(err, "config team drive failed to make drive client")
 	}
+	f := &Fs{
+		svc:   svc,
+		pacer: newPacer(opt),
+	}
 	fmt.Printf("Fetching team drive list...\n")
-	var driveIDs, driveNames []string
-	listTeamDrives := svc.Teamdrives.List().PageSize(100)
-	listFailed := false
-	var defaultFs Fs // default Fs with default Options
-	for {
-		var teamDrives *drive.TeamDriveList
-		err = newPacer(opt).Call(func() (bool, error) {
-			teamDrives, err = listTeamDrives.Context(ctx).Do()
-			return defaultFs.shouldRetry(err)
-		})
-		if err != nil {
-			fmt.Printf("Listing team drives failed: %v\n", err)
-			listFailed = true
-			break
-		}
-		for _, drive := range teamDrives.TeamDrives {
-			driveIDs = append(driveIDs, drive.Id)
-			driveNames = append(driveNames, drive.Name)
-		}
-		if teamDrives.NextPageToken == "" {
-			break
-		}
-		listTeamDrives.PageToken(teamDrives.NextPageToken)
+	teamDrives, err := f.listTeamDrives(ctx)
+	if err != nil {
+		return err
 	}
-	var driveID string
-	if !listFailed && len(driveIDs) == 0 {
+	if len(teamDrives) == 0 {
 		fmt.Printf("No team drives found in your account")
-	} else {
-		driveID = config.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
+		return nil
 	}
+	var driveIDs, driveNames []string
+	for _, teamDrive := range teamDrives {
+		driveIDs = append(driveIDs, teamDrive.Id)
+		driveNames = append(driveNames, teamDrive.Name)
+	}
+	driveID := config.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
 	m.Set("team_drive", driveID)
 	opt.TeamDriveID = driveID
 	return nil
@@ -2877,6 +2865,29 @@ func (f *Fs) makeShortcut(ctx context.Context, srcPath string, dstFs *Fs, dstPat
 	return dstFs.newObjectWithInfo(dstPath, info)
 }
 
+// List all team drives
+func (f *Fs) listTeamDrives(ctx context.Context) (drives []*drive.TeamDrive, err error) {
+	drives = []*drive.TeamDrive{}
+	listTeamDrives := f.svc.Teamdrives.List().PageSize(100)
+	var defaultFs Fs // default Fs with default Options
+	for {
+		var teamDrives *drive.TeamDriveList
+		err = f.pacer.Call(func() (bool, error) {
+			teamDrives, err = listTeamDrives.Context(ctx).Do()
+			return defaultFs.shouldRetry(err)
+		})
+		if err != nil {
+			return drives, errors.Wrap(err, "listing team drives failed")
+		}
+		drives = append(drives, teamDrives.TeamDrives...)
+		if teamDrives.NextPageToken == "" {
+			break
+		}
+		listTeamDrives.PageToken(teamDrives.NextPageToken)
+	}
+	return drives, nil
+}
+
 var commandHelp = []fs.CommandHelp{{
 	Name:  "get",
 	Short: "Get command for fetching the drive config parameters",
@@ -2928,6 +2939,32 @@ authenticated with "drive2:" can't read files from "drive:".
 	Opts: map[string]string{
 		"target": "optional target remote for the shortcut destination",
 	},
+}, {
+	Name:  "drives",
+	Short: "List the shared drives available to this account",
+	Long: `This command lists the shared drives (teamdrives) available to this
+account.
+
+Usage:
+
+    rclone backend drives drive:
+
+This will return a JSON list of objects like this
+
+    [
+        {
+            "id": "0ABCDEF-01234567890",
+            "kind": "drive#teamDrive",
+            "name": "My Drive"
+        },
+        {
+            "id": "0ABCDEFabcdefghijkl",
+            "kind": "drive#teamDrive",
+            "name": "Test Drive"
+        }
+    ]
+
+`,
 }}
 
 // Command the backend to run a named command
@@ -2991,6 +3028,8 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			}
 		}
 		return f.makeShortcut(ctx, arg[0], dstFs, arg[1])
+	case "drives":
+		return f.listTeamDrives(ctx)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
