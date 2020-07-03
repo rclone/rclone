@@ -374,15 +374,12 @@ func untar(srcFile, fileName, extractDir string) {
 				if err != nil {
 					log.Fatalf("Couldn't open output file: %v", err)
 				}
-				defer func() {
-					err := out.Close()
-					if err != nil {
-						log.Fatalf("Couldn't close output: %v", err)
-					}
-				}()
 				n, err := io.Copy(out, tarReader)
 				if err != nil {
 					log.Fatalf("Couldn't write output file: %v", err)
+				}
+				if err = out.Close(); err != nil {
+					log.Fatalf("Couldn't close output: %v", err)
 				}
 				log.Printf("Wrote %s (%d bytes) as %q", fileName, n, outPath)
 			}
