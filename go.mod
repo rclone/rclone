@@ -14,7 +14,7 @@ require (
 	github.com/anacrolix/dms v1.1.0
 	github.com/atotto/clipboard v0.1.2
 	github.com/aws/aws-sdk-go v1.32.11
-	github.com/billziss-gh/cgofuse v1.3.0
+	github.com/billziss-gh/cgofuse v1.4.0
 	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/coreos/go-semver v0.3.0
