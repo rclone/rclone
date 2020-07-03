@@ -36,7 +36,7 @@ jobs:
             os: macOS-latest
             go: '1.14.x'
             modules: 'on'
-            gotags: ''  # cmount doesn't work on osx travis for some reason
+            gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
             racequicktest: true
