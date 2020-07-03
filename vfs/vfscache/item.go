@@ -1018,20 +1018,14 @@ func (item *Item) Sync() (err error) {
 
 // rename the item
 func (item *Item) rename(name string, newName string, newObj fs.Object) (err error) {
-	var downloaders *downloaders.Downloaders
-	// close downloader with mutex unlocked
-	defer func() {
-		if downloaders != nil {
-			_ = downloaders.Close(nil)
-		}
-	}()
-
 	item.mu.Lock()
-	defer item.mu.Unlock()
 
 	// stop downloader
-	downloaders = item.downloaders
+	downloaders := item.downloaders
 	item.downloaders = nil
+
+	// id for writeback cancel
+	id := item.writeBackID
 
 	// Set internal state
 	item.name = newName
@@ -1039,15 +1033,20 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 
 	// Rename cache file if it exists
 	err = rename(item.c.toOSPath(name), item.c.toOSPath(newName)) // No locking in Cache
-	if err != nil {
-		return err
-	}
 
 	// Rename meta file if it exists
-	err = rename(item.c.toOSPathMeta(name), item.c.toOSPathMeta(newName)) // No locking in Cache
-	if err != nil {
-		return err
+	err2 := rename(item.c.toOSPathMeta(name), item.c.toOSPathMeta(newName)) // No locking in Cache
+	if err2 != nil {
+		err = err2
 	}
 
-	return nil
+	item.mu.Unlock()
+
+	// close downloader and cancel writebacks with mutex unlocked
+	if downloaders != nil {
+		_ = downloaders.Close(nil)
+	}
+	item.c.writeback.Rename(id, newName)
+
+	return err
 }
