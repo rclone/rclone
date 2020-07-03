@@ -19,7 +19,7 @@ require (
 	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/coreos/go-semver v0.3.0
-	github.com/djherbis/times v1.2.0
+	github.com/djherbis/times v1.2.0 // indirect
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
 	github.com/dvyukov/go-fuzz v0.0.0-20200318091601-be3528f3a813 // indirect
 	github.com/elazarl/go-bindata-assetfs v1.0.0 // indirect
