@@ -299,6 +299,28 @@ func (wb *WriteBack) Remove(id Handle) (found bool) {
 	return found
 }
 
+// Rename should be called when a file might be uploading and it gains
+// a new name. This will cancel the upload and put it back in the
+// queue.
+func (wb *WriteBack) Rename(id Handle, name string) {
+	wb.mu.Lock()
+	defer wb.mu.Unlock()
+
+	wbItem, ok := wb.lookup[id]
+	if !ok {
+		return
+	}
+	if wbItem.uploading {
+		// We are uploading already so cancel the upload
+		wb._cancelUpload(wbItem)
+	}
+	wbItem.name = name
+	// Kick the timer on
+	wb.items._update(wbItem, wb._newExpiry())
+
+	wb._resetTimer()
+}
+
 // upload the item - called as a goroutine
 //
 // uploading will have been incremented here already
