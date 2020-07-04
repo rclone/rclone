@@ -174,7 +174,7 @@ kill %1
 
 ## Install from source ##
 
-Make sure you have at least [Go](https://golang.org/) 1.7
+Make sure you have at least [Go](https://golang.org/) 1.10
 installed.  [Download go](https://golang.org/dl/) if necessary.  The
 latest release is recommended. Then
 
