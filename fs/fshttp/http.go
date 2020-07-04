@@ -58,26 +58,31 @@ func (c *timeoutConn) nudgeDeadline() (err error) {
 	return c.Conn.SetDeadline(when)
 }
 
-// readOrWrite bytes doing idle timeouts
-func (c *timeoutConn) readOrWrite(f func([]byte) (int, error), b []byte) (n int, err error) {
-	n, err = f(b)
+// Read bytes doing idle timeouts
+func (c *timeoutConn) Read(b []byte) (n int, err error) {
+	// Ideally we would LimitBandwidth(len(b)) here and replace tokens we didn't use
+	n, err = c.Conn.Read(b)
+	accounting.TokenBucket.LimitBandwidth(accounting.TokenBucketSlotTransportRx, n)
 	// Don't nudge if no bytes or an error
 	if n == 0 || err != nil {
 		return
 	}
 	// Nudge the deadline on successful Read or Write
 	err = c.nudgeDeadline()
-	return
-}
-
-// Read bytes doing idle timeouts
-func (c *timeoutConn) Read(b []byte) (n int, err error) {
-	return c.readOrWrite(c.Conn.Read, b)
+	return n, err
 }
 
 // Write bytes doing idle timeouts
 func (c *timeoutConn) Write(b []byte) (n int, err error) {
-	return c.readOrWrite(c.Conn.Write, b)
+	accounting.TokenBucket.LimitBandwidth(accounting.TokenBucketSlotTransportTx, len(b))
+	n, err = c.Conn.Write(b)
+	// Don't nudge if no bytes or an error
+	if n == 0 || err != nil {
+		return
+	}
+	// Nudge the deadline on successful Read or Write
+	err = c.nudgeDeadline()
+	return n, err
 }
 
 // dial with context and timeouts

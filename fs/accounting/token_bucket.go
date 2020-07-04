@@ -20,6 +20,8 @@ type TokenBucketSlot int
 // Slots for the token bucket
 const (
 	TokenBucketSlotAccounting TokenBucketSlot = iota
+	TokenBucketSlotTransportRx
+	TokenBucketSlotTransportTx
 	TokenBucketSlots
 )
 
