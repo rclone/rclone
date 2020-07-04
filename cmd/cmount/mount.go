@@ -158,6 +158,11 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	// Serve the mount point in the background returning error to errChan
 	errChan := make(chan error, 1)
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				errChan <- errors.Errorf("mount failed: %v", r)
+			}
+		}()
 		var err error
 		ok := host.Mount(mountpoint, options)
 		if !ok {
