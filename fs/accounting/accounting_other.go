@@ -7,4 +7,4 @@ package accounting
 
 // startSignalHandler() is Unix specific and does nothing under non-Unix
 // platforms.
-func startSignalHandler() {}
+func (tb *tokenBucket) startSignalHandler() {}

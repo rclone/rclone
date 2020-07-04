@@ -229,10 +229,10 @@ func LoadConfig(ctx context.Context) {
 	}
 
 	// Start the token bucket limiter
-	accounting.StartTokenBucket(ctx)
+	accounting.TokenBucket.StartTokenBucket(ctx)
 
 	// Start the bandwidth update ticker
-	accounting.StartTokenTicker(ctx)
+	accounting.TokenBucket.StartTokenTicker(ctx)
 
 	// Start the transactions per second limiter
 	accounting.StartLimitTPS(ctx)

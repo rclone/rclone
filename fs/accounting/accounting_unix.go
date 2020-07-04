@@ -14,7 +14,7 @@ import (
 )
 
 // startSignalHandler() sets a signal handler to catch SIGUSR2 and toggle throttling.
-func startSignalHandler() {
+func (tb *tokenBucket) startSignalHandler() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGUSR2)
 
@@ -22,14 +22,14 @@ func startSignalHandler() {
 		// This runs forever, but blocks until the signal is received.
 		for {
 			<-signals
-			tokenBucketMu.Lock()
-			bwLimitToggledOff = !bwLimitToggledOff
-			tokenBucket, prevTokenBucket = prevTokenBucket, tokenBucket
+			tb.mu.Lock()
+			tb.toggledOff = !tb.toggledOff
+			tb.curr, tb.prev = tb.prev, tb.curr
 			s := "disabled"
-			if tokenBucket != nil {
+			if !tb.curr._isOff() {
 				s = "enabled"
 			}
-			tokenBucketMu.Unlock()
+			tb.mu.Unlock()
 			fs.Logf(nil, "Bandwidth limit %s by user", s)
 		}
 	}()

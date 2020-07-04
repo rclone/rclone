@@ -24,7 +24,7 @@ func TestRcBwLimit(t *testing.T) {
 		"bytesPerSecond": int64(1048576),
 		"rate":           "1M",
 	}, out)
-	assert.Equal(t, rate.Limit(1048576), tokenBucket.Limit())
+	assert.Equal(t, rate.Limit(1048576), TokenBucket.curr[0].Limit())
 
 	// Query
 	in = rc.Params{}
@@ -45,7 +45,7 @@ func TestRcBwLimit(t *testing.T) {
 		"bytesPerSecond": int64(-1),
 		"rate":           "off",
 	}, out)
-	assert.Nil(t, tokenBucket)
+	assert.Nil(t, TokenBucket.curr[0])
 
 	// Query
 	in = rc.Params{}
