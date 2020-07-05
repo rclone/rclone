@@ -1188,9 +1188,6 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 		return nil, nil, errors.New("secret_access_key not found")
 	}
 
-	if opt.Region == "" && opt.Endpoint == "" {
-		opt.Endpoint = "https://s3.amazonaws.com/"
-	}
 	if opt.Region == "" {
 		opt.Region = "us-east-1"
 	}
