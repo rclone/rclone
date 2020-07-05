@@ -231,7 +231,7 @@ func (fsys *FS) Readdir(dirPath string,
 	// for getattr (but FUSE only looks at st_ino and the
 	// file-type bits of st_mode).
 	//
-	// FIXME If you call host.SetCapReaddirPlus() then WinFsp will
+	// We have called host.SetCapReaddirPlus() so WinFsp will
 	// use the full stat information - a Useful optimization on
 	// Windows.
 	//
@@ -250,14 +250,11 @@ func (fsys *FS) Readdir(dirPath string,
 				fs.Errorf(dirPath, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
 				continue
 			}
-			if usingReaddirPlus {
-				// We have called host.SetCapReaddirPlus() so supply the stat information
-				var stat fuse.Stat_t
-				_ = fsys.stat(node, &stat) // not capable of returning an error
-				fill(name, &stat, 0)
-			} else {
-				fill(name, nil, 0)
-			}
+			// We have called host.SetCapReaddirPlus() so supply the stat information
+			// It is very cheap at this point so supply it regardless of OS capabilities
+			var stat fuse.Stat_t
+			_ = fsys.stat(node, &stat) // not capable of returning an error
+			fill(name, &stat, 0)
 		}
 	}
 	itemsRead = len(items)
