@@ -390,3 +390,4 @@ put them back in again.` >}}
   * Petri Salminen <petri@salminen.dev>
   * Tim Burke <tim.burke@gmail.com>
   * Kai Lüke <kai@kinvolk.io>
+  * Garrett Squire <github@garrettsquire.com>
