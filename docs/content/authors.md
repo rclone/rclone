@@ -391,3 +391,4 @@ put them back in again.` >}}
   * Tim Burke <tim.burke@gmail.com>
   * Kai Lüke <kai@kinvolk.io>
   * Garrett Squire <github@garrettsquire.com>
+  * Evan Harris <eharris@puremagic.com>
