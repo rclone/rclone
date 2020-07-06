@@ -73,9 +73,9 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 		fRoot = strings.Replace(fRoot, ":", "", -1)
 	}
 	root := file.UNCPath(filepath.Join(config.CacheDir, "vfs", fremote.Name(), fRoot))
-	fs.Debugf(nil, "vfs cache root is %q", root)
+	fs.Debugf(nil, "vfs cache: root is %q", root)
 	metaRoot := file.UNCPath(filepath.Join(config.CacheDir, "vfsMeta", fremote.Name(), fRoot))
-	fs.Debugf(nil, "vfs metadata cache root is %q", root)
+	fs.Debugf(nil, "vfs cache: metadata root is %q", root)
 
 	fcache, err := fscache.Get(root)
 	if err != nil {
@@ -315,7 +315,7 @@ func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error
 	}
 	c.mu.Unlock()
 
-	fs.Infof(name, "Renamed in cache to %q", newName)
+	fs.Infof(name, "vfs cache: renamed in cache to %q", newName)
 	return nil
 }
 
@@ -431,11 +431,11 @@ func (c *Cache) purgeEmptyDirs() {
 	ctx := context.Background()
 	err := operations.Rmdirs(ctx, c.fcache, "", true)
 	if err != nil {
-		fs.Errorf(c.fcache, "Failed to remove empty directories from cache: %v", err)
+		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from cache: %v", err)
 	}
 	err = operations.Rmdirs(ctx, c.fcacheMeta, "", true)
 	if err != nil {
-		fs.Errorf(c.fcache, "Failed to remove empty directories from metadata cache: %v", err)
+		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from metadata cache: %v", err)
 	}
 }
 
@@ -523,7 +523,7 @@ func (c *Cache) clean() {
 	c.mu.Unlock()
 	uploadsInProgress, uploadsQueued := c.writeback.Stats()
 
-	fs.Infof(nil, "Cleaned the cache: objects %d (was %d) in use %d, to upload %d, uploading %d, total size %v (was %v)", newItems, oldItems, totalInUse, uploadsQueued, uploadsInProgress, newUsed, oldUsed)
+	fs.Infof(nil, "vfs cache: cleaned: objects %d (was %d) in use %d, to upload %d, uploading %d, total size %v (was %v)", newItems, oldItems, totalInUse, uploadsQueued, uploadsInProgress, newUsed, oldUsed)
 }
 
 // cleaner calls clean at regular intervals
@@ -531,7 +531,7 @@ func (c *Cache) clean() {
 // doesn't return until context is cancelled
 func (c *Cache) cleaner(ctx context.Context) {
 	if c.opt.CachePollInterval <= 0 {
-		fs.Debugf(nil, "Cache cleaning thread disabled because poll interval <= 0")
+		fs.Debugf(nil, "vfs cache: cleaning thread disabled because poll interval <= 0")
 		return
 	}
 	// Start cleaning the cache immediately
@@ -544,7 +544,7 @@ func (c *Cache) cleaner(ctx context.Context) {
 		case <-timer.C:
 			c.clean()
 		case <-ctx.Done():
-			fs.Debugf(nil, "cache cleaner exiting")
+			fs.Debugf(nil, "vfs cache: cleaner exiting")
 			return
 		}
 	}

@@ -207,7 +207,7 @@ func (wb *WriteBack) _stopTimer() {
 		return
 	}
 	wb.expiry = time.Time{}
-	fs.Debugf(nil, "resetTimer STOP")
+	// fs.Debugf(nil, "resetTimer STOP")
 	if wb.timer != nil {
 		wb.timer.Stop()
 		wb.timer = nil
@@ -228,7 +228,7 @@ func (wb *WriteBack) _resetTimer() {
 		if dt < 0 {
 			dt = 0
 		}
-		fs.Debugf(nil, "resetTimer dt=%v", dt)
+		// fs.Debugf(nil, "resetTimer dt=%v", dt)
 		if wb.timer != nil {
 			wb.timer.Stop()
 		}
@@ -330,13 +330,14 @@ func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 	putFn := wbItem.putFn
 	wbItem.tries++
 
+	fs.Debugf(wbItem.name, "vfs cache: starting upload")
+
 	wb.mu.Unlock()
 	err := putFn(ctx)
 	wb.mu.Lock()
 
 	wbItem.cancel() // cancel context to release resources since store done
 
-	//fs.Debugf(wbItem.name, "uploading = false %p item %p", wbItem, wbItem.item)
 	wbItem.uploading = false
 	wb.uploads--
 
@@ -347,7 +348,7 @@ func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 			wbItem.delay = maxUploadDelay
 		}
 		if _, uerr := fserrors.Cause(err); uerr == context.Canceled {
-			fs.Infof(wbItem.name, "vfs cache: upload canceled sucessfully")
+			fs.Infof(wbItem.name, "vfs cache: upload canceled")
 			// Upload was cancelled so reset timer
 			wbItem.delay = wb.opt.WriteBack
 		} else {
@@ -372,7 +373,7 @@ func (wb *WriteBack) _cancelUpload(wbItem *writeBackItem) {
 	if !wbItem.uploading {
 		return
 	}
-	fs.Infof(wbItem.name, "vfs cache: cancelling upload")
+	fs.Debugf(wbItem.name, "vfs cache: cancelling upload")
 	if wbItem.cancel != nil {
 		// Cancel the upload - this may or may not be effective
 		wbItem.cancel()
@@ -386,7 +387,7 @@ func (wb *WriteBack) _cancelUpload(wbItem *writeBackItem) {
 	}
 	// uploading items are not on the heap so add them back
 	wb._pushItem(wbItem)
-	fs.Infof(wbItem.name, "vfs cache: cancelled upload")
+	fs.Debugf(wbItem.name, "vfs cache: cancelled upload")
 }
 
 // cancelUpload cancels the upload of the item if there is one in progress
