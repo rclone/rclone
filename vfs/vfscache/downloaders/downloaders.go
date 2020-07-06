@@ -10,7 +10,6 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/asyncreader"
 	"github.com/rclone/rclone/fs/chunkedreader"
-	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -118,7 +117,7 @@ func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *
 		case <-ticker.C:
 			err := dls.kickWaiters()
 			if err != nil {
-				fs.Errorf(dls.src, "Failed to kick waiters: %v", err)
+				fs.Errorf(dls.src, "vfs cache: failed to kick waiters: %v", err)
 			}
 		case <-ctx.Done():
 			break
@@ -140,7 +139,7 @@ func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *
 func (dls *Downloaders) _countErrors(n int64, err error) {
 	if err == nil && n != 0 {
 		if dls.errorCount != 0 {
-			fs.Infof(dls.src, "Resetting error count to 0")
+			fs.Infof(dls.src, "vfs cache: downloader: resetting error count to 0")
 			dls.errorCount = 0
 			dls.lastErr = nil
 		}
@@ -149,7 +148,7 @@ func (dls *Downloaders) _countErrors(n int64, err error) {
 	if err != nil {
 		dls.errorCount++
 		dls.lastErr = err
-		fs.Infof(dls.src, "Error count now %d: %v", dls.errorCount, err)
+		fs.Infof(dls.src, "vfs cache: downloader: error count now %d: %v", dls.errorCount, err)
 	}
 }
 
@@ -163,7 +162,7 @@ func (dls *Downloaders) countErrors(n int64, err error) {
 //
 // call with lock held
 func (dls *Downloaders) _newDownloader(r ranges.Range) (dl *downloader, err error) {
-	defer log.Trace(dls.src, "r=%v", r)("err=%v", &err)
+	// defer log.Trace(dls.src, "r=%v", r)("err=%v", &err)
 
 	dl = &downloader{
 		kick:      make(chan struct{}, 1),
@@ -189,11 +188,11 @@ func (dls *Downloaders) _newDownloader(r ranges.Range) (dl *downloader, err erro
 		_ = dl.close(err)
 		dl.dls.countErrors(n, err)
 		if err != nil {
-			fs.Errorf(dl.dls.src, "Failed to download: %v", err)
+			fs.Errorf(dl.dls.src, "vfs cache: failed to download: %v", err)
 		}
 		err = dl.dls.kickWaiters()
 		if err != nil {
-			fs.Errorf(dl.dls.src, "Failed to kick waiters: %v", err)
+			fs.Errorf(dl.dls.src, "vfs cache: failed to kick waiters: %v", err)
 		}
 	}()
 
@@ -238,7 +237,7 @@ func (dls *Downloaders) Close(inErr error) (err error) {
 // Download the range passed in returning when it has been downloaded
 // with an error from the downloading go routine.
 func (dls *Downloaders) Download(r ranges.Range) (err error) {
-	defer log.Trace(dls.src, "r=%+v", r)("err=%v", &err)
+	// defer log.Trace(dls.src, "r=%+v", r)("err=%v", &err)
 
 	dls.mu.Lock()
 
@@ -384,12 +383,12 @@ func (dls *Downloaders) kickWaiters() (err error) {
 		err = dls._ensureDownloader(waiter.r)
 		if err != nil {
 			// Failures here will be retried by background kicker
-			fs.Errorf(dls.src, "Restart download failed: %v", err)
+			fs.Errorf(dls.src, "vfs cache: restart download failed: %v", err)
 		}
 	}
 
 	if dls.errorCount > maxErrorCount {
-		fs.Errorf(dls.src, "Too many errors %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
+		fs.Errorf(dls.src, "vfs cache: too many errors %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
 		dls._closeWaiters(dls.lastErr)
 		return dls.lastErr
 	}
@@ -405,7 +404,7 @@ func (dls *Downloaders) kickWaiters() (err error) {
 //
 // Implementations must not retain p.
 func (dl *downloader) Write(p []byte) (n int, err error) {
-	defer log.Trace(dl.dls.src, "p_len=%d", len(p))("n=%d, err=%v", &n, &err)
+	// defer log.Trace(dl.dls.src, "p_len=%d", len(p))("n=%d, err=%v", &n, &err)
 
 	// Kick the waiters on exit if some characters received
 	defer func() {
@@ -441,7 +440,7 @@ func (dl *downloader) Write(p []byte) (n int, err error) {
 			// stop any future reading
 			dl.mu.Lock()
 			if !dl.stop {
-				fs.Debugf(dl.dls.src, "stopping download thread as it timed out")
+				fs.Debugf(dl.dls.src, "vfs cache: stopping download thread as it timed out")
 				dl._stop()
 			}
 		}
@@ -457,7 +456,7 @@ func (dl *downloader) Write(p []byte) (n int, err error) {
 
 	// Kill this downloader if skipped too many bytes
 	if !dl.stop && dl.skipped > maxSkipBytes {
-		fs.Debugf(dl.dls.src, "stopping download thread as it has skipped %d bytes", dl.skipped)
+		fs.Debugf(dl.dls.src, "vfs cache: stopping download thread as it has skipped %d bytes", dl.skipped)
 		dl._stop()
 	}
 
@@ -475,7 +474,7 @@ func (dl *downloader) Write(p []byte) (n int, err error) {
 //
 // should be called on a fresh downloader
 func (dl *downloader) open(offset int64) (err error) {
-	defer log.Trace(dl.dls.src, "offset=%d", offset)("err=%v", &err)
+	// defer log.Trace(dl.dls.src, "offset=%d", offset)("err=%v", &err)
 	dl.tr = accounting.Stats(dl.dls.ctx).NewTransfer(dl.dls.src)
 
 	size := dl.dls.src.Size()
@@ -508,7 +507,7 @@ func (dl *downloader) open(offset int64) (err error) {
 
 // close the downloader
 func (dl *downloader) close(inErr error) (err error) {
-	defer log.Trace(dl.dls.src, "inErr=%v", err)("err=%v", &err)
+	// defer log.Trace(dl.dls.src, "inErr=%v", err)("err=%v", &err)
 	checkErr := func(e error) {
 		if e == nil || errors.Cause(err) == asyncreader.ErrorStreamAbandoned {
 			return
@@ -540,7 +539,7 @@ func (dl *downloader) closed() bool {
 //
 // Call with the mutex held
 func (dl *downloader) _stop() {
-	defer log.Trace(dl.dls.src, "")("")
+	// defer log.Trace(dl.dls.src, "")("")
 
 	// exit if have already called _stop
 	if dl.stop {
@@ -575,7 +574,7 @@ func (dl *downloader) stopAndClose(inErr error) (err error) {
 
 // Start downloading to the local file starting at offset until maxOffset.
 func (dl *downloader) download() (n int64, err error) {
-	defer log.Trace(dl.dls.src, "")("err=%v", &err)
+	// defer log.Trace(dl.dls.src, "")("err=%v", &err)
 	n, err = dl.in.WriteTo(dl)
 	if err != nil && errors.Cause(err) != asyncreader.ErrorStreamAbandoned {
 		return n, errors.Wrap(err, "vfs reader: failed to write to cache file")

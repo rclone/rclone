@@ -11,7 +11,6 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/ranges"
@@ -223,14 +222,14 @@ func (item *Item) _truncate(size int64) (err error) {
 		osPath := item.c.toOSPath(item.name) // No locking in Cache
 		fd, err = file.OpenFile(osPath, os.O_CREATE|os.O_WRONLY, 0600)
 		if err != nil {
-			return errors.Wrap(err, "vfs item truncate: failed to open cache file")
+			return errors.Wrap(err, "vfs cache: truncate: failed to open cache file")
 		}
 
 		defer fs.CheckClose(fd, &err)
 
 		err = file.SetSparse(fd)
 		if err != nil {
-			fs.Debugf(item.name, "vfs item truncate: failed to set as a sparse file: %v", err)
+			fs.Debugf(item.name, "vfs cache: truncate: failed to set as a sparse file: %v", err)
 		}
 	}
 
@@ -238,7 +237,7 @@ func (item *Item) _truncate(size int64) (err error) {
 
 	err = fd.Truncate(size)
 	if err != nil {
-		return errors.Wrap(err, "vfs truncate: failed to truncate")
+		return errors.Wrap(err, "vfs cache: truncate")
 	}
 
 	item.info.Size = size
@@ -403,7 +402,7 @@ func (item *Item) IsDirty() bool {
 // Open the local file from the object passed in (which may be nil)
 // which implies we are about to create the file
 func (item *Item) Open(o fs.Object) (err error) {
-	defer log.Trace(o, "item=%p", item)("err=%v", &err)
+	// defer log.Trace(o, "item=%p", item)("err=%v", &err)
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
@@ -434,7 +433,7 @@ func (item *Item) Open(o fs.Object) (err error) {
 	}
 	err = file.SetSparse(fd)
 	if err != nil {
-		fs.Debugf(item.name, "vfs cache item: failed to set as a sparse file: %v", err)
+		fs.Debugf(item.name, "vfs cache: failed to set as a sparse file: %v", err)
 	}
 	item.fd = fd
 
@@ -479,7 +478,7 @@ func (item *Item) Open(o fs.Object) (err error) {
 //
 // Call with lock held
 func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
-	defer log.Trace(item.name, "item=%p", item)("err=%v", &err)
+	// defer log.Trace(item.name, "item=%p", item)("err=%v", &err)
 
 	// Transfer the temp file to the remote
 	cacheObj, err := item.c.fcache.NewObject(ctx, item.name)
@@ -503,10 +502,10 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 	item.info.Dirty = false
 	err = item._save()
 	if err != nil {
-		fs.Errorf(item.name, "Failed to write metadata file: %v", err)
+		fs.Errorf(item.name, "vfs cache: failed to write metadata file: %v", err)
 	}
 	if storeFn != nil && item.o != nil {
-		fs.Debugf(item.name, "writeback object to VFS layer")
+		fs.Debugf(item.name, "vfs cache: writeback object to VFS layer")
 		// Write the object back to the VFS layer as last
 		// thing we do with mutex unlocked
 		item.mu.Unlock()
@@ -526,7 +525,7 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 
 // Close the cache file
 func (item *Item) Close(storeFn StoreFn) (err error) {
-	defer log.Trace(item.o, "Item.Close")("err=%v", &err)
+	// defer log.Trace(item.o, "Item.Close")("err=%v", &err)
 	var (
 		downloaders   *downloaders.Downloaders
 		syncWriteBack = item.c.opt.WriteBack <= 0
@@ -562,7 +561,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 	// Accumulate and log errors
 	checkErr := func(e error) {
 		if e != nil {
-			fs.Errorf(item.o, "vfs cache item close failed: %v", e)
+			fs.Errorf(item.o, "vfs cache: item close failed: %v", e)
 			if err == nil {
 				err = e
 			}
@@ -608,7 +607,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 
 	// upload the file to backing store if changed
 	if item.info.Dirty {
-		fs.Debugf(item.name, "item changed - writeback in %v", item.c.opt.WriteBack)
+		fs.Infof(item.name, "vfs cache: queuing for upload in %v", item.c.opt.WriteBack)
 		if syncWriteBack {
 			// do synchronous writeback
 			checkErr(item._store(context.Background(), storeFn))
@@ -806,13 +805,13 @@ func (item *Item) FindMissing(r ranges.Range) (outr ranges.Range) {
 //
 // call with the item lock held
 func (item *Item) _ensure(offset, size int64) (err error) {
-	defer log.Trace(item.name, "offset=%d, size=%d", offset, size)("err=%v", &err)
+	// defer log.Trace(item.name, "offset=%d, size=%d", offset, size)("err=%v", &err)
 	if offset+size > item.info.Size {
 		size = item.info.Size - offset
 	}
 	r := ranges.Range{Pos: offset, Size: size}
 	present := item.info.Rs.Present(r)
-	fs.Debugf(nil, "looking for range=%+v in %+v - present %v", r, item.info.Rs, present)
+	fs.Debugf(nil, "vfs cache: looking for range=%+v in %+v - present %v", r, item.info.Rs, present)
 	item.mu.Unlock()
 	defer item.mu.Lock()
 	if present {
@@ -840,7 +839,7 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 //
 // call with lock held
 func (item *Item) _written(offset, size int64) {
-	defer log.Trace(item.name, "offset=%d, size=%d", offset, size)("")
+	// defer log.Trace(item.name, "offset=%d, size=%d", offset, size)("")
 	item.info.Rs.Insert(ranges.Range{Pos: offset, Size: size})
 	item.metaDirty = true
 }
@@ -855,7 +854,7 @@ func (item *Item) _updateFingerprint() {
 	oldFingerprint := item.info.Fingerprint
 	item.info.Fingerprint = fs.Fingerprint(context.TODO(), item.o, false)
 	if oldFingerprint != item.info.Fingerprint {
-		fs.Debugf(item.o, "fingerprint now %q", item.info.Fingerprint)
+		fs.Debugf(item.o, "vfs cache: fingerprint now %q", item.info.Fingerprint)
 		item.metaDirty = true
 	}
 }
@@ -868,13 +867,13 @@ func (item *Item) _setModTime(modTime time.Time) {
 	osPath := item.c.toOSPath(item.name) // No locking in Cache
 	err := os.Chtimes(osPath, modTime, modTime)
 	if err != nil {
-		fs.Errorf(item.name, "Failed to set modification time of cached file: %v", err)
+		fs.Errorf(item.name, "vfs cache: failed to set modification time of cached file: %v", err)
 	}
 }
 
 // setModTime of the cache file and in the Item
 func (item *Item) setModTime(modTime time.Time) {
-	defer log.Trace(item.name, "modTime=%v", modTime)("")
+	// defer log.Trace(item.name, "modTime=%v", modTime)("")
 	item.mu.Lock()
 	item._updateFingerprint()
 	item._setModTime(modTime)
@@ -961,10 +960,10 @@ func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, e
 	)
 
 	// Write the range out ignoring already written chunks
-	fs.Debugf(item.name, "Ranges = %v", item.info.Rs)
+	// fs.Debugf(item.name, "Ranges = %v", item.info.Rs)
 	for i := range foundRanges {
 		foundRange := &foundRanges[i]
-		fs.Debugf(item.name, "foundRange[%d] = %v", i, foundRange)
+		// fs.Debugf(item.name, "foundRange[%d] = %v", i, foundRange)
 		if foundRange.R.Pos != off {
 			err = errors.New("internal error: offset of range is wrong")
 			break
@@ -972,12 +971,12 @@ func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, e
 		size := int(foundRange.R.Size)
 		if foundRange.Present {
 			// if present want to skip this range
-			fs.Debugf(item.name, "skip chunk offset=%d size=%d", off, size)
+			// fs.Debugf(item.name, "skip chunk offset=%d size=%d", off, size)
 			nn = size
 			skipped += size
 		} else {
 			// if range not present then we want to write it
-			fs.Debugf(item.name, "write chunk offset=%d size=%d", off, size)
+			// fs.Debugf(item.name, "write chunk offset=%d size=%d", off, size)
 			nn, err = item.fd.WriteAt(b[:size], off)
 			if err == nil && nn != size {
 				err = errors.Errorf("downloader: short write: tried to write %d but only %d written", size, nn)
