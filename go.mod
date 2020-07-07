@@ -25,13 +25,11 @@ require (
 	github.com/jlaffaye/ftp v0.0.0-20200720194710-13949d38913e
 	github.com/jzelinskie/whirlpool v0.0.0-20170603002051-c19460b8caa6
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/klauspost/cpuid v1.3.0 // indirect
 	github.com/koofr/go-httpclient v0.0.0-20200420163713-93aa7c75b348
 	github.com/koofr/go-koofrclient v0.0.0-20190724113126-8e5366da203a
 	github.com/mattn/go-colorable v0.1.7
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mattn/go-runewidth v0.0.9
-	github.com/minio/minio-go/v6 v6.0.57 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
 	github.com/ncw/swift v1.0.52
@@ -56,19 +54,18 @@ require (
 	go.etcd.io/bbolt v1.3.5
 	go.opencensus.io v0.22.4 // indirect
 	go.uber.org/zap v1.15.0 // indirect
-	goftp.io/server v0.3.5-0.20200630051340-d7b447417587
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200625001655-4c5254603344
+	goftp.io/server v0.4.0
+	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae
+	golang.org/x/sys v0.0.0-20200720211630-cb9d2d5c5666
 	golang.org/x/text v0.3.3
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 	google.golang.org/api v0.28.0
 	google.golang.org/genproto v0.0.0-20200626011028-ee7919e894b5 // indirect
 	google.golang.org/grpc v1.30.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
-	gopkg.in/ini.v1 v1.57.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	storj.io/common v0.0.0-20200624215549-bf610d22d466 // indirect
