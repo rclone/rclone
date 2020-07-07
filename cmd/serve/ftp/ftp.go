@@ -26,7 +26,7 @@ import (
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	ftp "goftp.io/server"
+	ftp "goftp.io/server/core"
 )
 
 // Options contains options for the http Server
