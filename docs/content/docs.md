@@ -1849,6 +1849,27 @@ mys3:
 Note that if you want to create a remote using environment variables
 you must create the `..._TYPE` variable as above.
 
+### Precedence
+
+The various different methods of backend configuration are read in
+this order and the first one with a value is used.
+
+- Flag values as supplied on the command line, eg `--drive-use-trash`.
+- Remote specific environment vars, eg `RCLONE_CONFIG_MYREMOTE_USE_TRASH` (see above).
+- Backend specific environment vars, eg `RCLONE_DRIVE_USE_TRASH`.
+- Config file, eg `use_trash = false`.
+- Default values, eg `true` - these can't be changed.
+
+So if both `--drive-use-trash` is supplied on the config line and an
+environment variable `RCLONE_DRIVE_USE_TRASH` is set, the command line
+flag will take preference.
+
+For non backend configuration the order is as follows:
+
+- Flag values as supplied on the command line, eg `--stats 5s`.
+- Environment vars, eg `RCLONE_STATS=5s`.
+- Default values, eg `1m` - these can't be changed.
+
 ### Other environment variables ###
 
 - `RCLONE_CONFIG_PASS` set to contain your config file password (see [Configuration Encryption](#configuration-encryption) section)
