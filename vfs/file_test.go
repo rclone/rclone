@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -243,7 +244,7 @@ func TestFileOpen(t *testing.T) {
 	assert.Equal(t, EPERM, err)
 }
 
-func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
+func testFileRename(t *testing.T, mode vfscommon.CacheMode, inCache bool, forceCache bool) {
 	r, vfs, file, item, cleanup := fileCreate(t, mode)
 	defer cleanup()
 
@@ -254,8 +255,22 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
 	rootDir, err := vfs.Root()
 	require.NoError(t, err)
 
+	// force the file into the cache if required
+	if forceCache {
+		// write the file with read and write
+		fd, err := file.Open(os.O_RDWR | os.O_CREATE | os.O_TRUNC)
+		require.NoError(t, err)
+
+		n, err := fd.Write([]byte("file1 contents"))
+		require.NoError(t, err)
+		require.Equal(t, 14, n)
+
+		err = fd.Close()
+		require.NoError(t, err)
+	}
+
 	// check file in cache
-	if mode != vfscommon.CacheModeOff {
+	if inCache {
 		// read contents to get file in cache
 		fileCheckContents(t, file)
 		assert.True(t, vfs.cache.Exists(item.Path))
@@ -274,7 +289,7 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
 	fstest.CheckItems(t, r.Fremote, item)
 
 	// check file in cache
-	if mode != vfscommon.CacheModeOff {
+	if inCache {
 		assert.True(t, vfs.cache.Exists(item.Path))
 	}
 
@@ -290,7 +305,7 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
 	fstest.CheckItems(t, r.Fremote, item)
 
 	// check file in cache
-	if mode != vfscommon.CacheModeOff {
+	if inCache {
 		assert.True(t, vfs.cache.Exists(item.Path))
 	}
 
@@ -308,7 +323,7 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
 	newItem := fstest.NewItem("newLeaf", string(newContents), item.ModTime)
 
 	// check file has been renamed immediately in the cache
-	if mode != vfscommon.CacheModeOff {
+	if inCache {
 		assert.True(t, vfs.cache.Exists("newLeaf"))
 	}
 
@@ -326,10 +341,20 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode) {
 }
 
 func TestFileRename(t *testing.T) {
-	t.Run("CacheModeOff", func(t *testing.T) {
-		testFileRename(t, vfscommon.CacheModeOff)
-	})
-	t.Run("CacheModeFull", func(t *testing.T) {
-		testFileRename(t, vfscommon.CacheModeFull)
-	})
+	for _, test := range []struct {
+		mode       vfscommon.CacheMode
+		inCache    bool
+		forceCache bool
+	}{
+		{mode: vfscommon.CacheModeOff, inCache: false},
+		{mode: vfscommon.CacheModeMinimal, inCache: false},
+		{mode: vfscommon.CacheModeMinimal, inCache: true, forceCache: true},
+		{mode: vfscommon.CacheModeWrites, inCache: false},
+		{mode: vfscommon.CacheModeWrites, inCache: true, forceCache: true},
+		{mode: vfscommon.CacheModeFull, inCache: true},
+	} {
+		t.Run(fmt.Sprintf("%v,forceCache=%v", test.mode, test.forceCache), func(t *testing.T) {
+			testFileRename(t, test.mode, test.inCache, test.forceCache)
+		})
+	}
 }
