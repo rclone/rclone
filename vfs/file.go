@@ -241,8 +241,8 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	CacheMode := d.vfs.Opt.CacheMode
 	if writing &&
 		(CacheMode < vfscommon.CacheModeMinimal ||
-			(CacheMode == vfscommon.CacheModeMinimal && !f.d.vfs.cache.Exists(f.Path()))) {
-		fs.Debugf(f.Path(), "File is currently open, delaying rename %p", f)
+			(CacheMode == vfscommon.CacheModeMinimal && !f.d.vfs.cache.Exists(oldPath))) {
+		fs.Debugf(oldPath, "File is currently open, delaying rename %p", f)
 		f.mu.Lock()
 		f.pendingRenameFun = renameCall
 		f.mu.Unlock()
