@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,7 +34,7 @@ type Dir struct {
 	read    time.Time         // time directory entry last read
 	items   map[string]Node   // directory entries - can be empty but not nil
 	virtual map[string]vState // virtual directory entries - may be nil
-	sys     interface{}       // user defined info to be attached here
+	sys     atomic.Value      // user defined info to be attached here
 }
 
 //go:generate stringer -type=vState
@@ -105,16 +106,12 @@ func (d *Dir) Path() (name string) {
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
 func (d *Dir) Sys() interface{} {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	return d.sys
+	return d.sys.Load()
 }
 
 // SetSys sets the underlying data source (can be nil) - satisfies Node interface
 func (d *Dir) SetSys(x interface{}) {
-	d.mu.Lock()
-	d.sys = x
-	d.mu.Unlock()
+	d.sys.Store(x)
 }
 
 // Inode returns the inode number - satisfies Node interface
