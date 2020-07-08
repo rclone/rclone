@@ -48,7 +48,7 @@ type File struct {
 	pendingModTime   time.Time                       // will be applied once o becomes available, i.e. after file was written
 	pendingRenameFun func(ctx context.Context) error // will be run/renamed after all writers close
 	appendMode       bool                            // file was opened with O_APPEND
-	sys              interface{}                     // user defined info to be attached here
+	sys              atomic.Value                    // user defined info to be attached here
 
 	muRW sync.Mutex // synchronize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
 }
@@ -122,16 +122,12 @@ func (f *File) Path() string {
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
 func (f *File) Sys() interface{} {
-	f.mu.RLock()
-	defer f.mu.RUnlock()
-	return f.sys
+	return f.sys.Load()
 }
 
 // SetSys sets the underlying data source (can be nil) - satisfies Node interface
 func (f *File) SetSys(x interface{}) {
-	f.mu.Lock()
-	f.sys = x
-	f.mu.Unlock()
+	f.sys.Store(x)
 }
 
 // Inode returns the inode number - satisfies Node interface
