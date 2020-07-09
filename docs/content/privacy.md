@@ -53,6 +53,10 @@ Users are advised to use social media platforms wisely and communicate / engage 
 
 This website may use social sharing buttons which help share web content directly from web pages to the social media platform in question. Users are advised before using such social sharing buttons that they do so at their own discretion and note that the social media platform may track and save your request to share a web page respectively through your social media platform account.
 
+### Use of Google User Data ###
+
+Rclone allows accessing the user content stored in [Google Drive](/drive/), which is governed by the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy). Rclone only provides the authenticated end user with access to the files available in their Google Drive associated by the OAuth token via the publicly exposed Google Drive API. Rclone allows storing the OAuth credentials on the user machine in the local configuration file. Rclone does not share any Google user data with third parties.
+
 ## Resources & Further Information ##
 
   * [Data Protection Act 1998](http://www.legislation.gov.uk/ukpga/1998/29/contents)
