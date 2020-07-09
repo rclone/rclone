@@ -1197,3 +1197,10 @@ for rclone to be able to get its token-id (but as this only happens during
 the remote configuration, it's not such a big deal). 
 
 (Thanks to @balazer on github for these instructions.)
+
+Sometimes, creation of an OAuth consent in Google API Console fails due to an error message
+“The request failed because changes to one of the field of the resource is not supported”.
+As a convenient workaround, the necessary Google Drive API key can be created on the
+[Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python) page.
+Just push the Enable the Drive API button to receive the Client ID and Secret.
+Note that it will automatically create a new project in the API Console.
