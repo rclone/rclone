@@ -3,6 +3,7 @@
 package terminal
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"runtime"
@@ -73,12 +74,15 @@ func Start() {
 	once.Do(func() {
 		f := os.Stdout
 		if !terminal.IsTerminal(int(f.Fd())) {
+			fmt.Fprintf(os.Stderr, "terminal: removing escape codes - no tty detected\n")
 			// If stdout not a tty then remove escape codes
 			Out = colorable.NewNonColorable(f)
 		} else if runtime.GOOS == "windows" && os.Getenv("TERM") != "" {
+			fmt.Fprintf(os.Stderr, "terminal: Windows with TERM using stdout directly\n")
 			// If TERM is set just use stdout
 			Out = f
 		} else {
+			fmt.Fprintf(os.Stderr, "terminal: using OS specific code\n")
 			Out = colorable.NewColorable(f)
 		}
 	})
