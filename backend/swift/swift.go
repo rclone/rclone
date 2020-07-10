@@ -505,7 +505,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *swift.Object) (fs.Object, er
 	// making sure we read the full metadata for all 0 byte files.
 	// We don't read the metadata for directory marker objects.
 	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" {
-		info = nil
+		err := o.readMetaData() // reads info and headers, returning an error
+		if err == fs.ErrorObjectNotFound {
+			// We have a dangling large object here so just return the original metadata
+			fs.Errorf(o, "dangling large object with no contents")
+		} else if err != nil {
+			return nil, err
+		} else {
+			return o, nil
+		}
 	}
 	if info != nil {
 		// Set info but not headers
