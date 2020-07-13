@@ -557,3 +557,7 @@ then rclone uses an internal one.
 `scrypt` makes it impractical to mount a dictionary attack on rclone
 encrypted data.  For full protection against this you should always use
 a salt.
+
+## SEE ALSO
+
+* [rclone cryptdecode](/commands/rclone_cryptdecode/)    - Show forward/reverse mapping of encrypted filenames
