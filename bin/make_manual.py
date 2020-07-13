@@ -6,6 +6,7 @@ conversion into man pages etc.
 
 import os
 import re
+import time
 from datetime import datetime
 
 docpath = "docs/content"
@@ -156,17 +157,19 @@ def read_commands(docpath):
         if command != "rclone.md":
             docs.append(read_command(command))
     return "\n".join(docs)
-    
+
 def main():
     check_docs(docpath)
     command_docs = read_commands(docpath).replace("\\", "\\\\") # escape \ so we can use command_docs in re.sub
+    build_date = datetime.utcfromtimestamp(
+            int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
     with open(outfile, "w") as out:
         out.write("""\
 %% rclone(1) User Manual
 %% Nick Craig-Wood
 %% %s
 
-""" % datetime.now().strftime("%b %d, %Y"))
+""" % build_date.strftime("%b %d, %Y"))
         for doc in docs:
             contents = read_doc(doc)
             # Substitute the commands into doc.md
