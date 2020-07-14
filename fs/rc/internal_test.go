@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/rclone/rclone/fstest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -118,4 +120,28 @@ func TestCoreQuit(t *testing.T) {
 	}
 	_, err := call.Fn(context.Background(), in)
 	require.Error(t, err)
+}
+
+// core/command: Runs a raw rclone command
+func TestCoreCommand(t *testing.T) {
+	call := Calls.Get("core/command")
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	in := Params{
+		"command": "ls",
+		"opt": map[string]string{
+			"max-depth": "1",
+		},
+		"arg": []string{
+			r.FremoteName,
+		},
+	}
+	got, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	errorBool, err := got.GetBool("error")
+	require.NoError(t, err)
+
+	require.Equal(t, errorBool, false)
 }
