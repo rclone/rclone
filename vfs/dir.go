@@ -42,9 +42,11 @@ type Dir struct {
 type vState byte
 
 const (
-	vOK  vState = iota // Not virtual
-	vAdd               // added file or directory
-	vDel               // removed file or directory
+	vOK      vState = iota // Not virtual
+	vAddFile               // added file
+	vDelFile               // removed file
+	vAddDir                // added directory
+	vDelDir                // removed directory
 )
 
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
@@ -295,8 +297,12 @@ func (d *Dir) addObject(node Node) {
 	if d.virtual == nil {
 		d.virtual = make(map[string]vState)
 	}
-	d.virtual[leaf] = vAdd
-	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vAdd, leaf)
+	virtualState := vAddFile
+	if node.IsDir() {
+		virtualState = vAddDir
+	}
+	d.virtual[leaf] = virtualState
+	fs.Debugf(d.path, "Added virtual directory entry %v: %q", virtualState, leaf)
 	d.mu.Unlock()
 }
 
@@ -339,8 +345,8 @@ func (d *Dir) delObject(leaf string) {
 	if d.virtual == nil {
 		d.virtual = make(map[string]vState)
 	}
-	d.virtual[leaf] = vDel
-	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vDel, leaf)
+	d.virtual[leaf] = vDelFile
+	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vDelFile, leaf)
 	d.mu.Unlock()
 }
 
@@ -392,6 +398,22 @@ func (d *Dir) _readDirFromDirTree(dirTree dirtree.DirTree, when time.Time) error
 // set the last read time - must be called with the lock held
 func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree, when time.Time) error {
 	var err error
+
+	// For backends which can have empty directories remove
+	// virtual directory entries before doing the listing - they
+	// should definitely appear in the listing.
+	if d.f.Features().CanHaveEmptyDirectories {
+		for name, virtualState := range d.virtual {
+			if virtualState == vAddDir {
+				delete(d.virtual, name)
+				if len(d.virtual) == 0 {
+					d.virtual = nil
+				}
+				fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
+			}
+		}
+	}
+
 	// Cache the items by name
 	found := make(map[string]struct{})
 	for _, entry := range entries {
@@ -403,7 +425,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 		found[name] = struct{}{}
 		virtualState := d.virtual[name]
 		switch virtualState {
-		case vAdd:
+		case vAddFile, vAddDir:
 			// item was added to the dir but since it is found in a
 			// listing is no longer virtual
 			delete(d.virtual, name)
@@ -411,7 +433,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 				d.virtual = nil
 			}
 			fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
-		case vDel:
+		case vDelFile, vDelDir:
 			// item is deleted from the dir so skip it
 			continue
 		case vOK:
@@ -453,7 +475,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 	}
 	// delete unused entries
 	for name := range d.items {
-		if _, ok := found[name]; !ok && d.virtual[name] != vAdd {
+		if _, ok := found[name]; !ok && d.virtual[name] != vAddFile && d.virtual[name] != vAddDir {
 			// item was added to the dir but wasn't found in the
 			// listing - remove it unless it was virtually added
 			delete(d.items, name)
@@ -461,7 +483,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 	}
 	// delete unused virtuals
 	for name, virtualState := range d.virtual {
-		if _, ok := found[name]; !ok && virtualState == vDel {
+		if _, ok := found[name]; !ok && (virtualState == vDelFile || virtualState == vDelDir) {
 			// We have a virtual delete but the item wasn't found in
 			// the listing so no longer needs a virtual delete.
 			delete(d.virtual, name)
