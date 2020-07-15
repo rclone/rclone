@@ -658,6 +658,7 @@ func (s *syncCopyMove) pushRenameMap(hash string, obj fs.Object) {
 // renameMap or returns nil if not found.
 func (s *syncCopyMove) popRenameMap(hash string, src fs.Object) (dst fs.Object) {
 	s.renameMapMu.Lock()
+	defer s.renameMapMu.Unlock()
 	dsts, ok := s.renameMap[hash]
 	if ok && len(dsts) > 0 {
 		// Element to remove
@@ -690,7 +691,6 @@ func (s *syncCopyMove) popRenameMap(hash string, src fs.Object) (dst fs.Object) 
 			delete(s.renameMap, hash)
 		}
 	}
-	s.renameMapMu.Unlock()
 	return dst
 }
 
