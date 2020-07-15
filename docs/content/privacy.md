@@ -53,6 +53,14 @@ Users are advised to use social media platforms wisely and communicate / engage 
 
 This website may use social sharing buttons which help share web content directly from web pages to the social media platform in question. Users are advised before using such social sharing buttons that they do so at their own discretion and note that the social media platform may track and save your request to share a web page respectively through your social media platform account.
 
+## Use of Cloud API User Data ##
+
+Rclone is a command line program to manage files on cloud storage. Its sole purpose is to access and manipulate user content in the [supported](/overview/) cloud storage systems from a local machine of the end user. For accessing the user content via the cloud provider API, Rclone uses authentication mechanisms, such as OAuth or HTTP Cookies, depending on the particular cloud provider offerings. Use of these authentication mechanisms and user data is governed by the privacy policies mentioned in the [Resources & Further Information](/privacy/#resources-further-information) section and followed by the privacy policy of Rclone.
+
+* Rclone provides the end user with access to their files available in a storage system associated by the authentication credentials via the publicly exposed API of the storage system.
+* Rclone allows storing the authentication credentials on the user machine in the local configuration file.
+* Rclone does not share any user data with third parties.
+
 ## Resources & Further Information ##
 
   * [Data Protection Act 1998](http://www.legislation.gov.uk/ukpga/1998/29/contents)
@@ -61,4 +69,5 @@ This website may use social sharing buttons which help share web content directl
   * [Twitter Privacy Policy](https://twitter.com/privacy)
   * [Facebook Privacy Policy](https://www.facebook.com/about/privacy/)
   * [Google Privacy Policy](https://www.google.com/privacy.html)
+  * [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy)
   * [Sample Website Privacy Policy](http://www.jamieking.co.uk/resources/free_sample_privacy_policy.html)
