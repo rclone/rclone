@@ -394,3 +394,4 @@ put them back in again.` >}}
   * Evan Harris <eharris@puremagic.com>
   * Kevin <keyam@microsoft.com>
   * Morten Linderud <morten@linderud.pw>
+  * Dmitry Ustalov <dmitry.ustalov@gmail.com>
