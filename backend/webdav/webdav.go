@@ -686,8 +686,8 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // mkParentDir makes the parent of the native path dirPath if
 // necessary and any directories above that
-func (f *Fs) mkParentDir(ctx context.Context, dirPath string) error {
-	// defer log.Trace(dirPath, "")("")
+func (f *Fs) mkParentDir(ctx context.Context, dirPath string) (err error) {
+	// defer log.Trace(dirPath, "")("err=%v", &err)
 	// chop off trailing / if it exists
 	if strings.HasSuffix(dirPath, "/") {
 		dirPath = dirPath[:len(dirPath)-1]
@@ -697,6 +697,27 @@ func (f *Fs) mkParentDir(ctx context.Context, dirPath string) error {
 		parent = ""
 	}
 	return f.mkdir(ctx, parent)
+}
+
+// _dirExists - list dirPath to see if it exists
+//
+// dirPath should be a native path ending in a /
+func (f *Fs) _dirExists(ctx context.Context, dirPath string) (exists bool) {
+	opts := rest.Opts{
+		Method: "PROPFIND",
+		Path:   dirPath,
+		ExtraHeaders: map[string]string{
+			"Depth": "0",
+		},
+	}
+	var result api.Multistatus
+	var resp *http.Response
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		return f.shouldRetry(resp, err)
+	})
+	return err == nil
 }
 
 // low level mkdir, only makes the directory, doesn't attempt to create parents
@@ -719,19 +740,29 @@ func (f *Fs) _mkdir(ctx context.Context, dirPath string) error {
 		return f.shouldRetry(resp, err)
 	})
 	if apiErr, ok := err.(*api.Error); ok {
-		// already exists
+		// Check if it already exists. The response code for this isn't
+		// defined in the RFC so the implementations vary wildly.
+		//
 		// owncloud returns 423/StatusLocked if the create is already in progress
 		if apiErr.StatusCode == http.StatusMethodNotAllowed || apiErr.StatusCode == http.StatusNotAcceptable || apiErr.StatusCode == http.StatusLocked {
 			return nil
 		}
+		// 4shared returns a 409/StatusConflict here which clashes
+		// horribly with the intermediate paths don't exist meaning. So
+		// check to see if actually exists. This will correct other
+		// error codes too.
+		if f._dirExists(ctx, dirPath) {
+			return nil
+		}
+
 	}
 	return err
 }
 
 // mkdir makes the directory and parents using native paths
-func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
-	// defer log.Trace(dirPath, "")("")
-	err := f._mkdir(ctx, dirPath)
+func (f *Fs) mkdir(ctx context.Context, dirPath string) (err error) {
+	// defer log.Trace(dirPath, "")("err=%v", &err)
+	err = f._mkdir(ctx, dirPath)
 	if apiErr, ok := err.(*api.Error); ok {
 		// parent does not exist so create it first then try again
 		if apiErr.StatusCode == http.StatusConflict {
