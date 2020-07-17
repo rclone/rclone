@@ -273,6 +273,12 @@ the magic, pretending to be user foo.
     - `gdrive:backup` - use the remote called gdrive, work in
 the folder named backup.
 
+Note: in case you configured a specific root folder on gdrive and rclone is unable to access the contents of that folder when using `--drive-impersonate`, do this instead:
+  - in the gdrive web interface, share your root folder with the user/email of the new Service Account you created/selected at step #1
+  - use rclone without specifying the `--drive-impersonate` option, like this:
+        `rclone -v foo@example.com lsf gdrive:backup`
+
+
 ### Team drives ###
 
 If you want to configure the remote to point to a Google Team Drive
