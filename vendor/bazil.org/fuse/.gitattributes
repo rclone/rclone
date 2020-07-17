@@ -1,2 +1,0 @@
-*.go filter=gofmt
-*.cgo filter=gofmt
