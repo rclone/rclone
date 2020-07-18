@@ -8,6 +8,8 @@ import (
 	"net/textproto"
 	"os"
 	"path"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -160,6 +162,43 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// Enable debugging output
+type debugLog struct {
+	mu   sync.Mutex
+	auth bool
+}
+
+// Write writes len(p) bytes from p to the underlying data stream. It returns
+// the number of bytes written from p (0 <= n <= len(p)) and any error
+// encountered that caused the write to stop early. Write must return a non-nil
+// error if it returns n < len(p). Write must not modify the slice data, even
+// temporarily.
+//
+// Implementations must not retain p.
+//
+// This writes debug info to the log
+func (dl *debugLog) Write(p []byte) (n int, err error) {
+	dl.mu.Lock()
+	defer dl.mu.Unlock()
+	_, file, _, ok := runtime.Caller(1)
+	direction := "FTP Rx"
+	if ok && strings.Contains(file, "multi") {
+		direction = "FTP Tx"
+	}
+	lines := strings.Split(string(p), "\r\n")
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+	for _, line := range lines {
+		if !dl.auth && strings.HasPrefix(line, "PASS") {
+			fs.Debugf(direction, "PASS *****")
+			continue
+		}
+		fs.Debugf(direction, "%q", line)
+	}
+	return len(p), nil
+}
+
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	fs.Debugf(f, "Connecting to FTP server")
@@ -182,6 +221,9 @@ func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
+	}
+	if fs.Config.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpRequests|fs.DumpResponses) != 0 {
+		ftpConfig = append(ftpConfig, ftp.DialWithDebugOutput(&debugLog{auth: fs.Config.Dump&fs.DumpAuth != 0}))
 	}
 	c, err := ftp.Dial(f.dialAddr, ftpConfig...)
 	if err != nil {
