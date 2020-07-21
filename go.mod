@@ -26,7 +26,7 @@ require (
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hanwen/go-fuse/v2 v2.0.3
-	github.com/jlaffaye/ftp v0.0.0-20200602180915-5563613968bf
+	github.com/jlaffaye/ftp v0.0.0-20200720194710-13949d38913e
 	github.com/jzelinskie/whirlpool v0.0.0-20170603002051-c19460b8caa6
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/klauspost/cpuid v1.3.0 // indirect
