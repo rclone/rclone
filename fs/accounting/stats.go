@@ -16,6 +16,8 @@ import (
 // MaxCompletedTransfers specifies maximum number of completed transfers in startedTransfers list
 var MaxCompletedTransfers = 100
 
+var startTime = time.Now()
+
 // StatsInfo accounts all transfers
 type StatsInfo struct {
 	mu                sync.RWMutex
@@ -66,7 +68,8 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["transfers"] = s.transfers
 	out["deletes"] = s.deletes
 	out["renames"] = s.renames
-	out["elapsedTime"] = s.totalDuration().Seconds()
+	out["transferTime"] = s.totalDuration().Seconds()
+	out["elapsedTime"] = time.Since(startTime).Seconds()
 	s.mu.RUnlock()
 	if !s.checking.empty() {
 		var c []string
@@ -248,7 +251,7 @@ func (s *StatsInfo) String() string {
 
 	s.mu.RLock()
 
-	dt := s.totalDuration()
+	dt := time.Since(startTime)
 	dtSeconds := dt.Seconds()
 	dtSecondsOnly := dt.Truncate(time.Second/10) % time.Minute
 	speed := 0.0
