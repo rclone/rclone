@@ -43,7 +43,9 @@ type (
 	// UnmountFn is called to unmount the file system
 	UnmountFn func() error
 	// MountFn is called to mount the file system
-	MountFn func(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, error)
+	MountFn func(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error)
+	// MountBlockingFn is called to mount the file system and block
+	MountBlockingFn func(VFS *vfs.VFS, mountpoint string) error
 )
 
 // Global constants
@@ -106,7 +108,7 @@ func checkMountpointOverlap(root, mountpoint string) error {
 }
 
 // NewMountCommand makes a mount command with the given name and Mount function
-func NewMountCommand(commandName string, hidden bool, Mount func(f fs.Fs, mountpoint string) error) *cobra.Command {
+func NewMountCommand(commandName string, hidden bool, Mount MountBlockingFn) *cobra.Command {
 	var commandDefinition = &cobra.Command{
 		Use:    commandName + " remote:path /path/to/mountpoint",
 		Hidden: hidden,
@@ -346,7 +348,8 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 				}
 			}
 
-			err := Mount(fdst, mountpoint)
+			VFS := vfs.New(fdst, &vfsflags.Opt)
+			err := Mount(VFS, mountpoint)
 			if err != nil {
 				log.Fatalf("Fatal error: %v", err)
 			}

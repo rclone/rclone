@@ -15,7 +15,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 // FS represents the top level filing system
@@ -28,10 +27,10 @@ type FS struct {
 var _ fusefs.FS = (*FS)(nil)
 
 // NewFS makes a new FS
-func NewFS(f fs.Fs) *FS {
+func NewFS(VFS *vfs.VFS) *FS {
 	fsys := &FS{
-		VFS: vfs.New(f, &vfsflags.Opt),
-		f:   f,
+		VFS: VFS,
+		f:   VFS.Fs(),
 	}
 	return fsys
 }

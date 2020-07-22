@@ -17,7 +17,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 const fhUnset = ^uint64(0)
@@ -32,10 +31,10 @@ type FS struct {
 }
 
 // NewFS makes a new FS
-func NewFS(f fs.Fs) *FS {
+func NewFS(VFS *vfs.VFS) *FS {
 	fsys := &FS{
-		VFS:   vfs.New(f, &vfsflags.Opt),
-		f:     f,
+		VFS:   VFS,
+		f:     VFS.Fs(),
 		ready: make(chan (struct{})),
 	}
 	return fsys

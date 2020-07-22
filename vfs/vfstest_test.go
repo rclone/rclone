@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/all" // import all the backends
-	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfstest"
@@ -18,13 +17,12 @@ func TestFunctional(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skip on non local")
 	}
-	vfstest.RunTests(t, true, func(f fs.Fs, mountpoint string) (VFS *vfs.VFS, unmountResult <-chan error, unmount func() error, err error) {
+	vfstest.RunTests(t, true, func(VFS *vfs.VFS, mountpoint string) (unmountResult <-chan error, unmount func() error, err error) {
 		unmountResultChan := make(chan (error), 1)
 		unmount = func() error {
 			unmountResultChan <- nil
 			return nil
 		}
-		VFS = vfs.New(f, nil)
-		return VFS, unmountResultChan, unmount, nil
+		return unmountResultChan, unmount, nil
 	})
 }
