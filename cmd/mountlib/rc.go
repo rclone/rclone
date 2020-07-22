@@ -55,11 +55,18 @@ This takes the following parameters
 - fs - a remote path to be mounted (required)
 - mountPoint: valid path on the local machine (required)
 - mountType: One of the values (mount, cmount, mount2) specifies the mount implementation to use
+- vfsOpt: a JSON object with VFS options in.
 
 Eg
 
     rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
     rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
+    rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}'
+
+The vfsOpt are as described in options/get and can be seen in the the
+"vfs" section when running:
+
+    rclone rc options/get
 `,
 	})
 }
@@ -67,6 +74,12 @@ Eg
 // mountRc allows the mount command to be run from rc
 func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	mountPoint, err := in.GetString("mountPoint")
+	if err != nil {
+		return nil, err
+	}
+
+	vfsOpt := vfsflags.Opt
+	err = in.GetStructMissingOK("vfsOpt", &vfsOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +106,7 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	if mountFns[mountType] != nil {
-		VFS := vfs.New(fdst, &vfsflags.Opt)
+		VFS := vfs.New(fdst, &vfsOpt)
 		_, unmountFn, err := mountFns[mountType](VFS, mountPoint)
 
 		if err != nil {
