@@ -68,6 +68,9 @@ func TestRc(t *testing.T) {
 		in := rc.Params{
 			"fs":         localDir,
 			"mountPoint": mountPoint,
+			"vfsOpt": rc.Params{
+				"FilePerms": 0400,
+			},
 		}
 
 		// check file.txt is not there
@@ -86,6 +89,9 @@ func TestRc(t *testing.T) {
 		fi, err := os.Stat(filePath)
 		require.NoError(t, err)
 		assert.Equal(t, int64(5), fi.Size())
+		if runtime.GOOS == "linux" {
+			assert.Equal(t, os.FileMode(0400), fi.Mode())
+		}
 
 		// FIXME the OS sometimes appears to be using the mount
 		// immediately after it appears so wait a moment
