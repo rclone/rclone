@@ -924,6 +924,15 @@ In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 			Default:  1000,
 			Advanced: true,
 		}, {
+			Name: "no_check_bucket",
+			Help: `If set don't attempt to check the bucket exists or create it
+
+This can be useful when trying to minimise the number of transactions
+rclone does if you know the bucket exists already.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -1001,6 +1010,7 @@ type Options struct {
 	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int64                `config:"list_chunk"`
+	NoCheckBucket         bool                 `config:"no_check_bucket"`
 	Enc                   encoder.MultiEncoder `config:"encoding"`
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
@@ -1786,6 +1796,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // makeBucket creates the bucket if it doesn't exist
 func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
+	if f.opt.NoCheckBucket {
+		return nil
+	}
 	return f.cache.Create(bucket, func() error {
 		req := s3.CreateBucketInput{
 			Bucket: &bucket,
