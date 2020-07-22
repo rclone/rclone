@@ -13,6 +13,8 @@ import (
 	"github.com/rclone/rclone/cmd/mount"
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,7 +32,8 @@ func (r *run) mountFs(t *testing.T, f fs.Fs) {
 	require.NoError(t, err)
 	c, err := fuse.Mount(r.mntDir, options...)
 	require.NoError(t, err)
-	filesys := mount.NewFS(f)
+	VFS := vfs.New(f, &vfsflags.Opt)
+	filesys := mount.NewFS(VFS)
 	server := fusefs.New(c, nil)
 
 	// Serve the mount point in the background returning error to errChan

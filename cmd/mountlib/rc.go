@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 // MountInfo defines the configuration for a mount
@@ -91,7 +93,8 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	if mountFns[mountType] != nil {
-		_, _, unmountFn, err := mountFns[mountType](fdst, mountPoint)
+		VFS := vfs.New(fdst, &vfsflags.Opt)
+		_, unmountFn, err := mountFns[mountType](VFS, mountPoint)
 
 		if err != nil {
 			log.Printf("mount FAILED: %v", err)

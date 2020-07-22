@@ -156,10 +156,11 @@ func mountOptions(fsys *FS, f fs.Fs) (mountOpts *fuse.MountOptions) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, error) {
+func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) {
+	f := VFS.Fs()
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
-	fsys := NewFS(f)
+	fsys := NewFS(VFS)
 	// nodeFsOpts := &fusefs.PathNodeFsOptions{
 	// 	ClientInodes: false,
 	// 	Debug:        mountlib.DebugFUSE,
@@ -187,20 +188,20 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 
 	root, err := fsys.Root()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	rawFS := fusefs.NewNodeFS(root, &opts)
 	server, err := fuse.NewServer(rawFS, mountpoint, &opts.MountOptions)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	//mountOpts := &fuse.MountOptions{}
 	//server, err := fusefs.Mount(mountpoint, fsys, &opts)
 	// server, err := fusefs.Mount(mountpoint, root, &opts)
 	// if err != nil {
-	// 	return nil, nil, nil, err
+	// 	return nil, nil, err
 	// }
 
 	umount := func() error {
@@ -222,19 +223,19 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 	fs.Debugf(f, "Waiting for the mount to start...")
 	err = server.WaitMount()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	fs.Debugf(f, "Mount started")
-	return fsys.VFS, errs, umount, nil
+	return errs, umount, nil
 }
 
 // Mount mounts the remote at mountpoint.
 //
 // If noModTime is set then it
-func Mount(f fs.Fs, mountpoint string) error {
+func Mount(VFS *vfs.VFS, mountpoint string) error {
 	// Mount it
-	vfs, errChan, unmount, err := mount(f, mountpoint)
+	errChan, unmount, err := mount(VFS, mountpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to mount FUSE fs")
 	}
@@ -263,9 +264,9 @@ waitloop:
 			break waitloop
 		// user sent SIGHUP to clear the cache
 		case <-sigHup:
-			root, err := vfs.Root()
+			root, err := VFS.Root()
 			if err != nil {
-				fs.Errorf(f, "Error reading root: %v", err)
+				fs.Errorf(VFS.Fs(), "Error reading root: %v", err)
 			} else {
 				root.ForgetAll()
 			}

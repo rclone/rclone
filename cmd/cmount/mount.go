@@ -23,7 +23,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 const (
@@ -45,7 +44,7 @@ func init() {
 }
 
 // mountOptions configures the options from the command line flags
-func mountOptions(device string, mountpoint string) (options []string) {
+func mountOptions(VFS *vfs.VFS, device string, mountpoint string) (options []string) {
 	// Options
 	options = []string{
 		"-o", "fsname=" + device,
@@ -97,7 +96,7 @@ func mountOptions(device string, mountpoint string) (options []string) {
 	if mountlib.DefaultPermissions {
 		options = append(options, "-o", "default_permissions")
 	}
-	if vfsflags.Opt.ReadOnly {
+	if VFS.Opt.ReadOnly {
 		options = append(options, "-o", "ro")
 	}
 	if mountlib.WritebackCache {
@@ -135,22 +134,23 @@ func waitFor(fn func() bool) (ok bool) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, error) {
+func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) {
+	f := VFS.Fs()
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	// Check the mountpoint - in Windows the mountpoint mustn't exist before the mount
 	if runtime.GOOS != "windows" {
 		fi, err := os.Stat(mountpoint)
 		if err != nil {
-			return nil, nil, nil, errors.Wrap(err, "mountpoint")
+			return nil, nil, errors.Wrap(err, "mountpoint")
 		}
 		if !fi.IsDir() {
-			return nil, nil, nil, errors.New("mountpoint is not a directory")
+			return nil, nil, errors.New("mountpoint is not a directory")
 		}
 	}
 
 	// Create underlying FS
-	fsys := NewFS(f)
+	fsys := NewFS(VFS)
 	host := fuse.NewFileSystemHost(fsys)
 	if usingReaddirPlus {
 		host.SetCapReaddirPlus(true)
@@ -158,7 +158,7 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 	host.SetCapCaseInsensitive(f.Features().CaseInsensitive)
 
 	// Create options
-	options := mountOptions(f.Name()+":"+f.Root(), mountpoint)
+	options := mountOptions(VFS, f.Name()+":"+f.Root(), mountpoint)
 	fs.Debugf(f, "Mounting with options: %q", options)
 
 	// Serve the mount point in the background returning error to errChan
@@ -199,7 +199,7 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 	select {
 	case err := <-errChan:
 		err = errors.Wrap(err, "mount stopped before calling Init")
-		return nil, nil, nil, err
+		return nil, nil, err
 	case <-fsys.ready:
 	}
 
@@ -214,15 +214,15 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 		}
 	}
 
-	return fsys.VFS, errChan, unmount, nil
+	return errChan, unmount, nil
 }
 
 // Mount mounts the remote at mountpoint.
 //
 // If noModTime is set then it
-func Mount(f fs.Fs, mountpoint string) error {
+func Mount(VFS *vfs.VFS, mountpoint string) error {
 	// Mount it
-	FS, errChan, unmount, err := mount(f, mountpoint)
+	errChan, unmount, err := mount(VFS, mountpoint)
 	if err != nil {
 		return errors.Wrap(err, "failed to mount FUSE fs")
 	}
@@ -248,9 +248,9 @@ waitloop:
 			break waitloop
 		// user sent SIGHUP to clear the cache
 		case <-sigHup:
-			root, err := FS.Root()
+			root, err := VFS.Root()
 			if err != nil {
-				fs.Errorf(f, "Error reading root: %v", err)
+				fs.Errorf(VFS.Fs(), "Error reading root: %v", err)
 			} else {
 				root.ForgetAll()
 			}

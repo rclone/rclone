@@ -25,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +34,7 @@ type (
 	// UnmountFn is called to unmount the file system
 	UnmountFn func() error
 	// MountFn is called to mount the file system
-	MountFn func(f fs.Fs, mountpoint string) (vfs *vfs.VFS, unmountResult <-chan error, unmount func() error, err error)
+	MountFn func(VFS *vfs.VFS, mountpoint string) (unmountResult <-chan error, unmount func() error, err error)
 )
 
 var (
@@ -176,7 +177,8 @@ found:
 func (r *Run) mount() {
 	log.Printf("mount %q %q", r.fremote, r.mountPath)
 	var err error
-	r.vfs, r.umountResult, r.umountFn, err = mountFn(r.fremote, r.mountPath)
+	r.vfs = vfs.New(r.fremote, &vfsflags.Opt)
+	r.umountResult, r.umountFn, err = mountFn(r.vfs, r.mountPath)
 	if err != nil {
 		log.Printf("mount FAILED: %v", err)
 		r.skip = true
