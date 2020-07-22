@@ -781,6 +781,9 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
 	}
+	// Check to see if destination exists
+	newNode, _ := destDir.stat(newName)
+	destinationExists := newNode != nil
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
 		if oldFile, ok := oldNode.(*File); ok {
@@ -793,6 +796,19 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			return EPERM
 		}
 	case fs.Object:
+		if destinationExists {
+			// Can't overwrite dir with file
+			if newNode.IsDir() {
+				return EEXIST // EISDIR is POSIX
+			}
+			// Try to delete the file
+			fs.Debugf(newPath, "Dir.Rename removing existing file")
+			err = newNode.Remove()
+			if err != nil {
+				fs.Errorf(newPath, "Dir.Rename error: couldn't delete existing file: %v", err)
+				return err
+			}
+		}
 		if oldFile, ok := oldNode.(*File); ok {
 			if err = oldFile.rename(context.TODO(), destDir, newName); err != nil {
 				fs.Errorf(oldPath, "Dir.Rename error: %v", err)
@@ -804,6 +820,19 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			return err
 		}
 	case fs.Directory:
+		if destinationExists {
+			// Can't overwrite file with dir
+			if newNode.IsFile() {
+				return EEXIST // ENOTDIR is POSIX
+			}
+			// Try to delete the existing directory - will succeed only if empty
+			fs.Debugf(newPath, "Dir.Rename removing existing dir")
+			err = newNode.Remove()
+			if err != nil {
+				fs.Errorf(newPath, "Dir.Rename error: couldn't rmdir existing dir: %v", err)
+				return err
+			}
+		}
 		features := d.f.Features()
 		if features.DirMove == nil && features.Move == nil && features.Copy == nil {
 			err := errors.Errorf("Fs %q can't rename directories (no DirMove, Move or Copy)", d.f)
