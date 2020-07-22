@@ -219,6 +219,13 @@ func (p Params) GetStruct(key string, out interface{}) error {
 	}
 	err = Reshape(out, value)
 	if err != nil {
+		if valueStr, ok := value.(string); ok {
+			// try to unmarshal as JSON if string
+			err = json.Unmarshal([]byte(valueStr), out)
+			if err == nil {
+				return nil
+			}
+		}
 		return ErrParamInvalid{errors.Wrapf(err, "key %q", key)}
 	}
 	return nil

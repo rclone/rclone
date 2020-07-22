@@ -304,6 +304,20 @@ func TestParamsGetStruct(t *testing.T) {
 	assert.Equal(t, true, IsErrParamInvalid(e3), e3.Error())
 }
 
+func TestParamsGetStructString(t *testing.T) {
+	in := Params{
+		"struct": `{"String": "one", "Float": 4.2}`,
+	}
+	var out struct {
+		String string
+		Float  float64
+	}
+	e1 := in.GetStruct("struct", &out)
+	assert.NoError(t, e1)
+	assert.Equal(t, "one", out.String)
+	assert.Equal(t, 4.2, out.Float)
+}
+
 func TestParamsGetStructMissingOK(t *testing.T) {
 	in := Params{
 		"struct": Params{

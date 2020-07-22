@@ -165,6 +165,8 @@ $ rclone rc rc/noop param1=one param2=two
 Run `rclone rc` on its own to see the help for the installed remote
 control commands.
 
+## JSON input
+
 `rclone rc` also supports a `--json` flag which can be used to send
 more complicated input parameters.
 
@@ -183,6 +185,22 @@ $ rclone rc --json '{ "p1": [1,"2",null,4], "p2": { "a":1, "b":2 } }' rc/noop
 	}
 }
 ```
+
+If the parameter being passed is an object then it can be passed as a
+JSON string rather than using the `--json` flag which simplifies the
+command line.
+
+```
+rclone rc operations/list fs=/tmp remote=test opt='{"showHash": true}'
+```
+
+Rather than
+
+```
+rclone rc operations/list --json '{"fs": "/tmp", "remote": "test", "opt": {"showHash": true}}'
+```
+
+
 
 ## Special parameters
 
