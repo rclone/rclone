@@ -33,13 +33,15 @@ import (
 // FOPEN_DIRECT_IO flag from their `Open` method. See directio_test.go
 // for an example.
 type FileHandle struct {
-	h vfs.Handle
+	h    vfs.Handle
+	fsys *FS
 }
 
 // Create a new FileHandle
-func newFileHandle(h vfs.Handle) *FileHandle {
+func newFileHandle(h vfs.Handle, fsys *FS) *FileHandle {
 	return &FileHandle{
-		h: h,
+		h:    h,
+		fsys: fsys,
 	}
 }
 
@@ -115,7 +117,7 @@ var _ fusefs.FileFsyncer = (*FileHandle)(nil)
 // is assumed, and the 'blocks' field is set accordingly.
 func (f *FileHandle) Getattr(ctx context.Context, out *fuse.AttrOut) (errno syscall.Errno) {
 	defer log.Trace(f, "")("attr=%v, errno=%v", &out, &errno)
-	setAttrOut(f.h.Node(), out)
+	f.fsys.setAttrOut(f.h.Node(), out)
 	return 0
 }
 
@@ -125,7 +127,7 @@ var _ fusefs.FileGetattrer = (*FileHandle)(nil)
 func (f *FileHandle) Setattr(ctx context.Context, in *fuse.SetAttrIn, out *fuse.AttrOut) (errno syscall.Errno) {
 	defer log.Trace(f, "in=%v", in)("attr=%v, errno=%v", &out, &errno)
 	var err error
-	setAttrOut(f.h.Node(), out)
+	f.fsys.setAttrOut(f.h.Node(), out)
 	size, ok := in.GetSize()
 	if ok {
 		err = f.h.Truncate(int64(size))

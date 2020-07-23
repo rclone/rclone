@@ -21,7 +21,7 @@ import (
 func (r *run) mountFs(t *testing.T, f fs.Fs) {
 	device := f.Name() + ":" + f.Root()
 	var options = []fuse.MountOption{
-		fuse.MaxReadahead(uint32(mountlib.MaxReadAhead)),
+		fuse.MaxReadahead(uint32(mountlib.Opt.MaxReadAhead)),
 		fuse.Subtype("rclone"),
 		fuse.FSName(device), fuse.VolumeName(device),
 		fuse.NoAppleDouble(),
@@ -33,7 +33,7 @@ func (r *run) mountFs(t *testing.T, f fs.Fs) {
 	c, err := fuse.Mount(r.mntDir, options...)
 	require.NoError(t, err)
 	VFS := vfs.New(f, &vfsflags.Opt)
-	filesys := mount.NewFS(VFS)
+	filesys := mount.NewFS(VFS, &mountlib.Opt)
 	server := fusefs.New(c, nil)
 
 	// Serve the mount point in the background returning error to errChan
