@@ -32,8 +32,8 @@ By default ` + "`dedupe`" + ` interactively finds files with duplicate
 names and offers to delete all but one or rename them to be
 different. This is known as deduping by name.
 
-Deduping by name is only useful with backends like Google Drive which
-can have duplicate file names. It can be run on wrapping backends
+Deduping by name is only useful with a small group of backends (e.g. Google Drive,
+Opendrive) that can have duplicate file names. It can be run on wrapping backends
 (e.g. crypt) if they wrap a backend which supports duplicate file
 names.
 
