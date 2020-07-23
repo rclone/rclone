@@ -11,6 +11,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
@@ -20,6 +21,8 @@ type MountInfo struct {
 	MountPoint string    `json:"MountPoint"`
 	MountedOn  time.Time `json:"MountedOn"`
 	Fs         string    `json:"Fs"`
+	MountOpt   *Options
+	VFSOpt     *vfscommon.Options
 }
 
 var (
@@ -85,8 +88,8 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
-	opt := Opt
-	err = in.GetStructMissingOK("mountOpt", &opt)
+	mountOpt := Opt
+	err = in.GetStructMissingOK("mountOpt", &mountOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +117,7 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 	if mountFns[mountType] != nil {
 		VFS := vfs.New(fdst, &vfsOpt)
-		_, unmountFn, err := mountFns[mountType](VFS, mountPoint, &opt)
+		_, unmountFn, err := mountFns[mountType](VFS, mountPoint, &mountOpt)
 
 		if err != nil {
 			log.Printf("mount FAILED: %v", err)
@@ -126,6 +129,8 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 			MountedOn:  time.Now(),
 			Fs:         fdst.Name(),
 			MountPoint: mountPoint,
+			VFSOpt:     &vfsOpt,
+			MountOpt:   &mountOpt,
 		}
 
 		fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), mountPoint, mountType)
