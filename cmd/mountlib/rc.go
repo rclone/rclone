@@ -55,16 +55,17 @@ This takes the following parameters
 - fs - a remote path to be mounted (required)
 - mountPoint: valid path on the local machine (required)
 - mountType: One of the values (mount, cmount, mount2) specifies the mount implementation to use
+- mountOpt: a JSON object with Mount options in.
 - vfsOpt: a JSON object with VFS options in.
 
 Eg
 
     rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
     rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
-    rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}'
+    rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
 
 The vfsOpt are as described in options/get and can be seen in the the
-"vfs" section when running:
+"vfs" section when running and the mountOpt can be seen in the "mount" section.
 
     rclone rc options/get
 `,
@@ -80,6 +81,12 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 	vfsOpt := vfsflags.Opt
 	err = in.GetStructMissingOK("vfsOpt", &vfsOpt)
+	if err != nil {
+		return nil, err
+	}
+
+	opt := Opt
+	err = in.GetStructMissingOK("mountOpt", &opt)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +114,7 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 	if mountFns[mountType] != nil {
 		VFS := vfs.New(fdst, &vfsOpt)
-		_, unmountFn, err := mountFns[mountType](VFS, mountPoint, &Opt)
+		_, unmountFn, err := mountFns[mountType](VFS, mountPoint, &opt)
 
 		if err != nil {
 			log.Printf("mount FAILED: %v", err)
