@@ -4,16 +4,20 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/okzk/sdnotify"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -44,8 +48,6 @@ type (
 	UnmountFn func() error
 	// MountFn is called to mount the file system
 	MountFn func(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error)
-	// MountBlockingFn is called to mount the file system and block
-	MountBlockingFn func(VFS *vfs.VFS, mountpoint string) error
 )
 
 // Global constants
@@ -108,7 +110,7 @@ func checkMountpointOverlap(root, mountpoint string) error {
 }
 
 // NewMountCommand makes a mount command with the given name and Mount function
-func NewMountCommand(commandName string, hidden bool, Mount MountBlockingFn) *cobra.Command {
+func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Command {
 	var commandDefinition = &cobra.Command{
 		Use:    commandName + " remote:path /path/to/mountpoint",
 		Hidden: hidden,
@@ -349,7 +351,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 			}
 
 			VFS := vfs.New(fdst, &vfsflags.Opt)
-			err := Mount(VFS, mountpoint)
+			err := Mount(VFS, mountpoint, mount)
 			if err != nil {
 				log.Fatalf("Fatal error: %v", err)
 			}
@@ -409,4 +411,57 @@ func ClipBlocks(b *uint64) {
 	if *b > max {
 		*b = max
 	}
+}
+
+// Mount mounts the remote at mountpoint.
+//
+// If noModTime is set then it
+func Mount(VFS *vfs.VFS, mountpoint string, mount MountFn) error {
+	// Mount it
+	errChan, unmount, err := mount(VFS, mountpoint)
+	if err != nil {
+		return errors.Wrap(err, "failed to mount FUSE fs")
+	}
+
+	// Unmount on exit
+	fnHandle := atexit.Register(func() {
+		_ = unmount()
+		_ = sdnotify.Stopping()
+	})
+	defer atexit.Unregister(fnHandle)
+
+	// Notify systemd
+	if err := sdnotify.Ready(); err != nil && err != sdnotify.ErrSdNotifyNoSocket {
+		return errors.Wrap(err, "failed to notify systemd")
+	}
+
+	// Reload VFS cache on SIGHUP
+	sigHup := make(chan os.Signal, 1)
+	signal.Notify(sigHup, syscall.SIGHUP)
+
+waitloop:
+	for {
+		select {
+		// umount triggered outside the app
+		case err = <-errChan:
+			break waitloop
+		// user sent SIGHUP to clear the cache
+		case <-sigHup:
+			root, err := VFS.Root()
+			if err != nil {
+				fs.Errorf(VFS.Fs(), "Error reading root: %v", err)
+			} else {
+				root.ForgetAll()
+			}
+		}
+	}
+
+	_ = unmount()
+	_ = sdnotify.Stopping()
+
+	if err != nil {
+		return errors.Wrap(err, "failed to umount FUSE fs")
+	}
+
+	return nil
 }

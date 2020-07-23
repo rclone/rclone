@@ -11,17 +11,13 @@ package cmount
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"runtime"
-	"syscall"
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
-	"github.com/okzk/sdnotify"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/vfs"
 )
 
@@ -37,10 +33,8 @@ func init() {
 	if runtime.GOOS == "windows" {
 		name = "mount"
 	}
-	mountlib.NewMountCommand(name, false, Mount)
-	// Add mount to rc
+	mountlib.NewMountCommand(name, false, mount)
 	mountlib.AddRc("cmount", mount)
-
 }
 
 // mountOptions configures the options from the command line flags
@@ -215,52 +209,4 @@ func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) 
 	}
 
 	return errChan, unmount, nil
-}
-
-// Mount mounts the remote at mountpoint.
-//
-// If noModTime is set then it
-func Mount(VFS *vfs.VFS, mountpoint string) error {
-	// Mount it
-	errChan, unmount, err := mount(VFS, mountpoint)
-	if err != nil {
-		return errors.Wrap(err, "failed to mount FUSE fs")
-	}
-
-	// Note cgofuse unmounts the fs on SIGINT etc
-
-	sigHup := make(chan os.Signal, 1)
-	signal.Notify(sigHup, syscall.SIGHUP)
-
-	atexit.Register(func() {
-		_ = unmount()
-	})
-
-	if err := sdnotify.Ready(); err != nil && err != sdnotify.ErrSdNotifyNoSocket {
-		return errors.Wrap(err, "failed to notify systemd")
-	}
-
-waitloop:
-	for {
-		select {
-		// umount triggered outside the app
-		case err = <-errChan:
-			break waitloop
-		// user sent SIGHUP to clear the cache
-		case <-sigHup:
-			root, err := VFS.Root()
-			if err != nil {
-				fs.Errorf(VFS.Fs(), "Error reading root: %v", err)
-			} else {
-				root.ForgetAll()
-			}
-		}
-	}
-
-	_ = sdnotify.Stopping()
-	if err != nil {
-		return errors.Wrap(err, "failed to umount FUSE fs")
-	}
-
-	return nil
 }
