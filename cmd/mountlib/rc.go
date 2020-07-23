@@ -107,7 +107,7 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 
 	if mountFns[mountType] != nil {
 		VFS := vfs.New(fdst, &vfsOpt)
-		_, unmountFn, err := mountFns[mountType](VFS, mountPoint)
+		_, unmountFn, err := mountFns[mountType](VFS, mountPoint, &Opt)
 
 		if err != nil {
 			log.Printf("mount FAILED: %v", err)

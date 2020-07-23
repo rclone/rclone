@@ -20,52 +20,52 @@ func init() {
 }
 
 // mountOptions configures the options from the command line flags
-func mountOptions(VFS *vfs.VFS, device string) (options []fuse.MountOption) {
+func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options []fuse.MountOption) {
 	options = []fuse.MountOption{
-		fuse.MaxReadahead(uint32(mountlib.MaxReadAhead)),
+		fuse.MaxReadahead(uint32(opt.MaxReadAhead)),
 		fuse.Subtype("rclone"),
 		fuse.FSName(device),
-		fuse.VolumeName(mountlib.VolumeName),
+		fuse.VolumeName(opt.VolumeName),
 
 		// Options from benchmarking in the fuse module
 		//fuse.MaxReadahead(64 * 1024 * 1024),
 		//fuse.WritebackCache(),
 	}
-	if mountlib.AsyncRead {
+	if opt.AsyncRead {
 		options = append(options, fuse.AsyncRead())
 	}
-	if mountlib.NoAppleDouble {
+	if opt.NoAppleDouble {
 		options = append(options, fuse.NoAppleDouble())
 	}
-	if mountlib.NoAppleXattr {
+	if opt.NoAppleXattr {
 		options = append(options, fuse.NoAppleXattr())
 	}
-	if mountlib.AllowNonEmpty {
+	if opt.AllowNonEmpty {
 		options = append(options, fuse.AllowNonEmptyMount())
 	}
-	if mountlib.AllowOther {
+	if opt.AllowOther {
 		options = append(options, fuse.AllowOther())
 	}
-	if mountlib.AllowRoot {
+	if opt.AllowRoot {
 		// options = append(options, fuse.AllowRoot())
 		fs.Errorf(nil, "Ignoring --allow-root. Support has been removed upstream - see https://github.com/bazil/fuse/issues/144 for more info")
 	}
-	if mountlib.DefaultPermissions {
+	if opt.DefaultPermissions {
 		options = append(options, fuse.DefaultPermissions())
 	}
 	if VFS.Opt.ReadOnly {
 		options = append(options, fuse.ReadOnly())
 	}
-	if mountlib.WritebackCache {
+	if opt.WritebackCache {
 		options = append(options, fuse.WritebackCache())
 	}
-	if mountlib.DaemonTimeout != 0 {
-		options = append(options, fuse.DaemonTimeout(fmt.Sprint(int(mountlib.DaemonTimeout.Seconds()))))
+	if opt.DaemonTimeout != 0 {
+		options = append(options, fuse.DaemonTimeout(fmt.Sprint(int(opt.DaemonTimeout.Seconds()))))
 	}
-	if len(mountlib.ExtraOptions) > 0 {
+	if len(opt.ExtraOptions) > 0 {
 		fs.Errorf(nil, "-o/--option not supported with this FUSE backend")
 	}
-	if len(mountlib.ExtraFlags) > 0 {
+	if len(opt.ExtraFlags) > 0 {
 		fs.Errorf(nil, "--fuse-flag not supported with this FUSE backend")
 	}
 	return options
@@ -77,8 +77,8 @@ func mountOptions(VFS *vfs.VFS, device string) (options []fuse.MountOption) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) {
-	if mountlib.DebugFUSE {
+func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, error) {
+	if opt.DebugFUSE {
 		fuse.Debug = func(msg interface{}) {
 			fs.Debugf("fuse", "%v", msg)
 		}
@@ -86,12 +86,12 @@ func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) 
 
 	f := VFS.Fs()
 	fs.Debugf(f, "Mounting on %q", mountpoint)
-	c, err := fuse.Mount(mountpoint, mountOptions(VFS, f.Name()+":"+f.Root())...)
+	c, err := fuse.Mount(mountpoint, mountOptions(VFS, f.Name()+":"+f.Root(), opt)...)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	filesys := NewFS(VFS)
+	filesys := NewFS(VFS, opt)
 	server := fusefs.New(c, nil)
 
 	// Serve the mount point in the background returning error to errChan

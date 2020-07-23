@@ -27,12 +27,12 @@ func init() {
 func mountOptions(fsys *FS, f fs.Fs) (mountOpts *fuse.MountOptions) {
 	device := f.Name() + ":" + f.Root()
 	mountOpts = &fuse.MountOptions{
-		AllowOther:    mountlib.AllowOther,
+		AllowOther:    fsys.opt.AllowOther,
 		FsName:        device,
 		Name:          "rclone",
 		DisableXAttrs: true,
-		Debug:         mountlib.DebugFUSE,
-		MaxReadAhead:  int(mountlib.MaxReadAhead),
+		Debug:         fsys.opt.DebugFUSE,
+		MaxReadAhead:  int(fsys.opt.MaxReadAhead),
 
 		// RememberInodes: true,
 		// SingleThreaded: true,
@@ -96,22 +96,22 @@ func mountOptions(fsys *FS, f fs.Fs) (mountOpts *fuse.MountOptions) {
 	}
 	var opts []string
 	// FIXME doesn't work opts = append(opts, fmt.Sprintf("max_readahead=%d", maxReadAhead))
-	if mountlib.AllowNonEmpty {
+	if fsys.opt.AllowNonEmpty {
 		opts = append(opts, "nonempty")
 	}
-	if mountlib.AllowOther {
+	if fsys.opt.AllowOther {
 		opts = append(opts, "allow_other")
 	}
-	if mountlib.AllowRoot {
+	if fsys.opt.AllowRoot {
 		opts = append(opts, "allow_root")
 	}
-	if mountlib.DefaultPermissions {
+	if fsys.opt.DefaultPermissions {
 		opts = append(opts, "default_permissions")
 	}
 	if fsys.VFS.Opt.ReadOnly {
 		opts = append(opts, "ro")
 	}
-	if mountlib.WritebackCache {
+	if fsys.opt.WritebackCache {
 		log.Printf("FIXME --write-back-cache not supported")
 		// FIXME opts = append(opts,fuse.WritebackCache())
 	}
@@ -147,11 +147,11 @@ func mountOptions(fsys *FS, f fs.Fs) (mountOpts *fuse.MountOptions) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) {
+func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, error) {
 	f := VFS.Fs()
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
-	fsys := NewFS(VFS)
+	fsys := NewFS(VFS, opt)
 	// nodeFsOpts := &fusefs.PathNodeFsOptions{
 	// 	ClientInodes: false,
 	// 	Debug:        mountlib.DebugFUSE,
@@ -171,8 +171,8 @@ func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) 
 	// FIXME fill out
 	opts := fusefs.Options{
 		MountOptions: *mountOpts,
-		EntryTimeout: &mountlib.AttrTimeout,
-		AttrTimeout:  &mountlib.AttrTimeout,
+		EntryTimeout: &opt.AttrTimeout,
+		AttrTimeout:  &opt.AttrTimeout,
 		// UID
 		// GID
 	}

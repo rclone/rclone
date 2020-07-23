@@ -20,13 +20,15 @@ import (
 type FS struct {
 	VFS *vfs.VFS
 	f   fs.Fs
+	opt *mountlib.Options
 }
 
 // NewFS creates a pathfs.FileSystem from the fs.Fs passed in
-func NewFS(VFS *vfs.VFS) *FS {
+func NewFS(VFS *vfs.VFS, opt *mountlib.Options) *FS {
 	fsys := &FS{
 		VFS: VFS,
 		f:   VFS.Fs(),
+		opt: opt,
 	}
 	return fsys
 }
@@ -84,16 +86,16 @@ func setAttr(node vfs.Node, attr *fuse.Attr) {
 }
 
 // fill in AttrOut from node
-func setAttrOut(node vfs.Node, out *fuse.AttrOut) {
+func (f *FS) setAttrOut(node vfs.Node, out *fuse.AttrOut) {
 	setAttr(node, &out.Attr)
-	out.SetTimeout(mountlib.AttrTimeout)
+	out.SetTimeout(f.opt.AttrTimeout)
 }
 
 // fill in EntryOut from node
-func setEntryOut(node vfs.Node, out *fuse.EntryOut) {
+func (f *FS) setEntryOut(node vfs.Node, out *fuse.EntryOut) {
 	setAttr(node, &out.Attr)
-	out.SetEntryTimeout(mountlib.AttrTimeout)
-	out.SetAttrTimeout(mountlib.AttrTimeout)
+	out.SetEntryTimeout(f.opt.AttrTimeout)
+	out.SetAttrTimeout(f.opt.AttrTimeout)
 }
 
 // Translate errors from mountlib into Syscall error numbers
