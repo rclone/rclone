@@ -6,23 +6,16 @@ package mount
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/okzk/sdnotify"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/vfs"
 )
 
 func init() {
-	mountlib.NewMountCommand("mount", false, Mount)
-	// Add mount to rc
+	mountlib.NewMountCommand("mount", false, mount)
 	mountlib.AddRc("mount", mount)
 }
 
@@ -85,6 +78,12 @@ func mountOptions(VFS *vfs.VFS, device string) (options []fuse.MountOption) {
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
 func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) {
+	if mountlib.DebugFUSE {
+		fuse.Debug = func(msg interface{}) {
+			fs.Debugf("fuse", "%v", msg)
+		}
+	}
+
 	f := VFS.Fs()
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 	c, err := fuse.Mount(mountpoint, mountOptions(VFS, f.Name()+":"+f.Root())...)
@@ -119,62 +118,4 @@ func mount(VFS *vfs.VFS, mountpoint string) (<-chan error, func() error, error) 
 	}
 
 	return errChan, unmount, nil
-}
-
-// Mount mounts the remote at mountpoint.
-//
-// If noModTime is set then it
-func Mount(VFS *vfs.VFS, mountpoint string) error {
-	if mountlib.DebugFUSE {
-		fuse.Debug = func(msg interface{}) {
-			fs.Debugf("fuse", "%v", msg)
-		}
-	}
-
-	// Mount it
-	errChan, unmount, err := mount(VFS, mountpoint)
-	if err != nil {
-		return errors.Wrap(err, "failed to mount FUSE fs")
-	}
-
-	sigInt := make(chan os.Signal, 1)
-	signal.Notify(sigInt, syscall.SIGINT, syscall.SIGTERM)
-	sigHup := make(chan os.Signal, 1)
-	signal.Notify(sigHup, syscall.SIGHUP)
-	atexit.IgnoreSignals()
-	atexit.Register(func() {
-		_ = unmount()
-	})
-
-	if err := sdnotify.Ready(); err != nil && err != sdnotify.ErrSdNotifyNoSocket {
-		return errors.Wrap(err, "failed to notify systemd")
-	}
-
-waitloop:
-	for {
-		select {
-		// umount triggered outside the app
-		case err = <-errChan:
-			break waitloop
-		// Program abort: umount
-		case <-sigInt:
-			err = unmount()
-			break waitloop
-		// user sent SIGHUP to clear the cache
-		case <-sigHup:
-			root, err := VFS.Root()
-			if err != nil {
-				fs.Errorf(VFS.Fs(), "Error reading root: %v", err)
-			} else {
-				root.ForgetAll()
-			}
-		}
-	}
-
-	_ = sdnotify.Stopping()
-	if err != nil {
-		return errors.Wrap(err, "failed to umount FUSE fs")
-	}
-
-	return nil
 }
