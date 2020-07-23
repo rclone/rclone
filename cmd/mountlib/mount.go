@@ -192,6 +192,9 @@ Stopping the mount manually:
     # OS X
     umount /path/to/local/mount
 
+**Note**: As of ` + "`rclone` 1.52.2, `rclone mount`" + ` now requires Go version 1.13
+or newer on some platforms depending on the underlying FUSE library in use.
+
 ### Installing on Windows
 
 To run rclone ` + commandName + ` on Windows, you will need to
