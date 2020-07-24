@@ -27,7 +27,6 @@ ifndef RELEASE_TAG
 	TAG := $(TAG)-beta
 endif
 GO_VERSION := $(shell go version)
-GO_FILES := $(shell go list ./... )
 ifdef BETA_SUBDIR
 	BETA_SUBDIR := /$(BETA_SUBDIR)
 endif
@@ -75,10 +74,10 @@ test:	rclone test_all
 
 # Quick test
 quicktest:
-	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) $(GO_FILES)
+	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) ./...
 
 racequicktest:
-	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -cpu=2 -race $(GO_FILES)
+	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -cpu=2 -race ./...
 
 # Do source code quality checks
 check:	rclone
