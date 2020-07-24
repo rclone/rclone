@@ -19412,7 +19412,7 @@ If you are having problems with them (E.g., seeing a lot of throttling),
 you can get your own Client ID and Key by following the steps below:
 
 1.  Open
-    https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade,
+    https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade ,
     then click New registration.
 2.  Enter a name for your app, choose account type
     Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox),

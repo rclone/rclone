@@ -13619,7 +13619,7 @@ y/e/d&gt; y</code></pre>
 <p>You can use your own Client ID if the default (<code>client_id</code> left blank) one doesn’t work for you or you see lots of throttling. The default Client ID and Key is shared by all rclone users when performing requests.</p>
 <p>If you are having problems with them (E.g., seeing a lot of throttling), you can get your own Client ID and Key by following the steps below:</p>
 <ol type="1">
-<li>Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade, then click <code>New registration</code>.</li>
+<li>Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade , then click <code>New registration</code>.</li>
 <li>Enter a name for your app, choose account type <code>Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)</code>, select <code>Web</code> in <code>Redirect URI</code> Enter <code>http://localhost:53682/</code> and click Register. Copy and keep the <code>Application (client) ID</code> under the app name for later use.</li>
 <li>Under <code>manage</code> select <code>Certificates &amp; secrets</code>, click <code>New client secret</code>. Copy and keep that secret for later use.</li>
 <li>Under <code>manage</code> select <code>API permissions</code>, click <code>Add a permission</code> and select <code>Microsoft Graph</code> then select <code>delegated permissions</code>.</li>
