@@ -32,7 +32,7 @@ var (
 	//
 	// This is a function pointer to decouple the config
 	// implementation from the fs
-	CountError = func(err error) {}
+	CountError = func(err error) error { return nil }
 
 	// ConfigProvider is the config key used for provider options
 	ConfigProvider = "provider"
@@ -44,6 +44,7 @@ type ConfigInfo struct {
 	StatsLogLevel          LogLevel
 	UseJSONLog             bool
 	DryRun                 bool
+	Interactive            bool
 	CheckSum               bool
 	SizeOnly               bool
 	IgnoreTimes            bool
@@ -54,11 +55,13 @@ type ConfigInfo struct {
 	Transfers              int
 	ConnectTimeout         time.Duration // Connect timeout
 	Timeout                time.Duration // Data channel timeout
+	ExpectContinueTimeout  time.Duration
 	Dump                   DumpFlags
 	InsecureSkipVerify     bool // Skip server certificate verification
 	DeleteMode             DeleteMode
 	MaxDelete              int64
-	TrackRenames           bool // Track file renames.
+	TrackRenames           bool   // Track file renames.
+	TrackRenamesStrategy   string // Comma separated list of stratgies used to track renames
 	LowLevelRetries        int
 	UpdateOlder            bool // Skip files that are newer on the destination
 	NoGzip                 bool // Disable compression
@@ -67,6 +70,9 @@ type ConfigInfo struct {
 	IgnoreChecksum         bool
 	IgnoreCaseSync         bool
 	NoTraverse             bool
+	CheckFirst             bool
+	NoCheckDest            bool
+	NoUnicodeNormalization bool
 	NoUpdateModTime        bool
 	DataRateUnit           string
 	CompareDest            string
@@ -87,13 +93,17 @@ type ConfigInfo struct {
 	StreamingUploadCutoff  SizeSuffix
 	StatsFileNameLength    int
 	AskPassword            bool
+	PasswordCommand        SpaceSepList
 	UseServerModTime       bool
 	MaxTransfer            SizeSuffix
+	MaxDuration            time.Duration
+	CutoffMode             CutoffMode
 	MaxBacklog             int
 	MaxStatsGroups         int
 	StatsOneLine           bool
 	StatsOneLineDate       bool   // If we want a date prefix at all
 	StatsOneLineDateFormat string // If we want to customize the prefix
+	ErrorOnNoTransfer      bool   // Set appropriate exit code if no files transferred
 	Progress               bool
 	Cookie                 bool
 	UseMmap                bool
@@ -102,7 +112,12 @@ type ConfigInfo struct {
 	ClientKey              string // Client Side Key
 	MultiThreadCutoff      SizeSuffix
 	MultiThreadStreams     int
-	MultiThreadSet         bool // whether MultiThreadStreams was set (set in fs/config/configflags)
+	MultiThreadSet         bool   // whether MultiThreadStreams was set (set in fs/config/configflags)
+	OrderBy                string // instructions on how to order the transfer
+	UploadHeaders          []*HTTPOption
+	DownloadHeaders        []*HTTPOption
+	Headers                []*HTTPOption
+	RefreshTimes           bool
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -119,6 +134,7 @@ func NewConfig() *ConfigInfo {
 	c.Transfers = 4
 	c.ConnectTimeout = 60 * time.Second
 	c.Timeout = 5 * 60 * time.Second
+	c.ExpectContinueTimeout = 1 * time.Second
 	c.DeleteMode = DeleteModeDefault
 	c.MaxDelete = -1
 	c.LowLevelRetries = 10
@@ -138,10 +154,12 @@ func NewConfig() *ConfigInfo {
 	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
 	c.MultiThreadStreams = 4
 
+	c.TrackRenamesStrategy = "hash"
+
 	return c
 }
 
-// ConfigToEnv converts an config section and name, eg ("myremote",
+// ConfigToEnv converts a config section and name, eg ("myremote",
 // "ignore-size") into an environment name
 // "RCLONE_CONFIG_MYREMOTE_IGNORE_SIZE"
 func ConfigToEnv(section, name string) string {

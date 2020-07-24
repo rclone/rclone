@@ -1,0 +1,25 @@
+#!/bin/bash
+
+set -e
+
+NAME=minio-edge
+USER=rclone
+PASS=DeniseOxygenEiffel4
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name $NAME \
+           -e "MINIO_ACCESS_KEY=$USER" \
+           -e "MINIO_SECRET_KEY=$PASS" \
+           minio/minio:edge server /data
+    
+    echo type=s3
+    echo provider=Minio
+    echo access_key_id=$USER
+    echo secret_access_key=$PASS
+    echo endpoint=http://$(docker_ip):9000/
+    echo _connect=$(docker_ip):9000
+}
+
+. $(dirname "$0")/run.bash

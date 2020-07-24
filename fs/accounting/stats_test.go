@@ -7,8 +7,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestETA(t *testing.T) {
@@ -76,7 +78,7 @@ func TestStatsError(t *testing.T) {
 	t0 := time.Now()
 	t1 := t0.Add(time.Second)
 
-	s.Error(nil)
+	_ = s.Error(nil)
 	assert.Equal(t, int64(0), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.False(t, s.HadRetryError())
@@ -84,7 +86,7 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, nil, s.GetLastError())
 	assert.False(t, s.Errored())
 
-	s.Error(io.EOF)
+	_ = s.Error(io.EOF)
 	assert.Equal(t, int64(1), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.True(t, s.HadRetryError())
@@ -93,7 +95,7 @@ func TestStatsError(t *testing.T) {
 	assert.True(t, s.Errored())
 
 	e := fserrors.ErrorRetryAfter(t0)
-	s.Error(e)
+	_ = s.Error(e)
 	assert.Equal(t, int64(2), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.True(t, s.HadRetryError())
@@ -101,14 +103,14 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, e, s.GetLastError())
 
 	err := errors.Wrap(fserrors.ErrorRetryAfter(t1), "potato")
-	s.Error(err)
+	err = s.Error(err)
 	assert.Equal(t, int64(3), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.True(t, s.HadRetryError())
 	assert.Equal(t, t1, s.RetryAfter())
 	assert.Equal(t, t1, fserrors.RetryAfterErrorTime(err))
 
-	s.Error(fserrors.FatalError(io.EOF))
+	_ = s.Error(fserrors.FatalError(io.EOF))
 	assert.Equal(t, int64(4), s.GetErrors())
 	assert.True(t, s.HadFatalError())
 	assert.True(t, s.HadRetryError())
@@ -122,7 +124,7 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, nil, s.GetLastError())
 	assert.False(t, s.Errored())
 
-	s.Error(fserrors.NoRetryError(io.EOF))
+	_ = s.Error(fserrors.NoRetryError(io.EOF))
 	assert.Equal(t, int64(1), s.GetErrors())
 	assert.False(t, s.HadFatalError())
 	assert.False(t, s.HadRetryError())
@@ -138,52 +140,65 @@ func TestStatsTotalDuration(t *testing.T) {
 
 	t.Run("Single completed transfer", func(t *testing.T) {
 		s := NewStats()
-		s.AddTransfer(&Transfer{
+		tr1 := &Transfer{
 			startedAt:   time1,
 			completedAt: time2,
-		})
+		}
+		s.AddTransfer(tr1)
 
 		s.mu.Lock()
 		total := s.totalDuration()
 		s.mu.Unlock()
 
+		assert.Equal(t, 1, len(s.startedTransfers))
 		assert.Equal(t, 10*time.Second, total)
+		s.RemoveTransfer(tr1)
+		assert.Equal(t, 10*time.Second, total)
+		assert.Equal(t, 0, len(s.startedTransfers))
 	})
 
 	t.Run("Single uncompleted transfer", func(t *testing.T) {
 		s := NewStats()
-		s.AddTransfer(&Transfer{
+		tr1 := &Transfer{
 			startedAt: time1,
-		})
+		}
+		s.AddTransfer(tr1)
 
 		s.mu.Lock()
 		total := s.totalDuration()
 		s.mu.Unlock()
 
 		assert.Equal(t, time.Since(time1)/time.Second, total/time.Second)
+		s.RemoveTransfer(tr1)
+		assert.Equal(t, time.Since(time1)/time.Second, total/time.Second)
 	})
 
 	t.Run("Overlapping without ending", func(t *testing.T) {
 		s := NewStats()
-		s.AddTransfer(&Transfer{
+		tr1 := &Transfer{
 			startedAt:   time2,
 			completedAt: time3,
-		})
-		s.AddTransfer(&Transfer{
+		}
+		s.AddTransfer(tr1)
+		tr2 := &Transfer{
 			startedAt:   time2,
 			completedAt: time2.Add(time.Second),
-		})
-		s.AddTransfer(&Transfer{
+		}
+		s.AddTransfer(tr2)
+		tr3 := &Transfer{
 			startedAt:   time1,
 			completedAt: time3,
-		})
-		s.AddTransfer(&Transfer{
+		}
+		s.AddTransfer(tr3)
+		tr4 := &Transfer{
 			startedAt:   time3,
 			completedAt: time4,
-		})
-		s.AddTransfer(&Transfer{
+		}
+		s.AddTransfer(tr4)
+		tr5 := &Transfer{
 			startedAt: time.Now(),
-		})
+		}
+		s.AddTransfer(tr5)
 
 		time.Sleep(time.Millisecond)
 
@@ -191,6 +206,14 @@ func TestStatsTotalDuration(t *testing.T) {
 		total := s.totalDuration()
 		s.mu.Unlock()
 
+		assert.Equal(t, time.Duration(30), total/time.Second)
+		s.RemoveTransfer(tr1)
+		assert.Equal(t, time.Duration(30), total/time.Second)
+		s.RemoveTransfer(tr2)
+		assert.Equal(t, time.Duration(30), total/time.Second)
+		s.RemoveTransfer(tr3)
+		assert.Equal(t, time.Duration(30), total/time.Second)
+		s.RemoveTransfer(tr4)
 		assert.Equal(t, time.Duration(30), total/time.Second)
 	})
 
@@ -216,4 +239,195 @@ func TestStatsTotalDuration(t *testing.T) {
 
 		assert.Equal(t, startTime.Sub(time1)/time.Second, total/time.Second)
 	})
+}
+
+// make time ranges from string description for testing
+func makeTimeRanges(t *testing.T, in []string) timeRanges {
+	trs := make(timeRanges, len(in))
+	for i, Range := range in {
+		var start, end int64
+		n, err := fmt.Sscanf(Range, "%d-%d", &start, &end)
+		require.NoError(t, err)
+		require.Equal(t, 2, n)
+		trs[i] = timeRange{time.Unix(start, 0), time.Unix(end, 0)}
+	}
+	return trs
+}
+
+func (trs timeRanges) toStrings() (out []string) {
+	out = []string{}
+	for _, tr := range trs {
+		out = append(out, fmt.Sprintf("%d-%d", tr.start.Unix(), tr.end.Unix()))
+	}
+	return out
+}
+
+func TestTimeRangeMerge(t *testing.T) {
+	for _, test := range []struct {
+		in   []string
+		want []string
+	}{{
+		in:   []string{},
+		want: []string{},
+	}, {
+		in:   []string{"1-2"},
+		want: []string{"1-2"},
+	}, {
+		in:   []string{"1-4", "2-3"},
+		want: []string{"1-4"},
+	}, {
+		in:   []string{"2-3", "1-4"},
+		want: []string{"1-4"},
+	}, {
+		in:   []string{"1-3", "2-4"},
+		want: []string{"1-4"},
+	}, {
+		in:   []string{"2-4", "1-3"},
+		want: []string{"1-4"},
+	}, {
+		in:   []string{"1-2", "2-3"},
+		want: []string{"1-3"},
+	}, {
+		in:   []string{"2-3", "1-2"},
+		want: []string{"1-3"},
+	}, {
+		in:   []string{"1-2", "3-4"},
+		want: []string{"1-2", "3-4"},
+	}, {
+		in:   []string{"1-3", "7-8", "4-6", "2-5", "7-8", "7-8"},
+		want: []string{"1-6", "7-8"},
+	}} {
+
+		in := makeTimeRanges(t, test.in)
+		in.merge()
+
+		got := in.toStrings()
+		assert.Equal(t, test.want, got)
+	}
+}
+
+func TestTimeRangeCull(t *testing.T) {
+	for _, test := range []struct {
+		in           []string
+		cutoff       int64
+		want         []string
+		wantDuration time.Duration
+	}{{
+		in:           []string{},
+		cutoff:       1,
+		want:         []string{},
+		wantDuration: 0 * time.Second,
+	}, {
+		in:           []string{"1-2"},
+		cutoff:       1,
+		want:         []string{"1-2"},
+		wantDuration: 0 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       1,
+		want:         []string{"2-5", "7-9"},
+		wantDuration: 0 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       4,
+		want:         []string{"2-5", "7-9"},
+		wantDuration: 0 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       5,
+		want:         []string{"7-9"},
+		wantDuration: 3 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9", "2-5", "2-5"},
+		cutoff:       6,
+		want:         []string{"7-9"},
+		wantDuration: 9 * time.Second,
+	}, {
+		in:           []string{"7-9", "3-3", "2-5"},
+		cutoff:       7,
+		want:         []string{"7-9"},
+		wantDuration: 3 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       8,
+		want:         []string{"7-9"},
+		wantDuration: 3 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       9,
+		want:         []string{},
+		wantDuration: 5 * time.Second,
+	}, {
+		in:           []string{"2-5", "7-9"},
+		cutoff:       10,
+		want:         []string{},
+		wantDuration: 5 * time.Second,
+	}} {
+
+		in := makeTimeRanges(t, test.in)
+		cutoff := time.Unix(test.cutoff, 0)
+		gotDuration := in.cull(cutoff)
+
+		what := fmt.Sprintf("in=%q, cutoff=%d", test.in, test.cutoff)
+		got := in.toStrings()
+		assert.Equal(t, test.want, got, what)
+		assert.Equal(t, test.wantDuration, gotDuration, what)
+	}
+}
+
+func TestTimeRangeDuration(t *testing.T) {
+	assert.Equal(t, 0*time.Second, timeRanges{}.total())
+	assert.Equal(t, 1*time.Second, makeTimeRanges(t, []string{"1-2"}).total())
+	assert.Equal(t, 91*time.Second, makeTimeRanges(t, []string{"1-2", "10-100"}).total())
+}
+
+func TestPruneTransfers(t *testing.T) {
+	for _, test := range []struct {
+		Name                     string
+		Transfers                int
+		Limit                    int
+		ExpectedStartedTransfers int
+	}{
+		{
+			Name:                     "Limited number of StartedTransfers",
+			Limit:                    100,
+			Transfers:                200,
+			ExpectedStartedTransfers: 100 + fs.Config.Transfers,
+		},
+		{
+			Name:                     "Unlimited number of StartedTransfers",
+			Limit:                    -1,
+			Transfers:                200,
+			ExpectedStartedTransfers: 200,
+		},
+	} {
+		t.Run(test.Name, func(t *testing.T) {
+			prevLimit := MaxCompletedTransfers
+			MaxCompletedTransfers = test.Limit
+			defer func() { MaxCompletedTransfers = prevLimit }()
+
+			s := NewStats()
+			for i := int64(1); i <= int64(test.Transfers); i++ {
+				s.AddTransfer(&Transfer{
+					startedAt:   time.Unix(i, 0),
+					completedAt: time.Unix(i+1, 0),
+				})
+			}
+
+			s.mu.Lock()
+			assert.Equal(t, time.Duration(test.Transfers)*time.Second, s.totalDuration())
+			assert.Equal(t, test.Transfers, len(s.startedTransfers))
+			s.mu.Unlock()
+
+			for i := 0; i < test.Transfers; i++ {
+				s.PruneTransfers()
+			}
+
+			s.mu.Lock()
+			assert.Equal(t, time.Duration(test.Transfers)*time.Second, s.totalDuration())
+			assert.Equal(t, test.ExpectedStartedTransfers, len(s.startedTransfers))
+			s.mu.Unlock()
+
+		})
+	}
 }

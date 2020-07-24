@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -37,6 +36,8 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"golang.org/x/oauth2"
@@ -78,10 +79,11 @@ func init() {
 		Config: func(name string, m configmap.Mapper) {
 			saFile, _ := m.Get("service_account_file")
 			saCreds, _ := m.Get("service_account_credentials")
-			if saFile != "" || saCreds != "" {
+			anonymous, _ := m.Get("anonymous")
+			if saFile != "" || saCreds != "" || anonymous == "true" {
 				return
 			}
-			err := oauthutil.Config("google cloud storage", name, m, storageConfig)
+			err := oauthutil.Config("google cloud storage", name, m, storageConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
@@ -97,11 +99,15 @@ func init() {
 			Help: "Project number.\nOptional - needed only for list/create/delete buckets - see your developer console.",
 		}, {
 			Name: "service_account_file",
-			Help: "Service Account Credentials JSON file path\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Help: "Service Account Credentials JSON file path\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
 		}, {
 			Name: "service_account_credentials",
 			Help: "Service Account Credentials JSON blob\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
 			Hide: fs.OptionHideBoth,
+		}, {
+			Name:    "anonymous",
+			Help:    "Access public buckets and objects without credentials\nSet to 'true' if you just want to download files and don't configure credentials.",
+			Default: false,
 		}, {
 			Name: "object_acl",
 			Help: "Access Control List for new objects.",
@@ -242,23 +248,35 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Value: "COLDLINE",
 				Help:  "Coldline storage class",
 			}, {
+				Value: "ARCHIVE",
+				Help:  "Archive storage class",
+			}, {
 				Value: "DURABLE_REDUCED_AVAILABILITY",
 				Help:  "Durable reduced availability storage class",
 			}},
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default: (encoder.Base |
+				encoder.EncodeCrLf |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ProjectNumber             string `config:"project_number"`
-	ServiceAccountFile        string `config:"service_account_file"`
-	ServiceAccountCredentials string `config:"service_account_credentials"`
-	ObjectACL                 string `config:"object_acl"`
-	BucketACL                 string `config:"bucket_acl"`
-	BucketPolicyOnly          bool   `config:"bucket_policy_only"`
-	Location                  string `config:"location"`
-	StorageClass              string `config:"storage_class"`
+	ProjectNumber             string               `config:"project_number"`
+	ServiceAccountFile        string               `config:"service_account_file"`
+	ServiceAccountCredentials string               `config:"service_account_credentials"`
+	Anonymous                 bool                 `config:"anonymous"`
+	ObjectACL                 string               `config:"object_acl"`
+	BucketACL                 string               `config:"bucket_acl"`
+	BucketPolicyOnly          bool                 `config:"bucket_policy_only"`
+	Location                  string               `config:"location"`
+	StorageClass              string               `config:"storage_class"`
+	Enc                       encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote storage server
@@ -349,7 +367,8 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
 // split returns bucket and bucketPath from the object
@@ -392,13 +411,15 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	// try loading service account credentials from env variable, then from a file
 	if opt.ServiceAccountCredentials == "" && opt.ServiceAccountFile != "" {
-		loadedCreds, err := ioutil.ReadFile(os.ExpandEnv(opt.ServiceAccountFile))
+		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServiceAccountFile))
 		if err != nil {
 			return nil, errors.Wrap(err, "error opening service account credentials file")
 		}
 		opt.ServiceAccountCredentials = string(loadedCreds)
 	}
-	if opt.ServiceAccountCredentials != "" {
+	if opt.Anonymous {
+		oAuthClient = &http.Client{}
+	} else if opt.ServiceAccountCredentials != "" {
 		oAuthClient, err = getServiceAccountClient([]byte(opt.ServiceAccountCredentials))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed configuring Google Cloud Storage Service Account")
@@ -438,8 +459,9 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the object exists
+		encodedDirectory := f.opt.Enc.FromStandardPath(f.rootDirectory)
 		err = f.pacer.Call(func() (bool, error) {
-			_, err = f.svc.Objects.Get(f.rootBucket, f.rootDirectory).Context(ctx).Do()
+			_, err = f.svc.Objects.Get(f.rootBucket, encodedDirectory).Context(ctx).Do()
 			return shouldRetry(err)
 		})
 		if err == nil {
@@ -522,6 +544,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				if !strings.HasSuffix(remote, "/") {
 					continue
 				}
+				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
@@ -537,12 +560,13 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			}
 		}
 		for _, object := range objects.Items {
-			if !strings.HasPrefix(object.Name, prefix) {
+			remote := f.opt.Enc.ToStandardPath(object.Name)
+			if !strings.HasPrefix(remote, prefix) {
 				fs.Logf(f, "Odd name received %q", object.Name)
 				continue
 			}
-			remote := object.Name[len(prefix):]
-			isDirectory := strings.HasSuffix(remote, "/")
+			remote = remote[len(prefix):]
+			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
 			if addBucket {
 				remote = path.Join(bucket, remote)
 			}
@@ -613,7 +637,7 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 			return nil, err
 		}
 		for _, bucket := range buckets.Items {
-			d := fs.NewDir(bucket.Name, time.Time{})
+			d := fs.NewDir(f.opt.Enc.ToStandardName(bucket.Name), time.Time{})
 			entries = append(entries, d)
 		}
 		if buckets.NextPageToken == "" {
@@ -1049,6 +1073,33 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Name:        bucketPath,
 		ContentType: fs.MimeType(ctx, src),
 		Metadata:    metadataFromModTime(modTime),
+	}
+	// Apply upload options
+	for _, option := range options {
+		key, value := option.Header()
+		lowerKey := strings.ToLower(key)
+		switch lowerKey {
+		case "":
+			// ignore
+		case "cache-control":
+			object.CacheControl = value
+		case "content-disposition":
+			object.ContentDisposition = value
+		case "content-encoding":
+			object.ContentEncoding = value
+		case "content-language":
+			object.ContentLanguage = value
+		case "content-type":
+			object.ContentType = value
+		default:
+			const googMetaPrefix = "x-goog-meta-"
+			if strings.HasPrefix(lowerKey, googMetaPrefix) {
+				metaKey := lowerKey[len(googMetaPrefix):]
+				object.Metadata[metaKey] = value
+			} else {
+				fs.Errorf(o, "Don't know how to set key %q on upload", key)
+			}
+		}
 	}
 	var newObject *storage.Object
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {

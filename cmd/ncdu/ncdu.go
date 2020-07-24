@@ -24,10 +24,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "ncdu remote:path",
 	Short: `Explore a remote with a text based user interface.`,
 	Long: `
@@ -35,7 +35,7 @@ This displays a text based user interface allowing the navigation of a
 remote. It is most useful for answering the question - "What is using
 all my disk space?".
 
-<script src="https://asciinema.org/a/157793.js" id="asciicast-157793" async></script>
+{{< asciinema 157793 >}}
 
 To make the user interface it first scans the entire remote given and
 builds an in memory representation.  rclone ncdu can be used during

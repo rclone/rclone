@@ -29,15 +29,17 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/env"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	sshagent "github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/time/rate"
 )
 
 const (
-	connectionsPerSecond    = 10 // don't make more than this many ssh connections/s
 	hashCommandNotSupported = "none"
+	minSleep                = 100 * time.Millisecond
+	maxSleep                = 2 * time.Second
+	decayConstant           = 2 // bigger for slower decay, exponential
 )
 
 var (
@@ -68,8 +70,11 @@ func init() {
 			Help:       "SSH password, leave blank to use ssh-agent.",
 			IsPassword: true,
 		}, {
+			Name: "key_pem",
+			Help: "Raw PEM-encoded private key, If specified, will override key_file parameter.",
+		}, {
 			Name: "key_file",
-			Help: "Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.",
+			Help: "Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent." + env.ShellExpandHelp,
 		}, {
 			Name: "key_file_pass",
 			Help: `The passphrase to decrypt the PEM-encoded private key file.
@@ -86,8 +91,19 @@ requested from the ssh-agent. This allows to avoid ` + "`Too many authentication
 when the ssh-agent contains many keys.`,
 			Default: false,
 		}, {
-			Name:    "use_insecure_cipher",
-			Help:    "Enable the use of the aes128-cbc cipher and diffie-hellman-group-exchange-sha256, diffie-hellman-group-exchange-sha1 key exchange. Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.",
+			Name: "use_insecure_cipher",
+			Help: `Enable the use of insecure ciphers and key exchange methods. 
+
+This enables the use of the following insecure ciphers and key exchange methods:
+
+- aes128-cbc
+- aes192-cbc
+- aes256-cbc
+- 3des-cbc
+- diffie-hellman-group-exchange-sha256
+- diffie-hellman-group-exchange-sha1
+
+Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.`,
 			Default: false,
 			Examples: []fs.OptionExample{
 				{
@@ -143,6 +159,11 @@ Home directory can be found in a shared folder called "home"
 			Default:  "",
 			Help:     "The command used to read sha1 hashes. Leave blank for autodetect.",
 			Advanced: true,
+		}, {
+			Name:     "skip_links",
+			Default:  false,
+			Help:     "Set to skip any symlinks and any other non regular files.",
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -154,6 +175,7 @@ type Options struct {
 	User              string `config:"user"`
 	Port              string `config:"port"`
 	Pass              string `config:"pass"`
+	KeyPem            string `config:"key_pem"`
 	KeyFile           string `config:"key_file"`
 	KeyFilePass       string `config:"key_file_pass"`
 	KeyUseAgent       bool   `config:"key_use_agent"`
@@ -164,12 +186,14 @@ type Options struct {
 	SetModTime        bool   `config:"set_modtime"`
 	Md5sumCommand     string `config:"md5sum_command"`
 	Sha1sumCommand    string `config:"sha1sum_command"`
+	SkipLinks         bool   `config:"skip_links"`
 }
 
 // Fs stores the interface to the remote SFTP files
 type Fs struct {
 	name         string
 	root         string
+	absRoot      string
 	opt          Options          // parsed options
 	m            configmap.Mapper // config
 	features     *fs.Features     // optional features
@@ -179,7 +203,7 @@ type Fs struct {
 	cachedHashes *hash.Set
 	poolMu       sync.Mutex
 	pool         []*conn
-	connLimit    *rate.Limiter // for limiting number of connections per second
+	pacer        *fs.Pacer // pacer for operations
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -259,10 +283,6 @@ func (c *conn) closed() error {
 // Open a new connection to the SFTP server.
 func (f *Fs) sftpConnection() (c *conn, err error) {
 	// Rate limit rate of new connections
-	err = f.connLimit.Wait(context.Background())
-	if err != nil {
-		return nil, errors.Wrap(err, "limiter failed in connect")
-	}
 	c = &conn{
 		err: make(chan error, 1),
 	}
@@ -296,7 +316,14 @@ func (f *Fs) getSftpConnection() (c *conn, err error) {
 	if c != nil {
 		return c, nil
 	}
-	return f.sftpConnection()
+	err = f.pacer.Call(func() (bool, error) {
+		c, err = f.sftpConnection()
+		if err != nil {
+			return true, err
+		}
+		return false, nil
+	})
+	return c, err
 }
 
 // Return an SFTP connection to the pool
@@ -363,13 +390,14 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 
 	if opt.UseInsecureCipher {
 		sshConfig.Config.SetDefaults()
-		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc")
+		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc", "aes192-cbc", "aes256-cbc", "3des-cbc")
 		sshConfig.Config.KeyExchanges = append(sshConfig.Config.KeyExchanges, "diffie-hellman-group-exchange-sha1", "diffie-hellman-group-exchange-sha256")
 	}
 
 	keyFile := env.ShellExpand(opt.KeyFile)
-	// Add ssh agent-auth if no password or file specified
-	if (opt.Pass == "" && keyFile == "" && !opt.AskPassword) || opt.KeyUseAgent {
+	//keyPem := env.ShellExpand(opt.KeyPem)
+	// Add ssh agent-auth if no password or file or key PEM specified
+	if (opt.Pass == "" && keyFile == "" && !opt.AskPassword && opt.KeyPem == "") || opt.KeyUseAgent {
 		sshAgentClient, _, err := sshagent.New()
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't connect to ssh-agent")
@@ -405,10 +433,20 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// Load key file if specified
-	if keyFile != "" {
-		key, err := ioutil.ReadFile(keyFile)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to read private key file")
+	if keyFile != "" || opt.KeyPem != "" {
+		var key []byte
+		if opt.KeyPem == "" {
+			key, err = ioutil.ReadFile(keyFile)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to read private key file")
+			}
+		} else {
+			// wrap in quotes because the config is a coming as a literal without them.
+			opt.KeyPem, err = strconv.Unquote("\"" + opt.KeyPem + "\"")
+			if err != nil {
+				return nil, errors.Wrap(err, "pem key not formatted properly")
+			}
+			key = []byte(opt.KeyPem)
 		}
 		clearpass := ""
 		if opt.KeyFilePass != "" {
@@ -417,7 +455,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 				return nil, err
 			}
 		}
-		signer, err := ssh.ParsePrivateKeyWithPassphrase(key, []byte(clearpass))
+		var signer ssh.Signer
+		if clearpass == "" {
+			signer, err = ssh.ParsePrivateKey(key)
+		} else {
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte(clearpass))
+		}
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse private key file")
 		}
@@ -443,32 +486,43 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	return NewFsWithConnection(ctx, name, root, m, opt, sshConfig)
 }
 
-// NewFsWithConnection creates a new Fs object from the name and root and a ssh.ClientConfig. It connects to
+// NewFsWithConnection creates a new Fs object from the name and root and an ssh.ClientConfig. It connects to
 // the host specified in the ssh.ClientConfig
 func NewFsWithConnection(ctx context.Context, name string, root string, m configmap.Mapper, opt *Options, sshConfig *ssh.ClientConfig) (fs.Fs, error) {
 	f := &Fs{
 		name:      name,
 		root:      root,
+		absRoot:   root,
 		opt:       *opt,
 		m:         m,
 		config:    sshConfig,
 		url:       "sftp://" + opt.User + "@" + opt.Host + ":" + opt.Port + "/" + root,
 		mkdirLock: newStringLock(),
-		connLimit: rate.NewLimiter(rate.Limit(connectionsPerSecond), 1),
+		pacer:     fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
+		SlowHash:                true,
 	}).Fill(f)
 	// Make a connection and pool it to return errors early
 	c, err := f.getSftpConnection()
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFs")
 	}
+	cwd, err := c.sftpClient.Getwd()
 	f.putSftpConnection(&c, nil)
+	if err != nil {
+		fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
+	} else if !path.IsAbs(f.root) {
+		f.absRoot = path.Join(cwd, f.root)
+		fs.Debugf(f, "Using absolute root directory %q", f.absRoot)
+	}
 	if root != "" {
 		// Check to see if the root actually an existing file
+		oldAbsRoot := f.absRoot
 		remote := path.Base(root)
 		f.root = path.Dir(root)
+		f.absRoot = path.Dir(f.absRoot)
 		if f.root == "." {
 			f.root = ""
 		}
@@ -477,6 +531,7 @@ func NewFsWithConnection(ctx context.Context, name string, root string, m config
 			if err == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
 				// File doesn't exist so return old f
 				f.root = root
+				f.absRoot = oldAbsRoot
 				return f, nil
 			}
 			return nil, err
@@ -559,7 +614,7 @@ func (f *Fs) dirExists(dir string) (bool, error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	root := path.Join(f.root, dir)
+	root := path.Join(f.absRoot, dir)
 	ok, err := f.dirExists(root)
 	if err != nil {
 		return nil, errors.Wrap(err, "List failed")
@@ -584,12 +639,16 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		remote := path.Join(dir, info.Name())
 		// If file is a symlink (not a regular file is the best cross platform test we can do), do a stat to
 		// pick up the size and type of the destination, instead of the size and type of the symlink.
-		if !info.Mode().IsRegular() {
+		if !info.Mode().IsRegular() && !info.IsDir() {
+			if f.opt.SkipLinks {
+				// skip non regular file if SkipLinks is set
+				continue
+			}
 			oldInfo := info
 			info, err = f.stat(remote)
 			if err != nil {
 				if !os.IsNotExist(err) {
-					fs.Errorf(remote, "stat of non-regular file/dir failed: %v", err)
+					fs.Errorf(remote, "stat of non-regular file failed: %v", err)
 				}
 				info = oldInfo
 			}
@@ -636,7 +695,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // directories above that
 func (f *Fs) mkParentDir(remote string) error {
 	parent := path.Dir(remote)
-	return f.mkdir(path.Join(f.root, parent))
+	return f.mkdir(path.Join(f.absRoot, parent))
 }
 
 // mkdir makes the directory and parents using native paths
@@ -672,7 +731,7 @@ func (f *Fs) mkdir(dirPath string) error {
 
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	root := path.Join(f.root, dir)
+	root := path.Join(f.absRoot, dir)
 	return f.mkdir(root)
 }
 
@@ -688,7 +747,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return fs.ErrorDirectoryNotEmpty
 	}
 	// Remove the directory
-	root := path.Join(f.root, dir)
+	root := path.Join(f.absRoot, dir)
 	c, err := f.getSftpConnection()
 	if err != nil {
 		return errors.Wrap(err, "Rmdir")
@@ -715,7 +774,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	err = c.sftpClient.Rename(
 		srcObj.path(),
-		path.Join(f.root, remote),
+		path.Join(f.absRoot, remote),
 	)
 	f.putSftpConnection(&c, err)
 	if err != nil {
@@ -742,8 +801,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.root, srcRemote)
-	dstPath := path.Join(f.root, dstRemote)
+	srcPath := path.Join(srcFs.absRoot, srcRemote)
+	dstPath := path.Join(f.absRoot, dstRemote)
 
 	// Check if destination exists
 	ok, err := f.dirExists(dstPath)
@@ -950,6 +1009,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		escapedPath = shellEscape(path.Join(o.fs.opt.PathOverride, o.remote))
 	}
 	err = session.Run(hashCmd + " " + escapedPath)
+	fs.Debugf(nil, "sftp cmd = %s", escapedPath)
 	if err != nil {
 		_ = session.Close()
 		fs.Debugf(o, "Failed to calculate %v hash: %v (%s)", r, err, bytes.TrimSpace(stderr.Bytes()))
@@ -957,7 +1017,10 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	}
 
 	_ = session.Close()
-	str := parseHash(stdout.Bytes())
+	b := stdout.Bytes()
+	fs.Debugf(nil, "sftp output = %q", b)
+	str := parseHash(b)
+	fs.Debugf(nil, "sftp hash = %q", str)
 	if r == hash.MD5 {
 		o.md5sum = &str
 	} else if r == hash.SHA1 {
@@ -966,7 +1029,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	return str, nil
 }
 
-var shellEscapeRegex = regexp.MustCompile(`[^A-Za-z0-9_.,:/@\n-]`)
+var shellEscapeRegex = regexp.MustCompile("[^A-Za-z0-9_.,:/\\@\u0080-\uFFFFFFFF\n-]")
 
 // Escape a string s.t. it cannot cause unintended behavior
 // when sending it to a shell.
@@ -979,12 +1042,14 @@ func shellEscape(str string) string {
 // an invocation of md5sum/sha1sum to a hash string
 // as expected by the rest of this application
 func parseHash(bytes []byte) string {
-	return strings.Split(string(bytes), " ")[0] // Split at hash / filename separator
+	// For strings with backslash *sum writes a leading \
+	// https://unix.stackexchange.com/q/313733/94054
+	return strings.Split(strings.TrimLeft(string(bytes), "\\"), " ")[0] // Split at hash / filename separator
 }
 
 // Parses the byte array output from the SSH session
 // returned by an invocation of df into
-// the disk size, used space, and avaliable space on the disk, in that order.
+// the disk size, used space, and available space on the disk, in that order.
 // Only works when `df` has output info on only one disk
 func parseUsage(bytes []byte) (spaceTotal int64, spaceUsed int64, spaceAvail int64) {
 	spaceTotal, spaceUsed, spaceAvail = -1, -1, -1
@@ -1023,7 +1088,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // path returns the native path of the object
 func (o *Object) path() string {
-	return path.Join(o.fs.root, o.remote)
+	return path.Join(o.fs.absRoot, o.remote)
 }
 
 // setMetadata updates the info in the object from the stat result passed in
@@ -1039,7 +1104,7 @@ func (f *Fs) stat(remote string) (info os.FileInfo, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "stat")
 	}
-	absPath := path.Join(f.root, remote)
+	absPath := path.Join(f.absRoot, remote)
 	info, err = c.sftpClient.Stat(absPath)
 	f.putSftpConnection(&c, err)
 	return info, err
@@ -1065,19 +1130,18 @@ func (o *Object) stat() error {
 //
 // it also updates the info field
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	if !o.fs.opt.SetModTime {
-		return nil
+	if o.fs.opt.SetModTime {
+		c, err := o.fs.getSftpConnection()
+		if err != nil {
+			return errors.Wrap(err, "SetModTime")
+		}
+		err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
+		o.fs.putSftpConnection(&c, err)
+		if err != nil {
+			return errors.Wrap(err, "SetModTime failed")
+		}
 	}
-	c, err := o.fs.getSftpConnection()
-	if err != nil {
-		return errors.Wrap(err, "SetModTime")
-	}
-	err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
-	o.fs.putSftpConnection(&c, err)
-	if err != nil {
-		return errors.Wrap(err, "SetModTime failed")
-	}
-	err = o.stat()
+	err := o.stat()
 	if err != nil {
 		return errors.Wrap(err, "SetModTime stat failed")
 	}
@@ -1178,7 +1242,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return errors.Wrap(err, "Update")
 	}
-	file, err := c.sftpClient.Create(o.path())
+	file, err := c.sftpClient.OpenFile(o.path(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
 	o.fs.putSftpConnection(&c, err)
 	if err != nil {
 		return errors.Wrap(err, "Update Create failed")

@@ -6,12 +6,26 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"golang.org/x/oauth2"
 )
+
+/*
+// TestPutio
+stringNeedsEscaping = []rune{
+	'/', '\x00'
+}
+maxFileLength = 255
+canWriteUnnormalized = true
+canReadUnnormalized   = true
+canReadRenormalized   = true
+canStream = false
+*/
 
 // Constants
 const (
@@ -46,12 +60,31 @@ func init() {
 		Description: "Put.io",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.ConfigNoOffline("putio", name, m, putioConfig)
+			opt := oauthutil.Options{
+				NoOffline: true,
+			}
+			err := oauthutil.Config("putio", name, m, putioConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
+		Options: []fs.Option{{
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			// Note that \ is renamed to -
+			//
+			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeInvalidUtf8),
+		}},
 	})
+}
+
+// Options defines the configuration for this backend
+type Options struct {
+	Enc encoder.MultiEncoder `config:"encoding"`
 }
 
 // Check the interfaces are satisfied

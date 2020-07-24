@@ -115,6 +115,9 @@ func TestMultithreadCopy(t *testing.T) {
 		{size: multithreadChunkSize*2 + 1, streams: 2},
 	} {
 		t.Run(fmt.Sprintf("%+v", test), func(t *testing.T) {
+			if *fstest.SizeLimit > 0 && int64(test.size) > *fstest.SizeLimit {
+				t.Skipf("exceeded file size limit %d > %d", test.size, *fstest.SizeLimit)
+			}
 			var err error
 			contents := random.String(test.size)
 			t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
@@ -135,7 +138,7 @@ func TestMultithreadCopy(t *testing.T) {
 			assert.Equal(t, src.Size(), dst.Size())
 			assert.Equal(t, "file1", dst.Remote())
 
-			fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
+			fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1}, nil, fs.GetModifyWindow(r.Flocal, r.Fremote))
 			require.NoError(t, dst.Remove(context.Background()))
 		})
 	}

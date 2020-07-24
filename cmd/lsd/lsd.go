@@ -7,6 +7,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -16,11 +17,12 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
+	cmd.Root.AddCommand(commandDefinition)
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "lsd remote:path",
 	Short: `List all directories/containers/buckets in the path.`,
 	Long: `

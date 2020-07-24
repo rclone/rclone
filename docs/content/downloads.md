@@ -2,7 +2,6 @@
 title: "Rclone downloads"
 description: "Download rclone binaries for your OS."
 type: page
-date: "2017-07-22"
 ---
 
 Rclone Download {{< version >}}
@@ -10,14 +9,15 @@ Rclone Download {{< version >}}
 
 | Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
 |:-------:|:-------:|:-----:|:-----:|:----:|:----:|:-------:|:------:|:-------:|:-----:|:-------:|
-| AMD64 - 64 Bit | {{< download windows amd64 >}} | {{< download osx amd64 >}} | {{< download linux amd64 >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | {{< download freebsd amd64 >}} | {{< download netbsd amd64 >}} | {{< download openbsd amd64 >}} | {{< download plan9 amd64 >}} | {{< download solaris amd64 >}} |
-| 386 - 32 Bit | {{< download windows 386 >}} | {{< download osx 386 >}} | {{< download linux 386 >}} | {{< download linux 386 deb >}} | {{< download linux 386 rpm >}} | {{< download freebsd 386 >}} | {{< download netbsd 386 >}} | {{< download openbsd 386 >}} | {{< download plan9 386 >}} | - |
-| ARM - 32 Bit | - | - | {{< download linux arm >}} | {{< download linux arm deb >}} | {{< download linux arm rpm >}} | {{< download freebsd arm >}} | {{< download netbsd arm >}} | - | - | - |
+| Intel/AMD - 64 Bit | {{< download windows amd64 >}} | {{< download osx amd64 >}} | {{< download linux amd64 >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | {{< download freebsd amd64 >}} | {{< download netbsd amd64 >}} | {{< download openbsd amd64 >}} | {{< download plan9 amd64 >}} | {{< download solaris amd64 >}} |
+| Intel/AMD - 32 Bit | {{< download windows 386 >}} | {{< download osx 386 >}} | {{< download linux 386 >}} | {{< download linux 386 deb >}} | {{< download linux 386 rpm >}} | {{< download freebsd 386 >}} | {{< download netbsd 386 >}} | {{< download openbsd 386 >}} | {{< download plan9 386 >}} | - |
+| ARMv6 - 32 Bit | - | - | {{< download linux arm >}} | {{< download linux arm deb >}} | {{< download linux arm rpm >}} | {{< download freebsd arm >}} | {{< download netbsd arm >}} | - | - | - |
+| ARMv7 - 32 Bit | - | - | {{< download linux arm-v7 >}} | {{< download linux arm-v7 deb >}} | {{< download linux arm-v7 rpm >}} | {{< download freebsd arm-v7 >}} | {{< download netbsd arm-v7 >}} | - | - | - |
 | ARM - 64 Bit | - | - | {{< download linux arm64 >}} | {{< download linux arm64 deb >}} | {{< download linux arm64 rpm >}} | - | - | - | - | - |
 | MIPS - Big Endian | - | - | {{< download linux mips >}} | {{< download linux mips deb >}} | {{< download linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< download linux mipsle >}} | {{< download linux mipsle deb >}} | {{< download linux mipsle rpm >}} | - | - | - | - | - |
 
-You can also find a [mirror of the downloads on github](https://github.com/rclone/rclone/releases/tag/{{< version >}}).
+You can also find a [mirror of the downloads on GitHub](https://github.com/rclone/rclone/releases/tag/{{< version >}}).
 
 ## Script download and install ##
 
@@ -69,9 +69,10 @@ script) from a URL which doesn't change then you can use these links.
 
 | Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
 |:-------:|:-------:|:-----:|:-----:|:----:|:----:|:-------:|:------:|:-------:|:-----:|:-------:|
-| AMD64 - 64 Bit | {{< cdownload windows amd64 >}} | {{< cdownload osx amd64 >}} | {{< cdownload linux amd64 >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | {{< cdownload freebsd amd64 >}} | {{< cdownload netbsd amd64 >}} | {{< cdownload openbsd amd64 >}} | {{< cdownload plan9 amd64 >}} | {{< cdownload solaris amd64 >}} |
-| 386 - 32 Bit | {{< cdownload windows 386 >}} | {{< cdownload osx 386 >}} | {{< cdownload linux 386 >}} | {{< cdownload linux 386 deb >}} | {{< cdownload linux 386 rpm >}} | {{< cdownload freebsd 386 >}} | {{< cdownload netbsd 386 >}} | {{< cdownload openbsd 386 >}} | {{< cdownload plan9 386 >}} | - |
-| ARM - 32 Bit | - | - | {{< cdownload linux arm >}} | {{< cdownload linux arm deb >}} | {{< cdownload linux arm rpm >}} | {{< cdownload freebsd arm >}} | {{< cdownload netbsd arm >}} | - | - | - |
+| Intel/AMD - 64 Bit | {{< cdownload windows amd64 >}} | {{< cdownload osx amd64 >}} | {{< cdownload linux amd64 >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | {{< cdownload freebsd amd64 >}} | {{< cdownload netbsd amd64 >}} | {{< cdownload openbsd amd64 >}} | {{< cdownload plan9 amd64 >}} | {{< cdownload solaris amd64 >}} |
+| Intel/AMD - 32 Bit | {{< cdownload windows 386 >}} | {{< cdownload osx 386 >}} | {{< cdownload linux 386 >}} | {{< cdownload linux 386 deb >}} | {{< cdownload linux 386 rpm >}} | {{< cdownload freebsd 386 >}} | {{< cdownload netbsd 386 >}} | {{< cdownload openbsd 386 >}} | {{< cdownload plan9 386 >}} | - |
+| ARMv6 - 32 Bit | - | - | {{< cdownload linux arm >}} | {{< cdownload linux arm deb >}} | {{< cdownload linux arm rpm >}} | {{< cdownload freebsd arm >}} | {{< cdownload netbsd arm >}} | - | - | - |
+| ARMv7 - 32 Bit | - | - | {{< cdownload linux arm-v7 >}} | {{< cdownload linux arm-v7 deb >}} | {{< cdownload linux arm-v7 rpm >}} | {{< cdownload freebsd arm-v7 >}} | {{< cdownload netbsd arm-v7 >}} | - | - | - |
 | ARM - 64 Bit | - | - | {{< cdownload linux arm64 >}} | {{< cdownload linux arm64 deb >}} | {{< cdownload linux arm64 rpm >}} | - | - | - | - | - |
 | MIPS - Big Endian | - | - | {{< cdownload linux mips >}} | {{< cdownload linux mips deb >}} | {{< cdownload linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< cdownload linux mipsle >}} | {{< cdownload linux mipsle deb >}} | {{< cdownload linux mipsle rpm >}} | - | - | - | - | - |
@@ -79,4 +80,4 @@ script) from a URL which doesn't change then you can use these links.
 Older Downloads
 ==============
 
-Older downloads can be found [here](https://downloads.rclone.org/)
+Older downloads can be found [here](https://downloads.rclone.org/).

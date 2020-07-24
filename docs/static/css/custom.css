@@ -1,28 +1,37 @@
 body {
-	margin-top: 75px; /* 100px is double the height of the navbar - I made it a big larger for some more space - keep it at 50px at least if you want to use the fixed top nav */
+    font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
-footer {
-	margin: 50px 0;
+btn-group.a {
+    color: #000000;
+}
+
+a {
+    color: #3f79ad;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #70caf2;
 }
 
 table {
-	background-color:#e0e0ff
+	background-color:#f0f0f0;
 }
 
 tbody td, th {
-	border: 1px solid black;
+	border: 1px solid #c0c0c0;
 	padding: 3px 7px 2px 7px;
 }
 
 thead td, th {
-	border: 1px solid black;
 	padding: 3px 7px 2px 7px;
 	font-weight: bold;
+	background-color:#e0e0e0;
 }
 
-tbody tr:nth-child(odd) {
-	background-color:#d0d0ff
+tbody tr:nth-child(even) {
+	background-color:#e8e8e8;
 }
 
 /* Preserve whitespace. Wrap text only at line breaks. */
@@ -43,38 +52,122 @@ h3:hover .header-link,
 h4:hover .header-link,
 h5:hover .header-link,
 h6:hover .header-link {
-  opacity: 1;
+  	opacity: 1;
+}
+
+/* more space before headings */
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 12px;
+    padding: 15px 0px;
+}
+
+/* Fix spacing of info boxes */
+.card {
+    margin-top: 0.75rem;
+}
+/* less padding around info box items */
+.card-body {
+    padding: 0.5rem;
+}
+
+/* make menus longer */
+.pre-scrollable {
+    max-height: 30rem;
 }
 
 /* Fix spacing between menu items */
-.navbar-default .dropdown-menu>li>a {
-	padding-top: 6px;
-	padding-bottom: 6px;
-}
+/* .navbar-default .dropdown-menu>li>a { */
+/* 	padding-top: 6px; */
+/* 	padding-bottom: 6px; */
+/* } */
 
 /* custom logo in navbar */
 .rclone-logo {
-	height: 36px;
+    height: 36px;
+    margin-top: -10px;
+    margin-bottom: -10px;
 }
 
-/* override padding so logo is centered */
-.navbar-brand {
-	padding: 4px 15px;
+.heart {
+    color: #e31b23;
+}
+
+blockquote {
+    display: block;
+    background-color: #EEE;
+    padding: 0.25rem;
+    border: 1px solid black;
+}
+
+pre {
+    padding: 10px;
+    margin: 0 0 10.5px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    word-break: break-all;
+    word-wrap: break-word;
+    color: #333333;
+    background-color: #f5f5f5;
+    border: 1px solid #cccccc;
+    border-radius: 0.25rem;
+}
+
+code {
+    font-size: 87.5%;
+    color: #e83e8c;
+    word-wrap: break-word;
 }
 
 /* reduce h12345 sizes */
 h1 {
-	font-size: 25px;
+    font-size: 160%;
 }
 h2 {
-	font-size: 22px;
+    font-size: 130%;
 }
 h3 {
-	font-size: 20px;
+    font-size: 110%;
+    font-weight: bold;
 }
 h4 {
-	font-size: 18px;
+    font-size: 100%;
+    font-weight: bold;
 }
 h5 {
-	font-size: 16px;
+    font-size: 90%;
+    font-weight: bold;
+}
+
+.menu {
+    font-size: 95%;
+}
+
+/* Make primary buttons rclone colours. Should learn sass and do this the proper way! */
+.btn-primary {
+    background-color: #3f79ad;
+    border-color: #3f79ad;
+}
+.btn-primary:hover {
+    background-color: #70caf2;
+    border-color: #70caf2;
+}
+.btn-primary:not(:disabled):not(.disabled).active, .btn-primary:not(:disabled):not(.disabled):active, .show>.btn-primary.dropdown-toggle {
+    background-color: #70caf2;
+    border-color: #70caf2;
+}
+.btn-primary.focus, .btn-primary:focus {
+    background-color: #3f79ad;
+    border-color: #3f79ad;
+    box-shadow: 0 0 0 0.2rem rgba(63,121,173,.5);
+}
+.badge-primary {
+    background-color: #3f79ad;
+    border-color: #3f79ad;
+}
+a.badge-primary:focus, a.badge-primary:hover {
+    background-color: #70caf2;
+}
+a.badge-primary.focus, a.badge-primary:focus {
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(112,202,242,.5);
 }

@@ -12,10 +12,13 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 
 	httpclient "github.com/koofr/go-httpclient"
 	koofrclient "github.com/koofr/go-koofrclient"
@@ -27,49 +30,56 @@ func init() {
 		Name:        "koofr",
 		Description: "Koofr",
 		NewFs:       NewFs,
-		Options: []fs.Option{
-			{
-				Name:     "endpoint",
-				Help:     "The Koofr API endpoint to use",
-				Default:  "https://app.koofr.net",
-				Required: true,
-				Advanced: true,
-			}, {
-				Name:     "mountid",
-				Help:     "Mount ID of the mount to use. If omitted, the primary mount is used.",
-				Required: false,
-				Default:  "",
-				Advanced: true,
-			}, {
-				Name:     "setmtime",
-				Help:     "Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.",
-				Default:  true,
-				Required: true,
-				Advanced: true,
-			}, {
-				Name:     "user",
-				Help:     "Your Koofr user name",
-				Required: true,
-			}, {
-				Name:       "password",
-				Help:       "Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)",
-				IsPassword: true,
-				Required:   true,
-			},
-		},
+		Options: []fs.Option{{
+			Name:     "endpoint",
+			Help:     "The Koofr API endpoint to use",
+			Default:  "https://app.koofr.net",
+			Required: true,
+			Advanced: true,
+		}, {
+			Name:     "mountid",
+			Help:     "Mount ID of the mount to use. If omitted, the primary mount is used.",
+			Required: false,
+			Default:  "",
+			Advanced: true,
+		}, {
+			Name:     "setmtime",
+			Help:     "Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.",
+			Default:  true,
+			Required: true,
+			Advanced: true,
+		}, {
+			Name:     "user",
+			Help:     "Your Koofr user name",
+			Required: true,
+		}, {
+			Name:       "password",
+			Help:       "Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)",
+			IsPassword: true,
+			Required:   true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeInvalidUtf8),
+		}},
 	})
 }
 
 // Options represent the configuration of the Koofr backend
 type Options struct {
-	Endpoint string `config:"endpoint"`
-	MountID  string `config:"mountid"`
-	User     string `config:"user"`
-	Password string `config:"password"`
-	SetMTime bool   `config:"setmtime"`
+	Endpoint string               `config:"endpoint"`
+	MountID  string               `config:"mountid"`
+	User     string               `config:"user"`
+	Password string               `config:"password"`
+	SetMTime bool                 `config:"setmtime"`
+	Enc      encoder.MultiEncoder `config:"encoding"`
 }
 
-// A Fs is a representation of a remote Koofr Fs
+// An Fs is a representation of a remote Koofr Fs
 type Fs struct {
 	name     string
 	mountID  string
@@ -240,9 +250,9 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
 }
 
-// fullPath constructs a full, absolute path from a Fs root relative path,
+// fullPath constructs a full, absolute path from an Fs root relative path,
 func (f *Fs) fullPath(part string) string {
-	return path.Join("/", f.root, part)
+	return f.opt.Enc.FromStandardPath(path.Join("/", f.root, part))
 }
 
 // NewFs constructs a new filesystem given a root path and configuration options
@@ -256,7 +266,9 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	if err != nil {
 		return nil, err
 	}
-	client := koofrclient.NewKoofrClient(opt.Endpoint, false)
+	httpClient := httpclient.New()
+	httpClient.Client = fshttp.NewClient(fs.Config)
+	client := koofrclient.NewKoofrClientWithHTTPClient(opt.Endpoint, httpClient)
 	basicAuth := fmt.Sprintf("Basic %s",
 		base64.StdEncoding.EncodeToString([]byte(opt.User+":"+pass)))
 	client.HTTPClient.Headers.Set("Authorization", basicAuth)
@@ -293,7 +305,7 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 		}
 		return nil, errors.New("Failed to find mount " + opt.MountID)
 	}
-	rootFile, err := f.client.FilesInfo(f.mountID, "/"+f.root)
+	rootFile, err := f.client.FilesInfo(f.mountID, f.opt.Enc.FromStandardPath("/"+f.root))
 	if err == nil && rootFile.Type != "dir" {
 		f.root = dir(f.root)
 		err = fs.ErrorIsFile
@@ -311,13 +323,14 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	entries = make([]fs.DirEntry, len(files))
 	for i, file := range files {
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(file.Name))
 		if file.Type == "dir" {
-			entries[i] = fs.NewDir(path.Join(dir, file.Name), time.Unix(0, 0))
+			entries[i] = fs.NewDir(remote, time.Unix(0, 0))
 		} else {
 			entries[i] = &Object{
 				fs:     f,
 				info:   file,
-				remote: path.Join(dir, file.Name),
+				remote: remote,
 			}
 		}
 	}
@@ -408,7 +421,7 @@ func translateErrorsObject(err error) error {
 }
 
 // mkdir creates a directory at the given remote path. Creates ancestors if
-// neccessary
+// necessary
 func (f *Fs) mkdir(fullPath string) error {
 	if fullPath == "/" {
 		return nil
@@ -590,7 +603,7 @@ func createLink(c *koofrclient.KoofrClient, mountID string, path string) (*link,
 }
 
 // PublicLink creates a public link to the remote path
-func (f *Fs) PublicLink(ctx context.Context, remote string) (string, error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	linkData, err := createLink(f.client, f.mountID, f.fullPath(remote))
 	if err != nil {
 		return "", translateErrorsDir(err)

@@ -11,21 +11,24 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
 
 const (
-	rootID        = "0"
-	apiBaseURL    = "https://api.1fichier.com/v1"
-	minSleep      = 334 * time.Millisecond // 3 API calls per second is recommended
-	maxSleep      = 5 * time.Second
-	decayConstant = 2 // bigger for slower decay, exponential
+	rootID         = "0"
+	apiBaseURL     = "https://api.1fichier.com/v1"
+	minSleep       = 400 * time.Millisecond // api is extremely rate limited now
+	maxSleep       = 5 * time.Second
+	decayConstant  = 2 // bigger for slower decay, exponential
+	attackConstant = 0 // start with max sleep
 )
 
 func init() {
@@ -35,25 +38,48 @@ func init() {
 		Config: func(name string, config configmap.Mapper) {
 		},
 		NewFs: NewFs,
-		Options: []fs.Option{
-			{
-				Help: "Your API Key, get it from https://1fichier.com/console/params.pl",
-				Name: "api_key",
-			},
-			{
-				Help:     "If you want to download a shared folder, add this parameter",
-				Name:     "shared_folder",
-				Required: false,
-				Advanced: true,
-			},
-		},
+		Options: []fs.Option{{
+			Help: "Your API Key, get it from https://1fichier.com/console/params.pl",
+			Name: "api_key",
+		}, {
+			Help:     "If you want to download a shared folder, add this parameter",
+			Name:     "shared_folder",
+			Required: false,
+			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			// Characters that need escaping
+			//
+			// 		'\\': '＼', // FULLWIDTH REVERSE SOLIDUS
+			// 		'<':  '＜', // FULLWIDTH LESS-THAN SIGN
+			// 		'>':  '＞', // FULLWIDTH GREATER-THAN SIGN
+			// 		'"':  '＂', // FULLWIDTH QUOTATION MARK - not on the list but seems to be reserved
+			// 		'\'': '＇', // FULLWIDTH APOSTROPHE
+			// 		'$':  '＄', // FULLWIDTH DOLLAR SIGN
+			// 		'`':  '｀', // FULLWIDTH GRAVE ACCENT
+			//
+			// Leading space and trailing space
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeSingleQuote |
+				encoder.EncodeBackQuote |
+				encoder.EncodeDoubleQuote |
+				encoder.EncodeLtGt |
+				encoder.EncodeDollar |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeRightSpace |
+				encoder.EncodeInvalidUtf8),
+		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	APIKey       string `config:"api_key"`
-	SharedFolder string `config:"shared_folder"`
+	APIKey       string               `config:"api_key"`
+	SharedFolder string               `config:"shared_folder"`
+	Enc          encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs is the interface a cloud storage system must provide
@@ -61,9 +87,9 @@ type Fs struct {
 	root       string
 	name       string
 	features   *fs.Features
+	opt        Options
 	dirCache   *dircache.DirCache
 	baseClient *http.Client
-	options    *Options
 	pacer      *fs.Pacer
 	rest       *rest.Client
 }
@@ -141,8 +167,7 @@ func (f *Fs) Features() *fs.Features {
 //
 // On Windows avoid single character remote names as they can be mixed
 // up with drive letters.
-func NewFs(name string, rootleaf string, config configmap.Mapper) (fs.Fs, error) {
-	root := replaceReservedChars(rootleaf)
+func NewFs(name string, root string, config configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	err := configstruct.Set(config, opt)
 	if err != nil {
@@ -160,8 +185,8 @@ func NewFs(name string, rootleaf string, config configmap.Mapper) (fs.Fs, error)
 	f := &Fs{
 		name:       name,
 		root:       root,
-		options:    opt,
-		pacer:      fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		opt:        *opt,
+		pacer:      fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
 		baseClient: &http.Client{},
 	}
 
@@ -174,7 +199,7 @@ func NewFs(name string, rootleaf string, config configmap.Mapper) (fs.Fs, error)
 
 	f.rest = rest.NewClient(client).SetRoot(apiBaseURL)
 
-	f.rest.SetHeader("Authorization", "Bearer "+f.options.APIKey)
+	f.rest.SetHeader("Authorization", "Bearer "+f.opt.APIKey)
 
 	f.dirCache = dircache.New(root, rootID, f)
 
@@ -224,8 +249,8 @@ func NewFs(name string, rootleaf string, config configmap.Mapper) (fs.Fs, error)
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	if f.options.SharedFolder != "" {
-		return f.listSharedFiles(ctx, f.options.SharedFolder)
+	if f.opt.SharedFolder != "" {
+		return f.listSharedFiles(ctx, f.opt.SharedFolder)
 	}
 
 	dirContent, err := f.listDir(ctx, dir)
@@ -239,7 +264,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, false)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
 			return nil, fs.ErrorObjectNotFound
@@ -273,7 +298,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Put in to the remote path with the modTime given of the given size
 //
-// When called from outside a Fs by rclone, src.Size() will always be >= 0.
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
 // But for unknown-sized objects (indicated by src.Size() == -1), Put should either
 // return an error or upload it properly (rather than e.g. calling panic).
 //
@@ -309,12 +334,12 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = f.uploadFile(ctx, in, size, leaf, directoryID, nodeResponse.ID, nodeResponse.URL)
+	_, err = f.uploadFile(ctx, in, size, leaf, directoryID, nodeResponse.ID, nodeResponse.URL, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -346,7 +371,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 			Date:        time.Now().Format("2006-01-02 15:04:05"),
 			Filename:    link.Filename,
 			Pass:        0,
-			Size:        int(fileSize),
+			Size:        fileSize,
 			URL:         link.Download,
 		},
 	}, nil
@@ -364,13 +389,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 //
 // Shouldn't return an error if it already exists
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	err := f.dirCache.FindRoot(ctx, true)
-	if err != nil {
-		return err
-	}
-	if dir != "" {
-		_, err = f.dirCache.FindDir(ctx, dir, true)
-	}
+	_, err := f.dirCache.FindDir(ctx, dir, true)
 	return err
 }
 
@@ -378,11 +397,6 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	err := f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return err
-	}
-
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return err

@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,6 +20,7 @@ func TestNewJobs(t *testing.T) {
 }
 
 func TestJobsKickExpire(t *testing.T) {
+	testy.SkipUnreliable(t)
 	jobs := newJobs()
 	jobs.opt.JobExpireInterval = time.Millisecond
 	assert.Equal(t, false, jobs.expireRunning)
@@ -33,6 +35,7 @@ func TestJobsKickExpire(t *testing.T) {
 }
 
 func TestJobsExpire(t *testing.T) {
+	testy.SkipUnreliable(t)
 	wait := make(chan struct{})
 	jobs := newJobs()
 	jobs.opt.JobExpireInterval = time.Millisecond
@@ -51,7 +54,7 @@ func TestJobsExpire(t *testing.T) {
 	assert.Equal(t, true, jobs.expireRunning)
 	job.mu.Unlock()
 	jobs.mu.Unlock()
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(250 * time.Millisecond)
 	jobs.mu.Lock()
 	assert.Equal(t, false, jobs.expireRunning)
 	assert.Equal(t, 0, len(jobs.jobs))

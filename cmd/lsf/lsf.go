@@ -10,6 +10,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -28,20 +29,20 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	flags := commandDefintion.Flags()
-	flags.StringVarP(&format, "format", "F", "p", "Output format - see  help for details")
-	flags.StringVarP(&separator, "separator", "s", ";", "Separator for the items in the format.")
-	flags.BoolVarP(&dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
-	flags.VarP(&hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
-	flags.BoolVarP(&filesOnly, "files-only", "", false, "Only list files.")
-	flags.BoolVarP(&dirsOnly, "dirs-only", "", false, "Only list directories.")
-	flags.BoolVarP(&csv, "csv", "", false, "Output in CSV format.")
-	flags.BoolVarP(&absolute, "absolute", "", false, "Put a leading / in front of path names.")
-	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
+	cmd.Root.AddCommand(commandDefinition)
+	cmdFlags := commandDefinition.Flags()
+	flags.StringVarP(cmdFlags, &format, "format", "F", "p", "Output format - see  help for details")
+	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format.")
+	flags.BoolVarP(cmdFlags, &dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
+	flags.FVarP(cmdFlags, &hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
+	flags.BoolVarP(cmdFlags, &filesOnly, "files-only", "", false, "Only list files.")
+	flags.BoolVarP(cmdFlags, &dirsOnly, "dirs-only", "", false, "Only list directories.")
+	flags.BoolVarP(cmdFlags, &csv, "csv", "", false, "Output in CSV format.")
+	flags.BoolVarP(cmdFlags, &absolute, "absolute", "", false, "Put a leading / in front of path names.")
+	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "lsf remote:path",
 	Short: `List directories and objects in remote:path formatted for parsing`,
 	Long: `
@@ -131,13 +132,13 @@ Eg
     "this file contains a comma, in the file name.txt",6
 
 Note that the --absolute parameter is useful for making lists of files
-to pass to an rclone copy with the --files-from flag.
+to pass to an rclone copy with the --files-from-raw flag.
 
 For example to find all the files modified within one day and copy
 those only (without traversing the whole directory structure):
 
     rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
-    rclone copy --files-from new_files /path/to/local remote:path
+    rclone copy --files-from-raw new_files /path/to/local remote:path
 
 ` + lshelp.Help,
 	Run: func(command *cobra.Command, args []string) {
@@ -165,10 +166,11 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 	list.SetDirSlash(dirSlash)
 	list.SetAbsolute(absolute)
 	var opt = operations.ListJSONOpt{
-		NoModTime: true,
-		DirsOnly:  dirsOnly,
-		FilesOnly: filesOnly,
-		Recurse:   recurse,
+		NoModTime:  true,
+		NoMimeType: true,
+		DirsOnly:   dirsOnly,
+		FilesOnly:  filesOnly,
+		Recurse:    recurse,
 	}
 
 	for _, char := range format {
@@ -183,10 +185,12 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 		case 'h':
 			list.AddHash(hashType)
 			opt.ShowHash = true
+			opt.HashTypes = []string{hashType.String()}
 		case 'i':
 			list.AddID()
 		case 'm':
 			list.AddMimeType()
+			opt.NoMimeType = false
 		case 'e':
 			list.AddEncrypted()
 			opt.ShowEncrypted = true

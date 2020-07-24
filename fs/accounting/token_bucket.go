@@ -177,7 +177,7 @@ Eg
     }
 
 
-If the rate parameter is not suppied then the bandwidth is queried
+If the rate parameter is not supplied then the bandwidth is queried
 
     rclone rc core/bwlimit
     {

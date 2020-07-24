@@ -178,6 +178,53 @@ func IsNoRetryError(err error) (isNoRetry bool) {
 	return
 }
 
+// NoLowLevelRetrier is an optional interface for error as to whether
+// the operation should not be retried at a low level.
+//
+// NoLowLevelRetry errors won't be retried by low level retry loops.
+type NoLowLevelRetrier interface {
+	error
+	NoLowLevelRetry() bool
+}
+
+// wrappedNoLowLevelRetryError is an error wrapped so it will satisfy the
+// NoLowLevelRetrier interface and return true
+type wrappedNoLowLevelRetryError struct {
+	error
+}
+
+// NoLowLevelRetry interface
+func (err wrappedNoLowLevelRetryError) NoLowLevelRetry() bool {
+	return true
+}
+
+// Check interface
+var _ NoLowLevelRetrier = wrappedNoLowLevelRetryError{error(nil)}
+
+// NoLowLevelRetryError makes an error which indicates the sync
+// shouldn't be low level retried.
+func NoLowLevelRetryError(err error) error {
+	return wrappedNoLowLevelRetryError{err}
+}
+
+// Cause returns the underlying error
+func (err wrappedNoLowLevelRetryError) Cause() error {
+	return err.error
+}
+
+// IsNoLowLevelRetryError returns true if err conforms to the NoLowLevelRetry
+// interface and calling the NoLowLevelRetry method returns true.
+func IsNoLowLevelRetryError(err error) (isNoLowLevelRetry bool) {
+	errors.Walk(err, func(err error) bool {
+		if r, ok := err.(NoLowLevelRetrier); ok {
+			isNoLowLevelRetry = r.NoLowLevelRetry()
+			return true
+		}
+		return false
+	})
+	return
+}
+
 // RetryAfter is an optional interface for error as to whether the
 // operation should be retried after a given delay
 //
@@ -230,20 +277,78 @@ func IsRetryAfterError(err error) bool {
 	return !RetryAfterErrorTime(err).IsZero()
 }
 
+// CountableError is an optional interface for error. It stores a boolean
+// which signifies if the error has already been counted or not
+type CountableError interface {
+	error
+	Count()
+	IsCounted() bool
+}
+
+// wrappedFatalError is an error wrapped so it will satisfy the
+// Retrier interface and return true
+type wrappedCountableError struct {
+	error
+	isCounted bool
+}
+
+// CountableError interface
+func (err *wrappedCountableError) Count() {
+	err.isCounted = true
+}
+
+// CountableError interface
+func (err *wrappedCountableError) IsCounted() bool {
+	return err.isCounted
+}
+
+func (err *wrappedCountableError) Cause() error {
+	return err.error
+}
+
+// IsCounted returns true if err conforms to the CountableError interface
+// and has already been counted
+func IsCounted(err error) bool {
+	if r, ok := err.(CountableError); ok {
+		return r.IsCounted()
+	}
+	return false
+}
+
+// Count sets the isCounted variable on the error if it conforms to the
+// CountableError interface
+func Count(err error) {
+	if r, ok := err.(CountableError); ok {
+		r.Count()
+	}
+}
+
+// Check interface
+var _ CountableError = &wrappedCountableError{error: error(nil)}
+
+// FsError makes an error which can keep a record that it is already counted
+// or not
+func FsError(err error) error {
+	if err == nil {
+		err = errors.New("countable error")
+	}
+	return &wrappedCountableError{error: err}
+}
+
 // Cause is a souped up errors.Cause which can unwrap some standard
 // library errors too.  It returns true if any of the intermediate
 // errors had a Timeout() or Temporary() method which returned true.
 func Cause(cause error) (retriable bool, err error) {
 	errors.Walk(cause, func(c error) bool {
 		// Check for net error Timeout()
-		if x, ok := err.(interface {
+		if x, ok := c.(interface {
 			Timeout() bool
 		}); ok && x.Timeout() {
 			retriable = true
 		}
 
 		// Check for net error Temporary()
-		if x, ok := err.(interface {
+		if x, ok := c.(interface {
 			Temporary() bool
 		}); ok && x.Temporary() {
 			retriable = true
@@ -255,7 +360,7 @@ func Cause(cause error) (retriable bool, err error) {
 }
 
 // retriableErrorStrings is a list of phrases which when we find it
-// in an an error, we know it is a networking error which should be
+// in an error, we know it is a networking error which should be
 // retried.
 //
 // This is incredibly ugly - if only errors.Cause worked for all
@@ -267,6 +372,8 @@ var retriableErrorStrings = []string{
 	"http: ContentLength=",             // net/http/transfer.go
 	"server closed idle connection",    // net/http/transport.go
 	"bad record MAC",                   // crypto/tls/alert.go
+	"stream error:",                    // net/http/h2_bundle.go
+	"tls: use of closed connection",    // crypto/tls/conn.go
 }
 
 // Errors which indicate networking errors which should be retried
@@ -283,6 +390,11 @@ var retriableErrors = []error{
 // indicates a premature closing of the connection.
 func ShouldRetry(err error) bool {
 	if err == nil {
+		return false
+	}
+
+	// If error has been marked to NoLowLevelRetry then don't retry
+	if IsNoLowLevelRetryError(err) {
 		return false
 	}
 

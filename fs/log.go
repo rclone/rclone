@@ -74,6 +74,27 @@ var LogPrint = func(level LogLevel, text string) {
 	_ = log.Output(4, text)
 }
 
+// LogValueItem describes keyed item for a JSON log entry
+type LogValueItem struct {
+	key   string
+	value interface{}
+}
+
+// LogValue should be used as an argument to any logging calls to
+// augment the JSON output with more structured information.
+//
+// key is the dictionary parameter used to store value.
+func LogValue(key string, value interface{}) LogValueItem {
+	return LogValueItem{key: key, value: value}
+}
+
+// String returns an empty string so LogValueItem entries won't show
+// in the textual representation of logs. They need to be put in so
+// the number of parameters of the log call matches.
+func (j LogValueItem) String() string {
+	return ""
+}
+
 // LogPrintf produces a log string from the arguments passed in
 func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
 	out := fmt.Sprintf(text, args...)
@@ -84,6 +105,11 @@ func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) 
 			fields = logrus.Fields{
 				"object":     fmt.Sprintf("%+v", o),
 				"objectType": fmt.Sprintf("%T", o),
+			}
+		}
+		for _, arg := range args {
+			if item, ok := arg.(LogValueItem); ok {
+				fields[item.key] = item.value
 			}
 		}
 		switch level {

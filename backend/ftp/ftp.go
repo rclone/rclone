@@ -8,16 +8,20 @@ import (
 	"net/textproto"
 	"os"
 	"path"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 )
@@ -28,54 +32,82 @@ func init() {
 		Name:        "ftp",
 		Description: "FTP Connection",
 		NewFs:       NewFs,
-		Options: []fs.Option{
-			{
-				Name:     "host",
-				Help:     "FTP host to connect to",
-				Required: true,
-				Examples: []fs.OptionExample{{
-					Value: "ftp.example.com",
-					Help:  "Connect to ftp.example.com",
-				}},
-			}, {
-				Name: "user",
-				Help: "FTP username, leave blank for current username, " + os.Getenv("USER"),
-			}, {
-				Name: "port",
-				Help: "FTP port, leave blank to use default (21)",
-			}, {
-				Name:       "pass",
-				Help:       "FTP password",
-				IsPassword: true,
-				Required:   true,
-			}, {
-				Name:    "tls",
-				Help:    "Use FTP over TLS (Implicit)",
-				Default: false,
-			}, {
-				Name:     "concurrency",
-				Help:     "Maximum number of FTP simultaneous connections, 0 for unlimited",
-				Default:  0,
-				Advanced: true,
-			}, {
-				Name:     "no_check_certificate",
-				Help:     "Do not verify the TLS certificate of the server",
-				Default:  false,
-				Advanced: true,
-			},
-		},
+		Options: []fs.Option{{
+			Name:     "host",
+			Help:     "FTP host to connect to",
+			Required: true,
+			Examples: []fs.OptionExample{{
+				Value: "ftp.example.com",
+				Help:  "Connect to ftp.example.com",
+			}},
+		}, {
+			Name: "user",
+			Help: "FTP username, leave blank for current username, " + os.Getenv("USER"),
+		}, {
+			Name: "port",
+			Help: "FTP port, leave blank to use default (21)",
+		}, {
+			Name:       "pass",
+			Help:       "FTP password",
+			IsPassword: true,
+			Required:   true,
+		}, {
+			Name: "tls",
+			Help: `Use FTPS over TLS (Implicit)
+When using implicit FTP over TLS the client will connect using TLS
+right from the start, which in turn breaks the compatibility with
+non-TLS-aware servers. This is usually served over port 990 rather
+than port 21. Cannot be used in combination with explicit FTP.`,
+			Default: false,
+		}, {
+			Name: "explicit_tls",
+			Help: `Use FTP over TLS (Explicit)
+When using explicit FTP over TLS the client explicitly request
+security from the server in order to upgrade a plain text connection
+to an encrypted one. Cannot be used in combination with implicit FTP.`,
+			Default: false,
+		}, {
+			Name:     "concurrency",
+			Help:     "Maximum number of FTP simultaneous connections, 0 for unlimited",
+			Default:  0,
+			Advanced: true,
+		}, {
+			Name:     "no_check_certificate",
+			Help:     "Do not verify the TLS certificate of the server",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "disable_epsv",
+			Help:     "Disable using EPSV even if server advertises support",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			// The FTP protocol can't handle trailing spaces (for instance
+			// pureftpd turns them into _)
+			//
+			// proftpd can't handle '*' in file names
+			// pureftpd can't handle '[', ']' or '*'
+			Default: (encoder.Display |
+				encoder.EncodeRightSpace),
+		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host              string `config:"host"`
-	User              string `config:"user"`
-	Pass              string `config:"pass"`
-	Port              string `config:"port"`
-	TLS               bool   `config:"tls"`
-	Concurrency       int    `config:"concurrency"`
-	SkipVerifyTLSCert bool   `config:"no_check_certificate"`
+	Host              string               `config:"host"`
+	User              string               `config:"user"`
+	Pass              string               `config:"pass"`
+	Port              string               `config:"port"`
+	TLS               bool                 `config:"tls"`
+	ExplicitTLS       bool                 `config:"explicit_tls"`
+	Concurrency       int                  `config:"concurrency"`
+	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
+	DisableEPSV       bool                 `config:"disable_epsv"`
+	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote FTP server
@@ -130,16 +162,68 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// Enable debugging output
+type debugLog struct {
+	mu   sync.Mutex
+	auth bool
+}
+
+// Write writes len(p) bytes from p to the underlying data stream. It returns
+// the number of bytes written from p (0 <= n <= len(p)) and any error
+// encountered that caused the write to stop early. Write must return a non-nil
+// error if it returns n < len(p). Write must not modify the slice data, even
+// temporarily.
+//
+// Implementations must not retain p.
+//
+// This writes debug info to the log
+func (dl *debugLog) Write(p []byte) (n int, err error) {
+	dl.mu.Lock()
+	defer dl.mu.Unlock()
+	_, file, _, ok := runtime.Caller(1)
+	direction := "FTP Rx"
+	if ok && strings.Contains(file, "multi") {
+		direction = "FTP Tx"
+	}
+	lines := strings.Split(string(p), "\r\n")
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+	for _, line := range lines {
+		if !dl.auth && strings.HasPrefix(line, "PASS") {
+			fs.Debugf(direction, "PASS *****")
+			continue
+		}
+		fs.Debugf(direction, "%q", line)
+	}
+	return len(p), nil
+}
+
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	fs.Debugf(f, "Connecting to FTP server")
 	ftpConfig := []ftp.DialOption{ftp.DialWithTimeout(fs.Config.ConnectTimeout)}
-	if f.opt.TLS {
+	if f.opt.TLS && f.opt.ExplicitTLS {
+		fs.Errorf(f, "Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
+		return nil, errors.New("Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
+	} else if f.opt.TLS {
 		tlsConfig := &tls.Config{
 			ServerName:         f.opt.Host,
 			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
 		}
 		ftpConfig = append(ftpConfig, ftp.DialWithTLS(tlsConfig))
+	} else if f.opt.ExplicitTLS {
+		tlsConfig := &tls.Config{
+			ServerName:         f.opt.Host,
+			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
+		}
+		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(tlsConfig))
+	}
+	if f.opt.DisableEPSV {
+		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
+	}
+	if fs.Config.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpRequests|fs.DumpResponses) != 0 {
+		ftpConfig = append(ftpConfig, ftp.DialWithDebugOutput(&debugLog{auth: fs.Config.Dump&fs.DumpAuth != 0}))
 	}
 	c, err := ftp.Dial(f.dialAddr, ftpConfig...)
 	if err != nil {
@@ -169,7 +253,11 @@ func (f *Fs) getFtpConnection() (c *ftp.ServerConn, err error) {
 	if c != nil {
 		return c, nil
 	}
-	return f.ftpConnection()
+	c, err = f.ftpConnection()
+	if err != nil && f.opt.Concurrency > 0 {
+		f.tokens.Put()
+	}
+	return c, err
 }
 
 // Return an FTP connection to the pool
@@ -182,7 +270,13 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	if f.opt.Concurrency > 0 {
 		defer f.tokens.Put()
 	}
+	if pc == nil {
+		return
+	}
 	c := *pc
+	if c == nil {
+		return
+	}
 	*pc = nil
 	if err != nil {
 		// If not a regular FTP error code then check the connection
@@ -295,10 +389,37 @@ func translateErrorDir(err error) error {
 	return err
 }
 
+// entryToStandard converts an incoming ftp.Entry to Standard encoding
+func (f *Fs) entryToStandard(entry *ftp.Entry) {
+	// Skip . and .. as we don't want these encoded
+	if entry.Name == "." || entry.Name == ".." {
+		return
+	}
+	entry.Name = f.opt.Enc.ToStandardName(entry.Name)
+	entry.Target = f.opt.Enc.ToStandardPath(entry.Target)
+}
+
+// dirFromStandardPath returns dir in encoded form.
+func (f *Fs) dirFromStandardPath(dir string) string {
+	// Skip . and .. as we don't want these encoded
+	if dir == "." || dir == ".." {
+		return dir
+	}
+	return f.opt.Enc.FromStandardPath(dir)
+}
+
 // findItem finds a directory entry for the name in its parent directory
 func (f *Fs) findItem(remote string) (entry *ftp.Entry, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
 	fullPath := path.Join(f.root, remote)
+	if fullPath == "" || fullPath == "." || fullPath == "/" {
+		// if root, assume exists and synthesize an entry
+		return &ftp.Entry{
+			Name: "",
+			Type: ftp.EntryTypeFolder,
+			Time: time.Now(),
+		}, nil
+	}
 	dir := path.Dir(fullPath)
 	base := path.Base(fullPath)
 
@@ -306,12 +427,13 @@ func (f *Fs) findItem(remote string) (entry *ftp.Entry, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "findItem")
 	}
-	files, err := c.List(dir)
+	files, err := c.List(f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorFile(err)
 	}
 	for _, file := range files {
+		f.entryToStandard(file)
 		if file.Name == base {
 			return file, nil
 		}
@@ -366,7 +488,7 @@ func (f *Fs) dirExists(remote string) (exists bool, err error) {
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	// defer fs.Trace(dir, "curlevel=%d", curlevel)("")
+	// defer log.Trace(dir, "dir=%q", dir)("entries=%v, err=%v", &entries, &err)
 	c, err := f.getFtpConnection()
 	if err != nil {
 		return nil, errors.Wrap(err, "list")
@@ -378,7 +500,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	resultchan := make(chan []*ftp.Entry, 1)
 	errchan := make(chan error, 1)
 	go func() {
-		result, err := c.List(path.Join(f.root, dir))
+		result, err := c.List(f.dirFromStandardPath(path.Join(f.root, dir)))
 		f.putFtpConnection(&c, err)
 		if err != nil {
 			errchan <- err
@@ -415,6 +537,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	for i := range files {
 		object := files[i]
+		f.entryToStandard(object)
 		newremote := path.Join(dir, object.Name)
 		switch object.Type {
 		case ftp.EntryTypeFolder:
@@ -484,19 +607,21 @@ func (f *Fs) getInfo(remote string) (fi *FileInfo, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "getInfo")
 	}
-	files, err := c.List(dir)
+	files, err := c.List(f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
 		return nil, translateErrorFile(err)
 	}
 
 	for i := range files {
-		if files[i].Name == base {
+		file := files[i]
+		f.entryToStandard(file)
+		if file.Name == base {
 			info := &FileInfo{
 				Name:    remote,
-				Size:    files[i].Size,
-				ModTime: files[i].Time,
-				IsDir:   files[i].Type == ftp.EntryTypeFolder,
+				Size:    file.Size,
+				ModTime: file.Time,
+				IsDir:   file.Type == ftp.EntryTypeFolder,
 			}
 			return info, nil
 		}
@@ -506,6 +631,7 @@ func (f *Fs) getInfo(remote string) (fi *FileInfo, err error) {
 
 // mkdir makes the directory and parents using unrooted paths
 func (f *Fs) mkdir(abspath string) error {
+	abspath = path.Clean(abspath)
 	if abspath == "." || abspath == "/" {
 		return nil
 	}
@@ -527,7 +653,7 @@ func (f *Fs) mkdir(abspath string) error {
 	if connErr != nil {
 		return errors.Wrap(connErr, "mkdir")
 	}
-	err = c.MakeDir(abspath)
+	err = c.MakeDir(f.dirFromStandardPath(abspath))
 	f.putFtpConnection(&c, err)
 	switch errX := err.(type) {
 	case *textproto.Error:
@@ -563,7 +689,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return errors.Wrap(translateErrorFile(err), "Rmdir")
 	}
-	err = c.RemoveDir(path.Join(f.root, dir))
+	err = c.RemoveDir(f.dirFromStandardPath(path.Join(f.root, dir)))
 	f.putFtpConnection(&c, err)
 	return translateErrorDir(err)
 }
@@ -584,8 +710,8 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, errors.Wrap(err, "Move")
 	}
 	err = c.Rename(
-		path.Join(srcObj.fs.root, srcObj.remote),
-		path.Join(f.root, remote),
+		f.opt.Enc.FromStandardPath(path.Join(srcObj.fs.root, srcObj.remote)),
+		f.opt.Enc.FromStandardPath(path.Join(f.root, remote)),
 	)
 	f.putFtpConnection(&c, err)
 	if err != nil {
@@ -638,8 +764,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return errors.Wrap(err, "DirMove")
 	}
 	err = c.Rename(
-		srcPath,
-		dstPath,
+		f.dirFromStandardPath(srcPath),
+		f.dirFromStandardPath(dstPath),
 	)
 	f.putFtpConnection(&c, err)
 	if err != nil {
@@ -725,19 +851,23 @@ func (f *ftpReadCloser) Close() error {
 	case <-timer.C:
 		// if timer fired assume no error but connection dead
 		fs.Errorf(f.f, "Timeout when waiting for connection Close")
+		f.f.putFtpConnection(nil, nil)
 		return nil
 	}
 	// if errors while reading or closing, dump the connection
 	if err != nil || f.err != nil {
 		_ = f.c.Quit()
+		f.f.putFtpConnection(nil, nil)
 	} else {
 		f.f.putFtpConnection(&f.c, nil)
 	}
 	// mask the error if it was caused by a premature close
+	// NB StatusAboutToSend is to work around a bug in pureftpd
+	// See: https://github.com/rclone/rclone/issues/3445#issuecomment-521654257
 	switch errX := err.(type) {
 	case *textproto.Error:
 		switch errX.Code {
-		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable:
+		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend:
 			err = nil
 		}
 	}
@@ -765,7 +895,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 	if err != nil {
 		return nil, errors.Wrap(err, "open")
 	}
-	fd, err := c.RetrFrom(path, uint64(offset))
+	fd, err := c.RetrFrom(o.fs.opt.Enc.FromStandardPath(path), uint64(offset))
 	if err != nil {
 		o.fs.putFtpConnection(&c, err)
 		return nil, errors.Wrap(err, "open")
@@ -800,10 +930,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return errors.Wrap(err, "Update")
 	}
-	err = c.Stor(path, in)
+	err = c.Stor(o.fs.opt.Enc.FromStandardPath(path), in)
 	if err != nil {
 		_ = c.Quit() // toss this connection to avoid sync errors
 		remove()
+		o.fs.putFtpConnection(nil, err)
 		return errors.Wrap(err, "update stor")
 	}
 	o.fs.putFtpConnection(&c, nil)
@@ -830,7 +961,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 		if err != nil {
 			return errors.Wrap(err, "Remove")
 		}
-		err = c.Delete(path)
+		err = c.Delete(o.fs.opt.Enc.FromStandardPath(path))
 		o.fs.putFtpConnection(&c, err)
 	}
 	return err

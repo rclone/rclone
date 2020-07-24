@@ -33,3 +33,16 @@ func TestCompletionZsh(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, string(bs))
 }
+
+func TestCompletionFish(t *testing.T) {
+	tempFile, err := ioutil.TempFile("", "completion_fish")
+	assert.NoError(t, err)
+	defer func() { _ = tempFile.Close() }()
+	defer func() { _ = os.Remove(tempFile.Name()) }()
+
+	fishCommandDefinition.Run(fishCommandDefinition, []string{tempFile.Name()})
+
+	bs, err := ioutil.ReadFile(tempFile.Name())
+	assert.NoError(t, err)
+	assert.NotEmpty(t, string(bs))
+}

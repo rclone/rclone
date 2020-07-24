@@ -134,7 +134,11 @@ func (lrw *loggingResponseWriter) logRequest(code int, err interface{}) {
 		level = fs.LogLevelError
 	}
 
-	fs.LogPrintf(level, lrw.request.URL.Path, "%s %s %d %s %s",
+	if err == nil {
+		err = ""
+	}
+
+	fs.LogPrintf(level, lrw.request.URL, "%s %s %d %s %s",
 		lrw.request.RemoteAddr, lrw.request.Method, code,
 		lrw.request.Header.Get("SOAPACTION"), err)
 }
@@ -210,7 +214,18 @@ func withHeader(name string, value string, next http.Handler) http.Handler {
 
 // serveError returns an http.StatusInternalServerError and logs the error
 func serveError(what interface{}, w http.ResponseWriter, text string, err error) {
-	fs.CountError(err)
+	err = fs.CountError(err)
 	fs.Errorf(what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)
+}
+
+// Splits a path into (root, ext) such that root + ext == path, and ext is empty
+// or begins with a period.  Extended version of path.Ext().
+func splitExt(path string) (string, string) {
+	for i := len(path) - 1; i >= 0 && path[i] != '/'; i-- {
+		if path[i] == '.' {
+			return path[:i], path[i:]
+		}
+	}
+	return path, ""
 }

@@ -12,10 +12,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "rcat remote:path",
 	Short: `Copies standard input to file on remote.`,
 	Long: `

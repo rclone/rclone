@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/cmd/serve/httplib/serve/data"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ import (
 )
 
 func GetTemplate(t *testing.T) *template.Template {
-	htmlTemplate, err := data.GetTemplate()
+	htmlTemplate, err := data.GetTemplate("../../http/testdata/golden/testindex.html")
 	require.NoError(t, err)
 	return htmlTemplate
 }
@@ -33,6 +34,32 @@ func TestSetQuery(t *testing.T) {
 	assert.Equal(t, "?potato=42", d.Query)
 	d.SetQuery(url.Values{})
 	assert.Equal(t, "", d.Query)
+}
+
+func TestAddHTMLEntry(t *testing.T) {
+	var modtime = time.Now()
+	var d = NewDirectory("z", GetTemplate(t))
+	d.AddHTMLEntry("", true, 0, modtime)
+	d.AddHTMLEntry("dir", true, 0, modtime)
+	d.AddHTMLEntry("a/b/c/d.txt", false, 64, modtime)
+	d.AddHTMLEntry("a/b/c/colon:colon.txt", false, 64, modtime)
+	d.AddHTMLEntry("\"quotes\".txt", false, 64, modtime)
+	assert.Equal(t, []DirEntry{
+		{remote: "", URL: "/", Leaf: "/", IsDir: true, Size: 0, ModTime: modtime},
+		{remote: "dir", URL: "dir/", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime},
+		{remote: "a/b/c/d.txt", URL: "d.txt", Leaf: "d.txt", IsDir: false, Size: 64, ModTime: modtime},
+		{remote: "a/b/c/colon:colon.txt", URL: "./colon:colon.txt", Leaf: "colon:colon.txt", IsDir: false, Size: 64, ModTime: modtime},
+		{remote: "\"quotes\".txt", URL: "%22quotes%22.txt", Leaf: "\"quotes\".txt", Size: 64, IsDir: false, ModTime: modtime},
+	}, d.Entries)
+
+	// Now test with a query parameter
+	d = NewDirectory("z", GetTemplate(t)).SetQuery(url.Values{"potato": []string{"42"}})
+	d.AddHTMLEntry("file", false, 64, modtime)
+	d.AddHTMLEntry("dir", true, 0, modtime)
+	assert.Equal(t, []DirEntry{
+		{remote: "file", URL: "file?potato=42", Leaf: "file", IsDir: false, Size: 64, ModTime: modtime},
+		{remote: "dir", URL: "dir/?potato=42", Leaf: "dir/", IsDir: true, Size: 0, ModTime: modtime},
+	}, d.Entries)
 }
 
 func TestAddEntry(t *testing.T) {

@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
@@ -18,7 +19,8 @@ type ReadFileHandle struct {
 	baseHandle
 	done        func(err error)
 	mu          sync.Mutex
-	closed      bool // set if handle has been closed
+	cond        *sync.Cond // cond lock for out of sequence reads
+	closed      bool       // set if handle has been closed
 	r           *accounting.Account
 	readCalled  bool  // set if read has been called
 	size        int64 // size of the object (0 for unknown length)
@@ -44,8 +46,9 @@ func newReadFileHandle(f *File) (*ReadFileHandle, error) {
 	var mhash *hash.MultiHasher
 	var err error
 	o := f.getObject()
-	if !f.d.vfs.Opt.NoChecksum {
-		mhash, err = hash.NewMultiHasherTypes(o.Fs().Hashes())
+	if !f.VFS().Opt.NoChecksum {
+		hashes := hash.NewHashSet(o.Fs().Hashes().GetOne()) // just pick one hash
+		mhash, err = hash.NewMultiHasherTypes(hashes)
 		if err != nil {
 			fs.Errorf(o.Fs(), "newReadFileHandle hash error: %v", err)
 		}
@@ -53,12 +56,13 @@ func newReadFileHandle(f *File) (*ReadFileHandle, error) {
 
 	fh := &ReadFileHandle{
 		remote:      o.Remote(),
-		noSeek:      f.d.vfs.Opt.NoSeek,
+		noSeek:      f.VFS().Opt.NoSeek,
 		file:        f,
 		hash:        mhash,
 		size:        nonNegative(o.Size()),
 		sizeUnknown: o.Size() < 0,
 	}
+	fh.cond = sync.NewCond(&fh.mu)
 	return fh, nil
 }
 
@@ -69,7 +73,7 @@ func (fh *ReadFileHandle) openPending() (err error) {
 		return nil
 	}
 	o := fh.file.getObject()
-	r, err := chunkedreader.New(context.TODO(), o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit)).Open()
+	r, err := chunkedreader.New(context.TODO(), o, int64(fh.file.VFS().Opt.ChunkSize), int64(fh.file.VFS().Opt.ChunkSizeLimit)).Open()
 	if err != nil {
 		return err
 	}
@@ -113,7 +117,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	fh.hash = nil
 	if !reopen {
 		ar := fh.r.GetAsyncReader()
-		// try to fullfill the seek with buffer discard
+		// try to fulfill the seek with buffer discard
 		if ar != nil && ar.SkipBytes(int(offset-fh.offset)) {
 			fh.offset = offset
 			return nil
@@ -142,7 +146,7 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 		}
 		// re-open with a seek
 		o := fh.file.getObject()
-		r = chunkedreader.New(context.TODO(), o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit))
+		r = chunkedreader.New(context.TODO(), o, int64(fh.file.VFS().Opt.ChunkSize), int64(fh.file.VFS().Opt.ChunkSizeLimit))
 		_, err := r.Seek(offset, 0)
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
@@ -208,10 +212,47 @@ func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 	return fh.readAt(p, off)
 }
 
+// This waits for *poff to equal off or aborts after the timeout.
+//
+// Waits here potentially affect all seeks so need to keep them short
+//
+// Call with fh.mu Locked
+func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Duration, poff *int64, off int64) {
+	var (
+		timeout = time.NewTimer(maxWait)
+		done    = make(chan struct{})
+		abort   = false
+	)
+	go func() {
+		select {
+		case <-timeout.C:
+			// take the lock to make sure that cond.Wait() is called before
+			// cond.Broadcast. NB cond.L == mu
+			cond.L.Lock()
+			// set abort flag and give all the waiting goroutines a kick on timeout
+			abort = true
+			fs.Debugf(remote, "aborting in-sequence %s wait, off=%d", what, off)
+			cond.Broadcast()
+			cond.L.Unlock()
+		case <-done:
+		}
+	}()
+	for *poff != off && !abort {
+		fs.Debugf(remote, "waiting for in-sequence %s to %d for %v", what, off, maxWait)
+		cond.Wait()
+	}
+	// tidy up end timer
+	close(done)
+	timeout.Stop()
+	if *poff != off {
+		fs.Debugf(remote, "failed to wait for in-sequence %s to %d", what, off)
+	}
+}
+
 // Implementation of ReadAt - call with lock held
 func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 	// defer log.Trace(fh.remote, "p[%d], off=%d", len(p), off)("n=%d, err=%v", &n, &err)
-	err = fh.openPending() // FIXME pending open could be more efficient in the presense of seek (and retries)
+	err = fh.openPending() // FIXME pending open could be more efficient in the presence of seek (and retries)
 	if err != nil {
 		return 0, err
 	}
@@ -219,6 +260,13 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 	if fh.closed {
 		fs.Errorf(fh.remote, "ReadFileHandle.Read error: %v", EBADF)
 		return 0, ECLOSED
+	}
+	maxBuf := 1024 * 1024
+	if len(p) < maxBuf {
+		maxBuf = len(p)
+	}
+	if gap := off - fh.offset; gap > 0 && gap < int64(8*maxBuf) {
+		waitSequential("read", fh.remote, fh.cond, fh.file.VFS().Opt.ReadWait, &fh.offset, off)
 	}
 	doSeek := off != fh.offset
 	if doSeek && fh.noSeek {
@@ -291,6 +339,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 			err = io.EOF
 		}
 	}
+	fh.cond.Broadcast() // wake everyone up waiting for an in-sequence read
 	return n, err
 }
 
@@ -303,6 +352,11 @@ func (fh *ReadFileHandle) checkHash() error {
 	for hashType, dstSum := range fh.hash.Sums() {
 		srcSum, err := o.Hash(context.TODO(), hashType)
 		if err != nil {
+			if os.IsNotExist(errors.Cause(err)) {
+				// if it was file not found then at
+				// this point we don't care any more
+				continue
+			}
 			return err
 		}
 		if !hash.Equals(dstSum, srcSum) {

@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/spf13/cobra"
 )
 
@@ -19,8 +20,9 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	commandDefinition.Flags().BoolVar(&jsonOutput, "json", false, "Format output as JSON")
-	commandDefinition.Flags().BoolVar(&fullOutput, "full", false, "Full numbers instead of SI units")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON")
+	flags.BoolVarP(cmdFlags, &fullOutput, "full", "", false, "Full numbers instead of SI units")
 }
 
 // printValue formats uv to be output

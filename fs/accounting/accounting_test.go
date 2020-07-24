@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/asyncreader"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,6 +20,7 @@ import (
 // Check it satisfies the interfaces
 var (
 	_ io.ReadCloser = &Account{}
+	_ io.WriterTo   = &Account{}
 	_ io.Reader     = &accountStream{}
 	_ Accounter     = &Account{}
 	_ Accounter     = &accountStream{}
@@ -32,7 +34,10 @@ func TestNewAccountSizeName(t *testing.T) {
 	assert.Equal(t, acc, stats.inProgress.get("test"))
 	err := acc.Close()
 	assert.NoError(t, err)
+	assert.Equal(t, acc, stats.inProgress.get("test"))
+	acc.Done()
 	assert.Nil(t, stats.inProgress.get("test"))
+	assert.False(t, acc.HasBuffer())
 }
 
 func TestAccountWithBuffer(t *testing.T) {
@@ -40,7 +45,9 @@ func TestAccountWithBuffer(t *testing.T) {
 
 	stats := NewStats()
 	acc := newAccountSizeName(stats, in, -1, "test")
+	assert.False(t, acc.HasBuffer())
 	acc.WithBuffer()
+	assert.True(t, acc.HasBuffer())
 	// should have a buffer for an unknown size
 	_, ok := acc.in.(*asyncreader.AsyncReader)
 	require.True(t, ok)
@@ -55,18 +62,31 @@ func TestAccountWithBuffer(t *testing.T) {
 }
 
 func TestAccountGetUpdateReader(t *testing.T) {
-	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
-	stats := NewStats()
-	acc := newAccountSizeName(stats, in, 1, "test")
+	test := func(doClose bool) func(t *testing.T) {
+		return func(t *testing.T) {
+			in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+			stats := NewStats()
+			acc := newAccountSizeName(stats, in, 1, "test")
 
-	assert.Equal(t, in, acc.GetReader())
+			assert.Equal(t, in, acc.GetReader())
+			assert.Equal(t, acc, stats.inProgress.get("test"))
 
-	in2 := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
-	acc.UpdateReader(in2)
+			if doClose {
+				// close the account before swapping it out
+				require.NoError(t, acc.Close())
+			}
 
-	assert.Equal(t, in2, acc.GetReader())
+			in2 := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+			acc.UpdateReader(in2)
 
-	assert.NoError(t, acc.Close())
+			assert.Equal(t, in2, acc.GetReader())
+			assert.Equal(t, acc, stats.inProgress.get("test"))
+
+			assert.NoError(t, acc.Close())
+		}
+	}
+	t.Run("NoClose", test(false))
+	t.Run("Close", test(true))
 }
 
 func TestAccountRead(t *testing.T) {
@@ -74,9 +94,11 @@ func TestAccountRead(t *testing.T) {
 	stats := NewStats()
 	acc := newAccountSizeName(stats, in, 1, "test")
 
-	assert.True(t, acc.start.IsZero())
-	assert.Equal(t, 0, acc.lpBytes)
-	assert.Equal(t, int64(0), acc.bytes)
+	assert.True(t, acc.values.start.IsZero())
+	acc.values.mu.Lock()
+	assert.Equal(t, 0, acc.values.lpBytes)
+	assert.Equal(t, int64(0), acc.values.bytes)
+	acc.values.mu.Unlock()
 	assert.Equal(t, int64(0), stats.bytes)
 
 	var buf = make([]byte, 2)
@@ -85,9 +107,11 @@ func TestAccountRead(t *testing.T) {
 	assert.Equal(t, 2, n)
 	assert.Equal(t, []byte{1, 2}, buf[:n])
 
-	assert.False(t, acc.start.IsZero())
-	assert.Equal(t, 2, acc.lpBytes)
-	assert.Equal(t, int64(2), acc.bytes)
+	assert.False(t, acc.values.start.IsZero())
+	acc.values.mu.Lock()
+	assert.Equal(t, 2, acc.values.lpBytes)
+	assert.Equal(t, int64(2), acc.values.bytes)
+	acc.values.mu.Unlock()
 	assert.Equal(t, int64(2), stats.bytes)
 
 	n, err = acc.Read(buf)
@@ -100,6 +124,50 @@ func TestAccountRead(t *testing.T) {
 	assert.Equal(t, 0, n)
 
 	assert.NoError(t, acc.Close())
+}
+
+func testAccountWriteTo(t *testing.T, withBuffer bool) {
+	buf := make([]byte, 2*asyncreader.BufferSize+1)
+	for i := range buf {
+		buf[i] = byte(i % 251)
+	}
+	in := ioutil.NopCloser(bytes.NewBuffer(buf))
+	stats := NewStats()
+	acc := newAccountSizeName(stats, in, int64(len(buf)), "test")
+	if withBuffer {
+		acc = acc.WithBuffer()
+	}
+
+	assert.True(t, acc.values.start.IsZero())
+	acc.values.mu.Lock()
+	assert.Equal(t, 0, acc.values.lpBytes)
+	assert.Equal(t, int64(0), acc.values.bytes)
+	acc.values.mu.Unlock()
+	assert.Equal(t, int64(0), stats.bytes)
+
+	var out bytes.Buffer
+
+	n, err := acc.WriteTo(&out)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(len(buf)), n)
+	assert.Equal(t, buf, out.Bytes())
+
+	assert.False(t, acc.values.start.IsZero())
+	acc.values.mu.Lock()
+	assert.Equal(t, len(buf), acc.values.lpBytes)
+	assert.Equal(t, int64(len(buf)), acc.values.bytes)
+	acc.values.mu.Unlock()
+	assert.Equal(t, int64(len(buf)), stats.bytes)
+
+	assert.NoError(t, acc.Close())
+}
+
+func TestAccountWriteTo(t *testing.T) {
+	testAccountWriteTo(t, false)
+}
+
+func TestAccountWriteToWithBuffer(t *testing.T) {
+	testAccountWriteTo(t, true)
 }
 
 func TestAccountString(t *testing.T) {
@@ -182,9 +250,12 @@ func TestAccountAccounter(t *testing.T) {
 
 func TestAccountMaxTransfer(t *testing.T) {
 	old := fs.Config.MaxTransfer
+	oldMode := fs.Config.CutoffMode
+
 	fs.Config.MaxTransfer = 15
 	defer func() {
 		fs.Config.MaxTransfer = old
+		fs.Config.CutoffMode = oldMode
 	}()
 
 	in := ioutil.NopCloser(bytes.NewBuffer(make([]byte, 100)))
@@ -197,12 +268,47 @@ func TestAccountMaxTransfer(t *testing.T) {
 	assert.Equal(t, 10, n)
 	assert.NoError(t, err)
 	n, err = acc.Read(b)
+	assert.Equal(t, 5, n)
+	assert.Equal(t, ErrorMaxTransferLimitReachedFatal, err)
+	n, err = acc.Read(b)
+	assert.Equal(t, 0, n)
+	assert.Equal(t, ErrorMaxTransferLimitReachedFatal, err)
+	assert.True(t, fserrors.IsFatalError(err))
+
+	fs.Config.CutoffMode = fs.CutoffModeSoft
+	stats = NewStats()
+	acc = newAccountSizeName(stats, in, 1, "test")
+
+	n, err = acc.Read(b)
 	assert.Equal(t, 10, n)
 	assert.NoError(t, err)
 	n, err = acc.Read(b)
-	assert.Equal(t, 0, n)
-	assert.Equal(t, ErrorMaxTransferLimitReached, err)
-	assert.True(t, fserrors.IsFatalError(err))
+	assert.Equal(t, 10, n)
+	assert.NoError(t, err)
+	n, err = acc.Read(b)
+	assert.Equal(t, 10, n)
+	assert.NoError(t, err)
+}
+
+func TestAccountMaxTransferWriteTo(t *testing.T) {
+	old := fs.Config.MaxTransfer
+	oldMode := fs.Config.CutoffMode
+
+	fs.Config.MaxTransfer = 15
+	defer func() {
+		fs.Config.MaxTransfer = old
+		fs.Config.CutoffMode = oldMode
+	}()
+
+	in := ioutil.NopCloser(readers.NewPatternReader(1024))
+	stats := NewStats()
+	acc := newAccountSizeName(stats, in, 1, "test")
+
+	var b bytes.Buffer
+
+	n, err := acc.WriteTo(&b)
+	assert.Equal(t, int64(15), n)
+	assert.Equal(t, ErrorMaxTransferLimitReachedFatal, err)
 }
 
 func TestShortenName(t *testing.T) {

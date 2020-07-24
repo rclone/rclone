@@ -42,8 +42,10 @@ var (
 	Individual      = flag.Bool("individual", false, "Make individual bucket/container/directory for each test - much slower")
 	LowLevelRetries = flag.Int("low-level-retries", 10, "Number of low level retries")
 	UseListR        = flag.Bool("fast-list", false, "Use recursive list if available. Uses more memory but fewer transactions.")
+	// SizeLimit signals tests to skip maximum test file size and skip inappropriate runs
+	SizeLimit = flag.Int64("size-limit", 0, "Limit maximum test file size")
 	// ListRetries is the number of times to retry a listing to overcome eventual consistency
-	ListRetries = flag.Int("list-retries", 6, "Number or times to retry listing")
+	ListRetries = flag.Int("list-retries", 3, "Number or times to retry listing")
 	// MatchTestRemote matches the remote names used for testing
 	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
 )
@@ -86,7 +88,6 @@ type Item struct {
 	Hashes  map[hash.Type]string
 	ModTime time.Time
 	Size    int64
-	WinPath string
 }
 
 // NewItem creates an item from a string content
@@ -116,10 +117,16 @@ func CheckTimeEqualWithPrecision(t0, t1 time.Time, precision time.Duration) (tim
 	return dt, true
 }
 
+// AssertTimeEqualWithPrecision checks that want is within precision
+// of got, asserting that with t and logging remote
+func AssertTimeEqualWithPrecision(t *testing.T, remote string, want, got time.Time, precision time.Duration) {
+	dt, ok := CheckTimeEqualWithPrecision(want, got, precision)
+	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (want %s vs got %s) (precision %s)", remote, dt, precision, want, got, precision))
+}
+
 // CheckModTime checks the mod time to the given precision
 func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, precision time.Duration) {
-	dt, ok := CheckTimeEqualWithPrecision(modTime, i.ModTime, precision)
-	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", obj.Remote(), dt, precision, modTime, i.ModTime, precision))
+	AssertTimeEqualWithPrecision(t, obj.Remote(), i.ModTime, modTime, precision)
 }
 
 // CheckHashes checks all the hashes the object supports are correct
@@ -139,17 +146,6 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	i.CheckHashes(t, obj)
 	assert.Equal(t, i.Size, obj.Size(), fmt.Sprintf("%s: size incorrect file=%d vs obj=%d", i.Path, i.Size, obj.Size()))
 	i.CheckModTime(t, obj, obj.ModTime(context.Background()), precision)
-}
-
-// WinPath converts a path into a windows safe path
-func WinPath(s string) string {
-	return strings.Map(func(r rune) rune {
-		switch r {
-		case '<', '>', '"', '|', '?', '*', ':':
-			return '_'
-		}
-		return r
-	}, s)
 }
 
 // Normalize runs a utf8 normalization on the string if running on OS
@@ -179,7 +175,6 @@ func NewItems(items []Item) *Items {
 	// Fill up byName
 	for i := range items {
 		is.byName[Normalize(items[i].Path)] = &items[i]
-		is.byNameAlt[Normalize(items[i].WinPath)] = &items[i]
 	}
 	return is
 }
@@ -194,7 +189,6 @@ func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
 	}
 	if i != nil {
 		delete(is.byName, i.Path)
-		delete(is.byName, i.WinPath)
 		i.Check(t, obj, precision)
 	}
 }
@@ -212,21 +206,14 @@ func (is *Items) Done(t *testing.T) {
 // makeListingFromItems returns a string representation of the items
 //
 // it returns two possible strings, one normal and one for windows
-func makeListingFromItems(items []Item) (string, string) {
-	nameLengths1 := make([]string, len(items))
-	nameLengths2 := make([]string, len(items))
+func makeListingFromItems(items []Item) string {
+	nameLengths := make([]string, len(items))
 	for i, item := range items {
-		remote1 := Normalize(item.Path)
-		remote2 := remote1
-		if item.WinPath != "" {
-			remote2 = item.WinPath
-		}
-		nameLengths1[i] = fmt.Sprintf("%s (%d)", remote1, item.Size)
-		nameLengths2[i] = fmt.Sprintf("%s (%d)", remote2, item.Size)
+		remote := Normalize(item.Path)
+		nameLengths[i] = fmt.Sprintf("%s (%d)", remote, item.Size)
 	}
-	sort.Strings(nameLengths1)
-	sort.Strings(nameLengths2)
-	return strings.Join(nameLengths1, ", "), strings.Join(nameLengths2, ", ")
+	sort.Strings(nameLengths)
+	return strings.Join(nameLengths, ", ")
 }
 
 // makeListingFromObjects returns a string representation of the objects
@@ -242,7 +229,7 @@ func makeListingFromObjects(objs []fs.Object) string {
 // filterEmptyDirs removes any empty (or containing only directories)
 // directories from expectedDirs
 func filterEmptyDirs(t *testing.T, items []Item, expectedDirs []string) (newExpectedDirs []string) {
-	dirs := map[string]struct{}{"": struct{}{}}
+	dirs := map[string]struct{}{"": {}}
 	for _, item := range items {
 		base := item.Path
 		for {
@@ -283,7 +270,7 @@ func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expec
 	var err error
 	var retries = *ListRetries
 	sleep := time.Second / 2
-	wantListing1, wantListing2 := makeListingFromItems(items)
+	wantListing := makeListingFromItems(items)
 	gotListing := "<unset>"
 	listingOK := false
 	for i := 1; i <= retries; i++ {
@@ -293,7 +280,7 @@ func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expec
 		}
 
 		gotListing = makeListingFromObjects(objs)
-		listingOK = wantListing1 == gotListing || wantListing2 == gotListing
+		listingOK = wantListing == gotListing
 		if listingOK && (expectedDirs == nil || len(dirs) == len(expectedDirs)) {
 			// Put an extra sleep in if we did any retries just to make sure it really
 			// is consistent (here is looking at you Amazon Drive!)
@@ -312,7 +299,7 @@ func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expec
 			doDirCacheFlush()
 		}
 	}
-	assert.True(t, listingOK, fmt.Sprintf("listing wrong, want\n  %s or\n  %s got\n  %s", wantListing1, wantListing2, gotListing))
+	assert.True(t, listingOK, fmt.Sprintf("listing wrong, want\n  %s got\n  %s", wantListing, gotListing))
 	for _, obj := range objs {
 		require.NotNil(t, obj)
 		is.Find(t, obj, precision)
@@ -326,11 +313,11 @@ func CheckListingWithRoot(t *testing.T, f fs.Fs, dir string, items []Item, expec
 	if expectedDirs != nil {
 		expectedDirsCopy := make([]string, len(expectedDirs))
 		for i, dir := range expectedDirs {
-			expectedDirsCopy[i] = WinPath(Normalize(dir))
+			expectedDirsCopy[i] = Normalize(dir)
 		}
 		actualDirs := []string{}
 		for _, dir := range dirs {
-			actualDirs = append(actualDirs, WinPath(Normalize(dir.Remote())))
+			actualDirs = append(actualDirs, Normalize(dir.Remote()))
 		}
 		sort.Strings(actualDirs)
 		sort.Strings(expectedDirsCopy)
@@ -366,7 +353,7 @@ func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDir
 	is := NewItems(items)
 	var objs []fs.Object
 	var dirs []fs.Directory
-	wantListing1, wantListing2 := makeListingFromItems(items)
+	wantListing := makeListingFromItems(items)
 	for _, entry := range entries {
 		switch x := entry.(type) {
 		case fs.Directory:
@@ -380,8 +367,8 @@ func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDir
 	}
 
 	gotListing := makeListingFromObjects(objs)
-	listingOK := wantListing1 == gotListing || wantListing2 == gotListing
-	assert.True(t, listingOK, fmt.Sprintf("%s not equal, want\n  %s or\n  %s got\n  %s", what, wantListing1, wantListing2, gotListing))
+	listingOK := wantListing == gotListing
+	assert.True(t, listingOK, fmt.Sprintf("%s not equal, want\n  %s got\n  %s", what, wantListing, gotListing))
 	for _, obj := range objs {
 		require.NotNil(t, obj)
 		is.Find(t, obj, precision)
@@ -391,11 +378,11 @@ func CompareItems(t *testing.T, entries fs.DirEntries, items []Item, expectedDir
 	if expectedDirs != nil {
 		expectedDirsCopy := make([]string, len(expectedDirs))
 		for i, dir := range expectedDirs {
-			expectedDirsCopy[i] = WinPath(Normalize(dir))
+			expectedDirsCopy[i] = Normalize(dir)
 		}
 		actualDirs := []string{}
 		for _, dir := range dirs {
-			actualDirs = append(actualDirs, WinPath(Normalize(dir.Remote())))
+			actualDirs = append(actualDirs, Normalize(dir.Remote()))
 		}
 		sort.Strings(actualDirs)
 		sort.Strings(expectedDirsCopy)

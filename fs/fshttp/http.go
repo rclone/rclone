@@ -12,11 +12,11 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httputil"
-	"reflect"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/structs"
 	"golang.org/x/net/publicsuffix"
 	"golang.org/x/time/rate"
 )
@@ -92,25 +92,6 @@ func (c *timeoutConn) Write(b []byte) (n int, err error) {
 	return c.readOrWrite(c.Conn.Write, b)
 }
 
-// setDefaults for a from b
-//
-// Copy the public members from b to a.  We can't just use a struct
-// copy as Transport contains a private mutex.
-func setDefaults(a, b interface{}) {
-	pt := reflect.TypeOf(a)
-	t := pt.Elem()
-	va := reflect.ValueOf(a).Elem()
-	vb := reflect.ValueOf(b).Elem()
-	for i := 0; i < t.NumField(); i++ {
-		aField := va.Field(i)
-		// Set a from b if it is public
-		if aField.CanSet() {
-			bField := vb.Field(i)
-			aField.Set(bField)
-		}
-	}
-}
-
 // dial with context and timeouts
 func dialContextTimeout(ctx context.Context, network, address string, ci *fs.ConfigInfo) (net.Conn, error) {
 	dialer := NewDialer(ci)
@@ -127,75 +108,95 @@ func ResetTransport() {
 	noTransport = new(sync.Once)
 }
 
+// NewTransportCustom returns an http.RoundTripper with the correct timeouts.
+// The customize function is called if set to give the caller an opportunity to
+// customize any defaults in the Transport.
+func NewTransportCustom(ci *fs.ConfigInfo, customize func(*http.Transport)) http.RoundTripper {
+	// Start with a sensible set of defaults then override.
+	// This also means we get new stuff when it gets added to go
+	t := new(http.Transport)
+	structs.SetDefaults(t, http.DefaultTransport.(*http.Transport))
+	t.Proxy = http.ProxyFromEnvironment
+	t.MaxIdleConnsPerHost = 2 * (ci.Checkers + ci.Transfers + 1)
+	t.MaxIdleConns = 2 * t.MaxIdleConnsPerHost
+	t.TLSHandshakeTimeout = ci.ConnectTimeout
+	t.ResponseHeaderTimeout = ci.Timeout
+
+	// TLS Config
+	t.TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: ci.InsecureSkipVerify,
+	}
+
+	// Load client certs
+	if ci.ClientCert != "" || ci.ClientKey != "" {
+		if ci.ClientCert == "" || ci.ClientKey == "" {
+			log.Fatalf("Both --client-cert and --client-key must be set")
+		}
+		cert, err := tls.LoadX509KeyPair(ci.ClientCert, ci.ClientKey)
+		if err != nil {
+			log.Fatalf("Failed to load --client-cert/--client-key pair: %v", err)
+		}
+		t.TLSClientConfig.Certificates = []tls.Certificate{cert}
+		t.TLSClientConfig.BuildNameToCertificate()
+	}
+
+	// Load CA cert
+	if ci.CaCert != "" {
+		caCert, err := ioutil.ReadFile(ci.CaCert)
+		if err != nil {
+			log.Fatalf("Failed to read --ca-cert: %v", err)
+		}
+		caCertPool := x509.NewCertPool()
+		ok := caCertPool.AppendCertsFromPEM(caCert)
+		if !ok {
+			log.Fatalf("Failed to add certificates from --ca-cert")
+		}
+		t.TLSClientConfig.RootCAs = caCertPool
+	}
+
+	t.DisableCompression = ci.NoGzip
+	t.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		return dialContextTimeout(ctx, network, addr, ci)
+	}
+	t.IdleConnTimeout = 60 * time.Second
+	t.ExpectContinueTimeout = ci.ExpectContinueTimeout
+
+	if ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
+		fs.Debugf(nil, "You have specified to dump information. Please be noted that the "+
+			"Accept-Encoding as shown may not be correct in the request and the response may not show "+
+			"Content-Encoding if the go standard libraries auto gzip encoding was in effect. In this case"+
+			" the body of the request will be gunzipped before showing it.")
+	}
+
+	// customize the transport if required
+	if customize != nil {
+		customize(t)
+	}
+
+	// Wrap that http.Transport in our own transport
+	return newTransport(ci, t)
+}
+
 // NewTransport returns an http.RoundTripper with the correct timeouts
 func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
 	(*noTransport).Do(func() {
-		// Start with a sensible set of defaults then override.
-		// This also means we get new stuff when it gets added to go
-		t := new(http.Transport)
-		setDefaults(t, http.DefaultTransport.(*http.Transport))
-		t.Proxy = http.ProxyFromEnvironment
-		t.MaxIdleConnsPerHost = 2 * (ci.Checkers + ci.Transfers + 1)
-		t.MaxIdleConns = 2 * t.MaxIdleConnsPerHost
-		t.TLSHandshakeTimeout = ci.ConnectTimeout
-		t.ResponseHeaderTimeout = ci.Timeout
-
-		// TLS Config
-		t.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: ci.InsecureSkipVerify,
-		}
-
-		// Load client certs
-		if ci.ClientCert != "" || ci.ClientKey != "" {
-			if ci.ClientCert == "" || ci.ClientKey == "" {
-				log.Fatalf("Both --client-cert and --client-key must be set")
-			}
-			cert, err := tls.LoadX509KeyPair(ci.ClientCert, ci.ClientKey)
-			if err != nil {
-				log.Fatalf("Failed to load --client-cert/--client-key pair: %v", err)
-			}
-			t.TLSClientConfig.Certificates = []tls.Certificate{cert}
-			t.TLSClientConfig.BuildNameToCertificate()
-		}
-
-		// Load CA cert
-		if ci.CaCert != "" {
-			caCert, err := ioutil.ReadFile(ci.CaCert)
-			if err != nil {
-				log.Fatalf("Failed to read --ca-cert: %v", err)
-			}
-			caCertPool := x509.NewCertPool()
-			ok := caCertPool.AppendCertsFromPEM(caCert)
-			if !ok {
-				log.Fatalf("Failed to add certificates from --ca-cert")
-			}
-			t.TLSClientConfig.RootCAs = caCertPool
-		}
-
-		t.DisableCompression = ci.NoGzip
-		t.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-			return dialContextTimeout(ctx, network, addr, ci)
-		}
-		t.IdleConnTimeout = 60 * time.Second
-		t.ExpectContinueTimeout = ci.ConnectTimeout
-		// Wrap that http.Transport in our own transport
-		transport = newTransport(ci, t)
+		transport = NewTransportCustom(ci, nil)
 	})
 	return transport
 }
 
 // NewClient returns an http.Client with the correct timeouts
 func NewClient(ci *fs.ConfigInfo) *http.Client {
-	transport := &http.Client{
+	client := &http.Client{
 		Transport: NewTransport(ci),
 	}
 	if ci.Cookie {
-		transport.Jar = cookieJar
+		client.Jar = cookieJar
 	}
-	return transport
+	return client
 }
 
-// Transport is a our http Transport which wraps an http.Transport
+// Transport is our http Transport which wraps an http.Transport
 // * Sets the User Agent
 // * Does logging
 type Transport struct {
@@ -203,6 +204,7 @@ type Transport struct {
 	dump          fs.DumpFlags
 	filterRequest func(req *http.Request)
 	userAgent     string
+	headers       []*fs.HTTPOption
 }
 
 // newTransport wraps the http.Transport passed in and logs all
@@ -212,6 +214,7 @@ func newTransport(ci *fs.ConfigInfo, transport *http.Transport) *Transport {
 		Transport: transport,
 		dump:      ci.Dump,
 		userAgent: ci.UserAgent,
+		headers:   ci.Headers,
 	}
 }
 
@@ -305,12 +308,16 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	// Get transactions per second token first if limiting
 	if tpsBucket != nil {
 		tbErr := tpsBucket.Wait(req.Context())
-		if tbErr != nil {
-			fs.Errorf(nil, "HTTP token bucket error: %v", err)
+		if tbErr != nil && tbErr != context.Canceled {
+			fs.Errorf(nil, "HTTP token bucket error: %v", tbErr)
 		}
 	}
 	// Force user agent
 	req.Header.Set("User-Agent", t.userAgent)
+	// Set user defined headers
+	for _, option := range t.headers {
+		req.Header.Set(option.Key, option.Value)
+	}
 	// Filter the request if required
 	if t.filterRequest != nil {
 		t.filterRequest(req)

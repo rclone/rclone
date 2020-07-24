@@ -1,0 +1,48 @@
+#!/bin/bash
+
+set -e
+
+# local variables
+NAME=seafile6
+SEAFILE_IP=127.0.0.1
+SEAFILE_PORT=8086
+SEAFILE_ADMIN_EMAIL=seafile@rclone.org
+SEAFILE_ADMIN_PASSWORD=qebiwob7wafixif8sojiboj4
+SEAFILE_TEST_DATA=${SEAFILE_TEST_DATA:-/tmp/seafile-test-data}
+SEAFILE_VERSION=latest
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    # make sure the data directory exists
+    mkdir -p ${SEAFILE_TEST_DATA}/${NAME}
+
+    docker run --rm -d --name $NAME \
+        -e SEAFILE_SERVER_HOSTNAME=${SEAFILE_IP}:${SEAFILE_PORT} \
+        -e SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL} \
+        -e SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD} \
+        -v ${SEAFILE_TEST_DATA}/${NAME}:/shared \
+        -p ${SEAFILE_IP}:${SEAFILE_PORT}:80 \
+        seafileltd/seafile:${SEAFILE_VERSION}
+
+    # it takes some time for the database to be created
+    sleep 60
+
+    # authentication token answer should be like: {"token":"dbf58423f1632b5b679a13b0929f1d0751d9250c"}
+    TOKEN=`curl --silent \
+        --data-urlencode username=${SEAFILE_ADMIN_EMAIL} -d password=${SEAFILE_ADMIN_PASSWORD} \
+        http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/auth-token/ \
+        | sed 's/^{"token":"\(.*\)"}$/\1/'`
+
+    # create default library
+    curl -X POST -H "Authorization: Token ${TOKEN}" "http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/default-repo/"
+
+    echo _connect=${SEAFILE_IP}:${SEAFILE_PORT}
+    echo type=seafile
+    echo url=http://${SEAFILE_IP}:${SEAFILE_PORT}/
+    echo user=${SEAFILE_ADMIN_EMAIL}
+    echo pass=$(rclone obscure ${SEAFILE_ADMIN_PASSWORD})
+    echo library=My Library
+}
+
+. $(dirname "$0")/run.bash

@@ -18,12 +18,14 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
 	qsConfig "github.com/yunify/qingstor-sdk-go/v3/config"
 	qsErr "github.com/yunify/qingstor-sdk-go/v3/request/errors"
 	qs "github.com/yunify/qingstor-sdk-go/v3/service"
@@ -54,7 +56,7 @@ func init() {
 			Help: "QingStor Secret Access Key (password)\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "endpoint",
-			Help: "Enter a endpoint URL to connection QingStor API.\nLeave blank will use the default value \"https://qingstor.com:443\"",
+			Help: "Enter an endpoint URL to connection QingStor API.\nLeave blank will use the default value \"https://qingstor.com:443\"",
 		}, {
 			Name: "zone",
 			Help: "Zone to connect to.\nDefault is \"pek3a\".",
@@ -110,6 +112,13 @@ and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.`,
 			Default:  1,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default: (encoder.EncodeInvalidUtf8 |
+				encoder.EncodeCtl |
+				encoder.EncodeSlash),
 		}},
 	})
 }
@@ -133,15 +142,16 @@ func timestampToTime(tp int64) time.Time {
 
 // Options defines the configuration for this backend
 type Options struct {
-	EnvAuth           bool          `config:"env_auth"`
-	AccessKeyID       string        `config:"access_key_id"`
-	SecretAccessKey   string        `config:"secret_access_key"`
-	Endpoint          string        `config:"endpoint"`
-	Zone              string        `config:"zone"`
-	ConnectionRetries int           `config:"connection_retries"`
-	UploadCutoff      fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize         fs.SizeSuffix `config:"chunk_size"`
-	UploadConcurrency int           `config:"upload_concurrency"`
+	EnvAuth           bool                 `config:"env_auth"`
+	AccessKeyID       string               `config:"access_key_id"`
+	SecretAccessKey   string               `config:"secret_access_key"`
+	Endpoint          string               `config:"endpoint"`
+	Zone              string               `config:"zone"`
+	ConnectionRetries int                  `config:"connection_retries"`
+	UploadCutoff      fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize         fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency int                  `config:"upload_concurrency"`
+	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote qingstor server
@@ -184,7 +194,8 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
 // split returns bucket and bucketPath from the object
@@ -192,10 +203,10 @@ func (o *Object) split() (bucket, bucketPath string) {
 	return o.fs.split(o.remote)
 }
 
-// Split an URL into three parts: protocol host and port
+// Split a URL into three parts: protocol host and port
 func qsParseEndpoint(endpoint string) (protocol, host, port string, err error) {
 	/*
-	  Pattern to match a endpoint,
+	  Pattern to match an endpoint,
 	  eg: "http(s)://qingstor.com:443" --> "http(s)", "qingstor.com", 443
 	      "http(s)//qingstor.com"      --> "http(s)", "qingstor.com", ""
 	      "qingstor.com"               --> "", "qingstor.com", ""
@@ -265,7 +276,7 @@ func qsServiceConnection(opt *Options) (*qs.Service, error) {
 	cf.Protocol = protocol
 	cf.Host = host
 	cf.Port = port
-	cf.ConnectionRetries = opt.ConnectionRetries
+	// unsupported in v3.1: cf.ConnectionRetries = opt.ConnectionRetries
 	cf.Connection = fshttp.NewClient(fs.Config)
 
 	return qs.Init(cf)
@@ -345,6 +356,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
+		SlowModTime:       true,
 	}).Fill(f)
 
 	if f.rootBucket != "" && f.rootDirectory != "" {
@@ -353,7 +365,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, err
 		}
-		_, err = bucketInit.HeadObject(f.rootDirectory, &qs.HeadObjectInput{})
+		encodedDirectory := f.opt.Enc.FromStandardPath(f.rootDirectory)
+		_, err = bucketInit.HeadObject(encodedDirectory, &qs.HeadObjectInput{})
 		if err == nil {
 			newRoot := path.Dir(f.root)
 			if newRoot == "." {
@@ -380,7 +393,7 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.rootBucket == "" {
-		return fmt.Sprintf("QingStor root")
+		return "QingStor root"
 	}
 	if f.rootDirectory == "" {
 		return fmt.Sprintf("QingStor bucket %s", f.rootBucket)
@@ -550,6 +563,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					continue
 				}
 				remote := *commonPrefix
+				remote = f.opt.Enc.ToStandardPath(remote)
 				if !strings.HasPrefix(remote, prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
@@ -569,12 +583,13 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		}
 
 		for _, object := range resp.Keys {
-			key := qs.StringValue(object.Key)
-			if !strings.HasPrefix(key, prefix) {
-				fs.Logf(f, "Odd name received %q", key)
+			remote := qs.StringValue(object.Key)
+			remote = f.opt.Enc.ToStandardPath(remote)
+			if !strings.HasPrefix(remote, prefix) {
+				fs.Logf(f, "Odd name received %q", remote)
 				continue
 			}
-			remote := key[len(prefix):]
+			remote = remote[len(prefix):]
 			if addBucket {
 				remote = path.Join(bucket, remote)
 			}
@@ -646,7 +661,7 @@ func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error)
 	}
 
 	for _, bucket := range resp.Buckets {
-		d := fs.NewDir(qs.StringValue(bucket.Name), qs.TimeValue(bucket.Created))
+		d := fs.NewDir(f.opt.Enc.ToStandardName(qs.StringValue(bucket.Name)), qs.TimeValue(bucket.Created))
 		entries = append(entries, d)
 	}
 	return entries, nil
@@ -848,6 +863,76 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		}
 		return err
 	})
+}
+
+// cleanUpBucket removes all pending multipart uploads for a given bucket
+func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
+	fs.Infof(f, "cleaning bucket %q of pending multipart uploads older than 24 hours", bucket)
+	bucketInit, err := f.svc.Bucket(bucket, f.zone)
+	if err != nil {
+		return err
+	}
+	maxLimit := int(listLimitSize)
+	var marker *string
+	for {
+		req := qs.ListMultipartUploadsInput{
+			Limit:     &maxLimit,
+			KeyMarker: marker,
+		}
+		var resp *qs.ListMultipartUploadsOutput
+		resp, err = bucketInit.ListMultipartUploads(&req)
+		if err != nil {
+			return errors.Wrap(err, "clean up bucket list multipart uploads")
+		}
+		for _, upload := range resp.Uploads {
+			if upload.Created != nil && upload.Key != nil && upload.UploadID != nil {
+				age := time.Since(*upload.Created)
+				if age > 24*time.Hour {
+					fs.Infof(f, "removing pending multipart upload for %q dated %v (%v ago)", *upload.Key, upload.Created, age)
+					req := qs.AbortMultipartUploadInput{
+						UploadID: upload.UploadID,
+					}
+					_, abortErr := bucketInit.AbortMultipartUpload(*upload.Key, &req)
+					if abortErr != nil {
+						err = errors.Wrapf(abortErr, "failed to remove multipart upload for %q", *upload.Key)
+						fs.Errorf(f, "%v", err)
+					}
+				} else {
+					fs.Debugf(f, "ignoring pending multipart upload for %q dated %v (%v ago)", *upload.Key, upload.Created, age)
+				}
+			}
+		}
+		if resp.HasMore != nil && !*resp.HasMore {
+			break
+		}
+		// Use NextMarker if set, otherwise use last Key
+		if resp.NextKeyMarker == nil || *resp.NextKeyMarker == "" {
+			fs.Errorf(f, "Expecting NextKeyMarker but didn't find one")
+			break
+		} else {
+			marker = resp.NextKeyMarker
+		}
+	}
+	return err
+}
+
+// CleanUp removes all pending multipart uploads
+func (f *Fs) CleanUp(ctx context.Context) (err error) {
+	if f.rootBucket != "" {
+		return f.cleanUpBucket(ctx, f.rootBucket)
+	}
+	entries, err := f.listBuckets(ctx)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		cleanErr := f.cleanUpBucket(ctx, f.opt.Enc.FromStandardName(entry.Remote()))
+		if err != nil {
+			fs.Errorf(f, "Failed to cleanup bucket: %q", cleanErr)
+			err = cleanErr
+		}
+	}
+	return err
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1076,9 +1161,10 @@ func (o *Object) MimeType(ctx context.Context) string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = &Fs{}
-	_ fs.Copier    = &Fs{}
-	_ fs.Object    = &Object{}
-	_ fs.ListRer   = &Fs{}
-	_ fs.MimeTyper = &Object{}
+	_ fs.Fs         = &Fs{}
+	_ fs.CleanUpper = &Fs{}
+	_ fs.Copier     = &Fs{}
+	_ fs.Object     = &Object{}
+	_ fs.ListRer    = &Fs{}
+	_ fs.MimeTyper  = &Object{}
 )

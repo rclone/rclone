@@ -101,15 +101,6 @@ func (d *Directory) abs() string {
 	return cleanPath(path.Join(d.Dir, d.Name))
 }
 
-// parentRemote returns the absolute path parent remote
-func (d *Directory) parentRemote() string {
-	absPath := d.abs()
-	if absPath == "" {
-		return ""
-	}
-	return cleanPath(path.Dir(absPath))
-}
-
 // ModTime returns the cached ModTime
 func (d *Directory) ModTime(ctx context.Context) time.Time {
 	return time.Unix(0, d.CacheModTime)

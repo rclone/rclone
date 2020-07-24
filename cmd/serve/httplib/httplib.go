@@ -52,6 +52,29 @@ inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
 --baseurl "/rclone" and --baseurl "/rclone/" are all treated
 identically.
 
+--template allows a user to specify a custom markup template for http
+and webdav serve functions.  The server exports the following markup
+to be used within the template to server pages:
+
+| Parameter   | Description |
+| :---------- | :---------- |
+| .Name       | The full path of a file/directory. |
+| .Title      | Directory listing of .Name |
+| .Sort       | The current sort used.  This is changeable via ?sort= parameter |
+|             | Sort Options: namedirfist,name,size,time (default namedirfirst) |
+| .Order      | The current ordering used.  This is changeable via ?order= parameter |
+|             | Order Options: asc,desc (default asc) |
+| .Query      | Currently unused. |
+| .Breadcrumb | Allows for creating a relative navigation |
+|-- .Link     | The relative to the root link of the Text. |
+|-- .Text     | The Name of the directory. |
+| .Entries    | Information about a specific file/directory. |
+|-- .URL      | The 'url' of an entry.  |
+|-- .Leaf     | Currently same as 'URL' but intended to be 'just' the name. |
+|-- .IsDir    | Boolean for if an entry is a directory or not. |
+|-- .Size     | Size in Bytes of the entry. |
+|-- .ModTime  | The UTC timestamp of an entry. |
+
 #### Authentication
 
 By default this will serve files without needing a login.
@@ -80,7 +103,7 @@ https.  You will need to supply the --cert and --key flags.  If you
 wish to do client side certificate validation then you will need to
 supply --client-ca also.
 
---cert should be a either a PEM encoded certificate or a concatenation
+--cert should be either a PEM encoded certificate or a concatenation
 of that with the CA certificate.  --key should be the PEM encoded
 private key and --client-ca should be the PEM encoded client
 certificate authority certificate.
@@ -101,6 +124,7 @@ type Options struct {
 	BasicUser          string        // single username for basic auth if not using Htpasswd
 	BasicPass          string        // password for BasicUser
 	Auth               AuthFn        `json:"-"` // custom Auth (not set by command line flags)
+	Template           string        // User specified template
 }
 
 // AuthFn if used will be used to authenticate user, pass. If an error
@@ -281,7 +305,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		s.httpServer.TLSConfig.ClientAuth = tls.RequireAndVerifyClientCert
 	}
 
-	htmlTemplate, templateErr := data.GetTemplate()
+	htmlTemplate, templateErr := data.GetTemplate(s.Opt.Template)
 	if templateErr != nil {
 		log.Fatalf(templateErr.Error())
 	}

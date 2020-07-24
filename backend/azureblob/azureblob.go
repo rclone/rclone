@@ -1,6 +1,6 @@
 // Package azureblob provides an interface to the Microsoft Azure blob object storage system
 
-// +build !plan9,!solaris
+// +build !plan9,!solaris,go1.13
 
 package azureblob
 
@@ -9,14 +9,12 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -33,7 +32,11 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
+	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -58,6 +61,8 @@ const (
 	emulatorAccount      = "devstoreaccount1"
 	emulatorAccountKey   = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 	emulatorBlobEndpoint = "http://127.0.0.1:10000/devstoreaccount1"
+	memoryPoolFlushTime  = fs.Duration(time.Minute) // flush the cached buffers after this long
+	memoryPoolUseMmap    = false
 )
 
 // Register with Fs
@@ -124,21 +129,57 @@ If blobs are in "archive tier" at remote, trying to perform data transfer
 operations from remote will not be allowed. User should first restore by
 tiering blob to "Hot" or "Cool".`,
 			Advanced: true,
+		}, {
+			Name: "disable_checksum",
+			Help: `Don't store MD5 checksum with object metadata.
+
+Normally rclone will calculate the MD5 checksum of the input before
+uploading it so it can add it to metadata on the object. This is great
+for data integrity checking but can cause long delays for large files
+to start uploading.`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "memory_pool_flush_time",
+			Default:  memoryPoolFlushTime,
+			Advanced: true,
+			Help: `How often internal memory buffer pools will be flushed.
+Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
+This option controls how often unused buffers will be removed from the pool.`,
+		}, {
+			Name:     "memory_pool_use_mmap",
+			Default:  memoryPoolUseMmap,
+			Advanced: true,
+			Help:     `Whether to use mmap buffers in internal memory pool.`,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default: (encoder.EncodeInvalidUtf8 |
+				encoder.EncodeSlash |
+				encoder.EncodeCtl |
+				encoder.EncodeDel |
+				encoder.EncodeBackSlash |
+				encoder.EncodeRightPeriod),
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account       string        `config:"account"`
-	Key           string        `config:"key"`
-	Endpoint      string        `config:"endpoint"`
-	SASURL        string        `config:"sas_url"`
-	UploadCutoff  fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize     fs.SizeSuffix `config:"chunk_size"`
-	ListChunkSize uint          `config:"list_chunk"`
-	AccessTier    string        `config:"access_tier"`
-	UseEmulator   bool          `config:"use_emulator"`
+	Account             string               `config:"account"`
+	Key                 string               `config:"key"`
+	Endpoint            string               `config:"endpoint"`
+	SASURL              string               `config:"sas_url"`
+	UploadCutoff        fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize           fs.SizeSuffix        `config:"chunk_size"`
+	ListChunkSize       uint                 `config:"list_chunk"`
+	AccessTier          string               `config:"access_tier"`
+	UseEmulator         bool                 `config:"use_emulator"`
+	DisableCheckSum     bool                 `config:"disable_checksum"`
+	MemoryPoolFlushTime fs.Duration          `config:"memory_pool_flush_time"`
+	MemoryPoolUseMmap   bool                 `config:"memory_pool_use_mmap"`
+	Enc                 encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote azure server
@@ -157,9 +198,10 @@ type Fs struct {
 	cache         *bucket.Cache                   // cache for container creation status
 	pacer         *fs.Pacer                       // To pace and retry the API calls
 	uploadToken   *pacer.TokenDispenser           // control concurrency
+	pool          *pool.Pool                      // memory pool
 }
 
-// Object describes a azure object
+// Object describes an azure object
 type Object struct {
 	fs         *Fs                   // what this object is part of
 	remote     string                // The remote path
@@ -186,7 +228,7 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.rootContainer == "" {
-		return fmt.Sprintf("Azure root")
+		return "Azure root"
 	}
 	if f.rootDirectory == "" {
 		return fmt.Sprintf("Azure container %s", f.rootContainer)
@@ -208,7 +250,8 @@ func parsePath(path string) (root string) {
 // split returns container and containerPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (containerName, containerPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	containerName, containerPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return f.opt.Enc.FromStandardName(containerName), f.opt.Enc.FromStandardPath(containerPath)
 }
 
 // split returns container and containerPath from the object
@@ -244,6 +287,12 @@ var retryErrorCodes = []int{
 func (f *Fs) shouldRetry(err error) (bool, error) {
 	// FIXME interpret special errors - more to do here
 	if storageErr, ok := err.(azblob.StorageError); ok {
+		switch storageErr.ServiceCode() {
+		case "InvalidBlobOrBlock":
+			// These errors happen sometimes in multipart uploads
+			// because of block concurrency issues
+			return true, err
+		}
 		statusCode := storageErr.Response().StatusCode
 		for _, e := range retryErrorCodes {
 			if statusCode == e {
@@ -289,7 +338,7 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 }
 
 // httpClientFactory creates a Factory object that sends HTTP requests
-// to a rclone's http.Client.
+// to an rclone's http.Client.
 //
 // copied from azblob.newDefaultHTTPClientFactory
 func httpClientFactory(client *http.Client) pipeline.Factory {
@@ -308,6 +357,9 @@ func httpClientFactory(client *http.Client) pipeline.Factory {
 //
 // this code was copied from azblob.NewPipeline
 func (f *Fs) newPipeline(c azblob.Credential, o azblob.PipelineOptions) pipeline.Pipeline {
+	// Don't log stuff to syslog/Windows Event log
+	pipeline.SetForceLogEnabled(false)
+
 	// Closest to API goes first; closest to the wire goes last
 	factories := []pipeline.Factory{
 		azblob.NewTelemetryPolicyFactory(o.Telemetry),
@@ -366,6 +418,12 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		client:      fshttp.NewClient(fs.Config),
 		cache:       bucket.NewCache(),
 		cntURLcache: make(map[string]*azblob.ContainerURL, 1),
+		pool: pool.New(
+			time.Duration(opt.MemoryPoolFlushTime),
+			int(opt.ChunkSize),
+			fs.Config.Transfers,
+			opt.MemoryPoolUseMmap,
+		),
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -575,18 +633,18 @@ func (f *Fs) list(ctx context.Context, container, directory, prefix string, addC
 		}
 		// Advance marker to next
 		marker = response.NextMarker
-
 		for i := range response.Segment.BlobItems {
 			file := &response.Segment.BlobItems[i]
 			// Finish if file name no longer has prefix
 			// if prefix != "" && !strings.HasPrefix(file.Name, prefix) {
 			// 	return nil
 			// }
-			if !strings.HasPrefix(file.Name, prefix) {
-				fs.Debugf(f, "Odd name received %q", file.Name)
+			remote := f.opt.Enc.ToStandardPath(file.Name)
+			if !strings.HasPrefix(remote, prefix) {
+				fs.Debugf(f, "Odd name received %q", remote)
 				continue
 			}
-			remote := file.Name[len(prefix):]
+			remote = remote[len(prefix):]
 			if isDirectoryMarker(*file.Properties.ContentLength, file.Metadata, remote) {
 				continue // skip directory marker
 			}
@@ -602,6 +660,7 @@ func (f *Fs) list(ctx context.Context, container, directory, prefix string, addC
 		// Send the subdirectories
 		for _, remote := range response.Segment.BlobPrefixes {
 			remote := strings.TrimRight(remote.Name, "/")
+			remote = f.opt.Enc.ToStandardPath(remote)
 			if !strings.HasPrefix(remote, prefix) {
 				fs.Debugf(f, "Odd directory name received %q", remote)
 				continue
@@ -665,7 +724,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 		return entries, nil
 	}
 	err = f.listContainersToFn(func(container *azblob.ContainerItem) error {
-		d := fs.NewDir(container.Name, container.Properties.LastModified)
+		d := fs.NewDir(f.opt.Enc.ToStandardName(container.Name), container.Properties.LastModified)
 		f.cache.MarkOK(container.Name)
 		entries = append(entries, d)
 		return nil
@@ -799,6 +858,11 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	return fs, fs.Update(ctx, in, src, options...)
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(ctx, in, src, options...)
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	container, _ := f.split(dir)
@@ -808,6 +872,10 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 // makeContainer creates the container if it doesn't exist
 func (f *Fs) makeContainer(ctx context.Context, container string) error {
 	return f.cache.Create(container, func() error {
+		// If this is a SAS URL limited to a container then assume it is already created
+		if f.isLimited {
+			return nil
+		}
 		// now try to create the container
 		return f.pacer.Call(func() (bool, error) {
 			_, err := f.cntURL(container).Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
@@ -961,6 +1029,19 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return f.NewObject(ctx, remote)
 }
 
+func (f *Fs) getMemoryPool(size int64) *pool.Pool {
+	if size == int64(f.opt.ChunkSize) {
+		return f.pool
+	}
+
+	return pool.New(
+		time.Duration(f.opt.MemoryPoolFlushTime),
+		int(size),
+		fs.Config.Transfers,
+		f.opt.MemoryPoolUseMmap,
+	)
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -1103,22 +1184,6 @@ func (o *Object) readMetaData() (err error) {
 	return o.decodeMetaDataFromPropertiesResponse(blobProperties)
 }
 
-// parseTimeString converts a decimal string number of milliseconds
-// elapsed since January 1, 1970 UTC into a time.Time and stores it in
-// the modTime variable.
-func (o *Object) parseTimeString(timeString string) (err error) {
-	if timeString == "" {
-		return nil
-	}
-	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
-	if err != nil {
-		fs.Debugf(o, "Failed to parse mod time string %q: %v", timeString, err)
-		return err
-	}
-	o.modTime = time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC()
-	return nil
-}
-
 // ModTime returns the modification time of the object
 //
 // It attempts to read the objects mtime and if that isn't present the
@@ -1220,103 +1285,116 @@ type readSeeker struct {
 	io.Seeker
 }
 
+// increment the slice passed in as LSB binary
+func increment(xs []byte) {
+	for i, digit := range xs {
+		newDigit := digit + 1
+		xs[i] = newDigit
+		if newDigit >= digit {
+			// exit if no carry
+			break
+		}
+	}
+}
+
+var warnStreamUpload sync.Once
+
 // uploadMultipart uploads a file using multipart upload
 //
 // Write a larger blob, using CreateBlockBlob, PutBlock, and PutBlockList.
-func (o *Object) uploadMultipart(in io.Reader, size int64, blob *azblob.BlobURL, httpHeaders *azblob.BlobHTTPHeaders) (err error) {
+func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, blob *azblob.BlobURL, httpHeaders *azblob.BlobHTTPHeaders) (err error) {
 	// Calculate correct chunkSize
 	chunkSize := int64(o.fs.opt.ChunkSize)
-	var totalParts int64
-	for {
-		// Calculate number of parts
-		var remainder int64
-		totalParts, remainder = size/chunkSize, size%chunkSize
-		if remainder != 0 {
-			totalParts++
+	totalParts := -1
+
+	// Note that the max size of file is 4.75 TB (100 MB X 50,000
+	// blocks) and this is bigger than the max uncommitted block
+	// size (9.52 TB) so we do not need to part commit block lists
+	// or garbage collect uncommitted blocks.
+	//
+	// See: https://docs.microsoft.com/en-gb/rest/api/storageservices/put-block
+
+	// size can be -1 here meaning we don't know the size of the incoming file.  We use ChunkSize
+	// buffers here (default 4MB). With a maximum number of parts (50,000) this will be a file of
+	// 195GB which seems like a not too unreasonable limit.
+	if size == -1 {
+		warnStreamUpload.Do(func() {
+			fs.Logf(o, "Streaming uploads using chunk size %v will have maximum file size of %v",
+				o.fs.opt.ChunkSize, fs.SizeSuffix(chunkSize*maxTotalParts))
+		})
+	} else {
+		// Adjust partSize until the number of parts is small enough.
+		if size/chunkSize >= maxTotalParts {
+			// Calculate partition size rounded up to the nearest MB
+			chunkSize = (((size / maxTotalParts) >> 20) + 1) << 20
 		}
-		if totalParts < maxTotalParts {
-			break
-		}
-		// Double chunk size if the number of parts is too big
-		chunkSize *= 2
 		if chunkSize > int64(maxChunkSize) {
 			return errors.Errorf("can't upload as it is too big %v - takes more than %d chunks of %v", fs.SizeSuffix(size), totalParts, fs.SizeSuffix(chunkSize/2))
 		}
+		totalParts = int(size / chunkSize)
+		if size%chunkSize != 0 {
+			totalParts++
+		}
 	}
+
 	fs.Debugf(o, "Multipart upload session started for %d parts of size %v", totalParts, fs.SizeSuffix(chunkSize))
-
-	// https://godoc.org/github.com/Azure/azure-storage-blob-go/2017-07-29/azblob#example-BlockBlobURL
-	// Utilities are cloned from above example
-	// These helper functions convert a binary block ID to a base-64 string and vice versa
-	// NOTE: The blockID must be <= 64 bytes and ALL blockIDs for the block must be the same length
-	blockIDBinaryToBase64 := func(blockID []byte) string { return base64.StdEncoding.EncodeToString(blockID) }
-	// These helper functions convert an int block ID to a base-64 string and vice versa
-	blockIDIntToBase64 := func(blockID uint64) string {
-		binaryBlockID := (&[8]byte{})[:] // All block IDs are 8 bytes long
-		binary.LittleEndian.PutUint64(binaryBlockID, blockID)
-		return blockIDBinaryToBase64(binaryBlockID)
-	}
-
-	// block ID variables
-	var (
-		rawID   uint64
-		blockID = "" // id in base64 encoded form
-		blocks  []string
-	)
-
-	// increment the blockID
-	nextID := func() {
-		rawID++
-		blockID = blockIDIntToBase64(rawID)
-		blocks = append(blocks, blockID)
-	}
-
-	// Get BlockBlobURL, we will use default pipeline here
-	blockBlobURL := blob.ToBlockBlobURL()
-	ctx := context.Background()
-	ac := azblob.LeaseAccessConditions{} // Use default lease access conditions
 
 	// unwrap the accounting from the input, we use wrap to put it
 	// back on after the buffering
 	in, wrap := accounting.UnWrap(in)
 
 	// Upload the chunks
-	remaining := size
-	position := int64(0)
-	errs := make(chan error, 1)
-	var wg sync.WaitGroup
-outer:
-	for part := 0; part < int(totalParts); part++ {
-		// Check any errors
-		select {
-		case err = <-errs:
-			break outer
-		default:
+	var (
+		g, gCtx       = errgroup.WithContext(ctx)
+		remaining     = size                           // remaining size in file for logging only, -1 if size < 0
+		position      = int64(0)                       // position in file
+		memPool       = o.fs.getMemoryPool(chunkSize)  // pool to get memory from
+		finished      = false                          // set when we have read EOF
+		blocks        []string                         // list of blocks for finalize
+		blockBlobURL  = blob.ToBlockBlobURL()          // Get BlockBlobURL, we will use default pipeline here
+		ac            = azblob.LeaseAccessConditions{} // Use default lease access conditions
+		binaryBlockID = make([]byte, 8)                // block counter as LSB first 8 bytes
+	)
+	for part := 0; !finished; part++ {
+		// Get a block of memory from the pool and a token which limits concurrency
+		o.fs.uploadToken.Get()
+		buf := memPool.Get()
+
+		free := func() {
+			memPool.Put(buf)       // return the buf
+			o.fs.uploadToken.Put() // return the token
 		}
 
-		reqSize := remaining
-		if reqSize >= chunkSize {
-			reqSize = chunkSize
+		// Fail fast, in case an errgroup managed function returns an error
+		// gCtx is cancelled. There is no point in uploading all the other parts.
+		if gCtx.Err() != nil {
+			free()
+			break
 		}
-
-		// Make a block of memory
-		buf := make([]byte, reqSize)
 
 		// Read the chunk
-		_, err = io.ReadFull(in, buf)
-		if err != nil {
-			err = errors.Wrap(err, "multipart upload failed to read source")
-			break outer
+		n, err := readers.ReadFill(in, buf) // this can never return 0, nil
+		if err == io.EOF {
+			if n == 0 { // end if no data
+				free()
+				break
+			}
+			finished = true
+		} else if err != nil {
+			free()
+			return errors.Wrap(err, "multipart upload failed to read source")
 		}
+		buf = buf[:n]
+
+		// increment the blockID and save the blocks for finalize
+		increment(binaryBlockID)
+		blockID := base64.StdEncoding.EncodeToString(binaryBlockID)
+		blocks = append(blocks, blockID)
 
 		// Transfer the chunk
-		nextID()
-		wg.Add(1)
-		o.fs.uploadToken.Get()
-		go func(part int, position int64, blockID string) {
-			defer wg.Done()
-			defer o.fs.uploadToken.Put()
-			fs.Debugf(o, "Uploading part %d/%d offset %v/%v part size %v", part+1, totalParts, fs.SizeSuffix(position), fs.SizeSuffix(size), fs.SizeSuffix(chunkSize))
+		fs.Debugf(o, "Uploading part %d/%d offset %v/%v part size %v", part+1, totalParts, fs.SizeSuffix(position), fs.SizeSuffix(size), fs.SizeSuffix(chunkSize))
+		g.Go(func() (err error) {
+			defer free()
 
 			// Upload the block, with MD5 for check
 			md5sum := md5.Sum(buf)
@@ -1328,28 +1406,19 @@ outer:
 				_, err = blockBlobURL.StageBlock(ctx, blockID, &rs, ac, transactionalMD5)
 				return o.fs.shouldRetry(err)
 			})
-
 			if err != nil {
-				err = errors.Wrap(err, "multipart upload failed to upload part")
-				select {
-				case errs <- err:
-				default:
-				}
-				return
+				return errors.Wrap(err, "multipart upload failed to upload part")
 			}
-		}(part, position, blockID)
+			return nil
+		})
 
 		// ready for next block
-		remaining -= chunkSize
+		if size >= 0 {
+			remaining -= chunkSize
+		}
 		position += chunkSize
 	}
-	wg.Wait()
-	if err == nil {
-		select {
-		case err = <-errs:
-		default:
-		}
-	}
+	err = g.Wait()
 	if err != nil {
 		return err
 	}
@@ -1386,14 +1455,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	httpHeaders.ContentType = fs.MimeType(ctx, o)
 	// Compute the Content-MD5 of the file, for multiparts uploads it
 	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
-	// Note: If multipart, a MD5 checksum will also be computed for each uploaded block
+	// Note: If multipart, an MD5 checksum will also be computed for each uploaded block
 	// 		 in order to validate its integrity during transport
-	if sourceMD5, _ := src.Hash(ctx, hash.MD5); sourceMD5 != "" {
-		sourceMD5bytes, err := hex.DecodeString(sourceMD5)
-		if err == nil {
-			httpHeaders.ContentMD5 = sourceMD5bytes
-		} else {
-			fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
+	if !o.fs.opt.DisableCheckSum {
+		if sourceMD5, _ := src.Hash(ctx, hash.MD5); sourceMD5 != "" {
+			sourceMD5bytes, err := hex.DecodeString(sourceMD5)
+			if err == nil {
+				httpHeaders.ContentMD5 = sourceMD5bytes
+			} else {
+				fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
+			}
 		}
 	}
 
@@ -1407,7 +1478,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// is merged the SDK can't upload a single blob of exactly the chunk
 	// size, so upload with a multpart upload to work around.
 	// See: https://github.com/rclone/rclone/issues/2653
-	multipartUpload := size >= int64(o.fs.opt.UploadCutoff)
+	multipartUpload := size < 0 || size >= int64(o.fs.opt.UploadCutoff)
 	if size == int64(o.fs.opt.ChunkSize) {
 		multipartUpload = true
 		fs.Debugf(o, "Setting multipart upload for file of chunk size (%d) to work around SDK bug", size)
@@ -1417,7 +1488,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		if multipartUpload {
 			// If a large file upload in chunks
-			err = o.uploadMultipart(in, size, &blob, &httpHeaders)
+			err = o.uploadMultipart(ctx, in, size, &blob, &httpHeaders)
 		} else {
 			// Write a small blob in one transaction
 			blockBlobURL := blob.ToBlockBlobURL()
@@ -1502,12 +1573,13 @@ func (o *Object) GetTier() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = &Fs{}
-	_ fs.Copier    = &Fs{}
-	_ fs.Purger    = &Fs{}
-	_ fs.ListRer   = &Fs{}
-	_ fs.Object    = &Object{}
-	_ fs.MimeTyper = &Object{}
-	_ fs.GetTierer = &Object{}
-	_ fs.SetTierer = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.Copier      = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.Purger      = &Fs{}
+	_ fs.ListRer     = &Fs{}
+	_ fs.Object      = &Object{}
+	_ fs.MimeTyper   = &Object{}
+	_ fs.GetTierer   = &Object{}
+	_ fs.SetTierer   = &Object{}
 )

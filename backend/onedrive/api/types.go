@@ -272,19 +272,19 @@ type CreateShareLinkResponse struct {
 	} `json:"link"`
 }
 
-// AsyncOperationStatus provides information on the status of a asynchronous job progress.
+// AsyncOperationStatus provides information on the status of an asynchronous job progress.
 //
 // The following API calls return AsyncOperationStatus resources:
 //
 // Copy Item
 // Upload From URL
 type AsyncOperationStatus struct {
-	PercentageComplete float64 `json:"percentageComplete"` // An float value between 0 and 100 that indicates the percentage complete.
+	PercentageComplete float64 `json:"percentageComplete"` // A float value between 0 and 100 that indicates the percentage complete.
 	Status             string  `json:"status"`             // A string value that maps to an enumeration of possible values about the status of the job. "notStarted | inProgress | completed | updating | failed | deletePending | deleteFailed | waiting"
 }
 
 // GetID returns a normalized ID of the item
-// If DriveID is known it will be prefixed to the ID with # seperator
+// If DriveID is known it will be prefixed to the ID with # separator
 // Can be parsed using onedrive.parseNormalizedID(normalizedID)
 func (i *Item) GetID() string {
 	if i.IsRemote() && i.RemoteItem.ID != "" {

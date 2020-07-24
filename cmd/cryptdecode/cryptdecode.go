@@ -18,8 +18,8 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	flagSet := commandDefinition.Flags()
-	flags.BoolVarP(flagSet, &Reverse, "reverse", "", Reverse, "Reverse cryptdecode, encrypts filenames")
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &Reverse, "reverse", "", Reverse, "Reverse cryptdecode, encrypts filenames")
 }
 
 var commandDefinition = &cobra.Command{
@@ -60,7 +60,7 @@ use it like this
 }
 
 // cryptDecode returns the unencrypted file name
-func cryptDecode(cipher crypt.Cipher, args []string) error {
+func cryptDecode(cipher *crypt.Cipher, args []string) error {
 	output := ""
 
 	for _, encryptedFileName := range args {
@@ -78,7 +78,7 @@ func cryptDecode(cipher crypt.Cipher, args []string) error {
 }
 
 // cryptEncode returns the encrypted file name
-func cryptEncode(cipher crypt.Cipher, args []string) error {
+func cryptEncode(cipher *crypt.Cipher, args []string) error {
 	output := ""
 
 	for _, fileName := range args {

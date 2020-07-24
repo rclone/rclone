@@ -22,14 +22,16 @@ import (
 // calling Callback for each match
 type March struct {
 	// parameters
-	Ctx           context.Context // context for background goroutines
-	Fdst          fs.Fs           // source Fs
-	Fsrc          fs.Fs           // dest Fs
-	Dir           string          // directory
-	NoTraverse    bool            // don't traverse the destination
-	SrcIncludeAll bool            // don't include all files in the src
-	DstIncludeAll bool            // don't include all files in the destination
-	Callback      Marcher         // object to call with results
+	Ctx                    context.Context // context for background goroutines
+	Fdst                   fs.Fs           // source Fs
+	Fsrc                   fs.Fs           // dest Fs
+	Dir                    string          // directory
+	NoTraverse             bool            // don't traverse the destination
+	SrcIncludeAll          bool            // don't include all files in the src
+	DstIncludeAll          bool            // don't include all files in the destination
+	Callback               Marcher         // object to call with results
+	NoCheckDest            bool            // transfer all objects regardless without checking dst
+	NoUnicodeNormalization bool            // don't normalize unicode characters in filenames
 	// internal state
 	srcListDir listDirFn // function to call to list a directory in the src
 	dstListDir listDirFn // function to call to list a directory in the dst
@@ -54,7 +56,9 @@ func (m *March) init() {
 	}
 	// Now create the matching transform
 	// ..normalise the UTF8 first
-	m.transforms = append(m.transforms, norm.NFC.String)
+	if !m.NoUnicodeNormalization {
+		m.transforms = append(m.transforms, norm.NFC.String)
+	}
 	// ..if destination is caseInsensitive then make it lower case
 	// case Insensitive | src | dst | lower case compare |
 	//                  | No  | No  | No                 |
@@ -69,13 +73,18 @@ func (m *March) init() {
 // list a directory into entries, err
 type listDirFn func(dir string) (entries fs.DirEntries, err error)
 
-// makeListDir makes a listing function for the given fs and includeAll flags
+// makeListDir makes constructs a listing function for the given fs
+// and includeAll flags for marching through the file system.
 func (m *March) makeListDir(f fs.Fs, includeAll bool) listDirFn {
-	if (!fs.Config.UseListR || f.Features().ListR == nil) && !filter.Active.HaveFilesFrom() {
+	if !(fs.Config.UseListR && f.Features().ListR != nil) && // !--fast-list active and
+		!(fs.Config.NoTraverse && filter.Active.HaveFilesFrom()) { // !(--files-from and --no-traverse)
 		return func(dir string) (entries fs.DirEntries, err error) {
 			return list.DirSorted(m.Ctx, f, includeAll, dir)
 		}
 	}
+
+	// This returns a closure for use when --fast-list is active or for when
+	// --files-from and --no-traverse is set
 	var (
 		mu      sync.Mutex
 		started bool
@@ -183,6 +192,7 @@ func (m *March) Run() error {
 		srcDepth:  srcDepth - 1,
 		dstRemote: m.Dir,
 		dstDepth:  dstDepth - 1,
+		noDst:     m.NoCheckDest,
 	}
 	go func() {
 		// when the context is cancelled discard the remaining jobs
@@ -388,20 +398,20 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	wg.Wait()
 	if srcListErr != nil {
 		fs.Errorf(job.srcRemote, "error reading source directory: %v", srcListErr)
-		fs.CountError(srcListErr)
+		srcListErr = fs.CountError(srcListErr)
 		return nil, srcListErr
 	}
 	if dstListErr == fs.ErrorDirNotFound {
 		// Copy the stuff anyway
 	} else if dstListErr != nil {
 		fs.Errorf(job.dstRemote, "error reading destination directory: %v", dstListErr)
-		fs.CountError(dstListErr)
+		dstListErr = fs.CountError(dstListErr)
 		return nil, dstListErr
 	}
 
 	// If NoTraverse is set, then try to find a matching object
 	// for each item in the srcList
-	if m.NoTraverse {
+	if m.NoTraverse && !m.NoCheckDest {
 		for _, src := range srcList {
 			if srcObj, ok := src.(fs.Object); ok {
 				leaf := path.Base(srcObj.Remote())

@@ -34,7 +34,7 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "dlna remote:path",
 	Short: `Serve remote:path over DLNA`,
-	Long: `rclone serve dlna is a DLNA media server for media stored in a rclone remote. Many
+	Long: `rclone serve dlna is a DLNA media server for media stored in an rclone remote. Many
 devices, such as the Xbox and PlayStation, can automatically discover this server in the LAN
 and play audio/video from it. VLC is also supported. Service discovery uses UDP multicast
 packets (SSDP) and will thus only work on LANs.
@@ -62,7 +62,7 @@ players might show files that they are not able to play back correctly.
 const (
 	serverField       = "Linux/3.4 DLNADOC/1.50 UPnP/1.0 DMS/1.0"
 	rootDescPath      = "/rootDesc.xml"
-	resPath           = "/res"
+	resPath           = "/r/"
 	serviceControlURL = "/ctl"
 )
 
@@ -122,7 +122,8 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 
 	// Setup the various http routes.
 	r := http.NewServeMux()
-	r.HandleFunc(resPath, s.resourceHandler)
+	r.Handle(resPath, http.StripPrefix(resPath,
+		http.HandlerFunc(s.resourceHandler)))
 	if opt.LogTrace {
 		r.Handle(rootDescPath, traceLogging(http.HandlerFunc(s.rootDescHandler)))
 		r.Handle(serviceControlURL, traceLogging(http.HandlerFunc(s.serviceControlHandler)))
@@ -224,8 +225,8 @@ func (s *server) soapActionResponse(sa upnp.SoapAction, actionRequestXML []byte,
 
 // Serves actual resources (media files).
 func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
-	remotePath := r.URL.Query().Get("path")
-	node, err := s.vfs.Stat(remotePath)
+	remotePath := r.URL.Path
+	node, err := s.vfs.Stat(r.URL.Path)
 	if err != nil {
 		http.NotFound(w, r)
 		return

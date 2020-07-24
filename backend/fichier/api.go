@@ -17,6 +17,7 @@ import (
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
+	403, // Forbidden (may happen when request limit is exceeded)
 	500, // Internal Server Error
 	502, // Bad Gateway
 	503, // Service Unavailable
@@ -107,6 +108,10 @@ func (f *Fs) listFiles(ctx context.Context, directoryID int) (filesList *FilesLi
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list files")
 	}
+	for i := range filesList.Items {
+		item := &filesList.Items[i]
+		item.Filename = f.opt.Enc.ToStandardName(item.Filename)
+	}
 
 	return filesList, nil
 }
@@ -131,6 +136,11 @@ func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *Fol
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list folders")
 	}
+	foldersList.Name = f.opt.Enc.ToStandardName(foldersList.Name)
+	for i := range foldersList.SubFolders {
+		folder := &foldersList.SubFolders[i]
+		folder.Name = f.opt.Enc.ToStandardName(folder.Name)
+	}
 
 	// fs.Debugf(f, "Got FoldersList for id `%s`", directoryID)
 
@@ -138,11 +148,6 @@ func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *Fol
 }
 
 func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	err = f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return nil, err
-	}
-
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -166,7 +171,6 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 	entries = make([]fs.DirEntry, len(files.Items)+len(folders.SubFolders))
 
 	for i, item := range files.Items {
-		item.Filename = restoreReservedChars(item.Filename)
 		entries[i] = f.newObjectFromFile(ctx, dir, item)
 	}
 
@@ -176,7 +180,6 @@ func (f *Fs) listDir(ctx context.Context, dir string) (entries fs.DirEntries, er
 			return nil, err
 		}
 
-		folder.Name = restoreReservedChars(folder.Name)
 		fullPath := getRemote(dir, folder.Name)
 		folderID := strconv.Itoa(folder.ID)
 
@@ -206,7 +209,7 @@ func getRemote(dir, fileName string) string {
 }
 
 func (f *Fs) makeFolder(ctx context.Context, leaf string, folderID int) (response *MakeFolderResponse, err error) {
-	name := replaceReservedChars(leaf)
+	name := f.opt.Enc.FromStandardName(leaf)
 	// fs.Debugf(f, "Creating folder `%s` in id `%s`", name, directoryID)
 
 	request := MakeFolderRequest{
@@ -313,10 +316,10 @@ func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse
 	return response, err
 }
 
-func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName, folderID, uploadID, node string) (response *http.Response, err error) {
+func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName, folderID, uploadID, node string, options ...fs.OpenOption) (response *http.Response, err error) {
 	// fs.Debugf(f, "Uploading File `%s`", fileName)
 
-	fileName = replaceReservedChars(fileName)
+	fileName = f.opt.Enc.FromStandardName(fileName)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
 		return nil, errors.New("Invalid UploadID")
@@ -331,6 +334,7 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName,
 		NoResponse:           true,
 		Body:                 in,
 		ContentLength:        &size,
+		Options:              options,
 		MultipartContentName: "file[]",
 		MultipartFileName:    fileName,
 		MultipartParams: map[string][]string{

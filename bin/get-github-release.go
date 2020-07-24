@@ -9,6 +9,7 @@ package main
 
 import (
 	"archive/tar"
+	"compress/bzip2"
 	"compress/gzip"
 	"encoding/json"
 	"flag"
@@ -41,10 +42,10 @@ var (
 	// Globals
 	matchProject = regexp.MustCompile(`^([\w-]+)/([\w-]+)$`)
 	osAliases    = map[string][]string{
-		"darwin": []string{"macos", "osx"},
+		"darwin": {"macos", "osx"},
 	}
 	archAliases = map[string][]string{
-		"amd64": []string{"x86_64"},
+		"amd64": {"x86_64"},
 	}
 )
 
@@ -349,6 +350,8 @@ func untar(srcFile, fileName, extractDir string) {
 			log.Fatalf("Couldn't open gzip: %v", err)
 		}
 		in = gzf
+	} else if srcExt == ".bz2" {
+		in = bzip2.NewReader(f)
 	}
 
 	tarReader := tar.NewReader(in)
@@ -371,15 +374,12 @@ func untar(srcFile, fileName, extractDir string) {
 				if err != nil {
 					log.Fatalf("Couldn't open output file: %v", err)
 				}
-				defer func() {
-					err := out.Close()
-					if err != nil {
-						log.Fatalf("Couldn't close output: %v", err)
-					}
-				}()
 				n, err := io.Copy(out, tarReader)
 				if err != nil {
 					log.Fatalf("Couldn't write output file: %v", err)
+				}
+				if err = out.Close(); err != nil {
+					log.Fatalf("Couldn't close output: %v", err)
 				}
 				log.Printf("Wrote %s (%d bytes) as %q", fileName, n, outPath)
 			}

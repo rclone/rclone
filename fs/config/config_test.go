@@ -115,14 +115,6 @@ func TestCRUD(t *testing.T) {
 	assert.Equal(t, "true", FileGet("asdf", "bool"))
 	assert.Equal(t, "secret", obscure.MustReveal(FileGet("asdf", "pass")))
 
-	// no-op rename, asdf → asdf
-	RenameRemote("asdf")
-
-	assert.Equal(t, []string{"asdf"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("asdf", "type"))
-	assert.Equal(t, "true", FileGet("asdf", "bool"))
-	assert.Equal(t, "secret", obscure.MustReveal(FileGet("asdf", "pass")))
-
 	// delete remote
 	DeleteRemote("asdf")
 	assert.Equal(t, []string{}, configFile.GetSectionList())
@@ -163,38 +155,79 @@ func TestChooseOption(t *testing.T) {
 	assert.Equal(t, "", FileGet("test", "pass"))
 }
 
+func TestNewRemoteName(t *testing.T) {
+	defer testConfigFile(t, "crud.conf")()
+
+	// script for creating remote
+	ReadLine = makeReadLine([]string{
+		"config_test_remote", // type
+		"true",               // bool value
+		"n",                  // not required
+		"y",                  // looks good, save
+	})
+	NewRemote("test")
+
+	ReadLine = makeReadLine([]string{
+		"test",           // already exists
+		"",               // empty string not allowed
+		"bad@characters", // bad characters
+		"newname",        // OK
+	})
+
+	assert.Equal(t, "newname", NewRemoteName())
+}
+
 func TestCreateUpatePasswordRemote(t *testing.T) {
 	defer testConfigFile(t, "update.conf")()
 
-	require.NoError(t, CreateRemote("test2", "config_test_remote", rc.Params{
-		"bool": true,
-		"pass": "potato",
-	}))
+	for _, doObscure := range []bool{false, true} {
+		for _, noObscure := range []bool{false, true} {
+			if doObscure && noObscure {
+				break
+			}
+			t.Run(fmt.Sprintf("doObscure=%v,noObscure=%v", doObscure, noObscure), func(t *testing.T) {
+				require.NoError(t, CreateRemote("test2", "config_test_remote", rc.Params{
+					"bool": true,
+					"pass": "potato",
+				}, doObscure, noObscure))
 
-	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "true", FileGet("test2", "bool"))
-	assert.Equal(t, "potato", obscure.MustReveal(FileGet("test2", "pass")))
+				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
+				assert.Equal(t, "true", FileGet("test2", "bool"))
+				gotPw := FileGet("test2", "pass")
+				if !noObscure {
+					gotPw = obscure.MustReveal(gotPw)
+				}
+				assert.Equal(t, "potato", gotPw)
 
-	require.NoError(t, UpdateRemote("test2", rc.Params{
-		"bool":  false,
-		"pass":  obscure.MustObscure("potato2"),
-		"spare": "spare",
-	}))
+				wantPw := obscure.MustObscure("potato2")
+				require.NoError(t, UpdateRemote("test2", rc.Params{
+					"bool":  false,
+					"pass":  wantPw,
+					"spare": "spare",
+				}, doObscure, noObscure))
 
-	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "false", FileGet("test2", "bool"))
-	assert.Equal(t, "potato2", obscure.MustReveal(FileGet("test2", "pass")))
+				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
+				assert.Equal(t, "false", FileGet("test2", "bool"))
+				gotPw = FileGet("test2", "pass")
+				if doObscure {
+					gotPw = obscure.MustReveal(gotPw)
+				}
+				assert.Equal(t, wantPw, gotPw)
 
-	require.NoError(t, PasswordRemote("test2", rc.Params{
-		"pass": "potato3",
-	}))
+				require.NoError(t, PasswordRemote("test2", rc.Params{
+					"pass": "potato3",
+				}))
 
-	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "false", FileGet("test2", "bool"))
-	assert.Equal(t, "potato3", obscure.MustReveal(FileGet("test2", "pass")))
+				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
+				assert.Equal(t, "false", FileGet("test2", "bool"))
+				assert.Equal(t, "potato3", obscure.MustReveal(FileGet("test2", "pass")))
+			})
+		}
+	}
+
 }
 
 // Test some error cases
@@ -254,6 +287,53 @@ func TestConfigLoadEncrypted(t *testing.T) {
 	keys := c.GetKeyList("nounc")
 	expect = []string{"type", "nounc"}
 	assert.Equal(t, expect, keys)
+}
+
+func TestConfigLoadEncryptedWithValidPassCommand(t *testing.T) {
+	oldConfigPath := ConfigPath
+	oldConfig := fs.Config
+	ConfigPath = "./testdata/encrypted.conf"
+	// using fs.Config.PasswordCommand, correct password
+	fs.Config.PasswordCommand = fs.SpaceSepList{"echo", "asdf"}
+	defer func() {
+		ConfigPath = oldConfigPath
+		configKey = nil // reset password
+		fs.Config = oldConfig
+		fs.Config.PasswordCommand = nil
+	}()
+
+	configKey = nil // reset password
+
+	c, err := loadConfigFile()
+	require.NoError(t, err)
+
+	sections := c.GetSectionList()
+	var expect = []string{"nounc", "unc"}
+	assert.Equal(t, expect, sections)
+
+	keys := c.GetKeyList("nounc")
+	expect = []string{"type", "nounc"}
+	assert.Equal(t, expect, keys)
+}
+
+func TestConfigLoadEncryptedWithInvalidPassCommand(t *testing.T) {
+	oldConfigPath := ConfigPath
+	oldConfig := fs.Config
+	ConfigPath = "./testdata/encrypted.conf"
+	// using fs.Config.PasswordCommand, incorrect password
+	fs.Config.PasswordCommand = fs.SpaceSepList{"echo", "asdf-blurfl"}
+	defer func() {
+		ConfigPath = oldConfigPath
+		configKey = nil // reset password
+		fs.Config = oldConfig
+		fs.Config.PasswordCommand = nil
+	}()
+
+	configKey = nil // reset password
+
+	_, err := loadConfigFile()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "using --password-command derived password")
 }
 
 func TestConfigLoadEncryptedFailures(t *testing.T) {
@@ -348,7 +428,7 @@ func TestFileRefresh(t *testing.T) {
 	defer testConfigFile(t, "refresh.conf")()
 	require.NoError(t, CreateRemote("refresh_test", "config_test_remote", rc.Params{
 		"bool": true,
-	}))
+	}, false, false))
 	b, err := ioutil.ReadFile(ConfigPath)
 	assert.NoError(t, err)
 

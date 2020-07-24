@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/sync"
 	"github.com/spf13/cobra"
@@ -14,11 +15,12 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().BoolVarP(&createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after sync")
+	cmd.Root.AddCommand(commandDefinition)
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &createEmptySrcDirs, "create-empty-src-dirs", "", createEmptySrcDirs, "Create empty source dirs on destination after sync")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "sync source:path dest:path",
 	Short: `Make source and dest identical, modifying destination only.`,
 	Long: `
@@ -28,7 +30,9 @@ modification time or MD5SUM.  Destination is updated to match
 source, including deleting files if necessary.
 
 **Important**: Since this can cause data loss, test first with the
-` + "`" + `--dry-run` + "`" + ` flag to see exactly what would be copied and deleted.
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
+
+    rclone sync -i SOURCE remote:DESTINATION
 
 Note that files in the destination won't be deleted if there were any
 errors at any point.

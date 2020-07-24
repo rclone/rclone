@@ -2,7 +2,6 @@
 title: "Overview of cloud storage systems"
 description: "Overview of cloud storage systems"
 type: page
-date: "2019-02-25"
 ---
 
 # Overview of cloud storage systems #
@@ -22,6 +21,7 @@ Here is an overview of the major features of each cloud storage system.
 | Amazon S3                    | MD5         | Yes     | No               | No              | R/W       |
 | Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
 | Box                          | SHA1        | Yes     | Yes              | No              | -         |
+| Citrix ShareFile             | MD5         | Yes     | Yes              | No              | -         |
 | Dropbox                      | DBHASH †    | Yes     | Yes              | No              | -         |
 | FTP                          | -           | No      | No               | No              | -         |
 | Google Cloud Storage         | MD5         | Yes     | No               | No              | R/W       |
@@ -33,15 +33,19 @@ Here is an overview of the major features of each cloud storage system.
 | Koofr                        | MD5         | No      | Yes              | No              | -         |
 | Mail.ru Cloud                | Mailru ‡‡‡  | Yes     | Yes              | No              | -         |
 | Mega                         | -           | No      | No               | Yes             | -         |
+| Memory                       | MD5         | Yes     | No               | No              | -         |
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
 | Microsoft OneDrive           | SHA1 ‡‡     | Yes     | Yes              | No              | R         |
 | OpenDrive                    | MD5         | Yes     | Yes              | No              | -         |
-| Openstack Swift              | MD5         | Yes     | No               | No              | R/W       |
+| OpenStack Swift              | MD5         | Yes     | No               | No              | R/W       |
 | pCloud                       | MD5, SHA1   | Yes     | No               | No              | W         |
 | premiumize.me                | -           | No      | Yes              | No              | R         |
 | put.io                       | CRC-32      | Yes     | No               | Yes             | R         |
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
+| Seafile                      | -           | No      | No               | No              | -         |
 | SFTP                         | MD5, SHA1 ‡ | Yes     | Depends          | No              | -         |
+| SugarSync                    | -           | No      | No               | No              | -         |
+| Tardigrade                   | -           | Yes     | No               | No              | -         |
 | WebDAV                       | MD5, SHA1 ††| Yes ††† | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R/W       |
 | The local filesystem         | All         | Yes     | Depends          | No              | -         |
@@ -113,6 +117,182 @@ objects with the same name.
 This confuses rclone greatly when syncing - use the `rclone dedupe`
 command to rename or remove duplicates.
 
+### Restricted filenames ###
+
+Some cloud storage systems might have restrictions on the characters
+that are usable in file or directory names.
+When `rclone` detects such a name during a file upload, it will
+transparently replace the restricted characters with similar looking
+Unicode characters.
+
+This process is designed to avoid ambiguous file names as much as
+possible and allow to move files between many cloud storage systems
+transparently.
+
+The name shown by `rclone` to the user or during log output will only
+contain a minimal set of [replaced characters](#restricted-characters)
+to ensure correct formatting and not necessarily the actual name used
+on the cloud storage.
+
+This transformation is reversed when downloading a file or parsing
+`rclone` arguments.
+For example, when uploading a file named `my file?.txt` to Onedrive
+will be displayed as `my file?.txt` on the console, but stored as
+`my file？.txt` (the `?` gets replaced by the similar looking `？`
+character) to Onedrive.
+The reverse transformation allows to read a file`unusual/name.txt`
+from Google Drive, by passing the name `unusual／name.txt` (the `/` needs
+to be replaced by the similar looking `／` character) on the command line.
+
+#### Default restricted characters {#restricted-characters}
+
+The table below shows the characters that are replaced by default.
+
+When a replacement character is found in a filename, this character
+will be escaped with the `‛` character to avoid ambiguous file names.
+(e.g. a file named `␀.txt` would shown as `‛␀.txt`)
+
+Each cloud storage backend can use a different set of characters,
+which will be specified in the documentation for each backend.
+
+| Character | Value | Replacement |
+| --------- |:-----:|:-----------:|
+| NUL       | 0x00  | ␀           |
+| SOH       | 0x01  | ␁           |
+| STX       | 0x02  | ␂           |
+| ETX       | 0x03  | ␃           |
+| EOT       | 0x04  | ␄           |
+| ENQ       | 0x05  | ␅           |
+| ACK       | 0x06  | ␆           |
+| BEL       | 0x07  | ␇           |
+| BS        | 0x08  | ␈           |
+| HT        | 0x09  | ␉           |
+| LF        | 0x0A  | ␊           |
+| VT        | 0x0B  | ␋           |
+| FF        | 0x0C  | ␌           |
+| CR        | 0x0D  | ␍           |
+| SO        | 0x0E  | ␎           |
+| SI        | 0x0F  | ␏           |
+| DLE       | 0x10  | ␐           |
+| DC1       | 0x11  | ␑           |
+| DC2       | 0x12  | ␒           |
+| DC3       | 0x13  | ␓           |
+| DC4       | 0x14  | ␔           |
+| NAK       | 0x15  | ␕           |
+| SYN       | 0x16  | ␖           |
+| ETB       | 0x17  | ␗           |
+| CAN       | 0x18  | ␘           |
+| EM        | 0x19  | ␙           |
+| SUB       | 0x1A  | ␚           |
+| ESC       | 0x1B  | ␛           |
+| FS        | 0x1C  | ␜           |
+| GS        | 0x1D  | ␝           |
+| RS        | 0x1E  | ␞           |
+| US        | 0x1F  | ␟           |
+| /         | 0x2F  | ／           |
+| DEL       | 0x7F  | ␡           |
+
+The default encoding will also encode these file names as they are
+problematic with many cloud storage systems.
+
+| File name | Replacement |
+| --------- |:-----------:|
+| .         | ．          |
+| ..        | ．．         |
+
+#### Invalid UTF-8 bytes {#invalid-utf8}
+
+Some backends only support a sequence of well formed UTF-8 bytes
+as file or directory names.
+
+In this case all invalid UTF-8 bytes will be replaced with a quoted
+representation of the byte value to allow uploading a file to such a
+backend. For example, the invalid byte `0xFE` will be encoded as `‛FE`.
+
+A common source of invalid UTF-8 bytes are local filesystems, that store
+names in a different encoding than UTF-8 or UTF-16, like latin1. See the
+[local filenames](/local/#filenames) section for details.
+
+#### Encoding option {#encoding}
+
+Most backends have an encoding options, specified as a flag
+`--backend-encoding` where `backend` is the name of the backend, or as
+a config parameter `encoding` (you'll need to select the Advanced
+config in `rclone config` to see it).
+
+This will have default value which encodes and decodes characters in
+such a way as to preserve the maximum number of characters (see
+above).
+
+However this can be incorrect in some scenarios, for example if you
+have a Windows file system with characters such as `＊` and `？` that
+you want to remain as those characters on the remote rather than being
+translated to `*` and `?`.
+
+The `--backend-encoding` flags allow you to change that. You can
+disable the encoding completely with `--backend-encoding None` or set
+`encoding = None` in the config file.
+
+Encoding takes a comma separated list of encodings. You can see the
+list of all available characters by passing an invalid value to this
+flag, eg `--local-encoding "help"` and `rclone help flags encoding`
+will show you the defaults for the backends.
+
+| Encoding  | Characters |
+| --------- | ---------- |
+| Asterisk | `*` |
+| BackQuote | `` ` `` |
+| BackSlash | `\` |
+| Colon | `:` |
+| CrLf | CR 0x0D, LF 0x0A |
+| Ctl | All control characters 0x00-0x1F |
+| Del | DEL 0x7F |
+| Dollar | `$` |
+| Dot | `.` |
+| DoubleQuote | `"` |
+| Hash | `#` |
+| InvalidUtf8 | An invalid UTF-8 character (eg latin1) |
+| LeftCrLfHtVt | CR 0x0D, LF 0x0A,HT 0x09, VT 0x0B on the left of a string |
+| LeftPeriod | `.` on the left of a string |
+| LeftSpace | SPACE on the left of a string |
+| LeftTilde | `~` on the left of a string |
+| LtGt | `<`, `>` |
+| None | No characters are encoded |
+| Percent | `%` |
+| Pipe | \| |
+| Question | `?` |
+| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string |
+| RightPeriod | `.` on the right of a string |
+| RightSpace | SPACE on the right of a string |
+| SingleQuote | `'` |
+| Slash | `/` |
+
+To take a specific example, the FTP backend's default encoding is
+
+    --ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
+
+However, let's say the FTP server is running on Windows and can't have
+any of the invalid Windows characters in file names. You are backing
+up Linux servers to this FTP server which do have those characters in
+file names. So you would add the Windows set which are
+
+    Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+
+to the existing ones, giving:
+
+    Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot,Del,RightSpace
+
+This can be specified using the `--ftp-encoding` flag or using an `encoding` parameter in the config file.
+
+Or let's say you have a Windows server but you want to preserve `＊`
+and `？`, you would then have this as the encoding (the Windows
+encoding minus `Asterisk` and `Question`).
+
+    Slash,LtGt,DoubleQuote,Colon,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+
+This can be specified using the `--local-encoding` flag or using an
+`encoding` parameter in the config file.
+
 ### MIME Type ###
 
 MIME types (also known as media types) classify types of documents
@@ -141,8 +321,9 @@ operations more efficient.
 | 1Fichier                     | No    | No   | No   | No      | No      | No    | No           | No           |   No  |  Yes |
 | Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No  | No  | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | Yes |
 | Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
-| Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes | No  | No |
-| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No  | Yes | Yes | No  | Yes |
+| Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No  | No |
+| Box                          | Yes   | Yes  | Yes  | Yes     | Yes ‡‡  | No    | Yes          | Yes          | No  | Yes |
+| Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No          | No  | Yes |
 | Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No  | Yes | Yes | Yes | Yes |
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | Yes |
 | Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
@@ -150,18 +331,22 @@ operations more efficient.
 | Google Photos                | No    | No   | No   | No      | No      | No    | No           | No          | No | No |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | Yes |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | No |
-| Jottacloud                   | Yes   | Yes  | Yes  | Yes     | No      | Yes   | No           | Yes                                                   | Yes | Yes |
+| Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes                                                   | Yes | Yes |
 | Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes                                                   | Yes | Yes |
 | Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | Yes |
-| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
+| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No          | No | No |
+| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No | No | Yes | Yes | Yes |
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                                                    | No  | Yes |
-| Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | No |
-| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | Yes |
+| OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | No |
+| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes | Yes | Yes |
 | premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | Yes         | Yes | Yes |
 | put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | Yes |
-| QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
+| QingStor                     | No    | Yes  | No   | No      | Yes     | Yes   | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
+| Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes         | Yes | Yes |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes  | Yes |
+| SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes         | No  | Yes |
+| Tardigrade                   | Yes † | No   | No   | No      | No      | Yes   | Yes          | No          | No  | No  |
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes  | Yes |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes         | Yes | Yes |
 | The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No          | Yes | Yes |
@@ -171,9 +356,9 @@ operations more efficient.
 This deletes a directory quicker than just deleting all the files in
 the directory.
 
-† Note Swift and Hubic implement this in order to delete directory
-markers but they don't actually have a quicker way of deleting files
-other than deleting them individually.
+† Note Swift, Hubic, and Tardigrade implement this in order to delete
+directory markers but they don't actually have a quicker way of deleting
+files other than deleting them individually.
 
 ‡ StreamUpload is not supported with Nextcloud
 
@@ -209,6 +394,9 @@ This is used for emptying the trash for a remote by `rclone cleanup`.
 
 If the server can't do `CleanUp` then `rclone cleanup` will return an
 error.
+
+‡‡ Note that while Box implements this it has to delete every file
+idividually so it will be slower than emptying the trash via the WebUI
 
 ### ListR ###
 

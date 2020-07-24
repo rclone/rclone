@@ -1,7 +1,6 @@
 ---
 title: "Install"
 description: "Rclone Installation"
-date: "2018-08-28"
 ---
 
 # Install #
@@ -16,7 +15,7 @@ Rclone is a Go program and comes as a single binary file.
 
 See below for some expanded Linux / macOS instructions.
 
-See the [Usage section](/docs/) of the docs for how to use rclone, or
+See the [Usage section](/docs/#usage) of the docs for how to use rclone, or
 run `rclone -h`.
 
 ## Script installation ##
@@ -56,7 +55,14 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
-## macOS installation from precompiled binary ##
+## macOS installation with brew ##
+
+    brew install rclone
+
+## macOS installation from precompiled binary, using curl ##
+
+To avoid problems with macOS gatekeeper enforcing the binary to be signed and
+notarized it is enough to download with `curl`.
 
 Download the latest version of rclone.
 
@@ -80,6 +86,19 @@ Remove the leftover files.
 Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
+
+## macOS installation from precompiled binary, using a web browser ##
+
+When downloading a binary with a web browser, the browser will set the macOS
+gatekeeper quarantine attribute. Starting from Catalina, when attempting to run
+`rclone`, a pop-up will appear saying:
+
+    “rclone” cannot be opened because the developer cannot be verified.
+    macOS cannot verify that this app is free from malware.
+
+The simplest fix is to run
+
+    xattr -d com.apple.quarantine rclone
 
 ## Install with docker ##
 
@@ -105,9 +124,10 @@ rclone v1.49.1
 There are a few command line options to consider when starting an rclone Docker container
 from the rclone image.
 
-- You need to mount the host rclone config dir at `/config` into the Docker container.
-  Due to the way in which rclone updates tokens inside its config file, you need to
-  mount a host config dir, not just a host config file.
+- You need to mount the host rclone config dir at `/config/rclone` into the Docker
+  container. Due to the fact that rclone updates tokens inside its config file, and that
+  the update process involves a file rename, you need to mount the whole host rclone
+  config dir, not just the single host rclone config file.
 
 - You need to mount a host data dir at `/data` into the Docker container.
 
@@ -154,7 +174,7 @@ kill %1
 
 ## Install from source ##
 
-Make sure you have at least [Go](https://golang.org/) 1.7
+Make sure you have at least [Go](https://golang.org/) 1.11
 installed.  [Download go](https://golang.org/dl/) if necessary.  The
 latest release is recommended. Then
 
@@ -163,16 +183,14 @@ latest release is recommended. Then
     go build
     ./rclone version
 
-You can also build and install rclone in the
-[GOPATH](https://github.com/golang/go/wiki/GOPATH) (which defaults to
-`~/go`) with:
+This will leave you a checked out version of rclone you can modify.
+
+You can also build rclone with:
 
     go get -u -v github.com/rclone/rclone
 
 and this will build the binary in `$GOPATH/bin` (`~/go/bin/rclone` by
-default) after downloading the source to
-`$GOPATH/src/github.com/rclone/rclone` (`~/go/src/github.com/rclone/rclone`
-by default).
+default) after downloading the source to the go module cache..
 
 ## Installation with Ansible ##
 

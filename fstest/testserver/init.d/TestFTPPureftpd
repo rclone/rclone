@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+NAME=pureftpd
+USER=rclone
+PASS=AcridSpiesBooks2
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name $NAME \
+           -e "FTP_USER_NAME=rclone" \
+           -e "FTP_USER_PASS=$PASS" \
+           -e "FTP_USER_HOME=/data" \
+           -e "FTP_MAX_CLIENTS=50" \
+           -e "FTP_MAX_CONNECTIONS=50" \
+           -e "FTP_PASSIVE_PORTS=30000:40000" \
+           stilliard/pure-ftpd
+
+    echo type=ftp
+    echo host=$(docker_ip)
+    echo user=$USER
+    echo pass=$(rclone obscure $PASS)
+    echo _connect=$(docker_ip):21
+}
+
+. $(dirname "$0")/run.bash

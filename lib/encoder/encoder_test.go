@@ -1,21 +1,77 @@
 package encoder
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/spf13/pflag"
+	"github.com/stretchr/testify/assert"
 )
 
+// Check it satisfies the interfaces
+var (
+	_ pflag.Value = (*MultiEncoder)(nil)
+	_ fmt.Scanner = (*MultiEncoder)(nil)
+)
+
+func TestEncodeString(t *testing.T) {
+	for _, test := range []struct {
+		mask MultiEncoder
+		want string
+	}{
+		{0, "None"},
+		{EncodeZero, "None"},
+		{EncodeDoubleQuote, "DoubleQuote"},
+		{EncodeDot, "Dot"},
+		{EncodeWin, "LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe"},
+		{EncodeHashPercent, "Hash,Percent"},
+		{EncodeSlash | EncodeDollar | EncodeColon, "Slash,Dollar,Colon"},
+		{EncodeSlash | (1 << 31), "Slash,0x80000000"},
+	} {
+		got := test.mask.String()
+		assert.Equal(t, test.want, got)
+	}
+
+}
+
+func TestEncodeSet(t *testing.T) {
+	for _, test := range []struct {
+		in      string
+		want    MultiEncoder
+		wantErr bool
+	}{
+		{"", 0, true},
+		{"None", 0, false},
+		{"None", EncodeZero, false},
+		{"DoubleQuote", EncodeDoubleQuote, false},
+		{"Dot", EncodeDot, false},
+		{"LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe", EncodeWin, false},
+		{"Hash,Percent", EncodeHashPercent, false},
+		{"Slash,Dollar,Colon", EncodeSlash | EncodeDollar | EncodeColon, false},
+		{"Slash,0x80000000", EncodeSlash | (1 << 31), false},
+		{"Blerp", 0, true},
+		{"0xFGFFF", 0, true},
+	} {
+		var got MultiEncoder
+		err := got.Set(test.in)
+		assert.Equal(t, test.wantErr, err != nil, err)
+		assert.Equal(t, test.want, got, test.in)
+	}
+
+}
+
 type testCase struct {
-	mask uint
+	mask MultiEncoder
 	in   string
 	out  string
 }
 
 func TestEncodeSingleMask(t *testing.T) {
 	for i, tc := range testCasesSingle {
-		e := MultiEncoder(tc.mask)
+		e := tc.mask
 		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
 			got := e.Encode(tc.in)
 			if got != tc.out {
@@ -31,7 +87,23 @@ func TestEncodeSingleMask(t *testing.T) {
 
 func TestEncodeSingleMaskEdge(t *testing.T) {
 	for i, tc := range testCasesSingleEdge {
-		e := MultiEncoder(tc.mask)
+		e := tc.mask
+		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
+			got := e.Encode(tc.in)
+			if got != tc.out {
+				t.Errorf("Encode(%q) want %q got %q", tc.in, tc.out, got)
+			}
+			got2 := e.Decode(got)
+			if got2 != tc.in {
+				t.Errorf("Decode(%q) want %q got %q", got, tc.in, got2)
+			}
+		})
+	}
+}
+
+func TestEncodeDoubleMaskEdge(t *testing.T) {
+	for i, tc := range testCasesDoubleEdge {
+		e := tc.mask
 		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
 			got := e.Encode(tc.in)
 			if got != tc.out {
@@ -89,7 +161,7 @@ func TestEncodeInvalidUnicode(t *testing.T) {
 			out:  "a\xBF＼\xFEb",
 		},
 	} {
-		e := MultiEncoder(tc.mask)
+		e := tc.mask
 		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
 			got := e.Encode(tc.in)
 			if got != tc.out {
@@ -102,6 +174,49 @@ func TestEncodeInvalidUnicode(t *testing.T) {
 		})
 	}
 }
+
+func TestEncodeDot(t *testing.T) {
+	for i, tc := range []testCase{
+		{
+			mask: 0,
+			in:   ".",
+			out:  ".",
+		}, {
+			mask: EncodeDot,
+			in:   ".",
+			out:  "．",
+		}, {
+			mask: 0,
+			in:   "..",
+			out:  "..",
+		}, {
+			mask: EncodeDot,
+			in:   "..",
+			out:  "．．",
+		}, {
+			mask: EncodeDot,
+			in:   "...",
+			out:  "...",
+		}, {
+			mask: EncodeDot,
+			in:   ". .",
+			out:  ". .",
+		},
+	} {
+		e := tc.mask
+		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
+			got := e.Encode(tc.in)
+			if got != tc.out {
+				t.Errorf("Encode(%q) want %q got %q", tc.in, tc.out, got)
+			}
+			got2 := e.Decode(got)
+			if got2 != tc.in {
+				t.Errorf("Decode(%q) want %q got %q", got, tc.in, got2)
+			}
+		})
+	}
+}
+
 func TestDecodeHalf(t *testing.T) {
 	for i, tc := range []testCase{
 		{
@@ -130,7 +245,7 @@ func TestDecodeHalf(t *testing.T) {
 			out:  "a‛B\\‛Eg",
 		},
 	} {
-		e := MultiEncoder(tc.mask)
+		e := tc.mask
 		t.Run(strconv.FormatInt(int64(i), 10), func(t *testing.T) {
 			got := e.Decode(tc.in)
 			if got != tc.out {
@@ -140,16 +255,15 @@ func TestDecodeHalf(t *testing.T) {
 	}
 }
 
-const oneDrive = MultiEncoder(
-	EncodeStandard |
-		EncodeWin |
-		EncodeBackSlash |
-		EncodeHashPercent |
-		EncodeDel |
-		EncodeCtl |
-		EncodeLeftTilde |
-		EncodeRightSpace |
-		EncodeRightPeriod)
+const oneDrive = (Standard |
+	EncodeWin |
+	EncodeBackSlash |
+	EncodeHashPercent |
+	EncodeDel |
+	EncodeCtl |
+	EncodeLeftTilde |
+	EncodeRightSpace |
+	EncodeRightPeriod)
 
 var benchTests = []struct {
 	in  string

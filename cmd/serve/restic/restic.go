@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/cmd/serve/httplib/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -33,9 +34,10 @@ var (
 
 func init() {
 	httpflags.AddFlags(Command.Flags())
-	Command.Flags().BoolVar(&stdio, "stdio", false, "run an HTTP2 server on stdin/stdout")
-	Command.Flags().BoolVar(&appendOnly, "append-only", false, "disallow deletion of repository data")
-	Command.Flags().BoolVar(&privateRepos, "private-repos", false, "users can only access their private repo")
+	flagSet := Command.Flags()
+	flags.BoolVarP(flagSet, &stdio, "stdio", "", false, "run an HTTP2 server on stdin/stdout")
+	flags.BoolVarP(flagSet, &appendOnly, "append-only", "", false, "disallow deletion of repository data")
+	flags.BoolVarP(flagSet, &privateRepos, "private-repos", "", false, "users can only access their private repo")
 }
 
 // Command definition for cobra
@@ -118,7 +120,7 @@ these **must** end with /.  Eg
 #### Private repositories ####
 
 The "--private-repos" flag can be used to limit users to repositories starting
-with a path of "/<username>/".
+with a path of ` + "`/<username>/`" + `.
 ` + httplib.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
@@ -271,7 +273,7 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 
 	_, err := operations.RcatSize(r.Context(), s.f, remote, r.Body, r.ContentLength, time.Now())
 	if err != nil {
-		accounting.Stats(r.Context()).Error(err)
+		err = accounting.Stats(r.Context()).Error(err)
 		fs.Errorf(remote, "Post request rcat error: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 

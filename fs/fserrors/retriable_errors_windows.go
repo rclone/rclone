@@ -6,12 +6,25 @@ import (
 	"syscall"
 )
 
+// Windows error code list
+// https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
 const (
+	WSAENETDOWN       syscall.Errno = 10050
+	WSAENETUNREACH    syscall.Errno = 10051
+	WSAENETRESET      syscall.Errno = 10052
 	WSAECONNABORTED   syscall.Errno = 10053
+	WSAECONNRESET     syscall.Errno = 10054
+	WSAENOBUFS        syscall.Errno = 10055
+	WSAENOTCONN       syscall.Errno = 10057
+	WSAESHUTDOWN      syscall.Errno = 10058
+	WSAETIMEDOUT      syscall.Errno = 10060
+	WSAECONNREFUSED   syscall.Errno = 10061
+	WSAEHOSTDOWN      syscall.Errno = 10064
+	WSAEHOSTUNREACH   syscall.Errno = 10065
+	WSAEDISCON        syscall.Errno = 10101
+	WSAEREFUSED       syscall.Errno = 10112
 	WSAHOST_NOT_FOUND syscall.Errno = 11001
 	WSATRY_AGAIN      syscall.Errno = 11002
-	WSAENETRESET      syscall.Errno = 10052
-	WSAETIMEDOUT      syscall.Errno = 10060
 )
 
 func init() {
@@ -19,11 +32,22 @@ func init() {
 	// don't seem to happen
 	retriableErrors = append(retriableErrors,
 		syscall.WSAECONNRESET,
+		WSAENETDOWN,
+		WSAENETUNREACH,
+		WSAENETRESET,
 		WSAECONNABORTED,
+		WSAECONNRESET,
+		WSAENOBUFS,
+		WSAENOTCONN,
+		WSAESHUTDOWN,
+		WSAETIMEDOUT,
+		WSAECONNREFUSED,
+		WSAEHOSTDOWN,
+		WSAEHOSTUNREACH,
+		WSAEDISCON,
+		WSAEREFUSED,
 		WSAHOST_NOT_FOUND,
 		WSATRY_AGAIN,
-		WSAENETRESET,
-		WSAETIMEDOUT,
 		syscall.ERROR_HANDLE_EOF,
 		syscall.ERROR_NETNAME_DELETED,
 		syscall.ERROR_BROKEN_PIPE,

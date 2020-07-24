@@ -7,17 +7,15 @@ import re
 import subprocess
 
 AUTHORS = "docs/content/authors.md"
-IGNORE = [ "nick@raig-wood.com" ]
+IGNORE = "bin/.ignore-emails"
 
-def load():
+def load(filename):
     """
-    returns a set of emails already in authors.md
+    returns a set of emails already in the file
     """
-    with open(AUTHORS) as fd:
+    with open(filename) as fd:
         authors = fd.read()
-    emails = set(re.findall(r"<(.*?)>", authors))
-    emails.update(IGNORE)
-    return emails
+    return set(re.findall(r"<(.*?)>", authors))
 
 def add_email(name, email):
     """
@@ -32,7 +30,9 @@ def main():
     out = subprocess.check_output(["git", "log", '--reverse', '--format=%an|%ae', "master"])
     out = out.decode("utf-8")
 
-    previous = load()
+    ignored = load(IGNORE)
+    previous = load(AUTHORS)
+    previous.update(ignored)
     for line in out.split("\n"):
         line = line.strip()
         if line == "":

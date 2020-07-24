@@ -13,6 +13,9 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 )
 
+// MaxCompletedTransfers specifies maximum number of completed transfers in startedTransfers list
+var MaxCompletedTransfers = 100
+
 // StatsInfo accounts all transfers
 type StatsInfo struct {
 	mu                sync.RWMutex
@@ -23,25 +26,29 @@ type StatsInfo struct {
 	retryError        bool
 	retryAfter        time.Time
 	checks            int64
-	checking          *stringSet
+	checking          *transferMap
 	checkQueue        int
 	checkQueueSize    int64
 	transfers         int64
-	transferring      *stringSet
+	transferring      *transferMap
 	transferQueue     int
 	transferQueueSize int64
+	renames           int64
 	renameQueue       int
 	renameQueueSize   int64
 	deletes           int64
 	inProgress        *inProgress
-	startedTransfers  []*Transfer
+	startedTransfers  []*Transfer   // currently active transfers
+	oldTimeRanges     timeRanges    // a merged list of time ranges for the transfers
+	oldDuration       time.Duration // duration of transfers we have culled
+	group             string
 }
 
 // NewStats creates an initialised StatsInfo
 func NewStats() *StatsInfo {
 	return &StatsInfo{
-		checking:     newStringSet(fs.Config.Checkers, "checking"),
-		transferring: newStringSet(fs.Config.Transfers, "transferring"),
+		checking:     newTransferMap(fs.Config.Checkers, "checking"),
+		transferring: newTransferMap(fs.Config.Transfers, "transferring"),
 		inProgress:   newInProgress(),
 	}
 }
@@ -50,13 +57,7 @@ func NewStats() *StatsInfo {
 func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out = make(rc.Params)
 	s.mu.RLock()
-	dt := s.totalDuration()
-	dtSeconds := dt.Seconds()
-	speed := 0.0
-	if dt > 0 {
-		speed = float64(s.bytes) / dtSeconds
-	}
-	out["speed"] = speed
+	out["speed"] = s.Speed()
 	out["bytes"] = s.bytes
 	out["errors"] = s.errors
 	out["fatalError"] = s.fatalError
@@ -64,14 +65,15 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["checks"] = s.checks
 	out["transfers"] = s.transfers
 	out["deletes"] = s.deletes
-	out["elapsedTime"] = dtSeconds
+	out["renames"] = s.renames
+	out["elapsedTime"] = s.totalDuration().Seconds()
 	s.mu.RUnlock()
 	if !s.checking.empty() {
 		var c []string
 		s.checking.mu.RLock()
 		defer s.checking.mu.RUnlock()
-		for name := range s.checking.items {
-			c = append(c, name)
+		for _, tr := range s.checking.sortedSlice() {
+			c = append(c, tr.remote)
 		}
 		out["checking"] = c
 	}
@@ -79,11 +81,11 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 		s.transferring.mu.RLock()
 
 		var t []rc.Params
-		for name := range s.transferring.items {
-			if acc := s.inProgress.get(name); acc != nil {
+		for _, tr := range s.transferring.sortedSlice() {
+			if acc := s.inProgress.get(tr.remote); acc != nil {
 				t = append(t, acc.RemoteStats())
 			} else {
-				t = append(t, s.transferRemoteStats(name))
+				t = append(t, s.transferRemoteStats(tr))
 			}
 		}
 		out["transferring"] = t
@@ -95,64 +97,109 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	return out, nil
 }
 
-func (s *StatsInfo) transferRemoteStats(name string) rc.Params {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	for _, tr := range s.startedTransfers {
-		if tr.remote == name {
-			return rc.Params{
-				"name": name,
-				"size": tr.size,
-			}
-		}
+// Speed returns the average speed of the transfer in bytes/second
+func (s *StatsInfo) Speed() float64 {
+	dt := s.totalDuration()
+	dtSeconds := dt.Seconds()
+	speed := 0.0
+	if dt > 0 {
+		speed = float64(s.bytes) / dtSeconds
 	}
-	return rc.Params{"name": name}
+	return speed
 }
 
+func (s *StatsInfo) transferRemoteStats(tr *Transfer) rc.Params {
+	return rc.Params{
+		"name": tr.remote,
+		"size": tr.size,
+	}
+}
+
+// timeRange is a start and end time of a transfer
 type timeRange struct {
 	start time.Time
 	end   time.Time
+}
+
+// timeRanges is a list of non-overlapping start and end times for
+// transfers
+type timeRanges []timeRange
+
+// merge all the overlapping time ranges
+func (trs *timeRanges) merge() {
+	Trs := *trs
+
+	// Sort by the starting time.
+	sort.Slice(Trs, func(i, j int) bool {
+		return Trs[i].start.Before(Trs[j].start)
+	})
+
+	// Merge overlaps and add distinctive ranges together
+	var (
+		newTrs = Trs[:0]
+		i, j   = 0, 1
+	)
+	for i < len(Trs) {
+		if j < len(Trs) {
+			if !Trs[i].end.Before(Trs[j].start) {
+				if Trs[i].end.Before(Trs[j].end) {
+					Trs[i].end = Trs[j].end
+				}
+				j++
+				continue
+			}
+		}
+		newTrs = append(newTrs, Trs[i])
+		i = j
+		j++
+	}
+
+	*trs = newTrs
+}
+
+// cull remove any ranges whose start and end are before cutoff
+// returning their duration sum
+func (trs *timeRanges) cull(cutoff time.Time) (d time.Duration) {
+	var newTrs = (*trs)[:0]
+	for _, tr := range *trs {
+		if cutoff.Before(tr.start) || cutoff.Before(tr.end) {
+			newTrs = append(newTrs, tr)
+		} else {
+			d += tr.end.Sub(tr.start)
+		}
+	}
+	*trs = newTrs
+	return d
+}
+
+// total the time out of the time ranges
+func (trs timeRanges) total() (total time.Duration) {
+	for _, tr := range trs {
+		total += tr.end.Sub(tr.start)
+	}
+	return total
 }
 
 // Total duration is union of durations of all transfers belonging to this
 // object.
 // Needs to be protected by mutex.
 func (s *StatsInfo) totalDuration() time.Duration {
-	now := time.Now()
+	// copy of s.oldTimeRanges with extra room for the current transfers
+	timeRanges := make(timeRanges, len(s.oldTimeRanges), len(s.oldTimeRanges)+len(s.startedTransfers))
+	copy(timeRanges, s.oldTimeRanges)
+
 	// Extract time ranges of all transfers.
-	timeRanges := make([]timeRange, len(s.startedTransfers))
+	now := time.Now()
 	for i := range s.startedTransfers {
 		start, end := s.startedTransfers[i].TimeRange()
 		if end.IsZero() {
 			end = now
 		}
-		timeRanges[i] = timeRange{start, end}
+		timeRanges = append(timeRanges, timeRange{start, end})
 	}
 
-	// Sort by the starting time.
-	sort.Slice(timeRanges, func(i, j int) bool {
-		return timeRanges[i].start.Before(timeRanges[j].start)
-	})
-
-	// Merge overlaps and add distinctive ranges together for total.
-	var total time.Duration
-	var i, j = 0, 1
-	for i < len(timeRanges) {
-		if j < len(timeRanges) {
-			if timeRanges[j].start.Before(timeRanges[i].end) {
-				if timeRanges[i].end.Before(timeRanges[j].end) {
-					timeRanges[i].end = timeRanges[j].end
-				}
-				j++
-				continue
-			}
-		}
-		total += timeRanges[i].end.Sub(timeRanges[i].start)
-		i = j
-		j++
-	}
-
-	return total
+	timeRanges.merge()
+	return s.oldDuration + timeRanges.total()
 }
 
 // eta returns the ETA of the current operation,
@@ -203,11 +250,11 @@ func (s *StatsInfo) String() string {
 
 	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
+	dtSecondsOnly := dt.Truncate(time.Second/10) % time.Minute
 	speed := 0.0
 	if dt > 0 {
 		speed = float64(s.bytes) / dtSeconds
 	}
-	dtRounded := dt - (dt % (time.Second / 10))
 
 	displaySpeed := speed
 	if fs.Config.DataRateUnit == "bits" {
@@ -245,7 +292,7 @@ func (s *StatsInfo) String() string {
 		}
 	}
 
-	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s",
+	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s\n",
 		dateString,
 		fs.SizeSuffix(s.bytes),
 		fs.SizeSuffix(totalSize).Unit("Bytes"),
@@ -266,16 +313,26 @@ func (s *StatsInfo) String() string {
 			errorDetails = " (no need to retry)"
 		}
 
-		_, _ = fmt.Fprintf(buf, `
-Errors:        %10d%s
-Checks:        %10d / %d, %s
-Transferred:   %10d / %d, %s
-Elapsed time:  %10v
-`,
-			s.errors, errorDetails,
-			s.checks, totalChecks, percent(s.checks, totalChecks),
-			s.transfers, totalTransfer, percent(s.transfers, totalTransfer),
-			dtRounded)
+		// Add only non zero stats
+		if s.errors != 0 {
+			_, _ = fmt.Fprintf(buf, "Errors:        %10d%s\n",
+				s.errors, errorDetails)
+		}
+		if s.checks != 0 || totalChecks != 0 {
+			_, _ = fmt.Fprintf(buf, "Checks:        %10d / %d, %s\n",
+				s.checks, totalChecks, percent(s.checks, totalChecks))
+		}
+		if s.deletes != 0 {
+			_, _ = fmt.Fprintf(buf, "Deleted:       %10d\n", s.deletes)
+		}
+		if s.renames != 0 {
+			_, _ = fmt.Fprintf(buf, "Renamed:       %10d\n", s.renames)
+		}
+		if s.transfers != 0 || totalTransfer != 0 {
+			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
+				s.transfers, totalTransfer, percent(s.transfers, totalTransfer))
+		}
+		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10ss\n", strings.TrimRight(dt.Truncate(time.Minute).String(), "0s")+fmt.Sprintf("%.1f", dtSecondsOnly.Seconds()))
 	}
 
 	// checking and transferring have their own locking so unlock
@@ -285,10 +342,10 @@ Elapsed time:  %10v
 	// Add per transfer stats if required
 	if !fs.Config.StatsOneLine {
 		if !s.checking.empty() {
-			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.inProgress))
+			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.inProgress, s.transferring))
 		}
 		if !s.transferring.empty() {
-			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.inProgress))
+			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.inProgress, nil))
 		}
 	}
 
@@ -311,7 +368,13 @@ func (s *StatsInfo) Transferred() []TransferSnapshot {
 
 // Log outputs the StatsInfo to the log
 func (s *StatsInfo) Log() {
-	fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%v\n", s)
+	if fs.Config.UseJSONLog {
+		out, _ := s.RemoteStats()
+		fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%v%v\n", s, fs.LogValue("stats", out))
+	} else {
+		fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%v\n", s)
+	}
+
 }
 
 // Bytes updates the stats for bytes bytes
@@ -326,6 +389,22 @@ func (s *StatsInfo) GetBytes() int64 {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.bytes
+}
+
+// GetBytesWithPending returns the number of bytes transferred and remaining transfers
+func (s *StatsInfo) GetBytesWithPending() int64 {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	pending := int64(0)
+	for _, tr := range s.startedTransfers {
+		if tr.acc != nil {
+			bytes, size := tr.acc.progress()
+			if bytes < size {
+				pending += size - bytes
+			}
+		}
+	}
+	return s.bytes + pending
 }
 
 // Errors updates the stats for errors
@@ -392,7 +471,15 @@ func (s *StatsInfo) Deletes(deletes int64) int64 {
 	return s.deletes
 }
 
-// ResetCounters sets the counters (bytes, checks, errors, transfers, deletes) to 0 and resets lastError, fatalError and retryError
+// Renames updates the stats for renames
+func (s *StatsInfo) Renames(renames int64) int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.renames += renames
+	return s.renames
+}
+
+// ResetCounters sets the counters (bytes, checks, errors, transfers, deletes, renames) to 0 and resets lastError, fatalError and retryError
 func (s *StatsInfo) ResetCounters() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -405,7 +492,9 @@ func (s *StatsInfo) ResetCounters() {
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
+	s.renames = 0
 	s.startedTransfers = nil
+	s.oldDuration = 0
 }
 
 // ResetErrors sets the errors count to 0 and resets lastError, fatalError and retryError
@@ -427,14 +516,16 @@ func (s *StatsInfo) Errored() bool {
 }
 
 // Error adds a single error into the stats, assigns lastError and eventually sets fatalError or retryError
-func (s *StatsInfo) Error(err error) {
-	if err == nil {
-		return
+func (s *StatsInfo) Error(err error) error {
+	if err == nil || fserrors.IsCounted(err) {
+		return err
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.errors++
 	s.lastError = err
+	err = fserrors.FsError(err)
+	fserrors.Count(err)
 	switch {
 	case fserrors.IsFatalError(err):
 		s.fatalError = true
@@ -447,6 +538,7 @@ func (s *StatsInfo) Error(err error) {
 	case !fserrors.IsNoRetryError(err):
 		s.retryError = true
 	}
+	return err
 }
 
 // RetryAfter returns the time to retry after if it is set.  It will
@@ -459,8 +551,9 @@ func (s *StatsInfo) RetryAfter() time.Time {
 
 // NewCheckingTransfer adds a checking transfer to the stats, from the object.
 func (s *StatsInfo) NewCheckingTransfer(obj fs.Object) *Transfer {
-	s.checking.add(obj.Remote())
-	return newCheckingTransfer(s, obj)
+	tr := newCheckingTransfer(s, obj)
+	s.checking.add(tr)
+	return tr
 }
 
 // DoneChecking removes a check from the stats
@@ -480,14 +573,16 @@ func (s *StatsInfo) GetTransfers() int64 {
 
 // NewTransfer adds a transfer to the stats from the object.
 func (s *StatsInfo) NewTransfer(obj fs.Object) *Transfer {
-	s.transferring.add(obj.Remote())
-	return newTransfer(s, obj)
+	tr := newTransfer(s, obj)
+	s.transferring.add(tr)
+	return tr
 }
 
 // NewTransferRemoteSize adds a transfer to the stats based on remote and size.
 func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
-	s.transferring.add(remote)
-	return newTransferRemoteSize(s, remote, size, false)
+	tr := newTransferRemoteSize(s, remote, size, false)
+	s.transferring.add(tr)
+	return tr
 }
 
 // DoneTransferring removes a transfer from the stats
@@ -530,5 +625,67 @@ func (s *StatsInfo) SetRenameQueue(n int, size int64) {
 func (s *StatsInfo) AddTransfer(transfer *Transfer) {
 	s.mu.Lock()
 	s.startedTransfers = append(s.startedTransfers, transfer)
+	s.mu.Unlock()
+}
+
+// removeTransfer removes a reference to the started transfer in
+// position i.
+//
+// Must be called with the lock held
+func (s *StatsInfo) removeTransfer(transfer *Transfer, i int) {
+	now := time.Now()
+
+	// add finished transfer onto old time ranges
+	start, end := transfer.TimeRange()
+	if end.IsZero() {
+		end = now
+	}
+	s.oldTimeRanges = append(s.oldTimeRanges, timeRange{start, end})
+	s.oldTimeRanges.merge()
+
+	// remove the found entry
+	s.startedTransfers = append(s.startedTransfers[:i], s.startedTransfers[i+1:]...)
+
+	// Find youngest active transfer
+	oldestStart := now
+	for i := range s.startedTransfers {
+		start, _ := s.startedTransfers[i].TimeRange()
+		if start.Before(oldestStart) {
+			oldestStart = start
+		}
+	}
+
+	// remove old entries older than that
+	s.oldDuration += s.oldTimeRanges.cull(oldestStart)
+}
+
+// RemoveTransfer removes a reference to the started transfer.
+func (s *StatsInfo) RemoveTransfer(transfer *Transfer) {
+	s.mu.Lock()
+	for i, tr := range s.startedTransfers {
+		if tr == transfer {
+			s.removeTransfer(tr, i)
+			break
+		}
+	}
+	s.mu.Unlock()
+}
+
+// PruneTransfers makes sure there aren't too many old transfers by removing
+// single finished transfer.
+func (s *StatsInfo) PruneTransfers() {
+	if MaxCompletedTransfers < 0 {
+		return
+	}
+	s.mu.Lock()
+	// remove a transfer from the start if we are over quota
+	if len(s.startedTransfers) > MaxCompletedTransfers+fs.Config.Transfers {
+		for i, tr := range s.startedTransfers {
+			if tr.IsDone() {
+				s.removeTransfer(tr, i)
+				break
+			}
+		}
+	}
 	s.mu.Unlock()
 }

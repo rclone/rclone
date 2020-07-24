@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -14,11 +15,12 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
-	commandDefintion.Flags().VarP(&dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|rename.")
+	cmd.Root.AddCommand(commandDefinition)
+	cmdFlag := commandDefinition.Flags()
+	flags.FVarP(cmdFlag, &dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|largest|smallest|rename.")
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "dedupe [mode] remote:path",
 	Short: `Interactively find duplicate files and delete/rename them.`,
 	Long: `
@@ -32,8 +34,10 @@ merged.
 
 The ` + "`" + `dedupe` + "`" + ` command will delete all but one of any identical (same
 md5sum) files it finds without confirmation.  This means that for most
-duplicated files the ` + "`" + `dedupe` + "`" + ` command will not be interactive.  You
-can use ` + "`" + `--dry-run` + "`" + ` to see what would happen without doing anything.
+duplicated files the ` + "`" + `dedupe` + "`" + ` command will not be interactive.
+
+**Important**: Since this can cause data loss, test first with the
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 
 Here is an example run.
 
@@ -92,6 +96,7 @@ Dedupe can be run non interactively using the ` + "`" + `--dedupe-mode` + "`" + 
   * ` + "`" + `--dedupe-mode newest` + "`" + ` - removes identical files then keeps the newest one.
   * ` + "`" + `--dedupe-mode oldest` + "`" + ` - removes identical files then keeps the oldest one.
   * ` + "`" + `--dedupe-mode largest` + "`" + ` - removes identical files then keeps the largest one.
+  * ` + "`" + `--dedupe-mode smallest` + "`" + ` - removes identical files then keeps the smallest one.
   * ` + "`" + `--dedupe-mode rename` + "`" + ` - removes identical files then renames the rest to be different.
 
 For example to rename all the identically named photos in your Google Photos directory, do

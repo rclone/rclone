@@ -1,7 +1,6 @@
 ---
 title: "FAQ"
 description: "Rclone Frequently Asked Questions"
-date: "2015-08-27"
 ---
 
 Frequently Asked Questions
@@ -35,7 +34,7 @@ The syncs would be incremental (on a file by file basis).
 
 Eg
 
-    rclone sync drive:Folder s3:bucket
+    rclone sync -i drive:Folder s3:bucket
 
 
 ### Using rclone from multiple locations at the same time ###
@@ -44,12 +43,12 @@ You can use rclone from multiple places at the same time if you choose
 different subdirectory for the output, eg
 
 ```
-Server A> rclone sync /tmp/whatever remote:ServerA
-Server B> rclone sync /tmp/whatever remote:ServerB
+Server A> rclone sync -i /tmp/whatever remote:ServerA
+Server B> rclone sync -i /tmp/whatever remote:ServerB
 ```
 
 If you sync to the same directory then you should use rclone copy
-otherwise the two rclones may delete each others files, eg
+otherwise the two instances of rclone may delete each other's files, eg
 
 ```
 Server A> rclone copy /tmp/whatever remote:Backup
@@ -145,7 +144,7 @@ curl -o /etc/ssl/certs/ca-certificates.crt https://raw.githubusercontent.com/bag
 ntpclient -s -h pool.ntp.org
 ```
 
-The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in the [x509 pacakge](https://godoc.org/crypto/x509),
+The two environment variables `SSL_CERT_FILE` and `SSL_CERT_DIR`, mentioned in the [x509 package](https://godoc.org/crypto/x509),
 provide an additional way to provide the SSL root certificates.
 
 Note that you may need to add the `--insecure` option to the `curl` command line if it doesn't work without.
@@ -209,5 +208,5 @@ work harder, reducing memory size at the expense of CPU usage.
 
 The most common cause of rclone using lots of memory is a single
 directory with thousands or millions of files in.  Rclone has to load
-this entirely into memory as rclone objects.  Each Rclone object takes
+this entirely into memory as rclone objects.  Each rclone object takes
 0.5k-1k of memory.

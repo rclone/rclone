@@ -4,14 +4,17 @@ package vfs
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/pkg/errors"
 	_ "github.com/rclone/rclone/backend/all" // import all the backends
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,9 +26,39 @@ var (
 	t3 = fstest.Time("2011-12-30T12:59:59.000000000Z")
 )
 
+// Constants uses in the tests
+const (
+	writeBackDelay      = 100 * time.Millisecond // A short writeback delay for testing
+	waitForWritersDelay = 10 * time.Second       // time to wait for exiting writiers
+)
+
 // TestMain drives the tests
 func TestMain(m *testing.M) {
 	fstest.TestMain(m)
+}
+
+// Clean up a test VFS
+func cleanupVFS(t *testing.T, vfs *VFS) {
+	vfs.WaitForWriters(waitForWritersDelay)
+	err := vfs.CleanUp()
+	require.NoError(t, err)
+	vfs.Shutdown()
+}
+
+// Create a new VFS
+func newTestVFSOpt(t *testing.T, opt *vfscommon.Options) (r *fstest.Run, vfs *VFS, cleanup func()) {
+	r = fstest.NewRun(t)
+	vfs = New(r.Fremote, opt)
+	cleanup = func() {
+		cleanupVFS(t, vfs)
+		r.Finalise()
+	}
+	return r, vfs, cleanup
+}
+
+// Create a new VFS with default options
+func newTestVFS(t *testing.T) (r *fstest.Run, vfs *VFS, cleanup func()) {
+	return newTestVFSOpt(t, nil)
 }
 
 // Check baseHandle performs as advertised
@@ -95,31 +128,58 @@ func TestVFSbaseHandle(t *testing.T) {
 
 // TestNew sees if the New command works properly
 func TestVFSNew(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
+	// Check active cache has this many entries
+	checkActiveCacheEntries := func(i int) {
+		_, count := activeCacheEntries()
+		assert.Equal(t, i, count)
+	}
+
+	checkActiveCacheEntries(0)
+
+	r, vfs, cleanup := newTestVFS(t)
 
 	// Check making a VFS with nil options
-	vfs := New(r.Fremote, nil)
-	var defaultOpt = DefaultOpt
+	var defaultOpt = vfscommon.DefaultOpt
 	defaultOpt.DirPerms |= os.ModeDir
 	assert.Equal(t, vfs.Opt, defaultOpt)
 	assert.Equal(t, vfs.f, r.Fremote)
 
-	// Check the initialisation
-	var opt = DefaultOpt
+	checkActiveCacheEntries(1)
+
+	// Check that we get the same VFS if we ask for it again with
+	// the same options
+	vfs2 := New(r.Fremote, nil)
+	assert.Equal(t, fmt.Sprintf("%p", vfs), fmt.Sprintf("%p", vfs2))
+
+	checkActiveCacheEntries(1)
+
+	// Shut the new VFS down and check the cache still has stuff in
+	vfs2.Shutdown()
+
+	checkActiveCacheEntries(1)
+
+	cleanup()
+
+	checkActiveCacheEntries(0)
+}
+
+// TestNew sees if the New command works properly
+func TestVFSNewWithOpts(t *testing.T) {
+	var opt = vfscommon.DefaultOpt
 	opt.DirPerms = 0777
 	opt.FilePerms = 0666
 	opt.Umask = 0002
-	vfs = New(r.Fremote, &opt)
+	_, vfs, cleanup := newTestVFSOpt(t, &opt)
+	defer cleanup()
+
 	assert.Equal(t, os.FileMode(0775)|os.ModeDir, vfs.Opt.DirPerms)
 	assert.Equal(t, os.FileMode(0664), vfs.Opt.FilePerms)
 }
 
 // TestRoot checks root directory is present and correct
 func TestVFSRoot(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	_, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	root, err := vfs.Root()
 	require.NoError(t, err)
@@ -129,9 +189,8 @@ func TestVFSRoot(t *testing.T) {
 }
 
 func TestVFSStat(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
@@ -152,23 +211,22 @@ func TestVFSStat(t *testing.T) {
 	assert.True(t, node.IsFile())
 	assert.Equal(t, "file2", node.Name())
 
-	node, err = vfs.Stat("not found")
+	_, err = vfs.Stat("not found")
 	assert.Equal(t, os.ErrNotExist, err)
 
-	node, err = vfs.Stat("dir/not found")
+	_, err = vfs.Stat("dir/not found")
 	assert.Equal(t, os.ErrNotExist, err)
 
-	node, err = vfs.Stat("not found/not found")
+	_, err = vfs.Stat("not found/not found")
 	assert.Equal(t, os.ErrNotExist, err)
 
-	node, err = vfs.Stat("file1/under a file")
+	_, err = vfs.Stat("file1/under a file")
 	assert.Equal(t, os.ErrNotExist, err)
 }
 
 func TestVFSStatParent(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
@@ -200,9 +258,8 @@ func TestVFSStatParent(t *testing.T) {
 }
 
 func TestVFSOpenFile(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
@@ -236,13 +293,13 @@ func TestVFSOpenFile(t *testing.T) {
 }
 
 func TestVFSRename(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
+
 	features := r.Fremote.Features()
 	if features.Move == nil && features.Copy == nil {
-		return // skip as can't rename files
+		t.Skip("skip as can't rename files")
 	}
-	vfs := New(r.Fremote, nil)
 
 	file1 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -265,9 +322,8 @@ func TestVFSRename(t *testing.T) {
 }
 
 func TestVFSStatfs(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs := New(r.Fremote, nil)
+	r, vfs, cleanup := newTestVFS(t)
+	defer cleanup()
 
 	// pre-conditions
 	assert.Nil(t, vfs.usage)
@@ -278,9 +334,9 @@ func TestVFSStatfs(t *testing.T) {
 	// read
 	total, used, free := vfs.Statfs()
 	if !aboutSupported {
-		assert.Equal(t, int64(-1), total)
-		assert.Equal(t, int64(-1), free)
-		assert.Equal(t, int64(-1), used)
+		assert.Equal(t, int64(unknownFreeBytes), total)
+		assert.Equal(t, int64(unknownFreeBytes), free)
+		assert.Equal(t, int64(0), used)
 		return // can't test anything else if About not supported
 	}
 	require.NotNil(t, vfs.usage)
@@ -288,17 +344,21 @@ func TestVFSStatfs(t *testing.T) {
 	if vfs.usage.Total != nil {
 		assert.Equal(t, *vfs.usage.Total, total)
 	} else {
-		assert.Equal(t, int64(-1), total)
+		assert.True(t, total >= int64(unknownFreeBytes))
 	}
 	if vfs.usage.Free != nil {
 		assert.Equal(t, *vfs.usage.Free, free)
 	} else {
-		assert.Equal(t, int64(-1), free)
+		if vfs.usage.Total != nil && vfs.usage.Used != nil {
+			assert.Equal(t, free, total-used)
+		} else {
+			assert.True(t, free >= int64(unknownFreeBytes))
+		}
 	}
 	if vfs.usage.Used != nil {
 		assert.Equal(t, *vfs.usage.Used, used)
 	} else {
-		assert.Equal(t, int64(-1), used)
+		assert.Equal(t, int64(0), used)
 	}
 
 	// read cached
@@ -310,4 +370,52 @@ func TestVFSStatfs(t *testing.T) {
 	assert.Equal(t, used, used2)
 	assert.Equal(t, free, free2)
 	assert.Equal(t, oldTime, vfs.usageTime)
+}
+
+func TestFillInMissingSizes(t *testing.T) {
+	const unknownFree = 10
+	for _, test := range []struct {
+		total, free, used             int64
+		wantTotal, wantUsed, wantFree int64
+	}{
+		{
+			total: 20, free: 5, used: 15,
+			wantTotal: 20, wantFree: 5, wantUsed: 15,
+		},
+		{
+			total: 20, free: 5, used: -1,
+			wantTotal: 20, wantFree: 5, wantUsed: 15,
+		},
+		{
+			total: 20, free: -1, used: 15,
+			wantTotal: 20, wantFree: 5, wantUsed: 15,
+		},
+		{
+			total: 20, free: -1, used: -1,
+			wantTotal: 20, wantFree: 20, wantUsed: 0,
+		},
+		{
+			total: -1, free: 5, used: 15,
+			wantTotal: 20, wantFree: 5, wantUsed: 15,
+		},
+		{
+			total: -1, free: 15, used: -1,
+			wantTotal: 15, wantFree: 15, wantUsed: 0,
+		},
+		{
+			total: -1, free: -1, used: 15,
+			wantTotal: 25, wantFree: 10, wantUsed: 15,
+		},
+		{
+			total: -1, free: -1, used: -1,
+			wantTotal: 10, wantFree: 10, wantUsed: 0,
+		},
+	} {
+		t.Run(fmt.Sprintf("total=%d,free=%d,used=%d", test.total, test.free, test.used), func(t *testing.T) {
+			gotTotal, gotUsed, gotFree := fillInMissingSizes(test.total, test.used, test.free, unknownFree)
+			assert.Equal(t, test.wantTotal, gotTotal, "total")
+			assert.Equal(t, test.wantUsed, gotUsed, "used")
+			assert.Equal(t, test.wantFree, gotFree, "free")
+		})
+	}
 }

@@ -1,7 +1,6 @@
 ---
 title: "Contact"
 description: "Contact the rclone project"
-date: "2014-04-26"
 ---
 
 # Contact the rclone project #
@@ -12,13 +11,13 @@ Forum for questions and general discussion:
 
   * https://forum.rclone.org
 
-## Gitub project ##
+## GitHub repository ##
 
-The project website is at:
+The project's repository is located at:
 
   * https://github.com/rclone/rclone
 
-There you can file bug reports or contribute pull requests.
+There you can file bug reports or contribute with pull requests.
 
 ## Twitter ##
 
@@ -31,4 +30,4 @@ You can also follow me on twitter for rclone announcements:
 Or if all else fails or you want to ask something private or
 confidential email [Nick Craig-Wood](mailto:nick@craig-wood.com).
 Please don't email me requests for help - those are better directed to
-the forum - thanks!
+the forum. Thanks!

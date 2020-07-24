@@ -1,7 +1,6 @@
 ---
 title: "GUI"
 description: "Web based Graphical User Interface"
-date: "2019-08-25"
 ---
 
 # GUI (Experimental)
@@ -29,8 +28,13 @@ This will produce logs like this and rclone needs to continue to run to serve th
 This assumes you are running rclone locally on your machine.  It is
 possible to separate the rclone and the GUI - see below for details.
 
-If you wish to update to the latest API version then you can add
-`--rc-web-gui-update` to the command line.
+If you wish to check for updates then you can add `--rc-web-gui-update` 
+to the command line.
+
+If you find your GUI broken, you may force it to update by add `--rc-web-gui-force-update`.
+
+By default, rclone will open your browser. Add `--rc-web-gui-no-open-browser` 
+to disable this feature.
 
 ## Using the GUI
 
@@ -68,7 +72,7 @@ The flag `--rc-web-gui` is shorthand for
 - `--rc-pass <random password>`
 - `--rc-serve`
 
-These flags can be overidden as desired.
+These flags can be overridden as desired.
 
 See also the [rclone rcd documentation](https://rclone.org/commands/rclone_rcd/).
 
@@ -90,16 +94,16 @@ If you want to run the GUI behind a proxy at `/rclone` you could use these flags
 - `--rc-baseurl rclone`
 - `--rc-htpasswd /path/to/htpasswd`
 
-Or instead of htpassword if you just want a single user and password:
+Or instead of htpasswd if you just want a single user and password:
 
 - `--rc-user me`
 - `--rc-pass mypassword`
 
 ## Project
 
-The GUI is being developed in the: [rclone/rclone-webui-react respository](https://github.com/rclone/rclone-webui-react).
+The GUI is being developed in the: [rclone/rclone-webui-react repository](https://github.com/rclone/rclone-webui-react).
 
-Bug reports and contributions very welcome welcome :-)
+Bug reports and contributions are very welcome :-)
 
 If you have questions then please ask them on the [rclone forum](https://forum.rclone.org/).
 

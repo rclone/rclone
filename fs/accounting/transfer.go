@@ -18,6 +18,7 @@ type TransferSnapshot struct {
 	StartedAt   time.Time `json:"started_at"`
 	CompletedAt time.Time `json:"completed_at,omitempty"`
 	Error       error     `json:"-"`
+	Group       string    `json:"group"`
 }
 
 // MarshalJSON implements json.Marshaler interface.
@@ -26,6 +27,7 @@ func (as TransferSnapshot) MarshalJSON() ([]byte, error) {
 	if as.Error != nil {
 		err = as.Error.Error()
 	}
+
 	type Alias TransferSnapshot
 	return json.Marshal(&struct {
 		Error string `json:"error"`
@@ -84,7 +86,7 @@ func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking
 // Must be called after transfer is finished to run proper cleanups.
 func (tr *Transfer) Done(err error) {
 	if err != nil {
-		tr.stats.Error(err)
+		err = tr.stats.Error(err)
 
 		tr.mu.Lock()
 		tr.err = err
@@ -96,9 +98,14 @@ func (tr *Transfer) Done(err error) {
 	tr.mu.RUnlock()
 
 	if acc != nil {
+		// Close the file if it is still open
 		if err := acc.Close(); err != nil {
 			fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "can't close account: %+v\n", err)
 		}
+		// Signal done with accounting
+		acc.Done()
+		// free the account since we may keep the transfer
+		acc = nil
 	}
 
 	tr.mu.Lock()
@@ -109,6 +116,21 @@ func (tr *Transfer) Done(err error) {
 		tr.stats.DoneChecking(tr.remote)
 	} else {
 		tr.stats.DoneTransferring(tr.remote, err == nil)
+	}
+	tr.stats.PruneTransfers()
+}
+
+// Reset allows to switch the Account to another transfer method.
+func (tr *Transfer) Reset() {
+	tr.mu.RLock()
+	acc := tr.acc
+	tr.acc = nil
+	tr.mu.RUnlock()
+
+	if acc != nil {
+		if err := acc.Close(); err != nil {
+			fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "can't close account: %+v\n", err)
+		}
 	}
 }
 
@@ -156,5 +178,6 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 		StartedAt:   tr.startedAt,
 		CompletedAt: tr.completedAt,
 		Error:       tr.err,
+		Group:       tr.stats.group,
 	}
 }

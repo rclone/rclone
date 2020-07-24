@@ -12,6 +12,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
@@ -25,17 +26,6 @@ const (
 	fileNameAlbum  = "rclone-test-image1.jpg"
 	fileNameUpload = "rclone-test-image2.jpg"
 )
-
-// Wrapper to override the remote for an object
-type overrideRemoteObject struct {
-	fs.Object
-	remote string
-}
-
-// Remote returns the overridden remote name
-func (o *overrideRemoteObject) Remote() string {
-	return o.remote
-}
 
 func TestIntegration(t *testing.T) {
 	ctx := context.Background()
@@ -66,7 +56,7 @@ func TestIntegration(t *testing.T) {
 			require.NoError(t, err)
 			in, err := srcObj.Open(ctx)
 			require.NoError(t, err)
-			dstObj, err := f.Put(ctx, in, &overrideRemoteObject{srcObj, remote})
+			dstObj, err := f.Put(ctx, in, operations.NewOverrideRemote(srcObj, remote))
 			require.NoError(t, err)
 			assert.Equal(t, remote, dstObj.Remote())
 			_ = in.Close()
@@ -231,7 +221,7 @@ func TestIntegration(t *testing.T) {
 		require.NoError(t, err)
 		in, err := srcObj.Open(ctx)
 		require.NoError(t, err)
-		dstObj, err := f.Put(ctx, in, &overrideRemoteObject{srcObj, remote})
+		dstObj, err := f.Put(ctx, in, operations.NewOverrideRemote(srcObj, remote))
 		require.NoError(t, err)
 		assert.Equal(t, remote, dstObj.Remote())
 		_ = in.Close()

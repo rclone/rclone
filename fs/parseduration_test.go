@@ -2,6 +2,7 @@ package fs
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -36,6 +37,10 @@ func TestParseDuration(t *testing.T) {
 		{"1x", 0, true},
 		{"off", time.Duration(DurationOff), false},
 		{"1h2m3s", time.Hour + 2*time.Minute + 3*time.Second, false},
+		{"2001-02-03", time.Since(time.Date(2001, 2, 3, 0, 0, 0, 0, time.Local)), false},
+		{"2001-02-03 10:11:12", time.Since(time.Date(2001, 2, 3, 10, 11, 12, 0, time.Local)), false},
+		{"2001-02-03T10:11:12", time.Since(time.Date(2001, 2, 3, 10, 11, 12, 0, time.Local)), false},
+		{"2001-02-03T10:11:12.123Z", time.Since(time.Date(2001, 2, 3, 10, 11, 12, 123, time.UTC)), false},
 	} {
 		duration, err := ParseDuration(test.in)
 		if test.err {
@@ -43,7 +48,12 @@ func TestParseDuration(t *testing.T) {
 		} else {
 			require.NoError(t, err)
 		}
-		assert.Equal(t, test.want, duration)
+		if strings.HasPrefix(test.in, "2001-") {
+			ok := duration > test.want-time.Second && duration < test.want+time.Second
+			assert.True(t, ok, test.in)
+		} else {
+			assert.Equal(t, test.want, duration)
+		}
 	}
 }
 

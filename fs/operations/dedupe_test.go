@@ -10,9 +10,13 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Check flag satisfies the interface
+var _ pflag.Value = (*operations.DeduplicateMode)(nil)
 
 func skipIfCantDedupe(t *testing.T, f fs.Fs) {
 	if !f.Features().DuplicateFiles {
@@ -146,6 +150,22 @@ func TestDeduplicateLargest(t *testing.T) {
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file3)
+}
+
+func TestDeduplicateSmallest(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	skipIfCantDedupe(t, r.Fremote)
+
+	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
+	file2 := r.WriteUncheckedObject(context.Background(), "one", "This is one too", t2)
+	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t3)
+	r.CheckWithDuplicates(t, file1, file2, file3)
+
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSmallest)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Fremote, file1)
 }
 
 func TestDeduplicateRename(t *testing.T) {

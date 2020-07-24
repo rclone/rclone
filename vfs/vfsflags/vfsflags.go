@@ -4,13 +4,13 @@ package vfsflags
 import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/spf13/pflag"
 )
 
 // Options set by command line flags
 var (
-	Opt       = vfs.DefaultOpt
+	Opt       = vfscommon.DefaultOpt
 	DirPerms  = &FileMode{Mode: &Opt.DirPerms}
 	FilePerms = &FileMode{Mode: &Opt.FilePerms}
 )
@@ -33,5 +33,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.FVarP(flagSet, DirPerms, "dir-perms", "", "Directory permissions")
 	flags.FVarP(flagSet, FilePerms, "file-perms", "", "File permissions")
 	flags.BoolVarP(flagSet, &Opt.CaseInsensitive, "vfs-case-insensitive", "", Opt.CaseInsensitive, "If a file name not found, find a case insensitive match.")
+	flags.DurationVarP(flagSet, &Opt.WriteWait, "vfs-write-wait", "", Opt.WriteWait, "Time to wait for in-sequence write before giving error.")
+	flags.DurationVarP(flagSet, &Opt.ReadWait, "vfs-read-wait", "", Opt.ReadWait, "Time to wait for in-sequence read before seeking.")
+	flags.DurationVarP(flagSet, &Opt.WriteBack, "vfs-write-back", "", Opt.WriteBack, "Time to writeback files after last use when using cache.")
 	platformFlags(flagSet)
 }

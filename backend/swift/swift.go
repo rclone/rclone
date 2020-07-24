@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -23,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 )
@@ -58,13 +61,19 @@ Rclone will still chunk files bigger than chunk_size when doing normal
 copy operations.`,
 	Default:  false,
 	Advanced: true,
+}, {
+	Name:     config.ConfigEncoding,
+	Help:     config.ConfigEncodingHelp,
+	Advanced: true,
+	Default: (encoder.EncodeInvalidUtf8 |
+		encoder.EncodeSlash),
 }}
 
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "swift",
-		Description: "Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
+		Description: "OpenStack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
 		NewFs:       NewFs,
 		Options: append([]fs.Option{{
 			Name:    "env_auth",
@@ -105,7 +114,7 @@ func init() {
 				Value: "https://auth.storage.memset.com/v2.0",
 			}, {
 				Help:  "OVH",
-				Value: "https://auth.cloud.ovh.net/v2.0",
+				Value: "https://auth.cloud.ovh.net/v3",
 			}},
 		}, {
 			Name: "user_id",
@@ -183,26 +192,27 @@ provider.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	EnvAuth                     bool          `config:"env_auth"`
-	User                        string        `config:"user"`
-	Key                         string        `config:"key"`
-	Auth                        string        `config:"auth"`
-	UserID                      string        `config:"user_id"`
-	Domain                      string        `config:"domain"`
-	Tenant                      string        `config:"tenant"`
-	TenantID                    string        `config:"tenant_id"`
-	TenantDomain                string        `config:"tenant_domain"`
-	Region                      string        `config:"region"`
-	StorageURL                  string        `config:"storage_url"`
-	AuthToken                   string        `config:"auth_token"`
-	AuthVersion                 int           `config:"auth_version"`
-	ApplicationCredentialID     string        `config:"application_credential_id"`
-	ApplicationCredentialName   string        `config:"application_credential_name"`
-	ApplicationCredentialSecret string        `config:"application_credential_secret"`
-	StoragePolicy               string        `config:"storage_policy"`
-	EndpointType                string        `config:"endpoint_type"`
-	ChunkSize                   fs.SizeSuffix `config:"chunk_size"`
-	NoChunk                     bool          `config:"no_chunk"`
+	EnvAuth                     bool                 `config:"env_auth"`
+	User                        string               `config:"user"`
+	Key                         string               `config:"key"`
+	Auth                        string               `config:"auth"`
+	UserID                      string               `config:"user_id"`
+	Domain                      string               `config:"domain"`
+	Tenant                      string               `config:"tenant"`
+	TenantID                    string               `config:"tenant_id"`
+	TenantDomain                string               `config:"tenant_domain"`
+	Region                      string               `config:"region"`
+	StorageURL                  string               `config:"storage_url"`
+	AuthToken                   string               `config:"auth_token"`
+	AuthVersion                 int                  `config:"auth_version"`
+	ApplicationCredentialID     string               `config:"application_credential_id"`
+	ApplicationCredentialName   string               `config:"application_credential_name"`
+	ApplicationCredentialSecret string               `config:"application_credential_secret"`
+	StoragePolicy               string               `config:"storage_policy"`
+	EndpointType                string               `config:"endpoint_type"`
+	ChunkSize                   fs.SizeSuffix        `config:"chunk_size"`
+	NoChunk                     bool                 `config:"no_chunk"`
+	Enc                         encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote swift server
@@ -274,7 +284,7 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
 func shouldRetry(err error) (bool, error) {
-	// If this is an swift.Error object extract the HTTP error code
+	// If this is a swift.Error object extract the HTTP error code
 	if swiftError, ok := err.(*swift.Error); ok {
 		for _, e := range retryErrorCodes {
 			if swiftError.StatusCode == e {
@@ -320,7 +330,8 @@ func parsePath(path string) (root string) {
 // split returns container and containerPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (container, containerPath string) {
-	return bucket.Split(path.Join(f.root, rootRelativePath))
+	container, containerPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	return f.opt.Enc.FromStandardName(container), f.opt.Enc.FromStandardPath(containerPath)
 }
 
 // split returns container and containerPath from the object
@@ -436,14 +447,16 @@ func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, n
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
+		SlowModTime:       true,
 	}).Fill(f)
 	if f.rootContainer != "" && f.rootDirectory != "" {
 		// Check to see if the object exists - ignoring directory markers
 		var info swift.Object
 		var err error
+		encodedDirectory := f.opt.Enc.FromStandardPath(f.rootDirectory)
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
-			info, rxHeaders, err = f.c.Object(f.rootContainer, f.rootDirectory)
+			info, rxHeaders, err = f.c.Object(f.rootContainer, encodedDirectory)
 			return shouldRetryHeaders(rxHeaders, err)
 		})
 		if err == nil && info.ContentType != directoryMarkerContentType {
@@ -492,7 +505,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *swift.Object) (fs.Object, er
 	// making sure we read the full metadata for all 0 byte files.
 	// We don't read the metadata for directory marker objects.
 	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" {
-		info = nil
+		err := o.readMetaData() // reads info and headers, returning an error
+		if err == fs.ErrorObjectNotFound {
+			// We have a dangling large object here so just return the original metadata
+			fs.Errorf(o, "dangling large object with no contents")
+		} else if err != nil {
+			return nil, err
+		} else {
+			return o, nil
+		}
 	}
 	if info != nil {
 		// Set info but not headers
@@ -524,11 +545,11 @@ type listFn func(remote string, object *swift.Object, isDirectory bool) error
 // container to the start.
 //
 // Set recurse to read sub directories
-func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer bool, recurse bool, fn listFn) error {
-	if prefix != "" {
+func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer bool, recurse bool, includeDirMarkers bool, fn listFn) error {
+	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
-	if directory != "" {
+	if directory != "" && !strings.HasSuffix(directory, "/") {
 		directory += "/"
 	}
 	// Options for ObjectsWalk
@@ -553,17 +574,18 @@ func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer
 				if !recurse {
 					isDirectory = strings.HasSuffix(object.Name, "/")
 				}
-				if !strings.HasPrefix(object.Name, prefix) {
-					fs.Logf(f, "Odd name received %q", object.Name)
+				remote := f.opt.Enc.ToStandardPath(object.Name)
+				if !strings.HasPrefix(remote, prefix) {
+					fs.Logf(f, "Odd name received %q", remote)
 					continue
 				}
-				if object.Name == prefix {
+				if !includeDirMarkers && remote == prefix {
 					// If we have zero length directory markers ending in / then swift
 					// will return them in the listing for the directory which causes
 					// duplicate directories.  Ignore them here.
 					continue
 				}
-				remote := object.Name[len(prefix):]
+				remote = remote[len(prefix):]
 				if addContainer {
 					remote = path.Join(container, remote)
 				}
@@ -580,8 +602,8 @@ func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer
 type addEntryFn func(fs.DirEntry) error
 
 // list the objects into the function supplied
-func (f *Fs) list(container, directory, prefix string, addContainer bool, recurse bool, fn addEntryFn) error {
-	err := f.listContainerRoot(container, directory, prefix, addContainer, recurse, func(remote string, object *swift.Object, isDirectory bool) (err error) {
+func (f *Fs) list(container, directory, prefix string, addContainer bool, recurse bool, includeDirMarkers bool, fn addEntryFn) error {
+	err := f.listContainerRoot(container, directory, prefix, addContainer, recurse, includeDirMarkers, func(remote string, object *swift.Object, isDirectory bool) (err error) {
 		if isDirectory {
 			remote = strings.TrimRight(remote, "/")
 			d := fs.NewDir(remote, time.Time{}).SetSize(object.Bytes)
@@ -593,7 +615,7 @@ func (f *Fs) list(container, directory, prefix string, addContainer bool, recurs
 			if err != nil {
 				return err
 			}
-			if o.Storable() {
+			if includeDirMarkers || o.Storable() {
 				err = fn(o)
 			}
 		}
@@ -611,7 +633,7 @@ func (f *Fs) listDir(container, directory, prefix string, addContainer bool) (en
 		return nil, fs.ErrorListBucketRequired
 	}
 	// List the objects
-	err = f.list(container, directory, prefix, addContainer, false, func(entry fs.DirEntry) error {
+	err = f.list(container, directory, prefix, addContainer, false, false, func(entry fs.DirEntry) error {
 		entries = append(entries, entry)
 		return nil
 	})
@@ -635,7 +657,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 	}
 	for _, container := range containers {
 		f.cache.MarkOK(container.Name)
-		d := fs.NewDir(container.Name, time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
+		d := fs.NewDir(f.opt.Enc.ToStandardName(container.Name), time.Time{}).SetSize(container.Bytes).SetItems(container.Count)
 		entries = append(entries, d)
 	}
 	return entries, nil
@@ -681,7 +703,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	container, directory := f.split(dir)
 	list := walk.NewListRHelper(callback)
 	listR := func(container, directory, prefix string, addContainer bool) error {
-		return f.list(container, directory, prefix, addContainer, true, func(entry fs.DirEntry) error {
+		return f.list(container, directory, prefix, addContainer, true, false, func(entry fs.DirEntry) error {
 			return list.Add(entry)
 		})
 	}
@@ -828,7 +850,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 	go func() {
 		delErr <- operations.DeleteFiles(ctx, toBeDeleted)
 	}()
-	err := f.list(f.rootContainer, f.rootDirectory, f.rootDirectory, f.rootContainer == "", true, func(entry fs.DirEntry) error {
+	err := f.list(f.rootContainer, f.rootDirectory, f.rootDirectory, f.rootContainer == "", true, true, func(entry fs.DirEntry) error {
 		if o, ok := entry.(*Object); ok {
 			toBeDeleted <- o
 		}
@@ -944,6 +966,18 @@ func (o *Object) isDynamicLargeObject() (bool, error) {
 // isStaticLargeObjectFile checks for the X-Static-Large-Object header
 func (o *Object) isStaticLargeObject() (bool, error) {
 	return o.hasHeader("X-Static-Large-Object")
+}
+
+func (o *Object) isInContainerVersioning(container string) (bool, error) {
+	_, headers, err := o.fs.c.Container(container)
+	if err != nil {
+		return false, err
+	}
+	xHistoryLocation := headers["X-History-Location"]
+	if len(xHistoryLocation) > 0 {
+		return true, nil
+	}
+	return false, nil
 }
 
 // Size returns the size of an object in bytes
@@ -1077,9 +1111,8 @@ func min(x, y int64) int64 {
 //
 // if except is passed in then segments with that prefix won't be deleted
 func (o *Object) removeSegments(except string) error {
-	container, containerPath := o.split()
-	segmentsContainer := container + "_segments"
-	err := o.fs.listContainerRoot(segmentsContainer, containerPath, "", false, true, func(remote string, object *swift.Object, isDirectory bool) error {
+	segmentsContainer, prefix, err := o.getSegmentsDlo()
+	err = o.fs.listContainerRoot(segmentsContainer, prefix, "", false, true, true, func(remote string, object *swift.Object, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
@@ -1100,12 +1133,32 @@ func (o *Object) removeSegments(except string) error {
 	// remove the segments container if empty, ignore errors
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ContainerDelete(segmentsContainer)
+		if err == swift.ContainerNotFound || err == swift.ContainerNotEmpty {
+			return false, err
+		}
 		return shouldRetry(err)
 	})
 	if err == nil {
 		fs.Debugf(o, "Removed empty container %q", segmentsContainer)
 	}
 	return nil
+}
+
+func (o *Object) getSegmentsDlo() (segmentsContainer string, prefix string, err error) {
+	if err = o.readMetaData(); err != nil {
+		return
+	}
+	dirManifest := o.headers["X-Object-Manifest"]
+	dirManifest, err = url.PathUnescape(dirManifest)
+	if err != nil {
+		return
+	}
+	delimiter := strings.Index(dirManifest, "/")
+	if len(dirManifest) == 0 || delimiter < 0 {
+		err = errors.New("Missing or wrong structure of manifest of Dynamic large object")
+		return
+	}
+	return dirManifest[:delimiter], dirManifest[delimiter+1:], nil
 }
 
 // urlEncode encodes a string so that it is a valid URL
@@ -1212,7 +1265,7 @@ func deleteChunks(o *Object, segmentsContainer string, segmentInfos []string) {
 			fs.Debugf(o, "Delete segment file %q on %q", v, segmentsContainer)
 			e := o.fs.c.ObjectDelete(segmentsContainer, v)
 			if e != nil {
-				fs.Errorf(o, "Error occured in delete segment file %q on %q , error: %q", v, segmentsContainer, e)
+				fs.Errorf(o, "Error occurred in delete segment file %q on %q, error: %q", v, segmentsContainer, e)
 			}
 		}
 	}
@@ -1244,6 +1297,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	m.SetModTime(modTime)
 	contentType := fs.MimeType(ctx, src)
 	headers := m.ObjectHeaders()
+	fs.OpenOptionAddHeaders(options, headers)
 	uniquePrefix := ""
 	if size > int64(o.fs.opt.ChunkSize) || (size == -1 && !o.fs.opt.NoChunk) {
 		uniquePrefix, err = o.updateChunks(in, headers, size, contentType)
@@ -1294,12 +1348,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // Remove an object
-func (o *Object) Remove(ctx context.Context) error {
+func (o *Object) Remove(ctx context.Context) (err error) {
 	container, containerPath := o.split()
-	isDynamicLargeObject, err := o.isDynamicLargeObject()
-	if err != nil {
-		return err
-	}
+
 	// Remove file/manifest first
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectDelete(container, containerPath)
@@ -1308,11 +1359,21 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	isDynamicLargeObject, err := o.isDynamicLargeObject()
+	if err != nil {
+		return err
+	}
 	// ...then segments if required
 	if isDynamicLargeObject {
-		err = o.removeSegments("")
+		isInContainerVersioning, err := o.isInContainerVersioning(container)
 		if err != nil {
 			return err
+		}
+		if !isInContainerVersioning {
+			err = o.removeSegments("")
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil

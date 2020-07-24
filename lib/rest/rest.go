@@ -75,6 +75,7 @@ func (api *Client) SetRoot(RootURL string) *Client {
 }
 
 // SetHeader sets a header for all requests
+// Start the key with "*" for don't canonicalise
 func (api *Client) SetHeader(key, value string) *Client {
 	api.mu.Lock()
 	defer api.mu.Unlock()
@@ -110,7 +111,7 @@ func (api *Client) SetUserPass(UserName, Password string) *Client {
 	return api
 }
 
-// SetCookie creates an Cookies Header for all requests with the supplied
+// SetCookie creates a Cookies Header for all requests with the supplied
 // cookies passed in.
 // All cookies have to be supplied at once, all cookies will be overwritten
 // on a new call to the method
@@ -133,9 +134,9 @@ type Opts struct {
 	ContentType           string
 	ContentLength         *int64
 	ContentRange          string
-	ExtraHeaders          map[string]string
-	UserName              string // username for Basic Auth
-	Password              string // password for Basic Auth
+	ExtraHeaders          map[string]string // extra headers, start them with "*" for don't canonicalise
+	UserName              string            // username for Basic Auth
+	Password              string            // password for Basic Auth
 	Options               []fs.OpenOption
 	IgnoreStatus          bool       // if set then we don't check error status or parse error body
 	MultipartParams       url.Values // if set do multipart form upload with attached file
@@ -247,10 +248,17 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	fs.OpenOptionAddHeaders(opts.Options, headers)
 	// Now set the headers
 	for k, v := range headers {
-		if v != "" {
-			req.Header.Add(k, v)
+		if k != "" && v != "" {
+			if k[0] == '*' {
+				// Add non-canonical version if header starts with *
+				k = k[1:]
+				req.Header[k] = append(req.Header[k], v)
+			} else {
+				req.Header.Add(k, v)
+			}
 		}
 	}
+
 	if opts.UserName != "" || opts.Password != "" {
 		req.SetBasicAuth(opts.UserName, opts.Password)
 	}
@@ -261,7 +269,9 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		c = api.c
 	}
 	if api.signer != nil {
+		api.mu.RUnlock()
 		err = api.signer(req)
+		api.mu.RLock()
 		if err != nil {
 			return nil, errors.Wrap(err, "signer failed")
 		}
@@ -397,7 +407,7 @@ func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}
 	return api.callCodec(ctx, opts, request, response, json.Marshal, DecodeJSON, "application/json")
 }
 
-// CallXML runs Call and decodes the body as a XML object into response (if not nil)
+// CallXML runs Call and decodes the body as an XML object into response (if not nil)
 //
 // If request is not nil then it will be XML encoded as the body of the request
 //

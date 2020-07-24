@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"golang.org/x/oauth2"
@@ -70,7 +71,7 @@ func init() {
 		Description: "Amazon Drive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.Config("amazon cloud drive", name, m, acdConfig)
+			err := oauthutil.Config("amazon cloud drive", name, m, acdConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
@@ -135,15 +136,23 @@ which downloads the file through a temporary URL directly from the
 underlying S3 storage.`,
 			Default:  defaultTempLinkThreshold,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+			Default: (encoder.Base |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Checkpoint        string        `config:"checkpoint"`
-	UploadWaitPerGB   fs.Duration   `config:"upload_wait_per_gb"`
-	TempLinkThreshold fs.SizeSuffix `config:"templink_threshold"`
+	Checkpoint        string               `config:"checkpoint"`
+	UploadWaitPerGB   fs.Duration          `config:"upload_wait_per_gb"`
+	TempLinkThreshold fs.SizeSuffix        `config:"templink_threshold"`
+	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote acd server
@@ -160,7 +169,7 @@ type Fs struct {
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 }
 
-// Object describes a acd object
+// Object describes an acd object
 //
 // Will definitely have info but maybe not meta
 type Object struct {
@@ -220,7 +229,7 @@ func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 		}
 		// Work around receiving this error sporadically on authentication
 		//
-		// HTTP code 403: "403 Forbidden", reponse body: {"message":"Authorization header requires 'Credential' parameter. Authorization header requires 'Signature' parameter. Authorization header requires 'SignedHeaders' parameter. Authorization header requires existence of either a 'X-Amz-Date' or a 'Date' header. Authorization=Bearer"}
+		// HTTP code 403: "403 Forbidden", response body: {"message":"Authorization header requires 'Credential' parameter. Authorization header requires 'Signature' parameter. Authorization header requires 'SignedHeaders' parameter. Authorization header requires existence of either a 'X-Amz-Date' or a 'Date' header. Authorization=Bearer"}
 		if resp.StatusCode == 403 && strings.Contains(err.Error(), "Authorization header requires") {
 			fs.Debugf(f, "403 \"Authorization header requires...\" error received - retry")
 			return true, err
@@ -384,7 +393,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	var resp *http.Response
 	var subFolder *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
-		subFolder, resp, err = folder.GetFolder(leaf)
+		subFolder, resp, err = folder.GetFolder(f.opt.Enc.FromStandardName(leaf))
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -411,7 +420,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	var resp *http.Response
 	var info *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
-		info, resp, err = folder.CreateFolder(leaf)
+		info, resp, err = folder.CreateFolder(f.opt.Enc.FromStandardName(leaf))
 		return f.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -479,6 +488,7 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 				if !hasValidParent {
 					continue
 				}
+				*node.Name = f.opt.Enc.ToStandardName(*node.Name)
 				// Store the nodes up in case we have to retry the listing
 				out = append(out, node)
 			}
@@ -504,10 +514,6 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	err = f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return nil, err
-	}
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -655,7 +661,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 	// If not create it
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
@@ -668,7 +674,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	err = f.pacer.CallNoRetry(func() (bool, error) {
 		start := time.Now()
 		f.tokenRenewer.Start()
-		info, resp, err = folder.Put(in, leaf)
+		info, resp, err = folder.Put(in, f.opt.Enc.FromStandardName(leaf))
 		f.tokenRenewer.Stop()
 		var ok bool
 		ok, info, err = f.checkUpload(ctx, resp, in, src, info, err, time.Since(start))
@@ -686,13 +692,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	err := f.dirCache.FindRoot(ctx, true)
-	if err != nil {
-		return err
-	}
-	if dir != "" {
-		_, err = f.dirCache.FindDir(ctx, dir, true)
-	}
+	_, err := f.dirCache.FindDir(ctx, dir, true)
 	return err
 }
 
@@ -714,10 +714,6 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// create the destination directory if necessary
-	err := f.dirCache.FindRoot(ctx, true)
-	if err != nil {
-		return nil, err
-	}
 	srcLeaf, srcDirectoryID, err := srcObj.fs.dirCache.FindPath(ctx, srcObj.remote, false)
 	if err != nil {
 		return nil, err
@@ -787,54 +783,24 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return errors.New("can't move root directory")
 	}
 
-	// find the root src directory
-	err = srcFs.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return err
-	}
-
-	// find the root dst directory
-	if dstRemote != "" {
-		err = f.dirCache.FindRoot(ctx, true)
-		if err != nil {
-			return err
-		}
-	} else {
-		if f.dirCache.FoundRoot() {
-			return fs.ErrorDirExists
-		}
-	}
-
 	// Find ID of dst parent, creating subdirs if necessary
-	findPath := dstRemote
-	if dstRemote == "" {
-		findPath = f.root
-	}
-	dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, findPath, true)
+	dstLeaf, dstDirectoryID, err := f.dirCache.FindPath(ctx, dstRemote, true)
 	if err != nil {
 		return err
 	}
 
 	// Check destination does not exist
-	if dstRemote != "" {
-		_, err = f.dirCache.FindDir(ctx, dstRemote, false)
-		if err == fs.ErrorDirNotFound {
-			// OK
-		} else if err != nil {
-			return err
-		} else {
-			return fs.ErrorDirExists
-		}
+	_, err = f.dirCache.FindDir(ctx, dstRemote, false)
+	if err == fs.ErrorDirNotFound {
+		// OK
+	} else if err != nil {
+		return err
+	} else {
+		return fs.ErrorDirExists
 	}
 
 	// Find ID of src parent
-	findPath = srcRemote
-	var srcDirectoryID string
-	if srcRemote == "" {
-		srcDirectoryID, err = srcFs.dirCache.RootParentID()
-	} else {
-		_, srcDirectoryID, err = srcFs.dirCache.FindPath(ctx, findPath, false)
-	}
+	_, srcDirectoryID, err := srcFs.dirCache.FindPath(ctx, srcRemote, false)
 	if err != nil {
 		return err
 	}
@@ -880,10 +846,6 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return errors.New("can't purge root directory")
 	}
 	dc := f.dirCache
-	err := dc.FindRoot(ctx, false)
-	if err != nil {
-		return err
-	}
 	rootID, err := dc.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
@@ -1027,7 +989,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if o.info != nil {
 		return nil
 	}
-	leaf, directoryID, err := o.fs.dirCache.FindRootAndPath(ctx, o.remote, false)
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, o.remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
 			return fs.ErrorObjectNotFound
@@ -1038,7 +1000,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	var resp *http.Response
 	var info *acd.File
 	err = o.fs.pacer.Call(func() (bool, error) {
-		info, resp, err = folder.GetFile(leaf)
+		info, resp, err = folder.GetFile(o.fs.opt.Enc.FromStandardName(leaf))
 		return o.fs.shouldRetry(resp, err)
 	})
 	if err != nil {
@@ -1158,7 +1120,7 @@ func (f *Fs) restoreNode(info *acd.Node) (newInfo *acd.Node, err error) {
 func (f *Fs) renameNode(info *acd.Node, newName string) (newInfo *acd.Node, err error) {
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		newInfo, resp, err = info.Rename(newName)
+		newInfo, resp, err = info.Rename(f.opt.Enc.FromStandardName(newName))
 		return f.shouldRetry(resp, err)
 	})
 	return newInfo, err
@@ -1354,10 +1316,11 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), checkpoin
 					if len(node.Parents) > 0 {
 						if path, ok := f.dirCache.GetInv(node.Parents[0]); ok {
 							// and append the drive file name to compute the full file name
+							name := f.opt.Enc.ToStandardName(*node.Name)
 							if len(path) > 0 {
-								path = path + "/" + *node.Name
+								path = path + "/" + name
 							} else {
-								path = *node.Name
+								path = name
 							}
 							// this will now clear the actual file too
 							pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})

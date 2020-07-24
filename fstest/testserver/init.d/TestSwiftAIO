@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+NAME=swift-aio
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name ${NAME} \
+           bouncestorage/swift-aio
+    
+    echo type=swift
+    echo env_auth=false
+    echo user=test:tester
+    echo key=testing
+    echo auth=http://$(docker_ip):8080/auth/v1.0
+    echo _connect=$(docker_ip):8080
+}
+
+. $(dirname "$0")/run.bash

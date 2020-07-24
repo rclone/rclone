@@ -10,10 +10,10 @@ import (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(commandDefinition)
 }
 
-var commandDefintion = &cobra.Command{
+var commandDefinition = &cobra.Command{
 	Use:   "moveto source:path dest:path",
 	Short: `Move file or directory from source to dest.`,
 	Long: `
@@ -44,7 +44,7 @@ modification time or MD5SUM.  src will be deleted on successful
 transfer.
 
 **Important**: Since this can cause data loss, test first with the
---dry-run flag.
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics.
 `,

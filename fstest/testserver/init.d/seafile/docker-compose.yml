@@ -1,0 +1,31 @@
+version: '2.0'
+services:
+  db:
+    image: mariadb:10.1
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_LOG_CONSOLE=true
+    volumes:
+      - ${SEAFILE_TEST_DATA}/${NAME}/seafile-mysql/db:/var/lib/mysql
+
+  memcached:
+    image: memcached:1.5.6
+    entrypoint: memcached -m 256
+
+  seafile:
+    image: seafileltd/seafile-mc:${SEAFILE_VERSION}
+    ports:
+      - "${SEAFILE_IP}:${SEAFILE_PORT}:80"
+    volumes:
+      - ${SEAFILE_TEST_DATA}/${NAME}/seafile-data:/shared
+    environment:
+      - DB_HOST=db
+      - DB_ROOT_PASSWD=${MYSQL_ROOT_PASSWORD}
+      - TIME_ZONE=Etc/UTC
+      - SEAFILE_ADMIN_EMAIL=${SEAFILE_ADMIN_EMAIL}
+      - SEAFILE_ADMIN_PASSWORD=${SEAFILE_ADMIN_PASSWORD}
+      - SEAFILE_SERVER_LETSENCRYPT=false
+      - SEAFILE_SERVER_HOSTNAME=${SEAFILE_IP}:${SEAFILE_PORT}
+    depends_on:
+      - db
+      - memcached

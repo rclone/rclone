@@ -13,6 +13,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -20,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
@@ -47,14 +49,57 @@ func init() {
 			Help:       "Password.",
 			IsPassword: true,
 			Required:   true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			// List of replaced characters:
+			//   < (less than)     -> '＜' // FULLWIDTH LESS-THAN SIGN
+			//   > (greater than)  -> '＞' // FULLWIDTH GREATER-THAN SIGN
+			//   : (colon)         -> '：' // FULLWIDTH COLON
+			//   " (double quote)  -> '＂' // FULLWIDTH QUOTATION MARK
+			//   \ (backslash)     -> '＼' // FULLWIDTH REVERSE SOLIDUS
+			//   | (vertical line) -> '｜' // FULLWIDTH VERTICAL LINE
+			//   ? (question mark) -> '？' // FULLWIDTH QUESTION MARK
+			//   * (asterisk)      -> '＊' // FULLWIDTH ASTERISK
+			//
+			// Additionally names can't begin or end with an ASCII whitespace.
+			// List of replaced characters:
+			//     (space)           -> '␠'  // SYMBOL FOR SPACE
+			//     (horizontal tab)  -> '␉'  // SYMBOL FOR HORIZONTAL TABULATION
+			//     (line feed)       -> '␊'  // SYMBOL FOR LINE FEED
+			//     (vertical tab)    -> '␋'  // SYMBOL FOR VERTICAL TABULATION
+			//     (carriage return) -> '␍'  // SYMBOL FOR CARRIAGE RETURN
+			//
+			// Also encode invalid UTF-8 bytes as json doesn't handle them properly.
+			//
+			// https://www.opendrive.com/wp-content/uploads/guides/OpenDrive_API_guide.pdf
+			Default: (encoder.Base |
+				encoder.EncodeWin |
+				encoder.EncodeLeftCrLfHtVt |
+				encoder.EncodeRightCrLfHtVt |
+				encoder.EncodeBackSlash |
+				encoder.EncodeLeftSpace |
+				encoder.EncodeRightSpace |
+				encoder.EncodeInvalidUtf8),
+		}, {
+			Name: "chunk_size",
+			Help: `Files will be uploaded in chunks this size.
+
+Note that these chunks are buffered in memory so increasing them will
+increase memory use.`,
+			Default:  10 * fs.MebiByte,
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	UserName string `config:"username"`
-	Password string `config:"password"`
+	UserName  string               `config:"username"`
+	Password  string               `config:"password"`
+	Enc       encoder.MultiEncoder `config:"encoding"`
+	ChunkSize fs.SizeSuffix        `config:"chunk_size"`
 }
 
 // Fs represents a remote server
@@ -235,13 +280,7 @@ func errorHandler(resp *http.Response) error {
 // Mkdir creates the folder if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	// fs.Debugf(nil, "Mkdir(\"%s\")", dir)
-	err := f.dirCache.FindRoot(ctx, true)
-	if err != nil {
-		return err
-	}
-	if dir != "" {
-		_, err = f.dirCache.FindDir(ctx, dir, true)
-	}
+	_, err := f.dirCache.FindDir(ctx, dir, true)
 	return err
 }
 
@@ -267,10 +306,6 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return errors.New("can't purge root directory")
 	}
 	dc := f.dirCache
-	err := dc.FindRoot(ctx, false)
-	if err != nil {
-		return err
-	}
 	rootID, err := dc.FindDir(ctx, dir, false)
 	if err != nil {
 		return err
@@ -438,58 +473,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		fs.Debugf(srcFs, "Can't move directory - not same remote type")
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.root, srcRemote)
-	dstPath := path.Join(f.root, dstRemote)
 
-	// Refuse to move to or from the root
-	if srcPath == "" || dstPath == "" {
-		fs.Debugf(src, "DirMove error: Can't move root")
-		return errors.New("can't move root directory")
-	}
-
-	// find the root src directory
-	err = srcFs.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return err
-	}
-
-	// find the root dst directory
-	if dstRemote != "" {
-		err = f.dirCache.FindRoot(ctx, true)
-		if err != nil {
-			return err
-		}
-	} else {
-		if f.dirCache.FoundRoot() {
-			return fs.ErrorDirExists
-		}
-	}
-
-	// Find ID of dst parent, creating subdirs if necessary
-	var leaf, directoryID string
-	findPath := dstRemote
-	if dstRemote == "" {
-		findPath = f.root
-	}
-	leaf, directoryID, err = f.dirCache.FindPath(ctx, findPath, true)
-	if err != nil {
-		return err
-	}
-
-	// Check destination does not exist
-	if dstRemote != "" {
-		_, err = f.dirCache.FindDir(ctx, dstRemote, false)
-		if err == fs.ErrorDirNotFound {
-			// OK
-		} else if err != nil {
-			return err
-		} else {
-			return fs.ErrorDirExists
-		}
-	}
-
-	// Find ID of src
-	srcID, err := srcFs.dirCache.FindDir(ctx, srcRemote, false)
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
 	if err != nil {
 		return err
 	}
@@ -501,9 +486,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		moveFolderData := moveCopyFolder{
 			SessionID:     f.session.SessionID,
 			FolderID:      srcID,
-			DstFolderID:   directoryID,
+			DstFolderID:   dstDirectoryID,
 			Move:          "true",
-			NewFolderName: leaf,
+			NewFolderName: dstLeaf,
 		}
 		opts := rest.Opts{
 			Method: "POST",
@@ -575,7 +560,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Used to create new objects
 func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
 	// Create the directory for the object if it doesn't exist
-	leaf, directoryID, err = f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err = f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, leaf, directoryID, err
 	}
@@ -585,7 +570,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time,
 		fs:     f,
 		remote: remote,
 	}
-	return o, leaf, directoryID, nil
+	return o, f.opt.Enc.FromStandardName(leaf), directoryID, nil
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -632,14 +617,19 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	if "" == o.id {
-		// We need to create a ID for this file
+		// We need to create an ID for this file
 		var resp *http.Response
 		response := createFileResponse{}
 		err := o.fs.pacer.Call(func() (bool, error) {
-			createFileData := createFile{SessionID: o.fs.session.SessionID, FolderID: directoryID, Name: replaceReservedChars(leaf)}
+			createFileData := createFile{
+				SessionID: o.fs.session.SessionID,
+				FolderID:  directoryID,
+				Name:      leaf,
+			}
 			opts := rest.Opts{
-				Method: "POST",
-				Path:   "/upload/create_file.json",
+				Method:  "POST",
+				Options: options,
+				Path:    "/upload/create_file.json",
 			}
 			resp, err = o.fs.srv.CallJSON(ctx, &opts, &createFileData, &response)
 			return o.fs.shouldRetry(resp, err)
@@ -683,7 +673,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	err = f.pacer.Call(func() (bool, error) {
 		createDirData := createFolder{
 			SessionID:           f.session.SessionID,
-			FolderName:          replaceReservedChars(leaf),
+			FolderName:          f.opt.Enc.FromStandardName(leaf),
 			FolderSubParent:     pathID,
 			FolderIsPublic:      0,
 			FolderPublicUpl:     0,
@@ -729,8 +719,8 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		return "", false, errors.Wrap(err, "failed to get folder list")
 	}
 
+	leaf = f.opt.Enc.FromStandardName(leaf)
 	for _, folder := range folderList.Folders {
-		folder.Name = restoreReservedChars(folder.Name)
 		// fs.Debugf(nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
 
 		if leaf == folder.Name {
@@ -753,10 +743,6 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	// fs.Debugf(nil, "List(%v)", dir)
-	err = f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return nil, err
-	}
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -777,7 +763,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, folder := range folderList.Folders {
-		folder.Name = restoreReservedChars(folder.Name)
+		folder.Name = f.opt.Enc.ToStandardName(folder.Name)
 		// fs.Debugf(nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
 		remote := path.Join(dir, folder.Name)
 		// cache the directory ID for later lookups
@@ -788,7 +774,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, file := range folderList.Files {
-		file.Name = restoreReservedChars(file.Name)
+		file.Name = f.opt.Enc.ToStandardName(file.Name)
 		// fs.Debugf(nil, "File: %s (%s)", file.Name, file.FileID)
 		remote := path.Join(dir, file.Name)
 		o, err := f.newObjectWithInfo(ctx, remote, &file)
@@ -851,7 +837,11 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		NoResponse: true,
 		Path:       "/file/filesettings.json",
 	}
-	update := modTimeFile{SessionID: o.fs.session.SessionID, FileID: o.id, FileModificationTime: strconv.FormatInt(modTime.Unix(), 10)}
+	update := modTimeFile{
+		SessionID:            o.fs.session.SessionID,
+		FileID:               o.id,
+		FileModificationTime: strconv.FormatInt(modTime.Unix(), 10),
+	}
 	err := o.fs.pacer.Call(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(ctx, &opts, &update, nil)
 		return o.fs.shouldRetry(resp, err)
@@ -917,8 +907,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		openUploadData := openUpload{SessionID: o.fs.session.SessionID, FileID: o.id, Size: size}
 		// fs.Debugf(nil, "PreOpen: %#v", openUploadData)
 		opts := rest.Opts{
-			Method: "POST",
-			Path:   "/upload/open_file_upload.json",
+			Method:  "POST",
+			Options: options,
+			Path:    "/upload/open_file_upload.json",
 		}
 		resp, err := o.fs.srv.CallJSON(ctx, &opts, &openUploadData, &openResponse)
 		return o.fs.shouldRetry(resp, err)
@@ -929,15 +920,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// resp.Body.Close()
 	// fs.Debugf(nil, "PostOpen: %#v", openResponse)
 
-	// 10 MB chunks size
-	chunkSize := int64(1024 * 1024 * 10)
-	buf := make([]byte, int(chunkSize))
+	buf := make([]byte, o.fs.opt.ChunkSize)
 	chunkOffset := int64(0)
 	remainingBytes := size
 	chunkCounter := 0
 
 	for remainingBytes > 0 {
-		currentChunkSize := chunkSize
+		currentChunkSize := int64(o.fs.opt.ChunkSize)
 		if currentChunkSize > remainingBytes {
 			currentChunkSize = remainingBytes
 		}
@@ -1026,7 +1015,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 func (o *Object) readMetaData(ctx context.Context) (err error) {
-	leaf, directoryID, err := o.fs.dirCache.FindRootAndPath(ctx, o.remote, false)
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, o.remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
 			return fs.ErrorObjectNotFound
@@ -1038,7 +1027,8 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	err = o.fs.pacer.Call(func() (bool, error) {
 		opts := rest.Opts{
 			Method: "GET",
-			Path:   "/folder/itembyname.json/" + o.fs.session.SessionID + "/" + directoryID + "?name=" + url.QueryEscape(replaceReservedChars(leaf)),
+			Path: fmt.Sprintf("/folder/itembyname.json/%s/%s?name=%s",
+				o.fs.session.SessionID, directoryID, url.QueryEscape(o.fs.opt.Enc.FromStandardName(leaf))),
 		}
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &folderList)
 		return o.fs.shouldRetry(resp, err)

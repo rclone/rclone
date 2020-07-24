@@ -39,6 +39,7 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/backend/dropbox/dbhash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -46,6 +47,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -102,16 +104,23 @@ var (
 	// A regexp matching path names for files Dropbox ignores
 	// See https://www.dropbox.com/en/help/145 - Ignored files
 	ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
+
+	// DbHashType is the hash.Type for Dropbox
+	DbHashType hash.Type
 )
 
 // Register with Fs
 func init() {
+	DbHashType = hash.RegisterHash("DropboxHash", 64, dbhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "dropbox",
 		Description: "Dropbox",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.ConfigNoOffline("dropbox", name, m, dropboxConfig)
+			opt := oauthutil.Options{
+				NoOffline: true,
+			}
+			err := oauthutil.Config("dropbox", name, m, dropboxConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
@@ -139,14 +148,28 @@ memory.  It can be set smaller if you are tight on memory.`, maxChunkSize),
 			Help:     "Impersonate this user when using a business account.",
 			Default:  "",
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			// https://www.dropbox.com/help/syncing-uploads/files-not-syncing lists / and \
+			// as invalid characters.
+			// Testing revealed names with trailing spaces and the DEL character don't work.
+			// Also encode invalid UTF-8 bytes as json doesn't handle them properly.
+			Default: (encoder.Base |
+				encoder.EncodeBackSlash |
+				encoder.EncodeDel |
+				encoder.EncodeRightSpace |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize   fs.SizeSuffix `config:"chunk_size"`
-	Impersonate string        `config:"impersonate"`
+	ChunkSize   fs.SizeSuffix        `config:"chunk_size"`
+	Impersonate string               `config:"impersonate"`
+	Enc         encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote dropbox server
@@ -205,7 +228,11 @@ func shouldRetry(err error) (bool, error) {
 		return false, err
 	}
 	baseErrString := errors.Cause(err).Error()
-	// handle any official Retry-After header from Dropbox's SDK first
+	// First check for Insufficient Space
+	if strings.Contains(baseErrString, "insufficient_space") {
+		return false, fserrors.FatalError(err)
+	}
+	// Then handle any official Retry-After header from Dropbox's SDK
 	switch e := err.(type) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
@@ -372,14 +399,15 @@ func (f *Fs) setRoot(root string) {
 // getMetadata gets the metadata for a file or directory
 func (f *Fs) getMetadata(objPath string) (entry files.IsMetadata, notFound bool, err error) {
 	err = f.pacer.Call(func() (bool, error) {
-		entry, err = f.srv.GetMetadata(&files.GetMetadataArg{Path: objPath})
+		entry, err = f.srv.GetMetadata(&files.GetMetadataArg{
+			Path: f.opt.Enc.FromStandardPath(objPath),
+		})
 		return shouldRetry(err)
 	})
 	if err != nil {
 		switch e := err.(type) {
 		case files.GetMetadataAPIError:
-			switch e.EndpointError.Path.Tag {
-			case files.LookupErrorNotFound:
+			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
 				notFound = true
 				err = nil
 			}
@@ -466,7 +494,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for {
 		if !started {
 			arg := files.ListFolderArg{
-				Path:      root,
+				Path:      f.opt.Enc.FromStandardPath(root),
 				Recursive: false,
 			}
 			if root == "/" {
@@ -479,8 +507,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if err != nil {
 				switch e := err.(type) {
 				case files.ListFolderAPIError:
-					switch e.EndpointError.Path.Tag {
-					case files.LookupErrorNotFound:
+					if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorNotFound {
 						err = fs.ErrorDirNotFound
 					}
 				}
@@ -517,7 +544,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 			// Only the last element is reliably cased in PathDisplay
 			entryPath := metadata.PathDisplay
-			leaf := path.Base(entryPath)
+			leaf := f.opt.Enc.ToStandardName(path.Base(entryPath))
 			remote := path.Join(dir, leaf)
 			if folderInfo != nil {
 				d := fs.NewDir(remote, time.Now())
@@ -575,7 +602,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 	// create it
 	arg2 := files.CreateFolderArg{
-		Path: root,
+		Path: f.opt.Enc.FromStandardPath(root),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.CreateFolderV2(&arg2)
@@ -601,6 +628,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return errors.Wrap(err, "Rmdir")
 	}
 
+	root = f.opt.Enc.FromStandardPath(root)
 	// check directory empty
 	arg := files.ListFolderArg{
 		Path:      root,
@@ -657,9 +685,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Copy
-	arg := files.RelocationArg{}
-	arg.FromPath = srcObj.remotePath()
-	arg.ToPath = dstObj.remotePath()
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: f.opt.Enc.FromStandardPath(srcObj.remotePath()),
+			ToPath:   f.opt.Enc.FromStandardPath(dstObj.remotePath()),
+		},
+	}
 	var err error
 	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
@@ -691,7 +722,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 func (f *Fs) Purge(ctx context.Context) (err error) {
 	// Let dropbox delete the filesystem tree
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.DeleteV2(&files.DeleteArg{Path: f.slashRoot})
+		_, err = f.srv.DeleteV2(&files.DeleteArg{
+			Path: f.opt.Enc.FromStandardPath(f.slashRoot),
+		})
 		return shouldRetry(err)
 	})
 	return err
@@ -720,9 +753,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Do the move
-	arg := files.RelocationArg{}
-	arg.FromPath = srcObj.remotePath()
-	arg.ToPath = dstObj.remotePath()
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: f.opt.Enc.FromStandardPath(srcObj.remotePath()),
+			ToPath:   f.opt.Enc.FromStandardPath(dstObj.remotePath()),
+		},
+	}
 	var err error
 	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
@@ -746,11 +782,17 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
-	absPath := "/" + path.Join(f.Root(), remote)
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
+	absPath := f.opt.Enc.FromStandardPath(path.Join(f.slashRoot, remote))
 	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
+		// FIXME this gives settings_error/not_authorized/.. errors
+		// and the expires setting isn't in the documentation so remove
+		// for now.
+		// Settings: &sharing.SharedLinkSettings{
+		// 	Expires: time.Now().Add(time.Duration(expire)).UTC().Round(time.Second),
+		// },
 	}
 	var linkRes sharing.IsSharedLinkMetadata
 	err = f.pacer.Call(func() (bool, error) {
@@ -758,7 +800,8 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 		return shouldRetry(err)
 	})
 
-	if err != nil && strings.Contains(err.Error(), sharing.CreateSharedLinkWithSettingsErrorSharedLinkAlreadyExists) {
+	if err != nil && strings.Contains(err.Error(),
+		sharing.CreateSharedLinkWithSettingsErrorSharedLinkAlreadyExists) {
 		fs.Debugf(absPath, "has a public link already, attempting to retrieve it")
 		listArg := sharing.ListSharedLinksArg{
 			Path:       absPath,
@@ -820,9 +863,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// ...apparently not necessary
 
 	// Do the move
-	arg := files.RelocationArg{}
-	arg.FromPath = srcPath
-	arg.ToPath = dstPath
+	arg := files.RelocationArg{
+		RelocationPath: files.RelocationPath{
+			FromPath: f.opt.Enc.FromStandardPath(srcPath),
+			ToPath:   f.opt.Enc.FromStandardPath(dstPath),
+		},
+	}
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.MoveV2(&arg)
 		return shouldRetry(err)
@@ -863,7 +909,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.Dropbox)
+	return hash.Set(DbHashType)
 }
 
 // ------------------------------------------------------------
@@ -888,7 +934,7 @@ func (o *Object) Remote() string {
 
 // Hash returns the dropbox special hash
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.Dropbox {
+	if t != DbHashType {
 		return "", hash.ErrUnsupported
 	}
 	err := o.readMetaData()
@@ -977,7 +1023,10 @@ func (o *Object) Storable() bool {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	fs.FixRangeOption(options, o.bytes)
 	headers := fs.OpenOptionHeaders(options)
-	arg := files.DownloadArg{Path: o.remotePath(), ExtraHeaders: headers}
+	arg := files.DownloadArg{
+		Path:         o.fs.opt.Enc.FromStandardPath(o.remotePath()),
+		ExtraHeaders: headers,
+	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, in, err = o.fs.srv.Download(&arg)
 		return shouldRetry(err)
@@ -986,7 +1035,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	switch e := err.(type) {
 	case files.DownloadAPIError:
 		// Don't attempt to retry copyright violation errors
-		if e.EndpointError.Path.Tag == files.LookupErrorRestrictedContent {
+		if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.LookupErrorRestrictedContent {
 			return nil, fserrors.NoRetryError(err)
 		}
 	}
@@ -1087,6 +1136,13 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 			return false, nil
 		}
 		entry, err = o.fs.srv.UploadSessionFinish(args, chunk)
+		// If error is insufficient space then don't retry
+		if e, ok := err.(files.UploadSessionFinishAPIError); ok {
+			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.WriteErrorInsufficientSpace {
+				err = fserrors.NoRetryError(err)
+				return false, err
+			}
+		}
 		// after the first chunk is uploaded, we retry everything
 		return err != nil, err
 	})
@@ -1104,10 +1160,9 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
-		fs.Logf(o, "File name disallowed - not uploading")
-		return nil
+		return fserrors.NoRetryError(errors.Errorf("file name %q is disallowed - not uploading", path.Base(remote)))
 	}
-	commitInfo := files.NewCommitInfo(o.remotePath())
+	commitInfo := files.NewCommitInfo(o.fs.opt.Enc.FromStandardPath(o.remotePath()))
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
 	commitInfo.ClientModified = src.ModTime(ctx).UTC().Round(time.Second)
@@ -1132,7 +1187,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) (err error) {
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{Path: o.remotePath()})
+		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{
+			Path: o.fs.opt.Enc.FromStandardPath(o.remotePath()),
+		})
 		return shouldRetry(err)
 	})
 	return err

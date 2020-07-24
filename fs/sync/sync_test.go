@@ -4,7 +4,9 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -85,6 +87,23 @@ func TestCopyNoTraverse(t *testing.T) {
 
 	fs.Config.NoTraverse = true
 	defer func() { fs.Config.NoTraverse = false }()
+
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+
+	err := CopyDir(context.Background(), r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Flocal, file1)
+	fstest.CheckItems(t, r.Fremote, file1)
+}
+
+// Now with --check-first
+func TestCopyCheckFirst(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.CheckFirst = true
+	defer func() { fs.Config.CheckFirst = false }()
 
 	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
 
@@ -311,7 +330,7 @@ func TestSyncBasedOnCheckSum(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Change last modified date only
@@ -345,7 +364,7 @@ func TestSyncSizeOnly(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Update mtime, md5sum but not length of file
@@ -379,7 +398,7 @@ func TestSyncIgnoreSize(t *testing.T) {
 	require.NoError(t, err)
 
 	// We should have transferred exactly one file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Update size but not date of file
@@ -419,7 +438,7 @@ func TestSyncIgnoreTimes(t *testing.T) {
 
 	// We should have transferred exactly one file even though the
 	// files were identical.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 
 	fstest.CheckItems(t, r.Flocal, file1)
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -489,7 +508,7 @@ func TestSyncIgnoreErrors(t *testing.T) {
 	)
 
 	accounting.GlobalStats().ResetCounters()
-	fs.CountError(errors.New("boom"))
+	_ = fs.CountError(errors.New("boom"))
 	assert.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
 
 	fstest.CheckListingWithPrecision(
@@ -598,7 +617,7 @@ func TestSyncDoesntUpdateModtime(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// We should have transferred exactly one file, not set the mod time
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 }
 
 func TestSyncAfterAddingAFile(t *testing.T) {
@@ -799,7 +818,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	)
 
 	accounting.GlobalStats().ResetCounters()
-	fs.CountError(errors.New("boom"))
+	_ = fs.CountError(errors.New("boom"))
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 
@@ -971,10 +990,67 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 		fs.Config.ModifyWindow = oldModifyWindow
 	}()
 
-	accounting.GlobalStats().ResetCounters()
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Fremote, oneO, twoF, threeO, fourF, fiveF)
+
+	if r.Fremote.Hashes().Count() == 0 {
+		t.Logf("Skip test with --checksum as no hashes supported")
+		return
+	}
+
+	// now enable checksum
+	fs.Config.CheckSum = true
+	defer func() { fs.Config.CheckSum = false }()
+
+	err = Sync(context.Background(), r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Fremote, oneO, twoF, threeF, fourF, fiveF)
+}
+
+// Test with a max transfer duration
+func TestSyncWithMaxDuration(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping test on non local remote")
+	}
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	maxDuration := 250 * time.Millisecond
+	fs.Config.MaxDuration = maxDuration
+	bytesPerSecond := 300
+	accounting.SetBwLimit(fs.SizeSuffix(bytesPerSecond))
+	oldTransfers := fs.Config.Transfers
+	fs.Config.Transfers = 1
+	defer func() {
+		fs.Config.MaxDuration = 0 // reset back to default
+		fs.Config.Transfers = oldTransfers
+		accounting.SetBwLimit(fs.SizeSuffix(0))
+	}()
+
+	// 5 files of 60 bytes at 60 bytes/s 5 seconds
+	testFiles := make([]fstest.Item, 5)
+	for i := 0; i < len(testFiles); i++ {
+		testFiles[i] = r.WriteFile(fmt.Sprintf("file%d", i), "------------------------------------------------------------", t1)
+	}
+
+	fstest.CheckListing(t, r.Flocal, testFiles)
+
+	accounting.GlobalStats().ResetCounters()
+	startTime := time.Now()
+	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
+	require.Equal(t, context.DeadlineExceeded, errors.Cause(err))
+	err = accounting.GlobalStats().GetLastError()
+	require.NoError(t, err)
+
+	elapsed := time.Since(startTime)
+	maxTransferTime := (time.Duration(len(testFiles)) * 60 * time.Second) / time.Duration(bytesPerSecond)
+
+	what := fmt.Sprintf("expecting elapsed time %v between %v and %v", elapsed, maxDuration, maxTransferTime)
+	require.True(t, elapsed >= maxDuration, what)
+	require.True(t, elapsed < 5*time.Second, what)
+	// we must not have transferred all files during the session
+	require.True(t, accounting.GlobalStats().GetTransfers() < int64(len(testFiles)))
 }
 
 // Test with TrackRenames set
@@ -985,7 +1061,6 @@ func TestSyncWithTrackRenames(t *testing.T) {
 	fs.Config.TrackRenames = true
 	defer func() {
 		fs.Config.TrackRenames = false
-
 	}()
 
 	haveHash := r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() != hash.None
@@ -1009,19 +1084,91 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
+	// Check we renamed something if we should have
 	if canTrackRenames {
-		if r.Fremote.Features().Move == nil || r.Fremote.Name() == "TestUnion" { // union remote can Move but returns CantMove error
-			// If no server side Move, we are falling back to Copy + Delete
-			assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers()) // 1 copy
-			assert.Equal(t, int64(4), accounting.GlobalStats().GetChecks())    // 2 file checks + 1 move + 1 delete
-		} else {
-			assert.Equal(t, int64(0), accounting.GlobalStats().GetTransfers()) // 0 copy
-			assert.Equal(t, int64(3), accounting.GlobalStats().GetChecks())    // 2 file checks + 1 move
-		}
-	} else {
-		assert.Equal(t, int64(2), accounting.GlobalStats().GetChecks())    // 2 file checks
-		assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers()) // 0 copy
+		renames := accounting.GlobalStats().Renames(0)
+		assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
 	}
+}
+
+func TestParseRenamesStrategyModtime(t *testing.T) {
+	for _, test := range []struct {
+		in      string
+		want    trackRenamesStrategy
+		wantErr bool
+	}{
+		{"", 0, false},
+		{"modtime", trackRenamesStrategyModtime, false},
+		{"hash", trackRenamesStrategyHash, false},
+		{"size", 0, false},
+		{"modtime,hash", trackRenamesStrategyModtime | trackRenamesStrategyHash, false},
+		{"hash,modtime,size", trackRenamesStrategyModtime | trackRenamesStrategyHash, false},
+		{"size,boom", 0, true},
+	} {
+		got, err := parseTrackRenamesStrategy(test.in)
+		assert.Equal(t, test.want, got, test.in)
+		assert.Equal(t, test.wantErr, err != nil, test.in)
+	}
+}
+
+func TestRenamesStrategyModtime(t *testing.T) {
+	both := trackRenamesStrategyHash | trackRenamesStrategyModtime
+	hash := trackRenamesStrategyHash
+	modTime := trackRenamesStrategyModtime
+
+	assert.True(t, both.hash())
+	assert.True(t, both.modTime())
+	assert.True(t, hash.hash())
+	assert.False(t, hash.modTime())
+	assert.False(t, modTime.hash())
+	assert.True(t, modTime.modTime())
+}
+
+func TestSyncWithTrackRenamesStrategyModtime(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.TrackRenames = true
+	fs.Config.TrackRenamesStrategy = "modtime"
+	defer func() {
+		fs.Config.TrackRenames = false
+		fs.Config.TrackRenamesStrategy = "hash"
+	}()
+
+	canTrackRenames := operations.CanServerSideMove(r.Fremote) && r.Fremote.Precision() != fs.ModTimeNotSupported
+	t.Logf("Can track renames: %v", canTrackRenames)
+
+	f1 := r.WriteFile("potato", "Potato Content", t1)
+	f2 := r.WriteFile("yam", "Yam Content", t2)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
+
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+	fstest.CheckItems(t, r.Flocal, f1, f2)
+
+	// Now rename locally.
+	f2 = r.RenameFile(f2, "yaml")
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
+
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+
+	// Check we renamed something if we should have
+	if canTrackRenames {
+		renames := accounting.GlobalStats().Renames(0)
+		assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
+	}
+}
+
+func toyFileTransfers(r *fstest.Run) int64 {
+	remote := r.Fremote.Name()
+	transfers := 1
+	if strings.HasPrefix(remote, "TestChunker") && strings.HasSuffix(remote, "S3") {
+		transfers++ // Extra Copy because S3 emulates Move as Copy+Delete.
+	}
+	return int64(transfers)
 }
 
 // Test a server side move if possible, or the backup path if not
@@ -1481,9 +1628,11 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 
 	fstest.CheckItems(t, r.Fremote, file1b, file2, file3a, file1a)
 }
-func TestSyncBackupDir(t *testing.T)                        { testSyncBackupDir(t, "", false) }
-func TestSyncBackupDirWithSuffix(t *testing.T)              { testSyncBackupDir(t, ".bak", false) }
-func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) { testSyncBackupDir(t, "-2019-01-01", true) }
+func TestSyncBackupDir(t *testing.T)           { testSyncBackupDir(t, "", false) }
+func TestSyncBackupDirWithSuffix(t *testing.T) { testSyncBackupDir(t, ".bak", false) }
+func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) {
+	testSyncBackupDir(t, "-2019-01-01", true)
+}
 
 // Test with Suffix set
 func testSyncSuffix(t *testing.T, suffix string, suffixKeepExtension bool) {
@@ -1600,7 +1749,7 @@ func TestSyncUTFNorm(t *testing.T) {
 
 	// We should have transferred exactly one file, but kept the
 	// normalized state of the file.
-	assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	assert.Equal(t, toyFileTransfers(r), accounting.GlobalStats().GetTransfers())
 	fstest.CheckItems(t, r.Flocal, file1)
 	file1.Path = file2.Path
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -1697,5 +1846,7 @@ func TestAbort(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
-	assert.Equal(t, accounting.ErrorMaxTransferLimitReached, err)
+	expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReachedFatal)
+	fserrors.Count(expectedErr)
+	assert.Equal(t, expectedErr, err)
 }

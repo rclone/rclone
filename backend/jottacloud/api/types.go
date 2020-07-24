@@ -46,13 +46,57 @@ func (t Time) String() string { return time.Time(t).Format(timeFormat) }
 // APIString returns Time string in Jottacloud API format
 func (t Time) APIString() string { return time.Time(t).Format(apiTimeFormat) }
 
+// LoginToken is struct representing the login token generated in the WebUI
+type LoginToken struct {
+	Username      string `json:"username"`
+	Realm         string `json:"realm"`
+	WellKnownLink string `json:"well_known_link"`
+	AuthToken     string `json:"auth_token"`
+}
+
+// WellKnown contains some configuration parameters for setting up endpoints
+type WellKnown struct {
+	Issuer                                     string   `json:"issuer"`
+	AuthorizationEndpoint                      string   `json:"authorization_endpoint"`
+	TokenEndpoint                              string   `json:"token_endpoint"`
+	TokenIntrospectionEndpoint                 string   `json:"token_introspection_endpoint"`
+	UserinfoEndpoint                           string   `json:"userinfo_endpoint"`
+	EndSessionEndpoint                         string   `json:"end_session_endpoint"`
+	JwksURI                                    string   `json:"jwks_uri"`
+	CheckSessionIframe                         string   `json:"check_session_iframe"`
+	GrantTypesSupported                        []string `json:"grant_types_supported"`
+	ResponseTypesSupported                     []string `json:"response_types_supported"`
+	SubjectTypesSupported                      []string `json:"subject_types_supported"`
+	IDTokenSigningAlgValuesSupported           []string `json:"id_token_signing_alg_values_supported"`
+	UserinfoSigningAlgValuesSupported          []string `json:"userinfo_signing_alg_values_supported"`
+	RequestObjectSigningAlgValuesSupported     []string `json:"request_object_signing_alg_values_supported"`
+	ResponseNodesSupported                     []string `json:"response_modes_supported"`
+	RegistrationEndpoint                       string   `json:"registration_endpoint"`
+	TokenEndpointAuthMethodsSupported          []string `json:"token_endpoint_auth_methods_supported"`
+	TokenEndpointAuthSigningAlgValuesSupported []string `json:"token_endpoint_auth_signing_alg_values_supported"`
+	ClaimsSupported                            []string `json:"claims_supported"`
+	ClaimTypesSupported                        []string `json:"claim_types_supported"`
+	ClaimsParameterSupported                   bool     `json:"claims_parameter_supported"`
+	ScopesSupported                            []string `json:"scopes_supported"`
+	RequestParameterSupported                  bool     `json:"request_parameter_supported"`
+	RequestURIParameterSupported               bool     `json:"request_uri_parameter_supported"`
+	CodeChallengeMethodsSupported              []string `json:"code_challenge_methods_supported"`
+	TLSClientCertificateBoundAccessTokens      bool     `json:"tls_client_certificate_bound_access_tokens"`
+	IntrospectionEndpoint                      string   `json:"introspection_endpoint"`
+}
+
 // TokenJSON is the struct representing the HTTP response from OAuth2
 // providers returning a token in JSON form.
 type TokenJSON struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int32  `json:"expires_in"` // at least PayPal returns string, while most return number
+	AccessToken      string `json:"access_token"`
+	ExpiresIn        int32  `json:"expires_in"` // at least PayPal returns string, while most return number
+	RefreshExpiresIn int32  `json:"refresh_expires_in"`
+	RefreshToken     string `json:"refresh_token"`
+	TokenType        string `json:"token_type"`
+	IDToken          string `json:"id_token"`
+	NotBeforePolicy  int32  `json:"not-before-policy"`
+	SessionState     string `json:"session_state"`
+	Scope            string `json:"scope"`
 }
 
 // JSON structures returned by new API
@@ -118,6 +162,12 @@ type CustomerInfo struct {
 	WebHash           string      `json:"web_hash"`
 	AndroidHash       string      `json:"android_hash"`
 	IOSHash           string      `json:"ios_hash"`
+}
+
+// TrashResponse is returned when emptying the Trash
+type TrashResponse struct {
+	Folders int64 `json:"folders"`
+	Files   int64 `json:"files"`
 }
 
 // XML structures returned by the old API

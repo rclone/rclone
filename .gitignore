@@ -8,3 +8,4 @@ rclone.iml
 .history
 *.test
 *.log
+*.iml

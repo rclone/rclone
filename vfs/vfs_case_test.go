@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,13 +33,15 @@ func TestCaseSensitivity(t *testing.T) {
 	file3 := r.WriteObject(ctx, "FilEb", "data3", t3)
 
 	// Create a case-Sensitive and case-INsensitive VFS
-	optCS := DefaultOpt
+	optCS := vfscommon.DefaultOpt
 	optCS.CaseInsensitive = false
 	vfsCS := New(r.Fremote, &optCS)
+	defer cleanupVFS(t, vfsCS)
 
-	optCI := DefaultOpt
+	optCI := vfscommon.DefaultOpt
 	optCI.CaseInsensitive = true
 	vfsCI := New(r.Fremote, &optCI)
+	defer cleanupVFS(t, vfsCI)
 
 	// Run basic checks that must pass on VFS of any type.
 	assertFileDataVFS(t, vfsCI, "FiLeA", "data1")

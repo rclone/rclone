@@ -4,6 +4,9 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -12,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -109,9 +113,21 @@ func TestRcCopyurl(t *testing.T) {
 		"remote":       "file1",
 		"url":          ts.URL,
 		"autoFilename": false,
+		"noClobber":    false,
 	}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
+	assert.Equal(t, rc.Params(nil), out)
+
+	in = rc.Params{
+		"fs":           r.FremoteName,
+		"remote":       "file1",
+		"url":          ts.URL,
+		"autoFilename": false,
+		"noClobber":    true,
+	}
+	out, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
 	assert.Equal(t, rc.Params(nil), out)
 
 	urlFileName := "filename.txt"
@@ -120,6 +136,7 @@ func TestRcCopyurl(t *testing.T) {
 		"remote":       "",
 		"url":          ts.URL + "/" + urlFileName,
 		"autoFilename": true,
+		"noClobber":    false,
 	}
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
@@ -130,6 +147,7 @@ func TestRcCopyurl(t *testing.T) {
 		"remote":       "",
 		"url":          ts.URL,
 		"autoFilename": true,
+		"noClobber":    false,
 	}
 	out, err = call.Fn(context.Background(), in)
 	require.Error(t, err)
@@ -178,7 +196,7 @@ func TestRcDeletefile(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2)
 }
 
-// operations/list: List the given remote and path in JSON format
+// operations/list: List the given remote and path in JSON format.
 func TestRcList(t *testing.T) {
 	r, call := rcNewRun(t, "operations/list")
 	defer r.Finalise()
@@ -388,6 +406,8 @@ func TestRcPublicLink(t *testing.T) {
 	in := rc.Params{
 		"fs":     r.FremoteName,
 		"remote": "",
+		"expire": "5m",
+		"unlink": false,
 	}
 	_, err := call.Fn(context.Background(), in)
 	require.Error(t, err)
@@ -419,4 +439,76 @@ func TestRcFsInfo(t *testing.T) {
 	}
 	assert.Equal(t, features, got["Features"])
 
+}
+
+//operations/uploadfile : Tests if upload file succeeds
+//
+func TestUploadFile(t *testing.T) {
+	r, call := rcNewRun(t, "operations/uploadfile")
+	defer r.Finalise()
+
+	testFileName := "test.txt"
+	testFileContent := "Hello World"
+	r.WriteFile(testFileName, testFileContent, t1)
+
+	currentFile, err := os.Open(path.Join(r.LocalName, testFileName))
+	require.NoError(t, err)
+
+	formReader, contentType, _, err := rest.MultipartUpload(currentFile, url.Values{}, "content", testFileName)
+	require.NoError(t, err)
+
+	httpReq := httptest.NewRequest("POST", "/", formReader)
+	httpReq.Header.Add("Content-Type", contentType)
+
+	in := rc.Params{
+		"_request": httpReq,
+		"fs":       r.FremoteName,
+		"remote":   "",
+	}
+
+	_, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{fstest.NewItem(testFileName, testFileContent, t1)}, nil, fs.ModTimeNotSupported)
+}
+
+// operations/command: Runs a backend command
+func TestRcCommand(t *testing.T) {
+	r, call := rcNewRun(t, "backend/command")
+	defer r.Finalise()
+	in := rc.Params{
+		"fs":      r.FremoteName,
+		"command": "noop",
+		"opt": map[string]string{
+			"echo": "true",
+			"blue": "",
+		},
+		"arg": []string{
+			"path1",
+			"path2",
+		},
+	}
+	got, err := call.Fn(context.Background(), in)
+	if err != nil {
+		assert.False(t, r.Fremote.Features().IsLocal, "mustn't fail on local remote")
+		assert.Contains(t, err.Error(), "command not found")
+		return
+	}
+	want := rc.Params{"result": map[string]interface{}{
+		"arg": []string{
+			"path1",
+			"path2",
+		},
+		"name": "noop",
+		"opt": map[string]string{
+			"blue": "",
+			"echo": "true",
+		},
+	}}
+	assert.Equal(t, want, got)
+	errTxt := "explosion in the sausage factory"
+	in["opt"].(map[string]string)["error"] = errTxt
+	_, err = call.Fn(context.Background(), in)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), errTxt)
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
@@ -60,7 +61,7 @@ func init() {
 		Description: "Yandex Disk",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.Config("yandex", name, m, oauthConfig)
+			err := oauthutil.Config("yandex", name, m, oauthConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 				return
@@ -73,18 +74,21 @@ func init() {
 			Name: config.ConfigClientSecret,
 			Help: "Yandex Client Secret\nLeave blank normally.",
 		}, {
-			Name:     "unlink",
-			Help:     "Remove existing public link to file/folder with link command rather than creating.\nDefault is false, meaning link command will create or retrieve public link.",
-			Default:  false,
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
+			// Of the control characters \t \n \r are allowed
+			// it doesn't seem worth making an exception for this
+			Default: (encoder.Display |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Token  string `config:"token"`
-	Unlink bool   `config:"unlink"`
+	Token string               `config:"token"`
+	Enc   encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote yandex
@@ -190,12 +194,12 @@ func (f *Fs) setRoot(root string) {
 	f.diskRoot = diskRoot
 }
 
-// filePath returns a escaped file path (f.root, file)
+// filePath returns an escaped file path (f.root, file)
 func (f *Fs) filePath(file string) string {
 	return path.Join(f.diskRoot, file)
 }
 
-// dirPath returns a escaped file path (f.root, file) ending with '/'
+// dirPath returns an escaped file path (f.root, file) ending with '/'
 func (f *Fs) dirPath(file string) string {
 	return path.Join(f.diskRoot, file) + "/"
 }
@@ -207,7 +211,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		Parameters: url.Values{},
 	}
 
-	opts.Parameters.Set("path", path)
+	opts.Parameters.Set("path", f.opt.Enc.FromStandardPath(path))
 
 	if options.SortMode != nil {
 		opts.Parameters.Set("sort", options.SortMode.String())
@@ -234,6 +238,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, options *api.
 		return nil, err
 	}
 
+	info.Name = f.opt.Enc.ToStandardName(info.Name)
 	return &info, nil
 }
 
@@ -360,6 +365,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		if info.ResourceType == "dir" {
 			//list all subdirs
 			for _, element := range info.Embedded.Items {
+				element.Name = f.opt.Enc.ToStandardName(element.Name)
 				remote := path.Join(dir, element.Name)
 				entry, err := f.itemToDirEntry(ctx, remote, &element)
 				if err != nil {
@@ -458,14 +464,18 @@ func (f *Fs) CreateDir(ctx context.Context, path string) (err error) {
 		NoResponse: true,
 	}
 
-	opts.Parameters.Set("path", path)
+	// If creating a directory with a : use (undocumented) disk: prefix
+	if strings.IndexRune(path, ':') >= 0 {
+		path = "disk:" + path
+	}
+	opts.Parameters.Set("path", f.opt.Enc.FromStandardPath(path))
 
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
 		return shouldRetry(resp, err)
 	})
 	if err != nil {
-		//fmt.Printf("CreateDir Error: %s\n", err.Error())
+		// fmt.Printf("CreateDir %q Error: %s\n", path, err.Error())
 		return err
 	}
 	// fmt.Printf("...Id %q\n", *info.Id)
@@ -486,7 +496,7 @@ func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 
 	if err = f.CreateDir(ctx, dirString); err != nil {
 		if apiErr, ok := err.(*api.ErrorResponse); ok {
-			// allready exists
+			// already exists
 			if apiErr.ErrorName != "DiskPathPointsToExistentDirectoryError" {
 				// 2 if it fails then create all directories in the path from root.
 				dirs := strings.Split(dirString, "/") //path separator
@@ -572,7 +582,7 @@ func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) (err erro
 		Parameters: url.Values{},
 	}
 
-	opts.Parameters.Set("path", path)
+	opts.Parameters.Set("path", f.opt.Enc.FromStandardPath(path))
 	opts.Parameters.Set("permanently", strconv.FormatBool(hardDelete))
 
 	var resp *http.Response
@@ -644,8 +654,8 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite 
 		Parameters: url.Values{},
 	}
 
-	opts.Parameters.Set("from", src)
-	opts.Parameters.Set("path", dst)
+	opts.Parameters.Set("from", f.opt.Enc.FromStandardPath(src))
+	opts.Parameters.Set("path", f.opt.Enc.FromStandardPath(dst))
 	opts.Parameters.Set("overwrite", strconv.FormatBool(overwrite))
 
 	var resp *http.Response
@@ -785,21 +795,21 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	var path string
-	if f.opt.Unlink {
+	if unlink {
 		path = "/resources/unpublish"
 	} else {
 		path = "/resources/publish"
 	}
 	opts := rest.Opts{
 		Method:     "PUT",
-		Path:       path,
+		Path:       f.opt.Enc.FromStandardPath(path),
 		Parameters: url.Values{},
 		NoResponse: true,
 	}
 
-	opts.Parameters.Set("path", f.filePath(remote))
+	opts.Parameters.Set("path", f.opt.Enc.FromStandardPath(f.filePath(remote)))
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -814,7 +824,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err er
 		}
 	}
 	if err != nil {
-		if f.opt.Unlink {
+		if unlink {
 			return "", errors.Wrap(err, "couldn't remove public link")
 		}
 		return "", errors.Wrap(err, "couldn't create public link")
@@ -985,7 +995,7 @@ func (o *Object) setCustomProperty(ctx context.Context, property string, value s
 		NoResponse: true,
 	}
 
-	opts.Parameters.Set("path", o.filePath())
+	opts.Parameters.Set("path", o.fs.opt.Enc.FromStandardPath(o.filePath()))
 	rcm := map[string]interface{}{
 		property: value,
 	}
@@ -1022,7 +1032,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Parameters: url.Values{},
 	}
 
-	opts.Parameters.Set("path", o.filePath())
+	opts.Parameters.Set("path", o.fs.opt.Enc.FromStandardPath(o.filePath()))
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &dl)
@@ -1049,7 +1059,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return resp.Body, err
 }
 
-func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeType string) (err error) {
+func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeType string, options ...fs.OpenOption) (err error) {
 	// prepare upload
 	var resp *http.Response
 	var ur api.AsyncInfo
@@ -1057,9 +1067,10 @@ func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeT
 		Method:     "GET",
 		Path:       "/resources/upload",
 		Parameters: url.Values{},
+		Options:    options,
 	}
 
-	opts.Parameters.Set("path", o.filePath())
+	opts.Parameters.Set("path", o.fs.opt.Enc.FromStandardPath(o.filePath()))
 	opts.Parameters.Set("overwrite", strconv.FormatBool(overwrite))
 
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1105,7 +1116,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	//upload file
-	err = o.upload(ctx, in1, true, fs.MimeType(ctx, src))
+	err = o.upload(ctx, in1, true, fs.MimeType(ctx, src), options...)
 	if err != nil {
 		return err
 	}

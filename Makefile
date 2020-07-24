@@ -1,22 +1,33 @@
 SHELL = bash
-BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(BUILD_SOURCEBRANCHNAME),$(shell git rev-parse --abbrev-ref HEAD))
+# Branch we are working on
+BRANCH := $(or $(BUILD_SOURCEBRANCHNAME),$(lastword $(subst /, ,$(GITHUB_REF))),$(shell git rev-parse --abbrev-ref HEAD))
+# Tag of the current commit, if any.  If this is not "" then we are building a release
+RELEASE_TAG := $(shell git tag -l --points-at HEAD)
+# Version of last release (may not be on this branch)
+VERSION := $(shell cat VERSION)
+# Last tag on this branch
 LAST_TAG := $(shell git describe --tags --abbrev=0)
-ifeq ($(BRANCH),$(LAST_TAG))
+# If we are working on a release, override branch to master
+ifdef RELEASE_TAG
 	BRANCH := master
 endif
 TAG_BRANCH := -$(BRANCH)
 BRANCH_PATH := branch/
+# If building HEAD or master then unset TAG_BRANCH and BRANCH_PATH
 ifeq ($(subst HEAD,,$(subst master,,$(BRANCH))),)
 	TAG_BRANCH :=
 	BRANCH_PATH :=
 endif
-TAG := $(shell echo $$(git describe --abbrev=8 --tags | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/'))$(TAG_BRANCH)
-NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f.0", $$_)')
-ifneq ($(TAG),$(LAST_TAG))
+# Make version suffix -DDD-gCCCCCCCC (D=commits since last relase, C=Commit) or blank
+VERSION_SUFFIX := $(shell git describe --abbrev=8 --tags | perl -lpe 's/^v\d+\.\d+\.\d+//; s/^-(\d+)/"-".sprintf("%03d",$$1)/e;')
+# TAG is current version + number of commits since last release + branch
+TAG := $(VERSION)$(VERSION_SUFFIX)$(TAG_BRANCH)
+NEXT_VERSION := $(shell echo $(VERSION) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f.0", $$_)')
+ifndef RELEASE_TAG
 	TAG := $(TAG)-beta
 endif
 GO_VERSION := $(shell go version)
-GO_FILES := $(shell go list ./... | grep -v /vendor/ )
+GO_FILES := $(shell go list ./... )
 ifdef BETA_SUBDIR
 	BETA_SUBDIR := /$(BETA_SUBDIR)
 endif
@@ -33,8 +44,10 @@ endif
 .PHONY: rclone test_all vars version
 
 rclone:
-	go install -v --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS)
-	cp -av `go env GOPATH`/bin/rclone .
+	go build -v --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS)
+	mkdir -p `go env GOPATH`/bin/
+	cp -av rclone`go env GOEXE` `go env GOPATH`/bin/rclone`go env GOEXE`.new
+	mv -v `go env GOPATH`/bin/rclone`go env GOEXE`.new `go env GOPATH`/bin/rclone`go env GOEXE`
 
 test_all:
 	go install --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS) github.com/rclone/rclone/fstest/test_all
@@ -43,10 +56,14 @@ vars:
 	@echo SHELL="'$(SHELL)'"
 	@echo BRANCH="'$(BRANCH)'"
 	@echo TAG="'$(TAG)'"
-	@echo LAST_TAG="'$(LAST_TAG)'"
-	@echo NEW_TAG="'$(NEW_TAG)'"
+	@echo VERSION="'$(VERSION)'"
+	@echo NEXT_VERSION="'$(NEXT_VERSION)'"
 	@echo GO_VERSION="'$(GO_VERSION)'"
 	@echo BETA_URL="'$(BETA_URL)'"
+
+btest:
+	@echo "[$(TAG)]($(BETA_URL)) on branch [$(BRANCH)](https://github.com/rclone/rclone/tree/$(BRANCH)) (uploaded in 15-30 mins)" | xclip -r -sel clip
+	@echo "Copied markdown of beta release to clip board"
 
 version:
 	@echo '$(TAG)'
@@ -73,30 +90,43 @@ check:	rclone
 build_dep:
 	go run bin/get-github-release.go -extract golangci-lint golangci/golangci-lint 'golangci-lint-.*\.tar\.gz'
 
-# Get the release dependencies
-release_dep:
-	go get -u github.com/goreleaser/nfpm/...
-	go get -u github.com/aktau/github-release
+# Get the release dependencies we only install on linux
+release_dep_linux:
+	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*_Linux_x86_64.tar.gz'
+	go run bin/get-github-release.go -extract github-release aktau/github-release 'linux-amd64-github-release.tar.bz2'
+
+# Get the release dependencies we only install on Windows
+release_dep_windows:
+	GO111MODULE=off GOOS="" GOARCH="" go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
 
 # Update dependencies
+showupdates:
+	@echo "*** Direct dependencies that could be updated ***"
+	@GO111MODULE=on go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
+
+# Update direct and indirect dependencies and test dependencies
 update:
-	GO111MODULE=on go get -u ./...
+	GO111MODULE=on go get -u -t ./...
+	-#GO111MODULE=on go get -d $(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all)
 	GO111MODULE=on go mod tidy
-	GO111MODULE=on go mod vendor
+
+# Tidy the module dependencies
+tidy:
+	GO111MODULE=on go mod tidy
 
 doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 
 rclone.1:	MANUAL.md
-	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
+	pandoc -s --from markdown-smart --to man MANUAL.md -o rclone.1
 
 MANUAL.md:	bin/make_manual.py docs/content/*.md commanddocs backenddocs
 	./bin/make_manual.py
 
 MANUAL.html:	MANUAL.md
-	pandoc -s --from markdown --to html MANUAL.md -o MANUAL.html
+	pandoc -s --from markdown-smart --to html MANUAL.md -o MANUAL.html
 
 MANUAL.txt:	MANUAL.md
-	pandoc -s --from markdown --to plain MANUAL.md -o MANUAL.txt
+	pandoc -s --from markdown-smart --to plain MANUAL.md -o MANUAL.txt
 
 commanddocs: rclone
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs docs/content/
@@ -118,10 +148,18 @@ clean:
 	rm -f rclone fs/operations/operations.test fs/sync/sync.test fs/test_all.log test.log
 
 website:
+	rm -rf docs/public
 	cd docs && hugo
+	@if grep -R "raw HTML omitted" docs/public ; then echo "ERROR: found unescaped HTML - fix the markdown source" ; fi
 
 upload_website:	website
 	rclone -v sync docs/public memstore:www-rclone-org
+
+upload_test_website:	website
+	rclone -P sync docs/public test-rclone-org:
+
+validate_website: website
+	find docs/public -type f -name "*.html" | xargs tidy --mute-id yes -errors --gnu-emacs yes --drop-empty-elements no --warn-proprietary-attributes no --mute MISMATCHED_ATTRIBUTE_WARN
 
 tarball:
 	git archive -9 --format=tar.gz --prefix=rclone-$(TAG)/ -o build/rclone-$(TAG).tar.gz $(TAG)
@@ -157,24 +195,17 @@ log_since_last_release:
 compile_all:
 	go run bin/cross-compile.go -compile-only $(BUILDTAGS) $(TAG)
 
-appveyor_upload:
-	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
-ifndef BRANCH_PATH
-	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
-endif
-	@echo Beta release ready at $(BETA_URL)
-
-circleci_upload:
+ci_upload:
+	sudo chown -R $$USER build
+	find build -type l -delete
+	gzip -r9v build
 	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD)/testbuilds
 ifndef BRANCH_PATH
 	./rclone --config bin/travis.rclone.conf -v copy build/ $(BETA_UPLOAD_ROOT)/test/testbuilds-latest
 endif
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
-travis_beta:
-ifeq (linux,$(filter linux,$(subst Linux,linux,$(TRAVIS_OS_NAME) $(AGENT_OS))))
-	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*\.tar.gz'
-endif
+ci_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt
 	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
@@ -183,32 +214,33 @@ ifndef BRANCH_PATH
 endif
 	@echo Beta release ready at $(BETA_URL)
 
-# Fetch the binary builds from travis and appveyor
+# Fetch the binary builds from GitHub actions
 fetch_binaries:
 	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
-	cd docs && hugo server -v -w
+	cd docs && hugo server -v -w --disableFastRender
 
 tag:	doc
-	@echo "Old tag is $(LAST_TAG)"
-	@echo "New tag is $(NEW_TAG)"
-	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
-	echo -n "$(NEW_TAG)" > docs/layouts/partials/version.html
-	git tag -s -m "Version $(NEW_TAG)" $(NEW_TAG)
-	bin/make_changelog.py $(LAST_TAG) $(NEW_TAG) > docs/content/changelog.md.new
+	@echo "Old tag is $(VERSION)"
+	@echo "New tag is $(NEXT_VERSION)"
+	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEXT_VERSION)\"\n" | gofmt > fs/version.go
+	echo -n "$(NEXT_VERSION)" > docs/layouts/partials/version.html
+	echo "$(NEXT_VERSION)" > VERSION
+	git tag -s -m "Version $(NEXT_VERSION)" $(NEXT_VERSION)
+	bin/make_changelog.py $(LAST_TAG) $(NEXT_VERSION) > docs/content/changelog.md.new
 	mv docs/content/changelog.md.new docs/content/changelog.md
 	@echo "Edit the new changelog in docs/content/changelog.md"
 	@echo "Then commit all the changes"
-	@echo git commit -m \"Version $(NEW_TAG)\" -a -v
+	@echo git commit -m \"Version $(NEXT_VERSION)\" -a -v
 	@echo "And finally run make retag before make cross etc"
 
 retag:
-	git tag -f -s -m "Version $(LAST_TAG)" $(LAST_TAG)
+	git tag -f -s -m "Version $(VERSION)" $(VERSION)
 
 startdev:
-	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(LAST_TAG)-DEV\"\n" | gofmt > fs/version.go
-	git commit -m "Start $(LAST_TAG)-DEV development" fs/version.go
+	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(VERSION)-DEV\"\n" | gofmt > fs/version.go
+	git commit -m "Start $(VERSION)-DEV development" fs/version.go
 
 winzip:
 	zip -9 rclone-$(TAG).zip rclone.exe

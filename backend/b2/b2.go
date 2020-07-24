@@ -23,6 +23,7 @@ import (
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -30,7 +31,9 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -52,6 +55,9 @@ const (
 	minChunkSize        = 5 * fs.MebiByte
 	defaultChunkSize    = 96 * fs.MebiByte
 	defaultUploadCutoff = 200 * fs.MebiByte
+	largeFileCopyCutoff = 4 * fs.GibiByte          // 5E9 is the max
+	memoryPoolFlushTime = fs.Duration(time.Minute) // flush the cached buffers after this long
+	memoryPoolUseMmap   = false
 )
 
 // Globals
@@ -112,6 +118,16 @@ This value should be set no larger than 4.657GiB (== 5GB).`,
 			Default:  defaultUploadCutoff,
 			Advanced: true,
 		}, {
+			Name: "copy_cutoff",
+			Help: `Cutoff for switching to multipart copy
+
+Any files larger than this that need to be server side copied will be
+copied in chunks of this size.
+
+The minimum is 0 and the maximum is 4.6GB.`,
+			Default:  largeFileCopyCutoff,
+			Advanced: true,
+		}, {
 			Name: "chunk_size",
 			Help: `Upload chunk size. Must fit in memory.
 
@@ -122,8 +138,13 @@ minimum size.`,
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
-			Name:     "disable_checksum",
-			Help:     `Disable checksums for large (> upload cutoff) files`,
+			Name: "disable_checksum",
+			Help: `Disable checksums for large (> upload cutoff) files
+
+Normally rclone will calculate the SHA1 checksum of the input before
+uploading it so it can add it to metadata on the object. This is great
+for data integrity checking but can cause long delays for large files
+to start uploading.`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -143,23 +164,49 @@ The duration before the download authorization token will expire.
 The minimum value is 1 second. The maximum value is one week.`,
 			Default:  fs.Duration(7 * 24 * time.Hour),
 			Advanced: true,
+		}, {
+			Name:     "memory_pool_flush_time",
+			Default:  memoryPoolFlushTime,
+			Advanced: true,
+			Help: `How often internal memory buffer pools will be flushed.
+Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
+This option controls how often unused buffers will be removed from the pool.`,
+		}, {
+			Name:     "memory_pool_use_mmap",
+			Default:  memoryPoolUseMmap,
+			Advanced: true,
+			Help:     `Whether to use mmap buffers in internal memory pool.`,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			// See: https://www.backblaze.com/b2/docs/files.html
+			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
+			// FIXME: allow /, but not leading, trailing or double
+			Default: (encoder.Display |
+				encoder.EncodeBackSlash |
+				encoder.EncodeInvalidUtf8),
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account                       string        `config:"account"`
-	Key                           string        `config:"key"`
-	Endpoint                      string        `config:"endpoint"`
-	TestMode                      string        `config:"test_mode"`
-	Versions                      bool          `config:"versions"`
-	HardDelete                    bool          `config:"hard_delete"`
-	UploadCutoff                  fs.SizeSuffix `config:"upload_cutoff"`
-	ChunkSize                     fs.SizeSuffix `config:"chunk_size"`
-	DisableCheckSum               bool          `config:"disable_checksum"`
-	DownloadURL                   string        `config:"download_url"`
-	DownloadAuthorizationDuration fs.Duration   `config:"download_auth_duration"`
+	Account                       string               `config:"account"`
+	Key                           string               `config:"key"`
+	Endpoint                      string               `config:"endpoint"`
+	TestMode                      string               `config:"test_mode"`
+	Versions                      bool                 `config:"versions"`
+	HardDelete                    bool                 `config:"hard_delete"`
+	UploadCutoff                  fs.SizeSuffix        `config:"upload_cutoff"`
+	CopyCutoff                    fs.SizeSuffix        `config:"copy_cutoff"`
+	ChunkSize                     fs.SizeSuffix        `config:"chunk_size"`
+	DisableCheckSum               bool                 `config:"disable_checksum"`
+	DownloadURL                   string               `config:"download_url"`
+	DownloadAuthorizationDuration fs.Duration          `config:"download_auth_duration"`
+	MemoryPoolFlushTime           fs.Duration          `config:"memory_pool_flush_time"`
+	MemoryPoolUseMmap             bool                 `config:"memory_pool_use_mmap"`
+	Enc                           encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote b2 server
@@ -181,7 +228,8 @@ type Fs struct {
 	uploads         map[string][]*api.GetUploadURLResponse // Upload URLs by buckedID
 	authMu          sync.Mutex                             // lock for authorizing the account
 	pacer           *fs.Pacer                              // To pace and retry the API calls
-	bufferTokens    chan []byte                            // control concurrency of multipart uploads
+	uploadToken     *pacer.TokenDispenser                  // control concurrency
+	pool            *pool.Pool                             // memory pool
 }
 
 // Object describes a b2 object
@@ -317,7 +365,6 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 	err = checkUploadChunkSize(cs)
 	if err == nil {
 		old, f.opt.ChunkSize = f.opt.ChunkSize, cs
-		f.fillBufferTokens() // reset the buffer tokens
 	}
 	return
 }
@@ -378,6 +425,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		_bucketType: make(map[string]string, 1),
 		uploads:     make(map[string][]*api.GetUploadURLResponse),
 		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
+		pool: pool.New(
+			time.Duration(opt.MemoryPoolFlushTime),
+			int(opt.ChunkSize),
+			fs.Config.Transfers,
+			opt.MemoryPoolUseMmap,
+		),
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -392,14 +446,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		f.srv.SetHeader(testModeHeader, testMode)
 		fs.Debugf(f, "Setting test header \"%s: %s\"", testModeHeader, testMode)
 	}
-	f.fillBufferTokens()
 	err = f.authorizeAccount(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to authorize account")
 	}
 	// If this is a key limited to a single bucket, it must exist already
 	if f.rootBucket != "" && f.info.Allowed.BucketID != "" {
-		allowedBucket := f.info.Allowed.BucketName
+		allowedBucket := f.opt.Enc.ToStandardName(f.info.Allowed.BucketName)
 		if allowedBucket == "" {
 			return nil, errors.New("bucket that application key is restricted to no longer exists")
 		}
@@ -515,32 +568,25 @@ func (f *Fs) clearUploadURL(bucketID string) {
 	f.uploadMu.Unlock()
 }
 
-// Fill up (or reset) the buffer tokens
-func (f *Fs) fillBufferTokens() {
-	f.bufferTokens = make(chan []byte, fs.Config.Transfers)
-	for i := 0; i < fs.Config.Transfers; i++ {
-		f.bufferTokens <- nil
+// getBuf gets a buffer of f.opt.ChunkSize and an upload token
+//
+// If noBuf is set then it just gets an upload token
+func (f *Fs) getBuf(noBuf bool) (buf []byte) {
+	f.uploadToken.Get()
+	if !noBuf {
+		buf = f.pool.Get()
 	}
-}
-
-// getUploadBlock gets a block from the pool of size chunkSize
-func (f *Fs) getUploadBlock() []byte {
-	buf := <-f.bufferTokens
-	if buf == nil {
-		buf = make([]byte, f.opt.ChunkSize)
-	}
-	// fs.Debugf(f, "Getting upload block %p", buf)
 	return buf
 }
 
-// putUploadBlock returns a block to the pool of size chunkSize
-func (f *Fs) putUploadBlock(buf []byte) {
-	buf = buf[:cap(buf)]
-	if len(buf) != int(f.opt.ChunkSize) {
-		panic("bad blocksize returned to pool")
+// putBuf returns a buffer to the memory pool and an upload token
+//
+// If noBuf is set then it just returns the upload token
+func (f *Fs) putBuf(buf []byte, noBuf bool) {
+	if !noBuf {
+		f.pool.Put(buf)
 	}
-	// fs.Debugf(f, "Returning upload block %p", buf)
-	f.bufferTokens <- buf
+	f.uploadToken.Put()
 }
 
 // Return an Object from a path
@@ -620,11 +666,11 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	var request = api.ListFileNamesRequest{
 		BucketID:     bucketID,
 		MaxFileCount: chunkSize,
-		Prefix:       directory,
+		Prefix:       f.opt.Enc.FromStandardPath(directory),
 		Delimiter:    delimiter,
 	}
 	if directory != "" {
-		request.StartFileName = directory
+		request.StartFileName = f.opt.Enc.FromStandardPath(directory)
 	}
 	opts := rest.Opts{
 		Method: "POST",
@@ -644,6 +690,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		}
 		for i := range response.Files {
 			file := &response.Files[i]
+			file.Name = f.opt.Enc.ToStandardPath(file.Name)
 			// Finish if file name no longer has prefix
 			if prefix != "" && !strings.HasPrefix(file.Name, prefix) {
 				return nil
@@ -654,7 +701,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			}
 			remote := file.Name[len(prefix):]
 			// Check for directory
-			isDirectory := strings.HasSuffix(remote, "/")
+			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
 			if isDirectory {
 				remote = remote[:len(remote)-1]
 			}
@@ -844,6 +891,7 @@ func (f *Fs) listBucketsToFn(ctx context.Context, fn listBucketFn) error {
 	f._bucketType = make(map[string]string, 1)
 	for i := range response.Buckets {
 		bucket := &response.Buckets[i]
+		bucket.Name = f.opt.Enc.ToStandardName(bucket.Name)
 		f.cache.MarkOK(bucket.Name)
 		f._bucketID[bucket.Name] = bucket.ID
 		f._bucketType[bucket.Name] = bucket.Type
@@ -965,7 +1013,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 		}
 		var request = api.CreateBucketRequest{
 			AccountID: f.info.AccountID,
-			Name:      bucket,
+			Name:      f.opt.Enc.FromStandardName(bucket),
 			Type:      "allPrivate",
 		}
 		var response api.Bucket
@@ -1049,7 +1097,7 @@ func (f *Fs) hide(ctx context.Context, bucket, bucketPath string) error {
 	}
 	var request = api.HideFileRequest{
 		BucketID: bucketID,
-		Name:     bucketPath,
+		Name:     f.opt.Enc.FromStandardPath(bucketPath),
 	}
 	var response api.File
 	err = f.pacer.Call(func() (bool, error) {
@@ -1077,7 +1125,7 @@ func (f *Fs) deleteByID(ctx context.Context, ID, Name string) error {
 	}
 	var request = api.DeleteFileRequest{
 		ID:   ID,
-		Name: Name,
+		Name: f.opt.Enc.FromStandardPath(Name),
 	}
 	var response api.File
 	err := f.pacer.Call(func() (bool, error) {
@@ -1185,6 +1233,63 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	return f.purge(ctx, f.rootBucket, f.rootDirectory, true)
 }
 
+// copy does a server side copy from dstObj <- srcObj
+//
+// If newInfo is nil then the metadata will be copied otherwise it
+// will be replaced with newInfo
+func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *api.File) (err error) {
+	if srcObj.size >= int64(f.opt.CopyCutoff) {
+		if newInfo == nil {
+			newInfo, err = srcObj.getMetaData(ctx)
+			if err != nil {
+				return err
+			}
+		}
+		up, err := f.newLargeUpload(ctx, dstObj, nil, srcObj, f.opt.CopyCutoff, true, newInfo)
+		if err != nil {
+			return err
+		}
+		return up.Upload(ctx)
+	}
+
+	dstBucket, dstPath := dstObj.split()
+	err = f.makeBucket(ctx, dstBucket)
+	if err != nil {
+		return err
+	}
+
+	destBucketID, err := f.getBucketID(ctx, dstBucket)
+	if err != nil {
+		return err
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/b2_copy_file",
+	}
+	var request = api.CopyFileRequest{
+		SourceID:     srcObj.id,
+		Name:         f.opt.Enc.FromStandardPath(dstPath),
+		DestBucketID: destBucketID,
+	}
+	if newInfo == nil {
+		request.MetadataDirective = "COPY"
+	} else {
+		request.MetadataDirective = "REPLACE"
+		request.ContentType = newInfo.ContentType
+		request.Info = newInfo.Info
+	}
+	var response api.FileInfo
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.srv.CallJSON(ctx, &opts, &request, &response)
+		return f.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+	return dstObj.decodeMetaDataFileInfo(&response)
+}
+
 // Copy src to this remote using server side copy operations.
 //
 // This is stored with the remote path given
@@ -1195,47 +1300,21 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	dstBucket, dstPath := f.split(remote)
-	err := f.makeBucket(ctx, dstBucket)
-	if err != nil {
-		return nil, err
-	}
 	srcObj, ok := src.(*Object)
 	if !ok {
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	destBucketID, err := f.getBucketID(ctx, dstBucket)
-	if err != nil {
-		return nil, err
-	}
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/b2_copy_file",
-	}
-	var request = api.CopyFileRequest{
-		SourceID:          srcObj.id,
-		Name:              dstPath,
-		MetadataDirective: "COPY",
-		DestBucketID:      destBucketID,
-	}
-	var response api.FileInfo
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err := f.srv.CallJSON(ctx, &opts, &request, &response)
-		return f.shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, err
-	}
-	o := &Object{
+	// Temporary Object under construction
+	dstObj := &Object{
 		fs:     f,
 		remote: remote,
 	}
-	err = o.decodeMetaDataFileInfo(&response)
+	err := f.copy(ctx, dstObj, srcObj, nil)
 	if err != nil {
 		return nil, err
 	}
-	return o, nil
+	return dstObj, nil
 }
 
 // Hashes returns the supported hash sets.
@@ -1263,7 +1342,7 @@ func (f *Fs) getDownloadAuthorization(ctx context.Context, bucket, remote string
 	}
 	var request = api.GetDownloadAuthorizationRequest{
 		BucketID:               bucketID,
-		FileNamePrefix:         path.Join(f.root, remote),
+		FileNamePrefix:         f.opt.Enc.FromStandardPath(path.Join(f.root, remote)),
 		ValidDurationInSeconds: validDurationInSeconds,
 	}
 	var response api.GetDownloadAuthorizationResponse
@@ -1278,7 +1357,7 @@ func (f *Fs) getDownloadAuthorization(ctx context.Context, bucket, remote string
 }
 
 // PublicLink returns a link for downloading without account
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	bucket, bucketPath := f.split(remote)
 	var RootURL string
 	if f.opt.DownloadURL == "" {
@@ -1355,6 +1434,21 @@ func (o *Object) Size() int64 {
 	return o.size
 }
 
+// Clean the SHA1
+//
+// Make sure it is lower case
+//
+// Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
+// Some tools (eg Cyberduck) use this
+func cleanSHA1(sha1 string) (out string) {
+	out = strings.ToLower(sha1)
+	const unverified = "unverified:"
+	if strings.HasPrefix(out, unverified) {
+		out = out[len(unverified):]
+	}
+	return out
+}
+
 // decodeMetaDataRaw sets the metadata from the data passed in
 //
 // Sets
@@ -1370,6 +1464,7 @@ func (o *Object) decodeMetaDataRaw(ID, SHA1 string, Size int64, UploadTimestamp 
 	if o.sha1 == "" || o.sha1 == "none" {
 		o.sha1 = Info[sha1Key]
 	}
+	o.sha1 = cleanSHA1(o.sha1)
 	o.size = Size
 	// Use the UploadTimestamp if can't get file info
 	o.modTime = time.Time(UploadTimestamp)
@@ -1490,28 +1585,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if err != nil {
 		return err
 	}
-	_, bucketPath := o.split()
 	info.Info[timeKey] = timeString(modTime)
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/b2_copy_file",
-	}
-	var request = api.CopyFileRequest{
-		SourceID:          o.id,
-		Name:              bucketPath, // copy to same name
-		MetadataDirective: "REPLACE",
-		ContentType:       info.ContentType,
-		Info:              info.Info,
-	}
-	var response api.FileInfo
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallJSON(ctx, &opts, &request, &response)
-		return o.fs.shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return err
-	}
-	return o.decodeMetaDataFileInfo(&response)
+
+	// Copy to the same name, overwriting the metadata only
+	return o.fs.copy(ctx, o, o, info)
 }
 
 // Storable returns if this object is storable
@@ -1600,7 +1677,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		opts.Path += "/b2api/v1/b2_download_file_by_id?fileId=" + urlEncode(o.id)
 	} else {
 		bucket, bucketPath := o.split()
-		opts.Path += "/file/" + urlEncode(bucket) + "/" + urlEncode(bucketPath)
+		opts.Path += "/file/" + urlEncode(o.fs.opt.Enc.FromStandardName(bucket)) + "/" + urlEncode(o.fs.opt.Enc.FromStandardPath(bucketPath))
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1627,6 +1704,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			o.sha1 = resp.Header.Get(sha1InfoHeader)
 			fs.Debugf(o, "Reading sha1 from info - %q", o.sha1)
 		}
+		o.sha1 = cleanSHA1(o.sha1)
 	}
 	// Don't check length or hash on partial content
 	if resp.StatusCode == http.StatusPartialContent {
@@ -1686,7 +1764,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	if size == -1 {
 		// Check if the file is large enough for a chunked upload (needs to be at least two chunks)
-		buf := o.fs.getUploadBlock()
+		buf := o.fs.getBuf(false)
+
 		n, err := io.ReadFull(in, buf)
 		if err == nil {
 			bufReader := bufio.NewReader(in)
@@ -1696,22 +1775,24 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 		if err == nil {
 			fs.Debugf(o, "File is big enough for chunked streaming")
-			up, err := o.fs.newLargeUpload(ctx, o, in, src)
+			up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil)
 			if err != nil {
-				o.fs.putUploadBlock(buf)
+				o.fs.putBuf(buf, false)
 				return err
 			}
+			// NB Stream returns the buffer and token
 			return up.Stream(ctx, buf)
 		} else if err == io.EOF || err == io.ErrUnexpectedEOF {
 			fs.Debugf(o, "File has %d bytes, which makes only one chunk. Using direct upload.", n)
-			defer o.fs.putUploadBlock(buf)
+			defer o.fs.putBuf(buf, false)
 			size = int64(n)
 			in = bytes.NewReader(buf[:n])
 		} else {
+			o.fs.putBuf(buf, false)
 			return err
 		}
 	} else if size > int64(o.fs.opt.UploadCutoff) {
-		up, err := o.fs.newLargeUpload(ctx, o, in, src)
+		up, err := o.fs.newLargeUpload(ctx, o, in, src, o.fs.opt.ChunkSize, false, nil)
 		if err != nil {
 			return err
 		}
@@ -1795,9 +1876,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Method:  "POST",
 		RootURL: upload.UploadURL,
 		Body:    in,
+		Options: options,
 		ExtraHeaders: map[string]string{
 			"Authorization":  upload.AuthorizationToken,
-			"X-Bz-File-Name": urlEncode(bucketPath),
+			"X-Bz-File-Name": urlEncode(o.fs.opt.Enc.FromStandardPath(bucketPath)),
 			"Content-Type":   fs.MimeType(ctx, src),
 			sha1Header:       calculatedSha1,
 			timeHeader:       timeString(modTime),

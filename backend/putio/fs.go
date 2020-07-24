@@ -17,7 +17,8 @@ import (
 	"github.com/putdotio/go-putio/putio"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -30,10 +31,12 @@ type Fs struct {
 	name        string             // name of this remote
 	root        string             // the path we are working on
 	features    *fs.Features       // optional features
+	opt         Options            // options for this Fs
 	client      *putio.Client      // client for making API calls to Put.io
 	pacer       *fs.Pacer          // To pace the API calls
 	dirCache    *dircache.DirCache // Map of directory path to directory id
-	oAuthClient *http.Client
+	httpClient  *http.Client       // base http client
+	oAuthClient *http.Client       // http client with oauth Authorization
 }
 
 // ------------------------------------------------------------
@@ -58,35 +61,34 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// shouldRetry returns a boolean as to whether this err deserves to be
-// retried.  It returns the err as a convenience
-func shouldRetry(err error) (bool, error) {
-	if err == nil {
-		return false, nil
-	}
-	if fserrors.ShouldRetry(err) {
-		return true, err
-	}
-	if perr, ok := err.(*putio.ErrorResponse); ok {
-		if perr.Response.StatusCode == 429 || perr.Response.StatusCode >= 500 {
-			return true, err
-		}
-	}
-	return false, err
+// parsePath parses a putio 'url'
+func parsePath(path string) (root string) {
+	root = strings.Trim(path, "/")
+	return
 }
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	// defer log.Trace(name, "root=%v", root)("f=%+v, err=%v", &f, &err)
-	oAuthClient, _, err := oauthutil.NewClient(name, m, putioConfig)
+	// Parse config into Options struct
+	opt := new(Options)
+	err = configstruct.Set(m, opt)
+	if err != nil {
+		return nil, err
+	}
+	root = parsePath(root)
+	httpClient := fshttp.NewClient(fs.Config)
+	oAuthClient, _, err := oauthutil.NewClientWithBaseClient(name, m, putioConfig, httpClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure putio")
 	}
 	p := &Fs{
 		name:        name,
 		root:        root,
+		opt:         *opt,
 		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		client:      putio.NewClient(oAuthClient),
+		httpClient:  httpClient,
 		oAuthClient: oAuthClient,
 	}
 	p.features = (&fs.Features{
@@ -145,7 +147,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	var entry putio.File
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "creating folder. part: %s, parentID: %d", leaf, parentID)
-		entry, err = f.client.Files.CreateFolder(ctx, leaf, parentID)
+		entry, err = f.client.Files.CreateFolder(ctx, f.opt.Enc.FromStandardName(leaf), parentID)
 		return shouldRetry(err)
 	})
 	return itoa(entry.ID), err
@@ -172,11 +174,11 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		return
 	}
 	for _, child := range children {
-		if child.Name == leaf {
+		if f.opt.Enc.ToStandardName(child.Name) == leaf {
 			found = true
 			pathIDOut = itoa(child.ID)
 			if !child.IsDir() {
-				err = fs.ErrorNotAFile
+				err = fs.ErrorIsFile
 			}
 			return
 		}
@@ -195,10 +197,6 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	// defer log.Trace(f, "dir=%v", dir)("err=%v", &err)
-	err = f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return nil, err
-	}
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -214,7 +212,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return
 	}
 	for _, child := range children {
-		remote := path.Join(dir, child.Name)
+		remote := path.Join(dir, f.opt.Enc.ToStandardName(child.Name))
 		// fs.Debugf(f, "child: %s", remote)
 		if child.IsDir() {
 			f.dirCache.Put(remote, itoa(child.ID))
@@ -258,11 +256,11 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	// defer log.Trace(f, "src=%+v", src)("o=%+v, err=%v", &o, &err)
 	size := src.Size()
 	remote := src.Remote()
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
-	loc, err := f.createUpload(ctx, leaf, size, directoryID, src.ModTime(ctx))
+	loc, err := f.createUpload(ctx, leaf, size, directoryID, src.ModTime(ctx), options)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +280,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	return f.newObjectWithInfo(ctx, remote, entry)
 }
 
-func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID string, modTime time.Time) (location string, err error) {
+func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID string, modTime time.Time, options []fs.OpenOption) (location string, err error) {
 	// defer log.Trace(f, "name=%v, size=%v, parentID=%v, modTime=%v", name, size, parentID, modTime.String())("location=%v, err=%v", location, &err)
 	err = f.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequest("POST", "https://upload.put.io/files/", nil)
@@ -292,11 +290,12 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 		req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 		req.Header.Set("tus-resumable", "1.0.0")
 		req.Header.Set("upload-length", strconv.FormatInt(size, 10))
-		b64name := base64.StdEncoding.EncodeToString([]byte(name))
+		b64name := base64.StdEncoding.EncodeToString([]byte(f.opt.Enc.FromStandardName(name)))
 		b64true := base64.StdEncoding.EncodeToString([]byte("true"))
 		b64parentID := base64.StdEncoding.EncodeToString([]byte(parentID))
 		b64modifiedAt := base64.StdEncoding.EncodeToString([]byte(modTime.Format(time.RFC3339)))
 		req.Header.Set("upload-metadata", fmt.Sprintf("name %s,no-torrent %s,parent_id %s,updated-at %s", b64name, b64true, b64parentID, b64modifiedAt))
+		fs.OpenOptionAddHTTPHeaders(req.Header, options)
 		resp, err := f.oAuthClient.Do(req)
 		retry, err := shouldRetry(err)
 		if retry {
@@ -318,66 +317,125 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 }
 
 func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.Reader) (fileID int64, err error) {
-	// defer log.Trace(f, "location=%v, size=%v", location, size)("fileID=%v, err=%v", fileID, &err)
+	// defer log.Trace(f, "location=%v, size=%v", location, size)("fileID=%v, err=%v", &fileID, &err)
 	if size == 0 {
 		err = f.pacer.Call(func() (bool, error) {
 			fs.Debugf(f, "Sending zero length chunk")
-			fileID, err = f.transferChunk(ctx, location, 0, bytes.NewReader([]byte{}), 0)
+			_, fileID, err = f.transferChunk(ctx, location, 0, bytes.NewReader([]byte{}), 0)
 			return shouldRetry(err)
 		})
 		return
 	}
-	var start int64
+	var clientOffset int64
+	var offsetMismatch bool
 	buf := make([]byte, defaultChunkSize)
-	for start < size {
-		reqSize := size - start
-		if reqSize >= int64(defaultChunkSize) {
-			reqSize = int64(defaultChunkSize)
+	for clientOffset < size {
+		chunkSize := size - clientOffset
+		if chunkSize >= int64(defaultChunkSize) {
+			chunkSize = int64(defaultChunkSize)
 		}
-		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, reqSize)
+		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+		chunkStart := clientOffset
+		reqSize := chunkSize
+		transferOffset := clientOffset
+		fs.Debugf(f, "chunkStart: %d, reqSize: %d", chunkStart, reqSize)
 
 		// Transfer the chunk
 		err = f.pacer.Call(func() (bool, error) {
-			fs.Debugf(f, "Sending chunk. start: %d length: %d", start, reqSize)
-			// TODO get file offset and seek to the position
-			fileID, err = f.transferChunk(ctx, location, start, chunk, reqSize)
+			if offsetMismatch {
+				// Get file offset and seek to the position
+				offset, err := f.getServerOffset(ctx, location)
+				if err != nil {
+					return shouldRetry(err)
+				}
+				sentBytes := offset - chunkStart
+				fs.Debugf(f, "sentBytes: %d", sentBytes)
+				_, err = chunk.Seek(sentBytes, io.SeekStart)
+				if err != nil {
+					return shouldRetry(err)
+				}
+				transferOffset = offset
+				reqSize = chunkSize - sentBytes
+				offsetMismatch = false
+			}
+			fs.Debugf(f, "Sending chunk. transferOffset: %d length: %d", transferOffset, reqSize)
+			var serverOffset int64
+			serverOffset, fileID, err = f.transferChunk(ctx, location, transferOffset, chunk, reqSize)
+			if cerr, ok := err.(*statusCodeError); ok && cerr.response.StatusCode == 409 {
+				offsetMismatch = true
+				return true, err
+			}
+			if serverOffset != (transferOffset + reqSize) {
+				offsetMismatch = true
+				return true, errors.New("connection broken")
+			}
 			return shouldRetry(err)
 		})
 		if err != nil {
 			return
 		}
 
-		start += reqSize
+		clientOffset += chunkSize
 	}
 	return
 }
 
-func (f *Fs) transferChunk(ctx context.Context, location string, start int64, chunk io.ReadSeeker, chunkSize int64) (fileID int64, err error) {
-	// defer log.Trace(f, "location=%v, start=%v, chunkSize=%v", location, start, chunkSize)("fileID=%v, err=%v", fileID, &err)
-	_, _ = chunk.Seek(0, io.SeekStart)
+func (f *Fs) getServerOffset(ctx context.Context, location string) (offset int64, err error) {
+	// defer log.Trace(f, "location=%v", location)("offset=%v, err=%v", &offset, &err)
+	req, err := f.makeUploadHeadRequest(ctx, location)
+	if err != nil {
+		return 0, err
+	}
+	resp, err := f.oAuthClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	err = checkStatusCode(resp, 200)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseInt(resp.Header.Get("upload-offset"), 10, 64)
+}
+
+func (f *Fs) transferChunk(ctx context.Context, location string, start int64, chunk io.ReadSeeker, chunkSize int64) (serverOffset, fileID int64, err error) {
+	// defer log.Trace(f, "location=%v, start=%v, chunkSize=%v", location, start, chunkSize)("fileID=%v, err=%v", &fileID, &err)
 	req, err := f.makeUploadPatchRequest(ctx, location, chunk, start, chunkSize)
 	if err != nil {
-		return 0, err
+		return
 	}
-	req = req.WithContext(ctx)
-	res, err := f.oAuthClient.Do(req)
+	resp, err := f.oAuthClient.Do(req)
 	if err != nil {
-		return 0, err
+		return
 	}
 	defer func() {
-		_ = res.Body.Close()
+		_ = resp.Body.Close()
 	}()
-	if res.StatusCode != 204 {
-		return 0, fmt.Errorf("unexpected status code while transferring chunk: %d", res.StatusCode)
+	err = checkStatusCode(resp, 204)
+	if err != nil {
+		return
 	}
-	sfid := res.Header.Get("putio-file-id")
+	serverOffset, err = strconv.ParseInt(resp.Header.Get("upload-offset"), 10, 64)
+	if err != nil {
+		return
+	}
+	sfid := resp.Header.Get("putio-file-id")
 	if sfid != "" {
 		fileID, err = strconv.ParseInt(sfid, 10, 64)
 		if err != nil {
-			return 0, err
+			return
 		}
 	}
-	return fileID, nil
+	return
+}
+
+func (f *Fs) makeUploadHeadRequest(ctx context.Context, location string) (*http.Request, error) {
+	req, err := http.NewRequest("HEAD", location, nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
+	req.Header.Set("tus-resumable", "1.0.0")
+	return req, nil
 }
 
 func (f *Fs) makeUploadPatchRequest(ctx context.Context, location string, in io.Reader, offset, length int64) (*http.Request, error) {
@@ -396,13 +454,7 @@ func (f *Fs) makeUploadPatchRequest(ctx context.Context, location string, in io.
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	// defer log.Trace(f, "dir=%v", dir)("err=%v", &err)
-	err = f.dirCache.FindRoot(ctx, true)
-	if err != nil {
-		return err
-	}
-	if dir != "" {
-		_, err = f.dirCache.FindDir(ctx, dir, true)
-	}
+	_, err = f.dirCache.FindDir(ctx, dir, true)
 	return err
 }
 
@@ -466,12 +518,11 @@ func (f *Fs) Purge(ctx context.Context) (err error) {
 	if f.root == "" {
 		return errors.New("can't purge root directory")
 	}
-	err = f.dirCache.FindRoot(ctx, false)
+	rootIDs, err := f.dirCache.RootID(ctx, false)
 	if err != nil {
 		return err
 	}
-
-	rootID := atoi(f.dirCache.RootID())
+	rootID := atoi(rootIDs)
 	// Let putio delete the filesystem tree
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "deleting file: %d", rootID)
@@ -497,7 +548,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +556,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
 		params.Set("parent_id", directoryID)
-		params.Set("name", leaf)
+		params.Set("name", f.opt.Enc.FromStandardName(leaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/copy", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err
@@ -536,7 +587,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if !ok {
 		return nil, fs.ErrorCantMove
 	}
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
@@ -544,7 +595,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		params := url.Values{}
 		params.Set("file_id", strconv.FormatInt(srcObj.file.ID, 10))
 		params.Set("parent_id", directoryID)
-		params.Set("name", leaf)
+		params.Set("name", f.opt.Enc.FromStandardName(leaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/move", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err
@@ -574,57 +625,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if !ok {
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.root, srcRemote)
-	dstPath := path.Join(f.root, dstRemote)
 
-	// Refuse to move to or from the root
-	if srcPath == "" || dstPath == "" {
-		return errors.New("can't move root directory")
-	}
-
-	// find the root src directory
-	err = srcFs.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return err
-	}
-
-	// find the root dst directory
-	if dstRemote != "" {
-		err = f.dirCache.FindRoot(ctx, true)
-		if err != nil {
-			return err
-		}
-	} else {
-		if f.dirCache.FoundRoot() {
-			return fs.ErrorDirExists
-		}
-	}
-
-	// Find ID of dst parent, creating subdirs if necessary
-	var leaf, dstDirectoryID string
-	findPath := dstRemote
-	if dstRemote == "" {
-		findPath = f.root
-	}
-	leaf, dstDirectoryID, err = f.dirCache.FindPath(ctx, findPath, true)
-	if err != nil {
-		return err
-	}
-
-	// Check destination does not exist
-	if dstRemote != "" {
-		_, err = f.dirCache.FindDir(ctx, dstRemote, false)
-		if err == fs.ErrorDirNotFound {
-			// OK
-		} else if err != nil {
-			return err
-		} else {
-			return fs.ErrorDirExists
-		}
-	}
-
-	// Find ID of src
-	srcID, err := srcFs.dirCache.FindDir(ctx, srcRemote, false)
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
 	if err != nil {
 		return err
 	}
@@ -633,7 +635,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		params := url.Values{}
 		params.Set("file_id", srcID)
 		params.Set("parent_id", dstDirectoryID)
-		params.Set("name", leaf)
+		params.Set("name", f.opt.Enc.FromStandardName(dstLeaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/move", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err

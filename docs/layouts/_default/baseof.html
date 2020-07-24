@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="{{ .Description }}">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-32x32.png"/>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-51081799-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-51081799-1');
+    </script>
+    <title>{{ block "title" . }}{{ .Title }}{{ end }}</title>
+    <link rel="canonical" href="{{ .Permalink }}">
+    <link href="/css/bootstrap.min.4.4.1.css" rel="stylesheet">
+    <link href="/css/font-awesome.min.5.10.2.css" rel="stylesheet">
+    <link href="/css/custom.css?r={{ .Date.Unix }}" rel="stylesheet">
+    {{ $RSSLink := "" }}{{ with .OutputFormats.Get "RSS" }}{{ $RSSLink = .RelPermalink }}{{ end }}{{ if $RSSLink }}<link href="{{ $RSSLink }}" rel="alternate" type="application/rss+xml" title="{{ .Site.Title }}" />{{ end }}
+  </head>
+  <body>
+    {{ template "chrome/navbar.html" . }}
+    <div class="container">
+      <div class="row">
+        <div class="col-md-10">
+          {{ block "main" . }}
+          {{ end }}
+        </div>
+        <div class="col-md-2">
+          {{ template "chrome/menu.html" . }}
+        </div>
+      </div>
+      {{ block "footer" . }}
+      <footer>
+        <div class="row">
+          <div class="col-md-10">
+            <div class="card card-body">
+              <p style="font-size: 90%;">
+                &copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-{{ now.Format "2006" }}<br>
+                {{ if .File}}{{ with $path := strings.TrimPrefix "/" .File.Path }}Source file <a href="https://github.com/rclone/rclone/blob/master/docs/content/{{ $path }}">{{ $path }}</a>{{ end }}
+                last updated <a href="https://github.com/rclone/rclone/commit/{{ with .GitInfo }}{{ .Hash }}{{ end }}">{{ .Lastmod.Format "2006-01-02" }}</a><br>{{end}}
+                Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                uploaded with <a href="https://rclone.org">rclone</a>
+                and built with <a href="https://github.com/spf13/hugo">Hugo</a>.
+                Logo by <a href="https://twitter.com/andy23">@andy23</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
+      {{ end }}
+    </div>
+    <script src="/js/jquery.min.3.5.1.js"></script>
+    <script src="/js/popper.min.1.16.0.js"></script>
+    <script src="/js/bootstrap.min.4.4.1.js"></script>
+    <script src="/js/custom.js?r={{ .Date.Unix }}"></script>
+  </body>
+</html>

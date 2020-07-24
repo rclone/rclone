@@ -1,7 +1,5 @@
 // Run a test
 
-// +build go1.11
-
 package main
 
 import (
@@ -16,11 +14,13 @@ import (
 	"regexp"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest/testserver"
 )
 
 // Control concurrency per backend if required
@@ -43,6 +43,7 @@ type Run struct {
 	NoRetries bool   // don't retry if set
 	OneOnly   bool   // only run test for this backend at once
 	NoBinary  bool   // set to not build a binary
+	SizeLimit int64  // maximum test file size
 	Ignore    map[string]struct{}
 	// Internals
 	cmdLine     []string
@@ -211,6 +212,16 @@ func (r *Run) trial() {
 		return
 	}
 
+	// Start the test server if required
+	finish, err := testserver.Start(r.Remote)
+	if err != nil {
+		log.Printf("%s: Failed to start test server: %v", r.Remote, err)
+		_, _ = fmt.Fprintf(out, "%s: Failed to start test server: %v\n", r.Remote, err)
+		r.err = err
+		return
+	}
+	defer finish()
+
 	// Internal buffer
 	var b bytes.Buffer
 	multiOut := io.MultiWriter(out, &b)
@@ -325,6 +336,9 @@ func (r *Run) Init() {
 		r.cmdLine = []string{"./" + r.BinaryName()}
 	}
 	r.cmdLine = append(r.cmdLine, prefix+"v", prefix+"timeout", timeout.String(), "-remote", r.Remote)
+	if *listRetries > 0 {
+		r.cmdLine = append(r.cmdLine, "-list-retries", fmt.Sprint(*listRetries))
+	}
 	r.try = 1
 	if *verbose {
 		r.cmdLine = append(r.cmdLine, "-verbose")
@@ -338,6 +352,9 @@ func (r *Run) Init() {
 	}
 	if r.Short {
 		r.cmdLine = append(r.cmdLine, "-short")
+	}
+	if r.SizeLimit > 0 {
+		r.cmdLine = append(r.cmdLine, "-size-limit", strconv.FormatInt(r.SizeLimit, 10))
 	}
 	r.cmdString = toShell(r.cmdLine)
 }

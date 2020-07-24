@@ -43,7 +43,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // Size returns the size of the file
 func (o *Object) Size() int64 {
-	return int64(o.file.Size)
+	return o.file.Size
 }
 
 // Fs returns read only access to the Fs that this object is part of
@@ -74,7 +74,7 @@ func (o *Object) SetModTime(context.Context, time.Time) error {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadCloser, error) {
-	fs.FixRangeOption(options, int64(o.file.Size))
+	fs.FixRangeOption(options, o.file.Size)
 	downloadToken, err := o.fs.getDownloadToken(ctx, o.file.URL)
 
 	if err != nil {
@@ -101,7 +101,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 // Update in to the object with the modTime given of the given size
 //
-// When called from outside a Fs by rclone, src.Size() will always be >= 0.
+// When called from outside an Fs by rclone, src.Size() will always be >= 0.
 // But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 // return an error or update the object properly (rather than e.g. calling panic).
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {

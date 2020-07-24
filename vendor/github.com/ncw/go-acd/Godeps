@@ -1,6 +1,0 @@
-# Dependencies can by installed via [gpm](https://github.com/pote/gpm)
-
-github.com/google/go-querystring/query
-
-# for tests
-github.com/stretchr/testify

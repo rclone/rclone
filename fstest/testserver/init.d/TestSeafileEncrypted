@@ -1,0 +1,65 @@
+#!/bin/bash
+
+set -e
+
+# local variables
+TEST_LIBRARY=Encrypted
+TEST_LIBRARY_PASSWORD=SecretKey
+
+# environment variables passed on docker-compose
+export NAME=seafile7encrypted
+export MYSQL_ROOT_PASSWORD=pixenij4zacoguq0kopamid6
+export SEAFILE_ADMIN_EMAIL=seafile@rclone.org
+export SEAFILE_ADMIN_PASSWORD=pixenij4zacoguq0kopamid6
+export SEAFILE_IP=127.0.0.1
+export SEAFILE_PORT=8088
+export SEAFILE_TEST_DATA=${SEAFILE_TEST_DATA:-/tmp/seafile-test-data}
+export SEAFILE_VERSION=latest
+
+# make sure the data directory exists
+mkdir -p ${SEAFILE_TEST_DATA}/${NAME}
+
+# docker-compose project directory
+COMPOSE_DIR=$(dirname "$0")/seafile
+
+start() {
+    docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml up -d
+
+    # it takes some time for the database to be created
+    sleep 60
+
+    # authentication token answer should be like: {"token":"dbf58423f1632b5b679a13b0929f1d0751d9250c"}
+    TOKEN=`curl --silent \
+        --data-urlencode username=${SEAFILE_ADMIN_EMAIL} -d password=${SEAFILE_ADMIN_PASSWORD} \
+        http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/auth-token/ \
+        | sed 's/^{"token":"\(.*\)"}$/\1/'`
+
+    # create encrypted library
+    curl -X POST -d "name=${TEST_LIBRARY}&passwd=${TEST_LIBRARY_PASSWORD}" -H "Authorization: Token ${TOKEN}" "http://${SEAFILE_IP}:${SEAFILE_PORT}/api2/repos/"
+
+    echo _connect=${SEAFILE_IP}:${SEAFILE_PORT}
+    echo type=seafile
+    echo url=http://${SEAFILE_IP}:${SEAFILE_PORT}/
+    echo user=${SEAFILE_ADMIN_EMAIL}
+    echo pass=$(rclone obscure ${SEAFILE_ADMIN_PASSWORD})
+    echo library=${TEST_LIBRARY}
+    echo library_key=$(rclone obscure ${TEST_LIBRARY_PASSWORD})
+}
+
+stop() {
+    if status ; then
+        docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml down
+    fi
+}
+
+status() {
+    if docker ps --format "{{.Names}}" | grep ^${NAME}_seafile_1$ >/dev/null ; then
+        echo "$NAME running"
+    else
+        echo "$NAME not running"
+        return 1
+    fi
+    return 0
+}
+
+. $(dirname "$0")/run.bash
