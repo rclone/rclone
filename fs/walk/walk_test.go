@@ -358,7 +358,7 @@ func walkErrors(t *testing.T, expectedErr error) *listDirs {
 	em := errorMap{}
 	de := make(fs.DirEntries, 10)
 	for i := range de {
-		path := string('0' + i)
+		path := string('0' + rune(i))
 		de[i] = mockdir.New(path)
 		lr[path] = listResult{entries: nil, err: fs.ErrorDirNotFound}
 		em[path] = fs.ErrorDirNotFound
