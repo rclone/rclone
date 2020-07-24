@@ -19,23 +19,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'mac', 'windows_amd64', 'windows_386', 'other_os', 'race', 'go1.11', 'go1.12', 'go1.13']
+        job_name: ['linux', 'mac', 'windows_amd64', 'windows_386', 'other_os', 'go1.11', 'go1.12', 'go1.13', 'go1.15']
 
         include:
           - job_name: linux
             os: ubuntu-latest
             go: '1.14.x'
-            modules: 'on'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
             quicktest: true
+            racequicktest: true
             deploy: true
 
           - job_name: mac
             os: macOS-latest
             go: '1.14.x'
-            modules: 'on'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -45,7 +44,6 @@ jobs:
           - job_name: windows_amd64
             os: windows-latest
             go: '1.14.x'
-            modules: 'on'
             gotags: cmount
             build_flags: '-include "^windows/amd64" -cgo'
             quicktest: true
@@ -55,7 +53,6 @@ jobs:
           - job_name: windows_386
             os: windows-latest
             go: '1.14.x'
-            modules: 'on'
             gotags: cmount
             goarch: '386'
             cgo: '1'
@@ -66,35 +63,30 @@ jobs:
           - job_name: other_os
             os: ubuntu-latest
             go: '1.14.x'
-            modules: 'on'
             build_flags: '-exclude "^(windows/|darwin/amd64|linux/)"'
             compile_all: true
             deploy: true
 
-          - job_name: race
-            os: ubuntu-latest
-            go: '1.14.x'
-            modules: 'on'
-            quicktest: true
-            racequicktest: true
-
           - job_name: go1.11
             os: ubuntu-latest
             go: '1.11.x'
-            modules: 'on'
             quicktest: true
 
           - job_name: go1.12
             os: ubuntu-latest
             go: '1.12.x'
-            modules: 'on'
             quicktest: true
 
           - job_name: go1.13
             os: ubuntu-latest
             go: '1.13.x'
-            modules: 'on'
             quicktest: true
+
+          - job_name: go1.15
+            os: ubuntu-latest
+            go: '1.15.0-rc1'
+            quicktest: true
+            racequicktest: true
 
     name: ${{ matrix.job_name }}
 
@@ -102,22 +94,19 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@v2
         with:
-          # Checkout into a fixed path to avoid import path problems on go < 1.11
-          path: ./src/github.com/rclone/rclone
+          fetch-depth: 0
 
       - name: Install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v2
         with:
+          stable: 'false'
           go-version: ${{ matrix.go }}
 
       - name: Set environment variables
         shell: bash
         run: |
-          echo '::set-env name=GOPATH::${{ runner.workspace }}'
-          echo '::add-path::${{ runner.workspace }}/bin'
-          echo '::set-env name=GO111MODULE::${{ matrix.modules }}'
           echo '::set-env name=GOTAGS::${{ matrix.gotags }}'
           echo '::set-env name=BUILD_FLAGS::${{ matrix.build_flags }}'
           if [[ "${{ matrix.goarch }}" != "" ]]; then echo '::set-env name=GOARCH::${{ matrix.goarch }}' ; fi
@@ -167,10 +156,22 @@ jobs:
           printf "\n\nSystem environment:\n\n"
           env
 
-      - name: Run tests
+      - name: Go module cache
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build rclone
         shell: bash
         run: |
           make
+
+      - name: Run tests
+        shell: bash
+        run: |
           make quicktest
         if: matrix.quicktest
 
@@ -242,9 +243,9 @@ jobs:
               .
 
       - name: Build rclone
+        shell: bash
         run: |
-          docker pull golang
-          docker run --rm -v "$PWD":/usr/src/rclone -w /usr/src/rclone golang go build -mod=mod -v
+          make
 
       - name: Upload artifacts
         run: |
