@@ -6,6 +6,7 @@ package mount
 
 import (
 	"fmt"
+	"runtime"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
@@ -78,6 +79,10 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
 func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, error) {
+	if runtime.GOOS == "darwin" {
+		fs.Logf(nil, "macOS users: please try \"rclone cmount\" as it will be the default in v1.54")
+	}
+
 	if opt.DebugFUSE {
 		fuse.Debug = func(msg interface{}) {
 			fs.Debugf("fuse", "%v", msg)
