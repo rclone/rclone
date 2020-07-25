@@ -139,7 +139,7 @@ with a path of ` + "`/<username>/`" + `.
 
 				httpSrv := &http2.Server{}
 				opts := &http2.ServeConnOpts{
-					Handler: http.HandlerFunc(s.ServeHTTP),
+					Handler: s,
 				}
 				httpSrv.ServeConn(conn, opts)
 				return nil
