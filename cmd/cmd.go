@@ -84,6 +84,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 	_, _, fsPath, err := fs.ParseRemote(remote)
 	if err != nil {
 		err = fs.CountError(err)
+		fmt.Printf("Failed to create file system for %q: %v", remote, err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
 	f, err := cache.Get(remote)
@@ -94,6 +95,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 		return f, ""
 	default:
 		err = fs.CountError(err)
+		fmt.Printf("Failed to create file system for %q: %v", remote, err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
 	return nil, ""
