@@ -9,7 +9,7 @@ import (
 )
 
 // NewServer returns a rclone server object which talks the restic http protocol
-func NewServer(args []string) (*server, error) {
+func NewServer(args []string) (http.RoundTripper, error) {
 	f := cmd.NewFsSrc(args)
 	return newServer(f, &httpflags.Opt), nil
 }
