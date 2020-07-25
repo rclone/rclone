@@ -1741,7 +1741,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		// https://issuetracker.google.com/issues/149522397
 		if len(dirs) > 1 && !foundItems {
 			if atomic.SwapInt32(&f.grouping, 1) != 1 {
-				fs.Logf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
+				fs.Debugf(f, "Disabling ListR to work around bug in drive as multi listing (%d) returned no entries", len(dirs))
 			}
 			var recycled = make([]listREntry, len(dirs))
 			f.listRmu.Lock()
@@ -1774,7 +1774,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 				// empty so must have made a mistake
 				if len(f.listRempties) == 0 {
 					if atomic.SwapInt32(&f.grouping, listRGrouping) != listRGrouping {
-						fs.Logf(f, "Re-enabling ListR as previous detection was in error")
+						fs.Debugf(f, "Re-enabling ListR as previous detection was in error")
 					}
 				}
 			}
