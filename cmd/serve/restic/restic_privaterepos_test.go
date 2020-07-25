@@ -57,7 +57,7 @@ func TestResticPrivateRepositories(t *testing.T) {
 
 	// make a new file system in the temp dir
 	f := cmd.NewFsSrc([]string{tempdir})
-	srv := newServer(f, &httpflags.Opt)
+	srv := NewServer(f, &httpflags.Opt)
 
 	// Requesting /test/ should allow access
 	reqs := []*http.Request{
@@ -66,7 +66,7 @@ func TestResticPrivateRepositories(t *testing.T) {
 		newAuthenticatedRequest(t, "GET", "/test/config", nil),
 	}
 	for _, req := range reqs {
-		checkRequest(t, srv.handler, req, []wantFunc{wantCode(http.StatusOK)})
+		checkRequest(t, srv.ServeHTTP, req, []wantFunc{wantCode(http.StatusOK)})
 	}
 
 	// Requesting everything else should raise forbidden errors
@@ -76,7 +76,7 @@ func TestResticPrivateRepositories(t *testing.T) {
 		newAuthenticatedRequest(t, "GET", "/other_user/config", nil),
 	}
 	for _, req := range reqs {
-		checkRequest(t, srv.handler, req, []wantFunc{wantCode(http.StatusForbidden)})
+		checkRequest(t, srv.ServeHTTP, req, []wantFunc{wantCode(http.StatusForbidden)})
 	}
 
 }
