@@ -1,12 +1,14 @@
 package restic
 
 import (
-	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
 )
 
+// NewServer returns a rclone server object which talks the restic http protocol
 func NewServer(args []string) (*server, error) {
 	f := cmd.NewFsSrc(args)
 	return newServer(f, &httpflags.Opt), nil
