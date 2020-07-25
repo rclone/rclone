@@ -164,6 +164,7 @@ type Server struct {
 	f fs.Fs
 }
 
+// NewServer returns an HTTP server that speaks the rest protocol
 func NewServer(f fs.Fs, opt *httplib.Options) *Server {
 	mux := http.NewServeMux()
 	s := &Server{
