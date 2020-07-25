@@ -224,9 +224,6 @@ Leave blank normally.
 
 Fill in to access "Computers" folders (see docs), or for rclone to use
 a non root folder as its starting point.
-
-Note that if this is blank, the first time rclone runs it will fill it
-in with the ID of the root folder.
 `,
 		}, {
 			Name: "service_account_file",
@@ -350,12 +347,9 @@ date is used.`,
 			Help:     "Size of listing chunk 100-1000. 0 to disable.",
 			Advanced: true,
 		}, {
-			Name:    "impersonate",
-			Default: "",
-			Help: `Impersonate this user when using a service account.
-
-Note that if this is used then "root_folder_id" will be ignored.
-`,
+			Name:     "impersonate",
+			Default:  "",
+			Help:     `Impersonate this user when using a service account.`,
 			Advanced: true,
 		}, {
 			Name:    "alternate_export",
@@ -1122,25 +1116,15 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		}
 	}
 
-	// If impersonating warn about root_folder_id if set and unset it
-	//
-	// This is because rclone v1.51 and v1.52 cached root_folder_id when
-	// using impersonate which they shouldn't have done. It is possible
-	// someone is using impersonate and root_folder_id in which case this
-	// breaks their workflow. There isn't an easy way around that.
-	if opt.RootFolderID != "" && opt.RootFolderID != "appDataFolder" && opt.Impersonate != "" {
-		fs.Logf(f, "Ignoring cached root_folder_id when using --drive-impersonate")
-		opt.RootFolderID = ""
-	}
-
-	// set root folder for a team drive or query the user root folder
+	// Set the root folder ID
 	if opt.RootFolderID != "" {
-		// override root folder if set or cached in the config and not impersonating
+		// use root_folder ID if set
 		f.rootFolderID = opt.RootFolderID
 	} else if f.isTeamDrive {
+		// otherwise use team_drive if set
 		f.rootFolderID = f.opt.TeamDriveID
 	} else {
-		// Look up the root ID and cache it in the config
+		// otherwise look up the actual root ID
 		rootID, err := f.getRootID()
 		if err != nil {
 			if gerr, ok := errors.Cause(err).(*googleapi.Error); ok && gerr.Code == 404 {
@@ -1152,10 +1136,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 			}
 		}
 		f.rootFolderID = rootID
-		// Don't cache the root folder ID if impersonating
-		if opt.Impersonate == "" {
-			m.Set("root_folder_id", rootID)
-		}
+		fs.Debugf(f, "root_folder_id = %q - save this in the config to speed up startup", rootID)
 	}
 
 	f.dirCache = dircache.New(root, f.rootFolderID, f)
