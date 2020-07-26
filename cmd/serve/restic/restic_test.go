@@ -41,7 +41,7 @@ func TestRestic(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Start the server
-	w := newServer(fremote, &opt)
+	w := NewServer(fremote, &opt)
 	assert.NoError(t, w.Serve())
 	defer func() {
 		w.Close()
