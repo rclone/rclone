@@ -16,6 +16,8 @@ import (
 // MaxCompletedTransfers specifies maximum number of completed transfers in startedTransfers list
 var MaxCompletedTransfers = 100
 
+var startTime = time.Now()
+
 // StatsInfo accounts all transfers
 type StatsInfo struct {
 	mu                sync.RWMutex
@@ -66,7 +68,8 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["transfers"] = s.transfers
 	out["deletes"] = s.deletes
 	out["renames"] = s.renames
-	out["elapsedTime"] = s.totalDuration().Seconds()
+	out["transferTime"] = s.totalDuration().Seconds()
+	out["elapsedTime"] = time.Since(startTime).Seconds()
 	s.mu.RUnlock()
 	if !s.checking.empty() {
 		var c []string
@@ -248,9 +251,10 @@ func (s *StatsInfo) String() string {
 
 	s.mu.RLock()
 
+	elapsedTime := time.Since(startTime)
+	elapsedTimeSecondsOnly := elapsedTime.Truncate(time.Second/10) % time.Minute
 	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
-	dtSecondsOnly := dt.Truncate(time.Second/10) % time.Minute
 	speed := 0.0
 	if dt > 0 {
 		speed = float64(s.bytes) / dtSeconds
@@ -332,7 +336,7 @@ func (s *StatsInfo) String() string {
 			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
 				s.transfers, totalTransfer, percent(s.transfers, totalTransfer))
 		}
-		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10ss\n", strings.TrimRight(dt.Truncate(time.Minute).String(), "0s")+fmt.Sprintf("%.1f", dtSecondsOnly.Seconds()))
+		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10ss\n", strings.TrimRight(elapsedTime.Truncate(time.Minute).String(), "0s")+fmt.Sprintf("%.1f", elapsedTimeSecondsOnly.Seconds()))
 	}
 
 	// checking and transferring have their own locking so unlock
