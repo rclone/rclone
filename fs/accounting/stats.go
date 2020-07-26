@@ -251,9 +251,10 @@ func (s *StatsInfo) String() string {
 
 	s.mu.RLock()
 
-	dt := time.Since(startTime)
+	elapsedTime := time.Since(startTime)
+	elapsedTimeSecondsOnly := elapsedTime.Truncate(time.Second/10) % time.Minute
+	dt := s.totalDuration()
 	dtSeconds := dt.Seconds()
-	dtSecondsOnly := dt.Truncate(time.Second/10) % time.Minute
 	speed := 0.0
 	if dt > 0 {
 		speed = float64(s.bytes) / dtSeconds
@@ -335,7 +336,7 @@ func (s *StatsInfo) String() string {
 			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
 				s.transfers, totalTransfer, percent(s.transfers, totalTransfer))
 		}
-		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10ss\n", strings.TrimRight(dt.Truncate(time.Minute).String(), "0s")+fmt.Sprintf("%.1f", dtSecondsOnly.Seconds()))
+		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10ss\n", strings.TrimRight(elapsedTime.Truncate(time.Minute).String(), "0s")+fmt.Sprintf("%.1f", elapsedTimeSecondsOnly.Seconds()))
 	}
 
 	// checking and transferring have their own locking so unlock
