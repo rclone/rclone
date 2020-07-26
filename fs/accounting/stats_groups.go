@@ -95,6 +95,7 @@ Returns the following values:
 	"transfers": number of transferred files,
 	"deletes" : number of deleted files,
 	"renames" : number of renamed files,
+	"transferTime" : total time spent on running jobs,
 	"elapsedTime": time in seconds since the start of the process,
 	"lastError": last occurred error,
 	"transferring": an array of currently active file transfers:
