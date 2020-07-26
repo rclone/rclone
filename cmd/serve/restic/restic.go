@@ -126,7 +126,7 @@ with a path of ` + "`/<username>/`" + `.
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f, &httpflags.Opt)
+			s := NewServer(f, &httpflags.Opt)
 			if stdio {
 				if terminal.IsTerminal(int(os.Stdout.Fd())) {
 					return errors.New("Refusing to run HTTP2 server directly on a terminal, please let restic start rclone")
@@ -139,7 +139,7 @@ with a path of ` + "`/<username>/`" + `.
 
 				httpSrv := &http2.Server{}
 				opts := &http2.ServeConnOpts{
-					Handler: http.HandlerFunc(s.handler),
+					Handler: s,
 				}
 				httpSrv.ServeConn(conn, opts)
 				return nil
@@ -158,26 +158,27 @@ const (
 	resticAPIV2 = "application/vnd.x.restic.rest.v2"
 )
 
-// server contains everything to run the server
-type server struct {
+// Server contains everything to run the Server
+type Server struct {
 	*httplib.Server
 	f fs.Fs
 }
 
-func newServer(f fs.Fs, opt *httplib.Options) *server {
+// NewServer returns an HTTP server that speaks the rest protocol
+func NewServer(f fs.Fs, opt *httplib.Options) *Server {
 	mux := http.NewServeMux()
-	s := &server{
+	s := &Server{
 		Server: httplib.NewServer(mux, opt),
 		f:      f,
 	}
-	mux.HandleFunc(s.Opt.BaseURL+"/", s.handler)
+	mux.HandleFunc(s.Opt.BaseURL+"/", s.ServeHTTP)
 	return s
 }
 
 // Serve runs the http server in the background.
 //
 // Use s.Close() and s.Wait() to shutdown server
-func (s *server) Serve() error {
+func (s *Server) Serve() error {
 	err := s.Server.Serve()
 	if err != nil {
 		return err
@@ -205,8 +206,8 @@ func makeRemote(path string) string {
 	return prefix + fileName[:2] + "/" + fileName
 }
 
-// handler reads incoming requests and dispatches them
-func (s *server) handler(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP reads incoming requests and dispatches them
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Server", "rclone/"+fs.Version)
 
@@ -248,7 +249,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 // get the remote
-func (s *server) serveObject(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *Server) serveObject(w http.ResponseWriter, r *http.Request, remote string) {
 	o, err := s.f.NewObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "%s request error: %v", r.Method, err)
@@ -259,7 +260,7 @@ func (s *server) serveObject(w http.ResponseWriter, r *http.Request, remote stri
 }
 
 // postObject posts an object to the repository
-func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *Server) postObject(w http.ResponseWriter, r *http.Request, remote string) {
 	if appendOnly {
 		// make sure the file does not exist yet
 		_, err := s.f.NewObject(r.Context(), remote)
@@ -282,7 +283,7 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 }
 
 // delete the remote
-func (s *server) deleteObject(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *Server) deleteObject(w http.ResponseWriter, r *http.Request, remote string) {
 	if appendOnly {
 		parts := strings.Split(r.URL.Path, "/")
 
@@ -331,7 +332,7 @@ func (ls *listItems) add(entry fs.DirEntry) {
 }
 
 // listObjects lists all Objects of a given type in an arbitrary order.
-func (s *server) listObjects(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *Server) listObjects(w http.ResponseWriter, r *http.Request, remote string) {
 	fs.Debugf(remote, "list request")
 
 	if r.Header.Get("Accept") != resticAPIV2 {
@@ -372,7 +373,7 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request, remote stri
 // createRepo creates repository directories.
 //
 // We don't bother creating the data dirs as rclone will create them on the fly
-func (s *server) createRepo(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *Server) createRepo(w http.ResponseWriter, r *http.Request, remote string) {
 	fs.Infof(remote, "Creating repository")
 
 	if r.URL.Query().Get("create") != "true" {
