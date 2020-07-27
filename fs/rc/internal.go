@@ -4,6 +4,7 @@ package rc
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
@@ -339,10 +340,12 @@ func rcSetBlockProfileRate(ctx context.Context, in Params) (out Params, err erro
 
 func init() {
 	Add(Call{
-		Path:         "core/command",
-		AuthRequired: true,
-		Fn:           rcRunCommand,
-		Title:        "Run a rclone terminal command over rc.",
+		Path:          "core/command",
+		AuthRequired:  true,
+		Fn:            rcRunCommand,
+		NeedsRequest:  true,
+		NeedsResponse: true,
+		Title:         "Run a rclone terminal command over rc.",
 		Help: `This takes the following parameters
 
 - command - a string with the command name
@@ -353,6 +356,7 @@ Returns
 
 - result - result from the backend command
 - error	 - set if rclone exits with an error code
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT". "STREAM_ONLY_STDERR")
 
 For example
 
@@ -398,6 +402,17 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 		return nil, err
 	}
 
+	returnType, err := in.GetString("returnType")
+	if err != nil {
+		returnType = "COMBINED_OUTPUT"
+	}
+
+	var httpResponse *http.ResponseWriter
+	httpResponse, err = in.GetHTTPResponseWriter()
+	if err != nil {
+		return nil, errors.Errorf("response object is required\n" + err.Error())
+	}
+
 	var allArgs = []string{}
 	if command != "" {
 		// Add the command eg: ls to the args
@@ -427,19 +442,30 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 
 	cmd := exec.CommandContext(ctx, ex, allArgs...)
 
-	// Run the command and get the output for error and stdout combined.
-	output, err := cmd.CombinedOutput()
+	if returnType == "COMBINED_OUTPUT" {
+		// Run the command and get the output for error and stdout combined.
 
-	if err != nil {
-		fs.Errorf(nil, "Command error %v", err)
+		out, err := cmd.CombinedOutput()
+
+		if err != nil {
+			return Params{
+				"result": string(out),
+				"error":  true,
+			}, nil
+		}
 		return Params{
-			"result": string(output),
-			"error":  true,
+			"result": string(out),
+			"error":  false,
 		}, nil
+	} else if returnType == "STREAM_ONLY_STDOUT" {
+		cmd.Stdout = *httpResponse
+	} else if returnType == "STREAM_ONLY_STDERR" {
+		cmd.Stderr = *httpResponse
+	} else if returnType == "STREAM" {
+		cmd.Stdout = *httpResponse
+		cmd.Stderr = *httpResponse
 	}
 
-	return Params{
-		"result": string(output),
-		"error":  false,
-	}, nil
+	err = cmd.Run()
+	return nil, err
 }
