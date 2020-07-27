@@ -3,6 +3,8 @@ package rc
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"runtime"
 	"testing"
@@ -135,10 +137,13 @@ func TestCoreQuit(t *testing.T) {
 func TestCoreCommand(t *testing.T) {
 	call := Calls.Get("core/command")
 
+	var httpResponse http.ResponseWriter = httptest.NewRecorder()
+
 	in := Params{
-		"command": "version",
-		"opt":     map[string]string{},
-		"arg":     []string{},
+		"command":   "version",
+		"opt":       map[string]string{},
+		"arg":       []string{},
+		"_response": &httpResponse,
 	}
 	got, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
