@@ -2,6 +2,8 @@ package rc
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"runtime"
 	"testing"
 
@@ -12,6 +14,15 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/version"
 )
+
+func TestMain(m *testing.M) {
+	// Pretend to be rclone version if we have a version string parameter
+	if os.Args[len(os.Args)-1] == "version" {
+		fmt.Printf("rclone %s\n", fs.Version)
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
 
 func TestInternalNoop(t *testing.T) {
 	call := Calls.Get("rc/noop")
@@ -132,8 +143,6 @@ func TestCoreCommand(t *testing.T) {
 	got, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 
-	errorBool, err := got.GetBool("error")
-	require.NoError(t, err)
-
-	require.Equal(t, errorBool, false)
+	assert.Equal(t, fmt.Sprintf("rclone %s\n", fs.Version), got["result"])
+	assert.Equal(t, false, got["error"])
 }
