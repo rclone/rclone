@@ -265,6 +265,10 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		in["_request"] = r
 	}
 
+	if call.NeedsResponse {
+		in["_response"] = &w
+	}
+
 	// Check to see if it is async or not
 	isAsync, err := in.GetBool("_async")
 	if rc.NotErrParamNotFound(err) {
