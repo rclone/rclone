@@ -183,16 +183,23 @@ latest release is recommended. Then
     go build
     ./rclone version
 
-You can also build and install rclone in the
-[GOPATH](https://github.com/golang/go/wiki/GOPATH) (which defaults to
-`~/go`) with:
+This will leave you a checked out version of rclone you can modify and
+send pull requests with. If you use `make` instead of `go build` then
+the rclone build will have the correct version information in it.
 
-    go get -u -v github.com/rclone/rclone
+You can also build the latest stable rclone with:
 
-and this will build the binary in `$GOPATH/bin` (`~/go/bin/rclone` by
-default) after downloading the source to
-`$GOPATH/src/github.com/rclone/rclone` (`~/go/src/github.com/rclone/rclone`
-by default).
+    go get github.com/rclone/rclone
+
+or the latest version (equivalent to the beta) with
+
+    go get github.com/rclone/rclone@master
+
+These will build the binary in `$(go env GOPATH)/bin`
+(`~/go/bin/rclone` by default) after downloading the source to the go
+module cache. Note - do **not** use the `-u` flag here. This causes go
+to try to update the depencencies that rclone uses and sometimes these
+don't work with the current version of rclone.
 
 ## Installation with Ansible ##
 
