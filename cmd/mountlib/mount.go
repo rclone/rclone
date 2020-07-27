@@ -436,7 +436,7 @@ func ClipBlocks(b *uint64) {
 //
 // If noModTime is set then it
 func Mount(VFS *vfs.VFS, mountpoint string, mount MountFn, opt *Options) error {
-	if opt != nil {
+	if opt == nil {
 		opt = &DefaultOpt
 	}
 
