@@ -17,12 +17,13 @@ type Func func(ctx context.Context, in Params) (out Params, err error)
 // Call defines info about a remote control function and is used in
 // the Add function to create new entry points.
 type Call struct {
-	Path         string // path to activate this RC
-	Fn           Func   `json:"-"` // function to call
-	Title        string // help for the function
-	AuthRequired bool   // if set then this call requires authorisation to be set
-	Help         string // multi-line markdown formatted help
-	NeedsRequest bool   // if set then this call will be passed the original request object as _request
+	Path          string // path to activate this RC
+	Fn            Func   `json:"-"` // function to call
+	Title         string // help for the function
+	AuthRequired  bool   // if set then this call requires authorisation to be set
+	Help          string // multi-line markdown formatted help
+	NeedsRequest  bool   // if set then this call will be passed the original request object as _request
+	NeedsResponse bool   // if set then this call will be passed the original response object as _response
 }
 
 // Registry holds the list of all the registered remote control functions
