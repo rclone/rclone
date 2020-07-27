@@ -19,8 +19,8 @@ import (
 	"github.com/rclone/rclone/lib/errors"
 )
 
-// getLatestReleaseURL returns the latest release details of the rclone-webui-react
-func getLatestReleaseURL(fetchURL string) (string, string, int, error) {
+// GetLatestReleaseURL returns the latest release details of the rclone-webui-react
+func GetLatestReleaseURL(fetchURL string) (string, string, int, error) {
 	resp, err := http.Get(fetchURL)
 	if err != nil {
 		return "", "", 0, errors.New("Error getting latest release of rclone-webui")
@@ -56,7 +56,7 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	// TODO: Add hashing to check integrity of the previous update.
 	if !extractPathExist || checkUpdate || forceUpdate {
 		// Get the latest release details
-		WebUIURL, tag, size, err := getLatestReleaseURL(fetchURL)
+		WebUIURL, tag, size, err := GetLatestReleaseURL(fetchURL)
 		if err != nil {
 			return err
 		}
@@ -88,7 +88,7 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 		fs.Logf(nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
 
 		// download the zip from latest url
-		err = downloadFile(zipPath, WebUIURL)
+		err = DownloadFile(zipPath, WebUIURL)
 		if err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 		}
 		fs.Logf(nil, "Unzipping webgui binary")
 
-		err = unzip(zipPath, extractPath)
+		err = Unzip(zipPath, extractPath)
 		if err != nil {
 			return err
 		}
@@ -120,8 +120,8 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	return nil
 }
 
-// downloadFile is a helper function to download a file from url to the filepath
-func downloadFile(filepath string, url string) error {
+// DownloadFile is a helper function to download a file from url to the filepath
+func DownloadFile(filepath string, url string) error {
 
 	// Get the data
 	resp, err := http.Get(url)
@@ -142,8 +142,8 @@ func downloadFile(filepath string, url string) error {
 	return err
 }
 
-// unzip is a helper function to unzip a file specified in src to path dest
-func unzip(src, dest string) (err error) {
+// Unzip is a helper function to Unzip a file specified in src to path dest
+func Unzip(src, dest string) (err error) {
 	dest = filepath.Clean(dest) + string(os.PathSeparator)
 
 	r, err := zip.OpenReader(src)
@@ -211,6 +211,22 @@ func exists(path string) (existence bool, stat os.FileInfo, err error) {
 		return false, nil, nil
 	}
 	return false, stat, err
+}
+
+// CreatePathIfNotExist creates the path to a folder if it does not exist
+func CreatePathIfNotExist(path string) (err error) {
+	exists, stat, _ := exists(path)
+	if !exists {
+		if err := os.MkdirAll(path, 0755); err != nil {
+			return errors.New("Error creating : " + path)
+		}
+	}
+
+	if exists && !stat.IsDir() {
+		return errors.New("Path is a file instead of folder. Please check it " + path)
+	}
+
+	return nil
 }
 
 // gitHubRequest Maps the GitHub API request to structure
