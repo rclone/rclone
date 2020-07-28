@@ -1,4 +1,5 @@
 // +build darwin linux
+// +build !gccgo
 
 package plugin
 
