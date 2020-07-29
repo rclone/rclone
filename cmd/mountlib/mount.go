@@ -339,8 +339,9 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 ` + vfs.Help,
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
+			opt := Opt // make a copy of the options
 
-			if Opt.Daemon {
+			if opt.Daemon {
 				config.PassConfigKeyForDaemonization = true
 			}
 
@@ -360,30 +361,29 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 
 			// Skip checkMountEmpty if --allow-non-empty flag is used or if
 			// the Operating System is Windows
-			if !Opt.AllowNonEmpty && runtime.GOOS != "windows" {
+			if !opt.AllowNonEmpty && runtime.GOOS != "windows" {
 				err := checkMountEmpty(mountpoint)
 				if err != nil {
 					log.Fatalf("Fatal error: %v", err)
 				}
-			} else if Opt.AllowNonEmpty && runtime.GOOS == "windows" {
+			} else if opt.AllowNonEmpty && runtime.GOOS == "windows" {
 				fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
 			}
 
 			// Work out the volume name, removing special
 			// characters from it if necessary
-			VolumeName := Opt.VolumeName
-			if VolumeName == "" {
-				VolumeName = fdst.Name() + ":" + fdst.Root()
+			if opt.VolumeName == "" {
+				opt.VolumeName = fdst.Name() + ":" + fdst.Root()
 			}
-			VolumeName = strings.Replace(VolumeName, ":", " ", -1)
-			VolumeName = strings.Replace(VolumeName, "/", " ", -1)
-			VolumeName = strings.TrimSpace(VolumeName)
-			if runtime.GOOS == "windows" && len(VolumeName) > 32 {
-				VolumeName = VolumeName[:32]
+			opt.VolumeName = strings.Replace(opt.VolumeName, ":", " ", -1)
+			opt.VolumeName = strings.Replace(opt.VolumeName, "/", " ", -1)
+			opt.VolumeName = strings.TrimSpace(opt.VolumeName)
+			if runtime.GOOS == "windows" && len(opt.VolumeName) > 32 {
+				opt.VolumeName = opt.VolumeName[:32]
 			}
 
 			// Start background task if --background is specified
-			if Opt.Daemon {
+			if opt.Daemon {
 				daemonized := startBackgroundMode()
 				if daemonized {
 					return
@@ -391,7 +391,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 			}
 
 			VFS := vfs.New(fdst, &vfsflags.Opt)
-			err := Mount(VFS, mountpoint, mount, &Opt)
+			err := Mount(VFS, mountpoint, mount, &opt)
 			if err != nil {
 				log.Fatalf("Fatal error: %v", err)
 			}
