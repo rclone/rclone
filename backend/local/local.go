@@ -145,6 +145,17 @@ cause disk fragmentation and can be slow to work with.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "no_set_modtime",
+			Help: `Disable setting modtime
+
+Normally rclone updates modification time of files after they are done
+uploading. This can cause permissions issues on Linux platforms when 
+the user rclone is running as does not own the file uploaded, such as
+when copying to a CIFS mount owned by another user. If this option is 
+enabled, rclone will no longer update the modtime after copying a file.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -166,6 +177,7 @@ type Options struct {
 	CaseSensitive     bool                 `config:"case_sensitive"`
 	CaseInsensitive   bool                 `config:"case_insensitive"`
 	NoSparse          bool                 `config:"no_sparse"`
+	NoSetModTime      bool                 `config:"no_set_modtime"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -542,6 +554,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision of the file system
 func (f *Fs) Precision() (precision time.Duration) {
+	if f.opt.NoSetModTime {
+		return fs.ModTimeNotSupported
+	}
+
 	f.precisionOk.Do(func() {
 		f.precision = f.readPrecision()
 	})
@@ -878,6 +894,9 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if o.fs.opt.NoSetModTime {
+		return nil
+	}
 	var err error
 	if o.translatedLink {
 		err = lChtimes(o.path, modTime, modTime)
