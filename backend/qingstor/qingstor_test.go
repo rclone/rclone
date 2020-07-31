@@ -1,6 +1,6 @@
 // Test QingStor filesystem interface
 
-// +build !plan9
+// +build !plan9,!js
 
 package qingstor
 
