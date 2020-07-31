@@ -66,6 +66,7 @@ var osarches = []string{
 	"plan9/386",
 	"plan9/amd64",
 	"solaris/amd64",
+	"js/wasm",
 }
 
 // Special environment flags for a given arch
@@ -320,14 +321,16 @@ func compileArch(version, goos, goarch, dir string) bool {
 		return false
 	}
 	if !*compileOnly {
-		artifacts := []string{buildZip(dir)}
-		// build a .deb and .rpm if appropriate
-		if goos == "linux" {
-			artifacts = append(artifacts, buildDebAndRpm(dir, version, goarch)...)
-		}
-		if *copyAs != "" {
-			for _, artifact := range artifacts {
-				run("ln", artifact, strings.Replace(artifact, "-"+version, "-"+*copyAs, 1))
+		if goos != "js" {
+			artifacts := []string{buildZip(dir)}
+			// build a .deb and .rpm if appropriate
+			if goos == "linux" {
+				artifacts = append(artifacts, buildDebAndRpm(dir, version, goarch)...)
+			}
+			if *copyAs != "" {
+				for _, artifact := range artifacts {
+					run("ln", artifact, strings.Replace(artifact, "-"+version, "-"+*copyAs, 1))
+				}
 			}
 		}
 		// tidy up

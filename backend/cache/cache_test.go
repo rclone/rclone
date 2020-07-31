@@ -1,6 +1,6 @@
 // Test Cache filesystem interface
 
-// +build !plan9
+// +build !plan9,!js
 // +build !race
 
 package cache_test

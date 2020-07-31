@@ -1,6 +1,6 @@
 // Upload object to QingStor
 
-// +build !plan9
+// +build !plan9,!js
 
 package qingstor
 
