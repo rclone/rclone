@@ -241,13 +241,7 @@ func init() {
 			m.Set(configDriveType, rootItem.ParentReference.DriveType)
 			config.SaveConfig()
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Microsoft App Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Microsoft App Client Secret\nLeave blank normally.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",
 			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
 
@@ -350,7 +344,7 @@ this flag there.
 				encoder.EncodeRightSpace |
 				encoder.EncodeWin |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 

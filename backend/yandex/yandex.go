@@ -67,13 +67,7 @@ func init() {
 				return
 			}
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Yandex Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Yandex Client Secret\nLeave blank normally.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -81,7 +75,7 @@ func init() {
 			// it doesn't seem worth making an exception for this
 			Default: (encoder.Display |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 
