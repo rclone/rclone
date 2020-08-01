@@ -193,13 +193,7 @@ func init() {
 				log.Fatalf("Failed to configure team drive: %v", err)
 			}
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Google Application Client Id\nSetting your own is recommended.\nSee https://rclone.org/drive/#making-your-own-client-id for how to create your own.\nIf you leave this blank, it will use an internal key which is low performance.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Google Application Client Secret\nSetting your own is recommended.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "scope",
 			Help: "Scope that rclone should use when requesting access from drive.",
 			Examples: []fs.OptionExample{{
@@ -489,7 +483,7 @@ If this flag is set then rclone will ignore shortcut files completely.
 			// Encode invalid UTF-8 bytes as json doesn't handle them properly.
 			// Don't encode / as it's a valid name character in drive.
 			Default: encoder.EncodeInvalidUtf8,
-		}},
+		}}...),
 	})
 
 	// register duplicate MIME types first

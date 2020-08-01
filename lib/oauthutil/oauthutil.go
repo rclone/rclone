@@ -71,6 +71,27 @@ All done. Please go back to rclone.
 `
 )
 
+// SharedOptions are shared between backends the utilize an OAuth flow
+var SharedOptions = []fs.Option{{
+	Name: config.ConfigClientID,
+	Help: "OAuth Client Id\nLeave blank normally.",
+}, {
+	Name: config.ConfigClientSecret,
+	Help: "OAuth Client Secret\nLeave blank normally.",
+}, {
+	Name:     config.ConfigToken,
+	Help:     "OAuth Access Token as a JSON blob.",
+	Advanced: true,
+}, {
+	Name:     config.ConfigAuthURL,
+	Help:     "Auth server URL.\nLeave blank to use the provider defaults.",
+	Advanced: true,
+}, {
+	Name:     config.ConfigTokenURL,
+	Help:     "Token server url.\nLeave blank to use the provider defaults.",
+	Advanced: true,
+}}
+
 // oldToken contains an end-user's tokens.
 // This is the data you must store to persist authentication.
 //

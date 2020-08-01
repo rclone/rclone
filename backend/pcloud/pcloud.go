@@ -103,13 +103,7 @@ func init() {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Pcloud App Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Pcloud App Client Secret\nLeave blank normally.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -131,7 +125,7 @@ func init() {
 This is normally set when rclone initially does the oauth connection.`,
 			Default:  defaultHostname,
 			Advanced: true,
-		}},
+		}}...),
 	})
 }
 
