@@ -20,7 +20,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/swift"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -63,13 +62,7 @@ func init() {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
-		Options: append([]fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Hubic Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Hubic Client Secret\nLeave blank normally.",
-		}}, swift.SharedOptions...),
+		Options: append(oauthutil.SharedOptions, swift.SharedOptions...),
 	})
 }
 

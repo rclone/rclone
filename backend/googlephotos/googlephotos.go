@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/googlephotos/api"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -110,13 +109,7 @@ func init() {
 `)
 
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Google Application Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Google Application Client Secret\nLeave blank normally.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:    "read_only",
 			Default: false,
 			Help: `Set to make the Google Photos backend read only.
@@ -139,7 +132,7 @@ you want to read the media.`,
 			Default:  2000,
 			Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year`,
 			Advanced: true,
-		}},
+		}}...),
 	})
 }
 

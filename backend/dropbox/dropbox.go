@@ -125,13 +125,7 @@ func init() {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Dropbox App Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Dropbox App Client Secret\nLeave blank normally.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",
 			Help: fmt.Sprintf(`Upload chunk size. (< %v).
 
@@ -161,7 +155,7 @@ memory.  It can be set smaller if you are tight on memory.`, maxChunkSize),
 				encoder.EncodeDel |
 				encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 

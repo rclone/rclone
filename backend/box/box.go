@@ -103,13 +103,7 @@ func init() {
 				}
 			}
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Box App Client Id.\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Box App Client Secret\nLeave blank normally.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     "root_folder_id",
 			Help:     "Fill in for rclone to use a non root folder as its starting point.",
 			Default:  "0",
@@ -155,7 +149,7 @@ func init() {
 				encoder.EncodeBackSlash |
 				encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 
