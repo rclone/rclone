@@ -403,6 +403,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+	if opt.UploadCutoff < opt.ChunkSize {
+		opt.UploadCutoff = opt.ChunkSize
+		fs.Infof(nil, "b2: raising upload cutoff to chunk size: %v", opt.UploadCutoff)
+	}
 	err = checkUploadCutoff(opt, opt.UploadCutoff)
 	if err != nil {
 		return nil, errors.Wrap(err, "b2: upload cutoff")
