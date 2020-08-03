@@ -410,3 +410,28 @@ func (i *Item) GetParentReference() *ItemReference {
 func (i *Item) IsRemote() bool {
 	return i.RemoteItem != nil
 }
+
+// User details for each version
+type User struct {
+	Email       string `json:"email"`
+	ID          string `json:"id"`
+	DisplayName string `json:"displayName"`
+}
+
+// LastModifiedBy for each version
+type LastModifiedBy struct {
+	User User `json:"user"`
+}
+
+// Version info
+type Version struct {
+	ID                   string         `json:"id"`
+	LastModifiedDateTime time.Time      `json:"lastModifiedDateTime"`
+	Size                 int            `json:"size"`
+	LastModifiedBy       LastModifiedBy `json:"lastModifiedBy"`
+}
+
+// VersionsResponse is returned from /versions
+type VersionsResponse struct {
+	Versions []Version `json:"value"`
+}
