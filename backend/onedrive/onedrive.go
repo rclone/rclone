@@ -14,6 +14,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -26,6 +27,8 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -1275,6 +1278,73 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return result.Link.WebURL, nil
 }
 
+// CleanUp deletes all the hidden files.
+func (f *Fs) CleanUp(ctx context.Context) error {
+	token := make(chan struct{}, fs.Config.Checkers)
+	var wg sync.WaitGroup
+	err := walk.Walk(ctx, f, "", true, -1, func(path string, entries fs.DirEntries, err error) error {
+		err = entries.ForObjectError(func(obj fs.Object) error {
+			o, ok := obj.(*Object)
+			if !ok {
+				return errors.New("internal error: not a onedrive object")
+			}
+			wg.Add(1)
+			token <- struct{}{}
+			go func() {
+				defer func() {
+					<-token
+					wg.Done()
+				}()
+				err := o.deleteVersions(ctx)
+				if err != nil {
+					fs.Errorf(o, "Failed to remove versions: %v", err)
+				}
+			}()
+			return nil
+		})
+		wg.Wait()
+		return err
+	})
+	return err
+}
+
+// Finds and removes any old versions for o
+func (o *Object) deleteVersions(ctx context.Context) error {
+	opts := newOptsCall(o.id, "GET", "/versions")
+	var versions api.VersionsResponse
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &versions)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return err
+	}
+	if len(versions.Versions) < 2 {
+		return nil
+	}
+	for _, version := range versions.Versions[1:] {
+		err = o.deleteVersion(ctx, version.ID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Finds and removes any old versions for o
+func (o *Object) deleteVersion(ctx context.Context, ID string) error {
+	if operations.SkipDestructive(ctx, fmt.Sprintf("%s of %s", ID, o.remote), "delete version") {
+		return nil
+	}
+	fs.Infof(o, "removing version %q", ID)
+	opts := newOptsCall(o.id, "DELETE", "/versions/"+ID)
+	opts.NoResponse = true
+	return o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.Call(ctx, &opts)
+		return shouldRetry(resp, err)
+	})
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -1840,6 +1910,7 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.CleanUpper      = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.MimeTyper       = &Object{}
 	_ fs.IDer            = &Object{}

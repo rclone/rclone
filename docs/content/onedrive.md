@@ -331,6 +331,8 @@ This counts against a users quota.
 For example changing the modification time of a file creates a second
 version, so the file is using twice the space.
 
+You can use the `rclone cleanup` command (see below) to remove old versions.
+
 The `copy` is the only rclone command affected by this as we copy
 the file and then afterwards set the modification time to match the
 source file.
@@ -358,6 +360,18 @@ Note: This will disable the creation of new file versions, but will not remove a
 7. Apply the changes by clicking OK.
 8. Use rclone to upload or modify files. (I also use the --no-update-modtime flag)
 9. Restore the versioning settings after using rclone. (Optional)
+
+### Cleanup
+
+OneDrive supports `rclone cleanup` which causes rclone to look through
+every file under the path supplied and delete all version but the
+current version. Because this involves traversing all the files, then
+querying each file for versions it can be quite slow. Rclone does
+`--checkers` tests in parallel. The command also supports `-i` which
+is a great way to see what it would do.
+
+    rclone cleanup -i remote:path/subdir # interactively remove all old version for path/subdir
+    rclone cleanup remote:path/subdir    # unconditionally remove all old version for path/subdir
 
 ### Troubleshooting ###
 
