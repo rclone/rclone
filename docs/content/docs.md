@@ -1328,8 +1328,10 @@ will be considered.
 
 If the destination does not support server-side copy or move, rclone
 will fall back to the default behaviour and log an error level message
-to the console. Note: Encrypted destinations are not supported
-by `--track-renames`.
+to the console.
+
+Encrypted destinations are not currently supported by `--track-renames`
+if `--track-renames-strategy` includes `hash`.
 
 Note that `--track-renames` is incompatible with `--no-traverse` and
 that it uses extra memory to keep track of all the rename candidates.
@@ -1357,6 +1359,8 @@ Using `--track-renames-strategy modtime` or `leaf` can enable
 `--track-renames` support for encrypted destinations.
 
 If nothing is specified, the default option is matching by `hash`es.
+
+Note that the `hash` strategy is not supported with encrypted destinations.
 
 ### --delete-(before,during,after) ###
 
