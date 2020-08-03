@@ -1115,13 +1115,18 @@ func min(x, y int64) int64 {
 //
 // if except is passed in then segments with that prefix won't be deleted
 func (o *Object) removeSegments(except string) error {
-	segmentsContainer, prefix, err := o.getSegmentsDlo()
-	err = o.fs.listContainerRoot(segmentsContainer, prefix, "", false, true, true, func(remote string, object *swift.Object, isDirectory bool) error {
+	segmentsContainer, _, err := o.getSegmentsDlo()
+	if err != nil {
+		return err
+	}
+	except = path.Join(o.remote, except)
+	// fs.Debugf(o, "segmentsContainer %q prefix %q", segmentsContainer, prefix)
+	err = o.fs.listContainerRoot(segmentsContainer, o.remote, "", false, true, true, func(remote string, object *swift.Object, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
 		if except != "" && strings.HasPrefix(remote, except) {
-			// fs.Debugf(o, "Ignoring current segment file %q in container %q", segmentsRoot+remote, segmentsContainer)
+			// fs.Debugf(o, "Ignoring current segment file %q in container %q", remote, segmentsContainer)
 			return nil
 		}
 		fs.Debugf(o, "Removing segment file %q in container %q", remote, segmentsContainer)
