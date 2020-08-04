@@ -36,7 +36,7 @@ Here is an overview of the major features of each cloud storage system.
 | Memory                       | MD5         | Yes     | No               | No              | -         |
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
 | Microsoft OneDrive           | SHA1 ‡‡     | Yes     | Yes              | No              | R         |
-| OpenDrive                    | MD5         | Yes     | Yes              | No              | -         |
+| OpenDrive                    | MD5         | Yes     | Yes              | Partial \*      | -         |
 | OpenStack Swift              | MD5         | Yes     | No               | No              | R/W       |
 | pCloud                       | MD5, SHA1   | Yes     | No               | No              | W         |
 | premiumize.me                | -           | No      | Yes              | No              | R         |
@@ -116,6 +116,12 @@ objects with the same name.
 
 This confuses rclone greatly when syncing - use the `rclone dedupe`
 command to rename or remove duplicates.
+
+\* Opendrive does not support creation of duplicate files using
+their web client interface or other stock clients, but the underlying
+storage platform has been determined to allow duplicate files, and it
+is possible to create them with `rclone`.  It may be that this is a
+mistake or an unsupported feature.
 
 ### Restricted filenames ###
 
