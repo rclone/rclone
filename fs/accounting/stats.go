@@ -72,27 +72,10 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["elapsedTime"] = time.Since(startTime).Seconds()
 	s.mu.RUnlock()
 	if !s.checking.empty() {
-		var c []string
-		s.checking.mu.RLock()
-		defer s.checking.mu.RUnlock()
-		for _, tr := range s.checking.sortedSlice() {
-			c = append(c, tr.remote)
-		}
-		out["checking"] = c
+		out["checking"] = s.checking.remotes()
 	}
 	if !s.transferring.empty() {
-		s.transferring.mu.RLock()
-
-		var t []rc.Params
-		for _, tr := range s.transferring.sortedSlice() {
-			if acc := s.inProgress.get(tr.remote); acc != nil {
-				t = append(t, acc.RemoteStats())
-			} else {
-				t = append(t, s.transferRemoteStats(tr))
-			}
-		}
-		out["transferring"] = t
-		s.transferring.mu.RUnlock()
+		out["transferring"] = s.transferring.rcStats(s.inProgress)
 	}
 	if s.errors > 0 {
 		out["lastError"] = s.lastError.Error()
@@ -109,13 +92,6 @@ func (s *StatsInfo) Speed() float64 {
 		speed = float64(s.bytes) / dtSeconds
 	}
 	return speed
-}
-
-func (s *StatsInfo) transferRemoteStats(tr *Transfer) rc.Params {
-	return rc.Params{
-		"name": tr.remote,
-		"size": tr.size,
-	}
 }
 
 // timeRange is a start and end time of a transfer

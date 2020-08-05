@@ -487,8 +487,8 @@ func (acc *Account) String() string {
 	)
 }
 
-// RemoteStats produces stats for this file
-func (acc *Account) RemoteStats() (out rc.Params) {
+// rcStats produces remote control stats for this file
+func (acc *Account) rcStats() (out rc.Params) {
 	out = make(rc.Params)
 	a, b := acc.progress()
 	out["bytes"] = a

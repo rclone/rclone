@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/rc"
 )
 
 // TransferSnapshot represents state of an account at point in time.
@@ -180,5 +181,13 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 		CompletedAt: tr.completedAt,
 		Error:       tr.err,
 		Group:       tr.stats.group,
+	}
+}
+
+// rcStats returns stats for the transfer suitable for the rc
+func (tr *Transfer) rcStats() rc.Params {
+	return rc.Params{
+		"name": tr.remote, // no locking needed to access thess
+		"size": tr.size,
 	}
 }
