@@ -273,8 +273,13 @@ func (dls *Downloaders) _closeWaiters(err error) {
 //
 // call with lock held
 func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
-	// FIXME this window could be a different config var?
+	// The window includes potentially unread data in the buffer
 	window := int64(fs.Config.BufferSize)
+
+	// Increase the read range by the read ahead if set
+	if dls.opt.ReadAhead > 0 {
+		r.Size += int64(dls.opt.ReadAhead)
+	}
 
 	// We may be reopening a downloader after a failure here or
 	// doing a tentative prefetch so check to see that we haven't
@@ -310,15 +315,15 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	// If there isn't one then start a new one
 	dls._removeClosed()
 	for _, dl = range dls.dls {
-		start, maxOffset := dl.getRange()
+		start, offset := dl.getRange()
 
 		// The downloader's offset to offset+window is the gap
 		// in which we would like to re-use this
 		// downloader. The downloader will never reach before
-		// start and maxOffset+windows is too far away - we'd
+		// start and offset+windows is too far away - we'd
 		// rather start another downloader.
-		// fs.Debugf(nil, "r=%v start=%d, maxOffset=%d, found=%v", r, start, maxOffset, r.Pos >= start && r.Pos < maxOffset+window)
-		if r.Pos >= start && r.Pos < maxOffset+window {
+		// fs.Debugf(nil, "r=%v start=%d, offset=%d, found=%v", r, start, offset, r.Pos >= start && r.Pos < offset+window)
+		if r.Pos >= start && r.Pos < offset+window {
 			// Found downloader which will soon have our data
 			dl.setRange(r)
 			return nil
@@ -598,8 +603,8 @@ func (dl *downloader) setRange(r ranges.Range) {
 }
 
 // get the current range this downloader is working on
-func (dl *downloader) getRange() (start, maxOffset int64) {
+func (dl *downloader) getRange() (start, offset int64) {
 	dl.mu.Lock()
 	defer dl.mu.Unlock()
-	return dl.start, dl.maxOffset
+	return dl.start, dl.offset
 }
