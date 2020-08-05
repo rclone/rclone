@@ -159,6 +159,13 @@ the data that has been downloaded present in them.
 This mode should support all normal file system operations and is
 otherwise identical to --vfs-cache-mode writes.
 
+When reading a file rclone will read --buffer-size plus
+--vfs-read-ahead bytes ahead.  The --buffer-size is buffered in memory
+whereas the --vfs-read-ahead is buffered on disk.
+
+When using this mode it is recommended that --buffer-size is not set
+too big and --vfs-read-ahead is set large if required.
+
 ### VFS Performance
 
 These flags may be used to enable/disable features of the VFS for
