@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/rc"
 )
 
 // transferMap holds name to transfer map
@@ -63,10 +64,10 @@ func (tm *transferMap) count() int {
 	return len(tm.items)
 }
 
-// sortedSlice returns all transfers sorted by start time
-func (tm *transferMap) sortedSlice() []*Transfer {
-	tm.mu.RLock()
-	defer tm.mu.RUnlock()
+// _sortedSlice returns all transfers sorted by start time
+//
+// Call with mu.Rlock held
+func (tm *transferMap) _sortedSlice() []*Transfer {
 	s := make([]*Transfer, 0, len(tm.items))
 	for _, tr := range tm.items {
 		s = append(s, tr)
@@ -83,7 +84,7 @@ func (tm *transferMap) String(progress *inProgress, exclude *transferMap) string
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
 	strngs := make([]string, 0, len(tm.items))
-	for _, tr := range tm.sortedSlice() {
+	for _, tr := range tm._sortedSlice() {
 		if exclude != nil {
 			exclude.mu.RLock()
 			_, found := exclude.items[tr.remote]
@@ -121,4 +122,28 @@ func (tm *transferMap) progress(stats *StatsInfo) (totalBytes, totalSize int64) 
 		}
 	}
 	return totalBytes, totalSize
+}
+
+// remotes returns a []string of the remote names for the transferMap
+func (tm *transferMap) remotes() (c []string) {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	for _, tr := range tm._sortedSlice() {
+		c = append(c, tr.remote)
+	}
+	return c
+}
+
+// rcStats returns a []rc.Params of the stats for the transferMap
+func (tm *transferMap) rcStats(progress *inProgress) (t []rc.Params) {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	for _, tr := range tm._sortedSlice() {
+		if acc := progress.get(tr.remote); acc != nil {
+			t = append(t, acc.rcStats())
+		} else {
+			t = append(t, tr.rcStats())
+		}
+	}
+	return t
 }
