@@ -324,26 +324,45 @@ list files: UnknownError:`.  See
 
 An official document about the limitations for different types of OneDrive can be found [here](https://support.office.com/en-us/article/invalid-file-names-and-file-types-in-onedrive-onedrive-for-business-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa).
 
-### Versioning issue ###
+### Versions
 
-Every change in OneDrive causes the service to create a new version.
-This counts against a users quota.
-For example changing the modification time of a file creates a second
-version, so the file is using twice the space.
+Every change in a file OneDrive causes the service to create a new
+version of the the file.  This counts against a users quota.  For
+example changing the modification time of a file creates a second
+version, so the file apparently uses twice the space.
 
-You can use the `rclone cleanup` command (see below) to remove old versions.
+For example the `copy` command is affected by this as rclone copies
+the file and then afterwards sets the modification time to match the
+source file which uses another version.
 
-The `copy` is the only rclone command affected by this as we copy
-the file and then afterwards set the modification time to match the
-source file.
+You can use the `rclone cleanup` command (see below) to remove all old
+versions.
 
-**Note**: Starting October 2018, users will no longer be able to disable versioning by default. This is because Microsoft has brought an [update](https://techcommunity.microsoft.com/t5/Microsoft-OneDrive-Blog/New-Updates-to-OneDrive-and-SharePoint-Team-Site-Versioning/ba-p/204390) to the mechanism. To change this new default setting, a PowerShell command is required to be run by a SharePoint admin. If you are an admin, you can run these commands in PowerShell to change that setting:
+Or you can set the `no_versions` parameter to `true` and rclone will
+remove versions after operations which create new versions. This takes
+extra transactions so only enable it if you need it.
+
+**Note** At the time of writing Onedrive Personal creates versions
+(but not for setting the modification time) but the API for removing
+them returns "API not found" so cleanup and `no_versions` should not
+be used on Onedrive Personal.
+
+### Disabling versioning
+
+Starting October 2018, users will no longer be able to
+disable versioning by default. This is because Microsoft has brought
+an
+[update](https://techcommunity.microsoft.com/t5/Microsoft-OneDrive-Blog/New-Updates-to-OneDrive-and-SharePoint-Team-Site-Versioning/ba-p/204390)
+to the mechanism. To change this new default setting, a PowerShell
+command is required to be run by a SharePoint admin. If you are an
+admin, you can run these commands in PowerShell to change that
+setting:
 
 1. `Install-Module -Name Microsoft.Online.SharePoint.PowerShell` (in case you haven't installed this already)
-1. `Import-Module Microsoft.Online.SharePoint.PowerShell -DisableNameChecking`
-1. `Connect-SPOService -Url https://YOURSITE-admin.sharepoint.com -Credential YOU@YOURSITE.COM` (replacing `YOURSITE`, `YOU`, `YOURSITE.COM` with the actual values; this will prompt for your credentials)
-1. `Set-SPOTenant -EnableMinimumVersionRequirement $False`
-1. `Disconnect-SPOService` (to disconnect from the server)
+2. `Import-Module Microsoft.Online.SharePoint.PowerShell -DisableNameChecking`
+3. `Connect-SPOService -Url https://YOURSITE-admin.sharepoint.com -Credential YOU@YOURSITE.COM` (replacing `YOURSITE`, `YOU`, `YOURSITE.COM` with the actual values; this will prompt for your credentials)
+4. `Set-SPOTenant -EnableMinimumVersionRequirement $False`
+5. `Disconnect-SPOService` (to disconnect from the server)
 
 *Below are the steps for normal users to disable versioning. If you don't see the "No Versioning" option, make sure the above requirements are met.*  
 
@@ -372,6 +391,8 @@ is a great way to see what it would do.
 
     rclone cleanup -i remote:path/subdir # interactively remove all old version for path/subdir
     rclone cleanup remote:path/subdir    # unconditionally remove all old version for path/subdir
+
+**NB** Onedrive personal can't currently delete versions
 
 ### Troubleshooting ###
 

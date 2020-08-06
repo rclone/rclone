@@ -288,6 +288,23 @@ because it isn't easy to tell if it will work between any two
 configurations.`,
 			Advanced: true,
 		}, {
+			Name:    "no_versions",
+			Default: false,
+			Help: `Remove all versions on modifying operations
+
+Onedrive for business creates versions when rclone uploads new files
+overwriting an existing one and when it sets the modification time.
+
+These versions take up space out of the quota.
+
+This flag checks for versions after file upload and setting
+modification time and removes all but the last version.
+
+**NB** Onedrive personal can't currently delete versions so don't use
+this flag there.
+`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -344,6 +361,7 @@ type Options struct {
 	DriveType               string               `config:"drive_type"`
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
+	NoVersions              bool                 `config:"no_versions"`
 	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -1508,6 +1526,13 @@ func (o *Object) setModTime(ctx context.Context, modTime time.Time) (*api.Item, 
 		resp, err := o.fs.srv.CallJSON(ctx, &opts, &update, &info)
 		return shouldRetry(resp, err)
 	})
+	// Remove versions if required
+	if o.fs.opt.NoVersions {
+		err := o.deleteVersions(ctx)
+		if err != nil {
+			fs.Errorf(o, "Failed to remove versions: %v", err)
+		}
+	}
 	return info, err
 }
 
@@ -1812,6 +1837,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	if err != nil {
 		return err
+	}
+
+	// If updating the file then remove versions
+	if o.fs.opt.NoVersions && o.hasMetaData {
+		err = o.deleteVersions(ctx)
+		if err != nil {
+			fs.Errorf(o, "Failed to remove versions: %v", err)
+		}
 	}
 
 	return o.setMetaData(info)
