@@ -144,7 +144,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.2")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.3")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -354,6 +354,7 @@ and may be set in the config file.
       --pcloud-client-id string                                  Pcloud App Client Id
       --pcloud-client-secret string                              Pcloud App Client Secret
       --pcloud-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --pcloud-hostname string                                   Hostname to connect to. (default "api.pcloud.com")
       --pcloud-root-folder-id string                             Fill in for rclone to use a non root folder as its starting point. (default "d0")
       --premiumizeme-encoding MultiEncoder                       This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --putio-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)

@@ -5,6 +5,36 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.52.3 - 2020-08-07
+
+[See commits](https://github.com/rclone/rclone/compare/v1.52.2...v1.52.3)
+
+* Bug Fixes
+    * docs
+        * Disable smart typography (eg en-dash) in MANUAL.* and man page (Nick Craig-Wood)
+        * Update install.md to reflect minimum Go version (Evan Harris)
+        * Update install from source instructions (Nick Craig-Wood)
+        * make_manual: Support SOURCE_DATE_EPOCH (Morten Linderud)
+    * log: Fix --use-json-log going to stderr not --log-file on Windows (Nick Craig-Wood)
+    * serve dlna: Fix file list on Samsung Series 6+ TVs (Matteo Pietro Dazzi)
+    * sync: Fix deadlock with --track-renames-strategy modtime (Nick Craig-Wood)
+* Cache
+    * Fix moveto/copyto remote:file remote:file2 (Nick Craig-Wood)
+* Drive
+    * Stop using root_folder_id as a cache (Nick Craig-Wood)
+    * Make dangling shortcuts appear in listings (Nick Craig-Wood)
+    * Drop "Disabling ListR" messages down to debug (Nick Craig-Wood)
+    * Workaround and policy for Google Drive API (Dmitry Ustalov)
+* FTP
+    * Add note to docs about home vs root directory selection (Nick Craig-Wood)
+* Onedrive
+    * Fix reverting to Copy when Move would have worked (Nick Craig-Wood)
+    * Avoid comma rendered in URL in onedrive.md (Kevin)
+* Pcloud
+    * Fix oauth on European region "eapi.pcloud.com" (Nick Craig-Wood)
+* S3
+    * Fix bucket Region auto detection when Region unset in config (Nick Craig-Wood)
+
 ## v1.52.2 - 2020-06-24
 
 [See commits](https://github.com/rclone/rclone/compare/v1.52.1...v1.52.2)

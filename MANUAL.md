@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jun 24, 2020
+% Aug 07, 2020
 
 # Rclone syncs your files to cloud storage
 
@@ -330,7 +330,7 @@ kill %1
 
 ## Install from source ##
 
-Make sure you have at least [Go](https://golang.org/) 1.7
+Make sure you have at least [Go](https://golang.org/) 1.10
 installed.  [Download go](https://golang.org/dl/) if necessary.  The
 latest release is recommended. Then
 
@@ -339,16 +339,23 @@ latest release is recommended. Then
     go build
     ./rclone version
 
-You can also build and install rclone in the
-[GOPATH](https://github.com/golang/go/wiki/GOPATH) (which defaults to
-`~/go`) with:
+This will leave you a checked out version of rclone you can modify and
+send pull requests with. If you use `make` instead of `go build` then
+the rclone build will have the correct version information in it.
 
-    go get -u -v github.com/rclone/rclone
+You can also build the latest stable rclone with:
 
-and this will build the binary in `$GOPATH/bin` (`~/go/bin/rclone` by
-default) after downloading the source to
-`$GOPATH/src/github.com/rclone/rclone` (`~/go/src/github.com/rclone/rclone`
-by default).
+    go get github.com/rclone/rclone
+
+or the latest version (equivalent to the beta) with
+
+    go get github.com/rclone/rclone@master
+
+These will build the binary in `$(go env GOPATH)/bin`
+(`~/go/bin/rclone` by default) after downloading the source to the go
+module cache. Note - do **not** use the `-u` flag here. This causes go
+to try to update the depencencies that rclone uses and sometimes these
+don't work with the current version of rclone.
 
 ## Installation with Ansible ##
 
@@ -9683,7 +9690,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.2")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.3")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -9893,6 +9900,7 @@ and may be set in the config file.
       --pcloud-client-id string                                  Pcloud App Client Id
       --pcloud-client-secret string                              Pcloud App Client Secret
       --pcloud-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --pcloud-hostname string                                   Hostname to connect to. (default "api.pcloud.com")
       --pcloud-root-folder-id string                             Fill in for rclone to use a non root folder as its starting point. (default "d0")
       --premiumizeme-encoding MultiEncoder                       This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --putio-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
@@ -15337,6 +15345,10 @@ FTP is the File Transfer Protocol. FTP support is provided using the
 [github.com/jlaffaye/ftp](https://godoc.org/github.com/jlaffaye/ftp)
 package.
 
+Paths are specified as `remote:path`. If the path does not begin with
+a `/` it is relative to the home directory of the user.  An empty path
+`remote:` refers to the user's home directory.
+
 Here is an example of making an FTP configuration.  First run
 
     rclone config
@@ -16624,9 +16636,6 @@ Leave blank normally.
 Fill in to access "Computers" folders (see docs), or for rclone to use
 a non root folder as its starting point.
 
-Note that if this is blank, the first time rclone runs it will fill it
-in with the ID of the root folder.
-
 
 - Config:      root_folder_id
 - Env Var:     RCLONE_DRIVE_ROOT_FOLDER_ID
@@ -16832,9 +16841,6 @@ Size of listing chunk 100-1000. 0 to disable.
 #### --drive-impersonate
 
 Impersonate this user when using a service account.
-
-Note that if this is used then "root_folder_id" will be ignored.
-
 
 - Config:      impersonate
 - Env Var:     RCLONE_DRIVE_IMPERSONATE
@@ -17231,6 +17237,13 @@ for rclone to be able to get its token-id (but as this only happens during
 the remote configuration, it's not such a big deal). 
 
 (Thanks to @balazer on github for these instructions.)
+
+Sometimes, creation of an OAuth consent in Google API Console fails due to an error message
+“The request failed because changes to one of the field of the resource is not supported”.
+As a convenient workaround, the necessary Google Drive API key can be created on the
+[Python Quickstart](https://developers.google.com/drive/api/v3/quickstart/python) page.
+Just push the Enable the Drive API button to receive the Client ID and Secret.
+Note that it will automatically create a new project in the API Console.
 
  Google Photos
 -------------------------------------------------
@@ -19449,7 +19462,7 @@ requests.
 If you are having problems with them (E.g., seeing a lot of throttling), you can get your own
 Client ID and Key by following the steps below:
 
-1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade, then click `New registration`.
+1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click `New registration`.
 2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI` Enter `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
 3. Under `manage` select `Certificates & secrets`, click `New client secret`. Copy and keep that secret for later use.
 4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
@@ -20868,6 +20881,17 @@ Fill in for rclone to use a non root folder as its starting point.
 - Env Var:     RCLONE_PCLOUD_ROOT_FOLDER_ID
 - Type:        string
 - Default:     "d0"
+
+#### --pcloud-hostname
+
+Hostname to connect to.
+
+This is normally set when rclone initially does the oauth connection.
+
+- Config:      hostname
+- Env Var:     RCLONE_PCLOUD_HOSTNAME
+- Type:        string
+- Default:     "api.pcloud.com"
 
 
 
@@ -23637,6 +23661,36 @@ Options:
 
 
 # Changelog
+
+## v1.52.3 - 2020-08-07
+
+[See commits](https://github.com/rclone/rclone/compare/v1.52.2...v1.52.3)
+
+* Bug Fixes
+    * docs
+        * Disable smart typography (eg en-dash) in MANUAL.* and man page (Nick Craig-Wood)
+        * Update install.md to reflect minimum Go version (Evan Harris)
+        * Update install from source instructions (Nick Craig-Wood)
+        * make_manual: Support SOURCE_DATE_EPOCH (Morten Linderud)
+    * log: Fix --use-json-log going to stderr not --log-file on Windows (Nick Craig-Wood)
+    * serve dlna: Fix file list on Samsung Series 6+ TVs (Matteo Pietro Dazzi)
+    * sync: Fix deadlock with --track-renames-strategy modtime (Nick Craig-Wood)
+* Cache
+    * Fix moveto/copyto remote:file remote:file2 (Nick Craig-Wood)
+* Drive
+    * Stop using root_folder_id as a cache (Nick Craig-Wood)
+    * Make dangling shortcuts appear in listings (Nick Craig-Wood)
+    * Drop "Disabling ListR" messages down to debug (Nick Craig-Wood)
+    * Workaround and policy for Google Drive API (Dmitry Ustalov)
+* FTP
+    * Add note to docs about home vs root directory selection (Nick Craig-Wood)
+* Onedrive
+    * Fix reverting to Copy when Move would have worked (Nick Craig-Wood)
+    * Avoid comma rendered in URL in onedrive.md (Kevin)
+* Pcloud
+    * Fix oauth on European region "eapi.pcloud.com" (Nick Craig-Wood)
+* S3
+    * Fix bucket Region auto detection when Region unset in config (Nick Craig-Wood)
 
 ## v1.52.2 - 2020-06-24
 

@@ -593,9 +593,6 @@ Leave blank normally.
 Fill in to access "Computers" folders (see docs), or for rclone to use
 a non root folder as its starting point.
 
-Note that if this is blank, the first time rclone runs it will fill it
-in with the ID of the root folder.
-
 
 - Config:      root_folder_id
 - Env Var:     RCLONE_DRIVE_ROOT_FOLDER_ID
@@ -801,9 +798,6 @@ Size of listing chunk 100-1000. 0 to disable.
 #### --drive-impersonate
 
 Impersonate this user when using a service account.
-
-Note that if this is used then "root_folder_id" will be ignored.
-
 
 - Config:      impersonate
 - Env Var:     RCLONE_DRIVE_IMPERSONATE
