@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -452,7 +451,7 @@ func TestUploadFile(t *testing.T) {
 	testFileContent := "Hello World"
 	r.WriteFile(testFileName, testFileContent, t1)
 	testItem1 := fstest.NewItem(testFileName, testFileContent, t1)
-	testItem2 := fstest.NewItem(filepath.Join("subdir", testFileName), testFileContent, t1)
+	testItem2 := fstest.NewItem(path.Join("subdir", testFileName), testFileContent, t1)
 
 	currentFile, err := os.Open(path.Join(r.LocalName, testFileName))
 	require.NoError(t, err)
