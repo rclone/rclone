@@ -84,7 +84,7 @@ jobs:
 
           - job_name: go1.15
             os: ubuntu-latest
-            go: '1.15.0-rc1'
+            go: '1.15.0-rc2'
             quicktest: true
             racequicktest: true
 
