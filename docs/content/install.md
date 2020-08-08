@@ -136,6 +136,13 @@ from the rclone image.
   reside on the host with a non-root UID:GID, you need to pass these on the container
   start command line.
 
+- If you want to access the RC interface (either via the API or the Web UI), it is
+  required to set the `--rc-addr` to `:5572` in order to connect to it from outside
+  the container. An explanation about why this is necessary is present [here](https://web.archive.org/web/20200808071950/https://pythonspeed.com/articles/docker-connection-refused/).
+    * NOTE: Users running this container with the docker network set to `host` should
+     probably set it to listen to localhost only, with `127.0.0.1:5572` as the value for
+      `--rc-addr`
+
 - It is possible to use `rclone mount` inside a userspace Docker container, and expose
   the resulting fuse mount to the host. The exact `docker run` options to do that might
   vary slightly between hosts. See, e.g. the discussion in this
