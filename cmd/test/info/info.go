@@ -1,7 +1,7 @@
 package info
 
 // FIXME once translations are implemented will need a no-escape
-// option for Put so we can make these tests work agaig
+// option for Put so we can make these tests work again
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path"
 	"regexp"
@@ -20,7 +21,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/info/internal"
+	"github.com/rclone/rclone/cmd/test"
+	"github.com/rclone/rclone/cmd/test/info/internal"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
@@ -35,6 +37,7 @@ var (
 	checkControl       bool
 	checkLength        bool
 	checkStreaming     bool
+	all                bool
 	uploadWait         time.Duration
 	positionLeftRe     = regexp.MustCompile(`(?s)^(.*)-position-left-([[:xdigit:]]+)$`)
 	positionMiddleRe   = regexp.MustCompile(`(?s)^position-middle-([[:xdigit:]]+)-(.*)-$`)
@@ -42,14 +45,15 @@ var (
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefinition)
+	test.Command.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file.")
-	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", true, "Check UTF-8 Normalization.")
-	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", true, "Check control characters.")
+	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization.")
+	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters.")
 	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file.")
-	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", true, "Check max filename length.")
-	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", true, "Check uploads with indeterminate file size.")
+	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length.")
+	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size.")
+	flags.BoolVarP(cmdFlags, &all, "all", "", false, "Run all tests.")
 }
 
 var commandDefinition = &cobra.Command{
@@ -59,10 +63,20 @@ var commandDefinition = &cobra.Command{
 to write to the paths passed in and how long they can be.  It can take some
 time.  It will write test files into the remote:path passed in.  It outputs
 a bit of go code for each one.
+
+**NB** this can create undeletable files and other hazards - use with care
 `,
-	Hidden: true,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1e6, command, args)
+		if !checkNormalization && !checkControl && !checkLength && !checkStreaming && !all {
+			log.Fatalf("no tests selected - select a test or use -all")
+		}
+		if all {
+			checkNormalization = true
+			checkControl = true
+			checkLength = true
+			checkStreaming = true
+		}
 		for i := range args {
 			f := cmd.NewFsDir(args[i : i+1])
 			cmd.Run(false, false, command, func() error {

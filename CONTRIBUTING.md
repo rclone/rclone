@@ -333,8 +333,8 @@ Getting going
   * Try to implement as many optional methods as possible as it makes the remote more usable.
   * Use lib/encoder to make sure we can encode any path name and `rclone info` to help determine the encodings needed
     * `rclone purge -v TestRemote:rclone-info`
-    * `rclone info --remote-encoding None -vv --write-json remote.json TestRemote:rclone-info`
-    * `go run cmd/info/internal/build_csv/main.go -o remote.csv remote.json`
+    * `rclone test info --all --remote-encoding None -vv --write-json remote.json TestRemote:rclone-info`
+    * `go run cmd/test/info/internal/build_csv/main.go -o remote.csv remote.json`
     * open `remote.csv` in a spreadsheet and examine
 
 Unit tests

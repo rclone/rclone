@@ -1,4 +1,4 @@
-package memtest
+package memory
 
 import (
 	"context"
@@ -6,19 +6,19 @@ import (
 	"sync"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/test"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefinition)
+	test.Command.AddCommand(commandDefinition)
 }
 
 var commandDefinition = &cobra.Command{
-	Use:    "memtest remote:path",
-	Short:  `Load all the objects at remote:path and report memory stats.`,
-	Hidden: true,
+	Use:   "memory remote:path",
+	Short: `Load all the objects at remote:path into memory and report memory stats.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
