@@ -33,14 +33,17 @@ func TestDriveScopes(t *testing.T) {
 	}{
 		{"", []string{
 			"https://www.googleapis.com/auth/drive",
+			"https://www.googleapis.com/auth/drive.activity.readonly",
 		}, false},
 		{" drive.file , drive.readonly", []string{
 			"https://www.googleapis.com/auth/drive.file",
 			"https://www.googleapis.com/auth/drive.readonly",
+			"https://www.googleapis.com/auth/drive.activity.readonly",
 		}, false},
 		{" drive.file , drive.appfolder", []string{
 			"https://www.googleapis.com/auth/drive.file",
 			"https://www.googleapis.com/auth/drive.appfolder",
+			"https://www.googleapis.com/auth/drive.activity.readonly",
 		}, true},
 	} {
 		got := driveScopes(test.in)
