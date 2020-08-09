@@ -45,7 +45,6 @@ var (
 var osarches = []string{
 	"windows/386",
 	"windows/amd64",
-	"darwin/386",
 	"darwin/amd64",
 	"linux/386",
 	"linux/amd64",
