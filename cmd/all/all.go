@@ -54,6 +54,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/sync"
 	_ "github.com/rclone/rclone/cmd/test"
 	_ "github.com/rclone/rclone/cmd/test/info"
+	_ "github.com/rclone/rclone/cmd/test/makefiles"
 	_ "github.com/rclone/rclone/cmd/test/memory"
 	_ "github.com/rclone/rclone/cmd/touch"
 	_ "github.com/rclone/rclone/cmd/tree"
