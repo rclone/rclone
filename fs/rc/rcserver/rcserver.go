@@ -364,11 +364,11 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 
 // Match URLS of the form [fs]/remote
 var fsMatch = regexp.MustCompile(`^\[(.*?)\](.*)$`)
+var referrerPathReg = regexp.MustCompile("^(https?)://(.+):([0-9]+)?/(.*)$")
 
 func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
 	// Look to see if this has an fs in the path
 	fsMatchResult := fsMatch.FindStringSubmatch(path)
-	pluginsMatchResult := webgui.PluginsMatch.FindStringSubmatch(path)
 
 	switch {
 	case fsMatchResult != nil && s.opt.Serve:
@@ -383,6 +383,8 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		s.serveRoot(w, r)
 		return
 	case s.files != nil:
+		pluginsMatchResult := webgui.PluginsMatch.FindStringSubmatch(path)
+
 		if s.opt.WebUI && pluginsMatchResult != nil {
 			ok := webgui.ServePluginOK(w, r, pluginsMatchResult)
 			if !ok {
@@ -391,6 +393,20 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 				return
 			}
 			return
+		} else if s.opt.WebUI {
+			referrer := r.Referer()
+			referrerPathMatch := referrerPathReg.FindStringSubmatch(referrer)
+
+			if referrerPathMatch != nil {
+				referrerPluginMatch := webgui.PluginsMatch.FindStringSubmatch(referrerPathMatch[4])
+				if referrerPluginMatch != nil {
+					path = fmt.Sprintf("/plugins/%s/%s/%s", referrerPluginMatch[1], referrerPluginMatch[2], path)
+
+					http.Redirect(w, r, path, http.StatusMovedPermanently)
+					//s.pluginsHandler.ServeHTTP(w, r)
+					return
+				}
+			}
 		}
 		// Serve the files
 		r.URL.Path = "/" + path
