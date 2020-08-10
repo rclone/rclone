@@ -257,7 +257,7 @@ and may be set in the config file.
       --drive-skip-gdocs                                         Skip google documents in all listings.
       --drive-skip-shortcuts                                     If set skip shortcut files
       --drive-stop-on-upload-limit                               Make upload limit errors be fatal
-      --drive-team-drive string                                  ID of the Team Drive
+      --drive-shared-drive string                                ID of the Shared Drive
       --drive-trashed-only                                       Only show files that are in the trash.
       --drive-upload-cutoff SizeSuffix                           Cutoff for switching to chunked upload (default 8M)
       --drive-use-created-date                                   Use file created date instead of modified date.,
