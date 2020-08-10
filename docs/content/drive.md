@@ -72,7 +72,7 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
-Configure this as a team drive?
+Configure this as a shared drive?
 y) Yes
 n) No
 y/n> n
@@ -279,23 +279,23 @@ Note: in case you configured a specific root folder on gdrive and rclone is unab
         `rclone -v foo@example.com lsf gdrive:backup`
 
 
-### Team drives ###
+### Shared drives ###
 
-If you want to configure the remote to point to a Google Team Drive
-then answer `y` to the question `Configure this as a team drive?`.
+If you want to configure the remote to point to a Google Shared Drive
+then answer `y` to the question `Configure this as a shared drive?`.
 
-This will fetch the list of Team Drives from google and allow you to
+This will fetch the list of Shared Drives from google and allow you to
 configure which one you want to use.  You can also type in a team
 drive ID if you prefer.
 
 For example:
 
 ```
-Configure this as a team drive?
+Configure this as a shared drive?
 y) Yes
 n) No
 y/n> y
-Fetching team drive list...
+Fetching shared drive list...
 Choose a number from below, or type in your own value
  1 / Rclone Test
    \ "xxxxxxxxxxxxxxxxxxxx"
@@ -303,7 +303,7 @@ Choose a number from below, or type in your own value
    \ "yyyyyyyyyyyyyyyyyyyy"
  3 / Rclone Test 3
    \ "zzzzzzzzzzzzzzzzzzzz"
-Enter a Team Drive ID> 1
+Enter a Shared Drive ID> 1
 --------------------
 [remote]
 client_id =
@@ -636,7 +636,7 @@ Needed only if you want use SA instead of interactive login.
 
 #### --drive-team-drive
 
-ID of the Team Drive
+ID of the Shared Drive
 
 - Config:      team_drive
 - Env Var:     RCLONE_DRIVE_TEAM_DRIVE
@@ -1140,7 +1140,7 @@ The most likely cause of this is the duplicated file issue above - run
 messages.
 
 This can also be caused by a delay/caching on google drive's end when
-comparing directory listings. Specifically with team drives used in
+comparing directory listings. Specifically with shared drives used in
 combination with --fast-list. Files that were uploaded recently may
 not appear on the directory list sent to rclone when using --fast-list.
 
