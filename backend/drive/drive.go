@@ -911,9 +911,9 @@ func configSharedDrive(ctx context.Context, opt *Options, m configmap.Mapper, na
 		return nil
 	}
 	if opt.SharedDriveID == "" {
-		fmt.Printf("Configure this as a team drive?\n")
+		fmt.Printf("Configure this as a shared drive?\n")
 	} else {
-		fmt.Printf("Change current team drive ID %q?\n", opt.SharedDriveID)
+		fmt.Printf("Change current shared drive ID %q?\n", opt.SharedDriveID)
 	}
 	if !config.Confirm(false) {
 		return nil
@@ -922,13 +922,13 @@ func configSharedDrive(ctx context.Context, opt *Options, m configmap.Mapper, na
 	if err != nil {
 		return errors.Wrap(err, "failed to make Fs to list shared drives")
 	}
-	fmt.Printf("Fetching team drive list...\n")
+	fmt.Printf("Fetching shared drive list...\n")
 	sharedDrives, err := f.listSharedDrives(ctx)
 	if err != nil {
 		return err
 	}
 	if len(sharedDrives) == 0 {
-		fmt.Printf("No team drives found in your account")
+		fmt.Printf("No shared drives found in your account")
 		return nil
 	}
 	var driveIDs, driveNames []string
@@ -936,7 +936,7 @@ func configSharedDrive(ctx context.Context, opt *Options, m configmap.Mapper, na
 		driveIDs = append(driveIDs, sharedDrive.Id)
 		driveNames = append(driveNames, sharedDrive.Name)
 	}
-	driveID := config.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
+	driveID := config.Choose("Enter a Shared Drive ID", driveIDs, driveNames, true)
 	m.Set("team_drive", driveID)
 	m.Set("root_folder_id", "")
 	opt.SharedDriveID = driveID
@@ -2354,7 +2354,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	return nil
 }
 
-// sharedDriveOK checks to see if we can access the team drive
+// sharedDriveOK checks to see if we can access the shared drive
 func (f *Fs) sharedDriveOK(ctx context.Context) (err error) {
 	if !f.isSharedDrive {
 		return nil
@@ -2367,7 +2367,7 @@ func (f *Fs) sharedDriveOK(ctx context.Context) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to get Team/Shared Drive info")
 	}
-	fs.Debugf(f, "read info from team drive %q", td.Name)
+	fs.Debugf(f, "read info from shared drive %q", td.Name)
 	return err
 }
 
@@ -2841,7 +2841,7 @@ func (f *Fs) makeShortcut(ctx context.Context, srcPath string, dstFs *Fs, dstPat
 	return dstFs.newObjectWithInfo(dstPath, info)
 }
 
-// List all team drives
+// List all shared drives
 func (f *Fs) listSharedDrives(ctx context.Context) (drives []*drive.SharedDrive, err error) {
 	drives = []*drive.SharedDrive{}
 	listSharedDrives := f.svc.Shareddrives.List().PageSize(100)
@@ -2853,7 +2853,7 @@ func (f *Fs) listSharedDrives(ctx context.Context) (drives []*drive.SharedDrive,
 			return defaultFs.shouldRetry(err)
 		})
 		if err != nil {
-			return drives, errors.Wrap(err, "listing team drives failed")
+			return drives, errors.Wrap(err, "listing shared drives failed")
 		}
 		drives = append(drives, sharedDrives.SharedDrives...)
 		if sharedDrives.NextPageToken == "" {
