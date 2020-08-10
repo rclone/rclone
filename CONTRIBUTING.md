@@ -243,7 +243,7 @@ change will get linked into the issue.
 Here is an example of a short commit message:
 
 ```
-drive: add team drive support - fixes #885
+drive: add shared drive support - fixes #885
 ```
 
 And here is an example of a longer one:
