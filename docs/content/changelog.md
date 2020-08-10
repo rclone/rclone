@@ -441,7 +441,7 @@ all the docs and Edward Barker for helping re-write the front page.
 * Drive
     * Add `--drive-stop-on-upload-limit` flag to stop syncs when upload limit reached (Nick Craig-Wood)
     * Add `--drive-use-shared-date` to use date file was shared instead of modified date (Garry McNulty)
-    * Make sure invalid auth for teamdrives always reports an error (Nick Craig-Wood)
+    * Make sure invalid auth for shareddrives always reports an error (Nick Craig-Wood)
     * Fix `--fast-list` when using appDataFolder (Nick Craig-Wood)
     * Use multipart resumable uploads for streaming and uploads in mount (Nick Craig-Wood)
     * Log an ERROR if an incomplete search is returned (Nick Craig-Wood)
@@ -744,7 +744,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Make all operations work from the root (Nick Craig-Wood)
 * Drive
     * Fix server side copy of big files (Nick Craig-Wood)
-    * Update API for teamdrive use (Nick Craig-Wood)
+    * Update API for shareddrive use (Nick Craig-Wood)
     * Add error for purge with `--drive-trashed-only` (ginvine)
 * Fichier
     * Make FolderID int and adjust related code (buengese)
@@ -840,7 +840,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Implement server side copy (Nick Craig-Wood)
     * Implement SetModTime (Nick Craig-Wood)
 * Drive
-    * Fix move and copy from TeamDrive to GDrive (Fionera)
+    * Fix move and copy from SharedDrive to GDrive (Fionera)
     * Add notes that cleanup works in the background on drive (Nick Craig-Wood)
     * Add `--drive-server-side-across-configs` to default back to old server side copy semantics by default (Nick Craig-Wood)
     * Add `--drive-size-as-quota` to show storage quota usage for file size (Garry McNulty)
@@ -917,7 +917,7 @@ all the docs and Edward Barker for helping re-write the front page.
 * Drive
     * Add `--skip-checksum-gphotos` to ignore incorrect checksums on Google Photos (Nick Craig-Wood)
     * Allow server side move/copy between different remotes. (Fionera)
-    * Add docs on team drives and `--fast-list` eventual consistency (Nestar47)
+    * Add docs on shared drives and `--fast-list` eventual consistency (Nestar47)
     * Fix imports of text files (Nick Craig-Wood)
     * Fix range requests on 0 length files (Nick Craig-Wood)
     * Fix creation of duplicates with server side copy (Nick Craig-Wood)
@@ -1211,7 +1211,7 @@ all the docs and Edward Barker for helping re-write the front page.
         * Fix escaped chars in documents during list (Fabian Möller)
     * Add `--drive-v2-download-min-size` a workaround for slow downloads (Fabian Möller)
     * Improve directory notifications in ChangeNotify (Fabian Möller)
-    * When listing team drives in config, continue on failure (Nick Craig-Wood)
+    * When listing shared drives in config, continue on failure (Nick Craig-Wood)
 * FTP
     * Add a small pause after failed upload before deleting file (Nick Craig-Wood)
 * Google Cloud Storage
@@ -1438,10 +1438,10 @@ Point release to fix hubic and azureblob backends.
 * Google Drive
     * Add `--drive-acknowledge-abuse` to download flagged files
     * Add `--drive-alternate-export` to fix large doc export
-    * Don't attempt to choose Team Drives when using rclone config create
-    * Fix change list polling with team drives
+    * Don't attempt to choose Shared Drives when using rclone config create
+    * Fix change list polling with shared drives
     * Fix ChangeNotify for folders (Fabian Möller)
-    * Fix about (and df on a mount) for team drives
+    * Fix about (and df on a mount) for shared drives
 * Onedrive
     * Errorhandler for onedrive for business requests (Henning Surmeier)
 * S3
@@ -1899,7 +1899,7 @@ Point release to fix hubic and azureblob backends.
 * B2
     * Reduce minimum chunk size to 5MB
 * Drive
-    * Add team drive support
+    * Add shared drive support
     * Reduce bandwidth by adding fields for partial responses - Martin Kristensen
     * Implement --drive-shared-with-me flag to view shared with me files - Danny Tsai
     * Add --drive-trashed-only to read only the files in the trash
