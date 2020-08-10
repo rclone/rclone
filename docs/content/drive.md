@@ -285,13 +285,13 @@ If you want to configure the remote to point to a Google Shared Drive
 then answer `y` to the question `Configure this as a shared drive?`.
 
 This will fetch the list of Shared Drives from google and allow you to
-configure which one you want to use.  You can also type in a team
+configure which one you want to use.  You can also type in a shared
 drive ID if you prefer.
 
 For example:
 
 ```
-Configure this as a shared drive?
+Configure this as a Shared drive?
 y) Yes
 n) No
 y/n> y
@@ -309,7 +309,7 @@ Enter a Shared Drive ID> 1
 client_id =
 client_secret =
 token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
-team_drive = xxxxxxxxxxxxxxxxxxxx
+shared_drive = xxxxxxxxxxxxxxxxxxxx
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -634,12 +634,12 @@ Needed only if you want use SA instead of interactive login.
 - Type:        string
 - Default:     ""
 
-#### --drive-team-drive
+#### --drive-shared-drive
 
 ID of the Shared Drive
 
-- Config:      team_drive
-- Env Var:     RCLONE_DRIVE_TEAM_DRIVE
+- Config:      shared_drive
+- Env Var:     RCLONE_DRIVE_SHARED_DRIVE
 - Type:        string
 - Default:     ""
 
