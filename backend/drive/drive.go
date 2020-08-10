@@ -188,9 +188,9 @@ func init() {
 					log.Fatalf("Failed to configure token: %v", err)
 				}
 			}
-			err = configTeamDrive(ctx, opt, m, name)
+			err = configSharedDrive(ctx, opt, m, name)
 			if err != nil {
-				log.Fatalf("Failed to configure team drive: %v", err)
+				log.Fatalf("Failed to configure shared drive: %v", err)
 			}
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
@@ -230,7 +230,7 @@ a non root folder as its starting point.
 			Advanced: true,
 		}, {
 			Name:     "team_drive",
-			Help:     "ID of the Team Drive",
+			Help:     "ID of the Shared Drive",
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
 		}, {
@@ -506,7 +506,7 @@ type Options struct {
 	RootFolderID              string               `config:"root_folder_id"`
 	ServiceAccountFile        string               `config:"service_account_file"`
 	ServiceAccountCredentials string               `config:"service_account_credentials"`
-	TeamDriveID               string               `config:"team_drive"`
+	SharedDriveID             string               `config:"team_drive"`
 	AuthOwnerOnly             bool                 `config:"auth_owner_only"`
 	UseTrash                  bool                 `config:"use_trash"`
 	SkipGdocs                 bool                 `config:"skip_gdocs"`
@@ -551,7 +551,7 @@ type Fs struct {
 	pacer            *fs.Pacer          // To pace the API calls
 	exportExtensions []string           // preferred extensions to download docs
 	importMimeTypes  []string           // MIME types to convert to docs
-	isTeamDrive      bool               // true if this is a team drive
+	isSharedDrive      bool               // true if this is a shared drive
 	fileFields       googleapi.Field    // fields to fetch file info with
 	m                configmap.Mapper
 	grouping         int32               // number of IDs to search at once in ListR - read with atomic
@@ -633,7 +633,7 @@ func (f *Fs) shouldRetry(err error) (bool, error) {
 				}
 				return true, err
 			} else if f.opt.StopOnUploadLimit && reason == "teamDriveFileLimitExceeded" {
-				fs.Errorf(f, "Received team drive file limit error: %v", err)
+				fs.Errorf(f, "Received shared drive file limit error: %v", err)
 				return false, fserrors.FatalError(err)
 			}
 		}
@@ -756,8 +756,8 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	}
 	list.SupportsAllDrives(true)
 	list.IncludeItemsFromAllDrives(true)
-	if f.isTeamDrive {
-		list.DriveId(f.opt.TeamDriveID)
+	if f.isSharedDrive {
+		list.DriveId(f.opt.SharedDriveID)
 		list.Corpora("drive")
 	}
 	// If using appDataFolder then need to add Spaces
@@ -904,42 +904,42 @@ func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, er
 	return
 }
 
-// Figure out if the user wants to use a team drive
-func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name string) error {
+// Figure out if the user wants to use a shared drive
+func configSharedDrive(ctx context.Context, opt *Options, m configmap.Mapper, name string) error {
 	// Stop if we are running non-interactive config
 	if fs.Config.AutoConfirm {
 		return nil
 	}
-	if opt.TeamDriveID == "" {
+	if opt.SharedDriveID == "" {
 		fmt.Printf("Configure this as a team drive?\n")
 	} else {
-		fmt.Printf("Change current team drive ID %q?\n", opt.TeamDriveID)
+		fmt.Printf("Change current team drive ID %q?\n", opt.SharedDriveID)
 	}
 	if !config.Confirm(false) {
 		return nil
 	}
 	f, err := newFs(name, "", m)
 	if err != nil {
-		return errors.Wrap(err, "failed to make Fs to list teamdrives")
+		return errors.Wrap(err, "failed to make Fs to list shared drives")
 	}
 	fmt.Printf("Fetching team drive list...\n")
-	teamDrives, err := f.listTeamDrives(ctx)
+	sharedDrives, err := f.listSharedDrives(ctx)
 	if err != nil {
 		return err
 	}
-	if len(teamDrives) == 0 {
+	if len(sharedDrives) == 0 {
 		fmt.Printf("No team drives found in your account")
 		return nil
 	}
 	var driveIDs, driveNames []string
-	for _, teamDrive := range teamDrives {
-		driveIDs = append(driveIDs, teamDrive.Id)
-		driveNames = append(driveNames, teamDrive.Name)
+	for _, sharedDrive := range sharedDrives {
+		driveIDs = append(driveIDs, sharedDrive.Id)
+		driveNames = append(driveNames, sharedDrive.Name)
 	}
 	driveID := config.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
 	m.Set("team_drive", driveID)
 	m.Set("root_folder_id", "")
-	opt.TeamDriveID = driveID
+	opt.SharedDriveID = driveID
 	opt.RootFolderID = ""
 	return nil
 }
@@ -1066,7 +1066,7 @@ func newFs(name, path string, m configmap.Mapper) (*Fs, error) {
 		listRmu:      new(sync.Mutex),
 		listRempties: make(map[string]struct{}),
 	}
-	f.isTeamDrive = opt.TeamDriveID != ""
+	f.isSharedDrive = opt.SharedDriveID != ""
 	f.fileFields = f.getFileFields()
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
@@ -1105,9 +1105,9 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	if f.opt.RootFolderID != "" {
 		// use root_folder ID if set
 		f.rootFolderID = f.opt.RootFolderID
-	} else if f.isTeamDrive {
+	} else if f.isSharedDrive {
 		// otherwise use team_drive if set
-		f.rootFolderID = f.opt.TeamDriveID
+		f.rootFolderID = f.opt.SharedDriveID
 	} else {
 		// otherwise look up the actual root ID
 		rootID, err := f.getRootID()
@@ -1584,10 +1584,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if iErr != nil {
 		return nil, iErr
 	}
-	// If listing the root of a teamdrive and got no entries,
+	// If listing the root of a shared drive and got no entries,
 	// double check we have access
-	if f.isTeamDrive && len(entries) == 0 && f.root == "" && dir == "" {
-		err = f.teamDriveOK(ctx)
+	if f.isSharedDrive && len(entries) == 0 && f.root == "" && dir == "" {
+		err = f.sharedDriveOK(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -1872,10 +1872,10 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		return err
 	}
 
-	// If listing the root of a teamdrive and got no entries,
+	// If listing the root of a shared drive and got no entries,
 	// double check we have access
-	if f.isTeamDrive && listed == 0 && f.root == "" && dir == "" {
-		err = f.teamDriveOK(ctx)
+	if f.isSharedDrive && listed == 0 && f.root == "" && dir == "" {
+		err = f.sharedDriveOK(ctx)
 		if err != nil {
 			return err
 		}
@@ -2354,14 +2354,14 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	return nil
 }
 
-// teamDriveOK checks to see if we can access the team drive
-func (f *Fs) teamDriveOK(ctx context.Context) (err error) {
-	if !f.isTeamDrive {
+// sharedDriveOK checks to see if we can access the team drive
+func (f *Fs) sharedDriveOK(ctx context.Context) (err error) {
+	if !f.isSharedDrive {
 		return nil
 	}
 	var td *drive.Drive
 	err = f.pacer.Call(func() (bool, error) {
-		td, err = f.svc.Drives.Get(f.opt.TeamDriveID).Fields("name,id,capabilities,createdTime,restrictions").Context(ctx).Do()
+		td, err = f.svc.Drives.Get(f.opt.SharedDriveID).Fields("name,id,capabilities,createdTime,restrictions").Context(ctx).Do()
 		return f.shouldRetry(err)
 	})
 	if err != nil {
@@ -2373,12 +2373,12 @@ func (f *Fs) teamDriveOK(ctx context.Context) (err error) {
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	if f.isTeamDrive {
-		err := f.teamDriveOK(ctx)
+	if f.isShaedDrive {
+		err := f.sharedDriveOK(ctx)
 		if err != nil {
 			return nil, err
 		}
-		// Teamdrives don't appear to have a usage API so just return empty
+		// Shared drives don't appear to have a usage API so just return empty
 		return &fs.Usage{}, nil
 	}
 	var about *drive.About
@@ -2489,7 +2489,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
-		// TODO: On TeamDrives this might fail if lacking permissions to change ACLs.
+		// TODO: On SharedDrives this might fail if lacking permissions to change ACLs.
 		// Need to either check `canShare` attribute on the object or see if a sufficient permission is already present.
 		_, err = f.svc.Permissions.Create(id, permission).
 			Fields("").
@@ -2600,8 +2600,8 @@ func (f *Fs) changeNotifyStartPageToken() (pageToken string, err error) {
 	var startPageToken *drive.StartPageToken
 	err = f.pacer.Call(func() (bool, error) {
 		changes := f.svc.Changes.GetStartPageToken().SupportsAllDrives(true)
-		if f.isTeamDrive {
-			changes.DriveId(f.opt.TeamDriveID)
+		if f.isSharedDrive {
+			changes.DriveId(f.opt.SharedDriveID)
 		}
 		startPageToken, err = changes.Do()
 		return f.shouldRetry(err)
@@ -2625,8 +2625,8 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			}
 			changesCall.SupportsAllDrives(true)
 			changesCall.IncludeItemsFromAllDrives(true)
-			if f.isTeamDrive {
-				changesCall.DriveId(f.opt.TeamDriveID)
+			if f.isSharedDrive {
+				changesCall.DriveId(f.opt.SharedDriveID)
 			}
 			// If using appDataFolder then need to add Spaces
 			if f.rootFolderID == "appDataFolder" {
@@ -2842,24 +2842,24 @@ func (f *Fs) makeShortcut(ctx context.Context, srcPath string, dstFs *Fs, dstPat
 }
 
 // List all team drives
-func (f *Fs) listTeamDrives(ctx context.Context) (drives []*drive.TeamDrive, err error) {
-	drives = []*drive.TeamDrive{}
-	listTeamDrives := f.svc.Teamdrives.List().PageSize(100)
+func (f *Fs) listSharedDrives(ctx context.Context) (drives []*drive.SharedDrive, err error) {
+	drives = []*drive.SharedDrive{}
+	listSharedDrives := f.svc.Shareddrives.List().PageSize(100)
 	var defaultFs Fs // default Fs with default Options
 	for {
-		var teamDrives *drive.TeamDriveList
+		var sharedDrives *drive.SharedDriveList
 		err = f.pacer.Call(func() (bool, error) {
-			teamDrives, err = listTeamDrives.Context(ctx).Do()
+			sharedDrives, err = listSharedDrives.Context(ctx).Do()
 			return defaultFs.shouldRetry(err)
 		})
 		if err != nil {
 			return drives, errors.Wrap(err, "listing team drives failed")
 		}
-		drives = append(drives, teamDrives.TeamDrives...)
-		if teamDrives.NextPageToken == "" {
+		drives = append(drives, sharedDrives.SharedDrives...)
+		if sharedDrives.NextPageToken == "" {
 			break
 		}
-		listTeamDrives.PageToken(teamDrives.NextPageToken)
+		listSharedDrives.PageToken(sharedDrives.NextPageToken)
 	}
 	return drives, nil
 }
@@ -2987,7 +2987,7 @@ authenticated with "drive2:" can't read files from "drive:".
 }, {
 	Name:  "drives",
 	Short: "List the shared drives available to this account",
-	Long: `This command lists the shared drives (teamdrives) available to this
+	Long: `This command lists the shared drives (shareddrives) available to this
 account.
 
 Usage:
@@ -2999,12 +2999,12 @@ This will return a JSON list of objects like this
     [
         {
             "id": "0ABCDEF-01234567890",
-            "kind": "drive#teamDrive",
+            "kind": "drive#sharedDrive",
             "name": "My Drive"
         },
         {
             "id": "0ABCDEFabcdefghijkl",
-            "kind": "drive#teamDrive",
+            "kind": "drive#sharedDrive",
             "name": "Test Drive"
         }
     ]
@@ -3097,7 +3097,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		}
 		return f.makeShortcut(ctx, arg[0], dstFs, arg[1])
 	case "drives":
-		return f.listTeamDrives(ctx)
+		return f.listSharedDrives(ctx)
 	case "untrash":
 		dir := ""
 		if len(arg) > 0 {
