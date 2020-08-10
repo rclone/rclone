@@ -450,11 +450,13 @@ func TestUploadFile(t *testing.T) {
 	testFileName := "test.txt"
 	testFileContent := "Hello World"
 	r.WriteFile(testFileName, testFileContent, t1)
+	testItem1 := fstest.NewItem(testFileName, testFileContent, t1)
+	testItem2 := fstest.NewItem(path.Join("subdir", testFileName), testFileContent, t1)
 
 	currentFile, err := os.Open(path.Join(r.LocalName, testFileName))
 	require.NoError(t, err)
 
-	formReader, contentType, _, err := rest.MultipartUpload(currentFile, url.Values{}, "content", testFileName)
+	formReader, contentType, _, err := rest.MultipartUpload(currentFile, url.Values{}, "file", testFileName)
 	require.NoError(t, err)
 
 	httpReq := httptest.NewRequest("POST", "/", formReader)
@@ -469,7 +471,30 @@ func TestUploadFile(t *testing.T) {
 	_, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)
 
-	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{fstest.NewItem(testFileName, testFileContent, t1)}, nil, fs.ModTimeNotSupported)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{testItem1}, nil, fs.ModTimeNotSupported)
+
+	assert.NoError(t, r.Fremote.Mkdir(context.Background(), "subdir"))
+
+	currentFile, err = os.Open(path.Join(r.LocalName, testFileName))
+	require.NoError(t, err)
+
+	formReader, contentType, _, err = rest.MultipartUpload(currentFile, url.Values{}, "file", testFileName)
+	require.NoError(t, err)
+
+	httpReq = httptest.NewRequest("POST", "/", formReader)
+	httpReq.Header.Add("Content-Type", contentType)
+
+	in = rc.Params{
+		"_request": httpReq,
+		"fs":       r.FremoteName,
+		"remote":   "subdir",
+	}
+
+	_, err = call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{testItem1, testItem2}, nil, fs.ModTimeNotSupported)
+
 }
 
 // operations/command: Runs a backend command
