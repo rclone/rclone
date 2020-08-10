@@ -229,7 +229,7 @@ a non root folder as its starting point.
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
 		}, {
-			Name:     "team_drive",
+			Name:     "shared_drive",
 			Help:     "ID of the Shared Drive",
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
@@ -506,7 +506,7 @@ type Options struct {
 	RootFolderID              string               `config:"root_folder_id"`
 	ServiceAccountFile        string               `config:"service_account_file"`
 	ServiceAccountCredentials string               `config:"service_account_credentials"`
-	SharedDriveID             string               `config:"team_drive"`
+	SharedDriveID             string               `config:"shared_drive"`
 	AuthOwnerOnly             bool                 `config:"auth_owner_only"`
 	UseTrash                  bool                 `config:"use_trash"`
 	SkipGdocs                 bool                 `config:"skip_gdocs"`
@@ -937,7 +937,7 @@ func configSharedDrive(ctx context.Context, opt *Options, m configmap.Mapper, na
 		driveNames = append(driveNames, sharedDrive.Name)
 	}
 	driveID := config.Choose("Enter a Shared Drive ID", driveIDs, driveNames, true)
-	m.Set("team_drive", driveID)
+	m.Set("shared_drive", driveID)
 	m.Set("root_folder_id", "")
 	opt.SharedDriveID = driveID
 	opt.RootFolderID = ""
@@ -1106,7 +1106,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 		// use root_folder ID if set
 		f.rootFolderID = f.opt.RootFolderID
 	} else if f.isSharedDrive {
-		// otherwise use team_drive if set
+		// otherwise use shared_drive if set
 		f.rootFolderID = f.opt.SharedDriveID
 	} else {
 		// otherwise look up the actual root ID
@@ -2365,7 +2365,7 @@ func (f *Fs) sharedDriveOK(ctx context.Context) (err error) {
 		return f.shouldRetry(err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to get Team/Shared Drive info")
+		return errors.Wrap(err, "failed to get Shared Drive info")
 	}
 	fs.Debugf(f, "read info from shared drive %q", td.Name)
 	return err
