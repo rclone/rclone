@@ -94,6 +94,9 @@ backends:
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
+ - backend:  "filefabric"
+   remote:   "TestFileFabric:"
+   fastlist: false
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
@@ -291,3 +294,6 @@ backends:
  - backend:  "tardigrade"
    remote:   "TestTardigrade:"
    fastlist: true
+ - backend:  "filefabric"
+   remote:   "TestFileFabric:"
+   fastlist: false
