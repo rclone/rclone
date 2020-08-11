@@ -36,6 +36,7 @@ docs = [
     "sharefile.md",
     "crypt.md",
     "dropbox.md",
+    "filefabric.md",
     "ftp.md",
     "googlecloudstorage.md",
     "drive.md",
