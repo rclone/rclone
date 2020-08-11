@@ -25,7 +25,7 @@ require (
 	github.com/jlaffaye/ftp v0.0.0-20200720194710-13949d38913e
 	github.com/jzelinskie/whirlpool v0.0.0-20170603002051-c19460b8caa6
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/klauspost/compress v1.10.10
+	github.com/klauspost/compress v1.10.11
 	github.com/koofr/go-httpclient v0.0.0-20200420163713-93aa7c75b348
 	github.com/koofr/go-koofrclient v0.0.0-20190724113126-8e5366da203a
 	github.com/mattn/go-colorable v0.1.7
@@ -73,4 +73,4 @@ require (
 	storj.io/uplink v1.1.2
 )
 
-replace github.com/klauspost/compress v1.10.10 => ../../klauspost/compress
+replace github.com/klauspost/compress v1.10.11 => github.com/klauspost/compress v1.10.11-0.20200811083703-3fdfbd5997ec
