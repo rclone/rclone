@@ -24,7 +24,7 @@ jobs:
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '1.15.0-rc2'
+            go: '1.15.x'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -34,7 +34,7 @@ jobs:
 
           - job_name: mac
             os: macOS-latest
-            go: '1.15.0-rc2'
+            go: '1.15.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -43,7 +43,7 @@ jobs:
 
           - job_name: windows_amd64
             os: windows-latest
-            go: '1.15.0-rc2'
+            go: '1.15.x'
             gotags: cmount
             build_flags: '-include "^windows/amd64" -cgo'
             quicktest: true
@@ -52,7 +52,7 @@ jobs:
 
           - job_name: windows_386
             os: windows-latest
-            go: '1.15.0-rc2'
+            go: '1.15.x'
             gotags: cmount
             goarch: '386'
             cgo: '1'
@@ -62,7 +62,7 @@ jobs:
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '1.15.0-rc2'
+            go: '1.15.x'
             build_flags: '-exclude "^(windows/|darwin/amd64|linux/)"'
             compile_all: true
             deploy: true
