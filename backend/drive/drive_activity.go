@@ -13,8 +13,8 @@ import (
 const (
 	initialBuffer = 10
 
-	MoveQuery   = "detail.action_detail_case:MOVE"
-	GlobalQuery = "time >= \"%s\" AND time < \"%s\""
+	moveQuery   = "detail.action_detail_case:MOVE"
+	globalQuery = "time >= \"%s\" AND time < \"%s\""
 )
 
 type (
@@ -36,14 +36,14 @@ var (
 )
 
 func parseItemID(itemName string) string {
-	return strings.ReplaceAll(itemName, "items/", "")
+	return strings.Replace(itemName, "items/", "", -1)
 }
 
-func createGlobalQueryRequest(rootFolderId, filter, pageToken string) *driveactivity.
+func createGlobalQueryRequest(rootFolderID, filter, pageToken string) *driveactivity.
 	QueryDriveActivityRequest {
 	return &driveactivity.QueryDriveActivityRequest{
 		PageSize:              10,
-		AncestorName:          fmt.Sprintf("items/%s", rootFolderId),
+		AncestorName:          fmt.Sprintf("items/%s", rootFolderID),
 		ConsolidationStrategy: &consolidationStrategy,
 		Filter:                filter,
 		PageToken:             pageToken,
@@ -62,6 +62,9 @@ func createItemQueryRequest(itemID, filter, pageToken string) *driveactivity.
 }
 
 func addParent(parents map[string]string, parent *parent) map[string]string {
+	if parent == nil {
+		return parents
+	}
 	if _, ok := parents[parent.ID]; !ok {
 		parents[parent.ID] = parent.Name
 	}
@@ -83,16 +86,24 @@ func getTargetInfo(targets []*driveactivity.Target) (targetInfo *driveactivity.D
 	return nil
 }
 
-func (f *Fs) getParent(target *driveactivity.DriveItem) *parent {
+func (f *Fs) getParent(ctx context.Context, target *driveactivity.DriveItem) *parent {
+	var (
+		err          error
+		moveResponse *driveactivity.QueryDriveActivityResponse
+	)
 	targetTitle := target.Title
-	q := createItemQueryRequest(parseItemID(target.Name), MoveQuery, "")
-	response, err := f.activitySvc.Activity.Query(q).Do()
+	itemMoveQuery := createItemQueryRequest(parseItemID(target.Name), moveQuery, "")
+	err = f.pacer.Call(func() (bool, error) {
+		moveResponse, err = f.activitySvc.Activity.Query(itemMoveQuery).Context(ctx).Do()
+		return f.shouldRetry(err)
+	})
 	if err != nil {
 		fs.Errorf(targetTitle, "Unable to retrieve list of moves: %v", err)
+		return nil
 	}
-	fs.Debugf(targetTitle, "Retrieved Moves : %d\n", len(response.Activities))
+	fs.Debugf(targetTitle, "Retrieved Moves : %d\n", len(moveResponse.Activities))
 
-	for _, activity := range response.Activities {
+	for _, activity := range moveResponse.Activities {
 		for _, action := range activity.Actions {
 			if action.Detail.Move != nil {
 				for _, addedParent := range action.Detail.Move.AddedParents {
@@ -105,7 +116,7 @@ func (f *Fs) getParent(target *driveactivity.DriveItem) *parent {
 	return nil
 }
 
-func (f *Fs) parseActivityActions(driveTarget *driveactivity.DriveItem,
+func (f *Fs) parseActivityActions(ctx context.Context, driveTarget *driveactivity.DriveItem,
 	actions []*driveactivity.Action) (invalidatedParents map[string]string) {
 
 	var (
@@ -120,30 +131,30 @@ func (f *Fs) parseActivityActions(driveTarget *driveactivity.DriveItem,
 		targetTitle := target.Title
 		if action.Detail.Delete != nil {
 			fs.Debugf(targetTitle, "Deleted")
-			invalidatedParent = f.getParent(target)
+			invalidatedParent = f.getParent(ctx, target)
 			invalidatedParents = addParent(invalidatedParents, invalidatedParent)
 		}
 		if action.Detail.Rename != nil {
 			fs.Debugf(targetTitle, "Renamed")
-			invalidatedParent = f.getParent(target)
+			invalidatedParent = f.getParent(ctx, target)
 			invalidatedParents = addParent(invalidatedParents, invalidatedParent)
 		}
 		if action.Detail.Restore != nil {
 			fs.Debugf(targetTitle, "Restored")
-			invalidatedParent = f.getParent(target)
+			invalidatedParent = f.getParent(ctx, target)
 			invalidatedParents = addParent(invalidatedParents, invalidatedParent)
 		}
 		/* TODO: Verify if this is needed
 		if action.Detail.Edit != nil {
 			fs.Debugf(targetTitle, "Edited")
-			invalidatedParent = f.getParent(target)
+			invalidatedParent = f.getParent(ctx, target)
 			invalidatedParents = addParent(invalidatedParents, invalidatedParent)
 		}
 		*/
 		/* TODO: Verify if this is needed
 		if action.Detail.PermissionChange != nil {
 			fs.Debugf(targetTitle, "Permissions Changed")
-			invalidatedParent = f.getParent(target)
+			invalidatedParent = f.getParent(ctx, target)
 			invalidatedParents = addParent(invalidatedParents, invalidatedParent)
 		}
 		*/
@@ -152,7 +163,9 @@ func (f *Fs) parseActivityActions(driveTarget *driveactivity.DriveItem,
 			moveAction := action.Detail.Move
 			for _, addedParent := range moveAction.AddedParents {
 				if addedParent.DriveItem == nil {
-					fs.Errorf(targetTitle, "Invalid Parent: %v\n", addedParent)
+					fs.Errorf(targetTitle, "Invalid Removed Parent on Move Activity: %v\n",
+						addedParent)
+					continue
 				}
 				parentItem := addedParent.DriveItem
 				invalidatedParent = &parent{
@@ -161,7 +174,9 @@ func (f *Fs) parseActivityActions(driveTarget *driveactivity.DriveItem,
 			}
 			for _, removedParent := range moveAction.RemovedParents {
 				if removedParent.DriveItem == nil {
-					fs.Errorf(targetTitle, "Invalid Parent: %v\n", removedParent)
+					fs.Errorf(targetTitle, "Invalid Added Parent on Move Activity: %v\n",
+						removedParent)
+					continue
 				}
 				parentItem := removedParent.DriveItem
 				invalidatedParent = &parent{
@@ -176,9 +191,9 @@ func (f *Fs) parseActivityActions(driveTarget *driveactivity.DriveItem,
 	return
 }
 
-func (f *Fs) parseActivity(activity *driveactivity.DriveActivity) map[string]string {
+func (f *Fs) parseActivity(ctx context.Context, activity *driveactivity.DriveActivity) map[string]string {
 	target := getTargetInfo(activity.Targets)
-	return f.parseActivityActions(target, activity.Actions)
+	return f.parseActivityActions(ctx, target, activity.Actions)
 }
 
 func (f *Fs) changeNotifyRunner(ctx context.Context, fromTime,
@@ -193,7 +208,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, fromTime,
 		activityResponse   *driveactivity.QueryDriveActivityResponse
 	)
 
-	filter := fmt.Sprintf(GlobalQuery,
+	filter := fmt.Sprintf(globalQuery,
 		fromTime.Format(time.RFC3339), toTime.Format(time.RFC3339))
 
 	for {
@@ -210,10 +225,9 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, fromTime,
 		fs.Infof(f, "Retrieved Activities : %d\n", len(activityResponse.Activities))
 
 		for _, activity := range activityResponse.Activities {
-			invalidatedParents = f.parseActivity(activity)
+			invalidatedParents = f.parseActivity(ctx, activity)
 
-			for parentID, parentName := range invalidatedParents {
-				parentName = f.opt.Enc.ToStandardName(parentName)
+			for parentID := range invalidatedParents {
 				// translate the path of this dir
 				if parentPath, ok := f.dirCache.GetInv(parentID); ok {
 					pathsToClear = append(pathsToClear, entryType{
