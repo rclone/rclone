@@ -164,6 +164,18 @@ Home directory can be found in a shared folder called "home"
 			Default:  false,
 			Help:     "Set to skip any symlinks and any other non regular files.",
 			Advanced: true,
+		}, {
+			Name:     "subsystem",
+			Default:  "sftp",
+			Help:     "Specifies the SSH2 subsystem on the remote host.",
+			Advanced: true,
+		}, {
+			Name:    "server_command",
+			Default: "",
+			Help: `Specifies the path or command to run a sftp server on the remote host.
+
+The subsystem option is ignored when server_command is defined.`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -187,6 +199,8 @@ type Options struct {
 	Md5sumCommand     string `config:"md5sum_command"`
 	Sha1sumCommand    string `config:"sha1sum_command"`
 	SkipLinks         bool   `config:"skip_links"`
+	Subsystem         string `config:"subsystem"`
+	ServerCommand     string `config:"server_command"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -290,13 +304,42 @@ func (f *Fs) sftpConnection() (c *conn, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't connect SSH")
 	}
-	c.sftpClient, err = sftp.NewClient(c.sshClient)
+	c.sftpClient, err = f.newSftpClient(c.sshClient)
 	if err != nil {
 		_ = c.sshClient.Close()
 		return nil, errors.Wrap(err, "couldn't initialise SFTP")
 	}
 	go c.wait()
 	return c, nil
+}
+
+// Creates a new SFTP client on conn, using the specified subsystem
+// or sftp server, and zero or more option functions
+func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.Client, error) {
+	s, err := conn.NewSession()
+	if err != nil {
+		return nil, err
+	}
+	pw, err := s.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+	pr, err := s.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	if f.opt.ServerCommand != "" {
+		if err := s.Start(f.opt.ServerCommand); err != nil {
+			return nil, err
+		}
+	} else {
+		if err := s.RequestSubsystem(f.opt.Subsystem); err != nil {
+			return nil, err
+		}
+	}
+
+	return sftp.NewClientPipe(pr, pw, opts...)
 }
 
 // Get an SFTP connection from the pool, or open a new one
