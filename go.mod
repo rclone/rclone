@@ -72,5 +72,3 @@ require (
 	storj.io/common v0.0.0-20200624215549-bf610d22d466 // indirect
 	storj.io/uplink v1.1.2
 )
-
-replace github.com/klauspost/compress v1.10.11 => github.com/klauspost/compress v1.10.11-0.20200811083703-3fdfbd5997ec

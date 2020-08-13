@@ -87,10 +87,6 @@ github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
-github.com/billziss-gh/cgofuse v1.3.0 h1:mFj8XQg/vvxMFywNy1F7IqFYcMeBqceYTh1+iUhpsk8=
-github.com/billziss-gh/cgofuse v1.3.0/go.mod h1:LJjoaUojlVjgo5GQoEJTcJNqZJeRU0nCR84CyxKt2YM=
-github.com/billziss-gh/cgofuse v1.3.1-0.20200703171401-45df47debffe h1:AXqxouOOD7FQuoVfZubWmMyHzOrrSGZbdh9o6PCtfKM=
-github.com/billziss-gh/cgofuse v1.3.1-0.20200703171401-45df47debffe/go.mod h1:LJjoaUojlVjgo5GQoEJTcJNqZJeRU0nCR84CyxKt2YM=
 github.com/billziss-gh/cgofuse v1.4.0 h1:kju2jDmdNuDDCrxPob2ggmZr5Mj/odCjU1Y8kx0Th9E=
 github.com/billziss-gh/cgofuse v1.4.0/go.mod h1:LJjoaUojlVjgo5GQoEJTcJNqZJeRU0nCR84CyxKt2YM=
 github.com/bradfitz/iter v0.0.0-20140124041915-454541ec3da2/go.mod h1:PyRFw1Lt2wKX4ZVSQ2mk+PeDa1rxyObEDlApuIsUKuo=
@@ -143,10 +139,6 @@ github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible h1:DtumzkLk2zZ2
 github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible/go.mod h1:lr+LhMM3F6Y3lW1T9j2U5l7QeuWm87N9+PPXo3yH4qY=
 github.com/dustin/go-humanize v0.0.0-20180421182945-02af3965c54e/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
-github.com/dvyukov/go-fuzz v0.0.0-20200318091601-be3528f3a813 h1:NgO45/5mBLRVfiXerEFzH6ikcZ7DNRPS639xFg3ENzU=
-github.com/dvyukov/go-fuzz v0.0.0-20200318091601-be3528f3a813/go.mod h1:11Gm+ccJnvAhCNLlf5+cS9KjtbaD5I5zaZpFMsTHWTw=
-github.com/dvyukov/go-fuzz v0.0.0-20200805095026-2dc2d88eb660 h1:oD1Mw0vCKJmM45Y4r8rjMVgcNCIvH+m5X0PrV66mlOg=
-github.com/dvyukov/go-fuzz v0.0.0-20200805095026-2dc2d88eb660/go.mod h1:11Gm+ccJnvAhCNLlf5+cS9KjtbaD5I5zaZpFMsTHWTw=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
@@ -269,10 +261,8 @@ github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvW
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
 github.com/kkdai/bstream v0.0.0-20161212061736-f391b8402d23/go.mod h1:J+Gs4SYgM6CZQHDETBtE9HaSEkGmuNXF86RwHhHUvq4=
-github.com/klauspost/compress v1.10.10 h1:a/y8CglcM7gLGYmlbP/stPE5sR3hbhFRUjCBfd/0B3I=
-github.com/klauspost/compress v1.10.10/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
-github.com/klauspost/compress v1.10.11-0.20200811083703-3fdfbd5997ec h1:a0yOVFOuh9el5v2PLXKSqQr4ofy7jox9eIGGI7yWDEM=
-github.com/klauspost/compress v1.10.11-0.20200811083703-3fdfbd5997ec/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
+github.com/klauspost/compress v1.10.11 h1:K9z59aO18Aywg2b/WSgBaUX99mHy2BES18Cr5lBKZHk=
+github.com/klauspost/compress v1.10.11/go.mod h1:aoV0uJVorq1K+umq18yTdKaF57EivdYsUV+/s2qKfXs=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.3 h1:CE8S1cTafDpPvMhIxNJKvHsGVBgn1xWYf1NbHQhywc8=
 github.com/konsorten/go-windows-terminal-sequences v1.0.3/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
