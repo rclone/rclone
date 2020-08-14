@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -e
+
+NAME=Sia
+
+. $(dirname "$0")/docker.bash
+
+start() {
+  docker run --rm -d --name $NAME \
+    --publish 127.0.0.1:9980:9980 \
+    nebulouslabs/siaantfarm
+
+    # pull latest remote image (do not use latest local image)
+    docker pull nebulouslabs/siaantfarm:latest
+
+    # start antfarm with the default config
+    docker run --rm -d --name "$NAME" \
+            -p "${SIA_CONN}:${SIA_PORT}" \
+            nebulouslabs/siaantfarm:latest
+
+    # wait until Sia test network is up, the Sia renter forms contracts on the
+    # blockchain and the renter is upload ready
+    until wget --user-agent="Sia-Agent" -q -O - "${SIA_CONN}/renter/uploadready" | grep '"ready":true'
+    do
+        sleep 1
+    done
+
+    # confirm backend type in the generated rclone.conf
+    echo "type=sia"
+    # override keys in the Sia section of generated rclone.conf
+    echo "api_url=http://${SIA_CONN}/"
+    # hint test harness where to probe for connection
+    echo "_connect=${SIA_CONN}"
+}
+
+stop() {
+    if status ; then
+        docker logs "$NAME" >> sia-test.log 2>&1
+        docker kill "$NAME"
+        echo "${NAME} stopped"
+    fi
+}
+
+. $(dirname "$0")/run.bash
