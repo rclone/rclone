@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/lib/encoder"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/lib/encoder"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/sia/api"
