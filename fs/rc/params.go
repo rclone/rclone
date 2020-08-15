@@ -120,7 +120,7 @@ func (p Params) GetHTTPResponseWriter() (*http.ResponseWriter, error) {
 	}
 	request, ok := value.(*http.ResponseWriter)
 	if !ok {
-		return nil, ErrParamInvalid{errors.Errorf("expecting http.ResponseWriter value for key %q (was %T)", key, value)}
+		return nil, ErrParamInvalid{errors.Errorf("expecting *http.ResponseWriter value for key %q (was %T)", key, value)}
 	}
 	return request, nil
 }

@@ -266,7 +266,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	}
 
 	if call.NeedsResponse {
-		in["_response"] = &w
+		in["_response"] = w
 	}
 
 	// Check to see if it is async or not
