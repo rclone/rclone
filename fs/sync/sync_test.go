@@ -97,6 +97,23 @@ func TestCopyNoTraverse(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 }
 
+// Now with --check-first
+func TestCopyCheckFirst(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.CheckFirst = true
+	defer func() { fs.Config.CheckFirst = false }()
+
+	file1 := r.WriteFile("sub dir/hello world", "hello world", t1)
+
+	err := CopyDir(context.Background(), r.Fremote, r.Flocal, false)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Flocal, file1)
+	fstest.CheckItems(t, r.Fremote, file1)
+}
+
 // Now with --no-traverse
 func TestSyncNoTraverse(t *testing.T) {
 	r := fstest.NewRun(t)
@@ -1023,8 +1040,6 @@ func TestSyncWithMaxDuration(t *testing.T) {
 	startTime := time.Now()
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
 	require.Equal(t, context.DeadlineExceeded, errors.Cause(err))
-	err = accounting.GlobalStats().GetLastError()
-	require.NoError(t, err)
 
 	elapsed := time.Since(startTime)
 	maxTransferTime := (time.Duration(len(testFiles)) * 60 * time.Second) / time.Duration(bytesPerSecond)
@@ -1067,63 +1082,119 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, f1, f2)
 
-	// As currently there is no Fs interface providing number of chunks
-	// in a file, this test depends on the well-known names of test remotes.
-	remote := r.Fremote.Name()
-
-	// Union remote can Move but returns CantMove error.
-	moveAsCopyDelete := r.Fremote.Features().Move == nil || remote == "TestUnion"
-
-	chunker := strings.HasPrefix(remote, "TestChunker")
-	wrappedMoveAsCopyDelete := chunker && strings.HasSuffix(remote, "S3")
-
-	chunk3b := chunker && strings.Contains(remote, "Chunk3b")            // chunker with 3 byte chunks
-	chunk50b := chunker && strings.Contains(remote, "Chunk50b")          // chunker with 50 byte chunks
-	chunkDefault := chunker && !strings.Contains(remote, "ChunkerChunk") // default big chunk size
-	chunkBig := chunk50b || chunkDefault                                 // file is smaller than chunk size
-
-	// Verify number of checks for a toy 14 byte file.
-	// The order of cases matters!
-	var checks int
-	switch {
-	case canTrackRenames && chunk3b:
-		checks = 8 // chunker makes extra checks for each small chunk
-	case canTrackRenames && chunkBig:
-		checks = 4 // chunker makes 1 extra check for a single big chunk
-	case canTrackRenames && moveAsCopyDelete:
-		checks = 4 // 2 file checks + 1 move + 1 delete
-	case canTrackRenames:
-		checks = 3 // 2 file checks + 1 move
-	case !chunker:
-		checks = 2 // 2 file checks on a generic non-chunking remote
-	case chunk3b:
-		checks = 6 // chunker makes extra checks for each small chunk
-	case chunkBig && wrappedMoveAsCopyDelete:
-		checks = 4 // one more extra check because S3 emulates Move as Copy+Delete
-	case chunkBig:
-		checks = 3 // chunker makes 1 extra check for a single big chunk
-	default:
-		checks = -1 // skip verification for chunker with unknown chunk size
+	// Check we renamed something if we should have
+	if canTrackRenames {
+		renames := accounting.GlobalStats().Renames(0)
+		assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
 	}
-	if checks != -1 { // "-1" allows remotes to bypass this check
-		assert.Equal(t, int64(checks), accounting.GlobalStats().GetChecks())
-	}
+}
 
-	// Verify number of copy operations for a toy 14 byte file.
-	// The order of cases matters!
-	var copies int64
-	switch {
-	case canTrackRenames && moveAsCopyDelete:
-		copies = 1 // 1 copy
-	case canTrackRenames:
-		copies = 0 // 0 copy
-	case chunkBig && wrappedMoveAsCopyDelete:
-		copies = 2 // extra Copy because S3 emulates Move as Copy+Delete.
-	default:
-		copies = 1
+func TestParseRenamesStrategyModtime(t *testing.T) {
+	for _, test := range []struct {
+		in      string
+		want    trackRenamesStrategy
+		wantErr bool
+	}{
+		{"", 0, false},
+		{"modtime", trackRenamesStrategyModtime, false},
+		{"hash", trackRenamesStrategyHash, false},
+		{"size", 0, false},
+		{"modtime,hash", trackRenamesStrategyModtime | trackRenamesStrategyHash, false},
+		{"hash,modtime,size", trackRenamesStrategyModtime | trackRenamesStrategyHash, false},
+		{"size,boom", 0, true},
+	} {
+		got, err := parseTrackRenamesStrategy(test.in)
+		assert.Equal(t, test.want, got, test.in)
+		assert.Equal(t, test.wantErr, err != nil, test.in)
 	}
-	if copies != -1 { // "-1" allows remotes to bypass this check
-		assert.Equal(t, copies, accounting.GlobalStats().GetTransfers())
+}
+
+func TestRenamesStrategyModtime(t *testing.T) {
+	both := trackRenamesStrategyHash | trackRenamesStrategyModtime
+	hash := trackRenamesStrategyHash
+	modTime := trackRenamesStrategyModtime
+
+	assert.True(t, both.hash())
+	assert.True(t, both.modTime())
+	assert.True(t, hash.hash())
+	assert.False(t, hash.modTime())
+	assert.False(t, modTime.hash())
+	assert.True(t, modTime.modTime())
+}
+
+func TestSyncWithTrackRenamesStrategyModtime(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.TrackRenames = true
+	fs.Config.TrackRenamesStrategy = "modtime"
+	defer func() {
+		fs.Config.TrackRenames = false
+		fs.Config.TrackRenamesStrategy = "hash"
+	}()
+
+	canTrackRenames := operations.CanServerSideMove(r.Fremote) && r.Fremote.Precision() != fs.ModTimeNotSupported
+	t.Logf("Can track renames: %v", canTrackRenames)
+
+	f1 := r.WriteFile("potato", "Potato Content", t1)
+	f2 := r.WriteFile("yam", "Yam Content", t2)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
+
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+	fstest.CheckItems(t, r.Flocal, f1, f2)
+
+	// Now rename locally.
+	f2 = r.RenameFile(f2, "yaml")
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
+
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+
+	// Check we renamed something if we should have
+	if canTrackRenames {
+		renames := accounting.GlobalStats().Renames(0)
+		assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
+	}
+}
+
+func TestSyncWithTrackRenamesStrategyLeaf(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.TrackRenames = true
+	fs.Config.TrackRenamesStrategy = "leaf"
+	defer func() {
+		fs.Config.TrackRenames = false
+		fs.Config.TrackRenamesStrategy = "hash"
+	}()
+
+	canTrackRenames := operations.CanServerSideMove(r.Fremote) && r.Fremote.Precision() != fs.ModTimeNotSupported
+	t.Logf("Can track renames: %v", canTrackRenames)
+
+	f1 := r.WriteFile("potato", "Potato Content", t1)
+	f2 := r.WriteFile("sub/yam", "Yam Content", t2)
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
+
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+	fstest.CheckItems(t, r.Flocal, f1, f2)
+
+	// Now rename locally.
+	f2 = r.RenameFile(f2, "yam")
+
+	accounting.GlobalStats().ResetCounters()
+	require.NoError(t, Sync(context.Background(), r.Fremote, r.Flocal, false))
+
+	fstest.CheckItems(t, r.Fremote, f1, f2)
+
+	// Check we renamed something if we should have
+	if canTrackRenames {
+		renames := accounting.GlobalStats().Renames(0)
+		assert.Equal(t, canTrackRenames, renames != 0, fmt.Sprintf("canTrackRenames=%v, renames=%d", canTrackRenames, renames))
 	}
 }
 
@@ -1593,9 +1664,11 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 
 	fstest.CheckItems(t, r.Fremote, file1b, file2, file3a, file1a)
 }
-func TestSyncBackupDir(t *testing.T)                        { testSyncBackupDir(t, "", false) }
-func TestSyncBackupDirWithSuffix(t *testing.T)              { testSyncBackupDir(t, ".bak", false) }
-func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) { testSyncBackupDir(t, "-2019-01-01", true) }
+func TestSyncBackupDir(t *testing.T)           { testSyncBackupDir(t, "", false) }
+func TestSyncBackupDirWithSuffix(t *testing.T) { testSyncBackupDir(t, ".bak", false) }
+func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) {
+	testSyncBackupDir(t, "-2019-01-01", true)
+}
 
 // Test with Suffix set
 func testSyncSuffix(t *testing.T, suffix string, suffixKeepExtension bool) {
@@ -1809,7 +1882,7 @@ func TestAbort(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 
 	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
-	expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReached)
+	expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReachedFatal)
 	fserrors.Count(expectedErr)
 	assert.Equal(t, expectedErr, err)
 }

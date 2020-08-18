@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -215,7 +216,12 @@ func TestPool(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Run("GetPut", func(t *testing.T) { testGetPut(t, test.useMmap, test.unreliable) })
-			t.Run("Flusher", func(t *testing.T) { testFlusher(t, test.useMmap, test.unreliable) })
+			t.Run("Flusher", func(t *testing.T) {
+				if test.name == "canFail" {
+					testy.SkipUnreliable(t) // fails regularly on macOS
+				}
+				testFlusher(t, test.useMmap, test.unreliable)
+			})
 		})
 	}
 }

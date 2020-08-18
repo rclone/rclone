@@ -117,18 +117,15 @@ func init() {
 		Description: "Dropbox",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.ConfigNoOffline("dropbox", name, m, dropboxConfig)
+			opt := oauthutil.Options{
+				NoOffline: true,
+			}
+			err := oauthutil.Config("dropbox", name, m, dropboxConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Dropbox App Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Dropbox App Client Secret\nLeave blank normally.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",
 			Help: fmt.Sprintf(`Upload chunk size. (< %v).
 
@@ -158,7 +155,7 @@ memory.  It can be set smaller if you are tight on memory.`, maxChunkSize),
 				encoder.EncodeDel |
 				encoder.EncodeRightSpace |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 
@@ -225,7 +222,11 @@ func shouldRetry(err error) (bool, error) {
 		return false, err
 	}
 	baseErrString := errors.Cause(err).Error()
-	// handle any official Retry-After header from Dropbox's SDK first
+	// First check for Insufficient Space
+	if strings.Contains(baseErrString, "insufficient_space") {
+		return false, fserrors.FatalError(err)
+	}
+	// Then handle any official Retry-After header from Dropbox's SDK
 	switch e := err.(type) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
@@ -604,10 +605,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return err
 }
 
-// Rmdir deletes the container
-//
-// Returns an error if it isn't empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+// purgeCheck removes the root directory, if check is set then it
+// refuses to do so if it has anything in
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error) {
 	root := path.Join(f.slashRoot, dir)
 
 	// can't remove root
@@ -615,31 +615,33 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return errors.New("can't remove root directory")
 	}
 
-	// check directory exists
-	_, err := f.getDirMetadata(root)
-	if err != nil {
-		return errors.Wrap(err, "Rmdir")
-	}
+	if check {
+		// check directory exists
+		_, err = f.getDirMetadata(root)
+		if err != nil {
+			return errors.Wrap(err, "Rmdir")
+		}
 
-	root = f.opt.Enc.FromStandardPath(root)
-	// check directory empty
-	arg := files.ListFolderArg{
-		Path:      root,
-		Recursive: false,
-	}
-	if root == "/" {
-		arg.Path = "" // Specify root folder as empty string
-	}
-	var res *files.ListFolderResult
-	err = f.pacer.Call(func() (bool, error) {
-		res, err = f.srv.ListFolder(&arg)
-		return shouldRetry(err)
-	})
-	if err != nil {
-		return errors.Wrap(err, "Rmdir")
-	}
-	if len(res.Entries) != 0 {
-		return errors.New("directory not empty")
+		root = f.opt.Enc.FromStandardPath(root)
+		// check directory empty
+		arg := files.ListFolderArg{
+			Path:      root,
+			Recursive: false,
+		}
+		if root == "/" {
+			arg.Path = "" // Specify root folder as empty string
+		}
+		var res *files.ListFolderResult
+		err = f.pacer.Call(func() (bool, error) {
+			res, err = f.srv.ListFolder(&arg)
+			return shouldRetry(err)
+		})
+		if err != nil {
+			return errors.Wrap(err, "Rmdir")
+		}
+		if len(res.Entries) != 0 {
+			return errors.New("directory not empty")
+		}
 	}
 
 	// remove it
@@ -648,6 +650,13 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		return shouldRetry(err)
 	})
 	return err
+}
+
+// Rmdir deletes the container
+//
+// Returns an error if it isn't empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	return f.purgeCheck(ctx, dir, true)
 }
 
 // Precision returns the precision
@@ -712,15 +721,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context) (err error) {
-	// Let dropbox delete the filesystem tree
-	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.DeleteV2(&files.DeleteArg{
-			Path: f.opt.Enc.FromStandardPath(f.slashRoot),
-		})
-		return shouldRetry(err)
-	})
-	return err
+func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
+	return f.purgeCheck(ctx, dir, false)
 }
 
 // Move src to this remote using server side move operations.
@@ -775,11 +777,17 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	absPath := f.opt.Enc.FromStandardPath(path.Join(f.slashRoot, remote))
 	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
+		// FIXME this gives settings_error/not_authorized/.. errors
+		// and the expires setting isn't in the documentation so remove
+		// for now.
+		// Settings: &sharing.SharedLinkSettings{
+		// 	Expires: time.Now().Add(time.Duration(expire)).UTC().Round(time.Second),
+		// },
 	}
 	var linkRes sharing.IsSharedLinkMetadata
 	err = f.pacer.Call(func() (bool, error) {

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"flag"
 	"io/ioutil"
 	"net/http"
@@ -25,11 +26,13 @@ var (
 
 const (
 	testBindAddress = "localhost:0"
+	testTemplate    = "testdata/golden/testindex.html"
 )
 
 func startServer(t *testing.T, f fs.Fs) {
 	opt := httplib.DefaultOpt
 	opt.ListenAddr = testBindAddress
+	opt.Template = testTemplate
 	httpServer = newServer(f, &opt)
 	assert.NoError(t, httpServer.Serve())
 	testURL = httpServer.Server.URL()
@@ -50,6 +53,11 @@ func startServer(t *testing.T, f fs.Fs) {
 
 }
 
+var (
+	datedObject  = "two.txt"
+	expectedTime = time.Date(2000, 1, 2, 3, 4, 5, 0, time.UTC)
+)
+
 func TestInit(t *testing.T) {
 	// Configure the remote
 	config.LoadConfig()
@@ -64,6 +72,11 @@ func TestInit(t *testing.T) {
 	// Create a test Fs
 	f, err := fs.NewFs("testdata/files")
 	require.NoError(t, err)
+
+	// set date of datedObject to expectedTime
+	obj, err := f.NewObject(context.Background(), datedObject)
+	require.NoError(t, err)
+	require.NoError(t, obj.SetModTime(context.Background(), expectedTime))
 
 	startServer(t, f)
 }
@@ -194,6 +207,18 @@ func TestGET(t *testing.T) {
 		assert.Equal(t, test.Status, resp.StatusCode, test.Golden)
 		body, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
+
+		// Check we got a Last-Modifed header and that it is a valid date
+		if test.Status == http.StatusOK || test.Status == http.StatusPartialContent {
+			lastModified := resp.Header.Get("Last-Modified")
+			assert.NotEqual(t, "", lastModified, test.Golden)
+			modTime, err := http.ParseTime(lastModified)
+			assert.NoError(t, err, test.Golden)
+			// check the actual date on our special file
+			if test.URL == datedObject {
+				assert.Equal(t, expectedTime, modTime, test.Golden)
+			}
+		}
 
 		checkGolden(t, test.Golden, body)
 	}

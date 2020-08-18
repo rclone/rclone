@@ -10,7 +10,7 @@ type Response struct {
 	Status  string `json:"status"`
 }
 
-// Error statisfies the error interface
+// Error satisfies the error interface
 func (e *Response) Error() string {
 	return fmt.Sprintf("%s: %s", e.Status, e.Message)
 }

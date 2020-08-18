@@ -1,6 +1,6 @@
 // FUSE main Fs
 
-// +build linux,go1.11 darwin,go1.11 freebsd,go1.11
+// +build linux,go1.13 darwin,go1.13 freebsd,go1.13
 
 package mount
 
@@ -15,23 +15,24 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
-	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 // FS represents the top level filing system
 type FS struct {
 	*vfs.VFS
-	f fs.Fs
+	f   fs.Fs
+	opt *mountlib.Options
 }
 
 // Check interface satisfied
 var _ fusefs.FS = (*FS)(nil)
 
 // NewFS makes a new FS
-func NewFS(f fs.Fs) *FS {
+func NewFS(VFS *vfs.VFS, opt *mountlib.Options) *FS {
 	fsys := &FS{
-		VFS: vfs.New(f, &vfsflags.Opt),
-		f:   f,
+		VFS: VFS,
+		f:   VFS.Fs(),
+		opt: opt,
 	}
 	return fsys
 }
@@ -43,7 +44,7 @@ func (f *FS) Root() (node fusefs.Node, err error) {
 	if err != nil {
 		return nil, translateError(err)
 	}
-	return &Dir{root}, nil
+	return &Dir{root, f}, nil
 }
 
 // Check interface satisfied
@@ -54,25 +55,15 @@ var _ fusefs.FSStatfser = (*FS)(nil)
 func (f *FS) Statfs(ctx context.Context, req *fuse.StatfsRequest, resp *fuse.StatfsResponse) (err error) {
 	defer log.Trace("", "")("stat=%+v, err=%v", resp, &err)
 	const blockSize = 4096
-	const fsBlocks = (1 << 50) / blockSize
-	resp.Blocks = fsBlocks  // Total data blocks in file system.
-	resp.Bfree = fsBlocks   // Free blocks in file system.
-	resp.Bavail = fsBlocks  // Free blocks in file system if you're not root.
-	resp.Files = 1e9        // Total files in file system.
-	resp.Ffree = 1e9        // Free files in file system.
-	resp.Bsize = blockSize  // Block size
-	resp.Namelen = 255      // Maximum file name length?
-	resp.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.
-	total, used, free := f.VFS.Statfs()
-	if total >= 0 {
-		resp.Blocks = uint64(total) / blockSize
-	}
-	if used >= 0 {
-		resp.Bfree = resp.Blocks - uint64(used)/blockSize
-	}
-	if free >= 0 {
-		resp.Bavail = uint64(free) / blockSize
-	}
+	total, _, free := f.VFS.Statfs()
+	resp.Blocks = uint64(total) / blockSize // Total data blocks in file system.
+	resp.Bfree = uint64(free) / blockSize   // Free blocks in file system.
+	resp.Bavail = resp.Bfree                // Free blocks in file system if you're not root.
+	resp.Files = 1e9                        // Total files in file system.
+	resp.Ffree = 1e9                        // Free files in file system.
+	resp.Bsize = blockSize                  // Block size
+	resp.Namelen = 255                      // Maximum file name length?
+	resp.Frsize = blockSize                 // Fragment size, smallest addressable data size in the file system.
 	mountlib.ClipBlocks(&resp.Blocks)
 	mountlib.ClipBlocks(&resp.Bfree)
 	mountlib.ClipBlocks(&resp.Bavail)
@@ -87,11 +78,11 @@ func translateError(err error) error {
 	switch errors.Cause(err) {
 	case vfs.OK:
 		return nil
-	case vfs.ENOENT:
+	case vfs.ENOENT, fs.ErrorDirNotFound, fs.ErrorObjectNotFound:
 		return fuse.ENOENT
-	case vfs.EEXIST:
+	case vfs.EEXIST, fs.ErrorDirExists:
 		return fuse.EEXIST
-	case vfs.EPERM:
+	case vfs.EPERM, fs.ErrorPermissionDenied:
 		return fuse.EPERM
 	case vfs.ECLOSED:
 		return fuse.Errno(syscall.EBADF)
@@ -103,7 +94,7 @@ func translateError(err error) error {
 		return fuse.Errno(syscall.EBADF)
 	case vfs.EROFS:
 		return fuse.Errno(syscall.EROFS)
-	case vfs.ENOSYS:
+	case vfs.ENOSYS, fs.ErrorNotImplemented:
 		return fuse.ENOSYS
 	case vfs.EINVAL:
 		return fuse.Errno(syscall.EINVAL)

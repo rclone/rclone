@@ -360,7 +360,7 @@ func Cause(cause error) (retriable bool, err error) {
 }
 
 // retriableErrorStrings is a list of phrases which when we find it
-// in an an error, we know it is a networking error which should be
+// in an error, we know it is a networking error which should be
 // retried.
 //
 // This is incredibly ugly - if only errors.Cause worked for all
@@ -372,7 +372,8 @@ var retriableErrorStrings = []string{
 	"http: ContentLength=",             // net/http/transfer.go
 	"server closed idle connection",    // net/http/transport.go
 	"bad record MAC",                   // crypto/tls/alert.go
-	"stream error:",                    // src/net/http/h2_bundle.go
+	"stream error:",                    // net/http/h2_bundle.go
+	"tls: use of closed connection",    // crypto/tls/conn.go
 }
 
 // Errors which indicate networking errors which should be retried

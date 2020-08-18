@@ -71,7 +71,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v starting", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
 
-	rc, err := newReOpen(ctx, mc.src, nil, &fs.RangeOption{Start: start, End: end - 1}, fs.Config.LowLevelRetries)
+	rc, err := NewReOpen(ctx, mc.src, fs.Config.LowLevelRetries, &fs.RangeOption{Start: start, End: end - 1})
 	if err != nil {
 		return errors.Wrap(err, "multpart copy: failed to open source")
 	}
@@ -158,14 +158,13 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	mc.calculateChunks()
 
 	// Make accounting
-	mc.acc = tr.Account(nil)
+	mc.acc = tr.Account(ctx, nil)
 
 	// create write file handle
 	mc.wc, err = openWriterAt(gCtx, remote, mc.size)
 	if err != nil {
 		return nil, errors.Wrap(err, "multpart copy: failed to open destination")
 	}
-	defer fs.CheckClose(mc.wc, &err)
 
 	fs.Debugf(src, "Starting multi-thread copy with %d parts of size %v", mc.streams, fs.SizeSuffix(mc.partSize))
 	for stream := 0; stream < mc.streams; stream++ {
@@ -175,8 +174,12 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		})
 	}
 	err = g.Wait()
+	closeErr := mc.wc.Close()
 	if err != nil {
 		return nil, err
+	}
+	if closeErr != nil {
+		return nil, errors.Wrap(closeErr, "multi-thread copy: failed to close object after copy")
 	}
 
 	obj, err := f.NewObject(ctx, remote)

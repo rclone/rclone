@@ -30,7 +30,9 @@ modification time or MD5SUM.  Destination is updated to match
 source, including deleting files if necessary.
 
 **Important**: Since this can cause data loss, test first with the
-` + "`" + `--dry-run` + "`" + ` flag to see exactly what would be copied and deleted.
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
+
+    rclone sync -i SOURCE remote:DESTINATION
 
 Note that files in the destination won't be deleted if there were any
 errors at any point.

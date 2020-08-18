@@ -61,7 +61,7 @@ func MaxConnectionsOption(maxConnections int) Option {
 	return func(p *pacerOptions) { p.maxConnections = maxConnections }
 }
 
-// InvokerOption sets a InvokerFunc for the new Pacer.
+// InvokerOption sets an InvokerFunc for the new Pacer.
 func InvokerOption(invoker InvokerFunc) Option {
 	return func(p *pacerOptions) { p.invoker = invoker }
 }
@@ -250,7 +250,7 @@ func RetryAfterError(err error, retryAfter time.Duration) error {
 	}
 }
 
-// IsRetryAfter returns true if the the error or any of it's Cause's is an error
+// IsRetryAfter returns true if the error or any of it's Cause's is an error
 // returned by RetryAfterError. It also returns the associated Duration if possible.
 func IsRetryAfter(err error) (retryAfter time.Duration, isRetryAfter bool) {
 	errors.Walk(err, func(err error) bool {

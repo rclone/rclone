@@ -2,17 +2,20 @@
 
 Current active maintainers of rclone are:
 
-| Name             | GitHub ID   | Specific Responsibilities    |
-| :--------------- | :---------- | :--------------------------  |
-| Nick Craig-Wood  | @ncw        | overall project health       |
-| Stefan Breunig   | @breunigs   |                              |
-| Ishuah Kariuki   | @ishuah     |                              |
-| Remus Bunduc     | @remusb     | cache backend                |
-| Fabian Möller    | @B4dM4n     |                              |
-| Alex Chen        | @Cnly       | onedrive backend             |
-| Sandeep Ummadi   | @sandeepkru | azureblob backend            |
-| Sebastian Bünger | @buengese   | jottacloud & yandex backends |
-| Ivan Andreev     | @ivandeex   | chunker & mailru backends    |
+| Name             | GitHub ID         | Specific Responsibilities    |
+| :--------------- | :---------------- | :--------------------------  |
+| Nick Craig-Wood  | @ncw              | overall project health       |
+| Stefan Breunig   | @breunigs         |                              |
+| Ishuah Kariuki   | @ishuah           |                              |
+| Remus Bunduc     | @remusb           | cache backend                |
+| Fabian Möller    | @B4dM4n           |                              |
+| Alex Chen        | @Cnly             | onedrive backend             |
+| Sandeep Ummadi   | @sandeepkru       | azureblob backend            |
+| Sebastian Bünger | @buengese         | jottacloud & yandex backends |
+| Ivan Andreev     | @ivandeex         | chunker & mailru backends    |
+| Max Sum          | @Max-Sum          | union backend                |
+| Fred             | @creativeprojects | seafile backend              |
+| Caleb Case       | @calebcase        | tardigrade backend           |
 
 **This is a work in progress Draft**
 
@@ -30,7 +33,7 @@ Rclone uses the labels like this:
 * `duplicate` - normally close these and ask the user to subscribe to the original
 * `enhancement: new remote` - a new rclone backend
 * `enhancement` - a new feature
-* `FUSE` - do do with `rclone mount` command
+* `FUSE` - to do with `rclone mount` command
 * `good first issue` - mark these if you find a small self contained issue - these get shown to new visitors to the project
 * `help` wanted - mark these if you find a self contained issue - these get shown to new visitors to the project
 * `IMPORTANT` - note to maintainers not to forget to fix this for the release

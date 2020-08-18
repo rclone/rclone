@@ -1,4 +1,4 @@
-// +build linux,go1.11 darwin,go1.11 freebsd,go1.11
+// +build linux,go1.13 darwin,go1.13 freebsd,go1.13
 
 package mount
 
@@ -19,6 +19,7 @@ import (
 // Dir represents a directory entry
 type Dir struct {
 	*vfs.Dir
+	fsys *FS
 }
 
 // Check interface satisfied
@@ -27,7 +28,7 @@ var _ fusefs.Node = (*Dir)(nil)
 // Attr updates the attributes of a directory
 func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer log.Trace(d, "")("attr=%+v, err=%v", a, &err)
-	a.Valid = mountlib.AttrTimeout
+	a.Valid = d.fsys.opt.AttrTimeout
 	a.Gid = d.VFS().Opt.GID
 	a.Uid = d.VFS().Opt.UID
 	a.Mode = os.ModeDir | d.VFS().Opt.DirPerms
@@ -75,14 +76,24 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 	if err != nil {
 		return nil, translateError(err)
 	}
-	resp.EntryValid = mountlib.AttrTimeout
+	resp.EntryValid = d.fsys.opt.AttrTimeout
+	// Check the mnode to see if it has a fuse Node cached
+	// We must return the same fuse nodes for vfs Nodes
+	node, ok := mnode.Sys().(fusefs.Node)
+	if ok {
+		return node, nil
+	}
 	switch x := mnode.(type) {
 	case *vfs.File:
-		return &File{x}, nil
+		node = &File{x, d.fsys}
 	case *vfs.Dir:
-		return &Dir{x}, nil
+		node = &Dir{x, d.fsys}
+	default:
+		panic("bad type")
 	}
-	panic("bad type")
+	// Cache the node for later
+	mnode.SetSys(node)
+	return node, nil
 }
 
 // Check interface satisfied
@@ -98,7 +109,7 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 	}
 	for _, node := range items {
 		name := node.Name()
-		if len(name) >= mountlib.MaxLeafSize {
+		if len(name) > mountlib.MaxLeafSize {
 			fs.Errorf(d, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
 			continue
 		}
@@ -129,7 +140,9 @@ func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.Cr
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
-	return &File{file}, &FileHandle{fh}, err
+	node = &File{file, d.fsys}
+	file.SetSys(node) // cache the FUSE node for later
+	return node, &FileHandle{fh}, err
 }
 
 var _ fusefs.NodeMkdirer = (*Dir)(nil)
@@ -141,7 +154,9 @@ func (d *Dir) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (node fusefs.No
 	if err != nil {
 		return nil, translateError(err)
 	}
-	return &Dir{dir}, nil
+	node = &Dir{dir, d.fsys}
+	dir.SetSys(node) // cache the FUSE node for later
+	return node, nil
 }
 
 var _ fusefs.NodeRemover = (*Dir)(nil)

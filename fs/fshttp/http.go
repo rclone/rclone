@@ -12,11 +12,11 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httputil"
-	"reflect"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/structs"
 	"golang.org/x/net/publicsuffix"
 	"golang.org/x/time/rate"
 )
@@ -92,25 +92,6 @@ func (c *timeoutConn) Write(b []byte) (n int, err error) {
 	return c.readOrWrite(c.Conn.Write, b)
 }
 
-// setDefaults for a from b
-//
-// Copy the public members from b to a.  We can't just use a struct
-// copy as Transport contains a private mutex.
-func setDefaults(a, b interface{}) {
-	pt := reflect.TypeOf(a)
-	t := pt.Elem()
-	va := reflect.ValueOf(a).Elem()
-	vb := reflect.ValueOf(b).Elem()
-	for i := 0; i < t.NumField(); i++ {
-		aField := va.Field(i)
-		// Set a from b if it is public
-		if aField.CanSet() {
-			bField := vb.Field(i)
-			aField.Set(bField)
-		}
-	}
-}
-
 // dial with context and timeouts
 func dialContextTimeout(ctx context.Context, network, address string, ci *fs.ConfigInfo) (net.Conn, error) {
 	dialer := NewDialer(ci)
@@ -134,7 +115,7 @@ func NewTransportCustom(ci *fs.ConfigInfo, customize func(*http.Transport)) http
 	// Start with a sensible set of defaults then override.
 	// This also means we get new stuff when it gets added to go
 	t := new(http.Transport)
-	setDefaults(t, http.DefaultTransport.(*http.Transport))
+	structs.SetDefaults(t, http.DefaultTransport.(*http.Transport))
 	t.Proxy = http.ProxyFromEnvironment
 	t.MaxIdleConnsPerHost = 2 * (ci.Checkers + ci.Transfers + 1)
 	t.MaxIdleConns = 2 * t.MaxIdleConnsPerHost
@@ -215,7 +196,7 @@ func NewClient(ci *fs.ConfigInfo) *http.Client {
 	return client
 }
 
-// Transport is a our http Transport which wraps an http.Transport
+// Transport is our http Transport which wraps an http.Transport
 // * Sets the User Agent
 // * Does logging
 type Transport struct {
@@ -223,6 +204,7 @@ type Transport struct {
 	dump          fs.DumpFlags
 	filterRequest func(req *http.Request)
 	userAgent     string
+	headers       []*fs.HTTPOption
 }
 
 // newTransport wraps the http.Transport passed in and logs all
@@ -232,6 +214,7 @@ func newTransport(ci *fs.ConfigInfo, transport *http.Transport) *Transport {
 		Transport: transport,
 		dump:      ci.Dump,
 		userAgent: ci.UserAgent,
+		headers:   ci.Headers,
 	}
 }
 
@@ -331,6 +314,10 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	}
 	// Force user agent
 	req.Header.Set("User-Agent", t.userAgent)
+	// Set user defined headers
+	for _, option := range t.headers {
+		req.Header.Set(option.Key, option.Value)
+	}
 	// Filter the request if required
 	if t.filterRequest != nil {
 		t.filterRequest(req)

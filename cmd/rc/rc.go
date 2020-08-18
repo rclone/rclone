@@ -27,6 +27,8 @@ var (
 	authUser  = ""
 	authPass  = ""
 	loopback  = false
+	options   []string
+	arguments []string
 )
 
 func init() {
@@ -38,6 +40,8 @@ func init() {
 	flags.StringVarP(cmdFlags, &authUser, "user", "", "", "Username to use to rclone remote control.")
 	flags.StringVarP(cmdFlags, &authPass, "pass", "", "", "Password to use to connect to rclone remote control.")
 	flags.BoolVarP(cmdFlags, &loopback, "loopback", "", false, "If set connect to this rclone instance not via HTTP.")
+	flags.StringArrayVarP(cmdFlags, &options, "opt", "o", options, "Option in the form name=value or name placed in the \"opt\" array.")
+	flags.StringArrayVarP(cmdFlags, &arguments, "arg", "a", arguments, "Argument placed in the \"arg\" array.")
 }
 
 var commandDefinition = &cobra.Command{
@@ -62,6 +66,29 @@ The result will be returned as a JSON object by default.
 The --json parameter can be used to pass in a JSON blob as an input
 instead of key=value arguments.  This is the only way of passing in
 more complicated values.
+
+The -o/--opt option can be used to set a key "opt" with key, value
+options in the form "-o key=value" or "-o key". It can be repeated as
+many times as required. This is useful for rc commands which take the
+"opt" parameter which by convention is a dictionary of strings.
+
+    -o key=value -o key2
+
+Will place this in the "opt" value
+
+    {"key":"value", "key2","")
+
+
+The -a/--arg option can be used to set strings in the "arg" value. It
+can be repeated as many times as required. This is useful for rc
+commands which take the "arg" parameter which by convention is a list
+of strings.
+
+    -a value -a value2
+
+Will place this in the "arg" value
+
+    ["value", "value2"]
 
 Use --loopback to connect to the rclone instance running "rclone rc".
 This is very useful for testing commands without having to run an
@@ -101,6 +128,23 @@ func parseFlags() {
 	if !strings.HasSuffix(url, "/") {
 		url += "/"
 	}
+}
+
+// ParseOptions parses a slice of options in the form key=value or key
+// into a map
+func ParseOptions(options []string) (opt map[string]string) {
+	opt = make(map[string]string, len(options))
+	for _, option := range options {
+		equals := strings.IndexRune(option, '=')
+		key := option
+		value := ""
+		if equals >= 0 {
+			key = option[:equals]
+			value = option[equals+1:]
+		}
+		opt[key] = value
+	}
+	return opt
 }
 
 // If the user set flagName set the output to its value
@@ -210,6 +254,12 @@ func run(ctx context.Context, args []string) (err error) {
 			return errors.Wrap(err, "bad --json input")
 		}
 	}
+	if len(options) > 0 {
+		in["opt"] = ParseOptions(options)
+	}
+	if len(arguments) > 0 {
+		in["arg"] = arguments
+	}
 
 	// Do the call
 	out, callErr := doCall(ctx, path, in)
@@ -240,11 +290,11 @@ func list(ctx context.Context) error {
 		if !ok {
 			return errors.New("bad JSON")
 		}
-		fmt.Printf("### %s: %s {#%s}\n\n", info["Path"], info["Title"], info["Path"])
+		fmt.Printf("### %s: %s {#%s}\n\n", info["Path"], info["Title"], strings.Replace(info["Path"].(string), "/", "-", -1))
 		fmt.Printf("%s\n\n", info["Help"])
 		if authRequired := info["AuthRequired"]; authRequired != nil {
 			if authRequired.(bool) {
-				fmt.Printf("Authentication is required for this call.\n\n")
+				fmt.Printf("**Authentication is required for this call.**\n\n")
 			}
 		}
 	}

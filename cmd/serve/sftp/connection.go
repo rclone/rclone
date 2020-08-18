@@ -51,7 +51,7 @@ type conn struct {
 	what     string
 }
 
-// execCommand implements an extrememly limited number of commands to
+// execCommand implements an extremely limited number of commands to
 // interoperate with the rclone sftp backend
 func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (err error) {
 	binary, args := command, ""

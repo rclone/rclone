@@ -33,7 +33,7 @@ the remote does not support a server side directory move operation.
 
 If no filters are in use and if possible this will server side move
 ` + "`source:path`" + ` into ` + "`dest:path`" + `. After this ` + "`source:path`" + ` will no
-longer longer exist.
+longer exist.
 
 Otherwise for each file in ` + "`source:path`" + ` selected by the filters (if
 any) this will move it into ` + "`dest:path`" + `.  If possible a server side
@@ -49,7 +49,7 @@ option when moving a small number of files into a large destination
 can speed transfers up greatly.
 
 **Important**: Since this can cause data loss, test first with the
---dry-run flag.
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics.
 `,

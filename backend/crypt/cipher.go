@@ -71,30 +71,6 @@ type ReadSeekCloser interface {
 // OpenRangeSeek opens the file handle at the offset with the limit given
 type OpenRangeSeek func(ctx context.Context, offset, limit int64) (io.ReadCloser, error)
 
-// Cipher is used to swap out the encryption implementations
-type Cipher interface {
-	// EncryptFileName encrypts a file path
-	EncryptFileName(string) string
-	// DecryptFileName decrypts a file path, returns error if decrypt was invalid
-	DecryptFileName(string) (string, error)
-	// EncryptDirName encrypts a directory path
-	EncryptDirName(string) string
-	// DecryptDirName decrypts a directory path, returns error if decrypt was invalid
-	DecryptDirName(string) (string, error)
-	// EncryptData
-	EncryptData(io.Reader) (io.Reader, error)
-	// DecryptData
-	DecryptData(io.ReadCloser) (io.ReadCloser, error)
-	// DecryptDataSeek decrypt at a given position
-	DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error)
-	// EncryptedSize calculates the size of the data when encrypted
-	EncryptedSize(int64) int64
-	// DecryptedSize calculates the size of the data when decrypted
-	DecryptedSize(int64) (int64, error)
-	// NameEncryptionMode returns the used mode for name handling
-	NameEncryptionMode() NameEncryptionMode
-}
-
 // NameEncryptionMode is the type of file name encryption in use
 type NameEncryptionMode int
 
@@ -136,7 +112,8 @@ func (mode NameEncryptionMode) String() (out string) {
 	return out
 }
 
-type cipher struct {
+// Cipher defines an encoding and decoding cipher for the crypt backend
+type Cipher struct {
 	dataKey        [32]byte                  // Key for secretbox
 	nameKey        [32]byte                  // 16,24 or 32 bytes
 	nameTweak      [nameCipherBlockSize]byte // used to tweak the name crypto
@@ -148,8 +125,8 @@ type cipher struct {
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
-func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool) (*cipher, error) {
-	c := &cipher{
+func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool) (*Cipher, error) {
+	c := &Cipher{
 		mode:           mode,
 		cryptoRand:     rand.Reader,
 		dirNameEncrypt: dirNameEncrypt,
@@ -172,7 +149,7 @@ func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bo
 //
 // Note that empty passsword makes all 0x00 keys which is used in the
 // tests.
-func (c *cipher) Key(password, salt string) (err error) {
+func (c *Cipher) Key(password, salt string) (err error) {
 	const keySize = len(c.dataKey) + len(c.nameKey) + len(c.nameTweak)
 	var saltBytes = defaultSalt
 	if salt != "" {
@@ -196,12 +173,12 @@ func (c *cipher) Key(password, salt string) (err error) {
 }
 
 // getBlock gets a block from the pool of size blockSize
-func (c *cipher) getBlock() []byte {
+func (c *Cipher) getBlock() []byte {
 	return c.buffers.Get().([]byte)
 }
 
 // putBlock returns a block to the pool of size blockSize
-func (c *cipher) putBlock(buf []byte) {
+func (c *Cipher) putBlock(buf []byte) {
 	if len(buf) != blockSize {
 		panic("bad blocksize returned to pool")
 	}
@@ -240,13 +217,13 @@ func decodeFileName(in string) ([]byte, error) {
 // 2003 paper "A Parallelizable Enciphering Mode" by Halevi and
 // Rogaway.
 //
-// This makes for determinstic encryption which is what we want - the
+// This makes for deterministic encryption which is what we want - the
 // same filename must encrypt to the same thing.
 //
 // This means that
 //  * filenames with the same name will encrypt the same
 //  * filenames which start the same won't have a common prefix
-func (c *cipher) encryptSegment(plaintext string) string {
+func (c *Cipher) encryptSegment(plaintext string) string {
 	if plaintext == "" {
 		return ""
 	}
@@ -256,7 +233,7 @@ func (c *cipher) encryptSegment(plaintext string) string {
 }
 
 // decryptSegment decrypts a path segment
-func (c *cipher) decryptSegment(ciphertext string) (string, error) {
+func (c *Cipher) decryptSegment(ciphertext string) (string, error) {
 	if ciphertext == "" {
 		return "", nil
 	}
@@ -283,7 +260,7 @@ func (c *cipher) decryptSegment(ciphertext string) (string, error) {
 }
 
 // Simple obfuscation routines
-func (c *cipher) obfuscateSegment(plaintext string) string {
+func (c *Cipher) obfuscateSegment(plaintext string) string {
 	if plaintext == "" {
 		return ""
 	}
@@ -370,7 +347,7 @@ func (c *cipher) obfuscateSegment(plaintext string) string {
 	return result.String()
 }
 
-func (c *cipher) deobfuscateSegment(ciphertext string) (string, error) {
+func (c *Cipher) deobfuscateSegment(ciphertext string) (string, error) {
 	if ciphertext == "" {
 		return "", nil
 	}
@@ -457,7 +434,7 @@ func (c *cipher) deobfuscateSegment(ciphertext string) (string, error) {
 }
 
 // encryptFileName encrypts a file path
-func (c *cipher) encryptFileName(in string) string {
+func (c *Cipher) encryptFileName(in string) string {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		// Skip directory name encryption if the user chose to
@@ -475,7 +452,7 @@ func (c *cipher) encryptFileName(in string) string {
 }
 
 // EncryptFileName encrypts a file path
-func (c *cipher) EncryptFileName(in string) string {
+func (c *Cipher) EncryptFileName(in string) string {
 	if c.mode == NameEncryptionOff {
 		return in + encryptedSuffix
 	}
@@ -483,7 +460,7 @@ func (c *cipher) EncryptFileName(in string) string {
 }
 
 // EncryptDirName encrypts a directory path
-func (c *cipher) EncryptDirName(in string) string {
+func (c *Cipher) EncryptDirName(in string) string {
 	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in
 	}
@@ -491,7 +468,7 @@ func (c *cipher) EncryptDirName(in string) string {
 }
 
 // decryptFileName decrypts a file path
-func (c *cipher) decryptFileName(in string) (string, error) {
+func (c *Cipher) decryptFileName(in string) (string, error) {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		var err error
@@ -514,7 +491,7 @@ func (c *cipher) decryptFileName(in string) (string, error) {
 }
 
 // DecryptFileName decrypts a file path
-func (c *cipher) DecryptFileName(in string) (string, error) {
+func (c *Cipher) DecryptFileName(in string) (string, error) {
 	if c.mode == NameEncryptionOff {
 		remainingLength := len(in) - len(encryptedSuffix)
 		if remainingLength > 0 && strings.HasSuffix(in, encryptedSuffix) {
@@ -526,14 +503,15 @@ func (c *cipher) DecryptFileName(in string) (string, error) {
 }
 
 // DecryptDirName decrypts a directory path
-func (c *cipher) DecryptDirName(in string) (string, error) {
+func (c *Cipher) DecryptDirName(in string) (string, error) {
 	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in, nil
 	}
 	return c.decryptFileName(in)
 }
 
-func (c *cipher) NameEncryptionMode() NameEncryptionMode {
+// NameEncryptionMode returns the encryption mode in use for names
+func (c *Cipher) NameEncryptionMode() NameEncryptionMode {
 	return c.mode
 }
 
@@ -581,7 +559,7 @@ func (n *nonce) increment() {
 	n.carry(0)
 }
 
-// add an uint64 to the nonce
+// add a uint64 to the nonce
 func (n *nonce) add(x uint64) {
 	carry := uint16(0)
 	for i := 0; i < 8; i++ {
@@ -601,7 +579,7 @@ func (n *nonce) add(x uint64) {
 type encrypter struct {
 	mu       sync.Mutex
 	in       io.Reader
-	c        *cipher
+	c        *Cipher
 	nonce    nonce
 	buf      []byte
 	readBuf  []byte
@@ -611,7 +589,7 @@ type encrypter struct {
 }
 
 // newEncrypter creates a new file handle encrypting on the fly
-func (c *cipher) newEncrypter(in io.Reader, nonce *nonce) (*encrypter, error) {
+func (c *Cipher) newEncrypter(in io.Reader, nonce *nonce) (*encrypter, error) {
 	fh := &encrypter{
 		in:      in,
 		c:       c,
@@ -683,13 +661,19 @@ func (fh *encrypter) finish(err error) (int, error) {
 }
 
 // Encrypt data encrypts the data stream
-func (c *cipher) EncryptData(in io.Reader) (io.Reader, error) {
+func (c *Cipher) encryptData(in io.Reader) (io.Reader, *encrypter, error) {
 	in, wrap := accounting.UnWrap(in) // unwrap the accounting off the Reader
 	out, err := c.newEncrypter(in, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return wrap(out), nil // and wrap the accounting back on
+	return wrap(out), out, nil // and wrap the accounting back on
+}
+
+// EncryptData encrypts the data stream
+func (c *Cipher) EncryptData(in io.Reader) (io.Reader, error) {
+	out, _, err := c.encryptData(in)
+	return out, err
 }
 
 // decrypter decrypts an io.ReaderCloser on the fly
@@ -698,7 +682,7 @@ type decrypter struct {
 	rc           io.ReadCloser
 	nonce        nonce
 	initialNonce nonce
-	c            *cipher
+	c            *Cipher
 	buf          []byte
 	readBuf      []byte
 	bufIndex     int
@@ -709,7 +693,7 @@ type decrypter struct {
 }
 
 // newDecrypter creates a new file handle decrypting on the fly
-func (c *cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
+func (c *Cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 	fh := &decrypter{
 		rc:      rc,
 		c:       c,
@@ -737,7 +721,7 @@ func (c *cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 }
 
 // newDecrypterSeek creates a new file handle decrypting on the fly
-func (c *cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (fh *decrypter, err error) {
+func (c *Cipher) newDecrypterSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (fh *decrypter, err error) {
 	var rc io.ReadCloser
 	doRangeSeek := false
 	setLimit := false
@@ -1012,7 +996,7 @@ func (fh *decrypter) finishAndClose(err error) error {
 }
 
 // DecryptData decrypts the data stream
-func (c *cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
+func (c *Cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
 	out, err := c.newDecrypter(rc)
 	if err != nil {
 		return nil, err
@@ -1025,7 +1009,7 @@ func (c *cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
 // The open function must return a ReadCloser opened to the offset supplied
 //
 // You must use this form of DecryptData if you might want to Seek the file handle
-func (c *cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error) {
+func (c *Cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error) {
 	out, err := c.newDecrypterSeek(ctx, open, offset, limit)
 	if err != nil {
 		return nil, err
@@ -1034,7 +1018,7 @@ func (c *cipher) DecryptDataSeek(ctx context.Context, open OpenRangeSeek, offset
 }
 
 // EncryptedSize calculates the size of the data when encrypted
-func (c *cipher) EncryptedSize(size int64) int64 {
+func (c *Cipher) EncryptedSize(size int64) int64 {
 	blocks, residue := size/blockDataSize, size%blockDataSize
 	encryptedSize := int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
 	if residue != 0 {
@@ -1044,7 +1028,7 @@ func (c *cipher) EncryptedSize(size int64) int64 {
 }
 
 // DecryptedSize calculates the size of the data when decrypted
-func (c *cipher) DecryptedSize(size int64) (int64, error) {
+func (c *Cipher) DecryptedSize(size int64) (int64, error) {
 	size -= int64(fileHeaderSize)
 	if size < 0 {
 		return 0, ErrorEncryptedFileTooShort
@@ -1063,7 +1047,6 @@ func (c *cipher) DecryptedSize(size int64) (int64, error) {
 
 // check interfaces
 var (
-	_ Cipher         = (*cipher)(nil)
 	_ io.ReadCloser  = (*decrypter)(nil)
 	_ io.Seeker      = (*decrypter)(nil)
 	_ fs.RangeSeeker = (*decrypter)(nil)

@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,!js
 
 package cachestats
 
@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/cache"
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +23,10 @@ var commandDefinition = &cobra.Command{
 	Long: `
 Print cache stats for a remote in JSON format
 `,
+	Hidden: true,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
+		fs.Logf(nil, `"rclone cachestats" is deprecated, use "rclone backend stats %s" instead`, args[0])
 
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {

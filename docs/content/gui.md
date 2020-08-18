@@ -1,7 +1,6 @@
 ---
 title: "GUI"
 description: "Web based Graphical User Interface"
-date: "2019-08-25"
 ---
 
 # GUI (Experimental)
@@ -73,7 +72,7 @@ The flag `--rc-web-gui` is shorthand for
 - `--rc-pass <random password>`
 - `--rc-serve`
 
-These flags can be overidden as desired.
+These flags can be overridden as desired.
 
 See also the [rclone rcd documentation](https://rclone.org/commands/rclone_rcd/).
 
@@ -95,14 +94,14 @@ If you want to run the GUI behind a proxy at `/rclone` you could use these flags
 - `--rc-baseurl rclone`
 - `--rc-htpasswd /path/to/htpasswd`
 
-Or instead of htpassword if you just want a single user and password:
+Or instead of htpasswd if you just want a single user and password:
 
 - `--rc-user me`
 - `--rc-pass mypassword`
 
 ## Project
 
-The GUI is being developed in the: [rclone/rclone-webui-react respository](https://github.com/rclone/rclone-webui-react).
+The GUI is being developed in the: [rclone/rclone-webui-react repository](https://github.com/rclone/rclone-webui-react).
 
 Bug reports and contributions are very welcome :-)
 

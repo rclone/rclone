@@ -90,7 +90,7 @@ func TestRepeatableReader(t *testing.T) {
 	assert.Nil(t, err)
 	require.Equal(t, 2, int(pos))
 
-	// Should read from seek postion and past it
+	// Should read from seek position and past it
 	dst = make([]byte, 5)
 	n, err = io.ReadFull(r, dst)
 	assert.Nil(t, err)

@@ -225,16 +225,6 @@ func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item)
 	require.NoError(t, obj.Remove(ctx))
 }
 
-// errorReader just returns an error on Read
-type errorReader struct {
-	err error
-}
-
-// Read returns an error immediately
-func (er errorReader) Read(p []byte) (n int, err error) {
-	return 0, er.err
-}
-
 // read the contents of an object as a string
 func readObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
 	what := fmt.Sprintf("readObject(%q) limit=%d, options=%+v", obj, limit, options)
@@ -302,9 +292,10 @@ func Run(t *testing.T, opt *Opt) {
 			ModTime: fstest.Time("2001-02-03T04:05:10.123123123Z"),
 			Path:    `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`,
 		}
-		isLocalRemote bool
-		purged        bool // whether the dir has been purged or not
-		ctx           = context.Background()
+		isLocalRemote        bool
+		purged               bool // whether the dir has been purged or not
+		ctx                  = context.Background()
+		unwrappableFsMethods = []string{"Command"} // these Fs methods don't need to be wrapped ever
 	)
 
 	if strings.HasSuffix(os.Getenv("RCLONE_CONFIG"), "/notfound") && *fstest.RemoteName == "" {
@@ -408,6 +399,9 @@ func Run(t *testing.T, opt *Opt) {
 			if stringsContains(vName, opt.UnimplementableFsMethods) {
 				continue
 			}
+			if stringsContains(vName, unwrappableFsMethods) {
+				continue
+			}
 			field := v.Field(i)
 			// skip the bools
 			if field.Type().Kind() == reflect.Bool {
@@ -417,6 +411,22 @@ func Run(t *testing.T, opt *Opt) {
 				t.Errorf("Missing Fs wrapper for %s", vName)
 			}
 		}
+	})
+
+	// Check to see if Fs advertises commands and they work and have docs
+	t.Run("FsCommand", func(t *testing.T) {
+		skipIfNotOk(t)
+		doCommand := remote.Features().Command
+		if doCommand == nil {
+			t.Skip("No commands in this remote")
+		}
+		// Check the correct error is generated
+		_, err := doCommand(context.Background(), "NOTFOUND", nil, nil)
+		assert.Equal(t, fs.ErrorCommandNotFound, err, "Incorrect error generated on command not found")
+		// Check there are some commands in the fsInfo
+		fsInfo, _, _, _, err := fs.ConfigFs(remoteName)
+		require.NoError(t, err)
+		assert.True(t, len(fsInfo.CommandHelp) > 0, "Command is declared, must return some help in CommandHelp")
 	})
 
 	// TestFsRmdirNotFound tests deleting a non existent directory
@@ -606,7 +616,7 @@ func Run(t *testing.T, opt *Opt) {
 			}
 		})
 
-		// TestFsNewObjectNotFound tests not finding a object
+		// TestFsNewObjectNotFound tests not finding an object
 		t.Run("FsNewObjectNotFound", func(t *testing.T) {
 			skipIfNotOk(t)
 			// Object in an existing directory
@@ -637,7 +647,7 @@ func Run(t *testing.T, opt *Opt) {
 			// Read N bytes then produce an error
 			contents := random.String(int(N))
 			buf := bytes.NewBufferString(contents)
-			er := &errorReader{errors.New("potato")}
+			er := &readers.ErrorReader{Err: errors.New("potato")}
 			in := io.MultiReader(buf, er)
 
 			obji := object.NewStaticObjectInfo(file2.Path, file2.ModTime, 2*N, true, nil, nil)
@@ -962,6 +972,43 @@ func Run(t *testing.T, opt *Opt) {
 				obj, err := remote.NewObject(ctx, dir)
 				assert.Nil(t, obj)
 				assert.NotNil(t, err)
+			})
+
+			// TestFsPurge tests Purge
+			t.Run("FsPurge", func(t *testing.T) {
+				skipIfNotOk(t)
+
+				// Check have Purge
+				doPurge := remote.Features().Purge
+				if doPurge == nil {
+					t.Skip("FS has no Purge interface")
+				}
+
+				// put up a file to purge
+				fileToPurge := fstest.Item{
+					ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
+					Path:    "dirToPurge/fileToPurge.txt",
+				}
+				_, _ = testPut(ctx, t, remote, &fileToPurge)
+
+				fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file1, file2, fileToPurge}, []string{
+					"dirToPurge",
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(remote))
+
+				// Now purge it
+				err = operations.Purge(ctx, remote, "dirToPurge")
+				require.NoError(t, err)
+
+				fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file1, file2}, []string{
+					"hello? sausage",
+					"hello? sausage/êé",
+					"hello? sausage/êé/Hello, 世界",
+					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
+				}, fs.GetModifyWindow(remote))
 			})
 
 			// TestFsCopy tests Copy
@@ -1456,38 +1503,40 @@ func Run(t *testing.T, opt *Opt) {
 					t.Skip("FS has no PublicLinker interface")
 				}
 
+				expiry := fs.Duration(60 * time.Second)
+
 				// if object not found
-				link, err := doPublicLink(ctx, file1.Path+"_does_not_exist")
+				link, err := doPublicLink(ctx, file1.Path+"_does_not_exist", expiry, false)
 				require.Error(t, err, "Expected to get error when file doesn't exist")
 				require.Equal(t, "", link, "Expected link to be empty on error")
 
 				// sharing file for the first time
-				link1, err := doPublicLink(ctx, file1.Path)
+				link1, err := doPublicLink(ctx, file1.Path, expiry, false)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link1, "Link should not be empty")
 
-				link2, err := doPublicLink(ctx, file2.Path)
+				link2, err := doPublicLink(ctx, file2.Path, expiry, false)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link2, "Link should not be empty")
 
 				require.NotEqual(t, link1, link2, "Links to different files should differ")
 
 				// sharing file for the 2nd time
-				link1, err = doPublicLink(ctx, file1.Path)
+				link1, err = doPublicLink(ctx, file1.Path, expiry, false)
 				require.NoError(t, err)
 				require.NotEqual(t, "", link1, "Link should not be empty")
 
 				// sharing directory for the first time
 				path := path.Dir(file2.Path)
-				link3, err := doPublicLink(ctx, path)
-				if err != nil && errors.Cause(err) == fs.ErrorCantShareDirectories {
+				link3, err := doPublicLink(ctx, path, expiry, false)
+				if err != nil && (errors.Cause(err) == fs.ErrorCantShareDirectories || errors.Cause(err) == fs.ErrorObjectNotFound) {
 					t.Log("skipping directory tests as not supported on this backend")
 				} else {
 					require.NoError(t, err)
 					require.NotEqual(t, "", link3, "Link should not be empty")
 
 					// sharing directory for the second time
-					link3, err = doPublicLink(ctx, path)
+					link3, err = doPublicLink(ctx, path, expiry, false)
 					require.NoError(t, err)
 					require.NotEqual(t, "", link3, "Link should not be empty")
 
@@ -1501,7 +1550,7 @@ func Run(t *testing.T, opt *Opt) {
 					_, err = subRemote.Put(ctx, buf, obji)
 					require.NoError(t, err)
 
-					link4, err := subRemote.Features().PublicLink(ctx, "")
+					link4, err := subRemote.Features().PublicLink(ctx, "", expiry, false)
 					require.NoError(t, err, "Sharing root in a sub-remote should work")
 					require.NotEqual(t, "", link4, "Link should not be empty")
 				}

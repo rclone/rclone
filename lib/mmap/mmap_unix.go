@@ -1,7 +1,7 @@
 // Package mmap implements a large block memory allocator using
 // anonymous memory maps.
 
-// +build !plan9,!windows
+// +build !plan9,!windows,!js
 
 package mmap
 

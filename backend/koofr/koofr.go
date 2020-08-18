@@ -79,7 +79,7 @@ type Options struct {
 	Enc      encoder.MultiEncoder `config:"encoding"`
 }
 
-// A Fs is a representation of a remote Koofr Fs
+// An Fs is a representation of a remote Koofr Fs
 type Fs struct {
 	name     string
 	mountID  string
@@ -250,7 +250,7 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.Set(hash.MD5)
 }
 
-// fullPath constructs a full, absolute path from a Fs root relative path,
+// fullPath constructs a full, absolute path from an Fs root relative path,
 func (f *Fs) fullPath(part string) string {
 	return f.opt.Enc.FromStandardPath(path.Join("/", f.root, part))
 }
@@ -421,7 +421,7 @@ func translateErrorsObject(err error) error {
 }
 
 // mkdir creates a directory at the given remote path. Creates ancestors if
-// neccessary
+// necessary
 func (f *Fs) mkdir(fullPath string) error {
 	if fullPath == "/" {
 		return nil
@@ -603,7 +603,7 @@ func createLink(c *koofrclient.KoofrClient, mountID string, path string) (*link,
 }
 
 // PublicLink creates a public link to the remote path
-func (f *Fs) PublicLink(ctx context.Context, remote string) (string, error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
 	linkData, err := createLink(f.client, f.mountID, f.fullPath(remote))
 	if err != nil {
 		return "", translateErrorsDir(err)

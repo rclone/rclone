@@ -1,5 +1,3 @@
-// +build go1.10
-
 package main
 
 import (
@@ -602,7 +600,7 @@ func runePos(r rune, s []rune) int {
 	return -1
 }
 
-// quotedToString returns a string for the chars slice where a encoder.QuoteRune is
+// quotedToString returns a string for the chars slice where an encoder.QuoteRune is
 // inserted before a char[i] when quoted[i] is true.
 func quotedToString(chars []rune, quoted []bool) string {
 	var out strings.Builder

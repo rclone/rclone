@@ -4,7 +4,9 @@ package rc
 
 import (
 	"context"
+	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"time"
 
@@ -334,4 +336,136 @@ func rcSetBlockProfileRate(ctx context.Context, in Params) (out Params, err erro
 	}
 	runtime.SetBlockProfileRate(int(rate))
 	return nil, nil
+}
+
+func init() {
+	Add(Call{
+		Path:          "core/command",
+		AuthRequired:  true,
+		Fn:            rcRunCommand,
+		NeedsRequest:  true,
+		NeedsResponse: true,
+		Title:         "Run a rclone terminal command over rc.",
+		Help: `This takes the following parameters
+
+- command - a string with the command name
+- arg - a list of arguments for the backend command
+- opt - a map of string to string of options
+
+Returns
+
+- result - result from the backend command
+- error	 - set if rclone exits with an error code
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT". "STREAM_ONLY_STDERR")
+
+For example
+
+    rclone rc core/command command=ls -a mydrive:/ -o max-depth=1
+	rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
+
+Returns
+
+` + "```" + `
+{
+	"error": false,
+	"result": "<Raw command line output>"
+}
+
+OR 
+{
+	"error": true,
+	"result": "<Raw command line output>"
+}
+
+
+`,
+	})
+}
+
+// rcRunCommand runs an rclone command with the given args and flags
+func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
+
+	command, err := in.GetString("command")
+	if err != nil {
+		command = ""
+	}
+
+	var opt = map[string]string{}
+	err = in.GetStructMissingOK("opt", &opt)
+	if err != nil {
+		return nil, err
+	}
+
+	var arg = []string{}
+	err = in.GetStructMissingOK("arg", &arg)
+	if err != nil {
+		return nil, err
+	}
+
+	returnType, err := in.GetString("returnType")
+	if err != nil {
+		returnType = "COMBINED_OUTPUT"
+	}
+
+	var httpResponse *http.ResponseWriter
+	httpResponse, err = in.GetHTTPResponseWriter()
+	if err != nil {
+		return nil, errors.Errorf("response object is required\n" + err.Error())
+	}
+
+	var allArgs = []string{}
+	if command != "" {
+		// Add the command eg: ls to the args
+		allArgs = append(allArgs, command)
+	}
+	// Add all from arg
+	for _, cur := range arg {
+		allArgs = append(allArgs, cur)
+	}
+
+	// Add flags to args for eg --max-depth 1 comes in as { max-depth 1 }.
+	// Convert it to [ max-depth, 1 ] and append to args list
+	for key, value := range opt {
+		if len(key) == 1 {
+			allArgs = append(allArgs, "-"+key)
+		} else {
+			allArgs = append(allArgs, "--"+key)
+		}
+		allArgs = append(allArgs, value)
+	}
+
+	// Get the path for the current executable which was used to run rclone.
+	ex, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := exec.CommandContext(ctx, ex, allArgs...)
+
+	if returnType == "COMBINED_OUTPUT" {
+		// Run the command and get the output for error and stdout combined.
+
+		out, err := cmd.CombinedOutput()
+
+		if err != nil {
+			return Params{
+				"result": string(out),
+				"error":  true,
+			}, nil
+		}
+		return Params{
+			"result": string(out),
+			"error":  false,
+		}, nil
+	} else if returnType == "STREAM_ONLY_STDOUT" {
+		cmd.Stdout = *httpResponse
+	} else if returnType == "STREAM_ONLY_STDERR" {
+		cmd.Stderr = *httpResponse
+	} else if returnType == "STREAM" {
+		cmd.Stdout = *httpResponse
+		cmd.Stderr = *httpResponse
+	}
+
+	err = cmd.Run()
+	return nil, err
 }

@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,!js
 
 package cache
 
@@ -65,6 +65,7 @@ func init() {
 		Name:        "cache",
 		Description: "Cache a remote",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to cache.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
@@ -86,7 +87,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "plex_insecure",
-			Help:     "Skip all certificate verifications when connecting to the Plex server",
+			Help:     "Skip all certificate verification when connecting to the Plex server",
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -338,7 +339,7 @@ func parseRootPath(path string) (string, error) {
 	return strings.Trim(path, "/"), nil
 }
 
-// NewFs constructs a Fs from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
@@ -519,9 +520,6 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 	// override only those features that use a temp fs and it doesn't support them
 	//f.features.ChangeNotify = f.ChangeNotify
 	if f.opt.TempWritePath != "" {
-		if f.tempFs.Features().Copy == nil {
-			f.features.Copy = nil
-		}
 		if f.tempFs.Features().Move == nil {
 			f.features.Move = nil
 		}
@@ -1532,6 +1530,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Errorf(src, "source remote (%v) doesn't support Copy", src.Fs())
 		return nil, fs.ErrorCantCopy
 	}
+	if f.opt.TempWritePath != "" && src.Fs() == f.tempFs {
+		return nil, fs.ErrorCantCopy
+	}
 	// the source must be a cached object or we abort
 	srcObj, ok := src.(*Object)
 	if !ok {
@@ -1701,17 +1702,20 @@ func (f *Fs) Hashes() hash.Set {
 	return f.Fs.Hashes()
 }
 
-// Purge all files in the root and the root directory
-func (f *Fs) Purge(ctx context.Context) error {
-	fs.Infof(f, "purging cache")
-	f.cache.Purge()
+// Purge all files in the directory
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	if dir == "" {
+		// FIXME this isn't quite right as it should purge the dir prefix
+		fs.Infof(f, "purging cache")
+		f.cache.Purge()
+	}
 
 	do := f.Fs.Features().Purge
 	if do == nil {
-		return nil
+		return fs.ErrorCantPurge
 	}
 
-	err := do(ctx)
+	err := do(ctx, dir)
 	if err != nil {
 		return err
 	}
@@ -1828,6 +1832,19 @@ func (f *Fs) isRootInPath(p string) bool {
 	return strings.HasPrefix(p, f.Root()+"/")
 }
 
+// MergeDirs merges the contents of all the directories passed
+// in into the first one and rmdirs the other directories.
+func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
+	do := f.Fs.Features().MergeDirs
+	if do == nil {
+		return errors.New("MergeDirs not supported")
+	}
+	for _, dir := range dirs {
+		_ = f.cache.RemoveDir(dir.Remote())
+	}
+	return do(ctx, dirs)
+}
+
 // DirCacheFlush flushes the dir cache
 func (f *Fs) DirCacheFlush() {
 	_ = f.cache.RemoveDir("")
@@ -1882,6 +1899,31 @@ func (f *Fs) Disconnect(ctx context.Context) error {
 	return do(ctx)
 }
 
+var commandHelp = []fs.CommandHelp{
+	{
+		Name:  "stats",
+		Short: "Print stats on the cache backend in JSON format.",
+	},
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error) {
+	switch name {
+	case "stats":
+		return f.Stats()
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs             = (*Fs)(nil)
@@ -1899,4 +1941,6 @@ var (
 	_ fs.Abouter        = (*Fs)(nil)
 	_ fs.UserInfoer     = (*Fs)(nil)
 	_ fs.Disconnecter   = (*Fs)(nil)
+	_ fs.Commander      = (*Fs)(nil)
+	_ fs.MergeDirser    = (*Fs)(nil)
 )

@@ -6,6 +6,7 @@ conversion into man pages etc.
 
 import os
 import re
+import time
 from datetime import datetime
 
 docpath = "docs/content"
@@ -13,7 +14,7 @@ outfile = "MANUAL.md"
 
 # Order to add docs segments to make outfile
 docs = [
-    "about.md",
+    "_index.md",
     "install.md",
     "docs.md",
     "remote_setup.md",
@@ -54,8 +55,10 @@ docs = [
     "pcloud.md",
     "premiumizeme.md",
     "putio.md",
+    "seafile.md",
     "sftp.md",
     "sugarsync.md",
+    "tardigrade.md",
     "union.md",
     "webdav.md",
     "yandex.md",
@@ -109,11 +112,21 @@ def read_doc(doc):
     contents = parts[2].strip()+"\n\n"
     # Remove icons
     contents = re.sub(r'<i class="fa.*?</i>\s*', "", contents)
+    # Interpret img shortcodes
+    # {{< img ... >}}
+    contents = re.sub(r'\{\{<\s*img\s+(.*?)>\}\}', r"<img \1>", contents)
+    # Make any img tags absolute
+    contents = re.sub(r'(<img.*?src=")/', r"\1https://rclone.org/", contents)
     # Make [...](/links/) absolute
-    contents = re.sub(r'\((\/.*?\/)\)', r"(https://rclone.org\1)", contents)
+    contents = re.sub(r'\]\((\/.*?\/(#.*)?)\)', r"](https://rclone.org\1)", contents)
+    # Add additional links on the front page
+    contents = re.sub(r'\{\{< rem MAINPAGELINK >\}\}', "- [Donate.](https://rclone.org/donate/)", contents)
     # Interpret provider shortcode
     # {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
-    contents = re.sub(r'\{\{<\s+provider.*?name="(.*?)".*?>\}\}', r"\1", contents)
+    contents = re.sub(r'\{\{<\s*provider.*?name="(.*?)".*?>\}\}', r"- \1", contents)
+    # Remove remaining shortcodes
+    contents = re.sub(r'\{\{<.*?>\}\}', r"", contents)
+    contents = re.sub(r'\{\{%.*?%\}\}', r"", contents)
     return contents
 
 def check_docs(docpath):
@@ -144,17 +157,19 @@ def read_commands(docpath):
         if command != "rclone.md":
             docs.append(read_command(command))
     return "\n".join(docs)
-    
+
 def main():
     check_docs(docpath)
     command_docs = read_commands(docpath).replace("\\", "\\\\") # escape \ so we can use command_docs in re.sub
+    build_date = datetime.utcfromtimestamp(
+            int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
     with open(outfile, "w") as out:
         out.write("""\
 %% rclone(1) User Manual
 %% Nick Craig-Wood
 %% %s
 
-""" % datetime.now().strftime("%b %d, %Y"))
+""" % build_date.strftime("%b %d, %Y"))
         for doc in docs:
             contents = read_doc(doc)
             # Substitute the commands into doc.md

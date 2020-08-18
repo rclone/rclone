@@ -19,6 +19,9 @@ var commandDefinition = &cobra.Command{
 Remove the path and all of its contents.  Note that this does not obey
 include/exclude filters - everything will be removed.  Use ` + "`" + `delete` + "`" + ` if
 you want to selectively delete files.
+
+**Important**: Since this can cause data loss, test first with the
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)

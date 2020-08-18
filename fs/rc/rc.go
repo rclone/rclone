@@ -29,6 +29,7 @@ type Options struct {
 	WebGUINoOpenBrowser      bool   // set to disable auto opening browser
 	WebGUIFetchURL           string // set the default url for fetching webgui
 	AccessControlAllowOrigin string // set the access control for CORS configuration
+	EnableMetrics            bool   // set to disable prometheus metrics on /metrics
 	JobExpireDuration        time.Duration
 	JobExpireInterval        time.Duration
 }

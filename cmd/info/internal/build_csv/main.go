@@ -88,9 +88,9 @@ func main() {
 	}
 
 	records := [][]string{
-		[]string{"", ""},
-		[]string{"", ""},
-		[]string{"Bytes", "Char"},
+		{"", ""},
+		{"", ""},
+		{"Bytes", "Char"},
 	}
 	for _, r := range remoteNames {
 		records[0] = append(records[0], hRemoteMap[r]...)

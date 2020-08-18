@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 )
 
@@ -69,19 +70,20 @@ func formatForPrecision(precision time.Duration) string {
 
 // ListJSONOpt describes the options for ListJSON
 type ListJSONOpt struct {
-	Recurse       bool `json:"recurse"`
-	NoModTime     bool `json:"noModTime"`
-	NoMimeType    bool `json:"noMimeType"`
-	ShowEncrypted bool `json:"showEncrypted"`
-	ShowOrigIDs   bool `json:"showOrigIDs"`
-	ShowHash      bool `json:"showHash"`
-	DirsOnly      bool `json:"dirsOnly"`
-	FilesOnly     bool `json:"filesOnly"`
+	Recurse       bool     `json:"recurse"`
+	NoModTime     bool     `json:"noModTime"`
+	NoMimeType    bool     `json:"noMimeType"`
+	ShowEncrypted bool     `json:"showEncrypted"`
+	ShowOrigIDs   bool     `json:"showOrigIDs"`
+	ShowHash      bool     `json:"showHash"`
+	DirsOnly      bool     `json:"dirsOnly"`
+	FilesOnly     bool     `json:"filesOnly"`
+	HashTypes     []string `json:"hashTypes"` // hash types to show if ShowHash is set, eg "MD5", "SHA-1"
 }
 
 // ListJSON lists fsrc using the options in opt calling callback for each item
 func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJSONItem) error) error {
-	var cipher crypt.Cipher
+	var cipher *crypt.Cipher
 	if opt.ShowEncrypted {
 		fsInfo, _, _, config, err := fs.ConfigFs(fsrc.Name() + ":" + fsrc.Root())
 		if err != nil {
@@ -99,6 +101,20 @@ func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, 
 	canGetTier := features.GetTier
 	format := formatForPrecision(fsrc.Precision())
 	isBucket := features.BucketBased && remote == "" && fsrc.Root() == "" // if bucket based remote listing the root mark directories as buckets
+	showHash := opt.ShowHash
+	hashTypes := fsrc.Hashes().Array()
+	if len(opt.HashTypes) != 0 {
+		showHash = true
+		hashTypes = []hash.Type{}
+		for _, hashType := range opt.HashTypes {
+			var ht hash.Type
+			err := ht.Set(hashType)
+			if err != nil {
+				return err
+			}
+			hashTypes = append(hashTypes, ht)
+		}
+	}
 	err := walk.ListR(ctx, fsrc, remote, false, ConfigMaxDepth(opt.Recurse), walk.ListAll, func(entries fs.DirEntries) (err error) {
 		for _, entry := range entries {
 			switch entry.(type) {
@@ -150,9 +166,9 @@ func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, 
 				item.IsBucket = isBucket
 			case fs.Object:
 				item.IsDir = false
-				if opt.ShowHash {
+				if showHash {
 					item.Hashes = make(map[string]string)
-					for _, hashType := range x.Fs().Hashes().Array() {
+					for _, hashType := range hashTypes {
 						hash, err := x.Hash(ctx, hashType)
 						if err != nil {
 							fs.Errorf(x, "Failed to read hash: %v", err)

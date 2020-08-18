@@ -1,4 +1,4 @@
-// +build linux,go1.11 darwin,go1.11 freebsd,go1.11
+// +build linux,go1.13 darwin,go1.13 freebsd,go1.13
 
 package mount
 
@@ -8,7 +8,6 @@ import (
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
 )
@@ -16,6 +15,7 @@ import (
 // File represents a file
 type File struct {
 	*vfs.File
+	fsys *FS
 }
 
 // Check interface satisfied
@@ -24,7 +24,7 @@ var _ fusefs.Node = (*File)(nil)
 // Attr fills out the attributes for the file
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer log.Trace(f, "")("a=%+v, err=%v", a, &err)
-	a.Valid = mountlib.AttrTimeout
+	a.Valid = f.fsys.opt.AttrTimeout
 	modTime := f.File.ModTime()
 	Size := uint64(f.File.Size())
 	Blocks := (Size + 511) / 512

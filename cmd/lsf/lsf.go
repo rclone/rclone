@@ -132,13 +132,13 @@ Eg
     "this file contains a comma, in the file name.txt",6
 
 Note that the --absolute parameter is useful for making lists of files
-to pass to an rclone copy with the --files-from flag.
+to pass to an rclone copy with the --files-from-raw flag.
 
 For example to find all the files modified within one day and copy
 those only (without traversing the whole directory structure):
 
     rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
-    rclone copy --files-from new_files /path/to/local remote:path
+    rclone copy --files-from-raw new_files /path/to/local remote:path
 
 ` + lshelp.Help,
 	Run: func(command *cobra.Command, args []string) {
@@ -185,6 +185,7 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 		case 'h':
 			list.AddHash(hashType)
 			opt.ShowHash = true
+			opt.HashTypes = []string{hashType.String()}
 		case 'i':
 			list.AddID()
 		case 'm':

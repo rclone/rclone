@@ -61,7 +61,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &opts.DirSort, "dirsfirst", "", false, "List directories before files (-U disables).")
 	flags.StringVarP(cmdFlags, &sort, "sort", "", "", "Select sort: name,version,size,mtime,ctime.")
 	// Graphics
-	flags.BoolVarP(cmdFlags, &opts.NoIndent, "noindent", "i", false, "Don't print indentation lines.")
+	flags.BoolVarP(cmdFlags, &opts.NoIndent, "noindent", "", false, "Don't print indentation lines.")
 	flags.BoolVarP(cmdFlags, &opts.Colorize, "color", "C", false, "Turn colorization on always.")
 }
 
@@ -143,7 +143,7 @@ func Tree(fsrc fs.Fs, outFile io.Writer, opts *tree.Options) error {
 	return nil
 }
 
-// FileInfo maps a fs.DirEntry into an os.FileInfo
+// FileInfo maps an fs.DirEntry into an os.FileInfo
 type FileInfo struct {
 	entry fs.DirEntry
 }

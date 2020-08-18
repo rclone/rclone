@@ -1,7 +1,6 @@
 ---
 title: "FAQ"
 description: "Rclone Frequently Asked Questions"
-date: "2015-08-27"
 ---
 
 Frequently Asked Questions
@@ -35,7 +34,7 @@ The syncs would be incremental (on a file by file basis).
 
 Eg
 
-    rclone sync drive:Folder s3:bucket
+    rclone sync -i drive:Folder s3:bucket
 
 
 ### Using rclone from multiple locations at the same time ###
@@ -44,12 +43,12 @@ You can use rclone from multiple places at the same time if you choose
 different subdirectory for the output, eg
 
 ```
-Server A> rclone sync /tmp/whatever remote:ServerA
-Server B> rclone sync /tmp/whatever remote:ServerB
+Server A> rclone sync -i /tmp/whatever remote:ServerA
+Server B> rclone sync -i /tmp/whatever remote:ServerB
 ```
 
 If you sync to the same directory then you should use rclone copy
-otherwise the two rclones may delete each others files, eg
+otherwise the two instances of rclone may delete each other's files, eg
 
 ```
 Server A> rclone copy /tmp/whatever remote:Backup

@@ -22,15 +22,16 @@ import (
 // calling Callback for each match
 type March struct {
 	// parameters
-	Ctx           context.Context // context for background goroutines
-	Fdst          fs.Fs           // source Fs
-	Fsrc          fs.Fs           // dest Fs
-	Dir           string          // directory
-	NoTraverse    bool            // don't traverse the destination
-	SrcIncludeAll bool            // don't include all files in the src
-	DstIncludeAll bool            // don't include all files in the destination
-	Callback      Marcher         // object to call with results
-	NoCheckDest   bool            // transfer all objects regardless without checking dst
+	Ctx                    context.Context // context for background goroutines
+	Fdst                   fs.Fs           // source Fs
+	Fsrc                   fs.Fs           // dest Fs
+	Dir                    string          // directory
+	NoTraverse             bool            // don't traverse the destination
+	SrcIncludeAll          bool            // don't include all files in the src
+	DstIncludeAll          bool            // don't include all files in the destination
+	Callback               Marcher         // object to call with results
+	NoCheckDest            bool            // transfer all objects regardless without checking dst
+	NoUnicodeNormalization bool            // don't normalize unicode characters in filenames
 	// internal state
 	srcListDir listDirFn // function to call to list a directory in the src
 	dstListDir listDirFn // function to call to list a directory in the dst
@@ -55,7 +56,9 @@ func (m *March) init() {
 	}
 	// Now create the matching transform
 	// ..normalise the UTF8 first
-	m.transforms = append(m.transforms, norm.NFC.String)
+	if !m.NoUnicodeNormalization {
+		m.transforms = append(m.transforms, norm.NFC.String)
+	}
 	// ..if destination is caseInsensitive then make it lower case
 	// case Insensitive | src | dst | lower case compare |
 	//                  | No  | No  | No                 |

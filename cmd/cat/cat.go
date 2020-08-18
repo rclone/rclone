@@ -42,11 +42,11 @@ You can use it like this to output a single file
 
     rclone cat remote:path/to/file
 
-Or like this to output any file in dir or subdirectories.
+Or like this to output any file in dir or its subdirectories.
 
     rclone cat remote:path/to/dir
 
-Or like this to output any .txt files in dir or subdirectories.
+Or like this to output any .txt files in dir or its subdirectories.
 
     rclone --include "*.txt" cat remote:path/to/dir
 

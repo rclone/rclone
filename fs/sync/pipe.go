@@ -1,11 +1,13 @@
 package sync
 
 import (
-	"container/heap"
 	"context"
+	"math/bits"
+	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/aalpar/deheap"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -25,20 +27,25 @@ type pipe struct {
 	totalSize int64
 	stats     func(items int, totalSize int64)
 	less      lessFn
+	fraction  int
 }
 
 func newPipe(orderBy string, stats func(items int, totalSize int64), maxBacklog int) (*pipe, error) {
-	less, err := newLess(orderBy)
+	if maxBacklog < 0 {
+		maxBacklog = (1 << (bits.UintSize - 1)) - 1 // largest posititive int
+	}
+	less, fraction, err := newLess(orderBy)
 	if err != nil {
 		return nil, fserrors.FatalError(err)
 	}
 	p := &pipe{
-		c:     make(chan struct{}, maxBacklog),
-		stats: stats,
-		less:  less,
+		c:        make(chan struct{}, maxBacklog),
+		stats:    stats,
+		less:     less,
+		fraction: fraction,
 	}
 	if p.less != nil {
-		heap.Init(p)
+		deheap.Init(p)
 	}
 	return p, nil
 }
@@ -73,10 +80,7 @@ func (p *pipe) Pop() interface{} {
 	return item
 }
 
-// Check interface satisfied
-var _ heap.Interface = (*pipe)(nil)
-
-// Put an pair into the pipe
+// Put a pair into the pipe
 //
 // It returns ok = false if the context was cancelled
 //
@@ -90,7 +94,7 @@ func (p *pipe) Put(ctx context.Context, pair fs.ObjectPair) (ok bool) {
 		// no order-by
 		p.queue = append(p.queue, pair)
 	} else {
-		heap.Push(p, pair)
+		deheap.Push(p, pair)
 	}
 	size := pair.Src.Size()
 	if size > 0 {
@@ -108,9 +112,12 @@ func (p *pipe) Put(ctx context.Context, pair fs.ObjectPair) (ok bool) {
 
 // Get a pair from the pipe
 //
+// If fraction is > the mixed fraction set in the pipe then it gets it
+// from the other end of the heap if order-by is in effect
+//
 // It returns ok = false if the context was cancelled or Close() has
 // been called.
-func (p *pipe) Get(ctx context.Context) (pair fs.ObjectPair, ok bool) {
+func (p *pipe) GetMax(ctx context.Context, fraction int) (pair fs.ObjectPair, ok bool) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -128,8 +135,10 @@ func (p *pipe) Get(ctx context.Context) (pair fs.ObjectPair, ok bool) {
 		pair = p.queue[0]
 		p.queue[0] = fs.ObjectPair{} // avoid memory leak
 		p.queue = p.queue[1:]
+	} else if p.fraction < 0 || fraction < p.fraction {
+		pair = deheap.Pop(p).(fs.ObjectPair)
 	} else {
-		pair = heap.Pop(p).(fs.ObjectPair)
+		pair = deheap.PopMax(p).(fs.ObjectPair)
 	}
 	size := pair.Src.Size()
 	if size > 0 {
@@ -141,6 +150,14 @@ func (p *pipe) Get(ctx context.Context) (pair fs.ObjectPair, ok bool) {
 	p.stats(len(p.queue), p.totalSize)
 	p.mu.Unlock()
 	return pair, true
+}
+
+// Get a pair from the pipe
+//
+// It returns ok = false if the context was cancelled or Close() has
+// been called.
+func (p *pipe) Get(ctx context.Context) (pair fs.ObjectPair, ok bool) {
+	return p.GetMax(ctx, -1)
 }
 
 // Stats reads the number of items in the queue and the totalSize
@@ -163,14 +180,12 @@ func (p *pipe) Close() {
 
 // newLess returns a less function for the heap comparison or nil if
 // one is not required
-func newLess(orderBy string) (less lessFn, err error) {
+func newLess(orderBy string) (less lessFn, fraction int, err error) {
+	fraction = -1
 	if orderBy == "" {
-		return nil, nil
+		return nil, fraction, nil
 	}
 	parts := strings.Split(strings.ToLower(orderBy), ",")
-	if len(parts) > 2 {
-		return nil, errors.Errorf("bad --order-by string %q", orderBy)
-	}
 	switch parts[0] {
 	case "name":
 		less = func(a, b fs.ObjectPair) bool {
@@ -186,7 +201,7 @@ func newLess(orderBy string) (less lessFn, err error) {
 			return a.Src.ModTime(ctx).Before(b.Src.ModTime(ctx))
 		}
 	default:
-		return nil, errors.Errorf("unknown --order-by comparison %q", parts[0])
+		return nil, fraction, errors.Errorf("unknown --order-by comparison %q", parts[0])
 	}
 	descending := false
 	if len(parts) > 1 {
@@ -194,9 +209,21 @@ func newLess(orderBy string) (less lessFn, err error) {
 		case "ascending", "asc":
 		case "descending", "desc":
 			descending = true
+		case "mixed":
+			fraction = 50
+			if len(parts) > 2 {
+				fraction, err = strconv.Atoi(parts[2])
+				if err != nil {
+					return nil, fraction, errors.Errorf("bad mixed fraction --order-by %q", parts[2])
+				}
+			}
+
 		default:
-			return nil, errors.Errorf("unknown --order-by sort direction %q", parts[1])
+			return nil, fraction, errors.Errorf("unknown --order-by sort direction %q", parts[1])
 		}
+	}
+	if (fraction >= 0 && len(parts) > 3) || (fraction < 0 && len(parts) > 2) {
+		return nil, fraction, errors.Errorf("bad --order-by string %q", orderBy)
 	}
 	if descending {
 		oldLess := less
@@ -204,5 +231,5 @@ func newLess(orderBy string) (less lessFn, err error) {
 			return !oldLess(a, b)
 		}
 	}
-	return less, nil
+	return less, fraction, nil
 }

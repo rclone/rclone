@@ -1,12 +1,14 @@
 package accounting
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/rc"
 )
 
 // TransferSnapshot represents state of an account at point in time.
@@ -135,12 +137,12 @@ func (tr *Transfer) Reset() {
 }
 
 // Account returns reader that knows how to keep track of transfer progress.
-func (tr *Transfer) Account(in io.ReadCloser) *Account {
+func (tr *Transfer) Account(ctx context.Context, in io.ReadCloser) *Account {
 	tr.mu.Lock()
 	if tr.acc == nil {
-		tr.acc = newAccountSizeName(tr.stats, in, tr.size, tr.remote)
+		tr.acc = newAccountSizeName(ctx, tr.stats, in, tr.size, tr.remote)
 	} else {
-		tr.acc.UpdateReader(in)
+		tr.acc.UpdateReader(ctx, in)
 	}
 	tr.mu.Unlock()
 	return tr.acc
@@ -179,5 +181,13 @@ func (tr *Transfer) Snapshot() TransferSnapshot {
 		CompletedAt: tr.completedAt,
 		Error:       tr.err,
 		Group:       tr.stats.group,
+	}
+}
+
+// rcStats returns stats for the transfer suitable for the rc
+func (tr *Transfer) rcStats() rc.Params {
+	return rc.Params{
+		"name": tr.remote, // no locking needed to access thess
+		"size": tr.size,
 	}
 }

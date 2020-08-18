@@ -61,7 +61,7 @@ var (
 	ErrorListAborted                 = errors.New("list aborted")
 	ErrorListBucketRequired          = errors.New("bucket or container name is needed in remote")
 	ErrorIsFile                      = errors.New("is a file not a directory")
-	ErrorNotAFile                    = errors.New("is a not a regular file")
+	ErrorNotAFile                    = errors.New("is not a regular file")
 	ErrorNotDeleting                 = errors.New("not deleting files as there were IO errors")
 	ErrorNotDeletingDirs             = errors.New("not deleting directories as there were IO errors")
 	ErrorOverlapping                 = errors.New("can't sync or move files on overlapping remotes")
@@ -70,6 +70,7 @@ var (
 	ErrorPermissionDenied            = errors.New("permission denied")
 	ErrorCantShareDirectories        = errors.New("this backend can't share directories with link")
 	ErrorNotImplemented              = errors.New("optional feature not implemented")
+	ErrorCommandNotFound             = errors.New("command not found")
 )
 
 // RegInfo provides information about a filesystem
@@ -81,13 +82,15 @@ type RegInfo struct {
 	// Prefix for command line flags for this fs - defaults to Name if not set
 	Prefix string
 	// Create a new file system.  If root refers to an existing
-	// object, then it should return a Fs which which points to
+	// object, then it should return an Fs which which points to
 	// the parent of that object and ErrorIsFile.
 	NewFs func(name string, root string, config configmap.Mapper) (Fs, error) `json:"-"`
 	// Function to call to help with config
 	Config func(name string, config configmap.Mapper) `json:"-"`
 	// Options for the Fs configuration
 	Options Options
+	// The command help, if any
+	CommandHelp []CommandHelp
 }
 
 // FileName returns the on disk file name for this backend
@@ -188,7 +191,7 @@ func (o *Option) String() string {
 	return fmt.Sprint(o.GetValue())
 }
 
-// Set a Option from a string
+// Set an Option from a string
 func (o *Option) Set(s string) (err error) {
 	newValue, err := configstruct.StringToInterface(o.GetValue(), s)
 	if err != nil {
@@ -271,7 +274,7 @@ type Fs interface {
 
 	// Put in to the remote path with the modTime given of the given size
 	//
-	// When called from outside a Fs by rclone, src.Size() will always be >= 0.
+	// When called from outside an Fs by rclone, src.Size() will always be >= 0.
 	// But for unknown-sized objects (indicated by src.Size() == -1), Put should either
 	// return an error or upload it properly (rather than e.g. calling panic).
 	//
@@ -324,7 +327,7 @@ type Object interface {
 
 	// Update in to the object with the modTime given of the given size
 	//
-	// When called from outside a Fs by rclone, src.Size() will always be >= 0.
+	// When called from outside an Fs by rclone, src.Size() will always be >= 0.
 	// But for unknown-sized objects (indicated by src.Size() == -1), Upload should either
 	// return an error or update the object properly (rather than e.g. calling panic).
 	Update(ctx context.Context, in io.Reader, src ObjectInfo, options ...OpenOption) error
@@ -512,14 +515,16 @@ type Features struct {
 	GetTier                 bool // allows to retrieve storage tier of objects
 	ServerSideAcrossConfigs bool // can server side copy between different remotes of the same type
 	IsLocal                 bool // is the local backend
+	SlowModTime             bool // if calling ModTime() generally takes an extra transaction
+	SlowHash                bool // if calling Hash() generally takes an extra transaction
 
-	// Purge all files in the root and the root directory
+	// Purge all files in the directory specified
 	//
 	// Implement this if you have a way of deleting all the files
 	// quicker than just running Remove() on the result of List()
 	//
 	// Return an error if it doesn't exist
-	Purge func(ctx context.Context) error
+	Purge func(ctx context.Context, dir string) error
 
 	// Copy src to this remote using server side copy operations.
 	//
@@ -572,7 +577,7 @@ type Features struct {
 	DirCacheFlush func()
 
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
-	PublicLink func(ctx context.Context, remote string) (string, error)
+	PublicLink func(ctx context.Context, remote string, expire Duration, unlink bool) (string, error)
 
 	// Put in to the remote path with the modTime given of the given size
 	//
@@ -634,6 +639,17 @@ type Features struct {
 
 	// Disconnect the current user
 	Disconnect func(ctx context.Context) error
+
+	// Command the backend to run a named command
+	//
+	// The command run is name
+	// args may be used to read arguments from
+	// opts may be used to read optional arguments from
+	//
+	// The result should be capable of being JSON encoded
+	// If it is a string or a []string it will be shown to the user
+	// otherwise it will be JSON encoded and shown to the user like that
+	Command func(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -755,6 +771,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(Disconnecter); ok {
 		ft.Disconnect = do.Disconnect
 	}
+	if do, ok := f.(Commander); ok {
+		ft.Command = do.Command
+	}
 	return ft.DisableList(Config.DisableFeatures)
 }
 
@@ -775,6 +794,10 @@ func (ft *Features) Mask(f Fs) *Features {
 	ft.BucketBasedRootOK = ft.BucketBasedRootOK && mask.BucketBasedRootOK
 	ft.SetTier = ft.SetTier && mask.SetTier
 	ft.GetTier = ft.GetTier && mask.GetTier
+	ft.ServerSideAcrossConfigs = ft.ServerSideAcrossConfigs && mask.ServerSideAcrossConfigs
+	// ft.IsLocal = ft.IsLocal && mask.IsLocal Don't propagate IsLocal
+	ft.SlowModTime = ft.SlowModTime && mask.SlowModTime
+	ft.SlowHash = ft.SlowHash && mask.SlowHash
 
 	if mask.Purge == nil {
 		ft.Purge = nil
@@ -830,6 +853,7 @@ func (ft *Features) Mask(f Fs) *Features {
 	if mask.Disconnect == nil {
 		ft.Disconnect = nil
 	}
+	// Command is always local so we don't mask it
 	return ft.DisableList(Config.DisableFeatures)
 }
 
@@ -859,13 +883,13 @@ func (ft *Features) WrapsFs(f Fs, w Fs) *Features {
 
 // Purger is an optional interfaces for Fs
 type Purger interface {
-	// Purge all files in the root and the root directory
+	// Purge all files in the directory specified
 	//
 	// Implement this if you have a way of deleting all the files
 	// quicker than just running Remove() on the result of List()
 	//
 	// Return an error if it doesn't exist
-	Purge(ctx context.Context) error
+	Purge(ctx context.Context, dir string) error
 }
 
 // Copier is an optional interface for Fs
@@ -970,7 +994,7 @@ type PutStreamer interface {
 // PublicLinker is an optional interface for Fs
 type PublicLinker interface {
 	// PublicLink generates a public link to the remote path (usually readable by anyone)
-	PublicLink(ctx context.Context, remote string) (string, error)
+	PublicLink(ctx context.Context, remote string, expire Duration, unlink bool) (string, error)
 }
 
 // MergeDirser is an option interface for Fs
@@ -1051,6 +1075,30 @@ type Disconnecter interface {
 	Disconnect(ctx context.Context) error
 }
 
+// CommandHelp describes a single backend Command
+//
+// These are automatically inserted in the docs
+type CommandHelp struct {
+	Name  string            // Name of the command, eg "link"
+	Short string            // Single line description
+	Long  string            // Long multi-line description
+	Opts  map[string]string // maps option name to a single line help
+}
+
+// Commander is an interface to wrap the Command function
+type Commander interface {
+	// Command the backend to run a named command
+	//
+	// The command run is name
+	// args may be used to read arguments from
+	// opts may be used to read optional arguments from
+	//
+	// The result should be capable of being JSON encoded
+	// If it is a string or a []string it will be shown to the user
+	// otherwise it will be JSON encoded and shown to the user like that
+	Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
+}
+
 // ObjectsChan is a channel of Objects
 type ObjectsChan chan Object
 
@@ -1095,7 +1143,7 @@ func UnWrapObject(o Object) Object {
 	return o
 }
 
-// Find looks for an RegInfo object for the name passed in.  The name
+// Find looks for a RegInfo object for the name passed in.  The name
 // can be either the Name or the Prefix.
 //
 // Services are looked up in the config file
@@ -1287,6 +1335,17 @@ func NewFs(path string) (Fs, error) {
 		return nil, err
 	}
 	return fsInfo.NewFs(configName, fsPath, config)
+}
+
+// ConfigString returns a canonical version of the config string used
+// to configure the Fs as passed to fs.NewFs
+func ConfigString(f Fs) string {
+	name := f.Name()
+	root := f.Root()
+	if name == "local" && f.Features().IsLocal {
+		return root
+	}
+	return name + ":" + root
 }
 
 // TemporaryLocalFs creates a local FS in the OS's temporary directory.

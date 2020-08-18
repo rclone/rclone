@@ -94,6 +94,8 @@ Returns the following values:
 	"checks": number of checked files,
 	"transfers": number of transferred files,
 	"deletes" : number of deleted files,
+	"renames" : number of renamed files,
+	"transferTime" : total time spent on running jobs,
 	"elapsedTime": time in seconds since the start of the process,
 	"lastError": last occurred error,
 	"transferring": an array of currently active file transfers:
@@ -103,8 +105,8 @@ Returns the following values:
 				"eta": estimated time in seconds until file transfer completion
 				"name": name of the file,
 				"percentage": progress of the file transfer in percent,
-				"speed": speed in bytes/sec,
-				"speedAvg": speed in bytes/sec as an exponentially weighted moving average,
+				"speed": average speed over the whole transfer in bytes/sec,
+				"speedAvg": current speed in bytes/sec as an exponentially weighted moving average,
 				"size": size of the file in bytes
 			}
 		],
@@ -165,7 +167,7 @@ Returns the following values:
 				"bytes": total transferred bytes for this file,
 				"checked": if the transfer is only checked (skipped, deleted),
 				"timestamp": integer representing millisecond unix epoch,
-				"error": string description of the error (empty if successfull),
+				"error": string description of the error (empty if successful),
 				"jobid": id of the job that this transfer belongs to
 			}
 		]
@@ -310,7 +312,7 @@ func (sg *statsGroups) set(group string, stats *StatsInfo) {
 	// Limit number of groups kept in memory.
 	if len(sg.order) >= fs.Config.MaxStatsGroups {
 		group := sg.order[0]
-		//fs.LogPrintf(fs.LogLevelInfo, nil, "Max number of stats groups reached removing %s", group)
+		fs.LogPrintf(fs.LogLevelDebug, nil, "Max number of stats groups reached removing %s", group)
 		delete(sg.m, group)
 		r := (len(sg.order) - fs.Config.MaxStatsGroups) + 1
 		sg.order = sg.order[r:]
@@ -356,6 +358,7 @@ func (sg *statsGroups) sum() *StatsInfo {
 			sum.checks += stats.checks
 			sum.transfers += stats.transfers
 			sum.deletes += stats.deletes
+			sum.renames += stats.renames
 			sum.checking.merge(stats.checking)
 			sum.transferring.merge(stats.transferring)
 			sum.inProgress.merge(stats.inProgress)

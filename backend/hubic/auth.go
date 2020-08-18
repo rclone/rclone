@@ -21,7 +21,7 @@ func newAuth(f *Fs) *auth {
 	}
 }
 
-// Request constructs a http.Request for authentication
+// Request constructs an http.Request for authentication
 //
 // returns nil for not needed
 func (a *auth) Request(*swift.Connection) (r *http.Request, err error) {

@@ -9,7 +9,7 @@
 
 set -e
 
-#when adding a tool to the list make sure to also add it's corresponding command further in the script
+#when adding a tool to the list make sure to also add its corresponding command further in the script
 unzip_tools_list=('unzip' '7z' 'busybox')
 
 usage() { echo "Usage: curl https://rclone.org/install.sh | sudo bash [-s beta]" 1>&2; exit 1; }
@@ -187,8 +187,6 @@ esac
 
 #update version variable post install
 version=`rclone --version 2>>errors | head -n 1`
-#create the directory for the default configuration folder
-mkdir $HOME/.config/rclone -p
 
 printf "\n${version} has successfully installed."
 printf '\nNow run "rclone config" for setup. Check https://rclone.org/docs/ for more details.\n\n'

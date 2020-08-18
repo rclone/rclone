@@ -10,7 +10,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -41,6 +40,7 @@ func init() {
 		Name:        "local",
 		Description: "Local Disk",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name: "nounc",
 			Help: "Disable UNC (long path names) conversion on Windows",
@@ -89,7 +89,24 @@ are being uploaded and aborts with a message which starts "can't copy
 
 However on some file systems this modification time check may fail (eg
 [Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this
-check can be disabled with this flag.`,
+check can be disabled with this flag.
+
+If this flag is set, rclone will use its best efforts to transfer a
+file which is being updated. If the file is only having things
+appended to it (eg a log) then rclone will transfer the log file with
+the size it had the first time rclone saw it.
+
+If the file is being modified throughout (not just appended to) then
+the transfer may fail with a hash check failure.
+
+In detail, once the file has had stat() called on it for the first
+time we:
+
+- Only transfer the size that stat gave
+- Only checksum the size that stat gave
+- Don't update the stat info for the file
+
+`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -118,6 +135,27 @@ to override the default choice.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "no_sparse",
+			Help: `Disable sparse files for multi-thread downloads
+
+On Windows platforms rclone will make sparse files when doing
+multi-thread downloads. This avoids long pauses on large files where
+the OS zeros the file. However sparse files may be undesirable as they
+cause disk fragmentation and can be slow to work with.`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "no_set_modtime",
+			Help: `Disable setting modtime
+
+Normally rclone updates modification time of files after they are done
+uploading. This can cause permissions issues on Linux platforms when 
+the user rclone is running as does not own the file uploaded, such as
+when copying to a CIFS mount owned by another user. If this option is 
+enabled, rclone will no longer update the modtime after copying a file.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -138,6 +176,8 @@ type Options struct {
 	OneFileSystem     bool                 `config:"one_file_system"`
 	CaseSensitive     bool                 `config:"case_sensitive"`
 	CaseInsensitive   bool                 `config:"case_insensitive"`
+	NoSparse          bool                 `config:"no_sparse"`
+	NoSetModTime      bool                 `config:"no_set_modtime"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -154,20 +194,22 @@ type Fs struct {
 	warned      map[string]struct{} // whether we have warned about this string
 
 	// do os.Lstat or os.Stat
-	lstat          func(name string) (os.FileInfo, error)
-	objectHashesMu sync.Mutex // global lock for Object.hashes
+	lstat        func(name string) (os.FileInfo, error)
+	objectMetaMu sync.RWMutex // global lock for Object metadata
 }
 
 // Object represents a local filesystem object
 type Object struct {
-	fs             *Fs    // The Fs this object is part of
-	remote         string // The remote path (encoded path)
-	path           string // The local path (OS path)
-	size           int64  // file metadata - always present
-	mode           os.FileMode
-	modTime        time.Time
-	hashes         map[hash.Type]string // Hashes
-	translatedLink bool                 // Is this object a translated link
+	fs     *Fs    // The Fs this object is part of
+	remote string // The remote path (encoded path)
+	path   string // The local path (OS path)
+	// When using these items the fs.objectMetaMu must be held
+	size    int64 // file metadata - always present
+	mode    os.FileMode
+	modTime time.Time
+	hashes  map[hash.Type]string // Hashes
+	// these are read only and don't need the mutex held
+	translatedLink bool // Is this object a translated link
 }
 
 // ------------------------------------------------------------
@@ -202,6 +244,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		CaseInsensitive:         f.caseInsensitive(),
 		CanHaveEmptyDirectories: true,
 		IsLocal:                 true,
+		SlowHash:                true,
 	}).Fill(f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
@@ -511,6 +554,10 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 
 // Precision of the file system
 func (f *Fs) Precision() (precision time.Duration) {
+	if f.opt.NoSetModTime {
+		return fs.ModTimeNotSupported
+	}
+
 	f.precisionOk.Do(func() {
 		f.precision = f.readPrecision()
 	})
@@ -569,20 +616,21 @@ func (f *Fs) readPrecision() (precision time.Duration) {
 	return
 }
 
-// Purge deletes all the files and directories
+// Purge deletes all the files in the directory
 //
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context) error {
-	fi, err := f.lstat(f.root)
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	dir = f.localPath(dir)
+	fi, err := f.lstat(dir)
 	if err != nil {
 		return err
 	}
 	if !fi.Mode().IsDir() {
-		return errors.Errorf("can't purge non directory: %q", f.root)
+		return errors.Errorf("can't purge non directory: %q", dir)
 	}
-	return os.RemoveAll(f.root)
+	return os.RemoveAll(dir)
 }
 
 // Move src to this remote using server side move operations.
@@ -603,6 +651,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Temporary Object under construction
 	dstObj := f.newObject(remote)
+	dstObj.fs.objectMetaMu.RLock()
+	dstObjMode := dstObj.mode
+	dstObj.fs.objectMetaMu.RUnlock()
 
 	// Check it is a file if it exists
 	err := dstObj.lstat()
@@ -610,7 +661,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// OK
 	} else if err != nil {
 		return nil, err
-	} else if !dstObj.fs.isRegular(dstObj.mode) {
+	} else if !dstObj.fs.isRegular(dstObjMode) {
 		// It isn't a file
 		return nil, errors.New("can't move file onto non-file")
 	}
@@ -697,6 +748,50 @@ func (f *Fs) Hashes() hash.Set {
 	return hash.Supported()
 }
 
+var commandHelp = []fs.CommandHelp{
+	{
+		Name:  "noop",
+		Short: "A null operation for testing backend commands",
+		Long: `This is a test command which has some options
+you can try to change the output.`,
+		Opts: map[string]string{
+			"echo":  "echo the input arguments",
+			"error": "return an error based on option value",
+		},
+	},
+}
+
+// Command the backend to run a named command
+//
+// The command run is name
+// args may be used to read arguments from
+// opts may be used to read optional arguments from
+//
+// The result should be capable of being JSON encoded
+// If it is a string or a []string it will be shown to the user
+// otherwise it will be JSON encoded and shown to the user like that
+func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error) {
+	switch name {
+	case "noop":
+		if txt, ok := opt["error"]; ok {
+			if txt == "" {
+				txt = "unspecified error"
+			}
+			return nil, errors.New(txt)
+		}
+		if _, ok := opt["echo"]; ok {
+			out := map[string]interface{}{}
+			out["name"] = name
+			out["arg"] = arg
+			out["opt"] = opt
+			return out, nil
+		}
+		return nil, nil
+	default:
+		return nil, fs.ErrorCommandNotFound
+	}
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -720,19 +815,31 @@ func (o *Object) Remote() string {
 // Hash returns the requested hash of a file as a lowercase hex string
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	// Check that the underlying file hasn't changed
+	o.fs.objectMetaMu.RLock()
 	oldtime := o.modTime
 	oldsize := o.size
+	o.fs.objectMetaMu.RUnlock()
 	err := o.lstat()
+	var changed bool
 	if err != nil {
-		return "", errors.Wrap(err, "hash: failed to stat")
+		if os.IsNotExist(errors.Cause(err)) {
+			// If file not found then we assume any accumulated
+			// hashes are OK - this will error on Open
+			changed = true
+		} else {
+			return "", errors.Wrap(err, "hash: failed to stat")
+		}
+	} else {
+		o.fs.objectMetaMu.RLock()
+		changed = !o.modTime.Equal(oldtime) || oldsize != o.size
+		o.fs.objectMetaMu.RUnlock()
 	}
 
-	o.fs.objectHashesMu.Lock()
-	hashes := o.hashes
+	o.fs.objectMetaMu.RLock()
 	hashValue, hashFound := o.hashes[r]
-	o.fs.objectHashesMu.Unlock()
+	o.fs.objectMetaMu.RUnlock()
 
-	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil || !hashFound {
+	if changed || !hashFound {
 		var in io.ReadCloser
 
 		if !o.translatedLink {
@@ -744,9 +851,14 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		} else {
 			in, err = o.openTranslatedLink(0, -1)
 		}
+		// If not checking for updates, only read size given
+		if o.fs.opt.NoCheckUpdated {
+			in = readers.NewLimitedReadCloser(in, o.size)
+		}
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
+		var hashes map[hash.Type]string
 		hashes, err = hash.StreamTypes(in, hash.NewHashSet(r))
 		closeErr := in.Close()
 		if err != nil {
@@ -756,29 +868,36 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 			return "", errors.Wrap(closeErr, "hash: failed to close")
 		}
 		hashValue = hashes[r]
-		o.fs.objectHashesMu.Lock()
+		o.fs.objectMetaMu.Lock()
 		if o.hashes == nil {
 			o.hashes = hashes
 		} else {
 			o.hashes[r] = hashValue
 		}
-		o.fs.objectHashesMu.Unlock()
+		o.fs.objectMetaMu.Unlock()
 	}
 	return hashValue, nil
 }
 
 // Size returns the size of an object in bytes
 func (o *Object) Size() int64 {
+	o.fs.objectMetaMu.RLock()
+	defer o.fs.objectMetaMu.RUnlock()
 	return o.size
 }
 
 // ModTime returns the modification time of the object
 func (o *Object) ModTime(ctx context.Context) time.Time {
+	o.fs.objectMetaMu.RLock()
+	defer o.fs.objectMetaMu.RUnlock()
 	return o.modTime
 }
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
+	if o.fs.opt.NoSetModTime {
+		return nil
+	}
 	var err error
 	if o.translatedLink {
 		err = lChtimes(o.path, modTime, modTime)
@@ -794,7 +913,9 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 
 // Storable returns a boolean showing if this object is storable
 func (o *Object) Storable() bool {
+	o.fs.objectMetaMu.RLock()
 	mode := o.mode
+	o.fs.objectMetaMu.RUnlock()
 	if mode&os.ModeSymlink != 0 && !o.fs.opt.TranslateSymlinks {
 		if !o.fs.opt.SkipSymlinks {
 			fs.Logf(o, "Can't follow symlink without -L/--copy-links")
@@ -827,11 +948,15 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 		if err != nil {
 			return 0, errors.Wrap(err, "can't read status of source file while transferring")
 		}
-		if file.o.size != fi.Size() {
-			return 0, fserrors.NoLowLevelRetryError(errors.Errorf("can't copy - source file is being updated (size changed from %d to %d)", file.o.size, fi.Size()))
+		file.o.fs.objectMetaMu.RLock()
+		oldtime := file.o.modTime
+		oldsize := file.o.size
+		file.o.fs.objectMetaMu.RUnlock()
+		if oldsize != fi.Size() {
+			return 0, fserrors.NoLowLevelRetryError(errors.Errorf("can't copy - source file is being updated (size changed from %d to %d)", oldsize, fi.Size()))
 		}
-		if !file.o.modTime.Equal(fi.ModTime()) {
-			return 0, fserrors.NoLowLevelRetryError(errors.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", file.o.modTime, fi.ModTime()))
+		if !oldtime.Equal(fi.ModTime()) {
+			return 0, fserrors.NoLowLevelRetryError(errors.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", oldtime, fi.ModTime()))
 		}
 	}
 
@@ -848,9 +973,9 @@ func (file *localOpenFile) Close() (err error) {
 	err = file.in.Close()
 	if err == nil {
 		if file.hash.Size() == file.o.Size() {
-			file.o.fs.objectHashesMu.Lock()
+			file.o.fs.objectMetaMu.Lock()
 			file.o.hashes = file.hash.Sums()
-			file.o.fs.objectHashesMu.Unlock()
+			file.o.fs.objectMetaMu.Unlock()
 		}
 	}
 	return err
@@ -875,7 +1000,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		case *fs.SeekOption:
 			offset = x.Offset
 		case *fs.RangeOption:
-			offset, limit = x.Decode(o.size)
+			offset, limit = x.Decode(o.Size())
 		case *fs.HashesOption:
 			if x.Hashes.Count() > 0 {
 				hasher, err = hash.NewMultiHasherTypes(x.Hashes)
@@ -888,6 +1013,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
 			}
 		}
+	}
+
+	// If not checking updated then limit to current size.  This means if
+	// file is being extended, readers will read a o.Size() bytes rather
+	// than the new size making for a consistent upload.
+	if limit < 0 && o.fs.opt.NoCheckUpdated {
+		limit = o.size
 	}
 
 	// Handle a translated link
@@ -977,7 +1109,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			}
 		}
 		// Pre-allocate the file for performance reasons
-		err = preAllocate(src.Size(), f)
+		err = file.PreAllocate(src.Size(), f)
 		if err != nil {
 			fs.Debugf(o, "Failed to pre-allocate: %v", err)
 		}
@@ -1026,9 +1158,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// All successful so update the hashes
 	if hasher != nil {
-		o.fs.objectHashesMu.Lock()
+		o.fs.objectMetaMu.Lock()
 		o.hashes = hasher.Sums()
-		o.fs.objectHashesMu.Unlock()
+		o.fs.objectMetaMu.Unlock()
 	}
 
 	// Set the mtime
@@ -1040,6 +1172,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// ReRead info now that we have finished
 	return o.lstat()
 }
+
+var sparseWarning sync.Once
 
 // OpenWriterAt opens with a handle for random access writes
 //
@@ -1064,29 +1198,38 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		return nil, err
 	}
 	// Pre-allocate the file for performance reasons
-	err = preAllocate(size, out)
+	err = file.PreAllocate(size, out)
 	if err != nil {
 		fs.Debugf(o, "Failed to pre-allocate: %v", err)
 	}
+	if !f.opt.NoSparse && file.SetSparseImplemented {
+		sparseWarning.Do(func() {
+			fs.Infof(nil, "Writing sparse files: use --local-no-sparse or --multi-thread-streams 0 to disable")
+		})
+		// Set the file to be a sparse file (important on Windows)
+		err = file.SetSparse(out)
+		if err != nil {
+			fs.Debugf(o, "Failed to set sparse: %v", err)
+		}
+	}
+
 	return out, nil
 }
 
 // setMetadata sets the file info from the os.FileInfo passed in
 func (o *Object) setMetadata(info os.FileInfo) {
-	// Don't overwrite the info if we don't need to
-	// this avoids upsetting the race detector
-	if o.size != info.Size() {
-		o.size = info.Size()
+	// if not checking updated then don't update the stat
+	if o.fs.opt.NoCheckUpdated && !o.modTime.IsZero() {
+		return
 	}
-	if !o.modTime.Equal(info.ModTime()) {
-		o.modTime = info.ModTime()
-	}
-	if o.mode != info.Mode() {
-		o.mode = info.Mode()
-	}
+	o.fs.objectMetaMu.Lock()
+	o.size = info.Size()
+	o.modTime = info.ModTime()
+	o.mode = info.Mode()
+	o.fs.objectMetaMu.Unlock()
 }
 
-// Stat a Object into info
+// Stat an Object into info
 func (o *Object) lstat() error {
 	info, err := o.fs.lstat(o.path)
 	if err == nil {
@@ -1115,7 +1258,7 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 
 		if !noUNC {
 			// Convert to UNC
-			s = uncPath(s)
+			s = file.UNCPath(s)
 		}
 		return s
 	}
@@ -1129,28 +1272,6 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	return s
 }
 
-// Pattern to match a windows absolute path: "c:\" and similar
-var isAbsWinDrive = regexp.MustCompile(`^[a-zA-Z]\:\\`)
-
-// uncPath converts an absolute Windows path
-// to a UNC long path.
-func uncPath(l string) string {
-	// If prefix is "\\", we already have a UNC path or server.
-	if strings.HasPrefix(l, `\\`) {
-		// If already long path, just keep it
-		if strings.HasPrefix(l, `\\?\`) {
-			return l
-		}
-
-		// Trim "\\" from path and add UNC prefix.
-		return `\\?\UNC\` + strings.TrimPrefix(l, `\\`)
-	}
-	if isAbsWinDrive.MatchString(l) {
-		return `\\?\` + l
-	}
-	return l
-}
-
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs             = &Fs{}
@@ -1158,6 +1279,7 @@ var (
 	_ fs.PutStreamer    = &Fs{}
 	_ fs.Mover          = &Fs{}
 	_ fs.DirMover       = &Fs{}
+	_ fs.Commander      = &Fs{}
 	_ fs.OpenWriterAter = &Fs{}
 	_ fs.Object         = &Object{}
 )

@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -34,7 +35,8 @@ type Fs struct {
 	client      *putio.Client      // client for making API calls to Put.io
 	pacer       *fs.Pacer          // To pace the API calls
 	dirCache    *dircache.DirCache // Map of directory path to directory id
-	oAuthClient *http.Client
+	httpClient  *http.Client       // base http client
+	oAuthClient *http.Client       // http client with oauth Authorization
 }
 
 // ------------------------------------------------------------
@@ -59,6 +61,12 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// parsePath parses a putio 'url'
+func parsePath(path string) (root string) {
+	root = strings.Trim(path, "/")
+	return
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	// defer log.Trace(name, "root=%v", root)("f=%+v, err=%v", &f, &err)
@@ -68,7 +76,9 @@ func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	if err != nil {
 		return nil, err
 	}
-	oAuthClient, _, err := oauthutil.NewClient(name, m, putioConfig)
+	root = parsePath(root)
+	httpClient := fshttp.NewClient(fs.Config)
+	oAuthClient, _, err := oauthutil.NewClientWithBaseClient(name, m, putioConfig, httpClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure putio")
 	}
@@ -78,6 +88,7 @@ func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 		opt:         *opt,
 		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		client:      putio.NewClient(oAuthClient),
+		httpClient:  httpClient,
 		oAuthClient: oAuthClient,
 	}
 	p.features = (&fs.Features{
@@ -186,10 +197,6 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	// defer log.Trace(f, "dir=%v", dir)("err=%v", &err)
-	err = f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return nil, err
-	}
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -249,11 +256,11 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	// defer log.Trace(f, "src=%+v", src)("o=%+v, err=%v", &o, &err)
 	size := src.Size()
 	remote := src.Remote()
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
-	loc, err := f.createUpload(ctx, leaf, size, directoryID, src.ModTime(ctx))
+	loc, err := f.createUpload(ctx, leaf, size, directoryID, src.ModTime(ctx), options)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +280,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	return f.newObjectWithInfo(ctx, remote, entry)
 }
 
-func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID string, modTime time.Time) (location string, err error) {
+func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID string, modTime time.Time, options []fs.OpenOption) (location string, err error) {
 	// defer log.Trace(f, "name=%v, size=%v, parentID=%v, modTime=%v", name, size, parentID, modTime.String())("location=%v, err=%v", location, &err)
 	err = f.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequest("POST", "https://upload.put.io/files/", nil)
@@ -288,6 +295,7 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 		b64parentID := base64.StdEncoding.EncodeToString([]byte(parentID))
 		b64modifiedAt := base64.StdEncoding.EncodeToString([]byte(modTime.Format(time.RFC3339)))
 		req.Header.Set("upload-metadata", fmt.Sprintf("name %s,no-torrent %s,parent_id %s,updated-at %s", b64name, b64true, b64parentID, b64modifiedAt))
+		fs.OpenOptionAddHTTPHeaders(req.Header, options)
 		resp, err := f.oAuthClient.Do(req)
 		retry, err := shouldRetry(err)
 		if retry {
@@ -446,20 +454,13 @@ func (f *Fs) makeUploadPatchRequest(ctx context.Context, location string, in io.
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	// defer log.Trace(f, "dir=%v", dir)("err=%v", &err)
-	err = f.dirCache.FindRoot(ctx, true)
-	if err != nil {
-		return err
-	}
-	if dir != "" {
-		_, err = f.dirCache.FindDir(ctx, dir, true)
-	}
+	_, err = f.dirCache.FindDir(ctx, dir, true)
 	return err
 }
 
-// Rmdir deletes the container
-//
-// Returns an error if it isn't empty
-func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
+// purgeCheck removes the root directory, if check is set then it
+// refuses to do so if it has anything in
+func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error) {
 	// defer log.Trace(f, "dir=%v", dir)("err=%v", &err)
 
 	root := strings.Trim(path.Join(f.root, dir), "/")
@@ -476,18 +477,20 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	}
 	dirID := atoi(directoryID)
 
-	// check directory empty
-	var children []putio.File
-	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "listing files: %d", dirID)
-		children, _, err = f.client.Files.List(ctx, dirID)
-		return shouldRetry(err)
-	})
-	if err != nil {
-		return errors.Wrap(err, "Rmdir")
-	}
-	if len(children) != 0 {
-		return errors.New("directory not empty")
+	if check {
+		// check directory empty
+		var children []putio.File
+		err = f.pacer.Call(func() (bool, error) {
+			// fs.Debugf(f, "listing files: %d", dirID)
+			children, _, err = f.client.Files.List(ctx, dirID)
+			return shouldRetry(err)
+		})
+		if err != nil {
+			return errors.Wrap(err, "Rmdir")
+		}
+		if len(children) != 0 {
+			return errors.New("directory not empty")
+		}
 	}
 
 	// remove it
@@ -500,36 +503,26 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	return err
 }
 
+// Rmdir deletes the container
+//
+// Returns an error if it isn't empty
+func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
+	return f.purgeCheck(ctx, dir, true)
+}
+
 // Precision returns the precision
 func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
-// Purge deletes all the files and the container
+// Purge deletes all the files in the directory
 //
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context) (err error) {
+func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 	// defer log.Trace(f, "")("err=%v", &err)
-
-	if f.root == "" {
-		return errors.New("can't purge root directory")
-	}
-	err = f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return err
-	}
-
-	rootID := atoi(f.dirCache.RootID())
-	// Let putio delete the filesystem tree
-	err = f.pacer.Call(func() (bool, error) {
-		// fs.Debugf(f, "deleting file: %d", rootID)
-		err = f.client.Files.Delete(ctx, rootID)
-		return shouldRetry(err)
-	})
-	f.dirCache.ResetRoot()
-	return err
+	return f.purgeCheck(ctx, dir, false)
 }
 
 // Copy src to this remote using server side copy operations.
@@ -547,7 +540,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if !ok {
 		return nil, fs.ErrorCantCopy
 	}
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
@@ -586,7 +579,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 	if !ok {
 		return nil, fs.ErrorCantMove
 	}
-	leaf, directoryID, err := f.dirCache.FindRootAndPath(ctx, remote, true)
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
 		return nil, err
 	}
@@ -624,57 +617,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if !ok {
 		return fs.ErrorCantDirMove
 	}
-	srcPath := path.Join(srcFs.root, srcRemote)
-	dstPath := path.Join(f.root, dstRemote)
 
-	// Refuse to move to or from the root
-	if srcPath == "" || dstPath == "" {
-		return errors.New("can't move root directory")
-	}
-
-	// find the root src directory
-	err = srcFs.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return err
-	}
-
-	// find the root dst directory
-	if dstRemote != "" {
-		err = f.dirCache.FindRoot(ctx, true)
-		if err != nil {
-			return err
-		}
-	} else {
-		if f.dirCache.FoundRoot() {
-			return fs.ErrorDirExists
-		}
-	}
-
-	// Find ID of dst parent, creating subdirs if necessary
-	var leaf, dstDirectoryID string
-	findPath := dstRemote
-	if dstRemote == "" {
-		findPath = f.root
-	}
-	leaf, dstDirectoryID, err = f.dirCache.FindPath(ctx, findPath, true)
-	if err != nil {
-		return err
-	}
-
-	// Check destination does not exist
-	if dstRemote != "" {
-		_, err = f.dirCache.FindDir(ctx, dstRemote, false)
-		if err == fs.ErrorDirNotFound {
-			// OK
-		} else if err != nil {
-			return err
-		} else {
-			return fs.ErrorDirExists
-		}
-	}
-
-	// Find ID of src
-	srcID, err := srcFs.dirCache.FindDir(ctx, srcRemote, false)
+	srcID, _, _, dstDirectoryID, dstLeaf, err := f.dirCache.DirMove(ctx, srcFs.dirCache, srcFs.root, srcRemote, f.root, dstRemote)
 	if err != nil {
 		return err
 	}
@@ -683,7 +627,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		params := url.Values{}
 		params.Set("file_id", srcID)
 		params.Set("parent_id", dstDirectoryID)
-		params.Set("name", f.opt.Enc.FromStandardName(leaf))
+		params.Set("name", f.opt.Enc.FromStandardName(dstLeaf))
 		req, err := f.client.NewRequest(ctx, "POST", "/v2/files/move", strings.NewReader(params.Encode()))
 		if err != nil {
 			return false, err

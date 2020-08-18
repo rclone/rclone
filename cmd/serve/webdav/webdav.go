@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/httplib"
@@ -14,6 +15,7 @@ import (
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/errors"
 	"github.com/rclone/rclone/vfs"
@@ -29,11 +31,12 @@ var (
 )
 
 func init() {
-	httpflags.AddFlags(Command.Flags())
-	vfsflags.AddFlags(Command.Flags())
-	proxyflags.AddFlags(Command.Flags())
-	Command.Flags().StringVar(&hashName, "etag-hash", "", "Which hash to use for the ETag, or auto or blank for off")
-	Command.Flags().BoolVar(&disableGETDir, "disable-dir-list", false, "Disable HTML directory list on GET request for a directory")
+	flagSet := Command.Flags()
+	httpflags.AddFlags(flagSet)
+	vfsflags.AddFlags(flagSet)
+	proxyflags.AddFlags(flagSet)
+	flags.StringVarP(flagSet, &hashName, "etag-hash", "", "", "Which hash to use for the ETag, or auto or blank for off")
+	flags.BoolVarP(flagSet, &disableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory")
 }
 
 // Command definition for cobra
@@ -204,6 +207,7 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	}
 	dir := node.(*vfs.Dir)
 	dirEntries, err := dir.ReadDirAll()
+
 	if err != nil {
 		serve.Error(dirRemote, rw, "Failed to list directory", err)
 		return
@@ -212,8 +216,16 @@ func (w *WebDAV) serveDir(rw http.ResponseWriter, r *http.Request, dirRemote str
 	// Make the entries for display
 	directory := serve.NewDirectory(dirRemote, w.HTMLTemplate)
 	for _, node := range dirEntries {
-		directory.AddEntry(node.Path(), node.IsDir())
+		if vfsflags.Opt.NoModTime {
+			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), time.Time{})
+		} else {
+			directory.AddHTMLEntry(node.Path(), node.IsDir(), node.Size(), node.ModTime().UTC())
+		}
 	}
+
+	sortParm := r.URL.Query().Get("sort")
+	orderParm := r.URL.Query().Get("order")
+	directory.ProcessQueryParams(sortParm, orderParm)
 
 	directory.Serve(rw, r)
 }

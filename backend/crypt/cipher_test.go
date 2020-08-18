@@ -12,6 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -784,21 +785,13 @@ func TestNewEncrypterErrUnexpectedEOF(t *testing.T) {
 	c, err := newCipher(NameEncryptionStandard, "", "", true)
 	assert.NoError(t, err)
 
-	in := &errorReader{io.ErrUnexpectedEOF}
+	in := &readers.ErrorReader{Err: io.ErrUnexpectedEOF}
 	fh, err := c.newEncrypter(in, nil)
 	assert.NoError(t, err)
 
 	n, err := io.CopyN(ioutil.Discard, fh, 1e6)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 	assert.Equal(t, int64(32), n)
-}
-
-type errorReader struct {
-	err error
-}
-
-func (er errorReader) Read(p []byte) (n int, err error) {
-	return 0, er.err
 }
 
 type closeDetector struct {
@@ -838,7 +831,7 @@ func TestNewDecrypter(t *testing.T) {
 		assert.Equal(t, 1, cd.closed)
 	}
 
-	er := &errorReader{errors.New("potato")}
+	er := &readers.ErrorReader{Err: errors.New("potato")}
 	cd = newCloseDetector(er)
 	fh, err = c.newDecrypter(cd)
 	assert.Nil(t, fh)
@@ -864,7 +857,7 @@ func TestNewDecrypterErrUnexpectedEOF(t *testing.T) {
 	c, err := newCipher(NameEncryptionStandard, "", "", true)
 	assert.NoError(t, err)
 
-	in2 := &errorReader{io.ErrUnexpectedEOF}
+	in2 := &readers.ErrorReader{Err: io.ErrUnexpectedEOF}
 	in1 := bytes.NewBuffer(file16)
 	in := ioutil.NopCloser(io.MultiReader(in1, in2))
 
@@ -936,7 +929,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 		assert.Equal(t, 0, n)
 	}
 
-	// Now try decoding it with a open/seek
+	// Now try decoding it with an open/seek
 	for _, offset := range trials {
 		for _, limit := range limits {
 			if offset+limit > len(plaintext) {
@@ -1118,7 +1111,7 @@ func TestDecrypterRead(t *testing.T) {
 
 	// Test producing an error on the file on Read the underlying file
 	in1 := bytes.NewBuffer(file1)
-	in2 := &errorReader{errors.New("potato")}
+	in2 := &readers.ErrorReader{Err: errors.New("potato")}
 	in := io.MultiReader(in1, in2)
 	cd := newCloseDetector(in)
 	fh, err := c.newDecrypter(cd)

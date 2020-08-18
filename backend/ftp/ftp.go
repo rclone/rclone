@@ -8,6 +8,8 @@ import (
 	"net/textproto"
 	"os"
 	"path"
+	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -50,8 +52,19 @@ func init() {
 			IsPassword: true,
 			Required:   true,
 		}, {
-			Name:    "tls",
-			Help:    "Use FTP over TLS (Implicit)",
+			Name: "tls",
+			Help: `Use FTPS over TLS (Implicit)
+When using implicit FTP over TLS the client will connect using TLS
+right from the start, which in turn breaks the compatibility with
+non-TLS-aware servers. This is usually served over port 990 rather
+than port 21. Cannot be used in combination with explicit FTP.`,
+			Default: false,
+		}, {
+			Name: "explicit_tls",
+			Help: `Use FTP over TLS (Explicit)
+When using explicit FTP over TLS the client explicitly request
+security from the server in order to upgrade a plain text connection
+to an encrypted one. Cannot be used in combination with implicit FTP.`,
 			Default: false,
 		}, {
 			Name:     "concurrency",
@@ -72,7 +85,7 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// The FTP protocal can't handle trailing spaces (for instance
+			// The FTP protocol can't handle trailing spaces (for instance
 			// pureftpd turns them into _)
 			//
 			// proftpd can't handle '*' in file names
@@ -90,6 +103,7 @@ type Options struct {
 	Pass              string               `config:"pass"`
 	Port              string               `config:"port"`
 	TLS               bool                 `config:"tls"`
+	ExplicitTLS       bool                 `config:"explicit_tls"`
 	Concurrency       int                  `config:"concurrency"`
 	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
 	DisableEPSV       bool                 `config:"disable_epsv"`
@@ -148,19 +162,68 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
+// Enable debugging output
+type debugLog struct {
+	mu   sync.Mutex
+	auth bool
+}
+
+// Write writes len(p) bytes from p to the underlying data stream. It returns
+// the number of bytes written from p (0 <= n <= len(p)) and any error
+// encountered that caused the write to stop early. Write must return a non-nil
+// error if it returns n < len(p). Write must not modify the slice data, even
+// temporarily.
+//
+// Implementations must not retain p.
+//
+// This writes debug info to the log
+func (dl *debugLog) Write(p []byte) (n int, err error) {
+	dl.mu.Lock()
+	defer dl.mu.Unlock()
+	_, file, _, ok := runtime.Caller(1)
+	direction := "FTP Rx"
+	if ok && strings.Contains(file, "multi") {
+		direction = "FTP Tx"
+	}
+	lines := strings.Split(string(p), "\r\n")
+	if lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+	for _, line := range lines {
+		if !dl.auth && strings.HasPrefix(line, "PASS") {
+			fs.Debugf(direction, "PASS *****")
+			continue
+		}
+		fs.Debugf(direction, "%q", line)
+	}
+	return len(p), nil
+}
+
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	fs.Debugf(f, "Connecting to FTP server")
 	ftpConfig := []ftp.DialOption{ftp.DialWithTimeout(fs.Config.ConnectTimeout)}
-	if f.opt.TLS {
+	if f.opt.TLS && f.opt.ExplicitTLS {
+		fs.Errorf(f, "Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
+		return nil, errors.New("Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
+	} else if f.opt.TLS {
 		tlsConfig := &tls.Config{
 			ServerName:         f.opt.Host,
 			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
 		}
 		ftpConfig = append(ftpConfig, ftp.DialWithTLS(tlsConfig))
+	} else if f.opt.ExplicitTLS {
+		tlsConfig := &tls.Config{
+			ServerName:         f.opt.Host,
+			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
+		}
+		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(tlsConfig))
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
+	}
+	if fs.Config.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpRequests|fs.DumpResponses) != 0 {
+		ftpConfig = append(ftpConfig, ftp.DialWithDebugOutput(&debugLog{auth: fs.Config.Dump&fs.DumpAuth != 0}))
 	}
 	c, err := ftp.Dial(f.dialAddr, ftpConfig...)
 	if err != nil {
@@ -190,7 +253,11 @@ func (f *Fs) getFtpConnection() (c *ftp.ServerConn, err error) {
 	if c != nil {
 		return c, nil
 	}
-	return f.ftpConnection()
+	c, err = f.ftpConnection()
+	if err != nil && f.opt.Concurrency > 0 {
+		f.tokens.Put()
+	}
+	return c, err
 }
 
 // Return an FTP connection to the pool
@@ -203,7 +270,13 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	if f.opt.Concurrency > 0 {
 		defer f.tokens.Put()
 	}
+	if pc == nil {
+		return
+	}
 	c := *pc
+	if c == nil {
+		return
+	}
 	*pc = nil
 	if err != nil {
 		// If not a regular FTP error code then check the connection
@@ -778,19 +851,23 @@ func (f *ftpReadCloser) Close() error {
 	case <-timer.C:
 		// if timer fired assume no error but connection dead
 		fs.Errorf(f.f, "Timeout when waiting for connection Close")
+		f.f.putFtpConnection(nil, nil)
 		return nil
 	}
 	// if errors while reading or closing, dump the connection
 	if err != nil || f.err != nil {
 		_ = f.c.Quit()
+		f.f.putFtpConnection(nil, nil)
 	} else {
 		f.f.putFtpConnection(&f.c, nil)
 	}
 	// mask the error if it was caused by a premature close
+	// NB StatusAboutToSend is to work around a bug in pureftpd
+	// See: https://github.com/rclone/rclone/issues/3445#issuecomment-521654257
 	switch errX := err.(type) {
 	case *textproto.Error:
 		switch errX.Code {
-		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable:
+		case ftp.StatusTransfertAborted, ftp.StatusFileUnavailable, ftp.StatusAboutToSend:
 			err = nil
 		}
 	}
@@ -857,6 +934,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		_ = c.Quit() // toss this connection to avoid sync errors
 		remove()
+		o.fs.putFtpConnection(nil, err)
 		return errors.Wrap(err, "update stor")
 	}
 	o.fs.putFtpConnection(&c, nil)

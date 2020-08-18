@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -69,7 +68,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
 		// NB Rcat deals with Stats.Transferring etc
-		o, err := operations.Rcat(context.TODO(), fh.file.d.f, fh.remote, pipeReader, time.Now())
+		o, err := operations.Rcat(context.TODO(), fh.file.Fs(), fh.remote, pipeReader, time.Now())
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
@@ -80,7 +79,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	}()
 	fh.file.setSize(0)
 	fh.truncated = true
-	fh.file.d.addObject(fh.file) // make sure the directory has this object in it now
+	fh.file.Dir().addObject(fh.file) // make sure the directory has this object in it now
 	fh.opened = true
 	return nil
 }
@@ -131,27 +130,7 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 		return 0, ECLOSED
 	}
 	if fh.offset != off {
-		// Set a background timer so we don't wait forever
-		timeout := time.NewTimer(10 * time.Second)
-		done := make(chan struct{})
-		abort := int32(0)
-		go func() {
-			select {
-			case <-timeout.C:
-				// set abort flag an give all the waiting goroutines a kick on timeout
-				atomic.StoreInt32(&abort, 1)
-				fh.cond.Broadcast()
-			case <-done:
-			}
-		}()
-		// Wait for an in-sequence write or abort
-		for fh.offset != off && atomic.LoadInt32(&abort) == 0 {
-			// fs.Debugf(fh.remote, "waiting for in-sequence write to %d", off)
-			fh.cond.Wait()
-		}
-		// tidy up end timer
-		close(done)
-		timeout.Stop()
+		waitSequential("write", fh.remote, fh.cond, fh.file.VFS().Opt.WriteWait, &fh.offset, off)
 	}
 	if fh.offset != off {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")
@@ -210,10 +189,9 @@ func (fh *WriteFileHandle) close() (err error) {
 	fh.closed = true
 	// leave writer open until file is transferred
 	defer func() {
-		fh.file.delWriter(fh, false)
-		fh.file.finishWriterClose()
+		fh.file.delWriter(fh)
 	}()
-	// If file not opened and not safe to truncate then then leave file intact
+	// If file not opened and not safe to truncate then leave file intact
 	if !fh.opened && !fh.safeToTruncate() {
 		return nil
 	}
@@ -305,11 +283,9 @@ func (fh *WriteFileHandle) Stat() (os.FileInfo, error) {
 
 // Truncate file to given size
 func (fh *WriteFileHandle) Truncate(size int64) (err error) {
+	// defer log.Trace(fh.remote, "size=%d", size)("err=%v", &err)
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	if fh.closed {
-		return ECLOSED
-	}
 	if size != fh.offset {
 		fs.Errorf(fh.remote, "WriteFileHandle: Truncate: Can't change size without --vfs-cache-mode >= writes")
 		return EPERM

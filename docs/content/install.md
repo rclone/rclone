@@ -1,7 +1,6 @@
 ---
 title: "Install"
 description: "Rclone Installation"
-date: "2018-08-28"
 ---
 
 # Install #
@@ -16,7 +15,7 @@ Rclone is a Go program and comes as a single binary file.
 
 See below for some expanded Linux / macOS instructions.
 
-See the [Usage section](/docs/) of the docs for how to use rclone, or
+See the [Usage section](/docs/#usage) of the docs for how to use rclone, or
 run `rclone -h`.
 
 ## Script installation ##
@@ -137,6 +136,13 @@ from the rclone image.
   reside on the host with a non-root UID:GID, you need to pass these on the container
   start command line.
 
+- If you want to access the RC interface (either via the API or the Web UI), it is
+  required to set the `--rc-addr` to `:5572` in order to connect to it from outside
+  the container. An explanation about why this is necessary is present [here](https://web.archive.org/web/20200808071950/https://pythonspeed.com/articles/docker-connection-refused/).
+    * NOTE: Users running this container with the docker network set to `host` should
+     probably set it to listen to localhost only, with `127.0.0.1:5572` as the value for
+      `--rc-addr`
+
 - It is possible to use `rclone mount` inside a userspace Docker container, and expose
   the resulting fuse mount to the host. The exact `docker run` options to do that might
   vary slightly between hosts. See, e.g. the discussion in this
@@ -175,7 +181,7 @@ kill %1
 
 ## Install from source ##
 
-Make sure you have at least [Go](https://golang.org/) 1.7
+Make sure you have at least [Go](https://golang.org/) 1.11
 installed.  [Download go](https://golang.org/dl/) if necessary.  The
 latest release is recommended. Then
 
@@ -184,16 +190,23 @@ latest release is recommended. Then
     go build
     ./rclone version
 
-You can also build and install rclone in the
-[GOPATH](https://github.com/golang/go/wiki/GOPATH) (which defaults to
-`~/go`) with:
+This will leave you a checked out version of rclone you can modify and
+send pull requests with. If you use `make` instead of `go build` then
+the rclone build will have the correct version information in it.
 
-    go get -u -v github.com/rclone/rclone
+You can also build the latest stable rclone with:
 
-and this will build the binary in `$GOPATH/bin` (`~/go/bin/rclone` by
-default) after downloading the source to
-`$GOPATH/src/github.com/rclone/rclone` (`~/go/src/github.com/rclone/rclone`
-by default).
+    go get github.com/rclone/rclone
+
+or the latest version (equivalent to the beta) with
+
+    go get github.com/rclone/rclone@master
+
+These will build the binary in `$(go env GOPATH)/bin`
+(`~/go/bin/rclone` by default) after downloading the source to the go
+module cache. Note - do **not** use the `-u` flag here. This causes go
+to try to update the depencencies that rclone uses and sometimes these
+don't work with the current version of rclone.
 
 ## Installation with Ansible ##
 

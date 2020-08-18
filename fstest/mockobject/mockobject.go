@@ -102,7 +102,7 @@ type ContentMockObject struct {
 	unknownSize bool
 }
 
-// WithContent returns a fs.Object with the given content.
+// WithContent returns an fs.Object with the given content.
 func (o Object) WithContent(content []byte, mode SeekMode) *ContentMockObject {
 	return &ContentMockObject{
 		Object:   o,
@@ -176,6 +176,20 @@ func (o *ContentMockObject) Size() int64 {
 		return -1
 	}
 	return int64(len(o.content))
+}
+
+// Hash returns the selected checksum of the file
+// If no checksum is available it returns ""
+func (o *ContentMockObject) Hash(ctx context.Context, t hash.Type) (string, error) {
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(t))
+	if err != nil {
+		return "", err
+	}
+	_, err = hasher.Write(o.content)
+	if err != nil {
+		return "", err
+	}
+	return hasher.Sums()[t], nil
 }
 
 type readCloser struct{ io.Reader }

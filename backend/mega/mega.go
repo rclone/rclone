@@ -150,7 +150,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// parsePath parses an mega 'url'
+// parsePath parses a mega 'url'
 func parsePath(path string) (root string) {
 	root = strings.Trim(path, "/")
 	return
@@ -669,13 +669,13 @@ func (f *Fs) Precision() time.Duration {
 	return fs.ModTimeNotSupported
 }
 
-// Purge deletes all the files and the container
+// Purge deletes all the files in the directory
 //
 // Optional interface: Only implement this if you have a way of
 // deleting all the files quicker than just running Remove() on the
 // result of List()
-func (f *Fs) Purge(ctx context.Context) error {
-	return f.purgeCheck("", false)
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	return f.purgeCheck(dir, false)
 }
 
 // move a file or folder (srcFs, srcRemote, info) to (f, dstRemote)
@@ -836,7 +836,7 @@ func (f *Fs) Hashes() hash.Set {
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	root, err := f.findRoot(false)
 	if err != nil {
 		return "", errors.Wrap(err, "PublicLink failed to find root node")
@@ -871,7 +871,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 			return errors.Errorf("MergeDirs failed to find node for: %v", srcDir)
 		}
 
-		// list the the objects
+		// list the objects
 		infos := []*mega.Node{}
 		_, err := f.list(ctx, srcDirNode, func(info *mega.Node) bool {
 			infos = append(infos, info)

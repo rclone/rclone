@@ -180,35 +180,54 @@ func TestNewRemoteName(t *testing.T) {
 func TestCreateUpatePasswordRemote(t *testing.T) {
 	defer testConfigFile(t, "update.conf")()
 
-	require.NoError(t, CreateRemote("test2", "config_test_remote", rc.Params{
-		"bool": true,
-		"pass": "potato",
-	}))
+	for _, doObscure := range []bool{false, true} {
+		for _, noObscure := range []bool{false, true} {
+			if doObscure && noObscure {
+				break
+			}
+			t.Run(fmt.Sprintf("doObscure=%v,noObscure=%v", doObscure, noObscure), func(t *testing.T) {
+				require.NoError(t, CreateRemote("test2", "config_test_remote", rc.Params{
+					"bool": true,
+					"pass": "potato",
+				}, doObscure, noObscure))
 
-	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "true", FileGet("test2", "bool"))
-	assert.Equal(t, "potato", obscure.MustReveal(FileGet("test2", "pass")))
+				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
+				assert.Equal(t, "true", FileGet("test2", "bool"))
+				gotPw := FileGet("test2", "pass")
+				if !noObscure {
+					gotPw = obscure.MustReveal(gotPw)
+				}
+				assert.Equal(t, "potato", gotPw)
 
-	require.NoError(t, UpdateRemote("test2", rc.Params{
-		"bool":  false,
-		"pass":  obscure.MustObscure("potato2"),
-		"spare": "spare",
-	}))
+				wantPw := obscure.MustObscure("potato2")
+				require.NoError(t, UpdateRemote("test2", rc.Params{
+					"bool":  false,
+					"pass":  wantPw,
+					"spare": "spare",
+				}, doObscure, noObscure))
 
-	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "false", FileGet("test2", "bool"))
-	assert.Equal(t, "potato2", obscure.MustReveal(FileGet("test2", "pass")))
+				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
+				assert.Equal(t, "false", FileGet("test2", "bool"))
+				gotPw = FileGet("test2", "pass")
+				if doObscure {
+					gotPw = obscure.MustReveal(gotPw)
+				}
+				assert.Equal(t, wantPw, gotPw)
 
-	require.NoError(t, PasswordRemote("test2", rc.Params{
-		"pass": "potato3",
-	}))
+				require.NoError(t, PasswordRemote("test2", rc.Params{
+					"pass": "potato3",
+				}))
 
-	assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
-	assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
-	assert.Equal(t, "false", FileGet("test2", "bool"))
-	assert.Equal(t, "potato3", obscure.MustReveal(FileGet("test2", "pass")))
+				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
+				assert.Equal(t, "false", FileGet("test2", "bool"))
+				assert.Equal(t, "potato3", obscure.MustReveal(FileGet("test2", "pass")))
+			})
+		}
+	}
+
 }
 
 // Test some error cases
@@ -409,7 +428,7 @@ func TestFileRefresh(t *testing.T) {
 	defer testConfigFile(t, "refresh.conf")()
 	require.NoError(t, CreateRemote("refresh_test", "config_test_remote", rc.Params{
 		"bool": true,
-	}))
+	}, false, false))
 	b, err := ioutil.ReadFile(ConfigPath)
 	assert.NoError(t, err)
 

@@ -44,6 +44,7 @@ type ConfigInfo struct {
 	StatsLogLevel          LogLevel
 	UseJSONLog             bool
 	DryRun                 bool
+	Interactive            bool
 	CheckSum               bool
 	SizeOnly               bool
 	IgnoreTimes            bool
@@ -59,7 +60,8 @@ type ConfigInfo struct {
 	InsecureSkipVerify     bool // Skip server certificate verification
 	DeleteMode             DeleteMode
 	MaxDelete              int64
-	TrackRenames           bool // Track file renames.
+	TrackRenames           bool   // Track file renames.
+	TrackRenamesStrategy   string // Comma separated list of stratgies used to track renames
 	LowLevelRetries        int
 	UpdateOlder            bool // Skip files that are newer on the destination
 	NoGzip                 bool // Disable compression
@@ -68,7 +70,9 @@ type ConfigInfo struct {
 	IgnoreChecksum         bool
 	IgnoreCaseSync         bool
 	NoTraverse             bool
+	CheckFirst             bool
 	NoCheckDest            bool
+	NoUnicodeNormalization bool
 	NoUpdateModTime        bool
 	DataRateUnit           string
 	CompareDest            string
@@ -79,6 +83,7 @@ type ConfigInfo struct {
 	UseListR               bool
 	BufferSize             SizeSuffix
 	BwLimit                BwTimetable
+	BwLimitFile            BwTimetable
 	TPSLimit               float64
 	TPSLimitBurst          int
 	BindAddr               net.IP
@@ -93,11 +98,13 @@ type ConfigInfo struct {
 	UseServerModTime       bool
 	MaxTransfer            SizeSuffix
 	MaxDuration            time.Duration
+	CutoffMode             CutoffMode
 	MaxBacklog             int
 	MaxStatsGroups         int
 	StatsOneLine           bool
 	StatsOneLineDate       bool   // If we want a date prefix at all
 	StatsOneLineDateFormat string // If we want to customize the prefix
+	ErrorOnNoTransfer      bool   // Set appropriate exit code if no files transferred
 	Progress               bool
 	Cookie                 bool
 	UseMmap                bool
@@ -108,6 +115,10 @@ type ConfigInfo struct {
 	MultiThreadStreams     int
 	MultiThreadSet         bool   // whether MultiThreadStreams was set (set in fs/config/configflags)
 	OrderBy                string // instructions on how to order the transfer
+	UploadHeaders          []*HTTPOption
+	DownloadHeaders        []*HTTPOption
+	Headers                []*HTTPOption
+	RefreshTimes           bool
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -144,10 +155,12 @@ func NewConfig() *ConfigInfo {
 	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)
 	c.MultiThreadStreams = 4
 
+	c.TrackRenamesStrategy = "hash"
+
 	return c
 }
 
-// ConfigToEnv converts an config section and name, eg ("myremote",
+// ConfigToEnv converts a config section and name, eg ("myremote",
 // "ignore-size") into an environment name
 // "RCLONE_CONFIG_MYREMOTE_IGNORE_SIZE"
 func ConfigToEnv(section, name string) string {

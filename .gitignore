@@ -8,3 +8,5 @@ rclone.iml
 .history
 *.test
 *.log
+*.iml
+fuzz-build.zip

@@ -33,6 +33,7 @@ type cacheEntry struct {
 	err      error       // creation error
 	key      string      // key
 	lastUsed time.Time   // time used for expiry
+	pinCount int         // non zero if the entry should not be removed
 }
 
 // CreateFunc is called to create new values.  If the create function
@@ -74,7 +75,27 @@ func (c *Cache) Get(key string, create CreateFunc) (value interface{}, err error
 	return entry.value, entry.err
 }
 
-// Put puts an value named key into the cache
+func (c *Cache) addPin(key string, count int) {
+	c.mu.Lock()
+	entry, ok := c.cache[key]
+	if ok {
+		entry.pinCount += count
+		c.used(entry)
+	}
+	c.mu.Unlock()
+}
+
+// Pin a value in the cache if it exists
+func (c *Cache) Pin(key string) {
+	c.addPin(key, 1)
+}
+
+// Unpin a value in the cache if it exists
+func (c *Cache) Unpin(key string) {
+	c.addPin(key, -1)
+}
+
+// Put puts a value named key into the cache
 func (c *Cache) Put(key string, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -98,13 +119,35 @@ func (c *Cache) GetMaybe(key string) (value interface{}, found bool) {
 	return entry.value, found
 }
 
+// Rename renames the item at oldKey to newKey.
+//
+// If there was an existing item at newKey then it takes precedence
+// and is returned otherwise the item (if any) at oldKey is returned.
+func (c *Cache) Rename(oldKey, newKey string) (value interface{}, found bool) {
+	c.mu.Lock()
+	if newEntry, newFound := c.cache[newKey]; newFound {
+		// If new entry is found use that
+		delete(c.cache, oldKey)
+		value, found = newEntry.value, newFound
+		c.used(newEntry)
+	} else if oldEntry, oldFound := c.cache[oldKey]; oldFound {
+		// If old entry is found rename it to new and use that
+		c.cache[newKey] = oldEntry
+		delete(c.cache, oldKey)
+		c.used(oldEntry)
+		value, found = oldEntry.value, oldFound
+	}
+	c.mu.Unlock()
+	return value, found
+}
+
 // cacheExpire expires any entries that haven't been used recently
 func (c *Cache) cacheExpire() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	now := time.Now()
 	for key, entry := range c.cache {
-		if now.Sub(entry.lastUsed) > c.expireDuration {
+		if entry.pinCount <= 0 && now.Sub(entry.lastUsed) > c.expireDuration {
 			delete(c.cache, key)
 		}
 	}
@@ -116,7 +159,7 @@ func (c *Cache) cacheExpire() {
 	}
 }
 
-// Clear removes everything from the cahce
+// Clear removes everything from the cache
 func (c *Cache) Clear() {
 	c.mu.Lock()
 	for k := range c.cache {

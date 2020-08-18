@@ -1,5 +1,3 @@
-// +build go1.11
-
 // Run tests for all the remotes.  Run this with package names which
 // need integration testing.
 //
@@ -36,7 +34,7 @@ var (
 	testTests    = flag.String("tests", "", "Comma separated list of tests to test, eg 'fs/sync,fs/operations'")
 	clean        = flag.Bool("clean", false, "Instead of testing, clean all left over test directories")
 	runOnly      = flag.String("run", "", "Run only those tests matching the regexp supplied")
-	timeout      = flag.Duration("timeout", 30*time.Minute, "Maximum time to run each test for before giving up")
+	timeout      = flag.Duration("timeout", 60*time.Minute, "Maximum time to run each test for before giving up")
 	configFile   = flag.String("config", "fstest/test_all/config.yaml", "Path to config file")
 	outputDir    = flag.String("output", path.Join(os.TempDir(), "rclone-integration-tests"), "Place to store results")
 	emailReport  = flag.String("email", "", "Set to email the report to the address supplied")
@@ -44,12 +42,13 @@ var (
 	urlBase      = flag.String("url-base", "https://pub.rclone.org/integration-tests/", "Base for the online version")
 	uploadPath   = flag.String("upload", "", "Set this to an rclone path to upload the results here")
 	verbose      = flag.Bool("verbose", false, "Set to enable verbose logging in the tests")
+	listRetries  = flag.Int("list-retries", -1, "Number or times to retry listing - set to override the default")
 )
 
 // if matches then is definitely OK in the shell
 var shellOK = regexp.MustCompile("^[A-Za-z0-9./_:-]+$")
 
-// converts a argv style input into a shell command
+// converts an argv style input into a shell command
 func toShell(args []string) (result string) {
 	for _, arg := range args {
 		if result != "" {
@@ -88,7 +87,7 @@ func main() {
 
 	// Just clean the directories if required
 	if *clean {
-		err := cleanRemotes(conf.Remotes())
+		err := cleanRemotes(conf)
 		if err != nil {
 			log.Fatalf("Failed to clean: %v", err)
 		}

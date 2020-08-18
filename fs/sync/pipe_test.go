@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"container/heap"
 	"context"
 	"sync"
 	"sync/atomic"
@@ -11,6 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Check interface satisfied
+var _ heap.Interface = (*pipe)(nil)
 
 func TestPipe(t *testing.T) {
 	var queueLength int
@@ -139,32 +143,37 @@ func TestPipeOrderBy(t *testing.T) {
 		orderBy  string
 		swapped1 bool
 		swapped2 bool
+		fraction int
 	}{
-		{"", false, true},
-		{"size", false, false},
-		{"name", true, true},
-		{"modtime", false, true},
-		{"size,ascending", false, false},
-		{"name,asc", true, true},
-		{"modtime,ascending", false, true},
-		{"size,descending", true, true},
-		{"name,desc", false, false},
-		{"modtime,descending", true, false},
+		{"", false, true, -1},
+		{"size", false, false, -1},
+		{"name", true, true, -1},
+		{"modtime", false, true, -1},
+		{"size,ascending", false, false, -1},
+		{"name,asc", true, true, -1},
+		{"modtime,ascending", false, true, -1},
+		{"size,descending", true, true, -1},
+		{"name,desc", false, false, -1},
+		{"modtime,descending", true, false, -1},
+		{"size,mixed,50", false, false, 25},
+		{"size,mixed,51", true, true, 75},
 	} {
 		t.Run(test.orderBy, func(t *testing.T) {
 			p, err := newPipe(test.orderBy, stats, 10)
 			require.NoError(t, err)
 
-			ok := p.Put(ctx, pair1)
-			assert.True(t, ok)
-			ok = p.Put(ctx, pair2)
-			assert.True(t, ok)
-
 			readAndCheck := func(swapped bool) {
-				readFirst, ok := p.Get(ctx)
-				assert.True(t, ok)
-				readSecond, ok := p.Get(ctx)
-				assert.True(t, ok)
+				var readFirst, readSecond fs.ObjectPair
+				var ok1, ok2 bool
+				if test.fraction < 0 {
+					readFirst, ok1 = p.Get(ctx)
+					readSecond, ok2 = p.Get(ctx)
+				} else {
+					readFirst, ok1 = p.GetMax(ctx, test.fraction)
+					readSecond, ok2 = p.GetMax(ctx, test.fraction)
+				}
+				assert.True(t, ok1)
+				assert.True(t, ok2)
 
 				if swapped {
 					assert.True(t, readFirst == pair2 && readSecond == pair1)
@@ -172,6 +181,11 @@ func TestPipeOrderBy(t *testing.T) {
 					assert.True(t, readFirst == pair1 && readSecond == pair2)
 				}
 			}
+
+			ok := p.Put(ctx, pair1)
+			assert.True(t, ok)
+			ok = p.Put(ctx, pair2)
+			assert.True(t, ok)
 
 			readAndCheck(test.swapped1)
 
@@ -189,25 +203,37 @@ func TestPipeOrderBy(t *testing.T) {
 
 func TestNewLess(t *testing.T) {
 	t.Run("blankOK", func(t *testing.T) {
-		less, err := newLess("")
+		less, _, err := newLess("")
 		require.NoError(t, err)
 		assert.Nil(t, less)
 	})
 
 	t.Run("tooManyParts", func(t *testing.T) {
-		_, err := newLess("too,many,parts")
+		_, _, err := newLess("size,asc,toomanyparts")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "bad --order-by string")
 	})
 
+	t.Run("tooManyParts2", func(t *testing.T) {
+		_, _, err := newLess("size,mixed,50,toomanyparts")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "bad --order-by string")
+	})
+
+	t.Run("badMixed", func(t *testing.T) {
+		_, _, err := newLess("size,mixed,32.7")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "bad mixed fraction")
+	})
+
 	t.Run("unknownComparison", func(t *testing.T) {
-		_, err := newLess("potato")
+		_, _, err := newLess("potato")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unknown --order-by comparison")
 	})
 
 	t.Run("unknownSortDirection", func(t *testing.T) {
-		_, err := newLess("name,sideways")
+		_, _, err := newLess("name,sideways")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unknown --order-by sort direction")
 	})
@@ -223,19 +249,23 @@ func TestNewLess(t *testing.T) {
 		orderBy        string
 		pair1LessPair2 bool
 		pair2LessPair1 bool
+		wantFraction   int
 	}{
-		{"size", true, false},
-		{"name", false, true},
-		{"modtime", false, false},
-		{"size,ascending", true, false},
-		{"name,asc", false, true},
-		{"modtime,ascending", false, false},
-		{"size,descending", false, true},
-		{"name,desc", true, false},
-		{"modtime,descending", true, true},
+		{"size", true, false, -1},
+		{"name", false, true, -1},
+		{"modtime", false, false, -1},
+		{"size,ascending", true, false, -1},
+		{"name,asc", false, true, -1},
+		{"modtime,ascending", false, false, -1},
+		{"size,descending", false, true, -1},
+		{"name,desc", true, false, -1},
+		{"modtime,descending", true, true, -1},
+		{"modtime,mixed", false, false, 50},
+		{"modtime,mixed,30", false, false, 30},
 	} {
 		t.Run(test.orderBy, func(t *testing.T) {
-			less, err := newLess(test.orderBy)
+			less, gotFraction, err := newLess(test.orderBy)
+			assert.Equal(t, test.wantFraction, gotFraction)
 			require.NoError(t, err)
 			require.NotNil(t, less)
 			pair1LessPair2 := less(pair1, pair2)

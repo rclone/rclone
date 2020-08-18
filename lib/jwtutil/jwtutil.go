@@ -6,10 +6,14 @@ import (
 	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/lib/oauthutil"
 
@@ -54,7 +58,13 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 	if err != nil {
 		return errors.Wrap(err, "jwtutil: failed making auth request")
 	}
+
+	s, err := bodyToString(resp.Body)
+	if err != nil {
+		fs.Debugf(nil, "jwtutil: failed to get response body")
+	}
 	if resp.StatusCode != 200 {
+		err = errors.New(resp.Status)
 		return errors.Wrap(err, "jwtutil: failed making auth request")
 	}
 	defer func() {
@@ -65,8 +75,11 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 	}()
 
 	result := &response{}
-	err = json.NewDecoder(resp.Body).Decode(result)
-	if err != nil || result.AccessToken == "" {
+	err = json.NewDecoder(strings.NewReader(s)).Decode(result)
+	if result.AccessToken == "" && err == nil {
+		err = errors.New("No AccessToken in Response")
+	}
+	if err != nil {
 		return errors.Wrap(err, "jwtutil: failed to get token")
 	}
 	token := &oauth2.Token{
@@ -78,6 +91,16 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 		token.Expiry = time.Now().Add(time.Duration(e) * time.Second)
 	}
 	return oauthutil.PutToken(name, m, token, true)
+}
+
+func bodyToString(responseBody io.Reader) (bodyString string, err error) {
+	bodyBytes, err := ioutil.ReadAll(responseBody)
+	if err != nil {
+		return "", err
+	}
+	bodyString = string(bodyBytes)
+	fs.Debugf(nil, "jwtutil: Response Body: "+bodyString)
+	return bodyString, nil
 }
 
 type response struct {

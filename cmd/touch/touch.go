@@ -16,21 +16,43 @@ import (
 var (
 	notCreateNewFile bool
 	timeAsArgument   string
+	localTime        bool
 )
 
-const defaultLayout string = "060102"
-const layoutDateWithTime = "2006-01-02T15:04:05"
+const (
+	defaultLayout          string = "060102"
+	layoutDateWithTime            = "2006-01-02T15:04:05"
+	layoutDateWithTimeNano        = "2006-01-02T15:04:05.999999999"
+)
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &notCreateNewFile, "no-create", "C", false, "Do not create the file if it does not exist.")
-	flags.StringVarP(cmdFlags, &timeAsArgument, "timestamp", "t", "", "Change the modification times to the specified time instead of the current time of day. The argument is of the form 'YYMMDD' (ex. 17.10.30) or 'YYYY-MM-DDTHH:MM:SS' (ex. 2006-01-02T15:04:05)")
+	flags.StringVarP(cmdFlags, &timeAsArgument, "timestamp", "t", "", "Use specified time instead of the current time of day.")
+	flags.BoolVarP(cmdFlags, &localTime, "localtime", "", false, "Use localtime for timestamp, not UTC.")
 }
 
 var commandDefinition = &cobra.Command{
 	Use:   "touch remote:path",
 	Short: `Create new file or change file modification time.`,
+	Long: `
+Set the modification time on object(s) as specified by remote:path to
+have the current time.
+
+If remote:path does not exist then a zero sized object will be created
+unless the --no-create flag is provided.
+
+If --timestamp is used then it will set the modification time to that
+time instead of the current time. Times may be specified as one of:
+
+- 'YYMMDD' - eg. 17.10.30
+- 'YYYY-MM-DDTHH:MM:SS' - eg. 2006-01-02T15:04:05
+- 'YYYY-MM-DDTHH:MM:SS.SSS' - eg. 2006-01-02T15:04:05.123456789
+
+Note that --timestamp is in UTC if you want local time then add the
+--localtime flag.
+`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc, srcFileName := cmd.NewFsDstFile(args)
@@ -41,14 +63,21 @@ var commandDefinition = &cobra.Command{
 }
 
 //Touch create new file or change file modification time.
-func Touch(ctx context.Context, fsrc fs.Fs, srcFileName string) error {
+func Touch(ctx context.Context, fsrc fs.Fs, srcFileName string) (err error) {
 	timeAtr := time.Now()
 	if timeAsArgument != "" {
 		layout := defaultLayout
 		if len(timeAsArgument) == len(layoutDateWithTime) {
 			layout = layoutDateWithTime
+		} else if len(timeAsArgument) > len(layoutDateWithTime) {
+			layout = layoutDateWithTimeNano
 		}
-		timeAtrFromFlags, err := time.Parse(layout, timeAsArgument)
+		var timeAtrFromFlags time.Time
+		if localTime {
+			timeAtrFromFlags, err = time.ParseInLocation(layout, timeAsArgument, time.Local)
+		} else {
+			timeAtrFromFlags, err = time.Parse(layout, timeAsArgument)
+		}
 		if err != nil {
 			return errors.Wrap(err, "failed to parse date/time argument")
 		}

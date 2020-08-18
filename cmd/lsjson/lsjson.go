@@ -29,6 +29,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object.")
 	flags.BoolVarP(cmdFlags, &opt.FilesOnly, "files-only", "", false, "Show only files in the listing.")
 	flags.BoolVarP(cmdFlags, &opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing.")
+	flags.StringArrayVarP(cmdFlags, &opt.HashTypes, "hash-type", "", nil, "Show only this hash type (may be repeated).")
 }
 
 var commandDefinition = &cobra.Command{
@@ -58,17 +59,25 @@ The output is an array of Items, where each Item looks like this
       "Tier" : "hot",
    }
 
-If --hash is not specified the Hashes property won't be emitted.
+If --hash is not specified the Hashes property won't be emitted. The
+types of hash can be specified with the --hash-type parameter (which
+may be repeated). If --hash-type is set then it implies --hash.
 
-If --no-modtime is specified then ModTime will be blank. This can speed things up on remotes where reading the ModTime takes an extra request (eg s3, swift).
+If --no-modtime is specified then ModTime will be blank. This can
+speed things up on remotes where reading the ModTime takes an extra
+request (eg s3, swift).
 
-If --no-mimetype is specified then MimeType will be blank. This can speed things up on remotes where reading the MimeType takes an extra request (eg s3, swift).
+If --no-mimetype is specified then MimeType will be blank. This can
+speed things up on remotes where reading the MimeType takes an extra
+request (eg s3, swift).
 
 If --encrypted is not specified the Encrypted won't be emitted.
 
-If --dirs-only is not specified files in addition to directories are returned
+If --dirs-only is not specified files in addition to directories are
+returned
 
-If --files-only is not specified directories in addition to the files will be returned.
+If --files-only is not specified directories in addition to the files
+will be returned.
 
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"

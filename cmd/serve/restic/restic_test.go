@@ -41,7 +41,7 @@ func TestRestic(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Start the server
-	w := newServer(fremote, &opt)
+	w := NewServer(fremote, &opt)
 	assert.NoError(t, w.Serve())
 	defer func() {
 		w.Close()
@@ -61,6 +61,7 @@ func TestRestic(t *testing.T) {
 		cmd := exec.Command("go", args...)
 		cmd.Env = append(os.Environ(),
 			"RESTIC_TEST_REST_REPOSITORY=rest:"+w.Server.URL()+path,
+			"GO111MODULE=on",
 		)
 		out, err := cmd.CombinedOutput()
 		if len(out) != 0 {

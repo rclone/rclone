@@ -1,6 +1,6 @@
 SHELL = bash
 # Branch we are working on
-BRANCH := $(or $(APPVEYOR_REPO_BRANCH),$(TRAVIS_BRANCH),$(BUILD_SOURCEBRANCHNAME),$(lastword $(subst /, ,$(GITHUB_REF))),$(shell git rev-parse --abbrev-ref HEAD))
+BRANCH := $(or $(BUILD_SOURCEBRANCHNAME),$(lastword $(subst /, ,$(GITHUB_REF))),$(shell git rev-parse --abbrev-ref HEAD))
 # Tag of the current commit, if any.  If this is not "" then we are building a release
 RELEASE_TAG := $(shell git tag -l --points-at HEAD)
 # Version of last release (may not be on this branch)
@@ -27,7 +27,6 @@ ifndef RELEASE_TAG
 	TAG := $(TAG)-beta
 endif
 GO_VERSION := $(shell go version)
-GO_FILES := $(shell go list ./... | grep -v /vendor/ )
 ifdef BETA_SUBDIR
 	BETA_SUBDIR := /$(BETA_SUBDIR)
 endif
@@ -61,6 +60,10 @@ vars:
 	@echo GO_VERSION="'$(GO_VERSION)'"
 	@echo BETA_URL="'$(BETA_URL)'"
 
+btest:
+	@echo "[$(TAG)]($(BETA_URL)) on branch [$(BRANCH)](https://github.com/rclone/rclone/tree/$(BRANCH)) (uploaded in 15-30 mins)" | xclip -r -sel clip
+	@echo "Copied markdown of beta release to clip board"
+
 version:
 	@echo '$(TAG)'
 
@@ -71,10 +74,10 @@ test:	rclone test_all
 
 # Quick test
 quicktest:
-	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) $(GO_FILES)
+	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) ./...
 
 racequicktest:
-	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -cpu=2 -race $(GO_FILES)
+	RCLONE_CONFIG="/notfound" go test $(BUILDTAGS) -cpu=2 -race ./...
 
 # Do source code quality checks
 check:	rclone
@@ -86,35 +89,43 @@ check:	rclone
 build_dep:
 	go run bin/get-github-release.go -extract golangci-lint golangci/golangci-lint 'golangci-lint-.*\.tar\.gz'
 
-# Get the release dependencies
-release_dep:
+# Get the release dependencies we only install on linux
+release_dep_linux:
 	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*_Linux_x86_64.tar.gz'
 	go run bin/get-github-release.go -extract github-release aktau/github-release 'linux-amd64-github-release.tar.bz2'
 
+# Get the release dependencies we only install on Windows
+release_dep_windows:
+	GO111MODULE=off GOOS="" GOARCH="" go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
+
 # Update dependencies
+showupdates:
+	@echo "*** Direct dependencies that could be updated ***"
+	@GO111MODULE=on go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
+
+# Update direct and indirect dependencies and test dependencies
 update:
-	GO111MODULE=on go get -u ./...
+	GO111MODULE=on go get -u -t ./...
+	-#GO111MODULE=on go get -d $(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all)
 	GO111MODULE=on go mod tidy
-	GO111MODULE=on go mod vendor
 
 # Tidy the module dependencies
 tidy:
 	GO111MODULE=on go mod tidy
-	GO111MODULE=on go mod vendor
 
 doc:	rclone.1 MANUAL.html MANUAL.txt rcdocs commanddocs
 
 rclone.1:	MANUAL.md
-	pandoc -s --from markdown --to man MANUAL.md -o rclone.1
+	pandoc -s --from markdown-smart --to man MANUAL.md -o rclone.1
 
 MANUAL.md:	bin/make_manual.py docs/content/*.md commanddocs backenddocs
 	./bin/make_manual.py
 
 MANUAL.html:	MANUAL.md
-	pandoc -s --from markdown --to html MANUAL.md -o MANUAL.html
+	pandoc -s --from markdown-smart --to html MANUAL.md -o MANUAL.html
 
 MANUAL.txt:	MANUAL.md
-	pandoc -s --from markdown --to plain MANUAL.md -o MANUAL.txt
+	pandoc -s --from markdown-smart --to plain MANUAL.md -o MANUAL.txt
 
 commanddocs: rclone
 	XDG_CACHE_HOME="" XDG_CONFIG_HOME="" HOME="\$$HOME" USER="\$$USER" rclone gendocs docs/content/
@@ -136,10 +147,18 @@ clean:
 	rm -f rclone fs/operations/operations.test fs/sync/sync.test fs/test_all.log test.log
 
 website:
+	rm -rf docs/public
 	cd docs && hugo
+	@if grep -R "raw HTML omitted" docs/public ; then echo "ERROR: found unescaped HTML - fix the markdown source" ; fi
 
 upload_website:	website
 	rclone -v sync docs/public memstore:www-rclone-org
+
+upload_test_website:	website
+	rclone -P sync docs/public test-rclone-org:
+
+validate_website: website
+	find docs/public -type f -name "*.html" | xargs tidy --mute-id yes -errors --gnu-emacs yes --drop-empty-elements no --warn-proprietary-attributes no --mute MISMATCHED_ATTRIBUTE_WARN
 
 tarball:
 	git archive -9 --format=tar.gz --prefix=rclone-$(TAG)/ -o build/rclone-$(TAG).tar.gz $(TAG)
@@ -175,14 +194,7 @@ log_since_last_release:
 compile_all:
 	go run bin/cross-compile.go -compile-only $(BUILDTAGS) $(TAG)
 
-appveyor_upload:
-	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
-ifndef BRANCH_PATH
-	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)
-endif
-	@echo Beta release ready at $(BETA_URL)
-
-circleci_upload:
+ci_upload:
 	sudo chown -R $$USER build
 	find build -type l -delete
 	gzip -r9v build
@@ -192,10 +204,7 @@ ifndef BRANCH_PATH
 endif
 	@echo Beta release ready at $(BETA_URL)/testbuilds
 
-travis_beta:
-ifeq (linux,$(filter linux,$(subst Linux,linux,$(TRAVIS_OS_NAME) $(AGENT_OS))))
-	go run bin/get-github-release.go -extract nfpm goreleaser/nfpm 'nfpm_.*\.tar.gz'
-endif
+ci_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt
 	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
@@ -204,12 +213,12 @@ ifndef BRANCH_PATH
 endif
 	@echo Beta release ready at $(BETA_URL)
 
-# Fetch the binary builds from travis and appveyor
+# Fetch the binary builds from GitHub actions
 fetch_binaries:
 	rclone -P sync --exclude "/testbuilds/**" --delete-excluded $(BETA_UPLOAD) build/
 
 serve:	website
-	cd docs && hugo server -v -w
+	cd docs && hugo server -v -w --disableFastRender
 
 tag:	doc
 	@echo "Old tag is $(VERSION)"

@@ -66,6 +66,7 @@ const (
 	exitCodeNoRetryError
 	exitCodeFatalError
 	exitCodeTransferExceeded
+	exitCodeNoFilesTransferred
 )
 
 // ShowVersion prints the version to stdout
@@ -75,7 +76,7 @@ func ShowVersion() {
 	fmt.Printf("- go version: %s\n", runtime.Version())
 }
 
-// NewFsFile creates a Fs from a name but may point to a file.
+// NewFsFile creates an Fs from a name but may point to a file.
 //
 // It returns a string with the file name if points to a file
 // otherwise "".
@@ -98,7 +99,7 @@ func NewFsFile(remote string) (fs.Fs, string) {
 	return nil, ""
 }
 
-// newFsFileAddFilter creates a src Fs from a name
+// newFsFileAddFilter creates an src Fs from a name
 //
 // This works the same as NewFsFile however it adds filters to the Fs
 // to limit it to a single file if the remote pointed to a file.
@@ -226,7 +227,7 @@ func ShowStats() bool {
 
 // Run the function with stats and retries if required
 func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
-	var err error
+	var cmdErr error
 	stopStats := func() {}
 	if !showStats && ShowStats() {
 		showStats = true
@@ -238,11 +239,11 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	}
 	SigInfoHandler()
 	for try := 1; try <= *retries; try++ {
-		err = f()
-		err = fs.CountError(err)
+		cmdErr = f()
+		cmdErr = fs.CountError(cmdErr)
 		lastErr := accounting.GlobalStats().GetLastError()
-		if err == nil {
-			err = lastErr
+		if cmdErr == nil {
+			cmdErr = lastErr
 		}
 		if !Retry || !accounting.GlobalStats().Errored() {
 			if try > 1 {
@@ -278,15 +279,6 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 	}
 	stopStats()
-	if err != nil {
-		nerrs := accounting.GlobalStats().GetErrors()
-		if nerrs <= 1 {
-			log.Printf("Failed to %s: %v", cmd.Name(), err)
-		} else {
-			log.Printf("Failed to %s with %d errors: last error was: %v", cmd.Name(), nerrs, err)
-		}
-		resolveExitCode(err)
-	}
 	if showStats && (accounting.GlobalStats().Errored() || *statsInterval > 0) {
 		accounting.GlobalStats().Log()
 	}
@@ -294,7 +286,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 
 	// dump all running go-routines
 	if fs.Config.Dump&fs.DumpGoRoutines != 0 {
-		err = pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
+		err := pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 		if err != nil {
 			fs.Errorf(nil, "Failed to dump goroutines: %v", err)
 		}
@@ -305,15 +297,23 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		c := exec.Command("lsof", "-p", strconv.Itoa(os.Getpid()))
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
-		err = c.Run()
+		err := c.Run()
 		if err != nil {
 			fs.Errorf(nil, "Failed to list open files: %v", err)
 		}
 	}
 
-	if accounting.GlobalStats().Errored() {
-		resolveExitCode(accounting.GlobalStats().GetLastError())
+	// Log the final error message and exit
+	if cmdErr != nil {
+		nerrs := accounting.GlobalStats().GetErrors()
+		if nerrs <= 1 {
+			log.Printf("Failed to %s: %v", cmd.Name(), cmdErr)
+		} else {
+			log.Printf("Failed to %s with %d errors: last error was: %v", cmd.Name(), nerrs, cmdErr)
+		}
 	}
+	resolveExitCode(cmdErr)
+
 }
 
 // CheckArgs checks there are enough arguments and prints a message if not
@@ -432,6 +432,11 @@ func initConfig() {
 func resolveExitCode(err error) {
 	atexit.Run()
 	if err == nil {
+		if fs.Config.ErrorOnNoTransfer {
+			if accounting.GlobalStats().GetTransfers() == 0 {
+				os.Exit(exitCodeNoFilesTransferred)
+			}
+		}
 		os.Exit(exitCodeSuccess)
 	}
 
@@ -481,6 +486,9 @@ func AddBackendFlags() {
 					help = help[:nl]
 				}
 				help = strings.TrimSpace(help)
+				if opt.IsPassword {
+					help += " (obscured)"
+				}
 				flag := pflag.CommandLine.VarPF(opt, name, opt.ShortOpt, help)
 				if _, isBool := opt.Default.(bool); isBool {
 					flag.NoOptDefVal = "true"

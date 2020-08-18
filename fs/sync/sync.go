@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,41 +30,65 @@ type syncCopyMove struct {
 	deleteEmptySrcDirs bool
 	dir                string
 	// internal state
-	ctx             context.Context        // internal context for controlling go-routines
-	cancel          func()                 // cancel the context
-	noTraverse      bool                   // if set don't traverse the dst
-	noCheckDest     bool                   // if set transfer all objects regardless without checking dst
-	deletersWg      sync.WaitGroup         // for delete before go routine
-	deleteFilesCh   chan fs.Object         // channel to receive deletes if delete before
-	trackRenames    bool                   // set if we should do server side renames
-	dstFilesMu      sync.Mutex             // protect dstFiles
-	dstFiles        map[string]fs.Object   // dst files, always filled
-	srcFiles        map[string]fs.Object   // src files, only used if deleteBefore
-	srcFilesChan    chan fs.Object         // passes src objects
-	srcFilesResult  chan error             // error result of src listing
-	dstFilesResult  chan error             // error result of dst listing
-	dstEmptyDirsMu  sync.Mutex             // protect dstEmptyDirs
-	dstEmptyDirs    map[string]fs.DirEntry // potentially empty directories
-	srcEmptyDirsMu  sync.Mutex             // protect srcEmptyDirs
-	srcEmptyDirs    map[string]fs.DirEntry // potentially empty directories
-	checkerWg       sync.WaitGroup         // wait for checkers
-	toBeChecked     *pipe                  // checkers channel
-	transfersWg     sync.WaitGroup         // wait for transfers
-	toBeUploaded    *pipe                  // copiers channel
-	errorMu         sync.Mutex             // Mutex covering the errors variables
-	err             error                  // normal error from copy process
-	noRetryErr      error                  // error with NoRetry set
-	fatalErr        error                  // fatal error
-	commonHash      hash.Type              // common hash type between src and dst
-	renameMapMu     sync.Mutex             // mutex to protect the below
-	renameMap       map[string][]fs.Object // dst files by hash - only used by trackRenames
-	renamerWg       sync.WaitGroup         // wait for renamers
-	toBeRenamed     *pipe                  // renamers channel
-	trackRenamesWg  sync.WaitGroup         // wg for background track renames
-	trackRenamesCh  chan fs.Object         // objects are pumped in here
-	renameCheck     []fs.Object            // accumulate files to check for rename here
-	compareCopyDest fs.Fs                  // place to check for files to server side copy
-	backupDir       fs.Fs                  // place to store overwrites/deletes
+	ctx                    context.Context        // internal context for controlling go-routines
+	cancel                 func()                 // cancel the context
+	noTraverse             bool                   // if set don't traverse the dst
+	noCheckDest            bool                   // if set transfer all objects regardless without checking dst
+	noUnicodeNormalization bool                   // don't normalize unicode characters in filenames
+	deletersWg             sync.WaitGroup         // for delete before go routine
+	deleteFilesCh          chan fs.Object         // channel to receive deletes if delete before
+	trackRenames           bool                   // set if we should do server side renames
+	trackRenamesStrategy   trackRenamesStrategy   // stratgies used for tracking renames
+	dstFilesMu             sync.Mutex             // protect dstFiles
+	dstFiles               map[string]fs.Object   // dst files, always filled
+	srcFiles               map[string]fs.Object   // src files, only used if deleteBefore
+	srcFilesChan           chan fs.Object         // passes src objects
+	srcFilesResult         chan error             // error result of src listing
+	dstFilesResult         chan error             // error result of dst listing
+	dstEmptyDirsMu         sync.Mutex             // protect dstEmptyDirs
+	dstEmptyDirs           map[string]fs.DirEntry // potentially empty directories
+	srcEmptyDirsMu         sync.Mutex             // protect srcEmptyDirs
+	srcEmptyDirs           map[string]fs.DirEntry // potentially empty directories
+	checkerWg              sync.WaitGroup         // wait for checkers
+	toBeChecked            *pipe                  // checkers channel
+	transfersWg            sync.WaitGroup         // wait for transfers
+	toBeUploaded           *pipe                  // copiers channel
+	errorMu                sync.Mutex             // Mutex covering the errors variables
+	err                    error                  // normal error from copy process
+	noRetryErr             error                  // error with NoRetry set
+	fatalErr               error                  // fatal error
+	commonHash             hash.Type              // common hash type between src and dst
+	modifyWindow           time.Duration          // modify window between fsrc, fdst
+	renameMapMu            sync.Mutex             // mutex to protect the below
+	renameMap              map[string][]fs.Object // dst files by hash - only used by trackRenames
+	renamerWg              sync.WaitGroup         // wait for renamers
+	toBeRenamed            *pipe                  // renamers channel
+	trackRenamesWg         sync.WaitGroup         // wg for background track renames
+	trackRenamesCh         chan fs.Object         // objects are pumped in here
+	renameCheck            []fs.Object            // accumulate files to check for rename here
+	compareCopyDest        fs.Fs                  // place to check for files to server side copy
+	backupDir              fs.Fs                  // place to store overwrites/deletes
+	checkFirst             bool                   // if set run all the checkers before starting transfers
+}
+
+type trackRenamesStrategy byte
+
+const (
+	trackRenamesStrategyHash trackRenamesStrategy = 1 << iota
+	trackRenamesStrategyModtime
+	trackRenamesStrategyLeaf
+)
+
+func (strategy trackRenamesStrategy) hash() bool {
+	return (strategy & trackRenamesStrategyHash) != 0
+}
+
+func (strategy trackRenamesStrategy) modTime() bool {
+	return (strategy & trackRenamesStrategyModtime) != 0
+}
+
+func (strategy trackRenamesStrategy) leaf() bool {
+	return (strategy & trackRenamesStrategyLeaf) != 0
 }
 
 func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) (*syncCopyMove, error) {
@@ -71,35 +96,43 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
 	s := &syncCopyMove{
-		fdst:               fdst,
-		fsrc:               fsrc,
-		deleteMode:         deleteMode,
-		DoMove:             DoMove,
-		copyEmptySrcDirs:   copyEmptySrcDirs,
-		deleteEmptySrcDirs: deleteEmptySrcDirs,
-		dir:                "",
-		srcFilesChan:       make(chan fs.Object, fs.Config.Checkers+fs.Config.Transfers),
-		srcFilesResult:     make(chan error, 1),
-		dstFilesResult:     make(chan error, 1),
-		dstEmptyDirs:       make(map[string]fs.DirEntry),
-		srcEmptyDirs:       make(map[string]fs.DirEntry),
-		noTraverse:         fs.Config.NoTraverse,
-		noCheckDest:        fs.Config.NoCheckDest,
-		deleteFilesCh:      make(chan fs.Object, fs.Config.Checkers),
-		trackRenames:       fs.Config.TrackRenames,
-		commonHash:         fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
-		trackRenamesCh:     make(chan fs.Object, fs.Config.Checkers),
+		fdst:                   fdst,
+		fsrc:                   fsrc,
+		deleteMode:             deleteMode,
+		DoMove:                 DoMove,
+		copyEmptySrcDirs:       copyEmptySrcDirs,
+		deleteEmptySrcDirs:     deleteEmptySrcDirs,
+		dir:                    "",
+		srcFilesChan:           make(chan fs.Object, fs.Config.Checkers+fs.Config.Transfers),
+		srcFilesResult:         make(chan error, 1),
+		dstFilesResult:         make(chan error, 1),
+		dstEmptyDirs:           make(map[string]fs.DirEntry),
+		srcEmptyDirs:           make(map[string]fs.DirEntry),
+		noTraverse:             fs.Config.NoTraverse,
+		noCheckDest:            fs.Config.NoCheckDest,
+		noUnicodeNormalization: fs.Config.NoUnicodeNormalization,
+		deleteFilesCh:          make(chan fs.Object, fs.Config.Checkers),
+		trackRenames:           fs.Config.TrackRenames,
+		commonHash:             fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
+		modifyWindow:           fs.GetModifyWindow(fsrc, fdst),
+		trackRenamesCh:         make(chan fs.Object, fs.Config.Checkers),
+		checkFirst:             fs.Config.CheckFirst,
+	}
+	backlog := fs.Config.MaxBacklog
+	if s.checkFirst {
+		fs.Infof(s.fdst, "Running all checks before starting transfers")
+		backlog = -1
 	}
 	var err error
-	s.toBeChecked, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetCheckQueue, fs.Config.MaxBacklog)
+	s.toBeChecked, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetCheckQueue, backlog)
 	if err != nil {
 		return nil, err
 	}
-	s.toBeUploaded, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetTransferQueue, fs.Config.MaxBacklog)
+	s.toBeUploaded, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetTransferQueue, backlog)
 	if err != nil {
 		return nil, err
 	}
-	s.toBeRenamed, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetRenameQueue, fs.Config.MaxBacklog)
+	s.toBeRenamed, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetRenameQueue, backlog)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +147,10 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
 		fs.Errorf(nil, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
+	}
+	s.trackRenamesStrategy, err = parseTrackRenamesStrategy(fs.Config.TrackRenamesStrategy)
+	if err != nil {
+		return nil, err
 	}
 	if s.noCheckDest {
 		if s.deleteMode != fs.DeleteModeOff {
@@ -132,10 +169,16 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 			fs.Errorf(fdst, "Ignoring --track-renames as the destination does not support server-side move or copy")
 			s.trackRenames = false
 		}
-		if s.commonHash == hash.None {
+		if s.trackRenamesStrategy.hash() && s.commonHash == hash.None {
 			fs.Errorf(fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
 			s.trackRenames = false
 		}
+
+		if s.trackRenamesStrategy.modTime() && s.modifyWindow == fs.ModTimeNotSupported {
+			fs.Errorf(fdst, "Ignoring --track-renames as either the source or destination do not support modtime")
+			s.trackRenames = false
+		}
+
 		if s.deleteMode == fs.DeleteModeOff {
 			fs.Errorf(fdst, "Ignoring --track-renames as it doesn't work with copy or move, only sync")
 			s.trackRenames = false
@@ -241,10 +284,10 @@ func (s *syncCopyMove) currentError() error {
 // pairChecker reads Objects~s on in send to out if they need transferring.
 //
 // FIXME potentially doing lots of hashes at once
-func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
+func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		pair, ok := in.Get(s.ctx)
+		pair, ok := in.GetMax(s.ctx, fraction)
 		if !ok {
 			return
 		}
@@ -297,10 +340,10 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, wg *sync.WaitGroup) {
 
 // pairRenamer reads Objects~s on in and attempts to rename them,
 // otherwise it sends them out if they need transferring.
-func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, wg *sync.WaitGroup) {
+func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		pair, ok := in.Get(s.ctx)
+		pair, ok := in.GetMax(s.ctx, fraction)
 		if !ok {
 			return
 		}
@@ -316,11 +359,11 @@ func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, wg *sync.WaitGroup) {
 }
 
 // pairCopyOrMove reads Objects on in and moves or copies them.
-func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs, wg *sync.WaitGroup) {
+func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs, fraction int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	var err error
 	for {
-		pair, ok := in.Get(s.ctx)
+		pair, ok := in.GetMax(s.ctx, fraction)
 		if !ok {
 			return
 		}
@@ -338,14 +381,15 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 func (s *syncCopyMove) startCheckers() {
 	s.checkerWg.Add(fs.Config.Checkers)
 	for i := 0; i < fs.Config.Checkers; i++ {
-		go s.pairChecker(s.toBeChecked, s.toBeUploaded, &s.checkerWg)
+		fraction := (100 * i) / fs.Config.Checkers
+		go s.pairChecker(s.toBeChecked, s.toBeUploaded, fraction, &s.checkerWg)
 	}
 }
 
 // This stops the background checkers
 func (s *syncCopyMove) stopCheckers() {
 	s.toBeChecked.Close()
-	fs.Infof(s.fdst, "Waiting for checks to finish")
+	fs.Debugf(s.fdst, "Waiting for checks to finish")
 	s.checkerWg.Wait()
 }
 
@@ -353,14 +397,15 @@ func (s *syncCopyMove) stopCheckers() {
 func (s *syncCopyMove) startTransfers() {
 	s.transfersWg.Add(fs.Config.Transfers)
 	for i := 0; i < fs.Config.Transfers; i++ {
-		go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, &s.transfersWg)
+		fraction := (100 * i) / fs.Config.Transfers
+		go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, fraction, &s.transfersWg)
 	}
 }
 
 // This stops the background transfers
 func (s *syncCopyMove) stopTransfers() {
 	s.toBeUploaded.Close()
-	fs.Infof(s.fdst, "Waiting for transfers to finish")
+	fs.Debugf(s.fdst, "Waiting for transfers to finish")
 	s.transfersWg.Wait()
 }
 
@@ -371,7 +416,8 @@ func (s *syncCopyMove) startRenamers() {
 	}
 	s.renamerWg.Add(fs.Config.Checkers)
 	for i := 0; i < fs.Config.Checkers; i++ {
-		go s.pairRenamer(s.toBeRenamed, s.toBeUploaded, &s.renamerWg)
+		fraction := (100 * i) / fs.Config.Checkers
+		go s.pairRenamer(s.toBeRenamed, s.toBeUploaded, fraction, &s.renamerWg)
 	}
 }
 
@@ -381,7 +427,7 @@ func (s *syncCopyMove) stopRenamers() {
 		return
 	}
 	s.toBeRenamed.Close()
-	fs.Infof(s.fdst, "Waiting for renames to finish")
+	fs.Debugf(s.fdst, "Waiting for renames to finish")
 	s.renamerWg.Wait()
 }
 
@@ -557,20 +603,61 @@ func (s *syncCopyMove) srcParentDirCheck(entry fs.DirEntry) {
 	}
 }
 
-// renameHash makes a string with the size and the hash for rename detection
+// parseTrackRenamesStrategy turns a config string into a trackRenamesStrategy
+func parseTrackRenamesStrategy(strategies string) (strategy trackRenamesStrategy, err error) {
+	if len(strategies) == 0 {
+		return strategy, nil
+	}
+	for _, s := range strings.Split(strategies, ",") {
+		switch s {
+		case "hash":
+			strategy |= trackRenamesStrategyHash
+		case "modtime":
+			strategy |= trackRenamesStrategyModtime
+		case "leaf":
+			strategy |= trackRenamesStrategyLeaf
+		case "size":
+			// ignore
+		default:
+			return strategy, errors.Errorf("unknown track renames strategy %q", s)
+		}
+	}
+	return strategy, nil
+}
+
+// renameID makes a string with the size and the other identifiers of the requested rename strategies
 //
 // it may return an empty string in which case no hash could be made
-func (s *syncCopyMove) renameHash(obj fs.Object) (hash string) {
-	var err error
-	hash, err = obj.Hash(s.ctx, s.commonHash)
-	if err != nil {
-		fs.Debugf(obj, "Hash failed: %v", err)
-		return ""
+func (s *syncCopyMove) renameID(obj fs.Object, renamesStrategy trackRenamesStrategy, precision time.Duration) string {
+	var builder strings.Builder
+
+	fmt.Fprintf(&builder, "%d", obj.Size())
+
+	if renamesStrategy.hash() {
+		var err error
+		hash, err := obj.Hash(s.ctx, s.commonHash)
+
+		if err != nil {
+			fs.Debugf(obj, "Hash failed: %v", err)
+			return ""
+		}
+		if hash == "" {
+			return ""
+		}
+
+		builder.WriteRune(',')
+		builder.WriteString(hash)
 	}
-	if hash == "" {
-		return ""
+
+	// for renamesStrategy.modTime() we don't add to the hash but we check the times in
+	// popRenameMap
+
+	if renamesStrategy.leaf() {
+		builder.WriteRune(',')
+		builder.WriteString(path.Base(obj.Remote()))
 	}
-	return fmt.Sprintf("%d,%s", obj.Size(), hash)
+
+	return builder.String()
 }
 
 // pushRenameMap adds the object with hash to the rename map
@@ -582,18 +669,41 @@ func (s *syncCopyMove) pushRenameMap(hash string, obj fs.Object) {
 
 // popRenameMap finds the object with hash and pop the first match from
 // renameMap or returns nil if not found.
-func (s *syncCopyMove) popRenameMap(hash string) (dst fs.Object) {
+func (s *syncCopyMove) popRenameMap(hash string, src fs.Object) (dst fs.Object) {
 	s.renameMapMu.Lock()
+	defer s.renameMapMu.Unlock()
 	dsts, ok := s.renameMap[hash]
 	if ok && len(dsts) > 0 {
-		dst, dsts = dsts[0], dsts[1:]
+		// Element to remove
+		i := 0
+
+		// If using track renames strategy modtime then we need to check the modtimes here
+		if s.trackRenamesStrategy.modTime() {
+			i = -1
+			srcModTime := src.ModTime(s.ctx)
+			for j, dst := range dsts {
+				dstModTime := dst.ModTime(s.ctx)
+				dt := dstModTime.Sub(srcModTime)
+				if dt < s.modifyWindow && dt > -s.modifyWindow {
+					i = j
+					break
+				}
+			}
+			// If nothing matched then return nil
+			if i < 0 {
+				return nil
+			}
+		}
+
+		// Remove the entry and return it
+		dst = dsts[i]
+		dsts = append(dsts[:i], dsts[i+1:]...)
 		if len(dsts) > 0 {
 			s.renameMap[hash] = dsts
 		} else {
 			delete(s.renameMap, hash)
 		}
 	}
-	s.renameMapMu.Unlock()
 	return dst
 }
 
@@ -623,10 +733,12 @@ func (s *syncCopyMove) makeRenameMap() {
 				// only create hash for dst fs.Object if its size could match
 				if _, found := possibleSizes[obj.Size()]; found {
 					tr := accounting.Stats(s.ctx).NewCheckingTransfer(obj)
-					hash := s.renameHash(obj)
+					hash := s.renameID(obj, s.trackRenamesStrategy, s.modifyWindow)
+
 					if hash != "" {
 						s.pushRenameMap(hash, obj)
 					}
+
 					tr.Done(nil)
 				}
 			}
@@ -636,17 +748,18 @@ func (s *syncCopyMove) makeRenameMap() {
 	fs.Infof(s.fdst, "Finished making map for --track-renames")
 }
 
-// tryRename renames a src object when doing track renames if
+// tryRename renames an src object when doing track renames if
 // possible, it returns true if the object was renamed.
 func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	// Calculate the hash of the src object
-	hash := s.renameHash(src)
+	hash := s.renameID(src, s.trackRenamesStrategy, fs.GetModifyWindow(s.fsrc, s.fdst))
+
 	if hash == "" {
 		return false
 	}
 
 	// Get a match on fdst
-	dst := s.popRenameMap(hash)
+	dst := s.popRenameMap(hash, src)
 	if dst == nil {
 		return false
 	}
@@ -686,7 +799,9 @@ func (s *syncCopyMove) run() error {
 	// Start background checking and transferring pipeline
 	s.startCheckers()
 	s.startRenamers()
-	s.startTransfers()
+	if !s.checkFirst {
+		s.startTransfers()
+	}
 	s.startDeleters()
 	s.dstFiles = make(map[string]fs.Object)
 
@@ -694,14 +809,15 @@ func (s *syncCopyMove) run() error {
 
 	// set up a march over fdst and fsrc
 	m := &march.March{
-		Ctx:           s.ctx,
-		Fdst:          s.fdst,
-		Fsrc:          s.fsrc,
-		Dir:           s.dir,
-		NoTraverse:    s.noTraverse,
-		Callback:      s,
-		DstIncludeAll: filter.Active.Opt.DeleteExcluded,
-		NoCheckDest:   s.noCheckDest,
+		Ctx:                    s.ctx,
+		Fdst:                   s.fdst,
+		Fsrc:                   s.fsrc,
+		Dir:                    s.dir,
+		NoTraverse:             s.noTraverse,
+		Callback:               s,
+		DstIncludeAll:          filter.Active.Opt.DeleteExcluded,
+		NoCheckDest:            s.noCheckDest,
+		NoUnicodeNormalization: s.noUnicodeNormalization,
 	}
 	s.processError(m.Run())
 
@@ -720,6 +836,10 @@ func (s *syncCopyMove) run() error {
 
 	// Stop background checking and transferring pipeline
 	s.stopCheckers()
+	if s.checkFirst {
+		fs.Infof(s.fdst, "Checks finished, now starting transfers")
+		s.startTransfers()
+	}
 	s.stopRenamers()
 	s.stopTransfers()
 	s.stopDeleters()
@@ -755,6 +875,10 @@ func (s *syncCopyMove) run() error {
 
 	// Read the error out of the context if there is one
 	s.processError(s.ctx.Err())
+
+	if s.deleteMode != fs.DeleteModeOnly && accounting.Stats(s.ctx).GetTransfers() == 0 {
+		fs.Infof(nil, "There was nothing to transfer")
+	}
 
 	// cancel the context to free resources
 	s.cancel()
@@ -875,11 +999,15 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 		// Do the same thing to the entire contents of the directory
 		_, ok := dst.(fs.Directory)
 		if ok {
-			// Record the src directory for deletion
-			s.srcEmptyDirsMu.Lock()
-			s.srcParentDirCheck(src)
-			s.srcEmptyDirs[src.Remote()] = src
-			s.srcEmptyDirsMu.Unlock()
+			// Only record matched (src & dst) empty dirs when performing move
+			if s.DoMove {
+				// Record the src directory for deletion
+				s.srcEmptyDirsMu.Lock()
+				s.srcParentDirCheck(src)
+				s.srcEmptyDirs[src.Remote()] = src
+				s.srcEmptyDirsMu.Unlock()
+			}
+
 			return true
 		}
 		// FIXME src is dir, dst is file
@@ -951,8 +1079,7 @@ func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
 	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && operations.SameConfig(fsrc, fdst) && filter.Active.InActive() {
-		if fs.Config.DryRun {
-			fs.Logf(fdst, "Not doing server side directory move as --dry-run")
+		if operations.SkipDestructive(ctx, fdst, "server side directory move") {
 			return nil
 		}
 		fs.Debugf(fdst, "Using server side directory move")

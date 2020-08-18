@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/sirupsen/logrus"
 )
 
 // Options contains options for the remote control server
@@ -120,6 +121,7 @@ func InitLogging() {
 			fs.Errorf(nil, "Failed to seek log file to end: %v", err)
 		}
 		log.SetOutput(f)
+		logrus.SetOutput(f)
 		redirectStderr(f)
 	}
 

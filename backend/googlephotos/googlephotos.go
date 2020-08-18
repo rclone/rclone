@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/googlephotos/api"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -96,7 +95,7 @@ func init() {
 			}
 
 			// Do the oauth
-			err = oauthutil.Config("google photos", name, m, oauthConfig)
+			err = oauthutil.Config("google photos", name, m, oauthConfig, nil)
 			if err != nil {
 				golog.Fatalf("Failed to configure token: %v", err)
 			}
@@ -110,13 +109,7 @@ func init() {
 `)
 
 		},
-		Options: []fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Google Application Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Google Application Client Secret\nLeave blank normally.",
-		}, {
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:    "read_only",
 			Default: false,
 			Help: `Set to make the Google Photos backend read only.
@@ -134,14 +127,20 @@ rclone mount needs to know the size of files in advance of reading
 them, so setting this flag when using rclone mount is recommended if
 you want to read the media.`,
 			Advanced: true,
-		}},
+		}, {
+			Name:     "start_year",
+			Default:  2000,
+			Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year`,
+			Advanced: true,
+		}}...),
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ReadOnly bool `config:"read_only"`
-	ReadSize bool `config:"read_size"`
+	ReadOnly  bool `config:"read_only"`
+	ReadSize  bool `config:"read_size"`
+	StartYear int  `config:"start_year"`
 }
 
 // Fs represents a remote storage server
@@ -202,6 +201,11 @@ func (f *Fs) dirTime() time.Time {
 	return f.startTime
 }
 
+// startYear returns the start year
+func (f *Fs) startYear() int {
+	return f.opt.StartYear
+}
+
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
@@ -223,6 +227,10 @@ func errorHandler(resp *http.Response) error {
 	body, err := rest.ReadBody(resp)
 	if err != nil {
 		body = nil
+	}
+	// Google sends 404 messages as images so be prepared for that
+	if strings.HasPrefix(resp.Header.Get("Content-Type"), "image/") {
+		body = []byte("Image not found or broken")
 	}
 	var e = api.Error{
 		Details: api.ErrorDetails{
@@ -943,8 +951,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Upload the media item in exchange for an UploadToken
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/uploads",
+		Method:  "POST",
+		Path:    "/uploads",
+		Options: options,
 		ExtraHeaders: map[string]string{
 			"X-Goog-Upload-File-Name": fileName,
 			"X-Goog-Upload-Protocol":  "raw",
@@ -1003,7 +1012,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Add upload to internal storage
 	if pattern.isUpload {
+		o.fs.uploadedMu.Lock()
 		o.fs.uploaded.AddEntry(o)
+		o.fs.uploadedMu.Unlock()
 	}
 	return nil
 }

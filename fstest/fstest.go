@@ -45,7 +45,7 @@ var (
 	// SizeLimit signals tests to skip maximum test file size and skip inappropriate runs
 	SizeLimit = flag.Int64("size-limit", 0, "Limit maximum test file size")
 	// ListRetries is the number of times to retry a listing to overcome eventual consistency
-	ListRetries = flag.Int("list-retries", 6, "Number or times to retry listing")
+	ListRetries = flag.Int("list-retries", 3, "Number or times to retry listing")
 	// MatchTestRemote matches the remote names used for testing
 	MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwxyz0123456789]{24}$`)
 )
@@ -117,10 +117,16 @@ func CheckTimeEqualWithPrecision(t0, t1 time.Time, precision time.Duration) (tim
 	return dt, true
 }
 
+// AssertTimeEqualWithPrecision checks that want is within precision
+// of got, asserting that with t and logging remote
+func AssertTimeEqualWithPrecision(t *testing.T, remote string, want, got time.Time, precision time.Duration) {
+	dt, ok := CheckTimeEqualWithPrecision(want, got, precision)
+	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (want %s vs got %s) (precision %s)", remote, dt, precision, want, got, precision))
+}
+
 // CheckModTime checks the mod time to the given precision
 func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, precision time.Duration) {
-	dt, ok := CheckTimeEqualWithPrecision(modTime, i.ModTime, precision)
-	assert.True(t, ok, fmt.Sprintf("%s: Modification time difference too big |%s| > %s (%s vs %s) (precision %s)", obj.Remote(), dt, precision, modTime, i.ModTime, precision))
+	AssertTimeEqualWithPrecision(t, obj.Remote(), i.ModTime, modTime, precision)
 }
 
 // CheckHashes checks all the hashes the object supports are correct
@@ -223,7 +229,7 @@ func makeListingFromObjects(objs []fs.Object) string {
 // filterEmptyDirs removes any empty (or containing only directories)
 // directories from expectedDirs
 func filterEmptyDirs(t *testing.T, items []Item, expectedDirs []string) (newExpectedDirs []string) {
-	dirs := map[string]struct{}{"": struct{}{}}
+	dirs := map[string]struct{}{"": {}}
 	for _, item := range items {
 		base := item.Path
 		for {
@@ -476,7 +482,7 @@ func Purge(f fs.Fs) {
 	if doPurge := f.Features().Purge; doPurge != nil {
 		doFallbackPurge = false
 		fs.Debugf(f, "Purge remote")
-		err = doPurge(ctx)
+		err = doPurge(ctx, "")
 		if err == fs.ErrorCantPurge {
 			doFallbackPurge = true
 		}

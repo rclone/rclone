@@ -48,14 +48,10 @@ func (v vfsHandler) Filewrite(r *sftp.Request) (io.WriterAt, error) {
 func (v vfsHandler) Filecmd(r *sftp.Request) error {
 	switch r.Method {
 	case "Setstat":
-		node, err := v.Stat(r.Filepath)
-		if err != nil {
-			return err
-		}
 		attr := r.Attributes()
 		if attr.Mtime != 0 {
 			modTime := time.Unix(int64(attr.Mtime), 0)
-			err := node.SetModTime(modTime)
+			err := v.Chtimes(r.Filepath, modTime, modTime)
 			if err != nil {
 				return err
 			}
@@ -67,20 +63,12 @@ func (v vfsHandler) Filecmd(r *sftp.Request) error {
 			return err
 		}
 	case "Rmdir", "Remove":
-		node, err := v.Stat(r.Filepath)
-		if err != nil {
-			return err
-		}
-		err = node.Remove()
+		err := v.Remove(r.Filepath)
 		if err != nil {
 			return err
 		}
 	case "Mkdir":
-		dir, leaf, err := v.StatParent(r.Filepath)
-		if err != nil {
-			return err
-		}
-		_, err = dir.Mkdir(leaf)
+		err := v.Mkdir(r.Filepath, 0777)
 		if err != nil {
 			return err
 		}

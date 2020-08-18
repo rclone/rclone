@@ -2,6 +2,10 @@ package rc
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
 	"runtime"
 	"testing"
 
@@ -12,6 +16,15 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/version"
 )
+
+func TestMain(m *testing.M) {
+	// Pretend to be rclone version if we have a version string parameter
+	if os.Args[len(os.Args)-1] == "version" {
+		fmt.Printf("rclone %s\n", fs.Version)
+		os.Exit(0)
+	}
+	os.Exit(m.Run())
+}
 
 func TestInternalNoop(t *testing.T) {
 	call := Calls.Get("rc/noop")
@@ -118,4 +131,23 @@ func TestCoreQuit(t *testing.T) {
 	}
 	_, err := call.Fn(context.Background(), in)
 	require.Error(t, err)
+}
+
+// core/command: Runs a raw rclone command
+func TestCoreCommand(t *testing.T) {
+	call := Calls.Get("core/command")
+
+	var httpResponse http.ResponseWriter = httptest.NewRecorder()
+
+	in := Params{
+		"command":   "version",
+		"opt":       map[string]string{},
+		"arg":       []string{},
+		"_response": &httpResponse,
+	}
+	got, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+
+	assert.Equal(t, fmt.Sprintf("rclone %s\n", fs.Version), got["result"])
+	assert.Equal(t, false, got["error"])
 }

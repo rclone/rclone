@@ -1,7 +1,5 @@
 // Config handling
 
-// +build go1.11
-
 package main
 
 import (
@@ -35,6 +33,7 @@ type Backend struct {
 	Short    bool     // set to test with -short
 	OneOnly  bool     // set to run only one backend test at once
 	MaxFile  string   // file size limit
+	CleanUp  bool     // when running clean, run cleanup first
 	Ignore   []string // test names to ignore the failure of
 	Tests    []string // paths of tests to run, blank for all
 }
@@ -185,17 +184,4 @@ func (c *Config) filterTests(paths []string) {
 		}
 	}
 	c.Tests = newTests
-}
-
-// Remotes returns the unique remotes
-func (c *Config) Remotes() (remotes []string) {
-	found := map[string]struct{}{}
-	for _, backend := range c.Backends {
-		if _, ok := found[backend.Remote]; ok {
-			continue
-		}
-		remotes = append(remotes, backend.Remote)
-		found[backend.Remote] = struct{}{}
-	}
-	return remotes
 }

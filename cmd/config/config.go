@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
@@ -14,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 func init() {
@@ -69,7 +71,8 @@ var configShowCommand = &cobra.Command{
 		if len(args) == 0 {
 			config.ShowConfig()
 		} else {
-			config.ShowRemote(args[0])
+			name := strings.TrimRight(args[0], ":")
+			config.ShowRemote(name)
 		}
 	},
 }
@@ -92,12 +95,32 @@ var configProvidersCommand = &cobra.Command{
 	},
 }
 
+var (
+	configObscure   bool
+	configNoObscure bool
+)
+
+const configPasswordHelp = `
+If any of the parameters passed is a password field, then rclone will
+automatically obscure them if they aren't already obscured before
+putting them in the config file.
+
+**NB** If the password parameter is 22 characters or longer and
+consists only of base64 characters then rclone can get confused about
+whether the password is already obscured or not and put unobscured
+passwords into the config file. If you want to be 100% certain that
+the passwords get obscured then use the "--obscure" flag, or if you
+are 100% certain you are already passing obscured passwords then use
+"--no-obscure".  You can also set osbscured passwords using the
+"rclone config password" command.
+`
+
 var configCreateCommand = &cobra.Command{
-	Use:   "create <name> <type> [<key> <value>]*",
+	Use:   "create `name` `type` [`key` `value`]*",
 	Short: `Create a new remote with name, type and options.`,
 	Long: `
-Create a new remote of <name> with <type> and options.  The options
-should be passed in in pairs of <key> <value>.
+Create a new remote of ` + "`name`" + ` with ` + "`type`" + ` and options.  The options
+should be passed in pairs of ` + "`key` `value`" + `.
 
 For example to make a swift remote of name myremote using auto config
 you would do:
@@ -107,10 +130,7 @@ you would do:
 Note that if the config process would normally ask a question the
 default is taken.  Each time that happens rclone will print a message
 saying how to affect the value taken.
-
-If any of the parameters passed is a password field, then rclone will
-automatically obscure them before putting them in the config file.
-
+` + configPasswordHelp + `
 So for example if you wanted to configure a Google Drive remote but
 using remote authorization you would do this:
 
@@ -122,7 +142,7 @@ using remote authorization you would do this:
 		if err != nil {
 			return err
 		}
-		err = config.CreateRemote(args[0], args[1], in)
+		err = config.CreateRemote(args[0], args[1], in, configObscure, configNoObscure)
 		if err != nil {
 			return err
 		}
@@ -131,22 +151,26 @@ using remote authorization you would do this:
 	},
 }
 
+func init() {
+	for _, cmdFlags := range []*pflag.FlagSet{configCreateCommand.Flags(), configUpdateCommand.Flags()} {
+		flags.BoolVarP(cmdFlags, &configObscure, "obscure", "", false, "Force any passwords to be obscured.")
+		flags.BoolVarP(cmdFlags, &configNoObscure, "no-obscure", "", false, "Force any passwords not to be obscured.")
+	}
+}
+
 var configUpdateCommand = &cobra.Command{
-	Use:   "update <name> [<key> <value>]+",
+	Use:   "update `name` [`key` `value`]+",
 	Short: `Update options in an existing remote.`,
 	Long: `
 Update an existing remote's options. The options should be passed in
-in pairs of <key> <value>.
+in pairs of ` + "`key` `value`" + `.
 
 For example to update the env_auth field of a remote of name myremote
 you would do:
 
     rclone config update myremote swift env_auth true
-
-If any of the parameters passed is a password field, then rclone will
-automatically obscure them before putting them in the config file.
-
-If the remote uses oauth the token will be updated, if you don't
+` + configPasswordHelp + `
+If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
     rclone config update myremote swift env_auth true config_refresh_token false
@@ -157,7 +181,7 @@ require this add an extra parameter thus:
 		if err != nil {
 			return err
 		}
-		err = config.UpdateRemote(args[0], in)
+		err = config.UpdateRemote(args[0], in, configObscure, configNoObscure)
 		if err != nil {
 			return err
 		}
@@ -167,8 +191,8 @@ require this add an extra parameter thus:
 }
 
 var configDeleteCommand = &cobra.Command{
-	Use:   "delete <name>",
-	Short: `Delete an existing remote <name>.`,
+	Use:   "delete `name`",
+	Short: "Delete an existing remote `name`.",
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		config.DeleteRemote(args[0])
@@ -176,11 +200,11 @@ var configDeleteCommand = &cobra.Command{
 }
 
 var configPasswordCommand = &cobra.Command{
-	Use:   "password <name> [<key> <value>]+",
+	Use:   "password `name` [`key` `value`]+",
 	Short: `Update password in an existing remote.`,
 	Long: `
 Update an existing remote's password. The password
-should be passed in in pairs of <key> <value>.
+should be passed in pairs of ` + "`key` `value`" + `.
 
 For example to set password of a remote of name myremote you would do:
 

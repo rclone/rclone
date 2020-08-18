@@ -164,6 +164,12 @@ type CustomerInfo struct {
 	IOSHash           string      `json:"ios_hash"`
 }
 
+// TrashResponse is returned when emptying the Trash
+type TrashResponse struct {
+	Folders int64 `json:"folders"`
+	Files   int64 `json:"files"`
+}
+
 // XML structures returned by the old API
 
 // Flag is a hacky type for checking if an attribute is present

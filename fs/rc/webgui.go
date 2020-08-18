@@ -44,6 +44,9 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	extractPath := filepath.Join(cachePath, "current")
 
 	extractPathExist, extractPathStat, err := exists(extractPath)
+	if err != nil {
+		return err
+	}
 
 	if extractPathExist && !extractPathStat.IsDir() {
 		return errors.New("Web GUI path exists, but is a file instead of folder. Please check the path " + extractPath)
@@ -199,7 +202,7 @@ func unzip(src, dest string) (err error) {
 	return nil
 }
 
-func exists(path string) (existance bool, stat os.FileInfo, err error) {
+func exists(path string) (existence bool, stat os.FileInfo, err error) {
 	stat, err = os.Stat(path)
 	if err == nil {
 		return true, stat, nil

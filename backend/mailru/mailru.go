@@ -402,7 +402,7 @@ func (q *quirks) parseQuirks(option string) {
 			// "Accept-Encoding: gzip" header. However, enabling compression
 			// might be good for performance.
 			// Use this quirk to investigate the performance impact.
-			// Remove this quirk if perfomance does not improve.
+			// Remove this quirk if performance does not improve.
 			q.gzip = true
 		case "insecure":
 			// The mailru disk-o protocol is not documented. To compare HTTP
@@ -1162,12 +1162,12 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return f.purgeWithCheck(ctx, dir, true, "rmdir")
 }
 
-// Purge deletes all the files and the root directory
+// Purge deletes all the files in the directory
 // Optional interface: Only implement this if you have a way of deleting
 // all the files quicker than just running Remove() on the result of List()
-func (f *Fs) Purge(ctx context.Context) error {
+func (f *Fs) Purge(ctx context.Context, dir string) error {
 	// fs.Debugf(f, ">>> Purge")
-	return f.purgeWithCheck(ctx, "", false, "purge")
+	return f.purgeWithCheck(ctx, dir, false, "purge")
 }
 
 // purgeWithCheck() removes the root directory.
@@ -1450,7 +1450,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 }
 
 // PublicLink generates a public link to the remote path (usually readable by anyone)
-func (f *Fs) PublicLink(ctx context.Context, remote string) (link string, err error) {
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	// fs.Debugf(f, ">>> PublicLink %q", remote)
 
 	token, err := f.accessToken()

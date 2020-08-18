@@ -71,6 +71,27 @@ All done. Please go back to rclone.
 `
 )
 
+// SharedOptions are shared between backends the utilize an OAuth flow
+var SharedOptions = []fs.Option{{
+	Name: config.ConfigClientID,
+	Help: "OAuth Client Id\nLeave blank normally.",
+}, {
+	Name: config.ConfigClientSecret,
+	Help: "OAuth Client Secret\nLeave blank normally.",
+}, {
+	Name:     config.ConfigToken,
+	Help:     "OAuth Access Token as a JSON blob.",
+	Advanced: true,
+}, {
+	Name:     config.ConfigAuthURL,
+	Help:     "Auth server URL.\nLeave blank to use the provider defaults.",
+	Advanced: true,
+}, {
+	Name:     config.ConfigTokenURL,
+	Help:     "Token server url.\nLeave blank to use the provider defaults.",
+	Advanced: true,
+}}
+
 // oldToken contains an end-user's tokens.
 // This is the data you must store to persist authentication.
 //
@@ -87,7 +108,7 @@ type oldToken struct {
 func GetToken(name string, m configmap.Mapper) (*oauth2.Token, error) {
 	tokenString, ok := m.Get(config.ConfigToken)
 	if !ok || tokenString == "" {
-		return nil, errors.New("empty token found - please run rclone config again")
+		return nil, errors.Errorf("empty token found - please run \"rclone config reconnect %s:\"", name)
 	}
 	token := new(oauth2.Token)
 	err := json.Unmarshal([]byte(tokenString), token)
@@ -213,7 +234,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		time.Sleep(1 * time.Second)
 	}
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "couldn't fetch token - maybe it has expired? - refresh with \"rclone config reconnect %s:\"", ts.name)
 	}
 	changed = changed || (*token != *ts.token)
 	ts.token = token
@@ -224,7 +245,7 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		}
 		err = PutToken(ts.name, ts.m, token, false)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "couldn't store token")
 		}
 	}
 	return token, nil
@@ -357,32 +378,26 @@ func (ar *AuthResult) Error() string {
 		status, ar.Name, ar.Code, ar.Description, ar.HelpURL)
 }
 
-// Config does the initial creation of the token
-//
-// It may run an internal webserver to receive the results
-func Config(id, name string, m configmap.Mapper, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, config, true, nil, opts)
-}
-
 // CheckAuthFn is called when a good Auth has been received
 type CheckAuthFn func(*oauth2.Config, *AuthResult) error
 
-// ConfigWithCallback does the initial creation of the token
+// Options for the oauth config
+type Options struct {
+	NoOffline    bool                    // If set then "access_type=offline" parameter is not passed
+	CheckAuth    CheckAuthFn             // When the AuthResult is known the checkAuth function is called if set
+	OAuth2Opts   []oauth2.AuthCodeOption // extra oauth2 options
+	StateBlankOK bool                    // If set, state returned as "" is deemed to be OK
+}
+
+// Config does the initial creation of the token
+//
+// If opt is nil it will use the default Options
 //
 // It may run an internal webserver to receive the results
-//
-// When the AuthResult is known the checkAuth function is called if set
-func ConfigWithCallback(id, name string, m configmap.Mapper, config *oauth2.Config, checkAuth CheckAuthFn, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, config, true, checkAuth, opts)
-}
-
-// ConfigNoOffline does the same as Config but does not pass the
-// "access_type=offline" parameter.
-func ConfigNoOffline(id, name string, m configmap.Mapper, config *oauth2.Config, opts ...oauth2.AuthCodeOption) error {
-	return doConfig(id, name, m, config, false, nil, opts)
-}
-
-func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, offline bool, checkAuth CheckAuthFn, opts []oauth2.AuthCodeOption) error {
+func Config(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt *Options) error {
+	if opt == nil {
+		opt = &Options{}
+	}
 	oauthConfig, changed := overrideCredentials(name, m, oauthConfig)
 	authorizeOnlyValue, ok := m.Get(config.ConfigAuthorize)
 	authorizeOnly := ok && authorizeOnlyValue != "" // set if being run by "rclone authorize"
@@ -429,14 +444,21 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 			break
 		}
 		if !isLocal() {
-			fmt.Printf("For this to work, you will need rclone available on a machine that has a web browser available.\n")
-			fmt.Printf("Execute the following on your machine (same rclone version recommended) :\n")
+			fmt.Printf(`For this to work, you will need rclone available on a machine that has
+a web browser available.
+
+For more help and alternate methods see: https://rclone.org/remote_setup/
+
+Execute the following on the machine with the web browser (same rclone
+version recommended):
+
+`)
 			if changed {
-				fmt.Printf("\trclone authorize %q %q %q\n", id, oauthConfig.ClientID, oauthConfig.ClientSecret)
+				fmt.Printf("\trclone authorize %q -- %q %q\n", id, oauthConfig.ClientID, oauthConfig.ClientSecret)
 			} else {
 				fmt.Printf("\trclone authorize %q\n", id)
 			}
-			fmt.Println("Then paste the result below:")
+			fmt.Println("\nThen paste the result below:")
 			code := config.ReadNonEmptyLine("result> ")
 			token := &oauth2.Token{}
 			err := json.Unmarshal([]byte(code), token)
@@ -454,7 +476,8 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 	}
 
 	// Generate oauth URL
-	if offline {
+	opts := opt.OAuth2Opts
+	if !opt.NoOffline {
 		opts = append(opts, oauth2.AccessTypeOffline)
 	}
 	authURL := oauthConfig.AuthCodeURL(state, opts...)
@@ -462,7 +485,7 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 	// Prepare webserver if needed
 	var server *authServer
 	if useWebServer {
-		server = newAuthServer(bindAddress, state, authURL)
+		server = newAuthServer(opt, bindAddress, state, authURL)
 		err := server.Init()
 		if err != nil {
 			return errors.Wrap(err, "failed to start auth webserver")
@@ -490,8 +513,8 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 			return auth
 		}
 		fmt.Printf("Got code\n")
-		if checkAuth != nil {
-			err = checkAuth(oauthConfig, auth)
+		if opt.CheckAuth != nil {
+			err = opt.CheckAuth(oauthConfig, auth)
 			if err != nil {
 				return err
 			}
@@ -503,7 +526,8 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 	}
 
 	// Exchange the code for a token
-	token, err := oauthConfig.Exchange(oauth2.NoContext, auth.Code)
+	ctx := Context(fshttp.NewClient(fs.Config))
+	token, err := oauthConfig.Exchange(ctx, auth.Code)
 	if err != nil {
 		return errors.Wrap(err, "failed to get token")
 	}
@@ -521,6 +545,7 @@ func doConfig(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, o
 
 // Local web server for collecting auth
 type authServer struct {
+	opt         *Options
 	state       string
 	listener    net.Listener
 	bindAddress string
@@ -530,8 +555,9 @@ type authServer struct {
 }
 
 // newAuthServer makes the webserver for collecting auth
-func newAuthServer(bindAddress, state, authURL string) *authServer {
+func newAuthServer(opt *Options, bindAddress, state, authURL string) *authServer {
 	return &authServer{
+		opt:         opt,
 		state:       state,
 		bindAddress: bindAddress,
 		authURL:     authURL, // http://host/auth redirects to here
@@ -576,7 +602,7 @@ func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
 
 	// check state
 	state := req.Form.Get("state")
-	if state != s.state {
+	if state != s.state && !(state == "" && s.opt.StateBlankOK) {
 		reply(http.StatusBadRequest, &AuthResult{
 			Name:        "Auth state doesn't match",
 			Description: fmt.Sprintf("Expecting %q got %q", s.state, state),

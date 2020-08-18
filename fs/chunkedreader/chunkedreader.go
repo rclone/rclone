@@ -16,10 +16,10 @@ var (
 	ErrorInvalidSeek = errors.New("invalid seek position")
 )
 
-// ChunkedReader is a reader for a Object with the possibility
+// ChunkedReader is a reader for an Object with the possibility
 // of reading the source in chunks of given size
 //
-// A initialChunkSize of <= 0 will disable chunked reading.
+// An initialChunkSize of <= 0 will disable chunked reading.
 type ChunkedReader struct {
 	ctx              context.Context
 	mu               sync.Mutex    // protects following fields
@@ -36,7 +36,7 @@ type ChunkedReader struct {
 
 // New returns a ChunkedReader for the Object.
 //
-// A initialChunkSize of <= 0 will disable chunked reading.
+// An initialChunkSize of <= 0 will disable chunked reading.
 // If maxChunkSize is greater than initialChunkSize, the chunk size will be
 // doubled after each chunk read with a maximun of maxChunkSize.
 // A Seek or RangeSeek will reset the chunk size to it's initial value

@@ -4,12 +4,19 @@ import (
 	"context"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
+var (
+	rmdirs = false
+)
+
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
+	cmdFlags := commandDefinition.Flags()
+	flags.BoolVarP(cmdFlags, &rmdirs, "rmdirs", "", rmdirs, "rmdirs removes empty directories but leaves root intact")
 }
 
 var commandDefinition = &cobra.Command{
@@ -22,6 +29,8 @@ filters so can be used to selectively delete files.
 ` + "`" + `rclone delete` + "`" + ` only deletes objects but leaves the directory structure
 alone. If you want to delete a directory and all of its contents use
 ` + "`" + `rclone purge` + "`" + `
+
+If you supply the --rmdirs flag, it will remove all empty directories along with it.
 
 Eg delete all files bigger than 100MBytes
 
@@ -36,12 +45,22 @@ Then delete
 
 That reads "delete everything with a minimum size of 100 MB", hence
 delete all files bigger than 100MBytes.
+
+**Important**: Since this can cause data loss, test first with the
+` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(true, false, command, func() error {
-			return operations.Delete(context.Background(), fsrc)
+			if err := operations.Delete(context.Background(), fsrc); err != nil {
+				return err
+			}
+			if rmdirs {
+				fdst := cmd.NewFsDir(args)
+				return operations.Rmdirs(context.Background(), fdst, "", true)
+			}
+			return nil
 		})
 	},
 }

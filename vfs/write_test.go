@@ -17,21 +17,20 @@ import (
 )
 
 // Open a file for write
-func writeHandleCreate(t *testing.T, r *fstest.Run) (*VFS, *WriteFileHandle) {
-	vfs := New(r.Fremote, nil)
+func writeHandleCreate(t *testing.T) (r *fstest.Run, vfs *VFS, fh *WriteFileHandle, cleanup func()) {
+	r, vfs, cleanup = newTestVFS(t)
 
 	h, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
 	require.NoError(t, err)
 	fh, ok := h.(*WriteFileHandle)
 	require.True(t, ok)
 
-	return vfs, fh
+	return r, vfs, fh, cleanup
 }
 
 func TestWriteFileHandleMethods(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, fh := writeHandleCreate(t, r)
+	r, vfs, fh, cleanup := writeHandleCreate(t)
+	defer cleanup()
 
 	// String
 	assert.Equal(t, "file1 (w)", fh.String())
@@ -133,9 +132,8 @@ func TestWriteFileHandleMethods(t *testing.T) {
 }
 
 func TestWriteFileHandleWriteAt(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, fh := writeHandleCreate(t, r)
+	r, vfs, fh, cleanup := writeHandleCreate(t)
+	defer cleanup()
 
 	// Preconditions
 	assert.Equal(t, int64(0), fh.offset)
@@ -179,9 +177,8 @@ func TestWriteFileHandleWriteAt(t *testing.T) {
 }
 
 func TestWriteFileHandleFlush(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, fh := writeHandleCreate(t, r)
+	_, vfs, fh, cleanup := writeHandleCreate(t)
+	defer cleanup()
 
 	// Check Flush already creates file for unwritten handles, without closing it
 	err := fh.Flush()
@@ -213,9 +210,8 @@ func TestWriteFileHandleFlush(t *testing.T) {
 }
 
 func TestWriteFileHandleRelease(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	_, fh := writeHandleCreate(t, r)
+	_, _, fh, cleanup := writeHandleCreate(t)
+	defer cleanup()
 
 	// Check Release closes file
 	err := fh.Release()
@@ -262,12 +258,12 @@ func canSetModTime(t *testing.T, r *fstest.Run) bool {
 
 // tests mod time on open files
 func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
+	r, vfs, fh, cleanup := writeHandleCreate(t)
+	defer cleanup()
+
 	if !canSetModTime(t, r) {
-		return
+		t.Skip("can't set mod time")
 	}
-	vfs, fh := writeHandleCreate(t, r)
 
 	mtime := time.Date(2012, time.November, 18, 17, 32, 31, 0, time.UTC)
 
@@ -290,9 +286,8 @@ func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
 }
 
 func testFileReadAt(t *testing.T, n int) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-	vfs, fh := writeHandleCreate(t, r)
+	_, vfs, fh, cleanup := writeHandleCreate(t)
+	defer cleanup()
 
 	contents := []byte(random.String(n))
 	if n != 0 {

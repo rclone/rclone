@@ -20,7 +20,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/swift"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -39,7 +38,7 @@ var (
 	// Description of how to auth for this app
 	oauthConfig = &oauth2.Config{
 		Scopes: []string{
-			"credentials.r", // Read Openstack credentials
+			"credentials.r", // Read OpenStack credentials
 		},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://api.hubic.com/oauth/auth/",
@@ -58,26 +57,20 @@ func init() {
 		Description: "Hubic",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
-			err := oauthutil.Config("hubic", name, m, oauthConfig)
+			err := oauthutil.Config("hubic", name, m, oauthConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
 		},
-		Options: append([]fs.Option{{
-			Name: config.ConfigClientID,
-			Help: "Hubic Client Id\nLeave blank normally.",
-		}, {
-			Name: config.ConfigClientSecret,
-			Help: "Hubic Client Secret\nLeave blank normally.",
-		}}, swift.SharedOptions...),
+		Options: append(oauthutil.SharedOptions, swift.SharedOptions...),
 	})
 }
 
 // credentials is the JSON returned from the Hubic API to read the
 // OpenStack credentials
 type credentials struct {
-	Token    string `json:"token"`    // Openstack token
-	Endpoint string `json:"endpoint"` // Openstack endpoint
+	Token    string `json:"token"`    // OpenStack token
+	Endpoint string `json:"endpoint"` // OpenStack endpoint
 	Expires  string `json:"expires"`  // Expires date - eg "2015-11-09T14:24:56+01:00"
 }
 

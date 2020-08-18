@@ -1,11 +1,10 @@
-// +build linux,go1.11 darwin,go1.11 freebsd,go1.11
+// +build linux,go1.13 darwin,go1.13 freebsd,go1.13
 
 package mount
 
 import (
 	"context"
 	"io"
-	"os"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
@@ -42,12 +41,7 @@ var _ fusefs.HandleWriter = (*FileHandle)(nil)
 // Write data to the file handle
 func (fh *FileHandle) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) (err error) {
 	defer log.Trace(fh, "len=%d, offset=%d", len(req.Data), req.Offset)("written=%d, err=%v", &resp.Size, &err)
-	var n int
-	if fh.Handle.Node().VFS().Opt.CacheMode < vfs.CacheModeWrites || fh.Handle.Node().Mode()&os.ModeAppend == 0 {
-		n, err = fh.Handle.WriteAt(req.Data, req.Offset)
-	} else {
-		n, err = fh.Handle.Write(req.Data)
-	}
+	n, err := fh.Handle.WriteAt(req.Data, req.Offset)
 	if err != nil {
 		return translateError(err)
 	}

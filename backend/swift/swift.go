@@ -73,7 +73,7 @@ copy operations.`,
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "swift",
-		Description: "Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
+		Description: "OpenStack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
 		NewFs:       NewFs,
 		Options: append([]fs.Option{{
 			Name:    "env_auth",
@@ -284,7 +284,7 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
 func shouldRetry(err error) (bool, error) {
-	// If this is an swift.Error object extract the HTTP error code
+	// If this is a swift.Error object extract the HTTP error code
 	if swiftError, ok := err.(*swift.Error); ok {
 		for _, e := range retryErrorCodes {
 			if swiftError.StatusCode == e {
@@ -447,6 +447,7 @@ func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, n
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
+		SlowModTime:       true,
 	}).Fill(f)
 	if f.rootContainer != "" && f.rootDirectory != "" {
 		// Check to see if the object exists - ignoring directory markers
@@ -504,7 +505,15 @@ func (f *Fs) newObjectWithInfo(remote string, info *swift.Object) (fs.Object, er
 	// making sure we read the full metadata for all 0 byte files.
 	// We don't read the metadata for directory marker objects.
 	if info != nil && info.Bytes == 0 && info.ContentType != "application/directory" {
-		info = nil
+		err := o.readMetaData() // reads info and headers, returning an error
+		if err == fs.ErrorObjectNotFound {
+			// We have a dangling large object here so just return the original metadata
+			fs.Errorf(o, "dangling large object with no contents")
+		} else if err != nil {
+			return nil, err
+		} else {
+			return o, nil
+		}
 	}
 	if info != nil {
 		// Set info but not headers
@@ -536,7 +545,7 @@ type listFn func(remote string, object *swift.Object, isDirectory bool) error
 // container to the start.
 //
 // Set recurse to read sub directories
-func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer bool, recurse bool, fn listFn) error {
+func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer bool, recurse bool, includeDirMarkers bool, fn listFn) error {
 	if prefix != "" && !strings.HasSuffix(prefix, "/") {
 		prefix += "/"
 	}
@@ -570,7 +579,7 @@ func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
 				}
-				if remote == prefix {
+				if !includeDirMarkers && remote == prefix {
 					// If we have zero length directory markers ending in / then swift
 					// will return them in the listing for the directory which causes
 					// duplicate directories.  Ignore them here.
@@ -593,8 +602,8 @@ func (f *Fs) listContainerRoot(container, directory, prefix string, addContainer
 type addEntryFn func(fs.DirEntry) error
 
 // list the objects into the function supplied
-func (f *Fs) list(container, directory, prefix string, addContainer bool, recurse bool, fn addEntryFn) error {
-	err := f.listContainerRoot(container, directory, prefix, addContainer, recurse, func(remote string, object *swift.Object, isDirectory bool) (err error) {
+func (f *Fs) list(container, directory, prefix string, addContainer bool, recurse bool, includeDirMarkers bool, fn addEntryFn) error {
+	err := f.listContainerRoot(container, directory, prefix, addContainer, recurse, includeDirMarkers, func(remote string, object *swift.Object, isDirectory bool) (err error) {
 		if isDirectory {
 			remote = strings.TrimRight(remote, "/")
 			d := fs.NewDir(remote, time.Time{}).SetSize(object.Bytes)
@@ -606,7 +615,7 @@ func (f *Fs) list(container, directory, prefix string, addContainer bool, recurs
 			if err != nil {
 				return err
 			}
-			if o.Storable() {
+			if includeDirMarkers || o.Storable() {
 				err = fn(o)
 			}
 		}
@@ -624,7 +633,7 @@ func (f *Fs) listDir(container, directory, prefix string, addContainer bool) (en
 		return nil, fs.ErrorListBucketRequired
 	}
 	// List the objects
-	err = f.list(container, directory, prefix, addContainer, false, func(entry fs.DirEntry) error {
+	err = f.list(container, directory, prefix, addContainer, false, false, func(entry fs.DirEntry) error {
 		entries = append(entries, entry)
 		return nil
 	})
@@ -694,7 +703,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	container, directory := f.split(dir)
 	list := walk.NewListRHelper(callback)
 	listR := func(container, directory, prefix string, addContainer bool) error {
-		return f.list(container, directory, prefix, addContainer, true, func(entry fs.DirEntry) error {
+		return f.list(container, directory, prefix, addContainer, true, false, func(entry fs.DirEntry) error {
 			return list.Add(entry)
 		})
 	}
@@ -831,17 +840,21 @@ func (f *Fs) Precision() time.Duration {
 	return time.Nanosecond
 }
 
-// Purge deletes all the files and directories
+// Purge deletes all the files in the directory
 //
 // Implemented here so we can make sure we delete directory markers
-func (f *Fs) Purge(ctx context.Context) error {
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	container, directory := f.split(dir)
+	if container == "" {
+		return fs.ErrorListBucketRequired
+	}
 	// Delete all the files including the directory markers
 	toBeDeleted := make(chan fs.Object, fs.Config.Transfers)
 	delErr := make(chan error, 1)
 	go func() {
 		delErr <- operations.DeleteFiles(ctx, toBeDeleted)
 	}()
-	err := f.list(f.rootContainer, f.rootDirectory, f.rootDirectory, f.rootContainer == "", true, func(entry fs.DirEntry) error {
+	err := f.list(container, directory, f.rootDirectory, false, true, true, func(entry fs.DirEntry) error {
 		if o, ok := entry.(*Object); ok {
 			toBeDeleted <- o
 		}
@@ -855,7 +868,7 @@ func (f *Fs) Purge(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return f.Rmdir(ctx, "")
+	return f.Rmdir(ctx, dir)
 }
 
 // Copy src to this remote using server side copy operations.
@@ -1102,13 +1115,18 @@ func min(x, y int64) int64 {
 //
 // if except is passed in then segments with that prefix won't be deleted
 func (o *Object) removeSegments(except string) error {
-	segmentsContainer, prefix, err := o.getSegmentsDlo()
-	err = o.fs.listContainerRoot(segmentsContainer, prefix, "", false, true, func(remote string, object *swift.Object, isDirectory bool) error {
+	segmentsContainer, _, err := o.getSegmentsDlo()
+	if err != nil {
+		return err
+	}
+	except = path.Join(o.remote, except)
+	// fs.Debugf(o, "segmentsContainer %q prefix %q", segmentsContainer, prefix)
+	err = o.fs.listContainerRoot(segmentsContainer, o.remote, "", false, true, true, func(remote string, object *swift.Object, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
 		if except != "" && strings.HasPrefix(remote, except) {
-			// fs.Debugf(o, "Ignoring current segment file %q in container %q", segmentsRoot+remote, segmentsContainer)
+			// fs.Debugf(o, "Ignoring current segment file %q in container %q", remote, segmentsContainer)
 			return nil
 		}
 		fs.Debugf(o, "Removing segment file %q in container %q", remote, segmentsContainer)
@@ -1124,6 +1142,9 @@ func (o *Object) removeSegments(except string) error {
 	// remove the segments container if empty, ignore errors
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ContainerDelete(segmentsContainer)
+		if err == swift.ContainerNotFound || err == swift.ContainerNotEmpty {
+			return false, err
+		}
 		return shouldRetry(err)
 	})
 	if err == nil {
@@ -1253,7 +1274,7 @@ func deleteChunks(o *Object, segmentsContainer string, segmentInfos []string) {
 			fs.Debugf(o, "Delete segment file %q on %q", v, segmentsContainer)
 			e := o.fs.c.ObjectDelete(segmentsContainer, v)
 			if e != nil {
-				fs.Errorf(o, "Error occured in delete segment file %q on %q , error: %q", v, segmentsContainer, e)
+				fs.Errorf(o, "Error occurred in delete segment file %q on %q, error: %q", v, segmentsContainer, e)
 			}
 		}
 	}
@@ -1285,6 +1306,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	m.SetModTime(modTime)
 	contentType := fs.MimeType(ctx, src)
 	headers := m.ObjectHeaders()
+	fs.OpenOptionAddHeaders(options, headers)
 	uniquePrefix := ""
 	if size > int64(o.fs.opt.ChunkSize) || (size == -1 && !o.fs.opt.NoChunk) {
 		uniquePrefix, err = o.updateChunks(in, headers, size, contentType)

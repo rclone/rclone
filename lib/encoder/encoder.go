@@ -2,7 +2,7 @@
 Translate file names for usage on restrictive storage systems
 
 The restricted set of characters are mapped to a unicode equivalent version
-(most to their FULLWIDTH variant) to increase compatability with other
+(most to their FULLWIDTH variant) to increase compatibility with other
 storage systems.
 See: http://unicode-search.net/unicode-namesearch.pl?term=FULLWIDTH
 
@@ -1095,7 +1095,7 @@ func (i identity) ToStandardName(s string) string {
 	return ToStandardName(i, s)
 }
 
-// Identity returns a Encoder that always returns the input value
+// Identity returns an Encoder that always returns the input value
 func Identity() Encoder {
 	return identity{}
 }

@@ -1,19 +1,15 @@
 package vfs
 
 import (
-	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
-	"runtime"
 	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
-	"github.com/rclone/rclone/fs/operations"
-	"github.com/rclone/rclone/lib/file"
+	"github.com/rclone/rclone/vfs/vfscache"
 )
 
 // RWFileHandle is a handle that can be open for read and write.
@@ -21,30 +17,29 @@ import (
 // It will be open to a temporary file which, when closed, will be
 // transferred to the remote.
 type RWFileHandle struct {
-	*os.File
+	// read only variables
+	file  *File
+	d     *Dir
+	flags int            // open flags
+	item  *vfscache.Item // cached file item
+
+	// read write variables protected by mutex
 	mu          sync.Mutex
-	closed      bool // set if handle has been closed
-	file        *File
-	d           *Dir
+	offset      int64 // file pointer offset
+	closed      bool  // set if handle has been closed
 	opened      bool
-	flags       int  // open flags
 	writeCalled bool // if any Write() methods have been called
-	changed     bool // file contents was changed in any other way
 }
 
-// Check interfaces
-var (
-	_ io.Reader   = (*RWFileHandle)(nil)
-	_ io.ReaderAt = (*RWFileHandle)(nil)
-	_ io.Writer   = (*RWFileHandle)(nil)
-	_ io.WriterAt = (*RWFileHandle)(nil)
-	_ io.Seeker   = (*RWFileHandle)(nil)
-	_ io.Closer   = (*RWFileHandle)(nil)
-)
-
 func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
+	defer log.Trace(f.Path(), "")("err=%v", &err)
+	// get an item to represent this from the cache
+	item := d.vfs.cache.Item(f.Path())
+
+	exists := f.exists() || item.Exists()
+
 	// if O_CREATE and O_EXCL are set and if path already exists, then return EEXIST
-	if flags&(os.O_CREATE|os.O_EXCL) == os.O_CREATE|os.O_EXCL && f.exists() {
+	if flags&(os.O_CREATE|os.O_EXCL) == os.O_CREATE|os.O_EXCL && exists {
 		return nil, EEXIST
 	}
 
@@ -52,143 +47,62 @@ func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
 		file:  f,
 		d:     d,
 		flags: flags,
+		item:  item,
 	}
 
-	// mark the file as open in the cache - must be done before the mkdir
-	fh.d.vfs.cache.open(fh.file.Path())
-
-	// Make a place for the file
-	_, err = d.vfs.cache.mkdir(fh.file.Path())
-	if err != nil {
-		fh.d.vfs.cache.close(fh.file.Path())
-		return nil, errors.Wrap(err, "open RW handle failed to make cache directory")
-	}
-
-	rdwrMode := fh.flags & accessModeMask
-	if rdwrMode != os.O_RDONLY {
-		fh.file.addWriter(fh)
-	}
-
-	// truncate or create files immediately to prepare the cache
-	if fh.flags&os.O_TRUNC != 0 || fh.flags&(os.O_CREATE) != 0 && !f.exists() {
-		if err := fh.openPending(false); err != nil {
-			fh.file.delWriter(fh, false)
-			return nil, err
+	// truncate immediately if O_TRUNC is set or O_CREATE is set and file doesn't exist
+	if !fh.readOnly() && (fh.flags&os.O_TRUNC != 0 || (fh.flags&os.O_CREATE != 0 && !exists)) {
+		err = fh.Truncate(0)
+		if err != nil {
+			return nil, errors.Wrap(err, "cache open with O_TRUNC: failed to truncate")
 		}
+		// we definitely need to write back the item even if we don't write to it
+		item.Dirty()
+	}
+
+	if !fh.readOnly() {
+		fh.file.addWriter(fh)
 	}
 
 	return fh, nil
 }
 
-// copy an object to or from the remote while accounting for it
-func copyObj(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
-	if operations.NeedTransfer(context.TODO(), dst, src) {
-		newDst, err = operations.Copy(context.TODO(), f, dst, remote, src)
-	} else {
-		newDst = dst
-	}
-	return newDst, err
+// readOnly returns whether flags say fh is read only
+func (fh *RWFileHandle) readOnly() bool {
+	return (fh.flags & accessModeMask) == os.O_RDONLY
+}
+
+// writeOnly returns whether flags say fh is write only
+func (fh *RWFileHandle) writeOnly() bool {
+	return (fh.flags & accessModeMask) == os.O_WRONLY
 }
 
 // openPending opens the file if there is a pending open
 //
 // call with the lock held
-func (fh *RWFileHandle) openPending(truncate bool) (err error) {
+func (fh *RWFileHandle) openPending() (err error) {
 	if fh.opened {
 		return nil
 	}
+	defer log.Trace(fh.logPrefix(), "")("err=%v", &err)
 
 	fh.file.muRW.Lock()
 	defer fh.file.muRW.Unlock()
 
 	o := fh.file.getObject()
+	err = fh.item.Open(o)
+	if err != nil {
+		return errors.Wrap(err, "open RW handle failed to open cache file")
+	}
 
-	var fd *os.File
-	cacheFileOpenFlags := fh.flags
-	// if not truncating the file, need to read it first
-	if fh.flags&os.O_TRUNC == 0 && !truncate {
-		// If the remote object exists AND its cached file exists locally AND there are no
-		// other RW handles with it open, then attempt to update it.
-		if o != nil && fh.file.rwOpens() == 0 {
-			cacheObj, err := fh.d.vfs.cache.f.NewObject(context.TODO(), fh.file.Path())
-			if err == nil && cacheObj != nil {
-				_, err = copyObj(fh.d.vfs.cache.f, cacheObj, fh.file.Path(), o)
-				if err != nil {
-					return errors.Wrap(err, "open RW handle failed to update cached file")
-				}
-			}
-		}
-
-		// try to open a exising cache file
-		fd, err = file.OpenFile(fh.file.osPath(), cacheFileOpenFlags&^os.O_CREATE, 0600)
-		if os.IsNotExist(err) {
-			// cache file does not exist, so need to fetch it if we have an object to fetch
-			// it from
-			if o != nil {
-				_, err = copyObj(fh.d.vfs.cache.f, nil, fh.file.Path(), o)
-				if err != nil {
-					cause := errors.Cause(err)
-					if cause != fs.ErrorObjectNotFound && cause != fs.ErrorDirNotFound {
-						// return any non NotFound errors
-						return errors.Wrap(err, "open RW handle failed to cache file")
-					}
-					// continue here with err=fs.Error{Object,Dir}NotFound
-				}
-			}
-			// if err == nil, then we have cached the file successfully, otherwise err is
-			// indicating some kind of non existent file/directory either
-			// os.IsNotExist(err) or fs.Error{Object,Dir}NotFound
-			if err != nil {
-				if fh.flags&os.O_CREATE != 0 {
-					// if the object wasn't found AND O_CREATE is set then
-					// ignore error as we are about to create the file
-					fh.file.setSize(0)
-					fh.changed = true
-				} else {
-					return errors.Wrap(err, "open RW handle failed to cache file")
-				}
-			}
-		} else if err != nil {
-			return errors.Wrap(err, "cache open file failed")
-		} else {
-			fs.Debugf(fh.logPrefix(), "Opened existing cached copy with flags=%s", decodeOpenFlags(fh.flags))
-		}
+	size := fh._size() // update size in file and read size
+	if fh.flags&os.O_APPEND != 0 {
+		fh.offset = size
+		fs.Debugf(fh.logPrefix(), "open at offset %d", fh.offset)
 	} else {
-		// Set the size to 0 since we are truncating and flag we need to write it back
-		fh.file.setSize(0)
-		fh.changed = true
-		if fh.flags&os.O_CREATE == 0 && fh.file.exists() {
-			// create an empty file if it exists on the source
-			err = ioutil.WriteFile(fh.file.osPath(), []byte{}, 0600)
-			if err != nil {
-				return errors.Wrap(err, "cache open failed to create zero length file")
-			}
-		}
-		// Windows doesn't seem to deal well with O_TRUNC and
-		// certain access modes so so truncate the file if it
-		// exists in these cases.
-		if runtime.GOOS == "windows" && fh.flags&os.O_APPEND != 0 {
-			cacheFileOpenFlags &^= os.O_TRUNC
-			_, err = os.Stat(fh.file.osPath())
-			if err == nil {
-				err = os.Truncate(fh.file.osPath(), 0)
-				if err != nil {
-					return errors.Wrap(err, "cache open failed to truncate")
-				}
-			}
-		}
+		fh.offset = 0
 	}
-
-	if fd == nil {
-		fs.Debugf(fh.logPrefix(), "Opening cached copy with flags=%s", decodeOpenFlags(fh.flags))
-		fd, err = file.OpenFile(fh.file.osPath(), cacheFileOpenFlags, 0600)
-		if err != nil {
-			return errors.Wrap(err, "cache open file failed")
-		}
-	}
-	fh.File = fd
 	fh.opened = true
-	fh.file.addRWOpen()
 	fh.d.addObject(fh.file) // make sure the directory has this object in it now
 	return nil
 }
@@ -198,8 +112,6 @@ func (fh *RWFileHandle) String() string {
 	if fh == nil {
 		return "<nil *RWFileHandle>"
 	}
-	fh.mu.Lock()
-	defer fh.mu.Unlock()
 	if fh.file == nil {
 		return "<nil *RWFileHandle.file>"
 	}
@@ -213,93 +125,16 @@ func (fh *RWFileHandle) Node() Node {
 	return fh.file
 }
 
-// Returns whether the file needs to be written back.
-//
-// If write hasn't been called and the file hasn't been changed in any other
-// way we haven't modified it so we don't need to transfer it
+// updateSize updates the size of the file if necessary
 //
 // Must be called with fh.mu held
-func (fh *RWFileHandle) modified() bool {
-	if !fh.writeCalled && !fh.changed {
-		fs.Debugf(fh.logPrefix(), "not modified so not transferring")
-		return false
+func (fh *RWFileHandle) updateSize() {
+	// If read only or not opened then ignore
+	if fh.readOnly() || !fh.opened {
+		return
 	}
-	return true
-}
-
-// flushWrites flushes any pending writes to cloud storage
-//
-// Must be called with fh.muRW held
-func (fh *RWFileHandle) flushWrites(closeFile bool) error {
-	if fh.closed && !closeFile {
-		return nil
-	}
-
-	rdwrMode := fh.flags & accessModeMask
-	writer := rdwrMode != os.O_RDONLY
-
-	// If read only then return
-	if !fh.opened && rdwrMode == os.O_RDONLY {
-		return nil
-	}
-
-	isCopied := false
-	if writer {
-		isCopied = fh.file.delWriter(fh, fh.modified())
-		defer fh.file.finishWriterClose()
-	}
-
-	// If we aren't creating or truncating the file then
-	// we haven't modified it so don't need to transfer it
-	if fh.flags&(os.O_CREATE|os.O_TRUNC) != 0 {
-		if err := fh.openPending(false); err != nil {
-			return err
-		}
-	}
-
-	if writer && fh.opened {
-		fi, err := fh.File.Stat()
-		if err != nil {
-			fs.Errorf(fh.logPrefix(), "Failed to stat cache file: %v", err)
-		} else {
-			fh.file.setSize(fi.Size())
-		}
-	}
-
-	// Close the underlying file
-	if fh.opened && closeFile {
-		err := fh.File.Close()
-		if err != nil {
-			err = errors.Wrap(err, "failed to close cache file")
-			return err
-		}
-	}
-
-	if isCopied {
-		// Transfer the temp file to the remote
-		cacheObj, err := fh.d.vfs.cache.f.NewObject(context.TODO(), fh.file.Path())
-		if err != nil {
-			err = errors.Wrap(err, "failed to find cache file")
-			fs.Errorf(fh.logPrefix(), "%v", err)
-			return err
-		}
-
-		objPath := fh.file.Path()
-		objOld := fh.file.getObject()
-		if objOld != nil {
-			objPath = objOld.Remote() // use the path of the actual object if available
-		}
-		o, err := copyObj(fh.d.vfs.f, objOld, objPath, cacheObj)
-		if err != nil {
-			err = errors.Wrap(err, "failed to transfer file from cache to remote")
-			fs.Errorf(fh.logPrefix(), "%v", err)
-			return err
-		}
-		fh.file.setObject(o)
-		fs.Debugf(o, "transferred to remote")
-	}
-
-	return nil
+	size := fh._size()
+	fh.file.setSize(size)
 }
 
 // close the file handle returning EBADF if it has been
@@ -317,15 +152,19 @@ func (fh *RWFileHandle) close() (err error) {
 	if fh.closed {
 		return ECLOSED
 	}
-	fh.closed = true
-	defer func() {
-		if fh.opened {
-			fh.file.delRWOpen()
-		}
-		fh.d.vfs.cache.close(fh.file.Path())
-	}()
 
-	return fh.flushWrites(true)
+	fh.closed = true
+	fh.updateSize()
+	if fh.opened {
+		err = fh.item.Close(fh.file.setObject)
+		fh.opened = false
+	}
+
+	if !fh.readOnly() {
+		fh.file.delWriter(fh)
+	}
+
+	return err
 }
 
 // Close closes the file
@@ -340,37 +179,10 @@ func (fh *RWFileHandle) Close() error {
 // single opened file, Flush can be called multiple times.
 func (fh *RWFileHandle) Flush() error {
 	fh.mu.Lock()
-	defer fh.mu.Unlock()
-	if !fh.opened {
-		return nil
-	}
-	if fh.closed {
-		fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush nothing to do")
-		return nil
-	}
-	// fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush")
-	if !fh.opened {
-		fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush ignoring flush on unopened handle")
-		return nil
-	}
-
-	// If Write hasn't been called then ignore the Flush - Release
-	// will pick it up
-	if !fh.writeCalled {
-		fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush ignoring flush on unwritten handle")
-		return nil
-	}
-
-	fh.file.muRW.Lock()
-	defer fh.file.muRW.Unlock()
-	err := fh.flushWrites(false)
-
-	if err != nil {
-		fs.Errorf(fh.logPrefix(), "RWFileHandle.Flush error: %v", err)
-	} else {
-		// fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush OK")
-	}
-	return err
+	fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush")
+	fh.updateSize()
+	fh.mu.Unlock()
+	return nil
 }
 
 // Release is called when we are finished with the file handle
@@ -380,32 +192,42 @@ func (fh *RWFileHandle) Flush() error {
 func (fh *RWFileHandle) Release() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
+	fs.Debugf(fh.logPrefix(), "RWFileHandle.Release")
 	if fh.closed {
-		fs.Debugf(fh.logPrefix(), "RWFileHandle.Release nothing to do")
+		// Don't return an error if called twice
 		return nil
 	}
-	fs.Debugf(fh.logPrefix(), "RWFileHandle.Release closing")
 	err := fh.close()
 	if err != nil {
 		fs.Errorf(fh.logPrefix(), "RWFileHandle.Release error: %v", err)
-	} else {
-		// fs.Debugf(fh.logPrefix(), "RWFileHandle.Release OK")
 	}
 	return err
+}
+
+// _size returns the size of the underlying file and also sets it in
+// the owning file
+//
+// call with the lock held
+func (fh *RWFileHandle) _size() int64 {
+	size, err := fh.item.GetSize()
+	if err != nil {
+		o := fh.file.getObject()
+		if o != nil {
+			size = o.Size()
+		} else {
+			fs.Errorf(fh.logPrefix(), "Couldn't read size of file")
+			size = 0
+		}
+	}
+	fh.file.setSize(size)
+	return size
 }
 
 // Size returns the size of the underlying file
 func (fh *RWFileHandle) Size() int64 {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	if !fh.opened {
-		return fh.file.Size()
-	}
-	fi, err := fh.File.Stat()
-	if err != nil {
-		return 0
-	}
-	return fi.Size()
+	return fh._size()
 }
 
 // Stat returns info about the file
@@ -415,35 +237,50 @@ func (fh *RWFileHandle) Stat() (os.FileInfo, error) {
 	return fh.file, nil
 }
 
-// readFn is a general purpose read function - pass in a closure to do
-// the actual read
-func (fh *RWFileHandle) readFn(read func() (int, error)) (n int, err error) {
-	fh.mu.Lock()
-	defer fh.mu.Unlock()
+// _readAt bytes from the file at off
+//
+// if release is set then it releases the mutex just before doing the IO
+//
+// call with lock held
+func (fh *RWFileHandle) _readAt(b []byte, off int64, release bool) (n int, err error) {
+	defer log.Trace(fh.logPrefix(), "size=%d, off=%d", len(b), off)("n=%d, err=%v", &n, &err)
 	if fh.closed {
-		return 0, ECLOSED
+		return n, ECLOSED
 	}
-	if fh.flags&accessModeMask == os.O_WRONLY {
-		return 0, EBADF
+	if fh.writeOnly() {
+		return n, EBADF
 	}
-	if err = fh.openPending(false); err != nil {
+	if off >= fh._size() {
+		return n, io.EOF
+	}
+	if err = fh.openPending(); err != nil {
 		return n, err
 	}
-	return read()
-}
-
-// Read bytes from the file
-func (fh *RWFileHandle) Read(b []byte) (n int, err error) {
-	return fh.readFn(func() (int, error) {
-		return fh.File.Read(b)
-	})
+	if release {
+		// Do the writing with fh.mu unlocked
+		fh.mu.Unlock()
+	}
+	n, err = fh.item.ReadAt(b, off)
+	if release {
+		fh.mu.Lock()
+	}
+	return n, err
 }
 
 // ReadAt bytes from the file at off
 func (fh *RWFileHandle) ReadAt(b []byte, off int64) (n int, err error) {
-	return fh.readFn(func() (int, error) {
-		return fh.File.ReadAt(b, off)
-	})
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	return fh._readAt(b, off, true)
+}
+
+// Read bytes from the file
+func (fh *RWFileHandle) Read(b []byte) (n int, err error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	n, err = fh._readAt(b, fh.offset, false)
+	fh.offset += int64(n)
+	return n, err
 }
 
 // Seek to new file position
@@ -456,65 +293,94 @@ func (fh *RWFileHandle) Seek(offset int64, whence int) (ret int64, err error) {
 	if !fh.opened && offset == 0 && whence != 2 {
 		return 0, nil
 	}
-	if err = fh.openPending(false); err != nil {
+	if err = fh.openPending(); err != nil {
 		return ret, err
 	}
-	return fh.File.Seek(offset, whence)
+	switch whence {
+	case io.SeekStart:
+		fh.offset = 0
+	case io.SeekEnd:
+		fh.offset = fh._size()
+	}
+	fh.offset += offset
+	// we don't check the offset - the next Read will
+	return fh.offset, nil
 }
 
-// writeFn general purpose write call
+// _writeAt bytes to the file at off
 //
-// Pass a closure to do the actual write
-func (fh *RWFileHandle) writeFn(write func() error) (err error) {
-	fh.mu.Lock()
-	defer fh.mu.Unlock()
+// if release is set then it releases the mutex just before doing the IO
+//
+// call with lock held
+func (fh *RWFileHandle) _writeAt(b []byte, off int64, release bool) (n int, err error) {
+	defer log.Trace(fh.logPrefix(), "size=%d, off=%d", len(b), off)("n=%d, err=%v", &n, &err)
 	if fh.closed {
-		return ECLOSED
+		return n, ECLOSED
 	}
-	if fh.flags&accessModeMask == os.O_RDONLY {
-		return EBADF
+	if fh.readOnly() {
+		return n, EBADF
 	}
-	if err = fh.openPending(false); err != nil {
-		return err
+	if err = fh.openPending(); err != nil {
+		return n, err
+	}
+	if fh.flags&os.O_APPEND != 0 {
+		// From open(2): Before each write(2), the file offset is
+		// positioned at the end of the file, as if with lseek(2).
+		size := fh._size()
+		fh.offset = size
+		off = fh.offset
 	}
 	fh.writeCalled = true
-	err = write()
-	if err != nil {
-		return err
+	if release {
+		// Do the writing with fh.mu unlocked
+		fh.mu.Unlock()
 	}
-	fi, err := fh.File.Stat()
-	if err != nil {
-		return errors.Wrap(err, "failed to stat cache file")
+	n, err = fh.item.WriteAt(b, off)
+	if release {
+		fh.mu.Lock()
 	}
-	fh.file.setSize(fi.Size())
-	return nil
-}
+	if err != nil {
+		return n, err
+	}
 
-// Write bytes to the file
-func (fh *RWFileHandle) Write(b []byte) (n int, err error) {
-	err = fh.writeFn(func() error {
-		n, err = fh.File.Write(b)
-		return err
-	})
+	_ = fh._size()
 	return n, err
 }
 
 // WriteAt bytes to the file at off
 func (fh *RWFileHandle) WriteAt(b []byte, off int64) (n int, err error) {
-	err = fh.writeFn(func() error {
-		n, err = fh.File.WriteAt(b, off)
-		return err
-	})
+	fh.mu.Lock()
+	n, err = fh._writeAt(b, off, true)
+	if fh.flags&os.O_APPEND != 0 {
+		fh.offset += int64(n)
+	}
+	fh.mu.Unlock()
+	return n, err
+}
+
+// Write bytes to the file
+func (fh *RWFileHandle) Write(b []byte) (n int, err error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	n, err = fh._writeAt(b, fh.offset, false)
+	fh.offset += int64(n)
 	return n, err
 }
 
 // WriteString a string to the file
 func (fh *RWFileHandle) WriteString(s string) (n int, err error) {
-	err = fh.writeFn(func() error {
-		n, err = fh.File.WriteString(s)
-		return err
-	})
-	return n, err
+	return fh.Write([]byte(s))
+}
+
+// Truncate file to given size
+//
+// Call with mutex held
+func (fh *RWFileHandle) _truncate(size int64) (err error) {
+	if size == fh._size() {
+		return nil
+	}
+	fh.file.setSize(size)
+	return fh.item.Truncate(size)
 }
 
 // Truncate file to given size
@@ -524,12 +390,10 @@ func (fh *RWFileHandle) Truncate(size int64) (err error) {
 	if fh.closed {
 		return ECLOSED
 	}
-	if err = fh.openPending(size == 0); err != nil {
+	if err = fh.openPending(); err != nil {
 		return err
 	}
-	fh.changed = true
-	fh.file.setSize(size)
-	return fh.File.Truncate(size)
+	return fh._truncate(size)
 }
 
 // Sync commits the current contents of the file to stable storage. Typically,
@@ -544,12 +408,48 @@ func (fh *RWFileHandle) Sync() error {
 	if !fh.opened {
 		return nil
 	}
-	if fh.flags&accessModeMask == os.O_RDONLY {
+	if fh.readOnly() {
 		return nil
 	}
-	return fh.File.Sync()
+	return fh.item.Sync()
 }
 
 func (fh *RWFileHandle) logPrefix() string {
 	return fmt.Sprintf("%s(%p)", fh.file.Path(), fh)
+}
+
+// Chdir changes the current working directory to the file, which must
+// be a directory.
+func (fh *RWFileHandle) Chdir() error {
+	return ENOSYS
+}
+
+// Chmod changes the mode of the file to mode.
+func (fh *RWFileHandle) Chmod(mode os.FileMode) error {
+	return ENOSYS
+}
+
+// Chown changes the numeric uid and gid of the named file.
+func (fh *RWFileHandle) Chown(uid, gid int) error {
+	return ENOSYS
+}
+
+// Fd returns the integer Unix file descriptor referencing the open file.
+func (fh *RWFileHandle) Fd() uintptr {
+	return 0xdeadbeef // FIXME
+}
+
+// Name returns the name of the file from the underlying Object.
+func (fh *RWFileHandle) Name() string {
+	return fh.file.String()
+}
+
+// Readdir reads the contents of the directory associated with file.
+func (fh *RWFileHandle) Readdir(n int) ([]os.FileInfo, error) {
+	return nil, ENOSYS
+}
+
+// Readdirnames reads the contents of the directory associated with file.
+func (fh *RWFileHandle) Readdirnames(n int) (names []string, err error) {
+	return nil, ENOSYS
 }

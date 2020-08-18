@@ -1,6 +1,6 @@
 // Upload object to QingStor
 
-// +build !plan9
+// +build !plan9,!js
 
 package qingstor
 
@@ -15,6 +15,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/atexit"
 	qs "github.com/yunify/qingstor-sdk-go/v3/service"
 )
 
@@ -22,7 +23,7 @@ const (
 	// maxSinglePartSize = 1024 * 1024 * 1024 * 5 // The maximum allowed size when uploading a single object to QingStor
 	// maxMultiPartSize = 1024 * 1024 * 1024 * 1 // The maximum allowed part size when uploading a part to QingStor
 	minMultiPartSize = 1024 * 1024 * 4 // The minimum allowed part size when uploading a part to QingStor
-	maxMultiParts    = 10000           // The maximum allowed number of parts in an multi-part upload
+	maxMultiParts    = 10000           // The maximum allowed number of parts in a multi-part upload
 )
 
 const (
@@ -168,7 +169,7 @@ func (u *uploader) singlePartUpload(buf io.Reader, size int64) error {
 	return err
 }
 
-// Upload upload a object into QingStor
+// Upload upload an object into QingStor
 func (u *uploader) upload() error {
 	u.init()
 
@@ -255,7 +256,7 @@ func (mu *multiUploader) readChunk(ch chan chunk) {
 	}
 }
 
-// initiate init an Multiple Object and obtain UploadID
+// initiate init a Multiple Object and obtain UploadID
 func (mu *multiUploader) initiate() error {
 	bucketInit, _ := mu.bucketInit()
 	req := qs.InitiateMultipartUploadInput{
@@ -297,22 +298,7 @@ func (mu *multiUploader) send(c chunk) error {
 	return err
 }
 
-// list list the ObjectParts of an multipart upload
-func (mu *multiUploader) list() error {
-	bucketInit, _ := mu.bucketInit()
-
-	req := qs.ListMultipartInput{
-		UploadID: mu.uploadID,
-	}
-	fs.Debugf(mu, "Reading multi-part details")
-	rsp, err := bucketInit.ListMultipart(mu.cfg.key, &req)
-	if err == nil {
-		mu.objectParts = rsp.ObjectParts
-	}
-	return err
-}
-
-// complete complete an multipart upload
+// complete complete a multipart upload
 func (mu *multiUploader) complete() error {
 	var err error
 	if err = mu.getErr(); err != nil {
@@ -339,7 +325,7 @@ func (mu *multiUploader) complete() error {
 	return err
 }
 
-// abort abort an multipart upload
+// abort abort a multipart upload
 func (mu *multiUploader) abort() error {
 	var err error
 	bucketInit, _ := mu.bucketInit()
@@ -356,12 +342,20 @@ func (mu *multiUploader) abort() error {
 }
 
 // multiPartUpload upload a multiple object into QingStor
-func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) error {
-	var err error
-	//Initiate an multi-part upload
+func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) (err error) {
+	// Initiate a multi-part upload
 	if err = mu.initiate(); err != nil {
 		return err
 	}
+
+	// Cancel the session if something went wrong
+	defer atexit.OnError(&err, func() {
+		fs.Debugf(mu, "Cancelling multipart upload: %v", err)
+		cancelErr := mu.abort()
+		if cancelErr != nil {
+			fs.Logf(mu, "Failed to cancel multipart upload: %v", cancelErr)
+		}
+	})()
 
 	ch := make(chan chunk, mu.cfg.concurrency)
 	for i := 0; i < mu.cfg.concurrency; i++ {
@@ -415,9 +409,5 @@ func (mu *multiUploader) multiPartUpload(firstBuf io.ReadSeeker) error {
 	close(ch)
 	mu.wg.Wait()
 	// Complete Multipart Upload
-	err = mu.complete()
-	if mu.getErr() != nil || err != nil {
-		_ = mu.abort()
-	}
-	return err
+	return mu.complete()
 }

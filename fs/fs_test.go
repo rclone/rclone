@@ -49,7 +49,7 @@ func TestFeaturesList(t *testing.T) {
 func TestFeaturesEnabled(t *testing.T) {
 	ft := new(Features)
 	ft.CaseInsensitive = true
-	ft.Purge = func(ctx context.Context) error { return nil }
+	ft.Purge = func(ctx context.Context, dir string) error { return nil }
 	enabled := ft.Enabled()
 
 	flag, ok := enabled["CaseInsensitive"]

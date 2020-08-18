@@ -1,43 +1,68 @@
 ---
-title: "Flowers for My Wife"
-description: "Flowers for My Wife."
+title: "Donations"
+description: "Donations to the rclone project."
 type: page
-date: "2015-09-06"
 ---
 
-## <i class="fa fa-heart"></i> Flowers for My Wife ##
+# {{< icon "fa fa-heart heart" >}} Donations to the rclone project
 
-Rclone is a pure open source for love-not-money project.  However I've
-had requests for a donation page and coding rclone does take me away
-from something else I love - my wonderful wife.
+Rclone is a free open source project with thousands of contributions
+from volunteers all round the world and I would like to thank all of
+you for donating your time to the project.
 
-So if you would like to send a donation, I will use it to buy flowers
-(and other pretty things) for her which will make her very happy.
+However, maintaining rclone is a lot of work - easily the equivalent
+of a **full time job** - for me. Nothing stands still in the world of
+cloud storage.  Rclone needs constant attention adapting to changes by
+cloud providers, adding new providers, adding new features, keeping
+the integration tests working, fixing bugs and many more things!
 
-### Paypal ###
+I love doing the work and I'd like to spend more time doing it - your
+support helps make that possible.
 
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-<input type="hidden" name="cmd" value="_s-xclick">
-<input type="hidden" name="hosted_button_id" value="XQMMNUD5ZY49J">
-<input type="image" src="https://www.paypalobjects.com/en_US/GB/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal – The safer, easier way to pay online.">
-<img alt="" border="0" src="https://www.paypalobjects.com/en_GB/i/scr/pixel.gif" width="1" height="1">
-</form>
+Thank you :-)
 
-### Paypal.me ###
+{{< nick >}}
 
-My paypal.me link https://www.paypal.me/nickcw can be used to send
-money if the donate button doesn't work for you (eg you live in
-Japan), or if you prefer to use it.
+PS I'm available for rclone and object storage related consultancy -
+[email me](mailto:nick@craig-wood.com) for more info.
 
-### Bitcoin ###
+{{< monthly_donations >}}
 
-[![19j3oLUsqBcTRvZ2LSq2phVjsAAJ86xSnk](/img/ncw-bitcoin-address.png)](bitcoin:19j3oLUsqBcTRvZ2LSq2phVjsAAJ86xSnk)
+## Personal users
 
-[Bitcoin:](bitcoin:19j3oLUsqBcTRvZ2LSq2phVjsAAJ86xSnk) 19j3oLUsqBcTRvZ2LSq2phVjsAAJ86xSnk
+If you are a personal user and you would like to support the project
+with sponsorship as a way of saying thank you that would be most
+appreciated. {{< icon "fa fa-heart heart" >}}
 
-If you would prefer to express your gratitude by promoting the
-project, or helping with it, I'd be over the moon with that too!
+## Business users
 
-Thanks
+If your business distributes rclone as part of its products (which the
+generous MIT licence allows) or uses it internally then it would make
+business sense to sponsor the rclone project to ensure that the
+project you rely on stays healthy and well maintained.
 
-Nick
+If you run one of the cloud storage providers that rclone supports and
+rclone is driving revenue your way then you know it makes sense to
+sponsor the project. {{< icon "far fa-smile" >}}
+
+Note that if you choose the "GitHub Sponsors" option they will provide
+proper tax invoices appropriate for your country.
+
+## Monthly donations
+
+Monthly donations help keep rclone development sustainable in the long
+run so this is the preferred option. A small amount every month is
+much better than a one off donation as it allows planning for the
+future.
+
+{{< monthly_donations >}}
+
+## One off donations
+
+If you don't want to contribute monthly then of course we'd love a one
+off donation.
+
+{{< one_off_donations >}}
+
+If you require a receipt or wish to contribute in a different way then
+please [drop me an email](mailto:nick@craig-wood.com).

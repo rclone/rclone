@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,!js
 
 package cache
 
@@ -99,15 +99,6 @@ func (d *Directory) Remote() string {
 // abs returns the absolute path to the dir
 func (d *Directory) abs() string {
 	return cleanPath(path.Join(d.Dir, d.Name))
-}
-
-// parentRemote returns the absolute path parent remote
-func (d *Directory) parentRemote() string {
-	absPath := d.abs()
-	if absPath == "" {
-		return ""
-	}
-	return cleanPath(path.Dir(absPath))
 }
 
 // ModTime returns the cached ModTime

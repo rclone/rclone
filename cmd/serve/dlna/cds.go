@@ -16,8 +16,8 @@ import (
 
 	"github.com/anacrolix/dms/dlna"
 	"github.com/anacrolix/dms/upnp"
-	"github.com/anacrolix/dms/upnpav"
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/cmd/serve/dlna/upnpav"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/vfs"
 )
@@ -77,16 +77,12 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 	}
 
 	if fileInfo.IsDir() {
-		children, err := cds.readContainer(cdsObject, host)
-		if err != nil {
-			return nil, err
-		}
-
+		defaultChildCount := 1
 		obj.Class = "object.container.storageFolder"
 		obj.Title = fileInfo.Name()
 		return upnpav.Container{
 			Object:     obj,
-			ChildCount: len(children),
+			ChildCount: &defaultChildCount,
 		}, nil
 	}
 
@@ -110,6 +106,7 @@ func (cds *contentDirectoryService) cdsObjectToUpnpavObject(cdsObject object, fi
 
 	obj.Class = "object.item." + mediaType[1] + "Item"
 	obj.Title = fileInfo.Name()
+	obj.Date = upnpav.Timestamp{Time: fileInfo.ModTime()}
 
 	item := upnpav.Item{
 		Object: obj,
@@ -186,7 +183,7 @@ func (cds *contentDirectoryService) readContainer(o object, host string) (ret []
 // Given a list of nodes, separate them into potential media items and any associated resources (external subtitles,
 // for example.)
 //
-// The result is a a slice of potential media nodes (in their original order) and a map containing associated
+// The result is a slice of potential media nodes (in their original order) and a map containing associated
 // resources nodes of each media node, if any.
 func mediaWithResources(nodes vfs.Nodes) (vfs.Nodes, map[vfs.Node]vfs.Nodes) {
 	media, mediaResources := vfs.Nodes{}, make(map[vfs.Node]vfs.Nodes)
