@@ -400,3 +400,4 @@ put them back in again.` >}}
   * tyhuber1 <68970760+tyhuber1@users.noreply.github.com>
   * David Ibarra <david.ibarra@realty.com>
   * Tim Gallant <tim@lilt.com>
+  * Kaloyan Raev <kaloyan@storj.io>
