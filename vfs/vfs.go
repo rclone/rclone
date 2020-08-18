@@ -216,12 +216,18 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 	vfs.root = newDir(vfs, f, nil, fsDir)
 
 	// Start polling function
-	if do := vfs.f.Features().ChangeNotify; do != nil {
+	features := vfs.f.Features()
+	if do := features.ChangeNotify; do != nil {
 		vfs.pollChan = make(chan time.Duration)
 		do(context.TODO(), vfs.root.changeNotify, vfs.pollChan)
 		vfs.pollChan <- vfs.Opt.PollInterval
 	} else {
 		fs.Infof(f, "poll-interval is not supported by this remote")
+	}
+
+	// Warn if can't stream
+	if !vfs.Opt.ReadOnly && vfs.Opt.CacheMode < vfscommon.CacheModeWrites && features.PutStream == nil {
+		fs.Logf(f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
 	}
 
 	vfs.SetCacheMode(vfs.Opt.CacheMode)
