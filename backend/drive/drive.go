@@ -2258,13 +2258,13 @@ func (f *Fs) Precision() time.Duration {
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	var srcObj *baseObject
 	ext := ""
-	readDescription := false
+	isDoc := false
 	switch src := src.(type) {
 	case *Object:
 		srcObj = &src.baseObject
 	case *documentObject:
 		srcObj, ext = &src.baseObject, src.ext()
-		readDescription = true
+		isDoc = true
 	case *linkObject:
 		srcObj, ext = &src.baseObject, src.ext()
 	default:
@@ -2288,7 +2288,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 
-	if readDescription {
+	if isDoc {
 		// preserve the description on copy for docs
 		info, err := f.getFile(actualID(srcObj.id), "description")
 		if err != nil {
@@ -2319,6 +2319,22 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	newObject, err := f.newObjectWithInfo(remote, info)
 	if err != nil {
 		return nil, err
+	}
+	// Google docs aren't preserving their mod time after copy, so set them explicitly
+	// See: https://github.com/rclone/rclone/issues/4517
+	//
+	// FIXME remove this when google fixes the problem!
+	if isDoc {
+		// A short sleep is needed here in order to make the
+		// change effective, without it is is ignored. This is
+		// probably some eventual consistency nastiness.
+		sleepTime := 2 * time.Second
+		fs.Debugf(f, "Sleeping for %v before setting the modtime to work around drive bug - see #4517")
+		time.Sleep(sleepTime)
+		err = newObject.SetModTime(ctx, src.ModTime(ctx))
+		if err != nil {
+			return nil, err
+		}
 	}
 	if existingObject != nil {
 		err = existingObject.Remove(ctx)
