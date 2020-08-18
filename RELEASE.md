@@ -69,6 +69,8 @@ this will be done already.
 
 Now
 
+  * FIXME this is now broken with new semver layout - needs fixing
+  * FIXME the TAG=${NEW_TAG} shouldn't be necessary any more
   * git co ${BASE_TAG}-stable
   * git cherry-pick any fixes
   * Test (see above)

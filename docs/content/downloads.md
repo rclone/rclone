@@ -38,16 +38,25 @@ Beta releases
 [Beta releases](https://beta.rclone.org) are generated from each commit
 to master.  Note these are named like
 
-    {Version Tag}-{Commit Number}-g{Git Commit Hash}
+    {Version Tag}.beta.{Commit Number}.{Git Commit Hash}
 
-You can match the `Git Commit Hash` up with the [git
-log](https://github.com/rclone/rclone/commits/master).  The most recent
-release will have the largest `Version Tag` and `Commit Number` and
-will normally be at the end of the list.
+eg
+
+    v1.53.0-beta.4677.b657a2204
+
+The `Version Tag` is the version that the beta release will become
+when it is released. You can match the `Git Commit Hash` up with the
+[git log](https://github.com/rclone/rclone/commits/master).  The most
+recent release will have the largest `Version Tag` and `Commit Number`
+and will normally be at the end of the list.
 
 Some beta releases may have a branch name also:
 
-    {Version Tag}-{Commit Number}-g{Git Commit Hash}-{Branch Name}
+    {Version Tag}-beta.{Commit Number}.{Git Commit Hash}.{Branch Name}
+
+eg
+
+    v1.53.0-beta.4677.b657a2204.semver
 
 The presence of `Branch Name` indicates that this is a feature under
 development which will at some point be merged into the normal betas
