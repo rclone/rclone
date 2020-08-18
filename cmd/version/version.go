@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/version"
 	"github.com/spf13/cobra"
 )
 
@@ -66,8 +66,16 @@ Or
 	},
 }
 
+// strip a leading v off the string
+func stripV(s string) string {
+	if len(s) > 0 && s[0] == 'v' {
+		return s[1:]
+	}
+	return s
+}
+
 // getVersion gets the version by checking the download repository passed in
-func getVersion(url string) (v version.Version, vs string, date time.Time, err error) {
+func getVersion(url string) (v *semver.Version, vs string, date time.Time, err error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return v, vs, date, err
@@ -89,16 +97,16 @@ func getVersion(url string) (v version.Version, vs string, date time.Time, err e
 	if err != nil {
 		return v, vs, date, err
 	}
-	v, err = version.New(vs)
+	v, err = semver.NewVersion(stripV(vs))
 	return v, vs, date, err
 }
 
 // check the current version against available versions
 func checkVersion() {
 	// Get Current version
-	vCurrent, err := version.New(fs.Version)
+	vCurrent, err := semver.NewVersion(stripV(fs.Version))
 	if err != nil {
-		fs.Errorf(nil, "Failed to get parse version: %v", err)
+		fs.Errorf(nil, "Failed to parse version: %v", err)
 	}
 	const timeFormat = "2006-01-02"
 
@@ -108,12 +116,12 @@ func checkVersion() {
 			fs.Errorf(nil, "Failed to get rclone %s version: %v", what, err)
 			return
 		}
-		fmt.Printf("%-8s%-13v %20s\n",
+		fmt.Printf("%-8s%-40v %20s\n",
 			what+":",
 			v,
 			"(released "+t.Format(timeFormat)+")",
 		)
-		if v.Cmp(vCurrent) > 0 {
+		if v.Compare(*vCurrent) > 0 {
 			fmt.Printf("  upgrade: %s\n", url+vs)
 		}
 	}
@@ -126,7 +134,7 @@ func checkVersion() {
 		"beta",
 		"https://beta.rclone.org/",
 	)
-	if vCurrent.IsGit() {
+	if strings.HasSuffix(fs.Version, "-DEV") {
 		fmt.Println("Your version is compiled from git so comparisons may be wrong.")
 	}
 }
