@@ -7,24 +7,26 @@ RELEASE_TAG := $(shell git tag -l --points-at HEAD)
 VERSION := $(shell cat VERSION)
 # Last tag on this branch
 LAST_TAG := $(shell git describe --tags --abbrev=0)
+# Next version
+NEXT_VERSION := $(shell echo $(VERSION) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f.0", $$_)')
 # If we are working on a release, override branch to master
 ifdef RELEASE_TAG
 	BRANCH := master
+	LAST_TAG := $(shell git describe --abbrev=0 --tags $(VERSION)^)
 endif
-TAG_BRANCH := -$(BRANCH)
-BRANCH_PATH := branch/
+TAG_BRANCH := .$(BRANCH)
+BRANCH_PATH := branch/$(BRANCH)/
 # If building HEAD or master then unset TAG_BRANCH and BRANCH_PATH
 ifeq ($(subst HEAD,,$(subst master,,$(BRANCH))),)
 	TAG_BRANCH :=
 	BRANCH_PATH :=
 endif
-# Make version suffix -DDD-gCCCCCCCC (D=commits since last relase, C=Commit) or blank
-VERSION_SUFFIX := $(shell git describe --abbrev=8 --tags | perl -lpe 's/^v\d+\.\d+\.\d+//; s/^-(\d+)/"-".sprintf("%03d",$$1)/e;')
-# TAG is current version + number of commits since last release + branch
+# Make version suffix -beta.NNNN.CCCCCCCC (N=Commit number, C=Commit)
+VERSION_SUFFIX := -beta.$(shell git rev-list --count HEAD).$(shell git show --no-patch --no-notes --pretty='%h' HEAD)
+# TAG is current version + commit number + commit + branch
 TAG := $(VERSION)$(VERSION_SUFFIX)$(TAG_BRANCH)
-NEXT_VERSION := $(shell echo $(VERSION) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f.0", $$_)')
-ifndef RELEASE_TAG
-	TAG := $(TAG)-beta
+ifdef RELEASE_TAG
+	TAG := $(RELEASE_TAG)
 endif
 GO_VERSION := $(shell go version)
 ifdef BETA_SUBDIR
@@ -56,7 +58,6 @@ vars:
 	@echo BRANCH="'$(BRANCH)'"
 	@echo TAG="'$(TAG)'"
 	@echo VERSION="'$(VERSION)'"
-	@echo NEXT_VERSION="'$(NEXT_VERSION)'"
 	@echo GO_VERSION="'$(GO_VERSION)'"
 	@echo BETA_URL="'$(BETA_URL)'"
 
@@ -220,25 +221,24 @@ fetch_binaries:
 serve:	website
 	cd docs && hugo server -v -w --disableFastRender
 
-tag:	doc
-	@echo "Old tag is $(VERSION)"
-	@echo "New tag is $(NEXT_VERSION)"
-	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEXT_VERSION)\"\n" | gofmt > fs/version.go
-	echo -n "$(NEXT_VERSION)" > docs/layouts/partials/version.html
-	echo "$(NEXT_VERSION)" > VERSION
-	git tag -s -m "Version $(NEXT_VERSION)" $(NEXT_VERSION)
-	bin/make_changelog.py $(LAST_TAG) $(NEXT_VERSION) > docs/content/changelog.md.new
+tag:	retag doc
+	bin/make_changelog.py $(LAST_TAG) $(VERSION) > docs/content/changelog.md.new
 	mv docs/content/changelog.md.new docs/content/changelog.md
 	@echo "Edit the new changelog in docs/content/changelog.md"
 	@echo "Then commit all the changes"
-	@echo git commit -m \"Version $(NEXT_VERSION)\" -a -v
+	@echo git commit -m \"Version $(VERSION)\" -a -v
 	@echo "And finally run make retag before make cross etc"
 
 retag:
+	@echo "Version is $(VERSION)"
 	git tag -f -s -m "Version $(VERSION)" $(VERSION)
 
 startdev:
-	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(VERSION)-DEV\"\n" | gofmt > fs/version.go
+	@echo "Version is $(VERSION)"
+	@echo "Next version is $(NEXT_VERSION)"
+	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEXT_VERSION)-DEV\"\n" | gofmt > fs/version.go
+	echo -n "$(NEXT_VERSION)" > docs/layouts/partials/version.html
+	echo "$(NEXT_VERSION)" > VERSION
 	git commit -m "Start $(VERSION)-DEV development" fs/version.go
 
 winzip:
