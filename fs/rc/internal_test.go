@@ -14,7 +14,6 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/version"
 )
 
 func TestMain(m *testing.M) {
@@ -106,7 +105,7 @@ func TestCoreVersion(t *testing.T) {
 	assert.Equal(t, runtime.GOARCH, out["arch"])
 	assert.Equal(t, runtime.Version(), out["goVersion"])
 	_ = out["isGit"].(bool)
-	v := out["decomposed"].(version.Version)
+	v := out["decomposed"].([]int64)
 	assert.True(t, len(v) >= 2)
 }
 

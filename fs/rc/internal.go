@@ -8,13 +8,14 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
+	"github.com/coreos/go-semver/semver"
 	"github.com/pkg/errors"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
-	"github.com/rclone/rclone/fs/version"
 	"github.com/rclone/rclone/lib/atexit"
 )
 
@@ -171,10 +172,10 @@ func init() {
 		Help: `
 This shows the current version of go and the go runtime
 
-- version - rclone version, eg "v1.44"
-- decomposed - version number as [major, minor, patch, subpatch]
-    - note patch and subpatch will be 999 for a git compiled version
+- version - rclone version, eg "v1.53.0"
+- decomposed - version number as [major, minor, patch]
 - isGit - boolean - true if this was compiled from the git version
+- isBeta - boolean - true if this is a beta version
 - os - OS in use as according to Go
 - arch - cpu architecture in use according to Go
 - goVersion - version of Go runtime in use
@@ -185,14 +186,15 @@ This shows the current version of go and the go runtime
 
 // Return version info
 func rcVersion(ctx context.Context, in Params) (out Params, err error) {
-	decomposed, err := version.New(fs.Version)
+	version, err := semver.NewVersion(fs.Version[1:])
 	if err != nil {
 		return nil, err
 	}
 	out = Params{
 		"version":    fs.Version,
-		"decomposed": decomposed,
-		"isGit":      decomposed.IsGit(),
+		"decomposed": version.Slice(),
+		"isGit":      strings.HasSuffix(fs.Version, "-DEV"),
+		"isBeta":     version.PreRelease != "",
 		"os":         runtime.GOOS,
 		"arch":       runtime.GOARCH,
 		"goVersion":  runtime.Version(),
