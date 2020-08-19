@@ -16,10 +16,6 @@ vfs/vfscache/downloaders
 cmd/cmount
 "
 
-testdirs="
-cmd/cmount
-"
-
 for testdir in ${testdirs}; do
     echo "Testing ${testdir}"
     cd ${base}/${testdir}

@@ -265,9 +265,12 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode, inCache bool, forceC
 		require.NoError(t, err)
 		require.Equal(t, 14, n)
 
+		require.NoError(t, file.SetModTime(item.ModTime))
+
 		err = fd.Close()
 		require.NoError(t, err)
 	}
+	vfs.WaitForWriters(waitForWritersDelay)
 
 	// check file in cache
 	if inCache {
