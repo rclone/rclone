@@ -625,6 +625,10 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	dir = f.localPath(dir)
 	fi, err := f.lstat(dir)
 	if err != nil {
+		// already purged
+		if os.IsNotExist(err) {
+			return fs.ErrorDirNotFound
+		}
 		return err
 	}
 	if !fi.Mode().IsDir() {
