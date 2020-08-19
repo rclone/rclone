@@ -181,6 +181,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
 		err := upstreams[i].Features().Purge(ctx, dir)
+		if errors.Cause(err) == fs.ErrorDirNotFound {
+			err = nil
+		}
 		errs[i] = errors.Wrap(err, upstreams[i].Name())
 	})
 	return errs.Err()
@@ -504,6 +507,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 	for _, u := range f.upstreams {
 		usg, err := u.About(ctx)
+		if errors.Cause(err) == fs.ErrorDirNotFound {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
