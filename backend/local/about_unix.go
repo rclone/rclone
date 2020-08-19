@@ -4,6 +4,7 @@ package local
 
 import (
 	"context"
+	"os"
 	"syscall"
 
 	"github.com/pkg/errors"
@@ -15,6 +16,9 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var s syscall.Statfs_t
 	err := syscall.Statfs(f.root, &s)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fs.ErrorDirNotFound
+		}
 		return nil, errors.Wrap(err, "failed to read disk usage")
 	}
 	bs := int64(s.Bsize) // nolint: unconvert
