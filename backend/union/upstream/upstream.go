@@ -335,6 +335,9 @@ func (f *Fs) updateUsageCore(lock bool) error {
 	usage, err := f.RootFs.Features().About(ctx)
 	if err != nil {
 		f.cacheUpdate = false
+		if errors.Cause(err) == fs.ErrorDirNotFound {
+			err = nil
+		}
 		return err
 	}
 	if lock {
