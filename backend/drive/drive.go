@@ -2272,6 +2272,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantCopy
 	}
 
+	// Look to see if there is an existing object before we remove
+	// the extension from the remote
+	existingObject, _ := f.NewObject(ctx, remote)
+
+	// Adjust the remote name to be without the extension if we
+	// are about to create a doc.
 	if ext != "" {
 		if !strings.HasSuffix(remote, ext) {
 			fs.Debugf(src, "Can't copy - not same document type")
@@ -2279,9 +2285,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 		remote = remote[:len(remote)-len(ext)]
 	}
-
-	// Look to see if there is an existing object
-	existingObject, _ := f.NewObject(ctx, remote)
 
 	createInfo, err := f.createFileInfo(ctx, remote, src.ModTime(ctx))
 	if err != nil {
@@ -2329,7 +2332,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		// change effective, without it is is ignored. This is
 		// probably some eventual consistency nastiness.
 		sleepTime := 2 * time.Second
-		fs.Debugf(f, "Sleeping for %v before setting the modtime to work around drive bug - see #4517")
+		fs.Debugf(f, "Sleeping for %v before setting the modtime to work around drive bug - see #4517", sleepTime)
 		time.Sleep(sleepTime)
 		err = newObject.SetModTime(ctx, src.ModTime(ctx))
 		if err != nil {
