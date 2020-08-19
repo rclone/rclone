@@ -1874,6 +1874,9 @@ func Run(t *testing.T, opt *Opt) {
 		if !isBucketBasedButNotRoot(remote) {
 			err = operations.Purge(ctx, remote, "")
 			assert.Error(t, err, "Expecting error after on second purge")
+			if errors.Cause(err) != fs.ErrorDirNotFound {
+				t.Log("Warning: this should produce fs.ErrorDirNotFound")
+			}
 		}
 
 	})
