@@ -877,6 +877,7 @@ func (item *Item) setModTime(modTime time.Time) {
 	item.mu.Lock()
 	item._updateFingerprint()
 	item._setModTime(modTime)
+	item.info.ModTime = modTime
 	err := item._save()
 	if err != nil {
 		fs.Errorf(item.name, "vfs cache: setModTime: failed to save item info: %v", err)

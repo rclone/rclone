@@ -351,6 +351,11 @@ func (f *File) SetModTime(modTime time.Time) error {
 
 	f.pendingModTime = modTime
 
+	// set the time of the file in the cache
+	if f.d.vfs.cache != nil && f.d.vfs.cache.Exists(f._path()) {
+		f.d.vfs.cache.SetModTime(f._path(), f.pendingModTime)
+	}
+
 	// Only update the ModTime when there are no writers, setObject will do it
 	if !f._writingInProgress() {
 		return f._applyPendingModTime()
@@ -382,11 +387,6 @@ func (f *File) _applyPendingModTime() error {
 	default:
 		fs.Errorf(f.o, "Failed to apply pending mod time %v: %v", f.pendingModTime, err)
 		return err
-	}
-
-	// set the time of the file in the cache
-	if f.d.vfs.cache != nil && f.d.vfs.cache.Exists(f._path()) {
-		f.d.vfs.cache.SetModTime(f._path(), f.pendingModTime)
 	}
 
 	return nil
