@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/rclone/rclone/fs/rc/webgui"
 	"log"
 	"mime"
 	"net/http"
@@ -17,6 +16,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/rclone/rclone/fs/rc/webgui"
 
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -368,7 +369,6 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 
 // Match URLS of the form [fs]/remote
 var fsMatch = regexp.MustCompile(`^\[(.*?)\](.*)$`)
-var referrerPathReg = regexp.MustCompile("^(https?)://(.+):([0-9]+)?/(.*)$")
 
 func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) {
 	// Look to see if this has an fs in the path
@@ -397,20 +397,8 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 				return
 			}
 			return
-		} else if s.opt.WebUI {
-			referrer := r.Referer()
-			referrerPathMatch := referrerPathReg.FindStringSubmatch(referrer)
-
-			if referrerPathMatch != nil {
-				referrerPluginMatch := webgui.PluginsMatch.FindStringSubmatch(referrerPathMatch[4])
-				if referrerPluginMatch != nil {
-					path = fmt.Sprintf("/plugins/%s/%s/%s", referrerPluginMatch[1], referrerPluginMatch[2], path)
-
-					http.Redirect(w, r, path, http.StatusMovedPermanently)
-					//s.pluginsHandler.ServeHTTP(w, r)
-					return
-				}
-			}
+		} else if s.opt.WebUI && webgui.ServePluginWithReferrerOK(w, r, path) {
+			return
 		}
 		// Serve the files
 		r.URL.Path = "/" + path
