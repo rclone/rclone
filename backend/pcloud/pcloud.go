@@ -814,14 +814,19 @@ func (f *Fs) linkDir(ctx context.Context, dirID string, expire fs.Duration) (str
 }
 
 func (f *Fs) linkFile(ctx context.Context, path string, expire fs.Duration) (string, error) {
+	obj, err := f.NewObject(ctx, path)
+	if err != nil {
+		return "", err
+	}
+	o := obj.(*Object)
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       "/getfilepublink",
 		Parameters: url.Values{},
 	}
 	var result api.PubLinkResult
-	opts.Parameters.Set("path", path)
-	err := f.pacer.Call(func() (bool, error) {
+	opts.Parameters.Set("fileid", fileIDtoNumber(o.id))
+	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Error.Update(err)
 		return shouldRetry(resp, err)
@@ -834,11 +839,6 @@ func (f *Fs) linkFile(ctx context.Context, path string, expire fs.Duration) (str
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
-	err := f.dirCache.FindRoot(ctx, false)
-	if err != nil {
-		return "", err
-	}
-
 	dirID, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == fs.ErrorDirNotFound {
 		return f.linkFile(ctx, remote, expire)
