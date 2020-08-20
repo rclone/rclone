@@ -3,6 +3,9 @@
 
 set -e
 
+# Optionally set the iterations with the first parameter
+iterations=${1:-100}
+
 base=$(dirname $(dirname $(realpath "$0")))
 echo ${base}
 run=${base}/bin/test-repeat.sh
@@ -17,7 +20,7 @@ cmd/cmount
 "
 
 for testdir in ${testdirs}; do
-    echo "Testing ${testdir}"
+    echo "Testing ${testdir} with ${iterations} iterations"
     cd ${base}/${testdir}
-    ${run} -c=100 -race -tags=cmount
+    ${run} -i=${iterations} -race -tags=cmount
 done
