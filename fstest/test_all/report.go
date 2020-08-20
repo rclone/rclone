@@ -140,7 +140,7 @@ func (r *Report) LogSummary() {
 	if !r.AllPassed() {
 		for _, t := range r.Failed {
 			log.Printf("  * %s", toShell(t.nextCmdLine()))
-			log.Printf("    * Failed tests: %v", t.failedTests)
+			log.Printf("    * Failed tests: %v", t.FailedTests)
 		}
 	}
 }
@@ -264,7 +264,7 @@ a:focus {
 <td>{{ if ne $prevRemote .Remote }}{{ .Remote }}{{ end }}{{ $prevRemote = .Remote }}</td>
 <td>{{ .Path }}</td>
 <td><span class="{{ .FastList }}">{{ .FastList }}</span></td>
-<td>{{ .FailedTests }}</td>
+<td>{{ .FailedTestsCSV }}</td>
 <td>{{ range $i, $v := .Logs }}<a href="{{ $v }}">#{{ $i }}</a> {{ end }}</td>
 </tr>
 {{ end }}

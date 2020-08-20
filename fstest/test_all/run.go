@@ -46,16 +46,16 @@ type Run struct {
 	SizeLimit int64  // maximum test file size
 	Ignore    map[string]struct{}
 	// Internals
-	cmdLine     []string
-	cmdString   string
-	try         int
+	CmdLine     []string
+	CmdString   string
+	Try         int
 	err         error
 	output      []byte
-	failedTests []string
-	runFlag     string
-	logDir      string   // directory to place the logs
-	trialName   string   // name/log file name of current trial
-	trialNames  []string // list of all the trials
+	FailedTests []string
+	RunFlag     string
+	LogDir      string   // directory to place the logs
+	TrialName   string   // name/log file name of current trial
+	TrialNames  []string // list of all the trials
 }
 
 // Runs records multiple Run objects
@@ -92,7 +92,7 @@ func (rs Runs) Less(i, j int) bool {
 // dumpOutput prints the error output
 func (r *Run) dumpOutput() {
 	log.Println("------------------------------------------------------------")
-	log.Printf("---- %q ----", r.cmdString)
+	log.Printf("---- %q ----", r.CmdString)
 	log.Println(string(r.output))
 	log.Println("------------------------------------------------------------")
 }
@@ -130,8 +130,8 @@ var failRe = regexp.MustCompile(`(?m)^\s*--- FAIL: (Test.*?) \(`)
 
 // findFailures looks for all the tests which failed
 func (r *Run) findFailures() {
-	oldFailedTests := r.failedTests
-	r.failedTests = nil
+	oldFailedTests := r.FailedTests
+	r.FailedTests = nil
 	excludeParents := map[string]struct{}{}
 	ignored := 0
 	for _, matches := range failRe.FindAllSubmatch(r.output, -1) {
@@ -140,7 +140,7 @@ func (r *Run) findFailures() {
 		if _, found := r.Ignore[failedTest]; found {
 			ignored++
 		} else {
-			r.failedTests = append(r.failedTests, failedTest)
+			r.FailedTests = append(r.FailedTests, failedTest)
 		}
 		// Find all the parents of this test
 		parts := strings.Split(failedTest, "/")
@@ -149,50 +149,50 @@ func (r *Run) findFailures() {
 		}
 	}
 	// Exclude the parents
-	var newTests = r.failedTests[:0]
-	for _, failedTest := range r.failedTests {
+	var newTests = r.FailedTests[:0]
+	for _, failedTest := range r.FailedTests {
 		if _, excluded := excludeParents[failedTest]; !excluded {
 			newTests = append(newTests, failedTest)
 		}
 	}
-	r.failedTests = newTests
-	if len(r.failedTests) == 0 && ignored > 0 {
-		log.Printf("%q - Found %d ignored errors only - marking as good", r.cmdString, ignored)
+	r.FailedTests = newTests
+	if len(r.FailedTests) == 0 && ignored > 0 {
+		log.Printf("%q - Found %d ignored errors only - marking as good", r.CmdString, ignored)
 		r.err = nil
 		r.dumpOutput()
 		return
 	}
-	if len(r.failedTests) != 0 {
-		r.runFlag = testsToRegexp(r.failedTests)
+	if len(r.FailedTests) != 0 {
+		r.RunFlag = testsToRegexp(r.FailedTests)
 	} else {
-		r.runFlag = ""
+		r.RunFlag = ""
 	}
-	if r.passed() && len(r.failedTests) != 0 {
-		log.Printf("%q - Expecting no errors but got: %v", r.cmdString, r.failedTests)
+	if r.passed() && len(r.FailedTests) != 0 {
+		log.Printf("%q - Expecting no errors but got: %v", r.CmdString, r.FailedTests)
 		r.dumpOutput()
-	} else if !r.passed() && len(r.failedTests) == 0 {
-		log.Printf("%q - Expecting errors but got none: %v", r.cmdString, r.failedTests)
+	} else if !r.passed() && len(r.FailedTests) == 0 {
+		log.Printf("%q - Expecting errors but got none: %v", r.CmdString, r.FailedTests)
 		r.dumpOutput()
-		r.failedTests = oldFailedTests
+		r.FailedTests = oldFailedTests
 	}
 }
 
 // nextCmdLine returns the next command line
 func (r *Run) nextCmdLine() []string {
-	cmdLine := r.cmdLine
-	if r.runFlag != "" {
-		cmdLine = append(cmdLine, "-test.run", r.runFlag)
+	CmdLine := r.CmdLine
+	if r.RunFlag != "" {
+		CmdLine = append(CmdLine, "-test.run", r.RunFlag)
 	}
-	return cmdLine
+	return CmdLine
 }
 
 // trial runs a single test
 func (r *Run) trial() {
-	cmdLine := r.nextCmdLine()
-	cmdString := toShell(cmdLine)
-	msg := fmt.Sprintf("%q - Starting (try %d/%d)", cmdString, r.try, *maxTries)
+	CmdLine := r.nextCmdLine()
+	CmdString := toShell(CmdLine)
+	msg := fmt.Sprintf("%q - Starting (try %d/%d)", CmdString, r.Try, *maxTries)
 	log.Println(msg)
-	logName := path.Join(r.logDir, r.trialName)
+	logName := path.Join(r.LogDir, r.TrialName)
 	out, err := os.Create(logName)
 	if err != nil {
 		log.Fatalf("Couldn't create log file: %v", err)
@@ -207,7 +207,7 @@ func (r *Run) trial() {
 
 	// Early exit if --try-run
 	if *dryRun {
-		log.Printf("Not executing as --dry-run: %v", cmdLine)
+		log.Printf("Not executing as --dry-run: %v", CmdLine)
 		_, _ = fmt.Fprintln(out, "--dry-run is set - not running")
 		return
 	}
@@ -226,7 +226,7 @@ func (r *Run) trial() {
 	var b bytes.Buffer
 	multiOut := io.MultiWriter(out, &b)
 
-	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
+	cmd := exec.Command(CmdLine[0], CmdLine[1:]...)
 	cmd.Stderr = multiOut
 	cmd.Stdout = multiOut
 	cmd.Dir = r.Path
@@ -236,9 +236,9 @@ func (r *Run) trial() {
 	duration := time.Since(start)
 	r.findFailures()
 	if r.passed() {
-		msg = fmt.Sprintf("%q - Finished OK in %v (try %d/%d)", cmdString, duration, r.try, *maxTries)
+		msg = fmt.Sprintf("%q - Finished OK in %v (try %d/%d)", CmdString, duration, r.Try, *maxTries)
 	} else {
-		msg = fmt.Sprintf("%q - Finished ERROR in %v (try %d/%d): %v: Failed %v", cmdString, duration, r.try, *maxTries, r.err, r.failedTests)
+		msg = fmt.Sprintf("%q - Finished ERROR in %v (try %d/%d): %v: Failed %v", CmdString, duration, r.Try, *maxTries, r.err, r.FailedTests)
 	}
 	log.Println(msg)
 	_, _ = fmt.Fprintln(out, msg)
@@ -282,12 +282,12 @@ func (r *Run) MakeTestBinary() {
 	binary := r.BinaryPath()
 	binaryName := r.BinaryName()
 	log.Printf("%s: Making test binary %q", r.Path, binaryName)
-	cmdLine := []string{"go", "test", "-c"}
+	CmdLine := []string{"go", "test", "-c"}
 	if *dryRun {
-		log.Printf("Not executing: %v", cmdLine)
+		log.Printf("Not executing: %v", CmdLine)
 		return
 	}
-	cmd := exec.Command(cmdLine[0], cmdLine[1:]...)
+	cmd := exec.Command(CmdLine[0], CmdLine[1:]...)
 	cmd.Dir = r.Path
 	err := cmd.Run()
 	if err != nil {
@@ -320,7 +320,7 @@ func (r *Run) Name() string {
 	if r.FastList {
 		ns = append(ns, "fastlist")
 	}
-	ns = append(ns, fmt.Sprintf("%d", r.try))
+	ns = append(ns, fmt.Sprintf("%d", r.Try))
 	s := strings.Join(ns, "-")
 	s = strings.Replace(s, ":", "", -1)
 	return s
@@ -331,52 +331,52 @@ func (r *Run) Init() {
 	prefix := "-test."
 	if r.NoBinary {
 		prefix = "-"
-		r.cmdLine = []string{"go", "test"}
+		r.CmdLine = []string{"go", "test"}
 	} else {
-		r.cmdLine = []string{"./" + r.BinaryName()}
+		r.CmdLine = []string{"./" + r.BinaryName()}
 	}
-	r.cmdLine = append(r.cmdLine, prefix+"v", prefix+"timeout", timeout.String(), "-remote", r.Remote)
+	r.CmdLine = append(r.CmdLine, prefix+"v", prefix+"timeout", timeout.String(), "-remote", r.Remote)
 	if *listRetries > 0 {
-		r.cmdLine = append(r.cmdLine, "-list-retries", fmt.Sprint(*listRetries))
+		r.CmdLine = append(r.CmdLine, "-list-retries", fmt.Sprint(*listRetries))
 	}
-	r.try = 1
+	r.Try = 1
 	if *verbose {
-		r.cmdLine = append(r.cmdLine, "-verbose")
+		r.CmdLine = append(r.CmdLine, "-verbose")
 		fs.Config.LogLevel = fs.LogLevelDebug
 	}
 	if *runOnly != "" {
-		r.cmdLine = append(r.cmdLine, prefix+"run", *runOnly)
+		r.CmdLine = append(r.CmdLine, prefix+"run", *runOnly)
 	}
 	if r.FastList {
-		r.cmdLine = append(r.cmdLine, "-fast-list")
+		r.CmdLine = append(r.CmdLine, "-fast-list")
 	}
 	if r.Short {
-		r.cmdLine = append(r.cmdLine, "-short")
+		r.CmdLine = append(r.CmdLine, "-short")
 	}
 	if r.SizeLimit > 0 {
-		r.cmdLine = append(r.cmdLine, "-size-limit", strconv.FormatInt(r.SizeLimit, 10))
+		r.CmdLine = append(r.CmdLine, "-size-limit", strconv.FormatInt(r.SizeLimit, 10))
 	}
-	r.cmdString = toShell(r.cmdLine)
+	r.CmdString = toShell(r.CmdLine)
 }
 
 // Logs returns all the log names
 func (r *Run) Logs() []string {
-	return r.trialNames
+	return r.TrialNames
 }
 
-// FailedTests returns the failed tests as a comma separated string, limiting the number
-func (r *Run) FailedTests() string {
+// FailedTestsCSV returns the failed tests as a comma separated string, limiting the number
+func (r *Run) FailedTestsCSV() string {
 	const maxTests = 5
-	ts := r.failedTests
+	ts := r.FailedTests
 	if len(ts) > maxTests {
 		ts = ts[:maxTests:maxTests]
-		ts = append(ts, fmt.Sprintf("… (%d more)", len(r.failedTests)-maxTests))
+		ts = append(ts, fmt.Sprintf("… (%d more)", len(r.FailedTests)-maxTests))
 	}
 	return strings.Join(ts, ", ")
 }
 
 // Run runs all the trials for this test
-func (r *Run) Run(logDir string, result chan<- *Run) {
+func (r *Run) Run(LogDir string, result chan<- *Run) {
 	if r.OneOnly {
 		oneOnlyMu.Lock()
 		mu := oneOnly[r.Backend]
@@ -389,11 +389,11 @@ func (r *Run) Run(logDir string, result chan<- *Run) {
 		defer mu.Unlock()
 	}
 	r.Init()
-	r.logDir = logDir
-	for r.try = 1; r.try <= *maxTries; r.try++ {
-		r.trialName = r.Name() + ".txt"
-		r.trialNames = append(r.trialNames, r.trialName)
-		log.Printf("Starting run with log %q", r.trialName)
+	r.LogDir = LogDir
+	for r.Try = 1; r.Try <= *maxTries; r.Try++ {
+		r.TrialName = r.Name() + ".txt"
+		r.TrialNames = append(r.TrialNames, r.TrialName)
+		log.Printf("Starting run with log %q", r.TrialName)
 		r.trial()
 		if r.passed() || r.NoRetries {
 			break
