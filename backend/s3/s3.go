@@ -83,6 +83,9 @@ func init() {
 				Value: "IBMCOS",
 				Help:  "IBM COS S3",
 			}, {
+				Value: "InternetArchive",
+				Help:  "Internet Archive S3",
+			}, {
 				Value: "Minio",
 				Help:  "Minio Object Storage",
 			}, {
@@ -185,7 +188,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,Scaleway",
+			Provider: "!AWS,Alibaba,InternetArchive,Scaleway",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure. Will use v4 signatures and an empty region.",
@@ -305,6 +308,14 @@ func init() {
 				Help:  "Toronto Single Site Private Endpoint",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for Internet Archive S3 API.",
+			Provider: "InternetArchive",
+			Examples: []fs.OptionExample{{
+				Value: "s3.us.archive.org",
+				Help:  "US Region Endpoint",
+			}},
+		}, {
 			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
 			Name:     "endpoint",
 			Help:     "Endpoint for OSS API.",
@@ -395,7 +406,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath",
+			Provider: "!AWS,IBMCOS,InternetArchive,Alibaba,Scaleway,StackPath",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -582,7 +593,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath",
+			Provider: "!AWS,IBMCOS,InternetArchive,Alibaba,Scaleway,StackPath",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1264,6 +1275,18 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 				return
 			}
 			sign(v.AccessKeyID, v.SecretAccessKey, req.HTTPRequest)
+		}
+		c.Handlers.Sign.Clear()
+		c.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
+		c.Handlers.Sign.PushBack(signer)
+	} else if opt.Provider == "InternetArchive" {
+		fs.Debugf(nil, "Using ias3 auth")
+		// Special treatment for InternetArchive S3 upload
+		signer := func(req *request.Request) {
+			if req.Config.Credentials == credentials.AnonymousCredentials {
+				return
+			}
+			req.HTTPRequest.Header.Set("Authorization", "LOW "+v.AccessKeyID+":"+v.SecretAccessKey)
 		}
 		c.Handlers.Sign.Clear()
 		c.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
@@ -2888,8 +2911,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return errors.Wrap(err, "s3 upload: sign request")
 		}
 
-		if o.fs.opt.V2Auth && headers == nil {
+		if (o.fs.opt.V2Auth || o.fs.opt.Provider == "InternetArchive") && headers == nil {
 			headers = putObj.HTTPRequest.Header
+		}
+
+		// Internet Archive doesn't recognize Content-Length for some reason
+		if o.fs.opt.Provider == "InternetArchive" && size > 0 {
+			headers.Set("x-archive-size-hint", strconv.FormatInt(size, 10))
+			headers.Set("x-archive-queue-derive", "1")
+			headers.Set("x-archive-meta00-scanner", "uri(rclone)")
 		}
 
 		// Set request to nil if empty so as not to make chunked encoding
