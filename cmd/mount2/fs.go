@@ -67,8 +67,8 @@ func setAttr(node vfs.Node, attr *fuse.Attr) {
 	modTime := node.ModTime()
 	// set attributes
 	vfs := node.VFS()
-	attr.Owner.Gid = vfs.Opt.UID
-	attr.Owner.Uid = vfs.Opt.GID
+	attr.Owner.Gid = vfs.Opt.GID
+	attr.Owner.Uid = vfs.Opt.UID
 	attr.Mode = getMode(node)
 	attr.Size = Size
 	attr.Nlink = 1
