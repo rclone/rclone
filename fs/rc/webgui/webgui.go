@@ -27,9 +27,12 @@ func GetLatestReleaseURL(fetchURL string) (string, string, int, error) {
 	}
 	results := gitHubRequest{}
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		return "", "", 0, errors.New("Could not decode results from http request")
+		return "", "", 0, errors.New("could not decode results from http request")
 	}
-
+	if len(results.Assets) < 1 {
+		return "", "", 0, errors.New("could not find an asset in the release. " +
+			"check if asset was successfully added in github release assets")
+	}
 	res := results.Assets[0].BrowserDownloadURL
 	tag := results.TagName
 	size := results.Assets[0].Size
