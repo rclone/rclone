@@ -2643,26 +2643,31 @@ func (f *Fs) changeChunkSize(chunkSizeString string) (err error) {
 	return err
 }
 
-func (f *Fs) changeServiceAccountFile(file string) (err error) {
+func (f *Fs) changeServiceAccountFile(ctx context.Context, file string) (err error) {
 	fs.Debugf(nil, "Changing Service Account File from %s to %s", f.opt.ServiceAccountFile, file)
 	if file == f.opt.ServiceAccountFile {
 		return nil
 	}
+
 	oldSvc := f.svc
+	oldActivitySvc := f.activitySvc
 	oldv2Svc := f.v2Svc
 	oldOAuthClient := f.client
 	oldFile := f.opt.ServiceAccountFile
 	oldCredentials := f.opt.ServiceAccountCredentials
+
 	defer func() {
-		// Undo all the changes instead of doing selective undo's
+		// Undo all the changes instead of doing selective undo
 		if err != nil {
 			f.svc = oldSvc
+			f.activitySvc = oldActivitySvc
 			f.v2Svc = oldv2Svc
 			f.client = oldOAuthClient
 			f.opt.ServiceAccountFile = oldFile
 			f.opt.ServiceAccountCredentials = oldCredentials
 		}
 	}()
+
 	f.opt.ServiceAccountFile = file
 	f.opt.ServiceAccountCredentials = ""
 	oAuthClient, err := createOAuthClient(&f.opt, f.name, f.m)
@@ -2670,16 +2675,22 @@ func (f *Fs) changeServiceAccountFile(file string) (err error) {
 		return errors.Wrap(err, "drive: failed when making oauth client")
 	}
 	f.client = oAuthClient
-	f.svc, err = drive.New(f.client)
+
+	f.svc, err = drive.NewService(ctx, option.WithHTTPClient(f.client))
 	if err != nil {
 		return errors.Wrap(err, "couldn't create Drive client")
 	}
+	f.activitySvc, err = driveactivity.NewService(ctx, option.WithHTTPClient(f.client))
+	if err != nil {
+		return errors.Wrap(err, "couldn't create Drive Activity client")
+	}
 	if f.opt.V2DownloadMinSize >= 0 {
-		f.v2Svc, err = drive_v2.New(f.client)
+		f.v2Svc, err = drive_v2.NewService(ctx, option.WithHTTPClient(f.client))
 		if err != nil {
 			return errors.Wrap(err, "couldn't create Drive v2 client")
 		}
 	}
+
 	return nil
 }
 
@@ -2978,7 +2989,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if serviceAccountFile, ok := opt["service_account_file"]; ok {
 			serviceAccountMap := make(map[string]string)
 			serviceAccountMap["previous"] = f.opt.ServiceAccountFile
-			if err = f.changeServiceAccountFile(serviceAccountFile); err != nil {
+			if err = f.changeServiceAccountFile(ctx, serviceAccountFile); err != nil {
 				return out, err
 			}
 			f.m.Set("service_account_file", serviceAccountFile)
