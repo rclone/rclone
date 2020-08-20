@@ -41,13 +41,15 @@ backends:
    remote:   "TestChunkerChunk3bNometaLocal:"
    fastlist: true
    maxfile:  6k
- - backend:  "chunker"
-   remote:   "TestChunkerMailru:"
-   fastlist: true
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bMailru:"
-   fastlist: true
-   maxfile:  10k
+ # Disable chunker with mailru tests until Mailru is fixed - see
+ # https://github.com/rclone/rclone/issues/4376
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerMailru:"
+ #   fastlist: true
+ # - backend:  "chunker"
+ #   remote:   "TestChunkerChunk50bMailru:"
+ #   fastlist: true
+ #   maxfile:  10k
  - backend:  "chunker"
    remote:   "TestChunkerChunk50bYandex:"
    fastlist: true
