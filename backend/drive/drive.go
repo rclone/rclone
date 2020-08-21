@@ -282,6 +282,11 @@ commands (copy, sync, etc), and with all other commands too.`,
 			Help:     "Only show files that are in the trash.\nThis will show trashed files in their original directory structure.",
 			Advanced: true,
 		}, {
+			Name:     "starred_only",
+			Default:  false,
+			Help:     "Only show files that are starred.",
+			Advanced: true,
+		}, {
 			Name:     "formats",
 			Default:  "",
 			Help:     "Deprecated: see export_formats",
@@ -513,6 +518,7 @@ type Options struct {
 	SkipChecksumGphotos       bool                 `config:"skip_checksum_gphotos"`
 	SharedWithMe              bool                 `config:"shared_with_me"`
 	TrashedOnly               bool                 `config:"trashed_only"`
+	StarredOnly               bool                 `config:"starred_only"`
 	Extensions                string               `config:"formats"`
 	ExportExtensions          string               `config:"export_formats"`
 	ImportExtensions          string               `config:"import_formats"`
@@ -696,6 +702,7 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 		}
 		query = append(query, q)
 	}
+
 	// Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
 	// We must not filter with parent when we try list "ROOT" with drive-shared-with-me
 	// If we need to list file inside those shared folders, we must search it without sharedWithMe
@@ -707,8 +714,16 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 		if parentsQuery.Len() > 1 {
 			_, _ = parentsQuery.WriteString(" or ")
 		}
-		if f.opt.SharedWithMe && dirID == f.rootFolderID {
-			_, _ = parentsQuery.WriteString("sharedWithMe=true")
+		if (f.opt.SharedWithMe || f.opt.StarredOnly) && dirID == f.rootFolderID {
+			if f.opt.SharedWithMe {
+				_, _ = parentsQuery.WriteString("sharedWithMe=true")
+			}
+			if f.opt.StarredOnly {
+				if f.opt.SharedWithMe {
+					_, _ = parentsQuery.WriteString(" and ")
+				}
+				_, _ = parentsQuery.WriteString("starred=true")
+			}
 		} else {
 			_, _ = fmt.Fprintf(parentsQuery, "'%s' in parents", dirID)
 		}
