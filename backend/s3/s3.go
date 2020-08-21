@@ -2446,11 +2446,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if err != nil {
 		if awsErr, ok := err.(awserr.RequestFailure); ok {
 			if awsErr.StatusCode() == http.StatusNotFound {
-				// NotFound indicates bucket was OK
-				// NoSuchBucket would be returned if bucket was bad
-				if awsErr.Code() == "NotFound" {
-					o.fs.cache.MarkOK(bucket)
-				}
 				return fs.ErrorObjectNotFound
 			}
 		}
