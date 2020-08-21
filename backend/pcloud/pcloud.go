@@ -122,9 +122,19 @@ func init() {
 			Name: "hostname",
 			Help: `Hostname to connect to.
 
-This is normally set when rclone initially does the oauth connection.`,
+This is normally set when rclone initially does the oauth connection,
+however you will need to set it by hand if you are using remote config
+with rclone authorize.
+`,
 			Default:  defaultHostname,
 			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: defaultHostname,
+				Help:  "Original/US region",
+			}, {
+				Value: "eapi.pcloud.com",
+				Help:  "EU region",
+			}},
 		}}...),
 	})
 }
