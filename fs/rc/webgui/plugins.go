@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -97,13 +98,23 @@ func (p *Plugins) readFromFile() (err error) {
 		return err
 	}
 	availablePluginsJSON := filepath.Join(pluginsConfigPath, p.fileName)
-	data, err := ioutil.ReadFile(availablePluginsJSON)
-	if err != nil {
-		// create a file ?
-	}
-	err = json.Unmarshal(data, &p)
-	if err != nil {
-		fs.Logf(nil, "%s", err)
+	_, err = os.Stat(availablePluginsJSON)
+	if err == nil {
+		data, err := ioutil.ReadFile(availablePluginsJSON)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(data, &p)
+		if err != nil {
+			fs.Logf(nil, "%s", err)
+		}
+		return nil
+	} else if os.IsNotExist(err) {
+		// path does not exist
+		err = p.writeToFile()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
