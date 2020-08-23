@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -28,6 +29,20 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
+	// Detect this error which the integration tests provoke
+	// error HTTP error 403 (403 Forbidden) returned body: "{\"message\":\"Flood detected: IP Locked #374\",\"status\":\"KO\"}"
+	//
+	// https://1fichier.com/api.html
+	//
+	// file/ls.cgi is limited :
+	//
+	// Warning (can be changed in case of abuses) :
+	// List all files of the account is limited to 1 request per hour.
+	// List folders is limited to 5 000 results and 1 request per folder per 30s.
+	if err != nil && strings.Contains(err.Error(), "Flood detected") {
+		fs.Debugf(nil, "Sleeping for 30 seconds due to: %v", err)
+		time.Sleep(30 * time.Second)
+	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
