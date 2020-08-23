@@ -620,8 +620,8 @@ func (f *Fs) shouldRetry(err error) (bool, error) {
 	}
 	switch gerr := err.(type) {
 	case *googleapi.Error:
-		if gerr.Code >= 500 && gerr.Code < 600 {
-			// All 5xx errors should be retried
+		if gerr.Code == 429 || (gerr.Code >= 500 && gerr.Code < 600) {
+			// All 429 or 5xx errors should be retried
 			return true, err
 		}
 		if len(gerr.Errors) > 0 {
