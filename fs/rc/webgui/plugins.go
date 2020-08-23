@@ -282,7 +282,7 @@ func ServePluginOK(w http.ResponseWriter, r *http.Request, pluginsMatchResult []
 	return true
 }
 
-var referrerPathReg = regexp.MustCompile("^(https?)://(.+):([0-9]+)?/(.*)$")
+var referrerPathReg = regexp.MustCompile("^(https?):\\/\\/(.+):([0-9]+)?\\/(.*)\\/?\\?(.*)$")
 
 // ServePluginWithReferrerOK check if redirectReferrer is set for the referred a plugin, if yes,
 // sends a redirect to actual url. This function is useful for plugins to refer to absolute paths when
