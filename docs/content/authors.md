@@ -401,3 +401,4 @@ put them back in again.` >}}
   * David Ibarra <david.ibarra@realty.com>
   * Tim Gallant <tim@lilt.com>
   * Kaloyan Raev <kaloyan@storj.io>
+  * Jay McEntire <jay.mcentire@gmail.com>
