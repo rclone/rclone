@@ -63,6 +63,7 @@ require (
 	golang.org/x/sys v0.0.0-20200720211630-cb9d2d5c5666
 	golang.org/x/text v0.3.3
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
+	golang.org/x/tools v0.0.0-20200820180210-c8f393745106 // indirect
 	google.golang.org/api v0.28.0
 	google.golang.org/genproto v0.0.0-20200626011028-ee7919e894b5 // indirect
 	google.golang.org/grpc v1.30.0 // indirect

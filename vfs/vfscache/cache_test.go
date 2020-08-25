@@ -33,6 +33,19 @@ func itemAsString(c *Cache) []string {
 	return out
 }
 
+// convert c.item to a string
+func itemSpaceAsString(c *Cache) []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var out []string
+	for name, item := range c.item {
+		space := item.info.Rs.Size()
+		out = append(out, fmt.Sprintf("name=%q opens=%d size=%d space=%d", filepath.ToSlash(name), item.opens, item.info.Size, space))
+	}
+	sort.Strings(out)
+	return out
+}
+
 // open an item and write to it
 func itemWrite(t *testing.T, item *Item, contents string) {
 	require.NoError(t, item.Open(nil))
@@ -174,7 +187,7 @@ func TestCacheNew(t *testing.T) {
 	assertPathNotExist(t, p)
 
 	// clean - have tested the internals already
-	c.clean()
+	c.clean(false)
 }
 
 func TestCacheOpens(t *testing.T) {
@@ -279,15 +292,7 @@ func TestCachePurgeOld(t *testing.T) {
 	defer cleanup()
 
 	// Test funcs
-	var removed []string
-	removeFile := func(item *Item) {
-		removed = append(removed, item.name)
-		item.remove("TestCachePurgeOld")
-	}
-
-	removed = nil
-	c._purgeOld(-10*time.Second, removeFile)
-	assert.Equal(t, []string(nil), removed)
+	c.purgeOld(-10 * time.Second)
 
 	potato2 := c.Item("sub/dir2/potato2")
 	require.NoError(t, potato2.Open(nil))
@@ -301,17 +306,23 @@ func TestCachePurgeOld(t *testing.T) {
 		`name="sub/dir2/potato2" opens=0 size=0`,
 	}, itemAsString(c))
 
-	removed = nil
-	c._purgeOld(-10*time.Second, removeFile)
+	c.purgeOld(-10 * time.Second)
+
 	assert.Equal(t, []string{
-		"sub/dir2/potato2",
-	}, removed)
+		`name="sub/dir/potato" opens=2 size=0`,
+	}, itemAsString(c))
 
 	require.NoError(t, potato.Close(nil))
 
-	removed = nil
-	c._purgeOld(-10*time.Second, removeFile)
-	assert.Equal(t, []string(nil), removed)
+	assert.Equal(t, []string{
+		`name="sub/dir/potato" opens=1 size=0`,
+	}, itemAsString(c))
+
+	c.purgeOld(-10 * time.Second)
+
+	assert.Equal(t, []string{
+		`name="sub/dir/potato" opens=1 size=0`,
+	}, itemAsString(c))
 
 	require.NoError(t, potato.Close(nil))
 
@@ -319,19 +330,13 @@ func TestCachePurgeOld(t *testing.T) {
 		`name="sub/dir/potato" opens=0 size=0`,
 	}, itemAsString(c))
 
-	removed = nil
-	c._purgeOld(10*time.Second, removeFile)
-	assert.Equal(t, []string(nil), removed)
+	c.purgeOld(10 * time.Second)
 
 	assert.Equal(t, []string{
 		`name="sub/dir/potato" opens=0 size=0`,
 	}, itemAsString(c))
 
-	removed = nil
-	c._purgeOld(-10*time.Second, removeFile)
-	assert.Equal(t, []string{
-		"sub/dir/potato",
-	}, removed)
+	c.purgeOld(-10 * time.Second)
 
 	assert.Equal(t, []string(nil), itemAsString(c))
 }
@@ -341,23 +346,6 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	defer cleanup()
 
 	// Test funcs
-	var removed []string
-	remove := func(item *Item) {
-		removed = append(removed, item.name)
-		item.remove("TestCachePurgeOverQuota")
-	}
-
-	removed = nil
-	c._purgeOverQuota(-1, remove)
-	assert.Equal(t, []string(nil), removed)
-
-	removed = nil
-	c._purgeOverQuota(0, remove)
-	assert.Equal(t, []string(nil), removed)
-
-	removed = nil
-	c._purgeOverQuota(1, remove)
-	assert.Equal(t, []string(nil), removed)
 
 	// Make some test files
 	potato := c.Item("sub/dir/potato")
@@ -372,9 +360,7 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	}, itemAsString(c))
 
 	// Check nothing removed
-	removed = nil
-	c._purgeOverQuota(1, remove)
-	assert.Equal(t, []string(nil), removed)
+	c.purgeOverQuota(1)
 
 	// Close the files
 	require.NoError(t, potato.Close(nil))
@@ -393,11 +379,7 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	potato2.info.ATime = t1
 
 	// Check only potato removed to get below quota
-	removed = nil
-	c._purgeOverQuota(10, remove)
-	assert.Equal(t, []string{
-		"sub/dir/potato",
-	}, removed)
+	c.purgeOverQuota(10)
 	assert.Equal(t, int64(6), c.used)
 
 	assert.Equal(t, []string{
@@ -423,11 +405,7 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	potato.info.ATime = t2
 
 	// Check only potato2 removed to get below quota
-	removed = nil
-	c._purgeOverQuota(10, remove)
-	assert.Equal(t, []string{
-		"sub/dir2/potato2",
-	}, removed)
+	c.purgeOverQuota(10)
 	assert.Equal(t, int64(5), c.used)
 	c.purgeEmptyDirs()
 
@@ -436,19 +414,79 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	}, itemAsString(c))
 
 	// Now purge everything
-	removed = nil
-	c._purgeOverQuota(1, remove)
-	assert.Equal(t, []string{
-		"sub/dir/potato",
-	}, removed)
+	c.purgeOverQuota(1)
 	assert.Equal(t, int64(0), c.used)
 	c.purgeEmptyDirs()
 
 	assert.Equal(t, []string(nil), itemAsString(c))
 
 	// Check nothing left behind
-	c.clean()
+	c.clean(false)
 	assert.Equal(t, int64(0), c.used)
+	assert.Equal(t, []string(nil), itemAsString(c))
+}
+
+// test reset clean files
+func TestCachePurgeClean(t *testing.T) {
+	r, c, cleanup := newItemTestCache(t)
+	defer cleanup()
+	contents, obj, patato1 := newFile(t, r, c, "existing")
+	_ = contents
+
+	// Open the object to create metadata for it
+	require.NoError(t, patato1.Open(obj))
+	require.NoError(t, patato1.Open(obj))
+
+	size, err := patato1.GetSize()
+	require.NoError(t, err)
+	assert.Equal(t, int64(100), size)
+
+	// Read something to instantiate the cache file
+	buf := make([]byte, 10)
+	_, err = patato1.ReadAt(buf, 10)
+	require.NoError(t, err)
+
+	// Test cache file present
+	_, err = os.Stat(patato1.c.toOSPath(patato1.name))
+	require.NoError(t, err)
+
+	// Add some potatos
+	potato2 := c.Item("sub/dir/potato2")
+	require.NoError(t, potato2.Open(nil))
+	require.NoError(t, potato2.Truncate(5))
+
+	potato3 := c.Item("sub/dir/potato3")
+	require.NoError(t, potato3.Open(nil))
+	require.NoError(t, potato3.Truncate(6))
+
+	c.updateUsed()
+	c.purgeClean(1)
+	assert.Equal(t, []string{
+		`name="existing" opens=2 size=100 space=0`,
+		`name="sub/dir/potato2" opens=1 size=5 space=5`,
+		`name="sub/dir/potato3" opens=1 size=6 space=6`,
+	}, itemSpaceAsString(c))
+	assert.Equal(t, int64(11), c.used)
+
+	require.NoError(t, potato2.Close(nil))
+	c.purgeClean(1)
+	assert.Equal(t, []string{
+		`name="existing" opens=2 size=100 space=0`,
+		`name="sub/dir/potato3" opens=1 size=6 space=6`,
+	}, itemSpaceAsString(c))
+	assert.Equal(t, int64(6), c.used)
+
+	require.NoError(t, patato1.Close(nil))
+	require.NoError(t, patato1.Close(nil))
+	require.NoError(t, potato3.Close(nil))
+
+	// Remove all files now.  The are all not in use.
+	// purgeClean does not remove empty cache files. purgeOverQuota does.
+	// So we use purgeOverQuota here for the cleanup.
+	c.purgeOverQuota(1)
+
+	c.purgeEmptyDirs()
+
 	assert.Equal(t, []string(nil), itemAsString(c))
 }
 
