@@ -10,6 +10,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/asyncreader"
 	"github.com/rclone/rclone/fs/chunkedreader"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/ranges"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
@@ -146,7 +147,9 @@ func (dls *Downloaders) _countErrors(n int64, err error) {
 		return
 	}
 	if err != nil {
+		//if err != syscall.ENOSPC {
 		dls.errorCount++
+		//}
 		dls.lastErr = err
 		fs.Infof(dls.src, "vfs cache: downloader: error count now %d: %v", dls.errorCount, err)
 	}
@@ -404,6 +407,11 @@ func (dls *Downloaders) kickWaiters() (err error) {
 			fs.Errorf(dls.src, "vfs cache: restart download failed: %v", err)
 		}
 	}
+	if fserrors.IsErrNoSpace(dls.lastErr) {
+		fs.Errorf(dls.src, "vfs cache: cache is out of space %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
+		dls._closeWaiters(dls.lastErr)
+		return dls.lastErr
+	}
 
 	if dls.errorCount > maxErrorCount {
 		fs.Errorf(dls.src, "vfs cache: too many errors %d/%d: last error: %v", dls.errorCount, maxErrorCount, dls.lastErr)
@@ -600,6 +608,7 @@ func (dl *downloader) download() (n int64, err error) {
 	if err != nil && errors.Cause(err) != asyncreader.ErrorStreamAbandoned {
 		return n, errors.Wrap(err, "vfs reader: failed to write to cache file")
 	}
+
 	return n, nil
 }
 

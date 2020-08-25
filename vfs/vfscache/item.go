@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/ranges"
@@ -47,19 +48,20 @@ import (
 // The Info field is written to the backing store to store status
 type Item struct {
 	// read only
-	c *Cache // cache this is part of
-
-	mu          sync.Mutex               // protect the variables
-	name        string                   // name in the VFS
-	opens       int                      // number of times file is open
-	downloaders *downloaders.Downloaders // a record of the downloaders in action - may be nil
-	o           fs.Object                // object we are caching - may be nil
-	fd          *os.File                 // handle we are using to read and write to the file
-	metaDirty   bool                     // set if the info needs writeback
-	modified    bool                     // set if the file has been modified since the last Open
-	info        Info                     // info about the file to persist to backing store
-	writeBackID writeback.Handle         // id of any writebacks in progress
-
+	c               *Cache                   // cache this is part of
+	mu              sync.Mutex               // protect the variables
+	cond            *sync.Cond               // synchronize with cache cleaner
+	name            string                   // name in the VFS
+	opens           int                      // number of times file is open
+	downloaders     *downloaders.Downloaders // a record of the downloaders in action - may be nil
+	o               fs.Object                // object we are caching - may be nil
+	fd              *os.File                 // handle we are using to read and write to the file
+	metaDirty       bool                     // set if the info needs writeback
+	modified        bool                     // set if the file has been modified since the last Open
+	info            Info                     // info about the file to persist to backing store
+	writeBackID     writeback.Handle         // id of any writebacks in progress
+	pendingAccesses int                      // number of threads - cache reset not allowed if not zero
+	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
 }
 
 // Info is persisted to backing store
@@ -74,6 +76,24 @@ type Info struct {
 
 // Items are a slice of *Item ordered by ATime
 type Items []*Item
+
+// ResetResult reports the actual action taken in the Reset function and reason
+type ResetResult int
+
+// Constants used to report actual action taken in the Reset function and reason
+const (
+	SkippedDirty         ResetResult = iota // Dirty item cannot be reset
+	SkippedPendingAccess                    // Reset pending access can lead to deadlock
+	SkippedEmpty                            // Reset empty item does not save space
+	RemovedNotInUse                         // Item not used. Remove instead of reset
+	ResetFailed                             // Reset failed with an error
+	ResetComplete                           // Reset completed successfully
+)
+
+func (rr ResetResult) String() string {
+	return [...]string{"Dirty item skipped", "In-access item skipped", "Empty item skipped",
+		"Not-in-use item removed", "Item reset failed", "Item reset completed"}[rr]
+}
 
 func (v Items) Len() int      { return len(v) }
 func (v Items) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
@@ -112,7 +132,7 @@ func newItem(c *Cache, name string) (item *Item) {
 			ATime:   now,
 		},
 	}
-
+	item.cond = sync.NewCond(&item.mu)
 	// check the cache file exists
 	osPath := c.toOSPath(name)
 	fi, statErr := os.Stat(osPath)
@@ -340,6 +360,13 @@ func (item *Item) _getSize() (size int64, err error) {
 	return size, err
 }
 
+// GetName gets the vfs name of the item
+func (item *Item) GetName() (name string) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item.name
+}
+
 // GetSize gets the current size of the item
 func (item *Item) GetSize() (size int64, err error) {
 	item.mu.Lock()
@@ -399,34 +426,20 @@ func (item *Item) IsDirty() bool {
 	return item.metaDirty || item.info.Dirty
 }
 
-// Open the local file from the object passed in (which may be nil)
-// which implies we are about to create the file
-func (item *Item) Open(o fs.Object) (err error) {
-	// defer log.Trace(o, "item=%p", item)("err=%v", &err)
+// IsDataDirty returns true if the item's data is dirty
+func (item *Item) IsDataDirty() bool {
 	item.mu.Lock()
 	defer item.mu.Unlock()
+	return item.info.Dirty
+}
 
-	item.info.ATime = time.Now()
-	item.opens++
-
-	osPath, err := item.c.mkdir(item.name) // No locking in Cache
-	if err != nil {
-		return errors.Wrap(err, "vfs cache item: open mkdir failed")
-	}
-
-	err = item._checkObject(o)
-	if err != nil {
-		return errors.Wrap(err, "vfs cache item: check object failed")
-	}
-
-	if item.opens != 1 {
-		return nil
-	}
+// Create the cache file and store the metadata on disk
+// Called with item.mu locked
+func (item *Item) _createFile(osPath string) (err error) {
 	if item.fd != nil {
 		return errors.New("vfs cache item: internal error: didn't Close file")
 	}
 	item.modified = false
-
 	fd, err := file.OpenFile(osPath, os.O_RDWR, 0600)
 	if err != nil {
 		return errors.Wrap(err, "vfs cache item: open failed")
@@ -439,9 +452,67 @@ func (item *Item) Open(o fs.Object) (err error) {
 
 	err = item._save()
 	if err != nil {
-		return err
+		closeErr := item.fd.Close()
+		if closeErr != nil {
+			fs.Errorf(item.name, "vfs cache: item.fd.Close: closeErr: %v", err)
+		}
+		item.fd = nil
+		return errors.Wrap(err, "vfs cache item: _save failed")
+	}
+	return err
+}
+
+// Open the local file from the object passed in.  Wraps open()
+// to provide recovery from out of space error.
+func (item *Item) Open(o fs.Object) (err error) {
+	for retries := 0; retries < fs.Config.LowLevelRetries; retries++ {
+		item.preAccess()
+		err = item.open(o)
+		item.postAccess()
+		if err == nil {
+			break
+		}
+		fs.Errorf(item.name, "vfs cache: failed to open item: %v", err)
+		if !fserrors.IsErrNoSpace(err) && err.Error() != "no space left on device" {
+			fs.Errorf(item.name, "Non-out-of-space error encountered during open")
+			break
+		}
+		item.c.KickCleaner()
+	}
+	return err
+}
+
+// Open the local file from the object passed in (which may be nil)
+// which implies we are about to create the file
+func (item *Item) open(o fs.Object) (err error) {
+	// defer log.Trace(o, "item=%p", item)("err=%v", &err)
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	item.info.ATime = time.Now()
+
+	osPath, err := item.c.mkdir(item.name) // No locking in Cache
+	if err != nil {
+		return errors.Wrap(err, "vfs cache item: open mkdir failed")
 	}
 
+	err = item._checkObject(o)
+	if err != nil {
+		return errors.Wrap(err, "vfs cache item: check object failed")
+	}
+
+	item.opens++
+	if item.opens != 1 {
+		return nil
+	}
+
+	err = item._createFile(osPath)
+	if err != nil {
+		item._remove("item.open failed on _createFile, remove cache data/metadata files")
+		item.fd = nil
+		item.opens--
+		return errors.Wrap(err, "vfs cache item: create cache file failed")
+	}
 	// Unlock the Item.mu so we can call some methods which take Cache.mu
 	item.mu.Unlock()
 
@@ -767,6 +838,197 @@ func (item *Item) remove(reason string) (wasWriting bool) {
 	return item._remove(reason)
 }
 
+// RemoveNotInUse is called to remove cache file that has not been accessed recently
+// It may also be called for removing empty cache files too when the quota is already reached.
+func (item *Item) RemoveNotInUse(maxAge time.Duration, emptyOnly bool) (removed bool, spaceFreed int64) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	spaceFreed = 0
+	removed = false
+
+	if item.opens != 0 || item.metaDirty || item.info.Dirty {
+		return
+	}
+
+	removeIt := false
+	if maxAge == 0 {
+		removeIt = true // quota-driven removal
+	}
+	if maxAge != 0 {
+		cutoff := time.Now().Add(-maxAge)
+		// If not locked and access time too long ago - delete the file
+		accessTime := item.info.ATime
+		if accessTime.Sub(cutoff) <= 0 {
+			removeIt = true
+		}
+	}
+	if removeIt {
+		spaceUsed := item.info.Rs.Size()
+		if !emptyOnly || spaceUsed == 0 {
+			spaceFreed = spaceUsed
+			removed = true
+			if item._remove("Removing old cache file not in use") {
+				fs.Errorf(item.name, "item removed when it was writing/uploaded")
+			}
+		}
+	}
+	return
+}
+
+// Reset is called by the cache purge functions only to reset (empty the contents) cache files that
+// are not dirty.  It is used when cache space runs out and we see some ENOSPC error.
+func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	// The item is not being used now.  Just remove it instead of resetting it.
+	if item.opens == 0 && !item.metaDirty && !item.info.Dirty {
+		spaceFreed = item.info.Rs.Size()
+		if item._remove("Removing old cache file not in use") {
+			fs.Errorf(item.name, "item removed when it was writing/uploaded")
+		}
+		return RemovedNotInUse, spaceFreed, nil
+	}
+
+	// do not reset dirty file
+	if item.info.Dirty {
+		return SkippedDirty, 0, nil
+	}
+
+	/* A wait on pendingAccessCnt to become 0 can lead to deadlock when an item.Open bumps
+	   up the pendingAccesses count, calls item.open, which calls cache.put. The cache.put
+	   operation needs the cache mutex, which is held here.  We skip this file now. The
+	   caller (the cache cleaner thread) may retry resetting this item if the cache size does
+	   not reduce below quota. */
+	if item.pendingAccesses > 0 {
+		return SkippedPendingAccess, 0, nil
+	}
+
+	/* Do not need to reset an empty cache file unless it was being reset and the reset failed.
+	   Some thread(s) may be waiting on the reset's succesful completion in that case. */
+	if item.info.Rs.Size() == 0 && item.beingReset == false {
+		return SkippedEmpty, 0, nil
+	}
+
+	item.beingReset = true
+
+	/* Error handling from this point on (setting item.fd and item.beingReset):
+	   Since Reset is called by the cache cleaner thread, there is no direct way to return
+	   the error to the io threads.  Set item.fd to nil upon internal errors, so that the
+	   io threads will return internal errors seeing a nil fd. In the case when the error
+	   is ENOSPC, keep the item in isBeingReset state and that will keep the item.ReadAt
+	   waiting at its beginning. The cache purge loop will try to redo the reset after cache
+	   space is made available again. This recovery design should allow most io threads to
+	   eventually go through, unless large files are written/overwritten concurrently and
+	   the total size of these files exceed the cache storage limit. */
+
+	// Close the downloaders
+	// Accumulate and log errors
+	checkErr := func(e error) {
+		if e != nil {
+			fs.Errorf(item.o, "vfs cache: item reset failed: %v", e)
+			if err == nil {
+				err = e
+			}
+		}
+	}
+
+	if downloaders := item.downloaders; downloaders != nil {
+		item.downloaders = nil
+		// FIXME need to unlock to kill downloader - should we
+		// re-arrange locking so this isn't necessary?  maybe
+		// downloader should use the item mutex for locking? or put a
+		// finer lock on Rs?
+		//
+		// downloader.Write calls ensure which needs the lock
+		// close downloader with mutex unlocked
+		item.mu.Unlock()
+		checkErr(downloaders.Close(nil))
+		item.mu.Lock()
+	}
+
+	// close the file handle
+	// fd can be nil if we tried Reset and failed before because of ENOSPC during reset
+	if item.fd != nil {
+		checkErr(item.fd.Close())
+		if err != nil {
+			// Could not close the cache file
+			item.beingReset = false
+			item.cond.Broadcast()
+			return ResetFailed, 0, err
+		}
+		item.fd = nil
+	}
+
+	spaceFreed = item.info.Rs.Size()
+
+	// This should not be possible.  We get here only if cache data is not dirty.
+	if item._remove("cache out of space, item is clean") {
+		fs.Errorf(item.o, "vfs cache item removed when it was writing/uploaded")
+	}
+
+	// can we have an item with no dirty data (so that we can get here) and nil item.o at the same time?
+	fso := item.o
+	checkErr(item._checkObject(fso))
+	if err != nil {
+		item.beingReset = false
+		item.cond.Broadcast()
+		return ResetFailed, spaceFreed, err
+	}
+
+	osPath := item.c.toOSPath(item.name)
+	checkErr(item._createFile(osPath))
+	if err != nil {
+		item._remove("cache reset failed on _createFile, removed cache data file")
+		item.fd = nil // This allows a new Reset redo to have a clean state to deal with
+		if !fserrors.IsErrNoSpace(err) {
+			item.beingReset = false
+			item.cond.Broadcast()
+		}
+		return ResetFailed, spaceFreed, err
+	}
+
+	// Create the downloaders
+	if item.o != nil {
+		item.downloaders = downloaders.New(item, item.c.opt, item.name, item.o)
+	}
+
+	/* The item will stay in the beingReset state if we get an error that prevents us from
+	reaching this point.  The cache purge loop will redo the failed Reset. */
+	item.beingReset = false
+	item.cond.Broadcast()
+
+	return ResetComplete, spaceFreed, err
+}
+
+// ProtectCache either waits for an ongoing cache reset to finish or increases pendingReads
+// to protect against cache reset on this item while the thread potentially uses the cache file
+// Cache cleaner waits until pendingReads is zero before resetting cache.
+func (item *Item) preAccess() {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	if item.beingReset {
+		for {
+			item.cond.Wait()
+			if !item.beingReset {
+				break
+			}
+		}
+	}
+	item.pendingAccesses++
+}
+
+// postAccess reduces the pendingReads count enabling cache reset upon ENOSPC
+func (item *Item) postAccess() {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+
+	item.pendingAccesses--
+	item.cond.Broadcast()
+}
+
 // _present returns true if the whole file has been downloaded
 //
 // call with the lock held
@@ -811,6 +1073,10 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 	}
 	r := ranges.Range{Pos: offset, Size: size}
 	present := item.info.Rs.Present(r)
+	/* This statement simulates a cache space error for test purpose */
+	/* if present != true && item.info.Rs.Size() > 32*1024*1024 {
+		return errors.New("no space left on device")
+	} */
 	fs.Debugf(nil, "vfs cache: looking for range=%+v in %+v - present %v", r, item.info.Rs, present)
 	item.mu.Unlock()
 	defer item.mu.Lock()
@@ -887,6 +1153,27 @@ func (item *Item) setModTime(modTime time.Time) {
 
 // ReadAt bytes from the file at off
 func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
+	n = 0
+	for retries := 0; retries < fs.Config.LowLevelRetries; retries++ {
+		item.preAccess()
+		n, err = item.readAt(b, off)
+		item.postAccess()
+		if err == nil {
+			break
+		}
+		fs.Errorf(item.name, "vfs cache: failed to _ensure cache %v", err)
+		if !fserrors.IsErrNoSpace(err) && err.Error() != "no space left on device" {
+			fs.Debugf(item.name, "vfs cache: failed to _ensure cache %v is not out of space", err)
+			break
+		}
+		item.c.KickCleaner()
+	}
+
+	return n, err
+}
+
+// ReadAt bytes from the file at off
+func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 	item.mu.Lock()
 	if item.fd == nil {
 		item.mu.Unlock()
@@ -896,15 +1183,17 @@ func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 		item.mu.Unlock()
 		return 0, io.EOF
 	}
+	defer item.mu.Unlock()
+
 	err = item._ensure(off, int64(len(b)))
 	if err != nil {
-		item.mu.Unlock()
-		return n, err
+		return 0, err
 	}
+
 	item.info.ATime = time.Now()
-	item.mu.Unlock()
-	// Do the reading with Item.mu unlocked
-	return item.fd.ReadAt(b, off)
+	// Do the reading with Item.mu unlocked and cache protected by preAccess
+	n, err = item.fd.ReadAt(b, off)
+	return n, err
 }
 
 // WriteAt bytes to the file at off
