@@ -555,7 +555,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // listSharedFoldersApi lists all available shared folders mounted and not mounted
 // we'll need the id later so we have to return them in original format
-func (f *Fs) listSharedFoldersAPI() (result []*sharing.SharedFolderMetadata, err error) {
+func (f *Fs) listSharedFolders() (entries fs.DirEntries, err error) {
 	started := false
 	var res *sharing.ListFoldersResult
 	for {
@@ -583,27 +583,19 @@ func (f *Fs) listSharedFoldersAPI() (result []*sharing.SharedFolderMetadata, err
 				return nil, errors.Wrap(err, "list continue")
 			}
 		}
-		result = append(result, res.Entries...)
+		for _, entry := range res.Entries {
+			leaf := f.opt.Enc.ToStandardName(entry.Name)
+			d := fs.NewDir(leaf, time.Now()).SetID(entry.SharedFolderId)
+			entries = append(entries, d)
+			if err != nil {
+				return nil, err
+			}
+		}
 		if res.Cursor == "" {
 			break
 		}
 	}
 
-	return result, nil
-}
-
-// listSharedFolders lists shared folders as normal dir entries
-func (f *Fs) listSharedFolders() (entries fs.DirEntries, err error) {
-	result, err := f.listSharedFoldersAPI()
-	if err != nil {
-		return nil, err
-	}
-	for _, entry := range result {
-		entryPath := entry.Name
-		leaf := f.opt.Enc.ToStandardName(entryPath)
-		d := fs.NewDir(leaf, time.Now())
-		entries = append(entries, d)
-	}
 	return entries, nil
 }
 
@@ -611,13 +603,13 @@ func (f *Fs) listSharedFolders() (entries fs.DirEntries, err error) {
 // somewhat annoyingly there is no endpoint to query a shared folder by it's name
 // so our only option is to iterate over all shared folders
 func (f *Fs) findSharedFolder(name string) (id string, err error) {
-	entries, err := f.listSharedFoldersAPI()
+	entries, err := f.listSharedFolders()
 	if err != nil {
 		return "", err
 	}
 	for _, entry := range entries {
-		if entry.Name == name {
-			return entry.SharedFolderId, nil
+		if entry.(*fs.Dir).Remote() == name {
+			return entry.(*fs.Dir).ID(), nil
 		}
 	}
 	return "", fs.ErrorDirNotFound
@@ -779,7 +771,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			leaf := f.opt.Enc.ToStandardName(path.Base(entryPath))
 			remote := path.Join(dir, leaf)
 			if folderInfo != nil {
-				d := fs.NewDir(remote, time.Now())
+				d := fs.NewDir(remote, time.Now()).SetID(folderInfo.Id)
 				entries = append(entries, d)
 			} else if fileInfo != nil {
 				o, err := f.newObjectWithInfo(remote, fileInfo)
@@ -1174,6 +1166,11 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
+// ID returns the object id
+func (o *Object) ID() string {
+	return o.id
+}
+
 // Hash returns the dropbox special hash
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
@@ -1475,4 +1472,5 @@ var (
 	_ fs.DirMover     = (*Fs)(nil)
 	_ fs.Abouter      = (*Fs)(nil)
 	_ fs.Object       = (*Object)(nil)
+	_ fs.IDer         = (*Object)(nil)
 )
