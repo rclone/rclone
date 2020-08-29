@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testPluginName = "rclone-webui-react"
+const testPluginName = "rclone-test-plugin"
 const testPluginAuthor = "rclone"
 const testPluginKey = testPluginAuthor + "/" + testPluginName
 const testPluginURL = "https://github.com/" + testPluginAuthor + "/" + testPluginName + "/"
