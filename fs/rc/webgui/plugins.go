@@ -293,19 +293,20 @@ func ServePluginWithReferrerOK(w http.ResponseWriter, r *http.Request, path stri
 	referrer := r.Referer()
 	referrerPathMatch := referrerPathReg.FindStringSubmatch(referrer)
 
-	if referrerPathMatch != nil {
+	if referrerPathMatch != nil && len(referrerPathMatch) > 3 {
 		referrerPluginMatch := PluginsMatch.FindStringSubmatch(referrerPathMatch[4])
-		pluginKey := fmt.Sprintf("%s/%s", referrerPluginMatch[1], referrerPluginMatch[2])
-		currentPlugin, err := loadedPlugins.GetPluginByName(pluginKey)
-		if err != nil {
-			return false
-		}
-		if referrerPluginMatch != nil && currentPlugin.Rclone.RedirectReferrer {
-			path = fmt.Sprintf("/plugins/%s/%s/%s", referrerPluginMatch[1], referrerPluginMatch[2], path)
+		if referrerPluginMatch != nil && len(referrerPluginMatch) > 2 {
+			pluginKey := fmt.Sprintf("%s/%s", referrerPluginMatch[1], referrerPluginMatch[2])
+			currentPlugin, err := loadedPlugins.GetPluginByName(pluginKey)
+			if err != nil {
+				return false
+			}
+			if currentPlugin.Rclone.RedirectReferrer {
+				path = fmt.Sprintf("/plugins/%s/%s/%s", referrerPluginMatch[1], referrerPluginMatch[2], path)
 
-			http.Redirect(w, r, path, http.StatusMovedPermanently)
-			//s.pluginsHandler.ServeHTTP(w, r)
-			return true
+				http.Redirect(w, r, path, http.StatusMovedPermanently)
+				return true
+			}
 		}
 	}
 	return false
