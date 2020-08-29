@@ -174,7 +174,9 @@ func (p *Plugins) writeToFile() (err error) {
 	availablePluginsJSON := filepath.Join(pluginsConfigPath, p.fileName)
 
 	file, err := json.MarshalIndent(p, "", " ")
-
+	if err != nil {
+		fs.Logf(nil, "%s", err)
+	}
 	err = ioutil.WriteFile(availablePluginsJSON, file, 0755)
 	if err != nil {
 		fs.Logf(nil, "%s", err)
