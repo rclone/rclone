@@ -59,17 +59,30 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 		return errors.New("Web GUI path exists, but is a file instead of folder. Please check the path " + extractPath)
 	}
 
+	// Get the latest release details
+	WebUIURL, tag, size, err := GetLatestReleaseURL(fetchURL)
+	if err != nil {
+		return errors.Wrap(err, "Error checking for web gui release update, skipping update")
+	}
+	dat, err := ioutil.ReadFile(tagPath)
+	tagsMatch := false
+	if err != nil {
+		fs.Errorf(nil, "Error reading tag file at %s ", tagPath)
+		checkUpdate = true
+	} else if string(dat) == tag {
+		tagsMatch = true
+	}
+	fs.Debugf(nil, "Current tag: %s, Release tag: %s", string(dat), tag)
+
+	if !tagsMatch {
+		fs.Infof(nil, "A release (%s) for gui is present at %s. Use --rc-web-gui-update to update. Your current version is (%s)", tag, WebUIURL, string(dat))
+	}
+
 	// if the old file exists does not exist or forced update is enforced.
 	// TODO: Add hashing to check integrity of the previous update.
 	if !extractPathExist || checkUpdate || forceUpdate {
-		// Get the latest release details
-		WebUIURL, tag, size, err := GetLatestReleaseURL(fetchURL)
-		if err != nil {
-			return err
-		}
 
-		dat, err := ioutil.ReadFile(tagPath)
-		if err == nil && string(dat) == tag {
+		if tagsMatch {
 			fs.Logf(nil, "No update to Web GUI available.")
 			if !forceUpdate {
 				return nil
@@ -91,7 +104,7 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 			return errors.New("Web GUI path is a file instead of folder. Please check it " + extractPath)
 		}
 
-		fs.Logf(nil, "A new release for gui is present at "+WebUIURL)
+		fs.Logf(nil, "A new release for gui (%s) is present at %s", tag, WebUIURL)
 		fs.Logf(nil, "Downloading webgui binary. Please wait. [Size: %s, Path :  %s]\n", strconv.Itoa(size), zipPath)
 
 		// download the zip from latest url
