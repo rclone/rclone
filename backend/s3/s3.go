@@ -202,107 +202,191 @@ func init() {
 			Help:     "Endpoint for IBM COS S3 API.\nSpecify if using an IBM COS On Premise.",
 			Provider: "IBMCOS",
 			Examples: []fs.OptionExample{{
-				Value: "s3-api.us-geo.objectstorage.softlayer.net",
+				Value: "s3.us.cloud-object-storage.appdomain.cloud",
 				Help:  "US Cross Region Endpoint",
 			}, {
-				Value: "s3-api.dal.us-geo.objectstorage.softlayer.net",
+				Value: "s3.dal.us.cloud-object-storage.appdomain.cloud",
 				Help:  "US Cross Region Dallas Endpoint",
 			}, {
-				Value: "s3-api.wdc-us-geo.objectstorage.softlayer.net",
+				Value: "s3.wdc.us.cloud-object-storage.appdomain.cloud",
 				Help:  "US Cross Region Washington DC Endpoint",
 			}, {
-				Value: "s3-api.sjc-us-geo.objectstorage.softlayer.net",
+				Value: "s3.sjc.us.cloud-object-storage.appdomain.cloud",
 				Help:  "US Cross Region San Jose Endpoint",
 			}, {
-				Value: "s3-api.us-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.us.cloud-object-storage.appdomain.cloud",
 				Help:  "US Cross Region Private Endpoint",
 			}, {
-				Value: "s3-api.dal-us-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.dal.us.cloud-object-storage.appdomain.cloud",
 				Help:  "US Cross Region Dallas Private Endpoint",
 			}, {
-				Value: "s3-api.wdc-us-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.wdc.us.cloud-object-storage.appdomain.cloud",
 				Help:  "US Cross Region Washington DC Private Endpoint",
 			}, {
-				Value: "s3-api.sjc-us-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.sjc.us.cloud-object-storage.appdomain.cloud",
 				Help:  "US Cross Region San Jose Private Endpoint",
 			}, {
-				Value: "s3.us-east.objectstorage.softlayer.net",
+				Value: "s3.us-east.cloud-object-storage.appdomain.cloud",
 				Help:  "US Region East Endpoint",
 			}, {
-				Value: "s3.us-east.objectstorage.service.networklayer.com",
+				Value: "s3.private.us-east.cloud-object-storage.appdomain.cloud",
 				Help:  "US Region East Private Endpoint",
 			}, {
-				Value: "s3.us-south.objectstorage.softlayer.net",
+				Value: "s3.us-south.cloud-object-storage.appdomain.cloud",
 				Help:  "US Region South Endpoint",
 			}, {
-				Value: "s3.us-south.objectstorage.service.networklayer.com",
+				Value: "s3.private.us-south.cloud-object-storage.appdomain.cloud",
 				Help:  "US Region South Private Endpoint",
 			}, {
-				Value: "s3.eu-geo.objectstorage.softlayer.net",
+				Value: "s3.eu.cloud-object-storage.appdomain.cloud",
 				Help:  "EU Cross Region Endpoint",
 			}, {
-				Value: "s3.fra-eu-geo.objectstorage.softlayer.net",
+				Value: "s3.fra.eu.cloud-object-storage.appdomain.cloud",
 				Help:  "EU Cross Region Frankfurt Endpoint",
 			}, {
-				Value: "s3.mil-eu-geo.objectstorage.softlayer.net",
+				Value: "s3.mil.eu.cloud-object-storage.appdomain.cloud",
 				Help:  "EU Cross Region Milan Endpoint",
 			}, {
-				Value: "s3.ams-eu-geo.objectstorage.softlayer.net",
+				Value: "s3.ams.eu.cloud-object-storage.appdomain.cloud",
 				Help:  "EU Cross Region Amsterdam Endpoint",
 			}, {
-				Value: "s3.eu-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.eu.cloud-object-storage.appdomain.cloud",
 				Help:  "EU Cross Region Private Endpoint",
 			}, {
-				Value: "s3.fra-eu-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.fra.eu.cloud-object-storage.appdomain.cloud",
 				Help:  "EU Cross Region Frankfurt Private Endpoint",
 			}, {
-				Value: "s3.mil-eu-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.mil.eu.cloud-object-storage.appdomain.cloud",
 				Help:  "EU Cross Region Milan Private Endpoint",
 			}, {
-				Value: "s3.ams-eu-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.ams.eu.cloud-object-storage.appdomain.cloud",
 				Help:  "EU Cross Region Amsterdam Private Endpoint",
 			}, {
-				Value: "s3.eu-gb.objectstorage.softlayer.net",
+				Value: "s3.eu-gb.cloud-object-storage.appdomain.cloud",
 				Help:  "Great Britain Endpoint",
 			}, {
-				Value: "s3.eu-gb.objectstorage.service.networklayer.com",
+				Value: "s3.private.eu-gb.cloud-object-storage.appdomain.cloud",
 				Help:  "Great Britain Private Endpoint",
 			}, {
-				Value: "s3.ap-geo.objectstorage.softlayer.net",
+				Value: "s3.eu-de.cloud-object-storage.appdomain.cloud",
+				Help:  "EU Region DE Endpoint",
+			}, {
+				Value: "s3.private.eu-de.cloud-object-storage.appdomain.cloud",
+				Help:  "EU Region DE Private Endpoint",
+			}, {
+				Value: "s3.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Endpoint",
 			}, {
-				Value: "s3.tok-ap-geo.objectstorage.softlayer.net",
+				Value: "s3.tok.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Tokyo Endpoint",
 			}, {
-				Value: "s3.hkg-ap-geo.objectstorage.softlayer.net",
+				Value: "s3.hkg.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional HongKong Endpoint",
 			}, {
-				Value: "s3.seo-ap-geo.objectstorage.softlayer.net",
+				Value: "s3.seo.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Seoul Endpoint",
 			}, {
-				Value: "s3.ap-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Private Endpoint",
 			}, {
-				Value: "s3.tok-ap-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.tok.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Tokyo Private Endpoint",
 			}, {
-				Value: "s3.hkg-ap-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.hkg.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional HongKong Private Endpoint",
 			}, {
-				Value: "s3.seo-ap-geo.objectstorage.service.networklayer.com",
+				Value: "s3.private.seo.ap.cloud-object-storage.appdomain.cloud",
 				Help:  "APAC Cross Regional Seoul Private Endpoint",
 			}, {
-				Value: "s3.mel01.objectstorage.softlayer.net",
+				Value: "s3.jp-tok.cloud-object-storage.appdomain.cloud",
+				Help:  "APAC Region Japan Endpoint",
+			}, {
+				Value: "s3.private.jp-tok.cloud-object-storage.appdomain.cloud",
+				Help:  "APAC Region Japan Private Endpoint",
+			}, {
+				Value: "s3.au-syd.cloud-object-storage.appdomain.cloud",
+				Help:  "APAC Region Australia Endpoint",
+			}, {
+				Value: "s3.private.au-syd.cloud-object-storage.appdomain.cloud",
+				Help:  "APAC Region Australia Private Endpoint",
+			}, {
+				Value: "s3.ams03.cloud-object-storage.appdomain.cloud",
+				Help:  "Amsterdam Single Site Endpoint",
+			}, {
+				Value: "s3.private.ams03.cloud-object-storage.appdomain.cloud",
+				Help:  "Amsterdam Single Site Private Endpoint",
+			}, {
+				Value: "s3.che01.cloud-object-storage.appdomain.cloud",
+				Help:  "Chennai Single Site Endpoint",
+			}, {
+				Value: "s3.private.che01.cloud-object-storage.appdomain.cloud",
+				Help:  "Chennai Single Site Private Endpoint",
+			}, {
+				Value: "s3.mel01.cloud-object-storage.appdomain.cloud",
 				Help:  "Melbourne Single Site Endpoint",
 			}, {
-				Value: "s3.mel01.objectstorage.service.networklayer.com",
+				Value: "s3.private.mel01.cloud-object-storage.appdomain.cloud",
 				Help:  "Melbourne Single Site Private Endpoint",
 			}, {
-				Value: "s3.tor01.objectstorage.softlayer.net",
+				Value: "s3.osl01.cloud-object-storage.appdomain.cloud",
+				Help:  "Oslo Single Site Endpoint",
+			}, {
+				Value: "s3.private.osl01.cloud-object-storage.appdomain.cloud",
+				Help:  "Oslo Single Site Private Endpoint",
+			}, {
+				Value: "s3.tor01.cloud-object-storage.appdomain.cloud",
 				Help:  "Toronto Single Site Endpoint",
 			}, {
-				Value: "s3.tor01.objectstorage.service.networklayer.com",
+				Value: "s3.private.tor01.cloud-object-storage.appdomain.cloud",
 				Help:  "Toronto Single Site Private Endpoint",
+			}, {
+				Value: "s3.seo01.cloud-object-storage.appdomain.cloud",
+				Help:  "Seoul Single Site Endpoint",
+			}, {
+				Value: "s3.private.seo01.cloud-object-storage.appdomain.cloud",
+				Help:  "Seoul Single Site Private Endpoint",
+			}, {
+				Value: "s3.mon01.cloud-object-storage.appdomain.cloud",
+				Help:  "Montreal Single Site Endpoint",
+			}, {
+				Value: "s3.private.mon01.cloud-object-storage.appdomain.cloud",
+				Help:  "Montreal Single Site Private Endpoint",
+			}, {
+				Value: "s3.mex01.cloud-object-storage.appdomain.cloud",
+				Help:  "Mexico Single Site Endpoint",
+			}, {
+				Value: "s3.private.mex01.cloud-object-storage.appdomain.cloud",
+				Help:  "Mexico Single Site Private Endpoint",
+			}, {
+				Value: "s3.sjc04.cloud-object-storage.appdomain.cloud",
+				Help:  "San Jose Single Site Endpoint",
+			}, {
+				Value: "s3.private.sjc04.cloud-object-storage.appdomain.cloud",
+				Help:  "San Jose Single Site Private Endpoint",
+			}, {
+				Value: "s3.mil01.cloud-object-storage.appdomain.cloud",
+				Help:  "Milan Single Site Endpoint",
+			}, {
+				Value: "s3.private.mil01.cloud-object-storage.appdomain.cloud",
+				Help:  "Milan Single Site Private Endpoint",
+			}, {
+				Value: "s3.hkg02.cloud-object-storage.appdomain.cloud",
+				Help:  "Hong Kong Single Site Endpoint",
+			}, {
+				Value: "s3.private.hkg02.cloud-object-storage.appdomain.cloud",
+				Help:  "Hong Kong Single Site Private Endpoint",
+			}, {
+				Value: "s3.par01.cloud-object-storage.appdomain.cloud",
+				Help:  "Paris Single Site Endpoint",
+			}, {
+				Value: "s3.private.par01.cloud-object-storage.appdomain.cloud",
+				Help:  "Paris Single Site Private Endpoint",
+			}, {
+				Value: "s3.sng01.cloud-object-storage.appdomain.cloud",
+				Help:  "Singapore Single Site Endpoint",
+			}, {
+				Value: "s3.private.sng01.cloud-object-storage.appdomain.cloud",
+				Help:  "Singapore Single Site Private Endpoint",
 			}},
 		}, {
 			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
