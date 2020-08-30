@@ -153,3 +153,29 @@ func TestPolicy2(t *testing.T) {
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
+
+func TestPolicy3(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir1 := filepath.Join(os.TempDir(), "rclone-union-test-policy31")
+	tempdir2 := filepath.Join(os.TempDir(), "rclone-union-test-policy32")
+	tempdir3 := filepath.Join(os.TempDir(), "rclone-union-test-policy33")
+	require.NoError(t, os.MkdirAll(tempdir1, 0744))
+	require.NoError(t, os.MkdirAll(tempdir2, 0744))
+	require.NoError(t, os.MkdirAll(tempdir3, 0744))
+	upstreams := tempdir1 + " " + tempdir2 + " " + tempdir3
+	name := "TestUnionPolicy3"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "union"},
+			{Name: name, Key: "upstreams", Value: upstreams},
+			{Name: name, Key: "action_policy", Value: "all"},
+			{Name: name, Key: "create_policy", Value: "all"},
+			{Name: name, Key: "search_policy", Value: "all"},
+		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
+		UnimplementableObjectMethods: []string{"MimeType"},
+	})
+}
