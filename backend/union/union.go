@@ -385,6 +385,37 @@ func (f *Fs) DirCacheFlush() {
 	})
 }
 
+// Tee in into n outputs
+//
+// When finished read the error from the channel
+func multiReader(n int, in io.Reader) ([]io.Reader, <-chan error) {
+	readers := make([]io.Reader, n)
+	pipeWriters := make([]*io.PipeWriter, n)
+	writers := make([]io.Writer, n)
+	errChan := make(chan error, 1)
+	for i := range writers {
+		r, w := io.Pipe()
+		bw := bufio.NewWriter(w)
+		readers[i], pipeWriters[i], writers[i] = r, w, bw
+	}
+	go func() {
+		mw := io.MultiWriter(writers...)
+		es := make([]error, 2*n+1)
+		_, copyErr := io.Copy(mw, in)
+		es[2*n] = copyErr
+		// Flush the buffers
+		for i, bw := range writers {
+			es[i] = bw.(*bufio.Writer).Flush()
+		}
+		// Close the underlying pipes
+		for i, pw := range pipeWriters {
+			es[2*i] = pw.CloseWithError(copyErr)
+		}
+		errChan <- Errors(es).Err()
+	}()
+	return readers, errChan
+}
+
 func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bool, options ...fs.OpenOption) (fs.Object, error) {
 	srcPath := src.Remote()
 	upstreams, err := f.create(ctx, srcPath)
@@ -412,31 +443,9 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 		e, err := f.wrapEntries(u.WrapObject(o))
 		return e.(*Object), err
 	}
-	errs := Errors(make([]error, len(upstreams)+1))
-	// Get multiple reader
-	readers := make([]io.Reader, len(upstreams))
-	writers := make([]io.Writer, len(upstreams))
-	for i := range writers {
-		r, w := io.Pipe()
-		bw := bufio.NewWriter(w)
-		readers[i], writers[i] = r, bw
-		defer func() {
-			err := w.Close()
-			if err != nil {
-				panic(err)
-			}
-		}()
-	}
-	go func() {
-		mw := io.MultiWriter(writers...)
-		es := make([]error, len(writers)+1)
-		_, es[len(es)-1] = io.Copy(mw, in)
-		for i, bw := range writers {
-			es[i] = bw.(*bufio.Writer).Flush()
-		}
-		errs[len(upstreams)] = Errors(es).Err()
-	}()
 	// Multi-threading
+	readers, errChan := multiReader(len(upstreams), in)
+	errs := Errors(make([]error, len(upstreams)+1))
 	objs := make([]upstream.Entry, len(upstreams))
 	multithread(len(upstreams), func(i int) {
 		u := upstreams[i]
@@ -453,6 +462,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 		}
 		objs[i] = u.WrapObject(o)
 	})
+	errs[len(upstreams)] = <-errChan
 	err = errs.Err()
 	if err != nil {
 		return nil, err

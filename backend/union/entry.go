@@ -1,7 +1,6 @@
 package union
 
 import (
-	"bufio"
 	"context"
 	"io"
 	"sync"
@@ -67,31 +66,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		obj := entries[0].(*upstream.Object)
 		return obj.Update(ctx, in, src, options...)
 	}
-	// Get multiple reader
-	readers := make([]io.Reader, len(entries))
-	writers := make([]io.Writer, len(entries))
-	errs := Errors(make([]error, len(entries)+1))
-	for i := range entries {
-		r, w := io.Pipe()
-		bw := bufio.NewWriter(w)
-		readers[i], writers[i] = r, bw
-		defer func() {
-			err := w.Close()
-			if err != nil {
-				panic(err)
-			}
-		}()
-	}
-	go func() {
-		mw := io.MultiWriter(writers...)
-		es := make([]error, len(writers)+1)
-		_, es[len(es)-1] = io.Copy(mw, in)
-		for i, bw := range writers {
-			es[i] = bw.(*bufio.Writer).Flush()
-		}
-		errs[len(entries)] = Errors(es).Err()
-	}()
 	// Multi-threading
+	readers, errChan := multiReader(len(entries), in)
+	errs := Errors(make([]error, len(entries)+1))
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			err := o.Update(ctx, readers[i], src, options...)
@@ -100,6 +77,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			errs[i] = fs.ErrorNotAFile
 		}
 	})
+	errs[len(entries)] = <-errChan
 	return errs.Err()
 }
 
