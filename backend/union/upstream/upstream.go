@@ -97,6 +97,7 @@ func New(remote, root string, cacheTime time.Duration) (*Fs, error) {
 		return nil, err
 	}
 	f.Fs = myFs
+	cache.PinUntilFinalized(f.Fs, f)
 	return f, err
 }
 

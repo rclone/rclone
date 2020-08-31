@@ -234,8 +234,8 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 
 	// Pin the Fs into the cache so that when we use cache.NewFs
 	// with the same remote string we get this one. The Pin is
-	// removed by Shutdown
-	cache.Pin(f)
+	// removed when the vfs is finalized
+	cache.PinUntilFinalized(f, vfs)
 
 	return vfs
 }
@@ -292,9 +292,6 @@ func (vfs *VFS) Shutdown() {
 	if atomic.AddInt32(&vfs.inUse, -1) > 0 {
 		return
 	}
-
-	// Unpin the Fs from the cache
-	cache.Unpin(vfs.f)
 
 	// Remove from active cache
 	activeMu.Lock()

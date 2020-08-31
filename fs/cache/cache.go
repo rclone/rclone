@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"runtime"
 	"sync"
 
 	"github.com/rclone/rclone/fs"
@@ -78,6 +79,18 @@ func GetFn(fsString string, create func(fsString string) (fs.Fs, error)) (f fs.F
 // Pin f into the cache until Unpin is called
 func Pin(f fs.Fs) {
 	c.Pin(fs.ConfigString(f))
+}
+
+// PinUntilFinalized pins f into the cache until x is garbage collected
+//
+// This calls runtime.SetFinalizer on x so it shouldn't have a
+// finalizer already.
+func PinUntilFinalized(f fs.Fs, x interface{}) {
+	Pin(f)
+	runtime.SetFinalizer(x, func(_ interface{}) {
+		Unpin(f)
+	})
+
 }
 
 // Unpin f from the cache

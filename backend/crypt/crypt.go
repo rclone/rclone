@@ -186,6 +186,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		opt:    *opt,
 		cipher: cipher,
 	}
+	cache.PinUntilFinalized(f.Fs, f)
 	// the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs
 	f.features = (&fs.Features{

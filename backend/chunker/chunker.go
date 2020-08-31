@@ -262,6 +262,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		root: rpath,
 		opt:  *opt,
 	}
+	cache.PinUntilFinalized(f.base, f)
 	f.dirSort = true // processEntries requires that meta Objects prerun data chunks atm.
 
 	if err := f.configure(opt.NameFormat, opt.MetaFormat, opt.HashType); err != nil {
