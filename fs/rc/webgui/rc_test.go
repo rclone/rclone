@@ -5,10 +5,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const testPluginName = "rclone-test-plugin"
@@ -39,7 +41,10 @@ func addPlugin(t *testing.T) {
 		"url": testPluginURL,
 	}
 	out, err := addPlugin.Fn(context.Background(), in)
-	assert.Nil(t, err)
+	if err != nil && strings.Contains(err.Error(), "bad HTTP status") {
+		t.Skipf("skipping test as plugin download failed: %v", err)
+	}
+	require.Nil(t, err)
 	assert.Nil(t, out)
 
 }
