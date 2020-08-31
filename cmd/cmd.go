@@ -89,8 +89,10 @@ func NewFsFile(remote string) (fs.Fs, string) {
 	f, err := cache.Get(remote)
 	switch err {
 	case fs.ErrorIsFile:
+		cache.Pin(f) // pin indefinitely since it was on the CLI
 		return f, path.Base(fsPath)
 	case nil:
+		cache.Pin(f) // pin indefinitely since it was on the CLI
 		return f, ""
 	default:
 		err = fs.CountError(err)
@@ -139,6 +141,7 @@ func newFsDir(remote string) fs.Fs {
 		err = fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
 	}
+	cache.Pin(f) // pin indefinitely since it was on the CLI
 	return f
 }
 
@@ -197,6 +200,7 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 		_ = fs.CountError(err)
 		log.Fatalf("Failed to create file system for destination %q: %v", dstRemote, err)
 	}
+	cache.Pin(fdst) // pin indefinitely since it was on the CLI
 	return
 }
 

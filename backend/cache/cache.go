@@ -385,6 +385,7 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 		cleanupChan:      make(chan bool, 1),
 		notifiedRemotes:  make(map[string]bool),
 	}
+	cache.PinUntilFinalized(f.Fs, f)
 	f.rateLimiter = rate.NewLimiter(rate.Limit(float64(opt.Rps)), opt.TotalWorkers)
 
 	f.plexConnector = &plexConnector{}
