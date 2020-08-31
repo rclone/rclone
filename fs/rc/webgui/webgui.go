@@ -15,19 +15,23 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/errors"
 )
 
 // GetLatestReleaseURL returns the latest release details of the rclone-webui-react
 func GetLatestReleaseURL(fetchURL string) (string, string, int, error) {
 	resp, err := http.Get(fetchURL)
 	if err != nil {
-		return "", "", 0, errors.New("Error getting latest release of rclone-webui")
+		return "", "", 0, errors.Wrap(err, "failed getting latest release of rclone-webui")
+	}
+	defer fs.CheckClose(resp.Body, &err)
+	if resp.StatusCode != http.StatusOK {
+		return "", "", 0, errors.Errorf("bad HTTP status %d (%s) when fetching %s", resp.StatusCode, resp.Status, fetchURL)
 	}
 	results := gitHubRequest{}
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		return "", "", 0, errors.New("could not decode results from http request")
+		return "", "", 0, errors.Wrap(err, "could not decode results from http request")
 	}
 	if len(results.Assets) < 1 {
 		return "", "", 0, errors.New("could not find an asset in the release. " +
@@ -124,14 +128,16 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 }
 
 // DownloadFile is a helper function to download a file from url to the filepath
-func DownloadFile(filepath string, url string) error {
-
+func DownloadFile(filepath string, url string) (err error) {
 	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
 	defer fs.CheckClose(resp.Body, &err)
+	if resp.StatusCode != http.StatusOK {
+		return errors.Errorf("bad HTTP status %d (%s) when fetching %s", resp.StatusCode, resp.Status, url)
+	}
 
 	// Create the file
 	out, err := os.Create(filepath)
