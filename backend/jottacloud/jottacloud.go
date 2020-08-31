@@ -353,7 +353,7 @@ func doAuthV1(ctx context.Context, srv *rest.Client, username, password string) 
 				authCode = strings.Replace(authCode, "-", "", -1) // remove any "-" contained in the code so we have a 6 digit number
 				opts.ExtraHeaders = make(map[string]string)
 				opts.ExtraHeaders["X-Jottacloud-Otp"] = authCode
-				resp, err = srv.CallJSON(ctx, &opts, nil, &jsonToken)
+				_, err = srv.CallJSON(ctx, &opts, nil, &jsonToken)
 			}
 		}
 	}
