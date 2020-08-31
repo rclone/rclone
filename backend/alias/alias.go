@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
@@ -46,9 +47,5 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if strings.HasPrefix(opt.Remote, name+":") {
 		return nil, errors.New("can't point alias remote at itself - check the value of the remote setting")
 	}
-	fsInfo, configName, fsPath, config, err := fs.ConfigFs(opt.Remote)
-	if err != nil {
-		return nil, err
-	}
-	return fsInfo.NewFs(configName, fspath.JoinRootPath(fsPath, root), config)
+	return cache.Get(fspath.JoinRootPath(opt.Remote, root))
 }

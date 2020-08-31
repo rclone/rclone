@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
@@ -238,15 +239,18 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.New("can't point remote at itself - check the value of the remote setting")
 	}
 
-	baseInfo, baseName, basePath, baseConfig, err := fs.ConfigFs(remote)
+	baseName, basePath, err := fspath.Parse(remote)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", remote)
 	}
+	if baseName != "" {
+		baseName += ":"
+	}
 	// Look for a file first
 	remotePath := fspath.JoinRootPath(basePath, rpath)
-	baseFs, err := baseInfo.NewFs(baseName, remotePath, baseConfig)
+	baseFs, err := cache.Get(baseName + remotePath)
 	if err != fs.ErrorIsFile && err != nil {
-		return nil, errors.Wrapf(err, "failed to make remote %s:%q to wrap", baseName, remotePath)
+		return nil, errors.Wrapf(err, "failed to make remote %q to wrap", baseName+remotePath)
 	}
 	if !operations.CanServerSideMove(baseFs) {
 		return nil, errors.New("can't use chunker on a backend which doesn't support server side move or copy")
@@ -271,7 +275,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	// (yet can't satisfy fstest.CheckListing, will ignore)
 	if err == nil && !f.useMeta && strings.Contains(rpath, "/") {
 		firstChunkPath := f.makeChunkName(remotePath, 0, "", "")
-		_, testErr := baseInfo.NewFs(baseName, firstChunkPath, baseConfig)
+		_, testErr := cache.Get(baseName + firstChunkPath)
 		if testErr == fs.ErrorIsFile {
 			err = testErr
 		}

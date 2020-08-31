@@ -361,15 +361,10 @@ func NewFs(name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.Wrapf(err, "failed to clean root path %q", rootPath)
 	}
 
-	wInfo, wName, wPath, wConfig, err := fs.ConfigFs(opt.Remote)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", opt.Remote)
-	}
-
-	remotePath := fspath.JoinRootPath(wPath, rootPath)
-	wrappedFs, wrapErr := wInfo.NewFs(wName, remotePath, wConfig)
+	remotePath := fspath.JoinRootPath(opt.Remote, rootPath)
+	wrappedFs, wrapErr := cache.Get(remotePath)
 	if wrapErr != nil && wrapErr != fs.ErrorIsFile {
-		return nil, errors.Wrapf(wrapErr, "failed to make remote %s:%s to wrap", wName, remotePath)
+		return nil, errors.Wrapf(wrapErr, "failed to make remote %q to wrap", remotePath)
 	}
 	var fsErr error
 	fs.Debugf(name, "wrapped %v:%v at root %v", wrappedFs.Name(), wrappedFs.Root(), rpath)
