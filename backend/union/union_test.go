@@ -18,7 +18,7 @@ func TestIntegration(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
-		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles", "Resume"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }

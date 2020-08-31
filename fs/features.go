@@ -163,6 +163,10 @@ type Features struct {
 	// Shutdown the backend, closing any background tasks and any
 	// cached connections.
 	Shutdown func(ctx context.Context) error
+
+	// Resume checks whether the (remote, ID) pair is valid and returns
+	// the point the file should be resumed from or an error.
+	Resume func(ctx context.Context, remote, ID, hashName, hashState string) (Pos int64, err error)
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -289,6 +293,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	}
 	if do, ok := f.(Shutdowner); ok {
 		ft.Shutdown = do.Shutdown
+	}
+	if do, ok := f.(Resumer); ok {
+		ft.Resume = do.Resume
 	}
 	return ft.DisableList(GetConfig(ctx).DisableFeatures)
 }
@@ -634,6 +641,13 @@ type Shutdowner interface {
 	// Shutdown the backend, closing any background tasks and any
 	// cached connections.
 	Shutdown(ctx context.Context) error
+}
+
+// Resumer is an optional interface for Fs
+type Resumer interface {
+	// Resume checks whether the (remote, ID) pair is valid and returns
+	// the point the file should be resumed from or an error.
+	Resume(ctx context.Context, remote, ID, hashName, hashState string) (Pos int64, err error)
 }
 
 // ObjectsChan is a channel of Objects
