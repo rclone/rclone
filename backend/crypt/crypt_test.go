@@ -23,7 +23,7 @@ func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName:                   *fstest.RemoteName,
 		NilObject:                    (*crypt.Object)(nil),
-		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableFsMethods:     []string{"OpenWriterAt", "Resume"},
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }

@@ -48,6 +48,7 @@ var (
 	ErrorNotImplemented              = errors.New("optional feature not implemented")
 	ErrorCommandNotFound             = errors.New("command not found")
 	ErrorFileNameTooLong             = errors.New("file name too long")
+	ErrorCantResume                  = errors.New("can't resume file upload")
 )
 
 // CheckClose is a utility function used to check the return from

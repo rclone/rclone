@@ -9,7 +9,6 @@ import (
 	"sync/atomic"
 	"syscall"
 
-	"github.com/rclone/rclone/fs"
 	"golang.org/x/sys/unix"
 )
 
@@ -48,7 +47,6 @@ func PreAllocate(size int64, out *os.File) (err error) {
 			// Try the next flags combination
 			index++
 			atomic.StoreInt32(&fallocFlagsIndex, index)
-			fs.Debugf(nil, "preAllocate: got error on fallocate, trying combination %d/%d: %v", index, len(fallocFlags), err)
 			goto again
 
 		}
