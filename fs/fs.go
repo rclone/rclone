@@ -1330,6 +1330,7 @@ func ConfigFs(path string) (fsInfo *RegInfo, configName, fsPath string, config *
 // On Windows avoid single character remote names as they can be mixed
 // up with drive letters.
 func NewFs(path string) (Fs, error) {
+	Debugf(nil, "Creating backend with remote %q", path)
 	fsInfo, configName, fsPath, config, err := ConfigFs(path)
 	if err != nil {
 		return nil, err
