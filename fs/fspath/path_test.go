@@ -2,6 +2,7 @@ package fspath
 
 import (
 	"fmt"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -153,6 +154,7 @@ func TestJoinRootPath(t *testing.T) {
 		{[]string{"", "//server/sub", "path"}, "//server/sub/path"},
 		{[]string{"", "//server", "//path"}, "//server/path"},
 		{[]string{"", "//server/sub", "//path"}, "//server/sub/path"},
+		{[]string{"", filepath.FromSlash("//server/sub"), filepath.FromSlash("//path")}, "//server/sub/path"},
 	} {
 		got := JoinRootPath(test.elements...)
 		assert.Equal(t, test.want, got)
