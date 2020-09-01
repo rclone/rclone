@@ -1335,7 +1335,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// object has been safely uploaded
 		o.lastModified = modTime
 		o.size = size
-		o.md5 = rxHeaders["ETag"]
+		o.md5 = rxHeaders["Etag"]
 		o.contentType = contentType
 		o.headers = headers
 		if inCount != nil {
