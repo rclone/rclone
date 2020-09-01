@@ -406,3 +406,4 @@ put them back in again.` >}}
   * aus <549081+aus@users.noreply.github.com>
   * Aaron Gokaslan <agokaslan@fb.com>
   * Egor Margineanu <egmar@users.noreply.github.com>
+  * Lucas Kanashiro <lucas.kanashiro@canonical.com>
