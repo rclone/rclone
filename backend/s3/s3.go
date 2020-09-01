@@ -1064,10 +1064,12 @@ This option controls how often unused buffers will be removed from the pool.`,
 
 // Constants
 const (
-	metaMtime           = "Mtime"                // the meta key to store mtime in - eg X-Amz-Meta-Mtime
-	metaMD5Hash         = "Md5chksum"            // the meta key to store md5hash in
-	maxSizeForCopy      = 5 * 1024 * 1024 * 1024 // The maximum size of object we can COPY
-	maxUploadParts      = 10000                  // maximum allowed number of parts in a multi-part upload
+	metaMtime   = "Mtime"     // the meta key to store mtime in - eg X-Amz-Meta-Mtime
+	metaMD5Hash = "Md5chksum" // the meta key to store md5hash in
+	// The maximum size of object we can COPY - this should be 5GiB but is < 5GB for b2 compatibility
+	// See https://forum.rclone.org/t/copying-files-within-a-b2-bucket/16680/76
+	maxSizeForCopy      = 4768 * 1024 * 1024
+	maxUploadParts      = 10000 // maximum allowed number of parts in a multi-part upload
 	minChunkSize        = fs.SizeSuffix(1024 * 1024 * 5)
 	defaultUploadCutoff = fs.SizeSuffix(200 * 1024 * 1024)
 	maxUploadCutoff     = fs.SizeSuffix(5 * 1024 * 1024 * 1024)
