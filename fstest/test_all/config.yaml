@@ -206,6 +206,8 @@ backends:
  - backend:  "fichier"
    remote:   "TestFichier:"
    fastlist: false
+   tests:
+     - backend
  - backend:  "qingstor"
    remote:   "TestQingStor:"
    fastlist: false
