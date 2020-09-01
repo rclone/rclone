@@ -438,7 +438,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	if do == nil {
 		return fs.ErrorCantPurge
 	}
-	return do(ctx, dir)
+	return do(ctx, f.cipher.EncryptDirName(dir))
 }
 
 // Copy src to this remote using server side copy operations.
