@@ -646,7 +646,6 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
-	400, // Bad request (seen in "Next token is expired")
 	401, // Unauthorized (seen in "Token has expired")
 	408, // Request Timeout
 	423, // Locked - get this on folders sometimes
