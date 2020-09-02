@@ -407,12 +407,23 @@ It is a
 [known](https://github.com/OneDrive/onedrive-api-docs/issues/935#issuecomment-441741631)
 issue that Sharepoint (not OneDrive or OneDrive for Business) silently modifies
 uploaded files, mainly Office files (.docx, .xlsx, etc.), causing file size and
-hash checks to fail. To use rclone with such affected files on Sharepoint, you
+hash checks to fail. There are also other situations that will cause OneDrive to 
+report inconsistent file sizes. To use rclone with such
+affected files on Sharepoint, you
 may disable these checks with the following command line arguments:
 
 ```
 --ignore-checksum --ignore-size
 ```
+
+Alternatively, if you have write access to the OneDrive files, it may be possible
+to fix this problem for certain files, by attempting the steps below.
+Open the web interface for [OneDrive](https://onedrive.live.com) and find the 
+affected files (which will be in the error messages/log for rclone). Simply click on
+each of these files, causing OneDrive to open them on the web. This will cause each 
+file to be converted in place to a format that is functionally equivalent
+but which will no longer trigger the size discrepancy. Once all problematic files
+are converted you will no longer need the ignore options above.
 
 #### Replacing/deleting existing files on Sharepoint gets "item not found" ####
 
