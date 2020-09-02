@@ -453,7 +453,7 @@ func (c *Cache) removeNotInUse(item *Item, maxAge time.Duration, emptyOnly bool)
 		// Remove the entry
 		delete(c.item, item.name)
 	} else {
-		fs.Infof(nil, "vfs cache RemoveNotInUse (maxAge=%d, emptyOnly=%v): item %s not removed, freed %d bytes", maxAge, emptyOnly, item.GetName(), spaceFreed)
+		fs.Debugf(nil, "vfs cache RemoveNotInUse (maxAge=%d, emptyOnly=%v): item %s not removed, freed %d bytes", maxAge, emptyOnly, item.GetName(), spaceFreed)
 	}
 	return
 }
