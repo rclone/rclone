@@ -343,6 +343,8 @@ The username of the Plex user
 
 The password of the Plex user
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      plex_password
 - Env Var:     RCLONE_CACHE_PLEX_PASSWORD
 - Type:        string

@@ -46,7 +46,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone copyurl](/commands/rclone_copyurl/)	 - Copy url content to dest.
 * [rclone cryptcheck](/commands/rclone_cryptcheck/)	 - Cryptcheck checks the integrity of a crypted remote.
 * [rclone cryptdecode](/commands/rclone_cryptdecode/)	 - Cryptdecode returns unencrypted file names.
-* [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate files and delete/rename them.
+* [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate filenames and delete/rename them.
 * [rclone delete](/commands/rclone_delete/)	 - Remove the contents of path.
 * [rclone deletefile](/commands/rclone_deletefile/)	 - Remove a single file from remote.
 * [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output completion script for a given shell.
@@ -65,7 +65,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone move](/commands/rclone_move/)	 - Move files from source to dest.
 * [rclone moveto](/commands/rclone_moveto/)	 - Move file or directory from source to dest.
 * [rclone ncdu](/commands/rclone_ncdu/)	 - Explore a remote with a text based user interface.
-* [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone.conf
+* [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone config file
 * [rclone purge](/commands/rclone_purge/)	 - Remove the path and all of its contents.
 * [rclone rc](/commands/rclone_rc/)	 - Run a command against a running rclone.
 * [rclone rcat](/commands/rclone_rcat/)	 - Copies standard input to file on remote.

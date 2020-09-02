@@ -315,7 +315,7 @@ Here are the standard options specific to google photos (Google Photos).
 
 #### --gphotos-client-id
 
-Google Application Client Id
+OAuth Client Id
 Leave blank normally.
 
 - Config:      client_id
@@ -325,7 +325,7 @@ Leave blank normally.
 
 #### --gphotos-client-secret
 
-Google Application Client Secret
+OAuth Client Secret
 Leave blank normally.
 
 - Config:      client_secret
@@ -348,6 +348,35 @@ to your photos, otherwise rclone will request full access.
 ### Advanced Options
 
 Here are the advanced options specific to google photos (Google Photos).
+
+#### --gphotos-token
+
+OAuth Access Token as a JSON blob.
+
+- Config:      token
+- Env Var:     RCLONE_GPHOTOS_TOKEN
+- Type:        string
+- Default:     ""
+
+#### --gphotos-auth-url
+
+Auth server URL.
+Leave blank to use the provider defaults.
+
+- Config:      auth_url
+- Env Var:     RCLONE_GPHOTOS_AUTH_URL
+- Type:        string
+- Default:     ""
+
+#### --gphotos-token-url
+
+Token server url.
+Leave blank to use the provider defaults.
+
+- Config:      token_url
+- Env Var:     RCLONE_GPHOTOS_TOKEN_URL
+- Type:        string
+- Default:     ""
 
 #### --gphotos-read-size
 

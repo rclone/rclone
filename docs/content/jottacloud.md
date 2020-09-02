@@ -220,16 +220,6 @@ Delete files permanently rather than putting them into the trash.
 - Type:        bool
 - Default:     false
 
-#### --jottacloud-unlink
-
-Remove existing public link to file/folder with link command rather than creating.
-Default is false, meaning link command will create or retrieve public link.
-
-- Config:      unlink
-- Env Var:     RCLONE_JOTTACLOUD_UNLINK
-- Type:        bool
-- Default:     false
-
 #### --jottacloud-upload-resume-limit
 
 Files bigger than this can be resumed if the upload fail's.

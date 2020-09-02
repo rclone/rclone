@@ -165,7 +165,8 @@ Here are the standard options specific to amazon cloud drive (Amazon Drive).
 
 #### --acd-client-id
 
-Amazon Application Client ID.
+OAuth Client Id
+Leave blank normally.
 
 - Config:      client_id
 - Env Var:     RCLONE_ACD_CLIENT_ID
@@ -174,7 +175,8 @@ Amazon Application Client ID.
 
 #### --acd-client-secret
 
-Amazon Application Client Secret.
+OAuth Client Secret
+Leave blank normally.
 
 - Config:      client_secret
 - Env Var:     RCLONE_ACD_CLIENT_SECRET
@@ -185,10 +187,19 @@ Amazon Application Client Secret.
 
 Here are the advanced options specific to amazon cloud drive (Amazon Drive).
 
+#### --acd-token
+
+OAuth Access Token as a JSON blob.
+
+- Config:      token
+- Env Var:     RCLONE_ACD_TOKEN
+- Type:        string
+- Default:     ""
+
 #### --acd-auth-url
 
 Auth server URL.
-Leave blank to use Amazon's.
+Leave blank to use the provider defaults.
 
 - Config:      auth_url
 - Env Var:     RCLONE_ACD_AUTH_URL
@@ -198,7 +209,7 @@ Leave blank to use Amazon's.
 #### --acd-token-url
 
 Token server url.
-leave blank to use Amazon's.
+Leave blank to use the provider defaults.
 
 - Config:      token_url
 - Env Var:     RCLONE_ACD_TOKEN_URL

@@ -52,7 +52,7 @@ rclone tree remote:path [flags]
       --human           Print the size in a more human readable way.
       --level int       Descend only level directories deep.
   -D, --modtime         Print the date of last modification.
-  -i, --noindent        Don't print indentation lines.
+      --noindent        Don't print indentation lines.
       --noreport        Turn off file/directory count at end of tree listing.
   -o, --output string   Output to file instead of stdout.
   -p, --protections     Print the protections for each file.

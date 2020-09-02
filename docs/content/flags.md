@@ -19,6 +19,7 @@ These flags are available for every command.
       --bind string                          Local address to bind to for outgoing connections, IPv4, IPv6 or name.
       --buffer-size SizeSuffix               In memory buffer size when reading files for each --transfer. (default 16M)
       --bwlimit BwTimetable                  Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.
+      --bwlimit-file BwTimetable             Bandwidth limit per file in kBytes/s, or use suffix b|k|M|G or a full timetable.
       --ca-cert string                       CA certificate used to verify servers
       --cache-dir string                     Directory rclone will use for caching. (default "$HOME/.cache/rclone")
       --check-first                          Do all the checks before starting transfers.
@@ -64,6 +65,7 @@ These flags are available for every command.
       --immutable                            Do not modify files. Fail if existing files have been modified.
       --include stringArray                  Include files matching pattern
       --include-from stringArray             Read include patterns from file (use - to read from stdin)
+  -i, --interactive                          Enable interactive mode
       --log-file string                      Log everything to this file
       --log-format string                    Comma separated list of log format options (default "date,time")
       --log-level string                     Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
@@ -118,6 +120,7 @@ These flags are available for every command.
       --rc-web-gui-force-update              Force update to latest version of web gui
       --rc-web-gui-no-open-browser           Don't open the browser automatically
       --rc-web-gui-update                    Check and update to latest version of web gui
+      --refresh-times                        Refresh the modtime of remote files.
       --retries int                          Retry operations this many times if they fail (default 3)
       --retries-sleep duration               Interval between retrying operations if they fail, e.g 500ms, 60s, 5m. (0 to disable)
       --size-only                            Skip based on size only, not mod-time or checksum
@@ -137,14 +140,14 @@ These flags are available for every command.
       --tpslimit float                       Limit HTTP transactions per second to this.
       --tpslimit-burst int                   Max burst of transactions for --tpslimit. (default 1)
       --track-renames                        When synchronizing, track file renames and do a server side move if possible
-      --track-renames-strategy string        Strategies to use when synchronizing using track-renames hash|modtime (default "hash")
+      --track-renames-strategy string        Strategies to use when synchronizing using track-renames hash|modtime|leaf (default "hash")
       --transfers int                        Number of file transfers to run in parallel. (default 4)
   -u, --update                               Skip files that are newer on the destination.
       --use-cookies                          Enable session cookiejar.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.52.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -155,10 +158,11 @@ and may be set in the config file.
 
 ```
       --acd-auth-url string                                      Auth server URL.
-      --acd-client-id string                                     Amazon Application Client ID.
-      --acd-client-secret string                                 Amazon Application Client Secret.
+      --acd-client-id string                                     OAuth Client Id
+      --acd-client-secret string                                 OAuth Client Secret
       --acd-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
       --acd-templink-threshold SizeSuffix                        Files >= this size will be downloaded via their tempLink. (default 9G)
+      --acd-token string                                         OAuth Access Token as a JSON blob.
       --acd-token-url string                                     Token server url.
       --acd-upload-wait-per-gb Duration                          Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s)
       --alias-remote string                                      Remote or path to alias.
@@ -177,6 +181,7 @@ and may be set in the config file.
       --azureblob-use-emulator                                   Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)
       --b2-account string                                        Account ID or Application Key ID
       --b2-chunk-size SizeSuffix                                 Upload chunk size. Must fit in memory. (default 96M)
+      --b2-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 4G)
       --b2-disable-checksum                                      Disable checksums for large (> upload cutoff) files
       --b2-download-auth-duration Duration                       Time before the authorization token will expire in s or suffix ms|s|m|h|d. (default 1w)
       --b2-download-url string                                   Custom endpoint for downloads.
@@ -184,16 +189,22 @@ and may be set in the config file.
       --b2-endpoint string                                       Endpoint for the service.
       --b2-hard-delete                                           Permanently delete files on remote removal, otherwise hide files.
       --b2-key string                                            Application Key
+      --b2-memory-pool-flush-time Duration                       How often internal memory buffer pools will be flushed. (default 1m0s)
+      --b2-memory-pool-use-mmap                                  Whether to use mmap buffers in internal memory pool.
       --b2-test-mode string                                      A flag string for X-Bz-Test-Mode header for debugging.
       --b2-upload-cutoff SizeSuffix                              Cutoff for switching to chunked upload. (default 200M)
       --b2-versions                                              Include old versions in directory listings.
+      --box-access-token string                                  Box App Primary Access Token
+      --box-auth-url string                                      Auth server URL.
       --box-box-config-file string                               Box App config.json location
       --box-box-sub-type string                                   (default "user")
-      --box-client-id string                                     Box App Client Id.
-      --box-client-secret string                                 Box App Client Secret
+      --box-client-id string                                     OAuth Client Id
+      --box-client-secret string                                 OAuth Client Secret
       --box-commit-retries int                                   Max number of times to try committing a multipart file. (default 100)
       --box-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot)
       --box-root-folder-id string                                Fill in for rclone to use a non root folder as its starting point.
+      --box-token string                                         OAuth Access Token as a JSON blob.
+      --box-token-url string                                     Token server url.
       --box-upload-cutoff SizeSuffix                             Cutoff for switching to multipart upload (>= 50MB). (default 50M)
       --cache-chunk-clean-interval Duration                      How often should the cache perform cleanups of the chunk storage. (default 1m0s)
       --cache-chunk-no-memory                                    Disable the in-memory cache for storing chunks during streaming.
@@ -205,7 +216,7 @@ and may be set in the config file.
       --cache-db-wait-time Duration                              How long to wait for the DB to be available - 0 is unlimited (default 1s)
       --cache-info-age Duration                                  How long to cache file structure information (directory listings, file size, times etc). (default 6h0m0s)
       --cache-plex-insecure string                               Skip all certificate verification when connecting to the Plex server
-      --cache-plex-password string                               The password of the Plex user
+      --cache-plex-password string                               The password of the Plex user (obscured)
       --cache-plex-url string                                    The URL of the Plex server
       --cache-plex-username string                               The username of the Plex user
       --cache-read-retries int                                   How many times to retry a read from a cache storage. (default 10)
@@ -225,17 +236,18 @@ and may be set in the config file.
   -L, --copy-links                                               Follow symlinks and copy the pointed to item.
       --crypt-directory-name-encryption                          Option to either encrypt directory names or leave them intact. (default true)
       --crypt-filename-encryption string                         How to encrypt the filenames. (default "standard")
-      --crypt-password string                                    Password or pass phrase for encryption.
-      --crypt-password2 string                                   Password or pass phrase for salt. Optional but recommended.
+      --crypt-password string                                    Password or pass phrase for encryption. (obscured)
+      --crypt-password2 string                                   Password or pass phrase for salt. Optional but recommended. (obscured)
       --crypt-remote string                                      Remote to encrypt/decrypt.
+      --crypt-server-side-across-configs                         Allow server side operations (eg copy) to work across different crypt configs.
       --crypt-show-mapping                                       For all files listed show how the names encrypt.
       --drive-acknowledge-abuse                                  Set to allow files which return cannotDownloadAbusiveFile to be downloaded.
       --drive-allow-import-name-change                           Allow the filetype to change when uploading Google docs (e.g. file.doc to file.docx). This will confuse sync and reupload every time.
-      --drive-alternate-export                                   Use alternate export URLs for google documents export.,
       --drive-auth-owner-only                                    Only consider files owned by the authenticated user.
+      --drive-auth-url string                                    Auth server URL.
       --drive-chunk-size SizeSuffix                              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
-      --drive-client-id string                                   Google Application Client Id
-      --drive-client-secret string                               Google Application Client Secret
+      --drive-client-id string                                   OAuth Client Id
+      --drive-client-secret string                               OAuth Client Secret
       --drive-disable-http2                                      Disable drive using http2 (default true)
       --drive-encoding MultiEncoder                              This sets the encoding for the backend. (default InvalidUtf8)
       --drive-export-formats string                              Comma separated list of preferred formats for downloading Google docs. (default "docx,xlsx,pptx,svg")
@@ -256,65 +268,81 @@ and may be set in the config file.
       --drive-skip-checksum-gphotos                              Skip MD5 checksum on Google photos and videos only.
       --drive-skip-gdocs                                         Skip google documents in all listings.
       --drive-skip-shortcuts                                     If set skip shortcut files
+      --drive-starred-only                                       Only show files that are starred.
       --drive-stop-on-upload-limit                               Make upload limit errors be fatal
       --drive-team-drive string                                  ID of the Team Drive
+      --drive-token string                                       OAuth Access Token as a JSON blob.
+      --drive-token-url string                                   Token server url.
       --drive-trashed-only                                       Only show files that are in the trash.
       --drive-upload-cutoff SizeSuffix                           Cutoff for switching to chunked upload (default 8M)
       --drive-use-created-date                                   Use file created date instead of modified date.,
       --drive-use-shared-date                                    Use date file was shared instead of modified date.
       --drive-use-trash                                          Send files to the trash instead of deleting permanently. (default true)
       --drive-v2-download-min-size SizeSuffix                    If Object's are greater, use drive v2 API to download. (default off)
+      --dropbox-auth-url string                                  Auth server URL.
       --dropbox-chunk-size SizeSuffix                            Upload chunk size. (< 150M). (default 48M)
-      --dropbox-client-id string                                 Dropbox App Client Id
-      --dropbox-client-secret string                             Dropbox App Client Secret
+      --dropbox-client-id string                                 OAuth Client Id
+      --dropbox-client-secret string                             OAuth Client Secret
       --dropbox-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot)
       --dropbox-impersonate string                               Impersonate this user when using a business account.
+      --dropbox-token string                                     OAuth Access Token as a JSON blob.
+      --dropbox-token-url string                                 Token server url.
       --fichier-api-key string                                   Your API Key, get it from https://1fichier.com/console/params.pl
       --fichier-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
       --fichier-shared-folder string                             If you want to download a shared folder, add this parameter
       --ftp-concurrency int                                      Maximum number of FTP simultaneous connections, 0 for unlimited
       --ftp-disable-epsv                                         Disable using EPSV even if server advertises support
       --ftp-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,Del,Ctl,RightSpace,Dot)
+      --ftp-explicit-tls                                         Use FTP over TLS (Explicit)
       --ftp-host string                                          FTP host to connect to
       --ftp-no-check-certificate                                 Do not verify the TLS certificate of the server
-      --ftp-pass string                                          FTP password
+      --ftp-pass string                                          FTP password (obscured)
       --ftp-port string                                          FTP port, leave blank to use default (21)
-      --ftp-tls                                                  Use FTP over TLS (Implicit)
+      --ftp-tls                                                  Use FTPS over TLS (Implicit)
       --ftp-user string                                          FTP username, leave blank for current username, $USER
+      --gcs-anonymous                                            Access public buckets and objects without credentials
+      --gcs-auth-url string                                      Auth server URL.
       --gcs-bucket-acl string                                    Access Control List for new buckets.
       --gcs-bucket-policy-only                                   Access checks should use bucket-level IAM policies.
-      --gcs-client-id string                                     Google Application Client Id
-      --gcs-client-secret string                                 Google Application Client Secret
+      --gcs-client-id string                                     OAuth Client Id
+      --gcs-client-secret string                                 OAuth Client Secret
       --gcs-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,CrLf,InvalidUtf8,Dot)
       --gcs-location string                                      Location for the newly created buckets.
       --gcs-object-acl string                                    Access Control List for new objects.
       --gcs-project-number string                                Project number.
       --gcs-service-account-file string                          Service Account Credentials JSON file path
       --gcs-storage-class string                                 The storage class to use when storing objects in Google Cloud Storage.
-      --gphotos-client-id string                                 Google Application Client Id
-      --gphotos-client-secret string                             Google Application Client Secret
+      --gcs-token string                                         OAuth Access Token as a JSON blob.
+      --gcs-token-url string                                     Token server url.
+      --gphotos-auth-url string                                  Auth server URL.
+      --gphotos-client-id string                                 OAuth Client Id
+      --gphotos-client-secret string                             OAuth Client Secret
       --gphotos-read-only                                        Set to make the Google Photos backend read only.
       --gphotos-read-size                                        Set to read the size of media items.
       --gphotos-start-year int                                   Year limits the photos to be downloaded to those which are uploaded after the given year (default 2000)
+      --gphotos-token string                                     OAuth Access Token as a JSON blob.
+      --gphotos-token-url string                                 Token server url.
       --http-headers CommaSepList                                Set HTTP headers for all transactions
       --http-no-head                                             Don't use HEAD requests to find file sizes in dir listing
       --http-no-slash                                            Set this if the site doesn't end directories with /
       --http-url string                                          URL of http host to connect to
+      --hubic-auth-url string                                    Auth server URL.
       --hubic-chunk-size SizeSuffix                              Above this size files will be chunked into a _segments container. (default 5G)
-      --hubic-client-id string                                   Hubic Client Id
-      --hubic-client-secret string                               Hubic Client Secret
+      --hubic-client-id string                                   OAuth Client Id
+      --hubic-client-secret string                               OAuth Client Secret
       --hubic-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,InvalidUtf8)
       --hubic-no-chunk                                           Don't chunk files during streaming upload.
+      --hubic-token string                                       OAuth Access Token as a JSON blob.
+      --hubic-token-url string                                   Token server url.
       --jottacloud-encoding MultiEncoder                         This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
       --jottacloud-hard-delete                                   Delete files permanently rather than putting them into the trash.
       --jottacloud-md5-memory-limit SizeSuffix                   Files bigger than this will be cached on disk to calculate the MD5 if required. (default 10M)
       --jottacloud-trashed-only                                  Only show files that are in the trash.
-      --jottacloud-unlink                                        Remove existing public link to file/folder with link command rather than creating.
       --jottacloud-upload-resume-limit SizeSuffix                Files bigger than this can be resumed if the upload fail's. (default 10M)
       --koofr-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --koofr-endpoint string                                    The Koofr API endpoint to use (default "https://app.koofr.net")
       --koofr-mountid string                                     Mount ID of the mount to use. If omitted, the primary mount is used.
-      --koofr-password string                                    Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)
+      --koofr-password string                                    Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password) (obscured)
       --koofr-setmtime                                           Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend. (default true)
       --koofr-user string                                        Your Koofr user name
   -l, --links                                                    Translate symlinks to/from regular files with a '.rclonelink' extension
@@ -322,12 +350,13 @@ and may be set in the config file.
       --local-case-sensitive                                     Force the filesystem to report itself as case sensitive.
       --local-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,Dot)
       --local-no-check-updated                                   Don't check to see if the files change during upload
+      --local-no-set-modtime                                     Disable setting modtime
       --local-no-sparse                                          Disable sparse files for multi-thread downloads
       --local-no-unicode-normalization                           Don't apply unicode normalization to paths and filenames (Deprecated)
       --local-nounc string                                       Disable UNC (long path names) conversion on Windows
       --mailru-check-hash                                        What should copy do if file checksum is mismatched or invalid (default true)
       --mailru-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,InvalidUtf8,Dot)
-      --mailru-pass string                                       Password
+      --mailru-pass string                                       Password (obscured)
       --mailru-speedup-enable                                    Skip full upload if there is another file with same data hash. (default true)
       --mailru-speedup-file-patterns string                      Comma separated list of file name patterns eligible for speedup (put by hash). (default "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf")
       --mailru-speedup-max-disk SizeSuffix                       This option allows you to disable speedup (put by hash) for large files (default 3G)
@@ -336,25 +365,33 @@ and may be set in the config file.
       --mega-debug                                               Output more debug from Mega.
       --mega-encoding MultiEncoder                               This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
       --mega-hard-delete                                         Delete files permanently rather than putting them into the trash.
-      --mega-pass string                                         Password.
+      --mega-pass string                                         Password. (obscured)
       --mega-user string                                         User name
   -x, --one-file-system                                          Don't cross filesystem boundaries (unix/macOS only).
+      --onedrive-auth-url string                                 Auth server URL.
       --onedrive-chunk-size SizeSuffix                           Chunk size to upload files with - must be multiple of 320k (327,680 bytes). (default 10M)
-      --onedrive-client-id string                                Microsoft App Client Id
-      --onedrive-client-secret string                            Microsoft App Client Secret
+      --onedrive-client-id string                                OAuth Client Id
+      --onedrive-client-secret string                            OAuth Client Secret
       --onedrive-drive-id string                                 The ID of the drive to use
       --onedrive-drive-type string                               The type of the drive ( personal | business | documentLibrary )
       --onedrive-encoding MultiEncoder                           This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --onedrive-expose-onenote-files                            Set to make OneNote files show up in directory listings.
+      --onedrive-no-versions                                     Remove all versions on modifying operations
       --onedrive-server-side-across-configs                      Allow server side operations (eg copy) to work across different onedrive configs.
+      --onedrive-token string                                    OAuth Access Token as a JSON blob.
+      --onedrive-token-url string                                Token server url.
       --opendrive-chunk-size SizeSuffix                          Files will be uploaded in chunks this size. (default 10M)
       --opendrive-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
-      --opendrive-password string                                Password.
+      --opendrive-password string                                Password. (obscured)
       --opendrive-username string                                Username
-      --pcloud-client-id string                                  Pcloud App Client Id
-      --pcloud-client-secret string                              Pcloud App Client Secret
+      --pcloud-auth-url string                                   Auth server URL.
+      --pcloud-client-id string                                  OAuth Client Id
+      --pcloud-client-secret string                              OAuth Client Secret
       --pcloud-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --pcloud-hostname string                                   Hostname to connect to. (default "api.pcloud.com")
       --pcloud-root-folder-id string                             Fill in for rclone to use a non root folder as its starting point. (default "d0")
+      --pcloud-token string                                      OAuth Access Token as a JSON blob.
+      --pcloud-token-url string                                  Token server url.
       --premiumizeme-encoding MultiEncoder                       This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --putio-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --qingstor-access-key-id string                            QingStor Access Key ID
@@ -371,7 +408,7 @@ and may be set in the config file.
       --s3-acl string                                            Canned ACL used when creating buckets and storing or copying objects.
       --s3-bucket-acl string                                     Canned ACL used when creating buckets.
       --s3-chunk-size SizeSuffix                                 Chunk size to use for uploading. (default 5M)
-      --s3-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 5G)
+      --s3-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 4.656G)
       --s3-disable-checksum                                      Don't store MD5 checksum with object metadata
       --s3-encoding MultiEncoder                                 This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
       --s3-endpoint string                                       Endpoint for S3 API.
@@ -380,13 +417,17 @@ and may be set in the config file.
       --s3-leave-parts-on-error                                  If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery.
       --s3-list-chunk int                                        Size of listing chunk (response list for each ListObject S3 request). (default 1000)
       --s3-location-constraint string                            Location constraint - must be set to match the Region.
+      --s3-max-upload-parts int                                  Maximum number of parts in a multipart upload. (default 10000)
       --s3-memory-pool-flush-time Duration                       How often internal memory buffer pools will be flushed. (default 1m0s)
       --s3-memory-pool-use-mmap                                  Whether to use mmap buffers in internal memory pool.
+      --s3-no-check-bucket                                       If set don't attempt to check the bucket exists or create it
+      --s3-profile string                                        Profile to use in the shared credentials file
       --s3-provider string                                       Choose your S3 provider.
       --s3-region string                                         Region to connect to.
       --s3-secret-access-key string                              AWS Secret Access Key (password)
       --s3-server-side-encryption string                         The server-side encryption algorithm used when storing this object in S3.
       --s3-session-token string                                  An AWS session token
+      --s3-shared-credentials-file string                        Path to the shared credentials file
       --s3-sse-customer-algorithm string                         If using SSE-C, the server-side encryption algorithm used when storing this object in S3.
       --s3-sse-customer-key string                               If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data.
       --s3-sse-customer-key-md5 string                           If using SSE-C you must provide the secret encryption key MD5 checksum.
@@ -400,24 +441,26 @@ and may be set in the config file.
       --seafile-create-library                                   Should rclone create a library if it doesn't exist
       --seafile-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
       --seafile-library string                                   Name of the library. Leave blank to access all non-encrypted libraries.
-      --seafile-library-key string                               Library password (for encrypted libraries only). Leave blank if you pass it through the command line.
-      --seafile-pass string                                      Password
+      --seafile-library-key string                               Library password (for encrypted libraries only). Leave blank if you pass it through the command line. (obscured)
+      --seafile-pass string                                      Password (obscured)
       --seafile-url string                                       URL of seafile host to connect to
       --seafile-user string                                      User name (usually email address)
       --sftp-ask-password                                        Allow asking for SFTP password when needed.
       --sftp-disable-hashcheck                                   Disable the execution of SSH commands to determine if remote file hashing is available.
       --sftp-host string                                         SSH host to connect to
       --sftp-key-file string                                     Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.
-      --sftp-key-file-pass string                                The passphrase to decrypt the PEM-encoded private key file.
+      --sftp-key-file-pass string                                The passphrase to decrypt the PEM-encoded private key file. (obscured)
       --sftp-key-pem string                                      Raw PEM-encoded private key, If specified, will override key_file parameter.
       --sftp-key-use-agent                                       When set forces the usage of the ssh-agent.
       --sftp-md5sum-command string                               The command used to read md5 hashes. Leave blank for autodetect.
-      --sftp-pass string                                         SSH password, leave blank to use ssh-agent.
+      --sftp-pass string                                         SSH password, leave blank to use ssh-agent. (obscured)
       --sftp-path-override string                                Override path used by SSH connection.
       --sftp-port string                                         SSH port, leave blank to use default (22)
+      --sftp-server-command string                               Specifies the path or command to run a sftp server on the remote host.
       --sftp-set-modtime                                         Set the modified time on the remote if set. (default true)
       --sftp-sha1sum-command string                              The command used to read sha1 hashes. Leave blank for autodetect.
       --sftp-skip-links                                          Set to skip any symlinks and any other non regular files.
+      --sftp-subsystem string                                    Specifies the SSH2 subsystem on the remote host. (default "sftp")
       --sftp-use-insecure-cipher                                 Enable the use of insecure ciphers and key exchange methods.
       --sftp-user string                                         SSH username, leave blank for current username, ncw
       --sharefile-chunk-size SizeSuffix                          Upload chunk size. Must a power of 2 >= 256k. (default 64M)
@@ -470,12 +513,14 @@ and may be set in the config file.
       --union-upstreams string                                   List of space separated upstreams.
       --webdav-bearer-token string                               Bearer token instead of user/pass (eg a Macaroon)
       --webdav-bearer-token-command string                       Command to run to get a bearer token
-      --webdav-pass string                                       Password.
+      --webdav-pass string                                       Password. (obscured)
       --webdav-url string                                        URL of http host to connect to
       --webdav-user string                                       User name
       --webdav-vendor string                                     Name of the Webdav site/service/software you are using
-      --yandex-client-id string                                  Yandex Client Id
-      --yandex-client-secret string                              Yandex Client Secret
+      --yandex-auth-url string                                   Auth server URL.
+      --yandex-client-id string                                  OAuth Client Id
+      --yandex-client-secret string                              OAuth Client Secret
       --yandex-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,Del,Ctl,InvalidUtf8,Dot)
-      --yandex-unlink                                            Remove existing public link to file/folder with link command rather than creating.
+      --yandex-token string                                      OAuth Access Token as a JSON blob.
+      --yandex-token-url string                                  Token server url.
 ```

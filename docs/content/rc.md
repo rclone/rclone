@@ -504,6 +504,41 @@ except only one bandwidth may be specified.
 In either case "rate" is returned as a human readable string, and
 "bytesPerSecond" is returned as a number.
 
+### core/command: Run a rclone terminal command over rc. {#core-command}
+
+This takes the following parameters
+
+- command - a string with the command name
+- arg - a list of arguments for the backend command
+- opt - a map of string to string of options
+
+Returns
+
+- result - result from the backend command
+- error	 - set if rclone exits with an error code
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT". "STREAM_ONLY_STDERR")
+
+For example
+
+    rclone rc core/command command=ls -a mydrive:/ -o max-depth=1
+	rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
+
+Returns
+
+```
+{
+	"error": false,
+	"result": "<Raw command line output>"
+}
+
+OR 
+{
+	"error": true,
+	"result": "<Raw command line output>"
+}
+
+**Authentication is required for this call.**
+
 ### core/gc: Runs a garbage collection. {#core-gc}
 
 This tells the go runtime to do a garbage collection run.  It isn't
@@ -582,6 +617,7 @@ Returns the following values:
 	"transfers": number of transferred files,
 	"deletes" : number of deleted files,
 	"renames" : number of renamed files,
+	"transferTime" : total time spent on running jobs,
 	"elapsedTime": time in seconds since the start of the process,
 	"lastError": last occurred error,
 	"transferring": an array of currently active file transfers:
@@ -591,8 +627,8 @@ Returns the following values:
 				"eta": estimated time in seconds until file transfer completion
 				"name": name of the file,
 				"percentage": progress of the file transfer in percent,
-				"speed": speed in bytes/sec,
-				"speedAvg": speed in bytes/sec as an exponentially weighted moving average,
+				"speed": average speed over the whole transfer in bytes/sec,
+				"speedAvg": current speed in bytes/sec as an exponentially weighted moving average,
 				"size": size of the file in bytes
 			}
 		],
@@ -657,10 +693,10 @@ Returns the following values:
 
 This shows the current version of go and the go runtime
 
-- version - rclone version, eg "v1.44"
-- decomposed - version number as [major, minor, patch, subpatch]
-    - note patch and subpatch will be 999 for a git compiled version
+- version - rclone version, eg "v1.53.0"
+- decomposed - version number as [major, minor, patch]
 - isGit - boolean - true if this was compiled from the git version
+- isBeta - boolean - true if this is a beta version
 - os - OS in use as according to Go
 - arch - cpu architecture in use according to Go
 - goVersion - version of Go runtime in use
@@ -736,6 +772,20 @@ Parameters
 
 - jobid - id of the job (integer)
 
+### mount/listmounts: Show current mount points {#mount-listmounts}
+
+This shows currently mounted points, which can be used for performing an unmount
+
+This takes no parameters and returns
+
+- mountPoints: list of current mount points
+
+Eg
+
+    rclone rc mount/listmounts
+
+**Authentication is required for this call.**
+
 ### mount/mount: Create a new mount point {#mount-mount}
 
 rclone allows Linux, FreeBSD, macOS and Windows to mount any of
@@ -748,11 +798,19 @@ This takes the following parameters
 - fs - a remote path to be mounted (required)
 - mountPoint: valid path on the local machine (required)
 - mountType: One of the values (mount, cmount, mount2) specifies the mount implementation to use
+- mountOpt: a JSON object with Mount options in.
+- vfsOpt: a JSON object with VFS options in.
 
 Eg
 
     rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
     rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
+    rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
+
+The vfsOpt are as described in options/get and can be seen in the the
+"vfs" section when running and the mountOpt can be seen in the "mount" section.
+
+    rclone rc options/get
 
 **Authentication is required for this call.**
 
@@ -773,7 +831,7 @@ Eg
 
 **Authentication is required for this call.**
 
-### mount/unmount: Unmount all active mounts {#mount-unmount}
+### mount/unmount: Unmount selected active mount {#mount-unmount}
 
 rclone allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
@@ -786,6 +844,18 @@ This takes the following parameters
 Eg
 
     rclone rc mount/unmount mountPoint=/home/<user>/mountPoint
+
+**Authentication is required for this call.**
+
+### mount/unmountall: Show current mount points {#mount-unmountall}
+
+This shows currently mounted points, which can be used for performing an unmount
+
+This takes no parameters and returns error if unmount does not succeed.
+
+Eg
+
+    rclone rc mount/unmountall
 
 **Authentication is required for this call.**
 
@@ -962,6 +1032,8 @@ This takes the following parameters
 
 - fs - a remote name string eg "drive:"
 - remote - a path within that remote eg "dir"
+- unlink - boolean - if set removes the link rather than adding it (optional)
+- expire - string - the expiry time of the link eg "1d" (optional)
 
 Returns
 
@@ -1020,6 +1092,17 @@ See the [size command](/commands/rclone_size/) command for more information on t
 
 **Authentication is required for this call.**
 
+### operations/uploadfile: Upload file using multiform/form-data {#operations-uploadfile}
+
+This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+- each part in body represents a file to be uploaded
+See the [uploadfile command](/commands/rclone_uploadfile/) command for more information on the above.
+
+**Authentication is required for this call.**
+
 ### options/blocks: List all the option blocks {#options-blocks}
 
 Returns
@@ -1059,6 +1142,97 @@ And this sets INFO level logs (-v)
 And this sets NOTICE level logs (normal without -v)
 
     rclone rc options/set --json '{"main": {"LogLevel": 6}}'
+
+### pluginsctl/addPlugin: Add a plugin using url {#pluginsctl-addPlugin}
+
+used for adding a plugin to the webgui
+
+This takes the following parameters
+
+- url: http url of the github repo where the plugin is hosted (http://github.com/rclone/rclone-webui-react)
+
+Eg
+
+   rclone rc pluginsctl/addPlugin
+
+**Authentication is required for this call.**
+
+### pluginsctl/getPluginsForType: Get plugins with type criteria {#pluginsctl-getPluginsForType}
+
+This shows all possible plugins by a mime type
+
+This takes the following parameters
+
+- type: supported mime type by a loaded plugin eg (video/mp4, audio/mp3)
+- pluginType: filter plugins based on their type eg (DASHBOARD, FILE_HANDLER, TERMINAL) 
+
+and returns
+
+- loadedPlugins: list of current production plugins
+- testPlugins: list of temporarily loaded development plugins, usually running on a different server.
+
+Eg
+
+   rclone rc pluginsctl/getPluginsForType type=video/mp4
+
+**Authentication is required for this call.**
+
+### pluginsctl/listPlugins: Get the list of currently loaded plugins {#pluginsctl-listPlugins}
+
+This allows you to get the currently enabled plugins and their details.
+
+This takes no parameters and returns
+
+- loadedPlugins: list of current production plugins
+- testPlugins: list of temporarily loaded development plugins, usually running on a different server.
+
+Eg
+
+   rclone rc pluginsctl/listPlugins
+
+**Authentication is required for this call.**
+
+### pluginsctl/listTestPlugins: Show currently loaded test plugins {#pluginsctl-listTestPlugins}
+
+allows listing of test plugins with the rclone.test set to true in package.json of the plugin
+
+This takes no parameters and returns
+
+- loadedTestPlugins: list of currently available test plugins
+
+Eg
+
+    rclone rc pluginsctl/listTestPlugins
+
+**Authentication is required for this call.**
+
+### pluginsctl/removePlugin: Remove a loaded plugin {#pluginsctl-removePlugin}
+
+This allows you to remove a plugin using it's name
+
+This takes parameters
+
+- name: name of the plugin in the format <author>/<plugin_name>
+
+Eg
+
+   rclone rc pluginsctl/removePlugin name=rclone/video-plugin
+
+**Authentication is required for this call.**
+
+### pluginsctl/removeTestPlugin: Remove  a test plugin {#pluginsctl-removeTestPlugin}
+
+This allows you to remove a plugin using it's name
+
+This takes the following parameters
+
+- name: name of the plugin in the format <author>/<plugin_name>
+
+Eg
+
+    rclone rc pluginsctl/removeTestPlugin name=rclone/rclone-webui-react
+
+**Authentication is required for this call.**
 
 ### rc/error: This returns an error {#rc-error}
 
@@ -1136,6 +1310,19 @@ parameter key starting with file will forget that file and any
 starting with dir will forget that dir, eg
 
     rclone rc vfs/forget file=hello file2=goodbye dir=home/junk
+ 
+This command takes an "fs" parameter. If this parameter is not
+supplied and if there is only one VFS in use then that VFS will be
+used. If there is more than one VFS in use then the "fs" parameter
+must be supplied.
+
+### vfs/list: List active VFSes. {#vfs-list}
+
+This lists the active VFSes.
+
+It returns a list under the key "vfses" where the values are the VFS
+names that could be passed to the other VFS commands in the "fs"
+parameter.
 
 ### vfs/poll-interval: Get the status or update the value of the poll-interval option. {#vfs-poll-interval}
 
@@ -1158,6 +1345,11 @@ not reached.
 If poll-interval is updated or disabled temporarily, some changes
 might not get picked up by the polling function, depending on the
 used remote.
+ 
+This command takes an "fs" parameter. If this parameter is not
+supplied and if there is only one VFS in use then that VFS will be
+used. If there is more than one VFS in use then the "fs" parameter
+must be supplied.
 
 ### vfs/refresh: Refresh the directory cache. {#vfs-refresh}
 
@@ -1175,6 +1367,11 @@ starting with dir will refresh that directory, eg
 
 If the parameter recursive=true is given the whole directory tree
 will get refreshed. This refresh will use --fast-list if enabled.
+ 
+This command takes an "fs" parameter. If this parameter is not
+supplied and if there is only one VFS in use then that VFS will be
+used. If there is more than one VFS in use then the "fs" parameter
+must be supplied.
 
 {{< rem autogenerated stop >}}
 

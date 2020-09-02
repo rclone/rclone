@@ -264,7 +264,7 @@ Here are the standard options specific to google cloud storage (Google Cloud Sto
 
 #### --gcs-client-id
 
-Google Application Client Id
+OAuth Client Id
 Leave blank normally.
 
 - Config:      client_id
@@ -274,7 +274,7 @@ Leave blank normally.
 
 #### --gcs-client-secret
 
-Google Application Client Secret
+OAuth Client Secret
 Leave blank normally.
 
 - Config:      client_secret
@@ -298,6 +298,9 @@ Service Account Credentials JSON file path
 Leave blank normally.
 Needed only if you want use SA instead of interactive login.
 
+Leading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.
+
+
 - Config:      service_account_file
 - Env Var:     RCLONE_GCS_SERVICE_ACCOUNT_FILE
 - Type:        string
@@ -313,6 +316,16 @@ Needed only if you want use SA instead of interactive login.
 - Env Var:     RCLONE_GCS_SERVICE_ACCOUNT_CREDENTIALS
 - Type:        string
 - Default:     ""
+
+#### --gcs-anonymous
+
+Access public buckets and objects without credentials
+Set to 'true' if you just want to download files and don't configure credentials.
+
+- Config:      anonymous
+- Env Var:     RCLONE_GCS_ANONYMOUS
+- Type:        bool
+- Default:     false
 
 #### --gcs-object-acl
 
@@ -454,6 +467,35 @@ The storage class to use when storing objects in Google Cloud Storage.
 ### Advanced Options
 
 Here are the advanced options specific to google cloud storage (Google Cloud Storage (this is not Google Drive)).
+
+#### --gcs-token
+
+OAuth Access Token as a JSON blob.
+
+- Config:      token
+- Env Var:     RCLONE_GCS_TOKEN
+- Type:        string
+- Default:     ""
+
+#### --gcs-auth-url
+
+Auth server URL.
+Leave blank to use the provider defaults.
+
+- Config:      auth_url
+- Env Var:     RCLONE_GCS_AUTH_URL
+- Type:        string
+- Default:     ""
+
+#### --gcs-token-url
+
+Token server url.
+Leave blank to use the provider defaults.
+
+- Config:      token_url
+- Env Var:     RCLONE_GCS_TOKEN_URL
+- Type:        string
+- Default:     ""
 
 #### --gcs-encoding
 

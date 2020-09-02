@@ -328,6 +328,8 @@ NB If filename_encryption is "off" then this option will do nothing.
 
 Password or pass phrase for encryption.
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      password
 - Env Var:     RCLONE_CRYPT_PASSWORD
 - Type:        string
@@ -338,6 +340,8 @@ Password or pass phrase for encryption.
 Password or pass phrase for salt. Optional but recommended.
 Should be different to the previous password.
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      password2
 - Env Var:     RCLONE_CRYPT_PASSWORD2
 - Type:        string
@@ -346,6 +350,24 @@ Should be different to the previous password.
 ### Advanced Options
 
 Here are the advanced options specific to crypt (Encrypt/Decrypt a remote).
+
+#### --crypt-server-side-across-configs
+
+Allow server side operations (eg copy) to work across different crypt configs.
+
+Normally this option is not what you want, but if you have two crypts
+pointing to the same backend you can use it.
+
+This can be used, for example, to change file name encryption type
+without re-uploading all the data. Just make two crypt backends
+pointing to two different directories with the single changed
+parameter and use rclone move to move the files between the crypt
+remotes.
+
+- Config:      server_side_across_configs
+- Env Var:     RCLONE_CRYPT_SERVER_SIDE_ACROSS_CONFIGS
+- Type:        bool
+- Default:     false
 
 #### --crypt-show-mapping
 
