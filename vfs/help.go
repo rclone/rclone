@@ -19,7 +19,7 @@ about files and directories (but not the data) in memory.
 
 ### VFS Directory Cache
 
-Using the ` + "`--dir-cache-time`" + ` flag, you can control long a
+Using the ` + "`--dir-cache-time`" + ` flag, you can control how long a
 directory should be considered up to date and not refreshed from the
 backend. Changes made through the mount will appear immediately or
 invalidate the cache.
@@ -27,11 +27,11 @@ invalidate the cache.
     --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
     --poll-interval duration    Time to wait between polling for changes.
 
-However, changes made directoy on the cloud storage by the web
+However, changes made directly on the cloud storage by the web
 interface or a different copy of rclone will only be picked up once
 the directory cache expires if the backend configured does not support
 polling for changes. If the backend supports polling, changes will be
-picked up on within the polling interval.
+picked up within the polling interval.
 
 You can send a ` + "`SIGHUP`" + ` signal to rclone for it to flush all
 directory caches, regardless of how old they are.  Assuming only one
@@ -106,7 +106,7 @@ evicted from the cache.
 
 #### --vfs-cache-mode off
 
-In this mode the cache will read directly from the remote and write
+In this mode (the default) the cache will read directly from the remote and write
 directly to the remote without caching anything on disk.
 
 This will mean some operations are not possible
@@ -122,7 +122,7 @@ This will mean some operations are not possible
 #### --vfs-cache-mode minimal
 
 This is very similar to "off" except that files opened for read AND
-write will be buffered to disks.  This means that files opened for
+write will be buffered to disk.  This means that files opened for
 write will be a lot more compatible, but uses the minimal disk space.
 
 These operations are not possible
@@ -196,7 +196,7 @@ unless it is set to "off" in which case there will be no limit.
 Sometimes rclone is delivered reads or writes out of order. Rather
 than seeking rclone will wait a short time for the in sequence read or
 write to come in. These flags only come into effect when not using an
-on disk cach file.
+on disk cache file.
 
     --vfs-read-wait duration   Time to wait for in-sequence read before seeking. (default 20ms)
     --vfs-write-wait duration  Time to wait for in-sequence write before giving error. (default 1s)
@@ -232,7 +232,7 @@ Note that case sensitivity of the operating system running rclone (the target)
 may differ from case sensitivity of a file system mounted by rclone (the source).
 The flag controls whether "fixup" is performed to satisfy the target.
 
-If the flag is not provided on command line, then its default value depends
+If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
 `
