@@ -112,7 +112,7 @@ Here are the standard options specific to hubic (Hubic).
 
 #### --hubic-client-id
 
-Hubic Client Id
+OAuth Client Id
 Leave blank normally.
 
 - Config:      client_id
@@ -122,7 +122,7 @@ Leave blank normally.
 
 #### --hubic-client-secret
 
-Hubic Client Secret
+OAuth Client Secret
 Leave blank normally.
 
 - Config:      client_secret
@@ -133,6 +133,35 @@ Leave blank normally.
 ### Advanced Options
 
 Here are the advanced options specific to hubic (Hubic).
+
+#### --hubic-token
+
+OAuth Access Token as a JSON blob.
+
+- Config:      token
+- Env Var:     RCLONE_HUBIC_TOKEN
+- Type:        string
+- Default:     ""
+
+#### --hubic-auth-url
+
+Auth server URL.
+Leave blank to use the provider defaults.
+
+- Config:      auth_url
+- Env Var:     RCLONE_HUBIC_AUTH_URL
+- Type:        string
+- Default:     ""
+
+#### --hubic-token-url
+
+Token server url.
+Leave blank to use the provider defaults.
+
+- Config:      token_url
+- Env Var:     RCLONE_HUBIC_TOKEN_URL
+- Type:        string
+- Default:     ""
 
 #### --hubic-chunk-size
 

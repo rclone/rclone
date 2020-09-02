@@ -152,6 +152,8 @@ User name
 
 Password.
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      pass
 - Env Var:     RCLONE_WEBDAV_PASS
 - Type:        string

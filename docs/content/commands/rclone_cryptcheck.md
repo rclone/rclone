@@ -35,9 +35,26 @@ the files in remote:path.
 
 After it has run it will log the status of the encryptedremote:.
 
-If you supply the --one-way flag, it will only check that files in source
-match the files in destination, not the other way around. Meaning extra files in
-destination that are not in the source will not trigger an error.
+If you supply the `--one-way` flag, it will only check that files in
+the source match the files in the destination, not the other way
+around. This means that extra files in the destination that are not in
+the source will not be detected.
+
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--src-only`
+and `--error` flags write paths, one per line, to the file name (or
+stdout if it is `-`) supplied. What they write is described in the
+help below. For example `--differ` will write all paths which are
+present on both the source and destination but different.
+
+The `--combined` flag will write a file (or stdout) which contains all
+file paths with a symbol and then a space and then the path to tell
+you what happened to it. These are reminiscent of diff files.
+
+- `= path` means path was found in source and destination and was identical
+- `- path` means path was missing on the source, so only in the destination
+- `+ path` means path was missing on the destination, so only in the source
+- `* path` means path was present in source and destination but different.
+- `! path` means there was an error reading or hashing the source or dest.
 
 
 ```
@@ -47,8 +64,14 @@ rclone cryptcheck remote:path cryptedremote:path [flags]
 ## Options
 
 ```
-  -h, --help      help for cryptcheck
-      --one-way   Check one way only, source files must exist on destination
+      --combined string         Make a combined report of changes to this file
+      --differ string           Report all non-matching files to this file
+      --error string            Report all files with errors (hashing or reading) to this file
+  -h, --help                    help for cryptcheck
+      --match string            Report all matching files to this file
+      --missing-on-dst string   Report all files missing from the destination to this file
+      --missing-on-src string   Report all files missing from the source to this file
+      --one-way                 Check one way only, source files must exist on remote
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

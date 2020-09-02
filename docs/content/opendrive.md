@@ -116,6 +116,8 @@ Username
 
 Password.
 
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
 - Config:      password
 - Env Var:     RCLONE_OPENDRIVE_PASSWORD
 - Type:        string

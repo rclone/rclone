@@ -132,7 +132,7 @@ Here are the standard options specific to yandex (Yandex Disk).
 
 #### --yandex-client-id
 
-Yandex Client Id
+OAuth Client Id
 Leave blank normally.
 
 - Config:      client_id
@@ -142,7 +142,7 @@ Leave blank normally.
 
 #### --yandex-client-secret
 
-Yandex Client Secret
+OAuth Client Secret
 Leave blank normally.
 
 - Config:      client_secret
@@ -154,15 +154,34 @@ Leave blank normally.
 
 Here are the advanced options specific to yandex (Yandex Disk).
 
-#### --yandex-unlink
+#### --yandex-token
 
-Remove existing public link to file/folder with link command rather than creating.
-Default is false, meaning link command will create or retrieve public link.
+OAuth Access Token as a JSON blob.
 
-- Config:      unlink
-- Env Var:     RCLONE_YANDEX_UNLINK
-- Type:        bool
-- Default:     false
+- Config:      token
+- Env Var:     RCLONE_YANDEX_TOKEN
+- Type:        string
+- Default:     ""
+
+#### --yandex-auth-url
+
+Auth server URL.
+Leave blank to use the provider defaults.
+
+- Config:      auth_url
+- Env Var:     RCLONE_YANDEX_AUTH_URL
+- Type:        string
+- Default:     ""
+
+#### --yandex-token-url
+
+Token server url.
+Leave blank to use the provider defaults.
+
+- Config:      token_url
+- Env Var:     RCLONE_YANDEX_TOKEN_URL
+- Type:        string
+- Default:     ""
 
 #### --yandex-encoding
 

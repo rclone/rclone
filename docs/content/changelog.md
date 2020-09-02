@@ -5,6 +5,183 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.53.0 - 2020-09-02
+
+[See commits](https://github.com/rclone/rclone/compare/v1.52.0...v1.53.0)
+
+* New Features
+    * The [VFS layer](/commands/rclone_mount/#vfs-virtual-file-system) was heavily reworked for this release - see below for more details
+    * Interactive mode [-i/--interactive](/docs/#interactive) for destructive operations (fishbullet)
+    * Add [--bwlimit-file](/docs/#bwlimit-file-bandwidth-spec) flag to limit speeds of individual file transfers (Nick Craig-Wood)
+    * Transfers are sorted by start time in the stats and progress output (Max Sum)
+    * Make sure backends expand `~` and environment vars in file names they use (Nick Craig-Wood)
+    * Add [--refresh-times](/docs/#refresh-times) flag to set modtimes on hashless backends (Nick Craig-Wood)
+    * build
+        * Remove vendor directory in favour of Go modules (Nick Craig-Wood)
+        * Build with go1.15.x by default (Nick Craig-Wood)
+        * Drop macOS 386 build as it is no longer supported by go1.15 (Nick Craig-Wood)
+        * Add ARMv7 to the supported builds (Nick Craig-Wood)
+        * Enable `rclone cmount` on macOS (Nick Craig-Wood)
+        * Make rclone build with gccgo (Nick Craig-Wood)
+        * Make rclone build with wasm (Nick Craig-Wood)
+        * Change beta numbering to be semver compatible (Nick Craig-Wood)
+        * Add file properties and icon to Windows executable (albertony)
+        * Add experimental interface for integrating rclone into browsers (Nick Craig-Wood)
+    * lib: Add file name compression (Klaus Post)
+    * rc
+        * Allow installation and use of plugins and test plugins with rclone-webui (Chaitanya Bankanhal)
+        * Add reverse proxy pluginsHandler for serving plugins (Chaitanya Bankanhal)
+        * Add `mount/listmounts` option for listing current mounts (Chaitanya Bankanhal)
+        * Add `operations/uploadfile` to upload a file through rc using encoding multipart/form-data (Chaitanya Bankanhal)
+        * Add `core/copmmand` to execute rclone terminal commands. (Chaitanya Bankanhal)
+    * `rclone check`
+        * Add reporting of filenames for same/missing/changed (Nick Craig-Wood)
+        * Make check command obey `--dry-run`/`-i`/`--interactive` (Nick Craig-Wood)
+        * Make check do `--checkers` files concurrently (Nick Craig-Wood)
+        * Retry downloads if they fail when using the `--download` flag (Nick Craig-Wood)
+        * Make it show stats by default (Nick Craig-Wood)
+    * `rclone obscure`: Allow obscure command to accept password on STDIN (David Ibarra)
+    * `rclone config`
+        * Set RCLONE_CONFIG_DIR for use in config files and subprocesses (Nick Craig-Wood)
+        * Reject remote names starting with a dash. (jtagcat)
+    * `rclone cryptcheck`: Add reporting of filenames for same/missing/changed (Nick Craig-Wood)
+    * `rclone dedupe`: Make it obey the `--size-only` flag for duplicate detection (Nick Craig-Wood)
+    * `rclone link`: Add `--expire` and `--unlink` flags (Roman Kredentser)
+    * `rclone mkdir`: Warn when using mkdir on remotes which can't have empty directories (Nick Craig-Wood)
+    * `rclone rc`: Allow JSON parameters to simplify command line usage (Nick Craig-Wood)
+    * `rclone serve ftp`
+        * Don't compile on < go1.13 after dependency update (Nick Craig-Wood)
+        * Add error message if auth proxy fails (Nick Craig-Wood)
+        * Use refactored goftp.io/server library for binary shrink (Nick Craig-Wood)
+    * `rclone serve restic`: Expose interfaces so that rclone can be used as a library from within restic (Jack)
+    * `rclone sync`: Add `--track-renames-strategy leaf` (Nick Craig-Wood)
+    * `rclone touch`: Add ability to set nanosecond resolution times (Nick Craig-Wood)
+    * `rclone tree`: Remove `-i` shorthand for `--noindent` as it conflicts with `-i`/`--interactive` (Nick Craig-Wood)
+* Bug Fixes
+    * accounting
+        * Fix documentation for `speed`/`speedAvg` (Nick Craig-Wood)
+        * Fix elapsed time not show actual time since beginning (Chaitanya Bankanhal)
+        * Fix deadlock in stats printing (Nick Craig-Wood)
+    * build
+        * Fix file handle leak in GitHub release tool (Garrett Squire)
+    * `rclone check`: Fix successful retries with `--download` counting errors (Nick Craig-Wood)
+    * `rclone dedupe`: Fix logging to be easier to understand (Nick Craig-Wood)
+* Mount
+    * Warn macOS users that mount implementation is changing (Nick Craig-Wood)
+        * to test the new implementation use `rclone cmount` instead of `rclone mount`
+        * this is because the library rclone uses has dropped macOS support
+    * rc interface
+        * Add call for unmount all (Chaitanya Bankanhal)
+        * Make `mount/mount` remote control take vfsOpt option (Nick Craig-Wood)
+        * Add mountOpt to `mount/mount` (Nick Craig-Wood)
+        * Add VFS and Mount options to `mount/listmounts` (Nick Craig-Wood)
+    * Catch panics in cgofuse initialization and turn into error messages (Nick Craig-Wood)
+    * Always supply stat information in Readdir (Nick Craig-Wood)
+    * Add support for reading unknown length files using direct IO (Windows) (Nick Craig-Wood)
+    * Fix On Windows don't add `-o uid/gid=-1` if user supplies `-o uid/gid`. (Nick Craig-Wood)
+    * Fix macOS losing directory contents in cmount (Nick Craig-Wood)
+    * Fix volume name broken in recent refactor (Nick Craig-Wood)
+* VFS
+    * Implement partial reads for `--vfs-cache-mode full` (Nick Craig-Wood)
+    * Add `--vfs-writeback` option to delay writes back to cloud storage (Nick Craig-Wood)
+    * Add `--vfs-read-ahead` parameter for use with `--vfs-cache-mode full` (Nick Craig-Wood)
+    * Restart pending uploads on restart of the cache (Nick Craig-Wood)
+    * Support synchronous cache space recovery upon ENOSPC (Leo Luan)
+    * Allow ReadAt and WriteAt to run concurrently with themselves (Nick Craig-Wood)
+    * Change modtime of file before upload to current (Rob Calistri)
+    * Recommend `--vfs-cache-modes writes` on backends which can't stream (Nick Craig-Wood)
+    * Add an optional `fs` parameter to vfs rc methods (Nick Craig-Wood)
+    * Fix errors when using > 260 char files in the cache in Windows (Nick Craig-Wood)
+    * Fix renaming of items while they are being uploaded (Nick Craig-Wood)
+    * Fix very high load caused by slow directory listings (Nick Craig-Wood)
+    * Fix renamed files not being uploaded with `--vfs-cache-mode minimal` (Nick Craig-Wood)
+    * Fix directory locking caused by slow directory listings (Nick Craig-Wood)
+    * Fix saving from chrome without `--vfs-cache-mode writes` (Nick Craig-Wood)
+* Local
+    * Add `--local-no-updated` to provide a consistent view of changing objects (Nick Craig-Wood)
+    * Add `--local-no-set-modtime` option to prevent modtime changes (tyhuber1)
+    * Fix race conditions updating and reading Object metadata (Nick Craig-Wood)
+* Cache
+    * Make any created backends be cached to fix rc problems (Nick Craig-Wood)
+    * Fix dedupe on caches wrapping drives (Nick Craig-Wood)
+* Crypt
+    * Add `--crypt-server-side-across-configs` flag (Nick Craig-Wood)
+    * Make any created backends be cached to fix rc problems (Nick Craig-Wood)
+* Alias
+    * Make any created backends be cached to fix rc problems (Nick Craig-Wood)
+* Azure Blob
+    * Don't compile on < go1.13 after dependency update (Nick Craig-Wood)
+* B2
+    * Implement server side copy for files > 5GB (Nick Craig-Wood)
+    * Cancel in progress multipart uploads and copies on rclone exit (Nick Craig-Wood)
+    * Note that b2's encoding now allows \ but rclone's hasn't changed (Nick Craig-Wood)
+    * Fix transfers when using download_url (Nick Craig-Wood)
+* Box
+    * Implement rclone cleanup (buengese)
+    * Cancel in progress multipart uploads and copies on rclone exit (Nick Craig-Wood)
+    * Allow authentication with access token (David)
+* Chunker
+    * Make any created backends be cached to fix rc problems (Nick Craig-Wood)
+* Drive
+    * Add `rclone backend drives` to list shared drives (teamdrives) (Nick Craig-Wood)
+    * Implement `rclone backend untrash` (Nick Craig-Wood)
+    * Work around drive bug which didn't set modtime of copied docs (Nick Craig-Wood)
+    * Added `--drive-starred-only` to only show starred files (Jay McEntire)
+    * Deprecate `--drive-alternate-export` as it is no longer needed (themylogin)
+    * Fix duplication of Google docs on server side copy (Nick Craig-Wood)
+    * Fix "panic: send on closed channel" when recycling dir entries (Nick Craig-Wood)
+* Dropbox
+    * Add copyright detector info in limitations section in the docs (Alex Guerrero)
+    * Fix `rclone link` by removing expires parameter (Nick Craig-Wood)
+* Fichier
+    * Detect Flood detected: IP Locked error and sleep for 30s (Nick Craig-Wood)
+* FTP
+    * Add explicit TLS support (Heiko Bornholdt)
+    * Add support for `--dump bodies` and `--dump auth` for debugging (Nick Craig-Wood)
+    * Fix interoperation with pure-ftpd (Nick Craig-Wood)
+* Google Cloud Storage
+    * Add support for anonymous access (Kai Lüke)
+* Jottacloud
+    * Bring back legacy authentification for use with whitelabel versions (buengese)
+    * Switch to new api root - also implement a very ugly workaround for the DirMove failures (buengese)
+* Onedrive
+    * Rework cancel of multipart uploads on rclone exit (Nick Craig-Wood)
+    * Implement rclone cleanup (Nick Craig-Wood)
+    * Add `--onedrive-no-versions` flag to remove old versions (Nick Craig-Wood)
+* Pcloud
+    * Implement `rclone link` for public link creation (buengese)
+* Qingstor
+    * Cancel in progress multipart uploads on rclone exit (Nick Craig-Wood)
+* S3
+    * Preserve metadata when doing multipart copy (Nick Craig-Wood)
+    * Cancel in progress multipart uploads and copies on rclone exit (Nick Craig-Wood)
+    * Add `rclone link` for public link sharing (Roman Kredentser)
+    * Add `rclone backend restore` command to restore objects from GLACIER (Nick Craig-Wood)
+    * Add `rclone cleanup` and `rclone backend cleanup` to clean unfinished multipart uploads (Nick Craig-Wood)
+    * Add `rclone backend list-multipart-uploads` to list unfinished multipart uploads (Nick Craig-Wood)
+    * Add `--s3-max-upload-parts` support (Kamil Trzciński)
+    * Add `--s3-no-check-bucket` for minimising rclone transactions and perms (Nick Craig-Wood)
+    * Add `--s3-profile` and `--s3-shared-credentials-file` options (Nick Craig-Wood)
+    * Use regional s3 us-east-1 endpoint (David)
+    * Add Scaleway provider (Vincent Feltz)
+    * Update IBM COS endpoints (Egor Margineanu)
+    * Reduce the default `--s3-copy-cutoff` to < 5GB for Backblaze S3 compatibility (Nick Craig-Wood)
+    * Fix detection of bucket existing (Nick Craig-Wood)
+* SFTP
+    * Use the absolute path instead of the relative path for listing for improved compatibility (Nick Craig-Wood)
+    * Add `--sftp-subsystem` and `--sftp-server-command` options (aus)
+* Swift
+    * Fix dangling large objects breaking the listing (Nick Craig-Wood)
+    * Fix purge not deleting directory markers (Nick Craig-Wood)
+    * Fix update multipart object removing all of its own parts (Nick Craig-Wood)
+    * Fix missing hash from object returned from upload (Nick Craig-Wood)
+* Tardigrade
+    * Upgrade to uplink v1.2.0 (Kaloyan Raev)
+* Union
+    * Fix writing with the all policy (Nick Craig-Wood)
+* WebDAV
+    * Fix directory creation with 4shared (Nick Craig-Wood)
+
 ## v1.52.3 - 2020-08-07
 
 [See commits](https://github.com/rclone/rclone/compare/v1.52.2...v1.52.3)

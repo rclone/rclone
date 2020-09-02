@@ -270,7 +270,7 @@ Here are the standard options specific to box (Box).
 
 #### --box-client-id
 
-Box App Client Id.
+OAuth Client Id
 Leave blank normally.
 
 - Config:      client_id
@@ -280,7 +280,7 @@ Leave blank normally.
 
 #### --box-client-secret
 
-Box App Client Secret
+OAuth Client Secret
 Leave blank normally.
 
 - Config:      client_secret
@@ -293,8 +293,21 @@ Leave blank normally.
 Box App config.json location
 Leave blank normally.
 
+Leading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.
+
+
 - Config:      box_config_file
 - Env Var:     RCLONE_BOX_BOX_CONFIG_FILE
+- Type:        string
+- Default:     ""
+
+#### --box-access-token
+
+Box App Primary Access Token
+Leave blank normally.
+
+- Config:      access_token
+- Env Var:     RCLONE_BOX_ACCESS_TOKEN
 - Type:        string
 - Default:     ""
 
@@ -315,6 +328,35 @@ Leave blank normally.
 ### Advanced Options
 
 Here are the advanced options specific to box (Box).
+
+#### --box-token
+
+OAuth Access Token as a JSON blob.
+
+- Config:      token
+- Env Var:     RCLONE_BOX_TOKEN
+- Type:        string
+- Default:     ""
+
+#### --box-auth-url
+
+Auth server URL.
+Leave blank to use the provider defaults.
+
+- Config:      auth_url
+- Env Var:     RCLONE_BOX_AUTH_URL
+- Type:        string
+- Default:     ""
+
+#### --box-token-url
+
+Token server url.
+Leave blank to use the provider defaults.
+
+- Config:      token_url
+- Env Var:     RCLONE_BOX_TOKEN_URL
+- Type:        string
+- Default:     ""
 
 #### --box-root-folder-id
 

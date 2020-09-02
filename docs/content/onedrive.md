@@ -199,7 +199,7 @@ Here are the standard options specific to onedrive (Microsoft OneDrive).
 
 #### --onedrive-client-id
 
-Microsoft App Client Id
+OAuth Client Id
 Leave blank normally.
 
 - Config:      client_id
@@ -209,7 +209,7 @@ Leave blank normally.
 
 #### --onedrive-client-secret
 
-Microsoft App Client Secret
+OAuth Client Secret
 Leave blank normally.
 
 - Config:      client_secret
@@ -220,6 +220,35 @@ Leave blank normally.
 ### Advanced Options
 
 Here are the advanced options specific to onedrive (Microsoft OneDrive).
+
+#### --onedrive-token
+
+OAuth Access Token as a JSON blob.
+
+- Config:      token
+- Env Var:     RCLONE_ONEDRIVE_TOKEN
+- Type:        string
+- Default:     ""
+
+#### --onedrive-auth-url
+
+Auth server URL.
+Leave blank to use the provider defaults.
+
+- Config:      auth_url
+- Env Var:     RCLONE_ONEDRIVE_AUTH_URL
+- Type:        string
+- Default:     ""
+
+#### --onedrive-token-url
+
+Token server url.
+Leave blank to use the provider defaults.
+
+- Config:      token_url
+- Env Var:     RCLONE_ONEDRIVE_TOKEN_URL
+- Type:        string
+- Default:     ""
 
 #### --onedrive-chunk-size
 
@@ -278,6 +307,27 @@ configurations.
 
 - Config:      server_side_across_configs
 - Env Var:     RCLONE_ONEDRIVE_SERVER_SIDE_ACROSS_CONFIGS
+- Type:        bool
+- Default:     false
+
+#### --onedrive-no-versions
+
+Remove all versions on modifying operations
+
+Onedrive for business creates versions when rclone uploads new files
+overwriting an existing one and when it sets the modification time.
+
+These versions take up space out of the quota.
+
+This flag checks for versions after file upload and setting
+modification time and removes all but the last version.
+
+**NB** Onedrive personal can't currently delete versions so don't use
+this flag there.
+
+
+- Config:      no_versions
+- Env Var:     RCLONE_ONEDRIVE_NO_VERSIONS
 - Type:        bool
 - Default:     false
 

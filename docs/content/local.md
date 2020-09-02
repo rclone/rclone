@@ -372,6 +372,23 @@ However on some file systems this modification time check may fail (eg
 [Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this
 check can be disabled with this flag.
 
+If this flag is set, rclone will use its best efforts to transfer a
+file which is being updated. If the file is only having things
+appended to it (eg a log) then rclone will transfer the log file with
+the size it had the first time rclone saw it.
+
+If the file is being modified throughout (not just appended to) then
+the transfer may fail with a hash check failure.
+
+In detail, once the file has had stat() called on it for the first
+time we:
+
+- Only transfer the size that stat gave
+- Only checksum the size that stat gave
+- Don't update the stat info for the file
+
+
+
 - Config:      no_check_updated
 - Env Var:     RCLONE_LOCAL_NO_CHECK_UPDATED
 - Type:        bool
@@ -423,6 +440,21 @@ cause disk fragmentation and can be slow to work with.
 
 - Config:      no_sparse
 - Env Var:     RCLONE_LOCAL_NO_SPARSE
+- Type:        bool
+- Default:     false
+
+#### --local-no-set-modtime
+
+Disable setting modtime
+
+Normally rclone updates modification time of files after they are done
+uploading. This can cause permissions issues on Linux platforms when 
+the user rclone is running as does not own the file uploaded, such as
+when copying to a CIFS mount owned by another user. If this option is 
+enabled, rclone will no longer update the modtime after copying a file.
+
+- Config:      no_set_modtime
+- Env Var:     RCLONE_LOCAL_NO_SET_MODTIME
 - Type:        bool
 - Default:     false
 

@@ -126,7 +126,7 @@ Here are the standard options specific to dropbox (Dropbox).
 
 #### --dropbox-client-id
 
-Dropbox App Client Id
+OAuth Client Id
 Leave blank normally.
 
 - Config:      client_id
@@ -136,7 +136,7 @@ Leave blank normally.
 
 #### --dropbox-client-secret
 
-Dropbox App Client Secret
+OAuth Client Secret
 Leave blank normally.
 
 - Config:      client_secret
@@ -147,6 +147,35 @@ Leave blank normally.
 ### Advanced Options
 
 Here are the advanced options specific to dropbox (Dropbox).
+
+#### --dropbox-token
+
+OAuth Access Token as a JSON blob.
+
+- Config:      token
+- Env Var:     RCLONE_DROPBOX_TOKEN
+- Type:        string
+- Default:     ""
+
+#### --dropbox-auth-url
+
+Auth server URL.
+Leave blank to use the provider defaults.
+
+- Config:      auth_url
+- Env Var:     RCLONE_DROPBOX_AUTH_URL
+- Type:        string
+- Default:     ""
+
+#### --dropbox-token-url
+
+Token server url.
+Leave blank to use the provider defaults.
+
+- Config:      token_url
+- Env Var:     RCLONE_DROPBOX_TOKEN_URL
+- Type:        string
+- Default:     ""
 
 #### --dropbox-chunk-size
 
