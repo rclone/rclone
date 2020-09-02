@@ -25,6 +25,7 @@ This file describes how to make the various kinds of releases
   * # Wait for the GitHub builds to complete then...
   * make fetch_binaries
   * make tarball
+  * make vendorball
   * make sign_upload
   * make check_sign
   * make upload
