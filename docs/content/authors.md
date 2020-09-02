@@ -408,3 +408,4 @@ put them back in again.` >}}
   * Egor Margineanu <egmar@users.noreply.github.com>
   * Lucas Kanashiro <lucas.kanashiro@canonical.com>
   * WarpedPixel <WarpedPixel@users.noreply.github.com>
+  * Sam Edwards <sam@samedwards.ca>
