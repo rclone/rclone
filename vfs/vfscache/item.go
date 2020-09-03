@@ -1158,7 +1158,7 @@ func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 		item.preAccess()
 		n, err = item.readAt(b, off)
 		item.postAccess()
-		if err == nil {
+		if err == nil || err == io.EOF {
 			break
 		}
 		fs.Errorf(item.name, "vfs cache: failed to _ensure cache %v", err)
