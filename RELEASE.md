@@ -9,7 +9,7 @@ This file describes how to make the various kinds of releases
 
 ## Making a release
 
-  * git checkout master
+  * git checkout master # see below for stable branch
   * git pull
   * git status - make sure everything is checked in
   * Check GitHub actions build for master is Green
@@ -31,7 +31,7 @@ This file describes how to make the various kinds of releases
   * make upload
   * make upload_website
   * make upload_github
-  * make startdev
+  * make startdev # make startstable for stable branch
   * # announce with forum post, twitter post, patreon post
 
 Early in the next release cycle update the dependencies
@@ -42,62 +42,35 @@ Early in the next release cycle update the dependencies
   * git add new files
   * git commit -a -v
 
-If `make update` fails with errors like this:
-
-```
-# github.com/cpuguy83/go-md2man/md2man
-../../../../pkg/mod/github.com/cpuguy83/go-md2man@v1.0.8/md2man/md2man.go:11:16: undefined: blackfriday.EXTENSION_NO_INTRA_EMPHASIS
-../../../../pkg/mod/github.com/cpuguy83/go-md2man@v1.0.8/md2man/md2man.go:12:16: undefined: blackfriday.EXTENSION_TABLES
-```
-
-Can be fixed with
-
-    * GO111MODULE=on go get -u github.com/russross/blackfriday@v1.5.2
-    * GO111MODULE=on go mod tidy
- 
-
 ## Making a point release
 
 If rclone needs a point release due to some horrendous bug:
 
-First make the release branch.  If this is a second point release then
-this will be done already.
+Set vars
 
   * BASE_TAG=v1.XX          # eg v1.52
   * NEW_TAG=${BASE_TAG}.Y   # eg v1.52.1
   * echo $BASE_TAG $NEW_TAG # v1.52 v1.52.1
+
+First make the release branch.  If this is a second point release then
+this will be done already.
+
   * git branch ${BASE_TAG} ${BASE_TAG}-stable
+  * git co ${BASE_TAG}-stable
+  * make startstable
 
 Now
 
-  * FIXME this is now broken with new semver layout - needs fixing
-  * FIXME the TAG=${NEW_TAG} shouldn't be necessary any more
   * git co ${BASE_TAG}-stable
   * git cherry-pick any fixes
-  * Test (see above)
-  * make NEXT_VERSION=${NEW_TAG} tag
-  * edit docs/content/changelog.md
-  * make TAG=${NEW_TAG} doc
-  * git commit -a -v -m "Version ${NEW_TAG}"
-  * git tag -d ${NEW_TAG}
-  * git tag -s -m "Version ${NEW_TAG}" ${NEW_TAG}
-  * git push --tags -u origin ${BASE_TAG}-stable
-  * Wait for builds to complete
-  * make BRANCH_PATH= TAG=${NEW_TAG} fetch_binaries
-  * make TAG=${NEW_TAG} tarball
-  * make TAG=${NEW_TAG} sign_upload
-  * make TAG=${NEW_TAG} check_sign
-  * make TAG=${NEW_TAG} upload
-  * make TAG=${NEW_TAG} upload_website
-  * make TAG=${NEW_TAG} upload_github
-  * NB this overwrites the current beta so we need to do this
+  * Do the steps as above
+  * make startstable
+  * NB this overwrites the current beta so we need to do this - FIXME is this true any more?
   * git co master
-  * make VERSION=${NEW_TAG} startdev
-  * # cherry pick the changes to the changelog and VERSION
-  * git checkout ${BASE_TAG}-stable VERSION docs/content/changelog.md
-  * git commit --amend
+  * # cherry pick the changes to the changelog
+  * git checkout ${BASE_TAG}-stable docs/content/changelog.md
+  * git commit -a -v -m "Changelog updates from Version ${NEW_TAG}"
   * git push
-  * Announce!
 
 ## Making a manual build of docker
 
