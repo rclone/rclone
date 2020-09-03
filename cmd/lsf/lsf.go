@@ -44,7 +44,7 @@ func init() {
 
 var commandDefinition = &cobra.Command{
 	Use:   "lsf remote:path",
-	Short: `List directories and objects in remote:path formatted for parsing`,
+	Short: `List directories and objects in remote:path formatted for parsing.`,
 	Long: `
 List the contents of the source path (directories and objects) to
 standard output in a form which is easy to parse by scripts.  By

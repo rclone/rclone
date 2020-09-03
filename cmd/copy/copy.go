@@ -22,7 +22,7 @@ func init() {
 
 var commandDefinition = &cobra.Command{
 	Use:   "copy source:path dest:path",
-	Short: `Copy files from source to dest, skipping already copied`,
+	Short: `Copy files from source to dest, skipping already copied.`,
 	Long: `
 Copy the source to the destination.  Doesn't transfer
 unchanged files, testing by size and modification time or
