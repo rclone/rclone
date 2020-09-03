@@ -16,7 +16,7 @@ require (
 	github.com/aws/aws-sdk-go v1.32.11
 	github.com/billziss-gh/cgofuse v1.4.0
 	github.com/btcsuite/btcutil v1.0.2 // indirect
-	github.com/buengese/xxh32 v1.0.1
+	github.com/buengese/sgzip v0.1.0
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/coreos/go-semver v0.3.0
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
@@ -39,7 +39,6 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1
 	github.com/okzk/sdnotify v0.0.0-20180710141335-d9becc38acbd
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pierrec/lz4 v2.4.1+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.11.0
 	github.com/prometheus/client_golang v1.7.1
@@ -52,7 +51,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
-	github.com/ulikunitz/xz v0.5.8
 	github.com/xanzy/ssh-agent v0.2.1
 	github.com/youmark/pkcs8 v0.0.0-20200520070018-fad002e585ce
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
