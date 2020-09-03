@@ -537,6 +537,8 @@ OR
 	"result": "<Raw command line output>"
 }
 
+```
+
 **Authentication is required for this call.**
 
 ### core/gc: Runs a garbage collection. {#core-gc}
@@ -1212,7 +1214,7 @@ This allows you to remove a plugin using it's name
 
 This takes parameters
 
-- name: name of the plugin in the format <author>/<plugin_name>
+- name: name of the plugin in the format `author`/`plugin_name`
 
 Eg
 
@@ -1226,7 +1228,7 @@ This allows you to remove a plugin using it's name
 
 This takes the following parameters
 
-- name: name of the plugin in the format <author>/<plugin_name>
+- name: name of the plugin in the format `author`/`plugin_name`
 
 Eg
 
