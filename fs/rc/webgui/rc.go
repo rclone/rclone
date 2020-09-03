@@ -45,7 +45,7 @@ func init() {
 
 This takes the following parameters
 
-- name: name of the plugin in the format <author>/<plugin_name>
+- name: name of the plugin in the format ` + "`author`/`plugin_name`" + `
 
 Eg
 
@@ -212,7 +212,7 @@ func init() {
 
 This takes parameters
 
-- name: name of the plugin in the format <author>/<plugin_name>
+- name: name of the plugin in the format ` + "`author`/`plugin_name`" + `
 
 Eg
 
