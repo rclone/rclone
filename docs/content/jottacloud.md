@@ -148,8 +148,13 @@ flag.
 Note that Jottacloud requires the MD5 hash before upload so if the
 source does not have an MD5 checksum then the file will be cached
 temporarily on disk (wherever the `TMPDIR` environment variable points
-to) before it is uploaded.  Small files will be cached in memory - see
+to) before it is uploaded. Small files will be cached in memory - see
 the [--jottacloud-md5-memory-limit](#jottacloud-md5-memory-limit) flag.
+When uploading from local disk the source checksum is always available,
+so this does not apply. Starting with rclone version 1.52 the same is
+true for crypted remotes (in older versions the crypt backend would not
+calculate hashes for uploads from local disk, so the Jottacloud
+backend had to do it as described above).
 
 #### Restricted filename characters
 
