@@ -22,7 +22,8 @@ Rclone is a command line program to manage files on cloud storage. It
 is a feature rich alternative to cloud vendors' web storage
 interfaces. [Over 40 cloud storage products](#providers) support
 rclone including S3 object stores, business & consumer file storage
-services, as well as standard transfer protocols.
+services, as well as standard transfer protocols. Rclone is optimised
+for high latency networks
 
 Rclone has powerful cloud equivalents to the unix commands rsync, cp,
 mv, mount, ls, ncdu, tree, rm, and cat. Rclone's familiar syntax
@@ -62,9 +63,11 @@ community are familiar with varied use cases. Official Ubuntu, Debian,
 Fedora, Brew and Chocolatey repos. include rclone. For the latest
 version [downloading from rclone.org](/downloads/) is recommended.
 
-Rclone is widely used on Linux, Windows and Mac. Third party
-developers create innovative backup, restore, GUI and business
-process solutions using the rclone command line or API.
+Rclone is widely used on Linux, Windows and Mac, including major hpc 
+sites. It is commonly used as a back end to popular streaming 
+media servers. Third party developers create innovative backup, 
+restore, GUI and business process solutions using the rclone 
+command line or API.
 
 Rclone does the heavy lifting of communicating with cloud storage.
 
