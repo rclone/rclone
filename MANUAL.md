@@ -146,7 +146,6 @@ WebDAV or S3, that work out of the box.)
 - StackPath
 - SugarSync
 - Tardigrade
-- Tencent Cloud Object Storage (COS)
 - Wasabi
 - WebDAV
 - Yandex Disk
@@ -10566,7 +10565,6 @@ The S3 backend can be used with a number of different providers:
 - Minio
 - Scaleway
 - StackPath
-- Tencent Cloud Object Storage (COS)
 - Wasabi
 
 
@@ -10994,7 +10992,7 @@ Vault API, so rclone cannot directly access Glacier Vaults.
 
 ### Standard Options
 
-Here are the standard options specific to s3 (Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, Tencent COS, etc)).
+Here are the standard options specific to s3 (Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, etc)).
 
 #### --s3-provider
 
@@ -11023,8 +11021,6 @@ Choose your S3 provider.
         - Netease Object Storage (NOS)
     - "StackPath"
         - StackPath Object Storage
-    - "TencentCOS"
-        - Tencent Cloud Object Storage (COS)
     - "Wasabi"
         - Wasabi Object Storage
     - "Other"
@@ -11561,7 +11557,7 @@ The storage class to use when storing new objects in OSS.
 
 ### Advanced Options
 
-Here are the advanced options specific to s3 (Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, Tencent COS, etc)).
+Here are the advanced options specific to s3 (Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, etc)).
 
 #### --s3-bucket-acl
 
@@ -12459,138 +12455,6 @@ y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
 y/e/d> y
-```
-
-### Tencent COS {#tencent-cos}
-
-[Tencent Cloud Object Storage (COS)](https://intl.cloud.tencent.com/product/cos) is a distributed storage service offered by Tencent Cloud for unstructured data. It is secure, stable, massive, convenient, low-delay and low-cost.
-
-To configure access to Tencent COS, follow the steps below:
-
-1. Run `rclone config` and select `n` for a new remote.
-
-```
-rclone config
-No remotes found - make a new one
-n) New remote
-s) Set configuration password
-q) Quit config
-n/s/q> n
-```
-
-2. Give the name of the configuration. For example, name it 'cos'.
-
-```
-name> cos
-```
-
-3. Select `s3` storage.
-
-```
-Choose a number from below, or type in your own value
-1 / 1Fichier
-   \ "fichier"
- 2 / Alias for an existing remote
-   \ "alias"
- 3 / Amazon Drive
-   \ "amazon cloud drive"
- 4 / Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, Tencent COS, etc)
-   \ "s3"
-[snip]
-Storage> 4
-```
-
-4. Select `TencentCOS` provider.
-```
-Choose a number from below, or type in your own value
-1 / Amazon Web Services (AWS) S3
-   \ "AWS"
-[snip]
-11 / Tencent Cloud Object Storage (COS)
-   \ "TencentCOS"
-[snip]
-provider> 11
-```
-
-5. Enter your SecretId and SecretKey of Tencent Cloud.
-
-```
-Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).
-Only applies if access_key_id and secret_access_key is blank.
-Enter a boolean value (true or false). Press Enter for the default ("false").
-Choose a number from below, or type in your own value
- 1 / Enter AWS credentials in the next step
-   \ "false"
- 2 / Get AWS credentials from the environment (env vars or IAM)
-   \ "true"
-env_auth> 1
-AWS Access Key ID.
-Leave blank for anonymous access or runtime credentials.
-Enter a string value. Press Enter for the default ("").
-access_key_id> AKIDxxxxxxxxxx
-AWS Secret Access Key (password)
-Leave blank for anonymous access or runtime credentials.
-Enter a string value. Press Enter for the default ("").
-secret_access_key> xxxxxxxxxxx
-```
-
-6. Select endpoint for Tencent COS. This is the standard endpoint for different region.
-
-```
- 1 / Beijing Region.
-   \ "cos.ap-beijing.myqcloud.com"
- 2 / Nanjing Region.
-   \ "cos.ap-nanjing.myqcloud.com"
- 3 / Shanghai Region.
-   \ "cos.ap-shanghai.myqcloud.com"
- 4 / Guangzhou Region.
-   \ "cos.ap-guangzhou.myqcloud.com"
-[snip]
-endpoint> 4
-```
-
-7. Choose acl and storage class.
-
-```
-Note that this ACL is applied when server side copying objects as S3
-doesn't copy the ACL from the source but rather writes a fresh one.
-Enter a string value. Press Enter for the default ("").
-Choose a number from below, or type in your own value
- 1 / Owner gets Full_CONTROL. No one else has access rights (default).
-   \ "default"
-[snip]
-acl> 1
-The storage class to use when storing new objects in Tencent COS.
-Enter a string value. Press Enter for the default ("").
-Choose a number from below, or type in your own value
- 1 / Default
-   \ ""
-[snip]
-storage_class> 1
-Edit advanced config? (y/n)
-y) Yes
-n) No (default)
-y/n> n
-Remote config
---------------------
-[cos]
-type = s3
-provider = TencentCOS
-env_auth = false
-access_key_id = xxx
-secret_access_key = xxx
-endpoint = cos.ap-guangzhou.myqcloud.com
-acl = default
---------------------
-y) Yes this is OK (default)
-e) Edit this remote
-d) Delete this remote
-y/e/d> y
-Current remotes:
-
-Name                 Type
-====                 ====
-cos                  s3
 ```
 
 ### Netease NOS  ###
