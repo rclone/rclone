@@ -25,7 +25,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hanwen/go-fuse/v2 v2.0.3
 	github.com/iguanesolutions/go-systemd/v5 v5.0.0
-	github.com/jlaffaye/ftp v0.0.0-20201021201046-0de5c29d4555
+	github.com/jlaffaye/ftp v0.0.0-20201112195030-9aae4d151126
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/klauspost/compress v1.11.2

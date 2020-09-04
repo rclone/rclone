@@ -86,6 +86,11 @@ to an encrypted one. Cannot be used in combination with implicit FTP.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "disable_mlsd",
+			Help:     "Disable using MLSD even if server advertises support",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -111,6 +116,7 @@ type Options struct {
 	Concurrency       int                  `config:"concurrency"`
 	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
 	DisableEPSV       bool                 `config:"disable_epsv"`
+	DisableMLSD       bool                 `config:"disable_mlsd"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -225,6 +231,9 @@ func (f *Fs) ftpConnection() (*ftp.ServerConn, error) {
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
+	}
+	if f.opt.DisableMLSD {
+		ftpConfig = append(ftpConfig, ftp.DialWithDisabledMLSD(true))
 	}
 	if fs.Config.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpRequests|fs.DumpResponses) != 0 {
 		ftpConfig = append(ftpConfig, ftp.DialWithDebugOutput(&debugLog{auth: fs.Config.Dump&fs.DumpAuth != 0}))
