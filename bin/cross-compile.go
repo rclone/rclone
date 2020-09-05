@@ -74,7 +74,6 @@ var archFlags = map[string][]string{
 	"386":    {"GO386=387"},
 	"mips":   {"GOMIPS=softfloat"},
 	"mipsle": {"GOMIPS=softfloat"},
-	"arm":    {"GOARM=6"},
 	"arm-v7": {"GOARM=7"},
 }
 
