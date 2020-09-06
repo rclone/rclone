@@ -15,6 +15,11 @@ import (
 var _ pflag.Value = (*Duration)(nil)
 
 func TestParseDuration(t *testing.T) {
+	now := time.Date(2020, 9, 5, 8, 15, 5, 250, time.UTC)
+	getNow := func() time.Time {
+		return now
+	}
+
 	for _, test := range []struct {
 		in   string
 		want time.Duration
@@ -37,12 +42,12 @@ func TestParseDuration(t *testing.T) {
 		{"1x", 0, true},
 		{"off", time.Duration(DurationOff), false},
 		{"1h2m3s", time.Hour + 2*time.Minute + 3*time.Second, false},
-		{"2001-02-03", time.Since(time.Date(2001, 2, 3, 0, 0, 0, 0, time.UTC)), false},
-		{"2001-02-03 10:11:12", time.Since(time.Date(2001, 2, 3, 10, 11, 12, 0, time.UTC)), false},
-		{"2001-02-03T10:11:12", time.Since(time.Date(2001, 2, 3, 10, 11, 12, 0, time.UTC)), false},
-		{"2001-02-03T10:11:12.123Z", time.Since(time.Date(2001, 2, 3, 10, 11, 12, 123, time.UTC)), false},
+		{"2001-02-03", now.Sub(time.Date(2001, 2, 3, 0, 0, 0, 0, time.UTC)), false},
+		{"2001-02-03 10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.UTC)), false},
+		{"2001-02-03T10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.UTC)), false},
+		{"2001-02-03T10:11:12.123Z", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 123, time.UTC)), false},
 	} {
-		duration, err := ParseDuration(test.in)
+		duration, err := parseDurationFromNow(test.in, getNow)
 		if test.err {
 			require.Error(t, err)
 		} else {
@@ -58,6 +63,11 @@ func TestParseDuration(t *testing.T) {
 }
 
 func TestDurationString(t *testing.T) {
+	now := time.Date(2020, 9, 5, 8, 15, 5, 250, time.UTC)
+	getNow := func() time.Time {
+		return now
+	}
+
 	for _, test := range []struct {
 		in   time.Duration
 		want string
@@ -88,7 +98,7 @@ func TestDurationString(t *testing.T) {
 		got := Duration(test.in).String()
 		assert.Equal(t, test.want, got)
 		// Test the reverse
-		reverse, err := ParseDuration(test.want)
+		reverse, err := parseDurationFromNow(test.want, getNow)
 		assert.NoError(t, err)
 		assert.Equal(t, test.in, reverse)
 	}
