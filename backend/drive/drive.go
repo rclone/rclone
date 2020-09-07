@@ -157,6 +157,17 @@ func driveScopesContainsAppFolder(scopes []string) bool {
 	return false
 }
 
+func driveOAuthOptions() []fs.Option {
+	opts := []fs.Option{}
+	for _, opt := range oauthutil.SharedOptions {
+		if opt.Name == config.ConfigClientID {
+			opt.Help = "Google Application Client Id\nSetting your own is recommended.\nSee https://rclone.org/drive/#making-your-own-client-id for how to create your own.\nIf you leave this blank, it will use an internal key which is low performance."
+		}
+		opts = append(opts, opt)
+	}
+	return opts
+}
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -192,7 +203,7 @@ func init() {
 				log.Fatalf("Failed to configure team drive: %v", err)
 			}
 		},
-		Options: append(oauthutil.SharedOptions, []fs.Option{{
+		Options: append(driveOAuthOptions(), []fs.Option{{
 			Name: "scope",
 			Help: "Scope that rclone should use when requesting access from drive.",
 			Examples: []fs.OptionExample{{
