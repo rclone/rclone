@@ -366,6 +366,8 @@ func (sg *statsGroups) sum() *StatsInfo {
 				sum.lastError = stats.lastError
 			}
 			sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
+			sum.oldDuration += stats.oldDuration
+			sum.oldTimeRanges = append(sum.oldTimeRanges, stats.oldTimeRanges...)
 		}
 		stats.mu.RUnlock()
 	}
