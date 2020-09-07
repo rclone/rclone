@@ -324,7 +324,7 @@ func compileArch(version, goos, goarch, dir string) bool {
 			artifacts := []string{buildZip(dir)}
 			// build a .deb and .rpm if appropriate
 			if goos == "linux" {
-				artifacts = append(artifacts, buildDebAndRpm(dir, version, goarch)...)
+				artifacts = append(artifacts, buildDebAndRpm(dir, version, stripVersion(goarch))...)
 			}
 			if *copyAs != "" {
 				for _, artifact := range artifacts {
