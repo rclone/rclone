@@ -272,7 +272,7 @@ func (s *StatsInfo) String() string {
 		}
 	}
 
-	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s\n",
+	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s",
 		dateString,
 		fs.SizeSuffix(s.bytes),
 		fs.SizeSuffix(totalSize).Unit("Bytes"),
@@ -283,6 +283,7 @@ func (s *StatsInfo) String() string {
 	)
 
 	if !fs.Config.StatsOneLine {
+		_, _ = buf.WriteRune('\n')
 		errorDetails := ""
 		switch {
 		case s.fatalError:
@@ -291,6 +292,7 @@ func (s *StatsInfo) String() string {
 			errorDetails = " (retrying may help)"
 		case s.errors != 0:
 			errorDetails = " (no need to retry)"
+
 		}
 
 		// Add only non zero stats
