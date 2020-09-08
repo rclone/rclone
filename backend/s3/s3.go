@@ -58,7 +58,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, etc)",
+		Description: "Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, Tencent COS, etc)",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
@@ -94,6 +94,9 @@ func init() {
 			}, {
 				Value: "StackPath",
 				Help:  "StackPath Object Storage",
+			}, {
+				Value: "TencentCOS",
+				Help:  "Tencent Cloud Object Storage (COS)",
 			}, {
 				Value: "Wasabi",
 				Help:  "Wasabi Object Storage",
@@ -185,7 +188,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,Scaleway",
+			Provider: "!AWS,Alibaba,Scaleway,TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure. Will use v4 signatures and an empty region.",
@@ -477,9 +480,72 @@ func init() {
 				Help:  "EU Endpoint",
 			}},
 		}, {
+			// cos endpoints: https://intl.cloud.tencent.com/document/product/436/6224
+			Name:     "endpoint",
+			Help:     "Endpoint for Tencent COS API.",
+			Provider: "TencentCOS",
+			Examples: []fs.OptionExample{{
+				Value: "cos.ap-beijing.myqcloud.com",
+				Help:  "Beijing Region.",
+			}, {
+				Value: "cos.ap-nanjing.myqcloud.com",
+				Help:  "Nanjing Region.",
+			}, {
+				Value: "cos.ap-shanghai.myqcloud.com",
+				Help:  "Shanghai Region.",
+			}, {
+				Value: "cos.ap-guangzhou.myqcloud.com",
+				Help:  "Guangzhou Region.",
+			}, {
+				Value: "cos.ap-nanjing.myqcloud.com",
+				Help:  "Nanjing Region.",
+			}, {
+				Value: "cos.ap-chengdu.myqcloud.com",
+				Help:  "Chengdu Region.",
+			}, {
+				Value: "cos.ap-chongqing.myqcloud.com",
+				Help:  "Chongqing Region.",
+			}, {
+				Value: "cos.ap-hongkong.myqcloud.com",
+				Help:  "Hong Kong (China) Region.",
+			}, {
+				Value: "cos.ap-singapore.myqcloud.com",
+				Help:  "Singapore Region.",
+			}, {
+				Value: "cos.ap-mumbai.myqcloud.com",
+				Help:  "Mumbai Region.",
+			}, {
+				Value: "cos.ap-seoul.myqcloud.com",
+				Help:  "Seoul Region.",
+			}, {
+				Value: "cos.ap-bangkok.myqcloud.com",
+				Help:  "Bangkok Region.",
+			}, {
+				Value: "cos.ap-tokyo.myqcloud.com",
+				Help:  "Tokyo Region.",
+			}, {
+				Value: "cos.na-siliconvalley.myqcloud.com",
+				Help:  "Silicon Valley Region.",
+			}, {
+				Value: "cos.na-ashburn.myqcloud.com",
+				Help:  "Virginia Region.",
+			}, {
+				Value: "cos.na-toronto.myqcloud.com",
+				Help:  "Toronto Region.",
+			}, {
+				Value: "cos.eu-frankfurt.myqcloud.com",
+				Help:  "Frankfurt Region.",
+			}, {
+				Value: "cos.eu-moscow.myqcloud.com",
+				Help:  "Moscow Region.",
+			}, {
+				Value: "cos.accelerate.myqcloud.com",
+				Help:  "Use Tencent COS Accelerate Endpoint.",
+			}},
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath",
+			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -666,7 +732,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath",
+			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -678,9 +744,13 @@ For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview
 Note that this ACL is applied when server side copying objects as S3
 doesn't copy the ACL from the source but rather writes a fresh one.`,
 			Examples: []fs.OptionExample{{
+				Value:    "default",
+				Help:     "Owner gets Full_CONTROL. No one else has access rights (default).",
+				Provider: "TencentCOS",
+			}, {
 				Value:    "private",
 				Help:     "Owner gets FULL_CONTROL. No one else has access rights (default).",
-				Provider: "!IBMCOS",
+				Provider: "!IBMCOS,TencentCOS",
 			}, {
 				Value:    "public-read",
 				Help:     "Owner gets FULL_CONTROL. The AllUsers group gets READ access.",
@@ -843,6 +913,24 @@ isn't set then "acl" is used instead.`,
 				Help:  "Infrequent access storage mode.",
 			}},
 		}, {
+			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in Tencent COS.",
+			Provider: "TencentCOS",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "STANDARD",
+				Help:  "Standard storage class",
+			}, {
+				Value: "ARCHIVE",
+				Help:  "Archive storage mode.",
+			}, {
+				Value: "STANDARD_IA",
+				Help:  "Infrequent access storage mode.",
+			}},
+		}, {
 			// Mapping from here: https://www.scaleway.com/en/docs/object-storage-glacier/#-Scaleway-Storage-Classes
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in S3.",
@@ -975,7 +1063,7 @@ if false then rclone will use virtual path style. See [the AWS S3
 docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
 for more info.
 
-Some providers (eg AWS, Aliyun OSS or Netease COS) require this set to
+Some providers (eg AWS, Aliyun OSS, Netease COS or Tencent COS) require this set to
 false - rclone will do this automatically based on the provider
 setting.`,
 			Default:  true,
@@ -1305,7 +1393,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	if opt.Region == "" {
 		opt.Region = "us-east-1"
 	}
-	if opt.Provider == "AWS" || opt.Provider == "Alibaba" || opt.Provider == "Netease" || opt.Provider == "Scaleway" || opt.UseAccelerateEndpoint {
+	if opt.Provider == "AWS" || opt.Provider == "Alibaba" || opt.Provider == "Netease" || opt.Provider == "Scaleway" || opt.Provider == "TencentCOS" || opt.UseAccelerateEndpoint {
 		opt.ForcePathStyle = false
 	}
 	if opt.Provider == "Scaleway" && opt.MaxUploadParts > 1000 {
@@ -1587,7 +1675,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	//
 	// So we enable only on providers we know supports it properly, all others can retry when a
 	// XML Syntax error is detected.
-	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba" || f.opt.Provider == "Minio")
+	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba" || f.opt.Provider == "Minio" || f.opt.Provider == "TencentCOS")
 	for {
 		// FIXME need to implement ALL loop
 		req := s3.ListObjectsInput{
