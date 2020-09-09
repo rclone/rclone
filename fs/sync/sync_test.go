@@ -1851,38 +1851,51 @@ func TestSyncIgnoreCase(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2)
 }
 
-// Test that aborting on max upload works
-func TestAbort(t *testing.T) {
-	r := fstest.NewRun(t)
-	defer r.Finalise()
-
-	if r.Fremote.Name() != "local" {
-		t.Skip("This test only runs on local")
-	}
-
+// Test that aborting on --max-transfer works
+func TestMaxTransfer(t *testing.T) {
 	oldMaxTransfer := fs.Config.MaxTransfer
 	oldTransfers := fs.Config.Transfers
 	oldCheckers := fs.Config.Checkers
+	oldCutoff := fs.Config.CutoffMode
 	fs.Config.MaxTransfer = 3 * 1024
 	fs.Config.Transfers = 1
 	fs.Config.Checkers = 1
+	fs.Config.CutoffMode = fs.CutoffModeHard
 	defer func() {
 		fs.Config.MaxTransfer = oldMaxTransfer
 		fs.Config.Transfers = oldTransfers
 		fs.Config.Checkers = oldCheckers
+		fs.Config.CutoffMode = oldCutoff
 	}()
 
-	// Create file on source
-	file1 := r.WriteFile("file1", string(make([]byte, 5*1024)), t1)
-	file2 := r.WriteFile("file2", string(make([]byte, 2*1024)), t1)
-	file3 := r.WriteFile("file3", string(make([]byte, 3*1024)), t1)
-	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
-	fstest.CheckItems(t, r.Fremote)
+	test := func(t *testing.T, cutoff fs.CutoffMode) {
+		r := fstest.NewRun(t)
+		defer r.Finalise()
+		fs.Config.CutoffMode = cutoff
 
-	accounting.GlobalStats().ResetCounters()
+		if r.Fremote.Name() != "local" {
+			t.Skip("This test only runs on local")
+		}
 
-	err := Sync(context.Background(), r.Fremote, r.Flocal, false)
-	expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReachedFatal)
-	fserrors.Count(expectedErr)
-	assert.Equal(t, expectedErr, err)
+		// Create file on source
+		file1 := r.WriteFile("file1", string(make([]byte, 5*1024)), t1)
+		file2 := r.WriteFile("file2", string(make([]byte, 2*1024)), t1)
+		file3 := r.WriteFile("file3", string(make([]byte, 3*1024)), t1)
+		fstest.CheckItems(t, r.Flocal, file1, file2, file3)
+		fstest.CheckItems(t, r.Fremote)
+
+		accounting.GlobalStats().ResetCounters()
+
+		err := Sync(context.Background(), r.Fremote, r.Flocal, false)
+		expectedErr := fserrors.FsError(accounting.ErrorMaxTransferLimitReachedFatal)
+		if cutoff != fs.CutoffModeHard {
+			expectedErr = accounting.ErrorMaxTransferLimitReachedGraceful
+		}
+		fserrors.Count(expectedErr)
+		assert.Equal(t, expectedErr, err)
+	}
+
+	t.Run("Hard", func(t *testing.T) { test(t, fs.CutoffModeHard) })
+	t.Run("Soft", func(t *testing.T) { test(t, fs.CutoffModeSoft) })
+	t.Run("Cautious", func(t *testing.T) { test(t, fs.CutoffModeCautious) })
 }
