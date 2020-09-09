@@ -32,6 +32,8 @@ type syncCopyMove struct {
 	// internal state
 	ctx                    context.Context        // internal context for controlling go-routines
 	cancel                 func()                 // cancel the context
+	inCtx                  context.Context        // internal context for controlling march
+	inCancel               func()                 // cancel the march context
 	noTraverse             bool                   // if set don't traverse the dst
 	noCheckDest            bool                   // if set transfer all objects regardless without checking dst
 	noUnicodeNormalization bool                   // don't normalize unicode characters in filenames
@@ -144,6 +146,8 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	} else {
 		s.ctx, s.cancel = context.WithCancel(ctx)
 	}
+	// Input context - cancel this for graceful stop
+	s.inCtx, s.inCancel = context.WithCancel(s.ctx)
 	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
 		fs.Errorf(nil, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
@@ -248,6 +252,12 @@ func (s *syncCopyMove) processError(err error) {
 	}
 	if err == context.DeadlineExceeded {
 		err = fserrors.NoRetryError(err)
+	} else if err == accounting.ErrorMaxTransferLimitReachedGraceful {
+		if s.inCtx.Err() == nil {
+			fs.Logf(nil, "%v - stopping transfers", err)
+			// Cancel the march and stop the pipes
+			s.inCancel()
+		}
 	}
 	s.errorMu.Lock()
 	defer s.errorMu.Unlock()
@@ -287,7 +297,7 @@ func (s *syncCopyMove) currentError() error {
 func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		pair, ok := in.GetMax(s.ctx, fraction)
+		pair, ok := in.GetMax(s.inCtx, fraction)
 		if !ok {
 			return
 		}
@@ -343,7 +353,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 func (s *syncCopyMove) pairRenamer(in *pipe, out *pipe, fraction int, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
-		pair, ok := in.GetMax(s.ctx, fraction)
+		pair, ok := in.GetMax(s.inCtx, fraction)
 		if !ok {
 			return
 		}
@@ -363,7 +373,7 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 	defer wg.Done()
 	var err error
 	for {
-		pair, ok := in.GetMax(s.ctx, fraction)
+		pair, ok := in.GetMax(s.inCtx, fraction)
 		if !ok {
 			return
 		}
@@ -809,7 +819,7 @@ func (s *syncCopyMove) run() error {
 
 	// set up a march over fdst and fsrc
 	m := &march.March{
-		Ctx:                    s.ctx,
+		Ctx:                    s.inCtx,
 		Fdst:                   s.fdst,
 		Fsrc:                   s.fsrc,
 		Dir:                    s.dir,

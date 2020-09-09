@@ -26,6 +26,10 @@ var ErrorMaxTransferLimitReached = errors.New("Max transfer limit reached as set
 // transfer limit is reached.
 var ErrorMaxTransferLimitReachedFatal = fserrors.FatalError(ErrorMaxTransferLimitReached)
 
+// ErrorMaxTransferLimitReachedGraceful is returned from operations.Copy when the max
+// transfer limit is reached and a graceful stop is required.
+var ErrorMaxTransferLimitReachedGraceful = fserrors.NoRetryError(ErrorMaxTransferLimitReached)
+
 // Account limits and accounts for one transfer
 type Account struct {
 	stats *StatsInfo

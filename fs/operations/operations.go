@@ -363,7 +363,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		actionTaken = "Copied (server side copy)"
 		if fs.Config.MaxTransfer >= 0 && (accounting.Stats(ctx).GetBytes() >= int64(fs.Config.MaxTransfer) ||
 			(fs.Config.CutoffMode == fs.CutoffModeCautious && accounting.Stats(ctx).GetBytesWithPending()+src.Size() >= int64(fs.Config.MaxTransfer))) {
-			return nil, accounting.ErrorMaxTransferLimitReachedFatal
+			return nil, accounting.ErrorMaxTransferLimitReachedGraceful
 		}
 		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && f.Features().ServerSideAcrossConfigs)) {
 			in := tr.Account(ctx, nil) // account the transfer
