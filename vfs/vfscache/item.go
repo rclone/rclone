@@ -239,8 +239,23 @@ func (item *Item) _truncate(size int64) (err error) {
 	// Use open handle if available
 	fd := item.fd
 	if fd == nil {
+		// If the metadata says we have some blockes cached then the
+		// file should exist, so open without O_CREATE
+		oFlags := os.O_WRONLY
+		if item.info.Rs.Size() == 0 {
+			oFlags |= os.O_CREATE
+		}
 		osPath := item.c.toOSPath(item.name) // No locking in Cache
-		fd, err = file.OpenFile(osPath, os.O_CREATE|os.O_WRONLY, 0600)
+		fd, err = file.OpenFile(osPath, oFlags, 0600)
+		if err != nil && os.IsNotExist(err) {
+			// If the metadata has info but the file doesn't
+			// not exist then it has been externally removed
+			fs.Errorf(item.name, "vfs cache: detected external removal of cache file")
+			item.info.Rs = nil      // show we have no blocks cached
+			item.info.Dirty = false // file can't be dirty if it doesn't exist
+			item._removeMeta("cache file externally deleted")
+			fd, err = file.OpenFile(osPath, os.O_CREATE|os.O_WRONLY, 0600)
+		}
 		if err != nil {
 			return errors.Wrap(err, "vfs cache: truncate: failed to open cache file")
 		}
