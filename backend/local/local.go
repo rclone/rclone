@@ -1213,7 +1213,7 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		// Set the file to be a sparse file (important on Windows)
 		err = file.SetSparse(out)
 		if err != nil {
-			fs.Debugf(o, "Failed to set sparse: %v", err)
+			fs.Errorf(o, "Failed to set sparse: %v", err)
 		}
 	}
 

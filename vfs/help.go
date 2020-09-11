@@ -166,6 +166,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
 
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
+
 ### VFS Performance
 
 These flags may be used to enable/disable features of the VFS for

@@ -249,7 +249,7 @@ func (item *Item) _truncate(size int64) (err error) {
 
 		err = file.SetSparse(fd)
 		if err != nil {
-			fs.Debugf(item.name, "vfs cache: truncate: failed to set as a sparse file: %v", err)
+			fs.Errorf(item.name, "vfs cache: truncate: failed to set as a sparse file: %v", err)
 		}
 	}
 
@@ -446,7 +446,7 @@ func (item *Item) _createFile(osPath string) (err error) {
 	}
 	err = file.SetSparse(fd)
 	if err != nil {
-		fs.Debugf(item.name, "vfs cache: failed to set as a sparse file: %v", err)
+		fs.Errorf(item.name, "vfs cache: failed to set as a sparse file: %v", err)
 	}
 	item.fd = fd
 
