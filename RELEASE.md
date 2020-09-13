@@ -21,7 +21,7 @@ This file describes how to make the various kinds of releases
   * git status - to check for new man pages - git add them
   * git commit -a -v -m "Version v1.XX.0"
   * make retag
-  * git push --tags origin master
+  * git push --follow-tags origin
   * # Wait for the GitHub builds to complete then...
   * make fetch_binaries
   * make tarball
@@ -65,7 +65,7 @@ Now
   * git cherry-pick any fixes
   * Do the steps as above
   * make startstable
-  * NB this overwrites the current beta so we need to do this - FIXME is this true any more?
+  * NB this overwrites the current beta so we need to do this
   * git co master
   * # cherry pick the changes to the changelog
   * git checkout ${BASE_TAG}-stable docs/content/changelog.md
