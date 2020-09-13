@@ -40,7 +40,7 @@ the source match the files in the destination, not the other way
 around. This means that extra files in the destination that are not in
 the source will not be detected.
 
-The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--src-only`
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match`
 and `--error` flags write paths, one per line, to the file name (or
 stdout if it is `-`) supplied. What they write is described in the
 help below. For example `--differ` will write all paths which are

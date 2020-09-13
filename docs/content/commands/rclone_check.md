@@ -29,7 +29,7 @@ the source match the files in the destination, not the other way
 around. This means that extra files in the destination that are not in
 the source will not be detected.
 
-The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--src-only`
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match`
 and `--error` flags write paths, one per line, to the file name (or
 stdout if it is `-`) supplied. What they write is described in the
 help below. For example `--differ` will write all paths which are
@@ -55,6 +55,7 @@ rclone check source:path dest:path [flags]
 ```
       --combined string         Make a combined report of changes to this file
       --differ string           Report all non-matching files to this file
+      --download                Check by downloading rather than with hash.
       --error string            Report all files with errors (hashing or reading) to this file
   -h, --help                    help for check
       --match string            Report all matching files to this file

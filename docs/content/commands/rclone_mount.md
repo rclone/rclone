@@ -49,6 +49,9 @@ Stopping the mount manually:
     # OS X
     umount /path/to/local/mount
 
+**Note**: As of `rclone` 1.52.2, `rclone mount` now requires Go version 1.13
+or newer on some platforms depending on the underlying FUSE library in use.
+
 ## Installing on Windows
 
 To run rclone mount on Windows, you will need to
@@ -356,6 +359,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
+
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
 
 ## VFS Performance
 

@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Sep 02, 2020
+% Sep 13, 2020
 
 # Rclone syncs your files to cloud storage
 
@@ -146,6 +146,7 @@ WebDAV or S3, that work out of the box.)
 - StackPath
 - SugarSync
 - Tardigrade
+- Tencent Cloud Object Storage (COS)
 - Wasabi
 - WebDAV
 - Yandex Disk
@@ -503,7 +504,7 @@ See the [global flags page](https://rclone.org/flags/) for global options not li
 
 # rclone copy
 
-Copy files from source to dest, skipping already copied
+Copy files from source to dest, skipping already copied.
 
 ## Synopsis
 
@@ -833,7 +834,7 @@ the source match the files in the destination, not the other way
 around. This means that extra files in the destination that are not in
 the source will not be detected.
 
-The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--src-only`
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match`
 and `--error` flags write paths, one per line, to the file name (or
 stdout if it is `-`) supplied. What they write is described in the
 help below. For example `--differ` will write all paths which are
@@ -859,6 +860,7 @@ rclone check source:path dest:path [flags]
 ```
       --combined string         Make a combined report of changes to this file
       --differ string           Report all non-matching files to this file
+      --download                Check by downloading rather than with hash.
       --error string            Report all files with errors (hashing or reading) to this file
   -h, --help                    help for check
       --match string            Report all matching files to this file
@@ -1191,7 +1193,7 @@ See the [global flags page](https://rclone.org/flags/) for global options not li
 
 # rclone cleanup
 
-Clean up the remote if possible
+Clean up the remote if possible.
 
 ## Synopsis
 
@@ -1915,7 +1917,7 @@ See the [global flags page](https://rclone.org/flags/) for global options not li
 
 # rclone copyto
 
-Copy files from source to dest, skipping already copied
+Copy files from source to dest, skipping already copied.
 
 ## Synopsis
 
@@ -2040,7 +2042,7 @@ the source match the files in the destination, not the other way
 around. This means that extra files in the destination that are not in
 the source will not be detected.
 
-The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--src-only`
+The `--differ`, `--missing-on-dst`, `--missing-on-src`, `--match`
 and `--error` flags write paths, one per line, to the file name (or
 stdout if it is `-`) supplied. What they write is described in the
 help below. For example `--differ` will write all paths which are
@@ -2434,7 +2436,7 @@ See the [global flags page](https://rclone.org/flags/) for global options not li
 
 # rclone lsf
 
-List directories and objects in remote:path formatted for parsing
+List directories and objects in remote:path formatted for parsing.
 
 ## Synopsis
 
@@ -2744,6 +2746,9 @@ Stopping the mount manually:
     # OS X
     umount /path/to/local/mount
 
+**Note**: As of `rclone` 1.52.2, `rclone mount` now requires Go version 1.13
+or newer on some platforms depending on the underlying FUSE library in use.
+
 ## Installing on Windows
 
 To run rclone mount on Windows, you will need to
@@ -3052,6 +3057,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
 
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
+
 ## VFS Performance
 
 These flags may be used to enable/disable features of the VFS for
@@ -3289,7 +3299,7 @@ See the [global flags page](https://rclone.org/flags/) for global options not li
 
 # rclone obscure
 
-Obscure password for use in the rclone config file
+Obscure password for use in the rclone config file.
 
 ## Synopsis
 
@@ -3754,6 +3764,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
 
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
+
 ## VFS Performance
 
 These flags may be used to enable/disable features of the VFS for
@@ -4055,6 +4070,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
+
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
 
 ## VFS Performance
 
@@ -4513,6 +4533,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
+
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
 
 ## VFS Performance
 
@@ -5035,6 +5060,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
 
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
+
 ## VFS Performance
 
 These flags may be used to enable/disable features of the VFS for
@@ -5501,6 +5531,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
+
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
 
 ## VFS Performance
 
@@ -6501,6 +6536,8 @@ Log all of rclone's output to FILE.  This is not active by default.
 This can be useful for tracking down problems with syncs in
 combination with the `-v` flag.  See the [Logging section](#logging)
 for more info.
+
+If FILE exists then rclone will append to it.
 
 Note that if you are using the `logrotate` program to manage rclone's
 logs, then you should use the `copytruncate` option as rclone doesn't
@@ -8893,6 +8930,8 @@ OR
 	"result": "<Raw command line output>"
 }
 
+```
+
 **Authentication is required for this call.**
 
 ### core/gc: Runs a garbage collection. {#core-gc}
@@ -9568,7 +9607,7 @@ This allows you to remove a plugin using it's name
 
 This takes parameters
 
-- name: name of the plugin in the format <author>/<plugin_name>
+- name: name of the plugin in the format `author`/`plugin_name`
 
 Eg
 
@@ -9582,7 +9621,7 @@ This allows you to remove a plugin using it's name
 
 This takes the following parameters
 
-- name: name of the plugin in the format <author>/<plugin_name>
+- name: name of the plugin in the format `author`/`plugin_name`
 
 Eg
 
@@ -10527,7 +10566,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -10626,7 +10665,7 @@ and may be set in the config file.
       --drive-auth-owner-only                                    Only consider files owned by the authenticated user.
       --drive-auth-url string                                    Auth server URL.
       --drive-chunk-size SizeSuffix                              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
-      --drive-client-id string                                   OAuth Client Id
+      --drive-client-id string                                   Google Application Client Id
       --drive-client-secret string                               OAuth Client Secret
       --drive-disable-http2                                      Disable drive using http2 (default true)
       --drive-encoding MultiEncoder                              This sets the encoding for the backend. (default InvalidUtf8)
@@ -11475,6 +11514,7 @@ The S3 backend can be used with a number of different providers:
 - Minio
 - Scaleway
 - StackPath
+- Tencent Cloud Object Storage (COS)
 - Wasabi
 
 
@@ -11912,7 +11952,7 @@ Vault API, so rclone cannot directly access Glacier Vaults.
 
 ### Standard Options
 
-Here are the standard options specific to s3 (Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, etc)).
+Here are the standard options specific to s3 (Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, Tencent COS, etc)).
 
 #### --s3-provider
 
@@ -11943,6 +11983,8 @@ Choose your S3 provider.
         - Scaleway Object Storage
     - "StackPath"
         - StackPath Object Storage
+    - "TencentCOS"
+        - Tencent Cloud Object Storage (COS)
     - "Wasabi"
         - Wasabi Object Storage
     - "Other"
@@ -12296,6 +12338,54 @@ Endpoint for StackPath Object Storage.
 
 #### --s3-endpoint
 
+Endpoint for Tencent COS API.
+
+- Config:      endpoint
+- Env Var:     RCLONE_S3_ENDPOINT
+- Type:        string
+- Default:     ""
+- Examples:
+    - "cos.ap-beijing.myqcloud.com"
+        - Beijing Region.
+    - "cos.ap-nanjing.myqcloud.com"
+        - Nanjing Region.
+    - "cos.ap-shanghai.myqcloud.com"
+        - Shanghai Region.
+    - "cos.ap-guangzhou.myqcloud.com"
+        - Guangzhou Region.
+    - "cos.ap-nanjing.myqcloud.com"
+        - Nanjing Region.
+    - "cos.ap-chengdu.myqcloud.com"
+        - Chengdu Region.
+    - "cos.ap-chongqing.myqcloud.com"
+        - Chongqing Region.
+    - "cos.ap-hongkong.myqcloud.com"
+        - Hong Kong (China) Region.
+    - "cos.ap-singapore.myqcloud.com"
+        - Singapore Region.
+    - "cos.ap-mumbai.myqcloud.com"
+        - Mumbai Region.
+    - "cos.ap-seoul.myqcloud.com"
+        - Seoul Region.
+    - "cos.ap-bangkok.myqcloud.com"
+        - Bangkok Region.
+    - "cos.ap-tokyo.myqcloud.com"
+        - Tokyo Region.
+    - "cos.na-siliconvalley.myqcloud.com"
+        - Silicon Valley Region.
+    - "cos.na-ashburn.myqcloud.com"
+        - Virginia Region.
+    - "cos.na-toronto.myqcloud.com"
+        - Toronto Region.
+    - "cos.eu-frankfurt.myqcloud.com"
+        - Frankfurt Region.
+    - "cos.eu-moscow.myqcloud.com"
+        - Moscow Region.
+    - "cos.accelerate.myqcloud.com"
+        - Use Tencent COS Accelerate Endpoint.
+
+#### --s3-endpoint
+
 Endpoint for S3 API.
 Required when using an S3 clone.
 
@@ -12463,6 +12553,8 @@ doesn't copy the ACL from the source but rather writes a fresh one.
 - Type:        string
 - Default:     ""
 - Examples:
+    - "default"
+        - Owner gets Full_CONTROL. No one else has access rights (default).
     - "private"
         - Owner gets FULL_CONTROL. No one else has access rights (default).
     - "public-read"
@@ -12563,6 +12655,24 @@ The storage class to use when storing new objects in OSS.
 
 #### --s3-storage-class
 
+The storage class to use when storing new objects in Tencent COS.
+
+- Config:      storage_class
+- Env Var:     RCLONE_S3_STORAGE_CLASS
+- Type:        string
+- Default:     ""
+- Examples:
+    - ""
+        - Default
+    - "STANDARD"
+        - Standard storage class
+    - "ARCHIVE"
+        - Archive storage mode.
+    - "STANDARD_IA"
+        - Infrequent access storage mode.
+
+#### --s3-storage-class
+
 The storage class to use when storing new objects in S3.
 
 - Config:      storage_class
@@ -12579,7 +12689,7 @@ The storage class to use when storing new objects in S3.
 
 ### Advanced Options
 
-Here are the advanced options specific to s3 (Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, etc)).
+Here are the advanced options specific to s3 (Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, Tencent COS, etc)).
 
 #### --s3-bucket-acl
 
@@ -12800,7 +12910,7 @@ if false then rclone will use virtual path style. See [the AWS S3
 docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
 for more info.
 
-Some providers (eg AWS, Aliyun OSS or Netease COS) require this set to
+Some providers (eg AWS, Aliyun OSS, Netease COS or Tencent COS) require this set to
 false - rclone will do this automatically based on the provider
 setting.
 
@@ -13667,6 +13777,138 @@ y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
 y/e/d> y
+```
+
+### Tencent COS {#tencent-cos}
+
+[Tencent Cloud Object Storage (COS)](https://intl.cloud.tencent.com/product/cos) is a distributed storage service offered by Tencent Cloud for unstructured data. It is secure, stable, massive, convenient, low-delay and low-cost.
+
+To configure access to Tencent COS, follow the steps below:
+
+1. Run `rclone config` and select `n` for a new remote.
+
+```
+rclone config
+No remotes found - make a new one
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+```
+
+2. Give the name of the configuration. For example, name it 'cos'.
+
+```
+name> cos
+```
+
+3. Select `s3` storage.
+
+```
+Choose a number from below, or type in your own value
+1 / 1Fichier
+   \ "fichier"
+ 2 / Alias for an existing remote
+   \ "alias"
+ 3 / Amazon Drive
+   \ "amazon cloud drive"
+ 4 / Amazon S3 Compliant Storage Provider (AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, Tencent COS, etc)
+   \ "s3"
+[snip]
+Storage> s3
+```
+
+4. Select `TencentCOS` provider.
+```
+Choose a number from below, or type in your own value
+1 / Amazon Web Services (AWS) S3
+   \ "AWS"
+[snip]
+11 / Tencent Cloud Object Storage (COS)
+   \ "TencentCOS"
+[snip]
+provider> TencentCOS
+```
+
+5. Enter your SecretId and SecretKey of Tencent Cloud.
+
+```
+Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).
+Only applies if access_key_id and secret_access_key is blank.
+Enter a boolean value (true or false). Press Enter for the default ("false").
+Choose a number from below, or type in your own value
+ 1 / Enter AWS credentials in the next step
+   \ "false"
+ 2 / Get AWS credentials from the environment (env vars or IAM)
+   \ "true"
+env_auth> 1
+AWS Access Key ID.
+Leave blank for anonymous access or runtime credentials.
+Enter a string value. Press Enter for the default ("").
+access_key_id> AKIDxxxxxxxxxx
+AWS Secret Access Key (password)
+Leave blank for anonymous access or runtime credentials.
+Enter a string value. Press Enter for the default ("").
+secret_access_key> xxxxxxxxxxx
+```
+
+6. Select endpoint for Tencent COS. This is the standard endpoint for different region.
+
+```
+ 1 / Beijing Region.
+   \ "cos.ap-beijing.myqcloud.com"
+ 2 / Nanjing Region.
+   \ "cos.ap-nanjing.myqcloud.com"
+ 3 / Shanghai Region.
+   \ "cos.ap-shanghai.myqcloud.com"
+ 4 / Guangzhou Region.
+   \ "cos.ap-guangzhou.myqcloud.com"
+[snip]
+endpoint> 4
+```
+
+7. Choose acl and storage class.
+
+```
+Note that this ACL is applied when server side copying objects as S3
+doesn't copy the ACL from the source but rather writes a fresh one.
+Enter a string value. Press Enter for the default ("").
+Choose a number from below, or type in your own value
+ 1 / Owner gets Full_CONTROL. No one else has access rights (default).
+   \ "default"
+[snip]
+acl> 1
+The storage class to use when storing new objects in Tencent COS.
+Enter a string value. Press Enter for the default ("").
+Choose a number from below, or type in your own value
+ 1 / Default
+   \ ""
+[snip]
+storage_class> 1
+Edit advanced config? (y/n)
+y) Yes
+n) No (default)
+y/n> n
+Remote config
+--------------------
+[cos]
+type = s3
+provider = TencentCOS
+env_auth = false
+access_key_id = xxx
+secret_access_key = xxx
+endpoint = cos.ap-guangzhou.myqcloud.com
+acl = default
+--------------------
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+Current remotes:
+
+Name                 Type
+====                 ====
+cos                  s3
 ```
 
 ### Netease NOS  ###
@@ -17997,8 +18239,10 @@ Here are the standard options specific to drive (Google Drive).
 
 #### --drive-client-id
 
-OAuth Client Id
-Leave blank normally.
+Google Application Client Id
+Setting your own is recommended.
+See https://rclone.org/drive/#making-your-own-client-id for how to create your own.
+If you leave this blank, it will use an internal key which is low performance.
 
 - Config:      client_id
 - Env Var:     RCLONE_DRIVE_CLIENT_ID
@@ -19688,8 +19932,13 @@ flag.
 Note that Jottacloud requires the MD5 hash before upload so if the
 source does not have an MD5 checksum then the file will be cached
 temporarily on disk (wherever the `TMPDIR` environment variable points
-to) before it is uploaded.  Small files will be cached in memory - see
+to) before it is uploaded. Small files will be cached in memory - see
 the [--jottacloud-md5-memory-limit](#jottacloud-md5-memory-limit) flag.
+When uploading from local disk the source checksum is always available,
+so this does not apply. Starting with rclone version 1.52 the same is
+true for crypted remotes (in older versions the crypt backend would not
+calculate hashes for uploads from local disk, so the Jottacloud
+backend had to do it as described above).
 
 #### Restricted filename characters
 
@@ -25431,6 +25680,36 @@ Options:
 
 
 # Changelog
+
+## v1.53.1 - 2020-09-13
+
+[See commits](https://github.com/rclone/rclone/compare/v1.53.0...v1.53.1)
+
+* Bug Fixes
+    * accounting: Remove new line from end of --stats-one-line display (Nick Craig-Wood)
+    * check
+        * Add back missing --download flag (Nick Craig-Wood)
+        * Fix docs (Nick Craig-Wood)
+    * docs
+        * Note --log-file does append (Nick Craig-Wood)
+        * Add full stops for consistency in rclone --help (edwardxml)
+        * Add Tencent COS to s3 provider list (wjielai)
+        * Updated mount command to reflect that it requires Go 1.13 or newer (Evan Harris)
+        * jottacloud: Mention that uploads from local disk will not need to cache files to disk for md5 calculation (albertony)
+        * Fix formatting of rc docs page (Nick Craig-Wood)
+    * build
+        * Include vendor tar ball in release and fix startdev (Nick Craig-Wood)
+        * Fix "Illegal instruction" error for ARMv6 builds (Nick Craig-Wood)
+        * Fix architecture name in ARMv7 build (Nick Craig-Wood)
+* VFS
+    * Fix spurious error "vfs cache: failed to _ensure cache EOF" (Nick Craig-Wood)
+    * Log an ERROR if we fail to set the file to be sparse (Nick Craig-Wood)
+* Local
+    * Log an ERROR if we fail to set the file to be sparse (Nick Craig-Wood)
+* Drive
+    * Re-adds special oauth help text (Tim Gallant)
+* Opendrive
+    * Do not retry 400 errors (Evan Harris)
 
 ## v1.53.0 - 2020-09-02
 

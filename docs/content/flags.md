@@ -147,7 +147,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -246,7 +246,7 @@ and may be set in the config file.
       --drive-auth-owner-only                                    Only consider files owned by the authenticated user.
       --drive-auth-url string                                    Auth server URL.
       --drive-chunk-size SizeSuffix                              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
-      --drive-client-id string                                   OAuth Client Id
+      --drive-client-id string                                   Google Application Client Id
       --drive-client-secret string                               OAuth Client Secret
       --drive-disable-http2                                      Disable drive using http2 (default true)
       --drive-encoding MultiEncoder                              This sets the encoding for the backend. (default InvalidUtf8)

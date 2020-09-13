@@ -5,6 +5,36 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.53.1 - 2020-09-13
+
+[See commits](https://github.com/rclone/rclone/compare/v1.53.0...v1.53.1)
+
+* Bug Fixes
+    * accounting: Remove new line from end of --stats-one-line display (Nick Craig-Wood)
+    * check
+        * Add back missing --download flag (Nick Craig-Wood)
+        * Fix docs (Nick Craig-Wood)
+    * docs
+        * Note --log-file does append (Nick Craig-Wood)
+        * Add full stops for consistency in rclone --help (edwardxml)
+        * Add Tencent COS to s3 provider list (wjielai)
+        * Updated mount command to reflect that it requires Go 1.13 or newer (Evan Harris)
+        * jottacloud: Mention that uploads from local disk will not need to cache files to disk for md5 calculation (albertony)
+        * Fix formatting of rc docs page (Nick Craig-Wood)
+    * build
+        * Include vendor tar ball in release and fix startdev (Nick Craig-Wood)
+        * Fix "Illegal instruction" error for ARMv6 builds (Nick Craig-Wood)
+        * Fix architecture name in ARMv7 build (Nick Craig-Wood)
+* VFS
+    * Fix spurious error "vfs cache: failed to _ensure cache EOF" (Nick Craig-Wood)
+    * Log an ERROR if we fail to set the file to be sparse (Nick Craig-Wood)
+* Local
+    * Log an ERROR if we fail to set the file to be sparse (Nick Craig-Wood)
+* Drive
+    * Re-adds special oauth help text (Tim Gallant)
+* Opendrive
+    * Do not retry 400 errors (Evan Harris)
+
 ## v1.53.0 - 2020-09-02
 
 [See commits](https://github.com/rclone/rclone/compare/v1.52.0...v1.53.0)
