@@ -238,6 +238,8 @@ github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M
 github.com/jlaffaye/ftp v0.0.0-20190624084859-c1312a7102bf/go.mod h1:lli8NYPQOFy3O++YmYbqVgOcQ1JPCwdOy+5zSjKJ9qY=
 github.com/jlaffaye/ftp v0.0.0-20200720194710-13949d38913e h1:itZyHiOkiB8mIGouegRNLM9LttGQ3yrgRmp/J/6H/0g=
 github.com/jlaffaye/ftp v0.0.0-20200720194710-13949d38913e/go.mod h1:2lmrmq866uF2tnje75wQHzmPXhmSWUt7Gyx2vgK1RCU=
+github.com/jlaffaye/ftp v0.0.0-20200812143550-39e3779af0db h1:e30IC+OuZIeMVK33/zE7wDvxDaRmGuRt/ps67pzcxAw=
+github.com/jlaffaye/ftp v0.0.0-20200812143550-39e3779af0db/go.mod h1:2lmrmq866uF2tnje75wQHzmPXhmSWUt7Gyx2vgK1RCU=
 github.com/jmespath/go-jmespath v0.3.0 h1:OS12ieG61fsCg5+qLJ+SsW9NicxNkg3b25OyT2yCeUc=
 github.com/jmespath/go-jmespath v0.3.0/go.mod h1:9QtRXoHjLGCJ5IBSaohpXITPlowMeeYCZ7fLUTSywik=
 github.com/jonboulle/clockwork v0.1.0/go.mod h1:Ii8DK3G1RaLaWxj9trq07+26W01tbo22gdxWY5EU2bo=
@@ -306,6 +308,16 @@ github.com/modern-go/reflect2 v1.0.1 h1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/mschoch/smat v0.0.0-20160514031455-90eadee771ae/go.mod h1:qAyveg+e4CE+eKJXWVjKXM4ck2QobLqTDytGJbLLhJg=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
+github.com/ncw/ftp v0.0.0-20200910202626-83bf7f3051fe h1:vJHusE940z05SKcdSy67YvPeZi9DkV7k1awGFKhCwXs=
+github.com/ncw/ftp v0.0.0-20200910202626-83bf7f3051fe/go.mod h1:2lmrmq866uF2tnje75wQHzmPXhmSWUt7Gyx2vgK1RCU=
+github.com/ncw/ftp v0.0.0-20200911161945-13c89676f4e4 h1:eLu30+/U5nLCkFegOUsGTFJ7wojikvdNESGEmA3ZnuM=
+github.com/ncw/ftp v0.0.0-20200911161945-13c89676f4e4/go.mod h1:2lmrmq866uF2tnje75wQHzmPXhmSWUt7Gyx2vgK1RCU=
+github.com/ncw/ftp v0.0.0-20200912103546-f95f53b8ef3e h1:UUzL92dVtNe6OQfRo+xxubN4Mj+chJro87Qa0bM+3Kg=
+github.com/ncw/ftp v0.0.0-20200912103546-f95f53b8ef3e/go.mod h1:2lmrmq866uF2tnje75wQHzmPXhmSWUt7Gyx2vgK1RCU=
+github.com/ncw/ftp v0.0.0-20200913095915-9bc640dd2108 h1:SBBlbVBRqSAb4KBfpQkevTEAmWOsX8exrX3XxNY/QOQ=
+github.com/ncw/ftp v0.0.0-20200913095915-9bc640dd2108/go.mod h1:2lmrmq866uF2tnje75wQHzmPXhmSWUt7Gyx2vgK1RCU=
+github.com/ncw/ftp v0.0.0-20200913100848-1d4a278dbc96 h1:DIvfe9Wqr8cuJulz8+guLCGyZRO22MDRjCk4fTvJ+7U=
+github.com/ncw/ftp v0.0.0-20200913100848-1d4a278dbc96/go.mod h1:2lmrmq866uF2tnje75wQHzmPXhmSWUt7Gyx2vgK1RCU=
 github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2 h1:VlXvEx6JbFp7F9iz92zXP2Ew+9VupSpfybr+TxmjdH0=
 github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2/go.mod h1:MLIrzg7gp/kzVBxRE1olT7CWYMCklcUWU+ekoxOD9x0=
 github.com/ncw/swift v1.0.52 h1:ACF3JufDGgeKp/9mrDgQlEgS8kRYC4XKcuzj/8EJjQU=

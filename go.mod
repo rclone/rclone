@@ -72,3 +72,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 	storj.io/uplink v1.2.0
 )
+
+replace github.com/jlaffaye/ftp => github.com/ncw/ftp v0.0.0-20200913100848-1d4a278dbc96
