@@ -712,10 +712,10 @@ func (f *Fs) getRootID() (string, error) {
 // If the user fn ever returns true then it early exits with found = true
 //
 // Search params: https://developers.google.com/drive/search-parameters
-func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directoriesOnly, filesOnly, includeAll bool, fn listFn) (found bool, err error) {
+func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directoriesOnly, filesOnly, trashedOnly, includeAll bool, fn listFn) (found bool, err error) {
 	var query []string
 	if !includeAll {
-		q := "trashed=" + strconv.FormatBool(f.opt.TrashedOnly)
+		q := "trashed=" + strconv.FormatBool(trashedOnly)
 		if f.opt.TrashedOnly {
 			q = fmt.Sprintf("(mimeType='%s' or %s)", driveFolderType, q)
 		}
@@ -1394,7 +1394,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
 	pathID = actualID(pathID)
-	found, err = f.list(ctx, []string{pathID}, leaf, true, false, false, func(item *drive.File) bool {
+	found, err = f.list(ctx, []string{pathID}, leaf, true, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			_, exportName, _, isDocument := f.findExportFormat(item)
 			if exportName == leaf {
@@ -1587,7 +1587,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	directoryID = actualID(directoryID)
 
 	var iErr error
-	_, err = f.list(ctx, []string{directoryID}, "", false, false, false, func(item *drive.File) bool {
+	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 		entry, err := f.itemToDirEntry(path.Join(dir, item.Name), item)
 		if err != nil {
 			iErr = err
@@ -1672,7 +1672,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 		listRSlices{dirs, paths}.Sort()
 		var iErr error
 		foundItems := false
-		_, err := f.list(ctx, dirs, "", false, false, false, func(item *drive.File) bool {
+		_, err := f.list(ctx, dirs, "", false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 			// shared with me items have no parents when at the root
 			if f.opt.SharedWithMe && len(item.Parents) == 0 && len(paths) == 1 && paths[0] == "" {
 				item.Parents = dirs
@@ -2147,7 +2147,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	for _, srcDir := range dirs[1:] {
 		// list the objects
 		infos := []*drive.File{}
-		_, err := f.list(ctx, []string{srcDir.ID()}, "", false, false, true, func(info *drive.File) bool {
+		_, err := f.list(ctx, []string{srcDir.ID()}, "", false, false, f.opt.TrashedOnly, true, func(info *drive.File) bool {
 			infos = append(infos, info)
 			return false
 		})
@@ -2225,7 +2225,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}
 	var trashedFiles = false
 	if check {
-		found, err := f.list(ctx, []string{directoryID}, "", false, false, true, func(item *drive.File) bool {
+		found, err := f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, func(item *drive.File) bool {
 			if !item.Trashed {
 				fs.Debugf(dir, "Rmdir: contains file: %q", item.Name)
 				return true
@@ -2385,8 +2385,57 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, false)
 }
 
+type cleanupResult struct {
+	Errors int
+}
+
+func (r cleanupResult) Error() string {
+	return fmt.Sprintf("%d errors during cleanup - see log", r.Errors)
+}
+
+func (f *Fs) cleanupTeamDrive(ctx context.Context, dir string, directoryID string) (r cleanupResult, err error) {
+	_, err = f.list(ctx, []string{directoryID}, "", false, false, true, false, func(item *drive.File) bool {
+		remote := path.Join(dir, item.Name)
+		if item.ExplicitlyTrashed { // description is wrong - can also be set for folders - no need to recurse them
+			err := f.delete(ctx, item.Id, false)
+			if err != nil {
+				r.Errors++
+				fs.Errorf(remote, "%v", err)
+			}
+			return false
+		}
+
+		if item.MimeType == driveFolderType {
+			if !isShortcutID(item.Id) {
+				rNew, _ := f.cleanupTeamDrive(ctx, remote, item.Id)
+				r.Errors += rNew.Errors
+			}
+			return false
+		}
+		return false
+	})
+	if err != nil {
+		err = errors.Wrap(err, "failed to list directory")
+		r.Errors++
+		fs.Errorf(dir, "%v", err)
+	}
+	if r.Errors != 0 {
+		return r, r
+	}
+	return r, nil
+}
+
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) error {
+	if f.isTeamDrive {
+		directoryID, err := f.dirCache.FindDir(ctx, "", false)
+		if err != nil {
+			return err
+		}
+		directoryID = actualID(directoryID)
+		_, err = f.cleanupTeamDrive(ctx, "", directoryID)
+		return err
+	}
 	err := f.pacer.Call(func() (bool, error) {
 		err := f.svc.Files.EmptyTrash().Context(ctx).Do()
 		return f.shouldRetry(err)
@@ -2921,7 +2970,7 @@ func (r unTrashResult) Error() string {
 func (f *Fs) unTrash(ctx context.Context, dir string, directoryID string, recurse bool) (r unTrashResult, err error) {
 	directoryID = actualID(directoryID)
 	fs.Debugf(dir, "finding trash to restore in directory %q", directoryID)
-	_, err = f.list(ctx, []string{directoryID}, "", false, false, true, func(item *drive.File) bool {
+	_, err = f.list(ctx, []string{directoryID}, "", false, false, f.opt.TrashedOnly, true, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
 		if item.ExplicitlyTrashed {
 			fs.Infof(remote, "restoring %q", item.Id)
@@ -3283,7 +3332,7 @@ func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 	}
 	directoryID = actualID(directoryID)
 
-	found, err := f.list(ctx, []string{directoryID}, leaf, false, false, false, func(item *drive.File) bool {
+	found, err := f.list(ctx, []string{directoryID}, leaf, false, false, f.opt.TrashedOnly, false, func(item *drive.File) bool {
 		if !f.opt.SkipGdocs {
 			extension, exportName, exportMimeType, isDocument = f.findExportFormat(item)
 			if exportName == leaf {
