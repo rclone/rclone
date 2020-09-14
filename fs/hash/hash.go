@@ -238,6 +238,15 @@ func (m *MultiHasher) Sums() map[Type]string {
 	return dst
 }
 
+// Sum returns the specified hash from the multihasher
+func (m *MultiHasher) Sum(hashType Type) ([]byte, error) {
+	h, ok := m.h[hashType]
+	if !ok {
+		return nil, ErrUnsupported
+	}
+	return h.Sum(nil), nil
+}
+
 // Size returns the number of bytes written
 func (m *MultiHasher) Size() int64 {
 	return m.size
