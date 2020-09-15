@@ -43,6 +43,13 @@ import (
 // be taken before Item.mu. writeback may call into Item but Item may
 // **not** call writeback methods with Item.mu held
 
+// LL Item reset is invoked by cache cleaner for synchronous recovery
+// from ENOSPC errors. The reset operation removes the cache file and
+// closes/reopens the downloaders.  Although most parts of reset and
+// other item operations are done with the item mutex held, the mutex
+// is released during fd.WriteAt and downloaders calls. We use preAccess
+// and postAccess calls to serialize reset and other item operations.
+
 // Item is stored in the item map
 //
 // The Info field is written to the backing store to store status
@@ -310,6 +317,8 @@ func (item *Item) _truncateToCurrentSize() (err error) {
 // extended and the extended data will be filled with zeros. The
 // object will be marked as dirty in this case also.
 func (item *Item) Truncate(size int64) (err error) {
+	item.preAccess()
+	defer item.postAccess()
 	item.mu.Lock()
 	defer item.mu.Unlock()
 
@@ -429,6 +438,8 @@ func (item *Item) _dirty() {
 
 // Dirty marks the item as changed and needing writeback
 func (item *Item) Dirty() {
+	item.preAccess()
+	defer item.postAccess()
 	item.mu.Lock()
 	item._dirty()
 	item.mu.Unlock()
@@ -612,6 +623,8 @@ func (item *Item) store(ctx context.Context, storeFn StoreFn) (err error) {
 // Close the cache file
 func (item *Item) Close(storeFn StoreFn) (err error) {
 	// defer log.Trace(item.o, "Item.Close")("err=%v", &err)
+	item.preAccess()
+	defer item.postAccess()
 	var (
 		downloaders   *downloaders.Downloaders
 		syncWriteBack = item.c.opt.WriteBack <= 0
@@ -1213,6 +1226,8 @@ func (item *Item) readAt(b []byte, off int64) (n int, err error) {
 
 // WriteAt bytes to the file at off
 func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
+	item.preAccess()
+	defer item.postAccess()
 	item.mu.Lock()
 	if item.fd == nil {
 		item.mu.Unlock()
@@ -1303,6 +1318,8 @@ func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, e
 // this means flushing the file system's in-memory copy of recently written
 // data to disk.
 func (item *Item) Sync() (err error) {
+	item.preAccess()
+	defer item.postAccess()
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	if item.fd == nil {
@@ -1322,6 +1339,8 @@ func (item *Item) Sync() (err error) {
 
 // rename the item
 func (item *Item) rename(name string, newName string, newObj fs.Object) (err error) {
+	item.preAccess()
+	defer item.postAccess()
 	item.mu.Lock()
 
 	// stop downloader
@@ -1351,6 +1370,5 @@ func (item *Item) rename(name string, newName string, newObj fs.Object) (err err
 		_ = downloaders.Close(nil)
 	}
 	item.c.writeback.Rename(id, newName)
-
 	return err
 }
