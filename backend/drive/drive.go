@@ -35,6 +35,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
@@ -2959,6 +2960,38 @@ func (f *Fs) unTrashDir(ctx context.Context, dir string, recurse bool) (r unTras
 	return f.unTrash(ctx, dir, directoryID, true)
 }
 
+// copy file with id to dest
+func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
+	info, err := f.getFile(id, f.fileFields)
+	if err != nil {
+		return errors.Wrap(err, "couldn't find id")
+	}
+	if info.MimeType == driveFolderType {
+		return errors.Errorf("can't copy directory use: rclone copy --drive-root-folder-id %s %s %s", id, fs.ConfigString(f), dest)
+	}
+	info.Name = f.opt.Enc.ToStandardName(info.Name)
+	o, err := f.newObjectWithInfo(info.Name, info)
+	if err != nil {
+		return err
+	}
+	destDir, destLeaf, err := fspath.Split(dest)
+	if err != nil {
+		return err
+	}
+	if destLeaf == "" {
+		destLeaf = info.Name
+	}
+	dstFs, err := cache.Get(destDir)
+	if err != nil {
+		return err
+	}
+	_, err = operations.Copy(ctx, dstFs, nil, destLeaf, o)
+	if err != nil {
+		return errors.Wrap(err, "copy failed")
+	}
+	return nil
+}
+
 var commandHelp = []fs.CommandHelp{{
 	Name:  "get",
 	Short: "Get command for fetching the drive config parameters",
@@ -3059,6 +3092,29 @@ Result:
         "Errors": 0
     }
 `,
+}, {
+	Name:  "copyid",
+	Short: "Copy files by ID",
+	Long: `This command copies files by ID
+
+Usage:
+
+    rclone backend copyid drive: ID path
+    rclone backend copyid drive: ID1 path1 ID2 path2
+
+It copies the drive file with ID given to the path (an rclone path which
+will be passed internally to rclone copyto). The ID and path pairs can be
+repeated.
+
+The path should end with a / to indicate copy the file as named to
+this directory. If it doesn't end with a / then the last path
+component will be used as the file name.
+
+If the destination is a drive backend then server side copying will be
+attempted if possible.
+
+Use the -i flag to see what would be copied before copying.
+`,
 }}
 
 // Command the backend to run a named command
@@ -3130,6 +3186,19 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			dir = arg[0]
 		}
 		return f.unTrashDir(ctx, dir, true)
+	case "copyid":
+		if len(arg)%2 != 0 {
+			return nil, errors.New("need an even number of arguments")
+		}
+		for len(arg) > 0 {
+			id, dest := arg[0], arg[1]
+			arg = arg[2:]
+			err = f.copyID(ctx, id, dest)
+			if err != nil {
+				return nil, errors.Wrapf(err, "failed copying %q to %q", id, dest)
+			}
+		}
+		return nil, nil
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}

@@ -7,6 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 	"mime"
+	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -272,14 +274,15 @@ func (f *Fs) InternalTestDocumentLink(t *testing.T) {
 	}
 }
 
+const (
+	// from fstest/fstests/fstests.go
+	existingDir    = "hello? sausage"
+	existingFile   = `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`
+	existingSubDir = "êé"
+)
+
 // TestIntegration/FsMkdir/FsPutFiles/Internal/Shortcuts
 func (f *Fs) InternalTestShortcuts(t *testing.T) {
-	const (
-		// from fstest/fstests/fstests.go
-		existingDir    = "hello? sausage"
-		existingFile   = `hello? sausage/êé/Hello, 世界/ " ' @ < > & ? + ≠/z.txt`
-		existingSubDir = "êé"
-	)
 	ctx := context.Background()
 	srcObj, err := f.NewObject(ctx, existingFile)
 	require.NoError(t, err)
@@ -408,6 +411,55 @@ func (f *Fs) InternalTestUnTrash(t *testing.T) {
 	require.NoError(t, f.Purge(ctx, "trashDir"))
 }
 
+// TestIntegration/FsMkdir/FsPutFiles/Internal/CopyID
+func (f *Fs) InternalTestCopyID(t *testing.T) {
+	ctx := context.Background()
+	obj, err := f.NewObject(ctx, existingFile)
+	require.NoError(t, err)
+	o := obj.(*Object)
+
+	dir, err := ioutil.TempDir("", "rclone-drive-copyid-test")
+	require.NoError(t, err)
+	defer func() {
+		_ = os.RemoveAll(dir)
+	}()
+
+	checkFile := func(name string) {
+		filePath := filepath.Join(dir, name)
+		fi, err := os.Stat(filePath)
+		require.NoError(t, err)
+		assert.Equal(t, int64(100), fi.Size())
+		err = os.Remove(filePath)
+		require.NoError(t, err)
+	}
+
+	t.Run("BadID", func(t *testing.T) {
+		err = f.copyID(ctx, "ID-NOT-FOUND", dir+"/")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "couldn't find id")
+	})
+
+	t.Run("Directory", func(t *testing.T) {
+		rootID, err := f.dirCache.RootID(ctx, false)
+		require.NoError(t, err)
+		err = f.copyID(ctx, rootID, dir+"/")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "can't copy directory")
+	})
+
+	t.Run("WithoutDestName", func(t *testing.T) {
+		err = f.copyID(ctx, o.id, dir+"/")
+		require.NoError(t, err)
+		checkFile(path.Base(existingFile))
+	})
+
+	t.Run("WithDestName", func(t *testing.T) {
+		err = f.copyID(ctx, o.id, dir+"/potato.txt")
+		require.NoError(t, err)
+		checkFile("potato.txt")
+	})
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	// These tests all depend on each other so run them as nested tests
 	t.Run("DocumentImport", func(t *testing.T) {
@@ -424,6 +476,7 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("Shortcuts", f.InternalTestShortcuts)
 	t.Run("UnTrash", f.InternalTestUnTrash)
+	t.Run("CopyID", f.InternalTestCopyID)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
