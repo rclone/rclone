@@ -46,7 +46,7 @@ type Library struct {
 	Encrypted bool   `json:"encrypted"`
 	Owner     string `json:"owner"`
 	ID        string `json:"id"`
-	Size      int    `json:"size"`
+	Size      int64  `json:"size"`
 	Name      string `json:"name"`
 	Modified  int64  `json:"mtime"`
 }
