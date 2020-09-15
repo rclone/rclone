@@ -466,9 +466,15 @@ func (c *Cache) retryFailedResets() {
 	if len(c.errItems) != 0 {
 		fs.Debugf(nil, "vfs cache reset: before redoing reset errItems = %v", c.errItems)
 		for itemName := range c.errItems {
-			_, _, err := c.item[itemName].Reset()
-			if err == nil || !fserrors.IsErrNoSpace(err) {
-				// TODO: not trying to handle non-ENOSPC errors yet
+			if retryItem, ok := c.item[itemName]; ok {
+				_, _, err := retryItem.Reset()
+				if err == nil || !fserrors.IsErrNoSpace(err) {
+					// TODO: not trying to handle non-ENOSPC errors yet
+					delete(c.errItems, itemName)
+				}
+			} else {
+				// The retry item was deleted because it was closed.
+				// No need to redo the failed reset now.
 				delete(c.errItems, itemName)
 			}
 		}
