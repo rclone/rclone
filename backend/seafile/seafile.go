@@ -1004,7 +1004,7 @@ func (f *Fs) listLibraries(ctx context.Context) (entries fs.DirEntries, err erro
 
 	for _, library := range libraries {
 		d := fs.NewDir(library.Name, time.Unix(library.Modified, 0))
-		d.SetSize(int64(library.Size))
+		d.SetSize(library.Size)
 		entries = append(entries, d)
 	}
 
