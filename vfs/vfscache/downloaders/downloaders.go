@@ -230,7 +230,11 @@ func (dls *Downloaders) Close(inErr error) (err error) {
 		}
 	}
 	dls.cancel()
+	// dls may have entered the periodical (every 5 seconds) kickWaiters() call
+	// unlock the mutex to allow it to finish so that we can get its dls.wg.Done()
+	dls.mu.Unlock()
 	dls.wg.Wait()
+	dls.mu.Lock()
 	dls.dls = nil
 	dls._dispatchWaiters()
 	dls._closeWaiters(inErr)
