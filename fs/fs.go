@@ -1143,6 +1143,16 @@ func UnWrapObject(o Object) Object {
 	return o
 }
 
+// UnWrapObjectInfo returns the underlying Object unwrapped as much as
+// possible or nil.
+func UnWrapObjectInfo(oi ObjectInfo) Object {
+	o, ok := oi.(Object)
+	if !ok {
+		return nil
+	}
+	return UnWrapObject(o)
+}
+
 // Find looks for a RegInfo object for the name passed in.  The name
 // can be either the Name or the Prefix.
 //
