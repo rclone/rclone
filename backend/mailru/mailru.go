@@ -1861,30 +1861,30 @@ func (f *Fs) uploadShard(ctx context.Context) (string, error) {
 		return f.shardURL, nil
 	}
 
-	token, err := f.accessToken()
-	if err != nil {
-		return "", err
-	}
-
 	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/api/m1/dispatcher",
-		Parameters: url.Values{
-			"client_id":    {api.OAuthClientID},
-			"access_token": {token},
-		},
+		RootURL: api.DispatchServerURL,
+		Method:  "GET",
+		Path:    "/u",
 	}
 
-	var info api.ShardInfoResponse
+	var (
+		res *http.Response
+		url string
+		err error
+	)
 	err = f.pacer.Call(func() (bool, error) {
-		res, err := f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(res, err, f, &opts)
+		res, err = f.srv.Call(ctx, &opts)
+		if err == nil {
+			url, err = readBodyWord(res)
+		}
+		return fserrors.ShouldRetry(err), err
 	})
 	if err != nil {
+		closeBody(res)
 		return "", err
 	}
 
-	f.shardURL = info.Body.Upload[0].URL
+	f.shardURL = url
 	f.shardExpiry = time.Now().Add(shardExpirySec * time.Second)
 	fs.Debugf(f, "new upload shard: %s", f.shardURL)
 
