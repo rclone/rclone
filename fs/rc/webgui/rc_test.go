@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,6 +18,10 @@ const testPluginName = "rclone-test-plugin"
 const testPluginAuthor = "rclone"
 const testPluginKey = testPluginAuthor + "/" + testPluginName
 const testPluginURL = "https://github.com/" + testPluginAuthor + "/" + testPluginName + "/"
+
+func init() {
+	rcflags.Opt.WebUI = true
+}
 
 func setCacheDir(t *testing.T) string {
 	cacheDir, err := ioutil.TempDir("", "rclone-cache-dir")
