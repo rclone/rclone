@@ -387,18 +387,20 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		s.serveRoot(w, r)
 		return
 	case s.files != nil:
-		pluginsMatchResult := webgui.PluginsMatch.FindStringSubmatch(path)
+		if s.opt.WebUI {
+			pluginsMatchResult := webgui.PluginsMatch.FindStringSubmatch(path)
 
-		if s.opt.WebUI && pluginsMatchResult != nil && len(pluginsMatchResult) > 2 {
-			ok := webgui.ServePluginOK(w, r, pluginsMatchResult)
-			if !ok {
-				r.URL.Path = fmt.Sprintf("/%s/%s/app/build/%s", pluginsMatchResult[1], pluginsMatchResult[2], pluginsMatchResult[3])
-				s.pluginsHandler.ServeHTTP(w, r)
+			if pluginsMatchResult != nil && len(pluginsMatchResult) > 2 {
+				ok := webgui.ServePluginOK(w, r, pluginsMatchResult)
+				if !ok {
+					r.URL.Path = fmt.Sprintf("/%s/%s/app/build/%s", pluginsMatchResult[1], pluginsMatchResult[2], pluginsMatchResult[3])
+					s.pluginsHandler.ServeHTTP(w, r)
+					return
+				}
+				return
+			} else if webgui.ServePluginWithReferrerOK(w, r, path) {
 				return
 			}
-			return
-		} else if s.opt.WebUI && webgui.ServePluginWithReferrerOK(w, r, path) {
-			return
 		}
 		// Serve the files
 		r.URL.Path = "/" + path
