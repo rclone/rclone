@@ -958,6 +958,8 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 		}
 		info := f.wrapInfo(src, chunkRemote, size)
 
+		// Refill chunkLimit and let basePut repeatedly call chunkingReader.Read()
+		c.chunkLimit = c.chunkSize
 		// TODO: handle range/limit options
 		chunk, errChunk := basePut(ctx, wrapIn, info, options...)
 		if errChunk != nil {
@@ -1166,10 +1168,14 @@ func (c *chunkingReader) updateHashes() {
 func (c *chunkingReader) Read(buf []byte) (bytesRead int, err error) {
 	if c.chunkLimit <= 0 {
 		// Chunk complete - switch to next one.
+		// Note #1:
 		// We might not get here because some remotes (eg. box multi-uploader)
 		// read the specified size exactly and skip the concluding EOF Read.
 		// Then a check in the put loop will kick in.
-		c.chunkLimit = c.chunkSize
+		// Note #2:
+		// The crypt backend after receiving EOF here will call Read again
+		// and we must insist on returning EOF, so we postpone refilling
+		// chunkLimit to the main loop.
 		return 0, io.EOF
 	}
 	if int64(len(buf)) > c.chunkLimit {
