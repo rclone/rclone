@@ -169,7 +169,7 @@ func init() {
 				Help:  "Asia Pacific (Mumbai)\nNeeds location constraint ap-south-1.",
 			}, {
 				Value: "ap-east-1",
-				Help:  "Asia Patific (Hong Kong) Region\nNeeds location constraint ap-east-1.",
+				Help:  "Asia Pacific (Hong Kong) Region\nNeeds location constraint ap-east-1.",
 			}, {
 				Value: "sa-east-1",
 				Help:  "South America (Sao Paulo) Region\nNeeds location constraint sa-east-1.",
