@@ -74,6 +74,10 @@ backends:
    fastlist: true
    maxfile:  1k
  - backend:  "chunker"
+   remote:   "TestChunkerOverCrypt:"
+   fastlist: true
+   maxfile:  6k
+ - backend:  "chunker"
    remote:   "TestChunkerChunk50bMD5QuickS3:"
    fastlist: true
    maxfile:  1k
