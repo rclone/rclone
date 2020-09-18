@@ -72,8 +72,16 @@ func (tm *transferMap) _sortedSlice() []*Transfer {
 	for _, tr := range tm.items {
 		s = append(s, tr)
 	}
+	// sort by time first and if equal by name.  Note that the relatively
+	// low time resolution on Windows can cause equal times.
 	sort.Slice(s, func(i, j int) bool {
-		return s[i].startedAt.Before(s[j].startedAt)
+		a, b := s[i], s[j]
+		if a.startedAt.Before(b.startedAt) {
+			return true
+		} else if !a.startedAt.Equal(b.startedAt) {
+			return false
+		}
+		return a.remote < b.remote
 	})
 	return s
 }
