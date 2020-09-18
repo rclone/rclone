@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/okzk/sdnotify"
+	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
@@ -448,13 +448,13 @@ func Mount(VFS *vfs.VFS, mountpoint string, mount MountFn, opt *Options) error {
 
 	// Unmount on exit
 	fnHandle := atexit.Register(func() {
+		_ = sysdnotify.Stopping()
 		_ = unmount()
-		_ = sdnotify.Stopping()
 	})
 	defer atexit.Unregister(fnHandle)
 
 	// Notify systemd
-	if err := sdnotify.Ready(); err != nil && err != sdnotify.ErrSdNotifyNoSocket {
+	if err := sysdnotify.Ready(); err != nil {
 		return errors.Wrap(err, "failed to notify systemd")
 	}
 
@@ -479,8 +479,8 @@ waitloop:
 		}
 	}
 
+	_ = sysdnotify.Stopping()
 	_ = unmount()
-	_ = sdnotify.Stopping()
 
 	if err != nil {
 		return errors.Wrap(err, "failed to umount FUSE fs")
