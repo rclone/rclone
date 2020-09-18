@@ -42,6 +42,7 @@ var (
 type ConfigInfo struct {
 	LogLevel               LogLevel
 	StatsLogLevel          LogLevel
+	LogSystemdSupport      bool
 	UseJSONLog             bool
 	DryRun                 bool
 	Interactive            bool

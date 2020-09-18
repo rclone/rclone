@@ -90,23 +90,25 @@ func Stack(o interface{}, info string) {
 func InitLogging() {
 	flagsStr := "," + Opt.Format + ","
 	var flags int
-	if strings.Contains(flagsStr, ",date,") {
-		flags |= log.Ldate
-	}
-	if strings.Contains(flagsStr, ",time,") {
-		flags |= log.Ltime
-	}
-	if strings.Contains(flagsStr, ",microseconds,") {
-		flags |= log.Lmicroseconds
+	if !fs.Config.LogSystemdSupport {
+		if strings.Contains(flagsStr, ",date,") {
+			flags |= log.Ldate
+		}
+		if strings.Contains(flagsStr, ",time,") {
+			flags |= log.Ltime
+		}
+		if strings.Contains(flagsStr, ",microseconds,") {
+			flags |= log.Lmicroseconds
+		}
+		if strings.Contains(flagsStr, ",UTC,") {
+			flags |= log.LUTC
+		}
 	}
 	if strings.Contains(flagsStr, ",longfile,") {
 		flags |= log.Llongfile
 	}
 	if strings.Contains(flagsStr, ",shortfile,") {
 		flags |= log.Lshortfile
-	}
-	if strings.Contains(flagsStr, ",UTC,") {
-		flags |= log.LUTC
 	}
 	log.SetFlags(flags)
 
