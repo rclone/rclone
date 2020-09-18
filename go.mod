@@ -22,6 +22,7 @@ require (
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/hanwen/go-fuse/v2 v2.0.3
+	github.com/iguanesolutions/go-systemd/v5 v5.0.0
 	github.com/jlaffaye/ftp v0.0.0-20200720194710-13949d38913e
 	github.com/jzelinskie/whirlpool v0.0.0-20170603002051-c19460b8caa6
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
@@ -35,7 +36,6 @@ require (
 	github.com/ncw/go-acd v0.0.0-20171120105400-887eb06ab6a2
 	github.com/ncw/swift v1.0.52
 	github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1
-	github.com/okzk/sdnotify v0.0.0-20180710141335-d9becc38acbd
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.11.0

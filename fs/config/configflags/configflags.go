@@ -123,6 +123,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringArrayVarP(flagSet, &downloadHeaders, "header-download", "", nil, "Set HTTP header for download transactions")
 	flags.StringArrayVarP(flagSet, &headers, "header", "", nil, "Set HTTP header for all transactions")
 	flags.BoolVarP(flagSet, &fs.Config.RefreshTimes, "refresh-times", "", fs.Config.RefreshTimes, "Refresh the modtime of remote files.")
+	flags.BoolVarP(flagSet, &fs.Config.LogSystemdSupport, "log-systemd", "", fs.Config.LogSystemdSupport, "Activate systemd integration for the logger.")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions

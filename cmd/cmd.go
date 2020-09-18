@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	systemd "github.com/iguanesolutions/go-systemd/v5"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -364,6 +365,12 @@ func StartStats() func() {
 
 // initConfig is run by cobra after initialising the flags
 func initConfig() {
+	// Activate logger systemd support if systemd invocation ID is detected
+	_, sysdLaunch := systemd.GetInvocationID()
+	if sysdLaunch {
+		fs.Config.LogSystemdSupport = true // used during fslog.InitLogging()
+	}
+
 	// Start the logger
 	fslog.InitLogging()
 
@@ -378,6 +385,13 @@ func initConfig() {
 
 	// Write the args for debug purposes
 	fs.Debugf("rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
+
+	// Inform user about systemd log support now that we have a logger
+	if sysdLaunch {
+		fs.Debugf("rclone", "systemd logging support automatically activated")
+	} else if fs.Config.LogSystemdSupport {
+		fs.Debugf("rclone", "systemd logging support manually activated")
+	}
 
 	// Start the remote control server if configured
 	_, err = rcserver.Start(&rcflags.Opt)
