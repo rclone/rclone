@@ -192,7 +192,7 @@ This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.
 Quirks will be removed when the backend grows stable.
-Supported quirks: atomicmkdir binlist gzip insecure retry400`,
+Supported quirks: atomicmkdir binlist`,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -237,9 +237,6 @@ func shouldRetry(res *http.Response, err error, f *Fs, opts *rest.Opts) (bool, e
 	if res != nil && res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
 		reAuthErr := f.reAuthorize(opts, err)
 		return reAuthErr == nil, err // return an original error
-	}
-	if res != nil && res.StatusCode == 400 && f.quirks.retry400 {
-		return true, err
 	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(res, retryErrorCodes), err
 }
@@ -342,19 +339,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if opt.UserAgent != "" {
 		clientConfig.UserAgent = opt.UserAgent
 	}
-	clientConfig.NoGzip = !f.quirks.gzip // Send not "Accept-Encoding: gzip" like official client
+	clientConfig.NoGzip = true // Mimic official client, skip sending "Accept-Encoding: gzip"
 	f.cli = fshttp.NewClient(&clientConfig)
 
 	f.srv = rest.NewClient(f.cli)
 	f.srv.SetRoot(api.APIServerURL)
 	f.srv.SetHeader("Accept", "*/*") // Send "Accept: */*" with every request like official client
 	f.srv.SetErrorHandler(errorHandler)
-
-	if f.quirks.insecure {
-		transport := f.cli.Transport.(*fshttp.Transport).Transport
-		transport.TLSClientConfig.InsecureSkipVerify = true
-		transport.ProxyConnectHeader = http.Header{"User-Agent": {clientConfig.UserAgent}}
-	}
 
 	if err = f.authorize(ctx, false); err != nil {
 		return nil, err
@@ -388,30 +379,13 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 // Internal maintenance flags (to be removed when the backend matures).
 // Primarily intended to facilitate remote support and troubleshooting.
 type quirks struct {
-	gzip        bool
-	insecure    bool
 	binlist     bool
 	atomicmkdir bool
-	retry400    bool
 }
 
 func (q *quirks) parseQuirks(option string) {
 	for _, flag := range strings.Split(option, ",") {
 		switch strings.ToLower(strings.TrimSpace(flag)) {
-		case "gzip":
-			// This backend mimics the official client which never sends the
-			// "Accept-Encoding: gzip" header. However, enabling compression
-			// might be good for performance.
-			// Use this quirk to investigate the performance impact.
-			// Remove this quirk if performance does not improve.
-			q.gzip = true
-		case "insecure":
-			// The mailru disk-o protocol is not documented. To compare HTTP
-			// stream against the official client one can use Telerik Fiddler,
-			// which introduces a self-signed certificate. This quirk forces
-			// the Go http layer to accept it.
-			// Remove this quirk when the backend reaches maturity.
-			q.insecure = true
 		case "binlist":
 			// The official client sometimes uses a so called "bin" protocol,
 			// implemented in the listBin file system method below. This method
@@ -424,18 +398,11 @@ func (q *quirks) parseQuirks(option string) {
 		case "atomicmkdir":
 			// At the moment rclone requires Mkdir to return success if the
 			// directory already exists. However, such programs as borgbackup
-			// or restic use mkdir as a locking primitive and depend on its
-			// atomicity. This quirk is a workaround. It can be removed
-			// when the above issue is investigated.
+			// use mkdir as a locking primitive and depend on its atomicity.
+			// Remove this quirk when the above issue is investigated.
 			q.atomicmkdir = true
-		case "retry400":
-			// This quirk will help in troubleshooting a very rare "Error 400"
-			// issue. It can be removed if the problem does not show up
-			// for a year or so. See the below issue:
-			// https://github.com/ivandeex/rclone/issues/14
-			q.retry400 = true
 		default:
-			// Just ignore all unknown flags
+			// Ignore unknown flags
 		}
 	}
 }
