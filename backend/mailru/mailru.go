@@ -102,6 +102,7 @@ func init() {
 This feature is called "speedup" or "put by hash". It is especially efficient
 in case of generally available files like popular books, video or audio clips,
 because files are searched by hash in all accounts of all mailru users.
+It is meaningless and ineffective if source file is unique or encrypted.
 Please note that rclone may need local memory and disk space to calculate
 content hash in advance and decide whether full upload is required.
 Also, if rclone does not know file size in advance (e.g. in case of
@@ -1601,23 +1602,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	var (
-		fileBuf    []byte
-		fileHash   []byte
-		newHash    []byte
-		trySpeedup bool
+		fileBuf  []byte
+		fileHash []byte
+		newHash  []byte
+		slowHash bool
+		localSrc bool
 	)
+	if srcObj := fs.UnWrapObjectInfo(src); srcObj != nil {
+		srcFeatures := srcObj.Fs().Features()
+		slowHash = srcFeatures.SlowHash
+		localSrc = srcFeatures.IsLocal
+	}
 
-	// Don't disturb the source if file fits in hash.
-	// Skip an extra speedup request if file fits in hash.
-	if size > mrhash.Size {
-		// Request hash from source.
+	// Try speedup if it's globally enabled but skip extra post
+	// request if file is small and fits in the metadata request
+	trySpeedup := o.fs.opt.SpeedupEnable && size > mrhash.Size
+
+	// Try to get the hash if it's instant
+	if trySpeedup && !slowHash {
 		if srcHash, err := src.Hash(ctx, MrHashType); err == nil && srcHash != "" {
 			fileHash, _ = mrhash.DecodeString(srcHash)
 		}
-
-		// Try speedup if it's globally enabled and source hash is available.
-		trySpeedup = o.fs.opt.SpeedupEnable
-		if trySpeedup && fileHash != nil {
+		if fileHash != nil {
 			if o.putByHash(ctx, fileHash, src, "source") {
 				return nil
 			}
@@ -1626,13 +1632,22 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// Need to calculate hash, check whether file is still eligible for speedup
-	if trySpeedup {
-		trySpeedup = o.fs.eligibleForSpeedup(o.Remote(), size, options...)
+	trySpeedup = trySpeedup && o.fs.eligibleForSpeedup(o.Remote(), size, options...)
+
+	// Attempt to put by hash if file is local and eligible
+	if trySpeedup && localSrc {
+		if srcHash, err := src.Hash(ctx, MrHashType); err == nil && srcHash != "" {
+			fileHash, _ = mrhash.DecodeString(srcHash)
+		}
+		if fileHash != nil && o.putByHash(ctx, fileHash, src, "localfs") {
+			return nil
+		}
+		// If local file hashing has failed, it's pointless to try anymore
+		trySpeedup = false
 	}
 
 	// Attempt to put by calculating hash in memory
 	if trySpeedup && size <= int64(o.fs.opt.SpeedupMaxMem) {
-		//fs.Debugf(o, "attempt to put by hash from memory")
 		fileBuf, err = ioutil.ReadAll(in)
 		if err != nil {
 			return err
@@ -1762,6 +1777,7 @@ func (f *Fs) parseSpeedupPatterns(patternString string) (err error) {
 	return nil
 }
 
+// putByHash is a thin wrapper around addFileMetaData
 func (o *Object) putByHash(ctx context.Context, mrHash []byte, info fs.ObjectInfo, method string) bool {
 	oNew := new(Object)
 	*oNew = *o
@@ -2188,6 +2204,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			// Discard the beginning of the data
 			_, err = io.CopyN(ioutil.Discard, wrapStream, start)
 			if err != nil {
+				closeBody(res)
 				return nil, err
 			}
 		}
