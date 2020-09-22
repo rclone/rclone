@@ -1087,7 +1087,7 @@ func shellEscape(str string) string {
 func parseHash(bytes []byte) string {
 	// For strings with backslash *sum writes a leading \
 	// https://unix.stackexchange.com/q/313733/94054
-	return strings.Split(strings.TrimLeft(string(bytes), "\\"), " ")[0] // Split at hash / filename separator
+	return strings.ToLower(strings.Split(strings.TrimLeft(string(bytes), "\\"), " ")[0]) // Split at hash / filename separator / all convert to lowercase
 }
 
 // Parses the byte array output from the SSH session
