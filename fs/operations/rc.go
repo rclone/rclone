@@ -31,6 +31,10 @@ func init() {
     - showEncrypted -  If set show decrypted names
     - showOrigIDs - If set show the IDs for each item if known
     - showHash - If set return a dictionary of hashes
+    - noMimeType - If set don't show mime types
+    - dirsOnly - If set only show directories
+    - filesOnly - If set only show files
+    - hashTypes - array of strings of hash types to show if showHash set
 
 The result is
 
@@ -63,6 +67,51 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	out = make(rc.Params)
 	out["list"] = list
+	return out, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "operations/stat",
+		AuthRequired: true,
+		Fn:           rcStat,
+		Title:        "Give information about the supplied file or directory",
+		Help: `This takes the following parameters
+
+- fs - a remote name string eg "drive:"
+- remote - a path within that remote eg "dir"
+- opt - a dictionary of options to control the listing (optional)
+    - see operations/list for the options
+
+The result is
+
+- item - an object as described in the lsjson command. Will be null if not found.
+
+Note that if you are only interested in files then it is much more
+efficient to set the filesOnly flag in the options.
+
+See the [lsjson command](/commands/rclone_lsjson/) for more information on the above and examples.
+`,
+	})
+}
+
+// List the directory
+func rcStat(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	f, remote, err := rc.GetFsAndRemote(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	var opt ListJSONOpt
+	err = in.GetStruct("opt", &opt)
+	if rc.NotErrParamNotFound(err) {
+		return nil, err
+	}
+	item, err := StatJSON(ctx, f, remote, &opt)
+	if err != nil {
+		return nil, err
+	}
+	out = make(rc.Params)
+	out["item"] = item
 	return out, nil
 }
 

@@ -9,13 +9,15 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
 var (
-	opt operations.ListJSONOpt
+	opt      operations.ListJSONOpt
+	statOnly bool
 )
 
 func init() {
@@ -30,6 +32,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &opt.FilesOnly, "files-only", "", false, "Show only files in the listing.")
 	flags.BoolVarP(cmdFlags, &opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing.")
 	flags.StringArrayVarP(cmdFlags, &opt.HashTypes, "hash-type", "", nil, "Show only this hash type (may be repeated).")
+	flags.BoolVarP(cmdFlags, &statOnly, "stat", "", false, "Just return the info for the pointed to file.")
 }
 
 var commandDefinition = &cobra.Command{
@@ -79,6 +82,12 @@ returned
 If --files-only is not specified directories in addition to the files
 will be returned.
 
+if --stat is set then a single JSON blob will be returned about the
+item pointed to. This will return an error if the item isn't found.
+However on bucket based backends (like s3, gcs, b2, azureblob etc) if
+the item isn't found it will return an empty directory as it isn't
+possible to tell empty directories from missing directories there.
+
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
@@ -99,33 +108,59 @@ will be shown ("2017-05-31T16:15:57+01:00").
 The whole output can be processed as a JSON blob, or alternatively it
 can be processed line by line as each item is written one to a line.
 ` + lshelp.Help,
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
-		fsrc := cmd.NewFsSrc(args)
+		var fsrc fs.Fs
+		var remote string
+		if statOnly {
+			fsrc, remote = cmd.NewFsFile(args[0])
+		} else {
+			fsrc = cmd.NewFsSrc(args)
+		}
 		cmd.Run(false, false, command, func() error {
-			fmt.Println("[")
-			first := true
-			err := operations.ListJSON(context.Background(), fsrc, "", &opt, func(item *operations.ListJSONItem) error {
-				out, err := json.Marshal(item)
+			if statOnly {
+				item, err := operations.StatJSON(context.Background(), fsrc, remote, &opt)
+				if err != nil {
+					return err
+				}
+				out, err := json.MarshalIndent(item, "", "\t")
 				if err != nil {
 					return errors.Wrap(err, "failed to marshal list object")
-				}
-				if first {
-					first = false
-				} else {
-					fmt.Print(",\n")
 				}
 				_, err = os.Stdout.Write(out)
 				if err != nil {
 					return errors.Wrap(err, "failed to write to output")
 				}
-				return nil
-			})
-			if !first {
 				fmt.Println()
+			} else {
+				fmt.Println("[")
+				first := true
+				err := operations.ListJSON(context.Background(), fsrc, remote, &opt, func(item *operations.ListJSONItem) error {
+					out, err := json.Marshal(item)
+					if err != nil {
+						return errors.Wrap(err, "failed to marshal list object")
+					}
+					if first {
+						first = false
+					} else {
+						fmt.Print(",\n")
+					}
+					_, err = os.Stdout.Write(out)
+					if err != nil {
+						return errors.Wrap(err, "failed to write to output")
+					}
+					return nil
+				})
+				if err != nil {
+					return err
+				}
+				if !first {
+					fmt.Println()
+				}
+				fmt.Println("]")
 			}
-			fmt.Println("]")
-			return err
+			return nil
 		})
+		return nil
 	},
 }
