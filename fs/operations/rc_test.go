@@ -261,6 +261,59 @@ func TestRcList(t *testing.T) {
 	checkFile2(list[2])
 }
 
+// operations/stat: Stat the given remote and path in JSON format.
+func TestRcStat(t *testing.T) {
+	r, call := rcNewRun(t, "operations/stat")
+	defer r.Finalise()
+
+	file1 := r.WriteObject(context.Background(), "subdir/a", "a", t1)
+
+	fstest.CheckItems(t, r.Fremote, file1)
+
+	fetch := func(t *testing.T, remotePath string) *operations.ListJSONItem {
+		in := rc.Params{
+			"fs":     r.FremoteName,
+			"remote": remotePath,
+		}
+		out, err := call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		return out["item"].(*operations.ListJSONItem)
+	}
+
+	t.Run("Root", func(t *testing.T) {
+		stat := fetch(t, "")
+		assert.Equal(t, "", stat.Path)
+		assert.Equal(t, "", stat.Name)
+		assert.Equal(t, int64(-1), stat.Size)
+		assert.Equal(t, "inode/directory", stat.MimeType)
+		assert.Equal(t, true, stat.IsDir)
+	})
+
+	t.Run("File", func(t *testing.T) {
+		stat := fetch(t, "subdir/a")
+		assert.WithinDuration(t, t1, stat.ModTime.When, time.Second)
+		assert.Equal(t, "subdir/a", stat.Path)
+		assert.Equal(t, "a", stat.Name)
+		assert.Equal(t, int64(1), stat.Size)
+		assert.Equal(t, "application/octet-stream", stat.MimeType)
+		assert.Equal(t, false, stat.IsDir)
+	})
+
+	t.Run("Subdir", func(t *testing.T) {
+		stat := fetch(t, "subdir")
+		assert.Equal(t, "subdir", stat.Path)
+		assert.Equal(t, "subdir", stat.Name)
+		assert.Equal(t, int64(-1), stat.Size)
+		assert.Equal(t, "inode/directory", stat.MimeType)
+		assert.Equal(t, true, stat.IsDir)
+	})
+
+	t.Run("NotFound", func(t *testing.T) {
+		stat := fetch(t, "notfound")
+		assert.Nil(t, stat)
+	})
+}
+
 // operations/mkdir: Make a destination directory or container
 func TestRcMkdir(t *testing.T) {
 	ctx := context.Background()
