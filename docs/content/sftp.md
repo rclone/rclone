@@ -102,7 +102,7 @@ excess files in the directory.
 The SFTP remote supports three authentication methods:
 
   * Password
-  * Key file
+  * Key file, including certificate signed keys
   * ssh-agent
 
 Key files should be PEM-encoded private key files. For instance `/home/$USER/.ssh/id_rsa`.
@@ -127,6 +127,26 @@ Using an ssh-agent is the only way to load encrypted OpenSSH keys at the moment.
 
 If you set the `--sftp-ask-password` option, rclone will prompt for a
 password when needed and no password has been configured.
+
+If you have a certificate then you can provide the path to the public key that contains the certificate.  For example:
+
+```
+[remote]
+type = sftp
+host = example.com
+user = sftpuser
+key_file = ~/id_rsa
+pubkey_file = ~/id_rsa-cert.pub
+````
+
+If you concatenate a cert with a private key then you can specify the
+merged file in both places.
+
+Note: the cert must come first in the file.  e.g.
+
+```
+cat id_rsa-cert.pub id_rsa > merged_key
+```
 
 ### ssh-agent on macOS ###
 
@@ -231,6 +251,18 @@ in the new OpenSSH format can't be used.
 
 - Config:      key_file_pass
 - Env Var:     RCLONE_SFTP_KEY_FILE_PASS
+- Type:        string
+- Default:     ""
+
+#### --sftp-pubkey-file
+
+Optional path to public key file; set this if you have a signed certificate you want to use for authentication.
+
+Leading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.
+
+
+- Config:      pubkey_file
+- Env Var:     RCLONE_SFTP_PUBKEY_FILE
 - Type:        string
 - Default:     ""
 

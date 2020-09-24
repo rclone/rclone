@@ -83,6 +83,11 @@ Only PEM encrypted key files (old OpenSSH format) are supported. Encrypted keys
 in the new OpenSSH format can't be used.`,
 			IsPassword: true,
 		}, {
+			Name: "pubkey_file",
+			Help: `Optional path to public key file.
+
+Set this if you have a signed certificate you want to use for authentication.` + env.ShellExpandHelp,
+		}, {
 			Name: "key_use_agent",
 			Help: `When set forces the usage of the ssh-agent.
 
@@ -190,6 +195,7 @@ type Options struct {
 	KeyPem            string `config:"key_pem"`
 	KeyFile           string `config:"key_file"`
 	KeyFilePass       string `config:"key_file_pass"`
+	PubKeyFile        string `config:"pubkey_file"`
 	KeyUseAgent       bool   `config:"key_use_agent"`
 	UseInsecureCipher bool   `config:"use_insecure_cipher"`
 	DisableHashCheck  bool   `config:"disable_hashcheck"`
@@ -438,6 +444,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	keyFile := env.ShellExpand(opt.KeyFile)
+	pubkeyFile := env.ShellExpand(opt.PubKeyFile)
 	//keyPem := env.ShellExpand(opt.KeyPem)
 	// Add ssh agent-auth if no password or file or key PEM specified
 	if (opt.Pass == "" && keyFile == "" && !opt.AskPassword && opt.KeyPem == "") || opt.KeyUseAgent {
@@ -507,7 +514,38 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse private key file")
 		}
-		sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signer))
+
+		// If a public key has been specified then use that
+		if pubkeyFile != "" {
+			certfile, err := ioutil.ReadFile(pubkeyFile)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to read cert file")
+			}
+
+			pk, _, _, _, err := ssh.ParseAuthorizedKey(certfile)
+			if err != nil {
+				return nil, errors.Wrap(err, "unable to parse cert file")
+			}
+
+			// And the signer for this, which includes the private key signer
+			// This is what we'll pass to the ssh client.
+			// Normally the ssh client will use the public key built
+			// into the private key, but we need to tell it to use the user
+			// specified public key cert.  This signer is specific to the
+			// cert and will include the private key signer.  Now ssh
+			// knows everything it needs.
+			cert, ok := pk.(*ssh.Certificate)
+			if !ok {
+				return nil, errors.New("public key file is not a certificate file: " + pubkeyFile)
+			}
+			pubsigner, err := ssh.NewCertSigner(cert, signer)
+			if err != nil {
+				return nil, errors.Wrap(err, "error generating cert signer")
+			}
+			sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(pubsigner))
+		} else {
+			sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signer))
+		}
 	}
 
 	// Auth from password if specified
