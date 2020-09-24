@@ -73,6 +73,7 @@ const (
 	partialFields    = "id,name,size,md5Checksum,trashed,explicitlyTrashed,modifiedTime,createdTime,mimeType,parents,webViewLink,shortcutDetails,exportLinks"
 	listRGrouping    = 50   // number of IDs to search at once when using ListR
 	listRInputBuffer = 1000 // size of input buffer when using ListR
+	defaultXDGIcon   = "text-html"
 )
 
 // Globals
@@ -127,6 +128,12 @@ var (
 	}
 	_mimeTypeCustomTransform = map[string]string{
 		"application/vnd.google-apps.script+json": "application/json",
+	}
+	_mimeTypeToXDGLinkIcons = map[string]string{
+		"application/vnd.google-apps.document":     "x-office-document",
+		"application/vnd.google-apps.drawing":      "x-office-drawing",
+		"application/vnd.google-apps.presentation": "x-office-presentation",
+		"application/vnd.google-apps.spreadsheet":  "x-office-spreadsheet",
 	}
 	fetchFormatsOnce sync.Once                     // make sure we fetch the export/import formats only once
 	_exportFormats   map[string][]string           // allowed export MIME type conversions
@@ -1294,11 +1301,15 @@ func (f *Fs) newLinkObject(remote string, info *drive.File, extension, exportMim
 	if t == nil {
 		return nil, errors.Errorf("unsupported link type %s", exportMimeType)
 	}
+	xdgIcon := _mimeTypeToXDGLinkIcons[info.MimeType]
+	if xdgIcon == "" {
+		xdgIcon = defaultXDGIcon
+	}
 	var buf bytes.Buffer
 	err := t.Execute(&buf, struct {
-		URL, Title string
+		URL, Title, XDGIcon string
 	}{
-		info.WebViewLink, info.Name,
+		info.WebViewLink, info.Name, xdgIcon,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "executing template failed")
@@ -3750,7 +3761,7 @@ URL={{ .URL }}{{"\r"}}
 Encoding=UTF-8
 Name={{ .Title }}
 URL={{ .URL }}
-Icon=text-html
+Icon={{ .XDGIcon }}
 Type=Link
 `
 	htmlTemplate = `<html>
