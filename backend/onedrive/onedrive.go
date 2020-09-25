@@ -45,24 +45,33 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2 // bigger for slower decay, exponential
-	graphURL                    = "https://graph.microsoft.com/v1.0"
-	configDriveID               = "drive_id"
-	configDriveType             = "drive_type"
-	driveTypePersonal           = "personal"
-	driveTypeBusiness           = "business"
-	driveTypeSharepoint         = "documentLibrary"
-	defaultChunkSize            = 10 * fs.MebiByte
-	chunkSizeMultiple           = 320 * fs.KibiByte
+	//graphURL                    = "https://graph.microsoft.com/v1.0"
+	configDriveID       = "drive_id"
+	configDriveType     = "drive_type"
+	configSiteID        = "siteid"
+	driveTypePersonal   = "personal"
+	driveTypeBusiness   = "business"
+	driveTypeSharepoint = "documentLibrary"
+	defaultChunkSize    = 10 * fs.MebiByte
+	chunkSizeMultiple   = 320 * fs.KibiByte
 )
 
 // Globals
 var (
+	oauthEndpoint = &oauth2.Endpoint{
+		AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+		TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+	}
+	oauthEndpointV21 = &oauth2.Endpoint{
+		AuthURL:  "https://login.chinacloudapi.cn/common/oauth2/v2.0/authorize",
+		TokenURL: "https://login.chinacloudapi.cn/common/oauth2/v2.0/token",
+	}
 	// Description of how to auth for this app for a business account
 	oauthConfig = &oauth2.Config{
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-			TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-		},
+		//	Endpoint: oauth2.Endpoint{
+		//		AuthURL:  "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+		//		TokenURL: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+		//},
 		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -81,8 +90,22 @@ func init() {
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
 		Config: func(name string, m configmap.Mapper) {
+			opt := new(Options)
+			err := configstruct.Set(m, opt)
+			if err != nil {
+				fs.Errorf(nil, "Couldn't parse config into struct: %v", err)
+				return
+			}
+
+			graphURL := "https://graph.microsoft.com/v1.0"
+			oauthConfig.Endpoint = *oauthEndpoint
+			if opt.Is21Vianet {
+				graphURL = "https://microsoftgraph.chinacloudapi.cn/v1.0"
+				oauthConfig.Endpoint = *oauthEndpointV21
+			}
+
 			ctx := context.TODO()
-			err := oauthutil.Config("onedrive", name, m, oauthConfig, nil)
+			err = oauthutil.Config("onedrive", name, m, oauthConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 				return
@@ -236,18 +259,28 @@ func init() {
 			if !config.ConfirmWithConfig(m, "config_drive_ok", true) {
 				log.Fatalf("Cancelled by user")
 			}
-
+			m.Set(configSiteID, siteID) //保存shipoint站点id
 			m.Set(configDriveID, finalDriveID)
 			m.Set(configDriveType, rootItem.ParentReference.DriveType)
 			config.SaveConfig()
 		},
-		Options: append(oauthutil.SharedOptions, []fs.Option{{
+
+		Options: []fs.Option{{
+			Name: config.ConfigClientID,
+			Help: "Microsoft App Client Id\nLeave blank normally.",
+		}, {
+			Name: config.ConfigClientSecret,
+			Help: "Microsoft App Client Secret\nLeave blank normally.",
+		}, {
+			Name:    "is_21vianet_version",
+			Default: true,
+			Help:    "OneDrive operated by 21Vianet (世纪互联).",
+		}, {
 			Name: "chunk_size",
 			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
 
-Above this size files will be chunked - must be multiple of 320k (327,680 bytes) and
-should not exceed 250M (262,144,000 bytes) else you may encounter \"Microsoft.SharePoint.Client.InvalidClientQueryException: The request message is too big.\"
-Note that the chunks will be buffered into memory.`,
+Above this size files will be chunked - must be multiple of 320k (327,680 bytes). Note
+that the chunks will be buffered into memory.`,
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
@@ -261,79 +294,10 @@ Note that the chunks will be buffered into memory.`,
 			Default:  "",
 			Advanced: true,
 		}, {
-			Name: "expose_onenote_files",
-			Help: `Set to make OneNote files show up in directory listings.
-
-By default rclone will hide OneNote files in directory listings because
-operations like "Open" and "Update" won't work on them.  But this
-behaviour may also prevent you from deleting them.  If you want to
-delete OneNote files or otherwise want them to show up in directory
-listing, set this option.`,
-			Default:  false,
-			Advanced: true,
-		}, {
-			Name:    "server_side_across_configs",
-			Default: false,
-			Help: `Allow server side operations (eg copy) to work across different onedrive configs.
-
-This can be useful if you wish to do a server side copy between two
-different Onedrives.  Note that this isn't enabled by default
-because it isn't easy to tell if it will work between any two
-configurations.`,
-			Advanced: true,
-		}, {
-			Name:    "no_versions",
-			Default: false,
-			Help: `Remove all versions on modifying operations
-
-Onedrive for business creates versions when rclone uploads new files
-overwriting an existing one and when it sets the modification time.
-
-These versions take up space out of the quota.
-
-This flag checks for versions after file upload and setting
-modification time and removes all but the last version.
-
-**NB** Onedrive personal can't currently delete versions so don't use
-this flag there.
-`,
-			Advanced: true,
-		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// List of replaced characters:
-			//   < (less than)     -> '＜' // FULLWIDTH LESS-THAN SIGN
-			//   > (greater than)  -> '＞' // FULLWIDTH GREATER-THAN SIGN
-			//   : (colon)         -> '：' // FULLWIDTH COLON
-			//   " (double quote)  -> '＂' // FULLWIDTH QUOTATION MARK
-			//   \ (backslash)     -> '＼' // FULLWIDTH REVERSE SOLIDUS
-			//   | (vertical line) -> '｜' // FULLWIDTH VERTICAL LINE
-			//   ? (question mark) -> '？' // FULLWIDTH QUESTION MARK
-			//   * (asterisk)      -> '＊' // FULLWIDTH ASTERISK
-			//   # (number sign)  -> '＃'  // FULLWIDTH NUMBER SIGN
-			//   % (percent sign) -> '％'  // FULLWIDTH PERCENT SIGN
-			//
-			// Folder names cannot begin with a tilde ('~')
-			// List of replaced characters:
-			//   ~ (tilde)        -> '～'  // FULLWIDTH TILDE
-			//
-			// Additionally names can't begin with a space ( ) or end with a period (.) or space ( ).
-			// List of replaced characters:
-			//   . (period)        -> '．' // FULLWIDTH FULL STOP
-			//     (space)         -> '␠'  // SYMBOL FOR SPACE
-			//
-			// Also encode invalid UTF-8 bytes as json doesn't handle them.
-			//
-			// The OneDrive API documentation lists the set of reserved characters, but
-			// testing showed this list is incomplete. This are the differences:
-			//  - " (double quote) is rejected, but missing in the documentation
-			//  - space at the end of file and folder names is rejected, but missing in the documentation
-			//  - period at the end of file names is rejected, but missing in the documentation
-			//
-			// Adding these restrictions to the OneDrive API documentation yields exactly
-			// the same rules as the Windows naming conventions.
-			//
+
 			// https://docs.microsoft.com/en-us/onedrive/developer/rest-api/concepts/addressing-driveitems?view=odsp-graph-online#path-encoding
 			Default: (encoder.Display |
 				encoder.EncodeBackSlash |
@@ -344,12 +308,14 @@ this flag there.
 				encoder.EncodeRightSpace |
 				encoder.EncodeWin |
 				encoder.EncodeInvalidUtf8),
-		}}...),
+		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
+	Is21Vianet              bool                 `config:"is_21vianet_version"`
+	SITEID                  string               `config:"siteid"`
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
@@ -369,7 +335,7 @@ type Fs struct {
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
-	driveID      string             // ID to use for querying Microsoft Graph
+	driveID      string             //shareponitid
 	driveType    string             // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
 }
 
@@ -608,6 +574,22 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.New("unable to get drive_id and drive_type - if you are upgrading from older versions of rclone, please run `rclone config` and re-configure this backend")
 	}
 
+	rootURL := "https://graph.microsoft.com/v1.0" + "/drives/" + opt.DriveID //chinaonedrive not support thistype so use< sites/ +opt.SITEID + "/drive">
+	oauthConfig.Endpoint = *oauthEndpoint
+	if opt.Is21Vianet {
+		//rootURL = graphAPIEndpoint21V + "/v1.0" + "/me/drive"
+		//rootURL = graphAPIEndpoint21V + "/v1.0"  + "/sites/" + opt.DriveID+ "/drive"
+		rootURL = "https://microsoftgraph.chinacloudapi.cn/v1.0/sites/universitytongji.sharepoint.cn,28b4c43d-97da-45ee-9583-9742b6b4e13c,522cede1-cb84-4052-b180-7c012a3c03ba/drive"
+		if opt.SITEID == "" {
+			rootURL = "https://microsoftgraph.chinacloudapi.cn/v1.0" + "/me/drive"
+		}
+		if opt.SITEID != "" {
+			rootURL = "https://microsoftgraph.chinacloudapi.cn/v1.0/sites/" + opt.SITEID + "/drive"
+		}
+		//
+		oauthConfig.Endpoint = *oauthEndpointV21
+	}
+
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
@@ -620,7 +602,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		opt:       *opt,
 		driveID:   opt.DriveID,
 		driveType: opt.DriveType,
-		srv:       rest.NewClient(oAuthClient).SetRoot(graphURL + "/drives/" + opt.DriveID),
+		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
 		pacer:     fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
@@ -1881,7 +1863,8 @@ func newOptsCall(normalizedID string, method string, route string) (opts rest.Op
 func parseNormalizedID(ID string) (string, string, string) {
 	if strings.Index(ID, "#") >= 0 {
 		s := strings.Split(ID, "#")
-		return s[1], s[0], graphURL + "/drives"
+		//return s[1], s[0], graphURL + "/drives"
+		return s[1], "", ""
 	}
 	return ID, "", ""
 }
