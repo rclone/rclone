@@ -1231,6 +1231,15 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	o.modTime = info.ModTime()
 	o.mode = info.Mode()
 	o.fs.objectMetaMu.Unlock()
+	// On Windows links read as 0 size so set the correct size here
+	if runtime.GOOS == "windows" && o.translatedLink {
+		linkdst, err := os.Readlink(o.path)
+		if err != nil {
+			fs.Errorf(o, "Failed to read link size: %v", err)
+		} else {
+			o.size = int64(len(linkdst))
+		}
+	}
 }
 
 // Stat an Object into info
