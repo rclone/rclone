@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/user"
 	"path"
 	"regexp"
 	"strconv"
@@ -43,7 +42,7 @@ const (
 )
 
 var (
-	currentUser = readCurrentUser()
+	currentUser = env.CurrentUser()
 )
 
 func init() {
@@ -235,20 +234,6 @@ type Object struct {
 	mode    os.FileMode // mode bits from the file
 	md5sum  *string     // Cached MD5 checksum
 	sha1sum *string     // Cached SHA1 checksum
-}
-
-// readCurrentUser finds the current user name or "" if not found
-func readCurrentUser() (userName string) {
-	usr, err := user.Current()
-	if err == nil {
-		return usr.Username
-	}
-	// Fall back to reading $USER then $LOGNAME
-	userName = os.Getenv("USER")
-	if userName != "" {
-		return userName
-	}
-	return os.Getenv("LOGNAME")
 }
 
 // dial starts a client connection to the given SSH server. It is a

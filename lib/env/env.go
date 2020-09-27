@@ -3,6 +3,7 @@ package env
 
 import (
 	"os"
+	"os/user"
 
 	homedir "github.com/mitchellh/go-homedir"
 )
@@ -23,4 +24,23 @@ func ShellExpand(s string) string {
 		s = os.ExpandEnv(s)
 	}
 	return s
+}
+
+// CurrentUser finds the current user name or "" if not found
+func CurrentUser() (userName string) {
+	userName = os.Getenv("USER")
+	// If we are making docs just use $USER
+	if userName == "$USER" {
+		return userName
+	}
+	// Try reading using the OS
+	usr, err := user.Current()
+	if err == nil {
+		return usr.Username
+	}
+	// Fall back to reading $USER then $LOGNAME
+	if userName != "" {
+		return userName
+	}
+	return os.Getenv("LOGNAME")
 }

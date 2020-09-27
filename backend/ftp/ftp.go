@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"io"
 	"net/textproto"
-	"os"
 	"path"
 	"runtime"
 	"strings"
@@ -22,8 +21,13 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
+)
+
+var (
+	currentUser = env.CurrentUser()
 )
 
 // Register with Fs
@@ -42,7 +46,7 @@ func init() {
 			}},
 		}, {
 			Name: "user",
-			Help: "FTP username, leave blank for current username, " + os.Getenv("USER"),
+			Help: "FTP username, leave blank for current username, " + currentUser,
 		}, {
 			Name: "port",
 			Help: "FTP port, leave blank to use default (21)",
@@ -311,7 +315,7 @@ func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	}
 	user := opt.User
 	if user == "" {
-		user = os.Getenv("USER")
+		user = currentUser
 	}
 	port := opt.Port
 	if port == "" {
