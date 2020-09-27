@@ -48,7 +48,7 @@ Choose a number from below, or type in your own value
  1 / Connect to ftp.example.com
    \ "ftp.example.com"
 host> ftp.example.com
-FTP username, leave blank for current username, ncw
+FTP username, leave blank for current username, $USER
 Enter a string value. Press Enter for the default ("").
 user> 
 FTP port, leave blank to use default (21)

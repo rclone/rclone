@@ -52,7 +52,7 @@ Choose a number from below, or type in your own value
  1 / Connect to example.com
    \ "example.com"
 host> example.com
-SSH username, leave blank for current username, ncw
+SSH username, leave blank for current username, $USER
 user> sftpuser
 SSH port, leave blank to use default (22)
 port>
@@ -192,7 +192,7 @@ SSH host to connect to
 
 #### --sftp-user
 
-SSH username, leave blank for current username, ncw
+SSH username, leave blank for current username, $USER
 
 - Config:      user
 - Env Var:     RCLONE_SFTP_USER
@@ -256,7 +256,9 @@ in the new OpenSSH format can't be used.
 
 #### --sftp-pubkey-file
 
-Optional path to public key file; set this if you have a signed certificate you want to use for authentication.
+Optional path to public key file.
+
+Set this if you have a signed certificate you want to use for authentication.
 
 Leading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.
 
