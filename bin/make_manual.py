@@ -42,6 +42,7 @@ docs = [
     "googlecloudstorage.md",
     "drive.md",
     "googlephotos.md",
+    "hdfs.md",
     "http.md",
     "hubic.md",
     "jottacloud.md",

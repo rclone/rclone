@@ -36,6 +36,7 @@ See the following for detailed instructions for
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Google Drive](/drive/)
   * [Google Photos](/googlephotos/)
+  * [HDFS](/hdfs/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
   * [Jottacloud / GetSky.no](/jottacloud/)

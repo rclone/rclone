@@ -120,6 +120,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Google Cloud Storage" home="https://cloud.google.com/storage/" config="/googlecloudstorage/" >}}
 {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
 {{< provider name="Google Photos" home="https://www.google.com/photos/about/" config="/googlephotos/" >}}
+{{< provider name="HDFS" home="https://hadoop.apache.org/" config="/hdfs/" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
 {{< provider name="Hubic" home="https://hubic.com/" config="/hubic/" >}}
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
