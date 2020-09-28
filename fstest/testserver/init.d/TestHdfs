@@ -1,0 +1,24 @@
+#!/bin/bash
+
+set -e
+
+NAME=rclone-hdfs
+
+. $(dirname "$0")/docker.bash
+
+start() {
+    docker run --rm -d --name "rclone-hdfs" -p 127.0.0.1:9866:9866 -p 127.0.0.1:8020:8020 --hostname "rclone-hdfs" rclone/test-hdfs
+    sleep 10
+
+    echo type=hdfs
+    echo namenode=127.0.0.1:8020
+    echo user=root
+}
+stop() {
+    if status ; then
+        docker kill $NAME
+        echo "$NAME stopped"
+    fi
+}
+
+. $(dirname "$0")/run.bash

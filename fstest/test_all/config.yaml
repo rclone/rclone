@@ -297,3 +297,8 @@ backends:
  - backend:  "zoho"
    remote:   "TestZoho:"
    fastlist: false
+ - backend: "hdfs"
+   remote: "TestHdfs:"
+   fastlist: false
+   ignore:
+     - TestSyncUTFNorm
