@@ -8,7 +8,7 @@ Press (Experimental)
 -----------------------------------------
 
 The `press` remote adds compression to another remote. It is best used with remotes containing
-many large compressible files or on top of other remotes like crypt.
+many large compressible files.
 
 Please read the [warnings](#warnings) before using this remote.
 
