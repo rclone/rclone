@@ -1,0 +1,14 @@
+<configuration>
+    <property><name>yarn.log-aggregation-enable</name><value>true</value></property>
+    <property><name>yarn.log.server.url</name><value>http://localhost:8188/applicationhistory/logs/</value></property>
+    <property><name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name><value>org.apache.hadoop.mapred.ShuffleHandler</value></property>
+    <property><name>yarn.nodemanager.aux-services</name><value>mapreduce_shuffle</value></property>
+    <property><name>yarn.nodemanager.bind-host</name><value>0.0.0.0</value></property>
+    <property><name>yarn.nodemanager.bind-host</name><value>0.0.0.0</value></property>
+    <property><name>yarn.nodemanager.remote-app-log-dir</name><value>/app-logs</value></property>
+    <property><name>yarn.timeline-service.bind-host</name><value>0.0.0.0</value></property>
+    <property><name>yarn.timeline-service.enabled</name><value>true</value></property>
+    <property><name>yarn.timeline-service.generic-application-history.enabled</name><value>true</value></property>
+    <property><name>yarn.timeline-service.hostname</name><value>historyserver.hadoop</value></property>
+    <property><name>yarn.timeline-service.leveldb-timeline-store.path</name><value>/hadoop/yarn/timeline</value></property>
+</configuration>
