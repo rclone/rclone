@@ -78,9 +78,8 @@ through any other means than rclone. This will upload files that do not contain 
 
 ### File names
 
-The compressed files will be named `*################.gz` where `*` is the base file and the `#` part is the size
-of the uncompressed data written as a hexadecimal number. The file names should not be changed by anything other than
-the rclone compression backend.
+The compressed files will be named `*.###########.gz` where `*` is the base file and the `#` part is base64 encoded 
+size of the uncompressed file. The file names should not be changed by anything other than the rclone compression backend.
 
 #### Experimental
 This remote is currently **experimental**. Things may break and data may be lost. Anything you do with this remote is

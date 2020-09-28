@@ -6,12 +6,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"regexp"
 	"strings"
 	"time"
 
@@ -38,7 +40,8 @@ const (
 	heuristicBytes      = 1048576
 	minCompressionRatio = 1.1
 
-	metaFileExt         = ".meta"
+	gzFileExt           = ".gz"
+	metaFileExt         = ".json"
 	uncompressedFileExt = ".bin"
 )
 
@@ -47,6 +50,8 @@ const (
 	Uncompressed = 0
 	Gzip         = 2
 )
+
+var nameRegexp = regexp.MustCompile("^(.+?)\\.([A-Za-z0-9+_]{11})$")
 
 // Register with Fs
 func init() {
@@ -182,16 +187,16 @@ func compressionModeFromName(name string) int {
 	}
 }
 
-// Converts an int64 to hex
-func int64ToHex(number int64) string {
+// Converts an int64 to base64
+func int64ToBase64(number int64) string {
 	intBytes := make([]byte, 8)
 	binary.LittleEndian.PutUint64(intBytes, uint64(number))
-	return hex.EncodeToString(intBytes)
+	return base64.RawURLEncoding.EncodeToString(intBytes)
 }
 
-// Converts hex to int64
-func hexToInt64(hexNumber string) (int64, error) {
-	intBytes, err := hex.DecodeString(hexNumber)
+// Converts base64 to int64
+func base64ToInt64(str string) (int64, error) {
+	intBytes, err := base64.RawStdEncoding.DecodeString(str)
 	if err != nil {
 		return 0, err
 	}
@@ -206,24 +211,20 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	if extensionPos == -1 {
 		return "", "", 0, errors.New("File name has no extension")
 	}
-	nameWithSize := compressedFileName[:extensionPos]
 	extension = compressedFileName[extensionPos:]
-	// Separate the name with the size if this is a compressed file. Otherwise, just return nameWithSize (because it has no size appended)
-	var name string
-	var size int64
+	nameWithSize := compressedFileName[:extensionPos]
 	if extension == uncompressedFileExt {
-		name = nameWithSize
-		size = -2
-	} else {
-		sizeLoc := len(nameWithSize) - 16
-		name = nameWithSize[:sizeLoc]
-		size, err = hexToInt64(nameWithSize[sizeLoc:])
-		if err != nil {
-			return "", "", 0, errors.New("Could not decode size")
-		}
+		return nameWithSize, extension, -2, nil
 	}
-	// Return everything
-	return name, extension, size, nil
+	match := nameRegexp.FindStringSubmatch(nameWithSize)
+	if match == nil || len(match) != 3 {
+		return "", "", 0, errors.New("Invalid filename")
+	}
+	size, err := base64ToInt64(match[2])
+	if err != nil {
+		return "", "", 0, errors.New("Could not decode size")
+	}
+	return match[1], gzFileExt, size, nil
 }
 
 // Generates the file name for a metadata file
@@ -236,16 +237,17 @@ func isMetadataFile(filename string) bool {
 	return strings.HasSuffix(filename, metaFileExt)
 }
 
-// Generates the file name for a data file
+// makeDataName generates the file name for a data file with specified compression mode
 func makeDataName(remote string, size int64, mode int) (newRemote string) {
 	if mode > 0 {
-		newRemote = remote + int64ToHex(size) + ".gz"
+		newRemote = remote + "." + int64ToBase64(size) + gzFileExt
 	} else {
 		newRemote = remote + uncompressedFileExt
 	}
 	return newRemote
 }
 
+// dataName generates the file name for data file
 func (f *Fs) dataName(remote string, size int64, compressed bool) (name string) {
 	if !compressed {
 		return makeDataName(remote, size, Uncompressed)
@@ -253,7 +255,7 @@ func (f *Fs) dataName(remote string, size int64, compressed bool) (name string) 
 	return makeDataName(remote, size, f.mode)
 }
 
-// Get an Object from a data DirEntry
+// addData parses an object and adds it to the DirEntries
 func (f *Fs) addData(entries *fs.DirEntries, o fs.Object) {
 	origFileName, _, size, err := processFileName(o.Remote())
 	if err != nil {
@@ -267,7 +269,7 @@ func (f *Fs) addData(entries *fs.DirEntries, o fs.Object) {
 	*entries = append(*entries, f.newObjectSizeAndNameOnly(o, metaName, size))
 }
 
-// Directory names are unchanged. Just append.
+// addDir adds a dir to the dir entries
 func (f *Fs) addDir(entries *fs.DirEntries, dir fs.Directory) {
 	*entries = append(*entries, f.newDir(dir))
 }
@@ -277,7 +279,7 @@ func (f *Fs) newDir(dir fs.Directory) fs.Directory {
 	return dir // We're using the same dir
 }
 
-// Processes file entries by removing compression data.
+// processEntries parses the file names and adds metadata to the dir entries
 func (f *Fs) processEntries(entries fs.DirEntries) (newEntries fs.DirEntries, err error) {
 	newEntries = entries[:0] // in place filter
 	for _, entry := range entries {
@@ -355,7 +357,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObject(o, mo, meta), err
 }
 
-// checkCompressAndType attempts to find the mime type of the object so we can determine compressibility
+// checkCompressAndType checks if an object is compressible and determines it's mime type
 // returns a multireader with the bytes that were read to determine mime type
 func checkCompressAndType(in io.Reader) (newReader io.Reader, compressible bool, mimeType string, err error) {
 	in, wrap := accounting.UnWrap(in)
@@ -390,7 +392,7 @@ func isCompressible(r io.Reader) (bool, error) {
 	return ratio > minCompressionRatio, nil
 }
 
-// Verifies an object hash
+// verifyObjectHash verifies the Objects hash
 func (f *Fs) verifyObjectHash(ctx context.Context, o fs.Object, hasher *hash.MultiHasher, ht hash.Type) error {
 	srcHash := hasher.Sums()[ht]
 	dstHash, err := o.Hash(ctx, ht)
