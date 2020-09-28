@@ -323,7 +323,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // This will create a duplicate if we upload a new file without
 // checking to see if there is one already - use Put() for that.
 func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size int64, options ...fs.OpenOption) (fs.Object, error) {
-	if size > int64(100e9) {
+	if size > int64(300e9) {
 		return nil, errors.New("File too big, cant upload")
 	} else if size == 0 {
 		return nil, fs.ErrorCantUploadEmptyFiles
