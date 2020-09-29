@@ -106,6 +106,7 @@ type ConfigInfo struct {
 	StatsOneLineDateFormat string // If we want to customize the prefix
 	ErrorOnNoTransfer      bool   // Set appropriate exit code if no files transferred
 	Progress               bool
+	ProgressTerminalTitle  bool
 	Cookie                 bool
 	UseMmap                bool
 	CaCert                 string // Client Side CA

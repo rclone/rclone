@@ -11,6 +11,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/terminal"
 )
 
 // MaxCompletedTransfers specifies maximum number of completed transfers in startedTransfers list
@@ -281,6 +282,11 @@ func (s *StatsInfo) String() string {
 		etaString(currentSize, totalSize, speed),
 		xfrchkString,
 	)
+
+	if fs.Config.ProgressTerminalTitle {
+		// Writes ETA to the terminal title
+		terminal.WriteTerminalTitle("ETA: " + etaString(currentSize, totalSize, speed))
+	}
 
 	if !fs.Config.StatsOneLine {
 		_, _ = buf.WriteRune('\n')

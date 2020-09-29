@@ -3,6 +3,7 @@
 package terminal
 
 import (
+	"fmt"
 	"os"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -28,4 +29,9 @@ func IsTerminal(fd int) bool {
 // returned does not include the \n.
 func ReadPassword(fd int) ([]byte, error) {
 	return terminal.ReadPassword(fd)
+}
+
+// WriteTerminalTitle writes a string to the terminal title
+func WriteTerminalTitle(title string) {
+	fmt.Printf(ChangeTitle + title + BEL)
 }
