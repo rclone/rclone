@@ -151,6 +151,15 @@ func defaultEqualOpt() equalOpt {
 	}
 }
 
+var modTimeUploadOnce sync.Once
+
+// emit a log if we are about to upload a file to set its modification time
+func logModTimeUpload(dst fs.Object) {
+	modTimeUploadOnce.Do(func() {
+		fs.Logf(dst.Fs(), "Forced to upload files to set modification times on this backend.")
+	})
+}
+
 func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) bool {
 	if sizeDiffers(src, dst) {
 		fs.Debugf(src, "Sizes differ (src %d vs dst %d)", src.Size(), dst.Size())
@@ -223,10 +232,12 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			// Update the mtime of the dst object here
 			err := dst.SetModTime(ctx, srcModTime)
 			if err == fs.ErrorCantSetModTime {
-				fs.Debugf(dst, "src and dst identical but can't set mod time without re-uploading")
+				logModTimeUpload(dst)
+				fs.Infof(dst, "src and dst identical but can't set mod time without re-uploading")
 				return false
 			} else if err == fs.ErrorCantSetModTimeWithoutDelete {
-				fs.Debugf(dst, "src and dst identical but can't set mod time without deleting and re-uploading")
+				logModTimeUpload(dst)
+				fs.Infof(dst, "src and dst identical but can't set mod time without deleting and re-uploading")
 				// Remove the file if BackupDir isn't set.  If BackupDir is set we would rather have the old file
 				// put in the BackupDir than deleted which is what will happen if we don't delete it.
 				if fs.Config.BackupDir == "" {
