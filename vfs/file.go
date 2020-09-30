@@ -342,9 +342,14 @@ func (f *File) Size() int64 {
 }
 
 // SetModTime sets the modtime for the file
+//
+// if NoModTime is set then it does nothing
 func (f *File) SetModTime(modTime time.Time) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if f.d.vfs.Opt.NoModTime {
+		return nil
+	}
 	if f.d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
