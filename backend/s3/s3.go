@@ -122,6 +122,9 @@ func init() {
 			Name: "secret_access_key",
 			Help: "AWS Secret Access Key (password)\nLeave blank for anonymous access or runtime credentials.",
 		}, {
+			// References:
+			// 1. https://docs.aws.amazon.com/general/latest/gr/rande.html
+			// 2. https://docs.aws.amazon.com/general/latest/gr/s3.html
 			Name:     "region",
 			Help:     "Region to connect to.",
 			Provider: "AWS",
@@ -132,11 +135,11 @@ func init() {
 				Value: "us-east-2",
 				Help:  "US East (Ohio) Region\nNeeds location constraint us-east-2.",
 			}, {
-				Value: "us-west-2",
-				Help:  "US West (Oregon) Region\nNeeds location constraint us-west-2.",
-			}, {
 				Value: "us-west-1",
 				Help:  "US West (Northern California) Region\nNeeds location constraint us-west-1.",
+			}, {
+				Value: "us-west-2",
+				Help:  "US West (Oregon) Region\nNeeds location constraint us-west-2.",
 			}, {
 				Value: "ca-central-1",
 				Help:  "Canada (Central) Region\nNeeds location constraint ca-central-1.",
@@ -147,8 +150,14 @@ func init() {
 				Value: "eu-west-2",
 				Help:  "EU (London) Region\nNeeds location constraint eu-west-2.",
 			}, {
+				Value: "eu-west-3",
+				Help:  "EU (Paris) Region\nNeeds location constraint eu-west-3.",
+			}, {
 				Value: "eu-north-1",
 				Help:  "EU (Stockholm) Region\nNeeds location constraint eu-north-1.",
+			}, {
+				Value: "eu-south-1",
+				Help:  "EU (Milan) Region\nNeeds location constraint eu-south-1.",
 			}, {
 				Value: "eu-central-1",
 				Help:  "EU (Frankfurt) Region\nNeeds location constraint eu-central-1.",
@@ -165,6 +174,9 @@ func init() {
 				Value: "ap-northeast-2",
 				Help:  "Asia Pacific (Seoul)\nNeeds location constraint ap-northeast-2.",
 			}, {
+				Value: "ap-northeast-3",
+				Help:  "Asia Pacific (Osaka-Local)\nNeeds location constraint ap-northeast-3.",
+			}, {
 				Value: "ap-south-1",
 				Help:  "Asia Pacific (Mumbai)\nNeeds location constraint ap-south-1.",
 			}, {
@@ -173,6 +185,24 @@ func init() {
 			}, {
 				Value: "sa-east-1",
 				Help:  "South America (Sao Paulo) Region\nNeeds location constraint sa-east-1.",
+			}, {
+				Value: "me-south-1",
+				Help:  "Middle East (Bahrain) Region\nNeeds location constraint me-south-1.",
+			}, {
+				Value: "af-south-1",
+				Help:  "Africa (Cape Town) Region\nNeeds location constraint af-south-1.",
+			}, {
+				Value: "cn-north-1",
+				Help:  "China (Beijing) Region\nNeeds location constraint cn-north-1.",
+			}, {
+				Value: "cn-northwest-1",
+				Help:  "China (Ningxia) Region\nNeeds location constraint cn-northwest-1.",
+			}, {
+				Value: "us-gov-east-1",
+				Help:  "AWS GovCloud (US-East) Region\nNeeds location constraint us-gov-east-1.",
+			}, {
+				Value: "us-gov-west-1",
+				Help:  "AWS GovCloud (US) Region\nNeeds location constraint us-gov-west-1.",
 			}},
 		}, {
 			Name:     "region",
@@ -586,11 +616,11 @@ func init() {
 				Value: "us-east-2",
 				Help:  "US East (Ohio) Region.",
 			}, {
-				Value: "us-west-2",
-				Help:  "US West (Oregon) Region.",
-			}, {
 				Value: "us-west-1",
 				Help:  "US West (Northern California) Region.",
+			}, {
+				Value: "us-west-2",
+				Help:  "US West (Oregon) Region.",
 			}, {
 				Value: "ca-central-1",
 				Help:  "Canada (Central) Region.",
@@ -601,8 +631,14 @@ func init() {
 				Value: "eu-west-2",
 				Help:  "EU (London) Region.",
 			}, {
+				Value: "eu-west-3",
+				Help:  "EU (Paris) Region.",
+			}, {
 				Value: "eu-north-1",
 				Help:  "EU (Stockholm) Region.",
+			}, {
+				Value: "eu-south-1",
+				Help:  "EU (Milan) Region.",
 			}, {
 				Value: "EU",
 				Help:  "EU Region.",
@@ -617,16 +653,37 @@ func init() {
 				Help:  "Asia Pacific (Tokyo) Region.",
 			}, {
 				Value: "ap-northeast-2",
-				Help:  "Asia Pacific (Seoul)",
+				Help:  "Asia Pacific (Seoul) Region.",
+			}, {
+				Value: "ap-northeast-3",
+				Help:  "Asia Pacific (Osaka-Local) Region.",
 			}, {
 				Value: "ap-south-1",
-				Help:  "Asia Pacific (Mumbai)",
+				Help:  "Asia Pacific (Mumbai) Region.",
 			}, {
 				Value: "ap-east-1",
-				Help:  "Asia Pacific (Hong Kong)",
+				Help:  "Asia Pacific (Hong Kong) Region.",
 			}, {
 				Value: "sa-east-1",
 				Help:  "South America (Sao Paulo) Region.",
+			}, {
+				Value: "me-south-1",
+				Help:  "Middle East (Bahrain) Region.",
+			}, {
+				Value: "af-south-1",
+				Help:  "Africa (Cape Town) Region.",
+			}, {
+				Value: "cn-north-1",
+				Help:  "China (Beijing) Region",
+			}, {
+				Value: "cn-northwest-1",
+				Help:  "China (Ningxia) Region.",
+			}, {
+				Value: "us-gov-east-1",
+				Help:  "AWS GovCloud (US-East) Region.",
+			}, {
+				Value: "us-gov-west-1",
+				Help:  "AWS GovCloud (US) Region.",
 			}},
 		}, {
 			Name:     "location_constraint",
