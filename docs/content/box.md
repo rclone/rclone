@@ -404,6 +404,7 @@ Note that Box is case insensitive so you can't have a file called
 "Hello.doc" and one called "hello.doc".
 
 Box file names can't have the `\` character in.  rclone maps this to
-and from an identical looking unicode equivalent `＼`.
+and from an identical looking unicode equivalent `＼` (U+FF3C Fullwidth
+Reverse Solidus).
 
 Box only supports filenames up to 255 characters in length.
