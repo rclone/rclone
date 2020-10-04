@@ -1590,7 +1590,7 @@ func TestSyncCopyDest(t *testing.T) {
 }
 
 // Test with BackupDir set
-func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
+func testSyncBackupDir(t *testing.T, backupDir string, suffix string, suffixKeepExtension bool) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
@@ -1599,7 +1599,23 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 	}
 	r.Mkdir(context.Background(), r.Fremote)
 
-	fs.Config.BackupDir = r.FremoteName + "/backup"
+	if backupDir != "" {
+		fs.Config.BackupDir = r.FremoteName + "/" + backupDir
+		backupDir += "/"
+	} else {
+		fs.Config.BackupDir = ""
+		backupDir = "dst/"
+		// Exclude the suffix from the sync otherwise the sync
+		// deletes the old backup files
+		flt, err := filter.NewFilter(nil)
+		require.NoError(t, err)
+		require.NoError(t, flt.AddRule("- *"+suffix))
+		oldFlt := filter.Active
+		filter.Active = flt
+		defer func() {
+			filter.Active = oldFlt
+		}()
+	}
 	fs.Config.Suffix = suffix
 	fs.Config.SuffixKeepExtension = suffixKeepExtension
 	defer func() {
@@ -1627,14 +1643,14 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 	require.NoError(t, err)
 
 	// one should be moved to the backup dir and the new one installed
-	file1.Path = "backup/one" + suffix
+	file1.Path = backupDir + "one" + suffix
 	file1a.Path = "dst/one"
 	// two should be unchanged
 	// three should be moved to the backup dir
 	if suffixKeepExtension {
-		file3.Path = "backup/three" + suffix + ".txt"
+		file3.Path = backupDir + "three" + suffix + ".txt"
 	} else {
-		file3.Path = "backup/three.txt" + suffix
+		file3.Path = backupDir + "three.txt" + suffix
 	}
 
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file1a)
@@ -1652,22 +1668,29 @@ func testSyncBackupDir(t *testing.T, suffix string, suffixKeepExtension bool) {
 	require.NoError(t, err)
 
 	// one should be moved to the backup dir and the new one installed
-	file1a.Path = "backup/one" + suffix
+	file1a.Path = backupDir + "one" + suffix
 	file1b.Path = "dst/one"
 	// two should be unchanged
 	// three should be moved to the backup dir
 	if suffixKeepExtension {
-		file3a.Path = "backup/three" + suffix + ".txt"
+		file3a.Path = backupDir + "three" + suffix + ".txt"
 	} else {
-		file3a.Path = "backup/three.txt" + suffix
+		file3a.Path = backupDir + "three.txt" + suffix
 	}
 
 	fstest.CheckItems(t, r.Fremote, file1b, file2, file3a, file1a)
 }
-func TestSyncBackupDir(t *testing.T)           { testSyncBackupDir(t, "", false) }
-func TestSyncBackupDirWithSuffix(t *testing.T) { testSyncBackupDir(t, ".bak", false) }
+func TestSyncBackupDir(t *testing.T) {
+	testSyncBackupDir(t, "backup", "", false)
+}
+func TestSyncBackupDirWithSuffix(t *testing.T) {
+	testSyncBackupDir(t, "backup", ".bak", false)
+}
 func TestSyncBackupDirWithSuffixKeepExtension(t *testing.T) {
-	testSyncBackupDir(t, "-2019-01-01", true)
+	testSyncBackupDir(t, "backup", "-2019-01-01", true)
+}
+func TestSyncBackupDirSuffixOnly(t *testing.T) {
+	testSyncBackupDir(t, "", ".bak", false)
 }
 
 // Test with Suffix set
