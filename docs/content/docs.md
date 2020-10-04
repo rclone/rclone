@@ -1253,10 +1253,16 @@ or with `--backup-dir`. See `--backup-dir` for more info.
 
 For example
 
-    rclone sync -i /path/to/local/file remote:current --suffix .bak
+    rclone copy -i /path/to/local/file remote:current --suffix .bak
 
-will sync `/path/to/local` to `remote:current`, but for any files
+will copy `/path/to/local` to `remote:current`, but for any files
 which would have been updated or deleted have .bak added.
+
+If using `rclone sync` with `--suffix` and without `--backup-dir` then
+it is recommended to put a filter rule in excluding the suffix
+otherwise the `sync` will delete the backup files.
+
+    rclone sync -i /path/to/local/file remote:current --suffix .bak --exclude "*.bak"
 
 ### --suffix-keep-extension ###
 
