@@ -148,6 +148,57 @@ Note: the cert must come first in the file.  e.g.
 cat id_rsa-cert.pub id_rsa > merged_key
 ```
 
+### Host key validation ###
+
+By default rclone will not check the server's host key for validation.  This
+can allow an attacker to replace a server with their own and if you use
+password authentication then this can lead to that password being exposed.
+
+Host key matching, using standard `known_hosts` files can be turned on by
+enabling the `known_hosts_file` option.  This can point to the file maintained
+by `OpenSSH` or can point to a unique file.
+
+e.g.
+
+```
+[remote]
+type = sftp
+host = example.com
+user = sftpuser
+pass = 
+known_hosts_file = ~/.ssh/known_hosts
+````
+
+There are some limitations:
+
+* `rclone` will not _manage_ this file for you.  If the key is missing or
+wrong then the connection will be refused.
+* If the server is set up for a certificate host key then the entry in
+the `known_hosts` file _must_ be the `@cert-authority` entry for the CA
+* Unlike `OpenSSH`, the libraries used by `rclone` do not permit (at time
+of writing) multiple host keys to be listed for a server.  Only the first
+entry is used.
+
+If the host key provided by the server does not match the one in the
+file (or is missing) then the connection will be aborted and an error
+returned such as
+
+    NewFs: couldn't connect SSH: ssh: handshake failed: knownhosts: key mismatch
+
+or
+
+    NewFs: couldn't connect SSH: ssh: handshake failed: knownhosts: key is unknown
+
+If you see an error such as
+
+    NewFs: couldn't connect SSH: ssh: handshake failed: ssh: no authorities for hostname: example.com:22
+
+then it is likely the server has presented a CA signed host certificate
+and you will need to add the appropriate `@cert-authority` entry.
+
+The `known_hosts_file` setting can be set during `rclone config` as an
+advanced option.
+
 ### ssh-agent on macOS ###
 
 Note that there seem to be various problems with using an ssh-agent on
@@ -319,6 +370,23 @@ Leave blank or set to false to enable hashing (recommended), set to true to disa
 ### Advanced Options
 
 Here are the advanced options specific to sftp (SSH/SFTP Connection).
+
+#### --sftp-known-hosts-file
+
+Optional path to known_hosts file.
+
+Set this value to enable server host key validation.
+
+Leading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.
+
+
+- Config:      known_hosts_file
+- Env Var:     RCLONE_SFTP_KNOWN_HOSTS_FILE
+- Type:        string
+- Default:     ""
+- Examples:
+    - "~/.ssh/known_hosts"
+        - Use OpenSSH's known_hosts file
 
 #### --sftp-ask-password
 
