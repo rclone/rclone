@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	sshagent "github.com/xanzy/ssh-agent"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 const (
@@ -86,6 +87,16 @@ in the new OpenSSH format can't be used.`,
 			Help: `Optional path to public key file.
 
 Set this if you have a signed certificate you want to use for authentication.` + env.ShellExpandHelp,
+		}, {
+			Name: "known_hosts_file",
+			Help: `Optional path to known_hosts file.
+
+Set this value to enable server host key validation.` + env.ShellExpandHelp,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "~/.ssh/known_hosts",
+				Help:  "Use OpenSSH's known_hosts file",
+			}},
 		}, {
 			Name: "key_use_agent",
 			Help: `When set forces the usage of the ssh-agent.
@@ -195,6 +206,7 @@ type Options struct {
 	KeyFile           string `config:"key_file"`
 	KeyFilePass       string `config:"key_file_pass"`
 	PubKeyFile        string `config:"pubkey_file"`
+	KnownHostsFile    string `config:"known_hosts_file"`
 	KeyUseAgent       bool   `config:"key_use_agent"`
 	UseInsecureCipher bool   `config:"use_insecure_cipher"`
 	DisableHashCheck  bool   `config:"disable_hashcheck"`
@@ -414,12 +426,21 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if opt.Port == "" {
 		opt.Port = "22"
 	}
+
 	sshConfig := &ssh.ClientConfig{
 		User:            opt.User,
 		Auth:            []ssh.AuthMethod{},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         fs.Config.ConnectTimeout,
 		ClientVersion:   "SSH-2.0-" + fs.Config.UserAgent,
+	}
+
+	if opt.KnownHostsFile != "" {
+		hostcallback, err := knownhosts.New(opt.KnownHostsFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't parse known_hosts_file")
+		}
+		sshConfig.HostKeyCallback = hostcallback
 	}
 
 	if opt.UseInsecureCipher {
