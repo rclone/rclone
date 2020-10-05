@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	fscache "github.com/rclone/rclone/fs/cache"
@@ -652,7 +653,12 @@ func (c *Cache) clean(removeCleanFiles bool) {
 	c.mu.Unlock()
 	uploadsInProgress, uploadsQueued := c.writeback.Stats()
 
-	fs.Infof(nil, "vfs cache: cleaned: objects %d (was %d) in use %d, to upload %d, uploading %d, total size %v (was %v)", newItems, oldItems, totalInUse, uploadsQueued, uploadsInProgress, newUsed, oldUsed)
+	stats := fmt.Sprintf("objects %d (was %d) in use %d, to upload %d, uploading %d, total size %v (was %v)",
+		newItems, oldItems, totalInUse, uploadsQueued, uploadsInProgress, newUsed, oldUsed)
+	fs.Infof(nil, "vfs cache: cleaned: %s", stats)
+	if err = sysdnotify.Status(fmt.Sprintf("[%s] vfs cache: %s", time.Now().Format("15:04"), stats)); err != nil {
+		fs.Errorf(nil, "vfs cache: updating systemd status with current stats failed: %s", err)
+	}
 }
 
 // cleaner calls clean at regular intervals and upon being kicked for out-of-space condition
