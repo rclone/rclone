@@ -1167,6 +1167,7 @@ func (item *Item) setModTime(modTime time.Time) {
 // ReadAt bytes from the file at off
 func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 	n = 0
+	var expBackOff int
 	for retries := 0; retries < fs.Config.LowLevelRetries; retries++ {
 		item.preAccess()
 		n, err = item.readAt(b, off)
@@ -1180,6 +1181,12 @@ func (item *Item) ReadAt(b []byte, off int64) (n int, err error) {
 			break
 		}
 		item.c.KickCleaner()
+		expBackOff = 2 << uint(retries)
+		time.Sleep(time.Duration(expBackOff) * time.Millisecond) // Exponential back-off the retries
+	}
+
+	if fserrors.IsErrNoSpace(err) {
+		fs.Errorf(item.name, "vfs cache: failed to _ensure cache after retries %v", err)
 	}
 
 	return n, err
