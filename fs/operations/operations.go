@@ -172,9 +172,12 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			return false
 		}
 		if ht == hash.None {
-			checksumWarning.Do(func() {
-				fs.Logf(dst.Fs(), "--checksum is in use but the source and destination have no hashes in common; falling back to --size-only")
-			})
+			common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
+			if common.Count() == 0 {
+				checksumWarning.Do(func() {
+					fs.Logf(dst.Fs(), "--checksum is in use but the source and destination have no hashes in common; falling back to --size-only")
+				})
+			}
 			fs.Debugf(src, "Size of src and dst objects identical")
 		} else {
 			fs.Debugf(src, "Size and %v of src and dst objects identical", ht)
