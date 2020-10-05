@@ -609,6 +609,7 @@ func (c *Cache) clean(removeCleanFiles bool) {
 	if os.IsNotExist(err) {
 		return
 	}
+	c.updateUsed()
 	c.mu.Lock()
 	oldItems, oldUsed := len(c.item), fs.SizeSuffix(c.used)
 	c.mu.Unlock()
