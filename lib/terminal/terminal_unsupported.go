@@ -21,3 +21,8 @@ func IsTerminal(fd int) bool {
 func ReadPassword(fd int) ([]byte, error) {
 	return nil, errors.New("can't read password")
 }
+
+// WriteTerminalTitle writes a string to the terminal title
+func WriteTerminalTitle(title string) {
+	// Since there's nothing to return, this is a NOOP
+}

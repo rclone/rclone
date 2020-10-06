@@ -1108,6 +1108,11 @@ Note: On Windows until [this bug](https://github.com/Azure/go-ansiterm/issues/26
 is fixed all non-ASCII characters will be replaced with `.` when
 `--progress` is in use.
 
+### --progress-terminal-title ###
+
+This flag, when used with `-P/--progress`, will print the string `ETA: %s`
+to the terminal title.
+
 ### -q, --quiet ###
 
 This flag will limit rclone's output to error messages only.

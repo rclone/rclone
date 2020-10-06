@@ -60,6 +60,9 @@ const (
 	HiMagentaBg = "\x1b[105m"
 	HiCyanBg    = "\x1b[106m"
 	HiWhiteBg   = "\x1b[107m"
+
+	ChangeTitle = "\033]0;"
+	BEL         = "\007"
 )
 
 var (
