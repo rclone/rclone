@@ -373,6 +373,9 @@ func v2config(ctx context.Context, name string, m configmap.Mapper) {
 	fmt.Printf("Login Token> ")
 	loginToken := config.ReadLine()
 
+	m.Set(configClientID, "jottacli")
+	m.Set(configClientSecret, "")
+
 	token, err := doAuthV2(ctx, srv, loginToken, m)
 	if err != nil {
 		log.Fatalf("Failed to get oauth token: %s", err)
@@ -384,7 +387,6 @@ func v2config(ctx context.Context, name string, m configmap.Mapper) {
 
 	fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
 	if config.Confirm(false) {
-		oauthConfig.ClientID = "jottacli"
 		oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
 		if err != nil {
 			log.Fatalf("Failed to load oAuthClient: %s", err)
