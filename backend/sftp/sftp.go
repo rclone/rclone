@@ -563,14 +563,20 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(clearpass))
 	}
 
-	// Ask for password if none was defined and we're allowed to
+	// Config for password if none was defined and we're allowed to
+	// We don't ask now; we ask if the ssh connection succeeds
 	if opt.Pass == "" && opt.AskPassword {
-		_, _ = fmt.Fprint(os.Stderr, "Enter SFTP password: ")
-		clearpass := config.ReadPassword()
-		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(clearpass))
+		sshConfig.Auth = append(sshConfig.Auth, ssh.PasswordCallback(getPass))
 	}
 
 	return NewFsWithConnection(ctx, name, root, m, opt, sshConfig)
+}
+
+// If we're in password mode and ssh connection succeeds then this
+// callback is called
+func getPass() (string, error) {
+	_, _ = fmt.Fprint(os.Stderr, "Enter SFTP password: ")
+	return config.ReadPassword(), nil
 }
 
 // NewFsWithConnection creates a new Fs object from the name and root and an ssh.ClientConfig. It connects to
