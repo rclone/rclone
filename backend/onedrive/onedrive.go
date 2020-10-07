@@ -1247,6 +1247,10 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return nil, errors.Wrap(err, "about failed")
 	}
 	q := drive.Quota
+	// On (some?) Onedrive sharepoints these are all 0 so return unknown in that case
+	if q.Total == 0 && q.Used == 0 && q.Deleted == 0 && q.Remaining == 0 {
+		return &fs.Usage{}, nil
+	}
 	usage = &fs.Usage{
 		Total:   fs.NewUsageValue(q.Total),     // quota of bytes that can be used
 		Used:    fs.NewUsageValue(q.Used),      // bytes in use
