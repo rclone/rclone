@@ -474,6 +474,21 @@ See: https://github.com/rclone/rclone/issues/3857
 `,
 			Advanced: true,
 		}, {
+			Name:    "stop_on_download_limit",
+			Default: false,
+			Help: `Make download limit errors be fatal
+
+At the time of writing it is only possible to download 10TB of data from
+Google Drive a day (this is an undocumented limit). When this limit is
+reached Google Drive produces a slightly different error message. When
+this flag is set it causes these errors to be fatal.  These will stop
+the in-progress sync.
+
+Note that this detection is relying on error message strings which
+Google don't document so it may break in the future.
+`,
+			Advanced: true,
+		}, {
 			Name: "skip_shortcuts",
 			Help: `If set skip shortcut files
 
@@ -540,6 +555,7 @@ type Options struct {
 	ServerSideAcrossConfigs   bool                 `config:"server_side_across_configs"`
 	DisableHTTP2              bool                 `config:"disable_http2"`
 	StopOnUploadLimit         bool                 `config:"stop_on_upload_limit"`
+	StopOnDownloadLimit       bool                 `config:"stop_on_download_limit"`
 	SkipShortcuts             bool                 `config:"skip_shortcuts"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 }
@@ -639,6 +655,9 @@ func (f *Fs) shouldRetry(err error) (bool, error) {
 					return false, fserrors.FatalError(err)
 				}
 				return true, err
+			} else if f.opt.StopOnDownloadLimit && reason == "downloadQuotaExceeded" {
+				fs.Errorf(f, "Received download limit error: %v", err)
+				return false, fserrors.FatalError(err)
 			} else if f.opt.StopOnUploadLimit && reason == "teamDriveFileLimitExceeded" {
 				fs.Errorf(f, "Received team drive file limit error: %v", err)
 				return false, fserrors.FatalError(err)
