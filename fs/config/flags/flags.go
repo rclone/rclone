@@ -156,6 +156,15 @@ func FVarP(flags *pflag.FlagSet, value pflag.Value, name, shorthand, usage strin
 	setDefaultFromEnv(flags, name)
 }
 
+// VarPF defines a flag which can be overridden by an environment variable
+//
+// It is a thin wrapper around pflag.VarPF
+func VarPF(flags *pflag.FlagSet, value pflag.Value, name, shorthand, usage string) *pflag.Flag {
+	flag := flags.VarPF(value, name, shorthand, usage)
+	setDefaultFromEnv(flags, name)
+	return flag
+}
+
 // StringArrayP defines a flag which can be overridden by an environment variable
 //
 // It sets one value only - command line flags can be used to set more.

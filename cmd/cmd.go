@@ -513,7 +513,7 @@ func AddBackendFlags() {
 				if opt.IsPassword {
 					help += " (obscured)"
 				}
-				flag := pflag.CommandLine.VarPF(opt, name, opt.ShortOpt, help)
+				flag := flags.VarPF(pflag.CommandLine, opt, name, opt.ShortOpt, help)
 				if _, isBool := opt.Default.(bool); isBool {
 					flag.NoOptDefVal = "true"
 				}
