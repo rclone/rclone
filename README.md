@@ -69,6 +69,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * Wasabi [:page_facing_up:](https://rclone.org/s3/#wasabi)
   * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
   * Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)
+  * Zoho WorkDrive [:page_facing_up:](https://rclone.org/zoho/)
   * The local filesystem [:page_facing_up:](https://rclone.org/local/)
   
 Please see [the full list of all storage providers and their features](https://rclone.org/overview/)

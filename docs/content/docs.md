@@ -58,6 +58,7 @@ See the following for detailed instructions for
   * [Union](/union/)
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)
+  * [Zoho WorkDrive](/zoho/)
   * [The local filesystem](/local/)
 
 Usage

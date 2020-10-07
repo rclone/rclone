@@ -294,3 +294,6 @@ backends:
  - backend:  "tardigrade"
    remote:   "TestTardigrade:"
    fastlist: true
+ - backend:  "zoho"
+   remote:   "TestZoho:"
+   fastlist: false
