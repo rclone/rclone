@@ -49,6 +49,7 @@ Here is an overview of the major features of each cloud storage system.
 | Tardigrade                   | -           | Yes     | No               | No              | -         |
 | WebDAV                       | MD5, SHA1 ³ | Yes ⁴   | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R         |
+| Zoho WorkDrive               | -           | No      | No               | No              | -         |
 | The local filesystem         | All         | Yes     | Depends          | No              | -         |
 
 ### Notes
@@ -360,6 +361,7 @@ upon backend specific capabilities.
 | Tardigrade                   | Yes † | No   | No   | No      | No      | Yes   | Yes          | No          | No  | No  |
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes  | Yes |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes         | Yes | Yes |
+| Zoho WorkDrive               | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No          | Yes | Yes |
 | The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No          | Yes | Yes |
 
 ### Purge ###
