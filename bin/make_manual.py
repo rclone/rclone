@@ -64,6 +64,7 @@ docs = [
     "union.md",
     "webdav.md",
     "yandex.md",
+    "zoho.md",
 
     "local.md",
     "changelog.md",
