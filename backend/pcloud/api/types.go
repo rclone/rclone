@@ -104,8 +104,9 @@ type ItemResult struct {
 
 // Hashes contains the supported hashes
 type Hashes struct {
-	SHA1 string `json:"sha1"`
-	MD5  string `json:"md5"`
+	SHA1   string `json:"sha1"`
+	MD5    string `json:"md5"`
+	SHA256 string `json:"sha256"`
 }
 
 // UploadFileResponse is the response from /uploadfile
