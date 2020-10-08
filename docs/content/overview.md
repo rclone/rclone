@@ -22,7 +22,7 @@ Here is an overview of the major features of each cloud storage system.
 | Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
 | Box                          | SHA1        | Yes     | Yes              | No              | -         |
 | Citrix ShareFile             | MD5         | Yes     | Yes              | No              | -         |
-| Dropbox                      | DBHASH †    | Yes     | Yes              | No              | -         |
+| Dropbox                      | DBHASH ¹    | Yes     | Yes              | No              | -         |
 | FTP                          | -           | No      | No               | No              | -         |
 | Google Cloud Storage         | MD5         | Yes     | No               | No              | R/W       |
 | Google Drive                 | MD5         | Yes     | No               | Yes             | R/W       |
@@ -31,24 +31,51 @@ Here is an overview of the major features of each cloud storage system.
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
 | Jottacloud                   | MD5         | Yes     | Yes              | No              | R/W       |
 | Koofr                        | MD5         | No      | Yes              | No              | -         |
-| Mail.ru Cloud                | Mailru ‡‡‡  | Yes     | Yes              | No              | -         |
+| Mail.ru Cloud                | Mailru ⁶    | Yes     | Yes              | No              | -         |
 | Mega                         | -           | No      | No               | Yes             | -         |
 | Memory                       | MD5         | Yes     | No               | No              | -         |
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
-| Microsoft OneDrive           | SHA1 ‡‡     | Yes     | Yes              | No              | R         |
-| OpenDrive                    | MD5         | Yes     | Yes              | Partial \*      | -         |
+| Microsoft OneDrive           | SHA1 ⁵      | Yes     | Yes              | No              | R         |
+| OpenDrive                    | MD5         | Yes     | Yes              | Partial ⁸       | -         |
 | OpenStack Swift              | MD5         | Yes     | No               | No              | R/W       |
-| pCloud                       | MD5, SHA1   | Yes     | No               | No              | W         |
+| pCloud                       | MD5, SHA1 ⁷ | Yes     | No               | No              | W         |
 | premiumize.me                | -           | No      | Yes              | No              | R         |
 | put.io                       | CRC-32      | Yes     | No               | Yes             | R         |
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
 | Seafile                      | -           | No      | No               | No              | -         |
-| SFTP                         | MD5, SHA1 ‡ | Yes     | Depends          | No              | -         |
+| SFTP                         | MD5, SHA1 ² | Yes     | Depends          | No              | -         |
 | SugarSync                    | -           | No      | No               | No              | -         |
 | Tardigrade                   | -           | Yes     | No               | No              | -         |
-| WebDAV                       | MD5, SHA1 ††| Yes ††† | Depends          | No              | -         |
+| WebDAV                       | MD5, SHA1 ³ | Yes ⁴   | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R/W       |
 | The local filesystem         | All         | Yes     | Depends          | No              | -         |
+
+### Notes
+
+¹ Dropbox supports [its own custom
+hash](https://www.dropbox.com/developers/reference/content-hash).
+This is an SHA256 sum of all the 4MB block SHA256s.
+
+² SFTP supports checksums if the same login has shell access and
+`md5sum` or `sha1sum` as well as `echo` are in the remote's PATH.
+
+³ WebDAV supports hashes when used with Owncloud and Nextcloud only.
+
+⁴ WebDAV supports modtimes when used with Owncloud and Nextcloud only.
+
+⁵ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive
+for business and SharePoint server support Microsoft's own
+[QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash).
+
+⁶ Mail.ru uses its own modified SHA1 hash
+
+⁷ pCloud only supports SHA1 (not MD5) in its EU region
+
+⁸ Opendrive does not support creation of duplicate files using
+their web client interface or other stock clients, but the underlying
+storage platform has been determined to allow duplicate files, and it
+is possible to create them with `rclone`.  It may be that this is a
+mistake or an unsupported feature.
 
 ### Hash ###
 
@@ -59,23 +86,6 @@ the `check` command.
 
 To use the verify checksums when transferring between cloud storage
 systems they must support a common hash type.
-
-† Note that Dropbox supports [its own custom
-hash](https://www.dropbox.com/developers/reference/content-hash).
-This is an SHA256 sum of all the 4MB block SHA256s.
-
-‡ SFTP supports checksums if the same login has shell access and `md5sum`
-or `sha1sum` as well as `echo` are in the remote's PATH.
-
-†† WebDAV supports hashes when used with Owncloud and Nextcloud only.
-
-††† WebDAV supports modtimes when used with Owncloud and Nextcloud only.
-
-‡‡ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive
-for business and SharePoint server support Microsoft's own
-[QuickXorHash](https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash).
-
-‡‡‡ Mail.ru uses its own modified SHA1 hash
 
 ### ModTime ###
 
@@ -116,12 +126,6 @@ objects with the same name.
 
 This confuses rclone greatly when syncing - use the `rclone dedupe`
 command to rename or remove duplicates.
-
-\* Opendrive does not support creation of duplicate files using
-their web client interface or other stock clients, but the underlying
-storage platform has been determined to allow duplicate files, and it
-is possible to create them with `rclone`.  It may be that this is a
-mistake or an unsupported feature.
 
 ### Restricted filenames ###
 
