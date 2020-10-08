@@ -90,8 +90,11 @@ second.  These will be used to detect whether objects need syncing or
 not.  In order to set a Modification time pCloud requires the object
 be re-uploaded.
 
-pCloud supports MD5 and SHA1 type hashes, so you can use the
-`--checksum` flag.
+pCloud supports MD5 and SHA1 type hashes in the US region but and SHA1
+only in the EU region, so you can use the `--checksum` flag.
+
+(Note that pCloud also support SHA256 in the EU region, but rclone
+does not have support for that yet.)
 
 #### Restricted filename characters
 
