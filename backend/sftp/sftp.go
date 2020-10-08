@@ -235,6 +235,7 @@ type Fs struct {
 	poolMu       sync.Mutex
 	pool         []*conn
 	pacer        *fs.Pacer // pacer for operations
+	savedpswd    string
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -413,6 +414,10 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+	// This will hold the Fs object.  We need to create it here
+	// so we can refer to it in the SSH callback, but it's populated
+	// in NewFsWithConnection
+	f := &Fs{}
 	ctx := context.Background()
 	// Parse config into Options struct
 	opt := new(Options)
@@ -566,33 +571,42 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Config for password if none was defined and we're allowed to
 	// We don't ask now; we ask if the ssh connection succeeds
 	if opt.Pass == "" && opt.AskPassword {
-		sshConfig.Auth = append(sshConfig.Auth, ssh.PasswordCallback(getPass))
+		sshConfig.Auth = append(sshConfig.Auth, ssh.PasswordCallback(f.getPass))
 	}
 
-	return NewFsWithConnection(ctx, name, root, m, opt, sshConfig)
+	return NewFsWithConnection(ctx, f, name, root, m, opt, sshConfig)
 }
 
 // If we're in password mode and ssh connection succeeds then this
-// callback is called
-func getPass() (string, error) {
-	_, _ = fmt.Fprint(os.Stderr, "Enter SFTP password: ")
-	return config.ReadPassword(), nil
+// callback is called.  First time around we ask the user, and then
+// save it so on reconnection we give back the previous string.
+// This removes the ability to let the user correct a mistaken entry,
+// but means that reconnects are transparent.
+// We'll re-use config.Pass for this, 'cos we know it's not been
+// specified.
+func (f *Fs) getPass() (string, error) {
+	for f.savedpswd == "" {
+		_, _ = fmt.Fprint(os.Stderr, "Enter SFTP password: ")
+		f.savedpswd = config.ReadPassword()
+	}
+	return f.savedpswd, nil
 }
 
 // NewFsWithConnection creates a new Fs object from the name and root and an ssh.ClientConfig. It connects to
 // the host specified in the ssh.ClientConfig
-func NewFsWithConnection(ctx context.Context, name string, root string, m configmap.Mapper, opt *Options, sshConfig *ssh.ClientConfig) (fs.Fs, error) {
-	f := &Fs{
-		name:      name,
-		root:      root,
-		absRoot:   root,
-		opt:       *opt,
-		m:         m,
-		config:    sshConfig,
-		url:       "sftp://" + opt.User + "@" + opt.Host + ":" + opt.Port + "/" + root,
-		mkdirLock: newStringLock(),
-		pacer:     fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-	}
+func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m configmap.Mapper, opt *Options, sshConfig *ssh.ClientConfig) (fs.Fs, error) {
+	// Populate the Filesystem Object
+	f.name = name
+	f.root = root
+	f.absRoot = root
+	f.opt = *opt
+	f.m = m
+	f.config = sshConfig
+	f.url = "sftp://" + opt.User + "@" + opt.Host + ":" + opt.Port + "/" + root
+	f.mkdirLock = newStringLock()
+	f.pacer = fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
+	f.savedpswd = ""
+
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 		SlowHash:                true,
