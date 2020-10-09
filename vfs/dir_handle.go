@@ -35,7 +35,7 @@ func (fh *DirHandle) Stat() (fi os.FileInfo, err error) {
 	return fh.d, nil
 }
 
-// Node returns the Node assocuated with this - satisfies Noder interface
+// Node returns the Node associated with this - satisfies Noder interface
 func (fh *DirHandle) Node() Node {
 	return fh.d
 }

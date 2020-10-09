@@ -61,7 +61,7 @@ to be used within the template to server pages:
 | .Name       | The full path of a file/directory. |
 | .Title      | Directory listing of .Name |
 | .Sort       | The current sort used.  This is changeable via ?sort= parameter |
-|             | Sort Options: namedirfist,name,size,time (default namedirfirst) |
+|             | Sort Options: namedirfirst,name,size,time (default namedirfirst) |
 | .Order      | The current ordering used.  This is changeable via ?order= parameter |
 |             | Order Options: asc,desc (default asc) |
 | .Query      | Currently unused. |

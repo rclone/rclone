@@ -141,7 +141,7 @@ def main():
     for name in sorted(bugfixes.keys()):
         out(name)
 
-    # Read old changlog and split
+    # Read old changelog and split
     with open("docs/content/changelog.md") as fd:
         old_changelog = fd.read()
     heading = "# Changelog"

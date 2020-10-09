@@ -45,7 +45,7 @@ func newFileHandle(h vfs.Handle, fsys *FS) *FileHandle {
 	}
 }
 
-// Check interface satistfied
+// Check interface satisfied
 var _ fusefs.FileHandle = (*FileHandle)(nil)
 
 // The String method is for debug printing.

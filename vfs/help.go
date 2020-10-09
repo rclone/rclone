@@ -149,7 +149,7 @@ In this mode all reads and writes are buffered to and from disk. When
 data is read from the remote this is buffered to disk as well.
 
 In this mode the files in the cache will be sparse files and rclone
-will keep track of which bits of the files it has dowloaded.
+will keep track of which bits of the files it has downloaded.
 
 So if an application only reads the starts of each file, then rclone
 will only buffer the start of the file. These files will appear to be

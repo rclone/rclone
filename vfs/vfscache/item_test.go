@@ -548,7 +548,7 @@ func TestItemReadWrite(t *testing.T) {
 		assert.False(t, item.remove(fileName))
 	})
 
-	// Read it back randomly concurently
+	// Read it back randomly concurrently
 	t.Run("RandomConcurrent", func(t *testing.T) {
 		require.NoError(t, item.Open(obj))
 		assert.False(t, item.present())

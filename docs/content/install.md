@@ -205,7 +205,7 @@ or the latest version (equivalent to the beta) with
 These will build the binary in `$(go env GOPATH)/bin`
 (`~/go/bin/rclone` by default) after downloading the source to the go
 module cache. Note - do **not** use the `-u` flag here. This causes go
-to try to update the depencencies that rclone uses and sometimes these
+to try to update the dependencies that rclone uses and sometimes these
 don't work with the current version of rclone.
 
 ## Installation with Ansible ##

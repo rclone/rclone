@@ -952,7 +952,7 @@ func (f *Fs) run(cmd string) ([]byte, error) {
 
 	session, err := c.sshClient.NewSession()
 	if err != nil {
-		return nil, errors.Wrap(err, "run: get SFTP sessiion")
+		return nil, errors.Wrap(err, "run: get SFTP session")
 	}
 	defer func() {
 		_ = session.Close()

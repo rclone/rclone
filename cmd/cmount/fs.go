@@ -270,7 +270,7 @@ func (fsys *FS) Releasedir(path string, fh uint64) (errc int) {
 	return fsys.closeHandle(fh)
 }
 
-// Statfs reads overall stats on the filessystem
+// Statfs reads overall stats on the filesystem
 func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	defer log.Trace(path, "")("stat=%+v, errc=%d", stat, &errc)
 	const blockSize = 4096

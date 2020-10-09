@@ -65,7 +65,7 @@ d) Delete this remote
 y/e/d> y
 ```
 
-### Setup with API key and passhprase
+### Setup with API key and passphrase
 
 ```
 No remotes found - make a new one

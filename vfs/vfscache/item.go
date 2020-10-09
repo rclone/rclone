@@ -246,7 +246,7 @@ func (item *Item) _truncate(size int64) (err error) {
 	// Use open handle if available
 	fd := item.fd
 	if fd == nil {
-		// If the metadata says we have some blockes cached then the
+		// If the metadata says we have some blocks cached then the
 		// file should exist, so open without O_CREATE
 		oFlags := os.O_WRONLY
 		if item.info.Rs.Size() == 0 {
@@ -647,7 +647,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 	// If the file is dirty ensure any segments not transferred
 	// are brought in first.
 	//
-	// FIXME It would be nice to do this asynchronously howeve it
+	// FIXME It would be nice to do this asynchronously however it
 	// would require keeping the downloaders alive after the item
 	// has been closed
 	if item.info.Dirty && item.o != nil {
@@ -841,7 +841,7 @@ func (item *Item) _removeMeta(reason string) {
 // remove the cached file and empty the metadata
 //
 // This returns true if the file was in the transfer queue so may not
-// have completedly uploaded yet.
+// have completely uploaded yet.
 //
 // call with lock held
 func (item *Item) _remove(reason string) (wasWriting bool) {
@@ -859,7 +859,7 @@ func (item *Item) _remove(reason string) (wasWriting bool) {
 // remove the cached file and empty the metadata
 //
 // This returns true if the file was in the transfer queue so may not
-// have completedly uploaded yet.
+// have completely uploaded yet.
 func (item *Item) remove(reason string) (wasWriting bool) {
 	item.mu.Lock()
 	defer item.mu.Unlock()

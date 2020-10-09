@@ -67,12 +67,12 @@ func init() {
 					log.Fatalf("Couldn't create access grant: %v", err)
 				}
 
-				serialziedAccess, err := access.Serialize()
+				serializedAccess, err := access.Serialize()
 				if err != nil {
 					log.Fatalf("Couldn't serialize access grant: %v", err)
 				}
 				configMapper.Set("satellite_address", satellite)
-				configMapper.Set("access_grant", serialziedAccess)
+				configMapper.Set("access_grant", serializedAccess)
 			} else if provider == existingProvider {
 				config.FileDeleteKey(name, "satellite_address")
 				config.FileDeleteKey(name, "api_key")

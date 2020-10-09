@@ -32,7 +32,7 @@ func String(n int) string {
 // memorable.  The password is composed of printable ASCII characters
 // from the base64 alphabet.
 //
-// Requres password strength in bits.
+// Requires password strength in bits.
 // 64 is just about memorable
 // 128 is secure
 func Password(bits int) (password string, err error) {

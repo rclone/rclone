@@ -1125,7 +1125,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Special treatment for a 0 length upload.  This doesn't work
 	// with PUT even with Content-Length set (by setting
-	// opts.Body=0), so upload it as a multpart form POST with
+	// opts.Body=0), so upload it as a multipart form POST with
 	// Content-Length set.
 	if size == 0 {
 		formReader, contentType, overhead, err := rest.MultipartUpload(in, opts.Parameters, "content", leaf)

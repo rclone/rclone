@@ -177,7 +177,7 @@ func TestNewRemoteName(t *testing.T) {
 	assert.Equal(t, "newname", NewRemoteName())
 }
 
-func TestCreateUpatePasswordRemote(t *testing.T) {
+func TestCreateUpdatePasswordRemote(t *testing.T) {
 	defer testConfigFile(t, "update.conf")()
 
 	for _, doObscure := range []bool{false, true} {

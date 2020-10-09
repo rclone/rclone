@@ -63,7 +63,7 @@ description: "Rclone Changelog"
         * Add reverse proxy pluginsHandler for serving plugins (Chaitanya Bankanhal)
         * Add `mount/listmounts` option for listing current mounts (Chaitanya Bankanhal)
         * Add `operations/uploadfile` to upload a file through rc using encoding multipart/form-data (Chaitanya Bankanhal)
-        * Add `core/copmmand` to execute rclone terminal commands. (Chaitanya Bankanhal)
+        * Add `core/command` to execute rclone terminal commands. (Chaitanya Bankanhal)
     * `rclone check`
         * Add reporting of filenames for same/missing/changed (Nick Craig-Wood)
         * Make check command obey `--dry-run`/`-i`/`--interactive` (Nick Craig-Wood)
@@ -172,7 +172,7 @@ description: "Rclone Changelog"
 * Google Cloud Storage
     * Add support for anonymous access (Kai Lüke)
 * Jottacloud
-    * Bring back legacy authentification for use with whitelabel versions (buengese)
+    * Bring back legacy authentication for use with whitelabel versions (buengese)
     * Switch to new api root - also implement a very ugly workaround for the DirMove failures (buengese)
 * Onedrive
     * Rework cancel of multipart uploads on rclone exit (Nick Craig-Wood)
@@ -322,7 +322,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Add `--header` flag to add HTTP headers to every HTTP transaction (Nick Craig-Wood)
     * Add `--check-first` to do all checking before starting transfers (Nick Craig-Wood)
     * Add `--track-renames-strategy` for configurable matching criteria for `--track-renames` (Bernd Schoolmann)
-    * Add `--cutoff-mode` hard,soft,catious (Shing Kit Chan & Franklyn Tackitt)
+    * Add `--cutoff-mode` hard,soft,cautious (Shing Kit Chan & Franklyn Tackitt)
     * Filter flags (eg `--files-from -`) can read from stdin (fishbullet)
     * Add `--error-on-no-transfer` option (Jon Fautley)
     * Implement `--order-by xxx,mixed` for copying some small and some big files (Nick Craig-Wood)
@@ -605,7 +605,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * dbhashsum: Stop it returning UNSUPPORTED on dropbox (Nick Craig-Wood)
     * dedupe: Add missing modes to help string (Nick Craig-Wood)
     * operations
-        * Fix dedupe continuing on errors like insufficientFilePermisson (SezalAgrawal)
+        * Fix dedupe continuing on errors like insufficientFilePersimmon (SezalAgrawal)
         * Clear accounting before low level retry (Maciej Zimnoch)
         * Write debug message when hashes could not be checked (Ole Schütt)
         * Move interface assertion to tests to remove pflag dependency (Nick Craig-Wood)
@@ -669,7 +669,7 @@ all the docs and Edward Barker for helping re-write the front page.
 * S3
     * Re-implement multipart upload to fix memory issues (Nick Craig-Wood)
     * Add `--s3-copy-cutoff` for size to switch to multipart copy (Nick Craig-Wood)
-    * Add new region Asia Patific (Hong Kong) (Outvi V)
+    * Add new region Asia Pacific (Hong Kong) (Outvi V)
     * Reduce memory usage streaming files by reducing max stream upload size (Nick Craig-Wood)
     * Add `--s3-list-chunk` option for bucket listing (Thomas Kriechbaumer)
     * Force path style bucket access to off for AWS deprecation (Nick Craig-Wood)
@@ -930,7 +930,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * rcat: Fix slowdown on systems with multiple hashes (Nick Craig-Wood)
     * rcd: Fix permissions problems on cache directory with web gui download (Nick Craig-Wood)
 * Mount
-    * Default `--deamon-timout` to 15 minutes on macOS and FreeBSD (Nick Craig-Wood)
+    * Default `--daemon-timout` to 15 minutes on macOS and FreeBSD (Nick Craig-Wood)
     * Update docs to show mounting from root OK for bucket based (Nick Craig-Wood)
     * Remove nonseekable flag from write files (Nick Craig-Wood)
 * VFS
@@ -1093,7 +1093,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Add client side TLS/SSL flags `--ca-cert`/`--client-cert`/`--client-key` (Nick Craig-Wood)
     * Implement `--suffix-keep-extension` for use with `--suffix` (Nick Craig-Wood)
     * build:
-        * Switch to semvar compliant version tags to be go modules compliant (Nick Craig-Wood)
+        * Switch to semver compliant version tags to be go modules compliant (Nick Craig-Wood)
         * Update to use go1.12.x for the build (Nick Craig-Wood)
     * serve dlna: Add connection manager service description to improve compatibility (Dan Walters)
     * lsf: Add 'e' format to show encrypted names and 'o' for original IDs (Nick Craig-Wood)

@@ -64,7 +64,7 @@ func TestTouchWithTimestamp(t *testing.T) {
 	checkFile(t, r.Fremote, srcFileName, "")
 }
 
-func TestTouchWithLognerTimestamp(t *testing.T) {
+func TestTouchWithLongerTimestamp(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 

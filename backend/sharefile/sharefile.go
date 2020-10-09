@@ -1090,7 +1090,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 		} else if err != nil {
 			return nil, errors.Wrap(err, "copy: failed to examine destination dir")
 		} else {
-			// otherwise need to copy via a temporary directlry
+			// otherwise need to copy via a temporary directory
 		}
 	}
 

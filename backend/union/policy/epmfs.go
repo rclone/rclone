@@ -106,7 +106,7 @@ func (p *EpMfs) Search(ctx context.Context, upstreams []*upstream.Fs, path strin
 	return p.mfs(upstreams)
 }
 
-// SearchEntries is SEARCH category policy but receivng a set of candidate entries
+// SearchEntries is SEARCH category policy but receiving a set of candidate entries
 func (p *EpMfs) SearchEntries(entries ...upstream.Entry) (upstream.Entry, error) {
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound

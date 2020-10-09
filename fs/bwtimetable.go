@@ -80,7 +80,7 @@ func parseWeekday(dayOfWeek string) (int, error) {
 // Set the bandwidth timetable.
 func (x *BwTimetable) Set(s string) error {
 	// The timetable is formatted as:
-	// "dayOfWeek-hh:mm,bandwidth dayOfWeek-hh:mm,banwidth..." ex: "Mon-10:00,10G Mon-11:30,1G Tue-18:00,off"
+	// "dayOfWeek-hh:mm,bandwidth dayOfWeek-hh:mm,bandwidth..." ex: "Mon-10:00,10G Mon-11:30,1G Tue-18:00,off"
 	// If only a single bandwidth identifier is provided, we assume constant bandwidth.
 
 	if len(s) == 0 {

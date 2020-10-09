@@ -104,7 +104,7 @@ enough memory, then increasing this will speed up the transfers.`,
 This is the number of chunks of the same file that are uploaded
 concurrently.
 
-NB if you set this to > 1 then the checksums of multpart uploads
+NB if you set this to > 1 then the checksums of multipart uploads
 become corrupted (the uploads themselves are not corrupted though).
 
 If you are uploading small numbers of large file over high speed link

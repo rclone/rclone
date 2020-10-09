@@ -115,7 +115,7 @@ func (o *Object) MimeType(ctx context.Context) string {
 
 // setMetadataFromEntry sets the fs data from a putio.File
 //
-// This isn't a complete set of metadata and has an inacurate date
+// This isn't a complete set of metadata and has an inaccurate date
 func (o *Object) setMetadataFromEntry(info putio.File) error {
 	o.file = &info
 	o.modtime = info.UpdatedAt.Time

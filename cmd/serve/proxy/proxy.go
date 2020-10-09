@@ -27,7 +27,7 @@ var Help = strings.Replace(`
 If you supply the parameter |--auth-proxy /path/to/program| then
 rclone will use that program to generate backends on the fly which
 then are used to authenticate incoming requests.  This uses a simple
-JSON based protocl with input on STDIN and output on STDOUT.
+JSON based protocol with input on STDIN and output on STDOUT.
 
 **PLEASE NOTE:** |--auth-proxy| and |--authorized-keys| cannot be used
 together, if |--auth-proxy| is set the authorized keys option will be

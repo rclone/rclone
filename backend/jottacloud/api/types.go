@@ -153,9 +153,9 @@ type CustomerInfo struct {
 	AccountType       string      `json:"account_type"`
 	SubscriptionType  string      `json:"subscription_type"`
 	Usage             int64       `json:"usage"`
-	Qouta             int64       `json:"quota"`
+	Quota             int64       `json:"quota"`
 	BusinessUsage     int64       `json:"business_usage"`
-	BusinessQouta     int64       `json:"business_quota"`
+	BusinessQuota     int64       `json:"business_quota"`
 	WriteLocked       bool        `json:"write_locked"`
 	ReadLocked        bool        `json:"read_locked"`
 	LockedCause       interface{} `json:"locked_cause"`
@@ -386,7 +386,7 @@ type Error struct {
 	Cause      string `xml:"cause"`
 }
 
-// Error returns a string for the error and statistifes the error interface
+// Error returns a string for the error and satisfies the error interface
 func (e *Error) Error() string {
 	out := fmt.Sprintf("error %d", e.StatusCode)
 	if e.Message != "" {
