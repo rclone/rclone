@@ -102,7 +102,7 @@ func (rs *Ranges) coalesce(i int) {
 		endChop = j + 1
 	}
 	if endChop > startChop {
-		// chop the uneeded ranges out
+		// chop the unneeded ranges out
 		copy(ranges[startChop:], ranges[endChop:])
 		*rs = ranges[:len(ranges)-endChop+startChop]
 	}

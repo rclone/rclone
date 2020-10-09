@@ -4,7 +4,7 @@ package hubic
 
 // This uses the normal swift mechanism to update the credentials and
 // ignores the expires field returned by the Hubic API.  This may need
-// to be revisted after some actual experience.
+// to be revisited after some actual experience.
 
 import (
 	"context"

@@ -115,7 +115,7 @@ func TestIntegration(t *testing.T) {
 				assert.Equal(t, "2013-07-26 08:57:21 +0000 UTC", entries[0].ModTime(ctx).String())
 			})
 
-			// Check it is there in the date/month/year heirachy
+			// Check it is there in the date/month/year hierarchy
 			// 2013-07-13 is the creation date of the folder
 			checkPresent := func(t *testing.T, objPath string) {
 				entries, err := f.List(ctx, objPath)

@@ -450,7 +450,7 @@ func shortenName(in string, size int) string {
 		return in
 	}
 	name := []rune(in)
-	size-- // don't count elipsis rune
+	size-- // don't count ellipsis rune
 	suffixLength := size / 2
 	prefixLength := size - suffixLength
 	suffixStart := len(name) - suffixLength

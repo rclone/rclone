@@ -254,7 +254,7 @@ func (r *Run) WriteObjectTo(ctx context.Context, f fs.Fs, remote, content string
 	}
 	r.Mkdir(ctx, f)
 
-	// caclulate all hashes f supports for content
+	// calculate all hashes f supports for content
 	hash, err := hash.NewMultiHasherTypes(f.Hashes())
 	if err != nil {
 		r.Fatalf("Failed to make new multi hasher: %v", err)

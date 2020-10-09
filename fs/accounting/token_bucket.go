@@ -99,7 +99,7 @@ func StartTokenTicker() {
 	}()
 }
 
-// limitBandwith sleeps for the correct amount of time for the passage
+// limitBandwidth sleeps for the correct amount of time for the passage
 // of n bytes according to the current bandwidth limit
 func limitBandwidth(n int) {
 	tokenBucketMu.Lock()

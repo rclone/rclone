@@ -86,7 +86,7 @@ git reset --soft HEAD~2 # This squashes the 2 latest commits together.
 git status # Check what will happen, if you made a mistake resetting, you can run git reset 'HEAD@{1}' to undo.
 git commit # Add a new commit message.
 git push --force # Push the squashed commit to your GitHub repo.
-# For more, see Stack Overflow, Git docs, or generally Duck around the web. jtagcat also reccommends wizardzines.com
+# For more, see Stack Overflow, Git docs, or generally Duck around the web. jtagcat also recommends wizardzines.com
 ```
 
 ## CI for your fork ##

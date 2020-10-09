@@ -156,7 +156,7 @@ func TestDirModTime(t *testing.T) {
 	run.rmdir(t, "dir")
 }
 
-// TestDirCacheFlush tests fluching the dir cache
+// TestDirCacheFlush tests flushing the dir cache
 func TestDirCacheFlush(t *testing.T) {
 	run.skipIfNoFUSE(t)
 

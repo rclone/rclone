@@ -27,8 +27,8 @@ Note that the web interface may refer to this token as a JottaCli token.
 ### Legacy Setup
 
 If you are using one of the whitelabel versions (Elgiganten, Com Hem Cloud) you may not have the option
-to generate a CLI token. In this case you'll have to use the legacy authentification. To to this select
-yes when the setup asks for legacy authentification and enter your username and password.
+to generate a CLI token. In this case you'll have to use the legacy authentication. To to this select
+yes when the setup asks for legacy authentication and enter your username and password.
 The rest of the setup is identical to the default setup.
 
 Here is an example of how to make a remote called `remote` with the default setup.  First run:
@@ -59,7 +59,7 @@ y) Yes
 n) No
 y/n> n
 Remote config
-Use legacy authentification?.
+Use legacy authentication?.
 This is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.
 y) Yes
 n) No (default)

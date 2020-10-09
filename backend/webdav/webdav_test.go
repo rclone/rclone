@@ -12,7 +12,7 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: "TestWebdavNexcloud:",
+		RemoteName: "TestWebdavNextcloud:",
 		NilObject:  (*webdav.Object)(nil),
 	})
 }

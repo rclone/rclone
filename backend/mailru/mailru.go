@@ -273,7 +273,7 @@ type Fs struct {
 	root         string             // root path
 	opt          Options            // parsed options
 	speedupGlobs []string           // list of file name patterns eligible for speedup
-	speedupAny   bool               // true if all file names are aligible for speedup
+	speedupAny   bool               // true if all file names are eligible for speedup
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // REST API client
 	cli          *http.Client       // underlying HTTP client (for authorize)
@@ -2214,7 +2214,7 @@ func (e *endHandler) handle(err error) error {
 	return io.EOF
 }
 
-// serverPool backs server dispacher
+// serverPool backs server dispatcher
 type serverPool struct {
 	pool      pendingServerMap
 	mu        sync.Mutex

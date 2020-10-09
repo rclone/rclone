@@ -32,7 +32,7 @@ type pipe struct {
 
 func newPipe(orderBy string, stats func(items int, totalSize int64), maxBacklog int) (*pipe, error) {
 	if maxBacklog < 0 {
-		maxBacklog = (1 << (bits.UintSize - 1)) - 1 // largest posititive int
+		maxBacklog = (1 << (bits.UintSize - 1)) - 1 // largest positive int
 	}
 	less, fraction, err := newLess(orderBy)
 	if err != nil {

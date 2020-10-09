@@ -49,7 +49,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", true, "Check control characters.")
 	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file.")
 	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", true, "Check max filename length.")
-	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", true, "Check uploadxs with indeterminate file size.")
+	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", true, "Check uploads with indeterminate file size.")
 }
 
 var commandDefinition = &cobra.Command{

@@ -57,7 +57,7 @@ func TestSetFrom(t *testing.T) {
 		Matching:      "a",
 		OnlyA:         "onlyA",
 		MatchingInt:   1,
-		DifferentType: "suprise",
+		DifferentType: "surprise",
 	}
 
 	b := bType{
@@ -75,7 +75,7 @@ func TestSetFrom(t *testing.T) {
 		Matching:      "b",
 		OnlyA:         "onlyA",
 		MatchingInt:   2,
-		DifferentType: "suprise",
+		DifferentType: "surprise",
 	}, a)
 
 	assert.Equal(t, bBefore, b)
@@ -86,7 +86,7 @@ func TestSetFromReversed(t *testing.T) {
 		Matching:      "a",
 		OnlyA:         "onlyA",
 		MatchingInt:   1,
-		DifferentType: "suprise",
+		DifferentType: "surprise",
 	}
 	aBefore := a
 

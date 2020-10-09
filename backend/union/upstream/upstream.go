@@ -52,7 +52,7 @@ type Object struct {
 	f *Fs
 }
 
-// Entry describe a warpped fs.DirEntry interface with the
+// Entry describe a wrapped fs.DirEntry interface with the
 // information of upstream Fs
 type Entry interface {
 	fs.DirEntry

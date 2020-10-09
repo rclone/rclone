@@ -75,7 +75,7 @@ func helpText() (tr []string) {
 		" d delete file/directory",
 	}
 	if !clipboard.Unsupported {
-		tr = append(tr, " y copy current path to clipbard")
+		tr = append(tr, " y copy current path to clipboard")
 	}
 	tr = append(tr, []string{
 		" Y display current path",

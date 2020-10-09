@@ -12,7 +12,7 @@ start() {
     docker run --rm -d --name $NAME \
            -e "OWNCLOUD_DOMAIN=${OWNCLOUD_DOMAIN}" \
            -e "OWNCLOUD_DB_TYPE=sqlite" \
-           -e "OWNCLOUD_DB_NAME=oowncloud.db" \
+           -e "OWNCLOUD_DB_NAME=owncloud.db" \
            -e "OWNCLOUD_ADMIN_USERNAME=$USER" \
            -e "OWNCLOUD_ADMIN_PASSWORD=$PASS" \
            -e "OWNCLOUD_MYSQL_UTF8MB4=true" \

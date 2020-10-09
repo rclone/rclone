@@ -20,7 +20,7 @@ type ResourceInfoRequestOptions struct {
 	Fields   []string
 }
 
-//ResourceInfoResponse struct is returned by the API for metedata requests.
+//ResourceInfoResponse struct is returned by the API for metadata requests.
 type ResourceInfoResponse struct {
 	PublicKey        string                 `json:"public_key"`
 	Name             string                 `json:"name"`
