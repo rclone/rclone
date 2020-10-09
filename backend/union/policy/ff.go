@@ -14,7 +14,7 @@ func init() {
 // FF stands for first found
 // Search category: same as epff.
 // Action category: same as epff.
-// Create category: Given the order of the candiates, act on the first one found.
+// Create category: Given the order of the candidates, act on the first one found.
 type FF struct {
 	EpFF
 }

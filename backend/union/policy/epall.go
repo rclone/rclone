@@ -61,7 +61,7 @@ func (p *EpAll) Action(ctx context.Context, upstreams []*upstream.Fs, path strin
 	return p.epall(ctx, upstreams, path)
 }
 
-// ActionEntries is ACTION category policy but receivng a set of candidate entries
+// ActionEntries is ACTION category policy but receiving a set of candidate entries
 func (p *EpAll) ActionEntries(entries ...upstream.Entry) ([]upstream.Entry, error) {
 	if len(entries) == 0 {
 		return nil, fs.ErrorObjectNotFound

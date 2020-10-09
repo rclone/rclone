@@ -40,7 +40,7 @@ type syncCopyMove struct {
 	deletersWg             sync.WaitGroup         // for delete before go routine
 	deleteFilesCh          chan fs.Object         // channel to receive deletes if delete before
 	trackRenames           bool                   // set if we should do server side renames
-	trackRenamesStrategy   trackRenamesStrategy   // stratgies used for tracking renames
+	trackRenamesStrategy   trackRenamesStrategy   // strategies used for tracking renames
 	dstFilesMu             sync.Mutex             // protect dstFiles
 	dstFiles               map[string]fs.Object   // dst files, always filled
 	srcFiles               map[string]fs.Object   // src files, only used if deleteBefore

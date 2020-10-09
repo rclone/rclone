@@ -147,7 +147,7 @@ func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bo
 // If salt is "" we use a fixed salt just to make attackers lives
 // slighty harder than using no salt.
 //
-// Note that empty passsword makes all 0x00 keys which is used in the
+// Note that empty password makes all 0x00 keys which is used in the
 // tests.
 func (c *Cipher) Key(password, salt string) (err error) {
 	const keySize = len(c.dataKey) + len(c.nameKey) + len(c.nameTweak)

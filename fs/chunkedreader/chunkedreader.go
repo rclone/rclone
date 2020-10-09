@@ -38,7 +38,7 @@ type ChunkedReader struct {
 //
 // An initialChunkSize of <= 0 will disable chunked reading.
 // If maxChunkSize is greater than initialChunkSize, the chunk size will be
-// doubled after each chunk read with a maximun of maxChunkSize.
+// doubled after each chunk read with a maximum of maxChunkSize.
 // A Seek or RangeSeek will reset the chunk size to it's initial value
 func New(ctx context.Context, o fs.Object, initialChunkSize int64, maxChunkSize int64) *ChunkedReader {
 	if initialChunkSize <= 0 {

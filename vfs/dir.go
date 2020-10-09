@@ -121,7 +121,7 @@ func (d *Dir) Inode() uint64 {
 	return d.inode
 }
 
-// Node returns the Node assocuated with this - satisfies Noder interface
+// Node returns the Node associated with this - satisfies Noder interface
 func (d *Dir) Node() Node {
 	return d
 }
@@ -254,7 +254,7 @@ func (d *Dir) countActiveWriters() (writers int) {
 }
 
 // age returns the duration since the last time the directory contents
-// was read and the content is cosidered stale. age will be 0 and
+// was read and the content is considered stale. age will be 0 and
 // stale true if the last read time is empty.
 // age must be called with d.mu held.
 func (d *Dir) _age(when time.Time) (age time.Duration, stale bool) {
@@ -528,7 +528,7 @@ func (d *Dir) stat(leaf string) (Node, error) {
 					// duplicate case insensitive match is an error
 					return nil, errors.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
 				}
-				// found a case insenstive match
+				// found a case insensitive match
 				ok = true
 				item = node
 			}

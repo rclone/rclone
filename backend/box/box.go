@@ -1013,7 +1013,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	return info.SharedLink.URL, err
 }
 
-// deletePermanently permenently deletes a trashed file
+// deletePermanently permanently deletes a trashed file
 func (f *Fs) deletePermanently(ctx context.Context, itemType, id string) error {
 	opts := rest.Opts{
 		Method:     "DELETE",

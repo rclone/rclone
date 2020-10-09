@@ -73,7 +73,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 
 	rc, err := NewReOpen(ctx, mc.src, fs.Config.LowLevelRetries, &fs.RangeOption{Start: start, End: end - 1})
 	if err != nil {
-		return errors.Wrap(err, "multpart copy: failed to open source")
+		return errors.Wrap(err, "multipart copy: failed to open source")
 	}
 	defer fs.CheckClose(rc, &err)
 
@@ -89,29 +89,29 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 		if nr > 0 {
 			err = mc.acc.AccountRead(nr)
 			if err != nil {
-				return errors.Wrap(err, "multpart copy: accounting failed")
+				return errors.Wrap(err, "multipart copy: accounting failed")
 			}
 			nw, ew := mc.wc.WriteAt(buf[0:nr], offset)
 			if nw > 0 {
 				offset += int64(nw)
 			}
 			if ew != nil {
-				return errors.Wrap(ew, "multpart copy: write failed")
+				return errors.Wrap(ew, "multipart copy: write failed")
 			}
 			if nr != nw {
-				return errors.Wrap(io.ErrShortWrite, "multpart copy")
+				return errors.Wrap(io.ErrShortWrite, "multipart copy")
 			}
 		}
 		if er != nil {
 			if er != io.EOF {
-				return errors.Wrap(er, "multpart copy: read failed")
+				return errors.Wrap(er, "multipart copy: read failed")
 			}
 			break
 		}
 	}
 
 	if offset != end {
-		return errors.Errorf("multpart copy: wrote %d bytes but expected to write %d", offset-start, end-start)
+		return errors.Errorf("multipart copy: wrote %d bytes but expected to write %d", offset-start, end-start)
 	}
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v finished", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
@@ -163,7 +163,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	// create write file handle
 	mc.wc, err = openWriterAt(gCtx, remote, mc.size)
 	if err != nil {
-		return nil, errors.Wrap(err, "multpart copy: failed to open destination")
+		return nil, errors.Wrap(err, "multipart copy: failed to open destination")
 	}
 
 	fs.Debugf(src, "Starting multi-thread copy with %d parts of size %v", mc.streams, fs.SizeSuffix(mc.partSize))

@@ -195,7 +195,7 @@ func (mask *MultiEncoder) Set(in string) error {
 	return nil
 }
 
-// Type returns a textual type of the MultiEncoder to satsify the pflag.Value interface
+// Type returns a textual type of the MultiEncoder to satisfy the pflag.Value interface
 func (mask MultiEncoder) Type() string {
 	return "Encoding"
 }

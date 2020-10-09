@@ -236,10 +236,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (o fs.Object, err error) {
 	// defer log.Trace(f, "src=%+v", src)("o=%+v, err=%v", &o, &err)
-	exisitingObj, err := f.NewObject(ctx, src.Remote())
+	existingObj, err := f.NewObject(ctx, src.Remote())
 	switch err {
 	case nil:
-		return exisitingObj, exisitingObj.Update(ctx, in, src, options...)
+		return existingObj, existingObj.Update(ctx, in, src, options...)
 	case fs.ErrorObjectNotFound:
 		// Not found so create it
 		return f.PutUnchecked(ctx, in, src, options...)

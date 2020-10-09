@@ -254,7 +254,7 @@ type MoveItemRequest struct {
 //Always Type:view and Scope:anonymous for public sharing
 type CreateShareLinkRequest struct {
 	Type  string `json:"type"`            //Link type in View, Edit or Embed
-	Scope string `json:"scope,omitempty"` //Optional. Scope in anonymousi, organization
+	Scope string `json:"scope,omitempty"` //Optional. Scope in anonymous, organization
 }
 
 //CreateShareLinkResponse is the response from CreateShareLinkRequest

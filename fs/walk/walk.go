@@ -205,7 +205,7 @@ func (dm *dirMap) add(dir string, sent bool) {
 			if !sent {
 				return
 			}
-			// currenSent == false && sent == true so needs overriding
+			// currentSent == false && sent == true so needs overriding
 		}
 		dm.m[dir] = sent
 		// Add parents in as unsent

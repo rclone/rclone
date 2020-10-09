@@ -12,7 +12,7 @@ Todo
   * Might be quicker to check md5sums first? for swift <-> swift certainly, and maybe for small files
   * FIXME Make NewFs to return err.IsAnObject so can put the LimitedFs
     creation in common code? Or try for as much as possible?
-  * FIXME Account all the transactons (ls etc) using a different
+  * FIXME Account all the transactions (ls etc) using a different
     Roundtripper wrapper which wraps the transactions?
 
 Ideas

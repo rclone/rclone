@@ -91,7 +91,7 @@ func (tm *transferMap) _sortedSlice() []*Transfer {
 func (tm *transferMap) String(progress *inProgress, exclude *transferMap) string {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
-	strngs := make([]string, 0, len(tm.items))
+	stringList := make([]string, 0, len(tm.items))
 	for _, tr := range tm._sortedSlice() {
 		if exclude != nil {
 			exclude.mu.RLock()
@@ -111,9 +111,9 @@ func (tm *transferMap) String(progress *inProgress, exclude *transferMap) string
 				tm.name,
 			)
 		}
-		strngs = append(strngs, " * "+out)
+		stringList = append(stringList, " * "+out)
 	}
-	return strings.Join(strngs, "\n")
+	return strings.Join(stringList, "\n")
 }
 
 // progress returns total bytes read as well as the size.

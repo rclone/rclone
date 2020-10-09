@@ -208,7 +208,7 @@ func TestGET(t *testing.T) {
 		body, err := ioutil.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		// Check we got a Last-Modifed header and that it is a valid date
+		// Check we got a Last-Modified header and that it is a valid date
 		if test.Status == http.StatusOK || test.Status == http.StatusPartialContent {
 			lastModified := resp.Header.Get("Last-Modified")
 			assert.NotEqual(t, "", lastModified, test.Golden)

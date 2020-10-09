@@ -159,7 +159,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	if strings.HasPrefix(remote, name+":") {
 		return nil, errors.New("can't point crypt remote at itself - check the value of the remote setting")
 	}
-	// Make sure to remove trailing . reffering to the current dir
+	// Make sure to remove trailing . referring to the current dir
 	if path.Base(rpath) == "." {
 		rpath = strings.TrimSuffix(rpath, ".")
 	}

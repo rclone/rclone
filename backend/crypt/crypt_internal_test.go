@@ -87,7 +87,7 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 	}
 
 	// wrap the object in a crypt for upload using the nonce we
-	// saved from the encryptor
+	// saved from the encrypter
 	src := f.newObjectInfo(oi, nonce)
 
 	// Test ObjectInfo methods

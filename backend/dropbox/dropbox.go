@@ -1193,7 +1193,7 @@ func (o *Object) Size() int64 {
 
 // setMetadataFromEntry sets the fs data from a files.FileMetadata
 //
-// This isn't a complete set of metadata and has an inacurate date
+// This isn't a complete set of metadata and has an inaccurate date
 func (o *Object) setMetadataFromEntry(info *files.FileMetadata) error {
 	o.id = info.Id
 	o.bytes = int64(info.Size)

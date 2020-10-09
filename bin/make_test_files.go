@@ -19,7 +19,7 @@ var (
 	// Flags
 	numberOfFiles            = flag.Int("n", 1000, "Number of files to create")
 	averageFilesPerDirectory = flag.Int("files-per-directory", 10, "Average number of files per directory")
-	maxDepth                 = flag.Int("max-depth", 10, "Maximum depth of directory heirachy")
+	maxDepth                 = flag.Int("max-depth", 10, "Maximum depth of directory hierarchy")
 	minFileSize              = flag.Int64("min-size", 0, "Minimum size of file to create")
 	maxFileSize              = flag.Int64("max-size", 100, "Maximum size of files to create")
 	minFileNameLength        = flag.Int("min-name-length", 4, "Minimum size of file to create")
@@ -61,7 +61,7 @@ func fileName() (name string) {
 	return name
 }
 
-// dir is a directory in the directory heirachy being built up
+// dir is a directory in the directory hierarchy being built up
 type dir struct {
 	name     string
 	depth    int
@@ -69,7 +69,7 @@ type dir struct {
 	parent   *dir
 }
 
-// Create a random directory heirachy under d
+// Create a random directory hierarchy under d
 func (d *dir) createDirectories() {
 	for totalDirectories < directoriesToCreate {
 		newDir := &dir{
@@ -91,7 +91,7 @@ func (d *dir) createDirectories() {
 	return
 }
 
-// list the directory heirachy
+// list the directory hierarchy
 func (d *dir) list(path string, output []string) []string {
 	dirPath := filepath.Join(path, d.name)
 	output = append(output, dirPath)

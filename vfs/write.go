@@ -97,7 +97,7 @@ func (fh *WriteFileHandle) String() string {
 	return fh.file.String() + " (w)"
 }
 
-// Node returns the Node assocuated with this - satisfies Noder interface
+// Node returns the Node associated with this - satisfies Noder interface
 func (fh *WriteFileHandle) Node() Node {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
@@ -122,7 +122,7 @@ func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
 	return fh.writeAt(p, off)
 }
 
-// Implementatino of WriteAt - call with lock held
+// Implementation of WriteAt - call with lock held
 func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 	// defer log.Trace(fh.remote, "len=%d off=%d", len(p), off)("n=%d, fh.off=%d, err=%v", &n, &fh.offset, &err)
 	if fh.closed {

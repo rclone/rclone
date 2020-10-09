@@ -402,7 +402,7 @@ If the server can't do `CleanUp` then `rclone cleanup` will return an
 error.
 
 ‡‡ Note that while Box implements this it has to delete every file
-idividually so it will be slower than emptying the trash via the WebUI
+individually so it will be slower than emptying the trash via the WebUI
 
 ### ListR ###
 

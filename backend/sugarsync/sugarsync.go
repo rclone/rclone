@@ -350,7 +350,7 @@ func (f *Fs) getAuth(req *http.Request) (err error) {
 	// if have auth, check it is in date
 	if f.opt.Authorization == "" || f.opt.User == "" || f.authExpiry.IsZero() || time.Until(f.authExpiry) < expiryLeeway {
 		// Get the auth token
-		f.srv.SetSigner(nil) // temporariliy remove the signer so we don't infinitely recurse
+		f.srv.SetSigner(nil) // temporarily remove the signer so we don't infinitely recurse
 		err = f.getAuthToken(ctx)
 		f.srv.SetSigner(f.getAuth) // replace signer
 		if err != nil {

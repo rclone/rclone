@@ -2364,7 +2364,7 @@ All the objects shown will be marked for restore, then
     rclone backend restore --include "*.txt" s3:bucket/path -o priority=Standard
 
 It returns a list of status dictionaries with Remote and Status
-keys. The Status will be OK if it was successfull or an error message
+keys. The Status will be OK if it was successful or an error message
 if not.
 
     [
@@ -2529,7 +2529,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 // listMultipartUploads lists all outstanding multipart uploads for (bucket, key)
 //
 // Note that rather lazily we treat key as a prefix so it matches
-// directories and objects. This could suprise the user if they ask
+// directories and objects. This could surprise the user if they ask
 // for "dir" and it returns "dirKey"
 func (f *Fs) listMultipartUploads(ctx context.Context, bucket, key string) (uploads []*s3.MultipartUpload, err error) {
 	var (
@@ -3062,7 +3062,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	// read the md5sum if available
-	// - for non multpart
+	// - for non multipart
 	//    - so we can add a ContentMD5
 	// - for multipart provided checksums aren't disabled
 	//    - so we can add the md5sum in the metadata as metaMD5Hash

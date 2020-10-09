@@ -108,7 +108,7 @@ type OsFiler interface {
 	WriteString(s string) (n int, err error)
 }
 
-// Handle is the interface statisified by open files or directories.
+// Handle is the interface satisfied by open files or directories.
 // It is the methods on *os.File, plus a few more useful for FUSE
 // filingsystems.  Not all of them are supported.
 type Handle interface {
