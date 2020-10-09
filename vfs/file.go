@@ -382,6 +382,13 @@ func (f *File) _applyPendingModTime() error {
 		return errors.New("Cannot apply ModTime, file object is not available")
 	}
 
+	dt := f.pendingModTime.Sub(f.o.ModTime(context.Background()))
+	modifyWindow := f.o.Fs().Precision()
+	if dt < modifyWindow && dt > -modifyWindow {
+		fs.Debugf(f.o, "Not setting pending mod time %v as it is already set", f.pendingModTime)
+		return nil
+	}
+
 	// set the time of the object
 	err := f.o.SetModTime(context.TODO(), f.pendingModTime)
 	switch err {
