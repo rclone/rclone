@@ -2,6 +2,7 @@ package genautocomplete
 
 import (
 	"log"
+	"os"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/spf13/cobra"
@@ -29,11 +30,20 @@ them directly
 
 If you supply a command line argument the script will be written
 there.
+
+If output_file is "-", then the output will be written to stdout.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
 		out := "/etc/fish/completions/rclone.fish"
 		if len(args) > 0 {
+			if args[0] == "-" {
+				err := cmd.Root.GenFishCompletion(os.Stdout, true)
+				if err != nil {
+					log.Fatal(err)
+				}
+				return
+			}
 			out = args[0]
 		}
 		err := cmd.Root.GenFishCompletionFile(out, true)
