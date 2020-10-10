@@ -27,6 +27,7 @@ them directly
 If you supply a command line argument the script will be written
 there.
 
+If output_file is `-`, then the output will be written to stdout.
 
 ```
 rclone genautocomplete bash [output_file] [flags]
