@@ -3,7 +3,7 @@
 
 version="$1"
 if [ "$version" = "" ]; then
-    echo "Syntax: $0 <version, eg v1.42> [delete]"
+    echo "Syntax: $0 <version, e.g. v1.42> [delete]"
     exit 1
 fi
 dry_run="--dry-run"

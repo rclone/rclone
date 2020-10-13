@@ -136,7 +136,7 @@ func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 // FixRangeOption looks through the slice of options and adjusts any
 // RangeOption~s found that request a fetch from the end into an
 // absolute fetch using the size passed in and makes sure the range does
-// not exceed filesize. Some remotes (eg Onedrive, Box) don't support
+// not exceed filesize. Some remotes (e.g. Onedrive, Box) don't support
 // range requests which index from the end.
 func FixRangeOption(options []OpenOption, size int64) {
 	if size == 0 {

@@ -225,7 +225,7 @@ func init() {
 				Help:  "Use this if unsure. Will use v4 signatures and an empty region.",
 			}, {
 				Value: "other-v2-signature",
-				Help:  "Use this only if v4 signatures don't work, eg pre Jewel/v10 CEPH.",
+				Help:  "Use this only if v4 signatures don't work, e.g. pre Jewel/v10 CEPH.",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -1016,7 +1016,7 @@ The minimum is 0 and the maximum is 5GB.`,
 			Help: `Chunk size to use for uploading.
 
 When uploading files larger than upload_cutoff or files with unknown
-size (eg from "rclone rcat" or uploaded with "rclone mount" or google
+size (e.g. from "rclone rcat" or uploaded with "rclone mount" or google
 photos or google docs) they will be uploaded as multipart uploads
 using this chunk size.
 
@@ -1121,7 +1121,7 @@ if false then rclone will use virtual path style. See [the AWS S3
 docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
 for more info.
 
-Some providers (eg AWS, Aliyun OSS, Netease COS or Tencent COS) require this set to
+Some providers (e.g. AWS, Aliyun OSS, Netease COS or Tencent COS) require this set to
 false - rclone will do this automatically based on the provider
 setting.`,
 			Default:  true,
@@ -1133,7 +1133,7 @@ setting.`,
 If this is false (the default) then rclone will use v4 authentication.
 If it is set then rclone will use v2 authentication.
 
-Use this only if v4 signatures don't work, eg pre Jewel/v10 CEPH.`,
+Use this only if v4 signatures don't work, e.g. pre Jewel/v10 CEPH.`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -1223,7 +1223,7 @@ See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rcl
 
 // Constants
 const (
-	metaMtime   = "Mtime"     // the meta key to store mtime in - eg X-Amz-Meta-Mtime
+	metaMtime   = "Mtime"     // the meta key to store mtime in - e.g. X-Amz-Meta-Mtime
 	metaMD5Hash = "Md5chksum" // the meta key to store md5hash in
 	// The maximum size of object we can COPY - this should be 5GiB but is < 5GB for b2 compatibility
 	// See https://forum.rclone.org/t/copying-files-within-a-b2-bucket/16680/76
@@ -1306,7 +1306,7 @@ type Object struct {
 	lastModified time.Time          // Last modified
 	meta         map[string]*string // The object metadata if known - may be nil
 	mimeType     string             // MimeType of object - may be ""
-	storageClass string             // eg GLACIER
+	storageClass string             // e.g. GLACIER
 }
 
 // ------------------------------------------------------------

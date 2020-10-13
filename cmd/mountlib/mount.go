@@ -260,7 +260,7 @@ applications won't work with their files on an rclone mount without
 "--vfs-cache-mode writes" or "--vfs-cache-mode full".  See the [File
 Caching](#file-caching) section for more info.
 
-The bucket based remotes (eg Swift, S3, Google Compute Storage, B2,
+The bucket based remotes (e.g. Swift, S3, Google Compute Storage, B2,
 Hubic) do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.

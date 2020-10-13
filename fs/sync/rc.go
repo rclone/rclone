@@ -22,8 +22,8 @@ func init() {
 			Title: name + " a directory from source remote to destination remote",
 			Help: `This takes the following parameters
 
-- srcFs - a remote name string eg "drive:src" for the source
-- dstFs - a remote name string eg "drive:dst" for the destination
+- srcFs - a remote name string e.g. "drive:src" for the source
+- dstFs - a remote name string e.g. "drive:dst" for the destination
 ` + moveHelp + `
 
 See the [` + name + ` command](/commands/rclone_` + name + `/) command for more information on the above.`,

@@ -244,8 +244,8 @@ func init() {
 
 This takes the following parameters
 
-- type: supported mime type by a loaded plugin eg (video/mp4, audio/mp3)
-- pluginType: filter plugins based on their type eg (DASHBOARD, FILE_HANDLER, TERMINAL) 
+- type: supported mime type by a loaded plugin e.g. (video/mp4, audio/mp3)
+- pluginType: filter plugins based on their type e.g. (DASHBOARD, FILE_HANDLER, TERMINAL) 
 
 and returns
 

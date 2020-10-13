@@ -268,7 +268,7 @@ description: "Rclone Changelog"
 
 * Bug Fixes
     * docs
-        * Disable smart typography (eg en-dash) in MANUAL.* and man page (Nick Craig-Wood)
+        * Disable smart typography (e.g. en-dash) in MANUAL.* and man page (Nick Craig-Wood)
         * Update install.md to reflect minimum Go version (Evan Harris)
         * Update install from source instructions (Nick Craig-Wood)
         * make_manual: Support SOURCE_DATE_EPOCH (Morten Linderud)
@@ -373,7 +373,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Add `--check-first` to do all checking before starting transfers (Nick Craig-Wood)
     * Add `--track-renames-strategy` for configurable matching criteria for `--track-renames` (Bernd Schoolmann)
     * Add `--cutoff-mode` hard,soft,cautious (Shing Kit Chan & Franklyn Tackitt)
-    * Filter flags (eg `--files-from -`) can read from stdin (fishbullet)
+    * Filter flags (e.g. `--files-from -`) can read from stdin (fishbullet)
     * Add `--error-on-no-transfer` option (Jon Fautley)
     * Implement `--order-by xxx,mixed` for copying some small and some big files (Nick Craig-Wood)
     * Allow `--max-backlog` to be negative meaning as large as possible (Nick Craig-Wood)
@@ -817,7 +817,7 @@ all the docs and Edward Barker for helping re-write the front page.
         * Check config names more carefully and report errors (Nick Craig-Wood)
         * Remove error: can't use `--size-only` and `--ignore-size` together. (Nick Craig-Wood)
     * filter: Prevent mixing options when `--files-from` is in use (Michele Caci)
-    * serve sftp: Fix crash on unsupported operations (eg Readlink) (Nick Craig-Wood)
+    * serve sftp: Fix crash on unsupported operations (e.g. Readlink) (Nick Craig-Wood)
 * Mount
     * Allow files of unknown size to be read properly (Nick Craig-Wood)
     * Skip tests on <= 2 CPUs to avoid lockup (Nick Craig-Wood)
@@ -833,7 +833,7 @@ all the docs and Edward Barker for helping re-write the front page.
 * Azure Blob
     * Disable logging to the Windows event log (Nick Craig-Wood)
 * B2
-    * Remove `unverified:` prefix on sha1 to improve interop (eg with CyberDuck) (Nick Craig-Wood)
+    * Remove `unverified:` prefix on sha1 to improve interop (e.g. with CyberDuck) (Nick Craig-Wood)
 * Box
     * Add options to get access token via JWT auth (David)
 * Drive
@@ -1048,7 +1048,7 @@ all the docs and Edward Barker for helping re-write the front page.
         * controlled with `--multi-thread-cutoff` and `--multi-thread-streams`
     * Use rclone.conf from rclone executable directory to enable portable use (albertony)
     * Allow sync of a file and a directory with the same name (forgems)
-        * this is common on bucket based remotes, eg s3, gcs
+        * this is common on bucket based remotes, e.g. s3, gcs
     * Add `--ignore-case-sync` for forced case insensitivity (garry415)
     * Implement `--stats-one-line-date` and `--stats-one-line-date-format` (Peter Berbec)
     * Log an ERROR for all commands which exit with non-zero status (Nick Craig-Wood)
@@ -1319,7 +1319,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Add support for PEM encrypted private keys (Fabian Möller)
     * Add option to force the usage of an ssh-agent (Fabian Möller)
     * Perform environment variable expansion on key-file (Fabian Möller)
-    * Fix rmdir on Windows based servers (eg CrushFTP) (Nick Craig-Wood)
+    * Fix rmdir on Windows based servers (e.g. CrushFTP) (Nick Craig-Wood)
     * Fix rmdir deleting directory contents on some SFTP servers (Nick Craig-Wood)
     * Fix error on dangling symlinks (Nick Craig-Wood)
 * Swift
@@ -1350,7 +1350,7 @@ all the docs and Edward Barker for helping re-write the front page.
         * sensitive operations require authorization or the `--rc-no-auth` flag
         * config/* operations to configure rclone
         * options/* for reading/setting command line flags
-        * operations/* for all low level operations, eg copy file, list directory
+        * operations/* for all low level operations, e.g. copy file, list directory
         * sync/* for sync, copy and move
         * `--rc-files` flag to serve files on the rc http server
           * this is for building web native GUIs for rclone
@@ -1745,7 +1745,7 @@ Point release to fix hubic and azureblob backends.
     * rc: fix setting bwlimit to unlimited
     * rc: take note of the --rc-addr flag too as per the docs
 * Mount
-    * Use About to return the correct disk total/used/free (eg in `df`)
+    * Use About to return the correct disk total/used/free (e.g. in `df`)
     * Set `--attr-timeout default` to `1s` - fixes:
         * rclone using too much memory
         * rclone not serving files to samba
@@ -1984,7 +1984,7 @@ Point release to fix hubic and azureblob backends.
     * Retry lots more different types of errors to make multipart transfers more reliable
     * Save the config before asking for a token, fixes disappearing oauth config
     * Warn the user if --include and --exclude are used together (Ernest Borowski)
-    * Fix duplicate files (eg on Google drive) causing spurious copies
+    * Fix duplicate files (e.g. on Google drive) causing spurious copies
     * Allow trailing and leading whitespace for passwords (Jason Rose)
     * ncdu: fix crashes on empty directories
     * rcat: fix goroutine leak
@@ -2412,7 +2412,7 @@ Point release to fix hubic and azureblob backends.
     * New B2 API endpoint (thanks Per Cederberg)
     * Set maximum backoff to 5 Minutes
 * onedrive
-    * Fix URL escaping in file names - eg uploading files with `+` in them.
+    * Fix URL escaping in file names - e.g. uploading files with `+` in them.
 * amazon cloud drive
     * Fix token expiry during large uploads
     * Work around 408 REQUEST_TIMEOUT and 504 GATEWAY_TIMEOUT errors
@@ -2453,7 +2453,7 @@ Point release to fix hubic and azureblob backends.
     * Skip setting the modified time for objects > 5GB as it isn't possible.
 * Backblaze B2
     * Add --b2-versions flag so old versions can be listed and retrieved.
-    * Treat 403 errors (eg cap exceeded) as fatal.
+    * Treat 403 errors (e.g. cap exceeded) as fatal.
     * Implement cleanup command for deleting old file versions.
     * Make error handling compliant with B2 integrations notes.
     * Fix handling of token expiry.
@@ -2625,7 +2625,7 @@ Point release to fix hubic and azureblob backends.
         * This could have deleted files unexpectedly on sync
         * Always check first with `--dry-run`!
 * Swift
-    * Stop SetModTime losing metadata (eg X-Object-Manifest)
+    * Stop SetModTime losing metadata (e.g. X-Object-Manifest)
         * This could have caused data loss for files > 5GB in size
     * Use ContentType from Object to avoid lookups in listings
 * OneDrive
@@ -2788,7 +2788,7 @@ Point release to fix hubic and azureblob backends.
 
 ## v1.09 - 2015-02-07
 
-* windows: Stop drive letters (eg C:) getting mixed up with remotes (eg drive:)
+* windows: Stop drive letters (e.g. C:) getting mixed up with remotes (e.g. drive:)
 * local: Fix directory separators on Windows
 * drive: fix rate limit exceeded errors
 

@@ -78,7 +78,7 @@ type ListJSONOpt struct {
 	ShowHash      bool     `json:"showHash"`
 	DirsOnly      bool     `json:"dirsOnly"`
 	FilesOnly     bool     `json:"filesOnly"`
-	HashTypes     []string `json:"hashTypes"` // hash types to show if ShowHash is set, eg "MD5", "SHA-1"
+	HashTypes     []string `json:"hashTypes"` // hash types to show if ShowHash is set, e.g. "MD5", "SHA-1"
 }
 
 // ListJSON lists fsrc using the options in opt calling callback for each item

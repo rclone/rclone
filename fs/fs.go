@@ -490,7 +490,7 @@ type Usage struct {
 	Total   *int64 `json:"total,omitempty"`   // quota of bytes that can be used
 	Used    *int64 `json:"used,omitempty"`    // bytes in use
 	Trashed *int64 `json:"trashed,omitempty"` // bytes in trash
-	Other   *int64 `json:"other,omitempty"`   // other usage eg gmail in drive
+	Other   *int64 `json:"other,omitempty"`   // other usage e.g. gmail in drive
 	Free    *int64 `json:"free,omitempty"`    // bytes which can be uploaded before reaching the quota
 	Objects *int64 `json:"objects,omitempty"` // objects in the storage system
 }
@@ -1079,7 +1079,7 @@ type Disconnecter interface {
 //
 // These are automatically inserted in the docs
 type CommandHelp struct {
-	Name  string            // Name of the command, eg "link"
+	Name  string            // Name of the command, e.g. "link"
 	Short string            // Single line description
 	Long  string            // Long multi-line description
 	Opts  map[string]string // maps option name to a single line help

@@ -108,7 +108,7 @@ on a minimal Alpine linux image.
 
 The `:latest` tag will always point to the latest stable release.  You
 can use the `:beta` tag to get the latest build from master.  You can
-also use version tags, eg `:1.49.1`, `:1.49` or `:1`.
+also use version tags, e.g. `:1.49.1`, `:1.49` or `:1`.
 
 ```
 $ docker pull rclone/rclone:latest

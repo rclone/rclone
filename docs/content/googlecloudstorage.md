@@ -7,7 +7,7 @@ description: "Rclone docs for Google Cloud Storage"
 -------------------------------------------------
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
-command.)  You may put subdirectories in too, eg `remote:bucket/path/to/dir`.
+command.)  You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
 
 The initial setup for google cloud storage involves getting a token from Google Cloud Storage
 which you need to do in your browser.  `rclone config` walks you

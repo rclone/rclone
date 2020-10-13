@@ -29,9 +29,9 @@ var (
 	// Flags
 	maxTries     = flag.Int("maxtries", 5, "Number of times to try each test")
 	maxN         = flag.Int("n", 20, "Maximum number of tests to run at once")
-	testRemotes  = flag.String("remotes", "", "Comma separated list of remotes to test, eg 'TestSwift:,TestS3'")
-	testBackends = flag.String("backends", "", "Comma separated list of backends to test, eg 's3,googlecloudstorage")
-	testTests    = flag.String("tests", "", "Comma separated list of tests to test, eg 'fs/sync,fs/operations'")
+	testRemotes  = flag.String("remotes", "", "Comma separated list of remotes to test, e.g. 'TestSwift:,TestS3'")
+	testBackends = flag.String("backends", "", "Comma separated list of backends to test, e.g. 's3,googlecloudstorage")
+	testTests    = flag.String("tests", "", "Comma separated list of tests to test, e.g. 'fs/sync,fs/operations'")
 	clean        = flag.Bool("clean", false, "Instead of testing, clean all left over test directories")
 	runOnly      = flag.String("run", "", "Run only those tests matching the regexp supplied")
 	timeout      = flag.Duration("timeout", 60*time.Minute, "Maximum time to run each test for before giving up")

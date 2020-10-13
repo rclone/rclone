@@ -16,7 +16,7 @@ Commercial implementations of that being:
   * [IBM Bluemix Cloud ObjectStorage Swift](https://console.bluemix.net/docs/infrastructure/objectstorage-swift/index.html)
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
-command.)  You may put subdirectories in too, eg `remote:container/path/to/dir`.
+command.)  You may put subdirectories in too, e.g. `remote:container/path/to/dir`.
 
 Here is an example of making a swift configuration.  First run
 
@@ -446,7 +446,7 @@ default for this is 5GB which is its maximum value.
 
 Don't chunk files during streaming upload.
 
-When doing streaming uploads (eg using rcat or mount) setting this
+When doing streaming uploads (e.g. using rcat or mount) setting this
 flag will cause the swift backend to not upload chunked files.
 
 This will limit the maximum upload size to 5GB. However non chunked
@@ -510,7 +510,7 @@ So this most likely means your username / password is wrong.  You can
 investigate further with the `--dump-bodies` flag.
 
 This may also be caused by specifying the region when you shouldn't
-have (eg OVH).
+have (e.g. OVH).
 
 #### Rclone gives Failed to create file system: Response didn't have storage url and auth token ####
 

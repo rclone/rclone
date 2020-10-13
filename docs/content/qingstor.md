@@ -7,7 +7,7 @@ description: "Rclone docs for QingStor Object Storage"
 ---------------------------------------
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
-command.)  You may put subdirectories in too, eg `remote:bucket/path/to/dir`.
+command.)  You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
 
 Here is an example of making an QingStor configuration.  First run
 

@@ -16,7 +16,7 @@ This is a backend for the [Seafile](https://www.seafile.com/) storage service:
 
 There are two distinct modes you can setup your remote:
 - you point your remote to the **root of the server**, meaning you don't specify a library during the configuration:
-Paths are specified as `remote:library`. You may put subdirectories in too, eg `remote:library/path/to/dir`.
+Paths are specified as `remote:library`. You may put subdirectories in too, e.g. `remote:library/path/to/dir`.
 - you point your remote to a specific library during the configuration:
 Paths are specified as `remote:path/to/dir`. **This is the recommended mode when using encrypted libraries**. (_This mode is possibly slightly faster than the root mode_)
 

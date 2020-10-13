@@ -8,7 +8,7 @@ description: "Rclone docs for Koofr"
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 The initial setup for Koofr involves creating an application password for
 rclone. You can do that by opening the Koofr

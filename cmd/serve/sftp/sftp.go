@@ -61,7 +61,7 @@ var Command = &cobra.Command{
 over SFTP.  This can be used with an SFTP client or you can make a
 remote of type sftp to use with it.
 
-You can use the filter flags (eg --include, --exclude) to control what
+You can use the filter flags (e.g. --include, --exclude) to control what
 is served.
 
 The server will log errors.  Use -v to see access logs.

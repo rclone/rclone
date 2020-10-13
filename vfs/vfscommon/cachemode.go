@@ -12,7 +12,7 @@ type CacheMode byte
 // CacheMode options
 const (
 	CacheModeOff     CacheMode = iota // cache nothing - return errors for writes which can't be satisfied
-	CacheModeMinimal                  // cache only the minimum, eg read/write opens
+	CacheModeMinimal                  // cache only the minimum, e.g. read/write opens
 	CacheModeWrites                   // cache all files opened with write intent
 	CacheModeFull                     // cache all files opened in any mode
 )

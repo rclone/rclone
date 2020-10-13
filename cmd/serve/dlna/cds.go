@@ -23,7 +23,7 @@ import (
 )
 
 // Add a minimal number of mime types to augment go's built in types
-// for environments which don't have access to a mime.types file (eg
+// for environments which don't have access to a mime.types file (e.g.
 // Termux on android)
 func init() {
 	for _, t := range []struct {

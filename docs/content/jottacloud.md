@@ -13,7 +13,7 @@ also several whitelabel versions which should work with this backend.
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 ## Setup
 

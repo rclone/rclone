@@ -51,7 +51,7 @@ XX / Cache a remote
 [snip]
 Storage> cache
 Remote to cache.
-Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 remote> local:/test
 Optional: The URL of the Plex server
@@ -313,7 +313,7 @@ Here are the standard options specific to cache (Cache a remote).
 #### --cache-remote
 
 Remote to cache.
-Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 
 - Config:      remote

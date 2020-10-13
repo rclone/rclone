@@ -8,7 +8,7 @@ description: "Rclone docs for Google drive"
 
 Paths are specified as `drive:path`
 
-Drive paths may be as deep as required, eg `drive:directory/subdirectory`.
+Drive paths may be as deep as required, e.g. `drive:directory/subdirectory`.
 
 The initial setup for drive involves getting a token from Google drive
 which you need to do in your browser.  `rclone config` walks you
@@ -397,7 +397,7 @@ be in multiple folders at once](https://cloud.google.com/blog/products/g-suite/s
 
 Shortcuts are files that link to other files on Google Drive somewhat
 like a symlink in unix, except they point to the underlying file data
-(eg the inode in unix terms) so they don't break if the source is
+(e.g. the inode in unix terms) so they don't break if the source is
 renamed or moved about.
 
 Be default rclone treats these as follows.
@@ -490,7 +490,7 @@ Here are some examples for allowed and prohibited conversions.
 
 This limitation can be disabled by specifying `--drive-allow-import-name-change`.
 When using this flag, rclone can convert multiple files types resulting
-in the same document type at once, eg with `--drive-import-formats docx,odt,txt`,
+in the same document type at once, e.g. with `--drive-import-formats docx,odt,txt`,
 all files having these extension would result in a document represented as a docx file.
 This brings the additional risk of overwriting a document, if multiple files
 have the same stem. Many rclone operations will not handle this name change
@@ -956,7 +956,7 @@ Number of API calls to allow without sleeping.
 
 #### --drive-server-side-across-configs
 
-Allow server-side operations (eg copy) to work across different drive configs.
+Allow server-side operations (e.g. copy) to work across different drive configs.
 
 This can be useful if you wish to do a server-side copy between two
 different Google drives.  Note that this isn't enabled by default
@@ -1188,7 +1188,7 @@ and upload the files if you prefer.
 #### Limitations of Google Docs ####
 
 Google docs will appear as size -1 in `rclone ls` and as size 0 in
-anything which uses the VFS layer, eg `rclone mount`, `rclone serve`.
+anything which uses the VFS layer, e.g. `rclone mount`, `rclone serve`.
 
 This is because rclone can't find out the size of the Google docs
 without downloading them.

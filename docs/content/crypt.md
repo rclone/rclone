@@ -18,7 +18,7 @@ removable drives.
 Before configuring the crypt remote, check the underlying remote is
 working. In this example the underlying remote is called `remote:path`.
 Anything inside `remote:path` will be encrypted and anything outside
-will not. In the case of an S3 based underlying remote (eg Amazon S3,
+will not. In the case of an S3 based underlying remote (e.g. Amazon S3,
 B2, Swift) it is generally advisable to define a crypt remote in the
 underlying remote `s3:bucket`. If `s3:` alone is specified alongside
 file name encryption, rclone will encrypt the bucket name.
@@ -42,7 +42,7 @@ XX / Encrypt/Decrypt a remote
 [snip]
 Storage> crypt
 Remote to encrypt/decrypt.
-Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 remote> remote:path
 How to encrypt the filenames.
@@ -281,7 +281,7 @@ Here are the standard options specific to crypt (Encrypt/Decrypt a remote).
 #### --crypt-remote
 
 Remote to encrypt/decrypt.
-Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 
 - Config:      remote
@@ -350,7 +350,7 @@ Here are the advanced options specific to crypt (Encrypt/Decrypt a remote).
 
 #### --crypt-server-side-across-configs
 
-Allow server-side operations (eg copy) to work across different crypt configs.
+Allow server-side operations (e.g. copy) to work across different crypt configs.
 
 Normally this option is not what you want, but if you have two crypts
 pointing to the same backend you can use it.
@@ -545,7 +545,7 @@ encoding is modified in two ways:
   * we strip the padding character `=`
 
 `base32` is used rather than the more efficient `base64` so rclone can be
-used on case insensitive remotes (eg Windows, Amazon Drive).
+used on case insensitive remotes (e.g. Windows, Amazon Drive).
 
 ### Key derivation ###
 

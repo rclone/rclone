@@ -40,7 +40,7 @@ func SetFrom(a, b interface{}) {
 //
 // This copies the public members only from b to a.  This is useful if
 // you can't just use a struct copy because it contains a private
-// mutex, eg as http.Transport.
+// mutex, e.g. as http.Transport.
 func SetDefaults(a, b interface{}) {
 	pt := reflect.TypeOf(a)
 	t := pt.Elem()

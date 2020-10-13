@@ -79,7 +79,7 @@ or you can make a remote of type ftp to read and write it.
 ### Server options
 
 Use --addr to specify which IP address and port the server should
-listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
+listen on, e.g. --addr 1.2.3.4:8000 or --addr :8080 to listen to all
 IPs.  By default it only listens on localhost.  You can use port
 :0 to let the OS choose an available port.
 

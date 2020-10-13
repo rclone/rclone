@@ -8,7 +8,7 @@ description: "Rclone docs for Dropbox"
 
 Paths are specified as `remote:path`
 
-Dropbox paths may be as deep as required, eg
+Dropbox paths may be as deep as required, e.g.
 `remote:directory/subdirectory`.
 
 The initial setup for dropbox involves getting a token from Dropbox
