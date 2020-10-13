@@ -10,6 +10,7 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,6 +37,12 @@ func skipIfNoHash(t *testing.T, f fs.Fs) {
 	}
 }
 
+func skipIfNoModTime(t *testing.T, f fs.Fs) {
+	if f.Precision() >= fs.ModTimeNotSupported {
+		t.Skip("Can't run this test without modtimes")
+	}
+}
+
 func TestDeduplicateInteractive(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -47,7 +54,7 @@ func TestDeduplicateInteractive(t *testing.T) {
 	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateInteractive)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateInteractive, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -69,7 +76,7 @@ func TestDeduplicateSkip(t *testing.T) {
 	files = append(files, file3)
 	r.CheckWithDuplicates(t, files...)
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSkip)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSkip, false)
 	require.NoError(t, err)
 
 	r.CheckWithDuplicates(t, file1, file3)
@@ -92,7 +99,7 @@ func TestDeduplicateSizeOnly(t *testing.T) {
 		ci.SizeOnly = false
 	}()
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSkip)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSkip, false)
 	require.NoError(t, err)
 
 	r.CheckWithDuplicates(t, file1, file3)
@@ -108,7 +115,7 @@ func TestDeduplicateFirst(t *testing.T) {
 	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is one BB", t1)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateFirst)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateFirst, false)
 	require.NoError(t, err)
 
 	// list until we get one object
@@ -131,16 +138,36 @@ func TestDeduplicateNewest(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	skipIfCantDedupe(t, r.Fremote)
+	skipIfNoModTime(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject(context.Background(), "one", "This is one", t1)
 	file2 := r.WriteUncheckedObject(context.Background(), "one", "This is one too", t2)
 	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t3)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateNewest)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateNewest, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file3)
+}
+
+func TestDeduplicateNewestByHash(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	skipIfNoHash(t, r.Fremote)
+	skipIfNoModTime(t, r.Fremote)
+	contents := random.String(100)
+
+	file1 := r.WriteObject(context.Background(), "one", contents, t1)
+	file2 := r.WriteObject(context.Background(), "also/one", contents, t2)
+	file3 := r.WriteObject(context.Background(), "another", contents, t3)
+	file4 := r.WriteObject(context.Background(), "not-one", "stuff", t3)
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file4)
+
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateNewest, true)
+	require.NoError(t, err)
+
+	fstest.CheckItems(t, r.Fremote, file3, file4)
 }
 
 func TestDeduplicateOldest(t *testing.T) {
@@ -153,7 +180,7 @@ func TestDeduplicateOldest(t *testing.T) {
 	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t3)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateOldest)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateOldest, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -169,7 +196,7 @@ func TestDeduplicateLargest(t *testing.T) {
 	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t3)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateLargest)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateLargest, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file3)
@@ -185,7 +212,7 @@ func TestDeduplicateSmallest(t *testing.T) {
 	file3 := r.WriteUncheckedObject(context.Background(), "one", "This is another one", t3)
 	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSmallest)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSmallest, false)
 	require.NoError(t, err)
 
 	fstest.CheckItems(t, r.Fremote, file1)
@@ -202,7 +229,7 @@ func TestDeduplicateRename(t *testing.T) {
 	file4 := r.WriteUncheckedObject(context.Background(), "one-1.txt", "This is not a duplicate", t1)
 	r.CheckWithDuplicates(t, file1, file2, file3, file4)
 
-	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateRename)
+	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateRename, false)
 	require.NoError(t, err)
 
 	require.NoError(t, walk.ListR(context.Background(), r.Fremote, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
