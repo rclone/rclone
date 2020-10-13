@@ -131,7 +131,7 @@ func init() {
 			Provider: "AWS",
 			Examples: []fs.OptionExample{{
 				Value: "us-east-1",
-				Help:  "The default endpoint - a good choice if you are unsure.\nUS Region, Northern Virginia or Pacific Northwest.\nLeave location constraint empty.",
+				Help:  "The default endpoint - a good choice if you are unsure.\nUS Region, Northern Virginia, or Pacific Northwest.\nLeave location constraint empty.",
 			}, {
 				Value: "us-east-2",
 				Help:  "US East (Ohio) Region\nNeeds location constraint us-east-2.",
@@ -612,7 +612,7 @@ func init() {
 			Provider: "AWS",
 			Examples: []fs.OptionExample{{
 				Value: "",
-				Help:  "Empty for US Region, Northern Virginia or Pacific Northwest.",
+				Help:  "Empty for US Region, Northern Virginia, or Pacific Northwest.",
 			}, {
 				Value: "us-east-2",
 				Help:  "US East (Ohio) Region.",
@@ -1121,7 +1121,7 @@ if false then rclone will use virtual path style. See [the AWS S3
 docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingBucket.html#access-bucket-intro)
 for more info.
 
-Some providers (e.g. AWS, Aliyun OSS, Netease COS or Tencent COS) require this set to
+Some providers (e.g. AWS, Aliyun OSS, Netease COS, or Tencent COS) require this set to
 false - rclone will do this automatically based on the provider
 setting.`,
 			Default:  true,
