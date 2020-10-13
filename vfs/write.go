@@ -67,7 +67,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 	var pipeReader *io.PipeReader
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
-		// NB Rcat deals with Stats.Transferring etc
+		// NB Rcat deals with Stats.Transferring, etc.
 		o, err := operations.Rcat(context.TODO(), fh.file.Fs(), fh.remote, pipeReader, time.Now())
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)

@@ -32,7 +32,7 @@ type largeUpload struct {
 	wrap     accounting.WrapFn        // account parts being transferred
 	size     int64                    // total size
 	parts    int64                    // calculated number of parts, if known
-	info     *api.UploadSpecification // where to post chunks etc
+	info     *api.UploadSpecification // where to post chunks, etc.
 	threads  int                      // number of threads to use in upload
 	streamed bool                     // set if using streamed upload
 }

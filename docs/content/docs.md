@@ -220,7 +220,7 @@ Here are some gotchas which may help users unfamiliar with the shell rules
 ### Linux / OSX ###
 
 If your names have spaces or shell metacharacters (e.g. `*`, `?`, `$`,
-`'`, `"` etc) then you must quote them.  Use single quotes `'` by default.
+`'`, `"`, etc.) then you must quote them.  Use single quotes `'` by default.
 
     rclone copy 'Important files?' remote:backup
 

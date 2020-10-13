@@ -109,7 +109,7 @@ will need to be cleared or unexpected EOF errors will occur.`,
 			}},
 		}, {
 			Name: "info_age",
-			Help: `How long to cache file structure information (directory listings, file size, times etc). 
+			Help: `How long to cache file structure information (directory listings, file size, times, etc.). 
 If all write operations are done through the cache then you can safely make
 this value very large as the cache store will also be updated in real time.`,
 			Default: DefCacheInfoAge,

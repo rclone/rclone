@@ -509,7 +509,7 @@ type Features struct {
 	ReadMimeType            bool // can read the mime type of objects
 	WriteMimeType           bool // can set the mime type of objects
 	CanHaveEmptyDirectories bool // can have empty directories
-	BucketBased             bool // is bucket based (like s3, swift etc)
+	BucketBased             bool // is bucket based (like s3, swift, etc.)
 	BucketBasedRootOK       bool // is bucket based and can use from root
 	SetTier                 bool // allows set tier functionality on objects
 	GetTier                 bool // allows to retrieve storage tier of objects

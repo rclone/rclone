@@ -93,7 +93,7 @@ number of decimal digits in the seconds will depend on the precision
 that the remote can hold the times, so if times are accurate to the
 nearest millisecond (e.g. Google Drive) then 3 digits will always be
 shown ("2017-05-31T16:15:57.034+01:00") whereas if the times are
-accurate to the nearest second (Dropbox, Box, WebDav etc) no digits
+accurate to the nearest second (Dropbox, Box, WebDav, etc.) no digits
 will be shown ("2017-05-31T16:15:57+01:00").
 
 The whole output can be processed as a JSON blob, or alternatively it

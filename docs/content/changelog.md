@@ -1261,7 +1261,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Check for maximum length before decrypting filename to fix panic (Garry McNulty)
 * Azure Blob
     * Allow building azureblob backend on *BSD (themylogin)
-    * Use the rclone HTTP client to support `--dump headers`, `--tpslimit` etc (Nick Craig-Wood)
+    * Use the rclone HTTP client to support `--dump headers`, `--tpslimit`, etc. (Nick Craig-Wood)
     * Use the s3 pacer for 0 delay in non error conditions (Nick Craig-Wood)
     * Ignore directory markers (Nick Craig-Wood)
     * Stop Mkdir attempting to create existing containers (Nick Craig-Wood)
@@ -1496,7 +1496,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Fix v2 auth on files with spaces (Nick Craig-Wood)
 * Union
     * Implement union backend which reads from multiple backends (Felix Brucker)
-    * Implement optional interfaces (Move, DirMove, Copy etc) (Nick Craig-Wood)
+    * Implement optional interfaces (Move, DirMove, Copy, etc.) (Nick Craig-Wood)
     * Fix ChangeNotify to support multiple remotes (Fabian Möller)
     * Fix `--backup-dir` on union backend (Nick Craig-Wood)
 * WebDAV
@@ -2476,7 +2476,7 @@ Point release to fix hubic and azureblob backends.
     * Log -v output to stdout by default
     * Display the transfer stats in more human readable form
     * Make 0 size files specifiable with `--max-size 0b`
-    * Add `b` suffix so we can specify bytes in --bwlimit, --min-size etc
+    * Add `b` suffix so we can specify bytes in --bwlimit, --min-size, etc.
     * Use "password:" instead of "password>" prompt - thanks Klaus Post and Leigh Klotz
 * Bug Fixes
     * Fix retry doing one too many retries
