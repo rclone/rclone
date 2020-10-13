@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/md5"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/xml"
@@ -1203,6 +1204,19 @@ This option controls how often unused buffers will be removed from the pool.`,
 			Default:  memoryPoolUseMmap,
 			Advanced: true,
 			Help:     `Whether to use mmap buffers in internal memory pool.`,
+		}, {
+			Name:     "disable_http2",
+			Default:  false,
+			Advanced: true,
+			Help: `Disable usage of http2 for S3 backends
+
+There is currently an unsolved issue with the s3 (specifically minio) backend
+and HTTP/2.  HTTP/2 is enabled by default for the s3 backend but can be
+disabled here.  When the issue is solved this flag will be removed.
+
+See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rclone/issues/3631
+
+`,
 		},
 		}})
 }
@@ -1260,6 +1274,7 @@ type Options struct {
 	Enc                   encoder.MultiEncoder `config:"encoding"`
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
+	DisableHTTP2          bool                 `config:"disable_http2"`
 }
 
 // Fs represents a remote s3 server
@@ -1381,6 +1396,19 @@ func (o *Object) split() (bucket, bucketPath string) {
 	return o.fs.split(o.remote)
 }
 
+// getClient makes an http client according to the options
+func getClient(opt *Options) *http.Client {
+	// TODO: Do we need cookies too?
+	t := fshttp.NewTransportCustom(fs.Config, func(t *http.Transport) {
+		if opt.DisableHTTP2 {
+			t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+		}
+	})
+	return &http.Client{
+		Transport: t,
+	}
+}
+
 // s3Connection makes a connection to s3
 func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	// Make the auth
@@ -1391,6 +1419,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	}
 
 	lowTimeoutClient := &http.Client{Timeout: 1 * time.Second} // low timeout to ec2 metadata service
+
 	def := defaults.Get()
 	def.Config.HTTPClient = lowTimeoutClient
 
@@ -1459,7 +1488,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	awsConfig := aws.NewConfig().
 		WithMaxRetries(0). // Rely on rclone's retry logic
 		WithCredentials(cred).
-		WithHTTPClient(fshttp.NewClient(fs.Config)).
+		WithHTTPClient(getClient(opt)).
 		WithS3ForcePathStyle(opt.ForcePathStyle).
 		WithS3UseAccelerate(opt.UseAccelerateEndpoint).
 		WithS3UsEast1RegionalEndpoint(endpoints.RegionalS3UsEast1Endpoint)
@@ -1573,7 +1602,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		ses:   ses,
 		pacer: fs.NewPacer(pacer.NewS3(pacer.MinSleep(minSleep))),
 		cache: bucket.NewCache(),
-		srv:   fshttp.NewClient(fs.Config),
+		srv:   getClient(opt),
 		pool: pool.New(
 			time.Duration(opt.MemoryPoolFlushTime),
 			int(opt.ChunkSize),
