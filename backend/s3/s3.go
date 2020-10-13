@@ -1107,7 +1107,7 @@ If empty it will default to the environment variable "AWS_PROFILE" or
 This is the number of chunks of the same file that are uploaded
 concurrently.
 
-If you are uploading small numbers of large files over high-speed link
+If you are uploading small numbers of large files over high-speed links
 and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.`,
 			Default:  4,
