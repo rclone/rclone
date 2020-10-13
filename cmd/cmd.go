@@ -495,7 +495,7 @@ func AddBackendFlags() {
 		done := map[string]struct{}{}
 		for i := range fsInfo.Options {
 			opt := &fsInfo.Options[i]
-			// Skip if done already (eg with Provider options)
+			// Skip if done already (e.g. with Provider options)
 			if _, doneAlready := done[opt.Name]; doneAlready {
 				continue
 			}

@@ -63,7 +63,7 @@ If no paths are passed in then it will refresh the root directory.
     rclone rc vfs/refresh
 
 Otherwise pass directories in as dir=path. Any parameter key
-starting with dir will refresh that directory, eg
+starting with dir will refresh that directory, e.g.
 
     rclone rc vfs/refresh dir=home/junk dir2=data/misc
 
@@ -180,7 +180,7 @@ directory cache.
 
 Otherwise pass files or dirs in as file=path or dir=path.  Any
 parameter key starting with file will forget that file and any
-starting with dir will forget that dir, eg
+starting with dir will forget that dir, e.g.
 
     rclone rc vfs/forget file=hello file2=goodbye dir=home/junk
 ` + getVFSHelp,

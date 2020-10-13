@@ -87,13 +87,13 @@ Normally rclone checks the size and modification time of files as they
 are being uploaded and aborts with a message which starts "can't copy
 - source file is being updated" if the file changes during upload.
 
-However on some file systems this modification time check may fail (eg
+However on some file systems this modification time check may fail (e.g.
 [Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this
 check can be disabled with this flag.
 
 If this flag is set, rclone will use its best efforts to transfer a
 file which is being updated. If the file is only having things
-appended to it (eg a log) then rclone will transfer the log file with
+appended to it (e.g. a log) then rclone will transfer the log file with
 the size it had the first time rclone saw it.
 
 If the file is being modified throughout (not just appended to) then

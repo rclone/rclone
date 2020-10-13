@@ -40,7 +40,7 @@ to master.  Note these are named like
 
     {Version Tag}.beta.{Commit Number}.{Git Commit Hash}
 
-eg
+e.g.
 
     v1.53.0-beta.4677.b657a2204
 
@@ -54,7 +54,7 @@ Some beta releases may have a branch name also:
 
     {Version Tag}-beta.{Commit Number}.{Git Commit Hash}.{Branch Name}
 
-eg
+e.g.
 
     v1.53.0-beta.4677.b657a2204.semver
 

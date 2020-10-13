@@ -8,7 +8,7 @@ description: "Rclone docs for Box"
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 The initial setup for Box involves getting a token from Box which you
 can do either in your browser, or with a config.json downloaded from Box

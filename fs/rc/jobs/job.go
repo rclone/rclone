@@ -244,11 +244,11 @@ Results
 
 - finished - boolean
 - duration - time in seconds that the job ran for
-- endTime - time the job finished (eg "2018-10-26T18:50:20.528746884+01:00")
+- endTime - time the job finished (e.g. "2018-10-26T18:50:20.528746884+01:00")
 - error - error from the job or empty string for no error
 - finished - boolean whether the job has finished or not
 - id - as passed in above
-- startTime - time the job started (eg "2018-10-26T18:50:20.528336039+01:00")
+- startTime - time the job started (e.g. "2018-10-26T18:50:20.528336039+01:00")
 - success - boolean - true for success false otherwise
 - output - output of the job as would have been returned if called synchronously
 - progress - output of the progress related to the underlying job

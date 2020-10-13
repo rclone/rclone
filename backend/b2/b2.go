@@ -290,7 +290,7 @@ func (o *Object) split() (bucket, bucketPath string) {
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
-	401, // Unauthorized (eg "Token has expired")
+	401, // Unauthorized (e.g. "Token has expired")
 	408, // Request Timeout
 	429, // Rate exceeded.
 	500, // Get occasional 500 Internal Server Error
@@ -1440,7 +1440,7 @@ func (o *Object) Size() int64 {
 // Make sure it is lower case
 //
 // Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
-// Some tools (eg Cyberduck) use this
+// Some tools (e.g. Cyberduck) use this
 func cleanSHA1(sha1 string) (out string) {
 	out = strings.ToLower(sha1)
 	const unverified = "unverified:"

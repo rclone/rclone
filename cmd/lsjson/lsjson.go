@@ -65,11 +65,11 @@ may be repeated). If --hash-type is set then it implies --hash.
 
 If --no-modtime is specified then ModTime will be blank. This can
 speed things up on remotes where reading the ModTime takes an extra
-request (eg s3, swift).
+request (e.g. s3, swift).
 
 If --no-mimetype is specified then MimeType will be blank. This can
 speed things up on remotes where reading the MimeType takes an extra
-request (eg s3, swift).
+request (e.g. s3, swift).
 
 If --encrypted is not specified the Encrypted won't be emitted.
 
@@ -91,7 +91,7 @@ If the directory is a bucket in a bucket based backend, then
 The time is in RFC3339 format with up to nanosecond precision.  The
 number of decimal digits in the seconds will depend on the precision
 that the remote can hold the times, so if times are accurate to the
-nearest millisecond (eg Google Drive) then 3 digits will always be
+nearest millisecond (e.g. Google Drive) then 3 digits will always be
 shown ("2017-05-31T16:15:57.034+01:00") whereas if the times are
 accurate to the nearest second (Dropbox, Box, WebDav etc) no digits
 will be shown ("2017-05-31T16:15:57+01:00").

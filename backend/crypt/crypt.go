@@ -30,7 +30,7 @@ func init() {
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "remote",
-			Help:     "Remote to encrypt/decrypt.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
+			Help:     "Remote to encrypt/decrypt.\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
 			Required: true,
 		}, {
 			Name:    "filename_encryption",
@@ -76,7 +76,7 @@ NB If filename_encryption is "off" then this option will do nothing.`,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
-			Help: `Allow server-side operations (eg copy) to work across different crypt configs.
+			Help: `Allow server-side operations (e.g. copy) to work across different crypt configs.
 
 Normally this option is not what you want, but if you have two crypts
 pointing to the same backend you can use it.

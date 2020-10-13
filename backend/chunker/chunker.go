@@ -42,7 +42,7 @@ import (
 // used mostly for consistency checks (lazily for performance reasons).
 // Other formats can be developed that use an external meta store
 // free of these limitations, but this needs some support from
-// rclone core (eg. metadata store interfaces).
+// rclone core (e.g. metadata store interfaces).
 //
 // The following types of chunks are supported:
 // data and control, active and temporary.
@@ -140,7 +140,7 @@ func init() {
 			Name:     "remote",
 			Required: true,
 			Help: `Remote to chunk/unchunk.
-Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).`,
 		}, {
 			Name:     "chunk_size",
@@ -464,7 +464,7 @@ func (f *Fs) setChunkNameFormat(pattern string) error {
 // filePath can be name, relative or absolute path of main file.
 //
 // chunkNo must be a zero based index of data chunk.
-// Negative chunkNo eg. -1 indicates a control chunk.
+// Negative chunkNo e.g. -1 indicates a control chunk.
 // ctrlType is type of control chunk (must be valid).
 // ctrlType must be "" for data chunks.
 //
@@ -994,7 +994,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, remote st
 		}
 
 		// Wrapped remote may or may not have seen EOF from chunking reader,
-		// eg. the box multi-uploader reads exactly the chunk size specified
+		// e.g. the box multi-uploader reads exactly the chunk size specified
 		// and skips the "EOF" read. Hence, switch to next limit here.
 		if !(c.chunkLimit == 0 || c.chunkLimit == c.chunkSize || c.sizeTotal == -1 || c.done) {
 			silentlyRemove(ctx, chunk)
@@ -1183,7 +1183,7 @@ func (c *chunkingReader) Read(buf []byte) (bytesRead int, err error) {
 	if c.chunkLimit <= 0 {
 		// Chunk complete - switch to next one.
 		// Note #1:
-		// We might not get here because some remotes (eg. box multi-uploader)
+		// We might not get here because some remotes (e.g. box multi-uploader)
 		// read the specified size exactly and skip the concluding EOF Read.
 		// Then a check in the put loop will kick in.
 		// Note #2:
@@ -1387,7 +1387,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // However, if rclone dies unexpectedly, it can leave hidden temporary
 // chunks, which cannot be discovered using the `list` command.
 // Remove does not try to search for such chunks or to delete them.
-// Sometimes this can lead to strange results eg. when `list` shows that
+// Sometimes this can lead to strange results e.g. when `list` shows that
 // directory is empty but `rmdir` refuses to remove it because on the
 // level of wrapped remote it's actually *not* empty.
 // As a workaround users can use `purge` to forcibly remove it.

@@ -31,7 +31,7 @@ Produces a hash file for all the objects in the path using the hash
 named.  The output is in the same format as the standard
 md5sum/sha1sum tool.
 
-Run without a hash to see the list of supported hashes, eg
+Run without a hash to see the list of supported hashes, e.g.
 
     $ rclone hashsum
     Supported hashes are:

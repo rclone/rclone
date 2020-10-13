@@ -37,7 +37,7 @@ so it is easy to tweak stuff.
 │   │   ├── footer.copyright.html - copyright footer
 │   │   ├── footer.html           - footer including scripts
 │   │   ├── header.html           - the whole html header
-│   │   ├── header.includes.html  - header includes eg css files
+│   │   ├── header.includes.html  - header includes e.g. css files
 │   │   ├── menu.html             - left hand side menu
 │   │   ├── meta.html             - meta tags for the header
 │   │   └── navbar.html           - top navigation bar

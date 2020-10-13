@@ -68,7 +68,7 @@ func init() {
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "remote",
-			Help:     "Remote to cache.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
+			Help:     "Remote to cache.\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
 			Required: true,
 		}, {
 			Name: "plex_url",
@@ -581,7 +581,7 @@ Some valid examples are:
 "0:10" -> the first ten chunks
 
 Any parameter with a key that starts with "file" can be used to
-specify files to fetch, eg
+specify files to fetch, e.g.
 
     rclone rc cache/fetch chunks=0 file=hello file2=home/goodbye
 

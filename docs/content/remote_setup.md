@@ -9,7 +9,7 @@ Some of the configurations (those involving oauth2) require an
 Internet connected web browser.
 
 If you are trying to set rclone up on a remote or headless box with no
-browser available on it (eg a NAS or a server in a datacenter) then
+browser available on it (e.g. a NAS or a server in a datacenter) then
 you will need to use an alternative means of configuration.  There are
 two ways of doing it, described below.
 

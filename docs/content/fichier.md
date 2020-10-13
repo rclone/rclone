@@ -12,7 +12,7 @@ the API.
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 The initial setup for 1Fichier involves getting the API key from the website which you
 need to do in your browser.

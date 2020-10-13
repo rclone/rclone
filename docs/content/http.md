@@ -133,7 +133,7 @@ The input format is comma separated list of key,value pairs.  Standard
 
 For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
-You can set multiple headers, eg '"Cookie","name=value","Authorization","xxx"'.
+You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
 
 
 - Config:      headers

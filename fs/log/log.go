@@ -18,7 +18,7 @@ type Options struct {
 	File           string // Log everything to this file
 	Format         string // Comma separated list of log format options
 	UseSyslog      bool   // Use Syslog for logging
-	SyslogFacility string // Facility for syslog, eg KERN,USER,...
+	SyslogFacility string // Facility for syslog, e.g. KERN,USER,...
 }
 
 // DefaultOpt is the default values used for Opt

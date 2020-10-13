@@ -14,7 +14,7 @@
 //
 // The vfs package returns Error values to signal precisely which
 // error conditions have ocurred.  It may also return general errors
-// it receives.  It tries to use os Error values (eg os.ErrExist)
+// it receives.  It tries to use os Error values (e.g. os.ErrExist)
 // where possible.
 
 //go:generate sh -c "go run make_open_tests.go | gofmt > open_test.go"

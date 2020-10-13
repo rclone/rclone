@@ -8,7 +8,7 @@ description: "Rclone docs for pCloud"
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 The initial setup for pCloud involves getting a token from pCloud which you
 need to do in your browser.  `rclone config` walks you through it.

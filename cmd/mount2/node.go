@@ -235,7 +235,7 @@ func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 	// defer log.Trace(nil, "")("de=%+v, errno=%v", &de, &errno)
 	fi := ds.nodes[ds.i]
 	de = fuse.DirEntry{
-		// Mode is the file's mode. Only the high bits (eg. S_IFDIR)
+		// Mode is the file's mode. Only the high bits (e.g. S_IFDIR)
 		// are considered.
 		Mode: getMode(fi),
 

@@ -17,7 +17,7 @@ a remote.
 
 First check your chosen remote is working - we'll call it `remote:path` here.
 Note that anything inside `remote:path` will be chunked and anything outside
-won't. This means that if you are using a bucket based remote (eg S3, B2, swift)
+won't. This means that if you are using a bucket based remote (e.g. S3, B2, swift)
 then you should probably put the bucket in the remote `s3:bucket`.
 
 Now configure `chunker` using `rclone config`. We will call this one `overlay`
@@ -38,7 +38,7 @@ XX / Transparently chunk/split large files
 [snip]
 Storage> chunker
 Remote to chunk/unchunk.
-Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 Enter a string value. Press Enter for the default ("").
 remote> remote:path
@@ -118,7 +118,7 @@ the potential chunk files are accounted for, grouped and assembled into
 composite directory entries. Any temporary chunks are hidden.
 
 List and other commands can sometimes come across composite files with
-missing or invalid chunks, eg. shadowed by like-named directory or
+missing or invalid chunks, e.g. shadowed by like-named directory or
 another file. This usually means that wrapped file system has been directly
 tampered with or damaged. If chunker detects a missing chunk it will
 by default print warning, skip the whole incomplete group of chunks but
@@ -140,7 +140,7 @@ characters defines the minimum length of a string representing a chunk number.
 If decimal chunk number has less digits than the number of hashes, it is
 left-padded by zeros. If the decimal string is longer, it is left intact.
 By default numbering starts from 1 but there is another option that allows
-user to start from 0, eg. for compatibility with legacy software.
+user to start from 0, e.g. for compatibility with legacy software.
 
 For example, if name format is `big_*-##.part` and original file name is
 `data.txt` and numbering starts from 0, then the first chunk will be named
@@ -211,7 +211,7 @@ guarantee given hash for all files. If wrapped remote doesn't support it,
 chunker will then add metadata to all files, even small. However, this can
 double the amount of small files in storage and incur additional service charges.
 You can even use chunker to force md5/sha1 support in any other remote
-at expense of sidecar meta objects by setting eg. `chunk_type=sha1all`
+at expense of sidecar meta objects by setting e.g. `chunk_type=sha1all`
 to force hashsums and `chunk_size=1P` to effectively disable chunking.
 
 Normally, when a file is copied to chunker controlled remote, chunker
@@ -282,7 +282,7 @@ suffix during operations. Many file systems limit base file name without path
 by 255 characters. Using rclone's crypt remote as a base file system limits
 file name by 143 characters. Thus, maximum name length is 231 for most files
 and 119 for chunker-over-crypt. A user in need can change name format to
-eg. `*.rcc##` and save 10 characters (provided at most 99 chunks per file).
+e.g. `*.rcc##` and save 10 characters (provided at most 99 chunks per file).
 
 Note that a move implemented using the copy-and-delete method may incur
 double charging with some cloud storage providers.
@@ -308,7 +308,7 @@ Here are the standard options specific to chunker (Transparently chunk/split lar
 #### --chunker-remote
 
 Remote to chunk/unchunk.
-Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 
 - Config:      remote

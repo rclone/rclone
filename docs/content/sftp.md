@@ -203,7 +203,7 @@ advanced option.
 
 Note that there seem to be various problems with using an ssh-agent on
 macOS due to recent changes in the OS.  The most effective work-around
-seems to be to start an ssh-agent in each session, eg
+seems to be to start an ssh-agent in each session, e.g.
 
     eval `ssh-agent -s` && ssh-add -A
 
@@ -498,7 +498,7 @@ the disk of the root on the remote.
 `about` will fail if it does not have shell
 access or if `df` is not in the remote's PATH.
 
-Note that some SFTP servers (eg Synology) the paths are different for
+Note that some SFTP servers (e.g. Synology) the paths are different for
 SSH and SFTP so the hashes can't be calculated properly.  For them
 using `disable_hashcheck` is a good idea.
 

@@ -32,7 +32,7 @@ var Command = &cobra.Command{
 over HTTP.  This can be viewed in a web browser or you can make a
 remote of type http read from it.
 
-You can use the filter flags (eg --include, --exclude) to control what
+You can use the filter flags (e.g. --include, --exclude) to control what
 is served.
 
 The server will log errors.  Use -v to see access logs.

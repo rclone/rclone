@@ -297,7 +297,7 @@ func showBackend(name string) {
 	var standardOptions, advancedOptions fs.Options
 	done := map[string]struct{}{}
 	for _, opt := range backend.Options {
-		// Skip if done already (eg with Provider options)
+		// Skip if done already (e.g. with Provider options)
 		if _, doneAlready := done[opt.Name]; doneAlready {
 			continue
 		}

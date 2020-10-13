@@ -207,7 +207,7 @@ func (o *Object) split() (bucket, bucketPath string) {
 func qsParseEndpoint(endpoint string) (protocol, host, port string, err error) {
 	/*
 	  Pattern to match an endpoint,
-	  eg: "http(s)://qingstor.com:443" --> "http(s)", "qingstor.com", 443
+	  e.g.: "http(s)://qingstor.com:443" --> "http(s)", "qingstor.com", 443
 	      "http(s)//qingstor.com"      --> "http(s)", "qingstor.com", ""
 	      "qingstor.com"               --> "", "qingstor.com", ""
 	*/

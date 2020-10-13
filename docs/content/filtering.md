@@ -118,7 +118,7 @@ directories.
 
 Directory matches are **only** used to optimise directory access
 patterns - you must still match the files that you want to match.
-Directory matches won't optimise anything on bucket based remotes (eg
+Directory matches won't optimise anything on bucket based remotes (e.g.
 s3, swift, google compute storage, b2) which don't have a concept of
 directory.
 
@@ -162,7 +162,7 @@ This would exclude
 A similar process is done on directory entries before recursing into
 them.  This only works on remotes which have a concept of directory
 (Eg local, google drive, onedrive, amazon drive) and not on bucket
-based remotes (eg s3, swift, google compute storage, b2).
+based remotes (e.g. s3, swift, google compute storage, b2).
 
 ## Adding filtering rules ##
 
@@ -233,7 +233,7 @@ backup and no others.
 
 This adds an implicit `--exclude *` at the very end of the filter
 list. This means you can mix `--include` and `--include-from` with the
-other filters (eg `--exclude`) but you must include all the files you
+other filters (e.g. `--exclude`) but you must include all the files you
 want in the include statement.  If this doesn't provide enough
 flexibility then you must use `--filter-from`.
 
@@ -258,7 +258,7 @@ This is useful if you have a lot of rules.
 
 This adds an implicit `--exclude *` at the very end of the filter
 list. This means you can mix `--include` and `--include-from` with the
-other filters (eg `--exclude`) but you must include all the files you
+other filters (e.g. `--exclude`) but you must include all the files you
 want in the include statement.  If this doesn't provide enough
 flexibility then you must use `--filter-from`.
 
@@ -352,7 +352,7 @@ want to back up regularly with these absolute paths:
 
 To copy these you'd find a common subdirectory - in this case `/home`
 and put the remaining files in `files-from.txt` with or without
-leading `/`, eg
+leading `/`, e.g.
 
     user1/important
     user1/dir/file
@@ -430,7 +430,7 @@ transferred.
 
 This can also be an absolute time in one of these formats
 
-- RFC3339 - eg "2006-01-02T15:04:05Z07:00"
+- RFC3339 - e.g. "2006-01-02T15:04:05Z07:00"
 - ISO8601 Date and time, local timezone - "2006-01-02T15:04:05"
 - ISO8601 Date and time, local timezone - "2006-01-02 15:04:05"
 - ISO8601 Date - "2006-01-02" (YYYY-MM-DD)
@@ -481,7 +481,7 @@ Normally a `--include "file.txt"` will not match a file called
 ## Quoting shell metacharacters ##
 
 The examples above may not work verbatim in your shell as they have
-shell metacharacters in them (eg `*`), and may require quoting.
+shell metacharacters in them (e.g. `*`), and may require quoting.
 
 Eg linux, OSX
 

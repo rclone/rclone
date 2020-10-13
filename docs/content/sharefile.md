@@ -99,7 +99,7 @@ To copy a local directory to an ShareFile directory called backup
 
     rclone copy /home/source remote:backup
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 ### Modified time and hashes ###
 

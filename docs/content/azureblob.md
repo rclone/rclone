@@ -7,7 +7,7 @@ description: "Rclone docs for Microsoft Azure Blob Storage"
 -----------------------------------------
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
-command.)  You may put subdirectories in too, eg
+command.)  You may put subdirectories in too, e.g.
 `remote:container/path/to/dir`.
 
 Here is an example of making a Microsoft Azure Blob Storage
@@ -104,7 +104,7 @@ as they can't be used in JSON strings.
 
 MD5 hashes are stored with blobs.  However blobs that were uploaded in
 chunks only have an MD5 if the source remote was capable of MD5
-hashes, eg the local disk.
+hashes, e.g. the local disk.
 
 ### Authenticating with Azure Blob Storage
 
@@ -127,7 +127,7 @@ container level SAS URL right click on a container in the Azure Blob
 explorer in the Azure portal.
 
 If you use a container level SAS URL, rclone operations are permitted
-only on a particular container, eg
+only on a particular container, e.g.
 
     rclone ls azureblob:container
 

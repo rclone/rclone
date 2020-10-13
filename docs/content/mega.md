@@ -17,7 +17,7 @@ features of Mega using the same client side encryption.
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 Here is an example of how to make a remote called `remote`.  First run:
 

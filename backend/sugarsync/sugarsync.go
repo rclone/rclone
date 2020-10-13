@@ -576,7 +576,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 	newID = resp.Header.Get("Location")
 	if newID == "" {
-		// look up ID if not returned (eg for syncFolder)
+		// look up ID if not returned (e.g. for syncFolder)
 		var found bool
 		newID, found, err = f.FindLeaf(ctx, pathID, leaf)
 		if err != nil {
