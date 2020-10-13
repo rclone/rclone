@@ -93,7 +93,7 @@ as multipart uploads using this chunk size.
 Note that "--qingstor-upload-concurrency" chunks of this size are buffered
 in memory per transfer.
 
-If you are transferring large files over high speed links and you have
+If you are transferring large files over high-speed links and you have
 enough memory, then increasing this will speed up the transfers.`,
 			Default:  minChunkSize,
 			Advanced: true,
@@ -107,7 +107,7 @@ concurrently.
 NB if you set this to > 1 then the checksums of multipart uploads
 become corrupted (the uploads themselves are not corrupted though).
 
-If you are uploading small numbers of large file over high speed link
+If you are uploading small numbers of large file over high-speed link
 and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.`,
 			Default:  1,
