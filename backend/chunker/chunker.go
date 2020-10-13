@@ -1222,7 +1222,7 @@ func (c *chunkingReader) accountBytes(bytesRead int64) {
 	}
 }
 
-// dummyRead updates accounting, hashsums etc by simulating reads
+// dummyRead updates accounting, hashsums, etc. by simulating reads
 func (c *chunkingReader) dummyRead(in io.Reader, size int64) error {
 	if c.hasher == nil && c.readCount+size > maxMetadataSize {
 		c.accountBytes(size)

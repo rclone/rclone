@@ -219,7 +219,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 	// Check if it is an api.Error
 	if apiErr, ok := err.(*api.Error); ok {
 		// See https://docs.pcloud.com/errors/ for error treatment
-		// Errors are classified as 1xxx, 2xxx etc
+		// Errors are classified as 1xxx, 2xxx, etc.
 		switch apiErr.Result / 1000 {
 		case 4: // 4xxx: rate limiting
 			doRetry = true

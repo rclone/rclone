@@ -89,6 +89,6 @@ Configuration file is stored at:
 /home/user/.rclone.conf
 ```
 
-Now transfer it to the remote box (scp, cut paste, ftp, sftp etc) and
+Now transfer it to the remote box (scp, cut paste, ftp, sftp, etc.) and
 place it in the correct place (use `rclone config file` on the remote
 box to find out where).

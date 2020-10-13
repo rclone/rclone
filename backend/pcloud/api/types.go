@@ -96,7 +96,7 @@ func (i *Item) ModTime() (t time.Time) {
 	return t
 }
 
-// ItemResult is returned from the /listfolder, /createfolder, /deletefolder, /deletefile etc methods
+// ItemResult is returned from the /listfolder, /createfolder, /deletefolder, /deletefile, etc. methods
 type ItemResult struct {
 	Error
 	Metadata Item `json:"metadata"`

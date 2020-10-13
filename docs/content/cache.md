@@ -77,7 +77,7 @@ Choose a number from below, or type in your own value
  3 / 10 MB
    \ "10M"
 chunk_size> 2
-How much time should object info (file size, file hashes etc) be stored in cache. Use a very high value if you don't plan on changing the source FS from outside the cache.
+How much time should object info (file size, file hashes, etc.) be stored in cache. Use a very high value if you don't plan on changing the source FS from outside the cache.
 Accepted units are: "s", "m", "h".
 Default: 5m
 Choose a number from below, or type in your own value
@@ -372,7 +372,7 @@ will need to be cleared or unexpected EOF errors will occur.
 
 #### --cache-info-age
 
-How long to cache file structure information (directory listings, file size, times etc). 
+How long to cache file structure information (directory listings, file size, times, etc.). 
 If all write operations are done through the cache then you can safely make
 this value very large as the cache store will also be updated in real time.
 

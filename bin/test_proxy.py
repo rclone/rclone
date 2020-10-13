@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-A demo proxy for rclone serve sftp/webdav/ftp etc
+A demo proxy for rclone serve sftp/webdav/ftp, etc.
 
 This takes the incoming user/pass and converts it into an sftp backend
 running on localhost.
