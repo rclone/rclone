@@ -274,7 +274,7 @@ listing, set this option.`,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
-			Help: `Allow server-side operations (eg copy) to work across different onedrive configs.
+			Help: `Allow server-side operations (e.g. copy) to work across different onedrive configs.
 
 This can be useful if you wish to do a server-side copy between two
 different Onedrives.  Note that this isn't enabled by default

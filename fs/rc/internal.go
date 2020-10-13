@@ -172,7 +172,7 @@ func init() {
 		Help: `
 This shows the current version of go and the go runtime
 
-- version - rclone version, eg "v1.53.0"
+- version - rclone version, e.g. "v1.53.0"
 - decomposed - version number as [major, minor, patch]
 - isGit - boolean - true if this was compiled from the git version
 - isBeta - boolean - true if this is a beta version
@@ -417,7 +417,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 
 	var allArgs = []string{}
 	if command != "" {
-		// Add the command eg: ls to the args
+		// Add the command e.g.: ls to the args
 		allArgs = append(allArgs, command)
 	}
 	// Add all from arg
@@ -425,7 +425,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 		allArgs = append(allArgs, cur)
 	}
 
-	// Add flags to args for eg --max-depth 1 comes in as { max-depth 1 }.
+	// Add flags to args for e.g. --max-depth 1 comes in as { max-depth 1 }.
 	// Convert it to [ max-depth, 1 ] and append to args list
 	for key, value := range opt {
 		if len(key) == 1 {

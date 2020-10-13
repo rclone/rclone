@@ -162,14 +162,14 @@ func NewConfig() *ConfigInfo {
 	return c
 }
 
-// ConfigToEnv converts a config section and name, eg ("myremote",
+// ConfigToEnv converts a config section and name, e.g. ("myremote",
 // "ignore-size") into an environment name
 // "RCLONE_CONFIG_MYREMOTE_IGNORE_SIZE"
 func ConfigToEnv(section, name string) string {
 	return "RCLONE_CONFIG_" + strings.ToUpper(strings.Replace(section+"_"+name, "-", "_", -1))
 }
 
-// OptionToEnv converts an option name, eg "ignore-size" into an
+// OptionToEnv converts an option name, e.g. "ignore-size" into an
 // environment name "RCLONE_IGNORE_SIZE"
 func OptionToEnv(name string) string {
 	return "RCLONE_" + strings.ToUpper(strings.Replace(name, "-", "_", -1))

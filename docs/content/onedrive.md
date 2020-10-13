@@ -8,7 +8,7 @@ description: "Rclone docs for Microsoft OneDrive"
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 The initial setup for OneDrive involves getting a token from
 Microsoft which you need to do in your browser.  `rclone config` walks
@@ -298,7 +298,7 @@ listing, set this option.
 
 #### --onedrive-server-side-across-configs
 
-Allow server-side operations (eg copy) to work across different onedrive configs.
+Allow server-side operations (e.g. copy) to work across different onedrive configs.
 
 This can be useful if you wish to do a server-side copy between two
 different Onedrives.  Note that this isn't enabled by default

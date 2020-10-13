@@ -8,7 +8,7 @@ Frequently Asked Questions
 
 ### Do all cloud storage systems support all rclone commands ###
 
-Yes they do.  All the rclone commands (eg `sync`, `copy` etc) will
+Yes they do.  All the rclone commands (e.g. `sync`, `copy` etc) will
 work on all the remote storage systems.
 
 ### Can I copy the config from one machine to another ###
@@ -40,7 +40,7 @@ Eg
 ### Using rclone from multiple locations at the same time ###
 
 You can use rclone from multiple places at the same time if you choose
-different subdirectory for the output, eg
+different subdirectory for the output, e.g.
 
 ```
 Server A> rclone sync -i /tmp/whatever remote:ServerA
@@ -48,7 +48,7 @@ Server B> rclone sync -i /tmp/whatever remote:ServerB
 ```
 
 If you sync to the same directory then you should use rclone copy
-otherwise the two instances of rclone may delete each other's files, eg
+otherwise the two instances of rclone may delete each other's files, e.g.
 
 ```
 Server A> rclone copy /tmp/whatever remote:Backup
@@ -56,14 +56,14 @@ Server B> rclone copy /tmp/whatever remote:Backup
 ```
 
 The file names you upload from Server A and Server B should be
-different in this case, otherwise some file systems (eg Drive) may
+different in this case, otherwise some file systems (e.g. Drive) may
 make duplicates.
 
 ### Why doesn't rclone support partial transfers / binary diffs like rsync? ###
 
 Rclone stores each file you transfer as a native object on the remote
 cloud storage system.  This means that you can see the files you
-upload as expected using alternative access methods (eg using the
+upload as expected using alternative access methods (e.g. using the
 Google Drive web interface).  There is a 1:1 mapping between files on
 your hard disk and objects created in the cloud storage system.
 

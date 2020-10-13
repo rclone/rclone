@@ -9,7 +9,7 @@ description: "Remote Aliases"
 The `alias` remote provides a new name for another remote.
 
 Paths may be as deep as required or a local path, 
-eg `remote:directory/subdirectory` or `/directory/subdirectory`.
+e.g. `remote:directory/subdirectory` or `/directory/subdirectory`.
 
 During the initial setup with `rclone config` you will specify the target
 remote. The target remote can either be a local path or another remote.

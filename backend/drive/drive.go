@@ -435,7 +435,7 @@ need to use --ignore size also.`,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
-			Help: `Allow server-side operations (eg copy) to work across different drive configs.
+			Help: `Allow server-side operations (e.g. copy) to work across different drive configs.
 
 This can be useful if you wish to do a server-side copy between two
 different Google drives.  Note that this isn't enabled by default
@@ -1690,7 +1690,7 @@ func (f *Fs) listRRunner(ctx context.Context, wg *sync.WaitGroup, in chan listRE
 				if len(paths) == 1 {
 					// don't check parents at root because
 					// - shared with me items have no parents at the root
-					// - if using a root alias, eg "root" or "appDataFolder" the ID won't match
+					// - if using a root alias, e.g. "root" or "appDataFolder" the ID won't match
 					i = 0
 					// items at root can have more than one parent so we need to put
 					// the item in just once.
@@ -2440,7 +2440,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	usage := &fs.Usage{
 		Used:    fs.NewUsageValue(q.UsageInDrive),           // bytes in use
 		Trashed: fs.NewUsageValue(q.UsageInDriveTrash),      // bytes in trash
-		Other:   fs.NewUsageValue(q.Usage - q.UsageInDrive), // other usage eg gmail in drive
+		Other:   fs.NewUsageValue(q.Usage - q.UsageInDrive), // other usage e.g. gmail in drive
 	}
 	if q.Limit > 0 {
 		usage.Total = fs.NewUsageValue(q.Limit)          // quota of bytes that can be used

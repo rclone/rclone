@@ -81,7 +81,7 @@ func init() {
 			IsPassword: true,
 		}, {
 			Name: "bearer_token",
-			Help: "Bearer token instead of user/pass (eg a Macaroon)",
+			Help: "Bearer token instead of user/pass (e.g. a Macaroon)",
 		}, {
 			Name:     "bearer_token_command",
 			Help:     "Command to run to get a bearer token",

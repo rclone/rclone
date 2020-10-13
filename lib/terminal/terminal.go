@@ -92,7 +92,7 @@ func WriteString(s string) {
 }
 
 // Out is an io.Writer which can be used to write to the terminal
-// eg for use with fmt.Fprintf(terminal.Out, "terminal fun: %d\n", n)
+// e.g. for use with fmt.Fprintf(terminal.Out, "terminal fun: %d\n", n)
 var Out io.Writer
 
 // Write sends out to the VT100 terminal.

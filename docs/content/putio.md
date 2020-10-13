@@ -8,7 +8,7 @@ description: "Rclone docs for put.io"
 
 Paths are specified as `remote:path`
 
-put.io paths may be as deep as required, eg
+put.io paths may be as deep as required, e.g.
 `remote:directory/subdirectory`.
 
 The initial setup for put.io involves getting a token from put.io

@@ -72,7 +72,7 @@ output:
     o - Original ID of underlying object
     m - MimeType of object if known
     e - encrypted name
-    T - tier of storage if known, eg "Hot" or "Cool"
+    T - tier of storage if known, e.g. "Hot" or "Cool"
 
 So if you wanted the path, size and modification time, you would use
 --format "pst", or maybe --format "tsp" to put the path last.

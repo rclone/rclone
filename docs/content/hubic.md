@@ -9,7 +9,7 @@ description: "Rclone docs for Hubic"
 Paths are specified as `remote:path`
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
-command.)  You may put subdirectories in too, eg `remote:container/path/to/dir`.
+command.)  You may put subdirectories in too, e.g. `remote:container/path/to/dir`.
 
 The initial setup for Hubic involves getting a token from Hubic which
 you need to do in your browser.  `rclone config` walks you through it.
@@ -179,7 +179,7 @@ default for this is 5GB which is its maximum value.
 
 Don't chunk files during streaming upload.
 
-When doing streaming uploads (eg using rcat or mount) setting this
+When doing streaming uploads (e.g. using rcat or mount) setting this
 flag will cause the swift backend to not upload chunked files.
 
 This will limit the maximum upload size to 5GB. However non chunked

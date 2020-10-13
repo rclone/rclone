@@ -45,7 +45,7 @@ Rclone uses the labels like this:
 
 If it turns out to be a bug or an enhancement it should be tagged as such, with the appropriate other tags.  Don't forget the "good first issue" tag to give new contributors something easy to do to get going.
 
-When a ticket is tagged it should be added to a milestone, either the next release, the one after, Soon or Help Wanted.  Bugs can be added to the "Known Bugs" milestone if they aren't planned to be fixed or need to wait for something (eg the next go release).
+When a ticket is tagged it should be added to a milestone, either the next release, the one after, Soon or Help Wanted.  Bugs can be added to the "Known Bugs" milestone if they aren't planned to be fixed or need to wait for something (e.g. the next go release).
 
 The milestones have these meanings:
 

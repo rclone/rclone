@@ -86,7 +86,7 @@ Rclone helps you:
     - MD5, SHA1 hashes are checked at all times for file integrity
     - Timestamps are preserved on files
     - Operations can be restarted at any time
-    - Can be to and from network, eg two different cloud providers
+    - Can be to and from network, e.g. two different cloud providers
     - Can use multi-threaded downloads to local disk
 - [Copy](/commands/rclone_copy/) new or changed files to cloud storage
 - [Sync](/commands/rclone_sync/) (one way) to make a directory identical

@@ -90,7 +90,7 @@ these will be set when transferring from the cloud storage system.
 ### Case Insensitive ###
 
 If a cloud storage systems is case sensitive then it is possible to
-have two files which differ only in case, eg `file.txt` and
+have two files which differ only in case, e.g. `file.txt` and
 `FILE.txt`.  If a cloud storage system is case insensitive then that
 isn't possible.
 
@@ -103,7 +103,7 @@ depending on OS.
 
   * Windows - usually case insensitive, though case is preserved
   * OSX - usually case insensitive, though it is possible to format case sensitive
-  * Linux - usually case sensitive, but there are case insensitive file systems (eg FAT formatted USB keys)
+  * Linux - usually case sensitive, but there are case insensitive file systems (e.g. FAT formatted USB keys)
 
 Most of the time this doesn't cause any problems as people tend to
 avoid files whose name differs only by case even on case sensitive
@@ -241,7 +241,7 @@ disable the encoding completely with `--backend-encoding None` or set
 
 Encoding takes a comma separated list of encodings. You can see the
 list of all available characters by passing an invalid value to this
-flag, eg `--local-encoding "help"` and `rclone help flags encoding`
+flag, e.g. `--local-encoding "help"` and `rclone help flags encoding`
 will show you the defaults for the backends.
 
 | Encoding  | Characters |
@@ -257,7 +257,7 @@ will show you the defaults for the backends.
 | Dot | `.` |
 | DoubleQuote | `"` |
 | Hash | `#` |
-| InvalidUtf8 | An invalid UTF-8 character (eg latin1) |
+| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) |
 | LeftCrLfHtVt | CR 0x0D, LF 0x0A,HT 0x09, VT 0x0B on the left of a string |
 | LeftPeriod | `.` on the left of a string |
 | LeftSpace | SPACE on the left of a string |
@@ -302,7 +302,7 @@ This can be specified using the `--local-encoding` flag or using an
 ### MIME Type ###
 
 MIME types (also known as media types) classify types of documents
-using a simple text classification, eg `text/html` or
+using a simple text classification, e.g. `text/html` or
 `application/pdf`.
 
 Some cloud storage systems support reading (`R`) the MIME type of

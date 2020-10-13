@@ -48,8 +48,8 @@ If rclone needs a point release due to some horrendous bug:
 
 Set vars
 
-  * BASE_TAG=v1.XX          # eg v1.52
-  * NEW_TAG=${BASE_TAG}.Y   # eg v1.52.1
+  * BASE_TAG=v1.XX          # e.g. v1.52
+  * NEW_TAG=${BASE_TAG}.Y   # e.g. v1.52.1
   * echo $BASE_TAG $NEW_TAG # v1.52 v1.52.1
 
 First make the release branch.  If this is a second point release then

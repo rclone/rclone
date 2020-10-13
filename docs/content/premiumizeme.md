@@ -8,7 +8,7 @@ description: "Rclone docs for premiumize.me"
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 The initial setup for [premiumize.me](https://premiumize.me/) involves getting a token from premiumize.me which you
 need to do in your browser.  `rclone config` walks you through it.

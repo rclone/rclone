@@ -90,7 +90,7 @@ To copy a local directory to an SugarSync folder called backup
 
 Paths are specified as `remote:path`
 
-Paths may be as deep as required, eg `remote:directory/subdirectory`.
+Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
 **NB** you can't create files in the top level folder you have to
 create a folder, which rclone will create as a "Sync Folder" with

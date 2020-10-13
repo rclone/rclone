@@ -92,7 +92,7 @@ Will place this in the "arg" value
 
 Use --loopback to connect to the rclone instance running "rclone rc".
 This is very useful for testing commands without having to run an
-rclone rc server, eg:
+rclone rc server, e.g.:
 
     rclone rc --loopback operations/about fs=/
 

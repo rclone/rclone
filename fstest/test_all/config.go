@@ -56,7 +56,7 @@ func (b *Backend) includeTest(t *Test) bool {
 // MakeRuns creates Run objects the Backend and Test
 //
 // There can be several created, one for each combination of optional
-// flags (eg FastList)
+// flags (e.g. FastList)
 func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 	if !b.includeTest(t) {
 		return runs

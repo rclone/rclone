@@ -12,10 +12,10 @@ When filing an issue, please include the following information if
 possible as well as a description of the problem.  Make sure you test
 with the [latest beta of rclone](https://beta.rclone.org/):
 
-  * Rclone version (eg output from `rclone -V`)
-  * Which OS you are using and how many bits (eg Windows 7, 64 bit)
-  * The command you were trying to run (eg `rclone copy /tmp remote:tmp`)
-  * A log of the command with the `-vv` flag (eg output from `rclone -vv copy /tmp remote:tmp`)
+  * Rclone version (e.g. output from `rclone -V`)
+  * Which OS you are using and how many bits (e.g. Windows 7, 64 bit)
+  * The command you were trying to run (e.g. `rclone copy /tmp remote:tmp`)
+  * A log of the command with the `-vv` flag (e.g. output from `rclone -vv copy /tmp remote:tmp`)
     * if the log contains secrets then edit the file with a text editor first to obscure them
 
 ## Submitting a pull request ##
@@ -48,7 +48,7 @@ When ready - run the unit tests for the code you changed
 
     go test -v
 
-Note that you may need to make a test remote, eg `TestSwift` for some
+Note that you may need to make a test remote, e.g. `TestSwift` for some
 of the unit tests.
 
 Note the top level Makefile targets
@@ -170,7 +170,7 @@ with modules beneath.
     * log - logging facilities
     * march - iterates directories in lock step
     * object - in memory Fs objects
-    * operations - primitives for sync, eg Copy, Move
+    * operations - primitives for sync, e.g. Copy, Move
     * sync - sync directories
     * walk - walk a directory
   * fstest - provides integration test framework
@@ -207,7 +207,7 @@ from those during the release process.  See the `make doc` and `make
 website` targets in the Makefile if you are interested in how.  You
 don't need to run these when adding a feature.
 
-Documentation for rclone sub commands is with their code, eg
+Documentation for rclone sub commands is with their code, e.g.
 `cmd/ls/ls.go`.
 
 Note that you can use [GitHub's online editor](https://help.github.com/en/github/managing-files-in-a-repository/editing-files-in-another-users-repository)
@@ -364,7 +364,7 @@ See the [testing](#testing) section for more information on integration tests.
 
 Add your fs to the docs - you'll need to pick an icon for it from
 [fontawesome](http://fontawesome.io/icons/).  Keep lists of remotes in
-alphabetical order of full name of remote (eg `drive` is ordered as
+alphabetical order of full name of remote (e.g. `drive` is ordered as
 `Google Drive`) but with the local file system last.
 
   * `README.md` - main GitHub page

@@ -30,7 +30,7 @@ names and offers to delete all but one or rename them to be
 different.
 
 This is only useful with backends like Google Drive which can have
-duplicate file names. It can be run on wrapping backends (eg crypt) if
+duplicate file names. It can be run on wrapping backends (e.g. crypt) if
 they wrap a backend which supports duplicate file names.
 
 In the first pass it will merge directories with the same name.  It
@@ -43,7 +43,7 @@ This means that for most duplicated files the ` + "`dedupe`" + `
 command will not be interactive.
 
 ` + "`dedupe`" + ` considers files to be identical if they have the
-same file path and the same hash. If the backend does not support hashes (eg crypt wrapping
+same file path and the same hash. If the backend does not support hashes (e.g. crypt wrapping
 Google Drive) then they will never be found to be identical. If you
 use the ` + "`--size-only`" + ` flag then files will be considered
 identical if they have the same size (any hash will be ignored). This

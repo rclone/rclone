@@ -61,14 +61,14 @@ Where the fields are:
   * Used: total size used
   * Free: total amount this user could upload.
   * Trashed: total amount in the trash
-  * Other: total amount in other storage (eg Gmail, Google Photos)
+  * Other: total amount in other storage (e.g. Gmail, Google Photos)
   * Objects: total number of objects in the storage
 
 Note that not all the backends provide all the fields - they will be
 missing if they are not known for that backend.  Where it is known
 that the value is unlimited the value will also be omitted.
 
-Use the --full flag to see the numbers written out in full, eg
+Use the --full flag to see the numbers written out in full, e.g.
 
     Total:   18253611008
     Used:    7993453766
@@ -76,7 +76,7 @@ Use the --full flag to see the numbers written out in full, eg
     Trashed: 104857602
     Other:   8849156022
 
-Use the --json flag for a computer readable output, eg
+Use the --json flag for a computer readable output, e.g.
 
     {
         "total": 18253611008,

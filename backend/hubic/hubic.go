@@ -71,7 +71,7 @@ func init() {
 type credentials struct {
 	Token    string `json:"token"`    // OpenStack token
 	Endpoint string `json:"endpoint"` // OpenStack endpoint
-	Expires  string `json:"expires"`  // Expires date - eg "2015-11-09T14:24:56+01:00"
+	Expires  string `json:"expires"`  // Expires date - e.g. "2015-11-09T14:24:56+01:00"
 }
 
 // Fs represents a remote hubic

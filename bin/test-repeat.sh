@@ -14,7 +14,7 @@ don't fail very often.
 
 Syntax: $0 [flags]
 
-Note that flags for 'go test' need to be expanded, eg '-test.v' instead
+Note that flags for 'go test' need to be expanded, e.g. '-test.v' instead
 of just '-v'. '-race' does not need to be expanded.
 
 Flags this script understands
