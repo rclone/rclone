@@ -121,7 +121,7 @@ This value should be set no larger than 4.657GiB (== 5GB).`,
 			Name: "copy_cutoff",
 			Help: `Cutoff for switching to multipart copy
 
-Any files larger than this that need to be server side copied will be
+Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
 The minimum is 0 and the maximum is 4.6GB.`,
@@ -1234,7 +1234,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	return f.purge(ctx, "", true)
 }
 
-// copy does a server side copy from dstObj <- srcObj
+// copy does a server-side copy from dstObj <- srcObj
 //
 // If newInfo is nil then the metadata will be copied otherwise it
 // will be replaced with newInfo
@@ -1291,7 +1291,7 @@ func (f *Fs) copy(ctx context.Context, dstObj *Object, srcObj *Object, newInfo *
 	return dstObj.decodeMetaDataFileInfo(&response)
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //

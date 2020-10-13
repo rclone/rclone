@@ -813,7 +813,7 @@ func (f *Fs) Precision() time.Duration {
 	return time.Nanosecond
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //

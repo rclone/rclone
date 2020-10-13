@@ -513,7 +513,7 @@ type Features struct {
 	BucketBasedRootOK       bool // is bucket based and can use from root
 	SetTier                 bool // allows set tier functionality on objects
 	GetTier                 bool // allows to retrieve storage tier of objects
-	ServerSideAcrossConfigs bool // can server side copy between different remotes of the same type
+	ServerSideAcrossConfigs bool // can server-side copy between different remotes of the same type
 	IsLocal                 bool // is the local backend
 	SlowModTime             bool // if calling ModTime() generally takes an extra transaction
 	SlowHash                bool // if calling Hash() generally takes an extra transaction
@@ -526,7 +526,7 @@ type Features struct {
 	// Return an error if it doesn't exist
 	Purge func(ctx context.Context, dir string) error
 
-	// Copy src to this remote using server side copy operations.
+	// Copy src to this remote using server-side copy operations.
 	//
 	// This is stored with the remote path given
 	//
@@ -537,7 +537,7 @@ type Features struct {
 	// If it isn't possible then return fs.ErrorCantCopy
 	Copy func(ctx context.Context, src Object, remote string) (Object, error)
 
-	// Move src to this remote using server side move operations.
+	// Move src to this remote using server-side move operations.
 	//
 	// This is stored with the remote path given
 	//
@@ -549,7 +549,7 @@ type Features struct {
 	Move func(ctx context.Context, src Object, remote string) (Object, error)
 
 	// DirMove moves src, srcRemote to this remote at dstRemote
-	// using server side move operations.
+	// using server-side move operations.
 	//
 	// Will only be called if src.Fs().Name() == f.Name()
 	//
@@ -894,7 +894,7 @@ type Purger interface {
 
 // Copier is an optional interface for Fs
 type Copier interface {
-	// Copy src to this remote using server side copy operations.
+	// Copy src to this remote using server-side copy operations.
 	//
 	// This is stored with the remote path given
 	//
@@ -908,7 +908,7 @@ type Copier interface {
 
 // Mover is an optional interface for Fs
 type Mover interface {
-	// Move src to this remote using server side move operations.
+	// Move src to this remote using server-side move operations.
 	//
 	// This is stored with the remote path given
 	//
@@ -923,7 +923,7 @@ type Mover interface {
 // DirMover is an optional interface for Fs
 type DirMover interface {
 	// DirMove moves src, srcRemote to this remote at dstRemote
-	// using server side move operations.
+	// using server-side move operations.
 	//
 	// Will only be called if src.Fs().Name() == f.Name()
 	//

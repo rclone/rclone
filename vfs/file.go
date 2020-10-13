@@ -166,7 +166,7 @@ func (f *File) rename(ctx context.Context, destDir *Dir, newName string) error {
 	f.mu.RUnlock()
 
 	if features := d.Fs().Features(); features.Move == nil && features.Copy == nil {
-		err := errors.Errorf("Fs %q can't rename files (no server side Move or Copy)", d.Fs())
+		err := errors.Errorf("Fs %q can't rename files (no server-side Move or Copy)", d.Fs())
 		fs.Errorf(f.Path(), "Dir.Rename error: %v", err)
 		return err
 	}

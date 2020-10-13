@@ -371,7 +371,7 @@ files other than deleting them individually.
 ### Copy ###
 
 Used when copying an object to and from the same remote.  This known
-as a server side copy so you can copy a file without downloading it
+as a server-side copy so you can copy a file without downloading it
 and uploading it again.  It is used if you use `rclone copy` or
 `rclone move` if the remote doesn't support `Move` directly.
 
@@ -381,7 +381,7 @@ the file is downloaded then re-uploaded.
 ### Move ###
 
 Used when moving/renaming an object on the same remote.  This is known
-as a server side move of a file.  This is used in `rclone move` if the
+as a server-side move of a file.  This is used in `rclone move` if the
 server doesn't support `DirMove`.
 
 If the server isn't capable of `Move` then rclone simulates it with

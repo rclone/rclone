@@ -262,7 +262,7 @@ func TestSyncEmptyDirectories(t *testing.T) {
 	)
 }
 
-// Test a server side copy if possible, or the backup path if not
+// Test a server-side copy if possible, or the backup path if not
 func TestServerSideCopy(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -1207,7 +1207,7 @@ func toyFileTransfers(r *fstest.Run) int64 {
 	return int64(transfers)
 }
 
-// Test a server side move if possible, or the backup path if not
+// Test a server-side move if possible, or the backup path if not
 func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmptyDirs bool) {
 	FremoteMove, _, finaliseMove, err := fstest.RandomRemote()
 	require.NoError(t, err)
@@ -1231,7 +1231,7 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmpty
 	file3 := r.WriteObjectTo(context.Background(), FremoteMove, "potato3", "------------------------------------------------------------", t1, false)
 	fstest.CheckItems(t, FremoteMove, file2, file3)
 
-	// Do server side move
+	// Do server-side move
 	accounting.GlobalStats().ResetCounters()
 	err = MoveDir(context.Background(), FremoteMove, r.Fremote, testDeleteEmptyDirs, false)
 	require.NoError(t, err)
@@ -1322,14 +1322,14 @@ func TestMoveWithoutDeleteEmptySrcDirs(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 }
 
-// Test a server side move if possible, or the backup path if not
+// Test a server-side move if possible, or the backup path if not
 func TestServerSideMove(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	testServerSideMove(t, r, false, false)
 }
 
-// Test a server side move if possible, or the backup path if not
+// Test a server-side move if possible, or the backup path if not
 func TestServerSideMoveWithFilter(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -1342,14 +1342,14 @@ func TestServerSideMoveWithFilter(t *testing.T) {
 	testServerSideMove(t, r, true, false)
 }
 
-// Test a server side move if possible
+// Test a server-side move if possible
 func TestServerSideMoveDeleteEmptySourceDirs(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	testServerSideMove(t, r, false, true)
 }
 
-// Test a server side move with overlap
+// Test a server-side move with overlap
 func TestServerSideMoveOverlap(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
@@ -1492,7 +1492,7 @@ func TestSyncCopyDest(t *testing.T) {
 	defer r.Finalise()
 
 	if r.Fremote.Features().Copy == nil {
-		t.Skip("Skipping test as remote does not support server side copy")
+		t.Skip("Skipping test as remote does not support server-side copy")
 	}
 
 	fs.Config.CopyDest = r.FremoteName + "/CopyDest"
@@ -1595,7 +1595,7 @@ func testSyncBackupDir(t *testing.T, backupDir string, suffix string, suffixKeep
 	defer r.Finalise()
 
 	if !operations.CanServerSideMove(r.Fremote) {
-		t.Skip("Skipping test as remote does not support server side move")
+		t.Skip("Skipping test as remote does not support server-side move")
 	}
 	r.Mkdir(context.Background(), r.Fremote)
 
@@ -1699,7 +1699,7 @@ func testSyncSuffix(t *testing.T, suffix string, suffixKeepExtension bool) {
 	defer r.Finalise()
 
 	if !operations.CanServerSideMove(r.Fremote) {
-		t.Skip("Skipping test as remote does not support server side move")
+		t.Skip("Skipping test as remote does not support server-side move")
 	}
 	r.Mkdir(context.Background(), r.Fremote)
 

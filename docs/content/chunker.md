@@ -271,7 +271,7 @@ remove everything including garbage.
 
 ### Caveats and Limitations
 
-Chunker requires wrapped remote to support server side `move` (or `copy` +
+Chunker requires wrapped remote to support server-side `move` (or `copy` +
 `delete`) operations, otherwise it will explicitly refuse to start.
 This is because it internally renames temporary chunk files to their final
 names when an operation completes successfully.

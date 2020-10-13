@@ -256,7 +256,7 @@ func (acc *Account) checkReadAfter(bytesUntilLimit int64, n int, err error) (out
 	return n, err
 }
 
-// ServerSideCopyStart should be called at the start of a server side copy
+// ServerSideCopyStart should be called at the start of a server-side copy
 //
 // This pretends a transfer has started
 func (acc *Account) ServerSideCopyStart() {

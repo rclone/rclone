@@ -736,7 +736,7 @@ func TestMoveFileBackupDir(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	if !operations.CanServerSideMove(r.Fremote) {
-		t.Skip("Skipping test as remote does not support server side move or copy")
+		t.Skip("Skipping test as remote does not support server-side move or copy")
 	}
 
 	oldBackupDir := fs.Config.BackupDir
@@ -788,7 +788,7 @@ func TestCopyFileBackupDir(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	if !operations.CanServerSideMove(r.Fremote) {
-		t.Skip("Skipping test as remote does not support server side move or copy")
+		t.Skip("Skipping test as remote does not support server-side move or copy")
 	}
 
 	oldBackupDir := fs.Config.BackupDir
@@ -896,7 +896,7 @@ func TestCopyFileCopyDest(t *testing.T) {
 	defer r.Finalise()
 
 	if r.Fremote.Features().Copy == nil {
-		t.Skip("Skipping test as remote does not support server side copy")
+		t.Skip("Skipping test as remote does not support server-side copy")
 	}
 
 	fs.Config.CopyDest = r.FremoteName + "/CopyDest"

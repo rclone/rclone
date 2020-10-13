@@ -903,7 +903,7 @@ func (f *Fs) Precision() time.Duration {
 	return time.Second
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //
@@ -964,7 +964,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 	return f.purgeCheck(ctx, dir, false)
 }
 
-// Move src to this remote using server side move operations.
+// Move src to this remote using server-side move operations.
 //
 // This is stored with the remote path given
 //
@@ -1069,7 +1069,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
-// using server side move operations.
+// using server-side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
