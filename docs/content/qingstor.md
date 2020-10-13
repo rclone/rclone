@@ -262,7 +262,7 @@ concurrently.
 NB if you set this to > 1 then the checksums of multipart uploads
 become corrupted (the uploads themselves are not corrupted though).
 
-If you are uploading small numbers of large file over high-speed link
+If you are uploading small numbers of large files over high-speed link
 and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.
 
