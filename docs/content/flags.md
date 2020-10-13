@@ -420,7 +420,7 @@ and may be set in the config file.
       --s3-max-upload-parts int                                  Maximum number of parts in a multipart upload. (default 10000)
       --s3-memory-pool-flush-time Duration                       How often internal memory buffer pools will be flushed. (default 1m0s)
       --s3-memory-pool-use-mmap                                  Whether to use mmap buffers in internal memory pool.
-      --s3-no-check-bucket                                       If set don't attempt to check the bucket exists or create it
+      --s3-no-check-bucket                                       If set, don't attempt to check the bucket exists or create it
       --s3-profile string                                        Profile to use in the shared credentials file
       --s3-provider string                                       Choose your S3 provider.
       --s3-region string                                         Region to connect to.
