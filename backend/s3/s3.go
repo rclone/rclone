@@ -1168,7 +1168,7 @@ In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 			Advanced: true,
 		}, {
 			Name: "no_check_bucket",
-			Help: `If set don't attempt to check the bucket exists or create it
+			Help: `If set, don't attempt to check the bucket exists or create it
 
 This can be useful when trying to minimise the number of transactions
 rclone does if you know the bucket exists already.
