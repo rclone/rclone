@@ -43,7 +43,7 @@ This means that for most duplicated files the ` + "`dedupe`" + `
 command will not be interactive.
 
 ` + "`dedupe`" + ` considers files to be identical if they have the
-same hash. If the backend does not support hashes (eg crypt wrapping
+same file path and the same hash. If the backend does not support hashes (eg crypt wrapping
 Google Drive) then they will never be found to be identical. If you
 use the ` + "`--size-only`" + ` flag then files will be considered
 identical if they have the same size (any hash will be ignored). This
