@@ -523,7 +523,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				}
 				entries = append(entries, o)
 			default:
-				// ignore ASSET etc
+				// ignore ASSET, etc.
 			}
 			return false
 		})

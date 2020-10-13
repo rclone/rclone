@@ -233,7 +233,7 @@ tag:	retag doc
 	@echo "Edit the new changelog in docs/content/changelog.md"
 	@echo "Then commit all the changes"
 	@echo git commit -m \"Version $(VERSION)\" -a -v
-	@echo "And finally run make retag before make cross etc"
+	@echo "And finally run make retag before make cross, etc."
 
 retag:
 	@echo "Version is $(VERSION)"

@@ -37,7 +37,7 @@ Rclone uses the labels like this:
 * `good first issue` - mark these if you find a small self contained issue - these get shown to new visitors to the project
 * `help` wanted - mark these if you find a self contained issue - these get shown to new visitors to the project
 * `IMPORTANT` - note to maintainers not to forget to fix this for the release
-* `maintenance` - internal enhancement, code re-organisation etc
+* `maintenance` - internal enhancement, code re-organisation, etc.
 * `Needs Go 1.XX` - waiting for that version of Go to be released
 * `question` - not a `bug` or `enhancement` - direct to the forum for next time
 * `Remote: XXX` - which rclone backend this affects

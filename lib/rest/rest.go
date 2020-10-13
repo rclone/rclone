@@ -124,9 +124,9 @@ func (api *Client) SetCookie(cks ...*http.Cookie) *Client {
 	return api
 }
 
-// Opts contains parameters for Call, CallJSON etc
+// Opts contains parameters for Call, CallJSON, etc.
 type Opts struct {
-	Method                string // GET, POST etc
+	Method                string // GET, POST, etc.
 	Path                  string // relative to RootURL
 	RootURL               string // override RootURL passed into SetRoot()
 	Body                  io.Reader

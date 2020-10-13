@@ -105,7 +105,7 @@ When upload completes, temporary chunk files are finally renamed.
 This scheme guarantees that operations can be run in parallel and look
 from outside as atomic.
 A similar method with hidden temporary chunks is used for other operations
-(copy/move/rename etc). If an operation fails, hidden chunks are normally
+(copy/move/rename, etc.). If an operation fails, hidden chunks are normally
 destroyed, and the target composite file stays intact.
 
 When a composite file download is requested, chunker transparently

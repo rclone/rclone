@@ -785,7 +785,7 @@ outer:
 				}
 			}
 		}
-		// listen to key presses, etc
+		// listen to key presses, etc.
 	}
 	return nil
 }

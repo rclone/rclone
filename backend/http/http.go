@@ -585,7 +585,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	return errorReadOnly
 }
 
-// Storable returns whether the remote http file is a regular file (not a directory, symbolic link, block device, character device, named pipe, etc)
+// Storable returns whether the remote http file is a regular file (not a directory, symbolic link, block device, character device, named pipe, etc.)
 func (o *Object) Storable() bool {
 	return true
 }

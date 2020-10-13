@@ -178,7 +178,7 @@ with modules beneath.
     * mockdir - mocks an fs.Directory
     * mockobject - mocks an fs.Object
     * test_all - Runs integration tests for everything
-  * graphics - the images used in the website etc
+  * graphics - the images used in the website, etc.
   * lib - libraries used by the backend
     * atexit - register functions to run when rclone exits
     * dircache - directory ID to name caching
@@ -202,7 +202,7 @@ for the flag help, the remainder is shown to the user in `rclone
 config` and is added to the docs with `make backenddocs`.
 
 The only documentation you need to edit are the `docs/content/*.md`
-files.  The MANUAL.*, rclone.1, web site etc are all auto generated
+files.  The MANUAL.*, rclone.1, web site, etc. are all auto generated
 from those during the release process.  See the `make doc` and `make
 website` targets in the Makefile if you are interested in how.  You
 don't need to run these when adding a feature.

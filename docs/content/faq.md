@@ -8,7 +8,7 @@ Frequently Asked Questions
 
 ### Do all cloud storage systems support all rclone commands ###
 
-Yes they do.  All the rclone commands (e.g. `sync`, `copy` etc) will
+Yes they do.  All the rclone commands (e.g. `sync`, `copy`, etc.) will
 work on all the remote storage systems.
 
 ### Can I copy the config from one machine to another ###

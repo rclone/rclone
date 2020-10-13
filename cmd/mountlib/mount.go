@@ -279,7 +279,7 @@ for solutions to make ` + commandName + ` more reliable.
 ### Attribute caching
 
 You can use the flag --attr-timeout to set the time the kernel caches
-the attributes (size, modification time etc) for directory entries.
+the attributes (size, modification time, etc.) for directory entries.
 
 The default is "1s" which caches files just long enough to avoid
 too many callbacks to rclone from the kernel.
