@@ -298,9 +298,9 @@ listing, set this option.
 
 #### --onedrive-server-side-across-configs
 
-Allow server side operations (eg copy) to work across different onedrive configs.
+Allow server-side operations (eg copy) to work across different onedrive configs.
 
-This can be useful if you wish to do a server side copy between two
+This can be useful if you wish to do a server-side copy between two
 different Onedrives.  Note that this isn't enabled by default
 because it isn't easy to tell if it will work between any two
 configurations.

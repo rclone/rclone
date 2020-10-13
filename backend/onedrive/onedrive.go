@@ -274,9 +274,9 @@ listing, set this option.`,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
-			Help: `Allow server side operations (eg copy) to work across different onedrive configs.
+			Help: `Allow server-side operations (eg copy) to work across different onedrive configs.
 
-This can be useful if you wish to do a server side copy between two
+This can be useful if you wish to do a server-side copy between two
 different Onedrives.  Note that this isn't enabled by default
 because it isn't easy to tell if it will work between any two
 configurations.`,
@@ -1006,7 +1006,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 	return errors.Errorf("async operation didn't complete after %v", fs.Config.Timeout)
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //
@@ -1097,7 +1097,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, false)
 }
 
-// Move src to this remote using server side move operations.
+// Move src to this remote using server-side move operations.
 //
 // This is stored with the remote path given
 //
@@ -1162,7 +1162,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
-// using server side move operations.
+// using server-side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //

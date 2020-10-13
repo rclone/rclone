@@ -39,7 +39,7 @@ type syncCopyMove struct {
 	noUnicodeNormalization bool                   // don't normalize unicode characters in filenames
 	deletersWg             sync.WaitGroup         // for delete before go routine
 	deleteFilesCh          chan fs.Object         // channel to receive deletes if delete before
-	trackRenames           bool                   // set if we should do server side renames
+	trackRenames           bool                   // set if we should do server-side renames
 	trackRenamesStrategy   trackRenamesStrategy   // strategies used for tracking renames
 	dstFilesMu             sync.Mutex             // protect dstFiles
 	dstFiles               map[string]fs.Object   // dst files, always filled
@@ -68,7 +68,7 @@ type syncCopyMove struct {
 	trackRenamesWg         sync.WaitGroup         // wg for background track renames
 	trackRenamesCh         chan fs.Object         // objects are pumped in here
 	renameCheck            []fs.Object            // accumulate files to check for rename here
-	compareCopyDest        fs.Fs                  // place to check for files to server side copy
+	compareCopyDest        fs.Fs                  // place to check for files to server-side copy
 	backupDir              fs.Fs                  // place to store overwrites/deletes
 	checkFirst             bool                   // if set run all the checkers before starting transfers
 }
@@ -1089,10 +1089,10 @@ func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
 	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && operations.SameConfig(fsrc, fdst) && filter.Active.InActive() {
-		if operations.SkipDestructive(ctx, fdst, "server side directory move") {
+		if operations.SkipDestructive(ctx, fdst, "server-side directory move") {
 			return nil
 		}
-		fs.Debugf(fdst, "Using server side directory move")
+		fs.Debugf(fdst, "Using server-side directory move")
 		err := fdstDirMove(ctx, fsrc, "", "")
 		switch err {
 		case fs.ErrorCantDirMove, fs.ErrorDirExists:

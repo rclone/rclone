@@ -265,7 +265,7 @@ Note that `--timeout` isn't supported (but `--contimeout` is).
 
 Note that `--bind` isn't supported.
 
-FTP could support server side move but doesn't yet.
+FTP could support server-side move but doesn't yet.
 
 Note that the ftp backend does not support the `ftp_proxy` environment
 variable yet.

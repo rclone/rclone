@@ -11,7 +11,7 @@ Improvements:
 * Uploads could be done in parallel
 * Downloads would be more efficient done in one go
 * Uploads would be more efficient with bigger chunks
-* Looks like mega can support server side copy, but it isn't implemented in go-mega
+* Looks like mega can support server-side copy, but it isn't implemented in go-mega
 * Upload can set modtime... - set as int64_t - can set ctime and mtime?
 */
 
@@ -699,7 +699,7 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 		dstDirNode, err = dstFs.mkdir(absRoot, dstParent)
 	}
 	if err != nil {
-		return errors.Wrap(err, "server side move failed to make dst parent dir")
+		return errors.Wrap(err, "server-side move failed to make dst parent dir")
 	}
 
 	if srcRemote != "" {
@@ -712,7 +712,7 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 		srcDirNode, err = f.findDir(absRoot, srcParent)
 	}
 	if err != nil {
-		return errors.Wrap(err, "server side move failed to lookup src parent dir")
+		return errors.Wrap(err, "server-side move failed to lookup src parent dir")
 	}
 
 	// move the object into its new directory if required
@@ -723,7 +723,7 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 			return shouldRetry(err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "server side move failed")
+			return errors.Wrap(err, "server-side move failed")
 		}
 	}
 
@@ -737,7 +737,7 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 			return shouldRetry(err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "server side rename failed")
+			return errors.Wrap(err, "server-side rename failed")
 		}
 	}
 
@@ -746,7 +746,7 @@ func (f *Fs) move(dstRemote string, srcFs *Fs, srcRemote string, info *mega.Node
 	return nil
 }
 
-// Move src to this remote using server side move operations.
+// Move src to this remote using server-side move operations.
 //
 // This is stored with the remote path given
 //
@@ -781,7 +781,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
-// using server side move operations.
+// using server-side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //

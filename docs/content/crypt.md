@@ -350,7 +350,7 @@ Here are the advanced options specific to crypt (Encrypt/Decrypt a remote).
 
 #### --crypt-server-side-across-configs
 
-Allow server side operations (eg copy) to work across different crypt configs.
+Allow server-side operations (eg copy) to work across different crypt configs.
 
 Normally this option is not what you want, but if you have two crypts
 pointing to the same backend you can use it.

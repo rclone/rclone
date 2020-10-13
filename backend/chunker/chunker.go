@@ -253,7 +253,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 		return nil, errors.Wrapf(err, "failed to make remote %q to wrap", baseName+remotePath)
 	}
 	if !operations.CanServerSideMove(baseFs) {
-		return nil, errors.New("can't use chunker on a backend which doesn't support server side move or copy")
+		return nil, errors.New("can't use chunker on a backend which doesn't support server-side move or copy")
 	}
 
 	f := &Fs{
@@ -1578,7 +1578,7 @@ func (f *Fs) okForServerSide(ctx context.Context, src fs.Object, opName string) 
 	return
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //
@@ -1599,7 +1599,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return f.copyOrMove(ctx, obj, remote, baseCopy, md5, sha1, "copy")
 }
 
-// Move src to this remote using server side move operations.
+// Move src to this remote using server-side move operations.
 //
 // This is stored with the remote path given
 //
@@ -1644,7 +1644,7 @@ func (f *Fs) baseMove(ctx context.Context, src fs.Object, remote string, delMode
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
-// using server side move operations.
+// using server-side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //

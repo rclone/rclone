@@ -407,8 +407,8 @@ For shortcuts pointing to files:
 - When listing a file shortcut appears as the destination file.
 - When downloading the contents of the destination file is downloaded.
 - When updating shortcut file with a non shortcut file, the shortcut is removed then a new file is uploaded in place of the shortcut.
-- When server side moving (renaming) the shortcut is renamed, not the destination file.
-- When server side copying the shortcut is copied, not the contents of the shortcut.
+- When server-side moving (renaming) the shortcut is renamed, not the destination file.
+- When server-side copying the shortcut is copied, not the contents of the shortcut.
 - When deleting the shortcut is deleted not the linked file.
 - When setting the modification time, the modification time of the linked file will be set.
 
@@ -417,8 +417,8 @@ For shortcuts pointing to folders:
 - When listing the shortcut appears as a folder and that folder will contain the contents of the linked folder appear (including any sub folders)
 - When downloading the contents of the linked folder and sub contents are downloaded
 - When uploading to a shortcut folder the file will be placed in the linked folder
-- When server side moving (renaming) the shortcut is renamed, not the destination folder
-- When server side copying the contents of the linked folder is copied, not the shortcut.
+- When server-side moving (renaming) the shortcut is renamed, not the destination folder
+- When server-side copying the contents of the linked folder is copied, not the shortcut.
 - When deleting with `rclone rmdir` or `rclone purge` the shortcut is deleted not the linked folder.
 - **NB** When deleting with `rclone remove` or `rclone mount` the contents of the linked folder will be deleted.
 
@@ -956,9 +956,9 @@ Number of API calls to allow without sleeping.
 
 #### --drive-server-side-across-configs
 
-Allow server side operations (eg copy) to work across different drive configs.
+Allow server-side operations (eg copy) to work across different drive configs.
 
-This can be useful if you wish to do a server side copy between two
+This can be useful if you wish to do a server-side copy between two
 different Google drives.  Note that this isn't enabled by default
 because it isn't easy to tell if it will work between any two
 configurations.
@@ -1182,7 +1182,7 @@ small files can take a long time.
 
 Server side copies are also subject to a separate rate limit. If you
 see User rate limit exceeded errors, wait at least 24 hours and retry.
-You can disable server side copies with `--disable copy` to download
+You can disable server-side copies with `--disable copy` to download
 and upload the files if you prefer.
 
 #### Limitations of Google Docs ####

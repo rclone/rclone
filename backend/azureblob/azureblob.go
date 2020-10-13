@@ -976,7 +976,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.deleteContainer(ctx, container)
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //
