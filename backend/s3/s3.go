@@ -799,7 +799,7 @@ This ACL is used for creating objects and if bucket_acl isn't set, for creating 
 
 For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 
-Note that this ACL is applied when server side copying objects as S3
+Note that this ACL is applied when server-side copying objects as S3
 doesn't copy the ACL from the source but rather writes a fresh one.`,
 			Examples: []fs.OptionExample{{
 				Value:    "default",
@@ -1055,7 +1055,7 @@ large file of a known size to stay below this number of chunks limit.
 			Name: "copy_cutoff",
 			Help: `Cutoff for switching to multipart copy
 
-Any files larger than this that need to be server side copied will be
+Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
 The minimum is 0 and the maximum is 5GB.`,
@@ -2139,7 +2139,7 @@ func pathEscape(s string) string {
 	return strings.Replace(rest.URLPathEscape(s), "+", "%2B", -1)
 }
 
-// copy does a server side copy
+// copy does a server-side copy
 //
 // It adds the boiler plate to the req passed in and calls the s3
 // method
@@ -2273,7 +2273,7 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	})
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //

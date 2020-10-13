@@ -1107,7 +1107,7 @@ func Run(t *testing.T, opt *Opt) {
 				require.NoError(t, remote.Rmdir(ctx, "moveTest"))
 			})
 
-			// Move src to this remote using server side move operations.
+			// Move src to this remote using server-side move operations.
 			//
 			// Will only be called if src.Fs().Name() == f.Name()
 			//

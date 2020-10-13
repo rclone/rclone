@@ -37,7 +37,7 @@ verifies checksums at all times. Transfers over limited bandwidth;
 intermittent connections, or subject to quota can be restarted, from
 the last good file transferred. You can
 [check](/commands/rclone_check/) the integrity of your files. Where
-possible, rclone employs server side transfers to minimise local
+possible, rclone employs server-side transfers to minimise local
 bandwidth use and transfers from one provider to another without
 using local disk.
 

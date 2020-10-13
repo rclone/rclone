@@ -372,9 +372,9 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 
 	var actionTaken string
 	for {
-		// Try server side copy first - if has optional interface and
+		// Try server-side copy first - if has optional interface and
 		// is same underlying remote
-		actionTaken = "Copied (server side copy)"
+		actionTaken = "Copied (server-side copy)"
 		if fs.Config.MaxTransfer >= 0 && (accounting.Stats(ctx).GetBytes() >= int64(fs.Config.MaxTransfer) ||
 			(fs.Config.CutoffMode == fs.CutoffModeCautious && accounting.Stats(ctx).GetBytesWithPending()+src.Size() >= int64(fs.Config.MaxTransfer))) {
 			return nil, accounting.ErrorMaxTransferLimitReachedGraceful
@@ -385,7 +385,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			newDst, err = doCopy(ctx, src, remote)
 			if err == nil {
 				dst = newDst
-				in.ServerSideCopyEnd(dst.Size()) // account the bytes for the server side transfer
+				in.ServerSideCopyEnd(dst.Size()) // account the bytes for the server-side transfer
 				err = in.Close()
 			} else {
 				_ = in.Close()
@@ -396,7 +396,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		} else {
 			err = fs.ErrorCantCopy
 		}
-		// If can't server side copy, do it manually
+		// If can't server-side copy, do it manually
 		if err == fs.ErrorCantCopy {
 			if doMultiThreadCopy(f, src) {
 				// Number of streams proportional to size
@@ -556,7 +556,7 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		newDst, err = doMove(ctx, src, remote)
 		switch err {
 		case nil:
-			fs.Infof(src, "Moved (server side)")
+			fs.Infof(src, "Moved (server-side)")
 			return newDst, nil
 		case fs.ErrorCantMove:
 			fs.Debugf(src, "Can't move, switching to copy")
@@ -576,8 +576,8 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	return newDst, DeleteFile(ctx, src)
 }
 
-// CanServerSideMove returns true if fdst support server side moves or
-// server side copies
+// CanServerSideMove returns true if fdst support server-side moves or
+// server-side copies
 //
 // Some remotes simulate rename by server-side copy and delete, so include
 // remotes that implements either Mover or Copier.
@@ -1287,7 +1287,7 @@ func GetCopyDest(fdst fs.Fs) (CopyDest fs.Fs, err error) {
 		return nil, fserrors.FatalError(errors.New("parameter to --copy-dest has to be on the same remote as destination"))
 	}
 	if CopyDest.Features().Copy == nil {
-		return nil, fserrors.FatalError(errors.New("can't use --copy-dest on a remote which doesn't support server side copy"))
+		return nil, fserrors.FatalError(errors.New("can't use --copy-dest on a remote which doesn't support server-side copy"))
 	}
 	return CopyDest, nil
 }
@@ -1329,7 +1329,7 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 				fs.Errorf(src, "Destination found in --copy-dest, error copying")
 				return false, nil
 			}
-			fs.Debugf(src, "Destination found in --copy-dest, using server side copy")
+			fs.Debugf(src, "Destination found in --copy-dest, using server-side copy")
 			return true, nil
 		}
 		fs.Debugf(src, "Unchanged skipping")
@@ -1543,7 +1543,7 @@ func BackupDir(fdst fs.Fs, fsrc fs.Fs, srcFileName string) (backupDir fs.Fs, err
 		return nil, fserrors.FatalError(errors.New("internal error: BackupDir called when --backup-dir and --suffix both empty"))
 	}
 	if !CanServerSideMove(backupDir) {
-		return nil, fserrors.FatalError(errors.New("can't use --backup-dir on a remote which doesn't support server side move or copy"))
+		return nil, fserrors.FatalError(errors.New("can't use --backup-dir on a remote which doesn't support server-side move or copy"))
 	}
 	return backupDir, nil
 }

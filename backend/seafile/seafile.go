@@ -663,7 +663,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) e
 
 // ==================== Optional Interface fs.Copier ====================
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //
@@ -714,7 +714,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // ==================== Optional Interface fs.Mover ====================
 
-// Move src to this remote using server side move operations.
+// Move src to this remote using server-side move operations.
 //
 // This is stored with the remote path given
 //
@@ -804,7 +804,7 @@ func (f *Fs) adjustDestination(ctx context.Context, libraryID, srcFilename, dstP
 // ==================== Optional Interface fs.DirMover ====================
 
 // DirMove moves src, srcRemote to this remote at dstRemote
-// using server side move operations.
+// using server-side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //

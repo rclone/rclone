@@ -435,9 +435,9 @@ need to use --ignore size also.`,
 		}, {
 			Name:    "server_side_across_configs",
 			Default: false,
-			Help: `Allow server side operations (eg copy) to work across different drive configs.
+			Help: `Allow server-side operations (eg copy) to work across different drive configs.
 
-This can be useful if you wish to do a server side copy between two
+This can be useful if you wish to do a server-side copy between two
 different Google drives.  Note that this isn't enabled by default
 because it isn't easy to tell if it will work between any two
 configurations.`,
@@ -2273,7 +2273,7 @@ func (f *Fs) Precision() time.Duration {
 	return time.Millisecond
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 //
 // This is stored with the remote path given
 //
@@ -2449,7 +2449,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
-// Move src to this remote using server side move operations.
+// Move src to this remote using server-side move operations.
 //
 // This is stored with the remote path given
 //
@@ -2550,7 +2550,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
-// using server side move operations.
+// using server-side move operations.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -3129,7 +3129,7 @@ The path should end with a / to indicate copy the file as named to
 this directory. If it doesn't end with a / then the last path
 component will be used as the file name.
 
-If the destination is a drive backend then server side copying will be
+If the destination is a drive backend then server-side copying will be
 attempted if possible.
 
 Use the -i flag to see what would be copied before copying.

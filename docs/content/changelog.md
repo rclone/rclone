@@ -192,7 +192,7 @@ description: "Rclone Changelog"
 * Azure Blob
     * Don't compile on < go1.13 after dependency update (Nick Craig-Wood)
 * B2
-    * Implement server side copy for files > 5GB (Nick Craig-Wood)
+    * Implement server-side copy for files > 5GB (Nick Craig-Wood)
     * Cancel in progress multipart uploads and copies on rclone exit (Nick Craig-Wood)
     * Note that b2's encoding now allows \ but rclone's hasn't changed (Nick Craig-Wood)
     * Fix transfers when using download_url (Nick Craig-Wood)
@@ -208,7 +208,7 @@ description: "Rclone Changelog"
     * Work around drive bug which didn't set modtime of copied docs (Nick Craig-Wood)
     * Added `--drive-starred-only` to only show starred files (Jay McEntire)
     * Deprecate `--drive-alternate-export` as it is no longer needed (themylogin)
-    * Fix duplication of Google docs on server side copy (Nick Craig-Wood)
+    * Fix duplication of Google docs on server-side copy (Nick Craig-Wood)
     * Fix "panic: send on closed channel" when recycling dir entries (Nick Craig-Wood)
 * Dropbox
     * Add copyright detector info in limitations section in the docs (Alex Guerrero)
@@ -798,7 +798,7 @@ all the docs and Edward Barker for helping re-write the front page.
         * Free objects after they come out of the transfer pipe to save memory (Nick Craig-Wood)
         * Fix `--files-from without --no-traverse` doing a recursive scan (Nick Craig-Wood)
     * operations
-        * Fix accounting for server side copies (Nick Craig-Wood)
+        * Fix accounting for server-side copies (Nick Craig-Wood)
         * Display 'All duplicates removed' only if dedupe successful (Sezal Agrawal)
         * Display 'Deleted X extra copies' only if dedupe successful (Sezal Agrawal)
     * accounting
@@ -997,10 +997,10 @@ all the docs and Edward Barker for helping re-write the front page.
     * Make all operations work from the root (Nick Craig-Wood)
 * B2
     * Implement link sharing (yparitcher)
-    * Enable server side copy to copy between buckets (Nick Craig-Wood)
+    * Enable server-side copy to copy between buckets (Nick Craig-Wood)
     * Make all operations work from the root (Nick Craig-Wood)
 * Drive
-    * Fix server side copy of big files (Nick Craig-Wood)
+    * Fix server-side copy of big files (Nick Craig-Wood)
     * Update API for teamdrive use (Nick Craig-Wood)
     * Add error for purge with `--drive-trashed-only` (ginvine)
 * Fichier
@@ -1094,12 +1094,12 @@ all the docs and Edward Barker for helping re-write the front page.
     * Support PublicLink (rclone link) of underlying backend (Nick Craig-Wood)
     * Implement Optional methods SetTier, GetTier (Nick Craig-Wood)
 * B2
-    * Implement server side copy (Nick Craig-Wood)
+    * Implement server-side copy (Nick Craig-Wood)
     * Implement SetModTime (Nick Craig-Wood)
 * Drive
     * Fix move and copy from TeamDrive to GDrive (Fionera)
     * Add notes that cleanup works in the background on drive (Nick Craig-Wood)
-    * Add `--drive-server-side-across-configs` to default back to old server side copy semantics by default (Nick Craig-Wood)
+    * Add `--drive-server-side-across-configs` to default back to old server-side copy semantics by default (Nick Craig-Wood)
     * Add `--drive-size-as-quota` to show storage quota usage for file size (Garry McNulty)
 * FTP
     * Add FTP List timeout (Jeff Quinn)
@@ -1138,7 +1138,7 @@ all the docs and Edward Barker for helping re-write the front page.
         * use `--disable ListR` to get old behaviour if required
     * Make `--files-from` traverse the destination unless `--no-traverse` is set (Nick Craig-Wood)
         * this fixes `--files-from` with Google drive and excessive API use in general.
-    * Make server side copy account bytes and obey `--max-transfer` (Nick Craig-Wood)
+    * Make server-side copy account bytes and obey `--max-transfer` (Nick Craig-Wood)
     * Add `--create-empty-src-dirs` flag and default to not creating empty dirs (ishuah)
     * Add client side TLS/SSL flags `--ca-cert`/`--client-cert`/`--client-key` (Nick Craig-Wood)
     * Implement `--suffix-keep-extension` for use with `--suffix` (Nick Craig-Wood)
@@ -1173,11 +1173,11 @@ all the docs and Edward Barker for helping re-write the front page.
     * Ignore malformed `src_last_modified_millis` (Nick Craig-Wood)
 * Drive
     * Add `--skip-checksum-gphotos` to ignore incorrect checksums on Google Photos (Nick Craig-Wood)
-    * Allow server side move/copy between different remotes. (Fionera)
+    * Allow server-side move/copy between different remotes. (Fionera)
     * Add docs on team drives and `--fast-list` eventual consistency (Nestar47)
     * Fix imports of text files (Nick Craig-Wood)
     * Fix range requests on 0 length files (Nick Craig-Wood)
-    * Fix creation of duplicates with server side copy (Nick Craig-Wood)
+    * Fix creation of duplicates with server-side copy (Nick Craig-Wood)
 * Dropbox
     * Retry blank errors to fix long listings (Nick Craig-Wood)
 * FTP
@@ -1390,7 +1390,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Fix transfer of files with `+` and `&` in (Nick Craig-Wood)
     * Fix retries of upload chunks (Nick Craig-Wood)
 * S3
-    * Set ACL for server side copies to that provided by the user (Nick Craig-Wood)
+    * Set ACL for server-side copies to that provided by the user (Nick Craig-Wood)
     * Fix role_arn, credential_source, ... (Erik Swanson)
     * Add config info for Wasabi's US-West endpoint (Henry Ptasinski)
 * SFTP
@@ -1433,7 +1433,7 @@ all the docs and Edward Barker for helping re-write the front page.
 * VFS
     * Fix race condition detected by serve ftp tests (Nick Craig-Wood)
     * Add vfs/poll-interval rc command (Fabian Möller)
-    * Enable rename for nearly all remotes using server side Move or Copy (Nick Craig-Wood)
+    * Enable rename for nearly all remotes using server-side Move or Copy (Nick Craig-Wood)
     * Reduce directory cache cleared by poll-interval (Fabian Möller)
     * Remove EXPERIMENTAL tags (Nick Craig-Wood)
 * Local
@@ -1618,7 +1618,7 @@ Point release to fix hubic and azureblob backends.
 * Swift
     * Add `storage_policy` (Ruben Vandamme)
     * Make it so just `storage_url` or `auth_token` can be overridden (Nick Craig-Wood)
-    * Fix server side copy bug for unusual file names (Nick Craig-Wood)
+    * Fix server-side copy bug for unusual file names (Nick Craig-Wood)
     * Remove leading / from paths (Nick Craig-Wood)
 * WebDAV
     * Ensure we call MKCOL with a URL with a trailing / for QNAP interop (Nick Craig-Wood)
@@ -1936,7 +1936,7 @@ Point release to fix hubic and azureblob backends.
     * Update docs to discourage use of v2 auth with CEPH and others
     * Don't check for bucket/container presence if listing was OK
         * this makes rclone do one less request per invocation
-    * Fix server side copy and set modtime on files with + in
+    * Fix server-side copy and set modtime on files with + in
 * SFTP
     * Add option to disable remote hash check command execution (Jon Fautley)
     * Add `--sftp-ask-password` flag to prompt for password when needed (Leo R. Lundgren)
@@ -2073,7 +2073,7 @@ Point release to fix hubic and azureblob backends.
     * Fix "entry doesn't belong in directory" error
     * Stop using deprecated API methods
 * Swift
-    * Fix server side copy to empty container with `--fast-list`
+    * Fix server-side copy to empty container with `--fast-list`
 * Google Drive
     * Change the default for `--drive-use-trash` to `true`
 * S3
@@ -2173,7 +2173,7 @@ Point release to fix hubic and azureblob backends.
     * Retry on token expired error, reset upload body on retry - Yoni Jah
 * Google Cloud Storage
     * Add ability to specify location and storage class via config and command line - thanks gdm85
-    * Create container if necessary on server side copy
+    * Create container if necessary on server-side copy
     * Increase directory listing chunk to 1000 to increase performance
     * Obtain a refresh token for GCS - Steven Lu
 * Yandex
@@ -2189,14 +2189,14 @@ Point release to fix hubic and azureblob backends.
         * Now supports low level retries
 * S3
     * Work around eventual consistency in bucket creation
-    * Create container if necessary on server side copy
+    * Create container if necessary on server-side copy
     * Add us-east-2 (Ohio) and eu-west-2 (London) S3 regions - Zahiar Ahmed
 * Swift, Hubic
     * Fix zero length directory markers showing in the subdirectory listing
         * this caused lots of duplicate transfers
     * Fix paged directory listings
         * this caused duplicate directory errors
-    * Create container if necessary on server side copy
+    * Create container if necessary on server-side copy
     * Increase directory listing chunk to 1000 to increase performance
     * Make sensible error if the user forgets the container
 * SFTP
@@ -2298,7 +2298,7 @@ Point release to fix hubic and azureblob backends.
     * Allow repeated --include/--exclude/--filter options
     * Only show transfer stats on commands which transfer stuff
         * show stats on any command using the `--stats` flag
-    * Allow overlapping directories in move when server side dir move is supported
+    * Allow overlapping directories in move when server-side dir move is supported
     * Add --stats-unit option - thanks Scott McGillivray
 * Bug Fixes
     * Fix the config file being overwritten when two rclone instances are running
@@ -2320,7 +2320,7 @@ Point release to fix hubic and azureblob backends.
     * Fix failed to authenticate decrypted block errors
         * these will now return the underlying unexpected EOF instead
 * Amazon Drive
-    * Add support for server side move and directory move - thanks Stefan Breunig
+    * Add support for server-side move and directory move - thanks Stefan Breunig
     * Fix nil pointer deref on size attribute
 * B2
     * Use new prefix and delimiter parameters in directory listings
@@ -2611,7 +2611,7 @@ Point release to fix hubic and azureblob backends.
 * Swift
     * Fix sync for chunked files
 * OneDrive
-    * Re-enable server side copy
+    * Re-enable server-side copy
     * Don't mask HTTP error codes with JSON decode error
 * S3
     * Fix corrupting Content-Type on mod time update (thanks Joseph Spurrier)
@@ -2629,7 +2629,7 @@ Point release to fix hubic and azureblob backends.
         * This could have caused data loss for files > 5GB in size
     * Use ContentType from Object to avoid lookups in listings
 * OneDrive
-    * disable server side copy as it seems to be broken at Microsoft
+    * disable server-side copy as it seems to be broken at Microsoft
 
 ## v1.24 - 2015-11-07
 
@@ -2690,7 +2690,7 @@ Point release to fix hubic and azureblob backends.
         * drive, googlecloudstorage: optionally use auto config for the oauth token
     * Implement --dump-headers and --dump-bodies debug flags
     * Show multiple matched commands if abbreviation too short
-    * Implement server side move where possible
+    * Implement server-side move where possible
 * local
     * Always use UNC paths internally on Windows - fixes a lot of bugs
 * dropbox
@@ -2701,7 +2701,7 @@ Point release to fix hubic and azureblob backends.
 
 * New features
     * Server side copies for s3/swift/drive/dropbox/gcs
-    * Move command - uses server side copies if it can
+    * Move command - uses server-side copies if it can
     * Implement --retries flag - tries 3 times by default
     * Build for plan9/amd64 and solaris/amd64 too
 * Fixes

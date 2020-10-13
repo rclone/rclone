@@ -264,7 +264,7 @@ Server Side Copy
 ----------------
 
 Most remotes (but not all - see [the
-overview](/overview/#optional-features)) support server side copy.
+overview](/overview/#optional-features)) support server-side copy.
 
 This means if you want to copy one folder to another then rclone won't
 download all the files and re-upload them; it will instruct the server
@@ -277,13 +277,13 @@ Eg
 Will copy the contents of `oldbucket` to `newbucket` without
 downloading and re-uploading.
 
-Remotes which don't support server side copy **will** download and
+Remotes which don't support server-side copy **will** download and
 re-upload in this case.
 
 Server side copies are used with `sync` and `copy` and will be
 identified in the log when using the `-v` flag.  The `move` command
-may also use them if remote doesn't support server side move directly.
-This is done by issuing a server side copy then a delete which is much
+may also use them if remote doesn't support server-side move directly.
+This is done by issuing a server-side copy then a delete which is much
 quicker than a download and re-upload.
 
 Server side copies will only be attempted if the remote names are the
@@ -328,7 +328,7 @@ If `--suffix` is set, then the moved files will have the suffix added
 to them.  If there is a file with the same path (after the suffix has
 been added) in DIR, then it will be overwritten.
 
-The remote in use must support server side move or copy and you must
+The remote in use must support server-side move or copy and you must
 use the same remote as the destination of the sync.  The backup
 directory must not overlap the destination directory.
 
@@ -537,10 +537,10 @@ connection to go through to a remote object storage system.  It is
 
 When using `sync`, `copy` or `move` DIR is checked in addition to the 
 destination for files. If a file identical to the source is found that 
-file is server side copied from DIR to the destination. This is useful 
+file is server-side copied from DIR to the destination. This is useful 
 for incremental backup.
 
-The remote in use must support server side copy and you must
+The remote in use must support server-side copy and you must
 use the same remote as the destination of the sync.  The compare
 directory must not overlap the destination directory.
 
@@ -553,7 +553,7 @@ Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, `newest`,
 ### --disable FEATURE,FEATURE,... ###
 
 This disables a comma separated list of optional features. For example
-to disable server side move and server side copy use:
+to disable server-side move and server-side copy use:
 
     --disable move,copy
 
@@ -1250,7 +1250,7 @@ overwritten or deleted will have the suffix added to them.  If there
 is a file with the same path (after the suffix has been added), then 
 it will be overwritten.
 
-The remote in use must support server side move or copy and you must
+The remote in use must support server-side move or copy and you must
 use the same remote as the destination of the sync.
 
 This is for use with files to add the suffix in the current directory 
@@ -1331,8 +1331,8 @@ By default, rclone doesn't keep track of renamed files, so if you
 rename a file locally then sync it to a remote, rclone will delete the
 old file on the remote and upload a new copy.
 
-If you use this flag, and the remote supports server side copy or
-server side move, and the source and destination have a compatible
+If you use this flag, and the remote supports server-side copy or
+server-side move, and the source and destination have a compatible
 hash, then this will track renames during `sync`
 operations and perform renaming server-side.
 

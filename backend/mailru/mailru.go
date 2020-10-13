@@ -1227,7 +1227,7 @@ func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) error {
 	}
 }
 
-// Copy src to this remote using server side copy operations.
+// Copy src to this remote using server-side copy operations.
 // This is stored with the remote path given.
 // It returns the destination Object and a possible error.
 // Will only be called if src.Fs().Name() == f.Name()
@@ -1322,7 +1322,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return dstObj, err
 }
 
-// Move src to this remote using server side move operations.
+// Move src to this remote using server-side move operations.
 // This is stored with the remote path given.
 // It returns the destination Object and a possible error.
 // Will only be called if src.Fs().Name() == f.Name()
@@ -1409,7 +1409,7 @@ func (f *Fs) moveItemBin(ctx context.Context, srcPath, dstPath, opName string) e
 }
 
 // DirMove moves src, srcRemote to this remote at dstRemote
-// using server side move operations.
+// using server-side move operations.
 // Will only be called if src.Fs().Name() == f.Name()
 // If it isn't possible then return fs.ErrorCantDirMove
 // If destination exists then return fs.ErrorDirExists
