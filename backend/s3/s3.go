@@ -2069,6 +2069,7 @@ func (f *Fs) bucketExists(ctx context.Context, bucket string) (bool, error) {
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	bucket, _ := f.split(dir)
+	f.opt.NoCheckBucket = false
 	return f.makeBucket(ctx, bucket)
 }
 
