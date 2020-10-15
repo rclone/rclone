@@ -418,3 +418,4 @@ put them back in again.` >}}
   * LaSombra <lasombra@users.noreply.github.com>
   * Dov Murik <dov.murik@gmail.com>
   * Ameer Dawood <ameer1234567890@gmail.com>
+  * Dan Hipschman <dan.hipschman@opendoor.com>
