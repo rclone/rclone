@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
 	"github.com/rclone/rclone/lib/readers"
@@ -238,10 +239,16 @@ func CheckFn(ctx context.Context, opt *CheckOpt) error {
 	if c.matches > 0 {
 		fs.Logf(c.opt.Fdst, "%d matching files", c.matches)
 	}
-	if c.differences > 0 {
-		return errors.Errorf("%d differences found", c.differences)
+	if err != nil {
+		return err
 	}
-	return err
+	if c.differences > 0 {
+		// Return an already counted error so we don't double count this error too
+		err = fserrors.FsError(errors.Errorf("%d differences found", c.differences))
+		fserrors.Count(err)
+		return err
+	}
+	return nil
 }
 
 // Check the files in fsrc and fdst according to Size and hash
