@@ -1,5 +1,5 @@
-// Package press provides wrappers for Fs and Object which implement compression.
-package press
+// Package compress provides wrappers for Fs and Object which implement compression.
+package compress
 
 import (
 	"bufio"
@@ -61,7 +61,7 @@ func init() {
 
 	// Register our remote
 	fs.Register(&fs.RegInfo{
-		Name:        "press",
+		Name:        "compress",
 		Description: "Compress a remote",
 		NewFs:       NewFs,
 		Options: []fs.Option{{

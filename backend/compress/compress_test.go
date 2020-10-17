@@ -1,5 +1,5 @@
 // Test Crypt filesystem interface
-package press
+package compress
 
 import (
 	"os"
@@ -41,8 +41,8 @@ func TestRemoteGzip(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir := filepath.Join(os.TempDir(), "rclone-press-test-gzip")
-	name := "TestPressGzip"
+	tempdir := filepath.Join(os.TempDir(), "rclone-compress-test-gzip")
+	name := "TestCompressGzip"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
 		NilObject:  (*Object)(nil),
@@ -60,7 +60,7 @@ func TestRemoteGzip(t *testing.T) {
 			"SetTier",
 		},
 		ExtraConfig: []fstests.ExtraConfigItem{
-			{Name: name, Key: "type", Value: "press"},
+			{Name: name, Key: "type", Value: "compress"},
 			{Name: name, Key: "remote", Value: tempdir},
 			{Name: name, Key: "compression_mode", Value: "gzip"},
 		},
