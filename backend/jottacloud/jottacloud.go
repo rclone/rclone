@@ -553,7 +553,7 @@ func (f *Fs) setEndpointURL() {
 	if f.opt.Mountpoint == "" {
 		f.opt.Mountpoint = defaultMountpoint
 	}
-	f.endpointURL = urlPathEscape(path.Join(f.user, f.opt.Device, f.opt.Mountpoint))
+	f.endpointURL = path.Join(f.user, f.opt.Device, f.opt.Mountpoint)
 }
 
 // readMetaDataForPath reads the metadata from the path
