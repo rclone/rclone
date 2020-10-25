@@ -124,6 +124,8 @@ jobs:
       - name: Install Libraries on macOS
         shell: bash
         run: |
+          brew untap local/homebrew-openssl  # workaround for https://github.com/actions/virtual-environments/issues/1811
+          brew untap local/homebrew-python2  # workaround for https://github.com/actions/virtual-environments/issues/1811
           brew update
           brew cask install osxfuse
         if: matrix.os == 'macOS-latest'
