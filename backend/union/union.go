@@ -145,11 +145,16 @@ func (f *Fs) Hashes() hash.Set {
 // Mkdir makes the root directory of the Fs object
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	upstreams, err := f.create(ctx, dir)
-	if err == fs.ErrorObjectNotFound && dir != parentDir(dir) {
-		if err := f.Mkdir(ctx, parentDir(dir)); err != nil {
-			return err
+	if err == fs.ErrorObjectNotFound {
+		if dir != parentDir(dir) {
+			if err := f.Mkdir(ctx, parentDir(dir)); err != nil {
+				return err
+			}
+			upstreams, err = f.create(ctx, dir)
+		} else if dir == "" {
+			// If root dirs not created then create them
+			upstreams, err = f.upstreams, nil
 		}
-		upstreams, err = f.create(ctx, dir)
 	}
 	if err != nil {
 		return err
@@ -818,6 +823,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
+	fs.Debugf(f, "actionPolicy = %T, createPolicy = %T, searchPolicy = %T", f.actionPolicy, f.createPolicy, f.searchPolicy)
 	var features = (&fs.Features{
 		CaseInsensitive:         true,
 		DuplicateFiles:          false,
