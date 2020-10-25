@@ -146,12 +146,12 @@ backends:
  #   ignore:
  #     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
  #     - TestIntegration/FsMkdir/FsPutFiles/SetTier
- - backend:  "s3"
-   remote:   "TestS3Ceph:"
-   fastlist: true
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
-     - TestIntegration/FsMkdir/FsPutFiles/SetTier
+ # - backend:  "s3"
+ #   remote:   "TestS3Ceph:"
+ #   fastlist: true
+ #   ignore:
+ #     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
+ #     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "s3"
    remote:   "TestS3Alibaba:"
    fastlist: true
@@ -172,11 +172,11 @@ backends:
  - backend:  "swift"
    remote:   "TestSwift:"
    fastlist: true
- - backend:  "swift"
-   remote:   "TestSwiftCeph:"
-   fastlist: true
-   ignore:
-     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
+ # - backend:  "swift"
+ #   remote:   "TestSwiftCeph:"
+ #   fastlist: true
+ #   ignore:
+ #     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
  - backend:  "yandex"
    remote:   "TestYandex:"
    fastlist: false
