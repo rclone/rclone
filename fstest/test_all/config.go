@@ -27,15 +27,16 @@ type Test struct {
 //
 // FIXME make bucket based remotes set sub-dir automatically???
 type Backend struct {
-	Backend  string   // name of the backend directory
-	Remote   string   // name of the test remote
-	FastList bool     // set to test with -fast-list
-	Short    bool     // set to test with -short
-	OneOnly  bool     // set to run only one backend test at once
-	MaxFile  string   // file size limit
-	CleanUp  bool     // when running clean, run cleanup first
-	Ignore   []string // test names to ignore the failure of
-	Tests    []string // paths of tests to run, blank for all
+	Backend     string   // name of the backend directory
+	Remote      string   // name of the test remote
+	FastList    bool     // set to test with -fast-list
+	Short       bool     // set to test with -short
+	OneOnly     bool     // set to run only one backend test at once
+	MaxFile     string   // file size limit
+	CleanUp     bool     // when running clean, run cleanup first
+	Ignore      []string // test names to ignore the failure of
+	Tests       []string // paths of tests to run, blank for all
+	ListRetries int      // -list-retries if > 0
 }
 
 // includeTest returns true if this backend should be included in this
@@ -79,16 +80,17 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 			continue
 		}
 		run := &Run{
-			Remote:    b.Remote,
-			Backend:   b.Backend,
-			Path:      t.Path,
-			FastList:  fastlist,
-			Short:     (b.Short && t.Short),
-			NoRetries: t.NoRetries,
-			OneOnly:   b.OneOnly,
-			NoBinary:  t.NoBinary,
-			SizeLimit: int64(maxSize),
-			Ignore:    ignore,
+			Remote:      b.Remote,
+			Backend:     b.Backend,
+			Path:        t.Path,
+			FastList:    fastlist,
+			Short:       (b.Short && t.Short),
+			NoRetries:   t.NoRetries,
+			OneOnly:     b.OneOnly,
+			NoBinary:    t.NoBinary,
+			SizeLimit:   int64(maxSize),
+			Ignore:      ignore,
+			ListRetries: b.ListRetries,
 		}
 		if t.AddBackend {
 			run.Path = path.Join(run.Path, b.Backend)
