@@ -5,6 +5,56 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.53.2 - 2020-10-26
+
+[See commits](https://github.com/rclone/rclone/compare/v1.53.1...v1.53.2)
+
+* Bug Fixes
+    * acounting
+        * Fix incorrect speed and transferTime in core/stats (Nick Craig-Wood)
+        * Stabilize display order of transfers on Windows (Nick Craig-Wood)
+    * operations
+        * Fix use of --suffix without --backup-dir (Nick Craig-Wood)
+        * Fix spurious "--checksum is in use but the source and destination have no hashes in common" (Nick Craig-Wood)
+    * build
+        * Work around GitHub actions brew problem (Nick Craig-Wood)
+        * Stop using set-env and set-path in the GitHub actions (Nick Craig-Wood)
+* Mount
+    * mount2: Fix the swapped UID / GID values (Russell Cattelan)
+* VFS
+    * Detect and recover from a file being removed externally from the cache (Nick Craig-Wood)
+    * Fix a deadlock vulnerability in downloaders.Close (Leo Luan)
+    * Fix a race condition in retryFailedResets (Leo Luan)
+    * Fix missed concurrency control between some item operations and reset (Leo Luan)
+    * Add exponential backoff during ENOSPC retries (Leo Luan)
+    * Add a missed update of used cache space (Leo Luan)
+    * Fix --no-modtime to not attempt to set modtimes (as documented) (Nick Craig-Wood)
+* Local
+    * Fix sizes and syncing with --links option on Windows (Nick Craig-Wood)
+* Chunker
+    * Disable ListR to fix missing files on GDrive (workaround) (Ivan Andreev)
+    * Fix upload over crypt (Ivan Andreev)
+* Fichier
+    * Increase maximum file size from 100GB to 300GB (gyutw)
+* Jottacloud
+    * Remove clientSecret from config when upgrading to token based authentication (buengese)
+    * Avoid double url escaping of device/mountpoint (albertony)
+    * Remove DirMove workaround as it's not required anymore - also (buengese)
+* Mailru
+    * Fix uploads after recent changes on server (Ivan Andreev)
+    * Fix range requests after june changes on server (Ivan Andreev)
+    * Fix invalid timestamp on corrupted files (fixes) (Ivan Andreev)
+* Onedrive
+    * Fix disk usage for sharepoint (Nick Craig-Wood)
+* S3
+    * Add missing regions for AWS (Anagh Kumar Baranwal)
+* Seafile
+    * Fix accessing libraries > 2GB on 32 bit systems (Muffin King)
+* SFTP
+    * Always convert the checksum to lower case (buengese)
+* Union
+    * Create root directories if none exist (Nick Craig-Wood)
+
 ## v1.53.1 - 2020-09-13
 
 [See commits](https://github.com/rclone/rclone/compare/v1.53.0...v1.53.1)
