@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Sep 13, 2020
+% Oct 26, 2020
 
 # Rclone syncs your files to cloud storage
 
@@ -2890,9 +2890,6 @@ With --vfs-read-chunk-size 100M and --vfs-read-chunk-size-limit 0 the following
 parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
 When --vfs-read-chunk-size-limit 500M is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
-
-Chunked reading will only work with --vfs-cache-mode < full, as the file will always
-be copied to the vfs cache before opening with --vfs-cache-mode full.
 
 ## VFS - Virtual File System
 
@@ -7033,10 +7030,16 @@ or with `--backup-dir`. See `--backup-dir` for more info.
 
 For example
 
-    rclone sync -i /path/to/local/file remote:current --suffix .bak
+    rclone copy -i /path/to/local/file remote:current --suffix .bak
 
-will sync `/path/to/local` to `remote:current`, but for any files
+will copy `/path/to/local` to `remote:current`, but for any files
 which would have been updated or deleted have .bak added.
+
+If using `rclone sync` with `--suffix` and without `--backup-dir` then
+it is recommended to put a filter rule in excluding the suffix
+otherwise the `sync` will delete the backup files.
+
+    rclone sync -i /path/to/local/file remote:current --suffix .bak --exclude "*.bak"
 
 ### --suffix-keep-extension ###
 
@@ -10566,7 +10569,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.1")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.2")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -11635,7 +11638,7 @@ Choose a number from below, or type in your own value
    / Asia Pacific (Mumbai)
 13 | Needs location constraint ap-south-1.
    \ "ap-south-1"
-   / Asia Patific (Hong Kong) Region
+   / Asia Pacific (Hong Kong) Region
 14 | Needs location constraint ap-east-1.
    \ "ap-east-1"
    / South America (Sao Paulo) Region
@@ -12041,12 +12044,12 @@ Region to connect to.
     - "us-east-2"
         - US East (Ohio) Region
         - Needs location constraint us-east-2.
-    - "us-west-2"
-        - US West (Oregon) Region
-        - Needs location constraint us-west-2.
     - "us-west-1"
         - US West (Northern California) Region
         - Needs location constraint us-west-1.
+    - "us-west-2"
+        - US West (Oregon) Region
+        - Needs location constraint us-west-2.
     - "ca-central-1"
         - Canada (Central) Region
         - Needs location constraint ca-central-1.
@@ -12056,9 +12059,15 @@ Region to connect to.
     - "eu-west-2"
         - EU (London) Region
         - Needs location constraint eu-west-2.
+    - "eu-west-3"
+        - EU (Paris) Region
+        - Needs location constraint eu-west-3.
     - "eu-north-1"
         - EU (Stockholm) Region
         - Needs location constraint eu-north-1.
+    - "eu-south-1"
+        - EU (Milan) Region
+        - Needs location constraint eu-south-1.
     - "eu-central-1"
         - EU (Frankfurt) Region
         - Needs location constraint eu-central-1.
@@ -12074,15 +12083,36 @@ Region to connect to.
     - "ap-northeast-2"
         - Asia Pacific (Seoul)
         - Needs location constraint ap-northeast-2.
+    - "ap-northeast-3"
+        - Asia Pacific (Osaka-Local)
+        - Needs location constraint ap-northeast-3.
     - "ap-south-1"
         - Asia Pacific (Mumbai)
         - Needs location constraint ap-south-1.
     - "ap-east-1"
-        - Asia Patific (Hong Kong) Region
+        - Asia Pacific (Hong Kong) Region
         - Needs location constraint ap-east-1.
     - "sa-east-1"
         - South America (Sao Paulo) Region
         - Needs location constraint sa-east-1.
+    - "me-south-1"
+        - Middle East (Bahrain) Region
+        - Needs location constraint me-south-1.
+    - "af-south-1"
+        - Africa (Cape Town) Region
+        - Needs location constraint af-south-1.
+    - "cn-north-1"
+        - China (Beijing) Region
+        - Needs location constraint cn-north-1.
+    - "cn-northwest-1"
+        - China (Ningxia) Region
+        - Needs location constraint cn-northwest-1.
+    - "us-gov-east-1"
+        - AWS GovCloud (US-East) Region
+        - Needs location constraint us-gov-east-1.
+    - "us-gov-west-1"
+        - AWS GovCloud (US) Region
+        - Needs location constraint us-gov-west-1.
 
 #### --s3-region
 
@@ -12423,18 +12453,22 @@ Used when creating buckets only.
         - Empty for US Region, Northern Virginia or Pacific Northwest.
     - "us-east-2"
         - US East (Ohio) Region.
-    - "us-west-2"
-        - US West (Oregon) Region.
     - "us-west-1"
         - US West (Northern California) Region.
+    - "us-west-2"
+        - US West (Oregon) Region.
     - "ca-central-1"
         - Canada (Central) Region.
     - "eu-west-1"
         - EU (Ireland) Region.
     - "eu-west-2"
         - EU (London) Region.
+    - "eu-west-3"
+        - EU (Paris) Region.
     - "eu-north-1"
         - EU (Stockholm) Region.
+    - "eu-south-1"
+        - EU (Milan) Region.
     - "EU"
         - EU Region.
     - "ap-southeast-1"
@@ -12444,13 +12478,27 @@ Used when creating buckets only.
     - "ap-northeast-1"
         - Asia Pacific (Tokyo) Region.
     - "ap-northeast-2"
-        - Asia Pacific (Seoul)
+        - Asia Pacific (Seoul) Region.
+    - "ap-northeast-3"
+        - Asia Pacific (Osaka-Local) Region.
     - "ap-south-1"
-        - Asia Pacific (Mumbai)
+        - Asia Pacific (Mumbai) Region.
     - "ap-east-1"
-        - Asia Pacific (Hong Kong)
+        - Asia Pacific (Hong Kong) Region.
     - "sa-east-1"
         - South America (Sao Paulo) Region.
+    - "me-south-1"
+        - Middle East (Bahrain) Region.
+    - "af-south-1"
+        - Africa (Cape Town) Region.
+    - "cn-north-1"
+        - China (Beijing) Region
+    - "cn-northwest-1"
+        - China (Ningxia) Region.
+    - "us-gov-east-1"
+        - AWS GovCloud (US-East) Region.
+    - "us-gov-west-1"
+        - AWS GovCloud (US) Region.
 
 #### --s3-location-constraint
 
@@ -14829,7 +14877,8 @@ Note that Box is case insensitive so you can't have a file called
 "Hello.doc" and one called "hello.doc".
 
 Box file names can't have the `\` character in.  rclone maps this to
-and from an identical looking unicode equivalent `＼`.
+and from an identical looking unicode equivalent `＼` (U+FF3C Fullwidth
+Reverse Solidus).
 
 Box only supports filenames up to 255 characters in length.
 
@@ -16111,23 +16160,26 @@ See: the [encoding section in the overview](https://rclone.org/overview/#encodin
 Crypt
 ----------------------------------------
 
-The `crypt` remote encrypts and decrypts another remote.
+Rclone `crypt` remotes encrypt and decrypt other remotes.
 
-To use it first set up the underlying remote following the config
-instructions for that remote.  You can also use a local pathname
-instead of a remote which will encrypt and decrypt from that directory
-which might be useful for encrypting onto a USB stick for example.
+To use `crypt`, first set up the underlying remote. Follow the `rclone
+config` instructions for that remote.
 
-First check your chosen remote is working - we'll call it
-`remote:path` in these docs.  Note that anything inside `remote:path`
-will be encrypted and anything outside won't.  This means that if you
-are using a bucket based remote (eg S3, B2, swift) then you should
-probably put the bucket in the remote `s3:bucket`. If you just use
-`s3:` then rclone will make encrypted bucket names too (if using file
-name encryption) which may or may not be what you want.
+`crypt` applied to a local pathname instead of a remote will
+encrypt and decrypt that directory, and can be used to encrypt USB
+removable drives.
 
-Now configure `crypt` using `rclone config`. We will call this one
-`secret` to differentiate it from the `remote`.
+Before configuring the crypt remote, check the underlying remote is
+working. In this example the underlying remote is called `remote:path`.
+Anything inside `remote:path` will be encrypted and anything outside
+will not. In the case of an S3 based underlying remote (eg Amazon S3,
+B2, Swift) it is generally advisable to define a crypt remote in the
+underlying remote `s3:bucket`. If `s3:` alone is specified alongside
+file name encryption, rclone will encrypt the bucket name.
+
+Configure `crypt` using `rclone config`. In this example the `crypt`
+remote is called `secret`, to differentiate it from the underlying
+`remote`.
 
 ```
 No remotes found - make a new one
@@ -16201,49 +16253,42 @@ d) Delete this remote
 y/e/d> y
 ```
 
-**Important** The password is stored in the config file is lightly
-obscured so it isn't immediately obvious what it is.  It is in no way
-secure unless you use config file encryption.
+**Important** The crypt password stored in `rclone.conf` is lightly
+obscured. That only protects it from cursory inspection. It is not
+secure unless encryption of `rclone.conf` is specified.
 
-A long passphrase is recommended, or you can use a random one.
+A long passphrase is recommended, or `rclone config` can generate a
+random one.
 
-The obscured password is created by using AES-CTR with a static key, with
-the salt stored verbatim at the beginning of the obscured password. This
-static key is shared by between all versions of rclone.
+The obscured password is created using AES-CTR with a static key. The
+salt is stored verbatim at the beginning of the obscured password. This
+static key is shared between all versions of rclone.
 
 If you reconfigure rclone with the same passwords/passphrases
 elsewhere it will be compatible, but the obscured version will be different
 due to the different salt.
 
-Note that rclone does not encrypt
+Rclone does not encrypt
 
   * file length - this can be calculated within 16 bytes
   * modification time - used for syncing
 
 ## Specifying the remote ##
 
-In normal use, make sure the remote has a `:` in. If you specify the
-remote without a `:` then rclone will use a local directory of that
-name.  So if you use a remote of `/path/to/secret/files` then rclone
-will encrypt stuff to that directory.  If you use a remote of `name`
-then rclone will put files in a directory called `name` in the current
-directory.
+In normal use, ensure the remote has a `:` in. If specified without,
+rclone uses a local directory of that name.  For example if a remote
+`/path/to/secret/files` is specified, rclone encrypts content to that
+directory.  If a remote `name` is specified, rclone targets a directory
+`name` in the current directory.
 
-If you specify the remote as `remote:path/to/dir` then rclone will
-store encrypted files in `path/to/dir` on the remote. If you are using
-file name encryption, then when you save files to
-`secret:subdir/subfile` this will store them in the unencrypted path
-`path/to/dir` but the `subdir/subpath` bit will be encrypted.
-
-Note that unless you want encrypted bucket names (which are difficult
-to manage because you won't know what directory they represent in web
-interfaces etc), you should probably specify a bucket, eg
-`remote:secretbucket` when using bucket based remotes such as S3,
-Swift, Hubic, B2, GCS.
+If remote `remote:path/to/dir` is specified, rclone stores encrypted
+files in `path/to/dir` on the remote. With file name encryption, files
+saved to `secret:subdir/subfile` are stored in the unencrypted path
+`path/to/dir` but the `subdir/subpath` element is encrypted.
 
 ## Example ##
 
-To test I made a little directory of files using "standard" file name
+Create the following file structure using "standard" file name
 encryption.
 
 ```
@@ -16257,7 +16302,7 @@ plaintext/
         └── file4.txt
 ```
 
-Copy these to the remote and list them back
+Copy these to the remote, and list them
 
 ```
 $ rclone -q copy plaintext secret:
@@ -16269,7 +16314,7 @@ $ rclone -q ls secret:
         9 subdir/file3.txt
 ```
 
-Now see what that looked like when encrypted
+The crypt remote looks like
 
 ```
 $ rclone -q ls remote:path
@@ -16280,7 +16325,7 @@ $ rclone -q ls remote:path
        56 86vhrsv86mpbtd3a0akjuqslj8/8njh1sk437gttmep3p70g81aps
 ```
 
-Note that this retains the directory structure which means you can do this
+The directory structure is preserved
 
 ```
 $ rclone -q ls secret:subdir
@@ -16289,9 +16334,9 @@ $ rclone -q ls secret:subdir
        10 subsubdir/file4.txt
 ```
 
-If don't use file name encryption then the remote will look like this
-- note the `.bin` extensions added to prevent the cloud provider
-attempting to interpret the data.
+Without file name encryption `.bin` extensions are added to underlying
+names. This prevents the cloud provider attempting to interpret file
+content.
 
 ```
 $ rclone -q ls remote:path
@@ -16303,8 +16348,6 @@ $ rclone -q ls remote:path
 ```
 
 ### File name encryption modes ###
-
-Here are some of the features of the file name encryption modes
 
 Off
 
@@ -16324,17 +16367,19 @@ Standard
 Obfuscation
 
 This is a simple "rotate" of the filename, with each file having a rot
-distance based on the filename. We store the distance at the beginning
-of the filename. So a file called "hello" may become "53.jgnnq".
+distance based on the filename. Rclone stores the distance at the
+beginning of the filename. A file called "hello" may become "53.jgnnq".
 
-This is not a strong encryption of filenames, but it may stop automated
-scanning tools from picking up on filename patterns. As such it's an
-intermediate between "off" and "standard". The advantage is that it
-allows for longer path segment names.
+Obfuscation is not a strong encryption of filenames, but hinders
+automated scanning tools picking up on filename patterns. It is an
+intermediate between "off" and "standard" which allows for longer path
+segment names.
 
 There is a possibility with some unicode based filenames that the
 obfuscation is weak and may map lower case characters to upper case
-equivalents.  You can not rely on this for strong protection.
+equivalents. 
+
+Obfuscation cannot be relied upon for strong protection.
 
   * file names very lightly obfuscated
   * file names can be longer than standard encryption
@@ -16342,13 +16387,14 @@ equivalents.  You can not rely on this for strong protection.
   * directory structure visible
   * identical files names will have identical uploaded names
 
-Cloud storage systems have various limits on file name length and
-total path length which you are more likely to hit using "Standard"
-file name encryption.  If you keep your file names to below 156
-characters in length then you should be OK on all providers.
+Cloud storage systems have limits on file name length and
+total path length which rclone is more likely to breach using
+"Standard" file name encryption.  Where file names are less thn 156
+characters in length issues should not be encountered, irrespective of
+cloud storage provider.
 
-There may be an even more secure file name encryption mode in the
-future which will address the long file name problem.
+An alternative, future rclone file name encryption mode may tolerate
+backend provider path length limits.
 
 ### Directory name encryption ###
 Crypt offers the option of encrypting dir names or leaving them intact.
@@ -16374,10 +16420,10 @@ Example:
 Crypt stores modification times using the underlying remote so support
 depends on that.
 
-Hashes are not stored for crypt.  However the data integrity is
+Hashes are not stored for crypt. However the data integrity is
 protected by an extremely strong crypto authenticator.
 
-Note that you should use the `rclone cryptcheck` command to check the
+Use the `rclone cryptcheck` command to check the
 integrity of a crypted remote instead of `rclone check` which can't
 check the checksums properly.
 
@@ -25680,6 +25726,56 @@ Options:
 
 
 # Changelog
+
+## v1.53.2 - 2020-10-26
+
+[See commits](https://github.com/rclone/rclone/compare/v1.53.1...v1.53.2)
+
+* Bug Fixes
+    * acounting
+        * Fix incorrect speed and transferTime in core/stats (Nick Craig-Wood)
+        * Stabilize display order of transfers on Windows (Nick Craig-Wood)
+    * operations
+        * Fix use of --suffix without --backup-dir (Nick Craig-Wood)
+        * Fix spurious "--checksum is in use but the source and destination have no hashes in common" (Nick Craig-Wood)
+    * build
+        * Work around GitHub actions brew problem (Nick Craig-Wood)
+        * Stop using set-env and set-path in the GitHub actions (Nick Craig-Wood)
+* Mount
+    * mount2: Fix the swapped UID / GID values (Russell Cattelan)
+* VFS
+    * Detect and recover from a file being removed externally from the cache (Nick Craig-Wood)
+    * Fix a deadlock vulnerability in downloaders.Close (Leo Luan)
+    * Fix a race condition in retryFailedResets (Leo Luan)
+    * Fix missed concurrency control between some item operations and reset (Leo Luan)
+    * Add exponential backoff during ENOSPC retries (Leo Luan)
+    * Add a missed update of used cache space (Leo Luan)
+    * Fix --no-modtime to not attempt to set modtimes (as documented) (Nick Craig-Wood)
+* Local
+    * Fix sizes and syncing with --links option on Windows (Nick Craig-Wood)
+* Chunker
+    * Disable ListR to fix missing files on GDrive (workaround) (Ivan Andreev)
+    * Fix upload over crypt (Ivan Andreev)
+* Fichier
+    * Increase maximum file size from 100GB to 300GB (gyutw)
+* Jottacloud
+    * Remove clientSecret from config when upgrading to token based authentication (buengese)
+    * Avoid double url escaping of device/mountpoint (albertony)
+    * Remove DirMove workaround as it's not required anymore - also (buengese)
+* Mailru
+    * Fix uploads after recent changes on server (Ivan Andreev)
+    * Fix range requests after june changes on server (Ivan Andreev)
+    * Fix invalid timestamp on corrupted files (fixes) (Ivan Andreev)
+* Onedrive
+    * Fix disk usage for sharepoint (Nick Craig-Wood)
+* S3
+    * Add missing regions for AWS (Anagh Kumar Baranwal)
+* Seafile
+    * Fix accessing libraries > 2GB on 32 bit systems (Muffin King)
+* SFTP
+    * Always convert the checksum to lower case (buengese)
+* Union
+    * Create root directories if none exist (Nick Craig-Wood)
 
 ## v1.53.1 - 2020-09-13
 

@@ -194,9 +194,6 @@ parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
 When --vfs-read-chunk-size-limit 500M is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 
-Chunked reading will only work with --vfs-cache-mode < full, as the file will always
-be copied to the vfs cache before opening with --vfs-cache-mode full.
-
 ## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects

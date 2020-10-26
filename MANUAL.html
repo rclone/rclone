@@ -17,7 +17,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Sep 13, 2020</p>
+<p class="date">Oct 26, 2020</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -1455,7 +1455,6 @@ umount /path/to/local/mount</code></pre>
 <p>--vfs-read-chunk-size will enable reading the source objects in parts. This can reduce the used download quota for some remotes by requesting only chunks from the remote that are actually read at the cost of an increased number of requests.</p>
 <p>When --vfs-read-chunk-size-limit is also specified and greater than --vfs-read-chunk-size, the chunk size for each open file will get doubled for each chunk read, until the specified value is reached. A value of -1 will disable the limit and the chunk size will grow indefinitely.</p>
 <p>With --vfs-read-chunk-size 100M and --vfs-read-chunk-size-limit 0 the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on. When --vfs-read-chunk-size-limit 500M is specified, the result would be 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.</p>
-<p>Chunked reading will only work with --vfs-cache-mode &lt; full, as the file will always be copied to the vfs cache before opening with --vfs-cache-mode full.</p>
 <h2 id="vfs---virtual-file-system">VFS - Virtual File System</h2>
 <p>This command uses the VFS layer. This adapts the cloud storage objects that rclone uses into something which looks much more like a disk filing system.</p>
 <p>Cloud storage objects have lots of properties which aren't like disk files - you can't extend them or write to the middle of them, so the VFS layer has to deal with that. Because there is no one right way of doing this there are various options explained below.</p>
@@ -3397,8 +3396,10 @@ y/n/s/!/q&gt; n</code></pre>
 <p>The remote in use must support server side move or copy and you must use the same remote as the destination of the sync.</p>
 <p>This is for use with files to add the suffix in the current directory or with <code>--backup-dir</code>. See <code>--backup-dir</code> for more info.</p>
 <p>For example</p>
-<pre><code>rclone sync -i /path/to/local/file remote:current --suffix .bak</code></pre>
-<p>will sync <code>/path/to/local</code> to <code>remote:current</code>, but for any files which would have been updated or deleted have .bak added.</p>
+<pre><code>rclone copy -i /path/to/local/file remote:current --suffix .bak</code></pre>
+<p>will copy <code>/path/to/local</code> to <code>remote:current</code>, but for any files which would have been updated or deleted have .bak added.</p>
+<p>If using <code>rclone sync</code> with <code>--suffix</code> and without <code>--backup-dir</code> then it is recommended to put a filter rule in excluding the suffix otherwise the <code>sync</code> will delete the backup files.</p>
+<pre><code>rclone sync -i /path/to/local/file remote:current --suffix .bak --exclude &quot;*.bak&quot;</code></pre>
 <h3 id="suffix-keep-extension">--suffix-keep-extension</h3>
 <p>When using <code>--suffix</code>, setting this causes rclone put the SUFFIX before the extension of the files that it backs up rather than after.</p>
 <p>So let's say we had <code>--suffix -2019-01-01</code>, without the flag <code>file.txt</code> would be backed up to <code>file.txt-2019-01-01</code> and with the flag it would be backed up to <code>file-2019-01-01.txt</code>. This can be helpful to make sure the suffixed files can still be opened.</p>
@@ -6290,7 +6291,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.53.1&quot;)
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.53.2&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -7178,7 +7179,7 @@ Choose a number from below, or type in your own value
    / Asia Pacific (Mumbai)
 13 | Needs location constraint ap-south-1.
    \ &quot;ap-south-1&quot;
-   / Asia Patific (Hong Kong) Region
+   / Asia Pacific (Hong Kong) Region
 14 | Needs location constraint ap-east-1.
    \ &quot;ap-east-1&quot;
    / South America (Sao Paulo) Region
@@ -7553,15 +7554,15 @@ y/e/d&gt; </code></pre>
 <li>US East (Ohio) Region</li>
 <li>Needs location constraint us-east-2.</li>
 </ul></li>
-<li>"us-west-2"
-<ul>
-<li>US West (Oregon) Region</li>
-<li>Needs location constraint us-west-2.</li>
-</ul></li>
 <li>"us-west-1"
 <ul>
 <li>US West (Northern California) Region</li>
 <li>Needs location constraint us-west-1.</li>
+</ul></li>
+<li>"us-west-2"
+<ul>
+<li>US West (Oregon) Region</li>
+<li>Needs location constraint us-west-2.</li>
 </ul></li>
 <li>"ca-central-1"
 <ul>
@@ -7578,10 +7579,20 @@ y/e/d&gt; </code></pre>
 <li>EU (London) Region</li>
 <li>Needs location constraint eu-west-2.</li>
 </ul></li>
+<li>"eu-west-3"
+<ul>
+<li>EU (Paris) Region</li>
+<li>Needs location constraint eu-west-3.</li>
+</ul></li>
 <li>"eu-north-1"
 <ul>
 <li>EU (Stockholm) Region</li>
 <li>Needs location constraint eu-north-1.</li>
+</ul></li>
+<li>"eu-south-1"
+<ul>
+<li>EU (Milan) Region</li>
+<li>Needs location constraint eu-south-1.</li>
 </ul></li>
 <li>"eu-central-1"
 <ul>
@@ -7608,6 +7619,11 @@ y/e/d&gt; </code></pre>
 <li>Asia Pacific (Seoul)</li>
 <li>Needs location constraint ap-northeast-2.</li>
 </ul></li>
+<li>"ap-northeast-3"
+<ul>
+<li>Asia Pacific (Osaka-Local)</li>
+<li>Needs location constraint ap-northeast-3.</li>
+</ul></li>
 <li>"ap-south-1"
 <ul>
 <li>Asia Pacific (Mumbai)</li>
@@ -7615,13 +7631,43 @@ y/e/d&gt; </code></pre>
 </ul></li>
 <li>"ap-east-1"
 <ul>
-<li>Asia Patific (Hong Kong) Region</li>
+<li>Asia Pacific (Hong Kong) Region</li>
 <li>Needs location constraint ap-east-1.</li>
 </ul></li>
 <li>"sa-east-1"
 <ul>
 <li>South America (Sao Paulo) Region</li>
 <li>Needs location constraint sa-east-1.</li>
+</ul></li>
+<li>"me-south-1"
+<ul>
+<li>Middle East (Bahrain) Region</li>
+<li>Needs location constraint me-south-1.</li>
+</ul></li>
+<li>"af-south-1"
+<ul>
+<li>Africa (Cape Town) Region</li>
+<li>Needs location constraint af-south-1.</li>
+</ul></li>
+<li>"cn-north-1"
+<ul>
+<li>China (Beijing) Region</li>
+<li>Needs location constraint cn-north-1.</li>
+</ul></li>
+<li>"cn-northwest-1"
+<ul>
+<li>China (Ningxia) Region</li>
+<li>Needs location constraint cn-northwest-1.</li>
+</ul></li>
+<li>"us-gov-east-1"
+<ul>
+<li>AWS GovCloud (US-East) Region</li>
+<li>Needs location constraint us-gov-east-1.</li>
+</ul></li>
+<li>"us-gov-west-1"
+<ul>
+<li>AWS GovCloud (US) Region</li>
+<li>Needs location constraint us-gov-west-1.</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -8202,13 +8248,13 @@ y/e/d&gt; </code></pre>
 <ul>
 <li>US East (Ohio) Region.</li>
 </ul></li>
-<li>"us-west-2"
-<ul>
-<li>US West (Oregon) Region.</li>
-</ul></li>
 <li>"us-west-1"
 <ul>
 <li>US West (Northern California) Region.</li>
+</ul></li>
+<li>"us-west-2"
+<ul>
+<li>US West (Oregon) Region.</li>
 </ul></li>
 <li>"ca-central-1"
 <ul>
@@ -8222,9 +8268,17 @@ y/e/d&gt; </code></pre>
 <ul>
 <li>EU (London) Region.</li>
 </ul></li>
+<li>"eu-west-3"
+<ul>
+<li>EU (Paris) Region.</li>
+</ul></li>
 <li>"eu-north-1"
 <ul>
 <li>EU (Stockholm) Region.</li>
+</ul></li>
+<li>"eu-south-1"
+<ul>
+<li>EU (Milan) Region.</li>
 </ul></li>
 <li>"EU"
 <ul>
@@ -8244,19 +8298,47 @@ y/e/d&gt; </code></pre>
 </ul></li>
 <li>"ap-northeast-2"
 <ul>
-<li>Asia Pacific (Seoul)</li>
+<li>Asia Pacific (Seoul) Region.</li>
+</ul></li>
+<li>"ap-northeast-3"
+<ul>
+<li>Asia Pacific (Osaka-Local) Region.</li>
 </ul></li>
 <li>"ap-south-1"
 <ul>
-<li>Asia Pacific (Mumbai)</li>
+<li>Asia Pacific (Mumbai) Region.</li>
 </ul></li>
 <li>"ap-east-1"
 <ul>
-<li>Asia Pacific (Hong Kong)</li>
+<li>Asia Pacific (Hong Kong) Region.</li>
 </ul></li>
 <li>"sa-east-1"
 <ul>
 <li>South America (Sao Paulo) Region.</li>
+</ul></li>
+<li>"me-south-1"
+<ul>
+<li>Middle East (Bahrain) Region.</li>
+</ul></li>
+<li>"af-south-1"
+<ul>
+<li>Africa (Cape Town) Region.</li>
+</ul></li>
+<li>"cn-north-1"
+<ul>
+<li>China (Beijing) Region</li>
+</ul></li>
+<li>"cn-northwest-1"
+<ul>
+<li>China (Ningxia) Region.</li>
+</ul></li>
+<li>"us-gov-east-1"
+<ul>
+<li>AWS GovCloud (US-East) Region.</li>
+</ul></li>
+<li>"us-gov-west-1"
+<ul>
+<li>AWS GovCloud (US) Region.</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -10194,7 +10276,7 @@ y/e/d&gt; y</code></pre>
 </ul>
 <h3 id="limitations-3">Limitations</h3>
 <p>Note that Box is case insensitive so you can't have a file called "Hello.doc" and one called "hello.doc".</p>
-<p>Box file names can't have the <code>\</code> character in. rclone maps this to and from an identical looking unicode equivalent <code>＼</code>.</p>
+<p>Box file names can't have the <code>\</code> character in. rclone maps this to and from an identical looking unicode equivalent <code>＼</code> (U+FF3C Fullwidth Reverse Solidus).</p>
 <p>Box only supports filenames up to 255 characters in length.</p>
 <h2 id="cache-beta">Cache (BETA)</h2>
 <p>The <code>cache</code> remote wraps another existing remote and stores file structure and its data for long running tasks like <code>rclone mount</code>.</p>
@@ -11058,10 +11140,11 @@ y/e/d&gt; y</code></pre>
 <li>Default: Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,LeftPeriod,RightSpace,RightPeriod,InvalidUtf8,Dot</li>
 </ul>
 <h2 id="crypt">Crypt</h2>
-<p>The <code>crypt</code> remote encrypts and decrypts another remote.</p>
-<p>To use it first set up the underlying remote following the config instructions for that remote. You can also use a local pathname instead of a remote which will encrypt and decrypt from that directory which might be useful for encrypting onto a USB stick for example.</p>
-<p>First check your chosen remote is working - we'll call it <code>remote:path</code> in these docs. Note that anything inside <code>remote:path</code> will be encrypted and anything outside won't. This means that if you are using a bucket based remote (eg S3, B2, swift) then you should probably put the bucket in the remote <code>s3:bucket</code>. If you just use <code>s3:</code> then rclone will make encrypted bucket names too (if using file name encryption) which may or may not be what you want.</p>
-<p>Now configure <code>crypt</code> using <code>rclone config</code>. We will call this one <code>secret</code> to differentiate it from the <code>remote</code>.</p>
+<p>Rclone <code>crypt</code> remotes encrypt and decrypt other remotes.</p>
+<p>To use <code>crypt</code>, first set up the underlying remote. Follow the <code>rclone config</code> instructions for that remote.</p>
+<p><code>crypt</code> applied to a local pathname instead of a remote will encrypt and decrypt that directory, and can be used to encrypt USB removable drives.</p>
+<p>Before configuring the crypt remote, check the underlying remote is working. In this example the underlying remote is called <code>remote:path</code>. Anything inside <code>remote:path</code> will be encrypted and anything outside will not. In the case of an S3 based underlying remote (eg Amazon S3, B2, Swift) it is generally advisable to define a crypt remote in the underlying remote <code>s3:bucket</code>. If <code>s3:</code> alone is specified alongside file name encryption, rclone will encrypt the bucket name.</p>
+<p>Configure <code>crypt</code> using <code>rclone config</code>. In this example the <code>crypt</code> remote is called <code>secret</code>, to differentiate it from the underlying <code>remote</code>.</p>
 <pre><code>No remotes found - make a new one
 n) New remote
 s) Set configuration password
@@ -11131,21 +11214,20 @@ y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
-<p><strong>Important</strong> The password is stored in the config file is lightly obscured so it isn't immediately obvious what it is. It is in no way secure unless you use config file encryption.</p>
-<p>A long passphrase is recommended, or you can use a random one.</p>
-<p>The obscured password is created by using AES-CTR with a static key, with the salt stored verbatim at the beginning of the obscured password. This static key is shared by between all versions of rclone.</p>
+<p><strong>Important</strong> The crypt password stored in <code>rclone.conf</code> is lightly obscured. That only protects it from cursory inspection. It is not secure unless encryption of <code>rclone.conf</code> is specified.</p>
+<p>A long passphrase is recommended, or <code>rclone config</code> can generate a random one.</p>
+<p>The obscured password is created using AES-CTR with a static key. The salt is stored verbatim at the beginning of the obscured password. This static key is shared between all versions of rclone.</p>
 <p>If you reconfigure rclone with the same passwords/passphrases elsewhere it will be compatible, but the obscured version will be different due to the different salt.</p>
-<p>Note that rclone does not encrypt</p>
+<p>Rclone does not encrypt</p>
 <ul>
 <li>file length - this can be calculated within 16 bytes</li>
 <li>modification time - used for syncing</li>
 </ul>
 <h2 id="specifying-the-remote-1">Specifying the remote</h2>
-<p>In normal use, make sure the remote has a <code>:</code> in. If you specify the remote without a <code>:</code> then rclone will use a local directory of that name. So if you use a remote of <code>/path/to/secret/files</code> then rclone will encrypt stuff to that directory. If you use a remote of <code>name</code> then rclone will put files in a directory called <code>name</code> in the current directory.</p>
-<p>If you specify the remote as <code>remote:path/to/dir</code> then rclone will store encrypted files in <code>path/to/dir</code> on the remote. If you are using file name encryption, then when you save files to <code>secret:subdir/subfile</code> this will store them in the unencrypted path <code>path/to/dir</code> but the <code>subdir/subpath</code> bit will be encrypted.</p>
-<p>Note that unless you want encrypted bucket names (which are difficult to manage because you won't know what directory they represent in web interfaces etc), you should probably specify a bucket, eg <code>remote:secretbucket</code> when using bucket based remotes such as S3, Swift, Hubic, B2, GCS.</p>
+<p>In normal use, ensure the remote has a <code>:</code> in. If specified without, rclone uses a local directory of that name. For example if a remote <code>/path/to/secret/files</code> is specified, rclone encrypts content to that directory. If a remote <code>name</code> is specified, rclone targets a directory <code>name</code> in the current directory.</p>
+<p>If remote <code>remote:path/to/dir</code> is specified, rclone stores encrypted files in <code>path/to/dir</code> on the remote. With file name encryption, files saved to <code>secret:subdir/subfile</code> are stored in the unencrypted path <code>path/to/dir</code> but the <code>subdir/subpath</code> element is encrypted.</p>
 <h2 id="example">Example</h2>
-<p>To test I made a little directory of files using "standard" file name encryption.</p>
+<p>Create the following file structure using "standard" file name encryption.</p>
 <pre><code>plaintext/
 ├── file0.txt
 ├── file1.txt
@@ -11154,7 +11236,7 @@ y/e/d&gt; y</code></pre>
     ├── file3.txt
     └── subsubdir
         └── file4.txt</code></pre>
-<p>Copy these to the remote and list them back</p>
+<p>Copy these to the remote, and list them</p>
 <pre><code>$ rclone -q copy plaintext secret:
 $ rclone -q ls secret:
         7 file1.txt
@@ -11162,19 +11244,19 @@ $ rclone -q ls secret:
         8 subdir/file2.txt
        10 subdir/subsubdir/file4.txt
         9 subdir/file3.txt</code></pre>
-<p>Now see what that looked like when encrypted</p>
+<p>The crypt remote looks like</p>
 <pre><code>$ rclone -q ls remote:path
        55 hagjclgavj2mbiqm6u6cnjjqcg
        54 v05749mltvv1tf4onltun46gls
        57 86vhrsv86mpbtd3a0akjuqslj8/dlj7fkq4kdq72emafg7a7s41uo
        58 86vhrsv86mpbtd3a0akjuqslj8/7uu829995du6o42n32otfhjqp4/b9pausrfansjth5ob3jkdqd4lc
        56 86vhrsv86mpbtd3a0akjuqslj8/8njh1sk437gttmep3p70g81aps</code></pre>
-<p>Note that this retains the directory structure which means you can do this</p>
+<p>The directory structure is preserved</p>
 <pre><code>$ rclone -q ls secret:subdir
         8 file2.txt
         9 file3.txt
        10 subsubdir/file4.txt</code></pre>
-<p>If don't use file name encryption then the remote will look like this - note the <code>.bin</code> extensions added to prevent the cloud provider attempting to interpret the data.</p>
+<p>Without file name encryption <code>.bin</code> extensions are added to underlying names. This prevents the cloud provider attempting to interpret file content.</p>
 <pre><code>$ rclone -q ls remote:path
        54 file0.txt.bin
        57 subdir/file3.txt.bin
@@ -11182,7 +11264,6 @@ $ rclone -q ls secret:
        58 subdir/subsubdir/file4.txt.bin
        55 file1.txt.bin</code></pre>
 <h3 id="file-name-encryption-modes">File name encryption modes</h3>
-<p>Here are some of the features of the file name encryption modes</p>
 <p>Off</p>
 <ul>
 <li>doesn't hide file names or directory structure</li>
@@ -11199,9 +11280,10 @@ $ rclone -q ls secret:
 <li>can use shortcuts to shorten the directory recursion</li>
 </ul>
 <p>Obfuscation</p>
-<p>This is a simple "rotate" of the filename, with each file having a rot distance based on the filename. We store the distance at the beginning of the filename. So a file called "hello" may become "53.jgnnq".</p>
-<p>This is not a strong encryption of filenames, but it may stop automated scanning tools from picking up on filename patterns. As such it's an intermediate between "off" and "standard". The advantage is that it allows for longer path segment names.</p>
-<p>There is a possibility with some unicode based filenames that the obfuscation is weak and may map lower case characters to upper case equivalents. You can not rely on this for strong protection.</p>
+<p>This is a simple "rotate" of the filename, with each file having a rot distance based on the filename. Rclone stores the distance at the beginning of the filename. A file called "hello" may become "53.jgnnq".</p>
+<p>Obfuscation is not a strong encryption of filenames, but hinders automated scanning tools picking up on filename patterns. It is an intermediate between "off" and "standard" which allows for longer path segment names.</p>
+<p>There is a possibility with some unicode based filenames that the obfuscation is weak and may map lower case characters to upper case equivalents.</p>
+<p>Obfuscation cannot be relied upon for strong protection.</p>
 <ul>
 <li>file names very lightly obfuscated</li>
 <li>file names can be longer than standard encryption</li>
@@ -11209,8 +11291,8 @@ $ rclone -q ls secret:
 <li>directory structure visible</li>
 <li>identical files names will have identical uploaded names</li>
 </ul>
-<p>Cloud storage systems have various limits on file name length and total path length which you are more likely to hit using "Standard" file name encryption. If you keep your file names to below 156 characters in length then you should be OK on all providers.</p>
-<p>There may be an even more secure file name encryption mode in the future which will address the long file name problem.</p>
+<p>Cloud storage systems have limits on file name length and total path length which rclone is more likely to breach using "Standard" file name encryption. Where file names are less thn 156 characters in length issues should not be encountered, irrespective of cloud storage provider.</p>
+<p>An alternative, future rclone file name encryption mode may tolerate backend provider path length limits.</p>
 <h3 id="directory-name-encryption">Directory name encryption</h3>
 <p>Crypt offers the option of encrypting dir names or leaving them intact. There are two options:</p>
 <p>True</p>
@@ -11220,7 +11302,7 @@ $ rclone -q ls secret:
 <h3 id="modified-time-and-hashes-3">Modified time and hashes</h3>
 <p>Crypt stores modification times using the underlying remote so support depends on that.</p>
 <p>Hashes are not stored for crypt. However the data integrity is protected by an extremely strong crypto authenticator.</p>
-<p>Note that you should use the <code>rclone cryptcheck</code> command to check the integrity of a crypted remote instead of <code>rclone check</code> which can't check the checksums properly.</p>
+<p>Use the <code>rclone cryptcheck</code> command to check the integrity of a crypted remote instead of <code>rclone check</code> which can't check the checksums properly.</p>
 <h3 id="standard-options-9">Standard Options</h3>
 <p>Here are the standard options specific to crypt (Encrypt/Decrypt a remote).</p>
 <h4 id="crypt-remote">--crypt-remote</h4>
@@ -18470,6 +18552,87 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.53.2---2020-10-26">v1.53.2 - 2020-10-26</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.53.1...v1.53.2">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>acounting
+<ul>
+<li>Fix incorrect speed and transferTime in core/stats (Nick Craig-Wood)</li>
+<li>Stabilize display order of transfers on Windows (Nick Craig-Wood)</li>
+</ul></li>
+<li>operations
+<ul>
+<li>Fix use of --suffix without --backup-dir (Nick Craig-Wood)</li>
+<li>Fix spurious "--checksum is in use but the source and destination have no hashes in common" (Nick Craig-Wood)</li>
+</ul></li>
+<li>build
+<ul>
+<li>Work around GitHub actions brew problem (Nick Craig-Wood)</li>
+<li>Stop using set-env and set-path in the GitHub actions (Nick Craig-Wood)</li>
+</ul></li>
+</ul></li>
+<li>Mount
+<ul>
+<li>mount2: Fix the swapped UID / GID values (Russell Cattelan)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Detect and recover from a file being removed externally from the cache (Nick Craig-Wood)</li>
+<li>Fix a deadlock vulnerability in downloaders.Close (Leo Luan)</li>
+<li>Fix a race condition in retryFailedResets (Leo Luan)</li>
+<li>Fix missed concurrency control between some item operations and reset (Leo Luan)</li>
+<li>Add exponential backoff during ENOSPC retries (Leo Luan)</li>
+<li>Add a missed update of used cache space (Leo Luan)</li>
+<li>Fix --no-modtime to not attempt to set modtimes (as documented) (Nick Craig-Wood)</li>
+</ul></li>
+<li>Local
+<ul>
+<li>Fix sizes and syncing with --links option on Windows (Nick Craig-Wood)</li>
+</ul></li>
+<li>Chunker
+<ul>
+<li>Disable ListR to fix missing files on GDrive (workaround) (Ivan Andreev)</li>
+<li>Fix upload over crypt (Ivan Andreev)</li>
+</ul></li>
+<li>Fichier
+<ul>
+<li>Increase maximum file size from 100GB to 300GB (gyutw)</li>
+</ul></li>
+<li>Jottacloud
+<ul>
+<li>Remove clientSecret from config when upgrading to token based authentication (buengese)</li>
+<li>Avoid double url escaping of device/mountpoint (albertony)</li>
+<li>Remove DirMove workaround as it's not required anymore - also (buengese)</li>
+</ul></li>
+<li>Mailru
+<ul>
+<li>Fix uploads after recent changes on server (Ivan Andreev)</li>
+<li>Fix range requests after june changes on server (Ivan Andreev)</li>
+<li>Fix invalid timestamp on corrupted files (fixes) (Ivan Andreev)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Fix disk usage for sharepoint (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Add missing regions for AWS (Anagh Kumar Baranwal)</li>
+</ul></li>
+<li>Seafile
+<ul>
+<li>Fix accessing libraries &gt; 2GB on 32 bit systems (Muffin King)</li>
+</ul></li>
+<li>SFTP
+<ul>
+<li>Always convert the checksum to lower case (buengese)</li>
+</ul></li>
+<li>Union
+<ul>
+<li>Create root directories if none exist (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.53.1---2020-09-13">v1.53.1 - 2020-09-13</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.53.0...v1.53.1">See commits</a></p>
 <ul>
