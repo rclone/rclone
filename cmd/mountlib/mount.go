@@ -83,8 +83,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	rc.AddOption("mount", &Opt)
 	flags.BoolVarP(flagSet, &Opt.DebugFUSE, "debug-fuse", "", Opt.DebugFUSE, "Debug the FUSE internals - needs -v.")
 	flags.BoolVarP(flagSet, &Opt.AllowNonEmpty, "allow-non-empty", "", Opt.AllowNonEmpty, "Allow mounting over a non-empty directory (not Windows).")
-	flags.BoolVarP(flagSet, &Opt.AllowRoot, "allow-root", "", Opt.AllowRoot, "Allow access to root user.")
-	flags.BoolVarP(flagSet, &Opt.AllowOther, "allow-other", "", Opt.AllowOther, "Allow access to other users.")
+	flags.BoolVarP(flagSet, &Opt.AllowRoot, "allow-root", "", Opt.AllowRoot, "Allow access to root user (not Windows).")
+	flags.BoolVarP(flagSet, &Opt.AllowOther, "allow-other", "", Opt.AllowOther, "Allow access to other users (not Windows).")
 	flags.BoolVarP(flagSet, &Opt.DefaultPermissions, "default-permissions", "", Opt.DefaultPermissions, "Makes kernel enforce access control based on the file mode.")
 	flags.BoolVarP(flagSet, &Opt.WritebackCache, "write-back-cache", "", Opt.WritebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
 	flags.FVarP(flagSet, &Opt.MaxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
@@ -101,7 +101,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	}
 }
 
-// Check is folder is empty
+// Check if folder is empty
 func checkMountEmpty(mountpoint string) error {
 	fp, fpErr := os.Open(mountpoint)
 
@@ -359,15 +359,25 @@ When --vfs-read-chunk-size-limit 500M is specified, the result would be
 				defer cmd.StartStats()()
 			}
 
-			// Skip checkMountEmpty if --allow-non-empty flag is used or if
-			// the Operating System is Windows
-			if !opt.AllowNonEmpty && runtime.GOOS != "windows" {
+
+			// Inform about ignored flags on Windows,
+			// and if not on Windows and not --allow-non-empty flag is used
+			// verify that mountpoint is empty.
+			if runtime.GOOS == "windows" {
+				if opt.AllowNonEmpty {
+					fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
+				}
+				if opt.AllowRoot {
+					fs.Logf(nil, "--allow-root flag does nothing on Windows")
+				}
+				if opt.AllowOther {
+					fs.Logf(nil, "--allow-other flag does nothing on Windows")
+				}
+			} else if !opt.AllowNonEmpty {
 				err := checkMountEmpty(mountpoint)
 				if err != nil {
 					log.Fatalf("Fatal error: %v", err)
 				}
-			} else if opt.AllowNonEmpty && runtime.GOOS == "windows" {
-				fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
 			}
 
 			// Work out the volume name, removing special
