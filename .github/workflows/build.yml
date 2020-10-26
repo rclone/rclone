@@ -107,10 +107,10 @@ jobs:
       - name: Set environment variables
         shell: bash
         run: |
-          echo '::set-env name=GOTAGS::${{ matrix.gotags }}'
-          echo '::set-env name=BUILD_FLAGS::${{ matrix.build_flags }}'
-          if [[ "${{ matrix.goarch }}" != "" ]]; then echo '::set-env name=GOARCH::${{ matrix.goarch }}' ; fi
-          if [[ "${{ matrix.cgo }}" != "" ]]; then echo '::set-env name=CGO_ENABLED::${{ matrix.cgo }}' ; fi
+          echo 'GOTAGS=${{ matrix.gotags }}' >> $GITHUB_ENV
+          echo 'BUILD_FLAGS=${{ matrix.build_flags }}' >> $GITHUB_ENV
+          if [[ "${{ matrix.goarch }}" != "" ]]; then echo 'GOARCH=${{ matrix.goarch }}' >> $GITHUB_ENV ; fi
+          if [[ "${{ matrix.cgo }}" != "" ]]; then echo 'CGO_ENABLED=${{ matrix.cgo }}' >> $GITHUB_ENV ; fi
 
       - name: Install Libraries on Linux
         shell: bash
@@ -135,10 +135,10 @@ jobs:
         run: |
           $ProgressPreference = 'SilentlyContinue'
           choco install -y winfsp zip
-          Write-Host "::set-env name=CPATH::C:\Program Files\WinFsp\inc\fuse;C:\Program Files (x86)\WinFsp\inc\fuse"
+          echo "CPATH=C:\Program Files\WinFsp\inc\fuse;C:\Program Files (x86)\WinFsp\inc\fuse" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           if ($env:GOARCH -eq "386") {
             choco install -y mingw --forcex86 --force
-            Write-Host "::add-path::C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw32\\bin"
+            echo "C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw32\\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           }
           # Copy mingw32-make.exe to make.exe so the same command line
           # can be used on Windows as on macOS and Linux
@@ -225,8 +225,8 @@ jobs:
       - name: Set environment variables
         shell: bash
         run: |
-          echo '::set-env name=GOPATH::${{ runner.workspace }}'
-          echo '::add-path::${{ runner.workspace }}/bin'
+          echo 'GOPATH=${{ runner.workspace }}' >> $GITHUB_ENV
+          echo '${{ runner.workspace }}/bin' >> $GITHUB_PATH
 
       - name: Cross-compile rclone
         run: |
