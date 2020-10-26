@@ -71,6 +71,7 @@ func helpText() (tr []string) {
 		" ←,h to return",
 		" c toggle counts",
 		" g toggle graph",
+		" a toggle average size in directory",
 		" n,s,C,A sort by name,size,count,average size",
 		" d delete file/directory",
 	}
@@ -88,28 +89,29 @@ func helpText() (tr []string) {
 
 // UI contains the state of the user interface
 type UI struct {
-	f                 fs.Fs     // fs being displayed
-	fsName            string    // human name of Fs
-	root              *scan.Dir // root directory
-	d                 *scan.Dir // current directory being displayed
-	path              string    // path of current directory
-	showBox           bool      // whether to show a box
-	boxText           []string  // text to show in box
-	boxMenu           []string  // box menu options
-	boxMenuButton     int
-	boxMenuHandler    func(fs fs.Fs, path string, option int) (string, error)
-	entries           fs.DirEntries // entries of current directory
-	sortPerm          []int         // order to display entries in after sorting
-	invSortPerm       []int         // inverse order
-	dirListHeight     int           // height of listing
-	listing           bool          // whether listing is in progress
-	showGraph         bool          // toggle showing graph
-	showCounts        bool          // toggle showing counts
-	sortByName        int8          // +1 for normal, 0 for off, -1 for reverse
-	sortBySize        int8
-	sortByCount       int8
-	sortByAverageSize int8
-	dirPosMap         map[string]dirPos // store for directory positions
+	f                  fs.Fs     // fs being displayed
+	fsName             string    // human name of Fs
+	root               *scan.Dir // root directory
+	d                  *scan.Dir // current directory being displayed
+	path               string    // path of current directory
+	showBox            bool      // whether to show a box
+	boxText            []string  // text to show in box
+	boxMenu            []string  // box menu options
+	boxMenuButton      int
+	boxMenuHandler     func(fs fs.Fs, path string, option int) (string, error)
+	entries            fs.DirEntries // entries of current directory
+	sortPerm           []int         // order to display entries in after sorting
+	invSortPerm        []int         // inverse order
+	dirListHeight      int           // height of listing
+	listing            bool          // whether listing is in progress
+	showGraph          bool          // toggle showing graph
+	showCounts         bool          // toggle showing counts
+	showDirAverageSize bool          // toggle average size
+	sortByName         int8          // +1 for normal, 0 for off, -1 for reverse
+	sortBySize         int8
+	sortByCount        int8
+	sortByAverageSize  int8
+	dirPosMap          map[string]dirPos // store for directory positions
 }
 
 // Where we have got to in the directory listing
@@ -342,6 +344,18 @@ func (u *UI) Draw() error {
 			if u.showCounts {
 				if count > 0 {
 					extras += fmt.Sprintf("%8v ", fs.SizeSuffix(count))
+				} else {
+					extras += "         "
+				}
+
+			}
+			var averageSize float64
+			if count > 0 {
+				averageSize = float64(size) / float64(count)
+			}
+			if u.showDirAverageSize {
+				if averageSize > 0 {
+					extras += fmt.Sprintf("%8v ", fs.SizeSuffix(int64(averageSize)))
 				} else {
 					extras += "         "
 				}
@@ -661,16 +675,17 @@ func (u *UI) toggleSort(sortType *int8) {
 // NewUI creates a new user interface for ncdu on f
 func NewUI(f fs.Fs) *UI {
 	return &UI{
-		f:             f,
-		path:          "Waiting for root...",
-		dirListHeight: 20, // updated in Draw
-		fsName:        f.Name() + ":" + f.Root(),
-		showGraph:     true,
-		showCounts:    false,
-		sortByName:    0, // +1 for normal, 0 for off, -1 for reverse
-		sortBySize:    1,
-		sortByCount:   0,
-		dirPosMap:     make(map[string]dirPos),
+		f:                  f,
+		path:               "Waiting for root...",
+		dirListHeight:      20, // updated in Draw
+		fsName:             f.Name() + ":" + f.Root(),
+		showGraph:          true,
+		showCounts:         false,
+		showDirAverageSize: false,
+		sortByName:         0, // +1 for normal, 0 for off, -1 for reverse
+		sortBySize:         1,
+		sortByCount:        0,
+		dirPosMap:          make(map[string]dirPos),
 	}
 }
 
@@ -758,6 +773,8 @@ outer:
 					u.showCounts = !u.showCounts
 				case 'g':
 					u.showGraph = !u.showGraph
+				case 'a':
+					u.showDirAverageSize = !u.showDirAverageSize
 				case 'n':
 					u.toggleSort(&u.sortByName)
 				case 's':
