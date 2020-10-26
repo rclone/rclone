@@ -501,8 +501,11 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			return newDst, err
 		}
 	}
-
-	fs.Infof(src, actionTaken)
+	if src.String() != newDst.String() {
+		fs.Infof(src, "%s to: %s", actionTaken, newDst.String())
+	} else {
+		fs.Infof(src, actionTaken)
+	}
 	return newDst, err
 }
 
@@ -556,7 +559,12 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		newDst, err = doMove(ctx, src, remote)
 		switch err {
 		case nil:
-			fs.Infof(src, "Moved (server-side)")
+			if src.String() != newDst.String() {
+				fs.Infof(src, "Moved (server-side) to: %s", newDst.String())
+			} else {
+				fs.Infof(src, "Moved (server-side)")
+			}
+
 			return newDst, nil
 		case fs.ErrorCantMove:
 			fs.Debugf(src, "Can't move, switching to copy")
