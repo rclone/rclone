@@ -359,7 +359,6 @@ When --vfs-read-chunk-size-limit 500M is specified, the result would be
 				defer cmd.StartStats()()
 			}
 
-
 			// Inform about ignored flags on Windows,
 			// and if not on Windows and not --allow-non-empty flag is used
 			// verify that mountpoint is empty.
