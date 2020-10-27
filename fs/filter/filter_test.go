@@ -526,6 +526,21 @@ func TestFilterAddDirRuleOrFileRule(t *testing.T) {
 		},
 		{
 			false,
+			"potato/",
+			`--- File filter rules ---
+- (^|/)potato/.*$
+--- Directory filter rules ---
+- (^|/)potato/.*$`,
+		},
+		{
+			true,
+			"potato/",
+			`--- File filter rules ---
+--- Directory filter rules ---
++ (^|/)potato/$`,
+		},
+		{
+			false,
 			"*",
 			`--- File filter rules ---
 - (^|/)[^/]*$

@@ -267,6 +267,10 @@ func (f *Filter) addDirGlobs(Include bool, glob string) error {
 func (f *Filter) Add(Include bool, glob string) error {
 	isDirRule := strings.HasSuffix(glob, "/")
 	isFileRule := !isDirRule
+	// Make excluding "dir/" equivalent to excluding "dir/**"
+	if isDirRule && !Include {
+		glob += "**"
+	}
 	if strings.Contains(glob, "**") {
 		isDirRule, isFileRule = true, true
 	}
