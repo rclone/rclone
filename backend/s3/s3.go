@@ -1190,8 +1190,7 @@ rclone does if you know the bucket exists already.
 			// - trailing / encoding
 			// so that AWS keys are always valid file names
 			Default: encoder.EncodeInvalidUtf8 |
-				encoder.EncodeSlash |
-				encoder.EncodeDot,
+				encoder.EncodeSlash,
 		}, {
 			Name:     "memory_pool_flush_time",
 			Default:  memoryPoolFlushTime,
