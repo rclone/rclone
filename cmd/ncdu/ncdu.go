@@ -71,7 +71,7 @@ func helpText() (tr []string) {
 		" ←,h to return",
 		" c toggle counts",
 		" g toggle graph",
-		" n,s,C sort by name,size,count",
+		" n,s,C,A sort by name,size,count,average size",
 		" d delete file/directory",
 	}
 	if !clipboard.Unsupported {
@@ -88,27 +88,28 @@ func helpText() (tr []string) {
 
 // UI contains the state of the user interface
 type UI struct {
-	f              fs.Fs     // fs being displayed
-	fsName         string    // human name of Fs
-	root           *scan.Dir // root directory
-	d              *scan.Dir // current directory being displayed
-	path           string    // path of current directory
-	showBox        bool      // whether to show a box
-	boxText        []string  // text to show in box
-	boxMenu        []string  // box menu options
-	boxMenuButton  int
-	boxMenuHandler func(fs fs.Fs, path string, option int) (string, error)
-	entries        fs.DirEntries // entries of current directory
-	sortPerm       []int         // order to display entries in after sorting
-	invSortPerm    []int         // inverse order
-	dirListHeight  int           // height of listing
-	listing        bool          // whether listing is in progress
-	showGraph      bool          // toggle showing graph
-	showCounts     bool          // toggle showing counts
-	sortByName     int8          // +1 for normal, 0 for off, -1 for reverse
-	sortBySize     int8
-	sortByCount    int8
-	dirPosMap      map[string]dirPos // store for directory positions
+	f                 fs.Fs     // fs being displayed
+	fsName            string    // human name of Fs
+	root              *scan.Dir // root directory
+	d                 *scan.Dir // current directory being displayed
+	path              string    // path of current directory
+	showBox           bool      // whether to show a box
+	boxText           []string  // text to show in box
+	boxMenu           []string  // box menu options
+	boxMenuButton     int
+	boxMenuHandler    func(fs fs.Fs, path string, option int) (string, error)
+	entries           fs.DirEntries // entries of current directory
+	sortPerm          []int         // order to display entries in after sorting
+	invSortPerm       []int         // inverse order
+	dirListHeight     int           // height of listing
+	listing           bool          // whether listing is in progress
+	showGraph         bool          // toggle showing graph
+	showCounts        bool          // toggle showing counts
+	sortByName        int8          // +1 for normal, 0 for off, -1 for reverse
+	sortBySize        int8
+	sortByCount       int8
+	sortByAverageSize int8
+	dirPosMap         map[string]dirPos // store for directory positions
 }
 
 // Where we have got to in the directory listing
@@ -496,9 +497,17 @@ type ncduSort struct {
 
 // Less is part of sort.Interface.
 func (ds *ncduSort) Less(i, j int) bool {
+	var iAvgSize, jAvgSize float64
 	isize, icount, _, _ := ds.d.AttrI(ds.sortPerm[i])
 	jsize, jcount, _, _ := ds.d.AttrI(ds.sortPerm[j])
 	iname, jname := ds.entries[ds.sortPerm[i]].Remote(), ds.entries[ds.sortPerm[j]].Remote()
+	if icount > 0 {
+		iAvgSize = float64(isize / icount)
+	}
+	if jcount > 0 {
+		jAvgSize = float64(jsize / jcount)
+	}
+
 	switch {
 	case ds.u.sortByName < 0:
 		return iname > jname
@@ -520,6 +529,18 @@ func (ds *ncduSort) Less(i, j int) bool {
 		if icount != jcount {
 			return icount > jcount
 		}
+	case ds.u.sortByAverageSize < 0:
+		if iAvgSize != jAvgSize {
+			return iAvgSize < jAvgSize
+		}
+		// if avgSize is equal, sort by size
+		return isize < jsize
+	case ds.u.sortByAverageSize > 0:
+		if iAvgSize != jAvgSize {
+			return iAvgSize > jAvgSize
+		}
+		// if avgSize is equal, sort by size
+		return isize > jsize
 	}
 	// if everything equal, sort by name
 	return iname < jname
@@ -628,6 +649,7 @@ func (u *UI) toggleSort(sortType *int8) {
 	u.sortBySize = 0
 	u.sortByCount = 0
 	u.sortByName = 0
+	u.sortByAverageSize = 0
 	if old == 0 {
 		*sortType = 1
 	} else {
@@ -742,6 +764,8 @@ outer:
 					u.toggleSort(&u.sortBySize)
 				case 'C':
 					u.toggleSort(&u.sortByCount)
+				case 'A':
+					u.toggleSort(&u.sortByAverageSize)
 				case 'y':
 					u.copyPath()
 				case 'Y':
