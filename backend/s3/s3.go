@@ -1500,6 +1500,9 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 		awsConfig.WithEndpoint(opt.Endpoint)
 	}
 
+	// Allow URI with "." etc
+	awsConfig.DisableRestProtocolURICleaning = aws.Bool(true)
+
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
 	awsSessionOpts := session.Options{
 		Config: *awsConfig,
