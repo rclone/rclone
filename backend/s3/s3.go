@@ -1387,7 +1387,8 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	bucketName, bucketPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
+	fs.Debugf(nil, "SPLIT %q %q", f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath))
 	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
@@ -1734,7 +1735,7 @@ type listFn func(remote string, object *s3.Object, isDirectory bool) error
 // bucket to the start.
 //
 // Set recurse to read sub directories
-func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, fn listFn) error {
+func (f *Fs) list(ctx context.Context, bucketName, directory, prefix string, addBucket bool, recurse bool, fn listFn) error {
 	if prefix != "" {
 		prefix += "/"
 	}
@@ -1765,7 +1766,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	for {
 		// FIXME need to implement ALL loop
 		req := s3.ListObjectsInput{
-			Bucket:    &bucket,
+			Bucket:    &bucketName,
 			Delimiter: &delimiter,
 			Prefix:    &directory,
 			MaxKeys:   &f.opt.ListChunk,
@@ -1805,7 +1806,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				if reqErr, ok := err.(awserr.RequestFailure); ok {
 					// 301 if wrong region for bucket
 					if reqErr.StatusCode() == http.StatusMovedPermanently {
-						fs.Errorf(f, "Can't change region for bucket %q with no bucket specified", bucket)
+						fs.Errorf(f, "Can't change region for bucket %q with no bucket specified", bucketName)
 						return nil
 					}
 				}
@@ -1833,7 +1834,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				}
 				remote = remote[len(prefix):]
 				if addBucket {
-					remote = path.Join(bucket, remote)
+					remote = bucket.Join(bucketName, remote)
 				}
 				if strings.HasSuffix(remote, "/") {
 					remote = remote[:len(remote)-1]
@@ -1861,7 +1862,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 			remote = remote[len(prefix):]
 			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
 			if addBucket {
-				remote = path.Join(bucket, remote)
+				remote = bucket.Join(bucketName, remote)
 			}
 			// is this a directory marker?
 			if isDirectory && object.Size != nil && *object.Size == 0 {
@@ -2147,7 +2148,7 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 	req.Bucket = &dstBucket
 	req.ACL = &f.opt.ACL
 	req.Key = &dstPath
-	source := pathEscape(path.Join(srcBucket, srcPath))
+	source := pathEscape(bucket.Join(srcBucket, srcPath))
 	req.CopySource = &source
 	if f.opt.ServerSideEncryption != "" {
 		req.ServerSideEncryption = &f.opt.ServerSideEncryption
