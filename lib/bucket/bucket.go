@@ -29,6 +29,23 @@ func Split(absPath string) (bucket, bucketPath string) {
 	return absPath[:slash], absPath[slash+1:]
 }
 
+// Join joins any number of path elements into a single path, adding a
+// separating slash if necessary. Empty elements are ignored.
+//
+// Unlike path.Join this does not run path.Clean on the elements so a
+// path called "." will be preserved.
+func Join(elem ...string) (out string) {
+	for _, e := range elem {
+		if e != "" {
+			if out != "" {
+				out += "/"
+			}
+			out += e
+		}
+	}
+	return out
+}
+
 // Cache stores whether buckets are available and their IDs
 type Cache struct {
 	mu       sync.Mutex      // mutex to protect created and deleted
