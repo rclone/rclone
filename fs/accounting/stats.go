@@ -40,6 +40,7 @@ type StatsInfo struct {
 	renameQueue       int
 	renameQueueSize   int64
 	deletes           int64
+	deletedDirs       int64
 	inProgress        *inProgress
 	startedTransfers  []*Transfer   // currently active transfers
 	oldTimeRanges     timeRanges    // a merged list of time ranges for the transfers
@@ -68,6 +69,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["checks"] = s.checks
 	out["transfers"] = s.transfers
 	out["deletes"] = s.deletes
+	out["deletedDirs"] = s.deletedDirs
 	out["renames"] = s.renames
 	out["transferTime"] = s.totalDuration().Seconds()
 	out["elapsedTime"] = time.Since(startTime).Seconds()
@@ -310,8 +312,8 @@ func (s *StatsInfo) String() string {
 			_, _ = fmt.Fprintf(buf, "Checks:        %10d / %d, %s\n",
 				s.checks, totalChecks, percent(s.checks, totalChecks))
 		}
-		if s.deletes != 0 {
-			_, _ = fmt.Fprintf(buf, "Deleted:       %10d\n", s.deletes)
+		if s.deletes != 0 || s.deletedDirs != 0 {
+			_, _ = fmt.Fprintf(buf, "Deleted:       %10d (files), %d (dirs)\n", s.deletes, s.deletedDirs)
 		}
 		if s.renames != 0 {
 			_, _ = fmt.Fprintf(buf, "Renamed:       %10d\n", s.renames)
@@ -459,6 +461,14 @@ func (s *StatsInfo) Deletes(deletes int64) int64 {
 	return s.deletes
 }
 
+// DeletedDirs updates the stats for deletedDirs
+func (s *StatsInfo) DeletedDirs(deletedDirs int64) int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.deletedDirs += deletedDirs
+	return s.deletedDirs
+}
+
 // Renames updates the stats for renames
 func (s *StatsInfo) Renames(renames int64) int64 {
 	s.mu.Lock()
@@ -480,6 +490,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
+	s.deletedDirs = 0
 	s.renames = 0
 	s.startedTransfers = nil
 	s.oldDuration = 0

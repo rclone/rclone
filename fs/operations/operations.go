@@ -935,6 +935,7 @@ func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
 // TryRmdir removes a container but not if not empty.  It doesn't
 // count errors but may return one.
 func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
+	accounting.Stats(ctx).DeletedDirs(1)
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "remove directory") {
 		return nil
 	}
@@ -957,6 +958,7 @@ func Purge(ctx context.Context, f fs.Fs, dir string) (err error) {
 	doFallbackPurge := true
 	if doPurge := f.Features().Purge; doPurge != nil {
 		doFallbackPurge = false
+		accounting.Stats(ctx).DeletedDirs(1)
 		if SkipDestructive(ctx, fs.LogDirName(f, dir), "purge directory") {
 			return nil
 		}
