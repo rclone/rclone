@@ -14,6 +14,7 @@ type RcloneCollector struct {
 	numOfCheckFiles  *prometheus.Desc
 	transferredFiles *prometheus.Desc
 	deletes          *prometheus.Desc
+	deletedDirs      *prometheus.Desc
 	renames          *prometheus.Desc
 	fatalError       *prometheus.Desc
 	retryError       *prometheus.Desc
@@ -46,6 +47,10 @@ func NewRcloneCollector() *RcloneCollector {
 			"Total number of files deleted",
 			nil, nil,
 		),
+		deletedDirs: prometheus.NewDesc(namespace+"dirs_deleted_total",
+			"Total number of directories deleted",
+			nil, nil,
+		),
 		renames: prometheus.NewDesc(namespace+"files_renamed_total",
 			"Total number of files renamed",
 			nil, nil,
@@ -69,6 +74,7 @@ func (c *RcloneCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.numOfCheckFiles
 	ch <- c.transferredFiles
 	ch <- c.deletes
+	ch <- c.deletedDirs
 	ch <- c.renames
 	ch <- c.fatalError
 	ch <- c.retryError
@@ -85,6 +91,7 @@ func (c *RcloneCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.numOfCheckFiles, prometheus.CounterValue, float64(s.checks))
 	ch <- prometheus.MustNewConstMetric(c.transferredFiles, prometheus.CounterValue, float64(s.transfers))
 	ch <- prometheus.MustNewConstMetric(c.deletes, prometheus.CounterValue, float64(s.deletes))
+	ch <- prometheus.MustNewConstMetric(c.deletedDirs, prometheus.CounterValue, float64(s.deletedDirs))
 	ch <- prometheus.MustNewConstMetric(c.renames, prometheus.CounterValue, float64(s.renames))
 	ch <- prometheus.MustNewConstMetric(c.fatalError, prometheus.GaugeValue, bool2Float(s.fatalError))
 	ch <- prometheus.MustNewConstMetric(c.retryError, prometheus.GaugeValue, bool2Float(s.retryError))

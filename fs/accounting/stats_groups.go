@@ -358,6 +358,7 @@ func (sg *statsGroups) sum() *StatsInfo {
 			sum.checks += stats.checks
 			sum.transfers += stats.transfers
 			sum.deletes += stats.deletes
+			sum.deletedDirs += stats.deletedDirs
 			sum.renames += stats.renames
 			sum.checking.merge(stats.checking)
 			sum.transferring.merge(stats.transferring)
