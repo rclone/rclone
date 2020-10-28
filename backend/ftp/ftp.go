@@ -57,16 +57,16 @@ func init() {
 			Required:   true,
 		}, {
 			Name: "tls",
-			Help: `Use FTPS over TLS (Implicit)
-When using implicit FTP over TLS the client will connect using TLS
-right from the start, which in turn breaks the compatibility with
+			Help: `Use Implicit FTPS (FTP over TLS)
+When using implicit FTP over TLS the client connects using TLS
+right from the start which breaks compatibility with
 non-TLS-aware servers. This is usually served over port 990 rather
 than port 21. Cannot be used in combination with explicit FTP.`,
 			Default: false,
 		}, {
 			Name: "explicit_tls",
-			Help: `Use FTP over TLS (Explicit)
-When using explicit FTP over TLS the client explicitly request
+			Help: `Use Explicit FTPS (FTP over TLS)
+When using explicit FTP over TLS the client explicitly requests
 security from the server in order to upgrade a plain text connection
 to an encrypted one. Cannot be used in combination with implicit FTP.`,
 			Default: false,
