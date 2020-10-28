@@ -57,7 +57,7 @@ download and install [WinFsp](http://www.secfs.net/winfsp/).
 [WinFsp](https://github.com/billziss-gh/winfsp) is an open source
 Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
-uses combination with
+uses in combination with
 [cgofuse](https://github.com/billziss-gh/cgofuse).  Both of these
 packages are by Bill Zissimopoulos who was very helpful during the
 implementation of rclone mount for Windows.
@@ -164,7 +164,7 @@ This is the same as setting the attr_timeout option in mount.fuse.
 
 ## Filters
 
-Note that all the rclone filters can be used to select a subset of the
+Rclone's filters can be used to select a subset of the
 files to be visible in the mount.
 
 ## systemd
@@ -196,7 +196,7 @@ be copied to the vfs cache before opening with --vfs-cache-mode full.
 
 ## VFS - Virtual File System
 
-This command uses the VFS layer. This adapts the cloud storage objects
+Mount uses rclone's VFS layer. This adapts the cloud storage objects
 that rclone uses into something which looks much more like a disk
 filing system.
 
