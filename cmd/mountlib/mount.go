@@ -162,7 +162,7 @@ FUSE.
 First set up your remote using ` + "`rclone config`" + `.  Check it works with ` + "`rclone ls`" + ` etc.
 
 You can either run mount in foreground mode or background (daemon) mode. Mount runs in
-foreground mode by default, use the --daemon flag to specify background mode.
+foreground mode by default, use the ` + "`--daemon`" + ` flag to specify background mode.
 Background mode is only supported on Linux and OSX, you can only run mount in
 foreground mode on Windows.
 
@@ -172,7 +172,8 @@ is an **empty** **existing** directory.
     rclone ` + commandName + ` remote:path/to/files /path/to/local/mount
 
 Or on Windows like this where ` + "`X:`" + ` is an unused drive letter
-or use a path to **non-existent** directory.
+or (unless [mounting as a network drive](#network-drive)) use a path
+to **non-existent** subdirectory of an **existing** parent directory or drive.
 
     rclone ` + commandName + ` remote:path/to/files X:
     rclone ` + commandName + ` remote:path/to/files C:\path\to\nonexistent\directory
@@ -226,39 +227,42 @@ alternatively using [the nssm service manager](https://nssm.cc/usage).
 
 #### Mount as a network drive
 
-By default, rclone will mount the remote as a normal drive. However,
-you can also mount it as a **Network Drive** (or **Network Share**, as
-mentioned in some places)
+By default, rclone will mount the remote as a normal, fixed disk drive. However,
+you can also mount it as a remote network drive, also known as a network share.
 
-Unlike other systems, Windows provides a different filesystem type for
-network drives.  Windows and other programs treat the network drives
-and fixed/removable drives differently: In network drives, many I/O
-operations are optimized, as the high latency and low reliability
-(compared to a normal drive) of a network is expected.
+Unlike other operating systems, Microsoft Windows provides a different filesystem
+type for network and fixed drives. It optimises access on the assumption fixed
+disk drives are fast and reliable, while network drives have relatively high latency
+and less reliability. Some settings can also be differentiated between the two types,
+for example that Windows Explorer should just display icons and not create preview
+thumbnails for image and video files on network drives.
 
-Although many people prefer network shares to be mounted as normal
-system drives, this might cause some issues, such as programs not
-working as expected or freezes and errors while operating with the
-mounted remote in Windows Explorer. If you experience any of those,
-consider mounting rclone remotes as network shares, as Windows expects
-normal drives to be fast and reliable, while cloud storage is far from
-that.  See also [Limitations](#limitations) section below for more
-info
+If you mount an rclone remote using the default, fixed drive mode and experience
+unexpected program errors, freezes or other issues, consider mounting the remotes
+as a network drive instead.
 
-Add "--fuse-flag --VolumePrefix=\server\share" to your "mount"
-command, **replacing "share" with any other name of your choice if you
-are mounting more than one remote**. Otherwise, the mountpoints will
-conflict and your mounted filesystems will overlap.
+See also [Limitations](#limitations) section below for more info.
+
+To mount as network drive, add ` + "`--fuse-flag --VolumePrefix=\\server\\share`" + `
+to your ` + commandName + ` command. You may replace the names "server" and "share"
+with whatever you like, as long as the combination is unique when you are mounting
+more than one drive (or else the mount command will fail). The "share" name will
+treated as the volume label for the mapped drive, shown in Windows Explorer etc, while
+` + "`\\\\server\\share`" + ` will be reported as the remote UNC path by
+` + "`net use`" + ` etc, just like a normal network drive mapping.
+
+You must use the method of mounting to a drive letter, as mounting to a directory
+path is not supported in this case (a limitation Windows imposes on junctions).
 
 [Read more about drive mapping](https://en.wikipedia.org/wiki/Drive_mapping)
 
 ### Limitations
 
-Without the use of "--vfs-cache-mode" this can only write files
+Without the use of ` + "`--vfs-cache-mode`" + ` this can only write files
 sequentially, it can only seek when reading.  This means that many
 applications won't work with their files on an rclone mount without
-"--vfs-cache-mode writes" or "--vfs-cache-mode full".  See the [File
-Caching](#file-caching) section for more info.
+` + "`--vfs-cache-mode writes`" + ` or ` + "`--vfs-cache-mode full`" + `.
+See the [File Caching](#file-caching) section for more info.
 
 The bucket based remotes (e.g. Swift, S3, Google Compute Storage, B2,
 Hubic) do not support the concept of empty directories, so empty
@@ -278,7 +282,7 @@ for solutions to make ` + commandName + ` more reliable.
 
 ### Attribute caching
 
-You can use the flag --attr-timeout to set the time the kernel caches
+You can use the flag ` + "`--attr-timeout`" + ` to set the time the kernel caches
 the attributes (size, modification time, etc.) for directory entries.
 
 The default is "1s" which caches files just long enough to avoid
@@ -292,10 +296,10 @@ few problems such as
 and [excessive time listing directories](https://github.com/rclone/rclone/issues/2095#issuecomment-371141147).
 
 The kernel can cache the info about a file for the time given by
-"--attr-timeout". You may see corruption if the remote file changes
+` + "`--attr-timeout`" + `. You may see corruption if the remote file changes
 length during this window.  It will show up as either a truncated file
-or a file with garbage on the end.  With "--attr-timeout 1s" this is
-very unlikely but not impossible.  The higher you set "--attr-timeout"
+or a file with garbage on the end.  With ` + "`--attr-timeout 1s`" + ` this is
+very unlikely but not impossible.  The higher you set ` + "`--attr-timeout`" + `
 the more likely it is.  The default setting of "1s" is the lowest
 setting which mitigates the problems above.
 
@@ -323,18 +327,18 @@ will see all files and folders immediately in this mode.
 
 ### chunked reading ###
 
---vfs-read-chunk-size will enable reading the source objects in parts.
+` + "`--vfs-read-chunk-size`" + ` will enable reading the source objects in parts.
 This can reduce the used download quota for some remotes by requesting only chunks
 from the remote that are actually read at the cost of an increased number of requests.
 
-When --vfs-read-chunk-size-limit is also specified and greater than --vfs-read-chunk-size,
-the chunk size for each open file will get doubled for each chunk read, until the
-specified value is reached. A value of -1 will disable the limit and the chunk size will
-grow indefinitely.
+When ` + "`--vfs-read-chunk-size-limit`" + ` is also specified and greater than
+` + "`--vfs-read-chunk-size`" + `, the chunk size for each open file will get doubled
+for each chunk read, until the specified value is reached. A value of -1 will disable
+the limit and the chunk size will grow indefinitely.
 
-With --vfs-read-chunk-size 100M and --vfs-read-chunk-size-limit 0 the following
-parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When --vfs-read-chunk-size-limit 500M is specified, the result would be
+With ` + "`--vfs-read-chunk-size 100M`" + ` and ` + "`--vfs-read-chunk-size-limit 0`" + `
+the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
+When ` + "`--vfs-read-chunk-size-limit 500M`" + ` is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 ` + vfs.Help,
 		Run: func(command *cobra.Command, args []string) {
