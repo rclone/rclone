@@ -24,10 +24,14 @@ import (
 
 func init() {
 	name := "cmount"
-	if runtime.GOOS == "windows" {
+	cmountOnly := runtime.GOOS == "windows" || runtime.GOOS == "darwin"
+	if cmountOnly {
 		name = "mount"
 	}
-	mountlib.NewMountCommand(name, false, mount)
+	cmd := mountlib.NewMountCommand(name, false, mount)
+	if cmountOnly {
+		cmd.Aliases = append(cmd.Aliases, "cmount")
+	}
 	mountlib.AddRc("cmount", mount)
 }
 
