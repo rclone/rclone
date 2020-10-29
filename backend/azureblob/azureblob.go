@@ -524,7 +524,7 @@ func (f *Fs) cntURL(container string) (containerURL *azblob.ContainerURL) {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(remote string, info *azblob.BlobItem) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(remote string, info *azblob.BlobItemInternal) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -581,7 +581,7 @@ func isDirectoryMarker(size int64, metadata azblob.Metadata, remote string) bool
 }
 
 // listFn is called from list to handle an object
-type listFn func(remote string, object *azblob.BlobItem, isDirectory bool) error
+type listFn func(remote string, object *azblob.BlobItemInternal, isDirectory bool) error
 
 // list lists the objects into the function supplied from
 // the container and root supplied
@@ -680,7 +680,7 @@ func (f *Fs) list(ctx context.Context, container, directory, prefix string, addC
 }
 
 // Convert a list item into a DirEntry
-func (f *Fs) itemToDirEntry(remote string, object *azblob.BlobItem, isDirectory bool) (fs.DirEntry, error) {
+func (f *Fs) itemToDirEntry(remote string, object *azblob.BlobItemInternal, isDirectory bool) (fs.DirEntry, error) {
 	if isDirectory {
 		d := fs.NewDir(remote, time.Time{})
 		return d, nil
@@ -694,7 +694,7 @@ func (f *Fs) itemToDirEntry(remote string, object *azblob.BlobItem, isDirectory 
 
 // listDir lists a single directory
 func (f *Fs) listDir(ctx context.Context, container, directory, prefix string, addContainer bool) (entries fs.DirEntries, err error) {
-	err = f.list(ctx, container, directory, prefix, addContainer, false, f.opt.ListChunkSize, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
+	err = f.list(ctx, container, directory, prefix, addContainer, false, f.opt.ListChunkSize, func(remote string, object *azblob.BlobItemInternal, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -775,7 +775,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	container, directory := f.split(dir)
 	list := walk.NewListRHelper(callback)
 	listR := func(container, directory, prefix string, addContainer bool) error {
-		return f.list(ctx, container, directory, prefix, addContainer, true, f.opt.ListChunkSize, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
+		return f.list(ctx, container, directory, prefix, addContainer, true, f.opt.ListChunkSize, func(remote string, object *azblob.BlobItemInternal, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(remote, object, isDirectory)
 			if err != nil {
 				return err
@@ -903,7 +903,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 // isEmpty checks to see if a given (container, directory) is empty and returns an error if not
 func (f *Fs) isEmpty(ctx context.Context, container, directory string) (err error) {
 	empty := true
-	err = f.list(ctx, container, directory, f.rootDirectory, f.rootContainer == "", true, 1, func(remote string, object *azblob.BlobItem, isDirectory bool) error {
+	err = f.list(ctx, container, directory, f.rootDirectory, f.rootContainer == "", true, 1, func(remote string, object *azblob.BlobItemInternal, isDirectory bool) error {
 		empty = false
 		return nil
 	})
@@ -1008,7 +1008,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var startCopy *azblob.BlobStartCopyFromURLResponse
 
 	err = f.pacer.Call(func() (bool, error) {
-		startCopy, err = dstBlobURL.StartCopyFromURL(ctx, *source, nil, azblob.ModifiedAccessConditions{}, options)
+		startCopy, err = dstBlobURL.StartCopyFromURL(ctx, *source, nil, azblob.ModifiedAccessConditions{}, options, azblob.AccessTierType(f.opt.AccessTier), nil)
 		return f.shouldRetry(err)
 	})
 	if err != nil {
@@ -1123,7 +1123,7 @@ func (o *Object) decodeMetaDataFromPropertiesResponse(info *azblob.BlobGetProper
 	return nil
 }
 
-func (o *Object) decodeMetaDataFromBlob(info *azblob.BlobItem) (err error) {
+func (o *Object) decodeMetaDataFromBlob(info *azblob.BlobItemInternal) (err error) {
 	metadata := info.Metadata
 	size := *info.Properties.ContentLength
 	if isDirectoryMarker(size, metadata, o.remote) {
@@ -1424,7 +1424,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 
 	// Finalise the upload session
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err := blockBlobURL.CommitBlockList(ctx, blocks, *httpHeaders, o.meta, azblob.BlobAccessConditions{})
+		_, err := blockBlobURL.CommitBlockList(ctx, blocks, *httpHeaders, o.meta, azblob.BlobAccessConditions{}, azblob.AccessTierType(o.fs.opt.AccessTier), nil)
 		return o.fs.shouldRetry(err)
 	})
 	if err != nil {
