@@ -4,6 +4,7 @@ package mount
 
 import (
 	"context"
+	"io"
 	"os"
 	"time"
 
@@ -213,4 +214,34 @@ var _ fusefs.NodeLinker = (*Dir)(nil)
 func (d *Dir) Link(ctx context.Context, req *fuse.LinkRequest, old fusefs.Node) (newNode fusefs.Node, err error) {
 	defer log.Trace(d, "req=%v, old=%v", req, old)("new=%v, err=%v", &newNode, &err)
 	return nil, fuse.ENOSYS
+}
+
+// Check interface satisfied
+var _ fusefs.NodeMknoder = (*Dir)(nil)
+
+// Mknod is called to create a file. Since we define create this will
+// be called in preference, however NFS likes to call it for some
+// reason. We don't actually create a file here just the Node.
+func (d *Dir) Mknod(ctx context.Context, req *fuse.MknodRequest) (node fusefs.Node, err error) {
+	defer log.Trace(d, "name=%v, mode=%d, rdev=%d", req.Name, req.Mode, req.Rdev)("node=%v, err=%v", &node, &err)
+	if req.Rdev != 0 {
+		fs.Errorf(d, "Can't create device node %q", req.Name)
+		return nil, fuse.EIO
+	}
+	var cReq = fuse.CreateRequest{
+		Name:  req.Name,
+		Flags: fuse.OpenFlags(os.O_CREATE | os.O_WRONLY),
+		Mode:  req.Mode,
+		Umask: req.Umask,
+	}
+	var cResp fuse.CreateResponse
+	node, handle, err := d.Create(ctx, &cReq, &cResp)
+	if err != nil {
+		return nil, err
+	}
+	err = handle.(io.Closer).Close()
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
 }
