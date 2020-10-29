@@ -5,8 +5,8 @@ go 1.14
 require (
 	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
 	cloud.google.com/go v0.70.0 // indirect
-	github.com/Azure/azure-pipeline-go v0.2.2
-	github.com/Azure/azure-storage-blob-go v0.10.0
+	github.com/Azure/azure-pipeline-go v0.2.3
+	github.com/Azure/azure-storage-blob-go v0.11.0
 	github.com/Unknwon/goconfig v0.0.0-20200908083735-df7de6a44db8
 	github.com/a8m/tree v0.0.0-20201026183218-fce18e2a750e
 	github.com/aalpar/deheap v0.0.0-20200318053559-9a0c2883bd56
