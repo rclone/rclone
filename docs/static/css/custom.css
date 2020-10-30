@@ -171,3 +171,14 @@ a.badge-primary.focus, a.badge-primary:focus {
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgba(112,202,242,.5);
 }
+nav#TableOfContents ul {
+    list-style-type: none;
+    padding: 0.0rem;
+    margin: 0.5rem;
+    font-size: 90%;
+    white-space: nowrap;
+    overflow:hidden;
+}
+nav#TableOfContents ul:hover {
+    overflow:visible;
+}
