@@ -43,6 +43,10 @@ backends:
    fastlist: true
    maxfile:  6k
  - backend:  "chunker"
+   remote:   "TestChunkerChunk3bNoRenameLocal:"
+   fastlist: true
+   maxfile:  6k
+ - backend:  "chunker"
    remote:   "TestChunkerMailru:"
    fastlist: true
  - backend:  "chunker"
