@@ -289,6 +289,20 @@ func (u *UI) biggestEntry() (biggest int64) {
 	return
 }
 
+// hasEmptyDir returns true if there is empty folder in current listing
+func (u *UI) hasEmptyDir() bool {
+	if u.d == nil {
+		return false
+	}
+	for i := range u.entries {
+		_, count, isDir, _, _, _ := u.d.AttrI(u.sortPerm[i])
+		if isDir && count == 0 {
+			return true
+		}
+	}
+	return false
+}
+
 // Draw the current screen
 func (u *UI) Draw() error {
 	w, h := termbox.Size()
@@ -319,6 +333,7 @@ func (u *UI) Draw() error {
 		if perBar == 0 {
 			perBar = 1
 		}
+		showEmptyDir := u.hasEmptyDir()
 		dirPos := u.dirPosMap[u.path]
 		for i, j := range u.sortPerm[dirPos.offset:] {
 			entry := u.entries[j]
@@ -373,6 +388,14 @@ func (u *UI) Draw() error {
 				}
 
 			}
+			emptyDir := ""
+			if showEmptyDir {
+				if isDir && count == 0 {
+					emptyDir = "e"
+				} else {
+					emptyDir = " "
+				}
+			}
 			if u.showGraph {
 				bars := (size + perBar/2 - 1) / perBar
 				// clip if necessary - only happens during startup
@@ -383,7 +406,7 @@ func (u *UI) Draw() error {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			Linef(0, y, w, fg, bg, ' ', "%8v %s%c%s%s", fs.SizeSuffix(size), extras, mark, path.Base(entry.Remote()), message)
+			Linef(0, y, w, fg, bg, ' ', "%s  %8v %s%c%s%s", emptyDir, fs.SizeSuffix(size), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
 	}
