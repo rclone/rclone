@@ -21,8 +21,20 @@ COMPOSE_DIR=$(dirname "$0")/seafile
 start() {
     docker-compose --project-directory ${COMPOSE_DIR} --project-name ${NAME} --file ${COMPOSE_DIR}/docker-compose.yml up -d
 
-    # it takes some time for the database to be created
-    sleep 60
+    # wait for Seafile server to start
+    seafile_endpoint="http://${SEAFILE_IP}:${SEAFILE_PORT}/"
+    wait_seconds=1
+    echo -n "Waiting for Seafile server to start"
+    for iterations in `seq 1 60`;
+    do
+      http_code=$(curl -s -o /dev/null -L -w '%{http_code}' "$seafile_endpoint" || true;)
+      if [ "$http_code" -eq 200 ]; then
+        echo
+        break
+      fi
+      echo -n "."
+      sleep $wait_seconds
+    done
 
     # authentication token answer should be like: {"token":"dbf58423f1632b5b679a13b0929f1d0751d9250c"}
     TOKEN=`curl --silent \
