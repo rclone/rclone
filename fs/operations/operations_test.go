@@ -1428,7 +1428,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
 	require.NotNil(t, err, "Did not get expected max transfer limit error")
 	assert.Contains(t, err.Error(), "Max transfer limit reached")
-	assert.True(t, fserrors.IsFatalError(err))
+	assert.True(t, fserrors.IsFatalError(err), fmt.Sprintf("Not fatal error: %v: %#v:", err, err))
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
 	fstest.CheckItems(t, r.Fremote, file1)
 

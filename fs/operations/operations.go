@@ -375,9 +375,19 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		// Try server-side copy first - if has optional interface and
 		// is same underlying remote
 		actionTaken = "Copied (server-side copy)"
-		if fs.Config.MaxTransfer >= 0 && (accounting.Stats(ctx).GetBytes() >= int64(fs.Config.MaxTransfer) ||
-			(fs.Config.CutoffMode == fs.CutoffModeCautious && accounting.Stats(ctx).GetBytesWithPending()+src.Size() >= int64(fs.Config.MaxTransfer))) {
-			return nil, accounting.ErrorMaxTransferLimitReachedGraceful
+		if fs.Config.MaxTransfer >= 0 {
+			var bytesSoFar int64
+			if fs.Config.CutoffMode == fs.CutoffModeCautious {
+				bytesSoFar = accounting.Stats(ctx).GetBytesWithPending() + src.Size()
+			} else {
+				bytesSoFar = accounting.Stats(ctx).GetBytes()
+			}
+			if bytesSoFar >= int64(fs.Config.MaxTransfer) {
+				if fs.Config.CutoffMode == fs.CutoffModeHard {
+					return nil, accounting.ErrorMaxTransferLimitReachedFatal
+				}
+				return nil, accounting.ErrorMaxTransferLimitReachedGraceful
+			}
 		}
 		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && f.Features().ServerSideAcrossConfigs)) {
 			in := tr.Account(ctx, nil) // account the transfer
