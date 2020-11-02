@@ -427,6 +427,8 @@ var retryErrorCodes = []int{
 	509, // Bandwidth Limit Exceeded
 }
 
+var gatewayTimeoutError sync.Once
+
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
@@ -451,6 +453,10 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 					fs.Debugf(nil, "Too many requests. Trying again in %d seconds.", retryAfter)
 				}
 			}
+		case 504: // Gateway timeout
+			gatewayTimeoutError.Do(func() {
+				fs.Errorf(nil, "%v: upload chunks may be taking too long - try reducing --onedrive-chunk-size or decreasing --transfers", err)
+			})
 		case 507: // Insufficient Storage
 			return false, fserrors.FatalError(err)
 		}
