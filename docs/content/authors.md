@@ -422,4 +422,4 @@ put them back in again.` >}}
   * Josh Soref <jsoref@users.noreply.github.com>
   * David <david@staron.nl>
   * Ingo <ingo@hoffmann.cx>
-  * Adam Plánský <adamplansky@users.noreply.github.com>
+  * Adam Plánský <adamplansky@users.noreply.github.com> <adamplansky@gmail.com>
