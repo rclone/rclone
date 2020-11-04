@@ -201,6 +201,22 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 	}
 
 	srcModTime := src.ModTime(ctx)
+	if !opt.forceModTimeMatch {
+		// Sizes the same so check the mtime
+		modifyWindow := fs.GetModifyWindow(src.Fs(), dst.Fs())
+		if modifyWindow == fs.ModTimeNotSupported {
+			fs.Debugf(src, "Sizes identical")
+			return true
+		}
+		dstModTime := dst.ModTime(ctx)
+		dt := dstModTime.Sub(srcModTime)
+		if dt < modifyWindow && dt > -modifyWindow {
+			fs.Debugf(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
+			return true
+		}
+
+		fs.Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
+	}
 
 	// Check if the hashes are the same
 	same, ht, _ := CheckHashes(ctx, src, dst)
