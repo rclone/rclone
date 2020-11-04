@@ -91,6 +91,12 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	if dstHash == "" {
 		return true, hash.None, srcHash, dstHash, nil
 	}
+	srcHashes := strings.Split(srcHash, "-")
+	dstHashes := strings.Split(dstHash, "-")
+	if len(srcHashes) == 2 && len(dstHashes) == 2 && srcHashes[1] != dstHashes[1] {
+		fs.Debugf(src, "chunk size differ")
+		return true, hash.None, "", "", nil
+	}
 	if srcHash != dstHash {
 		fs.Debugf(src, "%v = %s (%v)", ht, srcHash, src.Fs())
 		fs.Debugf(dst, "%v = %s (%v)", ht, dstHash, dst.Fs())
@@ -195,22 +201,6 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 	}
 
 	srcModTime := src.ModTime(ctx)
-	if !opt.forceModTimeMatch {
-		// Sizes the same so check the mtime
-		modifyWindow := fs.GetModifyWindow(src.Fs(), dst.Fs())
-		if modifyWindow == fs.ModTimeNotSupported {
-			fs.Debugf(src, "Sizes identical")
-			return true
-		}
-		dstModTime := dst.ModTime(ctx)
-		dt := dstModTime.Sub(srcModTime)
-		if dt < modifyWindow && dt > -modifyWindow {
-			fs.Debugf(src, "Size and modification time the same (differ by %s, within tolerance %s)", dt, modifyWindow)
-			return true
-		}
-
-		fs.Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
-	}
 
 	// Check if the hashes are the same
 	same, ht, _ := CheckHashes(ctx, src, dst)

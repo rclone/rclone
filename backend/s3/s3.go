@@ -2661,7 +2661,7 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
+var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}(-[0-9]+)?$`)
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
