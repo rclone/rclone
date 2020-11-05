@@ -142,7 +142,7 @@ using remote authorization you would do this:
 		if err != nil {
 			return err
 		}
-		err = config.CreateRemote(args[0], args[1], in, configObscure, configNoObscure)
+		err = config.CreateRemote(context.Background(), args[0], args[1], in, configObscure, configNoObscure)
 		if err != nil {
 			return err
 		}
@@ -181,7 +181,7 @@ require this add an extra parameter thus:
 		if err != nil {
 			return err
 		}
-		err = config.UpdateRemote(args[0], in, configObscure, configNoObscure)
+		err = config.UpdateRemote(context.Background(), args[0], in, configObscure, configNoObscure)
 		if err != nil {
 			return err
 		}
@@ -219,7 +219,7 @@ both support obscuring passwords directly.
 		if err != nil {
 			return err
 		}
-		err = config.PasswordRemote(args[0], in)
+		err = config.PasswordRemote(context.Background(), args[0], in)
 		if err != nil {
 			return err
 		}
@@ -253,6 +253,7 @@ To disconnect the remote use "rclone config disconnect".
 This normally means going through the interactive oauth flow again.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
+		ctx := context.Background()
 		cmd.CheckArgs(1, 1, command, args)
 		fsInfo, configName, _, config, err := fs.ConfigFs(args[0])
 		if err != nil {
@@ -261,7 +262,7 @@ This normally means going through the interactive oauth flow again.
 		if fsInfo.Config == nil {
 			return errors.Errorf("%s: doesn't support Reconnect", configName)
 		}
-		fsInfo.Config(configName, config)
+		fsInfo.Config(ctx, configName, config)
 		return nil
 	},
 }

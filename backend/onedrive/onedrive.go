@@ -80,9 +80,8 @@ func init() {
 		Name:        "onedrive",
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
-		Config: func(name string, m configmap.Mapper) {
-			ctx := context.TODO()
-			err := oauthutil.Config("onedrive", name, m, oauthConfig, nil)
+		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+			err := oauthutil.Config(ctx, "onedrive", name, m, oauthConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 				return
@@ -111,7 +110,7 @@ func init() {
 				Sites []siteResource `json:"value"`
 			}
 
-			oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
+			oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 			if err != nil {
 				log.Fatalf("Failed to configure OneDrive: %v", err)
 			}
@@ -233,7 +232,7 @@ func init() {
 
 			fmt.Printf("Found drive '%s' of type '%s', URL: %s\nIs that okay?\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL)
 			// This does not work, YET :)
-			if !config.ConfirmWithConfig(m, "config_drive_ok", true) {
+			if !config.ConfirmWithConfig(ctx, m, "config_drive_ok", true) {
 				log.Fatalf("Cancelled by user")
 			}
 
@@ -614,7 +613,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	root = parsePath(root)
-	oAuthClient, ts, err := oauthutil.NewClient(name, m, oauthConfig)
+	oAuthClient, ts, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure OneDrive")
 	}

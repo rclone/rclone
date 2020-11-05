@@ -35,7 +35,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "fichier",
 		Description: "1Fichier",
-		Config: func(name string, config configmap.Mapper) {
+		Config: func(ctx context.Context, name string, config configmap.Mapper) {
 		},
 		NewFs: NewFs,
 		Options: []fs.Option{{

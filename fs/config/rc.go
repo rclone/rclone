@@ -152,11 +152,11 @@ func rcConfig(ctx context.Context, in rc.Params, what string) (out rc.Params, er
 		if err != nil {
 			return nil, err
 		}
-		return nil, CreateRemote(name, remoteType, parameters, doObscure, noObscure)
+		return nil, CreateRemote(ctx, name, remoteType, parameters, doObscure, noObscure)
 	case "update":
-		return nil, UpdateRemote(name, parameters, doObscure, noObscure)
+		return nil, UpdateRemote(ctx, name, parameters, doObscure, noObscure)
 	case "password":
-		return nil, PasswordRemote(name, parameters)
+		return nil, PasswordRemote(ctx, name, parameters)
 	}
 	panic("unknown rcConfig type")
 }

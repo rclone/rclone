@@ -78,7 +78,7 @@ func init() {
 		Prefix:      "gphotos",
 		Description: "Google Photos",
 		NewFs:       NewFs,
-		Config: func(name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) {
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
@@ -95,7 +95,7 @@ func init() {
 			}
 
 			// Do the oauth
-			err = oauthutil.Config("google photos", name, m, oauthConfig, nil)
+			err = oauthutil.Config(ctx, "google photos", name, m, oauthConfig, nil)
 			if err != nil {
 				golog.Fatalf("Failed to configure token: %v", err)
 			}
@@ -255,7 +255,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	baseClient := fshttp.NewClient(fs.Config)
-	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, m, oauthConfig, baseClient)
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure Box")
 	}

@@ -420,7 +420,7 @@ func (f *Fs) authorize(ctx context.Context, force bool) (err error) {
 
 	if err != nil || !tokenIsValid(t) {
 		fs.Infof(f, "Valid token not found, authorizing.")
-		ctx := oauthutil.Context(f.cli)
+		ctx := oauthutil.Context(ctx, f.cli)
 		t, err = oauthConfig.PasswordCredentialsToken(ctx, f.opt.Username, f.opt.Password)
 	}
 	if err == nil && !tokenIsValid(t) {
@@ -443,7 +443,7 @@ func (f *Fs) authorize(ctx context.Context, force bool) (err error) {
 	// crashing with panic `comparing uncomparable type map[string]interface{}`
 	// As a workaround, mimic oauth2.NewClient() wrapping token source in
 	// oauth2.ReuseTokenSource
-	_, ts, err := oauthutil.NewClientWithBaseClient(f.name, f.m, oauthConfig, f.cli)
+	_, ts, err := oauthutil.NewClientWithBaseClient(ctx, f.name, f.m, oauthConfig, f.cli)
 	if err == nil {
 		f.source = oauth2.ReuseTokenSource(nil, ts)
 	}

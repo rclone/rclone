@@ -136,7 +136,7 @@ func init() {
 		Name:        "sharefile",
 		Description: "Citrix Sharefile",
 		NewFs:       NewFs,
-		Config: func(name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) {
 			oauthConfig := newOauthConfig("")
 			checkAuth := func(oauthConfig *oauth2.Config, auth *oauthutil.AuthResult) error {
 				if auth == nil || auth.Form == nil {
@@ -155,7 +155,7 @@ func init() {
 			opt := oauthutil.Options{
 				CheckAuth: checkAuth,
 			}
-			err := oauthutil.Config("sharefile", name, m, oauthConfig, &opt)
+			err := oauthutil.Config(ctx, "sharefile", name, m, oauthConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
@@ -436,7 +436,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	oauthConfig := newOauthConfig(opt.Endpoint + tokenPath)
 	var client *http.Client
 	var ts *oauthutil.TokenSource
-	client, ts, err = oauthutil.NewClient(name, m, oauthConfig)
+	client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure sharefile")
 	}

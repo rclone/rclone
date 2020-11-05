@@ -76,7 +76,7 @@ func init() {
 		Name:        "sugarsync",
 		Description: "Sugarsync",
 		NewFs:       NewFs,
-		Config: func(name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) {
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
 			if err != nil {
@@ -85,7 +85,7 @@ func init() {
 
 			if opt.RefreshToken != "" {
 				fmt.Printf("Already have a token - refresh?\n")
-				if !config.ConfirmWithConfig(m, "config_refresh_token", true) {
+				if !config.ConfirmWithConfig(ctx, m, "config_refresh_token", true) {
 					return
 				}
 			}

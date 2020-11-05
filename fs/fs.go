@@ -86,7 +86,7 @@ type RegInfo struct {
 	// the parent of that object and ErrorIsFile.
 	NewFs func(ctx context.Context, name string, root string, config configmap.Mapper) (Fs, error) `json:"-"`
 	// Function to call to help with config
-	Config func(name string, config configmap.Mapper) `json:"-"`
+	Config func(ctx context.Context, name string, config configmap.Mapper) `json:"-"`
 	// Options for the Fs configuration
 	Options Options
 	// The command help, if any
