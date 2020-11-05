@@ -25,12 +25,12 @@ type Fs struct {
 var ErrNotImplemented = errors.New("not implemented")
 
 // NewFs returns a new mock Fs
-func NewFs(name, root string) *Fs {
+func NewFs(ctx context.Context, name, root string) *Fs {
 	f := &Fs{
 		name: name,
 		root: root,
 	}
-	f.features = (&fs.Features{}).Fill(f)
+	f.features = (&fs.Features{}).Fill(ctx, f)
 	return f
 }
 

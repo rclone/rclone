@@ -23,9 +23,9 @@ func mockNewFs(t *testing.T) (func(), func(ctx context.Context, path string) (fs
 		called++
 		switch path {
 		case "mock:/":
-			return mockfs.NewFs("mock", "/"), nil
+			return mockfs.NewFs(ctx, "mock", "/"), nil
 		case "mock:/file.txt", "mock:file.txt":
-			return mockfs.NewFs("mock", "/"), fs.ErrorIsFile
+			return mockfs.NewFs(ctx, "mock", "/"), fs.ErrorIsFile
 		case "mock:/error":
 			return nil, errSentinel
 		}
@@ -124,7 +124,7 @@ func TestPut(t *testing.T) {
 	cleanup, create := mockNewFs(t)
 	defer cleanup()
 
-	f := mockfs.NewFs("mock", "/alien")
+	f := mockfs.NewFs(context.Background(), "mock", "/alien")
 
 	assert.Equal(t, 0, c.Entries())
 
@@ -155,7 +155,7 @@ func TestPin(t *testing.T) {
 	defer cleanup()
 
 	// Test pinning and unpinning non existent
-	f := mockfs.NewFs("mock", "/alien")
+	f := mockfs.NewFs(context.Background(), "mock", "/alien")
 	Pin(f)
 	Unpin(f)
 

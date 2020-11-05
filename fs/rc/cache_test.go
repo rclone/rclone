@@ -11,7 +11,7 @@ import (
 )
 
 func mockNewFs(t *testing.T) func() {
-	f := mockfs.NewFs("mock", "mock")
+	f := mockfs.NewFs(context.Background(), "mock", "mock")
 	cache.Put("/", f)
 	return func() {
 		cache.Clear()

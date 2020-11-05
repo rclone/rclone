@@ -17,9 +17,9 @@ import (
 )
 
 func TestDoMultiThreadCopy(t *testing.T) {
-	f := mockfs.NewFs("potato", "")
+	f := mockfs.NewFs(context.Background(), "potato", "")
 	src := mockobject.New("file.txt").WithContent([]byte(random.String(100)), mockobject.SeekModeNone)
-	srcFs := mockfs.NewFs("sausage", "")
+	srcFs := mockfs.NewFs(context.Background(), "sausage", "")
 	src.SetFs(srcFs)
 
 	oldStreams := fs.Config.MultiThreadStreams

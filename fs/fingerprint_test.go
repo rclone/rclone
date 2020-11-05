@@ -14,7 +14,7 @@ import (
 
 func TestFingerprint(t *testing.T) {
 	ctx := context.Background()
-	f := mockfs.NewFs("test", "root")
+	f := mockfs.NewFs(ctx, "test", "root")
 	f.SetHashes(hash.NewHashSet(hash.MD5))
 
 	for i, test := range []struct {

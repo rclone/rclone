@@ -709,7 +709,7 @@ func TestListR(t *testing.T) {
 		mockobject.Object("dir/b"),
 		mockobject.Object("dir/c"),
 	}
-	f := mockfs.NewFs("mock", "/")
+	f := mockfs.NewFs(context.Background(), "mock", "/")
 	var got []string
 	clearCallback := func() {
 		got = nil
