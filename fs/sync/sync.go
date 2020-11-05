@@ -116,7 +116,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		deleteFilesCh:          make(chan fs.Object, fs.Config.Checkers),
 		trackRenames:           fs.Config.TrackRenames,
 		commonHash:             fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
-		modifyWindow:           fs.GetModifyWindow(fsrc, fdst),
+		modifyWindow:           fs.GetModifyWindow(ctx, fsrc, fdst),
 		trackRenamesCh:         make(chan fs.Object, fs.Config.Checkers),
 		checkFirst:             fs.Config.CheckFirst,
 	}
@@ -762,7 +762,7 @@ func (s *syncCopyMove) makeRenameMap() {
 // possible, it returns true if the object was renamed.
 func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	// Calculate the hash of the src object
-	hash := s.renameID(src, s.trackRenamesStrategy, fs.GetModifyWindow(s.fsrc, s.fdst))
+	hash := s.renameID(src, s.trackRenamesStrategy, fs.GetModifyWindow(s.ctx, s.fsrc, s.fdst))
 
 	if hash == "" {
 		return false

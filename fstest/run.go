@@ -173,7 +173,7 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 	}
 	r.Logf = t.Logf
 	r.Fatalf = t.Fatalf
-	r.Logf("Remote %q, Local %q, Modify Window %q", r.Fremote, r.Flocal, fs.GetModifyWindow(r.Fremote))
+	r.Logf("Remote %q, Local %q, Modify Window %q", r.Fremote, r.Flocal, fs.GetModifyWindow(ctx, r.Fremote))
 	return r
 }
 

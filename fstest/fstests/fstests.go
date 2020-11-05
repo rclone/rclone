@@ -502,15 +502,15 @@ func Run(t *testing.T, opt *Opt) {
 			dir := "dir/subdir"
 			err := operations.Mkdir(ctx, remote, dir)
 			require.NoError(t, err)
-			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir", "dir/subdir"}, fs.GetModifyWindow(remote))
+			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir", "dir/subdir"}, fs.GetModifyWindow(ctx, remote))
 
 			err = operations.Rmdir(ctx, remote, dir)
 			require.NoError(t, err)
-			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir"}, fs.GetModifyWindow(remote))
+			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir"}, fs.GetModifyWindow(ctx, remote))
 
 			err = operations.Rmdir(ctx, remote, "dir")
 			require.NoError(t, err)
-			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(remote))
+			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(ctx, remote))
 		})
 
 		// TestFsListEmpty tests listing an empty directory
@@ -569,7 +569,7 @@ func Run(t *testing.T, opt *Opt) {
 			skipIfNotOk(t)
 
 			// check no files or dirs as pre-requisite
-			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(remote))
+			fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(ctx, remote))
 
 			for _, test := range []struct {
 				name string
@@ -609,10 +609,10 @@ func Run(t *testing.T, opt *Opt) {
 						Path:    dirName + "/" + fileName, // test creating a file and dir with that name
 					}
 					_, o := testPut(context.Background(), t, remote, &file)
-					fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file}, []string{dirName}, fs.GetModifyWindow(remote))
+					fstest.CheckListingWithPrecision(t, remote, []fstest.Item{file}, []string{dirName}, fs.GetModifyWindow(ctx, remote))
 					assert.NoError(t, o.Remove(ctx))
 					assert.NoError(t, remote.Rmdir(ctx, dirName))
-					fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(remote))
+					fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.GetModifyWindow(ctx, remote))
 				})
 			}
 		})
@@ -998,7 +998,7 @@ func Run(t *testing.T, opt *Opt) {
 					"hello? sausage/êé",
 					"hello? sausage/êé/Hello, 世界",
 					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
-				}, fs.GetModifyWindow(remote))
+				}, fs.GetModifyWindow(ctx, remote))
 
 				// Now purge it
 				err = operations.Purge(ctx, remote, "dirToPurge")
@@ -1009,7 +1009,7 @@ func Run(t *testing.T, opt *Opt) {
 					"hello? sausage/êé",
 					"hello? sausage/êé/Hello, 世界",
 					"hello? sausage/êé/Hello, 世界/ \" ' @ < > & ? + ≠",
-				}, fs.GetModifyWindow(remote))
+				}, fs.GetModifyWindow(ctx, remote))
 			})
 
 			// TestFsCopy tests Copy
