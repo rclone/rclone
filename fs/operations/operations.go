@@ -197,7 +197,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 	srcModTime := src.ModTime(ctx)
 	if !opt.forceModTimeMatch {
 		// Sizes the same so check the mtime
-		modifyWindow := fs.GetModifyWindow(src.Fs(), dst.Fs())
+		modifyWindow := fs.GetModifyWindow(ctx, src.Fs(), dst.Fs())
 		if modifyWindow == fs.ModTimeNotSupported {
 			fs.Debugf(src, "Sizes identical")
 			return true
@@ -1398,7 +1398,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 		dstModTime := dst.ModTime(ctx)
 		dt := dstModTime.Sub(srcModTime)
 		// If have a mutually agreed precision then use that
-		modifyWindow := fs.GetModifyWindow(dst.Fs(), src.Fs())
+		modifyWindow := fs.GetModifyWindow(ctx, dst.Fs(), src.Fs())
 		if modifyWindow == fs.ModTimeNotSupported {
 			// Otherwise use 1 second as a safe default as
 			// the resolution of the time a file was

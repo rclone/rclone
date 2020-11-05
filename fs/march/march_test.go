@@ -208,7 +208,7 @@ func TestMarch(t *testing.T) {
 			err := mt.currentError()
 			require.NoError(t, err)
 
-			precision := fs.GetModifyWindow(r.Fremote, r.Flocal)
+			precision := fs.GetModifyWindow(ctx, r.Fremote, r.Flocal)
 			fstest.CompareItems(t, mt.srcOnly, srcOnly, test.dirSrcOnly, precision, "srcOnly")
 			fstest.CompareItems(t, mt.dstOnly, dstOnly, test.dirDstOnly, precision, "dstOnly")
 			fstest.CompareItems(t, mt.match, match, test.dirMatch, precision, "match")
@@ -275,7 +275,7 @@ func TestMarchNoTraverse(t *testing.T) {
 			err := mt.currentError()
 			require.NoError(t, err)
 
-			precision := fs.GetModifyWindow(r.Fremote, r.Flocal)
+			precision := fs.GetModifyWindow(ctx, r.Fremote, r.Flocal)
 			fstest.CompareItems(t, mt.srcOnly, srcOnly, test.dirSrcOnly, precision, "srcOnly")
 			fstest.CompareItems(t, mt.match, match, test.dirMatch, precision, "match")
 		})

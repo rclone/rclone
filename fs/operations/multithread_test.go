@@ -105,6 +105,7 @@ func TestMultithreadCalculateChunks(t *testing.T) {
 func TestMultithreadCopy(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
+	ctx := context.Background()
 
 	for _, test := range []struct {
 		size    int
@@ -121,11 +122,11 @@ func TestMultithreadCopy(t *testing.T) {
 			var err error
 			contents := random.String(test.size)
 			t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
-			file1 := r.WriteObject(context.Background(), "file1", contents, t1)
+			file1 := r.WriteObject(ctx, "file1", contents, t1)
 			fstest.CheckItems(t, r.Fremote, file1)
 			fstest.CheckItems(t, r.Flocal)
 
-			src, err := r.Fremote.NewObject(context.Background(), "file1")
+			src, err := r.Fremote.NewObject(ctx, "file1")
 			require.NoError(t, err)
 			accounting.GlobalStats().ResetCounters()
 			tr := accounting.GlobalStats().NewTransfer(src)
@@ -133,13 +134,13 @@ func TestMultithreadCopy(t *testing.T) {
 			defer func() {
 				tr.Done(err)
 			}()
-			dst, err := multiThreadCopy(context.Background(), r.Flocal, "file1", src, 2, tr)
+			dst, err := multiThreadCopy(ctx, r.Flocal, "file1", src, 2, tr)
 			require.NoError(t, err)
 			assert.Equal(t, src.Size(), dst.Size())
 			assert.Equal(t, "file1", dst.Remote())
 
-			fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1}, nil, fs.GetModifyWindow(r.Flocal, r.Fremote))
-			require.NoError(t, dst.Remove(context.Background()))
+			fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1}, nil, fs.GetModifyWindow(ctx, r.Flocal, r.Fremote))
+			require.NoError(t, dst.Remove(ctx))
 		})
 	}
 
