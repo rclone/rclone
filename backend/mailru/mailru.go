@@ -332,7 +332,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Can copy/move across mailru configs (almost, thus true here), but
 		// only when they share common account (this is checked in Copy/Move).
 		ServerSideAcrossConfigs: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 
 	// Override few config settings and create a client
 	clientConfig := *fs.Config

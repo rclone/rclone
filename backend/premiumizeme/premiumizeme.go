@@ -266,7 +266,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
@@ -302,7 +302,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 			return nil, err
 		}
-		f.features.Fill(&tempF)
+		f.features.Fill(ctx, &tempF)
 		// XXX: update the old f here instead of returning tempF, since
 		// `features` were already filled with functions having *f as a receiver.
 		// See https://github.com/rclone/rclone/issues/2182

@@ -833,9 +833,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		BucketBased:             true,
 		SetTier:                 true,
 		GetTier:                 true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	for _, f := range upstreams {
-		features = features.Mask(f) // Mask all upstream fs
+		features = features.Mask(ctx, f) // Mask all upstream fs
 	}
 
 	// Enable ListR when upstreams either support ListR or is local

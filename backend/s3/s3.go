@@ -1620,7 +1620,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SetTier:           true,
 		GetTier:           true,
 		SlowModTime:       true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the object exists
 		encodedDirectory := f.opt.Enc.FromStandardPath(f.rootDirectory)

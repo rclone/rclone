@@ -512,7 +512,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 		DuplicateFiles:          false, // storage doesn't permit this
-	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
+	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 	// override only those features that use a temp fs and it doesn't support them
 	//f.features.ChangeNotify = f.ChangeNotify
 	if f.opt.TempWritePath != "" {

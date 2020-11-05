@@ -217,7 +217,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs,
 	f.features = (&fs.Features{
 		BucketBased:       true,
 		BucketBasedRootOK: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 
 	project, err := f.connect(ctx)
 	if err != nil {

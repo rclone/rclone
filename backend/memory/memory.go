@@ -241,7 +241,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		od := buckets.getObjectData(f.rootBucket, f.rootDirectory)
 		if od != nil {

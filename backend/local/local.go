@@ -245,7 +245,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		IsLocal:                 true,
 		SlowHash:                true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
 	}

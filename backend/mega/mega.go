@@ -233,7 +233,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 
 	// Find the root node and check if it is a file or not
 	_, err = f.findRoot(false)

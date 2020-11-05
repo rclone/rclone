@@ -389,7 +389,7 @@ func Run(t *testing.T, opt *Opt) {
 		if opt.SkipFsCheckWrap {
 			t.Skip("Skipping FsCheckWrap on this Fs")
 		}
-		ft := new(fs.Features).Fill(remote)
+		ft := new(fs.Features).Fill(ctx, remote)
 		if ft.UnWrap == nil {
 			t.Skip("Not a wrapping Fs")
 		}
@@ -1584,7 +1584,7 @@ func Run(t *testing.T, opt *Opt) {
 				if opt.SkipObjectCheckWrap {
 					t.Skip("Skipping FsCheckWrap on this Fs")
 				}
-				ft := new(fs.Features).Fill(remote)
+				ft := new(fs.Features).Fill(ctx, remote)
 				if ft.UnWrap == nil {
 					t.Skip("Not a wrapping Fs")
 				}

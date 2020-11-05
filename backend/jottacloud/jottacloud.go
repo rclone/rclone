@@ -720,7 +720,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		ReadMimeType:            true,
 		WriteMimeType:           true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 	if opt.TrashedOnly { // we cannot support showing Trashed Files when using ListR right now
 		f.features.ListR = nil

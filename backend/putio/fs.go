@@ -95,7 +95,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (f fs.Fs,
 		DuplicateFiles:          true,
 		ReadMimeType:            true,
 		CanHaveEmptyDirectories: true,
-	}).Fill(p)
+	}).Fill(ctx, p)
 	p.dirCache = dircache.New(root, "0", p)
 	// Find the current root
 	err = p.dirCache.FindRoot(ctx, false)

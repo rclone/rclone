@@ -193,7 +193,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 
 	client := fshttp.NewClient(fs.Config)
 
@@ -225,7 +225,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 			}
 			return nil, err
 		}
-		f.features.Fill(&tempF)
+		f.features.Fill(ctx, &tempF)
 		// XXX: update the old f here instead of returning tempF, since
 		// `features` were already filled with functions having *f as a receiver.
 		// See https://github.com/rclone/rclone/issues/2182

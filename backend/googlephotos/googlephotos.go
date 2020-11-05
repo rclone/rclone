@@ -279,7 +279,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.features = (&fs.Features{
 		ReadMimeType: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
 	_, _, pattern := patterns.match(f.root, "", true)
