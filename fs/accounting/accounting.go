@@ -280,6 +280,12 @@ func (acc *Account) ServerSideCopyEnd(n int64) {
 	acc.stats.Bytes(n)
 }
 
+// DryRun accounts for statistics without running the operation
+func (acc *Account) DryRun(n int64) {
+	acc.ServerSideCopyStart()
+	acc.ServerSideCopyEnd(n)
+}
+
 // Account for n bytes from the current file bandwidth limit (if any)
 func (acc *Account) limitPerFileBandwidth(n int) {
 	acc.values.mu.Lock()

@@ -368,6 +368,8 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 	}()
 	newDst = dst
 	if SkipDestructive(ctx, src, "copy") {
+		in := tr.Account(ctx, nil)
+		in.DryRun(src.Size())
 		return newDst, nil
 	}
 	maxTries := ci.LowLevelRetries
@@ -559,6 +561,8 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 	}()
 	newDst = dst
 	if SkipDestructive(ctx, src, "move") {
+		in := tr.Account(ctx, nil)
+		in.DryRun(src.Size())
 		return newDst, nil
 	}
 	// See if we have Move available
@@ -1929,6 +1933,12 @@ func (l *ListFormat) Format(entry *ListJSONItem) (result string) {
 // if available) and doing renames in parallel.
 func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err error) {
 	ci := fs.GetConfig(ctx)
+
+	if SkipDestructive(ctx, srcRemote, "dirMove") {
+		accounting.Stats(ctx).Renames(1)
+		return nil
+	}
+
 	// Use DirMove if possible
 	if doDirMove := f.Features().DirMove; doDirMove != nil {
 		err = doDirMove(ctx, f, srcRemote, dstRemote)
