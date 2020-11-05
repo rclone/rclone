@@ -116,11 +116,11 @@ func init() {
 		Name:        "dropbox",
 		Description: "Dropbox",
 		NewFs:       NewFs,
-		Config: func(name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) {
 			opt := oauthutil.Options{
 				NoOffline: true,
 			}
-			err := oauthutil.Config("dropbox", name, m, dropboxConfig, &opt)
+			err := oauthutil.Config(ctx, "dropbox", name, m, dropboxConfig, &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
@@ -316,7 +316,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
-	oAuthClient, _, err := oauthutil.NewClient(name, m, dropboxConfig)
+	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, dropboxConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure dropbox")
 	}

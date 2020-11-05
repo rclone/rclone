@@ -83,9 +83,7 @@ func init() {
 		Name:        "jottacloud",
 		Description: "Jottacloud",
 		NewFs:       NewFs,
-		Config: func(name string, m configmap.Mapper) {
-			ctx := context.TODO()
-
+		Config: func(ctx context.Context, name string, m configmap.Mapper) {
 			refresh := false
 			if version, ok := m.Get("configVersion"); ok {
 				ver, err := strconv.Atoi(version)
@@ -275,7 +273,7 @@ func v1config(ctx context.Context, name string, m configmap.Mapper) {
 
 	fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
 	if config.Confirm(false) {
-		oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
+		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
 			log.Fatalf("Failed to load oAuthClient: %s", err)
 		}
@@ -387,7 +385,7 @@ func v2config(ctx context.Context, name string, m configmap.Mapper) {
 
 	fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
 	if config.Confirm(false) {
-		oAuthClient, _, err := oauthutil.NewClient(name, m, oauthConfig)
+		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
 			log.Fatalf("Failed to load oAuthClient: %s", err)
 		}
@@ -699,7 +697,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Create OAuth Client
-	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, m, oauthConfig, baseClient)
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to configure Jottacloud oauth client")
 	}

@@ -1,6 +1,8 @@
 package authorize
 
 import (
+	"context"
+
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -29,6 +31,6 @@ Use the --auth-no-open-browser to prevent rclone to open auth
 link in default browser automatically.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 3, command, args)
-		config.Authorize(args, noAutoBrowser)
+		config.Authorize(context.Background(), args, noAutoBrowser)
 	},
 }

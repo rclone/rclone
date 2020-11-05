@@ -42,7 +42,7 @@ func init() {
 		Name:        "tardigrade",
 		Description: "Tardigrade Decentralized Cloud Storage",
 		NewFs:       NewFs,
-		Config: func(name string, configMapper configmap.Mapper) {
+		Config: func(ctx context.Context, name string, configMapper configmap.Mapper) {
 			provider, _ := configMapper.Get(fs.ConfigProvider)
 
 			config.FileDeleteKey(name, fs.ConfigProvider)

@@ -84,7 +84,7 @@ func init() {
 		Name:        "box",
 		Description: "Box",
 		NewFs:       NewFs,
-		Config: func(name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) {
 			jsonFile, ok := m.Get("box_config_file")
 			boxSubType, boxSubTypeOk := m.Get("box_sub_type")
 			boxAccessToken, boxAccessTokenOk := m.Get("access_token")
@@ -97,7 +97,7 @@ func init() {
 				}
 				// Else, if not using an access token, use oauth2
 			} else if boxAccessToken == "" || !boxAccessTokenOk {
-				err = oauthutil.Config("box", name, m, oauthConfig, nil)
+				err = oauthutil.Config(ctx, "box", name, m, oauthConfig, nil)
 				if err != nil {
 					log.Fatalf("Failed to configure token with oauth authentication: %v", err)
 				}
@@ -390,7 +390,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	var ts *oauthutil.TokenSource
 	// If not using an accessToken, create an oauth client and tokensource
 	if opt.AccessToken == "" {
-		client, ts, err = oauthutil.NewClient(name, m, oauthConfig)
+		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to configure Box")
 		}

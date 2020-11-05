@@ -288,8 +288,8 @@ func (ts *TokenSource) OnExpiry() <-chan time.Time {
 var _ oauth2.TokenSource = (*TokenSource)(nil)
 
 // Context returns a context with our HTTP Client baked in for oauth2
-func Context(client *http.Client) context.Context {
-	return context.WithValue(context.Background(), oauth2.HTTPClient, client)
+func Context(ctx context.Context, client *http.Client) context.Context {
+	return context.WithValue(ctx, oauth2.HTTPClient, client)
 }
 
 // overrideCredentials sets the ClientID and ClientSecret from the
@@ -327,7 +327,7 @@ func overrideCredentials(name string, m configmap.Mapper, origConfig *oauth2.Con
 // configures a Client with it.  It returns the client and a
 // TokenSource which Invalidate may need to be called on.  It uses the
 // httpClient passed in as the base client.
-func NewClientWithBaseClient(name string, m configmap.Mapper, config *oauth2.Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
+func NewClientWithBaseClient(ctx context.Context, name string, m configmap.Mapper, config *oauth2.Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
 	config, _ = overrideCredentials(name, m, config)
 	token, err := GetToken(name, m)
 	if err != nil {
@@ -335,7 +335,7 @@ func NewClientWithBaseClient(name string, m configmap.Mapper, config *oauth2.Con
 	}
 
 	// Set our own http client in the context
-	ctx := Context(baseClient)
+	ctx = Context(ctx, baseClient)
 
 	// Wrap the TokenSource in our TokenSource which saves changed
 	// tokens in the config file
@@ -352,8 +352,8 @@ func NewClientWithBaseClient(name string, m configmap.Mapper, config *oauth2.Con
 
 // NewClient gets a token from the config file and configures a Client
 // with it.  It returns the client and a TokenSource which Invalidate may need to be called on
-func NewClient(name string, m configmap.Mapper, oauthConfig *oauth2.Config) (*http.Client, *TokenSource, error) {
-	return NewClientWithBaseClient(name, m, oauthConfig, fshttp.NewClient(fs.Config))
+func NewClient(ctx context.Context, name string, m configmap.Mapper, oauthConfig *oauth2.Config) (*http.Client, *TokenSource, error) {
+	return NewClientWithBaseClient(ctx, name, m, oauthConfig, fshttp.NewClient(fs.Config))
 }
 
 // AuthResult is returned from the web server after authorization
@@ -394,7 +394,7 @@ type Options struct {
 // If opt is nil it will use the default Options
 //
 // It may run an internal webserver to receive the results
-func Config(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt *Options) error {
+func Config(ctx context.Context, id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt *Options) error {
 	if opt == nil {
 		opt = &Options{}
 	}
@@ -408,7 +408,7 @@ func Config(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt
 	tokenString, ok := m.Get("token")
 	if ok && tokenString != "" {
 		fmt.Printf("Already have a token - refresh?\n")
-		if !config.ConfirmWithConfig(m, "config_refresh_token", true) {
+		if !config.ConfirmWithConfig(ctx, m, "config_refresh_token", true) {
 			return nil
 		}
 	}
@@ -418,7 +418,7 @@ func Config(id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt
 		fmt.Printf("Use auto config?\n")
 		fmt.Printf(" * Say Y if not sure\n")
 		fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
-		return config.ConfirmWithConfig(m, "config_is_local", true)
+		return config.ConfirmWithConfig(ctx, m, "config_is_local", true)
 	}
 
 	// Detect whether we should use internal web server
@@ -526,7 +526,7 @@ version recommended):
 	}
 
 	// Exchange the code for a token
-	ctx := Context(fshttp.NewClient(fs.Config))
+	ctx = Context(ctx, fshttp.NewClient(fs.Config))
 	token, err := oauthConfig.Exchange(ctx, auth.Code)
 	if err != nil {
 		return errors.Wrap(err, "failed to get token")

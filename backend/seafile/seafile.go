@@ -296,7 +296,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 }
 
 // Config callback for 2FA
-func Config(name string, m configmap.Mapper) {
+func Config(ctx context.Context, name string, m configmap.Mapper) {
 	serverURL, ok := m.Get(configURL)
 	if !ok || serverURL == "" {
 		// If there's no server URL, it means we're trying an operation at the backend level, like a "rclone authorize seafile"

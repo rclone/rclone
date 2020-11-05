@@ -180,6 +180,7 @@ func TestNewRemoteName(t *testing.T) {
 }
 
 func TestCreateUpdatePasswordRemote(t *testing.T) {
+	ctx := context.Background()
 	defer testConfigFile(t, "update.conf")()
 
 	for _, doObscure := range []bool{false, true} {
@@ -188,7 +189,7 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 				break
 			}
 			t.Run(fmt.Sprintf("doObscure=%v,noObscure=%v", doObscure, noObscure), func(t *testing.T) {
-				require.NoError(t, CreateRemote("test2", "config_test_remote", rc.Params{
+				require.NoError(t, CreateRemote(ctx, "test2", "config_test_remote", rc.Params{
 					"bool": true,
 					"pass": "potato",
 				}, doObscure, noObscure))
@@ -203,7 +204,7 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 				assert.Equal(t, "potato", gotPw)
 
 				wantPw := obscure.MustObscure("potato2")
-				require.NoError(t, UpdateRemote("test2", rc.Params{
+				require.NoError(t, UpdateRemote(ctx, "test2", rc.Params{
 					"bool":  false,
 					"pass":  wantPw,
 					"spare": "spare",
@@ -218,7 +219,7 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 				}
 				assert.Equal(t, wantPw, gotPw)
 
-				require.NoError(t, PasswordRemote("test2", rc.Params{
+				require.NoError(t, PasswordRemote(ctx, "test2", rc.Params{
 					"pass": "potato3",
 				}))
 
@@ -427,8 +428,9 @@ func TestMatchProvider(t *testing.T) {
 }
 
 func TestFileRefresh(t *testing.T) {
+	ctx := context.Background()
 	defer testConfigFile(t, "refresh.conf")()
-	require.NoError(t, CreateRemote("refresh_test", "config_test_remote", rc.Params{
+	require.NoError(t, CreateRemote(ctx, "refresh_test", "config_test_remote", rc.Params{
 		"bool": true,
 	}, false, false))
 	b, err := ioutil.ReadFile(ConfigPath)

@@ -745,7 +745,7 @@ func Confirm(Default bool) bool {
 // If AutoConfirm is set, it will look up the value in m and return
 // that, but if it isn't set then it will return the Default value
 // passed in
-func ConfirmWithConfig(m configmap.Getter, configName string, Default bool) bool {
+func ConfirmWithConfig(ctx context.Context, m configmap.Getter, configName string, Default bool) bool {
 	if fs.Config.AutoConfirm {
 		configString, ok := m.Get(configName)
 		if ok {
@@ -902,7 +902,7 @@ func RemoteConfig(name string) {
 	f := MustFindByName(name)
 	if f.Config != nil {
 		m := fs.ConfigMap(f, name)
-		f.Config(name, m)
+		f.Config(context.Background(), name, m)
 	}
 }
 
@@ -1024,7 +1024,7 @@ func ChooseOption(o *fs.Option, name string) string {
 }
 
 // Suppress the confirm prompts and return a function to undo that
-func suppressConfirm() func() {
+func suppressConfirm(ctx context.Context) func() {
 	old := fs.Config.AutoConfirm
 	fs.Config.AutoConfirm = true
 	return func() {
@@ -1034,7 +1034,7 @@ func suppressConfirm() func() {
 
 // UpdateRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
-func UpdateRemote(name string, keyValues rc.Params, doObscure, noObscure bool) error {
+func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, doObscure, noObscure bool) error {
 	if doObscure && noObscure {
 		return errors.New("can't use --obscure and --no-obscure together")
 	}
@@ -1042,7 +1042,7 @@ func UpdateRemote(name string, keyValues rc.Params, doObscure, noObscure bool) e
 	if err != nil {
 		return err
 	}
-	defer suppressConfirm()()
+	defer suppressConfirm(ctx)()
 
 	// Work out which options need to be obscured
 	needsObscure := map[string]struct{}{}
@@ -1087,7 +1087,7 @@ func UpdateRemote(name string, keyValues rc.Params, doObscure, noObscure bool) e
 // CreateRemote creates a new remote with name, provider and a list of
 // parameters which are key, value pairs.  If update is set then it
 // adds the new keys rather than replacing all of them.
-func CreateRemote(name string, provider string, keyValues rc.Params, doObscure, noObscure bool) error {
+func CreateRemote(ctx context.Context, name string, provider string, keyValues rc.Params, doObscure, noObscure bool) error {
 	err := fspath.CheckConfigName(name)
 	if err != nil {
 		return err
@@ -1097,21 +1097,21 @@ func CreateRemote(name string, provider string, keyValues rc.Params, doObscure, 
 	// Set the type
 	getConfigData().SetValue(name, "type", provider)
 	// Set the remaining values
-	return UpdateRemote(name, keyValues, doObscure, noObscure)
+	return UpdateRemote(ctx, name, keyValues, doObscure, noObscure)
 }
 
 // PasswordRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
-func PasswordRemote(name string, keyValues rc.Params) error {
+func PasswordRemote(ctx context.Context, name string, keyValues rc.Params) error {
 	err := fspath.CheckConfigName(name)
 	if err != nil {
 		return err
 	}
-	defer suppressConfirm()()
+	defer suppressConfirm(ctx)()
 	for k, v := range keyValues {
 		keyValues[k] = obscure.MustObscure(fmt.Sprint(v))
 	}
-	return UpdateRemote(name, keyValues, false, true)
+	return UpdateRemote(ctx, name, keyValues, false, true)
 }
 
 // JSONListProviders prints all the providers and options in JSON format
@@ -1387,8 +1387,8 @@ func SetPassword() {
 //
 //   rclone authorize "fs name"
 //   rclone authorize "fs name" "client id" "client secret"
-func Authorize(args []string, noAutoBrowser bool) {
-	defer suppressConfirm()()
+func Authorize(ctx context.Context, args []string, noAutoBrowser bool) {
+	defer suppressConfirm(ctx)()
 	switch len(args) {
 	case 1, 3:
 	default:
@@ -1417,7 +1417,7 @@ func Authorize(args []string, noAutoBrowser bool) {
 	}
 
 	m := fs.ConfigMap(f, name)
-	f.Config(name, m)
+	f.Config(ctx, name, m)
 }
 
 // FileGetFlag gets the config key under section returning the

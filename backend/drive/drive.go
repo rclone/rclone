@@ -176,8 +176,7 @@ func init() {
 		Description: "Google Drive",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
-		Config: func(name string, m configmap.Mapper) {
-			ctx := context.TODO()
+		Config: func(ctx context.Context, name string, m configmap.Mapper) {
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
@@ -194,7 +193,7 @@ func init() {
 			}
 
 			if opt.ServiceAccountFile == "" {
-				err = oauthutil.Config("drive", name, m, driveConfig, nil)
+				err = oauthutil.Config(ctx, "drive", name, m, driveConfig, nil)
 				if err != nil {
 					log.Fatalf("Failed to configure token: %v", err)
 				}
@@ -991,7 +990,7 @@ func getClient(opt *Options) *http.Client {
 	}
 }
 
-func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client, error) {
+func getServiceAccountClient(ctx context.Context, opt *Options, credentialsData []byte) (*http.Client, error) {
 	scopes := driveScopes(opt.Scope)
 	conf, err := google.JWTConfigFromJSON(credentialsData, scopes...)
 	if err != nil {
@@ -1000,11 +999,11 @@ func getServiceAccountClient(opt *Options, credentialsData []byte) (*http.Client
 	if opt.Impersonate != "" {
 		conf.Subject = opt.Impersonate
 	}
-	ctxWithSpecialClient := oauthutil.Context(getClient(opt))
+	ctxWithSpecialClient := oauthutil.Context(ctx, getClient(opt))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
-func createOAuthClient(opt *Options, name string, m configmap.Mapper) (*http.Client, error) {
+func createOAuthClient(ctx context.Context, opt *Options, name string, m configmap.Mapper) (*http.Client, error) {
 	var oAuthClient *http.Client
 	var err error
 
@@ -1017,12 +1016,12 @@ func createOAuthClient(opt *Options, name string, m configmap.Mapper) (*http.Cli
 		opt.ServiceAccountCredentials = string(loadedCreds)
 	}
 	if opt.ServiceAccountCredentials != "" {
-		oAuthClient, err = getServiceAccountClient(opt, []byte(opt.ServiceAccountCredentials))
+		oAuthClient, err = getServiceAccountClient(ctx, opt, []byte(opt.ServiceAccountCredentials))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create oauth client from service account")
 		}
 	} else {
-		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(name, m, driveConfig, getClient(opt))
+		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(ctx, name, m, driveConfig, getClient(opt))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create oauth client")
 		}
@@ -1081,7 +1080,7 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		return nil, errors.Wrap(err, "drive: chunk size")
 	}
 
-	oAuthClient, err := createOAuthClient(opt, name, m)
+	oAuthClient, err := createOAuthClient(ctx, opt, name, m)
 	if err != nil {
 		return nil, errors.Wrap(err, "drive: failed when making oauth client")
 	}
@@ -2770,7 +2769,7 @@ func (f *Fs) changeChunkSize(chunkSizeString string) (err error) {
 	return err
 }
 
-func (f *Fs) changeServiceAccountFile(file string) (err error) {
+func (f *Fs) changeServiceAccountFile(ctx context.Context, file string) (err error) {
 	fs.Debugf(nil, "Changing Service Account File from %s to %s", f.opt.ServiceAccountFile, file)
 	if file == f.opt.ServiceAccountFile {
 		return nil
@@ -2792,7 +2791,7 @@ func (f *Fs) changeServiceAccountFile(file string) (err error) {
 	}()
 	f.opt.ServiceAccountFile = file
 	f.opt.ServiceAccountCredentials = ""
-	oAuthClient, err := createOAuthClient(&f.opt, f.name, f.m)
+	oAuthClient, err := createOAuthClient(ctx, &f.opt, f.name, f.m)
 	if err != nil {
 		return errors.Wrap(err, "drive: failed when making oauth client")
 	}
@@ -3160,7 +3159,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if serviceAccountFile, ok := opt["service_account_file"]; ok {
 			serviceAccountMap := make(map[string]string)
 			serviceAccountMap["previous"] = f.opt.ServiceAccountFile
-			if err = f.changeServiceAccountFile(serviceAccountFile); err != nil {
+			if err = f.changeServiceAccountFile(ctx, serviceAccountFile); err != nil {
 				return out, err
 			}
 			f.m.Set("service_account_file", serviceAccountFile)
