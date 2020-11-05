@@ -34,14 +34,14 @@ var (
 )
 
 // StartHTTPTokenBucket starts the token bucket if necessary
-func StartHTTPTokenBucket() {
-	if fs.Config.TPSLimit > 0 {
-		tpsBurst := fs.Config.TPSLimitBurst
+func StartHTTPTokenBucket(ctx context.Context) {
+	if fs.GetConfig(ctx).TPSLimit > 0 {
+		tpsBurst := fs.GetConfig(ctx).TPSLimitBurst
 		if tpsBurst < 1 {
 			tpsBurst = 1
 		}
-		tpsBucket = rate.NewLimiter(rate.Limit(fs.Config.TPSLimit), tpsBurst)
-		fs.Infof(nil, "Starting HTTP transaction limiter: max %g transactions/s with burst %d", fs.Config.TPSLimit, tpsBurst)
+		tpsBucket = rate.NewLimiter(rate.Limit(fs.GetConfig(ctx).TPSLimit), tpsBurst)
+		fs.Infof(nil, "Starting HTTP transaction limiter: max %g transactions/s with burst %d", fs.GetConfig(ctx).TPSLimit, tpsBurst)
 	}
 }
 

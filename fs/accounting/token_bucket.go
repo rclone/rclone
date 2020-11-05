@@ -36,8 +36,9 @@ func newTokenBucket(bandwidth fs.SizeSuffix) *rate.Limiter {
 
 // StartTokenBucket starts the token bucket if necessary
 func StartTokenBucket(ctx context.Context) {
+	ci := fs.GetConfig(ctx)
 	currLimitMu.Lock()
-	currLimit := fs.Config.BwLimit.LimitAt(time.Now())
+	currLimit := ci.BwLimit.LimitAt(time.Now())
 	currLimitMu.Unlock()
 
 	if currLimit.Bandwidth > 0 {
@@ -52,16 +53,17 @@ func StartTokenBucket(ctx context.Context) {
 
 // StartTokenTicker creates a ticker to update the bandwidth limiter every minute.
 func StartTokenTicker(ctx context.Context) {
+	ci := fs.GetConfig(ctx)
 	// If the timetable has a single entry or was not specified, we don't need
 	// a ticker to update the bandwidth.
-	if len(fs.Config.BwLimit) <= 1 {
+	if len(ci.BwLimit) <= 1 {
 		return
 	}
 
 	ticker := time.NewTicker(time.Minute)
 	go func() {
 		for range ticker.C {
-			limitNow := fs.Config.BwLimit.LimitAt(time.Now())
+			limitNow := ci.BwLimit.LimitAt(time.Now())
 			currLimitMu.Lock()
 
 			if currLimit.Bandwidth != limitNow.Bandwidth {

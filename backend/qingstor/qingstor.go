@@ -228,7 +228,7 @@ func qsParseEndpoint(endpoint string) (protocol, host, port string, err error) {
 }
 
 // qsConnection makes a connection to qingstor
-func qsServiceConnection(opt *Options) (*qs.Service, error) {
+func qsServiceConnection(ctx context.Context, opt *Options) (*qs.Service, error) {
 	accessKeyID := opt.AccessKeyID
 	secretAccessKey := opt.SecretAccessKey
 
@@ -277,7 +277,7 @@ func qsServiceConnection(opt *Options) (*qs.Service, error) {
 	cf.Host = host
 	cf.Port = port
 	// unsupported in v3.1: cf.ConnectionRetries = opt.ConnectionRetries
-	cf.Connection = fshttp.NewClient(fs.Config)
+	cf.Connection = fshttp.NewClient(fs.GetConfig(ctx))
 
 	return qs.Init(cf)
 }
@@ -334,7 +334,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, errors.Wrap(err, "qingstor: upload cutoff")
 	}
-	svc, err := qsServiceConnection(opt)
+	svc, err := qsServiceConnection(ctx, opt)
 	if err != nil {
 		return nil, err
 	}

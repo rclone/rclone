@@ -203,7 +203,7 @@ func TestMarch(t *testing.T) {
 				DstIncludeAll: filter.Active.Opt.DeleteExcluded,
 			}
 
-			mt.processError(m.Run())
+			mt.processError(m.Run(ctx))
 			mt.cancel()
 			err := mt.currentError()
 			require.NoError(t, err)
@@ -270,7 +270,7 @@ func TestMarchNoTraverse(t *testing.T) {
 				DstIncludeAll: filter.Active.Opt.DeleteExcluded,
 			}
 
-			mt.processError(m.Run())
+			mt.processError(m.Run(ctx))
 			mt.cancel()
 			err := mt.currentError()
 			require.NoError(t, err)

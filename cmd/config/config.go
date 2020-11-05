@@ -43,7 +43,7 @@ password to protect your configuration.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
-		config.EditConfig()
+		config.EditConfig(context.Background())
 	},
 }
 

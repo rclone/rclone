@@ -3,6 +3,7 @@
 package operations
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -13,6 +14,8 @@ import (
 )
 
 func TestSizeDiffers(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	when := time.Now()
 	for _, test := range []struct {
 		ignoreSize bool
@@ -31,10 +34,10 @@ func TestSizeDiffers(t *testing.T) {
 	} {
 		src := object.NewStaticObjectInfo("a", when, test.srcSize, true, nil, nil)
 		dst := object.NewStaticObjectInfo("a", when, test.dstSize, true, nil, nil)
-		oldIgnoreSize := fs.Config.IgnoreSize
-		fs.Config.IgnoreSize = test.ignoreSize
-		got := sizeDiffers(src, dst)
-		fs.Config.IgnoreSize = oldIgnoreSize
+		oldIgnoreSize := ci.IgnoreSize
+		ci.IgnoreSize = test.ignoreSize
+		got := sizeDiffers(ctx, src, dst)
+		ci.IgnoreSize = oldIgnoreSize
 		assert.Equal(t, test.want, got, fmt.Sprintf("ignoreSize=%v, srcSize=%v, dstSize=%v", test.ignoreSize, test.srcSize, test.dstSize))
 	}
 }

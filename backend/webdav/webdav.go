@@ -336,8 +336,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:         *opt,
 		endpoint:    u,
 		endpointURL: u.String(),
-		srv:         rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(u.String()),
-		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		srv:         rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetRoot(u.String()),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		precision:   fs.ModTimeNotSupported,
 	}
 	f.features = (&fs.Features{

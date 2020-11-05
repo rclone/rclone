@@ -59,11 +59,12 @@ type Func func(path string, entries fs.DirEntries, err error) error
 //
 // NB (f, path) to be replaced by fs.Dir at some point
 func Walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
-	if fs.Config.NoTraverse && filter.Active.HaveFilesFrom() {
+	ci := fs.GetConfig(ctx)
+	if ci.NoTraverse && filter.Active.HaveFilesFrom() {
 		return walkR(ctx, f, path, includeAll, maxLevel, fn, filter.Active.MakeListR(ctx, f.NewObject))
 	}
 	// FIXME should this just be maxLevel < 0 - why the maxLevel > 1
-	if (maxLevel < 0 || maxLevel > 1) && fs.Config.UseListR && f.Features().ListR != nil {
+	if (maxLevel < 0 || maxLevel > 1) && ci.UseListR && f.Features().ListR != nil {
 		return walkListR(ctx, f, path, includeAll, maxLevel, fn)
 	}
 	return walkListDirSorted(ctx, f, path, includeAll, maxLevel, fn)
@@ -353,10 +354,11 @@ type listDirFunc func(ctx context.Context, fs fs.Fs, includeAll bool, dir string
 
 func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func, listDir listDirFunc) error {
 	var (
-		wg         sync.WaitGroup // sync closing of go routines
-		traversing sync.WaitGroup // running directory traversals
-		doClose    sync.Once      // close the channel once
-		mu         sync.Mutex     // stop fn being called concurrently
+		wg         sync.WaitGroup      // sync closing of go routines
+		traversing sync.WaitGroup      // running directory traversals
+		doClose    sync.Once           // close the channel once
+		mu         sync.Mutex          // stop fn being called concurrently
+		ci         = fs.GetConfig(ctx) // current config
 	)
 	// listJob describe a directory listing that needs to be done
 	type listJob struct {
@@ -364,7 +366,7 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 		depth  int
 	}
 
-	in := make(chan listJob, fs.Config.Checkers)
+	in := make(chan listJob, ci.Checkers)
 	errs := make(chan error, 1)
 	quit := make(chan struct{})
 	closeQuit := func() {
@@ -377,7 +379,7 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 			}()
 		})
 	}
-	for i := 0; i < fs.Config.Checkers; i++ {
+	for i := 0; i < ci.Checkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -553,8 +555,9 @@ func walkNDirTree(ctx context.Context, f fs.Fs, path string, includeAll bool, ma
 //
 // NB (f, path) to be replaced by fs.Dir at some point
 func NewDirTree(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int) (dirtree.DirTree, error) {
+	ci := fs.GetConfig(ctx)
 	// if --no-traverse and --files-from build DirTree just from files
-	if fs.Config.NoTraverse && filter.Active.HaveFilesFrom() {
+	if ci.NoTraverse && filter.Active.HaveFilesFrom() {
 		return walkRDirTree(ctx, f, path, includeAll, maxLevel, filter.Active.MakeListR(ctx, f.NewObject))
 	}
 	// if have ListR; and recursing; and not using --files-from; then build a DirTree with ListR

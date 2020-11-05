@@ -273,6 +273,7 @@ type Fs struct {
 	name         string
 	root         string             // root path
 	opt          Options            // parsed options
+	ci           *fs.ConfigInfo     // global config
 	speedupGlobs []string           // list of file name patterns eligible for speedup
 	speedupAny   bool               // true if all file names are eligible for speedup
 	features     *fs.Features       // optional features
@@ -312,10 +313,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// However the f.root string should not have leading or trailing slashes
 	root = strings.Trim(root, "/")
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name: name,
 		root: root,
 		opt:  *opt,
+		ci:   ci,
 		m:    m,
 	}
 
@@ -324,7 +327,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.quirks.parseQuirks(opt.Quirks)
 
-	f.pacer = fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer)))
+	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleepPacer), pacer.MaxSleep(maxSleepPacer), pacer.DecayConstant(decayConstPacer)))
 
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -335,7 +338,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 
 	// Override few config settings and create a client
-	clientConfig := *fs.Config
+	clientConfig := *fs.GetConfig(ctx)
 	if opt.UserAgent != "" {
 		clientConfig.UserAgent = opt.UserAgent
 	}
@@ -692,7 +695,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		entries, err = f.listM1(ctx, f.absPath(dir), 0, maxInt32)
 	}
 
-	if err == nil && fs.Config.LogLevel >= fs.LogLevelDebug {
+	if err == nil && f.ci.LogLevel >= fs.LogLevelDebug {
 		names := []string{}
 		for _, entry := range entries {
 			names = append(names, entry.Remote())
@@ -956,7 +959,7 @@ func (t *treeState) NextRecord() (fs.DirEntry, error) {
 		return nil, r.Error()
 	}
 
-	if fs.Config.LogLevel >= fs.LogLevelDebug {
+	if t.f.ci.LogLevel >= fs.LogLevelDebug {
 		ctime, _ := modTime.MarshalJSON()
 		fs.Debugf(t.f, "binDir %d.%d %q %q (%d) %s", t.level, itemType, t.currDir, name, size, ctime)
 	}
@@ -2376,7 +2379,7 @@ func (p *serverPool) addServer(url string, now time.Time) {
 	expiry := now.Add(p.expirySec * time.Second)
 
 	expiryStr := []byte("-")
-	if fs.Config.LogLevel >= fs.LogLevelInfo {
+	if p.fs.ci.LogLevel >= fs.LogLevelInfo {
 		expiryStr, _ = expiry.MarshalJSON()
 	}
 

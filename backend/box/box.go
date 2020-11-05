@@ -91,7 +91,7 @@ func init() {
 			var err error
 			// If using box config.json, use JWT auth
 			if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
-				err = refreshJWTToken(jsonFile, boxSubType, name, m)
+				err = refreshJWTToken(ctx, jsonFile, boxSubType, name, m)
 				if err != nil {
 					log.Fatalf("Failed to configure token with jwt authentication: %v", err)
 				}
@@ -153,7 +153,7 @@ func init() {
 	})
 }
 
-func refreshJWTToken(jsonFile string, boxSubType string, name string, m configmap.Mapper) error {
+func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, name string, m configmap.Mapper) error {
 	jsonFile = env.ShellExpand(jsonFile)
 	boxConfig, err := getBoxConfig(jsonFile)
 	if err != nil {
@@ -169,7 +169,7 @@ func refreshJWTToken(jsonFile string, boxSubType string, name string, m configma
 	}
 	signingHeaders := getSigningHeaders(boxConfig)
 	queryParams := getQueryParams(boxConfig)
-	client := fshttp.NewClient(fs.Config)
+	client := fshttp.NewClient(fs.GetConfig(ctx))
 	err = jwtutil.Config("box", name, claims, signingHeaders, queryParams, privateKey, m, client)
 	return err
 }
@@ -386,7 +386,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	root = parsePath(root)
 
-	client := fshttp.NewClient(fs.Config)
+	client := fshttp.NewClient(fs.GetConfig(ctx))
 	var ts *oauthutil.TokenSource
 	// If not using an accessToken, create an oauth client and tokensource
 	if opt.AccessToken == "" {
@@ -396,13 +396,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:        name,
 		root:        root,
 		opt:         *opt,
 		srv:         rest.NewClient(client).SetRoot(rootURL),
-		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -423,7 +424,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// should do so whether there are uploads pending or not.
 		if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
 			f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-				err := refreshJWTToken(jsonFile, boxSubType, name, m)
+				err := refreshJWTToken(ctx, jsonFile, boxSubType, name, m)
 				return err
 			})
 			f.tokenRenewer.Start()

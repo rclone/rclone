@@ -221,6 +221,7 @@ type Fs struct {
 	root             string            // the path we are working on if any
 	features         *fs.Features      // optional features
 	opt              Options           // options for this backend
+	ci               *fs.ConfigInfo    // global config
 	c                *swift.Connection // the connection to the swift server
 	rootContainer    string            // container part of root (if any)
 	rootDirectory    string            // directory part of root (if any)
@@ -340,7 +341,8 @@ func (o *Object) split() (container, containerPath string) {
 }
 
 // swiftConnection makes a connection to swift
-func swiftConnection(opt *Options, name string) (*swift.Connection, error) {
+func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Connection, error) {
+	ci := fs.GetConfig(ctx)
 	c := &swift.Connection{
 		// Keep these in the same order as the Config for ease of checking
 		UserName:                    opt.User,
@@ -359,9 +361,9 @@ func swiftConnection(opt *Options, name string) (*swift.Connection, error) {
 		ApplicationCredentialName:   opt.ApplicationCredentialName,
 		ApplicationCredentialSecret: opt.ApplicationCredentialSecret,
 		EndpointType:                swift.EndpointType(opt.EndpointType),
-		ConnectTimeout:              10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
-		Timeout:                     10 * fs.Config.Timeout,        // Use the timeouts in the transport
-		Transport:                   fshttp.NewTransport(fs.Config),
+		ConnectTimeout:              10 * ci.ConnectTimeout, // Use the timeouts in the transport
+		Timeout:                     10 * ci.Timeout,        // Use the timeouts in the transport
+		Transport:                   fshttp.NewTransport(fs.GetConfig(ctx)),
 	}
 	if opt.EnvAuth {
 		err := c.ApplyEnvironment()
@@ -433,12 +435,14 @@ func (f *Fs) setRoot(root string) {
 // if noCheckContainer is set then the Fs won't check the container
 // exists before creating it.
 func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c *swift.Connection, noCheckContainer bool) (fs.Fs, error) {
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:             name,
 		opt:              *opt,
+		ci:               ci,
 		c:                c,
 		noCheckContainer: noCheckContainer,
-		pacer:            fs.NewPacer(pacer.NewS3(pacer.MinSleep(minSleep))),
+		pacer:            fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
 		cache:            bucket.NewCache(),
 	}
 	f.setRoot(root)
@@ -485,7 +489,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, errors.Wrap(err, "swift: chunk size")
 	}
 
-	c, err := swiftConnection(opt, name)
+	c, err := swiftConnection(ctx, opt, name)
 	if err != nil {
 		return nil, err
 	}
@@ -849,7 +853,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		return fs.ErrorListBucketRequired
 	}
 	// Delete all the files including the directory markers
-	toBeDeleted := make(chan fs.Object, fs.Config.Transfers)
+	toBeDeleted := make(chan fs.Object, f.ci.Transfers)
 	delErr := make(chan error, 1)
 	go func() {
 		delErr <- operations.DeleteFiles(ctx, toBeDeleted)
@@ -1040,7 +1044,7 @@ func (o *Object) readMetaData() (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	if fs.Config.UseServerModTime {
+	if o.fs.ci.UseServerModTime {
 		return o.lastModified
 	}
 	err := o.readMetaData()

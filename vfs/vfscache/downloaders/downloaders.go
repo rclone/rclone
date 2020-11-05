@@ -283,7 +283,7 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	// defer log.Trace(dls.src, "r=%v", r)("err=%v", &err)
 
 	// The window includes potentially unread data in the buffer
-	window := int64(fs.Config.BufferSize)
+	window := int64(fs.GetConfig(context.TODO()).BufferSize)
 
 	// Increase the read range by the read ahead if set
 	if dls.opt.ReadAhead > 0 {
@@ -521,7 +521,7 @@ func (dl *downloader) open(offset int64) (err error) {
 	// if offset > 0 {
 	// 	rangeOption = &fs.RangeOption{Start: offset, End: size - 1}
 	// }
-	// in0, err := operations.NewReOpen(dl.dls.ctx, dl.dls.src, fs.Config.LowLevelRetries, dl.dls.item.c.hashOption, rangeOption)
+	// in0, err := operations.NewReOpen(dl.dls.ctx, dl.dls.src, ci.LowLevelRetries, dl.dls.item.c.hashOption, rangeOption)
 
 	in0 := chunkedreader.New(context.TODO(), dl.dls.src, int64(dl.dls.opt.ChunkSize), int64(dl.dls.opt.ChunkSizeLimit))
 	_, err = in0.Seek(offset, 0)

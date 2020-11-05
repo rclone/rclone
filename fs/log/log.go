@@ -2,6 +2,7 @@
 package log
 
 import (
+	"context"
 	"io"
 	"log"
 	"os"
@@ -51,7 +52,7 @@ func fnName() string {
 //
 // Any pointers in the exit function will be dereferenced
 func Trace(o interface{}, format string, a ...interface{}) func(string, ...interface{}) {
-	if fs.Config.LogLevel < fs.LogLevelDebug {
+	if fs.GetConfig(context.Background()).LogLevel < fs.LogLevelDebug {
 		return func(format string, a ...interface{}) {}
 	}
 	name := fnName()
@@ -76,7 +77,7 @@ func Trace(o interface{}, format string, a ...interface{}) func(string, ...inter
 
 // Stack logs a stack trace of callers with the o and info passed in
 func Stack(o interface{}, info string) {
-	if fs.Config.LogLevel < fs.LogLevelDebug {
+	if fs.GetConfig(context.Background()).LogLevel < fs.LogLevelDebug {
 		return
 	}
 	arr := [16 * 1024]byte{}
@@ -90,7 +91,7 @@ func Stack(o interface{}, info string) {
 func InitLogging() {
 	flagsStr := "," + Opt.Format + ","
 	var flags int
-	if !fs.Config.LogSystemdSupport {
+	if !fs.GetConfig(context.Background()).LogSystemdSupport {
 		if strings.Contains(flagsStr, ",date,") {
 			flags |= log.Ldate
 		}

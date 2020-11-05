@@ -308,13 +308,14 @@ func newStatsGroups() *statsGroups {
 func (sg *statsGroups) set(ctx context.Context, group string, stats *StatsInfo) {
 	sg.mu.Lock()
 	defer sg.mu.Unlock()
+	ci := fs.GetConfig(ctx)
 
 	// Limit number of groups kept in memory.
-	if len(sg.order) >= fs.Config.MaxStatsGroups {
+	if len(sg.order) >= ci.MaxStatsGroups {
 		group := sg.order[0]
 		fs.LogPrintf(fs.LogLevelDebug, nil, "Max number of stats groups reached removing %s", group)
 		delete(sg.m, group)
-		r := (len(sg.order) - fs.Config.MaxStatsGroups) + 1
+		r := (len(sg.order) - ci.MaxStatsGroups) + 1
 		sg.order = sg.order[r:]
 	}
 

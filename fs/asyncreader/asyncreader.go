@@ -3,6 +3,7 @@
 package asyncreader
 
 import (
+	"context"
 	"io"
 	"sync"
 	"time"
@@ -29,17 +30,18 @@ var ErrorStreamAbandoned = errors.New("stream abandoned")
 // This should be fully transparent, except that once an error
 // has been returned from the Reader, it will not recover.
 type AsyncReader struct {
-	in      io.ReadCloser // Input reader
-	ready   chan *buffer  // Buffers ready to be handed to the reader
-	token   chan struct{} // Tokens which allow a buffer to be taken
-	exit    chan struct{} // Closes when finished
-	buffers int           // Number of buffers
-	err     error         // If an error has occurred it is here
-	cur     *buffer       // Current buffer being served
-	exited  chan struct{} // Channel is closed been the async reader shuts down
-	size    int           // size of buffer to use
-	closed  bool          // whether we have closed the underlying stream
-	mu      sync.Mutex    // lock for Read/WriteTo/Abandon/Close
+	in      io.ReadCloser  // Input reader
+	ready   chan *buffer   // Buffers ready to be handed to the reader
+	token   chan struct{}  // Tokens which allow a buffer to be taken
+	exit    chan struct{}  // Closes when finished
+	buffers int            // Number of buffers
+	err     error          // If an error has occurred it is here
+	cur     *buffer        // Current buffer being served
+	exited  chan struct{}  // Channel is closed been the async reader shuts down
+	size    int            // size of buffer to use
+	closed  bool           // whether we have closed the underlying stream
+	mu      sync.Mutex     // lock for Read/WriteTo/Abandon/Close
+	ci      *fs.ConfigInfo // for reading config
 }
 
 // New returns a reader that will asynchronously read from
@@ -48,14 +50,16 @@ type AsyncReader struct {
 // function has returned.
 // The input can be read from the returned reader.
 // When done use Close to release the buffers and close the supplied input.
-func New(rd io.ReadCloser, buffers int) (*AsyncReader, error) {
+func New(ctx context.Context, rd io.ReadCloser, buffers int) (*AsyncReader, error) {
 	if buffers <= 0 {
 		return nil, errors.New("number of buffers too small")
 	}
 	if rd == nil {
 		return nil, errors.New("nil reader supplied")
 	}
-	a := &AsyncReader{}
+	a := &AsyncReader{
+		ci: fs.GetConfig(ctx),
+	}
 	a.init(rd, buffers)
 	return a, nil
 }
@@ -114,7 +118,7 @@ func (a *AsyncReader) putBuffer(b *buffer) {
 func (a *AsyncReader) getBuffer() *buffer {
 	bufferPoolOnce.Do(func() {
 		// Initialise the buffer pool when used
-		bufferPool = pool.New(bufferCacheFlushTime, BufferSize, bufferCacheSize, fs.Config.UseMmap)
+		bufferPool = pool.New(bufferCacheFlushTime, BufferSize, bufferCacheSize, a.ci.UseMmap)
 	})
 	return &buffer{
 		buf: bufferPool.Get(),

@@ -81,6 +81,7 @@ func init() {
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+			ci := fs.GetConfig(ctx)
 			err := oauthutil.Config(ctx, "onedrive", name, m, oauthConfig, nil)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
@@ -88,7 +89,7 @@ func init() {
 			}
 
 			// Stop if we are running non-interactive config
-			if fs.Config.AutoConfirm {
+			if ci.AutoConfirm {
 				return
 			}
 
@@ -363,6 +364,7 @@ type Fs struct {
 	name         string             // name of this remote
 	root         string             // the path we are working on
 	opt          Options            // parsed options
+	ci           *fs.ConfigInfo     // global config
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // the connection to the one drive server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
@@ -618,14 +620,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, errors.Wrap(err, "failed to configure OneDrive")
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:      name,
 		root:      root,
 		opt:       *opt,
+		ci:        ci,
 		driveID:   opt.DriveID,
 		driveType: opt.DriveType,
 		srv:       rest.NewClient(oAuthClient).SetRoot(graphURL + "/drives/" + opt.DriveID),
-		pacer:     fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer:     fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -971,7 +975,7 @@ func (f *Fs) Precision() time.Duration {
 
 // waitForJob waits for the job with status in url to complete
 func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
-	deadline := time.Now().Add(fs.Config.Timeout)
+	deadline := time.Now().Add(f.ci.Timeout)
 	for time.Now().Before(deadline) {
 		var resp *http.Response
 		var err error
@@ -1007,7 +1011,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 
 		time.Sleep(1 * time.Second)
 	}
-	return errors.Errorf("async operation didn't complete after %v", fs.Config.Timeout)
+	return errors.Errorf("async operation didn't complete after %v", f.ci.Timeout)
 }
 
 // Copy src to this remote using server-side copy operations.
@@ -1300,7 +1304,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 // CleanUp deletes all the hidden files.
 func (f *Fs) CleanUp(ctx context.Context) error {
-	token := make(chan struct{}, fs.Config.Checkers)
+	token := make(chan struct{}, f.ci.Checkers)
 	var wg sync.WaitGroup
 	err := walk.Walk(ctx, f, "", true, -1, func(path string, entries fs.DirEntries, err error) error {
 		err = entries.ForObjectError(func(obj fs.Object) error {

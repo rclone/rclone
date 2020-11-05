@@ -58,7 +58,7 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 		return nil, errors.Errorf("can't use method %q with newLargeUpload", info.Method)
 	}
 
-	threads := fs.Config.Transfers
+	threads := f.ci.Transfers
 	if threads > info.MaxNumberOfThreads {
 		threads = info.MaxNumberOfThreads
 	}

@@ -108,8 +108,9 @@ short options as they conflict with rclone's short options.
 		opts.CTimeSort = opts.CTimeSort || sort == "ctime"
 		opts.NameSort = sort == "name"
 		opts.SizeSort = sort == "size"
+		ci := fs.GetConfig(context.Background())
 		if opts.DeepLevel == 0 {
-			opts.DeepLevel = fs.Config.MaxDepth
+			opts.DeepLevel = ci.MaxDepth
 		}
 		cmd.Run(false, false, command, func() error {
 			return Tree(fsrc, outFile, &opts)

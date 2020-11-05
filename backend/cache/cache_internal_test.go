@@ -925,7 +925,8 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	boltDb, err := cache.GetPersistent(runInstance.dbPath, runInstance.chunkPath, &cache.Features{PurgeDb: true})
 	require.NoError(t, err)
 
-	fs.Config.LowLevelRetries = 1
+	ci := fs.GetConfig(context.Background())
+	ci.LowLevelRetries = 1
 
 	// Instantiate root
 	if purge {

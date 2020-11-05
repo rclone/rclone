@@ -115,8 +115,9 @@ type Options struct {
 type Fs struct {
 	name        string
 	root        string
-	features    *fs.Features // optional features
-	opt         Options      // options for this backend
+	features    *fs.Features   // optional features
+	opt         Options        // options for this backend
+	ci          *fs.ConfigInfo // global config
 	endpoint    *url.URL
 	endpointURL string // endpoint as a string
 	httpClient  *http.Client
@@ -171,7 +172,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	client := fshttp.NewClient(fs.Config)
+	client := fshttp.NewClient(fs.GetConfig(ctx))
 
 	var isFile = false
 	if !strings.HasSuffix(u.String(), "/") {
@@ -209,10 +210,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:        name,
 		root:        root,
 		opt:         *opt,
+		ci:          ci,
 		httpClient:  client,
 		endpoint:    u,
 		endpointURL: u.String(),
@@ -439,14 +442,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	var (
 		entriesMu sync.Mutex // to protect entries
 		wg        sync.WaitGroup
-		in        = make(chan string, fs.Config.Checkers)
+		checkers  = f.ci.Checkers
+		in        = make(chan string, checkers)
 	)
 	add := func(entry fs.DirEntry) {
 		entriesMu.Lock()
 		entries = append(entries, entry)
 		entriesMu.Unlock()
 	}
-	for i := 0; i < fs.Config.Checkers; i++ {
+	for i := 0; i < checkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

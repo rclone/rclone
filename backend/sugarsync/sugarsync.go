@@ -106,7 +106,7 @@ func init() {
 				Method: "POST",
 				Path:   "/app-authorization",
 			}
-			srv := rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(rootURL) //  FIXME
+			srv := rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetRoot(rootURL) //  FIXME
 
 			// FIXME
 			//err = f.pacer.Call(func() (bool, error) {
@@ -403,13 +403,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	root = parsePath(root)
-	client := fshttp.NewClient(fs.Config)
+	client := fshttp.NewClient(fs.GetConfig(ctx))
 	f := &Fs{
 		name:       name,
 		root:       root,
 		opt:        *opt,
 		srv:        rest.NewClient(client).SetRoot(rootURL),
-		pacer:      fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		m:          m,
 		authExpiry: parseExpiry(opt.AuthorizationExpiry),
 	}

@@ -236,7 +236,7 @@ func LoadConfig(ctx context.Context) {
 	accounting.StartTokenTicker(ctx)
 
 	// Start the transactions per second limiter
-	fshttp.StartHTTPTokenBucket()
+	fshttp.StartHTTPTokenBucket(ctx)
 }
 
 var errorConfigFileNotFound = errors.New("config file not found")
@@ -244,6 +244,8 @@ var errorConfigFileNotFound = errors.New("config file not found")
 // loadConfigFile will load a config file, and
 // automatically decrypt it.
 func loadConfigFile() (*goconfig.ConfigFile, error) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	var usingPasswordCommand bool
 
 	b, err := ioutil.ReadFile(ConfigPath)
@@ -278,11 +280,11 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 	}
 
 	if len(configKey) == 0 {
-		if len(fs.Config.PasswordCommand) != 0 {
+		if len(ci.PasswordCommand) != 0 {
 			var stdout bytes.Buffer
 			var stderr bytes.Buffer
 
-			cmd := exec.Command(fs.Config.PasswordCommand[0], fs.Config.PasswordCommand[1:]...)
+			cmd := exec.Command(ci.PasswordCommand[0], ci.PasswordCommand[1:]...)
 
 			cmd.Stdout = &stdout
 			cmd.Stderr = &stderr
@@ -358,7 +360,7 @@ func loadConfigFile() (*goconfig.ConfigFile, error) {
 				if usingPasswordCommand {
 					return nil, errors.New("using --password-command derived password, unable to decrypt configuration")
 				}
-				if !fs.Config.AskPassword {
+				if !ci.AskPassword {
 					return nil, errors.New("unable to decrypt configuration and not allowed to ask for password - set RCLONE_CONFIG_PASS to your configuration password")
 				}
 				getConfigPassword("Enter configuration password:")
@@ -600,15 +602,17 @@ func saveConfig() error {
 // SaveConfig calling function which saves configuration file.
 // if saveConfig returns error trying again after sleep.
 func SaveConfig() {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	var err error
-	for i := 0; i < fs.Config.LowLevelRetries+1; i++ {
+	for i := 0; i < ci.LowLevelRetries+1; i++ {
 		if err = saveConfig(); err == nil {
 			return
 		}
 		waitingTimeMs := mathrand.Intn(1000)
 		time.Sleep(time.Duration(waitingTimeMs) * time.Millisecond)
 	}
-	log.Fatalf("Failed to save config after %d tries: %v", fs.Config.LowLevelRetries, err)
+	log.Fatalf("Failed to save config after %d tries: %v", ci.LowLevelRetries, err)
 
 	return
 }
@@ -746,7 +750,8 @@ func Confirm(Default bool) bool {
 // that, but if it isn't set then it will return the Default value
 // passed in
 func ConfirmWithConfig(ctx context.Context, m configmap.Getter, configName string, Default bool) bool {
-	if fs.Config.AutoConfirm {
+	ci := fs.GetConfig(ctx)
+	if ci.AutoConfirm {
 		configString, ok := m.Get(configName)
 		if ok {
 			configValue, err := strconv.ParseBool(configString)
@@ -897,12 +902,12 @@ func MustFindByName(name string) *fs.RegInfo {
 }
 
 // RemoteConfig runs the config helper for the remote if needed
-func RemoteConfig(name string) {
+func RemoteConfig(ctx context.Context, name string) {
 	fmt.Printf("Remote config\n")
 	f := MustFindByName(name)
 	if f.Config != nil {
 		m := fs.ConfigMap(f, name)
-		f.Config(context.Background(), name, m)
+		f.Config(ctx, name, m)
 	}
 }
 
@@ -1023,13 +1028,11 @@ func ChooseOption(o *fs.Option, name string) string {
 	return in
 }
 
-// Suppress the confirm prompts and return a function to undo that
-func suppressConfirm(ctx context.Context) func() {
-	old := fs.Config.AutoConfirm
-	fs.Config.AutoConfirm = true
-	return func() {
-		fs.Config.AutoConfirm = old
-	}
+// Suppress the confirm prompts by altering the context config
+func suppressConfirm(ctx context.Context) context.Context {
+	newCtx, ci := fs.AddConfig(ctx)
+	ci.AutoConfirm = true
+	return newCtx
 }
 
 // UpdateRemote adds the keyValues passed in to the remote of name.
@@ -1042,7 +1045,7 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, doObscu
 	if err != nil {
 		return err
 	}
-	defer suppressConfirm(ctx)()
+	ctx = suppressConfirm(ctx)
 
 	// Work out which options need to be obscured
 	needsObscure := map[string]struct{}{}
@@ -1079,7 +1082,7 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, doObscu
 		}
 		getConfigData().SetValue(name, k, vStr)
 	}
-	RemoteConfig(name)
+	RemoteConfig(ctx, name)
 	SaveConfig()
 	return nil
 }
@@ -1103,11 +1106,11 @@ func CreateRemote(ctx context.Context, name string, provider string, keyValues r
 // PasswordRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
 func PasswordRemote(ctx context.Context, name string, keyValues rc.Params) error {
+	ctx = suppressConfirm(ctx)
 	err := fspath.CheckConfigName(name)
 	if err != nil {
 		return err
 	}
-	defer suppressConfirm(ctx)()
 	for k, v := range keyValues {
 		keyValues[k] = obscure.MustObscure(fmt.Sprint(v))
 	}
@@ -1206,7 +1209,7 @@ func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 }
 
 // NewRemote make a new remote from its name
-func NewRemote(name string) {
+func NewRemote(ctx context.Context, name string) {
 	var (
 		newType string
 		ri      *fs.RegInfo
@@ -1226,16 +1229,16 @@ func NewRemote(name string) {
 	getConfigData().SetValue(name, "type", newType)
 
 	editOptions(ri, name, true)
-	RemoteConfig(name)
+	RemoteConfig(ctx, name)
 	if OkRemote(name) {
 		SaveConfig()
 		return
 	}
-	EditRemote(ri, name)
+	EditRemote(ctx, ri, name)
 }
 
 // EditRemote gets the user to edit a remote
-func EditRemote(ri *fs.RegInfo, name string) {
+func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
 	for {
@@ -1245,7 +1248,7 @@ func EditRemote(ri *fs.RegInfo, name string) {
 		}
 	}
 	SaveConfig()
-	RemoteConfig(name)
+	RemoteConfig(ctx, name)
 }
 
 // DeleteRemote gets the user to delete a remote
@@ -1307,7 +1310,7 @@ func ShowConfig() {
 }
 
 // EditConfig edits the config file interactively
-func EditConfig() {
+func EditConfig(ctx context.Context) {
 	for {
 		haveRemotes := len(getConfigData().GetSectionList()) != 0
 		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "rRename remote", "cCopy remote", "sSet configuration password", "qQuit config"}
@@ -1324,9 +1327,9 @@ func EditConfig() {
 		case 'e':
 			name := ChooseRemote()
 			fs := MustFindByName(name)
-			EditRemote(fs, name)
+			EditRemote(ctx, fs, name)
 		case 'n':
-			NewRemote(NewRemoteName())
+			NewRemote(ctx, NewRemoteName())
 		case 'd':
 			name := ChooseRemote()
 			DeleteRemote(name)
@@ -1388,7 +1391,7 @@ func SetPassword() {
 //   rclone authorize "fs name"
 //   rclone authorize "fs name" "client id" "client secret"
 func Authorize(ctx context.Context, args []string, noAutoBrowser bool) {
-	defer suppressConfirm(ctx)()
+	ctx = suppressConfirm(ctx)
 	switch len(args) {
 	case 1, 3:
 	default:

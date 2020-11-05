@@ -324,7 +324,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f := &Fs{
 		name:  name,
 		opt:   *opt,
-		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	config := dropbox.Config{
 		LogLevel:        dropbox.LogOff, // logging in the SDK: LogOff, LogDebug, LogInfo

@@ -249,9 +249,11 @@ func (r *results) checkStringPositions(k, s string) {
 // check we can write a file with the control chars
 func (r *results) checkControls() {
 	fs.Infof(r.f, "Trying to create control character file names")
+	ci := fs.GetConfig(context.Background())
+
 	// Concurrency control
-	tokens := make(chan struct{}, fs.Config.Checkers)
-	for i := 0; i < fs.Config.Checkers; i++ {
+	tokens := make(chan struct{}, ci.Checkers)
+	for i := 0; i < ci.Checkers; i++ {
 		tokens <- struct{}{}
 	}
 	var wg sync.WaitGroup

@@ -92,6 +92,7 @@ func (tm *transferMap) _sortedSlice() []*Transfer {
 func (tm *transferMap) String(ctx context.Context, progress *inProgress, exclude *transferMap) string {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
+	ci := fs.GetConfig(ctx)
 	stringList := make([]string, 0, len(tm.items))
 	for _, tr := range tm._sortedSlice() {
 		if exclude != nil {
@@ -107,8 +108,8 @@ func (tm *transferMap) String(ctx context.Context, progress *inProgress, exclude
 			out = acc.String()
 		} else {
 			out = fmt.Sprintf("%*s: %s",
-				fs.Config.StatsFileNameLength,
-				shortenName(tr.remote, fs.Config.StatsFileNameLength),
+				ci.StatsFileNameLength,
+				shortenName(tr.remote, ci.StatsFileNameLength),
 				tm.name,
 			)
 		}

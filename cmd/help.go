@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -166,8 +167,9 @@ func runRoot(cmd *cobra.Command, args []string) {
 //
 // Helpful example: http://rtfcode.com/xref/moby-17.03.2-ce/cli/cobra.go
 func setupRootCommand(rootCmd *cobra.Command) {
+	ci := fs.GetConfig(context.Background())
 	// Add global flags
-	configflags.AddFlags(pflag.CommandLine)
+	configflags.AddFlags(ci, pflag.CommandLine)
 	filterflags.AddFlags(pflag.CommandLine)
 	rcflags.AddFlags(pflag.CommandLine)
 	logflags.AddFlags(pflag.CommandLine)

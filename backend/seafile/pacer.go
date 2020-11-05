@@ -1,6 +1,7 @@
 package seafile
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"sync"
@@ -27,7 +28,7 @@ func init() {
 }
 
 // getPacer returns the unique pacer for that remote URL
-func getPacer(remote string) *fs.Pacer {
+func getPacer(ctx context.Context, remote string) *fs.Pacer {
 	pacerMutex.Lock()
 	defer pacerMutex.Unlock()
 
@@ -37,6 +38,7 @@ func getPacer(remote string) *fs.Pacer {
 	}
 
 	pacers[remote] = fs.NewPacer(
+		ctx,
 		pacer.NewDefault(
 			pacer.MinSleep(minSleep),
 			pacer.MaxSleep(maxSleep),

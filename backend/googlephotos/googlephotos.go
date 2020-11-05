@@ -254,7 +254,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	baseClient := fshttp.NewClient(fs.Config)
+	baseClient := fshttp.NewClient(fs.GetConfig(ctx))
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure Box")
@@ -272,7 +272,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		unAuth:    rest.NewClient(baseClient),
 		srv:       rest.NewClient(oAuthClient).SetRoot(rootURL),
 		ts:        ts,
-		pacer:     fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(minSleep))),
+		pacer:     fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(minSleep))),
 		startTime: time.Now(),
 		albums:    map[bool]*albums{},
 		uploaded:  dirtree.New(),
