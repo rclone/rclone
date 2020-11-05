@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -21,7 +22,7 @@ func TestRun(t *testing.T) {
 	opt := DefaultOpt
 	cmd := "go run proxy_code.go"
 	opt.AuthProxy = cmd
-	p := New(&opt)
+	p := New(context.Background(), &opt)
 
 	t.Run("Normal", func(t *testing.T) {
 		config, err := p.run(map[string]string{

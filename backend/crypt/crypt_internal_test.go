@@ -33,7 +33,7 @@ func (o testWrapper) UnWrap() fs.Object {
 // Create a temporary local fs to upload things from
 
 func makeTempLocalFs(t *testing.T) (localFs fs.Fs, cleanup func()) {
-	localFs, err := fs.TemporaryLocalFs()
+	localFs, err := fs.TemporaryLocalFs(context.Background())
 	require.NoError(t, err)
 	cleanup = func() {
 		require.NoError(t, localFs.Rmdir(context.Background(), ""))

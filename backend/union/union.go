@@ -757,7 +757,7 @@ func (f *Fs) mergeDirEntries(entriesList [][]upstream.Entry) (fs.DirEntries, err
 // NewFs constructs an Fs from the path.
 //
 // The returned Fs is the actual Fs, referenced by remote in the config
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -787,7 +787,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	errs := Errors(make([]error, len(opt.Upstreams)))
 	multithread(len(opt.Upstreams), func(i int) {
 		u := opt.Upstreams[i]
-		upstreams[i], errs[i] = upstream.New(u, root, time.Duration(opt.CacheTime)*time.Second)
+		upstreams[i], errs[i] = upstream.New(ctx, u, root, time.Duration(opt.CacheTime)*time.Second)
 	})
 	var usedUpstreams []*upstream.Fs
 	var fserr error

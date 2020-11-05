@@ -163,6 +163,6 @@ func TestSymlinkError(t *testing.T) {
 		"links":      "true",
 		"copy_links": "true",
 	}
-	_, err := NewFs("local", "/", m)
+	_, err := NewFs(context.Background(), "local", "/", m)
 	assert.Equal(t, errLinksAndCopyLinks, err)
 }

@@ -1157,7 +1157,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	canStream := fdst.Features().PutStream != nil
 	if !canStream {
 		fs.Debugf(fdst, "Target remote doesn't support streaming uploads, creating temporary local FS to spool file")
-		tmpLocalFs, err := fs.TemporaryLocalFs()
+		tmpLocalFs, err := fs.TemporaryLocalFs(ctx)
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to create temporary local FS to spool file")
 		}
@@ -1262,8 +1262,8 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 }
 
 // GetCompareDest sets up --compare-dest
-func GetCompareDest() (CompareDest fs.Fs, err error) {
-	CompareDest, err = cache.Get(fs.Config.CompareDest)
+func GetCompareDest(ctx context.Context) (CompareDest fs.Fs, err error) {
+	CompareDest, err = cache.Get(ctx, fs.Config.CompareDest)
 	if err != nil {
 		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --compare-dest %q: %v", fs.Config.CompareDest, err))
 	}
@@ -1298,8 +1298,8 @@ func compareDest(ctx context.Context, dst, src fs.Object, CompareDest fs.Fs) (No
 }
 
 // GetCopyDest sets up --copy-dest
-func GetCopyDest(fdst fs.Fs) (CopyDest fs.Fs, err error) {
-	CopyDest, err = cache.Get(fs.Config.CopyDest)
+func GetCopyDest(ctx context.Context, fdst fs.Fs) (CopyDest fs.Fs, err error) {
+	CopyDest, err = cache.Get(ctx, fs.Config.CopyDest)
 	if err != nil {
 		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --copy-dest %q: %v", fs.Config.CopyDest, err))
 	}
@@ -1530,9 +1530,9 @@ func CopyURLToWriter(ctx context.Context, url string, out io.Writer) (err error)
 }
 
 // BackupDir returns the correctly configured --backup-dir
-func BackupDir(fdst fs.Fs, fsrc fs.Fs, srcFileName string) (backupDir fs.Fs, err error) {
+func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) (backupDir fs.Fs, err error) {
 	if fs.Config.BackupDir != "" {
-		backupDir, err = cache.Get(fs.Config.BackupDir)
+		backupDir, err = cache.Get(ctx, fs.Config.BackupDir)
 		if err != nil {
 			return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --backup-dir %q: %v", fs.Config.BackupDir, err))
 		}
@@ -1636,18 +1636,18 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 
 	var backupDir, copyDestDir fs.Fs
 	if fs.Config.BackupDir != "" || fs.Config.Suffix != "" {
-		backupDir, err = BackupDir(fdst, fsrc, srcFileName)
+		backupDir, err = BackupDir(ctx, fdst, fsrc, srcFileName)
 		if err != nil {
 			return errors.Wrap(err, "creating Fs for --backup-dir failed")
 		}
 	}
 	if fs.Config.CompareDest != "" {
-		copyDestDir, err = GetCompareDest()
+		copyDestDir, err = GetCompareDest(ctx)
 		if err != nil {
 			return err
 		}
 	} else if fs.Config.CopyDest != "" {
-		copyDestDir, err = GetCopyDest(fdst)
+		copyDestDir, err = GetCopyDest(ctx, fdst)
 		if err != nil {
 			return err
 		}

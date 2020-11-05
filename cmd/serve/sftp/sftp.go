@@ -5,6 +5,8 @@
 package sftp
 
 import (
+	"context"
+
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
@@ -98,7 +100,7 @@ sftp backend, but it may not be with other SFTP clients.
 			cmd.CheckArgs(0, 0, command, args)
 		}
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f, &Opt)
+			s := newServer(context.Background(), f, &Opt)
 			err := s.Serve()
 			if err != nil {
 				return err

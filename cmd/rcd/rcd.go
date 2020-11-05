@@ -1,6 +1,7 @@
 package rcd
 
 import (
+	"context"
 	"log"
 
 	"github.com/rclone/rclone/cmd"
@@ -39,7 +40,7 @@ See the [rc documentation](/rc/) for more info on the rc flags.
 			rcflags.Opt.Files = args[0]
 		}
 
-		s, err := rcserver.Start(&rcflags.Opt)
+		s, err := rcserver.Start(context.Background(), &rcflags.Opt)
 		if err != nil {
 			log.Fatalf("Failed to start remote control: %v", err)
 		}

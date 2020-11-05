@@ -182,11 +182,11 @@ func TestCheck(t *testing.T) {
 }
 
 func TestCheckFsError(t *testing.T) {
-	dstFs, err := fs.NewFs("non-existent")
+	dstFs, err := fs.NewFs(context.Background(), "non-existent")
 	if err != nil {
 		t.Fatal(err)
 	}
-	srcFs, err := fs.NewFs("non-existent")
+	srcFs, err := fs.NewFs(context.Background(), "non-existent")
 	if err != nil {
 		t.Fatal(err)
 	}

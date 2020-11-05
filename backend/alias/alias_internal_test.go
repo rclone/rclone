@@ -68,7 +68,7 @@ func TestNewFS(t *testing.T) {
 		remoteRoot, err := filepath.Abs(filepath.FromSlash(path.Join("test/files", test.remoteRoot)))
 		require.NoError(t, err, what)
 		prepare(t, remoteRoot)
-		f, err := fs.NewFs(fmt.Sprintf("%s:%s", remoteName, test.fsRoot))
+		f, err := fs.NewFs(context.Background(), fmt.Sprintf("%s:%s", remoteName, test.fsRoot))
 		require.NoError(t, err, what)
 		gotEntries, err := f.List(context.Background(), test.fsList)
 		require.NoError(t, err, what)
@@ -90,7 +90,7 @@ func TestNewFS(t *testing.T) {
 
 func TestNewFSNoRemote(t *testing.T) {
 	prepare(t, "")
-	f, err := fs.NewFs(fmt.Sprintf("%s:", remoteName))
+	f, err := fs.NewFs(context.Background(), fmt.Sprintf("%s:", remoteName))
 
 	require.Error(t, err)
 	require.Nil(t, f)
@@ -98,7 +98,7 @@ func TestNewFSNoRemote(t *testing.T) {
 
 func TestNewFSInvalidRemote(t *testing.T) {
 	prepare(t, "not_existing_test_remote:")
-	f, err := fs.NewFs(fmt.Sprintf("%s:", remoteName))
+	f, err := fs.NewFs(context.Background(), fmt.Sprintf("%s:", remoteName))
 
 	require.Error(t, err)
 	require.Nil(t, f)

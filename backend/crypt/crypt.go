@@ -144,7 +144,7 @@ func NewCipher(m configmap.Mapper) (*Cipher, error) {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -166,14 +166,14 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	// Look for a file first
 	var wrappedFs fs.Fs
 	if rpath == "" {
-		wrappedFs, err = cache.Get(remote)
+		wrappedFs, err = cache.Get(ctx, remote)
 	} else {
 		remotePath := fspath.JoinRootPath(remote, cipher.EncryptFileName(rpath))
-		wrappedFs, err = cache.Get(remotePath)
+		wrappedFs, err = cache.Get(ctx, remotePath)
 		// if that didn't produce a file, look for a directory
 		if err != fs.ErrorIsFile {
 			remotePath = fspath.JoinRootPath(remote, cipher.EncryptDirName(rpath))
-			wrappedFs, err = cache.Get(remotePath)
+			wrappedFs, err = cache.Get(ctx, remotePath)
 		}
 	}
 	if err != fs.ErrorIsFile && err != nil {

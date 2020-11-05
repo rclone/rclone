@@ -386,8 +386,7 @@ func (f *Fs) setRoot(root string) {
 }
 
 // NewFs constructs an Fs from the path, bucket:path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
-	ctx := context.TODO()
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	var oAuthClient *http.Client
 
 	// Parse config into Options struct

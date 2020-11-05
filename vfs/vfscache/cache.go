@@ -86,11 +86,11 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	metaRoot := file.UNCPath(filepath.Join(config.CacheDir, "vfsMeta", fremote.Name(), fRoot))
 	fs.Debugf(nil, "vfs cache: metadata root is %q", root)
 
-	fcache, err := fscache.Get(root)
+	fcache, err := fscache.Get(ctx, root)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create cache remote")
 	}
-	fcacheMeta, err := fscache.Get(root)
+	fcacheMeta, err := fscache.Get(ctx, root)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create cache meta remote")
 	}

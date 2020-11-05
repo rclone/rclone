@@ -453,7 +453,7 @@ func RandomRemote() (fs.Fs, string, func(), error) {
 		return nil, "", nil, err
 	}
 
-	remote, err := fs.NewFs(remoteName)
+	remote, err := fs.NewFs(context.Background(), remoteName)
 	if err != nil {
 		return nil, "", nil, err
 	}

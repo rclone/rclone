@@ -74,7 +74,7 @@ Note to run these commands on a running backend then see
 			if err != nil {
 				return err
 			}
-			f, err := fsInfo.NewFs(configName, fsPath, config)
+			f, err := fsInfo.NewFs(context.Background(), configName, fsPath, config)
 			if err != nil {
 				return err
 			}

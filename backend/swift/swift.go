@@ -432,7 +432,7 @@ func (f *Fs) setRoot(root string) {
 //
 // if noCheckContainer is set then the Fs won't check the container
 // exists before creating it.
-func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, noCheckContainer bool) (fs.Fs, error) {
+func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c *swift.Connection, noCheckContainer bool) (fs.Fs, error) {
 	f := &Fs{
 		name:             name,
 		opt:              *opt,
@@ -473,7 +473,7 @@ func NewFsWithConnection(opt *Options, name, root string, c *swift.Connection, n
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -489,7 +489,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewFsWithConnection(opt, name, root, c, false)
+	return NewFsWithConnection(ctx, opt, name, root, c, false)
 }
 
 // Return an Object from a path

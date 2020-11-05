@@ -395,9 +395,7 @@ func parseExpiry(expiryString string) time.Time {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
-	ctx := context.Background()
-
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
 	if err != nil {

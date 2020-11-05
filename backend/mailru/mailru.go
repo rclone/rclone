@@ -294,9 +294,8 @@ type Fs struct {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// fs.Debugf(nil, ">>> NewFs %q %q", name, root)
-	ctx := context.Background() // Note: NewFs does not pass context!
 
 	// Parse config into Options struct
 	opt := new(Options)
@@ -1662,7 +1661,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Attempt to put by hash using a spool file
 	if trySpeedup {
-		tmpFs, err := fs.TemporaryLocalFs()
+		tmpFs, err := fs.TemporaryLocalFs(ctx)
 		if err != nil {
 			fs.Infof(tmpFs, "Failed to create spool FS: %v", err)
 		} else {

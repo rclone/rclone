@@ -819,7 +819,7 @@ func TestCopyFileCompareDest(t *testing.T) {
 	defer func() {
 		fs.Config.CompareDest = ""
 	}()
-	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	fdst, err := fs.NewFs(context.Background(), r.FremoteName+"/dst")
 	require.NoError(t, err)
 
 	// check empty dest, empty compare
@@ -904,7 +904,7 @@ func TestCopyFileCopyDest(t *testing.T) {
 		fs.Config.CopyDest = ""
 	}()
 
-	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	fdst, err := fs.NewFs(context.Background(), r.FremoteName+"/dst")
 	require.NoError(t, err)
 
 	// check empty dest, empty copy

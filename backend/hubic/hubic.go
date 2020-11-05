@@ -146,7 +146,7 @@ func (f *Fs) getCredentials(ctx context.Context) (err error) {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	client, _, err := oauthutil.NewClient(name, m, oauthConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure Hubic")
@@ -176,7 +176,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	}
 
 	// Make inner swift Fs from the connection
-	swiftFs, err := swift.NewFsWithConnection(opt, name, root, c, true)
+	swiftFs, err := swift.NewFsWithConnection(ctx, opt, name, root, c, true)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package rc
 
 import (
+	"context"
 	"testing"
 
 	"github.com/rclone/rclone/fs/cache"
@@ -23,14 +24,14 @@ func TestGetFsNamed(t *testing.T) {
 	in := Params{
 		"potato": "/",
 	}
-	f, err := GetFsNamed(in, "potato")
+	f, err := GetFsNamed(context.Background(), in, "potato")
 	require.NoError(t, err)
 	assert.NotNil(t, f)
 
 	in = Params{
 		"sausage": "/",
 	}
-	f, err = GetFsNamed(in, "potato")
+	f, err = GetFsNamed(context.Background(), in, "potato")
 	require.Error(t, err)
 	assert.Nil(t, f)
 }
@@ -41,7 +42,7 @@ func TestGetFs(t *testing.T) {
 	in := Params{
 		"fs": "/",
 	}
-	f, err := GetFs(in)
+	f, err := GetFs(context.Background(), in)
 	require.NoError(t, err)
 	assert.NotNil(t, f)
 }
@@ -53,16 +54,16 @@ func TestGetFsAndRemoteNamed(t *testing.T) {
 		"fs":     "/",
 		"remote": "hello",
 	}
-	f, remote, err := GetFsAndRemoteNamed(in, "fs", "remote")
+	f, remote, err := GetFsAndRemoteNamed(context.Background(), in, "fs", "remote")
 	require.NoError(t, err)
 	assert.NotNil(t, f)
 	assert.Equal(t, "hello", remote)
 
-	f, _, err = GetFsAndRemoteNamed(in, "fsX", "remote")
+	f, _, err = GetFsAndRemoteNamed(context.Background(), in, "fsX", "remote")
 	require.Error(t, err)
 	assert.Nil(t, f)
 
-	f, _, err = GetFsAndRemoteNamed(in, "fs", "remoteX")
+	f, _, err = GetFsAndRemoteNamed(context.Background(), in, "fs", "remoteX")
 	require.Error(t, err)
 	assert.Nil(t, f)
 
@@ -75,7 +76,7 @@ func TestGetFsAndRemote(t *testing.T) {
 		"fs":     "/",
 		"remote": "hello",
 	}
-	f, remote, err := GetFsAndRemote(in)
+	f, remote, err := GetFsAndRemote(context.Background(), in)
 	require.NoError(t, err)
 	assert.NotNil(t, f)
 	assert.Equal(t, "hello", remote)

@@ -201,20 +201,20 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	// Make Fs for --backup-dir if required
 	if fs.Config.BackupDir != "" || fs.Config.Suffix != "" {
 		var err error
-		s.backupDir, err = operations.BackupDir(fdst, fsrc, "")
+		s.backupDir, err = operations.BackupDir(ctx, fdst, fsrc, "")
 		if err != nil {
 			return nil, err
 		}
 	}
 	if fs.Config.CompareDest != "" {
 		var err error
-		s.compareCopyDest, err = operations.GetCompareDest()
+		s.compareCopyDest, err = operations.GetCompareDest(ctx)
 		if err != nil {
 			return nil, err
 		}
 	} else if fs.Config.CopyDest != "" {
 		var err error
-		s.compareCopyDest, err = operations.GetCopyDest(fdst)
+		s.compareCopyDest, err = operations.GetCopyDest(ctx, fdst)
 		if err != nil {
 			return nil, err
 		}

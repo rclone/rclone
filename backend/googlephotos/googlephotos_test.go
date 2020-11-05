@@ -35,14 +35,14 @@ func TestIntegration(t *testing.T) {
 	if *fstest.RemoteName == "" {
 		*fstest.RemoteName = "TestGooglePhotos:"
 	}
-	f, err := fs.NewFs(*fstest.RemoteName)
+	f, err := fs.NewFs(ctx, *fstest.RemoteName)
 	if err == fs.ErrorNotFoundInConfigFile {
 		t.Skip(fmt.Sprintf("Couldn't create google photos backend - skipping tests: %v", err))
 	}
 	require.NoError(t, err)
 
 	// Create local Fs pointing at testfiles
-	localFs, err := fs.NewFs("testfiles")
+	localFs, err := fs.NewFs(ctx, "testfiles")
 	require.NoError(t, err)
 
 	t.Run("CreateAlbum", func(t *testing.T) {
@@ -155,7 +155,7 @@ func TestIntegration(t *testing.T) {
 			})
 
 			t.Run("NewFsIsFile", func(t *testing.T) {
-				fNew, err := fs.NewFs(*fstest.RemoteName + remote)
+				fNew, err := fs.NewFs(ctx, *fstest.RemoteName+remote)
 				assert.Equal(t, fs.ErrorIsFile, err)
 				leaf := path.Base(remote)
 				o, err := fNew.NewObject(ctx, leaf)

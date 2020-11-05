@@ -8,6 +8,7 @@
 package webdav
 
 import (
+	"context"
 	"flag"
 	"io/ioutil"
 	"net/http"
@@ -56,7 +57,7 @@ func TestWebDav(t *testing.T) {
 		hashType = hash.MD5
 
 		// Start the server
-		w := newWebDAV(f, &opt)
+		w := newWebDAV(context.Background(), f, &opt)
 		assert.NoError(t, w.serve())
 
 		// Config for the backend we'll use to connect to the server
@@ -91,7 +92,7 @@ func TestHTTPFunction(t *testing.T) {
 	require.NoError(t, filter.Active.AddRule("- hidden/**"))
 
 	// Uses the same test files as http tests but with different golden.
-	f, err := fs.NewFs("../http/testdata/files")
+	f, err := fs.NewFs(context.Background(), "../http/testdata/files")
 	assert.NoError(t, err)
 
 	opt := httplib.DefaultOpt
@@ -99,7 +100,7 @@ func TestHTTPFunction(t *testing.T) {
 	opt.Template = testTemplate
 
 	// Start the server
-	w := newWebDAV(f, &opt)
+	w := newWebDAV(context.Background(), f, &opt)
 	assert.NoError(t, w.serve())
 	defer func() {
 		w.Close()

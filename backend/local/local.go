@@ -217,7 +217,7 @@ type Object struct {
 var errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
 
 // NewFs constructs an Fs from the path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)

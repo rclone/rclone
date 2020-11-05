@@ -84,7 +84,7 @@ Use "rclone hashsum" to see the full list.
 			fs.Debugf(f, "Using hash %v for ETag", hashType)
 		}
 		cmd.Run(false, false, command, func() error {
-			s := newWebDAV(f, &httpflags.Opt)
+			s := newWebDAV(context.Background(), f, &httpflags.Opt)
 			err := s.serve()
 			if err != nil {
 				return err
@@ -114,18 +114,20 @@ type WebDAV struct {
 	_vfs          *vfs.VFS // don't use directly, use getVFS
 	webdavhandler *webdav.Handler
 	proxy         *proxy.Proxy
+	ctx           context.Context // for global config
 }
 
 // check interface
 var _ webdav.FileSystem = (*WebDAV)(nil)
 
 // Make a new WebDAV to serve the remote
-func newWebDAV(f fs.Fs, opt *httplib.Options) *WebDAV {
+func newWebDAV(ctx context.Context, f fs.Fs, opt *httplib.Options) *WebDAV {
 	w := &WebDAV{
-		f: f,
+		f:   f,
+		ctx: ctx,
 	}
 	if proxyflags.Opt.AuthProxy != "" {
-		w.proxy = proxy.New(&proxyflags.Opt)
+		w.proxy = proxy.New(ctx, &proxyflags.Opt)
 		// override auth
 		copyOpt := *opt
 		copyOpt.Auth = w.auth

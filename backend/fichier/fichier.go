@@ -167,7 +167,7 @@ func (f *Fs) Features() *fs.Features {
 //
 // On Windows avoid single character remote names as they can be mixed
 // up with drive letters.
-func NewFs(name string, root string, config configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name string, root string, config configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
 	err := configstruct.Set(config, opt)
 	if err != nil {
@@ -202,8 +202,6 @@ func NewFs(name string, root string, config configmap.Mapper) (fs.Fs, error) {
 	f.rest.SetHeader("Authorization", "Bearer "+f.opt.APIKey)
 
 	f.dirCache = dircache.New(root, rootID, f)
-
-	ctx := context.Background()
 
 	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)

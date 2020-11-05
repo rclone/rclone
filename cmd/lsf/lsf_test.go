@@ -17,7 +17,7 @@ func TestDefaultLsf(t *testing.T) {
 	fstest.Initialise()
 	buf := new(bytes.Buffer)
 
-	f, err := fs.NewFs("testfiles")
+	f, err := fs.NewFs(context.Background(), "testfiles")
 	require.NoError(t, err)
 
 	err = Lsf(context.Background(), f, buf)
@@ -33,7 +33,7 @@ func TestRecurseFlag(t *testing.T) {
 	fstest.Initialise()
 	buf := new(bytes.Buffer)
 
-	f, err := fs.NewFs("testfiles")
+	f, err := fs.NewFs(context.Background(), "testfiles")
 	require.NoError(t, err)
 
 	recurse = true
@@ -54,7 +54,7 @@ func TestDirSlashFlag(t *testing.T) {
 	fstest.Initialise()
 	buf := new(bytes.Buffer)
 
-	f, err := fs.NewFs("testfiles")
+	f, err := fs.NewFs(context.Background(), "testfiles")
 	require.NoError(t, err)
 
 	dirSlash = true
@@ -80,7 +80,7 @@ subdir
 
 func TestFormat(t *testing.T) {
 	fstest.Initialise()
-	f, err := fs.NewFs("testfiles")
+	f, err := fs.NewFs(context.Background(), "testfiles")
 	require.NoError(t, err)
 
 	buf := new(bytes.Buffer)
@@ -160,7 +160,7 @@ file3
 
 func TestSeparator(t *testing.T) {
 	fstest.Initialise()
-	f, err := fs.NewFs("testfiles")
+	f, err := fs.NewFs(context.Background(), "testfiles")
 	require.NoError(t, err)
 	format = "ps"
 
@@ -188,7 +188,7 @@ subdir__SEP__-1
 
 func TestWholeLsf(t *testing.T) {
 	fstest.Initialise()
-	f, err := fs.NewFs("testfiles")
+	f, err := fs.NewFs(context.Background(), "testfiles")
 	require.NoError(t, err)
 	format = "pst"
 	separator = "_+_"
