@@ -60,7 +60,7 @@ var (
 
 func TestInit(t *testing.T) {
 	// Configure the remote
-	config.LoadConfig()
+	config.LoadConfig(context.Background())
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true

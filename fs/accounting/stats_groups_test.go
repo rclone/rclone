@@ -1,6 +1,7 @@
 package accounting
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"testing"
@@ -11,6 +12,7 @@ import (
 )
 
 func TestStatsGroupOperations(t *testing.T) {
+	ctx := context.Background()
 
 	t.Run("empty group returns nil", func(t *testing.T) {
 		t.Parallel()
@@ -20,10 +22,10 @@ func TestStatsGroupOperations(t *testing.T) {
 
 	t.Run("set assigns stats to group", func(t *testing.T) {
 		t.Parallel()
-		stats := NewStats()
+		stats := NewStats(ctx)
 		sg := newStatsGroups()
-		sg.set("test", stats)
-		sg.set("test1", stats)
+		sg.set(ctx, "test", stats)
+		sg.set(ctx, "test1", stats)
 		if len(sg.m) != len(sg.names()) || len(sg.m) != 2 {
 			t.Fatalf("Expected two stats got %d, %d", len(sg.m), len(sg.order))
 		}
@@ -31,10 +33,10 @@ func TestStatsGroupOperations(t *testing.T) {
 
 	t.Run("get returns correct group", func(t *testing.T) {
 		t.Parallel()
-		stats := NewStats()
+		stats := NewStats(ctx)
 		sg := newStatsGroups()
-		sg.set("test", stats)
-		sg.set("test1", stats)
+		sg.set(ctx, "test", stats)
+		sg.set(ctx, "test1", stats)
 		got := sg.get("test")
 		if got != stats {
 			t.Fatal("get returns incorrect stats")
@@ -43,20 +45,20 @@ func TestStatsGroupOperations(t *testing.T) {
 
 	t.Run("sum returns correct values", func(t *testing.T) {
 		t.Parallel()
-		stats1 := NewStats()
+		stats1 := NewStats(ctx)
 		stats1.bytes = 5
 		stats1.errors = 6
 		stats1.oldDuration = time.Second
 		stats1.oldTimeRanges = []timeRange{{time.Now(), time.Now().Add(time.Second)}}
-		stats2 := NewStats()
+		stats2 := NewStats(ctx)
 		stats2.bytes = 10
 		stats2.errors = 12
 		stats2.oldDuration = 2 * time.Second
 		stats2.oldTimeRanges = []timeRange{{time.Now(), time.Now().Add(2 * time.Second)}}
 		sg := newStatsGroups()
-		sg.set("test1", stats1)
-		sg.set("test2", stats2)
-		sum := sg.sum()
+		sg.set(ctx, "test1", stats1)
+		sg.set(ctx, "test2", stats2)
+		sum := sg.sum(ctx)
 		assert.Equal(t, stats1.bytes+stats2.bytes, sum.bytes)
 		assert.Equal(t, stats1.errors+stats2.errors, sum.errors)
 		assert.Equal(t, stats1.oldDuration+stats2.oldDuration, sum.oldDuration)
@@ -70,10 +72,10 @@ func TestStatsGroupOperations(t *testing.T) {
 
 	t.Run("delete removes stats", func(t *testing.T) {
 		t.Parallel()
-		stats := NewStats()
+		stats := NewStats(ctx)
 		sg := newStatsGroups()
-		sg.set("test", stats)
-		sg.set("test1", stats)
+		sg.set(ctx, "test", stats)
+		sg.set(ctx, "test1", stats)
 		sg.delete("test1")
 		if sg.get("test1") != nil {
 			t.Fatal("stats not deleted")
@@ -95,7 +97,7 @@ func TestStatsGroupOperations(t *testing.T) {
 		runtime.ReadMemStats(&start)
 
 		for i := 0; i < count; i++ {
-			sg.set(fmt.Sprintf("test-%d", i), NewStats())
+			sg.set(ctx, fmt.Sprintf("test-%d", i), NewStats(ctx))
 		}
 
 		for i := 0; i < count; i++ {

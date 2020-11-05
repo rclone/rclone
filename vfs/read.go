@@ -17,7 +17,7 @@ import (
 // ReadFileHandle is an open for read file handle on a File
 type ReadFileHandle struct {
 	baseHandle
-	done        func(err error)
+	done        func(ctx context.Context, err error)
 	mu          sync.Mutex
 	cond        *sync.Cond // cond lock for out of sequence reads
 	closed      bool       // set if handle has been closed
@@ -414,7 +414,7 @@ func (fh *ReadFileHandle) close() error {
 	if fh.opened {
 		var err error
 		defer func() {
-			fh.done(err)
+			fh.done(context.TODO(), err)
 		}()
 		// Close first so that we have hashes
 		err = fh.r.Close()

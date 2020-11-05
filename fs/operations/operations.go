@@ -359,7 +359,7 @@ func CommonHash(fa, fb fs.Info) (hash.Type, *fs.HashesOption) {
 func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	tr := accounting.Stats(ctx).NewTransfer(src)
 	defer func() {
-		tr.Done(err)
+		tr.Done(ctx, err)
 	}()
 	newDst = dst
 	if SkipDestructive(ctx, src, "copy") {
@@ -401,7 +401,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				_ = in.Close()
 			}
 			if err == fs.ErrorCantCopy {
-				tr.Reset() // skip incomplete accounting - will be overwritten by the manual copy below
+				tr.Reset(ctx) // skip incomplete accounting - will be overwritten by the manual copy below
 			}
 		} else {
 			err = fs.ErrorCantCopy
@@ -478,7 +478,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		// Retry if err returned a retry error
 		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
 			fs.Debugf(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
-			tr.Reset() // skip incomplete accounting - will be overwritten by retry
+			tr.Reset(ctx) // skip incomplete accounting - will be overwritten by retry
 			continue
 		}
 		// otherwise finish
@@ -550,7 +550,7 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		if err == nil {
 			accounting.Stats(ctx).Renames(1)
 		}
-		tr.Done(err)
+		tr.Done(ctx, err)
 	}()
 	newDst = dst
 	if SkipDestructive(ctx, src, "move") {
@@ -627,7 +627,7 @@ func SuffixName(remote string) string {
 func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs) (err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(dst)
 	defer func() {
-		tr.Done(err)
+		tr.Done(ctx, err)
 	}()
 	numDeletes := accounting.Stats(ctx).Deletes(1)
 	if fs.Config.MaxDelete != -1 && numDeletes > fs.Config.MaxDelete {
@@ -817,7 +817,7 @@ func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
 	return ListFn(ctx, f, func(o fs.Object) {
 		tr := accounting.Stats(ctx).NewCheckingTransfer(o)
 		defer func() {
-			tr.Done(nil)
+			tr.Done(ctx, nil)
 		}()
 		modTime := o.ModTime(ctx)
 		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
@@ -850,7 +850,7 @@ func hashSum(ctx context.Context, ht hash.Type, o fs.Object) (string, error) {
 	var err error
 	tr := accounting.Stats(ctx).NewCheckingTransfer(o)
 	defer func() {
-		tr.Done(err)
+		tr.Done(ctx, err)
 	}()
 	sum, err := o.Hash(ctx, ht)
 	if err == hash.ErrUnsupported {
@@ -1058,7 +1058,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 		var err error
 		tr := accounting.Stats(ctx).NewTransfer(o)
 		defer func() {
-			tr.Done(err)
+			tr.Done(ctx, err)
 		}()
 		opt := fs.RangeOption{Start: offset, End: -1}
 		size := o.Size()
@@ -1100,7 +1100,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst fs.Object, err error) {
 	tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, -1)
 	defer func() {
-		tr.Done(err)
+		tr.Done(ctx, err)
 	}()
 	in = tr.Account(ctx, in).WithBuffer()
 
@@ -1447,7 +1447,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		// Size known use Put
 		tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, size)
 		defer func() {
-			tr.Done(err)
+			tr.Done(ctx, err)
 		}()
 		body := ioutil.NopCloser(in) // we let the server close the body
 		in := tr.Account(ctx, body)  // account the transfer (no buffering)
@@ -1624,7 +1624,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}
 		tr := accounting.Stats(ctx).NewTransfer(srcObj)
 		defer func() {
-			tr.Done(err)
+			tr.Done(ctx, err)
 		}()
 		tmpObj, err := Op(ctx, fdst, nil, tmpObjName, srcObj)
 		if err != nil {
@@ -1673,7 +1673,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		if !cp {
 			err = DeleteFile(ctx, srcObj)
 		}
-		tr.Done(err)
+		tr.Done(ctx, err)
 	}
 	return err
 }

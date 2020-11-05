@@ -553,7 +553,7 @@ func (dl *downloader) close(inErr error) (err error) {
 		dl.in = nil
 	}
 	if dl.tr != nil {
-		dl.tr.Done(inErr)
+		dl.tr.Done(dl.dls.ctx, inErr)
 		dl.tr = nil
 	}
 	dl._closed = true

@@ -58,6 +58,7 @@ func init() {
 
 // Initialise rclone for testing
 func Initialise() {
+	ctx := context.Background()
 	// Never ask for passwords, fail instead.
 	// If your local config is encrypted set environment variable
 	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
@@ -68,7 +69,7 @@ func Initialise() {
 	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
 		config.ConfigPath = envConfig
 	}
-	config.LoadConfig()
+	config.LoadConfig(ctx)
 	if *Verbose {
 		fs.Config.LogLevel = fs.LogLevelDebug
 	}

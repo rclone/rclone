@@ -1,6 +1,8 @@
 package accounting
 
 import (
+	"context"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -8,6 +10,7 @@ var namespace = "rclone_"
 
 // RcloneCollector is a Prometheus collector for Rclone
 type RcloneCollector struct {
+	ctx              context.Context
 	bytesTransferred *prometheus.Desc
 	transferSpeed    *prometheus.Desc
 	numOfErrors      *prometheus.Desc
@@ -21,8 +24,9 @@ type RcloneCollector struct {
 }
 
 // NewRcloneCollector make a new RcloneCollector
-func NewRcloneCollector() *RcloneCollector {
+func NewRcloneCollector(ctx context.Context) *RcloneCollector {
 	return &RcloneCollector{
+		ctx: ctx,
 		bytesTransferred: prometheus.NewDesc(namespace+"bytes_transferred_total",
 			"Total transferred bytes since the start of the Rclone process",
 			nil, nil,
@@ -82,7 +86,7 @@ func (c *RcloneCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect is part of the Collector interface: https://godoc.org/github.com/prometheus/client_golang/prometheus#Collector
 func (c *RcloneCollector) Collect(ch chan<- prometheus.Metric) {
-	s := groups.sum()
+	s := groups.sum(c.ctx)
 	s.mu.RLock()
 
 	ch <- prometheus.MustNewConstMetric(c.bytesTransferred, prometheus.CounterValue, float64(s.bytes))

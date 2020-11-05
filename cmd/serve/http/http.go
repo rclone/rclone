@@ -206,7 +206,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 
 	// Account the transfer
 	tr := accounting.Stats(r.Context()).NewTransfer(obj)
-	defer tr.Done(nil)
+	defer tr.Done(r.Context(), nil)
 	// FIXME in = fs.NewAccount(in, obj).WithBuffer() // account the transfer
 
 	// Serve the file
