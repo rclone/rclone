@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -15,6 +16,7 @@ import (
 )
 
 func testConfigFile(t *testing.T, configFileName string) func() {
+	ctx := context.Background()
 	configKey = nil // reset password
 	_ = os.Unsetenv("_RCLONE_CONFIG_KEY_FILE")
 	_ = os.Unsetenv("RCLONE_CONFIG_PASS")
@@ -36,7 +38,7 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 	fs.Config = &fs.ConfigInfo{}
 	configFile = nil
 
-	LoadConfig()
+	LoadConfig(ctx)
 	assert.Equal(t, []string{}, getConfigData().GetSectionList())
 
 	// Fake a remote

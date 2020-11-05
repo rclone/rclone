@@ -86,7 +86,7 @@ func newTransferRemoteSize(stats *StatsInfo, remote string, size int64, checking
 
 // Done ends the transfer.
 // Must be called after transfer is finished to run proper cleanups.
-func (tr *Transfer) Done(err error) {
+func (tr *Transfer) Done(ctx context.Context, err error) {
 	if err != nil {
 		err = tr.stats.Error(err)
 
@@ -123,7 +123,7 @@ func (tr *Transfer) Done(err error) {
 }
 
 // Reset allows to switch the Account to another transfer method.
-func (tr *Transfer) Reset() {
+func (tr *Transfer) Reset(ctx context.Context) {
 	tr.mu.RLock()
 	acc := tr.acc
 	tr.acc = nil

@@ -132,7 +132,7 @@ func TestMultithreadCopy(t *testing.T) {
 			tr := accounting.GlobalStats().NewTransfer(src)
 
 			defer func() {
-				tr.Done(err)
+				tr.Done(ctx, err)
 			}()
 			dst, err := multiThreadCopy(ctx, r.Flocal, "file1", src, 2, tr)
 			require.NoError(t, err)

@@ -1182,7 +1182,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 				tr := accounting.Stats(ctx).NewCheckingTransfer(oi)
 				err = f.deleteByID(ctx, object.ID, object.Name)
 				checkErr(err)
-				tr.Done(err)
+				tr.Done(ctx, err)
 			}
 		}()
 	}
@@ -1210,7 +1210,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 				toBeDeleted <- object
 			}
 			last = remote
-			tr.Done(nil)
+			tr.Done(ctx, nil)
 		}
 		return nil
 	}))

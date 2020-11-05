@@ -116,7 +116,7 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
 	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
 	defer func() {
-		tr.Done(err)
+		tr.Done(ctx, err)
 	}()
 	if sizeDiffers(src, dst) {
 		err = errors.Errorf("Sizes differ")
@@ -323,7 +323,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	}
 	tr1 := accounting.Stats(ctx).NewTransfer(dst)
 	defer func() {
-		tr1.Done(nil) // error handling is done by the caller
+		tr1.Done(ctx, nil) // error handling is done by the caller
 	}()
 	in1 = tr1.Account(ctx, in1).WithBuffer() // account and buffer the transfer
 
@@ -333,7 +333,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 	}
 	tr2 := accounting.Stats(ctx).NewTransfer(dst)
 	defer func() {
-		tr2.Done(nil) // error handling is done by the caller
+		tr2.Done(ctx, nil) // error handling is done by the caller
 	}()
 	in2 = tr2.Account(ctx, in2).WithBuffer() // account and buffer the transfer
 

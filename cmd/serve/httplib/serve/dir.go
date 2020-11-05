@@ -225,7 +225,7 @@ const (
 func (d *Directory) Serve(w http.ResponseWriter, r *http.Request) {
 	// Account the transfer
 	tr := accounting.Stats(r.Context()).NewTransferRemoteSize(d.DirRemote, -1)
-	defer tr.Done(nil)
+	defer tr.Done(r.Context(), nil)
 
 	fs.Infof(d.DirRemote, "%s: Serving directory", r.RemoteAddr)
 

@@ -19,7 +19,7 @@ var (
 )
 
 func prepare(t *testing.T, root string) {
-	config.LoadConfig()
+	config.LoadConfig(context.Background())
 
 	// Configure the remote
 	config.FileSet(remoteName, "type", "alias")

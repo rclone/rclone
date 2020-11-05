@@ -4,6 +4,7 @@ package config
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -113,7 +114,7 @@ func init() {
 
 func getConfigData() *goconfig.ConfigFile {
 	if configFile == nil {
-		LoadConfig()
+		LoadConfig(context.Background())
 	}
 	return configFile
 }
@@ -212,7 +213,7 @@ func makeConfigPath() string {
 }
 
 // LoadConfig loads the config file
-func LoadConfig() {
+func LoadConfig(ctx context.Context) {
 	// Set RCLONE_CONFIG_DIR for backend config and subprocesses
 	_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(ConfigPath))
 
@@ -229,10 +230,10 @@ func LoadConfig() {
 	}
 
 	// Start the token bucket limiter
-	accounting.StartTokenBucket()
+	accounting.StartTokenBucket(ctx)
 
 	// Start the bandwidth update ticker
-	accounting.StartTokenTicker()
+	accounting.StartTokenTicker(ctx)
 
 	// Start the transactions per second limiter
 	fshttp.StartHTTPTokenBucket()

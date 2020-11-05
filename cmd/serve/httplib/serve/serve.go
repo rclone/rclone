@@ -77,7 +77,7 @@ func Object(w http.ResponseWriter, r *http.Request, o fs.Object) {
 	}
 	tr := accounting.Stats(r.Context()).NewTransfer(o)
 	defer func() {
-		tr.Done(err)
+		tr.Done(r.Context(), err)
 	}()
 	in := tr.Account(r.Context(), file) // account the transfer (no buffering)
 

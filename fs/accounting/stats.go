@@ -2,6 +2,7 @@ package accounting
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -22,6 +23,7 @@ var startTime = time.Now()
 // StatsInfo accounts all transfers
 type StatsInfo struct {
 	mu                sync.RWMutex
+	ctx               context.Context
 	bytes             int64
 	errors            int64
 	lastError         error
@@ -49,11 +51,12 @@ type StatsInfo struct {
 }
 
 // NewStats creates an initialised StatsInfo
-func NewStats() *StatsInfo {
+func NewStats(ctx context.Context) *StatsInfo {
 	return &StatsInfo{
+		ctx:          ctx,
 		checking:     newTransferMap(fs.Config.Checkers, "checking"),
 		transferring: newTransferMap(fs.Config.Transfers, "transferring"),
-		inProgress:   newInProgress(),
+		inProgress:   newInProgress(ctx),
 	}
 }
 
@@ -332,10 +335,10 @@ func (s *StatsInfo) String() string {
 	// Add per transfer stats if required
 	if !fs.Config.StatsOneLine {
 		if !s.checking.empty() {
-			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.inProgress, s.transferring))
+			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.ctx, s.inProgress, s.transferring))
 		}
 		if !s.transferring.empty() {
-			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.inProgress, nil))
+			_, _ = fmt.Fprintf(buf, "Transferring:\n%s\n", s.transferring.String(s.ctx, s.inProgress, nil))
 		}
 	}
 

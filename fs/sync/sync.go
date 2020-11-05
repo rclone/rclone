@@ -344,7 +344,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				}
 			}
 		}
-		tr.Done(err)
+		tr.Done(s.ctx, err)
 	}
 }
 
@@ -749,7 +749,7 @@ func (s *syncCopyMove) makeRenameMap() {
 						s.pushRenameMap(hash, obj)
 					}
 
-					tr.Done(nil)
+					tr.Done(s.ctx, nil)
 				}
 			}
 		}()
