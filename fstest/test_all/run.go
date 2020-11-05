@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"go/build"
 	"io"
@@ -345,9 +346,10 @@ func (r *Run) Init() {
 		r.CmdLine = append(r.CmdLine, "-list-retries", fmt.Sprint(listRetries))
 	}
 	r.Try = 1
+	ci := fs.GetConfig(context.Background())
 	if *verbose {
 		r.CmdLine = append(r.CmdLine, "-verbose")
-		fs.Config.LogLevel = fs.LogLevelDebug
+		ci.LogLevel = fs.LogLevelDebug
 	}
 	if *runOnly != "" {
 		r.CmdLine = append(r.CmdLine, prefix+"run", *runOnly)

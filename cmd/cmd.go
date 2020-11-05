@@ -234,12 +234,13 @@ func ShowStats() bool {
 
 // Run the function with stats and retries if required
 func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
+	ci := fs.GetConfig(context.Background())
 	var cmdErr error
 	stopStats := func() {}
 	if !showStats && ShowStats() {
 		showStats = true
 	}
-	if fs.Config.Progress {
+	if ci.Progress {
 		stopStats = startProgress()
 	} else if showStats {
 		stopStats = StartStats()
@@ -291,13 +292,13 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	}
 	fs.Debugf(nil, "%d go routines active\n", runtime.NumGoroutine())
 
-	if fs.Config.Progress && fs.Config.ProgressTerminalTitle {
+	if ci.Progress && ci.ProgressTerminalTitle {
 		// Clear terminal title
 		terminal.WriteTerminalTitle("")
 	}
 
 	// dump all running go-routines
-	if fs.Config.Dump&fs.DumpGoRoutines != 0 {
+	if ci.Dump&fs.DumpGoRoutines != 0 {
 		err := pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 		if err != nil {
 			fs.Errorf(nil, "Failed to dump goroutines: %v", err)
@@ -305,7 +306,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	}
 
 	// dump open files
-	if fs.Config.Dump&fs.DumpOpenFiles != 0 {
+	if ci.Dump&fs.DumpOpenFiles != 0 {
 		c := exec.Command("lsof", "-p", strconv.Itoa(os.Getpid()))
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
@@ -372,17 +373,18 @@ func StartStats() func() {
 
 // initConfig is run by cobra after initialising the flags
 func initConfig() {
+	ci := fs.GetConfig(context.Background())
 	// Activate logger systemd support if systemd invocation ID is detected
 	_, sysdLaunch := systemd.GetInvocationID()
 	if sysdLaunch {
-		fs.Config.LogSystemdSupport = true // used during fslog.InitLogging()
+		ci.LogSystemdSupport = true // used during fslog.InitLogging()
 	}
 
 	// Start the logger
 	fslog.InitLogging()
 
 	// Finish parsing any command line flags
-	configflags.SetFlags()
+	configflags.SetFlags(ci)
 
 	// Load filters
 	err := filterflags.Reload()
@@ -396,7 +398,7 @@ func initConfig() {
 	// Inform user about systemd log support now that we have a logger
 	if sysdLaunch {
 		fs.Debugf("rclone", "systemd logging support automatically activated")
-	} else if fs.Config.LogSystemdSupport {
+	} else if ci.LogSystemdSupport {
 		fs.Debugf("rclone", "systemd logging support manually activated")
 	}
 
@@ -448,16 +450,17 @@ func initConfig() {
 
 	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); m == false {
 		fs.Errorf(nil, "Invalid unit passed to --stats-unit. Defaulting to bytes.")
-		fs.Config.DataRateUnit = "bytes"
+		ci.DataRateUnit = "bytes"
 	} else {
-		fs.Config.DataRateUnit = *dataRateUnit
+		ci.DataRateUnit = *dataRateUnit
 	}
 }
 
 func resolveExitCode(err error) {
+	ci := fs.GetConfig(context.Background())
 	atexit.Run()
 	if err == nil {
-		if fs.Config.ErrorOnNoTransfer {
+		if ci.ErrorOnNoTransfer {
 			if accounting.GlobalStats().GetTransfers() == 0 {
 				os.Exit(exitCodeNoFilesTransferred)
 			}

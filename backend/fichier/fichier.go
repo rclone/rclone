@@ -186,7 +186,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		name:       name,
 		root:       root,
 		opt:        *opt,
-		pacer:      fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
+		pacer:      fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
 		baseClient: &http.Client{},
 	}
 
@@ -195,7 +195,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 
-	client := fshttp.NewClient(fs.Config)
+	client := fshttp.NewClient(fs.GetConfig(ctx))
 
 	f.rest = rest.NewClient(client).SetRoot(apiBaseURL)
 

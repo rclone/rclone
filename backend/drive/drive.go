@@ -564,6 +564,7 @@ type Fs struct {
 	name             string             // name of this remote
 	root             string             // the path we are working on
 	opt              Options            // parsed options
+	ci               *fs.ConfigInfo     // global config
 	features         *fs.Features       // optional features
 	svc              *drive.Service     // the connection to the drive server
 	v2Svc            *drive_v2.Service  // used to create download links for the v2 api
@@ -940,8 +941,10 @@ func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, er
 
 // Figure out if the user wants to use a team drive
 func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name string) error {
+	ci := fs.GetConfig(ctx)
+
 	// Stop if we are running non-interactive config
-	if fs.Config.AutoConfirm {
+	if ci.AutoConfirm {
 		return nil
 	}
 	if opt.TeamDriveID == "" {
@@ -979,8 +982,8 @@ func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name
 }
 
 // getClient makes an http client according to the options
-func getClient(opt *Options) *http.Client {
-	t := fshttp.NewTransportCustom(fs.Config, func(t *http.Transport) {
+func getClient(ctx context.Context, opt *Options) *http.Client {
+	t := fshttp.NewTransportCustom(fs.GetConfig(ctx), func(t *http.Transport) {
 		if opt.DisableHTTP2 {
 			t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
 		}
@@ -999,7 +1002,7 @@ func getServiceAccountClient(ctx context.Context, opt *Options, credentialsData 
 	if opt.Impersonate != "" {
 		conf.Subject = opt.Impersonate
 	}
-	ctxWithSpecialClient := oauthutil.Context(ctx, getClient(opt))
+	ctxWithSpecialClient := oauthutil.Context(ctx, getClient(ctx, opt))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
@@ -1021,7 +1024,7 @@ func createOAuthClient(ctx context.Context, opt *Options, name string, m configm
 			return nil, errors.Wrap(err, "failed to create oauth client from service account")
 		}
 	} else {
-		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(ctx, name, m, driveConfig, getClient(opt))
+		oAuthClient, _, err = oauthutil.NewClientWithBaseClient(ctx, name, m, driveConfig, getClient(ctx, opt))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create oauth client")
 		}
@@ -1090,11 +1093,13 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		return nil, err
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:         name,
 		root:         root,
 		opt:          *opt,
-		pacer:        fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(opt.PacerMinSleep), pacer.Burst(opt.PacerBurst))),
+		ci:           ci,
+		pacer:        fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(opt.PacerMinSleep), pacer.Burst(opt.PacerBurst))),
 		m:            m,
 		grouping:     listRGrouping,
 		listRmu:      new(sync.Mutex),
@@ -1803,7 +1808,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	mu := sync.Mutex{} // protects in and overflow
 	wg := sync.WaitGroup{}
 	in := make(chan listREntry, listRInputBuffer)
-	out := make(chan error, fs.Config.Checkers)
+	out := make(chan error, f.ci.Checkers)
 	list := walk.NewListRHelper(callback)
 	overflow := []listREntry{}
 	listed := 0
@@ -1842,7 +1847,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	wg.Add(1)
 	in <- listREntry{directoryID, dir}
 
-	for i := 0; i < fs.Config.Checkers; i++ {
+	for i := 0; i < f.ci.Checkers; i++ {
 		go f.listRRunner(ctx, &wg, in, out, cb, sendJob)
 	}
 	go func() {
@@ -1875,7 +1880,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		mu.Unlock()
 	}()
 	// wait until the all workers to finish
-	for i := 0; i < fs.Config.Checkers; i++ {
+	for i := 0; i < f.ci.Checkers; i++ {
 		e := <-out
 		mu.Lock()
 		// if one worker returns an error early, close the input so all other workers exit

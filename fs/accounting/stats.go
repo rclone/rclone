@@ -24,6 +24,7 @@ var startTime = time.Now()
 type StatsInfo struct {
 	mu                sync.RWMutex
 	ctx               context.Context
+	ci                *fs.ConfigInfo
 	bytes             int64
 	errors            int64
 	lastError         error
@@ -52,10 +53,12 @@ type StatsInfo struct {
 
 // NewStats creates an initialised StatsInfo
 func NewStats(ctx context.Context) *StatsInfo {
+	ci := fs.GetConfig(ctx)
 	return &StatsInfo{
 		ctx:          ctx,
-		checking:     newTransferMap(fs.Config.Checkers, "checking"),
-		transferring: newTransferMap(fs.Config.Transfers, "transferring"),
+		ci:           ci,
+		checking:     newTransferMap(ci.Checkers, "checking"),
+		transferring: newTransferMap(ci.Transfers, "transferring"),
 		inProgress:   newInProgress(ctx),
 	}
 }
@@ -243,7 +246,7 @@ func (s *StatsInfo) String() string {
 	}
 
 	displaySpeed := speed
-	if fs.Config.DataRateUnit == "bits" {
+	if s.ci.DataRateUnit == "bits" {
 		displaySpeed *= 8
 	}
 
@@ -259,7 +262,7 @@ func (s *StatsInfo) String() string {
 		dateString   = ""
 	)
 
-	if !fs.Config.StatsOneLine {
+	if !s.ci.StatsOneLine {
 		_, _ = fmt.Fprintf(buf, "\nTransferred:   	")
 	} else {
 		xfrchk := []string{}
@@ -272,9 +275,9 @@ func (s *StatsInfo) String() string {
 		if len(xfrchk) > 0 {
 			xfrchkString = fmt.Sprintf(" (%s)", strings.Join(xfrchk, ", "))
 		}
-		if fs.Config.StatsOneLineDate {
+		if s.ci.StatsOneLineDate {
 			t := time.Now()
-			dateString = t.Format(fs.Config.StatsOneLineDateFormat) // Including the separator so people can customize it
+			dateString = t.Format(s.ci.StatsOneLineDateFormat) // Including the separator so people can customize it
 		}
 	}
 
@@ -283,17 +286,17 @@ func (s *StatsInfo) String() string {
 		fs.SizeSuffix(s.bytes),
 		fs.SizeSuffix(totalSize).Unit("Bytes"),
 		percent(s.bytes, totalSize),
-		fs.SizeSuffix(displaySpeed).Unit(strings.Title(fs.Config.DataRateUnit)+"/s"),
+		fs.SizeSuffix(displaySpeed).Unit(strings.Title(s.ci.DataRateUnit)+"/s"),
 		etaString(currentSize, totalSize, speed),
 		xfrchkString,
 	)
 
-	if fs.Config.ProgressTerminalTitle {
+	if s.ci.ProgressTerminalTitle {
 		// Writes ETA to the terminal title
 		terminal.WriteTerminalTitle("ETA: " + etaString(currentSize, totalSize, speed))
 	}
 
-	if !fs.Config.StatsOneLine {
+	if !s.ci.StatsOneLine {
 		_, _ = buf.WriteRune('\n')
 		errorDetails := ""
 		switch {
@@ -333,7 +336,7 @@ func (s *StatsInfo) String() string {
 	s.mu.RUnlock()
 
 	// Add per transfer stats if required
-	if !fs.Config.StatsOneLine {
+	if !s.ci.StatsOneLine {
 		if !s.checking.empty() {
 			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.ctx, s.inProgress, s.transferring))
 		}
@@ -361,11 +364,11 @@ func (s *StatsInfo) Transferred() []TransferSnapshot {
 
 // Log outputs the StatsInfo to the log
 func (s *StatsInfo) Log() {
-	if fs.Config.UseJSONLog {
+	if s.ci.UseJSONLog {
 		out, _ := s.RemoteStats()
-		fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%v%v\n", s, fs.LogValue("stats", out))
+		fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v%v\n", s, fs.LogValue("stats", out))
 	} else {
-		fs.LogLevelPrintf(fs.Config.StatsLogLevel, nil, "%v\n", s)
+		fs.LogLevelPrintf(s.ci.StatsLogLevel, nil, "%v\n", s)
 	}
 
 }
@@ -681,7 +684,7 @@ func (s *StatsInfo) PruneTransfers() {
 	}
 	s.mu.Lock()
 	// remove a transfer from the start if we are over quota
-	if len(s.startedTransfers) > MaxCompletedTransfers+fs.Config.Transfers {
+	if len(s.startedTransfers) > MaxCompletedTransfers+s.ci.Transfers {
 		for i, tr := range s.startedTransfers {
 			if tr.IsDone() {
 				s.removeTransfer(tr, i)

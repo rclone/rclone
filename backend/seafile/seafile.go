@@ -197,8 +197,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:           *opt,
 		endpoint:      u,
 		endpointURL:   u.String(),
-		srv:           rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(u.String()),
-		pacer:         getPacer(opt.URL),
+		srv:           rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetRoot(u.String()),
+		pacer:         getPacer(ctx, opt.URL),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -297,6 +297,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Config callback for 2FA
 func Config(ctx context.Context, name string, m configmap.Mapper) {
+	ci := fs.GetConfig(ctx)
 	serverURL, ok := m.Get(configURL)
 	if !ok || serverURL == "" {
 		// If there's no server URL, it means we're trying an operation at the backend level, like a "rclone authorize seafile"
@@ -305,7 +306,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper) {
 	}
 
 	// Stop if we are running non-interactive config
-	if fs.Config.AutoConfirm {
+	if ci.AutoConfirm {
 		return
 	}
 
@@ -342,7 +343,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper) {
 	if !strings.HasPrefix(url, "/") {
 		url += "/"
 	}
-	srv := rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(url)
+	srv := rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetRoot(url)
 
 	// We loop asking for a 2FA code
 	for {

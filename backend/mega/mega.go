@@ -194,6 +194,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, errors.Wrap(err, "couldn't decrypt password")
 		}
 	}
+	ci := fs.GetConfig(ctx)
 
 	// cache *mega.Mega on username so we can re-use and share
 	// them between remotes.  They are expensive to make as they
@@ -204,8 +205,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	defer megaCacheMu.Unlock()
 	srv := megaCache[opt.User]
 	if srv == nil {
-		srv = mega.New().SetClient(fshttp.NewClient(fs.Config))
-		srv.SetRetries(fs.Config.LowLevelRetries) // let mega do the low level retries
+		srv = mega.New().SetClient(fshttp.NewClient(fs.GetConfig(ctx)))
+		srv.SetRetries(ci.LowLevelRetries) // let mega do the low level retries
 		srv.SetLogger(func(format string, v ...interface{}) {
 			fs.Infof("*go-mega*", format, v...)
 		})
@@ -228,7 +229,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:  root,
 		opt:   *opt,
 		srv:   srv,
-		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,

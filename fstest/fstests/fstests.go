@@ -295,6 +295,7 @@ func Run(t *testing.T, opt *Opt) {
 		isLocalRemote        bool
 		purged               bool // whether the dir has been purged or not
 		ctx                  = context.Background()
+		ci                   = fs.GetConfig(ctx)
 		unwrappableFsMethods = []string{"Command"} // these Fs methods don't need to be wrapped ever
 	)
 
@@ -316,10 +317,10 @@ func Run(t *testing.T, opt *Opt) {
 		if remote.Features().ListR == nil {
 			t.Skip("FS has no ListR interface")
 		}
-		previous := fs.Config.UseListR
-		fs.Config.UseListR = true
+		previous := ci.UseListR
+		ci.UseListR = true
 		return func() {
-			fs.Config.UseListR = previous
+			ci.UseListR = previous
 		}
 	}
 

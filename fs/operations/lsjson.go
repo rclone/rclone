@@ -115,7 +115,7 @@ func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, 
 			hashTypes = append(hashTypes, ht)
 		}
 	}
-	err := walk.ListR(ctx, fsrc, remote, false, ConfigMaxDepth(opt.Recurse), walk.ListAll, func(entries fs.DirEntries) (err error) {
+	err := walk.ListR(ctx, fsrc, remote, false, ConfigMaxDepth(ctx, opt.Recurse), walk.ListAll, func(entries fs.DirEntries) (err error) {
 		for _, entry := range entries {
 			switch entry.(type) {
 			case fs.Directory:

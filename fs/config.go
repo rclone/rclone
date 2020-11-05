@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"context"
 	"net"
 	"strings"
 	"time"
@@ -10,8 +11,8 @@ import (
 
 // Global
 var (
-	// Config is the global config
-	Config = NewConfig()
+	// globalConfig for rclone
+	globalConfig = NewConfig()
 
 	// Read a value from the config file
 	//
@@ -160,6 +161,34 @@ func NewConfig() *ConfigInfo {
 	c.TrackRenamesStrategy = "hash"
 
 	return c
+}
+
+type configContextKeyType struct{}
+
+// Context key for config
+var configContextKey = configContextKeyType{}
+
+// GetConfig returns the global or context sensitive context
+func GetConfig(ctx context.Context) *ConfigInfo {
+	if ctx == nil {
+		return globalConfig
+	}
+	c := ctx.Value(configContextKey)
+	if c == nil {
+		return globalConfig
+	}
+	return c.(*ConfigInfo)
+}
+
+// AddConfig returns a mutable config structure based on a shallow
+// copy of that found in ctx and returns a new context with that added
+// to it.
+func AddConfig(ctx context.Context) (context.Context, *ConfigInfo) {
+	c := GetConfig(ctx)
+	cCopy := new(ConfigInfo)
+	*cCopy = *c
+	newCtx := context.WithValue(ctx, configContextKey, cCopy)
+	return newCtx, cCopy
 }
 
 // ConfigToEnv converts a config section and name, e.g. ("myremote",

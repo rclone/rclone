@@ -375,7 +375,7 @@ func getServiceAccountClient(ctx context.Context, credentialsData []byte) (*http
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
-	ctxWithSpecialClient := oauthutil.Context(ctx, fshttp.NewClient(fs.Config))
+	ctxWithSpecialClient := oauthutil.Context(ctx, fshttp.NewClient(fs.GetConfig(ctx)))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
@@ -432,7 +432,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:  name,
 		root:  root,
 		opt:   *opt,
-		pacer: fs.NewPacer(pacer.NewGoogleDrive(pacer.MinSleep(minSleep))),
+		pacer: fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(minSleep))),
 		cache: bucket.NewCache(),
 	}
 	f.setRoot(root)

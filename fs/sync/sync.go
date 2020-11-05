@@ -30,6 +30,7 @@ type syncCopyMove struct {
 	deleteEmptySrcDirs bool
 	dir                string
 	// internal state
+	ci                     *fs.ConfigInfo         // global config
 	ctx                    context.Context        // internal context for controlling go-routines
 	cancel                 func()                 // cancel the context
 	inCtx                  context.Context        // internal context for controlling march
@@ -97,7 +98,9 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.Overlapping(fdst, fsrc) {
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
+	ci := fs.GetConfig(ctx)
 	s := &syncCopyMove{
+		ci:                     ci,
 		fdst:                   fdst,
 		fsrc:                   fsrc,
 		deleteMode:             deleteMode,
@@ -105,42 +108,42 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		copyEmptySrcDirs:       copyEmptySrcDirs,
 		deleteEmptySrcDirs:     deleteEmptySrcDirs,
 		dir:                    "",
-		srcFilesChan:           make(chan fs.Object, fs.Config.Checkers+fs.Config.Transfers),
+		srcFilesChan:           make(chan fs.Object, ci.Checkers+ci.Transfers),
 		srcFilesResult:         make(chan error, 1),
 		dstFilesResult:         make(chan error, 1),
 		dstEmptyDirs:           make(map[string]fs.DirEntry),
 		srcEmptyDirs:           make(map[string]fs.DirEntry),
-		noTraverse:             fs.Config.NoTraverse,
-		noCheckDest:            fs.Config.NoCheckDest,
-		noUnicodeNormalization: fs.Config.NoUnicodeNormalization,
-		deleteFilesCh:          make(chan fs.Object, fs.Config.Checkers),
-		trackRenames:           fs.Config.TrackRenames,
+		noTraverse:             ci.NoTraverse,
+		noCheckDest:            ci.NoCheckDest,
+		noUnicodeNormalization: ci.NoUnicodeNormalization,
+		deleteFilesCh:          make(chan fs.Object, ci.Checkers),
+		trackRenames:           ci.TrackRenames,
 		commonHash:             fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
 		modifyWindow:           fs.GetModifyWindow(ctx, fsrc, fdst),
-		trackRenamesCh:         make(chan fs.Object, fs.Config.Checkers),
-		checkFirst:             fs.Config.CheckFirst,
+		trackRenamesCh:         make(chan fs.Object, ci.Checkers),
+		checkFirst:             ci.CheckFirst,
 	}
-	backlog := fs.Config.MaxBacklog
+	backlog := ci.MaxBacklog
 	if s.checkFirst {
 		fs.Infof(s.fdst, "Running all checks before starting transfers")
 		backlog = -1
 	}
 	var err error
-	s.toBeChecked, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetCheckQueue, backlog)
+	s.toBeChecked, err = newPipe(ci.OrderBy, accounting.Stats(ctx).SetCheckQueue, backlog)
 	if err != nil {
 		return nil, err
 	}
-	s.toBeUploaded, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetTransferQueue, backlog)
+	s.toBeUploaded, err = newPipe(ci.OrderBy, accounting.Stats(ctx).SetTransferQueue, backlog)
 	if err != nil {
 		return nil, err
 	}
-	s.toBeRenamed, err = newPipe(fs.Config.OrderBy, accounting.Stats(ctx).SetRenameQueue, backlog)
+	s.toBeRenamed, err = newPipe(ci.OrderBy, accounting.Stats(ctx).SetRenameQueue, backlog)
 	if err != nil {
 		return nil, err
 	}
 	// If a max session duration has been defined add a deadline to the context
-	if fs.Config.MaxDuration > 0 {
-		endTime := time.Now().Add(fs.Config.MaxDuration)
+	if ci.MaxDuration > 0 {
+		endTime := time.Now().Add(ci.MaxDuration)
 		fs.Infof(s.fdst, "Transfer session deadline: %s", endTime.Format("2006/01/02 15:04:05"))
 		s.ctx, s.cancel = context.WithDeadline(ctx, endTime)
 	} else {
@@ -152,7 +155,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		fs.Errorf(nil, "Ignoring --no-traverse with sync")
 		s.noTraverse = false
 	}
-	s.trackRenamesStrategy, err = parseTrackRenamesStrategy(fs.Config.TrackRenamesStrategy)
+	s.trackRenamesStrategy, err = parseTrackRenamesStrategy(ci.TrackRenamesStrategy)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +163,7 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		if s.deleteMode != fs.DeleteModeOff {
 			return nil, errors.New("can't use --no-check-dest with sync: use copy instead")
 		}
-		if fs.Config.Immutable {
+		if ci.Immutable {
 			return nil, errors.New("can't use --no-check-dest with --immutable")
 		}
 		if s.backupDir != nil {
@@ -199,20 +202,20 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		}
 	}
 	// Make Fs for --backup-dir if required
-	if fs.Config.BackupDir != "" || fs.Config.Suffix != "" {
+	if ci.BackupDir != "" || ci.Suffix != "" {
 		var err error
 		s.backupDir, err = operations.BackupDir(ctx, fdst, fsrc, "")
 		if err != nil {
 			return nil, err
 		}
 	}
-	if fs.Config.CompareDest != "" {
+	if ci.CompareDest != "" {
 		var err error
 		s.compareCopyDest, err = operations.GetCompareDest(ctx)
 		if err != nil {
 			return nil, err
 		}
-	} else if fs.Config.CopyDest != "" {
+	} else if ci.CopyDest != "" {
 		var err error
 		s.compareCopyDest, err = operations.GetCopyDest(ctx, fdst)
 		if err != nil {
@@ -312,7 +315,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 			}
 			if !NoNeedTransfer && operations.NeedTransfer(s.ctx, pair.Dst, pair.Src) {
 				// If files are treated as immutable, fail if destination exists and does not match
-				if fs.Config.Immutable && pair.Dst != nil {
+				if s.ci.Immutable && pair.Dst != nil {
 					fs.Errorf(pair.Dst, "Source and destination exist but do not match: immutable file modified")
 					s.processError(fs.ErrorImmutableModified)
 				} else {
@@ -389,9 +392,9 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 
 // This starts the background checkers.
 func (s *syncCopyMove) startCheckers() {
-	s.checkerWg.Add(fs.Config.Checkers)
-	for i := 0; i < fs.Config.Checkers; i++ {
-		fraction := (100 * i) / fs.Config.Checkers
+	s.checkerWg.Add(s.ci.Checkers)
+	for i := 0; i < s.ci.Checkers; i++ {
+		fraction := (100 * i) / s.ci.Checkers
 		go s.pairChecker(s.toBeChecked, s.toBeUploaded, fraction, &s.checkerWg)
 	}
 }
@@ -405,9 +408,9 @@ func (s *syncCopyMove) stopCheckers() {
 
 // This starts the background transfers
 func (s *syncCopyMove) startTransfers() {
-	s.transfersWg.Add(fs.Config.Transfers)
-	for i := 0; i < fs.Config.Transfers; i++ {
-		fraction := (100 * i) / fs.Config.Transfers
+	s.transfersWg.Add(s.ci.Transfers)
+	for i := 0; i < s.ci.Transfers; i++ {
+		fraction := (100 * i) / s.ci.Transfers
 		go s.pairCopyOrMove(s.ctx, s.toBeUploaded, s.fdst, fraction, &s.transfersWg)
 	}
 }
@@ -424,9 +427,9 @@ func (s *syncCopyMove) startRenamers() {
 	if !s.trackRenames {
 		return
 	}
-	s.renamerWg.Add(fs.Config.Checkers)
-	for i := 0; i < fs.Config.Checkers; i++ {
-		fraction := (100 * i) / fs.Config.Checkers
+	s.renamerWg.Add(s.ci.Checkers)
+	for i := 0; i < s.ci.Checkers; i++ {
+		fraction := (100 * i) / s.ci.Checkers
 		go s.pairRenamer(s.toBeRenamed, s.toBeUploaded, fraction, &s.renamerWg)
 	}
 }
@@ -492,13 +495,13 @@ func (s *syncCopyMove) stopDeleters() {
 // checkSrcMap is clear then it assumes that the any source files that
 // have been found have been removed from dstFiles already.
 func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
-	if accounting.Stats(s.ctx).Errored() && !fs.Config.IgnoreErrors {
+	if accounting.Stats(s.ctx).Errored() && !s.ci.IgnoreErrors {
 		fs.Errorf(s.fdst, "%v", fs.ErrorNotDeleting)
 		return fs.ErrorNotDeleting
 	}
 
 	// Delete the spare files
-	toDelete := make(fs.ObjectsChan, fs.Config.Transfers)
+	toDelete := make(fs.ObjectsChan, s.ci.Transfers)
 	go func() {
 	outer:
 		for remote, o := range s.dstFiles {
@@ -524,11 +527,11 @@ func (s *syncCopyMove) deleteFiles(checkSrcMap bool) error {
 
 // This deletes the empty directories in the slice passed in.  It
 // ignores any errors deleting directories
-func deleteEmptyDirectories(ctx context.Context, f fs.Fs, entriesMap map[string]fs.DirEntry) error {
+func (s *syncCopyMove) deleteEmptyDirectories(ctx context.Context, f fs.Fs, entriesMap map[string]fs.DirEntry) error {
 	if len(entriesMap) == 0 {
 		return nil
 	}
-	if accounting.Stats(ctx).Errored() && !fs.Config.IgnoreErrors {
+	if accounting.Stats(ctx).Errored() && !s.ci.IgnoreErrors {
 		fs.Errorf(f, "%v", fs.ErrorNotDeletingDirs)
 		return fs.ErrorNotDeletingDirs
 	}
@@ -729,14 +732,14 @@ func (s *syncCopyMove) makeRenameMap() {
 	}
 
 	// pump all the dstFiles into in
-	in := make(chan fs.Object, fs.Config.Checkers)
+	in := make(chan fs.Object, s.ci.Checkers)
 	go s.pumpMapToChan(s.dstFiles, in)
 
 	// now make a map of size,hash for all dstFiles
 	s.renameMap = make(map[string][]fs.Object)
 	var wg sync.WaitGroup
-	wg.Add(fs.Config.Transfers)
-	for i := 0; i < fs.Config.Transfers; i++ {
+	wg.Add(s.ci.Transfers)
+	for i := 0; i < s.ci.Transfers; i++ {
 		go func() {
 			defer wg.Done()
 			for obj := range in {
@@ -829,7 +832,7 @@ func (s *syncCopyMove) run() error {
 		NoCheckDest:            s.noCheckDest,
 		NoUnicodeNormalization: s.noUnicodeNormalization,
 	}
-	s.processError(m.Run())
+	s.processError(m.Run(s.ctx))
 
 	s.stopTrackRenames()
 	if s.trackRenames {
@@ -860,7 +863,7 @@ func (s *syncCopyMove) run() error {
 
 	// Delete files after
 	if s.deleteMode == fs.DeleteModeAfter {
-		if s.currentError() != nil && !fs.Config.IgnoreErrors {
+		if s.currentError() != nil && !s.ci.IgnoreErrors {
 			fs.Errorf(s.fdst, "%v", fs.ErrorNotDeleting)
 		} else {
 			s.processError(s.deleteFiles(false))
@@ -869,10 +872,10 @@ func (s *syncCopyMove) run() error {
 
 	// Prune empty directories
 	if s.deleteMode != fs.DeleteModeOff {
-		if s.currentError() != nil && !fs.Config.IgnoreErrors {
+		if s.currentError() != nil && !s.ci.IgnoreErrors {
 			fs.Errorf(s.fdst, "%v", fs.ErrorNotDeletingDirs)
 		} else {
-			s.processError(deleteEmptyDirectories(s.ctx, s.fdst, s.dstEmptyDirs))
+			s.processError(s.deleteEmptyDirectories(s.ctx, s.fdst, s.dstEmptyDirs))
 		}
 	}
 
@@ -880,7 +883,7 @@ func (s *syncCopyMove) run() error {
 	// if DoMove and --delete-empty-src-dirs flag is set
 	if s.DoMove && s.deleteEmptySrcDirs {
 		//delete empty subdirectories that were part of the move
-		s.processError(deleteEmptyDirectories(s.ctx, s.fsrc, s.srcEmptyDirs))
+		s.processError(s.deleteEmptyDirectories(s.ctx, s.fsrc, s.srcEmptyDirs))
 	}
 
 	// Read the error out of the context if there is one
@@ -1038,12 +1041,13 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 //
 // dir is the start directory, "" for root
 func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
+	ci := fs.GetConfig(ctx)
 	if deleteMode != fs.DeleteModeOff && DoMove {
 		return fserrors.FatalError(errors.New("can't delete and move at the same time"))
 	}
 	// Run an extra pass to delete only
 	if deleteMode == fs.DeleteModeBefore {
-		if fs.Config.TrackRenames {
+		if ci.TrackRenames {
 			return fserrors.FatalError(errors.New("can't use --delete-before with --track-renames"))
 		}
 		// only delete stuff during in this pass
@@ -1067,7 +1071,8 @@ func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 
 // Sync fsrc into fdst
 func Sync(ctx context.Context, fdst, fsrc fs.Fs, copyEmptySrcDirs bool) error {
-	return runSyncCopyMove(ctx, fdst, fsrc, fs.Config.DeleteMode, false, false, copyEmptySrcDirs)
+	ci := fs.GetConfig(ctx)
+	return runSyncCopyMove(ctx, fdst, fsrc, ci.DeleteMode, false, false, copyEmptySrcDirs)
 }
 
 // CopyDir copies fsrc into fdst

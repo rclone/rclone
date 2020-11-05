@@ -416,7 +416,7 @@ func (wb *WriteBack) processItems(ctx context.Context) {
 	resetTimer := true
 	for wbItem := wb._peekItem(); wbItem != nil && time.Until(wbItem.expiry) <= 0; wbItem = wb._peekItem() {
 		// If reached transfer limit don't restart the timer
-		if wb.uploads >= fs.Config.Transfers {
+		if wb.uploads >= fs.GetConfig(context.TODO()).Transfers {
 			fs.Debugf(wbItem.name, "vfs cache: delaying writeback as --transfers exceeded")
 			resetTimer = false
 			break

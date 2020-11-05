@@ -214,6 +214,7 @@ type Fs struct {
 	name            string                                 // name of this remote
 	root            string                                 // the path we are working on if any
 	opt             Options                                // parsed config options
+	ci              *fs.ConfigInfo                         // global config
 	features        *fs.Features                           // optional features
 	srv             *rest.Client                           // the connection to the b2 server
 	rootBucket      string                                 // bucket part of root (if any)
@@ -415,20 +416,22 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Endpoint == "" {
 		opt.Endpoint = defaultEndpoint
 	}
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:        name,
 		opt:         *opt,
-		srv:         rest.NewClient(fshttp.NewClient(fs.Config)).SetErrorHandler(errorHandler),
+		ci:          ci,
+		srv:         rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetErrorHandler(errorHandler),
 		cache:       bucket.NewCache(),
 		_bucketID:   make(map[string]string, 1),
 		_bucketType: make(map[string]string, 1),
 		uploads:     make(map[string][]*api.GetUploadURLResponse),
-		pacer:       fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
+		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
 		pool: pool.New(
 			time.Duration(opt.MemoryPoolFlushTime),
 			int(opt.ChunkSize),
-			fs.Config.Transfers,
+			ci.Transfers,
 			opt.MemoryPoolUseMmap,
 		),
 	}
@@ -1167,10 +1170,10 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 	}
 
 	// Delete Config.Transfers in parallel
-	toBeDeleted := make(chan *api.File, fs.Config.Transfers)
+	toBeDeleted := make(chan *api.File, f.ci.Transfers)
 	var wg sync.WaitGroup
-	wg.Add(fs.Config.Transfers)
-	for i := 0; i < fs.Config.Transfers; i++ {
+	wg.Add(f.ci.Transfers)
+	for i := 0; i < f.ci.Transfers; i++ {
 		go func() {
 			defer wg.Done()
 			for object := range toBeDeleted {

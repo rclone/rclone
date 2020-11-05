@@ -774,7 +774,7 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(Commander); ok {
 		ft.Command = do.Command
 	}
-	return ft.DisableList(Config.DisableFeatures)
+	return ft.DisableList(GetConfig(ctx).DisableFeatures)
 }
 
 // Mask the Features with the Fs passed in
@@ -854,7 +854,7 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 		ft.Disconnect = nil
 	}
 	// Command is always local so we don't mask it
-	return ft.DisableList(Config.DisableFeatures)
+	return ft.DisableList(GetConfig(ctx).DisableFeatures)
 }
 
 // Wrap makes a Copy of the features passed in, overriding the UnWrap/Wrap
@@ -1399,7 +1399,7 @@ func FileExists(ctx context.Context, fs Fs, remote string) (bool, error) {
 // GetModifyWindow calculates the maximum modify window between the given Fses
 // and the Config.ModifyWindow parameter.
 func GetModifyWindow(ctx context.Context, fss ...Info) time.Duration {
-	window := Config.ModifyWindow
+	window := GetConfig(ctx).ModifyWindow
 	for _, f := range fss {
 		if f != nil {
 			precision := f.Precision()
@@ -1424,12 +1424,12 @@ type logCalculator struct {
 }
 
 // NewPacer creates a Pacer for the given Fs and Calculator.
-func NewPacer(c pacer.Calculator) *Pacer {
+func NewPacer(ctx context.Context, c pacer.Calculator) *Pacer {
 	p := &Pacer{
 		Pacer: pacer.New(
 			pacer.InvokerOption(pacerInvoker),
-			pacer.MaxConnectionsOption(Config.Checkers+Config.Transfers),
-			pacer.RetriesOption(Config.LowLevelRetries),
+			pacer.MaxConnectionsOption(GetConfig(ctx).Checkers+GetConfig(ctx).Transfers),
+			pacer.RetriesOption(GetConfig(ctx).LowLevelRetries),
 			pacer.CalculatorOption(c),
 		),
 	}

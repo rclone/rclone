@@ -252,7 +252,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, errors.Wrap(err, "failed to configure premiumize.me")
 		}
 	} else {
-		client = fshttp.NewClient(fs.Config)
+		client = fshttp.NewClient(fs.GetConfig(ctx))
 	}
 
 	f := &Fs{
@@ -260,7 +260,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root:  root,
 		opt:   *opt,
 		srv:   rest.NewClient(client).SetRoot(rootURL),
-		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,

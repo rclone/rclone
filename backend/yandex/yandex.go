@@ -88,12 +88,13 @@ type Options struct {
 // Fs represents a remote yandex
 type Fs struct {
 	name     string
-	root     string       // root path
-	opt      Options      // parsed options
-	features *fs.Features // optional features
-	srv      *rest.Client // the connection to the yandex server
-	pacer    *fs.Pacer    // pacer for API calls
-	diskRoot string       // root path with "disk:/" container name
+	root     string         // root path
+	opt      Options        // parsed options
+	ci       *fs.ConfigInfo // global config
+	features *fs.Features   // optional features
+	srv      *rest.Client   // the connection to the yandex server
+	pacer    *fs.Pacer      // pacer for API calls
+	diskRoot string         // root path with "disk:/" container name
 }
 
 // Object describes a swift object
@@ -265,11 +266,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		log.Fatalf("Failed to configure Yandex: %v", err)
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:  name,
 		opt:   *opt,
+		ci:    ci,
 		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
-		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -534,7 +537,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string) (err error) {
 		RootURL: location,
 		Method:  "GET",
 	}
-	deadline := time.Now().Add(fs.Config.Timeout)
+	deadline := time.Now().Add(f.ci.Timeout)
 	for time.Now().Before(deadline) {
 		var resp *http.Response
 		var body []byte
@@ -565,7 +568,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string) (err error) {
 
 		time.Sleep(1 * time.Second)
 	}
-	return errors.Errorf("async operation didn't complete after %v", fs.Config.Timeout)
+	return errors.Errorf("async operation didn't complete after %v", f.ci.Timeout)
 }
 
 func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) (err error) {

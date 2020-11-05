@@ -386,6 +386,7 @@ func TestTimeRangeDuration(t *testing.T) {
 
 func TestPruneTransfers(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	for _, test := range []struct {
 		Name                     string
 		Transfers                int
@@ -396,7 +397,7 @@ func TestPruneTransfers(t *testing.T) {
 			Name:                     "Limited number of StartedTransfers",
 			Limit:                    100,
 			Transfers:                200,
-			ExpectedStartedTransfers: 100 + fs.Config.Transfers,
+			ExpectedStartedTransfers: 100 + ci.Transfers,
 		},
 		{
 			Name:                     "Unlimited number of StartedTransfers",

@@ -59,10 +59,11 @@ func init() {
 // Initialise rclone for testing
 func Initialise() {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	// Never ask for passwords, fail instead.
 	// If your local config is encrypted set environment variable
 	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
-	fs.Config.AskPassword = false
+	ci.AskPassword = false
 	// Override the config file from the environment - we don't
 	// parse the flags any more so this doesn't happen
 	// automatically
@@ -71,16 +72,16 @@ func Initialise() {
 	}
 	config.LoadConfig(ctx)
 	if *Verbose {
-		fs.Config.LogLevel = fs.LogLevelDebug
+		ci.LogLevel = fs.LogLevelDebug
 	}
 	if *DumpHeaders {
-		fs.Config.Dump |= fs.DumpHeaders
+		ci.Dump |= fs.DumpHeaders
 	}
 	if *DumpBodies {
-		fs.Config.Dump |= fs.DumpBodies
+		ci.Dump |= fs.DumpBodies
 	}
-	fs.Config.LowLevelRetries = *LowLevelRetries
-	fs.Config.UseListR = *UseListR
+	ci.LowLevelRetries = *LowLevelRetries
+	ci.UseListR = *UseListR
 }
 
 // Item represents an item for checking

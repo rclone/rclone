@@ -127,15 +127,15 @@ func (dp *dummyPaced) fn() (bool, error) {
 }
 
 func TestPacerCall(t *testing.T) {
-	expectedCalled := Config.LowLevelRetries
+	ctx := context.Background()
+	config := GetConfig(ctx)
+	expectedCalled := config.LowLevelRetries
 	if expectedCalled == 0 {
+		ctx, config = AddConfig(ctx)
 		expectedCalled = 20
-		Config.LowLevelRetries = expectedCalled
-		defer func() {
-			Config.LowLevelRetries = 0
-		}()
+		config.LowLevelRetries = expectedCalled
 	}
-	p := NewPacer(pacer.NewDefault(pacer.MinSleep(1*time.Millisecond), pacer.MaxSleep(2*time.Millisecond)))
+	p := NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(1*time.Millisecond), pacer.MaxSleep(2*time.Millisecond)))
 
 	dp := &dummyPaced{retry: true}
 	err := p.Call(dp.fn)
@@ -144,7 +144,7 @@ func TestPacerCall(t *testing.T) {
 }
 
 func TestPacerCallNoRetry(t *testing.T) {
-	p := NewPacer(pacer.NewDefault(pacer.MinSleep(1*time.Millisecond), pacer.MaxSleep(2*time.Millisecond)))
+	p := NewPacer(context.Background(), pacer.NewDefault(pacer.MinSleep(1*time.Millisecond), pacer.MaxSleep(2*time.Millisecond)))
 
 	dp := &dummyPaced{retry: true}
 	err := p.CallNoRetry(dp.fn)

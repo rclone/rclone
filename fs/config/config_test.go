@@ -17,6 +17,7 @@ import (
 
 func testConfigFile(t *testing.T, configFileName string) func() {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	configKey = nil // reset password
 	_ = os.Unsetenv("_RCLONE_CONFIG_KEY_FILE")
 	_ = os.Unsetenv("RCLONE_CONFIG_PASS")
@@ -29,13 +30,13 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 	// temporarily adapt configuration
 	oldOsStdout := os.Stdout
 	oldConfigPath := ConfigPath
-	oldConfig := fs.Config
+	oldConfig := *ci
 	oldConfigFile := configFile
 	oldReadLine := ReadLine
 	oldPassword := Password
 	os.Stdout = nil
 	ConfigPath = path
-	fs.Config = &fs.ConfigInfo{}
+	ci = &fs.ConfigInfo{}
 	configFile = nil
 
 	LoadConfig(ctx)
@@ -67,7 +68,7 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 		ConfigPath = oldConfigPath
 		ReadLine = oldReadLine
 		Password = oldPassword
-		fs.Config = oldConfig
+		*ci = oldConfig
 		configFile = oldConfigFile
 
 		_ = os.Unsetenv("_RCLONE_CONFIG_KEY_FILE")
@@ -87,6 +88,7 @@ func makeReadLine(answers []string) func() string {
 
 func TestCRUD(t *testing.T) {
 	defer testConfigFile(t, "crud.conf")()
+	ctx := context.Background()
 
 	// script for creating remote
 	ReadLine = makeReadLine([]string{
@@ -97,7 +99,7 @@ func TestCRUD(t *testing.T) {
 		"secret",             // repeat
 		"y",                  // looks good, save
 	})
-	NewRemote("test")
+	NewRemote(ctx, "test")
 
 	assert.Equal(t, []string{"test"}, configFile.GetSectionList())
 	assert.Equal(t, "config_test_remote", FileGet("test", "type"))
@@ -124,6 +126,7 @@ func TestCRUD(t *testing.T) {
 
 func TestChooseOption(t *testing.T) {
 	defer testConfigFile(t, "crud.conf")()
+	ctx := context.Background()
 
 	// script for creating remote
 	ReadLine = makeReadLine([]string{
@@ -139,7 +142,7 @@ func TestChooseOption(t *testing.T) {
 		assert.Equal(t, 1024, bits)
 		return "not very random password", nil
 	}
-	NewRemote("test")
+	NewRemote(ctx, "test")
 
 	assert.Equal(t, "false", FileGet("test", "bool"))
 	assert.Equal(t, "not very random password", obscure.MustReveal(FileGet("test", "pass")))
@@ -151,7 +154,7 @@ func TestChooseOption(t *testing.T) {
 		"n",                  // not required
 		"y",                  // looks good, save
 	})
-	NewRemote("test")
+	NewRemote(ctx, "test")
 
 	assert.Equal(t, "true", FileGet("test", "bool"))
 	assert.Equal(t, "", FileGet("test", "pass"))
@@ -159,6 +162,7 @@ func TestChooseOption(t *testing.T) {
 
 func TestNewRemoteName(t *testing.T) {
 	defer testConfigFile(t, "crud.conf")()
+	ctx := context.Background()
 
 	// script for creating remote
 	ReadLine = makeReadLine([]string{
@@ -167,7 +171,7 @@ func TestNewRemoteName(t *testing.T) {
 		"n",                  // not required
 		"y",                  // looks good, save
 	})
-	NewRemote("test")
+	NewRemote(ctx, "test")
 
 	ReadLine = makeReadLine([]string{
 		"test",           // already exists
@@ -293,16 +297,18 @@ func TestConfigLoadEncrypted(t *testing.T) {
 }
 
 func TestConfigLoadEncryptedWithValidPassCommand(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	oldConfigPath := ConfigPath
-	oldConfig := fs.Config
+	oldConfig := *ci
 	ConfigPath = "./testdata/encrypted.conf"
-	// using fs.Config.PasswordCommand, correct password
-	fs.Config.PasswordCommand = fs.SpaceSepList{"echo", "asdf"}
+	// using ci.PasswordCommand, correct password
+	ci.PasswordCommand = fs.SpaceSepList{"echo", "asdf"}
 	defer func() {
 		ConfigPath = oldConfigPath
 		configKey = nil // reset password
-		fs.Config = oldConfig
-		fs.Config.PasswordCommand = nil
+		*ci = oldConfig
+		ci.PasswordCommand = nil
 	}()
 
 	configKey = nil // reset password
@@ -320,16 +326,18 @@ func TestConfigLoadEncryptedWithValidPassCommand(t *testing.T) {
 }
 
 func TestConfigLoadEncryptedWithInvalidPassCommand(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	oldConfigPath := ConfigPath
-	oldConfig := fs.Config
+	oldConfig := *ci
 	ConfigPath = "./testdata/encrypted.conf"
-	// using fs.Config.PasswordCommand, incorrect password
-	fs.Config.PasswordCommand = fs.SpaceSepList{"echo", "asdf-blurfl"}
+	// using ci.PasswordCommand, incorrect password
+	ci.PasswordCommand = fs.SpaceSepList{"echo", "asdf-blurfl"}
 	defer func() {
 		ConfigPath = oldConfigPath
 		configKey = nil // reset password
-		fs.Config = oldConfig
-		fs.Config.PasswordCommand = nil
+		*ci = oldConfig
+		ci.PasswordCommand = nil
 	}()
 
 	configKey = nil // reset password

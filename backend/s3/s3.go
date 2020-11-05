@@ -1285,6 +1285,8 @@ type Fs struct {
 	name          string           // the name of the remote
 	root          string           // root of the bucket - ignore all objects above this
 	opt           Options          // parsed options
+	ci            *fs.ConfigInfo   // global config
+	ctx           context.Context  // global context for reading config
 	features      *fs.Features     // optional features
 	c             *s3.S3           // the connection to the s3 server
 	ses           *session.Session // the s3 session
@@ -1401,9 +1403,9 @@ func (o *Object) split() (bucket, bucketPath string) {
 }
 
 // getClient makes an http client according to the options
-func getClient(opt *Options) *http.Client {
+func getClient(ctx context.Context, opt *Options) *http.Client {
 	// TODO: Do we need cookies too?
-	t := fshttp.NewTransportCustom(fs.Config, func(t *http.Transport) {
+	t := fshttp.NewTransportCustom(fs.GetConfig(ctx), func(t *http.Transport) {
 		if opt.DisableHTTP2 {
 			t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
 		}
@@ -1414,7 +1416,7 @@ func getClient(opt *Options) *http.Client {
 }
 
 // s3Connection makes a connection to s3
-func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
+func s3Connection(ctx context.Context, opt *Options) (*s3.S3, *session.Session, error) {
 	// Make the auth
 	v := credentials.Value{
 		AccessKeyID:     opt.AccessKeyID,
@@ -1492,7 +1494,7 @@ func s3Connection(opt *Options) (*s3.S3, *session.Session, error) {
 	awsConfig := aws.NewConfig().
 		WithMaxRetries(0). // Rely on rclone's retry logic
 		WithCredentials(cred).
-		WithHTTPClient(getClient(opt)).
+		WithHTTPClient(getClient(ctx, opt)).
 		WithS3ForcePathStyle(opt.ForcePathStyle).
 		WithS3UseAccelerate(opt.UseAccelerateEndpoint).
 		WithS3UsEast1RegionalEndpoint(endpoints.RegionalS3UsEast1Endpoint)
@@ -1599,23 +1601,26 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		md5sumBinary := md5.Sum([]byte(opt.SSECustomerKey))
 		opt.SSECustomerKeyMD5 = base64.StdEncoding.EncodeToString(md5sumBinary[:])
 	}
-	c, ses, err := s3Connection(opt)
+	c, ses, err := s3Connection(ctx, opt)
 	if err != nil {
 		return nil, err
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:  name,
 		opt:   *opt,
+		ci:    ci,
+		ctx:   ctx,
 		c:     c,
 		ses:   ses,
-		pacer: fs.NewPacer(pacer.NewS3(pacer.MinSleep(minSleep))),
+		pacer: fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
 		cache: bucket.NewCache(),
-		srv:   getClient(opt),
+		srv:   getClient(ctx, opt),
 		pool: pool.New(
 			time.Duration(opt.MemoryPoolFlushTime),
 			int(opt.ChunkSize),
-			opt.UploadConcurrency*fs.Config.Transfers,
+			opt.UploadConcurrency*ci.Transfers,
 			opt.MemoryPoolUseMmap,
 		),
 	}
@@ -1728,7 +1733,7 @@ func (f *Fs) updateRegionForBucket(bucket string) error {
 	// Make a new session with the new region
 	oldRegion := f.opt.Region
 	f.opt.Region = region
-	c, ses, err := s3Connection(&f.opt)
+	c, ses, err := s3Connection(f.ctx, &f.opt)
 	if err != nil {
 		return errors.Wrap(err, "creating new session failed")
 	}
@@ -2343,7 +2348,7 @@ func (f *Fs) getMemoryPool(size int64) *pool.Pool {
 	return pool.New(
 		time.Duration(f.opt.MemoryPoolFlushTime),
 		int(size),
-		f.opt.UploadConcurrency*fs.Config.Transfers,
+		f.opt.UploadConcurrency*f.ci.Transfers,
 		f.opt.MemoryPoolUseMmap,
 	)
 }
@@ -2810,7 +2815,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
-	if fs.Config.UseServerModTime {
+	if o.fs.ci.UseServerModTime {
 		return o.lastModified
 	}
 	err := o.readMetaData(ctx)

@@ -493,10 +493,12 @@ func TestWriteBackGetStats(t *testing.T) {
 
 // Test queuing more than fs.Config.Transfers
 func TestWriteBackMaxQueue(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	wb, cancel := newTestWriteBack(t)
 	defer cancel()
 
-	maxTransfers := fs.Config.Transfers
+	maxTransfers := ci.Transfers
 	toTransfer := maxTransfers + 2
 
 	// put toTransfer things in the queue

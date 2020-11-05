@@ -187,6 +187,7 @@ type Fs struct {
 	name          string                          // name of this remote
 	root          string                          // the path we are working on if any
 	opt           Options                         // parsed config options
+	ci            *fs.ConfigInfo                  // global config
 	features      *fs.Features                    // optional features
 	client        *http.Client                    // http client we are using
 	svcURL        *azblob.ServiceURL              // reference to serviceURL
@@ -409,18 +410,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			string(azblob.AccessTierHot), string(azblob.AccessTierCool), string(azblob.AccessTierArchive))
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:        name,
 		opt:         *opt,
-		pacer:       fs.NewPacer(pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
-		client:      fshttp.NewClient(fs.Config),
+		ci:          ci,
+		pacer:       fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
+		client:      fshttp.NewClient(fs.GetConfig(ctx)),
 		cache:       bucket.NewCache(),
 		cntURLcache: make(map[string]*azblob.ContainerURL, 1),
 		pool: pool.New(
 			time.Duration(opt.MemoryPoolFlushTime),
 			int(opt.ChunkSize),
-			fs.Config.Transfers,
+			ci.Transfers,
 			opt.MemoryPoolUseMmap,
 		),
 	}
@@ -1035,7 +1038,7 @@ func (f *Fs) getMemoryPool(size int64) *pool.Pool {
 	return pool.New(
 		time.Duration(f.opt.MemoryPoolFlushTime),
 		int(size),
-		fs.Config.Transfers,
+		f.ci.Transfers,
 		f.opt.MemoryPoolUseMmap,
 	)
 }

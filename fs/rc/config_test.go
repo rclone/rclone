@@ -75,10 +75,12 @@ func TestOptionsGet(t *testing.T) {
 
 func TestOptionsGetMarshal(t *testing.T) {
 	defer clearOptionBlock()()
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 
 	// Add some real options
 	AddOption("http", &httplib.DefaultOpt)
-	AddOption("main", fs.Config)
+	AddOption("main", ci)
 	AddOption("rc", &DefaultOpt)
 
 	// get them

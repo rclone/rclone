@@ -425,7 +425,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	root = parsePath(root)
 
-	client := fshttp.NewClient(fs.Config)
+	client := fshttp.NewClient(fs.GetConfig(ctx))
 
 	f := &Fs{
 		name:  name,
@@ -433,7 +433,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:   *opt,
 		m:     m,
 		srv:   rest.NewClient(client).SetRoot(opt.URL),
-		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 		token: opt.Token,
 	}
 	f.features = (&fs.Features{

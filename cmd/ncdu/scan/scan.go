@@ -162,12 +162,13 @@ func (d *Dir) AttrI(i int) (size int64, count int64, isDir bool, readable bool) 
 // Scan the Fs passed in, returning a root directory channel and an
 // error channel
 func Scan(ctx context.Context, f fs.Fs) (chan *Dir, chan error, chan struct{}) {
+	ci := fs.GetConfig(ctx)
 	root := make(chan *Dir, 1)
 	errChan := make(chan error, 1)
 	updated := make(chan struct{}, 1)
 	go func() {
 		parents := map[string]*Dir{}
-		err := walk.Walk(ctx, f, "", false, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
+		err := walk.Walk(ctx, f, "", false, ci.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
 			if err != nil {
 				return err // FIXME mark directory as errored instead of aborting
 			}

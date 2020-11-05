@@ -75,6 +75,8 @@ func dedupeDeleteAllButOne(ctx context.Context, keep int, remote string, objs []
 
 // dedupeDeleteIdentical deletes all but one of identical (by hash) copies
 func dedupeDeleteIdentical(ctx context.Context, ht hash.Type, remote string, objs []fs.Object) (remainingObjs []fs.Object) {
+	ci := fs.GetConfig(ctx)
+
 	// Make map of IDs
 	IDs := make(map[string]int, len(objs))
 	for _, o := range objs {
@@ -104,7 +106,7 @@ func dedupeDeleteIdentical(ctx context.Context, ht hash.Type, remote string, obj
 	dupesByID := make(map[string][]fs.Object, len(objs))
 	for _, o := range objs {
 		ID := ""
-		if fs.Config.SizeOnly && o.Size() >= 0 {
+		if ci.SizeOnly && o.Size() >= 0 {
 			ID = fmt.Sprintf("size %d", o.Size())
 		} else if ht != hash.None {
 			hashValue, err := o.Hash(ctx, ht)
@@ -229,8 +231,9 @@ func (x *DeduplicateMode) Type() string {
 
 // dedupeFindDuplicateDirs scans f for duplicate directories
 func dedupeFindDuplicateDirs(ctx context.Context, f fs.Fs) ([][]fs.Directory, error) {
+	ci := fs.GetConfig(ctx)
 	dirs := map[string][]fs.Directory{}
-	err := walk.ListR(ctx, f, "", true, fs.Config.MaxDepth, walk.ListDirs, func(entries fs.DirEntries) error {
+	err := walk.ListR(ctx, f, "", true, ci.MaxDepth, walk.ListDirs, func(entries fs.DirEntries) error {
 		entries.ForDir(func(d fs.Directory) {
 			dirs[d.Remote()] = append(dirs[d.Remote()], d)
 		})
@@ -297,6 +300,7 @@ func sortSmallestFirst(objs []fs.Object) {
 // Google Drive which can have duplicate file names.
 func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode) error {
 	fs.Infof(f, "Looking for duplicates using %v mode.", mode)
+	ci := fs.GetConfig(ctx)
 
 	// Find duplicate directories first and fix them
 	duplicateDirs, err := dedupeFindDuplicateDirs(ctx, f)
@@ -315,7 +319,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode) error {
 
 	// Now find duplicate files
 	files := map[string][]fs.Object{}
-	err = walk.ListR(ctx, f, "", true, fs.Config.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
+	err = walk.ListR(ctx, f, "", true, ci.MaxDepth, walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(func(o fs.Object) {
 			remote := o.Remote()
 			files[remote] = append(files[remote], o)

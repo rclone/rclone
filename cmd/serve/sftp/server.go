@@ -145,7 +145,7 @@ func (s *server) serve() (err error) {
 	// An SSH server is represented by a ServerConfig, which holds
 	// certificate details and handles authentication of ServerConns.
 	s.config = &ssh.ServerConfig{
-		ServerVersion: "SSH-2.0-" + fs.Config.UserAgent,
+		ServerVersion: "SSH-2.0-" + fs.GetConfig(s.ctx).UserAgent,
 		PasswordCallback: func(c ssh.ConnMetadata, pass []byte) (*ssh.Permissions, error) {
 			fs.Debugf(describeConn(c), "Password login attempt for %s", c.User())
 			if s.proxy != nil {

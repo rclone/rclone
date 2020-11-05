@@ -144,6 +144,7 @@ type Fs struct {
 	name         string             // name of this remote
 	features     *fs.Features       // optional features
 	opt          Options            // options for this Fs
+	ci           *fs.ConfigInfo     // global config
 	c            *acd.Client        // the connection to the acd server
 	noAuthClient *http.Client       // unauthenticated http client
 	root         string             // the path we are working on
@@ -247,7 +248,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 	root = parsePath(root)
-	baseClient := fshttp.NewClient(fs.Config)
+	baseClient := fshttp.NewClient(fs.GetConfig(ctx))
 	if do, ok := baseClient.Transport.(interface {
 		SetRequestFilter(f func(req *http.Request))
 	}); ok {
@@ -261,13 +262,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	c := acd.NewClient(oAuthClient)
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:         name,
 		root:         root,
 		opt:          *opt,
+		ci:           ci,
 		c:            c,
-		pacer:        fs.NewPacer(pacer.NewAmazonCloudDrive(pacer.MinSleep(minSleep))),
-		noAuthClient: fshttp.NewClient(fs.Config),
+		pacer:        fs.NewPacer(ctx, pacer.NewAmazonCloudDrive(pacer.MinSleep(minSleep))),
+		noAuthClient: fshttp.NewClient(ci),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -501,7 +504,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, err
 	}
-	maxTries := fs.Config.LowLevelRetries
+	maxTries := f.ci.LowLevelRetries
 	var iErr error
 	for tries := 1; tries <= maxTries; tries++ {
 		entries = nil
@@ -716,7 +719,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		dstObj         fs.Object
 		srcErr, dstErr error
 	)
-	for i := 1; i <= fs.Config.LowLevelRetries; i++ {
+	for i := 1; i <= f.ci.LowLevelRetries; i++ {
 		_, srcErr = srcObj.fs.NewObject(ctx, srcObj.remote) // try reading the object
 		if srcErr != nil && srcErr != fs.ErrorObjectNotFound {
 			// exit if error on source
@@ -731,7 +734,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			// finished if src not found and dst found
 			break
 		}
-		fs.Debugf(src, "Wait for directory listing to update after move %d/%d", i, fs.Config.LowLevelRetries)
+		fs.Debugf(src, "Wait for directory listing to update after move %d/%d", i, f.ci.LowLevelRetries)
 		time.Sleep(1 * time.Second)
 	}
 	return dstObj, dstErr

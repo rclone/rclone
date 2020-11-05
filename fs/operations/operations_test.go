@@ -106,6 +106,7 @@ func TestLs(t *testing.T) {
 
 func TestLsWithFilesFrom(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
@@ -132,10 +133,10 @@ func TestLsWithFilesFrom(t *testing.T) {
 	assert.Equal(t, "       60 potato2\n", buf.String())
 
 	// Now try with --no-traverse
-	oldNoTraverse := fs.Config.NoTraverse
-	fs.Config.NoTraverse = true
+	oldNoTraverse := ci.NoTraverse
+	ci.NoTraverse = true
 	defer func() {
-		fs.Config.NoTraverse = oldNoTraverse
+		ci.NoTraverse = oldNoTraverse
 	}()
 
 	buf.Reset()
@@ -269,9 +270,11 @@ func TestHashSums(t *testing.T) {
 }
 
 func TestSuffixName(t *testing.T) {
-	origSuffix, origKeepExt := fs.Config.Suffix, fs.Config.SuffixKeepExtension
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	origSuffix, origKeepExt := ci.Suffix, ci.SuffixKeepExtension
 	defer func() {
-		fs.Config.Suffix, fs.Config.SuffixKeepExtension = origSuffix, origKeepExt
+		ci.Suffix, ci.SuffixKeepExtension = origSuffix, origKeepExt
 	}()
 	for _, test := range []struct {
 		remote  string
@@ -288,15 +291,16 @@ func TestSuffixName(t *testing.T) {
 		{"test", "-suffix", false, "test-suffix"},
 		{"test", "-suffix", true, "test-suffix"},
 	} {
-		fs.Config.Suffix = test.suffix
-		fs.Config.SuffixKeepExtension = test.keepExt
-		got := operations.SuffixName(test.remote)
+		ci.Suffix = test.suffix
+		ci.SuffixKeepExtension = test.keepExt
+		got := operations.SuffixName(ctx, test.remote)
 		assert.Equal(t, test.want, got, fmt.Sprintf("%+v", test))
 	}
 }
 
 func TestCount(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
@@ -306,8 +310,8 @@ func TestCount(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
 	// Check the MaxDepth too
-	fs.Config.MaxDepth = 1
-	defer func() { fs.Config.MaxDepth = -1 }()
+	ci.MaxDepth = 1
+	defer func() { ci.MaxDepth = -1 }()
 
 	objects, size, err := operations.Count(ctx, r.Fremote)
 	require.NoError(t, err)
@@ -583,6 +587,7 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 
 func TestCopyURL(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
@@ -635,10 +640,10 @@ func TestCopyURL(t *testing.T) {
 	status = 0
 
 	// check when reading from unverified HTTPS server
-	fs.Config.InsecureSkipVerify = true
+	ci.InsecureSkipVerify = true
 	fshttp.ResetTransport()
 	defer func() {
-		fs.Config.InsecureSkipVerify = false
+		ci.InsecureSkipVerify = false
 		fshttp.ResetTransport()
 	}()
 	tss := httptest.NewTLSServer(handler)
@@ -750,16 +755,17 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 
 func TestMoveFileBackupDir(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	if !operations.CanServerSideMove(r.Fremote) {
 		t.Skip("Skipping test as remote does not support server-side move or copy")
 	}
 
-	oldBackupDir := fs.Config.BackupDir
-	fs.Config.BackupDir = r.FremoteName + "/backup"
+	oldBackupDir := ci.BackupDir
+	ci.BackupDir = r.FremoteName + "/backup"
 	defer func() {
-		fs.Config.BackupDir = oldBackupDir
+		ci.BackupDir = oldBackupDir
 	}()
 
 	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
@@ -804,16 +810,17 @@ func TestCopyFile(t *testing.T) {
 
 func TestCopyFileBackupDir(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	if !operations.CanServerSideMove(r.Fremote) {
 		t.Skip("Skipping test as remote does not support server-side move or copy")
 	}
 
-	oldBackupDir := fs.Config.BackupDir
-	fs.Config.BackupDir = r.FremoteName + "/backup"
+	oldBackupDir := ci.BackupDir
+	ci.BackupDir = r.FremoteName + "/backup"
 	defer func() {
-		fs.Config.BackupDir = oldBackupDir
+		ci.BackupDir = oldBackupDir
 	}()
 
 	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
@@ -832,12 +839,13 @@ func TestCopyFileBackupDir(t *testing.T) {
 // Test with CompareDest set
 func TestCopyFileCompareDest(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	fs.Config.CompareDest = r.FremoteName + "/CompareDest"
+	ci.CompareDest = r.FremoteName + "/CompareDest"
 	defer func() {
-		fs.Config.CompareDest = ""
+		ci.CompareDest = ""
 	}()
 	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
 	require.NoError(t, err)
@@ -913,6 +921,7 @@ func TestCopyFileCompareDest(t *testing.T) {
 // Test with CopyDest set
 func TestCopyFileCopyDest(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
@@ -920,9 +929,9 @@ func TestCopyFileCopyDest(t *testing.T) {
 		t.Skip("Skipping test as remote does not support server-side copy")
 	}
 
-	fs.Config.CopyDest = r.FremoteName + "/CopyDest"
+	ci.CopyDest = r.FremoteName + "/CopyDest"
 	defer func() {
-		fs.Config.CopyDest = ""
+		ci.CopyDest = ""
 	}()
 
 	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
@@ -955,7 +964,7 @@ func TestCopyFileCopyDest(t *testing.T) {
 
 	// check old dest, new copy, backup-dir
 
-	fs.Config.BackupDir = r.FremoteName + "/BackupDir"
+	ci.BackupDir = r.FremoteName + "/BackupDir"
 
 	file3 := r.WriteObject(ctx, "dst/one", "one", t1)
 	file2 := r.WriteObject(ctx, "CopyDest/one", "onet2", t2)
@@ -971,7 +980,7 @@ func TestCopyFileCopyDest(t *testing.T) {
 	file3.Path = "BackupDir/one"
 
 	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3)
-	fs.Config.BackupDir = ""
+	ci.BackupDir = ""
 
 	// check empty dest, new copy
 	file4 := r.WriteObject(ctx, "CopyDest/two", "two", t2)
@@ -1329,11 +1338,13 @@ func TestGetFsInfo(t *testing.T) {
 }
 
 func TestRcat(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	check := func(withChecksum, ignoreChecksum bool) {
-		checksumBefore, ignoreChecksumBefore := fs.Config.CheckSum, fs.Config.IgnoreChecksum
-		fs.Config.CheckSum, fs.Config.IgnoreChecksum = withChecksum, ignoreChecksum
+		checksumBefore, ignoreChecksumBefore := ci.CheckSum, ci.IgnoreChecksum
+		ci.CheckSum, ci.IgnoreChecksum = withChecksum, ignoreChecksum
 		defer func() {
-			fs.Config.CheckSum, fs.Config.IgnoreChecksum = checksumBefore, ignoreChecksumBefore
+			ci.CheckSum, ci.IgnoreChecksum = checksumBefore, ignoreChecksumBefore
 		}()
 
 		var prefix string
@@ -1350,13 +1361,13 @@ func TestRcat(t *testing.T) {
 		r := fstest.NewRun(t)
 		defer r.Finalise()
 
-		if *fstest.SizeLimit > 0 && int64(fs.Config.StreamingUploadCutoff) > *fstest.SizeLimit {
-			savedCutoff := fs.Config.StreamingUploadCutoff
+		if *fstest.SizeLimit > 0 && int64(ci.StreamingUploadCutoff) > *fstest.SizeLimit {
+			savedCutoff := ci.StreamingUploadCutoff
 			defer func() {
-				fs.Config.StreamingUploadCutoff = savedCutoff
+				ci.StreamingUploadCutoff = savedCutoff
 			}()
-			fs.Config.StreamingUploadCutoff = fs.SizeSuffix(*fstest.SizeLimit)
-			t.Logf("Adjust StreamingUploadCutoff to size limit %s (was %s)", fs.Config.StreamingUploadCutoff, savedCutoff)
+			ci.StreamingUploadCutoff = fs.SizeSuffix(*fstest.SizeLimit)
+			t.Logf("Adjust StreamingUploadCutoff to size limit %s (was %s)", ci.StreamingUploadCutoff, savedCutoff)
 		}
 
 		fstest.CheckListing(t, r.Fremote, []fstest.Item{})
@@ -1364,7 +1375,7 @@ func TestRcat(t *testing.T) {
 		data1 := "this is some really nice test data"
 		path1 := prefix + "small_file_from_pipe"
 
-		data2 := string(make([]byte, fs.Config.StreamingUploadCutoff+1))
+		data2 := string(make([]byte, ci.StreamingUploadCutoff+1))
 		path2 := prefix + "big_file_from_pipe"
 
 		in := ioutil.NopCloser(strings.NewReader(data1))
@@ -1418,14 +1429,15 @@ func TestRcatSize(t *testing.T) {
 
 func TestCopyFileMaxTransfer(t *testing.T) {
 	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	old := fs.Config.MaxTransfer
-	oldMode := fs.Config.CutoffMode
+	old := ci.MaxTransfer
+	oldMode := ci.CutoffMode
 
 	defer func() {
-		fs.Config.MaxTransfer = old
-		fs.Config.CutoffMode = oldMode
+		ci.MaxTransfer = old
+		ci.CutoffMode = oldMode
 		accounting.Stats(ctx).ResetCounters()
 	}()
 
@@ -1436,8 +1448,8 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	file4 := r.WriteFile("TestCopyFileMaxTransfer/file4", "file4 contents"+random.String(sizeCutoff), t2)
 
 	// Cutoff mode: Hard
-	fs.Config.MaxTransfer = sizeCutoff
-	fs.Config.CutoffMode = fs.CutoffModeHard
+	ci.MaxTransfer = sizeCutoff
+	ci.CutoffMode = fs.CutoffModeHard
 
 	// file1: Show a small file gets transferred OK
 	accounting.Stats(ctx).ResetCounters()
@@ -1456,7 +1468,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Cutoff mode: Cautious
-	fs.Config.CutoffMode = fs.CutoffModeCautious
+	ci.CutoffMode = fs.CutoffModeCautious
 
 	// file3: show a large file does not get transferred
 	accounting.Stats(ctx).ResetCounters()
@@ -1473,7 +1485,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	}
 
 	// Cutoff mode: Soft
-	fs.Config.CutoffMode = fs.CutoffModeSoft
+	ci.CutoffMode = fs.CutoffModeSoft
 
 	// file4: show a large file does get transferred this time
 	accounting.Stats(ctx).ResetCounters()

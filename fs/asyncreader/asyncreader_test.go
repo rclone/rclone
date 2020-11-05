@@ -3,6 +3,7 @@ package asyncreader
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -20,8 +21,10 @@ import (
 )
 
 func TestAsyncReader(t *testing.T) {
+	ctx := context.Background()
+
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
-	ar, err := New(buf, 4)
+	ar, err := New(ctx, buf, 4)
 	require.NoError(t, err)
 
 	var dst = make([]byte, 100)
@@ -46,7 +49,7 @@ func TestAsyncReader(t *testing.T) {
 
 	// Test Close without reading everything
 	buf = ioutil.NopCloser(bytes.NewBuffer(make([]byte, 50000)))
-	ar, err = New(buf, 4)
+	ar, err = New(ctx, buf, 4)
 	require.NoError(t, err)
 	err = ar.Close()
 	require.NoError(t, err)
@@ -54,8 +57,10 @@ func TestAsyncReader(t *testing.T) {
 }
 
 func TestAsyncWriteTo(t *testing.T) {
+	ctx := context.Background()
+
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
-	ar, err := New(buf, 4)
+	ar, err := New(ctx, buf, 4)
 	require.NoError(t, err)
 
 	var dst = &bytes.Buffer{}
@@ -73,15 +78,17 @@ func TestAsyncWriteTo(t *testing.T) {
 }
 
 func TestAsyncReaderErrors(t *testing.T) {
+	ctx := context.Background()
+
 	// test nil reader
-	_, err := New(nil, 4)
+	_, err := New(ctx, nil, 4)
 	require.Error(t, err)
 
 	// invalid buffer number
 	buf := ioutil.NopCloser(bytes.NewBufferString("Testbuffer"))
-	_, err = New(buf, 0)
+	_, err = New(ctx, buf, 0)
 	require.Error(t, err)
-	_, err = New(buf, -1)
+	_, err = New(ctx, buf, -1)
 	require.Error(t, err)
 }
 
@@ -140,6 +147,8 @@ var bufsizes = []int{
 
 // Test various  input buffer sizes, number of buffers and read sizes.
 func TestAsyncReaderSizes(t *testing.T) {
+	ctx := context.Background()
+
 	var texts [31]string
 	str := ""
 	all := ""
@@ -161,7 +170,7 @@ func TestAsyncReaderSizes(t *testing.T) {
 						bufsize := bufsizes[k]
 						read := readmaker.fn(strings.NewReader(text))
 						buf := bufio.NewReaderSize(read, bufsize)
-						ar, _ := New(ioutil.NopCloser(buf), l)
+						ar, _ := New(ctx, ioutil.NopCloser(buf), l)
 						s := bufreader.fn(ar)
 						// "timeout" expects the Reader to recover, AsyncReader does not.
 						if s != text && readmaker.name != "timeout" {
@@ -179,6 +188,8 @@ func TestAsyncReaderSizes(t *testing.T) {
 
 // Test various input buffer sizes, number of buffers and read sizes.
 func TestAsyncReaderWriteTo(t *testing.T) {
+	ctx := context.Background()
+
 	var texts [31]string
 	str := ""
 	all := ""
@@ -200,7 +211,7 @@ func TestAsyncReaderWriteTo(t *testing.T) {
 						bufsize := bufsizes[k]
 						read := readmaker.fn(strings.NewReader(text))
 						buf := bufio.NewReaderSize(read, bufsize)
-						ar, _ := New(ioutil.NopCloser(buf), l)
+						ar, _ := New(ctx, ioutil.NopCloser(buf), l)
 						dst := &bytes.Buffer{}
 						_, err := ar.WriteTo(dst)
 						if err != nil && err != io.EOF && err != iotest.ErrTimeout {
@@ -246,8 +257,10 @@ func (z *zeroReader) Close() error {
 
 // Test closing and abandoning
 func testAsyncReaderClose(t *testing.T, writeto bool) {
+	ctx := context.Background()
+
 	zr := &zeroReader{}
-	a, err := New(zr, 16)
+	a, err := New(ctx, zr, 16)
 	require.NoError(t, err)
 	var copyN int64
 	var copyErr error
@@ -287,6 +300,8 @@ func TestAsyncReaderCloseRead(t *testing.T)    { testAsyncReaderClose(t, false) 
 func TestAsyncReaderCloseWriteTo(t *testing.T) { testAsyncReaderClose(t, true) }
 
 func TestAsyncReaderSkipBytes(t *testing.T) {
+	ctx := context.Background()
+
 	t.Parallel()
 	data := make([]byte, 15000)
 	buf := make([]byte, len(data))
@@ -312,7 +327,7 @@ func TestAsyncReaderSkipBytes(t *testing.T) {
 				t.Run(fmt.Sprintf("%d", initialRead), func(t *testing.T) {
 					for _, skip := range skips {
 						t.Run(fmt.Sprintf("%d", skip), func(t *testing.T) {
-							ar, err := New(ioutil.NopCloser(bytes.NewReader(data)), buffers)
+							ar, err := New(ctx, ioutil.NopCloser(bytes.NewReader(data)), buffers)
 							require.NoError(t, err)
 
 							wantSkipFalse := false

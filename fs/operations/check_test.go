@@ -24,6 +24,8 @@ import (
 func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operations.CheckOpt) error) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 
 	addBuffers := func(opt *operations.CheckOpt) {
 		opt.Combined = new(bytes.Buffer)
@@ -73,7 +75,7 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operat
 				OneWay: oneway,
 			}
 			addBuffers(&opt)
-			err := checkFunction(context.Background(), &opt)
+			err := checkFunction(ctx, &opt)
 			gotErrors := accounting.GlobalStats().GetErrors()
 			gotChecks := accounting.GlobalStats().GetChecks()
 			if wantErrors == 0 && err != nil {
@@ -95,7 +97,7 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operat
 		})
 	}
 
-	file1 := r.WriteBoth(context.Background(), "rutabaga", "is tasty", t3)
+	file1 := r.WriteBoth(ctx, "rutabaga", "is tasty", t3)
 	fstest.CheckItems(t, r.Fremote, file1)
 	fstest.CheckItems(t, r.Flocal, file1)
 	check(1, 0, 1, false, map[string]string{
@@ -118,7 +120,7 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operat
 		"error":        "",
 	})
 
-	file3 := r.WriteObject(context.Background(), "empty space", "-", t2)
+	file3 := r.WriteObject(ctx, "empty space", "-", t2)
 	fstest.CheckItems(t, r.Fremote, file1, file3)
 	check(3, 2, 1, false, map[string]string{
 		"combined":     "- empty space\n+ potato2\n= rutabaga\n",
@@ -130,10 +132,10 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operat
 	})
 
 	file2r := file2
-	if fs.Config.SizeOnly {
-		file2r = r.WriteObject(context.Background(), "potato2", "--Some-Differences-But-Size-Only-Is-Enabled-----------------", t1)
+	if ci.SizeOnly {
+		file2r = r.WriteObject(ctx, "potato2", "--Some-Differences-But-Size-Only-Is-Enabled-----------------", t1)
 	} else {
-		r.WriteObject(context.Background(), "potato2", "------------------------------------------------------------", t1)
+		r.WriteObject(ctx, "potato2", "------------------------------------------------------------", t1)
 	}
 	fstest.CheckItems(t, r.Fremote, file1, file2r, file3)
 	check(4, 1, 2, false, map[string]string{
@@ -157,7 +159,7 @@ func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operat
 		"error":        "",
 	})
 
-	file4 := r.WriteObject(context.Background(), "remotepotato", "------------------------------------------------------------", t1)
+	file4 := r.WriteObject(ctx, "remotepotato", "------------------------------------------------------------", t1)
 	fstest.CheckItems(t, r.Fremote, file1, file2r, file3r, file4)
 	check(6, 2, 3, false, map[string]string{
 		"combined":     "* empty space\n= potato2\n= rutabaga\n- remotepotato\n",
@@ -182,11 +184,12 @@ func TestCheck(t *testing.T) {
 }
 
 func TestCheckFsError(t *testing.T) {
-	dstFs, err := fs.NewFs(context.Background(), "non-existent")
+	ctx := context.Background()
+	dstFs, err := fs.NewFs(ctx, "non-existent")
 	if err != nil {
 		t.Fatal(err)
 	}
-	srcFs, err := fs.NewFs(context.Background(), "non-existent")
+	srcFs, err := fs.NewFs(ctx, "non-existent")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +198,7 @@ func TestCheckFsError(t *testing.T) {
 		Fsrc:   srcFs,
 		OneWay: false,
 	}
-	err = operations.Check(context.Background(), &opt)
+	err = operations.Check(ctx, &opt)
 	require.Error(t, err)
 }
 
@@ -204,8 +207,10 @@ func TestCheckDownload(t *testing.T) {
 }
 
 func TestCheckSizeOnly(t *testing.T) {
-	fs.Config.SizeOnly = true
-	defer func() { fs.Config.SizeOnly = false }()
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	ci.SizeOnly = true
+	defer func() { ci.SizeOnly = false }()
 	TestCheck(t)
 }
 

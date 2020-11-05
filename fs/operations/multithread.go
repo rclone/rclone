@@ -18,15 +18,17 @@ const (
 
 // Return a boolean as to whether we should use multi thread copy for
 // this transfer
-func doMultiThreadCopy(f fs.Fs, src fs.Object) bool {
+func doMultiThreadCopy(ctx context.Context, f fs.Fs, src fs.Object) bool {
+	ci := fs.GetConfig(ctx)
+
 	// Disable multi thread if...
 
 	// ...it isn't configured
-	if fs.Config.MultiThreadStreams <= 1 {
+	if ci.MultiThreadStreams <= 1 {
 		return false
 	}
 	// ...size of object is less than cutoff
-	if src.Size() < int64(fs.Config.MultiThreadCutoff) {
+	if src.Size() < int64(ci.MultiThreadCutoff) {
 		return false
 	}
 	// ...source doesn't support it
@@ -36,7 +38,7 @@ func doMultiThreadCopy(f fs.Fs, src fs.Object) bool {
 	}
 	// ...if --multi-thread-streams not in use and source and
 	// destination are both local
-	if !fs.Config.MultiThreadSet && dstFeatures.IsLocal && src.Fs().Features().IsLocal {
+	if !ci.MultiThreadSet && dstFeatures.IsLocal && src.Fs().Features().IsLocal {
 		return false
 	}
 	return true
@@ -55,6 +57,7 @@ type multiThreadCopyState struct {
 
 // Copy a single stream into place
 func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err error) {
+	ci := fs.GetConfig(ctx)
 	defer func() {
 		if err != nil {
 			fs.Debugf(mc.src, "multi-thread copy: stream %d/%d failed: %v", stream+1, mc.streams, err)
@@ -71,7 +74,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v starting", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
 
-	rc, err := NewReOpen(ctx, mc.src, fs.Config.LowLevelRetries, &fs.RangeOption{Start: start, End: end - 1})
+	rc, err := NewReOpen(ctx, mc.src, ci.LowLevelRetries, &fs.RangeOption{Start: start, End: end - 1})
 	if err != nil {
 		return errors.Wrap(err, "multipart copy: failed to open source")
 	}

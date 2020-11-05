@@ -114,16 +114,17 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 
 // check to see if two objects are identical using the check function
 func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (differ bool, noHash bool, err error) {
+	ci := fs.GetConfig(ctx)
 	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
 	defer func() {
 		tr.Done(ctx, err)
 	}()
-	if sizeDiffers(src, dst) {
+	if sizeDiffers(ctx, src, dst) {
 		err = errors.Errorf("Sizes differ")
 		fs.Errorf(src, "%v", err)
 		return true, false, nil
 	}
-	if fs.Config.SizeOnly {
+	if ci.SizeOnly {
 		return false, false, nil
 	}
 	return c.opt.Check(ctx, dst, src)
@@ -202,11 +203,12 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 // it returns true if differences were found
 // it also returns whether it couldn't be hashed
 func CheckFn(ctx context.Context, opt *CheckOpt) error {
+	ci := fs.GetConfig(ctx)
 	if opt.Check == nil {
 		return errors.New("internal error: nil check function")
 	}
 	c := &checkMarch{
-		tokens: make(chan struct{}, fs.Config.Checkers),
+		tokens: make(chan struct{}, ci.Checkers),
 		opt:    *opt,
 	}
 
@@ -219,7 +221,7 @@ func CheckFn(ctx context.Context, opt *CheckOpt) error {
 		Callback: c,
 	}
 	fs.Debugf(c.opt.Fdst, "Waiting for checks to finish")
-	err := m.Run()
+	err := m.Run(ctx)
 	c.wg.Wait() // wait for background go-routines
 
 	if c.dstFilesMissing > 0 {
@@ -308,7 +310,8 @@ func CheckEqualReaders(in1, in2 io.Reader) (differ bool, err error) {
 //
 // it returns true if differences were found
 func CheckIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ bool, err error) {
-	err = Retry(src, fs.Config.LowLevelRetries, func() error {
+	ci := fs.GetConfig(ctx)
+	err = Retry(src, ci.LowLevelRetries, func() error {
 		differ, err = checkIdenticalDownload(ctx, dst, src)
 		return err
 	})

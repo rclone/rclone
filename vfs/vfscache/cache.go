@@ -95,7 +95,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 		return nil, errors.Wrap(err, "failed to create cache meta remote")
 	}
 
-	hashType, hashOption := operations.CommonHash(fcache, fremote)
+	hashType, hashOption := operations.CommonHash(ctx, fcache, fremote)
 
 	c := &Cache{
 		fremote:    fremote,

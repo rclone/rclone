@@ -258,13 +258,14 @@ func TestAccountAccounter(t *testing.T) {
 
 func TestAccountMaxTransfer(t *testing.T) {
 	ctx := context.Background()
-	old := fs.Config.MaxTransfer
-	oldMode := fs.Config.CutoffMode
+	ci := fs.GetConfig(ctx)
+	old := ci.MaxTransfer
+	oldMode := ci.CutoffMode
 
-	fs.Config.MaxTransfer = 15
+	ci.MaxTransfer = 15
 	defer func() {
-		fs.Config.MaxTransfer = old
-		fs.Config.CutoffMode = oldMode
+		ci.MaxTransfer = old
+		ci.CutoffMode = oldMode
 	}()
 
 	in := ioutil.NopCloser(bytes.NewBuffer(make([]byte, 100)))
@@ -284,7 +285,7 @@ func TestAccountMaxTransfer(t *testing.T) {
 	assert.Equal(t, ErrorMaxTransferLimitReachedFatal, err)
 	assert.True(t, fserrors.IsFatalError(err))
 
-	fs.Config.CutoffMode = fs.CutoffModeSoft
+	ci.CutoffMode = fs.CutoffModeSoft
 	stats = NewStats(ctx)
 	acc = newAccountSizeName(ctx, stats, in, 1, "test")
 
@@ -301,13 +302,14 @@ func TestAccountMaxTransfer(t *testing.T) {
 
 func TestAccountMaxTransferWriteTo(t *testing.T) {
 	ctx := context.Background()
-	old := fs.Config.MaxTransfer
-	oldMode := fs.Config.CutoffMode
+	ci := fs.GetConfig(ctx)
+	old := ci.MaxTransfer
+	oldMode := ci.CutoffMode
 
-	fs.Config.MaxTransfer = 15
+	ci.MaxTransfer = 15
 	defer func() {
-		fs.Config.MaxTransfer = old
-		fs.Config.CutoffMode = oldMode
+		ci.MaxTransfer = old
+		ci.CutoffMode = oldMode
 	}()
 
 	in := ioutil.NopCloser(readers.NewPatternReader(1024))

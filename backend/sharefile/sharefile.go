@@ -237,6 +237,7 @@ type Fs struct {
 	name         string             // name of this remote
 	root         string             // the path we are working on
 	opt          Options            // parsed options
+	ci           *fs.ConfigInfo     // global config
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // the connection to the server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
@@ -441,12 +442,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, errors.Wrap(err, "failed to configure sharefile")
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:  name,
 		root:  root,
 		opt:   *opt,
+		ci:    ci,
 		srv:   rest.NewClient(client).SetRoot(opt.Endpoint + apiPath),
-		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -531,8 +534,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Fill up (or reset) the buffer tokens
 func (f *Fs) fillBufferTokens() {
-	f.bufferTokens = make(chan []byte, fs.Config.Transfers)
-	for i := 0; i < fs.Config.Transfers; i++ {
+	f.bufferTokens = make(chan []byte, f.ci.Transfers)
+	for i := 0; i < f.ci.Transfers; i++ {
 		f.bufferTokens <- nil
 	}
 }
@@ -1338,7 +1341,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Overwrite:    true,
 		CreatedDate:  modTime,
 		ModifiedDate: modTime,
-		Tool:         fs.Config.UserAgent,
+		Tool:         o.fs.ci.UserAgent,
 	}
 
 	if isLargeFile {
@@ -1348,7 +1351,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		} else {
 			// otherwise use threaded which is more efficient
 			req.Method = "threaded"
-			req.ThreadCount = &fs.Config.Transfers
+			req.ThreadCount = &o.fs.ci.Transfers
 			req.Filesize = &size
 		}
 	}

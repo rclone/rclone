@@ -157,11 +157,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	// Make the swift Connection
+	ci := fs.GetConfig(ctx)
 	c := &swiftLib.Connection{
 		Auth:           newAuth(f),
-		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
-		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
-		Transport:      fshttp.NewTransport(fs.Config),
+		ConnectTimeout: 10 * ci.ConnectTimeout, // Use the timeouts in the transport
+		Timeout:        10 * ci.Timeout,        // Use the timeouts in the transport
+		Transport:      fshttp.NewTransport(fs.GetConfig(ctx)),
 	}
 	err = c.Authenticate()
 	if err != nil {

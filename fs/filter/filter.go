@@ -229,7 +229,7 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 			return nil, err
 		}
 	}
-	if fs.Config.Dump&fs.DumpFilters != 0 {
+	if fs.GetConfig(context.Background()).Dump&fs.DumpFilters != 0 {
 		fmt.Println("--- start filters ---")
 		fmt.Println(f.DumpFilters())
 		fmt.Println("--- end filters ---")
@@ -540,14 +540,16 @@ var errFilesFromNotSet = errors.New("--files-from not set so can't use Filter.Li
 // MakeListR makes function to return all the files set using --files-from
 func (f *Filter) MakeListR(ctx context.Context, NewObject func(ctx context.Context, remote string) (fs.Object, error)) fs.ListRFn {
 	return func(ctx context.Context, dir string, callback fs.ListRCallback) error {
+		ci := fs.GetConfig(ctx)
 		if !f.HaveFilesFrom() {
 			return errFilesFromNotSet
 		}
 		var (
-			remotes = make(chan string, fs.Config.Checkers)
-			g       errgroup.Group
+			checkers = ci.Checkers
+			remotes  = make(chan string, checkers)
+			g        errgroup.Group
 		)
-		for i := 0; i < fs.Config.Checkers; i++ {
+		for i := 0; i < checkers; i++ {
 			g.Go(func() (err error) {
 				var entries = make(fs.DirEntries, 1)
 				for remote := range remotes {
