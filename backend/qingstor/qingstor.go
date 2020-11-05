@@ -357,7 +357,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		BucketBased:       true,
 		BucketBasedRootOK: true,
 		SlowModTime:       true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 
 	if f.rootBucket != "" && f.rootDirectory != "" {
 		// Check to see if the object exists

@@ -715,7 +715,7 @@ func (ft *Features) DisableList(list []string) *Features {
 // Fill fills in the function pointers in the Features struct from the
 // optional interfaces.  It returns the original updated Features
 // struct passed in.
-func (ft *Features) Fill(f Fs) *Features {
+func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(Purger); ok {
 		ft.Purge = do.Purge
 	}
@@ -783,7 +783,7 @@ func (ft *Features) Fill(f Fs) *Features {
 // Fs AND the one passed in will be advertised.  Any features which
 // aren't in both will be set to false/nil, except for UnWrap/Wrap which
 // will be left untouched.
-func (ft *Features) Mask(f Fs) *Features {
+func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	mask := f.Features()
 	ft.CaseInsensitive = ft.CaseInsensitive && mask.CaseInsensitive
 	ft.DuplicateFiles = ft.DuplicateFiles && mask.DuplicateFiles

@@ -287,7 +287,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		DuplicateFiles:          false,
 		BucketBased:             false,
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	for _, m := range mounts {
 		if opt.MountID != "" {
 			if m.Id == opt.MountID {

@@ -953,7 +953,7 @@ func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name
 	if !config.Confirm(false) {
 		return nil
 	}
-	f, err := newFs(name, "", m)
+	f, err := newFs(ctx, name, "", m)
 	if err != nil {
 		return errors.Wrap(err, "failed to make Fs to list teamdrives")
 	}
@@ -1065,7 +1065,7 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 //
 // It constructs a valid Fs but doesn't attempt to figure out whether
 // it is a file or a directory.
-func newFs(name, path string, m configmap.Mapper) (*Fs, error) {
+func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -1109,7 +1109,7 @@ func newFs(name, path string, m configmap.Mapper) (*Fs, error) {
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
-	}).Fill(f)
+	}).Fill(ctx, f)
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
@@ -1130,7 +1130,7 @@ func newFs(name, path string, m configmap.Mapper) (*Fs, error) {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, path string, m configmap.Mapper) (fs.Fs, error) {
-	f, err := newFs(name, path, m)
+	f, err := newFs(ctx, name, path, m)
 	if err != nil {
 		return nil, err
 	}

@@ -414,7 +414,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.opt.SharedFolders = false
 	}
 
-	f.features.Fill(f)
+	f.features.Fill(ctx, f)
 
 	// If root starts with / then use the actual root
 	if strings.HasPrefix(root, "/") {

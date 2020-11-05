@@ -432,7 +432,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		BucketBasedRootOK: true,
 		SetTier:           true,
 		GetTier:           true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 
 	var (
 		u          *url.URL

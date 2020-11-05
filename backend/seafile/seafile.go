@@ -203,7 +203,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 		BucketBased:             opt.LibraryName == "",
-	}).Fill(f)
+	}).Fill(ctx, f)
 
 	serverInfo, err := f.getServerInfo(ctx)
 	if err != nil {

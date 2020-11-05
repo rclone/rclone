@@ -219,7 +219,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	if isFile {
 		return f, fs.ErrorIsFile
 	}

@@ -276,7 +276,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:            true,
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Check to see if the object exists and is a file

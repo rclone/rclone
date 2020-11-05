@@ -416,7 +416,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	f.srv.SetSigner(f.getAuth) // use signing hook to get the auth
 	f.srv.SetErrorHandler(errorHandler)
 

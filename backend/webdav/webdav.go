@@ -342,7 +342,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	if opt.User != "" || opt.Pass != "" {
 		f.srv.SetUserPass(opt.User, opt.Pass)
 	} else if opt.BearerToken != "" {

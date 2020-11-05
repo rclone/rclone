@@ -339,7 +339,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	// Make a connection and pool it to return errors early
 	c, err := f.getFtpConnection()
 	if err != nil {

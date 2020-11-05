@@ -199,7 +199,7 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		SetTier:                 true,
 		GetTier:                 true,
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
-	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
+	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
 	return f, err
 }

@@ -633,7 +633,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:            true,
 		CanHaveEmptyDirectories: true,
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background

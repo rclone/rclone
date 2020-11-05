@@ -438,7 +438,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		WriteMimeType:     true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
 	// Set the test flag if required
 	if opt.TestMode != "" {
 		testMode := strings.TrimSpace(opt.TestMode)
