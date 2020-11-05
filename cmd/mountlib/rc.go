@@ -76,7 +76,7 @@ The vfsOpt are as described in options/get and can be seen in the the
 }
 
 // mountRc allows the mount command to be run from rc
-func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
+func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	mountPoint, err := in.GetString("mountPoint")
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func mountRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 
 	// Get Fs.fs to be mounted from fs parameter in the params
-	fdst, err := rc.GetFs(in)
+	fdst, err := rc.GetFs(ctx, in)
 	if err != nil {
 		return nil, err
 	}

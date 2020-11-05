@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"context"
 	"runtime"
 	"sync"
 
@@ -40,11 +41,11 @@ func addMapping(fsString, canonicalName string) {
 
 // GetFn gets an fs.Fs named fsString either from the cache or creates
 // it afresh with the create function
-func GetFn(fsString string, create func(fsString string) (fs.Fs, error)) (f fs.Fs, err error) {
+func GetFn(ctx context.Context, fsString string, create func(ctx context.Context, fsString string) (fs.Fs, error)) (f fs.Fs, err error) {
 	fsString = Canonicalize(fsString)
 	created := false
 	value, err := c.Get(fsString, func(fsString string) (f interface{}, ok bool, err error) {
-		f, err = create(fsString)
+		f, err = create(ctx, fsString)
 		ok = err == nil || err == fs.ErrorIsFile
 		created = ok
 		return f, ok, err
@@ -99,8 +100,8 @@ func Unpin(f fs.Fs) {
 }
 
 // Get gets an fs.Fs named fsString either from the cache or creates it afresh
-func Get(fsString string) (f fs.Fs, err error) {
-	return GetFn(fsString, fs.NewFs)
+func Get(ctx context.Context, fsString string) (f fs.Fs, err error) {
+	return GetFn(ctx, fsString, fs.NewFs)
 }
 
 // Put puts an fs.Fs named fsString into the cache

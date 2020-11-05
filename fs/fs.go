@@ -84,7 +84,7 @@ type RegInfo struct {
 	// Create a new file system.  If root refers to an existing
 	// object, then it should return an Fs which which points to
 	// the parent of that object and ErrorIsFile.
-	NewFs func(name string, root string, config configmap.Mapper) (Fs, error) `json:"-"`
+	NewFs func(ctx context.Context, name string, root string, config configmap.Mapper) (Fs, error) `json:"-"`
 	// Function to call to help with config
 	Config func(name string, config configmap.Mapper) `json:"-"`
 	// Options for the Fs configuration
@@ -1339,13 +1339,13 @@ func ConfigFs(path string) (fsInfo *RegInfo, configName, fsPath string, config *
 //
 // On Windows avoid single character remote names as they can be mixed
 // up with drive letters.
-func NewFs(path string) (Fs, error) {
+func NewFs(ctx context.Context, path string) (Fs, error) {
 	Debugf(nil, "Creating backend with remote %q", path)
 	fsInfo, configName, fsPath, config, err := ConfigFs(path)
 	if err != nil {
 		return nil, err
 	}
-	return fsInfo.NewFs(configName, fsPath, config)
+	return fsInfo.NewFs(ctx, configName, fsPath, config)
 }
 
 // ConfigString returns a canonical version of the config string used
@@ -1362,7 +1362,7 @@ func ConfigString(f Fs) string {
 // TemporaryLocalFs creates a local FS in the OS's temporary directory.
 //
 // No cleanup is performed, the caller must call Purge on the Fs themselves.
-func TemporaryLocalFs() (Fs, error) {
+func TemporaryLocalFs(ctx context.Context) (Fs, error) {
 	path, err := ioutil.TempDir("", "rclone-spool")
 	if err == nil {
 		err = os.Remove(path)
@@ -1371,7 +1371,7 @@ func TemporaryLocalFs() (Fs, error) {
 		return nil, err
 	}
 	path = filepath.ToSlash(path)
-	return NewFs(path)
+	return NewFs(ctx, path)
 }
 
 // CheckClose is a utility function used to check the return from

@@ -2,6 +2,7 @@ package tree
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/a8m/tree"
@@ -17,7 +18,7 @@ func TestTree(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 
-	f, err := fs.NewFs("testfiles")
+	f, err := fs.NewFs(context.Background(), "testfiles")
 	require.NoError(t, err)
 	err = Tree(f, buf, new(tree.Options))
 	require.NoError(t, err)

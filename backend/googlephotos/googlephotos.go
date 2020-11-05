@@ -246,7 +246,7 @@ func errorHandler(resp *http.Response) error {
 }
 
 // NewFs constructs an Fs from the path, bucket:path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -288,7 +288,7 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		var leaf string
 		f.root, leaf = path.Split(f.root)
 		f.root = strings.TrimRight(f.root, "/")
-		_, err := f.NewObject(context.TODO(), leaf)
+		_, err := f.NewObject(ctx, leaf)
 		if err == nil {
 			return f, fs.ErrorIsFile
 		}

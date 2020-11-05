@@ -102,7 +102,7 @@ func newRun() *Run {
 		r.Fatalf("Failed to create temp dir: %v", err)
 	}
 	r.LocalName = filepath.ToSlash(r.LocalName)
-	r.Flocal, err = fs.NewFs(r.LocalName)
+	r.Flocal, err = fs.NewFs(context.Background(), r.LocalName)
 	if err != nil {
 		r.Fatalf("Failed to make %q: %v", r.LocalName, err)
 	}

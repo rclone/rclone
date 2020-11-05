@@ -20,7 +20,7 @@ var MatchTestRemote = regexp.MustCompile(`^rclone-test-[abcdefghijklmnopqrstuvwx
 
 // cleanFs runs a single clean fs for left over directories
 func cleanFs(ctx context.Context, remote string, cleanup bool) error {
-	f, err := fs.NewFs(remote)
+	f, err := fs.NewFs(context.Background(), remote)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func cleanFs(ctx context.Context, remote string, cleanup bool) error {
 				return nil
 			}
 			log.Printf("Purging %s", fullPath)
-			dir, err := fs.NewFs(fullPath)
+			dir, err := fs.NewFs(context.Background(), fullPath)
 			if err != nil {
 				err = errors.Wrap(err, "NewFs failed")
 				lastErr = err

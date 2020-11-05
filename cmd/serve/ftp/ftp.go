@@ -5,6 +5,7 @@
 package ftp
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -101,7 +102,7 @@ You can set a single username and password with the --user and --pass flags.
 			cmd.CheckArgs(0, 0, command, args)
 		}
 		cmd.Run(false, false, command, func() error {
-			s, err := newServer(f, &Opt)
+			s, err := newServer(context.Background(), f, &Opt)
 			if err != nil {
 				return err
 			}
@@ -114,13 +115,14 @@ You can set a single username and password with the --user and --pass flags.
 type server struct {
 	f     fs.Fs
 	srv   *ftp.Server
+	ctx   context.Context // for global config
 	opt   Options
 	vfs   *vfs.VFS
 	proxy *proxy.Proxy
 }
 
 // Make a new FTP to serve the remote
-func newServer(f fs.Fs, opt *Options) (*server, error) {
+func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
 	if err != nil {
 		return nil, errors.New("Failed to parse host:port")
@@ -132,10 +134,11 @@ func newServer(f fs.Fs, opt *Options) (*server, error) {
 
 	s := &server{
 		f:   f,
+		ctx: ctx,
 		opt: *opt,
 	}
 	if proxyflags.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(&proxyflags.Opt)
+		s.proxy = proxy.New(ctx, &proxyflags.Opt)
 	} else {
 		s.vfs = vfs.New(f, &vfsflags.Opt)
 	}

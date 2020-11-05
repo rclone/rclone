@@ -61,7 +61,7 @@ type Entry interface {
 
 // New creates a new Fs based on the
 // string formatted `type:root_path(:ro/:nc)`
-func New(remote, root string, cacheTime time.Duration) (*Fs, error) {
+func New(ctx context.Context, remote, root string, cacheTime time.Duration) (*Fs, error) {
 	_, configName, fsPath, err := fs.ParseRemote(remote)
 	if err != nil {
 		return nil, err
@@ -86,13 +86,13 @@ func New(remote, root string, cacheTime time.Duration) (*Fs, error) {
 	if configName != "local" {
 		fsPath = configName + ":" + fsPath
 	}
-	rFs, err := cache.Get(fsPath)
+	rFs, err := cache.Get(ctx, fsPath)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}
 	f.RootFs = rFs
 	rootString := path.Join(fsPath, filepath.ToSlash(root))
-	myFs, err := cache.Get(rootString)
+	myFs, err := cache.Get(ctx, rootString)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}

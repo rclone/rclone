@@ -3,6 +3,7 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/json"
@@ -118,6 +119,7 @@ var DefaultOpt = Options{
 type Proxy struct {
 	cmdLine  []string // broken down command line
 	vfsCache *libcache.Cache
+	ctx      context.Context // for global config
 	Opt      Options
 }
 
@@ -128,8 +130,9 @@ type cacheEntry struct {
 }
 
 // New creates a new proxy with the Options passed in
-func New(opt *Options) *Proxy {
+func New(ctx context.Context, opt *Options) *Proxy {
 	return &Proxy{
+		ctx:      ctx,
 		Opt:      *opt,
 		cmdLine:  strings.Fields(opt.AuthProxy),
 		vfsCache: libcache.New(),
@@ -220,7 +223,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 	// Look for fs in the VFS cache
 	value, err = p.vfsCache.Get(user, func(key string) (value interface{}, ok bool, err error) {
 		// Create the Fs from the cache
-		f, err := cache.GetFn(fsString, func(fsString string) (fs.Fs, error) {
+		f, err := cache.GetFn(p.ctx, fsString, func(ctx context.Context, fsString string) (fs.Fs, error) {
 			// Update the config with the default values
 			for i := range fsInfo.Options {
 				o := &fsInfo.Options[i]
@@ -228,7 +231,7 @@ func (p *Proxy) call(user, auth string, isPublicKey bool) (value interface{}, er
 					config.Set(o.Name, o.String())
 				}
 			}
-			return fsInfo.NewFs(name, root, config)
+			return fsInfo.NewFs(ctx, name, root, config)
 		})
 		if err != nil {
 			return nil, false, err

@@ -33,11 +33,11 @@ See the [` + name + ` command](/commands/rclone_` + name + `/) command for more 
 
 // Sync/Copy/Move a file
 func rcSyncCopyMove(ctx context.Context, in rc.Params, name string) (out rc.Params, err error) {
-	srcFs, err := rc.GetFsNamed(in, "srcFs")
+	srcFs, err := rc.GetFsNamed(ctx, in, "srcFs")
 	if err != nil {
 		return nil, err
 	}
-	dstFs, err := rc.GetFsNamed(in, "dstFs")
+	dstFs, err := rc.GetFsNamed(ctx, in, "dstFs")
 	if err != nil {
 		return nil, err
 	}

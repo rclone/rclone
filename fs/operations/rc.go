@@ -44,7 +44,7 @@ See the [lsjson command](/commands/rclone_lsjson/) for more information on the a
 
 // List the directory
 func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	f, remote, err := rc.GetFsAndRemote(in)
+	f, remote, err := rc.GetFsAndRemote(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,7 @@ See the [about command](/commands/rclone_size/) command for more information on 
 
 // About the remote
 func rcAbout(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	f, err := rc.GetFs(in)
+	f, err := rc.GetFs(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -131,11 +131,11 @@ func init() {
 
 // Copy a file
 func rcMoveOrCopyFile(ctx context.Context, in rc.Params, cp bool) (out rc.Params, err error) {
-	srcFs, srcRemote, err := rc.GetFsAndRemoteNamed(in, "srcFs", "srcRemote")
+	srcFs, srcRemote, err := rc.GetFsAndRemoteNamed(ctx, in, "srcFs", "srcRemote")
 	if err != nil {
 		return nil, err
 	}
-	dstFs, dstRemote, err := rc.GetFsAndRemoteNamed(in, "dstFs", "dstRemote")
+	dstFs, dstRemote, err := rc.GetFsAndRemoteNamed(ctx, in, "dstFs", "dstRemote")
 	if err != nil {
 		return nil, err
 	}
@@ -190,9 +190,9 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 		remote string
 	)
 	if noRemote {
-		f, err = rc.GetFs(in)
+		f, err = rc.GetFs(ctx, in)
 	} else {
-		f, remote, err = rc.GetFsAndRemote(in)
+		f, remote, err = rc.GetFsAndRemote(ctx, in)
 	}
 	if err != nil {
 		return nil, err
@@ -291,7 +291,7 @@ See the [size command](/commands/rclone_size/) command for more information on t
 
 // Size a directory
 func rcSize(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	f, err := rc.GetFs(in)
+	f, err := rc.GetFs(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ See the [link command](/commands/rclone_link/) command for more information on t
 
 // Make a public link
 func rcPublicLink(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	f, remote, err := rc.GetFsAndRemote(in)
+	f, remote, err := rc.GetFsAndRemote(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -413,7 +413,7 @@ This command does not have a command line equivalent so use this instead:
 
 // Fsinfo the remote
 func rcFsInfo(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	f, err := rc.GetFs(in)
+	f, err := rc.GetFs(ctx, in)
 	if err != nil {
 		return nil, err
 	}
@@ -478,7 +478,7 @@ See the [backend](/commands/rclone_backend/) command for more information.
 
 // Make a public link
 func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	f, err := rc.GetFs(in)
+	f, err := rc.GetFs(ctx, in)
 	if err != nil {
 		return nil, err
 	}

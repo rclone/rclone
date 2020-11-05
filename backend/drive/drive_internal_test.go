@@ -196,7 +196,7 @@ func (f *Fs) InternalTestDocumentImport(t *testing.T) {
 	testFilesPath, err := filepath.Abs(filepath.FromSlash("test/files"))
 	require.NoError(t, err)
 
-	testFilesFs, err := fs.NewFs(testFilesPath)
+	testFilesFs, err := fs.NewFs(context.Background(), testFilesPath)
 	require.NoError(t, err)
 
 	_, f.importMimeTypes, err = parseExtensions("odt,ods,doc")
@@ -210,7 +210,7 @@ func (f *Fs) InternalTestDocumentUpdate(t *testing.T) {
 	testFilesPath, err := filepath.Abs(filepath.FromSlash("test/files"))
 	require.NoError(t, err)
 
-	testFilesFs, err := fs.NewFs(testFilesPath)
+	testFilesFs, err := fs.NewFs(context.Background(), testFilesPath)
 	require.NoError(t, err)
 
 	_, f.importMimeTypes, err = parseExtensions("odt,ods,doc")

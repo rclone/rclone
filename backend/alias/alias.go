@@ -1,6 +1,7 @@
 package alias
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -34,7 +35,7 @@ type Options struct {
 // NewFs constructs an Fs from the path.
 //
 // The returned Fs is the actual Fs, referenced by remote in the config
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -47,5 +48,5 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	if strings.HasPrefix(opt.Remote, name+":") {
 		return nil, errors.New("can't point alias remote at itself - check the value of the remote setting")
 	}
-	return cache.Get(fspath.JoinRootPath(opt.Remote, root))
+	return cache.Get(ctx, fspath.JoinRootPath(opt.Remote, root))
 }

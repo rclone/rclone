@@ -165,9 +165,7 @@ var (
 )
 
 // NewFs creates a filesystem backed by Tardigrade.
-func NewFs(name, root string, m configmap.Mapper) (_ fs.Fs, err error) {
-	ctx := context.Background()
-
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs, err error) {
 	// Setup filesystem and connection to Tardigrade
 	root = norm.NFC.String(root)
 	root = strings.Trim(root, "/")

@@ -256,7 +256,7 @@ func (f *Fs) fullPath(part string) string {
 }
 
 // NewFs constructs a new filesystem given a root path and configuration options
-func NewFs(name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	opt := new(Options)
 	err = configstruct.Set(m, opt)
 	if err != nil {

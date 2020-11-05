@@ -43,7 +43,7 @@ func startServer(t *testing.T, f fs.Fs) {
 func TestInit(t *testing.T) {
 	config.LoadConfig()
 
-	f, err := fs.NewFs("testdata/files")
+	f, err := fs.NewFs(context.Background(), "testdata/files")
 	l, _ := f.List(context.Background(), "")
 	fmt.Println(l)
 	require.NoError(t, err)

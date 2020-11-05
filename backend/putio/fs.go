@@ -68,7 +68,7 @@ func parsePath(path string) (root string) {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 	// defer log.Trace(name, "root=%v", root)("f=%+v, err=%v", &f, &err)
 	// Parse config into Options struct
 	opt := new(Options)
@@ -97,7 +97,6 @@ func NewFs(name, root string, m configmap.Mapper) (f fs.Fs, err error) {
 		CanHaveEmptyDirectories: true,
 	}).Fill(p)
 	p.dirCache = dircache.New(root, "0", p)
-	ctx := context.Background()
 	// Find the current root
 	err = p.dirCache.FindRoot(ctx, false)
 	if err != nil {

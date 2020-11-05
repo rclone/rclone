@@ -373,7 +373,7 @@ func Run(t *testing.T, opt *Opt) {
 	// remote - the result of  fs.NewFs(TestRemote:subRemoteName)
 	subRemoteName, subRemoteLeaf, err = fstest.RandomRemoteName(remoteName)
 	require.NoError(t, err)
-	remote, err = fs.NewFs(subRemoteName)
+	remote, err = fs.NewFs(context.Background(), subRemoteName)
 	if err == fs.ErrorNotFoundInConfigFile {
 		t.Logf("Didn't find %q in config file - skipping tests", remoteName)
 		return
@@ -889,7 +889,7 @@ func Run(t *testing.T, opt *Opt) {
 			// TestFsListDirRoot tests that DirList works in the root
 			TestFsListDirRoot := func(t *testing.T) {
 				skipIfNotOk(t)
-				rootRemote, err := fs.NewFs(remoteName)
+				rootRemote, err := fs.NewFs(context.Background(), remoteName)
 				require.NoError(t, err)
 				_, dirs, err := walk.GetAll(ctx, rootRemote, "", true, 1)
 				require.NoError(t, err)
@@ -1374,7 +1374,7 @@ func Run(t *testing.T, opt *Opt) {
 				remoteName := subRemoteName + "/" + file2.Path
 				file2Copy := file2
 				file2Copy.Path = "z.txt"
-				fileRemote, err := fs.NewFs(remoteName)
+				fileRemote, err := fs.NewFs(context.Background(), remoteName)
 				require.NotNil(t, fileRemote)
 				assert.Equal(t, fs.ErrorIsFile, err)
 
@@ -1390,7 +1390,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("FsIsFileNotFound", func(t *testing.T) {
 				skipIfNotOk(t)
 				remoteName := subRemoteName + "/not found.txt"
-				fileRemote, err := fs.NewFs(remoteName)
+				fileRemote, err := fs.NewFs(context.Background(), remoteName)
 				require.NoError(t, err)
 				fstest.CheckListing(t, fileRemote, []fstest.Item{})
 			})
@@ -1409,7 +1409,7 @@ func Run(t *testing.T, opt *Opt) {
 					configName += ":"
 				}
 				t.Logf("Opening root remote %q path %q from %q", configName, configLeaf, subRemoteName)
-				rootRemote, err := fs.NewFs(configName)
+				rootRemote, err := fs.NewFs(context.Background(), configName)
 				require.NoError(t, err)
 
 				file1Root := file1
@@ -1851,7 +1851,7 @@ func Run(t *testing.T, opt *Opt) {
 		// https://github.com/rclone/rclone/issues/3164.
 		t.Run("FsRootCollapse", func(t *testing.T) {
 			deepRemoteName := subRemoteName + "/deeper/nonexisting/directory"
-			deepRemote, err := fs.NewFs(deepRemoteName)
+			deepRemote, err := fs.NewFs(context.Background(), deepRemoteName)
 			require.NoError(t, err)
 
 			colonIndex := strings.IndexRune(deepRemoteName, ':')

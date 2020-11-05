@@ -1129,8 +1129,7 @@ func newFs(name, path string, m configmap.Mapper) (*Fs, error) {
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
-	ctx := context.Background()
+func NewFs(ctx context.Context, name, path string, m configmap.Mapper) (fs.Fs, error) {
 	f, err := newFs(name, path, m)
 	if err != nil {
 		return nil, err
@@ -3000,7 +2999,7 @@ func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
 	if destLeaf == "" {
 		destLeaf = info.Name
 	}
-	dstFs, err := cache.Get(destDir)
+	dstFs, err := cache.Get(ctx, destDir)
 	if err != nil {
 		return err
 	}
@@ -3187,7 +3186,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		dstFs := f
 		target, ok := opt["target"]
 		if ok {
-			targetFs, err := cache.Get(target)
+			targetFs, err := cache.Get(ctx, target)
 			if err != nil {
 				return nil, errors.Wrap(err, "couldn't find target")
 			}

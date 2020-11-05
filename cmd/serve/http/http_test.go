@@ -70,7 +70,7 @@ func TestInit(t *testing.T) {
 	require.NoError(t, filter.Active.AddRule("- hidden/**"))
 
 	// Create a test Fs
-	f, err := fs.NewFs("testdata/files")
+	f, err := fs.NewFs(context.Background(), "testdata/files")
 	require.NoError(t, err)
 
 	// set date of datedObject to expectedTime

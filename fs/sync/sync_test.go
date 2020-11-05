@@ -71,7 +71,7 @@ func TestCopyMissingDirectory(t *testing.T) {
 	defer r.Finalise()
 	r.Mkdir(context.Background(), r.Fremote)
 
-	nonExistingFs, err := fs.NewFs("/non-existing")
+	nonExistingFs, err := fs.NewFs(context.Background(), "/non-existing")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1359,7 +1359,7 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	}
 
 	subRemoteName := r.FremoteName + "/rclone-move-test"
-	FremoteMove, err := fs.NewFs(subRemoteName)
+	FremoteMove, err := fs.NewFs(context.Background(), subRemoteName)
 	require.NoError(t, err)
 
 	file1 := r.WriteObject(context.Background(), "potato2", "------------------------------------------------------------", t1)
@@ -1384,7 +1384,7 @@ func TestSyncOverlap(t *testing.T) {
 	defer r.Finalise()
 
 	subRemoteName := r.FremoteName + "/rclone-sync-test"
-	FremoteSync, err := fs.NewFs(subRemoteName)
+	FremoteSync, err := fs.NewFs(context.Background(), subRemoteName)
 	require.NoError(t, err)
 
 	checkErr := func(err error) {
@@ -1409,7 +1409,7 @@ func TestSyncCompareDest(t *testing.T) {
 		fs.Config.CompareDest = ""
 	}()
 
-	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	fdst, err := fs.NewFs(context.Background(), r.FremoteName+"/dst")
 	require.NoError(t, err)
 
 	// check empty dest, empty compare
@@ -1500,7 +1500,7 @@ func TestSyncCopyDest(t *testing.T) {
 		fs.Config.CopyDest = ""
 	}()
 
-	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	fdst, err := fs.NewFs(context.Background(), r.FremoteName+"/dst")
 	require.NoError(t, err)
 
 	// check empty dest, empty copy
@@ -1635,7 +1635,7 @@ func testSyncBackupDir(t *testing.T, backupDir string, suffix string, suffixKeep
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1a, file2a)
 
-	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	fdst, err := fs.NewFs(context.Background(), r.FremoteName+"/dst")
 	require.NoError(t, err)
 
 	accounting.GlobalStats().ResetCounters()
@@ -1723,7 +1723,7 @@ func testSyncSuffix(t *testing.T, suffix string, suffixKeepExtension bool) {
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1a, file2a, file3a)
 
-	fdst, err := fs.NewFs(r.FremoteName + "/dst")
+	fdst, err := fs.NewFs(context.Background(), r.FremoteName+"/dst")
 	require.NoError(t, err)
 
 	accounting.GlobalStats().ResetCounters()

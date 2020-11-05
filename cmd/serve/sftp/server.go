@@ -4,6 +4,7 @@ package sftp
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/subtle"
@@ -33,20 +34,22 @@ type server struct {
 	f        fs.Fs
 	opt      Options
 	vfs      *vfs.VFS
+	ctx      context.Context // for global config
 	config   *ssh.ServerConfig
 	listener net.Listener
 	waitChan chan struct{} // for waiting on the listener to close
 	proxy    *proxy.Proxy
 }
 
-func newServer(f fs.Fs, opt *Options) *server {
+func newServer(ctx context.Context, f fs.Fs, opt *Options) *server {
 	s := &server{
 		f:        f,
+		ctx:      ctx,
 		opt:      *opt,
 		waitChan: make(chan struct{}),
 	}
 	if proxyflags.Opt.AuthProxy != "" {
-		s.proxy = proxy.New(&proxyflags.Opt)
+		s.proxy = proxy.New(ctx, &proxyflags.Opt)
 	} else {
 		s.vfs = vfs.New(f, &vfsflags.Opt)
 	}

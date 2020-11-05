@@ -8,6 +8,7 @@
 package ftp
 
 import (
+	"context"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
@@ -38,7 +39,7 @@ func TestFTP(t *testing.T) {
 		opt.BasicUser = testUSER
 		opt.BasicPass = testPASS
 
-		w, err := newServer(f, &opt)
+		w, err := newServer(context.Background(), f, &opt)
 		assert.NoError(t, err)
 
 		quit := make(chan struct{})

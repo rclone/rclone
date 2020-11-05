@@ -223,7 +223,7 @@ It has the following fields: ver, size, nchunks, md5, sha1.`,
 }
 
 // NewFs constructs an Fs from the path, container:path
-func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -248,7 +248,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	}
 	// Look for a file first
 	remotePath := fspath.JoinRootPath(basePath, rpath)
-	baseFs, err := cache.Get(baseName + remotePath)
+	baseFs, err := cache.Get(ctx, baseName+remotePath)
 	if err != fs.ErrorIsFile && err != nil {
 		return nil, errors.Wrapf(err, "failed to make remote %q to wrap", baseName+remotePath)
 	}
@@ -276,7 +276,7 @@ func NewFs(name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	// (yet can't satisfy fstest.CheckListing, will ignore)
 	if err == nil && !f.useMeta && strings.Contains(rpath, "/") {
 		firstChunkPath := f.makeChunkName(remotePath, 0, "", "")
-		_, testErr := cache.Get(baseName + firstChunkPath)
+		_, testErr := cache.Get(ctx, baseName+firstChunkPath)
 		if testErr == fs.ErrorIsFile {
 			err = testErr
 		}

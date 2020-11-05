@@ -413,12 +413,11 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// This will hold the Fs object.  We need to create it here
 	// so we can refer to it in the SSH callback, but it's populated
 	// in NewFsWithConnection
 	f := &Fs{}
-	ctx := context.Background()
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
