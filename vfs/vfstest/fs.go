@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -155,16 +156,13 @@ func findMountPath() string {
 	}
 
 	// Find a free drive letter
+	letter := file.FindUnusedDriveLetter()
 	drive := ""
-	for letter := 'E'; letter <= 'Z'; letter++ {
+	if letter == 0 {
+		log.Fatalf("Couldn't find free drive letter for test")
+	} else {
 		drive = string(letter) + ":"
-		_, err := os.Stat(drive + "\\")
-		if os.IsNotExist(err) {
-			goto found
-		}
 	}
-	log.Fatalf("Couldn't find free drive letter for test")
-found:
 	return drive
 }
 
