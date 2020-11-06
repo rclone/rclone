@@ -23,6 +23,8 @@ must be supplied.`
 //
 // If "fs" is not set and there is one and only one VFS in the active
 // cache then it returns it. This is for backwards compatibility.
+//
+// This deletes the "fs" parameter from in if it is valid
 func getVFS(in rc.Params) (vfs *VFS, err error) {
 	fsString, err := in.GetString("fs")
 	if rc.IsErrParamNotFound(err) {
@@ -46,6 +48,7 @@ func getVFS(in rc.Params) (vfs *VFS, err error) {
 	} else if len(activeVFS) > 1 {
 		return nil, errors.Errorf("more than one VFS active with name %q", fsString)
 	}
+	delete(in, "fs") // delete the fs parameter
 	return activeVFS[0], nil
 }
 

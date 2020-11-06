@@ -57,6 +57,7 @@ func TestRcGetVFS(t *testing.T) {
 	assert.Contains(t, err.Error(), "more than one VFS active - need")
 	assert.Nil(t, vfs)
 
+	inPresent = rc.Params{"fs": fs.ConfigString(r.Fremote)}
 	vfs, err = getVFS(inPresent)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "more than one VFS active with name")
@@ -67,7 +68,8 @@ func TestRcForget(t *testing.T) {
 	r, vfs, cleanup, call := rcNewRun(t, "vfs/forget")
 	defer cleanup()
 	_, _ = r, vfs
-	out, err := call.Fn(context.Background(), nil)
+	in := rc.Params{"fs": fs.ConfigString(r.Fremote)}
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params{
 		"forgotten": []string{},
@@ -79,7 +81,8 @@ func TestRcRefresh(t *testing.T) {
 	r, vfs, cleanup, call := rcNewRun(t, "vfs/refresh")
 	defer cleanup()
 	_, _ = r, vfs
-	out, err := call.Fn(context.Background(), nil)
+	in := rc.Params{"fs": fs.ConfigString(r.Fremote)}
+	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params{
 		"result": map[string]string{
