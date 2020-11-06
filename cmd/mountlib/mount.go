@@ -44,6 +44,7 @@ type Options struct {
 	NoAppleXattr       bool
 	DaemonTimeout      time.Duration // OSXFUSE only
 	AsyncRead          bool
+	NetworkMode        bool // Windows only
 }
 
 // DefaultOpt is the default values for creating the mount
@@ -99,6 +100,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	if runtime.GOOS == "darwin" {
 		flags.BoolVarP(flagSet, &Opt.NoAppleDouble, "noappledouble", "", Opt.NoAppleDouble, "Sets the OSXFUSE option noappledouble.")
 		flags.BoolVarP(flagSet, &Opt.NoAppleXattr, "noapplexattr", "", Opt.NoAppleXattr, "Sets the OSXFUSE option noapplexattr.")
+	} else if runtime.GOOS == "windows" {
+		flags.BoolVarP(flagSet, &Opt.NetworkMode, "network-mode", "", Opt.NetworkMode, "Mount as remote network drive, instead of fixed disk drive.")
 	}
 }
 

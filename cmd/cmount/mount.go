@@ -85,9 +85,14 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 			options = append(options, "-o", "gid=-1")
 		}
 		options = append(options, "--FileSystemName=rclone")
-	}
-
-	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		if opt.VolumeName != "" {
+			if opt.NetworkMode {
+				options = append(options, "--VolumePrefix="+opt.VolumeName)
+			} else {
+				options = append(options, "-o", "volname="+opt.VolumeName)
+			}
+		}
+	} else if runtime.GOOS == "darwin" {
 		if opt.VolumeName != "" {
 			options = append(options, "-o", "volname="+opt.VolumeName)
 		}
@@ -142,22 +147,16 @@ func waitFor(fn func() bool) (ok bool) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error, func() error, error) {
-	f := VFS.Fs()
-	fs.Debugf(f, "Mounting on %q", mountpoint)
-
-	// Check the mountpoint - in Windows the mountpoint mustn't exist before the mount
-	if runtime.GOOS != "windows" {
-		fi, err := os.Stat(mountpoint)
-		if err != nil {
-			return nil, nil, errors.Wrap(err, "mountpoint")
-		}
-		if !fi.IsDir() {
-			return nil, nil, errors.New("mountpoint is not a directory")
-		}
+func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error, func() error, error) {
+	// Get mountpoint using OS specific logic
+	mountpoint, err := getMountpoint(mountPath, opt)
+	if err != nil {
+		return nil, nil, err
 	}
+	fs.Debugf(nil, "Mounting on %q (%q)", mountpoint, opt.VolumeName)
 
 	// Create underlying FS
+	f := VFS.Fs()
 	fsys := NewFS(VFS)
 	host := fuse.NewFileSystemHost(fsys)
 	host.SetCapReaddirPlus(true) // only works on Windows
