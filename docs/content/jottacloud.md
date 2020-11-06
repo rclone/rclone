@@ -31,6 +31,8 @@ to generate a CLI token. In this case you'll have to use the legacy authenticati
 yes when the setup asks for legacy authentication and enter your username and password.
 The rest of the setup is identical to the default setup.
 
+### Example
+
 Here is an example of how to make a remote called `remote` with the default setup.  First run:
 
     rclone config
