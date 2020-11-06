@@ -1217,6 +1217,11 @@ disabled here.  When the issue is solved this flag will be removed.
 See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rclone/issues/3631
 
 `,
+		}, {
+			Name:     "use_multipart_etag_as_md5",
+			Default:  true,
+			Advanced: true,
+			Help:     `if set try checks multipart Etags as Md5`,
 		},
 		}})
 }
@@ -1275,6 +1280,7 @@ type Options struct {
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
 	DisableHTTP2          bool                 `config:"disable_http2"`
+	useMultipartEtagAsMd5 bool                 `config:"use_multipart_etag_as_md5"`
 }
 
 // Fs represents a remote s3 server
@@ -2661,7 +2667,14 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}(-[0-9]+)?$`)
+// Remote returns the match md5 regexp
+func (o *Object) matchMd5() *regexp.Regexp {
+	matchMd5Str := "^[0-9a-f]{32}$"
+	if o.fs.opt.useMultipartEtagAsMd5 {
+		matchMd5Str = "^[0-9a-f]{32}(-[0-9]+)?$"
+	}
+	return regexp.MustCompile(matchMd5Str)
+}
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
@@ -2670,7 +2683,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 	hash := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
-	if !matchMd5.MatchString(hash) {
+	if !o.matchMd5().MatchString(hash) {
 		err := o.readMetaData(ctx)
 		if err != nil {
 			return "", err
@@ -3069,7 +3082,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var md5sum string
 	if !multipart || !o.fs.opt.DisableChecksum {
 		hash, err := src.Hash(ctx, hash.MD5)
-		if err == nil && matchMd5.MatchString(hash) {
+		if err == nil && o.matchMd5().MatchString(hash) {
 			hashBytes, err := hex.DecodeString(hash)
 			if err == nil {
 				md5sum = base64.StdEncoding.EncodeToString(hashBytes)
