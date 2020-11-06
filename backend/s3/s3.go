@@ -1280,7 +1280,7 @@ type Options struct {
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
 	DisableHTTP2          bool                 `config:"disable_http2"`
-	useMultipartEtagAsMd5 bool                 `config:"use_multipart_etag_as_md5"`
+	UseMultipartEtagAsMd5 bool                 `config:"use_multipart_etag_as_md5"`
 }
 
 // Fs represents a remote s3 server
@@ -2670,7 +2670,7 @@ func (o *Object) Remote() string {
 // Remote returns the match md5 regexp
 func (o *Object) matchMd5() *regexp.Regexp {
 	matchMd5Str := "^[0-9a-f]{32}$"
-	if o.fs.opt.useMultipartEtagAsMd5 {
+	if o.fs.opt.UseMultipartEtagAsMd5 {
 		matchMd5Str = "^[0-9a-f]{32}(-[0-9]+)?$"
 	}
 	return regexp.MustCompile(matchMd5Str)
