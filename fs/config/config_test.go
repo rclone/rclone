@@ -31,16 +31,16 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 	oldOsStdout := os.Stdout
 	oldConfigPath := ConfigPath
 	oldConfig := *ci
-	oldConfigFile := configFile
+	oldConfigFile := Data
 	oldReadLine := ReadLine
 	oldPassword := Password
 	os.Stdout = nil
 	ConfigPath = path
 	ci = &fs.ConfigInfo{}
-	configFile = nil
+	Data = nil
 
 	LoadConfig(ctx)
-	assert.Equal(t, []string{}, getConfigData().GetSectionList())
+	assert.Equal(t, []string{}, Data.GetSectionList())
 
 	// Fake a remote
 	fs.Register(&fs.RegInfo{
@@ -69,7 +69,7 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 		ReadLine = oldReadLine
 		Password = oldPassword
 		*ci = oldConfig
-		configFile = oldConfigFile
+		Data = oldConfigFile
 
 		_ = os.Unsetenv("_RCLONE_CONFIG_KEY_FILE")
 		_ = os.Unsetenv("RCLONE_CONFIG_PASS")
@@ -101,7 +101,7 @@ func TestCRUD(t *testing.T) {
 	})
 	NewRemote(ctx, "test")
 
-	assert.Equal(t, []string{"test"}, configFile.GetSectionList())
+	assert.Equal(t, []string{"test"}, Data.GetSectionList())
 	assert.Equal(t, "config_test_remote", FileGet("test", "type"))
 	assert.Equal(t, "true", FileGet("test", "bool"))
 	assert.Equal(t, "secret", obscure.MustReveal(FileGet("test", "pass")))
@@ -114,14 +114,14 @@ func TestCRUD(t *testing.T) {
 	})
 	RenameRemote("test")
 
-	assert.Equal(t, []string{"asdf"}, configFile.GetSectionList())
+	assert.Equal(t, []string{"asdf"}, Data.GetSectionList())
 	assert.Equal(t, "config_test_remote", FileGet("asdf", "type"))
 	assert.Equal(t, "true", FileGet("asdf", "bool"))
 	assert.Equal(t, "secret", obscure.MustReveal(FileGet("asdf", "pass")))
 
 	// delete remote
 	DeleteRemote("asdf")
-	assert.Equal(t, []string{}, configFile.GetSectionList())
+	assert.Equal(t, []string{}, Data.GetSectionList())
 }
 
 func TestChooseOption(t *testing.T) {
@@ -198,7 +198,7 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 					"pass": "potato",
 				}, doObscure, noObscure))
 
-				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, []string{"test2"}, Data.GetSectionList())
 				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
 				assert.Equal(t, "true", FileGet("test2", "bool"))
 				gotPw := FileGet("test2", "pass")
@@ -214,7 +214,7 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 					"spare": "spare",
 				}, doObscure, noObscure))
 
-				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, []string{"test2"}, Data.GetSectionList())
 				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
 				assert.Equal(t, "false", FileGet("test2", "bool"))
 				gotPw = FileGet("test2", "pass")
@@ -227,7 +227,7 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 					"pass": "potato3",
 				}))
 
-				assert.Equal(t, []string{"test2"}, configFile.GetSectionList())
+				assert.Equal(t, []string{"test2"}, Data.GetSectionList())
 				assert.Equal(t, "config_test_remote", FileGet("test2", "type"))
 				assert.Equal(t, "false", FileGet("test2", "bool"))
 				assert.Equal(t, "potato3", obscure.MustReveal(FileGet("test2", "pass")))
@@ -260,15 +260,15 @@ func TestConfigLoad(t *testing.T) {
 		ConfigPath = oldConfigPath
 	}()
 	configKey = nil // reset password
-	c, err := loadConfigFile()
+	err := Data.Load()
 	if err != nil {
 		t.Fatal(err)
 	}
-	sections := c.GetSectionList()
+	sections := Data.GetSectionList()
 	var expect = []string{"RCLONE_ENCRYPT_V0", "nounc", "unc"}
 	assert.Equal(t, expect, sections)
 
-	keys := c.GetKeyList("nounc")
+	keys := Data.GetKeyList("nounc")
 	expect = []string{"type", "nounc"}
 	assert.Equal(t, expect, keys)
 }
@@ -285,13 +285,13 @@ func TestConfigLoadEncrypted(t *testing.T) {
 	// Set correct password
 	err = setConfigPassword("asdf")
 	require.NoError(t, err)
-	c, err := loadConfigFile()
+	err = Data.Load()
 	require.NoError(t, err)
-	sections := c.GetSectionList()
+	sections := Data.GetSectionList()
 	var expect = []string{"nounc", "unc"}
 	assert.Equal(t, expect, sections)
 
-	keys := c.GetKeyList("nounc")
+	keys := Data.GetKeyList("nounc")
 	expect = []string{"type", "nounc"}
 	assert.Equal(t, expect, keys)
 }
@@ -313,14 +313,14 @@ func TestConfigLoadEncryptedWithValidPassCommand(t *testing.T) {
 
 	configKey = nil // reset password
 
-	c, err := loadConfigFile()
+	err := Data.Load()
 	require.NoError(t, err)
 
-	sections := c.GetSectionList()
+	sections := Data.GetSectionList()
 	var expect = []string{"nounc", "unc"}
 	assert.Equal(t, expect, sections)
 
-	keys := c.GetKeyList("nounc")
+	keys := Data.GetKeyList("nounc")
 	expect = []string{"type", "nounc"}
 	assert.Equal(t, expect, keys)
 }
@@ -342,7 +342,7 @@ func TestConfigLoadEncryptedWithInvalidPassCommand(t *testing.T) {
 
 	configKey = nil // reset password
 
-	_, err := loadConfigFile()
+	err := Data.Load()
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "using --password-command derived password")
 }
@@ -354,24 +354,23 @@ func TestConfigLoadEncryptedFailures(t *testing.T) {
 	oldConfigPath := ConfigPath
 	ConfigPath = "./testdata/enc-short.conf"
 	defer func() { ConfigPath = oldConfigPath }()
-	_, err = loadConfigFile()
+	err = Data.Load()
 	require.Error(t, err)
 
 	// This file contains invalid base64 characters.
 	ConfigPath = "./testdata/enc-invalid.conf"
-	_, err = loadConfigFile()
+	err = Data.Load()
 	require.Error(t, err)
 
 	// This file contains invalid base64 characters.
 	ConfigPath = "./testdata/enc-too-new.conf"
-	_, err = loadConfigFile()
+	err = Data.Load()
 	require.Error(t, err)
 
 	// This file does not exist.
 	ConfigPath = "./testdata/filenotfound.conf"
-	c, err := loadConfigFile()
-	assert.Equal(t, errorConfigFileNotFound, err)
-	assert.Nil(t, c)
+	err = Data.Load()
+	assert.Equal(t, ErrorConfigFileNotFound, err)
 }
 
 func TestPassword(t *testing.T) {
@@ -448,8 +447,8 @@ func TestFileRefresh(t *testing.T) {
 	err = ioutil.WriteFile(ConfigPath, b, 0644)
 	assert.NoError(t, err)
 
-	assert.NotEqual(t, []string{"refreshed_test"}, configFile.GetSectionList())
+	assert.NotEqual(t, []string{"refreshed_test"}, Data.GetSectionList())
 	err = FileRefresh()
 	assert.NoError(t, err)
-	assert.Equal(t, []string{"refreshed_test"}, configFile.GetSectionList())
+	assert.Equal(t, []string{"refreshed_test"}, Data.GetSectionList())
 }
