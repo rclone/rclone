@@ -3,7 +3,7 @@
 
 // +build darwin dragonfly freebsd linux netbsd openbsd solaris
 
-package config
+package configfile
 
 import (
 	"os"

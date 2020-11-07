@@ -72,7 +72,7 @@ See the [listremotes command](/commands/rclone_listremotes/) command for more in
 // Return the a list of remotes in the config file
 func rcListRemotes(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	var remotes = []string{}
-	for _, remote := range getConfigData().GetSectionList() {
+	for _, remote := range Data.GetSectionList() {
 		remotes = append(remotes, remote)
 	}
 	out = rc.Params{
