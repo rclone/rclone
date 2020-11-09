@@ -2,6 +2,7 @@
 package restic
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -30,6 +31,7 @@ var (
 	stdio        bool
 	appendOnly   bool
 	privateRepos bool
+	cacheObjects bool
 )
 
 func init() {
@@ -38,6 +40,7 @@ func init() {
 	flags.BoolVarP(flagSet, &stdio, "stdio", "", false, "run an HTTP2 server on stdin/stdout")
 	flags.BoolVarP(flagSet, &appendOnly, "append-only", "", false, "disallow deletion of repository data")
 	flags.BoolVarP(flagSet, &privateRepos, "private-repos", "", false, "users can only access their private repo")
+	flags.BoolVarP(flagSet, &cacheObjects, "cache-objects", "", true, "cache listed objects")
 }
 
 // Command definition for cobra
@@ -76,6 +79,10 @@ By default this will serve on "localhost:8080" you can change this
 with use of the "--addr" flag.
 
 You might wish to start this server on boot.
+
+Adding --cache-objects=false will cause rclone to stop caching objects
+returned from the List call. Caching is normally desirable as it speeds
+up downloading objects, saves transactions and uses very little memory.
 
 ### Setting up restic to use rclone ###
 
@@ -161,7 +168,8 @@ const (
 // Server contains everything to run the Server
 type Server struct {
 	*httplib.Server
-	f fs.Fs
+	f     fs.Fs
+	cache *cache
 }
 
 // NewServer returns an HTTP server that speaks the rest protocol
@@ -170,6 +178,7 @@ func NewServer(f fs.Fs, opt *httplib.Options) *Server {
 	s := &Server{
 		Server: httplib.NewServer(mux, opt),
 		f:      f,
+		cache:  newCache(),
 	}
 	mux.HandleFunc(s.Opt.BaseURL+"/", s.ServeHTTP)
 	return s
@@ -248,9 +257,24 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// newObject returns an object with the remote given either from the
+// cache or directly
+func (s *Server) newObject(ctx context.Context, remote string) (fs.Object, error) {
+	o := s.cache.find(remote)
+	if o != nil {
+		return o, nil
+	}
+	o, err := s.f.NewObject(ctx, remote)
+	if err != nil {
+		return o, err
+	}
+	s.cache.add(remote, o)
+	return o, nil
+}
+
 // get the remote
 func (s *Server) serveObject(w http.ResponseWriter, r *http.Request, remote string) {
-	o, err := s.f.NewObject(r.Context(), remote)
+	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "%s request error: %v", r.Method, err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -263,7 +287,7 @@ func (s *Server) serveObject(w http.ResponseWriter, r *http.Request, remote stri
 func (s *Server) postObject(w http.ResponseWriter, r *http.Request, remote string) {
 	if appendOnly {
 		// make sure the file does not exist yet
-		_, err := s.f.NewObject(r.Context(), remote)
+		_, err := s.newObject(r.Context(), remote)
 		if err == nil {
 			fs.Errorf(remote, "Post request: file already exists, refusing to overwrite in append-only mode")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
@@ -272,7 +296,7 @@ func (s *Server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 		}
 	}
 
-	_, err := operations.RcatSize(r.Context(), s.f, remote, r.Body, r.ContentLength, time.Now())
+	o, err := operations.RcatSize(r.Context(), s.f, remote, r.Body, r.ContentLength, time.Now())
 	if err != nil {
 		err = accounting.Stats(r.Context()).Error(err)
 		fs.Errorf(remote, "Post request rcat error: %v", err)
@@ -280,6 +304,9 @@ func (s *Server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 
 		return
 	}
+
+	// if successfully uploaded add to cache
+	s.cache.add(remote, o)
 }
 
 // delete the remote
@@ -294,7 +321,7 @@ func (s *Server) deleteObject(w http.ResponseWriter, r *http.Request, remote str
 		}
 	}
 
-	o, err := s.f.NewObject(r.Context(), remote)
+	o, err := s.newObject(r.Context(), remote)
 	if err != nil {
 		fs.Debugf(remote, "Delete request error: %v", err)
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -310,6 +337,9 @@ func (s *Server) deleteObject(w http.ResponseWriter, r *http.Request, remote str
 		}
 		return
 	}
+
+	// remove object from cache
+	s.cache.remove(remote)
 }
 
 // listItem is an element returned for the restic v2 list response
@@ -321,14 +351,12 @@ type listItem struct {
 // return type for list
 type listItems []listItem
 
-// add a DirEntry to the listItems
-func (ls *listItems) add(entry fs.DirEntry) {
-	if o, ok := entry.(fs.Object); ok {
-		*ls = append(*ls, listItem{
-			Name: path.Base(o.Remote()),
-			Size: o.Size(),
-		})
-	}
+// add an fs.Object to the listItems
+func (ls *listItems) add(o fs.Object) {
+	*ls = append(*ls, listItem{
+		Name: path.Base(o.Remote()),
+		Size: o.Size(),
+	})
 }
 
 // listObjects lists all Objects of a given type in an arbitrary order.
@@ -344,10 +372,16 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request, remote stri
 	// make sure an empty list is returned, and not a 'nil' value
 	ls := listItems{}
 
+	// Remove all existing values from the cache
+	s.cache.removePrefix(remote)
+
 	// if remote supports ListR use that directly, otherwise use recursive Walk
 	err := walk.ListR(r.Context(), s.f, remote, true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
-			ls.add(entry)
+			if o, ok := entry.(fs.Object); ok {
+				ls.add(o)
+				s.cache.add(o.Remote(), o)
+			}
 		}
 		return nil
 	})
