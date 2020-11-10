@@ -40,32 +40,14 @@ func init() {
 func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.Options) (options []string) {
 	// Options
 	options = []string{
-		"-o", "fsname=" + device,
-		"-o", "subtype=rclone",
-		"-o", fmt.Sprintf("max_readahead=%d", opt.MaxReadAhead),
 		"-o", fmt.Sprintf("attr_timeout=%g", opt.AttrTimeout.Seconds()),
-		// This causes FUSE to supply O_TRUNC with the Open
-		// call which is more efficient for cmount.  However
-		// it does not work with cgofuse on Windows with
-		// WinFSP so cmount must work with or without it.
-		"-o", "atomic_o_trunc",
 	}
 	if opt.DebugFUSE {
 		options = append(options, "-o", "debug")
 	}
 
-	// OSX options
-	if runtime.GOOS == "darwin" {
-		if opt.NoAppleDouble {
-			options = append(options, "-o", "noappledouble")
-		}
-		if opt.NoAppleXattr {
-			options = append(options, "-o", "noapplexattr")
-		}
-	}
-
-	// determine if ExtraOptions already has an opt in
-	hasOption := func(optionName string) bool {
+	// Determine if ExtraOptions already has an opt in
+	hasExtraOption := func(optionName string) bool {
 		optionName += "="
 		for _, option := range opt.ExtraOptions {
 			if strings.HasPrefix(option, optionName) {
@@ -75,13 +57,12 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 		return false
 	}
 
-	// Windows options
 	if runtime.GOOS == "windows" {
-		// These cause WinFsp to mean the current user
-		if !hasOption("uid") {
+		// Setting uid and gid to -1 by default, which mean current user in WinFsp
+		if !hasExtraOption("uid") {
 			options = append(options, "-o", "uid=-1")
 		}
-		if !hasOption("gid") {
+		if !hasExtraOption("gid") {
 			options = append(options, "-o", "gid=-1")
 		}
 		options = append(options, "--FileSystemName=rclone")
@@ -92,31 +73,47 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 				options = append(options, "-o", "volname="+opt.VolumeName)
 			}
 		}
-	} else if runtime.GOOS == "darwin" {
-		if opt.VolumeName != "" {
-			options = append(options, "-o", "volname="+opt.VolumeName)
+	} else {
+		options = append(options, "-o", "fsname="+device)
+		options = append(options, "-o", "subtype=rclone")
+		options = append(options, "-o", fmt.Sprintf("max_readahead=%d", opt.MaxReadAhead))
+		// This causes FUSE to supply O_TRUNC with the Open
+		// call which is more efficient for cmount.  However
+		// it does not work with cgofuse on Windows with
+		// WinFSP so cmount must work with or without it.
+		options = append(options, "-o", "atomic_o_trunc")
+		if opt.DaemonTimeout != 0 {
+			options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(opt.DaemonTimeout.Seconds())))
 		}
-	}
-	if opt.AllowNonEmpty {
-		options = append(options, "-o", "nonempty")
-	}
-	if opt.AllowOther {
-		options = append(options, "-o", "allow_other")
-	}
-	if opt.AllowRoot {
-		options = append(options, "-o", "allow_root")
-	}
-	if opt.DefaultPermissions {
-		options = append(options, "-o", "default_permissions")
-	}
-	if VFS.Opt.ReadOnly {
-		options = append(options, "-o", "ro")
-	}
-	if opt.WritebackCache {
-		// FIXME? options = append(options, "-o", WritebackCache())
-	}
-	if opt.DaemonTimeout != 0 {
-		options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(opt.DaemonTimeout.Seconds())))
+		if opt.AllowNonEmpty {
+			options = append(options, "-o", "nonempty")
+		}
+		if opt.AllowOther {
+			options = append(options, "-o", "allow_other")
+		}
+		if opt.AllowRoot {
+			options = append(options, "-o", "allow_root")
+		}
+		if opt.DefaultPermissions {
+			options = append(options, "-o", "default_permissions")
+		}
+		if VFS.Opt.ReadOnly {
+			options = append(options, "-o", "ro")
+		}
+		if opt.WritebackCache {
+			// FIXME? options = append(options, "-o", WritebackCache())
+		}
+		if runtime.GOOS == "darwin" {
+			if opt.VolumeName != "" {
+				options = append(options, "-o", "volname="+opt.VolumeName)
+			}
+			if opt.NoAppleDouble {
+				options = append(options, "-o", "noappledouble")
+			}
+			if opt.NoAppleXattr {
+				options = append(options, "-o", "noapplexattr")
+			}
+		}
 	}
 	for _, option := range opt.ExtraOptions {
 		options = append(options, "-o", option)
