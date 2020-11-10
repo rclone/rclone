@@ -45,9 +45,10 @@ type Dir struct {
 type vState byte
 
 const (
-	vOK  vState = iota // Not virtual
-	vAdd               // added file or directory
-	vDel               // removed file or directory
+	vOK      vState = iota // Not virtual
+	vAddFile               // added file
+	vAddDir                // added directory
+	vDel                   // removed file or directory
 )
 
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
@@ -144,6 +145,9 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 			}
 		}
 	}
+	// Purge any unecessary virtual entries
+	d._purgeVirtual()
+
 	d.read = time.Time{}
 	// Check if this dir has virtual entries
 	if len(d.virtual) != 0 {
@@ -296,6 +300,10 @@ func (d *Dir) addObject(node Node) {
 	if d.virtual == nil {
 		d.virtual = make(map[string]vState)
 	}
+	vAdd := vAddFile
+	if node.IsDir() {
+		vAdd = vAddDir
+	}
 	d.virtual[leaf] = vAdd
 	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vAdd, leaf)
 	d.mu.Unlock()
@@ -348,7 +356,7 @@ func (d *Dir) delObject(leaf string) {
 // DelVirtual removes an object from the directory listing
 //
 // It marks it as removed until it has confirmed the object is missing when the
-// directory entries are re-read in which case the virtual mark is removed.
+// directory entries are re-read in.
 //
 // This is used to remove directory entries after things have been deleted or
 // renamed but before we've had confirmation from the backend.
@@ -389,33 +397,153 @@ func (d *Dir) _readDirFromDirTree(dirTree dirtree.DirTree, when time.Time) error
 	return d._readDirFromEntries(dirTree[d.path], dirTree, when)
 }
 
+// Remove the virtual directory entry leaf
+func (d *Dir) _deleteVirtual(name string) {
+	virtualState, ok := d.virtual[name]
+	if !ok {
+		return
+	}
+	delete(d.virtual, name)
+	if len(d.virtual) == 0 {
+		d.virtual = nil
+	}
+	fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
+}
+
+// Purge virtual entries assuming the directory has just been re-read
+//
+// Remove all the entries except:
+//
+// 1) vDirAdd on remotes which can't have empty directories. These will remain
+// virtual as long as the directory is empty. When the directory becomes real
+// (ie files are added) the virtual directory will be removed. This means that
+// directories will disappear when the last file is deleted which is probably
+// OK.
+//
+// 2) vFileAdd that are being written or uploaded
+func (d *Dir) _purgeVirtual() {
+	canHaveEmptyDirectories := d.f.Features().CanHaveEmptyDirectories
+	for name, virtualState := range d.virtual {
+		switch virtualState {
+		case vAddDir:
+			if canHaveEmptyDirectories {
+				// if remote can have empty directories then a
+				// new dir will be read in the listing
+				d._deleteVirtual(name)
+			} else {
+				// leave the empty directory marker
+			}
+		case vAddFile:
+			// Delete all virtual file adds that have finished uploading
+			node, ok := d.items[name]
+			if !ok {
+				// if the object has disappeared somehow then remove the virtual
+				d._deleteVirtual(name)
+				continue
+			}
+			f, ok := node.(*File)
+			if !ok {
+				// if the object isn't a file then remove the virtual as it is wrong
+				d._deleteVirtual(name)
+				continue
+			}
+			if f.writingInProgress() {
+				// if writing in progress then leave virtual
+				continue
+			}
+			if d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal && d.vfs.cache.InUse(f.Path()) {
+				// if object in use or dirty then leave virtual
+				continue
+			}
+			d._deleteVirtual(name)
+		default:
+			d._deleteVirtual(name)
+		}
+	}
+}
+
+// Manage the virtuals in a listing
+//
+// This keeps a record of the names listed in this directory so far
+type manageVirtuals map[string]struct{}
+
+// Create a new manageVirtuals and purge the d.virtuals of any entries which can
+// be removed.
+//
+// must be called with the Dir lock held
+func (d *Dir) _newManageVirtuals() manageVirtuals {
+	tv := make(manageVirtuals)
+	d._purgeVirtual()
+	return tv
+}
+
+// This should be called for every entry added to the directory
+//
+// It returns true if this entry should be skipped
+//
+// must be called with the Dir lock held
+func (mv manageVirtuals) add(d *Dir, name string) bool {
+	// Keep a record of all names listed
+	mv[name] = struct{}{}
+	// Remove virtuals if possible
+	switch d.virtual[name] {
+	case vAddFile, vAddDir:
+		// item was added to the dir but since it is found in a
+		// listing is no longer virtual
+		d._deleteVirtual(name)
+	case vDel:
+		// item is deleted from the dir so skip it
+		return true
+	case vOK:
+	}
+	return false
+}
+
+// This should be called after the directory entry is read to update d.items
+// with virtual entries
+//
+// must be called with the Dir lock held
+func (mv manageVirtuals) end(d *Dir) {
+	// delete unused d.items
+	for name := range d.items {
+		if _, ok := mv[name]; !ok {
+			// name was previously in the directory but wasn't found
+			// in the current listing
+			switch d.virtual[name] {
+			case vAddFile, vAddDir:
+				// virtually added so leave virtual item
+			default:
+				// otherwise delete it
+				delete(d.items, name)
+			}
+		}
+	}
+	// delete unused d.virtual~s
+	for name, virtualState := range d.virtual {
+		if _, ok := mv[name]; !ok {
+			// name exists as a virtual but isn't in the current
+			// listing so if it is a virtual delete we can remove it
+			// as it is no longer needed.
+			if virtualState == vDel {
+				d._deleteVirtual(name)
+			}
+		}
+	}
+}
+
 // update d.items and if dirTree is not nil update each dir in the DirTree below this one and
 // set the last read time - must be called with the lock held
 func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree, when time.Time) error {
 	var err error
-	// Cache the items by name
-	found := make(map[string]struct{})
+	mv := d._newManageVirtuals()
 	for _, entry := range entries {
 		name := path.Base(entry.Remote())
 		if name == "." || name == ".." {
 			continue
 		}
 		node := d.items[name]
-		found[name] = struct{}{}
-		virtualState := d.virtual[name]
-		switch virtualState {
-		case vAdd:
-			// item was added to the dir but since it is found in a
-			// listing is no longer virtual
-			delete(d.virtual, name)
-			if len(d.virtual) == 0 {
-				d.virtual = nil
-			}
-			fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
-		case vDel:
-			// item is deleted from the dir so skip it
+		if mv.add(d, name) {
 			continue
-		case vOK:
 		}
 		switch item := entry.(type) {
 		case fs.Object:
@@ -452,26 +580,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 		}
 		d.items[name] = node
 	}
-	// delete unused entries
-	for name := range d.items {
-		if _, ok := found[name]; !ok && d.virtual[name] != vAdd {
-			// item was added to the dir but wasn't found in the
-			// listing - remove it unless it was virtually added
-			delete(d.items, name)
-		}
-	}
-	// delete unused virtuals
-	for name, virtualState := range d.virtual {
-		if _, ok := found[name]; !ok && virtualState == vDel {
-			// We have a virtual delete but the item wasn't found in
-			// the listing so no longer needs a virtual delete.
-			delete(d.virtual, name)
-			fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
-		}
-	}
-	if len(d.virtual) == 0 {
-		d.virtual = nil
-	}
+	mv.end(d)
 	return nil
 }
 

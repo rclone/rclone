@@ -9,13 +9,14 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[vOK-0]
-	_ = x[vAdd-1]
-	_ = x[vDel-2]
+	_ = x[vAddFile-1]
+	_ = x[vAddDir-2]
+	_ = x[vDel-3]
 }
 
-const _vState_name = "vOKvAddvDel"
+const _vState_name = "vOKvAddFilevAddDirvDel"
 
-var _vState_index = [...]uint8{0, 3, 7, 11}
+var _vState_index = [...]uint8{0, 3, 11, 18, 22}
 
 func (i vState) String() string {
 	if i >= vState(len(_vState_index)-1) {
