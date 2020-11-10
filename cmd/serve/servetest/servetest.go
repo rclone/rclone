@@ -5,6 +5,7 @@ package servetest
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,6 +20,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var subRun = flag.String("sub-run", "", "pass this to the -run command of the backend tests")
 
 // StartFn describes the callback which should start the server with
 // the Fs passed in.
@@ -74,6 +77,9 @@ func run(t *testing.T, name string, start StartFn, useProxy bool) {
 		args = append(args, "-verbose")
 	}
 	remoteName := name + "test:"
+	if *subRun != "" {
+		args = append(args, "-run", *subRun)
+	}
 	args = append(args, "-remote", remoteName)
 	args = append(args, "-list-retries", fmt.Sprint(*fstest.ListRetries))
 	cmd := exec.Command("go", args...)
