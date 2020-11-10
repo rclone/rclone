@@ -101,11 +101,11 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 		md5Hash := md5.New()
 		if len(srcHashes) == 2 && srcHashes[1] == "1" {
 			md5Decoded, _ := hex.DecodeString(dstHash)
-			md5Hash.Write(md5Decoded)
+			_, _ = md5Hash.Write(md5Decoded)
 			dstHash = fmt.Sprintf("%x-1", md5Hash.Sum(nil))
 		} else if len(dstHashes) == 2 && dstHashes[1] == "1" {
 			md5Decoded, _ := hex.DecodeString(srcHash)
-			md5Hash.Write(md5Decoded)
+			_, _ = md5Hash.Write(md5Decoded)
 			srcHash = fmt.Sprintf("%x-1", md5Hash.Sum(nil))
 		} else {
 			fs.Debugf(src, "chunk md5 hashes type differ")
