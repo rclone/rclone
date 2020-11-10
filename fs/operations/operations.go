@@ -4,6 +4,7 @@ package operations
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"encoding/base64"
 	"encoding/csv"
 	"encoding/hex"
@@ -96,6 +97,20 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	if len(srcHashes) == 2 && len(dstHashes) == 2 && srcHashes[1] != dstHashes[1] {
 		fs.Debugf(src, "chunk size differ")
 		return true, hash.None, "", "", nil
+	} else if len(srcHashes) != len(dstHashes) {
+		md5Hash := md5.New()
+		if len(srcHashes) == 2 && srcHashes[1] == "1" {
+			md5_decoded, _ := hex.DecodeString(dstHash)
+			md5Hash.Write(md5_decoded)
+			dstHash = fmt.Sprintf("%x-1", md5Hash.Sum(nil))
+		} else if len(dstHashes) == 2 && dstHashes[1] == "1" {
+			md5_decoded, _ := hex.DecodeString(srcHash)
+			md5Hash.Write(md5_decoded)
+			srcHash = fmt.Sprintf("%x-1", md5Hash.Sum(nil))
+		} else {
+			fs.Debugf(src, "chunk md5 hashes type differ")
+			return true, hash.None, "", "", nil
+		}
 	}
 	if srcHash != dstHash {
 		fs.Debugf(src, "%v = %s (%v)", ht, srcHash, src.Fs())
