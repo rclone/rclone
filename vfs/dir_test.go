@@ -289,16 +289,6 @@ func TestDirReadDirAll(t *testing.T) {
 
 		checkListing(t, dir, []string{"file1,14,false", "virtualDir,0,true", "virtualFile,17,false"})
 
-		// Force a directory reload...
-		dir.invalidateDir("dir")
-
-		checkListing(t, dir, []string{"file1,14,false", "virtualDir,0,true", "virtualFile,17,false"})
-
-		// Check that forgetting the root doesn't invalidate the virtual entries
-		root.ForgetAll()
-
-		checkListing(t, dir, []string{"file1,14,false", "virtualDir,0,true", "virtualFile,17,false"})
-
 		// Now action the deletes and uploads
 		_ = r.WriteObject(context.Background(), "dir/virtualFile", "virtualFile contents", t1)
 		_ = r.WriteObject(context.Background(), "dir/virtualDir/testFile", "testFile contents", t1)
@@ -317,6 +307,29 @@ func TestDirReadDirAll(t *testing.T) {
 		assert.Nil(t, dir.virtual)
 		dir.mu.Unlock()
 
+		// Add some virtual entries and check what happens
+		dir.AddVirtual("virtualFile2", 100, false)
+		dir.AddVirtual("virtualDir2", 0, true)
+		// Remove some existing entries
+		dir.DelVirtual("file1")
+
+		checkListing(t, dir, []string{"virtualDir,0,true", "virtualDir2,0,true", "virtualFile,20,false", "virtualFile2,100,false"})
+
+		// Force a directory reload...
+		dir.invalidateDir("dir")
+
+		want := []string{"file1,14,false", "virtualDir,0,true", "virtualDir2,0,true", "virtualFile,20,false", "virtualFile2,100,false"}
+		features := r.Fremote.Features()
+		if features.CanHaveEmptyDirectories {
+			// snip out virtualDir2 which will only be present if can't have empty dirs
+			want = append(want[:2], want[3:]...)
+		}
+		checkListing(t, dir, want)
+
+		// Check that forgetting the root doesn't invalidate the virtual entries
+		root.ForgetAll()
+
+		checkListing(t, dir, want)
 	})
 }
 

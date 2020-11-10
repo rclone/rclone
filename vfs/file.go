@@ -403,6 +403,13 @@ func (f *File) _writingInProgress() bool {
 	return f.o == nil || len(f.writers) != 0
 }
 
+// writingInProgress returns true of there are any open writers
+func (f *File) writingInProgress() bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.o == nil || len(f.writers) != 0
+}
+
 // Update the size while writing
 func (f *File) setSize(n int64) {
 	atomic.StoreInt64(&f.size, n)
