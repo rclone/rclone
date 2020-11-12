@@ -808,6 +808,13 @@ func (item *Item) _checkObject(o fs.Object) error {
 	return nil
 }
 
+// WrittenBack checks to see if the item has been written back or not
+func (item *Item) WrittenBack() bool {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	return item.info.Fingerprint != ""
+}
+
 // remove the cached file
 //
 // call with lock held
