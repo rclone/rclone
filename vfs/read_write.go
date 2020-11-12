@@ -36,7 +36,7 @@ func newRWFileHandle(d *Dir, f *File, flags int) (fh *RWFileHandle, err error) {
 	// get an item to represent this from the cache
 	item := d.vfs.cache.Item(f.Path())
 
-	exists := f.exists() || item.Exists()
+	exists := f.exists() || (item.Exists() && !item.WrittenBack())
 
 	// if O_CREATE and O_EXCL are set and if path already exists, then return EEXIST
 	if flags&(os.O_CREATE|os.O_EXCL) == os.O_CREATE|os.O_EXCL && exists {
