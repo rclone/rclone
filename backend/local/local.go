@@ -456,8 +456,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
 				fi, err = os.Stat(localPath)
-				if os.IsNotExist(err) {
-					// Skip bad symlinks
+				if os.IsNotExist(err) || isCircularSymlinkError(err) {
+					// Skip bad symlinks and circular symlinks
 					err = fserrors.NoRetryError(errors.Wrap(err, "symlink"))
 					fs.Errorf(newRemote, "Listing error: %v", err)
 					err = accounting.Stats(ctx).Error(err)
