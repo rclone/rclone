@@ -170,32 +170,36 @@ On Linux and OSX, you can either run mount in foreground mode or background (dae
 Mount runs in foreground mode by default, use the ` + "`--daemon`" + ` flag to specify background mode.
 You can only run mount in foreground mode on Windows.
 
-On Linux/macOS/FreeBSD Start the mount like this where ` + "`/path/to/local/mount`" + `
-is an **empty** **existing** directory.
+On Linux/macOS/FreeBSD start the mount like this, where ` + "`/path/to/local/mount`" + `
+is an **empty** **existing** directory:
 
     rclone ` + commandName + ` remote:path/to/files /path/to/local/mount
 
-Or on Windows like this where ` + "`X:`" + ` is an unused drive letter
-or (unless [mounting as a network drive](#network-drive)) use a path
-to **non-existent** subdirectory of an **existing** parent directory or drive.
+On Windows you can start a mount in different ways. See [below](#mounting-modes-on-windows)
+for details. The following examples will mount to an automatically assigned drive,
+to specific drive letter ` + "`X:`" + `, to path ` + "`C:\\path\\to\\nonexistent\\directory`" + `
+(which must be **non-existent** subdirectory of an **existing** parent directory or drive,
+and is not supported when [mounting as a network drive](#mounting-modes-on-windows)), and
+the last example will mount as network share ` + "`\\cloud\remote`" + ` and map it to an
+automatically assigned drive:
 
+    rclone ` + commandName + ` remote:path/to/files *
     rclone ` + commandName + ` remote:path/to/files X:
     rclone ` + commandName + ` remote:path/to/files C:\path\to\nonexistent\directory
-
-When running in background mode the user will have to stop the mount manually (specified below).
+    rclone ` + commandName + ` remote:path/to/files \\cloud\remote
 
 When the program ends while in foreground mode, either via Ctrl+C or receiving
-a SIGINT or SIGTERM signal, the mount is automatically stopped.
+a SIGINT or SIGTERM signal, the mount should be automatically stopped.
 
-The umount operation can fail, for example when the mountpoint is busy.
-When that happens, it is the user's responsibility to stop the mount manually.
-
-Stopping the mount manually:
+When running in background mode the user will have to stop the mount manually:
 
     # Linux
     fusermount -u /path/to/local/mount
     # OS X
     umount /path/to/local/mount
+
+The umount operation can fail, for example when the mountpoint is busy.
+When that happens, it is the user's responsibility to stop the mount manually.
 
 **Note**: As of ` + "`rclone` 1.52.2, `rclone mount`" + ` now requires Go version 1.13
 or newer on some platforms depending on the underlying FUSE library in use.
@@ -208,10 +212,83 @@ download and install [WinFsp](http://www.secfs.net/winfsp/).
 [WinFsp](https://github.com/billziss-gh/winfsp) is an open source
 Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
-uses combination with
-[cgofuse](https://github.com/billziss-gh/cgofuse).  Both of these
-packages are by Bill Zissimopoulos who was very helpful during the
-implementation of rclone ` + commandName + ` for Windows.
+uses combination with [cgofuse](https://github.com/billziss-gh/cgofuse).
+Both of these packages are by Bill Zissimopoulos who was very helpful
+during the implementation of rclone ` + commandName + ` for Windows.
+
+#### Mounting modes on windows
+
+Unlike other operating systems, Microsoft Windows provides a different filesystem
+type for network and fixed drives. It optimises access on the assumption fixed
+disk drives are fast and reliable, while network drives have relatively high latency
+and less reliability. Some settings can also be differentiated between the two types,
+for example that Windows Explorer should just display icons and not create preview
+thumbnails for image and video files on network drives.
+
+In most cases, rclone will mount the remote as a normal, fixed disk drive by default.
+However, you can also choose to mount it as a remote network drive, often described
+as a network share. If you mount an rclone remote using the default, fixed drive mode
+and experience unexpected program errors, freezes or other issues, consider mounting
+as a network drive instead.
+
+When mounting as a fixed disk drive you can either mount to an unused drive letter,
+or to a path - which must be **non-existent** subdirectory of an **existing** parent
+directory or drive. Using the special value ` + "`*`" + ` will tell rclone to
+automatically assign the next available drive letter, starting with Z: and moving backward.
+Examples:
+
+    rclone ` + commandName + ` remote:path/to/files *
+    rclone ` + commandName + ` remote:path/to/files X:
+    rclone ` + commandName + ` remote:path/to/files C:\path\to\nonexistent\directory
+    rclone ` + commandName + ` remote:path/to/files X:
+
+Option ` + "`--volname`" + ` can be used to set a custom volume name for the mounted
+file system. The default is to use the remote name and path.
+
+To mount as network drive, you can add option ` + "`--network-mode`" + `
+to your ` + commandName + ` command. Mounting to a directory path is not supported in
+this mode, it is a limitation Windows imposes on junctions, so the remote must always
+be mounted to a drive letter.
+
+    rclone ` + commandName + ` remote:path/to/files X: --network-mode
+
+A volume name specified with ` + "`--volname`" + ` will be used to create the network share path.
+A complete UNC path, such as ` + "`\\\\cloud\\remote`" + `, optionally with path
+` + "`\\\\cloud\\remote\\madeup\\path`" + `, will be used as is. Any other
+string will be used as the share part, after a default prefix ` + "`\\\\server\\`" + `.
+If no volume name is specified then ` + "`\\\\server\\share`" + ` will be used.
+You must make sure the volume name is unique when you are mounting more than one drive,
+or else the mount command will fail. The share name will treated as the volume label for
+the mapped drive, shown in Windows Explorer etc, while the complete
+` + "`\\\\server\\share`" + ` will be reported as the remote UNC path by
+` + "`net use`" + ` etc, just like a normal network drive mapping.
+
+If you specify a full network share UNC path with ` + "`--volname`" + `, this will implicitely
+set the ` + "`--network-mode`" + ` option, so the following two examples have same result:
+
+    rclone ` + commandName + ` remote:path/to/files X: --network-mode
+    rclone ` + commandName + ` remote:path/to/files X: --volname \\server\share
+
+You may also specify the network share UNC path as the mountpoint itself. Then rclone
+will automatically assign a drive letter, same as with ` + "`*`" + ` and use that as
+mountpoint, and instead use the UNC path specified as the volume name, as if it were
+specified with the ` + "`--volname`" + ` option. This will also implicitely set
+the ` + "`--network-mode`" + ` option. This means the following two examples have same result:
+
+    rclone ` + commandName + ` remote:path/to/files \\cloud\remote
+    rclone ` + commandName + ` remote:path/to/files * --volname \\cloud\remote
+
+There is yet another way to enable network mode, and to set the share path,
+and that is to pass the "native" libfuse/WinFsp option directly:
+` + "`--fuse-flag --VolumePrefix=\\server\\share`" + `. Note that the path
+must be with just a single backslash prefix in this case.
+
+
+*Note:* In previous versions of rclone this was the only supported method.
+
+[Read more about drive mapping](https://en.wikipedia.org/wiki/Drive_mapping)
+
+See also [Limitations](#limitations) section below.
 
 #### Windows caveats
 
@@ -228,37 +305,6 @@ account (using [the WinFsp.Launcher
 infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
 which creates drives accessible for everyone on the system or
 alternatively using [the nssm service manager](https://nssm.cc/usage).
-
-#### Mount as a network drive
-
-By default, rclone will mount the remote as a normal, fixed disk drive. However,
-you can also mount it as a remote network drive, also known as a network share.
-
-Unlike other operating systems, Microsoft Windows provides a different filesystem
-type for network and fixed drives. It optimises access on the assumption fixed
-disk drives are fast and reliable, while network drives have relatively high latency
-and less reliability. Some settings can also be differentiated between the two types,
-for example that Windows Explorer should just display icons and not create preview
-thumbnails for image and video files on network drives.
-
-If you mount an rclone remote using the default, fixed drive mode and experience
-unexpected program errors, freezes or other issues, consider mounting the remotes
-as a network drive instead.
-
-See also [Limitations](#limitations) section below for more info.
-
-To mount as network drive, add ` + "`--fuse-flag --VolumePrefix=\\server\\share`" + `
-to your ` + commandName + ` command. You may replace the names "server" and "share"
-with whatever you like, as long as the combination is unique when you are mounting
-more than one drive (or else the mount command will fail). The "share" name will
-treated as the volume label for the mapped drive, shown in Windows Explorer etc, while
-` + "`\\\\server\\share`" + ` will be reported as the remote UNC path by
-` + "`net use`" + ` etc, just like a normal network drive mapping.
-
-You must use the method of mounting to a drive letter, as mounting to a directory
-path is not supported in this case (a limitation Windows imposes on junctions).
-
-[Read more about drive mapping](https://en.wikipedia.org/wiki/Drive_mapping)
 
 ### Limitations
 
