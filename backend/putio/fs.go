@@ -77,7 +77,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (f fs.Fs,
 		return nil, err
 	}
 	root = parsePath(root)
-	httpClient := fshttp.NewClient(fs.GetConfig(ctx))
+	httpClient := fshttp.NewClient(ctx)
 	oAuthClient, _, err := oauthutil.NewClientWithBaseClient(ctx, name, m, putioConfig, httpClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure putio")

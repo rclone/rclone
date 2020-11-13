@@ -277,7 +277,7 @@ func qsServiceConnection(ctx context.Context, opt *Options) (*qs.Service, error)
 	cf.Host = host
 	cf.Port = port
 	// unsupported in v3.1: cf.ConnectionRetries = opt.ConnectionRetries
-	cf.Connection = fshttp.NewClient(fs.GetConfig(ctx))
+	cf.Connection = fshttp.NewClient(ctx)
 
 	return qs.Init(cf)
 }

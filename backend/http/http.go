@@ -172,7 +172,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	client := fshttp.NewClient(fs.GetConfig(ctx))
+	client := fshttp.NewClient(ctx)
 
 	var isFile = false
 	if !strings.HasSuffix(u.String(), "/") {

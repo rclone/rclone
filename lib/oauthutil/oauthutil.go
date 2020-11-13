@@ -353,7 +353,7 @@ func NewClientWithBaseClient(ctx context.Context, name string, m configmap.Mappe
 // NewClient gets a token from the config file and configures a Client
 // with it.  It returns the client and a TokenSource which Invalidate may need to be called on
 func NewClient(ctx context.Context, name string, m configmap.Mapper, oauthConfig *oauth2.Config) (*http.Client, *TokenSource, error) {
-	return NewClientWithBaseClient(ctx, name, m, oauthConfig, fshttp.NewClient(fs.GetConfig(ctx)))
+	return NewClientWithBaseClient(ctx, name, m, oauthConfig, fshttp.NewClient(ctx))
 }
 
 // AuthResult is returned from the web server after authorization
@@ -526,7 +526,7 @@ version recommended):
 	}
 
 	// Exchange the code for a token
-	ctx = Context(ctx, fshttp.NewClient(fs.GetConfig(ctx)))
+	ctx = Context(ctx, fshttp.NewClient(ctx))
 	token, err := oauthConfig.Exchange(ctx, auth.Code)
 	if err != nil {
 		return errors.Wrap(err, "failed to get token")

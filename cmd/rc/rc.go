@@ -177,7 +177,7 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 	}
 
 	// Do HTTP request
-	client := fshttp.NewClient(fs.GetConfig(ctx))
+	client := fshttp.NewClient(ctx)
 	url += path
 	data, err := json.Marshal(in)
 	if err != nil {

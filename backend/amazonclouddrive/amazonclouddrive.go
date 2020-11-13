@@ -248,7 +248,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 	root = parsePath(root)
-	baseClient := fshttp.NewClient(fs.GetConfig(ctx))
+	baseClient := fshttp.NewClient(ctx)
 	if do, ok := baseClient.Transport.(interface {
 		SetRequestFilter(f func(req *http.Request))
 	}); ok {
@@ -270,7 +270,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ci:           ci,
 		c:            c,
 		pacer:        fs.NewPacer(ctx, pacer.NewAmazonCloudDrive(pacer.MinSleep(minSleep))),
-		noAuthClient: fshttp.NewClient(ci),
+		noAuthClient: fshttp.NewClient(ctx),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,

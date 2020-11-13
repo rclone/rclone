@@ -363,7 +363,7 @@ func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Con
 		EndpointType:                swift.EndpointType(opt.EndpointType),
 		ConnectTimeout:              10 * ci.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:                     10 * ci.Timeout,        // Use the timeouts in the transport
-		Transport:                   fshttp.NewTransport(fs.GetConfig(ctx)),
+		Transport:                   fshttp.NewTransport(ctx),
 	}
 	if opt.EnvAuth {
 		err := c.ApplyEnvironment()

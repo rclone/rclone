@@ -252,7 +252,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, errors.Wrap(err, "failed to configure premiumize.me")
 		}
 	} else {
-		client = fshttp.NewClient(fs.GetConfig(ctx))
+		client = fshttp.NewClient(ctx)
 	}
 
 	f := &Fs{
