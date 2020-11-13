@@ -14,10 +14,15 @@ func init() {
 
 var commandDefinition = &cobra.Command{
 	Use:   "rmdir remote:path",
-	Short: `Remove the path if empty.`,
+	Short: `Remove the empty directory at path.`,
 	Long: `
-Remove the path.  Note that you can't remove a path with
-objects in it, use purge for that.`,
+This removes empty directory given by path. Will not remove the path if it
+has any objects in it, not even empty subdirectories. Use
+command ` + "`rmdirs`" + ` (or ` + "`delete`" + ` with option ` + "`--rmdirs`" + `)
+to do that.
+
+To delete a path and any objects in it, use ` + "`purge`" + ` command.
+`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDir(args)
