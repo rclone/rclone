@@ -187,7 +187,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:  name,
 		root:  root,
 		opt:   *opt,
-		srv:   rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetErrorHandler(errorHandler),
+		srv:   rest.NewClient(fshttp.NewClient(ctx)).SetErrorHandler(errorHandler),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 

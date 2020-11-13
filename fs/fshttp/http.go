@@ -35,13 +35,14 @@ var (
 
 // StartHTTPTokenBucket starts the token bucket if necessary
 func StartHTTPTokenBucket(ctx context.Context) {
-	if fs.GetConfig(ctx).TPSLimit > 0 {
-		tpsBurst := fs.GetConfig(ctx).TPSLimitBurst
+	ci := fs.GetConfig(ctx)
+	if ci.TPSLimit > 0 {
+		tpsBurst := ci.TPSLimitBurst
 		if tpsBurst < 1 {
 			tpsBurst = 1
 		}
-		tpsBucket = rate.NewLimiter(rate.Limit(fs.GetConfig(ctx).TPSLimit), tpsBurst)
-		fs.Infof(nil, "Starting HTTP transaction limiter: max %g transactions/s with burst %d", fs.GetConfig(ctx).TPSLimit, tpsBurst)
+		tpsBucket = rate.NewLimiter(rate.Limit(ci.TPSLimit), tpsBurst)
+		fs.Infof(nil, "Starting HTTP transaction limiter: max %g transactions/s with burst %d", ci.TPSLimit, tpsBurst)
 	}
 }
 
@@ -94,7 +95,7 @@ func (c *timeoutConn) Write(b []byte) (n int, err error) {
 
 // dial with context and timeouts
 func dialContextTimeout(ctx context.Context, network, address string, ci *fs.ConfigInfo) (net.Conn, error) {
-	dialer := NewDialer(ci)
+	dialer := NewDialer(ctx)
 	c, err := dialer.DialContext(ctx, network, address)
 	if err != nil {
 		return c, err
@@ -111,7 +112,8 @@ func ResetTransport() {
 // NewTransportCustom returns an http.RoundTripper with the correct timeouts.
 // The customize function is called if set to give the caller an opportunity to
 // customize any defaults in the Transport.
-func NewTransportCustom(ci *fs.ConfigInfo, customize func(*http.Transport)) http.RoundTripper {
+func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) http.RoundTripper {
+	ci := fs.GetConfig(ctx)
 	// Start with a sensible set of defaults then override.
 	// This also means we get new stuff when it gets added to go
 	t := new(http.Transport)
@@ -178,17 +180,18 @@ func NewTransportCustom(ci *fs.ConfigInfo, customize func(*http.Transport)) http
 }
 
 // NewTransport returns an http.RoundTripper with the correct timeouts
-func NewTransport(ci *fs.ConfigInfo) http.RoundTripper {
+func NewTransport(ctx context.Context) http.RoundTripper {
 	(*noTransport).Do(func() {
-		transport = NewTransportCustom(ci, nil)
+		transport = NewTransportCustom(ctx, nil)
 	})
 	return transport
 }
 
 // NewClient returns an http.Client with the correct timeouts
-func NewClient(ci *fs.ConfigInfo) *http.Client {
+func NewClient(ctx context.Context) *http.Client {
+	ci := fs.GetConfig(ctx)
 	client := &http.Client{
-		Transport: NewTransport(ci),
+		Transport: NewTransport(ctx),
 	}
 	if ci.Cookie {
 		client.Jar = cookieJar
@@ -355,7 +358,8 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 
 // NewDialer creates a net.Dialer structure with Timeout, Keepalive
 // and LocalAddr set from rclone flags.
-func NewDialer(ci *fs.ConfigInfo) *net.Dialer {
+func NewDialer(ctx context.Context) *net.Dialer {
+	ci := fs.GetConfig(ctx)
 	dialer := &net.Dialer{
 		Timeout:   ci.ConnectTimeout,
 		KeepAlive: 30 * time.Second,

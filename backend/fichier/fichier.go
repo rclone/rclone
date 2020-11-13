@@ -195,7 +195,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 
-	client := fshttp.NewClient(fs.GetConfig(ctx))
+	client := fshttp.NewClient(ctx)
 
 	f.rest = rest.NewClient(client).SetRoot(apiBaseURL)
 

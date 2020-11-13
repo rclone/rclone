@@ -197,7 +197,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:           *opt,
 		endpoint:      u,
 		endpointURL:   u.String(),
-		srv:           rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetRoot(u.String()),
+		srv:           rest.NewClient(fshttp.NewClient(ctx)).SetRoot(u.String()),
 		pacer:         getPacer(ctx, opt.URL),
 	}
 	f.features = (&fs.Features{
@@ -343,7 +343,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper) {
 	if !strings.HasPrefix(url, "/") {
 		url += "/"
 	}
-	srv := rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetRoot(url)
+	srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(url)
 
 	// We loop asking for a 2FA code
 	for {

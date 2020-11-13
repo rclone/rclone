@@ -983,7 +983,7 @@ func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name
 
 // getClient makes an http client according to the options
 func getClient(ctx context.Context, opt *Options) *http.Client {
-	t := fshttp.NewTransportCustom(fs.GetConfig(ctx), func(t *http.Transport) {
+	t := fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
 		if opt.DisableHTTP2 {
 			t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
 		}

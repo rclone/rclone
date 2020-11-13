@@ -338,12 +338,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 
 	// Override few config settings and create a client
-	clientConfig := *fs.GetConfig(ctx)
+	newCtx, clientConfig := fs.AddConfig(ctx)
 	if opt.UserAgent != "" {
 		clientConfig.UserAgent = opt.UserAgent
 	}
 	clientConfig.NoGzip = true // Mimic official client, skip sending "Accept-Encoding: gzip"
-	f.cli = fshttp.NewClient(&clientConfig)
+	f.cli = fshttp.NewClient(newCtx)
 
 	f.srv = rest.NewClient(f.cli)
 	f.srv.SetRoot(api.APIServerURL)

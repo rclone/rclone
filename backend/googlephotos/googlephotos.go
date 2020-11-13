@@ -254,7 +254,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	baseClient := fshttp.NewClient(fs.GetConfig(ctx))
+	baseClient := fshttp.NewClient(ctx)
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure Box")

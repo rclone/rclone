@@ -421,7 +421,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:        name,
 		opt:         *opt,
 		ci:          ci,
-		srv:         rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetErrorHandler(errorHandler),
+		srv:         rest.NewClient(fshttp.NewClient(ctx)).SetErrorHandler(errorHandler),
 		cache:       bucket.NewCache(),
 		_bucketID:   make(map[string]string, 1),
 		_bucketType: make(map[string]string, 1),

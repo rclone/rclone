@@ -230,7 +230,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 
 // v1config configure a jottacloud backend using legacy authentication
 func v1config(ctx context.Context, name string, m configmap.Mapper) {
-	srv := rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx)))
+	srv := rest.NewClient(fshttp.NewClient(ctx))
 
 	fmt.Printf("\nDo you want to create a machine specific API key?\n\nRclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.\n\n")
 	if config.Confirm(false) {
@@ -365,7 +365,7 @@ func doAuthV1(ctx context.Context, srv *rest.Client, username, password string) 
 
 // v2config configure a jottacloud backend using the modern JottaCli token based authentication
 func v2config(ctx context.Context, name string, m configmap.Mapper) {
-	srv := rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx)))
+	srv := rest.NewClient(fshttp.NewClient(ctx))
 
 	fmt.Printf("Generate a personal login token here: https://www.jottacloud.com/web/secure\n")
 	fmt.Printf("Login Token> ")
@@ -661,7 +661,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, errors.New("Outdated config - please reconfigure this backend")
 	}
 
-	baseClient := fshttp.NewClient(fs.GetConfig(ctx))
+	baseClient := fshttp.NewClient(ctx)
 
 	if ver == configVersion {
 		oauthConfig.ClientID = "jottacli"

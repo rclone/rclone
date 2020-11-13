@@ -169,7 +169,7 @@ func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, na
 	}
 	signingHeaders := getSigningHeaders(boxConfig)
 	queryParams := getQueryParams(boxConfig)
-	client := fshttp.NewClient(fs.GetConfig(ctx))
+	client := fshttp.NewClient(ctx)
 	err = jwtutil.Config("box", name, claims, signingHeaders, queryParams, privateKey, m, client)
 	return err
 }
@@ -386,7 +386,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	root = parsePath(root)
 
-	client := fshttp.NewClient(fs.GetConfig(ctx))
+	client := fshttp.NewClient(ctx)
 	var ts *oauthutil.TokenSource
 	// If not using an accessToken, create an oauth client and tokensource
 	if opt.AccessToken == "" {

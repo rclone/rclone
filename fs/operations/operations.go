@@ -1502,7 +1502,7 @@ type copyURLFunc func(ctx context.Context, dstFileName string, in io.ReadCloser,
 
 // copyURLFn copies the data from the url to the function supplied
 func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameFromURL bool, fn copyURLFunc) (err error) {
-	client := fshttp.NewClient(fs.GetConfig(ctx))
+	client := fshttp.NewClient(ctx)
 	resp, err := client.Get(url)
 	if err != nil {
 		return err

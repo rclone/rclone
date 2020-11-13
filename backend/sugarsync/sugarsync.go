@@ -106,7 +106,7 @@ func init() {
 				Method: "POST",
 				Path:   "/app-authorization",
 			}
-			srv := rest.NewClient(fshttp.NewClient(fs.GetConfig(ctx))).SetRoot(rootURL) //  FIXME
+			srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(rootURL) //  FIXME
 
 			// FIXME
 			//err = f.pacer.Call(func() (bool, error) {
@@ -403,7 +403,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	root = parsePath(root)
-	client := fshttp.NewClient(fs.GetConfig(ctx))
+	client := fshttp.NewClient(ctx)
 	f := &Fs{
 		name:       name,
 		root:       root,

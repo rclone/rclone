@@ -267,7 +267,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		return nil, err
 	}
 	httpClient := httpclient.New()
-	httpClient.Client = fshttp.NewClient(fs.GetConfig(ctx))
+	httpClient.Client = fshttp.NewClient(ctx)
 	client := koofrclient.NewKoofrClientWithHTTPClient(opt.Endpoint, httpClient)
 	basicAuth := fmt.Sprintf("Basic %s",
 		base64.StdEncoding.EncodeToString([]byte(opt.User+":"+pass)))

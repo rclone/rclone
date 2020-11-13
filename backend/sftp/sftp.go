@@ -254,7 +254,7 @@ type Object struct {
 // convenience function that connects to the given network address,
 // initiates the SSH handshake, and then sets up a Client.
 func (f *Fs) dial(ctx context.Context, network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	dialer := fshttp.NewDialer(fs.GetConfig(ctx))
+	dialer := fshttp.NewDialer(ctx)
 	conn, err := dialer.Dial(network, addr)
 	if err != nil {
 		return nil, err

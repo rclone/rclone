@@ -182,7 +182,7 @@ func (ca *CookieAuth) getSPToken(ctx context.Context) (conf *SharepointSuccessRe
 	}
 	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
-	client := fshttp.NewClient(fs.GetConfig(ctx))
+	client := fshttp.NewClient(ctx)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while logging in to endpoint")

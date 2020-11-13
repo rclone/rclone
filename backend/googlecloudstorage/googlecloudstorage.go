@@ -375,7 +375,7 @@ func getServiceAccountClient(ctx context.Context, credentialsData []byte) (*http
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
-	ctxWithSpecialClient := oauthutil.Context(ctx, fshttp.NewClient(fs.GetConfig(ctx)))
+	ctxWithSpecialClient := oauthutil.Context(ctx, fshttp.NewClient(ctx))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
