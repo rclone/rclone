@@ -74,21 +74,26 @@ type AddVirtualFn func(remote string, size int64, isDir bool) error
 // This starts background goroutines which can be cancelled with the
 // context passed in.
 func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVirtualFn) (*Cache, error) {
+	fName := fremote.Name()
 	fRoot := filepath.FromSlash(fremote.Root())
 	if runtime.GOOS == "windows" {
 		if strings.HasPrefix(fRoot, `\\?`) {
 			fRoot = fRoot[3:]
 		}
 		fRoot = strings.Replace(fRoot, ":", "", -1)
+		// Replace leading ':' if remote was created on the fly as ":backend:/path" as it is illegal in Windows
+		if fName[0] == ':' {
+			fName = "^" + fName[1:]
+		}
 	}
 	cacheDir := config.CacheDir
 	cacheDir, err := filepath.Abs(cacheDir)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make --cache-dir absolute")
 	}
-	root := file.UNCPath(filepath.Join(cacheDir, "vfs", fremote.Name(), fRoot))
+	root := file.UNCPath(filepath.Join(cacheDir, "vfs", fName, fRoot))
 	fs.Debugf(nil, "vfs cache: root is %q", root)
-	metaRoot := file.UNCPath(filepath.Join(cacheDir, "vfsMeta", fremote.Name(), fRoot))
+	metaRoot := file.UNCPath(filepath.Join(cacheDir, "vfsMeta", fName, fRoot))
 	fs.Debugf(nil, "vfs cache: metadata root is %q", root)
 
 	fcache, err := fscache.Get(ctx, root)
