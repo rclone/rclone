@@ -206,6 +206,12 @@ on disk cache file.
     --vfs-read-wait duration   Time to wait for in-sequence read before seeking. (default 20ms)
     --vfs-write-wait duration  Time to wait for in-sequence write before giving error. (default 1s)
 
+When using VFS write caching (--vfs-cache-mode with value writes or full),
+the global flag --transfers can be set to adjust the number of parallel uploads of
+modified files from cache (the related global flag --checkers have no effect on mount).
+
+    --transfers int  Number of file transfers to run in parallel. (default 4)
+
 ### VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
