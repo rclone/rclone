@@ -135,7 +135,7 @@ With `--ignore-case`
 
 ## How filter rules are applied to files ##
 
-Rclone filters are made up of one or more of the following flags:
+Rclone path / file name filters are made up of one or more of the following flags:
 
   * `--include`
   * `--include-from`
@@ -283,7 +283,7 @@ Eg `rclone  size remote: --exclude /dir/**` to return the total size of
 all files on `remote:` excluding those in root directory `dir` and sub
 directories.
 
-Eg `rclone ls remote: --exclude '*\[{JP,KR,HK,CN,RU,PL,AU,GB,FR}\]*'
+Eg `rclone ls remote: --exclude '*\[{JP,KR,HK,CN,RU,PL,AU,GB,FR}\]*'`
 to list the files in `remote:` with `[JP]` or `[KR]` or `[HK]` etc. in
 their name. The single quotes prevent the shell from interpreting the `\`
 characters. The `\` characters escape the `[` and `]` so rclone's filter
@@ -389,9 +389,9 @@ include or exclude rule in `+` or `-` format.
 This flag can be repeated. See above for the order filter flags are
 processed in.
 
-'--filter +` differs from `--include`. In the case of `--include` rclone
-implies a `--exclude *` rule which it adds to the bottom of the internal rule
-list. Specifying a `+` rule with a `--filter...` flag does not imply
+`--filter +` differs from `--include`. In the case of `--include` rclone
+implies an `--exclude *` rule which it adds to the bottom of the internal rule
+list. `--filter...+` does not imply
 that rule.
 
 `--filter` has no effect when combined with `--files-from` or
