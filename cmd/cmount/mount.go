@@ -50,8 +50,11 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 	hasExtraOption := func(optionName string) bool {
 		optionName += "="
 		for _, option := range opt.ExtraOptions {
-			if strings.HasPrefix(option, optionName) {
-				return true
+			suboptions := strings.Split(option, ",")
+			for _, suboption := range suboptions {
+				if strings.HasPrefix(suboption, optionName) {
+					return true
+				}
 			}
 		}
 		return false
