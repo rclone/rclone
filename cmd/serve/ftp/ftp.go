@@ -38,6 +38,8 @@ type Options struct {
 	PassivePorts string // Passive ports range
 	BasicUser    string // single username for basic auth if not using Htpasswd
 	BasicPass    string // password for BasicUser
+	TLSCert      string // TLS PEM key (concatenation of certificate and CA certificate)
+	TLSKey       string // TLS PEM Private key
 }
 
 // DefaultOpt is the default values used for Options
@@ -60,6 +62,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &Opt.PassivePorts, "passive-port", "", Opt.PassivePorts, "Passive port range to use.")
 	flags.StringVarP(flagSet, &Opt.BasicUser, "user", "", Opt.BasicUser, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.BasicPass, "pass", "", Opt.BasicPass, "Password for authentication. (empty value allow every password)")
+	flags.StringVarP(flagSet, &Opt.TLSCert, "client-cert", "", Opt.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)")
+	flags.StringVarP(flagSet, &Opt.TLSKey, "client-key", "", Opt.TLSKey, "TLS PEM Private key")
 }
 
 func init() {
@@ -113,12 +117,13 @@ You can set a single username and password with the --user and --pass flags.
 
 // server contains everything to run the server
 type server struct {
-	f     fs.Fs
-	srv   *ftp.Server
-	ctx   context.Context // for global config
-	opt   Options
-	vfs   *vfs.VFS
-	proxy *proxy.Proxy
+	f      fs.Fs
+	srv    *ftp.Server
+	ctx    context.Context // for global config
+	opt    Options
+	vfs    *vfs.VFS
+	proxy  *proxy.Proxy
+	useTLS bool
 }
 
 // Make a new FTP to serve the remote
@@ -142,6 +147,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 	} else {
 		s.vfs = vfs.New(f, &vfsflags.Opt)
 	}
+	s.useTLS = s.opt.TLSKey != ""
 
 	ftpopt := &ftp.ServerOpts{
 		Name:           "Rclone FTP Server",
@@ -153,6 +159,9 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 		PassivePorts:   opt.PassivePorts,
 		Auth:           s, // implemented by CheckPasswd method
 		Logger:         &Logger{},
+		TLS:            s.useTLS,
+		CertFile:       s.opt.TLSCert,
+		KeyFile:        s.opt.TLSKey,
 		//TODO implement a maximum of https://godoc.org/goftp.io/server#ServerOpts
 	}
 	s.srv = ftp.NewServer(ftpopt)
