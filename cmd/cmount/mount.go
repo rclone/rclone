@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
@@ -46,28 +45,9 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 		options = append(options, "-o", "debug")
 	}
 
-	// Determine if ExtraOptions already has an opt in
-	hasExtraOption := func(optionName string) bool {
-		optionName += "="
-		for _, option := range opt.ExtraOptions {
-			suboptions := strings.Split(option, ",")
-			for _, suboption := range suboptions {
-				if strings.HasPrefix(suboption, optionName) {
-					return true
-				}
-			}
-		}
-		return false
-	}
-
 	if runtime.GOOS == "windows" {
-		// Setting uid and gid to -1 by default, which mean current user in WinFsp
-		if !hasExtraOption("uid") {
-			options = append(options, "-o", "uid=-1")
-		}
-		if !hasExtraOption("gid") {
-			options = append(options, "-o", "gid=-1")
-		}
+		options = append(options, "-o", "uid=-1")
+		options = append(options, "-o", "gid=-1")
 		options = append(options, "--FileSystemName=rclone")
 		if opt.VolumeName != "" {
 			if opt.NetworkMode {
