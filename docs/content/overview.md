@@ -431,7 +431,7 @@ an error.
 
 Backends without about capability cannot determine free space for an
 rclone mount, or use policy `mfs` (most free space) as a member of an
-`rclone union` remote.
+rclone union remote.
 
 ### EmptyDir ###
 
