@@ -257,11 +257,6 @@ Option `exclude-if-present` creates a directory exclude rule based
 on the presence of a file in a directory and takes precedence over
 other rclone directory filter rules.
 
-Rclone's treatment of directories contrasts with rsync. The rsync
-filter pattern `/directory/` matches all files in the directory
-but in rclone merely specifies a directory filter. To match the rsync
-interpretation `/directory/**` would be specified in rclone.
-
 ### `--exclude` - Exclude files matching pattern ###
 
 Excludes path/file names from an rclone command based on a single exclude
