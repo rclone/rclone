@@ -76,8 +76,8 @@ type ConfigInfo struct {
 	NoUnicodeNormalization bool
 	NoUpdateModTime        bool
 	DataRateUnit           string
-	CompareDest            string
-	CopyDest               string
+	CompareDest            []string
+	CopyDest               []string
 	BackupDir              string
 	Suffix                 string
 	SuffixKeepExtension    bool

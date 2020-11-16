@@ -909,9 +909,9 @@ func TestCopyFileCompareDest(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	ci.CompareDest = r.FremoteName + "/CompareDest"
+	ci.CompareDest = []string{r.FremoteName + "/CompareDest"}
 	defer func() {
-		ci.CompareDest = ""
+		ci.CompareDest = nil
 	}()
 	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
 	require.NoError(t, err)
@@ -995,9 +995,9 @@ func TestCopyFileCopyDest(t *testing.T) {
 		t.Skip("Skipping test as remote does not support server-side copy")
 	}
 
-	ci.CopyDest = r.FremoteName + "/CopyDest"
+	ci.CopyDest = []string{r.FremoteName + "/CopyDest"}
 	defer func() {
-		ci.CopyDest = ""
+		ci.CopyDest = nil
 	}()
 
 	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
