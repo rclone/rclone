@@ -5,14 +5,15 @@ description: "Filtering, includes and excludes"
 
 # Filtering, includes and excludes #
 
-Rclone filter flags are specified in terms of path/file name
+Filter flags determine which files rclone`sync`, `move`, `ls`, `lsl`,
+`md5sum`, `sha1sum`, `size`, `delete` and `check` commands are applied
+to.
+
+They are specified in terms of path/file name
 patterns; path/file lists; file age and size, or presence of
 a file in a directory. Bucket remotes without the concept of
 directory apply filters to object key, age and size in an
 analogous way.
-
-Filter flags apply to rclone `copy`, `sync`, `move`, `ls`, `lsl`,
-`md5sum`, `sha1sum`, `size`, `delete` and `check` commands.
 
 Rclone `purge` does not obey filters.
 
