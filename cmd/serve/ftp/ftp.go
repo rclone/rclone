@@ -62,8 +62,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &Opt.PassivePorts, "passive-port", "", Opt.PassivePorts, "Passive port range to use.")
 	flags.StringVarP(flagSet, &Opt.BasicUser, "user", "", Opt.BasicUser, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.BasicPass, "pass", "", Opt.BasicPass, "Password for authentication. (empty value allow every password)")
-	flags.StringVarP(flagSet, &Opt.TLSCert, "client-cert", "", Opt.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)")
-	flags.StringVarP(flagSet, &Opt.TLSKey, "client-key", "", Opt.TLSKey, "TLS PEM Private key")
+	flags.StringVarP(flagSet, &Opt.TLSCert, "cert", "", Opt.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)")
+	flags.StringVarP(flagSet, &Opt.TLSKey, "key", "", Opt.TLSKey, "TLS PEM Private key")
 }
 
 func init() {
