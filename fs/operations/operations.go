@@ -748,6 +748,16 @@ func SameConfig(fdst, fsrc fs.Info) bool {
 	return fdst.Name() == fsrc.Name()
 }
 
+// SameConfigArr returns true if any of []fsrcs has same config file entry with fdst
+func SameConfigArr(fdst fs.Info, fsrcs []fs.Fs) bool {
+	for _, fsrc := range fsrcs {
+		if fdst.Name() == fsrc.Name() {
+			return true
+		}
+	}
+	return false
+}
+
 // Same returns true if fdst and fsrc point to the same underlying Fs
 func Same(fdst, fsrc fs.Info) bool {
 	return SameConfig(fdst, fsrc) && strings.Trim(fdst.Root(), "/") == strings.Trim(fsrc.Root(), "/")
@@ -1354,9 +1364,9 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 }
 
 // GetCompareDest sets up --compare-dest
-func GetCompareDest(ctx context.Context) (CompareDest fs.Fs, err error) {
+func GetCompareDest(ctx context.Context) (CompareDest []fs.Fs, err error) {
 	ci := fs.GetConfig(ctx)
-	CompareDest, err = cache.Get(ctx, ci.CompareDest)
+	CompareDest, err = cache.GetArr(ctx, ci.CompareDest)
 	if err != nil {
 		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --compare-dest %q: %v", ci.CompareDest, err))
 	}
@@ -1391,18 +1401,21 @@ func compareDest(ctx context.Context, dst, src fs.Object, CompareDest fs.Fs) (No
 }
 
 // GetCopyDest sets up --copy-dest
-func GetCopyDest(ctx context.Context, fdst fs.Fs) (CopyDest fs.Fs, err error) {
+func GetCopyDest(ctx context.Context, fdst fs.Fs) (CopyDest []fs.Fs, err error) {
 	ci := fs.GetConfig(ctx)
-	CopyDest, err = cache.Get(ctx, ci.CopyDest)
+	CopyDest, err = cache.GetArr(ctx, ci.CopyDest)
 	if err != nil {
 		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --copy-dest %q: %v", ci.CopyDest, err))
 	}
-	if !SameConfig(fdst, CopyDest) {
+	if !SameConfigArr(fdst, CopyDest) {
 		return nil, fserrors.FatalError(errors.New("parameter to --copy-dest has to be on the same remote as destination"))
 	}
-	if CopyDest.Features().Copy == nil {
-		return nil, fserrors.FatalError(errors.New("can't use --copy-dest on a remote which doesn't support server-side copy"))
+	for _, cf := range CopyDest {
+		if cf.Features().Copy == nil {
+			return nil, fserrors.FatalError(errors.New("can't use --copy-dest on a remote which doesn't support server side copy"))
+		}
 	}
+
 	return CopyDest, nil
 }
 
@@ -1457,12 +1470,22 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 // does not need to be copied
 //
 // Returns True if src does not need to be copied
-func CompareOrCopyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CompareOrCopyDest, backupDir fs.Fs) (NoNeedTransfer bool, err error) {
+func CompareOrCopyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CompareOrCopyDest []fs.Fs, backupDir fs.Fs) (NoNeedTransfer bool, err error) {
 	ci := fs.GetConfig(ctx)
-	if ci.CompareDest != "" {
-		return compareDest(ctx, dst, src, CompareOrCopyDest)
-	} else if ci.CopyDest != "" {
-		return copyDest(ctx, fdst, dst, src, CompareOrCopyDest, backupDir)
+	if len(ci.CompareDest) > 0 {
+		for _, compareF := range CompareOrCopyDest {
+			NoNeedTransfer, err := compareDest(ctx, dst, src, compareF)
+			if NoNeedTransfer || err != nil {
+				return NoNeedTransfer, err
+			}
+		}
+	} else if len(ci.CopyDest) > 0 {
+		for _, copyF := range CompareOrCopyDest {
+			NoNeedTransfer, err := copyDest(ctx, fdst, dst, src, copyF, backupDir)
+			if NoNeedTransfer || err != nil {
+				return NoNeedTransfer, err
+			}
+		}
 	}
 	return false, nil
 }
@@ -1732,19 +1755,20 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		return err
 	}
 
-	var backupDir, copyDestDir fs.Fs
+	var backupDir fs.Fs
+	var copyDestDir []fs.Fs
 	if ci.BackupDir != "" || ci.Suffix != "" {
 		backupDir, err = BackupDir(ctx, fdst, fsrc, srcFileName)
 		if err != nil {
 			return errors.Wrap(err, "creating Fs for --backup-dir failed")
 		}
 	}
-	if ci.CompareDest != "" {
+	if len(ci.CompareDest) > 0 {
 		copyDestDir, err = GetCompareDest(ctx)
 		if err != nil {
 			return err
 		}
-	} else if ci.CopyDest != "" {
+	} else if len(ci.CopyDest) > 0 {
 		copyDestDir, err = GetCopyDest(ctx, fdst)
 		if err != nil {
 			return err

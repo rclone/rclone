@@ -81,8 +81,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.NoCheckDest, "no-check-dest", "", ci.NoCheckDest, "Don't check the destination, copy regardless.")
 	flags.BoolVarP(flagSet, &ci.NoUnicodeNormalization, "no-unicode-normalization", "", ci.NoUnicodeNormalization, "Don't normalize unicode characters in filenames.")
 	flags.BoolVarP(flagSet, &ci.NoUpdateModTime, "no-update-modtime", "", ci.NoUpdateModTime, "Don't update destination mod-time if files identical.")
-	flags.StringVarP(flagSet, &ci.CompareDest, "compare-dest", "", ci.CompareDest, "Include additional server-side path during comparison.")
-	flags.StringVarP(flagSet, &ci.CopyDest, "copy-dest", "", ci.CopyDest, "Implies --compare-dest but also copies files from path into destination.")
+	flags.StringArrayVarP(flagSet, &ci.CompareDest, "compare-dest", "", nil, "Include additional comma separated server-side paths during comparison.")
+	flags.StringArrayVarP(flagSet, &ci.CopyDest, "copy-dest", "", nil, "Implies --compare-dest but also copies files from paths into destination.")
 	flags.StringVarP(flagSet, &ci.BackupDir, "backup-dir", "", ci.BackupDir, "Make backups into hierarchy based in DIR.")
 	flags.StringVarP(flagSet, &ci.Suffix, "suffix", "", ci.Suffix, "Suffix to add to changed files.")
 	flags.BoolVarP(flagSet, &ci.SuffixKeepExtension, "suffix-keep-extension", "", ci.SuffixKeepExtension, "Preserve the extension when using --suffix.")
@@ -217,7 +217,7 @@ func SetFlags(ci *fs.ConfigInfo) {
 		ci.DeleteMode = fs.DeleteModeDefault
 	}
 
-	if ci.CompareDest != "" && ci.CopyDest != "" {
+	if len(ci.CompareDest) > 0 && len(ci.CopyDest) > 0 {
 		log.Fatalf(`Can't use --compare-dest with --copy-dest.`)
 	}
 

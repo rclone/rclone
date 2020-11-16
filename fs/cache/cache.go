@@ -104,6 +104,19 @@ func Get(ctx context.Context, fsString string) (f fs.Fs, err error) {
 	return GetFn(ctx, fsString, fs.NewFs)
 }
 
+// GetArr gets []fs.Fs from []fsStrings either from the cache or creates it afresh
+func GetArr(ctx context.Context, fsStrings []string) (f []fs.Fs, err error) {
+	var fArr []fs.Fs
+	for _, fsString := range fsStrings {
+		f1, err1 := GetFn(ctx, fsString, fs.NewFs)
+		if err1 != nil {
+			return fArr, err1
+		}
+		fArr = append(fArr, f1)
+	}
+	return fArr, nil
+}
+
 // Put puts an fs.Fs named fsString into the cache
 func Put(fsString string, f fs.Fs) {
 	canonicalName := fs.ConfigString(f)

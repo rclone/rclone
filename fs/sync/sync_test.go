@@ -1480,9 +1480,9 @@ func TestSyncCompareDest(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	ci.CompareDest = r.FremoteName + "/CompareDest"
+	ci.CompareDest = []string{r.FremoteName + "/CompareDest"}
 	defer func() {
-		ci.CompareDest = ""
+		ci.CompareDest = []string{}
 	}()
 
 	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
@@ -1562,6 +1562,40 @@ func TestSyncCompareDest(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2, file3, file4, file5bdst)
 }
 
+// Test with multiple CompareDest
+func TestSyncMultipleCompareDest(t *testing.T) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	ci.CompareDest = []string{r.FremoteName + "/pre-dest1", r.FremoteName + "/pre-dest2"}
+	defer func() {
+		ci.CompareDest = []string{}
+	}()
+
+	// check empty dest, new compare
+	fsrc1 := r.WriteFile("1", "1", t1)
+	fsrc2 := r.WriteFile("2", "2", t1)
+	fsrc3 := r.WriteFile("3", "3", t1)
+	fstest.CheckItems(t, r.Flocal, fsrc1, fsrc2, fsrc3)
+
+	fdest1 := r.WriteObject(ctx, "pre-dest1/1", "1", t1)
+	fdest2 := r.WriteObject(ctx, "pre-dest2/2", "2", t1)
+	fstest.CheckItems(t, r.Fremote, fdest1, fdest2)
+
+	accounting.GlobalStats().ResetCounters()
+	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dest")
+	require.NoError(t, err)
+	require.NoError(t, Sync(ctx, fdst, r.Flocal, false))
+
+	fdest3 := fsrc3
+	fdest3.Path = "dest/3"
+
+	fstest.CheckItems(t, fdst, fsrc3)
+	fstest.CheckItems(t, r.Fremote, fdest1, fdest2, fdest3)
+}
+
 // Test with CopyDest set
 func TestSyncCopyDest(t *testing.T) {
 	ctx := context.Background()
@@ -1573,9 +1607,9 @@ func TestSyncCopyDest(t *testing.T) {
 		t.Skip("Skipping test as remote does not support server-side copy")
 	}
 
-	ci.CopyDest = r.FremoteName + "/CopyDest"
+	ci.CopyDest = []string{r.FremoteName + "/CopyDest"}
 	defer func() {
-		ci.CopyDest = ""
+		ci.CopyDest = []string{}
 	}()
 
 	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
