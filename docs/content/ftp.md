@@ -236,8 +236,7 @@ through rclone are time of upload.
 Rclone's FTP backend does not support any checksums but can compare
 file sizes.
 
-When an FTP remote is a member of an rclone union remote `mfs`
-(most free space) policy is not supported.
+`rclone about` is not supported by the FTP backend. Backends without this capability cannot determine free space for an `rclone mount` or use policy `mfs` (most free space) as a member of an `rclone union` remote. [More](https://rclone.org/overview/#optional-features)
 
 The implementation of : `--dump headers`,
 `--dump bodies`, `--dump auth` for debugging isn't the same as
