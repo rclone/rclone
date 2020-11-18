@@ -3,7 +3,6 @@ package policy
 import (
 	"context"
 	"math/rand"
-	"time"
 
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
@@ -20,12 +19,10 @@ type EpRand struct {
 }
 
 func (p *EpRand) rand(upstreams []*upstream.Fs) *upstream.Fs {
-	rand.Seed(time.Now().Unix())
 	return upstreams[rand.Intn(len(upstreams))]
 }
 
 func (p *EpRand) randEntries(entries []upstream.Entry) upstream.Entry {
-	rand.Seed(time.Now().Unix())
 	return entries[rand.Intn(len(entries))]
 }
 
