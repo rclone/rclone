@@ -9,7 +9,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path"
@@ -35,6 +34,7 @@ import (
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -512,7 +512,9 @@ func AddBackendFlags() {
 
 // Main runs rclone interpreting flags and commands out of os.Args
 func Main() {
-	rand.Seed(time.Now().Unix())
+	if err := random.Seed(); err != nil {
+		log.Fatalf("Fatal error: %v", err)
+	}
 	setupRootCommand(Root)
 	AddBackendFlags()
 	if err := Root.Execute(); err != nil {
