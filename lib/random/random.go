@@ -2,8 +2,9 @@
 package random
 
 import (
+	cryptorand "crypto/rand"
 	"encoding/base64"
-	"math/rand"
+	mathrand "math/rand"
 
 	"github.com/pkg/errors"
 )
@@ -23,7 +24,7 @@ func String(n int) string {
 	for i := range out {
 		source := pattern[p]
 		p = (p + 1) % len(pattern)
-		out[i] = source[rand.Intn(len(source))]
+		out[i] = source[mathrand.Intn(len(source))]
 	}
 	return string(out)
 }
@@ -41,7 +42,7 @@ func Password(bits int) (password string, err error) {
 		bytes++
 	}
 	var pw = make([]byte, bytes)
-	n, err := rand.Read(pw)
+	n, err := cryptorand.Read(pw)
 	if err != nil {
 		return "", errors.Wrap(err, "password read failed")
 	}
