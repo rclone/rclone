@@ -6,8 +6,8 @@ description: "Rclone filtering, includes and excludes"
 # Filtering, includes and excludes
 
 Filter flags determine which files rclone`sync`, `move`, `ls`, `lsl`,
-`md5sum`, `sha1sum`, `size`, `delete`, `check` and similar commands are
-applied to.
+`md5sum`, `sha1sum`, `size`, `delete`, `check` and similar commands
+apply to.
 
 They are specified in terms of path/file name
 patterns; path/file lists; file age and size, or presence of
@@ -57,12 +57,12 @@ pattern-list:
     pattern { `,` pattern }
                 comma-separated (without spaces) patterns
 
-character classes (see [ref](https://golang.org/pkg/regexp/syntax/)) include:
+character classes (see [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)) include:
 
     Named character classes (eg [\d], [^\d], [\D], [^\D])
     Perl character classes (eg \s, \S, \w, \W)
     ASCII character classes (eg [[:alnum:]], [[:alpha:]], [[:punct:]], [[:xdigit:]])
-        - 
+
 If the filter pattern starts with a `/` then it only matches
 at the top level of the directory tree,
 **relative to the root of the remote** (not necessarily the root
@@ -71,30 +71,28 @@ starting at the **end of the path/file name** but it only matches
 a complete path element - it must match from a `/`
 separator or the beginning of the path/file.
 
-Eg
-
-    file.jpg  - matches "file.jpg"
-              - matches "directory/file.jpg"
-              - doesn't match "afile.jpg"
-              - doesn't match "directory/afile.jpg"
-    /file.jpg - matches "file.jpg" in the root directory of the remote
-              - doesn't match "afile.jpg"
-              - doesn't match "directory/file.jpg"
+    file.jpg   - matches "file.jpg"
+               - matches "directory/file.jpg"
+               - doesn't match "afile.jpg"
+               - doesn't match "directory/afile.jpg"
+    /file.jpg  - matches "file.jpg" in the root directory of the remote
+               - doesn't match "afile.jpg"
+               - doesn't match "directory/file.jpg"
 
 **Important** Use `/` in path/file name patterns and not `\` even if
 running on Microsoft Windows.
 
 Simple patterns are case sensitive unless the `--ignore-case` flag is used.
 
-    Without `--ignore-case` (default)
+Without `--ignore-case` (default)
 
-        potato - matches "potato"
-               - doesn't match "POTATO"
+    potato - matches "potato"
+           - doesn't match "POTATO"
 
-    With `--ignore-case`
+With `--ignore-case`
 
-        potato - matches "potato"
-               - matches "POTATO"
+    potato - matches "potato"
+           - matches "POTATO"
 
 ## How filter rules are applied to files
 
@@ -151,8 +149,8 @@ for a command add the `--dump filters` flag. Running an rclone command
 with `--dump filters` and `--vv` flags lists the internal filter elements
 and shows how they are applied to each source path/file. There is not
 currently a means provided to pass regular expression filter options into
-rclone directly though filter rules based on character classes contain
-some elements. [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)
+rclone directly though character class filter rules contain
+elements. [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)
 
 ### How filter rules are applied to directories
 
