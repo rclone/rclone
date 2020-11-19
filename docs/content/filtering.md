@@ -146,11 +146,11 @@ combined with other filter options.
 
 To see the internal combined rule list, in regular expression form,
 for a command add the `--dump filters` flag. Running an rclone command
-with `--dump filters` and `--vv` flags lists the internal filter elements
+with `--dump filters` and `-vv` flags lists the internal filter elements
 and shows how they are applied to each source path/file. There is not
 currently a means provided to pass regular expression filter options into
-rclone directly though character class filter rules contain
-elements. [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)
+rclone directly though character class filter rules contain character
+classes. [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)
 
 ### How filter rules are applied to directories
 
@@ -647,5 +647,6 @@ The most frequent filter support issues on
 the [rclone forum](https://https://forum.rclone.org/) are:
 
 * Not using paths relative to the root of the remote
-* Not using / to match from the root of a remote
-* Not using ** to match the contents of a directory
+* Not using `/` to match from the root of a remote
+* Not using `**` to match the contents of a directory
+
