@@ -17,7 +17,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Oct 26, 2020</p>
+<p class="date">Nov 19, 2020</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -6291,7 +6291,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.53.2&quot;)
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.53.3&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -18552,6 +18552,27 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.53.3---2020-11-19">v1.53.3 - 2020-11-19</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.53.2...v1.53.3">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>random: Fix incorrect use of math/rand instead of crypto/rand CVE-2020-28924 (Nick Craig-Wood)
+<ul>
+<li>Passwords you have generated with <code>rclone config</code> may be insecure</li>
+<li>See <a href="https://github.com/rclone/rclone/issues/4783">issue #4783</a> for more details and a checking tool</li>
+</ul></li>
+<li>random: Seed math/rand in one place with crypto strong seed (Nick Craig-Wood)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Fix vfs/refresh calls with fs= parameter (Nick Craig-Wood)</li>
+</ul></li>
+<li>Sharefile
+<ul>
+<li>Fix backend due to API swapping integers for strings (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.53.2---2020-10-26">v1.53.2 - 2020-10-26</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.53.1...v1.53.2">See commits</a></p>
 <ul>

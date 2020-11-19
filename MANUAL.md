@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Oct 26, 2020
+% Nov 19, 2020
 
 # Rclone syncs your files to cloud storage
 
@@ -10569,7 +10569,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.2")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.3")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -25726,6 +25726,20 @@ Options:
 
 
 # Changelog
+
+## v1.53.3 - 2020-11-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.53.2...v1.53.3)
+
+* Bug Fixes
+    * random: Fix incorrect use of math/rand instead of crypto/rand CVE-2020-28924 (Nick Craig-Wood)
+        * Passwords you have generated with `rclone config` may be insecure
+        * See [issue #4783](https://github.com/rclone/rclone/issues/4783) for more details and a checking tool
+    * random: Seed math/rand in one place with crypto strong seed (Nick Craig-Wood)
+* VFS
+    * Fix vfs/refresh calls with fs= parameter (Nick Craig-Wood)
+* Sharefile
+    * Fix backend due to API swapping integers for strings (Nick Craig-Wood)
 
 ## v1.53.2 - 2020-10-26
 
