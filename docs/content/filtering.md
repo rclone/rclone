@@ -23,7 +23,7 @@ ls`, or with the `--dry-run` and `-vv` flags.
 Rclone filter patterns can only be used in filter command line options, not
 in the specification of a remote.
 
-Eg `rclone copy "remote:dir*.jpg" /path/to/dir` does not have a filter effect.
+E.g. `rclone copy "remote:dir*.jpg" /path/to/dir` does not have a filter effect.
 `rclone copy remote:dir /path/to/dir --include "*.jpg"` does.
 
 **Important** Avoid mixing any two of `--include...`, `--exclude...` or
@@ -59,9 +59,9 @@ pattern-list:
 
 character classes (see [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)) include:
 
-    Named character classes (eg [\d], [^\d], [\D], [^\D])
-    Perl character classes (eg \s, \S, \w, \W)
-    ASCII character classes (eg [[:alnum:]], [[:alpha:]], [[:punct:]], [[:xdigit:]])
+    Named character classes (e.g. [\d], [^\d], [\D], [^\D])
+    Perl character classes (e.g. \s, \S, \w, \W)
+    ASCII character classes (e.g. [[:alnum:]], [[:alpha:]], [[:punct:]], [[:xdigit:]])
 
 If the filter pattern starts with a `/` then it only matches
 at the top level of the directory tree,
@@ -161,7 +161,7 @@ to a filter by the pattern `directory/*` or recursively by
 
 Directory filter rules are defined with a closing `/` separator.
 
-Eg `/directory/subdirectory/` is an rclone directory filter rule.
+E.g. `/directory/subdirectory/` is an rclone directory filter rule.
 
 Rclone commands can use directory filter rules to determine whether they
 recurse into subdirectories. This potentially optimises access to a remote
@@ -184,7 +184,7 @@ Rclone commands imply directory filter rules from path/file filter
 rules. To view the directory filter rules rclone has implied for a
 command specify the `--dump filters` flag.
 
-Eg for an include rule
+E.g. for an include rule
 
     /a/*.jpg
 
@@ -196,12 +196,12 @@ Directory filter rules specified in an rclone command can limit
 the scope of an rclone command but path/file filters still have
 to be specified.
 
-Eg `rclone ls remote: --include /directory/` will not match any
+E.g. `rclone ls remote: --include /directory/` will not match any
 files. Because it is an `--include` option the `--exclude **` rule
 is implied, and the `\directory\` pattern serves only to optimise
 access to the remote by ignoring everything outside of that directory.
 
-Eg `rclone ls remote: --filter-from filter-list.txt` with a file
+E.g. `rclone ls remote: --filter-from filter-list.txt` with a file
 `filter-list.txt`:
 
     - /dir1/
@@ -233,14 +233,14 @@ processed in.
 `--exclude` has no effect when combined with `--files-from` or
 `--files-from-raw` flags.
 
-Eg `rclone ls remote: --exclude *.bak` excludes all .bak files
+E.g. `rclone ls remote: --exclude *.bak` excludes all .bak files
 from listing.
 
-Eg `rclone size remote: "--exclude /dir/**"` returns the total size of
+E.g. `rclone size remote: "--exclude /dir/**"` returns the total size of
 all files on `remote:` excluding those in root directory `dir` and sub
 directories.
 
-Eg on Microsoft Windows `rclone ls remote: --exclude "*\[{JP,KR,HK}\]*"`
+E.g. on Microsoft Windows `rclone ls remote: --exclude "*\[{JP,KR,HK}\]*"`
 lists the files in `remote:` with `[JP]` or `[KR]` or `[HK]` in
 their name. The single quotes prevent the shell from interpreting the `\`
 characters. The `\` characters escape the `[` and `]` so ran clone filter
@@ -294,10 +294,10 @@ flags with `--exclude`, `--exclude-from`, `--filter` or `--filter-from`,
 you must use include rules for all the files you want in the include
 statement. For more flexibility use the `--filter-from` flag.
 
-Eg `rclone ls remote: --include "*.{png,jpg}"` lists the files on
+E.g. `rclone ls remote: --include "*.{png,jpg}"` lists the files on
 `remote:` with suffix `.png` and `.jpg`. All other files are excluded.
 
-Eg multiple rclone copy commands can be combined with `--include` and a
+E.g. multiple rclone copy commands can be combined with `--include` and a
 pattern-list.
 
     rclone copy /vol1/A remote:A
@@ -307,7 +307,7 @@ is equivalent to:
 
     rclone copy /vol1 remote: --include "{A,B}/**"
 
-Eg `rclone ls remote:/wheat --include "??[^[:punct:]]*"` lists the
+E.g. `rclone ls remote:/wheat --include "??[^[:punct:]]*"` lists the
 files `remote:` directory `wheat` (and subdirectories) whose third
 character is not punctuation. This example uses
 an [ASCII character class](https://golang.org/pkg/regexp/syntax/).
@@ -363,7 +363,7 @@ that rule.
 `--filter` should not be used with `--include`, `--include-from`,
 `--exclude` or `--exclude-from` flags.
 
-Eg `rclone ls remote: --filter "- *.bak"` excludes all `.bak` files
+E.g. `rclone ls remote: --filter "- *.bak"` excludes all `.bak` files
 from a list of `remote:`.
 
 ### `--filter-from` - Read filtering patterns from a file
@@ -379,7 +379,7 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
-Eg For `filter-file.txt`:
+E.g. For `filter-file.txt`:
 
     # a sample filter rule file
     - secret*.jpg
@@ -398,7 +398,7 @@ everything in the directory `dir` at the root of `remote`, except
 `remote:dir/Trash` which it excludes.  Everything else is excluded.
 
 
-Eg for an alternative `filter-file.txt`:
+E.g. for an alternative `filter-file.txt`:
 
     - secret*.jpg
     + *.jpg
@@ -409,7 +409,7 @@ Eg for an alternative `filter-file.txt`:
 Files `file1.jpg`, `file3.png` and `file2.avi` are listed whilst
 `secret17.jpg` and files without the suffix .jpg` or `.png` are excluded.
 
-Eg for an alternative `filter-file.txt`:
+E.g. for an alternative `filter-file.txt`:
 
     + *.jpg
     + *.gif
@@ -454,7 +454,7 @@ with the root specified in the rclone command.  Leading `/` separators are
 ignored. See [--files-from-raw](#files-from-raw-read-list-of-source-file-names-without-any-processing) if
 you need the input to be processed in a raw manner.
 
-Eg for a file `files-from.txt`:
+E.g. for a file `files-from.txt`:
 
     # comment
     file1.jpg
@@ -466,7 +466,7 @@ copies the following, if they exist, and only those files.
     /home/me/pics/file1.jpg        → remote:pics/file1.jpg
     /home/me/pics/subdir/file2.jpg → remote:pics/subdir/file2.jpg
 
-Eg to copy the following files referenced by their absolute paths:
+E.g. to copy the following files referenced by their absolute paths:
 
     /home/user1/42
     /home/user1/dir/ford
@@ -520,7 +520,7 @@ By default rclone filter patterns are case sensitive. The `--ignore-case`
 flag makes all of the filters patterns on the command line case
 insensitive.
 
-Eg `--include "zaphod.txt"` does not match a file `Zaphod.txt`. With
+E.g. `--include "zaphod.txt"` does not match a file `Zaphod.txt`. With
 `--ignore-case` a match is made.
 
 ## Quoting shell metacharacters
@@ -528,7 +528,7 @@ Eg `--include "zaphod.txt"` does not match a file `Zaphod.txt`. With
 Rclone commands with filter patterns containing shell metacharacters may
 not as work as expected in your shell and may require quoting.
 
-Eg linux, OSX (`*` metacharacter)
+E.g. linux, OSX (`*` metacharacter)
 
   * `--include \*.jpg`
   * `--include '*.jpg'`
@@ -549,7 +549,7 @@ remote or flag value. The fix then is to quote values containing spaces.
 Controls the minimum size file within the scope of an rclone command.
 Default units are `kBytes` but abbreviations `k`, `M`, or `G` are valid.
 
-Eg `rclone ls remote: --min-size 50k` lists files on `remote:` of 50kByte
+E.g. `rclone ls remote: --min-size 50k` lists files on `remote:` of 50kByte
 size or larger.
 
 ### `--max-size` - Don't transfer any file larger than this
@@ -557,7 +557,7 @@ size or larger.
 Controls the maximum size file within the scope of an rclone command.
 Default units are `kBytes` but abbreviations `k`, `M`, or `G` are valid.
 
-Eg `rclone ls remote: --max-size 1G` lists files on `remote:` of 1GByte
+E.g. `rclone ls remote: --max-size 1G` lists files on `remote:` of 1GByte
 size or smaller.
 
 ### `--max-age` - Don't transfer any file older than this
@@ -584,7 +584,7 @@ formats:
 
 `--max-age` applies only to files and not to directories.
 
-Eg `rclone ls remote: --max-age 2d` lists files on `remote:` of 2 days
+E.g. `rclone ls remote: --max-age 2d` lists files on `remote:` of 2 days
 old or less.
 
 ### `--min-age` - Don't transfer any file younger than this
@@ -594,7 +594,7 @@ Controls the minimum age of files within the scope of an rclone command.
 
 `--min-age` applies only to files and not to directories.
 
-Eg `rclone ls remote: --min-age 2d` lists files on `remote:` of 2 days
+E.g. `rclone ls remote: --min-age 2d` lists files on `remote:` of 2 days
 old or more.
 
 ## Other flags
@@ -607,7 +607,7 @@ and `-v` first.
 In conjunction with `rclone sync` the `--delete-excluded deletes any files
 on the destination which are excluded from the command.
 
-Eg the scope of `rclone sync -i A: B:` can be restricted:
+E.g. the scope of `rclone sync -i A: B:` can be restricted:
 
     rclone --min-size 50k --delete-excluded sync A: B:
 
@@ -629,7 +629,7 @@ named file within it.
 
 This flag has a priority over other filter flags.
 
-Eg for the following directory structure:
+E.g. for the following directory structure:
 
     dir1/file1
     dir1/dir2/file2
