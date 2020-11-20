@@ -915,8 +915,11 @@ isn't set then "acl" is used instead.`,
 				Help:  "None",
 			}},
 		}, {
-			Name:     "sse_customer_key_md5",
-			Help:     "If using SSE-C you must provide the secret encryption key MD5 checksum.",
+			Name: "sse_customer_key_md5",
+			Help: `If using SSE-C you may provide the secret encryption key MD5 checksum (optional).
+
+If you leave it blank, this is calculated automatically from the sse_customer_key provided.
+`,
 			Provider: "AWS,Ceph,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
@@ -1590,6 +1593,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.BucketACL == "" {
 		opt.BucketACL = opt.ACL
 	}
+	if opt.SSECustomerKey != "" && opt.SSECustomerKeyMD5 == "" {
+		// calculate CustomerKeyMD5 if not supplied
+		md5sumBinary := md5.Sum([]byte(opt.SSECustomerKey))
+		opt.SSECustomerKeyMD5 = base64.StdEncoding.EncodeToString(md5sumBinary[:])
+	}
 	c, ses, err := s3Connection(opt)
 	if err != nil {
 		return nil, err
@@ -1622,25 +1630,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SlowModTime:       true,
 	}).Fill(ctx, f)
 	if f.rootBucket != "" && f.rootDirectory != "" {
-		// Check to see if the object exists
-		encodedDirectory := f.opt.Enc.FromStandardPath(f.rootDirectory)
-		req := s3.HeadObjectInput{
-			Bucket: &f.rootBucket,
-			Key:    &encodedDirectory,
-		}
-		err = f.pacer.Call(func() (bool, error) {
-			_, err = f.c.HeadObject(&req)
-			return f.shouldRetry(err)
-		})
-		if err == nil {
-			newRoot := path.Dir(f.root)
-			if newRoot == "." {
-				newRoot = ""
+		// Check to see if the (bucket,directory) is actually an existing file
+		oldRoot := f.root
+		newRoot, leaf := path.Split(oldRoot)
+		f.setRoot(newRoot)
+		_, err := f.NewObject(ctx, leaf)
+		if err != nil {
+			if err == fs.ErrorObjectNotFound || err == fs.ErrorNotAFile {
+				// File doesn't exist or is a directory so return old f
+				f.setRoot(oldRoot)
+				return f, nil
 			}
-			f.setRoot(newRoot)
-			// return an error with an fs which points to the parent
-			return f, fs.ErrorIsFile
+			return nil, err
 		}
+		// return an error with an fs which points to the parent
+		return f, fs.ErrorIsFile
 	}
 	// f.listMultipartUploads()
 	return f, nil
@@ -2151,6 +2155,18 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 	req.CopySource = &source
 	if f.opt.ServerSideEncryption != "" {
 		req.ServerSideEncryption = &f.opt.ServerSideEncryption
+	}
+	if f.opt.SSECustomerAlgorithm != "" {
+		req.SSECustomerAlgorithm = &f.opt.SSECustomerAlgorithm
+		req.CopySourceSSECustomerAlgorithm = &f.opt.SSECustomerAlgorithm
+	}
+	if f.opt.SSECustomerKey != "" {
+		req.SSECustomerKey = &f.opt.SSECustomerKey
+		req.CopySourceSSECustomerKey = &f.opt.SSECustomerKey
+	}
+	if f.opt.SSECustomerKeyMD5 != "" {
+		req.SSECustomerKeyMD5 = &f.opt.SSECustomerKeyMD5
+		req.CopySourceSSECustomerKeyMD5 = &f.opt.SSECustomerKeyMD5
 	}
 	if f.opt.SSEKMSKeyID != "" {
 		req.SSEKMSKeyId = &f.opt.SSEKMSKeyID
@@ -2699,6 +2715,15 @@ func (o *Object) headObject(ctx context.Context) (resp *s3.HeadObjectOutput, err
 	req := s3.HeadObjectInput{
 		Bucket: &bucket,
 		Key:    &bucketPath,
+	}
+	if o.fs.opt.SSECustomerAlgorithm != "" {
+		req.SSECustomerAlgorithm = &o.fs.opt.SSECustomerAlgorithm
+	}
+	if o.fs.opt.SSECustomerKey != "" {
+		req.SSECustomerKey = &o.fs.opt.SSECustomerKey
+	}
+	if o.fs.opt.SSECustomerKeyMD5 != "" {
+		req.SSECustomerKeyMD5 = &o.fs.opt.SSECustomerKeyMD5
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		var err error
