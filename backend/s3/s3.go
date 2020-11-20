@@ -1294,6 +1294,7 @@ type Fs struct {
 	pacer         *fs.Pacer        // To pace the API calls
 	srv           *http.Client     // a plain http client
 	pool          *pool.Pool       // memory pool
+	etagIsNotMD5  bool             // if set ETags are not MD5s
 }
 
 // Object describes a s3 object
@@ -1618,7 +1619,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			opt.MemoryPoolUseMmap,
 		),
 	}
-
+	if opt.ServerSideEncryption == "aws:kms" || opt.SSECustomerAlgorithm != "" {
+		// From: https://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html
+		//
+		// Objects encrypted by SSE-S3 or plaintext have ETags that are an MD5
+		// digest of their data.
+		//
+		// Objects encrypted by SSE-C or SSE-KMS have ETags that are not an
+		// MD5 digest of their object data.
+		f.etagIsNotMD5 = true
+	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
 		ReadMimeType:      true,
@@ -1666,7 +1676,11 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		} else {
 			o.lastModified = *info.LastModified
 		}
-		o.etag = aws.StringValue(info.ETag)
+		if o.fs.etagIsNotMD5 {
+			o.etag = ""
+		} else {
+			o.etag = aws.StringValue(info.ETag)
+		}
 		o.bytes = aws.Int64Value(info.Size)
 		o.storageClass = aws.StringValue(info.StorageClass)
 	} else {
@@ -2759,7 +2773,11 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if resp.ContentLength != nil {
 		size = *resp.ContentLength
 	}
-	o.etag = aws.StringValue(resp.ETag)
+	if o.fs.etagIsNotMD5 {
+		o.etag = ""
+	} else {
+		o.etag = aws.StringValue(resp.ETag)
+	}
 	o.bytes = size
 	o.meta = resp.Metadata
 	if o.meta == nil {
