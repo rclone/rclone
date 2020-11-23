@@ -1305,7 +1305,7 @@ type Object struct {
 	// that in you need to call readMetaData
 	fs           *Fs                // what this object is part of
 	remote       string             // The remote path
-	etag         string             // md5sum of the object
+	md5          string             // md5sum of the object
 	bytes        int64              // size of the object
 	lastModified time.Time          // Last modified
 	meta         map[string]*string // The object metadata if known - may be nil
@@ -1676,11 +1676,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		} else {
 			o.lastModified = *info.LastModified
 		}
-		if o.fs.etagIsNotMD5 {
-			o.etag = ""
-		} else {
-			o.etag = aws.StringValue(info.ETag)
-		}
+		o.setMD5FromEtag(aws.StringValue(info.ETag))
 		o.bytes = aws.Int64Value(info.Size)
 		o.storageClass = aws.StringValue(info.StorageClass)
 	} else {
@@ -2693,30 +2689,38 @@ func (o *Object) Remote() string {
 
 var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
+// Set the MD5 from the etag
+func (o *Object) setMD5FromEtag(etag string) {
+	if o.fs.etagIsNotMD5 {
+		o.md5 = ""
+		return
+	}
+	if etag == "" {
+		o.md5 = ""
+		return
+	}
+	hash := strings.Trim(strings.ToLower(etag), `"`)
+	// Check the etag is a valid md5sum
+	if !matchMd5.MatchString(hash) {
+		o.md5 = ""
+		return
+	}
+	o.md5 = hash
+}
+
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
-	hash := strings.Trim(strings.ToLower(o.etag), `"`)
-	// Check the etag is a valid md5sum
-	if !matchMd5.MatchString(hash) {
+	// If we haven't got an MD5, then check the metadata
+	if o.md5 == "" {
 		err := o.readMetaData(ctx)
 		if err != nil {
 			return "", err
 		}
-
-		if md5sum, ok := o.meta[metaMD5Hash]; ok {
-			md5sumBytes, err := base64.StdEncoding.DecodeString(*md5sum)
-			if err != nil {
-				return "", err
-			}
-			hash = hex.EncodeToString(md5sumBytes)
-		} else {
-			hash = ""
-		}
 	}
-	return hash, nil
+	return o.md5, nil
 }
 
 // Size returns the size of an object in bytes
@@ -2773,15 +2777,22 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if resp.ContentLength != nil {
 		size = *resp.ContentLength
 	}
-	if o.fs.etagIsNotMD5 {
-		o.etag = ""
-	} else {
-		o.etag = aws.StringValue(resp.ETag)
-	}
+	o.setMD5FromEtag(aws.StringValue(resp.ETag))
 	o.bytes = size
 	o.meta = resp.Metadata
 	if o.meta == nil {
 		o.meta = map[string]*string{}
+	}
+	// Read MD5 from metadata if present
+	if md5sumBase64, ok := o.meta[metaMD5Hash]; ok {
+		md5sumBytes, err := base64.StdEncoding.DecodeString(*md5sumBase64)
+		if err != nil {
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", *md5sumBase64, err)
+		} else if len(md5sumBytes) != 16 {
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: wrong length", *md5sumBase64)
+		} else {
+			o.md5 = hex.EncodeToString(md5sumBytes)
+		}
 	}
 	o.storageClass = aws.StringValue(resp.StorageClass)
 	if resp.LastModified == nil {
