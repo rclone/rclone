@@ -318,9 +318,8 @@ remote itself may assign the MIME type.
 
 ## Optional Features ##
 
-All the remotes support a basic set of features, but there are some
-optional features supported by some remotes used to make some
-operations more efficient.
+All rclone remotes support a base command set. Other features depend
+upon backend specific capabilities.
 
 | Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing | About | EmptyDir |
 | ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:| :------: |
@@ -424,13 +423,15 @@ on the particular cloud provider.
 
 ### About ###
 
-This is used to fetch quota information from the remote, like bytes
-used/free/quota and bytes used in the trash.
+Rclone `about` prints quota information for a remote. Typical output
+includes bytes used, free, quota and in trash.
 
-This is also used to return the space used, available for `rclone mount`.
+If a remote lacks about capability `rclone about remote:`returns
+an error.
 
-If the server can't do `About` then `rclone about` will return an
-error.
+Backends without about capability cannot determine free space for an
+rclone mount, or use policy `mfs` (most free space) as a member of an
+rclone union remote.
 
 ### EmptyDir ###
 
