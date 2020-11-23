@@ -424,3 +424,4 @@ put them back in again.` >}}
   * Ingo <ingo@hoffmann.cx>
   * Adam Plánský <adamplansky@users.noreply.github.com> <adamplansky@gmail.com>
   * Manish Gupta <manishgupta.ait@gmail.com>
+  * Deepak Sah <sah.sslpu@gmail.com>
