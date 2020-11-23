@@ -125,6 +125,9 @@ func init() {
 		Config: func(ctx context.Context, name string, m configmap.Mapper) {
 			opt := oauthutil.Options{
 				NoOffline: true,
+				OAuth2Opts: []oauth2.AuthCodeOption{
+					oauth2.SetAuthURLParam("token_access_type", "offline"),
+				},
 			}
 			err := oauthutil.Config(ctx, "dropbox", name, m, dropboxConfig, &opt)
 			if err != nil {
