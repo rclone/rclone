@@ -3118,6 +3118,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// read the md5sum if available
 	// - for non multipart
 	//    - so we can add a ContentMD5
+	//    - so we can add the md5sum in the metadata as metaMD5Hash if using SSE/SSE-C
 	// - for multipart provided checksums aren't disabled
 	//    - so we can add the md5sum in the metadata as metaMD5Hash
 	var md5sum string
@@ -3127,7 +3128,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			hashBytes, err := hex.DecodeString(hash)
 			if err == nil {
 				md5sum = base64.StdEncoding.EncodeToString(hashBytes)
-				if multipart {
+				if (multipart || o.fs.etagIsNotMD5) && !o.fs.opt.DisableChecksum {
+					// Set the md5sum as metadata on the object if
+					// - a multipart upload
+					// - the Etag is not an MD5, eg when using SSE/SSE-C
+					// provided checksums aren't disabled
 					metadata[metaMD5Hash] = &md5sum
 				}
 			}
