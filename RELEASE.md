@@ -65,9 +65,8 @@ Now
   * git cherry-pick any fixes
   * Do the steps as above
   * make startstable
-  * NB this overwrites the current beta so we need to do this - FIXME is this true any more?
   * git co master
-  * # cherry pick the changes to the changelog
+  * `#` cherry pick the changes to the changelog - check the diff to make sure it is correct
   * git checkout ${BASE_TAG}-stable docs/content/changelog.md
   * git commit -a -v -m "Changelog updates from Version ${NEW_TAG}"
   * git push
