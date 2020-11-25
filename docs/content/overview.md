@@ -433,6 +433,8 @@ Backends without about capability cannot determine free space for an
 rclone mount, or use policy `mfs` (most free space) as a member of an
 rclone union remote.
 
+See [rclone about command](https://rclone.org/commands/rclone_about/)
+
 ### EmptyDir ###
 
 The remote supports empty directories. See [Limitations](/bugs/#limitations)
