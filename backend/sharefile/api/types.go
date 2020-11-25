@@ -106,7 +106,7 @@ type UploadSpecification struct {
 type UploadFinishResponse struct {
 	Error        bool   `json:"error"`
 	ErrorMessage string `json:"errorMessage"`
-	ErrorCode    int    `json:"errorCode,string"`
+	ErrorCode    int    `json:"errorCode"`
 	Value        []struct {
 		UploadID    string `json:"uploadid"`
 		ParentID    string `json:"parentid"`
@@ -114,7 +114,7 @@ type UploadFinishResponse struct {
 		StreamID    string `json:"streamid"`
 		FileName    string `json:"filename"`
 		DisplayName string `json:"displayname"`
-		Size        int    `json:"size,string"`
+		Size        int    `json:"size"`
 		Md5         string `json:"md5"`
 	} `json:"value"`
 }
