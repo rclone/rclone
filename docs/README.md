@@ -1,6 +1,6 @@
 # Docs
 
-This directory tree is uses to build all the different docs for
+This directory tree is used to build all the different docs for
 rclone.
 
 See the `content` directory for the docs in markdown format.
