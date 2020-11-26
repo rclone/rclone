@@ -592,7 +592,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		data:     data,
 		hash:     "",
 		modTime:  src.ModTime(ctx),
-		mimeType: fs.MimeType(ctx, o),
+		mimeType: fs.MimeType(ctx, src),
 	}
 	buckets.updateObjectData(bucket, bucketPath, o.od)
 	return nil

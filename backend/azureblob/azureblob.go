@@ -1453,7 +1453,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	blob := o.getBlobReference()
 	httpHeaders := azblob.BlobHTTPHeaders{}
-	httpHeaders.ContentType = fs.MimeType(ctx, o)
+	httpHeaders.ContentType = fs.MimeType(ctx, src)
 	// Compute the Content-MD5 of the file, for multiparts uploads it
 	// will be set in PutBlockList API call using the 'x-ms-blob-content-md5' header
 	// Note: If multipart, an MD5 checksum will also be computed for each uploaded block

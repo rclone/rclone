@@ -1117,7 +1117,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Method:           "PUT",
 		Path:             "/uploadfile",
 		Body:             in,
-		ContentType:      fs.MimeType(ctx, o),
+		ContentType:      fs.MimeType(ctx, src),
 		ContentLength:    &size,
 		Parameters:       url.Values{},
 		TransferEncoding: []string{"identity"}, // pcloud doesn't like chunked encoding
