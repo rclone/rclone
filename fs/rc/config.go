@@ -12,7 +12,7 @@ import (
 
 var (
 	optionBlock  = map[string]interface{}{}
-	optionReload = map[string]func() error{}
+	optionReload = map[string]func(context.Context) error{}
 )
 
 // AddOption adds an option set
@@ -22,7 +22,7 @@ func AddOption(name string, option interface{}) {
 
 // AddOptionReload adds an option set with a reload function to be
 // called when options are changed
-func AddOptionReload(name string, option interface{}, reload func() error) {
+func AddOptionReload(name string, option interface{}, reload func(context.Context) error) {
 	optionBlock[name] = option
 	optionReload[name] = reload
 }
@@ -116,7 +116,7 @@ func rcOptionsSet(ctx context.Context, in Params) (out Params, err error) {
 			return nil, errors.Wrapf(err, "failed to write options from block %q", name)
 		}
 		if reload := optionReload[name]; reload != nil {
-			err = reload()
+			err = reload(ctx)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to reload options from block %q", name)
 			}

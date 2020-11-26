@@ -41,7 +41,7 @@ func TestAddOption(t *testing.T) {
 func TestAddOptionReload(t *testing.T) {
 	defer clearOptionBlock()()
 	assert.Equal(t, len(optionBlock), 0)
-	reload := func() error { return nil }
+	reload := func(ctx context.Context) error { return nil }
 	AddOptionReload("potato", &testOptions, reload)
 	assert.Equal(t, len(optionBlock), 1)
 	assert.Equal(t, len(optionReload), 1)
@@ -99,7 +99,7 @@ func TestOptionsGetMarshal(t *testing.T) {
 func TestOptionsSet(t *testing.T) {
 	defer clearOptionBlock()()
 	var reloaded int
-	AddOptionReload("potato", &testOptions, func() error {
+	AddOptionReload("potato", &testOptions, func(ctx context.Context) error {
 		if reloaded > 0 {
 			return errors.New("error while reloading")
 		}

@@ -2,6 +2,8 @@
 package filterflags
 
 import (
+	"context"
+
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
@@ -14,7 +16,7 @@ var (
 )
 
 // Reload the filters from the flags
-func Reload() (err error) {
+func Reload(ctx context.Context) (err error) {
 	filter.Active, err = filter.NewFilter(&Opt)
 	return err
 }
