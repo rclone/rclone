@@ -109,15 +109,16 @@ func NewFsFile(remote string) (fs.Fs, string) {
 // This works the same as NewFsFile however it adds filters to the Fs
 // to limit it to a single file if the remote pointed to a file.
 func newFsFileAddFilter(remote string) (fs.Fs, string) {
+	fi := filter.GetConfig(context.Background())
 	f, fileName := NewFsFile(remote)
 	if fileName != "" {
-		if !filter.Active.InActive() {
+		if !fi.InActive() {
 			err := errors.Errorf("Can't limit to single files when using filters: %v", remote)
 			err = fs.CountError(err)
 			log.Fatalf(err.Error())
 		}
 		// Limit transfers to this file
-		err := filter.Active.AddFile(fileName)
+		err := fi.AddFile(fileName)
 		if err != nil {
 			err = fs.CountError(err)
 			log.Fatalf("Failed to limit to single file %q: %v", remote, err)

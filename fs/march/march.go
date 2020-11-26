@@ -78,8 +78,9 @@ type listDirFn func(dir string) (entries fs.DirEntries, err error)
 // and includeAll flags for marching through the file system.
 func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listDirFn {
 	ci := fs.GetConfig(ctx)
+	fi := filter.GetConfig(ctx)
 	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
-		!(ci.NoTraverse && filter.Active.HaveFilesFrom()) { // !(--files-from and --no-traverse)
+		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
 		return func(dir string) (entries fs.DirEntries, err error) {
 			return list.DirSorted(m.Ctx, f, includeAll, dir)
 		}
@@ -126,6 +127,7 @@ type listDirJob struct {
 // Run starts the matching process off
 func (m *March) Run(ctx context.Context) error {
 	ci := fs.GetConfig(ctx)
+	fi := filter.GetConfig(ctx)
 	m.init(ctx)
 
 	srcDepth := ci.MaxDepth
@@ -133,7 +135,7 @@ func (m *March) Run(ctx context.Context) error {
 		srcDepth = fs.MaxLevel
 	}
 	dstDepth := srcDepth
-	if filter.Active.Opt.DeleteExcluded {
+	if fi.Opt.DeleteExcluded {
 		dstDepth = fs.MaxLevel
 	}
 

@@ -31,6 +31,7 @@ type syncCopyMove struct {
 	dir                string
 	// internal state
 	ci                     *fs.ConfigInfo         // global config
+	fi                     *filter.Filter         // filter config
 	ctx                    context.Context        // internal context for controlling go-routines
 	cancel                 func()                 // cancel the context
 	inCtx                  context.Context        // internal context for controlling march
@@ -99,8 +100,10 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
 	ci := fs.GetConfig(ctx)
+	fi := filter.GetConfig(ctx)
 	s := &syncCopyMove{
 		ci:                     ci,
+		fi:                     fi,
 		fdst:                   fdst,
 		fsrc:                   fsrc,
 		deleteMode:             deleteMode,
@@ -828,7 +831,7 @@ func (s *syncCopyMove) run() error {
 		Dir:                    s.dir,
 		NoTraverse:             s.noTraverse,
 		Callback:               s,
-		DstIncludeAll:          filter.Active.Opt.DeleteExcluded,
+		DstIncludeAll:          s.fi.Opt.DeleteExcluded,
 		NoCheckDest:            s.noCheckDest,
 		NoUnicodeNormalization: s.noUnicodeNormalization,
 	}
@@ -1087,13 +1090,14 @@ func moveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, cop
 
 // MoveDir moves fsrc into fdst
 func MoveDir(ctx context.Context, fdst, fsrc fs.Fs, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {
+	fi := filter.GetConfig(ctx)
 	if operations.Same(fdst, fsrc) {
 		fs.Errorf(fdst, "Nothing to do as source and destination are the same")
 		return nil
 	}
 
 	// First attempt to use DirMover if exists, same Fs and no filters are active
-	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && operations.SameConfig(fsrc, fdst) && filter.Active.InActive() {
+	if fdstDirMove := fdst.Features().DirMove; fdstDirMove != nil && operations.SameConfig(fsrc, fdst) && fi.InActive() {
 		if operations.SkipDestructive(ctx, fdst, "server-side directory move") {
 			return nil
 		}

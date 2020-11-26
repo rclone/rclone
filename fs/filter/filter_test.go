@@ -753,3 +753,30 @@ func TestNewFilterUsesDirectoryFilters(t *testing.T) {
 		assert.Equal(t, test.want, got, fmt.Sprintf("%s: %s", what, f.DumpFilters()))
 	}
 }
+
+func TestGetConfig(t *testing.T) {
+	ctx := context.Background()
+
+	// Check nil
+	config := GetConfig(nil)
+	assert.Equal(t, globalConfig, config)
+
+	// Check empty config
+	config = GetConfig(ctx)
+	assert.Equal(t, globalConfig, config)
+
+	// Check adding a config
+	ctx2, config2 := AddConfig(ctx)
+	require.NoError(t, config2.AddRule("+ *.jpg"))
+	assert.NotEqual(t, config2, config)
+
+	// Check can get config back
+	config2ctx := GetConfig(ctx2)
+	assert.Equal(t, config2, config2ctx)
+
+	// Check ReplaceConfig
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+	ctx3 := ReplaceConfig(ctx, f)
+	assert.Equal(t, globalConfig, GetConfig(ctx3))
+}

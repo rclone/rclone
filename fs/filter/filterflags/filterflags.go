@@ -17,8 +17,13 @@ var (
 
 // Reload the filters from the flags
 func Reload(ctx context.Context) (err error) {
-	filter.Active, err = filter.NewFilter(&Opt)
-	return err
+	fi := filter.GetConfig(ctx)
+	newFilter, err := filter.NewFilter(&Opt)
+	if err != nil {
+		return err
+	}
+	*fi = *newFilter
+	return nil
 }
 
 // AddFlags adds the non filing system specific flags to the command

@@ -87,9 +87,11 @@ var (
 )
 
 func TestHTTPFunction(t *testing.T) {
+	ctx := context.Background()
 	// exclude files called hidden.txt and directories called hidden
-	require.NoError(t, filter.Active.AddRule("- hidden.txt"))
-	require.NoError(t, filter.Active.AddRule("- hidden/**"))
+	fi := filter.GetConfig(ctx)
+	require.NoError(t, fi.AddRule("- hidden.txt"))
+	require.NoError(t, fi.AddRule("- hidden/**"))
 
 	// Uses the same test files as http tests but with different golden.
 	f, err := fs.NewFs(context.Background(), "../http/testdata/files")

@@ -120,12 +120,8 @@ func TestLsWithFilesFrom(t *testing.T) {
 	require.NoError(t, f.AddFile("potato2"))
 	require.NoError(t, f.AddFile("notfound"))
 
-	// Monkey patch the active filter
-	oldFilter := filter.Active
-	filter.Active = f
-	defer func() {
-		filter.Active = oldFilter
-	}()
+	// Change the active filter
+	ctx = filter.ReplaceConfig(ctx, f)
 
 	var buf bytes.Buffer
 	err = operations.List(ctx, r.Fremote, &buf)
@@ -321,6 +317,7 @@ func TestCount(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	ctx := context.Background()
+	fi := filter.GetConfig(ctx)
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
@@ -328,9 +325,9 @@ func TestDelete(t *testing.T) {
 	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
-	filter.Active.Opt.MaxSize = 60
+	fi.Opt.MaxSize = 60
 	defer func() {
-		filter.Active.Opt.MaxSize = -1
+		fi.Opt.MaxSize = -1
 	}()
 
 	err := operations.Delete(ctx, r.Fremote)
