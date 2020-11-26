@@ -107,6 +107,9 @@ var (
 
 	// DbHashType is the hash.Type for Dropbox
 	DbHashType hash.Type
+
+	// Errors
+	errNotSupportedInSharedMode = fserrors.NoRetryError(errors.New("not supported in shared files mode"))
 )
 
 // Register with Fs
@@ -795,7 +798,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	if f.opt.SharedFiles || f.opt.SharedFolders {
-		return nil, fserrors.NoRetryError(errors.New("not support in shared files mode"))
+		return nil, errNotSupportedInSharedMode
 	}
 	// Temporary Object under construction
 	o := &Object{
@@ -813,7 +816,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if f.opt.SharedFiles || f.opt.SharedFolders {
-		return fserrors.NoRetryError(errors.New("not support in shared files mode"))
+		return errNotSupportedInSharedMode
 	}
 	root := path.Join(f.slashRoot, dir)
 
@@ -893,7 +896,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 // Returns an error if it isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if f.opt.SharedFiles || f.opt.SharedFolders {
-		return fserrors.NoRetryError(errors.New("not support in shared files mode"))
+		return errNotSupportedInSharedMode
 	}
 	return f.purgeCheck(ctx, dir, true)
 }
@@ -1174,7 +1177,7 @@ func (o *Object) ID() string {
 // Hash returns the dropbox special hash
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
-		return "", fserrors.NoRetryError(errors.New("not support in shared files mode"))
+		return "", errNotSupportedInSharedMode
 	}
 	if t != DbHashType {
 		return "", hash.ErrUnsupported
@@ -1419,7 +1422,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
-		return fserrors.NoRetryError(errors.New("not support in shared files mode"))
+		return errNotSupportedInSharedMode
 	}
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
@@ -1450,7 +1453,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) (err error) {
 	if o.fs.opt.SharedFiles || o.fs.opt.SharedFolders {
-		return fserrors.NoRetryError(errors.New("not support in shared files mode"))
+		return errNotSupportedInSharedMode
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		_, err = o.fs.srv.DeleteV2(&files.DeleteArg{
