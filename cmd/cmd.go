@@ -373,7 +373,8 @@ func StartStats() func() {
 
 // initConfig is run by cobra after initialising the flags
 func initConfig() {
-	ci := fs.GetConfig(context.Background())
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
 	// Activate logger systemd support if systemd invocation ID is detected
 	_, sysdLaunch := systemd.GetInvocationID()
 	if sysdLaunch {
@@ -387,7 +388,7 @@ func initConfig() {
 	configflags.SetFlags(ci)
 
 	// Load filters
-	err := filterflags.Reload()
+	err := filterflags.Reload(ctx)
 	if err != nil {
 		log.Fatalf("Failed to load filters: %v", err)
 	}
