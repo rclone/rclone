@@ -254,9 +254,11 @@ func shouldRetry(err error) (bool, error) {
 		return false, err
 	}
 	baseErrString := errors.Cause(err).Error()
-	// First check for Insufficient Space
+	// First check for specific errors
 	if strings.Contains(baseErrString, "insufficient_space") {
 		return false, fserrors.FatalError(err)
+	} else if strings.Contains(baseErrString, "malformed_path") {
+		return false, fserrors.NoRetryError(err)
 	}
 	// Then handle any official Retry-After header from Dropbox's SDK
 	switch e := err.(type) {
