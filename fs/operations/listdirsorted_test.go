@@ -18,9 +18,11 @@ func TestListDirSorted(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	filter.Active.Opt.MaxSize = 10
+	ctx := context.Background()
+	fi := filter.GetConfig(ctx)
+	fi.Opt.MaxSize = 10
 	defer func() {
-		filter.Active.Opt.MaxSize = -1
+		fi.Opt.MaxSize = -1
 	}()
 
 	files := []fstest.Item{
@@ -79,7 +81,7 @@ func TestListDirSorted(t *testing.T) {
 	assert.Equal(t, "sub dir/sub sub dir/", str(1))
 
 	// testing ignore file
-	filter.Active.Opt.ExcludeFile = ".ignore"
+	fi.Opt.ExcludeFile = ".ignore"
 
 	items, err = list.DirSorted(context.Background(), r.Fremote, false, "sub dir")
 	require.NoError(t, err)
@@ -96,7 +98,7 @@ func TestListDirSorted(t *testing.T) {
 	assert.Equal(t, "sub dir/ignore dir/.ignore", str(0))
 	assert.Equal(t, "sub dir/ignore dir/should be ignored", str(1))
 
-	filter.Active.Opt.ExcludeFile = ""
+	fi.Opt.ExcludeFile = ""
 	items, err = list.DirSorted(context.Background(), r.Fremote, false, "sub dir/ignore dir")
 	require.NoError(t, err)
 	require.Len(t, items, 2)

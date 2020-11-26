@@ -585,6 +585,8 @@ a/
 }
 
 func TestWalkRDirTreeExclude(t *testing.T) {
+	ctx := context.Background()
+	fi := filter.GetConfig(ctx)
 	for _, test := range []struct {
 		entries     fs.DirEntries
 		want        string
@@ -648,13 +650,13 @@ b/c/d/
   e
 `, nil, "", -1, "ign", true},
 	} {
-		filter.Active.Opt.ExcludeFile = test.excludeFile
+		fi.Opt.ExcludeFile = test.excludeFile
 		r, err := walkRDirTree(context.Background(), nil, test.root, test.includeAll, test.level, makeListRCallback(test.entries, test.err))
 		assert.Equal(t, test.err, err, fmt.Sprintf("%+v", test))
 		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
 	}
 	// Set to default value, to avoid side effects
-	filter.Active.Opt.ExcludeFile = ""
+	fi.Opt.ExcludeFile = ""
 }
 
 func TestListType(t *testing.T) {
@@ -701,6 +703,7 @@ func TestListType(t *testing.T) {
 }
 
 func TestListR(t *testing.T) {
+	ctx := context.Background()
 	objects := fs.DirEntries{
 		mockobject.Object("a"),
 		mockobject.Object("b"),
@@ -709,7 +712,7 @@ func TestListR(t *testing.T) {
 		mockobject.Object("dir/b"),
 		mockobject.Object("dir/c"),
 	}
-	f := mockfs.NewFs(context.Background(), "mock", "/")
+	f := mockfs.NewFs(ctx, "mock", "/")
 	var got []string
 	clearCallback := func() {
 		got = nil
@@ -730,57 +733,53 @@ func TestListR(t *testing.T) {
 		return callback(os)
 	}
 
-	// Setup filter
-	oldFilter := filter.Active
-	defer func() {
-		filter.Active = oldFilter
-	}()
-
-	var err error
-	filter.Active, err = filter.NewFilter(nil)
+	fi, err := filter.NewFilter(nil)
 	require.NoError(t, err)
-	require.NoError(t, filter.Active.AddRule("+ b"))
-	require.NoError(t, filter.Active.AddRule("- *"))
+	require.NoError(t, fi.AddRule("+ b"))
+	require.NoError(t, fi.AddRule("- *"))
+
+	// Change the active filter
+	ctx = filter.ReplaceConfig(ctx, fi)
 
 	// Base case
 	clearCallback()
-	err = listR(context.Background(), f, "", true, ListAll, callback, doListR, false)
+	err = listR(ctx, f, "", true, ListAll, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "dir", "dir/a", "dir/b", "dir/c"}, got)
 
 	// Base case - with Objects
 	clearCallback()
-	err = listR(context.Background(), f, "", true, ListObjects, callback, doListR, false)
+	err = listR(ctx, f, "", true, ListObjects, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "dir/a", "dir/b", "dir/c"}, got)
 
 	// Base case - with Dirs
 	clearCallback()
-	err = listR(context.Background(), f, "", true, ListDirs, callback, doListR, false)
+	err = listR(ctx, f, "", true, ListDirs, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir"}, got)
 
 	// With filter
 	clearCallback()
-	err = listR(context.Background(), f, "", false, ListAll, callback, doListR, false)
+	err = listR(ctx, f, "", false, ListAll, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"b", "dir", "dir/b"}, got)
 
 	// With filter - with Objects
 	clearCallback()
-	err = listR(context.Background(), f, "", false, ListObjects, callback, doListR, false)
+	err = listR(ctx, f, "", false, ListObjects, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"b", "dir/b"}, got)
 
 	// With filter - with Dir
 	clearCallback()
-	err = listR(context.Background(), f, "", false, ListDirs, callback, doListR, false)
+	err = listR(ctx, f, "", false, ListDirs, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir"}, got)
 
 	// With filter and subdir
 	clearCallback()
-	err = listR(context.Background(), f, "dir", false, ListAll, callback, doListR, false)
+	err = listR(ctx, f, "dir", false, ListAll, callback, doListR, false)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/b"}, got)
 
@@ -796,31 +795,31 @@ func TestListR(t *testing.T) {
 
 	// Base case
 	clearCallback()
-	err = listR(context.Background(), f, "", true, ListAll, callback, doListR, true)
+	err = listR(ctx, f, "", true, ListAll, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"a", "b", "dir/a", "dir/b", "dir/subdir/c", "dir/subdir", "dir"}, got)
 
 	// With filter
 	clearCallback()
-	err = listR(context.Background(), f, "", false, ListAll, callback, doListR, true)
+	err = listR(ctx, f, "", false, ListAll, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"b", "dir/b", "dir/subdir", "dir"}, got)
 
 	// With filter and subdir
 	clearCallback()
-	err = listR(context.Background(), f, "dir", false, ListAll, callback, doListR, true)
+	err = listR(ctx, f, "dir", false, ListAll, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/b", "dir/subdir"}, got)
 
 	// With filter and subdir - with Objects
 	clearCallback()
-	err = listR(context.Background(), f, "dir", false, ListObjects, callback, doListR, true)
+	err = listR(ctx, f, "dir", false, ListObjects, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/b"}, got)
 
 	// With filter and subdir - with Dirs
 	clearCallback()
-	err = listR(context.Background(), f, "dir", false, ListDirs, callback, doListR, true)
+	err = listR(ctx, f, "dir", false, ListDirs, callback, doListR, true)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/subdir"}, got)
 }

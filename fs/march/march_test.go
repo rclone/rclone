@@ -193,6 +193,7 @@ func TestMarch(t *testing.T) {
 				cancel:     cancel,
 				noTraverse: false,
 			}
+			fi := filter.GetConfig(ctx)
 			m := &March{
 				Ctx:           ctx,
 				Fdst:          r.Fremote,
@@ -200,7 +201,7 @@ func TestMarch(t *testing.T) {
 				Dir:           "",
 				NoTraverse:    mt.noTraverse,
 				Callback:      mt,
-				DstIncludeAll: filter.Active.Opt.DeleteExcluded,
+				DstIncludeAll: fi.Opt.DeleteExcluded,
 			}
 
 			mt.processError(m.Run(ctx))
@@ -260,6 +261,7 @@ func TestMarchNoTraverse(t *testing.T) {
 				cancel:     cancel,
 				noTraverse: true,
 			}
+			fi := filter.GetConfig(ctx)
 			m := &March{
 				Ctx:           ctx,
 				Fdst:          r.Fremote,
@@ -267,7 +269,7 @@ func TestMarchNoTraverse(t *testing.T) {
 				Dir:           "",
 				NoTraverse:    mt.noTraverse,
 				Callback:      mt,
-				DstIncludeAll: filter.Active.Opt.DeleteExcluded,
+				DstIncludeAll: fi.Opt.DeleteExcluded,
 			}
 
 			mt.processError(m.Run(ctx))

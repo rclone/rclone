@@ -177,13 +177,12 @@ func testCopyWithFilesFrom(t *testing.T, noTraverse bool) {
 	require.NoError(t, f.AddFile("potato2"))
 	require.NoError(t, f.AddFile("notfound"))
 
-	// Monkey patch the active filter
-	oldFilter := filter.Active
+	// Change the active filter
+	ctx = filter.ReplaceConfig(ctx, f)
+
 	oldNoTraverse := ci.NoTraverse
-	filter.Active = f
 	ci.NoTraverse = noTraverse
 	unpatch := func() {
-		filter.Active = oldFilter
 		ci.NoTraverse = oldNoTraverse
 	}
 	defer unpatch()
@@ -967,9 +966,10 @@ func TestSyncWithExclude(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
 
-	filter.Active.Opt.MaxSize = 40
+	fi := filter.GetConfig(ctx)
+	fi.Opt.MaxSize = 40
 	defer func() {
-		filter.Active.Opt.MaxSize = -1
+		fi.Opt.MaxSize = -1
 	}()
 
 	accounting.GlobalStats().ResetCounters()
@@ -996,11 +996,12 @@ func TestSyncWithExcludeAndDeleteExcluded(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
 
-	filter.Active.Opt.MaxSize = 40
-	filter.Active.Opt.DeleteExcluded = true
+	fi := filter.GetConfig(ctx)
+	fi.Opt.MaxSize = 40
+	fi.Opt.DeleteExcluded = true
 	defer func() {
-		filter.Active.Opt.MaxSize = -1
-		filter.Active.Opt.DeleteExcluded = false
+		fi.Opt.MaxSize = -1
+		fi.Opt.DeleteExcluded = false
 	}()
 
 	accounting.GlobalStats().ResetCounters()
@@ -1399,12 +1400,14 @@ func TestServerSideMove(t *testing.T) {
 
 // Test a server-side move if possible, or the backup path if not
 func TestServerSideMoveWithFilter(t *testing.T) {
+	ctx := context.Background()
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	filter.Active.Opt.MinSize = 40
+	fi := filter.GetConfig(ctx)
+	fi.Opt.MinSize = 40
 	defer func() {
-		filter.Active.Opt.MinSize = -1
+		fi.Opt.MinSize = -1
 	}()
 
 	testServerSideMove(t, r, true, false)
@@ -1439,9 +1442,10 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	assert.EqualError(t, err, fs.ErrorOverlapping.Error())
 
 	// Now try with a filter which should also fail with ErrorCantMoveOverlapping
-	filter.Active.Opt.MinSize = 40
+	fi := filter.GetConfig(ctx)
+	fi.Opt.MinSize = 40
 	defer func() {
-		filter.Active.Opt.MinSize = -1
+		fi.Opt.MinSize = -1
 	}()
 	err = MoveDir(ctx, FremoteMove, r.Fremote, false, false)
 	assert.EqualError(t, err, fs.ErrorOverlapping.Error())
@@ -1686,11 +1690,8 @@ func testSyncBackupDir(t *testing.T, backupDir string, suffix string, suffixKeep
 		flt, err := filter.NewFilter(nil)
 		require.NoError(t, err)
 		require.NoError(t, flt.AddRule("- *"+suffix))
-		oldFlt := filter.Active
-		filter.Active = flt
-		defer func() {
-			filter.Active = oldFlt
-		}()
+		// Change the active filter
+		ctx = filter.ReplaceConfig(ctx, flt)
 	}
 	ci.Suffix = suffix
 	ci.SuffixKeepExtension = suffixKeepExtension

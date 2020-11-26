@@ -59,6 +59,7 @@ var (
 )
 
 func TestInit(t *testing.T) {
+	ctx := context.Background()
 	// Configure the remote
 	config.LoadConfig(context.Background())
 	// fs.Config.LogLevel = fs.LogLevelDebug
@@ -66,8 +67,9 @@ func TestInit(t *testing.T) {
 	// fs.Config.DumpBodies = true
 
 	// exclude files called hidden.txt and directories called hidden
-	require.NoError(t, filter.Active.AddRule("- hidden.txt"))
-	require.NoError(t, filter.Active.AddRule("- hidden/**"))
+	fi := filter.GetConfig(ctx)
+	require.NoError(t, fi.AddRule("- hidden.txt"))
+	require.NoError(t, fi.AddRule("- hidden/**"))
 
 	// Create a test Fs
 	f, err := fs.NewFs(context.Background(), "testdata/files")

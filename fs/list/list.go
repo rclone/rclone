@@ -28,11 +28,12 @@ func DirSorted(ctx context.Context, f fs.Fs, includeAll bool, dir string) (entri
 	// This should happen only if exclude files lives in the
 	// starting directory, otherwise ListDirSorted should not be
 	// called.
-	if !includeAll && filter.Active.ListContainsExcludeFile(entries) {
+	fi := filter.GetConfig(ctx)
+	if !includeAll && fi.ListContainsExcludeFile(entries) {
 		fs.Debugf(dir, "Excluded")
 		return nil, nil
 	}
-	return filterAndSortDir(ctx, entries, includeAll, dir, filter.Active.IncludeObject, filter.Active.IncludeDirectory(ctx, f))
+	return filterAndSortDir(ctx, entries, includeAll, dir, fi.IncludeObject, fi.IncludeDirectory(ctx, f))
 }
 
 // filter (if required) and check the entries, then sort them

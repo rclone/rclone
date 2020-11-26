@@ -17,8 +17,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// Active is the globally active filter
-var Active = mustNewFilter(nil)
+// This is the globally active filter
+//
+// This is accessed through GetConfig and AddConfig
+var globalConfig = mustNewFilter(nil)
 
 // rule is one filter rule
 type rule struct {
@@ -590,4 +592,39 @@ func (f *Filter) UsesDirectoryFilters() bool {
 		return false
 	}
 	return true
+}
+
+type configContextKeyType struct{}
+
+// Context key for config
+var configContextKey = configContextKeyType{}
+
+// GetConfig returns the global or context sensitive config
+func GetConfig(ctx context.Context) *Filter {
+	if ctx == nil {
+		return globalConfig
+	}
+	c := ctx.Value(configContextKey)
+	if c == nil {
+		return globalConfig
+	}
+	return c.(*Filter)
+}
+
+// AddConfig returns a mutable config structure based on a shallow
+// copy of that found in ctx and returns a new context with that added
+// to it.
+func AddConfig(ctx context.Context) (context.Context, *Filter) {
+	c := GetConfig(ctx)
+	cCopy := new(Filter)
+	*cCopy = *c
+	newCtx := context.WithValue(ctx, configContextKey, cCopy)
+	return newCtx, cCopy
+}
+
+// ReplaceConfig replaces the filter config in the ctx with the one
+// passed in and returns a new context with that added to it.
+func ReplaceConfig(ctx context.Context, f *Filter) context.Context {
+	newCtx := context.WithValue(ctx, configContextKey, f)
+	return newCtx
 }
