@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"sync/atomic"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -18,6 +19,7 @@ var (
 	exitChan     chan os.Signal
 	exitOnce     sync.Once
 	registerOnce sync.Once
+	signalled    int32
 )
 
 // FnHandle is the type of the handle returned by function `Register`
@@ -40,6 +42,7 @@ func Register(fn func()) FnHandle {
 			if sig == nil {
 				return
 			}
+			atomic.StoreInt32(&signalled, 1)
 			fs.Infof(nil, "Signal received: %s", sig)
 			Run()
 			fs.Infof(nil, "Exiting...")
@@ -48,6 +51,11 @@ func Register(fn func()) FnHandle {
 	})
 
 	return &fn
+}
+
+// Signalled returns true if an exit signal has been received
+func Signalled() bool {
+	return atomic.LoadInt32(&signalled) != 0
 }
 
 // Unregister a function using the handle returned by `Register`
