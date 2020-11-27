@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -460,10 +461,14 @@ func Mount(VFS *vfs.VFS, mountpoint string, mount MountFn, opt *Options) error {
 	}
 
 	// Unmount on exit
-	fnHandle := atexit.Register(func() {
-		_ = sysdnotify.Stopping()
-		_ = unmount()
-	})
+	var finaliseOnce sync.Once
+	finalise := func() {
+		finaliseOnce.Do(func() {
+			_ = sysdnotify.Stopping()
+			_ = unmount()
+		})
+	}
+	fnHandle := atexit.Register(finalise)
 	defer atexit.Unregister(fnHandle)
 
 	// Notify systemd
@@ -492,8 +497,7 @@ waitloop:
 		}
 	}
 
-	_ = sysdnotify.Stopping()
-	_ = unmount()
+	finalise()
 
 	if err != nil {
 		return errors.Wrap(err, "failed to umount FUSE fs")
