@@ -307,3 +307,12 @@ because of file size, so it will retry the operation, as any other
 failure. To avoid this problem, use `--max-size 50000M` option to limit
 the maximum size of uploaded files. Note that `--max-size` does not split
 files into segments, it only ignores files over this size.
+
+`rclone about` is not supported by the Amazon Drive backend. Backends without
+this capability cannot determine free space for an rclone mount or
+use policy `mfs` (most free space) as a member of an rclone union
+remote.
+
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+See [rclone about](https://rclone.org/commands/rclone_about/)
+

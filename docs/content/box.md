@@ -408,3 +408,12 @@ and from an identical looking unicode equivalent `＼` (U+FF3C Fullwidth
 Reverse Solidus).
 
 Box only supports filenames up to 255 characters in length.
+
+`rclone about` is not supported by the Box backend. Backends without
+this capability cannot determine free space for an rclone mount or
+use policy `mfs` (most free space) as a member of an rclone union
+remote.
+
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+See [rclone about](https://rclone.org/commands/rclone_about/)
+
