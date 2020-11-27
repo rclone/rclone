@@ -650,6 +650,10 @@ type Features struct {
 	// If it is a string or a []string it will be shown to the user
 	// otherwise it will be JSON encoded and shown to the user like that
 	Command func(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
+
+	// Shutdown the backend, closing any background tasks and any
+	// cached connections.
+	Shutdown func(ctx context.Context) error
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -774,6 +778,9 @@ func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
 	if do, ok := f.(Commander); ok {
 		ft.Command = do.Command
 	}
+	if do, ok := f.(Shutdowner); ok {
+		ft.Shutdown = do.Shutdown
+	}
 	return ft.DisableList(GetConfig(ctx).DisableFeatures)
 }
 
@@ -854,6 +861,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 		ft.Disconnect = nil
 	}
 	// Command is always local so we don't mask it
+	if mask.Shutdown == nil {
+		ft.Shutdown = nil
+	}
 	return ft.DisableList(GetConfig(ctx).DisableFeatures)
 }
 
@@ -1097,6 +1107,13 @@ type Commander interface {
 	// If it is a string or a []string it will be shown to the user
 	// otherwise it will be JSON encoded and shown to the user like that
 	Command(ctx context.Context, name string, arg []string, opt map[string]string) (interface{}, error)
+}
+
+// Shutdowner is an interface to wrap the Shutdown function
+type Shutdowner interface {
+	// Shutdown the backend, closing any background tasks and any
+	// cached connections.
+	Shutdown(ctx context.Context) error
 }
 
 // ObjectsChan is a channel of Objects

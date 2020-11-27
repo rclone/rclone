@@ -1074,6 +1074,16 @@ func (f *Fs) newObjectSizeAndNameOnly(o fs.Object, moName string, size int64) *O
 	}
 }
 
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	do := f.Fs.Features().Shutdown
+	if do == nil {
+		return nil
+	}
+	return do(ctx)
+}
+
 // This loads the metadata of a press Object if it's not loaded yet
 func (o *Object) loadMetadataIfNotLoaded(ctx context.Context) (err error) {
 	err = o.loadMetadataObjectIfNotLoaded(ctx)
@@ -1337,6 +1347,7 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
 	_ fs.GetTierer       = (*Object)(nil)
 	_ fs.SetTierer       = (*Object)(nil)

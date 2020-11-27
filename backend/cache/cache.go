@@ -1895,6 +1895,16 @@ func (f *Fs) Disconnect(ctx context.Context) error {
 	return do(ctx)
 }
 
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	do := f.Fs.Features().Shutdown
+	if do == nil {
+		return nil
+	}
+	return do(ctx)
+}
+
 var commandHelp = []fs.CommandHelp{
 	{
 		Name:  "stats",
@@ -1939,4 +1949,5 @@ var (
 	_ fs.Disconnecter   = (*Fs)(nil)
 	_ fs.Commander      = (*Fs)(nil)
 	_ fs.MergeDirser    = (*Fs)(nil)
+	_ fs.Shutdowner     = (*Fs)(nil)
 )

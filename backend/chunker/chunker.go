@@ -1724,6 +1724,16 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 	do(ctx, wrappedNotifyFunc, pollIntervalChan)
 }
 
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	do := f.base.Features().Shutdown
+	if do == nil {
+		return nil
+	}
+	return do(ctx)
+}
+
 // Object represents a composite file wrapping one or more data chunks
 type Object struct {
 	remote string
@@ -2298,6 +2308,7 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.Wrapper         = (*Fs)(nil)
 	_ fs.ChangeNotifier  = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
 	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.ObjectUnWrapper = (*Object)(nil)

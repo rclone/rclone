@@ -754,6 +754,20 @@ func (f *Fs) mergeDirEntries(entriesList [][]upstream.Entry) (fs.DirEntries, err
 	return entries, nil
 }
 
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	errs := Errors(make([]error, len(f.upstreams)))
+	multithread(len(f.upstreams), func(i int) {
+		u := f.upstreams[i]
+		if do := u.Features().Shutdown; do != nil {
+			err := do(ctx)
+			errs[i] = errors.Wrap(err, u.Name())
+		}
+	})
+	return errs.Err()
+}
+
 // NewFs constructs an Fs from the path.
 //
 // The returned Fs is the actual Fs, referenced by remote in the config
@@ -896,4 +910,5 @@ var (
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
+	_ fs.Shutdowner      = (*Fs)(nil)
 )
