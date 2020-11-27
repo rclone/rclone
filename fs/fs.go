@@ -71,6 +71,7 @@ var (
 	ErrorCantShareDirectories        = errors.New("this backend can't share directories with link")
 	ErrorNotImplemented              = errors.New("optional feature not implemented")
 	ErrorCommandNotFound             = errors.New("command not found")
+	ErrorFileNameTooLong             = errors.New("file name too long")
 )
 
 // RegInfo provides information about a filesystem
