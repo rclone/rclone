@@ -412,6 +412,23 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 	f.poolMu.Unlock()
 }
 
+// Drain the pool of any connections
+func (f *Fs) drainPool(ctx context.Context) (err error) {
+	f.poolMu.Lock()
+	defer f.poolMu.Unlock()
+	for i, c := range f.pool {
+		if cErr := c.closed(); cErr == nil {
+			cErr = c.close()
+			if cErr != nil {
+				err = cErr
+			}
+		}
+		f.pool[i] = nil
+	}
+	f.pool = nil
+	return err
+}
+
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
@@ -1057,6 +1074,12 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	return usage, nil
 }
 
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	return f.drainPool(ctx)
+}
+
 // Fs is the filesystem this remote sftp file object is located within
 func (o *Object) Fs() fs.Info {
 	return o.fs
@@ -1407,5 +1430,6 @@ var (
 	_ fs.Mover       = &Fs{}
 	_ fs.DirMover    = &Fs{}
 	_ fs.Abouter     = &Fs{}
+	_ fs.Shutdowner  = &Fs{}
 	_ fs.Object      = &Object{}
 )

@@ -1932,6 +1932,15 @@ func Run(t *testing.T, opt *Opt) {
 		_ = operations.Purge(ctx, f, "")
 	}
 
+	t.Run("FsShutdown", func(t *testing.T) {
+		do := f.Features().Shutdown
+		if do == nil {
+			t.Skip("Shutdown method not supported")
+		}
+		require.NoError(t, do(ctx))
+		require.NoError(t, do(ctx), "must be able to call Shutdown twice")
+	})
+
 	// Remove the local directory so we don't clutter up /tmp
 	if strings.HasPrefix(remoteName, "/") {
 		t.Log("remoteName", remoteName)
