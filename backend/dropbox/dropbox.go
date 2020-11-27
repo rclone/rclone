@@ -30,6 +30,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/auth"
@@ -86,6 +87,8 @@ const (
 	// by default.
 	defaultChunkSize = 48 * fs.MebiByte
 	maxChunkSize     = 150 * fs.MebiByte
+	// Max length of filename parts: https://help.dropbox.com/installs-integrations/sync-uploads/files-not-syncing
+	maxFileNameLength = 255
 )
 
 var (
@@ -839,6 +842,10 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	arg2 := files.CreateFolderArg{
 		Path: f.opt.Enc.FromStandardPath(root),
 	}
+	// Don't attempt to create filenames that are too long
+	if cErr := checkPathLength(arg2.Path); cErr != nil {
+		return cErr
+	}
 	err = f.pacer.Call(func() (bool, error) {
 		_, err = f.srv.CreateFolderV2(&arg2)
 		return shouldRetry(err)
@@ -1417,6 +1424,31 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 	return entry, nil
 }
 
+// checks all the parts of name to see they are below
+// maxFileNameLength runes.
+//
+// This checks the length as runes which isn't quite right as dropbox
+// seems to encode some symbols (eg ☺) as two "characters". This seems
+// like utf-16 except that ☺ doesn't need two characters in utf-16.
+//
+// Using runes instead of what dropbox is using will work for most
+// cases, and when it goes wrong we will upload something we should
+// have detected as too long which is the least damaging way to fail.
+func checkPathLength(name string) (err error) {
+	for next := ""; len(name) > 0; name = next {
+		if slash := strings.IndexRune(name, '/'); slash >= 0 {
+			name, next = name[:slash], name[slash+1:]
+		} else {
+			next = ""
+		}
+		length := utf8.RuneCountInString(name)
+		if length > maxFileNameLength {
+			return fserrors.NoRetryError(fs.ErrorFileNameTooLong)
+		}
+	}
+	return nil
+}
+
 // Update the already existing object
 //
 // Copy the reader into the object updating modTime and size
@@ -1434,6 +1466,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
 	commitInfo.ClientModified = src.ModTime(ctx).UTC().Round(time.Second)
+	// Don't attempt to create filenames that are too long
+	if cErr := checkPathLength(commitInfo.Path); cErr != nil {
+		return cErr
+	}
 
 	size := src.Size()
 	var err error
