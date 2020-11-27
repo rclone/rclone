@@ -229,7 +229,6 @@ See: the [encoding section in the overview](/overview/#encoding) for more info.
 
 ### Limitations ###
 
-
 Modified times are not supported. Times you see on the FTP server
 through rclone are time of upload.
 
@@ -239,7 +238,10 @@ file sizes.
 `rclone about` is not supported by the FTP backend. Backends without
 this capability cannot determine free space for an rclone mount or
 use policy `mfs` (most free space) as a member of an rclone union
-remote. [More](https://rclone.org/overview/#optional-features)
+remote.
+
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+See [rclone about](https://rclone.org/commands/rclone_about/)
 
 The implementation of : `--dump headers`,
 `--dump bodies`, `--dump auth` for debugging isn't the same as
