@@ -439,6 +439,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		CanHaveEmptyDirectories: true,
+		ReadMimeType:            true,
+		WriteMimeType:           true,
 	}).Fill(ctx, f)
 	if f.opt.Version == "" {
 		err = f.getApplianceInfo(ctx)
