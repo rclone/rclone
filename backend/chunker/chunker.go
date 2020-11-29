@@ -289,7 +289,7 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
 		DuplicateFiles:          true,
-		ReadMimeType:            true,
+		ReadMimeType:            false, // Object.MimeType not supported
 		WriteMimeType:           true,
 		BucketBased:             true,
 		CanHaveEmptyDirectories: true,
