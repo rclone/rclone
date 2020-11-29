@@ -193,6 +193,7 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
 		CanHaveEmptyDirectories: true,
+		ReadMimeType:            true,
 	}).Fill(ctx, f)
 
 	client := fshttp.NewClient(ctx)
