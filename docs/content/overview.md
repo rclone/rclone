@@ -48,7 +48,7 @@ Here is an overview of the major features of each cloud storage system.
 | SugarSync                    | -           | No      | No               | No              | -         |
 | Tardigrade                   | -           | Yes     | No               | No              | -         |
 | WebDAV                       | MD5, SHA1 ³ | Yes ⁴   | Depends          | No              | -         |
-| Yandex Disk                  | MD5         | Yes     | No               | No              | R/W       |
+| Yandex Disk                  | MD5         | Yes     | No               | No              | R         |
 | The local filesystem         | All         | Yes     | Depends          | No              | -         |
 
 ### Notes
