@@ -277,7 +277,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.setRoot(root)
 	f.features = (&fs.Features{
 		ReadMimeType:            true,
-		WriteMimeType:           true,
+		WriteMimeType:           false, // Yandex ignores the mime type we send
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
