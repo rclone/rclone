@@ -30,7 +30,7 @@ Here is an overview of the major features of each cloud storage system.
 | Google Photos                | -           | No      | No               | Yes             | R         |
 | HTTP                         | -           | No      | No               | No              | R         |
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
-| Jottacloud                   | MD5         | Yes     | Yes              | No              | R/W       |
+| Jottacloud                   | MD5         | Yes     | Yes              | No              | R         |
 | Koofr                        | MD5         | No      | Yes              | No              | -         |
 | Mail.ru Cloud                | Mailru ⁶    | Yes     | Yes              | No              | -         |
 | Mega                         | -           | No      | No               | Yes             | -         |
