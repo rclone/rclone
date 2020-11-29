@@ -80,4 +80,35 @@ func TestGetFsAndRemote(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, f)
 	assert.Equal(t, "hello", remote)
+
+	t.Run("RcFscache", func(t *testing.T) {
+		getEntries := func() int {
+			call := Calls.Get("fscache/entries")
+			require.NotNil(t, call)
+
+			in := Params{}
+			out, err := call.Fn(context.Background(), in)
+			require.NoError(t, err)
+			require.NotNil(t, out)
+			return out["entries"].(int)
+		}
+
+		t.Run("Entries", func(t *testing.T) {
+			assert.NotEqual(t, 0, getEntries())
+		})
+
+		t.Run("Clear", func(t *testing.T) {
+			call := Calls.Get("fscache/clear")
+			require.NotNil(t, call)
+
+			in := Params{}
+			out, err := call.Fn(context.Background(), in)
+			require.NoError(t, err)
+			require.Nil(t, out)
+		})
+
+		t.Run("Entries2", func(t *testing.T) {
+			assert.Equal(t, 0, getEntries())
+		})
+	})
 }
