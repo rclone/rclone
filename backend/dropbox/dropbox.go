@@ -359,7 +359,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.users = users.New(config)
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
-		ReadMimeType:            true,
+		ReadMimeType:            false,
 		CanHaveEmptyDirectories: true,
 	})
 
