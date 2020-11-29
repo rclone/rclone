@@ -4,6 +4,10 @@ package mount
 
 import (
 	"context"
+	"io"
+	"os"
+	"strings"
+	"syscall"
 	"time"
 
 	"bazil.org/fuse"
@@ -31,6 +35,10 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	a.Gid = f.VFS().Opt.GID
 	a.Uid = f.VFS().Opt.UID
 	a.Mode = f.VFS().Opt.FilePerms
+	if (strings.HasSuffix(f.File.Name(), ".rclonelink")) {
+		defer log.Trace(f, f.File.Name() + " is a symlink")("a=%+v, err=%v", a, &err)
+		a.Mode = 0777 | os.ModeSymlink
+	}
 	a.Size = Size
 	a.Atime = modTime
 	a.Mtime = modTime
@@ -125,3 +133,24 @@ func (f *File) Removexattr(ctx context.Context, req *fuse.RemovexattrRequest) er
 }
 
 var _ fusefs.NodeRemovexattrer = (*File)(nil)
+
+var _ fusefs.NodeReadlinker = (*File)(nil)
+
+// read symbolic link target
+func (f *File) Readlink(ctx context.Context, req *fuse.ReadlinkRequest) (ret string, err error) {
+	defer log.Trace(f, "Requested to read link")("ret=%v, err=%v", &ret, &err)
+
+	handle, err := f.File.Open(syscall.O_RDONLY)
+	if err != nil {
+		return "", translateError(err)
+	}
+	data := make([]byte, f.File.Size())
+	_, err = handle.Read(data)
+	if err == io.EOF {
+		err = nil
+	} else if err != nil {
+		return "", translateError(err)
+	}
+
+	return string(data), nil
+}

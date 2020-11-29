@@ -6,6 +6,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"bazil.org/fuse"
@@ -75,7 +76,13 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 	defer log.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
 	mnode, err := d.Dir.Stat(req.Name)
 	if err != nil {
-		return nil, translateError(err)
+		// might be a symlink; so check to see if it is
+		symlink_mnode, err := d.Dir.Stat(req.Name + ".rclonelink")
+		if err != nil {
+			return nil, translateError(err)
+		}
+		// symlink found
+		mnode = symlink_mnode
 	}
 	resp.EntryValid = d.fsys.opt.AttrTimeout
 	// Check the mnode to see if it has a fuse Node cached
@@ -128,6 +135,11 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 		}
 		if node.IsDir() {
 			dirent.Type = fuse.DT_Dir
+		} else if strings.HasSuffix(name, ".rclonelink") {
+			// node represents a symlink; mark it as such, and remove the suffix from the node name
+			dirent.Type = fuse.DT_Link
+			dirent.Name = name[:len(name)-len(".rclonelink")]
+			defer log.Trace(d, name + " is a symlink; new name is " + dirent.Name)(name + " is a symlink; new name is " + dirent.Name, &itemsRead, &err)
 		}
 		dirents = append(dirents, dirent)
 	}
@@ -174,6 +186,17 @@ var _ fusefs.NodeRemover = (*Dir)(nil)
 // may correspond to a file (unlink) or to a directory (rmdir).
 func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) (err error) {
 	defer log.Trace(d, "name=%q", req.Name)("err=%v", &err)
+
+	_, err = d.Dir.Stat(req.Name)
+	if err != nil && err == vfs.ENOENT {
+		// check for removing symlink
+		err = d.Dir.RemoveName(req.Name + ".rclonelink")
+		if err != nil {
+			return translateError(err)
+		}
+		return nil
+	}
+
 	err = d.Dir.RemoveName(req.Name)
 	if err != nil {
 		return translateError(err)
@@ -190,6 +213,17 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 	destDir, ok := newDir.(*Dir)
 	if !ok {
 		return errors.Errorf("Unknown Dir type %T", newDir)
+	}
+
+	_, err = d.Dir.Stat(req.OldName)
+	// if the file cannot be found, it might be because it is a symbolic link
+	if err != nil && err == vfs.ENOENT {
+		defer log.Trace(d, "Could not find file " + req.OldName + "; checking for symbolic link")("err=%v", &err)
+		err = d.Dir.Rename(req.OldName + ".rclonelink", req.NewName + ".rclonelink", destDir.Dir)
+		if err != nil {
+			return translateError(err)
+		}
+		return nil
 	}
 
 	err = d.Dir.Rename(req.OldName, req.NewName, destDir.Dir)
@@ -251,4 +285,38 @@ func (d *Dir) Mknod(ctx context.Context, req *fuse.MknodRequest) (node fusefs.No
 		return nil, err
 	}
 	return node, nil
+}
+
+var _ fusefs.NodeSymlinker = (*Dir)(nil)
+
+// create symbolic link
+func (d *Dir) Symlink(ctx context.Context, req *fuse.SymlinkRequest) (node fusefs.Node, err error) {
+	defer log.Trace(d, "target=%q; new_name=%q", req.Target, req.NewName)("node=%v, err=%v", &node, &err)
+
+	symlinkName := req.NewName + ".rclonelink"
+	file, err := d.Dir.Create(symlinkName, os.O_RDWR)
+	if err != nil {
+		defer log.Trace(d, "failed to create symlink file " + symlinkName)
+		return nil, translateError(err)
+	}
+	fh, err := file.Open(os.O_RDWR | os.O_CREATE)
+	if err != nil {
+		defer log.Trace(d, "failed to open symlink file " + symlinkName)
+		return nil, translateError(err)
+	}
+	node = &File{file, d.fsys}
+
+	_, err2 := fh.WriteAt([]byte(req.Target), 0)
+	if err2 != nil {
+		defer log.Trace(d, "failed to write to symlink file " + symlinkName)
+		return nil, translateError(err2)
+	}
+
+	err = fh.Release()
+	if err != nil {
+		defer log.Trace(d, "failed to close symlink file " + symlinkName)
+		return nil, translateError(err)
+	}
+
+	return node, err
 }
