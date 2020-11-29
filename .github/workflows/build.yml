@@ -46,6 +46,7 @@ jobs:
             go: '1.15.x'
             gotags: cmount
             build_flags: '-include "^windows/amd64" -cgo'
+            build_args: '-buildmode exe'
             quicktest: true
             racequicktest: true
             deploy: true
@@ -57,6 +58,7 @@ jobs:
             goarch: '386'
             cgo: '1'
             build_flags: '-include "^windows/386" -cgo'
+            build_args: '-buildmode exe'
             quicktest: true
             deploy: true
 
@@ -109,6 +111,7 @@ jobs:
         run: |
           echo 'GOTAGS=${{ matrix.gotags }}' >> $GITHUB_ENV
           echo 'BUILD_FLAGS=${{ matrix.build_flags }}' >> $GITHUB_ENV
+          echo 'BUILD_ARGS=${{ matrix.build_args }}' >> $GITHUB_ENV
           if [[ "${{ matrix.goarch }}" != "" ]]; then echo 'GOARCH=${{ matrix.goarch }}' >> $GITHUB_ENV ; fi
           if [[ "${{ matrix.cgo }}" != "" ]]; then echo 'CGO_ENABLED=${{ matrix.cgo }}' >> $GITHUB_ENV ; fi
 
