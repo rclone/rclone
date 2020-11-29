@@ -180,3 +180,16 @@ func TestClear(t *testing.T) {
 
 	assert.Equal(t, 0, c.Entries())
 }
+
+func TestEntries(t *testing.T) {
+	cleanup, create := mockNewFs(t)
+	defer cleanup()
+
+	assert.Equal(t, 0, Entries())
+
+	// Create something
+	_, err := GetFn(context.Background(), "mock:/", create)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, Entries())
+}

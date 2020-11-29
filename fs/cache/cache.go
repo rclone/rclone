@@ -128,3 +128,8 @@ func Put(fsString string, f fs.Fs) {
 func Clear() {
 	c.Clear()
 }
+
+// Entries returns the number of entries in the cache
+func Entries() int {
+	return c.Entries()
+}
