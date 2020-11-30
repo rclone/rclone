@@ -28,6 +28,8 @@ func setup(t *testing.T) (*Cache, CreateFunc) {
 			return "/file.txt", true, errCached
 		case "/error":
 			return nil, false, errSentinel
+		case "/err":
+			return nil, false, errSentinel
 		}
 		panic(fmt.Sprintf("Unknown path %q", path))
 	}
@@ -223,6 +225,53 @@ func TestGetMaybe(t *testing.T) {
 	value, found = c.GetMaybe("/")
 	assert.Equal(t, false, found)
 	assert.Nil(t, value)
+}
+
+func TestDelete(t *testing.T) {
+	c, create := setup(t)
+
+	assert.Equal(t, 0, len(c.cache))
+
+	_, err := c.Get("/", create)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, len(c.cache))
+
+	assert.Equal(t, false, c.Delete("notfound"))
+	assert.Equal(t, 1, len(c.cache))
+
+	assert.Equal(t, true, c.Delete("/"))
+	assert.Equal(t, 0, len(c.cache))
+
+	assert.Equal(t, false, c.Delete("/"))
+	assert.Equal(t, 0, len(c.cache))
+}
+
+func TestDeletePrefix(t *testing.T) {
+	create := func(path string) (interface{}, bool, error) {
+		return path, true, nil
+	}
+	c := New()
+
+	_, err := c.Get("remote:path", create)
+	require.NoError(t, err)
+	_, err = c.Get("remote:path2", create)
+	require.NoError(t, err)
+	_, err = c.Get("remote:", create)
+	require.NoError(t, err)
+	_, err = c.Get("remote", create)
+	require.NoError(t, err)
+
+	assert.Equal(t, 4, len(c.cache))
+
+	assert.Equal(t, 3, c.DeletePrefix("remote:"))
+	assert.Equal(t, 1, len(c.cache))
+
+	assert.Equal(t, 1, c.DeletePrefix(""))
+	assert.Equal(t, 0, len(c.cache))
+
+	assert.Equal(t, 0, c.DeletePrefix(""))
+	assert.Equal(t, 0, len(c.cache))
 }
 
 func TestCacheRename(t *testing.T) {

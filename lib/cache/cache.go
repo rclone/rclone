@@ -3,6 +3,7 @@
 package cache
 
 import (
+	"strings"
 	"sync"
 	"time"
 )
@@ -117,6 +118,32 @@ func (c *Cache) GetMaybe(key string) (value interface{}, found bool) {
 	}
 	c.used(entry)
 	return entry.value, found
+}
+
+// Delete the entry passed in
+//
+// Returns true if the entry was found
+func (c *Cache) Delete(key string) bool {
+	c.mu.Lock()
+	_, found := c.cache[key]
+	delete(c.cache, key)
+	c.mu.Unlock()
+	return found
+}
+
+// DeletePrefix deletes all entries with the given prefix
+//
+// Returns number of entries deleted
+func (c *Cache) DeletePrefix(prefix string) (deleted int) {
+	c.mu.Lock()
+	for k := range c.cache {
+		if strings.HasPrefix(k, prefix) {
+			delete(c.cache, k)
+			deleted++
+		}
+	}
+	c.mu.Unlock()
+	return deleted
 }
 
 // Rename renames the item at oldKey to newKey.
