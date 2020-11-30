@@ -841,20 +841,27 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		remote: remote,
 	}
 
-	var newObject *storage.Object
-	err = f.pacer.Call(func() (bool, error) {
-		copyObject := f.svc.Objects.Copy(srcBucket, srcPath, dstBucket, dstPath, nil)
-		if !f.opt.BucketPolicyOnly {
-			copyObject.DestinationPredefinedAcl(f.opt.ObjectACL)
+	rewriteRequest := f.svc.Objects.Rewrite(srcBucket, srcPath, dstBucket, dstPath, nil)
+	if !f.opt.BucketPolicyOnly {
+		rewriteRequest.DestinationPredefinedAcl(f.opt.ObjectACL)
+	}
+	var rewriteResponse *storage.RewriteResponse
+	for {
+		err = f.pacer.Call(func() (bool, error) {
+			rewriteResponse, err = rewriteRequest.Context(ctx).Do()
+			return shouldRetry(err)
+		})
+		if err != nil {
+			return nil, err
 		}
-		newObject, err = copyObject.Context(ctx).Do()
-		return shouldRetry(err)
-	})
-	if err != nil {
-		return nil, err
+		if rewriteResponse.Done {
+			break
+		}
+		rewriteRequest.RewriteToken(rewriteResponse.RewriteToken)
+		fs.Debugf(dstObj, "Continuing rewrite %d bytes done", rewriteResponse.TotalBytesRewritten)
 	}
 	// Set the metadata for the new object while we have it
-	dstObj.setMetaData(newObject)
+	dstObj.setMetaData(rewriteResponse.Resource)
 	return dstObj, nil
 }
 
