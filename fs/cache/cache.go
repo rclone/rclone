@@ -124,6 +124,13 @@ func Put(fsString string, f fs.Fs) {
 	addMapping(fsString, canonicalName)
 }
 
+// ClearConfig deletes all entries which were based on the config name passed in
+//
+// Returns number of entries deleted
+func ClearConfig(name string) (deleted int) {
+	return c.DeletePrefix(name + ":")
+}
+
 // Clear removes everything from the cache
 func Clear() {
 	c.Clear()
