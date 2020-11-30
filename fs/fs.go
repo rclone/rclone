@@ -1370,7 +1370,7 @@ func NewFs(ctx context.Context, path string) (Fs, error) {
 func ConfigString(f Fs) string {
 	name := f.Name()
 	root := f.Root()
-	if name == "local" && f.Features().IsLocal {
+	if name == "local" || f.Features().IsLocal {
 		return root
 	}
 	return name + ":" + root
