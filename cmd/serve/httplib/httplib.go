@@ -402,6 +402,11 @@ func (s *Server) Path(w http.ResponseWriter, r *http.Request) (Path string, ok b
 		return Path, true
 	}
 	if !strings.HasPrefix(Path, s.Opt.BaseURL+"/") {
+		// Send a redirect if the BaseURL was requested without a /
+		if Path == s.Opt.BaseURL {
+			http.Redirect(w, r, s.Opt.BaseURL+"/", http.StatusPermanentRedirect)
+			return Path, false
+		}
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return Path, false
 	}
