@@ -69,6 +69,10 @@ const (
 	memoryPoolUseMmap    = false
 )
 
+var (
+	errCantUpdateArchiveTierBlobs = fserrors.NoRetryError(errors.New("can't update archive tier blob without --azureblob-archive-tier-delete"))
+)
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -148,6 +152,24 @@ operations from remote will not be allowed. User should first restore by
 tiering blob to "Hot" or "Cool".`,
 			Advanced: true,
 		}, {
+			Name:    "archive_tier_delete",
+			Default: false,
+			Help: fmt.Sprintf(`Delete archive tier blobs before overwriting.
+
+Archive tier blobs cannot be updated. So without this flag, if you
+attempt to update an archive tier blob, then rclone will produce the
+error:
+
+    %v
+
+With this flag set then before rclone attempts to overwrite an archive
+tier blob, it will delete the existing blob before uploading its
+replacement.  This has the potential for data loss if the upload fails
+(unlike updating a normal blob) and also may cost more since deleting
+archive tier blobs early may be chargable.
+`, errCantUpdateArchiveTierBlobs),
+			Advanced: true,
+		}, {
 			Name: "disable_checksum",
 			Help: `Don't store MD5 checksum with object metadata.
 
@@ -194,6 +216,7 @@ type Options struct {
 	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
 	ListChunkSize        uint                 `config:"list_chunk"`
 	AccessTier           string               `config:"access_tier"`
+	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
 	UseEmulator          bool                 `config:"use_emulator"`
 	DisableCheckSum      bool                 `config:"disable_checksum"`
 	MemoryPoolFlushTime  fs.Duration          `config:"memory_pool_flush_time"`
@@ -1542,6 +1565,17 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	if o.accessTier == azblob.AccessTierArchive {
+		if o.fs.opt.ArchiveTierDelete {
+			fs.Debugf(o, "deleting archive tier blob before updating")
+			err = o.Remove(ctx)
+			if err != nil {
+				return errors.Wrap(err, "failed to delete archive blob before updating")
+			}
+		} else {
+			return errCantUpdateArchiveTierBlobs
+		}
+	}
 	container, _ := o.split()
 	err = o.fs.makeContainer(ctx, container)
 	if err != nil {
