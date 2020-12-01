@@ -1346,6 +1346,7 @@ func (f *Fs) Features() *fs.Features {
 // retryErrorCodes is a slice of error codes that we will retry
 // See: https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html
 var retryErrorCodes = []int{
+	429, // Minio Specific - TooManyRequests: Too Many Requests
 	500, // Internal Server Error - "We encountered an internal error. Please try again."
 	503, // Service Unavailable/Slow Down - "Reduce your request rate"
 }
