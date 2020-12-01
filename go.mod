@@ -15,7 +15,6 @@ require (
 	github.com/atotto/clipboard v0.1.2
 	github.com/aws/aws-sdk-go v1.35.17
 	github.com/billziss-gh/cgofuse v1.4.0
-	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/buengese/sgzip v0.1.0
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/coreos/go-semver v0.3.0
@@ -54,7 +53,6 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
 	go.etcd.io/bbolt v1.3.5
-	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
 	goftp.io/server v0.4.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
@@ -70,6 +68,5 @@ require (
 	google.golang.org/grpc v1.33.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
-	storj.io/common v0.0.0-20201027143432-3718579e12bf // indirect
-	storj.io/uplink v1.3.1
+	storj.io/uplink v1.4.1
 )
