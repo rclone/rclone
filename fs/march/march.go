@@ -382,6 +382,7 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 		srcList, dstList       fs.DirEntries
 		srcListErr, dstListErr error
 		wg                     sync.WaitGroup
+		mu                     sync.Mutex
 	)
 
 	// List the src and dst directories
@@ -416,17 +417,28 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	}
 
 	// If NoTraverse is set, then try to find a matching object
-	// for each item in the srcList
+	// for each item in the srcList to head dst object
+	ci := fs.GetConfig(m.Ctx)
+	limiter := make(chan struct{}, ci.Checkers)
 	if m.NoTraverse && !m.NoCheckDest {
 		for _, src := range srcList {
-			if srcObj, ok := src.(fs.Object); ok {
-				leaf := path.Base(srcObj.Remote())
-				dstObj, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
-				if err == nil {
-					dstList = append(dstList, dstObj)
+			wg.Add(1)
+			limiter <- struct{}{}
+			go func(limiter chan struct{}, src fs.DirEntry) {
+				defer wg.Done()
+				if srcObj, ok := src.(fs.Object); ok {
+					leaf := path.Base(srcObj.Remote())
+					dstObj, err := m.Fdst.NewObject(m.Ctx, path.Join(job.dstRemote, leaf))
+					if err == nil {
+						mu.Lock()
+						dstList = append(dstList, dstObj)
+						mu.Unlock()
+					}
 				}
-			}
+				<-limiter
+			}(limiter, src)
 		}
+		wg.Wait()
 	}
 
 	// Work out what to do and do it
