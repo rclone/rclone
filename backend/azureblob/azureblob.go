@@ -99,6 +99,31 @@ for more details.
 			Name: "sas_url",
 			Help: "SAS URL for container level access only\n(leave blank if using account/key or Emulator)",
 		}, {
+			Name: "use_msi",
+			Help: `Use a managed service identity to authenticate (only works in Azure)
+
+When true, use a [managed service identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/)
+to authenticate to Azure Storage instead of a SAS token or account key.
+
+If the VM(SS) on which this program is running has a system-assigned identity, it will
+be used by default. If the resource has no system-assigned but exactly one user-assigned identity,
+the user-assigned identity will be used by default. If the resource has multiple user-assigned
+identities, the identity to use must be explicitly specified using exactly one of the msi_object_id,
+msi_client_id, or msi_mi_res_id parameters.`,
+			Default: false,
+		}, {
+			Name:     "msi_object_id",
+			Help:     "Object ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_mi_res_id specified.",
+			Advanced: true,
+		}, {
+			Name:     "msi_client_id",
+			Help:     "Object ID of the user-assigned MSI to use, if any. Leave blank if msi_object_id or msi_mi_res_id specified.",
+			Advanced: true,
+		}, {
+			Name:     "msi_mi_res_id",
+			Help:     "Azure resource ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_object_id specified.",
+			Advanced: true,
+		}, {
 			Name:    "use_emulator",
 			Help:    "Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)",
 			Default: false,
@@ -188,6 +213,10 @@ type Options struct {
 	Account              string               `config:"account"`
 	ServicePrincipalFile string               `config:"service_principal_file"`
 	Key                  string               `config:"key"`
+	UseMSI               bool                 `config:"use_msi"`
+	MSIObjectID          string               `config:"msi_object_id"`
+	MSIClientID          string               `config:"msi_client_id"`
+	MSIResourceID        string               `config:"msi_mi_res_id"`
 	Endpoint             string               `config:"endpoint"`
 	SASURL               string               `config:"sas_url"`
 	UploadCutoff         fs.SizeSuffix        `config:"upload_cutoff"`
@@ -217,6 +246,7 @@ type Fs struct {
 	isLimited     bool                            // if limited to one container
 	cache         *bucket.Cache                   // cache for container creation status
 	pacer         *fs.Pacer                       // To pace and retry the API calls
+	imdsPacer     *fs.Pacer                       // Same but for IMDS
 	uploadToken   *pacer.TokenDispenser           // control concurrency
 	pool          *pool.Pool                      // memory pool
 }
@@ -319,6 +349,8 @@ func (f *Fs) shouldRetry(err error) (bool, error) {
 				return true, err
 			}
 		}
+	} else if httpErr, ok := err.(httpError); ok {
+		return fserrors.ShouldRetryHTTP(httpErr.Response, retryErrorCodes), err
 	}
 	return fserrors.ShouldRetry(err), err
 }
@@ -479,6 +511,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:         *opt,
 		ci:          ci,
 		pacer:       fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		imdsPacer:   fs.NewPacer(ctx, pacer.NewAzureIMDS()),
 		uploadToken: pacer.NewTokenDispenser(ci.Transfers),
 		client:      fshttp.NewClient(ctx),
 		cache:       bucket.NewCache(),
@@ -490,6 +523,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			opt.MemoryPoolUseMmap,
 		),
 	}
+	f.imdsPacer.SetRetries(5) // per IMDS documentation
 	f.setRoot(root)
 	f.features = (&fs.Features{
 		ReadMimeType:      true,
@@ -516,15 +550,80 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
-	case opt.Account != "" && opt.Key != "":
-		credential, err := azblob.NewSharedKeyCredential(opt.Account, opt.Key)
+	case opt.UseMSI:
+		var token adal.Token
+		var userMSI *userMSI = &userMSI{}
+		if len(opt.MSIClientID) > 0 || len(opt.MSIObjectID) > 0 || len(opt.MSIResourceID) > 0 {
+			// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
+			// Validate and ensure exactly one is set. (To do: better validation.)
+			if len(opt.MSIClientID) > 0 {
+				if len(opt.MSIObjectID) > 0 || len(opt.MSIResourceID) > 0 {
+					return nil, errors.New("more than one user-assigned identity ID is set")
+				}
+				userMSI.Type = msiClientID
+				userMSI.Value = opt.MSIClientID
+			}
+			if len(opt.MSIObjectID) > 0 {
+				if len(opt.MSIClientID) > 0 || len(opt.MSIResourceID) > 0 {
+					return nil, errors.New("more than one user-assigned identity ID is set")
+				}
+				userMSI.Type = msiObjectID
+				userMSI.Value = opt.MSIObjectID
+			}
+			if len(opt.MSIResourceID) > 0 {
+				if len(opt.MSIClientID) > 0 || len(opt.MSIObjectID) > 0 {
+					return nil, errors.New("more than one user-assigned identity ID is set")
+				}
+				userMSI.Type = msiResourceID
+				userMSI.Value = opt.MSIResourceID
+			}
+		} else {
+			userMSI = nil
+		}
+		err = f.imdsPacer.Call(func() (bool, error) {
+			// Retry as specified by the documentation:
+			// https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-to-use-vm-token#retry-guidance
+			token, err = GetMSIToken(ctx, userMSI)
+			return f.shouldRetry(err)
+		})
+
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to parse credentials")
+			return nil, errors.Wrapf(err, "Failed to acquire MSI token")
 		}
 
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+		}
+		credential := azblob.NewTokenCredential(token.AccessToken, func(credential azblob.TokenCredential) time.Duration {
+			fs.Debugf(f, "Token refresher called.")
+			var refreshedToken adal.Token
+			err := f.imdsPacer.Call(func() (bool, error) {
+				refreshedToken, err = GetMSIToken(ctx, userMSI)
+				return f.shouldRetry(err)
+			})
+			if err != nil {
+				// Failed to refresh.
+				return 0
+			}
+			credential.SetToken(refreshedToken.AccessToken)
+			now := time.Now().UTC()
+			// Refresh one minute before expiry.
+			refreshAt := refreshedToken.Expires().UTC().Add(-1 * time.Minute)
+			fs.Debugf(f, "Acquired new token that expires at %v; refreshing in %d s", refreshedToken.Expires(),
+				int(refreshAt.Sub(now).Seconds()))
+			if now.After(refreshAt) {
+				// Acquired a causality violation.
+				return 0
+			}
+			return refreshAt.Sub(now)
+		})
+		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
+		serviceURL = azblob.NewServiceURL(*u, pipeline)
+	case opt.Account != "" && opt.Key != "":
+		credential, err := azblob.NewSharedKeyCredential(opt.Account, opt.Key)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to parse credentials")
 		}
 		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
@@ -567,7 +666,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		pipe := f.newPipeline(azblob.NewTokenCredential("", tokenRefresher), options)
 		serviceURL = azblob.NewServiceURL(*u, pipe)
 	default:
-		return nil, errors.New("Need account+key or connectionString or sasURL or servicePrincipalFile")
+		return nil, errors.New("No authentication method configured")
 	}
 	f.svcURL = &serviceURL
 
