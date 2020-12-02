@@ -195,6 +195,23 @@ func TestAmazonCloudDrivePacer(t *testing.T) {
 	}
 }
 
+func TestAzureIMDSPacer(t *testing.T) {
+	c := NewAzureIMDS()
+	for _, test := range []struct {
+		state State
+		want  time.Duration
+	}{
+		{State{SleepTime: 0, ConsecutiveRetries: 0}, 0},
+		{State{SleepTime: 0, ConsecutiveRetries: 1}, 2 * time.Second},
+		{State{SleepTime: 2 * time.Second, ConsecutiveRetries: 2}, 6 * time.Second},
+		{State{SleepTime: 6 * time.Second, ConsecutiveRetries: 3}, 14 * time.Second},
+		{State{SleepTime: 14 * time.Second, ConsecutiveRetries: 4}, 30 * time.Second},
+	} {
+		got := c.Calculate(test.state)
+		assert.Equal(t, test.want, got, "test: %+v", test)
+	}
+}
+
 func TestGoogleDrivePacer(t *testing.T) {
 	// Do lots of times because of the random number!
 	for _, test := range []struct {
