@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/fspath"
@@ -616,6 +617,7 @@ type Fs struct {
 	client           *http.Client       // authorized client
 	rootFolderID     string             // the id of the root folder
 	dirCache         *dircache.DirCache // Map of directory path to directory id
+	lastQuery        string             // Last query string to check in unit tests
 	pacer            *fs.Pacer          // To pace the API calls
 	exportExtensions []string           // preferred extensions to download docs
 	importMimeTypes  []string           // MIME types to convert to docs
@@ -829,11 +831,31 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	if filesOnly {
 		query = append(query, fmt.Sprintf("mimeType!='%s'", driveFolderType))
 	}
-	list := f.svc.Files.List()
-	if len(query) > 0 {
-		list.Q(strings.Join(query, " and "))
-		// fmt.Printf("list Query = %q\n", query)
+
+	// Constrain query using filter if this remote is a sync/copy/walk source.
+	if fi, use := filter.GetConfig(ctx), filter.GetUseFilter(ctx); fi != nil && use {
+		queryByTime := func(op string, tm time.Time) {
+			if tm.IsZero() {
+				return
+			}
+			// https://developers.google.com/drive/api/v3/ref-search-terms#operators
+			// Query times use RFC 3339 format, default timezone is UTC
+			timeStr := tm.UTC().Format("2006-01-02T15:04:05")
+			term := fmt.Sprintf("(modifiedTime %s '%s' or mimeType = '%s')", op, timeStr, driveFolderType)
+			query = append(query, term)
+		}
+		queryByTime(">=", fi.ModTimeFrom)
+		queryByTime("<=", fi.ModTimeTo)
 	}
+
+	list := f.svc.Files.List()
+	queryString := strings.Join(query, " and ")
+	if queryString != "" {
+		list.Q(queryString)
+		// fs.Debugf(f, "list query: %q", queryString)
+	}
+	f.lastQuery = queryString // for unit tests
+
 	if f.opt.ListChunk > 0 {
 		list.PageSize(f.opt.ListChunk)
 	}

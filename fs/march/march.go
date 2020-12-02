@@ -49,6 +49,7 @@ type Marcher interface {
 }
 
 // init sets up a march over opt.Fsrc, and opt.Fdst calling back callback for each match
+// Note: this will flag filter-aware backends on the source side
 func (m *March) init(ctx context.Context) {
 	ci := fs.GetConfig(ctx)
 	m.srcListDir = m.makeListDir(ctx, m.Fsrc, m.SrcIncludeAll)
@@ -76,13 +77,15 @@ type listDirFn func(dir string) (entries fs.DirEntries, err error)
 
 // makeListDir makes constructs a listing function for the given fs
 // and includeAll flags for marching through the file system.
+// Note: this will optionally flag filter-aware backends!
 func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listDirFn {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
 	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
 		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
 		return func(dir string) (entries fs.DirEntries, err error) {
-			return list.DirSorted(m.Ctx, f, includeAll, dir)
+			dirCtx := filter.SetUseFilter(m.Ctx, !includeAll) // make filter-aware backends constrain List
+			return list.DirSorted(dirCtx, f, includeAll, dir)
 		}
 	}
 
@@ -98,7 +101,8 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listD
 		mu.Lock()
 		defer mu.Unlock()
 		if !started {
-			dirs, dirsErr = walk.NewDirTree(m.Ctx, f, m.Dir, includeAll, ci.MaxDepth)
+			dirCtx := filter.SetUseFilter(m.Ctx, !includeAll) // make filter-aware backends constrain List
+			dirs, dirsErr = walk.NewDirTree(dirCtx, f, m.Dir, includeAll, ci.MaxDepth)
 			started = true
 		}
 		if dirsErr != nil {
