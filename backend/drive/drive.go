@@ -689,7 +689,7 @@ func containsString(slice []string, s string) bool {
 
 // getFile returns drive.File for the ID passed and fields passed in
 func (f *Fs) getFile(ID string, fields googleapi.Field) (info *drive.File, err error) {
-	err = f.pacer.CallNoRetry(func() (bool, error) {
+	err = f.pacer.Call(func() (bool, error) {
 		info, err = f.svc.Files.Get(ID).
 			Fields(fields).
 			SupportsAllDrives(true).
@@ -2922,7 +2922,7 @@ func (f *Fs) makeShortcut(ctx context.Context, srcPath string, dstFs *Fs, dstPat
 	}
 
 	var info *drive.File
-	err = dstFs.pacer.CallNoRetry(func() (bool, error) {
+	err = dstFs.pacer.Call(func() (bool, error) {
 		info, err = dstFs.svc.Files.Create(createInfo).
 			Fields(partialFields).
 			SupportsAllDrives(true).
