@@ -57,10 +57,13 @@ type Func func(path string, entries fs.DirEntries, err error) error
 // If --files-from and --no-traverse is set then a DirTree will be
 // constructed with just those files in and then walked with WalkR
 //
+// Note: this will flag filter-aware backends!
+//
 // NB (f, path) to be replaced by fs.Dir at some point
 func Walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
+	ctx = filter.SetUseFilter(ctx, !includeAll) // make filter-aware backends constrain List
 	if ci.NoTraverse && fi.HaveFilesFrom() {
 		return walkR(ctx, f, path, includeAll, maxLevel, fn, fi.MakeListR(ctx, f.NewObject))
 	}
@@ -138,6 +141,8 @@ func (l ListType) Filter(in *fs.DirEntries) {
 // This is implemented by using ListR on the backend if possible and
 // efficient, otherwise by Walk.
 //
+// Note: this will flag filter-aware backends
+//
 // NB (f, path) to be replaced by fs.Dir at some point
 func ListR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, listType ListType, fn fs.ListRCallback) error {
 	fi := filter.GetConfig(ctx)
@@ -152,10 +157,12 @@ func ListR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel 
 		fi.UsesDirectoryFilters() { // ...using any directory filters
 		return listRwalk(ctx, f, path, includeAll, maxLevel, listType, fn)
 	}
+	ctx = filter.SetUseFilter(ctx, !includeAll) // make filter-aware backends constrain List
 	return listR(ctx, f, path, includeAll, listType, fn, doListR, listType.Dirs() && f.Features().BucketBased)
 }
 
 // listRwalk walks the file tree for ListR using Walk
+// Note: this will flag filter-aware backends (via Walk)
 func listRwalk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, listType ListType, fn fs.ListRCallback) error {
 	var listErr error
 	walkErr := Walk(ctx, f, path, includeAll, maxLevel, func(path string, entries fs.DirEntries, err error) error {
