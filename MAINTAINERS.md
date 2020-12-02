@@ -11,7 +11,7 @@ Current active maintainers of rclone are:
 | Fabian Möller    | @B4dM4n           |                              |
 | Alex Chen        | @Cnly             | onedrive backend             |
 | Sandeep Ummadi   | @sandeepkru       | azureblob backend            |
-| Sebastian Bünger | @buengese         | jottacloud & yandex backends |
+| Sebastian Bünger | @buengese         | jottacloud, yandex & compress backends |
 | Ivan Andreev     | @ivandeex         | chunker & mailru backends    |
 | Max Sum          | @Max-Sum          | union backend                |
 | Fred             | @creativeprojects | seafile backend              |
