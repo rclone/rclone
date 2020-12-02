@@ -138,9 +138,9 @@ func dedupeDeleteIdentical(ctx context.Context, ht hash.Type, remote string, obj
 	return remainingObjs
 }
 
-// dedupeInteractive interactively dedupes the slice of objects
-func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool) {
-	fmt.Printf("%s: %d duplicates remain\n", remote, len(objs))
+// dedupeList lists the duplicates and does nothing
+func dedupeList(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool) {
+	fmt.Printf("%s: %d duplicates\n", remote, len(objs))
 	for i, o := range objs {
 		hashValue := ""
 		if ht != hash.None {
@@ -156,6 +156,11 @@ func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string
 			fmt.Printf("  %d: %12d bytes, %s, %v %32s\n", i+1, o.Size(), o.ModTime(ctx).Local().Format("2006-01-02 15:04:05.000000000"), ht, hashValue)
 		}
 	}
+}
+
+// dedupeInteractive interactively dedupes the slice of objects
+func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool) {
+	dedupeList(ctx, f, ht, remote, objs, byHash)
 	commands := []string{"sSkip and do nothing", "kKeep just one (choose which in next step)"}
 	if !byHash {
 		commands = append(commands, "rRename all to be different (by changing file.jpg to file-1.jpg)")
@@ -183,6 +188,7 @@ const (
 	DeduplicateRename                             // rename the objects
 	DeduplicateLargest                            // choose the largest object
 	DeduplicateSmallest                           // choose the smallest object
+	DeduplicateList                               // list duplicates only
 )
 
 func (x DeduplicateMode) String() string {
@@ -203,6 +209,8 @@ func (x DeduplicateMode) String() string {
 		return "largest"
 	case DeduplicateSmallest:
 		return "smallest"
+	case DeduplicateList:
+		return "list"
 	}
 	return "unknown"
 }
@@ -226,6 +234,8 @@ func (x *DeduplicateMode) Set(s string) error {
 		*x = DeduplicateLargest
 	case "smallest":
 		*x = DeduplicateSmallest
+	case "list":
+		*x = DeduplicateList
 	default:
 		return errors.Errorf("Unknown mode for dedupe %q.", s)
 	}
@@ -326,9 +336,15 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 			return err
 		}
 		if len(duplicateDirs) != 0 {
-			err = dedupeMergeDuplicateDirs(ctx, f, duplicateDirs)
-			if err != nil {
-				return err
+			if mode != DeduplicateList {
+				err = dedupeMergeDuplicateDirs(ctx, f, duplicateDirs)
+				if err != nil {
+					return err
+				}
+			} else {
+				for _, dir := range duplicateDirs {
+					fmt.Printf("%s: %d duplicates of this directory\n", dir[0].Remote(), len(dir))
+				}
 			}
 		}
 	}
@@ -361,7 +377,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 	for remote, objs := range files {
 		if len(objs) > 1 {
 			fs.Logf(remote, "Found %d files with duplicate %s", len(objs), what)
-			if !byHash {
+			if !byHash && mode != DeduplicateList {
 				objs = dedupeDeleteIdentical(ctx, ht, remote, objs)
 				if len(objs) <= 1 {
 					fs.Logf(remote, "All duplicates removed")
@@ -388,7 +404,9 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 				sortSmallestFirst(objs)
 				dedupeDeleteAllButOne(ctx, 0, remote, objs)
 			case DeduplicateSkip:
-				fs.Logf(remote, "Skipping %d files with duplicate names %s", len(objs), what)
+				fs.Logf(remote, "Skipping %d files with duplicate %s", len(objs), what)
+			case DeduplicateList:
+				dedupeList(ctx, f, ht, remote, objs, byHash)
 			default:
 				//skip
 			}
