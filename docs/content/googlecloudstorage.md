@@ -232,6 +232,7 @@ flag. Google Cloud Storage supports the headers as described in the
 - Content-Encoding
 - Content-Language
 - Content-Type
+- X-Goog-Storage-Class
 - X-Goog-Meta-
 
 Eg `--header-upload "Content-Type text/potato"`

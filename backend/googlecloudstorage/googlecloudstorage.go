@@ -1091,6 +1091,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			object.ContentLanguage = value
 		case "content-type":
 			object.ContentType = value
+		case "x-goog-storage-class":
+			object.StorageClass = value
 		default:
 			const googMetaPrefix = "x-goog-meta-"
 			if strings.HasPrefix(lowerKey, googMetaPrefix) {
