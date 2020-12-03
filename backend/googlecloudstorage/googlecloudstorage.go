@@ -1091,6 +1091,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			object.ContentLanguage = value
 		case "content-type":
 			object.ContentType = value
+		case "x-goog-storage-class":
+			// See https://cloud.google.com/storage/docs/xml-api/put-object-upload
+			object.StorageClass = value
 		default:
 			const googMetaPrefix = "x-goog-meta-"
 			if strings.HasPrefix(lowerKey, googMetaPrefix) {
