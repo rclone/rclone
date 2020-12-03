@@ -44,8 +44,10 @@ const (
 	timeHeader          = headerPrefix + timeKey
 	sha1Key             = "large_file_sha1"
 	sha1Header          = "X-Bz-Content-Sha1"
-	sha1InfoHeader      = headerPrefix + sha1Key
 	testModeHeader      = "X-Bz-Test-Mode"
+	idHeader            = "X-Bz-File-Id"
+	nameHeader          = "X-Bz-File-Name"
+	timestampHeader     = "X-Bz-Upload-Timestamp"
 	retryAfterHeader    = "Retry-After"
 	minSleep            = 10 * time.Millisecond
 	maxSleep            = 5 * time.Minute
@@ -1496,8 +1498,11 @@ func (o *Object) decodeMetaDataFileInfo(info *api.FileInfo) (err error) {
 	return o.decodeMetaDataRaw(info.ID, info.SHA1, info.Size, info.UploadTimestamp, info.Info, info.ContentType)
 }
 
-// getMetaData gets the metadata from the object unconditionally
-func (o *Object) getMetaData(ctx context.Context) (info *api.File, err error) {
+// getMetaDataListing gets the metadata from the object unconditionally from the listing
+//
+// Note that listing is a class C transaction which costs more than
+// the B transaction used in getMetaData
+func (o *Object) getMetaDataListing(ctx context.Context) (info *api.File, err error) {
 	bucket, bucketPath := o.split()
 	maxSearched := 1
 	var timestamp api.Timestamp
@@ -1528,6 +1533,19 @@ func (o *Object) getMetaData(ctx context.Context) (info *api.File, err error) {
 		return nil, fs.ErrorObjectNotFound
 	}
 	return info, nil
+}
+
+// getMetaData gets the metadata from the object unconditionally
+func (o *Object) getMetaData(ctx context.Context) (info *api.File, err error) {
+	// If using versions and have a version suffix, need to list the directory to find the correct versions
+	if o.fs.opt.Versions {
+		timestamp, _ := api.RemoveVersion(o.remote)
+		if !timestamp.IsZero() {
+			return o.getMetaDataListing(ctx)
+		}
+	}
+	_, info, err = o.getOrHead(ctx, "HEAD", nil)
+	return info, err
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
@@ -1659,12 +1677,11 @@ func (file *openFile) Close() (err error) {
 // Check it satisfies the interfaces
 var _ io.ReadCloser = &openFile{}
 
-// Open an object for read
-func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	fs.FixRangeOption(options, o.size)
+func (o *Object) getOrHead(ctx context.Context, method string, options []fs.OpenOption) (resp *http.Response, info *api.File, err error) {
 	opts := rest.Opts{
-		Method:  "GET",
-		Options: options,
+		Method:     method,
+		Options:    options,
+		NoResponse: method == "HEAD",
 	}
 
 	// Use downloadUrl from backblaze if downloadUrl is not set
@@ -1682,36 +1699,66 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		bucket, bucketPath := o.split()
 		opts.Path += "/file/" + urlEncode(o.fs.opt.Enc.FromStandardName(bucket)) + "/" + urlEncode(o.fs.opt.Enc.FromStandardPath(bucketPath))
 	}
-	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to open for download")
+		// 404 for files, 400 for directories
+		if resp != nil && (resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusBadRequest) {
+			return nil, nil, fs.ErrorObjectNotFound
+		}
+		return nil, nil, errors.Wrapf(err, "failed to %s for download", method)
 	}
 
-	// Parse the time out of the headers if possible
-	err = o.parseTimeString(resp.Header.Get(timeHeader))
+	// NB resp may be Open here - don't return err != nil without closing
+
+	// Convert the Headers into an api.File
+	var uploadTimestamp api.Timestamp
+	err = uploadTimestamp.UnmarshalJSON([]byte(resp.Header.Get(timestampHeader)))
+	if err != nil {
+		fs.Debugf(o, "Bad "+timestampHeader+" header: %v", err)
+	}
+	var Info = make(map[string]string)
+	for k, vs := range resp.Header {
+		k = strings.ToLower(k)
+		for _, v := range vs {
+			if strings.HasPrefix(k, headerPrefix) {
+				Info[k[len(headerPrefix):]] = v
+			}
+		}
+	}
+	info = &api.File{
+		ID:              resp.Header.Get(idHeader),
+		Name:            resp.Header.Get(nameHeader),
+		Action:          "upload",
+		Size:            resp.ContentLength,
+		UploadTimestamp: uploadTimestamp,
+		SHA1:            resp.Header.Get(sha1Header),
+		ContentType:     resp.Header.Get("Content-Type"),
+		Info:            Info,
+	}
+	return resp, info, nil
+}
+
+// Open an object for read
+func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	fs.FixRangeOption(options, o.size)
+
+	resp, info, err := o.getOrHead(ctx, "GET", options)
+	if err != nil {
+		return nil, err
+	}
+
+	// Don't check length or hash or metadata on partial content
+	if resp.StatusCode == http.StatusPartialContent {
+		return resp.Body, nil
+	}
+
+	err = o.decodeMetaData(info)
 	if err != nil {
 		_ = resp.Body.Close()
 		return nil, err
-	}
-	// Read sha1 from header if it isn't set
-	if o.sha1 == "" {
-		o.sha1 = resp.Header.Get(sha1Header)
-		fs.Debugf(o, "Reading sha1 from header - %q", o.sha1)
-		// if sha1 header is "none" (in big files), then need
-		// to read it from the metadata
-		if o.sha1 == "none" {
-			o.sha1 = resp.Header.Get(sha1InfoHeader)
-			fs.Debugf(o, "Reading sha1 from info - %q", o.sha1)
-		}
-		o.sha1 = cleanSHA1(o.sha1)
-	}
-	// Don't check length or hash on partial content
-	if resp.StatusCode == http.StatusPartialContent {
-		return resp.Body, nil
 	}
 	return newOpenFile(o, resp), nil
 }
