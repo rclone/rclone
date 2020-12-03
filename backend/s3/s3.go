@@ -869,6 +869,12 @@ isn't set then "acl" is used instead.`,
 				Help:  "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.",
 			}},
 		}, {
+			Name:     "requester_pays",
+			Help:     "Enables requester pays option when interacting with S3 bucket.",
+			Provider: "AWS",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "server_side_encryption",
 			Help:     "The server-side encryption algorithm used when storing this object in S3.",
 			Provider: "AWS,Ceph,Minio",
@@ -1253,6 +1259,7 @@ type Options struct {
 	LocationConstraint    string               `config:"location_constraint"`
 	ACL                   string               `config:"acl"`
 	BucketACL             string               `config:"bucket_acl"`
+	RequesterPays         bool                 `config:"requester_pays"`
 	ServerSideEncryption  string               `config:"server_side_encryption"`
 	SSEKMSKeyID           string               `config:"sse_kms_key_id"`
 	SSECustomerAlgorithm  string               `config:"sse_customer_algorithm"`
@@ -1793,6 +1800,9 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		if urlEncodeListings {
 			req.EncodingType = aws.String(s3.EncodingTypeUrl)
 		}
+		if f.opt.RequesterPays {
+			req.RequestPayer = aws.String(s3.RequestPayerRequester)
+		}
 		var resp *s3.ListObjectsOutput
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
@@ -2168,6 +2178,9 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 	req.Key = &dstPath
 	source := pathEscape(path.Join(srcBucket, srcPath))
 	req.CopySource = &source
+	if f.opt.RequesterPays {
+		req.RequestPayer = aws.String(s3.RequestPayerRequester)
+	}
 	if f.opt.ServerSideEncryption != "" {
 		req.ServerSideEncryption = &f.opt.ServerSideEncryption
 	}
@@ -2739,6 +2752,9 @@ func (o *Object) headObject(ctx context.Context) (resp *s3.HeadObjectOutput, err
 		Bucket: &bucket,
 		Key:    &bucketPath,
 	}
+	if o.fs.opt.RequesterPays {
+		req.RequestPayer = aws.String(s3.RequestPayerRequester)
+	}
 	if o.fs.opt.SSECustomerAlgorithm != "" {
 		req.SSECustomerAlgorithm = &o.fs.opt.SSECustomerAlgorithm
 	}
@@ -2857,6 +2873,9 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		Metadata:          o.meta,
 		MetadataDirective: aws.String(s3.MetadataDirectiveReplace), // replace metadata with that passed in
 	}
+	if o.fs.opt.RequesterPays {
+		req.RequestPayer = aws.String(s3.RequestPayerRequester)
+	}
 	return o.fs.copy(ctx, &req, bucket, bucketPath, bucket, bucketPath, o)
 }
 
@@ -2871,6 +2890,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	req := s3.GetObjectInput{
 		Bucket: &bucket,
 		Key:    &bucketPath,
+	}
+	if o.fs.opt.RequesterPays {
+		req.RequestPayer = aws.String(s3.RequestPayerRequester)
 	}
 	if o.fs.opt.SSECustomerAlgorithm != "" {
 		req.SSECustomerAlgorithm = &o.fs.opt.SSECustomerAlgorithm
@@ -3156,6 +3178,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if md5sum != "" {
 		req.ContentMD5 = &md5sum
 	}
+	if o.fs.opt.RequesterPays {
+		req.RequestPayer = aws.String(s3.RequestPayerRequester)
+	}
 	if o.fs.opt.ServerSideEncryption != "" {
 		req.ServerSideEncryption = &o.fs.opt.ServerSideEncryption
 	}
@@ -3275,6 +3300,9 @@ func (o *Object) Remove(ctx context.Context) error {
 	req := s3.DeleteObjectInput{
 		Bucket: &bucket,
 		Key:    &bucketPath,
+	}
+	if o.fs.opt.RequesterPays {
+		req.RequestPayer = aws.String(s3.RequestPayerRequester)
 	}
 	err := o.fs.pacer.Call(func() (bool, error) {
 		_, err := o.fs.c.DeleteObjectWithContext(ctx, &req)
