@@ -23,7 +23,7 @@ jobs:
               id: actual_major_version
               run: echo ::set-output name=ACTUAL_MAJOR_VERSION::$(echo $GITHUB_REF | cut -d / -f 3 | sed 's/v//g' | cut -d "." -f 1)
             - name: Build and publish image
-              uses: ilteoood/docker_buildx@cdfa422f87c26584dc0fa16bd52a44fb6bfa8ff6
+              uses: ilteoood/docker_buildx@1.1.0
               with:
                 tag: latest,${{ steps.actual_patch_version.outputs.ACTUAL_PATCH_VERSION }},${{ steps.actual_minor_version.outputs.ACTUAL_MINOR_VERSION }},${{ steps.actual_major_version.outputs.ACTUAL_MAJOR_VERSION }}
                 imageName: rclone/rclone
