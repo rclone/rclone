@@ -10,8 +10,10 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -21,6 +23,7 @@ import (
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
+	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -33,6 +36,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
@@ -74,6 +78,20 @@ func init() {
 		Options: []fs.Option{{
 			Name: "account",
 			Help: "Storage Account Name (leave blank to use SAS URL or Emulator)",
+		}, {
+			Name: "service_principal_file",
+			Help: `Path to file containing credentials for use with a service principal.
+
+Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
+
+    $ az sp create-for-rbac --name "<name>" \
+      --role "Storage Blob Data Owner" \
+      --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
+      > azure-principal.json
+
+See [Use Azure CLI to assign an Azure role for access to blob and queue data](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli)
+for more details.
+`,
 		}, {
 			Name: "key",
 			Help: "Storage Account Key (leave blank to use SAS URL or Emulator)",
@@ -167,19 +185,20 @@ This option controls how often unused buffers will be removed from the pool.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account             string               `config:"account"`
-	Key                 string               `config:"key"`
-	Endpoint            string               `config:"endpoint"`
-	SASURL              string               `config:"sas_url"`
-	UploadCutoff        fs.SizeSuffix        `config:"upload_cutoff"`
-	ChunkSize           fs.SizeSuffix        `config:"chunk_size"`
-	ListChunkSize       uint                 `config:"list_chunk"`
-	AccessTier          string               `config:"access_tier"`
-	UseEmulator         bool                 `config:"use_emulator"`
-	DisableCheckSum     bool                 `config:"disable_checksum"`
-	MemoryPoolFlushTime fs.Duration          `config:"memory_pool_flush_time"`
-	MemoryPoolUseMmap   bool                 `config:"memory_pool_use_mmap"`
-	Enc                 encoder.MultiEncoder `config:"encoding"`
+	Account              string               `config:"account"`
+	ServicePrincipalFile string               `config:"service_principal_file"`
+	Key                  string               `config:"key"`
+	Endpoint             string               `config:"endpoint"`
+	SASURL               string               `config:"sas_url"`
+	UploadCutoff         fs.SizeSuffix        `config:"upload_cutoff"`
+	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
+	ListChunkSize        uint                 `config:"list_chunk"`
+	AccessTier           string               `config:"access_tier"`
+	UseEmulator          bool                 `config:"use_emulator"`
+	DisableCheckSum      bool                 `config:"disable_checksum"`
+	MemoryPoolFlushTime  fs.Duration          `config:"memory_pool_flush_time"`
+	MemoryPoolUseMmap    bool                 `config:"memory_pool_use_mmap"`
+	Enc                  encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote azure server
@@ -354,6 +373,50 @@ func httpClientFactory(client *http.Client) pipeline.Factory {
 	})
 }
 
+type servicePrincipalCredentials struct {
+	AppID    string `json:"appId"`
+	Password string `json:"password"`
+	Tenant   string `json:"tenant"`
+}
+
+const azureActiveDirectoryEndpoint = "https://login.microsoftonline.com/"
+const azureStorageEndpoint = "https://storage.azure.com/"
+
+// newServicePrincipalTokenRefresher takes the client ID and secret, and returns a refresh-able access token.
+func newServicePrincipalTokenRefresher(ctx context.Context, credentialsData []byte) (azblob.TokenRefresher, error) {
+	var spCredentials servicePrincipalCredentials
+	if err := json.Unmarshal(credentialsData, &spCredentials); err != nil {
+		return nil, errors.Wrap(err, "error parsing credentials from JSON file")
+	}
+	oauthConfig, err := adal.NewOAuthConfig(azureActiveDirectoryEndpoint, spCredentials.Tenant)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating oauth config")
+	}
+
+	// Create service principal token for Azure Storage.
+	servicePrincipalToken, err := adal.NewServicePrincipalToken(
+		*oauthConfig,
+		spCredentials.AppID,
+		spCredentials.Password,
+		azureStorageEndpoint)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating service principal token")
+	}
+
+	// Wrap token inside a refresher closure.
+	var tokenRefresher azblob.TokenRefresher = func(credential azblob.TokenCredential) time.Duration {
+		if err := servicePrincipalToken.Refresh(); err != nil {
+			panic(err)
+		}
+		refreshedToken := servicePrincipalToken.Token()
+		credential.SetToken(refreshedToken.AccessToken)
+		exp := refreshedToken.Expires().Sub(time.Now().Add(2 * time.Minute))
+		return exp
+	}
+
+	return tokenRefresher, nil
+}
+
 // newPipeline creates a Pipeline using the specified credentials and options.
 //
 // this code was copied from azblob.NewPipeline
@@ -484,8 +547,27 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		} else {
 			serviceURL = azblob.NewServiceURL(*u, pipeline)
 		}
+	case opt.ServicePrincipalFile != "":
+		// Create a standard URL.
+		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+		}
+		// Try loading service principal credentials from file.
+		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
+		if err != nil {
+			return nil, errors.Wrap(err, "error opening service principal credentials file")
+		}
+		// Create a token refresher from service principal credentials.
+		tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, loadedCreds)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create a service principal token")
+		}
+		options := azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}}
+		pipe := f.newPipeline(azblob.NewTokenCredential("", tokenRefresher), options)
+		serviceURL = azblob.NewServiceURL(*u, pipe)
 	default:
-		return nil, errors.New("Need account+key or connectionString or sasURL")
+		return nil, errors.New("Need account+key or connectionString or sasURL or servicePrincipalFile")
 	}
 	f.svcURL = &serviceURL
 
