@@ -999,6 +999,16 @@ func Run(t *testing.T, opt *Opt) {
 				file1.Check(t, obj, f.Precision())
 			})
 
+			// FsNewObjectCaseInsensitive tests NewObject on a case insensitive file system
+			t.Run("FsNewObjectCaseInsensitive", func(t *testing.T) {
+				skipIfNotOk(t)
+				if !f.Features().CaseInsensitive {
+					t.Skip("Not Case Insensitive")
+				}
+				obj := findObject(ctx, t, f, strings.ToUpper(file1.Path))
+				file1.Check(t, obj, f.Precision())
+			})
+
 			// TestFsListFile1and2 tests two files present
 			t.Run("FsListFile1and2", func(t *testing.T) {
 				skipIfNotOk(t)
