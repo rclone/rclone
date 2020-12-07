@@ -264,7 +264,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Fi
 	}
 
 	found, err := f.listAll(ctx, directoryID, func(item *api.File) bool {
-		if item.Name == leaf {
+		if strings.EqualFold(item.Name, leaf) {
 			info = item
 			return true
 		}
