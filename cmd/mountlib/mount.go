@@ -297,6 +297,33 @@ must be with just a single backslash prefix in this case.
 
 See also [Limitations](#limitations) section below.
 
+#### Windows filesystem permissions
+
+The FUSE emulation layer on Windows must convert between the POSIX-based
+permission model used in FUSE, and the permission model used in Windows,
+based on access-control lists (ACL).
+
+The mounted filesystem will normally get three entries in its access-control list (ACL),
+representing permissions for the POSIX permission scopes: Owner, group and others.
+By default, the owner and group will be taken from the current user, and the built-in
+group "Everyone" will be used to represent others. The user/group can be customized
+with FUSE options "UserName" and "GroupName",
+e.g. ` + "`-o UserName=user123 -o GroupName=\"Authenticated Users\"`" + `.
+
+The permissions on each entry will be set according to
+[options](#options) ` + "`--dir-perms`" + ` and ` + "`--file-perms`" + `,
+which takes a value in traditional [numeric notation](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation),
+where the default corresponds to ` + "`--file-perms 0666 --dir-perms 0777`" + `.
+
+Note that the mapping of permissions is not always trivial, and the result
+you see in Windows Explorer may not be exactly like you expected.
+For example, when setting a value that includes write access, this will be
+mapped to individual permissions "write attributes", "write data" and "append data",
+but not "write extended attributes" (WinFsp does not support extended attributes,
+see [this](https://github.com/billziss-gh/winfsp/wiki/NTFS-Compatibility)).
+Windows will then show this as basic permission "Special" instead of "Write",
+because "Write" includes the "write extended attributes" permission.
+
 #### Windows caveats
 
 Note that drives created as Administrator are not visible by other
@@ -382,7 +409,7 @@ after the mountpoint has been successfully set up.
 Units having the rclone ` + commandName + ` service specified as a requirement
 will see all files and folders immediately in this mode.
 
-### chunked reading ###
+### chunked reading
 
 ` + "`--vfs-read-chunk-size`" + ` will enable reading the source objects in parts.
 This can reduce the used download quota for some remotes by requesting only chunks
