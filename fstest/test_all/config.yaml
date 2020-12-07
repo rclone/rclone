@@ -294,6 +294,3 @@ backends:
  - backend:  "tardigrade"
    remote:   "TestTardigrade:"
    fastlist: true
- - backend:  "filefabric"
-   remote:   "TestFileFabric:"
-   fastlist: false
