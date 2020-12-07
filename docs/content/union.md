@@ -19,11 +19,11 @@ e.g. `remote:directory/subdirectory:ro` or `remote:directory/subdirectory:nc`.
 
 Subfolders can be used in upstream remotes. Assume a union remote named `backup`
 with the remotes `mydrive:private/backup`. Invoking `rclone mkdir backup:desktop`
-is exactly the same as invoking `rclone mkdir mydrive2:/backup/desktop`.
+is exactly the same as invoking `rclone mkdir mydrive:private/backup/desktop`.
 
 There will be no special handling of paths containing `..` segments.
 Invoking `rclone mkdir backup:../desktop` is exactly the same as invoking
-`rclone mkdir mydrive2:/backup/../desktop`.
+`rclone mkdir mydrive:private/backup/../desktop`.
 
 ### Behavior / Policies
 
@@ -119,7 +119,7 @@ Storage> union
 List of space separated upstreams.
 Can be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.
 Enter a string value. Press Enter for the default ("").
-upstreams>
+upstreams> remote1:dir1 remote2:dir2 remote3:dir3
 Policy to choose upstream on ACTION class.
 Enter a string value. Press Enter for the default ("epall").
 action_policy>
@@ -136,7 +136,7 @@ Remote config
 --------------------
 [remote]
 type = union
-upstreams = C:\dir1 C:\dir2 C:\dir3
+upstreams = remote1:dir1 remote2:dir2 remote3:dir3
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -160,15 +160,15 @@ e/n/d/r/c/s/q> q
 
 Once configured you can then use `rclone` like this,
 
-List directories in top level in `C:\dir1`, `C:\dir2` and `C:\dir3`
+List directories in top level in `remote1:dir1`, `remote2:dir2` and `remote3:dir3`
 
     rclone lsd remote:
 
-List all the files in `C:\dir1`, `C:\dir2` and `C:\dir3`
+List all the files in `remote1:dir1`, `remote2:dir2` and `remote3:dir3`
 
     rclone ls remote:
 
-Copy another local directory to the union directory called source, which will be placed into `C:\dir3`
+Copy another local directory to the union directory called source, which will be placed into `remote3:dir3`
 
     rclone copy C:\source remote:source
 
