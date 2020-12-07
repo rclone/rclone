@@ -9,11 +9,56 @@ import (
 	"github.com/pkg/errors"
 )
 
+// BwPair represents an upload and a download bandwidth
+type BwPair struct {
+	Tx SizeSuffix // upload bandwidth
+	Rx SizeSuffix // download bandwidth
+}
+
+// String returns a printable representation of a BwPair
+func (bp *BwPair) String() string {
+	var out strings.Builder
+	out.WriteString(bp.Tx.String())
+	if bp.Rx != bp.Tx {
+		out.WriteRune(':')
+		out.WriteString(bp.Rx.String())
+	}
+	return out.String()
+}
+
+// Set the bandwidth from a string which is either
+// SizeSuffix or SizeSuffix:SizeSuffix (for tx:rx bandwidth)
+func (bp *BwPair) Set(s string) (err error) {
+	colon := strings.Index(s, ":")
+	stx, srx := s, ""
+	if colon >= 0 {
+		stx, srx = s[:colon], s[colon+1:]
+	}
+	err = bp.Tx.Set(stx)
+	if err != nil {
+		return err
+	}
+	if colon < 0 {
+		bp.Rx = bp.Tx
+	} else {
+		err = bp.Rx.Set(srx)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// IsSet returns true if either of the bandwidth limits are set
+func (bp *BwPair) IsSet() bool {
+	return bp.Tx > 0 || bp.Rx > 0
+}
+
 // BwTimeSlot represents a bandwidth configuration at a point in time.
 type BwTimeSlot struct {
 	DayOfTheWeek int
 	HHMM         int
-	Bandwidth    SizeSuffix
+	Bandwidth    BwPair
 }
 
 // BwTimetable contains all configured time slots.
@@ -21,11 +66,18 @@ type BwTimetable []BwTimeSlot
 
 // String returns a printable representation of BwTimetable.
 func (x BwTimetable) String() string {
-	ret := []string{}
+	var out strings.Builder
+	bwOnly := len(x) == 1 && x[0].DayOfTheWeek == 0 && x[0].HHMM == 0
 	for _, ts := range x {
-		ret = append(ret, fmt.Sprintf("%s-%04.4d,%s", time.Weekday(ts.DayOfTheWeek), ts.HHMM, ts.Bandwidth.String()))
+		if out.Len() != 0 {
+			out.WriteRune(' ')
+		}
+		if !bwOnly {
+			_, _ = fmt.Fprintf(&out, "%s-%02d:%02d,", time.Weekday(ts.DayOfTheWeek).String()[:3], ts.HHMM/100, ts.HHMM%100)
+		}
+		out.WriteString(ts.Bandwidth.String())
 	}
-	return strings.Join(ret, " ")
+	return out.String()
 }
 
 // Basic hour format checking
@@ -174,7 +226,7 @@ func timeDiff(lateDayOfWeekHHMM int, earlyDayOfWeekHHMM int) int {
 func (x BwTimetable) LimitAt(tt time.Time) BwTimeSlot {
 	// If the timetable is empty, we return an unlimited BwTimeSlot starting at Sunday midnight.
 	if len(x) == 0 {
-		return BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: -1}
+		return BwTimeSlot{Bandwidth: BwPair{-1, -1}}
 	}
 
 	dayOfWeekHHMM := int(tt.Weekday())*10000 + tt.Hour()*100 + tt.Minute()

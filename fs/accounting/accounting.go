@@ -90,7 +90,7 @@ func newAccountSizeName(ctx context.Context, stats *StatsInfo, in io.ReadCloser,
 		acc.values.max = int64((acc.ci.MaxTransfer))
 	}
 	currLimit := acc.ci.BwLimitFile.LimitAt(time.Now())
-	if currLimit.Bandwidth > 0 {
+	if currLimit.Bandwidth.IsSet() {
 		fs.Debugf(acc.name, "Limiting file transfer to %v", currLimit.Bandwidth)
 		acc.tokenBucket = newTokenBucket(currLimit.Bandwidth)
 	}

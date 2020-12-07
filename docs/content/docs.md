@@ -359,59 +359,81 @@ it will give an error.
 
 ### --bwlimit=BANDWIDTH_SPEC ###
 
-This option controls the bandwidth limit. Limits can be specified
-in two ways: As a single limit, or as a timetable.
+This option controls the bandwidth limit. For example
 
-Single limits last for the duration of the session. To use a single limit,
-specify the desired bandwidth in kBytes/s, or use a suffix b|k|M|G.  The
-default is `0` which means to not limit bandwidth.
+    --bwlimit 10M
+    
+would mean limit the upload and download bandwidth to 10 Mbyte/s.
+**NB** this is **bytes** per second not **bits** per second. To use a
+single limit, specify the desired bandwidth in kBytes/s, or use a
+suffix b|k|M|G. The default is `0` which means to not limit bandwidth.
 
-For example, to limit bandwidth usage to 10 MBytes/s use `--bwlimit 10M`
+The upload and download bandwidth can be specified seperately, as
+`--bwlimit UP:DOWN`, so
 
-It is also possible to specify a "timetable" of limits, which will cause
-certain limits to be applied at certain times. To specify a timetable, format your
-entries as `WEEKDAY-HH:MM,BANDWIDTH WEEKDAY-HH:MM,BANDWIDTH...` where:
-`WEEKDAY` is optional element.
-It could be written as whole world or only using 3 first characters.
-`HH:MM` is an hour from 00:00 to 23:59.
+    --bwlimit 10M:100k
+
+would mean limit the upload bandwidth to 10 Mbyte/s and the download
+bandwidth to 100 kByte/s. Either limit can be "off" meaning no limit, so
+to just limit the upload bandwidth you would use
+
+    --bwlimit 10M:off
+
+this would limit the upload bandwidth to 10MByte/s but the download
+bandwidth would be unlimited.
+
+When specified as above the bandwidth limits last for the duration of
+run of the rclone binary.
+
+It is also possible to specify a "timetable" of limits, which will
+cause certain limits to be applied at certain times. To specify a
+timetable, format your entries as `WEEKDAY-HH:MM,BANDWIDTH
+WEEKDAY-HH:MM,BANDWIDTH...` where: `WEEKDAY` is optional element.
+
+- `BANDWIDTH` can be a single number, e.g.`100k` or a pair of numbers
+for upload:download, e.g.`10M:1M`.
+- `WEEKDAY` can be written as the whole word or only using the first 3
+  characters. It is optional.
+- `HH:MM` is an hour from 00:00 to 23:59.
 
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
 
-`--bwlimit "08:00,512 12:00,10M 13:00,512 18:00,30M 23:00,off"`
+`--bwlimit "08:00,512k 12:00,10M 13:00,512k 18:00,30M 23:00,off"`
 
-In this example, the transfer bandwidth will be every day set to 512kBytes/sec at 8am.
-At noon, it will raise to 10Mbytes/s, and drop back to 512kBytes/sec at 1pm.
-At 6pm, the bandwidth limit will be set to 30MBytes/s, and at 11pm it will be
-completely disabled (full speed). Anything between 11pm and 8am will remain
-unlimited.
+In this example, the transfer bandwidth will be set to 512kBytes/sec
+at 8am every day. At noon, it will rise to 10Mbytes/s, and drop back
+to 512kBytes/sec at 1pm. At 6pm, the bandwidth limit will be set to
+30MBytes/s, and at 11pm it will be completely disabled (full speed).
+Anything between 11pm and 8am will remain unlimited.
 
 An example of timetable with `WEEKDAY` could be:
 
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
 
-It mean that, the transfer bandwidth will be set to 512kBytes/sec on Monday.
-It will raise to 10Mbytes/s before the end of Friday. 
-At 10:00 on Sunday it will be set to 1Mbyte/s.
-From 20:00 at Sunday will be unlimited.
+It means that, the transfer bandwidth will be set to 512kBytes/sec on
+Monday. It will rise to 10Mbytes/s before the end of Friday. At 10:00
+on Saturday it will be set to 1Mbyte/s. From 20:00 on Sunday it will
+be unlimited.
 
-Timeslots without weekday are extended to whole week.
-So this one example:
+Timeslots without `WEEKDAY` are extended to the whole week. So this
+example:
 
 `--bwlimit "Mon-00:00,512 12:00,1M Sun-20:00,off"`
 
-Is equal to this:
+Is equivalent to this:
 
 `--bwlimit "Mon-00:00,512Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"`
 
-Bandwidth limits only apply to the data transfer. They don't apply to the
-bandwidth of the directory listings etc.
+Bandwidth limit apply to the data transfer for all backends. For most
+backends the directory listing bandwidth is also included (exceptions
+being the non HTTP backends, `ftp`, `sftp` and `tardigrade`).
 
-Note that the units are Bytes/s, not Bits/s.  Typically connections are
-measured in Bits/s - to convert divide by 8.  For example, let's say
-you have a 10 Mbit/s connection and you wish rclone to use half of it
-- 5 Mbit/s.  This is 5/8 = 0.625MByte/s so you would use a `--bwlimit
-0.625M` parameter for rclone.
+Note that the units are **Bytes/s**, not **Bits/s**. Typically
+connections are measured in Bits/s - to convert divide by 8. For
+example, let's say you have a 10 Mbit/s connection and you wish rclone
+to use half of it - 5 Mbit/s. This is 5/8 = 0.625MByte/s so you would
+use a `--bwlimit 0.625M` parameter for rclone.
 
 On Unix systems (Linux, macOS, …) the bandwidth limiter can be toggled by
 sending a `SIGUSR2` signal to rclone. This allows to remove the limitations

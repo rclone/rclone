@@ -55,17 +55,32 @@ func (bs *buckets) _setOff() {
 
 const maxBurstSize = 4 * 1024 * 1024 // must be bigger than the biggest request
 
-// make a new empty token bucket with the bandwidth given
-func newTokenBucket(bandwidth fs.SizeSuffix) (newTokenBucket buckets) {
-	for i := range newTokenBucket {
-		newTokenBucket[i] = rate.NewLimiter(rate.Limit(bandwidth), maxBurstSize)
-		// empty the bucket
-		err := newTokenBucket[i].WaitN(context.Background(), maxBurstSize)
-		if err != nil {
-			fs.Errorf(nil, "Failed to empty token bucket: %v", err)
+// make a new empty token bucket with the bandwidth(s) given
+func newTokenBucket(bandwidth fs.BwPair) (tbs buckets) {
+	bandwidthAccounting := fs.SizeSuffix(-1)
+	if bandwidth.Tx > 0 {
+		tbs[TokenBucketSlotTransportTx] = rate.NewLimiter(rate.Limit(bandwidth.Tx), maxBurstSize)
+		bandwidthAccounting = bandwidth.Tx
+	}
+	if bandwidth.Rx > 0 {
+		tbs[TokenBucketSlotTransportRx] = rate.NewLimiter(rate.Limit(bandwidth.Rx), maxBurstSize)
+		if bandwidth.Rx > bandwidthAccounting {
+			bandwidthAccounting = bandwidth.Rx
 		}
 	}
-	return newTokenBucket
+	if bandwidthAccounting > 0 {
+		tbs[TokenBucketSlotAccounting] = rate.NewLimiter(rate.Limit(bandwidthAccounting), maxBurstSize)
+	}
+	for _, tb := range tbs {
+		if tb != nil {
+			// empty the bucket
+			err := tb.WaitN(context.Background(), maxBurstSize)
+			if err != nil {
+				fs.Errorf(nil, "Failed to empty token bucket: %v", err)
+			}
+		}
+	}
+	return tbs
 }
 
 // StartTokenBucket starts the token bucket if necessary
@@ -74,7 +89,7 @@ func (tb *tokenBucket) StartTokenBucket(ctx context.Context) {
 	defer tb.mu.Unlock()
 	ci := fs.GetConfig(ctx)
 	tb.currLimit = ci.BwLimit.LimitAt(time.Now())
-	if tb.currLimit.Bandwidth > 0 {
+	if tb.currLimit.Bandwidth.IsSet() {
 		tb.curr = newTokenBucket(tb.currLimit.Bandwidth)
 		fs.Infof(nil, "Starting bandwidth limiter at %vBytes/s", &tb.currLimit.Bandwidth)
 
@@ -113,7 +128,7 @@ func (tb *tokenBucket) StartTokenTicker(ctx context.Context) {
 				}
 
 				// Set new bandwidth. If unlimited, set tokenbucket to nil.
-				if limitNow.Bandwidth > 0 {
+				if limitNow.Bandwidth.IsSet() {
 					*targetBucket = newTokenBucket(limitNow.Bandwidth)
 					if tb.toggledOff {
 						fs.Logf(nil, "Scheduled bandwidth change. "+
@@ -140,7 +155,7 @@ func (tb *tokenBucket) LimitBandwidth(i TokenBucketSlot, n int) {
 	tb.mu.RLock()
 
 	// Limit the transfer speed if required
-	if !tb.curr._isOff() {
+	if tb.curr[i] != nil {
 		err := tb.curr[i].WaitN(context.Background(), n)
 		if err != nil {
 			fs.Errorf(nil, "Token bucket error: %v", err)
@@ -151,10 +166,10 @@ func (tb *tokenBucket) LimitBandwidth(i TokenBucketSlot, n int) {
 }
 
 // SetBwLimit sets the current bandwidth limit
-func (tb *tokenBucket) SetBwLimit(bandwidth fs.SizeSuffix) {
+func (tb *tokenBucket) SetBwLimit(bandwidth fs.BwPair) {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
-	if bandwidth > 0 {
+	if bandwidth.IsSet() {
 		tb.curr = newTokenBucket(bandwidth)
 		fs.Logf(nil, "Bandwidth limit set to %v", bandwidth)
 	} else {
@@ -183,13 +198,22 @@ func (tb *tokenBucket) rcBwlimit(ctx context.Context, in rc.Params) (out rc.Para
 	}
 	tb.mu.RLock()
 	bytesPerSecond := int64(-1)
-	if !tb.curr._isOff() {
-		bytesPerSecond = int64(tb.curr[0].Limit())
+	if tb.curr[TokenBucketSlotAccounting] != nil {
+		bytesPerSecond = int64(tb.curr[TokenBucketSlotAccounting].Limit())
+	}
+	var bp = fs.BwPair{Tx: -1, Rx: -1}
+	if tb.curr[TokenBucketSlotTransportTx] != nil {
+		bp.Tx = fs.SizeSuffix(tb.curr[TokenBucketSlotTransportTx].Limit())
+	}
+	if tb.curr[TokenBucketSlotTransportRx] != nil {
+		bp.Rx = fs.SizeSuffix(tb.curr[TokenBucketSlotTransportRx].Limit())
 	}
 	tb.mu.RUnlock()
 	out = rc.Params{
-		"rate":           fs.SizeSuffix(bytesPerSecond).String(),
-		"bytesPerSecond": bytesPerSecond,
+		"rate":             bp.String(),
+		"bytesPerSecond":   bytesPerSecond,
+		"bytesPerSecondTx": int64(bp.Tx),
+		"bytesPerSecondRx": int64(bp.Rx),
 	}
 	return out, nil
 }
@@ -203,18 +227,30 @@ func init() {
 		},
 		Title: "Set the bandwidth limit.",
 		Help: `
-This sets the bandwidth limit to that passed in.
+This sets the bandwidth limit to the string passed in. This should be
+a single bandwidth limit entry or a pair of upload:download bandwidth.
 
 Eg
 
     rclone rc core/bwlimit rate=off
     {
         "bytesPerSecond": -1,
+        "bytesPerSecondTx": -1,
+        "bytesPerSecondRx": -1,
         "rate": "off"
     }
     rclone rc core/bwlimit rate=1M
     {
         "bytesPerSecond": 1048576,
+        "bytesPerSecondTx": 1048576,
+        "bytesPerSecondRx": 1048576,
+        "rate": "1M"
+    }
+    rclone rc core/bwlimit rate=1M:100k
+    {
+        "bytesPerSecond": 1048576,
+        "bytesPerSecondTx": 1048576,
+        "bytesPerSecondRx": 131072,
         "rate": "1M"
     }
 
@@ -224,6 +260,8 @@ If the rate parameter is not supplied then the bandwidth is queried
     rclone rc core/bwlimit
     {
         "bytesPerSecond": 1048576,
+        "bytesPerSecondTx": 1048576,
+        "bytesPerSecondRx": 1048576,
         "rate": "1M"
     }
 

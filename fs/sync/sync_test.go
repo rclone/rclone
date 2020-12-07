@@ -1079,13 +1079,13 @@ func TestSyncWithMaxDuration(t *testing.T) {
 	maxDuration := 250 * time.Millisecond
 	ci.MaxDuration = maxDuration
 	bytesPerSecond := 300
-	accounting.TokenBucket.SetBwLimit(fs.SizeSuffix(bytesPerSecond))
+	accounting.TokenBucket.SetBwLimit(fs.BwPair{Tx: fs.SizeSuffix(bytesPerSecond), Rx: fs.SizeSuffix(bytesPerSecond)})
 	oldTransfers := ci.Transfers
 	ci.Transfers = 1
 	defer func() {
 		ci.MaxDuration = 0 // reset back to default
 		ci.Transfers = oldTransfers
-		accounting.TokenBucket.SetBwLimit(fs.SizeSuffix(0))
+		accounting.TokenBucket.SetBwLimit(fs.BwPair{Tx: -1, Rx: -1})
 	}()
 
 	// 5 files of 60 bytes at 60 bytes/s 5 seconds
