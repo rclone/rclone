@@ -80,9 +80,14 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 		}
 		fRoot = strings.Replace(fRoot, ":", "", -1)
 	}
-	root := file.UNCPath(filepath.Join(config.CacheDir, "vfs", fremote.Name(), fRoot))
+	cacheDir := config.CacheDir
+	cacheDir, err := filepath.Abs(cacheDir)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to make --cache-dir absolute")
+	}
+	root := file.UNCPath(filepath.Join(cacheDir, "vfs", fremote.Name(), fRoot))
 	fs.Debugf(nil, "vfs cache: root is %q", root)
-	metaRoot := file.UNCPath(filepath.Join(config.CacheDir, "vfsMeta", fremote.Name(), fRoot))
+	metaRoot := file.UNCPath(filepath.Join(cacheDir, "vfsMeta", fremote.Name(), fRoot))
 	fs.Debugf(nil, "vfs cache: metadata root is %q", root)
 
 	fcache, err := fscache.Get(root)
