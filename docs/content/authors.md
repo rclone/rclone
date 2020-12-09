@@ -427,3 +427,4 @@ put them back in again.` >}}
   * Deepak Sah <sah.sslpu@gmail.com>
   * Marcin Zelent <marcin@zelent.net>
   * zhucan <zhucan.k8s@gmail.com>
+  * James Lim <james.lim@samsara.com>
