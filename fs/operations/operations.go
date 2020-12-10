@@ -140,6 +140,7 @@ type equalOpt struct {
 	checkSum          bool // if set check checksum+size instead of modtime+size
 	updateModTime     bool // if set update the modtime if hashes identical and checking with modtime+size
 	forceModTimeMatch bool // if set assume modtimes match
+	noCheckSum        bool // if set assume size match and mtime differ, not to check checksum
 }
 
 // default set of options for equal()
@@ -150,6 +151,7 @@ func defaultEqualOpt(ctx context.Context) equalOpt {
 		checkSum:          ci.CheckSum,
 		updateModTime:     !ci.NoUpdateModTime,
 		forceModTimeMatch: false,
+		noCheckSum:        ci.NoCheckSum,
 	}
 }
 
@@ -215,15 +217,17 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 		fs.Debugf(src, "Modification times differ by %s: %v, %v", dt, srcModTime, dstModTime)
 	}
 
-	// Check if the hashes are the same
-	same, ht, _ := CheckHashes(ctx, src, dst)
-	if !same {
-		fs.Debugf(src, "%v differ", ht)
-		return false
-	}
-	if ht == hash.None && !ci.RefreshTimes {
-		// if couldn't check hash, return that they differ
-		return false
+	if !ci.NoCheckSum {
+		// Check if the hashes are the same
+		same, ht, _ := CheckHashes(ctx, src, dst)
+		if !same {
+			fs.Debugf(src, "%v differ", ht)
+			return false
+		}
+		if ht == hash.None && !ci.RefreshTimes {
+			// if couldn't check hash, return that they differ
+			return false
+		}
 	}
 
 	// mod time differs but hash is the same to reset mod time if required
