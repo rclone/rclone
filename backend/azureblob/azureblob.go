@@ -776,8 +776,26 @@ func (f *Fs) itemToDirEntry(remote string, object *azblob.BlobItemInternal, isDi
 	return o, nil
 }
 
+// Check to see if this is a limited container and the container is not found
+func (f *Fs) containerOK(container string) bool {
+	if !f.isLimited {
+		return true
+	}
+	f.cntURLcacheMu.Lock()
+	defer f.cntURLcacheMu.Unlock()
+	for limitedContainer := range f.cntURLcache {
+		if container == limitedContainer {
+			return true
+		}
+	}
+	return false
+}
+
 // listDir lists a single directory
 func (f *Fs) listDir(ctx context.Context, container, directory, prefix string, addContainer bool) (entries fs.DirEntries, err error) {
+	if !f.containerOK(container) {
+		return nil, fs.ErrorDirNotFound
+	}
 	err = f.list(ctx, container, directory, prefix, addContainer, false, f.opt.ListChunkSize, func(remote string, object *azblob.BlobItemInternal, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
@@ -886,6 +904,9 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			f.cache.MarkOK(container)
 		}
 	} else {
+		if !f.containerOK(container) {
+			return fs.ErrorDirNotFound
+		}
 		err = listR(container, directory, f.rootDirectory, f.rootContainer == "")
 		if err != nil {
 			return err
