@@ -1,18 +1,18 @@
 package fs
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // Check it satisfies the interface
-var _ pflag.Value = (*Duration)(nil)
+var _ flagger = (*Duration)(nil)
 
 func TestParseDuration(t *testing.T) {
 	now := time.Date(2020, 9, 5, 8, 15, 5, 250, time.UTC)
@@ -148,4 +148,41 @@ func TestDurationScan(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, n)
 	assert.Equal(t, Duration(17*60*time.Second), v)
+}
+
+func TestParseUnmarshalJSON(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want time.Duration
+		err  bool
+	}{
+		{`""`, 0, true},
+		{`"0"`, 0, false},
+		{`"1ms"`, time.Millisecond, false},
+		{`"1s"`, time.Second, false},
+		{`"1m"`, time.Minute, false},
+		{`"1h"`, time.Hour, false},
+		{`"1d"`, time.Hour * 24, false},
+		{`"1w"`, time.Hour * 24 * 7, false},
+		{`"1M"`, time.Hour * 24 * 30, false},
+		{`"1y"`, time.Hour * 24 * 365, false},
+		{`"off"`, time.Duration(DurationOff), false},
+		{`"error"`, 0, true},
+		{"0", 0, false},
+		{"1000000", time.Millisecond, false},
+		{"1000000000", time.Second, false},
+		{"60000000000", time.Minute, false},
+		{"3600000000000", time.Hour, false},
+		{"9223372036854775807", time.Duration(DurationOff), false},
+		{"error", 0, true},
+	} {
+		var duration Duration
+		err := json.Unmarshal([]byte(test.in), &duration)
+		if test.err {
+			require.Error(t, err, test.in)
+		} else {
+			require.NoError(t, err, test.in)
+		}
+		assert.Equal(t, Duration(test.want), duration, test.in)
+	}
 }

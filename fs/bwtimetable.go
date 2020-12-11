@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -263,4 +264,20 @@ func (x BwTimetable) LimitAt(tt time.Time) BwTimeSlot {
 // Type of the value
 func (x BwTimetable) Type() string {
 	return "BwTimetable"
+}
+
+// UnmarshalJSON unmarshals a string value
+func (x *BwTimetable) UnmarshalJSON(in []byte) error {
+	var s string
+	err := json.Unmarshal(in, &s)
+	if err != nil {
+		return err
+	}
+	return x.Set(s)
+}
+
+// MarshalJSON marshals as a string value
+func (x BwTimetable) MarshalJSON() ([]byte, error) {
+	s := x.String()
+	return json.Marshal(s)
 }

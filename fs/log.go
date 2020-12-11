@@ -69,6 +69,17 @@ func (l *LogLevel) Type() string {
 	return "string"
 }
 
+// UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
+func (l *LogLevel) UnmarshalJSON(in []byte) error {
+	return UnmarshalJSONFlag(in, l, func(i int64) error {
+		if i < 0 || i >= int64(LogLevel(len(logLevelToString))) {
+			return errors.Errorf("Unknown log level %d", i)
+		}
+		*l = (LogLevel)(i)
+		return nil
+	})
+}
+
 // LogPrint sends the text to the logger of level
 var LogPrint = func(level LogLevel, text string) {
 	text = fmt.Sprintf("%-6s: %s", level, text)

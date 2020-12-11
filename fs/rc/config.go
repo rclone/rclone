@@ -89,17 +89,18 @@ changed like this.
 
 For example:
 
-This sets DEBUG level logs (-vv)
+This sets DEBUG level logs (-vv) (these can be set by number or string)
 
+    rclone rc options/set --json '{"main": {"LogLevel": "DEBUG"}}'
     rclone rc options/set --json '{"main": {"LogLevel": 8}}'
 
 And this sets INFO level logs (-v)
 
-    rclone rc options/set --json '{"main": {"LogLevel": 7}}'
+    rclone rc options/set --json '{"main": {"LogLevel": "INFO"}}'
 
 And this sets NOTICE level logs (normal without -v)
 
-    rclone rc options/set --json '{"main": {"LogLevel": 6}}'
+    rclone rc options/set --json '{"main": {"LogLevel": "NOTICE"}}'
 `,
 	})
 }

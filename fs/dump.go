@@ -91,3 +91,11 @@ func (f *DumpFlags) Set(s string) error {
 func (f *DumpFlags) Type() string {
 	return "DumpFlags"
 }
+
+// UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
+func (f *DumpFlags) UnmarshalJSON(in []byte) error {
+	return UnmarshalJSONFlag(in, f, func(i int64) error {
+		*f = (DumpFlags)(i)
+		return nil
+	})
+}

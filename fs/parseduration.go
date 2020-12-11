@@ -196,6 +196,14 @@ func (d Duration) Type() string {
 	return "Duration"
 }
 
+// UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
+func (d *Duration) UnmarshalJSON(in []byte) error {
+	return UnmarshalJSONFlag(in, d, func(i int64) error {
+		*d = Duration(i)
+		return nil
+	})
+}
+
 // Scan implements the fmt.Scanner interface
 func (d *Duration) Scan(s fmt.ScanState, ch rune) error {
 	token, err := s.Token(true, nil)

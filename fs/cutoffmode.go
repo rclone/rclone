@@ -47,3 +47,14 @@ func (m *CutoffMode) Set(s string) error {
 func (m *CutoffMode) Type() string {
 	return "string"
 }
+
+// UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
+func (m *CutoffMode) UnmarshalJSON(in []byte) error {
+	return UnmarshalJSONFlag(in, m, func(i int64) error {
+		if i < 0 || i >= int64(len(cutoffModeToString)) {
+			return errors.Errorf("Out of range cutoff mode %d", i)
+		}
+		*m = (CutoffMode)(i)
+		return nil
+	})
+}

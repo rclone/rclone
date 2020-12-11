@@ -2,6 +2,7 @@ package fs
 
 // SizeSuffix is parsed by flag with k/M/G suffixes
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"sort"
@@ -142,4 +143,31 @@ func (l SizeSuffixList) Less(i, j int) bool { return l[i] < l[j] }
 // Sort sorts the list
 func (l SizeSuffixList) Sort() {
 	sort.Sort(l)
+}
+
+// UnmarshalJSONFlag unmarshals a JSON input for a flag. If the input
+// is a string then it calls the Set method on the flag otherwise it
+// calls the setInt function with a parsed int64.
+func UnmarshalJSONFlag(in []byte, x interface{ Set(string) error }, setInt func(int64) error) error {
+	// Try to parse as string first
+	var s string
+	err := json.Unmarshal(in, &s)
+	if err == nil {
+		return x.Set(s)
+	}
+	// If that fails parse as integer
+	var i int64
+	err = json.Unmarshal(in, &i)
+	if err != nil {
+		return err
+	}
+	return setInt(i)
+}
+
+// UnmarshalJSON makes sure the value can be parsed as a string or integer in JSON
+func (x *SizeSuffix) UnmarshalJSON(in []byte) error {
+	return UnmarshalJSONFlag(in, x, func(i int64) error {
+		*x = SizeSuffix(i)
+		return nil
+	})
 }

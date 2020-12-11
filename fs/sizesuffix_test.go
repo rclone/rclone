@@ -1,6 +1,7 @@
 package fs
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -9,8 +10,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Interface which flags must satisfy - only defined for _test.go
+// since we don't want to pull in pflag here
+type flagger interface {
+	pflag.Value
+	json.Unmarshaler
+}
+
 // Check it satisfies the interface
-var _ pflag.Value = (*SizeSuffix)(nil)
+var _ flagger = (*SizeSuffix)(nil)
 
 func TestSizeSuffixString(t *testing.T) {
 	for _, test := range []struct {
@@ -101,4 +109,38 @@ func TestSizeSuffixScan(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, n)
 	assert.Equal(t, SizeSuffix(17<<20), v)
+}
+
+func TestSizeSuffixUnmarshalJSON(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want int64
+		err  bool
+	}{
+		{`"0"`, 0, false},
+		{`"102B"`, 102, false},
+		{`"1K"`, 1024, false},
+		{`"2.5"`, 1024 * 2.5, false},
+		{`"1M"`, 1024 * 1024, false},
+		{`"1.g"`, 1024 * 1024 * 1024, false},
+		{`"10G"`, 10 * 1024 * 1024 * 1024, false},
+		{`"off"`, -1, false},
+		{`""`, 0, true},
+		{`"1q"`, 0, true},
+		{`"-1K"`, 0, true},
+		{`0`, 0, false},
+		{`102`, 102, false},
+		{`1024`, 1024, false},
+		{`1000000000`, 1000000000, false},
+		{`1.1.1`, 0, true},
+	} {
+		var ss SizeSuffix
+		err := json.Unmarshal([]byte(test.in), &ss)
+		if test.err {
+			require.Error(t, err, test.in)
+		} else {
+			require.NoError(t, err, test.in)
+		}
+		assert.Equal(t, test.want, int64(ss))
+	}
 }

@@ -1,16 +1,16 @@
 package fs
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // Check it satisfies the interface
-var _ pflag.Value = (*BwTimetable)(nil)
+var _ flagger = (*BwTimetable)(nil)
 
 func TestBwTimetableSet(t *testing.T) {
 	for _, test := range []struct {
@@ -462,5 +462,104 @@ func TestBwTimetableLimitAt(t *testing.T) {
 	} {
 		slot := test.tt.LimitAt(test.now)
 		assert.Equal(t, test.want, slot)
+	}
+}
+
+func TestBwTimetableUnmarshalJSON(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want BwTimetable
+		err  bool
+	}{
+		{
+			`"Mon-10:20,bad"`,
+			BwTimetable(nil),
+			true,
+		},
+		{
+			`"0"`,
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 0, Rx: 0}},
+			},
+			false,
+		},
+		{
+			`"666"`,
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+			},
+			false,
+		},
+		{
+			`"666:333"`,
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 333 * 1024}},
+			},
+			false,
+		},
+		{
+			`"10:20,666"`,
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 1, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 2, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 3, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 4, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 5, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 6, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+			},
+			false,
+		},
+	} {
+		var bwt BwTimetable
+		err := json.Unmarshal([]byte(test.in), &bwt)
+		if test.err {
+			require.Error(t, err, test.in)
+		} else {
+			require.NoError(t, err, test.in)
+		}
+		assert.Equal(t, test.want, bwt)
+	}
+}
+
+func TestBwTimetableMarshalJSON(t *testing.T) {
+	for _, test := range []struct {
+		in   BwTimetable
+		want string
+	}{
+		{
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 0, Rx: 0}},
+			},
+			`"0"`,
+		},
+		{
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+			},
+			`"666k"`,
+		},
+		{
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 333 * 1024}},
+			},
+			`"666k:333k"`,
+		},
+		{
+			BwTimetable{
+				BwTimeSlot{DayOfTheWeek: 0, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 1, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 2, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 3, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 4, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 5, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+				BwTimeSlot{DayOfTheWeek: 6, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
+			},
+			`"Sun-10:20,666k Mon-10:20,666k Tue-10:20,666k Wed-10:20,666k Thu-10:20,666k Fri-10:20,666k Sat-10:20,666k"`,
+		},
+	} {
+		got, err := json.Marshal(test.in)
+		require.NoError(t, err, test.want)
+		assert.Equal(t, test.want, string(got))
 	}
 }
