@@ -180,6 +180,17 @@ func TestEncryptFileName(t *testing.T) {
 	assert.Equal(t, "160.\u03c2", c.EncryptFileName("\u03a0"))
 }
 
+func TestCompressFileName(t *testing.T) {
+	// Filename compress on in standard mode
+	c, _ := newCipher(NameEncryptionStandard, "", "", true)
+	assert.Equal(t, "vel9rg44g4cvvfkb30h2gqun3ompvv28gdkbqfen0ga52o3ea82g7trdob92gjk6gjunph1ah38im", c.EncryptFileName("a long long not UNICODE filename"))
+	assert.Equal(t, "s4m9dhma7nnifeenm46j20e6od76m6im1odc8qn71sbc3gabghr0", c.EncryptFileName("長い長いＵＮＩＣＯＤＥファイル名"))
+	// Filename compress disabled in off mode
+	c, _ = newCipher(NameEncryptionOff, "", "", true)
+	assert.Equal(t, "a long long not UNICODE filename.bin", c.EncryptFileName("a long long not UNICODE filename"))
+	assert.Equal(t, "長い長いＵＮＩＣＯＤＥファイル名.bin", c.EncryptFileName("長い長いＵＮＩＣＯＤＥファイル名"))
+}
+
 func TestDecryptFileName(t *testing.T) {
 	for _, test := range []struct {
 		mode           NameEncryptionMode

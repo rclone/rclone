@@ -161,6 +161,8 @@ github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumC
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3ebgob9U8Nd0kOddGdZWjyMGR8Wziv+TBNwSE=
+github.com/dop251/scsu v0.0.0-20200422003335-8fadfb689669 h1:e28M2/odOZjMc1J2ZZwgex6NM9+aqr1nMlTqPLayxbk=
+github.com/dop251/scsu v0.0.0-20200422003335-8fadfb689669/go.mod h1:Gth7Xev0h28tuTayG4HlTZy90IXhiDgV2+MLtJzjpP0=
 github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible h1:DtumzkLk2zZ2SeElEr+VNz+zV7l+BTe509cV4sKPXbM=
 github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible/go.mod h1:lr+LhMM3F6Y3lW1T9j2U5l7QeuWm87N9+PPXo3yH4qY=
 github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=

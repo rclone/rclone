@@ -19,6 +19,7 @@ require (
 	github.com/buengese/sgzip v0.1.0
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/coreos/go-semver v0.3.0
+	github.com/dop251/scsu v0.0.0-20200422003335-8fadfb689669
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
 	github.com/gabriel-vasile/mimetype v1.1.1
 	github.com/gogo/protobuf v1.3.1 // indirect

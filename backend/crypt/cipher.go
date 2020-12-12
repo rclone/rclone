@@ -14,6 +14,7 @@ import (
 	"sync"
 	"unicode/utf8"
 
+	"github.com/dop251/scsu"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/rclone/rclone/fs"
@@ -228,6 +229,18 @@ func (c *Cipher) encryptSegment(plaintext string) string {
 		return ""
 	}
 	paddedPlaintext := pkcs7.Pad(nameCipherBlockSize, []byte(plaintext))
+
+	// Compress unicode string with header '\x00'
+	compressBuf := bytes.NewBuffer([]byte{0})
+	scsuWriter := scsu.NewWriter(compressBuf)
+	scsuWriter.WriteString(plaintext)
+	paddedCompressed := pkcs7.Pad(nameCipherBlockSize, compressBuf.Bytes())
+
+	// Choose a shortest padded data
+	if len(paddedPlaintext) > len(paddedCompressed) {
+		paddedPlaintext = paddedCompressed
+	}
+
 	ciphertext := eme.Transform(c.block, c.nameTweak[:], paddedPlaintext, eme.DirectionEncrypt)
 	return encodeFileName(ciphertext)
 }
@@ -256,7 +269,17 @@ func (c *Cipher) decryptSegment(ciphertext string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(plaintext), err
+	plaintextStr := string(plaintext)
+
+	// De-compress compressed unicode string that has header '\x00'
+	if len(plaintext) > 0 && plaintext[0] == 0 {
+		plaintextStr, err = scsu.Decode(plaintext[1:])
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return plaintextStr, err
 }
 
 // Simple obfuscation routines
