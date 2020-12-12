@@ -36,14 +36,17 @@ func TestJobsKickExpire(t *testing.T) {
 
 func TestJobsExpire(t *testing.T) {
 	testy.SkipUnreliable(t)
+	ctx := context.Background()
 	wait := make(chan struct{})
 	jobs := newJobs()
 	jobs.opt.JobExpireInterval = time.Millisecond
 	assert.Equal(t, false, jobs.expireRunning)
-	job := jobs.NewAsyncJob(func(ctx context.Context, in rc.Params) (rc.Params, error) {
+	job, out, err := jobs.NewJob(ctx, func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		defer close(wait)
 		return in, nil
-	}, rc.Params{})
+	}, rc.Params{"_async": true})
+	require.NoError(t, err)
+	assert.Equal(t, 1, len(out))
 	<-wait
 	assert.Equal(t, 1, len(jobs.jobs))
 	jobs.Expire()
@@ -66,9 +69,12 @@ var noopFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
 }
 
 func TestJobsIDs(t *testing.T) {
+	ctx := context.Background()
 	jobs := newJobs()
-	job1 := jobs.NewAsyncJob(noopFn, rc.Params{})
-	job2 := jobs.NewAsyncJob(noopFn, rc.Params{})
+	job1, _, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
+	require.NoError(t, err)
+	job2, _, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
+	require.NoError(t, err)
 	wantIDs := []int64{job1.ID, job2.ID}
 	gotIDs := jobs.IDs()
 	require.Equal(t, 2, len(gotIDs))
@@ -79,8 +85,10 @@ func TestJobsIDs(t *testing.T) {
 }
 
 func TestJobsGet(t *testing.T) {
+	ctx := context.Background()
 	jobs := newJobs()
-	job := jobs.NewAsyncJob(noopFn, rc.Params{})
+	job, _, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
+	require.NoError(t, err)
 	assert.Equal(t, job, jobs.Get(job.ID))
 	assert.Nil(t, jobs.Get(123123123123))
 }
@@ -125,8 +133,10 @@ func sleepJob() {
 }
 
 func TestJobFinish(t *testing.T) {
+	ctx := context.Background()
 	jobs := newJobs()
-	job := jobs.NewAsyncJob(longFn, rc.Params{})
+	job, _, err := jobs.NewJob(ctx, longFn, rc.Params{"_async": true})
+	require.NoError(t, err)
 	sleepJob()
 
 	assert.Equal(t, true, job.EndTime.IsZero())
@@ -146,7 +156,8 @@ func TestJobFinish(t *testing.T) {
 	assert.Equal(t, true, job.Success)
 	assert.Equal(t, true, job.Finished)
 
-	job = jobs.NewAsyncJob(longFn, rc.Params{})
+	job, _, err = jobs.NewJob(ctx, longFn, rc.Params{"_async": true})
+	require.NoError(t, err)
 	sleepJob()
 	job.finish(nil, nil)
 
@@ -157,7 +168,8 @@ func TestJobFinish(t *testing.T) {
 	assert.Equal(t, true, job.Success)
 	assert.Equal(t, true, job.Finished)
 
-	job = jobs.NewAsyncJob(longFn, rc.Params{})
+	job, _, err = jobs.NewJob(ctx, longFn, rc.Params{"_async": true})
+	require.NoError(t, err)
 	sleepJob()
 	job.finish(wantOut, errors.New("potato"))
 
@@ -172,6 +184,7 @@ func TestJobFinish(t *testing.T) {
 // We've tested the functionality of run() already as it is
 // part of NewJob, now just test the panic catching
 func TestJobRunPanic(t *testing.T) {
+	ctx := context.Background()
 	wait := make(chan struct{})
 	boom := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		sleepJob()
@@ -180,7 +193,8 @@ func TestJobRunPanic(t *testing.T) {
 	}
 
 	jobs := newJobs()
-	job := jobs.NewAsyncJob(boom, rc.Params{})
+	job, _, err := jobs.NewJob(ctx, boom, rc.Params{"_async": true})
+	require.NoError(t, err)
 	<-wait
 	runtime.Gosched() // yield to make sure job is updated
 
@@ -206,42 +220,50 @@ func TestJobRunPanic(t *testing.T) {
 }
 
 func TestJobsNewJob(t *testing.T) {
+	ctx := context.Background()
 	jobID = 0
 	jobs := newJobs()
-	job := jobs.NewAsyncJob(noopFn, rc.Params{})
+	job, out, err := jobs.NewJob(ctx, noopFn, rc.Params{"_async": true})
+	require.NoError(t, err)
 	assert.Equal(t, int64(1), job.ID)
+	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
 	assert.Equal(t, job, jobs.Get(1))
 	assert.NotEmpty(t, job.Stop)
 }
 
 func TestStartJob(t *testing.T) {
+	ctx := context.Background()
 	jobID = 0
-	out, err := StartAsyncJob(longFn, rc.Params{})
+	job, out, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 	assert.Equal(t, rc.Params{"jobid": int64(1)}, out)
+	assert.Equal(t, int64(1), job.ID)
 }
 
 func TestExecuteJob(t *testing.T) {
 	jobID = 0
-	_, id, err := ExecuteJob(context.Background(), shortFn, rc.Params{})
+	job, out, err := NewJob(context.Background(), shortFn, rc.Params{})
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1), id)
+	assert.Equal(t, int64(1), job.ID)
+	assert.Equal(t, rc.Params{}, out)
 }
 
 func TestExecuteJobErrorPropagation(t *testing.T) {
+	ctx := context.Background()
 	jobID = 0
 
 	testErr := errors.New("test error")
 	errorFn := func(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, testErr
 	}
-	_, _, err := ExecuteJob(context.Background(), errorFn, rc.Params{})
+	_, _, err := NewJob(ctx, errorFn, rc.Params{})
 	assert.Equal(t, testErr, err)
 }
 
 func TestRcJobStatus(t *testing.T) {
+	ctx := context.Background()
 	jobID = 0
-	_, err := StartAsyncJob(longFn, rc.Params{})
+	_, _, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
 	call := rc.Calls.Get("job/status")
@@ -267,8 +289,9 @@ func TestRcJobStatus(t *testing.T) {
 }
 
 func TestRcJobList(t *testing.T) {
+	ctx := context.Background()
 	jobID = 0
-	_, err := StartAsyncJob(longFn, rc.Params{})
+	_, _, err := NewJob(ctx, longFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
 	call := rc.Calls.Get("job/list")
@@ -281,8 +304,9 @@ func TestRcJobList(t *testing.T) {
 }
 
 func TestRcAsyncJobStop(t *testing.T) {
+	ctx := context.Background()
 	jobID = 0
-	_, err := StartAsyncJob(ctxFn, rc.Params{})
+	_, _, err := NewJob(ctx, ctxFn, rc.Params{"_async": true})
 	assert.NoError(t, err)
 
 	call := rc.Calls.Get("job/stop")
@@ -320,9 +344,10 @@ func TestRcSyncJobStop(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		jobID = 0
-		_, id, err := ExecuteJob(ctx, ctxFn, rc.Params{})
+		job, out, err := NewJob(ctx, ctxFn, rc.Params{})
 		assert.Error(t, err)
-		assert.Equal(t, int64(1), id)
+		assert.Equal(t, int64(1), job.ID)
+		assert.Equal(t, rc.Params{}, out)
 	}()
 
 	time.Sleep(10 * time.Millisecond)
@@ -363,10 +388,10 @@ func TestOnFinish(t *testing.T) {
 	jobID = 0
 	done := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
-	_, err := StartAsyncJob(ctxParmFn(ctx, false), rc.Params{})
+	job, _, err := NewJob(ctx, ctxParmFn(ctx, false), rc.Params{"_async": true})
 	assert.NoError(t, err)
 
-	stop, err := OnFinish(jobID, func() { close(done) })
+	stop, err := OnFinish(job.ID, func() { close(done) })
 	defer stop()
 	assert.NoError(t, err)
 
@@ -384,10 +409,10 @@ func TestOnFinishAlreadyFinished(t *testing.T) {
 	done := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	_, id, err := ExecuteJob(ctx, shortFn, rc.Params{})
+	job, _, err := NewJob(ctx, shortFn, rc.Params{})
 	assert.NoError(t, err)
 
-	stop, err := OnFinish(id, func() { close(done) })
+	stop, err := OnFinish(job.ID, func() { close(done) })
 	defer stop()
 	assert.NoError(t, err)
 

@@ -16,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fs/rc/jobs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -164,7 +165,7 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 		if call == nil {
 			return nil, errors.Errorf("method %q not found", path)
 		}
-		out, err = call.Fn(context.Background(), in)
+		_, out, err := jobs.NewJob(ctx, call.Fn, in)
 		if err != nil {
 			return nil, errors.Wrap(err, "loopback call failed")
 		}
