@@ -60,7 +60,7 @@ Choose a number from below, or type in your own value
    \ "true"
  2 / Don't encrypt directory names, leave them intact.
    \ "false"
-filename_encryption> 1
+directory_name_encryption> 1
 Password or pass phrase for encryption.
 y) Yes type in my own password
 g) Generate random password
