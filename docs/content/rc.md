@@ -273,6 +273,36 @@ $ rclone rc job/list
 }
 ```
 
+### Setting config flags with _config
+
+If you wish to set config (the equivalent of the global flags) for the
+duration of an rc call only then pass in the `_config` parameter.
+
+This should be in the same format as the `config` key returned by
+[options/get](#options-get).
+
+For example, if you wished to run a sync with the `--checksum`
+parameter, you would pass this parameter in your JSON blob.
+
+    "_config":{"CheckSum": true}
+
+If using `rclone rc` this could be passed as
+
+    rclone rc operations/sync ... _config='{"CheckSum": true}'
+
+Any config parameters you don't set will inherit the global defaults
+which were set with command line flags or environment variables.
+
+Note that it is possible to set some values as strings or integers -
+see [data types](/#data-types) for more info. Here is an example
+setting the equivalent of `--buffer-size` in string or integer format.
+
+    "_config":{"BufferSize": "42M"}
+    "_config":{"BufferSize": 44040192}
+
+If you wish to check the `_config` assignment has worked properly then
+calling `options/local` will show what the value got set to.
+
 ### Assigning operations to groups with _group = value
 
 Each rc call has its own stats group for tracking its metrics. By default
@@ -292,14 +322,14 @@ $ rclone rc --json '{ "group": "job/1" }' core/stats
 }
 ```
 
-## Data types
+## Data types {#data-types}
 
 When the API returns types, these will mostly be straight forward
 integer, string or boolean types.
 
 However some of the types returned by the [options/get](#options-get)
 call and taken by the [options/set](#options-set) calls as well as the
-`vfsOpt` and the `mountOpt` are as follows:
+`vfsOpt`, `mountOpt` and the `_config` parameters.
 
 - `Duration` - these are returned as an integer duration in
   nanoseconds. They may be set as an integer, or they may be set with

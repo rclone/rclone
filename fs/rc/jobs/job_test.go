@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fstest/testy"
@@ -246,6 +247,29 @@ func TestExecuteJob(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), job.ID)
 	assert.Equal(t, rc.Params{}, out)
+}
+
+func TestExecuteJobWithConfig(t *testing.T) {
+	ctx := context.Background()
+	jobID = 0
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		ci := fs.GetConfig(ctx)
+		assert.Equal(t, 42*fs.MebiByte, ci.BufferSize)
+		return nil, nil
+	}
+	_, _, err := NewJob(context.Background(), jobFn, rc.Params{
+		"_config": rc.Params{
+			"BufferSize": "42M",
+		},
+	})
+	require.NoError(t, err)
+	jobID = 0
+	_, _, err = NewJob(ctx, jobFn, rc.Params{
+		"_config": `{"BufferSize": "42M"}`,
+	})
+	require.NoError(t, err)
+	ci := fs.GetConfig(ctx)
+	assert.NotEqual(t, 42*fs.MebiByte, ci.BufferSize)
 }
 
 func TestExecuteJobErrorPropagation(t *testing.T) {

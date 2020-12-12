@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/rc"
 )
@@ -201,12 +202,31 @@ func getAsync(ctx context.Context, in rc.Params) (context.Context, bool, error) 
 	return ctx, isAsync, nil
 }
 
+// See if _config is set and if so adjust ctx to include it
+func getConfig(ctx context.Context, in rc.Params) (context.Context, error) {
+	if _, ok := in["_config"]; !ok {
+		return ctx, nil
+	}
+	ctx, ci := fs.AddConfig(ctx)
+	err := in.GetStruct("_config", ci)
+	if err != nil {
+		return ctx, err
+	}
+	delete(in, "_config") // remove the parameter
+	return ctx, nil
+}
+
 // NewJob creates a Job and executes it, possibly in the background if _async is set
 func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Job, out rc.Params, err error) {
 	id := atomic.AddInt64(&jobID, 1)
 	in = in.Copy() // copy input so we can change it
 
 	ctx, isAsync, err := getAsync(ctx, in)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ctx, err = getConfig(ctx, in)
 	if err != nil {
 		return nil, nil, err
 	}
