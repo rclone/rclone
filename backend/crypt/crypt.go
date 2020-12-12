@@ -65,6 +65,22 @@ NB If filename_encryption is "off" then this option will do nothing.`,
 				},
 			},
 		}, {
+			Name: "filename_compression",
+			Help: `Option to either compress filenames or not.
+
+NB If filename_encryption is not "standard" then this option will do nothing.`,
+			Default: false,
+			Examples: []fs.OptionExample{
+				{
+					Value: "true",
+					Help:  "Compress filenames.",
+				},
+				{
+					Value: "false",
+					Help:  "Don't compress filenames.",
+				},
+			},
+		}, {
 			Name:       "password",
 			Help:       "Password or pass phrase for encryption.",
 			IsPassword: true,
@@ -125,7 +141,7 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 			return nil, errors.Wrap(err, "failed to decrypt password2")
 		}
 	}
-	cipher, err := newCipher(mode, password, salt, opt.DirectoryNameEncryption)
+	cipher, err := newCipher(mode, password, salt, opt.DirectoryNameEncryption, opt.FilenameCompression)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
@@ -209,6 +225,7 @@ type Options struct {
 	Remote                  string `config:"remote"`
 	FilenameEncryption      string `config:"filename_encryption"`
 	DirectoryNameEncryption bool   `config:"directory_name_encryption"`
+	FilenameCompression     bool   `config:"filename_compression"`
 	Password                string `config:"password"`
 	Password2               string `config:"password2"`
 	ServerSideAcrossConfigs bool   `config:"server_side_across_configs"`

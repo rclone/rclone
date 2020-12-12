@@ -123,14 +123,16 @@ type Cipher struct {
 	buffers        sync.Pool // encrypt/decrypt buffers
 	cryptoRand     io.Reader // read crypto random numbers from here
 	dirNameEncrypt bool
+	nameCompress   bool
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
-func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool) (*Cipher, error) {
+func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, nameCompress bool) (*Cipher, error) {
 	c := &Cipher{
 		mode:           mode,
 		cryptoRand:     rand.Reader,
 		dirNameEncrypt: dirNameEncrypt,
+		nameCompress:   nameCompress,
 	}
 	c.buffers.New = func() interface{} {
 		return make([]byte, blockSize)
@@ -230,15 +232,17 @@ func (c *Cipher) encryptSegment(plaintext string) string {
 	}
 	paddedPlaintext := pkcs7.Pad(nameCipherBlockSize, []byte(plaintext))
 
-	// Compress unicode string with header '\x00'
-	compressBuf := bytes.NewBuffer([]byte{0})
-	scsuWriter := scsu.NewWriter(compressBuf)
-	scsuWriter.WriteString(plaintext)
-	paddedCompressed := pkcs7.Pad(nameCipherBlockSize, compressBuf.Bytes())
+	if c.nameCompress {
+		// Compress unicode string with header '\x00'
+		compressBuf := bytes.NewBuffer([]byte{0})
+		scsuWriter := scsu.NewWriter(compressBuf)
+		scsuWriter.WriteString(plaintext)
+		paddedCompressed := pkcs7.Pad(nameCipherBlockSize, compressBuf.Bytes())
 
-	// Choose a shortest padded data
-	if len(paddedPlaintext) > len(paddedCompressed) {
-		paddedPlaintext = paddedCompressed
+		// Choose a shortest padded data
+		if len(paddedPlaintext) > len(paddedCompressed) {
+			paddedPlaintext = paddedCompressed
+		}
 	}
 
 	ciphertext := eme.Transform(c.block, c.nameTweak[:], paddedPlaintext, eme.DirectionEncrypt)
@@ -272,7 +276,7 @@ func (c *Cipher) decryptSegment(ciphertext string) (string, error) {
 	plaintextStr := string(plaintext)
 
 	// De-compress compressed unicode string that has header '\x00'
-	if len(plaintext) > 0 && plaintext[0] == 0 {
+	if c.nameCompress && len(plaintext) > 0 && plaintext[0] == 0 {
 		plaintextStr, err = scsu.Decode(plaintext[1:])
 		if err != nil {
 			return "", err
