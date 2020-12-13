@@ -32,7 +32,7 @@ No remotes found - make a new one
 n) New remote
 s) Set configuration password
 q) Quit config
-n/s/q> n   
+n/s/q> n
 name> secret
 Type of storage to configure.
 Choose a number from below, or type in your own value
@@ -61,6 +61,16 @@ Choose a number from below, or type in your own value
  2 / Don't encrypt directory names, leave them intact.
    \ "false"
 directory_name_encryption> 1
+Option to either compress filenames or not.
+
+NB If filename_encryption is not "standard" then this option will do nothing.
+Enter a boolean value (true or false). Press Enter for the default ("false").
+Choose a number from below, or type in your own value
+ 1 / Compress filenames.
+   \ "true"
+ 2 / Don't compress filenames.
+   \ "false"
+filename_compression> 2
 Password or pass phrase for encryption.
 y) Yes type in my own password
 g) Generate random password
@@ -204,7 +214,10 @@ Off
 Standard
 
   * file names encrypted
-  * file names can't be as long (~143 characters)
+  * file names can't be as long
+    * ASCII (7bits) ~143 characters
+    * Alphabetic (Latin, Cyrillic, etc.) ~71 characters
+    * East-Asian (CJK) ~47 characters
   * can use sub paths and copy single files
   * directory structure visible
   * identical files names will have identical uploaded names
@@ -223,7 +236,7 @@ segment names.
 
 There is a possibility with some unicode based filenames that the
 obfuscation is weak and may map lower case characters to upper case
-equivalents. 
+equivalents.
 
 Obfuscation cannot be relied upon for strong protection.
 
@@ -235,9 +248,14 @@ Obfuscation cannot be relied upon for strong protection.
 
 Cloud storage systems have limits on file name length and
 total path length which rclone is more likely to breach using
-"Standard" file name encryption.  Where file names are less thn 156
+"Standard" file name encryption.  Where file names are less thn 143
 characters in length issues should not be encountered, irrespective of
 cloud storage provider.
+
+If you are using non-ASCII file names, you can use the
+[--crypt-filename-compression](#crypt-filename-compression) option to
+store longer file names.  This feature allows non-ASCII file names to
+be stored up to the same length as ASCII file names.
 
 An alternative, future rclone file name encryption mode may tolerate
 backend provider path length limits.
@@ -320,6 +338,22 @@ NB If filename_encryption is "off" then this option will do nothing.
         - Encrypt directory names.
     - "false"
         - Don't encrypt directory names, leave them intact.
+
+#### --crypt-filename-compression
+
+Option to either compress filenames or not.
+
+NB If filename_encryption is not "standard" then this option will do nothing.
+
+- Config:      filename_compression
+- Env Var:     RCLONE_CRYPT_FILENAME_COMPRESSION
+- Type:        bool
+- Default:     false
+- Examples:
+    - "true"
+        - Compress filenames.
+    - "false"
+        - Don't compress filenames.
 
 #### --crypt-password
 
