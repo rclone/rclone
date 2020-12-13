@@ -130,33 +130,66 @@ func TestSplit(t *testing.T) {
 		}
 	}
 }
+
+func TestMakeAbsolute(t *testing.T) {
+	for _, test := range []struct {
+		in   string
+		want string
+	}{
+		{"", ""},
+		{".", ""},
+		{"/.", "/"},
+		{"../potato", "potato"},
+		{"/../potato", "/potato"},
+		{"./../potato", "potato"},
+		{"//../potato", "/potato"},
+		{"././../potato", "potato"},
+		{"././potato/../../onion", "onion"},
+	} {
+		got := makeAbsolute(test.in)
+		assert.Equal(t, test.want, got, test)
+	}
+}
+
 func TestJoinRootPath(t *testing.T) {
 	for _, test := range []struct {
-		elements []string
+		remote   string
+		filePath string
 		want     string
 	}{
-		{nil, ""},
-		{[]string{""}, ""},
-		{[]string{"/"}, "/"},
-		{[]string{"/", "/"}, "/"},
-		{[]string{"/", "//"}, "/"},
-		{[]string{"/root", ""}, "/root"},
-		{[]string{"/root", "/"}, "/root"},
-		{[]string{"/root", "//"}, "/root"},
-		{[]string{"/a/b"}, "/a/b"},
-		{[]string{"//", "/"}, "//"},
-		{[]string{"//server", "path"}, "//server/path"},
-		{[]string{"//server/sub", "path"}, "//server/sub/path"},
-		{[]string{"//server", "//path"}, "//server/path"},
-		{[]string{"//server/sub", "//path"}, "//server/sub/path"},
-		{[]string{"", "//", "/"}, "//"},
-		{[]string{"", "//server", "path"}, "//server/path"},
-		{[]string{"", "//server/sub", "path"}, "//server/sub/path"},
-		{[]string{"", "//server", "//path"}, "//server/path"},
-		{[]string{"", "//server/sub", "//path"}, "//server/sub/path"},
-		{[]string{"", filepath.FromSlash("//server/sub"), filepath.FromSlash("//path")}, "//server/sub/path"},
+		{"", "", ""},
+		{"", "/", "/"},
+		{"/", "", "/"},
+		{"/", "/", "/"},
+		{"/", "//", "/"},
+		{"/root", "", "/root"},
+		{"/root", "/", "/root"},
+		{"/root", "//", "/root"},
+		{"/a/b", "", "/a/b"},
+		{"//", "/", "//"},
+		{"//server", "path", "//server/path"},
+		{"//server/sub", "path", "//server/sub/path"},
+		{"//server", "//path", "//server/path"},
+		{"//server/sub", "//path", "//server/sub/path"},
+		{"//", "/", "//"},
+		{"//server", "path", "//server/path"},
+		{"//server/sub", "path", "//server/sub/path"},
+		{"//server", "//path", "//server/path"},
+		{"//server/sub", "//path", "//server/sub/path"},
+		{filepath.FromSlash("//server/sub"), filepath.FromSlash("//path"), "//server/sub/path"},
+		{"s3:", "", "s3:"},
+		{"s3:", ".", "s3:"},
+		{"s3:.", ".", "s3:"},
+		{"s3:", "..", "s3:"},
+		{"s3:dir", "sub", "s3:dir/sub"},
+		{"s3:dir", "/sub", "s3:dir/sub"},
+		{"s3:dir", "./sub", "s3:dir/sub"},
+		{"s3:/dir", "/sub/", "s3:/dir/sub"},
+		{"s3:dir", "..", "s3:dir"},
+		{"s3:dir", "/..", "s3:dir"},
+		{"s3:dir", "/../", "s3:dir"},
 	} {
-		got := JoinRootPath(test.elements...)
-		assert.Equal(t, test.want, got)
+		got := JoinRootPath(test.remote, test.filePath)
+		assert.Equal(t, test.want, got, test)
 	}
 }
