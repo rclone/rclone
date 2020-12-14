@@ -26,15 +26,17 @@ import (
 
 // Constants
 const (
-	nameCipherBlockSize = aes.BlockSize
-	fileMagic           = "RCLONE\x00\x00"
-	fileMagicSize       = len(fileMagic)
-	fileNonceSize       = 24
-	fileHeaderSize      = fileMagicSize + fileNonceSize
-	blockHeaderSize     = secretbox.Overhead
-	blockDataSize       = 64 * 1024
-	blockSize           = blockHeaderSize + blockDataSize
-	encryptedSuffix     = ".bin" // when file name encryption is off we add this suffix to make sure the cloud provider doesn't process the file
+	nameCipherBlockSize    = aes.BlockSize
+	fileMagic              = "RCLONE\x00\x00"
+	fileMagicSize          = len(fileMagic)
+	fileNonceSize          = 24
+	fileHeaderSize         = fileMagicSize + fileNonceSize
+	blockHeaderSize        = secretbox.Overhead
+	blockDataSize          = 64 * 1024
+	blockSize              = blockHeaderSize + blockDataSize
+	encryptedSuffix        = ".bin" // when file name encryption is off we add this suffix to make sure the cloud provider doesn't process the file
+	compressNameHeader     = "\x00"
+	compressNameHeaderSize = len(compressNameHeader)
 )
 
 // Errors returned by cipher
@@ -58,7 +60,8 @@ var (
 
 // Global variables
 var (
-	fileMagicBytes = []byte(fileMagic)
+	fileMagicBytes          = []byte(fileMagic)
+	compressNameHeaderBytes = []byte(compressNameHeader)
 )
 
 // ReadSeekCloser is the interface of the read handles
@@ -233,15 +236,16 @@ func (c *Cipher) encryptSegment(plaintext string) string {
 	paddedPlaintext := pkcs7.Pad(nameCipherBlockSize, []byte(plaintext))
 
 	if c.nameCompress {
-		// Compress unicode string with header '\x00'
-		compressBuf := bytes.NewBuffer([]byte{0})
+		// Compress unicode string with header
+		compressBuf := bytes.NewBufferString(compressNameHeader)
 		scsuWriter := scsu.NewWriter(compressBuf)
-		scsuWriter.WriteString(plaintext)
-		paddedCompressed := pkcs7.Pad(nameCipherBlockSize, compressBuf.Bytes())
-
-		// Choose a shortest padded data
-		if len(paddedPlaintext) > len(paddedCompressed) {
-			paddedPlaintext = paddedCompressed
+		_, err := scsuWriter.WriteString(plaintext)
+		if err == nil && len(plaintext) > compressBuf.Len() {
+			// Choose a shortest padded data
+			paddedCompressed := pkcs7.Pad(nameCipherBlockSize, compressBuf.Bytes())
+			if len(paddedPlaintext) > len(paddedCompressed) {
+				paddedPlaintext = paddedCompressed
+			}
 		}
 	}
 
@@ -275,9 +279,9 @@ func (c *Cipher) decryptSegment(ciphertext string) (string, error) {
 	}
 	plaintextStr := string(plaintext)
 
-	// De-compress compressed unicode string that has header '\x00'
-	if c.nameCompress && len(plaintext) > 0 && plaintext[0] == 0 {
-		plaintextStr, err = scsu.Decode(plaintext[1:])
+	// De-compress compressed unicode string that has header
+	if c.nameCompress && len(plaintext) >= compressNameHeaderSize && bytes.Equal(plaintext[:compressNameHeaderSize], compressNameHeaderBytes) {
+		plaintextStr, err = scsu.Decode(plaintext[compressNameHeaderSize:])
 		if err != nil {
 			return "", err
 		}
