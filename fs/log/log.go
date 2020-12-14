@@ -3,7 +3,6 @@ package log
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -12,7 +11,6 @@ import (
 	"strings"
 
 	systemd "github.com/iguanesolutions/go-systemd/v5"
-	sysdjournald "github.com/iguanesolutions/go-systemd/v5/journald"
 	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
 )
@@ -155,28 +153,4 @@ func InitLogging() {
 // Redirected returns true if the log has been redirected from stdout
 func Redirected() bool {
 	return Opt.UseSyslog || Opt.File != ""
-}
-
-var logLevelToStringSystemd = []string{
-	fs.LogLevelEmergency: sysdjournald.EmergPrefix,
-	fs.LogLevelAlert:     sysdjournald.AlertPrefix,
-	fs.LogLevelCritical:  sysdjournald.CritPrefix,
-	fs.LogLevelError:     sysdjournald.ErrPrefix,
-	fs.LogLevelWarning:   sysdjournald.WarningPrefix,
-	fs.LogLevelNotice:    sysdjournald.NoticePrefix,
-	fs.LogLevelInfo:      sysdjournald.InfoPrefix,
-	fs.LogLevelDebug:     sysdjournald.DebugPrefix,
-}
-
-// Starts systemd logging
-func startSystemdLog() {
-	log.SetFlags(0)
-	fs.LogPrint = func(level fs.LogLevel, text string) {
-		var prefix string
-		if level < fs.LogLevel(len(logLevelToStringSystemd)) {
-			prefix = logLevelToStringSystemd[level]
-		}
-		text = fmt.Sprintf("%s%-6s: %s", prefix, level, text)
-		_ = log.Output(4, text)
-	}
 }
