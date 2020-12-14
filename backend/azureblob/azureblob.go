@@ -1102,7 +1102,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	copyStatus := startCopy.CopyStatus()
 	for copyStatus == azblob.CopyStatusPending {
 		time.Sleep(1 * time.Second)
-		getMetadata, err := dstBlobURL.GetProperties(ctx, options)
+		getMetadata, err := dstBlobURL.GetProperties(ctx, options, azblob.ClientProvidedKeyOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -1253,7 +1253,7 @@ func (o *Object) readMetaData() (err error) {
 	ctx := context.Background()
 	var blobProperties *azblob.BlobGetPropertiesResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
-		blobProperties, err = blob.GetProperties(ctx, options)
+		blobProperties, err = blob.GetProperties(ctx, options, azblob.ClientProvidedKeyOptions{})
 		return o.fs.shouldRetry(err)
 	})
 	if err != nil {
@@ -1288,7 +1288,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 
 	blob := o.getBlobReference()
 	err := o.fs.pacer.Call(func() (bool, error) {
-		_, err := blob.SetMetadata(ctx, o.meta, azblob.BlobAccessConditions{})
+		_, err := blob.SetMetadata(ctx, o.meta, azblob.BlobAccessConditions{}, azblob.ClientProvidedKeyOptions{})
 		return o.fs.shouldRetry(err)
 	})
 	if err != nil {
@@ -1331,7 +1331,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	ac := azblob.BlobAccessConditions{}
 	var downloadResponse *azblob.DownloadResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
-		downloadResponse, err = blob.Download(ctx, offset, count, ac, false)
+		downloadResponse, err = blob.Download(ctx, offset, count, ac, false, azblob.ClientProvidedKeyOptions{})
 		return o.fs.shouldRetry(err)
 	})
 	if err != nil {
@@ -1486,7 +1486,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 				bufferReader := bytes.NewReader(buf)
 				wrappedReader := wrap(bufferReader)
 				rs := readSeeker{wrappedReader, bufferReader}
-				_, err = blockBlobURL.StageBlock(ctx, blockID, &rs, ac, transactionalMD5)
+				_, err = blockBlobURL.StageBlock(ctx, blockID, &rs, ac, transactionalMD5, azblob.ClientProvidedKeyOptions{})
 				return o.fs.shouldRetry(err)
 			})
 			if err != nil {
@@ -1508,7 +1508,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 
 	// Finalise the upload session
 	err = o.fs.pacer.Call(func() (bool, error) {
-		_, err := blockBlobURL.CommitBlockList(ctx, blocks, *httpHeaders, o.meta, azblob.BlobAccessConditions{}, azblob.AccessTierType(o.fs.opt.AccessTier), nil)
+		_, err := blockBlobURL.CommitBlockList(ctx, blocks, *httpHeaders, o.meta, azblob.BlobAccessConditions{}, azblob.AccessTierType(o.fs.opt.AccessTier), nil, azblob.ClientProvidedKeyOptions{})
 		return o.fs.shouldRetry(err)
 	})
 	if err != nil {
