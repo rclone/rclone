@@ -31,6 +31,7 @@ var (
 	noTransport  = new(sync.Once)
 	tpsBucket    *rate.Limiter // for limiting number of http transactions per second
 	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
+	logMutex     sync.Mutex
 )
 
 // StartHTTPTokenBucket starts the token bucket if necessary
@@ -328,15 +329,18 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		if t.dump&fs.DumpAuth == 0 {
 			buf = cleanAuths(buf)
 		}
+		logMutex.Lock()
 		fs.Debugf(nil, "%s", separatorReq)
 		fs.Debugf(nil, "%s (req %p)", "HTTP REQUEST", req)
 		fs.Debugf(nil, "%s", string(buf))
 		fs.Debugf(nil, "%s", separatorReq)
+		logMutex.Unlock()
 	}
 	// Do round trip
 	resp, err = t.Transport.RoundTrip(req)
 	// Logf response
 	if t.dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpAuth|fs.DumpRequests|fs.DumpResponses) != 0 {
+		logMutex.Lock()
 		fs.Debugf(nil, "%s", separatorResp)
 		fs.Debugf(nil, "%s (req %p)", "HTTP RESPONSE", req)
 		if err != nil {
@@ -346,6 +350,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			fs.Debugf(nil, "%s", string(buf))
 		}
 		fs.Debugf(nil, "%s", separatorResp)
+		logMutex.Unlock()
 	}
 	if err == nil {
 		checkServerTime(req, resp)
