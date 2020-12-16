@@ -108,6 +108,13 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 	if err != nil {
 		return nil, translateError(err)
 	}
+	dirents = append(dirents, fuse.Dirent{
+		Type: fuse.DT_Dir,
+		Name: ".",
+	}, fuse.Dirent{
+		Type: fuse.DT_Dir,
+		Name: "..",
+	})
 	for _, node := range items {
 		name := node.Name()
 		if len(name) > mountlib.MaxLeafSize {
