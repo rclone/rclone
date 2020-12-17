@@ -3,6 +3,7 @@ package log
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -10,16 +11,19 @@ import (
 	"runtime"
 	"strings"
 
+	systemd "github.com/iguanesolutions/go-systemd/v5"
+	sysdjournald "github.com/iguanesolutions/go-systemd/v5/journald"
 	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
 )
 
-// Options contains options for the remote control server
+// Options contains options for controlling the logging
 type Options struct {
-	File           string // Log everything to this file
-	Format         string // Comma separated list of log format options
-	UseSyslog      bool   // Use Syslog for logging
-	SyslogFacility string // Facility for syslog, e.g. KERN,USER,...
+	File              string // Log everything to this file
+	Format            string // Comma separated list of log format options
+	UseSyslog         bool   // Use Syslog for logging
+	SyslogFacility    string // Facility for syslog, e.g. KERN,USER,...
+	LogSystemdSupport bool   // set if using systemd logging
 }
 
 // DefaultOpt is the default values used for Opt
@@ -91,19 +95,17 @@ func Stack(o interface{}, info string) {
 func InitLogging() {
 	flagsStr := "," + Opt.Format + ","
 	var flags int
-	if !fs.GetConfig(context.Background()).LogSystemdSupport {
-		if strings.Contains(flagsStr, ",date,") {
-			flags |= log.Ldate
-		}
-		if strings.Contains(flagsStr, ",time,") {
-			flags |= log.Ltime
-		}
-		if strings.Contains(flagsStr, ",microseconds,") {
-			flags |= log.Lmicroseconds
-		}
-		if strings.Contains(flagsStr, ",UTC,") {
-			flags |= log.LUTC
-		}
+	if strings.Contains(flagsStr, ",date,") {
+		flags |= log.Ldate
+	}
+	if strings.Contains(flagsStr, ",time,") {
+		flags |= log.Ltime
+	}
+	if strings.Contains(flagsStr, ",microseconds,") {
+		flags |= log.Lmicroseconds
+	}
+	if strings.Contains(flagsStr, ",UTC,") {
+		flags |= log.LUTC
 	}
 	if strings.Contains(flagsStr, ",longfile,") {
 		flags |= log.Llongfile
@@ -135,9 +137,46 @@ func InitLogging() {
 		}
 		startSysLog()
 	}
+
+	// Activate systemd logger support if systemd invocation ID is
+	// detected and output is going to stderr (not logging to a file or syslog)
+	if !Redirected() {
+		if _, usingSystemd := systemd.GetInvocationID(); usingSystemd {
+			Opt.LogSystemdSupport = true
+		}
+	}
+
+	// Systemd logging output
+	if Opt.LogSystemdSupport {
+		startSystemdLog()
+	}
 }
 
 // Redirected returns true if the log has been redirected from stdout
 func Redirected() bool {
 	return Opt.UseSyslog || Opt.File != ""
+}
+
+var logLevelToStringSystemd = []string{
+	fs.LogLevelEmergency: sysdjournald.EmergPrefix,
+	fs.LogLevelAlert:     sysdjournald.AlertPrefix,
+	fs.LogLevelCritical:  sysdjournald.CritPrefix,
+	fs.LogLevelError:     sysdjournald.ErrPrefix,
+	fs.LogLevelWarning:   sysdjournald.WarningPrefix,
+	fs.LogLevelNotice:    sysdjournald.NoticePrefix,
+	fs.LogLevelInfo:      sysdjournald.InfoPrefix,
+	fs.LogLevelDebug:     sysdjournald.DebugPrefix,
+}
+
+// Starts systemd logging
+func startSystemdLog() {
+	log.SetFlags(0)
+	fs.LogPrint = func(level fs.LogLevel, text string) {
+		var prefix string
+		if level < fs.LogLevel(len(logLevelToStringSystemd)) {
+			prefix = logLevelToStringSystemd[level]
+		}
+		text = fmt.Sprintf("%s%-6s: %s", prefix, level, text)
+		_ = log.Output(4, text)
+	}
 }

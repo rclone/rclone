@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	sysdjournald "github.com/iguanesolutions/go-systemd/v5/journald"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -72,28 +71,7 @@ func (l *LogLevel) Type() string {
 
 // LogPrint sends the text to the logger of level
 var LogPrint = func(level LogLevel, text string) {
-	var prefix string
-	if GetConfig(context.TODO()).LogSystemdSupport {
-		switch level {
-		case LogLevelDebug:
-			prefix = sysdjournald.DebugPrefix
-		case LogLevelInfo:
-			prefix = sysdjournald.InfoPrefix
-		case LogLevelNotice:
-			prefix = sysdjournald.NoticePrefix
-		case LogLevelWarning:
-			prefix = sysdjournald.WarningPrefix
-		case LogLevelError:
-			prefix = sysdjournald.ErrPrefix
-		case LogLevelCritical:
-			prefix = sysdjournald.CritPrefix
-		case LogLevelAlert:
-			prefix = sysdjournald.AlertPrefix
-		case LogLevelEmergency:
-			prefix = sysdjournald.EmergPrefix
-		}
-	}
-	text = fmt.Sprintf("%s%-6s: %s", prefix, level, text)
+	text = fmt.Sprintf("%-6s: %s", level, text)
 	_ = log.Output(4, text)
 }
 
