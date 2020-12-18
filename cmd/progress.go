@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/lib/terminal"
 )
 
@@ -28,6 +29,8 @@ const (
 func startProgress() func() {
 	stopStats := make(chan struct{})
 	oldLogPrint := fs.LogPrint
+	oldSyncPrint := operations.SyncPrintf
+
 	if !log.Redirected() {
 		// Intercept the log calls if not logging to file or syslog
 		fs.LogPrint = func(level fs.LogLevel, text string) {
@@ -35,6 +38,12 @@ func startProgress() func() {
 
 		}
 	}
+
+	// Intercept output from functions such as HashLister to stdout
+	operations.SyncPrintf = func(format string, a ...interface{}) {
+		printProgress(fmt.Sprintf(format, a...))
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -52,6 +61,7 @@ func startProgress() func() {
 				ticker.Stop()
 				printProgress("")
 				fs.LogPrint = oldLogPrint
+				operations.SyncPrintf = oldSyncPrint
 				fmt.Println("")
 				return
 			}

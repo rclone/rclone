@@ -15,6 +15,11 @@ Produces an sha1sum file for all the objects in the path.
 Produces an sha1sum file for all the objects in the path.  This
 is in the same format as the standard sha1sum tool produces.
 
+By default, the hash is requested from the remote.  If SHA-1 is
+not supported by the remote, no hash will be returned.  With the
+download flag, the file will be downloaded from the remote and
+hashed locally enabling SHA-1 for any remote.
+
 
 ```
 rclone sha1sum remote:path [flags]
@@ -23,7 +28,10 @@ rclone sha1sum remote:path [flags]
 ## Options
 
 ```
-  -h, --help   help for sha1sum
+      --base64               Output base64 encoded hashsum
+      --download             Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote
+  -h, --help                 help for sha1sum
+      --output-file string   Output hashsums to a file rather than the terminal
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
