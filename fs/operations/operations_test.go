@@ -193,10 +193,10 @@ func TestHashSums(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, file1, file2)
 
-	// MD5 Sum
+	// MD5 Sum without download
 
 	var buf bytes.Buffer
-	err := operations.Md5sum(ctx, r.Fremote, &buf)
+	err := operations.HashLister(ctx, hash.MD5, false, true, r.Fremote, &buf)
 	require.NoError(t, err)
 	res := buf.String()
 	if !strings.Contains(res, "336d5ebc5436534e61d16e63ddfca327  empty space\n") &&
@@ -210,10 +210,27 @@ func TestHashSums(t *testing.T) {
 		t.Errorf("potato2 missing: %q", res)
 	}
 
-	// SHA1 Sum
+	// MD5 Sum with download
 
 	buf.Reset()
-	err = operations.Sha1sum(ctx, r.Fremote, &buf)
+	err = operations.HashLister(ctx, hash.MD5, false, true, r.Fremote, &buf)
+	require.NoError(t, err)
+	res = buf.String()
+	if !strings.Contains(res, "336d5ebc5436534e61d16e63ddfca327  empty space\n") &&
+		!strings.Contains(res, "                     UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                                  empty space\n") {
+		t.Errorf("empty space missing: %q", res)
+	}
+	if !strings.Contains(res, "d6548b156ea68a4e003e786df99eee76  potato2\n") &&
+		!strings.Contains(res, "                     UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                                  potato2\n") {
+		t.Errorf("potato2 missing: %q", res)
+	}
+
+	// SHA1 Sum without download
+
+	buf.Reset()
+	err = operations.HashLister(ctx, hash.SHA1, false, false, r.Fremote, &buf)
 	require.NoError(t, err)
 	res = buf.String()
 	if !strings.Contains(res, "3bc15c8aae3e4124dd409035f32ea2fd6835efc9  empty space\n") &&
@@ -227,13 +244,30 @@ func TestHashSums(t *testing.T) {
 		t.Errorf("potato2 missing: %q", res)
 	}
 
-	// QuickXorHash Sum
+	// SHA1 Sum with download
+
+	buf.Reset()
+	err = operations.HashLister(ctx, hash.SHA1, false, true, r.Fremote, &buf)
+	require.NoError(t, err)
+	res = buf.String()
+	if !strings.Contains(res, "3bc15c8aae3e4124dd409035f32ea2fd6835efc9  empty space\n") &&
+		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                                          empty space\n") {
+		t.Errorf("empty space missing: %q", res)
+	}
+	if !strings.Contains(res, "9dc7f7d3279715991a22853f5981df582b7f9f6d  potato2\n") &&
+		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                                          potato2\n") {
+		t.Errorf("potato2 missing: %q", res)
+	}
+
+	// QuickXorHash Sum without download
 
 	buf.Reset()
 	var ht hash.Type
 	err = ht.Set("QuickXorHash")
 	require.NoError(t, err)
-	err = operations.HashLister(ctx, ht, r.Fremote, &buf)
+	err = operations.HashLister(ctx, ht, false, false, r.Fremote, &buf)
 	require.NoError(t, err)
 	res = buf.String()
 	if !strings.Contains(res, "2d00000000000000000000000100000000000000  empty space\n") &&
@@ -247,10 +281,45 @@ func TestHashSums(t *testing.T) {
 		t.Errorf("potato2 missing: %q", res)
 	}
 
-	// QuickXorHash Sum with Base64 Encoded
+	// QuickXorHash Sum with download
 
 	buf.Reset()
-	err = operations.HashListerBase64(ctx, ht, r.Fremote, &buf)
+	require.NoError(t, err)
+	err = operations.HashLister(ctx, ht, false, true, r.Fremote, &buf)
+	require.NoError(t, err)
+	res = buf.String()
+	if !strings.Contains(res, "2d00000000000000000000000100000000000000  empty space\n") &&
+		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                                          empty space\n") {
+		t.Errorf("empty space missing: %q", res)
+	}
+	if !strings.Contains(res, "4001dad296b6b4a52d6d694b67dad296b6b4a52d  potato2\n") &&
+		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                                          potato2\n") {
+		t.Errorf("potato2 missing: %q", res)
+	}
+
+	// QuickXorHash Sum with Base64 Encoded, without download
+
+	buf.Reset()
+	err = operations.HashLister(ctx, ht, true, false, r.Fremote, &buf)
+	require.NoError(t, err)
+	res = buf.String()
+	if !strings.Contains(res, "LQAAAAAAAAAAAAAAAQAAAAAAAAA=  empty space\n") &&
+		!strings.Contains(res, "                 UNSUPPORTED  empty space\n") &&
+		!strings.Contains(res, "                              empty space\n") {
+		t.Errorf("empty space missing: %q", res)
+	}
+	if !strings.Contains(res, "QAHa0pa2tKUtbWlLZ9rSlra0pS0=  potato2\n") &&
+		!strings.Contains(res, "                 UNSUPPORTED  potato2\n") &&
+		!strings.Contains(res, "                              potato2\n") {
+		t.Errorf("potato2 missing: %q", res)
+	}
+
+	// QuickXorHash Sum with Base64 Encoded and download
+
+	buf.Reset()
+	err = operations.HashLister(ctx, ht, true, true, r.Fremote, &buf)
 	require.NoError(t, err)
 	res = buf.String()
 	if !strings.Contains(res, "LQAAAAAAAAAAAAAAAQAAAAAAAAA=  empty space\n") &&

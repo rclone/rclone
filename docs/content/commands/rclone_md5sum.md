@@ -15,6 +15,11 @@ Produces an md5sum file for all the objects in the path.
 Produces an md5sum file for all the objects in the path.  This
 is in the same format as the standard md5sum tool produces.
 
+By default, the hash is requested from the remote.  If MD5 is
+not supported by the remote, no hash will be returned.  With the
+download flag, the file will be downloaded from the remote and
+hashed locally enabling MD5 for any remote.
+
 
 ```
 rclone md5sum remote:path [flags]
@@ -23,7 +28,10 @@ rclone md5sum remote:path [flags]
 ## Options
 
 ```
-  -h, --help   help for md5sum
+      --base64               Output base64 encoded hashsum
+      --download             Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote
+  -h, --help                 help for md5sum
+      --output-file string   Output hashsums to a file rather than the terminal
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
