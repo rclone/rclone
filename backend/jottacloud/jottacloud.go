@@ -1463,6 +1463,8 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	o.fs.tokenRenewer.Start()
+	defer o.fs.tokenRenewer.Stop()
 	size := src.Size()
 	md5String, err := src.Hash(ctx, hash.MD5)
 	if err != nil || md5String == "" {
