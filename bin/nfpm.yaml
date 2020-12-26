@@ -15,10 +15,12 @@ description: |
 vendor: "rclone"
 homepage: "https://rclone.org"
 license: "MIT"
-# No longer supported? See https://github.com/goreleaser/nfpm/issues/144
-# bindir: "/usr/bin"
-files:
-  ./rclone: "/usr/bin/rclone"
-  ./README.html: "/usr/share/doc/rclone/README.html"
-  ./README.txt: "/usr/share/doc/rclone/README.txt"
-  ./rclone.1: "/usr/share/man/man1/rclone.1"
+contents:
+  - src: ./rclone
+    dst: /usr/bin/rclone
+  - src: ./README.html
+    dst: /usr/share/doc/rclone/README.html
+  - src: ./README.txt
+    dst: /usr/share/doc/rclone/README.txt
+  - src: ./rclone.1
+    dst: /usr/share/man/man1/rclone.1
