@@ -125,7 +125,7 @@ jobs:
         shell: bash
         run: |
           brew update
-          brew cask install osxfuse
+          brew install --cask osxfuse
         if: matrix.os == 'macOS-latest'
 
       - name: Install Libraries on Windows
