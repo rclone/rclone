@@ -1133,6 +1133,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		Method:  "GET",
 		Path:    o.filePath(),
 		Options: options,
+		ExtraHeaders: map[string]string{
+			"Depth": "0",
+		},
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
