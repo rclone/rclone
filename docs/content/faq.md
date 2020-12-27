@@ -123,7 +123,7 @@ Note that the ftp backend does not support `ftp_proxy` yet.
 
 ### Rclone gives x509: failed to load system roots and no roots provided error ###
 
-This means that `rclone` can't file the SSL root certificates.  Likely
+This means that `rclone` can't find the SSL root certificates.  Likely
 you are running `rclone` on a NAS with a cut-down Linux OS, or
 possibly on Solaris.
 
