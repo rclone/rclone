@@ -128,7 +128,7 @@ If you are having problems with them (E.g., seeing a lot of throttling), you can
 Client ID and Key by following the steps below:
 
 1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click `New registration`.
-2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI` Enter `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
+2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI`, then type (do not copy and paste) `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
 3. Under `manage` select `Certificates & secrets`, click `New client secret`. Copy and keep that secret for later use.
 4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
 5. Search and select the following permissions: `Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`. Once selected click `Add permissions` at the bottom.
