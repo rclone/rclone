@@ -3,6 +3,8 @@ package cache
 import (
 	"errors"
 	"fmt"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -11,7 +13,7 @@ import (
 )
 
 var (
-	called      = 0
+	called      = int32(0)
 	errSentinel = errors.New("an error")
 	errCached   = errors.New("a cached error")
 )
@@ -19,17 +21,19 @@ var (
 func setup(t *testing.T) (*Cache, CreateFunc) {
 	called = 0
 	create := func(path string) (interface{}, bool, error) {
-		assert.Equal(t, 0, called)
-		called++
+		newCalled := atomic.AddInt32(&called, 1)
+		assert.Equal(t, int32(1), newCalled)
 		switch path {
 		case "/":
+			time.Sleep(100 * time.Millisecond)
 			return "/", true, nil
 		case "/file.txt":
 			return "/file.txt", true, errCached
 		case "/error":
 			return nil, false, errSentinel
 		}
-		panic(fmt.Sprintf("Unknown path %q", path))
+		assert.Fail(t, fmt.Sprintf("Unknown path %q", path))
+		return nil, false, nil
 	}
 	c := New()
 	return c, create
@@ -49,6 +53,24 @@ func TestGet(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, f, f2)
+}
+
+func TestGetConcurrent(t *testing.T) {
+	c, create := setup(t)
+	assert.Equal(t, 0, len(c.cache))
+
+	var wg sync.WaitGroup
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, err := c.Get("/", create)
+			require.NoError(t, err)
+		}()
+	}
+	wg.Wait()
+
+	assert.Equal(t, 1, len(c.cache))
 }
 
 func TestGetFile(t *testing.T) {

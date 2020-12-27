@@ -29,8 +29,10 @@ func New() *Cache {
 
 // cacheEntry is stored in the cache
 type cacheEntry struct {
+	createMu sync.Mutex  // held while creating the item
 	value    interface{} // cached item
 	err      error       // creation error
+	ok       bool        // true if entry is valid
 	key      string      // key
 	lastUsed time.Time   // time used for expiry
 	pinCount int         // non zero if the entry should not be removed
@@ -55,23 +57,27 @@ func (c *Cache) used(entry *cacheEntry) {
 // afresh with the create function.
 func (c *Cache) Get(key string, create CreateFunc) (value interface{}, err error) {
 	c.mu.Lock()
-	entry, ok := c.cache[key]
-	if !ok {
-		c.mu.Unlock() // Unlock in case Get is called recursively
-		value, ok, err = create(key)
-		if err != nil && !ok {
-			return value, err
-		}
+	entry, found := c.cache[key]
+	if !found {
 		entry = &cacheEntry{
-			value: value,
-			key:   key,
-			err:   err,
+			key: key,
 		}
-		c.mu.Lock()
 		c.cache[key] = entry
 	}
-	defer c.mu.Unlock()
-	c.used(entry)
+	c.mu.Unlock()
+	// Only one racing Get will have found=false here
+	entry.createMu.Lock()
+	if !found {
+		entry.value, entry.ok, entry.err = create(key)
+	}
+	entry.createMu.Unlock()
+	c.mu.Lock()
+	if !found && !entry.ok {
+		delete(c.cache, key)
+	} else {
+		c.used(entry)
+	}
+	c.mu.Unlock()
 	return entry.value, entry.err
 }
 
@@ -102,6 +108,7 @@ func (c *Cache) Put(key string, value interface{}) {
 	entry := &cacheEntry{
 		value: value,
 		key:   key,
+		ok:    true,
 	}
 	c.used(entry)
 	c.cache[key] = entry
@@ -112,7 +119,7 @@ func (c *Cache) GetMaybe(key string) (value interface{}, found bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	entry, found := c.cache[key]
-	if !found {
+	if !found || !entry.ok {
 		return nil, found
 	}
 	c.used(entry)
