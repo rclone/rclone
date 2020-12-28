@@ -19,13 +19,13 @@ func setDefaultFromEnv(flags *pflag.FlagSet, name string) {
 	if found {
 		flag := flags.Lookup(name)
 		if flag == nil {
-			log.Fatalf("Couldn't find flag %q", name)
+			log.Fatalf("Couldn't find flag --%q", name)
 		}
 		err := flag.Value.Set(newValue)
 		if err != nil {
-			log.Fatalf("Invalid value for environment variable %q: %v", key, err)
+			log.Fatalf("Invalid value for environment variable %q when setting default for --%s: %v", key, name, err)
 		}
-		fs.Debugf(nil, "Set default for %q from %q to %q (%v)", name, key, newValue, flag.Value)
+		fs.Debugf(nil, "Set default for --%q from %q to %q (%v)", name, key, newValue, flag.Value)
 		flag.DefValue = newValue
 	}
 }
