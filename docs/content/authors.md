@@ -437,3 +437,4 @@ put them back in again.` >}}
   * gtorelly <gtorelly@gmail.com>
   * Brad Ackerman <brad@facefault.org>
   * Mitsuo Heijo <mitsuo.heijo@gmail.com>
+  * Claudio Bantaloukas <rockdreamer@gmail.com>
