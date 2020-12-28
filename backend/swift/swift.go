@@ -976,6 +976,18 @@ func (o *Object) isStaticLargeObject() (bool, error) {
 	return o.hasHeader("X-Static-Large-Object")
 }
 
+func (o *Object) isLargeObject() (result bool, err error) {
+	result, err = o.hasHeader("X-Static-Large-Object")
+	if result {
+		return
+	}
+	result, err = o.hasHeader("X-Object-Manifest")
+	if result {
+		return
+	}
+	return false, nil
+}
+
 func (o *Object) isInContainerVersioning(container string) (bool, error) {
 	_, headers, err := o.fs.c.Container(container)
 	if err != nil {
@@ -1364,6 +1376,32 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 func (o *Object) Remove(ctx context.Context) (err error) {
 	container, containerPath := o.split()
 
+	//check object is large object
+	isLargeObject, err := o.isLargeObject()
+	if err != nil {
+		return err
+	}
+	//check container has enabled version to reserve segment when delete
+	isInContainerVersioning := false
+	if isLargeObject {
+		isInContainerVersioning, err = o.isInContainerVersioning(container)
+		if err != nil {
+			return err
+		}
+	}
+	isStaticLargeObject, err := o.isStaticLargeObject()
+	if err != nil {
+		return err
+	}
+	var segmentContainer string
+	var segmentObjects []swift.Object
+
+	if isStaticLargeObject {
+		segmentContainer, segmentObjects, err = o.fs.c.LargeObjectGetSegments(container, containerPath)
+		if err != nil {
+			return err
+		}
+	}
 	// Remove file/manifest first
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectDelete(container, containerPath)
@@ -1372,23 +1410,36 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+
+	if !isLargeObject || isInContainerVersioning {
+		return nil
+	}
+
 	isDynamicLargeObject, err := o.isDynamicLargeObject()
 	if err != nil {
 		return err
 	}
 	// ...then segments if required
+	//delete segment for dynamic large object
 	if isDynamicLargeObject {
-		isInContainerVersioning, err := o.isInContainerVersioning(container)
+		return o.removeSegments("")
+	}
+
+	//delete segment for static large object
+	if isStaticLargeObject && len(segmentContainer) > 0 && segmentObjects != nil && len(segmentObjects) > 0 {
+		var segmentNames []string
+		for _, segmentObject := range segmentObjects {
+			if len(segmentObject.Name) == 0 {
+				continue
+			}
+			segmentNames = append(segmentNames, segmentObject.Name)
+		}
+		_, err := o.fs.c.BulkDelete(segmentContainer, segmentNames)
 		if err != nil {
 			return err
 		}
-		if !isInContainerVersioning {
-			err = o.removeSegments("")
-			if err != nil {
-				return err
-			}
-		}
 	}
+
 	return nil
 }
 
