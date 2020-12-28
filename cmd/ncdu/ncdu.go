@@ -357,15 +357,18 @@ func (u *UI) Draw() error {
 			if isDir {
 				mark = '/'
 			}
+			fileFlag := ' '
 			message := ""
 			if !readable {
 				message = " [not read yet]"
 			}
 			if entriesHaveErrors {
 				message = " [some subdirectories could not be read, size may be underestimated]"
+				fileFlag = '.'
 			}
 			if err != nil {
 				message = fmt.Sprintf(" [%s]", err)
+				fileFlag = '!'
 			}
 			extras := ""
 			if u.showCounts {
@@ -388,12 +391,9 @@ func (u *UI) Draw() error {
 				}
 
 			}
-			emptyDir := ""
 			if showEmptyDir {
-				if isDir && count == 0 {
-					emptyDir = "e"
-				} else {
-					emptyDir = " "
+				if isDir && count == 0 && fileFlag == ' ' {
+					fileFlag = 'e'
 				}
 			}
 			if u.showGraph {
@@ -406,7 +406,7 @@ func (u *UI) Draw() error {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			Linef(0, y, w, fg, bg, ' ', "%s  %8v %s%c%s%s", emptyDir, fs.SizeSuffix(size), extras, mark, path.Base(entry.Remote()), message)
+			Linef(0, y, w, fg, bg, ' ', "%c %8v %s%c%s%s", fileFlag, fs.SizeSuffix(size), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
 	}
