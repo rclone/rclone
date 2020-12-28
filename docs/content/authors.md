@@ -436,3 +436,4 @@ put them back in again.` >}}
   * Milly <milly.ca@gmail.com>
   * gtorelly <gtorelly@gmail.com>
   * Brad Ackerman <brad@facefault.org>
+  * Mitsuo Heijo <mitsuo.heijo@gmail.com>
