@@ -959,7 +959,7 @@ func (o *Object) isStaticLargeObject() (bool, error) {
 	return o.hasHeader("X-Static-Large-Object")
 }
 
-func (o *Object) isLargeObject() ( result bool, err error) {
+func (o *Object) isLargeObject() (result bool, err error) {
 	result, err = o.hasHeader("X-Static-Large-Object")
 	if result {
 		return
@@ -1351,12 +1351,12 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	container, containerPath := o.split()
 
 	//check object is large object
-	isLargeObject, err := o.isLargeObject();
+	isLargeObject, err := o.isLargeObject()
 	if err != nil {
 		return err
 	}
 	//check container has enabled version to reserve segment when delete
-	isInContainerVersioning := false;
+	isInContainerVersioning := false
 	if isLargeObject {
 		isInContainerVersioning, err = o.isInContainerVersioning(container)
 		if err != nil {
@@ -1371,7 +1371,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	var segmentObjects []swift.Object
 
 	if isStaticLargeObject {
-		segmentContainer, segmentObjects, err = o.fs.c.LargeObjectGetSegments(container, containerPath);
+		segmentContainer, segmentObjects, err = o.fs.c.LargeObjectGetSegments(container, containerPath)
 		if err != nil {
 			return err
 		}
@@ -1410,7 +1410,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 		}
 		_, err := o.fs.c.BulkDelete(segmentContainer, segmentNames)
 		if err != nil {
-			return err;
+			return err
 		}
 	}
 
