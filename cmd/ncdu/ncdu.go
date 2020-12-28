@@ -281,7 +281,7 @@ func (u *UI) biggestEntry() (biggest int64) {
 		return
 	}
 	for i := range u.entries {
-		size, _, _, _ := u.d.AttrI(u.sortPerm[i])
+		size, _, _, _, _, _ := u.d.AttrI(u.sortPerm[i])
 		if size > biggest {
 			biggest = size
 		}
@@ -326,12 +326,18 @@ func (u *UI) Draw() error {
 			if y >= h-1 {
 				break
 			}
+			size, count, isDir, readable, entriesHaveErrors, err := u.d.AttrI(u.sortPerm[n])
 			fg := termbox.ColorWhite
+			if entriesHaveErrors {
+				fg = termbox.ColorYellow
+			}
+			if err != nil {
+				fg = termbox.ColorRed
+			}
 			bg := termbox.ColorBlack
 			if n == dirPos.entry {
 				fg, bg = bg, fg
 			}
-			size, count, isDir, readable := u.d.AttrI(u.sortPerm[n])
 			mark := ' '
 			if isDir {
 				mark = '/'
@@ -339,6 +345,12 @@ func (u *UI) Draw() error {
 			message := ""
 			if !readable {
 				message = " [not read yet]"
+			}
+			if entriesHaveErrors {
+				message = " [some subdirectories could not be read, size may be underestimated]"
+			}
+			if err != nil {
+				message = fmt.Sprintf(" [%s]", err)
 			}
 			extras := ""
 			if u.showCounts {
@@ -512,8 +524,8 @@ type ncduSort struct {
 // Less is part of sort.Interface.
 func (ds *ncduSort) Less(i, j int) bool {
 	var iAvgSize, jAvgSize float64
-	isize, icount, _, _ := ds.d.AttrI(ds.sortPerm[i])
-	jsize, jcount, _, _ := ds.d.AttrI(ds.sortPerm[j])
+	isize, icount, _, _, _, _ := ds.d.AttrI(ds.sortPerm[i])
+	jsize, jcount, _, _, _, _ := ds.d.AttrI(ds.sortPerm[j])
 	iname, jname := ds.entries[ds.sortPerm[i]].Remote(), ds.entries[ds.sortPerm[j]].Remote()
 	if icount > 0 {
 		iAvgSize = float64(isize / icount)
