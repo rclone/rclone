@@ -150,6 +150,9 @@ func SetFlags(ci *fs.ConfigInfo) {
 	} else if verbose >= 1 {
 		ci.LogLevel = fs.LogLevelInfo
 	}
+	if (ci.DryRun || ci.Interactive) && ci.StatsLogLevel > fs.LogLevelNotice {
+		ci.StatsLogLevel = fs.LogLevelNotice
+	}
 	if quiet {
 		if verbose > 0 {
 			log.Fatalf("Can't set -v and -q")
