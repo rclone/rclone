@@ -584,16 +584,39 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, err
 		}
-		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(clearpass))
+		sshConfig.Auth = append(sshConfig.Auth,
+			ssh.Password(clearpass),
+			ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) ([]string, error) {
+				return f.keyboardInteractiveReponse(user, instruction, questions, echos, clearpass)
+			}),
+		)
 	}
 
 	// Config for password if none was defined and we're allowed to
 	// We don't ask now; we ask if the ssh connection succeeds
 	if opt.Pass == "" && opt.AskPassword {
-		sshConfig.Auth = append(sshConfig.Auth, ssh.PasswordCallback(f.getPass))
+		sshConfig.Auth = append(sshConfig.Auth,
+			ssh.PasswordCallback(f.getPass),
+			ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) ([]string, error) {
+				pass, _ := f.getPass()
+				return f.keyboardInteractiveReponse(user, instruction, questions, echos, pass)
+			}),
+		)
 	}
 
 	return NewFsWithConnection(ctx, f, name, root, m, opt, sshConfig)
+}
+
+// Do the keyboard interactive challenge
+//
+// Just send the password back for all questions
+func (f *Fs) keyboardInteractiveReponse(user, instruction string, questions []string, echos []bool, pass string) ([]string, error) {
+	fs.Debugf(f, "keyboard interactive auth requested")
+	answers := make([]string, len(questions))
+	for i := range answers {
+		answers[i] = pass
+	}
+	return answers, nil
 }
 
 // If we're in password mode and ssh connection succeeds then this
