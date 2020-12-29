@@ -1186,7 +1186,7 @@ func removeObjects(f *Fs, container string, prefix string) (err error) {
 			return true, errors.New(fmt.Sprintf("There is no objects with prefix %q container %q", prefix, container))
 		})
 		if err != nil {
-			fs.Logf(nil, "Error in get objects with prefix %q container %q", prefix, container, err)
+			fs.Logf(nil, "Error in get objects with prefix %q container %q %v", prefix, container, err)
 		}
 		if len(objects) <= 0 {
 			return objects, errors.New(fmt.Sprintf("There is no objects with prefix %q container %q", prefix, container))
