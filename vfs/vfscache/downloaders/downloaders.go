@@ -26,6 +26,9 @@ const (
 	backgroundKickerInterval = 5 * time.Second
 	// maximum number of errors before declaring dead
 	maxErrorCount = 10
+	// If a downloader is within this range or --buffer-size
+	// whichever is the larger, we will reuse the downloader
+	minWindow = 1024 * 1024
 )
 
 // Item is the interface that an item to download must obey
@@ -325,6 +328,11 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 		}
 		// But don't write anything for the moment
 		r.Size = 0
+	}
+
+	// If buffer size is less than minWindow then make it that
+	if window < minWindow {
+		window = minWindow
 	}
 
 	var dl *downloader
