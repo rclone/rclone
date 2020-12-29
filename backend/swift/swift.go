@@ -1167,43 +1167,44 @@ func (o *Object) removeSegmentsLargeObject(containerSegments map[string][]string
 	}
 	return nil
 }
-func removeObjects(f *Fs, container string, prefix string) (err error) {
-	var segmentNames []string
-	opts := swift.ObjectsOpts{
-		Prefix: prefix,
-		Limit:  listChunks,
-	}
-	err = f.c.ObjectsWalk(container, &opts, func(opts *swift.ObjectsOpts) (interface{}, error) {
-		var objects []swift.Object
-		err = f.pacer.Call(func() (bool, error) {
-			objects, err = f.c.Objects(container, opts)
-			if err == nil && len(objects) > 0 {
-				for _, object := range objects {
-					segmentNames = append(segmentNames, object.Name)
-				}
-				return false, nil
-			}
-			return true, errors.New(fmt.Sprintf("There is no objects with prefix %q container %q", prefix, container))
-		})
-		if err != nil {
-			fs.Logf(nil, "Error in get objects with prefix %q container %q %v", prefix, container, err)
-		}
-		if len(objects) <= 0 {
-			return objects, errors.New(fmt.Sprintf("There is no objects with prefix %q container %q", prefix, container))
-		}
-		return objects, nil
-	})
-	if err != nil {
-		return err
-	}
-	if len(segmentNames) > 0 {
-		_, err = f.c.BulkDelete(container, segmentNames)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+
+//func removeObjects(f *Fs, container string, prefix string) (err error) {
+//	var segmentNames []string
+//	opts := swift.ObjectsOpts{
+//		Prefix: prefix,
+//		Limit:  listChunks,
+//	}
+//	err = f.c.ObjectsWalk(container, &opts, func(opts *swift.ObjectsOpts) (interface{}, error) {
+//		var objects []swift.Object
+//		err = f.pacer.Call(func() (bool, error) {
+//			objects, err = f.c.Objects(container, opts)
+//			if err == nil && len(objects) > 0 {
+//				for _, object := range objects {
+//					segmentNames = append(segmentNames, object.Name)
+//				}
+//				return false, nil
+//			}
+//			return true, errors.New(fmt.Sprintf("There is no objects with prefix %q container %q", prefix, container))
+//		})
+//		if err != nil {
+//			fs.Logf(nil, "Error in get objects with prefix %q container %q %v", prefix, container, err)
+//		}
+//		if len(objects) <= 0 {
+//			return objects, errors.New(fmt.Sprintf("There is no objects with prefix %q container %q", prefix, container))
+//		}
+//		return objects, nil
+//	})
+//	if err != nil {
+//		return err
+//	}
+//	if len(segmentNames) > 0 {
+//		_, err = f.c.BulkDelete(container, segmentNames)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 
 func (o *Object) getSegmentsDlo() (segmentsContainer string, prefix string, err error) {
 	if err = o.readMetaData(); err != nil {
