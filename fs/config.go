@@ -29,11 +29,11 @@ var (
 	}
 
 	// CountError counts an error.  If any errors have been
-	// counted then it will exit with a non zero error code.
+	// counted then rclone will exit with a non zero error code.
 	//
 	// This is a function pointer to decouple the config
 	// implementation from the fs
-	CountError = func(err error) error { return nil }
+	CountError = func(err error) error { return err }
 
 	// ConfigProvider is the config key used for provider options
 	ConfigProvider = "provider"
