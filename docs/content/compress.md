@@ -1,10 +1,9 @@
 ---
 title: "Compress"
 description: "Compression Remote"
-date: "2020-09-14"
 ---
 
-Compress (Experimental)
+{{< icon "fas fa-compress" >}}Compress (Experimental)
 -----------------------------------------
 
 The `Compress` remote adds compression to another remote. It is best used with remotes containing
