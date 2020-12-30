@@ -77,8 +77,9 @@ var LogPrint = func(level LogLevel, text string) {
 
 // LogValueItem describes keyed item for a JSON log entry
 type LogValueItem struct {
-	key   string
-	value interface{}
+	key    string
+	value  interface{}
+	render bool
 }
 
 // LogValue should be used as an argument to any logging calls to
@@ -86,14 +87,31 @@ type LogValueItem struct {
 //
 // key is the dictionary parameter used to store value.
 func LogValue(key string, value interface{}) LogValueItem {
-	return LogValueItem{key: key, value: value}
+	return LogValueItem{key: key, value: value, render: true}
 }
 
-// String returns an empty string so LogValueItem entries won't show
-// in the textual representation of logs. They need to be put in so
-// the number of parameters of the log call matches.
+// LogValueHide should be used as an argument to any logging calls to
+// augment the JSON output with more structured information.
+//
+// key is the dictionary parameter used to store value.
+//
+// String() will return a blank string - this is useful to put items
+// in which don't print into the log.
+func LogValueHide(key string, value interface{}) LogValueItem {
+	return LogValueItem{key: key, value: value, render: false}
+}
+
+// String returns the representation of value. If render is fals this
+// is an empty string so LogValueItem entries won't show in the
+// textual representation of logs.
 func (j LogValueItem) String() string {
-	return ""
+	if !j.render {
+		return ""
+	}
+	if do, ok := j.value.(fmt.Stringer); ok {
+		return do.String()
+	}
+	return fmt.Sprint(j.value)
 }
 
 // LogPrintf produces a log string from the arguments passed in
