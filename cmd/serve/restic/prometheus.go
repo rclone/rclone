@@ -15,7 +15,7 @@ var (
 	promGatherer   prometheus.Gatherer   = promRegistry
 )
 
-var metricLabelList = []string{"repo", "type"}
+var metricLabelList = []string{"user", "repo", "type"}
 
 var (
 	metricBlobWriteTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -66,16 +66,29 @@ func promHandler() http.Handler {
 	)
 }
 
-var blobRe = regexp.MustCompile(`(.+)/(data|index|keys|locks|snapshots)/(.+)`)
+var blobRe = regexp.MustCompile(`((.+))?(data|index|keys|locks|snapshots)/(.+)`)
 
 func getMetricLabels(r *http.Request, remote string) prometheus.Labels {
-	path := strings.Trim(remote, "/")
-	matches := blobRe.FindStringSubmatch(path)
+	remote = strings.Trim(remote, "/")
+	matches := blobRe.FindStringSubmatch(remote)
 	if matches == nil {
 		return nil
 	}
-	return prometheus.Labels{
-		"repo": matches[1],
-		"type": matches[2],
+	repo := "."
+	if matches[1] != "" {
+		repo = matches[1]
 	}
+	return prometheus.Labels{
+		"user": getUser(r),
+		"repo": repo,
+		"type": matches[3],
+	}
+}
+
+func getUser(r *http.Request) string {
+	u, _, ok := r.BasicAuth()
+	if ok {
+		return u
+	}
+	return ""
 }
