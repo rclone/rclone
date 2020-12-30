@@ -28,10 +28,11 @@ import (
 )
 
 var (
-	stdio        bool
-	appendOnly   bool
-	privateRepos bool
-	cacheObjects bool
+	stdio             bool
+	appendOnly        bool
+	privateRepos      bool
+	cacheObjects      bool
+	prometheusMetrics bool
 )
 
 func init() {
@@ -41,6 +42,7 @@ func init() {
 	flags.BoolVarP(flagSet, &appendOnly, "append-only", "", false, "disallow deletion of repository data")
 	flags.BoolVarP(flagSet, &privateRepos, "private-repos", "", false, "users can only access their private repo")
 	flags.BoolVarP(flagSet, &cacheObjects, "cache-objects", "", true, "cache listed objects")
+	flags.BoolVarP(flagSet, &prometheusMetrics, "prometheus", "", false, "enables prometheus metrics")
 }
 
 // Command definition for cobra
@@ -220,6 +222,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Server", "rclone/"+fs.Version)
 
+	if prometheusMetrics && r.URL.Path == "/metrics" {
+		promHandler().ServeHTTP(w, r)
+		return
+	}
+
 	path, ok := s.Path(w, r)
 	if !ok {
 		return
@@ -280,6 +287,16 @@ func (s *Server) serveObject(w http.ResponseWriter, r *http.Request, remote stri
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
+
+	if prometheusMetrics {
+		labels := getMetricLabels(r, remote)
+		if labels != nil {
+			metricBlobReadTotal.With(labels).Inc()
+			metricBlobReadBytesTotal.With(labels).Add(float64(o.Size()))
+		}
+
+	}
+
 	serve.Object(w, r, o)
 }
 
@@ -303,6 +320,14 @@ func (s *Server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 
 		return
+	}
+
+	if prometheusMetrics {
+		labels := getMetricLabels(r, remote)
+		if labels != nil {
+			metricBlobWriteTotal.With(labels).Inc()
+			metricBlobWriteBytesTotal.With(labels).Add(float64(o.Size()))
+		}
 	}
 
 	// if successfully uploaded add to cache
@@ -336,6 +361,14 @@ func (s *Server) deleteObject(w http.ResponseWriter, r *http.Request, remote str
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
+	}
+
+	if prometheusMetrics {
+		labels := getMetricLabels(r, remote)
+		if labels != nil {
+			metricBlobDeleteTotal.With(labels).Inc()
+			metricBlobDeleteBytesTotal.With(labels).Add(float64(o.Size()))
+		}
 	}
 
 	// remove object from cache
