@@ -155,7 +155,9 @@ to start uploading.`,
 
 This is usually set to a Cloudflare CDN URL as Backblaze offers
 free egress for data downloaded through the Cloudflare network.
-This is probably only useful for a public bucket.
+Rclone works with private buckets by sending an "Authorization" header.
+If the custom endpoint rewrites the requests for authentication,
+e.g., in Cloudflare Workers, this header needs to be handled properly.
 Leave blank if you want to use the endpoint provided by Backblaze.`,
 			Advanced: true,
 		}, {
