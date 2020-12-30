@@ -2123,7 +2123,15 @@ func SkipDestructive(ctx context.Context, subject interface{}, action string) (s
 		return false
 	}
 	if skip {
-		fs.Logf(subject, "Skipped %s as %s is set", action, flag)
+		size := int64(-1)
+		if do, ok := subject.(interface{ Size() int64 }); ok {
+			size = do.Size()
+		}
+		if size >= 0 {
+			fs.Logf(subject, "Skipped %s as %s is set (size %v)", fs.LogValue("skipped", action), flag, fs.LogValue("size", fs.SizeSuffix(size)))
+		} else {
+			fs.Logf(subject, "Skipped %s as %s is set", fs.LogValue("skipped", action), flag)
+		}
 	}
 	return skip
 }
