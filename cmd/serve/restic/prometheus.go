@@ -66,7 +66,7 @@ func promHandler() http.Handler {
 	)
 }
 
-var blobRe = regexp.MustCompile(`((.+))?(data|index|keys|locks|snapshots)/(.+)`)
+var blobRe = regexp.MustCompile(`((.+)/)?(data|index|keys|locks|snapshots)/(.+)`)
 
 func getMetricLabels(r *http.Request, remote string) prometheus.Labels {
 	remote = strings.Trim(remote, "/")
