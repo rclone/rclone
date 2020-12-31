@@ -74,6 +74,37 @@ func (f *Fs) testNoChunk(t *testing.T) {
 // Additional tests that aren't in the framework
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("NoChunk", f.testNoChunk)
+	t.Run("WithChunk", f.testWithChunk)
+}
+
+func (f *Fs) testWithChunk(t *testing.T) {
+	preConfChunkSize := f.opt.ChunkSize
+	preConfChunk := f.opt.NoChunk
+	f.opt.NoChunk = false
+	f.opt.ChunkSize = 1024 * fs.Byte
+	defer func() {
+		//restore old config after test
+		f.opt.ChunkSize = preConfChunkSize
+		f.opt.NoChunk = preConfChunk
+	}()
+
+	file := fstest.Item{
+		ModTime: fstest.Time("2020-12-31T04:05:06.499999999Z"),
+		Path:    "piped data chunk.txt",
+		Size:    -1, // use unknown size during upload
+	}
+	const contentSize = 2048
+	contents := random.String(contentSize)
+	buf := bytes.NewBufferString(contents)
+	uploadHash := hash.NewMultiHasher()
+	in := io.TeeReader(buf, uploadHash)
+
+	file.Size = -1
+	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+	ctx := context.TODO()
+	obj, err := f.Features().PutStream(ctx, in, obji)
+	require.NoError(t, err)
+	require.NotEmpty(t, obj)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
