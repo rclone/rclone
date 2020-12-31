@@ -648,6 +648,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to parse credentials")
 		}
+
+		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+		}
 		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
 	case opt.SASURL != "":
