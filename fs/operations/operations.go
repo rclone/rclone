@@ -232,7 +232,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 			// Size and hash the same but mtime different
 			// Error if objects are treated as immutable
 			if ci.Immutable {
-				fs.Errorf(dst, "StartedAt mismatch between immutable objects")
+				fs.Errorf(dst, "Timestamp mismatch between immutable objects")
 				return false
 			}
 			// Update the mtime of the dst object here
