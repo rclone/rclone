@@ -264,7 +264,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			break
 		}
 		if accounting.GlobalStats().Errored() && !accounting.GlobalStats().HadRetryError() {
-			fs.Errorf(nil, "Can't retry this error - not attempting retries")
+			fs.Errorf(nil, "Can't retry any of the errors - not attempting retries")
 			break
 		}
 		if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
