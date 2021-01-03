@@ -54,6 +54,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/sha1sum"
 	_ "github.com/rclone/rclone/cmd/size"
 	_ "github.com/rclone/rclone/cmd/sync"
+	_ "github.com/rclone/rclone/cmd/syncfiles"
 	_ "github.com/rclone/rclone/cmd/touch"
 	_ "github.com/rclone/rclone/cmd/tree"
 	_ "github.com/rclone/rclone/cmd/version"

@@ -168,7 +168,9 @@ func NewFsSrcDst(args []string) (fs.Fs, fs.Fs) {
 // The source may be a file, in which case the source Fs and file name is returned
 func NewFsSrcFileDst(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs) {
 	fsrc, srcFileName = NewFsFile(args[0])
-	fdst = newFsDir(args[1])
+	if len(args) > 1 {
+		fdst = newFsDir(args[1])
+	}
 	return fsrc, srcFileName, fdst
 }
 
