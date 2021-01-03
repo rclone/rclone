@@ -13,6 +13,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/cmount"
 	_ "github.com/rclone/rclone/cmd/mount"
 	_ "github.com/rclone/rclone/cmd/mount2"
+	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/assert"
@@ -95,6 +96,22 @@ func TestRc(t *testing.T) {
 			assert.Equal(t, os.FileMode(0400), fi.Mode())
 		}
 
+		// check mount point list
+		checkMountList := func() []mountlib.MountInfo {
+			listCall := rc.Calls.Get("mount/listmounts")
+			require.NotNil(t, listCall)
+			listReply, err := listCall.Fn(ctx, rc.Params{})
+			require.NoError(t, err)
+			mountPointsReply, err := listReply.Get("mountPoints")
+			require.NoError(t, err)
+			mountPoints, ok := mountPointsReply.([]mountlib.MountInfo)
+			require.True(t, ok)
+			return mountPoints
+		}
+		mountPoints := checkMountList()
+		require.Equal(t, 1, len(mountPoints))
+		require.Equal(t, mountPoint, mountPoints[0].MountPoint)
+
 		// FIXME the OS sometimes appears to be using the mount
 		// immediately after it appears so wait a moment
 		time.Sleep(100 * time.Millisecond)
@@ -102,6 +119,7 @@ func TestRc(t *testing.T) {
 		t.Run("Unmount", func(t *testing.T) {
 			_, err := unmount.Fn(ctx, in)
 			require.NoError(t, err)
+			assert.Equal(t, 0, len(checkMountList()))
 		})
 	})
 }
