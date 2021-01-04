@@ -7,6 +7,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/dop251/scsu"
 	"github.com/klauspost/compress/huff0"
 )
 
@@ -22,6 +23,7 @@ var customDecMu sync.Mutex
 
 // Decode an encoded string.
 func Decode(s string) (string, error) {
+	initCoders()
 	if len(s) < 1 {
 		return "", ErrCorrupted
 	}
@@ -31,19 +33,25 @@ func Decode(s string) (string, error) {
 	}
 	table--
 	s = s[1:]
-
 	data := make([]byte, base64.URLEncoding.DecodedLen(len(s)))
 	n, err := base64.URLEncoding.Decode(data, ([]byte)(s))
 	if err != nil || n < 0 {
 		return "", ErrCorrupted
 	}
 	data = data[:n]
+	return DecodeBytes(table, data)
+}
 
+// DecodeBytes will decode raw id and data values.
+func DecodeBytes(table byte, data []byte) (string, error) {
+	initCoders()
 	switch table {
 	case tableUncompressed:
 		return string(data), nil
 	case tableReserved:
 		return "", ErrUnsupported
+	case tableSCSUPlain:
+		return scsu.Decode(data)
 	case tableRLE:
 		if len(data) < 2 {
 			return "", ErrCorrupted
@@ -78,6 +86,9 @@ func Decode(s string) (string, error) {
 		name, err := dec.Decompress1X(dst[:0], data)
 		if err != nil {
 			return "", ErrCorrupted
+		}
+		if table == tableSCSU {
+			return scsu.Decode(name)
 		}
 		return string(name), nil
 	}
