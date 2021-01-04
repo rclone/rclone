@@ -13,6 +13,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -663,6 +664,80 @@ func testMetadataInput(t *testing.T, f *Fs) {
 	runSubtest(futureMeta, "future")
 }
 
+// test that chunker refuses to change on objects with future/unknowm metadata
+func testFutureProof(t *testing.T, f *Fs) {
+	if f.opt.MetaFormat == "none" {
+		t.Skip("this test requires metadata support")
+	}
+
+	saveOpt := f.opt
+	ctx := context.Background()
+	f.opt.FailHard = true
+	const dir = "future"
+	const file = dir + "/test"
+	defer func() {
+		f.opt.FailHard = false
+		_ = operations.Purge(ctx, f.base, dir)
+		f.opt = saveOpt
+	}()
+
+	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
+	putPart := func(name string, part int, data, msg string) {
+		if part > 0 {
+			name = f.makeChunkName(name, part-1, "", "")
+		}
+		item := fstest.Item{Path: name, ModTime: modTime}
+		_, obj := fstests.PutTestContents(ctx, t, f.base, &item, data, true)
+		assert.NotNil(t, obj, msg)
+	}
+
+	// simulate chunked object from future
+	meta := `{"ver":999,"nchunks":3,"size":9,"garbage":"litter","sha1":"0707f2970043f9f7c22029482db27733deaec029"}`
+	putPart(file, 0, meta, "metaobject")
+	putPart(file, 1, "abc", "chunk1")
+	putPart(file, 2, "def", "chunk2")
+	putPart(file, 3, "ghi", "chunk3")
+
+	// List should succeed
+	ls, err := f.List(ctx, dir)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(ls))
+	assert.Equal(t, int64(9), ls[0].Size())
+
+	// NewObject should succeed
+	obj, err := f.NewObject(ctx, file)
+	assert.NoError(t, err)
+	assert.Equal(t, file, obj.Remote())
+	assert.Equal(t, int64(9), obj.Size())
+
+	// Hash must fail
+	_, err = obj.Hash(ctx, hash.SHA1)
+	assert.Equal(t, ErrMetaUnknown, err)
+
+	// Move must fail
+	mobj, err := operations.Move(ctx, f, nil, file+"2", obj)
+	assert.Nil(t, mobj)
+	assert.Error(t, err)
+	if err != nil {
+		assert.Contains(t, err.Error(), "please upgrade rclone")
+	}
+
+	// Put must fail
+	oi := object.NewStaticObjectInfo(file, modTime, 3, true, nil, nil)
+	buf := bytes.NewBufferString("abc")
+	_, err = f.Put(ctx, buf, oi)
+	assert.Error(t, err)
+
+	// Rcat must fail
+	in := ioutil.NopCloser(bytes.NewBufferString("abc"))
+	robj, err := operations.Rcat(ctx, f, file, in, modTime)
+	assert.Nil(t, robj)
+	assert.NotNil(t, err)
+	if err != nil {
+		assert.Contains(t, err.Error(), "please upgrade rclone")
+	}
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("PutLarge", func(t *testing.T) {
@@ -685,6 +760,9 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("MetadataInput", func(t *testing.T) {
 		testMetadataInput(t, f)
+	})
+	t.Run("FutureProof", func(t *testing.T) {
+		testFutureProof(t, f)
 	})
 }
 
