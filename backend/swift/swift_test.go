@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"github.com/ncw/swift"
-	"github.com/rclone/rclone/lib/readers"
 	"io"
 	"io/ioutil"
 	"testing"
@@ -17,6 +16,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
