@@ -26,9 +26,12 @@ var (
 
 const (
 	tableUncompressed = 0
-	tableRLE          = 61
-	tableCustom       = 62
-	tableReserved     = 63
+
+	tableSCSU      = 59
+	tableSCSUPlain = 60
+	tableRLE       = 61
+	tableCustom    = 62
+	tableReserved  = 63
 )
 
 // predefined tables as base64 URL encoded string.
@@ -47,6 +50,10 @@ var tablesData = [64]string{
 	5: "JRDIcQf_______8PgIiIiIgINkggARHlkQwSSCCBxHFYINHdfXI=",
 
 	// Special tables:
+	// SCSU and a fairly generic table:
+	tableSCSU: "UxAgZmEB-RYPU8hrnAk6uMgpTNQMB5MGRBx0D3T0JjyUyY-yOi5CoGgktbAktSh7d36HtPTFu7SXJ7FYw_AYmA74ZH2vWgc8O6Z5jLnWnsFqU_4B",
+	// SCSU with no table...
+	tableSCSUPlain: "",
 	// Compressed data has its own table.
 	tableCustom: "",
 	// Reserved for extension.

@@ -21,6 +21,7 @@ require (
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/colinmarc/hdfs/v2 v2.2.0
 	github.com/coreos/go-semver v0.3.0
+	github.com/dop251/scsu v0.0.0-20200422003335-8fadfb689669
 	github.com/dropbox/dropbox-sdk-go-unofficial v5.6.0+incompatible
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/gogo/protobuf v1.3.2 // indirect
