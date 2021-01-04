@@ -4,7 +4,11 @@ package swift
 import (
 	"bytes"
 	"context"
+	"errors"
+	"github.com/ncw/swift"
+	"github.com/rclone/rclone/lib/readers"
 	"io"
+	"io/ioutil"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
@@ -75,6 +79,7 @@ func (f *Fs) testNoChunk(t *testing.T) {
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("NoChunk", f.testNoChunk)
 	t.Run("WithChunk", f.testWithChunk)
+	t.Run("WithChunkFail", f.testWithChunkFail)
 }
 
 func (f *Fs) testWithChunk(t *testing.T) {
@@ -105,6 +110,48 @@ func (f *Fs) testWithChunk(t *testing.T) {
 	obj, err := f.Features().PutStream(ctx, in, obji)
 	require.NoError(t, err)
 	require.NotEmpty(t, obj)
+}
+
+func (f *Fs) testWithChunkFail(t *testing.T) {
+	preConfChunkSize := f.opt.ChunkSize
+	preConfChunk := f.opt.NoChunk
+	f.opt.NoChunk = false
+	f.opt.ChunkSize = 1024 * fs.Byte
+	segmentContainer := f.root + "_segments"
+	defer func() {
+		//restore config
+		f.opt.ChunkSize = preConfChunkSize
+		f.opt.NoChunk = preConfChunk
+	}()
+	path := "piped data chunk with error.txt"
+	file := fstest.Item{
+		ModTime: fstest.Time("2021-01-04T03:46:00.499999999Z"),
+		Path:    path,
+		Size:    -1, // use unknown size during upload
+	}
+	const contentSize = 4096
+	const errPosition = 3072
+	contents := random.String(contentSize)
+	buf := bytes.NewBufferString(contents[:errPosition])
+	errMessage := "potato"
+	er := &readers.ErrorReader{Err: errors.New(errMessage)}
+	in := ioutil.NopCloser(io.MultiReader(buf, er))
+
+	file.Size = contentSize
+	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+	ctx := context.TODO()
+	_, err := f.Features().PutStream(ctx, in, obji)
+	// error is potato
+	require.NotNil(t, err)
+	require.Equal(t, errMessage, err.Error())
+	_, _, err = f.c.Object(f.rootContainer, path)
+	assert.Equal(t, fs.ErrorObjectNotFound, err)
+	prefix := path
+	objs, err := f.c.Objects(segmentContainer, &swift.ObjectsOpts{
+		Prefix: prefix,
+	})
+	require.NoError(t, err)
+	require.Empty(t, objs)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
