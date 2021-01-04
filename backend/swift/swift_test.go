@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/ncw/swift"
 	"io"
 	"io/ioutil"
 	"testing"
 
+	"github.com/ncw/swift"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
