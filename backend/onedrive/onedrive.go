@@ -428,7 +428,7 @@ var retryErrorCodes = []int{
 }
 
 var gatewayTimeoutError sync.Once
-var asyncJobAccessDeniedError = errors.New("async job failed - access denied")
+var errAsyncJobAccessDenied = errors.New("async job failed - access denied")
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
@@ -1001,7 +1001,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 		switch status.Status {
 		case "failed":
 			if strings.HasPrefix(status.ErrorCode, "AccessDenied_") {
-				return asyncJobAccessDeniedError
+				return errAsyncJobAccessDenied
 			}
 			fallthrough
 		case "deleteFailed":
@@ -1032,7 +1032,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantCopy
 	}
 	if f.driveType != srcObj.fs.driveType {
-		fs.Debugf(src, "Can't server-side copy - not all drives are OneDrive Personal")
+		fs.Debugf(src, "Can't server-side copy - not both drives are OneDrive Personal")
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -1088,7 +1088,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Wait for job to finish
 	err = f.waitForJob(ctx, location, dstObj)
-	if err == asyncJobAccessDeniedError {
+	if err == errAsyncJobAccessDenied {
 		fs.Debugf(src, "Server-side copy failed - file not shared between drives")
 		return nil, fs.ErrorCantCopy
 	}
