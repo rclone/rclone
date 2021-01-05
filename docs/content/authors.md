@@ -440,3 +440,4 @@ put them back in again.` >}}
   * Claudio Bantaloukas <rockdreamer@gmail.com>
   * Benjamin Gustin <gustin.ben@gmail.com>
   * Ingo Weiss <ingo@redhat.com>
+  * Kerry Su <me@sshockwave.net>
