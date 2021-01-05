@@ -1307,7 +1307,7 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (o
 		}
 		reader, err := fragment.Open(ctx)
 		if err != nil {
-			return
+			return nil, err
 		}
 		fragmentReaders[i] = reader
 	}
@@ -1320,8 +1320,7 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (o
 		modTime: modTime,
 	}
 
-	object, err = f.Put(ctx, io.MultiReader(fragmentReaders...), src)
-	return
+	return f.Put(ctx, io.MultiReader(fragmentReaders...), src)
 }
 
 //Implement ResumableUploader interface
@@ -1329,12 +1328,12 @@ func (f *Fs) ResumableUpload(ctx context.Context, remoteURL string) (uploader fs
 	newPath = remoteURL
 	parsedPath, err := url.Parse(remoteURL)
 	if err != nil {
-		return
+		return nil, newPath, err
 	}
 	dir := path.Join(uploadDir, parsedPath.Path)
 	err = f.Mkdir(ctx, dir)
 	if err != nil {
-		return
+		return nil, newPath, err
 	}
 
 	// Update mtime of all folders in path for cleanup
@@ -1346,7 +1345,7 @@ func (f *Fs) ResumableUpload(ctx context.Context, remoteURL string) (uploader fs
 	}
 
 	uploader = resumable.NewConcatUploader(parsedPath.Path, dir, f, ctx)
-	return
+	return uploader, newPath, err
 }
 
 func (f *Fs) ResumableCleanup(ctx context.Context) (err error) {

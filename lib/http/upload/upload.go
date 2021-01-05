@@ -3,7 +3,6 @@ package upload
 import (
 	"context"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/http/upload/tus"
 	"net/http"
 )
 
@@ -12,10 +11,10 @@ type CreateCallback func(ctx context.Context, Size int64, meta MetaData) fs.Obje
 type GetCallback func(ctx context.Context) fs.Object
 type Handler func(*http.Request, CreateCallback, GetCallback) http.Handler
 
-var Handlers = []Handler{
-	tus.HandleUpload,
-	//TODO multipart/form upload
-}
+// Handlers store all upload handlers:
+// - tus.HandleUpload
+// - TODO multipart/form upload
+var Handlers = []Handler{}
 
 func HandleUpload(r *http.Request, create CreateCallback, get GetCallback) http.Handler {
 	for _, handler := range Handlers {

@@ -46,4 +46,5 @@ func (c *concatReader) Close() (err error) {
 		err = c.reader.Close()
 		c.reader = nil
 	}
+	return
 }

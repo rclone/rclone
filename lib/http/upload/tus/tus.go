@@ -6,6 +6,10 @@ import (
 	"net/http"
 )
 
+func init() {
+	up.Handlers = append(up.Handlers, HandleUpload)
+}
+
 func HandleUpload(r *http.Request, create up.CreateCallback, get up.GetCallback) http.Handler {
 	if v := r.Header.Get("Tus-Resumable"); v != "" {
 		method := r.Method

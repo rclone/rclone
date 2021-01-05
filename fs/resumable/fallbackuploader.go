@@ -53,7 +53,8 @@ func (f *fallbackUploader) uploadDirContents() (entries fs.DirEntries, fs fs.Fs,
 
 func (f *fallbackUploader) Pos() (pos int64, ok bool) {
 	if f.partialFallback {
-		fallbackPos, ok := f.fragmentUploader.Pos()
+		var fallbackPos int64
+		fallbackPos, ok = f.fragmentUploader.Pos()
 		if !ok {
 			return
 		}
@@ -105,7 +106,7 @@ func (f *fallbackUploader) flush() (finished bool, err error) {
 			for _, f.partialFallback = range []bool{true, false} { // Total for fallback and main
 				lastDir, _, dirIndex, err := f.lastDir()
 				if err != nil {
-					return
+					return false, err
 				}
 				if dirIndex > 0 {
 					totalFragments += (int64(dirIndex) - 1) * MaxFolderCount
@@ -119,7 +120,7 @@ func (f *fallbackUploader) flush() (finished bool, err error) {
 			// Check to make sure the last fragment size on the fallback is big enough to eventually upload otherwise provide fallback with enough contiguous data
 			frag, err := f.lastFragment()
 			if err != nil {
-				return
+				return false, err
 			}
 			lastFragmentSize = frag.object.Size()
 		}

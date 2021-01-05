@@ -42,18 +42,18 @@ func (f *Fs) uploadFragmentRange(ctx context.Context, fragment fs.Object, bucket
 			UploadId:        uploadID,
 		})
 		if err != nil {
-			return
+			return nil, err
 		}
 		return &s3.CompletedPart{ETag: part.CopyPartResult.ETag, PartNumber: aws.Int64(partNumber)}, nil
 	} else { // else stream data from fragment backend
 		body, err := fragment.Open(ctx)
 		if err != nil {
-			return
+			return nil, err
 		}
 		if start != 0 {
 			_, err := io.CopyN(ioutil.Discard, body, int64(start))
 			if err != nil {
-				return
+				return nil, err
 			}
 		}
 		stream := body.(io.Reader)
@@ -69,7 +69,7 @@ func (f *Fs) uploadFragmentRange(ctx context.Context, fragment fs.Object, bucket
 		})
 		err = body.Close()
 		if err != nil {
-			return
+			return nil, err
 		}
 		return &s3.CompletedPart{ETag: part.ETag, PartNumber: aws.Int64(partNumber)}, nil
 	}
@@ -99,7 +99,7 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (r
 			// Handle more than maxUploadParts
 			bucket, bucketPath, err := f.makeUploadBucket(ctx)
 			if err != nil {
-				return
+				return nil, err
 			}
 			for fragLen > maxUploadParts {
 				manyFragments := fragments
@@ -113,7 +113,7 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (r
 					tmpFragments[tmpFragmentCount] = fragments[i]
 					tmpFragmentCount++
 					if err != nil {
-						return
+						return nil, err
 					}
 				}
 				copy(fragments[chunks:], manyFragments[fragLen-remainder:])
@@ -130,7 +130,7 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (r
 	bucket, bucketPath := o.split()
 	err = o.fs.makeBucket(ctx, bucket)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	expires := time.Now().Add(uploadLifetime)
@@ -227,7 +227,7 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (r
 					}
 				}
 				if err != nil {
-					return
+					return nil, err
 				}
 			} else {
 				// Exploit last part no minimum
@@ -235,7 +235,7 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (r
 				toMerge := fs.Objects{fragments[i], fragments[i+1]}
 				tmpFragment, err := f.Concat(ctx, toMerge, cat)
 				if err != nil {
-					return
+					return nil, err
 				}
 				tmpFragments[tmpFragmentCount] = tmpFragment
 				tmpFragmentCount++
@@ -247,7 +247,7 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (r
 					UploadId:   upload.UploadId,
 				})
 				if err != nil {
-					return
+					return nil, err
 				}
 				parts[partCount] = &s3.CompletedPart{ETag: part.CopyPartResult.ETag, PartNumber: aws.Int64(partCount)}
 				partCount++
@@ -257,9 +257,9 @@ func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (r
 			parts[partCount], err = f.uploadFragment(ctx, fragments[i], bucket, bucketPath, int64(partCount), upload.UploadId)
 			partCount++
 			if err != nil {
-				return
+				return nil, err
 			}
 		}
 	}
-	return
+	return result, nil
 }
