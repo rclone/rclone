@@ -281,6 +281,7 @@ type CreateShareLinkResponse struct {
 type AsyncOperationStatus struct {
 	PercentageComplete float64 `json:"percentageComplete"` // A float value between 0 and 100 that indicates the percentage complete.
 	Status             string  `json:"status"`             // A string value that maps to an enumeration of possible values about the status of the job. "notStarted | inProgress | completed | updating | failed | deletePending | deleteFailed | waiting"
+	ErrorCode          string  `json:"errorCode"`          // Not officially documented :(
 }
 
 // GetID returns a normalized ID of the item
