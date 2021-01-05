@@ -276,10 +276,9 @@ listing, set this option.`,
 			Default: false,
 			Help: `Allow server-side operations (e.g. copy) to work across different onedrive configs.
 
-This can be useful if you wish to do a server-side copy between two
-different Onedrives.  Note that this isn't enabled by default
-because it isn't easy to tell if it will work between any two
-configurations.`,
+This will only work if you are copying between two OneDrive *Personal* drives AND
+the files to copy are already shared between them.  In other cases, rclone will
+fall back to normal copy (which will be slightly slower).`,
 			Advanced: true,
 		}, {
 			Name:    "no_versions",
@@ -429,6 +428,7 @@ var retryErrorCodes = []int{
 }
 
 var gatewayTimeoutError sync.Once
+var errAsyncJobAccessDenied = errors.New("async job failed - access denied")
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
@@ -1000,10 +1000,12 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 
 		switch status.Status {
 		case "failed":
-		case "deleteFailed":
-			{
-				return errors.Errorf("%s: async operation returned %q", o.remote, status.Status)
+			if strings.HasPrefix(status.ErrorCode, "AccessDenied_") {
+				return errAsyncJobAccessDenied
 			}
+			fallthrough
+		case "deleteFailed":
+			return errors.Errorf("%s: async operation returned %q", o.remote, status.Status)
 		case "completed":
 			err = o.readMetaData(ctx)
 			return errors.Wrapf(err, "async operation completed but readMetaData failed")
@@ -1029,6 +1031,11 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
+	if f.driveType != srcObj.fs.driveType {
+		fs.Debugf(src, "Can't server-side copy - not both drives are OneDrive Personal")
+		return nil, fs.ErrorCantCopy
+	}
+
 	err := srcObj.readMetaData(ctx)
 	if err != nil {
 		return nil, err
@@ -1081,6 +1088,10 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Wait for job to finish
 	err = f.waitForJob(ctx, location, dstObj)
+	if err == errAsyncJobAccessDenied {
+		fs.Debugf(src, "Server-side copy failed - file not shared between drives")
+		return nil, fs.ErrorCantCopy
+	}
 	if err != nil {
 		return nil, err
 	}
