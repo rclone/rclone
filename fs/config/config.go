@@ -34,7 +34,6 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/driveletter"
-	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/random"
@@ -236,7 +235,7 @@ func LoadConfig(ctx context.Context) {
 	accounting.StartTokenTicker(ctx)
 
 	// Start the transactions per second limiter
-	fshttp.StartHTTPTokenBucket(ctx)
+	accounting.StartLimitTPS(ctx)
 }
 
 var errorConfigFileNotFound = errors.New("config file not found")
