@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -349,6 +350,7 @@ func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.C
 
 // Get an SFTP connection from the pool, or open a new one
 func (f *Fs) getSftpConnection(ctx context.Context) (c *conn, err error) {
+	accounting.LimitTPS(ctx)
 	f.poolMu.Lock()
 	for len(f.pool) > 0 {
 		c = f.pool[0]
