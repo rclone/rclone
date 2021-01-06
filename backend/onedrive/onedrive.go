@@ -1063,7 +1063,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Copy the object
-	opts := newOptsCall(srcObj.id, "POST", "/copy")
+	// The query param is a workaround for OneDrive Business for #4590
+	opts := newOptsCall(srcObj.id, "POST", "/copy?@microsoft.graph.conflictBehavior=replace")
 	opts.ExtraHeaders = map[string]string{"Prefer": "respond-async"}
 	opts.NoResponse = true
 
