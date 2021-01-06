@@ -15,6 +15,7 @@ import (
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -258,6 +259,7 @@ func (f *Fs) getFtpConnection(ctx context.Context) (c *ftp.ServerConn, err error
 	if f.opt.Concurrency > 0 {
 		f.tokens.Get()
 	}
+	accounting.LimitTPS(ctx)
 	f.poolMu.Lock()
 	if len(f.pool) > 0 {
 		c = f.pool[0]

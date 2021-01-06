@@ -1297,10 +1297,15 @@ facility is `DAEMON`.
 
 ### --tpslimit float ###
 
-Limit HTTP transactions per second to this. Default is 0 which is used
-to mean unlimited transactions per second.
+Limit transactions per second to this number. Default is 0 which is
+used to mean unlimited transactions per second.
 
-For example to limit rclone to 10 HTTP transactions per second use
+A transaction is roughly defined as an API call; its exact meaning
+will depend on the backend. For HTTP based backends it is an HTTP
+PUT/GET/POST/etc and its response. For FTP/SFTP it is a round trip
+transaction over TCP.
+
+For example to limit rclone to 10 transactions per second use
 `--tpslimit 10`, or to 1 transaction every 2 seconds use `--tpslimit
 0.5`.
 
@@ -1310,6 +1315,10 @@ banned or rate limited).
 
 This can be very useful for `rclone mount` to control the behaviour of
 applications using it.
+
+This limit applies to all HTTP based backends and to the FTP and SFTP
+backends. It does not apply to the local backend or the Tardigrade
+backend.
 
 See also `--tpslimit-burst`.
 
