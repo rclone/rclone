@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/structs"
 	"golang.org/x/net/publicsuffix"
-	"golang.org/x/time/rate"
 )
 
 const (
@@ -29,23 +29,9 @@ const (
 var (
 	transport    http.RoundTripper
 	noTransport  = new(sync.Once)
-	tpsBucket    *rate.Limiter // for limiting number of http transactions per second
 	cookieJar, _ = cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	logMutex     sync.Mutex
 )
-
-// StartHTTPTokenBucket starts the token bucket if necessary
-func StartHTTPTokenBucket(ctx context.Context) {
-	ci := fs.GetConfig(ctx)
-	if ci.TPSLimit > 0 {
-		tpsBurst := ci.TPSLimitBurst
-		if tpsBurst < 1 {
-			tpsBurst = 1
-		}
-		tpsBucket = rate.NewLimiter(rate.Limit(ci.TPSLimit), tpsBurst)
-		fs.Infof(nil, "Starting HTTP transaction limiter: max %g transactions/s with burst %d", ci.TPSLimit, tpsBurst)
-	}
-}
 
 // A net.Conn that sets a deadline for every Read or Write operation
 type timeoutConn struct {
@@ -309,13 +295,8 @@ func cleanAuths(buf []byte) []byte {
 
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	// Get transactions per second token first if limiting
-	if tpsBucket != nil {
-		tbErr := tpsBucket.Wait(req.Context())
-		if tbErr != nil && tbErr != context.Canceled {
-			fs.Errorf(nil, "HTTP token bucket error: %v", tbErr)
-		}
-	}
+	// Limit transactions per second if required
+	accounting.LimitTPS(req.Context())
 	// Force user agent
 	req.Header.Set("User-Agent", t.userAgent)
 	// Set user defined headers
