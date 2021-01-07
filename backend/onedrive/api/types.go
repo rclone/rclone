@@ -253,8 +253,10 @@ type MoveItemRequest struct {
 //CreateShareLinkRequest is the request to create a sharing link
 //Always Type:view and Scope:anonymous for public sharing
 type CreateShareLinkRequest struct {
-	Type  string `json:"type"`            //Link type in View, Edit or Embed
-	Scope string `json:"scope,omitempty"` //Optional. Scope in anonymous, organization
+	Type     string     `json:"type"`                         // Link type in View, Edit or Embed
+	Scope    string     `json:"scope,omitempty"`              // Scope in anonymous, organization
+	Password string     `json:"password,omitempty"`           // The password of the sharing link that is set by the creator. Optional and OneDrive Personal only.
+	Expiry   *time.Time `json:"expirationDateTime,omitempty"` // A String with format of yyyy-MM-ddTHH:mm:ssZ of DateTime indicates the expiration time of the permission.
 }
 
 //CreateShareLinkResponse is the response from CreateShareLinkRequest

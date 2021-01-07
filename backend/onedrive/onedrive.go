@@ -298,6 +298,41 @@ this flag there.
 `,
 			Advanced: true,
 		}, {
+			Name:     "link_scope",
+			Default:  "anonymous",
+			Help:     `Set the scope of the links created by the link command.`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "anonymous",
+				Help:  "Anyone with the link has access, without needing to sign in. This may include people outside of your organization. Anonymous link support may be disabled by an administrator.",
+			}, {
+				Value: "organization",
+				Help:  "Anyone signed into your organization (tenant) can use the link to get access. Only available in OneDrive for Business and SharePoint.",
+			}},
+		}, {
+			Name:     "link_type",
+			Default:  "view",
+			Help:     `Set the type of the links created by the link command.`,
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "view",
+				Help:  "Creates a read-only link to the item.",
+			}, {
+				Value: "edit",
+				Help:  "Creates a read-write link to the item.",
+			}, {
+				Value: "embed",
+				Help:  "Creates an embeddable link to the item.",
+			}},
+		}, {
+			Name:    "link_password",
+			Default: "",
+			Help: `Set the password for links created by the link command.
+
+At the time of writing this only works with OneDrive personal paid accounts.
+`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -355,6 +390,9 @@ type Options struct {
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
 	NoVersions              bool                 `config:"no_versions"`
+	LinkScope               string               `config:"link_scope"`
+	LinkType                string               `config:"link_type"`
+	LinkPassword            string               `config:"link_password"`
 	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -1303,8 +1341,14 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	opts := newOptsCall(info.GetID(), "POST", "/createLink")
 
 	share := api.CreateShareLinkRequest{
-		Type:  "view",
-		Scope: "anonymous",
+		Type:     f.opt.LinkType,
+		Scope:    f.opt.LinkScope,
+		Password: f.opt.LinkPassword,
+	}
+
+	if expire < fs.Duration(time.Hour*24*365*100) {
+		expiry := time.Now().Add(time.Duration(expire))
+		share.Expiry = &expiry
 	}
 
 	var resp *http.Response
