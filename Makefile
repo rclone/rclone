@@ -52,7 +52,7 @@ rclone:
 	mv -v `go env GOPATH`/bin/rclone`go env GOEXE`.new `go env GOPATH`/bin/rclone`go env GOEXE`
 
 test_all:
-	go install --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS) github.com/rclone/rclone/fstest/test_all
+	go install --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS) $(BUILD_ARGS) github.com/rclone/rclone/fstest/test_all
 
 vars:
 	@echo SHELL="'$(SHELL)'"
@@ -188,10 +188,10 @@ upload_github:
 	./bin/upload-github $(TAG)
 
 cross:	doc
-	go run bin/cross-compile.go -release current $(BUILDTAGS) $(TAG)
+	go run bin/cross-compile.go -release current $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
 
 beta:
-	go run bin/cross-compile.go $(BUILDTAGS) $(TAG)
+	go run bin/cross-compile.go $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
 	rclone -v copy build/ memstore:pub-rclone-org/$(TAG)
 	@echo Beta release ready at https://pub.rclone.org/$(TAG)/
 
@@ -199,7 +199,7 @@ log_since_last_release:
 	git log $(LAST_TAG)..
 
 compile_all:
-	go run bin/cross-compile.go -compile-only $(BUILDTAGS) $(TAG)
+	go run bin/cross-compile.go -compile-only $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
 
 ci_upload:
 	sudo chown -R $$USER build
@@ -213,7 +213,7 @@ endif
 
 ci_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt
-	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(TAG)
+	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt $(BUILD_FLAGS) $(BUILDTAGS) $(BUILD_ARGS) $(TAG)
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ $(BETA_UPLOAD)
 ifeq ($(or $(BRANCH_PATH),$(RELEASE_TAG)),)
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ $(BETA_UPLOAD_ROOT)$(BETA_SUBDIR)
