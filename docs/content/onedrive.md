@@ -163,8 +163,6 @@ the following characters are also replaced:
 | ?         | 0x3F  | ？          |
 | \         | 0x5C  | ＼          |
 | \|        | 0x7C  | ｜          |
-| #         | 0x23  | ＃          |
-| %         | 0x25  | ％          |
 
 File names can also not end with the following characters.
 These only get replaced if they are the last character in the name:
