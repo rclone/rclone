@@ -345,8 +345,6 @@ At the time of writing this only works with OneDrive personal paid accounts.
 			//   | (vertical line) -> '｜' // FULLWIDTH VERTICAL LINE
 			//   ? (question mark) -> '？' // FULLWIDTH QUESTION MARK
 			//   * (asterisk)      -> '＊' // FULLWIDTH ASTERISK
-			//   # (number sign)  -> '＃'  // FULLWIDTH NUMBER SIGN
-			//   % (percent sign) -> '％'  // FULLWIDTH PERCENT SIGN
 			//
 			// Folder names cannot begin with a tilde ('~')
 			// List of replaced characters:
@@ -371,7 +369,6 @@ At the time of writing this only works with OneDrive personal paid accounts.
 			// https://docs.microsoft.com/en-us/onedrive/developer/rest-api/concepts/addressing-driveitems?view=odsp-graph-online#path-encoding
 			Default: (encoder.Display |
 				encoder.EncodeBackSlash |
-				encoder.EncodeHashPercent |
 				encoder.EncodeLeftSpace |
 				encoder.EncodeLeftTilde |
 				encoder.EncodeRightPeriod |
