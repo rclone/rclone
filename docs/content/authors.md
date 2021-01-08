@@ -442,3 +442,4 @@ put them back in again.` >}}
   * Ingo Weiss <ingo@redhat.com>
   * Kerry Su <me@sshockwave.net>
   * Ilyess Bachiri <ilyess.bachiri@sonder.com>
+  * Yury Stankevich <urykhy@gmail.com>
