@@ -2,7 +2,7 @@ SHELL = bash
 # Branch we are working on
 BRANCH := $(or $(BUILD_SOURCEBRANCHNAME),$(lastword $(subst /, ,$(GITHUB_REF))),$(shell git rev-parse --abbrev-ref HEAD))
 # Tag of the current commit, if any.  If this is not "" then we are building a release
-RELEASE_TAG := $(shell git tag -l --points-at HEAD)
+RELEASE_TAG := $(shell git tag -l --points-at HEAD | head -1)
 # Version of last release (may not be on this branch)
 VERSION := $(shell cat VERSION)
 # Last tag on this branch

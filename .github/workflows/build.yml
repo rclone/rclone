@@ -2,24 +2,127 @@
 # Github Actions build for rclone
 # -*- compile-command: "yamllint -f parsable build.yml" -*-
 
-name: build
+name: test forked rclone
 
 # Trigger the workflow on push or pull request
 on:
   push:
     branches:
       - '*'
+      - '!master'
+      - '!upstream'
     tags:
       - '*'
   pull_request:
 
 jobs:
-  build:
+  release:
+    name: "build and publish release"
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+        with:
+          # checkout into a fixed path to avoid import path problems on go < 1.11
+          path: ./src/github.com/rclone/rclone
+
+      - name: Cross-compile rclone
+        run: |
+          export GOPATH=${{ runner.workspace }}
+          export PATH=$GOPATH/bin:$PATH
+          docker pull billziss/xgo-cgofuse
+          GO111MODULE=off go get -v github.com/karalabe/xgo  # don't add to go.mod
+
+          xgo \
+              -image=billziss/xgo-cgofuse \
+              -targets=linux/amd64,windows/amd64 \
+              -tags=cmount \
+              -dest=build \
+              -ldflags="-s -X github.com/rclone/rclone/fs.Version=$(echo $GITHUB_REF |cut -d/ -f3)" \
+              .
+
+          cp -r build dist  # fix root ownership after xgo
+
+      - name: List build artifacts
+        run: |
+          date | tee dist/timestamp.txt
+          ls -l dist
+
+      - name: Publish release
+        uses: meeDamian/github-release@1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: >
+            dist/timestamp.txt
+            dist/rclone-linux-amd64
+            dist/rclone-windows-4.0-amd64.exe
+          gzip: false
+          allow_override: true
+
+  integration_test:
+    name: "integration test"
+    timeout-minutes: 90
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/test')
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v1
+        with:
+          path: ./src/github.com/rclone/rclone
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          stable: 'false'
+          go-version: '1.14.x'
+
+      - name: Prepare integration
+        run: |
+          # build test binaries
+          export GOPATH=${{ runner.workspace }}
+          export PATH=$GOPATH/bin:$PATH
+          go version
+          go install .
+          go install ./fstest/test_all
+
+          # create test configuration
+          mkdir -p /tmp/crypt
+          mkdir -p ~/.config/rclone
+          cat > ~/.config/rclone/rclone.conf <<EOF
+          ${{ secrets.test_conf }}
+          EOF
+          chmod 600 ~/.config/rclone/rclone.conf
+
+      - name: Run integration test
+        run: |
+          export PATH=${{ runner.workspace }}/bin:$PATH
+          test_all -verbose -timeout 50m -backends chunker |& tee integration.log
+
+      - name: Purge test directories
+        run: |
+          export PATH=${{ runner.workspace }}/bin:$PATH
+          for remote in TestS3 TestMailru; do
+            (rclone lsd $remote: ||:) |awk '{print$5}' |grep rclone-test |xargs -rti rclone purge $remote:{} ||:
+          done
+
+      - name: Upload test log
+        uses: actions/upload-artifact@v1
+        with:
+          name: integration.log
+          path: integration.log
+
+  test:
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'mac_amd64', 'mac_arm64', 'windows_amd64', 'windows_386', 'other_os', 'go1.13', 'go1.14', 'go1.15']
+        job_name: ['linux', 'windows']
 
         include:
           - job_name: linux
@@ -29,69 +132,18 @@ jobs:
             build_flags: '-include "^linux/"'
             check: true
             quicktest: true
-            racequicktest: true
+            racequicktest: false
             deploy: true
 
-          - job_name: mac_amd64
-            os: macOS-latest
-            go: '1.16.x'
-            gotags: 'cmount'
-            build_flags: '-include "^darwin/amd64" -cgo'
-            quicktest: true
-            racequicktest: true
-            deploy: true
-
-          - job_name: mac_arm64
-            os: macOS-latest
-            go: '1.16.x'
-            gotags: 'cmount'
-            build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -macos-sdk macosx11.1 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
-            deploy: true
-
-          - job_name: windows_amd64
+          - job_name: windows
             os: windows-latest
             go: '1.16.x'
             gotags: cmount
             build_flags: '-include "^windows/amd64" -cgo'
             build_args: '-buildmode exe'
             quicktest: true
-            racequicktest: true
+            racequicktest: false
             deploy: true
-
-          - job_name: windows_386
-            os: windows-latest
-            go: '1.16.x'
-            gotags: cmount
-            goarch: '386'
-            cgo: '1'
-            build_flags: '-include "^windows/386" -cgo'
-            build_args: '-buildmode exe'
-            quicktest: true
-            deploy: true
-
-          - job_name: other_os
-            os: ubuntu-latest
-            go: '1.16.x'
-            build_flags: '-exclude "^(windows/|darwin/|linux/)"'
-            compile_all: true
-            deploy: true
-
-          - job_name: go1.13
-            os: ubuntu-latest
-            go: '1.13.x'
-            quicktest: true
-
-          - job_name: go1.14
-            os: ubuntu-latest
-            go: '1.14.x'
-            quicktest: true
-            racequicktest: true
-
-          - job_name: go1.15
-            os: ubuntu-latest
-            go: '1.15.x'
-            quicktest: true
-            racequicktest: true
 
     name: ${{ matrix.job_name }}
 
@@ -212,99 +264,3 @@ jobs:
         # working-directory: '$(modulePath)'
         # Deploy binaries if enabled in config && not a PR && not a fork
         if: matrix.deploy && github.head_ref == '' && github.repository == 'rclone/rclone'
-
-  android:
-     timeout-minutes: 30
-     name: "android-all"
-     runs-on: ubuntu-latest
-     
-     steps:
-       - name: Checkout
-         uses: actions/checkout@v2
-
-       # Upgrade together with NDK version
-       - name: Set up Go 1.14
-         uses: actions/setup-go@v1
-         with:
-           go-version: 1.14
-
-       # Upgrade together with Go version. Using a GitHub-provided version saves around 2 minutes.
-       - name: Force NDK version
-         run: echo "y" | sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;21.4.7075529" | grep -v = || true
-
-       - name: Go module cache
-         uses: actions/cache@v2
-         with:
-           path: ~/go/pkg/mod
-           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-           restore-keys: |
-             ${{ runner.os }}-go-
-
-       - name: Set global environment variables
-         shell: bash
-         run: |
-           echo "VERSION=$(make version)" >> $GITHUB_ENV
-
-       - name: build native rclone
-         run: |
-           make
-
-       - name: arm-v7a Set environment variables
-         shell: bash
-         run: |
-           echo "CC=$(echo $ANDROID_HOME/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang)" >> $GITHUB_ENV
-           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
-           echo 'GOOS=android' >> $GITHUB_ENV
-           echo 'GOARCH=arm' >> $GITHUB_ENV
-           echo 'GOARM=7' >> $GITHUB_ENV
-           echo 'CGO_ENABLED=1' >> $GITHUB_ENV
-           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
-       - name: arm-v7a build
-         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-16-armv7a .
-
-       - name: arm64-v8a Set environment variables
-         shell: bash
-         run: |
-           echo "CC=$(echo $ANDROID_HOME/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang)" >> $GITHUB_ENV
-           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
-           echo 'GOOS=android' >> $GITHUB_ENV
-           echo 'GOARCH=arm64' >> $GITHUB_ENV
-           echo 'CGO_ENABLED=1' >> $GITHUB_ENV
-           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
-
-       - name: arm64-v8a build
-         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-21-armv8a .
-
-       - name: x86 Set environment variables
-         shell: bash
-         run: |
-           echo "CC=$(echo $ANDROID_HOME/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android16-clang)" >> $GITHUB_ENV
-           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
-           echo 'GOOS=android' >> $GITHUB_ENV
-           echo 'GOARCH=386' >> $GITHUB_ENV
-           echo 'CGO_ENABLED=1' >> $GITHUB_ENV
-           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
-
-       - name: x86 build
-         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-16-x86 .
-
-       - name: x64 Set environment variables
-         shell: bash
-         run: |
-           echo "CC=$(echo $ANDROID_HOME/ndk/21.4.7075529/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang)" >> $GITHUB_ENV
-           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
-           echo 'GOOS=android' >> $GITHUB_ENV
-           echo 'GOARCH=amd64' >> $GITHUB_ENV
-           echo 'CGO_ENABLED=1' >> $GITHUB_ENV
-           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
-
-       - name: x64 build
-         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-21-x64 .
-
-       - name: Upload artifacts
-         run: |
-           make ci_upload
-         env:
-           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
-         # Upload artifacts if not a PR && not a fork
-         if: github.head_ref == '' && github.repository == 'rclone/rclone'

@@ -10,4 +10,5 @@ rclone.iml
 *.test
 *.log
 *.iml
+*.swp
 fuzz-build.zip

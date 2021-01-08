@@ -54,40 +54,16 @@ backends:
    fastlist: true
    maxfile:  10k
  - backend:  "chunker"
-   remote:   "TestChunkerChunk50bYandex:"
-   fastlist: true
-   maxfile:  1k
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bBox:"
-   fastlist: true
-   maxfile:  1k
- - backend:  "chunker"
    remote:   "TestChunkerS3:"
    fastlist: true
  - backend:  "chunker"
-   remote:   "TestChunkerChunk50bS3:"
-   fastlist: true
-   maxfile:  1k
- - backend:  "chunker"
    remote:   "TestChunkerChunk50bMD5HashS3:"
-   fastlist: true
-   maxfile:  1k
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bSHA1HashS3:"
    fastlist: true
    maxfile:  1k
  - backend:  "chunker"
    remote:   "TestChunkerOverCrypt:"
    fastlist: true
    maxfile:  6k
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bMD5QuickS3:"
-   fastlist: true
-   maxfile:  1k
- - backend:  "chunker"
-   remote:   "TestChunkerChunk50bSHA1QuickS3:"
-   fastlist: true
-   maxfile:  1k
  ## end chunker
  ## begin compress
  - backend:  "compress"
@@ -205,9 +181,6 @@ backends:
  #   fastlist: true
  #   ignore:
  #     - TestIntegration/FsMkdir/FsPutFiles/FsCopy
- - backend:  "yandex"
-   remote:   "TestYandex:"
-   fastlist: false
  - backend:  "ftp"
    remote:   "TestFTPProftpd:"
    ignore:
@@ -229,9 +202,6 @@ backends:
      - "TestMultithreadCopy/{size:131071_streams:2}"
      - "TestMultithreadCopy/{size:131072_streams:2}"
      - "TestMultithreadCopy/{size:131073_streams:2}"
-   fastlist: false
- - backend:  "box"
-   remote:   "TestBox:"
    fastlist: false
  - backend:  "fichier"
    remote:   "TestFichier:"
