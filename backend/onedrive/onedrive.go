@@ -122,12 +122,15 @@ func init() {
 			var siteID string
 			var relativePath string
 			switch config.Choose("Your choice",
-				[]string{"onedrive", "sharepoint", "url", "driveid", "siteid", "path", "search"},
+				[]string{"onedrive", "sharepoint", "url", "search", "driveid", "siteid", "path"},
 				[]string{
 					"OneDrive Personal or Business",
-					"Root Sharepoint site", "Sharepoint site URL",
-					"Type in driveID", "Type in SiteID",
-					"Sharepoint site by server-relative URL", "Search a Sharepoint site",
+					"Root Sharepoint site",
+					"Sharepoint site name or URL (e.g. mysite or https://contoso.sharepoint.com/sites/mysite)",
+					"Search for a Sharepoint site",
+					"Type in driveID (advanced)",
+					"Type in SiteID (advanced)",
+					"Sharepoint server-relative path (advanced, e.g. /teams/hr)",
 				},
 				false) {
 
