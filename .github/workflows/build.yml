@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'mac', 'windows_amd64', 'windows_386', 'other_os', 'go1.11', 'go1.12', 'go1.13', 'go1.14']
+        job_name: ['linux', 'mac', 'windows_amd64', 'windows_386', 'other_os', 'go1.12', 'go1.13', 'go1.14']
 
         include:
           - job_name: linux
@@ -68,11 +68,6 @@ jobs:
             build_flags: '-exclude "^(windows/|darwin/amd64|linux/)"'
             compile_all: true
             deploy: true
-
-          - job_name: go1.11
-            os: ubuntu-latest
-            go: '1.11.x'
-            quicktest: true
 
           - job_name: go1.12
             os: ubuntu-latest
