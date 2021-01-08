@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'mac', 'windows_amd64', 'windows_386', 'other_os', 'go1.12', 'go1.13', 'go1.14']
+        job_name: ['linux', 'mac', 'windows_amd64', 'windows_386', 'other_os', 'go1.12', 'go1.13', 'go1.14', 'go1.16']
 
         include:
           - job_name: linux
@@ -82,6 +82,12 @@ jobs:
           - job_name: go1.14
             os: ubuntu-latest
             go: '1.14.x'
+            quicktest: true
+            racequicktest: true
+
+          - job_name: go1.16
+            os: ubuntu-latest
+            go: '1.16.0-beta1'
             quicktest: true
             racequicktest: true
 
