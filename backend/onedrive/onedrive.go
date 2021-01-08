@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -120,9 +121,18 @@ func init() {
 			var opts rest.Opts
 			var finalDriveID string
 			var siteID string
+			var relativePath string
 			switch config.Choose("Your choice",
-				[]string{"onedrive", "sharepoint", "driveid", "siteid", "search"},
-				[]string{"OneDrive Personal or Business", "Root Sharepoint site", "Type in driveID", "Type in SiteID", "Search a Sharepoint site"},
+				[]string{"onedrive", "sharepoint", "url", "search", "driveid", "siteid", "path"},
+				[]string{
+					"OneDrive Personal or Business",
+					"Root Sharepoint site",
+					"Sharepoint site name or URL (e.g. mysite or https://contoso.sharepoint.com/sites/mysite)",
+					"Search for a Sharepoint site",
+					"Type in driveID (advanced)",
+					"Type in SiteID (advanced)",
+					"Sharepoint server-relative path (advanced, e.g. /teams/hr)",
+				},
 				false) {
 
 			case "onedrive":
@@ -143,6 +153,20 @@ func init() {
 			case "siteid":
 				fmt.Printf("Paste your Site ID here> ")
 				siteID = config.ReadLine()
+			case "url":
+				fmt.Println("Example: \"https://contoso.sharepoint.com/sites/mysite\" or \"mysite\"")
+				fmt.Printf("Paste your Site URL here> ")
+				siteURL := config.ReadLine()
+				re := regexp.MustCompile(`https://.*\.sharepoint.com/sites/(.*)`)
+				match := re.FindStringSubmatch(siteURL)
+				if len(match) == 2 {
+					relativePath = "/sites/" + match[1]
+				} else {
+					relativePath = "/sites/" + siteURL
+				}
+			case "path":
+				fmt.Printf("Enter server-relative URL here> ")
+				relativePath = config.ReadLine()
 			case "search":
 				fmt.Printf("What to search for> ")
 				searchTerm := config.ReadLine()
@@ -167,6 +191,21 @@ func init() {
 					}
 					siteID = sites.Sites[config.ChooseNumber("Chose drive to use:", 0, len(sites.Sites)-1)].SiteID
 				}
+			}
+
+			// if we use server-relative URL for finding the drive
+			if relativePath != "" {
+				opts = rest.Opts{
+					Method:  "GET",
+					RootURL: graphURL,
+					Path:    "/sites/root:" + relativePath,
+				}
+				site := siteResource{}
+				_, err := srv.CallJSON(ctx, &opts, nil, &site)
+				if err != nil {
+					log.Fatalf("Failed to query available site by relative path: %v", err)
+				}
+				siteID = site.SiteID
 			}
 
 			// if we have a siteID we need to ask for the drives
