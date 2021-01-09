@@ -2449,6 +2449,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	fs.Logf(f, "Note that emptying the trash happens in the background and can take some time.")
 	return nil
 }
 
