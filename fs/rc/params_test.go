@@ -2,6 +2,8 @@ package rc
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -345,4 +347,54 @@ func TestParamsGetStructMissingOK(t *testing.T) {
 	assert.Equal(t, "one", out.String)
 	assert.Equal(t, 4.2, out.Float)
 	assert.Equal(t, true, IsErrParamInvalid(e3), e3.Error())
+}
+
+func TestParamsGetHTTPRequest(t *testing.T) {
+	in := Params{}
+	req, err := in.GetHTTPRequest()
+	assert.Nil(t, req)
+	assert.Error(t, err)
+	assert.Equal(t, true, IsErrParamNotFound(err), err.Error())
+
+	in = Params{
+		"_request": 42,
+	}
+	req, err = in.GetHTTPRequest()
+	assert.Nil(t, req)
+	assert.Error(t, err)
+	assert.Equal(t, true, IsErrParamInvalid(err), err.Error())
+
+	r := new(http.Request)
+	in = Params{
+		"_request": r,
+	}
+	req, err = in.GetHTTPRequest()
+	assert.NotNil(t, req)
+	assert.NoError(t, err)
+	assert.Equal(t, r, req)
+}
+
+func TestParamsGetHTTPResponseWriter(t *testing.T) {
+	in := Params{}
+	wr, err := in.GetHTTPResponseWriter()
+	assert.Nil(t, wr)
+	assert.Error(t, err)
+	assert.Equal(t, true, IsErrParamNotFound(err), err.Error())
+
+	in = Params{
+		"_response": 42,
+	}
+	wr, err = in.GetHTTPResponseWriter()
+	assert.Nil(t, wr)
+	assert.Error(t, err)
+	assert.Equal(t, true, IsErrParamInvalid(err), err.Error())
+
+	var w http.ResponseWriter = httptest.NewRecorder()
+	in = Params{
+		"_response": w,
+	}
+	wr, err = in.GetHTTPResponseWriter()
+	assert.NotNil(t, wr)
+	assert.NoError(t, err)
+	assert.Equal(t, w, wr)
 }
