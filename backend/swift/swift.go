@@ -283,7 +283,6 @@ var retryErrorCodes = []int{
 	401, // Unauthorized (e.g. "Token has expired")
 	408, // Request Timeout
 	409, // Conflict - various states that could be resolved on a retry
-	413, // Upload exceeds quota
 	429, // Rate exceeded.
 	500, // Get occasional 500 Internal Server Error
 	503, // Service Unavailable/Slow Down - "Reduce your request rate"
@@ -1168,44 +1167,6 @@ func (o *Object) removeSegmentsLargeObject(containerSegments map[string][]string
 	return nil
 }
 
-//func removeObjects(f *Fs, container string, prefix string) (err error) {
-//	var segmentNames []string
-//	opts := swift.ObjectsOpts{
-//		Prefix: prefix,
-//		Limit:  listChunks,
-//	}
-//	err = f.c.ObjectsWalk(container, &opts, func(opts *swift.ObjectsOpts) (interface{}, error) {
-//		var objects []swift.Object
-//		err = f.pacer.Call(func() (bool, error) {
-//			objects, err = f.c.Objects(container, opts)
-//			if err == nil && len(objects) > 0 {
-//				for _, object := range objects {
-//					segmentNames = append(segmentNames, object.Name)
-//				}
-//				return false, nil
-//			}
-//			return true, errors.New(fmt.Sprintf("There is no objects with prefix %q container %q", prefix, container))
-//		})
-//		if err != nil {
-//			fs.Logf(nil, "Error in get objects with prefix %q container %q %v", prefix, container, err)
-//		}
-//		if len(objects) <= 0 {
-//			return objects, errors.New(fmt.Sprintf("There is no objects with prefix %q container %q", prefix, container))
-//		}
-//		return objects, nil
-//	})
-//	if err != nil {
-//		return err
-//	}
-//	if len(segmentNames) > 0 {
-//		_, err = f.c.BulkDelete(container, segmentNames)
-//		if err != nil {
-//			return err
-//		}
-//	}
-//	return nil
-//}
-
 func (o *Object) getSegmentsDlo() (segmentsContainer string, prefix string, err error) {
 	if err = o.readMetaData(); err != nil {
 		return
@@ -1231,7 +1192,7 @@ func urlEncode(str string) string {
 	var buf bytes.Buffer
 	for i := 0; i < len(str); i++ {
 		c := str[i]
-		if (c == '_' || c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '/' || c == '.' {
+		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '/' || c == '.' || c == '_' {
 			_ = buf.WriteByte(c)
 		} else {
 			_, _ = buf.WriteString(fmt.Sprintf("%%%02X", c))
