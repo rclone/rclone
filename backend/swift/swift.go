@@ -1192,7 +1192,7 @@ func urlEncode(str string) string {
 	var buf bytes.Buffer
 	for i := 0; i < len(str); i++ {
 		c := str[i]
-		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '/' || c == '.' || c == '_' {
+		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '/' || c == '.' || c == '_' || c == '-' {
 			_ = buf.WriteByte(c)
 		} else {
 			_, _ = buf.WriteString(fmt.Sprintf("%%%02X", c))

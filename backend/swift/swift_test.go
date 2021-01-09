@@ -145,7 +145,7 @@ func (f *Fs) testWithChunkFail(t *testing.T) {
 	require.NotNil(t, err)
 	require.Equal(t, errMessage, err.Error())
 	_, _, err = f.c.Object(f.rootContainer, path)
-	assert.Equal(t, fs.ErrorObjectNotFound, err)
+	assert.Equal(t, swift.ObjectNotFound, err)
 	prefix := path
 	objs, err := f.c.Objects(segmentContainer, &swift.ObjectsOpts{
 		Prefix: prefix,
