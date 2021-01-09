@@ -353,17 +353,22 @@ func init() {
 - command - a string with the command name
 - arg - a list of arguments for the backend command
 - opt - a map of string to string of options
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
+    - defaults to "COMBINED_OUTPUT" if not set
+    - the STREAM returnTypes will write the output to the body of the HTTP message
+    - the COMBINED_OUTPUT will write the output to the "result" parameter
 
 Returns
 
 - result - result from the backend command
+    - only set when using returnType "COMBINED_OUTPUT"
 - error	 - set if rclone exits with an error code
-- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT". "STREAM_ONLY_STDERR")
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
 
 For example
 
     rclone rc core/command command=ls -a mydrive:/ -o max-depth=1
-	rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
+    rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
 
 Returns
 
@@ -386,7 +391,6 @@ OR
 
 // rcRunCommand runs an rclone command with the given args and flags
 func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
-
 	command, err := in.GetString("command")
 	if err != nil {
 		command = ""
@@ -409,7 +413,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 		returnType = "COMBINED_OUTPUT"
 	}
 
-	var httpResponse *http.ResponseWriter
+	var httpResponse http.ResponseWriter
 	httpResponse, err = in.GetHTTPResponseWriter()
 	if err != nil {
 		return nil, errors.Errorf("response object is required\n" + err.Error())
@@ -460,12 +464,14 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 			"error":  false,
 		}, nil
 	} else if returnType == "STREAM_ONLY_STDOUT" {
-		cmd.Stdout = *httpResponse
+		cmd.Stdout = httpResponse
 	} else if returnType == "STREAM_ONLY_STDERR" {
-		cmd.Stderr = *httpResponse
+		cmd.Stderr = httpResponse
 	} else if returnType == "STREAM" {
-		cmd.Stdout = *httpResponse
-		cmd.Stderr = *httpResponse
+		cmd.Stdout = httpResponse
+		cmd.Stderr = httpResponse
+	} else {
+		return nil, errors.Errorf("Unknown returnType %q", returnType)
 	}
 
 	err = cmd.Run()
