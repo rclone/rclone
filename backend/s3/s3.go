@@ -1181,6 +1181,10 @@ In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 
 This can be useful when trying to minimise the number of transactions
 rclone does if you know the bucket exists already.
+
+It can also be needed if the user you are using does not have bucket
+creation permissions. Before v1.52.0 this would have passed silently
+due to a bug.
 `,
 			Default:  false,
 			Advanced: true,
