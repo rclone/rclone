@@ -49,7 +49,7 @@ const (
 	rootURL            = "https://jfs.jottacloud.com/jfs/"
 	apiURL             = "https://api.jottacloud.com/"
 	baseURL            = "https://www.jottacloud.com/"
-	defaultTokenURL    = "https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token"
+	defaultTokenURL    = "https://id.jottacloud.com/auth/realms/telia_se/protocol/openid-connect/token"
 	cachePrefix        = "rclone-jcmd5-"
 	configDevice       = "device"
 	configMountpoint   = "mountpoint"
@@ -371,7 +371,7 @@ func v2config(ctx context.Context, name string, m configmap.Mapper) {
 	fmt.Printf("Login Token> ")
 	loginToken := config.ReadLine()
 
-	m.Set(configClientID, "jottacli")
+	m.Set(configClientID, "desktop")
 	m.Set(configClientSecret, "")
 
 	token, err := doAuthV2(ctx, srv, loginToken, m)
@@ -436,11 +436,11 @@ func doAuthV2(ctx context.Context, srv *rest.Client, loginTokenBase64 string, m 
 
 	// prepare out token request with username and password
 	values := url.Values{}
-	values.Set("client_id", "jottacli")
-	values.Set("grant_type", "password")
-	values.Set("password", loginToken.AuthToken)
-	values.Set("scope", "offline_access+openid")
-	values.Set("username", loginToken.Username)
+	values.Set("client_id", "desktop")
+	values.Set("grant_type", "refresh_token")
+	values.Set("refresh_token", loginToken.AuthToken)
+	// values.Set("scope", "offline_access+openid")
+	// values.Set("username", loginToken.Username)
 	values.Encode()
 	opts = rest.Opts{
 		Method:      "POST",

@@ -175,6 +175,7 @@ type TokenSource struct {
 // If token has expired then first try re-reading it from the config
 // file in case a concurrently running rclone has updated it already
 func (ts *TokenSource) reReadToken() bool {
+	fs.Infof(ts.name, "re-reading token")
 	tokenString, err := config.FileGetFresh(ts.name, config.ConfigToken)
 	if err != nil {
 		fs.Debugf(ts.name, "Failed to read token out of config file: %v", err)
