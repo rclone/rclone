@@ -63,6 +63,19 @@ func TestReshape(t *testing.T) {
 
 }
 
+func TestParamsCopy(t *testing.T) {
+	in := Params{
+		"ok":  1,
+		"x":   "seventeen",
+		"nil": nil,
+	}
+	out := in.Copy()
+	assert.Equal(t, in, out)
+	if &in == &out {
+		t.Error("didn't copy")
+	}
+}
+
 func TestParamsGet(t *testing.T) {
 	in := Params{
 		"ok": 1,
