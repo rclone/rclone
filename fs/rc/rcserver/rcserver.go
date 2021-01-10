@@ -186,7 +186,7 @@ func writeError(path string, in rc.Params, w http.ResponseWriter, err error, sta
 	})
 	if err != nil {
 		// can't return the error at this point
-		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
+		fs.Errorf(nil, "rc: writeError: failed to write JSON output from %#v: %v", in, err)
 	}
 }
 
@@ -270,6 +270,9 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		writeError(path, in, w, errors.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
 		return
 	}
+
+	inOrig := in.Copy()
+
 	if call.NeedsRequest {
 		// Add the request to RC
 		in["_request"] = r
@@ -282,7 +285,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	// Check to see if it is async or not
 	isAsync, err := in.GetBool("_async")
 	if rc.NotErrParamNotFound(err) {
-		writeError(path, in, w, err, http.StatusBadRequest)
+		writeError(path, inOrig, w, err, http.StatusBadRequest)
 		return
 	}
 	delete(in, "_async") // remove the async parameter after parsing so vfs operations don't get confused
@@ -297,7 +300,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		w.Header().Add("x-rclone-jobid", fmt.Sprintf("%d", jobID))
 	}
 	if err != nil {
-		writeError(path, in, w, err, http.StatusInternalServerError)
+		writeError(path, inOrig, w, err, http.StatusInternalServerError)
 		return
 	}
 	if out == nil {
@@ -308,8 +311,8 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	err = rc.WriteJSON(w, out)
 	if err != nil {
 		// can't return the error at this point - but have a go anyway
-		writeError(path, in, w, err, http.StatusInternalServerError)
-		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
+		writeError(path, inOrig, w, err, http.StatusInternalServerError)
+		fs.Errorf(nil, "rc: handlePost: failed to write JSON output: %v", err)
 	}
 }
 
