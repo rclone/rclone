@@ -79,6 +79,15 @@ func Reshape(out interface{}, in interface{}) error {
 	return nil
 }
 
+// Copy shallow copies the Params
+func (p Params) Copy() (out Params) {
+	out = make(Params, len(p))
+	for k, v := range p {
+		out[k] = v
+	}
+	return out
+}
+
 // Get gets a parameter from the input
 //
 // If the parameter isn't found then error will be of type
