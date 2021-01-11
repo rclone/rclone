@@ -444,3 +444,4 @@ put them back in again.` >}}
   * Ilyess Bachiri <ilyess.bachiri@sonder.com>
   * Yury Stankevich <urykhy@gmail.com>
   * kice <wslikerqs@gmail.com>
+  * Denis Neuling <denisneuling@gmail.com>
