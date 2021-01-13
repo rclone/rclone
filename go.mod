@@ -6,7 +6,7 @@ require (
 	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
 	cloud.google.com/go v0.70.0 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3
-	github.com/Azure/azure-storage-blob-go v0.12.0
+	github.com/Azure/azure-storage-blob-go v0.13.0
 	github.com/Azure/go-autorest/autorest/adal v0.9.8
 	github.com/Unknwon/goconfig v0.0.0-20200908083735-df7de6a44db8
 	github.com/a8m/tree v0.0.0-20201026183218-fce18e2a750e
