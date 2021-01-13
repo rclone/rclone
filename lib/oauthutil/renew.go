@@ -34,7 +34,6 @@ func NewRenew(name string, ts *TokenSource, run func() error) *Renew {
 // Amazon seem to cancel your uploads if you don't renew your token
 // for 2hrs.
 func (r *Renew) renewOnExpiry() {
-	fs.Infof(r.name, "Trying to renew")
 	expiry := r.ts.OnExpiry()
 	for {
 		<-expiry
