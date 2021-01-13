@@ -64,9 +64,9 @@ const (
 	v1EncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
 	v1configVersion         = 0
 
-	teliaCloudTokenURL	   	= "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/token"
-	teliaCloudAuthURL		= "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/auth"
-	teliaCloudClientID		= "desktop"
+	teliaCloudTokenURL = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/token"
+	teliaCloudAuthURL  = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/auth"
+	teliaCloudClientID = "desktop"
 )
 
 var (
@@ -110,14 +110,17 @@ func init() {
 			}
 
 			fmt.Printf("Choose authentication type:\n" +
-					"1: Standard authentication - use this if you're a normal Jottacloud user.\n" +
-					"2: Legacy authentication - this is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.\n" +
-					"3: Telia Cloud authentication - use this if you are using Telia Cloud.\n")
+				"1: Standard authentication - use this if you're a normal Jottacloud user.\n" +
+				"2: Legacy authentication - this is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.\n" +
+				"3: Telia Cloud authentication - use this if you are using Telia Cloud.\n")
 
-			switch(config.ChooseNumber("Your choice", 1, 3)) {
-				case 1: v2config(ctx, name, m)
-				case 2: v1config(ctx, name, m)
-				case 3: teliaCloudConfig(ctx, name, m)
+			switch config.ChooseNumber("Your choice", 1, 3) {
+			case 1:
+				v2config(ctx, name, m)
+			case 2:
+				v1config(ctx, name, m)
+			case 3:
+				teliaCloudConfig(ctx, name, m)
 			}
 		},
 		Options: []fs.Option{{
@@ -237,14 +240,13 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 }
 
 func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
-	srv := rest.NewClient(fshttp.NewClient(ctx))
 	teliaCloudOauthConfig := &oauth2.Config{
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  teliaCloudAuthURL,
 			TokenURL: teliaCloudTokenURL,
 		},
-		ClientID: teliaCloudClientID,
-		Scopes: []string{"openid", "jotta-default", "offline_access"},
+		ClientID:    teliaCloudClientID,
+		Scopes:      []string{"openid", "jotta-default", "offline_access"},
 		RedirectURL: oauthutil.RedirectLocalhostURL,
 	}
 
@@ -261,7 +263,7 @@ func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
 			log.Fatalf("Failed to load oAuthClient: %s", err)
 		}
 
-		srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
+		srv := rest.NewClient(oAuthClient).SetRoot(rootURL)
 		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
 		device, mountpoint, err := setupMountpoint(ctx, srv, apiSrv)
