@@ -237,6 +237,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 }
 
 func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
+	srv := rest.NewClient(fshttp.NewClient(ctx))
 	teliaCloudOauthConfig := &oauth2.Config{
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  teliaCloudAuthURL,
@@ -251,6 +252,24 @@ func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
 	if err != nil {
 		log.Fatalf("Failed to configure token: %v", err)
 		return
+	}
+
+	fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
+	if config.Confirm(false) {
+		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, teliaCloudOauthConfig)
+		if err != nil {
+			log.Fatalf("Failed to load oAuthClient: %s", err)
+		}
+
+		srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
+		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
+
+		device, mountpoint, err := setupMountpoint(ctx, srv, apiSrv)
+		if err != nil {
+			log.Fatalf("Failed to setup mountpoint: %s", err)
+		}
+		m.Set(configDevice, device)
+		m.Set(configMountpoint, mountpoint)
 	}
 
 	m.Set("configVersion", strconv.Itoa(v1configVersion))
