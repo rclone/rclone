@@ -274,7 +274,7 @@ func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
 		m.Set(configMountpoint, mountpoint)
 	}
 
-	m.Set("configVersion", strconv.Itoa(v1configVersion))
+	m.Set("configVersion", strconv.Itoa(configVersion))
 	m.Set(configClientID, teliaCloudClientID)
 	m.Set(configClientSecret, "")
 	m.Set(configTokenURL, teliaCloudTokenURL)
