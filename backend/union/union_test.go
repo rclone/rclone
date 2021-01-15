@@ -2,13 +2,15 @@
 package union_test
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,17 +26,28 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
+func makeTestDirs(t *testing.T, n int) (dirs []string, clean func()) {
+	for i := 1; i <= n; i++ {
+		dir, err := ioutil.TempDir("", fmt.Sprintf("rclone-union-test-%d", n))
+		require.NoError(t, err)
+		dirs = append(dirs, dir)
+	}
+	clean = func() {
+		for _, dir := range dirs {
+			err := os.RemoveAll(dir)
+			assert.NoError(t, err)
+		}
+	}
+	return dirs, clean
+}
+
 func TestStandard(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir1 := filepath.Join(os.TempDir(), "rclone-union-test-standard1")
-	tempdir2 := filepath.Join(os.TempDir(), "rclone-union-test-standard2")
-	tempdir3 := filepath.Join(os.TempDir(), "rclone-union-test-standard3")
-	require.NoError(t, os.MkdirAll(tempdir1, 0744))
-	require.NoError(t, os.MkdirAll(tempdir2, 0744))
-	require.NoError(t, os.MkdirAll(tempdir3, 0744))
-	upstreams := tempdir1 + " " + tempdir2 + " " + tempdir3
+	dirs, clean := makeTestDirs(t, 3)
+	defer clean()
+	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
 	name := "TestUnion"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
@@ -54,13 +67,9 @@ func TestRO(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir1 := filepath.Join(os.TempDir(), "rclone-union-test-ro1")
-	tempdir2 := filepath.Join(os.TempDir(), "rclone-union-test-ro2")
-	tempdir3 := filepath.Join(os.TempDir(), "rclone-union-test-ro3")
-	require.NoError(t, os.MkdirAll(tempdir1, 0744))
-	require.NoError(t, os.MkdirAll(tempdir2, 0744))
-	require.NoError(t, os.MkdirAll(tempdir3, 0744))
-	upstreams := tempdir1 + " " + tempdir2 + ":ro " + tempdir3 + ":ro"
+	dirs, clean := makeTestDirs(t, 3)
+	defer clean()
+	upstreams := dirs[0] + " " + dirs[1] + ":ro " + dirs[2] + ":ro"
 	name := "TestUnionRO"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
@@ -80,13 +89,9 @@ func TestNC(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir1 := filepath.Join(os.TempDir(), "rclone-union-test-nc1")
-	tempdir2 := filepath.Join(os.TempDir(), "rclone-union-test-nc2")
-	tempdir3 := filepath.Join(os.TempDir(), "rclone-union-test-nc3")
-	require.NoError(t, os.MkdirAll(tempdir1, 0744))
-	require.NoError(t, os.MkdirAll(tempdir2, 0744))
-	require.NoError(t, os.MkdirAll(tempdir3, 0744))
-	upstreams := tempdir1 + " " + tempdir2 + ":nc " + tempdir3 + ":nc"
+	dirs, clean := makeTestDirs(t, 3)
+	defer clean()
+	upstreams := dirs[0] + " " + dirs[1] + ":nc " + dirs[2] + ":nc"
 	name := "TestUnionNC"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
@@ -106,13 +111,9 @@ func TestPolicy1(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir1 := filepath.Join(os.TempDir(), "rclone-union-test-policy11")
-	tempdir2 := filepath.Join(os.TempDir(), "rclone-union-test-policy12")
-	tempdir3 := filepath.Join(os.TempDir(), "rclone-union-test-policy13")
-	require.NoError(t, os.MkdirAll(tempdir1, 0744))
-	require.NoError(t, os.MkdirAll(tempdir2, 0744))
-	require.NoError(t, os.MkdirAll(tempdir3, 0744))
-	upstreams := tempdir1 + " " + tempdir2 + " " + tempdir3
+	dirs, clean := makeTestDirs(t, 3)
+	defer clean()
+	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
 	name := "TestUnionPolicy1"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
@@ -132,13 +133,9 @@ func TestPolicy2(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir1 := filepath.Join(os.TempDir(), "rclone-union-test-policy21")
-	tempdir2 := filepath.Join(os.TempDir(), "rclone-union-test-policy22")
-	tempdir3 := filepath.Join(os.TempDir(), "rclone-union-test-policy23")
-	require.NoError(t, os.MkdirAll(tempdir1, 0744))
-	require.NoError(t, os.MkdirAll(tempdir2, 0744))
-	require.NoError(t, os.MkdirAll(tempdir3, 0744))
-	upstreams := tempdir1 + " " + tempdir2 + " " + tempdir3
+	dirs, clean := makeTestDirs(t, 3)
+	defer clean()
+	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
 	name := "TestUnionPolicy2"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
@@ -158,13 +155,9 @@ func TestPolicy3(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	tempdir1 := filepath.Join(os.TempDir(), "rclone-union-test-policy31")
-	tempdir2 := filepath.Join(os.TempDir(), "rclone-union-test-policy32")
-	tempdir3 := filepath.Join(os.TempDir(), "rclone-union-test-policy33")
-	require.NoError(t, os.MkdirAll(tempdir1, 0744))
-	require.NoError(t, os.MkdirAll(tempdir2, 0744))
-	require.NoError(t, os.MkdirAll(tempdir3, 0744))
-	upstreams := tempdir1 + " " + tempdir2 + " " + tempdir3
+	dirs, clean := makeTestDirs(t, 3)
+	defer clean()
+	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
 	name := "TestUnionPolicy3"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
