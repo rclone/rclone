@@ -185,6 +185,38 @@ hadoop user name
 
 Here are the advanced options specific to hdfs (Hadoop distributed file system).
 
+#### --hdfs-service-principal-name
+
+Kerberos service principal name for the namenode
+
+Enables KERBEROS authentication. Specifies the Service Principal Name
+(SERVICE>/<FQDN>) for the namenode.
+
+- Config:      service_principal_name
+- Env Var:     RCLONE_HDFS_SERVICE_PRINCIPAL_NAME
+- Type:        string
+- Default:     ""
+- Examples:
+    - "hdfs/namenode.hadoop.docker"
+        - Namenode running as service 'hdfs' with FQDN 'namenode.hadoop.docker'.
+
+#### --hdfs-data-transfer-protection
+
+Kerberos data transfer protection: authentication|integrity|privacy
+
+Specifies whether or not authentication, data signature integrity
+checks, and wire encryption is required when communicating the the
+datanodes. Possible values are 'authentication', 'integrity' and
+'privacy'. Used only with KERBEROS enabled.
+
+- Config:      data_transfer_protection
+- Env Var:     RCLONE_HDFS_DATA_TRANSFER_PROTECTION
+- Type:        string
+- Default:     ""
+- Examples:
+    - "privacy"
+        - Ensure authentication, integrity and encryption enabled.
+
 #### --hdfs-encoding
 
 This sets the encoding for the backend.

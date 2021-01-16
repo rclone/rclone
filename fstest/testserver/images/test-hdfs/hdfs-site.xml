@@ -11,4 +11,21 @@
     <property><name>dfs.namenode.servicerpc-bind-host</name><value>0.0.0.0</value></property>
     <property><name>dfs.replication</name><value>2</value></property>
     <property><name>nfs.dump.dir</name><value>/tmp</value></property>
+    <!-- KERBEROS BEGIN -->
+    <property><name>ignore.secure.ports.for.testing</name><value>true</value></property>
+    <property><name>dfs.safemode.extension</name><value>0</value></property>
+    <property><name>dfs.block.access.token.enable</name><value>true</value></property>
+
+    <property><name>dfs.encrypt.data.transfer</name><value>true</value></property>
+    <property><name>dfs.encrypt.data.transfer.algorithm</name><value>rc4</value></property>
+    <property><name>dfs.encrypt.data.transfer.cipher.suites</name><value>AES/CTR/NoPadding</value></property>
+
+    <property><name>dfs.namenode.kerberos.principal</name>          <value>hdfs/_HOST@KERBEROS.RCLONE</value></property>
+    <property><name>dfs.web.authentication.kerberos.principal</name><value>HTTP/_HOST@KERBEROS.RCLONE</value></property>
+    <property><name>dfs.datanode.kerberos.principal</name>          <value>hdfs/_HOST@KERBEROS.RCLONE</value></property>
+
+    <property><name>dfs.namenode.keytab.file</name>              <value>/etc/hadoop/kerberos.key</value></property>
+    <property><name>dfs.web.authentication.kerberos.keytab</name><value>/etc/hadoop/kerberos.key</value></property>
+    <property><name>dfs.datanode.keytab.file</name>              <value>/etc/hadoop/kerberos.key</value></property>
+    <!-- KERBEROS END -->
 </configuration>

@@ -33,6 +33,32 @@ func init() {
 				Help:  "Connect to hdfs as root",
 			}},
 		}, {
+			Name: "service_principal_name",
+			Help: `Kerberos service principal name for the namenode
+
+Enables KERBEROS authentication. Specifies the Service Principal Name
+(<SERVICE>/<FQDN>) for the namenode.`,
+			Required: false,
+			Examples: []fs.OptionExample{{
+				Value: "hdfs/namenode.hadoop.docker",
+				Help:  "Namenode running as service 'hdfs' with FQDN 'namenode.hadoop.docker'.",
+			}},
+			Advanced: true,
+		}, {
+			Name: "data_transfer_protection",
+			Help: `Kerberos data transfer protection: authentication|integrity|privacy
+
+Specifies whether or not authentication, data signature integrity
+checks, and wire encryption is required when communicating the the
+datanodes. Possible values are 'authentication', 'integrity' and
+'privacy'. Used only with KERBEROS enabled.`,
+			Required: false,
+			Examples: []fs.OptionExample{{
+				Value: "privacy",
+				Help:  "Ensure authentication, integrity and encryption enabled.",
+			}},
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -44,9 +70,11 @@ func init() {
 
 // Options for this backend
 type Options struct {
-	Namenode string               `config:"namenode"`
-	Username string               `config:"username"`
-	Enc      encoder.MultiEncoder `config:"encoding"`
+	Namenode               string               `config:"namenode"`
+	Username               string               `config:"username"`
+	ServicePrincipalName   string               `config:"service_principal_name"`
+	DataTransferProtection string               `config:"data_transfer_protection"`
+	Enc                    encoder.MultiEncoder `config:"encoding"`
 }
 
 // xPath make correct file path with leading '/'
