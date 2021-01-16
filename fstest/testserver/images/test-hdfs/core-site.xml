@@ -3,4 +3,10 @@
     <property><name>hadoop.http.staticuser.user</name><value>root</value></property>
     <property><name>hadoop.proxyuser.root.groups</name><value>root,nogroup</value></property>
     <property><name>hadoop.proxyuser.root.hosts</name><value>*</value></property>
+    <!-- KERBEROS BEGIN -->
+    <property><name>hadoop.security.authentication</name><value>kerberos</value></property>
+    <property><name>hadoop.security.authorization</name><value>true</value></property>
+    <property><name>hadoop.rpc.protection</name><value>integrity</value></property>
+    <property><name>hadoop.user.group.static.mapping.overrides</name><value>user=supergroup</value></property>
+    <!-- KERBEROS END -->
 </configuration>

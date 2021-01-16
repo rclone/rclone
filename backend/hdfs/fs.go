@@ -7,10 +7,15 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/colinmarc/hdfs/v2"
+	krb "github.com/jcmturner/gokrb5/v8/client"
+	"github.com/jcmturner/gokrb5/v8/config"
+	"github.com/jcmturner/gokrb5/v8/credentials"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -27,6 +32,49 @@ type Fs struct {
 	client   *hdfs.Client
 }
 
+// copy-paste from https://github.com/colinmarc/hdfs/blob/master/cmd/hdfs/kerberos.go
+func getKerberosClient() (*krb.Client, error) {
+	configPath := os.Getenv("KRB5_CONFIG")
+	if configPath == "" {
+		configPath = "/etc/krb5.conf"
+	}
+
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Determine the ccache location from the environment, falling back to the
+	// default location.
+	ccachePath := os.Getenv("KRB5CCNAME")
+	if strings.Contains(ccachePath, ":") {
+		if strings.HasPrefix(ccachePath, "FILE:") {
+			ccachePath = strings.SplitN(ccachePath, ":", 2)[1]
+		} else {
+			return nil, fmt.Errorf("unusable ccache: %s", ccachePath)
+		}
+	} else if ccachePath == "" {
+		u, err := user.Current()
+		if err != nil {
+			return nil, err
+		}
+
+		ccachePath = fmt.Sprintf("/tmp/krb5cc_%s", u.Uid)
+	}
+
+	ccache, err := credentials.LoadCCache(ccachePath)
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := krb.NewFromCCache(ccache, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
 // NewFs constructs an Fs from the path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	opt := new(Options)
@@ -35,11 +83,26 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	client, err := hdfs.NewClient(hdfs.ClientOptions{
+	options := hdfs.ClientOptions{
 		Addresses:           []string{opt.Namenode},
-		User:                opt.Username,
 		UseDatanodeHostname: false,
-	})
+	}
+
+	if opt.ServicePrincipalName != "" {
+		options.KerberosClient, err = getKerberosClient()
+		if err != nil {
+			return nil, fmt.Errorf("Problem with kerberos authentication: %s", err)
+		}
+		options.KerberosServicePrincipleName = opt.ServicePrincipalName
+
+		if opt.DataTransferProtection != "" {
+			options.DataTransferProtection = opt.DataTransferProtection
+		}
+	} else {
+		options.User = opt.Username
+	}
+
+	client, err := hdfs.NewClient(options)
 	if err != nil {
 		return nil, err
 	}
