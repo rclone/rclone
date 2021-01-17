@@ -85,9 +85,20 @@ backends:
    fastlist: true
    maxfile:  1k
  ## end chunker
+ ## begin compress
  - backend:  "compress"
    remote:   "TestCompress:"
    fastlist: false
+ - backend:  "compress"
+   remote:   "TestCompressSwift:"
+   fastlist: false
+ - backend:  "compress"
+   remote:   "TestCompressDrive:"
+   fastlist: false
+ - backend:  "compress"
+   remote:   "TestCompressS3:"
+   fastlist: false
+## end compress
  - backend:  "drive"
    remote:   "TestDrive:"
    fastlist: true
