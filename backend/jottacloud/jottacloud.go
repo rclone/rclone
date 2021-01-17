@@ -63,6 +63,10 @@ const (
 	v1ClientID              = "nibfk8biu12ju7hpqomr8b1e40"
 	v1EncryptedClientSecret = "Vp8eAv7eVElMnQwN-kgU9cbhgApNDaMqWdlDi5qFydlQoji4JBxrGMF2"
 	v1configVersion         = 0
+
+	teliaCloudTokenURL = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/token"
+	teliaCloudAuthURL  = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/auth"
+	teliaCloudClientID = "desktop"
 )
 
 var (
@@ -105,11 +109,18 @@ func init() {
 				}
 			}
 
-			fmt.Printf("Use legacy authentication?.\nThis is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.\n")
-			if config.Confirm(false) {
-				v1config(ctx, name, m)
-			} else {
+			fmt.Printf("Choose authentication type:\n" +
+				"1: Standard authentication - use this if you're a normal Jottacloud user.\n" +
+				"2: Legacy authentication - this is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.\n" +
+				"3: Telia Cloud authentication - use this if you are using Telia Cloud.\n")
+
+			switch config.ChooseNumber("Your choice", 1, 3) {
+			case 1:
 				v2config(ctx, name, m)
+			case 2:
+				v1config(ctx, name, m)
+			case 3:
+				teliaCloudConfig(ctx, name, m)
 			}
 		},
 		Options: []fs.Option{{
@@ -226,6 +237,46 @@ var retryErrorCodes = []int{
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
+func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
+	teliaCloudOauthConfig := &oauth2.Config{
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  teliaCloudAuthURL,
+			TokenURL: teliaCloudTokenURL,
+		},
+		ClientID:    teliaCloudClientID,
+		Scopes:      []string{"openid", "jotta-default", "offline_access"},
+		RedirectURL: oauthutil.RedirectLocalhostURL,
+	}
+
+	err := oauthutil.Config(ctx, "jottacloud", name, m, teliaCloudOauthConfig, nil)
+	if err != nil {
+		log.Fatalf("Failed to configure token: %v", err)
+		return
+	}
+
+	fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
+	if config.Confirm(false) {
+		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, teliaCloudOauthConfig)
+		if err != nil {
+			log.Fatalf("Failed to load oAuthClient: %s", err)
+		}
+
+		srv := rest.NewClient(oAuthClient).SetRoot(rootURL)
+		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
+
+		device, mountpoint, err := setupMountpoint(ctx, srv, apiSrv)
+		if err != nil {
+			log.Fatalf("Failed to setup mountpoint: %s", err)
+		}
+		m.Set(configDevice, device)
+		m.Set(configMountpoint, mountpoint)
+	}
+
+	m.Set("configVersion", strconv.Itoa(configVersion))
+	m.Set(configClientID, teliaCloudClientID)
+	m.Set(configTokenURL, teliaCloudTokenURL)
 }
 
 // v1config configure a jottacloud backend using legacy authentication
