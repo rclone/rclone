@@ -564,7 +564,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				remote = path.Join(bucket, remote)
 			}
 			// is this a directory marker?
-			if isDirectory && object.Size == 0 {
+			if isDirectory {
 				continue // skip directory marker
 			}
 			err = fn(remote, object, false)
