@@ -446,3 +446,4 @@ put them back in again.` >}}
   * kice <wslikerqs@gmail.com>
   * Denis Neuling <denisneuling@gmail.com>
   * Janne Johansson <icepic.dz@gmail.com>
+  * Patrik Nordlén <patriki@gmail.com>
