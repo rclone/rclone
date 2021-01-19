@@ -411,7 +411,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.ServiceAccountCredentials = string(loadedCreds)
 	}
 	if opt.Anonymous {
-		oAuthClient = &http.Client{}
+		oAuthClient = fshttp.NewClient(ctx)
 	} else if opt.ServiceAccountCredentials != "" {
 		oAuthClient, err = getServiceAccountClient(ctx, []byte(opt.ServiceAccountCredentials))
 		if err != nil {
