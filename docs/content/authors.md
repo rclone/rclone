@@ -445,3 +445,4 @@ put them back in again.` >}}
   * Yury Stankevich <urykhy@gmail.com>
   * kice <wslikerqs@gmail.com>
   * Denis Neuling <denisneuling@gmail.com>
+  * Janne Johansson <icepic.dz@gmail.com>
