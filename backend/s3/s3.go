@@ -1562,6 +1562,8 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	if opt.EnvAuth && opt.AccessKeyID == "" && opt.SecretAccessKey == "" {
 		// Enable loading config options from ~/.aws/config (selected by AWS_PROFILE env)
 		awsSessionOpts.SharedConfigState = session.SharedConfigEnable
+		// Set the name of the profile if supplied
+		awsSessionOpts.Profile = opt.Profile
 	}
 	ses, err := session.NewSessionWithOptions(awsSessionOpts)
 	if err != nil {
