@@ -1225,8 +1225,8 @@ func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
 // multiple storage classes supported
 func (o *Object) SetTier(tier string) error {
 	do, ok := o.Object.(fs.SetTierer)
-	mdo, ok := o.mo.(fs.SetTierer)
-	if !ok {
+	mdo, mok := o.mo.(fs.SetTierer)
+	if !(ok && mok) {
 		return errors.New("press: underlying remote does not support SetTier")
 	}
 	if err := mdo.SetTier(tier); err != nil {
