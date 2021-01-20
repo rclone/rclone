@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Nov 19, 2020
+Jan 20, 2021
 
 
 
@@ -9018,13 +9018,21 @@ This takes the following parameters
 -   command - a string with the command name
 -   arg - a list of arguments for the backend command
 -   opt - a map of string to string of options
+-   returnType - one of ("COMBINED_OUTPUT", "STREAM",
+    "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
+    -   defaults to "COMBINED_OUTPUT" if not set
+    -   the STREAM returnTypes will write the output to the body of the
+        HTTP message
+    -   the COMBINED_OUTPUT will write the output to the "result"
+        parameter
 
 Returns
 
 -   result - result from the backend command
+    -   only set when using returnType "COMBINED_OUTPUT"
 -   error - set if rclone exits with an error code
 -   returnType - one of ("COMBINED_OUTPUT", "STREAM",
-    "STREAM_ONLY_STDOUT". "STREAM_ONLY_STDERR")
+    "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
 
 For example
 
@@ -10096,41 +10104,66 @@ Features
 
 Here is an overview of the major features of each cloud storage system.
 
-  Name                                Hash       ModTime   Case Insensitive   Duplicate Files   MIME Type
-  ------------------------------ -------------- --------- ------------------ ----------------- -----------
-  1Fichier                         Whirlpool       No             No                Yes             R
-  Amazon Drive                        MD5          No            Yes                No              R
-  Amazon S3                           MD5          Yes            No                No             R/W
-  Backblaze B2                        SHA1         Yes            No                No             R/W
-  Box                                 SHA1         Yes           Yes                No              -
-  Citrix ShareFile                    MD5          Yes           Yes                No              -
-  Dropbox                           DBHASH †       Yes           Yes                No              -
-  FTP                                  -           No             No                No              -
-  Google Cloud Storage                MD5          Yes            No                No             R/W
-  Google Drive                        MD5          Yes            No                Yes            R/W
-  Google Photos                        -           No             No                Yes             R
-  HTTP                                 -           No             No                No              R
-  Hubic                               MD5          Yes            No                No             R/W
-  Jottacloud                          MD5          Yes           Yes                No             R/W
-  Koofr                               MD5          No            Yes                No              -
-  Mail.ru Cloud                    Mailru ‡‡‡      Yes           Yes                No              -
-  Mega                                 -           No             No                Yes             -
-  Memory                              MD5          Yes            No                No              -
-  Microsoft Azure Blob Storage        MD5          Yes            No                No             R/W
-  Microsoft OneDrive                SHA1 ‡‡        Yes           Yes                No              R
-  OpenDrive                           MD5          Yes           Yes             Partial *          -
-  OpenStack Swift                     MD5          Yes            No                No             R/W
-  pCloud                           MD5, SHA1       Yes            No                No              W
-  premiumize.me                        -           No            Yes                No              R
-  put.io                             CRC-32        Yes            No                Yes             R
-  QingStor                            MD5          No             No                No             R/W
-  Seafile                              -           No             No                No              -
-  SFTP                            MD5, SHA1 ‡      Yes         Depends              No              -
-  SugarSync                            -           No             No                No              -
-  Tardigrade                           -           Yes            No                No              -
-  WebDAV                          MD5, SHA1 ††   Yes †††       Depends              No              -
-  Yandex Disk                         MD5          Yes            No                No             R/W
-  The local filesystem                All          Yes         Depends              No              -
+  Name                               Hash       ModTime   Case Insensitive   Duplicate Files   MIME Type
+  ------------------------------ ------------- --------- ------------------ ----------------- -----------
+  1Fichier                         Whirlpool      No             No                Yes             R
+  Amazon Drive                        MD5         No            Yes                No              R
+  Amazon S3                           MD5         Yes            No                No             R/W
+  Backblaze B2                       SHA1         Yes            No                No             R/W
+  Box                                SHA1         Yes           Yes                No              -
+  Citrix ShareFile                    MD5         Yes           Yes                No              -
+  Dropbox                          DBHASH ¹       Yes           Yes                No              -
+  FTP                                  -          No             No                No              -
+  Google Cloud Storage                MD5         Yes            No                No             R/W
+  Google Drive                        MD5         Yes            No                Yes            R/W
+  Google Photos                        -          No             No                Yes             R
+  HTTP                                 -          No             No                No              R
+  Hubic                               MD5         Yes            No                No             R/W
+  Jottacloud                          MD5         Yes           Yes                No             R/W
+  Koofr                               MD5         No            Yes                No              -
+  Mail.ru Cloud                    Mailru ⁶       Yes           Yes                No              -
+  Mega                                 -          No             No                Yes             -
+  Memory                              MD5         Yes            No                No              -
+  Microsoft Azure Blob Storage        MD5         Yes            No                No             R/W
+  Microsoft OneDrive                SHA1 ⁵        Yes           Yes                No              R
+  OpenDrive                           MD5         Yes           Yes             Partial ⁸          -
+  OpenStack Swift                     MD5         Yes            No                No             R/W
+  pCloud                          MD5, SHA1 ⁷     Yes            No                No              W
+  premiumize.me                        -          No            Yes                No              R
+  put.io                            CRC-32        Yes            No                Yes             R
+  QingStor                            MD5         No             No                No             R/W
+  Seafile                              -          No             No                No              -
+  SFTP                            MD5, SHA1 ²     Yes         Depends              No              -
+  SugarSync                            -          No             No                No              -
+  Tardigrade                           -          Yes            No                No              -
+  WebDAV                          MD5, SHA1 ³    Yes ⁴        Depends              No              -
+  Yandex Disk                         MD5         Yes            No                No             R/W
+  The local filesystem                All         Yes         Depends              No              -
+
+Notes
+
+¹ Dropbox supports its own custom hash. This is an SHA256 sum of all the
+4MB block SHA256s.
+
+² SFTP supports checksums if the same login has shell access and md5sum
+or sha1sum as well as echo are in the remote's PATH.
+
+³ WebDAV supports hashes when used with Owncloud and Nextcloud only.
+
+⁴ WebDAV supports modtimes when used with Owncloud and Nextcloud only.
+
+⁵ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive for
+business and SharePoint server support Microsoft's own QuickXorHash.
+
+⁶ Mail.ru uses its own modified SHA1 hash
+
+⁷ pCloud only supports SHA1 (not MD5) in its EU region
+
+⁸ Opendrive does not support creation of duplicate files using their web
+client interface or other stock clients, but the underlying storage
+platform has been determined to allow duplicate files, and it is
+possible to create them with rclone. It may be that this is a mistake or
+an unsupported feature.
 
 Hash
 
@@ -10141,21 +10174,6 @@ command.
 
 To use the verify checksums when transferring between cloud storage
 systems they must support a common hash type.
-
-† Note that Dropbox supports its own custom hash. This is an SHA256 sum
-of all the 4MB block SHA256s.
-
-‡ SFTP supports checksums if the same login has shell access and md5sum
-or sha1sum as well as echo are in the remote's PATH.
-
-†† WebDAV supports hashes when used with Owncloud and Nextcloud only.
-
-††† WebDAV supports modtimes when used with Owncloud and Nextcloud only.
-
-‡‡ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive
-for business and SharePoint server support Microsoft's own QuickXorHash.
-
-‡‡‡ Mail.ru uses its own modified SHA1 hash
 
 ModTime
 
@@ -10196,12 +10214,6 @@ objects with the same name.
 
 This confuses rclone greatly when syncing - use the rclone dedupe
 command to rename or remove duplicates.
-
-* Opendrive does not support creation of duplicate files using their web
-client interface or other stock clients, but the underlying storage
-platform has been determined to allow duplicate files, and it is
-possible to create them with rclone. It may be that this is a mistake or
-an unsupported feature.
 
 Restricted filenames
 
@@ -10660,7 +10672,7 @@ These flags are available for every command.
           --use-json-log                         Use json log format.
           --use-mmap                             Use mmap allocator (see docs).
           --use-server-modtime                   Use server modified time instead of object metadata
-          --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.3")
+          --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.4")
       -v, --verbose count                        Print lots more stuff (repeat for more)
 
 
@@ -22730,8 +22742,11 @@ second. These will be used to detect whether objects need syncing or
 not. In order to set a Modification time pCloud requires the object be
 re-uploaded.
 
-pCloud supports MD5 and SHA1 type hashes, so you can use the --checksum
-flag.
+pCloud supports MD5 and SHA1 type hashes in the US region but and SHA1
+only in the EU region, so you can use the --checksum flag.
+
+(Note that pCloud also support SHA256 in the EU region, but rclone does
+not have support for that yet.)
 
 Restricted filename characters
 
@@ -25698,6 +25713,64 @@ Options:
 
 
 CHANGELOG
+
+
+v1.53.4 - 2021-01-20
+
+See commits
+
+-   Bug Fixes
+    -   accounting: Fix data race in Transferred() (Maciej Zimnoch)
+    -   build
+        -   Stop tagged releases making a current beta (Nick Craig-Wood)
+        -   Upgrade docker buildx action (Matteo Pietro Dazzi)
+        -   Add -buildmode to cross-compile.go (Nick Craig-Wood)
+        -   Fix docker build by upgrading ilteoood/docker_buildx (Nick
+            Craig-Wood)
+        -   Revert GitHub actions brew fix since this is now fixed (Nick
+            Craig-Wood)
+        -   Fix brew install --cask syntax for macOS build (Nick
+            Craig-Wood)
+        -   Update nfpm syntax to fix build of .deb/.rpm packages (Nick
+            Craig-Wood)
+        -   Fix for Windows build errors (Ivan Andreev)
+    -   fs: Parseduration: fixed tests to use UTC time (Ankur Gupta)
+    -   fshttp: Prevent overlap of HTTP headers in logs (Nathan Collins)
+    -   rc
+        -   Fix core/command giving 500 internal error (Nick Craig-Wood)
+        -   Add Copy method to rc.Params (Nick Craig-Wood)
+        -   Fix 500 error when marshalling errors from core/command
+            (Nick Craig-Wood)
+        -   plugins: Create plugins files only if webui is enabled.
+            (negative0)
+    -   serve http: Fix serving files of unknown length (Nick
+        Craig-Wood)
+    -   serve sftp: Fix authentication on one connection blocking others
+        (Nick Craig-Wood)
+-   Mount
+    -   Add optional brew tag to throw an error when using mount in the
+        binaries installed via Homebrew (Anagh Kumar Baranwal)
+    -   Add "." and ".." to directories to match cmount and expectations
+        (Nick Craig-Wood)
+-   VFS
+    -   Make cache dir absolute before using it to fix path too long
+        errors (Nick Craig-Wood)
+-   Chunker
+    -   Improve detection of incompatible metadata (Ivan Andreev)
+-   Google Cloud Storage
+    -   Fix server side copy of large objects (Nick Craig-Wood)
+-   Jottacloud
+    -   Fix token renewer to fix long uploads (Nick Craig-Wood)
+    -   Fix token refresh failed: is not a regular file error (Nick
+        Craig-Wood)
+-   Pcloud
+    -   Only use SHA1 hashes in EU region (Nick Craig-Wood)
+-   Sharefile
+    -   Undo Fix backend due to API swapping integers for strings (Nick
+        Craig-Wood)
+-   WebDAV
+    -   Fix Open Range requests to fix 4shared mount (Nick Craig-Wood)
+    -   Add "Depth: 0" to GET requests to fix bitrix (Nick Craig-Wood)
 
 
 v1.53.3 - 2020-11-19

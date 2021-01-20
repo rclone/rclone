@@ -511,17 +511,22 @@ This takes the following parameters
 - command - a string with the command name
 - arg - a list of arguments for the backend command
 - opt - a map of string to string of options
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
+    - defaults to "COMBINED_OUTPUT" if not set
+    - the STREAM returnTypes will write the output to the body of the HTTP message
+    - the COMBINED_OUTPUT will write the output to the "result" parameter
 
 Returns
 
 - result - result from the backend command
+    - only set when using returnType "COMBINED_OUTPUT"
 - error	 - set if rclone exits with an error code
-- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT". "STREAM_ONLY_STDERR")
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
 
 For example
 
     rclone rc core/command command=ls -a mydrive:/ -o max-depth=1
-	rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
+    rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
 
 Returns
 

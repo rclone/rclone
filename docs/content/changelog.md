@@ -5,6 +5,50 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.53.4 - 2021-01-20
+
+[See commits](https://github.com/rclone/rclone/compare/v1.53.3...v1.53.4)
+
+* Bug Fixes
+    * accounting: Fix data race in Transferred() (Maciej Zimnoch)
+    * build
+        * Stop tagged releases making a current beta (Nick Craig-Wood)
+        * Upgrade docker buildx action (Matteo Pietro Dazzi)
+        * Add -buildmode to cross-compile.go (Nick Craig-Wood)
+        * Fix docker build by upgrading ilteoood/docker_buildx (Nick Craig-Wood)
+        * Revert GitHub actions brew fix since this is now fixed (Nick Craig-Wood)
+        * Fix brew install --cask syntax for macOS build (Nick Craig-Wood)
+        * Update nfpm syntax to fix build of .deb/.rpm packages (Nick Craig-Wood)
+        * Fix for Windows build errors (Ivan Andreev)
+    * fs: Parseduration: fixed tests to use UTC time (Ankur Gupta)
+    * fshttp: Prevent overlap of HTTP headers in logs (Nathan Collins)
+    * rc
+        * Fix core/command giving 500 internal error (Nick Craig-Wood)
+        * Add Copy method to rc.Params (Nick Craig-Wood)
+        * Fix 500 error when marshalling errors from core/command (Nick Craig-Wood)
+        * plugins: Create plugins files only if webui is enabled. (negative0)
+    * serve http: Fix serving files of unknown length (Nick Craig-Wood)
+    * serve sftp: Fix authentication on one connection blocking others (Nick Craig-Wood)
+* Mount
+    * Add optional `brew` tag to throw an error when using mount in the binaries installed via Homebrew (Anagh Kumar Baranwal)
+    * Add "." and ".." to directories to match cmount and expectations (Nick Craig-Wood)
+* VFS
+    * Make cache dir absolute before using it to fix path too long errors (Nick Craig-Wood)
+* Chunker
+    * Improve detection of incompatible metadata (Ivan Andreev)
+* Google Cloud Storage
+    * Fix server side copy of large objects (Nick Craig-Wood)
+* Jottacloud
+    * Fix token renewer to fix long uploads (Nick Craig-Wood)
+    * Fix token refresh failed: is not a regular file error (Nick Craig-Wood)
+* Pcloud
+    * Only use SHA1 hashes in EU region (Nick Craig-Wood)
+* Sharefile
+    * Undo Fix backend due to API swapping integers for strings (Nick Craig-Wood)
+* WebDAV
+    * Fix Open Range requests to fix 4shared mount (Nick Craig-Wood)
+    * Add "Depth: 0" to GET requests to fix bitrix (Nick Craig-Wood)
+
 ## v1.53.3 - 2020-11-19
 
 [See commits](https://github.com/rclone/rclone/compare/v1.53.2...v1.53.3)

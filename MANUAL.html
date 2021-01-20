@@ -17,7 +17,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Nov 19, 2020</p>
+<p class="date">Jan 20, 2021</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -4330,12 +4330,21 @@ rclone rc core/bwlimit rate=1M
 <li>command - a string with the command name</li>
 <li>arg - a list of arguments for the backend command</li>
 <li>opt - a map of string to string of options</li>
+<li>returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
+<ul>
+<li>defaults to "COMBINED_OUTPUT" if not set</li>
+<li>the STREAM returnTypes will write the output to the body of the HTTP message</li>
+<li>the COMBINED_OUTPUT will write the output to the "result" parameter</li>
+</ul></li>
 </ul>
 <p>Returns</p>
 <ul>
-<li>result - result from the backend command</li>
+<li>result - result from the backend command
+<ul>
+<li>only set when using returnType "COMBINED_OUTPUT"</li>
+</ul></li>
 <li>error - set if rclone exits with an error code</li>
-<li>returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT". "STREAM_ONLY_STDERR")</li>
+<li>returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")</li>
 </ul>
 <p>For example</p>
 <pre><code>rclone rc core/command command=ls -a mydrive:/ -o max-depth=1
@@ -5098,7 +5107,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="odd">
 <td>Dropbox</td>
-<td style="text-align: center;">DBHASH †</td>
+<td style="text-align: center;">DBHASH ¹</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -5170,7 +5179,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="even">
 <td>Mail.ru Cloud</td>
-<td style="text-align: center;">Mailru ‡‡‡</td>
+<td style="text-align: center;">Mailru ⁶</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -5202,7 +5211,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="even">
 <td>Microsoft OneDrive</td>
-<td style="text-align: center;">SHA1 ‡‡</td>
+<td style="text-align: center;">SHA1 ⁵</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
@@ -5213,7 +5222,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <td style="text-align: center;">MD5</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">Partial *</td>
+<td style="text-align: center;">Partial ⁸</td>
 <td style="text-align: center;">-</td>
 </tr>
 <tr class="even">
@@ -5226,7 +5235,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="odd">
 <td>pCloud</td>
-<td style="text-align: center;">MD5, SHA1</td>
+<td style="text-align: center;">MD5, SHA1 ⁷</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
@@ -5266,7 +5275,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="even">
 <td>SFTP</td>
-<td style="text-align: center;">MD5, SHA1 ‡</td>
+<td style="text-align: center;">MD5, SHA1 ²</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Depends</td>
 <td style="text-align: center;">No</td>
@@ -5290,8 +5299,8 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="odd">
 <td>WebDAV</td>
-<td style="text-align: center;">MD5, SHA1 ††</td>
-<td style="text-align: center;">Yes †††</td>
+<td style="text-align: center;">MD5, SHA1 ³</td>
+<td style="text-align: center;">Yes ⁴</td>
 <td style="text-align: center;">Depends</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">-</td>
@@ -5314,15 +5323,18 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 </tbody>
 </table>
+<h3 id="notes">Notes</h3>
+<p>¹ Dropbox supports <a href="https://www.dropbox.com/developers/reference/content-hash">its own custom hash</a>. This is an SHA256 sum of all the 4MB block SHA256s.</p>
+<p>² SFTP supports checksums if the same login has shell access and <code>md5sum</code> or <code>sha1sum</code> as well as <code>echo</code> are in the remote's PATH.</p>
+<p>³ WebDAV supports hashes when used with Owncloud and Nextcloud only.</p>
+<p>⁴ WebDAV supports modtimes when used with Owncloud and Nextcloud only.</p>
+<p>⁵ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive for business and SharePoint server support Microsoft's own <a href="https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash">QuickXorHash</a>.</p>
+<p>⁶ Mail.ru uses its own modified SHA1 hash</p>
+<p>⁷ pCloud only supports SHA1 (not MD5) in its EU region</p>
+<p>⁸ Opendrive does not support creation of duplicate files using their web client interface or other stock clients, but the underlying storage platform has been determined to allow duplicate files, and it is possible to create them with <code>rclone</code>. It may be that this is a mistake or an unsupported feature.</p>
 <h3 id="hash">Hash</h3>
 <p>The cloud storage system supports various hash types of the objects. The hashes are used when transferring data as an integrity check and can be specifically used with the <code>--checksum</code> flag in syncs and in the <code>check</code> command.</p>
 <p>To use the verify checksums when transferring between cloud storage systems they must support a common hash type.</p>
-<p>† Note that Dropbox supports <a href="https://www.dropbox.com/developers/reference/content-hash">its own custom hash</a>. This is an SHA256 sum of all the 4MB block SHA256s.</p>
-<p>‡ SFTP supports checksums if the same login has shell access and <code>md5sum</code> or <code>sha1sum</code> as well as <code>echo</code> are in the remote's PATH.</p>
-<p>†† WebDAV supports hashes when used with Owncloud and Nextcloud only.</p>
-<p>††† WebDAV supports modtimes when used with Owncloud and Nextcloud only.</p>
-<p>‡‡ Microsoft OneDrive Personal supports SHA1 hashes, whereas OneDrive for business and SharePoint server support Microsoft's own <a href="https://docs.microsoft.com/en-us/onedrive/developer/code-snippets/quickxorhash">QuickXorHash</a>.</p>
-<p>‡‡‡ Mail.ru uses its own modified SHA1 hash</p>
 <h3 id="modtime">ModTime</h3>
 <p>The cloud storage system supports setting modification times on objects. If it does then this enables a using the modification times as part of the sync. If not then only the size will be checked by default, though the MD5SUM can be checked with the <code>--checksum</code> flag.</p>
 <p>All cloud storage systems support some kind of date on the object and these will be set when transferring from the cloud storage system.</p>
@@ -5339,7 +5351,6 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 <h3 id="duplicate-files">Duplicate files</h3>
 <p>If a cloud storage system allows duplicate files then it can have two objects with the same name.</p>
 <p>This confuses rclone greatly when syncing - use the <code>rclone dedupe</code> command to rename or remove duplicates.</p>
-<p>* Opendrive does not support creation of duplicate files using their web client interface or other stock clients, but the underlying storage platform has been determined to allow duplicate files, and it is possible to create them with <code>rclone</code>. It may be that this is a mistake or an unsupported feature.</p>
 <h3 id="restricted-filenames">Restricted filenames</h3>
 <p>Some cloud storage systems might have restrictions on the characters that are usable in file or directory names. When <code>rclone</code> detects such a name during a file upload, it will transparently replace the restricted characters with similar looking Unicode characters.</p>
 <p>This process is designed to avoid ambiguous file names as much as possible and allow to move files between many cloud storage systems transparently.</p>
@@ -6291,7 +6302,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.53.3&quot;)
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.53.4&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -16160,7 +16171,8 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone copy /home/source remote:backup</code></pre>
 <h3 id="modified-time-and-hashes-8">Modified time and hashes</h3>
 <p>pCloud allows modification times to be set on objects accurate to 1 second. These will be used to detect whether objects need syncing or not. In order to set a Modification time pCloud requires the object be re-uploaded.</p>
-<p>pCloud supports MD5 and SHA1 type hashes, so you can use the <code>--checksum</code> flag.</p>
+<p>pCloud supports MD5 and SHA1 type hashes in the US region but and SHA1 only in the EU region, so you can use the <code>--checksum</code> flag.</p>
+<p>(Note that pCloud also support SHA256 in the EU region, but rclone does not have support for that yet.)</p>
 <h4 id="restricted-filename-characters-20">Restricted filename characters</h4>
 <p>In addition to the <a href="https://rclone.org/overview/#restricted-characters">default restricted characters set</a> the following characters are also replaced:</p>
 <table>
@@ -18552,6 +18564,71 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.53.4---2021-01-20">v1.53.4 - 2021-01-20</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.53.3...v1.53.4">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>accounting: Fix data race in Transferred() (Maciej Zimnoch)</li>
+<li>build
+<ul>
+<li>Stop tagged releases making a current beta (Nick Craig-Wood)</li>
+<li>Upgrade docker buildx action (Matteo Pietro Dazzi)</li>
+<li>Add -buildmode to cross-compile.go (Nick Craig-Wood)</li>
+<li>Fix docker build by upgrading ilteoood/docker_buildx (Nick Craig-Wood)</li>
+<li>Revert GitHub actions brew fix since this is now fixed (Nick Craig-Wood)</li>
+<li>Fix brew install --cask syntax for macOS build (Nick Craig-Wood)</li>
+<li>Update nfpm syntax to fix build of .deb/.rpm packages (Nick Craig-Wood)</li>
+<li>Fix for Windows build errors (Ivan Andreev)</li>
+</ul></li>
+<li>fs: Parseduration: fixed tests to use UTC time (Ankur Gupta)</li>
+<li>fshttp: Prevent overlap of HTTP headers in logs (Nathan Collins)</li>
+<li>rc
+<ul>
+<li>Fix core/command giving 500 internal error (Nick Craig-Wood)</li>
+<li>Add Copy method to rc.Params (Nick Craig-Wood)</li>
+<li>Fix 500 error when marshalling errors from core/command (Nick Craig-Wood)</li>
+<li>plugins: Create plugins files only if webui is enabled. (negative0)</li>
+</ul></li>
+<li>serve http: Fix serving files of unknown length (Nick Craig-Wood)</li>
+<li>serve sftp: Fix authentication on one connection blocking others (Nick Craig-Wood)</li>
+</ul></li>
+<li>Mount
+<ul>
+<li>Add optional <code>brew</code> tag to throw an error when using mount in the binaries installed via Homebrew (Anagh Kumar Baranwal)</li>
+<li>Add "." and ".." to directories to match cmount and expectations (Nick Craig-Wood)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Make cache dir absolute before using it to fix path too long errors (Nick Craig-Wood)</li>
+</ul></li>
+<li>Chunker
+<ul>
+<li>Improve detection of incompatible metadata (Ivan Andreev)</li>
+</ul></li>
+<li>Google Cloud Storage
+<ul>
+<li>Fix server side copy of large objects (Nick Craig-Wood)</li>
+</ul></li>
+<li>Jottacloud
+<ul>
+<li>Fix token renewer to fix long uploads (Nick Craig-Wood)</li>
+<li>Fix token refresh failed: is not a regular file error (Nick Craig-Wood)</li>
+</ul></li>
+<li>Pcloud
+<ul>
+<li>Only use SHA1 hashes in EU region (Nick Craig-Wood)</li>
+</ul></li>
+<li>Sharefile
+<ul>
+<li>Undo Fix backend due to API swapping integers for strings (Nick Craig-Wood)</li>
+</ul></li>
+<li>WebDAV
+<ul>
+<li>Fix Open Range requests to fix 4shared mount (Nick Craig-Wood)</li>
+<li>Add "Depth: 0" to GET requests to fix bitrix (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.53.3---2020-11-19">v1.53.3 - 2020-11-19</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.53.2...v1.53.3">See commits</a></p>
 <ul>
