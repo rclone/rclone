@@ -173,11 +173,6 @@ jobs:
         run: |
           make
 
-      - name: Run tests
-        shell: bash
-        run: |
-          make quicktest
-        if: matrix.quicktest
 
       - name: Race test
         shell: bash
