@@ -230,7 +230,7 @@ See: the [encoding section in the overview](/overview/#encoding) for more info.
 ### Limitations ###
 
 Modified times are not supported. Times you see on the FTP server
-through rclone are time of upload.
+through rclone are those of upload.
 
 Rclone's FTP backend does not support any checksums but can compare
 file sizes.
@@ -255,6 +255,10 @@ Rclone's FTP backend could support server-side move but does not
 at present.
 
 The `ftp_proxy` environment variable is not currently supported.
+
+FTP servers acting as rclone remotes must support 'passive'
+mode. Rclone's FTP implementation is not compatible with 'active'
+mode.
 
 #### Restricted filename characters
 
