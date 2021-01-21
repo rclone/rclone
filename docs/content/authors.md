@@ -447,3 +447,4 @@ put them back in again.` >}}
   * Denis Neuling <denisneuling@gmail.com>
   * Janne Johansson <icepic.dz@gmail.com>
   * Patrik Nordlén <patriki@gmail.com>
+  * CokeMine <aptx4561@gmail.com>
