@@ -872,11 +872,12 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
 	if err != nil {
 		return err
 	}
-	maxLimit := int(listLimitSize)
+	// maxLimit := int(listLimitSize)
 	var marker *string
 	for {
 		req := qs.ListMultipartUploadsInput{
-			Limit:     &maxLimit,
+			// The default is 200 but this errors if more than 200 is put in so leave at the default
+			// Limit:     &maxLimit,
 			KeyMarker: marker,
 		}
 		var resp *qs.ListMultipartUploadsOutput
