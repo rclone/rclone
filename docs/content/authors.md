@@ -448,3 +448,4 @@ put them back in again.` >}}
   * Janne Johansson <icepic.dz@gmail.com>
   * Patrik Nordlén <patriki@gmail.com>
   * CokeMine <aptx4561@gmail.com>
+  * Sơn Trần-Nguyễn <github@sntran.com>
