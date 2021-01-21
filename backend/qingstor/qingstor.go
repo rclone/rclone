@@ -927,7 +927,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	}
 	for _, entry := range entries {
 		cleanErr := f.cleanUpBucket(ctx, f.opt.Enc.FromStandardName(entry.Remote()))
-		if err != nil {
+		if cleanErr != nil {
 			fs.Errorf(f, "Failed to cleanup bucket: %q", cleanErr)
 			err = cleanErr
 		}
