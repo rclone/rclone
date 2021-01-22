@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ncw/swift"
+	"github.com/ncw/swift/v2"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -24,7 +24,7 @@ func newAuth(f *Fs) *auth {
 // Request constructs an http.Request for authentication
 //
 // returns nil for not needed
-func (a *auth) Request(*swift.Connection) (r *http.Request, err error) {
+func (a *auth) Request(ctx context.Context, c *swift.Connection) (r *http.Request, err error) {
 	const retries = 10
 	for try := 1; try <= retries; try++ {
 		err = a.f.getCredentials(context.TODO())
@@ -38,7 +38,7 @@ func (a *auth) Request(*swift.Connection) (r *http.Request, err error) {
 }
 
 // Response parses the result of an http request
-func (a *auth) Response(resp *http.Response) error {
+func (a *auth) Response(ctx context.Context, resp *http.Response) error {
 	return nil
 }
 

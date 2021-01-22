@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/ncw/swift"
+	"github.com/ncw/swift/v2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
@@ -144,10 +144,10 @@ func (f *Fs) testWithChunkFail(t *testing.T) {
 	// error is potato
 	require.NotNil(t, err)
 	require.Equal(t, errMessage, err.Error())
-	_, _, err = f.c.Object(f.rootContainer, path)
+	_, _, err = f.c.Object(ctx, f.rootContainer, path)
 	assert.Equal(t, swift.ObjectNotFound, err)
 	prefix := path
-	objs, err := f.c.Objects(segmentContainer, &swift.ObjectsOpts{
+	objs, err := f.c.Objects(ctx, segmentContainer, &swift.ObjectsOpts{
 		Prefix: prefix,
 	})
 	require.NoError(t, err)

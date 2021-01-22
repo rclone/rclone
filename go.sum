@@ -451,8 +451,8 @@ github.com/nats-io/nkeys v0.1.3/go.mod h1:xpnFELMwJABBLVhffcfd1MZx6VsNRFpEugbxzi
 github.com/nats-io/nuid v1.0.1/go.mod h1:19wcPz3Ph3q0Jbyiqsd0kePYG7A95tJPxeL+1OSON2c=
 github.com/ncw/go-acd v0.0.0-20201019170801-fe55f33415b1 h1:nAjWYc03awJAjsozNehdGZsm5LP7AhLOvjgbS8zN1tk=
 github.com/ncw/go-acd v0.0.0-20201019170801-fe55f33415b1/go.mod h1:MLIrzg7gp/kzVBxRE1olT7CWYMCklcUWU+ekoxOD9x0=
-github.com/ncw/swift v1.0.52 h1:ACF3JufDGgeKp/9mrDgQlEgS8kRYC4XKcuzj/8EJjQU=
-github.com/ncw/swift v1.0.52/go.mod h1:23YIA4yWVnGwv2dQlN4bB7egfYX6YLn0Yo/S6zZO/ZM=
+github.com/ncw/swift/v2 v2.0.0 h1:Q1jkMe/yhCkx7yAKq4bBZ/Th3NR+ejRcwbVK8Pi1i/0=
+github.com/ncw/swift/v2 v2.0.0/go.mod h1:z0A9RVdYPjNjXVo2pDOPxZ4eu3oarO1P91fTItcb+Kg=
 github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646/go.mod h1:jpp1/29i3P1S/RLdc7JQKbRpFeM1dOBd8T9ki5s+AY8=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=

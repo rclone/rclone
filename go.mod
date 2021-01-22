@@ -37,7 +37,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.9
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ncw/go-acd v0.0.0-20201019170801-fe55f33415b1
-	github.com/ncw/swift v1.0.52
+	github.com/ncw/swift/v2 v2.0.0
 	github.com/nsf/termbox-go v0.0.0-20200418040025-38ba6e5628f1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
