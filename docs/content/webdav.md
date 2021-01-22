@@ -47,7 +47,7 @@ Choose a number from below, or type in your own value
    \ "owncloud"
  3 / Sharepoint Online, authenticated by Microsoft OneDrive account.
    \ "sharepoint"
- 4 / Sharepoint with NTLM authentication. Usually self-hosted instances.
+ 4 / Sharepoint with NTLM authentication. Usually self-hosted or company instances.
    \ "sharepoint-ntlm"
  5 / Other site/service or software
    \ "other"
@@ -207,7 +207,7 @@ This is configured in an identical way to Owncloud.  Note that
 Nextcloud initially did not support streaming of files (`rcat`) whereas
 Owncloud did, but [this](https://github.com/nextcloud/nextcloud-snap/issues/365) seems to be fixed as of 2020-11-27 (tested with rclone v1.53.1 and Nextcloud Server v19).
 
-### Sharepoint OneDrive ###
+### Sharepoint Online ###
 
 Rclone can be used with Sharepoint provided by OneDrive for Business
 or Office365 Education Accounts.
@@ -248,11 +248,11 @@ user = YourEmailAddress
 pass = encryptedpassword
 ```
 
-### Sharepoint with NTLM ###
+### Sharepoint with NTLM Authentication ###
 
 Use this option in case your (hosted) Sharepoint is not tied to OneDrive accounts and uses NTLM authentication.
 
-For getting the `url` configuration, similarly to the above, first navigate to the desired directory in your browser to get the URL,
+To get the `url` configuration, similarly to the above, first navigate to the desired directory in your browser to get the URL,
 then strip everything after the name of the opened directory.
 
 Example:
