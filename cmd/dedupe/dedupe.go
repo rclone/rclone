@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -143,6 +144,9 @@ Or
 			args = args[1:]
 		}
 		fdst := cmd.NewFsSrc(args)
+		if !byHash && !fdst.Features().DuplicateFiles {
+			fs.Logf(fdst, "Can't have duplicate names here. Perhaps you wanted --by-hash ? Continuing anyway.")
+		}
 		cmd.Run(false, false, command, func() error {
 			return operations.Deduplicate(context.Background(), fdst, dedupeMode, byHash)
 		})
