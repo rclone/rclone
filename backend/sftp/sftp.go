@@ -192,6 +192,20 @@ Home directory can be found in a shared folder called "home"
 
 The subsystem option is ignored when server_command is defined.`,
 			Advanced: true,
+		}, {
+			Name:    "use_fstat",
+			Default: false,
+			Help: `If set use fstat instead of stat
+
+Some servers limit the amount of open files and calling Stat after opening
+the file will throw an error from the server. Setting this flag will call
+Fstat instead of Stat which is called on an already open file handle.
+
+It has been found that this helps with IBM Sterling SFTP servers which have
+"extractability" level set to 1 which means only 1 file can be opened at
+any given time.
+`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -219,6 +233,7 @@ type Options struct {
 	SkipLinks         bool   `config:"skip_links"`
 	Subsystem         string `config:"subsystem"`
 	ServerCommand     string `config:"server_command"`
+	UseFstat          bool   `config:"use_fstat"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -344,6 +359,8 @@ func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.C
 			return nil, err
 		}
 	}
+	opts = opts[:len(opts):len(opts)] // make sure we don't overwrite the callers opts
+	opts = append(opts, sftp.UseFstat(f.opt.UseFstat))
 
 	return sftp.NewClientPipe(pr, pw, opts...)
 }
