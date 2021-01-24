@@ -121,6 +121,7 @@ type ConfigInfo struct {
 	DownloadHeaders        []*HTTPOption
 	Headers                []*HTTPOption
 	RefreshTimes           bool
+	NoConsole              bool
 }
 
 // NewConfig creates a new config with everything set to the default
