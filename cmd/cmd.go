@@ -382,6 +382,11 @@ func initConfig() {
 	// Finish parsing any command line flags
 	configflags.SetFlags(ci)
 
+	// Hide console window
+	if ci.NoConsole {
+		terminal.HideConsole()
+	}
+
 	// Load filters
 	err := filterflags.Reload(ctx)
 	if err != nil {
