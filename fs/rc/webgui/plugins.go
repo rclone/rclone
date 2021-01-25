@@ -68,13 +68,6 @@ var (
 	initMutex                = &sync.Mutex{}
 )
 
-func init() {
-	cachePath = filepath.Join(config.CacheDir, "webgui")
-	PluginsPath = filepath.Join(cachePath, "plugins")
-	pluginsConfigPath = filepath.Join(PluginsPath, "config")
-
-}
-
 // Plugins represents the structure how plugins are saved onto disk
 type Plugins struct {
 	mutex         sync.Mutex
@@ -96,6 +89,9 @@ func initPluginsOrError() error {
 	initMutex.Lock()
 	defer initMutex.Unlock()
 	if !initSuccess {
+		cachePath = filepath.Join(config.CacheDir, "webgui")
+		PluginsPath = filepath.Join(cachePath, "plugins")
+		pluginsConfigPath = filepath.Join(PluginsPath, "config")
 		loadedPlugins = newPlugins(availablePluginsJSONPath)
 		err := loadedPlugins.readFromFile()
 		if err != nil {
