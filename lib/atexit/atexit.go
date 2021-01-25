@@ -77,9 +77,10 @@ func IgnoreSignals() {
 
 // Run all the at exit functions if they haven't been run already
 func Run() {
+	// Take the lock here so we wait until all have run before returning
+	fnsMutex.Lock()
+	defer fnsMutex.Unlock()
 	exitOnce.Do(func() {
-		fnsMutex.Lock()
-		defer fnsMutex.Unlock()
 		for fnHandle := range fns {
 			(*fnHandle)()
 		}
