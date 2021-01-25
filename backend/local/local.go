@@ -71,6 +71,20 @@ points, as you explicitly acknowledge that they should be skipped.`,
 			NoPrefix: true,
 			Advanced: true,
 		}, {
+			Name: "zero_size_links",
+			Help: `Assume the Stat size of links is zero (and read them instead)
+
+On some virtual filesystems (such ash LucidLink), reading a link size via a Stat call always returns 0.
+However, on unix it reads as the length of the text in the link. This may cause errors like this when
+syncing:
+
+    Failed to copy: corrupted on transfer: sizes differ 0 vs 13
+
+Setting this flag causes rclone to read the link and use that as the size of the link
+instead of 0 which in most cases fixes the problem.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name: "no_unicode_normalization",
 			Help: `Don't apply unicode normalization to paths and filenames (Deprecated)
 
@@ -170,6 +184,7 @@ type Options struct {
 	FollowSymlinks    bool                 `config:"copy_links"`
 	TranslateSymlinks bool                 `config:"links"`
 	SkipSymlinks      bool                 `config:"skip_links"`
+	ZeroSizeLinks     bool                 `config:"zero_size_links"`
 	NoUTFNorm         bool                 `config:"no_unicode_normalization"`
 	NoCheckUpdated    bool                 `config:"no_check_updated"`
 	NoUNC             bool                 `config:"nounc"`
@@ -1232,7 +1247,8 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	o.mode = info.Mode()
 	o.fs.objectMetaMu.Unlock()
 	// On Windows links read as 0 size so set the correct size here
-	if runtime.GOOS == "windows" && o.translatedLink {
+	// Optionally, users can turn this feature on with the zero_size_links flag
+	if (runtime.GOOS == "windows" || o.fs.opt.ZeroSizeLinks) && o.translatedLink {
 		linkdst, err := os.Readlink(o.path)
 		if err != nil {
 			fs.Errorf(o, "Failed to read link size: %v", err)
