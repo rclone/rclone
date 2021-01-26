@@ -464,6 +464,9 @@ transfers as soon as possible.
 This flag can be useful on IO limited systems where transfers
 interfere with checking.
 
+It can also be useful to ensure perfect ordering when using
+`--order-by`.
+
 Using this flag can use more memory as it effectively sets
 `--max-backlog` to infinite. This means that all the info on the
 objects to transfer is held in memory before the transfers start.
@@ -1070,6 +1073,10 @@ means that it may transfer some files out of the order specified if
 Rclone will do its best to transfer the best file it has so in
 practice this should not cause a problem.  Think of `--order-by` as
 being more of a best efforts flag rather than a perfect ordering.
+
+If you want perfect ordering then you will need to specify
+[--check-first](#check-first) which will find all the files which need
+transferring first before transferring any.
 
 ### --password-command SpaceSepList ###
 
