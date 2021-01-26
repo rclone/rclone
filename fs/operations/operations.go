@@ -529,11 +529,21 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 // SameObject returns true if src and dst could be pointing to the
 // same object.
 func SameObject(src, dst fs.Object) bool {
-	if !SameConfig(src.Fs(), dst.Fs()) {
+	srcFs, dstFs := src.Fs(), dst.Fs()
+	if !SameConfig(srcFs, dstFs) {
+		// If same remote type then check ID of objects if available
+		doSrcID, srcIDOK := src.(fs.IDer)
+		doDstID, dstIDOK := dst.(fs.IDer)
+		if srcIDOK && dstIDOK && SameRemoteType(srcFs, dstFs) {
+			srcID, dstID := doSrcID.ID(), doDstID.ID()
+			if srcID != "" && srcID == dstID {
+				return true
+			}
+		}
 		return false
 	}
-	srcPath := path.Join(src.Fs().Root(), src.Remote())
-	dstPath := path.Join(dst.Fs().Root(), dst.Remote())
+	srcPath := path.Join(srcFs.Root(), src.Remote())
+	dstPath := path.Join(dstFs.Root(), dst.Remote())
 	if dst.Fs().Features().CaseInsensitive {
 		srcPath = strings.ToLower(srcPath)
 		dstPath = strings.ToLower(dstPath)

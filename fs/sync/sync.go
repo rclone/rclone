@@ -347,7 +347,11 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 				// If moving need to delete the files we don't need to copy
 				if s.DoMove {
 					// Delete src if no error on copy
-					s.processError(operations.DeleteFile(s.ctx, src))
+					if operations.SameObject(src, pair.Dst) {
+						fs.Logf(src, "Not removing source file as it is the same file as the destination")
+					} else {
+						s.processError(operations.DeleteFile(s.ctx, src))
+					}
 				}
 			}
 		}
