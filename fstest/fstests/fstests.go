@@ -1010,6 +1010,8 @@ func Run(t *testing.T, opt *Opt) {
 				}
 				obj := findObject(ctx, t, f, strings.ToUpper(file1.Path))
 				file1.Check(t, obj, f.Precision())
+				obj = findObject(ctx, t, f, strings.ToUpper(file2.Path))
+				file2.Check(t, obj, f.Precision())
 			})
 
 			// TestFsListFile1and2 tests two files present
