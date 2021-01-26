@@ -606,6 +606,9 @@ func Run(t *testing.T, opt *Opt) {
 		// Must be run in an empty directory
 		t.Run("FsEncoding", func(t *testing.T) {
 			skipIfNotOk(t)
+			if testing.Short() {
+				t.Skip("not running with -short")
+			}
 
 			// check no files or dirs as pre-requisite
 			fstest.CheckListingWithPrecision(t, f, []fstest.Item{}, []string{}, fs.GetModifyWindow(ctx, f))
