@@ -350,11 +350,9 @@ Command Prompt and then try to access the same drive from Explorer
 new drive.
 
 The easiest way around this is to start the drive from a normal
-command prompt. It is also possible to start a drive from the SYSTEM
-account (using [the WinFsp.Launcher
-infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
-which creates drives accessible for everyone on the system or
-alternatively using [the nssm service manager](https://nssm.cc/usage).
+command prompt. It is also possible to start a drive as the SYSTEM
+account, which creates drives accessible for everyone on the system,
+read more in the [install documentation](https://rclone.org/install/).
 
 ### Limitations
 
