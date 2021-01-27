@@ -307,6 +307,17 @@ func stringsContains(x string, ss []string) bool {
 	return false
 }
 
+// toUpperASCII returns a copy of the string s with all Unicode
+// letters mapped to their upper case.
+func toUpperASCII(s string) string {
+	return strings.Map(func(r rune) rune {
+		if 'a' <= r && r <= 'z' {
+			r -= 'a' - 'A'
+		}
+		return r
+	}, s)
+}
+
 // Run runs the basic integration tests for a remote using the options passed in.
 //
 // They are structured in a hierarchical way so that dependencies for the tests can be created.
@@ -1008,10 +1019,12 @@ func Run(t *testing.T, opt *Opt) {
 				if !f.Features().CaseInsensitive {
 					t.Skip("Not Case Insensitive")
 				}
-				obj := findObject(ctx, t, f, strings.ToUpper(file1.Path))
+				obj := findObject(ctx, t, f, toUpperASCII(file1.Path))
 				file1.Check(t, obj, f.Precision())
-				obj = findObject(ctx, t, f, strings.ToUpper(file2.Path))
-				file2.Check(t, obj, f.Precision())
+				t.Run("Dir", func(t *testing.T) {
+					obj := findObject(ctx, t, f, toUpperASCII(file2.Path))
+					file2.Check(t, obj, f.Precision())
+				})
 			})
 
 			// TestFsListFile1and2 tests two files present
