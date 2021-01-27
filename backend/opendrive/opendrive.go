@@ -721,7 +721,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	for _, folder := range folderList.Folders {
 		// fs.Debugf(nil, "Folder: %s (%s)", folder.Name, folder.FolderID)
 
-		if leaf == folder.Name {
+		if strings.EqualFold(leaf, folder.Name) {
 			// found
 			return folder.FolderID, true, nil
 		}
