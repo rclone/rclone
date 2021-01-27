@@ -53,6 +53,7 @@ func sign(AccessKey, SecretKey string, req *http.Request) {
 	var md5 string
 	var contentType string
 	var headersToSign []string
+	tmpHeadersToSign := make(map[string][]string)
 	for k, v := range req.Header {
 		k = strings.ToLower(k)
 		switch k {
@@ -62,15 +63,24 @@ func sign(AccessKey, SecretKey string, req *http.Request) {
 			contentType = v[0]
 		default:
 			if strings.HasPrefix(k, "x-amz-") {
-				vall := strings.Join(v, ",")
-				headersToSign = append(headersToSign, k+":"+vall)
+				tmpHeadersToSign[k] = v
 			}
 		}
+	}
+	var keys []string
+	for k := range tmpHeadersToSign {
+		keys = append(keys, k)
+	}
+	// https://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		vall := strings.Join(tmpHeadersToSign[key], ",")
+		headersToSign = append(headersToSign, key+":"+vall)
 	}
 	// Make headers of interest into canonical string
 	var joinedHeadersToSign string
 	if len(headersToSign) > 0 {
-		sort.StringSlice(headersToSign).Sort()
 		joinedHeadersToSign = strings.Join(headersToSign, "\n") + "\n"
 	}
 
