@@ -1,9 +1,9 @@
 package obscure
 
 import (
+	"bufio"
 	"fmt"
 
-	"io/ioutil"
 	"os"
 
 	"github.com/rclone/rclone/cmd"
@@ -30,7 +30,8 @@ the config file. However it is very hard to shoulder surf a 64
 character hex token.
 
 This command can also accept a password through STDIN instead of an
-argument by passing a hyphen as an argument. Example:
+argument by passing a hyphen as an argument. This will use the first
+line of STDIN as the password not including the trailing newline.
 
 echo "secretpassword" | rclone obscure -
 
@@ -40,13 +41,18 @@ obfuscating the hyphen itself.
 If you want to encrypt the config file then please use config file
 encryption - see [rclone config](/commands/rclone_config/) for more
 info.`,
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		var password string
 		fi, _ := os.Stdin.Stat()
 		if args[0] == "-" && (fi.Mode()&os.ModeCharDevice) == 0 {
-			bytes, _ := ioutil.ReadAll(os.Stdin)
-			password = string(bytes)
+			scanner := bufio.NewScanner(os.Stdin)
+			if scanner.Scan() {
+				password = scanner.Text()
+			}
+			if err := scanner.Err(); err != nil {
+				return err
+			}
 		} else {
 			password = args[0]
 		}
@@ -55,5 +61,6 @@ info.`,
 			fmt.Println(obscured)
 			return nil
 		})
+		return nil
 	},
 }
