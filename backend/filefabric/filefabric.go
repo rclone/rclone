@@ -536,7 +536,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
 	found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
-		if item.Name == leaf {
+		if strings.EqualFold(item.Name, leaf) {
 			pathIDOut = item.ID
 			return true
 		}
