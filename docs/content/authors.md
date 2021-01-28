@@ -450,3 +450,4 @@ put them back in again.` >}}
   * CokeMine <aptx4561@gmail.com>
   * Sơn Trần-Nguyễn <github@sntran.com>
   * lluuaapp <266615+lluuaapp@users.noreply.github.com>
+  * Zach Kipp <kipp.zach@gmail.com>
