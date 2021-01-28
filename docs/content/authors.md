@@ -451,3 +451,4 @@ put them back in again.` >}}
   * Sơn Trần-Nguyễn <github@sntran.com>
   * lluuaapp <266615+lluuaapp@users.noreply.github.com>
   * Zach Kipp <kipp.zach@gmail.com>
+  * Riccardo Iaconelli <riccardo@kde.org>
