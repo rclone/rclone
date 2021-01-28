@@ -64,6 +64,11 @@ func (f *testLister) startYear() int {
 	return 2000
 }
 
+// mock includeArchived for testing
+func (f *testLister) includeArchived() bool {
+	return false
+}
+
 func TestPatternMatch(t *testing.T) {
 	for testNumber, test := range []struct {
 		// input

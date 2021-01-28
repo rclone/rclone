@@ -132,15 +132,33 @@ you want to read the media.`,
 			Default:  2000,
 			Help:     `Year limits the photos to be downloaded to those which are uploaded after the given year`,
 			Advanced: true,
+		}, {
+			Name:    "include_archived",
+			Default: false,
+			Help: `Also view and download archived media.
+
+By default rclone does not request archived media. Thus, when syncing,
+archived media is not visible in directory listings or transferred.
+
+Note that media in albums is always visible and synced, no matter
+their archive status.
+
+With this flag, archived media are always visible in directory
+listings and transferred.
+
+Without this flag, archived media will not be visible in directory
+listings and won't be transferred.`,
+			Advanced: true,
 		}}...),
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ReadOnly  bool `config:"read_only"`
-	ReadSize  bool `config:"read_size"`
-	StartYear int  `config:"start_year"`
+	ReadOnly        bool `config:"read_only"`
+	ReadSize        bool `config:"read_size"`
+	StartYear       int  `config:"start_year"`
+	IncludeArchived bool `config:"include_archived"`
 }
 
 // Fs represents a remote storage server
@@ -204,6 +222,10 @@ func (f *Fs) dirTime() time.Time {
 // startYear returns the start year
 func (f *Fs) startYear() int {
 	return f.opt.StartYear
+}
+
+func (f *Fs) includeArchived() bool {
+	return f.opt.IncludeArchived
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -497,6 +519,12 @@ func (f *Fs) list(ctx context.Context, filter api.SearchFilter, fn listFn) (err 
 	}
 	filter.PageSize = listChunks
 	filter.PageToken = ""
+	if filter.AlbumID == "" { // album ID and filters cannot be set together, else error 400 INVALID_ARGUMENT
+		if filter.Filters == nil {
+			filter.Filters = &api.Filters{}
+		}
+		filter.Filters.IncludeArchivedMedia = &f.opt.IncludeArchived
+	}
 	lastID := ""
 	for {
 		var result api.MediaItems

@@ -24,6 +24,7 @@ type lister interface {
 	listUploads(ctx context.Context, dir string) (entries fs.DirEntries, err error)
 	dirTime() time.Time
 	startYear() int
+	includeArchived() bool
 }
 
 // dirPattern describes a single directory pattern
