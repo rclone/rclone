@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
@@ -23,11 +24,12 @@ const fhUnset = ^uint64(0)
 
 // FS represents the top level filing system
 type FS struct {
-	VFS     *vfs.VFS
-	f       fs.Fs
-	ready   chan (struct{})
-	mu      sync.Mutex // to protect the below
-	handles []vfs.Handle
+	VFS       *vfs.VFS
+	f         fs.Fs
+	ready     chan (struct{})
+	mu        sync.Mutex // to protect the below
+	handles   []vfs.Handle
+	destroyed int32 // read/write with sync/atomic
 }
 
 // NewFS makes a new FS
@@ -187,6 +189,7 @@ func (fsys *FS) Init() {
 // Destroy call).
 func (fsys *FS) Destroy() {
 	defer log.Trace(fsys.f, "")("")
+	atomic.StoreInt32(&fsys.destroyed, 1)
 }
 
 // Getattr reads the attributes for path

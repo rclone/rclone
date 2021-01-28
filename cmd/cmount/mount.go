@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sync/atomic"
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
@@ -168,7 +169,10 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 		// Shutdown the VFS
 		fsys.VFS.Shutdown()
 		var umountOK bool
-		if atexit.Signalled() {
+		if atomic.LoadInt32(&fsys.destroyed) != 0 {
+			fs.Debugf(nil, "Not calling host.Unmount as mount already Destroyed")
+			umountOK = true
+		} else if atexit.Signalled() {
 			// If we have received a signal then FUSE will be shutting down already
 			fs.Debugf(nil, "Not calling host.Unmount as signal received")
 			umountOK = true
