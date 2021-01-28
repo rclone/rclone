@@ -135,12 +135,19 @@ you want to read the media.`,
 		}, {
 			Name:    "include_archived",
 			Default: false,
-			Help: `Also download archived media.
+			Help: `Also view and download archived media.
 
-By default rclone do not request archived media. Thus when syncing,
-archived media are not recovered (media in an album are
-always synced, no matter their archive status). With this flag,
-archived media are treated.`,
+By default rclone does not request archived media. Thus, when syncing,
+archived media is not visible in directory listings or transferred.
+
+Note that media in albums is always visible and synced, no matter
+their archive status.
+
+With this flag, archived media are always visible in directory
+listings and transferred.
+
+Without this flag, archived media will not be visible in directory
+listings and won't be transferred.`,
 			Advanced: true,
 		}}...),
 	})

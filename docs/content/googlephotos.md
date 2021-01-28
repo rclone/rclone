@@ -412,11 +412,19 @@ Year limits the photos to be downloaded to those which were uploaded after the g
 
 #### --gphotos-include-archived
 
-Also download archived media.
+Also view and download archived media.
 
-By default rclone do not request archived media. Thus when syncing,
-archived media are not recovered. Exception : media in an album are
-always synced, no matter their archive status.
+By default rclone does not request archived media. Thus, when syncing,
+archived media is not visible in directory listings or transferred.
+
+Note that media in albums is always visible and synced, no matter
+their archive status.
+
+With this flag, archived media are always visible in directory
+listings and transferred.
+
+Without this flag, archived media will not be visible in directory
+listings and won't be transferred.
 
 - Config:      include_archived
 - Env Var:     RCLONE_GPHOTOS_INCLUDE_ARCHIVED
