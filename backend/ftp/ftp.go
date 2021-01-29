@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"io"
+	"net"
 	"net/textproto"
 	"path"
 	"runtime"
@@ -20,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/env"
@@ -135,6 +137,7 @@ type Fs struct {
 	poolMu   sync.Mutex
 	pool     []*ftp.ServerConn
 	tokens   *pacer.TokenDispenser
+	tlsConf  *tls.Config
 }
 
 // Object describes an FTP file
@@ -211,25 +214,36 @@ func (dl *debugLog) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+type dialCtx struct {
+	f   *Fs
+	ctx context.Context
+}
+
+// dial a new connection with fshttp dialer
+func (d *dialCtx) dial(network, address string) (net.Conn, error) {
+	conn, err := fshttp.NewDialer(d.ctx).Dial(network, address)
+	if err != nil {
+		return nil, err
+	}
+	if d.f.tlsConf != nil {
+		conn = tls.Client(conn, d.f.tlsConf)
+	}
+	return conn, err
+}
+
 // Open a new connection to the FTP server.
 func (f *Fs) ftpConnection(ctx context.Context) (*ftp.ServerConn, error) {
 	fs.Debugf(f, "Connecting to FTP server")
-	ftpConfig := []ftp.DialOption{ftp.DialWithTimeout(f.ci.ConnectTimeout)}
-	if f.opt.TLS && f.opt.ExplicitTLS {
-		fs.Errorf(f, "Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
-		return nil, errors.New("Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
-	} else if f.opt.TLS {
-		tlsConfig := &tls.Config{
-			ServerName:         f.opt.Host,
-			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
+	dCtx := dialCtx{f, ctx}
+	ftpConfig := []ftp.DialOption{ftp.DialWithDialFunc(dCtx.dial)}
+	if f.opt.ExplicitTLS {
+		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(f.tlsConf))
+		// Initial connection needs to be cleartext for explicit TLS
+		conn, err := fshttp.NewDialer(ctx).Dial("tcp", f.dialAddr)
+		if err != nil {
+			return nil, err
 		}
-		ftpConfig = append(ftpConfig, ftp.DialWithTLS(tlsConfig))
-	} else if f.opt.ExplicitTLS {
-		tlsConfig := &tls.Config{
-			ServerName:         f.opt.Host,
-			InsecureSkipVerify: f.opt.SkipVerifyTLSCert,
-		}
-		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(tlsConfig))
+		ftpConfig = append(ftpConfig, ftp.DialWithNetConn(conn))
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
@@ -338,6 +352,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	if opt.TLS {
 		protocol = "ftps://"
 	}
+	if opt.TLS && opt.ExplicitTLS {
+		return nil, errors.New("Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
+	}
+	var tlsConfig *tls.Config
+	if opt.TLS || opt.ExplicitTLS {
+		tlsConfig = &tls.Config{
+			ServerName:         opt.Host,
+			InsecureSkipVerify: opt.SkipVerifyTLSCert,
+		}
+	}
 	u := protocol + path.Join(dialAddr+"/", root)
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
@@ -350,6 +374,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		pass:     pass,
 		dialAddr: dialAddr,
 		tokens:   pacer.NewTokenDispenser(opt.Concurrency),
+		tlsConf:  tlsConfig,
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,

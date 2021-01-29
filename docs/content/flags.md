@@ -42,6 +42,7 @@ These flags are available for every command.
       --dump DumpFlags                       List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
       --dump-bodies                          Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers                         Dump HTTP headers - may contain sensitive info
+      --dscp                                 DSCP Name or Value (default 0)
       --error-on-no-transfer                 Sets exit code 9 if no files are transferred, useful in scripts
       --exclude stringArray                  Exclude files matching pattern
       --exclude-from stringArray             Read exclude patterns from file (use - to read from stdin)

@@ -600,6 +600,21 @@ This flag can be useful for debugging and in exceptional circumstances
 (e.g. Google Drive limiting the total volume of Server Side Copies to
 100GB/day).
 
+### --dscp VALUE ###
+
+Specify a DSCP value or name to use in connections. This could help QoS
+system to identify traffic class. BE, EF, DF, LE, CSx and AFxx are allowed.
+
+See the description of [differentiated services](https://en.wikipedia.org/wiki/Differentiated_services) to get an idea of
+this field. Setting this to 1 (LE) to identify the flow to SCAVENGER class
+can avoid occupying too much bandwidth in a network with DiffServ support ([RFC 8622](https://tools.ietf.org/html/rfc8622)).
+
+For example, if you configured QoS on router to handle LE properly. Running:
+```
+rclone copy --dscp LE from:/from to:/to
+```
+would make the priority lower than usual internet flows.
+
 ### -n, --dry-run ###
 
 Do a trial run with no permanent changes.  Use this to see what rclone
