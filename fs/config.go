@@ -122,6 +122,7 @@ type ConfigInfo struct {
 	Headers                []*HTTPOption
 	RefreshTimes           bool
 	NoConsole              bool
+	TrafficClass           uint8
 }
 
 // NewConfig creates a new config with everything set to the default
