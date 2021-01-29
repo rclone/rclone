@@ -1189,6 +1189,39 @@ due to a bug.
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "no_head",
+			Help: `If set, don't HEAD uploaded objects to check integrity
+
+This can be useful when trying to minimise the number of transactions
+rclone does.
+
+Setting it means that if rclone receives a 200 OK message after
+uploading an object with PUT then it will assume that it got uploaded
+properly.
+
+In particular it will assume:
+
+- the metadata, including modtime, storage class and content type was as uploaded
+- the size was as uploaded
+
+It reads the following items from the response for a single part PUT:
+
+- the MD5SUM
+- The uploaded date
+
+For multipart uploads these items aren't read.
+
+If an source object of unknown length is uploaded then rclone **will** do a
+HEAD request.
+
+Setting this flag increases the chance for undetected upload failures,
+in particular an incorrect size, so it isn't recommended for normal
+operation. In practice the chance of an undetected upload failure is
+very small even with this flag.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -1285,6 +1318,7 @@ type Options struct {
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int64                `config:"list_chunk"`
 	NoCheckBucket         bool                 `config:"no_check_bucket"`
+	NoHead                bool                 `config:"no_head"`
 	Enc                   encoder.MultiEncoder `config:"encoding"`
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
@@ -3234,6 +3268,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
+	var resp *http.Response // response from PUT
 	if multipart {
 		err = o.uploadMultipart(ctx, &req, size, in)
 		if err != nil {
@@ -3274,7 +3309,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		httpReq.ContentLength = size
 
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			resp, err := o.fs.srv.Do(httpReq)
+			var err error
+			resp, err = o.fs.srv.Do(httpReq)
 			if err != nil {
 				return o.fs.shouldRetry(err)
 			}
@@ -3291,6 +3327,26 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if err != nil {
 			return err
 		}
+	}
+
+	// User requested we don't HEAD the object after uploading it
+	// so make up the object as best we can assuming it got
+	// uploaded properly. If size < 0 then we need to do the HEAD.
+	if o.fs.opt.NoHead && size >= 0 {
+		o.md5 = md5sum
+		o.bytes = size
+		o.lastModified = time.Now()
+		o.meta = req.Metadata
+		o.mimeType = aws.StringValue(req.ContentType)
+		o.storageClass = aws.StringValue(req.StorageClass)
+		// If we have done a single part PUT request then we can read these
+		if resp != nil {
+			if date, err := http.ParseTime(resp.Header.Get("Date")); err == nil {
+				o.lastModified = date
+			}
+			o.setMD5FromEtag(resp.Header.Get("Etag"))
+		}
+		return nil
 	}
 
 	// Read the metadata from the newly created object
