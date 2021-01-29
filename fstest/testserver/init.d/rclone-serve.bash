@@ -7,21 +7,21 @@ DATADIR=/tmp/${NAME}-data
 
 stop() {
     if status ; then
-        pid=$(cat ${PIDFILE})
-        kill $pid
-        rm ${PIDFILE}
+        pid=$(cat "$PIDFILE")
+        kill "$pid"
+        rm "$PIDFILE"
         echo "$NAME stopped"
     fi
 }
 
 status() {
-    if [ -e ${PIDFILE} ]; then
-        pid=$(cat ${PIDFILE})
-        if kill -0 &>1 > /dev/null $pid; then
+    if [ -e "$PIDFILE" ]; then
+        pid=$(cat "$PIDFILE")
+        if kill -0 "$pid" >/dev/null 2>&1; then
             # echo "$NAME running"
             return 0
         else
-            rm ${PIDFILE}
+            rm "$PIDFILE"
         fi
     fi
     # echo "$NAME not running"
@@ -30,12 +30,13 @@ status() {
 
 run() {
     if ! status ; then
-        mkdir -p ${DATADIR}
-        nohup "$@" >>/tmp/${NAME}.log 2>&1 </dev/null &
+        mkdir -p "$DATADIR"
+        nohup "$@" >> "/tmp/${NAME}.log" 2>&1 </dev/null &
         pid=$!
-        echo $pid > ${PIDFILE}
-        disown $pid
+        echo $pid > "$PIDFILE"
+        disown "$pid"
     fi
 }
 
-. $(dirname "$0")/run.bash
+# shellcheck disable=SC1090
+. "$(dirname "$0")/run.bash"
