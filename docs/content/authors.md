@@ -454,3 +454,4 @@ put them back in again.` >}}
   * Riccardo Iaconelli <riccardo@kde.org>
   * Sakuragawa Misty <gyc990326@gmail.com>
   * Nicolas Rueff <nicolas@rueff.fr>
+  * Pau Rodriguez-Estivill <prodrigestivill@gmail.com>
