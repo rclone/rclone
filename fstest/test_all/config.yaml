@@ -127,6 +127,12 @@ backends:
  - backend:  "onedrive"
    remote:   "TestOneDrive:"
    fastlist: false
+ - backend:  "onedrive"
+   remote:   "TestOneDriveBusiness:"
+   fastlist: false
+ - backend:  "onedrive"
+   remote:   "TestOneDriveCn:"
+   fastlist: false
  - backend:  "s3"
    remote:   "TestS3:"
    fastlist: true
