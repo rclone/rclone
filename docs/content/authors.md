@@ -453,3 +453,4 @@ put them back in again.` >}}
   * Zach Kipp <kipp.zach@gmail.com>
   * Riccardo Iaconelli <riccardo@kde.org>
   * Sakuragawa Misty <gyc990326@gmail.com>
+  * Nicolas Rueff <nicolas@rueff.fr>
