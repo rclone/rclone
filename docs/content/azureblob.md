@@ -250,6 +250,10 @@ tiering blob to "Hot" or "Cool".
 - Env Var:     RCLONE_AZUREBLOB_ACCESS_TIER
 - Type:        string
 - Default:     ""
+- Examples:
+     - "Hot"
+     - "Cool"
+     - "Archive"
 
 #### --azureblob-disable-checksum
 
