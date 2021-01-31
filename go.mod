@@ -16,7 +16,7 @@ require (
 	github.com/atotto/clipboard v0.1.2
 	github.com/aws/aws-sdk-go v1.35.17
 	github.com/billziss-gh/cgofuse v1.4.0
-	github.com/buengese/sgzip v0.1.0
+	github.com/buengese/sgzip v0.1.1
 	github.com/calebcase/tmpfile v1.0.2 // indirect
 	github.com/colinmarc/hdfs/v2 v2.2.0
 	github.com/coreos/go-semver v0.3.0
