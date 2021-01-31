@@ -149,6 +149,17 @@ to override the default choice.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "no_preallocate",
+			Help: `Disable preallocation of disk space for transferred files
+
+Preallocation of disk space helps prevent filesystem fragmentation.
+However, some virtual filesystem layers (such as Google Drive File
+Stream) may incorrectly set the actual file size equal to the
+preallocated space, causing checksum and file size checks to fail.
+Use this flag to disable preallocation.`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name: "no_sparse",
 			Help: `Disable sparse files for multi-thread downloads
 
@@ -191,6 +202,7 @@ type Options struct {
 	OneFileSystem     bool                 `config:"one_file_system"`
 	CaseSensitive     bool                 `config:"case_sensitive"`
 	CaseInsensitive   bool                 `config:"case_insensitive"`
+	NoPreAllocate     bool                 `config:"no_preallocate"`
 	NoSparse          bool                 `config:"no_sparse"`
 	NoSetModTime      bool                 `config:"no_set_modtime"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
@@ -1127,10 +1139,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 				return err
 			}
 		}
-		// Pre-allocate the file for performance reasons
-		err = file.PreAllocate(src.Size(), f)
-		if err != nil {
-			fs.Debugf(o, "Failed to pre-allocate: %v", err)
+		if !o.fs.opt.NoPreAllocate {
+			// Pre-allocate the file for performance reasons
+			err = file.PreAllocate(src.Size(), f)
+			if err != nil {
+				fs.Debugf(o, "Failed to pre-allocate: %v", err)
+			}
 		}
 		out = f
 	} else {
@@ -1217,9 +1231,11 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 		return nil, err
 	}
 	// Pre-allocate the file for performance reasons
-	err = file.PreAllocate(size, out)
-	if err != nil {
-		fs.Debugf(o, "Failed to pre-allocate: %v", err)
+	if !f.opt.NoPreAllocate {
+		err = file.PreAllocate(size, out)
+		if err != nil {
+			fs.Debugf(o, "Failed to pre-allocate: %v", err)
+		}
 	}
 	if !f.opt.NoSparse && file.SetSparseImplemented {
 		sparseWarning.Do(func() {

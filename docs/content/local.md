@@ -447,6 +447,21 @@ to override the default choice.
 - Type:        bool
 - Default:     false
 
+#### --local-no-preallocate
+
+Disable preallocation of disk space for transferred files
+
+Preallocation of disk space helps prevent filesystem fragmentation.
+However, some virtual filesystem layers (such as Google Drive File
+Stream) may incorrectly set the actual file size equal to the
+preallocated space, causing checksum and file size checks to fail.
+Use this flag to disable preallocation.
+
+- Config:      no_preallocate
+- Env Var:     RCLONE_LOCAL_NO_PREALLOCATE
+- Type:        bool
+- Default:     false
+
 #### --local-no-sparse
 
 Disable sparse files for multi-thread downloads
