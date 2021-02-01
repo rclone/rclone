@@ -3064,6 +3064,9 @@ func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
 	if destLeaf == "" {
 		destLeaf = info.Name
 	}
+	if destDir == "" {
+		destDir = "."
+	}
 	dstFs, err := cache.Get(ctx, destDir)
 	if err != nil {
 		return err
