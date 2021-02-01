@@ -48,6 +48,10 @@ var tablesData = [64]string{
 	4: "ExDoSTD___-tfXfhJ0hKSkryTxU=",
 	// Base64
 	5: "JRDIcQf_______8PgIiIiIgINkggARHlkQwSSCCBxHFYINHdfXI=",
+	// Hex plus a bit...
+	6: "E5CxwAHm9sYcAlmWZVvMHA4Y5jw=",
+	// Hex, upper case letters.
+	7: "FICxgAMMAGC3YwMthe3DWM_wDAAQ",
 
 	// Special tables:
 	// SCSU and a fairly generic table:
