@@ -121,14 +121,11 @@ can be processed line by line as each item is written one to a line.
 				}
 				return nil
 			})
-			if err != nil {
-				return err
-			}
 			if !first {
 				fmt.Println()
 			}
 			fmt.Println("]")
-			return nil
+			return err
 		})
 	},
 }
