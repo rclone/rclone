@@ -69,6 +69,7 @@ These flags are available for every command.
       --log-file string                      Log everything to this file
       --log-format string                    Comma separated list of log format options (default "date,time")
       --log-level string                     Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")
+      --log-systemd                          Activate systemd integration for the logger.
       --low-level-retries int                Number of low level retries to do. (default 10)
       --max-age Duration                     Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --max-backlog int                      Maximum number of objects in sync or check backlog. (default 10000)
@@ -86,6 +87,7 @@ These flags are available for every command.
       --multi-thread-streams int             Max number of streams to use for multi-thread downloads. (default 4)
       --no-check-certificate                 Do not verify the server SSL certificate. Insecure.
       --no-check-dest                        Don't check the destination, copy regardless.
+      --no-console                           Hide console window. Supported on Windows only.
       --no-gzip-encoding                     Don't set Accept-Encoding: gzip.
       --no-traverse                          Don't traverse destination file system on copy.
       --no-unicode-normalization             Don't normalize unicode characters in filenames.
@@ -93,6 +95,7 @@ These flags are available for every command.
       --order-by string                      Instructions on how to order the transfers, e.g. 'size,descending'
       --password-command SpaceSepList        Command for supplying password for encrypted configuration.
   -P, --progress                             Show progress during transfer.
+      --progress-terminal-title              Show progress on the terminal title. Requires -P/--progress.
   -q, --quiet                                Print as little stuff as possible
       --rc                                   Enable the remote control server.
       --rc-addr string                       IPaddress:Port or :Port to bind server to. (default "localhost:5572")
@@ -147,7 +150,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.53.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.54.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -168,6 +171,7 @@ and may be set in the config file.
       --alias-remote string                                      Remote or path to alias.
       --azureblob-access-tier string                             Access tier of blob: hot, cool or archive.
       --azureblob-account string                                 Storage Account Name (leave blank to use SAS URL or Emulator)
+      --azureblob-archive-tier-delete                            Delete archive tier blobs before overwriting.
       --azureblob-chunk-size SizeSuffix                          Upload chunk size (<= 100MB). (default 4M)
       --azureblob-disable-checksum                               Don't store MD5 checksum with object metadata.
       --azureblob-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
@@ -176,9 +180,14 @@ and may be set in the config file.
       --azureblob-list-chunk int                                 Size of blob list. (default 5000)
       --azureblob-memory-pool-flush-time Duration                How often internal memory buffer pools will be flushed. (default 1m0s)
       --azureblob-memory-pool-use-mmap                           Whether to use mmap buffers in internal memory pool.
+      --azureblob-msi-client-id string                           Object ID of the user-assigned MSI to use, if any. Leave blank if msi_object_id or msi_mi_res_id specified.
+      --azureblob-msi-mi-res-id string                           Azure resource ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_object_id specified.
+      --azureblob-msi-object-id string                           Object ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_mi_res_id specified.
       --azureblob-sas-url string                                 SAS URL for container level access only
-      --azureblob-upload-cutoff SizeSuffix                       Cutoff for switching to chunked upload (<= 256MB). (default 256M)
+      --azureblob-service-principal-file string                  Path to file containing credentials for use with a service principal.
+      --azureblob-upload-cutoff string                           Cutoff for switching to chunked upload (<= 256MB). (Deprecated)
       --azureblob-use-emulator                                   Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)
+      --azureblob-use-msi                                        Use a managed service identity to authenticate (only works in Azure)
       --b2-account string                                        Account ID or Application Key ID
       --b2-chunk-size SizeSuffix                                 Upload chunk size. Must fit in memory. (default 96M)
       --b2-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 4G)
@@ -229,10 +238,11 @@ and may be set in the config file.
       --chunker-chunk-size SizeSuffix                            Files larger than chunk size will be split in chunks. (default 2G)
       --chunker-fail-hard                                        Choose how chunker should handle files with missing or invalid chunks.
       --chunker-hash-type string                                 Choose how chunker handles hash sums. All modes but "none" require metadata. (default "md5")
-      --chunker-meta-format string                               Format of the metadata object or "none". By default "simplejson". (default "simplejson")
-      --chunker-name-format string                               String format of chunk file names. (default "*.rclone_chunk.###")
       --chunker-remote string                                    Remote to chunk/unchunk.
-      --chunker-start-from int                                   Minimum valid chunk number. Usually 0 or 1. (default 1)
+      --compress-level int                                       GZIP compression level (-2 to 9). (default -1)
+      --compress-mode string                                     Compression mode. (default "gzip")
+      --compress-ram-cache-limit SizeSuffix                      Some remotes don't allow the upload of files with unknown size. (default 20M)
+      --compress-remote string                                   Remote to compress.
   -L, --copy-links                                               Follow symlinks and copy the pointed to item.
       --crypt-directory-name-encryption                          Option to either encrypt directory names or leave them intact. (default true)
       --crypt-filename-encryption string                         How to encrypt the filenames. (default "standard")
@@ -246,7 +256,7 @@ and may be set in the config file.
       --drive-auth-owner-only                                    Only consider files owned by the authenticated user.
       --drive-auth-url string                                    Auth server URL.
       --drive-chunk-size SizeSuffix                              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
-      --drive-client-id string                                   OAuth Client Id
+      --drive-client-id string                                   Google Application Client Id
       --drive-client-secret string                               OAuth Client Secret
       --drive-disable-http2                                      Disable drive using http2 (default true)
       --drive-encoding MultiEncoder                              This sets the encoding for the backend. (default InvalidUtf8)
@@ -269,6 +279,7 @@ and may be set in the config file.
       --drive-skip-gdocs                                         Skip google documents in all listings.
       --drive-skip-shortcuts                                     If set skip shortcut files
       --drive-starred-only                                       Only show files that are starred.
+      --drive-stop-on-download-limit                             Make download limit errors be fatal
       --drive-stop-on-upload-limit                               Make upload limit errors be fatal
       --drive-team-drive string                                  ID of the Team Drive
       --drive-token string                                       OAuth Access Token as a JSON blob.
@@ -285,20 +296,30 @@ and may be set in the config file.
       --dropbox-client-secret string                             OAuth Client Secret
       --dropbox-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot)
       --dropbox-impersonate string                               Impersonate this user when using a business account.
+      --dropbox-shared-files                                     Instructs rclone to work on individual shared files.
+      --dropbox-shared-folders                                   Instructs rclone to work on shared folders.
       --dropbox-token string                                     OAuth Access Token as a JSON blob.
       --dropbox-token-url string                                 Token server url.
       --fichier-api-key string                                   Your API Key, get it from https://1fichier.com/console/params.pl
       --fichier-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
       --fichier-shared-folder string                             If you want to download a shared folder, add this parameter
+      --filefabric-encoding MultiEncoder                         This sets the encoding for the backend. (default Slash,Del,Ctl,InvalidUtf8,Dot)
+      --filefabric-permanent-token string                        Permanent Authentication Token
+      --filefabric-root-folder-id string                         ID of the root folder
+      --filefabric-token string                                  Session Token
+      --filefabric-token-expiry string                           Token expiry time
+      --filefabric-url string                                    URL of the Enterprise File Fabric to connect to
+      --filefabric-version string                                Version read from the file fabric
       --ftp-concurrency int                                      Maximum number of FTP simultaneous connections, 0 for unlimited
       --ftp-disable-epsv                                         Disable using EPSV even if server advertises support
+      --ftp-disable-mlsd                                         Disable using MLSD even if server advertises support
       --ftp-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,Del,Ctl,RightSpace,Dot)
-      --ftp-explicit-tls                                         Use FTP over TLS (Explicit)
+      --ftp-explicit-tls                                         Use Explicit FTPS (FTP over TLS)
       --ftp-host string                                          FTP host to connect to
       --ftp-no-check-certificate                                 Do not verify the TLS certificate of the server
       --ftp-pass string                                          FTP password (obscured)
       --ftp-port string                                          FTP port, leave blank to use default (21)
-      --ftp-tls                                                  Use FTPS over TLS (Implicit)
+      --ftp-tls                                                  Use Implicit FTPS (FTP over TLS)
       --ftp-user string                                          FTP username, leave blank for current username, $USER
       --gcs-anonymous                                            Access public buckets and objects without credentials
       --gcs-auth-url string                                      Auth server URL.
@@ -317,11 +338,17 @@ and may be set in the config file.
       --gphotos-auth-url string                                  Auth server URL.
       --gphotos-client-id string                                 OAuth Client Id
       --gphotos-client-secret string                             OAuth Client Secret
+      --gphotos-include-archived                                 Also view and download archived media.
       --gphotos-read-only                                        Set to make the Google Photos backend read only.
       --gphotos-read-size                                        Set to read the size of media items.
       --gphotos-start-year int                                   Year limits the photos to be downloaded to those which are uploaded after the given year (default 2000)
       --gphotos-token string                                     OAuth Access Token as a JSON blob.
       --gphotos-token-url string                                 Token server url.
+      --hdfs-data-transfer-protection string                     Kerberos data transfer protection: authentication|integrity|privacy
+      --hdfs-encoding MultiEncoder                               This sets the encoding for the backend. (default Slash,Colon,Del,Ctl,InvalidUtf8,Dot)
+      --hdfs-namenode string                                     hadoop name node and port
+      --hdfs-service-principal-name string                       Kerberos service principal name for the namenode
+      --hdfs-username string                                     hadoop user name
       --http-headers CommaSepList                                Set HTTP headers for all transactions
       --http-no-head                                             Don't use HEAD requests to find file sizes in dir listing
       --http-no-slash                                            Set this if the site doesn't end directories with /
@@ -354,6 +381,7 @@ and may be set in the config file.
       --local-no-sparse                                          Disable sparse files for multi-thread downloads
       --local-no-unicode-normalization                           Don't apply unicode normalization to paths and filenames (Deprecated)
       --local-nounc string                                       Disable UNC (long path names) conversion on Windows
+      --local-zero-size-links                                    Assume the Stat size of links is zero (and read them instead)
       --mailru-check-hash                                        What should copy do if file checksum is mismatched or invalid (default true)
       --mailru-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --mailru-pass string                                       Password (obscured)
@@ -374,9 +402,13 @@ and may be set in the config file.
       --onedrive-client-secret string                            OAuth Client Secret
       --onedrive-drive-id string                                 The ID of the drive to use
       --onedrive-drive-type string                               The type of the drive ( personal | business | documentLibrary )
-      --onedrive-encoding MultiEncoder                           This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
+      --onedrive-encoding MultiEncoder                           This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --onedrive-expose-onenote-files                            Set to make OneNote files show up in directory listings.
+      --onedrive-link-password string                            Set the password for links created by the link command.
+      --onedrive-link-scope string                               Set the scope of the links created by the link command. (default "anonymous")
+      --onedrive-link-type string                                Set the type of the links created by the link command. (default "view")
       --onedrive-no-versions                                     Remove all versions on modifying operations
+      --onedrive-region string                                   Choose national cloud region for OneDrive. (default "global")
       --onedrive-server-side-across-configs                      Allow server-side operations (e.g. copy) to work across different onedrive configs.
       --onedrive-token string                                    OAuth Access Token as a JSON blob.
       --onedrive-token-url string                                Token server url.
@@ -410,6 +442,7 @@ and may be set in the config file.
       --s3-chunk-size SizeSuffix                                 Chunk size to use for uploading. (default 5M)
       --s3-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 4.656G)
       --s3-disable-checksum                                      Don't store MD5 checksum with object metadata
+      --s3-disable-http2                                         Disable usage of http2 for S3 backends
       --s3-encoding MultiEncoder                                 This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
       --s3-endpoint string                                       Endpoint for S3 API.
       --s3-env-auth                                              Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).
@@ -421,16 +454,18 @@ and may be set in the config file.
       --s3-memory-pool-flush-time Duration                       How often internal memory buffer pools will be flushed. (default 1m0s)
       --s3-memory-pool-use-mmap                                  Whether to use mmap buffers in internal memory pool.
       --s3-no-check-bucket                                       If set, don't attempt to check the bucket exists or create it
+      --s3-no-head                                               If set, don't HEAD uploaded objects to check integrity
       --s3-profile string                                        Profile to use in the shared credentials file
       --s3-provider string                                       Choose your S3 provider.
       --s3-region string                                         Region to connect to.
+      --s3-requester-pays                                        Enables requester pays option when interacting with S3 bucket.
       --s3-secret-access-key string                              AWS Secret Access Key (password)
       --s3-server-side-encryption string                         The server-side encryption algorithm used when storing this object in S3.
       --s3-session-token string                                  An AWS session token
       --s3-shared-credentials-file string                        Path to the shared credentials file
       --s3-sse-customer-algorithm string                         If using SSE-C, the server-side encryption algorithm used when storing this object in S3.
       --s3-sse-customer-key string                               If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data.
-      --s3-sse-customer-key-md5 string                           If using SSE-C you must provide the secret encryption key MD5 checksum.
+      --s3-sse-customer-key-md5 string                           If using SSE-C you may provide the secret encryption key MD5 checksum (optional).
       --s3-sse-kms-key-id string                                 If using KMS ID you must provide the ARN of Key.
       --s3-storage-class string                                  The storage class to use when storing new objects in S3.
       --s3-upload-concurrency int                                Concurrency for multipart uploads. (default 4)
@@ -452,17 +487,20 @@ and may be set in the config file.
       --sftp-key-file-pass string                                The passphrase to decrypt the PEM-encoded private key file. (obscured)
       --sftp-key-pem string                                      Raw PEM-encoded private key, If specified, will override key_file parameter.
       --sftp-key-use-agent                                       When set forces the usage of the ssh-agent.
+      --sftp-known-hosts-file string                             Optional path to known_hosts file.
       --sftp-md5sum-command string                               The command used to read md5 hashes. Leave blank for autodetect.
       --sftp-pass string                                         SSH password, leave blank to use ssh-agent. (obscured)
       --sftp-path-override string                                Override path used by SSH connection.
       --sftp-port string                                         SSH port, leave blank to use default (22)
+      --sftp-pubkey-file string                                  Optional path to public key file.
       --sftp-server-command string                               Specifies the path or command to run a sftp server on the remote host.
       --sftp-set-modtime                                         Set the modified time on the remote if set. (default true)
       --sftp-sha1sum-command string                              The command used to read sha1 hashes. Leave blank for autodetect.
       --sftp-skip-links                                          Set to skip any symlinks and any other non regular files.
       --sftp-subsystem string                                    Specifies the SSH2 subsystem on the remote host. (default "sftp")
+      --sftp-use-fstat                                           If set use fstat instead of stat
       --sftp-use-insecure-cipher                                 Enable the use of insecure ciphers and key exchange methods.
-      --sftp-user string                                         SSH username, leave blank for current username, ncw
+      --sftp-user string                                         SSH username, leave blank for current username, $USER
       --sharefile-chunk-size SizeSuffix                          Upload chunk size. Must a power of 2 >= 256k. (default 64M)
       --sharefile-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,LeftPeriod,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --sharefile-endpoint string                                Endpoint for API calls.
@@ -492,6 +530,7 @@ and may be set in the config file.
       --swift-endpoint-type string                               Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE) (default "public")
       --swift-env-auth                                           Get swift credentials from environment variables in standard OpenStack form.
       --swift-key string                                         API key or password (OS_PASSWORD).
+      --swift-leave-parts-on-error                               If true avoid calling abort upload on a failure. It should be set to true for resuming uploads across different sessions.
       --swift-no-chunk                                           Don't chunk files during streaming upload.
       --swift-region string                                      Region name - optional (OS_REGION_NAME)
       --swift-storage-policy string                              The storage policy to use when creating a new container
@@ -523,4 +562,6 @@ and may be set in the config file.
       --yandex-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,Del,Ctl,InvalidUtf8,Dot)
       --yandex-token string                                      OAuth Access Token as a JSON blob.
       --yandex-token-url string                                  Token server url.
+      --zoho-encoding MultiEncoder                               This sets the encoding for the backend. (default Del,Ctl,InvalidUtf8)
+      --zoho-region string                                       Zoho region to connect to. You'll have to use the region you organization is registered in.
 ```

@@ -34,7 +34,7 @@ whether the password is already obscured or not and put unobscured
 passwords into the config file. If you want to be 100% certain that
 the passwords get obscured then use the "--obscure" flag, or if you
 are 100% certain you are already passing obscured passwords then use
-"--no-obscure".  You can also set osbscured passwords using the
+"--no-obscure".  You can also set obscured passwords using the
 "rclone config password" command.
 
 So for example if you wanted to configure a Google Drive remote but

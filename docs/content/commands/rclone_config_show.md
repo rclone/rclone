@@ -9,10 +9,6 @@ url: /commands/rclone_config_show/
 
 Print (decrypted) config file, or the config for a single remote.
 
-## Synopsis
-
-Print (decrypted) config file, or the config for a single remote.
-
 ```
 rclone config show [<remote>] [flags]
 ```

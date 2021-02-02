@@ -9,10 +9,6 @@ url: /commands/rclone_size/
 
 Prints the total size and number of objects in remote:path.
 
-## Synopsis
-
-Prints the total size and number of objects in remote:path.
-
 ```
 rclone size remote:path [flags]
 ```

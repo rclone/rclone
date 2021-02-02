@@ -194,6 +194,7 @@ Skip full upload if there is another file with same data hash.
 This feature is called "speedup" or "put by hash". It is especially efficient
 in case of generally available files like popular books, video or audio clips,
 because files are searched by hash in all accounts of all mailru users.
+It is meaningless and ineffective if source file is unique or encrypted.
 Please note that rclone may need local memory and disk space to calculate
 content hash in advance and decide whether full upload is required.
 Also, if rclone does not know file size in advance (e.g. in case of
@@ -296,7 +297,7 @@ This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.
 Quirks will be removed when the backend grows stable.
-Supported quirks: atomicmkdir binlist gzip insecure retry400
+Supported quirks: atomicmkdir binlist unknowndirs
 
 - Config:      quirks
 - Env Var:     RCLONE_MAILRU_QUIRKS

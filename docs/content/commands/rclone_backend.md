@@ -27,7 +27,7 @@ for more info).
 
     rclone backend features remote:
 
-Pass options to the backend command with -o. This should be key=value or key, eg:
+Pass options to the backend command with -o. This should be key=value or key, e.g.:
 
     rclone backend stats remote:path stats -o format=json -o long
 

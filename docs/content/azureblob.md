@@ -160,6 +160,26 @@ Storage Account Name (leave blank to use SAS URL or Emulator)
 - Type:        string
 - Default:     ""
 
+#### --azureblob-service-principal-file
+
+Path to file containing credentials for use with a service principal.
+
+Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
+
+    $ az sp create-for-rbac --name "<name>" \
+      --role "Storage Blob Data Owner" \
+      --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
+      > azure-principal.json
+
+See [Use Azure CLI to assign an Azure role for access to blob and queue data](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli)
+for more details.
+
+
+- Config:      service_principal_file
+- Env Var:     RCLONE_AZUREBLOB_SERVICE_PRINCIPAL_FILE
+- Type:        string
+- Default:     ""
+
 #### --azureblob-key
 
 Storage Account Key (leave blank to use SAS URL or Emulator)
@@ -179,6 +199,24 @@ SAS URL for container level access only
 - Type:        string
 - Default:     ""
 
+#### --azureblob-use-msi
+
+Use a managed service identity to authenticate (only works in Azure)
+
+When true, use a [managed service identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/)
+to authenticate to Azure Storage instead of a SAS token or account key.
+
+If the VM(SS) on which this program is running has a system-assigned identity, it will
+be used by default. If the resource has no system-assigned but exactly one user-assigned identity,
+the user-assigned identity will be used by default. If the resource has multiple user-assigned
+identities, the identity to use must be explicitly specified using exactly one of the msi_object_id,
+msi_client_id, or msi_mi_res_id parameters.
+
+- Config:      use_msi
+- Env Var:     RCLONE_AZUREBLOB_USE_MSI
+- Type:        bool
+- Default:     false
+
 #### --azureblob-use-emulator
 
 Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)
@@ -192,6 +230,33 @@ Uses local storage emulator if provided as 'true' (leave blank if using real azu
 
 Here are the advanced options specific to azureblob (Microsoft Azure Blob Storage).
 
+#### --azureblob-msi-object-id
+
+Object ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_mi_res_id specified.
+
+- Config:      msi_object_id
+- Env Var:     RCLONE_AZUREBLOB_MSI_OBJECT_ID
+- Type:        string
+- Default:     ""
+
+#### --azureblob-msi-client-id
+
+Object ID of the user-assigned MSI to use, if any. Leave blank if msi_object_id or msi_mi_res_id specified.
+
+- Config:      msi_client_id
+- Env Var:     RCLONE_AZUREBLOB_MSI_CLIENT_ID
+- Type:        string
+- Default:     ""
+
+#### --azureblob-msi-mi-res-id
+
+Azure resource ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_object_id specified.
+
+- Config:      msi_mi_res_id
+- Env Var:     RCLONE_AZUREBLOB_MSI_MI_RES_ID
+- Type:        string
+- Default:     ""
+
 #### --azureblob-endpoint
 
 Endpoint for the service
@@ -199,6 +264,15 @@ Leave blank normally.
 
 - Config:      endpoint
 - Env Var:     RCLONE_AZUREBLOB_ENDPOINT
+- Type:        string
+- Default:     ""
+
+#### --azureblob-upload-cutoff
+
+Cutoff for switching to chunked upload (<= 256MB). (Deprecated)
+
+- Config:      upload_cutoff
+- Env Var:     RCLONE_AZUREBLOB_UPLOAD_CUTOFF
 - Type:        string
 - Default:     ""
 
@@ -250,10 +324,28 @@ tiering blob to "Hot" or "Cool".
 - Env Var:     RCLONE_AZUREBLOB_ACCESS_TIER
 - Type:        string
 - Default:     ""
-- Examples:
-     - "Hot"
-     - "Cool"
-     - "Archive"
+
+#### --azureblob-archive-tier-delete
+
+Delete archive tier blobs before overwriting.
+
+Archive tier blobs cannot be updated. So without this flag, if you
+attempt to update an archive tier blob, then rclone will produce the
+error:
+
+    can't update archive tier blob without --azureblob-archive-tier-delete
+
+With this flag set then before rclone attempts to overwrite an archive
+tier blob, it will delete the existing blob before uploading its
+replacement.  This has the potential for data loss if the upload fails
+(unlike updating a normal blob) and also may cost more since deleting
+archive tier blobs early may be chargable.
+
+
+- Config:      archive_tier_delete
+- Env Var:     RCLONE_AZUREBLOB_ARCHIVE_TIER_DELETE
+- Type:        bool
+- Default:     false
 
 #### --azureblob-disable-checksum
 

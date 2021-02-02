@@ -190,7 +190,7 @@ Here are the advanced options specific to hdfs (Hadoop distributed file system).
 Kerberos service principal name for the namenode
 
 Enables KERBEROS authentication. Specifies the Service Principal Name
-(SERVICE>/<FQDN>) for the namenode.
+(<SERVICE>/<FQDN>) for the namenode.
 
 - Config:      service_principal_name
 - Env Var:     RCLONE_HDFS_SERVICE_PRINCIPAL_NAME

@@ -15,7 +15,7 @@ Output fish completion script for rclone.
 Generates a fish autocompletion script for rclone.
 
 This writes to /etc/fish/completions/rclone.fish by default so will
-probably need to be run with sudo or as root, eg
+probably need to be run with sudo or as root, e.g.
 
     sudo rclone genautocomplete fish
 
@@ -27,7 +27,8 @@ them directly
 If you supply a command line argument the script will be written
 there.
 
-If output_file is `-`, then the output will be written to stdout.
+If output_file is "-", then the output will be written to stdout.
+
 
 ```
 rclone genautocomplete fish [output_file] [flags]

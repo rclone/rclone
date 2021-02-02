@@ -477,18 +477,30 @@ See the [config update command](/commands/rclone_config_update/) command for mor
 
 ### core/bwlimit: Set the bandwidth limit. {#core-bwlimit}
 
-This sets the bandwidth limit to that passed in.
+This sets the bandwidth limit to the string passed in. This should be
+a single bandwidth limit entry or a pair of upload:download bandwidth.
 
 Eg
 
     rclone rc core/bwlimit rate=off
     {
         "bytesPerSecond": -1,
+        "bytesPerSecondTx": -1,
+        "bytesPerSecondRx": -1,
         "rate": "off"
     }
     rclone rc core/bwlimit rate=1M
     {
         "bytesPerSecond": 1048576,
+        "bytesPerSecondTx": 1048576,
+        "bytesPerSecondRx": 1048576,
+        "rate": "1M"
+    }
+    rclone rc core/bwlimit rate=1M:100k
+    {
+        "bytesPerSecond": 1048576,
+        "bytesPerSecondTx": 1048576,
+        "bytesPerSecondRx": 131072,
         "rate": "1M"
     }
 
@@ -498,6 +510,8 @@ If the rate parameter is not supplied then the bandwidth is queried
     rclone rc core/bwlimit
     {
         "bytesPerSecond": 1048576,
+        "bytesPerSecondTx": 1048576,
+        "bytesPerSecondRx": 1048576,
         "rate": "1M"
     }
 
@@ -514,17 +528,22 @@ This takes the following parameters
 - command - a string with the command name
 - arg - a list of arguments for the backend command
 - opt - a map of string to string of options
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
+    - defaults to "COMBINED_OUTPUT" if not set
+    - the STREAM returnTypes will write the output to the body of the HTTP message
+    - the COMBINED_OUTPUT will write the output to the "result" parameter
 
 Returns
 
 - result - result from the backend command
+    - only set when using returnType "COMBINED_OUTPUT"
 - error	 - set if rclone exits with an error code
-- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT". "STREAM_ONLY_STDERR")
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
 
 For example
 
     rclone rc core/command command=ls -a mydrive:/ -o max-depth=1
-	rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
+    rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
 
 Returns
 

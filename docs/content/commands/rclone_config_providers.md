@@ -9,10 +9,6 @@ url: /commands/rclone_config_providers/
 
 List in JSON format all the providers and options.
 
-## Synopsis
-
-List in JSON format all the providers and options.
-
 ```
 rclone config providers [flags]
 ```

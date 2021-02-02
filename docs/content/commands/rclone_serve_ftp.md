@@ -19,7 +19,7 @@ or you can make a remote of type ftp to read and write it.
 ## Server options
 
 Use --addr to specify which IP address and port the server should
-listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
+listen on, e.g. --addr 1.2.3.4:8000 or --addr :8080 to listen to all
 IPs.  By default it only listens on localhost.  You can use port
 :0 to let the OS choose an available port.
 
@@ -128,9 +128,9 @@ second. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using --vfs-cache-max-size note that the cache may exceed this size
+If using `--vfs-cache-max-size` note that the cache may exceed this size
 for two reasons.  Firstly because it is only checked every
---vfs-cache-poll-interval.  Secondly because open files cannot be
+`--vfs-cache-poll-interval`.  Secondly because open files cannot be
 evicted from the cache.
 
 ### --vfs-cache-mode off
@@ -178,7 +178,7 @@ In this mode all reads and writes are buffered to and from disk. When
 data is read from the remote this is buffered to disk as well.
 
 In this mode the files in the cache will be sparse files and rclone
-will keep track of which bits of the files it has dowloaded.
+will keep track of which bits of the files it has downloaded.
 
 So if an application only reads the starts of each file, then rclone
 will only buffer the start of the file. These files will appear to be
@@ -194,6 +194,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
+
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
 
 ## VFS Performance
 
@@ -230,6 +235,12 @@ on disk cache file.
     --vfs-read-wait duration   Time to wait for in-sequence read before seeking. (default 20ms)
     --vfs-write-wait duration  Time to wait for in-sequence write before giving error. (default 1s)
 
+When using VFS write caching (--vfs-cache-mode with value writes or full),
+the global flag --transfers can be set to adjust the number of parallel uploads of
+modified files from cache (the related global flag --checkers have no effect on mount).
+
+    --transfers int  Number of file transfers to run in parallel. (default 4)
+
 ## VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
@@ -243,7 +254,7 @@ It is not allowed for two files in the same directory to differ only by case.
 Usually file systems on macOS are case-insensitive. It is possible to make macOS
 file systems case-sensitive but that is not the default
 
-The "--vfs-case-insensitive" mount flag controls how rclone handles these
+The `--vfs-case-insensitive` mount flag controls how rclone handles these
 two cases. If its value is "false", rclone passes file names to the mounted
 file system as-is. If the flag is "true" (or appears without a value on
 command line), rclone may perform a "fixup" as explained below.
@@ -270,14 +281,14 @@ otherwise. If the flag is provided without a value, then it is "true".
 If you supply the parameter `--auth-proxy /path/to/program` then
 rclone will use that program to generate backends on the fly which
 then are used to authenticate incoming requests.  This uses a simple
-JSON based protocl with input on STDIN and output on STDOUT.
+JSON based protocol with input on STDIN and output on STDOUT.
 
 **PLEASE NOTE:** `--auth-proxy` and `--authorized-keys` cannot be used
 together, if `--auth-proxy` is set the authorized keys option will be
 ignored.
 
 There is an example program
-[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/bin/test_proxy.py)
+[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/test_proxy.py)
 in the rclone source code.
 
 The program's job is to take a `user` and `pass` on the input and turn
@@ -356,11 +367,13 @@ rclone serve ftp remote:path [flags]
 ```
       --addr string                            IPaddress:Port or :Port to bind server to. (default "localhost:2121")
       --auth-proxy string                      A program to use to create the backend from the auth.
+      --cert string                            TLS PEM key (concatenation of certificate and CA certificate)
       --dir-cache-time duration                Time to cache directory entries for. (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 0777)
       --file-perms FileMode                    File permissions (default 0666)
-      --gid uint32                             Override the gid field set by the filesystem. (default 1000)
+      --gid uint32                             Override the gid field set by the filesystem. Not supported on Windows. (default 1000)
   -h, --help                                   help for ftp
+      --key string                             TLS PEM Private key
       --no-checksum                            Don't compare checksums on up/download.
       --no-modtime                             Don't read/write the modification time (can speed things up).
       --no-seek                                Don't allow seeking in files.
@@ -369,8 +382,8 @@ rclone serve ftp remote:path [flags]
       --poll-interval duration                 Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
       --public-ip string                       Public IP address to advertise for passive connections.
       --read-only                              Mount read-only.
-      --uid uint32                             Override the uid field set by the filesystem. (default 1000)
-      --umask int                              Override the permission bits set by the filesystem. (default 2)
+      --uid uint32                             Override the uid field set by the filesystem. Not supported on Windows. (default 1000)
+      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows. (default 2)
       --user string                            User name for authentication. (default "anonymous")
       --vfs-cache-max-age duration             Max age of objects in the cache. (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache. (default off)

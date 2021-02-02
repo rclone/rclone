@@ -12,7 +12,7 @@ Serve a remote over a protocol.
 ## Synopsis
 
 rclone serve is used to serve a remote over a given protocol. This
-command requires the use of a subcommand to specify the protocol, eg
+command requires the use of a subcommand to specify the protocol, e.g.
 
     rclone serve http remote:
 

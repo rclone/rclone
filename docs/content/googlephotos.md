@@ -403,7 +403,7 @@ you want to read the media.
 
 #### --gphotos-start-year
 
-Year limits the photos to be downloaded to those which were uploaded after the given year
+Year limits the photos to be downloaded to those which are uploaded after the given year
 
 - Config:      start_year
 - Env Var:     RCLONE_GPHOTOS_START_YEAR

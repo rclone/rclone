@@ -9,10 +9,6 @@ url: /commands/rclone_config_delete/
 
 Delete an existing remote `name`.
 
-## Synopsis
-
-Delete an existing remote `name`.
-
 ```
 rclone config delete `name` [flags]
 ```

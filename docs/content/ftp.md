@@ -160,9 +160,9 @@ FTP password
 
 #### --ftp-tls
 
-Use FTPS over TLS (Implicit)
-When using implicit FTP over TLS the client will connect using TLS
-right from the start, which in turn breaks the compatibility with
+Use Implicit FTPS (FTP over TLS)
+When using implicit FTP over TLS the client connects using TLS
+right from the start which breaks compatibility with
 non-TLS-aware servers. This is usually served over port 990 rather
 than port 21. Cannot be used in combination with explicit FTP.
 
@@ -173,8 +173,8 @@ than port 21. Cannot be used in combination with explicit FTP.
 
 #### --ftp-explicit-tls
 
-Use FTP over TLS (Explicit)
-When using explicit FTP over TLS the client explicitly request
+Use Explicit FTPS (FTP over TLS)
+When using explicit FTP over TLS the client explicitly requests
 security from the server in order to upgrade a plain text connection
 to an encrypted one. Cannot be used in combination with implicit FTP.
 
@@ -211,6 +211,15 @@ Disable using EPSV even if server advertises support
 
 - Config:      disable_epsv
 - Env Var:     RCLONE_FTP_DISABLE_EPSV
+- Type:        bool
+- Default:     false
+
+#### --ftp-disable-mlsd
+
+Disable using MLSD even if server advertises support
+
+- Config:      disable_mlsd
+- Env Var:     RCLONE_FTP_DISABLE_MLSD
 - Type:        bool
 - Default:     false
 

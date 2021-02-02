@@ -18,36 +18,50 @@ FUSE.
 
 First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
 
-You can either run mount in foreground mode or background (daemon) mode. Mount runs in
-foreground mode by default, use the --daemon flag to specify background mode behaviour.
-Background mode is only supported on Linux and OSX, you can only run mount in
-foreground mode on Windows.
+On Linux and OSX, you can either run mount in foreground mode or background (daemon) mode.
+Mount runs in foreground mode by default, use the `--daemon` flag to specify background mode.
+You can only run mount in foreground mode on Windows.
 
-On Linux/macOS/FreeBSD Start the mount like this where `/path/to/local/mount`
-is an **empty** **existing** directory.
+On Linux/macOS/FreeBSD start the mount like this, where `/path/to/local/mount`
+is an **empty** **existing** directory:
 
     rclone mount remote:path/to/files /path/to/local/mount
 
-Or on Windows like this where `X:` is an unused drive letter
-or use a path to **non-existent** directory.
+On Windows you can start a mount in different ways. See [below](#mounting-modes-on-windows)
+for details. The following examples will mount to an automatically assigned drive,
+to specific drive letter `X:`, to path `C:\path\to\nonexistent\directory`
+(which must be **non-existent** subdirectory of an **existing** parent directory or drive,
+and is not supported when [mounting as a network drive](#mounting-modes-on-windows)), and
+the last example will mount as network share `\\cloud\remote` and map it to an
+automatically assigned drive:
 
+    rclone mount remote:path/to/files *
     rclone mount remote:path/to/files X:
     rclone mount remote:path/to/files C:\path\to\nonexistent\directory
-
-When running in background mode the user will have to stop the mount manually (specified below).
+    rclone mount remote:path/to/files \\cloud\remote
 
 When the program ends while in foreground mode, either via Ctrl+C or receiving
-a SIGINT or SIGTERM signal, the mount is automatically stopped.
+a SIGINT or SIGTERM signal, the mount should be automatically stopped.
 
-The umount operation can fail, for example when the mountpoint is busy.
-When that happens, it is the user's responsibility to stop the mount manually.
-
-Stopping the mount manually:
+When running in background mode the user will have to stop the mount manually:
 
     # Linux
     fusermount -u /path/to/local/mount
     # OS X
     umount /path/to/local/mount
+
+The umount operation can fail, for example when the mountpoint is busy.
+When that happens, it is the user's responsibility to stop the mount manually.
+
+The size of the mounted file system will be set according to information retrieved
+from the remote, the same as returned by the [rclone about](https://rclone.org/commands/rclone_about/)
+command. Remotes with unlimited storage may report the used size only,
+then an additional 1PB of free space is assumed. If the remote does not
+[support](https://rclone.org/overview/#optional-features) the about feature
+at all, then 1PB is set as both the total and the free size.
+
+**Note**: As of `rclone` 1.52.2, `rclone mount` now requires Go version 1.13
+or newer on some platforms depending on the underlying FUSE library in use.
 
 ## Installing on Windows
 
@@ -57,10 +71,110 @@ download and install [WinFsp](http://www.secfs.net/winfsp/).
 [WinFsp](https://github.com/billziss-gh/winfsp) is an open source
 Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
-uses in combination with
-[cgofuse](https://github.com/billziss-gh/cgofuse).  Both of these
-packages are by Bill Zissimopoulos who was very helpful during the
-implementation of rclone mount for Windows.
+uses combination with [cgofuse](https://github.com/billziss-gh/cgofuse).
+Both of these packages are by Bill Zissimopoulos who was very helpful
+during the implementation of rclone mount for Windows.
+
+### Mounting modes on windows
+
+Unlike other operating systems, Microsoft Windows provides a different filesystem
+type for network and fixed drives. It optimises access on the assumption fixed
+disk drives are fast and reliable, while network drives have relatively high latency
+and less reliability. Some settings can also be differentiated between the two types,
+for example that Windows Explorer should just display icons and not create preview
+thumbnails for image and video files on network drives.
+
+In most cases, rclone will mount the remote as a normal, fixed disk drive by default.
+However, you can also choose to mount it as a remote network drive, often described
+as a network share. If you mount an rclone remote using the default, fixed drive mode
+and experience unexpected program errors, freezes or other issues, consider mounting
+as a network drive instead.
+
+When mounting as a fixed disk drive you can either mount to an unused drive letter,
+or to a path - which must be **non-existent** subdirectory of an **existing** parent
+directory or drive. Using the special value `*` will tell rclone to
+automatically assign the next available drive letter, starting with Z: and moving backward.
+Examples:
+
+    rclone mount remote:path/to/files *
+    rclone mount remote:path/to/files X:
+    rclone mount remote:path/to/files C:\path\to\nonexistent\directory
+    rclone mount remote:path/to/files X:
+
+Option `--volname` can be used to set a custom volume name for the mounted
+file system. The default is to use the remote name and path.
+
+To mount as network drive, you can add option `--network-mode`
+to your mount command. Mounting to a directory path is not supported in
+this mode, it is a limitation Windows imposes on junctions, so the remote must always
+be mounted to a drive letter.
+
+    rclone mount remote:path/to/files X: --network-mode
+
+A volume name specified with `--volname` will be used to create the network share path.
+A complete UNC path, such as `\\cloud\remote`, optionally with path
+`\\cloud\remote\madeup\path`, will be used as is. Any other
+string will be used as the share part, after a default prefix `\\server\`.
+If no volume name is specified then `\\server\share` will be used.
+You must make sure the volume name is unique when you are mounting more than one drive,
+or else the mount command will fail. The share name will treated as the volume label for
+the mapped drive, shown in Windows Explorer etc, while the complete
+`\\server\share` will be reported as the remote UNC path by
+`net use` etc, just like a normal network drive mapping.
+
+If you specify a full network share UNC path with `--volname`, this will implicitely
+set the `--network-mode` option, so the following two examples have same result:
+
+    rclone mount remote:path/to/files X: --network-mode
+    rclone mount remote:path/to/files X: --volname \\server\share
+
+You may also specify the network share UNC path as the mountpoint itself. Then rclone
+will automatically assign a drive letter, same as with `*` and use that as
+mountpoint, and instead use the UNC path specified as the volume name, as if it were
+specified with the `--volname` option. This will also implicitely set
+the `--network-mode` option. This means the following two examples have same result:
+
+    rclone mount remote:path/to/files \\cloud\remote
+    rclone mount remote:path/to/files * --volname \\cloud\remote
+
+There is yet another way to enable network mode, and to set the share path,
+and that is to pass the "native" libfuse/WinFsp option directly:
+`--fuse-flag --VolumePrefix=\server\share`. Note that the path
+must be with just a single backslash prefix in this case.
+
+
+*Note:* In previous versions of rclone this was the only supported method.
+
+[Read more about drive mapping](https://en.wikipedia.org/wiki/Drive_mapping)
+
+See also [Limitations](#limitations) section below.
+
+### Windows filesystem permissions
+
+The FUSE emulation layer on Windows must convert between the POSIX-based
+permission model used in FUSE, and the permission model used in Windows,
+based on access-control lists (ACL).
+
+The mounted filesystem will normally get three entries in its access-control list (ACL),
+representing permissions for the POSIX permission scopes: Owner, group and others.
+By default, the owner and group will be taken from the current user, and the built-in
+group "Everyone" will be used to represent others. The user/group can be customized
+with FUSE options "UserName" and "GroupName",
+e.g. `-o UserName=user123 -o GroupName="Authenticated Users"`.
+
+The permissions on each entry will be set according to
+[options](#options) `--dir-perms` and `--file-perms`,
+which takes a value in traditional [numeric notation](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation),
+where the default corresponds to `--file-perms 0666 --dir-perms 0777`.
+
+Note that the mapping of permissions is not always trivial, and the result
+you see in Windows Explorer may not be exactly like you expected.
+For example, when setting a value that includes write access, this will be
+mapped to individual permissions "write attributes", "write data" and "append data",
+but not "write extended attributes" (WinFsp does not support extended attributes,
+see [this](https://github.com/billziss-gh/winfsp/wiki/NTFS-Compatibility)).
+Windows will then show this as basic permission "Special" instead of "Write",
+because "Write" includes the "write extended attributes" permission.
 
 ### Windows caveats
 
@@ -78,43 +192,15 @@ infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Archit
 which creates drives accessible for everyone on the system or
 alternatively using [the nssm service manager](https://nssm.cc/usage).
 
-### Mount as a network drive
-
-By default, rclone will mount the remote as a normal drive. However,
-you can also mount it as a **Network Drive** (or **Network Share**, as
-mentioned in some places)
-
-Unlike other systems, Windows provides a different filesystem type for
-network drives.  Windows and other programs treat the network drives
-and fixed/removable drives differently: In network drives, many I/O
-operations are optimized, as the high latency and low reliability
-(compared to a normal drive) of a network is expected.
-
-Although many people prefer network shares to be mounted as normal
-system drives, this might cause some issues, such as programs not
-working as expected or freezes and errors while operating with the
-mounted remote in Windows Explorer. If you experience any of those,
-consider mounting rclone remotes as network shares, as Windows expects
-normal drives to be fast and reliable, while cloud storage is far from
-that.  See also [Limitations](#limitations) section below for more
-info
-
-Add "--fuse-flag --VolumePrefix=\server\share" to your "mount"
-command, **replacing "share" with any other name of your choice if you
-are mounting more than one remote**. Otherwise, the mountpoints will
-conflict and your mounted filesystems will overlap.
-
-[Read more about drive mapping](https://en.wikipedia.org/wiki/Drive_mapping)
-
 ## Limitations
 
-Without the use of "--vfs-cache-mode" this can only write files
+Without the use of `--vfs-cache-mode` this can only write files
 sequentially, it can only seek when reading.  This means that many
 applications won't work with their files on an rclone mount without
-"--vfs-cache-mode writes" or "--vfs-cache-mode full".  See the [File
-Caching](#vfs-file-caching) section for more info.
+`--vfs-cache-mode writes` or `--vfs-cache-mode full`.
+See the [File Caching](#file-caching) section for more info.
 
-The bucket based remotes (eg Swift, S3, Google Compute Storage, B2,
+The bucket based remotes (e.g. Swift, S3, Google Compute Storage, B2,
 Hubic) do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.
@@ -127,15 +213,15 @@ File systems expect things to be 100% reliable, whereas cloud storage
 systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone mount
 can't use retries in the same way without making local copies of the
-uploads. Look at the [file caching](#vfs-file-caching)
+uploads. Look at the [file caching](#file-caching)
 for solutions to make mount more reliable.
 
 ## Attribute caching
 
-You can use the flag --attr-timeout to set the time the kernel caches
-the attributes (size, modification time etc) for directory entries.
+You can use the flag `--attr-timeout` to set the time the kernel caches
+the attributes (size, modification time, etc.) for directory entries.
 
-The default is "1s" which caches files just long enough to avoid
+The default is `1s` which caches files just long enough to avoid
 too many callbacks to rclone from the kernel.
 
 In theory 0s should be the correct value for filesystems which can
@@ -146,14 +232,14 @@ few problems such as
 and [excessive time listing directories](https://github.com/rclone/rclone/issues/2095#issuecomment-371141147).
 
 The kernel can cache the info about a file for the time given by
-"--attr-timeout". You may see corruption if the remote file changes
+`--attr-timeout`. You may see corruption if the remote file changes
 length during this window.  It will show up as either a truncated file
-or a file with garbage on the end.  With "--attr-timeout 1s" this is
-very unlikely but not impossible.  The higher you set "--attr-timeout"
+or a file with garbage on the end.  With `--attr-timeout 1s` this is
+very unlikely but not impossible.  The higher you set `--attr-timeout`
 the more likely it is.  The default setting of "1s" is the lowest
 setting which mitigates the problems above.
 
-If you set it higher ('10s' or '1m' say) then the kernel will call
+If you set it higher (`10s` or `1m` say) then the kernel will call
 back to rclone less often making it more efficient, however there is
 more chance of the corruption issue above.
 
@@ -164,7 +250,7 @@ This is the same as setting the attr_timeout option in mount.fuse.
 
 ## Filters
 
-Rclone's filters can be used to select a subset of the
+Note that all the rclone filters can be used to select a subset of the
 files to be visible in the mount.
 
 ## systemd
@@ -175,28 +261,25 @@ after the mountpoint has been successfully set up.
 Units having the rclone mount service specified as a requirement
 will see all files and folders immediately in this mode.
 
-## chunked reading ###
+## chunked reading
 
---vfs-read-chunk-size will enable reading the source objects in parts.
+`--vfs-read-chunk-size` will enable reading the source objects in parts.
 This can reduce the used download quota for some remotes by requesting only chunks
 from the remote that are actually read at the cost of an increased number of requests.
 
-When --vfs-read-chunk-size-limit is also specified and greater than --vfs-read-chunk-size,
-the chunk size for each open file will get doubled for each chunk read, until the
-specified value is reached. A value of -1 will disable the limit and the chunk size will
-grow indefinitely.
+When `--vfs-read-chunk-size-limit` is also specified and greater than
+`--vfs-read-chunk-size`, the chunk size for each open file will get doubled
+for each chunk read, until the specified value is reached. A value of `-1` will disable
+the limit and the chunk size will grow indefinitely.
 
-With --vfs-read-chunk-size 100M and --vfs-read-chunk-size-limit 0 the following
-parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When --vfs-read-chunk-size-limit 500M is specified, the result would be
+With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
+the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
+When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
 0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
-
-Chunked reading will only work with --vfs-cache-mode < full, as the file will always
-be copied to the vfs cache before opening with --vfs-cache-mode full.
 
 ## VFS - Virtual File System
 
-Mount uses rclone's VFS layer. This adapts the cloud storage objects
+This command uses the VFS layer. This adapts the cloud storage objects
 that rclone uses into something which looks much more like a disk
 filing system.
 
@@ -290,9 +373,9 @@ second. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
-If using --vfs-cache-max-size note that the cache may exceed this size
+If using `--vfs-cache-max-size` note that the cache may exceed this size
 for two reasons.  Firstly because it is only checked every
---vfs-cache-poll-interval.  Secondly because open files cannot be
+`--vfs-cache-poll-interval`.  Secondly because open files cannot be
 evicted from the cache.
 
 ### --vfs-cache-mode off
@@ -340,7 +423,7 @@ In this mode all reads and writes are buffered to and from disk. When
 data is read from the remote this is buffered to disk as well.
 
 In this mode the files in the cache will be sparse files and rclone
-will keep track of which bits of the files it has dowloaded.
+will keep track of which bits of the files it has downloaded.
 
 So if an application only reads the starts of each file, then rclone
 will only buffer the start of the file. These files will appear to be
@@ -356,6 +439,11 @@ whereas the --vfs-read-ahead is buffered on disk.
 
 When using this mode it is recommended that --buffer-size is not set
 too big and --vfs-read-ahead is set large if required.
+
+**IMPORTANT** not all file systems support sparse files. In particular
+FAT/exFAT do not. Rclone will perform very badly if the cache
+directory is on a filesystem which doesn't support sparse files and it
+will log an ERROR message if one is detected.
 
 ## VFS Performance
 
@@ -392,6 +480,12 @@ on disk cache file.
     --vfs-read-wait duration   Time to wait for in-sequence read before seeking. (default 20ms)
     --vfs-write-wait duration  Time to wait for in-sequence write before giving error. (default 1s)
 
+When using VFS write caching (--vfs-cache-mode with value writes or full),
+the global flag --transfers can be set to adjust the number of parallel uploads of
+modified files from cache (the related global flag --checkers have no effect on mount).
+
+    --transfers int  Number of file transfers to run in parallel. (default 4)
+
 ## VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
@@ -405,7 +499,7 @@ It is not allowed for two files in the same directory to differ only by case.
 Usually file systems on macOS are case-insensitive. It is possible to make macOS
 file systems case-sensitive but that is not the default
 
-The "--vfs-case-insensitive" mount flag controls how rclone handles these
+The `--vfs-case-insensitive` mount flag controls how rclone handles these
 two cases. If its value is "false", rclone passes file names to the mounted
 file system as-is. If the flag is "true" (or appears without a value on
 command line), rclone may perform a "fixup" as explained below.
@@ -435,30 +529,33 @@ rclone mount remote:path /path/to/mountpoint [flags]
 ## Options
 
 ```
-      --allow-non-empty                        Allow mounting over a non-empty directory (not Windows).
-      --allow-other                            Allow access to other users.
-      --allow-root                             Allow access to root user.
-      --async-read                             Use asynchronous reads. (default true)
+      --allow-non-empty                        Allow mounting over a non-empty directory. Not supported on Windows.
+      --allow-other                            Allow access to other users. Not supported on Windows.
+      --allow-root                             Allow access to root user. Not supported on Windows.
+      --async-read                             Use asynchronous reads. Not supported on Windows. (default true)
       --attr-timeout duration                  Time for which file/directory attributes are cached. (default 1s)
-      --daemon                                 Run mount as a daemon (background mode).
-      --daemon-timeout duration                Time limit for rclone to respond to kernel (not supported by all OSes).
+      --daemon                                 Run mount as a daemon (background mode). Not supported on Windows.
+      --daemon-timeout duration                Time limit for rclone to respond to kernel. Not supported on Windows.
       --debug-fuse                             Debug the FUSE internals - needs -v.
-      --default-permissions                    Makes kernel enforce access control based on the file mode.
+      --default-permissions                    Makes kernel enforce access control based on the file mode. Not supported on Windows.
       --dir-cache-time duration                Time to cache directory entries for. (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 0777)
       --file-perms FileMode                    File permissions (default 0666)
       --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.
-      --gid uint32                             Override the gid field set by the filesystem. (default 1000)
+      --gid uint32                             Override the gid field set by the filesystem. Not supported on Windows. (default 1000)
   -h, --help                                   help for mount
-      --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads. (default 128k)
+      --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads. Not supported on Windows. (default 128k)
+      --network-mode                           Mount as remote network drive, instead of fixed disk drive. Supported on Windows only
       --no-checksum                            Don't compare checksums on up/download.
       --no-modtime                             Don't read/write the modification time (can speed things up).
       --no-seek                                Don't allow seeking in files.
+      --noappledouble                          Ignore Apple Double (._) and .DS_Store files. Supported on OSX only. (default true)
+      --noapplexattr                           Ignore all "com.apple.*" extended attributes. Supported on OSX only.
   -o, --option stringArray                     Option for libfuse/WinFsp. Repeat if required.
       --poll-interval duration                 Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
       --read-only                              Mount read-only.
-      --uid uint32                             Override the uid field set by the filesystem. (default 1000)
-      --umask int                              Override the permission bits set by the filesystem.
+      --uid uint32                             Override the uid field set by the filesystem. Not supported on Windows. (default 1000)
+      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows.
       --vfs-cache-max-age duration             Max age of objects in the cache. (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache. (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
@@ -470,8 +567,8 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --vfs-read-wait duration                 Time to wait for in-sequence read before seeking. (default 20ms)
       --vfs-write-back duration                Time to writeback files after last use when using cache. (default 5s)
       --vfs-write-wait duration                Time to wait for in-sequence write before giving error. (default 1s)
-      --volname string                         Set the volume name (not supported by all OSes).
-      --write-back-cache                       Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.
+      --volname string                         Set the volume name. Supported on Windows and OSX only.
+      --write-back-cache                       Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used. Not supported on Windows.
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

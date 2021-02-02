@@ -39,15 +39,15 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone backend](/commands/rclone_backend/)	 - Run a backend specific command.
 * [rclone cat](/commands/rclone_cat/)	 - Concatenates any files and sends them to stdout.
 * [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
-* [rclone cleanup](/commands/rclone_cleanup/)	 - Clean up the remote if possible
+* [rclone cleanup](/commands/rclone_cleanup/)	 - Clean up the remote if possible.
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
-* [rclone copy](/commands/rclone_copy/)	 - Copy files from source to dest, skipping already copied
-* [rclone copyto](/commands/rclone_copyto/)	 - Copy files from source to dest, skipping already copied
+* [rclone copy](/commands/rclone_copy/)	 - Copy files from source to dest, skipping already copied.
+* [rclone copyto](/commands/rclone_copyto/)	 - Copy files from source to dest, skipping already copied.
 * [rclone copyurl](/commands/rclone_copyurl/)	 - Copy url content to dest.
 * [rclone cryptcheck](/commands/rclone_cryptcheck/)	 - Cryptcheck checks the integrity of a crypted remote.
 * [rclone cryptdecode](/commands/rclone_cryptdecode/)	 - Cryptdecode returns unencrypted file names.
 * [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate filenames and delete/rename them.
-* [rclone delete](/commands/rclone_delete/)	 - Remove the contents of path.
+* [rclone delete](/commands/rclone_delete/)	 - Remove the files in path.
 * [rclone deletefile](/commands/rclone_deletefile/)	 - Remove a single file from remote.
 * [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output completion script for a given shell.
 * [rclone gendocs](/commands/rclone_gendocs/)	 - Output markdown docs for rclone to the directory supplied.
@@ -56,7 +56,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone listremotes](/commands/rclone_listremotes/)	 - List all the remotes in the config file.
 * [rclone ls](/commands/rclone_ls/)	 - List the objects in the path with size and path.
 * [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the path.
-* [rclone lsf](/commands/rclone_lsf/)	 - List directories and objects in remote:path formatted for parsing
+* [rclone lsf](/commands/rclone_lsf/)	 - List directories and objects in remote:path formatted for parsing.
 * [rclone lsjson](/commands/rclone_lsjson/)	 - List directories and objects in the path in JSON format.
 * [rclone lsl](/commands/rclone_lsl/)	 - List the objects in path with modification time, size and path.
 * [rclone md5sum](/commands/rclone_md5sum/)	 - Produces an md5sum file for all the objects in the path.
@@ -65,12 +65,12 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone move](/commands/rclone_move/)	 - Move files from source to dest.
 * [rclone moveto](/commands/rclone_moveto/)	 - Move file or directory from source to dest.
 * [rclone ncdu](/commands/rclone_ncdu/)	 - Explore a remote with a text based user interface.
-* [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone config file
+* [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone config file.
 * [rclone purge](/commands/rclone_purge/)	 - Remove the path and all of its contents.
 * [rclone rc](/commands/rclone_rc/)	 - Run a command against a running rclone.
 * [rclone rcat](/commands/rclone_rcat/)	 - Copies standard input to file on remote.
 * [rclone rcd](/commands/rclone_rcd/)	 - Run rclone listening to remote control commands only.
-* [rclone rmdir](/commands/rclone_rmdir/)	 - Remove the path if empty.
+* [rclone rmdir](/commands/rclone_rmdir/)	 - Remove the empty directory at path.
 * [rclone rmdirs](/commands/rclone_rmdirs/)	 - Remove empty directories under the path.
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 * [rclone settier](/commands/rclone_settier/)	 - Changes storage class/tier of objects in remote.

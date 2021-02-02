@@ -28,7 +28,7 @@ For example
     
     1 directories, 5 files
 
-You can use any of the filtering options with the tree command (eg
+You can use any of the filtering options with the tree command (e.g.
 --include and --exclude).  You can also use --fast-list.
 
 The tree command has many options for controlling the listing which

@@ -9,10 +9,6 @@ url: /commands/rclone_config_dump/
 
 Dump the config file as JSON.
 
-## Synopsis
-
-Dump the config file as JSON.
-
 ```
 rclone config dump [flags]
 ```

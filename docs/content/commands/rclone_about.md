@@ -12,10 +12,10 @@ Get quota information from the remote.
 ## Synopsis
 
 
-Get quota information from the remote, like bytes used/free/quota and bytes
-used in the trash. Not supported by all remotes.
+`rclone about`prints quota information about a remote to standard
+output. The output is typically used, free, quota and trash contents.
 
-This will print to stdout something like this:
+E.g. Typical output from`rclone about remote:`is:
 
     Total:   17G
     Used:    7.444G
@@ -27,16 +27,15 @@ Where the fields are:
 
   * Total: total size available.
   * Used: total size used
-  * Free: total amount this user could upload.
-  * Trashed: total amount in the trash
-  * Other: total amount in other storage (eg Gmail, Google Photos)
+  * Free: total space available to this user.
+  * Trashed: total space used by trash
+  * Other: total amount in other storage (e.g. Gmail, Google Photos)
   * Objects: total number of objects in the storage
 
-Note that not all the backends provide all the fields - they will be
-missing if they are not known for that backend.  Where it is known
-that the value is unlimited the value will also be omitted.
+Not all backends print all fields. Information is not included if it is not
+provided by a backend. Where the value is unlimited it is omitted.
 
-Use the --full flag to see the numbers written out in full, eg
+Applying a `--full` flag to the command prints the bytes in full, e.g.
 
     Total:   18253611008
     Used:    7993453766
@@ -44,7 +43,7 @@ Use the --full flag to see the numbers written out in full, eg
     Trashed: 104857602
     Other:   8849156022
 
-Use the --json flag for a computer readable output, eg
+A `--json`flag generates conveniently computer readable output, e.g.
 
     {
         "total": 18253611008,
@@ -53,6 +52,10 @@ Use the --json flag for a computer readable output, eg
         "other": 8849156022,
         "free": 1411001220
     }
+
+Not all backends support the `rclone about` command.
+
+See [List of backends that do not support about](https://rclone.org/overview/#optional-features)
 
 
 ```

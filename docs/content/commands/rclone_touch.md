@@ -21,9 +21,9 @@ unless the --no-create flag is provided.
 If --timestamp is used then it will set the modification time to that
 time instead of the current time. Times may be specified as one of:
 
-- 'YYMMDD' - eg. 17.10.30
-- 'YYYY-MM-DDTHH:MM:SS' - eg. 2006-01-02T15:04:05
-- 'YYYY-MM-DDTHH:MM:SS.SSS' - eg. 2006-01-02T15:04:05.123456789
+- 'YYMMDD' - e.g. 17.10.30
+- 'YYYY-MM-DDTHH:MM:SS' - e.g. 2006-01-02T15:04:05
+- 'YYYY-MM-DDTHH:MM:SS.SSS' - e.g. 2006-01-02T15:04:05.123456789
 
 Note that --timestamp is in UTC if you want local time then add the
 --localtime flag.

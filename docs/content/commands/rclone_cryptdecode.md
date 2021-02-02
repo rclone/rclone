@@ -23,6 +23,9 @@ use it like this
 
 	rclone cryptdecode --reverse encryptedremote: filename1 filename2
 
+Another way to accomplish this is by using the `rclone backend encode` (or `decode`)command.
+See the documentation on the `crypt` overlay for more info.
+
 
 ```
 rclone cryptdecode encryptedremote: encryptedfilename [flags]

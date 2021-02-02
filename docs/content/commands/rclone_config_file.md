@@ -9,10 +9,6 @@ url: /commands/rclone_config_file/
 
 Show path of configuration file in use.
 
-## Synopsis
-
-Show path of configuration file in use.
-
 ```
 rclone config file [flags]
 ```

@@ -9,10 +9,6 @@ url: /commands/rclone_mkdir/
 
 Make the path if it doesn't already exist.
 
-## Synopsis
-
-Make the path if it doesn't already exist.
-
 ```
 rclone mkdir remote:path [flags]
 ```

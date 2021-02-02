@@ -14,15 +14,15 @@ Move files from source to dest.
 
 Moves the contents of the source directory to the destination
 directory. Rclone will error if the source and destination overlap and
-the remote does not support a server side directory move operation.
+the remote does not support a server-side directory move operation.
 
-If no filters are in use and if possible this will server side move
+If no filters are in use and if possible this will server-side move
 `source:path` into `dest:path`. After this `source:path` will no
 longer exist.
 
 Otherwise for each file in `source:path` selected by the filters (if
-any) this will move it into `dest:path`.  If possible a server side
-move will be used, otherwise it will copy it (server side if possible)
+any) this will move it into `dest:path`.  If possible a server-side
+move will be used, otherwise it will copy it (server-side if possible)
 into `dest:path` then delete the original (if no errors on copy) in
 `source:path`.
 

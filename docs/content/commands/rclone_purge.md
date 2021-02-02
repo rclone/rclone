@@ -13,8 +13,9 @@ Remove the path and all of its contents.
 
 
 Remove the path and all of its contents.  Note that this does not obey
-include/exclude filters - everything will be removed.  Use `delete` if
-you want to selectively delete files.
+include/exclude filters - everything will be removed.  Use the `delete`
+command if you want to selectively delete files. To delete empty directories only,
+use command `rmdir` or `rmdirs`.
 
 **Important**: Since this can cause data loss, test first with the
 `--dry-run` or the `--interactive`/`-i` flag.

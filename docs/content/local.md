@@ -347,6 +347,24 @@ points, as you explicitly acknowledge that they should be skipped.
 - Type:        bool
 - Default:     false
 
+#### --local-zero-size-links
+
+Assume the Stat size of links is zero (and read them instead)
+
+On some virtual filesystems (such ash LucidLink), reading a link size via a Stat call always returns 0.
+However, on unix it reads as the length of the text in the link. This may cause errors like this when
+syncing:
+
+    Failed to copy: corrupted on transfer: sizes differ 0 vs 13
+
+Setting this flag causes rclone to read the link and use that as the size of the link
+instead of 0 which in most cases fixes the problem.
+
+- Config:      zero_size_links
+- Env Var:     RCLONE_LOCAL_ZERO_SIZE_LINKS
+- Type:        bool
+- Default:     false
+
 #### --local-no-unicode-normalization
 
 Don't apply unicode normalization to paths and filenames (Deprecated)

@@ -430,6 +430,15 @@ provider.
 
 Here are the advanced options specific to swift (OpenStack Swift (Rackspace Cloud Files, Memset Memstore, OVH)).
 
+#### --swift-leave-parts-on-error
+
+If true avoid calling abort upload on a failure. It should be set to true for resuming uploads across different sessions.
+
+- Config:      leave_parts_on_error
+- Env Var:     RCLONE_SWIFT_LEAVE_PARTS_ON_ERROR
+- Type:        bool
+- Default:     false
+
 #### --swift-chunk-size
 
 Above this size files will be chunked into a _segments container.
