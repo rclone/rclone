@@ -19,7 +19,7 @@ description: "Rclone Changelog"
     * Deglobalise the config (Nick Craig-Wood)
         * Global config now read from the context
         * This will enable passing of global config via the rc
-        * This work was sponsored by [Digitalis](digitalis.io)
+        * This work was sponsored by [Digitalis](https://digitalis.io/)
     * Add `--bwlimit` for upload and download (Nick Craig-Wood)
         * Obey bwlimit in http Transport for better limiting
     * Enhance systemd integration (Hekmon)
