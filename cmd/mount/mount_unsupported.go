@@ -1,13 +1,9 @@
 // Build for mount for unsupported platforms to stop go complaining
 // about "no buildable Go source files "
 
-// Invert the build constraint: linux,go1.13 freebsd,go1.13
-//
-// !((linux&&go1.13) || (freebsd&&go1.13))
-// == !(linux&&go1.13) && !(freebsd&&go1.13))
-// == (!linux || !go1.13) && (!freebsd || !go1.13))
+// Invert the build constraint: linux freebsd
 
-// +build !linux !go1.13
-// +build !freebsd !go1.13
+// +build !linux
+// +build !freebsd
 
 package mount
