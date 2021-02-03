@@ -183,9 +183,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return http.ErrUseLastResponse
 		}
 		// check to see if points to a file
-		req, err := http.NewRequest("HEAD", u.String(), nil)
+		req, err := http.NewRequestWithContext(ctx, "HEAD", u.String(), nil)
 		if err == nil {
-			req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 			addHeaders(req, opt)
 			res, err := noRedir.Do(req)
 			err = statusError(res, err)
@@ -391,11 +390,10 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", URL)
 	}
 	// Do the request
-	req, err := http.NewRequest("GET", URL, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "readDir failed")
 	}
-	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	f.addHeaders(req)
 	res, err := f.httpClient.Do(req)
 	if err == nil {
@@ -547,11 +545,10 @@ func (o *Object) stat(ctx context.Context) error {
 		return nil
 	}
 	url := o.url()
-	req, err := http.NewRequest("HEAD", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
 	if err != nil {
 		return errors.Wrap(err, "stat failed")
 	}
-	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	o.fs.addHeaders(req)
 	res, err := o.fs.httpClient.Do(req)
 	if err == nil && res.StatusCode == http.StatusNotFound {
@@ -596,11 +593,10 @@ func (o *Object) Storable() bool {
 // Open a remote http file object for reading. Seek is supported
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	url := o.url()
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open failed")
 	}
-	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
 	// Add optional headers
 	for k, v := range fs.OpenOptionHeaders(options) {

@@ -1028,11 +1028,10 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	req, err := http.NewRequest("GET", o.url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", o.url, nil)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	fs.FixRangeOption(options, o.bytes)
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	var res *http.Response

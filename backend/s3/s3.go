@@ -3298,11 +3298,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 
 		// create the vanilla http request
-		httpReq, err := http.NewRequest("PUT", url, in)
+		httpReq, err := http.NewRequestWithContext(ctx, "PUT", url, in)
 		if err != nil {
 			return errors.Wrap(err, "s3 upload: new request")
 		}
-		httpReq = httpReq.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
 		// set the headers we signed and the length
 		httpReq.Header = headers

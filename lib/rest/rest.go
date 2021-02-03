@@ -213,11 +213,10 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	if opts.ContentLength != nil && *opts.ContentLength == 0 {
 		body = nil
 	}
-	req, err := http.NewRequest(opts.Method, url, body)
+	req, err := http.NewRequestWithContext(ctx, opts.Method, url, body)
 	if err != nil {
 		return
 	}
-	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	headers := make(map[string]string)
 	// Set default headers
 	for k, v := range api.headers {

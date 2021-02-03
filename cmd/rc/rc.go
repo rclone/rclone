@@ -184,11 +184,10 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 		return nil, errors.Wrap(err, "failed to encode JSON")
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make request")
 	}
-	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 
 	req.Header.Set("Content-Type", "application/json")
 	if authUser != "" || authPass != "" {

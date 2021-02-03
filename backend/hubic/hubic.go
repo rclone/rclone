@@ -110,11 +110,10 @@ func (f *Fs) String() string {
 //
 // The credentials are read into the Fs
 func (f *Fs) getCredentials(ctx context.Context) (err error) {
-	req, err := http.NewRequest("GET", "https://api.hubic.com/1.0/account/credentials", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.hubic.com/1.0/account/credentials", nil)
 	if err != nil {
 		return err
 	}
-	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	resp, err := f.client.Do(req)
 	if err != nil {
 		return err

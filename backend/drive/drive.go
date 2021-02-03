@@ -3427,11 +3427,10 @@ func (o *baseObject) httpResponse(ctx context.Context, url, method string, optio
 	if url == "" {
 		return nil, nil, errors.New("forbidden to download - check sharing permission")
 	}
-	req, err = http.NewRequest(method, url, nil)
+	req, err = http.NewRequestWithContext(ctx, method, url, nil)
 	if err != nil {
 		return req, nil, err
 	}
-	req = req.WithContext(ctx) // go1.13 can use NewRequestWithContext
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	if o.bytes == 0 {
 		// Don't supply range requests for 0 length objects as they always fail
