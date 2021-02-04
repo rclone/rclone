@@ -4,7 +4,7 @@ This file describes how to make the various kinds of releases
 
 ## Extra required software for making a release
 
-  * [github-release](https://github.com/aktau/github-release) for uploading packages
+  * [gh the github cli](https://github.com/cli/cli) for uploading packages
   * pandoc for making the html and man pages
 
 ## Making a release

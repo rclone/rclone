@@ -93,8 +93,7 @@ build_dep:
 
 # Get the release dependencies we only install on linux
 release_dep_linux:
-	cd /tmp && go get github.com/goreleaser/nfpm/...
-	cd /tmp && go get github.com/github-release/github-release
+	cd /tmp && go get github.com/goreleaser/nfpm/v2/...
 
 # Get the release dependencies we only install on Windows
 release_dep_windows:
