@@ -27,17 +27,22 @@ import (
 
 var (
 	// Flags
-	debug       = flag.Bool("d", false, "Print commands instead of running them.")
-	parallel    = flag.Int("parallel", runtime.NumCPU(), "Number of commands to run in parallel.")
-	copyAs      = flag.String("release", "", "Make copies of the releases with this name")
-	gitLog      = flag.String("git-log", "", "git log to include as well")
-	include     = flag.String("include", "^.*$", "os/arch regexp to include")
-	exclude     = flag.String("exclude", "^$", "os/arch regexp to exclude")
-	cgo         = flag.Bool("cgo", false, "Use cgo for the build")
-	noClean     = flag.Bool("no-clean", false, "Don't clean the build directory before running.")
-	tags        = flag.String("tags", "", "Space separated list of build tags")
-	buildmode   = flag.String("buildmode", "", "Passed to go build -buildmode flag")
-	compileOnly = flag.Bool("compile-only", false, "Just build the binary, not the zip.")
+	debug           = flag.Bool("d", false, "Print commands instead of running them.")
+	parallel        = flag.Int("parallel", runtime.NumCPU(), "Number of commands to run in parallel.")
+	copyAs          = flag.String("release", "", "Make copies of the releases with this name")
+	gitLog          = flag.String("git-log", "", "git log to include as well")
+	include         = flag.String("include", "^.*$", "os/arch regexp to include")
+	exclude         = flag.String("exclude", "^$", "os/arch regexp to exclude")
+	cgo             = flag.Bool("cgo", false, "Use cgo for the build")
+	noClean         = flag.Bool("no-clean", false, "Don't clean the build directory before running.")
+	tags            = flag.String("tags", "", "Space separated list of build tags")
+	buildmode       = flag.String("buildmode", "", "Passed to go build -buildmode flag")
+	compileOnly     = flag.Bool("compile-only", false, "Just build the binary, not the zip.")
+	extraEnv        = flag.String("env", "", "comma separated list of VAR=VALUE env vars to set")
+	macOSSDK        = flag.String("macos-sdk", "", "macOS SDK to use")
+	macOSArch       = flag.String("macos-arch", "", "macOS arch to use")
+	extraCgoCFlags  = flag.String("cgo-cflags", "", "extra CGO_CFLAGS")
+	extraCgoLdFlags = flag.String("cgo-ldflags", "", "extra CGO_LDFLAGS")
 )
 
 // GOOS/GOARCH pairs we build for
@@ -47,6 +52,7 @@ var osarches = []string{
 	"windows/386",
 	"windows/amd64",
 	"darwin/amd64",
+	"darwin/arm64",
 	"linux/386",
 	"linux/amd64",
 	"linux/arm",
@@ -279,6 +285,15 @@ func stripVersion(goarch string) string {
 	return goarch[:i]
 }
 
+// run the command returning trimmed output
+func runOut(command ...string) string {
+	out, err := exec.Command(command[0], command[1:]...).Output()
+	if err != nil {
+		log.Fatalf("Failed to run %q: %v", command, err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
 // build the binary in dir returning success or failure
 func compileArch(version, goos, goarch, dir string) bool {
 	log.Printf("Compiling %s/%s into %s", goos, goarch, dir)
@@ -313,6 +328,35 @@ func compileArch(version, goos, goarch, dir string) bool {
 	env := []string{
 		"GOOS=" + goos,
 		"GOARCH=" + stripVersion(goarch),
+	}
+	if *extraEnv != "" {
+		env = append(env, strings.Split(*extraEnv, ",")...)
+	}
+	var (
+		cgoCFlags  []string
+		cgoLdFlags []string
+	)
+	if *macOSSDK != "" {
+		flag := "-isysroot " + runOut("xcrun", "--sdk", *macOSSDK, "--show-sdk-path")
+		cgoCFlags = append(cgoCFlags, flag)
+		cgoLdFlags = append(cgoLdFlags, flag)
+	}
+	if *macOSArch != "" {
+		flag := "-arch " + *macOSArch
+		cgoCFlags = append(cgoCFlags, flag)
+		cgoLdFlags = append(cgoLdFlags, flag)
+	}
+	if *extraCgoCFlags != "" {
+		cgoCFlags = append(cgoCFlags, *extraCgoCFlags)
+	}
+	if *extraCgoLdFlags != "" {
+		cgoLdFlags = append(cgoLdFlags, *extraCgoLdFlags)
+	}
+	if len(cgoCFlags) > 0 {
+		env = append(env, "CGO_CFLAGS="+strings.Join(cgoCFlags, " "))
+	}
+	if len(cgoLdFlags) > 0 {
+		env = append(env, "CGO_LDFLAGS="+strings.Join(cgoLdFlags, " "))
 	}
 	if !*cgo {
 		env = append(env, "CGO_ENABLED=0")
