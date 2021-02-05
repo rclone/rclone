@@ -22,7 +22,7 @@ func New() *Cache {
 	return &Cache{
 		cache:          map[string]*cacheEntry{},
 		expireRunning:  false,
-		expireDuration: 300 * time.Second,
+		expireDuration: 24 * time.Hour,
 		expireInterval: 60 * time.Second,
 	}
 }
