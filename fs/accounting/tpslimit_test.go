@@ -34,6 +34,6 @@ func TestLimitTPS(t *testing.T) {
 			tpsBucket = nil
 		}()
 
-		timeTransactions(100, 900*time.Millisecond, 2000*time.Millisecond)
+		timeTransactions(100, 900*time.Millisecond, 5000*time.Millisecond)
 	})
 }
