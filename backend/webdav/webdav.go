@@ -10,6 +10,7 @@ package webdav
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -337,8 +338,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	client := fshttp.NewClient(ctx)
 	if opt.Vendor == "sharepoint-ntlm" {
+		// Disable transparent HTTP/2 support as per https://golang.org/pkg/net/http/ ,
+		// otherwise any connection to IIS 10.0 fails with 'stream error: stream ID 39; HTTP_1_1_REQUIRED'
+		// https://docs.microsoft.com/en-us/iis/get-started/whats-new-in-iis-10/http2-on-iis says:
+		// 'Windows authentication (NTLM/Kerberos/Negotiate) is not supported with HTTP/2.'
+		t := fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
+			t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+		})
 		// Add NTLM layer
-		client.Transport = ntlmssp.Negotiator{RoundTripper: client.Transport}
+		client.Transport = ntlmssp.Negotiator{RoundTripper: t}
 	}
 	f := &Fs{
 		name:        name,
