@@ -972,7 +972,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 	dstPath := f.filePath(remote)
 	err := f.mkParentDir(ctx, dstPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "Copy mkParentDir failed")
+		return nil, errors.Wrap(err, "copy mkParentDir failed")
 	}
 	destinationURL, err := rest.URLJoin(f.endpoint, dstPath)
 	if err != nil {
@@ -996,11 +996,11 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "Copy call failed")
+		return nil, errors.Wrap(err, "copy call failed")
 	}
 	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
-		return nil, errors.Wrap(err, "Copy NewObject failed")
+		return nil, errors.Wrap(err, "copy NewObject failed")
 	}
 	return dstObj, nil
 }
@@ -1063,18 +1063,18 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 	if err != fs.ErrorDirNotFound {
-		return errors.Wrap(err, "DirMove dirExists dst failed")
+		return errors.Wrap(err, "dirMove dirExists dst failed")
 	}
 
 	// Make sure the parent directory exists
 	err = f.mkParentDir(ctx, dstPath)
 	if err != nil {
-		return errors.Wrap(err, "DirMove mkParentDir dst failed")
+		return errors.Wrap(err, "dirMove mkParentDir dst failed")
 	}
 
 	destinationURL, err := rest.URLJoin(f.endpoint, dstPath)
 	if err != nil {
-		return errors.Wrap(err, "DirMove couldn't join URL")
+		return errors.Wrap(err, "dirMove couldn't join URL")
 	}
 
 	var resp *http.Response
@@ -1092,7 +1092,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "DirMove MOVE call failed")
+		return errors.Wrap(err, "dirMove MOVE call failed")
 	}
 	return nil
 }
@@ -1275,7 +1275,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	err = o.fs.mkParentDir(ctx, o.filePath())
 	if err != nil {
-		return errors.Wrap(err, "Update mkParentDir failed")
+		return errors.Wrap(err, "update mkParentDir failed")
 	}
 
 	if o.fs.canChunk {
@@ -1360,7 +1360,7 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 	hasher := md5.New()
 	_, err = hasher.Write([]byte(o.filePath()))
 	if err != nil {
-		return errors.Wrap(err, "Chunked upload couldn't hash URL")
+		return errors.Wrap(err, "chunked upload couldn't hash URL")
 	}
 	uploadDir := "chunked-upload-" + hex.EncodeToString(hasher.Sum(nil))
 	fs.Debugf(src, "Starting multipart upload to temp dir %q", uploadDir)
@@ -1372,7 +1372,7 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 
 	err = o.fs.mkdir(ctx, uploadDir)
 	if err != nil {
-		return errors.Wrap(err, "Making upload directory failed")
+		return errors.Wrap(err, "making upload directory failed")
 	}
 	defer atexit.OnError(&err, func() {
 		// Try to abort the upload, but ignore the error.
@@ -1397,7 +1397,7 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 		extraHeaders := map[string]string{}
 		err = o.updateSimple(ctx, io.LimitReader(in, int64(o.fs.opt.ChunkSize)), chunkPath, contentLength, "", extraHeaders, options...)
 		if err != nil {
-			return errors.Wrap(err, "Uploading chunk failed")
+			return errors.Wrap(err, "uploading chunk failed")
 		}
 		uploadedSize += contentLength
 	}
@@ -1414,7 +1414,7 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 	}
 	destinationURL, err := rest.URLJoin(o.fs.endpoint, o.filePath())
 	if err != nil {
-		return errors.Wrap(err, "Finalize chunked upload couldn't join URL")
+		return errors.Wrap(err, "finalize chunked upload couldn't join URL")
 	}
 	opts.ExtraHeaders = o.extraHeaders(ctx, src)
 	opts.ExtraHeaders["Destination"] = destinationURL.String()
@@ -1423,7 +1423,7 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "Finalize chunked upload failed")
+		return errors.Wrap(err, "finalize chunked upload failed")
 	}
 
 	o.remote = saveRemote
