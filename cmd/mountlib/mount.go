@@ -45,6 +45,7 @@ type Options struct {
 	DaemonTimeout      time.Duration // OSXFUSE only
 	AsyncRead          bool
 	NetworkMode        bool // Windows only
+	TPSLimit           float64
 }
 
 // DefaultOpt is the default values for creating the mount
@@ -97,6 +98,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.AsyncRead, "async-read", "", Opt.AsyncRead, "Use asynchronous reads. Not supported on Windows.")
 	flags.FVarP(flagSet, &Opt.MaxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads. Not supported on Windows.")
 	flags.BoolVarP(flagSet, &Opt.WritebackCache, "write-back-cache", "", Opt.WritebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used. Not supported on Windows.")
+	flags.Float64VarP(flagSet, &Opt.TPSLimit, "mount-tpslimit", "", 0, "Limit mount transactions per second to this. (0 is off).")
 	// Windows and OSX
 	flags.StringVarP(flagSet, &Opt.VolumeName, "volname", "", Opt.VolumeName, "Set the volume name. Supported on Windows and OSX only.")
 	// OSX only
