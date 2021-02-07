@@ -72,7 +72,7 @@ If your browser doesn't open automatically go to the following link: http://127.
 Log in and authorize rclone for access
 Waiting for code...
 Got code
-Configure this as a team drive?
+Configure this as a Shared Drive (Team Drive)?
 y) Yes
 n) No
 y/n> n
@@ -279,23 +279,24 @@ Note: in case you configured a specific root folder on gdrive and rclone is unab
         `rclone -v foo@example.com lsf gdrive:backup`
 
 
-### Team drives ###
+### Shared drives (team drives) ###
 
-If you want to configure the remote to point to a Google Team Drive
-then answer `y` to the question `Configure this as a team drive?`.
+If you want to configure the remote to point to a Google Shared Drive
+(previously known as Team Drives) then answer `y` to the question
+`Configure this as a Shared Drive (Team Drive)?`.
 
-This will fetch the list of Team Drives from google and allow you to
-configure which one you want to use.  You can also type in a team
-drive ID if you prefer.
+This will fetch the list of Shared Drives from google and allow you to
+configure which one you want to use. You can also type in a Shared
+Drive ID if you prefer.
 
 For example:
 
 ```
-Configure this as a team drive?
+Configure this as a Shared Drive (Team Drive)?
 y) Yes
 n) No
 y/n> y
-Fetching team drive list...
+Fetching Shared Drive list...
 Choose a number from below, or type in your own value
  1 / Rclone Test
    \ "xxxxxxxxxxxxxxxxxxxx"
@@ -303,7 +304,7 @@ Choose a number from below, or type in your own value
    \ "yyyyyyyyyyyyyyyyyyyy"
  3 / Rclone Test 3
    \ "zzzzzzzzzzzzzzzzzzzz"
-Enter a Team Drive ID> 1
+Enter a Shared Drive ID> 1
 --------------------
 [remote]
 client_id =
@@ -674,7 +675,7 @@ Needed only if you want use SA instead of interactive login.
 
 #### --drive-team-drive
 
-ID of the Team Drive
+ID of the Shared Drive (Team Drive)
 
 - Config:      team_drive
 - Env Var:     RCLONE_DRIVE_TEAM_DRIVE
@@ -1137,11 +1138,11 @@ Options:
 
 #### drives
 
-List the shared drives available to this account
+List the Shared Drives available to this account
 
     rclone backend drives remote: [options] [<arguments>+]
 
-This command lists the shared drives (teamdrives) available to this
+This command lists the Shared Drives (Team Drives) available to this
 account.
 
 Usage:
