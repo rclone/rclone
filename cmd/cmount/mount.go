@@ -138,7 +138,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 
 	// Create underlying FS
 	f := VFS.Fs()
-	fsys := NewFS(VFS)
+	fsys := NewFS(VFS, opt)
 	host := fuse.NewFileSystemHost(fsys)
 	host.SetCapReaddirPlus(true) // only works on Windows
 	host.SetCapCaseInsensitive(f.Features().CaseInsensitive)
