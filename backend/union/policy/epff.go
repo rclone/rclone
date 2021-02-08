@@ -17,7 +17,9 @@ func init() {
 type EpFF struct{}
 
 func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, filePath string) (*upstream.Fs, error) {
-	ch := make(chan *upstream.Fs)
+	ch := make(chan *upstream.Fs, len(upstreams))
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	for _, u := range upstreams {
 		u := u // Closure
 		go func() {
@@ -30,16 +32,10 @@ func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, filePath stri
 		}()
 	}
 	var u *upstream.Fs
-	for i := 0; i < len(upstreams); i++ {
+	for range upstreams {
 		u = <-ch
 		if u != nil {
-			// close remaining goroutines
-			go func(num int) {
-				defer close(ch)
-				for i := 0; i < num; i++ {
-					<-ch
-				}
-			}(len(upstreams) - 1 - i)
+			break
 		}
 	}
 	if u == nil {
