@@ -321,10 +321,24 @@ Note that the mapping of permissions is not always trivial, and the result
 you see in Windows Explorer may not be exactly like you expected.
 For example, when setting a value that includes write access, this will be
 mapped to individual permissions "write attributes", "write data" and "append data",
-but not "write extended attributes" (WinFsp does not support extended attributes,
-see [this](https://github.com/billziss-gh/winfsp/wiki/NTFS-Compatibility)).
-Windows will then show this as basic permission "Special" instead of "Write",
-because "Write" includes the "write extended attributes" permission.
+but not "write extended attributes". Windows will then show this as basic
+permission "Special" instead of "Write", because "Write" includes the
+"write extended attributes" permission.
+
+If you set POSIX permissions for only allowing access to the owner, using
+|--file-perms 0600 --dir-perms 0700|, the user group and the built-in "Everyone"
+group will still be given some special permissions, such as "read attributes"
+and "read permissions", in Windows. This is done for compatibility reasons,
+e.g. to allow users without additional permissions to be able to read basic
+metadata about files like in UNIX. One case that may arise is that other programs
+(incorrectly) interprets this as the file being accessible by everyone. For example
+an SSH client may warn about "unprotected private key file".
+
+WinFsp 2021 (version 1.9, still in beta) introduces a new FUSE option "FileSecurity",
+that allows the complete specification of file security descriptors using
+[SDDL](https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format).
+With this you can work around issues such as the mentioned "unprotected private key file"
+by specifying |-o FileSecurity="D:P(A;;FA;;;OW)"|, for file all access (FA) to the owner (OW).
 
 #### Windows caveats
 
