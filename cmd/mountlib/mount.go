@@ -179,15 +179,15 @@ is an **empty** **existing** directory:
 
 On Windows you can start a mount in different ways. See [below](#mounting-modes-on-windows)
 for details. The following examples will mount to an automatically assigned drive,
-to specific drive letter |X:|, to path |C:\path\to\nonexistent\directory|
-(which must be **non-existent** subdirectory of an **existing** parent directory or drive,
+to specific drive letter |X:|, to path |C:\path\parent\mount|
+(where parent directory or drive must exist, and mount must **not** exist,
 and is not supported when [mounting as a network drive](#mounting-modes-on-windows)), and
 the last example will mount as network share |\\cloud\remote| and map it to an
 automatically assigned drive:
 
     rclone @ remote:path/to/files *
     rclone @ remote:path/to/files X:
-    rclone @ remote:path/to/files C:\path\to\nonexistent\directory
+    rclone @ remote:path/to/files C:\path\parent\mount
     rclone @ remote:path/to/files \\cloud\remote
 
 When the program ends while in foreground mode, either via Ctrl+C or receiving
@@ -241,14 +241,14 @@ and experience unexpected program errors, freezes or other issues, consider moun
 as a network drive instead.
 
 When mounting as a fixed disk drive you can either mount to an unused drive letter,
-or to a path - which must be **non-existent** subdirectory of an **existing** parent
+or to a path representing a **non-existent** subdirectory of an **existing** parent
 directory or drive. Using the special value |*| will tell rclone to
 automatically assign the next available drive letter, starting with Z: and moving backward.
 Examples:
 
     rclone @ remote:path/to/files *
     rclone @ remote:path/to/files X:
-    rclone @ remote:path/to/files C:\path\to\nonexistent\directory
+    rclone @ remote:path/to/files C:\path\parent\mount
     rclone @ remote:path/to/files X:
 
 Option |--volname| can be used to set a custom volume name for the mounted
