@@ -114,11 +114,12 @@ func handleLocalMountpath(mountpath string, opt *mountlib.Options) (string, erro
 			fs.Errorf(nil, "Ignoring --network-mode as it is not supported with directory mountpoint")
 			opt.NetworkMode = false
 		}
-		parent := filepath.Join(mountpath, "..")
-		if parent == "" || parent == "." {
-			return "", errors.New("mountpoint parent path is not valid: " + parent)
+		var err error
+		if mountpath, err = filepath.Abs(mountpath); err != nil { // Ensures parent is found but also more informative log messages
+			return "", errors.Wrap(err, "mountpoint path is not valid: "+mountpath)
 		}
-		if _, err := os.Stat(parent); err != nil {
+		parent := filepath.Join(mountpath, "..")
+		if _, err = os.Stat(parent); err != nil {
 			if os.IsNotExist(err) {
 				return "", errors.New("parent of mountpoint directory does not exist: " + parent)
 			}
