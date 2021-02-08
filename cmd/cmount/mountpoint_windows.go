@@ -103,8 +103,9 @@ func handleLocalMountpath(mountpath string, opt *mountlib.Options) (string, erro
 	} else if !os.IsNotExist(err) {
 		return "", errors.Wrap(err, "failed to retrieve mountpoint path information")
 	}
-	//if isDriveRootPath(mountpath) { // Assume intention with "X:\" was "X:"
-	//	mountpoint = mountpath[:len(mountpath)-1] // WinFsp needs drive mountpoints without trailing path separator
+	if isDriveRootPath(mountpath) { // Assume intention with "X:\" was "X:"
+		mountpath = mountpath[:len(mountpath)-1] // WinFsp needs drive mountpoints without trailing path separator
+	}
 	if !isDrive(mountpath) {
 		// Assuming directory path, since it is not a pure drive letter string such as "X:".
 		// Drive letter string can be used as is, since we have already checked it does not exist,
@@ -115,10 +116,7 @@ func handleLocalMountpath(mountpath string, opt *mountlib.Options) (string, erro
 		}
 		parent := filepath.Join(mountpath, "..")
 		if parent == "" || parent == "." {
-			return "", errors.New("mountpoint directory is not valid: " + parent)
-		}
-		if os.IsPathSeparator(parent[len(parent)-1]) { // Ends in a separator only if it is the root directory
-			return "", errors.New("mountpoint directory is at root: " + parent)
+			return "", errors.New("mountpoint parent path is not valid: " + parent)
 		}
 		if _, err := os.Stat(parent); err != nil {
 			if os.IsNotExist(err) {
