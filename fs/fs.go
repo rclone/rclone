@@ -1206,10 +1206,12 @@ func MustFind(name string) *RegInfo {
 // ParseRemote deconstructs a path into configName, fsPath, looking up
 // the fsName in the config file (returning NotFoundInConfigFile if not found)
 func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err error) {
-	configName, fsPath, err = fspath.Parse(path)
+	parsed, err := fspath.Parse(path)
 	if err != nil {
 		return nil, "", "", err
 	}
+	configName, fsPath = parsed.Name, parsed.Path
+	// FIXME do something with parsed.Config
 	var fsName string
 	var ok bool
 	if configName != "" {

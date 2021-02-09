@@ -208,6 +208,83 @@ To copy files and directories in `https://example.com/path/to/dir` to `/tmp/dir`
 To copy files and directories from `example.com` in the relative
 directory `path/to/dir` to `/tmp/dir` using sftp.
 
+### Connection strings {#connection-strings}
+
+The above examples can also be written using a connection string
+syntax, so instead of providing the arguments as command line
+parameters `--http-url https://pub.rclone.org` they are provided as
+part of the remote specification as a kind of connection string.
+
+    rclone lsd ":http,url='https://pub.rclone.org':"
+    rclone lsf ":http,url='https://example.com':path/to/dir"
+    rclone copy ":http,url='https://example.com':path/to/dir" /tmp/dir
+    rclone copy :sftp,host=example.com:path/to/dir /tmp/dir
+
+These can apply to modify existing remotes as well as create new
+remotes with the on the fly syntax. This example is equivalent to
+adding the `--drive-shared-with-me` parameter to the remote `gdrive:`.
+
+    rclone lsf "gdrive,shared_with_me:path/to/dir"
+
+The major advantage to using the connection string style syntax is
+that it only applies the the remote, not to all the remotes of that
+type of the command line. A common confusion is this attempt to copy a
+file shared on google drive to the normal drive which **does not
+work** because the `--drive-shared-with-me` flag applies to both the
+source and the destination.
+
+    rclone copy --drive-shared-with-me gdrive:shared-file.txt gdrive:
+
+However using the connection string syntax, this does work.
+
+    rclone copy "gdrive,shared_with_me:shared-file.txt" gdrive:
+
+The connection strings have the following syntax
+
+    remote,parameter=value,parameter2=value2:path/to/dir
+    :backend,parameter=value,parameter2=value2:path/to/dir
+
+If the `parameter` has a `:` or `,` then it must be placed in quotes `"` or
+`'`, so
+
+    remote,parameter="colon:value",parameter2="comma,value":path/to/dir
+    :backend,parameter='colon:value',parameter2='comma,value':path/to/dir
+
+If a quoted value needs to include that quote, then it should be
+doubled, so
+
+    remote,parameter="with""quote",parameter2='with''quote':path/to/dir
+
+This will make `parameter` be `with"quote` and `parameter2` be
+`with'quote`.
+
+If you leave off the `=parameter` then rclone will substitute `=true`
+which works very well with flags. For example to use s3 configured in
+the environment you could use:
+
+    rclone lsd :s3,env_auth:
+
+Which is equivalent to
+
+    rclone lsd :s3,env_auth=true:
+
+Note that on the command line you might need to surround these
+connection strings with `"` or `'` to stop the shell interpreting any
+special characters within them.
+
+If you are a shell master then you'll know which strings are OK and
+which aren't, but if you aren't sure then enclose them in `"` and use
+`'` as the inside quote. This syntax works on all OSes.
+
+    rclone copy ":http,url='https://example.com':path/to/dir" /tmp/dir
+
+On Linux/macOS some characters are still interpreted inside `"`
+strings in the shell (notably `\` and `$` and `"`) so if your strings
+contain those you can swap the roles of `"` and `'` thus. (This syntax
+does not work on Windows.)
+
+    rclone copy ':http,url="https://example.com":path/to/dir' /tmp/dir
+
 ### Valid remote names
 
  - Remote names may only contain 0-9, A-Z ,a-z ,_ , - and space.
@@ -1927,11 +2004,8 @@ so they take exactly the same form.
 ### Config file ###
 
 You can set defaults for values in the config file on an individual
-remote basis.  If you want to use this feature, you will need to
-discover the name of the config items that you want.  The easiest way
-is to run through `rclone config` by hand, then look in the config
-file to see what the values are (the config file can be found by
-looking at the help for `--config` in `rclone help`).
+remote basis. The names of the config items are documented in the page
+for each backend.
 
 To find the name of the environment variable, you need to set, take
 `RCLONE_CONFIG_` + name of remote + `_` + name of config file option
@@ -1952,6 +2026,11 @@ mys3:
 
 Note that if you want to create a remote using environment variables
 you must create the `..._TYPE` variable as above.
+
+Note also that now rclone has [connectionstrings](#connection-strings),
+it is probably easier to use those instead which makes the above example
+
+    rclone lsd :s3,access_key_id=XXX,secret_access_key=XXX:
 
 ### Precedence
 
