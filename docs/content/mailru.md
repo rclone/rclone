@@ -6,7 +6,7 @@ description: "Mail.ru Cloud"
 {{< icon "fas fa-at" >}} Mail.ru Cloud
 ----------------------------------------
 
-[Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a Russian internet company [Mail.Ru Group](https://mail.ru). The official desktop client is [Disk-O:](https://disk-o.cloud/), available only on Windows. (Please note that official sites are in Russian)
+[Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a Russian internet company [Mail.Ru Group](https://mail.ru). The official desktop client is [Disk-O:](https://disk-o.cloud/en), available on Windows and Mac OS.
 
 Currently it is recommended to disable 2FA on Mail.ru accounts intended for rclone until it gets eventually implemented.
 
