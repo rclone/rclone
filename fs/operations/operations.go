@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -1302,11 +1303,14 @@ func PublicLink(ctx context.Context, f fs.Fs, remote string, expire fs.Duration,
 
 // Rmdirs removes any empty directories (or directories only
 // containing empty directories) under f, including f.
+//
+// Rmdirs obeys the filters
 func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	ci := fs.GetConfig(ctx)
+	fi := filter.GetConfig(ctx)
 	dirEmpty := make(map[string]bool)
 	dirEmpty[dir] = !leaveRoot
-	err := walk.Walk(ctx, f, dir, true, ci.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
+	err := walk.Walk(ctx, f, dir, false, ci.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
 		if err != nil {
 			err = fs.CountError(err)
 			fs.Errorf(f, "Failed to list %q: %v", dirPath, err)
@@ -1353,7 +1357,12 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	sort.Strings(toDelete)
 	for i := len(toDelete) - 1; i >= 0; i-- {
 		dir := toDelete[i]
-		err := TryRmdir(ctx, f, dir)
+		// If a filter matches the directory then that
+		// directory is a candidate for deletion
+		if !fi.Include(dir+"/", 0, time.Now()) {
+			continue
+		}
+		err = TryRmdir(ctx, f, dir)
 		if err != nil {
 			err = fs.CountError(err)
 			fs.Errorf(dir, "Failed to rmdir: %v", err)

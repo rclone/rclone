@@ -651,6 +651,46 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 	)
 }
 
+func TestRmdirsWithFilter(t *testing.T) {
+	ctx := context.Background()
+	ctx, fi := filter.AddConfig(ctx)
+	require.NoError(t, fi.AddRule("+ /A1/B1/**"))
+	require.NoError(t, fi.AddRule("- *"))
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	r.Mkdir(ctx, r.Fremote)
+
+	r.ForceMkdir(ctx, r.Fremote)
+
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "A1"))
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "A1/B1"))
+	require.NoError(t, operations.Mkdir(ctx, r.Fremote, "A1/B1/C1"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B1/C1",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
+
+	require.NoError(t, operations.Rmdirs(ctx, r.Fremote, "", false))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{},
+		[]string{
+			"A1",
+		},
+		fs.GetModifyWindow(ctx, r.Fremote),
+	)
+}
+
 func TestCopyURL(t *testing.T) {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
