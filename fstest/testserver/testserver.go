@@ -122,11 +122,11 @@ func Start(remoteName string) (fn func(), err error) {
 		// don't start the local backend
 		return func() {}, nil
 	}
-	var name string
-	name, _, err = fspath.Parse(remoteName)
+	parsed, err := fspath.Parse(remoteName)
 	if err != nil {
 		return nil, err
 	}
+	name := parsed.ConfigString
 	if name == "" {
 		// don't start the local backend
 		return func() {}, nil

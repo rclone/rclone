@@ -277,10 +277,11 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		return nil, errors.New("can't point remote at itself - check the value of the remote setting")
 	}
 
-	baseName, basePath, err := fspath.Parse(remote)
+	parsed, err := fspath.Parse(remote)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", remote)
 	}
+	baseName, basePath := parsed.ConfigString, parsed.Path
 	if baseName != "" {
 		baseName += ":"
 	}
