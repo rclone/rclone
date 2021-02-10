@@ -576,10 +576,10 @@ Default units are seconds or the following abbreviations are valid:
 `--max-age` can also be specified as an absolute time in the following
 formats:
 
-- RFC3339 - e.g. "2006-01-02T15:04:05Z07:00"
-- ISO8601 Date and time, local timezone - "2006-01-02T15:04:05"
-- ISO8601 Date and time, local timezone - "2006-01-02 15:04:05"
-- ISO8601 Date - "2006-01-02" (YYYY-MM-DD)
+- RFC3339 - e.g. `2006-01-02T15:04:05Z` or `2006-01-02T15:04:05+07:00`
+- ISO8601 Date and time, local timezone - `2006-01-02T15:04:05`
+- ISO8601 Date and time, local timezone - `2006-01-02 15:04:05`
+- ISO8601 Date - `2006-01-02` (YYYY-MM-DD)
 
 `--max-age` applies only to files and not to directories.
 
