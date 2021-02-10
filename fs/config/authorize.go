@@ -42,6 +42,6 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) {
 		Data.SetValue(name, ConfigClientSecret, args[2])
 	}
 
-	m := fs.ConfigMap(f, name)
+	m := fs.ConfigMap(f, name, nil)
 	f.Config(ctx, name, m)
 }

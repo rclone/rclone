@@ -274,7 +274,7 @@ func RemoteConfig(ctx context.Context, name string) {
 	fmt.Printf("Remote config\n")
 	f := mustFindByName(name)
 	if f.Config != nil {
-		m := fs.ConfigMap(f, name)
+		m := fs.ConfigMap(f, name, nil)
 		f.Config(ctx, name, m)
 	}
 }

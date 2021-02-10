@@ -1205,23 +1205,22 @@ func MustFind(name string) *RegInfo {
 
 // ParseRemote deconstructs a path into configName, fsPath, looking up
 // the fsName in the config file (returning NotFoundInConfigFile if not found)
-func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err error) {
+func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, connectionStringConfig configmap.Simple, err error) {
 	parsed, err := fspath.Parse(path)
 	if err != nil {
-		return nil, "", "", err
+		return nil, "", "", nil, err
 	}
 	configName, fsPath = parsed.Name, parsed.Path
-	// FIXME do something with parsed.Config
 	var fsName string
 	var ok bool
 	if configName != "" {
 		if strings.HasPrefix(configName, ":") {
 			fsName = configName[1:]
 		} else {
-			m := ConfigMap(nil, configName)
+			m := ConfigMap(nil, configName, parsed.Config)
 			fsName, ok = m.Get("type")
 			if !ok {
-				return nil, "", "", ErrorNotFoundInConfigFile
+				return nil, "", "", nil, ErrorNotFoundInConfigFile
 			}
 		}
 	} else {
@@ -1229,7 +1228,7 @@ func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err e
 		configName = "local"
 	}
 	fsInfo, err = Find(fsName)
-	return fsInfo, configName, fsPath, err
+	return fsInfo, configName, fsPath, parsed.Config, err
 }
 
 // A configmap.Getter to read from the environment RCLONE_CONFIG_backend_option_name
@@ -1304,15 +1303,21 @@ func (section getConfigFile) Get(key string) (value string, ok bool) {
 }
 
 // ConfigMap creates a configmap.Map from the *RegInfo and the
-// configName passed in.
+// configName passed in. If connectionStringConfig has any entries (it may be nil),
+// then it will be added to the lookup with the highest priority.
 //
 // If fsInfo is nil then the returned configmap.Map should only be
 // used for reading non backend specific parameters, such as "type".
-func ConfigMap(fsInfo *RegInfo, configName string) (config *configmap.Map) {
+func ConfigMap(fsInfo *RegInfo, configName string, connectionStringConfig configmap.Simple) (config *configmap.Map) {
 	// Create the config
 	config = configmap.New()
 
 	// Read the config, more specific to least specific
+
+	// Config from connection string
+	if len(connectionStringConfig) > 0 {
+		config.AddGetter(connectionStringConfig)
+	}
 
 	// flag values
 	if fsInfo != nil {
@@ -1348,11 +1353,11 @@ func ConfigMap(fsInfo *RegInfo, configName string) (config *configmap.Map) {
 // found then NotFoundInConfigFile will be returned.
 func ConfigFs(path string) (fsInfo *RegInfo, configName, fsPath string, config *configmap.Map, err error) {
 	// Parse the remote path
-	fsInfo, configName, fsPath, err = ParseRemote(path)
+	fsInfo, configName, fsPath, connectionStringConfig, err := ParseRemote(path)
 	if err != nil {
 		return
 	}
-	config = ConfigMap(fsInfo, configName)
+	config = ConfigMap(fsInfo, configName, connectionStringConfig)
 	return
 }
 
