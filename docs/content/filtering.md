@@ -139,7 +139,7 @@ To mix up the order of processing includes and excludes use `--filter...`
 flags.
 
 Within `--include-from`, `--exclude-from` and `--filter-from` flags
-rules are processed from top to bottom of the referenced file..
+rules are processed from top to bottom of the referenced file.
 
 If there is an `--include` or `--include-from` flag specified, rclone
 implies a `- **` rule which it adds to the bottom of the internal rule
@@ -187,13 +187,13 @@ desirable depends on the specific filter rules and source remote content.
 
 Optimisation occurs if either:
 
-* A source remote does not support the rclone `ListR` primitive. `local`,
-`sftp`, `Microsoft OneDrive` and `WebDav` do not support `ListR`. Google
+* A source remote does not support the rclone `ListR` primitive. local,
+sftp, Microsoft OneDrive and WebDav do not support `ListR`. Google
 Drive and most bucket type storage do. [Full list](https://rclone.org/overview/#optional-features)
 
 * On other remotes, if the rclone command is not naturally recursive,
 provided it is not run with the `--fast-list` flag. `ls`, `lsf -R` and
-`size` are recursive but `sync`, `copy` and `move` are not.
+`size` are naturally recursive but `sync`, `copy` and `move` are not.
 
 * Whenever the `--disable ListR` flag is applied to an rclone command.
 
@@ -215,7 +215,7 @@ to be specified.
 
 E.g. `rclone ls remote: --include /directory/` will not match any
 files. Because it is an `--include` option the `--exclude **` rule
-is implied, and the `\directory\` pattern serves only to optimise
+is implied, and the `/directory/` pattern serves only to optimise
 access to the remote by ignoring everything outside of that directory.
 
 E.g. `rclone ls remote: --filter-from filter-list.txt` with a file
@@ -228,7 +228,7 @@ E.g. `rclone ls remote: --filter-from filter-list.txt` with a file
 
 All files in directories `dir1` or `dir2` or their subdirectories
 are completely excluded from the listing. Only files of suffix
-`'pdf` in the root of `remote:` or its subdirectories are listed.
+`pdf` in the root of `remote:` or its subdirectories are listed.
 The `- **` rule prevents listing of any path/files not previously
 matched by the rules above.
 
@@ -259,8 +259,8 @@ directories.
 
 E.g. on Microsoft Windows `rclone ls remote: --exclude "*\[{JP,KR,HK}\]*"`
 lists the files in `remote:` with `[JP]` or `[KR]` or `[HK]` in
-their name. The single quotes prevent the shell from interpreting the `\`
-characters. The `\` characters escape the `[` and `]` so ran clone filter
+their name. Quotes prevent the shell from interpreting the `\`
+characters.`\` characters escape the `[` and `]` so an rclone filter
 treats them literally rather than as a character-range. The `{` and `}`
 define an rclone pattern list. For other operating systems single quotes are
 required ie `rclone ls remote: --exclude '*\[{JP,KR,HK}\]*'`
@@ -507,13 +507,13 @@ The three files are transferred as follows:
     /home/user1/dir/ford → remote:backup/user1/dir/file
     /home/user2/prefect  → remote:backup/user2/stuff
 
-Alternatively if `/` is chosen as root `files-from.txt` would be:
+Alternatively if `/` is chosen as root `files-from.txt` will be:
 
     /home/user1/42
     /home/user1/dir/ford
     /home/user2/prefect
 
-The copy command would be:
+The copy command will be:
 
     rclone copy --files-from files-from.txt / remote:backup
 
@@ -621,7 +621,7 @@ old or more.
 **Important** this flag is dangerous to your data - use with `--dry-run`
 and `-v` first.
 
-In conjunction with `rclone sync` the `--delete-excluded deletes any files
+In conjunction with `rclone sync`, `--delete-excluded` deletes any files
 on the destination which are excluded from the command.
 
 E.g. the scope of `rclone sync -i A: B:` can be restricted:
