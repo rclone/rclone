@@ -78,6 +78,24 @@ separator or the beginning of the path/file.
                - doesn't match "afile.jpg"
                - doesn't match "directory/file.jpg"
 
+The top level of the remote may not be the top level of the drive.
+
+E.g. for a Microsoft Windows local directory structure
+
+    F:
+    ├── bkp
+    ├── data
+    │   ├── excl
+    │   │   ├── 123.jpg
+    │   │   └── 456.jpg
+    │   ├── incl
+    │   │   └── document.pdf
+
+To copy the contents of folder `data` into folder `bkp` excluding the contents of subfolder
+`excl`the following command treats `F:\data` and `F:\bkp` as top level for filtering.
+
+`rclone copy F:\data\ F:\bkp\ --exclude=/excl/**`
+
 **Important** Use `/` in path/file name patterns and not `\` even if
 running on Microsoft Windows.
 
