@@ -32,6 +32,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
 	"golang.org/x/sync/errgroup"
@@ -483,7 +484,15 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			break
 		}
 		// Retry if err returned a retry error
+		var retry bool
 		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
+			retry = true
+		} else if t, ok := pacer.IsRetryAfter(err); ok {
+			fs.Debugf(src, "Sleeping for %v (as indicated by the server) to obey Retry-After error: %v", t, err)
+			time.Sleep(t)
+			retry = true
+		}
+		if retry {
 			fs.Debugf(src, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 			tr.Reset(ctx) // skip incomplete accounting - will be overwritten by retry
 			continue
