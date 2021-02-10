@@ -84,7 +84,7 @@ func ShowVersion() {
 // It returns a string with the file name if points to a file
 // otherwise "".
 func NewFsFile(remote string) (fs.Fs, string) {
-	_, _, fsPath, err := fs.ParseRemote(remote)
+	_, fsPath, err := fspath.SplitFs(remote)
 	if err != nil {
 		err = fs.CountError(err)
 		log.Fatalf("Failed to create file system for %q: %v", remote, err)
