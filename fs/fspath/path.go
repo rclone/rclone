@@ -259,6 +259,27 @@ loop:
 	return parsed, nil
 }
 
+// SplitFs splits a remote a remoteName and an remotePath.
+//
+// SplitFs("remote:path/to/file") -> ("remote:", "path/to/file")
+// SplitFs("/to/file") -> ("", "/to/file")
+//
+// If it returns remoteName as "" then remotePath is a local path
+//
+// The returned values have the property that remoteName + remotePath ==
+// remote (except under Windows where \ will be translated into /)
+func SplitFs(remote string) (remoteName string, remotePath string, err error) {
+	parsed, err := Parse(remote)
+	if err != nil {
+		return "", "", err
+	}
+	remoteName, remotePath = parsed.ConfigString, parsed.Path
+	if remoteName != "" {
+		remoteName += ":"
+	}
+	return remoteName, remotePath, nil
+}
+
 // Split splits a remote into a parent and a leaf
 //
 // if it returns leaf as an empty string then remote is a directory
@@ -268,13 +289,9 @@ loop:
 // The returned values have the property that parent + leaf == remote
 // (except under Windows where \ will be translated into /)
 func Split(remote string) (parent string, leaf string, err error) {
-	parsed, err := Parse(remote)
+	remoteName, remotePath, err := SplitFs(remote)
 	if err != nil {
 		return "", "", err
-	}
-	remoteName, remotePath := parsed.ConfigString, parsed.Path
-	if remoteName != "" {
-		remoteName += ":"
 	}
 	// Construct new remote name without last segment
 	parent, leaf = path.Split(remotePath)

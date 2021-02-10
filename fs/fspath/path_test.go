@@ -316,6 +316,47 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestSplitFs(t *testing.T) {
+	for _, test := range []struct {
+		remote, wantRemoteName, wantRemotePath string
+		wantErr                                error
+	}{
+		{"", "", "", errCantBeEmpty},
+
+		{"remote:", "remote:", "", nil},
+		{"remote:potato", "remote:", "potato", nil},
+		{"remote:/", "remote:", "/", nil},
+		{"remote:/potato", "remote:", "/potato", nil},
+		{"remote:/potato/potato", "remote:", "/potato/potato", nil},
+		{"remote:potato/sausage", "remote:", "potato/sausage", nil},
+		{"rem.ote:potato/sausage", "", "", errInvalidCharacters},
+
+		{":remote:", ":remote:", "", nil},
+		{":remote:potato", ":remote:", "potato", nil},
+		{":remote:/", ":remote:", "/", nil},
+		{":remote:/potato", ":remote:", "/potato", nil},
+		{":remote:/potato/potato", ":remote:", "/potato/potato", nil},
+		{":remote:potato/sausage", ":remote:", "potato/sausage", nil},
+		{":rem[ote:potato/sausage", "", "", errInvalidCharacters},
+
+		{"/", "", "/", nil},
+		{"/root", "", "/root", nil},
+		{"/a/b", "", "/a/b", nil},
+		{"root", "", "root", nil},
+		{"a/b", "", "a/b", nil},
+		{"root/", "", "root/", nil},
+		{"a/b/", "", "a/b/", nil},
+	} {
+		gotRemoteName, gotRemotePath, gotErr := SplitFs(test.remote)
+		assert.Equal(t, test.wantErr, gotErr)
+		assert.Equal(t, test.wantRemoteName, gotRemoteName, test.remote)
+		assert.Equal(t, test.wantRemotePath, gotRemotePath, test.remote)
+		if gotErr == nil {
+			assert.Equal(t, test.remote, gotRemoteName+gotRemotePath, fmt.Sprintf("%s: %q + %q != %q", test.remote, gotRemoteName, gotRemotePath, test.remote))
+		}
+	}
+}
+
 func TestSplit(t *testing.T) {
 	for _, test := range []struct {
 		remote, wantParent, wantLeaf string
