@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/fspath"
 )
 
 var (
@@ -62,7 +63,7 @@ type Entry interface {
 // New creates a new Fs based on the
 // string formatted `type:root_path(:ro/:nc)`
 func New(ctx context.Context, remote, root string, cacheTime time.Duration) (*Fs, error) {
-	_, configName, fsPath, err := fs.ParseRemote(remote)
+	configName, fsPath, err := fspath.SplitFs(remote)
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +84,8 @@ func New(ctx context.Context, remote, root string, cacheTime time.Duration) (*Fs
 		f.creatable = false
 		fsPath = fsPath[0 : len(fsPath)-3]
 	}
-	if configName != "local" {
-		fsPath = configName + ":" + fsPath
-	}
-	rFs, err := cache.Get(ctx, fsPath)
+	remote = configName + fsPath
+	rFs, err := cache.Get(ctx, remote)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
 	}
