@@ -639,6 +639,7 @@ func (s *authServer) Init() error {
 			http.Error(w, "State did not match - please try again", http.StatusForbidden)
 			return
 		}
+		fs.Debugf(nil, "Redirecting browser to: %s", s.authURL)
 		http.Redirect(w, req, s.authURL, http.StatusTemporaryRedirect)
 		return
 	})

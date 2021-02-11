@@ -94,7 +94,14 @@ const (
 var (
 	// Description of how to auth for this app
 	dropboxConfig = &oauth2.Config{
-		Scopes: []string{},
+		Scopes: []string{
+			"files.metadata.write",
+			"files.content.write",
+			"files.content.read",
+			"sharing.write",
+			// "file_requests.write",
+			// "members.read", // needed for impersonate - but causes app to need to be approved by Dropbox Team Admin during the flow
+		},
 		// Endpoint: oauth2.Endpoint{
 		// 	AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
 		// 	TokenURL: "https://api.dropboxapi.com/1/oauth2/token",
@@ -115,6 +122,19 @@ var (
 	errNotSupportedInSharedMode = fserrors.NoRetryError(errors.New("not supported in shared files mode"))
 )
 
+// Gets an oauth config with the right scopes
+func getOauthConfig(m configmap.Mapper) *oauth2.Config {
+	// If not impersonating, use standard scopes
+	if impersonate, _ := m.Get("impersonate"); impersonate == "" {
+		return dropboxConfig
+	}
+	// Make a copy of the config
+	config := *dropboxConfig
+	// Make a copy of the scopes with "members.read" appended
+	config.Scopes = append(config.Scopes, "members.read")
+	return &config
+}
+
 // Register with Fs
 func init() {
 	DbHashType = hash.RegisterHash("DropboxHash", 64, dbhash.New)
@@ -129,7 +149,7 @@ func init() {
 					oauth2.SetAuthURLParam("token_access_type", "offline"),
 				},
 			}
-			err := oauthutil.Config(ctx, "dropbox", name, m, dropboxConfig, &opt)
+			err := oauthutil.Config(ctx, "dropbox", name, m, getOauthConfig(m), &opt)
 			if err != nil {
 				log.Fatalf("Failed to configure token: %v", err)
 			}
@@ -147,8 +167,23 @@ memory.  It can be set smaller if you are tight on memory.`, maxChunkSize),
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
-			Name:     "impersonate",
-			Help:     "Impersonate this user when using a business account.",
+			Name: "impersonate",
+			Help: `Impersonate this user when using a business account.
+
+Note that if you want to use impersonate, you should make sure this
+flag is set when running "rclone config" as this will cause rclone to
+request the "members.read" scope which it won't normally. This is
+needed to lookup a members email address into the internal ID that
+dropbox uses in the API.
+
+Using the "members.read" scope will require a Dropbox Team Admin
+to approve during the OAuth flow.
+
+You will have to use your own App (setting your own client_id and
+client_secret) to use this option as currently rclone's default set of
+permissions doesn't include "members.read". This can be added once
+v1.55 or later is in use everywhere.
+`,
 			Default:  "",
 			Advanced: true,
 		}, {
@@ -327,7 +362,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
-	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, dropboxConfig)
+	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, getOauthConfig(m))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to configure dropbox")
 	}
