@@ -16,6 +16,8 @@ RUN apk --no-cache add ca-certificates fuse tzdata && \
 
 COPY --from=builder /go/src/github.com/rclone/rclone/rclone /usr/local/bin/
 
+RUN addgroup -g 1009 rclone && adduser -u 1009 -Ds /bin/sh -G rclone rclone
+
 ENTRYPOINT [ "rclone" ]
 
 WORKDIR /data
