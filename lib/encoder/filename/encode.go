@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 
-	"github.com/dop251/scsu"
 	"github.com/klauspost/compress/huff0"
 )
 
@@ -38,7 +37,7 @@ func EncodeBytes(s string) (table byte, payload []byte) {
 		if i == tableSCSU {
 			var err error
 			olen := len(org)
-			org, err = scsu.EncodeStrict(s, make([]byte, 0, len(org)))
+			org, err = scsuEncodeStrict(s, make([]byte, 0, len(org)))
 			if err != nil || olen <= len(org) {
 				continue
 			}
