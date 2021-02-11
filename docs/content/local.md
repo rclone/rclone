@@ -10,15 +10,17 @@ Local paths are specified as normal filesystem paths, e.g. `/path/to/wherever`, 
 
     rclone sync -i /home/source /tmp/destination
 
-Will sync `/home/source` to `/tmp/destination`
+Will sync `/home/source` to `/tmp/destination`.
 
-These can be configured into the config file for consistencies sake,
-but it is probably easier not to.
+For consistencies sake one can also configure a remote of type
+`local` in the config file, and access the local filesystem using
+rclone remote paths, e.g. `remote:path/to/wherever`, but it is probably
+easier not to.
 
 ### Modified time ###
 
 Rclone reads and writes the modified time using an accuracy determined by
-the OS.  Typically this is 1ns on Linux, 10 ns on Windows and 1 Second
+the OS. Typically this is 1ns on Linux, 10 ns on Windows and 1 Second
 on OS X.
 
 ### Filenames ###
@@ -109,15 +111,35 @@ These only get replaced if they are the last character in the name:
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be converted to UTF-16.
 
-### Long paths on Windows ###
+### Paths on Windows ###
 
-Rclone handles long paths automatically, by converting all paths to long
-[UNC paths](https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#maxpath)
-which allows paths up to 32,767 characters.
+On Windows there are many ways of specifying a path to a file system resource.
+Both absolute paths like `C:\path\to\wherever`, and relative paths like
+`..\wherever` can be used, and path separator can be either
+`\` (as in `C:\path\to\wherever`) or `/` (as in `C:/path/to/wherever`).
+Length of these paths are limited to 259 characters for files and 247
+characters for directories, but there is an alternative extended-length
+path format increasing the limit to (approximately) 32,767 characters.
+This format requires absolute paths and the use of prefix `\\?\`,
+e.g. `\\?\D:\some\very\long\path`. For convenience rclone will automatically
+convert regular paths into the corresponding extended-length paths,
+so in most cases you do not have to worry about this (read more [below](#long-paths)).
 
-This is why you will see that your paths, for instance `c:\files` is
-converted to the UNC path `\\?\c:\files` in the output,
-and `\\server\share` is converted to `\\?\UNC\server\share`.
+Note that Windows supports using the same prefix `\\?\` to
+specify path to volumes identified by their GUID, e.g.
+`\\?\Volume{b75e2c83-0000-0000-0000-602f00000000}\some\path`.
+This is *not* supported in rclone, due to an [issue](https://github.com/golang/go/issues/39785)
+in go.
+
+#### Long paths ####
+
+Rclone handles long paths automatically, by converting all paths to
+[extended-length path format](https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation), which allows paths up to 32,767 characters.
+
+This conversion will ensure paths are absolute and prefix them with
+the `\\?\`. This is why you will see that your paths, for instance
+`.\files` is shown as path `\\?\C:\files` in the output, and `\\server\share`
+as `\\?\UNC\server\share`.
 
 However, in rare cases this may cause problems with buggy file
 system drivers like [EncFS](https://github.com/rclone/rclone/issues/261).
@@ -141,7 +163,7 @@ And use rclone like this:
 
 This will use UNC paths on `c:\src` but not on `z:\dst`.
 Of course this will cause problems if the absolute path length of a
-file exceeds 258 characters on z, so only use this option if you have to.
+file exceeds 259 characters on z, so only use this option if you have to.
 
 ### Symlinks / Junction points
 
