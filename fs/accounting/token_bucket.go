@@ -68,7 +68,8 @@ func newTokenBucket(bandwidth fs.BwPair) (tbs buckets) {
 			bandwidthAccounting = bandwidth.Rx
 		}
 	}
-	if bandwidthAccounting > 0 {
+	// Limit core bandwidth to max of Rx and Tx if both are limited
+	if bandwidth.Tx > 0 && bandwidth.Rx > 0 {
 		tbs[TokenBucketSlotAccounting] = rate.NewLimiter(rate.Limit(bandwidthAccounting), maxBurstSize)
 	}
 	for _, tb := range tbs {
