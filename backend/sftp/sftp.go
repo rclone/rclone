@@ -206,6 +206,17 @@ It has been found that this helps with IBM Sterling SFTP servers which have
 any given time.
 `,
 			Advanced: true,
+		}, {
+			Name:    "idle_timeout",
+			Default: fs.Duration(60 * time.Second),
+			Help: `Max time before closing idle connections
+
+If no connections have been returned to the connection pool in the time
+given, rclone will empty the connection pool.
+
+Set to 0 to keep connections indefinitely.
+`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -213,27 +224,28 @@ any given time.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host              string `config:"host"`
-	User              string `config:"user"`
-	Port              string `config:"port"`
-	Pass              string `config:"pass"`
-	KeyPem            string `config:"key_pem"`
-	KeyFile           string `config:"key_file"`
-	KeyFilePass       string `config:"key_file_pass"`
-	PubKeyFile        string `config:"pubkey_file"`
-	KnownHostsFile    string `config:"known_hosts_file"`
-	KeyUseAgent       bool   `config:"key_use_agent"`
-	UseInsecureCipher bool   `config:"use_insecure_cipher"`
-	DisableHashCheck  bool   `config:"disable_hashcheck"`
-	AskPassword       bool   `config:"ask_password"`
-	PathOverride      string `config:"path_override"`
-	SetModTime        bool   `config:"set_modtime"`
-	Md5sumCommand     string `config:"md5sum_command"`
-	Sha1sumCommand    string `config:"sha1sum_command"`
-	SkipLinks         bool   `config:"skip_links"`
-	Subsystem         string `config:"subsystem"`
-	ServerCommand     string `config:"server_command"`
-	UseFstat          bool   `config:"use_fstat"`
+	Host              string      `config:"host"`
+	User              string      `config:"user"`
+	Port              string      `config:"port"`
+	Pass              string      `config:"pass"`
+	KeyPem            string      `config:"key_pem"`
+	KeyFile           string      `config:"key_file"`
+	KeyFilePass       string      `config:"key_file_pass"`
+	PubKeyFile        string      `config:"pubkey_file"`
+	KnownHostsFile    string      `config:"known_hosts_file"`
+	KeyUseAgent       bool        `config:"key_use_agent"`
+	UseInsecureCipher bool        `config:"use_insecure_cipher"`
+	DisableHashCheck  bool        `config:"disable_hashcheck"`
+	AskPassword       bool        `config:"ask_password"`
+	PathOverride      string      `config:"path_override"`
+	SetModTime        bool        `config:"set_modtime"`
+	Md5sumCommand     string      `config:"md5sum_command"`
+	Sha1sumCommand    string      `config:"sha1sum_command"`
+	SkipLinks         bool        `config:"skip_links"`
+	Subsystem         string      `config:"subsystem"`
+	ServerCommand     string      `config:"server_command"`
+	UseFstat          bool        `config:"use_fstat"`
+	IdleTimeout       fs.Duration `config:"idle_timeout"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -251,7 +263,8 @@ type Fs struct {
 	cachedHashes *hash.Set
 	poolMu       sync.Mutex
 	pool         []*conn
-	pacer        *fs.Pacer // pacer for operations
+	drain        *time.Timer // used to drain the pool when we stop using the connections
+	pacer        *fs.Pacer   // pacer for operations
 	savedpswd    string
 }
 
@@ -428,6 +441,9 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 	}
 	f.poolMu.Lock()
 	f.pool = append(f.pool, c)
+	if f.opt.IdleTimeout > 0 {
+		f.drain.Reset(time.Duration(f.opt.IdleTimeout)) // nudge on the pool emptying timer
+	}
 	f.poolMu.Unlock()
 }
 
@@ -435,6 +451,12 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 func (f *Fs) drainPool(ctx context.Context) (err error) {
 	f.poolMu.Lock()
 	defer f.poolMu.Unlock()
+	if f.opt.IdleTimeout > 0 {
+		f.drain.Stop()
+	}
+	if len(f.pool) != 0 {
+		fs.Debugf(f, "closing %d unused connections", len(f.pool))
+	}
 	for i, c := range f.pool {
 		if cErr := c.closed(); cErr == nil {
 			cErr = c.close()
@@ -667,6 +689,10 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	f.mkdirLock = newStringLock()
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	f.savedpswd = ""
+	// set the pool drainer timer going
+	if f.opt.IdleTimeout > 0 {
+		f.drain = time.AfterFunc(time.Duration(opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
+	}
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
