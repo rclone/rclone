@@ -362,13 +362,14 @@ type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ..
 
 // put implements Put or PutStream
 func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
+	if f.opt.NoDataEncryption {
+		return put(ctx, in, f.newObjectInfo(src, nonce{}), options...)
+	}
+
 	// Encrypt the data into wrappedIn
 	wrappedIn, encrypter, err := f.cipher.encryptData(in)
 	if err != nil {
 		return nil, err
-	}
-	if f.opt.NoDataEncryption {
-		wrappedIn = in
 	}
 
 	// Find a hash the destination supports to compute a hash of
@@ -637,24 +638,7 @@ func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Objec
 // Note that we break lots of encapsulation in this function.
 func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {
 	if f.opt.NoDataEncryption {
-		// Open the src for input
-		in, err := src.Open(ctx)
-		if err != nil {
-			return "", errors.Wrap(err, "failed to open src")
-		}
-		defer fs.CheckClose(in, &err)
-
-		// pipe into hash
-		m, err := hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
-		if err != nil {
-			return "", errors.Wrap(err, "failed to make hasher")
-		}
-		_, err = io.Copy(m, in)
-		if err != nil {
-			return "", errors.Wrap(err, "failed to hash data")
-		}
-
-		return m.Sums()[hashType], nil
+		return src.Hash(ctx, hashType)
 	}
 
 	// Read the nonce - opening the file is sufficient to read the nonce in
@@ -663,7 +647,6 @@ func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType
 	if err != nil {
 		return "", errors.Wrap(err, "failed to open object to read nonce")
 	}
-
 	d, err := f.cipher.newDecrypter(in)
 	if err != nil {
 		_ = in.Close()
@@ -866,7 +849,7 @@ func (o *Object) Size() int64 {
 	size := o.Object.Size()
 	if !o.f.opt.NoDataEncryption {
 		var err error
-		size, err = o.f.cipher.DecryptedSize(o.Object.Size())
+		size, err = o.f.cipher.DecryptedSize(size)
 		if err != nil {
 			fs.Debugf(o, "Bad size for decrypt: %v", err)
 		}
@@ -887,9 +870,12 @@ func (o *Object) UnWrap() fs.Object {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
+	if o.f.opt.NoDataEncryption {
+		return o.Object.Open(ctx, options...)
+	}
+
 	var openOptions []fs.OpenOption
 	var offset, limit int64 = 0, -1
-
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
@@ -901,24 +887,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			openOptions = append(openOptions, option)
 		}
 	}
-
-	if o.f.opt.NoDataEncryption {
-		if offset == 0 && limit < 0 {
-			// Open with no seek
-			return o.Object.Open(ctx, openOptions...)
-		}
-		// Open stream with a range of offset, limit
-		end := int64(-1)
-		if limit >= 0 {
-			end = offset + limit - 1
-			if end >= o.Object.Size() {
-				end = -1
-			}
-		}
-		newOpenOptions := append(openOptions, &fs.RangeOption{Start: offset, End: end})
-		return o.Object.Open(ctx, newOpenOptions...)
-	}
-
 	rc, err = o.f.cipher.DecryptDataSeek(ctx, func(ctx context.Context, underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
 		if underlyingOffset == 0 && underlyingLimit < 0 {
 			// Open with no seek
@@ -935,7 +903,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		newOpenOptions := append(openOptions, &fs.RangeOption{Start: underlyingOffset, End: end})
 		return o.Object.Open(ctx, newOpenOptions...)
 	}, offset, limit)
-
 	if err != nil {
 		return nil, err
 	}
