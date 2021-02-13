@@ -458,3 +458,4 @@ put them back in again.` >}}
   * Bob Pusateri <BobPusateri@users.noreply.github.com>
   * Alex JOST <25005220+dimejo@users.noreply.github.com>
   * Alexey Tabakman <samosad.ru@gmail.com>
+  * David Sze <sze.david@gmail.com>
