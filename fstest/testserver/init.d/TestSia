@@ -4,27 +4,36 @@ set -e
 
 NAME=Sia
 
-. $(dirname "$0")/docker.bash
+# shellcheck disable=SC1090
+. "$(dirname "$0")"/docker.bash
+
+# wait until Sia test network is up,
+# the Sia renter forms contracts on the blockchain
+# and the renter is upload ready
+wait_for_sia() {
+    until curl -A Sia-Agent -s "$1" | grep -q '"ready":true'
+    do
+        sleep 5
+    done
+}
+export -f wait_for_sia
 
 start() {
-  docker run --rm -d --name $NAME \
-    --publish 127.0.0.1:9980:9980 \
-    nebulouslabs/siaantfarm
+    # use non-production sia port in test
+    SIA_CONN="127.0.0.1:39980"
+    # nebulouslabs/siaantfarm is stale, use uptodate image
+    ANTFARM_IMAGE=ivandeex/sia-antfarm:latest
 
-    # pull latest remote image (do not use latest local image)
-    docker pull nebulouslabs/siaantfarm:latest
+    # pull latest antfarm image (dont use local image)
+    docker pull --quiet $ANTFARM_IMAGE
 
-    # start antfarm with the default config
-    docker run --rm -d --name "$NAME" \
-            -p "${SIA_CONN}:${SIA_PORT}" \
-            nebulouslabs/siaantfarm:latest
+    # start latest antfarm with default config
+    docker run --rm --detach --name "$NAME" \
+            --publish "${SIA_CONN}:9980" \
+            $ANTFARM_IMAGE
 
-    # wait until Sia test network is up, the Sia renter forms contracts on the
-    # blockchain and the renter is upload ready
-    until wget --user-agent="Sia-Agent" -q -O - "${SIA_CONN}/renter/uploadready" | grep '"ready":true'
-    do
-        sleep 1
-    done
+    # wait until the test network is upload ready
+    timeout 300 bash -c "wait_for_sia ${SIA_CONN}/renter/uploadready"
 
     # confirm backend type in the generated rclone.conf
     echo "type=sia"
@@ -42,4 +51,5 @@ stop() {
     fi
 }
 
-. $(dirname "$0")/run.bash
+# shellcheck disable=SC1090
+. "$(dirname "$0")"/run.bash
