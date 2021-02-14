@@ -76,11 +76,12 @@ y/e/d>
 See the [remote setup docs](/remote_setup/) for how to set it up on a
 machine with no Internet browser available.
 
-Note that rclone runs a webserver on your local machine to collect the
-token as returned from Zoho Workdrive. This only runs from the moment it
-opens your browser to the moment you get back the verification code.
-This is on `http://127.0.0.1:53682/` and this it may require you to
-unblock it temporarily if you are running a host firewall.
+Rclone runs a webserver on your local computer to collect the
+authorization token from Zoho Workdrive. This is only from the moment
+your browser is opened until the token is returned.
+The webserver runs on `http://127.0.0.1:53682/`.
+If local port `53682` is protected by a firewall you may need to temporarily
+unblock the firewall to complete authorization.
 
 Once configured you can then use `rclone` like this,
 
