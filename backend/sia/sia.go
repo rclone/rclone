@@ -59,6 +59,11 @@ func init() {
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
 			Default: encoder.EncodeInvalidUtf8 |
+				encoder.EncodeCtl |
+				encoder.EncodeDel |
+				encoder.EncodeHashPercent |
+				encoder.EncodeQuestion |
+				encoder.EncodeDot |
 				encoder.EncodeSlash,
 		},
 		}})
@@ -135,11 +140,22 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	var optionsFixed []fs.OpenOption
+	for _, opt := range options {
+		if optRange, ok := opt.(*fs.RangeOption); ok {
+			// Ignore range option if file is empty
+			if o.Size() == 0 && optRange.Start == 0 && optRange.End > 0 {
+				continue
+			}
+		}
+		optionsFixed = append(optionsFixed, opt)
+	}
+
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
 		Path:    path.Join("/renter/stream/", o.fs.root, o.fs.opt.Enc.FromStandardPath(o.remote)),
-		Options: options,
+		Options: optionsFixed,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
@@ -309,7 +325,27 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		size:    src.Size(),
 	}
 
-	return o, o.Update(ctx, in, src, options...)
+	err := o.Update(ctx, in, src, options...)
+	if err == nil {
+		return o, nil
+	}
+
+	// Cleanup stray files left after failed upload
+	for i := 0; i < 5; i++ {
+		cleanObj, cleanErr := f.NewObject(ctx, src.Remote())
+		if cleanErr == nil {
+			cleanErr = cleanObj.Remove(ctx)
+		}
+		if cleanErr == nil {
+			break
+		}
+		if cleanErr != fs.ErrorObjectNotFound {
+			fs.Logf(f, "%q: cleanup failed upload: %v", src.Remote(), cleanErr)
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return nil, err
 }
 
 // PutStream the object into the remote siad via uploadstream
@@ -375,7 +411,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 }
 
 // NewFs constructs an Fs from the path
-func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
+func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -396,22 +432,25 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = strings.Trim(root, "/")
 
-	config := fs.Config
-	if opt.UserAgent != "" {
-		config.UserAgent = opt.UserAgent
-	}
-
 	f := &Fs{
-		name:  name,
-		opt:   *opt,
-		srv:   rest.NewClient(fshttp.NewClient(config)).SetErrorHandler(errorHandler).SetRoot(u.String()),
-		root:  root,
-		pacer: fs.NewPacer(pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		name: name,
+		opt:  *opt,
+		root: root,
 	}
+	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
-	}).Fill(f)
+	}).Fill(ctx, f)
+
+	// Adjust client config and pass it attached to context
+	cliCtx, cliCfg := fs.AddConfig(ctx)
+	if opt.UserAgent != "" {
+		cliCfg.UserAgent = opt.UserAgent
+	}
+	f.srv = rest.NewClient(fshttp.NewClient(cliCtx))
+	f.srv.SetRoot(u.String())
+	f.srv.SetErrorHandler(errorHandler)
 
 	if opt.APIPassword != "" {
 		opt.APIPassword, err = obscure.Reveal(opt.APIPassword)
@@ -428,7 +467,6 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 		if f.root == "." {
 			f.root = ""
 		}
-		ctx := context.Background()
 		_, err := f.NewObject(ctx, remote)
 		if err != nil {
 			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
@@ -445,8 +483,8 @@ func NewFs(name, root string, m configmap.Mapper) (fs.Fs, error) {
 	return f, nil
 }
 
-// Decode errors into meaningful ones, sadly this is using
-// string matching since siad doesn't expose meaningful error codes
+// errorHandler translates Siad errors into native rclone filesystem errors.
+// Sadly this is using string matching since Siad can't expose meaningful codes.
 func errorHandler(resp *http.Response) error {
 	body, err := rest.ReadBody(resp)
 	if err != nil {
@@ -456,17 +494,24 @@ func errorHandler(resp *http.Response) error {
 	errResponse := new(api.Error)
 	err = json.Unmarshal(body, &errResponse)
 	if err != nil {
-		// set the Message to be the body if we can't parse the JSON
+		// Set the Message to be the body if we can't parse the JSON
 		errResponse.Message = strings.TrimSpace(string(body))
 	}
 	errResponse.Status = resp.Status
 	errResponse.StatusCode = resp.StatusCode
 
-	if errResponse.StatusCode == 400 && errResponse.Message == "no file known with that path" {
+	msg := strings.Trim(errResponse.Message, "[]")
+	code := errResponse.StatusCode
+	switch {
+	case code == 400 && msg == "no file known with that path":
 		return fs.ErrorObjectNotFound
-	} else if errResponse.StatusCode == 500 && errResponse.Message == "failed to create directory: a siadir already exists at that location" {
+	case code == 400 && strings.HasPrefix(msg, "unable to get the fileinfo from the filesystem") && strings.HasSuffix(msg, "path does not exist"):
+		return fs.ErrorObjectNotFound
+	case code == 500 && strings.HasPrefix(msg, "failed to create directory") && strings.HasSuffix(msg, "a siadir already exists at that location"):
 		return fs.ErrorDirExists
-	} else if errResponse.StatusCode == 500 && strings.HasSuffix(errResponse.Message, ": no such file or directory") {
+	case code == 500 && strings.HasPrefix(msg, "failed to get directory contents") && strings.HasSuffix(msg, "path does not exist"):
+		return fs.ErrorDirNotFound
+	case code == 500 && strings.HasSuffix(msg, "no such file or directory"):
 		return fs.ErrorDirNotFound
 	}
 	return errResponse
