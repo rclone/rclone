@@ -2,13 +2,13 @@
 
 stop() {
     if status ; then
-        docker stop $NAME
+        docker stop "$NAME"
         echo "$NAME stopped"
     fi
 }
 
 status() {
-    if docker ps --format "{{.Names}}" | grep ^${NAME}$ >/dev/null ; then
+    if docker ps --format '{{.Names}}' | grep -q "^${NAME}$" ; then
         echo "$NAME running"
     else
         echo "$NAME not running"
@@ -18,5 +18,5 @@ status() {
 }
 
 docker_ip() {
-    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $NAME    
+    docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{"\n"}}{{end}}' "$NAME" | head -1
 }

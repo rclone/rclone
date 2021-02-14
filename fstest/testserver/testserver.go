@@ -91,7 +91,7 @@ func start(name string) error {
 				continue
 			}
 
-			// fs.Debugf(name, "key = %q, envKey = %q, value = %q", key, envKey, value)
+			// fs.Debugf(name, "key = %q, envKey = %q, value = %q", key, envKey(name, string(key)), value)
 			err = os.Setenv(envKey(name, string(key)), string(value))
 			if err != nil {
 				return err
