@@ -312,6 +312,9 @@ backends:
  - backend:  "seafile"
    remote:   "TestSeafileEncrypted:"
    fastlist: true
+ - backend:  "sia"
+   remote:   "TestSia:"
+   fastlist: false
  - backend:  "tardigrade"
    remote:   "TestTardigrade:"
    fastlist: true
