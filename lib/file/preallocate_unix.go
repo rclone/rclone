@@ -4,6 +4,7 @@ package file
 
 import (
 	"os"
+	"sync"
 	"sync/atomic"
 
 	"github.com/rclone/rclone/fs"
@@ -16,6 +17,7 @@ var (
 		unix.FALLOC_FL_KEEP_SIZE | unix.FALLOC_FL_PUNCH_HOLE, // for ZFS #3066
 	}
 	fallocFlagsIndex int32
+	preAllocateMu    sync.Mutex
 )
 
 // PreallocateImplemented is a constant indicating whether the
@@ -27,6 +29,8 @@ func PreAllocate(size int64, out *os.File) error {
 	if size <= 0 {
 		return nil
 	}
+	preAllocateMu.Lock()
+	defer preAllocateMu.Unlock()
 	index := atomic.LoadInt32(&fallocFlagsIndex)
 again:
 	if index >= int32(len(fallocFlags)) {
