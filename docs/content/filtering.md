@@ -643,7 +643,7 @@ not list `dir3`, `file3` or `.ignore`.
 ## Common pitfalls
 
 The most frequent filter support issues on
-the [rclone forum](https://https://forum.rclone.org/) are:
+the [rclone forum](https://forum.rclone.org/) are:
 
 * Not using paths relative to the root of the remote
 * Not using `/` to match from the root of a remote
