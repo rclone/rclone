@@ -275,6 +275,15 @@ func SetFlags(ci *fs.ConfigInfo) {
 	multiThreadStreamsFlag := pflag.Lookup("multi-thread-streams")
 	ci.MultiThreadSet = multiThreadStreamsFlag != nil && multiThreadStreamsFlag.Changed
 
+	// Make sure some values are > 0
+	nonZero := func(pi *int) {
+		if *pi <= 0 {
+			*pi = 1
+		}
+	}
+	nonZero(&ci.LowLevelRetries)
+	nonZero(&ci.Transfers)
+	nonZero(&ci.Checkers)
 }
 
 // parseHeaders converts DSCP names to value
