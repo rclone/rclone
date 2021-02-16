@@ -67,7 +67,7 @@ func New(ctx context.Context, remote, root string, cacheTime time.Duration) (*Fs
 		return nil, err
 	}
 	f := &Fs{
-		RootPath:    root,
+		RootPath:    strings.TrimRight(root, "/"),
 		writable:    true,
 		creatable:   true,
 		cacheExpiry: time.Now().Unix(),
