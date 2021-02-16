@@ -325,6 +325,20 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	f.poolMu.Unlock()
 }
 
+// Drain the pool of any connections
+func (f *Fs) drainPool(ctx context.Context) (err error) {
+	f.poolMu.Lock()
+	defer f.poolMu.Unlock()
+	for i, c := range f.pool {
+		if cErr := c.Quit(); cErr != nil {
+			err = cErr
+		}
+		f.pool[i] = nil
+	}
+	f.pool = nil
+	return err
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
@@ -405,6 +419,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		return f, fs.ErrorIsFile
 	}
 	return f, err
+}
+
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	return f.drainPool(ctx)
 }
 
 // translateErrorFile turns FTP errors into rclone errors if possible for a file
@@ -1015,5 +1035,6 @@ var (
 	_ fs.Mover       = &Fs{}
 	_ fs.DirMover    = &Fs{}
 	_ fs.PutStreamer = &Fs{}
+	_ fs.Shutdowner  = &Fs{}
 	_ fs.Object      = &Object{}
 )
