@@ -205,7 +205,7 @@ These URLs are used by Plex internally to connect to the Plex server securely.
 
 The format for these URLs is the following:
 
-https://ip-with-dots-replaced.server-hash.plex.direct:32400/
+`https://ip-with-dots-replaced.server-hash.plex.direct:32400/`
 
 The `ip-with-dots-replaced` part can be any IPv4 address, where the dots
 have been replaced with dashes, e.g. `127.0.0.1` becomes `127-0-0-1`.
