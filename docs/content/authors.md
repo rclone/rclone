@@ -461,3 +461,4 @@ put them back in again.` >}}
   * David Sze <sze.david@gmail.com>
   * cynthia kwok <cynthia.m.kwok@gmail.com>
   * Ankur Gupta <agupta@egnyte.com>
+  * Miron Veryanskiy <MironVeryanskiy@gmail.com>
