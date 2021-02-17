@@ -1559,9 +1559,6 @@ func s3Connection(ctx context.Context, opt *Options) (*s3.S3, *session.Session, 
 	if opt.EnvAuth && opt.AccessKeyID == "" && opt.SecretAccessKey == "" {
 		// Enable loading config options from ~/.aws/config (selected by AWS_PROFILE env)
 		awsSessionOpts.SharedConfigState = session.SharedConfigEnable
-		// The session constructor (aws/session/mergeConfigSrcs) will only use the user's preferred credential source
-		// (from the shared config file) if the passed-in Options.Config.Credentials is nil.
-		awsSessionOpts.Config.Credentials = nil
 	}
 	ses, err := session.NewSessionWithOptions(awsSessionOpts)
 	if err != nil {
