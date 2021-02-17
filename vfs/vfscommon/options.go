@@ -32,6 +32,7 @@ type Options struct {
 	ReadWait          time.Duration // time to wait for in-sequence read
 	WriteBack         time.Duration // time to wait before writing back dirty files
 	ReadAhead         fs.SizeSuffix // bytes to read ahead in cache mode "full"
+	UsedIsSize        bool          // if true, use the `rclone size` algorithm for Used size
 }
 
 // DefaultOpt is the default values uses for Opt
@@ -58,4 +59,5 @@ var DefaultOpt = Options{
 	ReadWait:          20 * time.Millisecond,
 	WriteBack:         5 * time.Second,
 	ReadAhead:         0 * fs.MebiByte,
+	UsedIsSize:        false,
 }

@@ -259,4 +259,17 @@ The flag controls whether "fixup" is performed to satisfy the target.
 If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
+
+### Alternate report of used bytes
+
+Some backends, most notably S3, do not report the amount of bytes used.
+If you need this information to be available when running !df! on the
+filesystem, then pass the flag !--vfs-used-is-size! to rclone.
+With this flag set, instead of relying on the backend to report this
+information, rclone will scan the whole remote similar to !rclone size!
+and compute the total used space itself.
+
+_WARNING._ Contrary to !rclone size!, this flag ignores filters so that the
+result is accurate. However, this is very inefficient and may cost lots of API
+calls resulting in extra charges. Use it as a last resort and only with caching.
 `, "!", "`")
