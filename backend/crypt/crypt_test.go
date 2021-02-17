@@ -91,3 +91,26 @@ func TestObfuscate(t *testing.T) {
 		UnimplementableObjectMethods: []string{"MimeType"},
 	})
 }
+
+// TestNoDataObfuscate runs integration tests against the remote
+func TestNoDataObfuscate(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-obfuscate")
+	name := "TestCrypt4"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		NilObject:  (*crypt.Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "remote", Value: tempdir},
+			{Name: name, Key: "password", Value: obscure.MustObscure("potato2")},
+			{Name: name, Key: "filename_encryption", Value: "obfuscate"},
+			{Name: name, Key: "no_data_encryption", Value: "true"},
+		},
+		SkipBadWindowsCharacters:     true,
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableObjectMethods: []string{"MimeType"},
+	})
+}

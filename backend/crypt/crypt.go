@@ -101,6 +101,21 @@ names, or for debugging purposes.`,
 			Default:  false,
 			Hide:     fs.OptionHideConfigurator,
 			Advanced: true,
+		}, {
+			Name:     "no_data_encryption",
+			Help:     "Option to either encrypt file data or leave it unencrypted.",
+			Default:  false,
+			Advanced: true,
+			Examples: []fs.OptionExample{
+				{
+					Value: "true",
+					Help:  "Don't encrypt file data, leave it unencrypted.",
+				},
+				{
+					Value: "false",
+					Help:  "Encrypt file data.",
+				},
+			},
 		}},
 	})
 }
@@ -209,6 +224,7 @@ type Options struct {
 	Remote                  string `config:"remote"`
 	FilenameEncryption      string `config:"filename_encryption"`
 	DirectoryNameEncryption bool   `config:"directory_name_encryption"`
+	NoDataEncryption        bool   `config:"no_data_encryption"`
 	Password                string `config:"password"`
 	Password2               string `config:"password2"`
 	ServerSideAcrossConfigs bool   `config:"server_side_across_configs"`
@@ -346,6 +362,10 @@ type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ..
 
 // put implements Put or PutStream
 func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
+	if f.opt.NoDataEncryption {
+		return put(ctx, in, f.newObjectInfo(src, nonce{}), options...)
+	}
+
 	// Encrypt the data into wrappedIn
 	wrappedIn, encrypter, err := f.cipher.encryptData(in)
 	if err != nil {
@@ -617,6 +637,10 @@ func (f *Fs) computeHashWithNonce(ctx context.Context, nonce nonce, src fs.Objec
 //
 // Note that we break lots of encapsulation in this function.
 func (f *Fs) ComputeHash(ctx context.Context, o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {
+	if f.opt.NoDataEncryption {
+		return src.Hash(ctx, hashType)
+	}
+
 	// Read the nonce - opening the file is sufficient to read the nonce in
 	// use a limited read so we only read the header
 	in, err := o.Object.Open(ctx, &fs.RangeOption{Start: 0, End: int64(fileHeaderSize) - 1})
@@ -822,9 +846,13 @@ func (o *Object) Remote() string {
 
 // Size returns the size of the file
 func (o *Object) Size() int64 {
-	size, err := o.f.cipher.DecryptedSize(o.Object.Size())
-	if err != nil {
-		fs.Debugf(o, "Bad size for decrypt: %v", err)
+	size := o.Object.Size()
+	if !o.f.opt.NoDataEncryption {
+		var err error
+		size, err = o.f.cipher.DecryptedSize(size)
+		if err != nil {
+			fs.Debugf(o, "Bad size for decrypt: %v", err)
+		}
 	}
 	return size
 }
@@ -842,6 +870,10 @@ func (o *Object) UnWrap() fs.Object {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
+	if o.f.opt.NoDataEncryption {
+		return o.Object.Open(ctx, options...)
+	}
+
 	var openOptions []fs.OpenOption
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
