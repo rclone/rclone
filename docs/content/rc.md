@@ -1174,7 +1174,6 @@ This takes the following parameters
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - each part in body represents a file to be uploaded
-See the [uploadfile command](/commands/rclone_uploadfile/) command for more information on the above.
 
 **Authentication is required for this call.**
 
