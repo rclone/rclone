@@ -605,8 +605,9 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		fs.Debugf(item.name, "vfs cache: writeback object to VFS layer")
 		// Write the object back to the VFS layer as last
 		// thing we do with mutex unlocked
+		o := item.o
 		item.mu.Unlock()
-		storeFn(item.o)
+		storeFn(o)
 		item.mu.Lock()
 	}
 	return nil
