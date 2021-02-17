@@ -42,10 +42,10 @@ again:
 		goto again
 
 	}
-	// FIXME could be doing something here
-	// if err == unix.ENOSPC {
-	// 	log.Printf("No space")
-	// }
+	// Wrap important errors
+	if err == unix.ENOSPC {
+		return ErrDiskFull
+	}
 	return err
 }
 

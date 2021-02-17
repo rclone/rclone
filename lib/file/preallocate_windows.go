@@ -76,6 +76,9 @@ func PreAllocate(size int64, out *os.File) error {
 		uintptr(19), // FileAllocationInformation
 	)
 	if e1 != nil && e1 != syscall.Errno(0) {
+		if e1 == syscall.Errno(windows.ERROR_DISK_FULL) || e1 == syscall.Errno(windows.ERROR_HANDLE_DISK_FULL) {
+			return ErrDiskFull
+		}
 		return errors.Wrap(e1, "preAllocate NtSetInformationFile failed")
 	}
 
