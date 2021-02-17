@@ -82,7 +82,7 @@ as you would with any other remote, e.g. `rclone copy D:\docs secret:\docs`,
 and rclone will encrypt and decrypt as needed on the fly.
 If you access the wrapped remote `remote:path` directly you will bypass
 the encryption, and anything you read will be in encrypted form, and
-anything you write will be undencrypted. To avoid issues it is best to
+anything you write will be unencrypted. To avoid issues it is best to
 configure a dedicated path for encrypted content, and access it
 exclusively through a crypt remote.
 
