@@ -113,7 +113,7 @@ With `--ignore-case`
 
 ## How filter rules are applied to files
 
-Rclone path / file name filters are made up of one or more of the following flags:
+Rclone path/file name filters are made up of one or more of the following flags:
 
   * `--include`
   * `--include-from`
@@ -171,7 +171,7 @@ classes. [Go regular expression reference](https://golang.org/pkg/regexp/syntax/
 
 ### How filter rules are applied to directories
 
-Rclone commands filter, and are applied to, path/file names not
+Rclone commands are applied to path/file names not
 directories. The entire contents of a directory can be matched
 to a filter by the pattern `directory/*` or recursively by
 `directory/**`.
@@ -185,13 +185,13 @@ recurse into subdirectories. This potentially optimises access to a remote
 by avoiding listing unnecessary directories. Whether optimisation is
 desirable depends on the specific filter rules and source remote content.
 
-Optimisation occurs if either:
+Directory recursion optimisation occurs if either:
 
 * A source remote does not support the rclone `ListR` primitive. local,
 sftp, Microsoft OneDrive and WebDav do not support `ListR`. Google
 Drive and most bucket type storage do. [Full list](https://rclone.org/overview/#optional-features)
 
-* On other remotes, if the rclone command is not naturally recursive,
+* On other remotes (those that support `ListR`), if the rclone command is not naturally recursive, and
 provided it is not run with the `--fast-list` flag. `ls`, `lsf -R` and
 `size` are naturally recursive but `sync`, `copy` and `move` are not.
 
