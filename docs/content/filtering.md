@@ -14,6 +14,13 @@ lists; file age and size, or presence of a file in a directory. Bucket
 based remotes without the concept of directory apply filters to object
 key, age and size in an analogous way.
 
+* Rclone filter patterns differ from rsync. Whereas
+`/foo/` matches a directory foo and its
+contents in rsync, in rclone that it is a directory filter.
+Rclone directory filters can optimise listing of a remote.
+In rclone, to refer to a directory and its contents at a
+single level use `/foo/*` or `/foo/**` to recurse. *
+
 Rclone `purge` does not obey filters.
 
 To test filters without risk of damage to data, apply them to `rclone
