@@ -8,6 +8,7 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.3
 	github.com/Azure/azure-storage-blob-go v0.13.0
 	github.com/Azure/go-autorest/autorest/adal v0.9.10
+	github.com/K265/teambition-pan-api v0.0.0-20210219134827-efdd4458e417
 	github.com/Microsoft/go-winio v0.4.16 // indirect
 	github.com/Unknwon/goconfig v0.0.0-20200908083735-df7de6a44db8
 	github.com/a8m/tree v0.0.0-20210115125333-10a5fd5b637d
