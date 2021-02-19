@@ -615,6 +615,19 @@ func GetConfig(ctx context.Context) *Filter {
 	return c.(*Filter)
 }
 
+// CopyConfig copies the global config (if any) from srcCtx into
+// dstCtx returning the new context.
+func CopyConfig(dstCtx, srcCtx context.Context) context.Context {
+	if srcCtx == nil {
+		return dstCtx
+	}
+	c := srcCtx.Value(configContextKey)
+	if c == nil {
+		return dstCtx
+	}
+	return context.WithValue(dstCtx, configContextKey, c)
+}
+
 // AddConfig returns a mutable config structure based on a shallow
 // copy of that found in ctx and returns a new context with that added
 // to it.
