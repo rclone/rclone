@@ -59,6 +59,7 @@ const (
 	emulatorBlobEndpoint = "http://127.0.0.1:10000/devstoreaccount1"
 	memoryPoolFlushTime  = fs.Duration(time.Minute) // flush the cached buffers after this long
 	memoryPoolUseMmap    = false
+	defaultPublicAccess  = azblob.PublicAccessNone
 )
 
 var (
@@ -217,6 +218,17 @@ This option controls how often unused buffers will be removed from the pool.`,
 				encoder.EncodeDel |
 				encoder.EncodeBackSlash |
 				encoder.EncodeRightPeriod),
+		}, {
+			Name: "public_access",
+			Help: `Public access level of a container: blob, container or private(default).
+
+This sets the public access level of a container. Default is none that means only authorized user can get access to the container.
+Other options are "blob" and "container" where
+container: Specifies full public read access for container and blob data. Clients can enumerate blobs within the container via anonymous request,
+but cannot enumerate containers within the storage account.
+blob: Specifies public read access for blobs. Blob data within this container can be read via anonymous request, but container data is not available.
+Clients cannot enumerate blobs within the container via anonymous request.`,
+			Advanced: true,
 		}},
 	})
 }
@@ -241,6 +253,7 @@ type Options struct {
 	MemoryPoolFlushTime  fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap    bool                 `config:"memory_pool_use_mmap"`
 	Enc                  encoder.MultiEncoder `config:"encoding"`
+	PublicAccess         string               `config:"public_access"`
 }
 
 // Fs represents a remote azure server
@@ -262,6 +275,7 @@ type Fs struct {
 	imdsPacer     *fs.Pacer                       // Same but for IMDS
 	uploadToken   *pacer.TokenDispenser           // control concurrency
 	pool          *pool.Pool                      // memory pool
+	publicAccess  azblob.PublicAccessType         // Container Public Access Level
 }
 
 // Object describes an azure object
@@ -328,6 +342,19 @@ func validateAccessTier(tier string) bool {
 	case string(azblob.AccessTierHot),
 		string(azblob.AccessTierCool),
 		string(azblob.AccessTierArchive):
+		// valid cases
+		return true
+	default:
+		return false
+	}
+}
+
+// validatePublicAccess checks if azureblob supports use supplied public access level
+func validatePublicAccess(publicAccess string) bool {
+	switch publicAccess {
+	case string(azblob.PublicAccessNone),
+		string(azblob.PublicAccessBlob),
+		string(azblob.PublicAccessContainer):
 		// valid cases
 		return true
 	default:
@@ -499,6 +526,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			string(azblob.AccessTierHot), string(azblob.AccessTierCool), string(azblob.AccessTierArchive))
 	}
 
+	if opt.PublicAccess == "" {
+		opt.PublicAccess = string(defaultPublicAccess)
+	} else if !validatePublicAccess((opt.PublicAccess)) {
+		return nil, errors.Errorf("Azure Blob: Supported public access level are %s and %s",
+			string(azblob.PublicAccessBlob), string(azblob.PublicAccessContainer))
+	}
+
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:        name,
@@ -517,6 +551,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			opt.MemoryPoolUseMmap,
 		),
 	}
+	f.publicAccess = azblob.PublicAccessType(opt.PublicAccess)
 	f.imdsPacer.SetRetries(5) // per IMDS documentation
 	f.setRoot(root)
 	f.features = (&fs.Features{
@@ -1081,7 +1116,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 		}
 		// now try to create the container
 		return f.pacer.Call(func() (bool, error) {
-			_, err := f.cntURL(container).Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
+			_, err := f.cntURL(container).Create(ctx, azblob.Metadata{}, f.publicAccess)
 			if err != nil {
 				if storageErr, ok := err.(azblob.StorageError); ok {
 					switch storageErr.ServiceCode() {
