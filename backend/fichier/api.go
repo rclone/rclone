@@ -48,6 +48,41 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 
 var isAlphaNumeric = regexp.MustCompile(`^[a-zA-Z0-9]+$`).MatchString
 
+func (f *Fs) createObject(ctx context.Context, remote string) (o *Object, leaf string, directoryID string, err error) {
+	// Create the directory for the object if it doesn't exist
+	leaf, directoryID, err = f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return
+	}
+	// Temporary Object under construction
+	o = &Object{
+		fs:     f,
+		remote: remote,
+	}
+	return o, leaf, directoryID, nil
+}
+
+func (f *Fs) readFileInfo(ctx context.Context, url string) (*File, error) {
+	request := FileInfoRequest{
+		URL: url,
+	}
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file/info.cgi",
+	}
+
+	var file File
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, &request, &file)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't read file info")
+	}
+
+	return &file, err
+}
+
 func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenResponse, error) {
 	request := DownloadRequest{
 		URL:    url,
@@ -304,6 +339,56 @@ func (f *Fs) deleteFile(ctx context.Context, url string) (response *GenericOKRes
 	}
 
 	// fs.Debugf(f, "Removed file with url `%s`", url)
+
+	return response, nil
+}
+
+func (f *Fs) moveFile(ctx context.Context, url string, folderID int, rename string) (response *MoveFileResponse, err error) {
+	request := &MoveFileRequest{
+		URLs:     []string{url},
+		FolderID: folderID,
+		Rename:   rename,
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file/mv.cgi",
+	}
+
+	response = &MoveFileResponse{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, request, response)
+		return shouldRetry(resp, err)
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't copy file")
+	}
+
+	return response, nil
+}
+
+func (f *Fs) copyFile(ctx context.Context, url string, folderID int, rename string) (response *CopyFileResponse, err error) {
+	request := &CopyFileRequest{
+		URLs:     []string{url},
+		FolderID: folderID,
+		Rename:   rename,
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file/cp.cgi",
+	}
+
+	response = &CopyFileResponse{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, request, response)
+		return shouldRetry(resp, err)
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't copy file")
+	}
 
 	return response, nil
 }
