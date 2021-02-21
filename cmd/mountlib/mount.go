@@ -71,7 +71,7 @@ const (
 func init() {
 	// DaemonTimeout defaults to non zero for macOS
 	if runtime.GOOS == "darwin" {
-		DefaultOpt.DaemonTimeout = 15 * time.Minute
+		DefaultOpt.DaemonTimeout = 10 * time.Minute
 	}
 }
 
