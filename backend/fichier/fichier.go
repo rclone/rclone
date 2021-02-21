@@ -363,7 +363,6 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		fs:     f,
 		remote: remote,
 		file: File{
-			ACL:         0,
 			CDN:         0,
 			Checksum:    link.Whirlpool,
 			ContentType: "",
@@ -416,9 +415,79 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	return nil
 }
 
+// Move src to this remote using server side move operations.
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// Create temporary object
+	dstObj, leaf, directoryID, err := f.createObject(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+
+	folderID, err := strconv.Atoi(directoryID)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := f.moveFile(ctx, srcObj.file.URL, folderID, leaf)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't move file")
+	}
+	if resp.Status != "OK" {
+		return nil, errors.New("couldn't move file")
+	}
+
+	file, err := f.readFileInfo(ctx, resp.URLs[0])
+	if err != nil {
+		return nil, errors.New("couldn't read file data")
+	}
+	dstObj.setMetaData(*file)
+	return dstObj, nil
+}
+
+// Copy src to this remote using server side move operations.
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// Create temporary object
+	dstObj, leaf, directoryID, err := f.createObject(ctx, remote)
+	if err != nil {
+		return nil, err
+	}
+
+	folderID, err := strconv.Atoi(directoryID)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := f.copyFile(ctx, srcObj.file.URL, folderID, leaf)
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't move file")
+	}
+	if resp.Status != "OK" {
+		return nil, errors.New("couldn't move file")
+	}
+
+	file, err := f.readFileInfo(ctx, resp.URLs[0].ToURL)
+	if err != nil {
+		return nil, errors.New("couldn't read file data")
+	}
+	dstObj.setMetaData(*file)
+	return dstObj, nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.Copier          = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
 )
