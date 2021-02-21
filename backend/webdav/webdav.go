@@ -26,12 +26,14 @@ import (
 	"github.com/rclone/rclone/backend/webdav/api"
 	"github.com/rclone/rclone/backend/webdav/odrvcookie"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 
@@ -45,8 +47,22 @@ const (
 	defaultDepth  = "1" // depth for PROPFIND
 )
 
+const defaultEncodingSharepointNTLM = (encoder.EncodeWin |
+	encoder.EncodeHashPercent | // required by IIS/8.5 in contrast with onedrive which doesn't need it
+	(encoder.Display &^ encoder.EncodeDot) | // test with IIS/8.5 shows that EncodeDot is not needed
+	encoder.EncodeBackSlash |
+	encoder.EncodeLeftSpace |
+	encoder.EncodeLeftTilde |
+	encoder.EncodeRightPeriod |
+	encoder.EncodeRightSpace |
+	encoder.EncodeInvalidUtf8)
+
 // Register with Fs
 func init() {
+	configEncodingHelp := fmt.Sprintf(
+		"%s\n\nDefault encoding is %s for sharepoint-ntlm or identity otherwise.",
+		config.ConfigEncodingHelp, defaultEncodingSharepointNTLM)
+
 	fs.Register(&fs.RegInfo{
 		Name:        "webdav",
 		Description: "Webdav",
@@ -92,18 +108,23 @@ func init() {
 			Name:     "bearer_token_command",
 			Help:     "Command to run to get a bearer token",
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     configEncodingHelp,
+			Advanced: true,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	URL                string `config:"url"`
-	Vendor             string `config:"vendor"`
-	User               string `config:"user"`
-	Pass               string `config:"pass"`
-	BearerToken        string `config:"bearer_token"`
-	BearerTokenCommand string `config:"bearer_token_command"`
+	URL                string               `config:"url"`
+	Vendor             string               `config:"vendor"`
+	User               string               `config:"user"`
+	Pass               string               `config:"pass"`
+	BearerToken        string               `config:"bearer_token"`
+	BearerTokenCommand string               `config:"bearer_token_command"`
+	Enc                encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote webdav
@@ -291,7 +312,11 @@ func addSlash(s string) string {
 
 // filePath returns a file path (f.root, file)
 func (f *Fs) filePath(file string) string {
-	return rest.URLPathEscape(path.Join(f.root, file))
+	subPath := path.Join(f.root, file)
+	if f.opt.Enc != encoder.EncodeZero {
+		subPath = f.opt.Enc.FromStandardPath(subPath)
+	}
+	return rest.URLPathEscape(subPath)
 }
 
 // dirPath returns a directory path (f.root, dir)
@@ -329,6 +354,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt.Vendor = "other"
 	}
 	root = strings.Trim(root, "/")
+
+	if opt.Enc == encoder.EncodeZero && opt.Vendor == "sharepoint-ntlm" {
+		opt.Enc = defaultEncodingSharepointNTLM
+	}
 
 	// Parse the endpoint
 	u, err := url.Parse(opt.URL)
@@ -605,7 +634,11 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			fs.Debugf(nil, "Item with unknown path received: %q, %q", u.Path, baseURL.Path)
 			continue
 		}
-		remote := path.Join(dir, u.Path[len(baseURL.Path):])
+		subPath := u.Path[len(baseURL.Path):]
+		if f.opt.Enc != encoder.EncodeZero {
+			subPath = f.opt.Enc.ToStandardPath(subPath)
+		}
+		remote := path.Join(dir, subPath)
 		if strings.HasSuffix(remote, "/") {
 			remote = remote[:len(remote)-1]
 		}
