@@ -69,10 +69,10 @@ func init() {
 				Help:  "Owncloud",
 			}, {
 				Value: "sharepoint",
-				Help:  "Sharepoint Online, authenticated by Microsoft OneDrive account.",
+				Help:  "Sharepoint Online, authenticated by Microsoft account.",
 			}, {
 				Value: "sharepoint-ntlm",
-				Help:  "Sharepoint with NTLM authentication. Usually self-hosted or company instances.",
+				Help:  "Sharepoint with NTLM authentication. Usually self-hosted or on-premises.",
 			}, {
 				Value: "other",
 				Help:  "Other site/service or software",

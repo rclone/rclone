@@ -45,9 +45,9 @@ Choose a number from below, or type in your own value
    \ "nextcloud"
  2 / Owncloud
    \ "owncloud"
- 3 / Sharepoint Online, authenticated by Microsoft OneDrive account.
+ 3 / Sharepoint Online, authenticated by Microsoft account.
    \ "sharepoint"
- 4 / Sharepoint with NTLM authentication. Usually self-hosted or company instances.
+ 4 / Sharepoint with NTLM authentication. Usually self-hosted or on-premises.
    \ "sharepoint-ntlm"
  5 / Other site/service or software
    \ "other"
