@@ -142,6 +142,7 @@ type Fs struct {
 	canStream          bool          // set if can stream
 	useOCMtime         bool          // set if can use X-OC-Mtime
 	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
+	checkBeforePurge   bool          // enables extra check that directory to purge really exists
 	hasMD5             bool          // set if can use owncloud style checksums for MD5
 	hasSHA1            bool          // set if can use owncloud style checksums for SHA1
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
@@ -540,6 +541,12 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		// Sharepoint with NTLM authentication
 		// See comment above
 		f.retryWithZeroDepth = true
+
+		// Sharepoint 2016 returns status 204 to the purge request
+		// even if the directory to purge does not really exist
+		// so we must perform an extra check to detect this
+		// condition and return a proper error code.
+		f.checkBeforePurge = true
 	case "other":
 	default:
 		fs.Debugf(f, "Unknown vendor %q", vendor)
@@ -878,6 +885,21 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		}
 		if notEmpty {
 			return fs.ErrorDirectoryNotEmpty
+		}
+	} else if f.checkBeforePurge {
+		// We are doing purge as the `check` argument is unset.
+		// The quirk says that we are working with Sharepoint 2016.
+		// This provider returns status 204 even if the purged directory
+		// does not really exist so we perform an extra check here.
+		// Only the existence is checked, all other errors must be
+		// ignored here to make the rclone test suite pass.
+		depth := defaultDepth
+		if f.retryWithZeroDepth {
+			depth = "0"
+		}
+		_, err := f.readMetaDataForPath(ctx, dir, depth)
+		if err == fs.ErrorObjectNotFound {
+			return fs.ErrorDirNotFound
 		}
 	}
 	opts := rest.Opts{
