@@ -100,7 +100,7 @@ func init() {
 				log.Fatalf("Failed to configure root directory: %v", err)
 			}
 		},
-		Options: []fs.Option{{
+		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "region",
 			Help: "Zoho region to connect to. You'll have to use the region you organization is registered in.",
 			Examples: []fs.OptionExample{{
@@ -123,7 +123,7 @@ func init() {
 				encoder.EncodeCtl |
 				encoder.EncodeDel |
 				encoder.EncodeInvalidUtf8),
-		}},
+		}}...),
 	})
 }
 
