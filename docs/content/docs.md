@@ -402,9 +402,9 @@ working hours could be:
 `--bwlimit "08:00,512k 12:00,10M 13:00,512k 18:00,30M 23:00,off"`
 
 In this example, the transfer bandwidth will be set to 512kBytes/sec
-at 8am every day. At noon, it will rise to 10MBytes/s, and drop back
+at 8am every day. At noon, it will rise to 10MByte/s, and drop back
 to 512kBytes/sec at 1pm. At 6pm, the bandwidth limit will be set to
-30MBytes/s, and at 11pm it will be completely disabled (full speed).
+30MByte/s, and at 11pm it will be completely disabled (full speed).
 Anything between 11pm and 8am will remain unlimited.
 
 An example of timetable with `WEEKDAY` could be:
@@ -412,7 +412,7 @@ An example of timetable with `WEEKDAY` could be:
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
 
 It means that, the transfer bandwidth will be set to 512kBytes/sec on
-Monday. It will rise to 10MBytes/s before the end of Friday. At 10:00
+Monday. It will rise to 10MByte/s before the end of Friday. At 10:00
 on Saturday it will be set to 1MByte/s. From 20:00 on Sunday it will
 be unlimited.
 
