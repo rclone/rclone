@@ -483,11 +483,21 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return dstObj, nil
 }
 
+// PublicLink adds a "readable by anyone with link" permission on the given file or folder.
+func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (string, error) {
+	o, err := f.NewObject(ctx, remote)
+	if err != nil {
+		return "", err
+	}
+	return o.(*Object).file.URL, nil
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
 	_ fs.Mover           = (*Fs)(nil)
 	_ fs.Copier          = (*Fs)(nil)
+	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.PutUncheckeder  = (*Fs)(nil)
 	_ dircache.DirCacher = (*Fs)(nil)
 )
