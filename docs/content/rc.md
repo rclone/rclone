@@ -303,6 +303,39 @@ setting the equivalent of `--buffer-size` in string or integer format.
 If you wish to check the `_config` assignment has worked properly then
 calling `options/local` will show what the value got set to.
 
+### Setting filter flags with _filter
+
+If you wish to set filters for the duration of an rc call only then
+pass in the `_filter` parameter.
+
+This should be in the same format as the `filter` key returned by
+[options/get](#options-get).
+
+For example, if you wished to run a sync with these flags
+
+    --max-size 1M --max-age 42s --include "a" --include "b"
+
+you would pass this parameter in your JSON blob.
+
+    "_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
+
+If using `rclone rc` this could be passed as
+
+    rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
+
+Any filter parameters you don't set will inherit the global defaults
+which were set with command line flags or environment variables.
+
+Note that it is possible to set some values as strings or integers -
+see [data types](/#data-types) for more info. Here is an example
+setting the equivalent of `--buffer-size` in string or integer format.
+
+    "_filter":{"MinSize": "42M"}
+    "_filter":{"MinSize": 44040192}
+
+If you wish to check the `_filter` assignment has worked properly then
+calling `options/local` will show what the value got set to.
+
 ### Assigning operations to groups with _group = value
 
 Each rc call has its own stats group for tracking its metrics. By default

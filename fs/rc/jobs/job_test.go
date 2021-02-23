@@ -8,6 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fstest/testy"
@@ -252,9 +254,11 @@ func TestExecuteJob(t *testing.T) {
 func TestExecuteJobWithConfig(t *testing.T) {
 	ctx := context.Background()
 	jobID = 0
+	called := false
 	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		ci := fs.GetConfig(ctx)
 		assert.Equal(t, 42*fs.MebiByte, ci.BufferSize)
+		called = true
 		return nil, nil
 	}
 	_, _, err := NewJob(context.Background(), jobFn, rc.Params{
@@ -263,13 +267,57 @@ func TestExecuteJobWithConfig(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
+	assert.Equal(t, true, called)
+	// Retest with string parameter
 	jobID = 0
+	called = false
 	_, _, err = NewJob(ctx, jobFn, rc.Params{
 		"_config": `{"BufferSize": "42M"}`,
 	})
 	require.NoError(t, err)
+	assert.Equal(t, true, called)
+	// Check that wasn't the default
 	ci := fs.GetConfig(ctx)
 	assert.NotEqual(t, 42*fs.MebiByte, ci.BufferSize)
+}
+
+func TestExecuteJobWithFilter(t *testing.T) {
+	ctx := context.Background()
+	called := false
+	jobID = 0
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		fi := filter.GetConfig(ctx)
+		assert.Equal(t, fs.SizeSuffix(1024), fi.Opt.MaxSize)
+		assert.Equal(t, []string{"a", "b", "c"}, fi.Opt.IncludeRule)
+		called = true
+		return nil, nil
+	}
+	_, _, err := NewJob(ctx, jobFn, rc.Params{
+		"_filter": rc.Params{
+			"IncludeRule": []string{"a", "b", "c"},
+			"MaxSize":     "1k",
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
+}
+
+func TestExecuteJobWithGroup(t *testing.T) {
+	ctx := context.Background()
+	jobID = 0
+	called := false
+	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
+		called = true
+		group, found := accounting.StatsGroupFromContext(ctx)
+		assert.Equal(t, true, found)
+		assert.Equal(t, "myparty", group)
+		return nil, nil
+	}
+	_, _, err := NewJob(ctx, jobFn, rc.Params{
+		"_group": "myparty",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, true, called)
 }
 
 func TestExecuteJobErrorPropagation(t *testing.T) {

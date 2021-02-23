@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/rc"
 )
 
@@ -216,6 +217,27 @@ func getConfig(ctx context.Context, in rc.Params) (context.Context, error) {
 	return ctx, nil
 }
 
+// See if _filter is set and if so adjust ctx to include it
+func getFilter(ctx context.Context, in rc.Params) (context.Context, error) {
+	if _, ok := in["_filter"]; !ok {
+		return ctx, nil
+	}
+	// Copy of the current filter options
+	opt := filter.GetConfig(ctx).Opt
+	// Update the options from the parameter
+	err := in.GetStruct("_filter", &opt)
+	if err != nil {
+		return ctx, err
+	}
+	fi, err := filter.NewFilter(&opt)
+	if err != nil {
+		return ctx, err
+	}
+	ctx = filter.ReplaceConfig(ctx, fi)
+	delete(in, "_filter") // remove the parameter
+	return ctx, nil
+}
+
 // NewJob creates a Job and executes it, possibly in the background if _async is set
 func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Job, out rc.Params, err error) {
 	id := atomic.AddInt64(&jobID, 1)
@@ -227,6 +249,11 @@ func (jobs *Jobs) NewJob(ctx context.Context, fn rc.Func, in rc.Params) (job *Jo
 	}
 
 	ctx, err = getConfig(ctx, in)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ctx, err = getFilter(ctx, in)
 	if err != nil {
 		return nil, nil, err
 	}
