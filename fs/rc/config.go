@@ -103,7 +103,7 @@ map to the external options very easily with a few exceptions.
 func rcOptionsLocal(ctx context.Context, in Params) (out Params, err error) {
 	out = make(Params)
 	out["config"] = fs.GetConfig(ctx)
-	out["filter"] = filter.GetConfig(ctx)
+	out["filter"] = filter.GetConfig(ctx).Opt
 	return out, nil
 }
 
