@@ -465,3 +465,4 @@ put them back in again.` >}}
   * K265 <k.265@qq.com>
   * Vesnyx <Vesnyx@users.noreply.github.com>
   * Dmitry Chepurovskiy <me@dm3ch.net>
+  * Rauno Ots <rauno.ots@cgi.com>
