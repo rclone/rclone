@@ -219,11 +219,11 @@ shared folder.`,
 			// as invalid characters.
 			// Testing revealed names with trailing spaces and the DEL character don't work.
 			// Also encode invalid UTF-8 bytes as json doesn't handle them properly.
-			Default: (encoder.Base |
+			Default: encoder.Base |
 				encoder.EncodeBackSlash |
 				encoder.EncodeDel |
 				encoder.EncodeRightSpace |
-				encoder.EncodeInvalidUtf8),
+				encoder.EncodeInvalidUtf8,
 		}}...),
 	})
 }
@@ -242,6 +242,7 @@ type Fs struct {
 	name           string         // name of this remote
 	root           string         // the path we are working on
 	opt            Options        // parsed options
+	ci             *fs.ConfigInfo // global config
 	features       *fs.Features   // optional features
 	srv            files.Client   // the connection to the dropbox server
 	svc            files.Client   // the connection to the dropbox server (unauthorized)
@@ -368,9 +369,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, errors.Wrap(err, "failed to configure dropbox")
 	}
 
+	ci := fs.GetConfig(ctx)
+
 	f := &Fs{
 		name:  name,
 		opt:   *opt,
+		ci:    ci,
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	cfg := dropbox.Config{
@@ -667,7 +671,7 @@ func (f *Fs) findSharedFolder(name string) (id string, err error) {
 	return "", fs.ErrorDirNotFound
 }
 
-// mountSharedFolders mount a shared folder to the root namespace
+// mountSharedFolder mount a shared folder to the root namespace
 func (f *Fs) mountSharedFolder(id string) error {
 	arg := sharing.MountFolderArg{
 		SharedFolderId: id,
@@ -679,7 +683,7 @@ func (f *Fs) mountSharedFolder(id string) error {
 	return err
 }
 
-// listSharedFolders lists shared the user as access to (note this means individual
+// listReceivedFiles lists shared the user as access to (note this means individual
 // files not files contained in shared folders)
 func (f *Fs) listReceivedFiles() (entries fs.DirEntries, err error) {
 	started := false
@@ -1205,7 +1209,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 // Close the returned channel to stop being notified.
 func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryType), pollIntervalChan <-chan time.Duration) {
 	go func() {
-		// get the StartPageToken early so all changes from now on get processed
+		// get the StartCursor early so all changes from now on get processed
 		startCursor, err := f.changeNotifyCursor()
 		if err != nil {
 			fs.Infof(f, "Failed to get StartCursor: %s", err)
@@ -1248,7 +1252,6 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 }
 
 func (f *Fs) changeNotifyCursor() (cursor string, err error) {
-	fs.Debugf("", "changeNotifyCursor")
 	var startCursor *files.ListFolderGetLatestCursorResult
 
 	err = f.pacer.Call(func() (bool, error) {
@@ -1265,10 +1268,16 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 	cursor := startCursor
 	var res *files.ListFolderLongpollResult
 
+	// Dropbox sets a timeout range of 30 - 480
+	timeout := uint64(f.ci.Timeout / time.Second)
+	if timeout > 480 {
+		timeout = 480
+	}
+
 	err = f.pacer.Call(func() (bool, error) {
 		args := files.ListFolderLongpollArg{
 			Cursor:  cursor,
-			Timeout: 60,
+			Timeout: timeout,
 		}
 
 		res, err = f.svc.ListFolderLongpoll(&args)
