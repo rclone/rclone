@@ -466,3 +466,4 @@ put them back in again.` >}}
   * Vesnyx <Vesnyx@users.noreply.github.com>
   * Dmitry Chepurovskiy <me@dm3ch.net>
   * Rauno Ots <rauno.ots@cgi.com>
+  * Georg Neugschwandtner <georg.neugschwandtner@gmx.net>
