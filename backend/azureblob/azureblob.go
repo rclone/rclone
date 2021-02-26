@@ -59,7 +59,6 @@ const (
 	emulatorBlobEndpoint = "http://127.0.0.1:10000/devstoreaccount1"
 	memoryPoolFlushTime  = fs.Duration(time.Minute) // flush the cached buffers after this long
 	memoryPoolUseMmap    = false
-	defaultPublicAccess  = azblob.PublicAccessNone
 )
 
 var (
@@ -219,15 +218,18 @@ This option controls how often unused buffers will be removed from the pool.`,
 				encoder.EncodeBackSlash |
 				encoder.EncodeRightPeriod),
 		}, {
-			Name: "public_access",
-			Help: `Public access level of a container: blob, container or private(default).
-
-This sets the public access level of a container. Default is none that means only authorized user can get access to the container.
-Other options are "blob" and "container" where
-container: Specifies full public read access for container and blob data. Clients can enumerate blobs within the container via anonymous request,
-but cannot enumerate containers within the storage account.
-blob: Specifies public read access for blobs. Blob data within this container can be read via anonymous request, but container data is not available.
-Clients cannot enumerate blobs within the container via anonymous request.`,
+			Name:    "public_access",
+			Help:    "Public access level of a container: blob, container.",
+			Default: string(azblob.PublicAccessNone),
+			Examples: []fs.OptionExample{
+				{
+					Value: "blob",
+					Help:  "Blob data within this container can be read via anonymous request.",
+				}, {
+					Value: "container",
+					Help:  "Allow full public read access for container and blob data.",
+				},
+			},
 			Advanced: true,
 		}},
 	})
@@ -526,9 +528,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			string(azblob.AccessTierHot), string(azblob.AccessTierCool), string(azblob.AccessTierArchive))
 	}
 
-	if opt.PublicAccess == "" {
-		opt.PublicAccess = string(defaultPublicAccess)
-	} else if !validatePublicAccess((opt.PublicAccess)) {
+	if !validatePublicAccess((opt.PublicAccess)) {
 		return nil, errors.Errorf("Azure Blob: Supported public access level are %s and %s",
 			string(azblob.PublicAccessBlob), string(azblob.PublicAccessContainer))
 	}
