@@ -207,6 +207,25 @@ any given time.
 `,
 			Advanced: true,
 		}, {
+			Name:    "disable_concurrent_reads",
+			Default: false,
+			Help: `If set don't use concurrent reads
+
+Normally concurrent reads are safe to use and not using them will
+degrade performance, so this option is disabled by default.
+
+Some servers limit the amount number of times a file can be
+downloaded. Using concurrent reads can trigger this limit, so if you
+have a server which returns
+
+    Failed to copy: file does not exist
+
+Then you may need to enable this flag.
+
+If concurrent reads are disabled, the use_fstat option is ignored.
+`,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections
@@ -224,28 +243,29 @@ Set to 0 to keep connections indefinitely.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host              string      `config:"host"`
-	User              string      `config:"user"`
-	Port              string      `config:"port"`
-	Pass              string      `config:"pass"`
-	KeyPem            string      `config:"key_pem"`
-	KeyFile           string      `config:"key_file"`
-	KeyFilePass       string      `config:"key_file_pass"`
-	PubKeyFile        string      `config:"pubkey_file"`
-	KnownHostsFile    string      `config:"known_hosts_file"`
-	KeyUseAgent       bool        `config:"key_use_agent"`
-	UseInsecureCipher bool        `config:"use_insecure_cipher"`
-	DisableHashCheck  bool        `config:"disable_hashcheck"`
-	AskPassword       bool        `config:"ask_password"`
-	PathOverride      string      `config:"path_override"`
-	SetModTime        bool        `config:"set_modtime"`
-	Md5sumCommand     string      `config:"md5sum_command"`
-	Sha1sumCommand    string      `config:"sha1sum_command"`
-	SkipLinks         bool        `config:"skip_links"`
-	Subsystem         string      `config:"subsystem"`
-	ServerCommand     string      `config:"server_command"`
-	UseFstat          bool        `config:"use_fstat"`
-	IdleTimeout       fs.Duration `config:"idle_timeout"`
+	Host                   string      `config:"host"`
+	User                   string      `config:"user"`
+	Port                   string      `config:"port"`
+	Pass                   string      `config:"pass"`
+	KeyPem                 string      `config:"key_pem"`
+	KeyFile                string      `config:"key_file"`
+	KeyFilePass            string      `config:"key_file_pass"`
+	PubKeyFile             string      `config:"pubkey_file"`
+	KnownHostsFile         string      `config:"known_hosts_file"`
+	KeyUseAgent            bool        `config:"key_use_agent"`
+	UseInsecureCipher      bool        `config:"use_insecure_cipher"`
+	DisableHashCheck       bool        `config:"disable_hashcheck"`
+	AskPassword            bool        `config:"ask_password"`
+	PathOverride           string      `config:"path_override"`
+	SetModTime             bool        `config:"set_modtime"`
+	Md5sumCommand          string      `config:"md5sum_command"`
+	Sha1sumCommand         string      `config:"sha1sum_command"`
+	SkipLinks              bool        `config:"skip_links"`
+	Subsystem              string      `config:"subsystem"`
+	ServerCommand          string      `config:"server_command"`
+	UseFstat               bool        `config:"use_fstat"`
+	DisableConcurrentReads bool        `config:"disable_concurrent_reads"`
+	IdleTimeout            fs.Duration `config:"idle_timeout"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -373,7 +393,10 @@ func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.C
 		}
 	}
 	opts = opts[:len(opts):len(opts)] // make sure we don't overwrite the callers opts
-	opts = append(opts, sftp.UseFstat(f.opt.UseFstat))
+	opts = append(opts,
+		sftp.UseFstat(f.opt.UseFstat),
+		sftp.UseConcurrentReads(!f.opt.DisableConcurrentReads),
+	)
 
 	return sftp.NewClientPipe(pr, pw, opts...)
 }
