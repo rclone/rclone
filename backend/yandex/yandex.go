@@ -537,7 +537,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string) (err error) {
 		RootURL: location,
 		Method:  "GET",
 	}
-	deadline := time.Now().Add(f.ci.Timeout)
+	deadline := time.Now().Add(f.ci.TimeoutOrInfinite())
 	for time.Now().Before(deadline) {
 		var resp *http.Response
 		var body []byte
@@ -568,7 +568,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string) (err error) {
 
 		time.Sleep(1 * time.Second)
 	}
-	return errors.Errorf("async operation didn't complete after %v", f.ci.Timeout)
+	return errors.Errorf("async operation didn't complete after %v", f.ci.TimeoutOrInfinite())
 }
 
 func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) (err error) {

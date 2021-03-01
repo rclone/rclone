@@ -1088,7 +1088,7 @@ func (f *Fs) Precision() time.Duration {
 
 // waitForJob waits for the job with status in url to complete
 func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
-	deadline := time.Now().Add(f.ci.Timeout)
+	deadline := time.Now().Add(f.ci.TimeoutOrInfinite())
 	for time.Now().Before(deadline) {
 		var resp *http.Response
 		var err error
@@ -1126,7 +1126,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 
 		time.Sleep(1 * time.Second)
 	}
-	return errors.Errorf("async operation didn't complete after %v", f.ci.Timeout)
+	return errors.Errorf("async operation didn't complete after %v", f.ci.TimeoutOrInfinite())
 }
 
 // Copy src to this remote using server-side copy operations.

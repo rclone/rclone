@@ -1269,7 +1269,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 	var res *files.ListFolderLongpollResult
 
 	// Dropbox sets a timeout range of 30 - 480
-	timeout := uint64(f.ci.Timeout / time.Second)
+	timeout := uint64(f.ci.TimeoutOrInfinite() / time.Second)
 	if timeout > 480 {
 		timeout = 480
 	}

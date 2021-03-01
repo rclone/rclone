@@ -164,6 +164,14 @@ func NewConfig() *ConfigInfo {
 	return c
 }
 
+// TimeoutOrInfinite returns ci.Timeout if > 0 or infinite otherwise
+func (c *ConfigInfo) TimeoutOrInfinite() time.Duration {
+	if c.Timeout > 0 {
+		return c.Timeout
+	}
+	return ModTimeNotSupported
+}
+
 type configContextKeyType struct{}
 
 // Context key for config

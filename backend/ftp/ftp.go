@@ -598,7 +598,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}()
 
 	// Wait for List for up to Timeout seconds
-	timer := time.NewTimer(f.ci.Timeout)
+	timer := time.NewTimer(f.ci.TimeoutOrInfinite())
 	select {
 	case listErr = <-errchan:
 		timer.Stop()
