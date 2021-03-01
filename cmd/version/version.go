@@ -59,7 +59,7 @@ Or
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		if check {
-			checkVersion()
+			CheckVersion()
 		} else {
 			cmd.ShowVersion()
 		}
@@ -74,8 +74,8 @@ func stripV(s string) string {
 	return s
 }
 
-// getVersion gets the version by checking the download repository passed in
-func getVersion(url string) (v *semver.Version, vs string, date time.Time, err error) {
+// GetVersion gets the version available for download
+func GetVersion(url string) (v *semver.Version, vs string, date time.Time, err error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return v, vs, date, err
@@ -101,9 +101,8 @@ func getVersion(url string) (v *semver.Version, vs string, date time.Time, err e
 	return v, vs, date, err
 }
 
-// check the current version against available versions
-func checkVersion() {
-	// Get Current version
+// CheckVersion checks the installed version against available downloads
+func CheckVersion() {
 	vCurrent, err := semver.NewVersion(stripV(fs.Version))
 	if err != nil {
 		fs.Errorf(nil, "Failed to parse version: %v", err)
@@ -111,7 +110,7 @@ func checkVersion() {
 	const timeFormat = "2006-01-02"
 
 	printVersion := func(what, url string) {
-		v, vs, t, err := getVersion(url + "version.txt")
+		v, vs, t, err := GetVersion(url + "version.txt")
 		if err != nil {
 			fs.Errorf(nil, "Failed to get rclone %s version: %v", what, err)
 			return
