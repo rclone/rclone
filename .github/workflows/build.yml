@@ -23,7 +23,7 @@ jobs:
 
         include:
           - job_name: linux
-            os: ubuntu-latest
+            os: ubuntu-20.04
             go: '1.16.x'
             gotags: cmount
             build_flags: '-include "^linux/"'
@@ -70,25 +70,25 @@ jobs:
             deploy: true
 
           - job_name: other_os
-            os: ubuntu-latest
+            os: ubuntu-20.04
             go: '1.16.x'
             build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
 
           - job_name: go1.13
-            os: ubuntu-latest
+            os: ubuntu-20.04
             go: '1.13.x'
             quicktest: true
 
           - job_name: go1.14
-            os: ubuntu-latest
+            os: ubuntu-20.04
             go: '1.14.x'
             quicktest: true
             racequicktest: true
 
           - job_name: go1.15
-            os: ubuntu-latest
+            os: ubuntu-20.04
             go: '1.15.x'
             quicktest: true
             racequicktest: true
@@ -125,7 +125,7 @@ jobs:
           sudo chmod 666 /dev/fuse
           sudo chown root:$USER /etc/fuse.conf
           sudo apt-get install fuse libfuse-dev rpm pkg-config
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-20.04'
 
       - name: Install Libraries on macOS
         shell: bash
@@ -204,7 +204,7 @@ jobs:
       - name: Deploy built binaries
         shell: bash
         run: |
-          if [[ "${{ matrix.os }}" == "ubuntu-latest" ]]; then make release_dep_linux ; fi
+          if [[ "${{ matrix.os }}" == "ubuntu-20.04" ]]; then make release_dep_linux ; fi
           if [[ "${{ matrix.os }}" == "windows-latest" ]]; then make release_dep_windows ; fi
           make ci_beta
         env:
@@ -216,7 +216,7 @@ jobs:
   xgo:
     timeout-minutes: 60
     name: "xgo cross compile"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
 
