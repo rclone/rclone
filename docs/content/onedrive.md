@@ -430,7 +430,7 @@ in it will be mapped to `？` instead.
 
 #### File sizes ####
 
-The largest allowed file size is 250GB for both OneDrive Personal and OneDrive for Business [(Updated 13 Jan 2021)](https://support.microsoft.com/en-us/office/invalid-file-names-and-file-types-in-onedrive-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa?ui=en-us&rs=en-us&ad=us#individualfilesize).
+The largest allowed file size is 250 GiB for both OneDrive Personal and OneDrive for Business [(Updated 13 Jan 2021)](https://support.microsoft.com/en-us/office/invalid-file-names-and-file-types-in-onedrive-and-sharepoint-64883a5d-228e-48f5-b3d2-eb39e07630fa?ui=en-us&rs=en-us&ad=us#individualfilesize).
 
 #### Path length ####
 

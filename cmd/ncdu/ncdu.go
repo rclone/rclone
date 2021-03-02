@@ -385,9 +385,9 @@ func (u *UI) Draw() error {
 			}
 			if u.showDirAverageSize {
 				if averageSize > 0 {
-					extras += fmt.Sprintf("%8v ", fs.SizeSuffix(int64(averageSize)))
+					extras += fmt.Sprintf("%9v ", fs.SizeSuffix(int64(averageSize)))
 				} else {
-					extras += "         "
+					extras += "          "
 				}
 
 			}
@@ -406,7 +406,7 @@ func (u *UI) Draw() error {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			Linef(0, y, w, fg, bg, ' ', "%c %8v %s%c%s%s", fileFlag, fs.SizeSuffix(size), extras, mark, path.Base(entry.Remote()), message)
+			Linef(0, y, w, fg, bg, ' ', "%c %9v %s%c%s%s", fileFlag, fs.SizeSuffix(size), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
 	}

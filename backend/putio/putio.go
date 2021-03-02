@@ -35,7 +35,7 @@ const (
 	minSleep                   = 10 * time.Millisecond
 	maxSleep                   = 2 * time.Second
 	decayConstant              = 2 // bigger for slower decay, exponential
-	defaultChunkSize           = 48 * fs.MebiByte
+	defaultChunkSize           = 48 * fs.Mebi
 )
 
 var (

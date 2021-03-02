@@ -65,9 +65,9 @@ const (
 	// Upload chunk size - setting too small makes uploads slow.
 	// Chunks are buffered into memory for retries.
 	//
-	// Speed vs chunk size uploading a 1 GB file on 2017-11-22
+	// Speed vs chunk size uploading a 1 GiB file on 2017-11-22
 	//
-	// Chunk Size MB, Speed Mbyte/s, % of max
+	// Chunk Size MiB, Speed MiByte/s, % of max
 	// 1	1.364	11%
 	// 2	2.443	19%
 	// 4	4.288	33%
@@ -82,11 +82,11 @@ const (
 	// 96	12.302	95%
 	// 128	12.945	100%
 	//
-	// Choose 48MB which is 91% of Maximum speed.  rclone by
-	// default does 4 transfers so this should use 4*48MB = 192MB
+	// Choose 48 MiB which is 91% of Maximum speed.  rclone by
+	// default does 4 transfers so this should use 4*48 MiB = 192 MiB
 	// by default.
-	defaultChunkSize = 48 * fs.MebiByte
-	maxChunkSize     = 150 * fs.MebiByte
+	defaultChunkSize = 48 * fs.Mebi
+	maxChunkSize     = 150 * fs.Mebi
 	// Max length of filename parts: https://help.dropbox.com/installs-integrations/sync-uploads/files-not-syncing
 	maxFileNameLength = 255
 )
@@ -162,7 +162,7 @@ Any files larger than this will be uploaded in chunks of this size.
 
 Note that chunks are buffered in memory (one at a time) so rclone can
 deal with retries.  Setting this larger will increase the speed
-slightly (at most 10%% for 128MB in tests) at the cost of using more
+slightly (at most 10%% for 128 MiB in tests) at the cost of using more
 memory.  It can be set smaller if you are tight on memory.`, maxChunkSize),
 			Default:  defaultChunkSize,
 			Advanced: true,
@@ -323,7 +323,7 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 }
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
-	const minChunkSize = fs.Byte
+	const minChunkSize = fs.SizeSuffixBase
 	if cs < minChunkSize {
 		return errors.Errorf("%s is less than %s", cs, minChunkSize)
 	}

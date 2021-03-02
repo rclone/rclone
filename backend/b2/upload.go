@@ -230,14 +230,14 @@ func (up *largeUpload) transferChunk(ctx context.Context, part int64, body []byt
 		//
 		// The number of bytes in the file being uploaded. Note that
 		// this header is required; you cannot leave it out and just
-		// use chunked encoding.  The minimum size of every part but
-		// the last one is 100MB.
+		// use chunked encoding. The minimum size of every part but
+		// the last one is 100 MB (100,000,000 bytes)
 		//
 		// X-Bz-Content-Sha1
 		//
 		// The SHA1 checksum of the this part of the file. B2 will
 		// check this when the part is uploaded, to make sure that the
-		// data arrived correctly.  The same SHA1 checksum must be
+		// data arrived correctly. The same SHA1 checksum must be
 		// passed to b2_finish_large_file.
 		opts := rest.Opts{
 			Method:  "POST",

@@ -534,7 +534,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return nil
 }
 
-// About reports space usage (with a MB precision)
+// About reports space usage (with a MiB precision)
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	mount, err := f.client.MountsDetails(f.mountID)
 	if err != nil {

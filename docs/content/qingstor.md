@@ -101,7 +101,7 @@ docs](/docs/#fast-list) for more details.
 ### Multipart uploads ###
 
 rclone supports multipart uploads with QingStor which means that it can
-upload files bigger than 5GB. Note that files uploaded with multipart
+upload files bigger than 5 GiB. Note that files uploaded with multipart
 upload don't have an MD5SUM.
 
 Note that incomplete multipart uploads older than 24 hours can be
@@ -227,7 +227,7 @@ Number of connection retries.
 Cutoff for switching to chunked upload
 
 Any files larger than this will be uploaded in chunks of chunk_size.
-The minimum is 0 and the maximum is 5GB.
+The minimum is 0 and the maximum is 5 GiB.
 
 - Config:      upload_cutoff
 - Env Var:     RCLONE_QINGSTOR_UPLOAD_CUTOFF

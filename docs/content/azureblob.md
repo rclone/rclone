@@ -269,7 +269,7 @@ Leave blank normally.
 
 #### --azureblob-upload-cutoff
 
-Cutoff for switching to chunked upload (<= 256MB). (Deprecated)
+Cutoff for switching to chunked upload (<= 256 MiB). (Deprecated)
 
 - Config:      upload_cutoff
 - Env Var:     RCLONE_AZUREBLOB_UPLOAD_CUTOFF
@@ -278,7 +278,7 @@ Cutoff for switching to chunked upload (<= 256MB). (Deprecated)
 
 #### --azureblob-chunk-size
 
-Upload chunk size (<= 100MB).
+Upload chunk size (<= 100 MiB).
 
 Note that this is stored in memory and there may be up to
 "--transfers" chunks stored at once in memory.

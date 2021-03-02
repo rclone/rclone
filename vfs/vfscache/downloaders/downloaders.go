@@ -593,7 +593,7 @@ func (dl *downloader) _stop() {
 
 	// stop the downloader by stopping the async reader buffering
 	// any more input. This causes all the stuff in the async
-	// buffer (which can be many MB) to be written to the disk
+	// buffer (which can be many MiB) to be written to the disk
 	// before exiting.
 	if dl.in != nil {
 		dl.in.StopBuffering()

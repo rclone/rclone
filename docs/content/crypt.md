@@ -627,7 +627,7 @@ approximately 2×10⁻³² of re-using a nonce.
 
 #### Chunk
 
-Each chunk will contain 64kB of data, except for the last one which
+Each chunk will contain 64 KiB of data, except for the last one which
 may have less data. The data chunk is in standard NaCl SecretBox
 format. SecretBox uses XSalsa20 and Poly1305 to encrypt and
 authenticate messages.
@@ -653,12 +653,12 @@ This uses a 32 byte (256 bit key) key derived from the user password.
 
 49 bytes total
 
-1MB (1048576 bytes) file will encrypt to
+1 MiB (1048576 bytes) file will encrypt to
 
   * 32 bytes header
   * 16 chunks of 65568 bytes
 
-1049120 bytes total (a 0.05% overhead).  This is the overhead for big
+1049120 bytes total (a 0.05% overhead). This is the overhead for big
 files.
 
 ### Name encryption

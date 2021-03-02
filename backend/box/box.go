@@ -126,7 +126,7 @@ func init() {
 			}},
 		}, {
 			Name:     "upload_cutoff",
-			Help:     "Cutoff for switching to multipart upload (>= 50MB).",
+			Help:     "Cutoff for switching to multipart upload (>= 50 MiB).",
 			Default:  fs.SizeSuffix(defaultUploadCutoff),
 			Advanced: true,
 		}, {
@@ -1228,7 +1228,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // upload does a single non-multipart upload
 //
-// This is recommended for less than 50 MB of content
+// This is recommended for less than 50 MiB of content
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time, options ...fs.OpenOption) (err error) {
 	upload := api.UploadFile{
 		Name:              o.fs.opt.Enc.FromStandardName(leaf),

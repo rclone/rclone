@@ -54,10 +54,10 @@ const (
 	decayConstant       = 1 // bigger for slower decay, exponential
 	maxParts            = 10000
 	maxVersions         = 100 // maximum number of versions we search in --b2-versions mode
-	minChunkSize        = 5 * fs.MebiByte
-	defaultChunkSize    = 96 * fs.MebiByte
-	defaultUploadCutoff = 200 * fs.MebiByte
-	largeFileCopyCutoff = 4 * fs.GibiByte          // 5E9 is the max
+	minChunkSize        = 5 * fs.Mebi
+	defaultChunkSize    = 96 * fs.Mebi
+	defaultUploadCutoff = 200 * fs.Mebi
+	largeFileCopyCutoff = 4 * fs.Gibi              // 5E9 is the max
 	memoryPoolFlushTime = fs.Duration(time.Minute) // flush the cached buffers after this long
 	memoryPoolUseMmap   = false
 )
@@ -116,7 +116,7 @@ in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration
 
 Files above this size will be uploaded in chunks of "--b2-chunk-size".
 
-This value should be set no larger than 4.657GiB (== 5GB).`,
+This value should be set no larger than 4.657 GiB (== 5 GB).`,
 			Default:  defaultUploadCutoff,
 			Advanced: true,
 		}, {
@@ -126,7 +126,7 @@ This value should be set no larger than 4.657GiB (== 5GB).`,
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 4.6GB.`,
+The minimum is 0 and the maximum is 4.6 GiB.`,
 			Default:  largeFileCopyCutoff,
 			Advanced: true,
 		}, {

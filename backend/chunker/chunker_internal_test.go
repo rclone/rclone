@@ -33,7 +33,7 @@ func testPutLarge(t *testing.T, f *Fs, kilobytes int) {
 		fstests.TestPutLarge(context.Background(), t, f, &fstest.Item{
 			ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
 			Path:    fmt.Sprintf("chunker-upload-%dk", kilobytes),
-			Size:    int64(kilobytes) * int64(fs.KibiByte),
+			Size:    int64(kilobytes) * int64(fs.Kibi),
 		})
 	})
 }

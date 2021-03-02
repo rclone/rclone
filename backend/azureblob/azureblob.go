@@ -47,8 +47,8 @@ const (
 	timeFormatIn          = time.RFC3339
 	timeFormatOut         = "2006-01-02T15:04:05.000000000Z07:00"
 	storageDefaultBaseURL = "blob.core.windows.net"
-	defaultChunkSize      = 4 * fs.MebiByte
-	maxChunkSize          = 100 * fs.MebiByte
+	defaultChunkSize      = 4 * fs.Mebi
+	maxChunkSize          = 100 * fs.Mebi
 	uploadConcurrency     = 4
 	defaultAccessTier     = azblob.AccessTierNone
 	maxTryTimeout         = time.Hour * 24 * 365 //max time of an azure web request response window (whether or not data is flowing)
@@ -129,11 +129,11 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Advanced: true,
 		}, {
 			Name:     "upload_cutoff",
-			Help:     "Cutoff for switching to chunked upload (<= 256MB). (Deprecated)",
+			Help:     "Cutoff for switching to chunked upload (<= 256 MiB). (Deprecated)",
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
-			Help: `Upload chunk size (<= 100MB).
+			Help: `Upload chunk size (<= 100 MiB).
 
 Note that this is stored in memory and there may be up to
 "--transfers" chunks stored at once in memory.`,
@@ -404,7 +404,7 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 }
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
-	const minChunkSize = fs.Byte
+	const minChunkSize = fs.SizeSuffixBase
 	if cs < minChunkSize {
 		return errors.Errorf("%s is less than %s", cs, minChunkSize)
 	}

@@ -43,7 +43,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
 			},
 			false,
-			"666k",
+			"666Ki",
 		},
 		{
 			"666:333",
@@ -51,7 +51,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 333 * 1024}},
 			},
 			false,
-			"666k:333k",
+			"666Ki:333Ki",
 		},
 		{
 			"10:20,666",
@@ -65,7 +65,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 6, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
 			},
 			false,
-			"Sun-10:20,666k Mon-10:20,666k Tue-10:20,666k Wed-10:20,666k Thu-10:20,666k Fri-10:20,666k Sat-10:20,666k",
+			"Sun-10:20,666Ki Mon-10:20,666Ki Tue-10:20,666Ki Wed-10:20,666Ki Thu-10:20,666Ki Fri-10:20,666Ki Sat-10:20,666Ki",
 		},
 		{
 			"10:20,666:333",
@@ -79,7 +79,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 6, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 333 * 1024}},
 			},
 			false,
-			"Sun-10:20,666k:333k Mon-10:20,666k:333k Tue-10:20,666k:333k Wed-10:20,666k:333k Thu-10:20,666k:333k Fri-10:20,666k:333k Sat-10:20,666k:333k",
+			"Sun-10:20,666Ki:333Ki Mon-10:20,666Ki:333Ki Tue-10:20,666Ki:333Ki Wed-10:20,666Ki:333Ki Thu-10:20,666Ki:333Ki Fri-10:20,666Ki:333Ki Sat-10:20,666Ki:333Ki",
 		},
 		{
 			"11:00,333 13:40,666 23:50,10M 23:59,off",
@@ -114,7 +114,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 6, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: -1}},
 			},
 			false,
-			"Sun-11:00,333k Mon-11:00,333k Tue-11:00,333k Wed-11:00,333k Thu-11:00,333k Fri-11:00,333k Sat-11:00,333k Sun-13:40,666k Mon-13:40,666k Tue-13:40,666k Wed-13:40,666k Thu-13:40,666k Fri-13:40,666k Sat-13:40,666k Sun-23:50,10M Mon-23:50,10M Tue-23:50,10M Wed-23:50,10M Thu-23:50,10M Fri-23:50,10M Sat-23:50,10M Sun-23:59,off Mon-23:59,off Tue-23:59,off Wed-23:59,off Thu-23:59,off Fri-23:59,off Sat-23:59,off",
+			"Sun-11:00,333Ki Mon-11:00,333Ki Tue-11:00,333Ki Wed-11:00,333Ki Thu-11:00,333Ki Fri-11:00,333Ki Sat-11:00,333Ki Sun-13:40,666Ki Mon-13:40,666Ki Tue-13:40,666Ki Wed-13:40,666Ki Thu-13:40,666Ki Fri-13:40,666Ki Sat-13:40,666Ki Sun-23:50,10Mi Mon-23:50,10Mi Tue-23:50,10Mi Wed-23:50,10Mi Thu-23:50,10Mi Fri-23:50,10Mi Sat-23:50,10Mi Sun-23:59,off Mon-23:59,off Tue-23:59,off Wed-23:59,off Thu-23:59,off Fri-23:59,off Sat-23:59,off",
 		},
 		{
 			"11:00,333:666 13:40,666:off 23:50,10M:1M 23:59,off:10M",
@@ -149,7 +149,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 6, HHMM: 2359, Bandwidth: BwPair{Tx: -1, Rx: 10 * 1024 * 1024}},
 			},
 			false,
-			"Sun-11:00,333k:666k Mon-11:00,333k:666k Tue-11:00,333k:666k Wed-11:00,333k:666k Thu-11:00,333k:666k Fri-11:00,333k:666k Sat-11:00,333k:666k Sun-13:40,666k:off Mon-13:40,666k:off Tue-13:40,666k:off Wed-13:40,666k:off Thu-13:40,666k:off Fri-13:40,666k:off Sat-13:40,666k:off Sun-23:50,10M:1M Mon-23:50,10M:1M Tue-23:50,10M:1M Wed-23:50,10M:1M Thu-23:50,10M:1M Fri-23:50,10M:1M Sat-23:50,10M:1M Sun-23:59,off:10M Mon-23:59,off:10M Tue-23:59,off:10M Wed-23:59,off:10M Thu-23:59,off:10M Fri-23:59,off:10M Sat-23:59,off:10M",
+			"Sun-11:00,333Ki:666Ki Mon-11:00,333Ki:666Ki Tue-11:00,333Ki:666Ki Wed-11:00,333Ki:666Ki Thu-11:00,333Ki:666Ki Fri-11:00,333Ki:666Ki Sat-11:00,333Ki:666Ki Sun-13:40,666Ki:off Mon-13:40,666Ki:off Tue-13:40,666Ki:off Wed-13:40,666Ki:off Thu-13:40,666Ki:off Fri-13:40,666Ki:off Sat-13:40,666Ki:off Sun-23:50,10Mi:1Mi Mon-23:50,10Mi:1Mi Tue-23:50,10Mi:1Mi Wed-23:50,10Mi:1Mi Thu-23:50,10Mi:1Mi Fri-23:50,10Mi:1Mi Sat-23:50,10Mi:1Mi Sun-23:59,off:10Mi Mon-23:59,off:10Mi Tue-23:59,off:10Mi Wed-23:59,off:10Mi Thu-23:59,off:10Mi Fri-23:59,off:10Mi Sat-23:59,off:10Mi",
 		},
 		{
 			"Mon-11:00,333 Tue-13:40,666:333 Fri-00:00,10M Sat-10:00,off Sun-23:00,666",
@@ -161,7 +161,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 2300, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
 			},
 			false,
-			"Mon-11:00,333k Tue-13:40,666k:333k Fri-00:00,10M Sat-10:00,off Sun-23:00,666k",
+			"Mon-11:00,333Ki Tue-13:40,666Ki:333Ki Fri-00:00,10Mi Sat-10:00,off Sun-23:00,666Ki",
 		},
 		{
 			"Mon-11:00,333 Tue-13:40,666 Fri-00:00,10M 00:01,off Sun-23:00,666:off",
@@ -179,7 +179,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 2300, Bandwidth: BwPair{Tx: 666 * 1024, Rx: -1}},
 			},
 			false,
-			"Mon-11:00,333k Tue-13:40,666k Fri-00:00,10M Sun-00:01,off Mon-00:01,off Tue-00:01,off Wed-00:01,off Thu-00:01,off Fri-00:01,off Sat-00:01,off Sun-23:00,666k:off",
+			"Mon-11:00,333Ki Tue-13:40,666Ki Fri-00:00,10Mi Sun-00:01,off Mon-00:01,off Tue-00:01,off Wed-00:01,off Thu-00:01,off Fri-00:01,off Sat-00:01,off Sun-23:00,666Ki:off",
 		},
 		{
 			// from the docs
@@ -222,7 +222,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 6, HHMM: 2300, Bandwidth: BwPair{Tx: -1, Rx: -1}},
 			},
 			false,
-			"Sun-08:00,512k Mon-08:00,512k Tue-08:00,512k Wed-08:00,512k Thu-08:00,512k Fri-08:00,512k Sat-08:00,512k Sun-12:00,10M Mon-12:00,10M Tue-12:00,10M Wed-12:00,10M Thu-12:00,10M Fri-12:00,10M Sat-12:00,10M Sun-13:00,512k Mon-13:00,512k Tue-13:00,512k Wed-13:00,512k Thu-13:00,512k Fri-13:00,512k Sat-13:00,512k Sun-18:00,30M Mon-18:00,30M Tue-18:00,30M Wed-18:00,30M Thu-18:00,30M Fri-18:00,30M Sat-18:00,30M Sun-23:00,off Mon-23:00,off Tue-23:00,off Wed-23:00,off Thu-23:00,off Fri-23:00,off Sat-23:00,off",
+			"Sun-08:00,512Ki Mon-08:00,512Ki Tue-08:00,512Ki Wed-08:00,512Ki Thu-08:00,512Ki Fri-08:00,512Ki Sat-08:00,512Ki Sun-12:00,10Mi Mon-12:00,10Mi Tue-12:00,10Mi Wed-12:00,10Mi Thu-12:00,10Mi Fri-12:00,10Mi Sat-12:00,10Mi Sun-13:00,512Ki Mon-13:00,512Ki Tue-13:00,512Ki Wed-13:00,512Ki Thu-13:00,512Ki Fri-13:00,512Ki Sat-13:00,512Ki Sun-18:00,30Mi Mon-18:00,30Mi Tue-18:00,30Mi Wed-18:00,30Mi Thu-18:00,30Mi Fri-18:00,30Mi Sat-18:00,30Mi Sun-23:00,off Mon-23:00,off Tue-23:00,off Wed-23:00,off Thu-23:00,off Fri-23:00,off Sat-23:00,off",
 		},
 		{
 			// from the docs
@@ -234,7 +234,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 2000, Bandwidth: BwPair{Tx: -1, Rx: -1}},
 			},
 			false,
-			"Mon-00:00,512k Fri-23:59,10M Sat-10:00,1M Sun-20:00,off",
+			"Mon-00:00,512Ki Fri-23:59,10Mi Sat-10:00,1Mi Sun-20:00,off",
 		},
 		{
 			// from the docs
@@ -251,7 +251,7 @@ func TestBwTimetableSet(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 2000, Bandwidth: BwPair{Tx: -1, Rx: -1}},
 			},
 			false,
-			"Mon-00:00,512k Sun-12:00,1M Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-20:00,off",
+			"Mon-00:00,512Ki Sun-12:00,1Mi Mon-12:00,1Mi Tue-12:00,1Mi Wed-12:00,1Mi Thu-12:00,1Mi Fri-12:00,1Mi Sat-12:00,1Mi Sun-20:00,off",
 		},
 	} {
 		tt := BwTimetable{}
@@ -537,13 +537,13 @@ func TestBwTimetableMarshalJSON(t *testing.T) {
 			BwTimetable{
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
 			},
-			`"666k"`,
+			`"666Ki"`,
 		},
 		{
 			BwTimetable{
 				BwTimeSlot{DayOfTheWeek: 0, HHMM: 0, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 333 * 1024}},
 			},
-			`"666k:333k"`,
+			`"666Ki:333Ki"`,
 		},
 		{
 			BwTimetable{
@@ -555,7 +555,7 @@ func TestBwTimetableMarshalJSON(t *testing.T) {
 				BwTimeSlot{DayOfTheWeek: 5, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
 				BwTimeSlot{DayOfTheWeek: 6, HHMM: 1020, Bandwidth: BwPair{Tx: 666 * 1024, Rx: 666 * 1024}},
 			},
-			`"Sun-10:20,666k Mon-10:20,666k Tue-10:20,666k Wed-10:20,666k Thu-10:20,666k Fri-10:20,666k Sat-10:20,666k"`,
+			`"Sun-10:20,666Ki Mon-10:20,666Ki Tue-10:20,666Ki Wed-10:20,666Ki Thu-10:20,666Ki Fri-10:20,666Ki Sat-10:20,666Ki"`,
 		},
 	} {
 		got, err := json.Marshal(test.in)

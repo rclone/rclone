@@ -227,16 +227,16 @@ Checkpoint for internal polling (debug).
 
 #### --acd-upload-wait-per-gb
 
-Additional time per GB to wait after a failed complete upload to see if it appears.
+Additional time per GiB to wait after a failed complete upload to see if it appears.
 
 Sometimes Amazon Drive gives an error when a file has been fully
 uploaded but the file appears anyway after a little while.  This
-happens sometimes for files over 1GB in size and nearly every time for
-files bigger than 10GB. This parameter controls the time rclone waits
+happens sometimes for files over 1 GiB in size and nearly every time for
+files bigger than 10 GiB. This parameter controls the time rclone waits
 for the file to appear.
 
-The default value for this parameter is 3 minutes per GB, so by
-default it will wait 3 minutes for every GB uploaded to see if the
+The default value for this parameter is 3 minutes per GiB, so by
+default it will wait 3 minutes for every GiB uploaded to see if the
 file appears.
 
 You can disable this feature by setting it to 0. This may cause
@@ -260,7 +260,7 @@ Files >= this size will be downloaded via their tempLink.
 
 Files this size or more will be downloaded via their "tempLink". This
 is to work around a problem with Amazon Drive which blocks downloads
-of files bigger than about 10GB.  The default for this is 9GB which
+of files bigger than about 10 GiB.  The default for this is 9 GiB which
 shouldn't need to be changed.
 
 To download files above this threshold, rclone requests a "tempLink"
@@ -299,7 +299,7 @@ Amazon Drive has an internal limit of file sizes that can be uploaded
 to the service. This limit is not officially published, but all files
 larger than this will fail.
 
-At the time of writing (Jan 2016) is in the area of 50GB per file.
+At the time of writing (Jan 2016) is in the area of 50 GiB per file.
 This means that larger files are likely to fail.
 
 Unfortunately there is no way for rclone to see that this failure is

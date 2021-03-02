@@ -110,10 +110,10 @@ const (
 	decayConstant               = 2              // bigger for slower decay, exponential
 	apiPath                     = "/sf/v3"       // add to endpoint to get API path
 	tokenPath                   = "/oauth/token" // add to endpoint to get Token path
-	minChunkSize                = 256 * fs.KibiByte
-	maxChunkSize                = 2 * fs.GibiByte
-	defaultChunkSize            = 64 * fs.MebiByte
-	defaultUploadCutoff         = 128 * fs.MebiByte
+	minChunkSize                = 256 * fs.Kibi
+	maxChunkSize                = 2 * fs.Gibi
+	defaultChunkSize            = 64 * fs.Mebi
+	defaultUploadCutoff         = 128 * fs.Mebi
 )
 
 // Generate a new oauth2 config which we will update when we know the TokenURL

@@ -1017,7 +1017,7 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			Help: `Cutoff for switching to chunked upload
 
 Any files larger than this will be uploaded in chunks of chunk_size.
-The minimum is 0 and the maximum is 5GB.`,
+The minimum is 0 and the maximum is 5 GiB.`,
 			Default:  defaultUploadCutoff,
 			Advanced: true,
 		}, {
@@ -1039,9 +1039,9 @@ Rclone will automatically increase the chunk size when uploading a
 large file of known size to stay below the 10,000 chunks limit.
 
 Files of unknown size are uploaded with the configured
-chunk_size. Since the default chunk size is 5MB and there can be at
+chunk_size. Since the default chunk size is 5 MiB and there can be at
 most 10,000 chunks, this means that by default the maximum size of
-a file you can stream upload is 48GB.  If you wish to stream upload
+a file you can stream upload is 48 GiB.  If you wish to stream upload
 larger files then you will need to increase chunk_size.`,
 			Default:  minChunkSize,
 			Advanced: true,
@@ -1067,7 +1067,7 @@ large file of a known size to stay below this number of chunks limit.
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 5GB.`,
+The minimum is 0 and the maximum is 5 GiB.`,
 			Default:  fs.SizeSuffix(maxSizeForCopy),
 			Advanced: true,
 		}, {
@@ -1271,7 +1271,7 @@ See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rcl
 const (
 	metaMtime   = "Mtime"     // the meta key to store mtime in - e.g. X-Amz-Meta-Mtime
 	metaMD5Hash = "Md5chksum" // the meta key to store md5hash in
-	// The maximum size of object we can COPY - this should be 5GiB but is < 5GB for b2 compatibility
+	// The maximum size of object we can COPY - this should be 5 GiB but is < 5 GB for b2 compatibility
 	// See https://forum.rclone.org/t/copying-files-within-a-b2-bucket/16680/76
 	maxSizeForCopy      = 4768 * 1024 * 1024
 	maxUploadParts      = 10000 // maximum allowed number of parts in a multi-part upload
@@ -2997,9 +2997,9 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	// calculate size of parts
 	partSize := int(f.opt.ChunkSize)
 
-	// size can be -1 here meaning we don't know the size of the incoming file.  We use ChunkSize
-	// buffers here (default 5MB). With a maximum number of parts (10,000) this will be a file of
-	// 48GB which seems like a not too unreasonable limit.
+	// size can be -1 here meaning we don't know the size of the incoming file. We use ChunkSize
+	// buffers here (default 5 MiB). With a maximum number of parts (10,000) this will be a file of
+	// 48 GiB which seems like a not too unreasonable limit.
 	if size == -1 {
 		warnStreamUpload.Do(func() {
 			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
@@ -3008,7 +3008,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	} else {
 		// Adjust partSize until the number of parts is small enough.
 		if size/int64(partSize) >= uploadParts {
-			// Calculate partition size rounded up to the nearest MB
+			// Calculate partition size rounded up to the nearest MiB
 			partSize = int((((size / uploadParts) >> 20) + 1) << 20)
 		}
 	}

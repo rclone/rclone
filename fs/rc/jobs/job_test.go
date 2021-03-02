@@ -257,7 +257,7 @@ func TestExecuteJobWithConfig(t *testing.T) {
 	called := false
 	jobFn := func(ctx context.Context, in rc.Params) (rc.Params, error) {
 		ci := fs.GetConfig(ctx)
-		assert.Equal(t, 42*fs.MebiByte, ci.BufferSize)
+		assert.Equal(t, 42*fs.Mebi, ci.BufferSize)
 		called = true
 		return nil, nil
 	}
@@ -278,7 +278,7 @@ func TestExecuteJobWithConfig(t *testing.T) {
 	assert.Equal(t, true, called)
 	// Check that wasn't the default
 	ci := fs.GetConfig(ctx)
-	assert.NotEqual(t, 42*fs.MebiByte, ci.BufferSize)
+	assert.NotEqual(t, 42*fs.Mebi, ci.BufferSize)
 }
 
 func TestExecuteJobWithFilter(t *testing.T) {

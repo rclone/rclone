@@ -225,10 +225,10 @@ as they can't be used in JSON strings.
 
 ### Transfers ###
 
-For files above 50MB rclone will use a chunked transfer.  Rclone will
+For files above 50 MiB rclone will use a chunked transfer.  Rclone will
 upload up to `--transfers` chunks at the same time (shared among all
 the multipart uploads).  Chunks are buffered in memory and are
-normally 8MB so increasing `--transfers` will increase memory use.
+normally 8 MiB so increasing `--transfers` will increase memory use.
 
 ### Deleting files ###
 
@@ -369,7 +369,7 @@ Fill in for rclone to use a non root folder as its starting point.
 
 #### --box-upload-cutoff
 
-Cutoff for switching to multipart upload (>= 50MB).
+Cutoff for switching to multipart upload (>= 50 MiB).
 
 - Config:      upload_cutoff
 - Env Var:     RCLONE_BOX_UPLOAD_CUTOFF

@@ -52,8 +52,8 @@ const (
 	driveTypePersonal           = "personal"
 	driveTypeBusiness           = "business"
 	driveTypeSharepoint         = "documentLibrary"
-	defaultChunkSize            = 10 * fs.MebiByte
-	chunkSizeMultiple           = 320 * fs.KibiByte
+	defaultChunkSize            = 10 * fs.Mebi
+	chunkSizeMultiple           = 320 * fs.Kibi
 
 	regionGlobal = "global"
 	regionUS     = "us"
@@ -693,7 +693,7 @@ func errorHandler(resp *http.Response) error {
 }
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
-	const minChunkSize = fs.Byte
+	const minChunkSize = fs.SizeSuffixBase
 	if cs%chunkSizeMultiple != 0 {
 		return errors.Errorf("%s is not a multiple of %s", cs, chunkSizeMultiple)
 	}
@@ -1882,11 +1882,11 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 	return info, nil
 }
 
-// Update the content of a remote file within 4MB size in one single request
+// Update the content of a remote file within 4 MiB size in one single request
 // This function will set modtime after uploading, which will create a new version for the remote file
 func (o *Object) uploadSinglepart(ctx context.Context, in io.Reader, size int64, modTime time.Time, options ...fs.OpenOption) (info *api.Item, err error) {
 	if size < 0 || size > int64(fs.SizeSuffix(4*1024*1024)) {
-		return nil, errors.New("size passed into uploadSinglepart must be >= 0 and <= 4MiB")
+		return nil, errors.New("size passed into uploadSinglepart must be >= 0 and <= 4 MiB")
 	}
 
 	fs.Debugf(o, "Starting singlepart upload")
