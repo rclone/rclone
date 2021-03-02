@@ -58,7 +58,7 @@ Here is an overview of the major features of each cloud storage system.
 
 ¹ Dropbox supports [its own custom
 hash](https://www.dropbox.com/developers/reference/content-hash).
-This is an SHA256 sum of all the 4MB block SHA256s.
+This is an SHA256 sum of all the 4 MiB block SHA256s.
 
 ² SFTP supports checksums if the same login has shell access and
 `md5sum` or `sha1sum` as well as `echo` are in the remote's PATH.

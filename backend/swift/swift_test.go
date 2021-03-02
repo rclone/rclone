@@ -87,7 +87,7 @@ func (f *Fs) testWithChunk(t *testing.T) {
 	preConfChunkSize := f.opt.ChunkSize
 	preConfChunk := f.opt.NoChunk
 	f.opt.NoChunk = false
-	f.opt.ChunkSize = 1024 * fs.Byte
+	f.opt.ChunkSize = 1024 * fs.SizeSuffixBase
 	defer func() {
 		//restore old config after test
 		f.opt.ChunkSize = preConfChunkSize
@@ -117,7 +117,7 @@ func (f *Fs) testWithChunkFail(t *testing.T) {
 	preConfChunkSize := f.opt.ChunkSize
 	preConfChunk := f.opt.NoChunk
 	f.opt.NoChunk = false
-	f.opt.ChunkSize = 1024 * fs.Byte
+	f.opt.ChunkSize = 1024 * fs.SizeSuffixBase
 	segmentContainer := f.root + "_segments"
 	defer func() {
 		//restore config
@@ -159,7 +159,7 @@ func (f *Fs) testCopyLargeObject(t *testing.T) {
 	preConfChunkSize := f.opt.ChunkSize
 	preConfChunk := f.opt.NoChunk
 	f.opt.NoChunk = false
-	f.opt.ChunkSize = 1024 * fs.Byte
+	f.opt.ChunkSize = 1024 * fs.SizeSuffixBase
 	defer func() {
 		//restore old config after test
 		f.opt.ChunkSize = preConfChunkSize

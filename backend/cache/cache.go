@@ -98,14 +98,14 @@ changed, any downloaded chunks will be invalid and cache-chunk-path
 will need to be cleared or unexpected EOF errors will occur.`,
 			Default: DefCacheChunkSize,
 			Examples: []fs.OptionExample{{
-				Value: "1m",
-				Help:  "1MB",
+				Value: "1M",
+				Help:  "1 MiB",
 			}, {
 				Value: "5M",
-				Help:  "5 MB",
+				Help:  "5 MiB",
 			}, {
 				Value: "10M",
-				Help:  "10 MB",
+				Help:  "10 MiB",
 			}},
 		}, {
 			Name: "info_age",
@@ -132,13 +132,13 @@ oldest chunks until it goes under this value.`,
 			Default: DefCacheTotalChunkSize,
 			Examples: []fs.OptionExample{{
 				Value: "500M",
-				Help:  "500 MB",
+				Help:  "500 MiB",
 			}, {
 				Value: "1G",
-				Help:  "1 GB",
+				Help:  "1 GiB",
 			}, {
 				Value: "10G",
-				Help:  "10 GB",
+				Help:  "10 GiB",
 			}},
 		}, {
 			Name:     "db_path",

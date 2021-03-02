@@ -1792,7 +1792,7 @@ func Run(t *testing.T, opt *Opt) {
 				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
 			}
 
-			maxChunkSize := 2 * fs.MebiByte
+			maxChunkSize := 2 * fs.Mebi
 			if maxChunkSize < 2*minChunkSize {
 				maxChunkSize = 2 * minChunkSize
 			}

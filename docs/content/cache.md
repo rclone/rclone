@@ -70,11 +70,11 @@ password:
 The size of a chunk. Lower value good for slow connections but can affect seamless reading.
 Default: 5M
 Choose a number from below, or type in your own value
- 1 / 1MB
-   \ "1m"
- 2 / 5 MB
+ 1 / 1 MiB
+   \ "1M"
+ 2 / 5 MiB
    \ "5M"
- 3 / 10 MB
+ 3 / 10 MiB
    \ "10M"
 chunk_size> 2
 How much time should object info (file size, file hashes, etc.) be stored in cache. Use a very high value if you don't plan on changing the source FS from outside the cache.
@@ -91,11 +91,11 @@ info_age> 2
 The maximum size of stored chunks. When the storage grows beyond this size, the oldest chunks will be deleted.
 Default: 10G
 Choose a number from below, or type in your own value
- 1 / 500 MB
+ 1 / 500 MiB
    \ "500M"
- 2 / 1 GB
+ 2 / 1 GiB
    \ "1G"
- 3 / 10 GB
+ 3 / 10 GiB
    \ "10G"
 chunk_total_size> 3
 Remote config
@@ -364,11 +364,11 @@ will need to be cleared or unexpected EOF errors will occur.
 - Default:     5M
 - Examples:
     - "1m"
-        - 1MB
+        - 1 MiB
     - "5M"
-        - 5 MB
+        - 5 MiB
     - "10M"
-        - 10 MB
+        - 10 MiB
 
 #### --cache-info-age
 
@@ -401,11 +401,11 @@ oldest chunks until it goes under this value.
 - Default:     10G
 - Examples:
     - "500M"
-        - 500 MB
+        - 500 MiB
     - "1G"
-        - 1 GB
+        - 1 GiB
     - "10G"
-        - 10 GB
+        - 10 GiB
 
 ### Advanced Options
 

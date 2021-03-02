@@ -36,7 +36,7 @@ import (
 // Globals
 const (
 	initialChunkSize = 262144  // Initial and max sizes of chunks when reading parts of the file. Currently
-	maxChunkSize     = 8388608 // at 256KB and 8 MB.
+	maxChunkSize     = 8388608 // at 256 KiB and 8 MiB.
 
 	bufferSize          = 8388608
 	heuristicBytes      = 1048576

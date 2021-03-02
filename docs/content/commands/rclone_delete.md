@@ -23,7 +23,7 @@ If you supply the `--rmdirs` flag, it will remove all empty directories along wi
 You can also use the separate command `rmdir` or `rmdirs` to
 delete empty directories only.
 
-For example, to delete all files bigger than 100MBytes, you may first want to check what
+For example, to delete all files bigger than 100 MiByte, you may first want to check what
 would be deleted (use either):
 
     rclone --min-size 100M lsl remote:path
@@ -33,8 +33,8 @@ Then proceed with the actual delete:
 
     rclone --min-size 100M delete remote:path
 
-That reads "delete everything with a minimum size of 100 MB", hence
-delete all files bigger than 100MBytes.
+That reads "delete everything with a minimum size of 100 MiB", hence
+delete all files bigger than 100 MiByte.
 
 **Important**: Since this can cause data loss, test first with the
 `--dry-run` or the `--interactive`/`-i` flag.

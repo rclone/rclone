@@ -112,10 +112,10 @@ flag.
 
 ### Transfers ###
 
-For files above 128MB rclone will use a chunked transfer.  Rclone will
+For files above 128 MiB rclone will use a chunked transfer.  Rclone will
 upload up to `--transfers` chunks at the same time (shared among all
 the multipart uploads).  Chunks are buffered in memory and are
-normally 64MB so increasing `--transfers` will increase memory use.
+normally 64 MiB so increasing `--transfers` will increase memory use.
 
 ### Limitations ###
 

@@ -43,7 +43,7 @@ Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 Enter a string value. Press Enter for the default ("").
 remote> remote:path
 Files larger than chunk size will be split in chunks.
-Enter a size with suffix k,M,G,T. Press Enter for the default ("2G").
+Enter a size with suffix K,M,G,T. Press Enter for the default ("2G").
 chunk_size> 100M
 Choose how chunker handles hash sums. All modes but "none" require metadata.
 Enter a string value. Press Enter for the default ("md5").

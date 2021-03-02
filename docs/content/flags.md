@@ -18,8 +18,8 @@ These flags are available for every command.
       --backup-dir string                    Make backups into hierarchy based in DIR.
       --bind string                          Local address to bind to for outgoing connections, IPv4, IPv6 or name.
       --buffer-size SizeSuffix               In memory buffer size when reading files for each --transfer. (default 16M)
-      --bwlimit BwTimetable                  Bandwidth limit in kByte/s, or use suffix b|k|M|G or a full timetable.
-      --bwlimit-file BwTimetable             Bandwidth limit per file in kByte/s, or use suffix b|k|M|G or a full timetable.
+      --bwlimit BwTimetable                  Bandwidth limit in KiByte/s, or use suffix B|K|M|G|T|P or a full timetable.
+      --bwlimit-file BwTimetable             Bandwidth limit per file in KiByte/s, or use suffix B|K|M|G|T|P or a full timetable.
       --ca-cert string                       CA certificate used to verify servers
       --cache-dir string                     Directory rclone will use for caching. (default "$HOME/.cache/rclone")
       --check-first                          Do all the checks before starting transfers.
@@ -79,12 +79,12 @@ These flags are available for every command.
       --max-delete int                       When synchronizing, limit the number of deletes (default -1)
       --max-depth int                        If set limits the recursion depth to this. (default -1)
       --max-duration duration                Maximum duration rclone will transfer data for.
-      --max-size SizeSuffix                  Only transfer files smaller than this in k or suffix b|k|M|G (default off)
+      --max-size SizeSuffix                  Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P (default off)
       --max-stats-groups int                 Maximum number of stats groups to keep in memory. On max oldest is discarded. (default 1000)
       --max-transfer SizeSuffix              Maximum size of data to transfer. (default off)
       --memprofile string                    Write memory profile to file
       --min-age Duration                     Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
-      --min-size SizeSuffix                  Only transfer files bigger than this in k or suffix b|k|M|G (default off)
+      --min-size SizeSuffix                  Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
       --modify-window duration               Max time diff to be considered the same (default 1ns)
       --multi-thread-cutoff SizeSuffix       Use multi-thread downloads for files above this size. (default 250M)
       --multi-thread-streams int             Max number of streams to use for multi-thread downloads. (default 4)
@@ -170,12 +170,12 @@ and may be set in the config file.
       --acd-templink-threshold SizeSuffix                        Files >= this size will be downloaded via their tempLink. (default 9G)
       --acd-token string                                         OAuth Access Token as a JSON blob.
       --acd-token-url string                                     Token server url.
-      --acd-upload-wait-per-gb Duration                          Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s)
+      --acd-upload-wait-per-gb Duration                          Additional time per GiB to wait after a failed complete upload to see if it appears. (default 3m0s)
       --alias-remote string                                      Remote or path to alias.
       --azureblob-access-tier string                             Access tier of blob: hot, cool or archive.
       --azureblob-account string                                 Storage Account Name (leave blank to use SAS URL or Emulator)
       --azureblob-archive-tier-delete                            Delete archive tier blobs before overwriting.
-      --azureblob-chunk-size SizeSuffix                          Upload chunk size (<= 100MB). (default 4M)
+      --azureblob-chunk-size SizeSuffix                          Upload chunk size (<= 100 MiB). (default 4M)
       --azureblob-disable-checksum                               Don't store MD5 checksum with object metadata.
       --azureblob-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
       --azureblob-endpoint string                                Endpoint for the service
@@ -189,7 +189,7 @@ and may be set in the config file.
       --azureblob-public-access string                           Public access level of a container: blob, container.
       --azureblob-sas-url string                                 SAS URL for container level access only
       --azureblob-service-principal-file string                  Path to file containing credentials for use with a service principal.
-      --azureblob-upload-cutoff string                           Cutoff for switching to chunked upload (<= 256MB). (Deprecated)
+      --azureblob-upload-cutoff string                           Cutoff for switching to chunked upload (<= 256 MiB). (Deprecated)
       --azureblob-use-emulator                                   Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)
       --azureblob-use-msi                                        Use a managed service identity to authenticate (only works in Azure)
       --b2-account string                                        Account ID or Application Key ID
@@ -218,7 +218,7 @@ and may be set in the config file.
       --box-root-folder-id string                                Fill in for rclone to use a non root folder as its starting point.
       --box-token string                                         OAuth Access Token as a JSON blob.
       --box-token-url string                                     Token server url.
-      --box-upload-cutoff SizeSuffix                             Cutoff for switching to multipart upload (>= 50MB). (default 50M)
+      --box-upload-cutoff SizeSuffix                             Cutoff for switching to multipart upload (>= 50 MiB). (default 50M)
       --cache-chunk-clean-interval Duration                      How often should the cache perform cleanups of the chunk storage. (default 1m0s)
       --cache-chunk-no-memory                                    Disable the in-memory cache for storing chunks during streaming.
       --cache-chunk-path string                                  Directory to cache chunk files. (default "$HOME/.cache/rclone/cache-backend")

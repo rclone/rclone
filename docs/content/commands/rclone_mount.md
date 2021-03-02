@@ -56,9 +56,9 @@ When that happens, it is the user's responsibility to stop the mount manually.
 The size of the mounted file system will be set according to information retrieved
 from the remote, the same as returned by the [rclone about](https://rclone.org/commands/rclone_about/)
 command. Remotes with unlimited storage may report the used size only,
-then an additional 1PB of free space is assumed. If the remote does not
+then an additional 1 PiB of free space is assumed. If the remote does not
 [support](https://rclone.org/overview/#optional-features) the about feature
-at all, then 1PB is set as both the total and the free size.
+at all, then 1 PiB is set as both the total and the free size.
 
 **Note**: As of `rclone` 1.52.2, `rclone mount` now requires Go version 1.13
 or newer on some platforms depending on the underlying FUSE library in use.

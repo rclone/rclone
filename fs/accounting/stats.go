@@ -300,15 +300,13 @@ func (s *StatsInfo) String() string {
 		dateString             = ""
 		elapsedTime            = time.Since(startTime)
 		elapsedTimeSecondsOnly = elapsedTime.Truncate(time.Second/10) % time.Minute
-		displaySpeed           = ts.speed
-		displaySpeedUnit       string
+		displaySpeedString     string
 	)
 
 	if s.ci.DataRateUnit == "bits" {
-		displaySpeed *= 8
-		displaySpeedUnit = "bit/s"
+		displaySpeedString = fs.SizeSuffix(ts.speed * 8).BitRateUnit()
 	} else {
-		displaySpeedUnit = "Byte/s"
+		displaySpeedString = fs.SizeSuffix(ts.speed).ByteRateUnit()
 	}
 
 	if !s.ci.StatsOneLine {
@@ -330,12 +328,12 @@ func (s *StatsInfo) String() string {
 		}
 	}
 
-	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s",
+	_, _ = fmt.Fprintf(buf, "%s%11s / %s, %s, %s, ETA %s%s",
 		dateString,
 		fs.SizeSuffix(s.bytes),
-		fs.SizeSuffix(ts.totalBytes).Unit("Byte"),
+		fs.SizeSuffix(ts.totalBytes).ByteUnit(),
 		percent(s.bytes, ts.totalBytes),
-		fs.SizeSuffix(displaySpeed).Unit(displaySpeedUnit),
+		displaySpeedString,
 		etaString(s.bytes, ts.totalBytes, ts.speed),
 		xfrchkString,
 	)

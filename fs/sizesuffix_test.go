@@ -27,11 +27,11 @@ func TestSizeSuffixString(t *testing.T) {
 	}{
 		{0, "0"},
 		{102, "102"},
-		{1024, "1k"},
-		{1024 * 1024, "1M"},
-		{1024 * 1024 * 1024, "1G"},
-		{10 * 1024 * 1024 * 1024, "10G"},
-		{10.1 * 1024 * 1024 * 1024, "10.100G"},
+		{1024, "1Ki"},
+		{1024 * 1024, "1Mi"},
+		{1024 * 1024 * 1024, "1Gi"},
+		{10 * 1024 * 1024 * 1024, "10Gi"},
+		{10.1 * 1024 * 1024 * 1024, "10.100Gi"},
 		{-1, "off"},
 		{-100, "off"},
 	} {
@@ -41,26 +41,73 @@ func TestSizeSuffixString(t *testing.T) {
 	}
 }
 
-func TestSizeSuffixUnit(t *testing.T) {
+func TestSizeSuffixByteShortUnit(t *testing.T) {
 	for _, test := range []struct {
 		in   float64
 		want string
 	}{
-		{0, "0 Bytes"},
-		{102, "102 Bytes"},
-		{1024, "1 kBytes"},
-		{1024 * 1024, "1 MBytes"},
-		{1024 * 1024 * 1024, "1 GBytes"},
-		{10 * 1024 * 1024 * 1024, "10 GBytes"},
-		{10.1 * 1024 * 1024 * 1024, "10.100 GBytes"},
-		{10 * 1024 * 1024 * 1024 * 1024, "10 TBytes"},
-		{10 * 1024 * 1024 * 1024 * 1024 * 1024, "10 PBytes"},
-		{1 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024, "1024 PBytes"},
+		{0, "0 B"},
+		{102, "102 B"},
+		{1024, "1 KiB"},
+		{1024 * 1024, "1 MiB"},
+		{1024 * 1024 * 1024, "1 GiB"},
+		{10 * 1024 * 1024 * 1024, "10 GiB"},
+		{10.1 * 1024 * 1024 * 1024, "10.100 GiB"},
+		{10 * 1024 * 1024 * 1024 * 1024, "10 TiB"},
+		{10 * 1024 * 1024 * 1024 * 1024 * 1024, "10 PiB"},
+		{1 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024, "1 EiB"},
 		{-1, "off"},
 		{-100, "off"},
 	} {
 		ss := SizeSuffix(test.in)
-		got := ss.Unit("Bytes")
+		got := ss.ByteShortUnit()
+		assert.Equal(t, test.want, got)
+	}
+}
+
+func TestSizeSuffixByteUnit(t *testing.T) {
+	for _, test := range []struct {
+		in   float64
+		want string
+	}{
+		{0, "0 Byte"},
+		{102, "102 Byte"},
+		{1024, "1 KiByte"},
+		{1024 * 1024, "1 MiByte"},
+		{1024 * 1024 * 1024, "1 GiByte"},
+		{10 * 1024 * 1024 * 1024, "10 GiByte"},
+		{10.1 * 1024 * 1024 * 1024, "10.100 GiByte"},
+		{10 * 1024 * 1024 * 1024 * 1024, "10 TiByte"},
+		{10 * 1024 * 1024 * 1024 * 1024 * 1024, "10 PiByte"},
+		{1 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024, "1 EiByte"},
+		{-1, "off"},
+		{-100, "off"},
+	} {
+		ss := SizeSuffix(test.in)
+		got := ss.ByteUnit()
+		assert.Equal(t, test.want, got)
+	}
+}
+
+func TestSizeSuffixBitRateUnit(t *testing.T) {
+	for _, test := range []struct {
+		in   float64
+		want string
+	}{
+		{0, "0 bit/s"},
+		{1024, "1 Kibit/s"},
+		{1024 * 1024, "1 Mibit/s"},
+		{1024 * 1024 * 1024, "1 Gibit/s"},
+		{10 * 1024 * 1024 * 1024, "10 Gibit/s"},
+		{10.1 * 1024 * 1024 * 1024, "10.100 Gibit/s"},
+		{10 * 1024 * 1024 * 1024 * 1024, "10 Tibit/s"},
+		{10 * 1024 * 1024 * 1024 * 1024 * 1024, "10 Pibit/s"},
+		{1 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024, "1 Eibit/s"},
+		{-1, "off"},
+		{-100, "off"},
+	} {
+		ss := SizeSuffix(test.in)
+		got := ss.BitRateUnit()
 		assert.Equal(t, test.want, got)
 	}
 }
@@ -77,9 +124,23 @@ func TestSizeSuffixSet(t *testing.T) {
 		{"0.1k", 102, false},
 		{"0.1", 102, false},
 		{"1K", 1024, false},
+		{"1k", 1024, false},
+		//{"1KB", 1024, false},
+		//{"1kB", 1024, false},
+		//{"1kb", 1024, false},
+		{"1KI", 1024, false},
+		{"1Ki", 1024, false},
+		{"1kI", 1024, false},
+		{"1ki", 1024, false},
+		{"1KiB", 1024, false},
+		{"1KiB", 1024, false},
+		{"1kib", 1024, false},
 		{"1", 1024, false},
 		{"2.5", 1024 * 2.5, false},
 		{"1M", 1024 * 1024, false},
+		//{"1MB", 1024 * 1024, false},
+		{"1Mi", 1024 * 1024, false},
+		{"1MiB", 1024 * 1024, false},
 		{"1.g", 1024 * 1024 * 1024, false},
 		{"10G", 10 * 1024 * 1024 * 1024, false},
 		{"10T", 10 * 1024 * 1024 * 1024 * 1024, false},
@@ -91,6 +152,9 @@ func TestSizeSuffixSet(t *testing.T) {
 		{"1.q", 0, true},
 		{"1q", 0, true},
 		{"-1K", 0, true},
+		{"1i", 0, true},
+		{"1iB", 0, true},
+		{"1MB", 0, true},
 	} {
 		ss := SizeSuffix(0)
 		err := ss.Set(test.in)

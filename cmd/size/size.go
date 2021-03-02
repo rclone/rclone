@@ -44,7 +44,7 @@ var commandDefinition = &cobra.Command{
 			}
 
 			fmt.Printf("Total objects: %d\n", results.Count)
-			fmt.Printf("Total size: %s (%d Bytes)\n", fs.SizeSuffix(results.Bytes).Unit("Bytes"), results.Bytes)
+			fmt.Printf("Total size: %s (%d bytes)\n", fs.SizeSuffix(results.Bytes).ByteUnit(), results.Bytes)
 
 			return nil
 		})
