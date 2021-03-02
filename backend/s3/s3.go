@@ -1863,7 +1863,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	if !recurse {
 		delimiter = "/"
 	}
-	var marker *string
+	var continuationToken, startAfter *string
 	// URL encode the listings so we can use control characters in object names
 	// See: https://github.com/aws/aws-sdk-go/issues/1914
 	//
@@ -1882,12 +1882,13 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba" || f.opt.Provider == "Minio" || f.opt.Provider == "TencentCOS")
 	for {
 		// FIXME need to implement ALL loop
-		req := s3.ListObjectsInput{
-			Bucket:    &bucket,
-			Delimiter: &delimiter,
-			Prefix:    &directory,
-			MaxKeys:   &f.opt.ListChunk,
-			Marker:    marker,
+		req := s3.ListObjectsV2Input{
+			Bucket:            &bucket,
+			ContinuationToken: continuationToken,
+			Delimiter:         &delimiter,
+			Prefix:            &directory,
+			MaxKeys:           &f.opt.ListChunk,
+			StartAfter:        startAfter,
 		}
 		if urlEncodeListings {
 			req.EncodingType = aws.String(s3.EncodingTypeUrl)
@@ -1895,10 +1896,10 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		if f.opt.RequesterPays {
 			req.RequestPayer = aws.String(s3.RequestPayerRequester)
 		}
-		var resp *s3.ListObjectsOutput
+		var resp *s3.ListObjectsV2Output
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.c.ListObjectsWithContext(ctx, &req)
+			resp, err = f.c.ListObjectsV2WithContext(ctx, &req)
 			if err != nil && !urlEncodeListings {
 				if awsErr, ok := err.(awserr.RequestFailure); ok {
 					if origErr := awsErr.OrigErr(); origErr != nil {
@@ -1996,19 +1997,21 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		if !aws.BoolValue(resp.IsTruncated) {
 			break
 		}
-		// Use NextMarker if set, otherwise use last Key
-		if resp.NextMarker == nil || *resp.NextMarker == "" {
+		// Use NextContinuationToken if set, otherwise use last Key for StartAfter
+		if resp.NextContinuationToken == nil || *resp.NextContinuationToken == "" {
 			if len(resp.Contents) == 0 {
-				return errors.New("s3 protocol error: received listing with IsTruncated set, no NextMarker and no Contents")
+				return errors.New("s3 protocol error: received listing with IsTruncated set, no NextContinuationToken found")
 			}
-			marker = resp.Contents[len(resp.Contents)-1].Key
+			continuationToken = nil
+			startAfter = resp.Contents[len(resp.Contents)-1].Key
 		} else {
-			marker = resp.NextMarker
+			continuationToken = resp.NextContinuationToken
+			startAfter = nil
 		}
-		if urlEncodeListings {
-			*marker, err = url.QueryUnescape(*marker)
+		if startAfter != nil && urlEncodeListings {
+			*startAfter, err = url.QueryUnescape(*startAfter)
 			if err != nil {
-				return errors.Wrapf(err, "failed to URL decode NextMarker %q", *marker)
+				return errors.Wrapf(err, "failed to URL decode StartAfter %q", *startAfter)
 			}
 		}
 	}
