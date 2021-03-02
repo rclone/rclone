@@ -27,7 +27,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.1.2
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/google/uuid v1.2.0 // indirect
+	github.com/google/uuid v1.2.0
 	github.com/hanwen/go-fuse/v2 v2.0.3
 	github.com/iguanesolutions/go-systemd/v5 v5.0.0
 	github.com/jcmturner/gokrb5/v8 v8.4.2
