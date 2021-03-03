@@ -1255,7 +1255,17 @@ func (f *Fs) changeNotifyCursor() (cursor string, err error) {
 	var startCursor *files.ListFolderGetLatestCursorResult
 
 	err = f.pacer.Call(func() (bool, error) {
-		startCursor, err = f.srv.ListFolderGetLatestCursor(&files.ListFolderArg{Path: f.opt.Enc.FromStandardPath(f.slashRoot), Recursive: true})
+		arg := files.ListFolderArg{
+			Path:      f.opt.Enc.FromStandardPath(f.slashRoot),
+			Recursive: true,
+		}
+
+		if arg.Path == "/" {
+			arg.Path = ""
+		}
+
+		startCursor, err = f.srv.ListFolderGetLatestCursor(&arg)
+
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -1270,6 +1280,11 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 	// Dropbox sets a timeout range of 30 - 480
 	timeout := uint64(f.ci.TimeoutOrInfinite() / time.Second)
+
+	if timeout < 30 {
+		timeout = 30
+	}
+
 	if timeout > 480 {
 		timeout = 480
 	}
