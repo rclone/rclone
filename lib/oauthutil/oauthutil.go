@@ -269,6 +269,23 @@ func (ts *TokenSource) Invalidate() {
 	ts.mu.Unlock()
 }
 
+// Expire marks the token as expired
+//
+// This also marks the token in the config file as expired, if it is the same one
+func (ts *TokenSource) Expire() error {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	ts.token.Expiry = time.Now().Add(time.Hour * (-1)) // expire token
+	t, err := GetToken(ts.name, ts.m)
+	if err != nil {
+		return err
+	}
+	if t.AccessToken == ts.token.AccessToken {
+		err = PutToken(ts.name, ts.m, ts.token, false)
+	}
+	return err
+}
+
 // timeToExpiry returns how long until the token expires
 //
 // Call with the lock held
