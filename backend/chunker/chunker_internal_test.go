@@ -487,11 +487,11 @@ func testPreventCorruption(t *testing.T, f *Fs) {
 	// accessing chunks in strict mode is prohibited
 	f.opt.FailHard = true
 	billyChunk4Name := billyChunkName(4)
-	billyChunk4, err := f.NewObject(ctx, billyChunk4Name)
+	_, err = f.base.NewObject(ctx, billyChunk4Name)
 	assertOverlapError(err)
 
 	f.opt.FailHard = false
-	billyChunk4, err = f.NewObject(ctx, billyChunk4Name)
+	billyChunk4, err := f.NewObject(ctx, billyChunk4Name)
 	assert.NoError(t, err)
 	require.NotNil(t, billyChunk4)
 

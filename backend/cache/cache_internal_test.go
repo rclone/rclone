@@ -1034,7 +1034,7 @@ func (r *run) updateObjectRemote(t *testing.T, f fs.Fs, remote string, data1 []b
 	objInfo1 := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data1)), true, nil, f)
 	objInfo2 := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data2)), true, nil, f)
 
-	obj, err = f.Put(context.Background(), in1, objInfo1)
+	_, err = f.Put(context.Background(), in1, objInfo1)
 	require.NoError(t, err)
 	obj, err = f.NewObject(context.Background(), remote)
 	require.NoError(t, err)
