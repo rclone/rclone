@@ -5,25 +5,42 @@ about: Report a problem with rclone
 
 <!--
 
-Welcome :-) We understand you are having a problem with rclone; we want to help you with that!
+We understand you are having a problem with rclone; we want to help you with that!
 
-If you've just got a question or aren't sure if you've found a bug then please use the rclone forum:
+**STOP and READ**
+**YOUR POST WILL BE REMOVED IF IT IS LOW QUALITY**:
+Please show the effort you've put in to solving the problem and please be specific.
+People are volunteering their time to help! Low effort posts are not likely to get good answers!
+
+If you think you might have found a bug, try to replicate it with the latest beta (or stable).
+The update instructions are available at https://rclone.org/commands/rclone_selfupdate/
+
+If you can still replicate it or just got a question then please use the rclone forum:
 
     https://forum.rclone.org/
 
-instead of filing an issue for a quick response.
+for a quick response instead of filing an issue on this repo.
 
-If you think you might have found a bug, please can you try to replicate it with the latest beta?
+If nothing else helps, then please fill in the info below which helps us help you.
 
-    https://beta.rclone.org/
-    
-If you can still replicate it with the latest beta, then please fill in the info below which makes our lives much easier.  A log with -vv will make our day :-)
+**DO NOT REDACT** any information except passwords/keys/personal info.
+
+You should use 3 backticks to begin and end your paste to make it readable.
+
+Make sure to include a log obtained with '-vv'.
+
+You can also use '-vv --log-file bug.log' and a service such as https://pastebin.com or https://gist.github.com/
 
 Thank you
 
 The Rclone Developers
 
 -->
+
+
+#### The associated forum post URL from `https://forum.rclone.org`
+
+
 
 #### What is the problem you are having with rclone?
 
@@ -37,7 +54,7 @@ The Rclone Developers
 
 
 
-####  Which cloud storage system are you using? (e.g. Google Drive)
+#### Which cloud storage system are you using? (e.g. Google Drive)
 
 
 
