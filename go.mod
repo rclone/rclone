@@ -31,7 +31,7 @@ require (
 	github.com/hanwen/go-fuse/v2 v2.0.3
 	github.com/iguanesolutions/go-systemd/v5 v5.0.0
 	github.com/jcmturner/gokrb5/v8 v8.4.2
-	github.com/jlaffaye/ftp v0.0.0-20201112195030-9aae4d151126
+	github.com/jlaffaye/ftp v0.0.0-20210302195756-c3c8c7ac6590
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/klauspost/compress v1.11.7
