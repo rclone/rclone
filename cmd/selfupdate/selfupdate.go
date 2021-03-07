@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -12,7 +13,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -20,6 +23,8 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/cobra"
 
 	versionCmd "github.com/rclone/rclone/cmd/version"
@@ -32,6 +37,7 @@ type Options struct {
 	Beta    bool
 	Stable  bool
 	Version string
+	Format  string
 }
 
 // Opt is options set via command line
@@ -45,59 +51,99 @@ func init() {
 	flags.BoolVarP(cmdFlags, &Opt.Stable, "stable", "", Opt.Stable, "Install latest stable release (this is the default)")
 	flags.BoolVarP(cmdFlags, &Opt.Beta, "beta", "", Opt.Beta, "Install latest beta release.")
 	flags.StringVarP(cmdFlags, &Opt.Version, "version", "", Opt.Version, "Install the given rclone path (default: auto-detect)")
+	flags.StringVarP(cmdFlags, &Opt.Format, "package", "", Opt.Format, "Package format: zip|deb|rpm (default: zip)")
 }
 
 var cmdSelfUpdate = &cobra.Command{
 	Use:     "selfupdate",
 	Aliases: []string{"self-update"},
 	Short:   `Update the rclone binary.`,
-	Long: `
-This command downloads the latest release of rclone and replaces
-the currently running binary. The download is verified with a hashsum.
-
-If you previously installed rclone via a package manager, the package may
-include local documentation or configure services. This command will update
-only rclone executable so the local manual may become inaccurate after it.
-
-Note: Windows forbids deletion of a currently running executable so this
-command will rename the old executable to 'rclone.exe.old' upon success.
-`,
+	Long:    strings.ReplaceAll(selfUpdateHelp, "|", "`"),
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
+		if Opt.Format == "" {
+			Opt.Format = "zip"
+		}
 		if Opt.Check {
-			if Opt.Stable || Opt.Beta || Opt.Output != "" || Opt.Version != "" {
-				fmt.Println("Warning: --stable, --beta, --version and --output are ignored with --check")
+			if Opt.Stable || Opt.Beta || Opt.Output != "" || Opt.Version != "" || Opt.Format != "zip" {
+				fmt.Println("Warning: --stable, --beta, --version, --format and --output are ignored with --check")
 			}
 			versionCmd.CheckVersion()
 			return
 		}
-		if err := InstallUpdate(&Opt); err != nil {
+		if Opt.Format != "zip" {
+			if Opt.Format != "deb" && Opt.Format != "rpm" {
+				log.Fatalf("--package should be one of zip|deb|rpm")
+			}
+			if runtime.GOOS != "linux" {
+				log.Fatalf(".deb and .rpm packages are supported only on Linux")
+			} else if os.Geteuid() != 0 {
+				log.Fatalf(".deb and .rpm must be installed by root")
+			}
+			if Opt.Output != "" {
+				fmt.Println("Warning: --output is ignored with --package .deb|.rpm")
+			}
+		}
+		if err := InstallUpdate(context.Background(), &Opt); err != nil {
 			log.Fatalf("Error: %v", err)
 		}
 	},
 }
 
-// GetVersion is a wrapper for versionCmd.GetVersion with extra outputs
-func GetVersion(beta bool, version string) (newVersion, siteURL string, err error) {
+// GetVersion can get the latest release number from the download site
+// or massage a stable release number - prepend semantic "v" prefix
+// or find the latest micro release for a given major.minor release.
+// Note: this will not be applied to beta releases.
+func GetVersion(ctx context.Context, beta bool, version string) (newVersion, siteURL string, err error) {
 	siteURL = "https://downloads.rclone.org"
 	if beta {
 		siteURL = "https://beta.rclone.org"
 	}
-	newVersion = version
-	if newVersion == "" {
+
+	if version == "" {
+		// Request the latest release number from the download site
 		_, newVersion, _, err = versionCmd.GetVersion(siteURL + "/version.txt")
+		return
+	}
+
+	newVersion = version
+	if version[0] != 'v' {
+		newVersion = "v" + version
+	}
+	if beta {
+		return
+	}
+
+	if valid, _ := regexp.MatchString(`^v\d+\.\d+(\.\d+)?$`, newVersion); !valid {
+		return "", siteURL, errors.New("invalid semantic version")
+	}
+
+	// Find the latest stable micro release
+	if strings.Count(newVersion, ".") == 1 {
+		html, err := downloadFile(ctx, siteURL)
+		if err != nil {
+			return "", siteURL, errors.Wrap(err, "failed to get list of releases")
+		}
+		reSubver := fmt.Sprintf(`href="\./%s\.\d+/"`, regexp.QuoteMeta(newVersion))
+		allSubvers := regexp.MustCompile(reSubver).FindAllString(string(html), -1)
+		if allSubvers == nil {
+			return "", siteURL, errors.New("could not find the minor release")
+		}
+		// Use the fact that releases in the index are sorted by date
+		lastSubver := allSubvers[len(allSubvers)-1]
+		newVersion = lastSubver[8 : len(lastSubver)-2]
 	}
 	return
 }
 
 // InstallUpdate performs rclone self-update
-func InstallUpdate(opt *Options) error {
+func InstallUpdate(ctx context.Context, opt *Options) error {
 	// Find the latest release number
 	if opt.Stable && opt.Beta {
 		return errors.New("--stable and --beta are mutually exclusive")
 	}
 
-	newVersion, siteURL, err := GetVersion(opt.Beta, opt.Version)
+	newVersion, siteURL, err := GetVersion(ctx, opt.Beta, opt.Version)
 	if err != nil {
 		return errors.Wrap(err, "unable to detect new version")
 	}
@@ -115,7 +161,16 @@ func InstallUpdate(opt *Options) error {
 		return nil
 	}
 
-	// Find the executable path
+	// Install .deb/.rpm package if requested by user
+	if opt.Format == "deb" || opt.Format == "rpm" {
+		err := installPackage(ctx, opt.Beta, newVersion, siteURL, opt.Format)
+		if err == nil {
+			fmt.Printf("Successfully updated rclone package to version %s\n", newVersion)
+		}
+		return err
+	}
+
+	// Get the current executable path
 	executable, err := os.Executable()
 	if err != nil {
 		return errors.Wrap(err, "unable to find executable")
@@ -126,11 +181,18 @@ func InstallUpdate(opt *Options) error {
 		targetFile = executable
 	}
 
-	// Check for possible access errors in advance
-	newFile := targetFile + ".new"
+	// Make temporary file names and check for possible access errors in advance
+	var newFile string
+	if newFile, err = makeRandomExeName(targetFile, "new"); err != nil {
+		return err
+	}
 	savedFile := ""
 	if runtime.GOOS == "windows" {
-		savedFile = targetFile + ".old"
+		savedFile = targetFile
+		if strings.HasSuffix(savedFile, ".exe") {
+			savedFile = savedFile[:len(savedFile)-4]
+		}
+		savedFile += ".old.exe"
 	}
 
 	if savedFile == executable || newFile == executable {
@@ -142,25 +204,64 @@ func InstallUpdate(opt *Options) error {
 	}
 
 	// Download the update as a temporary file
-	if err := downloadUpdate(opt.Beta, newVersion, siteURL, newFile); err != nil {
+	err = downloadUpdate(ctx, opt.Beta, newVersion, siteURL, newFile, "zip")
+	if err != nil {
 		return errors.Wrap(err, "failed to update rclone")
 	}
 
-	// Copy permission bits from the old executable
-	fileMode := os.FileMode(0755)
-	if fileInfo, err := os.Lstat(targetFile); err == nil {
-		fileMode = fileInfo.Mode()
+	err = replaceExecutable(targetFile, newFile, savedFile)
+	if err == nil {
+		fmt.Printf("Successfully updated rclone to version %s\n", newVersion)
 	}
-	if err := os.Chmod(newFile, fileMode); err != nil {
-		return errors.Wrap(err, "failed to set permissions")
+	return err
+}
+
+func installPackage(ctx context.Context, beta bool, version, siteURL, format string) error {
+	tempFile, err := ioutil.TempFile("", "rclone.*."+format)
+	if err != nil {
+		return errors.Wrap(err, "unable to write temporary package")
+	}
+	packageFile := tempFile.Name()
+	_ = tempFile.Close()
+	defer func() {
+		if rmErr := os.Remove(packageFile); rmErr != nil {
+			fs.Errorf(nil, "%s: could not remove temporary package: %v", packageFile, rmErr)
+		}
+	}()
+	if err := downloadUpdate(ctx, beta, version, siteURL, packageFile, format); err != nil {
+		return err
 	}
 
-	// Replace current executable by the new file
+	packager := "dpkg"
+	if format == "rpm" {
+		packager = "rpm"
+	}
+	cmd := exec.Command(packager, "-i", packageFile)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to run %s: %v", packager, err)
+	}
+	return nil
+}
+
+func replaceExecutable(targetFile, newFile, savedFile string) error {
+	// Copy permission bits from the old executable
+	// (it was extracted with mode 0755)
+	fileInfo, err := os.Lstat(targetFile)
+	if err == nil {
+		if err = os.Chmod(newFile, fileInfo.Mode()); err != nil {
+			return errors.Wrap(err, "failed to set permission")
+		}
+	}
+
 	if err = os.Remove(targetFile); os.IsNotExist(err) {
 		err = nil
 	}
+
 	if err != nil && savedFile != "" {
-		// Windows forbids removal of a running executable so we rename it
+		// Windows forbids removal of a running executable so we rename it.
+		// For starters, rename download as the original file with ".old.exe" appended.
 		var saveErr error
 		if saveErr = os.Remove(savedFile); os.IsNotExist(saveErr) {
 			saveErr = nil
@@ -168,56 +269,91 @@ func InstallUpdate(opt *Options) error {
 		if saveErr == nil {
 			saveErr = os.Rename(targetFile, savedFile)
 		}
+		if saveErr != nil {
+			// The ".old" file cannot be removed or cannot be renamed to.
+			// This usually means that current executable already has ".old"
+			// This can happen in very rare cases, but we ought to handle it.
+			// Try inserting a randomness in the name to mitigate it.
+			fs.Debugf(nil, "%s: cannot replace old file, randomizing name", savedFile)
+
+			savedFile, saveErr = makeRandomExeName(targetFile, "old")
+			if saveErr == nil {
+				if saveErr = os.Remove(savedFile); os.IsNotExist(saveErr) {
+					saveErr = nil
+				}
+			}
+			if saveErr == nil {
+				saveErr = os.Rename(targetFile, savedFile)
+			}
+		}
 		if saveErr == nil {
 			fmt.Printf("The old executable was saved as %s\n", savedFile)
 			err = nil
-		} else {
-			// The rename trick didn't work out, proceed like on Unix
-			_ = os.Remove(savedFile)
 		}
 	}
+
 	if err == nil {
 		err = os.Rename(newFile, targetFile)
 	}
 	if err != nil {
-		_ = os.Remove(newFile)
+		if rmErr := os.Remove(newFile); rmErr != nil {
+			fs.Errorf(nil, "%s: could not remove temporary file: %v", newFile, rmErr)
+		}
 		return err
 	}
-	fmt.Printf("Successfully updated rclone to version %s\n", newVersion)
 	return nil
 }
 
-func downloadUpdate(beta bool, version, siteURL, newFile string) error {
-	archiveFilename := fmt.Sprintf("rclone-%s-%s-%s.zip", version, runtime.GOOS, runtime.GOARCH)
+func makeRandomExeName(baseName, extension string) (string, error) {
+	if runtime.GOOS == "windows" {
+		if strings.HasSuffix(baseName, ".exe") {
+			baseName = baseName[:len(baseName)-4]
+		}
+		extension += ".exe"
+	}
+
+	for attempt := 0; attempt < 5; attempt++ {
+		filename := fmt.Sprintf("%s.%s.%s", baseName, random.String(4), extension)
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			return filename, nil
+		}
+	}
+
+	return "", fmt.Errorf("cannot find a file name like %s.xxxx.%s", baseName, extension)
+}
+
+func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, format string) error {
+	osName := runtime.GOOS
+	arch := runtime.GOARCH
+	if arch == "darwin" {
+		arch = "osx"
+	}
+
+	archiveFilename := fmt.Sprintf("rclone-%s-%s-%s.%s", version, osName, arch, format)
 	archiveURL := fmt.Sprintf("%s/%s/%s", siteURL, version, archiveFilename)
-	archiveBuf, err := downloadFile(archiveURL)
+	archiveBuf, err := downloadFile(ctx, archiveURL)
 	if err != nil {
 		return err
 	}
-	fs.Debugf(nil, "downloaded release archive: %s", archiveURL)
 	gotHash := sha256.Sum256(archiveBuf)
-	fs.Debugf(nil, "archive hashsum: %s", hex.EncodeToString(gotHash[:]))
+	strHash := hex.EncodeToString(gotHash[:])
+	fs.Debugf(nil, "downloaded release archive with hashsum %s from %s", strHash, archiveURL)
 
 	// CI/CD does not provide hashsums for beta releases
 	if !beta {
-		hashsumsURL := fmt.Sprintf("%s/%s/SHA256SUMS", siteURL, version)
-		hashsumsBuf, err := downloadFile(hashsumsURL)
-		if err != nil {
+		if err := verifyHashsum(ctx, siteURL, version, archiveFilename, gotHash[:]); err != nil {
 			return err
-		}
-		fs.Debugf(nil, "downloaded hashsum list: %s", hashsumsURL)
-
-		wantHash, err := findFileHash(hashsumsBuf, archiveFilename)
-		if err != nil {
-			return err
-		}
-
-		if !bytes.Equal(wantHash, gotHash[:]) {
-			return fmt.Errorf("hash mismatch: want %02x vs got %02x", wantHash, gotHash)
 		}
 	}
 
-	entryName := fmt.Sprintf("rclone-%s-%s-%s/rclone", version, runtime.GOOS, runtime.GOARCH)
+	if format != "zip" {
+		if err := ioutil.WriteFile(newFile, archiveBuf, 0644); err != nil {
+			return errors.Wrap(err, "cannot write temporary ."+format)
+		}
+		return nil
+	}
+
+	entryName := fmt.Sprintf("rclone-%s-%s-%s/rclone", version, osName, arch)
 	if runtime.GOOS == "windows" {
 		entryName += ".exe"
 	}
@@ -309,13 +445,15 @@ func extractZipToFile(buf []byte, entryName, newFile string) error {
 	_, err = io.Copy(writer, reader)
 	_ = writer.Close()
 	if err != nil {
-		_ = os.Remove(newFile)
+		if rmErr := os.Remove(newFile); rmErr != nil {
+			fs.Errorf(nil, "%s: could not remove temporary file: %v", newFile, rmErr)
+		}
 	}
 	return err
 }
 
-func downloadFile(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+func downloadFile(ctx context.Context, url string) ([]byte, error) {
+	resp, err := fshttp.NewClient(ctx).Get(url)
 	if err != nil {
 		return nil, err
 	}

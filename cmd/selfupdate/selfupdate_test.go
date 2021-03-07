@@ -1,67 +1,103 @@
 package selfupdate
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest/testy"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInstallOnLinux(t *testing.T) {
-	if testing.Short() {
-		t.Skip("not running with -short")
+func TestGetVersion(t *testing.T) {
+	testy.SkipUnreliable(t)
+
+	ctx := context.Background()
+
+	// a beta version can only have "v" prepended
+	resultVer, _, err := GetVersion(ctx, true, "1.2.3.4")
+	assert.NoError(t, err)
+	assert.Equal(t, "v1.2.3.4", resultVer)
+
+	// but a stable version syntax should be checked
+	_, _, err = GetVersion(ctx, false, "1")
+	assert.Error(t, err)
+	_, _, err = GetVersion(ctx, false, "1.")
+	assert.Error(t, err)
+	_, _, err = GetVersion(ctx, false, "1.2.")
+	assert.Error(t, err)
+	_, _, err = GetVersion(ctx, false, "1.2.3.4")
+	assert.Error(t, err)
+
+	// incomplete stable version should have micro release added
+	resultVer, _, err = GetVersion(ctx, false, "1.52")
+	assert.NoError(t, err)
+	assert.Equal(t, "v1.52.3", resultVer)
+}
+
+func makeTestDir() (testDir string, err error) {
+	testDirBase := filepath.Join(os.TempDir(), "rclone-test-selfupdate.")
+	for attempt := 0; attempt < 5; attempt++ {
+		testDir = testDirBase + random.String(4)
+		err = os.MkdirAll(testDir, os.ModePerm)
+		if err == nil {
+			break
+		}
 	}
+	return
+}
+
+func TestInstallOnLinux(t *testing.T) {
+	testy.SkipUnreliable(t)
 	if runtime.GOOS != "linux" {
 		t.Skip("this is a Linux only test")
 	}
 
 	// Prepare for test
-	file, err := ioutil.TempFile("", "rclone-test.out")
+	ctx := context.Background()
+	testDir, err := makeTestDir()
 	assert.NoError(t, err)
-	path := file.Name()
-	assert.NoError(t, file.Close())
+	path := filepath.Join(testDir, "rclone")
 	defer func() {
 		_ = os.Chmod(path, 0644)
-		_ = os.Remove(path)
-		_ = os.Remove(path + ".old")
-		_ = os.Remove(path + ".new")
+		_ = os.RemoveAll(testDir)
 	}()
 
 	regexVer := regexp.MustCompile(`v[0-9]\S+`)
 
-	betaVer, _, err := GetVersion(true, "")
+	betaVer, _, err := GetVersion(ctx, true, "")
 	assert.NoError(t, err)
 
 	// Must do nothing if version isn't changing
-	assert.NoError(t, InstallUpdate(&Options{Beta: true, Output: path, Version: fs.Version}))
+	assert.NoError(t, InstallUpdate(ctx, &Options{Beta: true, Output: path, Version: fs.Version}))
 
 	// Must fail on non-writable file
+	assert.NoError(t, ioutil.WriteFile(path, []byte("test"), 0644))
 	assert.NoError(t, os.Chmod(path, 0000))
-	err = (InstallUpdate(&Options{Beta: true, Output: path}))
+	err = (InstallUpdate(ctx, &Options{Beta: true, Output: path}))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "run self-update as root")
 
 	// Must keep non-standard permissions
 	assert.NoError(t, os.Chmod(path, 0644))
-	assert.NoError(t, InstallUpdate(&Options{Beta: true, Output: path}))
+	assert.NoError(t, InstallUpdate(ctx, &Options{Beta: true, Output: path}))
 
 	info, err := os.Stat(path)
 	assert.NoError(t, err)
 	assert.Equal(t, os.FileMode(0644), info.Mode().Perm())
 
 	// Must remove temporary files
-	_, err = os.Stat(path + ".new")
-	assert.Error(t, err)
-	assert.True(t, os.IsNotExist(err))
-
-	_, err = os.Stat(path + ".old")
-	assert.Error(t, err)
-	assert.True(t, os.IsNotExist(err))
+	files, err := ioutil.ReadDir(testDir)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(files))
 
 	// Must contain valid executable
 	assert.NoError(t, os.Chmod(path, 0755))
@@ -73,74 +109,88 @@ func TestInstallOnLinux(t *testing.T) {
 }
 
 func TestRenameOnWindows(t *testing.T) {
-	if testing.Short() {
-		t.Skip("not running with -short")
-	}
+	testy.SkipUnreliable(t)
 	if runtime.GOOS != "windows" {
 		t.Skip("this is a Windows only test")
 	}
 
 	// Prepare for test
-	file, err := ioutil.TempFile("", "rclone-test.exe")
-	assert.NoError(t, err)
-	path := file.Name()
-	assert.NoError(t, file.Close())
-	assert.NoError(t, os.Remove(path))
+	ctx := context.Background()
 
+	testDir, err := makeTestDir()
+	assert.NoError(t, err)
 	defer func() {
-		_ = os.Remove(path)
-		_ = os.Remove(path + ".old")
-		_ = os.Remove(path + ".new")
+		_ = os.RemoveAll(testDir)
 	}()
 
+	path := filepath.Join(testDir, "rclone.exe")
 	regexVer := regexp.MustCompile(`v[0-9]\S+`)
 
-	stableVer, _, err := GetVersion(false, "")
+	stableVer, _, err := GetVersion(ctx, false, "")
 	assert.NoError(t, err)
 
-	betaVer, _, err := GetVersion(true, "")
+	betaVer, _, err := GetVersion(ctx, true, "")
 	assert.NoError(t, err)
 
 	// Must not create temporary files when target doesn't exist
-	assert.NoError(t, InstallUpdate(&Options{Beta: true, Output: path}))
+	assert.NoError(t, InstallUpdate(ctx, &Options{Beta: true, Output: path}))
 
-	_, err = os.Stat(path + ".new")
-	assert.Error(t, err)
-	assert.True(t, os.IsNotExist(err))
-
-	_, err = os.Stat(path + ".old")
-	assert.Error(t, err)
-	assert.True(t, os.IsNotExist(err))
+	files, err := ioutil.ReadDir(testDir)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(files))
 
 	// Must save running executable as the "old" file
-	cmd := exec.Command(path, "config")
-	stdin, err := cmd.StdinPipe() // Make it run waiting for input
+	cmdWait := exec.Command(path, "config")
+	stdinWait, err := cmdWait.StdinPipe() // Make it run waiting for input
 	assert.NoError(t, err)
-	assert.NoError(t, cmd.Start())
+	assert.NoError(t, cmdWait.Start())
 
-	assert.NoError(t, InstallUpdate(&Options{Beta: false, Output: path}))
+	assert.NoError(t, InstallUpdate(ctx, &Options{Beta: false, Output: path}))
+	files, err = ioutil.ReadDir(testDir)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(files))
 
-	_, err = os.Stat(path + ".new")
-	assert.Error(t, err)
-	assert.True(t, os.IsNotExist(err))
-
-	_, err = os.Stat(path + ".old")
+	pathOld := filepath.Join(testDir, "rclone.old.exe")
+	_, err = os.Stat(pathOld)
 	assert.NoError(t, err)
 
-	_ = stdin.Close() // End the wait
-	_ = cmd.Wait()
-
-	cmd = exec.Command(path, "version")
+	cmd := exec.Command(path, "version")
 	output, err := cmd.CombinedOutput()
 	assert.NoError(t, err)
 	assert.True(t, cmd.ProcessState.Success())
 	assert.Equal(t, stableVer, regexVer.FindString(string(output)))
 
-	assert.NoError(t, os.Remove(path))
-	assert.NoError(t, os.Rename(path+".old", path))
-	cmd = exec.Command(path, "version")
-	output, err = cmd.CombinedOutput()
+	cmdOld := exec.Command(pathOld, "version")
+	output, err = cmdOld.CombinedOutput()
 	assert.NoError(t, err)
-	assert.True(t, cmd.ProcessState.Success())
+	assert.True(t, cmdOld.ProcessState.Success())
 	assert.Equal(t, betaVer, regexVer.FindString(string(output)))
+
+	// Stop previous waiting executable, run new and saved executables
+	_ = stdinWait.Close()
+	_ = cmdWait.Wait()
+	time.Sleep(100 * time.Millisecond)
+
+	cmdWait = exec.Command(path, "config")
+	stdinWait, err = cmdWait.StdinPipe()
+	assert.NoError(t, err)
+	assert.NoError(t, cmdWait.Start())
+
+	cmdWaitOld := exec.Command(pathOld, "config")
+	stdinWaitOld, err := cmdWaitOld.StdinPipe()
+	assert.NoError(t, err)
+	assert.NoError(t, cmdWaitOld.Start())
+
+	// Updating when the "old" executable is running must produce a random "old" file
+	assert.NoError(t, InstallUpdate(ctx, &Options{Beta: true, Output: path}))
+	files, err = ioutil.ReadDir(testDir)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, len(files))
+
+	// Stop all waiting executables
+	_ = stdinWait.Close()
+	_ = cmdWait.Wait()
+	_ = stdinWaitOld.Close()
+	_ = cmdWaitOld.Wait()
+	time.Sleep(100 * time.Millisecond)
 }
