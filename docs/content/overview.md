@@ -328,43 +328,43 @@ remote itself may assign the MIME type.
 All rclone remotes support a base command set. Other features depend
 upon backend specific capabilities.
 
-| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing | About | EmptyDir |
-| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:| :------: |
-| 1Fichier                     | No    | Yes   | Yes   | No      | No      | No    | No           | Yes           |   No  |  Yes |
-| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No  | No  | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | Yes |
-| Amazon S3                    | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
-| Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No  | No |
-| Box                          | Yes   | Yes  | Yes  | Yes     | Yes ‡‡  | No    | Yes          | Yes          | No  | Yes |
-| Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No          | No  | Yes |
-| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/rclone/rclone/issues/575) | No  | Yes | Yes | Yes | Yes |
-| Enterprise File Fabric       | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No          | No  | Yes |
-| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | Yes |
-| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
-| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes         | Yes | Yes |
-| Google Photos                | No    | No   | No   | No      | No      | No    | No           | No          | No | No |
-| HDFS                         | Yes   | No   | No   | No      | No      | No    | Yes          | No          | Yes | Yes |
-| HTTP                         | No    | No   | No   | No      | No      | No    | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | Yes |
-| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | No |
-| Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes                                                   | Yes | Yes |
-| Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes                                                   | Yes | Yes |
-| Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | Yes |
-| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No          | No | No |
-| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
-| Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes | Yes | Yes |
-| OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No                                                    | No  | Yes |
-| OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | No |
-| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes | Yes | Yes |
-| premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | Yes         | Yes | Yes |
-| put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes | Yes |
-| QingStor                     | No    | Yes  | No   | No      | Yes     | Yes   | No           | No [#2178](https://github.com/rclone/rclone/issues/2178) | No  | No |
-| Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes         | Yes | Yes |
-| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes  | Yes |
-| SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes         | No  | Yes |
-| Tardigrade                   | Yes † | No   | No   | No      | No      | Yes   | Yes          | No          | No  | No  |
-| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No [#2178](https://github.com/rclone/rclone/issues/2178) | Yes  | Yes |
-| Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes         | Yes | Yes |
-| Zoho WorkDrive               | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No          | Yes | Yes |
-| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No          | Yes | Yes |
+| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing  | About | EmptyDir |
+| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|:--------:|
+| 1Fichier                     | No    | Yes  | Yes  | No      | No      | No    | No           | Yes          | No    | Yes      |
+| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
+| Amazon S3                    | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
+| Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
+| Box                          | Yes   | Yes  | Yes  | Yes     | Yes ‡‡  | No    | Yes          | Yes          | Yes   | Yes      |
+| Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
+| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | Yes   | Yes      |
+| Enterprise File Fabric       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No           | No    | Yes      |
+| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
+| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
+| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
+| Google Photos                | No    | No   | No   | No      | No      | No    | No           | No           | No    | No       |
+| HDFS                         | Yes   | No   | No   | No      | No      | No    | Yes          | No           | Yes   | Yes      |
+| HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
+| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
+| Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
+| Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
+| Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
+| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       | 
+| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
+| Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
+| OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
+| OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
+| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
+| premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | Yes          | Yes   | Yes      |
+| put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No           | Yes   | Yes      |
+| QingStor                     | No    | Yes  | No   | No      | Yes     | Yes   | No           | No           | No    | No       |
+| Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
+| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
+| SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
+| Tardigrade                   | Yes † | No   | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
+| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No           | Yes   | Yes      |
+| Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes          | Yes   | Yes      |
+| Zoho WorkDrive               | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | Yes   | Yes      |
+| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 
 ### Purge ###
 
