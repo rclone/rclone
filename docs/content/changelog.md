@@ -5,6 +5,43 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.54.1 - 2021-03-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.54.0...v1.54.1)
+
+* Bug Fixes
+    * accounting: Fix --bwlimit when up or down is off (Nick Craig-Wood)
+    * docs
+        * Fix nesting of brackets and backticks in ftp docs (edwardxml)
+        * Fix broken link in sftp page (edwardxml)
+        * Fix typo in crypt.md (Romeo Kienzler)
+        * Changelog: Correct link to digitalis.io (Alex JOST)
+        * Replace #file-caching with #vfs-file-caching (Miron Veryanskiy)
+        * Convert bogus example link to code (edwardxml)
+        * Remove dead link from rc.md (edwardxml)
+    * rc: Sync,copy,move: document createEmptySrcDirs parameter (Nick Craig-Wood)
+    * lsjson: Fix unterminated JSON in the presence of errors (Nick Craig-Wood)
+* Mount
+    * Fix mount dropping on macOS by setting --daemon-timeout 10m (Nick Craig-Wood)
+* VFS
+    * Document simultaneous usage with the same cache shouldn't be used (Nick Craig-Wood)
+* B2
+    * Automatically raise upload cutoff to avoid spurious error (Nick Craig-Wood)
+    * Fix failed to create file system with application key limited to a prefix (Nick Craig-Wood)
+* Drive
+    * Refer to Shared Drives instead of Team Drives (Nick Craig-Wood)
+* Dropbox
+    * Add scopes to oauth request and optionally "members.read" (Nick Craig-Wood)
+* S3
+    * Fix failed to create file system with folder level permissions policy (Nick Craig-Wood)
+    * Fix Wasabi HEAD requests returning stale data by using only 1 transport (Nick Craig-Wood)
+    * Fix shared_credentials_file auth (Dmitry Chepurovskiy)
+    * Add --s3-no-head to reducing costs docs (Nick Craig-Wood)
+* Union
+    * Fix mkdir at root with remote:/ (Nick Craig-Wood)
+* Zoho
+    * Fix custom client id's (buengese)
+
 ## v1.54.0 - 2021-02-02
 
 [See commits](https://github.com/rclone/rclone/compare/v1.53.0...v1.54.0)
