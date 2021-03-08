@@ -17,7 +17,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Feb 02, 2021</p>
+<p class="date">Mar 08, 2021</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -1475,7 +1475,7 @@ rclone mount remote:path/to/files * --volname \\cloud\remote</code></pre>
 <p>The bucket based remotes (e.g. Swift, S3, Google Compute Storage, B2, Hubic) do not support the concept of empty directories, so empty directories will have a tendency to disappear once they fall out of the directory cache.</p>
 <p>Only supported on Linux, FreeBSD, OS X and Windows at the moment.</p>
 <h2 id="rclone-mount-vs-rclone-synccopy">rclone mount vs rclone sync/copy</h2>
-<p>File systems expect things to be 100% reliable, whereas cloud storage systems are a long way from 100% reliable. The rclone sync/copy commands cope with this with lots of retries. However rclone mount can't use retries in the same way without making local copies of the uploads. Look at the <a href="#vfs-file-caching">VFS file caching</a> section for solutions to make mount more reliable.</p>
+<p>File systems expect things to be 100% reliable, whereas cloud storage systems are a long way from 100% reliable. The rclone sync/copy commands cope with this with lots of retries. However rclone mount can't use retries in the same way without making local copies of the uploads. Look at the <a href="#vfs-file-caching">VFS File Caching</a> for solutions to make mount more reliable.</p>
 <h2 id="attribute-caching">Attribute caching</h2>
 <p>You can use the flag <code>--attr-timeout</code> to set the time the kernel caches the attributes (size, modification time, etc.) for directory entries.</p>
 <p>The default is <code>1s</code> which caches files just long enough to avoid too many callbacks to rclone from the kernel.</p>
@@ -1526,6 +1526,7 @@ rclone mount remote:path/to/files * --volname \\cloud\remote</code></pre>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for --vfs-write-back second. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
 <p>If using <code>--vfs-cache-max-size</code> note that the cache may exceed this size for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache.</p>
+<p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off">--vfs-cache-mode off</h3>
 <p>In this mode (the default) the cache will read directly from the remote and write directly to the remote without caching anything on disk.</p>
 <p>This will mean some operations are not possible</p>
@@ -1848,6 +1849,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for --vfs-write-back second. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
 <p>If using <code>--vfs-cache-max-size</code> note that the cache may exceed this size for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache.</p>
+<p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-1">--vfs-cache-mode off</h3>
 <p>In this mode (the default) the cache will read directly from the remote and write directly to the remote without caching anything on disk.</p>
 <p>This will mean some operations are not possible</p>
@@ -1982,6 +1984,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for --vfs-write-back second. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
 <p>If using <code>--vfs-cache-max-size</code> note that the cache may exceed this size for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache.</p>
+<p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-2">--vfs-cache-mode off</h3>
 <p>In this mode (the default) the cache will read directly from the remote and write directly to the remote without caching anything on disk.</p>
 <p>This will mean some operations are not possible</p>
@@ -2246,6 +2249,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for --vfs-write-back second. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
 <p>If using <code>--vfs-cache-max-size</code> note that the cache may exceed this size for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache.</p>
+<p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-3">--vfs-cache-mode off</h3>
 <p>In this mode (the default) the cache will read directly from the remote and write directly to the remote without caching anything on disk.</p>
 <p>This will mean some operations are not possible</p>
@@ -2558,6 +2562,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for --vfs-write-back second. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
 <p>If using <code>--vfs-cache-max-size</code> note that the cache may exceed this size for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache.</p>
+<p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-4">--vfs-cache-mode off</h3>
 <p>In this mode (the default) the cache will read directly from the remote and write directly to the remote without caching anything on disk.</p>
 <p>This will mean some operations are not possible</p>
@@ -2823,6 +2828,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>The cache has 4 different modes selected by <code>--vfs-cache-mode</code>. The higher the cache mode the more compatible rclone becomes at the cost of using disk space.</p>
 <p>Note that files are written back to the remote only when they are closed and if they haven't been accessed for --vfs-write-back second. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.</p>
 <p>If using <code>--vfs-cache-max-size</code> note that the cache may exceed this size for two reasons. Firstly because it is only checked every <code>--vfs-cache-poll-interval</code>. Secondly because open files cannot be evicted from the cache.</p>
+<p>You <strong>should not</strong> run two copies of rclone using the same VFS cache with the same or overlapping remotes if using <code>--vfs-cache-mode &gt; off</code>. This can potentially cause data corruption if you do. You can work around this by giving each rclone its own cache hierarchy with <code>--cache-dir</code>. You don't need to worry about this if the remotes in use don't overlap.</p>
 <h3 id="vfs-cache-mode-off-5">--vfs-cache-mode off</h3>
 <p>In this mode (the default) the cache will read directly from the remote and write directly to the remote without caching anything on disk.</p>
 <p>This will mean some operations are not possible</p>
@@ -4085,7 +4091,7 @@ dir1/dir2/dir3/.ignore</code></pre>
 <p>The command <code>rclone ls --exclude-if-present .ignore dir1</code> does not list <code>dir3</code>, <code>file3</code> or <code>.ignore</code>.</p>
 <p><code>--exclude-if-present</code> can only be used once in an rclone command.</p>
 <h2 id="common-pitfalls">Common pitfalls</h2>
-<p>The most frequent filter support issues on the <a href="https://https://forum.rclone.org/">rclone forum</a> are:</p>
+<p>The most frequent filter support issues on the <a href="https://forum.rclone.org/">rclone forum</a> are:</p>
 <ul>
 <li>Not using paths relative to the root of the remote</li>
 <li>Not using <code>/</code> to match from the root of a remote</li>
@@ -4997,6 +5003,7 @@ rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt=&#39;{&quot;Cache
 <ul>
 <li>srcFs - a remote name string e.g. "drive:src" for the source</li>
 <li>dstFs - a remote name string e.g. "drive:dst" for the destination</li>
+<li>createEmptySrcDirs - create empty src directories on destination if set</li>
 </ul>
 <p>See the <a href="https://rclone.org/commands/rclone_copy/">copy command</a> command for more information on the above.</p>
 <p><strong>Authentication is required for this call.</strong></p>
@@ -5005,6 +5012,7 @@ rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt=&#39;{&quot;Cache
 <ul>
 <li>srcFs - a remote name string e.g. "drive:src" for the source</li>
 <li>dstFs - a remote name string e.g. "drive:dst" for the destination</li>
+<li>createEmptySrcDirs - create empty src directories on destination if set</li>
 <li>deleteEmptySrcDirs - delete empty src directories if set</li>
 </ul>
 <p>See the <a href="https://rclone.org/commands/rclone_move/">move command</a> command for more information on the above.</p>
@@ -5014,6 +5022,7 @@ rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt=&#39;{&quot;Cache
 <ul>
 <li>srcFs - a remote name string e.g. "drive:src" for the source</li>
 <li>dstFs - a remote name string e.g. "drive:dst" for the destination</li>
+<li>createEmptySrcDirs - create empty src directories on destination if set</li>
 </ul>
 <p>See the <a href="https://rclone.org/commands/rclone_sync/">sync command</a> command for more information on the above.</p>
 <p><strong>Authentication is required for this call.</strong></p>
@@ -6491,7 +6500,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.54.0&quot;)
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.54.1&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -6616,7 +6625,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --drive-starred-only                                       Only show files that are starred.
       --drive-stop-on-download-limit                             Make download limit errors be fatal
       --drive-stop-on-upload-limit                               Make upload limit errors be fatal
-      --drive-team-drive string                                  ID of the Team Drive
+      --drive-team-drive string                                  ID of the Shared Drive (Team Drive)
       --drive-token string                                       OAuth Access Token as a JSON blob.
       --drive-token-url string                                   Token server url.
       --drive-trashed-only                                       Only show files that are in the trash.
@@ -6897,8 +6906,13 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --yandex-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,Del,Ctl,InvalidUtf8,Dot)
       --yandex-token string                                      OAuth Access Token as a JSON blob.
       --yandex-token-url string                                  Token server url.
+      --zoho-auth-url string                                     Auth server URL.
+      --zoho-client-id string                                    OAuth Client Id
+      --zoho-client-secret string                                OAuth Client Secret
       --zoho-encoding MultiEncoder                               This sets the encoding for the backend. (default Del,Ctl,InvalidUtf8)
-      --zoho-region string                                       Zoho region to connect to. You&#39;ll have to use the region you organization is registered in.</code></pre>
+      --zoho-region string                                       Zoho region to connect to. You&#39;ll have to use the region you organization is registered in.
+      --zoho-token string                                        OAuth Access Token as a JSON blob.
+      --zoho-token-url string                                    Token server url.</code></pre>
 <h2 id="fichier">1Fichier</h2>
 <p>This is a backend for the <a href="https://1fichier.com">1fichier</a> cloud storage service. Note that a Premium subscription is required to use the API.</p>
 <p>Paths are specified as <code>remote:path</code></p>
@@ -7575,6 +7589,10 @@ y/e/d&gt; </code></pre>
 <pre><code>rclone copy --min-age 24h --no-traverse /path/to/source s3:bucket</code></pre>
 <p>You'd then do a full <code>rclone sync</code> less often.</p>
 <p>Note that <code>--fast-list</code> isn't required in the top-up sync.</p>
+<h4 id="avoiding-head-requests-after-put">Avoiding HEAD requests after PUT</h4>
+<p>By default rclone will HEAD every object it uploads. It does this to check the object got uploaded correctly.</p>
+<p>You can disable this with the <a href="#s3-no-head">--s3-no-head</a> option - see there for more details.</p>
+<p>Setting this flag increases the chance for undetected upload failures.</p>
 <h3 id="hashes">Hashes</h3>
 <p>For small objects which weren't uploaded as multipart uploads (objects sized below <code>--s3-upload-cutoff</code> if uploaded with rclone) rclone uses the <code>ETag:</code> header as an MD5 checksum.</p>
 <p>However for objects which were uploaded as multipart uploads or with server side encryption (SSE-AWS or SSE-C) the <code>ETag</code> header is no longer the MD5 sum of the data, so rclone adds an additional piece of metadata <code>X-Amz-Meta-Md5chksum</code> which is a base64 encoded MD5 hash (in the same format as is required for <code>Content-MD5</code>).</p>
@@ -10735,7 +10753,7 @@ chunk_total_size = 10G</code></pre>
 <h5 id="certificate-validation">Certificate Validation</h5>
 <p>When the Plex server is configured to only accept secure connections, it is possible to use <code>.plex.direct</code> URLs to ensure certificate validation succeeds. These URLs are used by Plex internally to connect to the Plex server securely.</p>
 <p>The format for these URLs is the following:</p>
-<p>https://ip-with-dots-replaced.server-hash.plex.direct:32400/</p>
+<p><code>https://ip-with-dots-replaced.server-hash.plex.direct:32400/</code></p>
 <p>The <code>ip-with-dots-replaced</code> part can be any IPv4 address, where the dots have been replaced with dashes, e.g. <code>127.0.0.1</code> becomes <code>127-0-0-1</code>.</p>
 <p>To get the <code>server-hash</code> part, the easiest way is to visit</p>
 <p>https://plex.tv/api/resources?includeHttps=1&amp;X-Plex-Token=your-plex-token</p>
@@ -11491,7 +11509,7 @@ y/e/d&gt; y</code></pre>
 <p>To use <code>crypt</code>, first set up the underlying remote. Follow the <code>rclone config</code> instructions for the specific backend.</p>
 <p>Before configuring the crypt remote, check the underlying remote is working. In this example the underlying remote is called <code>remote</code>. We will configure a path <code>path</code> within this remote to contain the encrypted content. Anything inside <code>remote:path</code> will be encrypted and anything outside will not.</p>
 <p>Configure <code>crypt</code> using <code>rclone config</code>. In this example the <code>crypt</code> remote is called <code>secret</code>, to differentiate it from the underlying <code>remote</code>.</p>
-<p>When you are done you can use the crypt remote named <code>secret</code> just as you would with any other remote, e.g. <code>rclone copy D:\docs secret:\docs</code>, and rclone will encrypt and decrypt as needed on the fly. If you access the wrapped remote <code>remote:path</code> directly you will bypass the encryption, and anything you read will be in encrypted form, and anything you write will be undencrypted. To avoid issues it is best to configure a dedicated path for encrypted content, and access it exclusively through a crypt remote.</p>
+<p>When you are done you can use the crypt remote named <code>secret</code> just as you would with any other remote, e.g. <code>rclone copy D:\docs secret:\docs</code>, and rclone will encrypt and decrypt as needed on the fly. If you access the wrapped remote <code>remote:path</code> directly you will bypass the encryption, and anything you read will be in encrypted form, and anything you write will be unencrypted. To avoid issues it is best to configure a dedicated path for encrypted content, and access it exclusively through a crypt remote.</p>
 <pre><code>No remotes found - make a new one
 n) New remote
 s) Set configuration password
@@ -12125,6 +12143,9 @@ y/e/d&gt; y</code></pre>
 </ul>
 <h4 id="dropbox-impersonate">--dropbox-impersonate</h4>
 <p>Impersonate this user when using a business account.</p>
+<p>Note that if you want to use impersonate, you should make sure this flag is set when running "rclone config" as this will cause rclone to request the "members.read" scope which it won't normally. This is needed to lookup a members email address into the internal ID that dropbox uses in the API.</p>
+<p>Using the "members.read" scope will require a Dropbox Team Admin to approve during the OAuth flow.</p>
+<p>You will have to use your own App (setting your own client_id and client_secret) to use this option as currently rclone's default set of permissions doesn't include "members.read". This can be added once v1.55 or later is in use everywhere.</p>
 <ul>
 <li>Config: impersonate</li>
 <li>Env Var: RCLONE_DROPBOX_IMPERSONATE</li>
@@ -12428,7 +12449,7 @@ y/e/d&gt; y</code></pre>
 <h3 id="example-without-a-config-file">Example without a config file</h3>
 <pre><code>rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=`rclone obscure dummy`</code></pre>
 <h3 id="implicit-tls">Implicit TLS</h3>
-<p>Rlone FTP supports implicit FTP over TLS servers (FTPS). This has to be enabled in the FTP backend config for the remote, or with <code>[--ftp-tls]{#ftp-tls}</code>. The default FTPS port is <code>990</code>, not <code>21</code> and can be set with <code>[--ftp-port]{#ftp-port}</code>.</p>
+<p>Rlone FTP supports implicit FTP over TLS servers (FTPS). This has to be enabled in the FTP backend config for the remote, or with <a href="#ftp-tls"><code>--ftp-tls</code></a>. The default FTPS port is <code>990</code>, not <code>21</code> and can be set with <a href="#ftp-port"><code>--ftp-port</code></a>.</p>
 <h3 id="standard-options-13">Standard Options</h3>
 <p>Here are the standard options specific to ftp (FTP Connection).</p>
 <h4 id="ftp-host">--ftp-host</h4>
@@ -13132,7 +13153,7 @@ If your browser doesn&#39;t open automatically go to the following link: http://
 Log in and authorize rclone for access
 Waiting for code...
 Got code
-Configure this as a team drive?
+Configure this as a Shared Drive (Team Drive)?
 y) Yes
 n) No
 y/n&gt; n
@@ -13233,15 +13254,15 @@ y/n&gt;             # Auto config, y
 </ul></li>
 </ul>
 <p>Note: in case you configured a specific root folder on gdrive and rclone is unable to access the contents of that folder when using <code>--drive-impersonate</code>, do this instead: - in the gdrive web interface, share your root folder with the user/email of the new Service Account you created/selected at step #1 - use rclone without specifying the <code>--drive-impersonate</code> option, like this: <code>rclone -v foo@example.com lsf gdrive:backup</code></p>
-<h3 id="team-drives">Team drives</h3>
-<p>If you want to configure the remote to point to a Google Team Drive then answer <code>y</code> to the question <code>Configure this as a team drive?</code>.</p>
-<p>This will fetch the list of Team Drives from google and allow you to configure which one you want to use. You can also type in a team drive ID if you prefer.</p>
+<h3 id="shared-drives-team-drives">Shared drives (team drives)</h3>
+<p>If you want to configure the remote to point to a Google Shared Drive (previously known as Team Drives) then answer <code>y</code> to the question <code>Configure this as a Shared Drive (Team Drive)?</code>.</p>
+<p>This will fetch the list of Shared Drives from google and allow you to configure which one you want to use. You can also type in a Shared Drive ID if you prefer.</p>
 <p>For example:</p>
-<pre><code>Configure this as a team drive?
+<pre><code>Configure this as a Shared Drive (Team Drive)?
 y) Yes
 n) No
 y/n&gt; y
-Fetching team drive list...
+Fetching Shared Drive list...
 Choose a number from below, or type in your own value
  1 / Rclone Test
    \ &quot;xxxxxxxxxxxxxxxxxxxx&quot;
@@ -13249,7 +13270,7 @@ Choose a number from below, or type in your own value
    \ &quot;yyyyyyyyyyyyyyyyyyyy&quot;
  3 / Rclone Test 3
    \ &quot;zzzzzzzzzzzzzzzzzzzz&quot;
-Enter a Team Drive ID&gt; 1
+Enter a Shared Drive ID&gt; 1
 --------------------
 [remote]
 client_id =
@@ -13659,7 +13680,7 @@ trashed=false and &#39;c&#39; in parents</code></pre>
 <li>Default: ""</li>
 </ul>
 <h4 id="drive-team-drive">--drive-team-drive</h4>
-<p>ID of the Team Drive</p>
+<p>ID of the Shared Drive (Team Drive)</p>
 <ul>
 <li>Config: team_drive</li>
 <li>Env Var: RCLONE_DRIVE_TEAM_DRIVE</li>
@@ -13972,9 +13993,9 @@ rclone backend shortcut drive: source_item -o target=drive2: destination_shortcu
 <li>"target": optional target remote for the shortcut destination</li>
 </ul>
 <h4 id="drives">drives</h4>
-<p>List the shared drives available to this account</p>
+<p>List the Shared Drives available to this account</p>
 <pre><code>rclone backend drives remote: [options] [&lt;arguments&gt;+]</code></pre>
-<p>This command lists the shared drives (teamdrives) available to this account.</p>
+<p>This command lists the Shared Drives (Team Drives) available to this account.</p>
 <p>Usage:</p>
 <pre><code>rclone backend drives drive:</code></pre>
 <p>This will return a JSON list of objects like this</p>
@@ -18173,7 +18194,7 @@ known_hosts_file = ~/.ssh/known_hosts</code></pre>
 <p>SFTP also supports <code>about</code> if the same login has shell access and <code>df</code> are in the remote's PATH. <code>about</code> will return the total space, free space, and used space on the remote for the disk of the specified path on the remote or, if not set, the disk of the root on the remote. <code>about</code> will fail if it does not have shell access or if <code>df</code> is not in the remote's PATH.</p>
 <p>Note that some SFTP servers (e.g. Synology) the paths are different for SSH and SFTP so the hashes can't be calculated properly. For them using <code>disable_hashcheck</code> is a good idea.</p>
 <p>The only ssh agent supported under Windows is Putty's pageant.</p>
-<p>The Go SSH library disables the use of the aes128-cbc cipher by default, due to security concerns. This can be re-enabled on a per-connection basis by setting the <code>use_insecure_cipher</code> setting in the configuration file to <code>true</code>. Further details on the insecurity of this cipher can be found [in this paper] (http://www.isg.rhul.ac.uk/~kp/SandPfinal.pdf).</p>
+<p>The Go SSH library disables the use of the aes128-cbc cipher by default, due to security concerns. This can be re-enabled on a per-connection basis by setting the <code>use_insecure_cipher</code> setting in the configuration file to <code>true</code>. Further details on the insecurity of this cipher can be found <a href="http://www.isg.rhul.ac.uk/~kp/SandPfinal.pdf">in this paper</a>.</p>
 <p>SFTP isn't supported under plan9 until <a href="https://github.com/pkg/sftp/issues/156">this issue</a> is fixed.</p>
 <p>Note that since SFTP isn't HTTP based the following flags don't work with it: <code>--dump-headers</code>, <code>--dump-bodies</code>, <code>--dump-auth</code></p>
 <p>Note that <code>--timeout</code> isn't supported (but <code>--contimeout</code> is).</p>
@@ -19267,6 +19288,22 @@ y/e/d&gt; </code></pre>
 <p>Only control characters and invalid UTF-8 are replaced. In addition most Unicode full-width characters are not supported at all and will be removed from filenames during upload.</p>
 <h3 id="standard-options-37">Standard Options</h3>
 <p>Here are the standard options specific to zoho (Zoho).</p>
+<h4 id="zoho-client-id">--zoho-client-id</h4>
+<p>OAuth Client Id Leave blank normally.</p>
+<ul>
+<li>Config: client_id</li>
+<li>Env Var: RCLONE_ZOHO_CLIENT_ID</li>
+<li>Type: string</li>
+<li>Default: ""</li>
+</ul>
+<h4 id="zoho-client-secret">--zoho-client-secret</h4>
+<p>OAuth Client Secret Leave blank normally.</p>
+<ul>
+<li>Config: client_secret</li>
+<li>Env Var: RCLONE_ZOHO_CLIENT_SECRET</li>
+<li>Type: string</li>
+<li>Default: ""</li>
+</ul>
 <h4 id="zoho-region">--zoho-region</h4>
 <p>Zoho region to connect to. You'll have to use the region you organization is registered in.</p>
 <ul>
@@ -19296,6 +19333,30 @@ y/e/d&gt; </code></pre>
 </ul>
 <h3 id="advanced-options-36">Advanced Options</h3>
 <p>Here are the advanced options specific to zoho (Zoho).</p>
+<h4 id="zoho-token">--zoho-token</h4>
+<p>OAuth Access Token as a JSON blob.</p>
+<ul>
+<li>Config: token</li>
+<li>Env Var: RCLONE_ZOHO_TOKEN</li>
+<li>Type: string</li>
+<li>Default: ""</li>
+</ul>
+<h4 id="zoho-auth-url">--zoho-auth-url</h4>
+<p>Auth server URL. Leave blank to use the provider defaults.</p>
+<ul>
+<li>Config: auth_url</li>
+<li>Env Var: RCLONE_ZOHO_AUTH_URL</li>
+<li>Type: string</li>
+<li>Default: ""</li>
+</ul>
+<h4 id="zoho-token-url">--zoho-token-url</h4>
+<p>Token server url. Leave blank to use the provider defaults.</p>
+<ul>
+<li>Config: token_url</li>
+<li>Env Var: RCLONE_ZOHO_TOKEN_URL</li>
+<li>Type: string</li>
+<li>Default: ""</li>
+</ul>
 <h4 id="zoho-encoding">--zoho-encoding</h4>
 <p>This sets the encoding for the backend.</p>
 <p>See: the <a href="https://rclone.org/overview/#encoding">encoding section in the overview</a> for more info.</p>
@@ -19824,12 +19885,68 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.54.1---2021-03-08">v1.54.1 - 2021-03-08</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.54.0...v1.54.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>accounting: Fix --bwlimit when up or down is off (Nick Craig-Wood)</li>
+<li>docs
+<ul>
+<li>Fix nesting of brackets and backticks in ftp docs (edwardxml)</li>
+<li>Fix broken link in sftp page (edwardxml)</li>
+<li>Fix typo in crypt.md (Romeo Kienzler)</li>
+<li>Changelog: Correct link to digitalis.io (Alex JOST)</li>
+<li>Replace #file-caching with #vfs-file-caching (Miron Veryanskiy)</li>
+<li>Convert bogus example link to code (edwardxml)</li>
+<li>Remove dead link from rc.md (edwardxml)</li>
+</ul></li>
+<li>rc: Sync,copy,move: document createEmptySrcDirs parameter (Nick Craig-Wood)</li>
+<li>lsjson: Fix unterminated JSON in the presence of errors (Nick Craig-Wood)</li>
+</ul></li>
+<li>Mount
+<ul>
+<li>Fix mount dropping on macOS by setting --daemon-timeout 10m (Nick Craig-Wood)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Document simultaneous usage with the same cache shouldn't be used (Nick Craig-Wood)</li>
+</ul></li>
+<li>B2
+<ul>
+<li>Automatically raise upload cutoff to avoid spurious error (Nick Craig-Wood)</li>
+<li>Fix failed to create file system with application key limited to a prefix (Nick Craig-Wood)</li>
+</ul></li>
+<li>Drive
+<ul>
+<li>Refer to Shared Drives instead of Team Drives (Nick Craig-Wood)</li>
+</ul></li>
+<li>Dropbox
+<ul>
+<li>Add scopes to oauth request and optionally "members.read" (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Fix failed to create file system with folder level permissions policy (Nick Craig-Wood)</li>
+<li>Fix Wasabi HEAD requests returning stale data by using only 1 transport (Nick Craig-Wood)</li>
+<li>Fix shared_credentials_file auth (Dmitry Chepurovskiy)</li>
+<li>Add --s3-no-head to reducing costs docs (Nick Craig-Wood)</li>
+</ul></li>
+<li>Union
+<ul>
+<li>Fix mkdir at root with remote:/ (Nick Craig-Wood)</li>
+</ul></li>
+<li>Zoho
+<ul>
+<li>Fix custom client id's (buengese)</li>
+</ul></li>
+</ul>
 <h2 id="v1.54.0---2021-02-02">v1.54.0 - 2021-02-02</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.53.0...v1.54.0">See commits</a></p>
 <ul>
 <li>New backends
 <ul>
-<li>Compression remote (experimental)(buengese)</li>
+<li>Compression remote (experimental) (buengese)</li>
 <li>Enterprise File Fabric (Nick Craig-Wood)
 <ul>
 <li>This work was sponsored by <a href="https://storagemadeeasy.com/">Storage Made Easy</a></li>
@@ -19842,8 +19959,8 @@ $ tree /tmp/b
 <li>Deglobalise the config (Nick Craig-Wood)
 <ul>
 <li>Global config now read from the context</li>
-<li>Global config can be passed into the rc</li>
-<li>This work was sponsored by <a href="digitalis.io">Digitalis</a></li>
+<li>This will enable passing of global config via the rc</li>
+<li>This work was sponsored by <a href="https://digitalis.io/">Digitalis</a></li>
 </ul></li>
 <li>Add <code>--bwlimit</code> for upload and download (Nick Craig-Wood)
 <ul>
@@ -19851,48 +19968,38 @@ $ tree /tmp/b
 </ul></li>
 <li>Enhance systemd integration (Hekmon)
 <ul>
-<li>log level identification</li>
-<li>manual activation with flag</li>
-<li>automatic systemd launch detection</li>
+<li>log level identification, manual activation with flag, automatic systemd launch detection</li>
 <li>Don't compile systemd log integration for non unix systems (Benjamin Gustin)</li>
 </ul></li>
-<li>Add a download flag to hashsum and related commands to force rclone to download and hash files locally (lostheli)</li>
+<li>Add a <code>--download</code> flag to md5sum/sha1sum/hashsum to force rclone to download and hash files locally (lostheli)</li>
+<li>Add <code>--progress-terminal-title</code> to print ETA to terminal title (LaSombra)</li>
+<li>Make backend env vars show in help as the defaults for backend flags (Nick Craig-Wood)</li>
 <li>build
 <ul>
 <li>Raise minimum go version to go1.12 (Nick Craig-Wood)</li>
 </ul></li>
-<li>check
-<ul>
-<li>Make the error count match up in the log message (Nick Craig-Wood)</li>
-</ul></li>
-<li>cmd
-<ul>
-<li>Add --progress-terminal-title to print ETA to terminal title (LaSombra)</li>
-<li>Make backend env vars show in help as the defaults for backend flags (Nick Craig-Wood)</li>
-</ul></li>
 <li>dedupe
 <ul>
-<li>Add --by-hash to dedupe on hash not file name (Nick Craig-Wood)</li>
-<li>Add --dedupe-mode list to just list dupes, changing nothing (Nick Craig-Wood)</li>
+<li>Add <code>--by-hash</code> to dedupe on content hash not file name (Nick Craig-Wood)</li>
+<li>Add <code>--dedupe-mode list</code> to just list dupes, changing nothing (Nick Craig-Wood)</li>
 <li>Add warning if used on a remote which can't have duplicate names (Nick Craig-Wood)</li>
 </ul></li>
-<li>flags: Improve error message when reading environment vars (Nick Craig-Wood)</li>
 <li>fs
 <ul>
 <li>Add Shutdown optional method for backends (Nick Craig-Wood)</li>
-<li>When using --files-from check files concurrently (zhucan)</li>
-<li>Accumulate stats when using --dry-run (Ingo Weiss)</li>
-<li>Always show stats when using --dry-run or --interactive (Nick Craig-Wood)</li>
-<li>Add support for flag --no-console on windows to hide the console window (albertony)</li>
+<li>When using <code>--files-from</code> check files concurrently (zhucan)</li>
+<li>Accumulate stats when using <code>--dry-run</code> (Ingo Weiss)</li>
+<li>Always show stats when using <code>--dry-run</code> or <code>--interactive</code> (Nick Craig-Wood)</li>
+<li>Add support for flag <code>--no-console</code> on windows to hide the console window (albertony)</li>
 </ul></li>
 <li>genautocomplete: Add support to output to stdout (Ingo)</li>
 <li>ncdu
 <ul>
 <li>Highlight read errors instead of aborting (Claudio Bantaloukas)</li>
 <li>Add sort by average size in directory (Adam Plánský)</li>
-<li>Add toggle option for average size in directory - key 'a' (Adam Plánský)</li>
+<li>Add toggle option for average s3ize in directory - key 'a' (Adam Plánský)</li>
 <li>Add empty folder flag into ncdu browser (Adam Plánský)</li>
-<li>Add ! (errror) and . (unreadable) file flags to go with e (empty) (Nick Craig-Wood)</li>
+<li>Add <code>!</code> (errror) and <code>.</code> (unreadable) file flags to go with <code>e</code> (empty) (Nick Craig-Wood)</li>
 </ul></li>
 <li>obscure: Make <code>rclone osbcure -</code> ignore newline at end of line (Nick Craig-Wood)</li>
 <li>operations
@@ -19919,36 +20026,32 @@ $ tree /tmp/b
 </ul></li>
 <li>Bug Fixes
 <ul>
-<li>build
-<ul>
-<li>Explicitly set ARM version to fix build (Nick Craig-Wood)</li>
-<li>Don't explicitly set ARM version to fix ARMv5 build (Nick Craig-Wood)</li>
-<li>Fix nfpm install (Nick Craig-Wood)</li>
-<li>Fix docker build by upgrading ilteoood/docker_buildx (Nick Craig-Wood)</li>
-<li>Temporary fix for Windows build errors (Ivan Andreev)</li>
-</ul></li>
 <li>fs
 <ul>
 <li>Fix nil pointer on copy &amp; move operations directly to remote (Anagh Kumar Baranwal)</li>
 <li>Fix parsing of .. when joining remotes (Nick Craig-Wood)</li>
 </ul></li>
-<li>log: Fix enabling systemd logging when using --log-file (Nick Craig-Wood)</li>
-<li>move: Fix data loss when moving the same object (Nick Craig-Wood)</li>
+<li>log: Fix enabling systemd logging when using <code>--log-file</code> (Nick Craig-Wood)</li>
+<li>check
+<ul>
+<li>Make the error count match up in the log message (Nick Craig-Wood)</li>
+</ul></li>
+<li>move: Fix data loss when source and destination are the same object (Nick Craig-Wood)</li>
 <li>operations
 <ul>
-<li>Fix --cutof-mode hard not cutting off immediately (Nick Craig-Wood)</li>
-<li>Fix --immutable error message (Nick Craig-Wood)</li>
+<li>Fix <code>--cutof-mode</code> hard not cutting off immediately (Nick Craig-Wood)</li>
+<li>Fix <code>--immutable</code> error message (Nick Craig-Wood)</li>
 </ul></li>
 <li>sync
 <ul>
-<li>Fix --cutoff-mode soft &amp; cautious so it doesn't end the transfer early (Nick Craig-Wood)</li>
-<li>Fix --immutable errors retrying many times (Nick Craig-Wood)</li>
+<li>Fix <code>--cutoff-mode</code> soft &amp; cautious so it doesn't end the transfer early (Nick Craig-Wood)</li>
+<li>Fix <code>--immutable</code> errors retrying many times (Nick Craig-Wood)</li>
 </ul></li>
 </ul></li>
 <li>Docs
 <ul>
 <li>Many fixes and a rewrite of the filtering docs (edwardxml)</li>
-<li>Many spelling and grammar problems (Josh Soref)</li>
+<li>Many spelling and grammar fixes (Josh Soref)</li>
 <li>Doc fixes for commands delete, purge, rmdir, rmdirs and mount (albertony)</li>
 <li>And thanks to these people for many doc fixes too numerous to list
 <ul>
@@ -19963,13 +20066,11 @@ $ tree /tmp/b
 <li>Update systemd status with cache stats (Hekmon)</li>
 <li>Disable bazil/fuse based mount on macOS (Nick Craig-Wood)
 <ul>
-<li>Make mount be cmount under macOS (Nick Craig-Wood)</li>
+<li>Make <code>rclone mount</code> actually run <code>rclone cmount</code> under macOS (Nick Craig-Wood)</li>
 </ul></li>
 <li>Implement mknod to make NFS file creation work (Nick Craig-Wood)</li>
 <li>Make sure we don't call umount more than once (Nick Craig-Wood)</li>
-<li>Don't call host.Umount if a signal has been received (Nick Craig-Wood)</li>
 <li>More user friendly mounting as network drive on windows (albertony)</li>
-<li>Cleanup OS specific option handling and documentation (albertony)</li>
 <li>Detect if uid or gid are set in same option string: -o uid=123,gid=456 (albertony)</li>
 <li>Don't attempt to unmount if fs has been destroyed already (Nick Craig-Wood)</li>
 </ul></li>
@@ -19977,32 +20078,34 @@ $ tree /tmp/b
 <ul>
 <li>Fix virtual entries causing deleted files to still appear (Nick Craig-Wood)</li>
 <li>Fix "file already exists" error for stale cache files (Nick Craig-Wood)</li>
-<li>Fix file leaks with --vfs-cache-mode full and --buffer-size 0 (Nick Craig-Wood)</li>
+<li>Fix file leaks with <code>--vfs-cache-mode</code> full and <code>--buffer-size 0</code> (Nick Craig-Wood)</li>
 <li>Fix invalid cache path on windows when using :backend: as remote (albertony)</li>
 </ul></li>
 <li>Local
 <ul>
 <li>Continue listing files/folders when a circular symlink is detected (Manish Gupta)</li>
-<li>New flag --local-zero-size-links to fix sync on some virtual filesystems (Riccardo Iaconelli)</li>
+<li>New flag <code>--local-zero-size-links</code> to fix sync on some virtual filesystems (Riccardo Iaconelli)</li>
 </ul></li>
 <li>Azure Blob
 <ul>
 <li>Add support for service principals (James Lim)</li>
-<li>Utilize streaming capabilities (Denis Neuling)</li>
-<li>Update SDK to v0.13.0 and fix API breakage (Nick Craig-Wood, Mitsuo Heijo)</li>
+<li>Add support for managed identities (Brad Ackerman)</li>
+<li>Add examples for access tier (Bob Pusateri)</li>
+<li>Utilize the streaming capabilities from the SDK for multipart uploads (Denis Neuling)</li>
 <li>Fix setting of mime types (Nick Craig-Wood)</li>
 <li>Fix crash when listing outside a SAS URL's root (Nick Craig-Wood)</li>
-<li>Delete archive tier blobs before update if --azureblob-archive-tier-delete (Nick Craig-Wood)</li>
-<li>Add support for managed identities (Brad Ackerman)</li>
+<li>Delete archive tier blobs before update if <code>--azureblob-archive-tier-delete</code> (Nick Craig-Wood)</li>
 <li>Fix crash on startup (Nick Craig-Wood)</li>
-<li>Add examples for access tier (Bob Pusateri)</li>
-<li>Fix memory usage by upgrading the SDK and implementing a TransferManager (Nick Craig-Wood)</li>
+<li>Fix memory usage by upgrading the SDK to v0.13.0 and implementing a TransferManager (Nick Craig-Wood)</li>
 <li>Require go1.14+ to compile due to SDK changes (Nick Craig-Wood)</li>
 </ul></li>
 <li>B2
 <ul>
-<li>Make NewObject use less expensive API calls (Nick Craig-Wood)</li>
-<li>Fixed possible crash when accessing Backblaze b2 remote (lluuaapp)</li>
+<li>Make NewObject use less expensive API calls (Nick Craig-Wood)
+<ul>
+<li>This will improve <code>--files-from</code> and <code>restic serve</code> in particular</li>
+</ul></li>
+<li>Fixed crash on an empty file name (lluuaapp)</li>
 </ul></li>
 <li>Box
 <ul>
@@ -20012,12 +20115,12 @@ $ tree /tmp/b
 <li>Chunker
 <ul>
 <li>Skip long local hashing, hash in-transit (fixes) (Ivan Andreev)</li>
-<li>Set Features.ReadMimeType=false as Object.MimeType not supported (Nick Craig-Wood)</li>
+<li>Set Features ReadMimeType to false as Object.MimeType not supported (Nick Craig-Wood)</li>
 <li>Fix case-insensitive NewObject, test metadata detection (Ivan Andreev)</li>
 </ul></li>
 <li>Drive
 <ul>
-<li>Implement "rclone backend copyid" command for copying files by ID (Nick Craig-Wood)</li>
+<li>Implement <code>rclone backend copyid</code> command for copying files by ID (Nick Craig-Wood)</li>
 <li>Added flag <code>--drive-stop-on-download-limit</code> to stop transfers when the download limit is exceeded (Anagh Kumar Baranwal)</li>
 <li>Implement CleanUp workaround for team drives (buengese)</li>
 <li>Allow shortcut resolution and creation to be retried (Nick Craig-Wood)</li>
@@ -20027,45 +20130,44 @@ $ tree /tmp/b
 <li>Dropbox
 <ul>
 <li>Add support for viewing shared files and folders (buengese)</li>
-<li>Implement IDer (buengese)</li>
-<li>Set Features.ReadMimeType=false as Object.MimeType not supported (Nick Craig-Wood)</li>
-<li>Tidy repeated error message (Nick Craig-Wood)</li>
+<li>Enable short lived access tokens (Nick Craig-Wood)</li>
+<li>Implement IDer on Objects so <code>rclone lsf</code> etc can read the IDs (buengese)</li>
+<li>Set Features ReadMimeType to false as Object.MimeType not supported (Nick Craig-Wood)</li>
 <li>Make malformed_path errors from too long files not retriable (Nick Craig-Wood)</li>
 <li>Test file name length before upload to fix upload loop (Nick Craig-Wood)</li>
-<li>Enable short lived access tokens (Nick Craig-Wood)</li>
 </ul></li>
 <li>Fichier
 <ul>
-<li>Set Features.ReadMimeType=true as Object.MimeType is supported (Nick Craig-Wood)</li>
+<li>Set Features ReadMimeType to true as Object.MimeType is supported (Nick Craig-Wood)</li>
 </ul></li>
 <li>FTP
 <ul>
-<li>Add --ftp-disable-msld option to ignore MLSD for really old servers (Nick Craig-Wood)</li>
-<li>Make --tpslimit apply (Nick Craig-Wood)</li>
+<li>Add <code>--ftp-disable-msld</code> option to ignore MLSD for really old servers (Nick Craig-Wood)</li>
+<li>Make <code>--tpslimit apply</code> (Nick Craig-Wood)</li>
 </ul></li>
 <li>Google Cloud Storage
 <ul>
 <li>Storage class object header support (Laurens Janssen)</li>
 <li>Fix anonymous client to use rclone's HTTP client (Nick Craig-Wood)</li>
-<li>Fix Entry doesn't belong in directory "" (same as directory) - ignoring (Nick Craig-Wood)</li>
+<li>Fix <code>Entry doesn't belong in directory "" (same as directory) - ignoring</code> (Nick Craig-Wood)</li>
 </ul></li>
 <li>Googlephotos
 <ul>
-<li>New flag --gphotos-include-archived (Nicolas Rueff)</li>
+<li>New flag <code>--gphotos-include-archived</code> to show archived photos as well (Nicolas Rueff)</li>
 </ul></li>
 <li>Jottacloud
 <ul>
-<li>Don't erroniously report support for writing mime types (buengese)</li>
-<li>Add support for Telia Cloud (#4930) (Patrik Nordlén)</li>
+<li>Don't erroneously report support for writing mime types (buengese)</li>
+<li>Add support for Telia Cloud (Patrik Nordlén)</li>
 </ul></li>
 <li>Mailru
 <ul>
+<li>Accept special folders eg camera-upload (Ivan Andreev)</li>
+<li>Avoid prehashing of large local files (Ivan Andreev)</li>
 <li>Fix uploads after recent changes on server (Ivan Andreev)</li>
 <li>Fix range requests after June 2020 changes on server (Ivan Andreev)</li>
 <li>Fix invalid timestamp on corrupted files (fixes) (Ivan Andreev)</li>
 <li>Remove deprecated protocol quirks (Ivan Andreev)</li>
-<li>Accept special folders eg camera-upload (Ivan Andreev)</li>
-<li>Avoid prehashing of large local files (Ivan Andreev)</li>
 </ul></li>
 <li>Memory
 <ul>
@@ -20073,14 +20175,14 @@ $ tree /tmp/b
 </ul></li>
 <li>Onedrive
 <ul>
-<li>Add support for china region operated by 21vianet and other regional suppliers (#4963) (NyaMisty)</li>
+<li>Add support for China region operated by 21vianet and other regional suppliers (NyaMisty)</li>
 <li>Warn on gateway timeout errors (Nick Craig-Wood)</li>
-<li>Fall back to normal copy if server-side copy unavailable (#4903) (Alex Chen)</li>
+<li>Fall back to normal copy if server-side copy unavailable (Alex Chen)</li>
 <li>Fix server-side copy completely disabled on OneDrive for Business (Cnly)</li>
-<li>(business only) workaround to replace existing file on server-side copy (#4904) (Alex Chen)</li>
+<li>(business only) workaround to replace existing file on server-side copy (Alex Chen)</li>
 <li>Enhance link creation with expiry, scope, type and password (Nick Craig-Wood)</li>
-<li>Remove % and # from the set of encoded characters (#4909) (Alex Chen)</li>
-<li>Support addressing site by server-relative URL (#4761) (kice)</li>
+<li>Remove % and # from the set of encoded characters (Alex Chen)</li>
+<li>Support addressing site by server-relative URL (kice)</li>
 </ul></li>
 <li>Opendrive
 <ul>
@@ -20102,14 +20204,16 @@ $ tree /tmp/b
 <li>S3
 <ul>
 <li>Added <code>--s3-disable-http2</code> to disable http/2 (Anagh Kumar Baranwal)</li>
-<li>Complete SSE-C implementation (Nick Craig-Wood)</li>
+<li>Complete SSE-C implementation (Nick Craig-Wood)
+<ul>
 <li>Fix hashes on small files with AWS:KMS and SSE-C (Nick Craig-Wood)</li>
 <li>Add MD5 metadata to objects uploaded with SSE-AWS/SSE-C (Nick Craig-Wood)</li>
+</ul></li>
+<li>Add <code>--s3-no-head parameter</code> to minimise transactions on upload (Nick Craig-Wood)</li>
 <li>Update docs with a Reducing Costs section (Nick Craig-Wood)</li>
 <li>Added error handling for error code 429 indicating too many requests (Anagh Kumar Baranwal)</li>
 <li>Add requester pays option (kelv)</li>
 <li>Fix copy multipart with v2 auth failing with 'SignatureDoesNotMatch' (Louis Koo)</li>
-<li>Add --s3-no-head parameter to minimise transactions on upload (Nick Craig-Wood)</li>
 </ul></li>
 <li>SFTP
 <ul>
@@ -20119,8 +20223,8 @@ $ tree /tmp/b
 <li>Remember entered password in AskPass mode (Stephen Harris)</li>
 <li>Implement Shutdown method (Nick Craig-Wood)</li>
 <li>Implement keyboard interactive authentication (Nick Craig-Wood)</li>
-<li>Make --tpslimit apply (Nick Craig-Wood)</li>
-<li>Implement --sftp-use-fstat (Nick Craig-Wood)</li>
+<li>Make <code>--tpslimit</code> apply (Nick Craig-Wood)</li>
+<li>Implement <code>--sftp-use-fstat</code> for unusual SFTP servers (Nick Craig-Wood)</li>
 </ul></li>
 <li>Sugarsync
 <ul>
@@ -20130,7 +20234,7 @@ $ tree /tmp/b
 <li>Swift
 <ul>
 <li>Fix deletion of parts of Static Large Object (SLO) (Nguyễn Hữu Luân)</li>
-<li>Ensure partially uploaded large files are uploaded unless --swift-leave-parts-on-error (Nguyễn Hữu Luân)</li>
+<li>Ensure partially uploaded large files are uploaded unless <code>--swift-leave-parts-on-error</code> (Nguyễn Hữu Luân)</li>
 </ul></li>
 <li>Tardigrade
 <ul>
@@ -20142,7 +20246,7 @@ $ tree /tmp/b
 </ul></li>
 <li>Yandex
 <ul>
-<li>Set Features.WriteMimeType=false as Yandex ignores mime types (Nick Craig-Wood)</li>
+<li>Set Features WriteMimeType to false as Yandex ignores mime types (Nick Craig-Wood)</li>
 </ul></li>
 </ul>
 <h2 id="v1.53.4---2021-01-20">v1.53.4 - 2021-01-20</h2>

@@ -213,6 +213,13 @@ for two reasons.  Firstly because it is only checked every
 `--vfs-cache-poll-interval`.  Secondly because open files cannot be
 evicted from the cache.
 
+You **should not** run two copies of rclone using the same VFS cache
+with the same or overlapping remotes if using `--vfs-cache-mode > off`.
+This can potentially cause data corruption if you do. You can work
+around this by giving each rclone its own cache hierarchy with
+`--cache-dir`. You don't need to worry about this if the remotes in
+use don't overlap.
+
 ### --vfs-cache-mode off
 
 In this mode (the default) the cache will read directly from the remote and write

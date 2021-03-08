@@ -150,7 +150,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.54.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.54.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -281,7 +281,7 @@ and may be set in the config file.
       --drive-starred-only                                       Only show files that are starred.
       --drive-stop-on-download-limit                             Make download limit errors be fatal
       --drive-stop-on-upload-limit                               Make upload limit errors be fatal
-      --drive-team-drive string                                  ID of the Team Drive
+      --drive-team-drive string                                  ID of the Shared Drive (Team Drive)
       --drive-token string                                       OAuth Access Token as a JSON blob.
       --drive-token-url string                                   Token server url.
       --drive-trashed-only                                       Only show files that are in the trash.
@@ -562,6 +562,11 @@ and may be set in the config file.
       --yandex-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,Del,Ctl,InvalidUtf8,Dot)
       --yandex-token string                                      OAuth Access Token as a JSON blob.
       --yandex-token-url string                                  Token server url.
+      --zoho-auth-url string                                     Auth server URL.
+      --zoho-client-id string                                    OAuth Client Id
+      --zoho-client-secret string                                OAuth Client Secret
       --zoho-encoding MultiEncoder                               This sets the encoding for the backend. (default Del,Ctl,InvalidUtf8)
       --zoho-region string                                       Zoho region to connect to. You'll have to use the region you organization is registered in.
+      --zoho-token string                                        OAuth Access Token as a JSON blob.
+      --zoho-token-url string                                    Token server url.
 ```
