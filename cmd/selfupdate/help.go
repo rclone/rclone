@@ -3,7 +3,8 @@ package selfupdate
 // Note: "|" will be replaced by backticks in the help string below
 var selfUpdateHelp string = `
 This command downloads the latest release of rclone and replaces
-the currently running binary. The download is verified with a hashsum.
+the currently running binary. The download is verified with a hashsum
+and cryptographically signed signature.
 
 The |--version VER| flag, if given, will update to a concrete version
 instead of the latest one. If you omit micro version from |VER| (for
