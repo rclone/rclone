@@ -29,6 +29,18 @@ var ErrorMaxTransferLimitReachedFatal = fserrors.FatalError(ErrorMaxTransferLimi
 // transfer limit is reached and a graceful stop is required.
 var ErrorMaxTransferLimitReachedGraceful = fserrors.NoRetryError(ErrorMaxTransferLimitReached)
 
+// Start sets up the accounting, in particular the bandwidth limiting
+func Start(ctx context.Context) {
+	// Start the token bucket limiter
+	TokenBucket.StartTokenBucket(ctx)
+
+	// Start the bandwidth update ticker
+	TokenBucket.StartTokenTicker(ctx)
+
+	// Start the transactions per second limiter
+	StartLimitTPS(ctx)
+}
+
 // Account limits and accounts for one transfer
 type Account struct {
 	stats *StatsInfo

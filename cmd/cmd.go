@@ -386,6 +386,9 @@ func initConfig() {
 	// Load the config
 	configfile.LoadConfig(ctx)
 
+	// Start accounting
+	accounting.Start(ctx)
+
 	// Hide console window
 	if ci.NoConsole {
 		terminal.HideConsole()
