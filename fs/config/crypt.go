@@ -101,7 +101,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 				return nil, errors.Wrap(err, "password command failed")
 			}
 			if pass := strings.Trim(stdout.String(), "\r\n"); pass != "" {
-				err := setConfigPassword(pass)
+				err := SetConfigPassword(pass)
 				if err != nil {
 					return nil, errors.Wrap(err, "incorrect password")
 				}
@@ -119,7 +119,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 			envpw := os.Getenv("RCLONE_CONFIG_PASS")
 
 			if envpw != "" {
-				err := setConfigPassword(envpw)
+				err := SetConfigPassword(envpw)
 				if err != nil {
 					fs.Errorf(nil, "Using RCLONE_CONFIG_PASS returned: %v", err)
 				} else {
@@ -281,7 +281,7 @@ func getConfigPassword(q string) {
 	}
 	for {
 		password := GetPassword(q)
-		err := setConfigPassword(password)
+		err := SetConfigPassword(password)
 		if err == nil {
 			return
 		}
@@ -289,10 +289,10 @@ func getConfigPassword(q string) {
 	}
 }
 
-// setConfigPassword will set the configKey to the hash of
+// SetConfigPassword will set the configKey to the hash of
 // the password. If the length of the password is
 // zero after trimming+normalization, an error is returned.
-func setConfigPassword(password string) error {
+func SetConfigPassword(password string) error {
 	password, err := checkPassword(password)
 	if err != nil {
 		return err
@@ -338,11 +338,16 @@ func setConfigPassword(password string) error {
 	return nil
 }
 
+// ClearConfigPassword sets the current the password to empty
+func ClearConfigPassword() {
+	configKey = nil
+}
+
 // changeConfigPassword will query the user twice
 // for a password. If the same password is entered
 // twice the key is updated.
 func changeConfigPassword() {
-	err := setConfigPassword(ChangePassword("NEW configuration"))
+	err := SetConfigPassword(ChangePassword("NEW configuration"))
 	if err != nil {
 		fmt.Printf("Failed to set config password: %v\n", err)
 		return

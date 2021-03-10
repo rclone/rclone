@@ -20,6 +20,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
 )
 
@@ -101,9 +102,11 @@ type testRun struct {
 
 // Run a suite of tests
 func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
+	ctx := context.Background()
+	configfile.LoadConfig(ctx)
 	mux := http.NewServeMux()
 	opt.HTTPOptions.Template = testTemplate
-	rcServer := newServer(context.Background(), opt, mux)
+	rcServer := newServer(ctx, opt, mux)
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			method := test.Method
