@@ -230,7 +230,7 @@ func LoadConfig(ctx context.Context) {
 var ErrorConfigFileNotFound = errors.New("config file not found")
 
 // SaveConfig calling function which saves configuration file.
-// if saveConfig returns error trying again after sleep.
+// if SaveConfig returns error trying again after sleep.
 func SaveConfig() {
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
@@ -253,19 +253,6 @@ func SaveConfig() {
 func SetValueAndSave(name, key, value string) error {
 	// Set the value in config in case we fail to reload it
 	Data.SetValue(name, key, value)
-
-	// Reload the config file
-	err := Data.Load()
-	if err == ErrorConfigFileNotFound {
-		// Config file not written yet so ignore reload
-		return nil
-	} else if err != nil {
-		return err
-	}
-	if !Data.HasSection(name) {
-		// Section doesn't exist yet so ignore reload
-		return nil
-	}
 	// Save it again
 	SaveConfig()
 	return nil
@@ -279,20 +266,6 @@ func getWithDefault(name, key, defaultValue string) string {
 		return defaultValue
 	}
 	return value
-}
-
-// FileGetFresh reads the config key under section return the value or
-// an error if the config file was not found or that value couldn't be
-// read.
-func FileGetFresh(section, key string) (value string, err error) {
-	if err := Data.Load(); err != nil {
-		return "", err
-	}
-	value, found := Data.GetValue(section, key)
-	if !found {
-		return "", errors.New("value not found")
-	}
-	return value, nil
 }
 
 // UpdateRemote adds the keyValues passed in to the remote of name.
@@ -445,11 +418,6 @@ func FileDeleteKey(section, key string) bool {
 }
 
 var matchEnv = regexp.MustCompile(`^RCLONE_CONFIG_(.*?)_TYPE=.*$`)
-
-// FileRefresh ensures the latest configFile is loaded from disk
-func FileRefresh() error {
-	return Data.Load()
-}
 
 // FileSections returns the sections in the config file
 // including any defined by environment variables.

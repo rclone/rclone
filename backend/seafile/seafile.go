@@ -372,7 +372,6 @@ func Config(ctx context.Context, name string, m configmap.Mapper) {
 			m.Set(configAuthToken, token)
 			// And delete any previous entry for password
 			m.Set(configPassword, "")
-			config.SaveConfig()
 			// And we're done here
 			break
 		}
