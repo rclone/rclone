@@ -72,6 +72,7 @@ func Initialise() {
 		config.ConfigPath = envConfig
 	}
 	configfile.LoadConfig(ctx)
+	accounting.Start(ctx)
 	if *Verbose {
 		ci.LogLevel = fs.LogLevelDebug
 	}

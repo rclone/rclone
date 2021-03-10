@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -232,15 +231,6 @@ func LoadConfig(ctx context.Context) {
 	} else {
 		fs.Debugf(nil, "Using config file from %q", ConfigPath)
 	}
-
-	// Start the token bucket limiter
-	accounting.TokenBucket.StartTokenBucket(ctx)
-
-	// Start the bandwidth update ticker
-	accounting.TokenBucket.StartTokenTicker(ctx)
-
-	// Start the transactions per second limiter
-	accounting.StartLimitTPS(ctx)
 }
 
 // ErrorConfigFileNotFound is returned when the config file is not found
