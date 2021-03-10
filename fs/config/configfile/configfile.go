@@ -1,3 +1,4 @@
+// Package configfile implements a config file loader and saver
 package configfile
 
 import (
@@ -6,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/Unknwon/goconfig"
 	"github.com/pkg/errors"
@@ -22,28 +24,54 @@ func LoadConfig(ctx context.Context) {
 // Storage implements config.Storage for saving and loading config
 // data in a simple INI based file.
 type Storage struct {
-	gc *goconfig.ConfigFile
+	gc *goconfig.ConfigFile // config file loaded - thread safe
+	mu sync.Mutex           // to protect the following variables
+	fi os.FileInfo          // stat of the file when last loaded
 }
 
-// Load the config from permanent storage, decrypting if necessary
-func (s *Storage) Load() (err error) {
+// Check to see if we need to reload the config
+func (s *Storage) check() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Check to see if config file has changed since it was last loaded
+	fi, err := os.Stat(config.ConfigPath)
+	if err == nil {
+		// check to see if config file has changed and if it has, reload it
+		if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
+			fs.Debugf(nil, "Config file has changed externaly - reloading")
+			err := s._load()
+			if err != nil {
+				fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)
+			}
+		}
+	}
+}
+
+// _load the config from permanent storage, decrypting if necessary
+//
+// mu must be held when calling this
+func (s *Storage) _load() (err error) {
 	// Make sure we have a sensible default even when we error
 	defer func() {
-		if err != nil {
+		if s.gc == nil {
 			s.gc, _ = goconfig.LoadFromReader(bytes.NewReader([]byte{}))
 		}
 	}()
 
-	b, err := os.Open(config.ConfigPath)
+	fd, err := os.Open(config.ConfigPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return config.ErrorConfigFileNotFound
 		}
 		return err
 	}
-	defer fs.CheckClose(b, &err)
+	defer fs.CheckClose(fd, &err)
 
-	cryptReader, err := config.Decrypt(b)
+	// Update s.fi with the current file info
+	s.fi, _ = os.Stat(config.ConfigPath)
+
+	cryptReader, err := config.Decrypt(fd)
 	if err != nil {
 		return err
 	}
@@ -57,8 +85,18 @@ func (s *Storage) Load() (err error) {
 	return nil
 }
 
+// Load the config from permanent storage, decrypting if necessary
+func (s *Storage) Load() (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s._load()
+}
+
 // Save the config to permanent storage, encrypting if necessary
 func (s *Storage) Save() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	dir, name := filepath.Split(config.ConfigPath)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
@@ -116,11 +154,15 @@ func (s *Storage) Save() error {
 		fs.Errorf(nil, "Failed to remove backup config file: %v", err)
 	}
 
+	// Update s.fi with the newly written file
+	s.fi, _ = os.Stat(config.ConfigPath)
+
 	return nil
 }
 
 // Serialize the config into a string
 func (s *Storage) Serialize() (string, error) {
+	s.check()
 	var buf bytes.Buffer
 	if err := goconfig.SaveConfigData(s.gc, &buf); err != nil {
 		return "", errors.Errorf("Failed to save config file: %v", err)
@@ -131,6 +173,7 @@ func (s *Storage) Serialize() (string, error) {
 
 // HasSection returns true if section exists in the config file
 func (s *Storage) HasSection(section string) bool {
+	s.check()
 	_, err := s.gc.GetSection(section)
 	if err != nil {
 		return false
@@ -141,22 +184,26 @@ func (s *Storage) HasSection(section string) bool {
 // DeleteSection removes the named section and all config from the
 // config file
 func (s *Storage) DeleteSection(section string) {
+	s.check()
 	s.gc.DeleteSection(section)
 }
 
 // GetSectionList returns a slice of strings with names for all the
 // sections
 func (s *Storage) GetSectionList() []string {
+	s.check()
 	return s.gc.GetSectionList()
 }
 
 // GetKeyList returns the keys in this section
 func (s *Storage) GetKeyList(section string) []string {
+	s.check()
 	return s.gc.GetKeyList(section)
 }
 
 // GetValue returns the key in section with a found flag
 func (s *Storage) GetValue(section string, key string) (value string, found bool) {
+	s.check()
 	value, err := s.gc.GetValue(section, key)
 	if err != nil {
 		return "", false
@@ -166,11 +213,13 @@ func (s *Storage) GetValue(section string, key string) (value string, found bool
 
 // SetValue sets the value under key in section
 func (s *Storage) SetValue(section string, key string, value string) {
+	s.check()
 	s.gc.SetValue(section, key, value)
 }
 
 // DeleteKey removes the key under section
 func (s *Storage) DeleteKey(section string, key string) bool {
+	s.check()
 	return s.gc.DeleteKey(section, key)
 }
 
