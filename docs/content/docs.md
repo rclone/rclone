@@ -285,6 +285,31 @@ does not work on Windows.)
 
     rclone copy ':http,url="https://example.com":path/to/dir' /tmp/dir
 
+#### Connection strings, config and logging
+
+If you supply extra configuration to a backend by command line flag,
+environment variable or connection string then rclone will add a
+suffix based on the hash of the config to the name of the remote, eg
+
+    rclone -vv lsf --s3-chunk-size 20M s3:
+
+Has the log message
+
+    DEBUG : s3: detected overridden config - adding "{Srj1p}" suffix to name
+
+This is so rclone can tell the modified remote apart from the
+unmodified remote when caching the backends.
+
+This should only be noticeable in the logs.
+
+This means that on the fly backends such as
+
+    rclone -vv lsf :s3,env_auth:
+
+Will get their own names
+
+    DEBUG : :s3: detected overridden config - adding "{YTu53}" suffix to name
+
 ### Valid remote names
 
  - Remote names may only contain 0-9, A-Z ,a-z ,_ , - and space.

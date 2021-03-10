@@ -318,6 +318,17 @@ func toUpperASCII(s string) string {
 	}, s)
 }
 
+// removeConfigID removes any {xyz} parts of the name put in for
+// config disambiguation
+func removeConfigID(s string) string {
+	bra := strings.IndexRune(s, '{')
+	ket := strings.IndexRune(s, '}')
+	if bra >= 0 && ket > bra {
+		s = s[:bra] + s[ket+1:]
+	}
+	return s
+}
+
 // Run runs the basic integration tests for a remote using the options passed in.
 //
 // They are structured in a hierarchical way so that dependencies for the tests can be created.
@@ -505,7 +516,7 @@ func Run(t *testing.T, opt *Opt) {
 	// TestFsName tests the Name method
 	t.Run("FsName", func(t *testing.T) {
 		skipIfNotOk(t)
-		got := f.Name()
+		got := removeConfigID(f.Name())
 		want := remoteName[:strings.LastIndex(remoteName, ":")+1]
 		if isLocalRemote {
 			want = "local:"
@@ -516,7 +527,7 @@ func Run(t *testing.T, opt *Opt) {
 	// TestFsRoot tests the Root method
 	t.Run("FsRoot", func(t *testing.T) {
 		skipIfNotOk(t)
-		name := f.Name() + ":"
+		name := removeConfigID(f.Name()) + ":"
 		root := f.Root()
 		if isLocalRemote {
 			// only check last path element on local
