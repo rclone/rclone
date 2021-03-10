@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/rest"
@@ -47,7 +47,7 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	ts := httptest.NewServer(handler)
 
 	// Configure the remote
-	config.LoadConfig(context.Background())
+	configfile.LoadConfig(context.Background())
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true

@@ -11,6 +11,7 @@ import (
 	_ "github.com/rclone/rclone/backend/local" // pull in test backend
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +20,7 @@ var (
 )
 
 func prepare(t *testing.T, root string) {
-	config.LoadConfig(context.Background())
+	configfile.LoadConfig(context.Background())
 
 	// Configure the remote
 	config.FileSet(remoteName, "type", "alias")

@@ -892,7 +892,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 		m.Set("type", "cache")
 		m.Set("remote", localRemote+":"+filepath.Join(os.TempDir(), localRemote))
 	} else {
-		remoteType := config.FileGet(remote, "type", "")
+		remoteType := config.FileGet(remote, "type")
 		if remoteType == "" {
 			t.Skipf("skipped due to invalid remote type for %v", remote)
 			return nil, nil
@@ -903,14 +903,14 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 				m.Set("password", cryptPassword1)
 				m.Set("password2", cryptPassword2)
 			}
-			remoteRemote := config.FileGet(remote, "remote", "")
+			remoteRemote := config.FileGet(remote, "remote")
 			if remoteRemote == "" {
 				t.Skipf("skipped due to invalid remote wrapper for %v", remote)
 				return nil, nil
 			}
 			remoteRemoteParts := strings.Split(remoteRemote, ":")
 			remoteWrapping := remoteRemoteParts[0]
-			remoteType := config.FileGet(remoteWrapping, "type", "")
+			remoteType := config.FileGet(remoteWrapping, "type")
 			if remoteType != "cache" {
 				t.Skipf("skipped due to invalid remote type for %v: '%v'", remoteWrapping, remoteType)
 				return nil, nil

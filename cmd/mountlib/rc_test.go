@@ -13,6 +13,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/cmount"
 	_ "github.com/rclone/rclone/cmd/mount"
 	_ "github.com/rclone/rclone/cmd/mount2"
+	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,7 @@ import (
 
 func TestRc(t *testing.T) {
 	ctx := context.Background()
+	configfile.LoadConfig(ctx)
 	mount := rc.Calls.Get("mount/mount")
 	assert.NotNil(t, mount)
 	unmount := rc.Calls.Get("mount/unmount")

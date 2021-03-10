@@ -64,7 +64,12 @@ const (
 	ConfigAuthNoBrowser = "config_auth_no_browser"
 )
 
-// Storage defines an interface for loading and saving the config file.
+// Storage defines an interface for loading and saving config to
+// persistent storage. Rclone provides a default implementation to
+// load and save to a config file when this is imported
+//
+// import "github.com/rclone/rclone/fs/config/configfile"
+// configfile.LoadConfig(ctx)
 type Storage interface {
 	// GetSectionList returns a slice of strings with names for all the
 	// sections
@@ -80,11 +85,8 @@ type Storage interface {
 	// GetKeyList returns the keys in this section
 	GetKeyList(section string) []string
 
-	// GetValue returns the key in section or an error if not found
-	GetValue(section string, key string) (string, error)
-
-	// MustValue returns the key in section returning defaultValue if not set
-	MustValue(section string, key string, defaultValue ...string) string
+	// GetValue returns the key in section with a found flag
+	GetValue(section string, key string) (value string, found bool)
 
 	// SetValue sets the value under key in section
 	SetValue(section string, key string, value string)
@@ -104,8 +106,8 @@ type Storage interface {
 
 // Global
 var (
-	// configFile is the global config data structure. Don't read it directly, use Data
-	Data Storage
+	// Data is the global config data structure
+	Data Storage = defaultStorage{}
 
 	// CacheDir points to the cache directory.  Users of this
 	// should make a subdirectory and use MkdirAll() to create it
@@ -286,6 +288,16 @@ func SetValueAndSave(name, key, value string) error {
 	return nil
 }
 
+// getWithDefault gets key out of section name returning defaultValue if not
+// found.
+func getWithDefault(name, key, defaultValue string) string {
+	value, found := Data.GetValue(name, key)
+	if !found {
+		return defaultValue
+	}
+	return value
+}
+
 // FileGetFresh reads the config key under section return the value or
 // an error if the config file was not found or that value couldn't be
 // read.
@@ -293,7 +305,11 @@ func FileGetFresh(section, key string) (value string, err error) {
 	if err := Data.Load(); err != nil {
 		return "", err
 	}
-	return Data.GetValue(section, key)
+	value, found := Data.GetValue(section, key)
+	if !found {
+		return "", errors.New("value not found")
+	}
+	return value, nil
 }
 
 // ShowRemotes shows an overview of the config file
@@ -583,7 +599,7 @@ func matchProvider(providerConfig, provider string) bool {
 
 // ChooseOption asks the user to choose an option
 func ChooseOption(o *fs.Option, name string) string {
-	var subProvider = Data.MustValue(name, fs.ConfigProvider, "")
+	var subProvider = getWithDefault(name, fs.ConfigProvider, "")
 	fmt.Println(o.Help)
 	if o.IsPassword {
 		actions := []string{"yYes type in my own password", "gGenerate random password"}
@@ -832,7 +848,7 @@ func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 			if option.Advanced != advanced {
 				continue
 			}
-			subProvider := Data.MustValue(name, fs.ConfigProvider, "")
+			subProvider := getWithDefault(name, fs.ConfigProvider, "")
 			if matchProvider(option.Provider, subProvider) && isVisible {
 				if !isNew {
 					fmt.Printf("Value %q = %q\n", option.Name, FileGet(name, option.Name))
@@ -902,7 +918,7 @@ func copyRemote(name string) string {
 	newName := NewRemoteName()
 	// Copy the keys
 	for _, key := range Data.GetKeyList(name) {
-		value := Data.MustValue(name, key, "")
+		value := getWithDefault(name, key, "")
 		Data.SetValue(newName, key, value)
 	}
 	return newName
@@ -1026,21 +1042,20 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) {
 // FileGetFlag gets the config key under section returning the
 // the value and true if found and or ("", false) otherwise
 func FileGetFlag(section, key string) (string, bool) {
-	newValue, err := Data.GetValue(section, key)
-	return newValue, err == nil
+	return Data.GetValue(section, key)
 }
 
-// FileGet gets the config key under section returning the
-// default or empty string if not set.
+// FileGet gets the config key under section returning the default if not set.
 //
 // It looks up defaults in the environment if they are present
-func FileGet(section, key string, defaultVal ...string) string {
+func FileGet(section, key string) string {
+	var defaultVal string
 	envKey := fs.ConfigToEnv(section, key)
 	newValue, found := os.LookupEnv(envKey)
 	if found {
-		defaultVal = []string{newValue}
+		defaultVal = newValue
 	}
-	return Data.MustValue(section, key, defaultVal...)
+	return getWithDefault(section, key, defaultVal)
 }
 
 // FileSet sets the key in section to value.  It doesn't save

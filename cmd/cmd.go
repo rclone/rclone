@@ -25,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/config/configflags"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/filter"
@@ -381,6 +382,9 @@ func initConfig() {
 
 	// Finish parsing any command line flags
 	configflags.SetFlags(ci)
+
+	// Load the config
+	configfile.LoadConfig(ctx)
 
 	// Hide console window
 	if ci.NoConsole {

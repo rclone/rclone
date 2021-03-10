@@ -2,6 +2,7 @@ package configfile
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,14 +13,27 @@ import (
 	"github.com/rclone/rclone/fs/config"
 )
 
-// GoConfig implements config file saving using a simple ini based
-// format.
-type GoConfig struct {
-	*goconfig.ConfigFile
+// LoadConfig installs the config file handler and calls config.LoadConfig
+func LoadConfig(ctx context.Context) {
+	config.Data = &Storage{}
+	config.LoadConfig(ctx)
 }
 
-// Load the config from permanent storage
-func (gc *GoConfig) Load() error {
+// Storage implements config.Storage for saving and loading config
+// data in a simple INI based file.
+type Storage struct {
+	gc *goconfig.ConfigFile
+}
+
+// Load the config from permanent storage, decrypting if necessary
+func (s *Storage) Load() (err error) {
+	// Make sure we have a sensible default even when we error
+	defer func() {
+		if err != nil {
+			s.gc, _ = goconfig.LoadFromReader(bytes.NewReader([]byte{}))
+		}
+	}()
+
 	b, err := os.Open(config.ConfigPath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -34,22 +48,17 @@ func (gc *GoConfig) Load() error {
 		return err
 	}
 
-	if gc.ConfigFile == nil {
-		c, err := goconfig.LoadFromReader(cryptReader)
-		if err != nil {
-			return err
-		}
-
-		gc.ConfigFile = c
-	} else {
-		return gc.ReloadData(cryptReader)
+	gc, err := goconfig.LoadFromReader(cryptReader)
+	if err != nil {
+		return err
 	}
+	s.gc = gc
 
 	return nil
 }
 
-// Save the config to permanent storage
-func (gc *GoConfig) Save() error {
+// Save the config to permanent storage, encrypting if necessary
+func (s *Storage) Save() error {
 	dir, name := filepath.Split(config.ConfigPath)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
@@ -67,7 +76,7 @@ func (gc *GoConfig) Save() error {
 	}()
 
 	var buf bytes.Buffer
-	if err := goconfig.SaveConfigData(gc.ConfigFile, &buf); err != nil {
+	if err := goconfig.SaveConfigData(s.gc, &buf); err != nil {
 		return errors.Errorf("Failed to save config file: %v", err)
 	}
 
@@ -111,9 +120,9 @@ func (gc *GoConfig) Save() error {
 }
 
 // Serialize the config into a string
-func (gc *GoConfig) Serialize() (string, error) {
+func (s *Storage) Serialize() (string, error) {
 	var buf bytes.Buffer
-	if err := goconfig.SaveConfigData(gc.ConfigFile, &buf); err != nil {
+	if err := goconfig.SaveConfigData(s.gc, &buf); err != nil {
 		return "", errors.Errorf("Failed to save config file: %v", err)
 	}
 
@@ -121,8 +130,8 @@ func (gc *GoConfig) Serialize() (string, error) {
 }
 
 // HasSection returns true if section exists in the config file
-func (gc *GoConfig) HasSection(section string) bool {
-	_, err := gc.ConfigFile.GetSection(section)
+func (s *Storage) HasSection(section string) bool {
+	_, err := s.gc.GetSection(section)
 	if err != nil {
 		return false
 	}
@@ -131,16 +140,39 @@ func (gc *GoConfig) HasSection(section string) bool {
 
 // DeleteSection removes the named section and all config from the
 // config file
-func (gc *GoConfig) DeleteSection(section string) {
-	gc.ConfigFile.DeleteSection(section)
+func (s *Storage) DeleteSection(section string) {
+	s.gc.DeleteSection(section)
+}
+
+// GetSectionList returns a slice of strings with names for all the
+// sections
+func (s *Storage) GetSectionList() []string {
+	return s.gc.GetSectionList()
+}
+
+// GetKeyList returns the keys in this section
+func (s *Storage) GetKeyList(section string) []string {
+	return s.gc.GetKeyList(section)
+}
+
+// GetValue returns the key in section with a found flag
+func (s *Storage) GetValue(section string, key string) (value string, found bool) {
+	value, err := s.gc.GetValue(section, key)
+	if err != nil {
+		return "", false
+	}
+	return value, true
 }
 
 // SetValue sets the value under key in section
-func (gc *GoConfig) SetValue(section string, key string, value string) {
-	gc.ConfigFile.SetValue(section, key, value)
+func (s *Storage) SetValue(section string, key string, value string) {
+	s.gc.SetValue(section, key, value)
 }
 
-// Check the interfaces are satisfied
-var (
-	_ config.File = (*GoConfig)(nil)
-)
+// DeleteKey removes the key under section
+func (s *Storage) DeleteKey(section string, key string) bool {
+	return s.gc.DeleteKey(section, key)
+}
+
+// Check the interface is satisfied
+var _ config.Storage = (*Storage)(nil)
