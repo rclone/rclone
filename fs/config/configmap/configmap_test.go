@@ -90,6 +90,56 @@ func TestConfigMapSet(t *testing.T) {
 	}, m2)
 }
 
+func TestConfigMapGetOverride(t *testing.T) {
+	m := New()
+
+	value, found := m.GetOverride("config1")
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	value, found = m.GetOverride("config2")
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	m1 := Simple{
+		"config1": "one",
+	}
+
+	m.AddOverrideGetter(m1)
+
+	value, found = m.GetOverride("config1")
+	assert.Equal(t, "one", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetOverride("config2")
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	m2 := Simple{
+		"config1": "one2",
+		"config2": "two2",
+	}
+
+	m.AddGetter(m2)
+
+	value, found = m.GetOverride("config1")
+	assert.Equal(t, "one", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetOverride("config2")
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	value, found = m.Get("config1")
+	assert.Equal(t, "one", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.Get("config2")
+	assert.Equal(t, "two2", value)
+	assert.Equal(t, true, found)
+
+}
+
 func TestSimpleString(t *testing.T) {
 	// Basic
 	assert.Equal(t, "", Simple(nil).String())

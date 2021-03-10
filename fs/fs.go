@@ -1316,20 +1316,20 @@ func ConfigMap(fsInfo *RegInfo, configName string, connectionStringConfig config
 
 	// Config from connection string
 	if len(connectionStringConfig) > 0 {
-		config.AddGetter(connectionStringConfig)
+		config.AddOverrideGetter(connectionStringConfig)
 	}
 
 	// flag values
 	if fsInfo != nil {
-		config.AddGetter(&regInfoValues{fsInfo, false})
+		config.AddOverrideGetter(&regInfoValues{fsInfo, false})
 	}
 
 	// remote specific environment vars
-	config.AddGetter(configEnvVars(configName))
+	config.AddOverrideGetter(configEnvVars(configName))
 
 	// backend specific environment vars
 	if fsInfo != nil {
-		config.AddGetter(optionEnvVars{fsInfo: fsInfo})
+		config.AddOverrideGetter(optionEnvVars{fsInfo: fsInfo})
 	}
 
 	// config file
