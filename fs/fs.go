@@ -3,6 +3,8 @@ package fs
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -1378,6 +1380,34 @@ func NewFs(ctx context.Context, path string) (Fs, error) {
 	fsInfo, configName, fsPath, config, err := ConfigFs(path)
 	if err != nil {
 		return nil, err
+	}
+	// Now discover which config items have been overridden,
+	// either by the config string, command line flags or
+	// environment variables
+	var overridden = configmap.Simple{}
+	for i := range fsInfo.Options {
+		opt := &fsInfo.Options[i]
+		value, isSet := config.GetOverride(opt.Name)
+		if isSet {
+			overridden.Set(opt.Name, value)
+		}
+	}
+	if len(overridden) > 0 {
+		extraConfig := overridden.String()
+		//Debugf(nil, "detected overriden config %q", extraConfig)
+		md5sumBinary := md5.Sum([]byte(extraConfig))
+		suffix := base64.RawStdEncoding.EncodeToString(md5sumBinary[:])
+		// 5 characters length is 5*6 = 30 bits of base64
+		const maxLength = 5
+		if len(suffix) > maxLength {
+			suffix = suffix[:maxLength]
+		}
+		suffix = "{" + suffix + "}"
+		Debugf(configName, "detected overridden config - adding %q suffix to name", suffix)
+		// Add the suffix to the config name
+		//
+		// These need to work as filesystem names as the VFS cache will use them
+		configName += suffix
 	}
 	return fsInfo.NewFs(ctx, configName, fsPath, config)
 }
