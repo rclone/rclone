@@ -58,3 +58,19 @@ func TestReveal(t *testing.T) {
 
 	}
 }
+
+// Test some error cases
+func TestRevealErrors(t *testing.T) {
+	for _, test := range []struct {
+		in      string
+		wantErr string
+	}{
+		{"YmJiYmJiYmJiYmJiYmJiYp*gcEWbAw", "base64 decode failed when revealing password - is it obscured?: illegal base64 data at input byte 22"},
+		{"aGVsbG8", "input too short when revealing password - is it obscured?"},
+		{"", "input too short when revealing password - is it obscured?"},
+	} {
+		gotString, gotErr := Reveal(test.in)
+		assert.Equal(t, "", gotString)
+		assert.Equal(t, test.wantErr, gotErr.Error())
+	}
+}
