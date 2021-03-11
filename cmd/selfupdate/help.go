@@ -11,8 +11,11 @@ instead of the latest one. If you omit micro version from |VER| (for
 example |1.53|), the latest matching micro version will be used.
 
 If you previously installed rclone via a package manager, the package may
-include local documentation or configure services. This command will update
-only the rclone executable so the local manual may become inaccurate after it.
+include local documentation or configure services. You may wish to update
+with the flag |--package deb| or |--package rpm| (whichever is correct for
+your OS) to update these too. This command with the default |--package zip|
+will update only the rclone executable so the local manual may become
+inaccurate after it.
 
 Note: Windows forbids deletion of a currently running executable so this
 command will rename the old executable to 'rclone.old.exe' upon success.
