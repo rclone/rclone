@@ -14,11 +14,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
-	"golang.org/x/text/unicode/norm"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -227,52 +225,6 @@ func Encrypt(src io.Reader, dst io.Writer) error {
 	return enc.Close()
 }
 
-// checkPassword normalises and validates the password
-func checkPassword(password string) (string, error) {
-	if !utf8.ValidString(password) {
-		return "", errors.New("password contains invalid utf8 characters")
-	}
-	// Check for leading/trailing whitespace
-	trimmedPassword := strings.TrimSpace(password)
-	// Warn user if password has leading+trailing whitespace
-	if len(password) != len(trimmedPassword) {
-		_, _ = fmt.Fprintln(os.Stderr, "Your password contains leading/trailing whitespace - in previous versions of rclone this was stripped")
-	}
-	// Normalize to reduce weird variations.
-	password = norm.NFKC.String(password)
-	if len(password) == 0 || len(trimmedPassword) == 0 {
-		return "", errors.New("no characters in password")
-	}
-	return password, nil
-}
-
-// GetPassword asks the user for a password with the prompt given.
-func GetPassword(prompt string) string {
-	_, _ = fmt.Fprintln(PasswordPromptOutput, prompt)
-	for {
-		_, _ = fmt.Fprint(PasswordPromptOutput, "password:")
-		password := ReadPassword()
-		password, err := checkPassword(password)
-		if err == nil {
-			return password
-		}
-		_, _ = fmt.Fprintf(os.Stderr, "Bad password: %v\n", err)
-	}
-}
-
-// ChangePassword will query the user twice for the named password. If
-// the same password is entered it is returned.
-func ChangePassword(name string) string {
-	for {
-		a := GetPassword(fmt.Sprintf("Enter %s password:", name))
-		b := GetPassword(fmt.Sprintf("Confirm %s password:", name))
-		if a == b {
-			return a
-		}
-		fmt.Println("Passwords do not match!")
-	}
-}
-
 // getConfigPassword will query the user for a password the
 // first time it is required.
 func getConfigPassword(q string) {
@@ -351,43 +303,5 @@ func changeConfigPassword() {
 	if err != nil {
 		fmt.Printf("Failed to set config password: %v\n", err)
 		return
-	}
-}
-
-// SetPassword will allow the user to modify the current
-// configuration encryption settings.
-func SetPassword() {
-	for {
-		if len(configKey) > 0 {
-			fmt.Println("Your configuration is encrypted.")
-			what := []string{"cChange Password", "uUnencrypt configuration", "qQuit to main menu"}
-			switch i := Command(what); i {
-			case 'c':
-				changeConfigPassword()
-				SaveConfig()
-				fmt.Println("Password changed")
-				continue
-			case 'u':
-				configKey = nil
-				SaveConfig()
-				continue
-			case 'q':
-				return
-			}
-
-		} else {
-			fmt.Println("Your configuration is not encrypted.")
-			fmt.Println("If you add a password, you will protect your login information to cloud services.")
-			what := []string{"aAdd Password", "qQuit to main menu"}
-			switch i := Command(what); i {
-			case 'a':
-				changeConfigPassword()
-				SaveConfig()
-				fmt.Println("Password set")
-				continue
-			case 'q':
-				return
-			}
-		}
 	}
 }
