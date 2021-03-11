@@ -44,8 +44,10 @@ func TestGetVersion(t *testing.T) {
 }
 
 func makeTestDir() (testDir string, err error) {
+	const maxAttempts = 5
 	testDirBase := filepath.Join(os.TempDir(), "rclone-test-selfupdate.")
-	for attempt := 0; attempt < 5; attempt++ {
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
 		testDir = testDirBase + random.String(4)
 		err = os.MkdirAll(testDir, os.ModePerm)
 		if err == nil {

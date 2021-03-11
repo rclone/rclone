@@ -33,11 +33,11 @@ import (
 // Options contains options for the self-update command
 type Options struct {
 	Check   bool
-	Output  string
-	Beta    bool
-	Stable  bool
+	Output  string // output path
+	Beta    bool   // mutually exclusive with Stable (false means "stable")
+	Stable  bool   // mutually exclusive with Beta
 	Version string
-	Format  string
+	Package string // package format: zip, deb, rpm (empty string means "zip")
 }
 
 // Opt is options set via command line
@@ -48,10 +48,10 @@ func init() {
 	cmdFlags := cmdSelfUpdate.Flags()
 	flags.BoolVarP(cmdFlags, &Opt.Check, "check", "", Opt.Check, "Check for latest release, do not download.")
 	flags.StringVarP(cmdFlags, &Opt.Output, "output", "", Opt.Output, "Save the downloaded binary at a given path (default: replace running binary)")
-	flags.BoolVarP(cmdFlags, &Opt.Stable, "stable", "", Opt.Stable, "Install latest stable release (this is the default)")
-	flags.BoolVarP(cmdFlags, &Opt.Beta, "beta", "", Opt.Beta, "Install latest beta release.")
-	flags.StringVarP(cmdFlags, &Opt.Version, "version", "", Opt.Version, "Install the given rclone path (default: auto-detect)")
-	flags.StringVarP(cmdFlags, &Opt.Format, "package", "", Opt.Format, "Package format: zip|deb|rpm (default: zip)")
+	flags.BoolVarP(cmdFlags, &Opt.Stable, "stable", "", Opt.Stable, "Install stable release (this is the default)")
+	flags.BoolVarP(cmdFlags, &Opt.Beta, "beta", "", Opt.Beta, "Install beta release.")
+	flags.StringVarP(cmdFlags, &Opt.Version, "version", "", Opt.Version, "Install the given rclone version (default: latest)")
+	flags.StringVarP(cmdFlags, &Opt.Package, "package", "", Opt.Package, "Package format: zip|deb|rpm (default: zip)")
 }
 
 var cmdSelfUpdate = &cobra.Command{
@@ -61,18 +61,18 @@ var cmdSelfUpdate = &cobra.Command{
 	Long:    strings.ReplaceAll(selfUpdateHelp, "|", "`"),
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
-		if Opt.Format == "" {
-			Opt.Format = "zip"
+		if Opt.Package == "" {
+			Opt.Package = "zip"
 		}
 		if Opt.Check {
-			if Opt.Stable || Opt.Beta || Opt.Output != "" || Opt.Version != "" || Opt.Format != "zip" {
-				fmt.Println("Warning: --stable, --beta, --version, --format and --output are ignored with --check")
+			if Opt.Stable || Opt.Beta || Opt.Output != "" || Opt.Version != "" || Opt.Package != "zip" {
+				fmt.Println("Warning: --stable, --beta, --version, --package and --output flags are ignored with --check")
 			}
 			versionCmd.CheckVersion()
 			return
 		}
-		if Opt.Format != "zip" {
-			if Opt.Format != "deb" && Opt.Format != "rpm" {
+		if Opt.Package != "zip" {
+			if Opt.Package != "deb" && Opt.Package != "rpm" {
 				log.Fatalf("--package should be one of zip|deb|rpm")
 			}
 			if runtime.GOOS != "linux" {
@@ -81,7 +81,7 @@ var cmdSelfUpdate = &cobra.Command{
 				log.Fatalf(".deb and .rpm must be installed by root")
 			}
 			if Opt.Output != "" {
-				fmt.Println("Warning: --output is ignored with --package .deb|.rpm")
+				fmt.Println("Warning: --output is ignored with --package deb|rpm")
 			}
 		}
 		if err := InstallUpdate(context.Background(), &Opt); err != nil {
@@ -162,8 +162,8 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 	}
 
 	// Install .deb/.rpm package if requested by user
-	if opt.Format == "deb" || opt.Format == "rpm" {
-		err := installPackage(ctx, opt.Beta, newVersion, siteURL, opt.Format)
+	if opt.Package == "deb" || opt.Package == "rpm" {
+		err := installPackage(ctx, opt.Beta, newVersion, siteURL, opt.Package)
 		if err == nil {
 			fmt.Printf("Successfully updated rclone package to version %s\n", newVersion)
 		}
@@ -196,7 +196,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 	}
 
 	if savedFile == executable || newFile == executable {
-		return fmt.Errorf("%s: a temporary file would overwrite executable, specify a different --output", targetFile)
+		return fmt.Errorf("%s: a temporary file would overwrite the executable, specify a different --output path", targetFile)
 	}
 
 	if err := verifyAccess(targetFile); err != nil {
@@ -216,8 +216,8 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 	return err
 }
 
-func installPackage(ctx context.Context, beta bool, version, siteURL, format string) error {
-	tempFile, err := ioutil.TempFile("", "rclone.*."+format)
+func installPackage(ctx context.Context, beta bool, version, siteURL, packageFormat string) error {
+	tempFile, err := ioutil.TempFile("", "rclone.*."+packageFormat)
 	if err != nil {
 		return errors.Wrap(err, "unable to write temporary package")
 	}
@@ -228,19 +228,19 @@ func installPackage(ctx context.Context, beta bool, version, siteURL, format str
 			fs.Errorf(nil, "%s: could not remove temporary package: %v", packageFile, rmErr)
 		}
 	}()
-	if err := downloadUpdate(ctx, beta, version, siteURL, packageFile, format); err != nil {
+	if err := downloadUpdate(ctx, beta, version, siteURL, packageFile, packageFormat); err != nil {
 		return err
 	}
 
-	packager := "dpkg"
-	if format == "rpm" {
-		packager = "rpm"
+	packageCommand := "dpkg"
+	if packageFormat == "rpm" {
+		packageCommand = "rpm"
 	}
-	cmd := exec.Command(packager, "-i", packageFile)
+	cmd := exec.Command(packageCommand, "-i", packageFile)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to run %s: %v", packager, err)
+		return fmt.Errorf("failed to run %s: %v", packageCommand, err)
 	}
 	return nil
 }
@@ -271,7 +271,7 @@ func replaceExecutable(targetFile, newFile, savedFile string) error {
 		}
 		if saveErr != nil {
 			// The ".old" file cannot be removed or cannot be renamed to.
-			// This usually means that current executable already has ".old"
+			// This usually means that the running executable has a name with ".old".
 			// This can happen in very rare cases, but we ought to handle it.
 			// Try inserting a randomness in the name to mitigate it.
 			fs.Debugf(nil, "%s: cannot replace old file, randomizing name", savedFile)
@@ -305,6 +305,8 @@ func replaceExecutable(targetFile, newFile, savedFile string) error {
 }
 
 func makeRandomExeName(baseName, extension string) (string, error) {
+	const maxAttempts = 5
+
 	if runtime.GOOS == "windows" {
 		if strings.HasSuffix(baseName, ".exe") {
 			baseName = baseName[:len(baseName)-4]
@@ -312,7 +314,7 @@ func makeRandomExeName(baseName, extension string) (string, error) {
 		extension += ".exe"
 	}
 
-	for attempt := 0; attempt < 5; attempt++ {
+	for attempt := 0; attempt < maxAttempts; attempt++ {
 		filename := fmt.Sprintf("%s.%s.%s", baseName, random.String(4), extension)
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			return filename, nil
@@ -322,14 +324,14 @@ func makeRandomExeName(baseName, extension string) (string, error) {
 	return "", fmt.Errorf("cannot find a file name like %s.xxxx.%s", baseName, extension)
 }
 
-func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, format string) error {
+func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, packageFormat string) error {
 	osName := runtime.GOOS
 	arch := runtime.GOARCH
 	if arch == "darwin" {
 		arch = "osx"
 	}
 
-	archiveFilename := fmt.Sprintf("rclone-%s-%s-%s.%s", version, osName, arch, format)
+	archiveFilename := fmt.Sprintf("rclone-%s-%s-%s.%s", version, osName, arch, packageFormat)
 	archiveURL := fmt.Sprintf("%s/%s/%s", siteURL, version, archiveFilename)
 	archiveBuf, err := downloadFile(ctx, archiveURL)
 	if err != nil {
@@ -346,9 +348,9 @@ func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, f
 		}
 	}
 
-	if format != "zip" {
+	if packageFormat == "deb" || packageFormat == "rpm" {
 		if err := ioutil.WriteFile(newFile, archiveBuf, 0644); err != nil {
-			return errors.Wrap(err, "cannot write temporary ."+format)
+			return errors.Wrap(err, "cannot write temporary ."+packageFormat)
 		}
 		return nil
 	}
