@@ -147,7 +147,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "creating folder. part: %s, parentID: %d", leaf, parentID)
 		entry, err = f.client.Files.CreateFolder(ctx, f.opt.Enc.FromStandardName(leaf), parentID)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	return itoa(entry.ID), err
 }
@@ -164,7 +164,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "listing file: %d", fileID)
 		children, _, err = f.client.Files.List(ctx, fileID)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		if perr, ok := err.(*putio.ErrorResponse); ok && perr.Response.StatusCode == 404 {
@@ -205,7 +205,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "listing files inside List: %d", parentID)
 		children, _, err = f.client.Files.List(ctx, parentID)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return
@@ -271,7 +271,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "getting file: %d", fileID)
 		entry, err = f.client.Files.Get(ctx, fileID)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
@@ -295,7 +295,7 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 		req.Header.Set("upload-metadata", fmt.Sprintf("name %s,no-torrent %s,parent_id %s,updated-at %s", b64name, b64true, b64parentID, b64modifiedAt))
 		fs.OpenOptionAddHTTPHeaders(req.Header, options)
 		resp, err := f.oAuthClient.Do(req)
-		retry, err := shouldRetry(err)
+		retry, err := shouldRetry(ctx, err)
 		if retry {
 			return true, err
 		}
@@ -320,7 +320,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 		err = f.pacer.Call(func() (bool, error) {
 			fs.Debugf(f, "Sending zero length chunk")
 			_, fileID, err = f.transferChunk(ctx, location, 0, bytes.NewReader([]byte{}), 0)
-			return shouldRetry(err)
+			return shouldRetry(ctx, err)
 		})
 		return
 	}
@@ -344,13 +344,13 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 				// Get file offset and seek to the position
 				offset, err := f.getServerOffset(ctx, location)
 				if err != nil {
-					return shouldRetry(err)
+					return shouldRetry(ctx, err)
 				}
 				sentBytes := offset - chunkStart
 				fs.Debugf(f, "sentBytes: %d", sentBytes)
 				_, err = chunk.Seek(sentBytes, io.SeekStart)
 				if err != nil {
-					return shouldRetry(err)
+					return shouldRetry(ctx, err)
 				}
 				transferOffset = offset
 				reqSize = chunkSize - sentBytes
@@ -367,7 +367,7 @@ func (f *Fs) sendUpload(ctx context.Context, location string, size int64, in io.
 				offsetMismatch = true
 				return true, errors.New("connection broken")
 			}
-			return shouldRetry(err)
+			return shouldRetry(ctx, err)
 		})
 		if err != nil {
 			return
@@ -479,7 +479,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		err = f.pacer.Call(func() (bool, error) {
 			// fs.Debugf(f, "listing files: %d", dirID)
 			children, _, err = f.client.Files.List(ctx, dirID)
-			return shouldRetry(err)
+			return shouldRetry(ctx, err)
 		})
 		if err != nil {
 			return errors.Wrap(err, "Rmdir")
@@ -493,7 +493,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "deleting file: %d", dirID)
 		err = f.client.Files.Delete(ctx, dirID)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	f.dirCache.FlushDir(dir)
 	return err
@@ -552,7 +552,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		// fs.Debugf(f, "copying file (%d) to parent_id: %s", srcObj.file.ID, directoryID)
 		_, err = f.client.Do(req, nil)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
@@ -591,7 +591,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (o fs.Objec
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		// fs.Debugf(f, "moving file (%d) to parent_id: %s", srcObj.file.ID, directoryID)
 		_, err = f.client.Do(req, nil)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
@@ -631,7 +631,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		// fs.Debugf(f, "moving file (%s) to parent_id: %s", srcID, dstDirectoryID)
 		_, err = f.client.Do(req, nil)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	srcFs.dirCache.FlushDir(srcRemote)
 	return err
@@ -644,7 +644,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	err = f.pacer.Call(func() (bool, error) {
 		// fs.Debugf(f, "getting account info")
 		ai, err = f.client.Account.Info(ctx)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "about failed")
@@ -678,6 +678,6 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 		}
 		// fs.Debugf(f, "emptying trash")
 		_, err = f.client.Do(req, nil)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 }

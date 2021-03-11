@@ -94,7 +94,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (io.ReadClo
 
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.rest.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 
 	if err != nil {

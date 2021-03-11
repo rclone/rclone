@@ -311,7 +311,7 @@ func CheckEqualReaders(in1, in2 io.Reader) (differ bool, err error) {
 // it returns true if differences were found
 func CheckIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ bool, err error) {
 	ci := fs.GetConfig(ctx)
-	err = Retry(src, ci.LowLevelRetries, func() error {
+	err = Retry(ctx, src, ci.LowLevelRetries, func() error {
 		differ, err = checkIdenticalDownload(ctx, dst, src)
 		return err
 	})

@@ -240,7 +240,10 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func shouldRetry(resp *http.Response, err error) (bool, error) {
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
@@ -329,7 +332,7 @@ func (f *Fs) fetchEndpoint(ctx context.Context, name string) (endpoint string, e
 	var openIDconfig map[string]interface{}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.unAuth.CallJSON(ctx, &opts, nil, &openIDconfig)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return "", errors.Wrap(err, "couldn't read openID config")
@@ -358,7 +361,7 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &userInfo)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't read user info")
@@ -389,7 +392,7 @@ func (f *Fs) Disconnect(ctx context.Context) (err error) {
 	var res interface{}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &res)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "couldn't revoke token")
@@ -476,7 +479,7 @@ func (f *Fs) listAlbums(ctx context.Context, shared bool) (all *albums, err erro
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-			return shouldRetry(resp, err)
+			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't list albums")
@@ -531,7 +534,7 @@ func (f *Fs) list(ctx context.Context, filter api.SearchFilter, fn listFn) (err 
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.CallJSON(ctx, &opts, &filter, &result)
-			return shouldRetry(resp, err)
+			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return errors.Wrap(err, "couldn't list files")
@@ -675,7 +678,7 @@ func (f *Fs) createAlbum(ctx context.Context, albumTitle string) (album *api.Alb
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, request, &result)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create album")
@@ -810,7 +813,7 @@ func (o *Object) Size() int64 {
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		fs.Debugf(o, "Reading size failed: %v", err)
@@ -861,7 +864,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		var resp *http.Response
 		err = o.fs.pacer.Call(func() (bool, error) {
 			resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &item)
-			return shouldRetry(resp, err)
+			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return errors.Wrap(err, "couldn't get media item")
@@ -938,7 +941,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -993,10 +996,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		if err != nil {
-			return shouldRetry(resp, err)
+			return shouldRetry(ctx, resp, err)
 		}
 		token, err = rest.ReadBody(resp)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "couldn't upload file")
@@ -1024,7 +1027,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var result api.BatchCreateResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, request, &result)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to create media item")
@@ -1069,7 +1072,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, nil)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "couldn't delete item from album")

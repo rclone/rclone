@@ -2,6 +2,7 @@
 package fserrors
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -433,6 +434,22 @@ func ShouldRetryHTTP(resp *http.Response, retryErrorCodes []int) bool {
 		if resp.StatusCode == e {
 			return true
 		}
+	}
+	return false
+}
+
+// ContextError checks to see if ctx is in error.
+//
+// If it is in error then it overwrites *perr with the context error
+// if *perr was nil and returns true.
+//
+// Otherwise it returns false.
+func ContextError(ctx context.Context, perr *error) bool {
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		if *perr == nil {
+			*perr = ctxErr
+		}
+		return true
 	}
 	return false
 }

@@ -1,6 +1,7 @@
 package fserrors
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net"
@@ -169,4 +170,22 @@ func TestRetryAfter(t *testing.T) {
 	assert.Equal(t, t0, RetryAfterErrorTime(err))
 	assert.True(t, IsRetryAfterError(err))
 	assert.Contains(t, e.Error(), "try again after")
+}
+
+func TestContextError(t *testing.T) {
+	var err = io.EOF
+	ctx, cancel := context.WithCancel(context.Background())
+
+	assert.False(t, ContextError(ctx, &err))
+	assert.Equal(t, io.EOF, err)
+
+	cancel()
+
+	assert.True(t, ContextError(ctx, &err))
+	assert.Equal(t, io.EOF, err)
+
+	err = nil
+
+	assert.True(t, ContextError(ctx, &err))
+	assert.Equal(t, context.Canceled, err)
 }
