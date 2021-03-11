@@ -1,6 +1,7 @@
 package putio
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -29,7 +30,10 @@ func (e *statusCodeError) Temporary() bool {
 
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
-func shouldRetry(err error) (bool, error) {
+func shouldRetry(ctx context.Context, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	if err == nil {
 		return false, nil
 	}

@@ -205,7 +205,10 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	if resp != nil {
 		if resp.StatusCode == 401 {
 			f.tokenRenewer.Invalidate()
@@ -280,7 +283,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
-		_, err := f.getRootInfo()
+		_, err := f.getRootInfo(ctx)
 		return err
 	})
 
@@ -288,14 +291,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		_, resp, err = f.c.Account.GetEndpoints()
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get endpoints")
 	}
 
 	// Get rootID
-	rootInfo, err := f.getRootInfo()
+	rootInfo, err := f.getRootInfo(ctx)
 	if err != nil || rootInfo.Id == nil {
 		return nil, errors.Wrap(err, "failed to get root")
 	}
@@ -337,11 +340,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 }
 
 // getRootInfo gets the root folder info
-func (f *Fs) getRootInfo() (rootInfo *acd.Folder, err error) {
+func (f *Fs) getRootInfo(ctx context.Context) (rootInfo *acd.Folder, err error) {
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		rootInfo, resp, err = f.c.Nodes.GetRoot()
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	return rootInfo, err
 }
@@ -380,7 +383,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	var subFolder *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
 		subFolder, resp, err = folder.GetFolder(f.opt.Enc.FromStandardName(leaf))
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if err == acd.ErrorNodeNotFound {
@@ -407,7 +410,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	var info *acd.Folder
 	err = f.pacer.Call(func() (bool, error) {
 		info, resp, err = folder.CreateFolder(f.opt.Enc.FromStandardName(leaf))
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		//fmt.Printf("...Error %v\n", err)
@@ -428,7 +431,7 @@ type listAllFn func(*acd.Node) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(ctx context.Context, dirID string, title string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	query := "parents:" + dirID
 	if directoriesOnly {
 		query += " AND kind:" + folderKind
@@ -449,7 +452,7 @@ func (f *Fs) listAll(dirID string, title string, directoriesOnly bool, filesOnly
 		var resp *http.Response
 		err = f.pacer.CallNoRetry(func() (bool, error) {
 			nodes, resp, err = f.c.Nodes.GetNodes(&opts)
-			return f.shouldRetry(resp, err)
+			return f.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return false, err
@@ -508,7 +511,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	var iErr error
 	for tries := 1; tries <= maxTries; tries++ {
 		entries = nil
-		_, err = f.listAll(directoryID, "", false, false, func(node *acd.Node) bool {
+		_, err = f.listAll(ctx, directoryID, "", false, false, func(node *acd.Node) bool {
 			remote := path.Join(dir, *node.Name)
 			switch *node.Kind {
 			case folderKind:
@@ -667,7 +670,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		if ok {
 			return false, nil
 		}
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -708,7 +711,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, err
 	}
-	err = f.moveNode(srcObj.remote, dstLeaf, dstDirectoryID, srcObj.info, srcLeaf, srcDirectoryID, false)
+	err = f.moveNode(ctx, srcObj.remote, dstLeaf, dstDirectoryID, srcObj.info, srcLeaf, srcDirectoryID, false)
 	if err != nil {
 		return nil, err
 	}
@@ -803,7 +806,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	var jsonStr string
 	err = srcFs.pacer.Call(func() (bool, error) {
 		jsonStr, err = srcInfo.GetMetadata()
-		return srcFs.shouldRetry(nil, err)
+		return srcFs.shouldRetry(ctx, nil, err)
 	})
 	if err != nil {
 		fs.Debugf(src, "DirMove error: error reading src metadata: %v", err)
@@ -815,7 +818,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return err
 	}
 
-	err = f.moveNode(srcPath, dstLeaf, dstDirectoryID, srcInfo, srcLeaf, srcDirectoryID, true)
+	err = f.moveNode(ctx, srcPath, dstLeaf, dstDirectoryID, srcInfo, srcLeaf, srcDirectoryID, true)
 	if err != nil {
 		return err
 	}
@@ -840,7 +843,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	if check {
 		// check directory is empty
 		empty := true
-		_, err = f.listAll(rootID, "", false, false, func(node *acd.Node) bool {
+		_, err = f.listAll(ctx, rootID, "", false, false, func(node *acd.Node) bool {
 			switch *node.Kind {
 			case folderKind:
 				empty = false
@@ -865,7 +868,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = node.Trash()
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return err
@@ -987,7 +990,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	var info *acd.File
 	err = o.fs.pacer.Call(func() (bool, error) {
 		info, resp, err = folder.GetFile(o.fs.opt.Enc.FromStandardName(leaf))
-		return o.fs.shouldRetry(resp, err)
+		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if err == acd.ErrorNodeNotFound {
@@ -1044,7 +1047,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		} else {
 			in, resp, err = file.OpenTempURLHeaders(o.fs.noAuthClient, headers)
 		}
-		return o.fs.shouldRetry(resp, err)
+		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	return in, err
 }
@@ -1067,7 +1070,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if ok {
 			return false, nil
 		}
-		return o.fs.shouldRetry(resp, err)
+		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return err
@@ -1077,70 +1080,70 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 // Remove a node
-func (f *Fs) removeNode(info *acd.Node) error {
+func (f *Fs) removeNode(ctx context.Context, info *acd.Node) error {
 	var resp *http.Response
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = info.Trash()
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	return err
 }
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	return o.fs.removeNode(o.info)
+	return o.fs.removeNode(ctx, o.info)
 }
 
 // Restore a node
-func (f *Fs) restoreNode(info *acd.Node) (newInfo *acd.Node, err error) {
+func (f *Fs) restoreNode(ctx context.Context, info *acd.Node) (newInfo *acd.Node, err error) {
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		newInfo, resp, err = info.Restore()
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	return newInfo, err
 }
 
 // Changes name of given node
-func (f *Fs) renameNode(info *acd.Node, newName string) (newInfo *acd.Node, err error) {
+func (f *Fs) renameNode(ctx context.Context, info *acd.Node, newName string) (newInfo *acd.Node, err error) {
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		newInfo, resp, err = info.Rename(f.opt.Enc.FromStandardName(newName))
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	return newInfo, err
 }
 
 // Replaces one parent with another, effectively moving the file. Leaves other
 // parents untouched. ReplaceParent cannot be used when the file is trashed.
-func (f *Fs) replaceParent(info *acd.Node, oldParentID string, newParentID string) error {
+func (f *Fs) replaceParent(ctx context.Context, info *acd.Node, oldParentID string, newParentID string) error {
 	return f.pacer.Call(func() (bool, error) {
 		resp, err := info.ReplaceParent(oldParentID, newParentID)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 }
 
 // Adds one additional parent to object.
-func (f *Fs) addParent(info *acd.Node, newParentID string) error {
+func (f *Fs) addParent(ctx context.Context, info *acd.Node, newParentID string) error {
 	return f.pacer.Call(func() (bool, error) {
 		resp, err := info.AddParent(newParentID)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 }
 
 // Remove given parent from object, leaving the other possible
 // parents untouched. Object can end up having no parents.
-func (f *Fs) removeParent(info *acd.Node, parentID string) error {
+func (f *Fs) removeParent(ctx context.Context, info *acd.Node, parentID string) error {
 	return f.pacer.Call(func() (bool, error) {
 		resp, err := info.RemoveParent(parentID)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 }
 
 // moveNode moves the node given from the srcLeaf,srcDirectoryID to
 // the dstLeaf,dstDirectoryID
-func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, srcLeaf, srcDirectoryID string, useDirErrorMsgs bool) (err error) {
+func (f *Fs) moveNode(ctx context.Context, name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, srcLeaf, srcDirectoryID string, useDirErrorMsgs bool) (err error) {
 	// fs.Debugf(name, "moveNode dst(%q,%s) <- src(%q,%s)", dstLeaf, dstDirectoryID, srcLeaf, srcDirectoryID)
 	cantMove := fs.ErrorCantMove
 	if useDirErrorMsgs {
@@ -1154,7 +1157,7 @@ func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, s
 
 	if srcLeaf != dstLeaf {
 		// fs.Debugf(name, "renaming")
-		_, err = f.renameNode(srcInfo, dstLeaf)
+		_, err = f.renameNode(ctx, srcInfo, dstLeaf)
 		if err != nil {
 			fs.Debugf(name, "Move: quick path rename failed: %v", err)
 			goto OnConflict
@@ -1162,7 +1165,7 @@ func (f *Fs) moveNode(name, dstLeaf, dstDirectoryID string, srcInfo *acd.Node, s
 	}
 	if srcDirectoryID != dstDirectoryID {
 		// fs.Debugf(name, "trying parent replace: %s -> %s", oldParentID, newParentID)
-		err = f.replaceParent(srcInfo, srcDirectoryID, dstDirectoryID)
+		err = f.replaceParent(ctx, srcInfo, srcDirectoryID, dstDirectoryID)
 		if err != nil {
 			fs.Debugf(name, "Move: quick path parent replace failed: %v", err)
 			return err
@@ -1175,13 +1178,13 @@ OnConflict:
 	fs.Debugf(name, "Could not directly rename file, presumably because there was a file with the same name already. Instead, the file will now be trashed where such operations do not cause errors. It will be restored to the correct parent after. If any of the subsequent calls fails, the rename/move will be in an invalid state.")
 
 	// fs.Debugf(name, "Trashing file")
-	err = f.removeNode(srcInfo)
+	err = f.removeNode(ctx, srcInfo)
 	if err != nil {
 		fs.Debugf(name, "Move: remove node failed: %v", err)
 		return err
 	}
 	// fs.Debugf(name, "Renaming file")
-	_, err = f.renameNode(srcInfo, dstLeaf)
+	_, err = f.renameNode(ctx, srcInfo, dstLeaf)
 	if err != nil {
 		fs.Debugf(name, "Move: rename node failed: %v", err)
 		return err
@@ -1189,19 +1192,19 @@ OnConflict:
 	// note: replacing parent is forbidden by API, modifying them individually is
 	// okay though
 	// fs.Debugf(name, "Adding target parent")
-	err = f.addParent(srcInfo, dstDirectoryID)
+	err = f.addParent(ctx, srcInfo, dstDirectoryID)
 	if err != nil {
 		fs.Debugf(name, "Move: addParent failed: %v", err)
 		return err
 	}
 	// fs.Debugf(name, "removing original parent")
-	err = f.removeParent(srcInfo, srcDirectoryID)
+	err = f.removeParent(ctx, srcInfo, srcDirectoryID)
 	if err != nil {
 		fs.Debugf(name, "Move: removeParent failed: %v", err)
 		return err
 	}
 	// fs.Debugf(name, "Restoring")
-	_, err = f.restoreNode(srcInfo)
+	_, err = f.restoreNode(ctx, srcInfo)
 	if err != nil {
 		fs.Debugf(name, "Move: restoreNode node failed: %v", err)
 		return err

@@ -228,7 +228,10 @@ var retryStatusCodes = []struct {
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func (f *Fs) shouldRetry(resp *http.Response, err error, status api.OKError) (bool, error) {
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error, status api.OKError) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	if err != nil {
 		return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 	}
@@ -401,7 +404,7 @@ func (f *Fs) rpc(ctx context.Context, function string, p params, result api.OKEr
 		// Refresh the body each retry
 		opts.Body = strings.NewReader(data.Encode())
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, result)
-		return f.shouldRetry(resp, err, result)
+		return f.shouldRetry(ctx, resp, err, result)
 	})
 	if err != nil {
 		return resp, err
@@ -1277,7 +1280,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &uploader)
-		return o.fs.shouldRetry(resp, err, nil)
+		return o.fs.shouldRetry(ctx, resp, err, nil)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to upload")

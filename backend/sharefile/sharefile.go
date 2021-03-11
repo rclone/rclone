@@ -299,7 +299,10 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func shouldRetry(resp *http.Response, err error) (bool, error) {
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
@@ -324,7 +327,7 @@ func (f *Fs) readMetaDataForIDPath(ctx context.Context, id, path string, directo
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &item)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -631,7 +634,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &req, &info)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return "", errors.Wrap(err, "CreateDir")
@@ -663,7 +666,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return found, errors.Wrap(err, "couldn't list files")
@@ -912,7 +915,7 @@ func (f *Fs) updateItem(ctx context.Context, id, leaf, directoryID string, modTi
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &update, &info)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -1133,7 +1136,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (dst fs.Obj
 	var info *api.Item
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -1294,7 +1297,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var dl api.DownloadSpecification
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &dl)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "open: fetch download specification")
@@ -1309,7 +1312,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "open")
@@ -1365,7 +1368,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, &req, &info)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "upload get specification")
@@ -1390,7 +1393,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	var finish api.UploadFinishResponse
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &finish)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "upload file")
@@ -1426,7 +1429,7 @@ func (f *Fs) remove(ctx context.Context, id string) (err error) {
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "remove")

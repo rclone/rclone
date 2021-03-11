@@ -257,7 +257,10 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func shouldRetry(resp *http.Response, err error) (bool, error) {
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	authRetry := false
 
 	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Index(resp.Header["Www-Authenticate"][0], "expired_token") >= 0 {
@@ -354,7 +357,7 @@ func (f *Fs) readMetaDataForID(ctx context.Context, id string) (*api.Item, error
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -450,7 +453,7 @@ OUTER:
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-			return shouldRetry(resp, err)
+			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return found, errors.Wrap(err, "couldn't list files")
@@ -555,7 +558,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &mkdir, &info)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		//fmt.Printf("...Error %v\n", err)
@@ -664,7 +667,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	var uploadResponse *api.UploadResponse
 	err = f.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &uploadResponse)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "upload error")
@@ -746,7 +749,7 @@ func (f *Fs) deleteObject(ctx context.Context, id string) (err error) {
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &delete, nil)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "delete object failed")
@@ -816,7 +819,7 @@ func (f *Fs) rename(ctx context.Context, id, name string) (item *api.Item, err e
 	var result *api.ItemInfo
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &rename, &result)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "rename failed")
@@ -869,7 +872,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var result *api.ItemList
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &copyFile, &result)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't copy file")
@@ -914,7 +917,7 @@ func (f *Fs) move(ctx context.Context, srcID, parentID string) (item *api.Item, 
 	var result *api.ItemList
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &moveFile, &result)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "move failed")
@@ -1181,7 +1184,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err

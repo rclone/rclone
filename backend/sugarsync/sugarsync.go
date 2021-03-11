@@ -111,7 +111,7 @@ func init() {
 			// FIXME
 			//err = f.pacer.Call(func() (bool, error) {
 			resp, err = srv.CallXML(context.Background(), &opts, &authRequest, nil)
-			//	return shouldRetry(resp, err)
+			//	return shouldRetry(ctx, resp, err)
 			//})
 			if err != nil {
 				log.Fatalf("Failed to get token: %v", err)
@@ -248,7 +248,10 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func shouldRetry(resp *http.Response, err error) (bool, error) {
+func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
@@ -288,7 +291,7 @@ func (f *Fs) readMetaDataForID(ctx context.Context, ID string) (info *api.File, 
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, nil, &info)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
@@ -325,7 +328,7 @@ func (f *Fs) getAuthToken(ctx context.Context) error {
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, &authRequest, &authResponse)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to get authorization")
@@ -373,7 +376,7 @@ func (f *Fs) getUser(ctx context.Context) (user *api.User, err error) {
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, nil, &user)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get user")
@@ -567,7 +570,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, mkdir, nil)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return "", err
@@ -618,7 +621,7 @@ OUTER:
 		var resp *http.Response
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
-			return shouldRetry(resp, err)
+			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
 			return found, errors.Wrap(err, "couldn't list files")
@@ -774,7 +777,7 @@ func (f *Fs) delete(ctx context.Context, isFile bool, id string, remote string, 
 		}
 		return f.pacer.Call(func() (bool, error) {
 			resp, err := f.srv.Call(ctx, &opts)
-			return shouldRetry(resp, err)
+			return shouldRetry(ctx, resp, err)
 		})
 	}
 	// Move file/dir to deleted files if not hard delete
@@ -880,7 +883,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, &copyFile, nil)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -934,7 +937,7 @@ func (f *Fs) moveFile(ctx context.Context, id, leaf, directoryID string) (info *
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, &move, &info)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -964,7 +967,7 @@ func (f *Fs) moveDir(ctx context.Context, id, leaf, directoryID string) (err err
 	var resp *http.Response
 	return f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, &move, nil)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 }
 
@@ -1053,7 +1056,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	var info *api.File
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, &linkFile, &info)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return "", err
@@ -1182,7 +1185,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -1204,7 +1207,7 @@ func (f *Fs) createFile(ctx context.Context, pathID, leaf, mimeType string) (new
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallXML(ctx, &opts, &mkdir, nil)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return "", err
@@ -1262,7 +1265,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to upload file")

@@ -145,7 +145,7 @@ func (o *Object) readEntry(ctx context.Context) (f *putio.File, err error) {
 		if perr, ok := err.(*putio.ErrorResponse); ok && perr.Response.StatusCode == 404 {
 			return false, fs.ErrorObjectNotFound
 		}
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var storageURL string
 	err = o.fs.pacer.Call(func() (bool, error) {
 		storageURL, err = o.fs.client.Files.URL(ctx, o.file.ID, true)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return
@@ -231,7 +231,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	err = o.fs.pacer.Call(func() (bool, error) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, storageURL, nil)
 		if err != nil {
-			return shouldRetry(err)
+			return shouldRetry(ctx, err)
 		}
 		req.Header.Set("User-Agent", o.fs.client.UserAgent)
 
@@ -241,7 +241,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 		// fs.Debugf(o, "opening file: id=%d", o.file.ID)
 		resp, err = o.fs.httpClient.Do(req)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if perr, ok := err.(*putio.ErrorResponse); ok && perr.Response.StatusCode >= 400 && perr.Response.StatusCode <= 499 {
 		_ = resp.Body.Close()
@@ -283,6 +283,6 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	return o.fs.pacer.Call(func() (bool, error) {
 		// fs.Debugf(o, "removing file: id=%d", o.file.ID)
 		err = o.fs.client.Files.Delete(ctx, o.file.ID)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 }

@@ -405,6 +405,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestRetry(t *testing.T) {
+	ctx := context.Background()
+
 	var i int
 	var err error
 	fn := func() error {
@@ -416,15 +418,15 @@ func TestRetry(t *testing.T) {
 	}
 
 	i, err = 3, io.EOF
-	assert.Equal(t, nil, operations.Retry(nil, 5, fn))
+	assert.Equal(t, nil, operations.Retry(ctx, nil, 5, fn))
 	assert.Equal(t, 0, i)
 
 	i, err = 10, io.EOF
-	assert.Equal(t, io.EOF, operations.Retry(nil, 5, fn))
+	assert.Equal(t, io.EOF, operations.Retry(ctx, nil, 5, fn))
 	assert.Equal(t, 5, i)
 
 	i, err = 10, fs.ErrorObjectNotFound
-	assert.Equal(t, fs.ErrorObjectNotFound, operations.Retry(nil, 5, fn))
+	assert.Equal(t, fs.ErrorObjectNotFound, operations.Retry(ctx, nil, 5, fn))
 	assert.Equal(t, 9, i)
 
 }

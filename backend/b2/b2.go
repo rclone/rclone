@@ -305,7 +305,10 @@ var retryErrorCodes = []int{
 
 // shouldRetryNoAuth returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
+func (f *Fs) shouldRetryNoReauth(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	// For 429 or 503 errors look at the Retry-After: header and
 	// set the retry appropriately, starting with a minimum of 1
 	// second if it isn't set.
@@ -336,7 +339,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 		}
 		return true, err
 	}
-	return f.shouldRetryNoReauth(resp, err)
+	return f.shouldRetryNoReauth(ctx, resp, err)
 }
 
 // errorHandler parses a non 2xx error response into an error
@@ -504,7 +507,7 @@ func (f *Fs) authorizeAccount(ctx context.Context) error {
 	}
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, &f.info)
-		return f.shouldRetryNoReauth(resp, err)
+		return f.shouldRetryNoReauth(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to authenticate")

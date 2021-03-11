@@ -86,7 +86,7 @@ func (f *Fs) getServerInfo(ctx context.Context) (account *api.ServerInfo, err er
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -112,7 +112,7 @@ func (f *Fs) getUserAccountInfo(ctx context.Context) (account *api.AccountInfo, 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -139,7 +139,7 @@ func (f *Fs) getLibraries(ctx context.Context) ([]api.Library, error) {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -170,7 +170,7 @@ func (f *Fs) createLibrary(ctx context.Context, libraryName, password string) (l
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -197,7 +197,7 @@ func (f *Fs) deleteLibrary(ctx context.Context, libraryID string) error {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -228,7 +228,7 @@ func (f *Fs) decryptLibrary(ctx context.Context, libraryID, password string) err
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -271,7 +271,7 @@ func (f *Fs) getDirectoryEntriesAPIv21(ctx context.Context, libraryID, dirPath s
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -316,7 +316,7 @@ func (f *Fs) getDirectoryDetails(ctx context.Context, libraryID, dirPath string)
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -358,7 +358,7 @@ func (f *Fs) createDir(ctx context.Context, libraryID, dirPath string) error {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -398,7 +398,7 @@ func (f *Fs) renameDir(ctx context.Context, libraryID, dirPath, newName string) 
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -438,7 +438,7 @@ func (f *Fs) moveDir(ctx context.Context, srcLibraryID, srcDir, srcName, dstLibr
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, nil)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -474,7 +474,7 @@ func (f *Fs) deleteDir(ctx context.Context, libraryID, filePath string) error {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, nil)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -505,7 +505,7 @@ func (f *Fs) getFileDetails(ctx context.Context, libraryID, filePath string) (*a
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -539,7 +539,7 @@ func (f *Fs) deleteFile(ctx context.Context, libraryID, filePath string) error {
 	}
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.srv.CallJSON(ctx, &opts, nil, nil)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to delete file")
@@ -565,7 +565,7 @@ func (f *Fs) getDownloadLink(ctx context.Context, libraryID, filePath string) (s
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -614,7 +614,7 @@ func (f *Fs) download(ctx context.Context, url string, size int64, options ...fs
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -659,7 +659,7 @@ func (f *Fs) getUploadLink(ctx context.Context, libraryID string) (string, error
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -739,7 +739,7 @@ func (f *Fs) listShareLinks(ctx context.Context, libraryID, remote string) ([]ap
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -777,7 +777,7 @@ func (f *Fs) createShareLink(ctx context.Context, libraryID, remote string) (*ap
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -818,7 +818,7 @@ func (f *Fs) copyFile(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, 
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -860,7 +860,7 @@ func (f *Fs) moveFile(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, 
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -900,7 +900,7 @@ func (f *Fs) renameFile(ctx context.Context, libraryID, filePath, newname string
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, &request, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -938,7 +938,7 @@ func (f *Fs) emptyLibraryTrash(ctx context.Context, libraryID string) error {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, nil)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -976,7 +976,7 @@ func (f *Fs) getDirectoryEntriesAPIv2(ctx context.Context, libraryID, dirPath st
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -1030,7 +1030,7 @@ func (f *Fs) copyFileAPIv2(ctx context.Context, srcLibraryID, srcPath, dstLibrar
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {
@@ -1075,7 +1075,7 @@ func (f *Fs) renameFileAPIv2(ctx context.Context, libraryID, filePath, newname s
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(resp, err)
+		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if resp != nil {

@@ -44,7 +44,7 @@ func (o *Object) createUploadSession(ctx context.Context, leaf, directoryID stri
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, &response)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	return
 }
@@ -74,7 +74,7 @@ func (o *Object) uploadPart(ctx context.Context, SessionID string, offset, total
 	err = o.fs.pacer.Call(func() (bool, error) {
 		opts.Body = wrap(bytes.NewReader(chunk))
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &response)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, err
@@ -109,10 +109,10 @@ outer:
 		err = o.fs.pacer.Call(func() (bool, error) {
 			resp, err = o.fs.srv.CallJSON(ctx, &opts, &request, nil)
 			if err != nil {
-				return shouldRetry(resp, err)
+				return shouldRetry(ctx, resp, err)
 			}
 			body, err = rest.ReadBody(resp)
-			return shouldRetry(resp, err)
+			return shouldRetry(ctx, resp, err)
 		})
 		delay := defaultDelay
 		var why string
@@ -167,7 +167,7 @@ func (o *Object) abortUpload(ctx context.Context, SessionID string) (err error) 
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(resp, err)
+		return shouldRetry(ctx, resp, err)
 	})
 	return err
 }

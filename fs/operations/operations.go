@@ -485,6 +485,9 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			break
 		}
 		// Retry if err returned a retry error
+		if fserrors.ContextError(ctx, &err) {
+			break
+		}
 		var retry bool
 		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
 			retry = true
@@ -800,7 +803,7 @@ func SameDir(fdst, fsrc fs.Info) bool {
 }
 
 // Retry runs fn up to maxTries times if it returns a retriable error
-func Retry(o interface{}, maxTries int, fn func() error) (err error) {
+func Retry(ctx context.Context, o interface{}, maxTries int, fn func() error) (err error) {
 	for tries := 1; tries <= maxTries; tries++ {
 		// Call the function which might error
 		err = fn()
@@ -808,6 +811,9 @@ func Retry(o interface{}, maxTries int, fn func() error) (err error) {
 			break
 		}
 		// Retry if err returned a retry error
+		if fserrors.ContextError(ctx, &err) {
+			break
+		}
 		if fserrors.IsRetryError(err) || fserrors.ShouldRetry(err) {
 			fs.Debugf(o, "Received error: %v - low level retry %d/%d", err, tries, maxTries)
 			continue
