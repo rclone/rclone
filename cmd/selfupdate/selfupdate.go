@@ -64,10 +64,8 @@ var cmdSelfUpdate = &cobra.Command{
 		if Opt.Package == "" {
 			Opt.Package = "zip"
 		}
-		if Opt.Check {
-			if Opt.Stable || Opt.Beta || Opt.Output != "" || Opt.Version != "" || Opt.Package != "zip" {
-				fmt.Println("Warning: --stable, --beta, --version, --package and --output flags are ignored with --check")
-			}
+		gotActionFlags := Opt.Stable || Opt.Beta || Opt.Output != "" || Opt.Version != "" || Opt.Package != "zip"
+		if Opt.Check && !gotActionFlags {
 			versionCmd.CheckVersion()
 			return
 		}
@@ -77,10 +75,10 @@ var cmdSelfUpdate = &cobra.Command{
 			}
 			if runtime.GOOS != "linux" {
 				log.Fatalf(".deb and .rpm packages are supported only on Linux")
-			} else if os.Geteuid() != 0 {
+			} else if os.Geteuid() != 0 && !Opt.Check {
 				log.Fatalf(".deb and .rpm must be installed by root")
 			}
-			if Opt.Output != "" {
+			if Opt.Output != "" && !Opt.Check {
 				fmt.Println("Warning: --output is ignored with --package deb|rpm")
 			}
 		}
@@ -163,11 +161,15 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 
 	// Install .deb/.rpm package if requested by user
 	if opt.Package == "deb" || opt.Package == "rpm" {
-		err := installPackage(ctx, opt.Beta, newVersion, siteURL, opt.Package)
-		if err == nil {
-			fmt.Printf("Successfully updated rclone package to version %s\n", newVersion)
+		if opt.Check {
+			fmt.Println("Warning: --package flag is ignored in --check mode")
+		} else {
+			err := installPackage(ctx, opt.Beta, newVersion, siteURL, opt.Package)
+			if err == nil {
+				fmt.Printf("Successfully updated rclone package to version %s\n", newVersion)
+			}
+			return err
 		}
-		return err
 	}
 
 	// Get the current executable path
@@ -179,6 +181,11 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 	targetFile := opt.Output
 	if targetFile == "" {
 		targetFile = executable
+	}
+
+	if opt.Check {
+		fmt.Printf("Without --check this would install rclone version %s at %s\n", newVersion, targetFile)
+		return nil
 	}
 
 	// Make temporary file names and check for possible access errors in advance
