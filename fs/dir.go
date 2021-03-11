@@ -12,6 +12,7 @@ type Dir struct {
 	size    int64     // size of directory and contents or -1 if unknown
 	items   int64     // number of objects or -1 for unknown
 	id      string    // optional ID
+	parent  string    // optional parent directory ID
 }
 
 // NewDir creates an unspecialized Directory object
@@ -59,6 +60,17 @@ func (d *Dir) ID() string {
 // SetID sets the optional ID
 func (d *Dir) SetID(id string) *Dir {
 	d.id = id
+	return d
+}
+
+// ParentID returns the IDs of the Dir parent if known
+func (d *Dir) ParentID() string {
+	return d.parent
+}
+
+// SetParentID sets the optional parent ID of the Dir
+func (d *Dir) SetParentID(parent string) *Dir {
+	d.parent = parent
 	return d
 }
 

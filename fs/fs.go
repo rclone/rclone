@@ -396,6 +396,12 @@ type IDer interface {
 	ID() string
 }
 
+// ParentIDer is an optional interface for Object
+type ParentIDer interface {
+	// ParentID returns the ID of the parent directory if known or nil if not
+	ParentID() string
+}
+
 // ObjectUnWrapper is an optional interface for Object
 type ObjectUnWrapper interface {
 	// UnWrap returns the Object that this Object is wrapping or

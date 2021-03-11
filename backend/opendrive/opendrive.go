@@ -119,6 +119,7 @@ type Object struct {
 	fs      *Fs       // what this object is part of
 	remote  string    // The remote path
 	id      string    // ID of the file
+	parent  string    // ID of the parent directory
 	modTime time.Time // The modified time of the object if known
 	md5     string    // MD5 hash if known
 	size    int64     // Size of the object
@@ -233,7 +234,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			// No root so return old f
 			return f, nil
 		}
-		_, err := tempF.newObjectWithInfo(ctx, remote, nil)
+		_, err := tempF.newObjectWithInfo(ctx, remote, nil, "")
 		if err != nil {
 			if err == fs.ErrorObjectNotFound {
 				// File doesn't exist so return old f
@@ -517,7 +518,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, file *File) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, file *File, parent string) (fs.Object, error) {
 	// fs.Debugf(nil, "newObjectWithInfo(%s, %v)", remote, file)
 
 	var o *Object
@@ -526,6 +527,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, file *File) (
 			fs:      f,
 			remote:  remote,
 			id:      file.FileID,
+			parent:  parent,
 			modTime: time.Unix(file.DateModified, 0),
 			size:    file.Size,
 			md5:     file.FileHash,
@@ -548,7 +550,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, file *File) (
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	// fs.Debugf(nil, "NewObject(\"%s\")", remote)
-	return f.newObjectWithInfo(ctx, remote, nil)
+	return f.newObjectWithInfo(ctx, remote, nil, "")
 }
 
 // Creates from the parameters passed in a half finished Object which
@@ -768,6 +770,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		f.dirCache.Put(remote, folder.FolderID)
 		d := fs.NewDir(remote, time.Unix(folder.DateModified, 0)).SetID(folder.FolderID)
 		d.SetItems(int64(folder.ChildFolders))
+		d.SetParentID(directoryID)
 		entries = append(entries, d)
 	}
 
@@ -775,7 +778,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		file.Name = f.opt.Enc.ToStandardName(file.Name)
 		// fs.Debugf(nil, "File: %s (%s)", file.Name, file.FileID)
 		remote := path.Join(dir, file.Name)
-		o, err := f.newObjectWithInfo(ctx, remote, &file)
+		o, err := f.newObjectWithInfo(ctx, remote, &file, directoryID)
 		if err != nil {
 			return nil, err
 		}
@@ -1053,6 +1056,11 @@ func (o *Object) ID() string {
 	return o.id
 }
 
+// ParentID returns the ID of the Object parent directory if known, or "" if not
+func (o *Object) ParentID() string {
+	return o.parent
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -1063,4 +1071,5 @@ var (
 	_ fs.DirCacheFlusher = (*Fs)(nil)
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
+	_ fs.ParentIDer      = (*Object)(nil)
 )
