@@ -109,7 +109,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	dirname := path.Dir(realpath)
 	fs.Debugf(o.fs, "update [%s]", realpath)
 
-	err := o.fs.client.MkdirAll(dirname, 755)
+	err := o.fs.client.MkdirAll(dirname, 0755)
 	if err != nil {
 		return err
 	}
