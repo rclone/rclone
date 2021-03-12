@@ -289,6 +289,15 @@ func (f *File) activeWriters() int {
 	return int(atomic.LoadInt32(&f.nwriters))
 }
 
+// _roundModTime rounds the time passed in to the Precision of the
+// underlying Fs
+//
+// It should be called with the lock held
+func (f *File) _roundModTime(modTime time.Time) time.Time {
+	precision := f.d.f.Precision()
+	return modTime.Truncate(precision)
+}
+
 // ModTime returns the modified time of the file
 //
 // if NoModTime is set then it returns the mod time of the directory
@@ -307,12 +316,12 @@ func (f *File) ModTime() (modTime time.Time) {
 			if err != nil {
 				fs.Errorf(f._path(), "ModTime: Item GetModTime failed: %v", err)
 			} else {
-				return modTime
+				return f._roundModTime(modTime)
 			}
 		}
 	}
 	if !pendingModTime.IsZero() {
-		return pendingModTime
+		return f._roundModTime(pendingModTime)
 	}
 	if o == nil {
 		return time.Now()
