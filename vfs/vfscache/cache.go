@@ -237,7 +237,8 @@ func (c *Cache) InUse(name string) bool {
 	return item.inUse()
 }
 
-// DirtyItem the Item if it exists in the cache and is Dirty
+// DirtyItem returns the Item if it exists in the cache **and** is
+// dirty otherwise it returns nil.
 //
 // name should be a remote path not an osPath
 func (c *Cache) DirtyItem(name string) (item *Item) {

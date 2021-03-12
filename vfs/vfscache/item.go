@@ -359,17 +359,22 @@ func (item *Item) Truncate(size int64) (err error) {
 	return nil
 }
 
+// _stat gets the current stat of the backing file
+//
+// Call with mutex held
+func (item *Item) _stat() (fi os.FileInfo, err error) {
+	if item.fd != nil {
+		return item.fd.Stat()
+	}
+	osPath := item.c.toOSPath(item.name) // No locking in Cache
+	return os.Stat(osPath)
+}
+
 // _getSize gets the current size of the item and updates item.info.Size
 //
 // Call with mutex held
 func (item *Item) _getSize() (size int64, err error) {
-	var fi os.FileInfo
-	if item.fd != nil {
-		fi, err = item.fd.Stat()
-	} else {
-		osPath := item.c.toOSPath(item.name) // No locking in Cache
-		fi, err = os.Stat(osPath)
-	}
+	fi, err := item._stat()
 	if err != nil {
 		if os.IsNotExist(err) && item.o != nil {
 			size = item.o.Size()
@@ -1185,6 +1190,18 @@ func (item *Item) setModTime(modTime time.Time) {
 		fs.Errorf(item.name, "vfs cache: setModTime: failed to save item info: %v", err)
 	}
 	item.mu.Unlock()
+}
+
+// GetModTime of the cache file
+func (item *Item) GetModTime() (modTime time.Time, err error) {
+	// defer log.Trace(item.name, "modTime=%v", modTime)("")
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	fi, err := item._stat()
+	if err == nil {
+		modTime = fi.ModTime()
+	}
+	return modTime, nil
 }
 
 // ReadAt bytes from the file at off

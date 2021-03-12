@@ -300,6 +300,17 @@ func (f *File) ModTime() (modTime time.Time) {
 	if d.vfs.Opt.NoModTime {
 		return d.ModTime()
 	}
+	// Read the modtime from a dirty item if it exists
+	if f.d.vfs.Opt.CacheMode >= vfscommon.CacheModeMinimal {
+		if item := f.d.vfs.cache.DirtyItem(f._path()); item != nil {
+			modTime, err := item.GetModTime()
+			if err != nil {
+				fs.Errorf(f._path(), "ModTime: Item GetModTime failed: %v", err)
+			} else {
+				return modTime
+			}
+		}
+	}
 	if !pendingModTime.IsZero() {
 		return pendingModTime
 	}
