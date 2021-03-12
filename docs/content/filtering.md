@@ -236,6 +236,28 @@ Option `exclude-if-present` creates a directory exclude rule based
 on the presence of a file in a directory and takes precedence over
 other rclone directory filter rules.
 
+When using pattern list syntax, if a pattern item contains either
+`/` or `**`, then rclone will not able to imply a directory filter rule
+from this pattern list.
+
+E.g. for an include rule
+
+    {dir1/**,dir2/**}
+
+Rclone will match files below directories `dir1` or `dir2` only,
+but will not be able to use this filter to exclude a directory `dir3`
+from being traversed.
+
+Directory recursion optimisation may affect performance, but normally
+not the result. One exception to this is sync operations with option
+`--create-empty-src-dirs`, where any traversed empty directories will
+be created. With the pattern list example `{dir1/**,dir2/**}` above,
+this would create an empty directory `dir3` on destination (when it exists
+on source). Changing the filter to `{dir1,dir2}/**`, or splitting it into
+two include rules `--include dir1/** --include dir2/**`, will match the
+same files while also filtering directories, with the result that an empty
+directory `dir3` will no longer be created.
+
 ### `--exclude` - Exclude files matching pattern
 
 Excludes path/file names from an rclone command based on a single exclude
@@ -396,7 +418,7 @@ processed in.
 Arrange the order of filter rules with the most restrictive first and
 work down.
 
-E.g. For `filter-file.txt`:
+E.g. for `filter-file.txt`:
 
     # a sample filter rule file
     - secret*.jpg
