@@ -90,7 +90,7 @@ eg: ` + "`curl http://localhost:5572/share/links/yf62HDvd78/file.txt -o file.txt
 
 // Make a share link
 func rcShareCreate(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	f, remote, err := rc.GetFsAndRemote(in)
+	f, remote, err := rc.GetFsAndRemote(ctx, in)
 	oth, _ := in.GetString("remote")
 	log.Println(oth)
 	if err != nil {
@@ -223,7 +223,7 @@ Returns - None
 
 // Delete shared file link
 func rcShareDelete(ctx context.Context, in rc.Params) (out rc.Params, err error) {
-	_, _, err = rc.GetFsAndRemote(in)
+	_, _, err = rc.GetFsAndRemote(ctx, in)
 	// provided fs and remote
 	if err == nil {
 		fs, _ := in.GetString("fs")
