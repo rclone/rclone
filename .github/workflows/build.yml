@@ -244,7 +244,7 @@ jobs:
           #     .
           xgo \
               -image=billziss/xgo-cgofuse \
-              -targets=android/*,ios/* \
+              -targets=android/* \
               -dest build \
               .
 
