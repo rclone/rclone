@@ -18,6 +18,9 @@ See below for some expanded Linux / macOS instructions.
 See the [Usage section](/docs/#usage) of the docs for how to use rclone, or
 run `rclone -h`.
 
+Already installed rclone can be easily updated to the latest version
+using the [rclone selfupdate](/commands/rclone_selfupdate/) command.
+
 ## Script installation ##
 
 To install rclone on Linux/macOS/BSD systems, run:
