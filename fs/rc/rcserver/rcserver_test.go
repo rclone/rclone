@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -21,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/configfile"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/rc"
 )
 
@@ -98,15 +101,57 @@ type testRun struct {
 	Expected    string
 	Contains    *regexp.Regexp
 	Headers     map[string]string
+	NoAuth      bool
 }
 
 // Run a suite of tests
 func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
+	testServerWithListen(t, tests, opt, false)
+}
+
+const (
+	minListenPort = 32000
+	maxListenPort = 48000
+	portAttempts  = 100
+)
+
+func testServerWithListen(t *testing.T, tests []testRun, opt *rc.Options, listen bool) {
 	ctx := context.Background()
 	configfile.LoadConfig(ctx)
 	mux := http.NewServeMux()
 	opt.HTTPOptions.Template = testTemplate
 	rcServer := newServer(ctx, opt, mux)
+	baseURL := "http://1.2.3.4/"
+
+	if listen {
+		// Find a free local listen port
+		var err error
+		for attempt := 0; attempt < portAttempts; attempt++ {
+			port := minListenPort + rand.Intn(maxListenPort-minListenPort)
+			addr := fmt.Sprintf("localhost:%d", port)
+			baseURL = fmt.Sprintf("http://%s/", addr)
+			var ln net.Listener
+			if ln, err = net.Listen("tcp", addr); err == nil {
+				opt.HTTPOptions.ListenAddr = addr
+				require.NoError(t, ln.Close())
+				time.Sleep(10 * time.Millisecond) // kernel closes listeners lazily
+				break
+			}
+		}
+		require.NoError(t, err, "cannot find free listen port")
+
+		mux = http.DefaultServeMux
+		rcServer = newServer(ctx, opt, mux)
+		require.NoError(t, rcServer.Serve(), "cannot start local server at %s", baseURL)
+		defer func() {
+			rcServer.Close()
+		}()
+	}
+
+	client := fshttp.NewClient(ctx)
+	basicUser := opt.HTTPOptions.BasicUser
+	basicPass := opt.HTTPOptions.BasicPass
+
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			method := test.Method
@@ -118,7 +163,7 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 				buf := bytes.NewBufferString(test.Body)
 				inBody = buf
 			}
-			req, err := http.NewRequest(method, "http://1.2.3.4/"+test.URL, inBody)
+			req, err := http.NewRequest(method, baseURL+test.URL, inBody)
 			require.NoError(t, err)
 			if test.Range != "" {
 				req.Header.Add("Range", test.Range)
@@ -127,9 +172,20 @@ func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 				req.Header.Add("Content-Type", test.ContentType)
 			}
 
-			w := httptest.NewRecorder()
-			rcServer.handler(w, req)
-			resp := w.Result()
+			if !test.NoAuth && basicUser != "" && basicPass != "" {
+				req.SetBasicAuth(basicUser, basicPass)
+			}
+			var resp *http.Response
+			if listen {
+				// Test full network stack on loopback port
+				resp, err = client.Do(req)
+				require.NoError(t, err)
+			} else {
+				// Bypass network stack, call handler directly
+				w := httptest.NewRecorder()
+				rcServer.handler(w, req)
+				resp = w.Result()
+			}
 
 			assert.Equal(t, test.Status, resp.StatusCode)
 			body, err := ioutil.ReadAll(resp.Body)
@@ -697,7 +753,16 @@ func TestShare(t *testing.T) {
 `,
 		}, {
 			Name:     "share-get-content",
-			URL:      "share/links/123456/file.txt", // TODO: it can be fetched without Authentication Header, btw can't test that here
+			URL:      "share/links/123456/file.txt",
+			Status:   http.StatusOK,
+			Expected: "this is file1.txt\n",
+			Headers: map[string]string{
+				"Content-Length": "18",
+			},
+		}, {
+			Name:     "share-get-content-noauth",
+			URL:      "share/links/123456/file.txt",
+			NoAuth:   true,
 			Status:   http.StatusOK,
 			Expected: "this is file1.txt\n",
 			Headers: map[string]string{
@@ -769,7 +834,7 @@ func TestShare(t *testing.T) {
 	opt.Files = testFs
 	opt.HTTPOptions.BasicUser = "user"
 	opt.HTTPOptions.BasicPass = "pass"
-	testServer(t, tests, &opt)
+	testServerWithListen(t, tests, &opt, true)
 }
 
 var matchRemoteDirListing = regexp.MustCompile(`<title>Directory listing of /</title>`)
