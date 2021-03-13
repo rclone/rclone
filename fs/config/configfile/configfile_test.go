@@ -213,3 +213,33 @@ func TestConfigFileDoesNotExist(t *testing.T) {
 	assert.False(t, ok)
 	assert.Equal(t, "", value)
 }
+
+func testConfigFileNoConfig(t *testing.T, configPath string) {
+	config.ConfigPath = configPath
+	data := &Storage{}
+
+	err := data.Load()
+	require.Equal(t, config.ErrorConfigFileNotFound, err)
+
+	data.SetValue("one", "extra", "42")
+	value, ok := data.GetValue("one", "extra")
+	assert.True(t, ok)
+	assert.Equal(t, "42", value)
+
+	err = data.Save()
+	require.NoError(t, err)
+}
+
+func TestConfigFileNoConfig(t *testing.T) {
+	old := config.ConfigPath
+	defer func() {
+		config.ConfigPath = old
+	}()
+
+	t.Run("Empty", func(t *testing.T) {
+		testConfigFileNoConfig(t, "")
+	})
+	t.Run("NotFound", func(t *testing.T) {
+		testConfigFileNoConfig(t, "/notfound")
+	})
+}

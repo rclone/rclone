@@ -15,6 +15,9 @@ import (
 	"github.com/rclone/rclone/fs/config"
 )
 
+// Special value indicating in memory config file. Empty string works also.
+const noConfigFile = "/notfound"
+
 // LoadConfig installs the config file handler and calls config.LoadConfig
 func LoadConfig(ctx context.Context) {
 	config.Data = &Storage{}
@@ -29,10 +32,19 @@ type Storage struct {
 	fi os.FileInfo          // stat of the file when last loaded
 }
 
+// Return whether we have a real config file or not
+func (s *Storage) noConfig() bool {
+	return config.ConfigPath == "" || config.ConfigPath == noConfigFile
+}
+
 // Check to see if we need to reload the config
 func (s *Storage) check() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.noConfig() {
+		return
+	}
 
 	// Check to see if config file has changed since it was last loaded
 	fi, err := os.Stat(config.ConfigPath)
@@ -58,6 +70,10 @@ func (s *Storage) _load() (err error) {
 			s.gc, _ = goconfig.LoadFromReader(bytes.NewReader([]byte{}))
 		}
 	}()
+
+	if s.noConfig() {
+		return config.ErrorConfigFileNotFound
+	}
 
 	fd, err := os.Open(config.ConfigPath)
 	if err != nil {
@@ -96,6 +112,10 @@ func (s *Storage) Load() (err error) {
 func (s *Storage) Save() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if s.noConfig() {
+		return nil
+	}
 
 	dir, name := filepath.Split(config.ConfigPath)
 	err := os.MkdirAll(dir, os.ModePerm)

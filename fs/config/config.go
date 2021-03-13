@@ -242,8 +242,7 @@ func SaveConfig() {
 		waitingTimeMs := mathrand.Intn(1000)
 		time.Sleep(time.Duration(waitingTimeMs) * time.Millisecond)
 	}
-	log.Fatalf("Failed to save config after %d tries: %v", ci.LowLevelRetries, err)
-
+	fs.Errorf(nil, "Failed to save config after %d tries: %v", ci.LowLevelRetries, err)
 	return
 }
 

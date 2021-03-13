@@ -554,6 +554,9 @@ location is for you.
 Use this flag to override the config location, e.g. `rclone
 --config=".myconfig" .config`.
 
+If this is set to empty string or the special value `/notfound` then
+rclone will keep the config file in memory only.
+
 ### --contimeout=TIME ###
 
 Set the connection timeout. This should be in go time format which
