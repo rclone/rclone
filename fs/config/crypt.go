@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -145,13 +144,13 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 			if err != nil {
 				errRemove := os.Remove(envKeyFile)
 				if errRemove != nil {
-					log.Fatalf("unable to read obscured config key and unable to delete the temp file: %v", err)
+					return nil, errors.Wrap(err, "unable to read obscured config key and unable to delete the temp file")
 				}
-				log.Fatalf("unable to read obscured config key: %v", err)
+				return nil, errors.Wrap(err, "unable to read obscured config key")
 			}
 			errRemove := os.Remove(envKeyFile)
 			if errRemove != nil {
-				log.Fatalf("unable to delete temp file with configKey: %v", err)
+				return nil, errors.Wrap(errRemove, "unable to delete temp file with configKey")
 			}
 			configKey = []byte(obscure.MustReveal(string(obscuredKey)))
 			fs.Debugf(nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
@@ -259,32 +258,32 @@ func SetConfigPassword(password string) error {
 	if PassConfigKeyForDaemonization {
 		tempFile, err := ioutil.TempFile("", "rclone")
 		if err != nil {
-			log.Fatalf("cannot create temp file to store configKey: %v", err)
+			return errors.Wrap(err, "cannot create temp file to store configKey")
 		}
 		_, err = tempFile.WriteString(obscure.MustObscure(string(configKey)))
 		if err != nil {
 			errRemove := os.Remove(tempFile.Name())
 			if errRemove != nil {
-				log.Fatalf("error writing configKey to temp file and also error deleting it: %v", err)
+				return errors.Wrap(err, "error writing configKey to temp file and also error deleting it")
 			}
-			log.Fatalf("error writing configKey to temp file: %v", err)
+			return errors.Wrap(err, "error writing configKey to temp file")
 		}
 		err = tempFile.Close()
 		if err != nil {
 			errRemove := os.Remove(tempFile.Name())
 			if errRemove != nil {
-				log.Fatalf("error closing temp file with configKey and also error deleting it: %v", err)
+				return errors.Wrap(err, "error closing temp file with configKey and also error deleting it")
 			}
-			log.Fatalf("error closing temp file with configKey: %v", err)
+			return errors.Wrap(err, "error closing temp file with configKey")
 		}
 		fs.Debugf(nil, "saving configKey to temp file")
 		err = os.Setenv("_RCLONE_CONFIG_KEY_FILE", tempFile.Name())
 		if err != nil {
 			errRemove := os.Remove(tempFile.Name())
 			if errRemove != nil {
-				log.Fatalf("unable to set environment variable _RCLONE_CONFIG_KEY_FILE and unable to delete the temp file: %v", err)
+				return errors.Wrap(err, "unable to set environment variable _RCLONE_CONFIG_KEY_FILE and unable to delete the temp file")
 			}
-			log.Fatalf("unable to set environment variable _RCLONE_CONFIG_KEY_FILE: %v", err)
+			return errors.Wrap(err, "unable to set environment variable _RCLONE_CONFIG_KEY_FILE")
 		}
 	}
 	return nil
