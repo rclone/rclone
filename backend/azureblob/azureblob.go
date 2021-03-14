@@ -223,10 +223,13 @@ This option controls how often unused buffers will be removed from the pool.`,
 			Default: string(azblob.PublicAccessNone),
 			Examples: []fs.OptionExample{
 				{
-					Value: "blob",
+					Value: string(azblob.PublicAccessNone),
+					Help:  "The container and its blobs can be accessed only with an authorized request. It's a default value",
+				}, {
+					Value: string(azblob.PublicAccessBlob),
 					Help:  "Blob data within this container can be read via anonymous request.",
 				}, {
-					Value: "container",
+					Value: string(azblob.PublicAccessContainer),
 					Help:  "Allow full public read access for container and blob data.",
 				},
 			},
