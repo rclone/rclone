@@ -88,22 +88,80 @@ func TestFileMethods(t *testing.T) {
 	assert.Equal(t, vfs, file.VFS())
 }
 
-func TestFileSetModTime(t *testing.T) {
-	r, vfs, file, file1, cleanup := fileCreate(t, vfscommon.CacheModeOff)
+func testFileSetModTime(t *testing.T, cacheMode vfscommon.CacheMode, open bool, write bool) {
+	if !canSetModTimeValue {
+		t.Skip("can't set mod time")
+	}
+	r, vfs, file, file1, cleanup := fileCreate(t, cacheMode)
 	defer cleanup()
 	if !canSetModTime(t, r) {
 		t.Skip("can't set mod time")
 	}
 
-	err := file.SetModTime(t2)
+	var (
+		err      error
+		fd       Handle
+		contents = "file1 contents"
+	)
+	if open {
+		// Open with write intent
+		if cacheMode != vfscommon.CacheModeOff {
+			fd, err = file.Open(os.O_WRONLY)
+			if write {
+				contents = "hello contents"
+			}
+		} else {
+			// Can't write without O_TRUNC with CacheMode Off
+			fd, err = file.Open(os.O_WRONLY | os.O_TRUNC)
+			if write {
+				contents = "hello"
+			} else {
+				contents = ""
+			}
+		}
+		require.NoError(t, err)
+
+		// Write some data
+		if write {
+			_, err = fd.WriteString("hello")
+			require.NoError(t, err)
+		}
+	}
+
+	err = file.SetModTime(t2)
 	require.NoError(t, err)
 
-	file1.ModTime = t2
+	if open {
+		require.NoError(t, fd.Close())
+		vfs.WaitForWriters(waitForWritersDelay)
+	}
+
+	file1 = fstest.NewItem(file1.Path, contents, t2)
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	vfs.Opt.ReadOnly = true
 	err = file.SetModTime(t2)
 	assert.Equal(t, EROFS, err)
+}
+
+// Test various combinations of setting mod times with and
+// without the cache and with and without opening or writing
+// to the file.
+//
+// Each of these tests a different path through the VFS code.
+func TestFileSetModTime(t *testing.T) {
+	for _, cacheMode := range []vfscommon.CacheMode{vfscommon.CacheModeOff, vfscommon.CacheModeFull} {
+		for _, open := range []bool{false, true} {
+			for _, write := range []bool{false, true} {
+				if write && !open {
+					continue
+				}
+				t.Run(fmt.Sprintf("cache=%v,open=%v,write=%v", cacheMode, open, write), func(t *testing.T) {
+					testFileSetModTime(t, cacheMode, open, write)
+				})
+			}
+		}
+	}
 }
 
 func fileCheckContents(t *testing.T, file *File) {

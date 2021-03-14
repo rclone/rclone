@@ -424,6 +424,13 @@ func (f *File) _applyPendingModTime() error {
 	return nil
 }
 
+// Apply a pending mod time
+func (f *File) applyPendingModTime() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f._applyPendingModTime()
+}
+
 // _writingInProgress returns true of there are any open writers
 // Call with read lock held
 func (f *File) _writingInProgress() bool {
