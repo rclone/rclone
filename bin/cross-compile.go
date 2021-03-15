@@ -161,7 +161,15 @@ func buildZip(dir string) string {
 // Build .deb and .rpm packages
 //
 // It returns a list of artifacts it has made
-func buildDebAndRpm(dir, version, goarch string) []string {
+func buildDebAndRpm(dir, version, goarchBuild string) []string {
+	goarch := stripVersion(goarchBuild)
+
+	// Base ARM build we will mark as "arm5" so nfpm puts the
+	// architecture in as armel not armhf
+	if goarchBuild == "arm" {
+		goarch = "arm5"
+	}
+
 	// Make internal version number acceptable to .deb and .rpm
 	pkgVersion := version[1:]
 	pkgVersion = strings.Replace(pkgVersion, "β", "-beta", -1)
@@ -376,7 +384,7 @@ func compileArch(version, goos, goarch, dir string) bool {
 			artifacts := []string{buildZip(dir)}
 			// build a .deb and .rpm if appropriate
 			if goos == "linux" {
-				artifacts = append(artifacts, buildDebAndRpm(dir, version, stripVersion(goarch))...)
+				artifacts = append(artifacts, buildDebAndRpm(dir, version, goarch)...)
 			}
 			if *copyAs != "" {
 				for _, artifact := range artifacts {
