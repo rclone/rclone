@@ -86,18 +86,22 @@ Returns the following values:
 
 ` + "```" + `
 {
-	"speed": average speed in bytes/sec since start of the process,
-	"bytes": total transferred bytes since the start of the process,
+	"bytes": total transferred bytes since the start of the group,
+	"checks": number of files checked,
+	"deletes" : number of files deleted,
+	"elapsedTime": time in floating point seconds since rclone was started,
 	"errors": number of errors,
-	"fatalError": whether there has been at least one FatalError,
-	"retryError": whether there has been at least one non-NoRetryError,
-	"checks": number of checked files,
-	"transfers": number of transferred files,
-	"deletes" : number of deleted files,
-	"renames" : number of renamed files,
+	"eta": estimated time in seconds until the group completes,
+	"fatalError": boolean whether there has been at least one fatal error,
+	"lastError": last error string,
+	"renames" : number of files renamed,
+	"retryError": boolean showing whether there has been at least one non-NoRetryError,
+	"speed": average speed in bytes/sec since start of the group,
+	"totalBytes": total number of bytes in the group,
+	"totalChecks": total number of checks in the group,
+	"totalTransfers": total number of transfers in the group,
 	"transferTime" : total time spent on running jobs,
-	"elapsedTime": time in seconds since the start of the process,
-	"lastError": last occurred error,
+	"transfers": number of transferred files,
 	"transferring": an array of currently active file transfers:
 		[
 			{

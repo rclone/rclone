@@ -527,14 +527,11 @@ func (acc *Account) rcStats() (out rc.Params) {
 	out["speed"] = spd
 	out["speedAvg"] = cur
 
-	eta, etaok := acc.eta()
-	out["eta"] = nil
-	if etaok {
-		if eta > 0 {
-			out["eta"] = eta.Seconds()
-		} else {
-			out["eta"] = 0
-		}
+	eta, etaOK := acc.eta()
+	if etaOK {
+		out["eta"] = eta.Seconds()
+	} else {
+		out["eta"] = nil
 	}
 	out["name"] = acc.name
 
