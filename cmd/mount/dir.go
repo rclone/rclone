@@ -181,6 +181,15 @@ func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) (err error) {
 	return nil
 }
 
+// Invalidate a leaf in a directory
+func (d *Dir) invalidateEntry(dirNode fusefs.Node, leaf string) {
+	fs.Debugf(dirNode, "Invalidating %q", leaf)
+	err := d.fsys.server.InvalidateEntry(dirNode, leaf)
+	if err != nil {
+		fs.Debugf(dirNode, "Failed to invalidate %q: %v", leaf, err)
+	}
+}
+
 // Check interface satisfied
 var _ fusefs.NodeRenamer = (*Dir)(nil)
 
@@ -196,6 +205,13 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 	if err != nil {
 		return translateError(err)
 	}
+
+	// Invalidate the new directory entry so it gets re-read (in
+	// the background otherwise we cause a deadlock)
+	//
+	// See https://github.com/rclone/rclone/issues/4977 for why
+	go d.invalidateEntry(newDir, req.NewName)
+	//go d.invalidateEntry(d, req.OldName)
 
 	return nil
 }

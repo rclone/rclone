@@ -91,12 +91,12 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 	}
 
 	filesys := NewFS(VFS, opt)
-	server := fusefs.New(c, nil)
+	filesys.server = fusefs.New(c, nil)
 
 	// Serve the mount point in the background returning error to errChan
 	errChan := make(chan error, 1)
 	go func() {
-		err := server.Serve(filesys)
+		err := filesys.server.Serve(filesys)
 		closeErr := c.Close()
 		if err == nil {
 			err = closeErr

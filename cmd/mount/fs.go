@@ -20,8 +20,9 @@ import (
 // FS represents the top level filing system
 type FS struct {
 	*vfs.VFS
-	f   fs.Fs
-	opt *mountlib.Options
+	f      fs.Fs
+	opt    *mountlib.Options
+	server *fusefs.Server
 }
 
 // Check interface satisfied
