@@ -1722,7 +1722,7 @@ Configuration Encryption
 ------------------------
 Your configuration file contains information for logging in to 
 your cloud services. This means that you should keep your 
-`.rclone.conf` file in a secure location.
+`rclone.conf` file in a secure location.
 
 If you are in an environment where that isn't possible, you can
 add a password to your configuration. This means that you will
@@ -1828,6 +1828,16 @@ password prompts. To do that, pass the parameter
 of asking for a password if `RCLONE_CONFIG_PASS` doesn't contain
 a valid password, and `--password-command` has not been supplied.
 
+Some rclone commands, such as `genautocomplete`, do not require configuration.
+Nevertheless, rclone will read any configuration file found
+according to the rules described [above](https://rclone.org/docs/#config-config-file).
+If an encrypted configuration file is found, this means you will be prompted for
+password (unless using `--password-command`). To avoid this, you can bypass
+the loading of the configuration file by overriding the location with an empty
+string `""` or the special value `/notfound`, or the os null device represented
+by value `NUL` on Windows and `/dev/null` on Unix systems (before rclone
+version 1.55 only this null device alternative was supported).
+E.g. `rclone --config="" genautocomplete bash`.
 
 Developer options
 -----------------
