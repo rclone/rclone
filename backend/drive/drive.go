@@ -703,7 +703,7 @@ func (f *Fs) getFile(ctx context.Context, ID string, fields googleapi.Field) (in
 		info, err = f.svc.Files.Get(ID).
 			Fields(fields).
 			SupportsAllDrives(true).
-			Do()
+			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	return info, err
@@ -816,7 +816,7 @@ OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Do()
+			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -1450,7 +1450,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		info, err = f.svc.Files.Create(createInfo).
 			Fields("id").
 			SupportsAllDrives(true).
-			Do()
+			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -1493,7 +1493,7 @@ func (f *Fs) fetchFormats(ctx context.Context) {
 		err = f.pacer.Call(func() (bool, error) {
 			about, err = f.svc.About.Get().
 				Fields("exportFormats,importFormats").
-				Do()
+				Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -2131,7 +2131,7 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 				Fields(partialFields).
 				SupportsAllDrives(true).
 				KeepRevisionForever(f.opt.KeepRevisionForever).
-				Do()
+				Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -2186,7 +2186,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 					AddParents(dstDir.ID()).
 					Fields("").
 					SupportsAllDrives(true).
-					Do()
+					Context(ctx).Do()
 				return f.shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -2220,12 +2220,12 @@ func (f *Fs) delete(ctx context.Context, id string, useTrash bool) error {
 			_, err = f.svc.Files.Update(id, &info).
 				Fields("").
 				SupportsAllDrives(true).
-				Do()
+				Context(ctx).Do()
 		} else {
 			err = f.svc.Files.Delete(id).
 				Fields("").
 				SupportsAllDrives(true).
-				Do()
+				Context(ctx).Do()
 		}
 		return f.shouldRetry(ctx, err)
 	})
@@ -2361,7 +2361,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			Fields(partialFields).
 			SupportsAllDrives(true).
 			KeepRevisionForever(f.opt.KeepRevisionForever).
-			Do()
+			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2460,7 +2460,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 		return err
 	}
 	err := f.pacer.Call(func() (bool, error) {
-		err := f.svc.Files.EmptyTrash().Context(ctx).Do()
+		err := f.svc.Files.EmptyTrash().Context(ctx).Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 
@@ -2478,7 +2478,7 @@ func (f *Fs) teamDriveOK(ctx context.Context) (err error) {
 	}
 	var td *drive.Drive
 	err = f.pacer.Call(func() (bool, error) {
-		td, err = f.svc.Drives.Get(f.opt.TeamDriveID).Fields("name,id,capabilities,createdTime,restrictions").Context(ctx).Do()
+		td, err = f.svc.Drives.Get(f.opt.TeamDriveID).Fields("name,id,capabilities,createdTime,restrictions").Context(ctx).Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2501,7 +2501,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var about *drive.About
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		about, err = f.svc.About.Get().Fields("storageQuota").Context(ctx).Do()
+		about, err = f.svc.About.Get().Fields("storageQuota").Context(ctx).Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2574,7 +2574,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			AddParents(dstParents).
 			Fields(partialFields).
 			SupportsAllDrives(true).
-			Do()
+			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2611,7 +2611,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		_, err = f.svc.Permissions.Create(id, permission).
 			Fields("").
 			SupportsAllDrives(true).
-			Do()
+			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2654,7 +2654,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			AddParents(dstDirectoryID).
 			Fields("").
 			SupportsAllDrives(true).
-			Do()
+			Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2720,7 +2720,7 @@ func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (pageToken string, 
 		if f.isTeamDrive {
 			changes.DriveId(f.opt.TeamDriveID)
 		}
-		startPageToken, err = changes.Do()
+		startPageToken, err = changes.Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2749,7 +2749,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if f.rootFolderID == "appDataFolder" {
 				changesCall.Spaces("appDataFolder")
 			}
-			changeList, err = changesCall.Context(ctx).Do()
+			changeList, err = changesCall.Context(ctx).Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -2946,7 +2946,7 @@ func (f *Fs) makeShortcut(ctx context.Context, srcPath string, dstFs *Fs, dstPat
 			Fields(partialFields).
 			SupportsAllDrives(true).
 			KeepRevisionForever(dstFs.opt.KeepRevisionForever).
-			Do()
+			Context(ctx).Do()
 		return dstFs.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2966,7 +2966,7 @@ func (f *Fs) listTeamDrives(ctx context.Context) (drives []*drive.TeamDrive, err
 	for {
 		var teamDrives *drive.TeamDriveList
 		err = f.pacer.Call(func() (bool, error) {
-			teamDrives, err = listTeamDrives.Context(ctx).Do()
+			teamDrives, err = listTeamDrives.Context(ctx).Context(ctx).Do()
 			return defaultFs.shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -3009,7 +3009,7 @@ func (f *Fs) unTrash(ctx context.Context, dir string, directoryID string, recurs
 				_, err := f.svc.Files.Update(item.Id, &update).
 					SupportsAllDrives(true).
 					Fields("trashed").
-					Do()
+					Context(ctx).Do()
 				return f.shouldRetry(ctx, err)
 			})
 			if err != nil {
@@ -3412,7 +3412,7 @@ func (o *baseObject) SetModTime(ctx context.Context, modTime time.Time) error {
 		info, err = o.fs.svc.Files.Update(actualID(o.id), updateInfo).
 			Fields(partialFields).
 			SupportsAllDrives(true).
-			Do()
+			Context(ctx).Do()
 		return o.fs.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -3543,7 +3543,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			v2File, err = o.fs.v2Svc.Files.Get(actualID(o.id)).
 				Fields("downloadUrl").
 				SupportsAllDrives(true).
-				Do()
+				Context(ctx).Do()
 			return o.fs.shouldRetry(ctx, err)
 		})
 		if err == nil {
@@ -3624,7 +3624,7 @@ func (o *baseObject) update(ctx context.Context, updateInfo *drive.File, uploadM
 				Fields(partialFields).
 				SupportsAllDrives(true).
 				KeepRevisionForever(o.fs.opt.KeepRevisionForever).
-				Do()
+				Context(ctx).Do()
 			return o.fs.shouldRetry(ctx, err)
 		})
 		return
