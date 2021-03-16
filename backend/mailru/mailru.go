@@ -234,7 +234,10 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this response and err
 // deserve to be retried. It returns the err as a convenience.
 // Retries password authorization (once) in a special case of access denied.
-func shouldRetry(res *http.Response, err error, f *Fs, opts *rest.Opts) (bool, error) {
+func shouldRetry(ctx context.Context, res *http.Response, err error, f *Fs, opts *rest.Opts) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	if res != nil && res.StatusCode == 403 && f.opt.Password != "" && !f.passFailed {
 		reAuthErr := f.reAuthorize(opts, err)
 		return reAuthErr == nil, err // return an original error
@@ -600,7 +603,7 @@ func (f *Fs) readItemMetaData(ctx context.Context, path string) (entry fs.DirEnt
 	var info api.ItemInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 
 	if err != nil {
@@ -736,7 +739,7 @@ func (f *Fs) listM1(ctx context.Context, dirPath string, offset int, limit int) 
 	)
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 
 	if err != nil {
@@ -800,7 +803,7 @@ func (f *Fs) listBin(ctx context.Context, dirPath string, depth int) (entries fs
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.Call(ctx, &opts)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 	if err != nil {
 		closeBody(res)
@@ -1073,7 +1076,7 @@ func (f *Fs) CreateDir(ctx context.Context, path string) error {
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.Call(ctx, &opts)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 	if err != nil {
 		closeBody(res)
@@ -1216,7 +1219,7 @@ func (f *Fs) delete(ctx context.Context, path string, hardDelete bool) error {
 	var response api.GenericResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(ctx, &opts, nil, &response)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 
 	switch {
@@ -1288,7 +1291,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	var response api.GenericBodyResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(ctx, &opts, nil, &response)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 
 	if err != nil {
@@ -1392,7 +1395,7 @@ func (f *Fs) moveItemBin(ctx context.Context, srcPath, dstPath, opName string) e
 	var res *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		res, err = f.srv.Call(ctx, &opts)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 	if err != nil {
 		closeBody(res)
@@ -1483,7 +1486,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	var response api.GenericBodyResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(ctx, &opts, nil, &response)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 
 	if err == nil && response.Body != "" {
@@ -1524,7 +1527,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	var response api.CleanupResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(ctx, &opts, nil, &response)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 	if err != nil {
 		return err
@@ -1557,7 +1560,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var info api.UserInfoResponse
 	err = f.pacer.Call(func() (bool, error) {
 		res, err := f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(res, err, f, &opts)
+		return shouldRetry(ctx, res, err, f, &opts)
 	})
 	if err != nil {
 		return nil, err
@@ -2076,7 +2079,7 @@ func (o *Object) addFileMetaData(ctx context.Context, overwrite bool) error {
 	var res *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(res, err, o.fs, &opts)
+		return shouldRetry(ctx, res, err, o.fs, &opts)
 	})
 	if err != nil {
 		closeBody(res)
@@ -2172,7 +2175,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 		opts.RootURL = server
 		res, err = o.fs.srv.Call(ctx, &opts)
-		return shouldRetry(res, err, o.fs, &opts)
+		return shouldRetry(ctx, res, err, o.fs, &opts)
 	})
 	if err != nil {
 		if res != nil && res.Body != nil {

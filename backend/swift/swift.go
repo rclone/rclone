@@ -291,7 +291,10 @@ var retryErrorCodes = []int{
 
 // shouldRetry returns a boolean as to whether this err deserves to be
 // retried.  It returns the err as a convenience
-func shouldRetry(err error) (bool, error) {
+func shouldRetry(ctx context.Context, err error) (bool, error) {
+	if fserrors.ContextError(ctx, &err) {
+		return false, err
+	}
 	// If this is a swift.Error object extract the HTTP error code
 	if swiftError, ok := err.(*swift.Error); ok {
 		for _, e := range retryErrorCodes {
@@ -307,7 +310,7 @@ func shouldRetry(err error) (bool, error) {
 // shouldRetryHeaders returns a boolean as to whether this err
 // deserves to be retried.  It reads the headers passed in looking for
 // `Retry-After`. It returns the err as a convenience
-func shouldRetryHeaders(headers swift.Headers, err error) (bool, error) {
+func shouldRetryHeaders(ctx context.Context, headers swift.Headers, err error) (bool, error) {
 	if swiftError, ok := err.(*swift.Error); ok && swiftError.StatusCode == 429 {
 		if value := headers["Retry-After"]; value != "" {
 			retryAfter, parseErr := strconv.Atoi(value)
@@ -326,7 +329,7 @@ func shouldRetryHeaders(headers swift.Headers, err error) (bool, error) {
 			}
 		}
 	}
-	return shouldRetry(err)
+	return shouldRetry(ctx, err)
 }
 
 // parsePath parses a remote 'url'
@@ -468,7 +471,7 @@ func NewFsWithConnection(ctx context.Context, opt *Options, name, root string, c
 		err = f.pacer.Call(func() (bool, error) {
 			var rxHeaders swift.Headers
 			info, rxHeaders, err = f.c.Object(ctx, f.rootContainer, encodedDirectory)
-			return shouldRetryHeaders(rxHeaders, err)
+			return shouldRetryHeaders(ctx, rxHeaders, err)
 		})
 		if err == nil && info.ContentType != directoryMarkerContentType {
 			newRoot := path.Dir(f.root)
@@ -576,7 +579,7 @@ func (f *Fs) listContainerRoot(ctx context.Context, container, directory, prefix
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
 			objects, err = f.c.Objects(ctx, container, opts)
-			return shouldRetry(err)
+			return shouldRetry(ctx, err)
 		})
 		if err == nil {
 			for i := range objects {
@@ -661,7 +664,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 	var containers []swift.Container
 	err = f.pacer.Call(func() (bool, error) {
 		containers, err = f.c.ContainersAll(ctx, nil)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "container listing failed")
@@ -753,7 +756,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
 		containers, err = f.c.ContainersAll(ctx, nil)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "container listing failed")
@@ -805,7 +808,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 			err = f.pacer.Call(func() (bool, error) {
 				var rxHeaders swift.Headers
 				_, rxHeaders, err = f.c.Container(ctx, container)
-				return shouldRetryHeaders(rxHeaders, err)
+				return shouldRetryHeaders(ctx, rxHeaders, err)
 			})
 		}
 		if err == swift.ContainerNotFound {
@@ -815,7 +818,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 			}
 			err = f.pacer.Call(func() (bool, error) {
 				err = f.c.ContainerCreate(ctx, container, headers)
-				return shouldRetry(err)
+				return shouldRetry(ctx, err)
 			})
 			if err == nil {
 				fs.Infof(f, "Container %q created", container)
@@ -836,7 +839,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	err := f.cache.Remove(container, func() error {
 		err := f.pacer.Call(func() (bool, error) {
 			err := f.c.ContainerDelete(ctx, container)
-			return shouldRetry(err)
+			return shouldRetry(ctx, err)
 		})
 		if err == nil {
 			fs.Infof(f, "Container %q removed", container)
@@ -906,7 +909,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	err = f.pacer.Call(func() (bool, error) {
 		var rxHeaders swift.Headers
 		rxHeaders, err = f.c.ObjectCopy(ctx, srcContainer, srcPath, dstContainer, dstPath, nil)
-		return shouldRetryHeaders(rxHeaders, err)
+		return shouldRetryHeaders(ctx, rxHeaders, err)
 	})
 	if err != nil {
 		return nil, err
@@ -1041,7 +1044,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	container, containerPath := o.split()
 	err = o.fs.pacer.Call(func() (bool, error) {
 		info, h, err = o.fs.c.Object(ctx, container, containerPath)
-		return shouldRetryHeaders(h, err)
+		return shouldRetryHeaders(ctx, h, err)
 	})
 	if err != nil {
 		if err == swift.ObjectNotFound {
@@ -1100,7 +1103,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	container, containerPath := o.split()
 	return o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectUpdate(ctx, container, containerPath, newHeaders)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 }
 
@@ -1121,7 +1124,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	err = o.fs.pacer.Call(func() (bool, error) {
 		var rxHeaders swift.Headers
 		in, rxHeaders, err = o.fs.c.ObjectOpen(ctx, container, containerPath, !isRanging, headers)
-		return shouldRetryHeaders(rxHeaders, err)
+		return shouldRetryHeaders(ctx, rxHeaders, err)
 	})
 	return
 }
@@ -1211,7 +1214,7 @@ func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.
 	err = o.fs.pacer.Call(func() (bool, error) {
 		var rxHeaders swift.Headers
 		_, rxHeaders, err = o.fs.c.Container(ctx, segmentsContainer)
-		return shouldRetryHeaders(rxHeaders, err)
+		return shouldRetryHeaders(ctx, rxHeaders, err)
 	})
 	if err == swift.ContainerNotFound {
 		headers := swift.Headers{}
@@ -1220,7 +1223,7 @@ func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.
 		}
 		err = o.fs.pacer.Call(func() (bool, error) {
 			err = o.fs.c.ContainerCreate(ctx, segmentsContainer, headers)
-			return shouldRetry(err)
+			return shouldRetry(ctx, err)
 		})
 	}
 	if err != nil {
@@ -1267,7 +1270,7 @@ func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.
 			if err == nil {
 				segmentInfos = append(segmentInfos, segmentPath)
 			}
-			return shouldRetryHeaders(rxHeaders, err)
+			return shouldRetryHeaders(ctx, rxHeaders, err)
 		})
 		if err != nil {
 			return "", err
@@ -1281,7 +1284,7 @@ func (o *Object) updateChunks(ctx context.Context, in0 io.Reader, headers swift.
 	err = o.fs.pacer.Call(func() (bool, error) {
 		var rxHeaders swift.Headers
 		rxHeaders, err = o.fs.c.ObjectPut(ctx, container, containerPath, emptyReader, true, "", contentType, headers)
-		return shouldRetryHeaders(rxHeaders, err)
+		return shouldRetryHeaders(ctx, rxHeaders, err)
 	})
 
 	if err == nil {
@@ -1356,7 +1359,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		var rxHeaders swift.Headers
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 			rxHeaders, err = o.fs.c.ObjectPut(ctx, container, containerPath, in, true, "", contentType, headers)
-			return shouldRetryHeaders(rxHeaders, err)
+			return shouldRetryHeaders(ctx, rxHeaders, err)
 		})
 		if err != nil {
 			return err
@@ -1414,7 +1417,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	// Remove file/manifest first
 	err = o.fs.pacer.Call(func() (bool, error) {
 		err = o.fs.c.ObjectDelete(ctx, container, containerPath)
-		return shouldRetry(err)
+		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return err
