@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"sort"
@@ -72,6 +73,47 @@ func (d *Dir) String() string {
 	d.mu.RLock()
 	defer d.mu.RUnlock()
 	return d.path + "/"
+}
+
+// Dumps the directory tree to the string builder with the given indent
+func (d *Dir) dumpIndent(out *strings.Builder, indent string) {
+	if d == nil {
+		fmt.Fprintf(out, "%s<nil *Dir>\n", indent)
+		return
+	}
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	fmt.Fprintf(out, "%sPath: %s\n", indent, d.path)
+	fmt.Fprintf(out, "%sEntry: %v\n", indent, d.entry)
+	fmt.Fprintf(out, "%sRead: %v\n", indent, d.read)
+	fmt.Fprintf(out, "%s- items %d\n", indent, len(d.items))
+	// Sort?
+	for leaf, node := range d.items {
+		switch x := node.(type) {
+		case *Dir:
+			fmt.Fprintf(out, "%s  %s/ - %v\n", indent, leaf, x)
+			// check the parent is correct
+			if x.parent != d {
+				fmt.Fprintf(out, "%s  PARENT POINTER WRONG\n", indent)
+			}
+			x.dumpIndent(out, indent+"\t")
+		case *File:
+			fmt.Fprintf(out, "%s  %s - %v\n", indent, leaf, x)
+		default:
+			panic("bad dir entry")
+		}
+	}
+	fmt.Fprintf(out, "%s- virtual %d\n", indent, len(d.virtual))
+	for leaf, state := range d.virtual {
+		fmt.Fprintf(out, "%s  %s - %v\n", indent, leaf, state)
+	}
+}
+
+// Dumps a nicely formatted directory tree to a string
+func (d *Dir) dump() string {
+	var out strings.Builder
+	d.dumpIndent(&out, "")
+	return out.String()
 }
 
 // IsFile returns false for Dir - satisfies Node interface
