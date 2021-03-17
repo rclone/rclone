@@ -322,11 +322,20 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.modTime = fsDir.ModTime(context.TODO())
 	d.modTimeMu.Unlock()
 	d.mu.Lock()
+	oldPath := d.path
 	d.parent = newParent
 	d.entry = fsDir
 	d.path = fsDir.Remote()
+	newPath := d.path
 	d.read = time.Time{}
 	d.mu.Unlock()
+
+	// Rename in the cache
+	if d.vfs.cache != nil && d.vfs.cache.DirExists(oldPath) {
+		if err := d.vfs.cache.DirRename(oldPath, newPath); err != nil {
+			fs.Infof(d, "Dir.Rename failed in Cache: %v", err)
+		}
+	}
 }
 
 // addObject adds a new object or directory to the directory

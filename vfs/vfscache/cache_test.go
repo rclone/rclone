@@ -279,7 +279,7 @@ func TestCacheOpenMkdir(t *testing.T) {
 
 	// clean the cache
 	c.purgeOld(-10 * time.Second)
-	c.purgeEmptyDirs()
+	c.purgeEmptyDirs("", true)
 
 	assert.Equal(t, []string(nil), itemAsString(c))
 
@@ -407,7 +407,7 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	// Check only potato2 removed to get below quota
 	c.purgeOverQuota(10)
 	assert.Equal(t, int64(5), c.used)
-	c.purgeEmptyDirs()
+	c.purgeEmptyDirs("", true)
 
 	assert.Equal(t, []string{
 		`name="sub/dir/potato" opens=0 size=5`,
@@ -416,7 +416,7 @@ func TestCachePurgeOverQuota(t *testing.T) {
 	// Now purge everything
 	c.purgeOverQuota(1)
 	assert.Equal(t, int64(0), c.used)
-	c.purgeEmptyDirs()
+	c.purgeEmptyDirs("", true)
 
 	assert.Equal(t, []string(nil), itemAsString(c))
 
@@ -485,7 +485,7 @@ func TestCachePurgeClean(t *testing.T) {
 	// So we use purgeOverQuota here for the cleanup.
 	c.purgeOverQuota(1)
 
-	c.purgeEmptyDirs()
+	c.purgeEmptyDirs("", true)
 
 	assert.Equal(t, []string(nil), itemAsString(c))
 }

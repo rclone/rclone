@@ -135,7 +135,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	}
 
 	// Remove any empty directories
-	c.purgeEmptyDirs()
+	c.purgeEmptyDirs("", true)
 
 	// Create a channel for cleaner to be kicked upon out of space con
 	c.kick = make(chan struct{}, 1)
@@ -342,6 +342,49 @@ func (c *Cache) Rename(name string, newName string, newObj fs.Object) (err error
 
 	fs.Infof(name, "vfs cache: renamed in cache to %q", newName)
 	return nil
+}
+
+// DirExists checks to see if the directory exists in the cache or not.
+func (c *Cache) DirExists(name string) bool {
+	path := c.toOSPath(name)
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// DirRename the dir in cache
+func (c *Cache) DirRename(oldDirName string, newDirName string) (err error) {
+	// Make sure names are / suffixed for reading keys out of c.item
+	if !strings.HasSuffix(oldDirName, "/") {
+		oldDirName += "/"
+	}
+	if !strings.HasSuffix(newDirName, "/") {
+		newDirName += "/"
+	}
+
+	// Find all items to rename
+	var renames []string
+	c.mu.Lock()
+	for itemName := range c.item {
+		if strings.HasPrefix(itemName, oldDirName) {
+			renames = append(renames, itemName)
+		}
+	}
+	c.mu.Unlock()
+
+	// Rename the items
+	for _, itemName := range renames {
+		newPath := newDirName + itemName[len(oldDirName):]
+		renameErr := c.Rename(itemName, newPath, nil)
+		if renameErr != nil {
+			err = renameErr
+		}
+	}
+
+	// Old path should be empty now so remove it
+	c.purgeEmptyDirs(oldDirName[:len(oldDirName)-1], false)
+
+	fs.Infof(oldDirName, "vfs cache: renamed dir in cache to %q", newDirName)
+	return err
 }
 
 // Remove should be called if name is deleted
@@ -555,15 +598,15 @@ func (c *Cache) purgeOld(maxAge time.Duration) {
 }
 
 // Purge any empty directories
-func (c *Cache) purgeEmptyDirs() {
+func (c *Cache) purgeEmptyDirs(dir string, leaveRoot bool) {
 	ctx := context.Background()
-	err := operations.Rmdirs(ctx, c.fcache, "", true)
+	err := operations.Rmdirs(ctx, c.fcache, dir, leaveRoot)
 	if err != nil {
-		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from cache: %v", err)
+		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from cache path %q: %v", dir, err)
 	}
-	err = operations.Rmdirs(ctx, c.fcacheMeta, "", true)
+	err = operations.Rmdirs(ctx, c.fcacheMeta, dir, leaveRoot)
 	if err != nil {
-		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from metadata cache: %v", err)
+		fs.Errorf(c.fcache, "vfs cache: failed to remove empty directories from metadata cache path %q: %v", dir, err)
 	}
 }
 
