@@ -816,7 +816,7 @@ OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Context(ctx).Do()
+			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -2460,7 +2460,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 		return err
 	}
 	err := f.pacer.Call(func() (bool, error) {
-		err := f.svc.Files.EmptyTrash().Context(ctx).Context(ctx).Do()
+		err := f.svc.Files.EmptyTrash().Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 
@@ -2478,7 +2478,7 @@ func (f *Fs) teamDriveOK(ctx context.Context) (err error) {
 	}
 	var td *drive.Drive
 	err = f.pacer.Call(func() (bool, error) {
-		td, err = f.svc.Drives.Get(f.opt.TeamDriveID).Fields("name,id,capabilities,createdTime,restrictions").Context(ctx).Context(ctx).Do()
+		td, err = f.svc.Drives.Get(f.opt.TeamDriveID).Fields("name,id,capabilities,createdTime,restrictions").Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2501,7 +2501,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var about *drive.About
 	var err error
 	err = f.pacer.Call(func() (bool, error) {
-		about, err = f.svc.About.Get().Fields("storageQuota").Context(ctx).Context(ctx).Do()
+		about, err = f.svc.About.Get().Fields("storageQuota").Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -2749,7 +2749,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			if f.rootFolderID == "appDataFolder" {
 				changesCall.Spaces("appDataFolder")
 			}
-			changeList, err = changesCall.Context(ctx).Context(ctx).Do()
+			changeList, err = changesCall.Context(ctx).Do()
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -2966,7 +2966,7 @@ func (f *Fs) listTeamDrives(ctx context.Context) (drives []*drive.TeamDrive, err
 	for {
 		var teamDrives *drive.TeamDriveList
 		err = f.pacer.Call(func() (bool, error) {
-			teamDrives, err = listTeamDrives.Context(ctx).Context(ctx).Do()
+			teamDrives, err = listTeamDrives.Context(ctx).Do()
 			return defaultFs.shouldRetry(ctx, err)
 		})
 		if err != nil {
