@@ -312,12 +312,35 @@ func (d *Dir) _age(when time.Time) (age time.Duration, stale bool) {
 	return
 }
 
+// renameTree renames the directories under this directory
+//
+// path should be the desired path
+func (d *Dir) renameTree(dirPath string) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	// Make sure the path is correct for each node
+	if d.path != dirPath {
+		fs.Debugf(d.path, "Renaming to %q", dirPath)
+		d.path = dirPath
+		d.entry = fs.NewDirCopy(context.TODO(), d.entry).SetRemote(dirPath)
+	}
+
+	// Do the same to any child directories
+	for leaf, node := range d.items {
+		if dir, ok := node.(*Dir); ok {
+			dir.renameTree(path.Join(dirPath, leaf))
+		}
+	}
+}
+
 // rename should be called after the directory is renamed
 //
 // Reset the directory to new state, discarding all the objects and
 // reading everything again
 func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.ForgetAll()
+
 	d.modTimeMu.Lock()
 	d.modTime = fsDir.ModTime(context.TODO())
 	d.modTimeMu.Unlock()
@@ -329,6 +352,9 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	newPath := d.path
 	d.read = time.Time{}
 	d.mu.Unlock()
+
+	// Rename any remaining items in the tree that we couldn't forget
+	d.renameTree(d.path)
 
 	// Rename in the cache
 	if d.vfs.cache != nil && d.vfs.cache.DirExists(oldPath) {
@@ -930,6 +956,7 @@ func (d *Dir) RemoveName(name string) error {
 
 // Rename the file
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
+	// fs.Debugf(d, "BEFORE\n%s", d.dump())
 	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
@@ -996,6 +1023,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	destDir.addObject(oldNode)
 
 	// fs.Debugf(newPath, "Dir.Rename renamed from %q", oldPath)
+	// fs.Debugf(d, "AFTER\n%s", d.dump())
 	return nil
 }
 
