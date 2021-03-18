@@ -214,7 +214,10 @@ func (acc *Account) averageLoop() {
 			acc.values.mu.Lock()
 			// Add average of last second.
 			elapsed := now.Sub(acc.values.lpTime).Seconds()
-			avg := float64(acc.values.lpBytes) / elapsed
+			avg := 0.0
+			if elapsed > 0 {
+				avg = float64(acc.values.lpBytes) / elapsed
+			}
 			// Soft start the moving average
 			if period < averagePeriod {
 				period++
@@ -442,7 +445,11 @@ func (acc *Account) speed() (bps, current float64) {
 	}
 	// Calculate speed from first read.
 	total := float64(time.Now().Sub(acc.values.start)) / float64(time.Second)
-	bps = float64(acc.values.bytes) / total
+	if total > 0 {
+		bps = float64(acc.values.bytes) / total
+	} else {
+		bps = 0.0
+	}
 	current = acc.values.avg
 	return
 }
