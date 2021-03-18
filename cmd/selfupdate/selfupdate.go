@@ -146,15 +146,8 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 		return errors.Wrap(err, "unable to detect new version")
 	}
 
-	if newVersion == "" {
-		var err error
-		_, newVersion, _, err = versionCmd.GetVersion(siteURL + "/version.txt")
-		if err != nil {
-			return errors.Wrap(err, "unable to detect new version")
-		}
-	}
-
-	if newVersion == fs.Version {
+	oldVersion := fs.Version
+	if newVersion == oldVersion {
 		fmt.Println("rclone is up to date")
 		return nil
 	}
@@ -166,7 +159,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 		} else {
 			err := installPackage(ctx, opt.Beta, newVersion, siteURL, opt.Package)
 			if err == nil {
-				fmt.Printf("Successfully updated rclone package to version %s\n", newVersion)
+				fmt.Printf("Successfully updated rclone package from version %s to version %s\n", oldVersion, newVersion)
 			}
 			return err
 		}
@@ -218,7 +211,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 
 	err = replaceExecutable(targetFile, newFile, savedFile)
 	if err == nil {
-		fmt.Printf("Successfully updated rclone to version %s\n", newVersion)
+		fmt.Printf("Successfully updated rclone from version %s to version %s\n", oldVersion, newVersion)
 	}
 	return err
 }
