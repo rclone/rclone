@@ -1354,18 +1354,19 @@ func (o *Object) stat(ctx context.Context) error {
 //
 // it also updates the info field
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	if o.fs.opt.SetModTime {
-		c, err := o.fs.getSftpConnection(ctx)
-		if err != nil {
-			return errors.Wrap(err, "SetModTime")
-		}
-		err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
-		o.fs.putSftpConnection(&c, err)
-		if err != nil {
-			return errors.Wrap(err, "SetModTime failed")
-		}
+	if !o.fs.opt.SetModTime {
+		return nil
 	}
-	err := o.stat(ctx)
+	c, err := o.fs.getSftpConnection(ctx)
+	if err != nil {
+		return errors.Wrap(err, "SetModTime")
+	}
+	err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
+	o.fs.putSftpConnection(&c, err)
+	if err != nil {
+		return errors.Wrap(err, "SetModTime failed")
+	}
+	err = o.stat(ctx)
 	if err != nil {
 		return errors.Wrap(err, "SetModTime stat failed")
 	}
@@ -1496,10 +1497,28 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		remove()
 		return errors.Wrap(err, "Update Close failed")
 	}
+
+	// Set the mod time - this stats the object if o.fs.opt.SetModTime == true
 	err = o.SetModTime(ctx, src.ModTime(ctx))
 	if err != nil {
 		return errors.Wrap(err, "Update SetModTime failed")
 	}
+
+	// Stat the file after the upload to read its stats back if o.fs.opt.SetModTime == false
+	if !o.fs.opt.SetModTime {
+		err = o.stat(ctx)
+		if err == fs.ErrorObjectNotFound {
+			// In the specific case of o.fs.opt.SetModTime == false
+			// if the object wasn't found then don't return an error
+			fs.Debugf(o, "Not found after upload with set_modtime=false so returning best guess")
+			o.modTime = src.ModTime(ctx)
+			o.size = src.Size()
+			o.mode = os.FileMode(0666) // regular file
+		} else if err != nil {
+			return errors.Wrap(err, "Update stat failed")
+		}
+	}
+
 	return nil
 }
 
