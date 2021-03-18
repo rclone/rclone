@@ -1222,7 +1222,13 @@ very small even with this flag.
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name:     config.ConfigEncoding,
+			}, {
+				Name: "no_head_object",
+				Help: `If set, don't HEAD objects`,
+				Default:  false,
+				Advanced: true,
+			}, {
+				Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
 			// Any UTF-8 character is valid in a key, however it can't handle
@@ -1319,6 +1325,7 @@ type Options struct {
 	ListChunk             int64                `config:"list_chunk"`
 	NoCheckBucket         bool                 `config:"no_check_bucket"`
 	NoHead                bool                 `config:"no_head"`
+	NoHeadObject          bool                 `config:"no_head_object"`
 	Enc                   encoder.MultiEncoder `config:"encoding"`
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
@@ -1693,7 +1700,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		GetTier:           true,
 		SlowModTime:       true,
 	}).Fill(ctx, f)
-	if f.rootBucket != "" && f.rootDirectory != "" {
+	if f.rootBucket != "" && f.rootDirectory != "" && !opt.NoHeadObject{
 		// Check to see if the (bucket,directory) is actually an existing file
 		oldRoot := f.root
 		newRoot, leaf := path.Split(oldRoot)
@@ -1730,7 +1737,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		o.setMD5FromEtag(aws.StringValue(info.ETag))
 		o.bytes = aws.Int64Value(info.Size)
 		o.storageClass = aws.StringValue(info.StorageClass)
-	} else {
+	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData(ctx) // reads info and meta, returning an error
 		if err != nil {
 			return nil, err
@@ -2972,6 +2979,39 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, err
 	}
+
+	var size int64
+	// Ignore missing Content-Length assuming it is 0
+	// Some versions of ceph do this due their apache proxies
+	if resp.ContentLength != nil {
+		size = *resp.ContentLength
+	}
+	o.setMD5FromEtag(aws.StringValue(resp.ETag))
+	o.bytes = size
+	o.meta = resp.Metadata
+	if o.meta == nil {
+		o.meta = map[string]*string{}
+	}
+	// Read MD5 from metadata if present
+	if md5sumBase64, ok := o.meta[metaMD5Hash]; ok {
+		md5sumBytes, err := base64.StdEncoding.DecodeString(*md5sumBase64)
+		if err != nil {
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", *md5sumBase64, err)
+		} else if len(md5sumBytes) != 16 {
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: wrong length", *md5sumBase64)
+		} else {
+			o.md5 = hex.EncodeToString(md5sumBytes)
+		}
+	}
+	o.storageClass = aws.StringValue(resp.StorageClass)
+	if resp.LastModified == nil {
+		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
+		o.lastModified = time.Now()
+	} else {
+		o.lastModified = *resp.LastModified
+	}
+	o.mimeType = aws.StringValue(resp.ContentType)
+
 	return resp.Body, nil
 }
 
