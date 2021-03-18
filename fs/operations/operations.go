@@ -1635,6 +1635,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameF
 		if dstFileName == "." || dstFileName == "/" {
 			return errors.Errorf("CopyURL failed: file name wasn't found in url")
 		}
+		fs.Debugf(dstFileName, "File name found in url")
 	}
 	return fn(ctx, dstFileName, resp.Body, resp.ContentLength, modTime)
 }
