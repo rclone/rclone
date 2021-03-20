@@ -25,13 +25,14 @@ fi
 
 
 #create tmp directory and move to it with macOS compatibility fallback
-tmp_dir=`mktemp -d 2>/dev/null || mktemp -d -t 'rclone-install.XXXXXXXXXX'`; cd $tmp_dir
+tmp_dir=$(mktemp -d 2>/dev/null || mktemp -d -t 'rclone-install.XXXXXXXXXX')
+cd "$tmp_dir"
 
 
 #make sure unzip tool is available and choose one to work with
 set +e
 for tool in ${unzip_tools_list[*]}; do
-    trash=`hash $tool 2>>errors`
+    trash=$(hash "$tool" 2>>errors)
     if [ "$?" -eq 0 ]; then
         unzip_tool="$tool"
         break
@@ -40,7 +41,7 @@ done
 set -e
 
 # exit if no unzip tools available
-if [ -z "${unzip_tool}" ]; then
+if [ -z "$unzip_tool" ]; then
     printf "\nNone of the supported tools for extracting zip archives (${unzip_tools_list[*]}) were found. "
     printf "Please install one of them and try again.\n\n"
     exit 4
@@ -50,11 +51,11 @@ fi
 export XDG_CONFIG_HOME=config
 
 #check installed version of rclone to determine if update is necessary
-version=`rclone --version 2>>errors | head -n 1`
-if [ -z "${install_beta}" ]; then
-    current_version=`curl https://downloads.rclone.org/version.txt`
+version=$(rclone --version 2>>errors | head -n 1)
+if [ -z "$install_beta" ]; then
+    current_version=$(curl https://downloads.rclone.org/version.txt)
 else
-    current_version=`curl https://beta.rclone.org/version.txt`
+    current_version=$(curl https://beta.rclone.org/version.txt)
 fi
 
 if [ "$version" = "$current_version" ]; then
@@ -63,9 +64,8 @@ if [ "$version" = "$current_version" ]; then
 fi
 
 
-
 #detect the platform
-OS="`uname`"
+OS="$(uname)"
 case $OS in
   Linux)
     OS='linux'
@@ -93,8 +93,8 @@ case $OS in
     ;;
 esac
 
-OS_type="`uname -m`"
-case $OS_type in
+OS_type="$(uname -m)"
+case "$OS_type" in
   x86_64|amd64)
     OS_type='amd64'
     ;;
@@ -115,43 +115,42 @@ esac
 
 
 #download and unzip
-if [ -z "${install_beta}" ]; then
-    download_link="https://downloads.rclone.org/rclone-current-$OS-$OS_type.zip"
-    rclone_zip="rclone-current-$OS-$OS_type.zip"
+if [ -z "$install_beta" ]; then
+    download_link="https://downloads.rclone.org/rclone-current-${OS}-${OS_type}.zip"
+    rclone_zip="rclone-current-${OS}-${OS_type}.zip"
 else
-    download_link="https://beta.rclone.org/rclone-beta-latest-$OS-$OS_type.zip"
-    rclone_zip="rclone-beta-latest-$OS-$OS_type.zip"
+    download_link="https://beta.rclone.org/rclone-beta-latest-${OS}-${OS_type}.zip"
+    rclone_zip="rclone-beta-latest-${OS}-${OS_type}.zip"
 fi
 
-curl -O $download_link
+curl -O "$download_link"
 unzip_dir="tmp_unzip_dir_for_rclone"
 # there should be an entry in this switch for each element of unzip_tools_list
-case $unzip_tool in
+case "$unzip_tool" in
   'unzip')
-    unzip -a $rclone_zip -d $unzip_dir
+    unzip -a "$rclone_zip" -d "$unzip_dir"
     ;;
   '7z')
-    7z x $rclone_zip -o$unzip_dir
+    7z x "$rclone_zip" "-o$unzip_dir"
     ;;
   'busybox')
-    mkdir -p $unzip_dir
-    busybox unzip $rclone_zip -d $unzip_dir
+    mkdir -p "$unzip_dir"
+    busybox unzip "$rclone_zip" -d "$unzip_dir"
     ;;
 esac
-    
-cd $unzip_dir/*
 
+cd $unzip_dir/*
 
 #mounting rclone to environment
 
-case $OS in
+case "$OS" in
   'linux')
     #binary
     cp rclone /usr/bin/rclone.new
     chmod 755 /usr/bin/rclone.new
     chown root:root /usr/bin/rclone.new
     mv /usr/bin/rclone.new /usr/bin/rclone
-    #manuals
+    #manual
     if ! [ -x "$(command -v mandb)" ]; then
         echo 'mandb not found. The rclone man docs will not be installed.'
     else 
@@ -161,11 +160,11 @@ case $OS in
     fi
     ;;
   'freebsd'|'openbsd'|'netbsd')
-    #bin
+    #binary
     cp rclone /usr/bin/rclone.new
     chown root:wheel /usr/bin/rclone.new
     mv /usr/bin/rclone.new /usr/bin/rclone
-    #man
+    #manual
     mkdir -p /usr/local/man/man1
     cp rclone.1 /usr/local/man/man1/
     makewhatis
@@ -186,7 +185,7 @@ esac
 
 
 #update version variable post install
-version=`rclone --version 2>>errors | head -n 1`
+version=$(rclone --version 2>>errors | head -n 1)
 
 printf "\n${version} has successfully installed."
 printf '\nNow run "rclone config" for setup. Check https://rclone.org/docs/ for more details.\n\n'
