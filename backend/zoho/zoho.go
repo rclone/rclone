@@ -372,6 +372,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
 	}
+	setupRegion(m)
 
 	root = parsePath(root)
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
