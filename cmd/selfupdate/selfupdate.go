@@ -21,9 +21,11 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
+	"github.com/rclone/rclone/cmd/cmount"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/fshttp"
+	"github.com/rclone/rclone/lib/buildinfo"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/cobra"
 
@@ -139,6 +141,17 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 	// Find the latest release number
 	if opt.Stable && opt.Beta {
 		return errors.New("--stable and --beta are mutually exclusive")
+	}
+
+	gotCmount := false
+	for _, tag := range buildinfo.Tags {
+		if tag == "cmount" {
+			gotCmount = true
+			break
+		}
+	}
+	if gotCmount && !cmount.ProvidedBy(runtime.GOOS) {
+		return errors.New("updating would discard the mount FUSE capability, aborting")
 	}
 
 	newVersion, siteURL, err := GetVersion(ctx, opt.Beta, opt.Version)

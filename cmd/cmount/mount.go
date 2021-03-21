@@ -26,7 +26,7 @@ import (
 
 func init() {
 	name := "cmount"
-	cmountOnly := runtime.GOOS == "windows" || runtime.GOOS == "darwin"
+	cmountOnly := ProvidedBy(runtime.GOOS)
 	if cmountOnly {
 		name = "mount"
 	}

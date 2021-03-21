@@ -37,6 +37,10 @@ your OS) to update these too. This command with the default |--package zip|
 will update only the rclone executable so the local manual may become
 inaccurate after it.
 
+The |rclone mount| command (https://rclone.org/commands/rclone_mount/) may
+or may not support extended FUSE options depending on the build and OS.
+|selfupdate| will refuse to update if the capability would be discarded.
+
 Note: Windows forbids deletion of a currently running executable so this
 command will rename the old executable to 'rclone.old.exe' upon success.
 
