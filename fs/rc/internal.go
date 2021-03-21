@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/buildinfo"
 )
 
 func init() {
@@ -179,6 +180,8 @@ This shows the current version of go and the go runtime
 - os - OS in use as according to Go
 - arch - cpu architecture in use according to Go
 - goVersion - version of Go runtime in use
+- linking - type of rclone executable (static or dynamic)
+- goTags - space separated build tags or "none"
 
 `,
 	})
@@ -190,6 +193,7 @@ func rcVersion(ctx context.Context, in Params) (out Params, err error) {
 	if err != nil {
 		return nil, err
 	}
+	linking, tagString := buildinfo.GetLinkingAndTags()
 	out = Params{
 		"version":    fs.Version,
 		"decomposed": version.Slice(),
@@ -198,6 +202,8 @@ func rcVersion(ctx context.Context, in Params) (out Params, err error) {
 		"os":         runtime.GOOS,
 		"arch":       runtime.GOARCH,
 		"goVersion":  runtime.Version(),
+		"linking":    linking,
+		"goTags":     tagString,
 	}
 	return out, nil
 }
@@ -425,9 +431,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 		allArgs = append(allArgs, command)
 	}
 	// Add all from arg
-	for _, cur := range arg {
-		allArgs = append(allArgs, cur)
-	}
+	allArgs = append(allArgs, arg...)
 
 	// Add flags to args for e.g. --max-depth 1 comes in as { max-depth 1 }.
 	// Convert it to [ max-depth, 1 ] and append to args list
