@@ -90,7 +90,7 @@ func New(ctx context.Context, remote, root string, cacheTime time.Duration) (*Fs
 		return nil, err
 	}
 	f.RootFs = rFs
-	rootString := path.Join(fsPath, filepath.ToSlash(root))
+	rootString := path.Join(remote, filepath.ToSlash(root))
 	myFs, err := cache.Get(ctx, rootString)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
