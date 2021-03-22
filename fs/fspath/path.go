@@ -36,9 +36,6 @@ var (
 
 	// remoteNameMatcher is a pattern to match an rclone remote name at the start of a config
 	remoteNameMatcher = regexp.MustCompile(`^` + remoteNameRe + `(:$|,)`)
-
-	// Function to check if string is a drive letter to be overriden in the tests
-	isDriveLetter = driveletter.IsDriveLetter
 )
 
 // CheckConfigName returns an error if configName is invalid
@@ -97,7 +94,7 @@ type Parsed struct {
 // An error may be returned if the remote name has invalid characters or the
 // parameters are invalid or the path is empty.
 func Parse(path string) (parsed Parsed, err error) {
-	parsed.Path = path
+	parsed.Path = filepath.ToSlash(path)
 	if path == "" {
 		return parsed, errCantBeEmpty
 	}
@@ -149,7 +146,7 @@ loop:
 				prev = i + 1
 				if c == ':' {
 					// If we parsed a drive letter, must be a local path
-					if isDriveLetter(parsed.Name) {
+					if driveletter.IsDriveLetter(parsed.Name) {
 						parsed.Name = ""
 						return parsed, nil
 					}

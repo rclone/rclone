@@ -7,11 +7,9 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fs/config/configmap"
-	"github.com/rclone/rclone/fs/driveletter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -66,17 +64,12 @@ func TestCheckRemoteName(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	isDriveLetter = func(name string) bool {
-		return name == "C"
-	}
-	defer func() {
-		isDriveLetter = driveletter.IsDriveLetter
-	}()
-
 	for testNumber, test := range []struct {
 		in         string
 		wantParsed Parsed
 		wantErr    error
+		win        bool // only run these tests on Windows
+		noWin      bool // only run these tests on !Windows
 	}{
 		{
 			in:      "",
@@ -100,8 +93,16 @@ func TestParse(t *testing.T) {
 			in: "\\backslash:",
 			wantParsed: Parsed{
 				ConfigString: "",
+				Path:         "/backslash:",
+			},
+			win: true,
+		}, {
+			in: "\\backslash:",
+			wantParsed: Parsed{
+				ConfigString: "",
 				Path:         "\\backslash:",
 			},
+			noWin: true,
 		}, {
 			in: "/slash:",
 			wantParsed: Parsed{
@@ -112,8 +113,16 @@ func TestParse(t *testing.T) {
 			in: "with\\backslash:",
 			wantParsed: Parsed{
 				ConfigString: "",
+				Path:         "with/backslash:",
+			},
+			win: true,
+		}, {
+			in: "with\\backslash:",
+			wantParsed: Parsed{
+				ConfigString: "",
 				Path:         "with\\backslash:",
 			},
+			noWin: true,
 		}, {
 			in: "with/slash:",
 			wantParsed: Parsed{
@@ -184,8 +193,39 @@ func TestParse(t *testing.T) {
 			in: `C:\path\to\file`,
 			wantParsed: Parsed{
 				Name: "",
-				Path: `C:\path\to\file`,
+				Path: `C:/path/to/file`,
 			},
+			win: true,
+		}, {
+			in: `C:\path\to\file`,
+			wantParsed: Parsed{
+				Name:         "C",
+				ConfigString: "C",
+				Path:         `\path\to\file`,
+			},
+			noWin: true,
+		}, {
+			in: `\path\to\file`,
+			wantParsed: Parsed{
+				Name: "",
+				Path: `/path/to/file`,
+			},
+			win: true,
+		}, {
+			in: `\path\to\file`,
+			wantParsed: Parsed{
+				Name: "",
+				Path: `\path\to\file`,
+			},
+			noWin: true,
+		}, {
+			in: `remote:\path\to\file`,
+			wantParsed: Parsed{
+				Name:         "remote",
+				ConfigString: "remote",
+				Path:         `/path/to/file`,
+			},
+			win: true,
 		}, {
 			in: `remote:\path\to\file`,
 			wantParsed: Parsed{
@@ -193,6 +233,14 @@ func TestParse(t *testing.T) {
 				ConfigString: "remote",
 				Path:         `\path\to\file`,
 			},
+			noWin: true,
+		}, {
+			in: `D:/path/to/file`,
+			wantParsed: Parsed{
+				Name: "",
+				Path: `D:/path/to/file`,
+			},
+			win: true,
 		}, {
 			in: `D:/path/to/file`,
 			wantParsed: Parsed{
@@ -200,6 +248,7 @@ func TestParse(t *testing.T) {
 				ConfigString: "D",
 				Path:         `/path/to/file`,
 			},
+			noWin: true,
 		}, {
 			in: `:backend,param1:/path/to/file`,
 			wantParsed: Parsed{
@@ -307,9 +356,11 @@ func TestParse(t *testing.T) {
 		},
 	} {
 		gotParsed, gotErr := Parse(test.in)
-		// For non-local paths we convert \ into / on Windows
-		if runtime.GOOS == "windows" && test.wantParsed.Name != "" {
-			test.wantParsed.Path = strings.Replace(test.wantParsed.Path, `\`, `/`, -1)
+		if runtime.GOOS == "windows" && test.noWin {
+			continue
+		}
+		if runtime.GOOS != "windows" && test.win {
+			continue
 		}
 		assert.Equal(t, test.wantErr, gotErr, test.in)
 		if test.wantErr == nil {
