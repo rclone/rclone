@@ -294,7 +294,7 @@ func (s *StatsInfo) String() string {
 
 	s.mu.RLock()
 
-	elapsedTime := time.Since(startTime).Truncate(time.Second / 10)
+	elapsedTime := time.Since(startTime).Truncate(time.Second)
 
 	displaySpeed := ts.speed
 	if s.ci.DataRateUnit == "bits" {
@@ -305,33 +305,41 @@ func (s *StatsInfo) String() string {
 		buf          = &bytes.Buffer{}
 		xfrchkString = ""
 		dateString   = ""
+		speedUnit    = strings.Title(s.ci.DataRateUnit)
+		byteUnit     = "Bytes"
 	)
 
 	if !s.ci.StatsOneLine {
 		_, _ = fmt.Fprintf(buf, "\nTransferred:   	")
 	} else {
+		switch speedUnit {
+		case "bits":
+			speedUnit = "b"
+		default:
+			speedUnit = "B"
+		}
+		byteUnit = "B"
 		xfrchk := []string{}
 		// Add only non zero stats
 		if s.errors != 0 {
-			xfrchk = append(xfrchk, fmt.Sprintf("err#%d", s.errors))
+			xfrchk = append(xfrchk, fmt.Sprintf("er#%d", s.errors))
 		}
 		if s.checks != 0 || ts.totalChecks != 0 {
-			xfrchk = append(xfrchk, fmt.Sprintf("chk#%d/%d", s.checks, ts.totalChecks))
+			xfrchk = append(xfrchk, fmt.Sprintf("ck#%d/%d", s.checks, ts.totalChecks))
 		}
 		if s.deletes > 0 || s.deletedDirs > 0 {
-			xfrchk = append(xfrchk, fmt.Sprintf("del#%df,%dd", s.deletes, s.deletedDirs))
+			xfrchk = append(xfrchk, fmt.Sprintf("rm#%df%dd", s.deletes, s.deletedDirs))
 		}
 		if s.renames != 0 {
-			xfrchk = append(xfrchk, fmt.Sprintf("ren#%d", s.renames))
+			xfrchk = append(xfrchk, fmt.Sprintf("mv#%d", s.renames))
 		}
 		if s.transfers != 0 || ts.totalTransfers != 0 {
-			xfrchk = append(xfrchk, fmt.Sprintf("xfr#%d/%d", s.transfers, ts.totalTransfers))
+			xfrchk = append(xfrchk, fmt.Sprintf("xr#%d/%d", s.transfers, ts.totalTransfers))
 		}
 		if len(xfrchk) > 0 {
-			xfrchkString = fmt.Sprintf(" (%s) ", strings.Join(xfrchk, ", "))
+			xfrchkString = fmt.Sprintf(" (%s) ", strings.Join(xfrchk, ","))
 		}
 		xfrchkString += elapsedTime.String()
-		xfrchkString += " elapsed"
 		if s.ci.StatsOneLineDate {
 			t := time.Now()
 			dateString = t.Format(s.ci.StatsOneLineDateFormat) // Including the separator so people can customize it
@@ -341,9 +349,9 @@ func (s *StatsInfo) String() string {
 	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s",
 		dateString,
 		fs.SizeSuffix(s.bytes),
-		fs.SizeSuffix(ts.totalBytes).Unit("Bytes"),
+		fs.SizeSuffix(ts.totalBytes).Unit(byteUnit),
 		percent(s.bytes, ts.totalBytes),
-		fs.SizeSuffix(displaySpeed).Unit(strings.Title(s.ci.DataRateUnit)+"/s"),
+		fs.SizeSuffix(displaySpeed).Unit(speedUnit+"/s"),
 		etaString(s.bytes, ts.totalBytes, ts.speed),
 		xfrchkString,
 	)
