@@ -14,8 +14,8 @@ show through.
 
 Here is an overview of the major features of each cloud storage system.
 
-| Name                         | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type |
-| ---------------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|
+| Name                         | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type | Free storage |
+| ---------------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|:---------:|
 | 1Fichier                     | Whirlpool   | No      | No               | Yes             | R         |
 | Amazon Drive                 | MD5         | No      | Yes              | No              | R         |
 | Amazon S3                    | MD5         | Yes     | No               | No              | R/W       |
@@ -26,7 +26,7 @@ Here is an overview of the major features of each cloud storage system.
 | Enterprise File Fabric       | -           | Yes     | Yes              | No              | R/W       |
 | FTP                          | -           | No      | No               | No              | -         |
 | Google Cloud Storage         | MD5         | Yes     | No               | No              | R/W       |
-| Google Drive                 | MD5         | Yes     | No               | Yes             | R/W       |
+| Google Drive                 | MD5         | Yes     | No               | Yes             | R/W       | 15GB      |
 | Google Photos                | -           | No      | No               | Yes             | R         |
 | HDFS                         | -           | Yes     | No               | No              | -         |
 | HTTP                         | -           | No      | No               | No              | R         |
@@ -34,7 +34,7 @@ Here is an overview of the major features of each cloud storage system.
 | Jottacloud                   | MD5         | Yes     | Yes              | No              | R         |
 | Koofr                        | MD5         | No      | Yes              | No              | -         |
 | Mail.ru Cloud                | Mailru ⁶    | Yes     | Yes              | No              | -         |
-| Mega                         | -           | No      | No               | Yes             | -         |
+| Mega                         | -           | No      | No               | Yes             | -         | 50GB      |
 | Memory                       | MD5         | Yes     | No               | No              | -         |
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
 | Microsoft OneDrive           | SHA1 ⁵      | Yes     | Yes              | No              | R         |
@@ -328,8 +328,8 @@ remote itself may assign the MIME type.
 All rclone remotes support a base command set. Other features depend
 upon backend specific capabilities.
 
-| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing  | About | EmptyDir |
-| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|:--------:|
+| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing  | About | EmptyDir | Free storage |
+| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|:--------:|:--------:|
 | 1Fichier                     | No    | Yes  | Yes  | No      | No      | No    | No           | Yes          | No    | Yes      |
 | Amazon Drive                 | Yes   | No   | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
 | Amazon S3                    | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
@@ -340,14 +340,14 @@ upon backend specific capabilities.
 | Enterprise File Fabric       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No           | No    | Yes      |
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
-| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
+| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      | 15GB      |
 | Google Photos                | No    | No   | No   | No      | No      | No    | No           | No           | No    | No       |
 | HDFS                         | Yes   | No   | No   | No      | No      | No    | Yes          | No           | Yes   | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
 | Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
-| Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
+| Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      | 50GB      |
 | Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       | 
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
