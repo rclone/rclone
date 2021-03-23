@@ -294,8 +294,7 @@ func (s *StatsInfo) String() string {
 
 	s.mu.RLock()
 
-	elapsedTime := time.Since(startTime)
-	elapsedTimeSecondsOnly := elapsedTime.Truncate(time.Second/10) % time.Minute
+	elapsedTime := time.Since(startTime).Truncate(time.Second / 10)
 
 	displaySpeed := ts.speed
 	if s.ci.DataRateUnit == "bits" {
@@ -312,15 +311,27 @@ func (s *StatsInfo) String() string {
 		_, _ = fmt.Fprintf(buf, "\nTransferred:   	")
 	} else {
 		xfrchk := []string{}
-		if ts.totalTransfers > 0 && s.transferQueue > 0 {
-			xfrchk = append(xfrchk, fmt.Sprintf("xfr#%d/%d", s.transfers, ts.totalTransfers))
+		// Add only non zero stats
+		if s.errors != 0 {
+			xfrchk = append(xfrchk, fmt.Sprintf("err#%d", s.errors))
 		}
-		if ts.totalChecks > 0 && s.checkQueue > 0 {
+		if s.checks != 0 || ts.totalChecks != 0 {
 			xfrchk = append(xfrchk, fmt.Sprintf("chk#%d/%d", s.checks, ts.totalChecks))
 		}
-		if len(xfrchk) > 0 {
-			xfrchkString = fmt.Sprintf(" (%s)", strings.Join(xfrchk, ", "))
+		if s.deletes > 0 || s.deletedDirs > 0 {
+			xfrchk = append(xfrchk, fmt.Sprintf("del#%df,%dd", s.deletes, s.deletedDirs))
 		}
+		if s.renames != 0 {
+			xfrchk = append(xfrchk, fmt.Sprintf("ren#%d", s.renames))
+		}
+		if s.transfers != 0 || ts.totalTransfers != 0 {
+			xfrchk = append(xfrchk, fmt.Sprintf("xfr#%d/%d", s.transfers, ts.totalTransfers))
+		}
+		if len(xfrchk) > 0 {
+			xfrchkString = fmt.Sprintf(" (%s) ", strings.Join(xfrchk, ", "))
+		}
+		xfrchkString += elapsedTime.String()
+		xfrchkString += " elapsed"
 		if s.ci.StatsOneLineDate {
 			t := time.Now()
 			dateString = t.Format(s.ci.StatsOneLineDateFormat) // Including the separator so people can customize it
@@ -374,7 +385,7 @@ func (s *StatsInfo) String() string {
 			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
 				s.transfers, ts.totalTransfers, percent(s.transfers, ts.totalTransfers))
 		}
-		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10ss\n", strings.TrimRight(elapsedTime.Truncate(time.Minute).String(), "0s")+fmt.Sprintf("%.1f", elapsedTimeSecondsOnly.Seconds()))
+		_, _ = fmt.Fprintf(buf, "Elapsed time:  %10s\n", elapsedTime.String())
 	}
 
 	// checking and transferring have their own locking so unlock
