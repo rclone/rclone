@@ -312,10 +312,9 @@ func (s *StatsInfo) String() string {
 	if !s.ci.StatsOneLine {
 		_, _ = fmt.Fprintf(buf, "\nTransferred:   	")
 	} else {
-		switch speedUnit {
-		case "bits":
+		if s.ci.DataRateUnit == "bits" {
 			speedUnit = "b"
-		default:
+		} else {
 			speedUnit = "B"
 		}
 		byteUnit = "B"
