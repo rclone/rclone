@@ -404,13 +404,16 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options [
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read destination hash")
 		}
-		if srcHash != "" && dstHash != "" && srcHash != dstHash {
-			// remove object
-			err = o.Remove(ctx)
-			if err != nil {
-				fs.Errorf(o, "Failed to remove corrupted object: %v", err)
+		if srcHash != "" && dstHash != "" {
+			if srcHash != dstHash {
+				// remove object
+				err = o.Remove(ctx)
+				if err != nil {
+					fs.Errorf(o, "Failed to remove corrupted object: %v", err)
+				}
+				return nil, errors.Errorf("corrupted on transfer: %v crypted hash differ %q vs %q", ht, srcHash, dstHash)
 			}
-			return nil, errors.Errorf("corrupted on transfer: %v crypted hash differ %q vs %q", ht, srcHash, dstHash)
+			fs.Debugf(src, "%v = %s OK", ht, srcHash)
 		}
 	}
 
