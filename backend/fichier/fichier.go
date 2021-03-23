@@ -348,8 +348,10 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 
-	if len(fileUploadResponse.Links) != 1 {
-		return nil, errors.New("unexpected amount of files")
+	if len(fileUploadResponse.Links) == 0 {
+		return nil, errors.New("upload response not found")
+	} else if len(fileUploadResponse.Links) > 1 {
+		fs.Debugf(remote, "Multiple upload responses found, using the first")
 	}
 
 	link := fileUploadResponse.Links[0]
