@@ -1744,6 +1744,13 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 		ContentType:     resp.Header.Get("Content-Type"),
 		Info:            Info,
 	}
+	// When reading files from B2 via cloudflare using
+	// --b2-download-url cloudflare strips the Content-Length
+	// headers (presumably so it can inject stuff) so use the old
+	// length read from the listing.
+	if info.Size < 0 {
+		info.Size = o.size
+	}
 	return resp, info, nil
 }
 
