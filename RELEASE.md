@@ -76,6 +76,24 @@ Now
 The rclone docker image should autobuild on via GitHub actions.  If it doesn't
 or needs to be updated then rebuild like this.
 
+See: https://github.com/ilteoood/docker_buildx/issues/19
+See: https://github.com/ilteoood/docker_buildx/blob/master/scripts/install_buildx.sh
+
+```
+git co v1.54.1
+docker pull golang
+export DOCKER_CLI_EXPERIMENTAL=enabled
+docker buildx create --name actions_builder --use
+docker run --rm --privileged docker/binfmt:820fdd95a9972a5308930a2bdfb8573dd4447ad3
+docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+SUPPORTED_PLATFORMS=$(docker buildx inspect --bootstrap | grep 'Platforms:*.*' | cut -d : -f2,3)
+echo "Supported platforms: $SUPPORTED_PLATFORMS"
+docker buildx build --platform linux/amd64,linux/386,linux/arm64,linux/arm/v7 -t rclone/rclone:1.54.1 -t rclone/rclone:1.54 -t rclone/rclone:1 -t rclone/rclone:latest --push .
+docker buildx stop actions_builder
+```
+
+### Old build for linux/amd64 only
+
 ```
 docker pull golang
 docker build --rm --ulimit memlock=67108864  -t rclone/rclone:1.52.0 -t rclone/rclone:1.52 -t rclone/rclone:1 -t rclone/rclone:latest .
