@@ -125,7 +125,7 @@ func (ca *CookieAuth) getSPCookie(conf *SharepointSuccessResponse) (*CookieRespo
 		return nil, errors.Wrap(err, "Error while constructing endpoint URL")
 	}
 
-	u, err := url.Parse("https://" + spRoot.Host + "/_forms/default.aspx?wa=wsignin1.0")
+	u, err := url.Parse(spRoot.Scheme + "://" + spRoot.Host + "/_forms/default.aspx?wa=wsignin1.0")
 	if err != nil {
 		return nil, errors.Wrap(err, "Error while constructing login URL")
 	}
