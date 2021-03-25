@@ -240,6 +240,15 @@ jobs:
            restore-keys: |
              ${{ runner.os }}-go-
 
+       - name: Set global environment variables
+         shell: bash
+         run: |
+           echo "VERSION=$(make version)" >> $GITHUB_ENV
+
+       - name: build native rclone
+         run: |
+           make
+
        - name: arm-v7a Set environment variables
          shell: bash
          run: |
@@ -251,7 +260,7 @@ jobs:
            echo 'CGO_ENABLED=1' >> $GITHUB_ENV
            echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
        - name: arm-v7a build
-         run: go build -v -tags android -trimpath -o build/rclone-android-16-armv7a .
+         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-16-armv7a .
 
        - name: arm64-v8a Set environment variables
          shell: bash
@@ -264,7 +273,7 @@ jobs:
            echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
        - name: arm64-v8a build
-         run: go build -v -tags android -trimpath -o build/rclone-android-21-armv8a .
+         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-21-armv8a .
 
        - name: x86 Set environment variables
          shell: bash
@@ -277,7 +286,7 @@ jobs:
            echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
        - name: x86 build
-         run: go build -v -tags android -trimpath -o build/rclone-android-16-x86 .
+         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-16-x86 .
 
        - name: x64 Set environment variables
          shell: bash
@@ -290,7 +299,7 @@ jobs:
            echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
        - name: x64 build
-         run: go build -v -tags android -trimpath -o build/rclone-android-21-x64 .
+         run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-21-x64 .
 
        - name: Upload artifacts
          run: |
