@@ -450,6 +450,7 @@ func TestRcFsInfo(t *testing.T) {
 func TestUploadFile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/uploadfile")
 	defer r.Finalise()
+	ctx := context.Background()
 
 	testFileName := "test.txt"
 	testFileContent := "Hello World"
@@ -460,7 +461,7 @@ func TestUploadFile(t *testing.T) {
 	currentFile, err := os.Open(path.Join(r.LocalName, testFileName))
 	require.NoError(t, err)
 
-	formReader, contentType, _, err := rest.MultipartUpload(currentFile, url.Values{}, "file", testFileName)
+	formReader, contentType, _, err := rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName)
 	require.NoError(t, err)
 
 	httpReq := httptest.NewRequest("POST", "/", formReader)
@@ -482,7 +483,7 @@ func TestUploadFile(t *testing.T) {
 	currentFile, err = os.Open(path.Join(r.LocalName, testFileName))
 	require.NoError(t, err)
 
-	formReader, contentType, _, err = rest.MultipartUpload(currentFile, url.Values{}, "file", testFileName)
+	formReader, contentType, _, err = rest.MultipartUpload(ctx, currentFile, url.Values{}, "file", testFileName)
 	require.NoError(t, err)
 
 	httpReq = httptest.NewRequest("POST", "/", formReader)

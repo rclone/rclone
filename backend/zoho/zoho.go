@@ -647,7 +647,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	params.Set("filename", name)
 	params.Set("parent_id", parent)
 	params.Set("override-name-exist", strconv.FormatBool(true))
-	formReader, contentType, overhead, err := rest.MultipartUpload(in, nil, "content", name)
+	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, nil, "content", name)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make multipart upload")
 	}
