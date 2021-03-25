@@ -113,6 +113,8 @@ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6r
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/billziss-gh/cgofuse v1.4.0 h1:kju2jDmdNuDDCrxPob2ggmZr5Mj/odCjU1Y8kx0Th9E=
 github.com/billziss-gh/cgofuse v1.4.0/go.mod h1:LJjoaUojlVjgo5GQoEJTcJNqZJeRU0nCR84CyxKt2YM=
+github.com/billziss-gh/cgofuse v1.5.0 h1:kH516I/s+Ab4diL/Y/ayFeUjjA8ey+JK12xDfBf4HEs=
+github.com/billziss-gh/cgofuse v1.5.0/go.mod h1:LJjoaUojlVjgo5GQoEJTcJNqZJeRU0nCR84CyxKt2YM=
 github.com/bketelsen/crypt v0.0.3-0.20200106085610-5cbc8cc4026c/go.mod h1:MKsuJmJgSg28kpZDP6UIiPt0e0Oz0kqKNGyRaWEPv84=
 github.com/bradfitz/iter v0.0.0-20140124041915-454541ec3da2/go.mod h1:PyRFw1Lt2wKX4ZVSQ2mk+PeDa1rxyObEDlApuIsUKuo=
 github.com/bradfitz/iter v0.0.0-20190303215204-33e6a9893b0c/go.mod h1:PyRFw1Lt2wKX4ZVSQ2mk+PeDa1rxyObEDlApuIsUKuo=
