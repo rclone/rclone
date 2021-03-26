@@ -180,6 +180,15 @@ FTP password.
 - Type:        string
 - Default:     ""
 
+#### --ftp-ask-password
+
+Ask for password when connecting to a FTP server and no password is configured.
+
+- Config:       ask_password
+- Env Var:      RCLONE_FTP_ASK_PASSWORD
+- Type:         bool
+- Default:      false
+
 #### --ftp-tls
 
 Use Implicit FTPS (FTP over TLS).

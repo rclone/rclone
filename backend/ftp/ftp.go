@@ -61,7 +61,6 @@ func init() {
 			Name:       "pass",
 			Help:       "FTP password.",
 			IsPassword: true,
-			Required:   true,
 		}, {
 			Name: "tls",
 			Help: `Use Implicit FTPS (FTP over TLS).
@@ -140,6 +139,14 @@ Enabled by default. Use 0 to disable.`,
 			Default:  fs.Duration(60 * time.Second),
 			Advanced: true,
 		}, {
+			Name:    "ask_password",
+			Default: false,
+			Help: `Allow asking for FTP password when needed.
+
+If this is set and no password is supplied then rclone will ask for a password
+`,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -179,6 +186,7 @@ type Options struct {
 	IdleTimeout       fs.Duration          `config:"idle_timeout"`
 	CloseTimeout      fs.Duration          `config:"close_timeout"`
 	ShutTimeout       fs.Duration          `config:"shut_timeout"`
+	AskPassword       bool                 `config:"ask_password"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -444,9 +452,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	if err != nil {
 		return nil, err
 	}
-	pass, err := obscure.Reveal(opt.Pass)
-	if err != nil {
-		return nil, fmt.Errorf("NewFS decrypt password: %w", err)
+	pass := ""
+	if opt.AskPassword && opt.Pass == "" {
+		pass = config.GetPassword("FTP server password")
+	} else {
+		pass, err = obscure.Reveal(opt.Pass)
+		if err != nil {
+			return nil, fmt.Errorf("NewFS decrypt password: %w", err)
+		}
 	}
 	user := opt.User
 	if user == "" {
