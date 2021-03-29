@@ -1067,7 +1067,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		Path:       addSlash(srcPath),
 		NoResponse: true,
 		ExtraHeaders: map[string]string{
-			"Destination": addSlash(destinationURL.String()),
+			"Destination": destinationURL.String(),
 			"Overwrite":   "F",
 		},
 	}
