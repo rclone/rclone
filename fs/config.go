@@ -123,6 +123,8 @@ type ConfigInfo struct {
 	RefreshTimes           bool
 	NoConsole              bool
 	TrafficClass           uint8
+	FsCacheExpireDuration  time.Duration
+	FsCacheExpireInterval  time.Duration
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -160,6 +162,8 @@ func NewConfig() *ConfigInfo {
 	c.MultiThreadStreams = 4
 
 	c.TrackRenamesStrategy = "hash"
+	c.FsCacheExpireDuration = 300 * time.Second
+	c.FsCacheExpireInterval = 60 * time.Second
 
 	return c
 }

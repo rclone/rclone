@@ -128,6 +128,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.RefreshTimes, "refresh-times", "", ci.RefreshTimes, "Refresh the modtime of remote files.")
 	flags.BoolVarP(flagSet, &ci.NoConsole, "no-console", "", ci.NoConsole, "Hide console window. Supported on Windows only.")
 	flags.StringVarP(flagSet, &dscp, "dscp", "", "", "Set DSCP value to connections. Can be value or names, eg. CS1, LE, DF, AF21.")
+	flags.DurationVarP(flagSet, &ci.FsCacheExpireDuration, "fs-cache-expire-duration", "", ci.FsCacheExpireDuration, "cache remotes for this long (0 to disable caching)")
+	flags.DurationVarP(flagSet, &ci.FsCacheExpireInterval, "fs-cache-expire-interval", "", ci.FsCacheExpireInterval, "interval to check for expired remotes")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions

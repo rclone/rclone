@@ -12,14 +12,26 @@ import (
 )
 
 var (
-	c     = cache.New()
+	once  sync.Once // creation
+	c     *cache.Cache
 	mu    sync.Mutex            // mutex to protect remap
 	remap = map[string]string{} // map user supplied names to canonical names
 )
 
+// Create the cache just once
+func createOnFirstUse() {
+	once.Do(func() {
+		ci := fs.GetConfig(context.Background())
+		c = cache.New()
+		c.SetExpireDuration(ci.FsCacheExpireDuration)
+		c.SetExpireInterval(ci.FsCacheExpireInterval)
+	})
+}
+
 // Canonicalize looks up fsString in the mapping from user supplied
 // names to canonical names and return the canonical form
 func Canonicalize(fsString string) string {
+	createOnFirstUse()
 	mu.Lock()
 	canonicalName, ok := remap[fsString]
 	mu.Unlock()
@@ -43,6 +55,7 @@ func addMapping(fsString, canonicalName string) {
 // GetFn gets an fs.Fs named fsString either from the cache or creates
 // it afresh with the create function
 func GetFn(ctx context.Context, fsString string, create func(ctx context.Context, fsString string) (fs.Fs, error)) (f fs.Fs, err error) {
+	createOnFirstUse()
 	fsString = Canonicalize(fsString)
 	created := false
 	value, err := c.Get(fsString, func(fsString string) (f interface{}, ok bool, err error) {
@@ -80,6 +93,7 @@ func GetFn(ctx context.Context, fsString string, create func(ctx context.Context
 
 // Pin f into the cache until Unpin is called
 func Pin(f fs.Fs) {
+	createOnFirstUse()
 	c.Pin(fs.ConfigString(f))
 }
 
@@ -97,6 +111,7 @@ func PinUntilFinalized(f fs.Fs, x interface{}) {
 
 // Unpin f from the cache
 func Unpin(f fs.Fs) {
+	createOnFirstUse()
 	c.Pin(fs.ConfigString(f))
 }
 
@@ -127,6 +142,7 @@ func GetArr(ctx context.Context, fsStrings []string) (f []fs.Fs, err error) {
 
 // Put puts an fs.Fs named fsString into the cache
 func Put(fsString string, f fs.Fs) {
+	createOnFirstUse()
 	canonicalName := fs.ConfigString(f)
 	c.Put(canonicalName, f)
 	addMapping(fsString, canonicalName)
@@ -136,15 +152,18 @@ func Put(fsString string, f fs.Fs) {
 //
 // Returns number of entries deleted
 func ClearConfig(name string) (deleted int) {
+	createOnFirstUse()
 	return c.DeletePrefix(name + ":")
 }
 
 // Clear removes everything from the cache
 func Clear() {
+	createOnFirstUse()
 	c.Clear()
 }
 
 // Entries returns the number of entries in the cache
 func Entries() int {
+	createOnFirstUse()
 	return c.Entries()
 }

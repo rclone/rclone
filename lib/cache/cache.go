@@ -28,6 +28,30 @@ func New() *Cache {
 	}
 }
 
+// SetExpireDuration sets the interval at which things expire
+//
+// If it is less than or equal to 0 then things are never cached
+func (c *Cache) SetExpireDuration(d time.Duration) *Cache {
+	c.expireDuration = d
+	return c
+}
+
+// returns true if we aren't to cache anything
+func (c *Cache) noCache() bool {
+	return c.expireDuration <= 0
+}
+
+// SetExpireInterval sets the interval at which the cache expiry runs
+//
+// Set to 0 or a -ve number to disable
+func (c *Cache) SetExpireInterval(d time.Duration) *Cache {
+	if d <= 0 {
+		d = 100 * 365 * 24 * time.Hour
+	}
+	c.expireInterval = d
+	return c
+}
+
 // cacheEntry is stored in the cache
 type cacheEntry struct {
 	value    interface{} // cached item
@@ -69,7 +93,9 @@ func (c *Cache) Get(key string, create CreateFunc) (value interface{}, err error
 			err:   err,
 		}
 		c.mu.Lock()
-		c.cache[key] = entry
+		if !c.noCache() {
+			c.cache[key] = entry
+		}
 	}
 	defer c.mu.Unlock()
 	c.used(entry)
@@ -100,6 +126,9 @@ func (c *Cache) Unpin(key string) {
 func (c *Cache) Put(key string, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.noCache() {
+		return
+	}
 	entry := &cacheEntry{
 		value: value,
 		key:   key,

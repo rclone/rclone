@@ -33,7 +33,7 @@ func mockNewFs(t *testing.T) (func(), func(ctx context.Context, path string) (fs
 		panic("unreachable")
 	}
 	cleanup := func() {
-		c.Clear()
+		Clear()
 	}
 	return cleanup, create
 }
@@ -42,12 +42,12 @@ func TestGet(t *testing.T) {
 	cleanup, create := mockNewFs(t)
 	defer cleanup()
 
-	assert.Equal(t, 0, c.Entries())
+	assert.Equal(t, 0, Entries())
 
 	f, err := GetFn(context.Background(), "mock:/", create)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, c.Entries())
+	assert.Equal(t, 1, Entries())
 
 	f2, err := GetFn(context.Background(), "mock:/", create)
 	require.NoError(t, err)
@@ -59,13 +59,13 @@ func TestGetFile(t *testing.T) {
 	cleanup, create := mockNewFs(t)
 	defer cleanup()
 
-	assert.Equal(t, 0, c.Entries())
+	assert.Equal(t, 0, Entries())
 
 	f, err := GetFn(context.Background(), "mock:/file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
 	require.NotNil(t, f)
 
-	assert.Equal(t, 2, c.Entries())
+	assert.Equal(t, 2, Entries())
 
 	f2, err := GetFn(context.Background(), "mock:/file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
@@ -85,13 +85,13 @@ func TestGetFile2(t *testing.T) {
 	cleanup, create := mockNewFs(t)
 	defer cleanup()
 
-	assert.Equal(t, 0, c.Entries())
+	assert.Equal(t, 0, Entries())
 
 	f, err := GetFn(context.Background(), "mock:file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
 	require.NotNil(t, f)
 
-	assert.Equal(t, 2, c.Entries())
+	assert.Equal(t, 2, Entries())
 
 	f2, err := GetFn(context.Background(), "mock:file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
@@ -111,13 +111,13 @@ func TestGetError(t *testing.T) {
 	cleanup, create := mockNewFs(t)
 	defer cleanup()
 
-	assert.Equal(t, 0, c.Entries())
+	assert.Equal(t, 0, Entries())
 
 	f, err := GetFn(context.Background(), "mock:/error", create)
 	require.Equal(t, errSentinel, err)
 	require.Equal(t, nil, f)
 
-	assert.Equal(t, 0, c.Entries())
+	assert.Equal(t, 0, Entries())
 }
 
 func TestPut(t *testing.T) {
@@ -126,17 +126,17 @@ func TestPut(t *testing.T) {
 
 	f := mockfs.NewFs(context.Background(), "mock", "/alien")
 
-	assert.Equal(t, 0, c.Entries())
+	assert.Equal(t, 0, Entries())
 
 	Put("mock:/alien", f)
 
-	assert.Equal(t, 1, c.Entries())
+	assert.Equal(t, 1, Entries())
 
 	fNew, err := GetFn(context.Background(), "mock:/alien", create)
 	require.NoError(t, err)
 	require.Equal(t, f, fNew)
 
-	assert.Equal(t, 1, c.Entries())
+	assert.Equal(t, 1, Entries())
 
 	// Check canonicalisation
 
@@ -146,7 +146,7 @@ func TestPut(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, f, fNew)
 
-	assert.Equal(t, 1, c.Entries())
+	assert.Equal(t, 1, Entries())
 
 }
 
@@ -170,7 +170,7 @@ func TestClearConfig(t *testing.T) {
 	cleanup, create := mockNewFs(t)
 	defer cleanup()
 
-	assert.Equal(t, 0, c.Entries())
+	assert.Equal(t, 0, Entries())
 
 	_, err := GetFn(context.Background(), "mock:/file.txt", create)
 	require.Equal(t, fs.ErrorIsFile, err)
@@ -190,11 +190,11 @@ func TestClear(t *testing.T) {
 	_, err := GetFn(context.Background(), "mock:/", create)
 	require.NoError(t, err)
 
-	assert.Equal(t, 1, c.Entries())
+	assert.Equal(t, 1, Entries())
 
 	Clear()
 
-	assert.Equal(t, 0, c.Entries())
+	assert.Equal(t, 0, Entries())
 }
 
 func TestEntries(t *testing.T) {

@@ -100,7 +100,7 @@ func TestPut(t *testing.T) {
 func TestCacheExpire(t *testing.T) {
 	c, create := setup(t)
 
-	c.expireInterval = time.Millisecond
+	c.SetExpireInterval(time.Millisecond)
 	assert.Equal(t, false, c.expireRunning)
 
 	_, err := c.Get("/", create)
@@ -123,6 +123,31 @@ func TestCacheExpire(t *testing.T) {
 
 	c.mu.Lock()
 	assert.Equal(t, false, c.expireRunning)
+	assert.Equal(t, 0, len(c.cache))
+	c.mu.Unlock()
+}
+
+func TestCacheNoExpire(t *testing.T) {
+	c, create := setup(t)
+
+	assert.False(t, c.noCache())
+
+	c.SetExpireDuration(0)
+	assert.Equal(t, false, c.expireRunning)
+
+	assert.True(t, c.noCache())
+
+	f, err := c.Get("/", create)
+	require.NoError(t, err)
+	require.NotNil(t, f)
+
+	c.mu.Lock()
+	assert.Equal(t, 0, len(c.cache))
+	c.mu.Unlock()
+
+	c.Put("/alien", "slime")
+
+	c.mu.Lock()
 	assert.Equal(t, 0, len(c.cache))
 	c.mu.Unlock()
 }
