@@ -36,6 +36,7 @@ jobs:
             check: true
             quicktest: true
             racequicktest: true
+            librclonetest: true
             deploy: true
 
           - job_name: mac_amd64
@@ -192,6 +193,13 @@ jobs:
         run: |
           make racequicktest
         if: matrix.racequicktest
+
+      - name: Run librclone tests
+        shell: bash
+        run: |
+          make -C librclone/ctest test
+          make -C librclone/ctest clean
+        if: matrix.librclonetest
 
       - name: Code quality test
         shell: bash

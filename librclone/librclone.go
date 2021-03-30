@@ -79,7 +79,7 @@ func RcloneFinalize() {
 //
 //   Output will be returned as a serialized JSON object
 //   Status is a HTTP status return (200=OK anything else fail)
-type RcloneRPCResult struct {
+type RcloneRPCResult struct { //nolint:deadcode
 	Output *C.char
 	Status C.int
 }
@@ -113,12 +113,12 @@ type RcloneMobileRPCResult struct {
 	Status int
 }
 
-// RcloneMobileRPCRPC this works the same as RcloneRPC but has an interface
+// RcloneMobileRPC works the same as RcloneRPC but has an interface
 // optimised for gomobile, in particular the function signature is
 // valid under gobind rules.
 //
 // https://pkg.go.dev/golang.org/x/mobile/cmd/gobind#hdr-Type_restrictions
-func RcloneMobileRPCRPC(method string, input string) (result RcloneMobileRPCResult) {
+func RcloneMobileRPC(method string, input string) (result RcloneMobileRPCResult) { //nolint:deadcode
 	output, status := callFunctionJSON(method, input)
 	result.Output = output
 	result.Status = status
