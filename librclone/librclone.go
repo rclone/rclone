@@ -19,9 +19,15 @@
 // The library will depend on `libdl` and `libpthread`.
 package main
 
-import (
-	"C"
+/*
+struct RcloneRPCResult {
+	char*	Output;
+	int	Status;
+};
+*/
+import "C"
 
+import (
 	"context"
 	"encoding/json"
 	"fmt"
@@ -31,6 +37,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/configfile"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
 
@@ -42,7 +51,19 @@ import (
 //
 //export RcloneInitialize
 func RcloneInitialize() {
-	// TODO: what need to be initialized manually?
+	// A subset of initialisation copied from cmd.go
+	// Note that we don't want to pull in anything which depends on pflags
+
+	ctx := context.Background()
+
+	// Start the logger
+	log.InitLogging()
+
+	// Load the config - this may need to be configurable
+	configfile.Install()
+
+	// Start accounting
+	accounting.Start(ctx)
 }
 
 // RcloneFinalize finalizes the library
@@ -54,50 +75,73 @@ func RcloneFinalize() {
 	runtime.GC()
 }
 
+// RcloneRPCResult is returned from RcloneRPC
+//
+//   Output will be returned as a serialized JSON object
+//   Status is a HTTP status return (200=OK anything else fail)
+type RcloneRPCResult struct {
+	Output *C.char
+	Status C.int
+}
+
 // RcloneRPC does a single RPC call. The inputs are (method, input)
 // and the output is (output, status). This is an exported interface
 // to the rclone API as described in https://rclone.org/rc/
 //
 //   method is a string, eg "operations/list"
 //   input should be a serialized JSON object
-//   output will be returned as a serialized JSON object
-//   status is a HTTP status return (200=OK anything else fail)
+//   result.Output will be returned as a serialized JSON object
+//   result.Status is a HTTP status return (200=OK anything else fail)
 //
-// Caller is responsible for freeing the memory for output
-//
-// Note that when calling from C output and status are returned in an
-// RcloneRPC_return which has two members r0 which is output and r1
-// which is status.
+// Caller is responsible for freeing the memory for result.Output,
+// result itself is passed on the stack.
 //
 //export RcloneRPC
-func RcloneRPC(method *C.char, input *C.char) (output *C.char, status C.int) { //nolint:golint
-	res, s := callFunctionJSON(C.GoString(method), C.GoString(input))
-	return C.CString(res), C.int(s)
+func RcloneRPC(method *C.char, input *C.char) (result C.struct_RcloneRPCResult) { //nolint:golint
+	output, status := callFunctionJSON(C.GoString(method), C.GoString(input))
+	result.Output = C.CString(output)
+	result.Status = C.int(status)
+	return result
+}
+
+// RcloneMobileRPCResult is returned from RcloneMobileRPC
+//
+//   Output will be returned as a serialized JSON object
+//   Status is a HTTP status return (200=OK anything else fail)
+type RcloneMobileRPCResult struct {
+	Output string
+	Status int
+}
+
+// RcloneMobileRPCRPC this works the same as RcloneRPC but has an interface
+// optimised for gomobile, in particular the function signature is
+// valid under gobind rules.
+//
+// https://pkg.go.dev/golang.org/x/mobile/cmd/gobind#hdr-Type_restrictions
+func RcloneMobileRPCRPC(method string, input string) (result RcloneMobileRPCResult) {
+	output, status := callFunctionJSON(method, input)
+	result.Output = output
+	result.Status = status
+	return result
 }
 
 // writeError returns a formatted error string and the status passed in
 func writeError(path string, in rc.Params, err error, status int) (string, int) {
 	fs.Errorf(nil, "rc: %q: error: %v", path, err)
+	params, status := rc.Error(path, in, err, status)
 	var w strings.Builder
-	// FIXME should factor this
-	// Adjust the error return for some well known errors
-	errOrig := errors.Cause(err)
-	switch {
-	case errOrig == fs.ErrorDirNotFound || errOrig == fs.ErrorObjectNotFound:
-		status = http.StatusNotFound
-	case rc.IsErrParamInvalid(err) || rc.IsErrParamNotFound(err):
-		status = http.StatusBadRequest
-	}
-	// w.WriteHeader(status)
-	err = rc.WriteJSON(&w, rc.Params{
-		"status": status,
-		"error":  err.Error(),
-		"input":  in,
-		"path":   path,
-	})
+	err = rc.WriteJSON(&w, params)
 	if err != nil {
-		// can't return the error at this point
-		return fmt.Sprintf(`{"error": "rc: failed to write JSON output: %v"}`, err), status
+		// ultimate fallback error
+		fs.Errorf(nil, "writeError: failed to write JSON output from %#v: %v", in, err)
+		status = http.StatusInternalServerError
+		w.Reset()
+		fmt.Fprintf(&w, `{
+	"error": %q,
+	"path": %q,
+	"status": %d
+}`, err, path, status)
+
 	}
 	return w.String(), status
 }
@@ -110,7 +154,6 @@ func callFunctionJSON(method string, input string) (output string, status int) {
 	in := make(rc.Params)
 	err := json.NewDecoder(strings.NewReader(input)).Decode(&in)
 	if err != nil {
-		// TODO: handle error
 		return writeError(method, in, errors.Wrap(err, "failed to read input JSON"), http.StatusBadRequest)
 	}
 
@@ -132,10 +175,9 @@ func callFunctionJSON(method string, input string) (output string, status int) {
 	}
 
 	fs.Debugf(nil, "rc: %q: with parameters %+v", method, in)
-	// TODO: what is r.Context()? use Background() for the moment
+
 	_, out, err := jobs.NewJob(context.Background(), call.Fn, in)
 	if err != nil {
-		// handle error
 		return writeError(method, in, err, http.StatusInternalServerError)
 	}
 	if out == nil {
@@ -150,6 +192,7 @@ func callFunctionJSON(method string, input string) (output string, status int) {
 		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
 		return writeError(method, in, err, http.StatusInternalServerError)
 	}
+
 	return w.String(), http.StatusOK
 }
 

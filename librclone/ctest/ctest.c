@@ -5,10 +5,10 @@
 #include "librclone.h"
 
 void testRPC(char *method, char *in) {
-    struct RcloneRPC_return out = RcloneRPC(method, in);
-    printf("status: %d\n", out.r1);
-    printf("output: %s\n", out.r0);
-    free(out.r0);
+    struct RcloneRPCResult out = RcloneRPC(method, in);
+    printf("status: %d\n", out.Status);
+    printf("output: %s\n", out.Output);
+    free(out.Output);
 }
 
 // noop command
