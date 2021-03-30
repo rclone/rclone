@@ -4,19 +4,62 @@ package rc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configmap"
 )
 
 // GetFsNamed gets an fs.Fs named fsName either from the cache or creates it afresh
 func GetFsNamed(ctx context.Context, in Params, fsName string) (f fs.Fs, err error) {
 	fsString, err := in.GetString(fsName)
 	if err != nil {
-		return nil, err
+		if !IsErrParamInvalid(err) {
+			return nil, err
+		}
+		fsString, err = getConfigMap(in, fsName)
+		if err != nil {
+			return nil, err
+		}
 	}
-
 	return cache.Get(ctx, fsString)
+}
+
+// getConfigMap gets the config as a map from in and converts it to a
+// config string
+//
+// It uses the special parameters _name to name the remote and _root
+// to make the root of the remote.
+func getConfigMap(in Params, fsName string) (fsString string, err error) {
+	var m configmap.Simple
+	err = in.GetStruct(fsName, &m)
+	if err != nil {
+		return fsString, err
+	}
+	pop := func(key string) string {
+		value := m[key]
+		delete(m, key)
+		return value
+	}
+	Type := pop("type")
+	name := pop("_name")
+	root := pop("_root")
+	if name != "" {
+		fsString = name
+	} else if Type != "" {
+		fsString = ":" + Type
+	} else {
+		return fsString, errors.New(`couldn't find "type" or "_name" in JSON config definition`)
+	}
+	config := m.String()
+	if config != "" {
+		fsString += ","
+		fsString += config
+	}
+	fsString += ":"
+	fsString += root
+	return fsString, nil
 }
 
 // GetFs gets an fs.Fs named "fs" either from the cache or creates it afresh

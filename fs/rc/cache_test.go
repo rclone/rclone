@@ -2,6 +2,7 @@ package rc
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/rclone/rclone/fs/cache"
@@ -13,6 +14,8 @@ import (
 func mockNewFs(t *testing.T) func() {
 	f := mockfs.NewFs(context.Background(), "mock", "mock")
 	cache.Put("/", f)
+	cache.Put("mock:/", f)
+	cache.Put(":mock:/", f)
 	return func() {
 		cache.Clear()
 	}
@@ -34,6 +37,98 @@ func TestGetFsNamed(t *testing.T) {
 	f, err = GetFsNamed(context.Background(), in, "potato")
 	require.Error(t, err)
 	assert.Nil(t, f)
+}
+
+func TestGetFsNamedStruct(t *testing.T) {
+	defer mockNewFs(t)()
+
+	in := Params{
+		"potato": Params{
+			"type":  "mock",
+			"_root": "/",
+		},
+	}
+	f, err := GetFsNamed(context.Background(), in, "potato")
+	require.NoError(t, err)
+	assert.NotNil(t, f)
+
+	in = Params{
+		"potato": Params{
+			"_name": "mock",
+			"_root": "/",
+		},
+	}
+	f, err = GetFsNamed(context.Background(), in, "potato")
+	require.NoError(t, err)
+	assert.NotNil(t, f)
+}
+
+func TestGetConfigMap(t *testing.T) {
+	for _, test := range []struct {
+		in           Params
+		fsName       string
+		wantFsString string
+		wantErr      string
+	}{
+		{
+			in: Params{
+				"Fs": Params{},
+			},
+			fsName:  "Fs",
+			wantErr: `couldn't find "type" or "_name" in JSON config definition`,
+		},
+		{
+			in: Params{
+				"Fs": Params{
+					"notastring": true,
+				},
+			},
+			fsName:  "Fs",
+			wantErr: `cannot unmarshal bool`,
+		},
+		{
+			in: Params{
+				"Fs": Params{
+					"_name": "potato",
+				},
+			},
+			fsName:       "Fs",
+			wantFsString: "potato:",
+		},
+		{
+			in: Params{
+				"Fs": Params{
+					"type": "potato",
+				},
+			},
+			fsName:       "Fs",
+			wantFsString: ":potato:",
+		},
+		{
+			in: Params{
+				"Fs": Params{
+					"type":       "sftp",
+					"_name":      "potato",
+					"parameter":  "42",
+					"parameter2": "true",
+					"_root":      "/path/to/somewhere",
+				},
+			},
+			fsName:       "Fs",
+			wantFsString: "potato,parameter='42',parameter2='true':/path/to/somewhere",
+		},
+	} {
+		gotFsString, gotErr := getConfigMap(test.in, test.fsName)
+		what := fmt.Sprintf("%+v", test.in)
+		assert.Equal(t, test.wantFsString, gotFsString, what)
+		if test.wantErr == "" {
+			assert.NoError(t, gotErr)
+		} else {
+			require.Error(t, gotErr)
+			assert.Contains(t, gotErr.Error(), test.wantErr)
+
+		}
+	}
 }
 
 func TestGetFs(t *testing.T) {
