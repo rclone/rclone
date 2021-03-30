@@ -279,3 +279,26 @@ func (p Params) GetDuration(key string) (time.Duration, error) {
 	}
 	return duration, nil
 }
+
+// Error creates the standard response for an errored rc call using an
+// rc.Param from a path, input Params, error and a suggested HTTP
+// response code.
+//
+// It returns a Params and an updated status code
+func Error(path string, in Params, err error, status int) (Params, int) {
+	// Adjust the status code for some well known errors
+	errOrig := errors.Cause(err)
+	switch {
+	case errOrig == fs.ErrorDirNotFound || errOrig == fs.ErrorObjectNotFound:
+		status = http.StatusNotFound
+	case IsErrParamInvalid(err) || IsErrParamNotFound(err):
+		status = http.StatusBadRequest
+	}
+	result := Params{
+		"status": status,
+		"error":  err.Error(),
+		"input":  in,
+		"path":   path,
+	}
+	return result, status
+}

@@ -169,21 +169,9 @@ func (s *Server) Serve() error {
 // writeError writes a formatted error to the output
 func writeError(path string, in rc.Params, w http.ResponseWriter, err error, status int) {
 	fs.Errorf(nil, "rc: %q: error: %v", path, err)
-	// Adjust the error return for some well known errors
-	errOrig := errors.Cause(err)
-	switch {
-	case errOrig == fs.ErrorDirNotFound || errOrig == fs.ErrorObjectNotFound:
-		status = http.StatusNotFound
-	case rc.IsErrParamInvalid(err) || rc.IsErrParamNotFound(err):
-		status = http.StatusBadRequest
-	}
+	params, status := rc.Error(path, in, err, status)
 	w.WriteHeader(status)
-	err = rc.WriteJSON(w, rc.Params{
-		"status": status,
-		"error":  err.Error(),
-		"input":  in,
-		"path":   path,
-	})
+	err = rc.WriteJSON(w, params)
 	if err != nil {
 		// can't return the error at this point
 		fs.Errorf(nil, "rc: writeError: failed to write JSON output from %#v: %v", in, err)
