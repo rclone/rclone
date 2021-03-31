@@ -101,11 +101,11 @@ case "$OS_type" in
   i?86|x86)
     OS_type='386'
     ;;
+  aarch64|arm64)
+    OS_type='arm64'
+    ;;
   arm*)
     OS_type='arm'
-    ;;
-  aarch64)
-    OS_type='arm64'
     ;;
   *)
     echo 'OS type not supported'
