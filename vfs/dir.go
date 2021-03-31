@@ -843,6 +843,23 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 // Create makes a new file node
 func (d *Dir) Create(name string, flags int) (*File, error) {
 	// fs.Debugf(path, "Dir.Create")
+	// Return existing node if one exists
+	node, err := d.stat(name)
+	switch err {
+	case ENOENT:
+		// not found, carry on
+	case nil:
+		// found so check what it is
+		if node.IsFile() {
+			return node.(*File), err
+		}
+		return nil, EEXIST // EISDIR would be better but we don't have that
+	default:
+		// a different error - report
+		fs.Errorf(d, "Dir.Create stat failed: %v", err)
+		return nil, err
+	}
+	// node doesn't exist so create it
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
