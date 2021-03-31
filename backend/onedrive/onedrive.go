@@ -897,6 +897,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	// Top parameter asks for bigger pages of data
 	// https://dev.onedrive.com/odata/optional-query-parameters.htm
 	opts := f.newOptsCall(dirID, "GET", "/children?$top=1000")
+	lastID := "\x00"
 OUTER:
 	for {
 		var result api.ListChildrenResponse
@@ -910,6 +911,10 @@ OUTER:
 		}
 		if len(result.Value) == 0 {
 			break
+		}
+		if result.Value[0].ID == lastID {
+			fs.Errorf(f, "Skipping duplicate entry %q in directory %q", lastID, dirID)
+			result.Value = result.Value[1:]
 		}
 		for i := range result.Value {
 			item := &result.Value[i]
@@ -937,6 +942,9 @@ OUTER:
 		}
 		opts.Path = ""
 		opts.RootURL = result.NextLink
+		if len(result.Value) > 0 {
+			lastID = result.Value[len(result.Value)-1].ID
+		}
 	}
 	return
 }
