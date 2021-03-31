@@ -137,22 +137,20 @@ Name of the Webdav site/service/software you are using
     - "owncloud"
         - Owncloud
     - "sharepoint"
-        - Sharepoint
+        - Sharepoint Online, authenticated by Microsoft account.
     - "sharepoint-ntlm"
-        - Sharepoint with NTLM authentication
+        - Sharepoint with NTLM authentication. Usually self-hosted or on-premises.
     - "other"
         - Other site/service or software
 
 #### --webdav-user
 
-User name
+User name. In case NTLM authentication is used, the username should be in the format 'Domain\User'.
 
 - Config:      user
 - Env Var:     RCLONE_WEBDAV_USER
 - Type:        string
 - Default:     ""
-
-In case vendor mode `sharepoint-ntlm` is used, the user name is in the form `DOMAIN\user`
 
 #### --webdav-pass
 
@@ -184,6 +182,19 @@ Command to run to get a bearer token
 
 - Config:      bearer_token_command
 - Env Var:     RCLONE_WEBDAV_BEARER_TOKEN_COMMAND
+- Type:        string
+- Default:     ""
+
+#### --webdav-encoding
+
+This sets the encoding for the backend.
+
+See: the [encoding section in the overview](/overview/#encoding) for more info.
+
+Default encoding is Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8 for sharepoint-ntlm or identity otherwise.
+
+- Config:      encoding
+- Env Var:     RCLONE_WEBDAV_ENCODING
 - Type:        string
 - Default:     ""
 

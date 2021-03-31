@@ -223,6 +223,30 @@ Disable using MLSD even if server advertises support
 - Type:        bool
 - Default:     false
 
+#### --ftp-idle-timeout
+
+Max time before closing idle connections
+
+If no connections have been returned to the connection pool in the time
+given, rclone will empty the connection pool.
+
+Set to 0 to keep connections indefinitely.
+
+
+- Config:      idle_timeout
+- Env Var:     RCLONE_FTP_IDLE_TIMEOUT
+- Type:        Duration
+- Default:     1m0s
+
+#### --ftp-close-timeout
+
+Maximum time to wait for a response to close.
+
+- Config:      close_timeout
+- Env Var:     RCLONE_FTP_CLOSE_TIMEOUT
+- Type:        Duration
+- Default:     1m0s
+
 #### --ftp-encoding
 
 This sets the encoding for the backend.

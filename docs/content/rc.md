@@ -765,18 +765,22 @@ Returns the following values:
 
 ```
 {
-	"speed": average speed in bytes/sec since start of the process,
-	"bytes": total transferred bytes since the start of the process,
+	"bytes": total transferred bytes since the start of the group,
+	"checks": number of files checked,
+	"deletes" : number of files deleted,
+	"elapsedTime": time in floating point seconds since rclone was started,
 	"errors": number of errors,
-	"fatalError": whether there has been at least one FatalError,
-	"retryError": whether there has been at least one non-NoRetryError,
-	"checks": number of checked files,
-	"transfers": number of transferred files,
-	"deletes" : number of deleted files,
-	"renames" : number of renamed files,
+	"eta": estimated time in seconds until the group completes,
+	"fatalError": boolean whether there has been at least one fatal error,
+	"lastError": last error string,
+	"renames" : number of files renamed,
+	"retryError": boolean showing whether there has been at least one non-NoRetryError,
+	"speed": average speed in bytes/sec since start of the group,
+	"totalBytes": total number of bytes in the group,
+	"totalChecks": total number of checks in the group,
+	"totalTransfers": total number of transfers in the group,
 	"transferTime" : total time spent on running jobs,
-	"elapsedTime": time in seconds since the start of the process,
-	"lastError": last occurred error,
+	"transfers": number of transferred files,
 	"transferring": an array of currently active file transfers:
 		[
 			{
@@ -857,6 +861,8 @@ This shows the current version of go and the go runtime
 - os - OS in use as according to Go
 - arch - cpu architecture in use according to Go
 - goVersion - version of Go runtime in use
+- linking - type of rclone executable (static or dynamic)
+- goTags - space separated build tags or "none"
 
 ### debug/set-block-profile-rate: Set runtime.SetBlockProfileRate for blocking profiling. {#debug-set-block-profile-rate}
 
@@ -895,6 +901,26 @@ Parameters
 Results
 
 - previousRate - int
+
+### fscache/clear: Clear the Fs cache. {#fscache-clear}
+
+This clears the fs cache. This is where remotes created from backends
+are cached for a short while to make repeated rc calls more efficient.
+
+If you change the parameters of a backend then you may want to call
+this to clear an existing remote out of the cache before re-creating
+it.
+
+**Authentication is required for this call.**
+
+### fscache/entries: Returns the number of entries in the fs cache. {#fscache-entries}
+
+This returns the number of entries in the fs cache.
+
+Returns
+- entries - number of items in the cache
+
+**Authentication is required for this call.**
 
 ### job/list: Lists the IDs of the running jobs {#job-list}
 
@@ -1256,6 +1282,7 @@ This takes the following parameters
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - each part in body represents a file to be uploaded
+See the [uploadfile command](/commands/rclone_uploadfile/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1264,10 +1291,30 @@ This takes the following parameters
 Returns
 - options - a list of the options block names
 
-### options/get: Get all the options {#options-get}
+### options/get: Get all the global options {#options-get}
 
 Returns an object where keys are option block names and values are an
 object with the current option values in.
+
+Note that these are the global options which are unaffected by use of
+the _config and _filter parameters. If you wish to read the parameters
+set in _config then use options/config and for _filter use options/filter.
+
+This shows the internal names of the option within rclone which should
+map to the external options very easily with a few exceptions.
+
+### options/local: Get the currently active config for this call {#options-local}
+
+Returns an object with the keys "config" and "filter".
+The "config" key contains the local config and the "filter" key contains
+the local filters.
+
+Note that these are the local options specific to this rc call. If
+_config was not supplied then they will be the global options.
+Likewise with "_filter".
+
+This call is mostly useful for seeing if _config and _filter passing
+is working.
 
 This shows the internal names of the option within rclone which should
 map to the external options very easily with a few exceptions.
@@ -1421,6 +1468,7 @@ This takes the following parameters
 
 - srcFs - a remote name string e.g. "drive:src" for the source
 - dstFs - a remote name string e.g. "drive:dst" for the destination
+- createEmptySrcDirs - create empty src directories on destination if set
 
 
 See the [copy command](/commands/rclone_copy/) command for more information on the above.
@@ -1433,6 +1481,7 @@ This takes the following parameters
 
 - srcFs - a remote name string e.g. "drive:src" for the source
 - dstFs - a remote name string e.g. "drive:dst" for the destination
+- createEmptySrcDirs - create empty src directories on destination if set
 - deleteEmptySrcDirs - delete empty src directories if set
 
 
@@ -1446,6 +1495,7 @@ This takes the following parameters
 
 - srcFs - a remote name string e.g. "drive:src" for the source
 - dstFs - a remote name string e.g. "drive:dst" for the destination
+- createEmptySrcDirs - create empty src directories on destination if set
 
 
 See the [sync command](/commands/rclone_sync/) command for more information on the above.

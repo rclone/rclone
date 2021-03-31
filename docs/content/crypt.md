@@ -517,6 +517,20 @@ names, or for debugging purposes.
 - Type:        bool
 - Default:     false
 
+#### --crypt-no-data-encryption
+
+Option to either encrypt file data or leave it unencrypted.
+
+- Config:      no_data_encryption
+- Env Var:     RCLONE_CRYPT_NO_DATA_ENCRYPTION
+- Type:        bool
+- Default:     false
+- Examples:
+    - "true"
+        - Don't encrypt file data, leave it unencrypted.
+    - "false"
+        - Encrypt file data.
+
 ### Backend commands
 
 Here are the commands specific to the crypt backend.

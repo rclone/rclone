@@ -72,11 +72,13 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone rcd](/commands/rclone_rcd/)	 - Run rclone listening to remote control commands only.
 * [rclone rmdir](/commands/rclone_rmdir/)	 - Remove the empty directory at path.
 * [rclone rmdirs](/commands/rclone_rmdirs/)	 - Remove empty directories under the path.
+* [rclone selfupdate](/commands/rclone_selfupdate/)	 - Update the rclone binary.
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 * [rclone settier](/commands/rclone_settier/)	 - Changes storage class/tier of objects in remote.
 * [rclone sha1sum](/commands/rclone_sha1sum/)	 - Produces an sha1sum file for all the objects in the path.
 * [rclone size](/commands/rclone_size/)	 - Prints the total size and number of objects in remote:path.
 * [rclone sync](/commands/rclone_sync/)	 - Make source and dest identical, modifying destination only.
+* [rclone test](/commands/rclone_test/)	 - Run a test command
 * [rclone touch](/commands/rclone_touch/)	 - Create new file or change file modification time.
 * [rclone tree](/commands/rclone_tree/)	 - List the contents of the remote in a tree like fashion.
 * [rclone version](/commands/rclone_version/)	 - Show the version number.

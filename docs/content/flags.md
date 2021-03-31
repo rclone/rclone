@@ -27,10 +27,10 @@ These flags are available for every command.
   -c, --checksum                             Skip based on checksum (if available) & size, not mod-time & size
       --client-cert string                   Client SSL certificate (PEM) for mutual TLS auth
       --client-key string                    Client SSL private key (PEM) for mutual TLS auth
-      --compare-dest string                  Include additional server-side path during comparison.
+      --compare-dest stringArray             Include additional comma separated server-side paths during comparison.
       --config string                        Config file. (default "$HOME/.config/rclone/rclone.conf")
       --contimeout duration                  Connect timeout (default 1m0s)
-      --copy-dest string                     Implies --compare-dest but also copies files from path into destination.
+      --copy-dest stringArray                Implies --compare-dest but also copies files from paths into destination.
       --cpuprofile string                    Write cpu profile to file
       --cutoff-mode string                   Mode to stop transfers when reaching the max transfer limit HARD|SOFT|CAUTIOUS (default "HARD")
       --delete-after                         When synchronizing, delete files on destination after transferring (default)
@@ -39,10 +39,10 @@ These flags are available for every command.
       --delete-excluded                      Delete files on dest excluded from sync
       --disable string                       Disable a comma separated list of features.  Use help to see a list.
   -n, --dry-run                              Do a trial run with no permanent changes
+      --dscp string                          Set DSCP value to connections. Can be value or names, eg. CS1, LE, DF, AF21.
       --dump DumpFlags                       List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
       --dump-bodies                          Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers                         Dump HTTP headers - may contain sensitive info
-      --dscp                                 DSCP Name or Value (default 0)
       --error-on-no-transfer                 Sets exit code 9 if no files are transferred, useful in scripts
       --exclude stringArray                  Exclude files matching pattern
       --exclude-from stringArray             Read exclude patterns from file (use - to read from stdin)
@@ -53,6 +53,8 @@ These flags are available for every command.
       --files-from-raw stringArray           Read list of source-file names from file without any processing of lines (use - to read from stdin)
   -f, --filter stringArray                   Add a file-filtering rule
       --filter-from stringArray              Read filtering patterns from a file (use - to read from stdin)
+      --fs-cache-expire-duration duration    cache remotes for this long (0 to disable caching) (default 5m0s)
+      --fs-cache-expire-interval duration    interval to check for expired remotes (default 1m0s)
       --header stringArray                   Set HTTP header for all transactions
       --header-download stringArray          Set HTTP header for download transactions
       --header-upload stringArray            Set HTTP header for upload transactions
@@ -151,7 +153,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.54.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.55.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -184,6 +186,7 @@ and may be set in the config file.
       --azureblob-msi-client-id string                           Object ID of the user-assigned MSI to use, if any. Leave blank if msi_object_id or msi_mi_res_id specified.
       --azureblob-msi-mi-res-id string                           Azure resource ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_object_id specified.
       --azureblob-msi-object-id string                           Object ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_mi_res_id specified.
+      --azureblob-public-access string                           Public access level of a container: blob, container.
       --azureblob-sas-url string                                 SAS URL for container level access only
       --azureblob-service-principal-file string                  Path to file containing credentials for use with a service principal.
       --azureblob-upload-cutoff string                           Cutoff for switching to chunked upload (<= 256MB). (Deprecated)
@@ -247,6 +250,7 @@ and may be set in the config file.
   -L, --copy-links                                               Follow symlinks and copy the pointed to item.
       --crypt-directory-name-encryption                          Option to either encrypt directory names or leave them intact. (default true)
       --crypt-filename-encryption string                         How to encrypt the filenames. (default "standard")
+      --crypt-no-data-encryption                                 Option to either encrypt file data or leave it unencrypted.
       --crypt-password string                                    Password or pass phrase for encryption. (obscured)
       --crypt-password2 string                                   Password or pass phrase for salt. Optional but recommended. (obscured)
       --crypt-remote string                                      Remote to encrypt/decrypt.
@@ -282,7 +286,7 @@ and may be set in the config file.
       --drive-starred-only                                       Only show files that are starred.
       --drive-stop-on-download-limit                             Make download limit errors be fatal
       --drive-stop-on-upload-limit                               Make upload limit errors be fatal
-      --drive-team-drive string                                  ID of the Team Drive
+      --drive-team-drive string                                  ID of the Shared Drive (Team Drive)
       --drive-token string                                       OAuth Access Token as a JSON blob.
       --drive-token-url string                                   Token server url.
       --drive-trashed-only                                       Only show files that are in the trash.
@@ -311,12 +315,14 @@ and may be set in the config file.
       --filefabric-token-expiry string                           Token expiry time
       --filefabric-url string                                    URL of the Enterprise File Fabric to connect to
       --filefabric-version string                                Version read from the file fabric
+      --ftp-close-timeout Duration                               Maximum time to wait for a response to close. (default 1m0s)
       --ftp-concurrency int                                      Maximum number of FTP simultaneous connections, 0 for unlimited
       --ftp-disable-epsv                                         Disable using EPSV even if server advertises support
       --ftp-disable-mlsd                                         Disable using MLSD even if server advertises support
       --ftp-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,Del,Ctl,RightSpace,Dot)
       --ftp-explicit-tls                                         Use Explicit FTPS (FTP over TLS)
       --ftp-host string                                          FTP host to connect to
+      --ftp-idle-timeout Duration                                Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                                 Do not verify the TLS certificate of the server
       --ftp-pass string                                          FTP password (obscured)
       --ftp-port string                                          FTP port, leave blank to use default (21)
@@ -378,6 +384,7 @@ and may be set in the config file.
       --local-case-sensitive                                     Force the filesystem to report itself as case sensitive.
       --local-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,Dot)
       --local-no-check-updated                                   Don't check to see if the files change during upload
+      --local-no-preallocate                                     Disable preallocation of disk space for transferred files
       --local-no-set-modtime                                     Disable setting modtime
       --local-no-sparse                                          Disable sparse files for multi-thread downloads
       --local-no-unicode-normalization                           Don't apply unicode normalization to paths and filenames (Deprecated)
@@ -482,8 +489,10 @@ and may be set in the config file.
       --seafile-url string                                       URL of seafile host to connect to
       --seafile-user string                                      User name (usually email address)
       --sftp-ask-password                                        Allow asking for SFTP password when needed.
+      --sftp-disable-concurrent-reads                            If set don't use concurrent reads
       --sftp-disable-hashcheck                                   Disable the execution of SSH commands to determine if remote file hashing is available.
       --sftp-host string                                         SSH host to connect to
+      --sftp-idle-timeout Duration                               Max time before closing idle connections (default 1m0s)
       --sftp-key-file string                                     Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent.
       --sftp-key-file-pass string                                The passphrase to decrypt the PEM-encoded private key file. (obscured)
       --sftp-key-pem string                                      Raw PEM-encoded private key, If specified, will override key_file parameter.
@@ -553,9 +562,10 @@ and may be set in the config file.
       --union-upstreams string                                   List of space separated upstreams.
       --webdav-bearer-token string                               Bearer token instead of user/pass (e.g. a Macaroon)
       --webdav-bearer-token-command string                       Command to run to get a bearer token
+      --webdav-encoding string                                   This sets the encoding for the backend.
       --webdav-pass string                                       Password. (obscured)
       --webdav-url string                                        URL of http host to connect to
-      --webdav-user string                                       User name
+      --webdav-user string                                       User name. In case NTLM authentication is used, the username should be in the format 'Domain\User'.
       --webdav-vendor string                                     Name of the Webdav site/service/software you are using
       --yandex-auth-url string                                   Auth server URL.
       --yandex-client-id string                                  OAuth Client Id
@@ -563,6 +573,11 @@ and may be set in the config file.
       --yandex-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,Del,Ctl,InvalidUtf8,Dot)
       --yandex-token string                                      OAuth Access Token as a JSON blob.
       --yandex-token-url string                                  Token server url.
+      --zoho-auth-url string                                     Auth server URL.
+      --zoho-client-id string                                    OAuth Client Id
+      --zoho-client-secret string                                OAuth Client Secret
       --zoho-encoding MultiEncoder                               This sets the encoding for the backend. (default Del,Ctl,InvalidUtf8)
       --zoho-region string                                       Zoho region to connect to. You'll have to use the region you organization is registered in.
+      --zoho-token string                                        OAuth Access Token as a JSON blob.
+      --zoho-token-url string                                    Token server url.
 ```

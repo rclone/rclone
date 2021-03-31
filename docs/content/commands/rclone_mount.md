@@ -29,15 +29,15 @@ is an **empty** **existing** directory:
 
 On Windows you can start a mount in different ways. See [below](#mounting-modes-on-windows)
 for details. The following examples will mount to an automatically assigned drive,
-to specific drive letter `X:`, to path `C:\path\to\nonexistent\directory`
-(which must be **non-existent** subdirectory of an **existing** parent directory or drive,
+to specific drive letter `X:`, to path `C:\path\parent\mount`
+(where parent directory or drive must exist, and mount must **not** exist,
 and is not supported when [mounting as a network drive](#mounting-modes-on-windows)), and
 the last example will mount as network share `\\cloud\remote` and map it to an
 automatically assigned drive:
 
     rclone mount remote:path/to/files *
     rclone mount remote:path/to/files X:
-    rclone mount remote:path/to/files C:\path\to\nonexistent\directory
+    rclone mount remote:path/to/files C:\path\parent\mount
     rclone mount remote:path/to/files \\cloud\remote
 
 When the program ends while in foreground mode, either via Ctrl+C or receiving
@@ -91,14 +91,14 @@ and experience unexpected program errors, freezes or other issues, consider moun
 as a network drive instead.
 
 When mounting as a fixed disk drive you can either mount to an unused drive letter,
-or to a path - which must be **non-existent** subdirectory of an **existing** parent
+or to a path representing a **non-existent** subdirectory of an **existing** parent
 directory or drive. Using the special value `*` will tell rclone to
 automatically assign the next available drive letter, starting with Z: and moving backward.
 Examples:
 
     rclone mount remote:path/to/files *
     rclone mount remote:path/to/files X:
-    rclone mount remote:path/to/files C:\path\to\nonexistent\directory
+    rclone mount remote:path/to/files C:\path\parent\mount
     rclone mount remote:path/to/files X:
 
 Option `--volname` can be used to set a custom volume name for the mounted
@@ -171,10 +171,24 @@ Note that the mapping of permissions is not always trivial, and the result
 you see in Windows Explorer may not be exactly like you expected.
 For example, when setting a value that includes write access, this will be
 mapped to individual permissions "write attributes", "write data" and "append data",
-but not "write extended attributes" (WinFsp does not support extended attributes,
-see [this](https://github.com/billziss-gh/winfsp/wiki/NTFS-Compatibility)).
-Windows will then show this as basic permission "Special" instead of "Write",
-because "Write" includes the "write extended attributes" permission.
+but not "write extended attributes". Windows will then show this as basic
+permission "Special" instead of "Write", because "Write" includes the
+"write extended attributes" permission.
+
+If you set POSIX permissions for only allowing access to the owner, using
+`--file-perms 0600 --dir-perms 0700`, the user group and the built-in "Everyone"
+group will still be given some special permissions, such as "read attributes"
+and "read permissions", in Windows. This is done for compatibility reasons,
+e.g. to allow users without additional permissions to be able to read basic
+metadata about files like in UNIX. One case that may arise is that other programs
+(incorrectly) interprets this as the file being accessible by everyone. For example
+an SSH client may warn about "unprotected private key file".
+
+WinFsp 2021 (version 1.9, still in beta) introduces a new FUSE option "FileSecurity",
+that allows the complete specification of file security descriptors using
+[SDDL](https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format).
+With this you can work around issues such as the mentioned "unprotected private key file"
+by specifying `-o FileSecurity="D:P(A;;FA;;;OW)"`, for file all access (FA) to the owner (OW).
 
 ### Windows caveats
 
@@ -378,6 +392,13 @@ for two reasons.  Firstly because it is only checked every
 `--vfs-cache-poll-interval`.  Secondly because open files cannot be
 evicted from the cache.
 
+You **should not** run two copies of rclone using the same VFS cache
+with the same or overlapping remotes if using `--vfs-cache-mode > off`.
+This can potentially cause data corruption if you do. You can work
+around this by giving each rclone its own cache hierarchy with
+`--cache-dir`. You don't need to worry about this if the remotes in
+use don't overlap.
+
 ### --vfs-cache-mode off
 
 In this mode (the default) the cache will read directly from the remote and write
@@ -521,6 +542,19 @@ If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
 
+## Alternate report of used bytes
+
+Some backends, most notably S3, do not report the amount of bytes used.
+If you need this information to be available when running `df` on the
+filesystem, then pass the flag `--vfs-used-is-size` to rclone.
+With this flag set, instead of relying on the backend to report this
+information, rclone will scan the whole remote similar to `rclone size`
+and compute the total used space itself.
+
+_WARNING._ Contrary to `rclone size`, this flag ignores filters so that the
+result is accurate. However, this is very inefficient and may cost lots of API
+calls resulting in extra charges. Use it as a last resort and only with caching.
+
 
 ```
 rclone mount remote:path /path/to/mountpoint [flags]
@@ -565,6 +599,7 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks. (default 128M)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached. 'off' is unlimited. (default off)
       --vfs-read-wait duration                 Time to wait for in-sequence read before seeking. (default 20ms)
+      --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size.
       --vfs-write-back duration                Time to writeback files after last use when using cache. (default 5s)
       --vfs-write-wait duration                Time to wait for in-sequence write before giving error. (default 1s)
       --volname string                         Set the volume name. Supported on Windows and OSX only.

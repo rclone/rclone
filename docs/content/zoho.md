@@ -128,6 +128,26 @@ from filenames during upload.
 
 Here are the standard options specific to zoho (Zoho).
 
+#### --zoho-client-id
+
+OAuth Client Id
+Leave blank normally.
+
+- Config:      client_id
+- Env Var:     RCLONE_ZOHO_CLIENT_ID
+- Type:        string
+- Default:     ""
+
+#### --zoho-client-secret
+
+OAuth Client Secret
+Leave blank normally.
+
+- Config:      client_secret
+- Env Var:     RCLONE_ZOHO_CLIENT_SECRET
+- Type:        string
+- Default:     ""
+
 #### --zoho-region
 
 Zoho region to connect to. You'll have to use the region you organization is registered in.
@@ -149,6 +169,35 @@ Zoho region to connect to. You'll have to use the region you organization is reg
 ### Advanced Options
 
 Here are the advanced options specific to zoho (Zoho).
+
+#### --zoho-token
+
+OAuth Access Token as a JSON blob.
+
+- Config:      token
+- Env Var:     RCLONE_ZOHO_TOKEN
+- Type:        string
+- Default:     ""
+
+#### --zoho-auth-url
+
+Auth server URL.
+Leave blank to use the provider defaults.
+
+- Config:      auth_url
+- Env Var:     RCLONE_ZOHO_AUTH_URL
+- Type:        string
+- Default:     ""
+
+#### --zoho-token-url
+
+Token server url.
+Leave blank to use the provider defaults.
+
+- Config:      token_url
+- Env Var:     RCLONE_ZOHO_TOKEN_URL
+- Type:        string
+- Default:     ""
 
 #### --zoho-encoding
 

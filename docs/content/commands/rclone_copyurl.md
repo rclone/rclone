@@ -15,15 +15,16 @@ Copy url content to dest.
 Download a URL's content and copy it to the destination without saving
 it in temporary storage.
 
-Setting --auto-filename will cause the file name to be retrieved from
+Setting `--auto-filename`will cause the file name to be retrieved from
 the from URL (after any redirections) and used in the destination
-path.
+path. With `--print-filename` in addition, the resuling file name will
+be printed.
 
-Setting --no-clobber will prevent overwriting file on the 
+Setting `--no-clobber` will prevent overwriting file on the 
 destination if there is one with the same name.
 
-Setting --stdout or making the output file name "-" will cause the
-output to be written to standard output.
+Setting `--stdout` or making the output file name `-`
+will cause the output to be written to standard output.
 
 
 ```
@@ -33,10 +34,11 @@ rclone copyurl https://example.com dest:path [flags]
 ## Options
 
 ```
-  -a, --auto-filename   Get the file name from the URL and use it for destination file path
-  -h, --help            help for copyurl
-      --no-clobber      Prevent overwriting file with same name
-      --stdout          Write the output to stdout rather than a file
+  -a, --auto-filename    Get the file name from the URL and use it for destination file path
+  -h, --help             help for copyurl
+      --no-clobber       Prevent overwriting file with same name
+  -p, --print-filename   Print the resulting name from --auto-filename
+      --stdout           Write the output to stdout rather than a file
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
