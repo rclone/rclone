@@ -1,0 +1,42 @@
+test extended-filenames
+# Tests with several files and a subdirectory
+# that contain UTF-8 code points or whitespace.
+#
+# Notes:
+# - All rclone backends including local return "\n" aka {eol} in file names
+#   as a pseudographic unicode glyph, thus we don't see `\n` in golden logs.
+# - File names with "\t" aka {tab} pass with local, dropbox, and drive
+#   backends, but fail with FTP. As a workaround, the test currently uses
+#   `name{spc}with{eol}white{spc}space` instead of
+#   `name{tab}with{eol}white{spc}space`.
+
+test initial bisync
+bisync resync
+
+test place a newer files on both paths
+# force specific modification time since file time is lost through git
+touch-glob 2001-01-02 {datadir/} file1.txt
+copy-as {datadir/}file1.txt {path2/} New_top_level_mañana_funcionará.txt
+copy-as {datadir/}file1.txt {path2/} file_enconde_mañana_funcionará.txt
+copy-as {datadir/}file1.txt {path1/} filename_contains_ࢺ_p1m.txt
+copy-as {datadir/}file1.txt {path2/} Русский.txt
+copy-as {datadir/}file1.txt {path1/} file1_with{spc}white{spc}space.txt
+copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ test.txt
+copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ mañana_funcionará.txt
+copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ file_with_測試_.txt
+copy-as {datadir/}file1.txt {path2/}subdir_with_ࢺ_ filename_contains_ࢺ_p2s.txt
+copy-as {datadir/}file1.txt {path2/}subdir{spc}with{eol}white{spc}space.txt file2{spc}with{eol}white{spc}space.txt
+copy-as {datadir/}file1.txt {path2/}subdir_rawchars_{chr:19}_{chr:81}_{chr:fe} file3_{chr:19}_{chr:81}_{chr:fe}
+
+test place a new file on both paths
+copy-as {datadir/}file1.txt {path2/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt
+touch-glob 2001-01-03 {datadir/} file1.txt
+copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt
+
+test delete files on both paths
+delete-file {path2/}filename_contains_ࢺ_.txt
+delete-file {path2/}subdir_with_ࢺ_/filename_contains_ě_.txt
+delete-file {path1/}Русский.txt
+
+test bisync run
+bisync

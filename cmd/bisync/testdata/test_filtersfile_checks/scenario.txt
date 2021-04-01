@@ -1,0 +1,36 @@
+test filtersfile-checks
+# Tests bisync's --filters-file MD5 hash checks logic
+# Note that this test checks for bisync's handling of the filters files,
+# not an extensive test of rclone's filter capability.
+# The effectiveness of the filters is not tested.
+# Sequence:
+#  1. Run with --filters-file but with no MD5. Should critical abort.
+#  2. Run without --filtersfile. Should be blocked due to prior critical abort.
+#  3. Run with --filters-file and --resync.
+#  4. Run with --filters-file alone. Should run.
+#  5. Push changed filters file.
+#  6. Run with --filters-file alone. Should critical abort.
+
+test initial bisync
+bisync resync
+
+test 1. inject filters file in workdir.
+copy-file {datadir/}filtersfile.txt {workdir/}
+
+test 2. run with filters-file but without md5. should abort.
+bisync filters-file={workdir/}filtersfile.txt
+
+test 3. run without filters-file. should be blocked due to prior abort.
+bisync
+
+test 4. run with filters-file and resync.
+bisync filters-file={workdir/}filtersfile.txt resync
+
+test 5. run with filters-file alone. should run.
+bisync filters-file={workdir/}filtersfile.txt
+
+test 6. push changed filters-file to workdir.
+copy-as {datadir/}filtersfile2.txt {workdir/} filtersfile.txt
+
+test 7. run with filters-file alone. should abort.
+bisync filters-file={workdir/}filtersfile.txt

@@ -1,0 +1,43 @@
+(01)  : test rclone-args
+
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test place newer files on both paths
+
+
+(05)  : touch-glob 2001-01-02 {datadir/} *
+
+(06)  : copy-file {datadir/}file1.txt {path1/}
+(07)  : copy-file {datadir/}file2.txt {path2/}
+
+(08)  : copy-file {datadir/}file20.txt {path1/}subdir
+(09)  : copy-file {datadir/}file21.txt {path2/}subdir
+
+(10)  : test run bisync with custom options
+(11)  : bisync size-only
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is newer                       - file1.txt
+INFO  : - Path1    File is newer                       - subdir/file20.txt
+INFO  : Path1:    2 changes:    0 new,    2 newer,    0 older,    0 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File is newer                       - file2.txt
+INFO  : - Path2    File is newer                       - subdir/file21.txt
+INFO  : Path2:    2 changes:    0 new,    2 newer,    0 older,    0 deleted
+INFO  : Applying changes
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file1.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir/file20.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file2.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}subdir/file21.txt
+INFO  : - Path2    Do queued copies to                 - Path1
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
