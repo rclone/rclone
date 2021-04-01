@@ -1,0 +1,11 @@
+# Test filters file
+#  Note that this test checks for bisync's access to a filters file, not an extensive test of rclone's filter capability
+
+# Exclude fileZ.txt in root only.  The copy in the subdir should be found and synched.
+- /fileZ.txt
+
+# Checks support for extended alphabets, such as Cyrillic
+- /Расшаренное/**
+- /Lightroom/**
+- /iPad 1/**
+- /Поездки/**

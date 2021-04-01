@@ -1,0 +1,100 @@
+(01)  : test extended-char-paths
+
+
+(02)  : test resync subdirs with extended chars
+(03)  : bisync subdir=測試_Русский_{spc}_{spc}_ě_áñ resync
+INFO  : Synching Path1 "{path1/}測試_Русский_ _ _ě_áñ/" with Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+(04)  : copy-listings resync
+
+(05)  : test place new files with extended chars on each side
+
+(06)  : touch-glob 2001-01-02 {datadir/} file1.txt
+(07)  : copy-as {datadir/}file1.txt {path1/}測試_Русский_{spc}_{spc}_ě_áñ 測試_file1p1
+(08)  : copy-as {datadir/}file1.txt {path2/}測試_Русский_{spc}_{spc}_ě_áñ 測試_file1p2
+
+(09)  : test normal sync of subdirs with extended chars
+(10)  : bisync subdir=測試_Русский_{spc}_{spc}_ě_áñ
+INFO  : Synching Path1 "{path1/}測試_Русский_ _ _ě_áñ/" with Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is new                         - 測試_file1p1
+INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File is new                         - 測試_file1p2
+INFO  : Path2:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
+INFO  : Applying changes
+INFO  : - Path1    Queue copy to Path2                 - {path2/}測試_Русский_ _ _ě_áñ/測試_file1p1
+INFO  : - Path2    Queue copy to Path1                 - {path1/}測試_Русский_ _ _ě_áñ/測試_file1p2
+INFO  : - Path2    Do queued copies to                 - Path1
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}測試_Русский_ _ _ě_áñ/" vs Path2 "{path2/}測試_Русский_ _ _ě_áñ/"
+INFO  : Bisync successful
+(11)  : move-listings normal-sync
+
+(12)  : test check-filename with extended chars. check should fail.
+(13)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+(14)  : delete-file {path1/}測試_Русский_{spc}_{spc}_ě_áñ/測試_check{spc}file
+(15)  : bisync check-access check-filename=測試_check{spc}file
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File was deleted                    - 測試_Русский_ _ _ě_áñ/測試_check file
+INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+ERROR : Access test failed: Path1 count 1, Path2 count 2 - 測試_check file
+ERROR : -          Access test failed: Path2 file not found in Path1 - 測試_Русский_ _ _ě_áñ/測試_check file
+ERROR : Bisync critical error: check file check failed
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+(16)  : copy-listings check-access-fail
+
+(17)  : test check-filename with extended chars. check should pass.
+(18)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : - Path2    Resync will copy to Path1           - 測試_Русский_ _ _ě_áñ/測試_check file
+INFO  : - Path2    Resync is doing queued copies to    - Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+(19)  : bisync check-access check-filename=測試_check{spc}file
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+INFO  : Found 2 matching "測試_check file" files on both paths
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+(20)  : move-listings check-access-pass
+
+(21)  : test filters-file path with extended chars - masks /fileZ.txt
+(22)  : copy-file {datadir/}測試_filtersfile.txt {workdir/}
+(23)  : bisync filters-file={workdir/}測試_filtersfile.txt resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}測試_filtersfile.txt
+INFO  : Storing filters file hash to {workdir/}測試_filtersfile.txt.md5
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+(24)  : copy-as {datadir/}file1.txt {path1/} fileZ.txt
+(25)  : bisync filters-file={workdir/}測試_filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}測試_filtersfile.txt
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful

@@ -1,0 +1,29 @@
+test all-changed
+# Check trap for all files changed logic
+#
+# Setup initial state
+# Change timestamp on all files except RCLONE_TEST
+# Sync should pass
+# Change timestamp on all files including RCLONE_TEST
+# Sync should fail
+# Sync with --force should pass
+
+test initial bisync
+bisync resync
+
+test change timestamp on all files except RCLONE_TEST
+touch-glob 2005-01-02 {path1/} file*
+touch-glob 2005-01-02 {path1/}subdir file*
+
+test sync should pass
+bisync
+
+test change timestamp on all files including RCLONE_TEST
+touch-glob 2004-01-02 {path1/} *
+touch-glob 2004-01-02 {path1/}subdir *
+
+test sync should fail
+bisync
+
+test sync with force should pass
+bisync force

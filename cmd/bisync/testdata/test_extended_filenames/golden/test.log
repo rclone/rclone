@@ -1,0 +1,84 @@
+(01)  : test extended-filenames
+
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test place a newer files on both paths
+
+(05)  : touch-glob 2001-01-02 {datadir/} file1.txt
+(06)  : copy-as {datadir/}file1.txt {path2/} New_top_level_mañana_funcionará.txt
+(07)  : copy-as {datadir/}file1.txt {path2/} file_enconde_mañana_funcionará.txt
+(08)  : copy-as {datadir/}file1.txt {path1/} filename_contains_ࢺ_p1m.txt
+(09)  : copy-as {datadir/}file1.txt {path2/} Русский.txt
+(10)  : copy-as {datadir/}file1.txt {path1/} file1_with{spc}white{spc}space.txt
+(11)  : copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ test.txt
+(12)  : copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ mañana_funcionará.txt
+(13)  : copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ file_with_測試_.txt
+(14)  : copy-as {datadir/}file1.txt {path2/}subdir_with_ࢺ_ filename_contains_ࢺ_p2s.txt
+(15)  : copy-as {datadir/}file1.txt {path2/}subdir{spc}with{eol}white{spc}space.txt file2{spc}with{eol}white{spc}space.txt
+(16)  : copy-as {datadir/}file1.txt {path2/}subdir_rawchars_{chr:19}_{chr:81}_{chr:fe} file3_{chr:19}_{chr:81}_{chr:fe}
+
+(17)  : test place a new file on both paths
+(18)  : copy-as {datadir/}file1.txt {path2/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt
+(19)  : touch-glob 2001-01-03 {datadir/} file1.txt
+(20)  : copy-as {datadir/}file1.txt {path1/}subdir_with_ࢺ_ filechangedbothpaths_ࢺ_.txt
+
+(21)  : test delete files on both paths
+(22)  : delete-file {path2/}filename_contains_ࢺ_.txt
+(23)  : delete-file {path2/}subdir_with_ࢺ_/filename_contains_ě_.txt
+(24)  : delete-file {path1/}Русский.txt
+
+(25)  : test bisync run
+(26)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is new                         - file1_with white space.txt
+INFO  : - Path1    File is new                         - filename_contains_ࢺ_p1m.txt
+INFO  : - Path1    File is new                         - subdir_with_ࢺ_/file_with_測試_.txt
+INFO  : - Path1    File is new                         - subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt
+INFO  : - Path1    File is new                         - subdir_with_ࢺ_/mañana_funcionará.txt
+INFO  : - Path1    File is new                         - subdir_with_ࢺ_/test.txt
+INFO  : - Path1    File was deleted                    - Русский.txt
+INFO  : Path1:    7 changes:    6 new,    0 newer,    0 older,    1 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File is new                         - "subdir_rawchars_␙_\x81_\xfe/file3_␙_\x81_\xfe"
+INFO  : - Path2    File is new                         - New_top_level_mañana_funcionará.txt
+INFO  : - Path2    File is new                         - subdir with␊white space.txt/file2 with␊white space.txt
+INFO  : - Path2    File is new                         - subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt
+INFO  : - Path2    File is new                         - subdir_with_ࢺ_/filename_contains_ࢺ_p2s.txt
+INFO  : - Path2    File is newer                       - file_enconde_mañana_funcionará.txt
+INFO  : - Path2    File is newer                       - Русский.txt
+INFO  : - Path2    File was deleted                    - filename_contains_ࢺ_.txt
+INFO  : - Path2    File was deleted                    - subdir_with_ࢺ_/filename_contains_ě_.txt
+INFO  : Path2:    9 changes:    5 new,    2 newer,    0 older,    2 deleted
+INFO  : Applying changes
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file1_with white space.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}filename_contains_ࢺ_p1m.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir_with_ࢺ_/file_with_測試_.txt
+NOTICE: - WARNING  New or changed in both paths        - subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt
+NOTICE: - Path1    Renaming Path1 copy                 - {path1/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt..path1
+NOTICE: - Path1    Queue copy to Path2                 - {path2/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt..path1
+NOTICE: - Path2    Renaming Path2 copy                 - {path2/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt..path2
+NOTICE: - Path2    Queue copy to Path1                 - {path1/}subdir_with_ࢺ_/filechangedbothpaths_ࢺ_.txt..path2
+INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir_with_ࢺ_/mañana_funcionará.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir_with_ࢺ_/test.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}Русский.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}New_top_level_mañana_funcionará.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file_enconde_mañana_funcionará.txt
+INFO  : - Path1    Queue delete                        - {path1/}filename_contains_ࢺ_.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}subdir with␊white space.txt/file2 with␊white space.txt
+INFO  : - Path2    Queue copy to Path1                 - "{path1/}subdir_rawchars_␙_\x81_\xfe/file3_␙_\x81_\xfe"
+INFO  : - Path1    Queue delete                        - {path1/}subdir_with_ࢺ_/filename_contains_ě_.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}subdir_with_ࢺ_/filename_contains_ࢺ_p2s.txt
+INFO  : - Path2    Do queued copies to                 - Path1
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : -          Do queued deletes on                - Path1
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful

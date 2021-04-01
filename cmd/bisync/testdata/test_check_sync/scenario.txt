@@ -1,0 +1,42 @@
+test check-sync
+# Exercise listing integrity checks
+#
+# 1. Run check-sync-only on a clean sync
+# 2. Copy modified listings into the workdir
+# 3. Run check-sync-only on modified listings
+# 4. Run normal sync to check that it critical aborts
+# 5. Prune failure listings after critical abort
+# 6. Run resync
+# 7. Run normal sync with check-sync enabled (default)
+# 8. Run normal sync with no-check-sync
+
+test initial bisync
+bisync resync
+
+test 1. run check-sync-only on a clean sync
+bisync check-sync-only
+
+test 2. inject modified listings into the workdir
+copy-as {datadir/}_testdir_path1.._testdir_path2.path1.lst {workdir/} {session}.path1.lst
+copy-as {datadir/}_testdir_path1.._testdir_path2.path2.lst {workdir/} {session}.path2.lst
+
+test 3. run check-sync-only on modified listings
+bisync check-sync-only
+copy-listings check-sync-only
+
+test 4. run normal sync to check that it aborts
+bisync
+
+test 5. prune failure listings after critical abort
+delete-glob {workdir/} *.lst
+delete-glob {workdir/} *.lst-err
+delete-glob {workdir/} *.lst-new
+
+test 6. run resync
+bisync resync
+
+test 7. run normal sync with check-sync enabled (default)
+bisync
+
+test 8. run normal sync with no-check-sync
+bisync no-check-sync

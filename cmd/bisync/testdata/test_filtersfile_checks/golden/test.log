@@ -1,0 +1,60 @@
+(01)  : test filtersfile-checks
+
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test 1. inject filters file in workdir.
+(05)  : copy-file {datadir/}filtersfile.txt {workdir/}
+
+(06)  : test 2. run with filters-file but without md5. should abort.
+(07)  : bisync filters-file={workdir/}filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}filtersfile.txt
+ERROR : Bisync critical error: filters file md5 hash not found (must run --resync): {workdir/}filtersfile.txt
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+
+(08)  : test 3. run without filters-file. should be blocked due to prior abort.
+(09)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+ERROR : Bisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+
+(10)  : test 4. run with filters-file and resync.
+(11)  : bisync filters-file={workdir/}filtersfile.txt resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}filtersfile.txt
+INFO  : Storing filters file hash to {workdir/}filtersfile.txt.md5
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(12)  : test 5. run with filters-file alone. should run.
+(13)  : bisync filters-file={workdir/}filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}filtersfile.txt
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(14)  : test 6. push changed filters-file to workdir.
+(15)  : copy-as {datadir/}filtersfile2.txt {workdir/} filtersfile.txt
+
+(16)  : test 7. run with filters-file alone. should abort.
+(17)  : bisync filters-file={workdir/}filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}filtersfile.txt
+ERROR : Bisync critical error: filters file has changed (must run --resync): {workdir/}filtersfile.txt
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
