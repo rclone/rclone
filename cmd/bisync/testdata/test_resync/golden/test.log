@@ -1,0 +1,91 @@
+(01)  : test resync
+
+
+(02)  : test 1. resync with empty path1, resulting in copying all content from path2.
+(03)  : purge-children {path1/}
+(04)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : - Path2    Resync will copy to Path1           - RCLONE_TEST
+INFO  : - Path2    Resync will copy to Path1           - file1.txt
+INFO  : - Path2    Resync will copy to Path1           - file2.txt
+INFO  : - Path2    Resync will copy to Path1           - file3.txt
+INFO  : - Path2    Resync will copy to Path1           - file4.txt
+INFO  : - Path2    Resync will copy to Path1           - file5.txt
+INFO  : - Path2    Resync will copy to Path1           - file6.txt
+INFO  : - Path2    Resync will copy to Path1           - file7.txt
+INFO  : - Path2    Resync is doing queued copies to    - Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+(05)  : move-listings empty-path1
+
+(06)  : test 2. resync with empty path2, resulting in synching all content to path2.
+(07)  : purge-children {path2/}
+(08)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+(09)  : move-listings empty-path2
+
+(10)  : test 3. exercise all of the various file difference scenarios during a resync.
+(11)  : touch-glob 2002-02-02 {datadir/} fileA.txt
+(12)  : touch-glob 1999-09-09 {datadir/} fileB.txt
+
+(13)  : test = file      - path1      - path2      - expected action    - who wins
+(14)  : test - file1.txt - exists     - missing    - sync path1 > path2 - path1
+(15)  : delete-file {path2/}file1.txt
+
+(16)  : test - file2.txt - missing    - exists     - copy path2 > path1 - path2
+(17)  : delete-file {path1/}file2.txt
+
+(18)  : test - file3.txt - exists     - newer date - sync path1 > path2 - path1
+(19)  : copy-as {datadir/}fileA.txt {path2/} file3.txt
+
+(20)  : test - file4.txt - missing    - newer date - copy path2 > path1 - path2
+(21)  : delete-file {path1/}file4.txt
+(22)  : copy-as {datadir/}fileA.txt {path2/} file4.txt
+
+(23)  : test - file5.txt - exists     - older date - sync path1 > path2 - path1
+(24)  : copy-as {datadir/}fileB.txt {path2/} file5.txt
+
+(25)  : test - file6.txt - older date - newer date - sync path1 > path2	- path1
+(26)  : copy-as {datadir/}fileB.txt {path1/} file6.txt
+(27)  : copy-as {datadir/}fileA.txt {path2/} file6.txt
+
+(28)  : test - file7.txt - exists     - exists (same) - none            - same
+
+(29)  : test run bisync with resync
+(30)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : - Path2    Resync will copy to Path1           - file2.txt
+INFO  : - Path2    Resync will copy to Path1           - file4.txt
+INFO  : - Path2    Resync is doing queued copies to    - Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+(31)  : copy-listings mixed-diffs
+
+(32)  : test run normal bisync
+(33)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(34)  : test 4. confirm critical error on normal sync of empty path.
+(35)  : purge-children {path2/}
+(36)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+ERROR : Empty current Path2 listing. Cannot sync to an empty directory: {workdir/}{session}.path2.lst-new
+ERROR : Bisync critical error: empty current Path2 listing: {workdir/}{session}.path2.lst-new
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted

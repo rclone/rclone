@@ -1,0 +1,21 @@
+test max-delete-path2-force
+# - Set up with 9 files.
+# - Delete 5 files from *Path2*, causing max-delete error.
+# - Run with --force to allow sync.
+
+test initial bisync
+bisync resync
+
+test delete >50% of remote files
+delete-file {path2/}file1.txt
+delete-file {path2/}file2.txt
+delete-file {path2/}file3.txt
+delete-file {path2/}file4.txt
+delete-file {path2/}file5.txt
+
+test sync should fail due to too many path2 deletes
+bisync
+copy-listings initial-fail
+
+test apply force option. sync should run.
+bisync force
