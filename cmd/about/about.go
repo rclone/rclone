@@ -22,11 +22,11 @@ func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON")
-	flags.BoolVarP(cmdFlags, &fullOutput, "full", "", false, "Full numbers instead of SI units")
+	flags.BoolVarP(cmdFlags, &fullOutput, "full", "", false, "Full numbers instead of human-readable")
 }
 
 // printValue formats uv to be output
-func printValue(what string, uv *int64) {
+func printValue(what string, uv *int64, isSize bool) {
 	what += ":"
 	if uv == nil {
 		return
@@ -34,8 +34,10 @@ func printValue(what string, uv *int64) {
 	var val string
 	if fullOutput {
 		val = fmt.Sprintf("%d", *uv)
+	} else if isSize {
+		val = fs.SizeSuffix(*uv).ByteUnit()
 	} else {
-		val = fs.SizeSuffix(*uv).String()
+		val = fs.CountSuffix(*uv).String()
 	}
 	fmt.Printf("%-9s%v\n", what, val)
 }
@@ -49,23 +51,22 @@ output. The output is typically used, free, quota and trash contents.
 
 E.g. Typical output from ` + "`rclone about remote:`" + ` is:
 
-    Total:   17G
-    Used:    7.444G
-    Free:    1.315G
-    Trashed: 100.000M
-    Other:   8.241G
+    Total:   17 GiByte
+    Used:    7.444 GiByte
+    Free:    1.315 GiByte
+    Trashed: 100.000 MiByte
+    Other:   8.241 GiByte
 
 Where the fields are:
 
-  * Total: total size available.
-  * Used: total size used
-  * Free: total space available to this user.
-  * Trashed: total space used by trash
-  * Other: total amount in other storage (e.g. Gmail, Google Photos)
-  * Objects: total number of objects in the storage
+  * Total: Total size available.
+  * Used: Total size used.
+  * Free: Total space available to this user.
+  * Trashed: Total space used by trash.
+  * Other: Total amount in other storage (e.g. Gmail, Google Photos).
+  * Objects: Total number of objects in the storage.
 
-Not all backends print all fields. Information is not included if it is not
-provided by a backend. Where the value is unlimited it is omitted.
+All sizes are in number of bytes.
 
 Applying a ` + "`--full`" + ` flag to the command prints the bytes in full, e.g.
 
@@ -85,9 +86,11 @@ A ` + "`--json`" + ` flag generates conveniently computer readable output, e.g.
         "free": 1411001220
     }
 
-Not all backends support the ` + "`rclone about`" + ` command.
+Not all backends print all fields. Information is not included if it is not
+provided by a backend. Where the value is unlimited it is omitted.
 
-See [List of backends that do not support about](https://rclone.org/overview/#optional-features)
+Some backends does not support the ` + "`rclone about`" + ` command at all,
+see complete list in [documentation](https://rclone.org/overview/#optional-features).
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
@@ -109,12 +112,13 @@ See [List of backends that do not support about](https://rclone.org/overview/#op
 				out.SetIndent("", "\t")
 				return out.Encode(u)
 			}
-			printValue("Total", u.Total)
-			printValue("Used", u.Used)
-			printValue("Free", u.Free)
-			printValue("Trashed", u.Trashed)
-			printValue("Other", u.Other)
-			printValue("Objects", u.Objects)
+
+			printValue("Total", u.Total, true)
+			printValue("Used", u.Used, true)
+			printValue("Free", u.Free, true)
+			printValue("Trashed", u.Trashed, true)
+			printValue("Other", u.Other, true)
+			printValue("Objects", u.Objects, false)
 			return nil
 		})
 	},
