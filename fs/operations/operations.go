@@ -860,14 +860,69 @@ func syncFprintf(w io.Writer, format string, a ...interface{}) {
 	}
 }
 
+// SizeString make string representation of size for output
+//
+// Optional human-readable format including a binary suffix
+func SizeString(size int64, humanReadable bool) string {
+	if humanReadable {
+		if size < 0 {
+			return "-" + fs.SizeSuffix(-size).String()
+		}
+		return fs.SizeSuffix(size).String()
+	}
+	return strconv.FormatInt(size, 10)
+}
+
+// SizeStringField make string representation of size for output in fixed width field
+//
+// Optional human-readable format including a binary suffix
+// Argument rawWidth is used to format field with of raw value. When humanReadable
+// option the width is hard coded to 9, since SizeSuffix strings have precision 3
+// and longest value will be "999.999Ei". This way the width can be optimized
+// depending to the humanReadable option. To always use a longer width the return
+// value can always be fed into another format string with a specific field with.
+func SizeStringField(size int64, humanReadable bool, rawWidth int) string {
+	str := SizeString(size, humanReadable)
+	if humanReadable {
+		return fmt.Sprintf("%9s", str)
+	}
+	return fmt.Sprintf("%[2]*[1]s", str, rawWidth)
+}
+
+// CountString make string representation of count for output
+//
+// Optional human-readable format including a decimal suffix
+func CountString(count int64, humanReadable bool) string {
+	if humanReadable {
+		if count < 0 {
+			return "-" + fs.CountSuffix(-count).String()
+		}
+		return fs.CountSuffix(count).String()
+	}
+	return strconv.FormatInt(count, 10)
+}
+
+// CountStringField make string representation of count for output in fixed width field
+//
+// Similar to SizeStringField, but human readable with decimal prefix and field width 8
+// since there is no 'i' in the decimal prefix symbols (e.g. "999.999E")
+func CountStringField(count int64, humanReadable bool, rawWidth int) string {
+	str := CountString(count, humanReadable)
+	if humanReadable {
+		return fmt.Sprintf("%8s", str)
+	}
+	return fmt.Sprintf("%[2]*[1]s", str, rawWidth)
+}
+
 // List the Fs to the supplied writer
 //
 // Shows size and path - obeys includes and excludes
 //
 // Lists in parallel which may get them out of order
 func List(ctx context.Context, f fs.Fs, w io.Writer) error {
+	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
-		syncFprintf(w, "%9d %s\n", o.Size(), o.Remote())
+		syncFprintf(w, "%s %s\n", SizeStringField(o.Size(), ci.HumanReadable, 9), o.Remote())
 	})
 }
 
@@ -877,13 +932,14 @@ func List(ctx context.Context, f fs.Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
+	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
 		tr := accounting.Stats(ctx).NewCheckingTransfer(o)
 		defer func() {
 			tr.Done(ctx, nil)
 		}()
 		modTime := o.ModTime(ctx)
-		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
+		syncFprintf(w, "%s %s %s\n", SizeStringField(o.Size(), ci.HumanReadable, 9), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
 
@@ -1012,10 +1068,11 @@ func ConfigMaxDepth(ctx context.Context, recursive bool) int {
 
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(ctx context.Context, f fs.Fs, w io.Writer) error {
+	ci := fs.GetConfig(ctx)
 	return walk.ListR(ctx, f, "", false, ConfigMaxDepth(ctx, false), walk.ListDirs, func(entries fs.DirEntries) error {
 		entries.ForDir(func(dir fs.Directory) {
 			if dir != nil {
-				syncFprintf(w, "%12d %13s %9d %s\n", dir.Size(), dir.ModTime(ctx).Local().Format("2006-01-02 15:04:05"), dir.Items(), dir.Remote())
+				syncFprintf(w, "%s %13s %s %s\n", SizeStringField(dir.Size(), ci.HumanReadable, 12), dir.ModTime(ctx).Local().Format("2006-01-02 15:04:05"), CountStringField(dir.Items(), ci.HumanReadable, 9), dir.Remote())
 			}
 		})
 		return nil
