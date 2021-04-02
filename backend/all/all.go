@@ -41,6 +41,7 @@ import (
 	_ "github.com/rclone/rclone/backend/swift"
 	_ "github.com/rclone/rclone/backend/tardigrade"
 	_ "github.com/rclone/rclone/backend/union"
+	_ "github.com/rclone/rclone/backend/uptobox"
 	_ "github.com/rclone/rclone/backend/webdav"
 	_ "github.com/rclone/rclone/backend/yandex"
 	_ "github.com/rclone/rclone/backend/zoho"
