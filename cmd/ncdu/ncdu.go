@@ -72,6 +72,7 @@ func helpText() (tr []string) {
 		" c toggle counts",
 		" g toggle graph",
 		" a toggle average size in directory",
+		" u toggle human-readable format",
 		" n,s,C,A sort by name,size,count,average size",
 		" d delete file/directory",
 	}
@@ -107,6 +108,7 @@ type UI struct {
 	showGraph          bool          // toggle showing graph
 	showCounts         bool          // toggle showing counts
 	showDirAverageSize bool          // toggle average size
+	humanReadable      bool          // toggle human-readable format
 	sortByName         int8          // +1 for normal, 0 for off, -1 for reverse
 	sortBySize         int8
 	sortByCount        int8
@@ -372,24 +374,24 @@ func (u *UI) Draw() error {
 			}
 			extras := ""
 			if u.showCounts {
+				ss := operations.CountStringField(count, u.humanReadable, 9) + " "
 				if count > 0 {
-					extras += fmt.Sprintf("%8v ", fs.CountSuffix(count))
+					extras += ss
 				} else {
-					extras += "         "
+					extras += strings.Repeat(" ", len(ss))
 				}
-
 			}
 			var averageSize float64
 			if count > 0 {
 				averageSize = float64(size) / float64(count)
 			}
 			if u.showDirAverageSize {
+				ss := operations.SizeStringField(int64(averageSize), u.humanReadable, 9) + " "
 				if averageSize > 0 {
-					extras += fmt.Sprintf("%9v ", fs.SizeSuffix(int64(averageSize)))
+					extras += ss
 				} else {
-					extras += "          "
+					extras += strings.Repeat(" ", len(ss))
 				}
-
 			}
 			if showEmptyDir {
 				if isDir && count == 0 && fileFlag == ' ' {
@@ -406,7 +408,7 @@ func (u *UI) Draw() error {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			Linef(0, y, w, fg, bg, ' ', "%c %9v %s%c%s%s", fileFlag, fs.SizeSuffix(size), extras, mark, path.Base(entry.Remote()), message)
+			Linef(0, y, w, fg, bg, ' ', "%c %s %s%c%s%s", fileFlag, operations.SizeStringField(size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
 	}
@@ -420,7 +422,7 @@ func (u *UI) Draw() error {
 			message = " [listing in progress]"
 		}
 		size, count := u.d.Attr()
-		Linef(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Total usage: %v, Objects: %d%s", fs.SizeSuffix(size), count, message)
+		Linef(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Total usage: %s, Objects: %s%s", operations.SizeString(size, u.humanReadable), operations.CountString(count, u.humanReadable), message)
 	}
 
 	// Show the box on top if required
@@ -727,6 +729,7 @@ func NewUI(f fs.Fs) *UI {
 		showGraph:          true,
 		showCounts:         false,
 		showDirAverageSize: false,
+		humanReadable:      true,
 		sortByName:         0, // +1 for normal, 0 for off, -1 for reverse
 		sortBySize:         1,
 		sortByCount:        0,
@@ -834,6 +837,8 @@ outer:
 					u.displayPath()
 				case 'd':
 					u.delete()
+				case 'u':
+					u.humanReadable = !u.humanReadable
 				case '?':
 					u.togglePopupBox(helpText())
 
