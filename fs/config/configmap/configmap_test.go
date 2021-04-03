@@ -88,6 +88,21 @@ func TestConfigMapSet(t *testing.T) {
 		"config1": "beetroot",
 		"config2": "potato",
 	}, m2)
+
+	m.ClearSetters()
+
+	// Check that nothing gets set
+	m.Set("config1", "BEETROOT")
+
+	assert.Equal(t, Simple{
+		"config1": "beetroot",
+		"config2": "potato",
+	}, m1)
+	assert.Equal(t, Simple{
+		"config1": "beetroot",
+		"config2": "potato",
+	}, m2)
+
 }
 
 func TestConfigMapGetOverride(t *testing.T) {

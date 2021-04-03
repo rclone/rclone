@@ -60,6 +60,12 @@ func (c *Map) AddSetter(setter Setter) *Map {
 	return c
 }
 
+// ClearSetters removes all the setters set so far
+func (c *Map) ClearSetters() *Map {
+	c.setters = nil
+	return c
+}
+
 // get gets an item with the key passed in and return the value from
 // the first getter. If the item is found then it returns true,
 // otherwise false.
