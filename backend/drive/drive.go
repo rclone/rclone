@@ -2959,12 +2959,12 @@ func (f *Fs) makeShortcut(ctx context.Context, srcPath string, dstFs *Fs, dstPat
 }
 
 // List all team drives
-func (f *Fs) listTeamDrives(ctx context.Context) (drives []*drive.TeamDrive, err error) {
-	drives = []*drive.TeamDrive{}
-	listTeamDrives := f.svc.Teamdrives.List().PageSize(100)
+func (f *Fs) listTeamDrives(ctx context.Context) (drives []*drive.Drive, err error) {
+	drives = []*drive.Drive{}
+	listTeamDrives := f.svc.Drives.List().PageSize(100)
 	var defaultFs Fs // default Fs with default Options
 	for {
-		var teamDrives *drive.TeamDriveList
+		var teamDrives *drive.DriveList
 		err = f.pacer.Call(func() (bool, error) {
 			teamDrives, err = listTeamDrives.Context(ctx).Do()
 			return defaultFs.shouldRetry(ctx, err)
@@ -2972,7 +2972,7 @@ func (f *Fs) listTeamDrives(ctx context.Context) (drives []*drive.TeamDrive, err
 		if err != nil {
 			return drives, errors.Wrap(err, "listing Team Drives failed")
 		}
-		drives = append(drives, teamDrives.TeamDrives...)
+		drives = append(drives, teamDrives.Drives...)
 		if teamDrives.NextPageToken == "" {
 			break
 		}
