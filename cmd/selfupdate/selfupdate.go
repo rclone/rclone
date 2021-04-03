@@ -143,14 +143,9 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 		return errors.New("--stable and --beta are mutually exclusive")
 	}
 
-	gotCmount := false
-	for _, tag := range buildinfo.Tags {
-		if tag == "cmount" {
-			gotCmount = true
-			break
-		}
-	}
-	if gotCmount && !cmount.ProvidedBy(runtime.GOOS) {
+	// The `cmount` tag is added by cmd/cmount/mount.go only if build is static.
+	_, tags := buildinfo.GetLinkingAndTags()
+	if strings.Contains(" "+tags+" ", " cmount ") && !cmount.ProvidedBy(runtime.GOOS) {
 		return errors.New("updating would discard the mount FUSE capability, aborting")
 	}
 
