@@ -39,6 +39,7 @@ import (
 	"github.com/rclone/rclone/lib/buildinfo"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/terminal"
+	"github.com/shirou/gopsutil/v3/host"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -75,8 +76,38 @@ const (
 
 // ShowVersion prints the version to stdout
 func ShowVersion() {
+	osVersion := ""
+	osKernel := ""
+	if platform, _, version, err := host.PlatformInformation(); err == nil && platform != "" {
+		osVersion = platform
+		if version != "" {
+			osVersion += " " + version
+		}
+	}
+	if version, err := host.KernelVersion(); err == nil && version != "" {
+		osKernel = version
+	}
+	if arch, err := host.KernelArch(); err == nil && arch != "" {
+		if strings.HasSuffix(arch, "64") && osVersion != "" {
+			osVersion += " (64 bit)"
+		}
+
+		if osKernel != "" {
+			osKernel += " (" + arch + ")"
+		}
+	}
+	if osVersion == "" {
+		osVersion = "unknown"
+	}
+	if osKernel == "" {
+		osKernel = "unknown"
+	}
+
 	linking, tagString := buildinfo.GetLinkingAndTags()
+
 	fmt.Printf("rclone %s\n", fs.Version)
+	fmt.Printf("- os/version: %s\n", osVersion)
+	fmt.Printf("- os/kernel: %s\n", osKernel)
 	fmt.Printf("- os/type: %s\n", runtime.GOOS)
 	fmt.Printf("- os/arch: %s\n", runtime.GOARCH)
 	fmt.Printf("- go/version: %s\n", runtime.Version())
