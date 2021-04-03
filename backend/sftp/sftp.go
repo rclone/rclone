@@ -395,8 +395,12 @@ func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.C
 	opts = opts[:len(opts):len(opts)] // make sure we don't overwrite the callers opts
 	opts = append(opts,
 		sftp.UseFstat(f.opt.UseFstat),
-		sftp.UseConcurrentReads(!f.opt.DisableConcurrentReads),
+		// FIXME disabled after library reversion
+		// sftp.UseConcurrentReads(!f.opt.DisableConcurrentReads),
 	)
+	if f.opt.DisableConcurrentReads { // FIXME
+		fs.Errorf(f, "Ignoring disable_concurrent_reads after library reversion - see #5197")
+	}
 
 	return sftp.NewClientPipe(pr, pw, opts...)
 }
