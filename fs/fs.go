@@ -125,6 +125,21 @@ func (os Options) Get(name string) *Option {
 	return nil
 }
 
+// Overridden discovers which config items have been overridden in the
+// configmap passed in, either by the config string, command line
+// flags or environment variables
+func (os Options) Overridden(m *configmap.Map) configmap.Simple {
+	var overridden = configmap.Simple{}
+	for i := range os {
+		opt := &os[i]
+		value, isSet := m.GetOverride(opt.Name)
+		if isSet {
+			overridden.Set(opt.Name, value)
+		}
+	}
+	return overridden
+}
+
 // OptionVisibility controls whether the options are visible in the
 // configurator or the command line.
 type OptionVisibility byte
@@ -1381,17 +1396,7 @@ func NewFs(ctx context.Context, path string) (Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Now discover which config items have been overridden,
-	// either by the config string, command line flags or
-	// environment variables
-	var overridden = configmap.Simple{}
-	for i := range fsInfo.Options {
-		opt := &fsInfo.Options[i]
-		value, isSet := config.GetOverride(opt.Name)
-		if isSet {
-			overridden.Set(opt.Name, value)
-		}
-	}
+	overridden := fsInfo.Options.Overridden(config)
 	if len(overridden) > 0 {
 		extraConfig := overridden.String()
 		//Debugf(nil, "detected overriden config %q", extraConfig)
