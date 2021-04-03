@@ -6,6 +6,8 @@ import (
 )
 
 // Tags contains slice of build tags
+// The `cmount` tag is added by cmd/cmount/mount.go only if build is static.
+// Other tags including `cgo` are detected in this package.
 var Tags []string
 
 // GetLinkingAndTags tells how the rclone executable was linked
