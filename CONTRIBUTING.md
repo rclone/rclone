@@ -33,10 +33,11 @@ page](https://github.com/rclone/rclone).
 
 Now in your terminal
 
-    go get -u github.com/rclone/rclone
-    cd $GOPATH/src/github.com/rclone/rclone
+    git clone https://github.com/rclone/rclone.git
+    cd rclone
     git remote rename origin upstream
     git remote add origin git@github.com:YOURUSER/rclone.git
+    go build
 
 Make a branch to add your new feature
 
