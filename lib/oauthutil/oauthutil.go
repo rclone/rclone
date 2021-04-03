@@ -526,14 +526,6 @@ version recommended):
 		return errors.Wrap(err, "failed to get token")
 	}
 
-	// Print code if we are doing a manual auth
-	if authorizeOnly {
-		result, err := json.Marshal(token)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal token")
-		}
-		fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste\n", result)
-	}
 	return PutToken(name, m, token, true)
 }
 

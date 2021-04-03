@@ -2,9 +2,11 @@ package config
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 )
 
 // Authorize is for remote authorization of headless machines.
@@ -20,29 +22,43 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 	default:
 		return errors.Errorf("invalid number of arguments: %d", len(args))
 	}
-	newType := args[0]
-	f := fs.MustFind(newType)
-	if f.Config == nil {
-		return errors.Errorf("can't authorize fs %q", newType)
+	Type := args[0] // FIXME could read this from input
+	ri, err := fs.Find(Type)
+	if err != nil {
+		return err
 	}
-	// Name used for temporary fs
-	name := "**temp-fs**"
+	if ri.Config == nil {
+		return errors.Errorf("can't authorize fs %q", Type)
+	}
 
-	// Make sure we delete it
-	defer DeleteRemote(name)
+	// Config map for remote
+	inM := configmap.Simple{}
 
 	// Indicate that we are running rclone authorize
-	Data.SetValue(name, ConfigAuthorize, "true")
+	inM[ConfigAuthorize] = "true"
 	if noAutoBrowser {
-		Data.SetValue(name, ConfigAuthNoBrowser, "true")
+		inM[ConfigAuthNoBrowser] = "true"
 	}
 
 	if len(args) == 3 {
-		Data.SetValue(name, ConfigClientID, args[1])
-		Data.SetValue(name, ConfigClientSecret, args[2])
+		inM[ConfigClientID] = args[1]
+		inM[ConfigClientSecret] = args[2]
 	}
 
-	m := fs.ConfigMap(f, name, nil)
-	f.Config(ctx, name, m)
+	// Name used for temporary remote
+	name := "**temp-fs**"
+
+	m := fs.ConfigMap(ri, name, inM)
+	outM := configmap.Simple{}
+	m.ClearSetters()
+	m.AddSetter(outM)
+
+	ri.Config(ctx, name, m)
+
+	// Print code if we are doing a manual auth
+	fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste\n", outM["token"])
+
+	fs.Debugf(nil, "Set parameters %q", outM)
+
 	return nil
 }
