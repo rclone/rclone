@@ -1,4 +1,5 @@
 // +build windows
+// +build !noselfupdate
 
 package selfupdate
 

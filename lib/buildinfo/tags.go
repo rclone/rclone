@@ -5,8 +5,9 @@ import (
 	"strings"
 )
 
-// Tags contains slice of build tags
+// Tags contains slice of build tags.
 // The `cmount` tag is added by cmd/cmount/mount.go only if build is static.
+// The `noselfupdate` tag is added by cmd/selfupdate/noselfupdate.go
 // Other tags including `cgo` are detected in this package.
 var Tags []string
 
