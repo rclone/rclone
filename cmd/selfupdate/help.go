@@ -1,3 +1,5 @@
+// +build !noselfupdate
+
 package selfupdate
 
 // Note: "|" will be replaced by backticks in the help string below

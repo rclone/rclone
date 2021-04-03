@@ -1,4 +1,5 @@
 // +build !windows,!plan9,!js
+// +build !noselfupdate
 
 package selfupdate
 

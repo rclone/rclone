@@ -1,4 +1,5 @@
 // +build plan9 js
+// +build !noselfupdate
 
 package selfupdate
 
