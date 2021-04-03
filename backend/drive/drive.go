@@ -3069,7 +3069,7 @@ func (f *Fs) copyID(ctx context.Context, id, dest string) (err error) {
 		return err
 	}
 	if destLeaf == "" {
-		destLeaf = info.Name
+		destLeaf = path.Base(o.Remote())
 	}
 	if destDir == "" {
 		destDir = "."
