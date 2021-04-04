@@ -190,6 +190,43 @@ func TestOptionsGet(t *testing.T) {
 	assert.Nil(t, opt)
 }
 
+func TestOptionsOveridden(t *testing.T) {
+	m := configmap.New()
+	m1 := configmap.Simple{
+		"nounc":      "m1",
+		"copy_links": "m1",
+	}
+	m.AddGetter(m1, configmap.PriorityNormal)
+	m2 := configmap.Simple{
+		"nounc":            "m2",
+		"case_insensitive": "m2",
+	}
+	m.AddGetter(m2, configmap.PriorityConfig)
+	m3 := configmap.Simple{
+		"nounc": "m3",
+	}
+	m.AddGetter(m3, configmap.PriorityDefault)
+	got := testOptions.Overridden(m)
+	assert.Equal(t, configmap.Simple{
+		"copy_links": "m1",
+		"nounc":      "m1",
+	}, got)
+}
+
+func TestOptionsNonDefault(t *testing.T) {
+	m := configmap.Simple{}
+	got := testOptions.NonDefault(m)
+	assert.Equal(t, configmap.Simple{}, got)
+
+	m["case_insensitive"] = "false"
+	got = testOptions.NonDefault(m)
+	assert.Equal(t, configmap.Simple{}, got)
+
+	m["case_insensitive"] = "true"
+	got = testOptions.NonDefault(m)
+	assert.Equal(t, configmap.Simple{"case_insensitive": "true"}, got)
+}
+
 func TestOptionMarshalJSON(t *testing.T) {
 	out, err := json.MarshalIndent(&caseInsensitiveOption, "", "")
 	assert.NoError(t, err)

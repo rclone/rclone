@@ -140,6 +140,23 @@ func (os Options) Overridden(m *configmap.Map) configmap.Simple {
 	return overridden
 }
 
+// NonDefault discovers which config values aren't at their default
+func (os Options) NonDefault(m configmap.Getter) configmap.Simple {
+	var nonDefault = configmap.Simple{}
+	for i := range os {
+		opt := &os[i]
+		value, isSet := m.Get(opt.Name)
+		if !isSet {
+			continue
+		}
+		defaultValue := fmt.Sprint(opt.Default)
+		if value != defaultValue {
+			nonDefault.Set(opt.Name, value)
+		}
+	}
+	return nonDefault
+}
+
 // OptionVisibility controls whether the options are visible in the
 // configurator or the command line.
 type OptionVisibility byte
