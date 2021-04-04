@@ -325,6 +325,15 @@ fall back to normal copy (which will be slightly slower).
 - Type:        bool
 - Default:     false
 
+#### --onedrive-list-chunk
+
+Size of listing chunk.
+
+- Config:      list_chunk
+- Env Var:     RCLONE_ONEDRIVE_LIST_CHUNK
+- Type:        int
+- Default:     1000
+
 #### --onedrive-no-versions
 
 Remove all versions on modifying operations
