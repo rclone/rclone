@@ -902,7 +902,7 @@ type listAllFn func(*api.Item) bool
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	// Top parameter asks for bigger pages of data
 	// https://dev.onedrive.com/odata/optional-query-parameters.htm
-	opts := f.newOptsCall(dirID, "GET", fmt.Sprintf("/children?$top=%d", &f.opt.ListChunk))
+	opts := f.newOptsCall(dirID, "GET", fmt.Sprintf("/children?$top=%d", f.opt.ListChunk))
 OUTER:
 	for {
 		var result api.ListChildrenResponse
