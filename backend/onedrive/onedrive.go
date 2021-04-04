@@ -362,6 +362,11 @@ the files to copy are already shared between them.  In other cases, rclone will
 fall back to normal copy (which will be slightly slower).`,
 			Advanced: true,
 		}, {
+			Name:     "list_chunk",
+			Help:     "Size of listing chunk.",
+			Default:  1000,
+			Advanced: true,
+		}, {
 			Name:    "no_versions",
 			Default: false,
 			Help: `Remove all versions on modifying operations
@@ -468,6 +473,7 @@ type Options struct {
 	DriveType               string               `config:"drive_type"`
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
+	ListChunk               int64                `config:"list_chunk"`
 	NoVersions              bool                 `config:"no_versions"`
 	LinkScope               string               `config:"link_scope"`
 	LinkType                string               `config:"link_type"`
@@ -896,7 +902,7 @@ type listAllFn func(*api.Item) bool
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
 	// Top parameter asks for bigger pages of data
 	// https://dev.onedrive.com/odata/optional-query-parameters.htm
-	opts := f.newOptsCall(dirID, "GET", "/children?$top=1000")
+	opts := f.newOptsCall(dirID, "GET", fmt.Sprintf("/children?$top=%d", f.opt.ListChunk))
 OUTER:
 	for {
 		var result api.ListChildrenResponse

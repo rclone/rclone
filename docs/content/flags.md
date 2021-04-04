@@ -415,6 +415,7 @@ and may be set in the config file.
       --onedrive-link-password string                            Set the password for links created by the link command.
       --onedrive-link-scope string                               Set the scope of the links created by the link command. (default "anonymous")
       --onedrive-link-type string                                Set the type of the links created by the link command. (default "view")
+      --onedrive-list-chunk int                                  Size of listing chunk. (default 1000)
       --onedrive-no-versions                                     Remove all versions on modifying operations
       --onedrive-region string                                   Choose national cloud region for OneDrive. (default "global")
       --onedrive-server-side-across-configs                      Allow server-side operations (e.g. copy) to work across different onedrive configs.
