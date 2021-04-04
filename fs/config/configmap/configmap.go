@@ -2,8 +2,13 @@
 package configmap
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"sort"
 	"strings"
+	"unicode"
+
+	"github.com/pkg/errors"
 )
 
 // Priority of getters
@@ -158,4 +163,39 @@ func (c Simple) String() string {
 		out.WriteRune('\'')
 	}
 	return out.String()
+}
+
+// Encode from c into a string suitable for putting on the command line
+func (c Simple) Encode() (string, error) {
+	if len(c) == 0 {
+		return "", nil
+	}
+	buf, err := json.Marshal(c)
+	if err != nil {
+		return "", errors.Wrap(err, "encode simple map")
+	}
+	return base64.RawStdEncoding.EncodeToString(buf), nil
+}
+
+// Decode an Encode~d string in into c
+func (c Simple) Decode(in string) error {
+	// Remove all whitespace from the input string
+	in = strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, in)
+	if len(in) == 0 {
+		return nil
+	}
+	decodedM, err := base64.RawStdEncoding.DecodeString(in)
+	if err != nil {
+		return errors.Wrap(err, "decode simple map")
+	}
+	err = json.Unmarshal(decodedM, &c)
+	if err != nil {
+		return errors.Wrap(err, "parse simple map")
+	}
+	return nil
 }

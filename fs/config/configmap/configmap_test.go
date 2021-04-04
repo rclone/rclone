@@ -1,9 +1,11 @@
 package configmap
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -266,4 +268,92 @@ func TestSimpleString(t *testing.T) {
 		"config1": "o'n'e",
 		"apple":   "",
 	}.String())
+}
+
+func TestSimpleEncode(t *testing.T) {
+	for _, test := range []struct {
+		in   Simple
+		want string
+	}{
+		{
+			in:   Simple{},
+			want: "",
+		},
+		{
+			in: Simple{
+				"one": "potato",
+			},
+			want: "eyJvbmUiOiJwb3RhdG8ifQ",
+		},
+		{
+			in: Simple{
+				"one": "potato",
+				"two": "",
+			},
+			want: "eyJvbmUiOiJwb3RhdG8iLCJ0d28iOiIifQ",
+		},
+	} {
+		got, err := test.in.Encode()
+		require.NoError(t, err)
+		assert.Equal(t, test.want, got)
+		gotM := Simple{}
+		err = gotM.Decode(got)
+		require.NoError(t, err)
+		assert.Equal(t, test.in, gotM)
+	}
+}
+
+func TestSimpleDecode(t *testing.T) {
+	for _, test := range []struct {
+		in      string
+		want    Simple
+		wantErr string
+	}{
+		{
+			in:   "",
+			want: Simple{},
+		},
+		{
+			in: "eyJvbmUiOiJwb3RhdG8ifQ",
+			want: Simple{
+				"one": "potato",
+			},
+		},
+		{
+			in: "   e yJvbm  UiOiJwb\r\n 3Rhd\tG8ifQ\n\n ",
+			want: Simple{
+				"one": "potato",
+			},
+		},
+		{
+			in: "eyJvbmUiOiJwb3RhdG8iLCJ0d28iOiIifQ",
+			want: Simple{
+				"one": "potato",
+				"two": "",
+			},
+		},
+		{
+			in:      "!!!!!",
+			want:    Simple{},
+			wantErr: "decode simple map",
+		},
+		{
+			in:   base64.RawStdEncoding.EncodeToString([]byte(`null`)),
+			want: Simple{},
+		},
+		{
+			in:      base64.RawStdEncoding.EncodeToString([]byte(`rubbish`)),
+			want:    Simple{},
+			wantErr: "parse simple map",
+		},
+	} {
+		got := Simple{}
+		err := got.Decode(test.in)
+		assert.Equal(t, test.want, got, test.in)
+		if test.wantErr == "" {
+			require.NoError(t, err, test.in)
+		} else {
+			assert.Contains(t, err.Error(), test.wantErr, test.in)
+		}
+	}
 }
