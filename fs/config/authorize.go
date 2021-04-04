@@ -18,7 +18,7 @@ import (
 func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 	ctx = suppressConfirm(ctx)
 	switch len(args) {
-	case 1, 3:
+	case 1, 2, 3:
 	default:
 		return errors.Errorf("invalid number of arguments: %d", len(args))
 	}
@@ -40,7 +40,13 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 		inM[ConfigAuthNoBrowser] = "true"
 	}
 
-	if len(args) == 3 {
+	// Add extra parameters if supplied
+	if len(args) == 2 {
+		err := inM.Decode(args[1])
+		if err != nil {
+			return err
+		}
+	} else if len(args) == 3 {
 		inM[ConfigClientID] = args[1]
 		inM[ConfigClientSecret] = args[2]
 	}
@@ -52,13 +58,21 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 	outM := configmap.Simple{}
 	m.ClearSetters()
 	m.AddSetter(outM)
+	m.AddGetter(outM, configmap.PriorityNormal)
 
 	ri.Config(ctx, name, m)
 
-	// Print code if we are doing a manual auth
-	fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste\n", outM["token"])
+	// Print the code for the user to paste
+	out := outM["token"]
 
-	fs.Debugf(nil, "Set parameters %q", outM)
+	// If received a config blob, then return one
+	if len(args) == 2 {
+		out, err = outM.Encode()
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Printf("Paste the following into your remote machine --->\n%s\n<---End paste\n", out)
 
 	return nil
 }

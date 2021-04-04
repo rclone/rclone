@@ -447,19 +447,46 @@ Execute the following on the machine with the web browser (same rclone
 version recommended):
 
 `)
-			if changed {
-				fmt.Printf("\trclone authorize %q -- %q %q\n", id, oauthConfig.ClientID, oauthConfig.ClientSecret)
+			// Find the configuration
+			ri, err := fs.Find(id)
+			if err != nil {
+				return errors.Wrap(err, "oauthutil authorize")
+			}
+			// Find the overridden options
+			inM := ri.Options.NonDefault(m)
+			delete(inM, config.ConfigToken) // delete token as we are refreshing it
+			for k, v := range inM {
+				fs.Debugf(nil, "sending %s = %q", k, v)
+			}
+			// Encode them into a string
+			mCopyString, err := inM.Encode()
+			if err != nil {
+				return errors.Wrap(err, "oauthutil authorize encode")
+			}
+			// Write what the user has to do
+			if len(mCopyString) > 0 {
+				fmt.Printf("\trclone authorize %q %q\n", id, mCopyString)
 			} else {
 				fmt.Printf("\trclone authorize %q\n", id)
 			}
 			fmt.Println("\nThen paste the result below:")
-			code := config.ReadNonEmptyLine("result> ")
-			token := &oauth2.Token{}
-			err := json.Unmarshal([]byte(code), token)
-			if err != nil {
-				return err
+			// Read the updates to the config
+			var outM configmap.Simple
+			for {
+				outM = configmap.Simple{}
+				code := config.ReadNonEmptyLine("result> ")
+				err = outM.Decode(code)
+				if err == nil {
+					break
+				}
+				fmt.Printf("Couldn't decode response - try again (make sure you are using a matching version of rclone on both sides: %v\n", err)
 			}
-			return PutToken(name, m, token, true)
+			// Save the config updates
+			for k, v := range outM {
+				m.Set(k, v)
+				fs.Debugf(nil, "received %s = %q", k, v)
+			}
+			return nil
 		}
 	}
 
