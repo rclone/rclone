@@ -27,7 +27,7 @@ func TestConfigMapGet(t *testing.T) {
 		"config1": "one",
 	}
 
-	m.AddGetter(m1)
+	m.AddGetter(m1, PriorityNormal)
 
 	value, found = m.Get("config1")
 	assert.Equal(t, "one", value)
@@ -42,7 +42,7 @@ func TestConfigMapGet(t *testing.T) {
 		"config2": "two2",
 	}
 
-	m.AddGetter(m2)
+	m.AddGetter(m2, PriorityNormal)
 
 	value, found = m.Get("config1")
 	assert.Equal(t, "one", value)
@@ -105,54 +105,143 @@ func TestConfigMapSet(t *testing.T) {
 
 }
 
-func TestConfigMapGetOverride(t *testing.T) {
+func TestConfigMapGetPriority(t *testing.T) {
 	m := New()
 
-	value, found := m.GetOverride("config1")
+	value, found := m.GetPriority("config1", PriorityMax)
 	assert.Equal(t, "", value)
 	assert.Equal(t, false, found)
 
-	value, found = m.GetOverride("config2")
+	value, found = m.GetPriority("config2", PriorityMax)
 	assert.Equal(t, "", value)
 	assert.Equal(t, false, found)
 
 	m1 := Simple{
 		"config1": "one",
+		"config3": "three",
 	}
 
-	m.AddOverrideGetter(m1)
+	m.AddGetter(m1, PriorityConfig)
 
-	value, found = m.GetOverride("config1")
+	value, found = m.GetPriority("config1", PriorityNormal)
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	value, found = m.GetPriority("config2", PriorityNormal)
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	value, found = m.GetPriority("config3", PriorityNormal)
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	value, found = m.GetPriority("config1", PriorityConfig)
 	assert.Equal(t, "one", value)
 	assert.Equal(t, true, found)
 
-	value, found = m.GetOverride("config2")
+	value, found = m.GetPriority("config2", PriorityConfig)
 	assert.Equal(t, "", value)
 	assert.Equal(t, false, found)
+
+	value, found = m.GetPriority("config3", PriorityConfig)
+	assert.Equal(t, "three", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetPriority("config1", PriorityMax)
+	assert.Equal(t, "one", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetPriority("config2", PriorityMax)
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	value, found = m.GetPriority("config3", PriorityMax)
+	assert.Equal(t, "three", value)
+	assert.Equal(t, true, found)
 
 	m2 := Simple{
 		"config1": "one2",
 		"config2": "two2",
 	}
 
-	m.AddGetter(m2)
+	m.AddGetter(m2, PriorityNormal)
 
-	value, found = m.GetOverride("config1")
-	assert.Equal(t, "one", value)
+	value, found = m.GetPriority("config1", PriorityNormal)
+	assert.Equal(t, "one2", value)
 	assert.Equal(t, true, found)
 
-	value, found = m.GetOverride("config2")
-	assert.Equal(t, "", value)
-	assert.Equal(t, false, found)
-
-	value, found = m.Get("config1")
-	assert.Equal(t, "one", value)
-	assert.Equal(t, true, found)
-
-	value, found = m.Get("config2")
+	value, found = m.GetPriority("config2", PriorityNormal)
 	assert.Equal(t, "two2", value)
 	assert.Equal(t, true, found)
 
+	value, found = m.GetPriority("config3", PriorityNormal)
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, found)
+
+	value, found = m.GetPriority("config1", PriorityConfig)
+	assert.Equal(t, "one2", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetPriority("config2", PriorityConfig)
+	assert.Equal(t, "two2", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetPriority("config3", PriorityConfig)
+	assert.Equal(t, "three", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetPriority("config1", PriorityMax)
+	assert.Equal(t, "one2", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetPriority("config2", PriorityMax)
+	assert.Equal(t, "two2", value)
+	assert.Equal(t, true, found)
+
+	value, found = m.GetPriority("config3", PriorityMax)
+	assert.Equal(t, "three", value)
+	assert.Equal(t, true, found)
+}
+
+func TestConfigMapClearGetters(t *testing.T) {
+	m := New()
+	m1 := Simple{}
+	m2 := Simple{}
+	m3 := Simple{}
+	m.AddGetter(m1, PriorityNormal)
+	m.AddGetter(m2, PriorityDefault)
+	m.AddGetter(m3, PriorityConfig)
+	assert.Equal(t, []getprio{
+		{m1, PriorityNormal},
+		{m3, PriorityConfig},
+		{m2, PriorityDefault},
+	}, m.getters)
+	m.ClearGetters(PriorityConfig)
+	assert.Equal(t, []getprio{
+		{m1, PriorityNormal},
+		{m2, PriorityDefault},
+	}, m.getters)
+	m.ClearGetters(PriorityNormal)
+	assert.Equal(t, []getprio{
+		{m2, PriorityDefault},
+	}, m.getters)
+	m.ClearGetters(PriorityDefault)
+	assert.Equal(t, []getprio{}, m.getters)
+	m.ClearGetters(PriorityDefault)
+	assert.Equal(t, []getprio{}, m.getters)
+}
+
+func TestConfigMapClearSetters(t *testing.T) {
+	m := New()
+	m1 := Simple{}
+	m2 := Simple{}
+	m3 := Simple{}
+	m.AddSetter(m1)
+	m.AddSetter(m2)
+	m.AddSetter(m3)
+	assert.Equal(t, []Setter{m1, m2, m3}, m.setters)
+	m.ClearSetters()
+	assert.Equal(t, []Setter(nil), m.setters)
 }
 
 func TestSimpleString(t *testing.T) {
