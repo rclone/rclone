@@ -227,6 +227,17 @@ If concurrent reads are disabled, the use_fstat option is ignored.
 `,
 			Advanced: true,
 		}, {
+			Name:    "disable_concurrent_writes",
+			Default: false,
+			Help: `If set don't use concurrent writes
+
+Normally rclone uses concurrent writes to upload files. This improves
+the performance greatly, especially for distant servers.
+
+This option disables concurrent writes should that be necessary.
+`,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections
@@ -244,29 +255,30 @@ Set to 0 to keep connections indefinitely.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host                   string      `config:"host"`
-	User                   string      `config:"user"`
-	Port                   string      `config:"port"`
-	Pass                   string      `config:"pass"`
-	KeyPem                 string      `config:"key_pem"`
-	KeyFile                string      `config:"key_file"`
-	KeyFilePass            string      `config:"key_file_pass"`
-	PubKeyFile             string      `config:"pubkey_file"`
-	KnownHostsFile         string      `config:"known_hosts_file"`
-	KeyUseAgent            bool        `config:"key_use_agent"`
-	UseInsecureCipher      bool        `config:"use_insecure_cipher"`
-	DisableHashCheck       bool        `config:"disable_hashcheck"`
-	AskPassword            bool        `config:"ask_password"`
-	PathOverride           string      `config:"path_override"`
-	SetModTime             bool        `config:"set_modtime"`
-	Md5sumCommand          string      `config:"md5sum_command"`
-	Sha1sumCommand         string      `config:"sha1sum_command"`
-	SkipLinks              bool        `config:"skip_links"`
-	Subsystem              string      `config:"subsystem"`
-	ServerCommand          string      `config:"server_command"`
-	UseFstat               bool        `config:"use_fstat"`
-	DisableConcurrentReads bool        `config:"disable_concurrent_reads"`
-	IdleTimeout            fs.Duration `config:"idle_timeout"`
+	Host                    string      `config:"host"`
+	User                    string      `config:"user"`
+	Port                    string      `config:"port"`
+	Pass                    string      `config:"pass"`
+	KeyPem                  string      `config:"key_pem"`
+	KeyFile                 string      `config:"key_file"`
+	KeyFilePass             string      `config:"key_file_pass"`
+	PubKeyFile              string      `config:"pubkey_file"`
+	KnownHostsFile          string      `config:"known_hosts_file"`
+	KeyUseAgent             bool        `config:"key_use_agent"`
+	UseInsecureCipher       bool        `config:"use_insecure_cipher"`
+	DisableHashCheck        bool        `config:"disable_hashcheck"`
+	AskPassword             bool        `config:"ask_password"`
+	PathOverride            string      `config:"path_override"`
+	SetModTime              bool        `config:"set_modtime"`
+	Md5sumCommand           string      `config:"md5sum_command"`
+	Sha1sumCommand          string      `config:"sha1sum_command"`
+	SkipLinks               bool        `config:"skip_links"`
+	Subsystem               string      `config:"subsystem"`
+	ServerCommand           string      `config:"server_command"`
+	UseFstat                bool        `config:"use_fstat"`
+	DisableConcurrentReads  bool        `config:"disable_concurrent_reads"`
+	DisableConcurrentWrites bool        `config:"disable_concurrent_writes"`
+	IdleTimeout             fs.Duration `config:"idle_timeout"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -414,8 +426,8 @@ func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.C
 	opts = opts[:len(opts):len(opts)] // make sure we don't overwrite the callers opts
 	opts = append(opts,
 		sftp.UseFstat(f.opt.UseFstat),
-		// FIXME disabled after library reversion
-		// sftp.UseConcurrentReads(!f.opt.DisableConcurrentReads),
+		sftp.UseConcurrentReads(!f.opt.DisableConcurrentReads),
+		sftp.UseConcurrentWrites(!f.opt.DisableConcurrentWrites),
 	)
 	if f.opt.DisableConcurrentReads { // FIXME
 		fs.Errorf(f, "Ignoring disable_concurrent_reads after library reversion - see #5197")
@@ -1494,6 +1506,19 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	return in, nil
 }
 
+type sizeReader struct {
+	io.Reader
+	size int64
+}
+
+// Size returns the expected size of the stream
+//
+// It is used in sftpFile.ReadFrom as a hint to work out the
+// concurrency needed
+func (sr *sizeReader) Size() int64 {
+	return sr.size
+}
+
 // Update a remote sftp file using the data <in> and ModTime from <src>
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	o.fs.addTransfer() // Show transfer in progress
@@ -1525,7 +1550,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(src, "Removed after failed upload: %v", err)
 		}
 	}
-	_, err = file.ReadFrom(in)
+	_, err = file.ReadFrom(&sizeReader{Reader: in, size: src.Size()})
 	if err != nil {
 		remove()
 		return errors.Wrap(err, "Update ReadFrom failed")

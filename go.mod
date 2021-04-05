@@ -46,7 +46,7 @@ require (
 	github.com/nsf/termbox-go v1.1.1-0.20210421210813-2ff630277754
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/sftp v1.12.0
+	github.com/pkg/sftp v1.13.1-0.20210424083437-2b80967078b8
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/common v0.20.0 // indirect
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
@@ -69,11 +69,11 @@ require (
 	go.etcd.io/bbolt v1.3.5
 	go.uber.org/zap v1.16.0 // indirect
 	goftp.io/server v0.4.1
-	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc
+	golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b
 	golang.org/x/net v0.0.0-20210415231046-e915ea6b2b7d
 	golang.org/x/oauth2 v0.0.0-20210413134643-5e61552d6c78
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210419170143-37df388d1f33
+	golang.org/x/sys v0.0.0-20210423185535-09eb48e85fd7
 	golang.org/x/term v0.0.0-20210406210042-72f3dc4e9b72 // indirect
 	golang.org/x/text v0.3.6
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
