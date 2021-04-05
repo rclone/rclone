@@ -29,13 +29,16 @@ var commandDefinition = &cobra.Command{
 	Use:   "version",
 	Short: `Show the version number.`,
 	Long: `
-Show the rclone version number, the go version, the build target OS and
-architecture, build tags and the type of executable (static or dynamic).
+Show the rclone version number, the go version, the build target
+OS and architecture, the runtime OS and kernel version and bitness,
+build tags and the type of executable (static or dynamic).
 
 For example:
 
     $ rclone version
-    rclone v1.54
+    rclone v1.55.0
+    - os/version: ubuntu 18.04 (64 bit)
+    - os/kernel: 4.15.0-136-generic (x86_64)
     - os/type: linux
     - os/arch: amd64
     - go/version: go1.16

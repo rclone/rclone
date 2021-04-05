@@ -75,8 +75,19 @@ const (
 
 // ShowVersion prints the version to stdout
 func ShowVersion() {
+	osVersion, osKernel := buildinfo.GetOSVersion()
+	if osVersion == "" {
+		osVersion = "unknown"
+	}
+	if osKernel == "" {
+		osKernel = "unknown"
+	}
+
 	linking, tagString := buildinfo.GetLinkingAndTags()
+
 	fmt.Printf("rclone %s\n", fs.Version)
+	fmt.Printf("- os/version: %s\n", osVersion)
+	fmt.Printf("- os/kernel: %s\n", osKernel)
 	fmt.Printf("- os/type: %s\n", runtime.GOOS)
 	fmt.Printf("- os/arch: %s\n", runtime.GOARCH)
 	fmt.Printf("- go/version: %s\n", runtime.Version())
