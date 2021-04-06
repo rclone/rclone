@@ -296,36 +296,32 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 }
 
 // Config callback for 2FA
-func Config(ctx context.Context, name string, m configmap.Mapper) {
+func Config(ctx context.Context, name string, m configmap.Mapper) error {
 	ci := fs.GetConfig(ctx)
 	serverURL, ok := m.Get(configURL)
 	if !ok || serverURL == "" {
 		// If there's no server URL, it means we're trying an operation at the backend level, like a "rclone authorize seafile"
-		fmt.Print("\nOperation not supported on this remote.\nIf you need a 2FA code on your account, use the command:\n\nrclone config reconnect <remote name>:\n\n")
-		return
+		return errors.New("operation not supported on this remote. If you need a 2FA code on your account, use the command: nrclone config reconnect <remote name>: ")
 	}
 
 	// Stop if we are running non-interactive config
 	if ci.AutoConfirm {
-		return
+		return nil
 	}
 
 	u, err := url.Parse(serverURL)
 	if err != nil {
-		fs.Errorf(nil, "Invalid server URL %s", serverURL)
-		return
+		return errors.Errorf("invalid server URL %s", serverURL)
 	}
 
 	is2faEnabled, _ := m.Get(config2FA)
 	if is2faEnabled != "true" {
-		fmt.Println("Two-factor authentication is not enabled on this account.")
-		return
+		return errors.New("two-factor authentication is not enabled on this account")
 	}
 
 	username, _ := m.Get(configUser)
 	if username == "" {
-		fs.Errorf(nil, "A username is required")
-		return
+		return errors.New("a username is required")
 	}
 
 	password, _ := m.Get(configPassword)
@@ -376,6 +372,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper) {
 			break
 		}
 	}
+	return nil
 }
 
 // sets the AuthorizationToken up

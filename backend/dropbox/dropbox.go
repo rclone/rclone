@@ -25,7 +25,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"path"
 	"regexp"
 	"strings"
@@ -144,7 +143,7 @@ func init() {
 		Name:        "dropbox",
 		Description: "Dropbox",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
 			opt := oauthutil.Options{
 				NoOffline: true,
 				OAuth2Opts: []oauth2.AuthCodeOption{
@@ -153,8 +152,9 @@ func init() {
 			}
 			err := oauthutil.Config(ctx, "dropbox", name, m, getOauthConfig(m), &opt)
 			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
+				return errors.Wrap(err, "failed to configure token")
 			}
+			return nil
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",

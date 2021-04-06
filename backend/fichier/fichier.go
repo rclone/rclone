@@ -35,9 +35,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "fichier",
 		Description: "1Fichier",
-		Config: func(ctx context.Context, name string, config configmap.Mapper) {
-		},
-		NewFs: NewFs,
+		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Help: "Your API Key, get it from https://1fichier.com/console/params.pl",
 			Name: "api_key",

@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -56,11 +55,12 @@ func init() {
 		Name:        "hubic",
 		Description: "Hubic",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
 			err := oauthutil.Config(ctx, "hubic", name, m, oauthConfig, nil)
 			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
+				return errors.Wrap(err, "failed to configure token")
 			}
+			return nil
 		},
 		Options: append(oauthutil.SharedOptions, swift.SharedOptions...),
 	})

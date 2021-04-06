@@ -16,7 +16,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"path"
 	"strings"
@@ -70,11 +69,12 @@ func init() {
 		Prefix:      "acd",
 		Description: "Amazon Drive",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
 			err := oauthutil.Config(ctx, "amazon cloud drive", name, m, acdConfig, nil)
 			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
+				return errors.Wrap(err, "failed to configure token")
 			}
+			return nil
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     "checkpoint",

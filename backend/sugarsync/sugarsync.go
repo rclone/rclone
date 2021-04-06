@@ -16,7 +16,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -76,17 +75,17 @@ func init() {
 		Name:        "sugarsync",
 		Description: "Sugarsync",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
 			if err != nil {
-				log.Fatalf("Failed to read options: %v", err)
+				return errors.Wrap(err, "failed to read options")
 			}
 
 			if opt.RefreshToken != "" {
 				fmt.Printf("Already have a token - refresh?\n")
 				if !config.ConfirmWithConfig(ctx, m, "config_refresh_token", true) {
-					return
+					return nil
 				}
 			}
 			fmt.Printf("Username (email address)> ")
@@ -114,10 +113,11 @@ func init() {
 			//	return shouldRetry(ctx, resp, err)
 			//})
 			if err != nil {
-				log.Fatalf("Failed to get token: %v", err)
+				return errors.Wrap(err, "failed to get token")
 			}
 			opt.RefreshToken = resp.Header.Get("Location")
 			m.Set("refresh_token", opt.RefreshToken)
+			return nil
 		},
 		Options: []fs.Option{{
 			Name: "app_id",

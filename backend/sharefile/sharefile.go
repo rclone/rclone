@@ -77,7 +77,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -136,7 +135,7 @@ func init() {
 		Name:        "sharefile",
 		Description: "Citrix Sharefile",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
 			oauthConfig := newOauthConfig("")
 			checkAuth := func(oauthConfig *oauth2.Config, auth *oauthutil.AuthResult) error {
 				if auth == nil || auth.Form == nil {
@@ -157,8 +156,9 @@ func init() {
 			}
 			err := oauthutil.Config(ctx, "sharefile", name, m, oauthConfig, &opt)
 			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
+				return errors.Wrap(err, "failed to configure token")
 			}
+			return nil
 		},
 		Options: []fs.Option{{
 			Name:     "upload_cutoff",

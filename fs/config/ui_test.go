@@ -103,7 +103,7 @@ func TestCRUD(t *testing.T) {
 		"secret",             // repeat
 		"y",                  // looks good, save
 	})
-	config.NewRemote(ctx, "test")
+	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, []string{"test"}, config.Data.GetSectionList())
 	assert.Equal(t, "config_test_remote", config.FileGet("test", "type"))
@@ -146,7 +146,7 @@ func TestChooseOption(t *testing.T) {
 		assert.Equal(t, 1024, bits)
 		return "not very random password", nil
 	}
-	config.NewRemote(ctx, "test")
+	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, "false", config.FileGet("test", "bool"))
 	assert.Equal(t, "not very random password", obscure.MustReveal(config.FileGet("test", "pass")))
@@ -158,7 +158,7 @@ func TestChooseOption(t *testing.T) {
 		"n",                  // not required
 		"y",                  // looks good, save
 	})
-	config.NewRemote(ctx, "test")
+	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	assert.Equal(t, "true", config.FileGet("test", "bool"))
 	assert.Equal(t, "", config.FileGet("test", "pass"))
@@ -175,7 +175,7 @@ func TestNewRemoteName(t *testing.T) {
 		"n",                  // not required
 		"y",                  // looks good, save
 	})
-	config.NewRemote(ctx, "test")
+	require.NoError(t, config.NewRemote(ctx, "test"))
 
 	config.ReadLine = makeReadLine([]string{
 		"test",           // already exists
