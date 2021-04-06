@@ -264,6 +264,9 @@ func (s *syncCopyMove) processError(err error) {
 			// Cancel the march and stop the pipes
 			s.inCancel()
 		}
+	} else if err == context.Canceled && s.inCtx.Err() != nil {
+		// Ignore context Canceled if we have called s.inCancel()
+		return
 	}
 	s.errorMu.Lock()
 	defer s.errorMu.Unlock()
