@@ -12,12 +12,14 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 	"unicode/utf8"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/lib/version"
 	"github.com/rfjakob/eme"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/scrypt"
@@ -442,10 +444,31 @@ func (c *Cipher) encryptFileName(in string) string {
 		if !c.dirNameEncrypt && i != (len(segments)-1) {
 			continue
 		}
+
+		// Strip version string so that only the non-versioned part
+		// of the file name gets encrypted/obfuscated
+		hasVersion := false
+		var t time.Time
+		if i == (len(segments)-1) && version.Match(segments[i]) {
+			var s string
+			t, s = version.Remove(segments[i])
+			// version.Remove can fail, in which case it returns segments[i]
+			if s != segments[i] {
+				segments[i] = s
+				hasVersion = true
+			}
+		}
+
 		if c.mode == NameEncryptionStandard {
 			segments[i] = c.encryptSegment(segments[i])
 		} else {
 			segments[i] = c.obfuscateSegment(segments[i])
+		}
+
+		// Add back a version to the encrypted/obfuscated
+		// file name, if we stripped it off earlier
+		if hasVersion {
+			segments[i] = version.Add(segments[i], t)
 		}
 	}
 	return strings.Join(segments, "/")
@@ -477,6 +500,21 @@ func (c *Cipher) decryptFileName(in string) (string, error) {
 		if !c.dirNameEncrypt && i != (len(segments)-1) {
 			continue
 		}
+
+		// Strip version string so that only the non-versioned part
+		// of the file name gets decrypted/deobfuscated
+		hasVersion := false
+		var t time.Time
+		if i == (len(segments)-1) && version.Match(segments[i]) {
+			var s string
+			t, s = version.Remove(segments[i])
+			// version.Remove can fail, in which case it returns segments[i]
+			if s != segments[i] {
+				segments[i] = s
+				hasVersion = true
+			}
+		}
+
 		if c.mode == NameEncryptionStandard {
 			segments[i], err = c.decryptSegment(segments[i])
 		} else {
@@ -486,6 +524,12 @@ func (c *Cipher) decryptFileName(in string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
+		// Add back a version to the decrypted/deobfuscated
+		// file name, if we stripped it off earlier
+		if hasVersion {
+			segments[i] = version.Add(segments[i], t)
+		}
 	}
 	return strings.Join(segments, "/"), nil
 }
@@ -494,10 +538,18 @@ func (c *Cipher) decryptFileName(in string) (string, error) {
 func (c *Cipher) DecryptFileName(in string) (string, error) {
 	if c.mode == NameEncryptionOff {
 		remainingLength := len(in) - len(encryptedSuffix)
-		if remainingLength > 0 && strings.HasSuffix(in, encryptedSuffix) {
-			return in[:remainingLength], nil
+		if remainingLength == 0 || !strings.HasSuffix(in, encryptedSuffix) {
+			return "", ErrorNotAnEncryptedFile
 		}
-		return "", ErrorNotAnEncryptedFile
+		decrypted := in[:remainingLength]
+		if version.Match(decrypted) {
+			_, unversioned := version.Remove(decrypted)
+			if unversioned == "" {
+				return "", ErrorNotAnEncryptedFile
+			}
+		}
+		// Leave the version string on, if it was there
+		return decrypted, nil
 	}
 	return c.decryptFileName(in)
 }

@@ -160,22 +160,29 @@ func TestEncryptFileName(t *testing.T) {
 	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s", c.EncryptFileName("1"))
 	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng", c.EncryptFileName("1/12"))
 	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng/qgm4avr35m5loi1th53ato71v0", c.EncryptFileName("1/12/123"))
+	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s-v2001-02-03-040506-123", c.EncryptFileName("1-v2001-02-03-040506-123"))
+	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng-v2001-02-03-040506-123", c.EncryptFileName("1/12-v2001-02-03-040506-123"))
 	// Standard mode with directory name encryption off
 	c, _ = newCipher(NameEncryptionStandard, "", "", false)
 	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s", c.EncryptFileName("1"))
 	assert.Equal(t, "1/l42g6771hnv3an9cgc8cr2n1ng", c.EncryptFileName("1/12"))
 	assert.Equal(t, "1/12/qgm4avr35m5loi1th53ato71v0", c.EncryptFileName("1/12/123"))
+	assert.Equal(t, "p0e52nreeaj0a5ea7s64m4j72s-v2001-02-03-040506-123", c.EncryptFileName("1-v2001-02-03-040506-123"))
+	assert.Equal(t, "1/l42g6771hnv3an9cgc8cr2n1ng-v2001-02-03-040506-123", c.EncryptFileName("1/12-v2001-02-03-040506-123"))
 	// Now off mode
 	c, _ = newCipher(NameEncryptionOff, "", "", true)
 	assert.Equal(t, "1/12/123.bin", c.EncryptFileName("1/12/123"))
 	// Obfuscation mode
 	c, _ = newCipher(NameEncryptionObfuscated, "", "", true)
 	assert.Equal(t, "49.6/99.23/150.890/53.!!lipps", c.EncryptFileName("1/12/123/!hello"))
+	assert.Equal(t, "49.6/99.23/150.890/53-v2001-02-03-040506-123.!!lipps", c.EncryptFileName("1/12/123/!hello-v2001-02-03-040506-123"))
+	assert.Equal(t, "49.6/99.23/150.890/162.uryyB-v2001-02-03-040506-123.GKG", c.EncryptFileName("1/12/123/hello-v2001-02-03-040506-123.txt"))
 	assert.Equal(t, "161.\u00e4", c.EncryptFileName("\u00a1"))
 	assert.Equal(t, "160.\u03c2", c.EncryptFileName("\u03a0"))
 	// Obfuscation mode with directory name encryption off
 	c, _ = newCipher(NameEncryptionObfuscated, "", "", false)
 	assert.Equal(t, "1/12/123/53.!!lipps", c.EncryptFileName("1/12/123/!hello"))
+	assert.Equal(t, "1/12/123/53-v2001-02-03-040506-123.!!lipps", c.EncryptFileName("1/12/123/!hello-v2001-02-03-040506-123"))
 	assert.Equal(t, "161.\u00e4", c.EncryptFileName("\u00a1"))
 	assert.Equal(t, "160.\u03c2", c.EncryptFileName("\u03a0"))
 }
@@ -194,14 +201,19 @@ func TestDecryptFileName(t *testing.T) {
 		{NameEncryptionStandard, true, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng/qgm4avr35m5loi1th53ato71v0", "1/12/123", nil},
 		{NameEncryptionStandard, true, "p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1/qgm4avr35m5loi1th53ato71v0", "", ErrorNotAMultipleOfBlocksize},
 		{NameEncryptionStandard, false, "1/12/qgm4avr35m5loi1th53ato71v0", "1/12/123", nil},
+		{NameEncryptionStandard, true, "p0e52nreeaj0a5ea7s64m4j72s-v2001-02-03-040506-123", "1-v2001-02-03-040506-123", nil},
 		{NameEncryptionOff, true, "1/12/123.bin", "1/12/123", nil},
 		{NameEncryptionOff, true, "1/12/123.bix", "", ErrorNotAnEncryptedFile},
 		{NameEncryptionOff, true, ".bin", "", ErrorNotAnEncryptedFile},
+		{NameEncryptionOff, true, "1/12/123-v2001-02-03-040506-123.bin", "1/12/123-v2001-02-03-040506-123", nil},
+		{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123", nil},
+		{NameEncryptionOff, true, "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt.bin", "1/12/123-v1970-01-01-010101-123-v2001-02-03-040506-123.txt", nil},
 		{NameEncryptionObfuscated, true, "!.hello", "hello", nil},
 		{NameEncryptionObfuscated, true, "hello", "", ErrorNotAnEncryptedFile},
 		{NameEncryptionObfuscated, true, "161.\u00e4", "\u00a1", nil},
 		{NameEncryptionObfuscated, true, "160.\u03c2", "\u03a0", nil},
 		{NameEncryptionObfuscated, false, "1/12/123/53.!!lipps", "1/12/123/!hello", nil},
+		{NameEncryptionObfuscated, false, "1/12/123/53-v2001-02-03-040506-123.!!lipps", "1/12/123/!hello-v2001-02-03-040506-123", nil},
 	} {
 		c, _ := newCipher(test.mode, "", "", test.dirNameEncrypt)
 		actual, actualErr := c.DecryptFileName(test.in)
