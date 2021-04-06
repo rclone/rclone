@@ -157,15 +157,15 @@ func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, na
 	jsonFile = env.ShellExpand(jsonFile)
 	boxConfig, err := getBoxConfig(jsonFile)
 	if err != nil {
-		log.Fatalf("Failed to configure token: %v", err)
+		return errors.Wrap(err, "get box config")
 	}
 	privateKey, err := getDecryptedPrivateKey(boxConfig)
 	if err != nil {
-		log.Fatalf("Failed to configure token: %v", err)
+		return errors.Wrap(err, "get decrypted private key")
 	}
 	claims, err := getClaims(boxConfig, boxSubType)
 	if err != nil {
-		log.Fatalf("Failed to configure token: %v", err)
+		return errors.Wrap(err, "get claims")
 	}
 	signingHeaders := getSigningHeaders(boxConfig)
 	queryParams := getQueryParams(boxConfig)
