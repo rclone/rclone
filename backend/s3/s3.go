@@ -1222,13 +1222,12 @@ very small even with this flag.
 			Default:  false,
 			Advanced: true,
 		}, {
-			}, {
-				Name: "no_head_object",
-				Help: `If set, don't HEAD objects`,
-				Default:  false,
-				Advanced: true,
-			}, {
-				Name:     config.ConfigEncoding,
+			Name:     "no_head_object",
+			Help:     `If set, don't HEAD objects`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
 			// Any UTF-8 character is valid in a key, however it can't handle
@@ -1700,7 +1699,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		GetTier:           true,
 		SlowModTime:       true,
 	}).Fill(ctx, f)
-	if f.rootBucket != "" && f.rootDirectory != "" && !opt.NoHeadObject{
+	if f.rootBucket != "" && f.rootDirectory != "" && !opt.NoHeadObject {
 		// Check to see if the (bucket,directory) is actually an existing file
 		oldRoot := f.root
 		newRoot, leaf := path.Split(oldRoot)
