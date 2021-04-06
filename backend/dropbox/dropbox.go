@@ -1084,13 +1084,30 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	fs.Debugf(f, "attempting to share '%s' (absolute path: %s)", remote, absPath)
 	createArg := sharing.CreateSharedLinkWithSettingsArg{
 		Path: absPath,
-		// FIXME this gives settings_error/not_authorized/.. errors
-		// and the expires setting isn't in the documentation so remove
-		// for now.
-		// Settings: &sharing.SharedLinkSettings{
-		// 	Expires: time.Now().Add(time.Duration(expire)).UTC().Round(time.Second),
-		// },
+		Settings: &sharing.SharedLinkSettings{
+			RequestedVisibility: &sharing.RequestedVisibility{
+				Tagged: dropbox.Tagged{Tag: sharing.RequestedVisibilityPublic},
+			},
+			Audience: &sharing.LinkAudience{
+				Tagged: dropbox.Tagged{Tag: sharing.LinkAudiencePublic},
+			},
+			Access: &sharing.RequestedLinkAccessLevel{
+				Tagged: dropbox.Tagged{Tag: sharing.RequestedLinkAccessLevelViewer},
+			},
+		},
 	}
+	if expire < fs.DurationOff {
+		expiryTime := time.Now().Add(time.Duration(expire)).UTC().Round(time.Second)
+		createArg.Settings.Expires = expiryTime
+	}
+	// FIXME note we can't set Settings for non enterprise dropbox
+	// because of https://github.com/dropbox/dropbox-sdk-go-unofficial/issues/75
+	// however this only goes wrong when we set Expires, so as a
+	// work-around remove Settings unless expire is set.
+	if expire == fs.DurationOff {
+		createArg.Settings = nil
+	}
+
 	var linkRes sharing.IsSharedLinkMetadata
 	err = f.pacer.Call(func() (bool, error) {
 		linkRes, err = f.sharing.CreateSharedLinkWithSettings(&createArg)

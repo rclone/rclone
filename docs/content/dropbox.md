@@ -285,6 +285,12 @@ dropbox:dir` will return the error `Failed to purge: There are too
 many files involved in this operation`.  As a work-around do an
 `rclone delete dropbox:dir` followed by an `rclone rmdir dropbox:dir`.
 
+When using `rclone link` you'll need to set `--expire` if using a
+non-personal account otherwise the visibility may not be correct.
+(Note that `--expire` isn't supported on personal accounts). See the
+[forum discussion](https://forum.rclone.org/t/rclone-link-dropbox-permissions/23211) and the 
+[dropbox SDK issue](https://github.com/dropbox/dropbox-sdk-go-unofficial/issues/75).
+
 ### Get your own Dropbox App ID ###
 
 When you use rclone with Dropbox in its default configuration you are using rclone's App ID. This is shared between all the rclone users.
