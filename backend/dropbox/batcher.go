@@ -311,12 +311,6 @@ func (b *batcher) Shutdown() {
 // batch and then waiting for the batch to complete in a synchronous
 // way if async is not set.
 func (b *batcher) Commit(ctx context.Context, commitInfo *files.UploadSessionFinishArg) (entry *files.FileMetadata, err error) {
-	select {
-	case <-b.in:
-		// pause this goroutine as we are quitting
-		select {}
-	default:
-	}
 	fs.Debugf(b.f, "Adding %q to batch", commitInfo.Commit.Path)
 	resp := make(chan batcherResponse, 1)
 	b.in <- batcherRequest{
