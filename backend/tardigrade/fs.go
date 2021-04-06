@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"path"
 	"strings"
 	"time"
@@ -42,7 +41,7 @@ func init() {
 		Name:        "tardigrade",
 		Description: "Tardigrade Decentralized Cloud Storage",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, configMapper configmap.Mapper) {
+		Config: func(ctx context.Context, name string, configMapper configmap.Mapper) error {
 			provider, _ := configMapper.Get(fs.ConfigProvider)
 
 			config.FileDeleteKey(name, fs.ConfigProvider)
@@ -54,7 +53,7 @@ func init() {
 
 				// satelliteString contains always default and passphrase can be empty
 				if apiKey == "" {
-					return
+					return nil
 				}
 
 				satellite, found := satMap[satelliteString]
@@ -64,12 +63,12 @@ func init() {
 
 				access, err := uplink.RequestAccessWithPassphrase(context.TODO(), satellite, apiKey, passphrase)
 				if err != nil {
-					log.Fatalf("Couldn't create access grant: %v", err)
+					return errors.Wrap(err, "couldn't create access grant")
 				}
 
 				serializedAccess, err := access.Serialize()
 				if err != nil {
-					log.Fatalf("Couldn't serialize access grant: %v", err)
+					return errors.Wrap(err, "couldn't serialize access grant")
 				}
 				configMapper.Set("satellite_address", satellite)
 				configMapper.Set("access_grant", serializedAccess)
@@ -78,8 +77,9 @@ func init() {
 				config.FileDeleteKey(name, "api_key")
 				config.FileDeleteKey(name, "passphrase")
 			} else {
-				log.Fatalf("Invalid provider type: %s", provider)
+				return errors.Errorf("invalid provider type: %s", provider)
 			}
+			return nil
 		},
 		Options: []fs.Option{
 			{

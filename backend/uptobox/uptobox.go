@@ -41,9 +41,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "uptobox",
 		Description: "Uptobox",
-		Config: func(ctx context.Context, name string, config configmap.Mapper) {
-		},
-		NewFs: NewFs,
+		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Help: "Your access Token, get it from https://uptobox.com/my_account",
 			Name: "access_token",

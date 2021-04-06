@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -87,12 +86,12 @@ func init() {
 		Name:        "jottacloud",
 		Description: "Jottacloud",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
 			refresh := false
 			if version, ok := m.Get("configVersion"); ok {
 				ver, err := strconv.Atoi(version)
 				if err != nil {
-					log.Fatalf("Failed to parse config version - corrupted config")
+					return errors.Wrap(err, "failed to parse config version - corrupted config")
 				}
 				refresh = (ver != configVersion) && (ver != v1configVersion)
 			}
@@ -104,7 +103,7 @@ func init() {
 				if ok && tokenString != "" {
 					fmt.Printf("Already have a token - refresh?\n")
 					if !config.Confirm(false) {
-						return
+						return nil
 					}
 				}
 			}
@@ -116,11 +115,13 @@ func init() {
 
 			switch config.ChooseNumber("Your choice", 1, 3) {
 			case 1:
-				v2config(ctx, name, m)
+				return v2config(ctx, name, m)
 			case 2:
-				v1config(ctx, name, m)
+				return v1config(ctx, name, m)
 			case 3:
-				teliaCloudConfig(ctx, name, m)
+				return teliaCloudConfig(ctx, name, m)
+			default:
+				return errors.New("unknown config choice")
 			}
 		},
 		Options: []fs.Option{{
@@ -242,7 +243,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
-func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
+func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) error {
 	teliaCloudOauthConfig := &oauth2.Config{
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  teliaCloudAuthURL,
@@ -255,15 +256,14 @@ func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
 
 	err := oauthutil.Config(ctx, "jottacloud", name, m, teliaCloudOauthConfig, nil)
 	if err != nil {
-		log.Fatalf("Failed to configure token: %v", err)
-		return
+		return errors.Wrap(err, "failed to configure token")
 	}
 
 	fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
 	if config.Confirm(false) {
 		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, teliaCloudOauthConfig)
 		if err != nil {
-			log.Fatalf("Failed to load oAuthClient: %s", err)
+			return errors.Wrap(err, "failed to load oAuthClient")
 		}
 
 		srv := rest.NewClient(oAuthClient).SetRoot(rootURL)
@@ -271,7 +271,7 @@ func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
 
 		device, mountpoint, err := setupMountpoint(ctx, srv, apiSrv)
 		if err != nil {
-			log.Fatalf("Failed to setup mountpoint: %s", err)
+			return errors.Wrap(err, "failed to setup mountpoint")
 		}
 		m.Set(configDevice, device)
 		m.Set(configMountpoint, mountpoint)
@@ -280,17 +280,18 @@ func teliaCloudConfig(ctx context.Context, name string, m configmap.Mapper) {
 	m.Set("configVersion", strconv.Itoa(configVersion))
 	m.Set(configClientID, teliaCloudClientID)
 	m.Set(configTokenURL, teliaCloudTokenURL)
+	return nil
 }
 
 // v1config configure a jottacloud backend using legacy authentication
-func v1config(ctx context.Context, name string, m configmap.Mapper) {
+func v1config(ctx context.Context, name string, m configmap.Mapper) error {
 	srv := rest.NewClient(fshttp.NewClient(ctx))
 
 	fmt.Printf("\nDo you want to create a machine specific API key?\n\nRclone has it's own Jottacloud API KEY which works fine as long as one only uses rclone on a single machine. When you want to use rclone with this account on more than one machine it's recommended to create a machine specific API key. These keys can NOT be shared between machines.\n\n")
 	if config.Confirm(false) {
 		deviceRegistration, err := registerDevice(ctx, srv)
 		if err != nil {
-			log.Fatalf("Failed to register device: %v", err)
+			return errors.Wrap(err, "failed to register device")
 		}
 
 		m.Set(configClientID, deviceRegistration.ClientID)
@@ -318,18 +319,18 @@ func v1config(ctx context.Context, name string, m configmap.Mapper) {
 
 	token, err := doAuthV1(ctx, srv, username, password)
 	if err != nil {
-		log.Fatalf("Failed to get oauth token: %s", err)
+		return errors.Wrap(err, "failed to get oauth token")
 	}
 	err = oauthutil.PutToken(name, m, &token, true)
 	if err != nil {
-		log.Fatalf("Error while saving token: %s", err)
+		return errors.Wrap(err, "error while saving token")
 	}
 
 	fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
 	if config.Confirm(false) {
 		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
-			log.Fatalf("Failed to load oAuthClient: %s", err)
+			return errors.Wrap(err, "failed to load oAuthClient")
 		}
 
 		srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
@@ -337,13 +338,14 @@ func v1config(ctx context.Context, name string, m configmap.Mapper) {
 
 		device, mountpoint, err := setupMountpoint(ctx, srv, apiSrv)
 		if err != nil {
-			log.Fatalf("Failed to setup mountpoint: %s", err)
+			return errors.Wrap(err, "failed to setup mountpoint")
 		}
 		m.Set(configDevice, device)
 		m.Set(configMountpoint, mountpoint)
 	}
 
 	m.Set("configVersion", strconv.Itoa(v1configVersion))
+	return nil
 }
 
 // registerDevice register a new device for use with the jottacloud API
@@ -418,7 +420,7 @@ func doAuthV1(ctx context.Context, srv *rest.Client, username, password string) 
 }
 
 // v2config configure a jottacloud backend using the modern JottaCli token based authentication
-func v2config(ctx context.Context, name string, m configmap.Mapper) {
+func v2config(ctx context.Context, name string, m configmap.Mapper) error {
 	srv := rest.NewClient(fshttp.NewClient(ctx))
 
 	fmt.Printf("Generate a personal login token here: https://www.jottacloud.com/web/secure\n")
@@ -430,31 +432,32 @@ func v2config(ctx context.Context, name string, m configmap.Mapper) {
 
 	token, err := doAuthV2(ctx, srv, loginToken, m)
 	if err != nil {
-		log.Fatalf("Failed to get oauth token: %s", err)
+		return errors.Wrap(err, "failed to get oauth token")
 	}
 	err = oauthutil.PutToken(name, m, &token, true)
 	if err != nil {
-		log.Fatalf("Error while saving token: %s", err)
+		return errors.Wrap(err, "error while saving token")
 	}
 
 	fmt.Printf("\nDo you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?\n\n")
 	if config.Confirm(false) {
 		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
-			log.Fatalf("Failed to load oAuthClient: %s", err)
+			return errors.Wrap(err, "failed to load oAuthClient")
 		}
 
 		srv = rest.NewClient(oAuthClient).SetRoot(rootURL)
 		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 		device, mountpoint, err := setupMountpoint(ctx, srv, apiSrv)
 		if err != nil {
-			log.Fatalf("Failed to setup mountpoint: %s", err)
+			return errors.Wrap(err, "failed to setup mountpoint")
 		}
 		m.Set(configDevice, device)
 		m.Set(configMountpoint, mountpoint)
 	}
 
 	m.Set("configVersion", strconv.Itoa(configVersion))
+	return nil
 }
 
 // doAuthV2 runs the actual token request for V2 authentication

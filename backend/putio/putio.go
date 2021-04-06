@@ -2,10 +2,10 @@ package putio
 
 import (
 	"context"
-	"log"
 	"regexp"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -60,14 +60,15 @@ func init() {
 		Name:        "putio",
 		Description: "Put.io",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
 			opt := oauthutil.Options{
 				NoOffline: true,
 			}
 			err := oauthutil.Config(ctx, "putio", name, m, putioConfig, &opt)
 			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
+				return errors.Wrap(err, "failed to configure token")
 			}
+			return nil
 		},
 		Options: []fs.Option{{
 			Name:     config.ConfigEncoding,

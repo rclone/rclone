@@ -455,7 +455,10 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, doObscu
 		}
 		LoadedData().SetValue(name, k, vStr)
 	}
-	RemoteConfig(ctx, name)
+	err = RemoteConfig(ctx, name)
+	if err != nil {
+		return err
+	}
 	SaveConfig()
 	cache.ClearConfig(name) // remove any remotes based on this config from the cache
 	return nil

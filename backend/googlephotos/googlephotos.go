@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	golog "log"
 	"net/http"
 	"net/url"
 	"path"
@@ -78,13 +77,12 @@ func init() {
 		Prefix:      "gphotos",
 		Description: "Google Photos",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
 			if err != nil {
-				fs.Errorf(nil, "Couldn't parse config into struct: %v", err)
-				return
+				return errors.Wrap(err, "couldn't parse config into struct")
 			}
 
 			// Fill in the scopes
@@ -97,7 +95,7 @@ func init() {
 			// Do the oauth
 			err = oauthutil.Config(ctx, "google photos", name, m, oauthConfig, nil)
 			if err != nil {
-				golog.Fatalf("Failed to configure token: %v", err)
+				return errors.Wrap(err, "failed to configure token")
 			}
 
 			// Warn the user
@@ -108,6 +106,7 @@ func init() {
 
 `)
 
+			return nil
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:    "read_only",

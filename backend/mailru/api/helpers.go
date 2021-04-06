@@ -6,8 +6,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
-	"log"
 	"time"
 
 	"github.com/pkg/errors"
@@ -48,7 +48,7 @@ func (w *BinWriter) Reader() io.Reader {
 // WritePu16 writes a short as unsigned varint
 func (w *BinWriter) WritePu16(val int) {
 	if val < 0 || val > 65535 {
-		log.Fatalf("Invalid UInt16 %v", val)
+		panic(fmt.Sprintf("Invalid UInt16 %v", val))
 	}
 	w.WritePu64(int64(val))
 }
@@ -56,7 +56,7 @@ func (w *BinWriter) WritePu16(val int) {
 // WritePu32 writes a signed long as unsigned varint
 func (w *BinWriter) WritePu32(val int64) {
 	if val < 0 || val > 4294967295 {
-		log.Fatalf("Invalid UInt32 %v", val)
+		panic(fmt.Sprintf("Invalid UInt32 %v", val))
 	}
 	w.WritePu64(val)
 }
@@ -64,7 +64,7 @@ func (w *BinWriter) WritePu32(val int64) {
 // WritePu64 writes an unsigned (actually, signed) long as unsigned varint
 func (w *BinWriter) WritePu64(val int64) {
 	if val < 0 {
-		log.Fatalf("Invalid UInt64 %v", val)
+		panic(fmt.Sprintf("Invalid UInt64 %v", val))
 	}
 	w.b.Write(w.a[:binary.PutUvarint(w.a, uint64(val))])
 }
@@ -123,7 +123,7 @@ func (r *BinReader) check(err error) bool {
 		r.err = err
 	}
 	if err != io.EOF {
-		log.Fatalf("Error parsing response: %v", err)
+		panic(fmt.Sprintf("Error parsing response: %v", err))
 	}
 	return false
 }

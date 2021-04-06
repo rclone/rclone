@@ -60,7 +60,10 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 	m.AddSetter(outM)
 	m.AddGetter(outM, configmap.PriorityNormal)
 
-	ri.Config(ctx, name, m)
+	err = ri.Config(ctx, name, m)
+	if err != nil {
+		return err
+	}
 
 	// Print the code for the user to paste
 	out := outM["token"]

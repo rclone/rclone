@@ -270,13 +270,14 @@ func OkRemote(name string) bool {
 }
 
 // RemoteConfig runs the config helper for the remote if needed
-func RemoteConfig(ctx context.Context, name string) {
+func RemoteConfig(ctx context.Context, name string) error {
 	fmt.Printf("Remote config\n")
 	f := mustFindByName(name)
 	if f.Config != nil {
 		m := fs.ConfigMap(f, name, nil)
-		f.Config(ctx, name, m)
+		return f.Config(ctx, name, m)
 	}
+	return nil
 }
 
 // matchProvider returns true if provider matches the providerConfig string.
@@ -456,7 +457,7 @@ func editOptions(ri *fs.RegInfo, name string, isNew bool) {
 }
 
 // NewRemote make a new remote from its name
-func NewRemote(ctx context.Context, name string) {
+func NewRemote(ctx context.Context, name string) error {
 	var (
 		newType string
 		ri      *fs.RegInfo
@@ -476,16 +477,19 @@ func NewRemote(ctx context.Context, name string) {
 	LoadedData().SetValue(name, "type", newType)
 
 	editOptions(ri, name, true)
-	RemoteConfig(ctx, name)
+	err = RemoteConfig(ctx, name)
+	if err != nil {
+		return err
+	}
 	if OkRemote(name) {
 		SaveConfig()
-		return
+		return nil
 	}
-	EditRemote(ctx, ri, name)
+	return EditRemote(ctx, ri, name)
 }
 
 // EditRemote gets the user to edit a remote
-func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) {
+func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) error {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
 	for {
@@ -495,7 +499,7 @@ func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) {
 		}
 	}
 	SaveConfig()
-	RemoteConfig(ctx, name)
+	return RemoteConfig(ctx, name)
 }
 
 // DeleteRemote gets the user to delete a remote
@@ -560,7 +564,7 @@ func ShowConfig() {
 }
 
 // EditConfig edits the config file interactively
-func EditConfig(ctx context.Context) {
+func EditConfig(ctx context.Context) (err error) {
 	for {
 		haveRemotes := len(LoadedData().GetSectionList()) != 0
 		what := []string{"eEdit existing remote", "nNew remote", "dDelete remote", "rRename remote", "cCopy remote", "sSet configuration password", "qQuit config"}
@@ -577,9 +581,15 @@ func EditConfig(ctx context.Context) {
 		case 'e':
 			name := ChooseRemote()
 			fs := mustFindByName(name)
-			EditRemote(ctx, fs, name)
+			err = EditRemote(ctx, fs, name)
+			if err != nil {
+				return err
+			}
 		case 'n':
-			NewRemote(ctx, NewRemoteName())
+			err = NewRemote(ctx, NewRemoteName())
+			if err != nil {
+				return err
+			}
 		case 'd':
 			name := ChooseRemote()
 			DeleteRemote(name)
@@ -590,8 +600,7 @@ func EditConfig(ctx context.Context) {
 		case 's':
 			SetPassword()
 		case 'q':
-			return
-
+			return nil
 		}
 	}
 }
