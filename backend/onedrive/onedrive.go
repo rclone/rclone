@@ -1429,7 +1429,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		Password: f.opt.LinkPassword,
 	}
 
-	if expire < fs.Duration(time.Hour*24*365*100) {
+	if expire < fs.DurationOff {
 		expiry := time.Now().Add(time.Duration(expire))
 		share.Expiry = &expiry
 	}
