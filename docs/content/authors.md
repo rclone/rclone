@@ -478,3 +478,4 @@ put them back in again.` >}}
   * Manish Kumar <krmanish260@gmail.com>
   * x0b <x0bdev@gmail.com>
   * CERN through the CS3MESH4EOSC Project
+  * Nick Gaya <nicholasgaya+github@gmail.com>
