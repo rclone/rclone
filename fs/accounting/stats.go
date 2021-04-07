@@ -294,19 +294,22 @@ func (s *StatsInfo) String() string {
 
 	s.mu.RLock()
 
-	elapsedTime := time.Since(startTime)
-	elapsedTimeSecondsOnly := elapsedTime.Truncate(time.Second/10) % time.Minute
+	var (
+		buf                    = &bytes.Buffer{}
+		xfrchkString           = ""
+		dateString             = ""
+		elapsedTime            = time.Since(startTime)
+		elapsedTimeSecondsOnly = elapsedTime.Truncate(time.Second/10) % time.Minute
+		displaySpeed           = ts.speed
+		displaySpeedUnit       string
+	)
 
-	displaySpeed := ts.speed
 	if s.ci.DataRateUnit == "bits" {
 		displaySpeed *= 8
+		displaySpeedUnit = "bit/s"
+	} else {
+		displaySpeedUnit = "Byte/s"
 	}
-
-	var (
-		buf          = &bytes.Buffer{}
-		xfrchkString = ""
-		dateString   = ""
-	)
 
 	if !s.ci.StatsOneLine {
 		_, _ = fmt.Fprintf(buf, "\nTransferred:   	")
@@ -330,9 +333,9 @@ func (s *StatsInfo) String() string {
 	_, _ = fmt.Fprintf(buf, "%s%10s / %s, %s, %s, ETA %s%s",
 		dateString,
 		fs.SizeSuffix(s.bytes),
-		fs.SizeSuffix(ts.totalBytes).Unit("Bytes"),
+		fs.SizeSuffix(ts.totalBytes).Unit("Byte"),
 		percent(s.bytes, ts.totalBytes),
-		fs.SizeSuffix(displaySpeed).Unit(strings.Title(s.ci.DataRateUnit)+"/s"),
+		fs.SizeSuffix(displaySpeed).Unit(displaySpeedUnit),
 		etaString(s.bytes, ts.totalBytes, ts.speed),
 		xfrchkString,
 	)
