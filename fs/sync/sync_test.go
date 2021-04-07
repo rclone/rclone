@@ -1048,7 +1048,7 @@ func TestSyncWithMaxDuration(t *testing.T) {
 	ci.Transfers = 1
 	defer accounting.TokenBucket.SetBwLimit(fs.BwPair{Tx: -1, Rx: -1})
 
-	// 5 files of 60 bytes at 60 bytes/s 5 seconds
+	// 5 files of 60 bytes at 60 Byte/s 5 seconds
 	testFiles := make([]fstest.Item, 5)
 	for i := 0; i < len(testFiles); i++ {
 		testFiles[i] = r.WriteFile(fmt.Sprintf("file%d", i), "------------------------------------------------------------", t1)

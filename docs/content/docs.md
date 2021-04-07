@@ -421,8 +421,8 @@ fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
 time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
 Options which use SIZE use kByte by default.  However, a suffix of `b`
-for bytes, `k` for kBytes, `M` for MBytes, `G` for GBytes, `T` for
-TBytes and `P` for PBytes may be used.  These are the binary units, e.g.
+for bytes, `k` for kByte, `M` for MByte, `G` for GByte, `T` for
+TByte and `P` for PByte may be used.  These are the binary units, e.g.
 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
 
 ### --backup-dir=DIR ###
@@ -468,7 +468,7 @@ This option controls the bandwidth limit. For example
     
 would mean limit the upload and download bandwidth to 10 MByte/s.
 **NB** this is **bytes** per second not **bits** per second. To use a
-single limit, specify the desired bandwidth in kBytes/s, or use a
+single limit, specify the desired bandwidth in kByte/s, or use a
 suffix b|k|M|G. The default is `0` which means to not limit bandwidth.
 
 The upload and download bandwidth can be specified seperately, as
@@ -482,7 +482,7 @@ to just limit the upload bandwidth you would use
 
     --bwlimit 10M:off
 
-this would limit the upload bandwidth to 10MByte/s but the download
+this would limit the upload bandwidth to 10 MByte/s but the download
 bandwidth would be unlimited.
 
 When specified as above the bandwidth limits last for the duration of
@@ -504,19 +504,19 @@ working hours could be:
 
 `--bwlimit "08:00,512k 12:00,10M 13:00,512k 18:00,30M 23:00,off"`
 
-In this example, the transfer bandwidth will be set to 512kBytes/sec
-at 8am every day. At noon, it will rise to 10MByte/s, and drop back
-to 512kBytes/sec at 1pm. At 6pm, the bandwidth limit will be set to
-30MByte/s, and at 11pm it will be completely disabled (full speed).
+In this example, the transfer bandwidth will be set to 512 kByte/s
+at 8am every day. At noon, it will rise to 10 MByte/s, and drop back
+to 512 kByte/sec at 1pm. At 6pm, the bandwidth limit will be set to
+30 MByte/s, and at 11pm it will be completely disabled (full speed).
 Anything between 11pm and 8am will remain unlimited.
 
 An example of timetable with `WEEKDAY` could be:
 
 `--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
 
-It means that, the transfer bandwidth will be set to 512kBytes/sec on
-Monday. It will rise to 10MByte/s before the end of Friday. At 10:00
-on Saturday it will be set to 1MByte/s. From 20:00 on Sunday it will
+It means that, the transfer bandwidth will be set to 512 kByte/s on
+Monday. It will rise to 10 MByte/s before the end of Friday. At 10:00
+on Saturday it will be set to 1 MByte/s. From 20:00 on Sunday it will
 be unlimited.
 
 Timeslots without `WEEKDAY` are extended to the whole week. So this
@@ -532,10 +532,10 @@ Bandwidth limit apply to the data transfer for all backends. For most
 backends the directory listing bandwidth is also included (exceptions
 being the non HTTP backends, `ftp`, `sftp` and `tardigrade`).
 
-Note that the units are **Bytes/s**, not **Bits/s**. Typically
-connections are measured in Bits/s - to convert divide by 8. For
+Note that the units are **Byte/s**, not **bit/s**. Typically
+connections are measured in bit/s - to convert divide by 8. For
 example, let's say you have a 10 Mbit/s connection and you wish rclone
-to use half of it - 5 Mbit/s. This is 5/8 = 0.625MByte/s so you would
+to use half of it - 5 Mbit/s. This is 5/8 = 0.625 MByte/s so you would
 use a `--bwlimit 0.625M` parameter for rclone.
 
 On Unix systems (Linux, macOS, …) the bandwidth limiter can be toggled by
@@ -556,7 +556,7 @@ change the bwlimit dynamically:
 This option controls per file bandwidth limit. For the options see the
 `--bwlimit` flag.
 
-For example use this to allow no transfers to be faster than 1MByte/s
+For example use this to allow no transfers to be faster than 1 MByte/s
 
     --bwlimit-file 1M
 
@@ -1443,14 +1443,14 @@ date formatting syntax.
 
 ### --stats-unit=bits|bytes ###
 
-By default, data transfer rates will be printed in bytes/second.
+By default, data transfer rates will be printed in bytes per second.
 
-This option allows the data rate to be printed in bits/second.
+This option allows the data rate to be printed in bits per second.
 
 Data transfer volume will still be reported in bytes.
 
 The rate is reported as a binary unit, not SI unit. So 1 Mbit/s
-equals 1,048,576 bits/s and not 1,000,000 bits/s.
+equals 1,048,576 bit/s and not 1,000,000 bit/s.
 
 The default is `bytes`.
 
