@@ -373,7 +373,7 @@ func (u *UI) Draw() error {
 			extras := ""
 			if u.showCounts {
 				if count > 0 {
-					extras += fmt.Sprintf("%8v ", fs.SizeSuffix(count))
+					extras += fmt.Sprintf("%8v ", fs.CountSuffix(count))
 				} else {
 					extras += "         "
 				}
