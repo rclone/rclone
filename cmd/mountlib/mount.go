@@ -334,7 +334,7 @@ metadata about files like in UNIX. One case that may arise is that other program
 (incorrectly) interprets this as the file being accessible by everyone. For example
 an SSH client may warn about "unprotected private key file".
 
-WinFsp 2021 (version 1.9, still in beta) introduces a new FUSE option "FileSecurity",
+WinFsp 2021 (version 1.9) introduces a new FUSE option "FileSecurity",
 that allows the complete specification of file security descriptors using
 [SDDL](https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format).
 With this you can work around issues such as the mentioned "unprotected private key file"
