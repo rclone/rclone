@@ -26,7 +26,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"path"
 	"regexp"
 	"strings"
@@ -1593,9 +1592,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // uploadChunked uploads the object in parts
 //
-// Will work optimally if size is >= uploadChunkSize. If the size is either
-// unknown (i.e. -1) or smaller than uploadChunkSize, the method incurs an
-// avoidable request to the Dropbox API that does not carry payload.
+// Will introduce two additional network requests to start and finish the session.
+// If the size is unknown (i.e. -1) the method incurs one additional
+// request to the Dropbox API that does not carry a payload to close the append session.
 func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *files.CommitInfo, size int64) (entry *files.FileMetadata, err error) {
 	// start upload
 	var res *files.UploadSessionStartResult
@@ -1608,7 +1607,10 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 	}
 
 	chunkSize := int64(o.fs.opt.ChunkSize)
-	chunks := int(math.Ceil(float64(size) / float64(chunkSize)))
+	chunks, remainder := size/chunkSize, size%chunkSize
+	if remainder > 0 {
+		chunks++
+	}
 
 	// write chunks
 	in := readers.NewCountingReader(in0)
@@ -1634,7 +1636,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 				return false, nil
 			}
 			err = o.fs.srv.UploadSessionAppendV2(&appendArg, chunk)
-			// after the first chunk is uploaded, we retry everything
+			// after session is started, we retry everything
 			return err != nil, err
 		})
 		if err != nil {
