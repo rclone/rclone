@@ -1226,7 +1226,7 @@ Use the -i flag to see what would be copied before copying.
 
 Drive has quite a lot of rate limiting.  This causes rclone to be
 limited to transferring about 2 files per second only.  Individual
-files may be transferred much faster at 100s of MBytes/s but lots of
+files may be transferred much faster at 100s of MByte/s but lots of
 small files can take a long time.
 
 Server side copies are also subject to a separate rate limit. If you
