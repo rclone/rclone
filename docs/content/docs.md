@@ -654,7 +654,7 @@ If you run `rclone config file` you will see where the default
 location is for you.
 
 Use this flag to override the config location, e.g. `rclone
---config=".myconfig" .config`.
+--config=".myconfig" config`.
 
 If the location is set to empty string `""` or the special value
 `/notfound`, or the os null device represented by value `NUL` on
@@ -2119,7 +2119,7 @@ mys3:
 Note that if you want to create a remote using environment variables
 you must create the `..._TYPE` variable as above.
 
-Note also that now rclone has [connectionstrings](#connection-strings),
+Note also that now rclone has [connection strings](#connection-strings),
 it is probably easier to use those instead which makes the above example
 
     rclone lsd :s3,access_key_id=XXX,secret_access_key=XXX:
