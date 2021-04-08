@@ -147,19 +147,23 @@ func (b *batcher) finishBatchJobStatus(ctx context.Context, launchBatchStatus *f
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "wait for batch completion: check failed")
+			fs.Debugf(b.f, "Wait for batch: sleeping for %v after error: %v: try %d/%d", sleepTime, err, try, maxTries)
+		} else {
+			if batchStatus.Tag == "complete" {
+				return batchStatus.Complete, nil
+			}
+			fs.Debugf(b.f, "Wait for batch: sleeping for %v after status: %q: try %d/%d", sleepTime, batchStatus.Tag, try, maxTries)
 		}
-		if batchStatus.Tag == "complete" {
-			break
-		}
-		fs.Debugf(b.f, "Sleeping for %v to wait for batch to complete: %q: try %d/%d", sleepTime, batchStatus.Tag, try, maxTries)
 		time.Sleep(sleepTime)
 		sleepTime *= 2
 		if sleepTime > time.Second {
 			sleepTime = time.Second
 		}
 	}
-	return batchStatus.Complete, nil
+	if err == nil {
+		err = errors.New("batch didn't complete")
+	}
+	return nil, errors.Wrapf(err, "wait for batch failed after %d tries", maxTries)
 }
 
 // commit a batch
