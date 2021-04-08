@@ -39,10 +39,10 @@ func setConfigFile(t *testing.T, data string) func() {
 
 	require.NoError(t, out.Close())
 
-	old := config.ConfigPath
-	config.ConfigPath = filePath
+	old := config.GetConfigPath()
+	assert.NoError(t, config.SetConfigPath(filePath))
 	return func() {
-		config.ConfigPath = old
+		assert.NoError(t, config.SetConfigPath(old))
 		_ = os.Remove(filePath)
 	}
 }
@@ -160,7 +160,7 @@ type = number3
 `, toUnix(buf))
 					t.Run("Save", func(t *testing.T) {
 						require.NoError(t, data.Save())
-						buf, err := ioutil.ReadFile(config.ConfigPath)
+						buf, err := ioutil.ReadFile(config.GetConfigPath())
 						require.NoError(t, err)
 						assert.Equal(t, `[one]
 fruit = potato
@@ -188,7 +188,7 @@ func TestConfigFileReload(t *testing.T) {
 	assert.Equal(t, "", value)
 
 	// Now write a new value on the end
-	out, err := os.OpenFile(config.ConfigPath, os.O_APPEND|os.O_WRONLY, 0777)
+	out, err := os.OpenFile(config.GetConfigPath(), os.O_APPEND|os.O_WRONLY, 0777)
 	require.NoError(t, err)
 	fmt.Fprintln(out, "appended = what magic")
 	require.NoError(t, out.Close())
@@ -203,7 +203,7 @@ func TestConfigFileDoesNotExist(t *testing.T) {
 	defer setConfigFile(t, configData)()
 	data := &Storage{}
 
-	require.NoError(t, os.Remove(config.ConfigPath))
+	require.NoError(t, os.Remove(config.GetConfigPath()))
 
 	err := data.Load()
 	require.Equal(t, config.ErrorConfigFileNotFound, err)
@@ -215,7 +215,7 @@ func TestConfigFileDoesNotExist(t *testing.T) {
 }
 
 func testConfigFileNoConfig(t *testing.T, configPath string) {
-	config.ConfigPath = configPath
+	assert.NoError(t, config.SetConfigPath(configPath))
 	data := &Storage{}
 
 	err := data.Load()
@@ -227,13 +227,13 @@ func testConfigFileNoConfig(t *testing.T, configPath string) {
 	assert.Equal(t, "42", value)
 
 	err = data.Save()
-	require.NoError(t, err)
+	require.Error(t, err)
 }
 
 func TestConfigFileNoConfig(t *testing.T) {
-	old := config.ConfigPath
+	old := config.GetConfigPath()
 	defer func() {
-		config.ConfigPath = old
+		assert.NoError(t, config.SetConfigPath(old))
 	}()
 
 	t.Run("Empty", func(t *testing.T) {

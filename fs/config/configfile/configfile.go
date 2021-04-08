@@ -15,9 +15,6 @@ import (
 	"github.com/rclone/rclone/fs/config"
 )
 
-// Special value indicating in memory config file. Empty string works also.
-const noConfigFile = "/notfound"
-
 // LoadConfig installs the config file handler and calls config.LoadConfig
 func LoadConfig(ctx context.Context) {
 	config.Data = &Storage{}
@@ -32,29 +29,22 @@ type Storage struct {
 	fi os.FileInfo          // stat of the file when last loaded
 }
 
-// Return whether we have a real config file or not
-func (s *Storage) noConfig() bool {
-	return config.ConfigPath == "" || config.ConfigPath == noConfigFile
-}
-
 // Check to see if we need to reload the config
 func (s *Storage) check() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.noConfig() {
-		return
-	}
-
-	// Check to see if config file has changed since it was last loaded
-	fi, err := os.Stat(config.ConfigPath)
-	if err == nil {
-		// check to see if config file has changed and if it has, reload it
-		if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
-			fs.Debugf(nil, "Config file has changed externaly - reloading")
-			err := s._load()
-			if err != nil {
-				fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)
+	if configPath := config.GetConfigPath(); configPath != "" {
+		// Check to see if config file has changed since it was last loaded
+		fi, err := os.Stat(configPath)
+		if err == nil {
+			// check to see if config file has changed and if it has, reload it
+			if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
+				fs.Debugf(nil, "Config file has changed externaly - reloading")
+				err := s._load()
+				if err != nil {
+					fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)
+				}
 			}
 		}
 	}
@@ -71,11 +61,12 @@ func (s *Storage) _load() (err error) {
 		}
 	}()
 
-	if s.noConfig() {
+	configPath := config.GetConfigPath()
+	if configPath == "" {
 		return config.ErrorConfigFileNotFound
 	}
 
-	fd, err := os.Open(config.ConfigPath)
+	fd, err := os.Open(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return config.ErrorConfigFileNotFound
@@ -85,7 +76,7 @@ func (s *Storage) _load() (err error) {
 	defer fs.CheckClose(fd, &err)
 
 	// Update s.fi with the current file info
-	s.fi, _ = os.Stat(config.ConfigPath)
+	s.fi, _ = os.Stat(configPath)
 
 	cryptReader, err := config.Decrypt(fd)
 	if err != nil {
@@ -113,11 +104,12 @@ func (s *Storage) Save() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.noConfig() {
-		return nil
+	configPath := config.GetConfigPath()
+	if configPath == "" {
+		return errors.Errorf("Failed to save config file: Path is empty")
 	}
 
-	dir, name := filepath.Split(config.ConfigPath)
+	dir, name := filepath.Split(configPath)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "failed to create config directory")
@@ -149,7 +141,7 @@ func (s *Storage) Save() error {
 	}
 
 	var fileMode os.FileMode = 0600
-	info, err := os.Stat(config.ConfigPath)
+	info, err := os.Stat(configPath)
 	if err != nil {
 		fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
 	} else if info.Mode() != fileMode {
@@ -157,25 +149,25 @@ func (s *Storage) Save() error {
 		fileMode = info.Mode()
 	}
 
-	attemptCopyGroup(config.ConfigPath, f.Name())
+	attemptCopyGroup(configPath, f.Name())
 
 	err = os.Chmod(f.Name(), fileMode)
 	if err != nil {
 		fs.Errorf(nil, "Failed to set permissions on config file: %v", err)
 	}
 
-	if err = os.Rename(config.ConfigPath, config.ConfigPath+".old"); err != nil && !os.IsNotExist(err) {
+	if err = os.Rename(configPath, configPath+".old"); err != nil && !os.IsNotExist(err) {
 		return errors.Errorf("Failed to move previous config to backup location: %v", err)
 	}
-	if err = os.Rename(f.Name(), config.ConfigPath); err != nil {
+	if err = os.Rename(f.Name(), configPath); err != nil {
 		return errors.Errorf("Failed to move newly written config from %s to final location: %v", f.Name(), err)
 	}
-	if err := os.Remove(config.ConfigPath + ".old"); err != nil && !os.IsNotExist(err) {
+	if err := os.Remove(configPath + ".old"); err != nil && !os.IsNotExist(err) {
 		fs.Errorf(nil, "Failed to remove backup config file: %v", err)
 	}
 
 	// Update s.fi with the newly written file
-	s.fi, _ = os.Stat(config.ConfigPath)
+	s.fi, _ = os.Stat(configPath)
 
 	return nil
 }

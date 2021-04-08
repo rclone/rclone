@@ -535,12 +535,16 @@ func CopyRemote(name string) {
 
 // ShowConfigLocation prints the location of the config file in use
 func ShowConfigLocation() {
-	if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
-		fmt.Println("Configuration file doesn't exist, but rclone will use this path:")
+	if configPath := GetConfigPath(); configPath == "" {
+		fmt.Println("Configuration is in memory only")
 	} else {
-		fmt.Println("Configuration file is stored at:")
+		if _, err := os.Stat(configPath); os.IsNotExist(err) {
+			fmt.Println("Configuration file doesn't exist, but rclone will use this path:")
+		} else {
+			fmt.Println("Configuration file is stored at:")
+		}
+		fmt.Printf("%s\n", configPath)
 	}
-	fmt.Printf("%s\n", ConfigPath)
 }
 
 // ShowConfig prints the (unencrypted) config options
