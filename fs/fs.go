@@ -1431,6 +1431,11 @@ func NewFs(ctx context.Context, path string) (Fs, error) {
 		// These need to work as filesystem names as the VFS cache will use them
 		configName += suffix
 	}
+	Debugf(nil, "Config dump:")
+	nonDefaultConfig := fsInfo.Options.NonDefault(config)
+	for k, v := range nonDefaultConfig {
+		Debugf(nil, "  %s = %q", k, v)
+	}
 	return fsInfo.NewFs(ctx, configName, fsPath, config)
 }
 
