@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -151,4 +152,30 @@ func TestOpenFileOperations(t *testing.T) {
 		"file1,7,false",
 	})
 
+}
+
+// Smoke test the IsReserved function
+func TestIsReserved(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("Skipping test on !windows")
+	}
+	// Regular name
+	require.NoError(t, IsReserved("readme.txt"))
+	require.NoError(t, IsReserved("some/path/readme.txt"))
+	// Empty
+	require.Error(t, IsReserved(""))
+	// Separators only
+	require.Error(t, IsReserved("/"))
+	require.Error(t, IsReserved("////"))
+	require.Error(t, IsReserved("./././././"))
+	// Legacy device name
+	require.Error(t, IsReserved("NUL"))
+	require.Error(t, IsReserved("nul"))
+	require.Error(t, IsReserved("Nul"))
+	require.Error(t, IsReserved("NUL.txt"))
+	require.Error(t, IsReserved("some/path/to/nul.txt"))
+	require.NoError(t, IsReserved("NULL"))
+	// Name end with a space or a period
+	require.Error(t, IsReserved("test."))
+	require.Error(t, IsReserved("test "))
 }

@@ -3,7 +3,10 @@
 package file
 
 import (
+	"errors"
 	"os"
+	"path/filepath"
+	"regexp"
 	"syscall"
 )
 
@@ -63,4 +66,37 @@ func OpenFile(path string, mode int, perm os.FileMode) (*os.File, error) {
 		return nil, e
 	}
 	return os.NewFile(uintptr(h), path), nil
+}
+
+// IsReserved checks if path contains a reserved name
+func IsReserved(path string) error {
+	if path == "" {
+		return errors.New("path is empty")
+	}
+	base := filepath.Base(path)
+	// If the path is empty or reduces to ".", Base returns ".".
+	if base == "." {
+		return errors.New("path is '.'")
+	}
+	// If the path consists entirely of separators, Base returns a single separator.
+	if base == string(filepath.Separator) {
+		return errors.New("path consists entirely of separators")
+	}
+	// Do not end a file or directory name with a space or a period. Although the underlying
+	// file system may support such names, the Windows shell and user interface does not.
+	// (https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file)
+	suffix := base[len(base)-1]
+	switch suffix {
+	case ' ':
+		return errors.New("base file name ends with a space")
+	case '.':
+		return errors.New("base file name ends with a period")
+	}
+	// Do not use names of legacy (DOS) devices, not even as basename without extension,
+	// as this will refer to the actual device.
+	// (https://docs.microsoft.com/en-gb/windows/win32/fileio/naming-a-file)
+	if reserved, _ := regexp.MatchString(`^(?i:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)`, base); reserved {
+		return errors.New("base file name is reserved windows device name (CON, PRN, AUX, NUL, COM[1-9], LPT[1-9])")
+	}
+	return nil
 }
