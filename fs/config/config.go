@@ -28,6 +28,7 @@ import (
 const (
 	configFileName       = "rclone.conf"
 	hiddenConfigFileName = "." + configFileName
+	noConfigFile         = "/notfound"
 
 	// ConfigToken is the key used to store the token under
 	ConfigToken = "token"
@@ -107,17 +108,21 @@ var (
 	// and any parents.
 	CacheDir = makeCacheDir()
 
-	// ConfigPath points to the config file
-	ConfigPath = makeConfigPath()
-
 	// Password can be used to configure the random password generator
 	Password = random.Password
+)
+
+var (
+	configPath   string
+	noConfigPath string
 )
 
 func init() {
 	// Set the function pointers up in fs
 	fs.ConfigFileGet = FileGetFlag
 	fs.ConfigFileSet = SetValueAndSave
+	noConfigPath, _ = filepath.Abs(noConfigFile)
+	configPath = makeConfigPath()
 }
 
 // Return the path to the configuration file
@@ -212,18 +217,44 @@ func makeConfigPath() string {
 	return hiddenConfigFileName
 }
 
+// GetConfigPath returns the current config file path
+func GetConfigPath() string {
+	return configPath
+}
+
+// SetConfigPath sets new config file path
+//
+// Checks for empty string, os null device, or special path, all of which indicates in-memory config.
+func SetConfigPath(path string) (err error) {
+	if path == "" || path == os.DevNull {
+		configPath = ""
+	} else {
+		if configPath, err = filepath.Abs(path); err != nil {
+			return err
+		}
+		if configPath == noConfigPath {
+			configPath = ""
+		}
+	}
+	return nil
+}
+
 // LoadConfig loads the config file
 func LoadConfig(ctx context.Context) {
 	// Set RCLONE_CONFIG_DIR for backend config and subprocesses
-	_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(ConfigPath))
-
-	// Load configuration file.
+	// If empty configPath (in-memory only) the value will be "."
+	_ = os.Setenv("RCLONE_CONFIG_DIR", filepath.Dir(configPath))
+	// Load configuration from file (or initialize sensible default if no file or error)
 	if err := Data.Load(); err == ErrorConfigFileNotFound {
-		fs.Logf(nil, "Config file %q not found - using defaults", ConfigPath)
+		if configPath == "" {
+			fs.Debugf(nil, "Config is memory-only - using defaults")
+		} else {
+			fs.Logf(nil, "Config file %q not found - using defaults", configPath)
+		}
 	} else if err != nil {
-		log.Fatalf("Failed to load config file %q: %v", ConfigPath, err)
+		log.Fatalf("Failed to load config file %q: %v", configPath, err)
 	} else {
-		fs.Debugf(nil, "Using config file from %q", ConfigPath)
+		fs.Debugf(nil, "Using config file from %q", configPath)
 	}
 }
 
@@ -233,6 +264,10 @@ var ErrorConfigFileNotFound = errors.New("config file not found")
 // SaveConfig calling function which saves configuration file.
 // if SaveConfig returns error trying again after sleep.
 func SaveConfig() {
+	if configPath == "" {
+		fs.Debugf(nil, "Skipping save for memory-only config")
+		return
+	}
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 	var err error
@@ -244,7 +279,6 @@ func SaveConfig() {
 		time.Sleep(time.Duration(waitingTimeMs) * time.Millisecond)
 	}
 	fs.Errorf(nil, "Failed to save config after %d tries: %v", ci.LowLevelRetries, err)
-	return
 }
 
 // SetValueAndSave sets the key to the value and saves just that

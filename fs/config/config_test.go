@@ -12,10 +12,10 @@ import (
 )
 
 func TestConfigLoad(t *testing.T) {
-	oldConfigPath := config.ConfigPath
-	config.ConfigPath = "./testdata/plain.conf"
+	oldConfigPath := config.GetConfigPath()
+	assert.NoError(t, config.SetConfigPath("./testdata/plain.conf"))
 	defer func() {
-		config.ConfigPath = oldConfigPath
+		assert.NoError(t, config.SetConfigPath(oldConfigPath))
 	}()
 	config.ClearConfigPassword()
 	configfile.LoadConfig(context.Background())

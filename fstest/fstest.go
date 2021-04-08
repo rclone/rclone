@@ -69,7 +69,7 @@ func Initialise() {
 	// parse the flags any more so this doesn't happen
 	// automatically
 	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
-		config.ConfigPath = envConfig
+		_ = config.SetConfigPath(envConfig)
 	}
 	configfile.LoadConfig(ctx)
 	accounting.Start(ctx)

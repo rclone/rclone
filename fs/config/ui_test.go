@@ -34,13 +34,13 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 
 	// temporarily adapt configuration
 	oldOsStdout := os.Stdout
-	oldConfigPath := config.ConfigPath
+	oldConfigPath := config.GetConfigPath()
 	oldConfig := *ci
 	oldConfigFile := config.Data
 	oldReadLine := config.ReadLine
 	oldPassword := config.Password
 	os.Stdout = nil
-	config.ConfigPath = path
+	assert.NoError(t, config.SetConfigPath(path))
 	ci = &fs.ConfigInfo{}
 
 	configfile.LoadConfig(ctx)
@@ -69,7 +69,7 @@ func testConfigFile(t *testing.T, configFileName string) func() {
 		assert.NoError(t, err)
 
 		os.Stdout = oldOsStdout
-		config.ConfigPath = oldConfigPath
+		assert.NoError(t, config.SetConfigPath(oldConfigPath))
 		config.ReadLine = oldReadLine
 		config.Password = oldPassword
 		*ci = oldConfig
