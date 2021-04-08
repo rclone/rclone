@@ -653,8 +653,8 @@ for Rclone to use it, it will never be created automatically.
 If you run `rclone config file` you will see where the default
 location is for you.
 
-Use this flag to override the config location, e.g. `rclone
---config=".myconfig" config`.
+Use this flag to override the config location, e.g.
+`rclone config --config="rclone.conf"`.
 
 If the location is set to empty string `""` or the special value
 `/notfound`, or the os null device represented by value `NUL` on
