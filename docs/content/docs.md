@@ -640,22 +640,51 @@ See `--copy-dest` and `--backup-dir`.
 
 ### --config=CONFIG_FILE ###
 
-Specify the location of the rclone configuration file.
+Specify the location of the rclone configuration file, to override
+the default. E.g. `rclone config --config="rclone.conf"`.
 
-Normally the config file is in your home directory as a file called
-`.config/rclone/rclone.conf` (or `.rclone.conf` if created with an
-older version). If `$XDG_CONFIG_HOME` is set it will be at
-`$XDG_CONFIG_HOME/rclone/rclone.conf`.
+The exact default is a bit complex to describe, due to changes
+introduced through different versions of rclone while preserving
+backwards compatibility, but in most cases it is as simple as:
 
-If there is a file `rclone.conf` in the same directory as the rclone
-executable it will be preferred. This file must be created manually
-for Rclone to use it, it will never be created automatically.
+ - `%APPDATA%/rclone/rclone.conf` on Windows
+ - `~/.config/rclone/rclone.conf` on other
+
+The complete logic is as follows: Rclone will look for an existing
+configuration file in any of the following locations, in priority order:
+
+  1. `rclone.conf` (in program directory, where rclone executable is)
+  2. `%APPDATA%/rclone/rclone.conf` (only on Windows)
+  3. `$XDG_CONFIG_HOME/rclone/rclone.conf` (on all systems, including Windows)
+  4. `~/.config/rclone/rclone.conf` (see below for explanation of ~ symbol)
+  5. `~/.rclone.conf`
+
+If no existing configuration file is found, then a new one will be created
+in the following location:
+
+- On Windows: Location 2 listed above, except in the unlikely event
+  that `APPDATA` is not defined, then location 4 is used instead.
+- On Unix: Location 3 if `XDG_CONFIG_HOME` is defined, else location 4.
+- Fallback to location 5 (on all OS), when the rclone directory cannot be
+  created, but if also a home directory was not found then path
+  `.rclone.conf` relative to current working directory will be used as
+  a final resort.
+
+The `~` symbol in paths above represent the home directory of the current user
+on any OS, and the value is defined as following:
+
+  - On Windows: `%HOME%` if defined, else `%USERPROFILE%`, or else `%HOMEDRIVE%\%HOMEPATH%`.
+  - On Unix: `$HOME` if defined, else by looking up current user in OS-specific user database
+    (e.g. passwd file), or else use the result from shell command `cd && pwd`.
 
 If you run `rclone config file` you will see where the default
 location is for you.
 
-Use this flag to override the config location, e.g.
-`rclone config --config="rclone.conf"`.
+The fact that an existing file `rclone.conf` in the same directory
+as the rclone executable is always preferred, means that it is easy
+to run in "portable" mode by downloading rclone executable to a
+writable directory and then create an empty file `rclone.conf` in the
+same directory.
 
 If the location is set to empty string `""` or the special value
 `/notfound`, or the os null device represented by value `NUL` on
