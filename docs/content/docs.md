@@ -57,6 +57,7 @@ See the following for detailed instructions for
   * [SugarSync](/sugarsync/)
   * [Tardigrade](/tardigrade/)
   * [Union](/union/)
+  * [Uptobox](/uptobox/)
   * [WebDAV](/webdav/)
   * [Yandex Disk](/yandex/)
   * [Zoho WorkDrive](/zoho/)
