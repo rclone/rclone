@@ -10,10 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-// String create a random string for test purposes.
+// StringFn create a random string for test purposes using the random
+// number generator function passed in.
 //
 // Do not use these for passwords.
-func String(n int) string {
+func StringFn(n int, randIntn func(n int) int) string {
 	const (
 		vowel     = "aeiou"
 		consonant = "bcdfghjklmnpqrstvwxyz"
@@ -25,9 +26,16 @@ func String(n int) string {
 	for i := range out {
 		source := pattern[p]
 		p = (p + 1) % len(pattern)
-		out[i] = source[mathrand.Intn(len(source))]
+		out[i] = source[randIntn(len(source))]
 	}
 	return string(out)
+}
+
+// String create a random string for test purposes.
+//
+// Do not use these for passwords.
+func String(n int) string {
+	return StringFn(n, mathrand.Intn)
 }
 
 // Password creates a crypto strong password which is just about
