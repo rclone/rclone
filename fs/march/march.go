@@ -404,14 +404,22 @@ func (m *March) processJob(job listDirJob) ([]listDirJob, error) {
 	// Wait for listings to complete and report errors
 	wg.Wait()
 	if srcListErr != nil {
-		fs.Errorf(job.srcRemote, "error reading source directory: %v", srcListErr)
+		if job.srcRemote != "" {
+			fs.Errorf(job.srcRemote, "error reading source directory: %v", srcListErr)
+		} else {
+			fs.Errorf(m.Fsrc, "error reading source root directory: %v", srcListErr)
+		}
 		srcListErr = fs.CountError(srcListErr)
 		return nil, srcListErr
 	}
 	if dstListErr == fs.ErrorDirNotFound {
 		// Copy the stuff anyway
 	} else if dstListErr != nil {
-		fs.Errorf(job.dstRemote, "error reading destination directory: %v", dstListErr)
+		if job.dstRemote != "" {
+			fs.Errorf(job.dstRemote, "error reading destination directory: %v", dstListErr)
+		} else {
+			fs.Errorf(m.Fdst, "error reading destination root directory: %v", dstListErr)
+		}
 		dstListErr = fs.CountError(dstListErr)
 		return nil, dstListErr
 	}
