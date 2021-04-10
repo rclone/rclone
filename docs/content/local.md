@@ -172,7 +172,7 @@ like symlinks under Windows).
 
 If you supply `--copy-links` or `-L` then rclone will follow the
 symlink and copy the pointed to file or directory.  Note that this
-flag is incompatible with `-links` / `-l`.
+flag is incompatible with `--links` / `-l`.
 
 This flag applies to all commands.
 
