@@ -22,6 +22,7 @@ func init() {
 	cmd.Root.AddCommand(configCommand)
 	configCommand.AddCommand(configEditCommand)
 	configCommand.AddCommand(configFileCommand)
+	configCommand.AddCommand(configTouchCommand)
 	configCommand.AddCommand(configShowCommand)
 	configCommand.AddCommand(configDumpCommand)
 	configCommand.AddCommand(configProvidersCommand)
@@ -60,6 +61,15 @@ var configFileCommand = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		config.ShowConfigLocation()
+	},
+}
+
+var configTouchCommand = &cobra.Command{
+	Use:   "touch",
+	Short: `Ensure configuration file exists.`,
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(0, 0, command, args)
+		config.SaveConfig()
 	},
 }
 
