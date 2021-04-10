@@ -56,23 +56,26 @@ var commandDefinition = &cobra.Command{
 		cmd.CheckArgs(1, 1, command, args)
 		if seed == 0 {
 			seed = time.Now().UnixNano()
-			log.Printf("Using random seed = %d", seed)
+			fs.Logf(nil, "Using random seed = %d", seed)
 		}
 		randSource = rand.New(rand.NewSource(seed))
 		outputDirectory := args[0]
 		directoriesToCreate = numberOfFiles / averageFilesPerDirectory
 		averageSize := (minFileSize + maxFileSize) / 2
-		log.Printf("Creating %d files of average size %v in %d directories in %q.", numberOfFiles, averageSize, directoriesToCreate, outputDirectory)
+		start := time.Now()
+		fs.Logf(nil, "Creating %d files of average size %v in %d directories in %q.", numberOfFiles, averageSize, directoriesToCreate, outputDirectory)
 		root := &dir{name: outputDirectory, depth: 1}
 		for totalDirectories < directoriesToCreate {
 			root.createDirectories()
 		}
 		dirs := root.list("", []string{})
+		totalBytes := int64(0)
 		for i := 0; i < numberOfFiles; i++ {
 			dir := dirs[randSource.Intn(len(dirs))]
-			writeFile(dir, fileName())
+			totalBytes += writeFile(dir, fileName())
 		}
-		log.Printf("Done.")
+		dt := time.Since(start)
+		fs.Logf(nil, "Written %viB in %v at %viB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
 	},
 }
 
@@ -130,7 +133,7 @@ func (d *dir) list(path string, output []string) []string {
 }
 
 // writeFile writes a random file at dir/name
-func writeFile(dir, name string) {
+func writeFile(dir, name string) int64 {
 	err := os.MkdirAll(dir, 0777)
 	if err != nil {
 		log.Fatalf("Failed to make directory %q: %v", dir, err)
@@ -149,4 +152,6 @@ func writeFile(dir, name string) {
 	if err != nil {
 		log.Fatalf("Failed to close file %q: %v", path, err)
 	}
+	fs.Infof(path, "Written file size %v", fs.SizeSuffix(size))
+	return size
 }
