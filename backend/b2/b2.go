@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
+	"encoding/json"
 	"fmt"
 	gohash "hash"
 	"io"
@@ -344,11 +345,17 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 
 // errorHandler parses a non 2xx error response into an error
 func errorHandler(resp *http.Response) error {
+	body, err := rest.ReadBody(resp)
+	if err != nil {
+		return errors.Wrap(err, "error reading error out of body")
+	}
 	// Decode error response
 	errResponse := new(api.Error)
-	err := rest.DecodeJSON(resp, &errResponse)
-	if err != nil {
-		fs.Debugf(nil, "Couldn't decode error response: %v", err)
+	if len(body) > 0 {
+		err := json.Unmarshal(body, &errResponse)
+		if err != nil {
+			fs.Debugf(nil, "Couldn't decode error response: %v", err)
+		}
 	}
 	if errResponse.Code == "" {
 		errResponse.Code = "unknown"
@@ -357,7 +364,7 @@ func errorHandler(resp *http.Response) error {
 		errResponse.Status = resp.StatusCode
 	}
 	if errResponse.Message == "" {
-		errResponse.Message = "Unknown " + resp.Status
+		errResponse.Message = fmt.Sprintf("Unknown: %s: %s", resp.Status, body)
 	}
 	return errResponse
 }
