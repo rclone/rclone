@@ -71,7 +71,10 @@ func Initialise() {
 	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
 		_ = config.SetConfigPath(envConfig)
 	}
-	configfile.LoadConfig(ctx)
+	err := configfile.LoadConfig(ctx)
+	if err != nil {
+		log.Fatalf("Initialise failed to load config: %v", err)
+	}
 	accounting.Start(ctx)
 	if *Verbose {
 		ci.LogLevel = fs.LogLevelDebug

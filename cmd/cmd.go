@@ -400,7 +400,10 @@ func initConfig() {
 	configflags.SetFlags(ci)
 
 	// Load the config
-	configfile.LoadConfig(ctx)
+	err := configfile.LoadConfig(ctx)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
 
 	// Start accounting
 	accounting.Start(ctx)
@@ -411,7 +414,7 @@ func initConfig() {
 	}
 
 	// Load filters
-	err := filterflags.Reload(ctx)
+	err = filterflags.Reload(ctx)
 	if err != nil {
 		log.Fatalf("Failed to load filters: %v", err)
 	}

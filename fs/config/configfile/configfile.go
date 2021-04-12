@@ -16,9 +16,9 @@ import (
 )
 
 // LoadConfig installs the config file handler and calls config.LoadConfig
-func LoadConfig(ctx context.Context) {
+func LoadConfig(ctx context.Context) error {
 	config.Data = &Storage{}
-	config.LoadConfig(ctx)
+	return config.LoadConfig(ctx)
 }
 
 // Storage implements config.Storage for saving and loading config

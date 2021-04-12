@@ -9,6 +9,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfigLoad(t *testing.T) {
@@ -18,7 +19,7 @@ func TestConfigLoad(t *testing.T) {
 		assert.NoError(t, config.SetConfigPath(oldConfigPath))
 	}()
 	config.ClearConfigPassword()
-	configfile.LoadConfig(context.Background())
+	require.NoError(t, configfile.LoadConfig(context.Background()))
 	sections := config.Data.GetSectionList()
 	var expect = []string{"RCLONE_ENCRYPT_V0", "nounc", "unc"}
 	assert.Equal(t, expect, sections)

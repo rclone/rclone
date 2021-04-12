@@ -18,7 +18,7 @@ const testName = "configTestNameForRc"
 
 func TestRc(t *testing.T) {
 	ctx := context.Background()
-	configfile.LoadConfig(ctx)
+	require.NoError(t, configfile.LoadConfig(ctx))
 	// Create the test remote
 	call := rc.Calls.Get("config/create")
 	assert.NotNil(t, call)

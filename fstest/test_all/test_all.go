@@ -72,7 +72,10 @@ func main() {
 		log.Println("test_all should be run from the root of the rclone source code")
 		log.Fatal(err)
 	}
-	configfile.LoadConfig(context.Background())
+	err = configfile.LoadConfig(context.Background())
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
 
 	// Seed the random number generator
 	rand.Seed(time.Now().UTC().UnixNano())
