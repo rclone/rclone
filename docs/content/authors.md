@@ -480,3 +480,4 @@ put them back in again.` >}}
   * CERN through the CS3MESH4EOSC Project
   * Nick Gaya <nicholasgaya+github@gmail.com>
   * Ashok Gelal <401055+ashokgelal@users.noreply.github.com>
+  * Dominik Mydlil <dominik.mydlil@outlook.com>
