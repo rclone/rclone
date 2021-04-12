@@ -189,6 +189,9 @@ backends:
  - backend:  "sftp"
    remote:   "TestSFTPRclone:"
    fastlist: false
+ - backend:  "sftp"
+   remote:   "TestSFTPRsyncNet:"
+   fastlist: false
  - backend:  "sugarsync"
    remote:   "TestSugarSync:Test"
    fastlist: false
