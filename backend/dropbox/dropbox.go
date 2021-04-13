@@ -99,6 +99,7 @@ var (
 			"files.content.write",
 			"files.content.read",
 			"sharing.write",
+			"account_info.read", // needed for About
 			// "file_requests.write",
 			// "members.read", // needed for impersonate - but causes app to need to be approved by Dropbox Team Admin during the flow
 		},
