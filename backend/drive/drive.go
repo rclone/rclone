@@ -199,7 +199,7 @@ func init() {
 				m.Set("root_folder_id", "appDataFolder")
 			}
 
-			if opt.ServiceAccountFile == "" {
+			if opt.ServiceAccountFile == "" && opt.ServiceAccountCredentials == "" {
 				err = oauthutil.Config(ctx, "drive", name, m, driveConfig, nil)
 				if err != nil {
 					log.Fatalf("Failed to configure token: %v", err)
