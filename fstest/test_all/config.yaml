@@ -326,3 +326,8 @@ backends:
    fastlist: false
    ignore:
      - TestSyncUTFNorm
+ - backend: "uptobox"
+   remote: "TestUptobox:"
+   fastlist: false
+   ignore:
+     - TestRWFileHandleWriteNoWrite
