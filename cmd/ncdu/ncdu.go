@@ -485,11 +485,15 @@ func (u *UI) removeEntry(pos int) {
 
 // delete the entry at the current position
 func (u *UI) delete() {
+	if u.d == nil || len(u.entries) == 0 {
+		return
+	}
 	ctx := context.Background()
-	dirPos := u.sortPerm[u.dirPosMap[u.path].entry]
-	entry := u.entries[dirPos]
+	cursorPos := u.dirPosMap[u.path]
+	dirPos := u.sortPerm[cursorPos.entry]
+	dirEntry := u.entries[dirPos]
 	u.boxMenu = []string{"cancel", "confirm"}
-	if obj, isFile := entry.(fs.Object); isFile {
+	if obj, isFile := dirEntry.(fs.Object); isFile {
 		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
 			if o != 1 {
 				return "Aborted!", nil
@@ -499,27 +503,33 @@ func (u *UI) delete() {
 				return "", err
 			}
 			u.removeEntry(dirPos)
+			if cursorPos.entry >= len(u.entries) {
+				u.move(-1) // move back onto a valid entry
+			}
 			return "Successfully deleted file!", nil
 		}
 		u.popupBox([]string{
 			"Delete this file?",
-			u.fsName + entry.String()})
+			u.fsName + dirEntry.String()})
 	} else {
 		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
 			if o != 1 {
 				return "Aborted!", nil
 			}
-			err := operations.Purge(ctx, f, entry.String())
+			err := operations.Purge(ctx, f, dirEntry.String())
 			if err != nil {
 				return "", err
 			}
 			u.removeEntry(dirPos)
+			if cursorPos.entry >= len(u.entries) {
+				u.move(-1) // move back onto a valid entry
+			}
 			return "Successfully purged folder!", nil
 		}
 		u.popupBox([]string{
 			"Purge this directory?",
 			"ALL files in it will be deleted",
-			u.fsName + entry.String()})
+			u.fsName + dirEntry.String()})
 	}
 }
 
