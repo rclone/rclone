@@ -1857,7 +1857,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, size int64, 
 		fs.Debugf(o, "Cancelling multipart upload: %v", err)
 		cancelErr := o.cancelUploadSession(ctx, uploadURL)
 		if cancelErr != nil {
-			fs.Logf(o, "Failed to cancel multipart upload: %v", cancelErr)
+			fs.Logf(o, "Failed to cancel multipart upload: %v (upload failed due to: %v)", cancelErr, err)
 		}
 	})()
 
