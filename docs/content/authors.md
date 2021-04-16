@@ -481,3 +481,4 @@ put them back in again.` >}}
   * Nick Gaya <nicholasgaya+github@gmail.com>
   * Ashok Gelal <401055+ashokgelal@users.noreply.github.com>
   * Dominik Mydlil <dominik.mydlil@outlook.com>
+  * Nazar Mishturak <nazarmx@gmail.com>
