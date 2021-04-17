@@ -62,7 +62,7 @@ docs = [
     "sftp.md",
     "sugarsync.md",
     "tardigrade.md",
-    "uptobox.md"
+    "uptobox.md",
     "union.md",
     "webdav.md",
     "yandex.md",
