@@ -102,6 +102,7 @@ var (
 			"account_info.read", // needed for About
 			// "file_requests.write",
 			// "members.read", // needed for impersonate - but causes app to need to be approved by Dropbox Team Admin during the flow
+			// "team_data.member"
 		},
 		// Endpoint: oauth2.Endpoint{
 		// 	AuthURL:  "https://www.dropbox.com/1/oauth2/authorize",
@@ -131,8 +132,8 @@ func getOauthConfig(m configmap.Mapper) *oauth2.Config {
 	}
 	// Make a copy of the config
 	config := *dropboxConfig
-	// Make a copy of the scopes with "members.read" appended
-	config.Scopes = append(config.Scopes, "members.read")
+	// Make a copy of the scopes with extra scopes requires appended
+	config.Scopes = append(config.Scopes, "members.read", "team_data.member")
 	return &config
 }
 
