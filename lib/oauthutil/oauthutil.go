@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/skratchdot/open-golang/open"
@@ -166,9 +167,11 @@ type TokenSource struct {
 	expiryTimer *time.Timer // signals whenever the token expires
 }
 
-// If token has expired then first try re-reading it from the config
-// file in case a concurrently running rclone has updated it already
-func (ts *TokenSource) reReadToken() bool {
+// If token has expired then first try re-reading it (and its refresh token)
+// from the config file in case a concurrently running rclone has updated them
+// already.
+// Returns whether either of the two tokens has been reread.
+func (ts *TokenSource) reReadToken() (changed bool) {
 	tokenString, found := ts.m.Get(config.ConfigToken)
 	if !found || tokenString == "" {
 		fs.Debugf(ts.name, "Failed to read token out of config file")
@@ -180,14 +183,23 @@ func (ts *TokenSource) reReadToken() bool {
 		fs.Debugf(ts.name, "Failed to parse token out of config file: %v", err)
 		return false
 	}
+
 	if !newToken.Valid() {
 		fs.Debugf(ts.name, "Loaded invalid token from config file - ignoring")
-		return false
+	} else {
+		fs.Debugf(ts.name, "Loaded fresh token from config file")
+		changed = true
 	}
-	fs.Debugf(ts.name, "Loaded fresh token from config file")
-	ts.token = newToken
-	ts.tokenSource = nil // invalidate since we changed the token
-	return true
+	if newToken.RefreshToken != "" && newToken.RefreshToken != ts.token.RefreshToken {
+		fs.Debugf(ts.name, "Loaded new refresh token from config file")
+		changed = true
+	}
+
+	if changed {
+		ts.token = newToken
+		ts.tokenSource = nil // invalidate since we changed the token
+	}
+	return changed
 }
 
 // Token returns a token or an error.
@@ -212,6 +224,10 @@ func (ts *TokenSource) Token() (*oauth2.Token, error) {
 		if !ts.token.Valid() {
 			if ts.reReadToken() {
 				changed = true
+			} else if ts.token.RefreshToken == "" {
+				return nil, fserrors.FatalError(
+					fmt.Errorf("token expired and there's no refresh token - manually refresh with \"rclone config reconnect %s:\"", ts.name),
+				)
 			}
 		}
 
