@@ -686,8 +686,8 @@ to run in "portable" mode by downloading rclone executable to a
 writable directory and then create an empty file `rclone.conf` in the
 same directory.
 
-If the location is set to empty string `""` or the special value
-`/notfound`, or the os null device represented by value `NUL` on
+If the location is set to empty string `""` or path to a file
+with name `notfound`, or the os null device represented by value `NUL` on
 Windows and `/dev/null` on Unix systems, then rclone will keep the
 config file in memory only.
 
@@ -1920,11 +1920,12 @@ Nevertheless, rclone will read any configuration file found
 according to the rules described [above](https://rclone.org/docs/#config-config-file).
 If an encrypted configuration file is found, this means you will be prompted for
 password (unless using `--password-command`). To avoid this, you can bypass
-the loading of the configuration file by overriding the location with an empty
-string `""` or the special value `/notfound`, or the os null device represented
-by value `NUL` on Windows and `/dev/null` on Unix systems (before rclone
-version 1.55 only this null device alternative was supported).
-E.g. `rclone --config="" genautocomplete bash`.
+the loading of the default configuration file by overriding the location,
+e.g. with one of the documented special values for memory-only configuration:
+
+```
+rclone genautocomplete bash --config=""
+```
 
 Developer options
 -----------------

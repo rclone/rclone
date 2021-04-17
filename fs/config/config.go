@@ -29,7 +29,7 @@ import (
 const (
 	configFileName       = "rclone.conf"
 	hiddenConfigFileName = "." + configFileName
-	noConfigFile         = "/notfound"
+	noConfigFile         = "notfound"
 
 	// ConfigToken is the key used to store the token under
 	ConfigToken = "token"
@@ -113,16 +113,12 @@ var (
 	Password = random.Password
 )
 
-var (
-	configPath   string
-	noConfigPath string
-)
+var configPath string
 
 func init() {
 	// Set the function pointers up in fs
 	fs.ConfigFileGet = FileGetFlag
 	fs.ConfigFileSet = SetValueAndSave
-	noConfigPath, _ = filepath.Abs(noConfigFile)
 	configPath = makeConfigPath()
 }
 
@@ -320,15 +316,12 @@ func SetConfigPath(path string) (err error) {
 	var cfgPath string
 	if path == "" || path == os.DevNull {
 		cfgPath = ""
+	} else if filepath.Base(path) == noConfigFile {
+		cfgPath = ""
 	} else if err = file.IsReserved(path); err != nil {
 		return err
-	} else {
-		if cfgPath, err = filepath.Abs(path); err != nil {
-			return err
-		}
-		if cfgPath == noConfigPath {
-			cfgPath = ""
-		}
+	} else if cfgPath, err = filepath.Abs(path); err != nil {
+		return err
 	}
 	configPath = cfgPath
 	return nil
