@@ -774,6 +774,9 @@ func (item *Item) reload(ctx context.Context) error {
 // check the fingerprint of an object and update the item or delete
 // the cached file accordingly
 //
+// If we have local modifications then they take precedence
+// over a change in the remote
+//
 // It ensures the file is the correct size for the object
 //
 // call with lock held
@@ -781,8 +784,12 @@ func (item *Item) _checkObject(o fs.Object) error {
 	if o == nil {
 		if item.info.Fingerprint != "" {
 			// no remote object && local object
-			// remove local object
-			item._remove("stale (remote deleted)")
+			// remove local object unless dirty
+			if !item.info.Dirty {
+				item._remove("stale (remote deleted)")
+			} else {
+				fs.Debugf(item.name, "vfs cache: remote object has gone but local object modified - keeping it")
+			}
 		} else {
 			// no remote object && no local object
 			// OK
@@ -793,8 +800,12 @@ func (item *Item) _checkObject(o fs.Object) error {
 		if item.info.Fingerprint != "" {
 			// remote object && local object
 			if remoteFingerprint != item.info.Fingerprint {
-				fs.Debugf(item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
-				item._remove("stale (remote is different)")
+				if !item.info.Dirty {
+					fs.Debugf(item.name, "vfs cache: removing cached entry as stale (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
+					item._remove("stale (remote is different)")
+				} else {
+					fs.Debugf(item.name, "vfs cache: remote object has changed but local object modified - keeping it (remote fingerprint %q != cached fingerprint %q)", remoteFingerprint, item.info.Fingerprint)
+				}
 			}
 		} else {
 			// remote object && no local object
