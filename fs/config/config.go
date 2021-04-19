@@ -64,7 +64,7 @@ const (
 // load and save to a config file when this is imported
 //
 // import "github.com/rclone/rclone/fs/config/configfile"
-// configfile.LoadConfig(ctx)
+// configfile.Install()
 type Storage interface {
 	// GetSectionList returns a slice of strings with names for all the
 	// sections

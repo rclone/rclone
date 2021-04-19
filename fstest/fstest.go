@@ -71,7 +71,7 @@ func Initialise() {
 	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
 		_ = config.SetConfigPath(envConfig)
 	}
-	configfile.LoadConfig(ctx)
+	configfile.Install()
 	accounting.Start(ctx)
 	if *Verbose {
 		ci.LogLevel = fs.LogLevelDebug

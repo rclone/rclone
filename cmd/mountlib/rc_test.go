@@ -21,7 +21,7 @@ import (
 
 func TestRc(t *testing.T) {
 	ctx := context.Background()
-	configfile.LoadConfig(ctx)
+	configfile.Install()
 	mount := rc.Calls.Get("mount/mount")
 	assert.NotNil(t, mount)
 	unmount := rc.Calls.Get("mount/unmount")

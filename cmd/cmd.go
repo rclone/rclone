@@ -400,7 +400,7 @@ func initConfig() {
 	configflags.SetFlags(ci)
 
 	// Load the config
-	configfile.LoadConfig(ctx)
+	configfile.Install()
 
 	// Start accounting
 	accounting.Start(ctx)

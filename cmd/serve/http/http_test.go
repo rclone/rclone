@@ -61,7 +61,7 @@ var (
 func TestInit(t *testing.T) {
 	ctx := context.Background()
 	// Configure the remote
-	configfile.LoadConfig(context.Background())
+	configfile.Install()
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true

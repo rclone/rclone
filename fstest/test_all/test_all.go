@@ -12,7 +12,6 @@ Make TesTrun have a []string of flags to try - that then makes it generic
 */
 
 import (
-	"context"
 	"flag"
 	"log"
 	"math/rand"
@@ -72,7 +71,7 @@ func main() {
 		log.Println("test_all should be run from the root of the rclone source code")
 		log.Fatal(err)
 	}
-	configfile.LoadConfig(context.Background())
+	configfile.Install()
 
 	// Seed the random number generator
 	rand.Seed(time.Now().UTC().UnixNano())

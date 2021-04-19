@@ -47,7 +47,7 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	ts := httptest.NewServer(handler)
 
 	// Configure the remote
-	configfile.LoadConfig(context.Background())
+	configfile.Install()
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true
