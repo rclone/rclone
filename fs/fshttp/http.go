@@ -100,6 +100,10 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 			" the body of the request will be gunzipped before showing it.")
 	}
 
+	if ci.DisableHTTP2 {
+		t.TLSNextProto = map[string]func(string, *tls.Conn) http.RoundTripper{}
+	}
+
 	// customize the transport if required
 	if customize != nil {
 		customize(t)

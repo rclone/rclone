@@ -125,6 +125,7 @@ type ConfigInfo struct {
 	TrafficClass           uint8
 	FsCacheExpireDuration  time.Duration
 	FsCacheExpireInterval  time.Duration
+	DisableHTTP2           bool
 }
 
 // NewConfig creates a new config with everything set to the default
