@@ -1353,13 +1353,13 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			switch info := entry.(type) {
 			case *files.FolderMetadata:
 				entryType = fs.EntryDirectory
-				entryPath = strings.TrimLeft(info.PathDisplay, f.slashRootSlash)
+				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
 			case *files.FileMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimLeft(info.PathDisplay, f.slashRootSlash)
+				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
 			case *files.DeletedMetadata:
 				entryType = fs.EntryObject
-				entryPath = strings.TrimLeft(info.PathDisplay, f.slashRootSlash)
+				entryPath = strings.TrimPrefix(info.PathDisplay, f.slashRootSlash)
 			default:
 				fs.Errorf(entry, "dropbox ChangeNotify: ignoring unknown EntryType %T", entry)
 				continue
