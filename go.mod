@@ -70,7 +70,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777
 	golang.org/x/oauth2 v0.0.0-20210201163806-010130855d6c
-	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20210313110737-8e9fff1a3a18
 	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf // indirect
 	golang.org/x/text v0.3.5
@@ -79,6 +79,5 @@ require (
 	google.golang.org/genproto v0.0.0-20210203152818-3206188e46ba // indirect
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
-	storj.io/common v0.0.0-20210203145648-3768017a858e // indirect
-	storj.io/uplink v1.4.5
+	storj.io/uplink v1.4.6
 )
