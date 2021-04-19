@@ -19,11 +19,11 @@ func TestConfigLoad(t *testing.T) {
 	}()
 	config.ClearConfigPassword()
 	configfile.LoadConfig(context.Background())
-	sections := config.Data.GetSectionList()
+	sections := config.Data().GetSectionList()
 	var expect = []string{"RCLONE_ENCRYPT_V0", "nounc", "unc"}
 	assert.Equal(t, expect, sections)
 
-	keys := config.Data.GetKeyList("nounc")
+	keys := config.Data().GetKeyList("nounc")
 	expect = []string{"type", "nounc"}
 	assert.Equal(t, expect, keys)
 }

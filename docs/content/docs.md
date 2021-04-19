@@ -228,7 +228,7 @@ adding the `--drive-shared-with-me` parameter to the remote `gdrive:`.
     rclone lsf "gdrive,shared_with_me:path/to/dir"
 
 The major advantage to using the connection string style syntax is
-that it only applies the the remote, not to all the remotes of that
+that it only applies to the remote, not to all the remotes of that
 type of the command line. A common confusion is this attempt to copy a
 file shared on google drive to the normal drive which **does not
 work** because the `--drive-shared-with-me` flag applies to both the
@@ -1915,17 +1915,21 @@ password prompts. To do that, pass the parameter
 of asking for a password if `RCLONE_CONFIG_PASS` doesn't contain
 a valid password, and `--password-command` has not been supplied.
 
-Some rclone commands, such as `genautocomplete`, do not require configuration.
-Nevertheless, rclone will read any configuration file found
-according to the rules described [above](https://rclone.org/docs/#config-config-file).
-If an encrypted configuration file is found, this means you will be prompted for
-password (unless using `--password-command`). To avoid this, you can bypass
-the loading of the default configuration file by overriding the location,
-e.g. with one of the documented special values for memory-only configuration:
-
-```
-rclone genautocomplete bash --config=""
-```
+Whenever running commands that may be affected by options in a
+configuration file, rclone will look for an existing file according
+to the rules described [above](#config-config-file), and load any it
+finds. If an encrypted file is found, this includes decrypting it,
+with the possible consequence of a password prompt. When executing
+a command line that you know are not actually using anything from such
+a configuration file, you can avoid it being loaded by overriding the
+location, e.g. with one of the documented special values for
+memory-only configuration. Since only backend options can be stored
+in configuration files, this is normally unnecessary for commands
+that do not operate on backends, e.g. `genautocomplete`. However,
+it will be relevant for commands that do operate on backends in
+general, but are used without referencing a stored remote, e.g.
+listing local filesystem paths, or
+[connection strings](#connection-strings): `rclone --config="" ls .`
 
 Developer options
 -----------------

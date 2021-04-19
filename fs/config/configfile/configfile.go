@@ -15,10 +15,9 @@ import (
 	"github.com/rclone/rclone/fs/config"
 )
 
-// LoadConfig installs the config file handler and calls config.LoadConfig
+// LoadConfig installs the config file handler
 func LoadConfig(ctx context.Context) {
-	config.Data = &Storage{}
-	config.LoadConfig(ctx)
+	config.SetData(&Storage{})
 }
 
 // Storage implements config.Storage for saving and loading config
