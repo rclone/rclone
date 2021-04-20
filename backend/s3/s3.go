@@ -26,7 +26,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -1509,11 +1508,6 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 			Client: ec2metadata.New(awsSession, &aws.Config{
 				HTTPClient: lowTimeoutClient,
 			}),
-			ExpiryWindow: 3 * time.Minute,
-		},
-
-		// Pick up IAM role if we are in EKS
-		&stscreds.WebIdentityRoleProvider{
 			ExpiryWindow: 3 * time.Minute,
 		},
 	}
