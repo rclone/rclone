@@ -26,7 +26,6 @@ import (
 	"github.com/skratchdot/open-golang/open"
 
 	"github.com/rclone/rclone/cmd/serve/httplib"
-	"github.com/rclone/rclone/cmd/serve/httplib/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -35,6 +34,7 @@ import (
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
 	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/random"
 )
 
