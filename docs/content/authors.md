@@ -372,7 +372,7 @@ put them back in again.` >}}
   * Fred <fred@creativeprojects.tech>
   * Sébastien Gross <renard@users.noreply.github.com>
   * Maxime Suret <11944422+msuret@users.noreply.github.com>
-  * Caleb Case <caleb@storj.io>
+  * Caleb Case <caleb@storj.io> <calebcase@gmail.com>
   * Ben Zenker <imbenzenker@gmail.com>
   * Martin Michlmayr <tbm@cyrius.com>
   * Brandon McNama <bmcnama@pagerduty.com>
