@@ -1,4 +1,6 @@
 // Package httplib provides common functionality for http servers
+//
+// Deprecated: httplib has been replaced with lib/http
 package httplib
 
 import (
