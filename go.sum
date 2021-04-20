@@ -479,6 +479,8 @@ github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWb
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/nsf/termbox-go v1.1.0 h1:R+GIXVMaDxDQ2VHem5vO5h0mI8ZxLECTUNw1ZzXODzI=
 github.com/nsf/termbox-go v1.1.0/go.mod h1:T0cTdVuOwf7pHQNtfhnEbzHbcNyCEcVU4YPpouCbVxo=
+github.com/nsf/termbox-go v1.1.1-0.20210421210813-2ff630277754 h1:4x51LJd1K+SE/z5cvh711BBMMAS9nHr9V3sXdns3HWQ=
+github.com/nsf/termbox-go v1.1.1-0.20210421210813-2ff630277754/go.mod h1:T0cTdVuOwf7pHQNtfhnEbzHbcNyCEcVU4YPpouCbVxo=
 github.com/oklog/oklog v0.3.2/go.mod h1:FCV+B7mhrz4o+ueLpx+KqkyXRGMWOYEvfiXtdGtbWGs=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=

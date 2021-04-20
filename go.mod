@@ -43,7 +43,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ncw/go-acd v0.0.0-20201019170801-fe55f33415b1
 	github.com/ncw/swift/v2 v2.0.0
-	github.com/nsf/termbox-go v1.1.0
+	github.com/nsf/termbox-go v1.1.1-0.20210421210813-2ff630277754
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.12.0
