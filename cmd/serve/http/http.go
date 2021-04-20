@@ -1,7 +1,9 @@
 package http
 
 import (
+	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -9,19 +11,34 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/serve/httplib"
-	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
+	"github.com/rclone/rclone/cmd/serve/http/data"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	httplib "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/lib/http/auth"
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
+// Options required for http server
+type Options struct {
+	data.Options
+}
+
+// DefaultOpt is the default values used for Options
+var DefaultOpt = Options{}
+
+// Opt is options set by command line flags
+var Opt = DefaultOpt
+
 func init() {
-	httpflags.AddFlags(Command.Flags())
+	data.AddFlags(Command.Flags(), "", &Opt.Options)
+	httplib.AddFlags(Command.Flags())
+	auth.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
 }
 
@@ -40,17 +57,17 @@ The server will log errors.  Use -v to see access logs.
 
 --bwlimit will be respected for file transfers.  Use --stats to
 control the stats printing.
-` + httplib.Help + vfs.Help,
+` + httplib.Help + data.Help + auth.Help + vfs.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f, &httpflags.Opt)
-			err := s.Serve()
+			s := newServer(f, Opt.Template)
+			router, err := httplib.Router()
 			if err != nil {
 				return err
 			}
-			s.Wait()
+			s.Bind("/*", router)
 			return nil
 		})
 	},
@@ -58,49 +75,38 @@ control the stats printing.
 
 // server contains everything to run the server
 type server struct {
-	*httplib.Server
-	f   fs.Fs
-	vfs *vfs.VFS
+	f            fs.Fs
+	vfs          *vfs.VFS
+	HTMLTemplate *template.Template // HTML template for web interface
 }
 
-func newServer(f fs.Fs, opt *httplib.Options) *server {
-	mux := http.NewServeMux()
-	s := &server{
-		Server: httplib.NewServer(mux, opt),
-		f:      f,
-		vfs:    vfs.New(f, &vfsflags.Opt),
+func newServer(f fs.Fs, templatePath string) *server {
+	htmlTemplate, templateErr := data.GetTemplate(templatePath)
+	if templateErr != nil {
+		log.Fatalf(templateErr.Error())
 	}
-	mux.HandleFunc(s.Opt.BaseURL+"/", s.handler)
+	s := &server{
+		f:            f,
+		vfs:          vfs.New(f, &vfsflags.Opt),
+		HTMLTemplate: htmlTemplate,
+	}
 	return s
 }
 
-// Serve runs the http server in the background.
-//
-// Use s.Close() and s.Wait() to shutdown server
-func (s *server) Serve() error {
-	err := s.Server.Serve()
-	if err != nil {
-		return err
-	}
-	fs.Logf(s.f, "Serving on %s", s.URL())
-	return nil
+func (s *server) Bind(pattern string, router chi.Router) {
+	router.Get(pattern, s.handler)
+	router.Head(pattern, s.handler)
 }
 
 // handler reads incoming requests and dispatches them
 func (s *server) handler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" && r.Method != "HEAD" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Server", "rclone/"+fs.Version)
 
-	urlPath, ok := s.Path(w, r)
-	if !ok {
-		return
-	}
-	isDir := strings.HasSuffix(urlPath, "/")
-	remote := strings.Trim(urlPath, "/")
+	//rctx := chi.RouteContext(r.Context())
+
+	isDir := strings.HasSuffix(r.URL.Path, "/")
+	remote := strings.Trim(r.URL.Path, "/")
 	if isDir {
 		s.serveDir(w, r, remote)
 	} else {
