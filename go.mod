@@ -25,6 +25,7 @@ require (
 	github.com/dop251/scsu v0.0.0-20200422003335-8fadfb689669
 	github.com/dropbox/dropbox-sdk-go-unofficial v1.0.1-0.20210114204226-41fdcdae8a53
 	github.com/gabriel-vasile/mimetype v1.2.0
+	github.com/go-chi/chi/v5 v5.0.2
 	github.com/go-ole/go-ole v1.2.5 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
