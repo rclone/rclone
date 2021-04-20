@@ -221,6 +221,8 @@ jobs:
      steps:
        - name: Checkout
          uses: actions/checkout@v2
+         with:
+           fetch-depth: 0
 
        # Upgrade together with NDK version
        - name: Set up Go 1.14
