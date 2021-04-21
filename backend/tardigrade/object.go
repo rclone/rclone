@@ -148,13 +148,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (_ io.ReadC
 			case s && !e:
 				offset = opt.Start
 			case !s && e:
-				object, err := o.fs.project.StatObject(ctx, bucketName, bucketPath)
-				if err != nil {
-					return nil, err
-				}
-
-				offset = object.System.ContentLength - opt.End
-				length = opt.End
+				offset = -opt.End
 			}
 		case *fs.SeekOption:
 			offset = opt.Offset
