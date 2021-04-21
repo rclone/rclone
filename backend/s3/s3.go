@@ -2985,7 +2985,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, err
 	}
 	if resp.LastModified == nil {
-		fs.Logf(o, "Failed to read last modified: %v", err)
+		fs.Logf(o, "Failed to read last modified from GET: %v", err)
 	}
 	o.setMetaData(aws.StringValue(resp.ETag), resp.ContentLength, resp.LastModified, resp.Metadata, aws.StringValue(resp.ContentType), aws.StringValue(resp.StorageClass))
 	return resp.Body, nil
