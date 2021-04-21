@@ -2840,18 +2840,18 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if resp.LastModified == nil {
 		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
 	}
-	o.setMetaData(aws.StringValue(resp.ETag), resp.ContentLength, resp.LastModified, resp.Metadata, aws.StringValue(resp.ContentType), aws.StringValue(resp.StorageClass))
+	o.setMetaData(resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
 	return nil
 }
 
-func (o *Object) setMetaData(etag string, contentLength *int64, lastModified *time.Time, meta map[string]*string, mimeType string, storageClass string) {
+func (o *Object) setMetaData(etag *string, contentLength *int64, lastModified *time.Time, meta map[string]*string, mimeType *string, storageClass *string) {
 	var size int64
 	// Ignore missing Content-Length assuming it is 0
 	// Some versions of ceph do this due their apache proxies
 	if contentLength != nil {
 		size = *contentLength
 	}
-	o.setMD5FromEtag(etag)
+	o.setMD5FromEtag(aws.StringValue(etag))
 	o.bytes = size
 	o.meta = meta
 	if o.meta == nil {
@@ -2868,13 +2868,13 @@ func (o *Object) setMetaData(etag string, contentLength *int64, lastModified *ti
 			o.md5 = hex.EncodeToString(md5sumBytes)
 		}
 	}
-	o.storageClass = storageClass
+	o.storageClass = aws.StringValue(storageClass)
 	if lastModified == nil {
 		o.lastModified = time.Now()
 	} else {
 		o.lastModified = *lastModified
 	}
-	o.mimeType = mimeType
+	o.mimeType = aws.StringValue(mimeType)
 }
 
 // ModTime returns the modification time of the object
@@ -2987,7 +2987,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if resp.LastModified == nil {
 		fs.Logf(o, "Failed to read last modified from GET: %v", err)
 	}
-	o.setMetaData(aws.StringValue(resp.ETag), resp.ContentLength, resp.LastModified, resp.Metadata, aws.StringValue(resp.ContentType), aws.StringValue(resp.StorageClass))
+	o.setMetaData(resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
 	return resp.Body, nil
 }
 
