@@ -2837,15 +2837,20 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+	o.setMetaData(aws.StringValue(resp.ETag), resp.ContentLength, resp.LastModified, resp.Metadata, aws.StringValue(resp.ContentType), aws.StringValue(resp.StorageClass))
+	return nil
+}
+
+func (o *Object) setMetaData(etag string, contentLength *int64, lastModified *time.Time, meta map[string]*string, mimeType string, storageClass string) (err error) {
 	var size int64
 	// Ignore missing Content-Length assuming it is 0
 	// Some versions of ceph do this due their apache proxies
-	if resp.ContentLength != nil {
-		size = *resp.ContentLength
+	if contentLength != nil {
+		size = *contentLength
 	}
-	o.setMD5FromEtag(aws.StringValue(resp.ETag))
+	o.setMD5FromEtag(etag)
 	o.bytes = size
-	o.meta = resp.Metadata
+	o.meta = meta
 	if o.meta == nil {
 		o.meta = map[string]*string{}
 	}
@@ -2860,14 +2865,14 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 			o.md5 = hex.EncodeToString(md5sumBytes)
 		}
 	}
-	o.storageClass = aws.StringValue(resp.StorageClass)
-	if resp.LastModified == nil {
-		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
+	o.storageClass = storageClass
+	if lastModified == nil {
+		fs.Logf(o, "Failed to read last modified: %v", err)
 		o.lastModified = time.Now()
 	} else {
-		o.lastModified = *resp.LastModified
+		o.lastModified = *lastModified
 	}
-	o.mimeType = aws.StringValue(resp.ContentType)
+	o.mimeType = mimeType
 	return nil
 }
 
@@ -2978,39 +2983,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, err
 	}
-
-	var size int64
-	// Ignore missing Content-Length assuming it is 0
-	// Some versions of ceph do this due their apache proxies
-	if resp.ContentLength != nil {
-		size = *resp.ContentLength
-	}
-	o.setMD5FromEtag(aws.StringValue(resp.ETag))
-	o.bytes = size
-	o.meta = resp.Metadata
-	if o.meta == nil {
-		o.meta = map[string]*string{}
-	}
-	// Read MD5 from metadata if present
-	if md5sumBase64, ok := o.meta[metaMD5Hash]; ok {
-		md5sumBytes, err := base64.StdEncoding.DecodeString(*md5sumBase64)
-		if err != nil {
-			fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", *md5sumBase64, err)
-		} else if len(md5sumBytes) != 16 {
-			fs.Debugf(o, "Failed to read md5sum from metadata %q: wrong length", *md5sumBase64)
-		} else {
-			o.md5 = hex.EncodeToString(md5sumBytes)
-		}
-	}
-	o.storageClass = aws.StringValue(resp.StorageClass)
-	if resp.LastModified == nil {
-		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
-		o.lastModified = time.Now()
-	} else {
-		o.lastModified = *resp.LastModified
-	}
-	o.mimeType = aws.StringValue(resp.ContentType)
-
+	o.setMetaData(aws.StringValue(resp.ETag), resp.ContentLength, resp.LastModified, resp.Metadata, aws.StringValue(resp.ContentType), aws.StringValue(resp.StorageClass))
 	return resp.Body, nil
 }
 
