@@ -53,7 +53,7 @@ const (
 	Gzip         = 2
 )
 
-var nameRegexp = regexp.MustCompile("^(.+?)\\.([A-Za-z0-9+_]{11})$")
+var nameRegexp = regexp.MustCompile("^(.+?)\\.([A-Za-z0-9-_]{11})$")
 
 // Register with Fs
 func init() {
