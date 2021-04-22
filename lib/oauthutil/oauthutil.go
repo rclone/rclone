@@ -480,7 +480,8 @@ version recommended):
 				return errors.Wrap(err, "oauthutil authorize encode")
 			}
 			// Write what the user has to do
-			if len(mCopyString) > 0 {
+			useNewFormat := len(mCopyString) > 0
+			if useNewFormat {
 				fmt.Printf("\trclone authorize %q %q\n", id, mCopyString)
 			} else {
 				fmt.Printf("\trclone authorize %q\n", id)
@@ -488,21 +489,33 @@ version recommended):
 			fmt.Println("\nThen paste the result below:")
 			// Read the updates to the config
 			var outM configmap.Simple
+			var token oauth2.Token
 			for {
 				outM = configmap.Simple{}
+				token = oauth2.Token{}
 				code := config.ReadNonEmptyLine("result> ")
-				err = outM.Decode(code)
+
+				if useNewFormat {
+					err = outM.Decode(code)
+				} else {
+					err = json.Unmarshal([]byte(code), &token)
+				}
 				if err == nil {
 					break
 				}
+
 				fmt.Printf("Couldn't decode response - try again (make sure you are using a matching version of rclone on both sides: %v\n", err)
 			}
+
 			// Save the config updates
-			for k, v := range outM {
-				m.Set(k, v)
-				fs.Debugf(nil, "received %s = %q", k, v)
+			if useNewFormat {
+				for k, v := range outM {
+					m.Set(k, v)
+					fs.Debugf(nil, "received %s = %q", k, v)
+				}
+				return nil
 			}
-			return nil
+			return PutToken(name, m, &token, true)
 		}
 	}
 
