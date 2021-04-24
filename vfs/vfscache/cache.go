@@ -658,7 +658,7 @@ func (c *Cache) purgeOverQuota(quota int64) {
 }
 
 // clean empties the cache of stuff if it can
-func (c *Cache) clean(removeCleanFiles bool) {
+func (c *Cache) clean(kicked bool) {
 	// Cache may be empty so end
 	_, err := os.Stat(c.root)
 	if os.IsNotExist(err) {
@@ -674,18 +674,17 @@ func (c *Cache) clean(removeCleanFiles bool) {
 		// Remove any files that are over age
 		c.purgeOld(c.opt.CacheMaxAge)
 
+		if int64(c.opt.CacheMaxSize) <= 0 {
+			break
+		}
+
 		// Now remove files not in use until cache size is below quota starting from the
 		// oldest first
 		c.purgeOverQuota(int64(c.opt.CacheMaxSize))
 
-		// removeCleanFiles indicates that we got ENOSPC error
-		// We remove cache files that are not dirty if we are still above the max cache size
-		if removeCleanFiles {
-			c.purgeClean(int64(c.opt.CacheMaxSize))
-			c.retryFailedResets()
-		} else {
-			break
-		}
+		// Remove cache files that are not dirty if we are still above the max cache size
+		c.purgeClean(int64(c.opt.CacheMaxSize))
+		c.retryFailedResets()
 
 		used := c.updateUsed()
 		if used <= int64(c.opt.CacheMaxSize) && len(c.errItems) == 0 {
@@ -694,7 +693,7 @@ func (c *Cache) clean(removeCleanFiles bool) {
 	}
 
 	// Was kicked?
-	if removeCleanFiles {
+	if kicked {
 		c.kickerMu.Lock() // Make sure this is called with cache mutex unlocked
 		// Reenable io threads to kick me
 		c.cleanerKicked = false
@@ -737,9 +736,9 @@ func (c *Cache) cleaner(ctx context.Context) {
 	for {
 		select {
 		case <-c.kick: // a thread encountering ENOSPC kicked me
-			c.clean(true) // remove inUse files that are clean (!item.info.Dirty)
+			c.clean(true) // kicked is true
 		case <-timer.C:
-			c.clean(false) // do not remove inUse files
+			c.clean(false) // timer driven cache poll, kicked is false
 		case <-ctx.Done():
 			fs.Debugf(nil, "vfs cache: cleaner exiting")
 			return
