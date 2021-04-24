@@ -1353,7 +1353,7 @@ func (f *Fs) getDownloadAuthorization(ctx context.Context, bucket, remote string
 	}
 	var request = api.GetDownloadAuthorizationRequest{
 		BucketID:               bucketID,
-		FileNamePrefix:         f.opt.Enc.FromStandardPath(path.Join(f.root, remote)),
+		FileNamePrefix:         f.opt.Enc.FromStandardPath(path.Join(f.rootDirectory, remote)),
 		ValidDurationInSeconds: validDurationInSeconds,
 	}
 	var response api.GetDownloadAuthorizationResponse
