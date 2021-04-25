@@ -10,10 +10,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// globToRegexp converts an rsync style glob to a regexp
+// GlobToRegexp converts an rsync style glob to a regexp
 //
 // documented in filtering.md
-func globToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
+func GlobToRegexp(glob string, ignoreCase bool) (*regexp.Regexp, error) {
 	var re bytes.Buffer
 	if ignoreCase {
 		_, _ = re.WriteString("(?i)")
