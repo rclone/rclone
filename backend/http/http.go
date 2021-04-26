@@ -519,7 +519,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					add(file)
 				case fs.ErrorNotAFile:
 					// ...found a directory not a file
-					add(fs.NewDir(remote, timeUnset))
+					if f.opt.GoIndexDriveIndex >= 0 { // since goindexes are based on google drive, this is accurate
+						add(fs.NewDir(remote, file.modTime))
+					} else {
+						add(fs.NewDir(remote, timeUnset))
+					}
 				default:
 					fs.Debugf(remote, "skipping because of error: %v", err)
 				}
@@ -595,14 +599,18 @@ func (o *Object) url() string {
 
 // stat updates the info field in the Object
 func (o *Object) stat(ctx context.Context) error {
-	if o.fs.opt.NoHead {
+	if o.fs.opt.NoHead && o.fs.opt.GoIndexDriveIndex < 0 {
 		o.size = -1
 		o.modTime = timeUnset
 		o.contentType = fs.MimeType(ctx, o)
 		return nil
 	}
 	url := o.url()
-	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
+	reqMethod := "HEAD"
+	if o.fs.opt.GoIndexDriveIndex >= 0 {
+		reqMethod = "POST"
+	}
+	req, err := http.NewRequestWithContext(ctx, reqMethod, url, nil)
 	if err != nil {
 		return errors.Wrap(err, "stat failed")
 	}
@@ -615,20 +623,37 @@ func (o *Object) stat(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to stat")
 	}
-	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
-	if err != nil {
-		t = timeUnset
+	var (
+		fSize int64
+		fTime time.Time
+		fType string
+	)
+	if o.fs.opt.GoIndexDriveIndex >= 0 {
+		var fInfo GoIndexFile
+		dec := json.NewDecoder(res.Body)
+		dec.Decode(&fInfo)
+		fSize = parseInt64(fInfo.Size, -1)
+		fTime, err = time.Parse(time.RFC3339, fInfo.ModifiedTime)
+		fType = fInfo.MimeType
+	} else {
+		fSize = parseInt64(res.Header.Get("Content-Length"), -1)
+		fTime, err = http.ParseTime(res.Header.Get("Last-Modified"))
+		fType = res.Header.Get("Content-Type")
 	}
-	o.size = parseInt64(res.Header.Get("Content-Length"), -1)
-	o.modTime = t
-	o.contentType = res.Header.Get("Content-Type")
+	if err != nil {
+		fTime = timeUnset
+	}
+	o.size = fSize
+	o.modTime = fTime
+	o.contentType = fType
 	// If NoSlash is set then check ContentType to see if it is a directory
-	if o.fs.opt.NoSlash {
+	if o.fs.opt.NoSlash || o.fs.opt.GoIndexDriveIndex >= 0 {
 		mediaType, _, err := mime.ParseMediaType(o.contentType)
 		if err != nil {
 			return errors.Wrapf(err, "failed to parse Content-Type: %q", o.contentType)
 		}
-		if mediaType == "text/html" {
+		if o.fs.opt.NoSlash && mediaType == "text/html" ||
+			o.fs.opt.GoIndexDriveIndex >= 0 && mediaType == "application/vnd.google-apps.folder" {
 			return fs.ErrorNotAFile
 		}
 	}
