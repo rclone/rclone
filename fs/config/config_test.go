@@ -3,7 +3,6 @@
 package config_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/rclone/rclone/fs/config"
@@ -18,12 +17,12 @@ func TestConfigLoad(t *testing.T) {
 		assert.NoError(t, config.SetConfigPath(oldConfigPath))
 	}()
 	config.ClearConfigPassword()
-	configfile.LoadConfig(context.Background())
-	sections := config.Data.GetSectionList()
+	configfile.Install()
+	sections := config.Data().GetSectionList()
 	var expect = []string{"RCLONE_ENCRYPT_V0", "nounc", "unc"}
 	assert.Equal(t, expect, sections)
 
-	keys := config.Data.GetKeyList("nounc")
+	keys := config.Data().GetKeyList("nounc")
 	expect = []string{"type", "nounc"}
 	assert.Equal(t, expect, keys)
 }

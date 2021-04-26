@@ -41,7 +41,7 @@ func startServer(t *testing.T, f fs.Fs) {
 }
 
 func TestInit(t *testing.T) {
-	configfile.LoadConfig(context.Background())
+	configfile.Install()
 
 	f, err := fs.NewFs(context.Background(), "testdata/files")
 	l, _ := f.List(context.Background(), "")

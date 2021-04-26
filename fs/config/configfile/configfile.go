@@ -3,7 +3,6 @@ package configfile
 
 import (
 	"bytes"
-	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -15,10 +14,9 @@ import (
 	"github.com/rclone/rclone/fs/config"
 )
 
-// LoadConfig installs the config file handler and calls config.LoadConfig
-func LoadConfig(ctx context.Context) {
-	config.Data = &Storage{}
-	config.LoadConfig(ctx)
+// Install installs the config file handler
+func Install() {
+	config.SetData(&Storage{})
 }
 
 // Storage implements config.Storage for saving and loading config

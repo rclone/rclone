@@ -3,7 +3,7 @@ package config
 // Default config.Storage which panics with a useful error when used
 type defaultStorage struct{}
 
-var noConfigStorage = "internal error: no config file system found. Did you call configfile.LoadConfig(ctx)?"
+var noConfigStorage = "internal error: no config file system found. Did you call configfile.Install()?"
 
 // GetSectionList returns a slice of strings with names for all the
 // sections
