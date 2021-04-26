@@ -5,6 +5,44 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.55.1 - 2021-04-26
+
+[See commits](https://github.com/rclone/rclone/compare/v1.55.0...v1.55.1)
+
+* Bug Fixes
+    * selfupdate
+        * Dont detect FUSE if build is static (Ivan Andreev)
+        * Add build tag noselfupdate (Ivan Andreev)
+    * sync: Fix incorrect error reported by graceful cutoff (Nick Craig-Wood)
+    * install.sh: fix macOS arm64 download (Nick Craig-Wood)
+    * build: Fix version numbers in android branch builds (Nick Craig-Wood)
+    * docs
+        * Contributing.md: update setup instructions for go1.16 (Nick Gaya)
+        * WinFsp 2021 is out of beta (albertony)
+        * Minor cleanup of space around code section (albertony)
+        * Fixed some typos (albertony)
+* VFS
+    * Fix a code path which allows dirty data to be removed causing data loss (Nick Craig-Wood)
+* Compress
+    * Fix compressed name regexp (buengese)
+* Drive
+    * Fix backend copyid of google doc to directory (Nick Craig-Wood)
+    * Don't open browser when service account... (Ansh Mittal)
+* Dropbox
+    * Add missing team_data.member scope for use with --impersonate (Nick Craig-Wood)
+    * Fix About after scopes changes - rclone config reconnect needed (Nick Craig-Wood)
+    * Fix Unable to decrypt returned paths from changeNotify (Nick Craig-Wood)
+* FTP
+    * Fix implicit TLS (Ivan Andreev)
+* Onedrive
+    * Work around for random "Unable to initialize RPS" errors (OleFrost)
+* SFTP
+    * Revert sftp library to v1.12.0 from v1.13.0 to fix performance regression (Nick Craig-Wood)
+    * Fix Update ReadFrom failed: failed to send packet: EOF errors (Nick Craig-Wood)
+* Zoho
+    * Fix error when region isn't set (buengese)
+    * Do not ask for mountpoint twice when using headless setup (buengese)
+
 ## v1.55.0 - 2021-03-31
 
 [See commits](https://github.com/rclone/rclone/compare/v1.54.0...v1.55.0)
