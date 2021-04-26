@@ -262,6 +262,9 @@ func (f *Fs) Features() *fs.Features {
 
 // Precision is the remote http file system's modtime precision, which we have no way of knowing. We estimate at 1s
 func (f *Fs) Precision() time.Duration {
+	if f.opt.GoIndexDriveIndex >= 0 { // uses precision of milliseconds just like Google Drive
+		return time.Millisecond
+	}
 	return time.Second
 }
 
