@@ -21,7 +21,10 @@ SSH installations.
 
 Paths are specified as `remote:path`. If the path does not begin with
 a `/` it is relative to the home directory of the user.  An empty path
-`remote:` refers to the user's home directory.
+`remote:` refers to the user's home directory. For example, `rclone lsd remote:` 
+would list the home directory of the user cofigured in the rclone remote config 
+(`i.e /home/sftpuser`). However, `rclone lsd remote:/` would list the root 
+directory for remote machine (i.e. `/`)
 
 "Note that some SFTP servers will need the leading / - Synology is a
 good example of this. rsync.net, on the other hand, requires users to
@@ -84,6 +87,10 @@ See all directories in the home directory
 
     rclone lsd remote:
 
+See all directories in the root directory
+
+    rclone lsd remote:/
+
 Make a new directory
 
     rclone mkdir remote:path/to/directory
@@ -96,6 +103,11 @@ Sync `/home/local/directory` to the remote directory, deleting any
 excess files in the directory.
 
     rclone sync -i /home/local/directory remote:directory
+
+Mount the remote path `/srv/www-data/` to the local path
+`/mnt/www-data`
+
+    rclone mount remote:/srv/www-data/ /mnt/www-data
 
 ### SSH Authentication ###
 
