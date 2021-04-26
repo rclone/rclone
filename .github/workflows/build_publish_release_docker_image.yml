@@ -6,6 +6,7 @@ on:
 
 jobs:
     build:
+        if: github.repository == 'rclone/rclone'
         runs-on: ubuntu-latest
         name: Build image job
         steps:

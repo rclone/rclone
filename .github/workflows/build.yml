@@ -12,9 +12,15 @@ on:
     tags:
       - '*'
   pull_request:
+  workflow_dispatch:
+    inputs:
+      manual:
+        required: true
+        default: true
 
 jobs:
   build:
+    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -214,6 +220,7 @@ jobs:
         if: matrix.deploy && github.head_ref == '' && github.repository == 'rclone/rclone'
 
   android:
+     if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
      timeout-minutes: 30
      name: "android-all"
      runs-on: ubuntu-latest
