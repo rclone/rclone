@@ -6,6 +6,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"mime"
 	"net/http"
@@ -377,6 +378,36 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 	return names, nil
 }
 
+type GoIndexFile struct {
+	Id           string `json:"id"`
+	MimeType     string `json:"mimeType"`
+	ModifiedTime string `json:"modifiedTime"`
+	Name         string `json:"name"`
+	// don't know why, but this is a string instead of an int64 (against gdrive doc)
+	Size          string `json:"size"`
+	ThumbnailLink string `json:"thumbnailLink"`
+}
+
+type GoIndexResults struct {
+	Data struct {
+		Files []GoIndexFile `json:"files"`
+	} `json:"data"`
+}
+
+// parser for GoIndex remotes
+func parseGoIndex(u *url.URL, in io.Reader) (names []string, err error) {
+	var results GoIndexResults
+	dec := json.NewDecoder(in)
+	err = dec.Decode(&results)
+	if err != nil {
+		return nil, err
+	}
+	for _, goIndexFile := range results.Data.Files {
+		names = append(names, goIndexFile.Name)
+	}
+	return names, nil
+}
+
 // Adds the configured headers to the request if any
 func addHeaders(req *http.Request, opt *Options) {
 	for i := 0; i < len(opt.Headers); i += 2 {
@@ -402,7 +433,13 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", URL)
 	}
 	// Do the request
-	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
+	reqMethod := "GET"
+	var body io.Reader = nil
+	if f.opt.GoIndexDriveIndex >= 0 {
+		reqMethod = "POST"
+		body = strings.NewReader(`{"q":""}`)
+	}
+	req, err := http.NewRequestWithContext(ctx, reqMethod, URL, body)
 	if err != nil {
 		return nil, errors.Wrap(err, "readDir failed")
 	}
@@ -423,6 +460,14 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 	switch contentType {
 	case "text/html":
 		names, err = parse(u, res.Body)
+		if err != nil {
+			return nil, errors.Wrap(err, "readDir")
+		}
+	case "text/plain":
+		if f.opt.GoIndexDriveIndex < 0 {
+			return nil, errors.Errorf("invalid response from non-GoIndex")
+		}
+		names, err = parseGoIndex(u, res.Body)
 		if err != nil {
 			return nil, errors.Wrap(err, "readDir")
 		}
