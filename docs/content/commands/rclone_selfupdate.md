@@ -37,7 +37,7 @@ If the old version contains only dots and digits (for example `v1.54.0`)
 then it's a stable release so you won't need the `--beta` flag. Beta releases
 have an additional information similar to `v1.54.0-beta.5111.06f1c0c61`.
 (if you are a developer and use a locally built rclone, the version number
-will end with `-DEV`, you will have to rebuild it as it obvisously can't
+will end with `-DEV`, you will have to rebuild it as it obviously can't
 be distributed).
 
 If you previously installed rclone via a package manager, the package may

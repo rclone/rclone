@@ -15,7 +15,7 @@ Copy url content to dest.
 Download a URL's content and copy it to the destination without saving
 it in temporary storage.
 
-Setting `--auto-filename`will cause the file name to be retrieved from
+Setting `--auto-filename` will cause the file name to be retrieved from
 the from URL (after any redirections) and used in the destination
 path. With `--print-filename` in addition, the resuling file name will
 be printed.

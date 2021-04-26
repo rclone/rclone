@@ -17,7 +17,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Mar 31, 2021</p>
+<p class="date">Apr 26, 2021</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -774,8 +774,8 @@ two-3.txt: renamed from: two.txt</code></pre>
 <h1 id="rclone-about">rclone about</h1>
 <p>Get quota information from the remote.</p>
 <h2 id="synopsis-16">Synopsis</h2>
-<p><code>rclone about</code>prints quota information about a remote to standard output. The output is typically used, free, quota and trash contents.</p>
-<p>E.g. Typical output from<code>rclone about remote:</code>is:</p>
+<p><code>rclone about</code> prints quota information about a remote to standard output. The output is typically used, free, quota and trash contents.</p>
+<p>E.g. Typical output from <code>rclone about remote:</code> is:</p>
 <pre><code>Total:   17G
 Used:    7.444G
 Free:    1.315G
@@ -797,7 +797,7 @@ Used:    7993453766
 Free:    1411001220
 Trashed: 104857602
 Other:   8849156022</code></pre>
-<p>A <code>--json</code>flag generates conveniently computer readable output, e.g.</p>
+<p>A <code>--json</code> flag generates conveniently computer readable output, e.g.</p>
 <pre><code>{
     &quot;total&quot;: 18253611008,
     &quot;used&quot;: 7993453766,
@@ -1066,7 +1066,7 @@ if src is directory
 <p>Copy url content to dest.</p>
 <h2 id="synopsis-28">Synopsis</h2>
 <p>Download a URL's content and copy it to the destination without saving it in temporary storage.</p>
-<p>Setting <code>--auto-filename</code>will cause the file name to be retrieved from the from URL (after any redirections) and used in the destination path. With <code>--print-filename</code> in addition, the resuling file name will be printed.</p>
+<p>Setting <code>--auto-filename</code> will cause the file name to be retrieved from the from URL (after any redirections) and used in the destination path. With <code>--print-filename</code> in addition, the resuling file name will be printed.</p>
 <p>Setting <code>--no-clobber</code> will prevent overwriting file on the destination if there is one with the same name.</p>
 <p>Setting <code>--stdout</code> or making the output file name <code>-</code> will cause the output to be written to standard output.</p>
 <pre><code>rclone copyurl https://example.com dest:path [flags]</code></pre>
@@ -1475,7 +1475,7 @@ rclone mount remote:path/to/files * --volname \\cloud\remote</code></pre>
 <p>The permissions on each entry will be set according to <a href="#options">options</a> <code>--dir-perms</code> and <code>--file-perms</code>, which takes a value in traditional <a href="https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation">numeric notation</a>, where the default corresponds to <code>--file-perms 0666 --dir-perms 0777</code>.</p>
 <p>Note that the mapping of permissions is not always trivial, and the result you see in Windows Explorer may not be exactly like you expected. For example, when setting a value that includes write access, this will be mapped to individual permissions "write attributes", "write data" and "append data", but not "write extended attributes". Windows will then show this as basic permission "Special" instead of "Write", because "Write" includes the "write extended attributes" permission.</p>
 <p>If you set POSIX permissions for only allowing access to the owner, using <code>--file-perms 0600 --dir-perms 0700</code>, the user group and the built-in "Everyone" group will still be given some special permissions, such as "read attributes" and "read permissions", in Windows. This is done for compatibility reasons, e.g. to allow users without additional permissions to be able to read basic metadata about files like in UNIX. One case that may arise is that other programs (incorrectly) interprets this as the file being accessible by everyone. For example an SSH client may warn about "unprotected private key file".</p>
-<p>WinFsp 2021 (version 1.9, still in beta) introduces a new FUSE option "FileSecurity", that allows the complete specification of file security descriptors using <a href="https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format">SDDL</a>. With this you can work around issues such as the mentioned "unprotected private key file" by specifying <code>-o FileSecurity="D:P(A;;FA;;;OW)"</code>, for file all access (FA) to the owner (OW).</p>
+<p>WinFsp 2021 (version 1.9) introduces a new FUSE option "FileSecurity", that allows the complete specification of file security descriptors using <a href="https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format">SDDL</a>. With this you can work around issues such as the mentioned "unprotected private key file" by specifying <code>-o FileSecurity="D:P(A;;FA;;;OW)"</code>, for file all access (FA) to the owner (OW).</p>
 <h3 id="windows-caveats">Windows caveats</h3>
 <p>Note that drives created as Administrator are not visible by other accounts (including the account that was elevated as Administrator). So if you start a Windows drive from an Administrative Command Prompt and then try to access the same drive from Explorer (which does not run as Administrator), you will not be able to see the new drive.</p>
 <p>The easiest way around this is to start the drive from a normal command prompt. It is also possible to start a drive from the SYSTEM account (using <a href="https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture">the WinFsp.Launcher infrastructure</a>) which creates drives accessible for everyone on the system or alternatively using <a href="https://nssm.cc/usage">the nssm service manager</a>.</p>
@@ -1805,7 +1805,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <p>This command downloads the latest release of rclone and replaces the currently running binary. The download is verified with a hashsum and cryptographically signed signature.</p>
 <p>If used without flags (or with implied <code>--stable</code> flag), this command will install the latest stable release. However, some issues may be fixed (or features added) only in the latest beta release. In such cases you should run the command with the <code>--beta</code> flag, i.e. <code>rclone selfupdate --beta</code>. You can check in advance what version would be installed by adding the <code>--check</code> flag, then repeat the command without it when you are satisfied.</p>
 <p>Sometimes the rclone team may recommend you a concrete beta or stable rclone release to troubleshoot your issue or add a bleeding edge feature. The <code>--version VER</code> flag, if given, will update to the concrete version instead of the latest one. If you omit micro version from <code>VER</code> (for example <code>1.53</code>), the latest matching micro version will be used.</p>
-<p>Upon successful update rclone will print a message that contains a previous version number. You will need it if you later decide to revert your update for some reason. Then you'll have to note the previous version and run the following command: <code>rclone selfupdate [--beta] OLDVER</code>. If the old version contains only dots and digits (for example <code>v1.54.0</code>) then it's a stable release so you won't need the <code>--beta</code> flag. Beta releases have an additional information similar to <code>v1.54.0-beta.5111.06f1c0c61</code>. (if you are a developer and use a locally built rclone, the version number will end with <code>-DEV</code>, you will have to rebuild it as it obvisously can't be distributed).</p>
+<p>Upon successful update rclone will print a message that contains a previous version number. You will need it if you later decide to revert your update for some reason. Then you'll have to note the previous version and run the following command: <code>rclone selfupdate [--beta] OLDVER</code>. If the old version contains only dots and digits (for example <code>v1.54.0</code>) then it's a stable release so you won't need the <code>--beta</code> flag. Beta releases have an additional information similar to <code>v1.54.0-beta.5111.06f1c0c61</code>. (if you are a developer and use a locally built rclone, the version number will end with <code>-DEV</code>, you will have to rebuild it as it obviously can't be distributed).</p>
 <p>If you previously installed rclone via a package manager, the package may include local documentation or configure services. You may wish to update with the flag <code>--package deb</code> or <code>--package rpm</code> (whichever is correct for your OS) to update these too. This command with the default <code>--package zip</code> will update only the rclone executable so the local manual may become inaccurate after it.</p>
 <p>The <code>rclone mount</code> command (https://rclone.org/commands/rclone_mount/) may or may not support extended FUSE options depending on the build and OS. <code>selfupdate</code> will refuse to update if the capability would be discarded.</p>
 <p>Note: Windows forbids deletion of a currently running executable so this command will rename the old executable to 'rclone.old.exe' upon success.</p>
@@ -3378,7 +3378,7 @@ rclone sync -i /path/to/files remote:current-backup</code></pre>
 <p>Normally the config file is in your home directory as a file called <code>.config/rclone/rclone.conf</code> (or <code>.rclone.conf</code> if created with an older version). If <code>$XDG_CONFIG_HOME</code> is set it will be at <code>$XDG_CONFIG_HOME/rclone/rclone.conf</code>.</p>
 <p>If there is a file <code>rclone.conf</code> in the same directory as the rclone executable it will be preferred. This file must be created manually for Rclone to use it, it will never be created automatically.</p>
 <p>If you run <code>rclone config file</code> you will see where the default location is for you.</p>
-<p>Use this flag to override the config location, e.g. <code>rclone --config=".myconfig" .config</code>.</p>
+<p>Use this flag to override the config location, e.g. <code>rclone --config=".myconfig" config</code>.</p>
 <p>If the location is set to empty string <code>""</code> or the special value <code>/notfound</code>, or the os null device represented by value <code>NUL</code> on Windows and <code>/dev/null</code> on Unix systems, then rclone will keep the config file in memory only.</p>
 <p>The file format is basic <a href="https://en.wikipedia.org/wiki/INI_file#Format">INI</a>: Sections of text, led by a <code>[section]</code> header and followed by <code>key=value</code> entries on separate lines. In rclone each remote is represented by its own section, where the section name defines the name of the remote. Options are specified as the <code>key=value</code> entries, where the key is the option name without the <code>--backend-</code> prefix, in lowercase and with <code>_</code> instead of <code>-</code>. E.g. option <code>--mega-hard-delete</code> corresponds to key <code>hard_delete</code>. Only backend options can be specified. A special, and required, key <code>type</code> identifies the <a href="https://rclone.org/overview/">storage system</a>, where the value is the internal lowercase name as returned by command <code>rclone help backends</code>. Comments are indicated by <code>;</code> or <code>#</code> at the beginning of a line.</p>
 <p>Example:</p>
@@ -3929,7 +3929,7 @@ $ rclone lsd MYS3:
 $ rclone listremotes | grep mys3
 mys3:</code></pre>
 <p>Note that if you want to create a remote using environment variables you must create the <code>..._TYPE</code> variable as above.</p>
-<p>Note also that now rclone has <a href="#connection-strings">connectionstrings</a>, it is probably easier to use those instead which makes the above example</p>
+<p>Note also that now rclone has <a href="#connection-strings">connection strings</a>, it is probably easier to use those instead which makes the above example</p>
 <pre><code>rclone lsd :s3,access_key_id=XXX,secret_access_key=XXX:</code></pre>
 <h3 id="precedence">Precedence</h3>
 <p>The various different methods of backend configuration are read in this order and the first one with a value is used.</p>
@@ -6806,7 +6806,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.55.0&quot;)
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.55.1&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -20355,6 +20355,65 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.55.1---2021-04-26">v1.55.1 - 2021-04-26</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.55.0...v1.55.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>selfupdate
+<ul>
+<li>Dont detect FUSE if build is static (Ivan Andreev)</li>
+<li>Add build tag noselfupdate (Ivan Andreev)</li>
+</ul></li>
+<li>sync: Fix incorrect error reported by graceful cutoff (Nick Craig-Wood)</li>
+<li>install.sh: fix macOS arm64 download (Nick Craig-Wood)</li>
+<li>build: Fix version numbers in android branch builds (Nick Craig-Wood)</li>
+<li>docs
+<ul>
+<li>Contributing.md: update setup instructions for go1.16 (Nick Gaya)</li>
+<li>WinFsp 2021 is out of beta (albertony)</li>
+<li>Minor cleanup of space around code section (albertony)</li>
+<li>Fixed some typos (albertony)</li>
+</ul></li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Fix a code path which allows dirty data to be removed causing data loss (Nick Craig-Wood)</li>
+</ul></li>
+<li>Compress
+<ul>
+<li>Fix compressed name regexp (buengese)</li>
+</ul></li>
+<li>Drive
+<ul>
+<li>Fix backend copyid of google doc to directory (Nick Craig-Wood)</li>
+<li>Don't open browser when service account... (Ansh Mittal)</li>
+</ul></li>
+<li>Dropbox
+<ul>
+<li>Add missing team_data.member scope for use with --impersonate (Nick Craig-Wood)</li>
+<li>Fix About after scopes changes - rclone config reconnect needed (Nick Craig-Wood)</li>
+<li>Fix Unable to decrypt returned paths from changeNotify (Nick Craig-Wood)</li>
+</ul></li>
+<li>FTP
+<ul>
+<li>Fix implicit TLS (Ivan Andreev)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Work around for random "Unable to initialize RPS" errors (OleFrost)</li>
+</ul></li>
+<li>SFTP
+<ul>
+<li>Revert sftp library to v1.12.0 from v1.13.0 to fix performance regression (Nick Craig-Wood)</li>
+<li>Fix Update ReadFrom failed: failed to send packet: EOF errors (Nick Craig-Wood)</li>
+</ul></li>
+<li>Zoho
+<ul>
+<li>Fix error when region isn't set (buengese)</li>
+<li>Do not ask for mountpoint twice when using headless setup (buengese)</li>
+</ul></li>
+</ul>
 <h2 id="v1.55.0---2021-03-31">v1.55.0 - 2021-03-31</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.54.0...v1.55.0">See commits</a></p>
 <ul>
