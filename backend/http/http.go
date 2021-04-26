@@ -98,6 +98,11 @@ If you set this option, rclone will not do the HEAD request.  This will mean
 `,
 			Default:  false,
 			Advanced: true,
+		}, {
+			Name:     "goindex_drive_idx",
+			Help:     "Index number of the drive on a GoIndex http backend. Only to be used with GoIndex sites",
+			Default:  -1,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -105,10 +110,11 @@ If you set this option, rclone will not do the HEAD request.  This will mean
 
 // Options defines the configuration for this backend
 type Options struct {
-	Endpoint string          `config:"url"`
-	NoSlash  bool            `config:"no_slash"`
-	NoHead   bool            `config:"no_head"`
-	Headers  fs.CommaSepList `config:"headers"`
+	Endpoint          string          `config:"url"`
+	NoSlash           bool            `config:"no_slash"`
+	NoHead            bool            `config:"no_head"`
+	GoIndexDriveIndex int             `config:"goindex_drive_idx"`
+	Headers           fs.CommaSepList `config:"headers"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -160,6 +166,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	if !strings.HasSuffix(opt.Endpoint, "/") {
 		opt.Endpoint += "/"
+	}
+	if opt.GoIndexDriveIndex >= 0 {
+		opt.Endpoint += strconv.Itoa(opt.GoIndexDriveIndex) + ":/"
 	}
 
 	// Parse the endpoint and stick the root onto it
