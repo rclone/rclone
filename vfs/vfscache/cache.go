@@ -549,7 +549,7 @@ func (c *Cache) purgeClean(quota int64) {
 
 	// Make a slice of clean cache files
 	for _, item := range c.item {
-		if !item.IsDataDirty() {
+		if !item.IsDirty() {
 			items = append(items, item)
 		}
 	}

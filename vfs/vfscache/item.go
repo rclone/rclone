@@ -450,15 +450,8 @@ func (item *Item) Dirty() {
 	item.mu.Unlock()
 }
 
-// IsDirty returns true if the item is dirty
+// IsDirty returns true if the item data is dirty
 func (item *Item) IsDirty() bool {
-	item.mu.Lock()
-	defer item.mu.Unlock()
-	return item.metaDirty || item.info.Dirty
-}
-
-// IsDataDirty returns true if the item's data is dirty
-func (item *Item) IsDataDirty() bool {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	return item.info.Dirty
