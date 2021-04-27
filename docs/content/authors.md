@@ -487,3 +487,4 @@ put them back in again.` >}}
   * OleFrost <82263101+olefrost@users.noreply.github.com>
   * Kenny Parsons <kennyparsons93@gmail.com>
   * Jeffrey Tolar <tolar.jeffrey@gmail.com>
+  * jtagcat <git-514635f7@jtag.cat>
