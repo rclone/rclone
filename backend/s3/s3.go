@@ -2987,7 +2987,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if resp.LastModified == nil {
 		fs.Logf(o, "Failed to read last modified: %v", err)
 	}
-	o.setMetaData(resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
+	if o.fs.opt.NoHeadObject {
+		o.setMetaData(resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
+	}
 	return resp.Body, nil
 }
 
