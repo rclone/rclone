@@ -199,6 +199,7 @@ jobs:
         run: |
           make -C librclone/ctest test
           make -C librclone/ctest clean
+          librclone/python/test_rclone.py
         if: matrix.librclonetest
 
       - name: Code quality test

@@ -38,9 +38,15 @@ There is an example program `ctest.c` with Makefile in the `ctest` subdirectory
 
 ## gomobile
 
-The gomobile subdirectory contains the equivalent of the C binding but
+The `gomobile` subdirectory contains the equivalent of the C binding but
 suitable for using with gomobile using something like this.
 
     gomobile bind -v -target=android github.com/rclone/rclone/librclone/gomobile
 
 
+## python
+
+The `python` subdirectory contains a simple python wrapper for the C
+API using rclone linked as a shared library.
+
+This needs expanding and submitting to pypi...
