@@ -18,8 +18,6 @@ import (
 // MaxCompletedTransfers specifies maximum number of completed transfers in startedTransfers list
 var MaxCompletedTransfers = 100
 
-var startTime = time.Now()
-
 // StatsInfo accounts all transfers
 type StatsInfo struct {
 	mu                sync.RWMutex
@@ -49,6 +47,7 @@ type StatsInfo struct {
 	oldTimeRanges     timeRanges    // a merged list of time ranges for the transfers
 	oldDuration       time.Duration // duration of transfers we have culled
 	group             string
+	startTime         time.Time // the moment these stats were initialized or reset
 }
 
 // NewStats creates an initialised StatsInfo
@@ -60,6 +59,7 @@ func NewStats(ctx context.Context) *StatsInfo {
 		checking:     newTransferMap(ci.Checkers, "checking"),
 		transferring: newTransferMap(ci.Transfers, "transferring"),
 		inProgress:   newInProgress(ctx),
+		startTime:    time.Now(),
 	}
 }
 
@@ -87,7 +87,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["deletes"] = s.deletes
 	out["deletedDirs"] = s.deletedDirs
 	out["renames"] = s.renames
-	out["elapsedTime"] = time.Since(startTime).Seconds()
+	out["elapsedTime"] = time.Since(s.startTime).Seconds()
 	eta, etaOK := eta(s.bytes, ts.totalBytes, ts.speed)
 	if etaOK {
 		out["eta"] = eta.Seconds()
@@ -298,7 +298,7 @@ func (s *StatsInfo) String() string {
 		buf                    = &bytes.Buffer{}
 		xfrchkString           = ""
 		dateString             = ""
-		elapsedTime            = time.Since(startTime)
+		elapsedTime            = time.Since(s.startTime)
 		elapsedTimeSecondsOnly = elapsedTime.Truncate(time.Second/10) % time.Minute
 		displaySpeedString     string
 	)
