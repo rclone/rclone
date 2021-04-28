@@ -267,6 +267,15 @@ jobs:
          run: |
            make
 
+       - name: install gomobile
+         run: |
+           go get golang.org/x/mobile/cmd/gobind
+           go get golang.org/x/mobile/cmd/gomobile
+           env PATH=$PATH:~/go/bin gomobile init
+           
+       - name: arm-v7a gomobile build
+         run: env PATH=$PATH:~/go/bin gomobile bind -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile 
+           
        - name: arm-v7a Set environment variables
          shell: bash
          run: |
