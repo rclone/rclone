@@ -2987,9 +2987,23 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if resp.LastModified == nil {
 		fs.Logf(o, "Failed to read last modified: %v", err)
 	}
-	if o.fs.opt.NoHeadObject {
-		o.setMetaData(resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
+	// read size from ContentLength or ContentRange
+	size := resp.ContentLength
+	if resp.ContentRange != nil {
+		var contentRange = *resp.ContentRange
+		slash := strings.IndexRune(contentRange, '/')
+		if slash >= 0 {
+			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
+			if err == nil {
+				size = &i
+			} else {
+				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+			}
+		} else {
+			fs.Debugf(o, "Failed to find length in %q", contentRange)
+		}
 	}
+	o.setMetaData(resp.ETag, size, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
 	return resp.Body, nil
 }
 
