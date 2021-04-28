@@ -34,19 +34,61 @@ For documentation see the Go documentation for:
 
 ### C Example
 
-There is an example program `ctest.c` with Makefile in the `ctest` subdirectory
+There is an example program `ctest.c` with `Makefile` in the `ctest` subdirectory.
 
 ## gomobile
 
 The `gomobile` subdirectory contains the equivalent of the C binding but
-suitable for using with gomobile using something like this.
+suitable for using with [gomobile](https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile)
+using something like this.
 
-    gomobile bind -v -target=android github.com/rclone/rclone/librclone/gomobile
+    gomobile bind -v -target=android -javapkg=org.rclone github.com/rclone/rclone/librclone/gomobile
 
+The command generates an Android library (`aar`) that can be imported
+into an Android application project. Librclone will be contained
+within `libgojni.so` and loaded automatically.
+
+```java
+// imports
+import org.rclone.gomobile.Gomobile;
+import org.rclone.gomobile.RcloneRPCResult;
+
+// initialize rclone
+Gomobile.rcloneInitialize();
+
+// call RC method and log response.
+RcloneRPCResult response = Gomobile.rcloneRPC("core/version", "{}");
+Log.i("rclone", "response status: " + response.getStatus());
+Log.i("rclone", "output: " + response.getOutput());
+
+// Clean up when finished.
+Gomobile.rcloneFinalize();
+```
+
+This is a low level interface - serialization, job management etc must
+be built on top of it.
+
+iOS has not been tested (but should probably work).
+
+Further docs:
+
+- [gomobile main website](https://pkg.go.dev/golang.org/x/mobile/cmd/gomobile)
+- [gomobile wiki](https://github.com/golang/go/wiki/Mobile)
+- [go issue #16876](https://github.com/golang/go/issues/16876) where the feature was added
+- [gomobile design doc](https://docs.google.com/document/d/1y9hStonl9wpj-5VM-xWrSTuEJFUAxGOXOhxvAs7GZHE/edit) for extra details not in the docs.
 
 ## python
 
-The `python` subdirectory contains a simple python wrapper for the C
-API using rclone linked as a shared library.
+The `python` subdirectory contains a simple Python wrapper for the C
+API using rclone linked as a shared library with `ctypes`.
+
+You are welcome to use this directly.
 
 This needs expanding and submitting to pypi...
+
+## TODO
+
+- Async jobs must currently be cancelled manually at the moment - RcloneFinalize doesn't do it.
+- This will use the rclone config system and rclone logging system.
+- Need examples showing how to configure things,
+
