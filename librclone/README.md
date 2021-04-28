@@ -1,7 +1,13 @@
 # librclone
 
 This directory contains code to build rclone as a C library and the
-shims for accessing rclone from C.
+shims for accessing rclone from C and other languages.
+
+**Note** for the moment, the interfaces defined here are experimental
+and may change in the future. Eventually they will stabilse and this
+notice will be removed.
+
+## C
 
 The shims are a thin wrapper over the rclone RPC.
 
@@ -18,7 +24,7 @@ be `#include`d in `C` programs wishing to use the library.
 
 The library will depend on `libdl` and `libpthread`.
 
-## Documentation
+### Documentation
 
 For documentation see the Go documentation for:
 
@@ -26,6 +32,15 @@ For documentation see the Go documentation for:
 - [RcloneFinalize](https://pkg.go.dev/github.com/rclone/rclone/librclone#RcloneFinalize)
 - [RcloneRPC](https://pkg.go.dev/github.com/rclone/rclone/librclone#RcloneRPC)
 
-## C Example
+### C Example
 
 There is an example program `ctest.c` with Makefile in the `ctest` subdirectory
+
+## gomobile
+
+The gomobile subdirectory contains the equivalent of the C binding but
+suitable for using with gomobile using something like this.
+
+    gomobile bind -v -target=android github.com/rclone/rclone/librclone/gomobile
+
+
