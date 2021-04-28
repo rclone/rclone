@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"runtime/debug"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -77,8 +78,17 @@ func writeError(path string, in rc.Params, err error, status int) (string, int) 
 // operations/uploadfile and core/command are not supported as they need request or response object
 // modified from handlePost in rcserver.go
 func RPC(method string, input string) (output string, status int) {
-	// create a buffer to capture the output
 	in := make(rc.Params)
+
+	// Catch panics
+	defer func() {
+		if r := recover(); r != nil {
+			output, status = writeError(method, in, fmt.Errorf("panic: %v\n%s", r, debug.Stack()), http.StatusInternalServerError)
+			return
+		}
+	}()
+
+	// create a buffer to capture the output
 	err := json.NewDecoder(strings.NewReader(input)).Decode(&in)
 	if err != nil {
 		return writeError(method, in, errors.Wrap(err, "failed to read input JSON"), http.StatusBadRequest)
