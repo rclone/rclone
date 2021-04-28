@@ -37,15 +37,6 @@ The Rclone Developers
 
 -->
 
-<!--- Please keep the note below for others who read your bug report. -->
-
-### How to use GitHub
-
-* Please use the 👍 [reaction](https://blog.github.com/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/) to show that you are affected by the same issue.
-* Please don't comment if you have no relevant information to add. It's just extra noise for everyone subscribed to this issue.
-* Subscribe to receive notifications on status change and new comments.
-
-
 #### The associated forum post URL from `https://forum.rclone.org`
 
 
@@ -73,3 +64,11 @@ The Rclone Developers
 #### A log from the command with the `-vv` flag (e.g. output from `rclone -vv copy /tmp remote:tmp`)
 
 
+
+<!--- Please keep the note below for others who read your bug report. -->
+
+#### How to use GitHub
+
+* Please use the 👍 [reaction](https://blog.github.com/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/) to show that you are affected by the same issue.
+* Please don't comment if you have no relevant information to add. It's just extra noise for everyone subscribed to this issue.
+* Subscribe to receive notifications on status change and new comments.
