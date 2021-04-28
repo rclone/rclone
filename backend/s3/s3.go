@@ -1221,6 +1221,11 @@ very small even with this flag.
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "no_head_object",
+			Help:     `If set, don't HEAD objects`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -1318,6 +1323,7 @@ type Options struct {
 	ListChunk             int64                `config:"list_chunk"`
 	NoCheckBucket         bool                 `config:"no_check_bucket"`
 	NoHead                bool                 `config:"no_head"`
+	NoHeadObject          bool                 `config:"no_head_object"`
 	Enc                   encoder.MultiEncoder `config:"encoding"`
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
@@ -1687,7 +1693,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		GetTier:           true,
 		SlowModTime:       true,
 	}).Fill(ctx, f)
-	if f.rootBucket != "" && f.rootDirectory != "" {
+	if f.rootBucket != "" && f.rootDirectory != "" && !opt.NoHeadObject {
 		// Check to see if the (bucket,directory) is actually an existing file
 		oldRoot := f.root
 		newRoot, leaf := path.Split(oldRoot)
@@ -1724,7 +1730,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		o.setMD5FromEtag(aws.StringValue(info.ETag))
 		o.bytes = aws.Int64Value(info.Size)
 		o.storageClass = aws.StringValue(info.StorageClass)
-	} else {
+	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData(ctx) // reads info and meta, returning an error
 		if err != nil {
 			return nil, err
@@ -2825,15 +2831,23 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
+	if resp.LastModified == nil {
+		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
+	}
+	o.setMetaData(resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
+	return nil
+}
+
+func (o *Object) setMetaData(etag *string, contentLength *int64, lastModified *time.Time, meta map[string]*string, mimeType *string, storageClass *string) {
 	var size int64
 	// Ignore missing Content-Length assuming it is 0
 	// Some versions of ceph do this due their apache proxies
-	if resp.ContentLength != nil {
-		size = *resp.ContentLength
+	if contentLength != nil {
+		size = *contentLength
 	}
-	o.setMD5FromEtag(aws.StringValue(resp.ETag))
+	o.setMD5FromEtag(aws.StringValue(etag))
 	o.bytes = size
-	o.meta = resp.Metadata
+	o.meta = meta
 	if o.meta == nil {
 		o.meta = map[string]*string{}
 	}
@@ -2848,15 +2862,13 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 			o.md5 = hex.EncodeToString(md5sumBytes)
 		}
 	}
-	o.storageClass = aws.StringValue(resp.StorageClass)
-	if resp.LastModified == nil {
-		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
+	o.storageClass = aws.StringValue(storageClass)
+	if lastModified == nil {
 		o.lastModified = time.Now()
 	} else {
-		o.lastModified = *resp.LastModified
+		o.lastModified = *lastModified
 	}
-	o.mimeType = aws.StringValue(resp.ContentType)
-	return nil
+	o.mimeType = aws.StringValue(mimeType)
 }
 
 // ModTime returns the modification time of the object
@@ -2966,6 +2978,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, err
 	}
+	if resp.LastModified == nil {
+		fs.Logf(o, "Failed to read last modified: %v", err)
+	}
+	// read size from ContentLength or ContentRange
+	size := resp.ContentLength
+	if resp.ContentRange != nil {
+		var contentRange = *resp.ContentRange
+		slash := strings.IndexRune(contentRange, '/')
+		if slash >= 0 {
+			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
+			if err == nil {
+				size = &i
+			} else {
+				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+			}
+		} else {
+			fs.Debugf(o, "Failed to find length in %q", contentRange)
+		}
+	}
+	o.setMetaData(resp.ETag, size, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
 	return resp.Body, nil
 }
 
