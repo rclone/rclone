@@ -3264,6 +3264,30 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if o.fs.opt.StorageClass != "" {
 		req.StorageClass = &o.fs.opt.StorageClass
 	}
+
+	// Before apply options, pre-fetch current values
+	if headResp, err := o.headObject(ctx); err != nil {
+		if !errors.Is(err, fs.ErrorObjectNotFound) {
+			return err
+		}
+	} else {
+		if headResp.CacheControl != nil {
+			req.CacheControl = headResp.CacheControl
+		}
+		if headResp.ContentDisposition != nil {
+			req.ContentDisposition = headResp.ContentDisposition
+		}
+		if headResp.ContentEncoding != nil {
+			req.ContentEncoding = headResp.ContentEncoding
+		}
+		if headResp.ContentLanguage != nil {
+			req.ContentLanguage = headResp.ContentLanguage
+		}
+		if headResp.ContentType != nil {
+			req.ContentType = headResp.ContentType
+		}
+	}
+
 	// Apply upload options
 	for _, option := range options {
 		key, value := option.Header()
