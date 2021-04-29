@@ -55,12 +55,10 @@ func init() {
 		Name:        "hubic",
 		Description: "Hubic",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
-			err := oauthutil.Config(ctx, "hubic", name, m, oauthConfig, nil)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure token")
-			}
-			return nil
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: oauthConfig,
+			})
 		},
 		Options: append(oauthutil.SharedOptions, swift.SharedOptions...),
 	})

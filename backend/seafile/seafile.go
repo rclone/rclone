@@ -296,83 +296,86 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 }
 
 // Config callback for 2FA
-func Config(ctx context.Context, name string, m configmap.Mapper) error {
-	ci := fs.GetConfig(ctx)
+func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	serverURL, ok := m.Get(configURL)
 	if !ok || serverURL == "" {
 		// If there's no server URL, it means we're trying an operation at the backend level, like a "rclone authorize seafile"
-		return errors.New("operation not supported on this remote. If you need a 2FA code on your account, use the command: nrclone config reconnect <remote name>: ")
-	}
-
-	// Stop if we are running non-interactive config
-	if ci.AutoConfirm {
-		return nil
+		return nil, errors.New("operation not supported on this remote. If you need a 2FA code on your account, use the command: rclone config reconnect <remote name>: ")
 	}
 
 	u, err := url.Parse(serverURL)
 	if err != nil {
-		return errors.Errorf("invalid server URL %s", serverURL)
+		return nil, errors.Errorf("invalid server URL %s", serverURL)
 	}
 
 	is2faEnabled, _ := m.Get(config2FA)
 	if is2faEnabled != "true" {
-		return errors.New("two-factor authentication is not enabled on this account")
+		return nil, errors.New("two-factor authentication is not enabled on this account")
 	}
 
 	username, _ := m.Get(configUser)
 	if username == "" {
-		return errors.New("a username is required")
+		return nil, errors.New("a username is required")
 	}
 
 	password, _ := m.Get(configPassword)
 	if password != "" {
 		password, _ = obscure.Reveal(password)
 	}
-	// Just make sure we do have a password
-	for password == "" {
-		fmt.Print("Two-factor authentication: please enter your password (it won't be saved in the configuration)\npassword> ")
-		password = config.ReadPassword()
-	}
 
-	// Create rest client for getAuthorizationToken
-	url := u.String()
-	if !strings.HasPrefix(url, "/") {
-		url += "/"
-	}
-	srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(url)
-
-	// We loop asking for a 2FA code
-	for {
-		code := ""
-		for code == "" {
-			fmt.Print("Two-factor authentication: please enter your 2FA code\n2fa code> ")
-			code = config.ReadLine()
+	switch config.State {
+	case "":
+		// Just make sure we do have a password
+		if password == "" {
+			return fs.ConfigPassword("", "Two-factor authentication: please enter your password (it won't be saved in the configuration)")
+		}
+		return fs.ConfigGoto("password")
+	case "password":
+		password = config.Result
+		if password == "" {
+			return fs.ConfigError("password", "Password can't be blank")
+		}
+		m.Set(configPassword, obscure.MustObscure(config.Result))
+		return fs.ConfigGoto("2fa")
+	case "2fa":
+		return fs.ConfigInput("2fa_do", "Two-factor authentication: please enter your 2FA code")
+	case "2fa_do":
+		code := config.Result
+		if code == "" {
+			return fs.ConfigError("2fa", "2FA codes can't be blank")
 		}
 
+		// Create rest client for getAuthorizationToken
+		url := u.String()
+		if !strings.HasPrefix(url, "/") {
+			url += "/"
+		}
+		srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(url)
+
+		// We loop asking for a 2FA code
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		fmt.Println("Authenticating...")
 		token, err := getAuthorizationToken(ctx, srv, username, password, code)
 		if err != nil {
-			fmt.Printf("Authentication failed: %v\n", err)
-			tryAgain := strings.ToLower(config.ReadNonEmptyLine("Do you want to try again (y/n)?"))
-			if tryAgain != "y" && tryAgain != "yes" {
-				// The user is giving up, we're done here
-				break
-			}
+			return fs.ConfigConfirm("2fa_error", true, fmt.Sprintf("Authentication failed: %v\n\nTry Again?", err))
 		}
-		if token != "" {
-			fmt.Println("Success!")
-			// Let's save the token into the configuration
-			m.Set(configAuthToken, token)
-			// And delete any previous entry for password
-			m.Set(configPassword, "")
-			// And we're done here
-			break
+		if token == "" {
+			return fs.ConfigConfirm("2fa_error", true, "Authentication failed - no token returned.\n\nTry Again?")
 		}
+		// Let's save the token into the configuration
+		m.Set(configAuthToken, token)
+		// And delete any previous entry for password
+		m.Set(configPassword, "")
+		// And we're done here
+		return nil, nil
+	case "2fa_error":
+		if config.Result == "true" {
+			return fs.ConfigGoto("2fa")
+		}
+		return nil, errors.New("2fa authentication failed")
 	}
-	return nil
+	return nil, fmt.Errorf("unknown state %q", config.State)
 }
 
 // sets the AuthorizationToken up

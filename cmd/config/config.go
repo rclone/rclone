@@ -265,14 +265,11 @@ This normally means going through the interactive oauth flow again.
 	RunE: func(command *cobra.Command, args []string) error {
 		ctx := context.Background()
 		cmd.CheckArgs(1, 1, command, args)
-		fsInfo, configName, _, config, err := fs.ConfigFs(args[0])
+		fsInfo, configName, _, m, err := fs.ConfigFs(args[0])
 		if err != nil {
 			return err
 		}
-		if fsInfo.Config == nil {
-			return errors.Errorf("%s: doesn't support Reconnect", configName)
-		}
-		return fsInfo.Config(ctx, configName, config)
+		return config.PostConfig(ctx, configName, m, fsInfo)
 	},
 }
 

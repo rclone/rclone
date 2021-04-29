@@ -41,19 +41,19 @@ func init() {
 		Name:        "tardigrade",
 		Description: "Tardigrade Decentralized Cloud Storage",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, configMapper configmap.Mapper) error {
-			provider, _ := configMapper.Get(fs.ConfigProvider)
+		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
+			provider, _ := m.Get(fs.ConfigProvider)
 
 			config.FileDeleteKey(name, fs.ConfigProvider)
 
 			if provider == newProvider {
-				satelliteString, _ := configMapper.Get("satellite_address")
-				apiKey, _ := configMapper.Get("api_key")
-				passphrase, _ := configMapper.Get("passphrase")
+				satelliteString, _ := m.Get("satellite_address")
+				apiKey, _ := m.Get("api_key")
+				passphrase, _ := m.Get("passphrase")
 
 				// satelliteString contains always default and passphrase can be empty
 				if apiKey == "" {
-					return nil
+					return nil, nil
 				}
 
 				satellite, found := satMap[satelliteString]
@@ -63,23 +63,23 @@ func init() {
 
 				access, err := uplink.RequestAccessWithPassphrase(context.TODO(), satellite, apiKey, passphrase)
 				if err != nil {
-					return errors.Wrap(err, "couldn't create access grant")
+					return nil, errors.Wrap(err, "couldn't create access grant")
 				}
 
 				serializedAccess, err := access.Serialize()
 				if err != nil {
-					return errors.Wrap(err, "couldn't serialize access grant")
+					return nil, errors.Wrap(err, "couldn't serialize access grant")
 				}
-				configMapper.Set("satellite_address", satellite)
-				configMapper.Set("access_grant", serializedAccess)
+				m.Set("satellite_address", satellite)
+				m.Set("access_grant", serializedAccess)
 			} else if provider == existingProvider {
 				config.FileDeleteKey(name, "satellite_address")
 				config.FileDeleteKey(name, "api_key")
 				config.FileDeleteKey(name, "passphrase")
 			} else {
-				return errors.Errorf("invalid provider type: %s", provider)
+				return nil, errors.Errorf("invalid provider type: %s", provider)
 			}
-			return nil
+			return nil, nil
 		},
 		Options: []fs.Option{
 			{

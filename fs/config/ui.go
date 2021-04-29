@@ -90,34 +90,6 @@ func Confirm(Default bool) bool {
 	return CommandDefault([]string{"yYes", "nNo"}, defaultIndex) == 'y'
 }
 
-// ConfirmWithConfig asks the user for Yes or No and returns true or
-// false.
-//
-// If AutoConfirm is set, it will look up the value in m and return
-// that, but if it isn't set then it will return the Default value
-// passed in
-func ConfirmWithConfig(ctx context.Context, m configmap.Getter, configName string, Default bool) bool {
-	ci := fs.GetConfig(ctx)
-	if ci.AutoConfirm {
-		configString, ok := m.Get(configName)
-		if ok {
-			configValue, err := strconv.ParseBool(configString)
-			if err != nil {
-				fs.Errorf(nil, "Failed to parse config parameter %s=%q as boolean - using default %v: %v", configName, configString, Default, err)
-			} else {
-				Default = configValue
-			}
-		}
-		answer := "No"
-		if Default {
-			answer = "Yes"
-		}
-		fmt.Printf("Auto confirm is set: answering %s, override by setting config parameter %s=%v\n", answer, configName, !Default)
-		return Default
-	}
-	return Confirm(Default)
-}
-
 // Choose one of the defaults or type a new string if newOk is set
 func Choose(what string, defaults, help []string, newOk bool) string {
 	valueDescription := "an existing"
@@ -269,15 +241,72 @@ func OkRemote(name string) bool {
 	return false
 }
 
+// PostConfig configures the backend after the main config has been done
+//
+// The is the user interface loop that drives the post configuration backend config.
+func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.RegInfo) error {
+	// FIXME if doing authorize, stop when we've got to the OAuth
+	if ri.Config == nil {
+		return errors.New("backend doesn't support reconnect or authorize")
+	}
+	in := fs.ConfigIn{
+		State: "",
+	}
+	for {
+		fs.Debugf(name, "config: state=%q, result=%q", in.State, in.Result)
+		out, err := fs.BackendConfig(ctx, name, m, ri, in)
+		if err != nil {
+			return err
+		}
+		if out == nil {
+			break
+		}
+		if out.Error != "" {
+			fmt.Println(out.Error)
+		}
+		in.State = out.State
+		in.Result = out.Result
+		if out.Option != nil {
+			if out.Option.Default == nil {
+				out.Option.Default = ""
+			}
+			if Default, isBool := out.Option.Default.(bool); isBool &&
+				len(out.Option.Examples) == 2 &&
+				out.Option.Examples[0].Help == "Yes" &&
+				out.Option.Examples[0].Value == "true" &&
+				out.Option.Examples[1].Help == "No" &&
+				out.Option.Examples[1].Value == "false" &&
+				out.Option.Exclusive {
+				// Use Confirm for Yes/No questions as it has a nicer interface=
+				fmt.Println(out.Option.Help)
+				in.Result = fmt.Sprint(Confirm(Default))
+			} else {
+				value := ChooseOption(out.Option, "")
+				if value != "" {
+					err := out.Option.Set(value)
+					if err != nil {
+						return errors.Wrap(err, "failed to set option")
+					}
+				}
+				in.Result = out.Option.String()
+			}
+		}
+		if out.State == "" {
+			break
+		}
+	}
+	return nil
+}
+
 // RemoteConfig runs the config helper for the remote if needed
 func RemoteConfig(ctx context.Context, name string) error {
 	fmt.Printf("Remote config\n")
-	f := mustFindByName(name)
-	if f.Config != nil {
-		m := fs.ConfigMap(f, name, nil)
-		return f.Config(ctx, name, m)
+	ri := mustFindByName(name)
+	m := fs.ConfigMap(ri, name, nil)
+	if ri.Config == nil {
+		return nil
 	}
-	return nil
+	return PostConfig(ctx, name, m, ri)
 }
 
 // matchProvider returns true if provider matches the providerConfig string.

@@ -143,18 +143,14 @@ func init() {
 		Name:        "dropbox",
 		Description: "Dropbox",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
-			opt := oauthutil.Options{
-				NoOffline: true,
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: getOauthConfig(m),
+				NoOffline:    true,
 				OAuth2Opts: []oauth2.AuthCodeOption{
 					oauth2.SetAuthURLParam("token_access_type", "offline"),
 				},
-			}
-			err := oauthutil.Config(ctx, "dropbox", name, m, getOauthConfig(m), &opt)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure token")
-			}
-			return nil
+			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",

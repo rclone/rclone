@@ -182,32 +182,64 @@ func init() {
 		Description: "Google Drive",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
 			if err != nil {
-				return errors.Wrap(err, "couldn't parse config into struct")
+				return nil, errors.Wrap(err, "couldn't parse config into struct")
 			}
 
-			// Fill in the scopes
-			driveConfig.Scopes = driveScopes(opt.Scope)
-			// Set the root_folder_id if using drive.appfolder
-			if driveScopesContainsAppFolder(driveConfig.Scopes) {
-				m.Set("root_folder_id", "appDataFolder")
-			}
+			switch config.State {
+			case "":
+				// Fill in the scopes
+				driveConfig.Scopes = driveScopes(opt.Scope)
 
-			if opt.ServiceAccountFile == "" && opt.ServiceAccountCredentials == "" {
-				err = oauthutil.Config(ctx, "drive", name, m, driveConfig, nil)
-				if err != nil {
-					return errors.Wrap(err, "failed to configure token")
+				// Set the root_folder_id if using drive.appfolder
+				if driveScopesContainsAppFolder(driveConfig.Scopes) {
+					m.Set("root_folder_id", "appDataFolder")
 				}
+
+				if opt.ServiceAccountFile == "" && opt.ServiceAccountCredentials == "" {
+					return oauthutil.ConfigOut("teamdrive", &oauthutil.Options{
+						OAuth2Config: driveConfig,
+					})
+				}
+				return fs.ConfigGoto("teamdrive")
+			case "teamdrive":
+				if opt.TeamDriveID == "" {
+					return fs.ConfigConfirm("teamdrive_ok", false, "Configure this as a Shared Drive (Team Drive)?\n")
+				}
+				return fs.ConfigConfirm("teamdrive_ok", false, fmt.Sprintf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID))
+			case "teamdrive_ok":
+				if config.Result == "false" {
+					m.Set("team_drive", "")
+					return nil, nil
+				}
+				f, err := newFs(ctx, name, "", m)
+				if err != nil {
+					return nil, errors.Wrap(err, "failed to make Fs to list Shared Drives")
+				}
+				teamDrives, err := f.listTeamDrives(ctx)
+				if err != nil {
+					return nil, err
+				}
+				if len(teamDrives) == 0 {
+					return fs.ConfigError("", "No Shared Drives found in your account")
+				}
+				return fs.ConfigChoose("teamdrive_final", "Shared Drive", len(teamDrives), func(i int) (string, string) {
+					teamDrive := teamDrives[i]
+					return teamDrive.Id, teamDrive.Name
+				})
+			case "teamdrive_final":
+				driveID := config.Result
+				m.Set("team_drive", driveID)
+				m.Set("root_folder_id", "")
+				opt.TeamDriveID = driveID
+				opt.RootFolderID = ""
+				return nil, nil
 			}
-			err = configTeamDrive(ctx, opt, m, name)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure Shared Drive")
-			}
-			return nil
+			return nil, fmt.Errorf("unknown state %q", config.State)
 		},
 		Options: append(driveOAuthOptions(), []fs.Option{{
 			Name: "scope",
@@ -948,48 +980,6 @@ func parseExtensions(extensionsIn ...string) (extensions, mimeTypes []string, er
 	return
 }
 
-// Figure out if the user wants to use a team drive
-func configTeamDrive(ctx context.Context, opt *Options, m configmap.Mapper, name string) error {
-	ci := fs.GetConfig(ctx)
-
-	// Stop if we are running non-interactive config
-	if ci.AutoConfirm {
-		return nil
-	}
-	if opt.TeamDriveID == "" {
-		fmt.Printf("Configure this as a Shared Drive (Team Drive)?\n")
-	} else {
-		fmt.Printf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID)
-	}
-	if !config.Confirm(false) {
-		return nil
-	}
-	f, err := newFs(ctx, name, "", m)
-	if err != nil {
-		return errors.Wrap(err, "failed to make Fs to list Shared Drives")
-	}
-	fmt.Printf("Fetching Shared Drive list...\n")
-	teamDrives, err := f.listTeamDrives(ctx)
-	if err != nil {
-		return err
-	}
-	if len(teamDrives) == 0 {
-		fmt.Printf("No Shared Drives found in your account")
-		return nil
-	}
-	var driveIDs, driveNames []string
-	for _, teamDrive := range teamDrives {
-		driveIDs = append(driveIDs, teamDrive.Id)
-		driveNames = append(driveNames, teamDrive.Name)
-	}
-	driveID := config.Choose("Enter a Shared Drive ID", driveIDs, driveNames, true)
-	m.Set("team_drive", driveID)
-	m.Set("root_folder_id", "")
-	opt.TeamDriveID = driveID
-	opt.RootFolderID = ""
-	return nil
-}
-
 // getClient makes an http client according to the options
 func getClient(ctx context.Context, opt *Options) *http.Client {
 	t := fshttp.NewTransportCustom(ctx, func(t *http.Transport) {
@@ -1168,7 +1158,7 @@ func NewFs(ctx context.Context, name, path string, m configmap.Mapper) (fs.Fs, e
 			}
 		}
 		f.rootFolderID = rootID
-		fs.Debugf(f, "root_folder_id = %q - save this in the config to speed up startup", rootID)
+		fs.Debugf(f, "'root_folder_id = %s' - save this in the config to speed up startup", rootID)
 	}
 
 	f.dirCache = dircache.New(f.root, f.rootFolderID, f)

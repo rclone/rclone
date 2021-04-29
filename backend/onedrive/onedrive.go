@@ -98,208 +98,7 @@ func init() {
 		Name:        "onedrive",
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
-			region, _ := m.Get("region")
-			graphURL := graphAPIEndpoint[region] + "/v1.0"
-			oauthConfig.Endpoint = oauth2.Endpoint{
-				AuthURL:  authEndpoint[region] + authPath,
-				TokenURL: authEndpoint[region] + tokenPath,
-			}
-			ci := fs.GetConfig(ctx)
-			err := oauthutil.Config(ctx, "onedrive", name, m, oauthConfig, nil)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure token")
-			}
-
-			// Stop if we are running non-interactive config
-			if ci.AutoConfirm {
-				return nil
-			}
-
-			type driveResource struct {
-				DriveID   string `json:"id"`
-				DriveName string `json:"name"`
-				DriveType string `json:"driveType"`
-			}
-			type drivesResponse struct {
-				Drives []driveResource `json:"value"`
-			}
-
-			type siteResource struct {
-				SiteID   string `json:"id"`
-				SiteName string `json:"displayName"`
-				SiteURL  string `json:"webUrl"`
-			}
-			type siteResponse struct {
-				Sites []siteResource `json:"value"`
-			}
-
-			oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure OneDrive")
-			}
-			srv := rest.NewClient(oAuthClient)
-
-			var opts rest.Opts
-			var finalDriveID string
-			var siteID string
-			var relativePath string
-			switch config.Choose("Your choice",
-				[]string{"onedrive", "sharepoint", "url", "search", "driveid", "siteid", "path"},
-				[]string{
-					"OneDrive Personal or Business",
-					"Root Sharepoint site",
-					"Sharepoint site name or URL (e.g. mysite or https://contoso.sharepoint.com/sites/mysite)",
-					"Search for a Sharepoint site",
-					"Type in driveID (advanced)",
-					"Type in SiteID (advanced)",
-					"Sharepoint server-relative path (advanced, e.g. /teams/hr)",
-				},
-				false) {
-
-			case "onedrive":
-				opts = rest.Opts{
-					Method:  "GET",
-					RootURL: graphURL,
-					Path:    "/me/drives",
-				}
-			case "sharepoint":
-				opts = rest.Opts{
-					Method:  "GET",
-					RootURL: graphURL,
-					Path:    "/sites/root/drives",
-				}
-			case "driveid":
-				fmt.Printf("Paste your Drive ID here> ")
-				finalDriveID = config.ReadLine()
-			case "siteid":
-				fmt.Printf("Paste your Site ID here> ")
-				siteID = config.ReadLine()
-			case "url":
-				fmt.Println("Example: \"https://contoso.sharepoint.com/sites/mysite\" or \"mysite\"")
-				fmt.Printf("Paste your Site URL here> ")
-				siteURL := config.ReadLine()
-				re := regexp.MustCompile(`https://.*\.sharepoint.com/sites/(.*)`)
-				match := re.FindStringSubmatch(siteURL)
-				if len(match) == 2 {
-					relativePath = "/sites/" + match[1]
-				} else {
-					relativePath = "/sites/" + siteURL
-				}
-			case "path":
-				fmt.Printf("Enter server-relative URL here> ")
-				relativePath = config.ReadLine()
-			case "search":
-				fmt.Printf("What to search for> ")
-				searchTerm := config.ReadLine()
-				opts = rest.Opts{
-					Method:  "GET",
-					RootURL: graphURL,
-					Path:    "/sites?search=" + searchTerm,
-				}
-
-				sites := siteResponse{}
-				_, err := srv.CallJSON(ctx, &opts, nil, &sites)
-				if err != nil {
-					return errors.Wrap(err, "failed to query available sites")
-				}
-
-				if len(sites.Sites) == 0 {
-					return errors.Errorf("search for %q returned no results", searchTerm)
-				}
-				fmt.Printf("Found %d sites, please select the one you want to use:\n", len(sites.Sites))
-				for index, site := range sites.Sites {
-					fmt.Printf("%d: %s (%s) id=%s\n", index, site.SiteName, site.SiteURL, site.SiteID)
-				}
-				siteID = sites.Sites[config.ChooseNumber("Chose drive to use:", 0, len(sites.Sites)-1)].SiteID
-			}
-
-			// if we use server-relative URL for finding the drive
-			if relativePath != "" {
-				opts = rest.Opts{
-					Method:  "GET",
-					RootURL: graphURL,
-					Path:    "/sites/root:" + relativePath,
-				}
-				site := siteResource{}
-				_, err := srv.CallJSON(ctx, &opts, nil, &site)
-				if err != nil {
-					return errors.Wrap(err, "failed to query available site by relative path")
-				}
-				siteID = site.SiteID
-			}
-
-			// if we have a siteID we need to ask for the drives
-			if siteID != "" {
-				opts = rest.Opts{
-					Method:  "GET",
-					RootURL: graphURL,
-					Path:    "/sites/" + siteID + "/drives",
-				}
-			}
-
-			// We don't have the final ID yet?
-			// query Microsoft Graph
-			if finalDriveID == "" {
-				drives := drivesResponse{}
-				_, err := srv.CallJSON(ctx, &opts, nil, &drives)
-				if err != nil {
-					return errors.Wrap(err, "failed to query available drives")
-				}
-
-				// Also call /me/drive as sometimes /me/drives doesn't return it #4068
-				if opts.Path == "/me/drives" {
-					opts.Path = "/me/drive"
-					meDrive := driveResource{}
-					_, err := srv.CallJSON(ctx, &opts, nil, &meDrive)
-					if err != nil {
-						return errors.Wrap(err, "failed to query available drives")
-					}
-					found := false
-					for _, drive := range drives.Drives {
-						if drive.DriveID == meDrive.DriveID {
-							found = true
-							break
-						}
-					}
-					// add the me drive if not found already
-					if !found {
-						fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
-						drives.Drives = append(drives.Drives, meDrive)
-					}
-				}
-
-				if len(drives.Drives) == 0 {
-					return errors.New("no drives found")
-				}
-				fmt.Printf("Found %d drives, please select the one you want to use:\n", len(drives.Drives))
-				for index, drive := range drives.Drives {
-					fmt.Printf("%d: %s (%s) id=%s\n", index, drive.DriveName, drive.DriveType, drive.DriveID)
-				}
-				finalDriveID = drives.Drives[config.ChooseNumber("Chose drive to use:", 0, len(drives.Drives)-1)].DriveID
-			}
-
-			// Test the driveID and get drive type
-			opts = rest.Opts{
-				Method:  "GET",
-				RootURL: graphURL,
-				Path:    "/drives/" + finalDriveID + "/root"}
-			var rootItem api.Item
-			_, err = srv.CallJSON(ctx, &opts, nil, &rootItem)
-			if err != nil {
-				return errors.Wrapf(err, "failed to query root for drive %s", finalDriveID)
-			}
-
-			fmt.Printf("Found drive '%s' of type '%s', URL: %s\nIs that okay?\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL)
-			// This does not work, YET :)
-			if !config.ConfirmWithConfig(ctx, m, "config_drive_ok", true) {
-				return errors.New("cancelled by user")
-			}
-
-			m.Set(configDriveID, finalDriveID)
-			m.Set(configDriveType, rootItem.ParentReference.DriveType)
-			return nil
-		},
+		Config:      Config,
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:    "region",
 			Help:    "Choose national cloud region for OneDrive.",
@@ -460,6 +259,263 @@ At the time of writing this only works with OneDrive personal paid accounts.
 				encoder.EncodeInvalidUtf8),
 		}}...),
 	})
+}
+
+type driveResource struct {
+	DriveID   string `json:"id"`
+	DriveName string `json:"name"`
+	DriveType string `json:"driveType"`
+}
+type drivesResponse struct {
+	Drives []driveResource `json:"value"`
+}
+
+type siteResource struct {
+	SiteID   string `json:"id"`
+	SiteName string `json:"displayName"`
+	SiteURL  string `json:"webUrl"`
+}
+type siteResponse struct {
+	Sites []siteResource `json:"value"`
+}
+
+// Get the region and graphURL from the config
+func getRegionURL(m configmap.Mapper) (region, graphURL string) {
+	region, _ = m.Get("region")
+	graphURL = graphAPIEndpoint[region] + "/v1.0"
+	return region, graphURL
+}
+
+// Config for chooseDrive
+type chooseDriveOpt struct {
+	opts         rest.Opts
+	finalDriveID string
+	siteID       string
+	relativePath string
+}
+
+// chooseDrive returns a query to choose which drive the user is interested in
+func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest.Client, opt chooseDriveOpt) (*fs.ConfigOut, error) {
+	_, graphURL := getRegionURL(m)
+
+	// if we use server-relative URL for finding the drive
+	if opt.relativePath != "" {
+		opt.opts = rest.Opts{
+			Method:  "GET",
+			RootURL: graphURL,
+			Path:    "/sites/root:" + opt.relativePath,
+		}
+		site := siteResource{}
+		_, err := srv.CallJSON(ctx, &opt.opts, nil, &site)
+		if err != nil {
+			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available site by relative path: %v", err))
+		}
+		opt.siteID = site.SiteID
+	}
+
+	// if we have a siteID we need to ask for the drives
+	if opt.siteID != "" {
+		opt.opts = rest.Opts{
+			Method:  "GET",
+			RootURL: graphURL,
+			Path:    "/sites/" + opt.siteID + "/drives",
+		}
+	}
+
+	drives := drivesResponse{}
+
+	// We don't have the final ID yet?
+	// query Microsoft Graph
+	if opt.finalDriveID == "" {
+		_, err := srv.CallJSON(ctx, &opt.opts, nil, &drives)
+		if err != nil {
+			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
+		}
+
+		// Also call /me/drive as sometimes /me/drives doesn't return it #4068
+		if opt.opts.Path == "/me/drives" {
+			opt.opts.Path = "/me/drive"
+			meDrive := driveResource{}
+			_, err := srv.CallJSON(ctx, &opt.opts, nil, &meDrive)
+			if err != nil {
+				return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available drives: %v", err))
+			}
+			found := false
+			for _, drive := range drives.Drives {
+				if drive.DriveID == meDrive.DriveID {
+					found = true
+					break
+				}
+			}
+			// add the me drive if not found already
+			if !found {
+				fs.Debugf(nil, "Adding %v to drives list from /me/drive", meDrive)
+				drives.Drives = append(drives.Drives, meDrive)
+			}
+		}
+	} else {
+		drives.Drives = append(drives.Drives, driveResource{
+			DriveID:   opt.finalDriveID,
+			DriveName: "Chosen Drive ID",
+			DriveType: "drive",
+		})
+	}
+	if len(drives.Drives) == 0 {
+		return fs.ConfigError("choose_type", "No drives found")
+	}
+	return fs.ConfigChoose("driveid_final", "Select drive you want to use", len(drives.Drives), func(i int) (string, string) {
+		drive := drives.Drives[i]
+		return drive.DriveID, fmt.Sprintf("%s (%s)", drive.DriveName, drive.DriveType)
+	})
+}
+
+// Config the backend
+func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to configure OneDrive")
+	}
+	srv := rest.NewClient(oAuthClient)
+	region, graphURL := getRegionURL(m)
+
+	switch config.State {
+	case "":
+		oauthConfig.Endpoint = oauth2.Endpoint{
+			AuthURL:  authEndpoint[region] + authPath,
+			TokenURL: authEndpoint[region] + tokenPath,
+		}
+		return oauthutil.ConfigOut("choose_type", &oauthutil.Options{
+			OAuth2Config: oauthConfig,
+		})
+	case "choose_type":
+		return fs.ConfigChooseFixed("choose_type_done", "Type of connection", []fs.OptionExample{{
+			Value: "onedrive",
+			Help:  "OneDrive Personal or Business",
+		}, {
+			Value: "sharepoint",
+			Help:  "Root Sharepoint site",
+		}, {
+			Value: "url",
+			Help:  "Sharepoint site name or URL (e.g. mysite or https://contoso.sharepoint.com/sites/mysite)",
+		}, {
+			Value: "search",
+			Help:  "Search for a Sharepoint site",
+		}, {
+			Value: "driveid",
+			Help:  "Type in driveID (advanced)",
+		}, {
+			Value: "siteid",
+			Help:  "Type in SiteID (advanced)",
+		}, {
+			Value: "path",
+			Help:  "Sharepoint server-relative path (advanced, e.g. /teams/hr)",
+		}})
+	case "choose_type_done":
+		// Jump to next state according to config chosen
+		return fs.ConfigGoto(config.Result)
+	case "onedrive":
+		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
+			opts: rest.Opts{
+				Method:  "GET",
+				RootURL: graphURL,
+				Path:    "/me/drives",
+			},
+		})
+	case "sharepoint":
+		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
+			opts: rest.Opts{
+				Method:  "GET",
+				RootURL: graphURL,
+				Path:    "/sites/root/drives",
+			},
+		})
+	case "driveid":
+		return fs.ConfigInput("driveid_end", "Drive ID")
+	case "driveid_end":
+		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
+			finalDriveID: config.Result,
+		})
+	case "siteid":
+		return fs.ConfigInput("siteid_end", "Site ID")
+	case "siteid_end":
+		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
+			siteID: config.Result,
+		})
+	case "url":
+		return fs.ConfigInput("url_end", `Site URL
+
+Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
+`)
+	case "url_end":
+		siteURL := config.Result
+		re := regexp.MustCompile(`https://.*\.sharepoint.com/sites/(.*)`)
+		match := re.FindStringSubmatch(siteURL)
+		if len(match) == 2 {
+			return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
+				relativePath: "/sites/" + match[1],
+			})
+		}
+		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
+			relativePath: "/sites/" + siteURL,
+		})
+	case "path":
+		return fs.ConfigInput("path_end", `Server-relative URL`)
+	case "path_end":
+		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
+			relativePath: config.Result,
+		})
+	case "search":
+		return fs.ConfigInput("search_end", `Search term`)
+	case "search_end":
+		searchTerm := config.Result
+		opts := rest.Opts{
+			Method:  "GET",
+			RootURL: graphURL,
+			Path:    "/sites?search=" + searchTerm,
+		}
+
+		sites := siteResponse{}
+		_, err := srv.CallJSON(ctx, &opts, nil, &sites)
+		if err != nil {
+			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query available sites: %v", err))
+		}
+
+		if len(sites.Sites) == 0 {
+			return fs.ConfigError("choose_type", fmt.Sprintf("search for %q returned no results", searchTerm))
+		}
+		return fs.ConfigChoose("search_sites", `Select the Site you want to use`, len(sites.Sites), func(i int) (string, string) {
+			site := sites.Sites[i]
+			return site.SiteID, fmt.Sprintf("%s (%s)", site.SiteName, site.SiteURL)
+		})
+	case "search_sites":
+		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
+			siteID: config.Result,
+		})
+	case "driveid_final":
+		finalDriveID := config.Result
+
+		// Test the driveID and get drive type
+		opts := rest.Opts{
+			Method:  "GET",
+			RootURL: graphURL,
+			Path:    "/drives/" + finalDriveID + "/root"}
+		var rootItem api.Item
+		_, err = srv.CallJSON(ctx, &opts, nil, &rootItem)
+		if err != nil {
+			return fs.ConfigError("choose_type", fmt.Sprintf("Failed to query root for drive %q: %v", finalDriveID, err))
+		}
+
+		m.Set(configDriveID, finalDriveID)
+		m.Set(configDriveType, rootItem.ParentReference.DriveType)
+
+		return fs.ConfigConfirm("driveid_final_end", true, fmt.Sprintf("Drive OK?\n\nFound drive %q of type %q\nURL: %s\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL))
+	case "driveid_final_end":
+		if config.Result == "true" {
+			return nil, nil
+		}
+		return fs.ConfigGoto("choose_type")
+	}
+	return nil, fmt.Errorf("unknown state %q", config.State)
 }
 
 // Options defines the configuration for this backend

@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -60,15 +59,11 @@ func init() {
 		Name:        "putio",
 		Description: "Put.io",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
-			opt := oauthutil.Options{
-				NoOffline: true,
-			}
-			err := oauthutil.Config(ctx, "putio", name, m, putioConfig, &opt)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure token")
-			}
-			return nil
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: putioConfig,
+				NoOffline:    true,
+			})
 		},
 		Options: []fs.Option{{
 			Name:     config.ConfigEncoding,

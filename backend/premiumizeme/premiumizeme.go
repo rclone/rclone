@@ -77,12 +77,10 @@ func init() {
 		Name:        "premiumizeme",
 		Description: "premiumize.me",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
-			err := oauthutil.Config(ctx, "premiumizeme", name, m, oauthConfig, nil)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure token")
-			}
-			return nil
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: oauthConfig,
+			})
 		},
 		Options: []fs.Option{{
 			Name: "api_key",

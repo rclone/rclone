@@ -83,7 +83,7 @@ func init() {
 		Name:        "box",
 		Description: "Box",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			jsonFile, ok := m.Get("box_config_file")
 			boxSubType, boxSubTypeOk := m.Get("box_sub_type")
 			boxAccessToken, boxAccessTokenOk := m.Get("access_token")
@@ -92,16 +92,15 @@ func init() {
 			if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
 				err = refreshJWTToken(ctx, jsonFile, boxSubType, name, m)
 				if err != nil {
-					return errors.Wrap(err, "failed to configure token with jwt authentication")
+					return nil, errors.Wrap(err, "failed to configure token with jwt authentication")
 				}
 				// Else, if not using an access token, use oauth2
 			} else if boxAccessToken == "" || !boxAccessTokenOk {
-				err = oauthutil.Config(ctx, "box", name, m, oauthConfig, nil)
-				if err != nil {
-					return errors.Wrap(err, "failed to configure token with oauth authentication")
-				}
+				return oauthutil.ConfigOut("", &oauthutil.Options{
+					OAuth2Config: oauthConfig,
+				})
 			}
-			return nil
+			return nil, nil
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     "root_folder_id",

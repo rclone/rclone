@@ -11,12 +11,14 @@ import (
 
 // Authorize is for remote authorization of headless machines.
 //
-// It expects 1 or 3 arguments
+// It expects 1, 2 or 3 arguments
 //
 //   rclone authorize "fs name"
+//   rclone authorize "fs name" "base64 encoded JSON blob"
 //   rclone authorize "fs name" "client id" "client secret"
 func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 	ctx = suppressConfirm(ctx)
+	ctx = fs.ConfigOAuthOnly(ctx)
 	switch len(args) {
 	case 1, 2, 3:
 	default:
@@ -60,7 +62,7 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 	m.AddSetter(outM)
 	m.AddGetter(outM, configmap.PriorityNormal)
 
-	err = ri.Config(ctx, name, m)
+	err = PostConfig(ctx, name, m, ri)
 	if err != nil {
 		return err
 	}

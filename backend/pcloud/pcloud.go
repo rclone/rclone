@@ -71,7 +71,7 @@ func init() {
 		Name:        "pcloud",
 		Description: "Pcloud",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			optc := new(Options)
 			err := configstruct.Set(m, optc)
 			if err != nil {
@@ -93,15 +93,11 @@ func init() {
 				fs.Debugf(nil, "pcloud: got hostname %q", hostname)
 				return nil
 			}
-			opt := oauthutil.Options{
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: oauthConfig,
 				CheckAuth:    checkAuth,
 				StateBlankOK: true, // pCloud seems to drop the state parameter now - see #4210
-			}
-			err = oauthutil.Config(ctx, "pcloud", name, m, oauthConfig, &opt)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure token")
-			}
-			return nil
+			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     config.ConfigEncoding,

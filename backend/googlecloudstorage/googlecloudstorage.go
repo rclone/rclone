@@ -75,18 +75,16 @@ func init() {
 		Prefix:      "gcs",
 		Description: "Google Cloud Storage (this is not Google Drive)",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			saFile, _ := m.Get("service_account_file")
 			saCreds, _ := m.Get("service_account_credentials")
 			anonymous, _ := m.Get("anonymous")
 			if saFile != "" || saCreds != "" || anonymous == "true" {
-				return nil
+				return nil, nil
 			}
-			err := oauthutil.Config(ctx, "google cloud storage", name, m, storageConfig, nil)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure token")
-			}
-			return nil
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: storageConfig,
+			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "project_number",

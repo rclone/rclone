@@ -77,36 +77,36 @@ func init() {
 		Prefix:      "gphotos",
 		Description: "Google Photos",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) error {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Parse config into Options struct
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
 			if err != nil {
-				return errors.Wrap(err, "couldn't parse config into struct")
+				return nil, errors.Wrap(err, "couldn't parse config into struct")
 			}
 
-			// Fill in the scopes
-			if opt.ReadOnly {
-				oauthConfig.Scopes[0] = scopeReadOnly
-			} else {
-				oauthConfig.Scopes[0] = scopeReadWrite
+			switch config.State {
+			case "":
+				// Fill in the scopes
+				if opt.ReadOnly {
+					oauthConfig.Scopes[0] = scopeReadOnly
+				} else {
+					oauthConfig.Scopes[0] = scopeReadWrite
+				}
+				return oauthutil.ConfigOut("warning", &oauthutil.Options{
+					OAuth2Config: oauthConfig,
+				})
+			case "warning":
+				// Warn the user as required by google photos integration
+				return fs.ConfigConfirm("warning_done", true, `Warning
+
+IMPORTANT: All media items uploaded to Google Photos with rclone
+are stored in full resolution at original quality.  These uploads
+will count towards storage in your Google Account.`)
+			case "warning_done":
+				return nil, nil
 			}
-
-			// Do the oauth
-			err = oauthutil.Config(ctx, "google photos", name, m, oauthConfig, nil)
-			if err != nil {
-				return errors.Wrap(err, "failed to configure token")
-			}
-
-			// Warn the user
-			fmt.Print(`
-*** IMPORTANT: All media items uploaded to Google Photos with rclone
-*** are stored in full resolution at original quality.  These uploads
-*** will count towards storage in your Google Account.
-
-`)
-
-			return nil
+			return nil, fmt.Errorf("unknown state %q", config.State)
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:    "read_only",
