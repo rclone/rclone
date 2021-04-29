@@ -1017,6 +1017,7 @@ func (file *localOpenFile) Close() (err error) {
 func (o *Object) openTranslatedLink(offset, limit int64) (lrc io.ReadCloser, err error) {
 	// Read the link and return the destination  it as the contents of the object
 	linkdst, err := os.Readlink(o.path)
+	fs.Infof(o, "openTranslatedLink link = %q, offset = %d, limit = %d, err = %v", linkdst, offset, limit, err)
 	if err != nil {
 		return nil, err
 	}
@@ -1271,6 +1272,7 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	// Optionally, users can turn this feature on with the zero_size_links flag
 	if (runtime.GOOS == "windows" || o.fs.opt.ZeroSizeLinks) && o.translatedLink {
 		linkdst, err := os.Readlink(o.path)
+		fs.Infof(o, "setMetadata link = %q, err = %v", linkdst, err)
 		if err != nil {
 			fs.Errorf(o, "Failed to read link size: %v", err)
 		} else {
