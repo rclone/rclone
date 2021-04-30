@@ -490,3 +490,4 @@ put them back in again.` >}}
   * jtagcat <git-514635f7@jtag.cat>
   * Tatsuya Noyori <63089076+public-tatsuya-noyori@users.noreply.github.com>
   * lewisxy <lewisxy@users.noreply.github.com>
+  * Nolan Woods <nolan_w@sfu.ca>
