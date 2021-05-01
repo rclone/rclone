@@ -73,16 +73,16 @@ points, as you explicitly acknowledge that they should be skipped.`,
 			Advanced: true,
 		}, {
 			Name: "zero_size_links",
-			Help: `Assume the Stat size of links is zero (and read them instead)
+			Help: `Assume the Stat size of links is zero (and read them instead) (Deprecated)
 
-On some virtual filesystems (such ash LucidLink), reading a link size via a Stat call always returns 0.
-However, on unix it reads as the length of the text in the link. This may cause errors like this when
-syncing:
+Rclone used to use the Stat size of links as the link size, but this fails in quite a few places
 
-    Failed to copy: corrupted on transfer: sizes differ 0 vs 13
+- Windows
+- On some virtual filesystems (such ash LucidLink)
+- Android
 
-Setting this flag causes rclone to read the link and use that as the size of the link
-instead of 0 which in most cases fixes the problem.`,
+So rclone now always reads the link
+`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -196,7 +196,6 @@ type Options struct {
 	FollowSymlinks    bool                 `config:"copy_links"`
 	TranslateSymlinks bool                 `config:"links"`
 	SkipSymlinks      bool                 `config:"skip_links"`
-	ZeroSizeLinks     bool                 `config:"zero_size_links"`
 	NoUTFNorm         bool                 `config:"no_unicode_normalization"`
 	NoCheckUpdated    bool                 `config:"no_check_updated"`
 	NoUNC             bool                 `config:"nounc"`
@@ -1267,9 +1266,13 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	o.modTime = info.ModTime()
 	o.mode = info.Mode()
 	o.fs.objectMetaMu.Unlock()
-	// On Windows links read as 0 size so set the correct size here
-	// Optionally, users can turn this feature on with the zero_size_links flag
-	if (runtime.GOOS == "windows" || o.fs.opt.ZeroSizeLinks) && o.translatedLink {
+	// Read the size of the link.
+	//
+	// The value in info.Size() is not always correct
+	// - Windows links read as 0 size
+	// - Some virtual filesystems (such ash LucidLink) links read as 0 size
+	// - Android - some versions the links are larger than readlink suggests
+	if o.translatedLink {
 		linkdst, err := os.Readlink(o.path)
 		if err != nil {
 			fs.Errorf(o, "Failed to read link size: %v", err)
