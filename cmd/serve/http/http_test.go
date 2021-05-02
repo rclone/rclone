@@ -37,7 +37,7 @@ func startServer(t *testing.T, f fs.Fs) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	httpServer.Bind("/*", router)
+	httpServer.Bind(router)
 	testURL = httplib.URL()
 
 	// try to connect to the test server

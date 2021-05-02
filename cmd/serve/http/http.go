@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/http/data"
 	"github.com/rclone/rclone/fs"
@@ -67,7 +68,7 @@ control the stats printing.
 			if err != nil {
 				return err
 			}
-			s.Bind("/*", router)
+			s.Bind(router)
 			return nil
 		})
 	},
@@ -93,18 +94,17 @@ func newServer(f fs.Fs, templatePath string) *server {
 	return s
 }
 
-func (s *server) Bind(pattern string, router chi.Router) {
-	router.Get(pattern, s.handler)
-	router.Head(pattern, s.handler)
+func (s *server) Bind(router chi.Router) {
+	router.Use(
+		middleware.SetHeader("Accept-Ranges", "bytes"),
+		middleware.SetHeader("Server", "rclone/"+fs.Version),
+	)
+	router.Get("/*", s.handler)
+	router.Head("/*", s.handler)
 }
 
 // handler reads incoming requests and dispatches them
 func (s *server) handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Accept-Ranges", "bytes")
-	w.Header().Set("Server", "rclone/"+fs.Version)
-
-	//rctx := chi.RouteContext(r.Context())
-
 	isDir := strings.HasSuffix(r.URL.Path, "/")
 	remote := strings.Trim(r.URL.Path, "/")
 	if isDir {
