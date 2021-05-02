@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // declare a few helper functions
@@ -15,11 +14,10 @@ import (
 // wantFunc tests the HTTP response in res and marks the test as errored if something is incorrect.
 type wantFunc func(t testing.TB, res *httptest.ResponseRecorder)
 
-// newRequest returns a new HTTP request with the given params. On error, the
-// test is marked as failed.
+// newRequest returns a new HTTP request with the given params
 func newRequest(t testing.TB, method, path string, body io.Reader) *http.Request {
-	req, err := http.NewRequest(method, path, body)
-	require.NoError(t, err)
+	req := httptest.NewRequest(method, path, body)
+	req.Header.Add("Accept", resticAPIV2)
 	return req
 }
 

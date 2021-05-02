@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/stretchr/testify/require"
 )
@@ -128,10 +128,12 @@ func TestResticHandler(t *testing.T) {
 
 	// make a new file system in the temp dir
 	f := cmd.NewFsSrc([]string{tempdir})
-	srv := NewServer(f, &httpflags.Opt)
+	srv := newServer(f)
+	router := chi.NewRouter()
+	srv.Bind(router)
 
 	// create the repo
-	checkRequest(t, srv.ServeHTTP,
+	checkRequest(t, router.ServeHTTP,
 		newRequest(t, "POST", "/?create=true", nil),
 		[]wantFunc{wantCode(http.StatusOK)})
 
@@ -139,7 +141,7 @@ func TestResticHandler(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			for i, seq := range test.seq {
 				t.Logf("request %v: %v %v", i, seq.req.Method, seq.req.URL.Path)
-				checkRequest(t, srv.ServeHTTP, seq.req, seq.want)
+				checkRequest(t, router.ServeHTTP, seq.req, seq.want)
 			}
 		})
 	}
