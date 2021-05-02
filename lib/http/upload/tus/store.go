@@ -3,6 +3,7 @@ package tus
 import (
 	"context"
 	"errors"
+
 	up "github.com/rclone/rclone/lib/http/upload"
 	tus "github.com/tus/tusd/pkg/handler"
 )
