@@ -173,6 +173,9 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 	router.MethodNotAllowed(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 	})
+	router.NotFound(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	})
 
 	handler := router.(http.Handler)
 	if opt.BaseURL != "" {
