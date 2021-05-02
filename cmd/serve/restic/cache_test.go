@@ -21,7 +21,7 @@ func (c *cache) String() string {
 }
 
 func TestCacheCRUD(t *testing.T) {
-	c := newCache()
+	c := newCache(true)
 	assert.Equal(t, "", c.String())
 	assert.Nil(t, c.find("potato"))
 	o := mockobject.New("potato")
@@ -35,7 +35,7 @@ func TestCacheCRUD(t *testing.T) {
 }
 
 func TestCacheRemovePrefix(t *testing.T) {
-	c := newCache()
+	c := newCache(true)
 	for _, remote := range []string{
 		"a",
 		"b",
