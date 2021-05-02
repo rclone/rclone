@@ -3,6 +3,7 @@ package fshttp
 import (
 	"context"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -53,15 +54,14 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 		return c, err
 	}
 	if d.tclass != 0 {
-		if addr, ok := c.RemoteAddr().(*net.IPAddr); ok {
-			if addr.IP.To16() != nil && addr.IP.To4() == nil {
-				err = ipv6.NewConn(c).SetTrafficClass(d.tclass)
-			} else {
-				err = ipv4.NewConn(c).SetTOS(d.tclass)
-			}
-			if err != nil {
-				return c, err
-			}
+		// IPv6 addresses must have two or more ":"
+		if strings.Count(c.RemoteAddr().String(), ":") > 1 {
+			err = ipv6.NewConn(c).SetTrafficClass(d.tclass)
+		} else {
+			err = ipv4.NewConn(c).SetTOS(d.tclass)
+		}
+		if err != nil {
+			return c, err
 		}
 	}
 	return newTimeoutConn(c, d.timeout)
