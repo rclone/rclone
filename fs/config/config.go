@@ -121,7 +121,7 @@ func init() {
 	fs.ConfigFileGet = FileGetFlag
 	fs.ConfigFileSet = SetValueAndSave
 	configPath = makeConfigPath()
-	data = defaultStorage{}
+	data = newDefaultStorage()
 }
 
 // Join directory with filename, and check if exists

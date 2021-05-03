@@ -1,61 +1,114 @@
 package config
 
-// Default config.Storage which panics with a useful error when used
-type defaultStorage struct{}
+import (
+	"encoding/json"
+	"sync"
+)
 
-var noConfigStorage = "internal error: no config file system found. Did you call configfile.Install()?"
-
-// GetSectionList returns a slice of strings with names for all the
-// sections
-func (defaultStorage) GetSectionList() []string {
-	panic(noConfigStorage)
+// defaultStorage implements config.Storage, providing in-memory config.
+// Indexed by section, then key.
+type defaultStorage struct {
+	mu       sync.RWMutex
+	sections map[string]map[string]string
 }
 
-// HasSection returns true if section exists in the config file
-func (defaultStorage) HasSection(section string) bool {
-	panic(noConfigStorage)
+func newDefaultStorage() *defaultStorage {
+	return &defaultStorage{
+		sections: map[string]map[string]string{},
+	}
 }
 
-// DeleteSection removes the named section and all config from the
-// config file
-func (defaultStorage) DeleteSection(section string) {
-	panic(noConfigStorage)
+// GetSectionList returns a slice of strings with names for all the sections.
+func (s *defaultStorage) GetSectionList() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	sections := make([]string, 0, len(s.sections))
+	for section := range s.sections {
+		sections = append(sections, section)
+	}
+	return sections
 }
 
-// GetKeyList returns the keys in this section
-func (defaultStorage) GetKeyList(section string) []string {
-	panic(noConfigStorage)
+// HasSection returns true if section exists in the config.
+func (s *defaultStorage) HasSection(section string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	_, hasSection := s.sections[section]
+	return hasSection
 }
 
-// GetValue returns the key in section with a found flag
-func (defaultStorage) GetValue(section string, key string) (value string, found bool) {
-	panic(noConfigStorage)
+// DeleteSection deletes the specified section.
+func (s *defaultStorage) DeleteSection(section string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.sections, section)
 }
 
-// SetValue sets the value under key in section
-func (defaultStorage) SetValue(section string, key string, value string) {
-	panic(noConfigStorage)
+// GetKeyList returns the keys in this section.
+func (s *defaultStorage) GetKeyList(section string) []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	theSection := s.sections[section]
+	keys := make([]string, 0, len(theSection))
+	for key := range theSection {
+		keys = append(keys, key)
+	}
+	return keys
 }
 
-// DeleteKey removes the key under section
-func (defaultStorage) DeleteKey(section string, key string) bool {
-	panic(noConfigStorage)
+// GetValue returns the key in section with a found flag.
+func (s *defaultStorage) GetValue(section string, key string) (value string, found bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	theSection, hasSection := s.sections[section]
+	if !hasSection {
+		return "", false
+	}
+	value, hasValue := theSection[key]
+	return value, hasValue
 }
 
-// Load the config from permanent storage
-func (defaultStorage) Load() error {
-	panic(noConfigStorage)
+func (s *defaultStorage) SetValue(section string, key string, value string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	theSection, hasSection := s.sections[section]
+	if !hasSection {
+		theSection = map[string]string{}
+		s.sections[section] = theSection
+	}
+	theSection[key] = value
 }
 
-// Save the config to permanent storage
-func (defaultStorage) Save() error {
-	panic(noConfigStorage)
+func (s *defaultStorage) DeleteKey(section string, key string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	theSection, hasSection := s.sections[section]
+	if !hasSection {
+		return false
+	}
+	_, hasKey := theSection[key]
+	if !hasKey {
+		return false
+	}
+	delete(s.sections[section], key)
+	return true
+}
+
+func (s *defaultStorage) Load() error {
+	return nil
+}
+
+func (s *defaultStorage) Save() error {
+	return nil
 }
 
 // Serialize the config into a string
-func (defaultStorage) Serialize() (string, error) {
-	panic(noConfigStorage)
+func (s *defaultStorage) Serialize() (string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	j, err := json.Marshal(s.sections)
+	return string(j), err
 }
 
 // Check the interface is satisfied
-var _ Storage = defaultStorage{}
+var _ Storage = newDefaultStorage()
