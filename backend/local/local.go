@@ -500,7 +500,26 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
 				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
-					d := fs.NewDir(newRemote, fi.ModTime())
+					d := fs.NewLazyDir(newRemote, fi.ModTime(), func() int64 {
+						var size int64
+						if err := filepath.Walk(newRemote, func(_ string, info os.FileInfo, err error) error {
+							if err != nil {
+								return err
+							}
+							if !info.IsDir() {
+								size += info.Size()
+							}
+							return err
+						}); err != nil {
+							size = -1
+						}
+						return size
+					}, func() int64 {
+						if matches, err := filepath.Glob(filepath.Join(newRemote, "*")); err == nil {
+							return int64(len(matches))
+						}
+						return -1
+					})
 					entries = append(entries, d)
 				}
 			} else {
