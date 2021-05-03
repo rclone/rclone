@@ -492,3 +492,4 @@ put them back in again.` >}}
   * lewisxy <lewisxy@users.noreply.github.com>
   * Nolan Woods <nolan_w@sfu.ca>
   * Gautam Kumar <25435568+gautamajay52@users.noreply.github.com>
+  * Chris Macklin <chris.macklin@10xgenomics.com>
