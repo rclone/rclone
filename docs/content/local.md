@@ -114,9 +114,9 @@ as they can't be converted to UTF-16.
 ### Paths on Windows ###
 
 On Windows there are many ways of specifying a path to a file system resource.
-Both absolute paths like `C:\path\to\wherever`, and relative paths like
-`..\wherever` can be used, and path separator can be either
-`\` (as in `C:\path\to\wherever`) or `/` (as in `C:/path/to/wherever`).
+Local paths can be absolute, like `C:\path\to\wherever`, or relative,
+like `..\wherever`. Network paths in UNC format, `\\server\share`, are also supported.
+Path separator can be either `\` (as in `C:\path\to\wherever`) or `/` (as in `C:/path/to/wherever`).
 Length of these paths are limited to 259 characters for files and 247
 characters for directories, but there is an alternative extended-length
 path format increasing the limit to (approximately) 32,767 characters.
