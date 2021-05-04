@@ -98,7 +98,7 @@ func init() {
 				})
 			case "warning":
 				// Warn the user as required by google photos integration
-				return fs.ConfigConfirm("warning_done", true, `Warning
+				return fs.ConfigConfirm("warning_done", true, "config_warning", `Warning
 
 IMPORTANT: All media items uploaded to Google Photos with rclone
 are stored in full resolution at original quality.  These uploads

@@ -25,7 +25,9 @@ var ConfigOAuth func(ctx context.Context, name string, m configmap.Mapper, ri *R
 
 // ConfigIn is passed to the Config function for an Fs
 //
-// The interactive config system for backends is state based. This is so that different frontends to the config can be attached, eg over the API or web page.
+// The interactive config system for backends is state based. This is
+// so that different frontends to the config can be attached, eg over
+// the API or web page.
 //
 // Each call to the config system supplies ConfigIn which tells the
 // system what to do. Each will return a ConfigOut which gives a
@@ -47,6 +49,10 @@ var ConfigOAuth func(ctx context.Context, name string, m configmap.Mapper, ri *R
 //
 // The utilities here are convenience methods for different kinds of
 // questions and responses.
+//
+// Where the questions ask for a name then this should start with
+// "config_" to show it is an ephemeral config input rather than the
+// actual value stored in the config file.
 type ConfigIn struct {
 	State  string // State to run
 	Result string // Result from previous Option
@@ -66,33 +72,42 @@ type ConfigOut struct {
 	Result string      // if Option/OAuth not set then this is passed to the next state
 }
 
-// ConfigInput asks the user for a string
+// ConfigInputOptional asks the user for a string which may be empty
 //
 // state should be the next state required
+// name is the config name for this item
 // help should be the help shown to the user
-func ConfigInput(state string, help string) (*ConfigOut, error) {
+func ConfigInputOptional(state string, name string, help string) (*ConfigOut, error) {
 	return &ConfigOut{
 		State: state,
 		Option: &Option{
+			Name:    name,
 			Help:    help,
 			Default: "",
 		},
 	}, nil
 }
 
+// ConfigInput asks the user for a non-empty string
+//
+// state should be the next state required
+// name is the config name for this item
+// help should be the help shown to the user
+func ConfigInput(state string, name string, help string) (*ConfigOut, error) {
+	out, _ := ConfigInputOptional(state, name, help)
+	out.Option.Required = true
+	return out, nil
+}
+
 // ConfigPassword asks the user for a password
 //
 // state should be the next state required
+// name is the config name for this item
 // help should be the help shown to the user
-func ConfigPassword(state string, help string) (*ConfigOut, error) {
-	return &ConfigOut{
-		State: state,
-		Option: &Option{
-			Help:       help,
-			Default:    "",
-			IsPassword: true,
-		},
-	}, nil
+func ConfigPassword(state string, name string, help string) (*ConfigOut, error) {
+	out, _ := ConfigInputOptional(state, name, help)
+	out.Option.IsPassword = true
+	return out, nil
 }
 
 // ConfigGoto goes to the next state with empty Result
@@ -130,11 +145,13 @@ func ConfigError(state string, Error string) (*ConfigOut, error) {
 //
 // state should be the next state required
 // Default should be the default state
+// name is the config name for this item
 // help should be the help shown to the user
-func ConfigConfirm(state string, Default bool, help string) (*ConfigOut, error) {
+func ConfigConfirm(state string, Default bool, name string, help string) (*ConfigOut, error) {
 	return &ConfigOut{
 		State: state,
 		Option: &Option{
+			Name:    name,
 			Help:    help,
 			Default: Default,
 			Examples: []OptionExample{{
@@ -151,19 +168,21 @@ func ConfigConfirm(state string, Default bool, help string) (*ConfigOut, error) 
 // ConfigChooseFixed returns a ConfigOut structure which has a list of items to choose from.
 //
 // state should be the next state required
+// name is the config name for this item
 // help should be the help shown to the user
 // items should be the items in the list
 //
 // It chooses the first item to be the default.
 // If there are no items then it will return an error.
 // If there is only one item it will short cut to the next state
-func ConfigChooseFixed(state string, help string, items []OptionExample) (*ConfigOut, error) {
+func ConfigChooseFixed(state string, name string, help string, items []OptionExample) (*ConfigOut, error) {
 	if len(items) == 0 {
 		return nil, errors.Errorf("no items found in: %s", help)
 	}
 	choose := &ConfigOut{
 		State: state,
 		Option: &Option{
+			Name:     name,
 			Help:     help,
 			Examples: items,
 		},
@@ -180,6 +199,7 @@ func ConfigChooseFixed(state string, help string, items []OptionExample) (*Confi
 // ConfigChoose returns a ConfigOut structure which has a list of items to choose from.
 //
 // state should be the next state required
+// name is the config name for this item
 // help should be the help shown to the user
 // n should be the number of items in the list
 // getItem should return the items (value, help)
@@ -187,12 +207,12 @@ func ConfigChooseFixed(state string, help string, items []OptionExample) (*Confi
 // It chooses the first item to be the default.
 // If there are no items then it will return an error.
 // If there is only one item it will short cut to the next state
-func ConfigChoose(state string, help string, n int, getItem func(i int) (itemValue string, itemHelp string)) (*ConfigOut, error) {
+func ConfigChoose(state string, name string, help string, n int, getItem func(i int) (itemValue string, itemHelp string)) (*ConfigOut, error) {
 	items := make(OptionExamples, n)
 	for i := range items {
 		items[i].Value, items[i].Help = getItem(i)
 	}
-	return ConfigChooseFixed(state, help, items)
+	return ConfigChooseFixed(state, name, help, items)
 }
 
 // StatePush pushes a new values onto the front of the config string
@@ -237,21 +257,21 @@ func StatePop(state string) (newState string, value string) {
 // BackendConfig calls the config for the backend in ri
 //
 // It wraps any OAuth transactions as necessary so only straight forward config questions are emitted
-func BackendConfig(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, in ConfigIn) (*ConfigOut, error) {
+func BackendConfig(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, in ConfigIn) (out *ConfigOut, err error) {
 	ci := GetConfig(ctx)
 	if ri.Config == nil {
 		return nil, nil
 	}
-	// Do internal states here
-	if strings.HasPrefix(in.State, "*") {
-		switch {
-		case strings.HasPrefix(in.State, "*oauth"):
-			return ConfigOAuth(ctx, name, m, ri, in)
-		default:
-			return nil, errors.Errorf("unknown internal state %q", in.State)
-		}
+	switch {
+	case strings.HasPrefix(in.State, "*oauth"):
+		// Do internal oauth states
+		out, err = ConfigOAuth(ctx, name, m, ri, in)
+	case strings.HasPrefix(in.State, "*"):
+		err = errors.Errorf("unknown internal state %q", in.State)
+	default:
+		// Otherwise pass to backend
+		out, err = ri.Config(ctx, name, m, in)
 	}
-	out, err := ri.Config(ctx, name, m, in)
 	if err != nil {
 		return nil, err
 	}
@@ -267,11 +287,21 @@ func BackendConfig(ctx context.Context, name string, m configmap.Mapper, ri *Reg
 		}
 		// Run internal state, saving the input so we can recall the state
 		return ConfigGoto(StatePush("", "*oauth", returnState, in.State, in.Result))
-	case out.Option != nil && ci.AutoConfirm:
+	case out.Option != nil:
+		if out.Option.Name == "" {
+			return nil, errors.New("internal error: no name set in Option")
+		}
+		// If override value is set in the config then use that
+		if result, ok := m.Get(out.Option.Name); ok {
+			Debugf(nil, "Override value found, choosing value %q for state %q", result, out.State)
+			return ConfigResult(out.State, result)
+		}
 		// If AutoConfirm is set, choose the default value
-		result := fmt.Sprint(out.Option.Default)
-		Debugf(nil, "Auto confirm is set, choosing default %q for state %q", result, out.State)
-		return ConfigResult(out.State, result)
+		if ci.AutoConfirm {
+			result := fmt.Sprint(out.Option.Default)
+			Debugf(nil, "Auto confirm is set, choosing default %q for state %q", result, out.State)
+			return ConfigResult(out.State, result)
+		}
 	}
 	return out, nil
 }

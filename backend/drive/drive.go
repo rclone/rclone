@@ -208,9 +208,9 @@ func init() {
 				return fs.ConfigGoto("teamdrive")
 			case "teamdrive":
 				if opt.TeamDriveID == "" {
-					return fs.ConfigConfirm("teamdrive_ok", false, "Configure this as a Shared Drive (Team Drive)?\n")
+					return fs.ConfigConfirm("teamdrive_ok", false, "config_change_team_drive", "Configure this as a Shared Drive (Team Drive)?\n")
 				}
-				return fs.ConfigConfirm("teamdrive_ok", false, fmt.Sprintf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID))
+				return fs.ConfigConfirm("teamdrive_ok", false, "config_change_team_drive", fmt.Sprintf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID))
 			case "teamdrive_ok":
 				if config.Result == "false" {
 					m.Set("team_drive", "")
@@ -227,7 +227,7 @@ func init() {
 				if len(teamDrives) == 0 {
 					return fs.ConfigError("", "No Shared Drives found in your account")
 				}
-				return fs.ConfigChoose("teamdrive_final", "Shared Drive", len(teamDrives), func(i int) (string, string) {
+				return fs.ConfigChoose("teamdrive_final", "config_team_drive", "Shared Drive", len(teamDrives), func(i int) (string, string) {
 					teamDrive := teamDrives[i]
 					return teamDrive.Id, teamDrive.Name
 				})

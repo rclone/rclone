@@ -455,14 +455,14 @@ func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.Re
 		// See if already have a token
 		tokenString, ok := m.Get("token")
 		if ok && tokenString != "" {
-			return fs.ConfigConfirm(newState("*oauth-confirm"), true, "Already have a token - refresh?")
+			return fs.ConfigConfirm(newState("*oauth-confirm"), true, "config_refresh_token", "Already have a token - refresh?")
 		}
 		return fs.ConfigGoto(newState("*oauth-confirm"))
 	case "*oauth-confirm":
 		if in.Result == "false" {
 			return fs.ConfigGoto(newState("*oauth-done"))
 		}
-		return fs.ConfigConfirm(newState("*oauth-islocal"), true, "Use auto config?\n * Say Y if not sure\n * Say N if you are working on a remote or headless machine\n")
+		return fs.ConfigConfirm(newState("*oauth-islocal"), true, "config_is_local", "Use auto config?\n * Say Y if not sure\n * Say N if you are working on a remote or headless machine\n")
 	case "*oauth-islocal":
 		if in.Result == "true" {
 			return fs.ConfigGoto(newState("*oauth-do"))
@@ -478,7 +478,7 @@ func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.Re
 			if err != nil {
 				return nil, err
 			}
-			return fs.ConfigInput(newState("*oauth-do"), fmt.Sprintf("Verification code\n\nGo to this URL, authenticate then paste the code here.\n\n%s\n", authURL))
+			return fs.ConfigInput(newState("*oauth-do"), "config_verification_code", fmt.Sprintf("Verification code\n\nGo to this URL, authenticate then paste the code here.\n\n%s\n", authURL))
 		}
 		var out strings.Builder
 		fmt.Fprintf(&out, `For this to work, you will need rclone available on a machine that has
@@ -508,7 +508,7 @@ version recommended):
 			fmt.Fprintf(&out, "\trclone authorize %q\n", ri.Name)
 		}
 		fmt.Fprintln(&out, "\nThen paste the result.")
-		return fs.ConfigInput(newState("*oauth-authorize"), out.String())
+		return fs.ConfigInput(newState("*oauth-authorize"), "config_token", out.String())
 	case "*oauth-authorize":
 		// Read the updates to the config
 		outM := configmap.Simple{}

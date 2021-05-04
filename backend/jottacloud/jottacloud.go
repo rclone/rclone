@@ -126,7 +126,7 @@ func init() {
 func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	switch config.State {
 	case "":
-		return fs.ConfigChooseFixed("auth_type_done", `Authentication type`, []fs.OptionExample{{
+		return fs.ConfigChooseFixed("auth_type_done", "config_type", `Authentication type`, []fs.OptionExample{{
 			Value: "standard",
 			Help:  "Standard authentication - use this if you're a normal Jottacloud user.",
 		}, {
@@ -141,7 +141,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		return fs.ConfigGoto(config.Result)
 	case "standard": // configure a jottacloud backend using the modern JottaCli token based authentication
 		m.Set("configVersion", fmt.Sprint(configVersion))
-		return fs.ConfigInput("standard_token", "Personal login token.\n\nGenerate here: https://www.jottacloud.com/web/secure")
+		return fs.ConfigInput("standard_token", "config_login_token", "Personal login token.\n\nGenerate here: https://www.jottacloud.com/web/secure")
 	case "standard_token":
 		loginToken := config.Result
 		m.Set(configClientID, "jottacli")
@@ -159,7 +159,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		return fs.ConfigGoto("choose_device")
 	case "legacy": // configure a jottacloud backend using legacy authentication
 		m.Set("configVersion", fmt.Sprint(v1configVersion))
-		return fs.ConfigConfirm("legacy_api", false, `Do you want to create a machine specific API key?
+		return fs.ConfigConfirm("legacy_api", false, "config_machine_specific", `Do you want to create a machine specific API key?
 
 Rclone has it's own Jottacloud API KEY which works fine as long as one
 only uses rclone on a single machine. When you want to use rclone with
@@ -177,10 +177,10 @@ machines.`)
 			m.Set(configClientSecret, obscure.MustObscure(deviceRegistration.ClientSecret))
 			fs.Debugf(nil, "Got clientID %q and clientSecret %q", deviceRegistration.ClientID, deviceRegistration.ClientSecret)
 		}
-		return fs.ConfigInput("legacy_user", "Username")
+		return fs.ConfigInput("legacy_user", "config_user", "Username")
 	case "legacy_username":
 		m.Set(configUsername, config.Result)
-		return fs.ConfigPassword("legacy_password", "Jottacloud password\n\n(this is only required during setup and will not be stored).")
+		return fs.ConfigPassword("legacy_password", "config_password", "Jottacloud password\n\n(this is only required during setup and will not be stored).")
 	case "legacy_password":
 		m.Set("password", config.Result)
 		m.Set("auth_code", "")
@@ -213,7 +213,7 @@ machines.`)
 
 		token, err := doAuthV1(ctx, srv, username, password, authCode)
 		if err == errAuthCodeRequired {
-			return fs.ConfigInput("legacy_auth_code", "Verification Code\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
+			return fs.ConfigInput("legacy_auth_code", "config_auth_code", "Verification Code\nThis account uses 2 factor authentication you will receive a verification code via SMS.")
 		}
 		m.Set("password", "")
 		m.Set("auth_code", "")
@@ -241,7 +241,7 @@ machines.`)
 			},
 		})
 	case "choose_device":
-		return fs.ConfigConfirm("choose_device_query", false, "Use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?")
+		return fs.ConfigConfirm("choose_device_query", false, "config_non_standard", "Use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?")
 	case "choose_device_query":
 		if config.Result != "true" {
 			m.Set(configDevice, "")
@@ -265,7 +265,7 @@ machines.`)
 		if err != nil {
 			return nil, err
 		}
-		return fs.ConfigChoose("choose_device_result", `Please select the device to use. Normally this will be Jotta`, len(acc.Devices), func(i int) (string, string) {
+		return fs.ConfigChoose("choose_device_result", "config_device", `Please select the device to use. Normally this will be Jotta`, len(acc.Devices), func(i int) (string, string) {
 			return acc.Devices[i].Name, ""
 		})
 	case "choose_device_result":
@@ -283,7 +283,7 @@ machines.`)
 		if err != nil {
 			return nil, err
 		}
-		return fs.ConfigChoose("choose_device_mountpoint", `Please select the mountpoint to use. Normally this will be Archive.`, len(dev.MountPoints), func(i int) (string, string) {
+		return fs.ConfigChoose("choose_device_mountpoint", "config_mountpoint", `Please select the mountpoint to use. Normally this will be Archive.`, len(dev.MountPoints), func(i int) (string, string) {
 			return dev.MountPoints[i].Name, ""
 		})
 	case "choose_device_mountpoint":

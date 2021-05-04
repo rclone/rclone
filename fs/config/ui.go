@@ -245,7 +245,6 @@ func OkRemote(name string) bool {
 //
 // The is the user interface loop that drives the post configuration backend config.
 func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.RegInfo) error {
-	// FIXME if doing authorize, stop when we've got to the OAuth
 	if ri.Config == nil {
 		return errors.New("backend doesn't support reconnect or authorize")
 	}
@@ -267,6 +266,7 @@ func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.Reg
 		in.State = out.State
 		in.Result = out.Result
 		if out.Option != nil {
+			fs.Debugf(name, "config: reading config item named %q", out.Option.Name)
 			if out.Option.Default == nil {
 				out.Option.Default = ""
 			}

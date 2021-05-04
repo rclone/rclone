@@ -327,7 +327,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	case "":
 		// Just make sure we do have a password
 		if password == "" {
-			return fs.ConfigPassword("", "Two-factor authentication: please enter your password (it won't be saved in the configuration)")
+			return fs.ConfigPassword("", "config_password", "Two-factor authentication: please enter your password (it won't be saved in the configuration)")
 		}
 		return fs.ConfigGoto("password")
 	case "password":
@@ -338,7 +338,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		m.Set(configPassword, obscure.MustObscure(config.Result))
 		return fs.ConfigGoto("2fa")
 	case "2fa":
-		return fs.ConfigInput("2fa_do", "Two-factor authentication: please enter your 2FA code")
+		return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: please enter your 2FA code")
 	case "2fa_do":
 		code := config.Result
 		if code == "" {
@@ -358,10 +358,10 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 		token, err := getAuthorizationToken(ctx, srv, username, password, code)
 		if err != nil {
-			return fs.ConfigConfirm("2fa_error", true, fmt.Sprintf("Authentication failed: %v\n\nTry Again?", err))
+			return fs.ConfigConfirm("2fa_error", true, "config_retry", fmt.Sprintf("Authentication failed: %v\n\nTry Again?", err))
 		}
 		if token == "" {
-			return fs.ConfigConfirm("2fa_error", true, "Authentication failed - no token returned.\n\nTry Again?")
+			return fs.ConfigConfirm("2fa_error", true, "config_retry", "Authentication failed - no token returned.\n\nTry Again?")
 		}
 		// Let's save the token into the configuration
 		m.Set(configAuthToken, token)

@@ -363,7 +363,7 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 	if len(drives.Drives) == 0 {
 		return fs.ConfigError("choose_type", "No drives found")
 	}
-	return fs.ConfigChoose("driveid_final", "Select drive you want to use", len(drives.Drives), func(i int) (string, string) {
+	return fs.ConfigChoose("driveid_final", "config_driveid", "Select drive you want to use", len(drives.Drives), func(i int) (string, string) {
 		drive := drives.Drives[i]
 		return drive.DriveID, fmt.Sprintf("%s (%s)", drive.DriveName, drive.DriveType)
 	})
@@ -388,7 +388,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			OAuth2Config: oauthConfig,
 		})
 	case "choose_type":
-		return fs.ConfigChooseFixed("choose_type_done", "Type of connection", []fs.OptionExample{{
+		return fs.ConfigChooseFixed("choose_type_done", "config_type", "Type of connection", []fs.OptionExample{{
 			Value: "onedrive",
 			Help:  "OneDrive Personal or Business",
 		}, {
@@ -430,19 +430,19 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			},
 		})
 	case "driveid":
-		return fs.ConfigInput("driveid_end", "Drive ID")
+		return fs.ConfigInput("driveid_end", "config_driveid_fixed", "Drive ID")
 	case "driveid_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
 			finalDriveID: config.Result,
 		})
 	case "siteid":
-		return fs.ConfigInput("siteid_end", "Site ID")
+		return fs.ConfigInput("siteid_end", "config_siteid", "Site ID")
 	case "siteid_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
 			siteID: config.Result,
 		})
 	case "url":
-		return fs.ConfigInput("url_end", `Site URL
+		return fs.ConfigInput("url_end", "config_site_url", `Site URL
 
 Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 `)
@@ -459,13 +459,13 @@ Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 			relativePath: "/sites/" + siteURL,
 		})
 	case "path":
-		return fs.ConfigInput("path_end", `Server-relative URL`)
+		return fs.ConfigInput("path_end", "config_sharepoint_url", `Server-relative URL`)
 	case "path_end":
 		return chooseDrive(ctx, name, m, srv, chooseDriveOpt{
 			relativePath: config.Result,
 		})
 	case "search":
-		return fs.ConfigInput("search_end", `Search term`)
+		return fs.ConfigInput("search_end", "config_search_term", `Search term`)
 	case "search_end":
 		searchTerm := config.Result
 		opts := rest.Opts{
@@ -483,7 +483,7 @@ Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 		if len(sites.Sites) == 0 {
 			return fs.ConfigError("choose_type", fmt.Sprintf("search for %q returned no results", searchTerm))
 		}
-		return fs.ConfigChoose("search_sites", `Select the Site you want to use`, len(sites.Sites), func(i int) (string, string) {
+		return fs.ConfigChoose("search_sites", "config_site", `Select the Site you want to use`, len(sites.Sites), func(i int) (string, string) {
 			site := sites.Sites[i]
 			return site.SiteID, fmt.Sprintf("%s (%s)", site.SiteName, site.SiteURL)
 		})
@@ -508,7 +508,7 @@ Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 		m.Set(configDriveID, finalDriveID)
 		m.Set(configDriveType, rootItem.ParentReference.DriveType)
 
-		return fs.ConfigConfirm("driveid_final_end", true, fmt.Sprintf("Drive OK?\n\nFound drive %q of type %q\nURL: %s\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL))
+		return fs.ConfigConfirm("driveid_final_end", true, "config_drive_ok", fmt.Sprintf("Drive OK?\n\nFound drive %q of type %q\nURL: %s\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL))
 	case "driveid_final_end":
 		if config.Result == "true" {
 			return nil, nil

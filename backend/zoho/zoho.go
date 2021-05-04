@@ -131,7 +131,7 @@ func init() {
 				if err != nil {
 					return nil, err
 				}
-				return fs.ConfigChoose("workspace", "Team Drive ID", len(teams), func(i int) (string, string) {
+				return fs.ConfigChoose("workspace", "config_team_drive_id", "Team Drive ID", len(teams), func(i int) (string, string) {
 					team := teams[i]
 					return team.ID, team.Attributes.Name
 				})
@@ -145,7 +145,7 @@ func init() {
 				if err != nil {
 					return nil, err
 				}
-				return fs.ConfigChoose("workspace_end", "Workspace ID", len(workspaces), func(i int) (string, string) {
+				return fs.ConfigChoose("workspace_end", "config_workspace", "Workspace ID", len(workspaces), func(i int) (string, string) {
 					workspace := workspaces[i]
 					return workspace.ID, workspace.Attributes.Name
 				})

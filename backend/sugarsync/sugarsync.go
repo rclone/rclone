@@ -87,17 +87,17 @@ func init() {
 				if opt.RefreshToken == "" {
 					return fs.ConfigGoto("username")
 				}
-				return fs.ConfigConfirm("refresh", true, "Already have a token - refresh?")
+				return fs.ConfigConfirm("refresh", true, "config_refresh", "Already have a token - refresh?")
 			case "refresh":
 				if config.Result == "false" {
 					return nil, nil
 				}
 				return fs.ConfigGoto("username")
 			case "username":
-				return fs.ConfigInput("password", "username (email address)")
+				return fs.ConfigInput("password", "config_username", "username (email address)")
 			case "password":
 				m.Set("username", config.Result)
-				return fs.ConfigPassword("auth", "Your Sugarsync password.\n\nOnly required during setup and will not be stored.")
+				return fs.ConfigPassword("auth", "config_password", "Your Sugarsync password.\n\nOnly required during setup and will not be stored.")
 			case "auth":
 				username, _ := m.Get("username")
 				m.Set("username", "")
