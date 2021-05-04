@@ -163,7 +163,7 @@ The syntax of the paths passed to the rclone command are as follows.
 This refers to the local file system.
 
 On Windows `\` may be used instead of `/` in local paths **only**,
-non local paths must use `/`. See [local filesystem](https://rclone.org/local/#windows-paths)
+non local paths must use `/`. See [local filesystem](https://rclone.org/local/#paths-on-windows)
 documentation for more about Windows-specific paths.
 
 These paths needn't start with a leading `/` - if they don't then they
