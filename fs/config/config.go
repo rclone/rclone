@@ -408,76 +408,117 @@ func getWithDefault(name, key, defaultValue string) string {
 	return value
 }
 
+// UpdateRemoteOpt configures the remote update
+type UpdateRemoteOpt struct {
+	// Treat all passwords as plain that need obscuring
+	Obscure bool `json:"obscure"`
+	// Treat all passwords as obscured
+	NoObscure bool `json:"noObscure"`
+	// Don't interact with the user - return questions
+	NonInteractive bool `json:"nonInteractive"`
+	// If set then supply state and result parameters to continue the process
+	Continue bool `json:"continue"`
+}
+
 // UpdateRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
-func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, doObscure, noObscure bool) error {
-	if doObscure && noObscure {
-		return errors.New("can't use --obscure and --no-obscure together")
+func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
+	if opt.Obscure && opt.NoObscure {
+		return nil, errors.New("can't use --obscure and --no-obscure together")
 	}
-	err := fspath.CheckConfigName(name)
+	err = fspath.CheckConfigName(name)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	ctx = suppressConfirm(ctx)
+	interactive := !(opt.NonInteractive || opt.Continue)
+	if interactive {
+		ctx = suppressConfirm(ctx)
+	}
 
-	// Work out which options need to be obscured
-	needsObscure := map[string]struct{}{}
-	if !noObscure {
-		if fsType := FileGet(name, "type"); fsType != "" {
-			if ri, err := fs.Find(fsType); err != nil {
-				fs.Debugf(nil, "Couldn't find fs for type %q", fsType)
-			} else {
-				for _, opt := range ri.Options {
-					if opt.IsPassword {
-						needsObscure[opt.Name] = struct{}{}
+	fsType := FileGet(name, "type")
+	if fsType == "" {
+		return nil, errors.New("couldn't find type field in config")
+	}
+
+	ri, err := fs.Find(fsType)
+	if err != nil {
+		return nil, errors.Errorf("couldn't find backend for type %q", fsType)
+	}
+
+	if !opt.Continue {
+		// Work out which options need to be obscured
+		needsObscure := map[string]struct{}{}
+		if !opt.NoObscure {
+			for _, option := range ri.Options {
+				if option.IsPassword {
+					needsObscure[option.Name] = struct{}{}
+				}
+			}
+		}
+
+		// Set the config
+		for k, v := range keyValues {
+			vStr := fmt.Sprint(v)
+			// Obscure parameter if necessary
+			if _, ok := needsObscure[k]; ok {
+				_, err := obscure.Reveal(vStr)
+				if err != nil || opt.Obscure {
+					// If error => not already obscured, so obscure it
+					// or we are forced to obscure
+					vStr, err = obscure.Obscure(vStr)
+					if err != nil {
+						return nil, errors.Wrap(err, "UpdateRemote: obscure failed")
 					}
 				}
 			}
-		} else {
-			fs.Debugf(nil, "UpdateRemote: Couldn't find fs type")
+			LoadedData().SetValue(name, k, vStr)
 		}
 	}
 
-	// Set the config
-	for k, v := range keyValues {
-		vStr := fmt.Sprint(v)
-		// Obscure parameter if necessary
-		if _, ok := needsObscure[k]; ok {
-			_, err := obscure.Reveal(vStr)
-			if err != nil || doObscure {
-				// If error => not already obscured, so obscure it
-				// or we are forced to obscure
-				vStr, err = obscure.Obscure(vStr)
-				if err != nil {
-					return errors.Wrap(err, "UpdateRemote: obscure failed")
-				}
+	if interactive {
+		err = RemoteConfig(ctx, name)
+	} else {
+		// Start the config state machine
+		m := fs.ConfigMap(ri, name, nil)
+		in := fs.ConfigIn{}
+		if opt.Continue {
+			if state, ok := keyValues["state"]; ok {
+				in.State = fmt.Sprint(state)
+			} else {
+				return nil, errors.New("UpdateRemote: need state parameter with --continue")
+			}
+			if result, ok := keyValues["result"]; ok {
+				in.Result = fmt.Sprint(result)
+			} else {
+				return nil, errors.New("UpdateRemote: need result parameter with --continue")
 			}
 		}
-		LoadedData().SetValue(name, k, vStr)
+		out, err = fs.BackendConfig(ctx, name, m, ri, in)
 	}
-	err = RemoteConfig(ctx, name)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	SaveConfig()
 	cache.ClearConfig(name) // remove any remotes based on this config from the cache
-	return nil
+	return out, nil
 }
 
 // CreateRemote creates a new remote with name, provider and a list of
 // parameters which are key, value pairs.  If update is set then it
 // adds the new keys rather than replacing all of them.
-func CreateRemote(ctx context.Context, name string, provider string, keyValues rc.Params, doObscure, noObscure bool) error {
-	err := fspath.CheckConfigName(name)
+func CreateRemote(ctx context.Context, name string, provider string, keyValues rc.Params, opts UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
+	err = fspath.CheckConfigName(name)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	// Delete the old config if it exists
-	LoadedData().DeleteSection(name)
-	// Set the type
-	LoadedData().SetValue(name, "type", provider)
+	if !opts.Continue {
+		// Delete the old config if it exists
+		LoadedData().DeleteSection(name)
+		// Set the type
+		LoadedData().SetValue(name, "type", provider)
+	}
 	// Set the remaining values
-	return UpdateRemote(ctx, name, keyValues, doObscure, noObscure)
+	return UpdateRemote(ctx, name, keyValues, opts)
 }
 
 // PasswordRemote adds the keyValues passed in to the remote of name.
@@ -491,7 +532,10 @@ func PasswordRemote(ctx context.Context, name string, keyValues rc.Params) error
 	for k, v := range keyValues {
 		keyValues[k] = obscure.MustObscure(fmt.Sprint(v))
 	}
-	return UpdateRemote(ctx, name, keyValues, false, true)
+	_, err = UpdateRemote(ctx, name, keyValues, UpdateRemoteOpt{
+		NoObscure: true,
+	})
+	return err
 }
 
 // JSONListProviders prints all the providers and options in JSON format

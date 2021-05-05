@@ -252,7 +252,6 @@ func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.Reg
 		State: "",
 	}
 	for {
-		fs.Debugf(name, "config: state=%q, result=%q", in.State, in.Result)
 		out, err := fs.BackendConfig(ctx, name, m, ri, in)
 		if err != nil {
 			return err
@@ -266,7 +265,7 @@ func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.Reg
 		in.State = out.State
 		in.Result = out.Result
 		if out.Option != nil {
-			fs.Debugf(name, "config: reading config item named %q", out.Option.Name)
+			fs.Debugf(name, "config: reading config parameter %q", out.Option.Name)
 			if out.Option.Default == nil {
 				out.Option.Default = ""
 			}

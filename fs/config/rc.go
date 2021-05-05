@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 )
@@ -112,8 +113,12 @@ func init() {
 			extraHelp = "- type - type of the new remote\n"
 		}
 		if name == "create" || name == "update" {
-			extraHelp += "- obscure - optional bool - forces obscuring of passwords\n"
-			extraHelp += "- noObscure - optional bool - forces passwords not to be obscured\n"
+			extraHelp += `- opt - a dictionary of options to control the configuration
+    - obscure - declare passwords are plain and need obscuring
+    - noObscure - declare passwords are already obscured and don't need obscuring
+    - nonInteractive - don't interact with a user, return questions
+    - continue - continue the config process with an answer
+`
 		}
 		rc.Add(rc.Call{
 			Path:         "config/" + name,
@@ -144,21 +149,47 @@ func rcConfig(ctx context.Context, in rc.Params, what string) (out rc.Params, er
 	if err != nil {
 		return nil, err
 	}
-	doObscure, _ := in.GetBool("obscure")
-	noObscure, _ := in.GetBool("noObscure")
+	var opt UpdateRemoteOpt
+	err = in.GetStruct("opt", &opt)
+	if err != nil && !rc.IsErrParamNotFound(err) {
+		return nil, err
+	}
+	// Backwards compatibility
+	if value, err := in.GetBool("obscure"); err == nil {
+		opt.Obscure = value
+	}
+	if value, err := in.GetBool("noObscure"); err == nil {
+		opt.NoObscure = value
+	}
+	var configOut *fs.ConfigOut
 	switch what {
 	case "create":
-		remoteType, err := in.GetString("type")
-		if err != nil {
-			return nil, err
+		remoteType, typeErr := in.GetString("type")
+		if typeErr != nil {
+			return nil, typeErr
 		}
-		return nil, CreateRemote(ctx, name, remoteType, parameters, doObscure, noObscure)
+		configOut, err = CreateRemote(ctx, name, remoteType, parameters, opt)
 	case "update":
-		return nil, UpdateRemote(ctx, name, parameters, doObscure, noObscure)
+		configOut, err = UpdateRemote(ctx, name, parameters, opt)
 	case "password":
-		return nil, PasswordRemote(ctx, name, parameters)
+		err = PasswordRemote(ctx, name, parameters)
+	default:
+		err = errors.New("unknown rcConfig type")
 	}
-	panic("unknown rcConfig type")
+	if err != nil {
+		return nil, err
+	}
+	if !opt.NonInteractive {
+		return nil, nil
+	}
+	if configOut == nil {
+		configOut = &fs.ConfigOut{}
+	}
+	err = rc.Reshape(&out, configOut)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func init() {

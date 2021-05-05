@@ -197,10 +197,15 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 				break
 			}
 			t.Run(fmt.Sprintf("doObscure=%v,noObscure=%v", doObscure, noObscure), func(t *testing.T) {
-				require.NoError(t, config.CreateRemote(ctx, "test2", "config_test_remote", rc.Params{
+				opt := config.UpdateRemoteOpt{
+					Obscure:   doObscure,
+					NoObscure: noObscure,
+				}
+				_, err := config.CreateRemote(ctx, "test2", "config_test_remote", rc.Params{
 					"bool": true,
 					"pass": "potato",
-				}, doObscure, noObscure))
+				}, opt)
+				require.NoError(t, err)
 
 				assert.Equal(t, []string{"test2"}, config.Data().GetSectionList())
 				assert.Equal(t, "config_test_remote", config.FileGet("test2", "type"))
@@ -212,11 +217,12 @@ func TestCreateUpdatePasswordRemote(t *testing.T) {
 				assert.Equal(t, "potato", gotPw)
 
 				wantPw := obscure.MustObscure("potato2")
-				require.NoError(t, config.UpdateRemote(ctx, "test2", rc.Params{
+				_, err = config.UpdateRemote(ctx, "test2", rc.Params{
 					"bool":  false,
 					"pass":  wantPw,
 					"spare": "spare",
-				}, doObscure, noObscure))
+				}, opt)
+				require.NoError(t, err)
 
 				assert.Equal(t, []string{"test2"}, config.Data().GetSectionList())
 				assert.Equal(t, "config_test_remote", config.FileGet("test2", "type"))

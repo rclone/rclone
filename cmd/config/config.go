@@ -105,12 +105,9 @@ var configProvidersCommand = &cobra.Command{
 	},
 }
 
-var (
-	configObscure   bool
-	configNoObscure bool
-)
+var updateRemoteOpt config.UpdateRemoteOpt
 
-const configPasswordHelp = `
+var configPasswordHelp = strings.ReplaceAll(`
 If any of the parameters passed is a password field, then rclone will
 automatically obscure them if they aren't already obscured before
 putting them in the config file.
@@ -119,12 +116,57 @@ putting them in the config file.
 consists only of base64 characters then rclone can get confused about
 whether the password is already obscured or not and put unobscured
 passwords into the config file. If you want to be 100% certain that
-the passwords get obscured then use the "--obscure" flag, or if you
+the passwords get obscured then use the |--obscure| flag, or if you
 are 100% certain you are already passing obscured passwords then use
-"--no-obscure".  You can also set obscured passwords using the
-"rclone config password" command.
-`
+|--no-obscure|.  You can also set obscured passwords using the
+|rclone config password| command.
 
+The flag |--non-interactive| is for use by applications that wish to
+configure rclone themeselves, rather than using rclone's text based
+configuration questions. If this flag is set, and rclone needs to ask
+the user a question, a JSON blob will be returned with the question in
+it.
+
+This will look something like (some irrelevant detail removed):
+
+{
+    "State": "*oauth-islocal,teamdrive,,",
+    "Option": {
+        "Name": "config_is_local",
+        "Help": "Use auto config?\n * Say Y if not sure\n * Say N if you are working on a remote or headless machine\n",
+        "Default": true,
+        "Examples": [
+            {
+                "Value": "true",
+                "Help": "Yes"
+            },
+            {
+                "Value": "false",
+                "Help": "No"
+            }
+        ],
+        "Required": false,
+        "IsPassword": false,
+        "Type": "bool"
+    },
+    "Error": "",
+}
+
+The format of |Option| is the same as returned by |rclone config
+providers|. The question should be asked to the user and returned to
+rclone as a string parameter along with the state parameter.
+
+If |Error| is set then it should be shown to the user at the same
+time as the question.
+
+    rclone config update name --continue state "*oauth-islocal,teamdrive,," result "true"
+
+Note that when using |--continue| all passwords should be passed in
+the clear (not obscured).
+
+At the end of the non interactive process, rclone will return a result
+with |State| as empty string.
+`, "|", "`")
 var configCreateCommand = &cobra.Command{
 	Use:   "create `name` `type` [`key` `value`]*",
 	Short: `Create a new remote with name, type and options.`,
@@ -152,19 +194,39 @@ using remote authorization you would do this:
 		if err != nil {
 			return err
 		}
-		err = config.CreateRemote(context.Background(), args[0], args[1], in, configObscure, configNoObscure)
+		return doConfig(args[0], in, func(opts config.UpdateRemoteOpt) (*fs.ConfigOut, error) {
+			return config.CreateRemote(context.Background(), args[0], args[1], in, opts)
+		})
+	},
+}
+
+func doConfig(name string, in rc.Params, do func(config.UpdateRemoteOpt) (*fs.ConfigOut, error)) error {
+	out, err := do(updateRemoteOpt)
+	if err != nil {
+		return err
+	}
+	if !(updateRemoteOpt.NonInteractive || updateRemoteOpt.Continue) {
+		config.ShowRemote(name)
+	} else {
+		if out == nil {
+			out = &fs.ConfigOut{}
+		}
+		outBytes, err := json.MarshalIndent(out, "", "\t")
 		if err != nil {
 			return err
 		}
-		config.ShowRemote(args[0])
-		return nil
-	},
+		_, _ = os.Stdout.Write(outBytes)
+		_, _ = os.Stdout.WriteString("\n")
+	}
+	return nil
 }
 
 func init() {
 	for _, cmdFlags := range []*pflag.FlagSet{configCreateCommand.Flags(), configUpdateCommand.Flags()} {
-		flags.BoolVarP(cmdFlags, &configObscure, "obscure", "", false, "Force any passwords to be obscured.")
-		flags.BoolVarP(cmdFlags, &configNoObscure, "no-obscure", "", false, "Force any passwords not to be obscured.")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Obscure, "obscure", "", false, "Force any passwords to be obscured.")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NoObscure, "no-obscure", "", false, "Force any passwords not to be obscured.")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NonInteractive, "non-interactive", "", false, "Don't interact with user and return questions.")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Continue, "continue", "", false, "Continue the configuration process with an answer.")
 	}
 }
 
@@ -191,12 +253,9 @@ require this add an extra parameter thus:
 		if err != nil {
 			return err
 		}
-		err = config.UpdateRemote(context.Background(), args[0], in, configObscure, configNoObscure)
-		if err != nil {
-			return err
-		}
-		config.ShowRemote(args[0])
-		return nil
+		return doConfig(args[0], in, func(opts config.UpdateRemoteOpt) (*fs.ConfigOut, error) {
+			return config.UpdateRemote(context.Background(), args[0], in, opts)
+		})
 	},
 }
 

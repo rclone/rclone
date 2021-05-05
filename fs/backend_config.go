@@ -258,10 +258,42 @@ func StatePop(state string) (newState string, value string) {
 //
 // It wraps any OAuth transactions as necessary so only straight forward config questions are emitted
 func BackendConfig(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, in ConfigIn) (out *ConfigOut, err error) {
+	for {
+		out, err = backendConfigStep(ctx, name, m, ri, in)
+		if err != nil {
+			break
+		}
+		if out == nil || out.State == "" {
+			// finished
+			break
+		}
+		if out.Option != nil {
+			// question to ask user
+			break
+		}
+		if out.Error != "" {
+			// error to show user
+			break
+		}
+		// non terminal state, but no question to ask or error to show - loop here
+		in = ConfigIn{
+			State:  out.State,
+			Result: out.Result,
+		}
+	}
+	return out, err
+}
+
+func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, in ConfigIn) (out *ConfigOut, err error) {
 	ci := GetConfig(ctx)
 	if ri.Config == nil {
 		return nil, nil
 	}
+	Debugf(name, "config in: state=%q, result=%q", in.State, in.Result)
+	defer func() {
+		Debugf(name, "config out: out=%+v, err=%v", out, err)
+	}()
+
 	switch {
 	case strings.HasPrefix(in.State, "*oauth"):
 		// Do internal oauth states
@@ -299,7 +331,7 @@ func BackendConfig(ctx context.Context, name string, m configmap.Mapper, ri *Reg
 		// If AutoConfirm is set, choose the default value
 		if ci.AutoConfirm {
 			result := fmt.Sprint(out.Option.Default)
-			Debugf(nil, "Auto confirm is set, choosing default %q for state %q", result, out.State)
+			Debugf(nil, "Auto confirm is set, choosing default %q for state %q, override by setting config parameter %q", result, out.State, out.Option.Name)
 			return ConfigResult(out.State, result)
 		}
 	}
