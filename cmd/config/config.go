@@ -108,6 +108,11 @@ var configProvidersCommand = &cobra.Command{
 var updateRemoteOpt config.UpdateRemoteOpt
 
 var configPasswordHelp = strings.ReplaceAll(`
+Note that if the config process would normally ask a question the
+default is taken (unless |--non-interactive| is used).  Each time
+that happens rclone will print or DEBUG a message saying how to
+affect the value taken.
+
 If any of the parameters passed is a password field, then rclone will
 automatically obscure them if they aren't already obscured before
 putting them in the config file.
@@ -170,24 +175,21 @@ with |State| as empty string.
 var configCreateCommand = &cobra.Command{
 	Use:   "create `name` `type` [`key` `value`]*",
 	Short: `Create a new remote with name, type and options.`,
-	Long: `
-Create a new remote of ` + "`name`" + ` with ` + "`type`" + ` and options.  The options
-should be passed in pairs of ` + "`key` `value`" + `.
+	Long: strings.ReplaceAll(`
+Create a new remote of |name| with |type| and options.  The options
+should be passed in pairs of |key| |value| or as |key=value|.
 
 For example to make a swift remote of name myremote using auto config
 you would do:
 
     rclone config create myremote swift env_auth true
+    rclone config create myremote swift env_auth=true
 
-Note that if the config process would normally ask a question the
-default is taken.  Each time that happens rclone will print a message
-saying how to affect the value taken.
-` + configPasswordHelp + `
 So for example if you wanted to configure a Google Drive remote but
 using remote authorization you would do this:
 
-    rclone config create mydrive drive config_is_local false
-`,
+    rclone config create mydrive drive config_is_local=false
+`, "|", "`") + configPasswordHelp,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 256, command, args)
 		in, err := argsToMap(args[2:])
@@ -233,22 +235,23 @@ func init() {
 var configUpdateCommand = &cobra.Command{
 	Use:   "update `name` [`key` `value`]+",
 	Short: `Update options in an existing remote.`,
-	Long: `
+	Long: strings.ReplaceAll(`
 Update an existing remote's options. The options should be passed in
-in pairs of ` + "`key` `value`" + `.
+pairs of |key| |value| or as |key=value|.
 
 For example to update the env_auth field of a remote of name myremote
 you would do:
 
-    rclone config update myremote swift env_auth true
-` + configPasswordHelp + `
+    rclone config update myremote env_auth true
+    rclone config update myremote env_auth=true
+
 If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
-    rclone config update myremote swift env_auth true config_refresh_token false
-`,
+    rclone config update myremote swift env_auth=true config_refresh_token=false
+`, "|", "`") + configPasswordHelp,
 	RunE: func(command *cobra.Command, args []string) error {
-		cmd.CheckArgs(3, 256, command, args)
+		cmd.CheckArgs(1, 256, command, args)
 		in, err := argsToMap(args[1:])
 		if err != nil {
 			return err
@@ -271,19 +274,21 @@ var configDeleteCommand = &cobra.Command{
 var configPasswordCommand = &cobra.Command{
 	Use:   "password `name` [`key` `value`]+",
 	Short: `Update password in an existing remote.`,
-	Long: `
+	Long: strings.ReplaceAll(`
 Update an existing remote's password. The password
-should be passed in pairs of ` + "`key` `value`" + `.
+should be passed in pairs of |key| |password| or as |key=password|.
+The |password| should be passed in in clear (unobscured).
 
 For example to set password of a remote of name myremote you would do:
 
     rclone config password myremote fieldname mypassword
+    rclone config password myremote fieldname=mypassword
 
 This command is obsolete now that "config update" and "config create"
 both support obscuring passwords directly.
-`,
+`, "|", "`"),
 	RunE: func(command *cobra.Command, args []string) error {
-		cmd.CheckArgs(3, 256, command, args)
+		cmd.CheckArgs(1, 256, command, args)
 		in, err := argsToMap(args[1:])
 		if err != nil {
 			return err
@@ -297,16 +302,24 @@ both support obscuring passwords directly.
 	},
 }
 
-// This takes a list of arguments in key value key value form and
-// converts it into a map
+// This takes a list of arguments in key value key value form, or
+// key=value key=value form and converts it into a map
 func argsToMap(args []string) (out rc.Params, err error) {
-	if len(args)%2 != 0 {
-		return nil, errors.New("found key without value")
-	}
 	out = rc.Params{}
-	// Set the config
-	for i := 0; i < len(args); i += 2 {
-		out[args[i]] = args[i+1]
+	for i := 0; i < len(args); i++ {
+		key := args[i]
+		equals := strings.IndexRune(key, '=')
+		var value string
+		if equals >= 0 {
+			key, value = key[:equals], key[equals+1:]
+		} else {
+			i++
+			if i >= len(args) {
+				return nil, errors.New("found key without value")
+			}
+			value = args[i]
+		}
+		out[key] = value
 	}
 	return out, nil
 }
