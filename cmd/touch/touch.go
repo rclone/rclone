@@ -31,6 +31,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &notCreateNewFile, "no-create", "C", false, "Do not create the file if it does not exist.")
 	flags.StringVarP(cmdFlags, &timeAsArgument, "timestamp", "t", "", "Use specified time instead of the current time of day.")
 	flags.BoolVarP(cmdFlags, &localTime, "localtime", "", false, "Use localtime for timestamp, not UTC.")
+	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
 var commandDefinition = &cobra.Command{
@@ -100,4 +101,34 @@ func Touch(ctx context.Context, fsrc fs.Fs, srcFileName string) (err error) {
 		return errors.Wrap(err, "touch: couldn't set mod time")
 	}
 	return nil
+}
+
+// Recursively touch every file in f with time t
+func TouchRecursive(ctx context.Context, f fs.Fs, t time.Time) error {
+	timeAtr := time.Now()
+	if timeAsArgument != "" {
+		layout := defaultLayout
+		if len(timeAsArgument) == len(layoutDateWithTime) {
+			layout = layoutDateWithTime
+		} else if len(timeAsArgument) > len(layoutDateWithTime) {
+			layout = layoutDateWithTimeNano
+		}
+		var timeAtrFromFlags time.Time
+		if localTime {
+			timeAtrFromFlags, err = time.ParseInLocation(layout, timeAsArgument, time.Local)
+		} else {
+			timeAtrFromFlags, err = time.Parse(layout, timeAsArgument)
+		}
+		if err != nil {
+			return errors.Wrap(err, "failed to parse date/time argument")
+		}
+		timeAtr = timeAtrFromFlags
+	}
+	return ListFn(ctx, f, func(o fs.Object) {
+		err := o.SetModTime(ctx, timeAtr)
+		if err != nil {
+			err = fs.CountError(err)
+			fs.Errorf(o, "touch: couldn't set mod time %v", err)
+		}
+	})
 }
