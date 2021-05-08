@@ -242,6 +242,7 @@ func TestOptionMarshalJSON(t *testing.T) {
 "IsPassword": false,
 "NoPrefix": false,
 "Advanced": true,
+"Exclusive": false,
 "DefaultStr": "false",
 "ValueStr": "true",
 "Type": "bool"

@@ -402,7 +402,7 @@ func ChooseOption(o *fs.Option, name string) string {
 					help = append(help, example.Help)
 				}
 			}
-			in = Choose(o.Name, values, help, true)
+			in = Choose(o.Name, values, help, !o.Exclusive)
 		} else {
 			fmt.Printf("%s> ", o.Name)
 			in = ReadLine()

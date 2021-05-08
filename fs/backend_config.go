@@ -161,6 +161,7 @@ func ConfigConfirm(state string, Default bool, name string, help string) (*Confi
 				Value: "false",
 				Help:  "No",
 			}},
+			Exclusive: true,
 		},
 	}, nil
 }
@@ -182,9 +183,10 @@ func ConfigChooseFixed(state string, name string, help string, items []OptionExa
 	choose := &ConfigOut{
 		State: state,
 		Option: &Option{
-			Name:     name,
-			Help:     help,
-			Examples: items,
+			Name:      name,
+			Help:      help,
+			Examples:  items,
+			Exclusive: true,
 		},
 	}
 	choose.Option.Default = choose.Option.Examples[0].Value
