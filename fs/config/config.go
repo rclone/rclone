@@ -19,6 +19,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/rc"
@@ -418,6 +419,8 @@ type UpdateRemoteOpt struct {
 	NonInteractive bool `json:"nonInteractive"`
 	// If set then supply state and result parameters to continue the process
 	Continue bool `json:"continue"`
+	// If set then ask all the questions, not just the post config questions
+	All bool `json:"all"`
 }
 
 // UpdateRemote adds the keyValues passed in to the remote of name.
@@ -431,7 +434,7 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 		return nil, err
 	}
 	interactive := !(opt.NonInteractive || opt.Continue)
-	if interactive {
+	if interactive && !opt.All {
 		ctx = suppressConfirm(ctx)
 	}
 
@@ -445,41 +448,48 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 		return nil, errors.Errorf("couldn't find backend for type %q", fsType)
 	}
 
-	if !opt.Continue {
-		// Work out which options need to be obscured
-		needsObscure := map[string]struct{}{}
-		if !opt.NoObscure {
-			for _, option := range ri.Options {
-				if option.IsPassword {
-					needsObscure[option.Name] = struct{}{}
+	// Work out which options need to be obscured
+	needsObscure := map[string]struct{}{}
+	if !opt.NoObscure {
+		for _, option := range ri.Options {
+			if option.IsPassword {
+				needsObscure[option.Name] = struct{}{}
+			}
+		}
+	}
+
+	choices := configmap.Simple{}
+	m := fs.ConfigMap(ri, name, nil)
+
+	// Set the config
+	for k, v := range keyValues {
+		vStr := fmt.Sprint(v)
+		// Obscure parameter if necessary
+		if _, ok := needsObscure[k]; ok {
+			_, err := obscure.Reveal(vStr)
+			if err != nil || opt.Obscure {
+				// If error => not already obscured, so obscure it
+				// or we are forced to obscure
+				vStr, err = obscure.Obscure(vStr)
+				if err != nil {
+					return nil, errors.Wrap(err, "UpdateRemote: obscure failed")
 				}
 			}
 		}
-
-		// Set the config
-		for k, v := range keyValues {
-			vStr := fmt.Sprint(v)
-			// Obscure parameter if necessary
-			if _, ok := needsObscure[k]; ok {
-				_, err := obscure.Reveal(vStr)
-				if err != nil || opt.Obscure {
-					// If error => not already obscured, so obscure it
-					// or we are forced to obscure
-					vStr, err = obscure.Obscure(vStr)
-					if err != nil {
-						return nil, errors.Wrap(err, "UpdateRemote: obscure failed")
-					}
-				}
-			}
-			LoadedData().SetValue(name, k, vStr)
+		choices.Set(k, vStr)
+		if !strings.HasPrefix(k, fs.ConfigKeyEphemeralPrefix) {
+			m.Set(k, vStr)
 		}
 	}
 
 	if interactive {
-		err = RemoteConfig(ctx, name)
+		var state = ""
+		if opt.All {
+			state = fs.ConfigAll
+		}
+		err = backendConfig(ctx, name, m, ri, choices, state)
 	} else {
 		// Start the config state machine
-		m := fs.ConfigMap(ri, name, nil)
 		in := fs.ConfigIn{}
 		if opt.Continue {
 			if state, ok := keyValues["state"]; ok {
@@ -493,7 +503,10 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 				return nil, errors.New("UpdateRemote: need result parameter with --continue")
 			}
 		}
-		out, err = fs.BackendConfig(ctx, name, m, ri, in)
+		if in.State == "" && opt.All {
+			in.State = fs.ConfigAll
+		}
+		out, err = fs.BackendConfig(ctx, name, m, ri, choices, in)
 	}
 	if err != nil {
 		return nil, err

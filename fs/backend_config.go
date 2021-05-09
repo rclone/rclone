@@ -7,6 +7,7 @@ package fs
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -16,6 +17,9 @@ import (
 const (
 	// ConfigToken is the key used to store the token under
 	ConfigToken = "token"
+
+	// ConfigKeyEphemeralPrefix marks config keys which shouldn't be stored in the config file
+	ConfigKeyEphemeralPrefix = "config_"
 )
 
 // ConfigOAuth should be called to do the OAuth
@@ -52,7 +56,10 @@ var ConfigOAuth func(ctx context.Context, name string, m configmap.Mapper, ri *R
 //
 // Where the questions ask for a name then this should start with
 // "config_" to show it is an ephemeral config input rather than the
-// actual value stored in the config file.
+// actual value stored in the config file. Names beginning with
+// "config_fs_" are reserved for internal use.
+//
+// State names starting with "*" are reserved for internal use.
 type ConfigIn struct {
 	State  string // State to run
 	Result string // Result from previous Option
@@ -258,10 +265,11 @@ func StatePop(state string) (newState string, value string) {
 
 // BackendConfig calls the config for the backend in ri
 //
-// It wraps any OAuth transactions as necessary so only straight forward config questions are emitted
-func BackendConfig(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, in ConfigIn) (out *ConfigOut, err error) {
+// It wraps any OAuth transactions as necessary so only straight
+// forward config questions are emitted
+func BackendConfig(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, choices configmap.Getter, in ConfigIn) (out *ConfigOut, err error) {
 	for {
-		out, err = backendConfigStep(ctx, name, m, ri, in)
+		out, err = backendConfigStep(ctx, name, m, ri, choices, in)
 		if err != nil {
 			break
 		}
@@ -286,24 +294,130 @@ func BackendConfig(ctx context.Context, name string, m configmap.Mapper, ri *Reg
 	return out, err
 }
 
-func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, in ConfigIn) (out *ConfigOut, err error) {
-	ci := GetConfig(ctx)
-	if ri.Config == nil {
-		return nil, nil
+// ConfigAll should be passed in as the initial state to run the
+// entire config
+const ConfigAll = "*all"
+
+// Run the config state machine for the normal config
+func configAll(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, in ConfigIn) (out *ConfigOut, err error) {
+	if len(ri.Options) == 0 {
+		return ConfigGoto("*postconfig")
 	}
+
+	// States are encoded
+	//
+	//     *all-ACTION,NUMBER,ADVANCED
+	//
+	// Where NUMBER is the curent state, ADVANCED is a flag true or false
+	// to say whether we are asking about advanced config and
+	// ACTION is what the state should be doing next.
+	stateParams, state := StatePop(in.State)
+	stateParams, stateNumber := StatePop(stateParams)
+	_, stateAdvanced := StatePop(stateParams)
+
+	optionNumber := 0
+	advanced := stateAdvanced == "true"
+	if stateNumber != "" {
+		optionNumber, err = strconv.Atoi(stateNumber)
+		if err != nil {
+			return nil, errors.Wrap(err, "internal error: bad state number")
+		}
+	}
+
+	// Detect if reached the end of the questions
+	if optionNumber == len(ri.Options) {
+		if ri.Options.HasAdvanced() {
+			return ConfigConfirm("*all-advanced", false, "config_fs_advanced", "Edit advanced config?")
+		}
+		return ConfigGoto("*postconfig")
+	} else if optionNumber < 0 || optionNumber > len(ri.Options) {
+		return nil, errors.New("internal error: option out of range")
+	}
+
+	// Make the next state
+	newState := func(state string, i int, advanced bool) string {
+		return StatePush("", state, fmt.Sprint(i), fmt.Sprint(advanced))
+	}
+
+	// Find the current option
+	option := &ri.Options[optionNumber]
+
+	switch state {
+	case "*all":
+		// If option is hidden or doesn't match advanced setting then skip it
+		if option.Hide&OptionHideConfigurator != 0 || option.Advanced != advanced {
+			return ConfigGoto(newState("*all", optionNumber+1, advanced))
+		}
+
+		// Skip this question if it isn't the correct provider
+		provider, _ := m.Get(ConfigProvider)
+		if !MatchProvider(option.Provider, provider) {
+			return ConfigGoto(newState("*all", optionNumber+1, advanced))
+		}
+
+		out = &ConfigOut{
+			State:  newState("*all-set", optionNumber, advanced),
+			Option: option,
+		}
+
+		// Filter examples by provider if necessary
+		if provider != "" && len(option.Examples) > 0 {
+			optionCopy := option.Copy()
+			optionCopy.Examples = OptionExamples{}
+			for _, example := range option.Examples {
+				if MatchProvider(example.Provider, provider) {
+					optionCopy.Examples = append(optionCopy.Examples, example)
+				}
+			}
+			out.Option = optionCopy
+		}
+
+		return out, nil
+	case "*all-set":
+		// Set the value if not different to current
+		// Note this won't set blank values in the config file
+		// if the default is blank
+		currentValue, _ := m.Get(option.Name)
+		if currentValue != in.Result {
+			m.Set(option.Name, in.Result)
+		}
+		// Find the next question
+		return ConfigGoto(newState("*all", optionNumber+1, advanced))
+	case "*all-advanced":
+		// Reply to edit advanced question
+		if in.Result == "true" {
+			return ConfigGoto(newState("*all", 0, true))
+		}
+		return ConfigGoto("*postconfig")
+	}
+	return nil, errors.Errorf("internal error: bad state %q", state)
+}
+
+func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, choices configmap.Getter, in ConfigIn) (out *ConfigOut, err error) {
+	ci := GetConfig(ctx)
 	Debugf(name, "config in: state=%q, result=%q", in.State, in.Result)
 	defer func() {
 		Debugf(name, "config out: out=%+v, err=%v", out, err)
 	}()
 
 	switch {
+	case strings.HasPrefix(in.State, ConfigAll):
+		// Do all config
+		out, err = configAll(ctx, name, m, ri, in)
 	case strings.HasPrefix(in.State, "*oauth"):
 		// Do internal oauth states
 		out, err = ConfigOAuth(ctx, name, m, ri, in)
+	case strings.HasPrefix(in.State, "*postconfig"):
+		// Do the post config starting from state ""
+		in.State = ""
+		return backendConfigStep(ctx, name, m, ri, choices, in)
 	case strings.HasPrefix(in.State, "*"):
 		err = errors.Errorf("unknown internal state %q", in.State)
 	default:
 		// Otherwise pass to backend
+		if ri.Config == nil {
+			return nil, nil
+		}
 		out, err = ri.Config(ctx, name, m, in)
 	}
 	if err != nil {
@@ -325,8 +439,8 @@ func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri 
 		if out.Option.Name == "" {
 			return nil, errors.New("internal error: no name set in Option")
 		}
-		// If override value is set in the config then use that
-		if result, ok := m.Get(out.Option.Name); ok {
+		// If override value is set in the choices then use that
+		if result, ok := choices.Get(out.Option.Name); ok {
 			Debugf(nil, "Override value found, choosing value %q for state %q", result, out.State)
 			return ConfigResult(out.State, result)
 		}
@@ -336,6 +450,52 @@ func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri 
 			Debugf(nil, "Auto confirm is set, choosing default %q for state %q, override by setting config parameter %q", result, out.State, out.Option.Name)
 			return ConfigResult(out.State, result)
 		}
+		// If fs.ConfigEdit is set then make the default value
+		// in the config the current value.
+		if result, ok := choices.Get(ConfigEdit); ok && result == "true" {
+			if value, ok := m.Get(out.Option.Name); ok {
+				newOption := out.Option.Copy()
+				oldValue := newOption.Value
+				err = newOption.Set(value)
+				if err != nil {
+					Errorf(nil, "Failed to set %q from %q - using default: %v", out.Option.Name, value, err)
+				} else {
+					newOption.Default = newOption.Value
+					newOption.Value = oldValue
+					out.Option = newOption
+				}
+			}
+		}
 	}
 	return out, nil
+}
+
+// MatchProvider returns true if provider matches the providerConfig string.
+//
+// The providerConfig string can either be a list of providers to
+// match, or if it starts with "!" it will be a list of providers not
+// to match.
+//
+// If either providerConfig or provider is blank then it will return true
+func MatchProvider(providerConfig, provider string) bool {
+	if providerConfig == "" || provider == "" {
+		return true
+	}
+	negate := false
+	if strings.HasPrefix(providerConfig, "!") {
+		providerConfig = providerConfig[1:]
+		negate = true
+	}
+	providers := strings.Split(providerConfig, ",")
+	matched := false
+	for _, p := range providers {
+		if p == provider {
+			matched = true
+			break
+		}
+	}
+	if negate {
+		return !matched
+	}
+	return matched
 }

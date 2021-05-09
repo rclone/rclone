@@ -118,6 +118,7 @@ func init() {
     - noObscure - declare passwords are already obscured and don't need obscuring
     - nonInteractive - don't interact with a user, return questions
     - continue - continue the config process with an answer
+    - all - ask all the config questions not just the post config ones
 `
 		}
 		rc.Add(rc.Call{

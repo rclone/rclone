@@ -241,18 +241,15 @@ func OkRemote(name string) bool {
 	return false
 }
 
-// PostConfig configures the backend after the main config has been done
+// backendConfig configures the backend starting from the state passed in
 //
 // The is the user interface loop that drives the post configuration backend config.
-func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.RegInfo) error {
-	if ri.Config == nil {
-		return errors.New("backend doesn't support reconnect or authorize")
-	}
+func backendConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.RegInfo, choices configmap.Getter, startState string) error {
 	in := fs.ConfigIn{
-		State: "",
+		State: startState,
 	}
 	for {
-		out, err := fs.BackendConfig(ctx, name, m, ri, in)
+		out, err := fs.BackendConfig(ctx, name, m, ri, choices, in)
 		if err != nil {
 			return err
 		}
@@ -297,6 +294,16 @@ func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.Reg
 	return nil
 }
 
+// PostConfig configures the backend after the main config has been done
+//
+// The is the user interface loop that drives the post configuration backend config.
+func PostConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.RegInfo) error {
+	if ri.Config == nil {
+		return errors.New("backend doesn't support reconnect or authorize")
+	}
+	return backendConfig(ctx, name, m, ri, configmap.Simple{}, "")
+}
+
 // RemoteConfig runs the config helper for the remote if needed
 func RemoteConfig(ctx context.Context, name string) error {
 	fmt.Printf("Remote config\n")
@@ -308,39 +315,8 @@ func RemoteConfig(ctx context.Context, name string) error {
 	return PostConfig(ctx, name, m, ri)
 }
 
-// matchProvider returns true if provider matches the providerConfig string.
-//
-// The providerConfig string can either be a list of providers to
-// match, or if it starts with "!" it will be a list of providers not
-// to match.
-//
-// If either providerConfig or provider is blank then it will return true
-func matchProvider(providerConfig, provider string) bool {
-	if providerConfig == "" || provider == "" {
-		return true
-	}
-	negate := false
-	if strings.HasPrefix(providerConfig, "!") {
-		providerConfig = providerConfig[1:]
-		negate = true
-	}
-	providers := strings.Split(providerConfig, ",")
-	matched := false
-	for _, p := range providers {
-		if p == provider {
-			matched = true
-			break
-		}
-	}
-	if negate {
-		return !matched
-	}
-	return matched
-}
-
 // ChooseOption asks the user to choose an option
 func ChooseOption(o *fs.Option, name string) string {
-	var subProvider = getWithDefault(name, fs.ConfigProvider, "")
 	fmt.Println(o.Help)
 	if o.IsPassword {
 		actions := []string{"yYes type in my own password", "gGenerate random password"}
@@ -397,10 +373,8 @@ func ChooseOption(o *fs.Option, name string) string {
 			var values []string
 			var help []string
 			for _, example := range o.Examples {
-				if matchProvider(example.Provider, subProvider) {
-					values = append(values, example.Value)
-					help = append(help, example.Help)
-				}
+				values = append(values, example.Value)
+				help = append(help, example.Help)
 			}
 			in = Choose(o.Name, values, help, !o.Exclusive)
 		} else {
@@ -450,38 +424,13 @@ func NewRemoteName() (name string) {
 
 // editOptions edits the options.  If new is true then it just allows
 // entry and doesn't show any old values.
-func editOptions(ri *fs.RegInfo, name string, isNew bool) {
+func editOptions(ctx context.Context, ri *fs.RegInfo, name string, isNew bool) error {
 	fmt.Printf("** See help for %s backend at: https://rclone.org/%s/ **\n\n", ri.Name, ri.FileName())
-	hasAdvanced := false
-	for _, advanced := range []bool{false, true} {
-		if advanced {
-			if !hasAdvanced {
-				break
-			}
-			fmt.Printf("Edit advanced config? (y/n)\n")
-			if !Confirm(false) {
-				break
-			}
-		}
-		for _, option := range ri.Options {
-			isVisible := option.Hide&fs.OptionHideConfigurator == 0
-			hasAdvanced = hasAdvanced || (option.Advanced && isVisible)
-			if option.Advanced != advanced {
-				continue
-			}
-			subProvider := getWithDefault(name, fs.ConfigProvider, "")
-			if matchProvider(option.Provider, subProvider) && isVisible {
-				if !isNew {
-					fmt.Printf("Value %q = %q\n", option.Name, FileGet(name, option.Name))
-					fmt.Printf("Edit? (y/n)>\n")
-					if !Confirm(false) {
-						continue
-					}
-				}
-				FileSet(name, option.Name, ChooseOption(&option, name))
-			}
-		}
+	m := fs.ConfigMap(ri, name, nil)
+	choices := configmap.Simple{
+		fs.ConfigEdit: fmt.Sprint(isNew),
 	}
+	return backendConfig(ctx, name, m, ri, choices, fs.ConfigAll)
 }
 
 // NewRemote make a new remote from its name
@@ -504,8 +453,7 @@ func NewRemote(ctx context.Context, name string) error {
 	}
 	LoadedData().SetValue(name, "type", newType)
 
-	editOptions(ri, name, true)
-	err = RemoteConfig(ctx, name)
+	err = editOptions(ctx, ri, name, true)
 	if err != nil {
 		return err
 	}
@@ -521,13 +469,16 @@ func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) error {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
 	for {
-		editOptions(ri, name, false)
+		err := editOptions(ctx, ri, name, true)
+		if err != nil {
+			return err
+		}
 		if OkRemote(name) {
 			break
 		}
 	}
 	SaveConfig()
-	return RemoteConfig(ctx, name)
+	return nil
 }
 
 // DeleteRemote gets the user to delete a remote

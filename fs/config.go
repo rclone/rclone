@@ -37,6 +37,9 @@ var (
 
 	// ConfigProvider is the config key used for provider options
 	ConfigProvider = "provider"
+
+	// ConfigEdit is the config key used to show we wish to edit existing entries
+	ConfigEdit = "config_fs_edit"
 )
 
 // ConfigInfo is filesystem config options

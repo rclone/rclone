@@ -148,7 +148,7 @@ func TestChooseOption(t *testing.T) {
 	}
 	require.NoError(t, config.NewRemote(ctx, "test"))
 
-	assert.Equal(t, "false", config.FileGet("test", "bool"))
+	assert.Equal(t, "", config.FileGet("test", "bool")) // this is the default now
 	assert.Equal(t, "not very random password", obscure.MustReveal(config.FileGet("test", "pass")))
 
 	// script for creating remote

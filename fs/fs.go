@@ -157,6 +157,17 @@ func (os Options) NonDefault(m configmap.Getter) configmap.Simple {
 	return nonDefault
 }
 
+// HasAdvanced discovers if any options have an Advanced setting
+func (os Options) HasAdvanced() bool {
+	for i := range os {
+		opt := &os[i]
+		if opt.Advanced {
+			return true
+		}
+	}
+	return false
+}
+
 // OptionVisibility controls whether the options are visible in the
 // configurator or the command line.
 type OptionVisibility byte
@@ -254,6 +265,13 @@ func (o *Option) FlagName(prefix string) string {
 // EnvVarName for the option
 func (o *Option) EnvVarName(prefix string) string {
 	return OptionToEnv(prefix + "-" + o.Name)
+}
+
+// Copy makes a shallow copy of the option
+func (o *Option) Copy() *Option {
+	copy := new(Option)
+	*copy = *o
+	return copy
 }
 
 // OptionExamples is a slice of examples

@@ -167,10 +167,15 @@ time as the question.
     rclone config update name --continue state "*oauth-islocal,teamdrive,," result "true"
 
 Note that when using |--continue| all passwords should be passed in
-the clear (not obscured).
+the clear (not obscured). Any default config values should be passed
+in with each invocation of |--continue|.
 
 At the end of the non interactive process, rclone will return a result
 with |State| as empty string.
+
+If |--all| is passed then rclone will ask all the config questions,
+not just the post config questions. Any parameters are used as
+defaults for questions as usual.
 `, "|", "`")
 var configCreateCommand = &cobra.Command{
 	Use:   "create `name` `type` [`key` `value`]*",
@@ -229,6 +234,7 @@ func init() {
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NoObscure, "no-obscure", "", false, "Force any passwords not to be obscured.")
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NonInteractive, "non-interactive", "", false, "Don't interact with user and return questions.")
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Continue, "continue", "", false, "Continue the configuration process with an answer.")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.All, "all", "", false, "Ask the full set of config questions.")
 	}
 }
 
