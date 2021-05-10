@@ -60,6 +60,9 @@ var ConfigOAuth func(ctx context.Context, name string, m configmap.Mapper, ri *R
 // "config_fs_" are reserved for internal use.
 //
 // State names starting with "*" are reserved for internal use.
+//
+// Note that in the bin directory there is a python program called
+// "config.py" which shows how this interface should be used.
 type ConfigIn struct {
 	State  string // State to run
 	Result string // Result from previous Option
