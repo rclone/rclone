@@ -422,17 +422,6 @@ func NewRemoteName() (name string) {
 	}
 }
 
-// editOptions edits the options.  If new is true then it just allows
-// entry and doesn't show any old values.
-func editOptions(ctx context.Context, ri *fs.RegInfo, name string, isNew bool) error {
-	fmt.Printf("** See help for %s backend at: https://rclone.org/%s/ **\n\n", ri.Name, ri.FileName())
-	m := fs.ConfigMap(ri, name, nil)
-	choices := configmap.Simple{
-		fs.ConfigEdit: fmt.Sprint(isNew),
-	}
-	return backendConfig(ctx, name, m, ri, choices, fs.ConfigAll)
-}
-
 // NewRemote make a new remote from its name
 func NewRemote(ctx context.Context, name string) error {
 	var (
@@ -453,7 +442,9 @@ func NewRemote(ctx context.Context, name string) error {
 	}
 	LoadedData().SetValue(name, "type", newType)
 
-	err = editOptions(ctx, ri, name, true)
+	_, err = CreateRemote(ctx, name, newType, nil, UpdateRemoteOpt{
+		All: true,
+	})
 	if err != nil {
 		return err
 	}
@@ -469,7 +460,9 @@ func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) error {
 	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
 	for {
-		err := editOptions(ctx, ri, name, true)
+		_, err := UpdateRemote(ctx, name, nil, UpdateRemoteOpt{
+			All: true,
+		})
 		if err != nil {
 			return err
 		}

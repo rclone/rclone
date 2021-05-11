@@ -425,14 +425,15 @@ type UpdateRemoteOpt struct {
 	State string `json:"state"`
 	// Result to return - used with Continue
 	Result string `json:"result"`
+	// If set then edit existing values
+	Edit bool `json:"edit"`
 }
 
-// UpdateRemote adds the keyValues passed in to the remote of name.
-// keyValues should be key, value pairs.
-func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
+func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
 	if opt.Obscure && opt.NoObscure {
 		return nil, errors.New("can't use --obscure and --no-obscure together")
 	}
+
 	err = fspath.CheckConfigName(name)
 	if err != nil {
 		return nil, err
@@ -485,6 +486,9 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 			m.Set(k, vStr)
 		}
 	}
+	if opt.Edit {
+		choices[fs.ConfigEdit] = "true"
+	}
 
 	if interactive {
 		var state = ""
@@ -511,10 +515,17 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 	return out, nil
 }
 
-// CreateRemote creates a new remote with name, provider and a list of
+// UpdateRemote adds the keyValues passed in to the remote of name.
+// keyValues should be key, value pairs.
+func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
+	opt.Edit = true
+	return updateRemote(ctx, name, keyValues, opt)
+}
+
+// CreateRemote creates a new remote with name, type and a list of
 // parameters which are key, value pairs.  If update is set then it
 // adds the new keys rather than replacing all of them.
-func CreateRemote(ctx context.Context, name string, provider string, keyValues rc.Params, opts UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
+func CreateRemote(ctx context.Context, name string, Type string, keyValues rc.Params, opts UpdateRemoteOpt) (out *fs.ConfigOut, err error) {
 	err = fspath.CheckConfigName(name)
 	if err != nil {
 		return nil, err
@@ -523,7 +534,7 @@ func CreateRemote(ctx context.Context, name string, provider string, keyValues r
 		// Delete the old config if it exists
 		LoadedData().DeleteSection(name)
 		// Set the type
-		LoadedData().SetValue(name, "type", provider)
+		LoadedData().SetValue(name, "type", Type)
 	}
 	// Set the remaining values
 	return UpdateRemote(ctx, name, keyValues, opts)
