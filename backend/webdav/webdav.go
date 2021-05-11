@@ -113,6 +113,21 @@ func init() {
 			Name:     config.ConfigEncoding,
 			Help:     configEncodingHelp,
 			Advanced: true,
+		}, {
+			Name: "headers",
+			Help: `Set HTTP headers for all transactions
+
+Use this to set additional HTTP headers for all transactions
+
+The input format is comma separated list of key,value pairs.  Standard
+[CSV encoding](https://godoc.org/encoding/csv) may be used.
+
+For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
+
+You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
+`,
+			Default:  fs.CommaSepList{},
+			Advanced: true,
 		}},
 	})
 }
@@ -126,6 +141,7 @@ type Options struct {
 	BearerToken        string               `config:"bearer_token"`
 	BearerTokenCommand string               `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
+	Headers            fs.CommaSepList      `config:"headers"`
 }
 
 // Fs represents a remote webdav
@@ -359,6 +375,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+
+	if len(opt.Headers)%2 != 0 {
+		return nil, errors.New("odd number of headers supplied")
+	}
+	fs.Debugf(nil, "found headers: %v", opt.Headers)
+
 	rootIsDir := strings.HasSuffix(root, "/")
 	root = strings.Trim(root, "/")
 
@@ -428,6 +450,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, err
 		}
 	}
+	if opt.Headers != nil {
+		f.addHeaders(opt.Headers)
+	}
 	f.srv.SetErrorHandler(errorHandler)
 	err = f.setQuirks(ctx, opt.Vendor)
 	if err != nil {
@@ -485,6 +510,15 @@ func (f *Fs) fetchBearerToken(cmd string) (string, error) {
 		return "", errors.Wrapf(err, "failed to get bearer token using %q: %s", f.opt.BearerTokenCommand, stderrString)
 	}
 	return stdoutString, nil
+}
+
+// Adds the configured headers to the request if any
+func (f *Fs) addHeaders(headers fs.CommaSepList) {
+	for i := 0; i < len(headers); i += 2 {
+		key := f.opt.Headers[i]
+		value := f.opt.Headers[i+1]
+		f.srv.SetHeader(key, value)
+	}
 }
 
 // fetch the bearer token and set it if successful
