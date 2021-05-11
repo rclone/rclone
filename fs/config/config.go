@@ -421,6 +421,10 @@ type UpdateRemoteOpt struct {
 	Continue bool `json:"continue"`
 	// If set then ask all the questions, not just the post config questions
 	All bool `json:"all"`
+	// State to restart with - used with Continue
+	State string `json:"state"`
+	// Result to return - used with Continue
+	Result string `json:"result"`
 }
 
 // UpdateRemote adds the keyValues passed in to the remote of name.
@@ -490,18 +494,9 @@ func UpdateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 		err = backendConfig(ctx, name, m, ri, choices, state)
 	} else {
 		// Start the config state machine
-		in := fs.ConfigIn{}
-		if opt.Continue {
-			if state, ok := keyValues["state"]; ok {
-				in.State = fmt.Sprint(state)
-			} else {
-				return nil, errors.New("UpdateRemote: need state parameter with --continue")
-			}
-			if result, ok := keyValues["result"]; ok {
-				in.Result = fmt.Sprint(result)
-			} else {
-				return nil, errors.New("UpdateRemote: need result parameter with --continue")
-			}
+		in := fs.ConfigIn{
+			State:  opt.State,
+			Result: opt.Result,
 		}
 		if in.State == "" && opt.All {
 			in.State = fs.ConfigAll

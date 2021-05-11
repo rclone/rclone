@@ -119,6 +119,8 @@ func init() {
     - nonInteractive - don't interact with a user, return questions
     - continue - continue the config process with an answer
     - all - ask all the config questions not just the post config ones
+    - state - state to restart with - used with continue
+    - result - result to restart with - used with continue
 `
 		}
 		rc.Add(rc.Call{

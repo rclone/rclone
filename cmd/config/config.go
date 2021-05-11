@@ -159,12 +159,12 @@ This will look something like (some irrelevant detail removed):
 
 The format of |Option| is the same as returned by |rclone config
 providers|. The question should be asked to the user and returned to
-rclone as a string parameter along with the state parameter.
+rclone as the |--result| option along with the |--state| parameter.
 
 If |Error| is set then it should be shown to the user at the same
 time as the question.
 
-    rclone config update name --continue state "*oauth-islocal,teamdrive,," result "true"
+    rclone config update name --continue --state "*oauth-islocal,teamdrive,," --result "true"
 
 Note that when using |--continue| all passwords should be passed in
 the clear (not obscured). Any default config values should be passed
@@ -235,6 +235,8 @@ func init() {
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NonInteractive, "non-interactive", "", false, "Don't interact with user and return questions.")
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Continue, "continue", "", false, "Continue the configuration process with an answer.")
 		flags.BoolVarP(cmdFlags, &updateRemoteOpt.All, "all", "", false, "Ask the full set of config questions.")
+		flags.StringVarP(cmdFlags, &updateRemoteOpt.State, "state", "", "", "State - use with --continue.")
+		flags.StringVarP(cmdFlags, &updateRemoteOpt.Result, "result", "", "", "Result - use with --continue.")
 	}
 }
 
