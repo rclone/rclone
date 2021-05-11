@@ -566,7 +566,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	if opt.KnownHostsFile != "" {
-		hostcallback, err := knownhosts.New(opt.KnownHostsFile)
+		hostcallback, err := knownhosts.New(env.ShellExpand(opt.KnownHostsFile))
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't parse known_hosts_file")
 		}
