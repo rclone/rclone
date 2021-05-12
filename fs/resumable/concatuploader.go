@@ -20,7 +20,7 @@ type ConcatenatorFs interface {
 
 // NewConcatUploader returns an fs.Uploader that is able to receive upload chunks which are then concatenated upon completion
 func NewConcatUploader(remote, uploadDir string, f ConcatenatorFs, ctx context.Context) fs.Uploader {
-	self := &concatUploader{fragmentUploader{nil, remote, uploadDir, f, ctx, []io.Reader{}, 0, -1}, f}
+	self := &concatUploader{fragmentUploader{nil, remote, uploadDir, f, ctx, []io.Reader{}, 0, -1, 0, nil}, f}
 	self.self = self
 	return self
 }

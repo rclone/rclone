@@ -33,6 +33,8 @@ func NewFallbackUploader(remote, uploadDir, fallbackUploadDir string, fs_, fallb
 			[]io.Reader{},
 			0,
 			-1,
+			0,
+			nil,
 		},
 		fallbackUploadDir,
 		fallbackFs,

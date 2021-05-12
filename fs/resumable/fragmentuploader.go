@@ -5,10 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"hash/crc64"
 	"io"
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -17,6 +19,8 @@ import (
 )
 
 const MaxFolderCount = 10000 // Some filesystems will struggle or fail if a folder contains more than 10000 files
+var crcTable   *crc64.Table
+var NoCrcData = errors.New("crc not initialised with data")
 
 type FragmentUploader interface {
 	fs.Uploader
@@ -29,6 +33,7 @@ type FragmentUploader interface {
 	putSizeObject(io.Reader, *uploadSrcObjectInfo) error
 	getAllFragments(fs.Fs, string) ([]*fragment, error)
 	lastFragment() (*fragment, error)
+	Crc() (uint64, error)
 }
 
 // CleanUploads recursively deletes any entries that have expired
@@ -67,22 +72,35 @@ type fragmentUploader struct {
 	pending    []io.Reader
 	pendingLen int64
 	size       int64
+	crc		   uint64
+	lastFrag   *fragment
 }
 
 type fragment struct {
 	start  int64
+	crc    uint64
 	object fs.Object
 }
 
 func (f *fragmentUploader) Write(p []byte) (n int, err error) {
+	if crcTable == nil {
+		crcTable = crc64.MakeTable(crc64.ECMA)
+	}
+	if crc, e := f.Crc(); errors.Is(e, NoCrcData) {
+		f.crc = crc64.Checksum(p, crcTable)
+	} else if e == nil {
+		f.crc = crc64.Update(crc, crcTable, p)
+	} else {
+		return 0, e
+	}
 	n = len(p)
 	if n == 0 {
-		return
+		return // Skip empty fragments
 	}
 	f.pending = append(f.pending, bytes.NewReader(p))
 	f.pendingLen += int64(n)
 	if f.pendingLen >= 2^24 { // 16Mb chunks TODO make configurable
-		err = f.self.Close()
+		err = f.self.Close() // Close rather than flush to include finished logic, Close can be called multiple times for this implementation
 	}
 	return
 }
@@ -113,7 +131,11 @@ func (f *fragmentUploader) lastDir() (fs.Directory, fs.Fs, uint64, error) {
 	return lastDir, fs_, dirIndex, err
 }
 
+// Get the last (non-empty) fragment written to the upload dir
 func (f *fragmentUploader) lastFragment() (*fragment, error) {
+	if f.lastFrag != nil {
+		return f.lastFrag, nil
+	}
 	// Get largest file name across all subdirectories in upload dir
 	lastDir, s, _, err := f.self.lastDir()
 	if lastDir == nil || err != nil {
@@ -127,11 +149,15 @@ func (f *fragmentUploader) lastFragment() (*fragment, error) {
 	var frag *fragment
 	entries.ForObject(func(o fs.Object) {
 		if _, name, err := fspath.Split(o.Remote()); err == nil && name != "" && name[0] != '.' {
-			if start, err := strconv.ParseInt(name, 10, 64); err == nil && pos < (start+o.Size()) {
+			parts := strings.SplitN(name, "-", 2)
+				if start, err := strconv.ParseInt(parts[0], 10, 64); err == nil && pos < (start+o.Size()) {
 				pos = start + o.Size()
 				frag = &fragment{
-					start:  start,
+					start: start,
 					object: o,
+				}
+				if crc, err := strconv.ParseUint(parts[1], 36, 64); err == nil {
+					frag.crc = crc
 				}
 			}
 		}
@@ -139,6 +165,7 @@ func (f *fragmentUploader) lastFragment() (*fragment, error) {
 	if pos == -1 {
 		return nil, nil // If no entries found then assume at start
 	}
+	f.lastFrag = frag
 	return frag, nil
 }
 
@@ -181,6 +208,20 @@ func (f *fragmentUploader) Size() (size int64, ok bool) {
 	return
 }
 
+func (f *fragmentUploader) Crc() (uint64, error) {
+	if f.pendingLen > 0 {
+		return f.crc, nil
+	}
+	if lastFrag, err := f.lastFragment(); err == nil {
+		if lastFrag == nil {
+			return 0, NoCrcData
+		}
+		return lastFrag.crc, nil
+	} else {
+		return 0, err
+	}
+}
+
 func (f *fragmentUploader) putSizeObject(data io.Reader, src *uploadSrcObjectInfo) error {
 	_, err := f.fs.Put(f.ctx, data, src)
 	return err
@@ -220,10 +261,15 @@ func (f *fragmentUploader) getAllFragments(fs_ fs.Fs, uploadDir string) ([]*frag
 			return
 		}
 		subentries.ForObject(func(o fs.Object) {
-			i, e := strconv.ParseInt(o.Remote(), 10, 64)
-			if e == nil {
-				fragments[fragI] = &fragment{i, o}
-				fragI++
+			parts := strings.SplitN(o.Remote(), "-", 2)
+			if len(parts) != 2 {
+				return
+			}
+			if i, e := strconv.ParseInt(parts[0], 10, 64); e == nil {
+				if crc, e := strconv.ParseUint(parts[1], 36, 64); e == nil {
+					fragments[fragI] = &fragment{i, crc, o}
+					fragI++
+				}
 			}
 		})
 	})
@@ -248,27 +294,32 @@ func (f *fragmentUploader) flush() (bool, error) {
 		return false, errors.New("failed to determine current upload position")
 	}
 
-	// Limit folders to 10000 fragments
-	lastDir, fs_, dirIndex, err := f.self.lastDir()
-	if err != nil {
-		return false, err
-	}
+	if f.pendingLen > 0 {
+		// Limit folders to 10000 fragments
+		lastDir, fs_, dirIndex, err := f.self.lastDir()
+		if err != nil {
+			return false, err
+		}
 
-	var uploadDir string
-	if lastDir == nil || lastDir.Items() >= MaxFolderCount {
-		uploadDir = f.self.binPath(dirIndex + 1)
-	} else {
-		uploadDir = lastDir.Remote()
-	}
+		var uploadDir string
+		if lastDir == nil || lastDir.Items() >= MaxFolderCount {
+			uploadDir = f.self.binPath(dirIndex + 1)
+		} else {
+			uploadDir = lastDir.Remote()
+		}
 
-	src := &uploadSrcObjectInfo{
-		remote: path.Join(uploadDir, strconv.FormatInt(pos, 10)),
-		size:   f.pendingLen,
-	}
-	_, err = fs_.Put(f.ctx, io.MultiReader(f.pending...), src)
-	pos += f.pendingLen
-	if err != nil {
-		return false, err
+		src := &uploadSrcObjectInfo{
+			remote: path.Join(uploadDir, strconv.FormatInt(pos, 10)+"-"+strconv.FormatUint(f.crc, 36)),
+			size:   f.pendingLen,
+		}
+		_, err = fs_.Put(f.ctx, io.MultiReader(f.pending...), src)
+		pos += f.pendingLen
+		f.pending = []io.Reader{}
+		f.pendingLen = 0
+		f.lastFrag = nil
+		if err != nil {
+			return false, err
+		}
 	}
 	size, ok := f.Size()
 	return ok && size == pos, nil
@@ -294,8 +345,7 @@ func (f *fragmentUploader) Close() error {
 		err = f.self.finish(files)
 		_ = f.self.Abort()
 	}
-	f.pending = []io.Reader{}
-	f.pendingLen = 0
+	f.lastFrag = nil
 	return err
 }
 
