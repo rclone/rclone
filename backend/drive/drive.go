@@ -11,6 +11,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -2585,6 +2586,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.
+// Or a "readable by user" permission if service account credentials file is specified
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	id, err := f.dirCache.FindDir(ctx, remote, false)
 	if err == nil {
@@ -2599,10 +2601,24 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		id = shortcutID(o.(fs.IDer).ID())
 	}
 
+	permission_type := "anyone"
+	emailAddress := ""
+
+	// Extract the email address from service account credentials file, if available
+	if f.opt.ServiceAccountFile != "" {
+		file, _ := ioutil.ReadFile(f.opt.ServiceAccountFile)
+		var data map[string]string
+		// Unmarshal file byte array contents into data
+		json.Unmarshal(file, &data)
+		emailAddress = data["client_email"]
+		permission_type = "user"
+	}
+
 	permission := &drive.Permission{
 		AllowFileDiscovery: false,
 		Role:               "reader",
-		Type:               "anyone",
+		Type:               permission_type,
+		EmailAddress:		emailAddress,
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
