@@ -367,6 +367,8 @@ to be the same account as the Dropbox you want to access)
 
 5. Click the button `Create App`
 
-5. Fill `Redirect URIs` as `http://localhost:53682/`
+6. Switch to the `Permissions` tab. Enable at least the following permissions: `account_info.read`, `files.metadata.write`, `files.content.write`, `files.content.read`, `sharing.write`. The `files.metadata.read` and `sharing.read` checkboxes will be marked too. Click `Submit`
 
-6. Find the `App key` and `App secret` Use these values in rclone config to add a new remote or edit an existing remote.
+7. Switch to the `Settings` tab. Fill `OAuth2 - Redirect URIs` as `http://localhost:53682/`
+
+8. Find the `App key` and `App secret` values on the `Settings` tab. Use these values in rclone config to add a new remote or edit an existing remote. The `App key` setting corresponds to `client_id` in rclone config, the `App secret` corresponds to `client_secret`
