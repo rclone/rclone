@@ -37,7 +37,7 @@ These flags are available for every command.
       --delete-before                        When synchronizing, delete files on destination before transferring
       --delete-during                        When synchronizing, delete files during transfer
       --delete-excluded                      Delete files on dest excluded from sync
-      --disable string                       Disable a comma separated list of features.  Use help to see a list.
+      --disable string                       Disable a comma separated list of features.  Use --disable help to see a list.
   -n, --dry-run                              Do a trial run with no permanent changes
       --dscp string                          Set DSCP value to connections. Can be value or names, eg. CS1, LE, DF, AF21.
       --dump DumpFlags                       List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
