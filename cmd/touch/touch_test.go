@@ -117,3 +117,25 @@ func TestTouchCreateMultipleDirAndFile(t *testing.T) {
 	file1 := fstest.NewItem("a/b/c.txt", "", t1)
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"a", "a/b"}, fs.ModTimeNotSupported)
 }
+
+func TestTouchRecursiveWithTimestamp(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	timeAsArgument = "060102"
+	srcFileName := "oldFile"
+	err := TouchRecursive(context.Background(), r.Fremote, srcFileName)
+	require.NoError(t, err)
+	checkFile(t, r.Fremote, srcFileName, "")
+}
+
+func TestTouchRecursiveWithLongerTimestamp(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	timeAsArgument = "2006-01-02T15:04:05"
+	srcFileName := "oldFile"
+	err := TouchRecursive(context.Background(), r.Fremote, srcFileName)
+	require.NoError(t, err)
+	checkFile(t, r.Fremote, srcFileName, "")
+}

@@ -39,6 +39,7 @@ rclone touch remote:path [flags]
   -h, --help               help for touch
       --localtime          Use localtime for timestamp, not UTC.
   -C, --no-create          Do not create the file if it does not exist.
+  -R, --recursive          Recurse into the listing.
   -t, --timestamp string   Use specified time instead of the current time of day.
 ```
 

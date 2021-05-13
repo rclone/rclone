@@ -17,6 +17,7 @@ var (
 	notCreateNewFile bool
 	timeAsArgument   string
 	localTime        bool
+	recurse          bool
 )
 
 const (
@@ -31,6 +32,7 @@ func init() {
 	flags.BoolVarP(cmdFlags, &notCreateNewFile, "no-create", "C", false, "Do not create the file if it does not exist.")
 	flags.StringVarP(cmdFlags, &timeAsArgument, "timestamp", "t", "", "Use specified time instead of the current time of day.")
 	flags.BoolVarP(cmdFlags, &localTime, "localtime", "", false, "Use localtime for timestamp, not UTC.")
+	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
 var commandDefinition = &cobra.Command{
