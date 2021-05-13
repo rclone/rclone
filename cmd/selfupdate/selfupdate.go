@@ -337,8 +337,8 @@ func makeRandomExeName(baseName, extension string) (string, error) {
 func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, packageFormat string) error {
 	osName := runtime.GOOS
 	arch := runtime.GOARCH
-	if arch == "darwin" {
-		arch = "osx"
+	if osName == "darwin" {
+		osName = "osx"
 	}
 
 	archiveFilename := fmt.Sprintf("rclone-%s-%s-%s.%s", version, osName, arch, packageFormat)
