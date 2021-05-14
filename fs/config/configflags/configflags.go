@@ -90,7 +90,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.Float64VarP(flagSet, &ci.TPSLimit, "tpslimit", "", ci.TPSLimit, "Limit HTTP transactions per second to this.")
 	flags.IntVarP(flagSet, &ci.TPSLimitBurst, "tpslimit-burst", "", ci.TPSLimitBurst, "Max burst of transactions for --tpslimit.")
 	flags.StringVarP(flagSet, &bindAddr, "bind", "", "", "Local address to bind to for outgoing connections, IPv4, IPv6 or name.")
-	flags.StringVarP(flagSet, &disableFeatures, "disable", "", "", "Disable a comma separated list of features.  Use help to see a list.")
+	flags.StringVarP(flagSet, &disableFeatures, "disable", "", "", "Disable a comma separated list of features.  Use --disable help to see a list.")
 	flags.StringVarP(flagSet, &ci.UserAgent, "user-agent", "", ci.UserAgent, "Set the user-agent to a specified string. The default is rclone/ version")
 	flags.BoolVarP(flagSet, &ci.Immutable, "immutable", "", ci.Immutable, "Do not modify files. Fail if existing files have been modified.")
 	flags.BoolVarP(flagSet, &ci.AutoConfirm, "auto-confirm", "", ci.AutoConfirm, "If enabled, do not request console confirmation.")
