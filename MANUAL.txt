@@ -12422,6 +12422,15 @@ If you want to download a shared folder, add this parameter
 -   Type: string
 -   Default: ""
 
+--fichier-shared-password
+
+If you want to download a password protected file from a shared folder, add this parameter
+
+-   Config: shared_password
+-   Env Var: RCLONE_FICHIER_SHARED_PASSWORD
+-   Type: string
+-   Default: ""
+
 --fichier-encoding
 
 This sets the encoding for the backend.
