@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -90,6 +91,7 @@ func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenRespons
 	request := DownloadRequest{
 		URL:    url,
 		Single: 1,
+		Pass:   f.opt.FilePassword,
 	}
 	opts := rest.Opts{
 		Method: "POST",
@@ -118,10 +120,16 @@ func fileFromSharedFile(file *SharedFile) File {
 
 func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntries, err error) {
 	opts := rest.Opts{
-		Method:     "GET",
-		RootURL:    "https://1fichier.com/dir/",
-		Path:       id,
-		Parameters: map[string][]string{"json": {"1"}},
+		Method:      "GET",
+		RootURL:     "https://1fichier.com/dir/",
+		Path:        id,
+		Parameters:  map[string][]string{"json": {"1"}},
+		ContentType: "application/x-www-form-urlencoded",
+	}
+	if f.opt.FolderPassword != "" {
+		opts.Method = "POST"
+		opts.Parameters = nil
+		opts.Body = strings.NewReader("json=1&pass=" + url.QueryEscape(f.opt.FolderPassword))
 	}
 
 	var sharedFiles SharedFolderResponse
