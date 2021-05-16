@@ -105,6 +105,7 @@ The main rclone commands with most used first
 * [rclone config](/commands/rclone_config/)	- Enter an interactive configuration session.
 * [rclone copy](/commands/rclone_copy/)		- Copy files from source to dest, skipping already copied.
 * [rclone sync](/commands/rclone_sync/)		- Make source and dest identical, modifying destination only.
+* [rclone bisync](/commands/rclone_bisync/)	- [Bidirectional synchronization](/bisync/) between two paths.
 * [rclone move](/commands/rclone_move/)		- Move files from source to dest.
 * [rclone delete](/commands/rclone_delete/)	- Remove the contents of path.
 * [rclone purge](/commands/rclone_purge/)	- Remove the path and all of its contents.
