@@ -371,15 +371,9 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 
 // Config the backend
 func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure OneDrive")
-	}
-	srv := rest.NewClient(oAuthClient)
 	region, graphURL := getRegionURL(m)
 
-	switch config.State {
-	case "":
+	if config.State == "" {
 		oauthConfig.Endpoint = oauth2.Endpoint{
 			AuthURL:  authEndpoint[region] + authPath,
 			TokenURL: authEndpoint[region] + tokenPath,
@@ -387,6 +381,15 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		return oauthutil.ConfigOut("choose_type", &oauthutil.Options{
 			OAuth2Config: oauthConfig,
 		})
+	}
+
+	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to configure OneDrive")
+	}
+	srv := rest.NewClient(oAuthClient)
+
+	switch config.State {
 	case "choose_type":
 		return fs.ConfigChooseFixed("choose_type_done", "config_type", "Type of connection", []fs.OptionExample{{
 			Value: "onedrive",
