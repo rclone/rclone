@@ -22,12 +22,25 @@ from pprint import pprint
 
 sep = "-"*60
 
-def rpc(command, params):
+def rpc(args, command, params):
     """
     Run the command. This could be either over the CLI or the API.
-    Here we run over the API using rclone rc --loopback which is
-    useful for making sure state is saved properly.
+
+    Here we run over the API either using `rclone rc --loopback` which
+    is useful for making sure state is saved properly or to an
+    existing rclone rcd if `--rc` is used on the command line.
     """
+    if args.rc:
+        import requests
+        kwargs = {
+            "json": params,
+        }
+        if args.user:
+            kwargs["auth"] = (args.user, args.password)
+        r = requests.post('http://localhost:5572/'+command, **kwargs)
+        if r.status_code != 200:
+            raise ValueError(f"RC command failed: Error {r.status_code}: {r.text}")
+        return r.json()
     cmd = ["rclone", "-vv", "rc", "--loopback", command, "--json", json.dumps(params)]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
     return json.loads(result.stdout)
@@ -111,7 +124,7 @@ def create_or_update(what, args):
         print("Input to API")
         pprint(inp)
         print(sep)
-        out = rpc("config/"+what, inp)
+        out = rpc(args, "config/"+what, inp)
         print(sep)
         print("Output from API")
         pprint(out)
@@ -155,6 +168,12 @@ def main():
                         help="Ask all the config questions if set")
     parser.add_argument("-o", "--obscured-passwords", action='store_true',
                         help="If set assume the passwords are obscured")
+    parser.add_argument("--rc", action='store_true',
+                        help="If set use the rc (you'll need to start an rclone rcd)")
+    parser.add_argument("--user", type=str, default="",
+                        help="Username for use with --rc")
+    parser.add_argument("--pass", type=str, default="", dest='password',
+                        help="Password for use with --rc")
 
     subparsers = parser.add_subparsers(dest='command', required=True)
     
