@@ -25,10 +25,13 @@ Run without a hash to see the list of all supported hashes, e.g.
 
     $ rclone hashsum
     Supported hashes are:
-      * MD5
-      * SHA-1
-      * DropboxHash
-      * QuickXorHash
+      * md5
+      * sha1
+      * whirlpool
+      * crc32
+      * dropbox
+      * mailru
+      * quickxor
 
 Then
 

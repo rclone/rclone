@@ -156,16 +156,50 @@ func TestHashStreamTypes(t *testing.T) {
 
 func TestHashSetStringer(t *testing.T) {
 	h := hash.NewHashSet(hash.SHA1, hash.MD5)
-	assert.Equal(t, h.String(), "[MD5, SHA-1]")
+	assert.Equal(t, "[MD5, SHA-1]", h.String())
 	h = hash.NewHashSet(hash.SHA1)
-	assert.Equal(t, h.String(), "[SHA-1]")
+	assert.Equal(t, "[SHA-1]", h.String())
 	h = hash.NewHashSet()
-	assert.Equal(t, h.String(), "[]")
+	assert.Equal(t, "[]", h.String())
 }
 
 func TestHashStringer(t *testing.T) {
 	h := hash.MD5
-	assert.Equal(t, h.String(), "MD5")
+	assert.Equal(t, "MD5", h.String())
+	assert.Equal(t, "md5", h.Alias())
+	h = hash.SHA1
+	assert.Equal(t, "SHA-1", h.String())
+	assert.Equal(t, "sha1", h.Alias())
 	h = hash.None
-	assert.Equal(t, h.String(), "None")
+	assert.Equal(t, "None", h.String())
+	assert.Equal(t, "none", h.Alias())
+}
+
+func TestHashSetter(t *testing.T) {
+	var ht hash.Type
+
+	assert.NoError(t, ht.Set("none"))
+	assert.Equal(t, hash.None, ht)
+	assert.NoError(t, ht.Set("None"))
+	assert.Equal(t, hash.None, ht)
+
+	assert.NoError(t, ht.Set("md5"))
+	assert.Equal(t, hash.MD5, ht)
+	assert.NoError(t, ht.Set("MD5"))
+	assert.Equal(t, hash.MD5, ht)
+
+	assert.NoError(t, ht.Set("sha1"))
+	assert.Equal(t, hash.SHA1, ht)
+	assert.NoError(t, ht.Set("SHA-1"))
+	assert.Equal(t, hash.SHA1, ht)
+}
+
+func TestHashTypeStability(t *testing.T) {
+	assert.Equal(t, hash.Type(0), hash.None)
+	assert.Equal(t, hash.Type(1), hash.MD5)
+	assert.Equal(t, hash.Type(2), hash.SHA1)
+
+	assert.True(t, hash.Supported().Contains(hash.MD5))
+	assert.True(t, hash.Supported().Contains(hash.SHA1))
+	assert.False(t, hash.Supported().Contains(hash.None))
 }

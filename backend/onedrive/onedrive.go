@@ -93,7 +93,7 @@ var (
 
 // Register with Fs
 func init() {
-	QuickXorHashType = hash.RegisterHash("QuickXorHash", 40, quickxorhash.New)
+	QuickXorHashType = hash.RegisterHash("quickxor", "QuickXorHash", 40, quickxorhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "onedrive",
 		Description: "Microsoft OneDrive",
