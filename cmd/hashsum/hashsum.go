@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// Global hashsum flags for reuse in md5sum, sha1sum, and dbhashsum
+// Global hashsum flags for reuse in hashsum, md5sum, sha1sum
 var (
 	OutputBase64   = false
 	DownloadFlag   = false
@@ -28,7 +28,7 @@ func init() {
 	AddHashFlags(cmdFlags)
 }
 
-// AddHashFlags is a convenience function to add the command flags OutputBase64 and DownloadFlag to hashsum, md5sum, sha1sum, and dbhashsum
+// AddHashFlags is a convenience function to add the command flags OutputBase64 and DownloadFlag to hashsum, md5sum, sha1sum
 func AddHashFlags(cmdFlags *pflag.FlagSet) {
 	flags.BoolVarP(cmdFlags, &OutputBase64, "base64", "", OutputBase64, "Output base64 encoded hashsum")
 	flags.StringVarP(cmdFlags, &HashsumOutfile, "output-file", "", HashsumOutfile, "Output hashsums to a file rather than the terminal")
