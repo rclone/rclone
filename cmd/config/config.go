@@ -134,6 +134,7 @@ it.
 
 This will look something like (some irrelevant detail removed):
 
+|||
 {
     "State": "*oauth-islocal,teamdrive,,",
     "Option": {
@@ -152,14 +153,28 @@ This will look something like (some irrelevant detail removed):
         ],
         "Required": false,
         "IsPassword": false,
-        "Type": "bool"
+        "Type": "bool",
+        "Exclusive": true,
     },
     "Error": "",
 }
+|||
 
 The format of |Option| is the same as returned by |rclone config
 providers|. The question should be asked to the user and returned to
 rclone as the |--result| option along with the |--state| parameter.
+
+The keys of |Option| are used as follows:
+
+- |Name| - name of variable - show to user
+- |Help| - help text. Hard wrapped at 80 chars. Any URLs should be clicky.
+- |Default| - default value - return this if the user just wants the default.
+- |Examples| - the user should be able to choose one of these
+- |Required| - the value should be non-empty
+- |IsPassword| - the value is a password and should be edited as such
+- |Type| - type of value, eg |bool|, |string|, |int| and others
+- |Exclusive| - if set no free-form entry allowed only the |Examples|
+- Irrelevant keys |Provider|, |ShortOpt|, |Hide|, |NoPrefix|, |Advanced|
 
 If |Error| is set then it should be shown to the user at the same
 time as the question.
@@ -176,6 +191,9 @@ with |State| as empty string.
 If |--all| is passed then rclone will ask all the config questions,
 not just the post config questions. Any parameters are used as
 defaults for questions as usual.
+
+Note that |bin/config.py| in the rclone source implements this protocol
+as a readable demonstration.
 `, "|", "`")
 var configCreateCommand = &cobra.Command{
 	Use:   "create `name` `type` [`key` `value`]*",
