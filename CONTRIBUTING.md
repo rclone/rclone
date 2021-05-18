@@ -30,7 +30,7 @@ page](https://github.com/rclone/rclone).
 
 Then [install Git](https://git-scm.com/downloads) and set your public contribution [name](https://docs.github.com/en/github/getting-started-with-github/setting-your-username-in-git) and [email](https://docs.github.com/en/github/setting-up-and-managing-your-github-user-account/setting-your-commit-email-address#setting-your-commit-email-address-in-git).
 
-Next open your terminal, change directory to your preferred folder and  initialize your local rclone project:
+Next open your terminal, change directory to your preferred folder and initialise your local rclone project:
 
     git clone https://github.com/rclone/rclone.git
     cd rclone
@@ -73,10 +73,7 @@ Make sure you
 
   * Add [unit tests](#testing) for a new feature.
   * Add [documentation](#writing-documentation) for a new feature.
-  * [Commit](#committing-your-work) using the [message guideline](#commit-messages).
-  * [Base your code on the latest master](#basing-your-work-on-the-latest-master).
-  * [Squash your commits](#squashing-your-commits) to one per feature.
-  
+  * [Commit your changes](#committing-your-changes) using the [message guideline](#commit-messages).
 
 When you are done with that push your changes to Github:
 
@@ -85,15 +82,13 @@ When you are done with that push your changes to Github:
 and open the GitHub website to [create your pull
 request](https://help.github.com/articles/creating-a-pull-request/).
 
-Your changes will then get reviewed and you might get asked to fix some stuff.
+Your changes will then get reviewed and you might get asked to fix some stuff. If so, then make the changes in the same branch, commit and push your updates to GitHub.
 
-If so, then make the changes in the same branch, [squash your commits](#squashing-your-commits), [rebase to master](#basing-your-work-on-the-latest-master) and replace your previously pushed branch: 
-
-    git push --force origin my-new-feature 
+You may sometimes be asked to [base your changes on the latest master](#basing-your-changes-on-the-latest-master) or [squash your commits](#squashing-your-commits).
 
 ## Using Git and Github ##
 
-### Committing your work ###
+### Committing your changes ###
 
 Follow the guideline for [commit messages](#commit-messages) and then:
 
@@ -108,11 +103,19 @@ You can modify the message or changes in the latest commit using:
 
     git commit --amend
 
-Note that you are rewriting your git/GitHub history when ammending, rebasing, squasing and rolling back. It is good practice to involve your collaborators before modifying commits that have been pushed.
+If you amend to commits that have been pushed to GitHub, then you will have to [replace your previously pushed commits](#replacing-your-previously-pushed-commits).
 
-### Basing your work on the latest master ###
+### Replacing your previously pushed commits ###
 
-To base your work on the latest version of the [rclone master](https://github.com/rclone/rclone/tree/master) (upstream):
+Note that you are about to rewrite the GitHub history of your branch. It is good practice to involve your collaborators before modifying commits that have been pushed to GitHub.
+
+Your previously pushed commits are replaced by:
+
+    git push --force origin my-new-feature 
+
+### Basing your changes on the latest master ###
+
+To base your changes on the latest version of the [rclone master](https://github.com/rclone/rclone/tree/master) (upstream):
 
     git checkout master
     git fetch upstream
@@ -120,6 +123,8 @@ To base your work on the latest version of the [rclone master](https://github.co
     git push origin --follow-tags    # optional update of your fork in GitHub
     git checkout my-new-feature
     git rebase master
+
+If you rebase commits that have been pushed to GitHub, then you will have to [replace your previously pushed commits](#replacing-your-previously-pushed-commits).
 
 ### Squashing your commits ###
 
@@ -137,16 +142,31 @@ otherwise, you may roll back using:
 
     git reflog                       # To check that HEAD{1} is your previous state
     git reset --soft 'HEAD@{1}'      # To roll back to your previous state
-### GitHub Continous Integration ###
+
+If you squash commits that have been pushed to GitHub, then you will have to [replace your previously pushed commits](#replacing-your-previously-pushed-commits).
+
+Tip: You may like to use `git rebase -i master` if you are experienced or have a more complex situation.
+
+### GitHub Continuous Integration ###
 
 rclone currently uses [GitHub Actions](https://github.com/rclone/rclone/actions) to build and test the project, which should be automatically available for your fork too from the `Actions` tab in your repository.
 
 ## Testing ##
 
+### Quick testing ###
+
 rclone's tests are run from the go testing framework, so at the top
 level you can run this to run all the tests.
 
     go test -v ./...
+
+You can also use `make`, if supported by your platform
+
+    make quicktest
+
+The quicktest is [automatically run by GitHub](#github-continuous-integration) when you push your branch to GitHub.
+
+### Backend testing ###
 
 rclone contains a mixture of unit tests and integration tests.
 Because it is difficult (and in some respects pointless) to test cloud
@@ -181,19 +201,21 @@ project root:
     go install github.com/rclone/rclone/fstest/test_all
     test_all -backend drive
 
+### Full integration testing ###
+
 If you want to run all the integration tests against all the remotes,
 then change into the project root and run
 
+    make check
     make test
 
-The make command may require some extra go packages which you can install with
+The commands may require some extra go packages which you can install with
 
     make build_dep
 
-The test command is run daily on the integration test server. You can
+The full integration tests are run daily on the integration test server. You can
 find the results at https://pub.rclone.org/integration-tests/
 
-The tests are also [run by GitHub](#github-continous-integration) when you push your branch to GitHub.
 ## Code Organisation ##
 
 Rclone code is organised into a small number of top level directories
