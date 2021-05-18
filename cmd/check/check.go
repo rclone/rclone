@@ -9,6 +9,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -155,6 +156,12 @@ to check all the data.
 			defer close()
 			if download {
 				return operations.CheckDownload(context.Background(), opt)
+			}
+			hashType := fsrc.Hashes().Overlap(fdst.Hashes()).GetOne()
+			if hashType == hash.None {
+				fs.Errorf(nil, "No common hash found - not using a hash for checks")
+			} else {
+				fs.Infof(nil, "Using %v for hash comparisons", hashType)
 			}
 			return operations.Check(context.Background(), opt)
 		})
