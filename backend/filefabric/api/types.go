@@ -5,6 +5,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -49,6 +50,23 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 // parameters
 func (t Time) String() string {
 	return time.Time(t).UTC().Format(timeFormatParameters)
+}
+
+// Int represents an integer which can be represented in JSON as a
+// quoted integer or an integer.
+type Int int
+
+// MarshalJSON turns a Int into JSON
+func (i *Int) MarshalJSON() (out []byte, err error) {
+	return json.Marshal((*int)(i))
+}
+
+// UnmarshalJSON turns JSON into a Int
+func (i *Int) UnmarshalJSON(data []byte) error {
+	if len(data) >= 2 && data[0] == '"' && data[len(data)-1] == '"' {
+		data = data[1 : len(data)-1]
+	}
+	return json.Unmarshal(data, (*int)(i))
 }
 
 // Status return returned in all status responses
@@ -115,7 +133,7 @@ type GetFolderContentsResponse struct {
 	Total  int    `json:"total,string"`
 	Items  []Item `json:"filelist"`
 	Folder Item   `json:"folder"`
-	From   int    `json:"from,string"`
+	From   Int    `json:"from"`
 	//Count         int    `json:"count"`
 	Pid           string `json:"pid"`
 	RefreshResult Status `json:"refreshresult"`
