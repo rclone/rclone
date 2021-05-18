@@ -6,13 +6,17 @@ package sftp
 
 import (
 	"context"
+	"os"
 
+	"github.com/pkg/errors"
+	"github.com/pkg/sftp"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/terminal"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -27,6 +31,7 @@ type Options struct {
 	User           string   // single username
 	Pass           string   // password for user
 	NoAuth         bool     // allow no authentication on connections
+	Stdio          bool     // serve on stdio
 }
 
 // DefaultOpt is the default values used for Options
@@ -47,6 +52,7 @@ func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
 	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication.")
 	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set.")
+	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on run stdin/stdout")
 }
 
 func init() {
@@ -90,6 +96,11 @@ reachable externally then supply "--addr :2022" for example.
 Note that the default of "--vfs-cache-mode off" is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
 
+If --stdio is specified, rclone will serve SFTP over stdio, which can
+be used with sshd via ~/.ssh/authorized_keys, for example:
+
+    restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
+
 ` + vfs.Help + proxy.Help,
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
@@ -101,6 +112,22 @@ sftp backend, but it may not be with other SFTP clients.
 		}
 		cmd.Run(false, true, command, func() error {
 			s := newServer(context.Background(), f, &Opt)
+			if Opt.Stdio {
+				if terminal.IsTerminal(int(os.Stdout.Fd())) {
+					return errors.New("Refusing to run SFTP server directly on a terminal. Please let sshd start rclone, by connecting with sftp or sshfs.")
+				}
+				sshChannel := &StdioChannel{
+					stdin: os.Stdin,
+					stdout: os.Stdout,
+				}
+				handlers := newVFSHandler(vfs.New(f, &vfsflags.Opt))
+				server := sftp.NewRequestServer(sshChannel, handlers)
+				defer server.Close()
+				if err := server.Serve(); err != nil {
+					return errors.Wrap(err, "failed to start stdio server")
+				}
+				return nil
+			}
 			err := s.Serve()
 			if err != nil {
 				return err
@@ -109,4 +136,26 @@ sftp backend, but it may not be with other SFTP clients.
 			return nil
 		})
 	},
+}
+
+type StdioChannel struct {
+	stdin *os.File
+	stdout *os.File
+}
+
+func (c *StdioChannel) Read(data []byte) (int, error) {
+	return c.stdin.Read(data)
+}
+
+func (c *StdioChannel) Write(data []byte) (int, error) {
+	return c.stdout.Write(data)
+}
+
+func (c *StdioChannel) Close() error {
+	err1 := c.stdin.Close()
+	err2 := c.stdout.Close()
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }
