@@ -18,7 +18,6 @@ import (
 	_ "github.com/rclone/rclone/cmd/copyurl"
 	_ "github.com/rclone/rclone/cmd/cryptcheck"
 	_ "github.com/rclone/rclone/cmd/cryptdecode"
-	_ "github.com/rclone/rclone/cmd/dbhashsum"
 	_ "github.com/rclone/rclone/cmd/dedupe"
 	_ "github.com/rclone/rclone/cmd/delete"
 	_ "github.com/rclone/rclone/cmd/deletefile"
