@@ -22,6 +22,7 @@ package operations_test
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -42,7 +43,6 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -1503,10 +1503,17 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	defer accounting.Stats(ctx).ResetCounters()
 
 	const sizeCutoff = 2048
+
+	// Make random incompressible data
+	randomData := make([]byte, sizeCutoff)
+	_, err := rand.Read(randomData)
+	require.NoError(t, err)
+	randomString := string(randomData)
+
 	file1 := r.WriteFile("TestCopyFileMaxTransfer/file1", "file1 contents", t1)
-	file2 := r.WriteFile("TestCopyFileMaxTransfer/file2", "file2 contents"+random.String(sizeCutoff), t2)
-	file3 := r.WriteFile("TestCopyFileMaxTransfer/file3", "file3 contents"+random.String(sizeCutoff), t2)
-	file4 := r.WriteFile("TestCopyFileMaxTransfer/file4", "file4 contents"+random.String(sizeCutoff), t2)
+	file2 := r.WriteFile("TestCopyFileMaxTransfer/file2", "file2 contents"+randomString, t2)
+	file3 := r.WriteFile("TestCopyFileMaxTransfer/file3", "file3 contents"+randomString, t2)
+	file4 := r.WriteFile("TestCopyFileMaxTransfer/file4", "file4 contents"+randomString, t2)
 
 	// Cutoff mode: Hard
 	ci.MaxTransfer = sizeCutoff
@@ -1514,7 +1521,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 
 	// file1: Show a small file gets transferred OK
 	accounting.Stats(ctx).ResetCounters()
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
 	require.NoError(t, err)
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
 	fstest.CheckItems(t, r.Fremote, file1)
