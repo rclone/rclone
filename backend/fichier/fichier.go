@@ -49,6 +49,7 @@ func init() {
 			Name:     "shared_password",
 			Required: false,
 			Advanced: true,
+			IsPassword: true,
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
