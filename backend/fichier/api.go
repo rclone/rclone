@@ -91,7 +91,7 @@ func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenRespons
 	request := DownloadRequest{
 		URL:    url,
 		Single: 1,
-		Pass: f.opt.SharedPassword,
+		Pass:   f.opt.SharedPassword,
 	}
 	opts := rest.Opts{
 		Method: "POST",
