@@ -33,7 +33,7 @@ var (
 )
 
 // RegisterHash adds a new Hash to the list and returns it Type
-func RegisterHash(alias, name string, width int, newFunc func() hash.Hash) Type {
+func RegisterHash(name, alias string, width int, newFunc func() hash.Hash) Type {
 	hashType := Type(1 << len(supported))
 	supported = append(supported, hashType)
 
@@ -118,25 +118,13 @@ func StreamTypes(r io.Reader, set Set) (map[Type]string, error) {
 }
 
 // String returns a string representation of the hash type.
-// For backwards compatibility it returns Name, not Alias.
 // The function will panic if the hash type is unknown.
 func (h Type) String() string {
-	if h == None {
-		return "None"
-	}
-	if hash := type2hash[h]; hash != nil {
-		return hash.name
-	}
-	panic(fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h)))
-}
-
-// Alias is similar to String but returns a user visible name.
-func (h Type) Alias() string {
 	if h == None {
 		return "none"
 	}
 	if hash := type2hash[h]; hash != nil {
-		return hash.alias
+		return hash.name
 	}
 	panic(fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h)))
 }

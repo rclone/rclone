@@ -112,7 +112,7 @@ func hashListHelp(indent string) string {
 	help.WriteString("Supported hashes are:\n")
 	for _, ht := range hash.Supported().Array() {
 		help.WriteString(indent)
-		fmt.Fprintf(&help, "  * %v\n", ht.Alias())
+		fmt.Fprintf(&help, "  * %v\n", ht.String())
 	}
 	return help.String()
 }

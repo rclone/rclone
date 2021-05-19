@@ -115,7 +115,7 @@ func TestHTTPOption(t *testing.T) {
 func TestHashesOption(t *testing.T) {
 	opt := &HashesOption{hash.Set(hash.MD5 | hash.SHA1)}
 	var _ OpenOption = opt // check interface
-	assert.Equal(t, `HashesOption([MD5, SHA-1])`, opt.String())
+	assert.Equal(t, `HashesOption([md5, sha1])`, opt.String())
 	key, value := opt.Header()
 	assert.Equal(t, "", key)
 	assert.Equal(t, "", value)
