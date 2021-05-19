@@ -45,10 +45,10 @@ func init() {
 			Required: false,
 			Advanced: true,
 		}, {
-			Help:     "If you want to download a shared file that is password protected, add this parameter",
-			Name:     "shared_password",
-			Required: false,
-			Advanced: true,
+			Help:       "If you want to download a shared file that is password protected, add this parameter",
+			Name:       "shared_password",
+			Required:   false,
+			Advanced:   true,
 			IsPassword: true,
 		}, {
 			Name:     config.ConfigEncoding,
