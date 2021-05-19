@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -126,7 +127,7 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 	}
 	if f.opt.SharedPassword != "" {
 		opts.Method = "POST"
-		opts.Body = strings.NewReader("json=1&pass=" + f.opt.SharedPassword);
+		opts.Body = strings.NewReader("json=1&pass=" + url.QueryEscape(f.opt.SharedPassword));
 		opts.ContentType = "application/x-www-form-urlencoded"
 		opts.Parameters = nil
 	}
