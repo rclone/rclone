@@ -92,6 +92,9 @@ func helpText() (tr []string) {
 		" u toggle human-readable format",
 		" n,s,C,A sort by name,size,count,average size",
 		" d delete file/directory",
+		" v select file/directory",
+		" V enter visual select mode",
+		" D delete selected files/directories",
 	}
 	if !clipboard.Unsupported {
 		tr = append(tr, " y copy current path to clipboard")
@@ -126,11 +129,13 @@ type UI struct {
 	showCounts         bool          // toggle showing counts
 	showDirAverageSize bool          // toggle average size
 	humanReadable      bool          // toggle human-readable format
+	visualSelectMode   bool          // toggle visual selection mode
 	sortByName         int8          // +1 for normal, 0 for off, -1 for reverse
 	sortBySize         int8
 	sortByCount        int8
 	sortByAverageSize  int8
 	dirPosMap          map[string]dirPos // store for directory positions
+	selectedEntries    map[string]dirPos // selected entries of current directory
 }
 
 // Where we have got to in the directory listing
@@ -361,12 +366,16 @@ func (u *UI) Draw() error {
 				break
 			}
 			attrs, err := u.d.AttrI(u.sortPerm[n])
+			_, isSelected := u.selectedEntries[entry.String()]
 			fg := termbox.ColorWhite
 			if attrs.EntriesHaveErrors {
 				fg = termbox.ColorYellow
 			}
 			if err != nil {
 				fg = termbox.ColorRed
+			}
+			if isSelected {
+				fg = termbox.ColorLightYellow
 			}
 			bg := termbox.ColorBlack
 			if n == dirPos.entry {
@@ -494,6 +503,11 @@ func (u *UI) move(d int) {
 		dirPos.offset = entries - 1
 	}
 
+	// toggle the current file for selection in selection mode
+	if u.visualSelectMode {
+		u.toggleSelectForCursor()
+	}
+
 	// write dirPos back for later
 	u.dirPosMap[u.path] = dirPos
 }
@@ -503,11 +517,19 @@ func (u *UI) removeEntry(pos int) {
 	u.setCurrentDir(u.d)
 }
 
-// delete the entry at the current position
 func (u *UI) delete() {
 	if u.d == nil || len(u.entries) == 0 {
 		return
 	}
+	if len(u.selectedEntries) > 0 {
+		u.deleteSelected()
+	} else {
+		u.deleteSingle()
+	}
+}
+
+// delete the entry at the current position
+func (u *UI) deleteSingle() {
 	ctx := context.Background()
 	cursorPos := u.dirPosMap[u.path]
 	dirPos := u.sortPerm[cursorPos.entry]
@@ -551,6 +573,62 @@ func (u *UI) delete() {
 			"ALL files in it will be deleted",
 			fspath.JoinRootPath(u.fsName, dirEntry.String())})
 	}
+}
+
+func (u *UI) deleteSelected() {
+	ctx := context.Background()
+
+	u.boxMenu = []string{"cancel", "confirm"}
+
+	u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
+		if o != 1 {
+			return "Aborted!", nil
+		}
+
+		positionsToDelete := make([]int, len(u.selectedEntries))
+		i := 0
+
+		for key, cursorPos := range u.selectedEntries {
+
+			dirPos := u.sortPerm[cursorPos.entry]
+			dirEntry := u.entries[dirPos]
+			var err error
+
+			if obj, isFile := dirEntry.(fs.Object); isFile {
+				err = operations.DeleteFile(ctx, obj)
+			} else {
+				err = operations.Purge(ctx, f, dirEntry.String())
+			}
+
+			if err != nil {
+				return "", err
+			}
+
+			delete(u.selectedEntries, key)
+			positionsToDelete[i] = dirPos
+			i++
+		}
+
+		// deleting all entries at once, as doing it during the deletions
+		// could cause issues.
+		sort.Slice(positionsToDelete, func(i, j int) bool {
+			return positionsToDelete[i] > positionsToDelete[j]
+		})
+		for _, dirPos := range positionsToDelete {
+			u.removeEntry(dirPos)
+		}
+
+		// move cursor at end if needed
+		cursorPos := u.dirPosMap[u.path]
+		if cursorPos.entry >= len(u.entries) {
+			u.move(-1)
+		}
+
+		return "Successfully deleted all items!", nil
+	}
+	u.popupBox([]string{
+		"Delete selected items?",
+		fmt.Sprintf("ALL %d items will be deleted", len(u.selectedEntries))})
 }
 
 func (u *UI) displayPath() {
@@ -661,6 +739,8 @@ func (u *UI) setCurrentDir(d *scan.Dir) {
 	u.d = d
 	u.entries = d.Entries()
 	u.path = fspath.JoinRootPath(u.fsName, d.Path())
+	u.selectedEntries = make(map[string]dirPos)
+	u.visualSelectMode = false
 	u.sortCurrentDir()
 }
 
@@ -737,6 +817,20 @@ func (u *UI) toggleSort(sortType *int8) {
 	u.sortCurrentDir()
 }
 
+func (u *UI) toggleSelectForCursor() {
+	cursorPos := u.dirPosMap[u.path]
+	dirPos := u.sortPerm[cursorPos.entry]
+	dirEntry := u.entries[dirPos]
+
+	_, present := u.selectedEntries[dirEntry.String()]
+
+	if present {
+		delete(u.selectedEntries, dirEntry.String())
+	} else {
+		u.selectedEntries[dirEntry.String()] = cursorPos
+	}
+}
+
 // NewUI creates a new user interface for ncdu on f
 func NewUI(f fs.Fs) *UI {
 	return &UI{
@@ -752,6 +846,7 @@ func NewUI(f fs.Fs) *UI {
 		sortBySize:         1,
 		sortByCount:        0,
 		dirPosMap:          make(map[string]dirPos),
+		selectedEntries:    make(map[string]dirPos),
 	}
 }
 
@@ -845,6 +940,10 @@ outer:
 					u.toggleSort(&u.sortByName)
 				case 's':
 					u.toggleSort(&u.sortBySize)
+				case 'v':
+					u.toggleSelectForCursor()
+				case 'V':
+					u.visualSelectMode = !u.visualSelectMode
 				case 'C':
 					u.toggleSort(&u.sortByCount)
 				case 'A':
@@ -857,6 +956,8 @@ outer:
 					u.delete()
 				case 'u':
 					u.humanReadable = !u.humanReadable
+				case 'D':
+					u.deleteSelected()
 				case '?':
 					u.togglePopupBox(helpText())
 
