@@ -46,7 +46,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Help:       "If you want to download a shared file that is password protected, add this parameter",
-			Name:       "shared_password",
+			Name:       "file_password",
 			Required:   false,
 			Advanced:   true,
 			IsPassword: true,
@@ -81,10 +81,10 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	APIKey         string               `config:"api_key"`
-	SharedFolder   string               `config:"shared_folder"`
-	SharedPassword string               `config:"shared_password"`
-	Enc            encoder.MultiEncoder `config:"encoding"`
+	APIKey       string               `config:"api_key"`
+	SharedFolder string               `config:"shared_folder"`
+	FilePassword string               `config:"file_password"`
+	Enc          encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs is the interface a cloud storage system must provide
