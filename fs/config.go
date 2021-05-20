@@ -3,6 +3,7 @@ package fs
 import (
 	"context"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -168,6 +169,20 @@ func NewConfig() *ConfigInfo {
 	c.TrackRenamesStrategy = "hash"
 	c.FsCacheExpireDuration = 300 * time.Second
 	c.FsCacheExpireInterval = 60 * time.Second
+
+	// Perform a simple check for debug flags to enable debug logging during the flag initialization
+	for argIndex, arg := range os.Args {
+		if strings.HasPrefix(arg, "-vv") && strings.TrimRight(arg, "v") == "-" {
+			c.LogLevel = LogLevelDebug
+		}
+		if arg == "--log-level=DEBUG" || (arg == "--log-level" && len(os.Args) > argIndex+1 && os.Args[argIndex+1] == "DEBUG") {
+			c.LogLevel = LogLevelDebug
+		}
+	}
+	envValue, found := os.LookupEnv("RCLONE_LOG_LEVEL")
+	if found && envValue == "DEBUG" {
+		c.LogLevel = LogLevelDebug
+	}
 
 	return c
 }
