@@ -10,6 +10,7 @@ import (
 	_ "github.com/rclone/rclone/cmd/cachestats"
 	_ "github.com/rclone/rclone/cmd/cat"
 	_ "github.com/rclone/rclone/cmd/check"
+	_ "github.com/rclone/rclone/cmd/checksum"
 	_ "github.com/rclone/rclone/cmd/cleanup"
 	_ "github.com/rclone/rclone/cmd/cmount"
 	_ "github.com/rclone/rclone/cmd/config"
