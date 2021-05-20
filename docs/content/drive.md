@@ -1327,6 +1327,9 @@ you using a GSuite account and click "Create". (the default name is fine)
 8. It will show you a client ID and client secret.  Use these values
 in rclone config to add a new remote or edit an existing remote.
 
+9. Click "OAuth consent screen", then click "PUBLISH APP" button and 
+confirm, or add your account under "Test users".
+
 Be aware that, due to the "enhanced security" recently introduced by
 Google, you are theoretically expected to "submit your app for verification"
 and then wait a few weeks(!) for their response; in practice, you can go right
