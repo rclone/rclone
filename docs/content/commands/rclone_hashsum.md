@@ -37,6 +37,8 @@ Then
 
     $ rclone hashsum MD5 remote:path
 
+Note that hash names are case insensitive.
+
 
 ```
 rclone hashsum <hash> remote:path [flags]

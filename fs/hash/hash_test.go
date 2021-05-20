@@ -189,6 +189,12 @@ func TestHashSetter(t *testing.T) {
 	assert.Equal(t, hash.SHA1, ht)
 	assert.NoError(t, ht.Set("SHA-1"))
 	assert.Equal(t, hash.SHA1, ht)
+
+	assert.NoError(t, ht.Set("SHA1"))
+	assert.Equal(t, hash.SHA1, ht)
+	assert.NoError(t, ht.Set("Sha1"))
+	assert.Equal(t, hash.SHA1, ht)
+	assert.Error(t, ht.Set("Sha-1"))
 }
 
 func TestHashTypeStability(t *testing.T) {

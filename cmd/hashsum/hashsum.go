@@ -74,6 +74,8 @@ Run without a hash to see the list of all supported hashes, e.g.
 Then
 
     $ rclone hashsum MD5 remote:path
+
+Note that hash names are case insensitive.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 2, command, args)

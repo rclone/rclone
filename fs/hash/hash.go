@@ -136,7 +136,7 @@ func (h *Type) Set(s string) error {
 		*h = None
 		return nil
 	}
-	if hash := name2hash[s]; hash != nil {
+	if hash := name2hash[strings.ToLower(s)]; hash != nil {
 		*h = hash.hashType
 		return nil
 	}
