@@ -7,8 +7,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-
-	"github.com/rclone/rclone/fs"
 )
 
 // Func defines a type for a remote control function
@@ -45,7 +43,7 @@ func (r *Registry) Add(call Call) {
 	defer r.mu.Unlock()
 	call.Path = strings.Trim(call.Path, "/")
 	call.Help = strings.TrimSpace(call.Help)
-	fs.Debugf(nil, "Adding path %q to remote control registry", call.Path)
+	// fs.Debugf(nil, "Adding path %q to remote control registry", call.Path) // disabled to make initialization less verbose
 	r.call[call.Path] = &call
 }
 
