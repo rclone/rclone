@@ -125,9 +125,9 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 		Path:       id,
 		Parameters: map[string][]string{"json": {"1"}},
 	}
-	if f.opt.SharedPassword != "" {
+	if f.opt.FolderPassword != "" {
 		opts.Method = "POST"
-		opts.Body = strings.NewReader("json=1&pass=" + url.QueryEscape(f.opt.SharedPassword))
+		opts.Body = strings.NewReader("json=1&pass=" + url.QueryEscape(f.opt.FolderPassword))
 		opts.ContentType = "application/x-www-form-urlencoded"
 		opts.Parameters = nil
 	}
