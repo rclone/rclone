@@ -2,6 +2,7 @@ package check
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -25,12 +26,14 @@ var (
 	match        = ""
 	differ       = ""
 	errFile      = ""
+	checkSum     = ""
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by downloading rather than with hash.")
+	flags.StringVarP(cmdFlags, &checkSum, "checkfile", "C", checkSum, "Treat source:path as a SUM file with hashes of given type")
 	AddFlags(cmdFlags)
 }
 
@@ -126,7 +129,6 @@ func GetCheckOpt(fsrc, fdst fs.Fs) (opt *operations.CheckOpt, close func(), err 
 	}
 
 	return opt, close, nil
-
 }
 
 var commandDefinition = &cobra.Command{
@@ -144,16 +146,39 @@ If you supply the |--download| flag, it will download the data from
 both remotes and check them against each other on the fly.  This can
 be useful for remotes that don't support hashes or if you really want
 to check all the data.
+
+If you supply the |--checkfile HASH| flag with a valid hash name,
+the |source:path| must point to a text file in the SUM format.
 `, "|", "`") + FlagsHelp,
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 2, command, args)
-		fsrc, fdst := cmd.NewFsSrcDst(args)
+		var (
+			fsrc, fdst fs.Fs
+			hashType   hash.Type
+			fsum       fs.Fs
+			sumFile    string
+		)
+		if checkSum != "" {
+			if err := hashType.Set(checkSum); err != nil {
+				fmt.Println(hash.HelpString(0))
+				return err
+			}
+			fsum, sumFile, fsrc = cmd.NewFsSrcFileDst(args)
+		} else {
+			fsrc, fdst = cmd.NewFsSrcDst(args)
+		}
+
 		cmd.Run(false, true, command, func() error {
 			opt, close, err := GetCheckOpt(fsrc, fdst)
 			if err != nil {
 				return err
 			}
 			defer close()
+
+			if checkSum != "" {
+				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, hashType, opt, download)
+			}
+
 			if download {
 				return operations.CheckDownload(context.Background(), opt)
 			}
@@ -165,5 +190,6 @@ to check all the data.
 			}
 			return operations.Check(context.Background(), opt)
 		})
+		return nil
 	},
 }
