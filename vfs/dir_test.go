@@ -19,7 +19,7 @@ func dirCreate(t *testing.T) (r *fstest.Run, vfs *VFS, dir *Dir, item fstest.Ite
 	r, vfs, cleanup = newTestVFS(t)
 
 	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	node, err := vfs.Stat("dir")
 	require.NoError(t, err)
@@ -145,7 +145,7 @@ func TestDirWalk(t *testing.T) {
 	defer cleanup()
 
 	file2 := r.WriteObject(context.Background(), "fil/a/b/c", "super long file", t1)
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
 	root, err := vfs.Root()
 	require.NoError(t, err)
@@ -259,7 +259,7 @@ func TestDirReadDirAll(t *testing.T) {
 	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2- contents", t2)
 	file3 := r.WriteObject(context.Background(), "dir/subdir/file3", "file3-- contents", t3)
-	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+	r.CheckRemoteItems(t, file1, file2, file3)
 
 	node, err := vfs.Stat("dir")
 	require.NoError(t, err)

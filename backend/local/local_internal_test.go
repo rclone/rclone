@@ -93,16 +93,16 @@ func TestSymlink(t *testing.T) {
 	file2d := fstest.NewItem("symlink.txt", "hello", modTime1)
 
 	// Check with no symlink flags
-	fstest.CheckItems(t, r.Flocal, file1)
-	fstest.CheckItems(t, r.Fremote)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t)
 
 	// Set fs into "-L" mode
 	f.opt.FollowSymlinks = true
 	f.opt.TranslateSymlinks = false
 	f.lstat = os.Stat
 
-	fstest.CheckItems(t, r.Flocal, file1, file2d)
-	fstest.CheckItems(t, r.Fremote)
+	r.CheckLocalItems(t, file1, file2d)
+	r.CheckRemoteItems(t)
 
 	// Set fs into "-l" mode
 	f.opt.FollowSymlinks = false
@@ -111,7 +111,7 @@ func TestSymlink(t *testing.T) {
 
 	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2}, nil, fs.ModTimeNotSupported)
 	if haveLChtimes {
-		fstest.CheckItems(t, r.Flocal, file1, file2)
+		r.CheckLocalItems(t, file1, file2)
 	}
 
 	// Create a symlink
@@ -119,7 +119,7 @@ func TestSymlink(t *testing.T) {
 	file3 := r.WriteObjectTo(ctx, r.Flocal, "symlink2.txt"+linkSuffix, "file.txt", modTime3, false)
 	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2, file3}, nil, fs.ModTimeNotSupported)
 	if haveLChtimes {
-		fstest.CheckItems(t, r.Flocal, file1, file2, file3)
+		r.CheckLocalItems(t, file1, file2, file3)
 	}
 
 	// Check it got the correct contents

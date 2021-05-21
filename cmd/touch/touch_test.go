@@ -77,7 +77,7 @@ func TestTouchUpdateTimestamp(t *testing.T) {
 	srcFileName := "a"
 	content := "aaa"
 	file1 := r.WriteObject(context.Background(), srcFileName, content, t1)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	timeAsArgument = "121212"
 	err := Touch(context.Background(), r.Fremote, "a")
@@ -92,7 +92,7 @@ func TestTouchUpdateTimestampWithCFlag(t *testing.T) {
 	srcFileName := "a"
 	content := "aaa"
 	file1 := r.WriteObject(context.Background(), srcFileName, content, t1)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	notCreateNewFile = true
 	timeAsArgument = "121212"

@@ -38,7 +38,7 @@ func rwHandleCreateFlags(t *testing.T, create bool, filename string, flags int) 
 
 	if create {
 		file1 := r.WriteObject(context.Background(), filename, "0123456789abcdef", t1)
-		fstest.CheckItems(t, r.Fremote, file1)
+		r.CheckRemoteItems(t, file1)
 	}
 
 	h, err := vfs.OpenFile(filename, flags, 0777)
@@ -690,7 +690,7 @@ func TestRWFileModTimeWithOpenWriters(t *testing.T) {
 
 	file1 := fstest.NewItem("file1", "hi", mtime)
 	vfs.WaitForWriters(waitForWritersDelay)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 }
 
 func TestRWCacheRename(t *testing.T) {

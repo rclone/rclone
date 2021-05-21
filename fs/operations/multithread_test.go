@@ -125,8 +125,8 @@ func TestMultithreadCopy(t *testing.T) {
 			contents := random.String(test.size)
 			t1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
 			file1 := r.WriteObject(ctx, "file1", contents, t1)
-			fstest.CheckItems(t, r.Fremote, file1)
-			fstest.CheckItems(t, r.Flocal)
+			r.CheckRemoteItems(t, file1)
+			r.CheckLocalItems(t)
 
 			src, err := r.Fremote.NewObject(ctx, "file1")
 			require.NoError(t, err)
