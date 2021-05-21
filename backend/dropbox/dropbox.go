@@ -138,7 +138,7 @@ func getOauthConfig(m configmap.Mapper) *oauth2.Config {
 
 // Register with Fs
 func init() {
-	DbHashType = hash.RegisterHash("DropboxHash", 64, dbhash.New)
+	DbHashType = hash.RegisterHash("dropbox", "DropboxHash", 64, dbhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "dropbox",
 		Description: "Dropbox",

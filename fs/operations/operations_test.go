@@ -1206,10 +1206,10 @@ func TestListFormat(t *testing.T) {
 			Format: "2006-01-02T15:04:05.000000000Z07:00"},
 		IsDir: false,
 		Hashes: map[string]string{
-			"MD5":          "0cc175b9c0f1b6a831c399e269772661",
-			"SHA-1":        "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8",
-			"DropboxHash":  "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8",
-			"QuickXorHash": "6100000000000000000000000100000000000000"},
+			"md5":      "0cc175b9c0f1b6a831c399e269772661",
+			"sha1":     "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8",
+			"dropbox":  "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8",
+			"quickxor": "6100000000000000000000000100000000000000"},
 		ID:     "fileID",
 		OrigID: "fileOrigID",
 	}

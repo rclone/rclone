@@ -80,7 +80,7 @@ var oauthConfig = &oauth2.Config{
 
 // Register with Fs
 func init() {
-	MrHashType = hash.RegisterHash("MailruHash", 40, mrhash.New)
+	MrHashType = hash.RegisterHash("mailru", "MailruHash", 40, mrhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "mailru",
 		Description: "Mail.ru Cloud",

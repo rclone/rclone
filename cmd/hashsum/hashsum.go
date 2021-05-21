@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
@@ -69,23 +70,17 @@ hashed locally enabling any hash for any remote.
 Run without a hash to see the list of all supported hashes, e.g.
 
     $ rclone hashsum
-    Supported hashes are:
-      * MD5
-      * SHA-1
-      * DropboxHash
-      * QuickXorHash
-
+` + hashListHelp("    ") + `
 Then
 
     $ rclone hashsum MD5 remote:path
+
+Note that hash names are case insensitive.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 2, command, args)
 		if len(args) == 0 {
-			fmt.Printf("Supported hashes are:\n")
-			for _, ht := range hash.Supported().Array() {
-				fmt.Printf("  * %v\n", ht)
-			}
+			fmt.Print(hashListHelp(""))
 			return nil
 		} else if len(args) == 1 {
 			return errors.New("need hash type and remote")
@@ -93,6 +88,7 @@ Then
 		var ht hash.Type
 		err := ht.Set(args[0])
 		if err != nil {
+			fmt.Println(hashListHelp(""))
 			return err
 		}
 		fsrc := cmd.NewFsSrc(args[1:])
@@ -110,4 +106,15 @@ Then
 		})
 		return nil
 	},
+}
+
+func hashListHelp(indent string) string {
+	var help strings.Builder
+	help.WriteString(indent)
+	help.WriteString("Supported hashes are:\n")
+	for _, ht := range hash.Supported().Array() {
+		help.WriteString(indent)
+		fmt.Fprintf(&help, "  * %v\n", ht.String())
+	}
+	return help.String()
 }

@@ -20,25 +20,36 @@ type Type int
 type hashDefinition struct {
 	width    int
 	name     string
+	alias    string
 	newFunc  func() hash.Hash
 	hashType Type
 }
 
-var hashes []*hashDefinition
-var highestType Type = 1
+var (
+	type2hash  = map[Type]*hashDefinition{}
+	name2hash  = map[string]*hashDefinition{}
+	alias2hash = map[string]*hashDefinition{}
+	supported  = []Type{}
+)
 
 // RegisterHash adds a new Hash to the list and returns it Type
-func RegisterHash(name string, width int, newFunc func() hash.Hash) Type {
+func RegisterHash(name, alias string, width int, newFunc func() hash.Hash) Type {
+	hashType := Type(1 << len(supported))
+	supported = append(supported, hashType)
+
 	definition := &hashDefinition{
 		name:     name,
+		alias:    alias,
 		width:    width,
 		newFunc:  newFunc,
-		hashType: highestType,
+		hashType: hashType,
 	}
-	hashes = append(hashes, definition)
-	highestType = highestType << 1
 
-	return definition.hashType
+	type2hash[hashType] = definition
+	name2hash[name] = definition
+	alias2hash[alias] = definition
+
+	return hashType
 }
 
 // ErrUnsupported should be returned by filesystem,
@@ -63,31 +74,23 @@ var (
 )
 
 func init() {
-	MD5 = RegisterHash("MD5", 32, md5.New)
-	SHA1 = RegisterHash("SHA-1", 40, sha1.New)
-	Whirlpool = RegisterHash("Whirlpool", 128, whirlpool.New)
-	CRC32 = RegisterHash("CRC-32", 8, func() hash.Hash { return crc32.NewIEEE() })
+	MD5 = RegisterHash("md5", "MD5", 32, md5.New)
+	SHA1 = RegisterHash("sha1", "SHA-1", 40, sha1.New)
+	Whirlpool = RegisterHash("whirlpool", "Whirlpool", 128, whirlpool.New)
+	CRC32 = RegisterHash("crc32", "CRC-32", 8, func() hash.Hash { return crc32.NewIEEE() })
 }
 
 // Supported returns a set of all the supported hashes by
 // HashStream and MultiHasher.
 func Supported() Set {
-	var types []Type
-	for _, v := range hashes {
-		types = append(types, v.hashType)
-	}
-
-	return NewHashSet(types...)
+	return NewHashSet(supported...)
 }
 
 // Width returns the width in characters for any HashType
 func Width(hashType Type) int {
-	for _, v := range hashes {
-		if v.hashType == hashType {
-			return v.width
-		}
+	if hash := type2hash[hashType]; hash != nil {
+		return hash.width
 	}
-
 	return 0
 }
 
@@ -118,32 +121,29 @@ func StreamTypes(r io.Reader, set Set) (map[Type]string, error) {
 // The function will panic if the hash type is unknown.
 func (h Type) String() string {
 	if h == None {
-		return "None"
+		return "none"
 	}
-
-	for _, v := range hashes {
-		if v.hashType == h {
-			return v.name
-		}
+	if hash := type2hash[h]; hash != nil {
+		return hash.name
 	}
-
-	err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
-	panic(err)
+	panic(fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h)))
 }
 
-// Set a Type from a flag
+// Set a Type from a flag.
+// Both name and alias are accepted.
 func (h *Type) Set(s string) error {
-	if s == "None" {
+	if s == "none" || s == "None" {
 		*h = None
+		return nil
 	}
-
-	for _, v := range hashes {
-		if v.name == s {
-			*h = v.hashType
-			return nil
-		}
+	if hash := name2hash[strings.ToLower(s)]; hash != nil {
+		*h = hash.hashType
+		return nil
 	}
-
+	if hash := alias2hash[s]; hash != nil {
+		*h = hash.hashType
+		return nil
+	}
 	return errors.Errorf("Unknown hash type %q", s)
 }
 
@@ -159,23 +159,14 @@ func fromTypes(set Set) (map[Type]hash.Hash, error) {
 	if !set.SubsetOf(Supported()) {
 		return nil, errors.Errorf("requested set %08x contains unknown hash types", int(set))
 	}
-	var hashers = make(map[Type]hash.Hash)
+	hashers := map[Type]hash.Hash{}
 
-	types := set.Array()
-	for _, t := range types {
-		for _, v := range hashes {
-			if t != v.hashType {
-				continue
-			}
-
-			hashers[t] = v.newFunc()
-			break
+	for _, t := range set.Array() {
+		hash := type2hash[t]
+		if hash == nil {
+			panic(fmt.Sprintf("internal error: Unsupported hash type %v", t))
 		}
-
-		if hashers[t] == nil {
-			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
-			panic(err)
-		}
+		hashers[t] = hash.newFunc()
 	}
 
 	return hashers, nil
