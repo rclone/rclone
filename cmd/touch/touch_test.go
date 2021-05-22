@@ -3,7 +3,6 @@ package touch
 import (
 	"context"
 	"testing"
-	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
@@ -16,11 +15,7 @@ var (
 )
 
 func checkFile(t *testing.T, r fs.Fs, path string, content string) {
-	layout := defaultLayout
-	if len(timeAsArgument) == len(layoutDateWithTime) {
-		layout = layoutDateWithTime
-	}
-	timeAtrFromFlags, err := time.Parse(layout, timeAsArgument)
+	timeAtrFromFlags, err := timeOfTouch()
 	require.NoError(t, err)
 	file1 := fstest.NewItem(path, content, timeAtrFromFlags)
 	fstest.CheckItems(t, r, file1)
