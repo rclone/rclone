@@ -3,7 +3,9 @@ package fshttp
 import (
 	"context"
 	"net"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -46,6 +48,8 @@ func (d *Dialer) Dial(network, address string) (net.Conn, error) {
 	return d.DialContext(context.Background(), network, address)
 }
 
+var warnDSCPFail, warnDSCPWindows sync.Once
+
 // DialContext connects to the address on the named network using
 // the provided context.
 func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
@@ -59,9 +63,17 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 			err = ipv6.NewConn(c).SetTrafficClass(d.tclass)
 		} else {
 			err = ipv4.NewConn(c).SetTOS(d.tclass)
+			// Warn of silent failure on Windows (IPv4 only, IPv6 caught by error handler)
+			if runtime.GOOS == "windows" {
+				warnDSCPWindows.Do(func() {
+					fs.LogLevelPrintf(fs.LogLevelWarning, nil, "dialer: setting DSCP on Windows/IPv4 fails silently; see https://github.com/golang/go/issues/42728")
+				})
+			}
 		}
 		if err != nil {
-			return c, err
+			warnDSCPFail.Do(func() {
+				fs.LogLevelPrintf(fs.LogLevelWarning, nil, "dialer: failed to set DSCP socket options: %v", err)
+			})
 		}
 	}
 	return newTimeoutConn(c, d.timeout)
