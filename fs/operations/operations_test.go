@@ -1573,3 +1573,22 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
 	fstest.CheckItems(t, r.Fremote, file1, file4)
 }
+
+func TestTouchDir(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
+	file3 := r.WriteBoth(ctx, "sub dir/potato3", "hello", t2)
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+
+	timeValue := time.Date(2010, 9, 8, 7, 6, 5, 4, time.UTC)
+	err := operations.TouchDir(ctx, r.Fremote, timeValue, true)
+	require.NoError(t, err)
+	file1.ModTime = timeValue
+	file2.ModTime = timeValue
+	file3.ModTime = timeValue
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+}
