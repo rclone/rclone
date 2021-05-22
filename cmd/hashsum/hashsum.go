@@ -20,6 +20,7 @@ var (
 	OutputBase64   = false
 	DownloadFlag   = false
 	HashsumOutfile = ""
+	ChecksumFile   = ""
 )
 
 func init() {
@@ -32,6 +33,7 @@ func init() {
 func AddHashFlags(cmdFlags *pflag.FlagSet) {
 	flags.BoolVarP(cmdFlags, &OutputBase64, "base64", "", OutputBase64, "Output base64 encoded hashsum")
 	flags.StringVarP(cmdFlags, &HashsumOutfile, "output-file", "", HashsumOutfile, "Output hashsums to a file rather than the terminal")
+	flags.StringVarP(cmdFlags, &ChecksumFile, "checkfile", "C", ChecksumFile, "Validate hashes against a given SUM file instead of printing them")
 	flags.BoolVarP(cmdFlags, &DownloadFlag, "download", "", DownloadFlag, "Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote")
 }
 
@@ -93,6 +95,10 @@ Note that hash names are case insensitive.
 		fsrc := cmd.NewFsSrc(args[1:])
 
 		cmd.Run(false, false, command, func() error {
+			if ChecksumFile != "" {
+				fsum, sumFile := cmd.NewFsFile(ChecksumFile)
+				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, ht, nil, DownloadFlag)
+			}
 			if HashsumOutfile == "" {
 				return operations.HashLister(context.Background(), ht, OutputBase64, DownloadFlag, fsrc, nil)
 			}

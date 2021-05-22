@@ -32,6 +32,10 @@ hashed locally enabling SHA-1 for any remote.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
+			if hashsum.ChecksumFile != "" {
+				fsum, sumFile := cmd.NewFsFile(hashsum.ChecksumFile)
+				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, hash.SHA1, nil, hashsum.DownloadFlag)
+			}
 			if hashsum.HashsumOutfile == "" {
 				return operations.HashLister(context.Background(), hash.SHA1, hashsum.OutputBase64, hashsum.DownloadFlag, fsrc, nil)
 			}
