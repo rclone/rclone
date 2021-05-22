@@ -787,6 +787,8 @@ rclone copy --dscp LE from:/from to:/to
 ```
 would make the priority lower than usual internet flows.
 
+This option has no effect on Windows (see [golang/go#42728](https://github.com/golang/go/issues/42728)).
+
 ### -n, --dry-run ###
 
 Do a trial run with no permanent changes.  Use this to see what rclone
