@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -390,7 +389,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 	options.Fdst = fsrc // denotes the file system to check
 	opt = &options      // override supplied argument
 
-	if hashType == hash.None || !opt.Fdst.Hashes().Contains(hashType) {
+	if !download && (hashType == hash.None || !opt.Fdst.Hashes().Contains(hashType)) {
 		return errors.Errorf("%s: hash type is not supported by file system: %s", hashType, opt.Fdst)
 	}
 
@@ -411,7 +410,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 		tokens: make(chan struct{}, ci.Checkers),
 		opt:    *opt,
 	}
-	listErr := ListFn(ctx, opt.Fdst, func(obj fs.Object) {
+	lastErr := ListFn(ctx, opt.Fdst, func(obj fs.Object) {
 		c.checkSum(ctx, obj, download, hashes, hashType)
 	})
 	c.wg.Wait() // wait for background go-routines
@@ -429,12 +428,14 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 		err := errors.Errorf("File not in %v", opt.Fdst)
 		fs.Errorf(filename, "%v", err)
 		_ = fs.CountError(err)
-		atomic.AddInt32(&c.differences, 1)
+		if lastErr == nil {
+			lastErr = err
+		}
 		atomic.AddInt32(&c.dstFilesMissing, 1)
 		c.reportFilename(filename, opt.MissingOnDst, '+')
 	}
 
-	return c.reportResults(ctx, listErr)
+	return c.reportResults(ctx, lastErr)
 }
 
 // checkSum checks single object against golden hashes
@@ -496,6 +497,9 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 
 // matchSum sums up the results of hashsum matching for an object
 func (c *checkMarch) matchSum(ctx context.Context, sumHash, objHash string, obj fs.Object, err error, hashType hash.Type) {
+	tr := accounting.Stats(ctx).NewCheckingTransfer(obj)
+	defer tr.Done(ctx, err)
+
 	switch {
 	case err != nil:
 		_ = fs.CountError(err)
@@ -513,7 +517,6 @@ func (c *checkMarch) matchSum(ctx context.Context, sumHash, objHash string, obj 
 		atomic.AddInt32(&c.matches, 1)
 		c.report(obj, c.opt.Match, '=')
 	case objHash == sumHash:
-		atomic.AddInt32(&c.matches, 1)
 		fs.Debugf(obj, "%v = %s OK", hashType, sumHash)
 		atomic.AddInt32(&c.matches, 1)
 		c.report(obj, c.opt.Match, '=')
@@ -552,12 +555,10 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		line := strings.TrimSpace(string(lineBytes))
+		line := string(lineBytes)
 		if line == "" {
 			continue
 		}
-		//line = strings.TrimPrefix(line, "\\")
 
 		if fields := re.FindStringSubmatch(line); fields != nil {
 			hashes[fields[2]] = fields[1]
