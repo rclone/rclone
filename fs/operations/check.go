@@ -56,6 +56,7 @@ type checkMarch struct {
 	dstFilesMissing int32
 	matches         int32
 	opt             CheckOpt
+	progress        bool
 }
 
 // report outputs the fileName to out if required and to the combined log
@@ -68,6 +69,9 @@ func (c *checkMarch) reportFilename(filename string, out io.Writer, sigil rune) 
 		c.ioMu.Lock()
 		_, _ = fmt.Fprintf(out, "%s\n", filename)
 		c.ioMu.Unlock()
+	}
+	if c.progress {
+		fs.LogPrintf(fs.LogLevelNotice, nil, "%c %s", sigil, filename)
 	}
 	if c.opt.Combined != nil {
 		c.ioMu.Lock()
@@ -377,12 +381,17 @@ func CheckDownload(ctx context.Context, opt *CheckOpt) error {
 
 // CheckSum checks filesystem hashes against a SUM file
 func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType hash.Type, opt *CheckOpt, download bool) error {
+	ci := fs.GetConfig(ctx)
+	progress := false
 	var options CheckOpt
 	if opt != nil {
 		options = *opt
 	} else {
 		// default options for hashsum -c
-		options.Combined = os.Stdout
+		progress = ci.Progress
+		if !progress { // prevent visual clutter
+			options.Combined = os.Stdout
+		}
 	}
 	// CheckSum treats Fsrc and Fdst specially:
 	options.Fsrc = nil  // no file system here, corresponds to the sum list
@@ -405,10 +414,10 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 		return errors.Wrap(err, "failed to parse sum file")
 	}
 
-	ci := fs.GetConfig(ctx)
 	c := &checkMarch{
-		tokens: make(chan struct{}, ci.Checkers),
-		opt:    *opt,
+		tokens:   make(chan struct{}, ci.Checkers),
+		opt:      *opt,
+		progress: progress,
 	}
 	lastErr := ListFn(ctx, opt.Fdst, func(obj fs.Object) {
 		c.checkSum(ctx, obj, download, hashes, hashType)
