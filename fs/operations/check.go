@@ -458,8 +458,13 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 	if !sumFound && c.opt.OneWay {
 		return
 	}
+
+	var err error
+	tr := accounting.Stats(ctx).NewCheckingTransfer(obj)
+	defer tr.Done(ctx, err)
+
 	if !sumFound {
-		err := errors.New("sum not found")
+		err = errors.New("sum not found")
 		_ = fs.CountError(err)
 		fs.Errorf(obj, "%v", err)
 		atomic.AddInt32(&c.differences, 1)
@@ -469,7 +474,8 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 	}
 
 	if !download {
-		objHash, err := obj.Hash(ctx, hashType)
+		var objHash string
+		objHash, err = obj.Hash(ctx, hashType)
 		c.matchSum(ctx, sumHash, objHash, obj, err, hashType)
 		return
 	}
@@ -506,9 +512,6 @@ func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool,
 
 // matchSum sums up the results of hashsum matching for an object
 func (c *checkMarch) matchSum(ctx context.Context, sumHash, objHash string, obj fs.Object, err error, hashType hash.Type) {
-	tr := accounting.Stats(ctx).NewCheckingTransfer(obj)
-	defer tr.Done(ctx, err)
-
 	switch {
 	case err != nil:
 		_ = fs.CountError(err)

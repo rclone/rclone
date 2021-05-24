@@ -453,7 +453,7 @@ func testCheckSum(t *testing.T, download bool) {
 		"banana": testDigest1,
 	})
 	fstest.CheckItems(t, r.Fremote, fcsums, file1, file2)
-	check(2, 1, 1, wantType{
+	check(2, 2, 1, wantType{
 		"combined":     "- potato\n= banana\n",
 		"missingonsrc": "potato\n",
 		"missingondst": "",
