@@ -145,6 +145,7 @@ WebDAV or S3, that work out of the box.)
 - rsync.net
 - Scaleway
 - Seafile
+- SeaweedFS
 - SFTP
 - StackPath
 - SugarSync

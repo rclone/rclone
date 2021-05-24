@@ -58,7 +58,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, and Tencent COS",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, SeaweedFS, and Tencent COS",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
@@ -91,6 +91,9 @@ func init() {
 			}, {
 				Value: "Scaleway",
 				Help:  "Scaleway Object Storage",
+			}, {
+				Value: "SeaweedFS",
+				Help:  "SeaweedFS S3",
 			}, {
 				Value: "StackPath",
 				Help:  "StackPath Object Storage",
@@ -592,6 +595,10 @@ func init() {
 				Value:    "sgp1.digitaloceanspaces.com",
 				Help:     "Digital Ocean Spaces Singapore 1",
 				Provider: "DigitalOcean",
+			}, {
+				Value:    "localhost:8333",
+				Help:     "SeaweedFS S3 localhost",
+				Provider: "SeaweedFS",
 			}, {
 				Value:    "s3.wasabisys.com",
 				Help:     "Wasabi US East endpoint",
