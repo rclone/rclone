@@ -6,17 +6,13 @@ package sftp
 
 import (
 	"context"
-	"os"
 
-	"github.com/pkg/errors"
-	"github.com/pkg/sftp"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/lib/terminal"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -111,23 +107,10 @@ be used with sshd via ~/.ssh/authorized_keys, for example:
 			cmd.CheckArgs(0, 0, command, args)
 		}
 		cmd.Run(false, true, command, func() error {
-			s := newServer(context.Background(), f, &Opt)
 			if Opt.Stdio {
-				if terminal.IsTerminal(int(os.Stdout.Fd())) {
-					return errors.New("Refusing to run SFTP server directly on a terminal. Please let sshd start rclone, by connecting with sftp or sshfs.")
-				}
-				sshChannel := &StdioChannel{
-					stdin: os.Stdin,
-					stdout: os.Stdout,
-				}
-				handlers := newVFSHandler(vfs.New(f, &vfsflags.Opt))
-				server := sftp.NewRequestServer(sshChannel, handlers)
-				defer server.Close()
-				if err := server.Serve(); err != nil {
-					return errors.Wrap(err, "failed to start stdio server")
-				}
-				return nil
+				return serveStdio(f)
 			}
+			s := newServer(context.Background(), f, &Opt)
 			err := s.Serve()
 			if err != nil {
 				return err
@@ -136,26 +119,4 @@ be used with sshd via ~/.ssh/authorized_keys, for example:
 			return nil
 		})
 	},
-}
-
-type StdioChannel struct {
-	stdin *os.File
-	stdout *os.File
-}
-
-func (c *StdioChannel) Read(data []byte) (int, error) {
-	return c.stdin.Read(data)
-}
-
-func (c *StdioChannel) Write(data []byte) (int, error) {
-	return c.stdout.Write(data)
-}
-
-func (c *StdioChannel) Close() error {
-	err1 := c.stdin.Close()
-	err2 := c.stdout.Close()
-	if err1 != nil {
-		return err1
-	}
-	return err2
 }
