@@ -25,7 +25,7 @@ type Test struct {
 
 // Backend describes a backend test
 //
-// FIXME make bucket based remotes set sub-dir automatically???
+// FIXME make bucket-based remotes set sub-dir automatically???
 type Backend struct {
 	Backend     string   // name of the backend directory
 	Remote      string   // name of the test remote

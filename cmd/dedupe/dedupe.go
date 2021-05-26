@@ -20,7 +20,7 @@ func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlag := commandDefinition.Flags()
 	flags.FVarP(cmdFlag, &dedupeMode, "dedupe-mode", "", "Dedupe mode interactive|skip|first|newest|oldest|largest|smallest|rename")
-	flags.BoolVarP(cmdFlag, &byHash, "by-hash", "", false, "Find indentical hashes rather than names")
+	flags.BoolVarP(cmdFlag, &byHash, "by-hash", "", false, "Find identical hashes rather than names")
 }
 
 var commandDefinition = &cobra.Command{
@@ -47,7 +47,7 @@ name.  It will do this iteratively until all the identically named
 directories have been merged.
 
 Next, if deduping by name, for every group of duplicate file names /
-hashes, it will delete all but one identical files it finds without
+hashes, it will delete all but one identical file it finds without
 confirmation.  This means that for most duplicated files the ` +
 		"`dedupe`" + ` command will not be interactive.
 
@@ -59,7 +59,7 @@ identical if they have the same size (any hash will be ignored). This
 can be useful on crypt backends which do not support hashes.
 
 Next rclone will resolve the remaining duplicates. Exactly which
-action is taken depends on the dedupe mode. By default rclone will
+action is taken depends on the dedupe mode. By default, rclone will
 interactively query the user for each one.
 
 **Important**: Since this can cause data loss, test first with the
@@ -126,7 +126,7 @@ Dedupe can be run non interactively using the ` + "`" + `--dedupe-mode` + "`" + 
   * ` + "`" + `--dedupe-mode rename` + "`" + ` - removes identical files then renames the rest to be different.
   * ` + "`" + `--dedupe-mode list` + "`" + ` - lists duplicate dirs and files only and changes nothing.
 
-For example to rename all the identically named photos in your Google Photos directory, do
+For example, to rename all the identically named photos in your Google Photos directory, do
 
     rclone dedupe --dedupe-mode rename "drive:Google Photos"
 

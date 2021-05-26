@@ -269,7 +269,7 @@ func errorHandler(res *http.Response) (err error) {
 	}
 	serverError.Message = string(data)
 	if serverError.Message == "" || strings.HasPrefix(serverError.Message, "{") {
-		// Replace empty or JSON response with a human readable text.
+		// Replace empty or JSON response with a human-readable text.
 		serverError.Message = res.Status
 	}
 	serverError.Status = res.StatusCode

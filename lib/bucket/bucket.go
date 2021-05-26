@@ -1,4 +1,4 @@
-// Package bucket is contains utilities for managing bucket based backends
+// Package bucket is contains utilities for managing bucket-based backends
 package bucket
 
 import (

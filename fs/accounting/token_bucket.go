@@ -281,7 +281,7 @@ If the rate parameter is not supplied then the bandwidth is queried
 The format of the parameter is exactly the same as passed to --bwlimit
 except only one bandwidth may be specified.
 
-In either case "rate" is returned as a human readable string, and
+In either case "rate" is returned as a human-readable string, and
 "bytesPerSecond" is returned as a number.
 `,
 	})

@@ -224,7 +224,7 @@ it when needed.
 If you intend to use the wrapped remote both directly for keeping
 unencrypted content, as well as through a crypt remote for encrypted
 content, it is recommended to point the crypt remote to a separate
-directory within the wrapped remote. If you use a bucket based storage
+directory within the wrapped remote. If you use a bucket-based storage
 system (e.g. Swift, S3, Google Compute Storage, B2, Hubic) it is generally
 advisable to wrap the crypt remote around a specific bucket (`s3:bucket`).
 If wrapping around the entire root of the storage (`s3:`), and use the

@@ -6,7 +6,7 @@ type: page
 
 # {{< icon "fa fa-heart heart" >}} Donations to the rclone project
 
-Rclone is a free open source project with thousands of contributions
+Rclone is a free open-source project with thousands of contributions
 from volunteers all round the world and I would like to thank all of
 you for donating your time to the project.
 

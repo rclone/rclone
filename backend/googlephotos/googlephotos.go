@@ -139,7 +139,7 @@ you want to read the media.`,
 			Default: false,
 			Help: `Also view and download archived media.
 
-By default rclone does not request archived media. Thus, when syncing,
+By default, rclone does not request archived media. Thus, when syncing,
 archived media is not visible in directory listings or transferred.
 
 Note that media in albums is always visible and synced, no matter
