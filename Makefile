@@ -256,3 +256,36 @@ startstable:
 
 winzip:
 	zip -9 rclone-$(TAG).zip rclone.exe
+
+# docker volume plugin
+PLUGIN_IMAGE_USER ?= rclone
+PLUGIN_IMAGE_TAG ?= latest
+PLUGIN_IMAGE_NAME ?= docker-volume-rclone
+PLUGIN_IMAGE ?= $(PLUGIN_IMAGE_USER)/$(PLUGIN_IMAGE_NAME):$(PLUGIN_IMAGE_TAG)
+
+PLUGIN_BASE_IMAGE := rclone/rclone:latest
+PLUGIN_BUILD_DIR := ./build/docker-plugin
+PLUGIN_CONTRIB_DIR := ./cmd/serve/docker/contrib/plugin
+PLUGIN_CONFIG := $(PLUGIN_CONTRIB_DIR)/config.json
+PLUGIN_DOCKERFILE := $(PLUGIN_CONTRIB_DIR)/Dockerfile
+PLUGIN_CONTAINER := docker-volume-rclone-dev-$(shell date +'%Y%m%d-%H%M%S')
+
+docker-plugin: docker-plugin-rootfs docker-plugin-create
+
+docker-plugin-image: rclone
+	docker build --no-cache --pull --build-arg BASE_IMAGE=${PLUGIN_BASE_IMAGE} -t ${PLUGIN_IMAGE} -f ${PLUGIN_DOCKERFILE} .
+
+docker-plugin-rootfs: docker-plugin-image
+	mkdir -p ${PLUGIN_BUILD_DIR}/rootfs
+	docker create --name ${PLUGIN_CONTAINER} ${PLUGIN_IMAGE}
+	docker export ${PLUGIN_CONTAINER} | tar -x -C ${PLUGIN_BUILD_DIR}/rootfs
+	docker rm -vf ${PLUGIN_CONTAINER}
+	cp ${PLUGIN_CONFIG} ${PLUGIN_BUILD_DIR}/config.json
+
+docker-plugin-create:
+	docker plugin rm -f ${PLUGIN_IMAGE} 2>/dev/null || true
+	docker plugin create ${PLUGIN_IMAGE} ${PLUGIN_BUILD_DIR}
+
+docker-plugin-push: docker-plugin-create
+	docker plugin push ${PLUGIN_IMAGE}
+	docker plugin rm ${PLUGIN_IMAGE}
