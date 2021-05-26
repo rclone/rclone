@@ -32,3 +32,40 @@ jobs:
                 publish: true
                 dockerHubUser: ${{ secrets.DOCKER_HUB_USER }}
                 dockerHubPassword: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+    build_docker_volume_plugin:
+        if: github.repository == 'rclone/rclone'
+        needs: build
+        runs-on: ubuntu-latest
+        name: Build and publish docker volume plugin
+        steps:
+            - name: Checkout master
+              uses: actions/checkout@v2
+              with:
+                fetch-depth: 0
+            - name: Set plugin parameters
+              shell: bash
+              run: |
+                GITHUB_REF=${{ github.ref }}
+
+                PLUGIN_IMAGE_USER=rclone
+                PLUGIN_IMAGE_NAME=docker-volume-rclone
+                PLUGIN_IMAGE_TAG=${GITHUB_REF#refs/tags/}
+                PLUGIN_IMAGE=${PLUGIN_IMAGE_USER}/${PLUGIN_IMAGE_NAME}:${PLUGIN_IMAGE_TAG}
+                PLUGIN_IMAGE_LATEST=${PLUGIN_IMAGE_USER}/${PLUGIN_IMAGE_NAME}:latest
+
+                echo "PLUGIN_IMAGE_USER=${PLUGIN_IMAGE_USER}" >> $GITHUB_ENV
+                echo "PLUGIN_IMAGE_NAME=${PLUGIN_IMAGE_NAME}" >> $GITHUB_ENV
+                echo "PLUGIN_IMAGE_TAG=${PLUGIN_IMAGE_TAG}" >> $GITHUB_ENV
+                echo "PLUGIN_IMAGE=${PLUGIN_IMAGE}" >> $GITHUB_ENV
+                echo "PLUGIN_IMAGE_LATEST=${PLUGIN_IMAGE_LATEST}" >> $GITHUB_ENV
+            - name: Build image
+              shell: bash
+              run: |
+                make docker-plugin
+            - name: Push image
+              shell: bash
+              run: |
+                docker login -u ${{ secrets.DOCKER_HUB_USER }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
+                make docker-plugin-push PLUGIN_IMAGE=${PLUGIN_IMAGE}
+                make docker-plugin-push PLUGIN_IMAGE=${PLUGIN_IMAGE_LATEST}
