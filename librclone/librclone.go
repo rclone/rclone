@@ -20,12 +20,15 @@
 package main
 
 /*
+#include <stdlib.h>
+
 struct RcloneRPCResult {
 	char*	Output;
 	int	Status;
 };
 */
 import "C"
+import "unsafe"
 
 import (
 	"github.com/rclone/rclone/librclone/librclone"
@@ -77,6 +80,12 @@ func RcloneRPC(method *C.char, input *C.char) (result C.struct_RcloneRPCResult) 
 	result.Output = C.CString(output)
 	result.Status = C.int(status)
 	return result
+}
+
+// Use this to free the string returned by RcloneRPC
+//export FreeString
+func FreeString(str *C.char) {
+	C.free(unsafe.Pointer(str))
 }
 
 // do nothing here - necessary for building into a C library
