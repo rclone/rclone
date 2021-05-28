@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -74,58 +75,59 @@ type AddVirtualFn func(remote string, size int64, isDir bool) error
 // This starts background goroutines which can be cancelled with the
 // context passed in.
 func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVirtualFn) (*Cache, error) {
-	fName := fremote.Name()
-	fRoot := filepath.FromSlash(fremote.Root())
-	if runtime.GOOS == "windows" {
-		if strings.HasPrefix(fRoot, `\\?`) {
-			fRoot = fRoot[3:]
-		}
-		fRoot = strings.Replace(fRoot, ":", "", -1)
-		// Replace leading ':' if remote was created on the fly as ":backend:/path" as it is illegal in Windows
-		if fName[0] == ':' {
-			fName = "^" + fName[1:]
-		}
-	}
-	cacheDir := config.CacheDir
-	cacheDir, err := filepath.Abs(cacheDir)
-	if err != nil {
+	// Get cache root path.
+	// We need it in two variants: OS path as an absolute path with UNC prefix,
+	// OS-specific path separators, and encoded with OS-specific encoder. Standard path
+	// without UNC prefix, with slash path separators, and standard (internal) encoding.
+	// Care must be taken when creating OS paths so that the ':' separator following a
+	// drive letter is not encoded (e.g. into unicode fullwidth colon).
+	var err error
+	parentOSPath := config.CacheDir // Assuming string contains a local path in OS encoding
+	if parentOSPath, err = filepath.Abs(parentOSPath); err != nil {
 		return nil, errors.Wrap(err, "failed to make --cache-dir absolute")
 	}
-	root := file.UNCPath(filepath.Join(cacheDir, "vfs", fName, fRoot))
-	fs.Debugf(nil, "vfs cache: root is %q", root)
-	metaRoot := file.UNCPath(filepath.Join(cacheDir, "vfsMeta", fName, fRoot))
-	fs.Debugf(nil, "vfs cache: metadata root is %q", root)
+	fs.Debugf(nil, "vfs cache: root is %q", parentOSPath)
+	parentPath := fromOSPath(parentOSPath)
 
-	fcache, err := fscache.Get(ctx, root)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create cache remote")
+	// Get a relative cache path representing the remote.
+	relativeDirPath := fremote.Root() // This is a remote path in standard encoding
+	if runtime.GOOS == "windows" {
+		if strings.HasPrefix(relativeDirPath, `//?/`) {
+			relativeDirPath = relativeDirPath[2:] // Trim off the "//" for the result to be a valid when appending to another path
+		}
 	}
-	fcacheMeta, err := fscache.Get(ctx, metaRoot)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create cache meta remote")
+	relativeDirPath = fremote.Name() + "/" + relativeDirPath
+	relativeDirOSPath := toOSPath(relativeDirPath)
+
+	// Create cache root dirs
+	var dataOSPath, metaOSPath string
+	if dataOSPath, metaOSPath, err = createRootDirs(parentOSPath, relativeDirOSPath); err != nil {
+		return nil, err
 	}
+	fs.Debugf(nil, "vfs cache: data root is %q", dataOSPath)
+	fs.Debugf(nil, "vfs cache: metadata root is %q", metaOSPath)
 
-	hashType, hashOption := operations.CommonHash(ctx, fcache, fremote)
+	// Get (create) cache backends
+	var fdata, fmeta fs.Fs
+	if fdata, fmeta, err = getBackends(ctx, parentPath, relativeDirPath); err != nil {
+		return nil, err
+	}
+	hashType, hashOption := operations.CommonHash(ctx, fdata, fremote)
 
+	// Create the cache object
 	c := &Cache{
 		fremote:    fremote,
-		fcache:     fcache,
-		fcacheMeta: fcacheMeta,
+		fcache:     fdata,
+		fcacheMeta: fmeta,
 		opt:        opt,
-		root:       root,
-		metaRoot:   metaRoot,
+		root:       dataOSPath,
+		metaRoot:   metaOSPath,
 		item:       make(map[string]*Item),
 		errItems:   make(map[string]error),
 		hashType:   hashType,
 		hashOption: hashOption,
 		writeback:  writeback.New(ctx, opt),
 		avFn:       avFn,
-	}
-
-	// Make sure cache directories exist
-	_, err = c.mkdir("")
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to make cache directory")
 	}
 
 	// load in the cache and metadata off disk
@@ -146,6 +148,63 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	return c, nil
 }
 
+// createDir creates a directory path, along with any necessary parents
+func createDir(dir string) error {
+	return os.MkdirAll(dir, 0700)
+}
+
+// createRootDir creates a single cache root directory
+func createRootDir(parentOSPath string, name string, relativeDirOSPath string) (path string, err error) {
+	path = file.UNCPath(filepath.Join(parentOSPath, name, relativeDirOSPath))
+	err = createDir(path)
+	return
+}
+
+// createRootDirs creates all cache root directories
+func createRootDirs(parentOSPath string, relativeDirOSPath string) (dataOSPath string, metaOSPath string, err error) {
+	if dataOSPath, err = createRootDir(parentOSPath, "vfs", relativeDirOSPath); err != nil {
+		err = errors.Wrap(err, "failed to create data cache directory")
+	} else if metaOSPath, err = createRootDir(parentOSPath, "vfsMeta", relativeDirOSPath); err != nil {
+		err = errors.Wrap(err, "failed to create metadata cache directory")
+	}
+	return
+}
+
+// createItemDir creates the directory for named item in all cache roots
+//
+// Returns an os path for the data cache file.
+func (c *Cache) createItemDir(name string) (string, error) {
+	parent := vfscommon.FindParent(name)
+	leaf := filepath.Base(name)
+	parentPath := c.toOSPath(parent)
+	err := createDir(parentPath)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to create data cache item directory")
+	}
+	parentPathMeta := c.toOSPathMeta(parent)
+	err = createDir(parentPathMeta)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to create metadata cache item directory")
+	}
+	return filepath.Join(parentPath, leaf), nil
+}
+
+// getBackend gets a backend for a cache root dir
+func getBackend(ctx context.Context, parentPath string, name string, relativeDirPath string) (fs.Fs, error) {
+	path := fmt.Sprintf("%s/%s/%s", parentPath, name, relativeDirPath)
+	return fscache.Get(ctx, path)
+}
+
+// getBackends gets backends for all cache root dirs
+func getBackends(ctx context.Context, parentPath string, relativeDirPath string) (fdata fs.Fs, fmeta fs.Fs, err error) {
+	if fdata, err = getBackend(ctx, parentPath, "vfs", relativeDirPath); err != nil {
+		err = errors.Wrap(err, "failed to get data cache backend")
+	} else if fmeta, err = getBackend(ctx, parentPath, "vfsMeta", relativeDirPath); err != nil {
+		err = errors.Wrap(err, "failed to get metadata cache backend")
+	}
+	return
+}
+
 // clean returns the cleaned version of name for use in the index map
 //
 // name should be a remote path not an osPath
@@ -158,33 +217,25 @@ func clean(name string) string {
 	return name
 }
 
+// fromOSPath turns a OS path into a standard/remote path
+func fromOSPath(osPath string) string {
+	return encoder.OS.ToStandardPath(filepath.ToSlash(osPath))
+}
+
+// toOSPath turns a standard/remote path into an OS path
+func toOSPath(standardPath string) string {
+	return filepath.FromSlash(encoder.OS.FromStandardPath(standardPath))
+}
+
 // toOSPath turns a remote relative name into an OS path in the cache
 func (c *Cache) toOSPath(name string) string {
-	return filepath.Join(c.root, filepath.FromSlash(name))
+	return filepath.Join(c.root, toOSPath(name))
 }
 
 // toOSPathMeta turns a remote relative name into an OS path in the
 // cache for the metadata
 func (c *Cache) toOSPathMeta(name string) string {
-	return filepath.Join(c.metaRoot, filepath.FromSlash(name))
-}
-
-// mkdir makes the directory for name in the cache and returns an os
-// path for the file
-func (c *Cache) mkdir(name string) (string, error) {
-	parent := vfscommon.FindParent(name)
-	leaf := filepath.Base(name)
-	parentPath := c.toOSPath(parent)
-	err := os.MkdirAll(parentPath, 0700)
-	if err != nil {
-		return "", errors.Wrap(err, "make cache directory failed")
-	}
-	parentPathMeta := c.toOSPathMeta(parent)
-	err = os.MkdirAll(parentPathMeta, 0700)
-	if err != nil {
-		return "", errors.Wrap(err, "make cache meta directory failed")
-	}
-	return filepath.Join(parentPath, leaf), nil
+	return filepath.Join(c.metaRoot, toOSPath(name))
 }
 
 // _get gets name from the cache or creates a new one
@@ -306,7 +357,7 @@ func rename(osOldPath, osNewPath string) error {
 			return errors.Wrapf(err, "Failed to stat destination: %s", osNewPath)
 		}
 		parent := vfscommon.OsFindParent(osNewPath)
-		err = os.MkdirAll(parent, 0700)
+		err = createDir(parent)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to create parent dir: %s", parent)
 		}
@@ -488,7 +539,7 @@ func (c *Cache) KickCleaner() {
 	c.kickerMu.Unlock()
 
 	c.mu.Lock()
-	for c.outOfSpace == true {
+	for c.outOfSpace {
 		fs.Debugf(nil, "vfs cache: in KickCleaner, looping on c.outOfSpace")
 		c.cond.Wait()
 	}
@@ -510,7 +561,6 @@ func (c *Cache) removeNotInUse(item *Item, maxAge time.Duration, emptyOnly bool)
 	} else {
 		fs.Debugf(nil, "vfs cache RemoveNotInUse (maxAge=%d, emptyOnly=%v): item %s not removed, freed %d bytes", maxAge, emptyOnly, item.GetName(), spaceFreed)
 	}
-	return
 }
 
 // Retry failed resets during purgeClean()
