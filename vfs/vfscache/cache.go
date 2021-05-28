@@ -100,7 +100,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create cache remote")
 	}
-	fcacheMeta, err := fscache.Get(ctx, root)
+	fcacheMeta, err := fscache.Get(ctx, metaRoot)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create cache meta remote")
 	}
