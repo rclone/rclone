@@ -27,6 +27,7 @@ type Options struct {
 	User           string   // single username
 	Pass           string   // password for user
 	NoAuth         bool     // allow no authentication on connections
+	Stdio          bool     // serve on stdio
 }
 
 // DefaultOpt is the default values used for Options
@@ -47,6 +48,7 @@ func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
 	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication.")
 	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set.")
+	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on run stdin/stdout")
 }
 
 func init() {
@@ -90,6 +92,11 @@ reachable externally then supply "--addr :2022" for example.
 Note that the default of "--vfs-cache-mode off" is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
 
+If --stdio is specified, rclone will serve SFTP over stdio, which can
+be used with sshd via ~/.ssh/authorized_keys, for example:
+
+    restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
+
 ` + vfs.Help + proxy.Help,
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
@@ -100,6 +107,9 @@ sftp backend, but it may not be with other SFTP clients.
 			cmd.CheckArgs(0, 0, command, args)
 		}
 		cmd.Run(false, true, command, func() error {
+			if Opt.Stdio {
+				return serveStdio(f)
+			}
 			s := newServer(context.Background(), f, &Opt)
 			err := s.Serve()
 			if err != nil {
