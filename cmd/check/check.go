@@ -151,17 +151,13 @@ If you supply the |--checkfile HASH| flag with a valid hash name,
 the |source:path| must point to a text file in the SUM format.
 `, "|", "`") + FlagsHelp,
 	RunE: func(command *cobra.Command, args []string) error {
-		cmd.CheckArgs(2, 3, command, args)
+		cmd.CheckArgs(2, 2, command, args)
 		var (
 			fsrc, fdst fs.Fs
 			hashType   hash.Type
 			fsum       fs.Fs
 			sumFile    string
 		)
-		if len(args) == 3 {
-			checkSum = args[0]
-			args = args[1:]
-		}
 		if checkSum != "" {
 			if err := hashType.Set(checkSum); err != nil {
 				fmt.Println(hash.HelpString(0))
