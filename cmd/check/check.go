@@ -18,22 +18,22 @@ import (
 
 // Globals
 var (
-	download     = false
-	oneway       = false
-	combined     = ""
-	missingOnSrc = ""
-	missingOnDst = ""
-	match        = ""
-	differ       = ""
-	errFile      = ""
-	checkSum     = ""
+	download          = false
+	oneway            = false
+	combined          = ""
+	missingOnSrc      = ""
+	missingOnDst      = ""
+	match             = ""
+	differ            = ""
+	errFile           = ""
+	checkFileHashType = ""
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by downloading rather than with hash.")
-	flags.StringVarP(cmdFlags, &checkSum, "checkfile", "C", checkSum, "Treat source:path as a SUM file with hashes of given type")
+	flags.StringVarP(cmdFlags, &checkFileHashType, "checkfile", "C", checkFileHashType, "Treat source:path as a SUM file with hashes of given type")
 	AddFlags(cmdFlags)
 }
 
@@ -158,8 +158,8 @@ the |source:path| must point to a text file in the SUM format.
 			fsum       fs.Fs
 			sumFile    string
 		)
-		if checkSum != "" {
-			if err := hashType.Set(checkSum); err != nil {
+		if checkFileHashType != "" {
+			if err := hashType.Set(checkFileHashType); err != nil {
 				fmt.Println(hash.HelpString(0))
 				return err
 			}
@@ -175,7 +175,7 @@ the |source:path| must point to a text file in the SUM format.
 			}
 			defer close()
 
-			if checkSum != "" {
+			if checkFileHashType != "" {
 				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, hashType, opt, download)
 			}
 
