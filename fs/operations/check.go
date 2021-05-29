@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"regexp"
@@ -65,14 +64,10 @@ func (c *checkMarch) report(o fs.DirEntry, out io.Writer, sigil rune) {
 
 func (c *checkMarch) reportFilename(filename string, out io.Writer, sigil rune) {
 	if out != nil {
-		c.ioMu.Lock()
-		_, _ = fmt.Fprintf(out, "%s\n", filename)
-		c.ioMu.Unlock()
+		syncFprintf(out, "%s\n", filename)
 	}
 	if c.opt.Combined != nil {
-		c.ioMu.Lock()
-		_, _ = fmt.Fprintf(c.opt.Combined, "%c %s\n", sigil, filename)
-		c.ioMu.Unlock()
+		syncFprintf(c.opt.Combined, "%c %s\n", sigil, filename)
 	}
 }
 

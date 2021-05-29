@@ -853,7 +853,7 @@ var SyncPrintf = func(format string, a ...interface{}) {
 func syncFprintf(w io.Writer, format string, a ...interface{}) {
 	outMutex.Lock()
 	defer outMutex.Unlock()
-	if w == nil {
+	if w == nil || w == os.Stdout {
 		SyncPrintf(format, a...)
 	} else {
 		_, _ = fmt.Fprintf(w, format, a...)
