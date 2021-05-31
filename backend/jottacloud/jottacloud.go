@@ -350,10 +350,21 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// parsePath parses a box 'url'
-func parsePath(path string) (root string) {
-	root = strings.Trim(path, "/")
-	return
+// joinPath joins two path/url elements
+//
+// Does not perform clean on the result like path.Join does,
+// which breaks urls by changing prefix "https://" into "https:/".
+func joinPath(base string, rel string) string {
+	if rel == "" {
+		return base
+	}
+	if strings.HasSuffix(base, "/") {
+		return base + strings.TrimPrefix(rel, "/")
+	}
+	if strings.HasPrefix(rel, "/") {
+		return strings.TrimSuffix(base, "/") + rel
+	}
+	return base + "/" + rel
 }
 
 // retryErrorCodes is a slice of error codes that we will retry
@@ -721,7 +732,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	rootIsDir := strings.HasSuffix(root, "/")
-	root = parsePath(root)
+	root = strings.Trim(root, "/")
 
 	f := &Fs{
 		name:   name,
@@ -1259,8 +1270,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if result.PublicSharePath == "" {
 		return "", errors.New("couldn't create public link - no link path received")
 	}
-	link = path.Join(baseURL, result.PublicSharePath)
-	return link, nil
+	return joinPath(baseURL, result.PublicSharePath), nil
 }
 
 // About gets quota information
