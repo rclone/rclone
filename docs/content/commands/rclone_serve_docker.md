@@ -9,13 +9,49 @@ url: /commands/rclone_serve_docker/
 
 Serve any remote on docker's volume plugin API.
 
-# Synopsis
+## Synopsis
 
 
-rclone serve docker implements docker's volume plugin API.
-This allows docker to use rclone as a data storage mechanism for various cloud providers.
+This command implements the Docker volume plugin API allowing docker to use
+rclone as a data storage mechanism for various cloud providers.
+rclone provides [docker volume plugin](/docker) based on it.
 
-# VFS - Virtual File System
+To create a docker plugin, one must create a Unix or TCP socket that Docker
+will look for when you use the plugin and then it listens for commands from
+docker daemon and runs the corresponding code when necessary.
+Docker plugins can run as a managed plugin under control of the docker daemon
+or as an independent native service. For testing, you can just run it directly
+from the command line, for example:
+```
+sudo rclone serve docker --base-dir /tmp/rclone-volumes --socket-addr localhost:8787 -vv
+```
+
+Running `rclone serve docker` will create the said socket, listening for
+commands from Docker to create the necessary Volumes. Normally you need not
+give the `--socket-addr` flag. The API will listen on the unix domain socket
+at `/run/docker/plugins/rclone.sock`. In the example above rclone will create
+a TCP socket and a small file `/etc/docker/plugins/rclone.spec` containing
+the socket address. We use `sudo` because both paths are writeable only by
+the root user.
+
+If you later decide to change listening socket, the docker daemon must be
+restarted to reconnect to `/run/docker/plugins/rclone.sock`
+or parse new `/etc/docker/plugins/rclone.spec`. Until you restart, any
+volume related docker commands will timeout trying to access the old socket.
+Running directly is supported on **Linux only**, not on Windows or MacOS.
+This is not a problem with managed plugin mode described in details
+in the [full documentation](https://rclone.org/docker).
+
+The command will create volume mounts under the path given by `--base-dir`
+(by default `/var/lib/docker-volumes/rclone` available only to root)
+and maintain the JSON formatted file `docker-plugin.state` in the rclone cache
+directory with book-keeping records of created and mounted volumes.
+
+All mount and VFS options are submitted by the docker daemon via API, but
+you can also provide defaults on the command line as well as set path to the
+config file and cache directory or adjust logging verbosity.
+
+## VFS - Virtual File System
 
 This command uses the VFS layer. This adapts the cloud storage objects
 that rclone uses into something which looks much more like a disk
@@ -29,7 +65,7 @@ doing this there are various options explained below.
 The VFS layer also implements a directory cache - this caches info
 about files and directories (but not the data) in memory.
 
-# VFS Directory Cache
+## VFS Directory Cache
 
 Using the `--dir-cache-time` flag, you can control how long a
 directory should be considered up to date and not refreshed from the
@@ -37,7 +73,7 @@ backend. Changes made through the mount will appear immediately or
 invalidate the cache.
 
     --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
-    --poll-interval duration    Time to wait between polling for changes.
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
 
 However, changes made directly on the cloud storage by the web
 interface or a different copy of rclone will only be picked up once
@@ -60,7 +96,7 @@ Or individual files or directories:
 
     rclone rc vfs/forget file=path/to/file dir=path/to/dir
 
-# VFS File Buffering
+## VFS File Buffering
 
 The `--buffer-size` flag determines the amount of memory,
 that will be used to buffer data in advance.
@@ -77,7 +113,7 @@ be used.
 The maximum memory used by rclone for buffering can be up to
 `--buffer-size * open files`.
 
-# VFS File Caching
+## VFS File Caching
 
 These flags control the VFS file caching options. File caching is
 necessary to make the VFS layer appear compatible with a normal file
@@ -123,7 +159,7 @@ around this by giving each rclone its own cache hierarchy with
 `--cache-dir`. You don't need to worry about this if the remotes in
 use don't overlap.
 
-## --vfs-cache-mode off
+### --vfs-cache-mode off
 
 In this mode (the default) the cache will read directly from the remote and write
 directly to the remote without caching anything on disk.
@@ -138,7 +174,7 @@ This will mean some operations are not possible
   * Open modes O_APPEND, O_TRUNC are ignored
   * If an upload fails it can't be retried
 
-## --vfs-cache-mode minimal
+### --vfs-cache-mode minimal
 
 This is very similar to "off" except that files opened for read AND
 write will be buffered to disk.  This means that files opened for
@@ -151,7 +187,7 @@ These operations are not possible
   * Files opened for write only will ignore O_APPEND, O_TRUNC
   * If an upload fails it can't be retried
 
-## --vfs-cache-mode writes
+### --vfs-cache-mode writes
 
 In this mode files opened for read only are still read directly from
 the remote, write only and read/write files are buffered to disk
@@ -162,7 +198,7 @@ This mode should support all normal file system operations.
 If an upload fails it will be retried at exponentially increasing
 intervals up to 1 minute.
 
-## --vfs-cache-mode full
+### --vfs-cache-mode full
 
 In this mode all reads and writes are buffered to and from disk. When
 data is read from the remote this is buffered to disk as well.
@@ -190,7 +226,7 @@ FAT/exFAT do not. Rclone will perform very badly if the cache
 directory is on a filesystem which doesn't support sparse files and it
 will log an ERROR message if one is detected.
 
-# VFS Performance
+## VFS Performance
 
 These flags may be used to enable/disable features of the VFS for
 performance or other reasons.
@@ -231,7 +267,7 @@ modified files from cache (the related global flag --checkers have no effect on 
 
     --transfers int  Number of file transfers to run in parallel. (default 4)
 
-# VFS Case Sensitivity
+## VFS Case Sensitivity
 
 Linux file systems are case-sensitive: two files can differ only
 by case, and the exact case must be used when opening a file.
@@ -266,7 +302,7 @@ If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
 
-# Alternate report of used bytes
+## Alternate report of used bytes
 
 Some backends, most notably S3, do not report the amount of bytes used.
 If you need this information to be available when running `df` on the
@@ -284,7 +320,7 @@ calls resulting in extra charges. Use it as a last resort and only with caching.
 rclone serve docker [flags]
 ```
 
-# Options
+## Options
 
 ```
       --allow-non-empty                        Allow mounting over a non-empty directory. Not supported on Windows.
@@ -292,7 +328,7 @@ rclone serve docker [flags]
       --allow-root                             Allow access to root user. Not supported on Windows.
       --async-read                             Use asynchronous reads. Not supported on Windows. (default true)
       --attr-timeout duration                  Time for which file/directory attributes are cached. (default 1s)
-      --base-dir string                        base directory for volumes (default "/var/lib/docker/plugins/rclone/volumes")
+      --base-dir string                        base directory for volumes (default "/var/lib/docker-volumes/rclone")
       --daemon                                 Run mount as a daemon (background mode). Not supported on Windows.
       --daemon-timeout duration                Time limit for rclone to respond to kernel. Not supported on Windows.
       --debug-fuse                             Debug the FUSE internals - needs -v.
@@ -337,7 +373,7 @@ rclone serve docker [flags]
 
 See the [global flags page](/flags/) for global options not listed here.
 
-# SEE ALSO
+## SEE ALSO
 
 * [rclone serve](/commands/rclone_serve/)	 - Serve a remote over a protocol.
 
