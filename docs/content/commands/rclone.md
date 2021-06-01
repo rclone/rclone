@@ -39,6 +39,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone backend](/commands/rclone_backend/)	 - Run a backend specific command.
 * [rclone cat](/commands/rclone_cat/)	 - Concatenates any files and sends them to stdout.
 * [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
+* [rclone checksum](/commands/rclone_checksum/)	 - Checks the files in the source against a SUM file.
 * [rclone cleanup](/commands/rclone_cleanup/)	 - Clean up the remote if possible.
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 * [rclone copy](/commands/rclone_copy/)	 - Copy files from source to dest, skipping already copied.
