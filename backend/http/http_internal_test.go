@@ -28,6 +28,7 @@ var (
 	testPath   = "test"
 	filesPath  = filepath.Join(testPath, "files")
 	headers    = []string{"X-Potato", "sausage", "X-Rhubarb", "cucumber"}
+	nonGoIndex = "-1"
 )
 
 // prepareServer the test server and return a function to tidy it up afterwards
@@ -55,9 +56,10 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	// config.FileSet(remoteName, "url", ts.URL)
 
 	m := configmap.Simple{
-		"type":    "http",
-		"url":     ts.URL,
-		"headers": strings.Join(headers, ","),
+		"type":              "http",
+		"url":               ts.URL,
+		"headers":           strings.Join(headers, ","),
+		"goindex_drive_idx": nonGoIndex,
 	}
 
 	// return a function to tidy up
