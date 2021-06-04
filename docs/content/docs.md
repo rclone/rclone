@@ -239,6 +239,13 @@ However using the connection string syntax, this does work.
 
     rclone copy "gdrive,shared_with_me:shared-file.txt" gdrive:
 
+Note that the connection string only affects the options of the immediate 
+backend. If for example gdriveCrypt is a crypt based on gdrive, then the 
+following command **will not work** as intended, because 
+`shared_with_me` is ignored by the crypt backend:
+
+    rclone copy "gdriveCrypt,shared_with_me:shared-file.txt" gdriveCrypt:
+
 The connection strings have the following syntax
 
     remote,parameter=value,parameter2=value2:path/to/dir
@@ -2156,6 +2163,11 @@ mys3:
 
 Note that if you want to create a remote using environment variables
 you must create the `..._TYPE` variable as above.
+
+Note that you can only set the options of the immediate backend, 
+so RCLONE_CONFIG_MYS3CRYPT_ACCESS_KEY_ID has no effect, if myS3Crypt is 
+a crypt remote based on an S3 remote. However RCLONE_S3_ACCESS_KEY_ID will 
+set the access key of all remotes using S3, including myS3Crypt.
 
 Note also that now rclone has [connection strings](#connection-strings),
 it is probably easier to use those instead which makes the above example
