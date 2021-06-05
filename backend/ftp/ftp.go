@@ -117,6 +117,14 @@ Set to 0 to keep connections indefinitely.
 			Default:  fs.Duration(60 * time.Second),
 			Advanced: true,
 		}, {
+			Name: "tls_cache_size",
+			Help: `Size of TLS session cache for all control and data connections.
+TLS cache allows to resume TLS sessions and reuse PSK between connections.
+Increase if default size is not enough resulting in TLS resumption errors.
+Enabled by default. Use 0 to disable.`,
+			Default:  32,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -146,6 +154,7 @@ type Options struct {
 	Port              string               `config:"port"`
 	TLS               bool                 `config:"tls"`
 	ExplicitTLS       bool                 `config:"explicit_tls"`
+	TLSCacheSize      int                  `config:"tls_cache_size"`
 	Concurrency       int                  `config:"concurrency"`
 	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
 	DisableEPSV       bool                 `config:"disable_epsv"`
@@ -433,6 +442,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		tlsConfig = &tls.Config{
 			ServerName:         opt.Host,
 			InsecureSkipVerify: opt.SkipVerifyTLSCert,
+		}
+		if opt.TLSCacheSize > 0 {
+			tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(opt.TLSCacheSize)
 		}
 	}
 	u := protocol + path.Join(dialAddr+"/", root)
