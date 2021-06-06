@@ -13,16 +13,23 @@ Create a new remote with name, type and options.
 
 
 Create a new remote of `name` with `type` and options.  The options
-should be passed in pairs of `key` `value`.
+should be passed in pairs of `key` `value` or as `key=value`.
 
 For example to make a swift remote of name myremote using auto config
 you would do:
 
     rclone config create myremote swift env_auth true
+    rclone config create myremote swift env_auth=true
+
+So for example if you wanted to configure a Google Drive remote but
+using remote authorization you would do this:
+
+    rclone config create mydrive drive config_is_local=false
 
 Note that if the config process would normally ask a question the
-default is taken.  Each time that happens rclone will print a message
-saying how to affect the value taken.
+default is taken (unless `--non-interactive` is used).  Each time
+that happens rclone will print or DEBUG a message saying how to
+affect the value taken.
 
 If any of the parameters passed is a password field, then rclone will
 automatically obscure them if they aren't already obscured before
@@ -32,15 +39,79 @@ putting them in the config file.
 consists only of base64 characters then rclone can get confused about
 whether the password is already obscured or not and put unobscured
 passwords into the config file. If you want to be 100% certain that
-the passwords get obscured then use the "--obscure" flag, or if you
+the passwords get obscured then use the `--obscure` flag, or if you
 are 100% certain you are already passing obscured passwords then use
-"--no-obscure".  You can also set obscured passwords using the
-"rclone config password" command.
+`--no-obscure`.  You can also set obscured passwords using the
+`rclone config password` command.
 
-So for example if you wanted to configure a Google Drive remote but
-using remote authorization you would do this:
+The flag `--non-interactive` is for use by applications that wish to
+configure rclone themeselves, rather than using rclone's text based
+configuration questions. If this flag is set, and rclone needs to ask
+the user a question, a JSON blob will be returned with the question in
+it.
 
-    rclone config create mydrive drive config_is_local false
+This will look something like (some irrelevant detail removed):
+
+```
+{
+    "State": "*oauth-islocal,teamdrive,,",
+    "Option": {
+        "Name": "config_is_local",
+        "Help": "Use auto config?\n * Say Y if not sure\n * Say N if you are working on a remote or headless machine\n",
+        "Default": true,
+        "Examples": [
+            {
+                "Value": "true",
+                "Help": "Yes"
+            },
+            {
+                "Value": "false",
+                "Help": "No"
+            }
+        ],
+        "Required": false,
+        "IsPassword": false,
+        "Type": "bool",
+        "Exclusive": true,
+    },
+    "Error": "",
+}
+```
+
+The format of `Option` is the same as returned by `rclone config
+providers`. The question should be asked to the user and returned to
+rclone as the `--result` option along with the `--state` parameter.
+
+The keys of `Option` are used as follows:
+
+- `Name` - name of variable - show to user
+- `Help` - help text. Hard wrapped at 80 chars. Any URLs should be clicky.
+- `Default` - default value - return this if the user just wants the default.
+- `Examples` - the user should be able to choose one of these
+- `Required` - the value should be non-empty
+- `IsPassword` - the value is a password and should be edited as such
+- `Type` - type of value, eg `bool`, `string`, `int` and others
+- `Exclusive` - if set no free-form entry allowed only the `Examples`
+- Irrelevant keys `Provider`, `ShortOpt`, `Hide`, `NoPrefix`, `Advanced`
+
+If `Error` is set then it should be shown to the user at the same
+time as the question.
+
+    rclone config update name --continue --state "*oauth-islocal,teamdrive,," --result "true"
+
+Note that when using `--continue` all passwords should be passed in
+the clear (not obscured). Any default config values should be passed
+in with each invocation of `--continue`.
+
+At the end of the non interactive process, rclone will return a result
+with `State` as empty string.
+
+If `--all` is passed then rclone will ask all the config questions,
+not just the post config questions. Any parameters are used as
+defaults for questions as usual.
+
+Note that `bin/config.py` in the rclone source implements this protocol
+as a readable demonstration.
 
 
 ```
@@ -50,9 +121,14 @@ rclone config create `name` `type` [`key` `value`]* [flags]
 ## Options
 
 ```
-  -h, --help         help for create
-      --no-obscure   Force any passwords not to be obscured.
-      --obscure      Force any passwords to be obscured.
+      --all               Ask the full set of config questions.
+      --continue          Continue the configuration process with an answer.
+  -h, --help              help for create
+      --no-obscure        Force any passwords not to be obscured.
+      --non-interactive   Don't interact with user and return questions.
+      --obscure           Force any passwords to be obscured.
+      --result string     Result - use with --continue.
+      --state string      State - use with --continue.
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

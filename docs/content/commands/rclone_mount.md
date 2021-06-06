@@ -184,7 +184,7 @@ metadata about files like in UNIX. One case that may arise is that other program
 (incorrectly) interprets this as the file being accessible by everyone. For example
 an SSH client may warn about "unprotected private key file".
 
-WinFsp 2021 (version 1.9, still in beta) introduces a new FUSE option "FileSecurity",
+WinFsp 2021 (version 1.9) introduces a new FUSE option "FileSecurity",
 that allows the complete specification of file security descriptors using
 [SDDL](https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format).
 With this you can work around issues such as the mentioned "unprotected private key file"
@@ -192,19 +192,38 @@ by specifying `-o FileSecurity="D:P(A;;FA;;;OW)"`, for file all access (FA) to t
 
 ### Windows caveats
 
-Note that drives created as Administrator are not visible by other
-accounts (including the account that was elevated as
-Administrator). So if you start a Windows drive from an Administrative
-Command Prompt and then try to access the same drive from Explorer
-(which does not run as Administrator), you will not be able to see the
-new drive.
+Drives created as Administrator are not visible to other accounts,
+not even an account that was elevated to Administrator with the
+User Account Control (UAC) feature. A result of this is that if you mount
+to a drive letter from a Command Prompt run as Administrator, and then try
+to access the same drive from Windows Explorer (which does not run as
+Administrator), you will not be able to see the mounted drive.
 
-The easiest way around this is to start the drive from a normal
-command prompt. It is also possible to start a drive from the SYSTEM
-account (using [the WinFsp.Launcher
-infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
-which creates drives accessible for everyone on the system or
-alternatively using [the nssm service manager](https://nssm.cc/usage).
+If you don't need to access the drive from applications running with
+administrative privileges, the easiest way around this is to always
+create the mount from a non-elevated command prompt.
+
+To make mapped drives available to the user account that created them
+regardless if elevated or not, there is a special Windows setting called
+[linked connections](https://docs.microsoft.com/en-us/troubleshoot/windows-client/networking/mapped-drives-not-available-from-elevated-command#detail-to-configure-the-enablelinkedconnections-registry-entry)
+that can be enabled.
+
+It is also possible to make a drive mount available to everyone on the system,
+by running the process creating it as the built-in SYSTEM account.
+There are several ways to do this: One is to use the command-line
+utility [PsExec](https://docs.microsoft.com/en-us/sysinternals/downloads/psexec),
+from Microsoft's Sysinternals suite, which has option `-s` to start
+processes as the SYSTEM account. Another alternative is to run the mount
+command from a Windows Scheduled Task, or a Windows Service, configured
+to run as the SYSTEM account. A third alternative is to use the
+[WinFsp.Launcher infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture)).
+Note that when running rclone as another user, it will not use
+the configuration file from your profile unless you tell it to
+with the [`--config`](https://rclone.org/docs/#config-config-file) option.
+Read more in the [install documentation](https://rclone.org/install/).
+
+Note that mapping to a directory path, instead of a drive letter,
+does not suffer from the same limitations.
 
 ## Limitations
 
@@ -313,7 +332,7 @@ backend. Changes made through the mount will appear immediately or
 invalidate the cache.
 
     --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
-    --poll-interval duration    Time to wait between polling for changes.
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
 
 However, changes made directly on the cloud storage by the web
 interface or a different copy of rclone will only be picked up once
@@ -578,7 +597,7 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.
       --gid uint32                             Override the gid field set by the filesystem. Not supported on Windows. (default 1000)
   -h, --help                                   help for mount
-      --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads. Not supported on Windows. (default 128k)
+      --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads. Not supported on Windows. (default 128Ki)
       --network-mode                           Mount as remote network drive, instead of fixed disk drive. Supported on Windows only
       --no-checksum                            Don't compare checksums on up/download.
       --no-modtime                             Don't read/write the modification time (can speed things up).
@@ -589,14 +608,14 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --poll-interval duration                 Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
       --read-only                              Mount read-only.
       --uid uint32                             Override the uid field set by the filesystem. Not supported on Windows. (default 1000)
-      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows.
+      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows. (default 18)
       --vfs-cache-max-age duration             Max age of objects in the cache. (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache. (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
       --vfs-cache-poll-interval duration       Interval to poll the cache for stale objects. (default 1m0s)
       --vfs-case-insensitive                   If a file name not found, find a case insensitive match.
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full.
-      --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks. (default 128M)
+      --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks. (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached. 'off' is unlimited. (default off)
       --vfs-read-wait duration                 Time to wait for in-sequence read before seeking. (default 20ms)
       --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size.

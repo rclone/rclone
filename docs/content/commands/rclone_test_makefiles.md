@@ -23,6 +23,7 @@ rclone test makefiles <dir> [flags]
       --max-name-length int        Maximum size of file names (default 12)
       --min-file-size SizeSuffix   Minimum size of file to create
       --min-name-length int        Minimum size of file names (default 4)
+      --seed int                   Seed for the random number generator (0 for random) (default 1)
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

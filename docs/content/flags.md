@@ -17,7 +17,7 @@ These flags are available for every command.
       --auto-confirm                         If enabled, do not request console confirmation.
       --backup-dir string                    Make backups into hierarchy based in DIR.
       --bind string                          Local address to bind to for outgoing connections, IPv4, IPv6 or name.
-      --buffer-size SizeSuffix               In memory buffer size when reading files for each --transfer. (default 16M)
+      --buffer-size SizeSuffix               In memory buffer size when reading files for each --transfer. (default 16Mi)
       --bwlimit BwTimetable                  Bandwidth limit in KiByte/s, or use suffix B|K|M|G|T|P or a full timetable.
       --bwlimit-file BwTimetable             Bandwidth limit per file in KiByte/s, or use suffix B|K|M|G|T|P or a full timetable.
       --ca-cert string                       CA certificate used to verify servers
@@ -38,6 +38,7 @@ These flags are available for every command.
       --delete-during                        When synchronizing, delete files during transfer
       --delete-excluded                      Delete files on dest excluded from sync
       --disable string                       Disable a comma separated list of features.  Use --disable help to see a list.
+      --disable-http2                        Disable HTTP/2 in the global transport.
   -n, --dry-run                              Do a trial run with no permanent changes
       --dscp string                          Set DSCP value to connections. Can be value or names, eg. CS1, LE, DF, AF21.
       --dump DumpFlags                       List of items to dump from: headers,bodies,requests,responses,auth,filters,goroutines,openfiles
@@ -86,7 +87,7 @@ These flags are available for every command.
       --min-age Duration                     Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --min-size SizeSuffix                  Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
       --modify-window duration               Max time diff to be considered the same (default 1ns)
-      --multi-thread-cutoff SizeSuffix       Use multi-thread downloads for files above this size. (default 250M)
+      --multi-thread-cutoff SizeSuffix       Use multi-thread downloads for files above this size. (default 250Mi)
       --multi-thread-streams int             Max number of streams to use for multi-thread downloads. (default 4)
       --no-check-certificate                 Do not verify the server SSL certificate. Insecure.
       --no-check-dest                        Don't check the destination, copy regardless.
@@ -136,8 +137,8 @@ These flags are available for every command.
       --stats-one-line                       Make the stats fit on one line.
       --stats-one-line-date                  Enables --stats-one-line and add current date/time prefix.
       --stats-one-line-date-format string    Enables --stats-one-line-date and uses custom formatted date. Enclose date string in double quotes ("). See https://golang.org/pkg/time/#Time.Format
-      --stats-unit string                    Show data rate in stats as either 'bits' or 'bytes'/s (default "bytes")
-      --streaming-upload-cutoff SizeSuffix   Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends. (default 100k)
+      --stats-unit string                    Show data rate in stats as either 'bits' or 'bytes' per second (default "bytes")
+      --streaming-upload-cutoff SizeSuffix   Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends. (default 100Ki)
       --suffix string                        Suffix to add to changed files.
       --suffix-keep-extension                Preserve the extension when using --suffix.
       --syslog                               Use Syslog for logging
@@ -153,7 +154,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.55.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.0-beta.5531.41f561bf2.pr-commanddocs")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -167,7 +168,7 @@ and may be set in the config file.
       --acd-client-id string                                     OAuth Client Id
       --acd-client-secret string                                 OAuth Client Secret
       --acd-encoding MultiEncoder                                This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
-      --acd-templink-threshold SizeSuffix                        Files >= this size will be downloaded via their tempLink. (default 9G)
+      --acd-templink-threshold SizeSuffix                        Files >= this size will be downloaded via their tempLink. (default 9Gi)
       --acd-token string                                         OAuth Access Token as a JSON blob.
       --acd-token-url string                                     Token server url.
       --acd-upload-wait-per-gb Duration                          Additional time per GiB to wait after a failed complete upload to see if it appears. (default 3m0s)
@@ -175,7 +176,7 @@ and may be set in the config file.
       --azureblob-access-tier string                             Access tier of blob: hot, cool or archive.
       --azureblob-account string                                 Storage Account Name (leave blank to use SAS URL or Emulator)
       --azureblob-archive-tier-delete                            Delete archive tier blobs before overwriting.
-      --azureblob-chunk-size SizeSuffix                          Upload chunk size (<= 100 MiB). (default 4M)
+      --azureblob-chunk-size SizeSuffix                          Upload chunk size (<= 100 MiB). (default 4Mi)
       --azureblob-disable-checksum                               Don't store MD5 checksum with object metadata.
       --azureblob-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
       --azureblob-endpoint string                                Endpoint for the service
@@ -193,8 +194,8 @@ and may be set in the config file.
       --azureblob-use-emulator                                   Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)
       --azureblob-use-msi                                        Use a managed service identity to authenticate (only works in Azure)
       --b2-account string                                        Account ID or Application Key ID
-      --b2-chunk-size SizeSuffix                                 Upload chunk size. Must fit in memory. (default 96M)
-      --b2-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 4G)
+      --b2-chunk-size SizeSuffix                                 Upload chunk size. Must fit in memory. (default 96Mi)
+      --b2-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 4Gi)
       --b2-disable-checksum                                      Disable checksums for large (> upload cutoff) files
       --b2-download-auth-duration Duration                       Time before the authorization token will expire in s or suffix ms|s|m|h|d. (default 1w)
       --b2-download-url string                                   Custom endpoint for downloads.
@@ -205,7 +206,7 @@ and may be set in the config file.
       --b2-memory-pool-flush-time Duration                       How often internal memory buffer pools will be flushed. (default 1m0s)
       --b2-memory-pool-use-mmap                                  Whether to use mmap buffers in internal memory pool.
       --b2-test-mode string                                      A flag string for X-Bz-Test-Mode header for debugging.
-      --b2-upload-cutoff SizeSuffix                              Cutoff for switching to chunked upload. (default 200M)
+      --b2-upload-cutoff SizeSuffix                              Cutoff for switching to chunked upload. (default 200Mi)
       --b2-versions                                              Include old versions in directory listings.
       --box-access-token string                                  Box App Primary Access Token
       --box-auth-url string                                      Auth server URL.
@@ -218,12 +219,12 @@ and may be set in the config file.
       --box-root-folder-id string                                Fill in for rclone to use a non root folder as its starting point.
       --box-token string                                         OAuth Access Token as a JSON blob.
       --box-token-url string                                     Token server url.
-      --box-upload-cutoff SizeSuffix                             Cutoff for switching to multipart upload (>= 50 MiB). (default 50M)
+      --box-upload-cutoff SizeSuffix                             Cutoff for switching to multipart upload (>= 50 MiB). (default 50Mi)
       --cache-chunk-clean-interval Duration                      How often should the cache perform cleanups of the chunk storage. (default 1m0s)
       --cache-chunk-no-memory                                    Disable the in-memory cache for storing chunks during streaming.
       --cache-chunk-path string                                  Directory to cache chunk files. (default "$HOME/.cache/rclone/cache-backend")
-      --cache-chunk-size SizeSuffix                              The size of a chunk (partial file data). (default 5M)
-      --cache-chunk-total-size SizeSuffix                        The total size that the chunks can take up on the local disk. (default 10G)
+      --cache-chunk-size SizeSuffix                              The size of a chunk (partial file data). (default 5Mi)
+      --cache-chunk-total-size SizeSuffix                        The total size that the chunks can take up on the local disk. (default 10Gi)
       --cache-db-path string                                     Directory to store file structure metadata DB. (default "$HOME/.cache/rclone/cache-backend")
       --cache-db-purge                                           Clear all the cached data for this remote on start.
       --cache-db-wait-time Duration                              How long to wait for the DB to be available - 0 is unlimited (default 1s)
@@ -239,13 +240,13 @@ and may be set in the config file.
       --cache-tmp-wait-time Duration                             How long should files be stored in local cache before being uploaded (default 15s)
       --cache-workers int                                        How many workers should run in parallel to download chunks. (default 4)
       --cache-writes                                             Cache file data on writes through the FS
-      --chunker-chunk-size SizeSuffix                            Files larger than chunk size will be split in chunks. (default 2G)
+      --chunker-chunk-size SizeSuffix                            Files larger than chunk size will be split in chunks. (default 2Gi)
       --chunker-fail-hard                                        Choose how chunker should handle files with missing or invalid chunks.
       --chunker-hash-type string                                 Choose how chunker handles hash sums. All modes but "none" require metadata. (default "md5")
       --chunker-remote string                                    Remote to chunk/unchunk.
       --compress-level int                                       GZIP compression level (-2 to 9). (default -1)
       --compress-mode string                                     Compression mode. (default "gzip")
-      --compress-ram-cache-limit SizeSuffix                      Some remotes don't allow the upload of files with unknown size. (default 20M)
+      --compress-ram-cache-limit SizeSuffix                      Some remotes don't allow the upload of files with unknown size. (default 20Mi)
       --compress-remote string                                   Remote to compress.
   -L, --copy-links                                               Follow symlinks and copy the pointed to item.
       --crypt-directory-name-encryption                          Option to either encrypt directory names or leave them intact. (default true)
@@ -260,7 +261,7 @@ and may be set in the config file.
       --drive-allow-import-name-change                           Allow the filetype to change when uploading Google docs (e.g. file.doc to file.docx). This will confuse sync and reupload every time.
       --drive-auth-owner-only                                    Only consider files owned by the authenticated user.
       --drive-auth-url string                                    Auth server URL.
-      --drive-chunk-size SizeSuffix                              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
+      --drive-chunk-size SizeSuffix                              Upload chunk size. Must a power of 2 >= 256k. (default 8Mi)
       --drive-client-id string                                   Google Application Client Id
       --drive-client-secret string                               OAuth Client Secret
       --drive-disable-http2                                      Disable drive using http2 (default true)
@@ -290,13 +291,16 @@ and may be set in the config file.
       --drive-token string                                       OAuth Access Token as a JSON blob.
       --drive-token-url string                                   Token server url.
       --drive-trashed-only                                       Only show files that are in the trash.
-      --drive-upload-cutoff SizeSuffix                           Cutoff for switching to chunked upload (default 8M)
+      --drive-upload-cutoff SizeSuffix                           Cutoff for switching to chunked upload (default 8Mi)
       --drive-use-created-date                                   Use file created date instead of modified date.,
       --drive-use-shared-date                                    Use date file was shared instead of modified date.
       --drive-use-trash                                          Send files to the trash instead of deleting permanently. (default true)
       --drive-v2-download-min-size SizeSuffix                    If Object's are greater, use drive v2 API to download. (default off)
       --dropbox-auth-url string                                  Auth server URL.
-      --dropbox-chunk-size SizeSuffix                            Upload chunk size. (< 150M). (default 48M)
+      --dropbox-batch-mode string                                Upload file batching sync|async|off. (default "sync")
+      --dropbox-batch-size int                                   Max number of files in upload batch.
+      --dropbox-batch-timeout Duration                           Max time to allow an idle upload batch before uploading (default 0s)
+      --dropbox-chunk-size SizeSuffix                            Upload chunk size. (< 150Mi). (default 48Mi)
       --dropbox-client-id string                                 OAuth Client Id
       --dropbox-client-secret string                             OAuth Client Secret
       --dropbox-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot)
@@ -361,7 +365,7 @@ and may be set in the config file.
       --http-no-slash                                            Set this if the site doesn't end directories with /
       --http-url string                                          URL of http host to connect to
       --hubic-auth-url string                                    Auth server URL.
-      --hubic-chunk-size SizeSuffix                              Above this size files will be chunked into a _segments container. (default 5G)
+      --hubic-chunk-size SizeSuffix                              Above this size files will be chunked into a _segments container. (default 5Gi)
       --hubic-client-id string                                   OAuth Client Id
       --hubic-client-secret string                               OAuth Client Secret
       --hubic-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,InvalidUtf8)
@@ -370,9 +374,9 @@ and may be set in the config file.
       --hubic-token-url string                                   Token server url.
       --jottacloud-encoding MultiEncoder                         This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
       --jottacloud-hard-delete                                   Delete files permanently rather than putting them into the trash.
-      --jottacloud-md5-memory-limit SizeSuffix                   Files bigger than this will be cached on disk to calculate the MD5 if required. (default 10M)
+      --jottacloud-md5-memory-limit SizeSuffix                   Files bigger than this will be cached on disk to calculate the MD5 if required. (default 10Mi)
       --jottacloud-trashed-only                                  Only show files that are in the trash.
-      --jottacloud-upload-resume-limit SizeSuffix                Files bigger than this can be resumed if the upload fail's. (default 10M)
+      --jottacloud-upload-resume-limit SizeSuffix                Files bigger than this can be resumed if the upload fail's. (default 10Mi)
       --koofr-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --koofr-endpoint string                                    The Koofr API endpoint to use (default "https://app.koofr.net")
       --koofr-mountid string                                     Mount ID of the mount to use. If omitted, the primary mount is used.
@@ -387,16 +391,16 @@ and may be set in the config file.
       --local-no-preallocate                                     Disable preallocation of disk space for transferred files
       --local-no-set-modtime                                     Disable setting modtime
       --local-no-sparse                                          Disable sparse files for multi-thread downloads
-      --local-no-unicode-normalization                           Don't apply unicode normalization to paths and filenames (Deprecated)
       --local-nounc string                                       Disable UNC (long path names) conversion on Windows
-      --local-zero-size-links                                    Assume the Stat size of links is zero (and read them instead)
+      --local-unicode-normalization                              Apply unicode NFC normalization to paths and filenames
+      --local-zero-size-links                                    Assume the Stat size of links is zero (and read them instead) (Deprecated)
       --mailru-check-hash                                        What should copy do if file checksum is mismatched or invalid (default true)
       --mailru-encoding MultiEncoder                             This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --mailru-pass string                                       Password (obscured)
       --mailru-speedup-enable                                    Skip full upload if there is another file with same data hash. (default true)
       --mailru-speedup-file-patterns string                      Comma separated list of file name patterns eligible for speedup (put by hash). (default "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf")
-      --mailru-speedup-max-disk SizeSuffix                       This option allows you to disable speedup (put by hash) for large files (default 3G)
-      --mailru-speedup-max-memory SizeSuffix                     Files larger than the size given below will always be hashed on disk. (default 32M)
+      --mailru-speedup-max-disk SizeSuffix                       This option allows you to disable speedup (put by hash) for large files (default 3Gi)
+      --mailru-speedup-max-memory SizeSuffix                     Files larger than the size given below will always be hashed on disk. (default 32Mi)
       --mailru-user string                                       User name (usually email)
       --mega-debug                                               Output more debug from Mega.
       --mega-encoding MultiEncoder                               This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
@@ -405,7 +409,7 @@ and may be set in the config file.
       --mega-user string                                         User name
   -x, --one-file-system                                          Don't cross filesystem boundaries (unix/macOS only).
       --onedrive-auth-url string                                 Auth server URL.
-      --onedrive-chunk-size SizeSuffix                           Chunk size to upload files with - must be multiple of 320k (327,680 bytes). (default 10M)
+      --onedrive-chunk-size SizeSuffix                           Chunk size to upload files with - must be multiple of 320k (327,680 bytes). (default 10Mi)
       --onedrive-client-id string                                OAuth Client Id
       --onedrive-client-secret string                            OAuth Client Secret
       --onedrive-drive-id string                                 The ID of the drive to use
@@ -421,7 +425,7 @@ and may be set in the config file.
       --onedrive-server-side-across-configs                      Allow server-side operations (e.g. copy) to work across different onedrive configs.
       --onedrive-token string                                    OAuth Access Token as a JSON blob.
       --onedrive-token-url string                                Token server url.
-      --opendrive-chunk-size SizeSuffix                          Files will be uploaded in chunks this size. (default 10M)
+      --opendrive-chunk-size SizeSuffix                          Files will be uploaded in chunks this size. (default 10Mi)
       --opendrive-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
       --opendrive-password string                                Password. (obscured)
       --opendrive-username string                                Username
@@ -436,20 +440,20 @@ and may be set in the config file.
       --premiumizeme-encoding MultiEncoder                       This sets the encoding for the backend. (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --putio-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --qingstor-access-key-id string                            QingStor Access Key ID
-      --qingstor-chunk-size SizeSuffix                           Chunk size to use for uploading. (default 4M)
+      --qingstor-chunk-size SizeSuffix                           Chunk size to use for uploading. (default 4Mi)
       --qingstor-connection-retries int                          Number of connection retries. (default 3)
       --qingstor-encoding MultiEncoder                           This sets the encoding for the backend. (default Slash,Ctl,InvalidUtf8)
       --qingstor-endpoint string                                 Enter an endpoint URL to connection QingStor API.
       --qingstor-env-auth                                        Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.
       --qingstor-secret-access-key string                        QingStor Secret Access Key (password)
       --qingstor-upload-concurrency int                          Concurrency for multipart uploads. (default 1)
-      --qingstor-upload-cutoff SizeSuffix                        Cutoff for switching to chunked upload (default 200M)
+      --qingstor-upload-cutoff SizeSuffix                        Cutoff for switching to chunked upload (default 200Mi)
       --qingstor-zone string                                     Zone to connect to.
       --s3-access-key-id string                                  AWS Access Key ID.
       --s3-acl string                                            Canned ACL used when creating buckets and storing or copying objects.
       --s3-bucket-acl string                                     Canned ACL used when creating buckets.
-      --s3-chunk-size SizeSuffix                                 Chunk size to use for uploading. (default 5M)
-      --s3-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 4.656G)
+      --s3-chunk-size SizeSuffix                                 Chunk size to use for uploading. (default 5Mi)
+      --s3-copy-cutoff SizeSuffix                                Cutoff for switching to multipart copy (default 4.656Gi)
       --s3-disable-checksum                                      Don't store MD5 checksum with object metadata
       --s3-disable-http2                                         Disable usage of http2 for S3 backends
       --s3-encoding MultiEncoder                                 This sets the encoding for the backend. (default Slash,InvalidUtf8,Dot)
@@ -464,6 +468,7 @@ and may be set in the config file.
       --s3-memory-pool-use-mmap                                  Whether to use mmap buffers in internal memory pool.
       --s3-no-check-bucket                                       If set, don't attempt to check the bucket exists or create it
       --s3-no-head                                               If set, don't HEAD uploaded objects to check integrity
+      --s3-no-head-object                                        If set, don't HEAD objects
       --s3-profile string                                        Profile to use in the shared credentials file
       --s3-provider string                                       Choose your S3 provider.
       --s3-region string                                         Region to connect to.
@@ -478,7 +483,7 @@ and may be set in the config file.
       --s3-sse-kms-key-id string                                 If using KMS ID you must provide the ARN of Key.
       --s3-storage-class string                                  The storage class to use when storing new objects in S3.
       --s3-upload-concurrency int                                Concurrency for multipart uploads. (default 4)
-      --s3-upload-cutoff SizeSuffix                              Cutoff for switching to chunked upload (default 200M)
+      --s3-upload-cutoff SizeSuffix                              Cutoff for switching to chunked upload (default 200Mi)
       --s3-use-accelerate-endpoint                               If true use the AWS S3 accelerated endpoint.
       --s3-v2-auth                                               If true use v2 authentication.
       --seafile-2fa                                              Two-factor authentication ('true' if the account has 2FA enabled)
@@ -491,6 +496,7 @@ and may be set in the config file.
       --seafile-user string                                      User name (usually email address)
       --sftp-ask-password                                        Allow asking for SFTP password when needed.
       --sftp-disable-concurrent-reads                            If set don't use concurrent reads
+      --sftp-disable-concurrent-writes                           If set don't use concurrent writes
       --sftp-disable-hashcheck                                   Disable the execution of SSH commands to determine if remote file hashing is available.
       --sftp-host string                                         SSH host to connect to
       --sftp-idle-timeout Duration                               Max time before closing idle connections (default 1m0s)
@@ -512,11 +518,11 @@ and may be set in the config file.
       --sftp-use-fstat                                           If set use fstat instead of stat
       --sftp-use-insecure-cipher                                 Enable the use of insecure ciphers and key exchange methods.
       --sftp-user string                                         SSH username, leave blank for current username, $USER
-      --sharefile-chunk-size SizeSuffix                          Upload chunk size. Must a power of 2 >= 256k. (default 64M)
+      --sharefile-chunk-size SizeSuffix                          Upload chunk size. Must a power of 2 >= 256k. (default 64Mi)
       --sharefile-encoding MultiEncoder                          This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,LeftPeriod,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --sharefile-endpoint string                                Endpoint for API calls.
       --sharefile-root-folder-id string                          ID of the root folder
-      --sharefile-upload-cutoff SizeSuffix                       Cutoff for switching to multipart upload. (default 128M)
+      --sharefile-upload-cutoff SizeSuffix                       Cutoff for switching to multipart upload. (default 128Mi)
       --skip-links                                               Don't warn about skipped symlinks.
       --sugarsync-access-key-id string                           Sugarsync Access Key ID.
       --sugarsync-app-id string                                  Sugarsync App ID.
@@ -535,7 +541,7 @@ and may be set in the config file.
       --swift-auth string                                        Authentication URL for server (OS_AUTH_URL).
       --swift-auth-token string                                  Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)
       --swift-auth-version int                                   AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)
-      --swift-chunk-size SizeSuffix                              Above this size files will be chunked into a _segments container. (default 5G)
+      --swift-chunk-size SizeSuffix                              Above this size files will be chunked into a _segments container. (default 5Gi)
       --swift-domain string                                      User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)
       --swift-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,InvalidUtf8)
       --swift-endpoint-type string                               Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE) (default "public")
@@ -561,9 +567,12 @@ and may be set in the config file.
       --union-create-policy string                               Policy to choose upstream on CREATE category. (default "epmfs")
       --union-search-policy string                               Policy to choose upstream on SEARCH category. (default "ff")
       --union-upstreams string                                   List of space separated upstreams.
+      --uptobox-access-token string                              Your access Token, get it from https://uptobox.com/my_account
+      --uptobox-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,BackQuote,Del,Ctl,LeftSpace,InvalidUtf8,Dot)
       --webdav-bearer-token string                               Bearer token instead of user/pass (e.g. a Macaroon)
       --webdav-bearer-token-command string                       Command to run to get a bearer token
       --webdav-encoding string                                   This sets the encoding for the backend.
+      --webdav-headers CommaSepList                              Set HTTP headers for all transactions
       --webdav-pass string                                       Password. (obscured)
       --webdav-url string                                        URL of http host to connect to
       --webdav-user string                                       User name. In case NTLM authentication is used, the username should be in the format 'Domain\User'.
