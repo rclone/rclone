@@ -43,7 +43,6 @@ using local disk.
 
 Virtual backends wrap local and cloud file systems to apply
 [encryption](/crypt/), 
-[caching](/cache/),
 [compression](/compress/)
 [chunking](/chunker/) and
 [joining](/union/).

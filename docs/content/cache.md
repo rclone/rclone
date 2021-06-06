@@ -3,7 +3,7 @@ title: "Cache"
 description: "Rclone docs for cache remote"
 ---
 
-{{< icon "fa fa-archive" >}} Cache (BETA)
+{{< icon "fa fa-archive" >}} Cache (DEPRECATED)
 -----------------------------------------
 
 The `cache` remote wraps another existing remote and stores file structure
