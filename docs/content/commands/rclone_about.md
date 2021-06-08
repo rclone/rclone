@@ -12,10 +12,10 @@ Get quota information from the remote.
 ## Synopsis
 
 
-`rclone about`prints quota information about a remote to standard
+`rclone about` prints quota information about a remote to standard
 output. The output is typically used, free, quota and trash contents.
 
-E.g. Typical output from`rclone about remote:`is:
+E.g. Typical output from `rclone about remote:` is:
 
     Total:   17G
     Used:    7.444G
@@ -43,7 +43,7 @@ Applying a `--full` flag to the command prints the bytes in full, e.g.
     Trashed: 104857602
     Other:   8849156022
 
-A `--json`flag generates conveniently computer readable output, e.g.
+A `--json` flag generates conveniently computer readable output, e.g.
 
     {
         "total": 18253611008,

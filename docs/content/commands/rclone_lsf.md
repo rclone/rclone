@@ -143,7 +143,7 @@ rclone lsf remote:path [flags]
       --dirs-only          Only list directories.
       --files-only         Only list files.
   -F, --format string      Output format - see  help for details (default "p")
-      --hash h             Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "MD5")
+      --hash h             Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "md5")
   -h, --help               help for lsf
   -R, --recursive          Recurse into the listing.
   -s, --separator string   Separator for the items in the format. (default ";")
