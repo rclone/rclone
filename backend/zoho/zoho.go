@@ -158,7 +158,11 @@ func init() {
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "region",
-			Help: "Zoho region to connect to. You'll have to use the region you organization is registered in.",
+			Help: `Zoho region to connect to.
+
+You'll have to use the region your organization is registered in. If
+not sure use the same top level domain as you connect to in your
+browser.`,
 			Examples: []fs.OptionExample{{
 				Value: "com",
 				Help:  "United states / Global",
