@@ -608,5 +608,25 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if err != nil {
 		return "", translateErrorsDir(err)
 	}
-	return linkData.ShortURL, nil
+
+	// URL returned by API looks like following:
+	//
+	// https://app.koofr.net/links/35d9fb92-74a3-4930-b4ed-57f123bfb1a6
+	//
+	// Direct url looks like following:
+	//
+	// https://app.koofr.net/content/links/39a6cc01-3b23-477a-8059-c0fb3b0f15de/files/get?path=%2F
+	//
+	// I am not sure about meaning of "path" parameter; in my expriments
+	// it is always "%2F", and omitting it or putting any other value
+	// results in 404.
+	//
+	// There is one more quirk: direct link to file in / returns that file,
+	// direct link to file somewhere else in hierarchy returns zip archive
+	// with one member.
+	link := linkData.URL
+	link = strings.ReplaceAll(link, "/links", "/content/links")
+	link += "/files/get?path=%2F"
+
+	return link, nil
 }
