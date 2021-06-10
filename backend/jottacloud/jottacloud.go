@@ -1261,15 +1261,23 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", errors.Wrap(err, "couldn't create public link")
 	}
 	if unlink {
-		if result.PublicSharePath != "" {
-			return "", errors.Errorf("couldn't remove public link - %q", result.PublicSharePath)
+		if result.PublicURI != "" {
+			return "", errors.Errorf("couldn't remove public link - %q", result.PublicURI)
 		}
 		return "", nil
 	}
-	if result.PublicSharePath == "" {
-		return "", errors.New("couldn't create public link - no link path received")
+	if result.PublicURI == "" {
+		return "", errors.New("couldn't create public link - no uri received")
 	}
-	return joinPath(baseURL, result.PublicSharePath), nil
+	if result.PublicSharePath != "" {
+		webLink := joinPath(baseURL, result.PublicSharePath)
+		fs.Debugf(nil, "Web link: %s", webLink)
+	} else {
+		fs.Debugf(nil, "No web link received")
+	}
+	directLink := joinPath(baseURL, fmt.Sprintf("opin/io/downloadPublic/%s/%s", f.user, result.PublicURI))
+	fs.Debugf(nil, "Direct link: %s", directLink)
+	return directLink, nil
 }
 
 // About gets quota information
