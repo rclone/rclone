@@ -437,25 +437,45 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, fs.ErrorCantMove
 	}
 
+	// Find current directory ID
+	_, currentDirectoryID, err := f.dirCache.FindPath(ctx, remote, false)
+	if err != nil {
+		return nil, err
+	}
+
 	// Create temporary object
 	dstObj, leaf, directoryID, err := f.createObject(ctx, remote)
 	if err != nil {
 		return nil, err
 	}
 
-	folderID, err := strconv.Atoi(directoryID)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := f.moveFile(ctx, srcObj.file.URL, folderID, leaf)
-	if err != nil {
-		return nil, errors.Wrap(err, "couldn't move file")
-	}
-	if resp.Status != "OK" {
-		return nil, errors.Errorf("couldn't move file: %s", resp.Message)
+	// If it is in the correct directory, just rename it
+	var url string
+	if currentDirectoryID == directoryID {
+		resp, err := f.renameFile(ctx, srcObj.file.URL, leaf)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't rename file")
+		}
+		if resp.Status != "OK" {
+			return nil, errors.Errorf("couldn't rename file: %s", resp.Message)
+		}
+		url = resp.URLs[0].URL
+	} else {
+		folderID, err := strconv.Atoi(directoryID)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := f.moveFile(ctx, srcObj.file.URL, folderID, leaf)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't move file")
+		}
+		if resp.Status != "OK" {
+			return nil, errors.Errorf("couldn't move file: %s", resp.Message)
+		}
+		url = resp.URLs[0]
 	}
 
-	file, err := f.readFileInfo(ctx, resp.URLs[0])
+	file, err := f.readFileInfo(ctx, url)
 	if err != nil {
 		return nil, errors.New("couldn't read file data")
 	}

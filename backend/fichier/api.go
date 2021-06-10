@@ -404,6 +404,34 @@ func (f *Fs) copyFile(ctx context.Context, url string, folderID int, rename stri
 	return response, nil
 }
 
+func (f *Fs) renameFile(ctx context.Context, url string, newName string) (response *RenameFileResponse, err error) {
+	request := &RenameFileRequest{
+		URLs: []RenameFileURL{
+			{
+				URL:      url,
+				Filename: newName,
+			},
+		},
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file/rename.cgi",
+	}
+
+	response = &RenameFileResponse{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, request, response)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't rename file")
+	}
+
+	return response, nil
+}
+
 func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse, err error) {
 	// fs.Debugf(f, "Requesting Upload node")
 

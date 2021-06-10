@@ -90,6 +90,30 @@ type FileCopy struct {
 	ToURL   string `json:"to_url"`
 }
 
+// RenameFileURL is the data structure to rename a single file
+type RenameFileURL struct {
+	URL      string `json:"url"`
+	Filename string `json:"filename"`
+}
+
+// RenameFileRequest is the request structure of the corresponding request
+type RenameFileRequest struct {
+	URLs   []RenameFileURL `json:"urls"`
+	Pretty int             `json:"pretty"`
+}
+
+// RenameFileResponse is the response structure of the corresponding request
+type RenameFileResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Renamed int    `json:"renamed"`
+	URLs    []struct {
+		URL         string `json:"url"`
+		OldFilename string `json:"old_filename"`
+		NewFilename string `json:"new_filename"`
+	} `json:"urls"`
+}
+
 // GetUploadNodeResponse is the response structure of the corresponding request
 type GetUploadNodeResponse struct {
 	ID  string `json:"id"`
