@@ -16,6 +16,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/testy"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 )
@@ -52,7 +53,7 @@ func makeTestDir() (testDir string, err error) {
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		testDir = testDirBase + random.String(4)
-		err = os.MkdirAll(testDir, os.ModePerm)
+		err = file.MkdirAll(testDir, os.ModePerm)
 		if err == nil {
 			break
 		}

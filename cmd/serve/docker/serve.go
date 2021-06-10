@@ -13,6 +13,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/file"
 )
 
 // Server connects plugin with docker daemon by protocol
@@ -87,7 +88,7 @@ func writeSpecFile(addr, proto, specDir string) (string, error) {
 	if specDir == "" {
 		specDir = defSpecDir
 	}
-	if err := os.MkdirAll(specDir, 0755); err != nil {
+	if err := file.MkdirAll(specDir, 0755); err != nil {
 		return "", err
 	}
 	specFile := filepath.Join(specDir, "rclone.spec")

@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 )
@@ -44,12 +45,12 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make --cache-dir absolute")
 	}
-	err = os.MkdirAll(cacheDir, 0700)
+	err = file.MkdirAll(cacheDir, 0700)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create cache directory: %s", cacheDir)
 	}
 
-	//err = os.MkdirAll(root, 0755)
+	//err = file.MkdirAll(root, 0755)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create mount root: %s", root)
 	}
