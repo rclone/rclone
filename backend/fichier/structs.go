@@ -64,8 +64,9 @@ type MoveFileRequest struct {
 
 // MoveFileResponse is the response structure of the corresponding request
 type MoveFileResponse struct {
-	Status string   `json:"status"`
-	URLs   []string `json:"urls"`
+	Status  string   `json:"status"`
+	Message string   `json:"message"`
+	URLs    []string `json:"urls"`
 }
 
 // CopyFileRequest is the request structure of the corresponding request
@@ -77,9 +78,10 @@ type CopyFileRequest struct {
 
 // CopyFileResponse is the response structure of the corresponding request
 type CopyFileResponse struct {
-	Status string     `json:"status"`
-	Copied int        `json:"copied"`
-	URLs   []FileCopy `json:"urls"`
+	Status  string     `json:"status"`
+	Message string     `json:"message"`
+	Copied  int        `json:"copied"`
+	URLs    []FileCopy `json:"urls"`
 }
 
 // FileCopy is used in the the CopyFileResponse

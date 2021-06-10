@@ -452,7 +452,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, errors.Wrap(err, "couldn't move file")
 	}
 	if resp.Status != "OK" {
-		return nil, errors.New("couldn't move file")
+		return nil, errors.Errorf("couldn't move file: %s", resp.Message)
 	}
 
 	file, err := f.readFileInfo(ctx, resp.URLs[0])
@@ -486,7 +486,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, errors.Wrap(err, "couldn't move file")
 	}
 	if resp.Status != "OK" {
-		return nil, errors.New("couldn't move file")
+		return nil, errors.Errorf("couldn't move file: %s", resp.Message)
 	}
 
 	file, err := f.readFileInfo(ctx, resp.URLs[0].ToURL)

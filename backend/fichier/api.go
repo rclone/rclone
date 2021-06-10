@@ -319,7 +319,7 @@ func (f *Fs) removeFolder(ctx context.Context, name string, folderID int) (respo
 		return nil, errors.Wrap(err, "couldn't remove folder")
 	}
 	if response.Status != "OK" {
-		return nil, errors.New("Can't remove non-empty dir")
+		return nil, errors.Errorf("can't remove folder: %s", response.Message)
 	}
 
 	// fs.Debugf(f, "Removed Folder with id `%s`", directoryID)
