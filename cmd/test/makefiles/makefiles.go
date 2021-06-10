@@ -14,6 +14,7 @@ import (
 	"github.com/rclone/rclone/cmd/test"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/cobra"
 )
@@ -134,7 +135,7 @@ func (d *dir) list(path string, output []string) []string {
 
 // writeFile writes a random file at dir/name
 func writeFile(dir, name string) int64 {
-	err := os.MkdirAll(dir, 0777)
+	err := file.MkdirAll(dir, 0777)
 	if err != nil {
 		log.Fatalf("Failed to make directory %q: %v", dir, err)
 	}

@@ -275,7 +275,7 @@ func makeConfigPath() string {
 			return configFile
 		}
 		var mkdirErr error
-		if mkdirErr = os.MkdirAll(configDir, os.ModePerm); mkdirErr == nil {
+		if mkdirErr = file.MkdirAll(configDir, os.ModePerm); mkdirErr == nil {
 			return configFile
 		}
 		// Problem: Try a fallback location. If we did find a home directory then

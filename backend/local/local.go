@@ -569,9 +569,8 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 
 // Mkdir creates the directory if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	// FIXME: https://github.com/syncthing/syncthing/blob/master/lib/osutil/mkdirall_windows.go
 	localPath := f.localPath(dir)
-	err := os.MkdirAll(localPath, 0777)
+	err := file.MkdirAll(localPath, 0777)
 	if err != nil {
 		return err
 	}
@@ -765,7 +764,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	// Create parent of destination
 	dstParentPath := filepath.Dir(dstPath)
-	err = os.MkdirAll(dstParentPath, 0777)
+	err = file.MkdirAll(dstParentPath, 0777)
 	if err != nil {
 		return err
 	}
@@ -1099,7 +1098,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // mkdirAll makes all the directories needed to store the object
 func (o *Object) mkdirAll() error {
 	dir := filepath.Dir(o.path)
-	return os.MkdirAll(dir, 0777)
+	return file.MkdirAll(dir, 0777)
 }
 
 type nopWriterCloser struct {

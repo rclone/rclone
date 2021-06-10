@@ -44,6 +44,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -212,7 +213,7 @@ func (r *Run) WriteFile(filePath, content string, t time.Time) Item {
 	// FIXME make directories?
 	filePath = path.Join(r.LocalName, filePath)
 	dirPath := path.Dir(filePath)
-	err := os.MkdirAll(dirPath, 0770)
+	err := file.MkdirAll(dirPath, 0770)
 	if err != nil {
 		r.Fatalf("Failed to make directories %q: %v", dirPath, err)
 	}

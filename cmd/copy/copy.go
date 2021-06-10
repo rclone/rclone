@@ -78,6 +78,7 @@ recently very efficiently like this:
 **Note**: Use the |--dry-run| or the |--interactive|/|-i| flag to test without copying anything.
 `, "|", "`"),
 	Run: func(command *cobra.Command, args []string) {
+
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst := cmd.NewFsSrcFileDst(args)
 		cmd.Run(true, true, command, func() error {

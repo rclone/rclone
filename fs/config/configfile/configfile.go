@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/lib/file"
 )
 
 // Install installs the config file handler
@@ -109,7 +110,7 @@ func (s *Storage) Save() error {
 	}
 
 	dir, name := filepath.Split(configPath)
-	err := os.MkdirAll(dir, os.ModePerm)
+	err := file.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "failed to create config directory")
 	}

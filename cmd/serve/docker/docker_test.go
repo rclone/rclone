@@ -20,6 +20,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/lib/file"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +37,7 @@ func initialise(ctx context.Context, t *testing.T) (string, fs.Fs) {
 	// Make test cache directory
 	testDir, err := fstest.LocalRemote()
 	require.NoError(t, err)
-	err = os.MkdirAll(testDir, 0755)
+	err = file.MkdirAll(testDir, 0755)
 	require.NoError(t, err)
 
 	// Make test file system
@@ -350,7 +351,7 @@ func testMountAPI(t *testing.T, sockAddr string) {
 
 	// Run test sequence
 	path1 := filepath.Join(testDir, "path1")
-	require.NoError(t, os.MkdirAll(path1, 0755))
+	require.NoError(t, file.MkdirAll(path1, 0755))
 	mount1 := filepath.Join(testDir, "vol1")
 	res := ""
 

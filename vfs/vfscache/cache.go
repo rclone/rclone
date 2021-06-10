@@ -150,7 +150,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 
 // createDir creates a directory path, along with any necessary parents
 func createDir(dir string) error {
-	return os.MkdirAll(dir, 0700)
+	return file.MkdirAll(dir, 0700)
 }
 
 // createRootDir creates a single cache root directory
