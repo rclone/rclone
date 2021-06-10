@@ -25,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/env"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"golang.org/x/crypto/ssh"
@@ -227,7 +228,7 @@ func (s *server) serve() (err error) {
 		if err != nil && len(s.opt.HostKeys) == 0 {
 			fs.Debugf(nil, "Failed to load %q: %v", keyPath, err)
 			// If loading a cached key failed, make the keys and retry
-			err = os.MkdirAll(cachePath, 0700)
+			err = file.MkdirAll(cachePath, 0700)
 			if err != nil {
 				return errors.Wrap(err, "failed to create cache path")
 			}

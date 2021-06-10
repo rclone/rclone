@@ -14,6 +14,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/file"
 )
 
 // Errors
@@ -153,7 +154,7 @@ func (vol *Volume) checkMountpoint() error {
 	}
 	_, err := os.Lstat(path)
 	if os.IsNotExist(err) {
-		if err = os.MkdirAll(path, 0700); err != nil {
+		if err = file.MkdirAll(path, 0700); err != nil {
 			return errors.Wrapf(err, "failed to create mountpoint: %s", path)
 		}
 	} else if err != nil {

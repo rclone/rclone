@@ -8,6 +8,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+
+	"github.com/rclone/rclone/lib/file"
 )
 
 func newUnixListener(path string, gid int) (net.Listener, string, error) {
@@ -31,7 +33,7 @@ func newUnixListener(path string, gid int) (net.Listener, string, error) {
 		path = filepath.Join(sockDir, path)
 	}
 
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+	if err := file.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return nil, "", err
 	}
 	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
