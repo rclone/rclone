@@ -1837,7 +1837,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	// Send the entry to the caller, queueing any directories as new jobs
 	cb := func(entry fs.DirEntry) error {
-		if d, isDir := entry.(*fs.Dir); isDir {
+		if d, isDir := entry.(fs.Dir); isDir {
 			job := listREntry{actualID(d.ID()), d.Remote()}
 			sendJob(job)
 		}

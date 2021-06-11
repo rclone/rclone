@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -24,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/resumable"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/readers"
@@ -505,7 +507,26 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				// Ignore directories which are symlinks.  These are junction points under windows which
 				// are kind of a souped up symlink. Unix doesn't have directories which are symlinks.
 				if (mode&os.ModeSymlink) == 0 && f.dev == readDevice(fi, f.opt.OneFileSystem) {
-					d := fs.NewDir(newRemote, fi.ModTime())
+					d := fs.NewLazyDir(newRemote, fi.ModTime(), func() int64 {
+						var size int64
+						if err := filepath.Walk(newRemote, func(_ string, info os.FileInfo, err error) error {
+							if err != nil {
+								return err
+							}
+							if !info.IsDir() {
+								size += info.Size()
+							}
+							return err
+						}); err != nil {
+							size = -1
+						}
+						return size
+					}, func() int64 {
+						if matches, err := filepath.Glob(filepath.Join(newRemote, "*")); err == nil {
+							return int64(len(matches))
+						}
+						return -1
+					})
 					entries = append(entries, d)
 				}
 			} else {
@@ -1264,6 +1285,81 @@ func (f *Fs) OpenWriterAt(ctx context.Context, remote string, size int64) (fs.Wr
 	return out, nil
 }
 
+const uploadDir = ".%!%uploads%!%/"   // TODO make configurable
+const uploadLifetime = time.Hour * 24 // TODO make configurable
+
+// Concat implements fs.Concatenator interface
+func (f *Fs) Concat(ctx context.Context, fragments fs.Objects, remote string) (fs.Object, error) {
+	var totalSize int64 = 0
+	modTime := fragments[0].ModTime(ctx)
+	fragmentReaders := make([]io.Reader, len(fragments))
+
+	defer func() {
+		// Close open fragmentReaders
+		for _, reader := range fragmentReaders {
+			if reader, ok := reader.(io.ReadCloser); ok {
+				_ = reader.Close()
+			}
+		}
+	}()
+
+	// Aggregate fragment properties and fragment readers
+	for i, fragment := range fragments {
+		totalSize += fragment.Size()
+		fmodTime := fragment.ModTime(ctx)
+		if modTime.Before(fmodTime) {
+			// Use most recent modification time
+			modTime = fmodTime
+		}
+		reader, err := fragment.Open(ctx)
+		if err != nil {
+			return nil, err
+		}
+		fragmentReaders[i] = reader
+	}
+
+	// Create temporary Object to act as unified src
+	src := &Object{
+		fs:      f, // TODO does it matter if fragments fs != f?
+		remote:  remote,
+		size:    totalSize,
+		modTime: modTime,
+	}
+
+	return f.Put(ctx, io.MultiReader(fragmentReaders...), src)
+}
+
+// ResumableUpload implements fs.ResumableUploader interface
+func (f *Fs) ResumableUpload(ctx context.Context, remoteURL string) (fs.Uploader, string, error) {
+	parsedPath, err := url.Parse(remoteURL)
+	if err != nil {
+		return nil, remoteURL, err
+	}
+	dir := path.Join(uploadDir, parsedPath.Path)
+	err = f.Mkdir(ctx, dir)
+	if err != nil {
+		return nil, remoteURL, err
+	}
+
+	// Update mtime of all folders in path for cleanup
+	now := time.Now()
+	current := uploadDir
+	for _, d := range strings.Split(parsedPath.Path, "/") {
+		current = path.Join(current, d)
+		_ = os.Chtimes(f.localPath(current), now, now)
+	}
+
+	return resumable.NewConcatUploader(parsedPath.Path, dir, f, ctx), remoteURL, err
+}
+
+func (f *Fs) ResumableCleanup(ctx context.Context) error {
+	entries, err := f.List(ctx, uploadDir)
+	if err != nil {
+		return err
+	}
+	return resumable.CleanUploads(ctx, f, entries, uploadLifetime)
+}
+
 // setMetadata sets the file info from the os.FileInfo passed in
 func (o *Object) setMetadata(info os.FileInfo) {
 	// if not checking updated then don't update the stat
@@ -1336,12 +1432,14 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 
 // Check the interfaces are satisfied
 var (
+	_ fs.Commander      = &Fs{}
+	_ fs.Concatenator   = &Fs{}
+	_ fs.DirMover       = &Fs{}
 	_ fs.Fs             = &Fs{}
+	_ fs.Mover          = &Fs{}
+	_ fs.OpenWriterAter = &Fs{}
 	_ fs.Purger         = &Fs{}
 	_ fs.PutStreamer    = &Fs{}
-	_ fs.Mover          = &Fs{}
-	_ fs.DirMover       = &Fs{}
-	_ fs.Commander      = &Fs{}
-	_ fs.OpenWriterAter = &Fs{}
+	_ fs.ResumableUploader = &Fs{}
 	_ fs.Object         = &Object{}
 )
