@@ -408,6 +408,32 @@ func (f *Fs) moveFile(ctx context.Context, url string, folderID int, rename stri
 	return response, nil
 }
 
+func (f *Fs) moveDir(ctx context.Context, folderID int, newLeaf string, destinationFolderID int) (response *MoveDirResponse, err error) {
+	request := &MoveDirRequest{
+		FolderID:            folderID,
+		DestinationFolderID: destinationFolderID,
+		Rename:              newLeaf,
+		// DestinationUser:     destinationUser,
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/folder/mv.cgi",
+	}
+
+	response = &MoveDirResponse{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, request, response)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("couldn't move dir: %w", err)
+	}
+
+	return response, nil
+}
+
 func (f *Fs) copyFile(ctx context.Context, url string, folderID int, rename string) (response *CopyFileResponse, err error) {
 	request := &CopyFileRequest{
 		URLs:     []string{url},
