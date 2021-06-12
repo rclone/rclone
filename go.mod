@@ -64,6 +64,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
+	github.com/tus/tusd v1.6.0
 	github.com/xanzy/ssh-agent v0.3.0
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0

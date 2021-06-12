@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/xml"
 	"fmt"
+	"github.com/rclone/rclone/fs/resumable"
 	"io"
 	"net/http"
 	"net/url"
@@ -2147,37 +2148,52 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	return f.makeBucket(ctx, bucket)
 }
 
+func (f *Fs) createBucket(ctx context.Context, bucket string) error {
+	req := s3.CreateBucketInput{
+		Bucket: &bucket,
+		ACL:    &f.opt.BucketACL,
+	}
+	if f.opt.LocationConstraint != "" {
+		req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
+			LocationConstraint: &f.opt.LocationConstraint,
+		}
+	}
+	err := f.pacer.Call(func() (bool, error) {
+		_, err := f.c.CreateBucketWithContext(ctx, &req)
+		return f.shouldRetry(err)
+	})
+	if err == nil {
+		fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
+	}
+	if awsErr, ok := err.(awserr.Error); ok {
+		if code := awsErr.Code(); code == "BucketAlreadyOwnedByYou" || code == "BucketAlreadyExists" {
+			err = nil
+		}
+	}
+	return nil
+}
+
 // makeBucket creates the bucket if it doesn't exist
 func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 	if f.opt.NoCheckBucket {
 		return nil
 	}
 	return f.cache.Create(bucket, func() error {
-		req := s3.CreateBucketInput{
-			Bucket: &bucket,
-			ACL:    &f.opt.BucketACL,
-		}
-		if f.opt.LocationConstraint != "" {
-			req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
-				LocationConstraint: &f.opt.LocationConstraint,
-			}
-		}
-		err := f.pacer.Call(func() (bool, error) {
-			_, err := f.c.CreateBucketWithContext(ctx, &req)
-			return f.shouldRetry(ctx, err)
-		})
-		if err == nil {
-			fs.Infof(f, "Bucket %q created with ACL %q", bucket, f.opt.BucketACL)
-		}
-		if awsErr, ok := err.(awserr.Error); ok {
-			if code := awsErr.Code(); code == "BucketAlreadyOwnedByYou" || code == "BucketAlreadyExists" {
-				err = nil
-			}
-		}
-		return err
+		return f.createBucket(ctx, bucket)
 	}, func() (bool, error) {
 		return f.bucketExists(ctx, bucket)
 	})
+}
+
+func (f *Fs) makeUploadBucket(ctx context.Context) (string, string, error) {
+	// Ensure bucket housing upload dir exists
+	o := &Object{
+		fs:     f,
+		remote: uploadDir,
+	}
+	bucket, bucketPath := o.split()
+
+	return bucket, bucketPath, f.makeBucket(ctx, bucket)
 }
 
 // Rmdir deletes the bucket if the fs is at the root
@@ -2729,6 +2745,31 @@ func (f *Fs) cleanUp(ctx context.Context, maxAge time.Duration) (err error) {
 // CleanUp removes all pending multipart uploads older than 24 hours
 func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	return f.cleanUp(ctx, 24*time.Hour)
+}
+
+func (f *Fs) ResumableUpload(ctx context.Context, remoteUrl string) (u fs.Uploader, newPath string, err error) {
+	newPath = remoteUrl
+	parsedPath, err := url.Parse(remoteUrl)
+	if err != nil {
+		return
+	}
+	dir := path.Join(uploadDir, parsedPath.Path)
+
+	_, _, err = f.makeUploadBucket(ctx)
+	if err != nil {
+		return
+	}
+
+	u = resumable.NewConcatUploader(parsedPath.Path, dir, f, ctx)
+	return
+}
+
+func (f *Fs) ResumableCleanup(ctx context.Context) (err error) {
+	entries, err := f.List(ctx, uploadDir)
+	if err != nil {
+		return
+	}
+	return resumable.CleanUploads(ctx, f, entries, uploadLifetime)
 }
 
 // ------------------------------------------------------------

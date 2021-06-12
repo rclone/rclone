@@ -729,8 +729,8 @@ func (f *Fs) findSharedFolder(ctx context.Context, name string) (id string, err 
 		return "", err
 	}
 	for _, entry := range entries {
-		if entry.(*fs.Dir).Remote() == name {
-			return entry.(*fs.Dir).ID(), nil
+		if entry.(fs.Dir).Remote() == name {
+			return entry.(fs.Dir).ID(), nil
 		}
 	}
 	return "", fs.ErrorDirNotFound

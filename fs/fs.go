@@ -951,6 +951,27 @@ func (ft *Features) WrapsFs(f Fs, w Fs) *Features {
 	return ft
 }
 
+// Uploader describes a resumable upload
+type Uploader interface {
+	io.WriteCloser
+	Pos() (int64, bool)  // position we have got to in the upload
+	Size() (int64, bool) // final size of the upload
+	SetSize(int64) error // Set the final size of the upload, must be called before Pos() == Size(). Calling multiple times has undefined behavior.
+	Abort() error        // abort the upload
+	Expires() time.Time  // the time the upload expires or nil if never
+}
+
+// ResumableUploader describes how to start or resume a resumable upload
+type ResumableUploader interface {
+	ResumableUpload(ctx context.Context, path string) (uploader Uploader, newPath string, err error) // Start or continue an existing upload to path. path is a uri encoded remote path that can include a RFC3986 query string
+	ResumableCleanup(ctx context.Context) error                                                      // Clean up expired incomplete uploads
+}
+
+// Concatenator is an optional interface for Fs
+type Concatenator interface {
+	Concat(ctx context.Context, fragments Objects, remote string) (Object, error) // Concatenate to remote path
+}
+
 // Purger is an optional interfaces for Fs
 type Purger interface {
 	// Purge all files in the directory specified
