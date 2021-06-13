@@ -2,8 +2,9 @@ package accounting
 
 import (
 	"context"
-	"github.com/rclone/rclone/fs/rc"
 	"sync"
+
+	"github.com/rclone/rclone/fs/rc"
 
 	"github.com/rclone/rclone/fs"
 )
