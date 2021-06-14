@@ -1496,19 +1496,29 @@ func TestSyncCompareDest(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
 
-	// check empty dest, old compare
-	file5b := r.WriteFile("two", "twot3", t3)
-	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+	// check new dest, new compare, src timestamp differs
+	file5b := r.WriteFile("two", "two", t3)
 	fstest.CheckItems(t, r.Flocal, file1c, file5b)
 
 	accounting.GlobalStats().ResetCounters()
 	err = Sync(ctx, fdst, r.Flocal, false)
 	require.NoError(t, err)
 
-	file5bdst := file5b
-	file5bdst.Path = "dst/two"
+	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
 
-	fstest.CheckItems(t, r.Fremote, file2, file3, file4, file5bdst)
+	// check empty dest, old compare
+	file5c := r.WriteFile("two", "twot3", t3)
+	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+	fstest.CheckItems(t, r.Flocal, file1c, file5c)
+
+	accounting.GlobalStats().ResetCounters()
+	err = Sync(ctx, fdst, r.Flocal, false)
+	require.NoError(t, err)
+
+	file5cdst := file5c
+	file5cdst.Path = "dst/two"
+
+	fstest.CheckItems(t, r.Fremote, file2, file3, file4, file5cdst)
 }
 
 // Test with multiple CompareDest
