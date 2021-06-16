@@ -167,7 +167,7 @@ files in the bucket.
 
     rclone sync -i /home/local/directory remote:bucket
 
-### Service Account support ###
+### Service Account support
 
 You can set up rclone with Google Cloud Storage in an unattended mode,
 i.e. not tied to a specific end-user Google account. This is useful
@@ -194,14 +194,14 @@ the rclone config file, you can set `service_account_credentials` with
 the actual contents of the file instead, or set the equivalent
 environment variable.
 
-### Anonymous Access ###
+### Anonymous Access
 
 For downloads of objects that permit public access you can configure rclone
 to use anonymous access by setting `anonymous` to `true`.
 With unauthorized access you can't write or create files but only read or list
 those buckets and objects that have public read access.
 
-### Application Default Credentials ###
+### Application Default Credentials
 
 If no other source of credentials is provided, rclone will fall back
 to
@@ -215,13 +215,13 @@ additional commands on your google compute machine -
 Note that in the case application default credentials are used, there
 is no need to explicitly configure a project number.
 
-### --fast-list ###
+### --fast-list
 
 This remote supports `--fast-list` which allows you to use fewer
 transactions in exchange for more memory. See the [rclone
 docs](/docs/#fast-list) for more details.
 
-### Custom upload headers ###
+### Custom upload headers
 
 You can set custom upload headers with the `--header-upload`
 flag. Google Cloud Storage supports the headers as described in the
@@ -240,13 +240,24 @@ Eg `--header-upload "Content-Type text/potato"`
 Note that the last of these is for setting custom metadata in the form
 `--header-upload "x-goog-meta-key: value"`
 
-### Modified time ###
+### Modification time
 
-Google google cloud storage stores md5sums natively and rclone stores
-modification times as metadata on the object, under the "mtime" key in
-RFC3339 format accurate to 1ns.
+Google Cloud Storage stores md5sum natively.
+Google's [gsutil](https://cloud.google.com/storage/docs/gsutil) tool stores modification time
+with one-second precision as `goog-reserved-file-mtime` in file metadata.
 
-#### Restricted filename characters
+To ensure compatibility with gsutil, rclone stores modification time in 2 separate metadata entries.
+`mtime` uses RFC3339 format with one-nanosecond precision.
+`goog-reserved-file-mtime` uses Unix timestamp format with one-second precision.
+To get modification time from object metadata, rclone reads the metadata in the following order: `mtime`, `goog-reserved-file-mtime`, object updated time.
+
+Note that rclone's default modify window is 1ns.
+Files uploaded by gsutil only contain timestamps with one-second precision.
+If you use rclone to sync files previously uploaded by gsutil,
+rclone will attempt to update modification time for all these files.
+To avoid these possibly unnecessary updates, use `--modify-window 1s`.
+
+### Restricted filename characters
 
 | Character | Value | Replacement |
 | --------- |:-----:|:-----------:|

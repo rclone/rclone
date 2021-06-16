@@ -34,6 +34,7 @@ See the [global flags page](/flags/) for global options not listed here.
 ## SEE ALSO
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
+* [rclone test changenotify](/commands/rclone_test_changenotify/)	 - Log any change notify requests for the remote passed in.
 * [rclone test histogram](/commands/rclone_test_histogram/)	 - Makes a histogram of file name characters.
 * [rclone test info](/commands/rclone_test_info/)	 - Discovers file name or other limitations for paths.
 * [rclone test makefiles](/commands/rclone_test_makefiles/)	 - Make a random file hierarchy in <dir>

@@ -46,7 +46,7 @@ Got code
 [remote]
 client_id =
 client_secret =
-token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","expiry":"2016-12-29T12:27:11.362788025Z"}
+token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"OAuth","expiry":"2016-12-29T12:27:11.362788025Z"}
 --------------------
 y) Yes this is OK
 e) Edit this remote

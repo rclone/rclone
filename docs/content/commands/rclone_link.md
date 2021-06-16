@@ -41,7 +41,7 @@ rclone link remote:path [flags]
 ## Options
 
 ```
-      --expire Duration   The amount of time that the link will be valid (default 100y)
+      --expire Duration   The amount of time that the link will be valid (default off)
   -h, --help              help for link
       --unlink            Remove existing public link to file/folder
 ```

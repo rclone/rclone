@@ -274,7 +274,7 @@ you would do:
 If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
-    rclone config update myremote swift env_auth=true config_refresh_token=false
+    rclone config update myremote env_auth=true config_refresh_token=false
 `, "|", "`") + configPasswordHelp,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 256, command, args)

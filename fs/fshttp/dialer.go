@@ -3,6 +3,9 @@ package fshttp
 import (
 	"context"
 	"net"
+	"runtime"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -45,6 +48,8 @@ func (d *Dialer) Dial(network, address string) (net.Conn, error) {
 	return d.DialContext(context.Background(), network, address)
 }
 
+var warnDSCPFail, warnDSCPWindows sync.Once
+
 // DialContext connects to the address on the named network using
 // the provided context.
 func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
@@ -53,15 +58,22 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 		return c, err
 	}
 	if d.tclass != 0 {
-		if addr, ok := c.RemoteAddr().(*net.IPAddr); ok {
-			if addr.IP.To16() != nil && addr.IP.To4() == nil {
-				err = ipv6.NewConn(c).SetTrafficClass(d.tclass)
-			} else {
-				err = ipv4.NewConn(c).SetTOS(d.tclass)
+		// IPv6 addresses must have two or more ":"
+		if strings.Count(c.RemoteAddr().String(), ":") > 1 {
+			err = ipv6.NewConn(c).SetTrafficClass(d.tclass)
+		} else {
+			err = ipv4.NewConn(c).SetTOS(d.tclass)
+			// Warn of silent failure on Windows (IPv4 only, IPv6 caught by error handler)
+			if runtime.GOOS == "windows" {
+				warnDSCPWindows.Do(func() {
+					fs.LogLevelPrintf(fs.LogLevelWarning, nil, "dialer: setting DSCP on Windows/IPv4 fails silently; see https://github.com/golang/go/issues/42728")
+				})
 			}
-			if err != nil {
-				return c, err
-			}
+		}
+		if err != nil {
+			warnDSCPFail.Do(func() {
+				fs.LogLevelPrintf(fs.LogLevelWarning, nil, "dialer: failed to set DSCP socket options: %v", err)
+			})
 		}
 	}
 	return newTimeoutConn(c, d.timeout)

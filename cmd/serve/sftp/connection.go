@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"regexp"
 	"strings"
 
@@ -14,7 +15,9 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/terminal"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -225,19 +228,8 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 
 	// Wait for either subsystem "sftp" or "exec" request
 	if <-isSFTP {
-		fs.Debugf(c.what, "Starting SFTP server")
-		server := sftp.NewRequestServer(channel, c.handlers)
-		defer func() {
-			err := server.Close()
-			if err != nil && err != io.EOF {
-				fs.Debugf(c.what, "Failed to close server: %v", err)
-			}
-		}()
-		err = server.Serve()
-		if err == io.EOF || err == nil {
-			fs.Debugf(c.what, "exited session")
-		} else {
-			fs.Errorf(c.what, "completed with error: %v", err)
+		if err := serveChannel(channel, c.handlers, c.what); err != nil {
+			fs.Errorf(c.what, "Failed to serve SFPT: %v", err)
 		}
 	} else {
 		var rc = uint32(0)
@@ -262,4 +254,55 @@ func (c *conn) handleChannels(chans <-chan ssh.NewChannel) {
 	for newChannel := range chans {
 		go c.handleChannel(newChannel)
 	}
+}
+
+func serveChannel(rwc io.ReadWriteCloser, h sftp.Handlers, what string) error {
+	fs.Debugf(what, "Starting SFTP server")
+	server := sftp.NewRequestServer(rwc, h)
+	defer func() {
+		err := server.Close()
+		if err != nil && err != io.EOF {
+			fs.Debugf(what, "Failed to close server: %v", err)
+		}
+	}()
+	err := server.Serve()
+	if err != nil && err != io.EOF {
+		return errors.Wrap(err, "completed with error")
+	}
+	fs.Debugf(what, "exited session")
+	return nil
+}
+
+func serveStdio(f fs.Fs) error {
+	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+		return errors.New("refusing to run SFTP server directly on a terminal. Please let sshd start rclone, by connecting with sftp or sshfs")
+	}
+	sshChannel := &stdioChannel{
+		stdin:  os.Stdin,
+		stdout: os.Stdout,
+	}
+	handlers := newVFSHandler(vfs.New(f, &vfsflags.Opt))
+	return serveChannel(sshChannel, handlers, "stdio")
+}
+
+type stdioChannel struct {
+	stdin  *os.File
+	stdout *os.File
+}
+
+func (c *stdioChannel) Read(data []byte) (int, error) {
+	return c.stdin.Read(data)
+}
+
+func (c *stdioChannel) Write(data []byte) (int, error) {
+	return c.stdout.Write(data)
+}
+
+func (c *stdioChannel) Close() error {
+	err1 := c.stdin.Close()
+	err2 := c.stdout.Close()
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }

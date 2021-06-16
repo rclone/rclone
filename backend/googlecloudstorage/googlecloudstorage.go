@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,10 +51,10 @@ import (
 const (
 	rcloneClientID              = "202264815644.apps.googleusercontent.com"
 	rcloneEncryptedClientSecret = "Uj7C9jGfb9gmeaV70Lh058cNkWvepr-Es9sBm0zdgil7JaOWF1VySw"
-	timeFormatIn                = time.RFC3339
-	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
-	metaMtime                   = "mtime" // key to store mtime under in metadata
-	listChunks                  = 1000    // chunk size to read directory listings
+	timeFormat                  = time.RFC3339Nano
+	metaMtime                   = "mtime"                    // key to store mtime in metadata
+	metaMtimeGsutil             = "goog-reserved-file-mtime" // key used by GSUtil to store mtime in metadata
+	listChunks                  = 1000                       // chunk size to read directory listings
 	minSleep                    = 10 * time.Millisecond
 )
 
@@ -920,7 +921,7 @@ func (o *Object) setMetaData(info *storage.Object) {
 	// read mtime out of metadata if available
 	mtimeString, ok := info.Metadata[metaMtime]
 	if ok {
-		modTime, err := time.Parse(timeFormatIn, mtimeString)
+		modTime, err := time.Parse(timeFormat, mtimeString)
 		if err == nil {
 			o.modTime = modTime
 			return
@@ -928,8 +929,19 @@ func (o *Object) setMetaData(info *storage.Object) {
 		fs.Debugf(o, "Failed to read mtime from metadata: %s", err)
 	}
 
+	// Fallback to GSUtil mtime
+	mtimeGsutilString, ok := info.Metadata[metaMtimeGsutil]
+	if ok {
+		unixTimeSec, err := strconv.ParseInt(mtimeGsutilString, 10, 64)
+		if err == nil {
+			o.modTime = time.Unix(unixTimeSec, 0)
+			return
+		}
+		fs.Debugf(o, "Failed to read GSUtil mtime from metadata: %s", err)
+	}
+
 	// Fallback to the Updated time
-	modTime, err := time.Parse(timeFormatIn, info.Updated)
+	modTime, err := time.Parse(timeFormat, info.Updated)
 	if err != nil {
 		fs.Logf(o, "Bad time decode: %v", err)
 	} else {
@@ -986,7 +998,8 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 // Returns metadata for an object
 func metadataFromModTime(modTime time.Time) map[string]string {
 	metadata := make(map[string]string, 1)
-	metadata[metaMtime] = modTime.Format(timeFormatOut)
+	metadata[metaMtime] = modTime.Format(timeFormat)
+	metadata[metaMtimeGsutil] = strconv.FormatInt(modTime.Unix(), 10)
 	return metadata
 }
 
@@ -998,11 +1011,11 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) 
 		return err
 	}
 	// Add the mtime to the existing metadata
-	mtime := modTime.Format(timeFormatOut)
 	if object.Metadata == nil {
 		object.Metadata = make(map[string]string, 1)
 	}
-	object.Metadata[metaMtime] = mtime
+	object.Metadata[metaMtime] = modTime.Format(timeFormat)
+	object.Metadata[metaMtimeGsutil] = strconv.FormatInt(modTime.Unix(), 10)
 	// Copy the object to itself to update the metadata
 	// Using PATCH requires too many permissions
 	bucket, bucketPath := o.split()

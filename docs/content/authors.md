@@ -496,3 +496,11 @@ put them back in again.` >}}
   * Antoon Prins <antoon.prins@surfsara.nl>
   * Alexey Ivanov <rbtz@dropbox.com>
   * sp31415t1 <33207650+sp31415t1@users.noreply.github.com>
+  * acsfer <carlos@reendex.com>
+  * Tom <tom@tom-fitzhenry.me.uk>
+  * Tyson Moore <tyson@tyson.me>
+  * database64128 <free122448@hotmail.com>
+  * Chris Lu <chrislusf@users.noreply.github.com>
+  * Reid Buzby <reid@rethink.software>
+  * darrenrhs <darrenrhs@gmail.com>
+  * Florian Penzkofer <fp@nullptr.de>

@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -90,6 +91,7 @@ func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenRespons
 	request := DownloadRequest{
 		URL:    url,
 		Single: 1,
+		Pass:   f.opt.FilePassword,
 	}
 	opts := rest.Opts{
 		Method: "POST",
@@ -118,10 +120,16 @@ func fileFromSharedFile(file *SharedFile) File {
 
 func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntries, err error) {
 	opts := rest.Opts{
-		Method:     "GET",
-		RootURL:    "https://1fichier.com/dir/",
-		Path:       id,
-		Parameters: map[string][]string{"json": {"1"}},
+		Method:      "GET",
+		RootURL:     "https://1fichier.com/dir/",
+		Path:        id,
+		Parameters:  map[string][]string{"json": {"1"}},
+		ContentType: "application/x-www-form-urlencoded",
+	}
+	if f.opt.FolderPassword != "" {
+		opts.Method = "POST"
+		opts.Parameters = nil
+		opts.Body = strings.NewReader("json=1&pass=" + url.QueryEscape(f.opt.FolderPassword))
 	}
 
 	var sharedFiles SharedFolderResponse
@@ -311,7 +319,7 @@ func (f *Fs) removeFolder(ctx context.Context, name string, folderID int) (respo
 		return nil, errors.Wrap(err, "couldn't remove folder")
 	}
 	if response.Status != "OK" {
-		return nil, errors.New("Can't remove non-empty dir")
+		return nil, errors.Errorf("can't remove folder: %s", response.Message)
 	}
 
 	// fs.Debugf(f, "Removed Folder with id `%s`", directoryID)
@@ -391,6 +399,34 @@ func (f *Fs) copyFile(ctx context.Context, url string, folderID int, rename stri
 
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't copy file")
+	}
+
+	return response, nil
+}
+
+func (f *Fs) renameFile(ctx context.Context, url string, newName string) (response *RenameFileResponse, err error) {
+	request := &RenameFileRequest{
+		URLs: []RenameFileURL{
+			{
+				URL:      url,
+				Filename: newName,
+			},
+		},
+	}
+
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   "/file/rename.cgi",
+	}
+
+	response = &RenameFileResponse{}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err := f.rest.CallJSON(ctx, &opts, request, response)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if err != nil {
+		return nil, errors.Wrap(err, "couldn't rename file")
 	}
 
 	return response, nil
