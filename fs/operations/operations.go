@@ -266,22 +266,6 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 	return true
 }
 
-// Used to remove a failed copy
-//
-// Returns whether the file was successfully removed or not
-func removeFailedCopy(ctx context.Context, dst fs.Object) bool {
-	if dst == nil {
-		return false
-	}
-	fs.Infof(dst, "Removing failed copy")
-	removeErr := dst.Remove(ctx)
-	if removeErr != nil {
-		fs.Infof(dst, "Failed to remove failed copy: %s", removeErr)
-		return false
-	}
-	return true
-}
-
 // OverrideRemote is a wrapper to override the Remote for an
 // ObjectInfo
 type OverrideRemote struct {
@@ -515,7 +499,6 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
 		fs.Errorf(dst, "%v", err)
 		err = fs.CountError(err)
-		removeFailedCopy(ctx, dst)
 		return newDst, err
 	}
 
@@ -527,7 +510,6 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
 			fs.Errorf(dst, "%v", err)
 			err = fs.CountError(err)
-			removeFailedCopy(ctx, dst)
 			return newDst, err
 		}
 	}
