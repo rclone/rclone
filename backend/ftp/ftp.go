@@ -1050,6 +1050,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.Wrap(err, "Update")
 	}
 	err = c.Stor(o.fs.opt.Enc.FromStandardPath(path), in)
+	// Ignore error 250 here - send by some servers
+	if err != nil {
+		switch errX := err.(type) {
+		case *textproto.Error:
+			switch errX.Code {
+			case ftp.StatusRequestedFileActionOK:
+				err = nil
+			}
+		}
+	}
 	if err != nil {
 		_ = c.Quit() // toss this connection to avoid sync errors
 		remove()
