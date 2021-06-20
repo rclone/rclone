@@ -1503,7 +1503,50 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		fmt.Println(err)
 		return "", err
 	}
-	return result.Link.WebURL, nil
+
+	url := result.Link.WebURL
+
+	// Convert share link to direct download link if target is not a folder
+	segments := strings.Split(url, "/")
+	cnvFailMsg := "Conversion method is outdated. Cannot convert to downloadable URL"
+	switch {
+	case f.driveType == driveTypePersonal:
+		// https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
+		if len(segments) != 5 {
+			fs.Logf(f, cnvFailMsg)
+		} else if segments[3] != "u" {
+			enc := base64.StdEncoding.EncodeToString([]byte(url))
+			url = "https://api.onedrive.com/v1.0/shares/u!" + enc[:len(enc)-1] + "/root/content"
+		}
+	case f.driveType == driveTypeBusiness:
+		// https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
+		if len(segments) != 8 {
+			fs.Logf(f, cnvFailMsg)
+		} else if segments[3] != ":f:" {
+			url = strings.Join(segments[0:3], "/") + "/" + segments[5] + "/" + segments[6] +
+				"/_layouts/15/download.aspx?share=" + segments[7]
+		}
+	case f.driveType == driveTypeSharepoint:
+		if len(segments) < 6 {
+			fs.Logf(f, cnvFailMsg)
+		} else if segments[3] != ":f:" {
+			url = strings.Join(segments[0:3], "/")
+			switch segments[4] {
+			case "s":
+				url += "/sites/" + segments[5]
+			case "t":
+				url += "/teams/" + segments[5]
+			case "g": // Root site
+			default:
+				fs.Logf(f, cnvFailMsg)
+			}
+			url += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
+		}
+	default:
+		fs.Logf(f, "Unsupported drive type. Cannot convert to downloadable URL")
+	}
+
+	return url, nil
 }
 
 // CleanUp deletes all the hidden files.
