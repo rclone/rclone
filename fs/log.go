@@ -180,8 +180,8 @@ func Errorf(o interface{}, text string, args ...interface{}) {
 }
 
 // Logf writes log output for this Object or Fs.  This should be
-// considered to be Info level logging.  It is the default level.  By
-// default rclone should not log very much so only use this for
+// considered to be Notice level logging.  It is the default level.
+// By default rclone should not log very much so only use this for
 // important things the user should see.  The user can filter these
 // out with the -q flag.
 func Logf(o interface{}, text string, args ...interface{}) {
