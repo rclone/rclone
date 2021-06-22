@@ -1523,12 +1523,10 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			fs.Logf(f, cnvFailMsg)
 			return url, nil
 		}
-
 		enc := base64.StdEncoding.EncodeToString([]byte(url))
 		strings.ReplaceAll(enc, "/", "_")
 		strings.ReplaceAll(enc, "+", "-")
 		url = "https://api.onedrive.com/v1.0/shares/u!" + enc[:len(enc)-1] + "/root/content"
-
 	case driveTypeBusiness:
 		/*
 			Method: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
@@ -1541,10 +1539,8 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			fs.Logf(f, cnvFailMsg)
 			return url, nil
 		}
-
 		url = strings.Join(segments[:3], "/") + "/" + segments[5] + "/" + segments[6] +
 			"/_layouts/15/download.aspx?share=" + segments[7]
-
 	case driveTypeSharepoint:
 		/*
 			Method: Similar to driveTypeBusiness
@@ -1565,7 +1561,6 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			fs.Logf(f, cnvFailMsg)
 			return url, nil
 		}
-
 		url = strings.Join(segments[:3], "/")
 		switch segments[4] {
 		case "s": // Site
@@ -1577,10 +1572,6 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			fs.Logf(f, cnvFailMsg)
 		}
 		url += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
-
-	default:
-		fs.Logf(f, cnvFailMsg)
-		return url, nil
 	}
 
 	return url, nil
