@@ -1516,17 +1516,16 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	segments := strings.Split(url, "/")
 	switch f.driveType {
 	case driveTypePersonal:
-		/*
-			Method: https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
-		*/
+		// Method: https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
 		if len(segments) != 5 {
 			fs.Logf(f, cnvFailMsg)
 			return url, nil
 		}
 		enc := base64.StdEncoding.EncodeToString([]byte(url))
-		strings.ReplaceAll(enc, "/", "_")
-		strings.ReplaceAll(enc, "+", "-")
-		url = "https://api.onedrive.com/v1.0/shares/u!" + enc[:len(enc)-1] + "/root/content"
+		enc = strings.ReplaceAll(enc, "/", "_")
+		enc = strings.ReplaceAll(enc, "+", "-")
+		enc = strings.ReplaceAll(enc, "=", "")
+		url = "https://api.onedrive.com/v1.0/shares/u!" + enc + "/root/content"
 	case driveTypeBusiness:
 		/*
 			Method: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
@@ -1557,21 +1556,23 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 				--convert to->
 				https://{tenant}-my.sharepoint.com/_layouts/15/download.aspx?share={Opaque_String}
 		*/
-		if len(segments) < 6 {
+		if len(segments) < 6 || len(segments) > 7 {
 			fs.Logf(f, cnvFailMsg)
 			return url, nil
 		}
-		url = strings.Join(segments[:3], "/")
+		tmpURL := strings.Join(segments[:3], "/")
 		switch segments[4] {
 		case "s": // Site
-			url += "/sites/" + segments[5]
+			tmpURL += "/sites/" + segments[5]
 		case "t": // Team
-			url += "/teams/" + segments[5]
+			tmpURL += "/teams/" + segments[5]
 		case "g": // Root site
 		default:
 			fs.Logf(f, cnvFailMsg)
+			return url, nil
 		}
-		url += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
+		tmpURL += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
+		url = tmpURL
 	}
 
 	return url, nil
