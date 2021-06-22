@@ -1507,12 +1507,16 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	shareURL := result.Link.WebURL
 
 	// Convert share link to direct download link if target is not a folder
-	cnvFailMsg := "Don't know how to convert share link to direct link - returning the link as is"
+	// Not attempting to do the conversion for regional versions, just to be safe
+	if f.opt.Region != regionGlobal {
+		return shareURL, nil
+	}
 	if info.Folder != nil {
 		fs.Debugf(nil, "Can't convert share link for folder to direct link - returning the link as is")
 		return shareURL, nil
 	}
 
+	cnvFailMsg := "Don't know how to convert share link to direct link - returning the link as is"
 	directURL := ""
 	segments := strings.Split(shareURL, "/")
 	switch f.driveType {
