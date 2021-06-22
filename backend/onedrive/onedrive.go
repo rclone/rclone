@@ -1509,7 +1509,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	// Convert share link to direct download link if target is not a folder
 	cnvFailMsg := "Don't know how to convert share link to direct link - returning the link as is"
 	if info.Folder != nil {
-		fs.Logf(f, cnvFailMsg)
+		fs.Debugf(nil, "Can't convert share link for folder to direct link - returning the link as is")
 		return shareURL, nil
 	}
 
@@ -1526,7 +1526,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		enc = strings.ReplaceAll(enc, "/", "_")
 		enc = strings.ReplaceAll(enc, "+", "-")
 		enc = strings.ReplaceAll(enc, "=", "")
-		directURL = "https://api.onedrive.com/v1.0/shares/u!" + enc + "/root/content"
+		directURL = fmt.Sprintf("https://api.onedrive.com/v1.0/shares/u!%s/root/content", enc)
 	case driveTypeBusiness:
 		// Method: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
 		// Example:
@@ -1537,38 +1537,39 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			fs.Logf(f, cnvFailMsg)
 			return shareURL, nil
 		}
-		directURL = strings.Join(segments[:3], "/") + "/" + segments[5] + "/" + segments[6] +
-			"/_layouts/15/download.aspx?share=" + segments[7]
+		directURL = fmt.Sprintf("https://%s/%s/%s/_layouts/15/download.aspx?share=%s",
+			segments[2], segments[5], segments[6], segments[7])
 	case driveTypeSharepoint:
 		// Method: Similar to driveTypeBusiness
 		// Example:
-		//   https://{tenant}-my.sharepoint.com/:t:/s/{site_name}/{Opaque_String}
+		//   https://{tenant}.sharepoint.com/:t:/s/{site_name}/{Opaque_String}
 		//   --convert to->
-		//   https://{tenant}-my.sharepoint.com/sites/{site_name}/_layouts/15/download.aspx?share={Opaque_String}
+		//   https://{tenant}.sharepoint.com/sites/{site_name}/_layouts/15/download.aspx?share={Opaque_String}
 		//
-		//   https://{tenant}-my.sharepoint.com/:t:/t/{team_name}/{Opaque_String}
+		//   https://{tenant}.sharepoint.com/:t:/t/{team_name}/{Opaque_String}
 		//   --convert to->
-		//   https://{tenant}-my.sharepoint.com/teams/{team_name}/_layouts/15/download.aspx?share={Opaque_String}
+		//   https://{tenant}.sharepoint.com/teams/{team_name}/_layouts/15/download.aspx?share={Opaque_String}
 		//
-		//   https://{tenant}-my.sharepoint.com/:t:/g/{Opaque_String}
+		//   https://{tenant}.sharepoint.com/:t:/g/{Opaque_String}
 		//   --convert to->
-		//   https://{tenant}-my.sharepoint.com/_layouts/15/download.aspx?share={Opaque_String}
+		//   https://{tenant}.sharepoint.com/_layouts/15/download.aspx?share={Opaque_String}
 		if len(segments) < 6 || len(segments) > 7 {
 			fs.Logf(f, cnvFailMsg)
 			return shareURL, nil
 		}
-		directURL = strings.Join(segments[:3], "/")
+		segType := ""
 		switch segments[4] {
 		case "s": // Site
-			directURL += "/sites/" + segments[5]
+			segType = "/sites/" + segments[5]
 		case "t": // Team
-			directURL += "/teams/" + segments[5]
+			segType = "/teams/" + segments[5]
 		case "g": // Root site
 		default:
 			fs.Logf(f, cnvFailMsg)
 			return shareURL, nil
 		}
-		directURL += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
+		directURL = fmt.Sprintf("https://%s%s/_layouts/15/download.aspx?share=%s",
+			segments[2], segType, segments[len(segments)-1])
 	}
 
 	return directURL, nil
