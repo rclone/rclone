@@ -1504,28 +1504,29 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", err
 	}
 
-	url := result.Link.WebURL
+	shareURL := result.Link.WebURL
 
 	// Convert share link to direct download link if target is not a folder
 	cnvFailMsg := "Don't know how to convert share link to direct link - returning the link as is"
 	if info.Folder != nil {
 		fs.Logf(f, cnvFailMsg)
-		return url, nil
+		return shareURL, nil
 	}
 
-	segments := strings.Split(url, "/")
+	directURL := ""
+	segments := strings.Split(shareURL, "/")
 	switch f.driveType {
 	case driveTypePersonal:
 		// Method: https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
 		if len(segments) != 5 {
 			fs.Logf(f, cnvFailMsg)
-			return url, nil
+			return shareURL, nil
 		}
-		enc := base64.StdEncoding.EncodeToString([]byte(url))
+		enc := base64.StdEncoding.EncodeToString([]byte(shareURL))
 		enc = strings.ReplaceAll(enc, "/", "_")
 		enc = strings.ReplaceAll(enc, "+", "-")
 		enc = strings.ReplaceAll(enc, "=", "")
-		url = "https://api.onedrive.com/v1.0/shares/u!" + enc + "/root/content"
+		directURL = "https://api.onedrive.com/v1.0/shares/u!" + enc + "/root/content"
 	case driveTypeBusiness:
 		/*
 			Method: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
@@ -1536,9 +1537,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		*/
 		if len(segments) != 8 {
 			fs.Logf(f, cnvFailMsg)
-			return url, nil
+			return shareURL, nil
 		}
-		url = strings.Join(segments[:3], "/") + "/" + segments[5] + "/" + segments[6] +
+		directURL = strings.Join(segments[:3], "/") + "/" + segments[5] + "/" + segments[6] +
 			"/_layouts/15/download.aspx?share=" + segments[7]
 	case driveTypeSharepoint:
 		/*
@@ -1558,24 +1559,23 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		*/
 		if len(segments) < 6 || len(segments) > 7 {
 			fs.Logf(f, cnvFailMsg)
-			return url, nil
+			return shareURL, nil
 		}
-		tmpURL := strings.Join(segments[:3], "/")
+		directURL = strings.Join(segments[:3], "/")
 		switch segments[4] {
 		case "s": // Site
-			tmpURL += "/sites/" + segments[5]
+			directURL += "/sites/" + segments[5]
 		case "t": // Team
-			tmpURL += "/teams/" + segments[5]
+			directURL += "/teams/" + segments[5]
 		case "g": // Root site
 		default:
 			fs.Logf(f, cnvFailMsg)
-			return url, nil
+			return shareURL, nil
 		}
-		tmpURL += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
-		url = tmpURL
+		directURL += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
 	}
 
-	return url, nil
+	return directURL, nil
 }
 
 // CleanUp deletes all the hidden files.
