@@ -1528,13 +1528,13 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		enc = strings.ReplaceAll(enc, "=", "")
 		directURL = "https://api.onedrive.com/v1.0/shares/u!" + enc + "/root/content"
 	case driveTypeBusiness:
-		/*
-			Method: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
-			Example:
-				https://{tenant}-my.sharepoint.com/:t:/g/personal/{user_email}/{Opaque_String}
-				--convert to->
-				https://{tenant}-my.sharepoint.com/personal/{user_email}/_layouts/15/download.aspx?share={Opaque_String}
-		*/
+
+		// Method: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
+		// Example:
+		//   https://{tenant}-my.sharepoint.com/:t:/g/personal/{user_email}/{Opaque_String}
+		//   --convert to->
+		//   https://{tenant}-my.sharepoint.com/personal/{user_email}/_layouts/15/download.aspx?share={Opaque_String}
+
 		if len(segments) != 8 {
 			fs.Logf(f, cnvFailMsg)
 			return shareURL, nil
@@ -1542,21 +1542,20 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		directURL = strings.Join(segments[:3], "/") + "/" + segments[5] + "/" + segments[6] +
 			"/_layouts/15/download.aspx?share=" + segments[7]
 	case driveTypeSharepoint:
-		/*
-			Method: Similar to driveTypeBusiness
-			Example:
-				https://{tenant}-my.sharepoint.com/:t:/s/{site_name}/{Opaque_String}
-				--convert to->
-				https://{tenant}-my.sharepoint.com/sites/{site_name}/_layouts/15/download.aspx?share={Opaque_String}
+		// Method: Similar to driveTypeBusiness
+		// Example:
+		//   https://{tenant}-my.sharepoint.com/:t:/s/{site_name}/{Opaque_String}
+		//   --convert to->
+		//   https://{tenant}-my.sharepoint.com/sites/{site_name}/_layouts/15/download.aspx?share={Opaque_String}
+		//
+		//   https://{tenant}-my.sharepoint.com/:t:/t/{team_name}/{Opaque_String}
+		//   --convert to->
+		//   https://{tenant}-my.sharepoint.com/teams/{team_name}/_layouts/15/download.aspx?share={Opaque_String}
+		//
+		//   https://{tenant}-my.sharepoint.com/:t:/g/{Opaque_String}
+		//   --convert to->
+		//   https://{tenant}-my.sharepoint.com/_layouts/15/download.aspx?share={Opaque_String}
 
-				https://{tenant}-my.sharepoint.com/:t:/t/{team_name}/{Opaque_String}
-				--convert to->
-				https://{tenant}-my.sharepoint.com/teams/{team_name}/_layouts/15/download.aspx?share={Opaque_String}
-
-				https://{tenant}-my.sharepoint.com/:t:/g/{Opaque_String}
-				--convert to->
-				https://{tenant}-my.sharepoint.com/_layouts/15/download.aspx?share={Opaque_String}
-		*/
 		if len(segments) < 6 || len(segments) > 7 {
 			fs.Logf(f, cnvFailMsg)
 			return shareURL, nil
