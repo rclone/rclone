@@ -1503,7 +1503,80 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		fmt.Println(err)
 		return "", err
 	}
-	return result.Link.WebURL, nil
+
+	shareURL := result.Link.WebURL
+
+	// Convert share link to direct download link if target is not a folder
+	// Not attempting to do the conversion for regional versions, just to be safe
+	if f.opt.Region != regionGlobal {
+		return shareURL, nil
+	}
+	if info.Folder != nil {
+		fs.Debugf(nil, "Can't convert share link for folder to direct link - returning the link as is")
+		return shareURL, nil
+	}
+
+	cnvFailMsg := "Don't know how to convert share link to direct link - returning the link as is"
+	directURL := ""
+	segments := strings.Split(shareURL, "/")
+	switch f.driveType {
+	case driveTypePersonal:
+		// Method: https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
+		if len(segments) != 5 {
+			fs.Logf(f, cnvFailMsg)
+			return shareURL, nil
+		}
+		enc := base64.StdEncoding.EncodeToString([]byte(shareURL))
+		enc = strings.ReplaceAll(enc, "/", "_")
+		enc = strings.ReplaceAll(enc, "+", "-")
+		enc = strings.ReplaceAll(enc, "=", "")
+		directURL = fmt.Sprintf("https://api.onedrive.com/v1.0/shares/u!%s/root/content", enc)
+	case driveTypeBusiness:
+		// Method: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
+		// Example:
+		//   https://{tenant}-my.sharepoint.com/:t:/g/personal/{user_email}/{Opaque_String}
+		//   --convert to->
+		//   https://{tenant}-my.sharepoint.com/personal/{user_email}/_layouts/15/download.aspx?share={Opaque_String}
+		if len(segments) != 8 {
+			fs.Logf(f, cnvFailMsg)
+			return shareURL, nil
+		}
+		directURL = fmt.Sprintf("https://%s/%s/%s/_layouts/15/download.aspx?share=%s",
+			segments[2], segments[5], segments[6], segments[7])
+	case driveTypeSharepoint:
+		// Method: Similar to driveTypeBusiness
+		// Example:
+		//   https://{tenant}.sharepoint.com/:t:/s/{site_name}/{Opaque_String}
+		//   --convert to->
+		//   https://{tenant}.sharepoint.com/sites/{site_name}/_layouts/15/download.aspx?share={Opaque_String}
+		//
+		//   https://{tenant}.sharepoint.com/:t:/t/{team_name}/{Opaque_String}
+		//   --convert to->
+		//   https://{tenant}.sharepoint.com/teams/{team_name}/_layouts/15/download.aspx?share={Opaque_String}
+		//
+		//   https://{tenant}.sharepoint.com/:t:/g/{Opaque_String}
+		//   --convert to->
+		//   https://{tenant}.sharepoint.com/_layouts/15/download.aspx?share={Opaque_String}
+		if len(segments) < 6 || len(segments) > 7 {
+			fs.Logf(f, cnvFailMsg)
+			return shareURL, nil
+		}
+		pathPrefix := ""
+		switch segments[4] {
+		case "s": // Site
+			pathPrefix = "/sites/" + segments[5]
+		case "t": // Team
+			pathPrefix = "/teams/" + segments[5]
+		case "g": // Root site
+		default:
+			fs.Logf(f, cnvFailMsg)
+			return shareURL, nil
+		}
+		directURL = fmt.Sprintf("https://%s%s/_layouts/15/download.aspx?share=%s",
+			segments[2], pathPrefix, segments[len(segments)-1])
+	}
+
+	return directURL, nil
 }
 
 // CleanUp deletes all the hidden files.
