@@ -152,6 +152,19 @@ func ParseHeaders(headers []string) []*fs.HTTPOption {
 
 // SetFlags converts any flags into config which weren't straight forward
 func SetFlags(ci *fs.ConfigInfo) {
+	if dumpHeaders {
+		ci.Dump |= fs.DumpHeaders
+		fs.Logf(nil, "--dump-headers is obsolete - please use --dump headers instead")
+	}
+	if dumpBodies {
+		ci.Dump |= fs.DumpBodies
+		fs.Logf(nil, "--dump-bodies is obsolete - please use --dump bodies instead")
+	}
+	if ci.Dump != 0 && verbose < 2 && ci.LogLevel != fs.LogLevelDebug {
+		fs.Logf(nil, "Automatically setting -vv as --dump is enabled")
+		verbose = 2
+	}
+
 	if verbose >= 2 {
 		ci.LogLevel = fs.LogLevelDebug
 	} else if verbose >= 1 {
@@ -195,15 +208,6 @@ func SetFlags(ci *fs.ConfigInfo) {
 		case fs.LogLevelDebug:
 			logrus.SetLevel(logrus.DebugLevel)
 		}
-	}
-
-	if dumpHeaders {
-		ci.Dump |= fs.DumpHeaders
-		fs.Logf(nil, "--dump-headers is obsolete - please use --dump headers instead")
-	}
-	if dumpBodies {
-		ci.Dump |= fs.DumpBodies
-		fs.Logf(nil, "--dump-bodies is obsolete - please use --dump bodies instead")
 	}
 
 	switch {
