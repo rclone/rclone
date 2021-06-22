@@ -1557,19 +1557,19 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			fs.Logf(f, cnvFailMsg)
 			return shareURL, nil
 		}
-		segType := ""
+		pathPrefix := ""
 		switch segments[4] {
 		case "s": // Site
-			segType = "/sites/" + segments[5]
+			pathPrefix = "/sites/" + segments[5]
 		case "t": // Team
-			segType = "/teams/" + segments[5]
+			pathPrefix = "/teams/" + segments[5]
 		case "g": // Root site
 		default:
 			fs.Logf(f, cnvFailMsg)
 			return shareURL, nil
 		}
 		directURL = fmt.Sprintf("https://%s%s/_layouts/15/download.aspx?share=%s",
-			segments[2], segType, segments[len(segments)-1])
+			segments[2], pathPrefix, segments[len(segments)-1])
 	}
 
 	return directURL, nil
