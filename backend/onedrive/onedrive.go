@@ -1507,43 +1507,80 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	url := result.Link.WebURL
 
 	// Convert share link to direct download link if target is not a folder
+	cnvFailMsg := "Don't know how to convert share link to direct link - returning the link as is"
+	if info.Folder != nil {
+		fs.Logf(f, cnvFailMsg)
+		return url, nil
+	}
+
 	segments := strings.Split(url, "/")
-	cnvFailMsg := "Conversion method is outdated. Cannot convert to downloadable URL"
-	switch {
-	case f.driveType == driveTypePersonal:
-		// https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
+	switch f.driveType {
+	case driveTypePersonal:
+		/*
+			Method: https://stackoverflow.com/questions/37951114/direct-download-link-to-onedrive-file
+		*/
 		if len(segments) != 5 {
 			fs.Logf(f, cnvFailMsg)
-		} else if segments[3] != "u" {
-			enc := base64.StdEncoding.EncodeToString([]byte(url))
-			url = "https://api.onedrive.com/v1.0/shares/u!" + enc[:len(enc)-1] + "/root/content"
+			return url, nil
 		}
-	case f.driveType == driveTypeBusiness:
-		// https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
+
+		enc := base64.StdEncoding.EncodeToString([]byte(url))
+		strings.ReplaceAll(enc, "/", "_")
+		strings.ReplaceAll(enc, "+", "-")
+		url = "https://api.onedrive.com/v1.0/shares/u!" + enc[:len(enc)-1] + "/root/content"
+
+	case driveTypeBusiness:
+		/*
+			Method: https://docs.microsoft.com/en-us/sharepoint/dev/spfx/shorter-share-link-format
+			Example:
+				https://{tenant}-my.sharepoint.com/:t:/g/personal/{user_email}/{Opaque_String}
+				--convert to->
+				https://{tenant}-my.sharepoint.com/personal/{user_email}/_layouts/15/download.aspx?share={Opaque_String}
+		*/
 		if len(segments) != 8 {
 			fs.Logf(f, cnvFailMsg)
-		} else if segments[3] != ":f:" {
-			url = strings.Join(segments[0:3], "/") + "/" + segments[5] + "/" + segments[6] +
-				"/_layouts/15/download.aspx?share=" + segments[7]
+			return url, nil
 		}
-	case f.driveType == driveTypeSharepoint:
+
+		url = strings.Join(segments[:3], "/") + "/" + segments[5] + "/" + segments[6] +
+			"/_layouts/15/download.aspx?share=" + segments[7]
+
+	case driveTypeSharepoint:
+		/*
+			Method: Similar to driveTypeBusiness
+			Example:
+				https://{tenant}-my.sharepoint.com/:t:/s/{site_name}/{Opaque_String}
+				--convert to->
+				https://{tenant}-my.sharepoint.com/sites/{site_name}/_layouts/15/download.aspx?share={Opaque_String}
+
+				https://{tenant}-my.sharepoint.com/:t:/t/{team_name}/{Opaque_String}
+				--convert to->
+				https://{tenant}-my.sharepoint.com/teams/{team_name}/_layouts/15/download.aspx?share={Opaque_String}
+
+				https://{tenant}-my.sharepoint.com/:t:/g/{Opaque_String}
+				--convert to->
+				https://{tenant}-my.sharepoint.com/_layouts/15/download.aspx?share={Opaque_String}
+		*/
 		if len(segments) < 6 {
 			fs.Logf(f, cnvFailMsg)
-		} else if segments[3] != ":f:" {
-			url = strings.Join(segments[0:3], "/")
-			switch segments[4] {
-			case "s":
-				url += "/sites/" + segments[5]
-			case "t":
-				url += "/teams/" + segments[5]
-			case "g": // Root site
-			default:
-				fs.Logf(f, cnvFailMsg)
-			}
-			url += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
+			return url, nil
 		}
+
+		url = strings.Join(segments[:3], "/")
+		switch segments[4] {
+		case "s": // Site
+			url += "/sites/" + segments[5]
+		case "t": // Team
+			url += "/teams/" + segments[5]
+		case "g": // Root site
+		default:
+			fs.Logf(f, cnvFailMsg)
+		}
+		url += "/_layouts/15/download.aspx?share=" + segments[len(segments)-1]
+
 	default:
-		fs.Logf(f, "Unsupported drive type. Cannot convert to downloadable URL")
+		fs.Logf(f, cnvFailMsg)
+		return url, nil
 	}
 
 	return url, nil
