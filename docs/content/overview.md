@@ -280,6 +280,7 @@ will show you the defaults for the backends.
 | RightSpace | SPACE on the right of a string |
 | SingleQuote | `'` |
 | Slash | `/` |
+| SquareBracket | `[`, `]` |
 
 To take a specific example, the FTP backend's default encoding is
 
