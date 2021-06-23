@@ -42,6 +42,7 @@ var maskBits = []struct {
 	{encoder.EncodeSingleQuote, "EncodeSingleQuote"},
 	{encoder.EncodeBackQuote, "EncodeBackQuote"},
 	{encoder.EncodeLtGt, "EncodeLtGt"},
+	{encoder.EncodeSquareBracket, "EncodeSquareBracket"},
 	{encoder.EncodeDollar, "EncodeDollar"},
 	{encoder.EncodeDoubleQuote, "EncodeDoubleQuote"},
 	{encoder.EncodeColon, "EncodeColon"},
@@ -104,6 +105,11 @@ var allMappings = []mapping{{
 		'<', '>',
 	}, []rune{
 		'＜', '＞',
+	}}, {
+	encoder.EncodeSquareBracket, []rune{
+		'[', ']',
+	}, []rune{
+		'［', '］',
 	}}, {
 	encoder.EncodeDoubleQuote, []rune{
 		'"',
