@@ -100,6 +100,11 @@ func init() {
 			Default:  fs.SizeSuffix(10 * 1024 * 1024),
 			Advanced: true,
 		}, {
+			Name:     "no_versions",
+			Help:     "Avoid server side versioning by deleting files and recreating files instead of overwriting them.",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -297,6 +302,7 @@ type Options struct {
 	MD5MemoryThreshold fs.SizeSuffix        `config:"md5_memory_limit"`
 	TrashedOnly        bool                 `config:"trashed_only"`
 	HardDelete         bool                 `config:"hard_delete"`
+	NoVersions         bool                 `config:"no_versions"`
 	UploadThreshold    fs.SizeSuffix        `config:"upload_resume_limit"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 }
@@ -1494,6 +1500,20 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	if o.fs.opt.NoVersions {
+		err := o.readMetaData(ctx, false)
+		if err == nil {
+			// if the object exists delete it
+			err = o.remove(ctx, true)
+			if err != nil {
+				return errors.Wrap(err, "failed to remove old object")
+			}
+		}
+		// if the object does not exist we can just continue but if the error is something different we should report that
+		if err != fs.ErrorObjectNotFound {
+			return err
+		}
+	}
 	o.fs.tokenRenewer.Start()
 	defer o.fs.tokenRenewer.Stop()
 	size := src.Size()
@@ -1584,8 +1604,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
-// Remove an object
-func (o *Object) Remove(ctx context.Context) error {
+func (o *Object) remove(ctx context.Context, hard bool) error {
 	opts := rest.Opts{
 		Method:     "POST",
 		Path:       o.filePath(),
@@ -1593,7 +1612,7 @@ func (o *Object) Remove(ctx context.Context) error {
 		NoResponse: true,
 	}
 
-	if o.fs.opt.HardDelete {
+	if hard {
 		opts.Parameters.Set("rm", "true")
 	} else {
 		opts.Parameters.Set("dl", "true")
@@ -1603,6 +1622,11 @@ func (o *Object) Remove(ctx context.Context) error {
 		resp, err := o.fs.srv.CallXML(ctx, &opts, nil, nil)
 		return shouldRetry(ctx, resp, err)
 	})
+}
+
+// Remove an object
+func (o *Object) Remove(ctx context.Context) error {
+	return o.remove(ctx, o.fs.opt.HardDelete)
 }
 
 // Check the interfaces are satisfied
