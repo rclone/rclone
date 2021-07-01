@@ -213,7 +213,7 @@ Files bigger than this will be cached on disk to calculate the MD5 if required.
 - Config:      md5_memory_limit
 - Env Var:     RCLONE_JOTTACLOUD_MD5_MEMORY_LIMIT
 - Type:        SizeSuffix
-- Default:     10M
+- Default:     10Mi
 
 #### --jottacloud-trashed-only
 
@@ -241,7 +241,16 @@ Files bigger than this can be resumed if the upload fail's.
 - Config:      upload_resume_limit
 - Env Var:     RCLONE_JOTTACLOUD_UPLOAD_RESUME_LIMIT
 - Type:        SizeSuffix
-- Default:     10M
+- Default:     10Mi
+
+#### --jottacloud-no-versions
+
+Avoid server side versioning by deleting files and recreating files instead of overwriting them.
+
+- Config:      no_versions
+- Env Var:     RCLONE_JOTTACLOUD_NO_VERSIONS
+- Type:        bool
+- Default:     false
 
 #### --jottacloud-encoding
 
