@@ -2,14 +2,17 @@ package vfs
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -791,6 +794,35 @@ func (f *File) Truncate(size int64) (err error) {
 	defer fs.CheckClose(fh, &err)
 	if size != 0 {
 		return fh.Truncate(size)
+	}
+	return nil
+}
+
+func (f *File) Getxattr(name string) (value []byte, err error) {
+	hashType := hash.None
+
+	parts := strings.Split(name, ".")
+	if len(parts) != 3 || parts[0] != "system" || parts[1] != "hash" {
+		return nil, ENODATA
+	}
+	err = hashType.Set(parts[2])
+	if err != nil {
+		return nil, ENODATA
+	}
+
+	h, err := f.getObject().Hash(context.TODO(), hashType)
+	if err != nil {
+		return
+	}
+	value = []byte(h)
+	return
+}
+
+func (f *File) Listxattr(fill func(name string) bool) (err error) {
+	for _, hashType := range f.getObject().Fs().Hashes().Array() {
+		if !fill(fmt.Sprintf("system.hash.%s", hashType.String())) {
+			return ERANGE
+		}
 	}
 	return nil
 }
