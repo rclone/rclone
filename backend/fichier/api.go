@@ -87,6 +87,11 @@ func (f *Fs) readFileInfo(ctx context.Context, url string) (*File, error) {
 	return &file, err
 }
 
+// maybe do some actual validation later if necessary
+func validToken(token *GetTokenResponse) bool {
+	return token.Status == "OK"
+}
+
 func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenResponse, error) {
 	request := DownloadRequest{
 		URL:    url,
@@ -101,7 +106,8 @@ func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenRespons
 	var token GetTokenResponse
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err := f.rest.CallJSON(ctx, &opts, &request, &token)
-		return shouldRetry(ctx, resp, err)
+		doretry, err := shouldRetry(ctx, resp, err)
+		return doretry || !validToken(&token), err
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't list files")
