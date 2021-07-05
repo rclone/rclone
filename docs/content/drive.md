@@ -58,7 +58,7 @@ Choose a number from below, or type in your own value
    \ "drive.metadata.readonly"
 scope> 1
 ID of the root folder - leave blank normally.  Fill in to access "Computers" folders. (see docs).
-root_folder_id> 
+root_folder_id>
 Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
 service_account_file>
 Remote config
@@ -78,10 +78,10 @@ n) No
 y/n> n
 --------------------
 [remote]
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 scope = drive
-root_folder_id = 
+root_folder_id =
 service_account_file =
 token = {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2014-03-16T13:57:58.955387075Z"}
 --------------------
@@ -423,7 +423,7 @@ For shortcuts pointing to folders:
 - When deleting with `rclone rmdir` or `rclone purge` the shortcut is deleted not the linked folder.
 - **NB** When deleting with `rclone remove` or `rclone mount` the contents of the linked folder will be deleted.
 
-The [rclone backend](https://rclone.org/commands/rclone_backend/) command can be used to create shortcuts.  
+The [rclone backend](https://rclone.org/commands/rclone_backend/) command can be used to create shortcuts.
 
 Shortcuts can be completely ignored with the `--drive-skip-shortcuts` flag
 or the corresponding `skip_shortcuts` configuration setting.
@@ -496,7 +496,7 @@ all files having these extension would result in a document represented as a doc
 This brings the additional risk of overwriting a document, if multiple files
 have the same stem. Many rclone operations will not handle this name change
 in any way. They assume an equal name when copying files and might copy the
-file again or delete them when the name changes. 
+file again or delete them when the name changes.
 
 Here are the possible export extensions with their corresponding mime types.
 Most of these can also be used for importing, but there more that are not
@@ -608,7 +608,7 @@ a non root folder as its starting point.
 
 #### --drive-service-account-file
 
-Service Account Credentials JSON file path 
+Service Account Credentials JSON file path
 Leave blank normally.
 Needed only if you want use SA instead of interactive login.
 
@@ -1308,20 +1308,21 @@ be the same account as the Google Drive you want to access)
 credentials", which opens the wizard), then "Create credentials"
 
 5. If you already configured an "Oauth Consent Screen", then skip
-to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 
+to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button
 (near the top right corner of the right panel), then select "External"
 and click on "CREATE"; on the next screen, enter an "Application name"
-("rclone" is OK) then click on "Save" (all other data is optional). 
-Click again on "Credentials" on the left panel to go back to the 
+("rclone" is OK) then click on "Save" (all other data is optional).
+Scroll down, and add the current users to the "Test users".
+Click again on "Credentials" on the left panel to go back to the
 "Credentials" screen.
 
 (PS: if you are a GSuite user, you could also select "Internal" instead
-of "External" above, but this has not been tested/documented so far). 
+of "External" above, but this has not been tested/documented so far).
 
 6.  Click on the "+ CREATE CREDENTIALS" button at the top of the screen,
 then select "OAuth client ID".
 
-7. Choose an application type of "Desktop app" if you using a Google account or "Other" if 
+7. Choose an application type of "Desktop app" if you using a Google account or "Other" if
 you using a GSuite account and click "Create". (the default name is fine)
 
 8. It will show you a client ID and client secret. Make a note of these.
@@ -1334,9 +1335,9 @@ Be aware that, due to the "enhanced security" recently introduced by
 Google, you are theoretically expected to "submit your app for verification"
 and then wait a few weeks(!) for their response; in practice, you can go right
 ahead and use the client ID and client secret with rclone, the only issue will
-be a very scary confirmation screen shown when you connect via your browser 
-for rclone to be able to get its token-id (but as this only happens during 
-the remote configuration, it's not such a big deal). 
+be a very scary confirmation screen shown when you connect via your browser
+for rclone to be able to get its token-id (but as this only happens during
+the remote configuration, it's not such a big deal).
 
 (Thanks to @balazer on github for these instructions.)
 
