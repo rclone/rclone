@@ -23,13 +23,13 @@
   </head>
   <body>
     {{ template "chrome/navbar.html" . }}
-    <div class="container">
+    <div class="container-fluid">
       <div class="row">
-        <div class="col-md-10">
+        <div class="col-md-9">
           {{ block "main" . }}
           {{ end }}
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
           {{ template "chrome/menu.html" . }}
         </div>
       </div>
