@@ -12,94 +12,161 @@ When filing an issue, please include the following information if
 possible as well as a description of the problem.  Make sure you test
 with the [latest beta of rclone](https://beta.rclone.org/):
 
-  * Rclone version (e.g. output from `rclone -V`)
-  * Which OS you are using and how many bits (e.g. Windows 7, 64 bit)
+  * Rclone version (e.g. output from `rclone version`)
+  * Which OS you are using and how many bits (e.g. Windows 10, 64 bit)
   * The command you were trying to run (e.g. `rclone copy /tmp remote:tmp`)
   * A log of the command with the `-vv` flag (e.g. output from `rclone -vv copy /tmp remote:tmp`)
     * if the log contains secrets then edit the file with a text editor first to obscure them
 
-## Submitting a pull request ##
+## Submitting a new feature or bug fix ##
 
 If you find a bug that you'd like to fix, or a new feature that you'd
 like to implement then please submit a pull request via GitHub.
 
-If it is a big feature then make an issue first so it can be discussed.
+If it is a big feature, then [make an issue](https://github.com/rclone/rclone/issues) first so it can be discussed.
 
-You'll need a Go environment set up with GOPATH set.  See [the Go
-getting started docs](https://golang.org/doc/install) for more info.
-
-First in your web browser press the fork button on [rclone's GitHub
+To prepare your pull request first press the fork button on [rclone's GitHub
 page](https://github.com/rclone/rclone).
 
-Now in your terminal
+Then [install Git](https://git-scm.com/downloads) and set your public contribution [name](https://docs.github.com/en/github/getting-started-with-github/setting-your-username-in-git) and [email](https://docs.github.com/en/github/setting-up-and-managing-your-github-user-account/setting-your-commit-email-address#setting-your-commit-email-address-in-git).
+
+Next open your terminal, change directory to your preferred folder and initialise your local rclone project:
 
     git clone https://github.com/rclone/rclone.git
     cd rclone
     git remote rename origin upstream
+      # if you have SSH keys setup in your GitHub account:
     git remote add origin git@github.com:YOURUSER/rclone.git
-    go build
+      # otherwise:
+    git remote add origin https://github.com/YOURUSER/rclone.git
 
-Make a branch to add your new feature
+Note that most of the terminal commands in the rest of this guide must be executed from the rclone folder created above.
+
+Now [install Go](https://golang.org/doc/install) and verify your installation:
+
+    go version
+
+Great, you can now compile and execute your own version of rclone:
+
+    go build                              
+    ./rclone version
+
+Finally make a branch to add your new feature
 
     git checkout -b my-new-feature
 
 And get hacking.
 
-When ready - run the unit tests for the code you changed
+You may like one of the [popular editors/IDE's for Go](https://github.com/golang/go/wiki/IDEsAndTextEditorPlugins) and a quick view on the rclone [code organisation](#code-organisation).
 
+When ready - test the affected functionality and run the unit tests for the code you changed
+
+    cd folder/with/changed/files
     go test -v
 
 Note that you may need to make a test remote, e.g. `TestSwift` for some
 of the unit tests.
 
-Note the top level Makefile targets
-
-  * make check
-  * make test
-
-Both of these will be run by Travis when you make a pull request but
-you can do this yourself locally too.  These require some extra go
-packages which you can install with
-
-  * make build_dep
+This is typically enough if you made a simple bug fix, otherwise please read the rclone [testing](#testing) section too.
 
 Make sure you
 
+  * Add [unit tests](#testing) for a new feature.
   * Add [documentation](#writing-documentation) for a new feature.
-  * Follow the [commit message guidelines](#commit-messages).
-  * Add [unit tests](#testing) for a new feature
-  * squash commits down to one per feature
-  * rebase to master with `git rebase master`
+  * [Commit your changes](#committing-your-changes) using the [message guideline](#commit-messages).
 
-When you are done with that
+When you are done with that push your changes to Github:
 
     git push -u origin my-new-feature
 
-Go to the GitHub website and click [Create pull
+and open the GitHub website to [create your pull
 request](https://help.github.com/articles/creating-a-pull-request/).
 
-You patch will get reviewed and you might get asked to fix some stuff.
+Your changes will then get reviewed and you might get asked to fix some stuff. If so, then make the changes in the same branch, commit and push your updates to GitHub.
 
-If so, then make the changes in the same branch, squash the commits (make multiple commits one commit) by running:
-```
-git log # See how many commits you want to squash
-git reset --soft HEAD~2 # This squashes the 2 latest commits together.
-git status # Check what will happen, if you made a mistake resetting, you can run git reset 'HEAD@{1}' to undo.
-git commit # Add a new commit message.
-git push --force # Push the squashed commit to your GitHub repo.
-# For more, see Stack Overflow, Git docs, or generally Duck around the web. jtagcat also recommends wizardzines.com
-```
+You may sometimes be asked to [base your changes on the latest master](#basing-your-changes-on-the-latest-master) or [squash your commits](#squashing-your-commits).
 
-## CI for your fork ##
+## Using Git and Github ##
+
+### Committing your changes ###
+
+Follow the guideline for [commit messages](#commit-messages) and then:
+
+    git checkout my-new-feature      # To switch to your branch
+    git status                       # To see the new and changed files
+    git add FILENAME                 # To select FILENAME for the commit
+    git status                       # To verify the changes to be committed
+    git commit                       # To do the commit
+    git log                          # To verify the commit. Use q to quit the log
+
+You can modify the message or changes in the latest commit using:
+
+    git commit --amend
+
+If you amend to commits that have been pushed to GitHub, then you will have to [replace your previously pushed commits](#replacing-your-previously-pushed-commits).
+
+### Replacing your previously pushed commits ###
+
+Note that you are about to rewrite the GitHub history of your branch. It is good practice to involve your collaborators before modifying commits that have been pushed to GitHub.
+
+Your previously pushed commits are replaced by:
+
+    git push --force origin my-new-feature 
+
+### Basing your changes on the latest master ###
+
+To base your changes on the latest version of the [rclone master](https://github.com/rclone/rclone/tree/master) (upstream):
+
+    git checkout master
+    git fetch upstream
+    git merge --ff-only
+    git push origin --follow-tags    # optional update of your fork in GitHub
+    git checkout my-new-feature
+    git rebase master
+
+If you rebase commits that have been pushed to GitHub, then you will have to [replace your previously pushed commits](#replacing-your-previously-pushed-commits).
+
+### Squashing your commits ###
+
+To combine your commits into one commit:
+
+    git log                          # To count the commits to squash, e.g. the last 2
+    git reset --soft HEAD~2          # To undo the 2 latest commits
+    git status                       # To check everything is as expected
+
+If everything is fine, then make the new combined commit:
+
+    git commit                       # To commit the undone commits as one
+
+otherwise, you may roll back using:
+
+    git reflog                       # To check that HEAD{1} is your previous state
+    git reset --soft 'HEAD@{1}'      # To roll back to your previous state
+
+If you squash commits that have been pushed to GitHub, then you will have to [replace your previously pushed commits](#replacing-your-previously-pushed-commits).
+
+Tip: You may like to use `git rebase -i master` if you are experienced or have a more complex situation.
+
+### GitHub Continuous Integration ###
 
 rclone currently uses [GitHub Actions](https://github.com/rclone/rclone/actions) to build and test the project, which should be automatically available for your fork too from the `Actions` tab in your repository.
 
 ## Testing ##
 
+### Quick testing ###
+
 rclone's tests are run from the go testing framework, so at the top
 level you can run this to run all the tests.
 
     go test -v ./...
+
+You can also use `make`, if supported by your platform
+
+    make quicktest
+
+The quicktest is [automatically run by GitHub](#github-continuous-integration) when you push your branch to GitHub.
+
+### Backend testing ###
 
 rclone contains a mixture of unit tests and integration tests.
 Because it is difficult (and in some respects pointless) to test cloud
@@ -134,12 +201,19 @@ project root:
     go install github.com/rclone/rclone/fstest/test_all
     test_all -backend drive
 
+### Full integration testing ###
+
 If you want to run all the integration tests against all the remotes,
 then change into the project root and run
 
+    make check
     make test
 
-This command is run daily on the integration test server. You can
+The commands may require some extra go packages which you can install with
+
+    make build_dep
+
+The full integration tests are run daily on the integration test server. You can
 find the results at https://pub.rclone.org/integration-tests/
 
 ## Code Organisation ##
