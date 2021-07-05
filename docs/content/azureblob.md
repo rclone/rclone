@@ -166,13 +166,12 @@ Path to file containing credentials for use with a service principal.
 
 Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
 
-    $ az sp create-for-rbac --name "<name>" \
+    $ az ad sp create-for-rbac --name "<name>" \
       --role "Storage Blob Data Owner" \
       --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
       > azure-principal.json
 
-See [Use Azure CLI to assign an Azure role for access to blob and queue data](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli)
-for more details.
+See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 
 
 - Config:      service_principal_file
