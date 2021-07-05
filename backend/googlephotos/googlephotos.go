@@ -53,6 +53,7 @@ const (
 	minSleep                    = 10 * time.Millisecond
 	scopeReadOnly               = "https://www.googleapis.com/auth/photoslibrary.readonly"
 	scopeReadWrite              = "https://www.googleapis.com/auth/photoslibrary"
+	scopeAccess                 = 2 // position of access scope in list
 )
 
 var (
@@ -61,7 +62,7 @@ var (
 		Scopes: []string{
 			"openid",
 			"profile",
-			scopeReadWrite,
+			scopeReadWrite, // this must be at position scopeAccess
 		},
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
@@ -89,9 +90,9 @@ func init() {
 			case "":
 				// Fill in the scopes
 				if opt.ReadOnly {
-					oauthConfig.Scopes[0] = scopeReadOnly
+					oauthConfig.Scopes[scopeAccess] = scopeReadOnly
 				} else {
-					oauthConfig.Scopes[0] = scopeReadWrite
+					oauthConfig.Scopes[scopeAccess] = scopeReadWrite
 				}
 				return oauthutil.ConfigOut("warning", &oauthutil.Options{
 					OAuth2Config: oauthConfig,
