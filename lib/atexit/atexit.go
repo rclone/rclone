@@ -51,7 +51,7 @@ func Register(fn func()) FnHandle {
 			fs.Infof(nil, "Signal received: %s", sig)
 			Run()
 			fs.Infof(nil, "Exiting...")
-			os.Exit(0)
+			os.Exit(exitCode(sig))
 		}()
 	})
 
