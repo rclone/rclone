@@ -18,7 +18,7 @@ FUSE.
 
 First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
 
-On Linux and OSX, you can either run mount in foreground mode or background (daemon) mode.
+On Linux and macOS, you can either run mount in foreground mode or background (daemon) mode.
 Mount runs in foreground mode by default, use the `--daemon` flag to specify background mode.
 You can only run mount in foreground mode on Windows.
 
