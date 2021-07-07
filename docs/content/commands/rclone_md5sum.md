@@ -29,6 +29,7 @@ rclone md5sum remote:path [flags]
 
 ```
       --base64               Output base64 encoded hashsum
+  -C, --checkfile string     Validate hashes against a given SUM file instead of printing them
       --download             Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote
   -h, --help                 help for md5sum
       --output-file string   Output hashsums to a file rather than the terminal

@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/readers"
@@ -274,4 +275,256 @@ func TestCheckEqualReaders(t *testing.T) {
 	differ, err = operations.CheckEqualReaders(bytes.NewBuffer(b66), wrap(b65a))
 	assert.Equal(t, myErr, err)
 	assert.Equal(t, differ, true)
+}
+
+func TestParseSumFile(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	ctx := context.Background()
+
+	const sumFile = "test.sum"
+
+	samples := []struct {
+		hash, sep, name string
+		ok              bool
+	}{
+		{"1", "  ", "file1", true},
+		{"2", " *", "file2", true},
+		{"3", "  ", " file3 ", true},
+		{"4", "  ", "\tfile3\t", true},
+		{"5", " ", "file5", false},
+		{"6", "\t", "file6", false},
+		{"7", " \t", " file7 ", false},
+		{"", "  ", "file8", false},
+		{"", "", "file9", false},
+	}
+
+	for _, eol := range []string{"\n", "\r\n"} {
+		data := &bytes.Buffer{}
+		wantNum := 0
+		for _, s := range samples {
+			_, _ = data.WriteString(s.hash + s.sep + s.name + eol)
+			if s.ok {
+				wantNum++
+			}
+		}
+
+		_ = r.WriteObject(ctx, sumFile, data.String(), t1)
+		file, err := r.Fremote.NewObject(ctx, sumFile)
+		assert.NoError(t, err)
+		sums, err := operations.ParseSumFile(ctx, file)
+		assert.NoError(t, err)
+
+		assert.Equal(t, wantNum, len(sums))
+		for _, s := range samples {
+			if s.ok {
+				assert.Equal(t, s.hash, sums[s.name])
+			}
+		}
+	}
+}
+
+func testCheckSum(t *testing.T, download bool) {
+	const dataDir = "data"
+	const sumFile = "test.sum"
+
+	hashType := hash.MD5
+	const (
+		testString1 = "Hello, World!"
+		testDigest1 = "65a8e27d8879283831b664bd8b7f0ad4"
+		testString2 = "I am the walrus"
+		testDigest2 = "87396e030ef3f5b35bbf85c0a09a4fb3"
+	)
+
+	type wantType map[string]string
+
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	subRemote := r.FremoteName
+	if !strings.HasSuffix(subRemote, ":") {
+		subRemote += "/"
+	}
+	subRemote += dataDir
+	dataFs, err := fs.NewFs(ctx, subRemote)
+	require.NoError(t, err)
+
+	if !download && !dataFs.Hashes().Contains(hashType) {
+		t.Skipf("%s lacks %s, skipping", dataFs, hashType)
+	}
+
+	makeFile := func(name, content string) fstest.Item {
+		remote := dataDir + "/" + name
+		return r.WriteObject(ctx, remote, content, t1)
+	}
+
+	makeSums := func(sums operations.HashSums) fstest.Item {
+		files := make([]string, 0, len(sums))
+		for name := range sums {
+			files = append(files, name)
+		}
+		sort.Strings(files)
+		buf := &bytes.Buffer{}
+		for _, name := range files {
+			_, _ = fmt.Fprintf(buf, "%s  %s\n", sums[name], name)
+		}
+		return r.WriteObject(ctx, sumFile, buf.String(), t1)
+	}
+
+	sortLines := func(in string) []string {
+		if in == "" {
+			return []string{}
+		}
+		lines := strings.Split(in, "\n")
+		sort.Strings(lines)
+		return lines
+	}
+
+	checkResult := func(runNo int, want wantType, name string, out io.Writer) {
+		expected := want[name]
+		buf, ok := out.(*bytes.Buffer)
+		require.True(t, ok)
+		assert.Equal(t, sortLines(expected), sortLines(buf.String()), "wrong %s result in run %d", name, runNo)
+	}
+
+	checkRun := func(runNo, wantChecks, wantErrors int, want wantType) {
+		accounting.GlobalStats().ResetCounters()
+		buf := new(bytes.Buffer)
+		log.SetOutput(buf)
+		defer log.SetOutput(os.Stderr)
+
+		opt := operations.CheckOpt{
+			Combined:     new(bytes.Buffer),
+			Match:        new(bytes.Buffer),
+			Differ:       new(bytes.Buffer),
+			Error:        new(bytes.Buffer),
+			MissingOnSrc: new(bytes.Buffer),
+			MissingOnDst: new(bytes.Buffer),
+		}
+		err := operations.CheckSum(ctx, dataFs, r.Fremote, sumFile, hashType, &opt, download)
+
+		gotErrors := int(accounting.GlobalStats().GetErrors())
+		if wantErrors == 0 {
+			assert.NoError(t, err, "unexpected error in run %d", runNo)
+		}
+		if wantErrors > 0 {
+			assert.Error(t, err, "no expected error in run %d", runNo)
+		}
+		assert.Equal(t, wantErrors, gotErrors, "wrong error count in run %d", runNo)
+
+		gotChecks := int(accounting.GlobalStats().GetChecks())
+		if wantChecks > 0 || gotChecks > 0 {
+			assert.Contains(t, buf.String(), "matching files", "missing matching files in run %d", runNo)
+		}
+		assert.Equal(t, wantChecks, gotChecks, "wrong number of checks in run %d", runNo)
+
+		checkResult(runNo, want, "combined", opt.Combined)
+		checkResult(runNo, want, "missingonsrc", opt.MissingOnSrc)
+		checkResult(runNo, want, "missingondst", opt.MissingOnDst)
+		checkResult(runNo, want, "match", opt.Match)
+		checkResult(runNo, want, "differ", opt.Differ)
+		checkResult(runNo, want, "error", opt.Error)
+	}
+
+	check := func(runNo, wantChecks, wantErrors int, wantResults wantType) {
+		runName := fmt.Sprintf("move%d", runNo)
+		t.Run(runName, func(t *testing.T) {
+			checkRun(runNo, wantChecks, wantErrors, wantResults)
+		})
+	}
+
+	file1 := makeFile("banana", testString1)
+	fcsums := makeSums(operations.HashSums{
+		"banana": testDigest1,
+	})
+	fstest.CheckItems(t, r.Fremote, fcsums, file1)
+	check(1, 1, 0, wantType{
+		"combined":     "= banana\n",
+		"missingonsrc": "",
+		"missingondst": "",
+		"match":        "banana\n",
+		"differ":       "",
+		"error":        "",
+	})
+
+	file2 := makeFile("potato", testString2)
+	fcsums = makeSums(operations.HashSums{
+		"banana": testDigest1,
+	})
+	fstest.CheckItems(t, r.Fremote, fcsums, file1, file2)
+	check(2, 2, 1, wantType{
+		"combined":     "- potato\n= banana\n",
+		"missingonsrc": "potato\n",
+		"missingondst": "",
+		"match":        "banana\n",
+		"differ":       "",
+		"error":        "",
+	})
+
+	fcsums = makeSums(operations.HashSums{
+		"banana": testDigest1,
+		"potato": testDigest2,
+	})
+	fstest.CheckItems(t, r.Fremote, fcsums, file1, file2)
+	check(3, 2, 0, wantType{
+		"combined":     "= potato\n= banana\n",
+		"missingonsrc": "",
+		"missingondst": "",
+		"match":        "banana\npotato\n",
+		"differ":       "",
+		"error":        "",
+	})
+
+	fcsums = makeSums(operations.HashSums{
+		"banana": testDigest2,
+		"potato": testDigest2,
+	})
+	fstest.CheckItems(t, r.Fremote, fcsums, file1, file2)
+	check(4, 2, 1, wantType{
+		"combined":     "* banana\n= potato\n",
+		"missingonsrc": "",
+		"missingondst": "",
+		"match":        "potato\n",
+		"differ":       "banana\n",
+		"error":        "",
+	})
+
+	fcsums = makeSums(operations.HashSums{
+		"banana": testDigest1,
+		"potato": testDigest2,
+		"orange": testDigest2,
+	})
+	fstest.CheckItems(t, r.Fremote, fcsums, file1, file2)
+	check(5, 2, 1, wantType{
+		"combined":     "+ orange\n= potato\n= banana\n",
+		"missingonsrc": "",
+		"missingondst": "orange\n",
+		"match":        "banana\npotato\n",
+		"differ":       "",
+		"error":        "",
+	})
+
+	fcsums = makeSums(operations.HashSums{
+		"banana": testDigest1,
+		"potato": testDigest1,
+		"orange": testDigest2,
+	})
+	fstest.CheckItems(t, r.Fremote, fcsums, file1, file2)
+	check(6, 2, 2, wantType{
+		"combined":     "+ orange\n* potato\n= banana\n",
+		"missingonsrc": "",
+		"missingondst": "orange\n",
+		"match":        "banana\n",
+		"differ":       "potato\n",
+		"error":        "",
+	})
+}
+
+func TestCheckSum(t *testing.T) {
+	testCheckSum(t, false)
+}
+
+func TestCheckSumDownload(t *testing.T) {
+	testCheckSum(t, true)
 }
