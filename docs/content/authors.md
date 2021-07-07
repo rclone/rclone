@@ -507,3 +507,4 @@ put them back in again.` >}}
   * Xuanchen Wu <117010292@link.cuhk.edu.cn>
   * partev <petrosyan@gmail.com>
   * Dmitry Sitnikov <fo2@inbox.ru>
+  * Haochen Tong <i@hexchain.org>
