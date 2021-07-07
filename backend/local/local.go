@@ -467,6 +467,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				for _, name := range names {
 					namepath := filepath.Join(fsDirPath, name)
 					fi, fierr := os.Lstat(namepath)
+					if os.IsNotExist(fierr) {
+						// skip entry removed by a concurrent goroutine
+						continue
+					}
 					if fierr != nil {
 						err = errors.Wrapf(err, "failed to read directory %q", namepath)
 						fs.Errorf(dir, "%v", fierr)

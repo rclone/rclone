@@ -1973,3 +1973,54 @@ func TestMaxTransfer(t *testing.T) {
 	t.Run("Soft", func(t *testing.T) { test(t, fs.CutoffModeSoft) })
 	t.Run("Cautious", func(t *testing.T) { test(t, fs.CutoffModeCautious) })
 }
+
+func testSyncConcurrent(t *testing.T, subtest string) {
+	const (
+		NFILES     = 20
+		NCHECKERS  = 4
+		NTRANSFERS = 4
+	)
+
+	ctx, ci := fs.AddConfig(context.Background())
+	ci.Checkers = NCHECKERS
+	ci.Transfers = NTRANSFERS
+
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	stats := accounting.GlobalStats()
+
+	itemsBefore := []fstest.Item{}
+	itemsAfter := []fstest.Item{}
+	for i := 0; i < NFILES; i++ {
+		nameBoth := fmt.Sprintf("both%d", i)
+		nameOnly := fmt.Sprintf("only%d", i)
+		switch subtest {
+		case "delete":
+			fileBoth := r.WriteBoth(ctx, nameBoth, "potato", t1)
+			fileOnly := r.WriteObject(ctx, nameOnly, "potato", t1)
+			itemsBefore = append(itemsBefore, fileBoth, fileOnly)
+			itemsAfter = append(itemsAfter, fileBoth)
+		case "truncate":
+			fileBoth := r.WriteBoth(ctx, nameBoth, "potato", t1)
+			fileFull := r.WriteObject(ctx, nameOnly, "potato", t1)
+			fileEmpty := r.WriteFile(nameOnly, "", t1)
+			itemsBefore = append(itemsBefore, fileBoth, fileFull)
+			itemsAfter = append(itemsAfter, fileBoth, fileEmpty)
+		}
+	}
+
+	fstest.CheckItems(t, r.Fremote, itemsBefore...)
+	stats.ResetErrors()
+	err := Sync(ctx, r.Fremote, r.Flocal, false)
+	assert.NoError(t, err, "Sync must not return a error")
+	assert.False(t, stats.Errored(), "Low level errors must not have happened")
+	fstest.CheckItems(t, r.Fremote, itemsAfter...)
+}
+
+func TestSyncConcurrentDelete(t *testing.T) {
+	testSyncConcurrent(t, "delete")
+}
+
+func TestSyncConcurrentTruncate(t *testing.T) {
+	testSyncConcurrent(t, "truncate")
+}
