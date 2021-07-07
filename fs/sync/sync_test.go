@@ -1496,15 +1496,35 @@ func TestSyncCompareDest(t *testing.T) {
 
 	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
 
+	// Work out if we actually have hashes for uploaded files
+	haveHash := false
+	if ht := fdst.Hashes().GetOne(); ht != hash.None {
+		file2obj, err := fdst.NewObject(ctx, "one")
+		if err == nil {
+			file2objHash, err := file2obj.Hash(ctx, ht)
+			if err == nil {
+				haveHash = file2objHash != ""
+			}
+		}
+	}
+
 	// check new dest, new compare, src timestamp differs
-	file5b := r.WriteFile("two", "two", t3)
-	fstest.CheckItems(t, r.Flocal, file1c, file5b)
+	//
+	// we only check this if we the file we uploaded previously
+	// actually has a hash otherwise the differing timestamp is
+	// always copied.
+	if haveHash {
+		file5b := r.WriteFile("two", "two", t3)
+		fstest.CheckItems(t, r.Flocal, file1c, file5b)
 
-	accounting.GlobalStats().ResetCounters()
-	err = Sync(ctx, fdst, r.Flocal, false)
-	require.NoError(t, err)
+		accounting.GlobalStats().ResetCounters()
+		err = Sync(ctx, fdst, r.Flocal, false)
+		require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+		fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+	} else {
+		t.Log("No hash on uploaded file so skipping compare timestamp test")
+	}
 
 	// check empty dest, old compare
 	file5c := r.WriteFile("two", "twot3", t3)
