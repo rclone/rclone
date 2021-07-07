@@ -341,3 +341,15 @@ func Equals(src, dst string) bool {
 	}
 	return src == dst
 }
+
+// HelpString returns help message with supported hashes
+func HelpString(indent int) string {
+	padding := strings.Repeat(" ", indent)
+	var help strings.Builder
+	help.WriteString(padding)
+	help.WriteString("Supported hashes are:\n")
+	for _, h := range supported {
+		fmt.Fprintf(&help, "%s  * %v\n", padding, h.String())
+	}
+	return help.String()
+}

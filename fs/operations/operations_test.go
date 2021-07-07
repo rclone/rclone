@@ -713,7 +713,7 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
 
 	// Check file clobbering
-	o, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, true)
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, true)
 	require.Error(t, err)
 
 	// Check auto file naming
@@ -725,7 +725,7 @@ func TestCopyURL(t *testing.T) {
 	assert.Equal(t, urlFileName, o.Remote())
 
 	// Check auto file naming when url without file name
-	o, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false)
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false)
 	require.Error(t, err)
 
 	// Check an error is returned for a 404

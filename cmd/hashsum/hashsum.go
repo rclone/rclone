@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
@@ -21,6 +20,7 @@ var (
 	OutputBase64   = false
 	DownloadFlag   = false
 	HashsumOutfile = ""
+	ChecksumFile   = ""
 )
 
 func init() {
@@ -33,6 +33,7 @@ func init() {
 func AddHashFlags(cmdFlags *pflag.FlagSet) {
 	flags.BoolVarP(cmdFlags, &OutputBase64, "base64", "", OutputBase64, "Output base64 encoded hashsum")
 	flags.StringVarP(cmdFlags, &HashsumOutfile, "output-file", "", HashsumOutfile, "Output hashsums to a file rather than the terminal")
+	flags.StringVarP(cmdFlags, &ChecksumFile, "checkfile", "C", ChecksumFile, "Validate hashes against a given SUM file instead of printing them")
 	flags.BoolVarP(cmdFlags, &DownloadFlag, "download", "", DownloadFlag, "Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote")
 }
 
@@ -70,7 +71,7 @@ hashed locally enabling any hash for any remote.
 Run without a hash to see the list of all supported hashes, e.g.
 
     $ rclone hashsum
-` + hashListHelp("    ") + `
+` + hash.HelpString(4) + `
 Then
 
     $ rclone hashsum MD5 remote:path
@@ -80,7 +81,7 @@ Note that hash names are case insensitive.
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 2, command, args)
 		if len(args) == 0 {
-			fmt.Print(hashListHelp(""))
+			fmt.Print(hash.HelpString(0))
 			return nil
 		} else if len(args) == 1 {
 			return errors.New("need hash type and remote")
@@ -88,12 +89,16 @@ Note that hash names are case insensitive.
 		var ht hash.Type
 		err := ht.Set(args[0])
 		if err != nil {
-			fmt.Println(hashListHelp(""))
+			fmt.Println(hash.HelpString(0))
 			return err
 		}
 		fsrc := cmd.NewFsSrc(args[1:])
 
 		cmd.Run(false, false, command, func() error {
+			if ChecksumFile != "" {
+				fsum, sumFile := cmd.NewFsFile(ChecksumFile)
+				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, ht, nil, DownloadFlag)
+			}
 			if HashsumOutfile == "" {
 				return operations.HashLister(context.Background(), ht, OutputBase64, DownloadFlag, fsrc, nil)
 			}
@@ -106,15 +111,4 @@ Note that hash names are case insensitive.
 		})
 		return nil
 	},
-}
-
-func hashListHelp(indent string) string {
-	var help strings.Builder
-	help.WriteString(indent)
-	help.WriteString("Supported hashes are:\n")
-	for _, ht := range hash.Supported().Array() {
-		help.WriteString(indent)
-		fmt.Fprintf(&help, "  * %v\n", ht.String())
-	}
-	return help.String()
 }
