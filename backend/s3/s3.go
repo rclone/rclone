@@ -430,6 +430,12 @@ func init() {
 			Help:     "Endpoint for OSS API.",
 			Provider: "Alibaba",
 			Examples: []fs.OptionExample{{
+				Value: "oss-accelerate.aliyuncs.com",
+				Help:  "Global Accelerate",
+			}, {
+				Value: "oss-accelerate-overseas.aliyuncs.com",
+				Help:  "Global Accelerate (outside mainland China)",
+			}, {
 				Value: "oss-cn-hangzhou.aliyuncs.com",
 				Help:  "East China 1 (Hangzhou)",
 			}, {
@@ -446,10 +452,22 @@ func init() {
 				Help:  "North China 3 (Zhangjiakou)",
 			}, {
 				Value: "oss-cn-huhehaote.aliyuncs.com",
-				Help:  "North China 5 (Huhehaote)",
+				Help:  "North China 5 (Hohhot)",
+			}, {
+				Value: "oss-cn-wulanchabu.aliyuncs.com",
+				Help:  "North China 6 (Ulanqab)",
 			}, {
 				Value: "oss-cn-shenzhen.aliyuncs.com",
 				Help:  "South China 1 (Shenzhen)",
+			}, {
+				Value: "oss-cn-heyuan.aliyuncs.com",
+				Help:  "South China 2 (Heyuan)",
+			}, {
+				Value: "oss-cn-guangzhou.aliyuncs.com",
+				Help:  "South China 3 (Guangzhou)",
+			}, {
+				Value: "oss-cn-chengdu.aliyuncs.com",
+				Help:  "West China 1 (Chengdu)",
 			}, {
 				Value: "oss-cn-hongkong.aliyuncs.com",
 				Help:  "Hong Kong (Hong Kong)",
