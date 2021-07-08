@@ -508,3 +508,4 @@ put them back in again.` >}}
   * partev <petrosyan@gmail.com>
   * Dmitry Sitnikov <fo2@inbox.ru>
   * Haochen Tong <i@hexchain.org>
+  * Michael Hanselmann <public@hansmi.ch>
