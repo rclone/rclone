@@ -55,7 +55,7 @@ import (
 const (
 	rcloneClientID              = "202264815644.apps.googleusercontent.com"
 	rcloneEncryptedClientSecret = "eX8GpZTVx3vxMWVkuuBdDWmAUE6rGhTwVrvG9GhllYccSdj2-mvHVg"
-	rcloneAPIKey                = "AIzaSyB7Qf0eRsyvLZoCMtYnHMc1U5CjvX0pEdQ" // FIXME Should use APIKey of rcloneDev
+	rcloneAPIKey                = "AIzaSyDgI0Hb9o8UKUhZJjAZ0kKkCgqzkjh7w_k"
 	driveFolderType             = "application/vnd.google-apps.folder"
 	shortcutMimeType            = "application/vnd.google-apps.shortcut"
 	shortcutMimeTypeDangling    = "application/vnd.google-apps.shortcut.dangling" // synthetic mime type for internal use
@@ -2616,8 +2616,8 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return fmt.Sprintf("https://drive.google.com/open?id=%s", id), nil
 	}
 
-	// Do not use "https://drive.google.com/uc?id={id}&export=download" method because of the 100 MB file size limit.
-	// The current "https://www.googleapis.com/drive/v3/..." method will rename the downloaded file to {id}.{suffix}
+	// Do not use the "https://drive.google.com/uc?id={id}&export=download" method. See issues #5381.
+	// The current "https://www.googleapis.com/..." method will rename the downloaded file to {id}.{suffix}
 	return fmt.Sprintf("https://www.googleapis.com/drive/v3/files/%s?alt=media&key=%s", id, rcloneAPIKey), nil
 }
 
