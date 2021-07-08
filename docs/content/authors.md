@@ -316,7 +316,7 @@ put them back in again.` >}}
   * Barry Muldrey <barry@muldrey.net>
   * Sebastian Brandt <sebastian.brandt@friday.de>
   * Marco Molteni <marco.molteni@mailbox.org>
-  * Ankur Gupta <ankur0493@gmail.com> <7876747+ankur0493@users.noreply.github.com>
+  * Ankur Gupta <7876747+ankur0493@users.noreply.github.com>
   * Maciej Zimnoch <maciej@scylladb.com>
   * anuar45 <serdaliyev.anuar@gmail.com>
   * Fernando <ferferga@users.noreply.github.com>
@@ -462,7 +462,6 @@ put them back in again.` >}}
   * Alexey Tabakman <samosad.ru@gmail.com>
   * David Sze <sze.david@gmail.com>
   * cynthia kwok <cynthia.m.kwok@gmail.com>
-  * Ankur Gupta <agupta@egnyte.com>
   * Miron Veryanskiy <MironVeryanskiy@gmail.com>
   * K265 <k.265@qq.com>
   * Vesnyx <Vesnyx@users.noreply.github.com>
