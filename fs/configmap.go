@@ -4,7 +4,6 @@ package fs
 
 import (
 	"os"
-	"strings"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 )
@@ -70,14 +69,10 @@ type setConfigFile string
 
 // Set a config item into the config file
 func (section setConfigFile) Set(key, value string) {
-	if strings.HasPrefix(string(section), ":") {
-		Logf(nil, "Can't save config %q = %q for on the fly backend %q", key, value, section)
-		return
-	}
-	Debugf(nil, "Saving config %q = %q in section %q of the config file", key, value, section)
+	Debugf(nil, "Saving config %q in section %q of the config file", key, section)
 	err := ConfigFileSet(string(section), key, value)
 	if err != nil {
-		Errorf(nil, "Failed saving config %q = %q in section %q of the config file: %v", key, value, section, err)
+		Errorf(nil, "Failed saving config %q in section %q of the config file: %v", key, section, err)
 	}
 }
 
