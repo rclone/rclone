@@ -210,12 +210,19 @@ func init() {
 				if opt.TeamDriveID == "" {
 					return fs.ConfigConfirm("teamdrive_ok", false, "config_change_team_drive", "Configure this as a Shared Drive (Team Drive)?\n")
 				}
-				return fs.ConfigConfirm("teamdrive_ok", false, "config_change_team_drive", fmt.Sprintf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID))
+				return fs.ConfigConfirm("teamdrive_change", false, "config_change_team_drive", fmt.Sprintf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID))
 			case "teamdrive_ok":
 				if config.Result == "false" {
 					m.Set("team_drive", "")
 					return nil, nil
 				}
+				return fs.ConfigGoto("teamdrive_config")
+			case "teamdrive_change":
+				if config.Result == "false" {
+					return nil, nil
+				}
+				return fs.ConfigGoto("teamdrive_config")
+			case "teamdrive_config":
 				f, err := newFs(ctx, name, "", m)
 				if err != nil {
 					return nil, errors.Wrap(err, "failed to make Fs to list Shared Drives")
