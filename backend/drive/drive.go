@@ -749,6 +749,23 @@ func (f *Fs) getRootID(ctx context.Context) (string, error) {
 	return info.Id, nil
 }
 
+// Replaces `\` to `\\` and `'` to `\'`
+func escapeSingleQuotesAndBackslashes(s string) string {
+	n := strings.Count(s, "\\") + strings.Count(s, "'")
+	var b strings.Builder
+	b.Grow(len(s) + n)
+	start := 0
+	for pos, c := range s {
+		if c == '\\' || c == '\'' {
+			b.WriteString(s[start:pos])
+			b.Write([]byte{'\\', byte(c)})
+			start = pos + 1
+		}
+	}
+	b.WriteString(s[start:])
+	return b.String()
+}
+
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
@@ -757,7 +774,12 @@ func (f *Fs) getRootID(ctx context.Context) (string, error) {
 func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directoriesOnly, filesOnly, trashedOnly, includeAll bool, fn listFn) (found bool, err error) {
 	var query []string
 	if !includeAll {
-		q := "trashed=" + strconv.FormatBool(trashedOnly)
+		var q string
+		if trashedOnly {
+			q = "trashed"
+		} else {
+			q = "not trashed"
+		}
 		if f.opt.TrashedOnly {
 			q = fmt.Sprintf("(mimeType='%s' or %s)", driveFolderType, q)
 		}
@@ -767,7 +789,8 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	// Search with sharedWithMe will always return things listed in "Shared With Me" (without any parents)
 	// We must not filter with parent when we try list "ROOT" with drive-shared-with-me
 	// If we need to list file inside those shared folders, we must search it without sharedWithMe
-	parentsQuery := bytes.NewBufferString("(")
+	var parentsQuery strings.Builder
+	_ = parentsQuery.WriteByte('(')
 	for _, dirID := range dirIDs {
 		if dirID == "" {
 			continue
@@ -777,16 +800,15 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 		}
 		if (f.opt.SharedWithMe || f.opt.StarredOnly) && dirID == f.rootFolderID {
 			if f.opt.SharedWithMe {
-				_, _ = parentsQuery.WriteString("sharedWithMe=true")
-			}
-			if f.opt.StarredOnly {
-				if f.opt.SharedWithMe {
-					_, _ = parentsQuery.WriteString(" and ")
+				_, _ = parentsQuery.WriteString("sharedWithMe")
+				if f.opt.StarredOnly {
+					_, _ = parentsQuery.WriteString(" and starred")
 				}
-				_, _ = parentsQuery.WriteString("starred=true")
+			} else if f.opt.StarredOnly {
+				_, _ = parentsQuery.WriteString("starred")
 			}
 		} else {
-			_, _ = fmt.Fprintf(parentsQuery, "'%s' in parents", dirID)
+			_, _ = fmt.Fprintf(&parentsQuery, "'%s' in parents", dirID)
 		}
 	}
 	if parentsQuery.Len() > 1 {
@@ -796,11 +818,11 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	var stems []string
 	if title != "" {
 		searchTitle := f.opt.Enc.FromStandardName(title)
-		// Escaping the backslash isn't documented but seems to work
-		searchTitle = strings.Replace(searchTitle, `\`, `\\`, -1)
-		searchTitle = strings.Replace(searchTitle, `'`, `\'`, -1)
 
-		var titleQuery bytes.Buffer
+		// Escaping backslash and single quote (https://stackoverflow.com/a/32310092)
+		searchTitle = escapeSingleQuotesAndBackslashes(searchTitle)
+
+		var titleQuery strings.Builder
 		_, _ = fmt.Fprintf(&titleQuery, "(name='%s'", searchTitle)
 		if !directoriesOnly && !f.opt.SkipGdocs {
 			// If the search title has an extension that is in the export extensions add a search
@@ -818,11 +840,13 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	}
 	if directoriesOnly {
 		query = append(query, fmt.Sprintf("(mimeType='%s' or mimeType='%s')", driveFolderType, shortcutMimeType))
-	}
-	if filesOnly {
+	} else if filesOnly {
 		query = append(query, fmt.Sprintf("mimeType!='%s'", driveFolderType))
 	}
-	list := f.svc.Files.List()
+	list := f.svc.Files.List().
+		SupportsAllDrives(true).
+		IncludeItemsFromAllDrives(true)
+
 	if len(query) > 0 {
 		list.Q(strings.Join(query, " and "))
 		// fmt.Printf("list Query = %q\n", query)
@@ -830,24 +854,23 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	if f.opt.ListChunk > 0 {
 		list.PageSize(f.opt.ListChunk)
 	}
-	list.SupportsAllDrives(true)
-	list.IncludeItemsFromAllDrives(true)
 	if f.isTeamDrive {
-		list.DriveId(f.opt.TeamDriveID)
-		list.Corpora("drive")
+		list.DriveId(f.opt.TeamDriveID).Corpora("drive")
 	}
 	// If using appDataFolder then need to add Spaces
 	if f.rootFolderID == "appDataFolder" {
 		list.Spaces("appDataFolder")
 	}
 
-	fields := fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.fileFields)
+	list.Fields(googleapi.Field(fmt.Sprintf("files(%s),nextPageToken,incompleteSearch", f.fileFields)))
 
 OUTER:
 	for {
 		var files *drive.FileList
 		err = f.pacer.Call(func() (bool, error) {
-			files, err = list.Fields(googleapi.Field(fields)).Context(ctx).Do()
+			if files, err = list.Context(ctx).Do(); err == nil {
+				return false, nil
+			}
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
@@ -863,36 +886,36 @@ OUTER:
 				if f.opt.SkipShortcuts {
 					continue
 				}
-				// skip file shortcuts if directory only
-				if directoriesOnly && item.ShortcutDetails.TargetMimeType != driveFolderType {
-					continue
+				if directoriesOnly {
+					// skip file shortcuts if directory only
+					if item.ShortcutDetails.TargetMimeType != driveFolderType {
+						continue
+					}
+				} else if filesOnly {
+					// skip directory shortcuts if file only
+					if item.ShortcutDetails.TargetMimeType == driveFolderType {
+						continue
+					}
 				}
-				// skip directory shortcuts if file only
-				if filesOnly && item.ShortcutDetails.TargetMimeType == driveFolderType {
-					continue
-				}
-				item, err = f.resolveShortcut(ctx, item)
-				if err != nil {
+				if item, err = f.resolveShortcut(ctx, item); err != nil {
 					return false, errors.Wrap(err, "list")
 				}
 			}
-			// Check the case of items is correct since
-			// the `=` operator is case insensitive.
+			// Check the case of items is correct since the `=` operator is case insensitive.
 			if title != "" && title != item.Name {
-				found := false
 				for _, stem := range stems {
 					if stem == item.Name {
-						found = true
+						if _,exportName,_,_ := f.findExportFormat(ctx, item); exportName == "" || exportName != title {
+							break
+						}
+						if fn(item) {
+							found = true
+							break OUTER
+						}
 						break
 					}
 				}
-				if !found {
-					continue
-				}
-				_, exportName, _, _ := f.findExportFormat(ctx, item)
-				if exportName == "" || exportName != title {
-					continue
-				}
+				continue
 			}
 			if fn(item) {
 				found = true
