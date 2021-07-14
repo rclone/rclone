@@ -510,3 +510,4 @@ put them back in again.` >}}
   * Haochen Tong <i@hexchain.org>
   * Michael Hanselmann <public@hansmi.ch>
   * Chuan Zh <zhchuan7@gmail.com>
+  * Antoine GIRARD <antoine.girard@sapk.fr>
