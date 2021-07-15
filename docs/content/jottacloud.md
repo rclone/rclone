@@ -195,6 +195,9 @@ Emptying the trash is supported by the [cleanup](/commands/rclone_cleanup/) comm
 Jottacloud supports file versioning. When rclone uploads a new version of a file it creates a new version of it.
 Currently rclone only supports retrieving the current version but older versions can be accessed via the Jottacloud Website.
 
+Versioning can be disabled by `--jottacloud-no-versions` option. This is achieved by deleting the remote file prior to uploading
+a new version. If the upload the fails no version of the file will be available in the remote.
+
 ### Quota information
 
 To view your current quota you can use the `rclone about remote:`
