@@ -53,9 +53,9 @@ sudo mkdir -p /var/lib/docker-plugins/rclone/config
 sudo mkdir -p /var/lib/docker-plugins/rclone/cache
 ```
 
-Install the managed rclone docker plugin:
+Install the managed rclone docker plugin for your architecture (here `amd64`):
 ```
-docker plugin install rclone/docker-volume-rclone args="-v" --alias rclone --grant-all-permissions
+docker plugin install rclone/docker-volume-rclone:amd64 args="-v" --alias rclone --grant-all-permissions
 docker plugin list
 ```
 
@@ -321,8 +321,35 @@ By default they must exist on host at the following locations
 You can [install managed plugin](https://docs.docker.com/engine/reference/commandline/plugin_install/)
 with default settings as follows:
 ```
-docker plugin install rclone/docker-volume-rclone:latest --grant-all-permissions --alias rclone
+docker plugin install rclone/docker-volume-rclone:amd64 --grant-all-permissions --alias rclone
 ```
+
+The `:amd64` part of the image specification after colon is called a _tag_.
+Usually you will want to install the latest plugin for your architecture. In
+this case the tag will just name it, like `amd64` above. The following plugin
+architectures are currently available:
+- `amd64`
+- `arm64`
+- `arm-v7`
+
+Sometimes you might want a concrete plugin version, not the latest one.
+Then you should use image tag in the form `:ARCHITECTURE-VERSION`.
+For example, to install plugin version `v1.56.2` on architecture `arm64`
+you will use tag `arm64-1.56.2` (note the removed `v`) so the full image
+specification becomes `rclone/docker-volume-rclone:arm64-1.56.2`.
+
+We also provide the `latest` plugin tag, but since docker does not support
+multi-architecture plugins as of the time of this writing, this tag is
+currently an **alias for `amd64`**.
+By convention the `latest` tag is the default one and can be omitted, thus
+both `rclone/docker-volume-rclone:latest` and just `rclone/docker-volume-rclone`
+will refer to the latest plugin release for the `amd64` platform.
+
+Also the `amd64` part can be omitted from the versioned rclone plugin tags.
+For example, rclone image reference `rclone/docker-volume-rclone:amd64-1.56.2`
+can be abbreviated as `rclone/docker-volume-rclone:1.56.2` for convenience.
+However, for non-intel architectures you still have to use the full tag as
+`amd64` or `latest` will fail to start.
 
 Managed plugin is in fact a special container running in a namespace separate
 from normal docker containers. Inside it runs the `rclone serve docker`
@@ -395,7 +422,7 @@ actual level assigned by rclone in the encapsulated message string.
 You can set custom plugin options right when you install it, _in one go_:
 ```
 docker plugin remove rclone
-docker plugin install rclone/docker-volume-rclone:latest \
+docker plugin install rclone/docker-volume-rclone:amd64 \
        --alias rclone --grant-all-permissions \
        args="-v --allow-other" config=/etc/rclone
 docker plugin inspect rclone
@@ -434,8 +461,8 @@ sudo apt-get -y install fuse
 ```
 
 Download two systemd configuration files:
-[docker-volume-rclone.service](https://raw.githubusercontent.com/rclone/rclone/master/cmd/serve/docker/contrib/systemd/docker-volume-rclone.service)
-and [docker-volume-rclone.socket](https://raw.githubusercontent.com/rclone/rclone/master/cmd/serve/docker/contrib/systemd/docker-volume-rclone.socket).
+[docker-volume-rclone.service](https://raw.githubusercontent.com/rclone/rclone/master/contrib/docker-plugin/systemd/docker-volume-rclone.service)
+and [docker-volume-rclone.socket](https://raw.githubusercontent.com/rclone/rclone/master/contrib/docker-plugin/systemd/docker-volume-rclone.socket).
 
 Put them to the `/etc/systemd/system/` directory:
 ```
@@ -489,7 +516,7 @@ Use `journalctl --unit docker` to see managed plugin output as part of
 the docker daemon log. Note that docker reflects plugin lines as _errors_
 but their actual level can be seen from encapsulated message string.
 
-You will usually install the latest version of managed plugin.
+You will usually install the latest version of managed plugin for your platform.
 Use the following commands to print the actual installed version:
 ```
 PLUGID=$(docker plugin list --no-trunc | awk '/rclone/{print$1}')
