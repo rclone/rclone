@@ -258,34 +258,31 @@ winzip:
 	zip -9 rclone-$(TAG).zip rclone.exe
 
 # docker volume plugin
-PLUGIN_IMAGE_USER ?= rclone
-PLUGIN_IMAGE_TAG ?= latest
-PLUGIN_IMAGE_NAME ?= docker-volume-rclone
-PLUGIN_IMAGE ?= $(PLUGIN_IMAGE_USER)/$(PLUGIN_IMAGE_NAME):$(PLUGIN_IMAGE_TAG)
-
-PLUGIN_BASE_IMAGE := rclone/rclone:latest
+PLUGIN_USER ?= rclone
+PLUGIN_TAG ?= latest
+PLUGIN_BASE_TAG ?= latest
+PLUGIN_ARCH ?= amd64
+PLUGIN_IMAGE := $(PLUGIN_USER)/docker-volume-rclone:$(PLUGIN_TAG)
+PLUGIN_BASE := $(PLUGIN_USER)/rclone:$(PLUGIN_BASE_TAG)
 PLUGIN_BUILD_DIR := ./build/docker-plugin
-PLUGIN_CONTRIB_DIR := ./cmd/serve/docker/contrib/plugin
-PLUGIN_CONFIG := $(PLUGIN_CONTRIB_DIR)/config.json
-PLUGIN_DOCKERFILE := $(PLUGIN_CONTRIB_DIR)/Dockerfile
-PLUGIN_CONTAINER := docker-volume-rclone-dev-$(shell date +'%Y%m%d-%H%M%S')
-
-docker-plugin: docker-plugin-rootfs docker-plugin-create
-
-docker-plugin-image: rclone
-	docker build --no-cache --pull --build-arg BASE_IMAGE=${PLUGIN_BASE_IMAGE} -t ${PLUGIN_IMAGE} -f ${PLUGIN_DOCKERFILE} .
-
-docker-plugin-rootfs: docker-plugin-image
-	mkdir -p ${PLUGIN_BUILD_DIR}/rootfs
-	docker create --name ${PLUGIN_CONTAINER} ${PLUGIN_IMAGE}
-	docker export ${PLUGIN_CONTAINER} | tar -x -C ${PLUGIN_BUILD_DIR}/rootfs
-	docker rm -vf ${PLUGIN_CONTAINER}
-	cp ${PLUGIN_CONFIG} ${PLUGIN_BUILD_DIR}/config.json
+PLUGIN_CONTRIB_DIR := ./contrib/docker-plugin/managed
 
 docker-plugin-create:
-	docker plugin rm -f ${PLUGIN_IMAGE} 2>/dev/null || true
+	docker buildx inspect |grep -q /${PLUGIN_ARCH} || \
+	docker run --rm --privileged tonistiigi/binfmt --install all
+	rm -rf ${PLUGIN_BUILD_DIR}
+	docker buildx build \
+		--no-cache --pull \
+		--build-arg BASE_IMAGE=${PLUGIN_BASE} \
+		--platform linux/${PLUGIN_ARCH} \
+		--output ${PLUGIN_BUILD_DIR}/rootfs \
+		${PLUGIN_CONTRIB_DIR}
+	cp ${PLUGIN_CONTRIB_DIR}/config.json ${PLUGIN_BUILD_DIR}
+	docker plugin rm --force ${PLUGIN_IMAGE} 2>/dev/null || true
 	docker plugin create ${PLUGIN_IMAGE} ${PLUGIN_BUILD_DIR}
 
-docker-plugin-push: docker-plugin-create
+docker-plugin-push:
 	docker plugin push ${PLUGIN_IMAGE}
 	docker plugin rm ${PLUGIN_IMAGE}
+
+docker-plugin: docker-plugin-create docker-plugin-push
