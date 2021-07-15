@@ -264,28 +264,49 @@ PLUGIN_IMAGE_NAME ?= docker-volume-rclone
 PLUGIN_IMAGE ?= $(PLUGIN_IMAGE_USER)/$(PLUGIN_IMAGE_NAME):$(PLUGIN_IMAGE_TAG)
 
 PLUGIN_BASE_IMAGE := rclone/rclone:latest
-PLUGIN_BUILD_DIR := ./build/docker-plugin
+PLUGIN_BUILD_DIR := ./build
 PLUGIN_CONTRIB_DIR := ./cmd/serve/docker/contrib/plugin
 PLUGIN_CONFIG := $(PLUGIN_CONTRIB_DIR)/config.json
 PLUGIN_DOCKERFILE := $(PLUGIN_CONTRIB_DIR)/Dockerfile
 PLUGIN_CONTAINER := docker-volume-rclone-dev-$(shell date +'%Y%m%d-%H%M%S')
 
-docker-plugin: docker-plugin-rootfs docker-plugin-create
+PLUGIN_PLATFORM ?= linux/amd64,linux/386,linux/arm64,linux/arm/v7
 
-docker-plugin-image: rclone
-	docker build --no-cache --pull --build-arg BASE_IMAGE=${PLUGIN_BASE_IMAGE} -t ${PLUGIN_IMAGE} -f ${PLUGIN_DOCKERFILE} .
+docker-plugin: docker-plugin-create docker-plugin-push
 
-docker-plugin-rootfs: docker-plugin-image
-	mkdir -p ${PLUGIN_BUILD_DIR}/rootfs
-	docker create --name ${PLUGIN_CONTAINER} ${PLUGIN_IMAGE}
-	docker export ${PLUGIN_CONTAINER} | tar -x -C ${PLUGIN_BUILD_DIR}/rootfs
-	docker rm -vf ${PLUGIN_CONTAINER}
-	cp ${PLUGIN_CONFIG} ${PLUGIN_BUILD_DIR}/config.json
+docker-plugin-build:
+	rm -rf ${PLUGIN_BUILD_DIR}
 
-docker-plugin-create:
-	docker plugin rm -f ${PLUGIN_IMAGE} 2>/dev/null || true
-	docker plugin create ${PLUGIN_IMAGE} ${PLUGIN_BUILD_DIR}
+	docker buildx create --use \
+		--platform ${PLUGIN_PLATFORM} \
+		--name ${PLUGIN_CONTAINER}
+
+	docker buildx build --no-cache --pull \
+		--builder ${PLUGIN_CONTAINER} \
+		--build-arg BASE_IMAGE=${PLUGIN_BASE_IMAGE} \
+		--platform ${PLUGIN_PLATFORM} \
+		-o type=local,dest=${PLUGIN_BUILD_DIR} \
+		-t ${PLUGIN_IMAGE} -f ${PLUGIN_DOCKERFILE} .
+
+	docker buildx rm ${PLUGIN_CONTAINER}
+
+	for dir in ${PLUGIN_BUILD_DIR}/*/ ; do \
+		tag=${PLUGIN_IMAGE_TAG}-`basename $$dir | sed "s/_/-/g"` ; \
+		mkdir -p ${PLUGIN_BUILD_DIR}/$$tag ; \
+		mv $$dir ${PLUGIN_BUILD_DIR}/$$tag/rootfs ; \
+		cp ${PLUGIN_CONFIG} ${PLUGIN_BUILD_DIR}/$$tag/config.json ; \
+	done
+
+docker-plugin-create: docker-plugin-build
+	for dir in ${PLUGIN_BUILD_DIR}/*/ ; do \
+		tag=`basename $$dir` ; \
+		docker plugin rm -f $(PLUGIN_IMAGE_USER)/${PLUGIN_IMAGE_NAME}:$$tag 2>/dev/null || true ; \
+		docker plugin create $(PLUGIN_IMAGE_USER)/${PLUGIN_IMAGE_NAME}:$$tag $$dir ; \
+	done
 
 docker-plugin-push: docker-plugin-create
-	docker plugin push ${PLUGIN_IMAGE}
-	docker plugin rm ${PLUGIN_IMAGE}
+	for dir in ${PLUGIN_BUILD_DIR}/*/ ; do \
+		tag=`basename $$dir` ; \
+		docker plugin push $(PLUGIN_IMAGE_USER)/${PLUGIN_IMAGE_NAME}:$$tag ; \
+		docker plugin rm $(PLUGIN_IMAGE_USER)/${PLUGIN_IMAGE_NAME}:$$tag ; \
+	done
