@@ -67,5 +67,4 @@ jobs:
               shell: bash
               run: |
                 docker login -u ${{ secrets.DOCKER_HUB_USER }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
-                make docker-plugin-push PLUGIN_IMAGE=${PLUGIN_IMAGE}
-                make docker-plugin-push PLUGIN_IMAGE=${PLUGIN_IMAGE_LATEST}
+                make docker-plugin-push
