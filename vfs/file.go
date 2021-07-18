@@ -798,24 +798,33 @@ func (f *File) Truncate(size int64) (err error) {
 	return nil
 }
 
+// Note: If we end up adding many different xattrs, rewrite this function into
+// something more extensible.
 func (f *File) Getxattr(name string) (value []byte, err error) {
-	hashType := hash.None
+	obj := f.getObject()
 
-	parts := strings.Split(name, ".")
-	if len(parts) != 3 || parts[0] != "system" || parts[1] != "hash" {
-		return nil, ENODATA
-	}
-	err = hashType.Set(parts[2])
-	if err != nil {
-		return nil, ENODATA
+	if name == "user.mime_type" {
+		return []byte(fs.MimeType(context.TODO(), obj)), nil
 	}
 
-	h, err := f.getObject().Hash(context.TODO(), hashType)
-	if err != nil {
+	hashName := strings.TrimPrefix(name, "system.hash.")
+	if hashName != name {
+		hashType := hash.None
+		err = hashType.Set(hashName)
+		if err != nil {
+			return nil, ENODATA
+		}
+
+		var h string
+		h, err = obj.Hash(context.TODO(), hashType)
+		if err != nil {
+			return
+		}
+		value = []byte(h)
 		return
 	}
-	value = []byte(h)
-	return
+
+	return nil, ENODATA
 }
 
 func (f *File) Listxattr(fill func(name string) bool) (err error) {
@@ -824,5 +833,10 @@ func (f *File) Listxattr(fill func(name string) bool) (err error) {
 			return ERANGE
 		}
 	}
-	return nil
+
+	if !fill("user.mime_type") {
+		return ERANGE
+	}
+
+	return
 }
