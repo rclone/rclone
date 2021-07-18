@@ -5,6 +5,7 @@ package mount
 
 import (
 	"context"
+	"syscall"
 	"time"
 
 	"bazil.org/fuse"
@@ -97,15 +98,47 @@ func (f *File) Fsync(ctx context.Context, req *fuse.FsyncRequest) (err error) {
 // node.
 //
 // If there is no xattr by that name, returns fuse.ErrNoXattr.
-func (f *File) Getxattr(ctx context.Context, req *fuse.GetxattrRequest, resp *fuse.GetxattrResponse) error {
-	return fuse.ENOSYS // we never implement this
+func (f *File) Getxattr(ctx context.Context, req *fuse.GetxattrRequest, resp *fuse.GetxattrResponse) (err error) {
+	defer log.Trace(f, "name=%v, size=%d", req.Name, req.Size)("err=%v", &err)
+
+	data, err := f.File.Getxattr(ctx, req.Name)
+	if err != nil {
+		return translateError(err)
+	}
+
+	var datalen int = len(data)
+	nbytes := uint32(datalen)
+	if int(nbytes) != datalen {
+		err = syscall.E2BIG
+		return
+	}
+
+	// A req.Size of 0 means no restrictions on the size.
+	if req.Size != 0 && nbytes > req.Size {
+		err = syscall.ERANGE
+		return
+	}
+
+	resp.Xattr = data
+
+	return
 }
 
 var _ fusefs.NodeGetxattrer = (*File)(nil)
 
 // Listxattr lists the extended attributes recorded for the node.
-func (f *File) Listxattr(ctx context.Context, req *fuse.ListxattrRequest, resp *fuse.ListxattrResponse) error {
-	return fuse.ENOSYS // we never implement this
+func (f *File) Listxattr(ctx context.Context, req *fuse.ListxattrRequest, resp *fuse.ListxattrResponse) (err error) {
+	defer log.Trace(f, "size=%v", req.Size)("err=%v", &err)
+
+	err = f.File.Listxattr(ctx, func(name string) bool {
+		resp.Append(name)
+		return true // keep going
+	})
+	if err != nil {
+		return translateError(err)
+	}
+
+	return
 }
 
 var _ fusefs.NodeListxattrer = (*File)(nil)
