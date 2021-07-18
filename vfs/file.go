@@ -807,7 +807,7 @@ func (f *File) Getxattr(name string) (value []byte, err error) {
 		return []byte(fs.MimeType(context.TODO(), obj)), nil
 	}
 
-	hashName := strings.TrimPrefix(name, "system.hash.")
+	hashName := strings.TrimPrefix(name, "system.org.rclone.hash.")
 	if hashName != name {
 		hashType := hash.None
 		err = hashType.Set(hashName)
@@ -829,7 +829,7 @@ func (f *File) Getxattr(name string) (value []byte, err error) {
 
 func (f *File) Listxattr(fill func(name string) bool) (err error) {
 	for _, hashType := range f.getObject().Fs().Hashes().Array() {
-		if !fill(fmt.Sprintf("system.hash.%s", hashType.String())) {
+		if !fill(fmt.Sprintf("system.org.rclone.hash.%s", hashType.String())) {
 			return ERANGE
 		}
 	}
