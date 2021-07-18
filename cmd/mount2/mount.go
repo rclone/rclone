@@ -31,7 +31,7 @@ func mountOptions(fsys *FS, f fs.Fs) (mountOpts *fuse.MountOptions) {
 		AllowOther:    fsys.opt.AllowOther,
 		FsName:        device,
 		Name:          "rclone",
-		DisableXAttrs: true,
+		DisableXAttrs: false,
 		Debug:         fsys.opt.DebugFUSE,
 		MaxReadAhead:  int(fsys.opt.MaxReadAhead),
 

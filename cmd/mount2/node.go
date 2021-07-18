@@ -405,3 +405,83 @@ func (n *Node) Rename(ctx context.Context, oldName string, newParent fusefs.Inod
 }
 
 var _ = (fusefs.NodeRenamer)((*Node)(nil))
+
+// Getxattr should read data for the given attribute into
+// `dest` and return the number of bytes. If `dest` is too
+// small, it should return ERANGE and the size of the attribute.
+// If not defined, Getxattr will return ENOATTR.
+func (n *Node) Getxattr(ctx context.Context, attr string, dest []byte) (nbytes uint32, errno syscall.Errno) {
+	defer log.Trace(n, "attr=%q, len(dest)=%d", attr, len(dest))("errno=%v", &errno)
+	data, err := n.node.Getxattr(attr)
+	if err != nil {
+		return 0, translateError(err)
+	}
+
+	var datalen int = len(data)
+	nbytes = uint32(datalen)
+	if int(nbytes) != datalen {
+		errno = syscall.E2BIG
+		return
+	}
+
+	if datalen > len(dest) {
+		errno = syscall.ERANGE
+		return
+	}
+
+	copy(dest, data)
+	return
+}
+
+var _ = (fusefs.NodeGetxattrer)((*Node)(nil))
+
+// Listxattr should read all attributes (null terminated) into
+// `dest`. If the `dest` buffer is too small, it should return ERANGE
+// and the correct size.  If not defined, return an empty list and
+// success.
+func (n *Node) Listxattr(ctx context.Context, dest []byte) (nbytes uint32, errno syscall.Errno) {
+	defer log.Trace(n, "len(dest)=%d", len(dest))("errno=%v", &errno)
+
+	maxlen := len(dest)
+	var listlen int
+
+	err := n.node.Listxattr(func(name string) (keepgoing bool) {
+		keepgoing = true
+
+		namelen := len(name)
+		listlen += namelen + 1  // +1 for null terminator
+
+		if len(dest) == 0 {
+			return
+		}
+
+		nb := copy(dest, name)
+		dest = dest[nb:]
+		if len(dest) == 0 {
+			return
+		}
+
+		dest[0] = 0  // null delimited
+		dest = dest[1:]
+
+		return
+	})
+	if err != nil {
+		return 0, translateError(err)
+	}
+
+	nbytes = uint32(listlen)
+	if int(nbytes) != listlen {
+		errno = syscall.E2BIG
+		return
+	}
+
+	if listlen > maxlen {
+		errno = syscall.ERANGE
+		return
+	}
+
+	return
+}
+
+var _ = (fusefs.NodeListxattrer)((*Node)(nil))
