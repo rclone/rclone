@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/mockfs"
@@ -416,6 +417,56 @@ func TestFileRename(t *testing.T) {
 	} {
 		t.Run(fmt.Sprintf("%v,forceCache=%v", test.mode, test.forceCache), func(t *testing.T) {
 			testFileRename(t, test.mode, test.inCache, test.forceCache)
+		})
+	}
+}
+
+func testFileMimeTypeXattr(t *testing.T, name string, expectedvalue string) {
+	var (
+		remote   = "file.txt"
+		//ctx      = context.Background()
+	)
+
+	f := mockfs.NewFs(context.Background(), "test", "root")
+	f.SetHashes(hash.NewHashSet(hash.MD5))
+
+	o := mockobject.New(remote).WithContent([]byte("data"), mockobject.SeekModeRegular)
+	o.SetFs(f)
+	f.AddObject(o)
+
+	// create a VFS from that mockfs
+	vfs := New(f, nil)
+	defer cleanupVFS(t, vfs)
+
+	// find the file
+	node, err := vfs.Stat(remote)
+	require.NoError(t, err)
+	require.True(t, node.IsFile())
+	file := node.(*File)
+
+	xattrs := make([]string, 0)
+	err = file.Listxattr(func(name string) bool {
+		xattrs = append(xattrs, name)
+		return true
+	})
+	require.NoError(t, err)
+	require.Contains(t, xattrs, name)
+
+	actualval, err := file.Getxattr(name)
+	require.NoError(t, err)
+	assert.Equal(t, expectedvalue, string(actualval))
+}
+
+func TestFileXAttrs(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		value string
+	}{
+		{name: "user.mime_type", value: "text/plain; charset=utf-8"},
+		{name: "system.org.rclone.hash.md5", value: "8d777f385d3dfec8815d20f7496026dc"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			testFileMimeTypeXattr(t, test.name, test.value)
 		})
 	}
 }
