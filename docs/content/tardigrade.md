@@ -3,8 +3,7 @@ title: "Tardigrade"
 description: "Rclone docs for Tardigrade"
 ---
 
-{{< icon "fas fa-dove" >}} Tardigrade
------------------------------------------
+# {{< icon "fas fa-dove" >}} Tardigrade
 
 [Tardigrade](https://tardigrade.io) is an encrypted, secure, and 
 cost-effective object storage service that enables you to store, back up, and 

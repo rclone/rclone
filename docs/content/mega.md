@@ -3,8 +3,7 @@ title: "Mega"
 description: "Rclone docs for Mega"
 ---
 
-{{< icon "fa fa-archive" >}} Mega
------------------------------------------
+# {{< icon "fa fa-archive" >}} Mega
 
 [Mega](https://mega.nz/) is a cloud storage and file hosting service
 known for its security feature where all files are encrypted locally

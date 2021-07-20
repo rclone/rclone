@@ -3,8 +3,7 @@ title: "Memory"
 description: "Rclone docs for Memory backend"
 ---
 
-{{< icon "fas fa-memory" >}} Memory
------------------------------------------
+# {{< icon "fas fa-memory" >}} Memory
 
 The memory backend is an in RAM backend. It does not persist its
 data - use the local backend for that.

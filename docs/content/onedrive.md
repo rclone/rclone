@@ -3,8 +3,7 @@ title: "Microsoft OneDrive"
 description: "Rclone docs for Microsoft OneDrive"
 ---
 
-{{< icon "fab fa-windows" >}} Microsoft OneDrive
------------------------------------------
+# {{< icon "fab fa-windows" >}} Microsoft OneDrive
 
 Paths are specified as `remote:path`
 
@@ -277,7 +276,7 @@ Note that the chunks will be buffered into memory.
 - Config:      chunk_size
 - Env Var:     RCLONE_ONEDRIVE_CHUNK_SIZE
 - Type:        SizeSuffix
-- Default:     10M
+- Default:     10Mi
 
 #### --onedrive-drive-id
 

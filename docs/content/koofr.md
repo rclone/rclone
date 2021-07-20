@@ -3,8 +3,7 @@ title: "Koofr"
 description: "Rclone docs for Koofr"
 ---
 
-{{< icon "fa fa-suitcase" >}} Koofr
------------------------------------------
+# {{< icon "fa fa-suitcase" >}} Koofr
 
 Paths are specified as `remote:path`
 

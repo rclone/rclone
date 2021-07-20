@@ -3,8 +3,7 @@ title: "Google drive"
 description: "Rclone docs for Google drive"
 ---
 
-{{< icon "fab fa-google" >}} Google Drive
------------------------------------------
+# {{< icon "fab fa-google" >}} Google Drive
 
 Paths are specified as `drive:path`
 
@@ -868,7 +867,7 @@ Cutoff for switching to chunked upload
 - Config:      upload_cutoff
 - Env Var:     RCLONE_DRIVE_UPLOAD_CUTOFF
 - Type:        SizeSuffix
-- Default:     8M
+- Default:     8Mi
 
 #### --drive-chunk-size
 
@@ -882,7 +881,7 @@ Reducing this will reduce memory usage but decrease performance.
 - Config:      chunk_size
 - Env Var:     RCLONE_DRIVE_CHUNK_SIZE
 - Type:        SizeSuffix
-- Default:     8M
+- Default:     8Mi
 
 #### --drive-acknowledge-abuse
 

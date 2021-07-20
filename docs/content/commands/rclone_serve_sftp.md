@@ -419,7 +419,7 @@ rclone serve sftp remote:path [flags]
       --read-only                              Mount read-only.
       --stdio                                  Run an sftp server on run stdin/stdout
       --uid uint32                             Override the uid field set by the filesystem. Not supported on Windows. (default 1000)
-      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows. (default 18)
+      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows. (default 2)
       --user string                            User name for authentication.
       --vfs-cache-max-age duration             Max age of objects in the cache. (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache. (default off)

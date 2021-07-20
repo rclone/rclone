@@ -525,8 +525,14 @@ This takes the following parameters
 - name - name of remote
 - parameters - a map of \{ "key": "value" \} pairs
 - type - type of the new remote
-- obscure - optional bool - forces obscuring of passwords
-- noObscure - optional bool - forces passwords not to be obscured
+- opt - a dictionary of options to control the configuration
+    - obscure - declare passwords are plain and need obscuring
+    - noObscure - declare passwords are already obscured and don't need obscuring
+    - nonInteractive - don't interact with a user, return questions
+    - continue - continue the config process with an answer
+    - all - ask all the config questions not just the post config ones
+    - state - state to restart with - used with continue
+    - result - result to restart with - used with continue
 
 
 See the [config create command](/commands/rclone_config_create/) command for more information on the above.
@@ -600,8 +606,14 @@ This takes the following parameters
 
 - name - name of remote
 - parameters - a map of \{ "key": "value" \} pairs
-- obscure - optional bool - forces obscuring of passwords
-- noObscure - optional bool - forces passwords not to be obscured
+- opt - a dictionary of options to control the configuration
+    - obscure - declare passwords are plain and need obscuring
+    - noObscure - declare passwords are already obscured and don't need obscuring
+    - nonInteractive - don't interact with a user, return questions
+    - continue - continue the config process with an answer
+    - all - ask all the config questions not just the post config ones
+    - state - state to restart with - used with continue
+    - result - result to restart with - used with continue
 
 
 See the [config update command](/commands/rclone_config_update/) command for more information on the above.
@@ -775,7 +787,7 @@ Returns the following values:
 	"lastError": last error string,
 	"renames" : number of files renamed,
 	"retryError": boolean showing whether there has been at least one non-NoRetryError,
-	"speed": average speed in bytes/sec since start of the group,
+	"speed": average speed in bytes per second since start of the group,
 	"totalBytes": total number of bytes in the group,
 	"totalChecks": total number of checks in the group,
 	"totalTransfers": total number of transfers in the group,

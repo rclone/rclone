@@ -3,8 +3,7 @@ title: "QingStor"
 description: "Rclone docs for QingStor Object Storage"
 ---
 
-{{< icon "fas fa-hdd" >}} QingStor
----------------------------------------
+# {{< icon "fas fa-hdd" >}} QingStor
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.
@@ -232,7 +231,7 @@ The minimum is 0 and the maximum is 5 GiB.
 - Config:      upload_cutoff
 - Env Var:     RCLONE_QINGSTOR_UPLOAD_CUTOFF
 - Type:        SizeSuffix
-- Default:     200M
+- Default:     200Mi
 
 #### --qingstor-chunk-size
 
@@ -250,7 +249,7 @@ enough memory, then increasing this will speed up the transfers.
 - Config:      chunk_size
 - Env Var:     RCLONE_QINGSTOR_CHUNK_SIZE
 - Type:        SizeSuffix
-- Default:     4M
+- Default:     4Mi
 
 #### --qingstor-upload-concurrency
 

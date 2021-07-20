@@ -3,8 +3,7 @@ title: "Zoho"
 description: "Zoho WorkDrive"
 ---
 
-{{< icon "fas fa-folder" >}}Zoho Workdrive
-----------------------------------------
+# {{< icon "fas fa-folder" >}}Zoho Workdrive
 
 [Zoho WorkDrive](https://www.zoho.com/workdrive/) is a cloud storage solution created by [Zoho](https://zoho.com).
 
@@ -150,7 +149,11 @@ Leave blank normally.
 
 #### --zoho-region
 
-Zoho region to connect to. You'll have to use the region you organization is registered in.
+Zoho region to connect to.
+
+You'll have to use the region your organization is registered in. If
+not sure use the same top level domain as you connect to in your
+browser.
 
 - Config:      region
 - Env Var:     RCLONE_ZOHO_REGION

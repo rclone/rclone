@@ -3,8 +3,7 @@ title: "SFTP"
 description: "SFTP"
 ---
 
-{{< icon "fa fa-server" >}} SFTP
-----------------------------------------
+# {{< icon "fa fa-server" >}} SFTP
 
 SFTP is the [Secure (or SSH) File Transfer
 Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol).
@@ -528,6 +527,21 @@ If concurrent reads are disabled, the use_fstat option is ignored.
 
 - Config:      disable_concurrent_reads
 - Env Var:     RCLONE_SFTP_DISABLE_CONCURRENT_READS
+- Type:        bool
+- Default:     false
+
+#### --sftp-disable-concurrent-writes
+
+If set don't use concurrent writes
+
+Normally rclone uses concurrent writes to upload files. This improves
+the performance greatly, especially for distant servers.
+
+This option disables concurrent writes should that be necessary.
+
+
+- Config:      disable_concurrent_writes
+- Env Var:     RCLONE_SFTP_DISABLE_CONCURRENT_WRITES
 - Type:        bool
 - Default:     false
 

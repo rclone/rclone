@@ -3,8 +3,7 @@ title: "Alias"
 description: "Remote Aliases"
 ---
 
-{{< icon "fa fa-link" >}} Alias
------------------------------------------
+# {{< icon "fa fa-link" >}} Alias
 
 The `alias` remote provides a new name for another remote.
 

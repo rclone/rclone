@@ -3,8 +3,7 @@ title: "Local Filesystem"
 description: "Rclone docs for the local filesystem"
 ---
 
-{{< icon "fas fa-hdd" >}} Local Filesystem
--------------------------------------------
+# {{< icon "fas fa-hdd" >}} Local Filesystem
 
 Local paths are specified as normal filesystem paths, e.g. `/path/to/wherever`, so
 
@@ -367,32 +366,41 @@ points, as you explicitly acknowledge that they should be skipped.
 
 #### --local-zero-size-links
 
-Assume the Stat size of links is zero (and read them instead)
+Assume the Stat size of links is zero (and read them instead) (Deprecated)
 
-On some virtual filesystems (such ash LucidLink), reading a link size via a Stat call always returns 0.
-However, on unix it reads as the length of the text in the link. This may cause errors like this when
-syncing:
+Rclone used to use the Stat size of links as the link size, but this fails in quite a few places
 
-    Failed to copy: corrupted on transfer: sizes differ 0 vs 13
+- Windows
+- On some virtual filesystems (such ash LucidLink)
+- Android
 
-Setting this flag causes rclone to read the link and use that as the size of the link
-instead of 0 which in most cases fixes the problem.
+So rclone now always reads the link
+
 
 - Config:      zero_size_links
 - Env Var:     RCLONE_LOCAL_ZERO_SIZE_LINKS
 - Type:        bool
 - Default:     false
 
-#### --local-no-unicode-normalization
+#### --local-unicode-normalization
 
-Don't apply unicode normalization to paths and filenames (Deprecated)
+Apply unicode NFC normalization to paths and filenames
 
-This flag is deprecated now.  Rclone no longer normalizes unicode file
-names, but it compares them with unicode normalization in the sync
-routine instead.
+This flag can be used to normalize file names into unicode NFC form
+that are read from the local filesystem.
 
-- Config:      no_unicode_normalization
-- Env Var:     RCLONE_LOCAL_NO_UNICODE_NORMALIZATION
+Rclone does not normally touch the encoding of file names it reads from
+the file system.
+
+This can be useful when using macOS as it normally provides decomposed (NFD)
+unicode which in some language (eg Korean) doesn't display properly on
+some OSes.
+
+Note that rclone compares filenames with unicode normalization in the sync
+routine so this flag shouldn't normally be used.
+
+- Config:      unicode_normalization
+- Env Var:     RCLONE_LOCAL_UNICODE_NORMALIZATION
 - Type:        bool
 - Default:     false
 

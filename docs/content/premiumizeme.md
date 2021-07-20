@@ -3,8 +3,7 @@ title: "premiumize.me"
 description: "Rclone docs for premiumize.me"
 ---
 
-{{< icon "fa fa-user" >}} premiumize.me
------------------------------------------
+# {{< icon "fa fa-user" >}} premiumize.me
 
 Paths are specified as `remote:path`
 

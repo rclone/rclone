@@ -24,7 +24,7 @@ you would do:
 If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
-    rclone config update myremote swift env_auth=true config_refresh_token=false
+    rclone config update myremote env_auth=true config_refresh_token=false
 
 Note that if the config process would normally ask a question the
 default is taken (unless `--non-interactive` is used).  Each time

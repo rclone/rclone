@@ -3,8 +3,7 @@ title: "FTP"
 description: "Rclone docs for FTP backend"
 ---
 
-{{< icon "fa fa-file" >}} FTP
-------------------------------
+# {{< icon "fa fa-file" >}} FTP
 
 FTP is the File Transfer Protocol. Rclone FTP support is provided using the
 [github.com/jlaffaye/ftp](https://godoc.org/github.com/jlaffaye/ftp)

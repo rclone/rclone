@@ -154,7 +154,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.0-beta.5531.41f561bf2.pr-commanddocs")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -311,6 +311,8 @@ and may be set in the config file.
       --dropbox-token-url string                                 Token server url.
       --fichier-api-key string                                   Your API Key, get it from https://1fichier.com/console/params.pl
       --fichier-encoding MultiEncoder                            This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
+      --fichier-file-password string                             If you want to download a shared file that is password protected, add this parameter (obscured)
+      --fichier-folder-password string                           If you want to list the files in a shared folder that is password protected, add this parameter (obscured)
       --fichier-shared-folder string                             If you want to download a shared folder, add this parameter
       --filefabric-encoding MultiEncoder                         This sets the encoding for the backend. (default Slash,Del,Ctl,InvalidUtf8,Dot)
       --filefabric-permanent-token string                        Permanent Authentication Token
@@ -375,6 +377,7 @@ and may be set in the config file.
       --jottacloud-encoding MultiEncoder                         This sets the encoding for the backend. (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
       --jottacloud-hard-delete                                   Delete files permanently rather than putting them into the trash.
       --jottacloud-md5-memory-limit SizeSuffix                   Files bigger than this will be cached on disk to calculate the MD5 if required. (default 10Mi)
+      --jottacloud-no-versions                                   Avoid server side versioning by deleting files and recreating files instead of overwriting them.
       --jottacloud-trashed-only                                  Only show files that are in the trash.
       --jottacloud-upload-resume-limit SizeSuffix                Files bigger than this can be resumed if the upload fail's. (default 10Mi)
       --koofr-encoding MultiEncoder                              This sets the encoding for the backend. (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
@@ -587,7 +590,7 @@ and may be set in the config file.
       --zoho-client-id string                                    OAuth Client Id
       --zoho-client-secret string                                OAuth Client Secret
       --zoho-encoding MultiEncoder                               This sets the encoding for the backend. (default Del,Ctl,InvalidUtf8)
-      --zoho-region string                                       Zoho region to connect to. You'll have to use the region you organization is registered in.
+      --zoho-region string                                       Zoho region to connect to.
       --zoho-token string                                        OAuth Access Token as a JSON blob.
       --zoho-token-url string                                    Token server url.
 ```

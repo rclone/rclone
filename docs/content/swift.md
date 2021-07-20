@@ -3,8 +3,7 @@ title: "Swift"
 description: "Swift"
 ---
 
-{{< icon "fa fa-space-shuttle" >}}Swift
-----------------------------------------
+# {{< icon "fa fa-space-shuttle" >}}Swift
 
 Swift refers to [OpenStack Object Storage](https://docs.openstack.org/swift/latest/).
 Commercial implementations of that being:
@@ -449,7 +448,7 @@ default for this is 5 GiB which is its maximum value.
 - Config:      chunk_size
 - Env Var:     RCLONE_SWIFT_CHUNK_SIZE
 - Type:        SizeSuffix
-- Default:     5G
+- Default:     5Gi
 
 #### --swift-no-chunk
 
