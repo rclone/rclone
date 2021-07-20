@@ -3,8 +3,7 @@ title: "Yandex"
 description: "Yandex Disk"
 ---
 
-{{< icon "fa fa-space-shuttle" >}}Yandex Disk
-----------------------------------------
+# {{< icon "fa fa-space-shuttle" >}}Yandex Disk
 
 [Yandex Disk](https://disk.yandex.com) is a cloud storage solution created by [Yandex](https://yandex.com).
 

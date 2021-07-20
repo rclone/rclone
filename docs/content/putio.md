@@ -3,8 +3,7 @@ title: "put.io"
 description: "Rclone docs for put.io"
 ---
 
-{{< icon "fas fa-parking" >}} put.io
----------------------------------
+# {{< icon "fas fa-parking" >}} put.io
 
 Paths are specified as `remote:path`
 

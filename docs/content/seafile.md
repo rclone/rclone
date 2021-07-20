@@ -3,8 +3,7 @@ title: "Seafile"
 description: "Seafile"
 ---
 
-{{< icon "fa fa-server" >}}Seafile
-----------------------------------------
+# {{< icon "fa fa-server" >}}Seafile
 
 This is a backend for the [Seafile](https://www.seafile.com/) storage service:
 - It works with both the free community edition or the professional edition.

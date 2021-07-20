@@ -3,8 +3,7 @@ title: "Union"
 description: "Remote Unification"
 ---
 
-{{< icon "fa fa-link" >}} Union
------------------------------------------
+# {{< icon "fa fa-link" >}} Union
 
 The `union` remote provides a unification similar to UnionFS using other remotes.
 

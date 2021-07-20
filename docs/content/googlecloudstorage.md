@@ -3,8 +3,7 @@ title: "Google Cloud Storage"
 description: "Rclone docs for Google Cloud Storage"
 ---
 
-{{< icon "fab fa-google" >}} Google Cloud Storage
--------------------------------------------------
+# {{< icon "fab fa-google" >}} Google Cloud Storage
 
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g. `remote:bucket/path/to/dir`.

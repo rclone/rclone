@@ -3,8 +3,7 @@ title: "Crypt"
 description: "Encryption overlay remote"
 ---
 
-{{< icon "fa fa-lock" >}}Crypt
-----------------------------------------
+# {{< icon "fa fa-lock" >}}Crypt
 
 Rclone `crypt` remotes encrypt and decrypt other remotes.
 

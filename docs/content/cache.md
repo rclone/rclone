@@ -3,8 +3,7 @@ title: "Cache"
 description: "Rclone docs for cache remote"
 ---
 
-{{< icon "fa fa-archive" >}} Cache (DEPRECATED)
------------------------------------------
+# {{< icon "fa fa-archive" >}} Cache (DEPRECATED)
 
 The `cache` remote wraps another existing remote and stores file structure
 and its data for long running tasks like `rclone mount`.
@@ -361,9 +360,9 @@ will need to be cleared or unexpected EOF errors will occur.
 - Config:      chunk_size
 - Env Var:     RCLONE_CACHE_CHUNK_SIZE
 - Type:        SizeSuffix
-- Default:     5M
+- Default:     5Mi
 - Examples:
-    - "1m"
+    - "1M"
         - 1 MiB
     - "5M"
         - 5 MiB
@@ -398,7 +397,7 @@ oldest chunks until it goes under this value.
 - Config:      chunk_total_size
 - Env Var:     RCLONE_CACHE_CHUNK_TOTAL_SIZE
 - Type:        SizeSuffix
-- Default:     10G
+- Default:     10Gi
 - Examples:
     - "500M"
         - 500 MiB

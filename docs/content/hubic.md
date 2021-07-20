@@ -3,8 +3,7 @@ title: "Hubic"
 description: "Rclone docs for Hubic"
 ---
 
-{{< icon "fa fa-space-shuttle" >}} Hubic
------------------------------------------
+# {{< icon "fa fa-space-shuttle" >}} Hubic
 
 Paths are specified as `remote:path`
 
@@ -173,7 +172,7 @@ default for this is 5 GiB which is its maximum value.
 - Config:      chunk_size
 - Env Var:     RCLONE_HUBIC_CHUNK_SIZE
 - Type:        SizeSuffix
-- Default:     5G
+- Default:     5Gi
 
 #### --hubic-no-chunk
 

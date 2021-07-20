@@ -354,7 +354,7 @@ rclone serve docker [flags]
       --socket-addr string                     <host:port> or absolute path (default: /run/docker/plugins/rclone.sock)
       --socket-gid int                         GID for unix socket (default: current process GID) (default 1000)
       --uid uint32                             Override the uid field set by the filesystem. Not supported on Windows. (default 1000)
-      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows. (default 18)
+      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows. (default 2)
       --vfs-cache-max-age duration             Max age of objects in the cache. (default 1h0m0s)
       --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache. (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)

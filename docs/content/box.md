@@ -3,8 +3,7 @@ title: "Box"
 description: "Rclone docs for Box"
 ---
 
-{{< icon "fa fa-archive" >}} Box
------------------------------------------
+# {{< icon "fa fa-archive" >}} Box
 
 Paths are specified as `remote:path`
 
@@ -374,7 +373,7 @@ Cutoff for switching to multipart upload (>= 50 MiB).
 - Config:      upload_cutoff
 - Env Var:     RCLONE_BOX_UPLOAD_CUTOFF
 - Type:        SizeSuffix
-- Default:     50M
+- Default:     50Mi
 
 #### --box-commit-retries
 

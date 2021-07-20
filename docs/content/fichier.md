@@ -3,8 +3,7 @@ title: "1Fichier"
 description: "Rclone docs for 1Fichier"
 ---
 
-{{< icon "fa fa-archive" >}} 1Fichier
------------------------------------------
+# {{< icon "fa fa-archive" >}} 1Fichier
 
 This is a backend for the [1fichier](https://1fichier.com) cloud
 storage service. Note that a Premium subscription is required to use
@@ -136,6 +135,28 @@ If you want to download a shared folder, add this parameter
 
 - Config:      shared_folder
 - Env Var:     RCLONE_FICHIER_SHARED_FOLDER
+- Type:        string
+- Default:     ""
+
+#### --fichier-file-password
+
+If you want to download a shared file that is password protected, add this parameter
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+- Config:      file_password
+- Env Var:     RCLONE_FICHIER_FILE_PASSWORD
+- Type:        string
+- Default:     ""
+
+#### --fichier-folder-password
+
+If you want to list the files in a shared folder that is password protected, add this parameter
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+- Config:      folder_password
+- Env Var:     RCLONE_FICHIER_FOLDER_PASSWORD
 - Type:        string
 - Default:     ""
 
