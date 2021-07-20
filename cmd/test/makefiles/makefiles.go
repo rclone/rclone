@@ -51,7 +51,7 @@ func init() {
 
 var commandDefinition = &cobra.Command{
 	Use:   "makefiles <dir>",
-	Short: `Make a random file hierarchy in <dir>`,
+	Short: `Make a random file hierarchy in a directory`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		if seed == 0 {
