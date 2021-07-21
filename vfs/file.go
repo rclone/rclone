@@ -812,7 +812,7 @@ func (f *File) Getxattr(name string) (value []byte, err error) {
 		hashType := hash.None
 		err = hashType.Set(hashName)
 		if err != nil {
-			return nil, ENODATA
+			return nil, ENOATTR
 		}
 
 		var h string
@@ -824,7 +824,7 @@ func (f *File) Getxattr(name string) (value []byte, err error) {
 		return
 	}
 
-	return nil, ENODATA
+	return nil, ENOATTR
 }
 
 func (f *File) Listxattr(fill func(name string) bool) (err error) {
