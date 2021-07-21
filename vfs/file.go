@@ -798,13 +798,15 @@ func (f *File) Truncate(size int64) (err error) {
 	return nil
 }
 
+// Getxattr gets extended attributes.
+//
 // Note: If we end up adding many different xattrs, rewrite this function into
 // something more extensible.
-func (f *File) Getxattr(name string) (value []byte, err error) {
+func (f *File) Getxattr(ctx context.Context, name string) (value []byte, err error) {
 	obj := f.getObject()
 
 	if name == "user.mime_type" {
-		return []byte(fs.MimeType(context.TODO(), obj)), nil
+		return []byte(fs.MimeType(ctx, obj)), nil
 	}
 
 	hashName := strings.TrimPrefix(name, "system.org.rclone.hash.")
@@ -816,7 +818,7 @@ func (f *File) Getxattr(name string) (value []byte, err error) {
 		}
 
 		var h string
-		h, err = obj.Hash(context.TODO(), hashType)
+		h, err = obj.Hash(ctx, hashType)
 		if err != nil {
 			return
 		}
@@ -827,7 +829,8 @@ func (f *File) Getxattr(name string) (value []byte, err error) {
 	return nil, ENOATTR
 }
 
-func (f *File) Listxattr(fill func(name string) bool) (err error) {
+// Listxattr lists extended attributes.
+func (f *File) Listxattr(_ context.Context, fill func(name string) bool) (err error) {
 	for _, hashType := range f.getObject().Fs().Hashes().Array() {
 		if !fill(fmt.Sprintf("system.org.rclone.hash.%s", hashType.String())) {
 			return ERANGE

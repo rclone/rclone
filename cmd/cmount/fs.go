@@ -6,6 +6,7 @@
 package cmount
 
 import (
+	"context"
 	"io"
 	"os"
 	"path"
@@ -557,7 +558,7 @@ func (fsys *FS) Getxattr(path string, name string) (errc int, value []byte) {
 		return
 	}
 
-	value, err := node.Getxattr(name)
+	value, err := node.Getxattr(context.TODO(), name)
 	if err != nil {
 		return translateError(err), nil
 	}
@@ -578,7 +579,7 @@ func (fsys *FS) Listxattr(path string, fill func(name string) bool) (errc int) {
 		return errc
 	}
 
-	err := node.Listxattr(fill)
+	err := node.Listxattr(context.TODO(), fill)
 	if err != nil {
 		return translateError(err)
 	}

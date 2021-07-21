@@ -423,8 +423,8 @@ func TestFileRename(t *testing.T) {
 
 func testFileMimeTypeXattr(t *testing.T, name string, expectedvalue string) {
 	var (
-		remote   = "file.txt"
-		//ctx      = context.Background()
+		remote = "file.txt"
+		ctx    = context.Background()
 	)
 
 	f := mockfs.NewFs(context.Background(), "test", "root")
@@ -445,14 +445,14 @@ func testFileMimeTypeXattr(t *testing.T, name string, expectedvalue string) {
 	file := node.(*File)
 
 	xattrs := make([]string, 0)
-	err = file.Listxattr(func(name string) bool {
+	err = file.Listxattr(ctx, func(name string) bool {
 		xattrs = append(xattrs, name)
 		return true
 	})
 	require.NoError(t, err)
 	require.Contains(t, xattrs, name)
 
-	actualval, err := file.Getxattr(name)
+	actualval, err := file.Getxattr(ctx, name)
 	require.NoError(t, err)
 	assert.Equal(t, expectedvalue, string(actualval))
 }

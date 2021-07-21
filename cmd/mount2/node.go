@@ -412,7 +412,7 @@ var _ = (fusefs.NodeRenamer)((*Node)(nil))
 // If not defined, Getxattr will return ENOATTR.
 func (n *Node) Getxattr(ctx context.Context, attr string, dest []byte) (nbytes uint32, errno syscall.Errno) {
 	defer log.Trace(n, "attr=%q, len(dest)=%d", attr, len(dest))("errno=%v", &errno)
-	data, err := n.node.Getxattr(attr)
+	data, err := n.node.Getxattr(ctx, attr)
 	if err != nil {
 		return 0, translateError(err)
 	}
@@ -445,11 +445,11 @@ func (n *Node) Listxattr(ctx context.Context, dest []byte) (nbytes uint32, errno
 	maxlen := len(dest)
 	var listlen int
 
-	err := n.node.Listxattr(func(name string) (keepgoing bool) {
+	err := n.node.Listxattr(ctx, func(name string) (keepgoing bool) {
 		keepgoing = true
 
 		namelen := len(name)
-		listlen += namelen + 1  // +1 for null terminator
+		listlen += namelen + 1 // +1 for null terminator
 
 		if len(dest) == 0 {
 			return
@@ -461,7 +461,7 @@ func (n *Node) Listxattr(ctx context.Context, dest []byte) (nbytes uint32, errno
 			return
 		}
 
-		dest[0] = 0  // null delimited
+		dest[0] = 0 // null delimited
 		dest = dest[1:]
 
 		return

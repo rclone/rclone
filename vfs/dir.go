@@ -1068,10 +1068,12 @@ func (d *Dir) Truncate(size int64) error {
 	return ENOSYS
 }
 
-func (d *Dir) Getxattr(name string) (value []byte, err error) {
+// Getxattr gets extended attributes.
+func (d *Dir) Getxattr(context.Context, string) ([]byte, error) {
 	return nil, ENOATTR
 }
 
-func (d *Dir) Listxattr(fill func(name string) bool) (err error) {
+// Listxattr lists extended attributes.
+func (d *Dir) Listxattr(context.Context, func(name string) bool) error {
 	return nil
 }

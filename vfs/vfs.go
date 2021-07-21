@@ -56,8 +56,8 @@ type Node interface {
 	Truncate(size int64) error
 	Path() string
 	SetSys(interface{})
-	Getxattr(name string) ([]byte, error)
-	Listxattr(fill func(name string) bool) error
+	Getxattr(ctx context.Context, name string) ([]byte, error)
+	Listxattr(ctx context.Context, fill func(name string) bool) error
 }
 
 // Check interfaces
