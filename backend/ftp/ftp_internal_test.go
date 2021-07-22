@@ -90,9 +90,26 @@ func (f *Fs) testUploadTimeout(t *testing.T) {
 	}
 }
 
+// rclone must support precise time with ProFtpd and PureFtpd out of the box.
+// The VsFtpd server does not support the MFMT command to set file time like
+// other servers but by default supports the MDTM command in the non-standard
+// two-argument form for the same purpose.
+// See "mdtm_write" in https://security.appspot.com/vsftpd/vsftpd_conf.html
+func (f *Fs) testTimePrecision(t *testing.T) {
+	name := f.Name()
+	if pos := strings.Index(name, "{"); pos != -1 {
+		name = name[:pos]
+	}
+	switch name {
+	case "TestFTPProftpd", "TestFTPPureftpd", "TestFTPVsftpd":
+		assert.LessOrEqual(t, f.Precision(), time.Second)
+	}
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("UploadTimeout", f.testUploadTimeout)
+	t.Run("TimePrecision", f.testTimePrecision)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
