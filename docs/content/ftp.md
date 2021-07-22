@@ -246,6 +246,15 @@ Disable using MLSD even if server advertises support
 - Type:        bool
 - Default:     false
 
+#### --ftp-writing-mdtm
+
+Use MDTM to set modification time (VsFtpd quirk)
+
+- Config:      writing_mdtm
+- Env Var:     RCLONE_FTP_WRITING_MDTM
+- Type:        bool
+- Default:     false
+
 #### --ftp-idle-timeout
 
 Max time before closing idle connections
@@ -298,9 +307,6 @@ Rclone's FTP implementation is not compatible with `active` mode
 as [the library it uses doesn't support it](https://github.com/jlaffaye/ftp/issues/29).
 This will likely never be supported due to security concerns.
 
-Modified times are not supported. Times you see on the FTP server
-through rclone are those of upload.
-
 Rclone's FTP backend does not support any checksums but can compare
 file sizes.
 
@@ -324,3 +330,23 @@ Rclone's FTP backend could support server-side move but does not
 at present.
 
 The `ftp_proxy` environment variable is not currently supported.
+
+#### Modified time
+
+File modification time (timestamps) is supported to 1 second resolution
+for major FTP servers: ProFTPd, PureFTPd, VsFTPd, and FileZilla FTP server.
+The `VsFTPd` server has non-standard implementation of time related protocol
+commands and needs a special configuration setting: `writing_mdtm = true`.
+
+Support for precise file time with other FTP servers varies depending on what
+protocol extensions they advertise. If all the `MLSD`, `MDTM` and `MFTM`
+extensions are present, rclone will use them together to provide precise time.
+Otherwise the times you see on the FTP server through rclone are those of the
+last file upload.
+
+You can use the following command to check whether rclone can use precise time
+with your FTP server: `rclone backend features your_ftp_remote:` (the trailing
+colon is important). Look for the number in the line tagged by `Precision`
+designating the remote time precision expressed as nanoseconds. A value of
+`1000000000` means that file time precision of 1 second is available.
+A value of `3153600000000000000` (or another large number) means "unsupported".

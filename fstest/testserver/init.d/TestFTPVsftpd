@@ -18,6 +18,7 @@ start() {
     echo host=$(docker_ip)
     echo user=$USER
     echo pass=$(rclone obscure $PASS)
+    echo writing_mdtm=true
     echo encoding=Ctl,LeftPeriod,Slash
     echo _connect=$(docker_ip):21
 }
