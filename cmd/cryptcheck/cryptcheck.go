@@ -57,11 +57,16 @@ After it has run it will log the status of the encryptedremote:.
 
 // cryptCheck checks the integrity of a crypted remote
 func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
-	// Check to see fcrypt is a crypt
+	// Check to see fdst is crypted. If not, check fsrc.
 	fcrypt, ok := fdst.(*crypt.Fs)
 	if !ok {
-		return errors.Errorf("%s:%s is not a crypt remote", fdst.Name(), fdst.Root())
+		fcrypt, ok = fsrc.(*crypt.Fs)
+		if !ok {
+			return errors.Errorf("Both %s:%s and %s:%s are not crypt remote", fsrc.Name(), fsrc.Root(), fdst.Name(), fdst.Root())
+		}
+		fdst, fsrc = fsrc, fdst
 	}
+
 	// Find a hash to use
 	funderlying := fcrypt.UnWrap()
 	hashType := funderlying.Hashes().GetOne()
