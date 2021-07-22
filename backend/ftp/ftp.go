@@ -99,6 +99,11 @@ to an encrypted one. Cannot be used in combination with implicit FTP.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "writing_mdtm",
+			Help:     "Use MDTM to set modification time (VsFtpd quirk)",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -169,6 +174,7 @@ type Options struct {
 	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
 	DisableEPSV       bool                 `config:"disable_epsv"`
 	DisableMLSD       bool                 `config:"disable_mlsd"`
+	WritingMDTM       bool                 `config:"writing_mdtm"`
 	IdleTimeout       fs.Duration          `config:"idle_timeout"`
 	CloseTimeout      fs.Duration          `config:"close_timeout"`
 	ShutTimeout       fs.Duration          `config:"shut_timeout"`
@@ -192,6 +198,9 @@ type Fs struct {
 	tokens   *pacer.TokenDispenser
 	tlsConf  *tls.Config
 	pacer    *fs.Pacer // pacer for FTP connections
+	fGetTime bool      // true if the ftp library accepts GetTime
+	fSetTime bool      // true if the ftp library accepts SetTime
+	fLstTime bool      // true if the List call returns precise time
 }
 
 // Object describes an FTP file
@@ -206,6 +215,7 @@ type FileInfo struct {
 	Name    string
 	Size    uint64
 	ModTime time.Time
+	precise bool // true if the time is precise
 	IsDir   bool
 }
 
@@ -319,6 +329,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	}
 	if f.opt.ShutTimeout != 0 && f.opt.ShutTimeout != fs.DurationOff {
 		ftpConfig = append(ftpConfig, ftp.DialWithShutTimeout(time.Duration(f.opt.ShutTimeout)))
+	}
+	if f.opt.WritingMDTM {
+		ftpConfig = append(ftpConfig, ftp.DialWithWritingMDTM(true))
 	}
 	if f.ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpRequests|fs.DumpResponses) != 0 {
 		ftpConfig = append(ftpConfig, ftp.DialWithDebugOutput(&debugLog{auth: f.ci.Dump&fs.DumpAuth != 0}))
@@ -491,6 +504,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFs")
 	}
+	f.fGetTime = c.IsGetTimeSupported()
+	f.fSetTime = c.IsSetTimeSupported()
+	f.fLstTime = c.IsTimePreciseInList()
+	if !f.fLstTime && f.fGetTime {
+		f.features.SlowModTime = true
+	}
 	f.putFtpConnection(&c, nil)
 	if root != "" {
 		// Check to see if the root actually an existing file
@@ -609,13 +628,12 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err err
 			fs:     f,
 			remote: remote,
 		}
-		info := &FileInfo{
+		o.info = &FileInfo{
 			Name:    remote,
 			Size:    entry.Size,
 			ModTime: entry.Time,
+			precise: f.fLstTime,
 		}
-		o.info = info
-
 		return o, nil
 	}
 	return nil, fs.ErrorObjectNotFound
@@ -710,6 +728,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				Name:    newremote,
 				Size:    object.Size,
 				ModTime: object.Time,
+				precise: f.fLstTime,
 			}
 			o.info = info
 			entries = append(entries, o)
@@ -723,8 +742,18 @@ func (f *Fs) Hashes() hash.Set {
 	return 0
 }
 
-// Precision shows Modified Time not supported
+// Precision shows whether modified time is supported or not depending on the
+// FTP server capabilities, namely whether FTP server:
+// - accepts the MDTM command to get file time (fGetTime)
+//   or supports MLSD returning precise file time in the list (fLstTime)
+// - accepts the MFMT command to set file time (fSetTime)
+//   or non-standard form of the MDTM command (fSetTime, too)
+//   used by VsFtpd for the same purpose (WritingMDTM)
+// See "mdtm_write" in https://security.appspot.com/vsftpd/vsftpd_conf.html
 func (f *Fs) Precision() time.Duration {
+	if (f.fGetTime || f.fLstTime) && f.fSetTime {
+		return time.Second
+	}
 	return fs.ModTimeNotSupported
 }
 
@@ -776,6 +805,7 @@ func (f *Fs) getInfo(ctx context.Context, remote string) (fi *FileInfo, err erro
 				Name:    remote,
 				Size:    file.Size,
 				ModTime: file.Time,
+				precise: f.fLstTime,
 				IsDir:   file.Type == ftp.EntryTypeFolder,
 			}
 			return info, nil
@@ -961,12 +991,41 @@ func (o *Object) Size() int64 {
 
 // ModTime returns the modification time of the object
 func (o *Object) ModTime(ctx context.Context) time.Time {
+	if !o.info.precise && o.fs.fGetTime {
+		c, err := o.fs.getFtpConnection(ctx)
+		if err == nil {
+			path := path.Join(o.fs.root, o.remote)
+			path = o.fs.opt.Enc.FromStandardPath(path)
+			modTime, err := c.GetTime(path)
+			if err == nil && o.info != nil {
+				o.info.ModTime = modTime
+				o.info.precise = true
+			}
+			o.fs.putFtpConnection(&c, err)
+		}
+	}
 	return o.info.ModTime
 }
 
 // SetModTime sets the modification time of the object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return nil
+	if !o.fs.fSetTime {
+		fs.Errorf(o.fs, "SetModTime is not supported")
+		return nil
+	}
+	c, err := o.fs.getFtpConnection(ctx)
+	if err != nil {
+		return err
+	}
+	path := path.Join(o.fs.root, o.remote)
+	path = o.fs.opt.Enc.FromStandardPath(path)
+	err = c.SetTime(path, modTime.In(time.UTC))
+	if err == nil && o.info != nil {
+		o.info.ModTime = modTime
+		o.info.precise = true
+	}
+	o.fs.putFtpConnection(&c, err)
+	return err
 }
 
 // Storable returns a boolean as to whether this object is storable
@@ -1108,6 +1167,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return errors.Wrap(err, "update stor")
 	}
 	o.fs.putFtpConnection(&c, nil)
+	if err = o.SetModTime(ctx, src.ModTime(ctx)); err != nil {
+		return errors.Wrap(err, "SetModTime")
+	}
 	o.info, err = o.fs.getInfo(ctx, path)
 	if err != nil {
 		return errors.Wrap(err, "update getinfo")
