@@ -64,6 +64,7 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 		if !ok {
 			return errors.Errorf("Both %s:%s and %s:%s are not crypt remote", fsrc.Name(), fsrc.Root(), fdst.Name(), fdst.Root())
 		}
+		fs.Infof(nil, "Dst %s:%s is not a crypt remote, switching src and dst", fdst.Name(), fdst.Root())
 		fdst, fsrc = fsrc, fdst
 	}
 
