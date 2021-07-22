@@ -120,13 +120,20 @@ Set to 0 to keep connections indefinitely.
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// The FTP protocol can't handle trailing spaces (for instance
-			// pureftpd turns them into _)
-			//
-			// proftpd can't handle '*' in file names
-			// pureftpd can't handle '[', ']' or '*'
+			// The FTP protocol can't handle trailing spaces
+			// (for instance, pureftpd turns them into '_')
 			Default: (encoder.Display |
 				encoder.EncodeRightSpace),
+			Examples: []fs.OptionExample{{
+				Value: "Asterisk,Ctl,Dot,Slash",
+				Help:  "ProFTPd can't handle '*' in file names",
+			}, {
+				Value: "BackSlash,Ctl,Del,Dot,RightSpace,Slash,SquareBracket",
+				Help:  "PureFTPd can't handle '[]' or '*' in file names",
+			}, {
+				Value: "Ctl,LeftPeriod,Slash",
+				Help:  "VsFTPd can't handle file names starting with dot",
+			}},
 		}},
 	})
 }
