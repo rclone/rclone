@@ -1043,7 +1043,7 @@ func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "remove directory") {
 		return nil
 	}
-	fs.Debugf(fs.LogDirName(f, dir), "Removing directory")
+	fs.Infof(fs.LogDirName(f, dir), "Removing directory")
 	return f.Rmdir(ctx, dir)
 }
 
