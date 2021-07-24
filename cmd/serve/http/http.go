@@ -69,6 +69,7 @@ control the stats printing.
 				return err
 			}
 			s.Bind(router)
+			httplib.Wait()
 			return nil
 		})
 	},
