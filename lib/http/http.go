@@ -231,6 +231,11 @@ func (s *server) Serve() {
 	}
 }
 
+// Wait blocks while the server is serving requests
+func (s *server) Wait() {
+	s.closing.Wait()
+}
+
 // Router returns the server base router
 func (s *server) Router() chi.Router {
 	return s.baseRouter
@@ -289,6 +294,11 @@ func Restart() error {
 	}
 
 	return start()
+}
+
+// Wait blocks while the default http server is serving requests
+func Wait() {
+	defaultServer.Wait()
 }
 
 // Start the default server
