@@ -14,6 +14,7 @@ require (
 	github.com/aalpar/deheap v0.0.0-20200318053559-9a0c2883bd56
 	github.com/abbot/go-http-auth v0.4.0
 	github.com/anacrolix/dms v1.2.2
+	github.com/artyom/mtab v0.0.0-20141107123140-74b6fd01d416
 	github.com/atotto/clipboard v0.1.4
 	github.com/aws/aws-sdk-go v1.40.27
 	github.com/billziss-gh/cgofuse v1.5.0
