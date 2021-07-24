@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -199,58 +198,6 @@ func (m *MountPoint) Mount() (daemonized bool, err error) {
 	return false, nil
 }
 
-// CheckOverlap checks that root doesn't overlap with mountpoint
-func (m *MountPoint) CheckOverlap() error {
-	name := m.Fs.Name()
-	if name != "" && name != "local" {
-		return nil
-	}
-	rootAbs := absPath(m.Fs.Root())
-	mountpointAbs := absPath(m.MountPoint)
-	if strings.HasPrefix(rootAbs, mountpointAbs) || strings.HasPrefix(mountpointAbs, rootAbs) {
-		const msg = "mount point %q and directory to be mounted %q mustn't overlap"
-		return errors.Errorf(msg, m.MountPoint, m.Fs.Root())
-	}
-	return nil
-}
-
-// absPath is a helper function for MountPoint.CheckOverlap
-func absPath(path string) string {
-	if abs, err := filepath.EvalSymlinks(path); err == nil {
-		path = abs
-	}
-	if abs, err := filepath.Abs(path); err == nil {
-		path = abs
-	}
-	path = filepath.ToSlash(path)
-	if !strings.HasSuffix(path, "/") {
-		path += "/"
-	}
-	return path
-}
-
-// CheckAllowings informs about ignored flags on Windows. If not on Windows
-// and not --allow-non-empty flag is used, verify that mountpoint is empty.
-func (m *MountPoint) CheckAllowings() error {
-	opt := &m.MountOpt
-	if runtime.GOOS == "windows" {
-		if opt.AllowNonEmpty {
-			fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
-		}
-		if opt.AllowRoot {
-			fs.Logf(nil, "--allow-root flag does nothing on Windows")
-		}
-		if opt.AllowOther {
-			fs.Logf(nil, "--allow-other flag does nothing on Windows")
-		}
-		return nil
-	}
-	if !opt.AllowNonEmpty {
-		return CheckMountEmpty(m.MountPoint)
-	}
-	return nil
-}
-
 // Wait for mount end
 func (m *MountPoint) Wait() error {
 	// Unmount on exit
@@ -302,23 +249,4 @@ func (m *MountPoint) Wait() error {
 // Unmount the specified mountpoint
 func (m *MountPoint) Unmount() (err error) {
 	return m.UnmountFn()
-}
-
-// SetVolumeName with sensible default
-func (m *MountPoint) SetVolumeName(vol string) {
-	if vol == "" {
-		vol = m.Fs.Name() + ":" + m.Fs.Root()
-	}
-	m.MountOpt.SetVolumeName(vol)
-}
-
-// SetVolumeName removes special characters from volume name if necessary
-func (opt *Options) SetVolumeName(vol string) {
-	vol = strings.ReplaceAll(vol, ":", " ")
-	vol = strings.ReplaceAll(vol, "/", " ")
-	vol = strings.TrimSpace(vol)
-	if runtime.GOOS == "windows" && len(vol) > 32 {
-		vol = vol[:32]
-	}
-	opt.VolumeName = vol
 }
