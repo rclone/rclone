@@ -106,6 +106,8 @@ github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kd
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
 github.com/armon/go-metrics v0.0.0-20180917152333-f0300d1749da/go.mod h1:Q73ZrmVTwzkszR9V5SSuryQ31EELlFMUz1kKyl939pY=
 github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
+github.com/artyom/mtab v0.0.0-20141107123140-74b6fd01d416 h1:8VH5S3f48ca549Ij9/mIIzwp5kkBio0enC+Zte5xBr4=
+github.com/artyom/mtab v0.0.0-20141107123140-74b6fd01d416/go.mod h1:4/w3KGZo0/xcC5ghHHq/Ij/CRCfK8s00v8oTmB7UTO0=
 github.com/atotto/clipboard v0.1.4 h1:EH0zSVneZPSuFR11BlR9YppQTVDbh5+16AmcJi4g1z4=
 github.com/atotto/clipboard v0.1.4/go.mod h1:ZY9tmq7sm5xIbd9bOK4onWV4S6X0u6GY7Vn0Yu86PYI=
 github.com/aws/aws-sdk-go v1.40.27 h1:8fWW0CpmBZ8WWduNwl4vE9t07nMYFrhAsUHjPj81qUM=

@@ -1,35 +1,13 @@
 package mountlib
 
 import (
-	"io"
-	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 )
-
-// CheckMountEmpty checks if folder is empty
-func CheckMountEmpty(mountpoint string) error {
-	fp, fpErr := os.Open(mountpoint)
-
-	if fpErr != nil {
-		return errors.Wrap(fpErr, "Can not open: "+mountpoint)
-	}
-	defer fs.CheckClose(fp, &fpErr)
-
-	_, fpErr = fp.Readdirnames(1)
-
-	if fpErr == io.EOF {
-		return nil
-	}
-
-	msg := "Directory is not empty: " + mountpoint + " If you want to mount it anyway use: --allow-non-empty option"
-	if fpErr == nil {
-		return errors.New(msg)
-	}
-	return errors.Wrap(fpErr, msg)
-}
 
 // ClipBlocks clips the blocks pointed to the OS max
 func ClipBlocks(b *uint64) {
@@ -52,4 +30,75 @@ func ClipBlocks(b *uint64) {
 	if *b > max {
 		*b = max
 	}
+}
+
+// CheckOverlap checks that root doesn't overlap with mountpoint
+func (m *MountPoint) CheckOverlap() error {
+	name := m.Fs.Name()
+	if name != "" && name != "local" {
+		return nil
+	}
+	rootAbs := absPath(m.Fs.Root())
+	mountpointAbs := absPath(m.MountPoint)
+	if strings.HasPrefix(rootAbs, mountpointAbs) || strings.HasPrefix(mountpointAbs, rootAbs) {
+		const msg = "mount point %q and directory to be mounted %q mustn't overlap"
+		return errors.Errorf(msg, m.MountPoint, m.Fs.Root())
+	}
+	return nil
+}
+
+// absPath is a helper function for MountPoint.CheckOverlap
+func absPath(path string) string {
+	if abs, err := filepath.EvalSymlinks(path); err == nil {
+		path = abs
+	}
+	if abs, err := filepath.Abs(path); err == nil {
+		path = abs
+	}
+	path = filepath.ToSlash(path)
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
+	}
+	return path
+}
+
+// CheckAllowings informs about ignored flags on Windows. If not on Windows
+// and not --allow-non-empty flag is used, verify that mountpoint is empty.
+func (m *MountPoint) CheckAllowings() error {
+	opt := &m.MountOpt
+	if runtime.GOOS == "windows" {
+		if opt.AllowNonEmpty {
+			fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
+		}
+		if opt.AllowRoot {
+			fs.Logf(nil, "--allow-root flag does nothing on Windows")
+		}
+		if opt.AllowOther {
+			fs.Logf(nil, "--allow-other flag does nothing on Windows")
+		}
+		return nil
+	}
+	if !opt.AllowNonEmpty {
+		return CheckMountEmpty(m.MountPoint)
+	}
+	return nil
+}
+
+// SetVolumeName with sensible default
+func (m *MountPoint) SetVolumeName(vol string) {
+	if vol == "" {
+		vol = m.Fs.Name() + ":" + m.Fs.Root()
+	}
+	m.MountOpt.SetVolumeName(vol)
+}
+
+// SetVolumeName removes special characters from volume name if necessary
+func (o *Options) SetVolumeName(vol string) {
+	vol = strings.ReplaceAll(vol, ":", " ")
+	vol = strings.ReplaceAll(vol, "/", " ")
+	vol = strings.TrimSpace(vol)
+	if runtime.GOOS == "windows" && len(vol) > 32 {
+		vol = vol[:32]
+	}
+	o.VolumeName = vol
 }
