@@ -128,6 +128,11 @@ Enabled by default. Use 0 to disable.`,
 			Default:  32,
 			Advanced: true,
 		}, {
+			Name:     "disable_tls13",
+			Help:     "Disable TLS 1.3 (workaround for TLS bug in ProFTPd 1.3.6)",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "about_command",
 			Help:     "A command that returns JSON with free space, e.g. `rclone about --json sftp-remote:`",
 			Advanced: true,
@@ -155,6 +160,7 @@ type Options struct {
 	TLS               bool                 `config:"tls"`
 	ExplicitTLS       bool                 `config:"explicit_tls"`
 	TLSCacheSize      int                  `config:"tls_cache_size"`
+	DisableTLS13      bool                 `config:"disable_tls13"`
 	Concurrency       int                  `config:"concurrency"`
 	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
 	DisableEPSV       bool                 `config:"disable_epsv"`
@@ -447,6 +453,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		}
 		if opt.TLSCacheSize > 0 {
 			tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(opt.TLSCacheSize)
+		}
+		if opt.DisableTLS13 {
+			tlsConfig.MaxVersion = tls.VersionTLS12
 		}
 	}
 	u := protocol + path.Join(dialAddr+"/", root)
