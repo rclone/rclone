@@ -15,7 +15,6 @@ type Error byte
 // Low level errors
 const (
 	OK Error = iota
-	ENODATA
 	ENOTEMPTY
 	ESPIPE
 	EBADF
@@ -36,7 +35,6 @@ var (
 
 var errorNames = []string{
 	OK:        "Success",
-	ENODATA:   "No data available",
 	ENOTEMPTY: "Directory not empty",
 	ESPIPE:    "Illegal seek",
 	EBADF:     "Bad file descriptor",

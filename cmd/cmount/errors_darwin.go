@@ -40,8 +40,6 @@ func translateError(err error) (errc int) {
 		return -fuse.EINVAL
 	case vfs.ENOATTR:
 		return -fuse.ENOATTR
-	case vfs.ENODATA:
-		return -fuse.ENODATA
 	case vfs.ERANGE:
 		return -fuse.ERANGE
 	}

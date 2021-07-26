@@ -1,46 +1,46 @@
-package mount2
+package mount
 
 import (
 	"syscall"
 
+	"bazil.org/fuse"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/vfs"
 )
 
-// Translate errors from mountlib into Syscall error numbers
-func translateError(err error) syscall.Errno {
+// Translate errors from mountlib
+func translateError(err error) error {
 	if err == nil {
-		return 0
+		return nil
 	}
 	switch errors.Cause(err) {
 	case vfs.OK:
-		return 0
+		return nil
 	case vfs.ENOENT, fs.ErrorDirNotFound, fs.ErrorObjectNotFound:
-		return syscall.ENOENT
+		return fuse.ENOENT
 	case vfs.EEXIST, fs.ErrorDirExists:
-		return syscall.EEXIST
+		return fuse.EEXIST
 	case vfs.EPERM, fs.ErrorPermissionDenied:
-		return syscall.EPERM
+		return fuse.EPERM
 	case vfs.ECLOSED:
-		return syscall.EBADF
+		return fuse.Errno(syscall.EBADF)
 	case vfs.ENOTEMPTY:
-		return syscall.ENOTEMPTY
+		return fuse.Errno(syscall.ENOTEMPTY)
 	case vfs.ESPIPE:
-		return syscall.ESPIPE
+		return fuse.Errno(syscall.ESPIPE)
 	case vfs.EBADF:
-		return syscall.EBADF
+		return fuse.Errno(syscall.EBADF)
 	case vfs.EROFS:
-		return syscall.EROFS
+		return fuse.Errno(syscall.EROFS)
 	case vfs.ENOSYS, fs.ErrorNotImplemented:
-		return syscall.ENOSYS
+		return fuse.ENOSYS
 	case vfs.EINVAL:
-		return syscall.EINVAL
+		return fuse.Errno(syscall.EINVAL)
 	case vfs.ENOATTR:
-		return syscall.ENOATTR
+		return fuse.ErrNoXattr
 	case vfs.ERANGE:
-		return syscall.ERANGE
+		return fuse.Errno(syscall.ERANGE)
 	}
-	fs.Errorf(nil, "IO error: %v", err)
-	return syscall.EIO
+	return err
 }

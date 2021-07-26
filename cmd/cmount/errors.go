@@ -44,8 +44,6 @@ func translateError(err error) (errc int) {
 		// On non-BSD platforms, there is no ENOATTR. xattr operations instead
 		// return ENODATA.
 		return -fuse.ENODATA
-	case vfs.ENODATA:
-		return -fuse.ENODATA
 	case vfs.ERANGE:
 		return -fuse.ERANGE
 	}

@@ -40,8 +40,6 @@ func translateError(err error) syscall.Errno {
 		// On non-BSD platforms, there is no ENOATTR. xattr operations instead
 		// return ENODATA.
 		return syscall.ENODATA
-	case vfs.ENODATA:
-		return syscall.ENODATA
 	case vfs.ERANGE:
 		return syscall.ERANGE
 	}
