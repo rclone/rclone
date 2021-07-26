@@ -257,6 +257,45 @@ performed only at the end. We advise you to set wait time on macOS reasonably.
 
 Only supported on Linux, FreeBSD, macOS and Windows at the moment.
 
+## Extended Attributes
+
+rclone will expose some metadata as extended attributes on mounted filesystems.
+Currently, the exported attributes are:
+
+- `system.org.rclone.hash.$hashtype` - the specific hash types exposed depend on
+  the storage backend used.
+- `user.mime_type` - the [media type](https://en.wikipedia.org/wiki/Media_type)
+  of the file
+
+Note: Currently extended attributes are read-only, and can neither be created
+nor modified.
+
+### Examples
+Extended attributes work differently depending on your operating system.
+
+#### OSX
+```
+$ xattr image.jpg
+system.hash.md5
+user.mime_type
+$ xattr -p user.mime_type image.jpg
+image/jpeg
+$ xattr -p system.hash.md5 image.jpg
+920e3d7899c8eed81b50d6f26fe0f64b
+```
+
+#### Linux
+Note: On Linux you must use `-m '.*'` in order for `getfattr` to show extended
+attributes in the `system` namespace.
+
+```
+$ getfattr -d -m '.*' image.jpg
+getfattr: Removing leading '/' from absolute path names
+# file: image.jpg
+system.org.rclone.hash.md5="920e3d7899c8eed81b50d6f26fe0f64b"
+user.mime_type="image/jpeg"
+```
+
 ## rclone mount vs rclone sync/copy
 
 File systems expect things to be 100% reliable, whereas cloud storage
