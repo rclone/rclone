@@ -276,23 +276,20 @@ Extended attributes work differently depending on your operating system.
 #### OSX
 ```
 $ xattr image.jpg
-system.hash.md5
+user.checksum.md5
 user.mime_type
 $ xattr -p user.mime_type image.jpg
 image/jpeg
-$ xattr -p system.hash.md5 image.jpg
+$ xattr -p user.checksum.md5 image.jpg
 920e3d7899c8eed81b50d6f26fe0f64b
 ```
 
 #### Linux
-Note: On Linux you must use `-m '.*'` in order for `getfattr` to show extended
-attributes in the `system` namespace.
-
 ```
 $ getfattr -d -m '.*' image.jpg
 getfattr: Removing leading '/' from absolute path names
 # file: image.jpg
-system.org.rclone.hash.md5="920e3d7899c8eed81b50d6f26fe0f64b"
+user.checksum.md5="920e3d7899c8eed81b50d6f26fe0f64b"
 user.mime_type="image/jpeg"
 ```
 

@@ -463,7 +463,7 @@ func TestFileXAttrs(t *testing.T) {
 		value string
 	}{
 		{name: "user.mime_type", value: "text/plain; charset=utf-8"},
-		{name: "system.org.rclone.hash.md5", value: "8d777f385d3dfec8815d20f7496026dc"},
+		{name: "user.checksum.md5", value: "8d777f385d3dfec8815d20f7496026dc"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			testFileMimeTypeXattr(t, test.name, test.value)
