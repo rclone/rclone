@@ -270,7 +270,7 @@ func (vol *Volume) mount(id string) error {
 		return errors.New("volume filesystem is not ready")
 	}
 
-	if err := vol.mnt.Mount(); err != nil {
+	if _, err := vol.mnt.Mount(); err != nil {
 		return err
 	}
 	vol.mnt.MountedOn = time.Now()
