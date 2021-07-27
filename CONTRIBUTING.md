@@ -48,7 +48,7 @@ Now [install Go](https://golang.org/doc/install) and verify your installation:
 
 Great, you can now compile and execute your own version of rclone:
 
-    go build                              
+    make
     ./rclone version
 
 Finally make a branch to add your new feature

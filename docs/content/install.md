@@ -63,6 +63,11 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     brew install rclone
 
+NOTE: This version of rclone will not support `mount` any more (see
+[#5373](https://github.com/rclone/rclone/issues/5373)). If mounting is wanted
+on macOS, either install a precompiled binary or enable the relevant option
+when [installing from source](#install-from-source).
+
 ## macOS installation from precompiled binary, using curl ##
 
 To avoid problems with macOS gatekeeper enforcing the binary to be signed and
@@ -189,14 +194,17 @@ Make sure you have at least [Go](https://golang.org/) go1.13
 installed.  [Download go](https://golang.org/dl/) if necessary.  The
 latest release is recommended. Then
 
-    git clone https://github.com/rclone/rclone.git
-    cd rclone
-    go build
-    ./rclone version
+```sh
+git clone https://github.com/rclone/rclone.git
+cd rclone
+make
+# If on macOS and mount is wanted, instead run: make GOTAGS=cmount
+./rclone version
+```
 
 This will leave you a checked out version of rclone you can modify and
-send pull requests with. If you use `make` instead of `go build` then
-the rclone build will have the correct version information in it.
+send pull requests with. If you use `go build` instead of `make` then
+the rclone build will have less accurate commit version information in it.
 
 You can also build the latest stable rclone with:
 
