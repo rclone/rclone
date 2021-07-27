@@ -441,6 +441,10 @@ func Run(t *testing.T, opt *Opt) {
 	}
 	require.NoError(t, err, fmt.Sprintf("unexpected error: %v", err))
 
+	// Get fsInfo which contains type, etc. of the fs
+	fsInfo, _, _, _, err := fs.ConfigFs(subRemoteName)
+	require.NoError(t, err, fmt.Sprintf("unexpected error: %v", err))
+
 	// Skip the rest if it failed
 	skipIfNotOk(t)
 
@@ -1587,12 +1591,30 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("PublicLink", func(t *testing.T) {
 				skipIfNotOk(t)
 
-				doPublicLink := f.Features().PublicLink
-				if doPublicLink == nil {
+				publicLinkFunc := f.Features().PublicLink
+				if publicLinkFunc == nil {
 					t.Skip("FS has no PublicLinker interface")
 				}
 
+				type PublicLinkFunc func(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error)
+				wrapPublicLinkFunc := func(f PublicLinkFunc) PublicLinkFunc {
+					return func(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
+						link, err = publicLinkFunc(ctx, remote, expire, unlink)
+						if err == nil {
+							return
+						}
+						// For OneDrive Personal, link expiry is a premium feature
+						// Don't let it fail the test (https://github.com/rclone/rclone/issues/5420)
+						if fsInfo.Name == "onedrive" && strings.Contains(err.Error(), "accountUpgradeRequired") {
+							t.Log("treating accountUpgradeRequired as success for PublicLink")
+							link, err = "bogus link to "+remote, nil
+						}
+						return
+					}
+				}
+
 				expiry := fs.Duration(60 * time.Second)
+				doPublicLink := wrapPublicLinkFunc(publicLinkFunc)
 
 				// if object not found
 				link, err := doPublicLink(ctx, file1.Path+"_does_not_exist", expiry, false)
@@ -1639,7 +1661,7 @@ func Run(t *testing.T, opt *Opt) {
 					_, err = subRemote.Put(ctx, buf, obji)
 					require.NoError(t, err)
 
-					link4, err := subRemote.Features().PublicLink(ctx, "", expiry, false)
+					link4, err := wrapPublicLinkFunc(subRemote.Features().PublicLink)(ctx, "", expiry, false)
 					require.NoError(t, err, "Sharing root in a sub-remote should work")
 					require.NotEqual(t, "", link4, "Link should not be empty")
 				}
