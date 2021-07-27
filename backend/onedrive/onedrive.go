@@ -1500,7 +1500,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		fmt.Println(err)
+		if resp != nil && resp.StatusCode == 400 && f.driveType != driveTypePersonal {
+			return "", errors.Errorf("%v (is making public links permitted by the org admin?)", err)
+		}
 		return "", err
 	}
 
