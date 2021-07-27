@@ -65,6 +65,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
 	github.com/tklauser/go-sysconf v0.3.5 // indirect
+	github.com/valyala/fastjson v1.6.3
 	github.com/xanzy/ssh-agent v0.3.0
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
@@ -82,6 +83,7 @@ require (
 	google.golang.org/api v0.44.0
 	google.golang.org/genproto v0.0.0-20210416161957-9910b6c460de // indirect
 	google.golang.org/grpc v1.37.0 // indirect
+	gopkg.in/dc0d/tinykv.v4 v4.0.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	storj.io/common v0.0.0-20210419115916-eabb53ea1332 // indirect
