@@ -585,6 +585,53 @@ func TestWriteBackRename(t *testing.T) {
 	assert.Equal(t, wbItem.name, "three")
 }
 
+// TestWriteBackRenameDuplicates checks that if we rename an entry and
+// make a duplicate, we remove the duplicate.
+func TestWriteBackRenameDuplicates(t *testing.T) {
+	wb, cancel := newTestWriteBack(t)
+	defer cancel()
+
+	// add item "one"
+	pi1 := newPutItem(t)
+	id1 := wb.Add(0, "one", true, pi1.put)
+	wbItem1 := wb.lookup[id1]
+	checkOnHeap(t, wb, wbItem1)
+	checkInLookup(t, wb, wbItem1)
+	assert.Equal(t, wbItem1.name, "one")
+
+	<-pi1.started
+	checkNotOnHeap(t, wb, wbItem1)
+	checkInLookup(t, wb, wbItem1)
+
+	// add item "two"
+	pi2 := newPutItem(t)
+	id2 := wb.Add(0, "two", true, pi2.put)
+	wbItem2 := wb.lookup[id2]
+	checkOnHeap(t, wb, wbItem2)
+	checkInLookup(t, wb, wbItem2)
+	assert.Equal(t, wbItem2.name, "two")
+
+	<-pi2.started
+	checkNotOnHeap(t, wb, wbItem2)
+	checkInLookup(t, wb, wbItem2)
+
+	// rename "two" to "one"
+	wb.Rename(id2, "one")
+
+	// check "one" is cancelled and removed from heap and lookup
+	checkNotOnHeap(t, wb, wbItem1)
+	checkNotInLookup(t, wb, wbItem1)
+	assert.True(t, pi1.cancelled)
+	assert.Equal(t, wbItem1.name, "one")
+
+	// check "two" (now called "one"!) has been cancelled and will
+	// be retried
+	checkOnHeap(t, wb, wbItem2)
+	checkInLookup(t, wb, wbItem2)
+	assert.True(t, pi2.cancelled)
+	assert.Equal(t, wbItem2.name, "one")
+}
+
 func TestWriteBackCancelUpload(t *testing.T) {
 	wb, cancel := newTestWriteBack(t)
 	defer cancel()
