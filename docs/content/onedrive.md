@@ -582,3 +582,12 @@ Description: Due to a configuration change made by your administrator, or becaus
 ```
 
 If you see the error above after enabling multi-factor authentication for your account, you can fix it by refreshing your OAuth refresh token. To do that, run `rclone config`, and choose to edit your OneDrive backend. Then, you don't need to actually make any changes until you reach this question: `Already have a token - refresh?`. For this question, answer `y` and go through the process to refresh your token, just like the first time the backend is configured. After this, rclone should work again for this backend.
+
+#### Invalid request when making public links ####
+
+On Sharepoint and OneDrive for Business, `rclone link` may return an "Invalid
+request" error. A possible cause is that the organisation admin didn't allow
+public links to be made for the organisation/sharepoint library. To fix the
+permissions as an admin, take a look at the docs:
+[1](https://docs.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off),
+[2](https://support.microsoft.com/en-us/office/set-up-and-manage-access-requests-94b26e0b-2822-49d4-929a-8455698654b3).
