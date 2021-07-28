@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"os"
 	"path"
@@ -1757,7 +1758,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 type copyURLFunc func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error)
 
 // copyURLFn copies the data from the url to the function supplied
-func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameFromURL bool, fn copyURLFunc) (err error) {
+func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename, dstFileNameFromHeader bool, fn copyURLFunc) (err error) {
 	client := fshttp.NewClient(ctx)
 	resp, err := client.Get(url)
 	if err != nil {
@@ -1771,7 +1772,17 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameF
 	if err != nil {
 		modTime = time.Now()
 	}
-	if dstFileNameFromURL {
+	if autoFilename {
+		if dstFileNameFromHeader {
+			_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
+			headerFilename := path.Base(strings.Replace(params["filename"], "\\", "/", -1))
+			if err != nil || headerFilename == "" {
+				return fmt.Errorf("copyurl failed: filename not found in the Content-Dispoition header")
+			}
+			fs.Debugf(headerFilename, "filename found in Content-Disposition header.")
+			return fn(ctx, headerFilename, resp.Body, resp.ContentLength, modTime)
+		}
+
 		dstFileName = path.Base(resp.Request.URL.Path)
 		if dstFileName == "." || dstFileName == "/" {
 			return fmt.Errorf("CopyURL failed: file name wasn't found in url")
@@ -1782,9 +1793,9 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameF
 }
 
 // CopyURL copies the data from the url to (fdst, dstFileName)
-func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, dstFileNameFromURL bool, noClobber bool) (dst fs.Object, err error) {
+func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, autoFilename, dstFileNameFromHeader bool, noClobber bool) (dst fs.Object, err error) {
 
-	err = copyURLFn(ctx, dstFileName, url, dstFileNameFromURL, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
+	err = copyURLFn(ctx, dstFileName, url, autoFilename, dstFileNameFromHeader, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
 		if noClobber {
 			_, err = fdst.NewObject(ctx, dstFileName)
 			if err == nil {
@@ -1799,7 +1810,7 @@ func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, ds
 
 // CopyURLToWriter copies the data from the url to the io.Writer supplied
 func CopyURLToWriter(ctx context.Context, url string, out io.Writer) (err error) {
-	return copyURLFn(ctx, "", url, false, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
+	return copyURLFn(ctx, "", url, false, false, func(ctx context.Context, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (err error) {
 		_, err = io.Copy(out, in)
 		return err
 	})

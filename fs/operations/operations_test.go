@@ -739,31 +739,31 @@ func TestCopyURL(t *testing.T) {
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
-	o, err := operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false)
+	o, err := operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false, false)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(contents)), o.Size())
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
 
 	// Check file clobbering
-	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, true)
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false, true)
 	require.Error(t, err)
 
 	// Check auto file naming
 	status = 0
 	urlFileName := "filename.txt"
-	o, err = operations.CopyURL(ctx, r.Fremote, "", ts.URL+"/"+urlFileName, true, false)
+	o, err = operations.CopyURL(ctx, r.Fremote, "", ts.URL+"/"+urlFileName, true, false, false)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(contents)), o.Size())
 	assert.Equal(t, urlFileName, o.Remote())
 
 	// Check auto file naming when url without file name
-	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false)
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false, false)
 	require.Error(t, err)
 
 	// Check an error is returned for a 404
 	status = http.StatusNotFound
-	o, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false)
+	o, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false, false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Not Found")
 	assert.Nil(t, o)
@@ -776,7 +776,7 @@ func TestCopyURL(t *testing.T) {
 	tss := httptest.NewTLSServer(handler)
 	defer tss.Close()
 
-	o, err = operations.CopyURL(ctx, r.Fremote, "file2", tss.URL, false, false)
+	o, err = operations.CopyURL(ctx, r.Fremote, "file2", tss.URL, false, false, false)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(contents)), o.Size())
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1)}, nil, fs.ModTimeNotSupported)
