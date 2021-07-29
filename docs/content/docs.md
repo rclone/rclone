@@ -910,6 +910,10 @@ While this isn't a generally recommended option, it can be useful
 in cases where your files change due to encryption. However, it cannot
 correct partial transfers in case a transfer was interrupted.
 
+When performing a `move`/`moveto` command, this flag will leave skipped
+files in the source location unchanged when a file with the same name
+exists on the destination.
+
 ### --ignore-size ###
 
 Normally rclone will look at modification time and size of files to
