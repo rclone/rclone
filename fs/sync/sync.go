@@ -354,6 +354,8 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 					// Delete src if no error on copy
 					if operations.SameObject(src, pair.Dst) {
 						fs.Logf(src, "Not removing source file as it is the same file as the destination")
+					} else if s.ci.IgnoreExisting {
+						fs.Debugf(src, "Not removing source file as destination file exists and --ignore-existing is set")
 					} else {
 						s.processError(operations.DeleteFile(s.ctx, src))
 					}

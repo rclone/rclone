@@ -811,6 +811,32 @@ func TestMoveFile(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file2)
 }
 
+func TestMoveFileWithIgnoreExisting(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("file1", "file1 contents", t1)
+	fstest.CheckItems(t, r.Flocal, file1)
+
+	ci.IgnoreExisting = true
+
+	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Flocal)
+	fstest.CheckItems(t, r.Fremote, file1)
+
+	// Recreate file with updated content
+	file1b := r.WriteFile("file1", "file1 modified", t2)
+	fstest.CheckItems(t, r.Flocal, file1b)
+
+	// Ensure modified file did not transfer and was not deleted
+	err = operations.MoveFile(ctx, r.Fremote, r.Flocal, file1.Path, file1b.Path)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.Flocal, file1b)
+	fstest.CheckItems(t, r.Fremote, file1)
+}
+
 func TestCaseInsensitiveMoveFile(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
