@@ -1811,7 +1811,11 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	} else {
 		tr := accounting.Stats(ctx).NewCheckingTransfer(srcObj)
 		if !cp {
-			err = DeleteFile(ctx, srcObj)
+			if ci.IgnoreExisting {
+				fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
+			} else {
+				err = DeleteFile(ctx, srcObj)
+			}
 		}
 		tr.Done(ctx, err)
 	}
