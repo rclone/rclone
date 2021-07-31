@@ -313,6 +313,13 @@ type Object struct {
 	sha1sum *string     // Cached SHA1 checksum
 }
 
+// debugf calls fs.Debugf if --dump bodies or --dump headers is set
+func (f *Fs) debugf(o interface{}, text string, args ...interface{}) {
+	if f.ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpRequests|fs.DumpResponses) != 0 {
+		fs.Debugf(o, text, args...)
+	}
+}
+
 // dial starts a client connection to the given SSH server. It is a
 // convenience function that connects to the given network address,
 // initiates the SSH handshake, and then sets up a Client.
@@ -764,7 +771,9 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFs")
 	}
+	f.debugf(f, "> Getwd")
 	cwd, err := c.sftpClient.Getwd()
+	f.debugf(f, "< Getwd: %q, err=%#v", cwd, err)
 	f.putSftpConnection(&c, nil)
 	if err != nil {
 		fs.Debugf(f, "Failed to read current directory - using relative paths: %v", err)
@@ -845,7 +854,9 @@ func (f *Fs) dirExists(ctx context.Context, dir string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrap(err, "dirExists")
 	}
+	f.debugf(f, "> Stat dirExists: %q", dir)
 	info, err := c.sftpClient.Stat(dir)
+	f.debugf(f, "< Stat dirExists: %#v, err=%#v", info, err)
 	f.putSftpConnection(&c, err)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -885,7 +896,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if err != nil {
 		return nil, errors.Wrap(err, "List")
 	}
+	f.debugf(f, "> ReadDir: %q", sftpDir)
 	infos, err := c.sftpClient.ReadDir(sftpDir)
+	f.debugf(f, "< ReadDir: %#v, err=%#v", infos, err)
 	f.putSftpConnection(&c, err)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error listing %q", dir)
@@ -976,7 +989,9 @@ func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 	if err != nil {
 		return errors.Wrap(err, "mkdir")
 	}
+	f.debugf(f, "> Mkdir: %q", dirPath)
 	err = c.sftpClient.Mkdir(dirPath)
+	f.debugf(f, "< Mkdir: err=%#v", err)
 	f.putSftpConnection(&c, err)
 	if err != nil {
 		return errors.Wrapf(err, "mkdir %q failed", dirPath)
@@ -1007,7 +1022,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if err != nil {
 		return errors.Wrap(err, "Rmdir")
 	}
+	f.debugf(f, "> Rmdir: %q", root)
 	err = c.sftpClient.RemoveDirectory(root)
+	f.debugf(f, "< Rmdir: err=%#v", err)
 	f.putSftpConnection(&c, err)
 	return err
 }
@@ -1027,10 +1044,10 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if err != nil {
 		return nil, errors.Wrap(err, "Move")
 	}
-	err = c.sftpClient.Rename(
-		srcObj.path(),
-		path.Join(f.absRoot, remote),
-	)
+	srcPath, dstPath := srcObj.path(), path.Join(f.absRoot, remote)
+	f.debugf(f, "> Rename file: src=%q, dst=%q", srcPath, dstPath)
+	err = c.sftpClient.Rename(srcPath, dstPath)
+	f.debugf(f, "< Rename file: err=%#v", err)
 	f.putSftpConnection(&c, err)
 	if err != nil {
 		return nil, errors.Wrap(err, "Move Rename failed")
@@ -1079,10 +1096,12 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err != nil {
 		return errors.Wrap(err, "DirMove")
 	}
+	f.debugf(f, "> Rename dir: src=%q, dst=%q", srcPath, dstPath)
 	err = c.sftpClient.Rename(
 		srcPath,
 		dstPath,
 	)
+	f.debugf(f, "< Rename dir: err=%#v", err)
 	f.putSftpConnection(&c, err)
 	if err != nil {
 		return errors.Wrapf(err, "DirMove Rename(%q,%q) failed", srcPath, dstPath)
@@ -1098,7 +1117,9 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 	}
 	defer f.putSftpConnection(&c, err)
 
+	f.debugf(f, "> NewSession run")
 	session, err := c.sshClient.NewSession()
+	f.debugf(f, "< NewSession run: %#v, err=%#v", session, err)
 	if err != nil {
 		return nil, errors.Wrap(err, "run: get SFTP session")
 	}
@@ -1110,7 +1131,9 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 	session.Stdout = &stdout
 	session.Stderr = &stderr
 
+	f.debugf(f, "> Run cmd: %q", cmd)
 	err = session.Run(cmd)
+	f.debugf(f, "< Run cmd: err=%#v", err)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to run %q: %s", cmd, stderr.Bytes())
 	}
@@ -1257,7 +1280,9 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "Hash get SFTP connection")
 	}
+	o.fs.debugf(o, "> NewSession hash")
 	session, err := c.sshClient.NewSession()
+	o.fs.debugf(o, "< NewSession hash: %#v, err=%#v", session, err)
 	o.fs.putSftpConnection(&c, err)
 	if err != nil {
 		return "", errors.Wrap(err, "Hash put SFTP connection")
@@ -1367,7 +1392,9 @@ func (f *Fs) stat(ctx context.Context, remote string) (info os.FileInfo, err err
 		return nil, errors.Wrap(err, "stat")
 	}
 	absPath := path.Join(f.absRoot, remote)
+	f.debugf(f, "> Stat file: %q", absPath)
 	info, err = c.sftpClient.Stat(absPath)
+	f.debugf(f, "< Stat file: %#v, err=%#v", info, err)
 	f.putSftpConnection(&c, err)
 	return info, err
 }
@@ -1399,7 +1426,9 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if err != nil {
 		return errors.Wrap(err, "SetModTime")
 	}
+	o.fs.debugf(o, "> Chtimes: %q, %v", o.path(), modTime)
 	err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
+	o.fs.debugf(o, "< Chtimes: err=%#v", err)
 	o.fs.putSftpConnection(&c, err)
 	if err != nil {
 		return errors.Wrap(err, "SetModTime failed")
@@ -1487,7 +1516,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, errors.Wrap(err, "Open")
 	}
+	o.fs.debugf(o, "> Open read: %q", o.path())
 	sftpFile, err := c.sftpClient.Open(o.path())
+	o.fs.debugf(o, "< Open read: %#v, err=%#v", sftpFile, err)
 	o.fs.putSftpConnection(&c, err)
 	if err != nil {
 		return nil, errors.Wrap(err, "Open failed")
@@ -1526,7 +1557,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return errors.Wrap(err, "Update")
 	}
+	o.fs.debugf(o, "> OpenFile write: %q", o.path())
 	file, err := c.sftpClient.OpenFile(o.path(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+	o.fs.debugf(o, "< OpenFile write: %#v, err=%#v", file, err)
 	o.fs.putSftpConnection(&c, err)
 	if err != nil {
 		return errors.Wrap(err, "Update Create failed")
@@ -1538,7 +1571,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(src, "Failed to open new SSH connection for delete: %v", removeErr)
 			return
 		}
+		o.fs.debugf(o, "> Remove file: %q", o.path())
 		removeErr = c.sftpClient.Remove(o.path())
+		o.fs.debugf(o, "< Remove file: err=%#v", removeErr)
 		o.fs.putSftpConnection(&c, removeErr)
 		if removeErr != nil {
 			fs.Debugf(src, "Failed to remove: %v", removeErr)
@@ -1587,7 +1622,9 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "Remove")
 	}
+	o.fs.debugf(o, "> Remove: %q", o.path())
 	err = c.sftpClient.Remove(o.path())
+	o.fs.debugf(o, "< Remove: err=%#v", err)
 	o.fs.putSftpConnection(&c, err)
 	return err
 }
