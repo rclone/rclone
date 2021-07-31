@@ -93,13 +93,13 @@ These flags are available for every command.
       --no-check-dest                        Don't check the destination, copy regardless.
       --no-console                           Hide console window. Supported on Windows only.
       --no-gzip-encoding                     Don't set Accept-Encoding: gzip.
+      --no-progress                          Hide progress during transfer.
       --no-traverse                          Don't traverse destination file system on copy.
       --no-unicode-normalization             Don't normalize unicode characters in filenames.
       --no-update-modtime                    Don't update destination mod-time if files identical.
       --order-by string                      Instructions on how to order the transfers, e.g. 'size,descending'
       --password-command SpaceSepList        Command for supplying password for encrypted configuration.
-  -P, --progress                             Show progress during transfer.
-      --progress-terminal-title              Show progress on the terminal title. Requires -P/--progress.
+      --progress-terminal-title              Show progress on the terminal title.
   -q, --quiet                                Print as little stuff as possible
       --rc                                   Enable the remote control server.
       --rc-addr string                       IPaddress:Port or :Port to bind server to. (default "localhost:5572")
@@ -137,6 +137,7 @@ These flags are available for every command.
       --stats-one-line                       Make the stats fit on one line.
       --stats-one-line-date                  Enables --stats-one-line and add current date/time prefix.
       --stats-one-line-date-format string    Enables --stats-one-line-date and uses custom formatted date. Enclose date string in double quotes ("). See https://golang.org/pkg/time/#Time.Format
+      --stats-per-transfer                   Show stats per transfer.
       --stats-unit string                    Show data rate in stats as either 'bits' or 'bytes' per second (default "bytes")
       --streaming-upload-cutoff SizeSuffix   Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends. (default 100Ki)
       --suffix string                        Suffix to add to changed files.

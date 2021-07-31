@@ -35,8 +35,6 @@ extended explanation in the `copy` command above if unsure.
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
 
-**Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
-
 **Note**: Use the `rclone dedupe` command to deal with "Duplicate object/directory found in source/destination - ignoring" errors.
 See [this forum post](https://forum.rclone.org/t/sync-not-clearing-duplicates/14372) for more info.
 

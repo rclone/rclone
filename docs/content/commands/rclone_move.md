@@ -36,8 +36,6 @@ can speed transfers up greatly.
 **Important**: Since this can cause data loss, test first with the
 `--dry-run` or the `--interactive`/`-i` flag.
 
-**Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics.
-
 
 ```
 rclone move source:path dest:path [flags]

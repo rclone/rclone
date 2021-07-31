@@ -1219,6 +1219,21 @@ uploaded compressed files.
 There is no need to set this in normal operation, and doing so will
 decrease the network transfer efficiency of rclone.
 
+### --no-progress ###
+
+This flag hides realtime progress block with stats (count and size of
+transferred files, estimated time, elapsed time, transfer speed etc.)
+
+Normally, progress is updated every 500mS but this period can be overridden
+with the `--stats` flag.
+
+If you need stats of each current transfer, use `--stats-per-transfer` flag.
+
+If you need more simple realtime report, use `--stats-one-line` flag.
+
+Note: On Windows until [this bug](https://github.com/Azure/go-ansiterm/issues/26)
+is fixed all non-ASCII characters will be replaced with `.`.
+
 ### --no-traverse ###
 
 The `--no-traverse` flag controls whether the destination file system
@@ -1338,29 +1353,11 @@ See the [Configuration Encryption](#configuration-encryption) for more info.
 
 See a [Windows PowerShell example on the Wiki](https://github.com/rclone/rclone/wiki/Windows-Powershell-use-rclone-password-command-for-Config-file-password).
 
-### -P, --progress ###
-
-This flag makes rclone update the stats in a static block in the
-terminal providing a realtime overview of the transfer.
-
-Any log messages will scroll above the static block.  Log messages
-will push the static block down to the bottom of the terminal where it
-will stay.
-
-Normally this is updated every 500mS but this period can be overridden
-with the `--stats` flag.
-
-This can be used with the `--stats-one-line` flag for a simpler
-display.
-
-Note: On Windows until [this bug](https://github.com/Azure/go-ansiterm/issues/26)
-is fixed all non-ASCII characters will be replaced with `.` when
-`--progress` is in use.
-
 ### --progress-terminal-title ###
 
-This flag, when used with `-P/--progress`, will print the string `ETA: %s`
-to the terminal title.
+This flag will print the string `ETA: %s` to the terminal title.
+
+Note: Not work if `--no-progress` flag is set
 
 ### -q, --quiet ###
 
@@ -1478,6 +1475,13 @@ When this is specified, rclone enables the single-line stats and prepends
 the display with a user-supplied date string. The date string MUST be
 enclosed in quotes. Follow [golang specs](https://golang.org/pkg/time/#Time.Format) for
 date formatting syntax.
+
+### --stats-per-transfer ###
+
+When this is specified, in addition to overall realtime progress stats,
+rclone will print realtime stats of each current transfer or file checking
+
+Note: Not work when `--stats-one-line` or `--no-progress` flag is set
 
 ### --stats-unit=bits|bytes ###
 

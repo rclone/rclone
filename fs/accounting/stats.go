@@ -445,7 +445,7 @@ func (s *StatsInfo) String() string {
 	s.mu.RUnlock()
 
 	// Add per transfer stats if required
-	if !s.ci.StatsOneLine {
+	if !s.ci.StatsOneLine && s.ci.StatsPerTransfer {
 		if !s.checking.empty() {
 			_, _ = fmt.Fprintf(buf, "Checking:\n%s\n", s.checking.String(s.ctx, s.inProgress, s.transferring))
 		}

@@ -41,8 +41,6 @@ transfer.
 **Important**: Since this can cause data loss, test first with the
 `--dry-run` or the `--interactive`/`-i` flag.
 
-**Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics.
-
 
 ```
 rclone moveto source:path dest:path [flags]

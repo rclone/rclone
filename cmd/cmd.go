@@ -245,7 +245,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	if !showStats && ShowStats() {
 		showStats = true
 	}
-	if ci.Progress {
+	if !ci.NoProgress {
 		stopStats = startProgress()
 	} else if showStats {
 		stopStats = StartStats()
@@ -297,7 +297,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	}
 	fs.Debugf(nil, "%d go routines active\n", runtime.NumGoroutine())
 
-	if ci.Progress && ci.ProgressTerminalTitle {
+	if !ci.NoProgress && ci.ProgressTerminalTitle {
 		// Clear terminal title
 		terminal.WriteTerminalTitle("")
 	}
