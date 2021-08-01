@@ -999,6 +999,9 @@ func (o *ObjectInfo) Size() int64 {
 	if size < 0 {
 		return size
 	}
+	if o.f.opt.NoDataEncryption {
+		return size
+	}
 	return o.f.cipher.EncryptedSize(size)
 }
 
