@@ -258,7 +258,7 @@ client_secret>   # Can be left blank
 scope>           # Select your scope, 1 for example
 root_folder_id>  # Can be left blank
 service_account_file> /home/foo/myJSONfile.json # This is where the JSON file goes!
-y/n>             # Auto config, y
+y/n>             # Auto config, n
 
 ```
 
