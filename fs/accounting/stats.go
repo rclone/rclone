@@ -90,7 +90,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 
 	out = make(rc.Params)
 
-	ts := s.calculateTransferStats()
+	ts := s.calculateTransferStats(true)
 	out["totalChecks"] = ts.totalChecks
 	out["totalTransfers"] = ts.totalTransfers
 	out["totalBytes"] = ts.totalBytes
@@ -280,7 +280,7 @@ type transferStats struct {
 
 // calculateTransferStats calculates some addtional transfer stats not
 // stored directly in StatsInfo
-func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
+func (s *StatsInfo) calculateTransferStats(useMovingAverage bool) (ts transferStats) {
 	// checking and transferring have their own locking so read
 	// here before lock to prevent deadlock on GetBytes
 	transferring, checking := s.transferring.count(), s.checking.count()
@@ -294,10 +294,14 @@ func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	// note that s.bytes already includes transferringBytesDone so
 	// we take it off here to avoid double counting
 	ts.totalBytes = s.transferQueueSize + s.bytes + transferringBytesTotal - transferringBytesDone
-
-	s.average.mu.Lock()
-	defer s.average.mu.Unlock()
-	ts.speed = s.average.speed
+	ts.transferTime = s.totalDuration().Seconds()
+	if useMovingAverage {
+		s.average.mu.Lock()
+		defer s.average.mu.Unlock()
+		ts.speed = s.average.speed
+	} else if ts.transferTime > 0 {
+		ts.speed = float64(ts.totalBytes) / ts.transferTime
+	}
 
 	return ts
 }
@@ -353,11 +357,11 @@ func (s *StatsInfo) stopAverageLoop() {
 }
 
 // String convert the StatsInfo to a string for printing
-func (s *StatsInfo) String() string {
+func (s *StatsInfo) String(final bool) string {
 	// NB if adding more stats in here, remember to add them into
 	// RemoteStats() too.
 
-	ts := s.calculateTransferStats()
+	ts := s.calculateTransferStats(!final)
 
 	s.mu.RLock()
 

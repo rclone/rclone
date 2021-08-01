@@ -34,14 +34,14 @@ func startProgress() func() {
 	if !log.Redirected() {
 		// Intercept the log calls if not logging to file or syslog
 		fs.LogPrint = func(level fs.LogLevel, text string) {
-			printProgress(fmt.Sprintf("%s %-6s: %s", time.Now().Format(logTimeFormat), level, text))
+			printProgress(fmt.Sprintf("%s %-6s: %s", time.Now().Format(logTimeFormat), level, text), false)
 
 		}
 	}
 
 	// Intercept output from functions such as HashLister to stdout
 	operations.SyncPrintf = func(format string, a ...interface{}) {
-		printProgress(fmt.Sprintf(format, a...))
+		printProgress(fmt.Sprintf(format, a...), false)
 	}
 
 	var wg sync.WaitGroup
@@ -56,10 +56,10 @@ func startProgress() func() {
 		for {
 			select {
 			case <-ticker.C:
-				printProgress("")
+				printProgress("", false)
 			case <-stopStats:
 				ticker.Stop()
-				printProgress("")
+				printProgress("", true)
 				fs.LogPrint = oldLogPrint
 				operations.SyncPrintf = oldSyncPrint
 				fmt.Println("")
@@ -80,13 +80,13 @@ var (
 )
 
 // printProgress prints the progress with an optional log
-func printProgress(logMessage string) {
+func printProgress(logMessage string, final bool) {
 	progressMu.Lock()
 	defer progressMu.Unlock()
 
 	var buf bytes.Buffer
 	w, _ := terminal.GetSize()
-	stats := strings.TrimSpace(accounting.GlobalStats().String())
+	stats := strings.TrimSpace(accounting.GlobalStats().String(final))
 	logMessage = strings.TrimSpace(logMessage)
 
 	out := func(s string) {
