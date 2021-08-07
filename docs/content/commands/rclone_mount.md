@@ -47,7 +47,7 @@ When running in background mode the user will have to stop the mount manually:
 
     # Linux
     fusermount -u /path/to/local/mount
-    # OS X
+    # macOS
     umount /path/to/local/mount
 
 The umount operation can fail, for example when the mountpoint is busy.
@@ -238,7 +238,7 @@ Hubic) do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.
 
-Only supported on Linux, FreeBSD, OS X and Windows at the moment.
+Only supported on Linux, FreeBSD, macOS and Windows at the moment.
 
 ## rclone mount vs rclone sync/copy
 
