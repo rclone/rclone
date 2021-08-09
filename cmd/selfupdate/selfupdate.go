@@ -158,7 +158,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 
 	oldVersion := fs.Version
 	if newVersion == oldVersion {
-		fmt.Println("rclone is up to date")
+		fs.Logf(nil, "rclone is up to date")
 		return nil
 	}
 
@@ -169,7 +169,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 		} else {
 			err := installPackage(ctx, opt.Beta, newVersion, siteURL, opt.Package)
 			if err == nil {
-				fmt.Printf("Successfully updated rclone package from version %s to version %s\n", oldVersion, newVersion)
+				fs.Logf(nil, "Successfully updated rclone package from version %s to version %s", oldVersion, newVersion)
 			}
 			return err
 		}
@@ -221,7 +221,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 
 	err = replaceExecutable(targetFile, newFile, savedFile)
 	if err == nil {
-		fmt.Printf("Successfully updated rclone from version %s to version %s\n", oldVersion, newVersion)
+		fs.Logf(nil, "Successfully updated rclone from version %s to version %s", oldVersion, newVersion)
 	}
 	return err
 }
@@ -297,7 +297,7 @@ func replaceExecutable(targetFile, newFile, savedFile string) error {
 			}
 		}
 		if saveErr == nil {
-			fmt.Printf("The old executable was saved as %s\n", savedFile)
+			fs.Infof(nil, "The old executable was saved as %s", savedFile)
 			err = nil
 		}
 	}
