@@ -53,33 +53,45 @@ func (bs *buckets) _setOff() {
 	}
 }
 
-const maxBurstSize = 4 * 1024 * 1024 // must be bigger than the biggest request
+const defaultMaxBurstSize = 4 * 1024 * 1024 // must be bigger than the biggest request
+
+// make a new empty token bucket with the bandwidth given
+func newEmptyTokenBucket(bandwidth fs.SizeSuffix) *rate.Limiter {
+	// Relate maxBurstSize to bandwidth limit
+	// 4M gives 2.5 Gb/s on Windows
+	// Use defaultMaxBurstSize up to 2GBit/s (256MByte/s) then scale
+	maxBurstSize := (bandwidth * defaultMaxBurstSize) / (256 * 1024 * 1024)
+	if maxBurstSize < defaultMaxBurstSize {
+		maxBurstSize = defaultMaxBurstSize
+	}
+	// fs.Debugf(nil, "bandwidth=%v maxBurstSize=%v", bandwidth, maxBurstSize)
+	tb := rate.NewLimiter(rate.Limit(bandwidth), int(maxBurstSize))
+	if tb != nil {
+		// empty the bucket
+		err := tb.WaitN(context.Background(), int(maxBurstSize))
+		if err != nil {
+			fs.Errorf(nil, "Failed to empty token bucket: %v", err)
+		}
+	}
+	return tb
+}
 
 // make a new empty token bucket with the bandwidth(s) given
 func newTokenBucket(bandwidth fs.BwPair) (tbs buckets) {
 	bandwidthAccounting := fs.SizeSuffix(-1)
 	if bandwidth.Tx > 0 {
-		tbs[TokenBucketSlotTransportTx] = rate.NewLimiter(rate.Limit(bandwidth.Tx), maxBurstSize)
+		tbs[TokenBucketSlotTransportTx] = newEmptyTokenBucket(bandwidth.Tx)
 		bandwidthAccounting = bandwidth.Tx
 	}
 	if bandwidth.Rx > 0 {
-		tbs[TokenBucketSlotTransportRx] = rate.NewLimiter(rate.Limit(bandwidth.Rx), maxBurstSize)
+		tbs[TokenBucketSlotTransportRx] = newEmptyTokenBucket(bandwidth.Rx)
 		if bandwidth.Rx > bandwidthAccounting {
 			bandwidthAccounting = bandwidth.Rx
 		}
 	}
 	// Limit core bandwidth to max of Rx and Tx if both are limited
 	if bandwidth.Tx > 0 && bandwidth.Rx > 0 {
-		tbs[TokenBucketSlotAccounting] = rate.NewLimiter(rate.Limit(bandwidthAccounting), maxBurstSize)
-	}
-	for _, tb := range tbs {
-		if tb != nil {
-			// empty the bucket
-			err := tb.WaitN(context.Background(), maxBurstSize)
-			if err != nil {
-				fs.Errorf(nil, "Failed to empty token bucket: %v", err)
-			}
-		}
+		tbs[TokenBucketSlotAccounting] = newEmptyTokenBucket(bandwidthAccounting)
 	}
 	return tbs
 }
@@ -92,7 +104,7 @@ func (tb *tokenBucket) StartTokenBucket(ctx context.Context) {
 	tb.currLimit = ci.BwLimit.LimitAt(time.Now())
 	if tb.currLimit.Bandwidth.IsSet() {
 		tb.curr = newTokenBucket(tb.currLimit.Bandwidth)
-		fs.Infof(nil, "Starting bandwidth limiter at %v Byte/s", &tb.currLimit.Bandwidth)
+		fs.Infof(nil, "Starting bandwidth limiter at %vByte/s", &tb.currLimit.Bandwidth)
 
 		// Start the SIGUSR2 signal handler to toggle bandwidth.
 		// This function does nothing in windows systems.
