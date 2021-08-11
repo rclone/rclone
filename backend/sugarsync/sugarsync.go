@@ -105,7 +105,7 @@ func init() {
 
 				authRequest := api.AppAuthorization{
 					Username:         username,
-					Password:         password,
+					Password:         obscure.MustReveal(password),
 					Application:      withDefault(opt.AppID, appID),
 					AccessKeyID:      withDefault(opt.AccessKeyID, accessKeyID),
 					PrivateAccessKey: withDefault(opt.PrivateAccessKey, obscure.MustReveal(encryptedPrivateAccessKey)),
