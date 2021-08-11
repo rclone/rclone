@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"sync"
+	"time"
 
 	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
 	"github.com/pkg/errors"
@@ -322,13 +324,20 @@ func (drv *Driver) saveState() error {
 	}
 
 	data, err := json.Marshal(state)
-	if err == nil {
-		err = ioutil.WriteFile(drv.statePath, data, 0600)
-	}
 	if err != nil {
-		return errors.Wrap(err, "failed to write state")
+		return errors.Wrap(err, "failed to marshal state")
 	}
-	return nil
+
+	ctx := context.Background()
+	retries := fs.GetConfig(ctx).LowLevelRetries
+	for i := 0; i <= retries; i++ {
+		err = ioutil.WriteFile(drv.statePath, data, 0600)
+		if err == nil {
+			return nil
+		}
+		time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+	}
+	return errors.Wrap(err, "failed to save state")
 }
 
 // restoreState recreates volumes from saved driver state
