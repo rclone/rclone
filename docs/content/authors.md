@@ -515,3 +515,4 @@ put them back in again.` >}}
   * Mariano Absatz (git) <scm@baby.com.ar>
   * Greg Sadetsky <lepetitg@gmail.com>
   * yedamo <logindaveye@gmail.com>
+  * hota <lindwurm.q@gmail.com>
