@@ -3,6 +3,7 @@ package hash
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"hash"
@@ -71,6 +72,9 @@ var (
 
 	// CRC32 indicates CRC-32 support
 	CRC32 Type
+
+	// SHA256 indicates SHA-256 support
+	SHA256 Type
 )
 
 func init() {
@@ -78,6 +82,7 @@ func init() {
 	SHA1 = RegisterHash("sha1", "SHA-1", 40, sha1.New)
 	Whirlpool = RegisterHash("whirlpool", "Whirlpool", 128, whirlpool.New)
 	CRC32 = RegisterHash("crc32", "CRC-32", 8, func() hash.Hash { return crc32.NewIEEE() })
+	SHA256 = RegisterHash("sha256", "SHA-256", 64, sha256.New)
 }
 
 // Supported returns a set of all the supported hashes by
