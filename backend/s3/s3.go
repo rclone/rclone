@@ -1508,6 +1508,7 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 
 // s3Connection makes a connection to s3
 func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S3, *session.Session, error) {
+	ci := fs.GetConfig(ctx)
 	// Make the auth
 	v := credentials.Value{
 		AccessKeyID:     opt.AccessKeyID,
@@ -1578,7 +1579,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 		opt.MaxUploadParts = 1000
 	}
 	awsConfig := aws.NewConfig().
-		WithMaxRetries(0). // Rely on rclone's retry logic
+		WithMaxRetries(ci.LowLevelRetries).
 		WithCredentials(cred).
 		WithHTTPClient(client).
 		WithS3ForcePathStyle(opt.ForcePathStyle).
@@ -1693,6 +1694,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	ci := fs.GetConfig(ctx)
+	pc := fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep)))
+	// Set pacer retries to 2 (1 try and 1 retry) because we are
+	// relying on SDK retry mechanism, but we allow 2 attempts to
+	// retry directory listings after XMLSyntaxError
+	pc.SetRetries(2)
+
 	f := &Fs{
 		name:    name,
 		opt:     *opt,
@@ -1700,7 +1707,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ctx:     ctx,
 		c:       c,
 		ses:     ses,
-		pacer:   fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
+		pacer:   pc,
 		cache:   bucket.NewCache(),
 		srv:     srv,
 		srvRest: rest.NewClient(fshttp.NewClient(ctx)),
