@@ -30,6 +30,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.3
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/google/uuid v1.3.0
 	github.com/hanwen/go-fuse/v2 v2.1.0
 	github.com/iguanesolutions/go-systemd/v5 v5.1.0

@@ -4,15 +4,18 @@ package ftp
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"io"
 	"net"
 	"net/textproto"
+	"os/exec"
 	"path"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/google/shlex"
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
@@ -117,6 +120,10 @@ Set to 0 to keep connections indefinitely.
 			Default:  fs.Duration(60 * time.Second),
 			Advanced: true,
 		}, {
+			Name:     "about_command",
+			Help:     "A command that returns JSON with free space, e.g. `rclone about --json sftp-remote:`",
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -145,6 +152,7 @@ type Options struct {
 	DisableMLSD       bool                 `config:"disable_mlsd"`
 	IdleTimeout       fs.Duration          `config:"idle_timeout"`
 	CloseTimeout      fs.Duration          `config:"close_timeout"`
+	AboutCommand      string               `config:"about_command"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -165,6 +173,7 @@ type Fs struct {
 	tokens   *pacer.TokenDispenser
 	tlsConf  *tls.Config
 	pacer    *fs.Pacer // pacer for FTP connections
+	aboutCmd []string
 }
 
 // Object describes an FTP file
@@ -446,6 +455,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
+	// About is supported only if custom command is configured and valid
+	if cmdLine := strings.TrimSpace(f.opt.AboutCommand); cmdLine != "" {
+		cmdTokens, err := shlex.Split(cmdLine)
+		if err != nil {
+			fs.Errorf(f, "Failed to parse the about command")
+		} else if len(cmdTokens) > 0 {
+			f.aboutCmd = cmdTokens
+		}
+	}
+	if len(f.aboutCmd) == 0 {
+		f.features.About = nil
+	}
 	// set the pool drainer timer going
 	if f.opt.IdleTimeout > 0 {
 		f.drain = time.AfterFunc(time.Duration(opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
@@ -893,6 +914,24 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	return nil
 }
 
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	command := f.aboutCmd
+	if len(command) == 0 {
+		return nil, errors.New("about is not supported")
+	}
+	cmd := exec.Command(command[0], command[1:]...)
+	buf, err := cmd.Output()
+	if err != nil {
+		return nil, errors.Wrap(err, "running the about command")
+	}
+	var usage fs.Usage
+	if err = json.Unmarshal(buf, &usage); err != nil {
+		return nil, errors.Wrap(err, "parsing the about json")
+	}
+	return &usage, nil
+}
+
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs
@@ -1103,5 +1142,6 @@ var (
 	_ fs.DirMover    = &Fs{}
 	_ fs.PutStreamer = &Fs{}
 	_ fs.Shutdowner  = &Fs{}
+	_ fs.Abouter     = &Fs{}
 	_ fs.Object      = &Object{}
 )
