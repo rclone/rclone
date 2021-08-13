@@ -106,10 +106,54 @@ func (f *Fs) testTimePrecision(t *testing.T) {
 	}
 }
 
+// test the about command
+func (f *Fs) testAboutCommand(t *testing.T) {
+	ctx := context.Background()
+	fnAbout := f.Features().About
+	assert.Nil(t, fnAbout)
+
+	deriveAboutFs := func(cmd string) fs.Fs {
+		return deriveFs(ctx, t, f, settings{"about_command": cmd})
+	}
+	fsAbout := deriveAboutFs("")
+	fnAbout = fsAbout.Features().About
+	assert.Nil(t, fnAbout)
+
+	fsAbout = deriveAboutFs(`invalid-command`)
+	fnAbout = fsAbout.Features().About
+	require.NotNil(t, fnAbout)
+	usage, err := fnAbout(ctx)
+	assert.Error(t, err)
+	assert.Nil(t, usage)
+
+	fsAbout = deriveAboutFs(`echo "invalid json"`)
+	fnAbout = fsAbout.Features().About
+	require.NotNil(t, fnAbout)
+	usage, err = fnAbout(ctx)
+	assert.Error(t, err)
+	assert.Nil(t, usage)
+
+	fsAbout = deriveAboutFs(`echo '{"total":300000,"used":200000,"free":100000}'`)
+	fnAbout = fsAbout.Features().About
+	require.NotNil(t, fnAbout)
+	usage, err = fnAbout(ctx)
+	assert.NoError(t, err)
+	require.NotNil(t, usage)
+
+	assertUsage := func(expected int64, actualPtr *int64) {
+		require.NotNil(t, actualPtr)
+		assert.Equal(t, expected, *actualPtr)
+	}
+	assertUsage(300000, usage.Total)
+	assertUsage(200000, usage.Used)
+	assertUsage(100000, usage.Free)
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("UploadTimeout", f.testUploadTimeout)
 	t.Run("TimePrecision", f.testTimePrecision)
+	t.Run("AboutCommand", f.testAboutCommand)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

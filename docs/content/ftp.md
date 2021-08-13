@@ -311,6 +311,15 @@ Maximum time to wait for data connection closing status.
 - Type:        Duration
 - Default:     1m0s
 
+#### --ftp-about-command
+
+A command that returns JSON with free space, e.g. `rclone about --json sftp-remote:`
+
+- Config:      about_command
+- Env Var:     RCLONE_FTP_ABOUT_COMMAND
+- Type:        string
+- Default:     ""
+
 #### --ftp-encoding
 
 This sets the encoding for the backend.
@@ -341,14 +350,6 @@ This will likely never be supported due to security concerns.
 
 Rclone's FTP backend does not support any checksums but can compare
 file sizes.
-
-`rclone about` is not supported by the FTP backend. Backends without
-this capability cannot determine free space for an rclone mount or
-use policy `mfs` (most free space) as a member of an rclone union
-remote.
-
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
-See [rclone about](https://rclone.org/commands/rclone_about/)
 
 The implementation of : `--dump headers`,
 `--dump bodies`, `--dump auth` for debugging isn't the same as
@@ -382,3 +383,31 @@ colon is important). Look for the number in the line tagged by `Precision`
 designating the remote time precision expressed as nanoseconds. A value of
 `1000000000` means that file time precision of 1 second is available.
 A value of `3153600000000000000` (or another large number) means "unsupported".
+
+#### About space usage
+
+FTP servers do not have a standard way to report used or free space.
+Consequently [rclone about](/commands/rclone_about/) is not
+supported by the FTP backend by default.
+
+However many clouds provide FTP and SFTP as alternative access methods for
+the same storage. While SFTP transfers may be slower than FTP due to strong
+encryption, the SFTP backend usually is able to return the used/free report.
+The FTP backend can leverage this thanks to the `about_command = shell command`
+option allowing users to transparently submit output of
+`rclone about --json twin_sftp_remote:` as a hint for `rclone about my_ftp:`.
+In fact, any program or shell command can be used if its output is compatible
+with json format of the space usage report, like the sample shell script below:
+
+```
+#!/bin/sh
+size=3000000
+used=1000000
+free=2000000
+echo '{"total":'$size',"used":'$used',"free":'$free'}'
+```
+
+Note that backends without the `about` capability cannot report free space
+for an `rclone mount` or use policy `mfs` (most free space) as a member of an
+[rclone union](/union/) remote.
+See the [list of backends that do not support rclone about](/overview/#optional-features).
