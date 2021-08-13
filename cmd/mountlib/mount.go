@@ -1,6 +1,7 @@
 package mountlib
 
 import (
+	"context"
 	"log"
 	"os"
 	"path/filepath"
@@ -127,6 +128,10 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 		Long:   strings.ReplaceAll(strings.ReplaceAll(mountHelp, "|", "`"), "@", commandName) + vfs.Help,
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
+
+			if fs.GetConfig(context.Background()).UseListR {
+				fs.Logf(nil, "--fast-list does nothing on a mount")
+			}
 
 			if Opt.Daemon {
 				config.PassConfigKeyForDaemonization = true
