@@ -29,6 +29,7 @@ Run without a hash to see the list of all supported hashes, e.g.
       * sha1
       * whirlpool
       * crc32
+      * sha256
       * dropbox
       * mailru
       * quickxor
