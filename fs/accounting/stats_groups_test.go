@@ -62,6 +62,7 @@ func TestStatsGroupOperations(t *testing.T) {
 		assert.Equal(t, stats1.bytes+stats2.bytes, sum.bytes)
 		assert.Equal(t, stats1.errors+stats2.errors, sum.errors)
 		assert.Equal(t, stats1.oldDuration+stats2.oldDuration, sum.oldDuration)
+		assert.Equal(t, stats1.average.speed+stats2.average.speed, sum.average.speed)
 		// dict can iterate in either order
 		a := timeRanges{stats1.oldTimeRanges[0], stats2.oldTimeRanges[0]}
 		b := timeRanges{stats2.oldTimeRanges[0], stats1.oldTimeRanges[0]}
