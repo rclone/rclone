@@ -517,3 +517,4 @@ put them back in again.` >}}
   * yedamo <logindaveye@gmail.com>
   * hota <lindwurm.q@gmail.com>
   * vinibali <vinibali1@gmail.com>
+  * Ken Enrique Morel <ken.morel.santana@gmail.com>
