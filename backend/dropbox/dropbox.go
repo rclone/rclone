@@ -267,6 +267,11 @@ default based on the batch_mode in use.
 			Default:  fs.Duration(0),
 			Advanced: true,
 		}, {
+			Name:     "batch_commit_timeout",
+			Help:     `Max time to wait for a batch to finish comitting`,
+			Default:  fs.Duration(10 * time.Minute),
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -285,15 +290,16 @@ default based on the batch_mode in use.
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
-	Impersonate   string               `config:"impersonate"`
-	SharedFiles   bool                 `config:"shared_files"`
-	SharedFolders bool                 `config:"shared_folders"`
-	BatchMode     string               `config:"batch_mode"`
-	BatchSize     int                  `config:"batch_size"`
-	BatchTimeout  fs.Duration          `config:"batch_timeout"`
-	AsyncBatch    bool                 `config:"async_batch"`
-	Enc           encoder.MultiEncoder `config:"encoding"`
+	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
+	Impersonate        string               `config:"impersonate"`
+	SharedFiles        bool                 `config:"shared_files"`
+	SharedFolders      bool                 `config:"shared_folders"`
+	BatchMode          string               `config:"batch_mode"`
+	BatchSize          int                  `config:"batch_size"`
+	BatchTimeout       fs.Duration          `config:"batch_timeout"`
+	BatchCommitTimeout fs.Duration          `config:"batch_commit_timeout"`
+	AsyncBatch         bool                 `config:"async_batch"`
+	Enc                encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote dropbox server
