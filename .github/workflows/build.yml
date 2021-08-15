@@ -30,7 +30,7 @@ jobs:
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '1.16.x'
+            go: '1.17.x'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -41,7 +41,7 @@ jobs:
 
           - job_name: mac_amd64
             os: macOS-latest
-            go: '1.16.x'
+            go: '1.17.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -50,14 +50,14 @@ jobs:
 
           - job_name: mac_arm64
             os: macOS-latest
-            go: '1.16.x'
+            go: '1.17.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -macos-sdk macosx11.1 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
           - job_name: windows_amd64
             os: windows-latest
-            go: '1.16.x'
+            go: '1.17.x'
             gotags: cmount
             build_flags: '-include "^windows/amd64" -cgo'
             build_args: '-buildmode exe'
@@ -67,7 +67,7 @@ jobs:
 
           - job_name: windows_386
             os: windows-latest
-            go: '1.16.x'
+            go: '1.17.x'
             gotags: cmount
             goarch: '386'
             cgo: '1'
@@ -78,7 +78,7 @@ jobs:
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '1.16.x'
+            go: '1.17.x'
             build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
@@ -97,6 +97,12 @@ jobs:
           - job_name: go1.15
             os: ubuntu-latest
             go: '1.15.x'
+            quicktest: true
+            racequicktest: true
+
+          - job_name: go1.16
+            os: ubuntu-latest
+            go: '1.16.x'
             quicktest: true
             racequicktest: true
 
