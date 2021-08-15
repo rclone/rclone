@@ -56,7 +56,7 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sevlyar/go-daemon v0.1.5
-	github.com/shirou/gopsutil/v3 v3.21.3
+	github.com/shirou/gopsutil/v3 v3.21.6
 	github.com/sirupsen/logrus v1.8.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spacemonkeygo/monkit/v3 v3.0.11 // indirect
@@ -64,7 +64,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
-	github.com/tklauser/go-sysconf v0.3.5 // indirect
 	github.com/xanzy/ssh-agent v0.3.0
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
