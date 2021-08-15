@@ -1,4 +1,5 @@
-// +build !openbsd,!windows
+// +build !windows
+// +build !openbsd !386
 
 package buildinfo
 

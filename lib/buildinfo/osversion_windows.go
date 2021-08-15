@@ -1,5 +1,3 @@
-// +build !openbsd !windows
-
 package buildinfo
 
 import (
