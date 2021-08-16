@@ -523,7 +523,7 @@ func AddBackendFlags() {
 				if nl := strings.IndexRune(help, '\n'); nl >= 0 {
 					help = help[:nl]
 				}
-				help = strings.TrimSpace(help)
+				help = strings.TrimRight(strings.TrimSpace(help), ".!?")
 				if opt.IsPassword {
 					help += " (obscured)"
 				}
