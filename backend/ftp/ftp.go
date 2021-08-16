@@ -121,6 +121,7 @@ Set to 0 to keep connections indefinitely.
 		}, {
 			Name: "tls_cache_size",
 			Help: `Size of TLS session cache for all control and data connections.
+
 TLS cache allows to resume TLS sessions and reuse PSK between connections.
 Increase if default size is not enough resulting in TLS resumption errors.
 Enabled by default. Use 0 to disable.`,
