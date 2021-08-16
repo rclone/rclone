@@ -96,7 +96,7 @@ func Choose(what string, defaults, help []string, newOk bool) string {
 	if newOk {
 		valueDescription = "your own"
 	}
-	fmt.Printf("Choose a number from below, or type in %s value\n", valueDescription)
+	fmt.Printf("Choose a number from below, or type in %s value.\n", valueDescription)
 	attributes := []string{terminal.HiRedFg, terminal.HiGreenFg}
 	for i, text := range defaults {
 		var lines []string
@@ -277,7 +277,7 @@ func backendConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.
 				fmt.Println(out.Option.Help)
 				in.Result = fmt.Sprint(Confirm(Default))
 			} else {
-				value := ChooseOption(out.Option, "")
+				value := ChooseOption(out.Option)
 				if value != "" {
 					err := out.Option.Set(value)
 					if err != nil {
@@ -316,15 +316,23 @@ func RemoteConfig(ctx context.Context, name string) error {
 }
 
 // ChooseOption asks the user to choose an option
-func ChooseOption(o *fs.Option, name string) string {
-	fmt.Println(o.Help)
+func ChooseOption(o *fs.Option) string {
+	fmt.Printf("Option %s.\n", o.Name)
+	if o.Help != "" {
+		// Show help string without empty lines.
+		help := strings.Replace(strings.TrimSpace(o.Help), "\n\n", "\n", -1)
+		fmt.Println(help)
+	}
 	if o.IsPassword {
+		fmt.Printf("Choose an alternative below.")
 		actions := []string{"yYes type in my own password", "gGenerate random password"}
 		defaultAction := -1
 		if !o.Required {
 			defaultAction = len(actions)
 			actions = append(actions, "nNo leave this optional password blank")
+			fmt.Printf(" Press Enter for the default (%s).", string(actions[defaultAction][0]))
 		}
+		fmt.Println()
 		var password string
 		var err error
 		switch i := CommandDefault(actions, defaultAction); i {
@@ -432,7 +440,7 @@ func NewRemote(ctx context.Context, name string) error {
 
 	// Set the type first
 	for {
-		newType = ChooseOption(fsOption(), name)
+		newType = ChooseOption(fsOption())
 		ri, err = fs.Find(newType)
 		if err != nil {
 			fmt.Printf("Bad remote %q: %v\n", newType, err)
