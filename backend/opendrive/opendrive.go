@@ -42,7 +42,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "username",
-			Help:     "Username",
+			Help:     "Username.",
 			Required: true,
 		}, {
 			Name:       "password",

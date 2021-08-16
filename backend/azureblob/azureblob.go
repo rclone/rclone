@@ -75,7 +75,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",
-			Help: "Storage Account Name (leave blank to use SAS URL or Emulator)",
+			Help: "Storage Account Name.\n\nLeave blank to use SAS URL or Emulator.",
 		}, {
 			Name: "service_principal_file",
 			Help: `Path to file containing credentials for use with a service principal.
@@ -91,13 +91,13 @@ See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/a
 `,
 		}, {
 			Name: "key",
-			Help: "Storage Account Key (leave blank to use SAS URL or Emulator)",
+			Help: "Storage Account Key.\n\nLeave blank to use SAS URL or Emulator.",
 		}, {
 			Name: "sas_url",
-			Help: "SAS URL for container level access only\n(leave blank if using account/key or Emulator)",
+			Help: "SAS URL for container level access only.\n\nLeave blank if using account/key or Emulator.",
 		}, {
 			Name: "use_msi",
-			Help: `Use a managed service identity to authenticate (only works in Azure)
+			Help: `Use a managed service identity to authenticate (only works in Azure).
 
 When true, use a [managed service identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/)
 to authenticate to Azure Storage instead of a SAS token or account key.
@@ -110,27 +110,27 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Default: false,
 		}, {
 			Name:     "msi_object_id",
-			Help:     "Object ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_mi_res_id specified.",
+			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_mi_res_id specified.",
 			Advanced: true,
 		}, {
 			Name:     "msi_client_id",
-			Help:     "Object ID of the user-assigned MSI to use, if any. Leave blank if msi_object_id or msi_mi_res_id specified.",
+			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_object_id or msi_mi_res_id specified.",
 			Advanced: true,
 		}, {
 			Name:     "msi_mi_res_id",
-			Help:     "Azure resource ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_object_id specified.",
+			Help:     "Azure resource ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_object_id specified.",
 			Advanced: true,
 		}, {
 			Name:    "use_emulator",
-			Help:    "Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)",
+			Help:    "Uses local storage emulator if provided as 'true'.\n\nLeave blank if using real azure storage endpoint.",
 			Default: false,
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for the service\nLeave blank normally.",
+			Help:     "Endpoint for the service.\n\nLeave blank normally.",
 			Advanced: true,
 		}, {
 			Name:     "upload_cutoff",
-			Help:     "Cutoff for switching to chunked upload (<= 256 MiB). (Deprecated)",
+			Help:     "Cutoff for switching to chunked upload (<= 256 MiB) (deprecated).",
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -201,6 +201,7 @@ to start uploading.`,
 			Default:  memoryPoolFlushTime,
 			Advanced: true,
 			Help: `How often internal memory buffer pools will be flushed.
+
 Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
 This option controls how often unused buffers will be removed from the pool.`,
 		}, {
@@ -220,12 +221,12 @@ This option controls how often unused buffers will be removed from the pool.`,
 				encoder.EncodeRightPeriod),
 		}, {
 			Name:    "public_access",
-			Help:    "Public access level of a container: blob, container.",
+			Help:    "Public access level of a container: blob or container.",
 			Default: string(azblob.PublicAccessNone),
 			Examples: []fs.OptionExample{
 				{
 					Value: string(azblob.PublicAccessNone),
-					Help:  "The container and its blobs can be accessed only with an authorized request. It's a default value",
+					Help:  "The container and its blobs can be accessed only with an authorized request.\nIt's a default value.",
 				}, {
 					Value: string(azblob.PublicAccessBlob),
 					Help:  "Blob data within this container can be read via anonymous request.",

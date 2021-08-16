@@ -37,21 +37,21 @@ func init() {
 		Description: "1Fichier",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Help: "Your API Key, get it from https://1fichier.com/console/params.pl",
+			Help: "Your API Key, get it from https://1fichier.com/console/params.pl.",
 			Name: "api_key",
 		}, {
-			Help:     "If you want to download a shared folder, add this parameter",
+			Help:     "If you want to download a shared folder, add this parameter.",
 			Name:     "shared_folder",
 			Required: false,
 			Advanced: true,
 		}, {
-			Help:       "If you want to download a shared file that is password protected, add this parameter",
+			Help:       "If you want to download a shared file that is password protected, add this parameter.",
 			Name:       "file_password",
 			Required:   false,
 			Advanced:   true,
 			IsPassword: true,
 		}, {
-			Help:       "If you want to list the files in a shared folder that is password protected, add this parameter",
+			Help:       "If you want to list the files in a shared folder that is password protected, add this parameter.",
 			Name:       "folder_password",
 			Required:   false,
 			Advanced:   true,

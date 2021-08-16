@@ -154,7 +154,7 @@ func init() {
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",
-			Help: fmt.Sprintf(`Upload chunk size. (< %v).
+			Help: fmt.Sprintf(`Upload chunk size (< %v).
 
 Any files larger than this will be uploaded in chunks of this size.
 
@@ -252,7 +252,7 @@ maximise throughput.
 			Advanced: true,
 		}, {
 			Name: "batch_timeout",
-			Help: `Max time to allow an idle upload batch before uploading
+			Help: `Max time to allow an idle upload batch before uploading.
 
 If an upload batch is idle for more than this long then it will be
 uploaded.

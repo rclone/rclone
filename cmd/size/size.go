@@ -18,7 +18,7 @@ var jsonOutput bool
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "format output as JSON")
+	flags.BoolVarP(cmdFlags, &jsonOutput, "json", "", false, "Format output as JSON")
 }
 
 var commandDefinition = &cobra.Command{

@@ -24,8 +24,8 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.StringArrayVarP(cmdFlags, &options, "option", "o", options, "Option in the form name=value or name.")
-	flags.BoolVarP(cmdFlags, &useJSON, "json", "", useJSON, "Always output in JSON format.")
+	flags.StringArrayVarP(cmdFlags, &options, "option", "o", options, "Option in the form name=value or name")
+	flags.BoolVarP(cmdFlags, &useJSON, "json", "", useJSON, "Always output in JSON format")
 }
 
 var commandDefinition = &cobra.Command{

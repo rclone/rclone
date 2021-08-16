@@ -43,7 +43,7 @@ func init() {
 		Description: "Uptobox",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Help: "Your access Token, get it from https://uptobox.com/my_account",
+			Help: "Your access token.\n\nGet it from https://uptobox.com/my_account.",
 			Name: "access_token",
 		}, {
 			Name:     config.ConfigEncoding,

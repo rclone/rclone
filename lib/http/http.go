@@ -378,14 +378,14 @@ func URL() string {
 
 // AddFlagsPrefix adds flags for the httplib
 func AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
-	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to.")
+	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to")
 	flags.DurationVarP(flagSet, &Opt.ServerReadTimeout, prefix+"server-read-timeout", "", Opt.ServerReadTimeout, "Timeout for server reading data")
 	flags.DurationVarP(flagSet, &Opt.ServerWriteTimeout, prefix+"server-write-timeout", "", Opt.ServerWriteTimeout, "Timeout for server writing data")
 	flags.IntVarP(flagSet, &Opt.MaxHeaderBytes, prefix+"max-header-bytes", "", Opt.MaxHeaderBytes, "Maximum size of request header")
 	flags.StringVarP(flagSet, &Opt.SslCert, prefix+"cert", "", Opt.SslCert, "SSL PEM key (concatenation of certificate and CA certificate)")
 	flags.StringVarP(flagSet, &Opt.SslKey, prefix+"key", "", Opt.SslKey, "SSL PEM Private key")
 	flags.StringVarP(flagSet, &Opt.ClientCA, prefix+"client-ca", "", Opt.ClientCA, "Client certificate authority to verify clients with")
-	flags.StringVarP(flagSet, &Opt.BaseURL, prefix+"baseurl", "", Opt.BaseURL, "Prefix for URLs - leave blank for root.")
+	flags.StringVarP(flagSet, &Opt.BaseURL, prefix+"baseurl", "", Opt.BaseURL, "Prefix for URLs - leave blank for root")
 
 }
 

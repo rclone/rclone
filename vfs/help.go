@@ -30,8 +30,8 @@ directory should be considered up to date and not refreshed from the
 backend. Changes made through the mount will appear immediately or
 invalidate the cache.
 
-    --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
-    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 
 However, changes made directly on the cloud storage by the web
 interface or a different copy of rclone will only be picked up once
@@ -85,10 +85,10 @@ find that you need one or the other or both.
 
     --cache-dir string                   Directory rclone will use for caching.
     --vfs-cache-mode CacheMode           Cache mode off|minimal|writes|full (default off)
-    --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
-    --vfs-cache-max-size SizeSuffix      Max total size of objects in the cache. (default off)
-    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
-    --vfs-write-back duration            Time to writeback files after last use when using cache. (default 5s)
+    --vfs-cache-max-age duration         Max age of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix      Max total size of objects in the cache (default off)
+    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration            Time to writeback files after last use when using cache (default 5s)
 
 If run with !-vv! rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
@@ -231,14 +231,14 @@ than seeking rclone will wait a short time for the in sequence read or
 write to come in. These flags only come into effect when not using an
 on disk cache file.
 
-    --vfs-read-wait duration   Time to wait for in-sequence read before seeking. (default 20ms)
-    --vfs-write-wait duration  Time to wait for in-sequence write before giving error. (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 
 When using VFS write caching (!--vfs-cache-mode! with value writes or full),
 the global flag !--transfers! can be set to adjust the number of parallel uploads of
 modified files from cache (the related global flag !--checkers! have no effect on mount).
 
-    --transfers int  Number of file transfers to run in parallel. (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 
 ### VFS Case Sensitivity
 

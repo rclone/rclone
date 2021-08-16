@@ -30,7 +30,7 @@ func init() {
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "remote",
-			Help:     "Remote to encrypt/decrypt.\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
+			Help:     "Remote to encrypt/decrypt.\n\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
 			Required: true,
 		}, {
 			Name:    "filename_encryption",
@@ -39,13 +39,13 @@ func init() {
 			Examples: []fs.OptionExample{
 				{
 					Value: "standard",
-					Help:  "Encrypt the filenames. See the docs for the details.",
+					Help:  "Encrypt the filenames.\nSee the docs for the details.",
 				}, {
 					Value: "obfuscate",
 					Help:  "Very simple filename obfuscation.",
 				}, {
 					Value: "off",
-					Help:  "Don't encrypt the file names.  Adds a \".bin\" extension only.",
+					Help:  "Don't encrypt the file names.\nAdds a \".bin\" extension only.",
 				},
 			},
 		}, {
@@ -71,7 +71,7 @@ NB If filename_encryption is "off" then this option will do nothing.`,
 			Required:   true,
 		}, {
 			Name:       "password2",
-			Help:       "Password or pass phrase for salt. Optional but recommended.\nShould be different to the previous password.",
+			Help:       "Password or pass phrase for salt.\n\nOptional but recommended.\nShould be different to the previous password.",
 			IsPassword: true,
 		}, {
 			Name:    "server_side_across_configs",

@@ -57,22 +57,22 @@ Rclone's cloud storage systems as a file system with FUSE.
 
 If no mountType is provided, the priority is given as follows: 1. mount 2.cmount 3.mount2
 
-This takes the following parameters
+This takes the following parameters:
 
 - fs - a remote path to be mounted (required)
 - mountPoint: valid path on the local machine (required)
-- mountType: One of the values (mount, cmount, mount2) specifies the mount implementation to use
+- mountType: one of the values (mount, cmount, mount2) specifies the mount implementation to use
 - mountOpt: a JSON object with Mount options in.
 - vfsOpt: a JSON object with VFS options in.
 
-Eg
+Example:
 
     rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint
     rclone rc mount/mount fs=mydrive: mountPoint=/home/<user>/mountPoint mountType=mount
     rclone rc mount/mount fs=TestDrive: mountPoint=/mnt/tmp vfsOpt='{"CacheMode": 2}' mountOpt='{"AllowOther": true}'
 
 The vfsOpt are as described in options/get and can be seen in the the
-"vfs" section when running and the mountOpt can be seen in the "mount" section.
+"vfs" section when running and the mountOpt can be seen in the "mount" section:
 
     rclone rc options/get
 `,
@@ -150,11 +150,11 @@ rclone allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
 FUSE.
 
-This takes the following parameters
+This takes the following parameters:
 
 - mountPoint: valid path on the local machine where the mount was created (required)
 
-Eg
+Example:
 
     rclone rc mount/unmount mountPoint=/home/<user>/mountPoint
 `,
@@ -222,7 +222,7 @@ func init() {
 		AuthRequired: true,
 		Fn:           listMountsRc,
 		Title:        "Show current mount points",
-		Help: `This shows currently mounted points, which can be used for performing an unmount
+		Help: `This shows currently mounted points, which can be used for performing an unmount.
 
 This takes no parameters and returns
 
@@ -272,7 +272,7 @@ func init() {
 		AuthRequired: true,
 		Fn:           unmountAll,
 		Title:        "Show current mount points",
-		Help: `This shows currently mounted points, which can be used for performing an unmount
+		Help: `This shows currently mounted points, which can be used for performing an unmount.
 
 This takes no parameters and returns error if unmount does not succeed.
 

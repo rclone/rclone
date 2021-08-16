@@ -34,7 +34,7 @@ func init() {
 		Path:  "options/blocks",
 		Fn:    rcOptionsBlocks,
 		Title: "List all the option blocks",
-		Help: `Returns
+		Help: `Returns:
 - options - a list of the options block names`,
 	})
 }
@@ -112,7 +112,7 @@ func init() {
 		Path:  "options/set",
 		Fn:    rcOptionsSet,
 		Title: "Set an option",
-		Help: `Parameters
+		Help: `Parameters:
 
 - option block name containing an object with
   - key: value

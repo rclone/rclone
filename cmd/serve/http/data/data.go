@@ -47,7 +47,7 @@ type Options struct {
 
 // AddFlags for the templating functionality
 func AddFlags(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
-	flags.StringVarP(flagSet, &Opt.Template, prefix+"template", "", Opt.Template, "User Specified Template.")
+	flags.StringVarP(flagSet, &Opt.Template, prefix+"template", "", Opt.Template, "User-specified template")
 }
 
 // AfterEpoch returns the time since the epoch for the given time

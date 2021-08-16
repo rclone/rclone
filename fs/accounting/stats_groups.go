@@ -235,7 +235,7 @@ func init() {
 		Fn:    rcDeleteStats,
 		Title: "Delete stats group.",
 		Help: `
-This deletes entire stats group
+This deletes entire stats group.
 
 Parameters
 

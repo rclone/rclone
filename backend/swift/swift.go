@@ -84,10 +84,10 @@ func init() {
 			Examples: []fs.OptionExample{
 				{
 					Value: "false",
-					Help:  "Enter swift credentials in the next step",
+					Help:  "Enter swift credentials in the next step.",
 				}, {
 					Value: "true",
-					Help:  "Get swift credentials from environment vars. Leave other fields blank if using this.",
+					Help:  "Get swift credentials from environment vars.\nLeave other fields blank if using this.",
 				},
 			},
 		}, {
@@ -100,23 +100,23 @@ func init() {
 			Name: "auth",
 			Help: "Authentication URL for server (OS_AUTH_URL).",
 			Examples: []fs.OptionExample{{
-				Help:  "Rackspace US",
 				Value: "https://auth.api.rackspacecloud.com/v1.0",
+				Help:  "Rackspace US",
 			}, {
-				Help:  "Rackspace UK",
 				Value: "https://lon.auth.api.rackspacecloud.com/v1.0",
+				Help:  "Rackspace UK",
 			}, {
-				Help:  "Rackspace v2",
 				Value: "https://identity.api.rackspacecloud.com/v2.0",
+				Help:  "Rackspace v2",
 			}, {
-				Help:  "Memset Memstore UK",
 				Value: "https://auth.storage.memset.com/v1.0",
+				Help:  "Memset Memstore UK",
 			}, {
-				Help:  "Memset Memstore UK v2",
 				Value: "https://auth.storage.memset.com/v2.0",
+				Help:  "Memset Memstore UK v2",
 			}, {
-				Help:  "OVH",
 				Value: "https://auth.cloud.ovh.net/v3",
+				Help:  "OVH",
 			}},
 		}, {
 			Name: "user_id",
@@ -126,57 +126,59 @@ func init() {
 			Help: "User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)",
 		}, {
 			Name: "tenant",
-			Help: "Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME)",
+			Help: "Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME).",
 		}, {
 			Name: "tenant_id",
-			Help: "Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)",
+			Help: "Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID).",
 		}, {
 			Name: "tenant_domain",
-			Help: "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME)",
+			Help: "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME).",
 		}, {
 			Name: "region",
-			Help: "Region name - optional (OS_REGION_NAME)",
+			Help: "Region name - optional (OS_REGION_NAME).",
 		}, {
 			Name: "storage_url",
-			Help: "Storage URL - optional (OS_STORAGE_URL)",
+			Help: "Storage URL - optional (OS_STORAGE_URL).",
 		}, {
 			Name: "auth_token",
-			Help: "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)",
+			Help: "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN).",
 		}, {
 			Name: "application_credential_id",
-			Help: "Application Credential ID (OS_APPLICATION_CREDENTIAL_ID)",
+			Help: "Application Credential ID (OS_APPLICATION_CREDENTIAL_ID).",
 		}, {
 			Name: "application_credential_name",
-			Help: "Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME)",
+			Help: "Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME).",
 		}, {
 			Name: "application_credential_secret",
-			Help: "Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET)",
+			Help: "Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET).",
 		}, {
 			Name:    "auth_version",
-			Help:    "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)",
+			Help:    "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION).",
 			Default: 0,
 		}, {
 			Name:    "endpoint_type",
-			Help:    "Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE)",
+			Help:    "Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE).",
 			Default: "public",
 			Examples: []fs.OptionExample{{
-				Help:  "Public (default, choose this if not sure)",
 				Value: "public",
+				Help:  "Public (default, choose this if not sure)",
 			}, {
-				Help:  "Internal (use internal service net)",
 				Value: "internal",
+				Help:  "Internal (use internal service net)",
 			}, {
-				Help:  "Admin",
 				Value: "admin",
+				Help:  "Admin",
 			}},
 		}, {
-			Name:     "leave_parts_on_error",
-			Help:     `If true avoid calling abort upload on a failure. It should be set to true for resuming uploads across different sessions.`,
+			Name: "leave_parts_on_error",
+			Help: `If true avoid calling abort upload on a failure.
+
+It should be set to true for resuming uploads across different sessions.`,
 			Default:  false,
 			Advanced: true,
 		}, {
 			Name: "storage_policy",
-			Help: `The storage policy to use when creating a new container
+			Help: `The storage policy to use when creating a new container.
 
 This applies the specified storage policy when creating a new
 container. The policy cannot be changed afterwards. The allowed
@@ -184,14 +186,14 @@ configuration values and their meaning depend on your Swift storage
 provider.`,
 			Default: "",
 			Examples: []fs.OptionExample{{
-				Help:  "Default",
 				Value: "",
+				Help:  "Default",
 			}, {
-				Help:  "OVH Public Cloud Storage",
 				Value: "pcs",
+				Help:  "OVH Public Cloud Storage",
 			}, {
-				Help:  "OVH Public Cloud Archive",
 				Value: "pca",
+				Help:  "OVH Public Cloud Archive",
 			}},
 		}}, SharedOptions...),
 	})

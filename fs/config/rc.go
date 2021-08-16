@@ -130,7 +130,7 @@ func init() {
 				return rcConfig(ctx, in, name)
 			},
 			Title: name + " the config for a remote.",
-			Help: `This takes the following parameters
+			Help: `This takes the following parameters:
 
 - name - name of remote
 - parameters - a map of \{ "key": "value" \} pairs

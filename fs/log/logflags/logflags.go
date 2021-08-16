@@ -16,5 +16,5 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &log.Opt.Format, "log-format", "", log.Opt.Format, "Comma separated list of log format options")
 	flags.BoolVarP(flagSet, &log.Opt.UseSyslog, "syslog", "", log.Opt.UseSyslog, "Use Syslog for logging")
 	flags.StringVarP(flagSet, &log.Opt.SyslogFacility, "syslog-facility", "", log.Opt.SyslogFacility, "Facility for syslog, e.g. KERN,USER,...")
-	flags.BoolVarP(flagSet, &log.Opt.LogSystemdSupport, "log-systemd", "", log.Opt.LogSystemdSupport, "Activate systemd integration for the logger.")
+	flags.BoolVarP(flagSet, &log.Opt.LogSystemdSupport, "log-systemd", "", log.Opt.LogSystemdSupport, "Activate systemd integration for the logger")
 }

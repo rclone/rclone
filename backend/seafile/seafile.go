@@ -60,41 +60,41 @@ func init() {
 		Config:      Config,
 		Options: []fs.Option{{
 			Name:     configURL,
-			Help:     "URL of seafile host to connect to",
+			Help:     "URL of seafile host to connect to.",
 			Required: true,
 			Examples: []fs.OptionExample{{
 				Value: "https://cloud.seafile.com/",
-				Help:  "Connect to cloud.seafile.com",
+				Help:  "Connect to cloud.seafile.com.",
 			}},
 		}, {
 			Name:     configUser,
-			Help:     "User name (usually email address)",
+			Help:     "User name (usually email address).",
 			Required: true,
 		}, {
 			// Password is not required, it will be left blank for 2FA
 			Name:       configPassword,
-			Help:       "Password",
+			Help:       "Password.",
 			IsPassword: true,
 		}, {
 			Name:    config2FA,
-			Help:    "Two-factor authentication ('true' if the account has 2FA enabled)",
+			Help:    "Two-factor authentication ('true' if the account has 2FA enabled).",
 			Default: false,
 		}, {
 			Name: configLibrary,
-			Help: "Name of the library. Leave blank to access all non-encrypted libraries.",
+			Help: "Name of the library.\n\nLeave blank to access all non-encrypted libraries.",
 		}, {
 			Name:       configLibraryKey,
-			Help:       "Library password (for encrypted libraries only). Leave blank if you pass it through the command line.",
+			Help:       "Library password (for encrypted libraries only).\n\nLeave blank if you pass it through the command line.",
 			IsPassword: true,
 		}, {
 			Name:     configCreateLibrary,
-			Help:     "Should rclone create a library if it doesn't exist",
+			Help:     "Should rclone create a library if it doesn't exist.",
 			Advanced: true,
 			Default:  false,
 		}, {
 			// Keep the authentication token after entering the 2FA code
 			Name: configAuthToken,
-			Help: "Authentication token",
+			Help: "Authentication token.",
 			Hide: fs.OptionHideBoth,
 		}, {
 			Name:     config.ConfigEncoding,

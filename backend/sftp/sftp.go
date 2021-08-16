@@ -56,28 +56,28 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "host",
-			Help:     "SSH host to connect to",
+			Help:     "SSH host to connect to.",
 			Required: true,
 			Examples: []fs.OptionExample{{
 				Value: "example.com",
-				Help:  "Connect to example.com",
+				Help:  "Connect to example.com.",
 			}},
 		}, {
 			Name: "user",
-			Help: "SSH username, leave blank for current username, " + currentUser,
+			Help: "SSH username, leave blank for current username, " + currentUser + ".",
 		}, {
 			Name: "port",
-			Help: "SSH port, leave blank to use default (22)",
+			Help: "SSH port, leave blank to use default (22).",
 		}, {
 			Name:       "pass",
 			Help:       "SSH password, leave blank to use ssh-agent.",
 			IsPassword: true,
 		}, {
 			Name: "key_pem",
-			Help: "Raw PEM-encoded private key, If specified, will override key_file parameter.",
+			Help: "Raw PEM-encoded private key.\n\nIf specified, will override key_file parameter.",
 		}, {
 			Name: "key_file",
-			Help: "Path to PEM-encoded private key file, leave blank or set key-use-agent to use ssh-agent." + env.ShellExpandHelp,
+			Help: "Path to PEM-encoded private key file.\n\nLeave blank or set key-use-agent to use ssh-agent." + env.ShellExpandHelp,
 		}, {
 			Name: "key_file_pass",
 			Help: `The passphrase to decrypt the PEM-encoded private key file.
@@ -98,7 +98,7 @@ Set this value to enable server host key validation.` + env.ShellExpandHelp,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "~/.ssh/known_hosts",
-				Help:  "Use OpenSSH's known_hosts file",
+				Help:  "Use OpenSSH's known_hosts file.",
 			}},
 		}, {
 			Name: "key_use_agent",
@@ -135,7 +135,7 @@ Those algorithms are insecure and may allow plaintext data to be recovered by an
 		}, {
 			Name:    "disable_hashcheck",
 			Default: false,
-			Help:    "Disable the execution of SSH commands to determine if remote file hashing is available.\nLeave blank or set to false to enable hashing (recommended), set to true to disable hashing.",
+			Help:    "Disable the execution of SSH commands to determine if remote file hashing is available.\n\nLeave blank or set to false to enable hashing (recommended), set to true to disable hashing.",
 		}, {
 			Name:    "ask_password",
 			Default: false,
@@ -170,12 +170,12 @@ Home directory can be found in a shared folder called "home"
 		}, {
 			Name:     "md5sum_command",
 			Default:  "",
-			Help:     "The command used to read md5 hashes. Leave blank for autodetect.",
+			Help:     "The command used to read md5 hashes.\n\nLeave blank for autodetect.",
 			Advanced: true,
 		}, {
 			Name:     "sha1sum_command",
 			Default:  "",
-			Help:     "The command used to read sha1 hashes. Leave blank for autodetect.",
+			Help:     "The command used to read sha1 hashes.\n\nLeave blank for autodetect.",
 			Advanced: true,
 		}, {
 			Name:     "skip_links",
@@ -197,7 +197,7 @@ The subsystem option is ignored when server_command is defined.`,
 		}, {
 			Name:    "use_fstat",
 			Default: false,
-			Help: `If set use fstat instead of stat
+			Help: `If set use fstat instead of stat.
 
 Some servers limit the amount of open files and calling Stat after opening
 the file will throw an error from the server. Setting this flag will call
@@ -211,7 +211,7 @@ any given time.
 		}, {
 			Name:    "disable_concurrent_reads",
 			Default: false,
-			Help: `If set don't use concurrent reads
+			Help: `If set don't use concurrent reads.
 
 Normally concurrent reads are safe to use and not using them will
 degrade performance, so this option is disabled by default.
@@ -230,7 +230,7 @@ If concurrent reads are disabled, the use_fstat option is ignored.
 		}, {
 			Name:    "disable_concurrent_writes",
 			Default: false,
-			Help: `If set don't use concurrent writes
+			Help: `If set don't use concurrent writes.
 
 Normally rclone uses concurrent writes to upload files. This improves
 the performance greatly, especially for distant servers.
@@ -241,7 +241,7 @@ This option disables concurrent writes should that be necessary.
 		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
-			Help: `Max time before closing idle connections
+			Help: `Max time before closing idle connections.
 
 If no connections have been returned to the connection pool in the time
 given, rclone will empty the connection pool.

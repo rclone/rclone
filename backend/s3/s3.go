@@ -109,21 +109,21 @@ func init() {
 			}},
 		}, {
 			Name:    "env_auth",
-			Help:    "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).\nOnly applies if access_key_id and secret_access_key is blank.",
+			Help:    "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).\n\nOnly applies if access_key_id and secret_access_key is blank.",
 			Default: false,
 			Examples: []fs.OptionExample{{
 				Value: "false",
-				Help:  "Enter AWS credentials in the next step",
+				Help:  "Enter AWS credentials in the next step.",
 			}, {
 				Value: "true",
-				Help:  "Get AWS credentials from the environment (env vars or IAM)",
+				Help:  "Get AWS credentials from the environment (env vars or IAM).",
 			}},
 		}, {
 			Name: "access_key_id",
-			Help: "AWS Access Key ID.\nLeave blank for anonymous access or runtime credentials.",
+			Help: "AWS Access Key ID.\n\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "secret_access_key",
-			Help: "AWS Secret Access Key (password)\nLeave blank for anonymous access or runtime credentials.",
+			Help: "AWS Secret Access Key (password).\n\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			// References:
 			// 1. https://docs.aws.amazon.com/general/latest/gr/rande.html
@@ -136,76 +136,76 @@ func init() {
 				Help:  "The default endpoint - a good choice if you are unsure.\nUS Region, Northern Virginia, or Pacific Northwest.\nLeave location constraint empty.",
 			}, {
 				Value: "us-east-2",
-				Help:  "US East (Ohio) Region\nNeeds location constraint us-east-2.",
+				Help:  "US East (Ohio) Region.\nNeeds location constraint us-east-2.",
 			}, {
 				Value: "us-west-1",
-				Help:  "US West (Northern California) Region\nNeeds location constraint us-west-1.",
+				Help:  "US West (Northern California) Region.\nNeeds location constraint us-west-1.",
 			}, {
 				Value: "us-west-2",
-				Help:  "US West (Oregon) Region\nNeeds location constraint us-west-2.",
+				Help:  "US West (Oregon) Region.\nNeeds location constraint us-west-2.",
 			}, {
 				Value: "ca-central-1",
-				Help:  "Canada (Central) Region\nNeeds location constraint ca-central-1.",
+				Help:  "Canada (Central) Region.\nNeeds location constraint ca-central-1.",
 			}, {
 				Value: "eu-west-1",
-				Help:  "EU (Ireland) Region\nNeeds location constraint EU or eu-west-1.",
+				Help:  "EU (Ireland) Region.\nNeeds location constraint EU or eu-west-1.",
 			}, {
 				Value: "eu-west-2",
-				Help:  "EU (London) Region\nNeeds location constraint eu-west-2.",
+				Help:  "EU (London) Region.\nNeeds location constraint eu-west-2.",
 			}, {
 				Value: "eu-west-3",
-				Help:  "EU (Paris) Region\nNeeds location constraint eu-west-3.",
+				Help:  "EU (Paris) Region.\nNeeds location constraint eu-west-3.",
 			}, {
 				Value: "eu-north-1",
-				Help:  "EU (Stockholm) Region\nNeeds location constraint eu-north-1.",
+				Help:  "EU (Stockholm) Region.\nNeeds location constraint eu-north-1.",
 			}, {
 				Value: "eu-south-1",
-				Help:  "EU (Milan) Region\nNeeds location constraint eu-south-1.",
+				Help:  "EU (Milan) Region.\nNeeds location constraint eu-south-1.",
 			}, {
 				Value: "eu-central-1",
-				Help:  "EU (Frankfurt) Region\nNeeds location constraint eu-central-1.",
+				Help:  "EU (Frankfurt) Region.\nNeeds location constraint eu-central-1.",
 			}, {
 				Value: "ap-southeast-1",
-				Help:  "Asia Pacific (Singapore) Region\nNeeds location constraint ap-southeast-1.",
+				Help:  "Asia Pacific (Singapore) Region.\nNeeds location constraint ap-southeast-1.",
 			}, {
 				Value: "ap-southeast-2",
-				Help:  "Asia Pacific (Sydney) Region\nNeeds location constraint ap-southeast-2.",
+				Help:  "Asia Pacific (Sydney) Region.\nNeeds location constraint ap-southeast-2.",
 			}, {
 				Value: "ap-northeast-1",
-				Help:  "Asia Pacific (Tokyo) Region\nNeeds location constraint ap-northeast-1.",
+				Help:  "Asia Pacific (Tokyo) Region.\nNeeds location constraint ap-northeast-1.",
 			}, {
 				Value: "ap-northeast-2",
-				Help:  "Asia Pacific (Seoul)\nNeeds location constraint ap-northeast-2.",
+				Help:  "Asia Pacific (Seoul).\nNeeds location constraint ap-northeast-2.",
 			}, {
 				Value: "ap-northeast-3",
-				Help:  "Asia Pacific (Osaka-Local)\nNeeds location constraint ap-northeast-3.",
+				Help:  "Asia Pacific (Osaka-Local).\nNeeds location constraint ap-northeast-3.",
 			}, {
 				Value: "ap-south-1",
-				Help:  "Asia Pacific (Mumbai)\nNeeds location constraint ap-south-1.",
+				Help:  "Asia Pacific (Mumbai).\nNeeds location constraint ap-south-1.",
 			}, {
 				Value: "ap-east-1",
-				Help:  "Asia Pacific (Hong Kong) Region\nNeeds location constraint ap-east-1.",
+				Help:  "Asia Pacific (Hong Kong) Region.\nNeeds location constraint ap-east-1.",
 			}, {
 				Value: "sa-east-1",
-				Help:  "South America (Sao Paulo) Region\nNeeds location constraint sa-east-1.",
+				Help:  "South America (Sao Paulo) Region.\nNeeds location constraint sa-east-1.",
 			}, {
 				Value: "me-south-1",
-				Help:  "Middle East (Bahrain) Region\nNeeds location constraint me-south-1.",
+				Help:  "Middle East (Bahrain) Region.\nNeeds location constraint me-south-1.",
 			}, {
 				Value: "af-south-1",
-				Help:  "Africa (Cape Town) Region\nNeeds location constraint af-south-1.",
+				Help:  "Africa (Cape Town) Region.\nNeeds location constraint af-south-1.",
 			}, {
 				Value: "cn-north-1",
-				Help:  "China (Beijing) Region\nNeeds location constraint cn-north-1.",
+				Help:  "China (Beijing) Region.\nNeeds location constraint cn-north-1.",
 			}, {
 				Value: "cn-northwest-1",
-				Help:  "China (Ningxia) Region\nNeeds location constraint cn-northwest-1.",
+				Help:  "China (Ningxia) Region.\nNeeds location constraint cn-northwest-1.",
 			}, {
 				Value: "us-gov-east-1",
-				Help:  "AWS GovCloud (US-East) Region\nNeeds location constraint us-gov-east-1.",
+				Help:  "AWS GovCloud (US-East) Region.\nNeeds location constraint us-gov-east-1.",
 			}, {
 				Value: "us-gov-west-1",
-				Help:  "AWS GovCloud (US) Region\nNeeds location constraint us-gov-west-1.",
+				Help:  "AWS GovCloud (US) Region.\nNeeds location constraint us-gov-west-1.",
 			}},
 		}, {
 			Name:     "region",
@@ -220,22 +220,22 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
-			Help:     "Region to connect to.\nLeave blank if you are using an S3 clone and you don't have a region.",
+			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
 			Provider: "!AWS,Alibaba,Scaleway,TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "",
-				Help:  "Use this if unsure. Will use v4 signatures and an empty region.",
+				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
 			}, {
 				Value: "other-v2-signature",
-				Help:  "Use this only if v4 signatures don't work, e.g. pre Jewel/v10 CEPH.",
+				Help:  "Use this only if v4 signatures don't work.\nE.g. pre Jewel/v10 CEPH.",
 			}},
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for S3 API.\nLeave blank if using AWS to use the default endpoint for the region.",
+			Help:     "Endpoint for S3 API.\n\nLeave blank if using AWS to use the default endpoint for the region.",
 			Provider: "AWS",
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for IBM COS S3 API.\nSpecify if using an IBM COS On Premise.",
+			Help:     "Endpoint for IBM COS S3 API.\n\nSpecify if using an IBM COS On Premise.",
 			Provider: "IBMCOS",
 			Examples: []fs.OptionExample{{
 				Value: "s3.us.cloud-object-storage.appdomain.cloud",
@@ -537,65 +537,65 @@ func init() {
 			Provider: "TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "cos.ap-beijing.myqcloud.com",
-				Help:  "Beijing Region.",
+				Help:  "Beijing Region",
 			}, {
 				Value: "cos.ap-nanjing.myqcloud.com",
-				Help:  "Nanjing Region.",
+				Help:  "Nanjing Region",
 			}, {
 				Value: "cos.ap-shanghai.myqcloud.com",
-				Help:  "Shanghai Region.",
+				Help:  "Shanghai Region",
 			}, {
 				Value: "cos.ap-guangzhou.myqcloud.com",
-				Help:  "Guangzhou Region.",
+				Help:  "Guangzhou Region",
 			}, {
 				Value: "cos.ap-nanjing.myqcloud.com",
-				Help:  "Nanjing Region.",
+				Help:  "Nanjing Region",
 			}, {
 				Value: "cos.ap-chengdu.myqcloud.com",
-				Help:  "Chengdu Region.",
+				Help:  "Chengdu Region",
 			}, {
 				Value: "cos.ap-chongqing.myqcloud.com",
-				Help:  "Chongqing Region.",
+				Help:  "Chongqing Region",
 			}, {
 				Value: "cos.ap-hongkong.myqcloud.com",
-				Help:  "Hong Kong (China) Region.",
+				Help:  "Hong Kong (China) Region",
 			}, {
 				Value: "cos.ap-singapore.myqcloud.com",
-				Help:  "Singapore Region.",
+				Help:  "Singapore Region",
 			}, {
 				Value: "cos.ap-mumbai.myqcloud.com",
-				Help:  "Mumbai Region.",
+				Help:  "Mumbai Region",
 			}, {
 				Value: "cos.ap-seoul.myqcloud.com",
-				Help:  "Seoul Region.",
+				Help:  "Seoul Region",
 			}, {
 				Value: "cos.ap-bangkok.myqcloud.com",
-				Help:  "Bangkok Region.",
+				Help:  "Bangkok Region",
 			}, {
 				Value: "cos.ap-tokyo.myqcloud.com",
-				Help:  "Tokyo Region.",
+				Help:  "Tokyo Region",
 			}, {
 				Value: "cos.na-siliconvalley.myqcloud.com",
-				Help:  "Silicon Valley Region.",
+				Help:  "Silicon Valley Region",
 			}, {
 				Value: "cos.na-ashburn.myqcloud.com",
-				Help:  "Virginia Region.",
+				Help:  "Virginia Region",
 			}, {
 				Value: "cos.na-toronto.myqcloud.com",
-				Help:  "Toronto Region.",
+				Help:  "Toronto Region",
 			}, {
 				Value: "cos.eu-frankfurt.myqcloud.com",
-				Help:  "Frankfurt Region.",
+				Help:  "Frankfurt Region",
 			}, {
 				Value: "cos.eu-moscow.myqcloud.com",
-				Help:  "Moscow Region.",
+				Help:  "Moscow Region",
 			}, {
 				Value: "cos.accelerate.myqcloud.com",
-				Help:  "Use Tencent COS Accelerate Endpoint.",
+				Help:  "Use Tencent COS Accelerate Endpoint",
 			}},
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for S3 API.\nRequired when using an S3 clone.",
+			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
 			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
@@ -636,87 +636,87 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
-			Help:     "Location constraint - must be set to match the Region.\nUsed when creating buckets only.",
+			Help:     "Location constraint - must be set to match the Region.\n\nUsed when creating buckets only.",
 			Provider: "AWS",
 			Examples: []fs.OptionExample{{
 				Value: "",
-				Help:  "Empty for US Region, Northern Virginia, or Pacific Northwest.",
+				Help:  "Empty for US Region, Northern Virginia, or Pacific Northwest",
 			}, {
 				Value: "us-east-2",
-				Help:  "US East (Ohio) Region.",
+				Help:  "US East (Ohio) Region",
 			}, {
 				Value: "us-west-1",
-				Help:  "US West (Northern California) Region.",
+				Help:  "US West (Northern California) Region",
 			}, {
 				Value: "us-west-2",
-				Help:  "US West (Oregon) Region.",
+				Help:  "US West (Oregon) Region",
 			}, {
 				Value: "ca-central-1",
-				Help:  "Canada (Central) Region.",
+				Help:  "Canada (Central) Region",
 			}, {
 				Value: "eu-west-1",
-				Help:  "EU (Ireland) Region.",
+				Help:  "EU (Ireland) Region",
 			}, {
 				Value: "eu-west-2",
-				Help:  "EU (London) Region.",
+				Help:  "EU (London) Region",
 			}, {
 				Value: "eu-west-3",
-				Help:  "EU (Paris) Region.",
+				Help:  "EU (Paris) Region",
 			}, {
 				Value: "eu-north-1",
-				Help:  "EU (Stockholm) Region.",
+				Help:  "EU (Stockholm) Region",
 			}, {
 				Value: "eu-south-1",
-				Help:  "EU (Milan) Region.",
+				Help:  "EU (Milan) Region",
 			}, {
 				Value: "EU",
-				Help:  "EU Region.",
+				Help:  "EU Region",
 			}, {
 				Value: "ap-southeast-1",
-				Help:  "Asia Pacific (Singapore) Region.",
+				Help:  "Asia Pacific (Singapore) Region",
 			}, {
 				Value: "ap-southeast-2",
-				Help:  "Asia Pacific (Sydney) Region.",
+				Help:  "Asia Pacific (Sydney) Region",
 			}, {
 				Value: "ap-northeast-1",
-				Help:  "Asia Pacific (Tokyo) Region.",
+				Help:  "Asia Pacific (Tokyo) Region",
 			}, {
 				Value: "ap-northeast-2",
-				Help:  "Asia Pacific (Seoul) Region.",
+				Help:  "Asia Pacific (Seoul) Region",
 			}, {
 				Value: "ap-northeast-3",
-				Help:  "Asia Pacific (Osaka-Local) Region.",
+				Help:  "Asia Pacific (Osaka-Local) Region",
 			}, {
 				Value: "ap-south-1",
-				Help:  "Asia Pacific (Mumbai) Region.",
+				Help:  "Asia Pacific (Mumbai) Region",
 			}, {
 				Value: "ap-east-1",
-				Help:  "Asia Pacific (Hong Kong) Region.",
+				Help:  "Asia Pacific (Hong Kong) Region",
 			}, {
 				Value: "sa-east-1",
-				Help:  "South America (Sao Paulo) Region.",
+				Help:  "South America (Sao Paulo) Region",
 			}, {
 				Value: "me-south-1",
-				Help:  "Middle East (Bahrain) Region.",
+				Help:  "Middle East (Bahrain) Region",
 			}, {
 				Value: "af-south-1",
-				Help:  "Africa (Cape Town) Region.",
+				Help:  "Africa (Cape Town) Region",
 			}, {
 				Value: "cn-north-1",
 				Help:  "China (Beijing) Region",
 			}, {
 				Value: "cn-northwest-1",
-				Help:  "China (Ningxia) Region.",
+				Help:  "China (Ningxia) Region",
 			}, {
 				Value: "us-gov-east-1",
-				Help:  "AWS GovCloud (US-East) Region.",
+				Help:  "AWS GovCloud (US-East) Region",
 			}, {
 				Value: "us-gov-west-1",
-				Help:  "AWS GovCloud (US) Region.",
+				Help:  "AWS GovCloud (US) Region",
 			}},
 		}, {
 			Name:     "location_constraint",
-			Help:     "Location constraint - must match endpoint when using IBM Cloud Public.\nFor on-prem COS, do not make a selection from this list, hit enter",
+			Help:     "Location constraint - must match endpoint when using IBM Cloud Public.\n\nFor on-prem COS, do not make a selection from this list, hit enter.",
 			Provider: "IBMCOS",
 			Examples: []fs.OptionExample{{
 				Value: "us-standard",
@@ -817,7 +817,7 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
-			Help:     "Location constraint - must be set to match the Region.\nLeave blank if not sure. Used when creating buckets only.",
+			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
 			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath,TencentCOS",
 		}, {
 			Name: "acl",
@@ -831,27 +831,27 @@ Note that this ACL is applied when server-side copying objects as S3
 doesn't copy the ACL from the source but rather writes a fresh one.`,
 			Examples: []fs.OptionExample{{
 				Value:    "default",
-				Help:     "Owner gets Full_CONTROL. No one else has access rights (default).",
+				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
 				Provider: "TencentCOS",
 			}, {
 				Value:    "private",
-				Help:     "Owner gets FULL_CONTROL. No one else has access rights (default).",
+				Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).",
 				Provider: "!IBMCOS,TencentCOS",
 			}, {
 				Value:    "public-read",
-				Help:     "Owner gets FULL_CONTROL. The AllUsers group gets READ access.",
+				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.",
 				Provider: "!IBMCOS",
 			}, {
 				Value:    "public-read-write",
-				Help:     "Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
+				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
 				Provider: "!IBMCOS",
 			}, {
 				Value:    "authenticated-read",
-				Help:     "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.",
+				Help:     "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.",
 				Provider: "!IBMCOS",
 			}, {
 				Value:    "bucket-owner-read",
-				Help:     "Object owner gets FULL_CONTROL. Bucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
+				Help:     "Object owner gets FULL_CONTROL.\nBucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
 				Provider: "!IBMCOS",
 			}, {
 				Value:    "bucket-owner-full-control",
@@ -859,19 +859,19 @@ doesn't copy the ACL from the source but rather writes a fresh one.`,
 				Provider: "!IBMCOS",
 			}, {
 				Value:    "private",
-				Help:     "Owner gets FULL_CONTROL. No one else has access rights (default). This acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS",
+				Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS.",
 				Provider: "IBMCOS",
 			}, {
 				Value:    "public-read",
-				Help:     "Owner gets FULL_CONTROL. The AllUsers group gets READ access. This acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise IBM COS",
+				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise IBM COS.",
 				Provider: "IBMCOS",
 			}, {
 				Value:    "public-read-write",
-				Help:     "Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access. This acl is available on IBM Cloud (Infra), On-Premise IBM COS",
+				Help:     "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nThis acl is available on IBM Cloud (Infra), On-Premise IBM COS.",
 				Provider: "IBMCOS",
 			}, {
 				Value:    "authenticated-read",
-				Help:     "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access. Not supported on Buckets. This acl is available on IBM Cloud (Infra) and On-Premise IBM COS",
+				Help:     "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.\nNot supported on Buckets.\nThis acl is available on IBM Cloud (Infra) and On-Premise IBM COS.",
 				Provider: "IBMCOS",
 			}},
 		}, {
@@ -885,16 +885,16 @@ isn't set then "acl" is used instead.`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
-				Help:  "Owner gets FULL_CONTROL. No one else has access rights (default).",
+				Help:  "Owner gets FULL_CONTROL.\nNo one else has access rights (default).",
 			}, {
 				Value: "public-read",
-				Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ access.",
+				Help:  "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ access.",
 			}, {
 				Value: "public-read-write",
-				Help:  "Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
+				Help:  "Owner gets FULL_CONTROL.\nThe AllUsers group gets READ and WRITE access.\nGranting this on a bucket is generally not recommended.",
 			}, {
 				Value: "authenticated-read",
-				Help:  "Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.",
+				Help:  "Owner gets FULL_CONTROL.\nThe AuthenticatedUsers group gets READ access.",
 			}},
 		}, {
 			Name:     "requester_pays",
@@ -1002,10 +1002,10 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Standard storage class",
 			}, {
 				Value: "GLACIER",
-				Help:  "Archive storage mode.",
+				Help:  "Archive storage mode",
 			}, {
 				Value: "STANDARD_IA",
-				Help:  "Infrequent access storage mode.",
+				Help:  "Infrequent access storage mode",
 			}},
 		}, {
 			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
@@ -1020,10 +1020,10 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Standard storage class",
 			}, {
 				Value: "ARCHIVE",
-				Help:  "Archive storage mode.",
+				Help:  "Archive storage mode",
 			}, {
 				Value: "STANDARD_IA",
-				Help:  "Infrequent access storage mode.",
+				Help:  "Infrequent access storage mode",
 			}},
 		}, {
 			// Mapping from here: https://www.scaleway.com/en/docs/object-storage-glacier/#-Scaleway-Storage-Classes
@@ -1032,17 +1032,17 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			Provider: "Scaleway",
 			Examples: []fs.OptionExample{{
 				Value: "",
-				Help:  "Default",
+				Help:  "Default.",
 			}, {
 				Value: "STANDARD",
-				Help:  "The Standard class for any upload; suitable for on-demand content like streaming or CDN.",
+				Help:  "The Standard class for any upload.\nSuitable for on-demand content like streaming or CDN.",
 			}, {
 				Value: "GLACIER",
-				Help:  "Archived storage; prices are lower, but it needs to be restored first to be accessed.",
+				Help:  "Archived storage.\nPrices are lower, but it needs to be restored first to be accessed.",
 			}},
 		}, {
 			Name: "upload_cutoff",
-			Help: `Cutoff for switching to chunked upload
+			Help: `Cutoff for switching to chunked upload.
 
 Any files larger than this will be uploaded in chunks of chunk_size.
 The minimum is 0 and the maximum is 5 GiB.`,
@@ -1090,7 +1090,7 @@ large file of a known size to stay below this number of chunks limit.
 			Advanced: true,
 		}, {
 			Name: "copy_cutoff",
-			Help: `Cutoff for switching to multipart copy
+			Help: `Cutoff for switching to multipart copy.
 
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
@@ -1100,7 +1100,7 @@ The minimum is 0 and the maximum is 5 GiB.`,
 			Advanced: true,
 		}, {
 			Name: "disable_checksum",
-			Help: `Don't store MD5 checksum with object metadata
+			Help: `Don't store MD5 checksum with object metadata.
 
 Normally rclone will calculate the MD5 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great
@@ -1110,7 +1110,7 @@ to start uploading.`,
 			Advanced: true,
 		}, {
 			Name: "shared_credentials_file",
-			Help: `Path to the shared credentials file
+			Help: `Path to the shared credentials file.
 
 If env_auth = true then rclone can use a shared credentials file.
 
@@ -1124,7 +1124,7 @@ it will default to the current user's home directory.
 			Advanced: true,
 		}, {
 			Name: "profile",
-			Help: `Profile to use in the shared credentials file
+			Help: `Profile to use in the shared credentials file.
 
 If env_auth = true then rclone can use a shared credentials file. This
 variable controls which profile is used in that file.
@@ -1135,7 +1135,7 @@ If empty it will default to the environment variable "AWS_PROFILE" or
 			Advanced: true,
 		}, {
 			Name:     "session_token",
-			Help:     "An AWS session token",
+			Help:     "An AWS session token.",
 			Advanced: true,
 		}, {
 			Name: "upload_concurrency",
@@ -1205,7 +1205,7 @@ In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 			Advanced: true,
 		}, {
 			Name: "no_check_bucket",
-			Help: `If set, don't attempt to check the bucket exists or create it
+			Help: `If set, don't attempt to check the bucket exists or create it.
 
 This can be useful when trying to minimise the number of transactions
 rclone does if you know the bucket exists already.
@@ -1218,7 +1218,7 @@ due to a bug.
 			Advanced: true,
 		}, {
 			Name: "no_head",
-			Help: `If set, don't HEAD uploaded objects to check integrity
+			Help: `If set, don't HEAD uploaded objects to check integrity.
 
 This can be useful when trying to minimise the number of transactions
 rclone does.
@@ -1276,6 +1276,7 @@ very small even with this flag.
 			Default:  memoryPoolFlushTime,
 			Advanced: true,
 			Help: `How often internal memory buffer pools will be flushed.
+
 Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
 This option controls how often unused buffers will be removed from the pool.`,
 		}, {
@@ -1287,7 +1288,7 @@ This option controls how often unused buffers will be removed from the pool.`,
 			Name:     "disable_http2",
 			Default:  false,
 			Advanced: true,
-			Help: `Disable usage of http2 for S3 backends
+			Help: `Disable usage of http2 for S3 backends.
 
 There is currently an unsolved issue with the s3 (specifically minio) backend
 and HTTP/2.  HTTP/2 is enabled by default for the s3 backend but can be

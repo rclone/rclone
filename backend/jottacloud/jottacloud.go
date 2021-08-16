@@ -86,7 +86,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "trashed_only",
-			Help:     "Only show files that are in the trash.\nThis will show trashed files in their original directory structure.",
+			Help:     "Only show files that are in the trash.\n\nThis will show trashed files in their original directory structure.",
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -122,15 +122,15 @@ func init() {
 func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	switch config.State {
 	case "":
-		return fs.ConfigChooseFixed("auth_type_done", "config_type", `Authentication type`, []fs.OptionExample{{
+		return fs.ConfigChooseFixed("auth_type_done", "config_type", `Authentication type.`, []fs.OptionExample{{
 			Value: "standard",
-			Help:  "Standard authentication - use this if you're a normal Jottacloud user.",
+			Help:  "Standard authentication.\nUse this if you're a normal Jottacloud user.",
 		}, {
 			Value: "legacy",
-			Help:  "Legacy authentication - this is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.",
+			Help:  "Legacy authentication.\nThis is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.",
 		}, {
 			Value: "telia",
-			Help:  "Telia Cloud authentication - use this if you are using Telia Cloud.",
+			Help:  "Telia Cloud authentication.\nUse this if you are using Telia Cloud.",
 		}})
 	case "auth_type_done":
 		// Jump to next state according to config chosen

@@ -70,10 +70,10 @@ var (
 
 // AddFlagsPrefix adds flags for http/auth
 func AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
-	flags.StringVarP(flagSet, &Opt.HtPasswd, prefix+"htpasswd", "", Opt.HtPasswd, "htpasswd file - if not provided no authentication is done")
-	flags.StringVarP(flagSet, &Opt.Realm, prefix+"realm", "", Opt.Realm, "realm for authentication")
-	flags.StringVarP(flagSet, &Opt.BasicUser, prefix+"user", "", Opt.BasicUser, "User name for authentication.")
-	flags.StringVarP(flagSet, &Opt.BasicPass, prefix+"pass", "", Opt.BasicPass, "Password for authentication.")
+	flags.StringVarP(flagSet, &Opt.HtPasswd, prefix+"htpasswd", "", Opt.HtPasswd, "A htpasswd file - if not provided no authentication is done")
+	flags.StringVarP(flagSet, &Opt.Realm, prefix+"realm", "", Opt.Realm, "Realm for authentication")
+	flags.StringVarP(flagSet, &Opt.BasicUser, prefix+"user", "", Opt.BasicUser, "User name for authentication")
+	flags.StringVarP(flagSet, &Opt.BasicPass, prefix+"pass", "", Opt.BasicPass, "Password for authentication")
 	flags.StringVarP(flagSet, &Opt.Salt, prefix+"salt", "", Opt.Salt, "Password hashing salt")
 }
 
