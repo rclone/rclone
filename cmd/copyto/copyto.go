@@ -15,7 +15,7 @@ func init() {
 
 var commandDefinition = &cobra.Command{
 	Use:   "copyto source:path dest:path",
-	Short: `Copy files from source to dest, skipping already copied.`,
+	Short: `Copy files from source to dest, skipping identical files.`,
 	Long: `
 If source:path is a file or directory then it copies it to a file or
 directory named dest:path.
@@ -39,9 +39,9 @@ This will:
         copy it to dst, overwriting existing files if they exist
         see copy command for full details
 
-This doesn't transfer unchanged files, testing by size and
-modification time or MD5SUM.  It doesn't delete files from the
-destination.
+This doesn't transfer files that are identical on src and dst, testing
+by size and modification time or MD5SUM.  It doesn't delete files from
+the destination.
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
 `,
