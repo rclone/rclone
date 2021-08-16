@@ -42,17 +42,20 @@ func init() {
 		Options: []fs.Option{{
 			Name: "api_url",
 			Help: `Sia daemon API URL, like http://sia.daemon.host:9980.
+
 Note that siad must run with --disable-api-security to open API port for other hosts (not recommended).
 Keep default if Sia daemon runs on localhost.`,
 			Default: "http://127.0.0.1:9980",
 		}, {
 			Name: "api_password",
 			Help: `Sia Daemon API Password.
+
 Can be found in the apipassword file located in HOME/.sia/ or in the daemon directory.`,
 			IsPassword: true,
 		}, {
 			Name: "user_agent",
 			Help: `Siad User Agent
+
 Sia daemon requires the 'Sia-Agent' user agent by default for security`,
 			Default:  "Sia-Agent",
 			Advanced: true,
