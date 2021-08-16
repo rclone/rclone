@@ -18,7 +18,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &listLong, "long", "", listLong, "Show the type as well as names.")
+	flags.BoolVarP(cmdFlags, &listLong, "long", "", listLong, "Show the type as well as names")
 }
 
 var commandDefinition = &cobra.Command{

@@ -38,20 +38,20 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",
-			Help:     "URL of http host to connect to",
+			Help:     "URL of http host to connect to.",
 			Required: true,
 			Examples: []fs.OptionExample{{
 				Value: "https://example.com",
-				Help:  "Connect to example.com",
+				Help:  "Connect to example.com.",
 			}, {
 				Value: "https://user:pass@example.com",
-				Help:  "Connect to example.com using a username and password",
+				Help:  "Connect to example.com using a username and password.",
 			}},
 		}, {
 			Name: "headers",
-			Help: `Set HTTP headers for all transactions
+			Help: `Set HTTP headers for all transactions.
 
-Use this to set additional HTTP headers for all transactions
+Use this to set additional HTTP headers for all transactions.
 
 The input format is comma separated list of key,value pairs.  Standard
 [CSV encoding](https://godoc.org/encoding/csv) may be used.
@@ -64,7 +64,7 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 			Advanced: true,
 		}, {
 			Name: "no_slash",
-			Help: `Set this if the site doesn't end directories with /
+			Help: `Set this if the site doesn't end directories with /.
 
 Use this if your target website does not use / on the end of
 directories.
@@ -80,7 +80,7 @@ directories.`,
 			Advanced: true,
 		}, {
 			Name: "no_head",
-			Help: `Don't use HEAD requests to find file sizes in dir listing
+			Help: `Don't use HEAD requests to find file sizes in dir listing.
 
 If your site is being very slow to load then you can try this option.
 Normally rclone does a HEAD request for each potential file in a

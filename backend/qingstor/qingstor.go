@@ -40,36 +40,36 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:    "env_auth",
-			Help:    "Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.",
+			Help:    "Get QingStor credentials from runtime.\n\nOnly applies if access_key_id and secret_access_key is blank.",
 			Default: false,
 			Examples: []fs.OptionExample{{
 				Value: "false",
-				Help:  "Enter QingStor credentials in the next step",
+				Help:  "Enter QingStor credentials in the next step.",
 			}, {
 				Value: "true",
-				Help:  "Get QingStor credentials from the environment (env vars or IAM)",
+				Help:  "Get QingStor credentials from the environment (env vars or IAM).",
 			}},
 		}, {
 			Name: "access_key_id",
-			Help: "QingStor Access Key ID\nLeave blank for anonymous access or runtime credentials.",
+			Help: "QingStor Access Key ID.\n\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "secret_access_key",
-			Help: "QingStor Secret Access Key (password)\nLeave blank for anonymous access or runtime credentials.",
+			Help: "QingStor Secret Access Key (password).\n\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "endpoint",
-			Help: "Enter an endpoint URL to connection QingStor API.\nLeave blank will use the default value \"https://qingstor.com:443\"",
+			Help: "Enter an endpoint URL to connection QingStor API.\n\nLeave blank will use the default value \"https://qingstor.com:443\".",
 		}, {
 			Name: "zone",
-			Help: "Zone to connect to.\nDefault is \"pek3a\".",
+			Help: "Zone to connect to.\n\nDefault is \"pek3a\".",
 			Examples: []fs.OptionExample{{
 				Value: "pek3a",
-				Help:  "The Beijing (China) Three Zone\nNeeds location constraint pek3a.",
+				Help:  "The Beijing (China) Three Zone.\nNeeds location constraint pek3a.",
 			}, {
 				Value: "sh1a",
-				Help:  "The Shanghai (China) First Zone\nNeeds location constraint sh1a.",
+				Help:  "The Shanghai (China) First Zone.\nNeeds location constraint sh1a.",
 			}, {
 				Value: "gd2a",
-				Help:  "The Guangdong (China) Second Zone\nNeeds location constraint gd2a.",
+				Help:  "The Guangdong (China) Second Zone.\nNeeds location constraint gd2a.",
 			}},
 		}, {
 			Name:     "connection_retries",
@@ -78,7 +78,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name: "upload_cutoff",
-			Help: `Cutoff for switching to chunked upload
+			Help: `Cutoff for switching to chunked upload.
 
 Any files larger than this will be uploaded in chunks of chunk_size.
 The minimum is 0 and the maximum is 5 GiB.`,

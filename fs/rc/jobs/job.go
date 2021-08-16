@@ -317,11 +317,11 @@ func init() {
 		Path:  "job/status",
 		Fn:    rcJobStatus,
 		Title: "Reads the status of the job ID",
-		Help: `Parameters
+		Help: `Parameters:
 
-- jobid - id of the job (integer)
+- jobid - id of the job (integer).
 
-Results
+Results:
 
 - finished - boolean
 - duration - time in seconds that the job ran for
@@ -362,11 +362,11 @@ func init() {
 		Path:  "job/list",
 		Fn:    rcJobList,
 		Title: "Lists the IDs of the running jobs",
-		Help: `Parameters - None
+		Help: `Parameters: None.
 
-Results
+Results:
 
-- jobids - array of integer job ids
+- jobids - array of integer job ids.
 `,
 	})
 }
@@ -383,9 +383,9 @@ func init() {
 		Path:  "job/stop",
 		Fn:    rcJobStop,
 		Title: "Stop the running job",
-		Help: `Parameters
+		Help: `Parameters:
 
-- jobid - id of the job (integer)
+- jobid - id of the job (integer).
 `,
 	})
 }

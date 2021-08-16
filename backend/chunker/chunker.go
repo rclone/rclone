@@ -150,6 +150,7 @@ func init() {
 			Name:     "remote",
 			Required: true,
 			Help: `Remote to chunk/unchunk.
+
 Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).`,
 		}, {
@@ -163,6 +164,7 @@ Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 			Hide:     fs.OptionHideCommandLine,
 			Default:  `*.rclone_chunk.###`,
 			Help: `String format of chunk file names.
+
 The two placeholders are: base file name (*) and chunk number (#...).
 There must be one and only one asterisk and one or more consecutive hash characters.
 If chunk number has less digits than the number of hashes, it is left-padded by zeros.
@@ -174,48 +176,57 @@ Possible chunk files are ignored if their name does not match given format.`,
 			Hide:     fs.OptionHideCommandLine,
 			Default:  1,
 			Help: `Minimum valid chunk number. Usually 0 or 1.
+
 By default chunk numbers start from 1.`,
 		}, {
 			Name:     "meta_format",
 			Advanced: true,
 			Hide:     fs.OptionHideCommandLine,
 			Default:  "simplejson",
-			Help: `Format of the metadata object or "none". By default "simplejson".
+			Help: `Format of the metadata object or "none".
+
+By default "simplejson".
 Metadata is a small JSON file named after the composite file.`,
 			Examples: []fs.OptionExample{{
 				Value: "none",
-				Help:  `Do not use metadata files at all. Requires hash type "none".`,
+				Help: `Do not use metadata files at all.
+Requires hash type "none".`,
 			}, {
 				Value: "simplejson",
 				Help: `Simple JSON supports hash sums and chunk validation.
+
 It has the following fields: ver, size, nchunks, md5, sha1.`,
 			}},
 		}, {
 			Name:     "hash_type",
 			Advanced: false,
 			Default:  "md5",
-			Help:     `Choose how chunker handles hash sums. All modes but "none" require metadata.`,
+			Help: `Choose how chunker handles hash sums.
+
+All modes but "none" require metadata.`,
 			Examples: []fs.OptionExample{{
 				Value: "none",
-				Help:  `Pass any hash supported by wrapped remote for non-chunked files, return nothing otherwise`,
+				Help: `Pass any hash supported by wrapped remote for non-chunked files.
+Return nothing otherwise.`,
 			}, {
 				Value: "md5",
-				Help:  `MD5 for composite files`,
+				Help:  `MD5 for composite files.`,
 			}, {
 				Value: "sha1",
-				Help:  `SHA1 for composite files`,
+				Help:  `SHA1 for composite files.`,
 			}, {
 				Value: "md5all",
-				Help:  `MD5 for all files`,
+				Help:  `MD5 for all files.`,
 			}, {
 				Value: "sha1all",
-				Help:  `SHA1 for all files`,
+				Help:  `SHA1 for all files.`,
 			}, {
 				Value: "md5quick",
-				Help:  `Copying a file to chunker will request MD5 from the source falling back to SHA1 if unsupported`,
+				Help: `Copying a file to chunker will request MD5 from the source.
+Falling back to SHA1 if unsupported.`,
 			}, {
 				Value: "sha1quick",
-				Help:  `Similar to "md5quick" but prefers SHA1 over MD5`,
+				Help:  `Similar to "md5quick" but prefers SHA1 over MD5.`,
 			}},
 		}, {
 			Name:     "fail_hard",

@@ -110,19 +110,19 @@ func init() {
 			Advanced: true,
 		}, {
 			Name: "box_config_file",
-			Help: "Box App config.json location\nLeave blank normally." + env.ShellExpandHelp,
+			Help: "Box App config.json location\n\nLeave blank normally." + env.ShellExpandHelp,
 		}, {
 			Name: "access_token",
-			Help: "Box App Primary Access Token\nLeave blank normally.",
+			Help: "Box App Primary Access Token\n\nLeave blank normally.",
 		}, {
 			Name:    "box_sub_type",
 			Default: "user",
 			Examples: []fs.OptionExample{{
 				Value: "user",
-				Help:  "Rclone should act on behalf of a user",
+				Help:  "Rclone should act on behalf of a user.",
 			}, {
 				Value: "enterprise",
-				Help:  "Rclone should act on behalf of a service account",
+				Help:  "Rclone should act on behalf of a service account.",
 			}},
 		}, {
 			Name:     "upload_cutoff",

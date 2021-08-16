@@ -129,12 +129,12 @@ Note that the chunks will be buffered into memory.`,
 			Advanced: true,
 		}, {
 			Name:     "drive_id",
-			Help:     "The ID of the drive to use",
+			Help:     "The ID of the drive to use.",
 			Default:  "",
 			Advanced: true,
 		}, {
 			Name:     "drive_type",
-			Help:     "The type of the drive ( " + driveTypePersonal + " | " + driveTypeBusiness + " | " + driveTypeSharepoint + " )",
+			Help:     "The type of the drive (" + driveTypePersonal + " | " + driveTypeBusiness + " | " + driveTypeSharepoint + ").",
 			Default:  "",
 			Advanced: true,
 		}, {
@@ -165,7 +165,7 @@ fall back to normal copy (which will be slightly slower).`,
 		}, {
 			Name:    "no_versions",
 			Default: false,
-			Help: `Remove all versions on modifying operations
+			Help: `Remove all versions on modifying operations.
 
 Onedrive for business creates versions when rclone uploads new files
 overwriting an existing one and when it sets the modification time.
@@ -186,10 +186,10 @@ this flag there.
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "anonymous",
-				Help:  "Anyone with the link has access, without needing to sign in. This may include people outside of your organization. Anonymous link support may be disabled by an administrator.",
+				Help:  "Anyone with the link has access, without needing to sign in.\nThis may include people outside of your organization.\nAnonymous link support may be disabled by an administrator.",
 			}, {
 				Value: "organization",
-				Help:  "Anyone signed into your organization (tenant) can use the link to get access. Only available in OneDrive for Business and SharePoint.",
+				Help:  "Anyone signed into your organization (tenant) can use the link to get access.\nOnly available in OneDrive for Business and SharePoint.",
 			}},
 		}, {
 			Name:     "link_type",
@@ -399,7 +399,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			Help:  "Root Sharepoint site",
 		}, {
 			Value: "url",
-			Help:  "Sharepoint site name or URL (e.g. mysite or https://contoso.sharepoint.com/sites/mysite)",
+			Help:  "Sharepoint site name or URL\nE.g. mysite or https://contoso.sharepoint.com/sites/mysite",
 		}, {
 			Value: "search",
 			Help:  "Search for a Sharepoint site",
@@ -411,7 +411,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 			Help:  "Type in SiteID (advanced)",
 		}, {
 			Value: "path",
-			Help:  "Sharepoint server-relative path (advanced, e.g. /teams/hr)",
+			Help:  "Sharepoint server-relative path (advanced)\nE.g. /teams/hr",
 		}})
 	case "choose_type_done":
 		// Jump to next state according to config chosen

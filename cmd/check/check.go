@@ -32,7 +32,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by downloading rather than with hash.")
+	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by downloading rather than with hash")
 	flags.StringVarP(cmdFlags, &checkFileHashType, "checkfile", "C", checkFileHashType, "Treat source:path as a SUM file with hashes of given type")
 	AddFlags(cmdFlags)
 }

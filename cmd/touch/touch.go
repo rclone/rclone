@@ -30,10 +30,10 @@ const (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &notCreateNewFile, "no-create", "C", false, "Do not create the file if it does not exist. Implied with --recursive.")
-	flags.StringVarP(cmdFlags, &timeAsArgument, "timestamp", "t", "", "Use specified time instead of the current time of day.")
-	flags.BoolVarP(cmdFlags, &localTime, "localtime", "", false, "Use localtime for timestamp, not UTC.")
-	flags.BoolVarP(cmdFlags, &recursive, "recursive", "R", false, "Recursively touch all files.")
+	flags.BoolVarP(cmdFlags, &notCreateNewFile, "no-create", "C", false, "Do not create the file if it does not exist (implied with --recursive)")
+	flags.StringVarP(cmdFlags, &timeAsArgument, "timestamp", "t", "", "Use specified time instead of the current time of day")
+	flags.BoolVarP(cmdFlags, &localTime, "localtime", "", false, "Use localtime for timestamp, not UTC")
+	flags.BoolVarP(cmdFlags, &recursive, "recursive", "R", false, "Recursively touch all files")
 }
 
 var commandDefinition = &cobra.Command{

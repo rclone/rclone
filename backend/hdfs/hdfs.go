@@ -19,23 +19,23 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "namenode",
-			Help:     "hadoop name node and port",
+			Help:     "Hadoop name node and port.",
 			Required: true,
 			Examples: []fs.OptionExample{{
 				Value: "namenode:8020",
-				Help:  "Connect to host namenode at port 8020",
+				Help:  "Connect to host namenode at port 8020.",
 			}},
 		}, {
 			Name:     "username",
-			Help:     "hadoop user name",
+			Help:     "Hadoop user name.",
 			Required: false,
 			Examples: []fs.OptionExample{{
 				Value: "root",
-				Help:  "Connect to hdfs as root",
+				Help:  "Connect to hdfs as root.",
 			}},
 		}, {
 			Name: "service_principal_name",
-			Help: `Kerberos service principal name for the namenode
+			Help: `Kerberos service principal name for the namenode.
 
 Enables KERBEROS authentication. Specifies the Service Principal Name
 (SERVICE/FQDN) for the namenode.`,
@@ -47,7 +47,7 @@ Enables KERBEROS authentication. Specifies the Service Principal Name
 			Advanced: true,
 		}, {
 			Name: "data_transfer_protection",
-			Help: `Kerberos data transfer protection: authentication|integrity|privacy
+			Help: `Kerberos data transfer protection: authentication|integrity|privacy.
 
 Specifies whether or not authentication, data signature integrity
 checks, and wire encryption is required when communicating the the

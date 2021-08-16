@@ -65,7 +65,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",
-			Help:     "URL of the Enterprise File Fabric to connect to",
+			Help:     "URL of the Enterprise File Fabric to connect to.",
 			Required: true,
 			Examples: []fs.OptionExample{{
 				Value: "https://storagemadeeasy.com",
@@ -79,14 +79,15 @@ func init() {
 			}},
 		}, {
 			Name: "root_folder_id",
-			Help: `ID of the root folder
+			Help: `ID of the root folder.
+
 Leave blank normally.
 
 Fill in to make rclone start with directory of a given ID.
 `,
 		}, {
 			Name: "permanent_token",
-			Help: `Permanent Authentication Token
+			Help: `Permanent Authentication Token.
 
 A Permanent Authentication Token can be created in the Enterprise File
 Fabric, on the users Dashboard under Security, there is an entry
@@ -99,7 +100,7 @@ For more info see: https://docs.storagemadeeasy.com/organisationcloud/api-tokens
 `,
 		}, {
 			Name: "token",
-			Help: `Session Token
+			Help: `Session Token.
 
 This is a session token which rclone caches in the config file. It is
 usually valid for 1 hour.
@@ -109,14 +110,14 @@ Don't set this value - rclone will set it automatically.
 			Advanced: true,
 		}, {
 			Name: "token_expiry",
-			Help: `Token expiry time
+			Help: `Token expiry time.
 
 Don't set this value - rclone will set it automatically.
 `,
 			Advanced: true,
 		}, {
 			Name: "version",
-			Help: `Version read from the file fabric
+			Help: `Version read from the file fabric.
 
 Don't set this value - rclone will set it automatically.
 `,

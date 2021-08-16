@@ -139,34 +139,34 @@ func init() {
 			Help: "Sugarsync Access Key ID.\n\nLeave blank to use rclone's.",
 		}, {
 			Name: "private_access_key",
-			Help: "Sugarsync Private Access Key\n\nLeave blank to use rclone's.",
+			Help: "Sugarsync Private Access Key.\n\nLeave blank to use rclone's.",
 		}, {
 			Name:    "hard_delete",
 			Help:    "Permanently delete files if true\notherwise put them in the deleted files.",
 			Default: false,
 		}, {
 			Name:     "refresh_token",
-			Help:     "Sugarsync refresh token\n\nLeave blank normally, will be auto configured by rclone.",
+			Help:     "Sugarsync refresh token.\n\nLeave blank normally, will be auto configured by rclone.",
 			Advanced: true,
 		}, {
 			Name:     "authorization",
-			Help:     "Sugarsync authorization\n\nLeave blank normally, will be auto configured by rclone.",
+			Help:     "Sugarsync authorization.\n\nLeave blank normally, will be auto configured by rclone.",
 			Advanced: true,
 		}, {
 			Name:     "authorization_expiry",
-			Help:     "Sugarsync authorization expiry\n\nLeave blank normally, will be auto configured by rclone.",
+			Help:     "Sugarsync authorization expiry.\n\nLeave blank normally, will be auto configured by rclone.",
 			Advanced: true,
 		}, {
 			Name:     "user",
-			Help:     "Sugarsync user\n\nLeave blank normally, will be auto configured by rclone.",
+			Help:     "Sugarsync user.\n\nLeave blank normally, will be auto configured by rclone.",
 			Advanced: true,
 		}, {
 			Name:     "root_id",
-			Help:     "Sugarsync root id\n\nLeave blank normally, will be auto configured by rclone.",
+			Help:     "Sugarsync root id.\n\nLeave blank normally, will be auto configured by rclone.",
 			Advanced: true,
 		}, {
 			Name:     "deleted_id",
-			Help:     "Sugarsync deleted folder id\n\nLeave blank normally, will be auto configured by rclone.",
+			Help:     "Sugarsync deleted folder id.\n\nLeave blank normally, will be auto configured by rclone.",
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,

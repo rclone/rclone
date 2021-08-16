@@ -98,13 +98,13 @@ func init() {
 				}},
 			{
 				Name:     "access_grant",
-				Help:     "Access Grant.",
+				Help:     "Access grant.",
 				Required: false,
 				Provider: "existing",
 			},
 			{
 				Name:     "satellite_address",
-				Help:     "Satellite Address. Custom satellite address should match the format: `<nodeid>@<address>:<port>`.",
+				Help:     "Satellite address.\n\nCustom satellite address should match the format: `<nodeid>@<address>:<port>`.",
 				Required: false,
 				Provider: newProvider,
 				Default:  "us-central-1.tardigrade.io",
@@ -122,13 +122,13 @@ func init() {
 			},
 			{
 				Name:     "api_key",
-				Help:     "API Key.",
+				Help:     "API key.",
 				Required: false,
 				Provider: newProvider,
 			},
 			{
 				Name:     "passphrase",
-				Help:     "Encryption Passphrase. To access existing objects enter passphrase used for uploading.",
+				Help:     "Encryption passphrase.\n\nTo access existing objects enter passphrase used for uploading.",
 				Required: false,
 				Provider: newProvider,
 			},
