@@ -275,9 +275,28 @@ If you add a new general flag (not for a backend), then document it in
 alphabetical order.
 
 If you add a new backend option/flag, then it should be documented in
-the source file in the `Help:` field.  The first line of this is used
-for the flag help, the remainder is shown to the user in `rclone
-config` and is added to the docs with `make backenddocs`.
+the source file in the `Help:` field.
+
+  * Start with the most important information about the option,
+    as a single sentence on a single line.
+    * This text will be used for the command-line flag help.
+    * It will be combined with other information, such as any default value,
+      and the result will look odd if not written as a single sentence.
+    * It should end with a period/full stop character, which will be shown
+      in docs but automatically removed when producing the flag help.
+    * Try to keep it below 80 characters, to reduce text wrapping in the terminal.
+  * More details can be added in a new paragraph, after an empty line (`"\n\n"`).
+    * Like with docs generated from Markdown, a single line break is ignored
+      and two line breaks creates a new paragraph.
+    * This text will be shown to the user in `rclone config`
+      and in the docs (where it will be added by `make backenddocs`,
+      normally run some time before next release).
+  * To create options of enumeration type use the `Examples:` field.
+    * Each example value have their own `Help:` field, but they are treated
+      a bit different than the main option help text. They will be shown
+      as an unordered list, therefore a single line break is enough to
+      create a new list item. Also, for enumeration texts like name of
+      countries, it looks better without an ending period/full stop character.
 
 The only documentation you need to edit are the `docs/content/*.md`
 files.  The `MANUAL.*`, `rclone.1`, web site, etc. are all auto generated
@@ -286,7 +305,9 @@ website` targets in the Makefile if you are interested in how.  You
 don't need to run these when adding a feature.
 
 Documentation for rclone sub commands is with their code, e.g.
-`cmd/ls/ls.go`.
+`cmd/ls/ls.go`. Write flag help strings as a single sentence on a single
+line, without a period/full stop character at the end, as it will be
+combined unmodified with other information (such as any default value).
 
 Note that you can use [GitHub's online editor](https://help.github.com/en/github/managing-files-in-a-repository/editing-files-in-another-users-repository)
 for small changes in the docs which makes it very easy.
