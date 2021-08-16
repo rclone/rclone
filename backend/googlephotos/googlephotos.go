@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/googlephotos/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -28,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/log"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
@@ -149,16 +151,24 @@ listings and transferred.
 Without this flag, archived media will not be visible in directory
 listings and won't be transferred.`,
 			Advanced: true,
+		}, {
+			Name:     config.ConfigEncoding,
+			Help:     config.ConfigEncodingHelp,
+			Advanced: true,
+			Default: (encoder.Base |
+				encoder.EncodeCrLf |
+				encoder.EncodeInvalidUtf8),
 		}}...),
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	ReadOnly        bool `config:"read_only"`
-	ReadSize        bool `config:"read_size"`
-	StartYear       int  `config:"start_year"`
-	IncludeArchived bool `config:"include_archived"`
+	ReadOnly        bool                 `config:"read_only"`
+	ReadSize        bool                 `config:"read_size"`
+	StartYear       int                  `config:"start_year"`
+	IncludeArchived bool                 `config:"include_archived"`
+	Enc             encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote storage server
@@ -496,7 +506,9 @@ func (f *Fs) listAlbums(ctx context.Context, shared bool) (all *albums, err erro
 			lastID = newAlbums[len(newAlbums)-1].ID
 		}
 		for i := range newAlbums {
-			all.add(&newAlbums[i])
+			anAlbum := newAlbums[i]
+			anAlbum.Title = f.opt.Enc.FromStandardPath(anAlbum.Title)
+			all.add(&anAlbum)
 		}
 		if result.NextPageToken == "" {
 			break
