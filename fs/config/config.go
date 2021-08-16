@@ -51,7 +51,7 @@ const (
 	ConfigEncoding = "encoding"
 
 	// ConfigEncodingHelp is the help for ConfigEncoding
-	ConfigEncodingHelp = "This sets the encoding for the backend.\n\nSee: the [encoding section in the overview](/overview/#encoding) for more info."
+	ConfigEncodingHelp = "This sets the encoding for the backend.\n\nSee the [encoding section in the overview](/overview/#encoding) for more info."
 
 	// ConfigAuthorize indicates that we just want "rclone authorize"
 	ConfigAuthorize = "config_authorize"

@@ -21,7 +21,7 @@ func init() {
 		AuthRequired: true,
 		Fn:           rcList,
 		Title:        "List the given remote and path in JSON format",
-		Help: `This takes the following parameters
+		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
@@ -36,7 +36,7 @@ func init() {
     - filesOnly - If set only show files
     - hashTypes - array of strings of hash types to show if showHash set
 
-The result is
+Returns:
 
 - list
     - This is an array of objects as described in the lsjson command
@@ -121,7 +121,7 @@ func init() {
 		AuthRequired: true,
 		Fn:           rcAbout,
 		Title:        "Return the space used on the remote",
-		Help: `This takes the following parameters
+		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
 
@@ -167,7 +167,7 @@ func init() {
 				return rcMoveOrCopyFile(ctx, in, copy)
 			},
 			Title: name + " a file from source remote to destination remote",
-			Help: `This takes the following parameters
+			Help: `This takes the following parameters:
 
 - srcFs - a remote name string e.g. "drive:" for the source
 - srcRemote - a path within that remote e.g. "file.txt" for the source
@@ -202,7 +202,7 @@ func init() {
 		{name: "mkdir", title: "Make a destination directory or container"},
 		{name: "rmdir", title: "Remove an empty directory or container"},
 		{name: "purge", title: "Remove a directory or container and all of its contents"},
-		{name: "rmdirs", title: "Remove all the empty directories in the path", help: "- leaveRoot - boolean, set to true not to delete the root\n"},
+		{name: "rmdirs", title: "Remove all the empty directories in the path", help: "- leaveRoot - boolean, set to true not to delete the root"},
 		{name: "delete", title: "Remove files in the path", noRemote: true},
 		{name: "deletefile", title: "Remove the single file pointed to"},
 		{name: "copyurl", title: "Copy the URL to the object", help: "- url - string, URL to read from\n - autoFilename - boolean, set to true to retrieve destination file name from url"},
@@ -222,7 +222,7 @@ func init() {
 				return rcSingleCommand(ctx, in, op.name, op.noRemote)
 			},
 			Title: op.title,
-			Help: `This takes the following parameters
+			Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
 ` + remote + op.help + `
@@ -324,11 +324,11 @@ func init() {
 		AuthRequired: true,
 		Fn:           rcSize,
 		Title:        "Count the number of bytes and files in remote",
-		Help: `This takes the following parameters
+		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:path/to/dir"
 
-Returns
+Returns:
 
 - count - number of files
 - bytes - number of bytes in those files
@@ -360,14 +360,14 @@ func init() {
 		AuthRequired: true,
 		Fn:           rcPublicLink,
 		Title:        "Create or retrieve a public link to the given file or folder.",
-		Help: `This takes the following parameters
+		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - unlink - boolean - if set removes the link rather than adding it (optional)
 - expire - string - the expiry time of the link e.g. "1d" (optional)
 
-Returns
+Returns:
 
 - url - URL of the resource
 
@@ -401,7 +401,7 @@ func init() {
 		Path:  "operations/fsinfo",
 		Fn:    rcFsInfo,
 		Title: "Return information about the remote",
-		Help: `This takes the following parameters
+		Help: `This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
 
@@ -480,18 +480,18 @@ func init() {
 		AuthRequired: true,
 		Fn:           rcBackend,
 		Title:        "Runs a backend command.",
-		Help: `This takes the following parameters
+		Help: `This takes the following parameters:
 
 - command - a string with the command name
 - fs - a remote name string e.g. "drive:"
 - arg - a list of arguments for the backend command
 - opt - a map of string to string of options
 
-Returns
+Returns:
 
 - result - result from the backend command
 
-For example
+Example:
 
     rclone rc backend/command command=noop fs=. -o echo=yes -o blue -a path1 -a path2
 

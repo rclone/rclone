@@ -163,13 +163,13 @@ func init() {
 			Advanced: true,
 		}, {
 			Name: "root_folder_id",
-			Help: `ID of the root folder
+			Help: `ID of the root folder.
 
 Leave blank to access "Personal Folders".  You can use one of the
 standard values here or any folder ID (long hex number ID).`,
 			Examples: []fs.OptionExample{{
 				Value: "",
-				Help:  `Access the Personal Folders. (Default)`,
+				Help:  `Access the Personal Folders (default).`,
 			}, {
 				Value: "favorites",
 				Help:  "Access the Favorites folder.",
@@ -186,7 +186,9 @@ standard values here or any folder ID (long hex number ID).`,
 		}, {
 			Name:    "chunk_size",
 			Default: defaultChunkSize,
-			Help: `Upload chunk size. Must a power of 2 >= 256k.
+			Help: `Upload chunk size.
+
+Must a power of 2 >= 256k.
 
 Making this larger will improve performance, but note that each chunk
 is buffered in memory one per transfer.

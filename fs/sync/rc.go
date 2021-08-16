@@ -20,7 +20,7 @@ func init() {
 				return rcSyncCopyMove(ctx, in, name)
 			},
 			Title: name + " a directory from source remote to destination remote",
-			Help: `This takes the following parameters
+			Help: `This takes the following parameters:
 
 - srcFs - a remote name string e.g. "drive:src" for the source
 - dstFs - a remote name string e.g. "drive:dst" for the destination

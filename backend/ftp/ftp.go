@@ -48,7 +48,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "host",
-			Help:     "FTP host to connect to",
+			Help:     "FTP host to connect to.",
 			Required: true,
 			Examples: []fs.OptionExample{{
 				Value: "ftp.example.com",
@@ -56,18 +56,19 @@ func init() {
 			}},
 		}, {
 			Name: "user",
-			Help: "FTP username, leave blank for current username, " + currentUser,
+			Help: "FTP username, leave blank for current username, " + currentUser + ".",
 		}, {
 			Name: "port",
-			Help: "FTP port, leave blank to use default (21)",
+			Help: "FTP port, leave blank to use default (21).",
 		}, {
 			Name:       "pass",
-			Help:       "FTP password",
+			Help:       "FTP password.",
 			IsPassword: true,
 			Required:   true,
 		}, {
 			Name: "tls",
-			Help: `Use Implicit FTPS (FTP over TLS)
+			Help: `Use Implicit FTPS (FTP over TLS).
+
 When using implicit FTP over TLS the client connects using TLS
 right from the start which breaks compatibility with
 non-TLS-aware servers. This is usually served over port 990 rather
@@ -75,35 +76,36 @@ than port 21. Cannot be used in combination with explicit FTP.`,
 			Default: false,
 		}, {
 			Name: "explicit_tls",
-			Help: `Use Explicit FTPS (FTP over TLS)
+			Help: `Use Explicit FTPS (FTP over TLS).
+
 When using explicit FTP over TLS the client explicitly requests
 security from the server in order to upgrade a plain text connection
 to an encrypted one. Cannot be used in combination with implicit FTP.`,
 			Default: false,
 		}, {
 			Name:     "concurrency",
-			Help:     "Maximum number of FTP simultaneous connections, 0 for unlimited",
+			Help:     "Maximum number of FTP simultaneous connections, 0 for unlimited.",
 			Default:  0,
 			Advanced: true,
 		}, {
 			Name:     "no_check_certificate",
-			Help:     "Do not verify the TLS certificate of the server",
+			Help:     "Do not verify the TLS certificate of the server.",
 			Default:  false,
 			Advanced: true,
 		}, {
 			Name:     "disable_epsv",
-			Help:     "Disable using EPSV even if server advertises support",
+			Help:     "Disable using EPSV even if server advertises support.",
 			Default:  false,
 			Advanced: true,
 		}, {
 			Name:     "disable_mlsd",
-			Help:     "Disable using MLSD even if server advertises support",
+			Help:     "Disable using MLSD even if server advertises support.",
 			Default:  false,
 			Advanced: true,
 		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
-			Help: `Max time before closing idle connections
+			Help: `Max time before closing idle connections.
 
 If no connections have been returned to the connection pool in the time
 given, rclone will empty the connection pool.

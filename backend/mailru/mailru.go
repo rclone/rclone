@@ -87,11 +87,11 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "user",
-			Help:     "User name (usually email)",
+			Help:     "User name (usually email).",
 			Required: true,
 		}, {
 			Name:       "pass",
-			Help:       "Password",
+			Help:       "Password.",
 			Required:   true,
 			IsPassword: true,
 		}, {
@@ -99,6 +99,7 @@ func init() {
 			Default:  true,
 			Advanced: false,
 			Help: `Skip full upload if there is another file with same data hash.
+
 This feature is called "speedup" or "put by hash". It is especially efficient
 in case of generally available files like popular books, video or audio clips,
 because files are searched by hash in all accounts of all mailru users.
@@ -119,6 +120,7 @@ streaming or partial uploads), it will not even try this optimization.`,
 			Default:  "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf",
 			Advanced: true,
 			Help: `Comma separated list of file name patterns eligible for speedup (put by hash).
+
 Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -137,8 +139,9 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Name:     "speedup_max_disk",
 			Default:  fs.SizeSuffix(3 * 1024 * 1024 * 1024),
 			Advanced: true,
-			Help: `This option allows you to disable speedup (put by hash) for large files
-(because preliminary hashing can exhaust you RAM or disk space)`,
+			Help: `This option allows you to disable speedup (put by hash) for large files.
+
+Reason is that preliminary hashing can exhaust your RAM or disk space.`,
 			Examples: []fs.OptionExample{{
 				Value: "0",
 				Help:  "Completely disable speedup (put by hash).",
@@ -168,7 +171,7 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Name:     "check_hash",
 			Default:  true,
 			Advanced: true,
-			Help:     "What should copy do if file checksum is mismatched or invalid",
+			Help:     "What should copy do if file checksum is mismatched or invalid.",
 			Examples: []fs.OptionExample{{
 				Value: "true",
 				Help:  "Fail with error.",
@@ -182,6 +185,7 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
 			Help: `HTTP user agent used internally by client.
+
 Defaults to "rclone/VERSION" or "--user-agent" provided on command line.`,
 		}, {
 			Name:     "quirks",
@@ -189,6 +193,7 @@ Defaults to "rclone/VERSION" or "--user-agent" provided on command line.`,
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
 			Help: `Comma separated list of internal maintenance flags.
+
 This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.

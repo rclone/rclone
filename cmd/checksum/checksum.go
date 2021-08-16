@@ -18,7 +18,7 @@ var download = false
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by hashing the contents.")
+	flags.BoolVarP(cmdFlags, &download, "download", "", download, "Check by hashing the contents")
 	check.AddFlags(cmdFlags)
 }
 

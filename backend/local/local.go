@@ -44,11 +44,11 @@ func init() {
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "nounc",
-			Help:     "Disable UNC (long path names) conversion on Windows",
+			Help:     "Disable UNC (long path names) conversion on Windows.",
 			Advanced: runtime.GOOS != "windows",
 			Examples: []fs.OptionExample{{
 				Value: "true",
-				Help:  "Disables long file names",
+				Help:  "Disables long file names.",
 			}},
 		}, {
 			Name:     "copy_links",
@@ -59,7 +59,7 @@ func init() {
 			Advanced: true,
 		}, {
 			Name:     "links",
-			Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension",
+			Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension.",
 			Default:  false,
 			NoPrefix: true,
 			ShortOpt: "l",
@@ -67,6 +67,7 @@ func init() {
 		}, {
 			Name: "skip_links",
 			Help: `Don't warn about skipped symlinks.
+
 This flag disables warning messages on skipped symlinks or junction
 points, as you explicitly acknowledge that they should be skipped.`,
 			Default:  false,
@@ -74,21 +75,21 @@ points, as you explicitly acknowledge that they should be skipped.`,
 			Advanced: true,
 		}, {
 			Name: "zero_size_links",
-			Help: `Assume the Stat size of links is zero (and read them instead) (Deprecated)
+			Help: `Assume the Stat size of links is zero (and read them instead) (deprecated).
 
-Rclone used to use the Stat size of links as the link size, but this fails in quite a few places
+Rclone used to use the Stat size of links as the link size, but this fails in quite a few places:
 
 - Windows
 - On some virtual filesystems (such ash LucidLink)
 - Android
 
-So rclone now always reads the link
+So rclone now always reads the link.
 `,
 			Default:  false,
 			Advanced: true,
 		}, {
 			Name: "unicode_normalization",
-			Help: `Apply unicode NFC normalization to paths and filenames
+			Help: `Apply unicode NFC normalization to paths and filenames.
 
 This flag can be used to normalize file names into unicode NFC form
 that are read from the local filesystem.
@@ -106,7 +107,7 @@ routine so this flag shouldn't normally be used.`,
 			Advanced: true,
 		}, {
 			Name: "no_check_updated",
-			Help: `Don't check to see if the files change during upload
+			Help: `Don't check to see if the files change during upload.
 
 Normally rclone checks the size and modification time of files as they
 are being uploaded and aborts with a message which starts "can't copy
@@ -152,7 +153,7 @@ to override the default choice.`,
 			Advanced: true,
 		}, {
 			Name: "case_insensitive",
-			Help: `Force the filesystem to report itself as case insensitive
+			Help: `Force the filesystem to report itself as case insensitive.
 
 Normally the local backend declares itself as case insensitive on
 Windows/macOS and case sensitive for everything else.  Use this flag
@@ -161,7 +162,7 @@ to override the default choice.`,
 			Advanced: true,
 		}, {
 			Name: "no_preallocate",
-			Help: `Disable preallocation of disk space for transferred files
+			Help: `Disable preallocation of disk space for transferred files.
 
 Preallocation of disk space helps prevent filesystem fragmentation.
 However, some virtual filesystem layers (such as Google Drive File
@@ -172,7 +173,7 @@ Use this flag to disable preallocation.`,
 			Advanced: true,
 		}, {
 			Name: "no_sparse",
-			Help: `Disable sparse files for multi-thread downloads
+			Help: `Disable sparse files for multi-thread downloads.
 
 On Windows platforms rclone will make sparse files when doing
 multi-thread downloads. This avoids long pauses on large files where
@@ -182,7 +183,7 @@ cause disk fragmentation and can be slow to work with.`,
 			Advanced: true,
 		}, {
 			Name: "no_set_modtime",
-			Help: `Disable setting modtime
+			Help: `Disable setting modtime.
 
 Normally rclone updates modification time of files after they are done
 uploading. This can cause permissions issues on Linux platforms when 

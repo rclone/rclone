@@ -30,7 +30,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "upstreams",
-			Help:     "List of space separated upstreams.\nCan be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.\n",
+			Help:     "List of space separated upstreams.\n\nCan be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.",
 			Required: true,
 		}, {
 			Name:     "action_policy",
@@ -49,7 +49,7 @@ func init() {
 			Default:  "ff",
 		}, {
 			Name:     "cache_time",
-			Help:     "Cache time of usage and free space (in seconds). This option is only useful when a path preserving policy is used.",
+			Help:     "Cache time of usage and free space (in seconds).\n\nThis option is only useful when a path preserving policy is used.",
 			Required: true,
 			Default:  120,
 		}},

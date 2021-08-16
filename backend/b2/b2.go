@@ -75,15 +75,15 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "account",
-			Help:     "Account ID or Application Key ID",
+			Help:     "Account ID or Application Key ID.",
 			Required: true,
 		}, {
 			Name:     "key",
-			Help:     "Application Key",
+			Help:     "Application Key.",
 			Required: true,
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for the service.\nLeave blank normally.",
+			Help:     "Endpoint for the service.\n\nLeave blank normally.",
 			Advanced: true,
 		}, {
 			Name: "test_mode",
@@ -103,7 +103,7 @@ in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration
 			Advanced: true,
 		}, {
 			Name:     "versions",
-			Help:     "Include old versions in directory listings.\nNote that when using this no file write operations are permitted,\nso you can't upload files or delete them.",
+			Help:     "Include old versions in directory listings.\n\nNote that when using this no file write operations are permitted,\nso you can't upload files or delete them.",
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -121,7 +121,7 @@ This value should be set no larger than 4.657 GiB (== 5 GB).`,
 			Advanced: true,
 		}, {
 			Name: "copy_cutoff",
-			Help: `Cutoff for switching to multipart copy
+			Help: `Cutoff for switching to multipart copy.
 
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
@@ -131,17 +131,19 @@ The minimum is 0 and the maximum is 4.6 GiB.`,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
-			Help: `Upload chunk size. Must fit in memory.
+			Help: `Upload chunk size.
 
-When uploading large files, chunk the file into this size.  Note that
-these chunks are buffered in memory and there might a maximum of
-"--transfers" chunks in progress at once.  5,000,000 Bytes is the
-minimum size.`,
+When uploading large files, chunk the file into this size.
+
+Must fit in memory. These chunks are buffered in memory and there
+might a maximum of "--transfers" chunks in progress at once.
+
+5,000,000 Bytes is the minimum size.`,
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
 			Name: "disable_checksum",
-			Help: `Disable checksums for large (> upload cutoff) files
+			Help: `Disable checksums for large (> upload cutoff) files.
 
 Normally rclone will calculate the SHA1 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great

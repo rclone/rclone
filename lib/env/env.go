@@ -9,7 +9,7 @@ import (
 )
 
 // ShellExpandHelp describes what ShellExpand does for inclusion into help
-const ShellExpandHelp = "\n\nLeading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.\n"
+const ShellExpandHelp = "\n\nLeading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`."
 
 // ShellExpand replaces a leading "~" with the home directory" and
 // expands all environment variables afterwards.

@@ -32,29 +32,29 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "endpoint",
-			Help:     "The Koofr API endpoint to use",
+			Help:     "The Koofr API endpoint to use.",
 			Default:  "https://app.koofr.net",
 			Required: true,
 			Advanced: true,
 		}, {
 			Name:     "mountid",
-			Help:     "Mount ID of the mount to use. If omitted, the primary mount is used.",
+			Help:     "Mount ID of the mount to use.\n\nIf omitted, the primary mount is used.",
 			Required: false,
 			Default:  "",
 			Advanced: true,
 		}, {
 			Name:     "setmtime",
-			Help:     "Does the backend support setting modification time. Set this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.",
+			Help:     "Does the backend support setting modification time.\n\nSet this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.",
 			Default:  true,
 			Required: true,
 			Advanced: true,
 		}, {
 			Name:     "user",
-			Help:     "Your Koofr user name",
+			Help:     "Your Koofr user name.",
 			Required: true,
 		}, {
 			Name:       "password",
-			Help:       "Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password)",
+			Help:       "Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password).",
 			IsPassword: true,
 			Required:   true,
 		}, {
