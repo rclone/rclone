@@ -4,6 +4,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -26,7 +27,7 @@ const (
 // startProgress starts the progress bar printing
 //
 // It returns a func which should be called to stop the stats.
-func startProgress() func() {
+func startProgress(printProgressFunc func(string)) func() {
 	stopStats := make(chan struct{})
 	oldLogPrint := fs.LogPrint
 	oldSyncPrint := operations.SyncPrintf
@@ -34,14 +35,13 @@ func startProgress() func() {
 	if !log.Redirected() {
 		// Intercept the log calls if not logging to file or syslog
 		fs.LogPrint = func(level fs.LogLevel, text string) {
-			printProgress(fmt.Sprintf("%s %-6s: %s", time.Now().Format(logTimeFormat), level, text))
-
+			printProgressFunc(fmt.Sprintf("%s %-6s: %s", time.Now().Format(logTimeFormat), level, text))
 		}
 	}
 
 	// Intercept output from functions such as HashLister to stdout
 	operations.SyncPrintf = func(format string, a ...interface{}) {
-		printProgress(fmt.Sprintf(format, a...))
+		printProgressFunc(fmt.Sprintf(format, a...))
 	}
 
 	var wg sync.WaitGroup
@@ -56,10 +56,10 @@ func startProgress() func() {
 		for {
 			select {
 			case <-ticker.C:
-				printProgress("")
+				printProgressFunc("")
 			case <-stopStats:
 				ticker.Stop()
-				printProgress("")
+				printProgressFunc("")
 				fs.LogPrint = oldLogPrint
 				operations.SyncPrintf = oldSyncPrint
 				fmt.Println("")
@@ -120,4 +120,23 @@ func printProgress(logMessage string) {
 		}
 	}
 	terminal.Write(buf.Bytes())
+}
+
+// printProgressJSON prints the progress as JSON with an optional log
+func printProgressJSON(logMessage string) {
+	progressMu.Lock()
+	defer progressMu.Unlock()
+
+	stats, err := accounting.GlobalStats().RemoteStats()
+	if err != nil {
+		return
+	}
+	stats["log"] = logMessage
+
+	statsBytes, err := json.Marshal(stats)
+	if err != nil {
+		return
+	}
+	terminal.Write(statsBytes)
+	terminal.WriteString("\n")
 }

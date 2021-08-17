@@ -246,7 +246,11 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		showStats = true
 	}
 	if ci.Progress {
-		stopStats = startProgress()
+		if ci.UseJSONLog {
+			stopStats = startProgress(printProgressJSON)
+		} else {
+			stopStats = startProgress(printProgress)
+		}
 	} else if showStats {
 		stopStats = StartStats()
 	}
