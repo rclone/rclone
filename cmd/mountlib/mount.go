@@ -15,6 +15,7 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/daemonize"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -34,6 +35,7 @@ type Options struct {
 	DefaultPermissions bool
 	WritebackCache     bool
 	Daemon             bool
+	DaemonWait         time.Duration // time to wait for ready mount from daemon, maximum on Linux or constant on macOS/BSD
 	MaxReadAhead       fs.SizeSuffix
 	ExtraOptions       []string
 	ExtraFlags         []string
@@ -81,16 +83,30 @@ const (
 )
 
 func init() {
-	// DaemonTimeout defaults to non zero for macOS
-	if runtime.GOOS == "darwin" {
+	switch runtime.GOOS {
+	case "darwin":
+		// DaemonTimeout defaults to non-zero for macOS
+		// (this is a macOS specific kernel option unrelated to DaemonWait)
 		DefaultOpt.DaemonTimeout = 10 * time.Minute
 	}
+
+	switch runtime.GOOS {
+	case "linux":
+		// Linux provides /proc/mounts to check mount status
+		// so --daemon-wait means *maximum* time to wait
+		DefaultOpt.DaemonWait = 60 * time.Second
+	case "darwin", "openbsd", "freebsd", "netbsd":
+		// On BSD we can't check mount status yet
+		// so --daemon-wait is just a *constant* delay
+		DefaultOpt.DaemonWait = 5 * time.Second
+	}
+
+	// Opt must be assigned in the init block to ensure changes really get in
+	Opt = DefaultOpt
 }
 
-// Options set by command line flags
-var (
-	Opt = DefaultOpt
-)
+// Opt contains options set by command line flags
+var Opt Options
 
 // AddFlags adds the non filing system specific flags to the command
 func AddFlags(flagSet *pflag.FlagSet) {
@@ -100,7 +116,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringArrayVarP(flagSet, &Opt.ExtraOptions, "option", "o", []string{}, "Option for libfuse/WinFsp. Repeat if required.")
 	flags.StringArrayVarP(flagSet, &Opt.ExtraFlags, "fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.")
 	// Non-Windows only
-	flags.BoolVarP(flagSet, &Opt.Daemon, "daemon", "", Opt.Daemon, "Run mount as a daemon (background mode). Not supported on Windows.")
+	flags.BoolVarP(flagSet, &Opt.Daemon, "daemon", "", Opt.Daemon, "Run mount in background and exit parent process. Not supported on Windows. As background output is suppressed, use --log-file with --log-format=pid,... to monitor.")
 	flags.DurationVarP(flagSet, &Opt.DaemonTimeout, "daemon-timeout", "", Opt.DaemonTimeout, "Time limit for rclone to respond to kernel. Not supported on Windows.")
 	flags.BoolVarP(flagSet, &Opt.DefaultPermissions, "default-permissions", "", Opt.DefaultPermissions, "Makes kernel enforce access control based on the file mode. Not supported on Windows.")
 	flags.BoolVarP(flagSet, &Opt.AllowNonEmpty, "allow-non-empty", "", Opt.AllowNonEmpty, "Allow mounting over a non-empty directory. Not supported on Windows.")
@@ -116,6 +132,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.NoAppleXattr, "noapplexattr", "", Opt.NoAppleXattr, "Ignore all \"com.apple.*\" extended attributes. Supported on OSX only.")
 	// Windows only
 	flags.BoolVarP(flagSet, &Opt.NetworkMode, "network-mode", "", Opt.NetworkMode, "Mount as remote network drive, instead of fixed disk drive. Supported on Windows only")
+	// Unix only
+	flags.DurationVarP(flagSet, &Opt.DaemonWait, "daemon-wait", "", Opt.DaemonWait, "Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD). Ignored on Windows.")
 }
 
 // NewMountCommand makes a mount command with the given name and Mount function
@@ -136,6 +154,12 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				config.PassConfigKeyForDaemonization = true
 			}
 
+			if os.Getenv("PATH") == "" && runtime.GOOS != "windows" {
+				// PATH can be unset when running under Autofs or Systemd mount
+				fs.Debugf(nil, "Using fallback PATH to run fusermount")
+				_ = os.Setenv("PATH", "/bin:/usr/bin")
+			}
+
 			// Show stats if the user has specifically requested them
 			if cmd.ShowStats() {
 				defer cmd.StartStats()()
@@ -149,9 +173,40 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				VFSOpt:     vfsflags.Opt,
 			}
 
-			daemonized, err := mnt.Mount()
-			if !daemonized && err == nil {
-				err = mnt.Wait()
+			daemon, err := mnt.Mount()
+
+			// Wait for foreground mount, if any...
+			if daemon == nil {
+				if err == nil {
+					err = mnt.Wait()
+				}
+				if err != nil {
+					log.Fatalf("Fatal error: %v", err)
+				}
+				return
+			}
+
+			// Wait for daemon, if any...
+			killOnce := sync.Once{}
+			killDaemon := func(reason string) {
+				killOnce.Do(func() {
+					if err := daemon.Signal(os.Interrupt); err != nil {
+						fs.Errorf(nil, "%s. Failed to terminate daemon pid %d: %v", reason, daemon.Pid, err)
+						return
+					}
+					fs.Debugf(nil, "%s. Terminating daemon pid %d", reason, daemon.Pid)
+				})
+			}
+
+			if err == nil && Opt.DaemonWait > 0 {
+				handle := atexit.Register(func() {
+					killDaemon("Got interrupt")
+				})
+				err = WaitMountReady(mnt.MountPoint, Opt.DaemonWait)
+				if err != nil {
+					killDaemon("Daemon timed out")
+				}
+				atexit.Unregister(handle)
 			}
 			if err != nil {
 				log.Fatalf("Fatal error: %v", err)
@@ -171,21 +226,21 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 }
 
 // Mount the remote at mountpoint
-func (m *MountPoint) Mount() (daemonized bool, err error) {
+func (m *MountPoint) Mount() (daemon *os.Process, err error) {
 	if err = m.CheckOverlap(); err != nil {
-		return false, err
+		return nil, err
 	}
 
 	if err = m.CheckAllowings(); err != nil {
-		return false, err
+		return nil, err
 	}
 	m.SetVolumeName(m.MountOpt.VolumeName)
 
 	// Start background task if --daemon is specified
 	if m.MountOpt.Daemon {
-		daemonized = startBackgroundMode()
-		if daemonized {
-			return true, nil
+		daemon, err = daemonize.StartDaemon(os.Args)
+		if daemon != nil || err != nil {
+			return daemon, err
 		}
 	}
 
@@ -193,9 +248,9 @@ func (m *MountPoint) Mount() (daemonized bool, err error) {
 
 	m.ErrChan, m.UnmountFn, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
 	if err != nil {
-		return false, errors.Wrap(err, "failed to mount FUSE fs")
+		return nil, errors.Wrap(err, "failed to mount FUSE fs")
 	}
-	return false, nil
+	return nil, nil
 }
 
 // Wait for mount end
@@ -205,7 +260,16 @@ func (m *MountPoint) Wait() error {
 	finalise := func() {
 		finaliseOnce.Do(func() {
 			_ = sysdnotify.Stopping()
-			_ = m.UnmountFn()
+			// Unmount only if directory was mounted by rclone, e.g. don't unmount autofs hooks.
+			if err := CheckMountReady(m.MountPoint); err != nil {
+				fs.Debugf(m.MountPoint, "Unmounted externally. Just exit now.")
+				return
+			}
+			if err := m.Unmount(); err != nil {
+				fs.Errorf(m.MountPoint, "Failed to unmount: %v", err)
+			} else {
+				fs.Errorf(m.MountPoint, "Unmounted rclone mount")
+			}
 		})
 	}
 	fnHandle := atexit.Register(finalise)
