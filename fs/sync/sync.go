@@ -349,6 +349,8 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 					}
 				}
 			} else {
+				// Transfer skipped
+				accounting.Stats(s.ctx).Skips(1)
 				// If moving need to delete the files we don't need to copy
 				if s.DoMove {
 					// Delete src if no error on copy

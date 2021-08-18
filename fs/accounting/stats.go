@@ -47,6 +47,7 @@ type StatsInfo struct {
 	renameQueueSize   int64
 	deletes           int64
 	deletedDirs       int64
+	skips             int64
 	inProgress        *inProgress
 	startedTransfers  []*Transfer   // currently active transfers
 	oldTimeRanges     timeRanges    // a merged list of time ranges for the transfers
@@ -105,6 +106,7 @@ func (s *StatsInfo) RemoteStats() (out rc.Params, err error) {
 	out["deletes"] = s.deletes
 	out["deletedDirs"] = s.deletedDirs
 	out["renames"] = s.renames
+	out["skips"] = s.skips
 	out["elapsedTime"] = time.Since(s.startTime).Seconds()
 	eta, etaOK := eta(s.bytes, ts.totalBytes, ts.speed)
 	if etaOK {
@@ -433,6 +435,9 @@ func (s *StatsInfo) String() string {
 		if s.renames != 0 {
 			_, _ = fmt.Fprintf(buf, "Renamed:       %10d\n", s.renames)
 		}
+		if s.skips != 0 {
+			_, _ = fmt.Fprintf(buf, "Skipped:       %10d\n", s.skips)
+		}
 		if s.transfers != 0 || ts.totalTransfers != 0 {
 			_, _ = fmt.Fprintf(buf, "Transferred:   %10d / %d, %s\n",
 				s.transfers, ts.totalTransfers, percent(s.transfers, ts.totalTransfers))
@@ -598,6 +603,14 @@ func (s *StatsInfo) Renames(renames int64) int64 {
 	return s.renames
 }
 
+// Skips updates the stats for skips
+func (s *StatsInfo) Skips(skips int64) int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.skips += skips
+	return s.skips
+}
+
 // ResetCounters sets the counters (bytes, checks, errors, transfers, deletes, renames) to 0 and resets lastError, fatalError and retryError
 func (s *StatsInfo) ResetCounters() {
 	s.mu.Lock()
@@ -613,6 +626,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.deletes = 0
 	s.deletedDirs = 0
 	s.renames = 0
+	s.skips = 0
 	s.startedTransfers = nil
 	s.oldDuration = 0
 

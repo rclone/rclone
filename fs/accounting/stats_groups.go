@@ -366,6 +366,7 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 			sum.deletes += stats.deletes
 			sum.deletedDirs += stats.deletedDirs
 			sum.renames += stats.renames
+			sum.skips += stats.skips
 			sum.checking.merge(stats.checking)
 			sum.transferring.merge(stats.transferring)
 			sum.inProgress.merge(stats.inProgress)
