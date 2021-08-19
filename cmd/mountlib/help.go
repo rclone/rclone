@@ -283,20 +283,4 @@ to use Type=notify. In this case the service will enter the started state
 after the mountpoint has been successfully set up.
 Units having the rclone @ service specified as a requirement
 will see all files and folders immediately in this mode.
-
-### chunked reading
-
-|--vfs-read-chunk-size| will enable reading the source objects in parts.
-This can reduce the used download quota for some remotes by requesting only chunks
-from the remote that are actually read at the cost of an increased number of requests.
-
-When |--vfs-read-chunk-size-limit| is also specified and greater than
-|--vfs-read-chunk-size|, the chunk size for each open file will get doubled
-for each chunk read, until the specified value is reached. A value of |-1| will disable
-the limit and the chunk size will grow indefinitely.
-
-With |--vfs-read-chunk-size 100M| and |--vfs-read-chunk-size-limit 0|
-the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When |--vfs-read-chunk-size-limit 500M| is specified, the result would be
-0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
 `
