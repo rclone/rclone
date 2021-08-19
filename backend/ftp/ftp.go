@@ -1062,8 +1062,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	if err != nil {
 		_ = c.Quit() // toss this connection to avoid sync errors
-		remove()
+		// recycle connection in advance to let remove() find free token
 		o.fs.putFtpConnection(nil, err)
+		remove()
 		return errors.Wrap(err, "update stor")
 	}
 	o.fs.putFtpConnection(&c, nil)
