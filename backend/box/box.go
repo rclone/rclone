@@ -578,10 +578,13 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		Parameters: fieldsValue(),
 	}
 	opts.Parameters.Set("limit", strconv.Itoa(listChunks))
-	offset := 0
+	opts.Parameters.Set("usemarker", "true")
+	var marker *string
 OUTER:
 	for {
-		opts.Parameters.Set("offset", strconv.Itoa(offset))
+		if marker != nil {
+			opts.Parameters.Set("marker", *marker)
+		}
 
 		var result api.FolderItems
 		var resp *http.Response
@@ -615,8 +618,8 @@ OUTER:
 				break OUTER
 			}
 		}
-		offset += result.Limit
-		if offset >= result.TotalCount {
+		marker = result.NextMarker
+		if marker == nil {
 			break
 		}
 	}
@@ -1100,9 +1103,12 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 		},
 	}
 	opts.Parameters.Set("limit", strconv.Itoa(listChunks))
-	offset := 0
+	opts.Parameters.Set("usemarker", "true")
+	var marker *string
 	for {
-		opts.Parameters.Set("offset", strconv.Itoa(offset))
+		if marker != nil {
+			opts.Parameters.Set("marker", *marker)
+		}
 
 		var result api.FolderItems
 		var resp *http.Response
@@ -1125,8 +1131,8 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 				continue
 			}
 		}
-		offset += result.Limit
-		if offset >= result.TotalCount {
+		marker = result.NextMarker
+		if marker == nil {
 			break
 		}
 	}
