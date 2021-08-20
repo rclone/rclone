@@ -1095,6 +1095,7 @@ func (f *Fs) deletePermanently(ctx context.Context, itemType, id string) error {
 
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) (err error) {
+	var deleteErrors = 0
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/folders/trash/items",
@@ -1124,7 +1125,8 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 			if item.Type == api.ItemTypeFolder || item.Type == api.ItemTypeFile {
 				err := f.deletePermanently(ctx, item.Type, item.ID)
 				if err != nil {
-					return errors.Wrap(err, "failed to delete file")
+					fs.Errorf(f, "failed to delete trash item %q: %v", item.ID, err)
+					deleteErrors++
 				}
 			} else {
 				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
@@ -1136,7 +1138,10 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 			break
 		}
 	}
-	return
+	if deleteErrors != 0 {
+		return errors.Errorf("failed to delete %d trash items", deleteErrors)
+	}
+	return nil
 }
 
 // DirCacheFlush resets the directory cache - used in testing as an
