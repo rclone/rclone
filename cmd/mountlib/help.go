@@ -50,9 +50,6 @@ then an additional 1 PiB of free space is assumed. If the remote does not
 [support](https://rclone.org/overview/#optional-features) the about feature
 at all, then 1 PiB is set as both the total and the free size.
 
-**Note**: As of |rclone| 1.52.2, |rclone mount| now requires Go version 1.13
-or newer on some platforms depending on the underlying FUSE library in use.
-
 ### Installing on Windows
 
 To run rclone @ on Windows, you will need to
