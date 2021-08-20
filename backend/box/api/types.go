@@ -103,10 +103,11 @@ func (i *Item) ModTime() (t time.Time) {
 
 // FolderItems is returned from the GetFolderItems call
 type FolderItems struct {
-	TotalCount int    `json:"total_count"`
-	Entries    []Item `json:"entries"`
-	Offset     int    `json:"offset"`
-	Limit      int    `json:"limit"`
+	TotalCount int     `json:"total_count"`
+	Entries    []Item  `json:"entries"`
+	Offset     int     `json:"offset"`
+	Limit      int     `json:"limit"`
+	NextMarker *string `json:"next_marker,omitempty"`
 	Order      []struct {
 		By        string `json:"by"`
 		Direction string `json:"direction"`
