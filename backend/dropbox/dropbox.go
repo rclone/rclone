@@ -66,7 +66,7 @@ const (
 	//
 	// Speed vs chunk size uploading a 1 GiB file on 2017-11-22
 	//
-	// Chunk Size MiB, Speed MiByte/s, % of max
+	// Chunk Size MiB, Speed MiB/s, % of max
 	// 1	1.364	11%
 	// 2	2.443	19%
 	// 4	4.288	33%

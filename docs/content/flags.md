@@ -18,8 +18,8 @@ These flags are available for every command.
       --backup-dir string                    Make backups into hierarchy based in DIR.
       --bind string                          Local address to bind to for outgoing connections, IPv4, IPv6 or name.
       --buffer-size SizeSuffix               In memory buffer size when reading files for each --transfer. (default 16Mi)
-      --bwlimit BwTimetable                  Bandwidth limit in KiByte/s, or use suffix B|K|M|G|T|P or a full timetable.
-      --bwlimit-file BwTimetable             Bandwidth limit per file in KiByte/s, or use suffix B|K|M|G|T|P or a full timetable.
+      --bwlimit BwTimetable                  Bandwidth limit in KiB/s, or use suffix B|K|M|G|T|P or a full timetable.
+      --bwlimit-file BwTimetable             Bandwidth limit per file in KiB/s, or use suffix B|K|M|G|T|P or a full timetable.
       --ca-cert string                       CA certificate used to verify servers
       --cache-dir string                     Directory rclone will use for caching. (default "$HOME/.cache/rclone")
       --check-first                          Do all the checks before starting transfers.
