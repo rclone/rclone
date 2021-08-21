@@ -59,7 +59,7 @@ const defaultMaxBurstSize = 4 * 1024 * 1024 // must be bigger than the biggest r
 func newEmptyTokenBucket(bandwidth fs.SizeSuffix) *rate.Limiter {
 	// Relate maxBurstSize to bandwidth limit
 	// 4M gives 2.5 Gb/s on Windows
-	// Use defaultMaxBurstSize up to 2GBit/s (256MByte/s) then scale
+	// Use defaultMaxBurstSize up to 2GBit/s (256MiB/s) then scale
 	maxBurstSize := (bandwidth * defaultMaxBurstSize) / (256 * 1024 * 1024)
 	if maxBurstSize < defaultMaxBurstSize {
 		maxBurstSize = defaultMaxBurstSize
@@ -104,7 +104,7 @@ func (tb *tokenBucket) StartTokenBucket(ctx context.Context) {
 	tb.currLimit = ci.BwLimit.LimitAt(time.Now())
 	if tb.currLimit.Bandwidth.IsSet() {
 		tb.curr = newTokenBucket(tb.currLimit.Bandwidth)
-		fs.Infof(nil, "Starting bandwidth limiter at %vByte/s", &tb.currLimit.Bandwidth)
+		fs.Infof(nil, "Starting bandwidth limiter at %v Byte/s", &tb.currLimit.Bandwidth)
 
 		// Start the SIGUSR2 signal handler to toggle bandwidth.
 		// This function does nothing in windows systems.

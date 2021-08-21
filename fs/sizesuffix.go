@@ -104,21 +104,11 @@ func (x SizeSuffix) BitRateUnit() string {
 
 // ByteUnit turns SizeSuffix into a string with byte unit
 func (x SizeSuffix) ByteUnit() string {
-	return x.unit("Byte")
+	return x.unit("B")
 }
 
 // ByteRateUnit turns SizeSuffix into a string with byte rate unit
 func (x SizeSuffix) ByteRateUnit() string {
-	return x.unit("Byte/s")
-}
-
-// ByteShortUnit turns SizeSuffix into a string with byte unit short form
-func (x SizeSuffix) ByteShortUnit() string {
-	return x.unit("B")
-}
-
-// ByteRateShortUnit turns SizeSuffix into a string with byte rate unit short form
-func (x SizeSuffix) ByteRateShortUnit() string {
 	return x.unit("B/s")
 }
 

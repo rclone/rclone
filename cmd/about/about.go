@@ -51,11 +51,11 @@ output. The output is typically used, free, quota and trash contents.
 
 E.g. Typical output from ` + "`rclone about remote:`" + ` is:
 
-    Total:   17 GiByte
-    Used:    7.444 GiByte
-    Free:    1.315 GiByte
-    Trashed: 100.000 MiByte
-    Other:   8.241 GiByte
+    Total:   17 GiB
+    Used:    7.444 GiB
+    Free:    1.315 GiB
+    Trashed: 100.000 MiB
+    Other:   8.241 GiB
 
 Where the fields are:
 
