@@ -22,6 +22,8 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/lib/encoder"
@@ -1100,19 +1102,32 @@ func (f *Fs) deletePermanently(ctx context.Context, itemType, id string) error {
 
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) (err error) {
-	var deleteErrors = 0
+	var (
+		deleteErrors       = int64(0)
+		concurrencyControl = make(chan struct{}, fs.GetConfig(ctx).Checkers)
+		wg                 sync.WaitGroup
+	)
 	_, err = f.listAll(ctx, "trash", false, false, false, func(item *api.Item) bool {
 		if item.Type == api.ItemTypeFolder || item.Type == api.ItemTypeFile {
-			err := f.deletePermanently(ctx, item.Type, item.ID)
-			if err != nil {
-				fs.Errorf(f, "failed to delete trash item %q: %v", item.ID, err)
-				deleteErrors++
-			}
+			wg.Add(1)
+			concurrencyControl <- struct{}{}
+			go func() {
+				defer func() {
+					<-concurrencyControl
+					wg.Done()
+				}()
+				err := f.deletePermanently(ctx, item.Type, item.ID)
+				if err != nil {
+					fs.Errorf(f, "failed to delete trash item %q (%q): %v", item.Name, item.ID, err)
+					atomic.AddInt64(&deleteErrors, 1)
+				}
+			}()
 		} else {
 			fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 		}
 		return false
 	})
+	wg.Wait()
 	if deleteErrors != 0 {
 		return errors.Errorf("failed to delete %d trash items", deleteErrors)
 	}
