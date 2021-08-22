@@ -48,12 +48,8 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "host",
-			Help:     "FTP host to connect to.",
+			Help:     "FTP host to connect to.\n\nE.g. \"ftp.example.com\".",
 			Required: true,
-			Examples: []fs.OptionExample{{
-				Value: "ftp.example.com",
-				Help:  "Connect to ftp.example.com",
-			}},
 		}, {
 			Name: "user",
 			Help: "FTP username, leave blank for current username, " + currentUser + ".",

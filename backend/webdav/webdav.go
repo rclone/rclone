@@ -70,12 +70,8 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",
-			Help:     "URL of http host to connect to.",
+			Help:     "URL of http host to connect to.\n\nE.g. https://example.com.",
 			Required: true,
-			Examples: []fs.OptionExample{{
-				Value: "https://example.com",
-				Help:  "Connect to example.com.",
-			}},
 		}, {
 			Name: "vendor",
 			Help: "Name of the Webdav site/service/software you are using.",
