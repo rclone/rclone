@@ -197,14 +197,14 @@ latest release is recommended. Then
 ```sh
 git clone https://github.com/rclone/rclone.git
 cd rclone
-make
+go build
 # If on macOS and mount is wanted, instead run: make GOTAGS=cmount
 ./rclone version
 ```
 
 This will leave you a checked out version of rclone you can modify and
-send pull requests with. If you use `go build` instead of `make` then
-the rclone build will have less accurate commit version information in it.
+send pull requests with. If you use `make` instead of `go build` then
+the rclone build will have the correct version information in it.
 
 You can also build the latest stable rclone with:
 
