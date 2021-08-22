@@ -42,18 +42,15 @@ func init() {
 		}, {
 			Help:     "If you want to download a shared folder, add this parameter.",
 			Name:     "shared_folder",
-			Required: false,
 			Advanced: true,
 		}, {
 			Help:       "If you want to download a shared file that is password protected, add this parameter.",
 			Name:       "file_password",
-			Required:   false,
 			Advanced:   true,
 			IsPassword: true,
 		}, {
 			Help:       "If you want to list the files in a shared folder that is password protected, add this parameter.",
 			Name:       "folder_password",
-			Required:   false,
 			Advanced:   true,
 			IsPassword: true,
 		}, {

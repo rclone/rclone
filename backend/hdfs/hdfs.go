@@ -22,9 +22,8 @@ func init() {
 			Help:     "Hadoop name node and port.\n\nE.g. \"namenode:8020\" to connect to host namenode at port 8020.",
 			Required: true,
 		}, {
-			Name:     "username",
-			Help:     "Hadoop user name.",
-			Required: false,
+			Name: "username",
+			Help: "Hadoop user name.",
 			Examples: []fs.OptionExample{{
 				Value: "root",
 				Help:  "Connect to hdfs as root.",
@@ -36,7 +35,6 @@ func init() {
 Enables KERBEROS authentication. Specifies the Service Principal Name
 (SERVICE/FQDN) for the namenode. E.g. \"hdfs/namenode.hadoop.docker\"
 for namenode running as service 'hdfs' with FQDN 'namenode.hadoop.docker'.`,
-			Required: false,
 			Advanced: true,
 		}, {
 			Name: "data_transfer_protection",
@@ -46,7 +44,6 @@ Specifies whether or not authentication, data signature integrity
 checks, and wire encryption is required when communicating the the
 datanodes. Possible values are 'authentication', 'integrity' and
 'privacy'. Used only with KERBEROS enabled.`,
-			Required: false,
 			Examples: []fs.OptionExample{{
 				Value: "privacy",
 				Help:  "Ensure authentication, integrity and encryption enabled.",
