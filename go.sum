@@ -354,6 +354,8 @@ github.com/iguanesolutions/go-systemd/v5 v5.1.0 h1:UWprhbpxjLM0vvwu4MxaBR+/KzSxg
 github.com/iguanesolutions/go-systemd/v5 v5.1.0/go.mod h1:XprNDEZ9zdPzEg1WrmpV1BnGorgP0WP40AGurMxeQOY=
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
+github.com/ivandeex/ftp v1.0.0-210902f h1:0c0cXPyKRKU8ey92ufJxRM/Z1f+uk08iozCvZ9tddBw=
+github.com/ivandeex/ftp v1.0.0-210902f/go.mod h1:2lmrmq866uF2tnje75wQHzmPXhmSWUt7Gyx2vgK1RCU=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
 github.com/jcmturner/aescts/v2 v2.0.0/go.mod h1:AiaICIRyfYg35RUkr8yESTqvSy7csK90qZ5xfvvsoNs=
 github.com/jcmturner/dnsutils/v2 v2.0.0 h1:lltnkeZGL0wILNvrNiVCR6Ro5PGU/SeBvVO/8c/iPbo=
