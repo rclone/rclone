@@ -140,6 +140,11 @@ func init() {
 			Help:     "Size of listing chunk 1-1000.",
 			Advanced: true,
 		}, {
+			Name:     "owned_by",
+			Default:  "",
+			Help:     "Only show items owned by the login (email address) passed in.",
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -254,6 +259,7 @@ type Options struct {
 	RootFolderID  string               `config:"root_folder_id"`
 	AccessToken   string               `config:"access_token"`
 	ListChunk     int                  `config:"list_chunk"`
+	OwnedBy       string               `config:"owned_by"`
 }
 
 // Fs represents a remote box
@@ -617,6 +623,9 @@ OUTER:
 				continue
 			}
 			if activeOnly && item.ItemStatus != api.ItemStatusActive {
+				continue
+			}
+			if f.opt.OwnedBy != "" && f.opt.OwnedBy != item.OwnedBy.Login {
 				continue
 			}
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
