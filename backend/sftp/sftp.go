@@ -56,12 +56,8 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "host",
-			Help:     "SSH host to connect to.",
+			Help:     "SSH host to connect to.\n\nE.g. \"example.com\".",
 			Required: true,
-			Examples: []fs.OptionExample{{
-				Value: "example.com",
-				Help:  "Connect to example.com.",
-			}},
 		}, {
 			Name: "user",
 			Help: "SSH username, leave blank for current username, " + currentUser + ".",
