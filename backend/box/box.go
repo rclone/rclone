@@ -345,7 +345,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		return nil, err
 	}
 
-	found, err := f.listAll(ctx, directoryID, false, true, func(item *api.Item) bool {
+	found, err := f.listAll(ctx, directoryID, false, true, true, func(item *api.Item) bool {
 		if strings.EqualFold(item.Name, leaf) {
 			info = item
 			return true
@@ -520,7 +520,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
+	found, err = f.listAll(ctx, pathID, true, false, true, func(item *api.Item) bool {
 		if strings.EqualFold(item.Name, leaf) {
 			pathIDOut = item.ID
 			return true
@@ -576,7 +576,7 @@ type listAllFn func(*api.Item) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, activeOnly bool, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       "/folders/" + dirID + "/items",
@@ -614,7 +614,7 @@ OUTER:
 				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 				continue
 			}
-			if item.ItemStatus != api.ItemStatusActive {
+			if activeOnly && item.ItemStatus != api.ItemStatusActive {
 				continue
 			}
 			item.Name = f.opt.Enc.ToStandardName(item.Name)
@@ -646,7 +646,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 	var iErr error
-	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
+	_, err = f.listAll(ctx, directoryID, false, false, true, func(info *api.Item) bool {
 		remote := path.Join(dir, info.Name)
 		if info.Type == api.ItemTypeFolder {
 			// cache the directory ID for later lookups
@@ -1101,52 +1101,22 @@ func (f *Fs) deletePermanently(ctx context.Context, itemType, id string) error {
 // CleanUp empties the trash
 func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	var deleteErrors = 0
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/folders/trash/items",
-		Parameters: url.Values{
-			"fields": []string{"type", "id"},
-		},
-	}
-	opts.Parameters.Set("limit", strconv.Itoa(f.opt.ListChunk))
-	opts.Parameters.Set("usemarker", "true")
-	var marker *string
-	for {
-		if marker != nil {
-			opts.Parameters.Set("marker", *marker)
-		}
-
-		var result api.FolderItems
-		var resp *http.Response
-		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
-			return shouldRetry(ctx, resp, err)
-		})
-		if err != nil {
-			return errors.Wrap(err, "couldn't list trash")
-		}
-		for i := range result.Entries {
-			item := &result.Entries[i]
-			if item.Type == api.ItemTypeFolder || item.Type == api.ItemTypeFile {
-				err := f.deletePermanently(ctx, item.Type, item.ID)
-				if err != nil {
-					fs.Errorf(f, "failed to delete trash item %q: %v", item.ID, err)
-					deleteErrors++
-				}
-			} else {
-				fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
-				continue
+	_, err = f.listAll(ctx, "trash", false, false, false, func(item *api.Item) bool {
+		if item.Type == api.ItemTypeFolder || item.Type == api.ItemTypeFile {
+			err := f.deletePermanently(ctx, item.Type, item.ID)
+			if err != nil {
+				fs.Errorf(f, "failed to delete trash item %q: %v", item.ID, err)
+				deleteErrors++
 			}
+		} else {
+			fs.Debugf(f, "Ignoring %q - unknown type %q", item.Name, item.Type)
 		}
-		marker = result.NextMarker
-		if marker == nil {
-			break
-		}
-	}
+		return false
+	})
 	if deleteErrors != 0 {
 		return errors.Errorf("failed to delete %d trash items", deleteErrors)
 	}
-	return nil
+	return err
 }
 
 // DirCacheFlush resets the directory cache - used in testing as an
