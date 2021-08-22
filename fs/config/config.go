@@ -570,9 +570,10 @@ func JSONListProviders() error {
 // fsOption returns an Option describing the possible remotes
 func fsOption() *fs.Option {
 	o := &fs.Option{
-		Name:    "Storage",
-		Help:    "Type of storage to configure.",
-		Default: "",
+		Name:     "Storage",
+		Help:     "Type of storage to configure.",
+		Default:  "",
+		Required: true,
 	}
 	for _, item := range fs.Registry {
 		example := fs.OptionExample{

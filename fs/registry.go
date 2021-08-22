@@ -124,20 +124,29 @@ const (
 // Option is describes an option for the config wizard
 //
 // This also describes command line options and environment variables
+//
+// To create a multiple-choice option, specify the possible values
+// in the Examples property. Whether the option's value is required
+// to be one of these depends on other properties:
+// - Default is to allow any value, either from specified examples,
+//   or any other value. To restrict exclusively to the specified
+//   examples, also set Exclusive=true.
+// - If empty string should not be allowed then set Required=true,
+//   and do not set Default.
 type Option struct {
 	Name       string           // name of the option in snake_case
-	Help       string           // Help, the first line only is used for the command line help
-	Provider   string           // Set to filter on provider
-	Default    interface{}      // default value, nil => ""
+	Help       string           // help, start with a single sentence on a single line that will be extracted for command line help
+	Provider   string           // set to filter on provider
+	Default    interface{}      // default value, nil => "", if set (and not to nil or "") then Required does nothing
 	Value      interface{}      // value to be set by flags
-	Examples   OptionExamples   `json:",omitempty"` // config examples
+	Examples   OptionExamples   `json:",omitempty"` // predefined values that can be selected from list (multiple-choice option)
 	ShortOpt   string           // the short option for this if required
 	Hide       OptionVisibility // set this to hide the config from the configurator or the command line
-	Required   bool             // this option is required
+	Required   bool             // this option is required, meaning value cannot be empty unless there is a default
 	IsPassword bool             // set if the option is a password
 	NoPrefix   bool             // set if the option for this should not use the backend prefix
 	Advanced   bool             // set if this is an advanced config option
-	Exclusive  bool             // set if the answer can only be one of the examples
+	Exclusive  bool             // set if the answer can only be one of the examples (empty string allowed unless Required or Default is set)
 }
 
 // BaseOption is an alias for Option used internally
