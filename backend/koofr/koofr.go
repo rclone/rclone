@@ -39,7 +39,6 @@ func init() {
 		}, {
 			Name:     "mountid",
 			Help:     "Mount ID of the mount to use.\n\nIf omitted, the primary mount is used.",
-			Required: false,
 			Default:  "",
 			Advanced: true,
 		}, {
