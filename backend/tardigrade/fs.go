@@ -84,10 +84,9 @@ func init() {
 		},
 		Options: []fs.Option{
 			{
-				Name:     fs.ConfigProvider,
-				Help:     "Choose an authentication method.",
-				Required: true,
-				Default:  existingProvider,
+				Name:    fs.ConfigProvider,
+				Help:    "Choose an authentication method.",
+				Default: existingProvider,
 				Examples: []fs.OptionExample{{
 					Value: "existing",
 					Help:  "Use an existing access grant.",

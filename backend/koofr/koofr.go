@@ -34,18 +34,15 @@ func init() {
 			Name:     "endpoint",
 			Help:     "The Koofr API endpoint to use.",
 			Default:  "https://app.koofr.net",
-			Required: true,
 			Advanced: true,
 		}, {
 			Name:     "mountid",
 			Help:     "Mount ID of the mount to use.\n\nIf omitted, the primary mount is used.",
-			Default:  "",
 			Advanced: true,
 		}, {
 			Name:     "setmtime",
 			Help:     "Does the backend support setting modification time.\n\nSet this to false if you use a mount ID that points to a Dropbox or Amazon Drive backend.",
 			Default:  true,
-			Required: true,
 			Advanced: true,
 		}, {
 			Name:     "user",
