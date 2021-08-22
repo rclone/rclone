@@ -56,7 +56,6 @@ const (
 	decayConstant               = 2 // bigger for slower decay, exponential
 	rootURL                     = "https://api.box.com/2.0"
 	uploadURL                   = "https://upload.box.com/api/2.0"
-	listChunks                  = 1000     // chunk size to read directory listings
 	minUploadCutoff             = 50000000 // upload cutoff can be no lower than this
 	defaultUploadCutoff         = 50 * 1024 * 1024
 	tokenURL                    = "https://api.box.com/oauth2/token"
@@ -132,6 +131,11 @@ func init() {
 			Name:     "commit_retries",
 			Help:     "Max number of times to try committing a multipart file.",
 			Default:  100,
+			Advanced: true,
+		}, {
+			Name:     "list_chunk",
+			Default:  1000,
+			Help:     "Size of listing chunk 1-1000.",
 			Advanced: true,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -247,6 +251,7 @@ type Options struct {
 	Enc           encoder.MultiEncoder `config:"encoding"`
 	RootFolderID  string               `config:"root_folder_id"`
 	AccessToken   string               `config:"access_token"`
+	ListChunk     int                  `config:"list_chunk"`
 }
 
 // Fs represents a remote box
@@ -577,7 +582,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		Path:       "/folders/" + dirID + "/items",
 		Parameters: fieldsValue(),
 	}
-	opts.Parameters.Set("limit", strconv.Itoa(listChunks))
+	opts.Parameters.Set("limit", strconv.Itoa(f.opt.ListChunk))
 	opts.Parameters.Set("usemarker", "true")
 	var marker *string
 OUTER:
@@ -1103,7 +1108,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 			"fields": []string{"type", "id"},
 		},
 	}
-	opts.Parameters.Set("limit", strconv.Itoa(listChunks))
+	opts.Parameters.Set("limit", strconv.Itoa(f.opt.ListChunk))
 	opts.Parameters.Set("usemarker", "true")
 	var marker *string
 	for {
