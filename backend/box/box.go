@@ -339,6 +339,13 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		authRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
+
+	// Box API errors which should be retries
+	if apiErr, ok := err.(*api.Error); ok && apiErr.Code == "operation_blocked_temporary" {
+		fs.Debugf(nil, "Retrying API error %v", err)
+		return true, err
+	}
+
 	return authRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
