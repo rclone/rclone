@@ -5,13 +5,13 @@ package vfstest
 
 import (
 	"syscall"
-	"testing"
 
+	"github.com/rclone/rclone/fstest/retesting"
 	"github.com/stretchr/testify/assert"
 )
 
 // TestReadFileDoubleClose tests double close on read
-func TestReadFileDoubleClose(t *testing.T) {
+func TestReadFileDoubleClose(t retesting.T) {
 	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 

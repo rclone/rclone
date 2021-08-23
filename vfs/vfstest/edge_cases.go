@@ -2,14 +2,14 @@ package vfstest
 
 import (
 	"runtime"
-	"testing"
 
+	"github.com/rclone/rclone/fstest/retesting"
 	"github.com/stretchr/testify/require"
 )
 
 // TestTouchAndDelete checks that writing a zero byte file and immediately
 // deleting it is not racy. See https://github.com/rclone/rclone/issues/1181
-func TestTouchAndDelete(t *testing.T) {
+func TestTouchAndDelete(t retesting.T) {
 	run.skipIfNoFUSE(t)
 	run.checkDir(t, "")
 
@@ -21,7 +21,7 @@ func TestTouchAndDelete(t *testing.T) {
 
 // TestRenameOpenHandle checks that a file with open writers is successfully
 // renamed after all writers close. See https://github.com/rclone/rclone/issues/2130
-func TestRenameOpenHandle(t *testing.T) {
+func TestRenameOpenHandle(t retesting.T) {
 	run.skipIfNoFUSE(t)
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping test on Windows")

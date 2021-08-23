@@ -3,13 +3,13 @@ package vfstest
 import (
 	"io"
 	"io/ioutil"
-	"testing"
 
+	"github.com/rclone/rclone/fstest/retesting"
 	"github.com/stretchr/testify/assert"
 )
 
 // TestReadByByte reads by byte including don't read any bytes
-func TestReadByByte(t *testing.T) {
+func TestReadByByte(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	var data = []byte("hellohello")
@@ -34,7 +34,7 @@ func TestReadByByte(t *testing.T) {
 }
 
 // TestReadChecksum checks the checksum reading is working
-func TestReadChecksum(t *testing.T) {
+func TestReadChecksum(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	// create file big enough so we exceed any single FUSE read
@@ -75,7 +75,7 @@ func TestReadChecksum(t *testing.T) {
 }
 
 // TestReadSeek test seeking
-func TestReadSeek(t *testing.T) {
+func TestReadSeek(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	var data = []byte("helloHELLO")

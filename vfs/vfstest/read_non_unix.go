@@ -5,10 +5,11 @@ package vfstest
 
 import (
 	"runtime"
-	"testing"
+
+	"github.com/rclone/rclone/fstest/retesting"
 )
 
 // TestReadFileDoubleClose tests double close on read
-func TestReadFileDoubleClose(t *testing.T) {
+func TestReadFileDoubleClose(t retesting.T) {
 	t.Skip("not supported on " + runtime.GOOS)
 }

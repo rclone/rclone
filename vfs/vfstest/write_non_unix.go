@@ -5,13 +5,13 @@ package vfstest
 
 import (
 	"runtime"
-	"testing"
 
+	"github.com/rclone/rclone/fstest/retesting"
 	"golang.org/x/sys/windows"
 )
 
 // TestWriteFileDoubleClose tests double close on write
-func TestWriteFileDoubleClose(t *testing.T) {
+func TestWriteFileDoubleClose(t retesting.T) {
 	t.Skip("not supported on " + runtime.GOOS)
 }
 

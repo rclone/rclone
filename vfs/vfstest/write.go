@@ -3,15 +3,15 @@ package vfstest
 import (
 	"os"
 	"runtime"
-	"testing"
 
+	"github.com/rclone/rclone/fstest/retesting"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // TestWriteFileNoWrite tests writing a file with no write()'s to it
-func TestWriteFileNoWrite(t *testing.T) {
+func TestWriteFileNoWrite(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	fd, err := osCreate(run.path("testnowrite"))
@@ -28,7 +28,7 @@ func TestWriteFileNoWrite(t *testing.T) {
 }
 
 // FIXMETestWriteOpenFileInDirListing tests open file in directory listing
-func FIXMETestWriteOpenFileInDirListing(t *testing.T) {
+func FIXMETestWriteOpenFileInDirListing(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	fd, err := osCreate(run.path("testnowrite"))
@@ -45,7 +45,7 @@ func FIXMETestWriteOpenFileInDirListing(t *testing.T) {
 }
 
 // TestWriteFileWrite tests writing a file and reading it back
-func TestWriteFileWrite(t *testing.T) {
+func TestWriteFileWrite(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.createFile(t, "testwrite", "data")
@@ -56,7 +56,7 @@ func TestWriteFileWrite(t *testing.T) {
 }
 
 // TestWriteFileOverwrite tests overwriting a file
-func TestWriteFileOverwrite(t *testing.T) {
+func TestWriteFileOverwrite(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.createFile(t, "testwrite", "data")
@@ -70,7 +70,7 @@ func TestWriteFileOverwrite(t *testing.T) {
 // TestWriteFileFsync tests Fsync
 //
 // NB the code for this is in file.go rather than write.go
-func TestWriteFileFsync(t *testing.T) {
+func TestWriteFileFsync(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	filepath := run.path("to be synced")
@@ -87,7 +87,7 @@ func TestWriteFileFsync(t *testing.T) {
 }
 
 // TestWriteFileDup tests behavior of mmap() in Python by using dup() on a file handle
-func TestWriteFileDup(t *testing.T) {
+func TestWriteFileDup(t retesting.T) {
 	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 
@@ -133,7 +133,7 @@ func TestWriteFileDup(t *testing.T) {
 }
 
 // TestWriteFileAppend tests that O_APPEND works on cache backends >= writes
-func TestWriteFileAppend(t *testing.T) {
+func TestWriteFileAppend(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	if run.vfs.Opt.CacheMode < vfscommon.CacheModeWrites {

@@ -3,16 +3,16 @@ package vfstest
 import (
 	"os"
 	"runtime"
-	"testing"
 	"time"
 
+	"github.com/rclone/rclone/fstest/retesting"
 	"github.com/rclone/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // TestFileModTime tests mod times on files
-func TestFileModTime(t *testing.T) {
+func TestFileModTime(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.createFile(t, "file", "123")
@@ -41,7 +41,7 @@ func osAppend(name string) (vfs.OsFiler, error) {
 }
 
 // TestFileModTimeWithOpenWriters tests mod time on open files
-func TestFileModTimeWithOpenWriters(t *testing.T) {
+func TestFileModTimeWithOpenWriters(t retesting.T) {
 	run.skipIfNoFUSE(t)
 	if runtime.GOOS == "windows" {
 		t.Skip("Skipping test on Windows")

@@ -16,7 +16,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"testing"
 	"time"
 
 	_ "github.com/rclone/rclone/backend/all" // import all the backends
@@ -24,6 +23,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/retesting"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfscommon"
@@ -40,10 +40,17 @@ var (
 	mountFn mountlib.MountFn
 )
 
+// RetryTests runs all tests retrying if needed
+func RetryTests(t retesting.T, useVFS bool, fn mountlib.MountFn) {
+	retesting.Run(t, "TestVFS", func(t retesting.T) {
+		RunTests(t, useVFS, fn)
+	})
+}
+
 // RunTests runs all the tests against all the VFS cache modes
 //
 // If useVFS is set then it runs the tests against a VFS rather than amount
-func RunTests(t *testing.T, useVFS bool, fn mountlib.MountFn) {
+func RunTests(t retesting.T, useVFS bool, fn mountlib.MountFn) {
 	mountFn = fn
 	flag.Parse()
 	tests := []struct {
@@ -64,33 +71,33 @@ func RunTests(t *testing.T, useVFS bool, fn mountlib.MountFn) {
 			what += fmt.Sprintf(",WriteBack=%v", test.writeBack)
 		}
 		log.Printf("Starting test run with %s", what)
-		ok := t.Run(what, func(t *testing.T) {
-			t.Run("TestTouchAndDelete", TestTouchAndDelete)
-			t.Run("TestRenameOpenHandle", TestRenameOpenHandle)
-			t.Run("TestDirLs", TestDirLs)
-			t.Run("TestDirCreateAndRemoveDir", TestDirCreateAndRemoveDir)
-			t.Run("TestDirCreateAndRemoveFile", TestDirCreateAndRemoveFile)
-			t.Run("TestDirRenameFile", TestDirRenameFile)
-			t.Run("TestDirRenameEmptyDir", TestDirRenameEmptyDir)
-			t.Run("TestDirRenameFullDir", TestDirRenameFullDir)
-			t.Run("TestDirModTime", TestDirModTime)
-			t.Run("TestDirCacheFlush", TestDirCacheFlush)
-			t.Run("TestDirCacheFlushOnDirRename", TestDirCacheFlushOnDirRename)
-			t.Run("TestFileModTime", TestFileModTime)
-			t.Run("TestFileModTimeWithOpenWriters", TestFileModTimeWithOpenWriters)
-			t.Run("TestMount", TestMount)
-			t.Run("TestRoot", TestRoot)
-			t.Run("TestReadByByte", TestReadByByte)
-			t.Run("TestReadChecksum", TestReadChecksum)
-			t.Run("TestReadFileDoubleClose", TestReadFileDoubleClose)
-			t.Run("TestReadSeek", TestReadSeek)
-			t.Run("TestWriteFileNoWrite", TestWriteFileNoWrite)
-			t.Run("TestWriteFileWrite", TestWriteFileWrite)
-			t.Run("TestWriteFileOverwrite", TestWriteFileOverwrite)
-			t.Run("TestWriteFileDoubleClose", TestWriteFileDoubleClose)
-			t.Run("TestWriteFileFsync", TestWriteFileFsync)
-			t.Run("TestWriteFileDup", TestWriteFileDup)
-			t.Run("TestWriteFileAppend", TestWriteFileAppend)
+		ok := retesting.Run(t, what, func(t retesting.T) {
+			retesting.Run(t, "TestTouchAndDelete", TestTouchAndDelete)
+			retesting.Run(t, "TestRenameOpenHandle", TestRenameOpenHandle)
+			retesting.Run(t, "TestDirLs", TestDirLs)
+			retesting.Run(t, "TestDirCreateAndRemoveDir", TestDirCreateAndRemoveDir)
+			retesting.Run(t, "TestDirCreateAndRemoveFile", TestDirCreateAndRemoveFile)
+			retesting.Run(t, "TestDirRenameFile", TestDirRenameFile)
+			retesting.Run(t, "TestDirRenameEmptyDir", TestDirRenameEmptyDir)
+			retesting.Run(t, "TestDirRenameFullDir", TestDirRenameFullDir)
+			retesting.Run(t, "TestDirModTime", TestDirModTime)
+			retesting.Run(t, "TestDirCacheFlush", TestDirCacheFlush)
+			retesting.Run(t, "TestDirCacheFlushOnDirRename", TestDirCacheFlushOnDirRename)
+			retesting.Run(t, "TestFileModTime", TestFileModTime)
+			retesting.Run(t, "TestFileModTimeWithOpenWriters", TestFileModTimeWithOpenWriters)
+			retesting.Run(t, "TestMount", TestMount)
+			retesting.Run(t, "TestRoot", TestRoot)
+			retesting.Run(t, "TestReadByByte", TestReadByByte)
+			retesting.Run(t, "TestReadChecksum", TestReadChecksum)
+			retesting.Run(t, "TestReadFileDoubleClose", TestReadFileDoubleClose)
+			retesting.Run(t, "TestReadSeek", TestReadSeek)
+			retesting.Run(t, "TestWriteFileNoWrite", TestWriteFileNoWrite)
+			retesting.Run(t, "TestWriteFileWrite", TestWriteFileWrite)
+			retesting.Run(t, "TestWriteFileOverwrite", TestWriteFileOverwrite)
+			retesting.Run(t, "TestWriteFileDoubleClose", TestWriteFileDoubleClose)
+			retesting.Run(t, "TestWriteFileFsync", TestWriteFileFsync)
+			retesting.Run(t, "TestWriteFileDup", TestWriteFileDup)
+			retesting.Run(t, "TestWriteFileAppend", TestWriteFileAppend)
 		})
 		log.Printf("Finished test run with %s (ok=%v)", what, ok)
 		if !ok {
@@ -251,13 +258,13 @@ func (r *Run) cacheMode(cacheMode vfscommon.CacheMode, writeBack time.Duration) 
 
 }
 
-func (r *Run) skipIfNoFUSE(t *testing.T) {
+func (r *Run) skipIfNoFUSE(t retesting.T) {
 	if r.skip {
 		t.Skip("FUSE not found so skipping test")
 	}
 }
 
-func (r *Run) skipIfVFS(t *testing.T) {
+func (r *Run) skipIfVFS(t retesting.T) {
 	if r.useVFS {
 		t.Skip("Not running under VFS")
 	}
@@ -314,7 +321,7 @@ func (dm dirMap) filesOnly() dirMap {
 }
 
 // reads the local tree into dir
-func (r *Run) readLocal(t *testing.T, dir dirMap, filePath string) {
+func (r *Run) readLocal(t retesting.T, dir dirMap, filePath string) {
 	realPath := r.path(filePath)
 	files, err := r.os.ReadDir(realPath)
 	require.NoError(t, err)
@@ -332,7 +339,7 @@ func (r *Run) readLocal(t *testing.T, dir dirMap, filePath string) {
 }
 
 // reads the remote tree into dir
-func (r *Run) readRemote(t *testing.T, dir dirMap, filepath string) {
+func (r *Run) readRemote(t retesting.T, dir dirMap, filepath string) {
 	objs, dirs, err := walk.GetAll(context.Background(), r.fremote, filepath, true, 1)
 	if err == fs.ErrorDirNotFound {
 		return
@@ -349,7 +356,7 @@ func (r *Run) readRemote(t *testing.T, dir dirMap, filepath string) {
 }
 
 // checkDir checks the local and remote against the string passed in
-func (r *Run) checkDir(t *testing.T, dirString string) {
+func (r *Run) checkDir(t retesting.T, dirString string) {
 	var retries = *fstest.ListRetries
 	sleep := time.Second / 5
 	var remoteOK, fuseOK bool
@@ -406,27 +413,27 @@ func writeFile(filename string, data []byte, perm os.FileMode) error {
 	return err
 }
 
-func (r *Run) createFile(t *testing.T, filepath string, contents string) {
+func (r *Run) createFile(t retesting.T, filepath string, contents string) {
 	filepath = r.path(filepath)
 	err := writeFile(filepath, []byte(contents), 0600)
 	require.NoError(t, err)
 	r.waitForWriters()
 }
 
-func (r *Run) readFile(t *testing.T, filepath string) string {
+func (r *Run) readFile(t retesting.T, filepath string) string {
 	filepath = r.path(filepath)
 	result, err := run.os.ReadFile(filepath)
 	require.NoError(t, err)
 	return string(result)
 }
 
-func (r *Run) mkdir(t *testing.T, filepath string) {
+func (r *Run) mkdir(t retesting.T, filepath string) {
 	filepath = r.path(filepath)
 	err := run.os.Mkdir(filepath, 0700)
 	require.NoError(t, err)
 }
 
-func (r *Run) rm(t *testing.T, filepath string) {
+func (r *Run) rm(t retesting.T, filepath string) {
 	filepath = r.path(filepath)
 	err := run.os.Remove(filepath)
 	require.NoError(t, err)
@@ -442,7 +449,7 @@ func (r *Run) rm(t *testing.T, filepath string) {
 	assert.Fail(t, "failed to delete file", filepath)
 }
 
-func (r *Run) rmdir(t *testing.T, filepath string) {
+func (r *Run) rmdir(t retesting.T, filepath string) {
 	filepath = r.path(filepath)
 	err := run.os.Remove(filepath)
 	require.NoError(t, err)
@@ -450,7 +457,7 @@ func (r *Run) rmdir(t *testing.T, filepath string) {
 
 // TestMount checks that the Fs is mounted by seeing if the mountpoint
 // is in the mount output
-func TestMount(t *testing.T) {
+func TestMount(t retesting.T) {
 	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 	if runtime.GOOS == "windows" {
@@ -463,7 +470,7 @@ func TestMount(t *testing.T) {
 }
 
 // TestRoot checks root directory is present and correct
-func TestRoot(t *testing.T) {
+func TestRoot(t retesting.T) {
 	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 

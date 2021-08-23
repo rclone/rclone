@@ -2,16 +2,16 @@ package vfstest
 
 import (
 	"context"
-	"testing"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest/retesting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // TestDirLs checks out listing
-func TestDirLs(t *testing.T) {
+func TestDirLs(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.checkDir(t, "")
@@ -28,7 +28,7 @@ func TestDirLs(t *testing.T) {
 }
 
 // TestDirCreateAndRemoveDir tests creating and removing a directory
-func TestDirCreateAndRemoveDir(t *testing.T) {
+func TestDirCreateAndRemoveDir(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.mkdir(t, "dir")
@@ -47,7 +47,7 @@ func TestDirCreateAndRemoveDir(t *testing.T) {
 }
 
 // TestDirCreateAndRemoveFile tests creating and removing a file
-func TestDirCreateAndRemoveFile(t *testing.T) {
+func TestDirCreateAndRemoveFile(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.mkdir(t, "dir")
@@ -67,7 +67,7 @@ func TestDirCreateAndRemoveFile(t *testing.T) {
 }
 
 // TestDirRenameFile tests renaming a file
-func TestDirRenameFile(t *testing.T) {
+func TestDirRenameFile(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.mkdir(t, "dir")
@@ -95,7 +95,7 @@ func TestDirRenameFile(t *testing.T) {
 }
 
 // TestDirRenameEmptyDir tests renaming and empty directory
-func TestDirRenameEmptyDir(t *testing.T) {
+func TestDirRenameEmptyDir(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.mkdir(t, "dir")
@@ -116,7 +116,7 @@ func TestDirRenameEmptyDir(t *testing.T) {
 }
 
 // TestDirRenameFullDir tests renaming a full directory
-func TestDirRenameFullDir(t *testing.T) {
+func TestDirRenameFullDir(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.mkdir(t, "dir")
@@ -139,7 +139,7 @@ func TestDirRenameFullDir(t *testing.T) {
 }
 
 // TestDirModTime tests mod times
-func TestDirModTime(t *testing.T) {
+func TestDirModTime(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.mkdir(t, "dir")
@@ -157,7 +157,7 @@ func TestDirModTime(t *testing.T) {
 }
 
 // TestDirCacheFlush tests flushing the dir cache
-func TestDirCacheFlush(t *testing.T) {
+func TestDirCacheFlush(t retesting.T) {
 	run.skipIfNoFUSE(t)
 
 	run.checkDir(t, "")
@@ -197,7 +197,7 @@ func TestDirCacheFlush(t *testing.T) {
 }
 
 // TestDirCacheFlushOnDirRename tests flushing the dir cache on rename
-func TestDirCacheFlushOnDirRename(t *testing.T) {
+func TestDirCacheFlushOnDirRename(t retesting.T) {
 	run.skipIfNoFUSE(t)
 	run.mkdir(t, "dir")
 	run.createFile(t, "dir/file", "1")

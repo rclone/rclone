@@ -5,15 +5,15 @@ package vfstest
 
 import (
 	"runtime"
-	"testing"
 
+	"github.com/rclone/rclone/fstest/retesting"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/sys/unix"
 )
 
 // TestWriteFileDoubleClose tests double close on write
-func TestWriteFileDoubleClose(t *testing.T) {
+func TestWriteFileDoubleClose(t retesting.T) {
 	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 	if runtime.GOOS == "darwin" {
