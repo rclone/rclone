@@ -186,6 +186,7 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
+          export RCLONE_FLAKEY_RETRIES=2
           make quicktest
         if: matrix.quicktest
 
