@@ -12,5 +12,5 @@ import (
 
 func TestMount(t *testing.T) {
 	testy.SkipUnreliable(t)
-	vfstest.RunTests(t, false, mount)
+	vfstest.RetryTests(t, false, mount)
 }
