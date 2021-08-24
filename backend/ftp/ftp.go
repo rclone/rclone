@@ -130,6 +130,11 @@ Enabled by default. Use 0 to disable.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "shut_timeout",
+			Help:     "Maximum time to wait for data connection closing status.",
+			Default:  fs.Duration(60 * time.Second),
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -167,6 +172,7 @@ type Options struct {
 	DisableMLSD       bool                 `config:"disable_mlsd"`
 	IdleTimeout       fs.Duration          `config:"idle_timeout"`
 	CloseTimeout      fs.Duration          `config:"close_timeout"`
+	ShutTimeout       fs.Duration          `config:"shut_timeout"`
 	Enc               encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -311,6 +317,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	}
 	if f.opt.DisableMLSD {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledMLSD(true))
+	}
+	if f.opt.ShutTimeout != 0 && f.opt.ShutTimeout != fs.DurationOff {
+		ftpConfig = append(ftpConfig, ftp.DialWithShutTimeout(time.Duration(f.opt.ShutTimeout)))
 	}
 	if f.ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpRequests|fs.DumpResponses) != 0 {
 		ftpConfig = append(ftpConfig, ftp.DialWithDebugOutput(&debugLog{auth: f.ci.Dump&fs.DumpAuth != 0}))
@@ -991,7 +1000,11 @@ func (f *ftpReadCloser) Close() error {
 		errchan <- f.rc.Close()
 	}()
 	// Wait for Close for up to 60 seconds by default
-	timer := time.NewTimer(time.Duration(f.f.opt.CloseTimeout))
+	closeTimeout := f.f.opt.CloseTimeout
+	if closeTimeout == 0 {
+		closeTimeout = fs.DurationOff
+	}
+	timer := time.NewTimer(time.Duration(closeTimeout))
 	select {
 	case err = <-errchan:
 		timer.Stop()
