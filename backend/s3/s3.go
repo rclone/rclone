@@ -2010,7 +2010,9 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *s3.Objec
 
 // listDir lists files and directories to out
 func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool) (entries fs.DirEntries, err error) {
+
 	// List the objects and directories
+
 	err = f.list(ctx, bucket, directory, prefix, addBucket, false, func(remote string, object *s3.Object, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, remote, object, isDirectory)
 		if err != nil {
@@ -2021,10 +2023,13 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 		}
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
 	// bucket must be present if listing succeeded
+	fs.Debugf(bucket, "------> s3::listDir() directory=%s prefix=%s -- read %i entries", directory, prefix, len(entries))
+
 	f.cache.MarkOK(bucket)
 	return entries, nil
 }
