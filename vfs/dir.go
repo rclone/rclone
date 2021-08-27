@@ -735,6 +735,9 @@ func (d *Dir) createNewFSObjectForLeaf(leaf string) (Node, error) {
 	}
 
 	if node == nil { // directory
+
+		// check that it is indeed a directory using a aws s3 api call
+
 		entry := fs.NewDir(full_path, time.Now())
 		dir := newDir(d.vfs, d.f, d, entry)
 		fs.Debugf(d.path, "vfs::dir::createNewFSObjectForLeaf leaf=%s - successfully returning Dir item !!", leaf)
@@ -775,14 +778,18 @@ func (d *Dir) stat(leaf string) (Node, error) {
 			d.mu.Lock()
 			defer d.mu.Unlock()
 
-			mv := d._newManageVirtuals()
+			// mv := d._newManageVirtuals()
 			d.items[leaf] = item
-			mv.end(d)
+			// mv.end(d)
+
+			// should save this modified dir
 
 			fs.Debugf(d.path, "KF vfs::dir::stat leaf=%s -->  RETURNING NEWLY CREATED NODE", leaf)
 
+			//return item, errors.New("UPDATE_PARENT")
 			return item, nil
 		}
+
 	}
 
 	// KF: update parent dir content if needed. N.B: this should never happen with KF_DIRECT_STAT
