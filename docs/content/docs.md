@@ -915,6 +915,39 @@ rclone sync -i ~/src s3:test/dst --header-upload "Content-Disposition: attachmen
 See the GitHub issue [here](https://github.com/rclone/rclone/issues/59) for
 currently supported backends.
 
+### --human-readable ###
+
+Rclone commands output values for sizes (e.g. number of bytes) and
+counts (e.g. number of files) either as *raw* numbers, or
+in *human-readable* format.
+
+In human-readable format the values are scaled to larger units, indicated with
+a suffix shown after the value, and rounded to three decimals. Rclone consistently
+uses binary units (powers of 2) for sizes and decimal units (powers of 10) for counts.
+The unit prefix for size is according to IEC standard notation, e.g. `Ki` for kibi.
+Used with byte unit, `1 KiB` means 1024 Byte. In list type of output, only the
+unit prefix appended to the value (e.g. `9.762Ki`), while in more textual output
+the full unit is shown (e.g. `9.762 KiB`). For counts the SI standard notation is
+used, e.g. prefix `k` for kilo. Used with file counts, `1k` means 1000 files.
+
+The various [list](commands/rclone_ls/) commands output raw numbers by default.
+Option `--human-readable` will make them output values in human-readable format
+instead (with the short unit prefix).
+
+The [about](commands/rclone_about/) command outputs human-readable by default,
+with a command-specific option `--full` to output the raw numbers instead.
+
+Command [size](commands/rclone_size/) outputs both human-readable and raw numbers
+in the same output.
+
+The [tree](commands/rclone_tree/) command also considers `--human-readable`, but
+it will not use the exact same notation as the other commands: It rounds to one
+decimal, and uses single letter suffix, e.g. `K` instead of `Ki`. The reason for
+this is that it relies on an external library.
+
+The interactive command [ncdu](commands/rclone_ncdu/) shows human-readable by
+default, and responds to key `u` for toggling human-readable format.
+
 ### --ignore-case-sync ###
 
 Using this option will cause rclone to ignore the case of the files 
