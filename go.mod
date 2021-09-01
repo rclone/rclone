@@ -56,7 +56,7 @@ require (
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/rfjakob/eme v1.1.2
 	github.com/sevlyar/go-daemon v0.1.5
-	github.com/shirou/gopsutil/v3 v3.21.7
+	github.com/shirou/gopsutil/v3 v3.21.8
 	github.com/sirupsen/logrus v1.8.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spacemonkeygo/monkit/v3 v3.0.15 // indirect
@@ -64,8 +64,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
-	github.com/tklauser/go-sysconf v0.3.8 // indirect
-	github.com/tklauser/numcpus v0.3.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.1
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
