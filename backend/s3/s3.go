@@ -1247,7 +1247,7 @@ very small even with this flag.
 			Advanced: true,
 		}, {
 			Name:     "no_head_object",
-			Help:     `If set, don't HEAD objects. So, it will be faster when getting a lot of small files.`,
+			Help:     `If set, do not do HEAD before GET when getting objects.`,
 			Default:  false,
 			Advanced: true,
 		}, {
