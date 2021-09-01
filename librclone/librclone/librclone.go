@@ -22,6 +22,9 @@ import (
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
+
+	_ "github.com/rclone/rclone/cmd/mount"
+	_ "github.com/rclone/rclone/cmd/mountlib"
 )
 
 // Initialize initializes rclone as a library
