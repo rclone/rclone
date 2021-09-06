@@ -1383,7 +1383,7 @@ func (o *Object) stat(ctx context.Context) error {
 		return errors.Wrap(err, "stat failed")
 	}
 	if info.IsDir() {
-		return errors.Wrapf(fs.ErrorNotAFile, "%q", o.remote)
+		return fs.ErrorIsDir
 	}
 	o.setMetadata(info)
 	return nil

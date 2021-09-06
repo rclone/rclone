@@ -624,6 +624,9 @@ func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (fileInfo *fi
 	}
 	fileInfo, ok := entry.(*files.FileMetadata)
 	if !ok {
+		if _, ok = entry.(*files.FolderMetadata); ok {
+			return nil, fs.ErrorIsDir
+		}
 		return nil, fs.ErrorNotAFile
 	}
 	return fileInfo, nil

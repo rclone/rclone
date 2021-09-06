@@ -344,7 +344,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (obj fs.Object, err e
 		return nil, translateErrorsObject(err)
 	}
 	if info.Type == "dir" {
-		return nil, fs.ErrorNotAFile
+		return nil, fs.ErrorIsDir
 	}
 	return &Object{
 		fs:     f,

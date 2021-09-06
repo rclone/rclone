@@ -317,7 +317,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, depth string)
 		return nil, fs.ErrorObjectNotFound
 	}
 	if itemIsDir(&item) {
-		return nil, fs.ErrorNotAFile
+		return nil, fs.ErrorIsDir
 	}
 	return &item.Props, nil
 }
@@ -469,7 +469,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		_, err := f.NewObject(ctx, remote)
 		if err != nil {
-			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
+			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorIsDir {
 				// File doesn't exist so return old f
 				f.root = root
 				return f, nil

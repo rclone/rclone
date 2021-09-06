@@ -337,8 +337,12 @@ func (f *Fs) readMetaDataForIDPath(ctx context.Context, id, path string, directo
 	if directoriesOnly && item.Type != api.ItemTypeFolder {
 		return nil, fs.ErrorIsFile
 	}
-	if filesOnly && item.Type != api.ItemTypeFile {
-		return nil, fs.ErrorNotAFile
+	if filesOnly {
+		if item.Type == api.ItemTypeFolder {
+			return nil, fs.ErrorIsDir
+		} else if item.Type != api.ItemTypeFile {
+			return nil, fs.ErrorNotAFile
+		}
 	}
 	return &item, nil
 }
