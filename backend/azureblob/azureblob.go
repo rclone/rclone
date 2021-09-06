@@ -233,6 +233,11 @@ This option controls how often unused buffers will be removed from the pool.`,
 				},
 			},
 			Advanced: true,
+		}, {
+			Name:     "no_head_object",
+			Help:     `If set, do not do HEAD before GET when getting objects.`,
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
@@ -258,6 +263,7 @@ type Options struct {
 	MemoryPoolUseMmap    bool                 `config:"memory_pool_use_mmap"`
 	Enc                  encoder.MultiEncoder `config:"encoding"`
 	PublicAccess         string               `config:"public_access"`
+	NoHeadObject         bool                 `config:"no_head_object"`
 }
 
 // Fs represents a remote azure server
@@ -756,7 +762,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *azblob.BlobItemInternal) (fs
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData() // reads info and headers, returning an error
 		if err != nil {
 			return nil, err
@@ -1366,6 +1372,24 @@ func (o *Object) decodeMetaDataFromPropertiesResponse(info *azblob.BlobGetProper
 	return nil
 }
 
+func (o *Object) decodeMetaDataFromDownloadResponse(info *azblob.DownloadResponse) (err error) {
+	metadata := info.NewMetadata()
+	size := info.ContentLength()
+	if isDirectoryMarker(size, metadata, o.remote) {
+		return fs.ErrorNotAFile
+	}
+	// NOTE - Client library always returns MD5 as base64 decoded string, Object needs to maintain
+	// this as base64 encoded string.
+	o.md5 = base64.StdEncoding.EncodeToString(info.ContentMD5())
+	o.mimeType = info.ContentType()
+	o.size = size
+	o.modTime = info.LastModified()
+	o.accessTier = o.AccessTier()
+	o.setMetadata(metadata)
+
+	return nil
+}
+
 func (o *Object) decodeMetaDataFromBlob(info *azblob.BlobItemInternal) (err error) {
 	metadata := info.Metadata
 	size := *info.Properties.ContentLength
@@ -1495,6 +1519,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to open for download")
+	}
+	err = o.decodeMetaDataFromDownloadResponse(downloadResponse)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode metadata for download")
 	}
 	in = downloadResponse.Body(azblob.RetryReaderOptions{})
 	return in, nil
