@@ -1121,7 +1121,7 @@ func (o *Object) Size() int64 {
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.Attributes.IsFolder {
-		return fs.ErrorNotAFile
+		return fs.ErrorIsDir
 	}
 	o.hasMetaData = true
 	o.size = info.Attributes.StorageInfo.Size

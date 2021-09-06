@@ -599,7 +599,9 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Jo
 	if err != nil {
 		return nil, errors.Wrap(err, "read metadata failed")
 	}
-	if result.XMLName.Local != "file" {
+	if result.XMLName.Local == "folder" {
+		return nil, fs.ErrorIsDir
+	} else if result.XMLName.Local != "file" {
 		return nil, fs.ErrorNotAFile
 	}
 	return &result, nil
@@ -762,7 +764,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
 		_, err := f.readMetaDataForPath(ctx, "")
-		if err == fs.ErrorNotAFile {
+		if err == fs.ErrorNotAFile || err == fs.ErrorIsDir {
 			err = nil
 		}
 		return err
@@ -784,7 +786,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		_, err := f.NewObject(context.TODO(), remote)
 		if err != nil {
-			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
+			if uErr := errors.Cause(err); uErr == fs.ErrorObjectNotFound || uErr == fs.ErrorNotAFile || uErr == fs.ErrorIsDir {
 				// File doesn't exist so return old f
 				f.root = root
 				return f, nil

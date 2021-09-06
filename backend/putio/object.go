@@ -151,7 +151,7 @@ func (o *Object) readEntry(ctx context.Context) (f *putio.File, err error) {
 		return nil, err
 	}
 	if resp.File.IsDir() {
-		return nil, fs.ErrorNotAFile
+		return nil, fs.ErrorIsDir
 	}
 	return &resp.File, err
 }

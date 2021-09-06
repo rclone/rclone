@@ -303,7 +303,7 @@ func (f *Fs) findObject(rootNode *mega.Node, file string) (node *mega.Node, err 
 	if err == mega.ENOENT {
 		return nil, fs.ErrorObjectNotFound
 	} else if err == nil && node.GetType() != mega.FILE {
-		return nil, fs.ErrorNotAFile
+		return nil, fs.ErrorIsDir // all other node types are directories
 	}
 	return node, err
 }
@@ -958,7 +958,7 @@ func (o *Object) Size() int64 {
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *mega.Node) (err error) {
 	if info.GetType() != mega.FILE {
-		return fs.ErrorNotAFile
+		return fs.ErrorIsDir // all other node types are directories
 	}
 	o.info = info
 	return nil

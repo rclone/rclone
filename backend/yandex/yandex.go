@@ -949,7 +949,9 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	if info.ResourceType != "file" {
+	if info.ResourceType == "dir" {
+		return fs.ErrorIsDir
+	} else if info.ResourceType != "file" {
 		return fs.ErrorNotAFile
 	}
 	return o.setMetaData(info)

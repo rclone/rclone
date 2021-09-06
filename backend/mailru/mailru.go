@@ -1958,7 +1958,7 @@ func (o *Object) readMetaData(ctx context.Context, force bool) error {
 	}
 	newObj, ok := entry.(*Object)
 	if !ok || dirSize >= 0 {
-		return fs.ErrorNotAFile
+		return fs.ErrorIsDir
 	}
 	if newObj.remote != o.remote {
 		return fmt.Errorf("File %q path has changed to %q", o.remote, newObj.remote)

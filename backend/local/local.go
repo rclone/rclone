@@ -401,7 +401,7 @@ func (f *Fs) newObjectWithInfo(remote string, info os.FileInfo) (fs.Object, erro
 
 	}
 	if o.mode.IsDir() {
-		return nil, errors.Wrapf(fs.ErrorNotAFile, "%q", remote)
+		return nil, fs.ErrorIsDir
 	}
 	return o, nil
 }

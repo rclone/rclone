@@ -28,6 +28,10 @@ type Fs interface {
 
 	// NewObject finds the Object at remote.  If it can't be found
 	// it returns the error ErrorObjectNotFound.
+	//
+	// If remote points to a directory then it should return
+	// ErrorIsDir if possible without doing any extra work,
+	// otherwise ErrorObjectNotFound.
 	NewObject(ctx context.Context, remote string) (Object, error)
 
 	// Put in to the remote path with the modTime given of the given size
