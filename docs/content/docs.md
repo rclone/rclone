@@ -48,7 +48,7 @@ See the following for detailed instructions for
   * [HDFS](/hdfs/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
-  * [Jottacloud / GetSky.no](/jottacloud/)
+  * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
   * [Mail.ru Cloud](/mailru/)
   * [Mega](/mega/)

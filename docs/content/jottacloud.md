@@ -5,10 +5,23 @@ description: "Rclone docs for Jottacloud"
 
 # {{< icon "fa fa-cloud" >}} Jottacloud
 
-Jottacloud is a cloud storage service provider from a Norwegian company, using its own datacenters in Norway.
+Jottacloud is a cloud storage service provider from a Norwegian company, using its own datacenters
+in Norway. In addition to the official service at [jottacloud.com](https://www.jottacloud.com/),
+it also provides white-label solutions to different companies, such as:
+* Telia
+  * Telia Cloud (cloud.telia.se)
+  * Telia Sky (sky.telia.no)
+* Tele2
+  * Tele2 Cloud (mittcloud.tele2.se)
+* Elkjøp (with subsidiaries):
+  * Elkjøp Cloud (cloud.elkjop.no)
+  * Elgiganten Sweden (cloud.elgiganten.se)
+  * Elgiganten Denmark (cloud.elgiganten.dk)
+  * Giganti Cloud  (cloud.gigantti.fi)
+  * ELKO Clouud (cloud.elko.is)
 
-In addition to the official service at [jottacloud.com](https://www.jottacloud.com/), there are
-also several whitelabel versions which should work with this backend.
+Most of the white-label versions are supported by this backend, although may require different
+authentication setup - described below.
 
 Paths are specified as `remote:path`
 
@@ -28,7 +41,7 @@ Note that the web interface may refer to this token as a JottaCli token.
 
 ### Legacy authentication
 
-If you are using one of the whitelabel versions (Elgiganten, Com Hem Cloud) you may not have the option
+If you are using one of the whitelabel versions (e.g. from Elkjøp or Tele2) you may not have the option
 to generate a CLI token. In this case you'll have to use the legacy authentication. To to this select
 yes when the setup asks for legacy authentication and enter your username and password.
 The rest of the setup is identical to the default setup.
