@@ -601,6 +601,9 @@ func (f *Fs) Precision() (precision time.Duration) {
 	f.precisionOk.Do(func() {
 		f.precision = f.readPrecision()
 	})
+
+	fs.Debugf(f, "precision detected: %v", f.precision)
+
 	return f.precision
 }
 
