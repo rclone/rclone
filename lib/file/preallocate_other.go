@@ -1,4 +1,5 @@
-//+build !windows,!linux
+//go:build !windows && !linux
+// +build !windows,!linux
 
 package file
 

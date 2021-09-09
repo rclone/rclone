@@ -3,7 +3,7 @@
 
 // Invert the build constraint: linux freebsd
 
-// +build !linux
-// +build !freebsd
+//go:build !linux && !freebsd
+// +build !linux,!freebsd
 
 package mount

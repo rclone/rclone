@@ -1,3 +1,4 @@
+//go:build !openbsd || !windows
 // +build !openbsd !windows
 
 package buildinfo
