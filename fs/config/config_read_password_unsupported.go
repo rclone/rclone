@@ -2,6 +2,7 @@
 // See https://github.com/golang/go/issues/14441 - plan9
 //     https://github.com/golang/go/issues/13085 - solaris
 
+//go:build solaris || plan9
 // +build solaris plan9
 
 package config
