@@ -1,5 +1,6 @@
 // FUSE main Fs
 
+//go:build linux || freebsd
 // +build linux freebsd
 
 package mount
