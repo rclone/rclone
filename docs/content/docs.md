@@ -596,6 +596,23 @@ Set to `0` to disable the buffering for the minimum memory usage.
 Note that the memory allocation of the buffers is influenced by the
 [--use-mmap](#use-mmap) flag.
 
+### --cache-dir=DIR ###
+
+Specify the directory rclone will use for caching, to override
+the default.
+
+Default value is depending on operating system:
+- Windows `%LocalAppData%\rclone`, if `LocalAppData` is defined.
+- macOS `$HOME/Library/Caches/rclone` if `HOME` is defined.
+- Unix `$XDG_CACHE_HOME/rclone` if `XDG_CACHE_HOME` is defined, else `$HOME/.cache/rclone` if `HOME` is defined.
+- Fallback (on all OS) to `$TMPDIR/rclone`, where `TMPDIR` is the value from [--temp-dir](#temp-dir-dir).
+
+You can use the [config paths](/commands/rclone_config_paths/)
+command to see the current value.
+
+Cache directory is heavily used by the [VFS File Caching](/commands/rclone_mount/#vfs-file-caching)
+mount feature, but also by [serve](/commands/rclone_serve/), [GUI](/gui) and other parts of rclone.
+
 ### --check-first ###
 
 If this flag is set then in a `sync`, `copy` or `move`, rclone will do
