@@ -1,4 +1,5 @@
-//+build gofuzz
+//go:build gofuzz
+// +build gofuzz
 
 package filename
 

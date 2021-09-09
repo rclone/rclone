@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 // Read blocks out of a single file to time the seeking code

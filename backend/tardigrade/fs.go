@@ -1,3 +1,4 @@
+//go:build !plan9
 // +build !plan9
 
 // Package tardigrade provides an interface to Tardigrade decentralized object storage.
