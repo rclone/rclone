@@ -80,7 +80,7 @@ var configPathsCommand = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		fmt.Printf("Config file: %s\n", config.GetConfigPath())
-		fmt.Printf("Cache dir:   %s\n", config.CacheDir)
+		fmt.Printf("Cache dir:   %s\n", config.GetCacheDir())
 		fmt.Printf("Temp dir:    %s\n", os.TempDir())
 	},
 }

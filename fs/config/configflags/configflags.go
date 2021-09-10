@@ -24,6 +24,7 @@ var (
 	verbose         int
 	quiet           bool
 	configPath      string
+	cacheDir        string
 	tempDir         string
 	dumpHeaders     bool
 	dumpBodies      bool
@@ -48,7 +49,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.IntVarP(flagSet, &ci.Checkers, "checkers", "", ci.Checkers, "Number of checkers to run in parallel.")
 	flags.IntVarP(flagSet, &ci.Transfers, "transfers", "", ci.Transfers, "Number of file transfers to run in parallel.")
 	flags.StringVarP(flagSet, &configPath, "config", "", config.GetConfigPath(), "Config file.")
-	flags.StringVarP(flagSet, &config.CacheDir, "cache-dir", "", config.CacheDir, "Directory rclone will use for caching.")
+	flags.StringVarP(flagSet, &cacheDir, "cache-dir", "", config.GetCacheDir(), "Directory rclone will use for caching.")
 	flags.StringVarP(flagSet, &tempDir, "temp-dir", "", os.TempDir(), "Directory rclone will use for temporary files.")
 	flags.BoolVarP(flagSet, &ci.CheckSum, "checksum", "c", ci.CheckSum, "Skip based on checksum (if available) & size, not mod-time & size")
 	flags.BoolVarP(flagSet, &ci.SizeOnly, "size-only", "", ci.SizeOnly, "Skip based on size only, not mod-time or checksum")
@@ -279,6 +280,11 @@ func SetFlags(ci *fs.ConfigInfo) {
 	// Set path to configuration file
 	if err := config.SetConfigPath(configPath); err != nil {
 		log.Fatalf("--config: Failed to set %q as config path: %v", configPath, err)
+	}
+
+	// Set path to cache dir
+	if err := config.SetCacheDir(cacheDir); err != nil {
+		log.Fatalf("--cache-dir: Failed to set %q as cache dir: %v", cacheDir, err)
 	}
 
 	// Set path to temp dir
