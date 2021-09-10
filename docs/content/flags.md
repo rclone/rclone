@@ -21,6 +21,7 @@ These flags are available for every command.
       --bwlimit BwTimetable                  Bandwidth limit in KiB/s, or use suffix B|K|M|G|T|P or a full timetable.
       --bwlimit-file BwTimetable             Bandwidth limit per file in KiB/s, or use suffix B|K|M|G|T|P or a full timetable.
       --ca-cert string                       CA certificate used to verify servers
+      --temp-dir string                      Directory rclone will use for temporary files. (default "$TMPDIR")
       --cache-dir string                     Directory rclone will use for caching. (default "$HOME/.cache/rclone")
       --check-first                          Do all the checks before starting transfers.
       --checkers int                         Number of checkers to run in parallel. (default 8)
