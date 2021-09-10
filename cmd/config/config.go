@@ -23,6 +23,7 @@ func init() {
 	configCommand.AddCommand(configEditCommand)
 	configCommand.AddCommand(configFileCommand)
 	configCommand.AddCommand(configTouchCommand)
+	configCommand.AddCommand(configPathsCommand)
 	configCommand.AddCommand(configShowCommand)
 	configCommand.AddCommand(configDumpCommand)
 	configCommand.AddCommand(configProvidersCommand)
@@ -70,6 +71,17 @@ var configTouchCommand = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		config.SaveConfig()
+	},
+}
+
+var configPathsCommand = &cobra.Command{
+	Use:   "paths",
+	Short: `Show paths used for configuration, cache, temp etc.`,
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(0, 0, command, args)
+		fmt.Printf("Config file: %s\n", config.GetConfigPath())
+		fmt.Printf("Cache dir:   %s\n", config.CacheDir)
+		fmt.Printf("Temp dir:    %s\n", os.TempDir())
 	},
 }
 
