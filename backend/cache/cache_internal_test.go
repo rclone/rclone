@@ -926,9 +926,9 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 		}
 	}
 	runInstance.rootIsCrypt = rootIsCrypt
-	runInstance.dbPath = filepath.Join(config.CacheDir, "cache-backend", cacheRemote+".db")
-	runInstance.chunkPath = filepath.Join(config.CacheDir, "cache-backend", cacheRemote)
-	runInstance.vfsCachePath = filepath.Join(config.CacheDir, "vfs", remote)
+	runInstance.dbPath = filepath.Join(config.GetCacheDir(), "cache-backend", cacheRemote+".db")
+	runInstance.chunkPath = filepath.Join(config.GetCacheDir(), "cache-backend", cacheRemote)
+	runInstance.vfsCachePath = filepath.Join(config.GetCacheDir(), "vfs", remote)
 	boltDb, err := cache.GetPersistent(runInstance.dbPath, runInstance.chunkPath, &cache.Features{PurgeDb: true})
 	require.NoError(t, err)
 

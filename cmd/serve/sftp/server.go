@@ -222,7 +222,7 @@ func (s *server) serve() (err error) {
 
 	// Load the private key, from the cache if not explicitly configured
 	keyPaths := s.opt.HostKeys
-	cachePath := filepath.Join(config.CacheDir, "serve-sftp")
+	cachePath := filepath.Join(config.GetCacheDir(), "serve-sftp")
 	if len(keyPaths) == 0 {
 		keyPaths = []string{
 			filepath.Join(cachePath, "id_rsa"),

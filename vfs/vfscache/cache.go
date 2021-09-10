@@ -82,10 +82,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	// Care must be taken when creating OS paths so that the ':' separator following a
 	// drive letter is not encoded (e.g. into unicode fullwidth colon).
 	var err error
-	parentOSPath := config.CacheDir // Assuming string contains a local path in OS encoding
-	if parentOSPath, err = filepath.Abs(parentOSPath); err != nil {
-		return nil, errors.Wrap(err, "failed to make --cache-dir absolute")
-	}
+	parentOSPath := config.GetCacheDir() // Assuming string contains a local absolute path in OS encoding
 	fs.Debugf(nil, "vfs cache: root is %q", parentOSPath)
 	parentPath := fromOSPath(parentOSPath)
 
