@@ -1554,6 +1554,22 @@ If using `--syslog` this sets the syslog facility (e.g. `KERN`, `USER`).
 See `man syslog` for a list of possible facilities.  The default
 facility is `DAEMON`.
 
+### --temp-dir=DIR ###
+
+Specify the directory rclone will use for temporary files, to override
+the default. Make sure the directory exists and have accessible permissions.
+
+By default the operating system's temp directory will be used:
+- On Unix systems, `$TMPDIR` if non-empty, else `/tmp`.
+- On Windows, the first non-empty value from `%TMP%`, `%TEMP%`, `%USERPROFILE%`, or the Windows directory.
+
+When overriding the default with this option, the specified path will be
+set as value of environment variable `TMPDIR` on Unix systems
+and `TMP` and `TEMP` on Windows.
+
+You can use the [config paths](/commands/rclone_config_paths/)
+command to see the current value.
+
 ### --tpslimit float ###
 
 Limit transactions per second to this number. Default is 0 which is

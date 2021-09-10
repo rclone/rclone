@@ -712,3 +712,32 @@ func makeCacheDir() (dir string) {
 	}
 	return filepath.Join(dir, "rclone")
 }
+
+// SetTempDir sets new default directory to use for temporary files.
+//
+// Assuming golang's os.TempDir is used to get the directory:
+// "On Unix systems, it returns $TMPDIR if non-empty, else /tmp. On Windows,
+// it uses GetTempPath, returning the first non-empty value from %TMP%, %TEMP%,
+// %USERPROFILE%, or the Windows directory."
+//
+// To override the default we therefore set environment variable TMPDIR
+// on Unix systems, and both TMP and TEMP on Windows (they are almost exclusively
+// aliases for the same path, and programs may refer to to either of them).
+// This should make all libraries and forked processes use the same.
+func SetTempDir(path string) (err error) {
+	var tempDir string
+	if tempDir, err = filepath.Abs(path); err != nil {
+		return err
+	}
+	if runtime.GOOS == "windows" {
+		if err = os.Setenv("TMP", tempDir); err != nil {
+			return err
+		}
+		if err = os.Setenv("TEMP", tempDir); err != nil {
+			return err
+		}
+	} else {
+		return os.Setenv("TMPDIR", tempDir)
+	}
+	return nil
+}
