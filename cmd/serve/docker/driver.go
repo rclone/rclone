@@ -41,11 +41,8 @@ type Driver struct {
 // NewDriver makes a new docker driver
 func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOpt *vfscommon.Options, dummy, forgetState bool) (*Driver, error) {
 	// setup directories
-	cacheDir, err := filepath.Abs(config.CacheDir)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to make --cache-dir absolute")
-	}
-	err = file.MkdirAll(cacheDir, 0700)
+	cacheDir := config.GetCacheDir()
+	err := file.MkdirAll(cacheDir, 0700)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create cache directory: %s", cacheDir)
 	}

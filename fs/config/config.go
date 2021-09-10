@@ -102,17 +102,13 @@ type Storage interface {
 
 // Global
 var (
-	// CacheDir points to the cache directory.  Users of this
-	// should make a subdirectory and use MkdirAll() to create it
-	// and any parents.
-	CacheDir = makeCacheDir()
-
 	// Password can be used to configure the random password generator
 	Password = random.Password
 )
 
 var (
 	configPath string
+	cacheDir   string
 	data       Storage
 	dataLoaded bool
 )
@@ -122,6 +118,7 @@ func init() {
 	fs.ConfigFileGet = FileGetFlag
 	fs.ConfigFileSet = SetValueAndSave
 	configPath = makeConfigPath()
+	cacheDir = makeCacheDir() // Has fallback to tempDir, so set that first
 	data = newDefaultStorage()
 }
 
@@ -711,6 +708,21 @@ func makeCacheDir() (dir string) {
 		dir = os.TempDir()
 	}
 	return filepath.Join(dir, "rclone")
+}
+
+// GetCacheDir returns the default directory for cache
+//
+// The directory is neither guaranteed to exist nor have accessible permissions.
+// Users of this should make a subdirectory and use MkdirAll() to create it
+// and any parents.
+func GetCacheDir() string {
+	return cacheDir
+}
+
+// SetCacheDir sets new default directory for cache
+func SetCacheDir(path string) (err error) {
+	cacheDir, err = filepath.Abs(path)
+	return
 }
 
 // SetTempDir sets new default directory to use for temporary files.

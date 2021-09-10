@@ -76,7 +76,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) *Server
 	_ = mime.AddExtensionType(".wasm", "application/wasm")
 	_ = mime.AddExtensionType(".js", "application/javascript")
 
-	cachePath := filepath.Join(config.CacheDir, "webgui")
+	cachePath := filepath.Join(config.GetCacheDir(), "webgui")
 	extractPath := filepath.Join(cachePath, "current/build")
 	// File handling
 	if opt.Files != "" {
@@ -86,7 +86,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) *Server
 		fs.Logf(nil, "Serving files from %q", opt.Files)
 		fileHandler = http.FileServer(http.Dir(opt.Files))
 	} else if opt.WebUI {
-		if err := webgui.CheckAndDownloadWebGUIRelease(opt.WebGUIUpdate, opt.WebGUIForceUpdate, opt.WebGUIFetchURL, config.CacheDir); err != nil {
+		if err := webgui.CheckAndDownloadWebGUIRelease(opt.WebGUIUpdate, opt.WebGUIForceUpdate, opt.WebGUIFetchURL, config.GetCacheDir()); err != nil {
 			log.Fatalf("Error while fetching the latest release of Web GUI: %v", err)
 		}
 		if opt.NoAuth {

@@ -89,7 +89,7 @@ func initPluginsOrError() error {
 	initMutex.Lock()
 	defer initMutex.Unlock()
 	if !initSuccess {
-		cachePath = filepath.Join(config.CacheDir, "webgui")
+		cachePath = filepath.Join(config.GetCacheDir(), "webgui")
 		PluginsPath = filepath.Join(cachePath, "plugins")
 		pluginsConfigPath = filepath.Join(PluginsPath, "config")
 		loadedPlugins = newPlugins(availablePluginsJSONPath)

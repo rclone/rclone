@@ -143,12 +143,12 @@ oldest chunks until it goes under this value.`,
 			}},
 		}, {
 			Name:     "db_path",
-			Default:  filepath.Join(config.CacheDir, "cache-backend"),
+			Default:  filepath.Join(config.GetCacheDir(), "cache-backend"),
 			Help:     "Directory to store file structure metadata DB.\nThe remote name is used as the DB file name.",
 			Advanced: true,
 		}, {
 			Name:    "chunk_path",
-			Default: filepath.Join(config.CacheDir, "cache-backend"),
+			Default: filepath.Join(config.GetCacheDir(), "cache-backend"),
 			Help: `Directory to cache chunk files.
 
 Path to where partial file data (chunks) are stored locally. The remote
@@ -421,8 +421,8 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 	dbPath := f.opt.DbPath
 	chunkPath := f.opt.ChunkPath
 	// if the dbPath is non default but the chunk path is default, we overwrite the last to follow the same one as dbPath
-	if dbPath != filepath.Join(config.CacheDir, "cache-backend") &&
-		chunkPath == filepath.Join(config.CacheDir, "cache-backend") {
+	if dbPath != filepath.Join(config.GetCacheDir(), "cache-backend") &&
+		chunkPath == filepath.Join(config.GetCacheDir(), "cache-backend") {
 		chunkPath = dbPath
 	}
 	if filepath.Ext(dbPath) != "" {
