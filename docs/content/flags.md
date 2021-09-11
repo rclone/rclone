@@ -339,7 +339,7 @@ and may be set in the config file.
       --ftp-idle-timeout Duration                    Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                     Do not verify the TLS certificate of the server
       --ftp-pass string                              FTP password (obscured)
-      --ftp-port string                              FTP port, leave blank to use default (21)
+      --ftp-port string                              FTP port number (default 21)
       --ftp-shut-timeout Duration                    Maximum time to wait for data connection closing status (default 1m0s)
       --ftp-tls                                      Use Implicit FTPS (FTP over TLS)
       --ftp-tls-cache-size int                       Size of TLS session cache for all control and data connections (default 32)
@@ -528,7 +528,7 @@ and may be set in the config file.
       --sftp-md5sum-command string                   The command used to read md5 hashes
       --sftp-pass string                             SSH password, leave blank to use ssh-agent (obscured)
       --sftp-path-override string                    Override path used by SSH connection
-      --sftp-port string                             SSH port, leave blank to use default (22)
+      --sftp-port string                             SSH port number (default 22)
       --sftp-pubkey-file string                      Optional path to public key file
       --sftp-server-command string                   Specifies the path or command to run a sftp server on the remote host
       --sftp-set-modtime                             Set the modified time on the remote if set (default true)
