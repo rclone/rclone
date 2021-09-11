@@ -101,10 +101,12 @@ func Choose(what string, kind string, choices, help []string, defaultValue strin
 		valueDescription = "your own"
 	}
 	fmt.Printf("Choose a number from below, or type in %s %s.\n", valueDescription, kind)
-	if !required || defaultValue != "" {
-		// Empty input is allowed if not required is set, or if
-		// required is set but there is a default value to use.
-		fmt.Printf("Press Enter for the default (%q).\n", defaultValue)
+	// Empty input is allowed if not required is set, or if
+	// required is set but there is a default value to use.
+	if defaultValue != "" {
+		fmt.Printf("Press Enter for the default (%s).\n", defaultValue)
+	} else if !required {
+		fmt.Printf("Press Enter to leave empty.\n")
 	}
 	attributes := []string{terminal.HiRedFg, terminal.HiGreenFg}
 	for i, text := range choices {
@@ -113,7 +115,7 @@ func Choose(what string, kind string, choices, help []string, defaultValue strin
 			parts := strings.Split(help[i], "\n")
 			lines = append(lines, parts...)
 		}
-		lines = append(lines, fmt.Sprintf("%q", text))
+		lines = append(lines, fmt.Sprintf("(%s)", text))
 		pos := i + 1
 		terminal.WriteString(attributes[i%len(attributes)])
 		if len(lines) == 1 {
@@ -179,12 +181,15 @@ func Choose(what string, kind string, choices, help []string, defaultValue strin
 
 // Enter prompts for an input value of a specified type
 func Enter(what string, kind string, defaultValue string, required bool) string {
-	if !required || defaultValue != "" {
-		// Empty input is allowed if not required is set, or if
-		// required is set but there is a default value to use.
-		fmt.Printf("Enter a %s. Press Enter for the default (%q).\n", kind, defaultValue)
+	// Empty input is allowed if not required is set, or if
+	// required is set but there is a default value to use.
+	fmt.Printf("Enter a %s.", kind)
+	if defaultValue != "" {
+		fmt.Printf(" Press Enter for the default (%s).\n", defaultValue)
+	} else if !required {
+		fmt.Println(" Press Enter to leave empty.")
 	} else {
-		fmt.Printf("Enter a %s.\n", kind)
+		fmt.Println()
 	}
 	for {
 		fmt.Printf("%s> ", what)
@@ -427,18 +432,22 @@ func ChooseOption(o *fs.Option, name string) string {
 		return ChoosePassword(defaultValue, o.Required)
 	}
 
-	what := fmt.Sprintf("%T value", o.Default)
-	switch o.Default.(type) {
-	case bool:
-		what = "boolean value (true or false)"
-	case fs.SizeSuffix:
-		what = "size with suffix K,M,G,T"
-	case fs.Duration:
-		what = "duration s,m,h,d,w,M,y"
-	case int, int8, int16, int32, int64:
-		what = "signed integer"
-	case uint, byte, uint16, uint32, uint64:
-		what = "unsigned integer"
+	what := "value"
+	if o.Default != "" {
+		switch o.Default.(type) {
+		case bool:
+			what = "boolean value (true or false)"
+		case fs.SizeSuffix:
+			what = "size with suffix K,M,G,T"
+		case fs.Duration:
+			what = "duration s,m,h,d,w,M,y"
+		case int, int8, int16, int32, int64:
+			what = "signed integer"
+		case uint, byte, uint16, uint32, uint64:
+			what = "unsigned integer"
+		default:
+			what = fmt.Sprintf("%T value", o.Default)
+		}
 	}
 	var in string
 	for {
