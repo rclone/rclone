@@ -200,13 +200,17 @@ func Enter(what string, kind string, defaultValue string, required bool) string 
 }
 
 // ChoosePassword asks the user for a password
-func ChoosePassword(required bool) string {
+func ChoosePassword(defaultValue string, required bool) string {
 	fmt.Printf("Choose an alternative below.")
-	actions := []string{"yYes type in my own password", "gGenerate random password"}
+	actions := []string{"yYes, type in my own password", "gGenerate random password"}
 	defaultAction := -1
-	if !required {
+	if defaultValue != "" {
 		defaultAction = len(actions)
-		actions = append(actions, "nNo leave this optional password blank")
+		actions = append(actions, "nNo, keep existing")
+		fmt.Printf(" Press Enter for the default (%s).", string(actions[defaultAction][0]))
+	} else if !required {
+		defaultAction = len(actions)
+		actions = append(actions, "nNo, leave this optional password blank")
 		fmt.Printf(" Press Enter for the default (%s).", string(actions[defaultAction][0]))
 	}
 	fmt.Println()
@@ -232,7 +236,7 @@ func ChoosePassword(required bool) string {
 			}
 		}
 	case 'n':
-		return ""
+		return defaultValue
 	default:
 		fs.Errorf(nil, "Bad choice %c", i)
 	}
@@ -412,8 +416,15 @@ func ChooseOption(o *fs.Option, name string) string {
 		fmt.Println(help)
 	}
 
+	var defaultValue string
+	if o.Default == nil {
+		defaultValue = ""
+	} else {
+		defaultValue = fmt.Sprint(o.Default)
+	}
+
 	if o.IsPassword {
-		return ChoosePassword(o.Required)
+		return ChoosePassword(defaultValue, o.Required)
 	}
 
 	what := fmt.Sprintf("%T value", o.Default)
@@ -430,13 +441,6 @@ func ChooseOption(o *fs.Option, name string) string {
 		what = "unsigned integer"
 	}
 	var in string
-	var defaultValue string
-	if o.Default == nil {
-		defaultValue = ""
-	} else {
-		defaultValue = fmt.Sprint(o.Default)
-	}
-
 	for {
 		if len(o.Examples) > 0 {
 			var values []string
