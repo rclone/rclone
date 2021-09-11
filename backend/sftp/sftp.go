@@ -60,11 +60,13 @@ func init() {
 			Help:     "SSH host to connect to.\n\nE.g. \"example.com\".",
 			Required: true,
 		}, {
-			Name: "user",
-			Help: "SSH username, leave blank for current username, " + currentUser + ".",
+			Name:    "user",
+			Help:    "SSH username.",
+			Default: currentUser,
 		}, {
-			Name: "port",
-			Help: "SSH port, leave blank to use default (22).",
+			Name:    "port",
+			Help:    "SSH port number.",
+			Default: 22,
 		}, {
 			Name:       "pass",
 			Help:       "SSH password, leave blank to use ssh-agent.",

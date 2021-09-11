@@ -51,11 +51,11 @@ Choose a number from below, or type in your own value
  1 / Connect to ftp.example.com
    \ "ftp.example.com"
 host> ftp.example.com
-FTP username, leave blank for current username, $USER
-Enter a string value. Press Enter for the default ("").
+FTP username
+Enter a string value. Press Enter for the default ("$USER").
 user> 
-FTP port, leave blank to use default (21)
-Enter a string value. Press Enter for the default ("").
+FTP port number
+Enter a signed integer. Press Enter for the default (21).
 port> 
 FTP password
 y) Yes type in my own password
