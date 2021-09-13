@@ -1296,6 +1296,14 @@ disabled here.  When the issue is solved this flag will be removed.
 See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rclone/issues/3631
 
 `,
+		}, {
+			Name:     "use_lazy_dir_list_hack",
+			Default:  false,
+			Advanced: true,
+			Help: `Whether to use a hack to avoid slowness due to large directories traversal.
+During the lookup, the directories will not be populated, unless if a child is looked up.
+See: https://github.com/rclone/rclone/issues/5553
+			`,
 		},
 		}})
 }
@@ -1357,6 +1365,7 @@ type Options struct {
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
 	DisableHTTP2          bool                 `config:"disable_http2"`
+	UseLazyDirListHack    bool                 `config:"use_lazy_dir_list_hack"`
 }
 
 // Fs represents a remote s3 server
@@ -1819,6 +1828,32 @@ func (f *Fs) updateRegionForBucket(ctx context.Context, bucket string) error {
 	return nil
 }
 
+func (f *Fs) IsDirectoryS3(ctx context.Context, path string) (inDir bool, err error) {
+	bucketName, bucketPath := bucket.Split(path)
+	if bucketName == "" {
+		return false, nil
+	}
+
+	// N.B: len(bucketPath) == 0 iff the path is the bucket !
+	if len(bucketPath) > 0 && !strings.HasSuffix(bucketPath, "/") { 
+		bucketPath += "/"
+	}
+
+	req := &s3.ListObjectsV2Input{
+		Bucket:  aws.String(bucketName),
+		MaxKeys: aws.Int64(1),
+		Prefix: aws.String(bucketPath),
+	}
+
+	resp, err := f.c.ListObjectsV2(req)
+	if err != nil { // actual API error
+		return false, err
+	}
+
+	return len(resp.Contents) > 0, nil
+}
+
+
 // listFn is called from list to handle an object.
 type listFn func(remote string, object *s3.Object, isDirectory bool) error
 
@@ -2036,6 +2071,7 @@ func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addB
 
 // listBuckets lists the buckets to out
 func (f *Fs) listBuckets(ctx context.Context) (entries fs.DirEntries, err error) {
+	fs.Debugf("backend::s3::listBuckets", "#####################################################")
 	req := s3.ListBucketsInput{}
 	var resp *s3.ListBucketsOutput
 	err = f.pacer.Call(func() (bool, error) {
@@ -2554,6 +2590,11 @@ Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
 		"max-age": "Max age of upload to delete",
 	},
 }}
+
+// Return the options - needed by vfs::direct_access::isDirectAccessHeuristicOn
+func (f *Fs) Options() Options {
+	return f.opt
+}
 
 // Command the backend to run a named command
 //
