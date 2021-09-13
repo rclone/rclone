@@ -746,18 +746,23 @@ func (f *File) Truncate(size int64) (err error) {
 	copy(writers, f.writers)
 	f.mu.Unlock()
 
-	// FIXME: handle closing writer
-
 	// If have writers then call truncate for each writer
 	if len(writers) != 0 {
+		var openWriters = len(writers)
 		fs.Debugf(f.Path(), "Truncating %d file handles", len(writers))
 		for _, h := range writers {
 			truncateErr := h.Truncate(size)
-			if truncateErr != nil {
+			if truncateErr == ECLOSED {
+				// Ignore ECLOSED since file handle can get closed while this is running
+				openWriters--
+			} else if truncateErr != nil {
 				err = truncateErr
 			}
 		}
-		return err
+		// If at least one open writer return here
+		if openWriters > 0 {
+			return err
+		}
 	}
 
 	// if o is nil it isn't valid yet
