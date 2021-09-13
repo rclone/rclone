@@ -38,6 +38,8 @@ type Dir struct {
 
 	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
+
+	accessed *DirectAccessManager // last accessed entries - can be empty but not nil
 }
 
 //go:generate stringer -type=vState
@@ -51,8 +53,6 @@ const (
 	vAddDir                // added directory
 	vDel                   // removed file or directory
 
-	KF_DIRECT_STAT bool = true // Karl Forner's uygly hack for direct stat() of leaf
-
 )
 
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
@@ -65,6 +65,7 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		modTime: fsDir.ModTime(context.TODO()),
 		inode:   newInode(),
 		items:   make(map[string]Node),
+		accessed: newDirectAccessManager(),
 	}
 }
 
@@ -467,6 +468,7 @@ func (d *Dir) _readDir() error {
 		return err
 	}
 
+	d.accessed.clear()
 	d.read = when
 	return nil
 }
@@ -695,63 +697,6 @@ func (d *Dir) readDir() error {
 	return d._readDir()
 }
 
-// func (d *Dir) createFileObjFromFsEntry(node fs.Object, name string) (Node, error) {
-// 	switch node.(type) {
-// 	case fs.Object:
-// 		file := newFile(d, d.path, node, name)
-// 		fs.Debugf(d.path, "vfs::dir::createFileObjFromFsEntry name=%s - called newFile(%s)", name)
-// 		return file, nil
-
-// 	case fs.Directory:
-// 		remote := path.Join(d.path, name)
-// 		entry := fs.NewDir(remote, time.Now())
-// 		dir := newDir(d.vfs, d.f, d, entry)
-// 		fs.Debugf(d.path, "vfs::dir::createFileObjFromFsEntry name=%s - called newDir(%s)", name)
-// 		return dir, nil
-
-// 	default:
-// 		err := errors.Errorf("unknown type %T", node)
-// 		fs.Errorf(d, "readDir error: %v", err)
-// 		return nil, err
-// 	}
-
-// 	return nil, nil
-// }
-
-// part of KF_DIRECT_STAT UGLY HACK
-func (d *Dir) createNewFSObjectForLeaf(leaf string) (Node, error) {
-	if len(d.path) == 0 {
-		return nil, ENOENT
-	}
-
-	fs.Debugf(d.path, "vfs::dir::createNewFSObjectForLeaf leaf=%s", leaf)
-
-	full_path := path.Join(d.path, leaf)
-	fs.Debugf(d.path, "vfs::dir::createNewFSObjectForLeaf leaf=%s - calling NewObject(%s)", leaf, full_path)
-	node, err := d.f.NewObject(context.TODO(), full_path)
-	if err != nil && err.Error() != "object not found" {
-		fs.Debugf(d.path, "@@@@@@@@@@@ NewObject FAILED for %s: %s", full_path, err)
-		return nil, err
-	}
-
-	if node == nil { // directory
-
-		// check that it is indeed a directory using a aws s3 api call
-
-		entry := fs.NewDir(full_path, time.Now())
-		dir := newDir(d.vfs, d.f, d, entry)
-		fs.Debugf(d.path, "vfs::dir::createNewFSObjectForLeaf leaf=%s - successfully returning Dir item !!", leaf)
-		return dir, nil
-	}
-
-	item := newFile(d, d.path, node, leaf)
-	if item == nil {
-		return nil, ENOENT
-	}
-
-	fs.Debugf(d.path, "vfs::dir::createNewFSObjectForLeaf leaf=%s - successfully returning File item !!", leaf)
-	return item, nil
-}
 
 // stat a single item in the directory
 //
@@ -759,75 +704,81 @@ func (d *Dir) createNewFSObjectForLeaf(leaf string) (Node, error) {
 // returns a custom error if directory on a case-insensitive file system
 // contains files with names that differ only by case.
 func (d *Dir) stat(leaf string) (Node, error) {
-	fs.Debugf(d.path, "============================ KF vfs::dir::stat leaf=%s ================================", leaf)
+	fs.Debugf("==================================================================", "")
+	fs.Debugf("", "============================ vfs::dir::stat %v ================================", path.Join(d.path, leaf))
+	fs.Debugf("==================================================================", "")
 
-	if KF_DIRECT_STAT {
-		// first look in existing parent dir items
-		item, err := d.searchFileInDirItems(leaf)
+	when := time.Now()
 
-		if err == nil { // found it !
-			fs.Debugf(d.path, "KF vfs::dir::stat leaf=%s -->  FOUND NODE IN EXISTING PARENT ITEMS", leaf)
-			return item, err
-		}
+	// 1. check if present  the directory cache if not outdated/stale
+	_, stale := d._age(when)
 
-		// try to find it using full path ~ newObject
-		item, err = d.createNewFSObjectForLeaf(leaf)
-		if err == nil {
-			fs.Debugf(d.path, "KF vfs::dir::stat leaf=%s -->  ADDING NEW ITEM TO DIR", leaf)
-
-			d.mu.Lock()
-			defer d.mu.Unlock()
-
-			// mv := d._newManageVirtuals()
-			d.items[leaf] = item
-			// mv.end(d)
-
-			// should save this modified dir
-
-			fs.Debugf(d.path, "KF vfs::dir::stat leaf=%s -->  RETURNING NEWLY CREATED NODE", leaf)
-
-			//return item, errors.New("UPDATE_PARENT")
+	if !stale {
+		// look in the existing parent dir items
+		item, _ := d.searchFileInDirItems(leaf)
+		if item != nil { // found it !
+			fs.Debugf("vfs::dir::stat", "FOUND file %v IN EXISTING PARENT DIR ITEMS", path.Join(d.path, leaf))
 			return item, nil
 		}
-
 	}
 
-	// KF: update parent dir content if needed. N.B: this should never happen with KF_DIRECT_STAT
+	// 2. check if the file is among the valid directly accessed files
+	if d.isDirectAccessHeuristicOn() {
+		item, err := d.directAccessLookup(leaf)
+		if err != nil {
+			return nil, err
+		}
+
+		if item != nil {
+			fs.Debugf("vfs::dir::stat", "found file %v via direct access", path.Join(d.path, leaf))
+			return *item.node, nil
+		} else {
+			fs.Debugf("vfs::dir::stat", "did NOT find file %v via direct access!!!!!!!!", path.Join(d.path, leaf))
+			return nil, ENOENT
+		}
+	}
+
+	// 3.the directory content needs updating
+	if !stale {
+		return nil, ENOENT
+	}
+
+	// update parent dir content if needed. N.B: this should never happen
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	fs.Debugf(d.path, "KF vfs::dir::stat leaf=%s -->  d._readDir()", leaf)
+	fs.Debugf(d.path, "vfs::dir::stat leaf=%v -->  d._readDir()", leaf)
 	err := d._readDir()
 	if err != nil {
 		return nil, err
 	}
 
-	// KF search in new list
+	// search in updated list
 	item, err := d.searchFileInDirItems(leaf)
 	if err != nil {
 		return nil, err
 	}
 
-	fs.Debugf(d.path, "KF vfs::dir::stat leaf=%s FOUND NODE IN UPUDATED PARENT ITEMS", leaf)
+	fs.Debugf("vfs::dir::stat", "FOUND file %v IN UPDATED PARENT ITEMS", path.Join(d.path, leaf))
 	return item, nil
 }
 
 // search for a (leaf) File among existing Dir Items (children) by name
 // if not found return nil, NOENT
-func (d *Dir) searchFileInDirItems(leaf string) (Node, error) {
-	fs.Debugf(d.path, "KF vfs::dir::searchFileInDirItems leaf=%s items=%s", leaf, len(d.items))
-	item, ok := d.items[leaf]
+func (d *Dir) searchFileInDirItems(name string) (Node, error) {
+	fs.Debugf("vfs::dir::searchFileInDirItems", " leaf=%v nb of items=%v", path.Join(d.path, name), len(d.items))
+	item, ok := d.items[name]
 
 	if ok {
 		return item, nil
 	}
 
 	if !ok && d.vfs.Opt.CaseInsensitive {
-		leafLower := strings.ToLower(leaf)
+		leafLower := strings.ToLower(name)
 		for name, node := range d.items {
 			if strings.ToLower(name) == leafLower {
 				if ok {
 					// duplicate case insensitive match is an error
-					return nil, errors.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
+					return nil, errors.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", name)
 				}
 				// found a case insensitive match
 				return node, nil
@@ -915,7 +866,7 @@ func (d *Dir) Stat(name string) (node Node, err error) {
 		}
 		return nil, err
 	}
-	//fs.Debugf(d, "Dir.Stat OK")
+	fs.Debugf(d, "Dir.Stat OK")
 	return node, nil
 }
 

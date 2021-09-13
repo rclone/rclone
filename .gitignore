@@ -14,3 +14,6 @@ fuzz-build.zip
 *.orig
 *.rej
 Thumbs.db
+.vscode/launch.json
+.vscode/settings.json
+KARL_DEBUG.md
