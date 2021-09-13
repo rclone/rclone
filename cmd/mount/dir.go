@@ -80,26 +80,6 @@ func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.Lo
 	defer log.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
 	mnode, err := d.Dir.Stat(req.Name)
 	if err != nil {
-		// if err.Error() == "UPDATE_PARENT" {
-		// 	println(err)
-
-		// 	c := d.fsys.server
-		// 	println(c)
-
-		// 	//c.saveNode(, n2)
-
-		// 	// from server::handleRequest
-		// 	// if err := c.saveLookup(ctx, s, snode, r.Name, n2); err != nil {
-		// 	// 	return err
-		// 	// }
-
-		// 	// if s.Attr.Inode == 0 {
-		// 	// 	s.Attr.Inode = c.dynamicInode(snode.inode, elem)
-		// 	// }
-
-		// 	// s.Node, s.Generation = c.saveNode(s.Attr.Inode, n2)
-		// }
-
 		return nil, translateError(err)
 	}
 	resp.EntryValid = d.fsys.opt.AttrTimeout
