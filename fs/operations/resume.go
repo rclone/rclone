@@ -6,35 +6,30 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strings"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/lib/cacheroot"
 )
 
 // Creates an OptionResume that will be passed to Put/Upload
 func createResumeOpt(ctx context.Context, f fs.Fs, remote string, src fs.Object) (resumeOpt *fs.OptionResume) {
 	ci := fs.GetConfig(ctx)
-	resumeOpt = &fs.OptionResume{ID: "", Pos: 0, Src: src, F: f, Remote: remote, CacheCleaned: false, CacheDir: config.CacheDir}
-	if ci.ResumeLarger >= 0 {
-		root := f.Root()
-		if runtime.GOOS == "windows" {
-			if root[:4] == "//?/" {
-				root = root[4:]
-			}
-			if root[1] == ':' {
-				root = strings.Replace(root, ":", "", 1)
-			}
+	cacheParent := config.GetCacheDir()
+	resumeOpt = &fs.OptionResume{ID: "", Pos: 0, Src: src, F: f, Remote: remote, CacheCleaned: false, CacheDir: cacheParent}
+	if ci.ResumeCutoff >= 0 {
+		cacheDir, _, err := cacheroot.CreateCacheRoot(cacheParent, f.Name(), f.Root(), "resume")
+		if err != nil {
+			return nil
 		}
-		cacheName := filepath.Join(config.CacheDir, "resume", f.Name(), root, remote)
-		resumeID, hashName, hashState, attemptResume := readResumeCache(ctx, f, src, cacheName)
+		cacheFile := filepath.Join(cacheDir, remote)
+		resumeID, hashName, hashState, attemptResume := readResumeCache(ctx, f, src, cacheFile)
 		if attemptResume {
-			fs.Debugf(f, "Existing resume cache file found: %s. A resume will now be attempted.", cacheName)
+			fs.Debugf(f, "Existing resume cache file found: %s. A resume will now be attempted.", cacheFile)
 			position, resumeErr := f.Features().Resume(ctx, remote, resumeID, hashName, hashState)
 			if resumeErr != nil {
 				fs.Errorf(src, "Resume canceled: %v", resumeErr)
-			} else if position > int64(ci.ResumeLarger) {
+			} else if position > int64(ci.ResumeCutoff) {
 				(*resumeOpt).Pos = position
 			}
 		}

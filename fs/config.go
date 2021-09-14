@@ -133,7 +133,7 @@ type ConfigInfo struct {
 	DisableHTTP2           bool
 	HumanReadable          bool
 	MaxResumeCacheSize     SizeSuffix
-	ResumeLarger           SizeSuffix
+	ResumeCutoff           SizeSuffix
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -166,7 +166,7 @@ func NewConfig() *ConfigInfo {
 	c.MaxTransfer = -1
 	c.MaxBacklog = 10000
 	c.MaxResumeCacheSize = SizeSuffix(100 * 1024)
-	c.ResumeLarger = -1
+	c.ResumeCutoff = -1
 	// We do not want to set the default here. We use this variable being empty as part of the fall-through of options.
 	//	c.StatsOneLineDateFormat = "2006/01/02 15:04:05 - "
 	c.MultiThreadCutoff = SizeSuffix(250 * 1024 * 1024)

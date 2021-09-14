@@ -79,7 +79,7 @@ func TestResume(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	ci := fs.GetConfig(ctx)
-	ci.ResumeLarger = 0
+	ci.ResumeCutoff = 0
 
 	// Contents for the mock object
 	var (

@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/cacheroot"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
@@ -484,8 +485,13 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						if err == nil {
 							newDst = dst
 							err = closeErr
+							cacheParent := config.GetCacheDir()
 							// Remove resume cache file (if one was created) when Put/Upload is successful
-							cacheFile := filepath.Join(config.CacheDir, "resume", f.Name(), f.Root(), remote)
+							cacheDir, _, err := cacheroot.CreateCacheRoot(cacheParent, f.Name(), f.Root(), "resume")
+							if err != nil {
+								return nil, err
+							}
+							cacheFile := filepath.Join(cacheDir, remote)
 							removeErr := os.Remove(cacheFile)
 							if err != nil && !os.IsNotExist(removeErr) {
 								return nil, errors.Wrap(err, "failed to remove resume cache file after upload")

@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/cacheroot"
 )
 
 // OpenOption is an interface describing options for Open
@@ -254,7 +254,6 @@ type OptionResume struct {
 // --cache-dir so that future Copy operations can resume the upload if it fails
 func (o *OptionResume) SetID(ctx context.Context, ID, hashName, hashState string) error {
 	ci := GetConfig(ctx)
-	rootCacheDir := filepath.Join(o.CacheDir, "resume")
 	// Get the Fingerprint of the src object so that future Copy operations can ensure the
 	// object hasn't changed before resuming an upload
 	fingerprint := Fingerprint(ctx, o.Src, true)
@@ -264,16 +263,10 @@ func (o *OptionResume) SetID(ctx context.Context, ID, hashName, hashState string
 	}
 	if len(data) < int(ci.MaxResumeCacheSize) {
 		// Each remote will have its own directory for cached resume files
-		root := o.F.Root()
-		if runtime.GOOS == "windows" {
-			if root[:4] == "//?/" {
-				root = root[4:]
-			}
-			if root[1] == ':' {
-				root = strings.Replace(root, ":", "", 1)
-			}
+		dirPath, _, err := cacheroot.CreateCacheRoot(o.CacheDir, o.F.Name(), o.F.Root(), "resume")
+		if err != nil {
+			return err
 		}
-		dirPath := filepath.Join(rootCacheDir, o.F.Name(), root)
 		err = os.MkdirAll(dirPath, os.ModePerm)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create cache directory %v", dirPath)
@@ -288,11 +281,12 @@ func (o *OptionResume) SetID(ctx context.Context, ID, hashName, hashState string
 			_ = cacheFile.Close()
 		}()
 		_, errWrite := cacheFile.Write(data)
-		if err != nil {
+		if errWrite != nil {
 			return errors.Wrapf(errWrite, "failed to write JSON to file")
 		}
 	}
 	if !o.CacheCleaned {
+		rootCacheDir := filepath.Join(o.CacheDir, "resume")
 		if err := cleanResumeCache(ctx, rootCacheDir); err != nil {
 			return errors.Wrapf(err, "failed to clean resume cache")
 		}

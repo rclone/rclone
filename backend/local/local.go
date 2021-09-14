@@ -1428,7 +1428,7 @@ func (f *Fs) Resume(ctx context.Context, remote, ID, hashName, hashState string)
 		return cachedPos, nil
 	}
 	// No valid position found, restart from beginning
-	fs.Debugf(f, "Cached hash state did not match hash state on remote")
+	fs.Infof(remote, "Not resuming as cached hash state did not match hash state on remote")
 	return 0, nil
 }
 
