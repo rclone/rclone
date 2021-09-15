@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/lib/structs"
+	"github.com/rkl-/digest"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -126,6 +127,22 @@ func NewClient(ctx context.Context) *http.Client {
 	ci := fs.GetConfig(ctx)
 	client := &http.Client{
 		Transport: NewTransport(ctx),
+	}
+	if ci.Cookie {
+		client.Jar = cookieJar
+	}
+	return client
+}
+
+func NewDigestClient(ctx context.Context, username, password string) *http.Client {
+	ci := fs.GetConfig(ctx)
+
+	dt := digest.NewTransport(username, password)
+	// override the default transport with the custom implementation
+	dt.Transport = NewTransport(ctx)
+
+	client := &http.Client{
+		Transport: dt,
 	}
 	if ci.Cookie {
 		client.Jar = cookieJar
