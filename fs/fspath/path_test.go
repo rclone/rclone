@@ -221,6 +221,13 @@ func TestParse(t *testing.T) {
 				Path:         "/path/to/file",
 			},
 		}, {
+			in: ":back.end:/path/to/file",
+			wantParsed: Parsed{
+				ConfigString: ":back.end",
+				Name:         ":back.end",
+				Path:         "/path/to/file",
+			},
+		}, {
 			in:      ":bac*kend:/path/to/file",
 			wantErr: errInvalidCharacters,
 		}, {
@@ -449,6 +456,7 @@ func TestSplitFs(t *testing.T) {
 		{":remote:/potato", ":remote:", "/potato", nil},
 		{":remote:/potato/potato", ":remote:", "/potato/potato", nil},
 		{":remote:potato/sausage", ":remote:", "potato/sausage", nil},
+		{":rem.ote:potato/sausage", ":rem.ote:", "potato/sausage", nil},
 		{":rem[ote:potato/sausage", "", "", errInvalidCharacters},
 
 		{":.:", ":.:", "", nil},
@@ -500,6 +508,7 @@ func TestSplit(t *testing.T) {
 		{":remote:/potato", ":remote:/", "potato", nil},
 		{":remote:/potato/potato", ":remote:/potato/", "potato", nil},
 		{":remote:potato/sausage", ":remote:potato/", "sausage", nil},
+		{":rem.ote:potato/sausage", ":rem.ote:potato/", "sausage", nil},
 		{":rem[ote:potato/sausage", "", "", errInvalidCharacters},
 
 		{":.:", ":.:", "", nil},
