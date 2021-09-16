@@ -300,7 +300,7 @@ func TestOptionEnvVarName(t *testing.T) {
 func TestOptionGetters(t *testing.T) {
 	// Set up env vars
 	envVars := [][2]string{
-		{"RCLONE_CONFIG_LOCAL_POTATO_PIE", "yes"},
+		{"RCLONE_CONFIG_local_POTATO_PIE", "yes"},
 		{"RCLONE_COPY_LINKS", "TRUE"},
 		{"RCLONE_LOCAL_NOUNC", "NOUNC"},
 	}

@@ -237,11 +237,11 @@ func AddConfig(ctx context.Context) (context.Context, *ConfigInfo) {
 	return newCtx, cCopy
 }
 
-// ConfigToEnv converts a config section and name, e.g. ("my-remote",
+// ConfigToEnv converts a config section and name, e.g. ("My-Remote",
 // "ignore-size") into an environment name
-// "RCLONE_CONFIG_MY-REMOTE_IGNORE_SIZE"
+// "RCLONE_CONFIG_My-Remote_IGNORE_SIZE"
 func ConfigToEnv(section, name string) string {
-	return "RCLONE_CONFIG_" + strings.ToUpper(section + "_" + strings.Replace(name, "-", "_", -1))
+	return "RCLONE_CONFIG_" + section + "_" + strings.ToUpper(strings.Replace(name, "-", "_", -1))
 }
 
 // OptionToEnv converts an option name, e.g. "ignore-size" into an

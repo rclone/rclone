@@ -633,7 +633,7 @@ func FileSections() []string {
 	for _, item := range os.Environ() {
 		matches := matchEnv.FindStringSubmatch(item)
 		if len(matches) == 2 {
-			sections = append(sections, strings.ToLower(matches[1]))
+			sections = append(sections, matches[1])
 		}
 	}
 	return sections

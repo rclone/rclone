@@ -80,10 +80,12 @@ func TestEnvironmentVariables(t *testing.T) {
 
 	// Backend flags and remote name
 	// - The listremotes command includes names from environment variables,
-	//   the part between "RCLONE_CONFIG_" and "_TYPE", converted to lowercase.
-	// - When using using a remote created from env, e.g. with lsd command,
-	//   the name is case insensitive in contrast to remotes in config file
-	//   (fs.ConfigToEnv converts to uppercase before checking environment).
+	//   the part between "RCLONE_CONFIG_" and "_TYPE". Previously converted
+	//   to lowercase, but currently shown as is.
+	// - Previously, when using using a remote created from env, e.g. with lsd
+	//   command, the name was previously case insensitive in contrast to remotes
+	//   in config file (fs.ConfigToEnv converted to uppercase before checking
+	//   environment).
 	// - Previously using a remote created from env, e.g. with lsd command,
 	//   would not be possible for remotes with '-' in names, and remote names
 	//   with '_' could be referred to with both '-' and '_', because any '-'
@@ -91,6 +93,31 @@ func TestEnvironmentVariables(t *testing.T) {
 	// ===================================
 
 	env = "RCLONE_CONFIG_MY-LOCAL_TYPE=local"
+	out, err = rcloneEnv(env, "listremotes")
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "MY-LOCAL:")
+	}
+	out, err = rcloneEnv(env, "lsl", "MY-LOCAL:"+testFolder)
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "rclone.config")
+		assert.Contains(t, out, "file1.txt")
+		assert.Contains(t, out, "fileA1.txt")
+		assert.Contains(t, out, "fileAA1.txt")
+	}
+	out, err = rcloneEnv(env, "lsl", "my-local:"+testFolder)
+	if assert.Error(t, err) {
+		assert.Contains(t, out, "Failed to create file system")
+	}
+	out, err = rcloneEnv(env, "lsl", "MY_LOCAL:"+testFolder)
+	if assert.Error(t, err) {
+		assert.Contains(t, out, "Failed to create file system")
+	}
+	out, err = rcloneEnv(env, "lsl", "my_local:"+testFolder)
+	if assert.Error(t, err) {
+		assert.Contains(t, out, "Failed to create file system")
+	}
+
+	env = "RCLONE_CONFIG_my-local_TYPE=local"
 	out, err = rcloneEnv(env, "listremotes")
 	if assert.NoError(t, err) {
 		assert.Contains(t, out, "my-local:")
@@ -102,31 +129,15 @@ func TestEnvironmentVariables(t *testing.T) {
 		assert.Contains(t, out, "fileA1.txt")
 		assert.Contains(t, out, "fileAA1.txt")
 	}
-	out, err = rcloneEnv(env, "lsl", "mY-LoCaL:"+testFolder)
-	if assert.NoError(t, err) {
-		assert.Contains(t, out, "rclone.config")
-		assert.Contains(t, out, "file1.txt")
-		assert.Contains(t, out, "fileA1.txt")
-		assert.Contains(t, out, "fileAA1.txt")
+	out, err = rcloneEnv(env, "lsl", "MY-LOCAL:"+testFolder)
+	if assert.Error(t, err) {
+		assert.Contains(t, out, "Failed to create file system")
 	}
 	out, err = rcloneEnv(env, "lsl", "my_local:"+testFolder)
 	if assert.Error(t, err) {
 		assert.Contains(t, out, "Failed to create file system")
 	}
-
-	env = "RCLONE_CONFIG_MY_LOCAL_TYPE=local"
-	out, err = rcloneEnv(env, "listremotes")
-	if assert.NoError(t, err) {
-		assert.Contains(t, out, "my_local:")
-	}
-	out, err = rcloneEnv(env, "lsl", "my_local:"+testFolder)
-	if assert.NoError(t, err) {
-		assert.Contains(t, out, "rclone.config")
-		assert.Contains(t, out, "file1.txt")
-		assert.Contains(t, out, "fileA1.txt")
-		assert.Contains(t, out, "fileAA1.txt")
-	}
-	out, err = rcloneEnv(env, "lsl", "my-local:"+testFolder)
+	out, err = rcloneEnv(env, "lsl", "MY_LOCAL:"+testFolder)
 	if assert.Error(t, err) {
 		assert.Contains(t, out, "Failed to create file system")
 	}
@@ -159,7 +170,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	}
 
 	// Verify symlink warning when skip_links=false on all levels
-	env = "RCLONE_SKIP_LINKS=false;RCLONE_LOCAL_SKIP_LINKS=false;RCLONE_CONFIG_MYLOCAL_SKIP_LINKS=false"
+	env = "RCLONE_SKIP_LINKS=false;RCLONE_LOCAL_SKIP_LINKS=false;RCLONE_CONFIG_myLocal_SKIP_LINKS=false"
 	out, err = rcloneEnv(env, "lsd", "myLocal,skip_links=false:"+testdataPath, "--skip-links=false")
 	//t.Logf("\n" + out)
 	if assert.NoError(t, err) {
@@ -168,7 +179,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	}
 
 	// Test precedence of connection strings
-	env = "RCLONE_SKIP_LINKS=false;RCLONE_LOCAL_SKIP_LINKS=false;RCLONE_CONFIG_MYLOCAL_SKIP_LINKS=false"
+	env = "RCLONE_SKIP_LINKS=false;RCLONE_LOCAL_SKIP_LINKS=false;RCLONE_CONFIG_myLocal_SKIP_LINKS=false"
 	out, err = rcloneEnv(env, "lsd", "myLocal,skip_links:"+testdataPath, "--skip-links=false")
 	if assert.NoError(t, err) {
 		assert.NotContains(t, out, "symlinkA")
@@ -176,7 +187,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	}
 
 	// Test precedence of command line flags
-	env = "RCLONE_SKIP_LINKS=false;RCLONE_LOCAL_SKIP_LINKS=false;RCLONE_CONFIG_MYLOCAL_SKIP_LINKS=false"
+	env = "RCLONE_SKIP_LINKS=false;RCLONE_LOCAL_SKIP_LINKS=false;RCLONE_CONFIG_myLocal_SKIP_LINKS=false"
 	out, err = rcloneEnv(env, "lsd", "myLocal:"+testdataPath, "--skip-links")
 	if assert.NoError(t, err) {
 		assert.NotContains(t, out, "symlinkA")
@@ -184,7 +195,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	}
 
 	// Test precedence of remote specific environment variables (tests #5341 Issue2)
-	env = "RCLONE_SKIP_LINKS=false;RCLONE_LOCAL_SKIP_LINKS=false;RCLONE_CONFIG_MYLOCAL_SKIP_LINKS=true"
+	env = "RCLONE_SKIP_LINKS=false;RCLONE_LOCAL_SKIP_LINKS=false;RCLONE_CONFIG_myLocal_SKIP_LINKS=true"
 	out, err = rcloneEnv(env, "lsd", "myLocal:"+testdataPath)
 	if assert.NoError(t, err) {
 		assert.NotContains(t, out, "symlinkA")
@@ -287,14 +298,14 @@ func TestEnvironmentVariables(t *testing.T) {
 
 	// Test remote specific flags
 	// having no effect unless supported by the immediate remote (alias)
-	env = "RCLONE_CONFIG_MYALIAS_SKIP_LINKS=true"
+	env = "RCLONE_CONFIG_myAlias_SKIP_LINKS=true"
 	out, err = rcloneEnv(env, "lsd", "myAlias:")
 	if assert.NoError(t, err) {
 		assert.Contains(t, out, "NOTICE: symlinkA:")
 		assert.Contains(t, out, "folderA")
 	}
 
-	env = "RCLONE_CONFIG_MYALIAS_REMOTE=" + "myLocal:" + testdataPath + "/folderA"
+	env = "RCLONE_CONFIG_myAlias_REMOTE=" + "myLocal:" + testdataPath + "/folderA"
 	out, err = rcloneEnv(env, "lsl", "myAlias:")
 	if assert.NoError(t, err) {
 		assert.Contains(t, out, "fileA1.txt")
