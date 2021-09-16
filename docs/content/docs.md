@@ -328,8 +328,9 @@ Will get their own names
 
 ### Valid remote names
 
- - Remote names may only contain 0-9, A-Z ,a-z ,_ , - and space.
- - Remote names may not start with -.
+Remote names are case sensitive, and must adhere to the following rules:
+ - May only contain `0`-`9`, `A`-`Z`, `a`-`z`, `_`, `-` and space.
+ - May not start with `-` or space.
 
 Quoting and the shell
 ---------------------
@@ -2168,7 +2169,7 @@ file (using unix ways of setting environment variables):
 $ export RCLONE_CONFIG_MYS3_TYPE=s3
 $ export RCLONE_CONFIG_MYS3_ACCESS_KEY_ID=XXX
 $ export RCLONE_CONFIG_MYS3_SECRET_ACCESS_KEY=XXX
-$ rclone lsd MYS3:
+$ rclone lsd mys3:
           -1 2016-09-21 12:54:21        -1 my-bucket
 $ rclone listremotes | grep mys3
 mys3:
@@ -2176,6 +2177,20 @@ mys3:
 
 Note that if you want to create a remote using environment variables
 you must create the `..._TYPE` variable as above.
+
+Note that the name of a remote created using environment variable is
+case insensitive, in contrast to regular remotes stored in config
+file as documented [above](#valid-remote-names).
+You must write the name in uppercase in the environment variable, but
+as seen from example above it will be listed and can be accessed in
+lowercase, while you can also refer to the same remote in uppercase:
+```
+$ rclone lsd mys3:
+          -1 2016-09-21 12:54:21        -1 my-bucket
+$ rclone lsd MYS3:
+          -1 2016-09-21 12:54:21        -1 my-bucket
+```
+
 
 Note that you can only set the options of the immediate backend, 
 so RCLONE_CONFIG_MYS3CRYPT_ACCESS_KEY_ID has no effect, if myS3Crypt is 
