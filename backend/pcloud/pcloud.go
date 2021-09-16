@@ -166,6 +166,7 @@ type Object struct {
 	id          string    // ID of the object
 	md5         string    // MD5 if known
 	sha1        string    // SHA1 if known
+	sha256      string    // SHA256 if known
 	link        *api.GetFileLinkResult
 }
 
@@ -937,19 +938,24 @@ func (o *Object) getHashes(ctx context.Context) (err error) {
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.MD5 && t != hash.SHA1 && t != hash.SHA256 {
+	var pHash *string
+	switch t {
+	case hash.MD5:
+		pHash = &o.md5
+	case hash.SHA1:
+		pHash = &o.sha1
+	case hash.SHA256:
+		pHash = &o.sha256
+	default:
 		return "", hash.ErrUnsupported
 	}
-	if o.md5 == "" && o.sha1 == "" {
+	if o.md5 == "" && o.sha1 == "" && o.sha256 == "" {
 		err := o.getHashes(ctx)
 		if err != nil {
 			return "", errors.Wrap(err, "failed to get hash")
 		}
 	}
-	if t == hash.MD5 {
-		return o.md5, nil
-	}
-	return o.sha1, nil
+	return *pHash, nil
 }
 
 // Size returns the size of an object in bytes
@@ -978,6 +984,7 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 func (o *Object) setHashes(hashes *api.Hashes) {
 	o.sha1 = hashes.SHA1
 	o.md5 = hashes.MD5
+	o.sha256 = hashes.SHA256
 }
 
 // readMetaData gets the metadata if it hasn't already been fetched
