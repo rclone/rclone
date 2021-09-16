@@ -78,6 +78,59 @@ func TestEnvironmentVariables(t *testing.T) {
 		assert.Contains(t, out, "RCLONE_STATS=")
 	}
 
+	// Backend flags and remote name
+	// - The listremotes command includes names from environment variables,
+	//   the part between "RCLONE_CONFIG_" and "_TYPE", converted to lowercase.
+	// - When using using a remote created from env, e.g. with lsd command,
+	//   the name is case insensitive in contrast to remotes in config file
+	//   (fs.ConfigToEnv converts to uppercase before checking environment).
+	// - Previously using a remote created from env, e.g. with lsd command,
+	//   would not be possible for remotes with '-' in names, and remote names
+	//   with '_' could be referred to with both '-' and '_', because any '-'
+	//   were replaced with '_' before lookup.
+	// ===================================
+
+	env = "RCLONE_CONFIG_MY-LOCAL_TYPE=local"
+	out, err = rcloneEnv(env, "listremotes")
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "my-local:")
+	}
+	out, err = rcloneEnv(env, "lsl", "my-local:"+testFolder)
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "rclone.config")
+		assert.Contains(t, out, "file1.txt")
+		assert.Contains(t, out, "fileA1.txt")
+		assert.Contains(t, out, "fileAA1.txt")
+	}
+	out, err = rcloneEnv(env, "lsl", "mY-LoCaL:"+testFolder)
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "rclone.config")
+		assert.Contains(t, out, "file1.txt")
+		assert.Contains(t, out, "fileA1.txt")
+		assert.Contains(t, out, "fileAA1.txt")
+	}
+	out, err = rcloneEnv(env, "lsl", "my_local:"+testFolder)
+	if assert.Error(t, err) {
+		assert.Contains(t, out, "Failed to create file system")
+	}
+
+	env = "RCLONE_CONFIG_MY_LOCAL_TYPE=local"
+	out, err = rcloneEnv(env, "listremotes")
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "my_local:")
+	}
+	out, err = rcloneEnv(env, "lsl", "my_local:"+testFolder)
+	if assert.NoError(t, err) {
+		assert.Contains(t, out, "rclone.config")
+		assert.Contains(t, out, "file1.txt")
+		assert.Contains(t, out, "fileA1.txt")
+		assert.Contains(t, out, "fileAA1.txt")
+	}
+	out, err = rcloneEnv(env, "lsl", "my-local:"+testFolder)
+	if assert.Error(t, err) {
+		assert.Contains(t, out, "Failed to create file system")
+	}
+
 	// Backend flags and option precedence
 	// ===================================
 
@@ -86,7 +139,6 @@ func TestEnvironmentVariables(t *testing.T) {
 	// and skip_links=false on all levels with lower precedence
 	//
 	// Reference: https://rclone.org/docs/#precedence
-
 	// Create a symlink in test data
 	err = os.Symlink(testdataPath+"/folderA", testdataPath+"/symlinkA")
 	if runtime.GOOS == "windows" {
