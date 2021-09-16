@@ -134,6 +134,7 @@ func NewClient(ctx context.Context) *http.Client {
 	return client
 }
 
+// NewDigestClient returns an http.Client with the correct timeouts that supports digest authentication
 func NewDigestClient(ctx context.Context, username, password string) *http.Client {
 	ci := fs.GetConfig(ctx)
 
