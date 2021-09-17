@@ -1165,10 +1165,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	})
 	if err != nil {
 		// sometimes pcloud leaves a half complete file on
-		// error, so delete it if it exists
-		delObj, delErr := o.fs.NewObject(ctx, o.remote)
-		if delErr == nil && delObj != nil {
-			_ = delObj.Remove(ctx)
+		// error, so delete it if it exists, trying a few times
+		for i := 0; i < 5; i++ {
+			delObj, delErr := o.fs.NewObject(ctx, o.remote)
+			if delErr == nil && delObj != nil {
+				_ = delObj.Remove(ctx)
+				break
+			}
+			time.Sleep(time.Second)
 		}
 		return err
 	}
