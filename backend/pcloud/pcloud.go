@@ -1099,6 +1099,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	modTime := src.ModTime(ctx)
 	remote := o.Remote()
 
+	if size < 0 {
+		return errors.New("can't upload unknown sizes objects")
+	}
+
 	// Create the directory for the object if it doesn't exist
 	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
 	if err != nil {
