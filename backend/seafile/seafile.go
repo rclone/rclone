@@ -325,17 +325,20 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 	switch config.State {
 	case "":
-		// Just make sure we do have a password
+		// Empty state means it's the first call to the Config function
 		if password == "" {
-			return fs.ConfigPassword("", "config_password", "Two-factor authentication: please enter your password (it won't be saved in the configuration)")
+			return fs.ConfigPassword("password", "config_password", "Two-factor authentication: please enter your password (it won't be saved in the configuration)")
 		}
-		return fs.ConfigGoto("password")
+		// password was successfully loaded from the config
+		return fs.ConfigGoto("2fa")
 	case "password":
+		// password should be coming from the previous state (entered by the user)
 		password = config.Result
 		if password == "" {
-			return fs.ConfigError("password", "Password can't be blank")
+			return fs.ConfigError("", "Password can't be blank")
 		}
-		m.Set(configPassword, obscure.MustObscure(config.Result))
+		// save it into the configuration file and keep going
+		m.Set(configPassword, obscure.MustObscure(password))
 		return fs.ConfigGoto("2fa")
 	case "2fa":
 		return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: please enter your 2FA code")
