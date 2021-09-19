@@ -5,6 +5,43 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.56.1 - 2021-09-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.56.0...v1.56.1)
+
+* Bug Fixes
+    * accounting: Fix maximum bwlimit by scaling scale max token bucket size (Nick Craig-Wood)
+    * rc: Fix speed does not update in core/stats (negative0)
+    * selfupdate: Fix --quiet option, not quite quiet (yedamo)
+    * serve http: Fix `serve http` exiting directly after starting (Cnly)
+    * build
+        * Apply gofmt from golang 1.17 (Ivan Andreev)
+        * Update Go to 1.16 and NDK to 22b for android/any (x0b)
+* Mount
+    * Fix `--daemon` mode (Ivan Andreev)
+* VFS
+    * Fix duplicates on rename (Nick Craig-Wood)
+    * Fix crash when truncating a just uploaded object (Nick Craig-Wood)
+    * Fix issue where empty dirs would build up in cache meta dir (albertony)
+* Drive
+    * Fix instructions for auto config (Greg Sadetsky)
+    * Fix lsf example without drive-impersonate (Greg Sadetsky)
+* Onedrive
+    * Handle HTTP 400 better in PublicLink (Alex Chen)
+    * Clarification of the process for creating custom client_id (Mariano Absatz)
+* Pcloud
+    * Return an early error when Put is called with an unknown size (Nick Craig-Wood)
+    * Try harder to delete a failed upload (Nick Craig-Wood)
+* S3
+    * Add Wasabi's AP-Northeast endpoint info (hota)
+    * Fix typo in s3 documentation (Greg Sadetsky)
+* Seafile
+    * Fix 2fa config state machine (Fred)
+* SFTP
+    * Remove spurious error message on `--sftp-disable-concurrent-reads` (Nick Craig-Wood)
+* Sugarsync
+    * Fix initial connection after config re-arrangement (Nick Craig-Wood)
+
 ## v1.56.0 - 2021-07-20
 
 [See commits](https://github.com/rclone/rclone/compare/v1.55.0...v1.56.0)

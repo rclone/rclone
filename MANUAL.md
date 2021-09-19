@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jul 20, 2021
+% Sep 19, 2021
 
 # Rclone syncs your files to cloud storage
 
@@ -12650,7 +12650,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.0")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -14452,7 +14452,7 @@ y/e/d>
 ### Modified time ###
 
 The modified time is stored as metadata on the object as
-`X-Amz-Meta-Mtime` as floating point since the epoch accurate to 1 ns.
+`X-Amz-Meta-Mtime` as floating point since the epoch, accurate to 1 ns.
 
 If the modification time needs to be updated rclone will attempt to perform a server
 side copy to update the modification if the object can be copied in a single part.
@@ -15249,6 +15249,8 @@ Required when using an S3 clone.
         - Wasabi US West endpoint
     - "s3.eu-central-1.wasabisys.com"
         - Wasabi EU Central endpoint
+    - "s3.ap-northeast-1.wasabisys.com"
+        - Wasabi AP Northeast endpoint
 
 #### --s3-location-constraint
 
@@ -21789,7 +21791,7 @@ client_secret>   # Can be left blank
 scope>           # Select your scope, 1 for example
 root_folder_id>  # Can be left blank
 service_account_file> /home/foo/myJSONfile.json # This is where the JSON file goes!
-y/n>             # Auto config, y
+y/n>             # Auto config, n
 
 ```
 
@@ -21806,7 +21808,7 @@ the folder named backup.
 Note: in case you configured a specific root folder on gdrive and rclone is unable to access the contents of that folder when using `--drive-impersonate`, do this instead:
   - in the gdrive web interface, share your root folder with the user/email of the new Service Account you created/selected at step #1
   - use rclone without specifying the `--drive-impersonate` option, like this:
-        `rclone -v foo@example.com lsf gdrive:backup`
+        `rclone -v lsf gdrive:backup`
 
 
 ### Shared drives (team drives) ###
@@ -25525,7 +25527,7 @@ Client ID and Key by following the steps below:
 
 1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click `New registration`.
 2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI`, then type (do not copy and paste) `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
-3. Under `manage` select `Certificates & secrets`, click `New client secret`. Copy and keep that secret for later use.
+3. Under `manage` select `Certificates & secrets`, click `New client secret`. Enter a description (can be anything) and set `Expires` to 24 months. Copy and keep that secret _Value_ for later use (you _won't_ be able to see this value afterwards).
 4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
 5. Search and select the following permissions: `Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`. Once selected click `Add permissions` at the bottom.
 
@@ -25979,6 +25981,15 @@ Description: Due to a configuration change made by your administrator, or becaus
 ```
 
 If you see the error above after enabling multi-factor authentication for your account, you can fix it by refreshing your OAuth refresh token. To do that, run `rclone config`, and choose to edit your OneDrive backend. Then, you don't need to actually make any changes until you reach this question: `Already have a token - refresh?`. For this question, answer `y` and go through the process to refresh your token, just like the first time the backend is configured. After this, rclone should work again for this backend.
+
+#### Invalid request when making public links ####
+
+On Sharepoint and OneDrive for Business, `rclone link` may return an "Invalid
+request" error. A possible cause is that the organisation admin didn't allow
+public links to be made for the organisation/sharepoint library. To fix the
+permissions as an admin, take a look at the docs:
+[1](https://docs.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off),
+[2](https://support.microsoft.com/en-us/office/set-up-and-manage-access-requests-94b26e0b-2822-49d4-929a-8455698654b3).
 
 #  OpenDrive
 
@@ -30699,6 +30710,43 @@ Options:
 
 
 # Changelog
+
+## v1.56.1 - 2021-09-19
+
+[See commits](https://github.com/rclone/rclone/compare/v1.56.0...v1.56.1)
+
+* Bug Fixes
+    * accounting: Fix maximum bwlimit by scaling scale max token bucket size (Nick Craig-Wood)
+    * rc: Fix speed does not update in core/stats (negative0)
+    * selfupdate: Fix --quiet option, not quite quiet (yedamo)
+    * serve http: Fix `serve http` exiting directly after starting (Cnly)
+    * build
+        * Apply gofmt from golang 1.17 (Ivan Andreev)
+        * Update Go to 1.16 and NDK to 22b for android/any (x0b)
+* Mount
+    * Fix `--daemon` mode (Ivan Andreev)
+* VFS
+    * Fix duplicates on rename (Nick Craig-Wood)
+    * Fix crash when truncating a just uploaded object (Nick Craig-Wood)
+    * Fix issue where empty dirs would build up in cache meta dir (albertony)
+* Drive
+    * Fix instructions for auto config (Greg Sadetsky)
+    * Fix lsf example without drive-impersonate (Greg Sadetsky)
+* Onedrive
+    * Handle HTTP 400 better in PublicLink (Alex Chen)
+    * Clarification of the process for creating custom client_id (Mariano Absatz)
+* Pcloud
+    * Return an early error when Put is called with an unknown size (Nick Craig-Wood)
+    * Try harder to delete a failed upload (Nick Craig-Wood)
+* S3
+    * Add Wasabi's AP-Northeast endpoint info (hota)
+    * Fix typo in s3 documentation (Greg Sadetsky)
+* Seafile
+    * Fix 2fa config state machine (Fred)
+* SFTP
+    * Remove spurious error message on `--sftp-disable-concurrent-reads` (Nick Craig-Wood)
+* Sugarsync
+    * Fix initial connection after config re-arrangement (Nick Craig-Wood)
 
 ## v1.56.0 - 2021-07-20
 

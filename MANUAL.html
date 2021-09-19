@@ -17,7 +17,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jul 20, 2021</p>
+<p class="date">Sep 19, 2021</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -7243,7 +7243,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.56.0&quot;)
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.56.1&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -8500,7 +8500,7 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; </code></pre>
 <h3 id="modified-time">Modified time</h3>
-<p>The modified time is stored as metadata on the object as <code>X-Amz-Meta-Mtime</code> as floating point since the epoch accurate to 1 ns.</p>
+<p>The modified time is stored as metadata on the object as <code>X-Amz-Meta-Mtime</code> as floating point since the epoch, accurate to 1 ns.</p>
 <p>If the modification time needs to be updated rclone will attempt to perform a server side copy to update the modification if the object can be copied in a single part. In the case the object is larger than 5Gb or is in Glacier or Glacier Deep Archive storage the object will be uploaded rather than copied.</p>
 <p>Note that reading this from the object takes an additional <code>HEAD</code> request as the metadata isn't returned in object listings.</p>
 <h3 id="reducing-costs">Reducing costs</h3>
@@ -9519,6 +9519,10 @@ y/e/d&gt; </code></pre>
 <li>"s3.eu-central-1.wasabisys.com"
 <ul>
 <li>Wasabi EU Central endpoint</li>
+</ul></li>
+<li>"s3.ap-northeast-1.wasabisys.com"
+<ul>
+<li>Wasabi AP Northeast endpoint</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -14409,7 +14413,7 @@ client_secret&gt;   # Can be left blank
 scope&gt;           # Select your scope, 1 for example
 root_folder_id&gt;  # Can be left blank
 service_account_file&gt; /home/foo/myJSONfile.json # This is where the JSON file goes!
-y/n&gt;             # Auto config, y
+y/n&gt;             # Auto config, n
 </code></pre>
 <h5 id="verify-that-its-working">4. Verify that it's working</h5>
 <ul>
@@ -14422,7 +14426,7 @@ y/n&gt;             # Auto config, y
 <li><code>gdrive:backup</code> - use the remote called gdrive, work in the folder named backup.</li>
 </ul></li>
 </ul>
-<p>Note: in case you configured a specific root folder on gdrive and rclone is unable to access the contents of that folder when using <code>--drive-impersonate</code>, do this instead: - in the gdrive web interface, share your root folder with the user/email of the new Service Account you created/selected at step #1 - use rclone without specifying the <code>--drive-impersonate</code> option, like this: <code>rclone -v foo@example.com lsf gdrive:backup</code></p>
+<p>Note: in case you configured a specific root folder on gdrive and rclone is unable to access the contents of that folder when using <code>--drive-impersonate</code>, do this instead: - in the gdrive web interface, share your root folder with the user/email of the new Service Account you created/selected at step #1 - use rclone without specifying the <code>--drive-impersonate</code> option, like this: <code>rclone -v lsf gdrive:backup</code></p>
 <h3 id="shared-drives-team-drives">Shared drives (team drives)</h3>
 <p>If you want to configure the remote to point to a Google Shared Drive (previously known as Team Drives) then answer <code>y</code> to the question <code>Configure this as a Shared Drive (Team Drive)?</code>.</p>
 <p>This will fetch the list of Shared Drives from google and allow you to configure which one you want to use. You can also type in a Shared Drive ID if you prefer.</p>
@@ -17187,7 +17191,7 @@ y/e/d&gt; y</code></pre>
 <ol type="1">
 <li>Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click <code>New registration</code>.</li>
 <li>Enter a name for your app, choose account type <code>Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)</code>, select <code>Web</code> in <code>Redirect URI</code>, then type (do not copy and paste) <code>http://localhost:53682/</code> and click Register. Copy and keep the <code>Application (client) ID</code> under the app name for later use.</li>
-<li>Under <code>manage</code> select <code>Certificates &amp; secrets</code>, click <code>New client secret</code>. Copy and keep that secret for later use.</li>
+<li>Under <code>manage</code> select <code>Certificates &amp; secrets</code>, click <code>New client secret</code>. Enter a description (can be anything) and set <code>Expires</code> to 24 months. Copy and keep that secret <em>Value</em> for later use (you <em>won't</em> be able to see this value afterwards).</li>
 <li>Under <code>manage</code> select <code>API permissions</code>, click <code>Add a permission</code> and select <code>Microsoft Graph</code> then select <code>delegated permissions</code>.</li>
 <li>Search and select the following permissions: <code>Files.Read</code>, <code>Files.ReadWrite</code>, <code>Files.Read.All</code>, <code>Files.ReadWrite.All</code>, <code>offline_access</code>, <code>User.Read</code>. Once selected click <code>Add permissions</code> at the bottom.</li>
 </ol>
@@ -17557,6 +17561,8 @@ Description: Using application &#39;rclone&#39; is currently not supported for y
 Code: AADSTS50076
 Description: Due to a configuration change made by your administrator, or because you moved to a new location, you must use multi-factor authentication to access &#39;...&#39;.</code></pre>
 <p>If you see the error above after enabling multi-factor authentication for your account, you can fix it by refreshing your OAuth refresh token. To do that, run <code>rclone config</code>, and choose to edit your OneDrive backend. Then, you don't need to actually make any changes until you reach this question: <code>Already have a token - refresh?</code>. For this question, answer <code>y</code> and go through the process to refresh your token, just like the first time the backend is configured. After this, rclone should work again for this backend.</p>
+<h4 id="invalid-request-when-making-public-links">Invalid request when making public links</h4>
+<p>On Sharepoint and OneDrive for Business, <code>rclone link</code> may return an "Invalid request" error. A possible cause is that the organisation admin didn't allow public links to be made for the organisation/sharepoint library. To fix the permissions as an admin, take a look at the docs: <a href="https://docs.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off">1</a>, <a href="https://support.microsoft.com/en-us/office/set-up-and-manage-access-requests-94b26e0b-2822-49d4-929a-8455698654b3">2</a>.</p>
 <h1 id="opendrive">OpenDrive</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
@@ -21308,6 +21314,64 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.56.1---2021-09-19">v1.56.1 - 2021-09-19</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.56.0...v1.56.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>accounting: Fix maximum bwlimit by scaling scale max token bucket size (Nick Craig-Wood)</li>
+<li>rc: Fix speed does not update in core/stats (negative0)</li>
+<li>selfupdate: Fix --quiet option, not quite quiet (yedamo)</li>
+<li>serve http: Fix <code>serve http</code> exiting directly after starting (Cnly)</li>
+<li>build
+<ul>
+<li>Apply gofmt from golang 1.17 (Ivan Andreev)</li>
+<li>Update Go to 1.16 and NDK to 22b for android/any (x0b)</li>
+</ul></li>
+</ul></li>
+<li>Mount
+<ul>
+<li>Fix <code>--daemon</code> mode (Ivan Andreev)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Fix duplicates on rename (Nick Craig-Wood)</li>
+<li>Fix crash when truncating a just uploaded object (Nick Craig-Wood)</li>
+<li>Fix issue where empty dirs would build up in cache meta dir (albertony)</li>
+</ul></li>
+<li>Drive
+<ul>
+<li>Fix instructions for auto config (Greg Sadetsky)</li>
+<li>Fix lsf example without drive-impersonate (Greg Sadetsky)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Handle HTTP 400 better in PublicLink (Alex Chen)</li>
+<li>Clarification of the process for creating custom client_id (Mariano Absatz)</li>
+</ul></li>
+<li>Pcloud
+<ul>
+<li>Return an early error when Put is called with an unknown size (Nick Craig-Wood)</li>
+<li>Try harder to delete a failed upload (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Add Wasabi's AP-Northeast endpoint info (hota)</li>
+<li>Fix typo in s3 documentation (Greg Sadetsky)</li>
+</ul></li>
+<li>Seafile
+<ul>
+<li>Fix 2fa config state machine (Fred)</li>
+</ul></li>
+<li>SFTP
+<ul>
+<li>Remove spurious error message on <code>--sftp-disable-concurrent-reads</code> (Nick Craig-Wood)</li>
+</ul></li>
+<li>Sugarsync
+<ul>
+<li>Fix initial connection after config re-arrangement (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.56.0---2021-07-20">v1.56.0 - 2021-07-20</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.55.0...v1.56.0">See commits</a></p>
 <ul>
