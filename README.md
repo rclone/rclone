@@ -65,6 +65,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * SeaweedFS [:page_facing_up:](https://rclone.org/s3/#seaweedfs)
   * SFTP [:page_facing_up:](https://rclone.org/sftp/)
   * StackPath [:page_facing_up:](https://rclone.org/s3/#stackpath)
+  * Storj [:page_facing_up:](https://rclone.org/storj/)
   * SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)
   * Tardigrade [:page_facing_up:](https://rclone.org/tardigrade/)
   * Tencent Cloud Object Storage (COS) [:page_facing_up:](https://rclone.org/s3/#tencent-cos)

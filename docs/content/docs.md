@@ -53,6 +53,7 @@ See the following for detailed instructions for
   * [QingStor](/qingstor/)
   * [Seafile](/seafile/)
   * [SFTP](/sftp/)
+  * [Storj](/storj/)
   * [SugarSync](/sugarsync/)
   * [Tardigrade](/tardigrade/)
   * [Union](/union/)

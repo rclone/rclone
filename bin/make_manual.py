@@ -61,6 +61,7 @@ docs = [
     "putio.md",
     "seafile.md",
     "sftp.md",
+    "storj.md",
     "sugarsync.md",
     "tardigrade.md",
     "uptobox.md",

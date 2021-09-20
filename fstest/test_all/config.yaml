@@ -315,8 +315,8 @@ backends:
  - backend:  "seafile"
    remote:   "TestSeafileEncrypted:"
    fastlist: true
- - backend:  "tardigrade"
-   remote:   "TestTardigrade:"
+ - backend:  "storj"
+   remote:   "TestStorj:"
    fastlist: true
  - backend:  "zoho"
    remote:   "TestZoho:"
