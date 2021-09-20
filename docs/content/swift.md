@@ -524,3 +524,18 @@ have (e.g. OVH).
 
 This is most likely caused by forgetting to specify your tenant when
 setting up a swift remote.
+
+### OVH Cloud Archive ###
+To use rclone with OVH cloud archive, first use `rclone config` to set up a `swift` backend with OVH, choosing `pca` as the `storage_policy`.
+
+#### Uploading Objects ####
+
+Uploading objects to OVH cloud archive is no different to object storage, you just simply run the command you like (move, copy or sync) to upload the objects. Once uploaded the objects will show in a "Frozen" state within the OVH control panel.
+
+#### Retrieving Objects ####
+
+To retrieve objects use `rclone copy` as normal. If the objects are in a frozen state then rclone will ask for them all to be unfrozen and it will wait at the end of the output with a message like the following:
+
+`2019/03/23 13:06:33 NOTICE: Received retry after error - sleeping until 2019-03-23T13:16:33.481657164+01:00 (9m59.99985121s)`
+
+Rclone will wait for the time specified then retry the copy.
