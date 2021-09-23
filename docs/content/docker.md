@@ -33,7 +33,7 @@ via [plugin API](https://docs.docker.com/engine/extend/plugin_api/) and
 handles mounting of remote file systems into docker containers so it must
 run on the same host as the docker daemon or on every Swarm node.
 
-## Getting started
+## Quickstart
 
 In the first example we will use the [SFTP](/sftp/)
 rclone volume with Docker engine on a standalone Ubuntu machine.
@@ -299,7 +299,7 @@ Notice a few important details:
   For example, JSON access tokens usually contain double quotes and
   surrounding braces, so you must put them in single quotes.
 
-## Installing as Managed Plugin
+## Installing
 
 Docker daemon can install plugins from an image registry and run them managed.
 We maintain the
@@ -319,7 +319,7 @@ By default they must exist on host at the following locations
 You can [install managed plugin](https://docs.docker.com/engine/reference/commandline/plugin_install/)
 with default settings as follows:
 ```
-docker plugin install rclone/docker-volume-rclone:latest --grant-all-permissions --alias rclone
+docker plugin install rclone/docker-volume-rclone --alias rclone --grant-all-permissions
 ```
 
 Managed plugin is in fact a special container running in a namespace separate
@@ -390,7 +390,7 @@ actual level assigned by rclone in the encapsulated message string.
 You can set custom plugin options right when you install it, _in one go_:
 ```
 docker plugin remove rclone
-docker plugin install rclone/docker-volume-rclone:latest \
+docker plugin install rclone/docker-volume-rclone \
        --alias rclone --grant-all-permissions \
        args="-v --allow-other" config=/etc/rclone
 docker plugin inspect rclone
