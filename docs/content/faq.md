@@ -3,8 +3,7 @@ title: "FAQ"
 description: "Rclone Frequently Asked Questions"
 ---
 
-Frequently Asked Questions
---------------------------
+# Frequently Asked Questions
 
 ### Do all cloud storage systems support all rclone commands ###
 
