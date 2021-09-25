@@ -4,8 +4,13 @@ description: "Download rclone binaries for your OS."
 type: page
 ---
 
-Rclone Download {{< version >}}
-=====================
+# Downloads
+
+Rclone is single executable (`rclone`, or `rclone.exe` on Windows) that you can
+simply download as a zip archive and extract into a location of your choosing.
+See the [install](https://rclone.org/install/) documentation for more details.
+
+## Release {{< version >}}
 
 | Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
 |:-------:|:-------:|:-----:|:-----:|:----:|:----:|:-------:|:------:|:-------:|:-----:|:-------:|
@@ -32,8 +37,7 @@ For beta installation, run:
 Note that this script checks the version of rclone installed first and
 won't re-download if not needed.
 
-Beta releases
-=============
+## Beta releases
 
 [Beta releases](https://beta.rclone.org) are generated from each commit
 to master.  Note these are named like
@@ -70,8 +74,7 @@ Note that [rclone.org](https://rclone.org/) is only updated on
 releases - to see the documentation for the latest beta go to
 [tip.rclone.org](https://tip.rclone.org/).
 
-Downloads for scripting
-=======================
+## Downloads for scripting
 
 If you would like to download the current version (maybe from a
 script) from a URL which doesn't change then you can use these links.
@@ -86,7 +89,6 @@ script) from a URL which doesn't change then you can use these links.
 | MIPS - Big Endian | - | - | {{< cdownload linux mips >}} | {{< cdownload linux mips deb >}} | {{< cdownload linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< cdownload linux mipsle >}} | {{< cdownload linux mipsle deb >}} | {{< cdownload linux mipsle rpm >}} | - | - | - | - | - |
 
-Older Downloads
-==============
+## Older Downloads
 
 Older downloads can be found [here](https://downloads.rclone.org/).
