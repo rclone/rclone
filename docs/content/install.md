@@ -10,7 +10,7 @@ Rclone is a Go program and comes as a single binary file.
 ## Quickstart ##
 
   * [Download](/downloads/) the relevant binary.
-  * Extract the `rclone` or `rclone.exe` binary from the archive
+  * Extract the `rclone` executable, `rclone.exe` on Windows, from the archive.
   * Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
   * Optionally configure [automatic execution](#autostart).
 
@@ -227,6 +227,26 @@ Instructions
       roles:
           - rclone
 ```
+
+## Portable installation ##
+
+As mentioned [above](https://rclone.org/install/#quickstart), rclone is single
+executable (`rclone`, or `rclone.exe` on Windows) that you can download as a
+zip archive and extract into a location of your choosing. When executing different
+commands, it may create files in different locations, such as a configuration file
+and various temporary files. By default the locations for these are according to
+your operating system, e.g. configuration file in your user profile directory and
+temporary files in the standard temporary directory, but you can customize all of
+them, e.g. to make a completely self-contained, portable installation.
+
+Run the [config paths](/commands/rclone_config_paths/) command to see
+the locations that rclone will use.
+
+To override them set the corresponding options (as command-line arguments, or as
+[environment variables](https://rclone.org/docs/#environment-variables)):
+  - [--config](https://rclone.org/docs/#config-config-file)
+  - [--cache-dir](https://rclone.org/docs/#cache-dir-dir)
+  - [--temp-dir](https://rclone.org/docs/#temp-dir-dir)
 
 ## Autostart
 
