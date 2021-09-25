@@ -16,7 +16,7 @@ Rclone is a Go program and comes as a single binary file.
 
 See below for some expanded Linux / macOS instructions.
 
-See the [Usage section](/docs/#usage) of the docs for how to use rclone, or
+See the [usage](/docs/) docs for how to use rclone, or
 run `rclone -h`.
 
 Already installed rclone can be easily updated to the latest version
@@ -228,7 +228,7 @@ Instructions
           - rclone
 ```
 
-# Autostart #
+## Autostart
 
 After installing and configuring rclone, as described above, you are ready to use rclone
 as an interactive command line utility. If your goal is to perform *periodic* operations,
@@ -244,14 +244,14 @@ different operating systems.
 NOTE: Before setting up autorun it is highly recommended that you have tested your command
 manually from a Command Prompt first.
 
-## Autostart on Windows ##
+### Autostart on Windows
 
 The most relevant alternatives for autostart on Windows are:
 - Run at user log on using the Startup folder
 - Run at user log on, at system startup or at schedule using Task Scheduler
 - Run at system startup using Windows service
 
-### Running in background
+#### Running in background
 
 Rclone is a console application, so if not starting from an existing Command Prompt,
 e.g. when starting rclone.exe from a shortcut, it will open a Command Prompt window.
@@ -267,7 +267,7 @@ Example command to run a sync in background:
 c:\rclone\rclone.exe sync c:\files remote:/files --no-console --log-file c:\rclone\logs\sync_files.txt
 ```
 
-### User account
+#### User account
 
 As mentioned in the [mount](https://rclone.org/commands/rclone_move/) documentation,
 mounted drives created as Administrator are not visible to other accounts, not even the
@@ -286,7 +286,7 @@ the [PsExec](https://docs.microsoft.com/en-us/sysinternals/downloads/psexec)
 utility from Microsoft's Sysinternals suite, which takes option `-s` to
 execute commands as the `SYSTEM` user.
 
-### Start from Startup folder ###
+#### Start from Startup folder ###
 
 To quickly execute an rclone command you can simply create a standard
 Windows Explorer shortcut for the complete rclone command you want to run. If you
@@ -301,7 +301,7 @@ functionality to set it to run as different user, or to set conditions or
 actions on certain events. Setting up a scheduled task as described below
 will often give you better results.
 
-### Start from Task Scheduler ###
+#### Start from Task Scheduler ###
 
 Task Scheduler is an administrative tool built into Windows, and it can be used to
 configure rclone to be started automatically in a highly configurable way, e.g.
@@ -311,12 +311,12 @@ be available to all users it can run as the `SYSTEM` user.
 For technical information, see
 https://docs.microsoft.com/windows/win32/taskschd/task-scheduler-start-page.
 
-### Run as service ###
+#### Run as service ###
 
 For running rclone at system startup, you can create a Windows service that executes
 your rclone command, as an alternative to scheduled task configured to run at startup.
 
-#### Mount command built-in service integration ####
+##### Mount command built-in service integration ####
 
 For mount commands, Rclone has a built-in Windows service integration via the third party
 WinFsp library it uses. Registering as a regular Windows service easy, as you just have to
@@ -338,7 +338,7 @@ Windows standard methods for managing network drives. This is currently not
 officially supported by Rclone, but with WinFsp version 2019.3 B2 / v1.5B2 or later
 it should be possible through path rewriting as described [here](https://github.com/rclone/rclone/issues/3340).
 
-#### Third party service integration ####
+##### Third party service integration ####
 
 To Windows service running any rclone command, the excellent third party utility
 [NSSM](http://nssm.cc), the "Non-Sucking Service Manager", can be used.
@@ -358,9 +358,9 @@ settings, without having go through manual steps in a GUI. One thing to note is 
 by default it does not restart the service on error, one have to explicit enable this
 in the configuration file (via the "onfailure" parameter).
 
-## Autostart on Linux
+### Autostart on Linux
 
-### Start as a service
+#### Start as a service
 
 To always run rclone in background, relevant for mount commands etc,
 you can use systemd to set up rclone as a system or user service. Running as a
@@ -368,6 +368,6 @@ system service ensures that it is run at startup even if the user it is running 
 has no active session. Running rclone as a user service ensures that it only
 starts after the configured user has logged into the system.
 
-### Run periodically from cron
+#### Run periodically from cron
 
 To run a periodic command, such as a copy/sync, you can set up a cron job.

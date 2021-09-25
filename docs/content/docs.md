@@ -3,6 +3,15 @@ title: "Documentation"
 description: "Rclone Usage"
 ---
 
+# Usage
+
+Rclone is a command line program to manage files on cloud storage.
+After [download](/downloads/) and [install](/install), continue
+here to learn how to use it: Initial [configuration](#configure),
+what the [basic syntax](#basic-syntax) looks like, describes the
+various [subcommands](#subcommands), the various [options](#options),
+and more.
+
 Configure
 ---------
 
@@ -62,7 +71,7 @@ See the following for detailed instructions for
   * [Zoho WorkDrive](/zoho/)
   * [The local filesystem](/local/)
 
-Usage
+Basic syntax
 -----
 
 Rclone syncs a directory tree from one storage system to another.
