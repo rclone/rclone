@@ -18,7 +18,7 @@ Here is an overview of the major features of each cloud storage system.
 | ---------------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|
 | 1Fichier                     | Whirlpool   | No      | No               | Yes             | R         |
 | Amazon Drive                 | MD5         | No      | Yes              | No              | R         |
-| Amazon S3                    | MD5         | Yes     | No               | No              | R/W       |
+| Amazon S3 (or S3 compatible) | MD5         | Yes     | No               | No              | R/W       |
 | Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
 | Box                          | SHA1        | Yes     | Yes              | No              | -         |
 | Citrix ShareFile             | MD5         | Yes     | Yes              | No              | -         |
