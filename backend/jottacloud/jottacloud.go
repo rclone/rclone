@@ -1406,7 +1406,43 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	// make sure metadata is available, we need its current size and md5
+	err := o.readMetaData(ctx, false)
+	if err != nil {
+		fs.Logf(o, "Failed to read metadata: %v", err)
+		return err
+	}
+
+	// prepare allocate request with existing metadata but changed timestamps
+	var resp *http.Response
+	var options []fs.OpenOption
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         "files/v1/allocate",
+		Options:      options,
+		ExtraHeaders: make(map[string]string),
+	}
+	fileDate := api.Time(modTime).APIString()
+	var request = api.AllocateFileRequest{
+		Bytes:    o.size,
+		Created:  fileDate,
+		Modified: fileDate,
+		Md5:      o.md5,
+		Path:     path.Join(o.fs.opt.Mountpoint, o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
+	}
+
+	// send it
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.apiSrv.CallJSON(ctx, &opts, &request, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	// update local metadata
+	o.modTime = modTime
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable
