@@ -210,3 +210,39 @@ The most common cause of rclone using lots of memory is a single
 directory with thousands or millions of files in.  Rclone has to load
 this entirely into memory as rclone objects.  Each rclone object takes
 0.5k-1k of memory.
+
+### Rclone changes fullwidth characters in file names
+
+On a Windows system, you have a file with name `C：Backup.txt`,
+where `：` is the Unicode fullwidth colon symbol, and use rclone to
+copy this to your Google Drive with rclone. Then you will notice that
+it in Google Drive it has been renamed to `C:Backup.txt`, where `:` is
+the regular (halfwidth) colon.
+
+The reason for such unexpected renames is the way rclone handles
+different [restricted filenames](/overview/#restricted-filenames)
+on different cloud storage systems. It tries to avoid ambiguous file
+names as much and allow moving files between many cloud storage systems
+transparently, by replacing invalid characters with similar looking
+Unicode characters when transferring to one storage system, and replacing
+back again when transferring to a different storage system where the
+original characters are supported.
+
+You will see this process working as intended in an example which is
+opposite of the one above: If you upload a file named `C:Backup.txt`
+from a Linux system (where such a filename is valid), into your
+Google Drive (where it is also valid) using the official client,
+or Web GUI, but not rclone. Then if you later copy this file to
+your Windows computer with rclone, you will notice that in your
+local disk it will get name `C：Backup.txt`. But this may also
+become an issue, if you already had a *different* file
+originally named `C：Backup.txt` in your Windows system.
+
+Its impossible to handle all cases like these correctly in all
+situations, but by customizing the [encoding option](/overview/#encoding),
+changing the set of characters that rclone should convert,
+you should be able to make it work correct in your situation.
+See [this](/overview/#encoding-example-windows) example.
+
+Windows was used as an example of a file system with many restricted
+characters, and Google drive a storage system with few.

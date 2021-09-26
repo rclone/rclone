@@ -137,7 +137,8 @@ Some cloud storage systems might have restrictions on the characters
 that are usable in file or directory names.
 When `rclone` detects such a name during a file upload, it will
 transparently replace the restricted characters with similar looking
-Unicode characters.
+Unicode characters. To handle the different sets of restricted characters
+for different backends, rclone uses something it calls [encoding](#encoding).
 
 This process is designed to avoid ambiguous file names as much as
 possible and allow to move files between many cloud storage systems
@@ -149,14 +150,19 @@ to ensure correct formatting and not necessarily the actual name used
 on the cloud storage.
 
 This transformation is reversed when downloading a file or parsing
-`rclone` arguments.
-For example, when uploading a file named `my file?.txt` to Onedrive
-will be displayed as `my file?.txt` on the console, but stored as
-`my file？.txt` (the `?` gets replaced by the similar looking `？`
-character) to Onedrive.
-The reverse transformation allows to read a file`unusual/name.txt`
-from Google Drive, by passing the name `unusual／name.txt` (the `/` needs
-to be replaced by the similar looking `／` character) on the command line.
+`rclone` arguments. For example, when uploading a file named `my file?.txt`
+to Onedrive, it will be displayed as `my file?.txt` on the console, but
+stored as `my file？.txt` to Onedrive (the `?` gets replaced by the similar
+looking `？` character, the so-called "fullwidth question mark").
+The reverse transformation allows to read a file `unusual/name.txt`
+from Google Drive, by passing the name `unusual／name.txt` on the command line
+(the `/` needs to be replaced by the similar looking `／` character).
+
+Note that if you have filenames originally with the same Unicode characters
+as rclone would use as replacement for invalid characters, these files
+will be included in the same encoding process and be renamed. To avoid this
+you must customize the [encoding options](#encoding). See example,
+[below](#encoding-example-windows).
 
 #### Default restricted characters {#restricted-characters}
 
@@ -229,7 +235,7 @@ names in a different encoding than UTF-8 or UTF-16, like latin1. See the
 
 #### Encoding option {#encoding}
 
-Most backends have an encoding options, specified as a flag
+Most backends have an encoding option, specified as a flag
 `--backend-encoding` where `backend` is the name of the backend, or as
 a config parameter `encoding` (you'll need to select the Advanced
 config in `rclone config` to see it).
@@ -239,17 +245,17 @@ such a way as to preserve the maximum number of characters (see
 above).
 
 However this can be incorrect in some scenarios, for example if you
-have a Windows file system with characters such as `＊` and `？` that
-you want to remain as those characters on the remote rather than being
-translated to `*` and `?`.
+have a Windows file system with Unicode fullwidth characters
+`＊`, `？` or `：`, that you want to remain as those characters on the
+remote rather than being translated to regular (halfwidth) `*`, `?` and `:`.
 
 The `--backend-encoding` flags allow you to change that. You can
 disable the encoding completely with `--backend-encoding None` or set
 `encoding = None` in the config file.
 
 Encoding takes a comma separated list of encodings. You can see the
-list of all available characters by passing an invalid value to this
-flag, e.g. `--local-encoding "help"` and `rclone help flags encoding`
+list of all possible values by passing an invalid value to this
+flag, e.g. `--local-encoding "help"`. The command `rclone help flags encoding`
 will show you the defaults for the backends.
 
 | Encoding  | Characters |
@@ -262,7 +268,7 @@ will show you the defaults for the backends.
 | Ctl | All control characters 0x00-0x1F |
 | Del | DEL 0x7F |
 | Dollar | `$` |
-| Dot | `.` |
+| Dot | `.` or `..` as entire string |
 | DoubleQuote | `"` |
 | Hash | `#` |
 | InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) |
@@ -281,6 +287,8 @@ will show you the defaults for the backends.
 | SingleQuote | `'` |
 | Slash | `/` |
 
+##### Encoding example: FTP
+
 To take a specific example, the FTP backend's default encoding is
 
     --ftp-encoding "Slash,Del,Ctl,RightSpace,Dot"
@@ -298,14 +306,54 @@ to the existing ones, giving:
 
 This can be specified using the `--ftp-encoding` flag or using an `encoding` parameter in the config file.
 
-Or let's say you have a Windows server but you want to preserve `＊`
-and `？`, you would then have this as the encoding (the Windows
-encoding minus `Asterisk` and `Question`).
+##### Encoding example: Windows
 
-    Slash,LtGt,DoubleQuote,Colon,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+On Windows, the characters `:`, `*` and `?` are examples of restricted
+characters. If these are used in filenames on a remote that supports it,
+Rclone will transparently convert them to their fullwidth Unicode
+variants `＊`, `？` and `：` when downloading to Windows, and back again
+when uploading.
 
-This can be specified using the `--local-encoding` flag or using an
-`encoding` parameter in the config file.
+However, if you have files on your Windows system originally with these same
+Unicode characters in their names, they will be included in the same conversion
+process. E.g. if you create a file in your Windows filesystem with the `？`
+(fullwidth question mark) and use rclone to upload it to Google Drive,
+which supports regular `?` (halfwidth question mark), rclone will replace the
+fullwidth `？` with the halfwidth `?` in Google Drive - which may not be
+what you expect. And opposite, if you create a file with `？` in the name
+on your Windows system, and then create a file with with same path and
+same name, except with halfwidth `?`, in Google Drive, rclone will, with
+its default encoding, treat these two as the same file during syncing.
+
+To solve this you can change the set of characters rclone should convert.
+For the local filesystem the option can be set with command-line argument
+`--local-encoding`, or with `encoding` in the config file. Rclone's default
+behavior on Windows corresponds to
+
+```
+--local-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
+```
+
+If you want to use fullwidth characters `：`, `＊` and `？` in your filenames
+without rclone changing them when uploading to a remote, then set the same as
+the default value but without `Colon,Question,Asterisk`:
+
+```
+--local-encoding "Slash,LtGt,DoubleQuote,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
+```
+
+Alternatively, you can disable the conversion of any characters with `--local-encoding None`.
+
+Instead of using command-line argument `--local-encoding`, you may also set it
+as [environment variable](/docs/#environment-variables) `RCLONE_LOCAL_ENCODING`,
+or [configure](/docs/#configure) a remote of type `local` in your config,
+and set the `encoding` option there.
+
+The risk by doing this is that if you have a filename with the regular (halfwidth)
+`:`, `*` and `?` in your cloud storage, and you try to download
+it to your Windows filesystem, this will fail. These characters are not
+valid in filenames on Windows, and you have told rclone not to work around
+this by converting them to valid fullwidth variants.
 
 ### MIME Type ###
 
