@@ -807,15 +807,8 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Jot
 	}
 	var err error
 	if info != nil {
-		if info.State != "COMPLETED" {
-			return nil, fs.ErrorObjectNotFound // File is incomplete or corrupt
-		}
-		if o.fs.opt.TrashedOnly {
-			if !info.Deleted {
-				return nil, fs.ErrorObjectNotFound // Regular file but TrashedOnly
-			}
-		} else if bool(info.Deleted) {
-			return nil, fs.ErrorObjectNotFound // Deleted file and not TrashedOnly
+		if !f.validFile(info) {
+			return nil, fs.ErrorObjectNotFound
 		}
 		err = o.setMetaData(info) // sets the info
 	} else {
@@ -889,37 +882,27 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, errors.Wrap(err, "couldn't list files")
 	}
 
-	if bool(result.Deleted) && !f.opt.TrashedOnly {
+	if !f.validFolder(&result) {
 		return nil, fs.ErrorDirNotFound
 	}
 
 	for i := range result.Folders {
 		item := &result.Folders[i]
-		if !f.opt.TrashedOnly && bool(item.Deleted) {
-			continue
+		if f.validFolder(item) {
+			remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+			d := fs.NewDir(remote, time.Time(item.ModifiedAt))
+			entries = append(entries, d)
 		}
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
-		d := fs.NewDir(remote, time.Time(item.ModifiedAt))
-		entries = append(entries, d)
 	}
 
 	for i := range result.Files {
 		item := &result.Files[i]
-		if f.opt.TrashedOnly {
-			if !item.Deleted || item.State != "COMPLETED" {
-				continue
-			}
-		} else {
-			if item.Deleted || item.State != "COMPLETED" {
-				continue
+		if f.validFile(item) {
+			remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+			if o, err := f.newObjectWithInfo(ctx, remote, item); err == nil {
+				entries = append(entries, o)
 			}
 		}
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
-		o, err := f.newObjectWithInfo(ctx, remote, item)
-		if err != nil {
-			continue
-		}
-		entries = append(entries, o)
 	}
 	return entries, nil
 }
@@ -936,7 +919,7 @@ func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolde
 	startPathLength := len(startPath)
 	for i := range startFolder.Folders {
 		folder := &startFolder.Folders[i]
-		if folder.Deleted {
+		if !f.validFolder(folder) {
 			return nil
 		}
 		folderPath := f.opt.Enc.ToStandardPath(path.Join(folder.Path, folder.Name))
@@ -954,17 +937,16 @@ func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolde
 		}
 		for i := range folder.Files {
 			file := &folder.Files[i]
-			if file.Deleted || file.State != "COMPLETED" {
-				continue
-			}
-			remoteFile := path.Join(remoteDir, f.opt.Enc.ToStandardName(file.Name))
-			o, err := f.newObjectWithInfo(ctx, remoteFile, file)
-			if err != nil {
-				return err
-			}
-			err = fn(o)
-			if err != nil {
-				return err
+			if f.validFile(file) {
+				remoteFile := path.Join(remoteDir, f.opt.Enc.ToStandardName(file.Name))
+				o, err := f.newObjectWithInfo(ctx, remoteFile, file)
+				if err != nil {
+					return err
+				}
+				err = fn(o)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1375,6 +1357,25 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 
+// validFile checks if info indicates file is valid
+func (f *Fs) validFile(info *api.JottaFile) bool {
+	if info.State != "COMPLETED" {
+		return false // File is incomplete or corrupt
+	}
+	if !info.Deleted {
+		return !f.opt.TrashedOnly // Regular file; return false if TrashedOnly, else true
+	}
+	return f.opt.TrashedOnly // Deleted file; return true if TrashedOnly, else false
+}
+
+// validFolder checks if info indicates folder is valid
+func (f *Fs) validFolder(info *api.JottaFolder) bool {
+	// Returns true if folder is not deleted.
+	// If TrashedOnly option then always returns true, because a folder not
+	// in trash must be traversed to get to files/subfolders that are.
+	return !bool(info.Deleted) || f.opt.TrashedOnly
+}
+
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 	o.hasMetaData = true
@@ -1394,15 +1395,8 @@ func (o *Object) readMetaData(ctx context.Context, force bool) (err error) {
 	if err != nil {
 		return err
 	}
-	if info.State != "COMPLETED" {
-		return fs.ErrorObjectNotFound // File is incomplete or corrupt
-	}
-	if o.fs.opt.TrashedOnly {
-		if !info.Deleted {
-			return fs.ErrorObjectNotFound // Regular file but TrashedOnly
-		}
-	} else if bool(info.Deleted) {
-		return fs.ErrorObjectNotFound // Deleted file and not TrashedOnly
+	if !o.fs.validFile(info) {
+		return fs.ErrorObjectNotFound
 	}
 	return o.setMetaData(info)
 }
