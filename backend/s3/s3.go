@@ -103,6 +103,9 @@ func init() {
 				Value: "StackPath",
 				Help:  "StackPath Object Storage",
 			}, {
+				Value: "Storj",
+				Help:  "Storj (S3 Compatible Gateway)",
+			}, {
 				Value: "TencentCOS",
 				Help:  "Tencent Cloud Object Storage (COS)",
 			}, {
@@ -288,7 +291,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,RackCorp,Scaleway,TencentCOS",
+			Provider: "!AWS,Alibaba,RackCorp,Scaleway,Storj,TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -598,6 +601,20 @@ func init() {
 				Help:  "EU Endpoint",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint of the Shared Gateway.",
+			Provider: "Storj",
+			Examples: []fs.OptionExample{{
+				Value: "gateway.eu1.storjshare.io",
+				Help:  "EU1 Shared Gateway",
+			}, {
+				Value: "gateway.us1.storjshare.io",
+				Help:  "US1 Shared Gateway",
+			}, {
+				Value: "gateway.ap1.storjshare.io",
+				Help:  "Asia-Pacific Shared Gateway",
+			}},
+		}, {
 			// cos endpoints: https://intl.cloud.tencent.com/document/product/436/6224
 			Name:     "endpoint",
 			Help:     "Endpoint for Tencent COS API.",
@@ -726,7 +743,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath,RackCorp",
+			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1014,7 +1031,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,RackCorp,Scaleway,StackPath,TencentCOS",
+			Provider: "!AWS,IBMCOS,Alibaba,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1025,6 +1042,7 @@ For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview
 
 Note that this ACL is applied when server-side copying objects as S3
 doesn't copy the ACL from the source but rather writes a fresh one.`,
+			Provider: "!Storj",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -1936,6 +1954,11 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
+	case "Storj":
+		// Force chunk size to >= 64 MiB
+		if opt.ChunkSize < 64*fs.Mebi {
+			opt.ChunkSize = 64 * fs.Mebi
+		}
 	case "TencentCOS":
 		listObjectsV2 = false // untested
 	case "Wasabi":
@@ -2069,6 +2092,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
+	}
+	if opt.Provider == "Storj" {
+		f.features.Copy = nil
+		f.features.SetTier = false
+		f.features.GetTier = false
 	}
 	// f.listMultipartUploads()
 	return f, nil
