@@ -807,8 +807,17 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Jot
 	}
 	var err error
 	if info != nil {
-		// Set info
-		err = o.setMetaData(info)
+		if info.State != "COMPLETED" {
+			return nil, fs.ErrorObjectNotFound // File is incomplete or corrupt
+		}
+		if o.fs.opt.TrashedOnly {
+			if !info.Deleted {
+				return nil, fs.ErrorObjectNotFound // Regular file but TrashedOnly
+			}
+		} else if bool(info.Deleted) {
+			return nil, fs.ErrorObjectNotFound // Deleted file and not TrashedOnly
+		}
+		err = o.setMetaData(info) // sets the info
 	} else {
 		err = o.readMetaData(ctx, false) // reads info and meta, returning an error
 	}
@@ -1385,8 +1394,15 @@ func (o *Object) readMetaData(ctx context.Context, force bool) (err error) {
 	if err != nil {
 		return err
 	}
-	if bool(info.Deleted) && !o.fs.opt.TrashedOnly {
-		return fs.ErrorObjectNotFound
+	if info.State != "COMPLETED" {
+		return fs.ErrorObjectNotFound // File is incomplete or corrupt
+	}
+	if o.fs.opt.TrashedOnly {
+		if !info.Deleted {
+			return fs.ErrorObjectNotFound // Regular file but TrashedOnly
+		}
+	} else if bool(info.Deleted) {
+		return fs.ErrorObjectNotFound // Deleted file and not TrashedOnly
 	}
 	return o.setMetaData(info)
 }
@@ -1432,12 +1448,19 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	}
 
 	// send it
+	var response api.AllocateFileResponse
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.apiSrv.CallJSON(ctx, &opts, &request, nil)
+		resp, err = o.fs.apiSrv.CallJSON(ctx, &opts, &request, &response)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return err
+	}
+
+	// check response
+	if response.State != "COMPLETED" {
+		// could be the file was modified (size/md5 changed) between readMetaData and the allocate request
+		return errors.New("metadata did not match")
 	}
 
 	// update local metadata
