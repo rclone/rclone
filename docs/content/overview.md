@@ -158,11 +158,52 @@ The reverse transformation allows to read a file `unusual/name.txt`
 from Google Drive, by passing the name `unusual／name.txt` on the command line
 (the `/` needs to be replaced by the similar looking `／` character).
 
-Note that if you have filenames originally with the same Unicode characters
-as rclone would use as replacement for invalid characters, these files
-will be included in the same encoding process and be renamed. To avoid this
-you must customize the [encoding options](#encoding). See example,
-[below](#encoding-example-windows).
+#### Caveats {#restricted-filenames-caveats}
+
+The filename encoding system works well in most cases, at least
+where file names are written in English or similar languages.
+You might not even notice it: It just works. In some cases it may
+lead to issues, though. E.g. when file names are written in Chinese,
+or Japanese, where it is always the Unicode fullwidth variants of the
+punctuation marks that are used.
+
+On Windows, the characters `:`, `*` and `?` are examples of restricted
+characters. If these are used in filenames on a remote that supports it,
+Rclone will transparently convert them to their fullwidth Unicode
+variants `＊`, `？` and `：` when downloading to Windows, and back again
+when uploading. This way files with names that are not allowed on Windows
+can still be stored.
+
+However, if you have files on your Windows system originally with these same
+Unicode characters in their names, they will be included in the same conversion
+process. E.g. if you create a file in your Windows filesystem with name
+`Test：1.jpg`, where `：` is the Unicode fullwidth colon symbol, and use
+rclone to upload it to Google Drive, which supports regular `:` (halfwidth
+question mark), rclone will replace the fullwidth `:` with the
+halfwidth `:` and store the file as `Test:1.jpg` in Google Drive. Since
+both Windows and Google Drive allows the name `Test：1.jpg`, it would
+probably be better if rclone just kept the name as is in this case.
+
+With the opposite situation; if you have a file named `Test:1.jpg`,
+in your Google Drive, e.g. uploaded from a Linux system where `:` is valid
+in file names. Then later use rclone to copy this file to your Windows
+computer you will notice that on your local disk it gets renamed
+to `Test：1.jpg`. The original filename is not legal on Windows, due to
+the `:`, and rclone therefore renames it to make the copy possible.
+That is all good. However, this can also lead to an issue: If you already
+had a *different* file named `Test：1.jpg` on Windows, and then use rclone
+to copy either way. Rclone will then treat the file originally named
+`Test:1.jpg` on Google Drive and the file originally named `Test：1.jpg`
+on Windows as the same file, and replace the contents from one with the other.
+
+Its virtually impossible to handle all cases like these correctly in all
+situations, but by customizing the [encoding option](#encoding), changing the
+set of characters that rclone should convert, you should be able to
+create a configuration that works well for your specific situation.
+See also the [example](/overview/#encoding-example-windows) below.
+
+(Windows was used as an example of a file system with many restricted
+characters, and Google drive a storage system with few.)
 
 #### Default restricted characters {#restricted-characters}
 
@@ -308,27 +349,15 @@ This can be specified using the `--ftp-encoding` flag or using an `encoding` par
 
 ##### Encoding example: Windows
 
-On Windows, the characters `:`, `*` and `?` are examples of restricted
-characters. If these are used in filenames on a remote that supports it,
-Rclone will transparently convert them to their fullwidth Unicode
-variants `＊`, `？` and `：` when downloading to Windows, and back again
-when uploading.
+As a nother example, take a Windows system where there is a file with
+name `Test：1.jpg`, where `：` is the Unicode fullwidth colon symbol.
+When using rclone to copy this to a remote which supports `:`,
+the regular (halfwidth) colon (such as Google Drive), you will notice
+that the file gets renamed to `Test:1.jpg`.
 
-However, if you have files on your Windows system originally with these same
-Unicode characters in their names, they will be included in the same conversion
-process. E.g. if you create a file in your Windows filesystem with the `？`
-(fullwidth question mark) and use rclone to upload it to Google Drive,
-which supports regular `?` (halfwidth question mark), rclone will replace the
-fullwidth `？` with the halfwidth `?` in Google Drive - which may not be
-what you expect. And opposite, if you create a file with `？` in the name
-on your Windows system, and then create a file with with same path and
-same name, except with halfwidth `?`, in Google Drive, rclone will, with
-its default encoding, treat these two as the same file during syncing.
-
-To solve this you can change the set of characters rclone should convert.
-For the local filesystem the option can be set with command-line argument
-`--local-encoding`, or with `encoding` in the config file. Rclone's default
-behavior on Windows corresponds to
+To avoid this you can change the set of characters rclone should convert
+for the local filesystem, using command-line argument `--local-encoding`.
+Rclone's default behavior on Windows corresponds to
 
 ```
 --local-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
