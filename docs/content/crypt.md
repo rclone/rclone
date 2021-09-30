@@ -110,7 +110,7 @@ remote> remote:path
 How to encrypt the filenames.
 Enter a string value. Press Enter for the default ("standard").
 Choose a number from below, or type in your own value
- 1 / Encrypt the filenames see the docs for the details.
+ 1 / Encrypt the filenames. See the docs for the details.
    \ "standard"
  2 / Very simple filename obfuscation.
    \ "obfuscate"
