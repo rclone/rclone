@@ -2,16 +2,13 @@
 package union_test
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"
+	_ "github.com/rclone/rclone/backend/memory"
+	"github.com/rclone/rclone/backend/union"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // TestIntegration runs integration tests against the remote
@@ -26,26 +23,11 @@ func TestIntegration(t *testing.T) {
 	})
 }
 
-func makeTestDirs(t *testing.T, n int) (dirs []string, clean func()) {
-	for i := 1; i <= n; i++ {
-		dir, err := ioutil.TempDir("", fmt.Sprintf("rclone-union-test-%d", n))
-		require.NoError(t, err)
-		dirs = append(dirs, dir)
-	}
-	clean = func() {
-		for _, dir := range dirs {
-			err := os.RemoveAll(dir)
-			assert.NoError(t, err)
-		}
-	}
-	return dirs, clean
-}
-
 func TestStandard(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	dirs, clean := makeTestDirs(t, 3)
+	dirs, clean := union.MakeTestDirs(t, 3)
 	defer clean()
 	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
 	name := "TestUnion"
@@ -67,7 +49,7 @@ func TestRO(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	dirs, clean := makeTestDirs(t, 3)
+	dirs, clean := union.MakeTestDirs(t, 3)
 	defer clean()
 	upstreams := dirs[0] + " " + dirs[1] + ":ro " + dirs[2] + ":ro"
 	name := "TestUnionRO"
@@ -89,7 +71,7 @@ func TestNC(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	dirs, clean := makeTestDirs(t, 3)
+	dirs, clean := union.MakeTestDirs(t, 3)
 	defer clean()
 	upstreams := dirs[0] + " " + dirs[1] + ":nc " + dirs[2] + ":nc"
 	name := "TestUnionNC"
@@ -111,7 +93,7 @@ func TestPolicy1(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	dirs, clean := makeTestDirs(t, 3)
+	dirs, clean := union.MakeTestDirs(t, 3)
 	defer clean()
 	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
 	name := "TestUnionPolicy1"
@@ -133,7 +115,7 @@ func TestPolicy2(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	dirs, clean := makeTestDirs(t, 3)
+	dirs, clean := union.MakeTestDirs(t, 3)
 	defer clean()
 	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
 	name := "TestUnionPolicy2"
@@ -155,7 +137,7 @@ func TestPolicy3(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
-	dirs, clean := makeTestDirs(t, 3)
+	dirs, clean := union.MakeTestDirs(t, 3)
 	defer clean()
 	upstreams := dirs[0] + " " + dirs[1] + " " + dirs[2]
 	name := "TestUnionPolicy3"

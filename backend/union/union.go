@@ -254,7 +254,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	for _, e := range entries {
-		if e.UpstreamFs().Features().Move == nil {
+		if !operations.CanServerSideMove(e.UpstreamFs()) {
 			return nil, fs.ErrorCantMove
 		}
 	}
@@ -277,12 +277,27 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			errs[i] = errors.Wrap(fs.ErrorCantMove, su.Name()+":"+remote)
 			return
 		}
-		mo, err := du.Features().Move(ctx, o.UnWrap(), remote)
-		if err != nil || mo == nil {
+		srcObj := o.UnWrap()
+		duFeatures := du.Features()
+		do := duFeatures.Move
+		if duFeatures.Move == nil {
+			do = duFeatures.Copy
+		}
+		// Do the Move or Copy
+		dstObj, err := do(ctx, srcObj, remote)
+		if err != nil || dstObj == nil {
 			errs[i] = errors.Wrap(err, su.Name())
 			return
 		}
-		objs[i] = du.WrapObject(mo)
+		objs[i] = du.WrapObject(dstObj)
+		// Delete the source object if Copy
+		if duFeatures.Move == nil {
+			err = srcObj.Remove(ctx)
+			if err != nil {
+				errs[i] = errors.Wrap(err, su.Name())
+				return
+			}
+		}
 	})
 	var en []upstream.Entry
 	for _, o := range objs {
@@ -848,8 +863,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SetTier:                 true,
 		GetTier:                 true,
 	}).Fill(ctx, f)
+	canMove := true
 	for _, f := range upstreams {
 		features = features.Mask(ctx, f) // Mask all upstream fs
+		if !operations.CanServerSideMove(f) {
+			canMove = false
+		}
+	}
+	// We can move if all remotes support Move or Copy
+	if canMove {
+		features.Move = f.Move
 	}
 
 	// Enable ListR when upstreams either support ListR or is local
