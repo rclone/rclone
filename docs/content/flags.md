@@ -154,7 +154,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.1")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.2")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 

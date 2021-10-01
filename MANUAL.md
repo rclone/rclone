@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Sep 19, 2021
+% Oct 01, 2021
 
 # Rclone syncs your files to cloud storage
 
@@ -12650,7 +12650,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.1")
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.56.2")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -30710,6 +30710,16 @@ Options:
 
 
 # Changelog
+
+## v1.56.2 - 2021-10-01
+
+[See commits](https://github.com/rclone/rclone/compare/v1.56.1...v1.56.2)
+
+* Bug Fixes
+    * serve http: Re-add missing auth to http service (Nolan Woods)
+    * build: Update golang.org/x/sys to fix crash on macOS when compiled with go1.17 (Herby Gillot)
+* FTP
+    * Fix deadlock after failed update when concurrency=1 (Ivan Andreev)
 
 ## v1.56.1 - 2021-09-19
 

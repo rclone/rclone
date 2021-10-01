@@ -5,6 +5,16 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.56.2 - 2021-10-01
+
+[See commits](https://github.com/rclone/rclone/compare/v1.56.1...v1.56.2)
+
+* Bug Fixes
+    * serve http: Re-add missing auth to http service (Nolan Woods)
+    * build: Update golang.org/x/sys to fix crash on macOS when compiled with go1.17 (Herby Gillot)
+* FTP
+    * Fix deadlock after failed update when concurrency=1 (Ivan Andreev)
+
 ## v1.56.1 - 2021-09-19
 
 [See commits](https://github.com/rclone/rclone/compare/v1.56.0...v1.56.1)

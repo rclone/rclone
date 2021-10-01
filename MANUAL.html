@@ -17,7 +17,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Sep 19, 2021</p>
+<p class="date">Oct 01, 2021</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -7243,7 +7243,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format.
       --use-mmap                             Use mmap allocator (see docs).
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.56.1&quot;)
+      --user-agent string                    Set the user-agent to a specified string. The default is rclone/ version (default &quot;rclone/v1.56.2&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -21314,6 +21314,19 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.56.2---2021-10-01">v1.56.2 - 2021-10-01</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.56.1...v1.56.2">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>serve http: Re-add missing auth to http service (Nolan Woods)</li>
+<li>build: Update golang.org/x/sys to fix crash on macOS when compiled with go1.17 (Herby Gillot)</li>
+</ul></li>
+<li>FTP
+<ul>
+<li>Fix deadlock after failed update when concurrency=1 (Ivan Andreev)</li>
+</ul></li>
+</ul>
 <h2 id="v1.56.1---2021-09-19">v1.56.1 - 2021-09-19</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.56.0...v1.56.1">See commits</a></p>
 <ul>
