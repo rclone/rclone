@@ -57,7 +57,7 @@ mechanism for cloud providers that restic does not support directly.
 [Restic](https://restic.net/) is a command line program for doing
 backups.
 
-The server will log errors.  Use -v to see access logs.
+The service will log errors.  Use -v to see access logs.
 
 --bwlimit will be respected for file transfers.  Use --stats to
 control the stats printing.
@@ -71,7 +71,7 @@ Once you have set up the remote, check it is working with, for example
 than "remote:" - just substitute whatever you called it in the
 following instructions.
 
-Now start the rclone restic server
+Now start the rclone restic service
 
     rclone serve restic -v remote:backup
 
@@ -81,7 +81,7 @@ remote you wish to use.
 By default this will serve on "localhost:8080" you can change this
 with use of the "--addr" flag.
 
-You might wish to start this server on boot.
+You might wish to start this service on boot.
 
 Adding --cache-objects=false will cause rclone to stop caching objects
 returned from the List call. Caching is normally desirable as it speeds
@@ -90,14 +90,14 @@ up downloading objects, saves transactions and uses very little memory.
 ### Setting up restic to use rclone ###
 
 Now you can [follow the restic
-instructions](http://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#rest-server)
+instructions](http://restic.readthedocs.io/en/latest/030_preparing_a_new_repo.html#rest-service)
 on setting up restic.
 
 Note that you will need restic 0.8.2 or later to interoperate with
 rclone.
 
 For the example above you will want to use "http://localhost:8080/" as
-the URL for the REST server.
+the URL for the REST service.
 
 For example:
 
@@ -136,7 +136,7 @@ with a path of ` + "`/<username>/`" + `.
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f)
+			s := newService(f)
 			router, err := httplib.Router()
 			if err != nil {
 				return err
@@ -145,7 +145,7 @@ with a path of ` + "`/<username>/`" + `.
 			fs.Logf(s.f, "Serving restic REST API on %s", httplib.URL())
 			if stdio {
 				if terminal.IsTerminal(int(os.Stdout.Fd())) {
-					return errors.New("refusing to run HTTP2 server directly on a terminal, please let restic start rclone")
+					return errors.New("refusing to run HTTP2 service directly on a terminal, please let restic start rclone")
 				}
 
 				conn := &StdioConn{
@@ -229,14 +229,14 @@ func checkPrivate(next http.Handler) http.Handler {
 	})
 }
 
-// server contains everything to run the server
-type server struct {
+// service contains everything to run the service
+type service struct {
 	f     fs.Fs
 	cache *cache
 }
 
-func newServer(f fs.Fs) *server {
-	s := &server{
+func newService(f fs.Fs) *service {
+	s := &service{
 		f:     f,
 		cache: newCache(),
 	}
@@ -244,7 +244,7 @@ func newServer(f fs.Fs) *server {
 }
 
 // bind helper for main Bind method
-func (s *server) bind(router chi.Router) {
+func (s *service) bind(router chi.Router) {
 	router.MethodFunc("GET", "/*", func(w http.ResponseWriter, r *http.Request) {
 		urlpath := chi.URLParam(r, "*")
 		if urlpath == "" || strings.HasSuffix(urlpath, "/") {
@@ -265,14 +265,14 @@ func (s *server) bind(router chi.Router) {
 	router.MethodFunc("DELETE", "/*", s.deleteObject)
 }
 
-// Bind restic server routes to passed router
-func (s *server) Bind(router chi.Router) {
+// Bind restic service routes to passed router
+func (s *service) Bind(router chi.Router) {
 	if m := auth.Auth(auth.Opt); m != nil {
 		router.Use(m)
 	}
 	router.Use(
 		middleware.SetHeader("Accept-Ranges", "bytes"),
-		middleware.SetHeader("server", "rclone/"+fs.Version),
+		middleware.SetHeader("service", "rclone/"+fs.Version),
 		WithRemote,
 		requireRestic,
 	)
@@ -294,7 +294,7 @@ var matchData = regexp.MustCompile("(?:^|/)data/([^/]{2,})$")
 
 // newObject returns an object with the remote given either from the
 // cache or directly
-func (s *server) newObject(ctx context.Context, remote string) (fs.Object, error) {
+func (s *service) newObject(ctx context.Context, remote string) (fs.Object, error) {
 	o := s.cache.find(remote)
 	if o != nil {
 		return o, nil
@@ -308,7 +308,7 @@ func (s *server) newObject(ctx context.Context, remote string) (fs.Object, error
 }
 
 // get the remote
-func (s *server) serveObject(w http.ResponseWriter, r *http.Request) {
+func (s *service) serveObject(w http.ResponseWriter, r *http.Request) {
 	remote, ok := r.Context().Value(ContextRemoteKey).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -324,7 +324,7 @@ func (s *server) serveObject(w http.ResponseWriter, r *http.Request) {
 }
 
 // postObject posts an object to the repository
-func (s *server) postObject(w http.ResponseWriter, r *http.Request) {
+func (s *service) postObject(w http.ResponseWriter, r *http.Request) {
 	remote, ok := r.Context().Value(ContextRemoteKey).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -355,7 +355,7 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request) {
 }
 
 // delete the remote
-func (s *server) deleteObject(w http.ResponseWriter, r *http.Request) {
+func (s *service) deleteObject(w http.ResponseWriter, r *http.Request) {
 	remote, ok := r.Context().Value(ContextRemoteKey).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -410,7 +410,7 @@ func (ls *listItems) add(o fs.Object) {
 }
 
 // listObjects lists all Objects of a given type in an arbitrary order.
-func (s *server) listObjects(w http.ResponseWriter, r *http.Request) {
+func (s *service) listObjects(w http.ResponseWriter, r *http.Request) {
 	remote, ok := r.Context().Value(ContextRemoteKey).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -456,7 +456,7 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request) {
 // createRepo creates repository directories.
 //
 // We don't bother creating the data dirs as rclone will create them on the fly
-func (s *server) createRepo(w http.ResponseWriter, r *http.Request) {
+func (s *service) createRepo(w http.ResponseWriter, r *http.Request) {
 	remote, ok := r.Context().Value(ContextRemoteKey).(string)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

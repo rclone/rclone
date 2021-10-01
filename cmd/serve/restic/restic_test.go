@@ -1,4 +1,4 @@
-// Serve restic tests set up a server and run the integration tests
+// Serve restic tests set up a service and run the integration tests
 // for restic against it.
 
 package restic
@@ -24,7 +24,7 @@ const (
 	resticSource    = "../../../../../restic/restic"
 )
 
-// TestRestic runs the restic server then runs the unit tests for the
+// TestRestic runs the restic service then runs the unit tests for the
 // restic remote against it.
 func TestRestic(t *testing.T) {
 	_, err := os.Stat(resticSource)
@@ -44,8 +44,8 @@ func TestRestic(t *testing.T) {
 	err = fremote.Mkdir(context.Background(), "")
 	assert.NoError(t, err)
 
-	// Start the server
-	w := newServer(fremote)
+	// Start the service
+	w := newService(fremote)
 	l, err := net.Listen("tcp", opt.ListenAddr)
 	if err != nil {
 		t.Fatal(err.Error())

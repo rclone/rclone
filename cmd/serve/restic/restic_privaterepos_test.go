@@ -55,7 +55,7 @@ func TestResticPrivateRepositories(t *testing.T) {
 
 	// make a new file system in the temp dir
 	f := cmd.NewFsSrc([]string{tempdir})
-	srv := newServer(f)
+	srv := newService(f)
 	router := chi.NewRouter()
 	srv.Bind(router)
 
