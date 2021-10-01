@@ -20,7 +20,7 @@ import (
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
-	httpServer   *server
+	httpService  *service
 	testURL      string
 )
 
@@ -32,15 +32,15 @@ const (
 func startServer(t *testing.T, f fs.Fs) {
 	opt := httplib.DefaultOpt
 	opt.ListenAddr = testBindAddress
-	httpServer = newServer(f, testTemplate)
+	httpService = newService(f, testTemplate)
 	router, err := httplib.Router()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	httpServer.Bind(router)
+	httpService.Bind(router)
 	testURL = httplib.URL()
 
-	// try to connect to the test server
+	// try to connect to the test service
 	pause := time.Millisecond
 	for i := 0; i < 10; i++ {
 		resp, err := http.Head(testURL)
@@ -52,7 +52,7 @@ func startServer(t *testing.T, f fs.Fs) {
 		time.Sleep(pause)
 		pause *= 2
 	}
-	t.Fatal("couldn't connect to server")
+	t.Fatal("couldn't connect to service")
 
 }
 

@@ -25,7 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Options required for http server
+// Options required for http service
 type Options struct {
 	data.Options
 }
@@ -47,14 +47,14 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "http remote:path",
 	Short: `Serve the remote over HTTP.`,
-	Long: `rclone serve http implements a basic web server to serve the remote
+	Long: `rclone serve http implements a basic web service to serve the remote
 over HTTP.  This can be viewed in a web browser or you can make a
 remote of type http read from it.
 
 You can use the filter flags (e.g. --include, --exclude) to control what
 is served.
 
-The server will log errors.  Use -v to see access logs.
+The service will log errors.  Use -v to see access logs.
 
 --bwlimit will be respected for file transfers.  Use --stats to
 control the stats printing.
@@ -63,7 +63,7 @@ control the stats printing.
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f, Opt.Template)
+			s := newService(f, Opt.Template)
 			router, err := httplib.Router()
 			if err != nil {
 				return err
@@ -75,19 +75,19 @@ control the stats printing.
 	},
 }
 
-// server contains everything to run the server
-type server struct {
+// service contains everything to run the service
+type service struct {
 	f            fs.Fs
 	vfs          *vfs.VFS
 	HTMLTemplate *template.Template // HTML template for web interface
 }
 
-func newServer(f fs.Fs, templatePath string) *server {
+func newService(f fs.Fs, templatePath string) *service {
 	htmlTemplate, templateErr := data.GetTemplate(templatePath)
 	if templateErr != nil {
 		log.Fatalf(templateErr.Error())
 	}
-	s := &server{
+	s := &service{
 		f:            f,
 		vfs:          vfs.New(f, &vfsflags.Opt),
 		HTMLTemplate: htmlTemplate,
@@ -95,7 +95,7 @@ func newServer(f fs.Fs, templatePath string) *server {
 	return s
 }
 
-func (s *server) Bind(router chi.Router) {
+func (s *service) Bind(router chi.Router) {
 	if m := auth.Auth(auth.Opt); m != nil {
 		router.Use(m)
 	}
@@ -108,7 +108,7 @@ func (s *server) Bind(router chi.Router) {
 }
 
 // handler reads incoming requests and dispatches them
-func (s *server) handler(w http.ResponseWriter, r *http.Request) {
+func (s *service) handler(w http.ResponseWriter, r *http.Request) {
 	isDir := strings.HasSuffix(r.URL.Path, "/")
 	remote := strings.Trim(r.URL.Path, "/")
 	if isDir {
@@ -119,7 +119,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 }
 
 // serveDir serves a directory index at dirRemote
-func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
+func (s *service) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
 	// List the directory
 	node, err := s.vfs.Stat(dirRemote)
 	if err == vfs.ENOENT {
@@ -161,7 +161,7 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 }
 
 // serveFile serves a file object at remote
-func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string) {
+func (s *service) serveFile(w http.ResponseWriter, r *http.Request, remote string) {
 	node, err := s.vfs.Stat(remote)
 	if err == vfs.ENOENT {
 		fs.Infof(remote, "%s: File not found", r.RemoteAddr)
@@ -192,7 +192,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	// Set content type
 	mimeType := fs.MimeType(r.Context(), obj)
 	if mimeType == "application/octet-stream" && path.Ext(remote) == "" {
-		// Leave header blank so http server guesses
+		// Leave header blank so http service guesses
 	} else {
 		w.Header().Set("Content-Type", mimeType)
 	}
