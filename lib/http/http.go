@@ -86,10 +86,12 @@ var DefaultOpt = Options{
 
 // Server interface of http server
 type Server interface {
-	Router() chi.Router
-	Route(pattern string, fn func(r chi.Router)) chi.Router
 	Mount(pattern string, h http.Handler)
+	Route(pattern string, fn func(r chi.Router)) chi.Router
+	Router() chi.Router
+	Serve()
 	Shutdown() error
+	Wait()
 }
 
 type server struct {
@@ -210,6 +212,7 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 	return &server{addrs, tlsAddrs, listeners, tlsListeners, httpServer, router, wg, useSSL}, nil
 }
 
+// Serve attaches server to registered listeners
 func (s *server) Serve() {
 	serve := func(l net.Listener) {
 		defer s.closing.Done()
