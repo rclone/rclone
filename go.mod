@@ -55,6 +55,7 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
 	github.com/rfjakob/eme v1.1.2
+	github.com/rkl-/digest v0.0.0-20180419075440-8316caa4a777 // indirect
 	github.com/sevlyar/go-daemon v0.1.5
 	github.com/shirou/gopsutil/v3 v3.21.8
 	github.com/sirupsen/logrus v1.8.1

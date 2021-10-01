@@ -48,6 +48,11 @@ func init() {
 				Help:  "Connect to example.com using a username and password",
 			}},
 		}, {
+			Name:     "use_digest_auth",
+			Help:     `Set this if the site requires digest authentication`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name: "headers",
 			Help: `Set HTTP headers for all transactions
 
@@ -105,10 +110,11 @@ If you set this option, rclone will not do the HEAD request.  This will mean
 
 // Options defines the configuration for this backend
 type Options struct {
-	Endpoint string          `config:"url"`
-	NoSlash  bool            `config:"no_slash"`
-	NoHead   bool            `config:"no_head"`
-	Headers  fs.CommaSepList `config:"headers"`
+	Endpoint      string          `config:"url"`
+	UseDigestAuth bool            `config:"use_digest_auth"`
+	NoSlash       bool            `config:"no_slash"`
+	NoHead        bool            `config:"no_head"`
+	Headers       fs.CommaSepList `config:"headers"`
 }
 
 // Fs stores the interface to the remote HTTP files
@@ -172,7 +178,20 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	client := fshttp.NewClient(ctx)
+	var client *http.Client
+	if opt.UseDigestAuth && base.User != nil {
+		password, set := base.User.Password()
+		if !set {
+			return nil, errors.New("remote configured to use digest auth but no password supplied")
+		}
+		client = fshttp.NewDigestClient(ctx, base.User.Username(), password)
+
+		// clean the request, we are using digest auth, no need to send this along
+		u.User = nil
+
+	} else {
+		client = fshttp.NewClient(ctx)
+	}
 
 	var isFile = false
 	if !strings.HasSuffix(u.String(), "/") {
