@@ -3,7 +3,9 @@ package http
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
 	"testing"
@@ -20,7 +22,7 @@ import (
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
-	httpService  *service
+	httpServer   httplib.Server
 	testURL      string
 )
 
@@ -32,13 +34,19 @@ const (
 func startServer(t *testing.T, f fs.Fs) {
 	opt := httplib.DefaultOpt
 	opt.ListenAddr = testBindAddress
-	httpService = newService(f, testTemplate)
-	router, err := httplib.Router()
+	httpService := newService(f, testTemplate)
+	l, err := net.Listen("tcp", opt.ListenAddr)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
+	httpServer, err = httplib.NewServer([]net.Listener{l}, []net.Listener{}, opt)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	httpServer.Serve()
+	router := httpServer.Router()
 	httpService.Bind(router)
-	testURL = httplib.URL()
+	testURL = fmt.Sprintf("http://%s/", l.Addr())
 
 	// try to connect to the test service
 	pause := time.Millisecond
@@ -230,5 +238,5 @@ func TestGET(t *testing.T) {
 }
 
 func TestFinalise(t *testing.T) {
-	_ = httplib.Shutdown()
+	_ = httpServer.Shutdown()
 }
