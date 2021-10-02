@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -178,6 +179,11 @@ func NewConfig() *ConfigInfo {
 		}
 		if arg == "--log-level=DEBUG" || (arg == "--log-level" && len(os.Args) > argIndex+1 && os.Args[argIndex+1] == "DEBUG") {
 			c.LogLevel = LogLevelDebug
+		}
+		if strings.HasPrefix(arg, "--verbose=") {
+			if level, err := strconv.Atoi(arg[10:]); err == nil && level >= 2 {
+				c.LogLevel = LogLevelDebug
+			}
 		}
 	}
 	envValue, found := os.LookupEnv("RCLONE_LOG_LEVEL")
