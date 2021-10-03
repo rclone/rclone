@@ -213,18 +213,12 @@ backends:
    fastlist: false
  - backend:  "ftp"
    remote:   "TestFTPProftpd:"
-   ignore:
-     - TestIntegration/FsMkdir/FsEncoding/punctuation
    fastlist: false
- # - backend:  "ftp"
- #   remote:   "TestFTPVsftpd:"
- #   ignore:
- #     - TestIntegration/FsMkdir/FsEncoding/punctuation
- #   fastlist: false
  - backend:  "ftp"
    remote:   "TestFTPPureftpd:"
-   ignore:
-     - TestIntegration/FsMkdir/FsEncoding/punctuation
+   fastlist: false
+ - backend:  "ftp"
+   remote:   "TestFTPVsftpd:"
    fastlist: false
  - backend:  "ftp"
    remote:   "TestFTPRclone:"

@@ -319,3 +319,7 @@ Not all FTP servers can have all characters in file names, for example:
 | --------- |:--------------------:|
 | proftpd   | `*`                  |
 | pureftpd  | `\ [ ]`              |
+
+This backend's interactive configuration wizard provides a selection of
+sensible encoding settings for major FTP servers: ProFTPd, PureFTPd, VsFTPd.
+Just hit a selection number when prompted.
