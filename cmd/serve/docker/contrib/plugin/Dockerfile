@@ -26,6 +26,10 @@ ENV RCLONE_CACHE_DIR=/data/cache
 ENV RCLONE_BASE_DIR=/mnt
 ENV RCLONE_VERBOSE=0
 
+ENV HTTP_PROXY=
+ENV HTTPS_PROXY=
+ENV NO_PROXY=
+
 WORKDIR /data
 ENTRYPOINT ["/usr/local/bin/rclone"]
 CMD ["serve", "docker"]

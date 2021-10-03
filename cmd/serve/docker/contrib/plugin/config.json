@@ -42,6 +42,21 @@
         {
             "name": "RCLONE_BASE_DIR",
             "value": "/mnt"
+        },
+        {
+            "name": "HTTP_PROXY",
+            "value": "",
+            "settable": ["value"]
+        },
+        {
+            "name": "HTTPS_PROXY",
+            "value": "",
+            "settable": ["value"]
+        },
+        {
+            "name": "NO_PROXY",
+            "value": "",
+            "settable": ["value"]
         }
     ],
     "mounts": [
