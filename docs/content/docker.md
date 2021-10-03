@@ -347,7 +347,8 @@ swarm services that use them. This is rather tedious so please carefully
 plan in advance.
 
 You can tweak the following settings:
-`args`, `config`, `cache`, and `RCLONE_VERBOSE`.
+`args`, `config`, `cache`, `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY`
+and `RCLONE_VERBOSE`.
 It's _your_ task to keep plugin settings in sync across swarm cluster nodes.
 
 `args` sets command-line arguments for the `rclone serve docker` command
@@ -388,6 +389,8 @@ Since arguments are more generic, you will rarely need this setting.
 The plugin output by default feeds the docker daemon log on local host.
 Log entries are reflected as _errors_ in the docker log but retain their
 actual level assigned by rclone in the encapsulated message string.
+
+`HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` customize the plugin proxy settings.
 
 You can set custom plugin options right when you install it, _in one go_:
 ```
@@ -505,6 +508,8 @@ PLUGID=123abc...
 sudo curl -H Content-Type:application/json -XPOST -d {} --unix-socket /run/docker/plugins/$PLUGID/rclone.sock http://localhost/Plugin.Activate
 ```
 though this is rarely needed.
+
+## Caveats
 
 Finally I'd like to mention a _caveat with updating volume settings_.
 Docker CLI does not have a dedicated command like `docker volume update`.
