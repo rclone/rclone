@@ -87,6 +87,10 @@ You are welcome to use this directly.
 
 This needs expanding and submitting to pypi...
 
+## Rust
+
+Rust bindings are available in the `librclone` crate: https://crates.io/crates/librclone
+
 ## TODO
 
 - Async jobs must currently be cancelled manually at the moment - RcloneFinalize doesn't do it.
