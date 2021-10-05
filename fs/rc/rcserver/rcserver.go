@@ -86,7 +86,7 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) *Server
 		fileHandler = http.FileServer(http.Dir(opt.Files))
 	} else if opt.WebUI {
 		if err := webgui.CheckAndDownloadWebGUIRelease(opt.WebGUIUpdate, opt.WebGUIForceUpdate, opt.WebGUIFetchURL, config.GetCacheDir()); err != nil {
-			log.Fatalf("Error while fetching the latest release of Web GUI: %v", err)
+			fs.Errorf(nil, "Error while fetching the latest release of Web GUI: %v", err)
 		}
 		if opt.NoAuth {
 			opt.NoAuth = false
