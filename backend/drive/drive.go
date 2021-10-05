@@ -3162,7 +3162,7 @@ account.
 
 Usage:
 
-    rclone backend drives drive:
+    rclone backend [-o config] drives drive:
 
 This will return a JSON list of objects like this
 
@@ -3178,6 +3178,22 @@ This will return a JSON list of objects like this
             "name": "Test Drive"
         }
     ]
+
+With the -o config parameter it will output the list in a format
+suitable for adding to a config file to make aliases for all the
+drives found.
+
+    [My Drive]
+    type = alias
+    remote = drive,team_drive=0ABCDEF-01234567890,root_folder_id=:
+
+    [Test Drive]
+    type = alias
+    remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
+
+Adding this to the rclone config file will cause those team drives to
+be accessible with the aliases shown. This may require manual editing
+of the names.
 
 `,
 }, {
@@ -3290,7 +3306,21 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		}
 		return f.makeShortcut(ctx, arg[0], dstFs, arg[1])
 	case "drives":
-		return f.listTeamDrives(ctx)
+		drives, err := f.listTeamDrives(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := opt["config"]; ok {
+			lines := []string{}
+			for _, drive := range drives {
+				lines = append(lines, "")
+				lines = append(lines, fmt.Sprintf("[%s]", drive.Name))
+				lines = append(lines, fmt.Sprintf("type = alias"))
+				lines = append(lines, fmt.Sprintf("remote = %s,team_drive=%s,root_folder_id=:", f.name, drive.Id))
+			}
+			return lines, nil
+		}
+		return drives, nil
 	case "untrash":
 		dir := ""
 		if len(arg) > 0 {
