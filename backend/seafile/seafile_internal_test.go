@@ -136,6 +136,7 @@ func Test2FAStateMachine(t *testing.T) {
 		expectErrorMessage string
 		expectResult       string
 		expectFail         bool
+		expectNil          bool
 	}{
 		{
 			name:       "no url",
@@ -144,16 +145,16 @@ func Test2FAStateMachine(t *testing.T) {
 			expectFail: true,
 		},
 		{
-			name:       "2fa not set",
-			mapper:     configmap.Simple{"url": "http://localhost/"},
-			input:      fs.ConfigIn{State: ""},
-			expectFail: true,
-		},
-		{
 			name:       "unknown state",
 			mapper:     configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
 			input:      fs.ConfigIn{State: "unknown"},
 			expectFail: true,
+		},
+		{
+			name:      "2fa not set",
+			mapper:    configmap.Simple{"url": "http://localhost/"},
+			input:     fs.ConfigIn{State: ""},
+			expectNil: true,
 		},
 		{
 			name:        "no password in config",
@@ -213,6 +214,10 @@ func Test2FAStateMachine(t *testing.T) {
 			if fixture.expectFail {
 				require.Error(t, err)
 				t.Log(err)
+				return
+			}
+			if fixture.expectNil {
+				require.Nil(t, output)
 				return
 			}
 			assert.Equal(t, fixture.expectState, output.State)
