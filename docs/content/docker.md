@@ -319,8 +319,23 @@ By default they must exist on host at the following locations
 You can [install managed plugin](https://docs.docker.com/engine/reference/commandline/plugin_install/)
 with default settings as follows:
 ```
-docker plugin install rclone/docker-volume-rclone:latest --grant-all-permissions --alias rclone
+docker plugin install rclone/docker-volume-rclone:amd64 --grant-all-permissions --alias rclone
 ```
+
+The `:amd64` part of the image specification after colon is called a _tag_.
+Normally people want to install the latest plugin for their architecture. In
+this case the tag will just name it, like `amd64` above. Note that docker does
+not support multi-architecture plugins yet, and consequently we don't use the
+universal `latest` tag. The following plugin architectures are available:
+- `amd64`
+- `arm64`
+- `arm-v7`
+
+Sometimes you might want a concrete plugin version, not the latest one.
+Then you should use image tag in the form `ARCHITECTURE-VERSION`.
+For example, to install plugin version `v1.56.2` on architecture `arm64`
+you will use tag `arm64-1.56.2` (note the removed `v`) so the full image
+specification becomes `rclone/docker-volume-rclone:arm64-1.56.2`.
 
 Managed plugin is in fact a special container running in a namespace separate
 from normal docker containers. Inside it runs the `rclone serve docker`
@@ -387,10 +402,10 @@ The plugin output by default feeds the docker daemon log on local host.
 Log entries are reflected as _errors_ in the docker log but retain their
 actual level assigned by rclone in the encapsulated message string.
 
-You can set custom plugin options right when you install it, _in one go_:
+You can set custom plugin options right when you install it _in one go_:
 ```
 docker plugin remove rclone
-docker plugin install rclone/docker-volume-rclone:latest \
+docker plugin install rclone/docker-volume-rclone:amd64 \
        --alias rclone --grant-all-permissions \
        args="-v --allow-other" config=/etc/rclone
 docker plugin inspect rclone
@@ -429,8 +444,8 @@ sudo apt-get -y install fuse
 ```
 
 Download two systemd configuration files:
-[docker-volume-rclone.service](https://raw.githubusercontent.com/rclone/rclone/master/cmd/serve/docker/contrib/systemd/docker-volume-rclone.service)
-and [docker-volume-rclone.socket](https://raw.githubusercontent.com/rclone/rclone/master/cmd/serve/docker/contrib/systemd/docker-volume-rclone.socket).
+[docker-volume-rclone.service](https://raw.githubusercontent.com/rclone/rclone/master/contrib/docker-plugin/systemd/docker-volume-rclone.service)
+and [docker-volume-rclone.socket](https://raw.githubusercontent.com/rclone/rclone/master/contrib/docker-plugin/systemd/docker-volume-rclone.socket).
 
 Put them to the `/etc/systemd/system/` directory:
 ```
@@ -484,7 +499,7 @@ Use `journalctl --unit docker` to see managed plugin output as part of
 the docker daemon log. Note that docker reflects plugin lines as _errors_
 but their actual level can be seen from encapsulated message string.
 
-You will usually install the latest version of managed plugin.
+You will usually install the latest version of managed plugin for your platform.
 Use the following commands to print the actual installed version:
 ```
 PLUGID=$(docker plugin list --no-trunc | awk '/rclone/{print$1}')
