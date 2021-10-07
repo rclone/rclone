@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/rclone/rclone/cmd/mountlib"
@@ -270,8 +271,14 @@ func getVFSOption(vfsOpt *vfscommon.Options, opt rc.Params, key string) (ok bool
 
 	// unprefixed unix-only vfs options
 	case "umask":
-		intVal, err = opt.GetInt64(key)
-		vfsOpt.Umask = int(intVal)
+		// GetInt64 doesn't support the `0octal` umask syntax - parse locally
+		var strVal string
+		if strVal, err = opt.GetString(key); err == nil {
+			var longVal int64
+			if longVal, err = strconv.ParseInt(strVal, 0, 0); err == nil {
+				vfsOpt.Umask = int(longVal)
+			}
+		}
 	case "uid":
 		intVal, err = opt.GetInt64(key)
 		vfsOpt.UID = uint32(intVal)
