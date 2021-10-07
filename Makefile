@@ -288,6 +288,7 @@ docker-plugin-build:
 		-o type=local,dest=${PLUGIN_BUILD_DIR} \
 		-t ${PLUGIN_IMAGE} -f ${PLUGIN_DOCKERFILE} .
 
+	docker buildx stop ${PLUGIN_CONTAINER}
 	docker buildx rm ${PLUGIN_CONTAINER}
 
 	for dir in ${PLUGIN_BUILD_DIR}/*/ ; do \
