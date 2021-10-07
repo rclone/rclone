@@ -196,7 +196,7 @@ Note that |bin/config.py| in the rclone source implements this protocol
 as a readable demonstration.
 `, "|", "`")
 var configCreateCommand = &cobra.Command{
-	Use:   "create `name` `type` [`key` `value`]*",
+	Use:   "create name type [key value]*",
 	Short: `Create a new remote with name, type and options.`,
 	Long: strings.ReplaceAll(`
 Create a new remote of |name| with |type| and options.  The options
@@ -259,7 +259,7 @@ func init() {
 }
 
 var configUpdateCommand = &cobra.Command{
-	Use:   "update `name` [`key` `value`]+",
+	Use:   "update name [key value]+",
 	Short: `Update options in an existing remote.`,
 	Long: strings.ReplaceAll(`
 Update an existing remote's options. The options should be passed in
@@ -289,8 +289,8 @@ require this add an extra parameter thus:
 }
 
 var configDeleteCommand = &cobra.Command{
-	Use:   "delete `name`",
-	Short: "Delete an existing remote `name`.",
+	Use:   "delete name",
+	Short: "Delete an existing remote.",
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		config.DeleteRemote(args[0])
@@ -298,7 +298,7 @@ var configDeleteCommand = &cobra.Command{
 }
 
 var configPasswordCommand = &cobra.Command{
-	Use:   "password `name` [`key` `value`]+",
+	Use:   "password name [key value]+",
 	Short: `Update password in an existing remote.`,
 	Long: strings.ReplaceAll(`
 Update an existing remote's password. The password

@@ -120,13 +120,20 @@ Set to 0 to keep connections indefinitely.
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
-			// The FTP protocol can't handle trailing spaces (for instance
-			// pureftpd turns them into _)
-			//
-			// proftpd can't handle '*' in file names
-			// pureftpd can't handle '[', ']' or '*'
+			// The FTP protocol can't handle trailing spaces
+			// (for instance, pureftpd turns them into '_')
 			Default: (encoder.Display |
 				encoder.EncodeRightSpace),
+			Examples: []fs.OptionExample{{
+				Value: "Asterisk,Ctl,Dot,Slash",
+				Help:  "ProFTPd can't handle '*' in file names",
+			}, {
+				Value: "BackSlash,Ctl,Del,Dot,RightSpace,Slash,SquareBracket",
+				Help:  "PureFTPd can't handle '[]' or '*' in file names",
+			}, {
+				Value: "Ctl,LeftPeriod,Slash",
+				Help:  "VsFTPd can't handle file names starting with dot",
+			}},
 		}},
 	})
 }
@@ -1062,8 +1069,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	if err != nil {
 		_ = c.Quit() // toss this connection to avoid sync errors
-		remove()
+		// recycle connection in advance to let remove() find free token
 		o.fs.putFtpConnection(nil, err)
+		remove()
 		return errors.Wrap(err, "update stor")
 	}
 	o.fs.putFtpConnection(&c, nil)

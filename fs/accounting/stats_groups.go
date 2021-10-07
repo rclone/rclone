@@ -375,6 +375,9 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 			sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
 			sum.oldDuration += stats.oldDuration
 			sum.oldTimeRanges = append(sum.oldTimeRanges, stats.oldTimeRanges...)
+			stats.average.mu.Lock()
+			sum.average.speed += stats.average.speed
+			stats.average.mu.Unlock()
 		}
 		stats.mu.RUnlock()
 	}

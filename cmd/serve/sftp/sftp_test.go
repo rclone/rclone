@@ -3,7 +3,8 @@
 //
 // We skip tests on platforms with troublesome character mappings
 
-//+build !windows,!darwin,!plan9
+//go:build !windows && !darwin && !plan9
+// +build !windows,!darwin,!plan9
 
 package sftp
 

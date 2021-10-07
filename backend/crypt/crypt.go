@@ -39,7 +39,7 @@ func init() {
 			Examples: []fs.OptionExample{
 				{
 					Value: "standard",
-					Help:  "Encrypt the filenames see the docs for the details.",
+					Help:  "Encrypt the filenames. See the docs for the details.",
 				}, {
 					Value: "obfuscate",
 					Help:  "Very simple filename obfuscation.",

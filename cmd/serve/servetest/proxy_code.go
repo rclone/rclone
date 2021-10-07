@@ -1,3 +1,4 @@
+//go:build ignore
 // +build ignore
 
 // A simple auth proxy for testing purposes

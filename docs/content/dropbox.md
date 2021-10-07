@@ -3,8 +3,7 @@ title: "Dropbox"
 description: "Rclone docs for Dropbox"
 ---
 
-{{< icon "fab fa-dropbox" >}} Dropbox
----------------------------------
+# {{< icon "fab fa-dropbox" >}} Dropbox
 
 Paths are specified as `remote:path`
 
@@ -238,7 +237,7 @@ Leave blank to use the provider defaults.
 
 #### --dropbox-chunk-size
 
-Upload chunk size. (< 150M).
+Upload chunk size. (< 150Mi).
 
 Any files larger than this will be uploaded in chunks of this size.
 
@@ -250,7 +249,7 @@ memory.  It can be set smaller if you are tight on memory.
 - Config:      chunk_size
 - Env Var:     RCLONE_DROPBOX_CHUNK_SIZE
 - Type:        SizeSuffix
-- Default:     48M
+- Default:     48Mi
 
 #### --dropbox-impersonate
 
@@ -308,6 +307,75 @@ shared folder.
 - Env Var:     RCLONE_DROPBOX_SHARED_FOLDERS
 - Type:        bool
 - Default:     false
+
+#### --dropbox-batch-mode
+
+Upload file batching sync|async|off.
+
+This sets the batch mode used by rclone.
+
+For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)
+
+This has 3 possible values
+
+- off - no batching
+- sync - batch uploads and check completion (default)
+- async - batch upload and don't check completion
+
+Rclone will close any outstanding batches when it exits which may make
+a delay on quit.
+
+
+- Config:      batch_mode
+- Env Var:     RCLONE_DROPBOX_BATCH_MODE
+- Type:        string
+- Default:     "sync"
+
+#### --dropbox-batch-size
+
+Max number of files in upload batch.
+
+This sets the batch size of files to upload. It has to be less than 1000.
+
+By default this is 0 which means rclone which calculate the batch size
+depending on the setting of batch_mode.
+
+- batch_mode: async - default batch_size is 100
+- batch_mode: sync - default batch_size is the same as --transfers
+- batch_mode: off - not in use
+
+Rclone will close any outstanding batches when it exits which may make
+a delay on quit.
+
+Setting this is a great idea if you are uploading lots of small files
+as it will make them a lot quicker. You can use --transfers 32 to
+maximise throughput.
+
+
+- Config:      batch_size
+- Env Var:     RCLONE_DROPBOX_BATCH_SIZE
+- Type:        int
+- Default:     0
+
+#### --dropbox-batch-timeout
+
+Max time to allow an idle upload batch before uploading
+
+If an upload batch is idle for more than this long then it will be
+uploaded.
+
+The default for this is 0 which means rclone will choose a sensible
+default based on the batch_mode in use.
+
+- batch_mode: async - default batch_timeout is 500ms
+- batch_mode: sync - default batch_timeout is 10s
+- batch_mode: off - not in use
+
+
+- Config:      batch_timeout
+- Env Var:     RCLONE_DROPBOX_BATCH_TIMEOUT
+- Type:        Duration
+- Default:     0s
 
 #### --dropbox-encoding
 

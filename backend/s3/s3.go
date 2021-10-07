@@ -629,6 +629,10 @@ func init() {
 				Value:    "s3.eu-central-1.wasabisys.com",
 				Help:     "Wasabi EU Central endpoint",
 				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ap-northeast-1.wasabisys.com",
+				Help:     "Wasabi AP Northeast endpoint",
+				Provider: "Wasabi",
 			}},
 		}, {
 			Name:     "location_constraint",
@@ -1247,7 +1251,7 @@ very small even with this flag.
 			Advanced: true,
 		}, {
 			Name:     "no_head_object",
-			Help:     `If set, don't HEAD objects`,
+			Help:     `If set, do not do HEAD before GET when getting objects.`,
 			Default:  false,
 			Advanced: true,
 		}, {

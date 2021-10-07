@@ -275,7 +275,7 @@ func makeConfigPath() string {
 			return configFile
 		}
 		var mkdirErr error
-		if mkdirErr = os.MkdirAll(configDir, os.ModePerm); mkdirErr == nil {
+		if mkdirErr = file.MkdirAll(configDir, os.ModePerm); mkdirErr == nil {
 			return configFile
 		}
 		// Problem: Try a fallback location. If we did find a home directory then
@@ -332,6 +332,10 @@ func SetConfigPath(path string) (err error) {
 
 // SetData sets new config file storage
 func SetData(newData Storage) {
+	// If no config file, use in-memory config (which is the default)
+	if configPath == "" {
+		return
+	}
 	data = newData
 	dataLoaded = false
 }
@@ -371,10 +375,6 @@ var ErrorConfigFileNotFound = errors.New("config file not found")
 // SaveConfig calling function which saves configuration file.
 // if SaveConfig returns error trying again after sleep.
 func SaveConfig() {
-	if configPath == "" {
-		fs.Debugf(nil, "Skipping save for memory-only config")
-		return
-	}
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 	var err error

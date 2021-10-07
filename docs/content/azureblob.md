@@ -3,8 +3,7 @@ title: "Microsoft Azure Blob Storage"
 description: "Rclone docs for Microsoft Azure Blob Storage"
 ---
 
-{{< icon "fab fa-windows" >}} Microsoft Azure Blob Storage
------------------------------------------
+# {{< icon "fab fa-windows" >}} Microsoft Azure Blob Storage
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g.
@@ -285,7 +284,7 @@ Note that this is stored in memory and there may be up to
 - Config:      chunk_size
 - Env Var:     RCLONE_AZUREBLOB_CHUNK_SIZE
 - Type:        SizeSuffix
-- Default:     4M
+- Default:     4Mi
 
 #### --azureblob-list-chunk
 

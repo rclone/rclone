@@ -3,8 +3,7 @@ title: "HDFS Remote"
 description: "Remote for Hadoop Distributed Filesystem"
 ---
 
-{{< icon "fa fa-globe" >}} HDFS
--------------------------------------------------
+# {{< icon "fa fa-globe" >}} HDFS
 
 [HDFS](https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html) is a
 distributed file-system, part of the [Apache Hadoop](https://hadoop.apache.org/) framework.
@@ -190,7 +189,7 @@ Here are the advanced options specific to hdfs (Hadoop distributed file system).
 Kerberos service principal name for the namenode
 
 Enables KERBEROS authentication. Specifies the Service Principal Name
-(<SERVICE>/<FQDN>) for the namenode.
+(SERVICE/FQDN) for the namenode.
 
 - Config:      service_principal_name
 - Env Var:     RCLONE_HDFS_SERVICE_PRINCIPAL_NAME

@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
 	"sync"
+	"time"
 
 	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
 	"github.com/pkg/errors"
@@ -17,6 +19,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 )
@@ -42,12 +45,12 @@ func NewDriver(ctx context.Context, root string, mntOpt *mountlib.Options, vfsOp
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make --cache-dir absolute")
 	}
-	err = os.MkdirAll(cacheDir, 0700)
+	err = file.MkdirAll(cacheDir, 0700)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create cache directory: %s", cacheDir)
 	}
 
-	//err = os.MkdirAll(root, 0755)
+	//err = file.MkdirAll(root, 0755)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create mount root: %s", root)
 	}
@@ -322,13 +325,20 @@ func (drv *Driver) saveState() error {
 	}
 
 	data, err := json.Marshal(state)
-	if err == nil {
-		err = ioutil.WriteFile(drv.statePath, data, 0600)
-	}
 	if err != nil {
-		return errors.Wrap(err, "failed to write state")
+		return errors.Wrap(err, "failed to marshal state")
 	}
-	return nil
+
+	ctx := context.Background()
+	retries := fs.GetConfig(ctx).LowLevelRetries
+	for i := 0; i <= retries; i++ {
+		err = ioutil.WriteFile(drv.statePath, data, 0600)
+		if err == nil {
+			return nil
+		}
+		time.Sleep(time.Duration(rand.Intn(100)) * time.Millisecond)
+	}
+	return errors.Wrap(err, "failed to save state")
 }
 
 // restoreState recreates volumes from saved driver state

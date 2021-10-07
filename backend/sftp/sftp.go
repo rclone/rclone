@@ -1,5 +1,6 @@
 // Package sftp provides a filesystem interface using github.com/pkg/sftp
 
+//go:build !plan9
 // +build !plan9
 
 package sftp
@@ -429,10 +430,6 @@ func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.C
 		sftp.UseConcurrentReads(!f.opt.DisableConcurrentReads),
 		sftp.UseConcurrentWrites(!f.opt.DisableConcurrentWrites),
 	)
-	if f.opt.DisableConcurrentReads { // FIXME
-		fs.Errorf(f, "Ignoring disable_concurrent_reads after library reversion - see #5197")
-	}
-
 	return sftp.NewClientPipe(pr, pw, opts...)
 }
 

@@ -41,7 +41,7 @@ func TestSizeSuffixString(t *testing.T) {
 	}
 }
 
-func TestSizeSuffixByteShortUnit(t *testing.T) {
+func TestSizeSuffixByteUnit(t *testing.T) {
 	for _, test := range []struct {
 		in   float64
 		want string
@@ -56,30 +56,6 @@ func TestSizeSuffixByteShortUnit(t *testing.T) {
 		{10 * 1024 * 1024 * 1024 * 1024, "10 TiB"},
 		{10 * 1024 * 1024 * 1024 * 1024 * 1024, "10 PiB"},
 		{1 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024, "1 EiB"},
-		{-1, "off"},
-		{-100, "off"},
-	} {
-		ss := SizeSuffix(test.in)
-		got := ss.ByteShortUnit()
-		assert.Equal(t, test.want, got)
-	}
-}
-
-func TestSizeSuffixByteUnit(t *testing.T) {
-	for _, test := range []struct {
-		in   float64
-		want string
-	}{
-		{0, "0 Byte"},
-		{102, "102 Byte"},
-		{1024, "1 KiByte"},
-		{1024 * 1024, "1 MiByte"},
-		{1024 * 1024 * 1024, "1 GiByte"},
-		{10 * 1024 * 1024 * 1024, "10 GiByte"},
-		{10.1 * 1024 * 1024 * 1024, "10.100 GiByte"},
-		{10 * 1024 * 1024 * 1024 * 1024, "10 TiByte"},
-		{10 * 1024 * 1024 * 1024 * 1024 * 1024, "10 PiByte"},
-		{1 * 1024 * 1024 * 1024 * 1024 * 1024 * 1024, "1 EiByte"},
 		{-1, "off"},
 		{-100, "off"},
 	} {

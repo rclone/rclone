@@ -97,8 +97,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.IntVarP(flagSet, &ci.StatsFileNameLength, "stats-file-name-length", "", ci.StatsFileNameLength, "Max file name length in stats. 0 for no limit")
 	flags.FVarP(flagSet, &ci.LogLevel, "log-level", "", "Log level DEBUG|INFO|NOTICE|ERROR")
 	flags.FVarP(flagSet, &ci.StatsLogLevel, "stats-log-level", "", "Log level to show --stats output DEBUG|INFO|NOTICE|ERROR")
-	flags.FVarP(flagSet, &ci.BwLimit, "bwlimit", "", "Bandwidth limit in KiByte/s, or use suffix B|K|M|G|T|P or a full timetable.")
-	flags.FVarP(flagSet, &ci.BwLimitFile, "bwlimit-file", "", "Bandwidth limit per file in KiByte/s, or use suffix B|K|M|G|T|P or a full timetable.")
+	flags.FVarP(flagSet, &ci.BwLimit, "bwlimit", "", "Bandwidth limit in KiB/s, or use suffix B|K|M|G|T|P or a full timetable.")
+	flags.FVarP(flagSet, &ci.BwLimitFile, "bwlimit-file", "", "Bandwidth limit per file in KiB/s, or use suffix B|K|M|G|T|P or a full timetable.")
 	flags.FVarP(flagSet, &ci.BufferSize, "buffer-size", "", "In memory buffer size when reading files for each --transfer.")
 	flags.FVarP(flagSet, &ci.StreamingUploadCutoff, "streaming-upload-cutoff", "", "Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends.")
 	flags.FVarP(flagSet, &ci.Dump, "dump", "", "List of items to dump from: "+fs.DumpFlagsList)
@@ -131,6 +131,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.DurationVarP(flagSet, &ci.FsCacheExpireDuration, "fs-cache-expire-duration", "", ci.FsCacheExpireDuration, "cache remotes for this long (0 to disable caching)")
 	flags.DurationVarP(flagSet, &ci.FsCacheExpireInterval, "fs-cache-expire-interval", "", ci.FsCacheExpireInterval, "interval to check for expired remotes")
 	flags.BoolVarP(flagSet, &ci.DisableHTTP2, "disable-http2", "", ci.DisableHTTP2, "Disable HTTP/2 in the global transport.")
+	flags.BoolVarP(flagSet, &ci.HumanReadable, "human-readable", "", ci.HumanReadable, "Print numbers in a human-readable format. Sizes with suffix Ki|Mi|Gi|Ti|Pi.")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions

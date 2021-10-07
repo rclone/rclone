@@ -3,8 +3,7 @@ title: "Mailru"
 description: "Mail.ru Cloud"
 ---
 
-{{< icon "fas fa-at" >}} Mail.ru Cloud
-----------------------------------------
+# {{< icon "fas fa-at" >}} Mail.ru Cloud
 
 [Mail.ru Cloud](https://cloud.mail.ru/) is a cloud storage provided by a Russian internet company [Mail.Ru Group](https://mail.ru). The official desktop client is [Disk-O:](https://disk-o.cloud/en), available on Windows and Mac OS.
 
@@ -241,7 +240,7 @@ This option allows you to disable speedup (put by hash) for large files
 - Config:      speedup_max_disk
 - Env Var:     RCLONE_MAILRU_SPEEDUP_MAX_DISK
 - Type:        SizeSuffix
-- Default:     3G
+- Default:     3Gi
 - Examples:
     - "0"
         - Completely disable speedup (put by hash).
@@ -257,7 +256,7 @@ Files larger than the size given below will always be hashed on disk.
 - Config:      speedup_max_memory
 - Env Var:     RCLONE_MAILRU_SPEEDUP_MAX_MEMORY
 - Type:        SizeSuffix
-- Default:     32M
+- Default:     32Mi
 - Examples:
     - "0"
         - Preliminary hashing will always be done in a temporary disk location.

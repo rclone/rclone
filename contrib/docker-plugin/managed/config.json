@@ -1,6 +1,6 @@
 {
     "description": "Rclone volume plugin for Docker",
-    "documentation": "https://rclone.org/",
+    "documentation": "https://rclone.org/docker",
     "interface": {
         "socket": "rclone.sock",
         "types": ["docker.volumedriver/1.0"]
@@ -18,7 +18,7 @@
     "network": {
         "type": "host"
     },
-    "entrypoint": ["/usr/local/bin/rclone", "serve", "docker"],
+    "entrypoint": ["rclone", "serve", "docker"],
     "workdir": "/data",
     "args": {
         "name": "args",

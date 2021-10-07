@@ -1,3 +1,4 @@
+//go:build !plan9
 // +build !plan9
 
 package hdfs
@@ -37,7 +38,7 @@ func init() {
 			Help: `Kerberos service principal name for the namenode
 
 Enables KERBEROS authentication. Specifies the Service Principal Name
-(<SERVICE>/<FQDN>) for the namenode.`,
+(SERVICE/FQDN) for the namenode.`,
 			Required: false,
 			Examples: []fs.OptionExample{{
 				Value: "hdfs/namenode.hadoop.docker",

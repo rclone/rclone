@@ -3,8 +3,7 @@ title: "Amazon Drive"
 description: "Rclone docs for Amazon Drive"
 ---
 
-{{< icon "fab fa-amazon" >}} Amazon Drive
------------------------------------------
+# {{< icon "fab fa-amazon" >}} Amazon Drive
 
 Amazon Drive, formerly known as Amazon Cloud Drive, is a cloud storage
 service run by Amazon for consumers.
@@ -260,7 +259,7 @@ Files >= this size will be downloaded via their tempLink.
 
 Files this size or more will be downloaded via their "tempLink". This
 is to work around a problem with Amazon Drive which blocks downloads
-of files bigger than about 10 GiB.  The default for this is 9 GiB which
+of files bigger than about 10 GiB. The default for this is 9 GiB which
 shouldn't need to be changed.
 
 To download files above this threshold, rclone requests a "tempLink"
@@ -270,7 +269,7 @@ underlying S3 storage.
 - Config:      templink_threshold
 - Env Var:     RCLONE_ACD_TEMPLINK_THRESHOLD
 - Type:        SizeSuffix
-- Default:     9G
+- Default:     9Gi
 
 #### --acd-encoding
 

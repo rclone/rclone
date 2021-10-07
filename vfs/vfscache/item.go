@@ -29,7 +29,7 @@ import (
 //
 // - Cache.toOSPath
 // - Cache.toOSPathMeta
-// - Cache.mkdir
+// - Cache.createItemDir
 // - Cache.objectFingerprint
 // - Cache.AddVirtual
 
@@ -511,9 +511,9 @@ func (item *Item) open(o fs.Object) (err error) {
 
 	item.info.ATime = time.Now()
 
-	osPath, err := item.c.mkdir(item.name) // No locking in Cache
+	osPath, err := item.c.createItemDir(item.name) // No locking in Cache
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item: open mkdir failed")
+		return errors.Wrap(err, "vfs cache item: createItemDir failed")
 	}
 
 	err = item._checkObject(o)

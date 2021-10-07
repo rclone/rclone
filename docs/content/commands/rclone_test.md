@@ -37,6 +37,6 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone test changenotify](/commands/rclone_test_changenotify/)	 - Log any change notify requests for the remote passed in.
 * [rclone test histogram](/commands/rclone_test_histogram/)	 - Makes a histogram of file name characters.
 * [rclone test info](/commands/rclone_test_info/)	 - Discovers file name or other limitations for paths.
-* [rclone test makefiles](/commands/rclone_test_makefiles/)	 - Make a random file hierarchy in <dir>
+* [rclone test makefiles](/commands/rclone_test_makefiles/)	 - Make a random file hierarchy in a directory
 * [rclone test memory](/commands/rclone_test_memory/)	 - Load all the objects at remote:path into memory and report memory stats.
 

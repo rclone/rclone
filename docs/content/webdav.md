@@ -3,8 +3,7 @@ title: "WebDAV"
 description: "Rclone docs for WebDAV"
 ---
 
-{{< icon "fa fa-globe" >}} WebDAV
------------------------------------------
+# {{< icon "fa fa-globe" >}} WebDAV
 
 Paths are specified as `remote:path`
 

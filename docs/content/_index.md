@@ -2,6 +2,7 @@
 title: "Rclone"
 description: "Rclone syncs your files to cloud storage: Google Drive, S3, Swift, Dropbox, Google Cloud Storage, Azure, Box and many more."
 type: page
+notoc: true
 ---
 
 # Rclone syncs your files to cloud storage

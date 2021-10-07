@@ -69,6 +69,7 @@ control the stats printing.
 				return err
 			}
 			s.Bind(router)
+			httplib.Wait()
 			return nil
 		})
 	},
@@ -95,6 +96,9 @@ func newServer(f fs.Fs, templatePath string) *server {
 }
 
 func (s *server) Bind(router chi.Router) {
+	if m := auth.Auth(auth.Opt); m != nil {
+		router.Use(m)
+	}
 	router.Use(
 		middleware.SetHeader("Accept-Ranges", "bytes"),
 		middleware.SetHeader("Server", "rclone/"+fs.Version),

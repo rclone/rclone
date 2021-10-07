@@ -23,6 +23,7 @@ docs = [
     "rc.md",
     "overview.md",
     "flags.md",
+    "docker.md",
 
     # Keep these alphabetical by full name
     "fichier.md",

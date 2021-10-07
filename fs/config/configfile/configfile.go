@@ -6,12 +6,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/Unknwon/goconfig"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/lib/file"
 )
 
 // Install installs the config file handler
@@ -108,7 +110,7 @@ func (s *Storage) Save() error {
 	}
 
 	dir, name := filepath.Split(configPath)
-	err := os.MkdirAll(dir, os.ModePerm)
+	err := file.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return errors.Wrap(err, "failed to create config directory")
 	}
@@ -224,6 +226,10 @@ func (s *Storage) GetValue(section string, key string) (value string, found bool
 // SetValue sets the value under key in section
 func (s *Storage) SetValue(section string, key string, value string) {
 	s.check()
+	if strings.HasPrefix(section, ":") {
+		fs.Logf(nil, "Can't save config %q for on the fly backend %q", key, section)
+		return
+	}
 	s.gc.SetValue(section, key, value)
 }
 

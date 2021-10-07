@@ -807,8 +807,10 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *api.Jot
 	}
 	var err error
 	if info != nil {
-		// Set info
-		err = o.setMetaData(info)
+		if !f.validFile(info) {
+			return nil, fs.ErrorObjectNotFound
+		}
+		err = o.setMetaData(info) // sets the info
 	} else {
 		err = o.readMetaData(ctx, false) // reads info and meta, returning an error
 	}
@@ -880,37 +882,27 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, errors.Wrap(err, "couldn't list files")
 	}
 
-	if bool(result.Deleted) && !f.opt.TrashedOnly {
+	if !f.validFolder(&result) {
 		return nil, fs.ErrorDirNotFound
 	}
 
 	for i := range result.Folders {
 		item := &result.Folders[i]
-		if !f.opt.TrashedOnly && bool(item.Deleted) {
-			continue
+		if f.validFolder(item) {
+			remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+			d := fs.NewDir(remote, time.Time(item.ModifiedAt))
+			entries = append(entries, d)
 		}
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
-		d := fs.NewDir(remote, time.Time(item.ModifiedAt))
-		entries = append(entries, d)
 	}
 
 	for i := range result.Files {
 		item := &result.Files[i]
-		if f.opt.TrashedOnly {
-			if !item.Deleted || item.State != "COMPLETED" {
-				continue
-			}
-		} else {
-			if item.Deleted || item.State != "COMPLETED" {
-				continue
+		if f.validFile(item) {
+			remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
+			if o, err := f.newObjectWithInfo(ctx, remote, item); err == nil {
+				entries = append(entries, o)
 			}
 		}
-		remote := path.Join(dir, f.opt.Enc.ToStandardName(item.Name))
-		o, err := f.newObjectWithInfo(ctx, remote, item)
-		if err != nil {
-			continue
-		}
-		entries = append(entries, o)
 	}
 	return entries, nil
 }
@@ -927,7 +919,7 @@ func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolde
 	startPathLength := len(startPath)
 	for i := range startFolder.Folders {
 		folder := &startFolder.Folders[i]
-		if folder.Deleted {
+		if !f.validFolder(folder) {
 			return nil
 		}
 		folderPath := f.opt.Enc.ToStandardPath(path.Join(folder.Path, folder.Name))
@@ -945,17 +937,16 @@ func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolde
 		}
 		for i := range folder.Files {
 			file := &folder.Files[i]
-			if file.Deleted || file.State != "COMPLETED" {
-				continue
-			}
-			remoteFile := path.Join(remoteDir, f.opt.Enc.ToStandardName(file.Name))
-			o, err := f.newObjectWithInfo(ctx, remoteFile, file)
-			if err != nil {
-				return err
-			}
-			err = fn(o)
-			if err != nil {
-				return err
+			if f.validFile(file) {
+				remoteFile := path.Join(remoteDir, f.opt.Enc.ToStandardName(file.Name))
+				o, err := f.newObjectWithInfo(ctx, remoteFile, file)
+				if err != nil {
+					return err
+				}
+				err = fn(o)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -1366,6 +1357,25 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.mimeType
 }
 
+// validFile checks if info indicates file is valid
+func (f *Fs) validFile(info *api.JottaFile) bool {
+	if info.State != "COMPLETED" {
+		return false // File is incomplete or corrupt
+	}
+	if !info.Deleted {
+		return !f.opt.TrashedOnly // Regular file; return false if TrashedOnly, else true
+	}
+	return f.opt.TrashedOnly // Deleted file; return true if TrashedOnly, else false
+}
+
+// validFolder checks if info indicates folder is valid
+func (f *Fs) validFolder(info *api.JottaFolder) bool {
+	// Returns true if folder is not deleted.
+	// If TrashedOnly option then always returns true, because a folder not
+	// in trash must be traversed to get to files/subfolders that are.
+	return !bool(info.Deleted) || f.opt.TrashedOnly
+}
+
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.JottaFile) (err error) {
 	o.hasMetaData = true
@@ -1385,7 +1395,7 @@ func (o *Object) readMetaData(ctx context.Context, force bool) (err error) {
 	if err != nil {
 		return err
 	}
-	if bool(info.Deleted) && !o.fs.opt.TrashedOnly {
+	if !o.fs.validFile(info) {
 		return fs.ErrorObjectNotFound
 	}
 	return o.setMetaData(info)
@@ -1406,7 +1416,50 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	// make sure metadata is available, we need its current size and md5
+	err := o.readMetaData(ctx, false)
+	if err != nil {
+		fs.Logf(o, "Failed to read metadata: %v", err)
+		return err
+	}
+
+	// prepare allocate request with existing metadata but changed timestamps
+	var resp *http.Response
+	var options []fs.OpenOption
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         "files/v1/allocate",
+		Options:      options,
+		ExtraHeaders: make(map[string]string),
+	}
+	fileDate := api.Time(modTime).APIString()
+	var request = api.AllocateFileRequest{
+		Bytes:    o.size,
+		Created:  fileDate,
+		Modified: fileDate,
+		Md5:      o.md5,
+		Path:     path.Join(o.fs.opt.Mountpoint, o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
+	}
+
+	// send it
+	var response api.AllocateFileResponse
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.apiSrv.CallJSON(ctx, &opts, &request, &response)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+
+	// check response
+	if response.State != "COMPLETED" {
+		// could be the file was modified (size/md5 changed) between readMetaData and the allocate request
+		return errors.New("metadata did not match")
+	}
+
+	// update local metadata
+	o.modTime = modTime
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable

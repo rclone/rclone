@@ -5,6 +5,149 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.56.0 - 2021-07-20
+
+[See commits](https://github.com/rclone/rclone/compare/v1.55.0...v1.56.0)
+
+* New backends
+    * [Uptobox](/uptobox/) (buengese)
+* New commands
+    * [serve docker](/commands/rclone_serve_docker/) (Antoine GIRARD) (Ivan Andreev)
+        * and accompanying [docker volume plugin](/docker/)
+    * [checksum](/commands/rclone_checksum/) to check files against a file of checksums (Ivan Andreev)
+        * this is also available as `rclone md5sum -C` etc
+    * [config touch](/commands/rclone_config_touch/): ensure config exists at configured location (albertony)
+    * [test changenotify](/commands/rclone_test_changenotify/): command to help debugging changenotify (Nick Craig-Wood)
+* Deprecations
+    * `dbhashsum`: Remove command deprecated a year ago (Ivan Andreev)
+    * `cache`: Deprecate cache backend (Ivan Andreev)
+* New Features
+    * rework config system so it can be used non-interactively via cli and rc API.
+        * See docs in [config create](/commands/rclone_config_create/)
+        * This is a very big change to all the backends so may cause breakages - please file bugs!
+    * librclone - export the rclone RC as a C library (lewisxy) (Nick Craig-Wood)
+        * Link a C-API rclone shared object into your project
+        * Use the RC as an in memory interface
+        * Python example supplied
+        * Also supports Android and gomobile
+    * fs
+        * Add `--disable-http2` for global http2 disable (Nick Craig-Wood)
+        * Make `--dump` imply `-vv` (Alex Chen)
+        * Use binary prefixes for size and rate units (albertony)
+        * Use decimal prefixes for counts (albertony)
+        * Add google search widget to rclone.org (Ivan Andreev)
+    * accounting: Calculate rolling average speed (Haochen Tong)
+    * atexit: Terminate with non-zero status after receiving signal (Michael Hanselmann)
+    * build
+        * Only run event-based workflow scripts under rclone repo with manual override (Mathieu Carbou)
+        * Add Android build with gomobile (x0b)
+    * check: Log the hash in use like cryptcheck does (Nick Craig-Wood)
+    * version: Print os/version, kernel and bitness (Ivan Andreev)
+    * config
+        * Prevent use of Windows reserved names in config file name (albertony)
+        * Create config file in windows appdata directory by default (albertony)
+        * Treat any config file paths with filename notfound as memory-only config (albertony)
+        * Delay load config file (albertony)
+        * Replace defaultConfig with a thread-safe in-memory implementation (Chris Macklin)
+        * Allow `config create` and friends to take `key=value` parameters (Nick Craig-Wood)
+        * Fixed issues with flags/options set by environment vars. (Ole Frost)
+    * fshttp: Implement graceful DSCP error handling (Tyson Moore)
+    * lib/http - provides an abstraction for a central http server that services can bind routes to (Nolan Woods)
+        * Add `--template` config and flags to serve/data (Nolan Woods)
+        * Add default 404 handler (Nolan Woods)
+    * link: Use "off" value for unset expiry (Nick Craig-Wood)
+    * oauthutil: Raise fatal error if token expired without refresh token (Alex Chen)
+    * rcat: Add `--size` flag for more efficient uploads of known size (Nazar Mishturak)
+    * serve sftp: Add `--stdio` flag to serve via stdio (Tom)
+    * sync: Don't warn about `--no-traverse` when `--files-from` is set (Nick Gaya)
+    * `test makefiles`
+        * Add `--seed` flag and make data generated repeatable (Nick Craig-Wood)
+        * Add log levels and speed summary (Nick Craig-Wood)
+* Bug Fixes
+    * accounting: Fix startTime of statsGroups.sum (Haochen Tong)
+    * cmd/ncdu: Fix out of range panic in delete (buengese)
+    * config
+        * Fix issues with memory-only config file paths (albertony)
+        * Fix in memory config not saving on the fly backend config (Nick Craig-Wood)
+    * fshttp: Fix address parsing for DSCP (Tyson Moore)
+    * ncdu: Update termbox-go library to fix crash (Nick Craig-Wood)
+    * oauthutil: Fix old authorize result not recognised (Cnly)
+    * operations: Don't update timestamps of files in `--compare-dest` (Nick Gaya)
+    * selfupdate: fix archive name on macos (Ivan Andreev)
+* Mount
+    * Refactor before adding serve docker (Antoine GIRARD)
+* VFS
+    * Add cache reset for `--vfs-cache-max-size` handling at cache poll interval (Leo Luan)
+    * Fix modtime changing when reading file into cache (Nick Craig-Wood)
+    * Avoid unnecessary subdir in cache path (albertony)
+    * Fix that umask option cannot be set as environment variable (albertony)
+    * Do not print notice about missing poll-interval support when set to 0 (albertony)
+* Local
+    * Always use readlink to read symlink size for better compatibility (Nick Craig-Wood)
+    * Add `--local-unicode-normalization` (and remove `--local-no-unicode-normalization`) (Nick Craig-Wood)
+    * Skip entries removed concurrently with List() (Ivan Andreev)
+* Crypt
+    * Support timestamped filenames from `--b2-versions` (Dominik Mydlil)
+* B2
+    * Don't include the bucket name in public link file prefixes (Jeffrey Tolar)
+    * Fix versions and .files with no extension (Nick Craig-Wood)
+    * Factor version handling into lib/version (Dominik Mydlil)
+* Box
+    * Use upload preflight check to avoid listings in file uploads (Nick Craig-Wood)
+    * Return errors instead of calling log.Fatal with them (Nick Craig-Wood)
+* Drive
+    * Switch to the Drives API for looking up shared drives (Nick Craig-Wood)
+    * Fix some google docs being treated as files (Nick Craig-Wood)
+* Dropbox
+    * Add `--dropbox-batch-mode` flag to speed up uploading (Nick Craig-Wood)
+        * Read the [batch mode](/dropbox/#batch-mode) docs for more info
+    * Set visibility in link sharing when `--expire` is set (Nick Craig-Wood)
+    * Simplify chunked uploads (Alexey Ivanov)
+    * Improve "own App IP" instructions (Ivan Andreev)
+* Fichier
+    * Check if more than one upload link is returned (Nick Craig-Wood)
+    * Support downloading password protected files and folders (Florian Penzkofer)
+    * Make error messages report text from the API (Nick Craig-Wood)
+    * Fix move of files in the same directory (Nick Craig-Wood)
+    * Check that we actually got a download token and retry if we didn't (buengese)
+* Filefabric
+    * Fix listing after change of from field from "int" to int. (Nick Craig-Wood)
+* FTP
+    * Make upload error 250 indicate success (Nick Craig-Wood)
+* GCS
+  * Make compatible with gsutil's mtime metadata (database64128)
+  * Clean up time format constants (database64128)
+* Google Photos
+  * Fix read only scope not being used properly (Nick Craig-Wood)
+* HTTP
+    * Replace httplib with lib/http (Nolan Woods)
+    * Clean up Bind to better use middleware (Nolan Woods)
+* Jottacloud
+    * Fix legacy auth with state based config system (buengese)
+    * Fix invalid url in output from link command (albertony)
+    * Add no versions option (buengese)
+* Onedrive
+    * Add `list_chunk option` (Nick Gaya)
+    * Also report root error if unable to cancel multipart upload (Cnly)
+    * Fix  failed to configure: empty token found error (Nick Craig-Wood)
+    * Make link return direct download link (Xuanchen Wu)
+* S3
+    * Add `--s3-no-head-object` (Tatsuya Noyori)
+    * Remove WebIdentityRoleProvider to fix crash on auth (Nick Craig-Wood)
+    * Don't check to see if remote is object if it ends with / (Nick Craig-Wood)
+    * Add SeaweedFS (Chris Lu)
+    * Update Alibaba OSS endpoints (Chuan Zh)
+* SFTP
+    * Fix performance regression by re-enabling concurrent writes (Nick Craig-Wood)
+    * Expand tilde and environment variables in configured `known_hosts_file` (albertony)
+* Tardigrade
+    * Upgrade to uplink v1.4.6 (Caleb Case)
+    * Use negative offset (Caleb Case)
+    * Add warning about `too many open files` (acsfer)
+* WebDAV
+    * Fix sharepoint auth over http (Nick Craig-Wood)
+    * Add headers option (Antoon Prins)
+
 ## v1.55.1 - 2021-04-26
 
 [See commits](https://github.com/rclone/rclone/compare/v1.55.0...v1.55.1)

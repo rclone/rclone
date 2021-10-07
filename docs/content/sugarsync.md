@@ -3,8 +3,7 @@ title: "SugarSync"
 description: "Rclone docs for SugarSync"
 ---
 
-{{< icon "fas fa-dove" >}} SugarSync
------------------------------------------
+# {{< icon "fas fa-dove" >}} SugarSync
 
 [SugarSync](https://sugarsync.com) is a cloud service that enables
 active synchronization of files across computers and other devices for
