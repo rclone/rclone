@@ -1000,9 +1000,10 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 
 		sum, err = o.Hash(ctx, ht)
 		if err == hash.ErrUnsupported {
-			return "UNSUPPORTED", errors.Wrap(err, "Hash unsupported")
-		} else if err != nil {
-			return "ERROR", errors.Wrapf(err, "Failed to get hash %v from backed: %v", ht, err)
+			return "", errors.Wrap(err, "Hash unsupported")
+		}
+		if err != nil {
+			return "", errors.Wrapf(err, "Failed to get hash %v from backend: %v", ht, err)
 		}
 	}
 
@@ -1013,6 +1014,10 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 // Updated to handle both standard hex encoding and base64
 // Updated to perform multiple hashes concurrently
 func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFlag bool, f fs.Fs, w io.Writer) error {
+	width := hash.Width(ht)
+	if outputBase64 {
+		width = base64.URLEncoding.EncodedLen(width / 2)
+	}
 	concurrencyControl := make(chan struct{}, fs.GetConfig(ctx).Transfers)
 	var wg sync.WaitGroup
 	err := ListFn(ctx, f, func(o fs.Object) {
@@ -1024,18 +1029,15 @@ func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFl
 				wg.Done()
 			}()
 			sum, err := hashSum(ctx, ht, downloadFlag, o)
-			if outputBase64 && err == nil {
+			if err != nil {
+				fs.Errorf(o, "%v", fs.CountError(err))
+				return
+			}
+			if outputBase64 {
 				hexBytes, _ := hex.DecodeString(sum)
 				sum = base64.URLEncoding.EncodeToString(hexBytes)
-				width := base64.URLEncoding.EncodedLen(hash.Width(ht) / 2)
-				syncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
-			} else {
-				syncFprintf(w, "%*s  %s\n", hash.Width(ht), sum, o.Remote())
 			}
-			if err != nil {
-				err = fs.CountError(err)
-				fs.Errorf(o, "%v", err)
-			}
+			syncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
 		}()
 	})
 	wg.Wait()

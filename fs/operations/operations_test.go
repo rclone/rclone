@@ -43,6 +43,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
+	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -328,6 +329,33 @@ func TestHashSums(t *testing.T) {
 		!strings.Contains(res, "                              potato2\n") {
 		t.Errorf("potato2 missing: %q", res)
 	}
+}
+
+func TestHashSumsWithErrors(t *testing.T) {
+	ctx := context.Background()
+	memFs, err := fs.NewFs(ctx, ":memory:")
+	require.NoError(t, err)
+
+	// Make a test file
+	content := "-"
+	item1 := fstest.NewItem("file1", content, t1)
+	_, _ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
+
+	// MemoryFS supports MD5
+	buf := &bytes.Buffer{}
+	err = operations.HashLister(ctx, hash.MD5, false, false, memFs, buf)
+	require.NoError(t, err)
+	assert.Contains(t, buf.String(), "336d5ebc5436534e61d16e63ddfca327  file1\n")
+
+	// MemoryFS can't do SHA1, but UNSUPPORTED must not appear in the output
+	buf.Reset()
+	err = operations.HashLister(ctx, hash.SHA1, false, false, memFs, buf)
+	require.NoError(t, err)
+	assert.NotContains(t, buf.String(), " UNSUPPORTED ")
+
+	// ERROR must not appear in the output either
+	assert.NotContains(t, buf.String(), " ERROR ")
+	// TODO mock an unreadable file
 }
 
 func TestSuffixName(t *testing.T) {
