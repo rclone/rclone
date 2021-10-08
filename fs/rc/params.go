@@ -56,6 +56,11 @@ type ErrParamInvalid struct {
 	error
 }
 
+// NewErrParamInvalid returns new ErrParamInvalid from given error
+func NewErrParamInvalid(err error) ErrParamInvalid {
+	return ErrParamInvalid{err}
+}
+
 // IsErrParamInvalid returns whether err is ErrParamInvalid
 func IsErrParamInvalid(err error) bool {
 	_, isInvalid := err.(ErrParamInvalid)
