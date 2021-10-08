@@ -84,11 +84,11 @@ func init() {
 			Help: `GZIP compression level (-2 to 9).
 
 			Generally -1 (default, equivalent to 5) is recommended.
-			Levels 1 to 9 increase compressiong at the cost of speed.. Going past 6 
+			Levels 1 to 9 increase compression at the cost of speed. Going past 6 
 			generally offers very little return.
 			
-			Level -2 uses Huffmann encoding only. Only use if you now what you
-			are doing
+			Level -2 uses Huffmann encoding only. Only use if you know what you
+			are doing.
 			Level 0 turns off compression.`,
 			Default:  sgzip.DefaultCompression,
 			Advanced: true,
@@ -98,8 +98,8 @@ func init() {
 				   In this case the compressed file will need to be cached to determine
 				   it's size.
 				   
-				   Files smaller than this limit will be cached in RAM, file larger than 
-				   this limit will be cached on disk`,
+				   Files smaller than this limit will be cached in RAM, files larger than 
+				   this limit will be cached on disk.`,
 			Default:  fs.SizeSuffix(20 * 1024 * 1024),
 			Advanced: true,
 		}},
