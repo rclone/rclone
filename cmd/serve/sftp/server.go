@@ -6,6 +6,8 @@ package sftp
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/subtle"
@@ -221,7 +223,10 @@ func (s *server) serve() (err error) {
 	keyPaths := s.opt.HostKeys
 	cachePath := filepath.Join(config.CacheDir, "serve-sftp")
 	if len(keyPaths) == 0 {
-		keyPaths = []string{filepath.Join(cachePath, "id_rsa")}
+		keyPaths = []string{
+			filepath.Join(cachePath, "id_rsa"),
+			filepath.Join(cachePath, "id_ecdsa"),
+		}
 	}
 	for _, keyPath := range keyPaths {
 		private, err := loadPrivateKey(keyPath)
@@ -232,13 +237,20 @@ func (s *server) serve() (err error) {
 			if err != nil {
 				return errors.Wrap(err, "failed to create cache path")
 			}
-			const bits = 2048
-			fs.Logf(nil, "Generating %d bit key pair at %q", bits, keyPath)
-			err = makeSSHKeyPair(bits, keyPath+".pub", keyPath)
+			if strings.HasSuffix(keyPath, "/id_rsa") {
+				const bits = 2048
+				fs.Logf(nil, "Generating %d bit key pair at %q", bits, keyPath)
+				err = makeRSASSHKeyPair(bits, keyPath+".pub", keyPath)
+			} else if strings.HasSuffix(keyPath, "/id_ecdsa") {
+				fs.Logf(nil, "Generating ECDSA p256 key pair at %q", keyPath)
+				err = makeECDSASSHKeyPair(keyPath+".pub", keyPath)
+			} else {
+				return errors.Errorf("don't know how to generate key pair %q", keyPath)
+			}
 			if err != nil {
 				return errors.Wrap(err, "failed to create SSH key pair")
 			}
-			// reload the new keys
+			// reload the new key
 			private, err = loadPrivateKey(keyPath)
 		}
 		if err != nil {
@@ -325,12 +337,12 @@ func loadAuthorizedKeys(authorizedKeysPath string) (authorizedKeysMap map[string
 	return authorizedKeysMap, nil
 }
 
-// makeSSHKeyPair make a pair of public and private keys for SSH access.
+// makeRSASSHKeyPair make a pair of public and private keys for SSH access.
 // Public key is encoded in the format for inclusion in an OpenSSH authorized_keys file.
 // Private Key generated is PEM encoded
 //
 // Originally from: https://stackoverflow.com/a/34347463/164234
-func makeSSHKeyPair(bits int, pubKeyPath, privateKeyPath string) (err error) {
+func makeRSASSHKeyPair(bits int, pubKeyPath, privateKeyPath string) (err error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, bits)
 	if err != nil {
 		return err
@@ -343,6 +355,38 @@ func makeSSHKeyPair(bits int, pubKeyPath, privateKeyPath string) (err error) {
 	}
 	defer fs.CheckClose(privateKeyFile, &err)
 	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
+	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
+		return err
+	}
+
+	// generate and write public key
+	pub, err := ssh.NewPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(pubKeyPath, ssh.MarshalAuthorizedKey(pub), 0644)
+}
+
+// makeECDSASSHKeyPair make a pair of public and private keys for ECDSA SSH access.
+// Public key is encoded in the format for inclusion in an OpenSSH authorized_keys file.
+// Private Key generated is PEM encoded
+func makeECDSASSHKeyPair(pubKeyPath, privateKeyPath string) (err error) {
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return err
+	}
+
+	// generate and write private key as PEM
+	privateKeyFile, err := os.OpenFile(privateKeyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(privateKeyFile, &err)
+	buf, err := x509.MarshalECPrivateKey(privateKey)
+	if err != nil {
+		return err
+	}
+	privateKeyPEM := &pem.Block{Type: "EC PRIVATE KEY", Bytes: buf}
 	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
 		return err
 	}
