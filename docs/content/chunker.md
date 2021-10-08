@@ -10,6 +10,8 @@ during upload to wrapped remote and transparently assembles them back
 when the file is downloaded. This allows to effectively overcome size limits
 imposed by storage providers.
 
+## Configuration
+
 To use it, first set up the underlying remote following the configuration
 instructions for that remote. You can also use a local pathname instead of
 a remote.

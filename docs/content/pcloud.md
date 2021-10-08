@@ -9,6 +9,8 @@ Paths are specified as `remote:path`
 
 Paths may be as deep as required, e.g. `remote:directory/subdirectory`.
 
+## Configuration
+
 The initial setup for pCloud involves getting a token from pCloud which you
 need to do in your browser.  `rclone config` walks you through it.
 
@@ -92,7 +94,7 @@ be re-uploaded.
 pCloud supports MD5 and SHA1 hashes in the US region, and SHA1 and SHA256
 hashes in the EU region, so you can use the `--checksum` flag.
 
-#### Restricted filename characters
+### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)
 the following characters are also replaced:
@@ -104,13 +106,13 @@ the following characters are also replaced:
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in JSON strings.
 
-### Deleting files ###
+### Deleting files
 
 Deleted files will be moved to the trash.  Your subscription level
 will determine how long items stay in the trash.  `rclone cleanup` can
 be used to empty the trash.
 
-### Root folder ID ###
+### Root folder ID
 
 You can set the `root_folder_id` for rclone.  This is the directory
 (identified by its `Folder ID`) that rclone considers to be the root

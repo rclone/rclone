@@ -13,7 +13,7 @@ Google Photos.
 limitations, so please read the [limitations section](#limitations)
 carefully to make sure it is suitable for your use.
 
-## Configuring Google Photos
+## Configuration
 
 The initial setup for google cloud storage involves getting a token from Google Photos
 which you need to do in your browser.  `rclone config` walks you
@@ -113,7 +113,7 @@ files in the album.
 
     rclone sync -i /home/local/image remote:album/newAlbum
 
-## Layout
+### Layout
 
 As Google Photos is not a general purpose cloud storage system the
 backend is laid out to help you navigate it.
@@ -220,100 +220,6 @@ filesystem and it is a good target for repeated syncing.
 
 The `shared-album` directory shows albums shared with you or by you.
 This is similar to the Sharing tab in the Google Photos web interface.
-
-## Limitations
-
-Only images and videos can be uploaded.  If you attempt to upload non
-videos or images or formats that Google Photos doesn't understand,
-rclone will upload the file, then Google Photos will give an error
-when it is put turned into a media item.
-
-Note that all media items uploaded to Google Photos through the API
-are stored in full resolution at "original quality" and **will** count
-towards your storage quota in your Google Account.  The API does
-**not** offer a way to upload in "high quality" mode..
-
-`rclone about` is not supported by the Google Photos backend. Backends without
-this capability cannot determine free space for an rclone mount or
-use policy `mfs` (most free space) as a member of an rclone union
-remote.
-
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
-See [rclone about](https://rclone.org/commands/rclone_about/)
-
-### Downloading Images
-
-When Images are downloaded this strips EXIF location (according to the
-docs and my tests).  This is a limitation of the Google Photos API and
-is covered by [bug #112096115](https://issuetracker.google.com/issues/112096115).
-
-**The current google API does not allow photos to be downloaded at original resolution.  This is very important if you are, for example, relying on "Google Photos" as a backup of your photos.  You will not be able to use rclone to redownload original images.  You could use 'google takeout' to recover the original photos as a last resort**
-
-### Downloading Videos
-
-When videos are downloaded they are downloaded in a really compressed
-version of the video compared to downloading it via the Google Photos
-web interface. This is covered by [bug #113672044](https://issuetracker.google.com/issues/113672044).
-
-### Duplicates
-
-If a file name is duplicated in a directory then rclone will add the
-file ID into its name.  So two files called `file.jpg` would then
-appear as `file {123456}.jpg` and `file {ABCDEF}.jpg` (the actual IDs
-are a lot longer alas!).
-
-If you upload the same image (with the same binary data) twice then
-Google Photos will deduplicate it.  However it will retain the
-filename from the first upload which may confuse rclone.  For example
-if you uploaded an image to `upload` then uploaded the same image to
-`album/my_album` the filename of the image in `album/my_album` will be
-what it was uploaded with initially, not what you uploaded it with to
-`album`.  In practise this shouldn't cause too many problems.
-
-### Modified time
-
-The date shown of media in Google Photos is the creation date as
-determined by the EXIF information, or the upload date if that is not
-known.
-
-This is not changeable by rclone and is not the modification date of
-the media on local disk.  This means that rclone cannot use the dates
-from Google Photos for syncing purposes.
-
-### Size
-
-The Google Photos API does not return the size of media.  This means
-that when syncing to Google Photos, rclone can only do a file
-existence check.
-
-It is possible to read the size of the media, but this needs an extra
-HTTP HEAD request per media item so is **very slow** and uses up a lot of
-transactions.  This can be enabled with the `--gphotos-read-size`
-option or the `read_size = true` config parameter.
-
-If you want to use the backend with `rclone mount` you may need to
-enable this flag (depending on your OS and application using the
-photos) otherwise you may not be able to read media off the mount.
-You'll need to experiment to see if it works for you without the flag.
-
-### Albums
-
-Rclone can only upload files to albums it created. This is a
-[limitation of the Google Photos API](https://developers.google.com/photos/library/guides/manage-albums).
-
-Rclone can remove files it uploaded from albums it created only.
-
-### Deleting files
-
-Rclone can remove files from albums it created, but note that the
-Google Photos API does not allow media to be deleted permanently so
-this media will still remain. See [bug #109759781](https://issuetracker.google.com/issues/109759781).
-
-Rclone cannot delete files anywhere except under `album`.
-
-### Deleting albums
-
-The Google Photos API does not support deleting albums - see [bug #135714733](https://issuetracker.google.com/issues/135714733).
 
 {{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/googlephotos/googlephotos.go then run make backenddocs" >}}
 ### Standard Options
@@ -431,3 +337,97 @@ listings and won't be transferred.
 - Default:     false
 
 {{< rem autogenerated options stop >}}
+
+## Limitations
+
+Only images and videos can be uploaded.  If you attempt to upload non
+videos or images or formats that Google Photos doesn't understand,
+rclone will upload the file, then Google Photos will give an error
+when it is put turned into a media item.
+
+Note that all media items uploaded to Google Photos through the API
+are stored in full resolution at "original quality" and **will** count
+towards your storage quota in your Google Account.  The API does
+**not** offer a way to upload in "high quality" mode..
+
+`rclone about` is not supported by the Google Photos backend. Backends without
+this capability cannot determine free space for an rclone mount or
+use policy `mfs` (most free space) as a member of an rclone union
+remote.
+
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
+See [rclone about](https://rclone.org/commands/rclone_about/)
+
+### Downloading Images
+
+When Images are downloaded this strips EXIF location (according to the
+docs and my tests).  This is a limitation of the Google Photos API and
+is covered by [bug #112096115](https://issuetracker.google.com/issues/112096115).
+
+**The current google API does not allow photos to be downloaded at original resolution.  This is very important if you are, for example, relying on "Google Photos" as a backup of your photos.  You will not be able to use rclone to redownload original images.  You could use 'google takeout' to recover the original photos as a last resort**
+
+### Downloading Videos
+
+When videos are downloaded they are downloaded in a really compressed
+version of the video compared to downloading it via the Google Photos
+web interface. This is covered by [bug #113672044](https://issuetracker.google.com/issues/113672044).
+
+### Duplicates
+
+If a file name is duplicated in a directory then rclone will add the
+file ID into its name.  So two files called `file.jpg` would then
+appear as `file {123456}.jpg` and `file {ABCDEF}.jpg` (the actual IDs
+are a lot longer alas!).
+
+If you upload the same image (with the same binary data) twice then
+Google Photos will deduplicate it.  However it will retain the
+filename from the first upload which may confuse rclone.  For example
+if you uploaded an image to `upload` then uploaded the same image to
+`album/my_album` the filename of the image in `album/my_album` will be
+what it was uploaded with initially, not what you uploaded it with to
+`album`.  In practise this shouldn't cause too many problems.
+
+### Modified time
+
+The date shown of media in Google Photos is the creation date as
+determined by the EXIF information, or the upload date if that is not
+known.
+
+This is not changeable by rclone and is not the modification date of
+the media on local disk.  This means that rclone cannot use the dates
+from Google Photos for syncing purposes.
+
+### Size
+
+The Google Photos API does not return the size of media.  This means
+that when syncing to Google Photos, rclone can only do a file
+existence check.
+
+It is possible to read the size of the media, but this needs an extra
+HTTP HEAD request per media item so is **very slow** and uses up a lot of
+transactions.  This can be enabled with the `--gphotos-read-size`
+option or the `read_size = true` config parameter.
+
+If you want to use the backend with `rclone mount` you may need to
+enable this flag (depending on your OS and application using the
+photos) otherwise you may not be able to read media off the mount.
+You'll need to experiment to see if it works for you without the flag.
+
+### Albums
+
+Rclone can only upload files to albums it created. This is a
+[limitation of the Google Photos API](https://developers.google.com/photos/library/guides/manage-albums).
+
+Rclone can remove files it uploaded from albums it created only.
+
+### Deleting files
+
+Rclone can remove files from albums it created, but note that the
+Google Photos API does not allow media to be deleted permanently so
+this media will still remain. See [bug #109759781](https://issuetracker.google.com/issues/109759781).
+
+Rclone cannot delete files anywhere except under `album`.
+
+### Deleting albums
+
+The Google Photos API does not support deleting albums - see [bug #135714733](https://issuetracker.google.com/issues/135714733).

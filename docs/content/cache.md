@@ -22,7 +22,7 @@ the use of the cache backend to minimize API hits and by-and-large
 these are out of date and the cache backend isn't needed in those
 scenarios any more.
 
-## Setup
+## Configuration
 
 To get started you just need to have an existing remote which can be configured
 with `cache`.

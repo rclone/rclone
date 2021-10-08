@@ -11,7 +11,7 @@ This is a backend for the [Seafile](https://www.seafile.com/) storage service:
 - Encrypted libraries are also supported.
 - It supports 2FA enabled users
 
-### Root mode vs Library mode ###
+## Configuration
 
 There are two distinct modes you can setup your remote:
 - you point your remote to the **root of the server**, meaning you don't specify a library during the configuration:
@@ -19,7 +19,7 @@ Paths are specified as `remote:library`. You may put subdirectories in too, e.g.
 - you point your remote to a specific library during the configuration:
 Paths are specified as `remote:path/to/dir`. **This is the recommended mode when using encrypted libraries**. (_This mode is possibly slightly faster than the root mode_)
 
-### Configuration in root mode ###
+### Configuration in root mode
 
 Here is an example of making a seafile configuration for a user with **no** two-factor authentication.  First run
 
@@ -113,7 +113,7 @@ excess files in the library.
 
     rclone sync -i /home/local/directory seafile:library
 
-### Configuration in library mode ###
+### Configuration in library mode
 
 Here's an example of a configuration in library mode with a user that has the two-factor authentication enabled. Your 2FA code will be asked at the end of the configuration, and will attempt to authenticate you:
 
@@ -210,7 +210,7 @@ excess files in the library.
     rclone sync -i /home/local/directory seafile:
 
 
-### --fast-list ###
+### --fast-list
 
 Seafile version 7+ supports `--fast-list` which allows you to use fewer
 transactions in exchange for more memory. See the [rclone
@@ -218,7 +218,7 @@ docs](/docs/#fast-list) for more details.
 Please note this is not supported on seafile server version 6.x
 
 
-#### Restricted filename characters
+### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)
 the following characters are also replaced:
@@ -232,7 +232,7 @@ the following characters are also replaced:
 Invalid UTF-8 bytes will also be [replaced](/overview/#invalid-utf8),
 as they can't be used in JSON strings.
 
-### Seafile and rclone link ###
+### Seafile and rclone link
 
 Rclone supports generating share links for non-encrypted libraries only.
 They can either be for a file or a directory:
@@ -253,7 +253,7 @@ http://my.seafile.server/d/9ea2455f6f55478bbb0d/
 Please note a share link is unique for each file or directory. If you run a link command on a file/dir
 that has already been shared, you will get the exact same link.
 
-### Compatibility ###
+### Compatibility
 
 It has been actively tested using the [seafile docker image](https://github.com/haiwen/seafile-docker) of these versions:
 - 6.3.4 community edition

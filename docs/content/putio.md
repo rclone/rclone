@@ -10,6 +10,8 @@ Paths are specified as `remote:path`
 put.io paths may be as deep as required, e.g.
 `remote:directory/subdirectory`.
 
+## Configuration
+
 The initial setup for put.io involves getting a token from put.io
 which you need to do in your browser.  `rclone config` walks you
 through it.
@@ -94,7 +96,7 @@ To copy a local directory to a put.io directory called backup
 
     rclone copy /home/source remote:backup
 
-#### Restricted filename characters
+### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)
 the following characters are also replaced:
