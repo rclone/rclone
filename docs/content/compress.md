@@ -75,7 +75,7 @@ If you open a remote wrapped by compress, you will see that there are many files
 the compression algorithm you chose. These files are standard files that can be opened by various archive programs, 
 but they have some hidden metadata that allows them to be used by rclone.
 While you may download and decompress these files at will, do **not** manually delete or rename files. Files without
-correct metadata will not be recognized by rclone.
+correct metadata files will not be recognized by rclone.
 
 ### File names
 
@@ -117,11 +117,11 @@ Here are the advanced options specific to compress (Compress a remote).
 GZIP compression level (-2 to 9).
 
 			Generally -1 (default, equivalent to 5) is recommended.
-			Levels 1 to 9 increase compressiong at the cost of speed. Going past 6 
+			Levels 1 to 9 increase compressiong at the cost of speed.. Going past 6 
 			generally offers very little return.
 			
-			Level -2 uses Huffmann encoding only. Only use if you know what you
-			are doing.
+			Level -2 uses Huffmann encoding only. Only use if you now what you
+			are doing
 			Level 0 turns off compression.
 
 - Config:      level
@@ -135,8 +135,8 @@ Some remotes don't allow the upload of files with unknown size.
 				   In this case the compressed file will need to be cached to determine
 				   it's size.
 				   
-				   Files smaller than this limit will be cached in RAM, files larger than 
-				   this limit will be cached on disk.
+				   Files smaller than this limit will be cached in RAM, file larger than 
+				   this limit will be cached on disk
 
 - Config:      ram_cache_limit
 - Env Var:     RCLONE_COMPRESS_RAM_CACHE_LIMIT
