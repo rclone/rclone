@@ -66,12 +66,12 @@ y/e/d> y
 ```
 
 ### Compression Modes
-Currently only gzip compression is supported, it provides a decent balance between speed and strength and is well
-supported by other application. Compression strength can further be configured via an advanced setting where 0 is no
+Currently only gzip compression is supported. It provides a decent balance between speed and size and is well
+supported by other applications. Compression strength can further be configured via an advanced setting where 0 is no
 compression and 9 is strongest compression.
 
 #### Filetype
-If you open a remote wrapped by press, you will see that there are many files with an extension corresponding to
+If you open a remote wrapped by compress, you will see that there are many files with an extension corresponding to
 the compression algorithm you chose. These files are standard files that can be opened by various archive programs, 
 but they have some hidden metadata that allows them to be used by rclone.
 While you may download and decompress these files at will, do **not** manually delete or rename files. Files without
