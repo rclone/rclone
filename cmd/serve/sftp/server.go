@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
@@ -226,6 +227,7 @@ func (s *server) serve() (err error) {
 		keyPaths = []string{
 			filepath.Join(cachePath, "id_rsa"),
 			filepath.Join(cachePath, "id_ecdsa"),
+			filepath.Join(cachePath, "id_ed25519"),
 		}
 	}
 	for _, keyPath := range keyPaths {
@@ -244,6 +246,9 @@ func (s *server) serve() (err error) {
 			} else if strings.HasSuffix(keyPath, "/id_ecdsa") {
 				fs.Logf(nil, "Generating ECDSA p256 key pair at %q", keyPath)
 				err = makeECDSASSHKeyPair(keyPath+".pub", keyPath)
+			} else if strings.HasSuffix(keyPath, "/id_ed25519") {
+				fs.Logf(nil, "Generating Ed25519 key pair at %q", keyPath)
+				err = makeEd25519SSHKeyPair(keyPath+".pub", keyPath)
 			} else {
 				return errors.Errorf("don't know how to generate key pair %q", keyPath)
 			}
@@ -393,6 +398,38 @@ func makeECDSASSHKeyPair(pubKeyPath, privateKeyPath string) (err error) {
 
 	// generate and write public key
 	pub, err := ssh.NewPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(pubKeyPath, ssh.MarshalAuthorizedKey(pub), 0644)
+}
+
+// makeEd25519SSHKeyPair make a pair of public and private keys for Ed25519 SSH access.
+// Public key is encoded in the format for inclusion in an OpenSSH authorized_keys file.
+// Private Key generated is PEM encoded
+func makeEd25519SSHKeyPair(pubKeyPath, privateKeyPath string) (err error) {
+	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return err
+	}
+
+	// generate and write private key as PEM
+	privateKeyFile, err := os.OpenFile(privateKeyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(privateKeyFile, &err)
+	buf, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return err
+	}
+	privateKeyPEM := &pem.Block{Type: "PRIVATE KEY", Bytes: buf}
+	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
+		return err
+	}
+
+	// generate and write public key
+	pub, err := ssh.NewPublicKey(publicKey)
 	if err != nil {
 		return err
 	}
