@@ -239,14 +239,14 @@ func (s *server) serve() (err error) {
 			if err != nil {
 				return errors.Wrap(err, "failed to create cache path")
 			}
-			if strings.HasSuffix(keyPath, "/id_rsa") {
+			if strings.HasSuffix(keyPath, string(os.PathSeparator)+"id_rsa") {
 				const bits = 2048
 				fs.Logf(nil, "Generating %d bit key pair at %q", bits, keyPath)
 				err = makeRSASSHKeyPair(bits, keyPath+".pub", keyPath)
-			} else if strings.HasSuffix(keyPath, "/id_ecdsa") {
+			} else if strings.HasSuffix(keyPath, string(os.PathSeparator)+"id_ecdsa") {
 				fs.Logf(nil, "Generating ECDSA p256 key pair at %q", keyPath)
 				err = makeECDSASSHKeyPair(keyPath+".pub", keyPath)
-			} else if strings.HasSuffix(keyPath, "/id_ed25519") {
+			} else if strings.HasSuffix(keyPath, string(os.PathSeparator)+"id_ed25519") {
 				fs.Logf(nil, "Generating Ed25519 key pair at %q", keyPath)
 				err = makeEd25519SSHKeyPair(keyPath+".pub", keyPath)
 			} else {
