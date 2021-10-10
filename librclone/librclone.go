@@ -20,6 +20,8 @@
 package main
 
 /*
+#include <stdlib.h>
+
 struct RcloneRPCResult {
 	char*	Output;
 	int	Status;
@@ -28,6 +30,8 @@ struct RcloneRPCResult {
 import "C"
 
 import (
+	"unsafe"
+
 	"github.com/rclone/rclone/librclone/librclone"
 
 	_ "github.com/rclone/rclone/backend/all"   // import all backends
@@ -77,6 +81,18 @@ func RcloneRPC(method *C.char, input *C.char) (result C.struct_RcloneRPCResult) 
 	result.Output = C.CString(output)
 	result.Status = C.int(status)
 	return result
+}
+
+// RcloneFreeString may be used to free the string returned by RcloneRPC
+//
+// If the caller has access to the C standard library, the free function can
+// normally be called directly instead. In some cases the caller uses a
+// runtime library which is not compatible, and then this function can be
+// used to release the memory with the same library that allocated it.
+//
+//export RcloneFreeString
+func RcloneFreeString(str *C.char) {
+	C.free(unsafe.Pointer(str))
 }
 
 // do nothing here - necessary for building into a C library
