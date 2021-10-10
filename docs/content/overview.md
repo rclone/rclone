@@ -46,6 +46,7 @@ Here is an overview of the major features of each cloud storage system.
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
 | Seafile                      | -           | No      | No               | No              | -         |
 | SFTP                         | MD5, SHA1 ² | Yes     | Depends          | No              | -         |
+| Sia                          | -           | No      | No               | No              | -         |
 | SugarSync                    | -           | No      | No               | No              | -         |
 | Tardigrade                   | -           | Yes     | No               | No              | -         |
 | Uptobox                      | -           | No      | No               | Yes             | -         |
