@@ -25,7 +25,7 @@ would list the home directory of the user cofigured in the rclone remote config
 (`i.e /home/sftpuser`). However, `rclone lsd remote:/` would list the root 
 directory for remote machine (i.e. `/`)
 
-"Note that some SFTP servers will need the leading / - Synology is a
+Note that some SFTP servers will need the leading / - Synology is a
 good example of this. rsync.net, on the other hand, requires users to
 OMIT the leading /.
 
@@ -123,25 +123,39 @@ Only unencrypted OpenSSH or PEM encrypted files are supported.
 
 The key file can be specified in either an external file (key_file) or contained within the 
 rclone config file (key_pem).  If using key_pem in the config file, the entry should be on a
-single line with new line ('\n' or '\r\n') separating lines.  i.e. 
+single line with new line ('\n' or '\r\n') separating lines.  i.e.
 
-key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
+    key_pem = -----BEGIN RSA PRIVATE KEY-----\nMaMbaIXtE\n0gAMbMbaSsd\nMbaass\n-----END RSA PRIVATE KEY-----
 
-This will generate it correctly for key_pem for use in the config:  
+This will generate it correctly for key_pem for use in the config:
 
     awk '{printf "%s\\n", $0}' < ~/.ssh/id_rsa
 
-If you don't specify `pass`, `key_file`, or `key_pem` then rclone will attempt to contact an ssh-agent.
-
-You can also specify `key_use_agent` to force the usage of an ssh-agent. In this case
-`key_file` or `key_pem` can also be specified to force the usage of a specific key in the ssh-agent.
+If you don't specify `pass`, `key_file`, or `key_pem` or `ask_password` then
+rclone will attempt to contact an ssh-agent. You can also specify `key_use_agent`
+to force the usage of an ssh-agent. In this case `key_file` or `key_pem` can
+also be specified to force the usage of a specific key in the ssh-agent.
 
 Using an ssh-agent is the only way to load encrypted OpenSSH keys at the moment.
 
-If you set the `--sftp-ask-password` option, rclone will prompt for a
-password when needed and no password has been configured.
+If you set the `ask_password` option, rclone will prompt for a password when
+needed and no password has been configured.
 
-If you have a certificate then you can provide the path to the public key that contains the certificate.  For example:
+#### Certificate-signed keys
+
+With traditional key-based authentication, you configure your private key only,
+and the public key built into it will be used during the authentication process.
+
+If you have a certificate you may use it to sign your public key, creating a
+separate SSH user certificate that should be used instead of the plain public key
+extracted from the private key. Then you must provide the path to the
+user certificate public key file in `pubkey_file`.
+
+Note: This is not the traditional public key paired with your private key,
+typically saved as `/home/$USER/.ssh/id_rsa.pub`. Setting this path in
+`pubkey_file` will not work.
+
+Example:
 
 ```
 [remote]
@@ -161,7 +175,7 @@ Note: the cert must come first in the file.  e.g.
 cat id_rsa-cert.pub id_rsa > merged_key
 ```
 
-### Host key validation ###
+### Host key validation
 
 By default rclone will not check the server's host key for validation.  This
 can allow an attacker to replace a server with their own and if you use
@@ -212,7 +226,7 @@ and you will need to add the appropriate `@cert-authority` entry.
 The `known_hosts_file` setting can be set during `rclone config` as an
 advanced option.
 
-### ssh-agent on macOS ###
+### ssh-agent on macOS
 
 Note that there seem to be various problems with using an ssh-agent on
 macOS due to recent changes in the OS.  The most effective work-around
@@ -226,7 +240,7 @@ And then at the end of the session
 
 These commands can be used in scripts of course.
 
-### Modified time ###
+### Modified time
 
 Modified times are stored on the server to 1 second precision.
 
