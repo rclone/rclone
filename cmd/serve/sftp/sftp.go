@@ -84,8 +84,10 @@ that it can provide md5sum/sha1sum/df information for the rclone sftp
 backend.  This means that is can support SHA1SUMs, MD5SUMs and the
 about command when paired with the rclone sftp backend.
 
-If you don't supply a --key then rclone will generate one and cache it
-for later use.
+If you don't supply a host --key then rclone will generate rsa, ecdsa
+and ed25519 variants, and cache them for later use in rclone's cache
+directory (see "rclone help flags cache-dir") in the "serve-sftp"
+directory.
 
 By default the server binds to localhost:2022 - if you want it to be
 reachable externally then supply "--addr :2022" for example.
