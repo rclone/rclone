@@ -363,7 +363,11 @@ type putFn func(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ..
 // put implements Put or PutStream
 func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
 	if f.opt.NoDataEncryption {
-		return put(ctx, in, f.newObjectInfo(src, nonce{}), options...)
+		o, err := put(ctx, in, f.newObjectInfo(src, nonce{}), options...)
+		if err == nil && o != nil {
+			o = f.newObject(o)
+		}
+		return o, err
 	}
 
 	// Encrypt the data into wrappedIn
