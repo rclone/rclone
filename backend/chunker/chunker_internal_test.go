@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
@@ -36,6 +38,30 @@ func testPutLarge(t *testing.T, f *Fs, kilobytes int) {
 			Size:    int64(kilobytes) * int64(fs.Kibi),
 		})
 	})
+}
+
+type settings map[string]interface{}
+
+func deriveFs(ctx context.Context, t *testing.T, f fs.Fs, path string, opts settings) fs.Fs {
+	fsName := strings.Split(f.Name(), "{")[0] // strip off hash
+	configMap := configmap.Simple{}
+	for key, val := range opts {
+		configMap[key] = fmt.Sprintf("%v", val)
+	}
+	rpath := fspath.JoinRootPath(f.Root(), path)
+	remote := fmt.Sprintf("%s,%s:%s", fsName, configMap.String(), rpath)
+	fixFs, err := fs.NewFs(ctx, remote)
+	require.NoError(t, err)
+	return fixFs
+}
+
+var mtime1 = fstest.Time("2001-02-03T04:05:06.499999999Z")
+
+func testPutFile(ctx context.Context, t *testing.T, f fs.Fs, name, contents, message string, check bool) fs.Object {
+	item := fstest.Item{Path: name, ModTime: mtime1}
+	_, obj := fstests.PutTestContents(ctx, t, f, &item, contents, check)
+	assert.NotNil(t, obj, message)
+	return obj
 }
 
 // test chunk name parser
@@ -617,22 +643,13 @@ func testMetadataInput(t *testing.T, f *Fs) {
 	}()
 	f.opt.FailHard = false
 
-	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
-
-	putFile := func(f fs.Fs, name, contents, message string, check bool) fs.Object {
-		item := fstest.Item{Path: name, ModTime: modTime}
-		_, obj := fstests.PutTestContents(ctx, t, f, &item, contents, check)
-		assert.NotNil(t, obj, message)
-		return obj
-	}
-
 	runSubtest := func(contents, name string) {
 		description := fmt.Sprintf("file with %s metadata", name)
 		filename := path.Join(dir, name)
 		require.True(t, len(contents) > 2 && len(contents) < minChunkForTest, description+" test data is correct")
 
-		part := putFile(f.base, f.makeChunkName(filename, 0, "", ""), "oops", "", true)
-		_ = putFile(f, filename, contents, "upload "+description, false)
+		part := testPutFile(ctx, t, f.base, f.makeChunkName(filename, 0, "", ""), "oops", "", true)
+		_ = testPutFile(ctx, t, f, filename, contents, "upload "+description, false)
 
 		obj, err := f.NewObject(ctx, filename)
 		assert.NoError(t, err, "access "+description)
@@ -844,6 +861,42 @@ func testChunkerServerSideMove(t *testing.T, f *Fs) {
 	_ = operations.Purge(ctx, f.base, dir)
 }
 
+// Test that md5all creates metadata even for small files
+func testMD5AllSlow(t *testing.T, f *Fs) {
+	ctx := context.Background()
+	fsResult := deriveFs(ctx, t, f, "md5all", settings{
+		"chunk_size":  "1P",
+		"name_format": "*.#",
+		"hash_type":   "md5all",
+	})
+	chunkFs, ok := fsResult.(*Fs)
+	require.True(t, ok, "fs must be a chunker remote")
+	baseFs := chunkFs.base
+	if !baseFs.Features().SlowHash {
+		t.Skipf("this test needs a base fs with slow hash, e.g. local")
+	}
+
+	assert.True(t, chunkFs.useMD5, "must use md5")
+	assert.True(t, chunkFs.hashAll, "must hash all files")
+
+	_ = testPutFile(ctx, t, chunkFs, "file", "-", "error", true)
+	obj, err := chunkFs.NewObject(ctx, "file")
+	require.NoError(t, err)
+	sum, err := obj.Hash(ctx, hash.MD5)
+	assert.NoError(t, err)
+	assert.Equal(t, "336d5ebc5436534e61d16e63ddfca327", sum)
+
+	list, err := baseFs.List(ctx, "")
+	require.NoError(t, err)
+	assert.Equal(t, 2, len(list))
+	_, err = baseFs.NewObject(ctx, "file")
+	assert.NoError(t, err, "metadata must be created")
+	_, err = baseFs.NewObject(ctx, "file.1")
+	assert.NoError(t, err, "first chunk must be created")
+
+	require.NoError(t, operations.Purge(ctx, baseFs, ""))
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("PutLarge", func(t *testing.T) {
@@ -875,6 +928,9 @@ func (f *Fs) InternalTest(t *testing.T) {
 	})
 	t.Run("ChunkerServerSideMove", func(t *testing.T) {
 		testChunkerServerSideMove(t, f)
+	})
+	t.Run("MD5AllSlow", func(t *testing.T) {
+		testMD5AllSlow(t, f)
 	})
 }
 
