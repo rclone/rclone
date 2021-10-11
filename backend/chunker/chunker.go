@@ -432,10 +432,10 @@ func (f *Fs) setHashType(hashType string) error {
 		f.hashFallback = true
 	case "md5all":
 		f.useMD5 = true
-		f.hashAll = !f.base.Hashes().Contains(hash.MD5)
+		f.hashAll = !f.base.Hashes().Contains(hash.MD5) || f.base.Features().SlowHash
 	case "sha1all":
 		f.useSHA1 = true
-		f.hashAll = !f.base.Hashes().Contains(hash.SHA1)
+		f.hashAll = !f.base.Hashes().Contains(hash.SHA1) || f.base.Features().SlowHash
 	default:
 		return fmt.Errorf("unsupported hash type '%s'", hashType)
 	}
@@ -812,7 +812,7 @@ func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirP
 			tempEntries = append(tempEntries, wrapDir)
 		default:
 			if f.opt.FailHard {
-				return nil, fmt.Errorf("Unknown object type %T", entry)
+				return nil, fmt.Errorf("unknown object type %T", entry)
 			}
 			fs.Debugf(f, "unknown object type %T", entry)
 		}
@@ -1099,7 +1099,7 @@ func (o *Object) readXactID(ctx context.Context) (xactID string, err error) {
 
 	switch o.f.opt.MetaFormat {
 	case "simplejson":
-		if data != nil && len(data) > maxMetadataSizeWritten {
+		if len(data) > maxMetadataSizeWritten {
 			return "", nil // this was likely not a metadata object, return empty xactID but don't throw error
 		}
 		var metadata metaSimpleJSON
@@ -1214,7 +1214,7 @@ func (f *Fs) put(
 		// and skips the "EOF" read. Hence, switch to next limit here.
 		if !(c.chunkLimit == 0 || c.chunkLimit == c.chunkSize || c.sizeTotal == -1 || c.done) {
 			silentlyRemove(ctx, chunk)
-			return nil, fmt.Errorf("Destination ignored %d data bytes", c.chunkLimit)
+			return nil, fmt.Errorf("destination ignored %d data bytes", c.chunkLimit)
 		}
 		c.chunkLimit = c.chunkSize
 
@@ -1223,7 +1223,7 @@ func (f *Fs) put(
 
 	// Validate uploaded size
 	if c.sizeTotal != -1 && c.readCount != c.sizeTotal {
-		return nil, fmt.Errorf("Incorrect upload size %d != %d", c.readCount, c.sizeTotal)
+		return nil, fmt.Errorf("incorrect upload size %d != %d", c.readCount, c.sizeTotal)
 	}
 
 	// Check for input that looks like valid metadata
@@ -1260,7 +1260,7 @@ func (f *Fs) put(
 		sizeTotal += chunk.Size()
 	}
 	if sizeTotal != c.readCount {
-		return nil, fmt.Errorf("Incorrect chunks size %d != %d", sizeTotal, c.readCount)
+		return nil, fmt.Errorf("incorrect chunks size %d != %d", sizeTotal, c.readCount)
 	}
 
 	// If previous object was chunked, remove its chunks
@@ -2440,7 +2440,7 @@ func marshalSimpleJSON(ctx context.Context, size int64, nChunks int, md5, sha1, 
 func unmarshalSimpleJSON(ctx context.Context, metaObject fs.Object, data []byte) (info *ObjectInfo, madeByChunker bool, err error) {
 	// Be strict about JSON format
 	// to reduce possibility that a random small file resembles metadata.
-	if data != nil && len(data) > maxMetadataSizeWritten {
+	if len(data) > maxMetadataSizeWritten {
 		return nil, false, ErrMetaTooBig
 	}
 	if data == nil || len(data) < 2 || data[0] != '{' || data[len(data)-1] != '}' {
