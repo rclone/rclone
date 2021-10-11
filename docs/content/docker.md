@@ -306,6 +306,8 @@ We maintain the
 [docker-volume-rclone](https://hub.docker.com/p/rclone/docker-volume-rclone/)
 plugin image on [Docker Hub](https://hub.docker.com).
 
+Rclone volume plugin requires **Docker Engine >= 19.03.15**
+
 The plugin requires presence of two directories on the host before it can
 be installed. Note that plugin will **not** create them automatically.
 By default they must exist on host at the following locations
