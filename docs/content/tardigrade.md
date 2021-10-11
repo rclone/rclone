@@ -9,6 +9,96 @@ description: "Rclone docs for Tardigrade"
 cost-effective object storage service that enables you to store, back up, and 
 archive large amounts of data in a decentralized manner.
 
+## Backend options
+
+Storj can be used both with this native backend and with the [s3
+backend using the Storj S3 compatible gateway](/s3/#storj) (shared or private).
+
+Use this backend to take advantage of client-side encryption as well
+as to achieve the best possible download performance. Uploads will be
+erasure-coded locally, thus a 1gb upload will result in 2.68gb of data
+being uploaded to storage nodes across the network.
+
+Use the s3 backend and one of the S3 compatible Hosted Gateways to
+increase upload performance and reduce the load on your systems and
+network. Uploads will be encrypted and erasure-coded server-side, thus
+a 1GB upload will result in only in 1GB of data being uploaded to
+storage nodes across the network.
+
+Side by side comparison with more details:
+
+* Characteristics:
+  * *Tardigrade backend*: Uses native RPC protocol, connects directly
+    to the storage nodes which hosts the data. Requires more CPU
+    resource of encoding/decoding and has network amplification
+    (especially during the upload), uses lots of TCP connections
+  * *S3 backend*: Uses S3 compatible HTTP Rest API via the shared
+    gateways. There is no network amplification, but performance
+    depends on the shared gateways and the secret encryption key is
+    shared with the gateway.
+* Typical usage:
+  * *Tardigrade backend*: Server environments and desktops with enough
+    resources, internet speed and connectivity - and applications
+    where tardigrades client-side encryption is required.
+  * *S3 backend*: Desktops and similar with limited resources,
+    internet speed or connectivity.
+* Security:
+  * *Tardigrade backend*: __strong__. Private encryption key doesn't
+    need to leave the local computer.
+  * *S3 backend*: __weaker__. Private encryption key is [shared
+    with](https://docs.storj.io/dcs/api-reference/s3-compatible-gateway#security-and-encryption)
+    the authentication service of the hosted gateway, where it's
+    stored encrypted. It can be stronger when combining with the
+    rclone [crypt](/crypt) backend.
+* Bandwidth usage (upload):
+  * *Tardigrade backend*: __higher__. As data is erasure coded on the
+    client side both the original data and the parities should be
+    uploaded. About ~2.7 times more data is required to be uploaded.
+    Client may start to upload with even higher number of nodes (~3.7
+    times more) and abandon/stop the slow uploads.
+  * *S3 backend*: __normal__. Only the raw data is uploaded, erasure
+    coding happens on the gateway.
+* Bandwidth usage (download)
+  * *Tardigrade backend*: __almost normal__. Only the minimal number
+    of data is required, but to avoid very slow data providers a few
+    more sources are used and the slowest are ignored (max 1.2x
+    overhead).
+  * *S3 backend*: __normal__. Only the raw data is downloaded, erasure coding happens on the shared gateway.
+* CPU usage:
+  * *Tardigrade backend*: __higher__, but more predictable. Erasure
+    code and encryption/decryption happens locally which requires
+    significant CPU usage.
+  * *S3 backend*: __less__. Erasure code and encryption/decryption
+    happens on shared s3 gateways (and as is, it depends on the
+    current load on the gateways)
+* TCP connection usage:
+  * *Tardigrade backend*: __high__. A direct connection is required to
+    each of the Storj nodes resulting in 110 connections on upload and
+    35 on download per 64 MB segment. Not all the connections are
+    actively used (slow ones are pruned), but they are all opened.
+    [Adjusting the max open file limit](/tardigrade/#known-issues) may
+    be required.
+  * *S3 backend*: __normal__. Only one connection per download/upload
+    thread is required to the shared gateway.
+* Overall performance:
+  * *Tardigrade backend*: with enough resources (CPU and bandwidth)
+    *tardigrade* backend can provide even 2x better performance. Data
+    is directly downloaded to / uploaded from to the client instead of
+    the gateway.
+  * *S3 backend*: Can be faster on edge devices where CPU and network
+    bandwidth is limited as the shared S3 compatible gateways take
+    care about the encrypting/decryption and erasure coding and no
+    download/upload amplification.
+* Decentralization:
+  * *Tardigrade backend*: __high__. Data is downloaded directly from
+    the distributed cloud of storage providers.
+  * *S3 backend*: __low__. Requires a running S3 gateway (either
+    self-hosted or Storj-hosted).
+* Limitations:
+  * *Tardigrade backend*: `rclone checksum` is not possible without
+    download, as checksum metadata is not calculated during upload
+  * *S3 backend*: secret encryption key is shared with the gateway
+
 ## Configuration
 
 To make a new Tardigrade configuration you need one of the following:
