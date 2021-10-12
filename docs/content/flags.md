@@ -359,6 +359,10 @@ and may be set in the config file.
       --gphotos-start-year int                                   Year limits the photos to be downloaded to those which are uploaded after the given year (default 2000)
       --gphotos-token string                                     OAuth Access Token as a JSON blob.
       --gphotos-token-url string                                 Token server url.
+      --hasher-auto-size SizeSuffix                              Auto-update checksum for files smaller than this size (disabled by default).
+      --hasher-hashes CommaSepList                               Comma separated list of supported checksum types. (default md5,sha1)
+      --hasher-max-age Duration                                  Maximum time to keep checksums in cache (0 = no cache, off = cache forever). (default off)
+      --hasher-remote string                                     Remote to cache checksums for (e.g. myRemote:path).
       --hdfs-data-transfer-protection string                     Kerberos data transfer protection: authentication|integrity|privacy
       --hdfs-encoding MultiEncoder                               This sets the encoding for the backend. (default Slash,Colon,Del,Ctl,InvalidUtf8,Dot)
       --hdfs-namenode string                                     hadoop name node and port

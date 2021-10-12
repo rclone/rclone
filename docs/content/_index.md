@@ -44,8 +44,9 @@ using local disk.
 
 Virtual backends wrap local and cloud file systems to apply
 [encryption](/crypt/), 
-[compression](/compress/)
-[chunking](/chunker/) and
+[compression](/compress/),
+[chunking](/chunker/),
+[hashing](/hasher/) and
 [joining](/union/).
 
 Rclone [mounts](/commands/rclone_mount/) any local, cloud or
