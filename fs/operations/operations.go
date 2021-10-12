@@ -647,7 +647,13 @@ func SuffixName(ctx context.Context, remote string) string {
 	if ci.SuffixKeepExtension {
 		ext := path.Ext(remote)
 		base := remote[:len(remote)-len(ext)]
-		return base + ci.Suffix + ext
+		fullExt := ext
+		while ext != "" {
+			ext = path.Ext(base)
+			base = base[:len(base)-len(ext)]
+			fullExt = ext + fullExt
+		}
+		return base + ci.Suffix + fullExt
 	}
 	return remote + ci.Suffix
 }

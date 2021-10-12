@@ -372,7 +372,7 @@ func TestSuffixName(t *testing.T) {
 		{"test.txt", "-suffix", false, "test.txt-suffix"},
 		{"test.txt", "-suffix", true, "test-suffix.txt"},
 		{"test.txt.csv", "-suffix", false, "test.txt.csv-suffix"},
-		{"test.txt.csv", "-suffix", true, "test.txt-suffix.csv"},
+		{"test.txt.csv", "-suffix", true, "test-suffix.txt.csv"},
 		{"test", "-suffix", false, "test-suffix"},
 		{"test", "-suffix", true, "test-suffix"},
 	} {
