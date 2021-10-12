@@ -44,6 +44,7 @@ See the following for detailed instructions for
   * [Google Cloud Storage](/googlecloudstorage/)
   * [Google Drive](/drive/)
   * [Google Photos](/googlephotos/)
+  * [Hasher](/hasher/) - to handle checksums for other remotes
   * [HDFS](/hdfs/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
