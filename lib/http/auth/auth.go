@@ -29,6 +29,8 @@ To create an htpasswd file:
 The password file can be updated while rclone is running.
 
 Use --realm to set the authentication realm.
+
+Use --salt to change the password hashing salt from the default.
 `
 
 // CustomAuthFn if used will be used to authenticate user, pass. If an error
@@ -43,6 +45,7 @@ type Options struct {
 	Realm     string       // realm for authentication
 	BasicUser string       // single username for basic auth if not using Htpasswd
 	BasicPass string       // password for BasicUser
+	Salt      string       // password hashing salt
 	Auth      CustomAuthFn `json:"-"` // custom Auth (not set by command line flags)
 }
 
@@ -53,14 +56,16 @@ func Auth(opt Options) http.Middleware {
 	} else if opt.HtPasswd != "" {
 		return HtPasswdAuth(opt.HtPasswd, opt.Realm)
 	} else if opt.BasicUser != "" {
-		return SingleAuth(opt.BasicUser, opt.BasicPass, opt.Realm)
+		return SingleAuth(opt.BasicUser, opt.BasicPass, opt.Realm, opt.Salt)
 	}
 	return nil
 }
 
 // Options set by command line flags
 var (
-	Opt = Options{}
+	Opt = Options{
+		Salt: "dlPL2MqE",
+	}
 )
 
 // AddFlagsPrefix adds flags for http/auth
@@ -69,6 +74,7 @@ func AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
 	flags.StringVarP(flagSet, &Opt.Realm, prefix+"realm", "", Opt.Realm, "realm for authentication")
 	flags.StringVarP(flagSet, &Opt.BasicUser, prefix+"user", "", Opt.BasicUser, "User name for authentication.")
 	flags.StringVarP(flagSet, &Opt.BasicPass, prefix+"pass", "", Opt.BasicPass, "Password for authentication.")
+	flags.StringVarP(flagSet, &Opt.Salt, prefix+"salt", "", Opt.Salt, "Password hashing salt")
 }
 
 // AddFlags adds flags for the http/auth
