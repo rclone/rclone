@@ -88,8 +88,8 @@ func HtPasswdAuth(path, realm string) httplib.Middleware {
 func SingleAuth(user, pass, realm string) httplib.Middleware {
 	fs.Infof(nil, "Using --user %s --pass XXXX as authenticated user", user)
 	pass = string(auth.MD5Crypt([]byte(pass), []byte("dlPL2MqE"), []byte("$1$")))
-	secretProvider := func(user, realm string) string {
-		if user == user {
+	secretProvider := func(u, r string) string {
+		if user == u {
 			return pass
 		}
 		return ""
