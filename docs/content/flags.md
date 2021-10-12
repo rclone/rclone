@@ -71,6 +71,7 @@ These flags are available for every command.
       --include stringArray                  Include files matching pattern
       --include-from stringArray             Read include patterns from file (use - to read from stdin)
   -i, --interactive                          Enable interactive mode
+      --kv-lock-time duration                Maximum time to keep key-value database locked by process (default 1s)
       --log-file string                      Log everything to this file
       --log-format string                    Comma separated list of log format options (default "date,time")
       --log-level string                     Log level DEBUG|INFO|NOTICE|ERROR (default "NOTICE")

@@ -132,6 +132,7 @@ type ConfigInfo struct {
 	FsCacheExpireInterval  time.Duration
 	DisableHTTP2           bool
 	HumanReadable          bool
+	KvLockTime             time.Duration // maximum time to keep key-value database locked by process
 }
 
 // NewConfig creates a new config with everything set to the default
@@ -171,6 +172,7 @@ func NewConfig() *ConfigInfo {
 	c.TrackRenamesStrategy = "hash"
 	c.FsCacheExpireDuration = 300 * time.Second
 	c.FsCacheExpireInterval = 60 * time.Second
+	c.KvLockTime = 1 * time.Second
 
 	// Perform a simple check for debug flags to enable debug logging during the flag initialization
 	for argIndex, arg := range os.Args {
