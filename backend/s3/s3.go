@@ -2982,6 +2982,46 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 	if err != nil {
 		return nil, err
 	}
+
+	size, err := strconv.ParseInt(resp.Header["Content-Length"][0], 10, 64)
+	if err != nil {
+		fs.Debugf(o, "Failed to parse content length from string %s, %v", resp.Header["Content-Length"][0], err)
+	}
+	contentLength := &size
+	if resp.Header["Content-Range"] != nil {
+		var contentRange = resp.Header["Content-Range"][0]
+		slash := strings.IndexRune(contentRange, '/')
+		if slash >= 0 {
+			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
+			if err == nil {
+				contentLength = &i
+			} else {
+				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+			}
+		} else {
+			fs.Debugf(o, "Failed to find length in %q", contentRange)
+			fs.Debugf(o, "Failed to find length in %q", contentLength)
+		}
+	}
+
+	lastModified, err := time.Parse(time.RFC1123, resp.Header["Last-Modified"][0])
+	if err != nil {
+		fs.Debugf(o, "Failed to parse last modified from string %s, %v", resp.Header["Last-Modified"][0], err)
+	}
+
+	metaData := make(map[string]*string)
+	for key, value := range resp.Header {
+		if strings.HasPrefix(key, "x-amz-meta") {
+			metaKey := strings.TrimPrefix(key, "x-amz-meta-")
+			metaData[strings.Title(metaKey)] = &value[0]
+		}
+	}
+
+	storageClass := resp.Header.Get("X-Amz-Storage-Class")
+	contentType := resp.Header.Get("Content-Type")
+	etag := resp.Header.Get("Etag")
+
+	o.setMetaData(&etag, contentLength, &lastModified, metaData, &contentType, &storageClass)
 	return resp.Body, err
 }
 
