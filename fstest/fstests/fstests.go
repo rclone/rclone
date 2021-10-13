@@ -1333,12 +1333,14 @@ func Run(t *testing.T, opt *Opt) {
 				features := f.Features()
 				obj := findObject(ctx, t, f, file1.Path)
 				do, ok := obj.(fs.MimeTyper)
-				require.Equal(t, features.ReadMimeType, ok, "mismatch between Object.MimeType and Features.ReadMimeType")
 				if !ok {
+					require.False(t, features.ReadMimeType, "Features.ReadMimeType is set but Object.MimeType method not found")
 					t.Skip("MimeType method not supported")
 				}
 				mimeType := do.MimeType(ctx)
-				if features.WriteMimeType {
+				if !features.ReadMimeType {
+					require.Equal(t, "", mimeType, "Features.ReadMimeType is not set but Object.MimeType returned a non-empty MimeType")
+				} else if features.WriteMimeType {
 					assert.Equal(t, file1MimeType, mimeType, "can read and write mime types but failed")
 				} else {
 					if strings.ContainsRune(mimeType, ';') {
