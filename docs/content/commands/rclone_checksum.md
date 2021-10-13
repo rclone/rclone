@@ -20,6 +20,8 @@ If you supply the `--download` flag, it will download the data from remote
 and calculate the contents hash on the fly.  This can be useful for remotes
 that don't support hashes or if you really want to check all the data.
 
+Note that hash values in the SUM file are treated as case insensitive.
+
 If you supply the `--one-way` flag, it will only check that files in
 the source match the files in the destination, not the other way
 around. This means that extra files in the destination that are not in

@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 	"sync/atomic"
 
@@ -540,7 +541,7 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 	}
 	parser := bufio.NewReader(rd)
 
-	const maxWarn = 4
+	const maxWarn = 3
 	numWarn := 0
 
 	re := regexp.MustCompile(`^([^ ]+) [ *](.+)$`)
@@ -558,19 +559,31 @@ func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
 			continue
 		}
 
-		if fields := re.FindStringSubmatch(line); fields != nil {
-			hashes[fields[2]] = fields[1]
+		fields := re.FindStringSubmatch(line)
+		if fields == nil {
+			numWarn++
+			if numWarn <= maxWarn {
+				fs.Logf(sumFile, "improperly formatted checksum line %d", lineNo)
+			}
 			continue
 		}
 
-		numWarn++
-		if numWarn < maxWarn {
-			fs.Logf(sumFile, "improperly formatted checksum line %d", lineNo)
-		} else if numWarn == maxWarn {
-			fs.Logf(sumFile, "more warnings suppressed...")
+		sum, file := fields[1], fields[2]
+		if hashes[file] != "" {
+			numWarn++
+			if numWarn <= maxWarn {
+				fs.Logf(sumFile, "duplicate file on checksum line %d", lineNo)
+			}
+			continue
 		}
+
+		// We've standardised on lower case checksums in rclone internals.
+		hashes[file] = strings.ToLower(sum)
 	}
 
+	if numWarn > maxWarn {
+		fs.Logf(sumFile, "%d warning(s) suppressed...", numWarn-maxWarn)
+	}
 	if err = rd.Close(); err != nil {
 		return nil, err
 	}

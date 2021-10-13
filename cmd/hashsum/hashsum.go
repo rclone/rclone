@@ -76,7 +76,7 @@ Then
 
     $ rclone hashsum MD5 remote:path
 
-Note that hash names are case insensitive.
+Note that hash names are case insensitive and values are output in lower case.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 2, command, args)
