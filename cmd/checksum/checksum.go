@@ -33,6 +33,8 @@ don't match.  It doesn't alter the file system.
 If you supply the |--download| flag, it will download the data from remote
 and calculate the contents hash on the fly.  This can be useful for remotes
 that don't support hashes or if you really want to check all the data.
+
+Note that hash values in the SUM file are treated as case insensitive.
 `, "|", "`") + check.FlagsHelp,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(3, 3, command, args)
