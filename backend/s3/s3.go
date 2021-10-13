@@ -3000,7 +3000,6 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 			}
 		} else {
 			fs.Debugf(o, "Failed to find length in %q", contentRange)
-			fs.Debugf(o, "Failed to find length in %q", contentLength)
 		}
 	}
 
