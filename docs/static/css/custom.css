@@ -180,11 +180,11 @@ a.badge-primary.focus, a.badge-primary:focus {
 nav#TableOfContents ul {
     list-style-type: none;
     padding: 0.0rem;
-    margin: 0.5rem;
+    margin: 0rem 0.5rem 0rem 0.5rem;
     font-size: 90%;
     white-space: nowrap;
-    overflow:hidden;
+    overflow: hidden;
 }
 nav#TableOfContents ul:hover {
-    overflow:visible;
+    overflow: visible;
 }
