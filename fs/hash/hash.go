@@ -229,6 +229,14 @@ func (m *MultiHasher) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
+// Hashes returns accumulated hash types.
+func (m *MultiHasher) Hashes() (set Set) {
+	for ht := range m.h {
+		set.Add(ht)
+	}
+	return
+}
+
 // Sums returns the sums of all accumulated hashes as hex encoded
 // strings.
 func (m *MultiHasher) Sums() map[Type]string {
