@@ -240,6 +240,7 @@ func (o *HashesOption) Mandatory() bool {
 type OptionResume struct {
 	ID           string // resume this ID if set
 	Pos          int64  // and resume from this position
+	Hash         string
 	Src          Object
 	F            Fs
 	Remote       string

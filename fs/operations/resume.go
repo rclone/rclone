@@ -30,7 +30,8 @@ func createResumeOpt(ctx context.Context, f fs.Fs, remote string, src fs.Object)
 			if resumeErr != nil {
 				fs.Errorf(src, "Resume canceled: %v", resumeErr)
 			} else if position > int64(ci.ResumeCutoff) {
-				(*resumeOpt).Pos = position
+				resumeOpt.Pos = position
+				resumeOpt.Hash = hashName
 			}
 		}
 	}

@@ -1139,6 +1139,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 					return err
 				}
 				hashType := o.fs.Hashes().GetOne()
+				if resumeOpt.Hash != "" {
+					if err = hashType.Set(resumeOpt.Hash); err != nil {
+						return err
+					}
+					if !o.fs.Hashes().Contains(hashType) {
+						return errors.Errorf("unsupported resume hash: %q", resumeOpt.Hash)
+					}
+				}
 				hasher, err = hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
 				if err != nil {
 					return err
@@ -1206,10 +1214,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Context for read so that we can handle io.copy being interrupted
 	ctxr, cancel := context.WithCancel(ctx)
 	// Create exit handler during Copy so that resume data can be written if interrupted
+	var atexitOnce sync.Once
 	atexitHandle := atexit.Register(func() {
-		// If OptionResume was passed, call SetID to prepare for future resumes
-		// ID is the number of bytes written to the destination
-		if resumeOpt != nil {
+		atexitOnce.Do(func() {
+			if resumeOpt == nil || hasher == nil {
+				return
+			}
+			// If OptionResume was passed, call SetID to prepare for future resumes
+			// ID is the number of bytes written to the destination
 			// Stops the copy so cache is consistent with remote
 			cacheingWg.Add(1)
 			cancel()
@@ -1217,13 +1229,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Infof(o, "Updating resume cache")
 			fileInfo, _ := o.fs.lstat(o.path)
 			writtenStr := strconv.FormatInt(fileInfo.Size(), 10)
-			hashType := o.fs.Hashes().GetOne()
+			hashType := hasher.Hashes().GetOne()
 			hashState, err := hasher.GetHashState(hashType)
-			if err != nil {
-				return
+			if err == nil {
+				err = resumeOpt.SetID(ctx, writtenStr, hashType.String(), hashState)
 			}
-			_ = resumeOpt.SetID(ctx, writtenStr, hashType.String(), hashState)
-		}
+			if err != nil {
+				fs.Logf(o, "Updating resume cache failed: %v", err)
+			}
+		})
 	})
 	cr := readers.NewContextReader(ctxr, in)
 	_, err = io.Copy(out, cr)
