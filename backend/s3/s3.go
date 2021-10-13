@@ -2983,13 +2983,13 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 		return nil, err
 	}
 
-	size, err := strconv.ParseInt(resp.Header["Content-Length"][0], 10, 64)
+	size, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
 	if err != nil {
-		fs.Debugf(o, "Failed to parse content length from string %s, %v", resp.Header["Content-Length"][0], err)
+		fs.Debugf(o, "Failed to parse content length from string %s, %v", resp.Header.Get("Content-Length"), err)
 	}
 	contentLength := &size
-	if resp.Header["Content-Range"] != nil {
-		var contentRange = resp.Header["Content-Range"][0]
+	if resp.Header.Get("Content-Range") != "" {
+		var contentRange = resp.Header.Get("Content-Range")
 		slash := strings.IndexRune(contentRange, '/')
 		if slash >= 0 {
 			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
@@ -3003,9 +3003,9 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 		}
 	}
 
-	lastModified, err := time.Parse(time.RFC1123, resp.Header["Last-Modified"][0])
+	lastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
 	if err != nil {
-		fs.Debugf(o, "Failed to parse last modified from string %s, %v", resp.Header["Last-Modified"][0], err)
+		fs.Debugf(o, "Failed to parse last modified from string %s, %v", resp.Header.Get("Last-Modified"), err)
 	}
 
 	metaData := make(map[string]*string)
