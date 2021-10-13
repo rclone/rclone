@@ -330,10 +330,12 @@ func testCheckSum(t *testing.T, download bool) {
 
 	hashType := hash.MD5
 	const (
-		testString1 = "Hello, World!"
-		testDigest1 = "65a8e27d8879283831b664bd8b7f0ad4"
-		testString2 = "I am the walrus"
-		testDigest2 = "87396e030ef3f5b35bbf85c0a09a4fb3"
+		testString1      = "Hello, World!"
+		testDigest1      = "65a8e27d8879283831b664bd8b7f0ad4"
+		testDigest1Upper = "65A8E27D8879283831B664BD8B7F0AD4"
+		testString2      = "I am the walrus"
+		testDigest2      = "87396e030ef3f5b35bbf85c0a09a4fb3"
+		testDigest2Mixed = "87396e030EF3f5b35BBf85c0a09a4FB3"
 	)
 
 	type wantType map[string]string
@@ -428,7 +430,7 @@ func testCheckSum(t *testing.T, download bool) {
 	}
 
 	check := func(runNo, wantChecks, wantErrors int, wantResults wantType) {
-		runName := fmt.Sprintf("move%d", runNo)
+		runName := fmt.Sprintf("subtest%d", runNo)
 		t.Run(runName, func(t *testing.T) {
 			checkRun(runNo, wantChecks, wantErrors, wantResults)
 		})
@@ -517,6 +519,23 @@ func testCheckSum(t *testing.T, download bool) {
 		"missingondst": "orange\n",
 		"match":        "banana\n",
 		"differ":       "potato\n",
+		"error":        "",
+	})
+
+	// test mixed-case checksums
+	file1 = makeFile("banana", testString1)
+	file2 = makeFile("potato", testString2)
+	fcsums = makeSums(operations.HashSums{
+		"banana": testDigest1Upper,
+		"potato": testDigest2Mixed,
+	})
+	fstest.CheckItems(t, r.Fremote, fcsums, file1, file2)
+	check(7, 2, 0, wantType{
+		"combined":     "= banana\n= potato\n",
+		"missingonsrc": "",
+		"missingondst": "",
+		"match":        "banana\npotato\n",
+		"differ":       "",
 		"error":        "",
 	})
 }
