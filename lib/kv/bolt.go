@@ -43,8 +43,9 @@ type DB struct {
 }
 
 var (
-	dbMap = map[string]*DB{}
-	dbMut = sync.Mutex{}
+	dbMap  = map[string]*DB{}
+	dbMut  sync.Mutex
+	atExit bool
 )
 
 // Supported returns true on supported OSes
@@ -66,7 +67,9 @@ func makeName(facility string, f fs.Fs) string {
 
 // Start a new key-value database
 func Start(ctx context.Context, facility string, f fs.Fs) (*DB, error) {
-	if db := Get(facility, f); db != nil {
+	dbMut.Lock()
+	defer dbMut.Unlock()
+	if db := lockedGet(facility, f); db != nil {
 		return db, nil
 	}
 
@@ -101,42 +104,27 @@ func Start(ctx context.Context, facility string, f fs.Fs) (*DB, error) {
 		return nil, errors.Wrapf(err, "cannot open db: %s", db.path)
 	}
 
-	// Initialization above was performed without locks..
-	dbMut.Lock()
-	defer dbMut.Unlock()
-	if dbOther := dbMap[name]; dbOther != nil {
-		// Races between concurrent Start's are rare but possible, the 1st one wins.
-		_ = db.close()
-		return dbOther, nil
-	}
-	go db.loop() // Start queue handling
+	dbMap[name] = db
+	go db.loop()
 	return db, nil
 }
 
 // Get returns database record for given filesystem and facility
 func Get(facility string, f fs.Fs) *DB {
-	name := makeName(facility, f)
 	dbMut.Lock()
+	defer dbMut.Unlock()
+	return lockedGet(facility, f)
+}
+
+func lockedGet(facility string, f fs.Fs) *DB {
+	name := makeName(facility, f)
 	db := dbMap[name]
 	if db != nil {
 		db.mu.Lock()
 		db.refs++
 		db.mu.Unlock()
 	}
-	dbMut.Unlock()
 	return db
-}
-
-// free database record
-func (db *DB) free() {
-	dbMut.Lock()
-	db.mu.Lock()
-	db.refs--
-	if db.refs <= 0 {
-		delete(dbMap, db.name)
-	}
-	db.mu.Unlock()
-	dbMut.Unlock()
 }
 
 // Path returns database path
@@ -201,18 +189,28 @@ func (db *DB) close() (err error) {
 // loop over database operations sequentially
 func (db *DB) loop() {
 	ctx := context.Background()
-	for db.queue != nil {
+	var req *request
+	quit := false
+	for !quit {
 		select {
-		case req := <-db.queue:
-			req.handle(ctx, db)
-			_ = db.idleTimer.Reset(db.idleTime)
+		case req = <-db.queue:
+			if quit = req.handle(ctx, db); !quit {
+				req.wg.Done()
+				_ = db.idleTimer.Reset(db.idleTime)
+			}
 		case <-db.idleTimer.C:
 			_ = db.close()
 		case <-db.lockTimer.C:
 			_ = db.close()
 		}
 	}
-	db.free()
+	db.queue = nil
+	if !atExit {
+		dbMut.Lock()
+		delete(dbMap, db.name)
+		dbMut.Unlock()
+	}
+	req.wg.Done()
 }
 
 // Do a key-value operation and return error when done
@@ -239,8 +237,10 @@ type request struct {
 }
 
 // handle a key-value request with given DB
-func (r *request) handle(ctx context.Context, db *DB) {
+// returns true as a signal to quit the loop
+func (r *request) handle(ctx context.Context, db *DB) bool {
 	db.mu.Lock()
+	defer db.mu.Unlock()
 	if op, stop := r.op.(*opStop); stop {
 		r.err = db.close()
 		if op.remove {
@@ -248,12 +248,11 @@ func (r *request) handle(ctx context.Context, db *DB) {
 				r.err = err
 			}
 		}
-		db.queue = nil
-	} else {
-		r.err = db.execute(ctx, r.op, r.wr)
+		db.refs--
+		return db.refs <= 0
 	}
-	db.mu.Unlock()
-	r.wg.Done()
+	r.err = db.execute(ctx, r.op, r.wr)
+	return false
 }
 
 // execute a key-value DB operation
@@ -302,11 +301,15 @@ func (*opStop) Do(context.Context, Bucket) error {
 	return nil
 }
 
-// Exit stops all databases
+// Exit immediately stops all databases
 func Exit() {
 	dbMut.Lock()
+	atExit = true
 	for _, s := range dbMap {
+		s.refs = 0
 		_ = s.Stop(false)
 	}
+	dbMap = map[string]*DB{}
+	atExit = false
 	dbMut.Unlock()
 }
