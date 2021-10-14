@@ -315,7 +315,7 @@ func showBackend(name string) {
 			optionsType = "advanced"
 			continue
 		}
-		fmt.Printf("### %s Options\n\n", strings.Title(optionsType))
+		fmt.Printf("### %s options\n\n", strings.Title(optionsType))
 		fmt.Printf("Here are the %s options specific to %s (%s).\n\n", optionsType, backend.Name, backend.Description)
 		optionsType = "advanced"
 		for _, opt := range opts {

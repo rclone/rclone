@@ -5,13 +5,16 @@ description: "Compression Remote"
 
 # {{< icon "fas fa-compress" >}}Compress (Experimental)
 
-### Warning
+## Warning
+
 This remote is currently **experimental**. Things may break and data may be lost. Anything you do with this remote is
 at your own risk. Please understand the risks associated with using experimental code and don't use this remote in
 critical applications.
 
 The `Compress` remote adds compression to another remote. It is best used with remotes containing
 many large compressible files.
+
+## Configuration
 
 To use this remote, all you need to do is specify another remote and a compression mode to use:
 
@@ -66,11 +69,13 @@ y/e/d> y
 ```
 
 ### Compression Modes
+
 Currently only gzip compression is supported. It provides a decent balance between speed and size and is well
 supported by other applications. Compression strength can further be configured via an advanced setting where 0 is no
 compression and 9 is strongest compression.
 
-#### Filetype
+### File types
+
 If you open a remote wrapped by compress, you will see that there are many files with an extension corresponding to
 the compression algorithm you chose. These files are standard files that can be opened by various archive programs, 
 but they have some hidden metadata that allows them to be used by rclone.

@@ -137,7 +137,7 @@ func showHelp(fsInfo *fs.RegInfo) error {
 	if len(cmds) == 0 {
 		return errors.Errorf("%s backend has no commands", name)
 	}
-	fmt.Printf("### Backend commands\n\n")
+	fmt.Printf("## Backend commands\n\n")
 	fmt.Printf(`Here are the commands specific to the %s backend.
 
 Run them with
@@ -154,7 +154,7 @@ These can be run on a running backend using the rc command
 
 `, name)
 	for _, cmd := range cmds {
-		fmt.Printf("#### %s\n\n", cmd.Name)
+		fmt.Printf("### %s\n\n", cmd.Name)
 		fmt.Printf("%s\n\n", cmd.Short)
 		fmt.Printf("    rclone backend %s remote: [options] [<arguments>+]\n\n", cmd.Name)
 		if cmd.Long != "" {

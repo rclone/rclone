@@ -59,7 +59,7 @@ based on XSalsa20 cipher and Poly1305 for integrity.
 by default, but this has some implications and is therefore
 possible to turned off.
 
-### Configuration
+## Configuration
 
 Here is an example of how to make a remote called `secret`.
 

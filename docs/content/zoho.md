@@ -7,6 +7,8 @@ description: "Zoho WorkDrive"
 
 [Zoho WorkDrive](https://www.zoho.com/workdrive/) is a cloud storage solution created by [Zoho](https://zoho.com).
 
+## Configuration
+
 Here is an example of making a zoho configuration.  First run
 
     rclone config
@@ -103,20 +105,20 @@ excess files in the path.
 
 Zoho paths may be as deep as required, eg `remote:directory/subdirectory`.
 
-### Modified time ###
+### Modified time
 
 Modified times are currently not supported for Zoho Workdrive
 
-### Checksums ###
+### Checksums
 
 No checksums are supported.
 
-### Usage information ###
+### Usage information
 
 To view your current quota you can use the `rclone about remote:`
 command which will display your current usage.
 
-#### Restricted filename characters
+### Restricted filename characters
 
 Only control characters and invalid UTF-8 are replaced. In addition most
 Unicode full-width characters are not supported at all and will be removed 
