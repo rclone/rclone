@@ -203,13 +203,6 @@ jobs:
           librclone/python/test_rclone.py
         if: matrix.librclonetest
 
-      - name: Code quality test
-        shell: bash
-        run: |
-          make build_dep
-          make check
-        if: matrix.check
-
       - name: Compile all architectures test
         shell: bash
         run: |
@@ -228,6 +221,22 @@ jobs:
         # working-directory: '$(modulePath)'
         # Deploy binaries if enabled in config && not a PR && not a fork
         if: matrix.deploy && github.head_ref == '' && github.repository == 'rclone/rclone'
+
+  lint:
+    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
+    timeout-minutes: 30
+    name: "lint"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Code quality test
+        uses: golangci/golangci-lint-action@v2
+        with:
+          # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
+          version: latest
 
   android:
     if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
