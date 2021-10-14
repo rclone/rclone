@@ -1296,6 +1296,12 @@ disabled here.  When the issue is solved this flag will be removed.
 See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rclone/issues/3631
 
 `,
+		}, {
+			Name: "download_url",
+			Help: `Custom endpoint for downloads.
+This is usually set to a CloudFront CDN URL as AWS S3 offers
+cheaper egress for data downloaded through the CloudFront network.`,
+			Advanced: true,
 		},
 		}})
 }
@@ -1357,6 +1363,7 @@ type Options struct {
 	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
 	DisableHTTP2          bool                 `config:"disable_http2"`
+	DownloadURL           string               `config:"download_url"`
 }
 
 // Fs represents a remote s3 server
@@ -1374,6 +1381,7 @@ type Fs struct {
 	cache         *bucket.Cache    // cache for bucket creation status
 	pacer         *fs.Pacer        // To pace the API calls
 	srv           *http.Client     // a plain http client
+	srvRest       *rest.Client     // the rest connection to the server
 	pool          *pool.Pool       // memory pool
 	etagIsNotMD5  bool             // if set ETags are not MD5s
 }
@@ -1686,15 +1694,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	ci := fs.GetConfig(ctx)
 	f := &Fs{
-		name:  name,
-		opt:   *opt,
-		ci:    ci,
-		ctx:   ctx,
-		c:     c,
-		ses:   ses,
-		pacer: fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
-		cache: bucket.NewCache(),
-		srv:   srv,
+		name:    name,
+		opt:     *opt,
+		ci:      ci,
+		ctx:     ctx,
+		c:       c,
+		ses:     ses,
+		pacer:   fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
+		cache:   bucket.NewCache(),
+		srv:     srv,
+		srvRest: rest.NewClient(fshttp.NewClient(ctx)),
 		pool: pool.New(
 			time.Duration(opt.MemoryPoolFlushTime),
 			int(opt.ChunkSize),
@@ -2958,9 +2967,71 @@ func (o *Object) Storable() bool {
 	return true
 }
 
+func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	url := o.fs.opt.DownloadURL + bucketPath
+	var resp *http.Response
+	opts := rest.Opts{
+		Method:  "GET",
+		RootURL: url,
+		Options: options,
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srvRest.Call(ctx, &opts)
+		return o.fs.shouldRetry(ctx, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	size, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
+	if err != nil {
+		fs.Debugf(o, "Failed to parse content length from string %s, %v", resp.Header.Get("Content-Length"), err)
+	}
+	contentLength := &size
+	if resp.Header.Get("Content-Range") != "" {
+		var contentRange = resp.Header.Get("Content-Range")
+		slash := strings.IndexRune(contentRange, '/')
+		if slash >= 0 {
+			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
+			if err == nil {
+				contentLength = &i
+			} else {
+				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+			}
+		} else {
+			fs.Debugf(o, "Failed to find length in %q", contentRange)
+		}
+	}
+
+	lastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
+	if err != nil {
+		fs.Debugf(o, "Failed to parse last modified from string %s, %v", resp.Header.Get("Last-Modified"), err)
+	}
+
+	metaData := make(map[string]*string)
+	for key, value := range resp.Header {
+		if strings.HasPrefix(key, "x-amz-meta") {
+			metaKey := strings.TrimPrefix(key, "x-amz-meta-")
+			metaData[strings.Title(metaKey)] = &value[0]
+		}
+	}
+
+	storageClass := resp.Header.Get("X-Amz-Storage-Class")
+	contentType := resp.Header.Get("Content-Type")
+	etag := resp.Header.Get("Etag")
+
+	o.setMetaData(&etag, contentLength, &lastModified, metaData, &contentType, &storageClass)
+	return resp.Body, err
+}
+
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	bucket, bucketPath := o.split()
+
+	if o.fs.opt.DownloadURL != "" {
+		return o.downloadFromURL(ctx, bucketPath, options...)
+	}
+
 	req := s3.GetObjectInput{
 		Bucket: &bucket,
 		Key:    &bucketPath,
