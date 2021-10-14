@@ -124,7 +124,7 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 	}
 
 	// Prepare TLS config
-	var tlsConfig *tls.Config = nil
+	var tlsConfig *tls.Config
 
 	useSSL := useSSL(opt)
 	if (opt.SslCert != "") != useSSL {

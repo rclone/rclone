@@ -566,7 +566,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 			vfs.usage, err = doAbout(ctx)
 		}
 		if vfs.Opt.UsedIsSize {
-			var usedBySizeAlgorithm int64 = 0
+			var usedBySizeAlgorithm int64
 			// Algorithm from `rclone size`
 			err = walk.ListR(ctx, vfs.f, "", true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 				entries.ForObject(func(o fs.Object) {

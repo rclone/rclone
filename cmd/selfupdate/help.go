@@ -4,7 +4,7 @@
 package selfupdate
 
 // Note: "|" will be replaced by backticks in the help string below
-var selfUpdateHelp string = `
+var selfUpdateHelp = `
 This command downloads the latest release of rclone and replaces
 the currently running binary. The download is verified with a hashsum
 and cryptographically signed signature.

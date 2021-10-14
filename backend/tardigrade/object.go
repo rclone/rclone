@@ -132,7 +132,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (_ io.ReadC
 	// Convert the semantics of HTTP range headers to an offset and length
 	// that libuplink can use.
 	var (
-		offset int64 = 0
+		offset int64
 		length int64 = -1
 	)
 
