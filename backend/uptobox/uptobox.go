@@ -304,7 +304,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	var limit uint64 = 100 // max number of objects per request - 100 seems to be the maximum the api accepts
 	var page uint64 = 1
-	var offset uint64 = 0 // for the next page of requests
+	var offset uint64 // for the next page of requests
 
 	for {
 		opts := &api.MetadataRequestOptions{

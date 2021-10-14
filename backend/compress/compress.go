@@ -1260,7 +1260,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		return o.Object.Open(ctx, options...)
 	}
 	// Get offset and limit from OpenOptions, pass the rest to the underlying remote
-	var openOptions []fs.OpenOption = []fs.OpenOption{&fs.SeekOption{Offset: 0}}
+	var openOptions = []fs.OpenOption{&fs.SeekOption{Offset: 0}}
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
