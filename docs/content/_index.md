@@ -105,6 +105,7 @@ WebDAV or S3, that work out of the box.)
 
 {{< provider_list >}}
 {{< provider name="1Fichier" home="https://1fichier.com/" config="/fichier/" start="true">}}
+{{< provider name="Akamai Netstorage" home="https://www.akamai.com/us/en/products/media-delivery/netstorage.jsp" config="/netstorage/" >}}
 {{< provider name="Alibaba Cloud (Aliyun) Object Storage System (OSS)" home="https://www.alibabacloud.com/product/oss/" config="/s3/#alibaba-oss" >}}
 {{< provider name="Amazon Drive" home="https://www.amazon.com/clouddrive" config="/amazonclouddrive/" note="#status">}}
 {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}

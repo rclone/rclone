@@ -139,6 +139,9 @@ backends:
  - backend:  "memory"
    remote:   ":memory:"
    fastlist: true
+ - backend:  "netstorage"
+   remote:   "TestnStorage:"
+   fastlist: true
  - backend:  "onedrive"
    remote:   "TestOneDrive:"
    fastlist: false
