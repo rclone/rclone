@@ -525,3 +525,4 @@ put them back in again.` >}}
   * HNGamingUK <connor@earnshawhome.co.uk>
   * Jonta <359397+Jonta@users.noreply.github.com>
   * YenForYang <YenForYang@users.noreply.github.com>
+  * Joda Stößer <stoesser@yay-digital.de> <services+github@simjo.st>
