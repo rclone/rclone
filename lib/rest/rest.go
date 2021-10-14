@@ -139,15 +139,16 @@ type Opts struct {
 	UserName              string            // username for Basic Auth
 	Password              string            // password for Basic Auth
 	Options               []fs.OpenOption
-	IgnoreStatus          bool       // if set then we don't check error status or parse error body
-	MultipartParams       url.Values // if set do multipart form upload with attached file
-	MultipartMetadataName string     // ..this is used for the name of the metadata form part if set
-	MultipartContentName  string     // ..name of the parameter which is the attached file
-	MultipartFileName     string     // ..name of the file for the attached file
-	Parameters            url.Values // any parameters for the final URL
-	TransferEncoding      []string   // transfer encoding, set to "identity" to disable chunked encoding
-	Close                 bool       // set to close the connection after this transaction
-	NoRedirect            bool       // if this is set then the client won't follow redirects
+	IgnoreStatus          bool         // if set then we don't check error status or parse error body
+	MultipartParams       url.Values   // if set do multipart form upload with attached file
+	MultipartMetadataName string       // ..this is used for the name of the metadata form part if set
+	MultipartContentName  string       // ..name of the parameter which is the attached file
+	MultipartFileName     string       // ..name of the file for the attached file
+	Parameters            url.Values   // any parameters for the final URL
+	TransferEncoding      []string     // transfer encoding, set to "identity" to disable chunked encoding
+	Trailer               *http.Header // set the request trailer
+	Close                 bool         // set to close the connection after this transaction
+	NoRedirect            bool         // if this is set then the client won't follow redirects
 }
 
 // Copy creates a copy of the options
@@ -238,6 +239,9 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	}
 	if len(opts.TransferEncoding) != 0 {
 		req.TransferEncoding = opts.TransferEncoding
+	}
+	if opts.Trailer != nil {
+		req.Trailer = *opts.Trailer
 	}
 	if opts.Close {
 		req.Close = true
