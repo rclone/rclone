@@ -12,6 +12,8 @@ The memory backend behaves like a bucket based remote (e.g. like
 s3). Because it has no parameters you can just use it with the
 `:memory:` remote name.
 
+## Configuration
+
 You can configure it as a remote like this with `rclone config` too if
 you want to:
 
@@ -51,11 +53,11 @@ testing or with an rclone server or rclone mount, e.g.
     rclone serve webdav :memory:
     rclone serve sftp :memory:
 
-### Modified time and hashes ###
+### Modified time and hashes
 
 The memory backend supports MD5 hashes and modification times accurate to 1 nS.
 
-#### Restricted filename characters
+### Restricted filename characters
 
 The memory backend replaces the [default restricted characters
 set](/overview/#restricted-characters).

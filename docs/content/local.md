@@ -11,6 +11,8 @@ Local paths are specified as normal filesystem paths, e.g. `/path/to/wherever`, 
 
 Will sync `/home/source` to `/tmp/destination`.
 
+## Configuration
+
 For consistencies sake one can also configure a remote of type
 `local` in the config file, and access the local filesystem using
 rclone remote paths, e.g. `remote:path/to/wherever`, but it is probably

@@ -23,6 +23,8 @@ Invoking `rclone mkdir backup:../desktop` is exactly the same as invoking
 The empty path is not allowed as a remote. To alias the current directory
 use `.` instead.
 
+## Configuration
+
 Here is an example of how to make an alias called `remote` for local folder.
 First run:
 

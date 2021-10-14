@@ -10,6 +10,8 @@ Fabric™](https://storagemadeeasy.com/about/) which provides a software
 solution to integrate and unify File and Object Storage accessible
 through a global file system.
 
+## Configuration
+
 The initial setup for the Enterprise File Fabric backend involves
 getting a token from the the Enterprise File Fabric which you need to
 do in your browser.  `rclone config` walks you through it.
