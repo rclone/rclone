@@ -17,6 +17,7 @@ Here is an overview of the major features of each cloud storage system.
 | Name                         | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type |
 | ---------------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|
 | 1Fichier                     | Whirlpool   | No      | No               | Yes             | R         |
+| Akamai Netstorage            | MD5, SHA256 | Yes     | No               | No              | R         |
 | Amazon Drive                 | MD5         | No      | Yes              | No              | R         |
 | Amazon S3 (or S3 compatible) | MD5         | Yes     | No               | No              | R/W       |
 | Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |

@@ -52,6 +52,7 @@ docs = [
     "mailru.md",
     "mega.md",
     "memory.md",
+    "netstorage.md",
     "azureblob.md",
     "onedrive.md",
     "opendrive.md",
