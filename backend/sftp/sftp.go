@@ -784,7 +784,7 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 		}
 		_, err := f.NewObject(ctx, remote)
 		if err != nil {
-			if err == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
+			if err == fs.ErrorObjectNotFound || err == fs.ErrorIsDir {
 				// File doesn't exist so return old f
 				f.root = root
 				f.absRoot = oldAbsRoot
