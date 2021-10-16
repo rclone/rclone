@@ -31,13 +31,13 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/auth"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/common"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/sharing"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/auth"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/common"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/sharing"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/team"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/users"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/dropbox/dbhash"
 	"github.com/rclone/rclone/fs"
@@ -580,7 +580,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 }
 
 // headerGenerator for dropbox sdk
-func (f *Fs) headerGenerator(hostType string, style string, namespace string, route string) map[string]string {
+func (f *Fs) headerGenerator(hostType string, namespace string, route string) map[string]string {
 	if f.ns == "" {
 		return map[string]string{}
 	}
@@ -794,7 +794,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context) (entries fs.DirEntries, err 
 				fs:      f,
 				url:     entry.PreviewUrl,
 				remote:  entryPath,
-				modTime: entry.TimeInvited,
+				modTime: *entry.TimeInvited,
 			}
 			if err != nil {
 				return nil, err
@@ -1169,14 +1169,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	if expire < fs.DurationOff {
 		expiryTime := time.Now().Add(time.Duration(expire)).UTC().Round(time.Second)
-		createArg.Settings.Expires = expiryTime
-	}
-	// FIXME note we can't set Settings for non enterprise dropbox
-	// because of https://github.com/dropbox/dropbox-sdk-go-unofficial/issues/75
-	// however this only goes wrong when we set Expires, so as a
-	// work-around remove Settings unless expire is set.
-	if expire == fs.DurationOff {
-		createArg.Settings = nil
+		createArg.Settings.Expires = &expiryTime
 	}
 
 	var linkRes sharing.IsSharedLinkMetadata
@@ -1750,7 +1743,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	commitInfo := files.NewCommitInfo(o.fs.opt.Enc.FromStandardPath(o.remotePath()))
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
-	commitInfo.ClientModified = src.ModTime(ctx).UTC().Round(time.Second)
+	clientModified := src.ModTime(ctx).UTC().Round(time.Second)
+	commitInfo.ClientModified = &clientModified
 	// Don't attempt to create filenames that are too long
 	if cErr := checkPathLength(commitInfo.Path); cErr != nil {
 		return cErr
@@ -1775,7 +1769,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// This will only happen if we are uploading async batches
 	if entry == nil {
 		o.bytes = size
-		o.modTime = commitInfo.ClientModified
+		o.modTime = *commitInfo.ClientModified
 		o.hash = "" // we don't have this
 		return nil
 	}

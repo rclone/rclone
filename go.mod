@@ -25,7 +25,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/dop251/scsu v0.0.0-20200422003335-8fadfb689669
-	github.com/dropbox/dropbox-sdk-go-unofficial v1.0.1-0.20210114204226-41fdcdae8a53
+	github.com/dropbox/dropbox-sdk-go-unofficial/v6 v6.0.3
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/gabriel-vasile/mimetype v1.3.1
 	github.com/go-chi/chi/v5 v5.0.3
