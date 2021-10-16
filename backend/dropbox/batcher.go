@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/async"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/async"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
