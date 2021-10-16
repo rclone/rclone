@@ -133,7 +133,7 @@ func TestListJSON(t *testing.T) {
 				IsDir:   false,
 			}},
 		}, {
-			name: "NoModTime",
+			name: "NoMimeType",
 			opt: operations.ListJSONOpt{
 				FilesOnly:  true,
 				NoMimeType: true,
@@ -249,6 +249,24 @@ func TestStatJSON(t *testing.T) {
 			name:   "Root",
 			remote: "",
 			opt:    operations.ListJSONOpt{},
+			want: &operations.ListJSONItem{
+				Path:  "",
+				Name:  "",
+				IsDir: true,
+			},
+		}, {
+			name:   "RootFilesOnly",
+			remote: "",
+			opt: operations.ListJSONOpt{
+				FilesOnly: true,
+			},
+			want: nil,
+		}, {
+			name:   "RootDirsOnly",
+			remote: "",
+			opt: operations.ListJSONOpt{
+				DirsOnly: true,
+			},
 			want: &operations.ListJSONItem{
 				Path:  "",
 				Name:  "",

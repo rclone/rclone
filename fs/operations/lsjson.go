@@ -264,6 +264,21 @@ func StatJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) 
 	if err != nil {
 		return nil, err
 	}
+
+	// Root is always a directory. When we have a NewDirEntry
+	// primitive we need to call it, but for now this will do.
+	if remote == "" {
+		if !lj.dirs {
+			return nil, nil
+		}
+		// Check the root directory exists
+		_, err := fsrc.List(ctx, "")
+		if err != nil {
+			return nil, err
+		}
+		return lj.entry(ctx, fs.NewDir("", time.Now()))
+	}
+
 	// Could be a file or a directory here
 	if lj.files {
 		// NewObject can return the sentinel errors ErrorObjectNotFound or ErrorIsDir
@@ -288,14 +303,6 @@ func StatJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) 
 		}
 	}
 	// Must be a directory here
-	if remote == "" {
-		// Check the root directory exists
-		_, err := fsrc.List(ctx, "")
-		if err != nil {
-			return nil, err
-		}
-		return lj.entry(ctx, fs.NewDir("", time.Now()))
-	}
 	parent := path.Dir(remote)
 	if parent == "." || parent == "/" {
 		parent = ""
