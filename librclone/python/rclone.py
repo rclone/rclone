@@ -21,11 +21,22 @@ import json
 import subprocess
 from ctypes import *
 
+class RcloneRPCString(c_char_p):
+    """
+    This is a raw string from the C API
+
+    With a plain c_char_p type, ctypes will replace it with a
+    regular Python string object that cannot be used with
+    RcloneFreeString. Subclassing prevents it, while the string
+    can still be retrieved from attribute value.
+    """
+    pass
+
 class RcloneRPCResult(Structure):
     """
     This is returned from the C API when calling RcloneRPC
     """
-    _fields_ = [("Output", c_char_p),
+    _fields_ = [("Output", RcloneRPCString),
                 ("Status", c_int)]
 
 class RcloneException(Exception):
@@ -49,10 +60,12 @@ class Rclone():
 
     Initialise with shared_object as the file path of librclone.so
     """
-    def __init__(self, shared_object="./librclone.so"):
+    def __init__(self, shared_object=f"./librclone{'.dll' if os.name == 'nt' else '.so'}"):
         self.rclone = CDLL(shared_object)
         self.rclone.RcloneRPC.restype = RcloneRPCResult
         self.rclone.RcloneRPC.argtypes = (c_char_p, c_char_p)
+        self.rclone.RcloneFreeString.restype = None
+        self.rclone.RcloneFreeString.argtypes = (c_char_p,)
         self.rclone.RcloneInitialize.restype = None
         self.rclone.RcloneInitialize.argtypes = ()
         self.rclone.RcloneFinalize.restype = None
@@ -70,7 +83,8 @@ class Rclone():
         method = method.encode("utf-8")
         parameters = json.dumps(kwargs).encode("utf-8")
         resp = self.rclone.RcloneRPC(method, parameters)
-        output = json.loads(resp.Output.decode("utf-8"))
+        output = json.loads(resp.Output.value.decode("utf-8"))
+        self.rclone.RcloneFreeString(resp.Output)
         status = resp.Status
         if status != 200:
             raise RcloneException(output, status)
