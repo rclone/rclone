@@ -648,7 +648,7 @@ func SuffixName(ctx context.Context, remote string) string {
 		ext := path.Ext(remote)
 		base := remote[:len(remote)-len(ext)]
 		fullExt := ext
-		while ext != "" {
+		for ext != "" {
 			ext = path.Ext(base)
 			base = base[:len(base)-len(ext)]
 			fullExt = ext + fullExt
