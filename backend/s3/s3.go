@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -1134,6 +1135,15 @@ If empty it will default to the environment variable "AWS_PROFILE" or
 `,
 			Advanced: true,
 		}, {
+			Name: "assume_role_arn",
+			Help: `Arn of a Role to assume 
+
+This variable controls the if a specific role should be assumed using the configured creds.
+
+If empty the configured creds will be used to setup the client. 
+`,
+			Advanced: true,
+		}, {
 			Name:     "session_token",
 			Help:     "An AWS session token",
 			Advanced: true,
@@ -1349,6 +1359,7 @@ type Options struct {
 	DisableChecksum       bool                 `config:"disable_checksum"`
 	SharedCredentialsFile string               `config:"shared_credentials_file"`
 	Profile               string               `config:"profile"`
+	AssumeRoleArn         string               `config:"assume_role_arn"`
 	SessionToken          string               `config:"session_token"`
 	UploadConcurrency     int                  `config:"upload_concurrency"`
 	ForcePathStyle        bool                 `config:"force_path_style"`
@@ -1606,6 +1617,26 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	if err != nil {
 		return nil, nil, err
 	}
+
+	if opt.AssumeRoleArn != "" {
+		fs.Debugf(nil, fmt.Sprintf("Assuming role: %s", opt.AssumeRoleArn))
+		// Get new creds from assume role using the previously configured cred
+		credSes, err := session.NewSessionWithOptions(session.Options{
+			Config: aws.Config{
+				Credentials: cred,
+				Region:      &opt.Region,
+				HTTPClient:  client,
+			},
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+		assumeRoleCreds := stscreds.NewCredentials(credSes, opt.AssumeRoleArn)
+
+		// update the session with creds recieved from assume role
+		ses.Config.Credentials = assumeRoleCreds
+	}
+
 	c := s3.New(ses)
 	if opt.V2Auth || opt.Region == "other-v2-signature" {
 		fs.Debugf(nil, "Using v2 auth")
