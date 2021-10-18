@@ -695,7 +695,7 @@ func testMetadataInput(t *testing.T, f *Fs) {
 
 // Test that chunker refuses to change on objects with future/unknown metadata
 func testFutureProof(t *testing.T, f *Fs) {
-	if f.opt.MetaFormat == "none" {
+	if !f.useMeta {
 		t.Skip("this test requires metadata support")
 	}
 
@@ -865,9 +865,11 @@ func testChunkerServerSideMove(t *testing.T, f *Fs) {
 func testMD5AllSlow(t *testing.T, f *Fs) {
 	ctx := context.Background()
 	fsResult := deriveFs(ctx, t, f, "md5all", settings{
-		"chunk_size":  "1P",
-		"name_format": "*.#",
-		"hash_type":   "md5all",
+		"chunk_size":   "1P",
+		"name_format":  "*.#",
+		"hash_type":    "md5all",
+		"transactions": "rename",
+		"meta_format":  "simplejson",
 	})
 	chunkFs, ok := fsResult.(*Fs)
 	require.True(t, ok, "fs must be a chunker remote")
