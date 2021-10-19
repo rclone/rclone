@@ -527,3 +527,4 @@ put them back in again.` >}}
   * YenForYang <YenForYang@users.noreply.github.com>
   * Joda Stößer <stoesser@yay-digital.de> <services+github@simjo.st>
   * Logeshwaran <waranlogesh@gmail.com>
+  * Rajat Goel <rajat@dropbox.com>
