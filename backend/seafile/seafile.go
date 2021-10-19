@@ -310,7 +310,8 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 	is2faEnabled, _ := m.Get(config2FA)
 	if is2faEnabled != "true" {
-		return nil, errors.New("two-factor authentication is not enabled on this account")
+		// no need to do anything here
+		return nil, nil
 	}
 
 	username, _ := m.Get(configUser)
