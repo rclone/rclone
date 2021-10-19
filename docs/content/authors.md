@@ -528,3 +528,4 @@ put them back in again.` >}}
   * Joda Stößer <stoesser@yay-digital.de> <services+github@simjo.st>
   * Logeshwaran <waranlogesh@gmail.com>
   * Rajat Goel <rajat@dropbox.com>
+  * r0kk3rz <r0kk3rz@gmail.com>
