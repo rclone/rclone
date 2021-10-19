@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1387,6 +1388,21 @@ func (o *Object) decodeMetaDataFromDownloadResponse(info *azblob.DownloadRespons
 	o.modTime = info.LastModified()
 	o.accessTier = o.AccessTier()
 	o.setMetadata(metadata)
+
+	// If it was a Range request, the size is wrong, so correct it
+	if contentRange := info.ContentRange(); contentRange != "" {
+		slash := strings.IndexRune(contentRange, '/')
+		if slash >= 0 {
+			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
+			if err == nil {
+				o.size = i
+			} else {
+				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+			}
+		} else {
+			fs.Debugf(o, "Failed to find length in %q", contentRange)
+		}
+	}
 
 	return nil
 }
