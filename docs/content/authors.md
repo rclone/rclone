@@ -531,3 +531,4 @@ put them back in again.` >}}
   * r0kk3rz <r0kk3rz@gmail.com>
   * Matthew Sevey <mjsevey@gmail.com>
   * Filip Rysavy <fil@siasky.net>
+  * Ian Levesque <ian@ianlevesque.org>
