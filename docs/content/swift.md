@@ -11,7 +11,7 @@ Commercial implementations of that being:
   * [Rackspace Cloud Files](https://www.rackspace.com/cloud/files/)
   * [Memset Memstore](https://www.memset.com/cloud/storage/)
   * [OVH Object Storage](https://www.ovh.co.uk/public-cloud/storage/object-storage/)
-  * [Oracle Cloud Storage](https://cloud.oracle.com/storage-opc)
+  * [Oracle Cloud Storage](https://cloud.oracle.com/object-storage/buckets)
   * [IBM Bluemix Cloud ObjectStorage Swift](https://console.bluemix.net/docs/infrastructure/objectstorage-swift/index.html)
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
