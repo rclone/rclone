@@ -222,13 +222,14 @@ var retryStatusCodes = []struct {
 		// delete in that folder. Please try again later or use
 		// another name. (error_background)
 		code:  "error_background",
-		sleep: 6 * time.Second,
+		sleep: 1 * time.Second,
 	},
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
-func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error, status api.OKError) (bool, error) {
+// try should be the number of the tries so far, counting up from 1
+func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error, status api.OKError, try int) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
@@ -244,9 +245,10 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error, st
 			for _, retryCode := range retryStatusCodes {
 				if code == retryCode.code {
 					if retryCode.sleep > 0 {
-						// make this thread only sleep extra time
-						fs.Debugf(f, "Sleeping for %v to wait for %q error to clear", retryCode.sleep, retryCode.code)
-						time.Sleep(retryCode.sleep)
+						// make this thread only sleep exponentially increasing extra time
+						sleepTime := retryCode.sleep << (try - 1)
+						fs.Debugf(f, "Sleeping for %v to wait for %q error to clear", sleepTime, retryCode.code)
+						time.Sleep(sleepTime)
 					}
 					return true, err
 				}
@@ -400,11 +402,13 @@ func (f *Fs) rpc(ctx context.Context, function string, p params, result api.OKEr
 		ContentType: "application/x-www-form-urlencoded",
 		Options:     options,
 	}
+	try := 0
 	err = f.pacer.Call(func() (bool, error) {
+		try++
 		// Refresh the body each retry
 		opts.Body = strings.NewReader(data.Encode())
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, result)
-		return f.shouldRetry(ctx, resp, err, result)
+		return f.shouldRetry(ctx, resp, err, result, try)
 	})
 	if err != nil {
 		return resp, err
@@ -1278,9 +1282,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		var contentLength = size
 		opts.ContentLength = &contentLength // NB CallJSON scribbles on this which is naughty
 	}
+	try := 0
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+		try++
 		resp, err := o.fs.srv.CallJSON(ctx, &opts, nil, &uploader)
-		return o.fs.shouldRetry(ctx, resp, err, nil)
+		return o.fs.shouldRetry(ctx, resp, err, nil, try)
 	})
 	if err != nil {
 		return errors.Wrap(err, "failed to upload")
