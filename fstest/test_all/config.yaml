@@ -109,6 +109,10 @@ backends:
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
+   ignore:
+     # This test doesn't work on a standard dropbox account because it
+     # tries to set the expiry of the link
+     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
  - backend:  "filefabric"
    remote:   "TestFileFabric:"
    fastlist: false
