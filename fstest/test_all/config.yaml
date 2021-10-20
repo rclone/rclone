@@ -24,6 +24,8 @@ backends:
  - backend:  "crypt"
    remote:   "TestCryptDrive:"
    fastlist: true
+   ignore:
+     - TestCopyFileMaxTransfer
  - backend:  "crypt"
    remote:   "TestCryptSwift:"
    fastlist: false
@@ -106,6 +108,10 @@ backends:
  - backend:  "drive"
    remote:   "TestDrive:"
    fastlist: true
+   ignore:
+     # Test with CutoffModeHard does not result in ErrorMaxTransferLimitReachedFatal
+     # because googleapi replaces it with a non-fatal error
+     - TestCopyFileMaxTransfer
  - backend:  "dropbox"
    remote:   "TestDropbox:"
    fastlist: false
