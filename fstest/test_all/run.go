@@ -46,7 +46,8 @@ type Run struct {
 	NoBinary    bool   // set to not build a binary
 	SizeLimit   int64  // maximum test file size
 	Ignore      map[string]struct{}
-	ListRetries int // -list-retries if > 0
+	ListRetries int     // -list-retries if > 0
+	ExtraTime   float64 // multiply the timeout by this
 	// Internals
 	CmdLine     []string
 	CmdString   string
@@ -337,7 +338,12 @@ func (r *Run) Init() {
 	} else {
 		r.CmdLine = []string{"./" + r.BinaryName()}
 	}
-	r.CmdLine = append(r.CmdLine, prefix+"v", prefix+"timeout", timeout.String(), "-remote", r.Remote)
+	testTimeout := *timeout
+	log.Printf("extra time: %f", r.ExtraTime)
+	if r.ExtraTime > 0 {
+		testTimeout = time.Duration(float64(testTimeout) * r.ExtraTime)
+	}
+	r.CmdLine = append(r.CmdLine, prefix+"v", prefix+"timeout", testTimeout.String(), "-remote", r.Remote)
 	listRetries := *listRetries
 	if r.ListRetries > 0 {
 		listRetries = r.ListRetries
