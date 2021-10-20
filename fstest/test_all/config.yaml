@@ -241,6 +241,7 @@ backends:
  - backend:  "fichier"
    remote:   "TestFichier:"
    fastlist: false
+   listretries: 5
    tests:
      - backend
  - backend:  "qingstor"
