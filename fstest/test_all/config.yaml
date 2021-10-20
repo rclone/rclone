@@ -135,6 +135,10 @@ backends:
  - backend:  "onedrive"
    remote:   "TestOneDrive:"
    fastlist: false
+   ignore:
+     # This test doesn't work on a standard Onedrive account returning
+     # accessDenied: accountUpgradeRequired: Account Upgrade is required for this operation.
+     - TestIntegration/FsMkdir/FsPutFiles/PublicLink
  - backend:  "onedrive"
    remote:   "TestOneDriveBusiness:"
    fastlist: false
