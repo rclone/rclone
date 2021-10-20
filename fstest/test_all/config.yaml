@@ -300,6 +300,7 @@ backends:
  - backend:  "putio"
    remote:   "TestPutio:"
    fastlist: false
+   extratime: 2.0
  - backend:  "sharefile"
    remote:   "TestSharefile:"
    fastlist: false
