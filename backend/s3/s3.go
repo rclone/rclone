@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/processcreds"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
@@ -1303,6 +1304,16 @@ See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rcl
 This is usually set to a CloudFront CDN URL as AWS S3 offers
 cheaper egress for data downloaded through the CloudFront network.`,
 			Advanced: true,
+		}, {
+			Name: "credential_process",
+			Help: `Run this process for obtaining credentials.
+
+Setting this option disables all other means of obtaining credentials. It corresponds to
+setting "credential_process" in the AWS configuration file ([documented here](https://docs.aws.amazon.com/sdkref/latest/guide/setting-global-credential_process.html)).
+As rclone currently does not support obtaining this value from the AWS config
+file, it needs to be configured explicitly.
+`,
+			Advanced: true,
 		},
 		}})
 }
@@ -1365,6 +1376,7 @@ type Options struct {
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
 	DisableHTTP2          bool                 `config:"disable_http2"`
 	DownloadURL           string               `config:"download_url"`
+	CredentialProcess     string               `config:"credential_process"`
 }
 
 // Fs represents a remote s3 server
@@ -1558,16 +1570,20 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	}
 	cred := credentials.NewChainCredentials(providers)
 
-	switch {
-	case opt.EnvAuth:
-		// No need for empty checks if "env_auth" is true
-	case v.AccessKeyID == "" && v.SecretAccessKey == "":
-		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
-		cred = credentials.AnonymousCredentials
-	case v.AccessKeyID == "":
-		return nil, nil, errors.New("access_key_id not found")
-	case v.SecretAccessKey == "":
-		return nil, nil, errors.New("secret_access_key not found")
+	if len(opt.CredentialProcess) != 0 {
+		cred = processcreds.NewCredentials(opt.CredentialProcess)
+	} else {
+		switch {
+		case opt.EnvAuth:
+			// No need for empty checks if "env_auth" is true
+		case v.AccessKeyID == "" && v.SecretAccessKey == "":
+			// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
+			cred = credentials.AnonymousCredentials
+		case v.AccessKeyID == "":
+			return nil, nil, errors.New("access_key_id not found")
+		case v.SecretAccessKey == "":
+			return nil, nil, errors.New("secret_access_key not found")
+		}
 	}
 
 	if opt.Region == "" {
