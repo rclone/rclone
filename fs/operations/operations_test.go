@@ -34,6 +34,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	_ "github.com/rclone/rclone/backend/all" // import all backends
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -1579,6 +1580,10 @@ func TestTouchDir(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 
+	if r.Fremote.Precision() == fs.ModTimeNotSupported {
+		t.Skip("Skipping test as remote does not support modtime")
+	}
+
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 	file3 := r.WriteBoth(ctx, "sub dir/potato3", "hello", t2)
@@ -1587,8 +1592,13 @@ func TestTouchDir(t *testing.T) {
 	timeValue := time.Date(2010, 9, 8, 7, 6, 5, 4, time.UTC)
 	err := operations.TouchDir(ctx, r.Fremote, timeValue, true)
 	require.NoError(t, err)
-	file1.ModTime = timeValue
-	file2.ModTime = timeValue
-	file3.ModTime = timeValue
-	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+	if accounting.Stats(ctx).GetErrors() != 0 {
+		err = errors.Cause(accounting.Stats(ctx).GetLastError())
+		require.True(t, err == fs.ErrorCantSetModTime || err == fs.ErrorCantSetModTimeWithoutDelete)
+	} else {
+		file1.ModTime = timeValue
+		file2.ModTime = timeValue
+		file3.ModTime = timeValue
+		fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+	}
 }
