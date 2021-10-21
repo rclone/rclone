@@ -1914,8 +1914,9 @@ func TouchDir(ctx context.Context, f fs.Fs, t time.Time, recursive bool) error {
 				fs.Debugf(f, "Touching %q", o.Remote())
 				err := o.SetModTime(ctx, t)
 				if err != nil {
+					err = errors.Wrap(err, "failed to touch")
 					err = fs.CountError(err)
-					fs.Errorf(o, "Failed to touch %v", err)
+					fs.Errorf(o, "%v", err)
 				}
 			}
 		})
