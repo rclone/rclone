@@ -532,3 +532,4 @@ put them back in again.` >}}
   * Matthew Sevey <mjsevey@gmail.com>
   * Filip Rysavy <fil@siasky.net>
   * Ian Levesque <ian@ianlevesque.org>
+  * Thomas Stachl <thomas@stachl.me>
