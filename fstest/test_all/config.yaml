@@ -116,6 +116,7 @@ backends:
  - backend:  "filefabric"
    remote:   "TestFileFabric:"
    fastlist: false
+   extratime: 2.0
  - backend:  "googlecloudstorage"
    remote:   "TestGoogleCloudStorage:"
    fastlist: true
