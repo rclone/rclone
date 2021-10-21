@@ -132,7 +132,7 @@ func Touch(ctx context.Context, f fs.Fs, fileName string) error {
 				return errors.Wrap(err, "failed to touch (create)")
 			}
 		}
-		if errors.Cause(err) == fs.ErrorNotAFile {
+		if errors.Cause(err) == fs.ErrorIsDir {
 			if recursive {
 				// Touch existing directory, recursive
 				fs.Debugf(nil, "Touching files in directory recursively")

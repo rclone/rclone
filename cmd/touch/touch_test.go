@@ -112,3 +112,43 @@ func TestTouchCreateMultipleDirAndFile(t *testing.T) {
 	file1 := fstest.NewItem("a/b/c.txt", "", t1)
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"a", "a/b"}, fs.ModTimeNotSupported)
 }
+
+func TestTouchEmptyDir(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	err := r.Fremote.Mkdir(context.Background(), "a")
+	require.NoError(t, err)
+	err = Touch(context.Background(), r.Fremote, "a")
+	require.NoError(t, err)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{"a"}, fs.ModTimeNotSupported)
+}
+
+func TestTouchDirWithFiles(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	err := r.Fremote.Mkdir(context.Background(), "a")
+	require.NoError(t, err)
+	file1 := r.WriteObject(context.Background(), "a/f1", "111", t1)
+	file2 := r.WriteObject(context.Background(), "a/f2", "222", t1)
+	err = Touch(context.Background(), r.Fremote, "a")
+	require.NoError(t, err)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2}, []string{"a"}, fs.ModTimeNotSupported)
+}
+
+func TestRecursiveTouchDirWithFiles(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	err := r.Fremote.Mkdir(context.Background(), "a/b/c")
+	require.NoError(t, err)
+	file1 := r.WriteObject(context.Background(), "a/f1", "111", t1)
+	file2 := r.WriteObject(context.Background(), "a/b/f2", "222", t1)
+	file3 := r.WriteObject(context.Background(), "a/b/c/f3", "333", t1)
+	recursive = true
+	err = Touch(context.Background(), r.Fremote, "a")
+	recursive = false
+	require.NoError(t, err)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, file3}, []string{"a", "a/b", "a/b/c"}, fs.ModTimeNotSupported)
+}
