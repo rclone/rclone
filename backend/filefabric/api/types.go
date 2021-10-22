@@ -69,11 +69,29 @@ func (i *Int) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, (*int)(i))
 }
 
+// String represents an string which can be represented in JSON as a
+// quoted string or an integer.
+type String string
+
+// MarshalJSON turns a String into JSON
+func (s *String) MarshalJSON() (out []byte, err error) {
+	return json.Marshal((*string)(s))
+}
+
+// UnmarshalJSON turns JSON into a String
+func (s *String) UnmarshalJSON(data []byte) error {
+	err := json.Unmarshal(data, (*string)(s))
+	if err != nil {
+		*s = String(data)
+	}
+	return nil
+}
+
 // Status return returned in all status responses
 type Status struct {
 	Code    string `json:"status"`
 	Message string `json:"statusmessage"`
-	TaskID  string `json:"taskid"`
+	TaskID  String `json:"taskid"`
 	// Warning string `json:"warning"` // obsolete
 }
 

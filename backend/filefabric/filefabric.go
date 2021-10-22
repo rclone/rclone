@@ -844,7 +844,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 }
 
 // Wait for the the background task to complete if necessary
-func (f *Fs) waitForBackgroundTask(ctx context.Context, taskID string) (err error) {
+func (f *Fs) waitForBackgroundTask(ctx context.Context, taskID api.String) (err error) {
 	if taskID == "" || taskID == "0" {
 		// No task to wait for
 		return nil
