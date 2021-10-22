@@ -25,6 +25,7 @@ start() {
     echo type=hdfs
     echo namenode=127.0.0.1:8020
     echo username=root
+    echo _connect=${namenode}
 }
 stop() {
     if status ; then
