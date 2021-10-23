@@ -533,3 +533,4 @@ put them back in again.` >}}
   * Filip Rysavy <fil@siasky.net>
   * Ian Levesque <ian@ianlevesque.org>
   * Thomas Stachl <thomas@stachl.me>
+  * Dmitry Bogatov <git#v1@kaction.cc>
