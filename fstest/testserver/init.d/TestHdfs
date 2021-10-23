@@ -16,7 +16,7 @@ start() {
         -p 127.0.0.1:750:750     \
         -p 127.0.0.1:88:88       \
         rclone/test-hdfs
-    sleep 10
+    sleep 30
 
     if [ $KERBEROS = "true" ]; then
         docker cp rclone-hdfs:/tmp/krb5cc_0 /tmp/krb5cc_`id -u`
