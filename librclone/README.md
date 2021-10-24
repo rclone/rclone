@@ -33,6 +33,10 @@ The library will depend on `libdl` and `libpthread` on Linux/macOS, unless
 linking with a C standard library where their functionality is integrated,
 which is the case for glibc version 2.34 and newer.
 
+You may add arguments `-ldflags -s` to make the library file smaller. This will
+omit symbol table and debug information, reducing size by about 25% on Linux and
+50% on Windows.
+
 ### Documentation
 
 For documentation see the Go documentation for:
