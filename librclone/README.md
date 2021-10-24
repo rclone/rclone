@@ -13,7 +13,7 @@ The shims are a thin wrapper over the rclone RPC.
 
 The implementation is based on cgo; to build it you need Go and a GCC compatible
 C compiler (GCC or Clang). On Windows you can use the MinGW port of GCC,
-installing it via the [MSYS2](https://www.msys2.org) distribution is recommended
+e.g. by installing it in a [MSYS2](https://www.msys2.org) distribution
 (make sure you install GCC in the classic mingw64 subsystem, the ucrt64 version
 is not compatible with cgo).
 
@@ -36,6 +36,14 @@ which is the case for glibc version 2.34 and newer.
 You may add arguments `-ldflags -s` to make the library file smaller. This will
 omit symbol table and debug information, reducing size by about 25% on Linux and
 50% on Windows.
+
+Note that on macOS and Windows the mount functions will not be available unless
+you add additional argument `-tags cmount`. On Windows this also requires you to
+first install the third party utility [WinFsp](http://www.secfs.net/winfsp/),
+with the "Developer" feature selected, and to set environment variable CPATH
+pointing to the fuse include directory within the WinFsp installation
+(typically `C:\Program Files (x86)\WinFsp\inc\fuse`). See also the
+[mount](/commands/rclone_mount/#installing-on-windows) documentation.
 
 ### Documentation
 
