@@ -373,6 +373,7 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 				sum.lastError = stats.lastError
 			}
 			sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
+			sum.transferQueueSize += stats.transferQueueSize
 			sum.oldDuration += stats.oldDuration
 			sum.oldTimeRanges = append(sum.oldTimeRanges, stats.oldTimeRanges...)
 			stats.average.mu.Lock()
