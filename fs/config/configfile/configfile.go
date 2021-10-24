@@ -24,6 +24,7 @@ func Install() {
 // Storage implements config.Storage for saving and loading config
 // data in a simple INI based file.
 type Storage struct {
+	lf *bytes.Reader        // contents of config file before decryption
 	gc *goconfig.ConfigFile // config file loaded - thread safe
 	mu sync.Mutex           // to protect the following variables
 	fi os.FileInfo          // stat of the file when last loaded
@@ -38,16 +39,36 @@ func (s *Storage) check() {
 		// Check to see if config file has changed since it was last loaded
 		fi, err := os.Stat(configPath)
 		if err == nil {
-			// check to see if config file has changed and if it has, reload it
-			if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
-				fs.Debugf(nil, "Config file has changed externaly - reloading")
-				err := s._load()
-				if err != nil {
-					fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)
+			// If this was received via a named pipe, we can't reload it
+			if (fi.Mode() & os.ModeNamedPipe) != 0 {
+				return
+			} else {
+				// check to see if config file has changed and if it has, reload it
+				if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
+					fs.Debugf(nil, "Config file has changed externaly - reloading")
+					err := s._load()
+					if err != nil {
+						fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)
+					}
 				}
 			}
 		}
 	}
+}
+
+func (s *Storage) _loadFIFO(configPath string) (err error) {
+	fd, _ := ioutil.ReadFile(configPath)
+	defer ioutil.NopCloser(bytes.NewReader(fd))
+	s.lf = bytes.NewReader(fd)
+	return nil
+}
+
+func (s *Storage) _loadFile(configPath string) (err error) {
+	fd, _ := os.Open(configPath)
+	defer fs.CheckClose(fd, &err)
+	fdBytes, _ := ioutil.ReadAll(fd)
+	s.lf = bytes.NewReader(fdBytes)
+	return nil
 }
 
 // _load the config from permanent storage, decrypting if necessary
@@ -66,19 +87,26 @@ func (s *Storage) _load() (err error) {
 		return config.ErrorConfigFileNotFound
 	}
 
-	fd, err := os.Open(configPath)
+	fileStat, err := os.Stat(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return config.ErrorConfigFileNotFound
 		}
 		return err
 	}
-	defer fs.CheckClose(fd, &err)
+
+	// Named pipes can't be read with os.Open, so we need to fall back
+	// to the previously-used ioutil.ReadFile method
+	if (fileStat.Mode() & os.ModeNamedPipe) != 0 {
+		s._loadFIFO(configPath)
+	} else {
+		s._loadFile(configPath)
+	}
 
 	// Update s.fi with the current file info
-	s.fi, _ = os.Stat(configPath)
+	s.fi = fileStat
 
-	cryptReader, err := config.Decrypt(fd)
+	cryptReader, err := config.Decrypt(s.lf)
 	if err != nil {
 		return err
 	}

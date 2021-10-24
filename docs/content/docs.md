@@ -755,7 +755,11 @@ editing the configuration file.
 The configuration file will typically contain login information, and
 should therefore have restricted permissions so that only the current user
 can read it. Rclone tries to ensure this when it writes the file.
-You may also choose to [encrypt](#configuration-encryption) the file.
+You may also choose to [encrypt](#configuration-encryption) the file. 
+Alternately, you can use [Mozilla SOPS](https://github.com/mozilla/sops) to
+encrypt the configuration file, and pass it in with decryption being transparently
+handled by SOPS, thus not needing password input - useful for cron.
+See [SOPS](#sops) for more information.
 
 When token-based authentication are used, the configuration file
 must be writable, because rclone needs to update the tokens inside it.
@@ -1987,6 +1991,21 @@ it will be relevant for commands that do operate on backends in
 general, but are used without referencing a stored remote, e.g.
 listing local filesystem paths, or
 [connection strings](#connection-strings): `rclone --config="" ls .`
+
+### SOPS
+
+Alternately, you can choose to encrypt the file externally with SOPS.
+The encrypted configuration file would then be passed in, like so:
+`sops exec-file $RCLONE_CONFIG "rclone --config={} $RCLONE_COMMAND`.
+
+One downside to this is that as it's passed in via FIFO, it's not available
+for Windows users, and also can't be reloaded since the pipe is closed as soon
+as it's read. SOPS includes a `--no-fifo` option that can be passed, which
+writes the decrypted file to a temporary location, and removes it as soon
+as the process has exited.
+
+The other downside is that you'll need to manually decrypt the file before
+it can be edited, either with `rclone config`, or manually.
 
 Developer options
 -----------------
