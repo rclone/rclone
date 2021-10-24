@@ -130,9 +130,10 @@ Client ID and Key by following the steps below:
 
 1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click `New registration`.
 2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI`, then type (do not copy and paste) `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
-3. Under `manage` select `Certificates & secrets`, click `New client secret`. Enter a description (can be anything) and set `Expires` to 24 months. Copy and keep that secret _Value_ for later use (you _won't_ be able to see this value afterwards).
-4. Under `manage` select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
-5. Search and select the following permissions: `Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`. Once selected click `Add permissions` at the bottom.
+3. Select `Certificates & secrets`, click `New client secret`. Enter a description (can be anything) and set `Expires` to 24 months. Copy and keep that secret _Value_ for later use (you _won't_ be able to see this value afterwards).
+4. Select `API permissions`, click `Add a permission` and select `Microsoft Graph` then select `delegated permissions`.
+6. Search and select the following permissions: `Files.Read`, `Files.ReadWrite`, `Files.Read.All`, `Files.ReadWrite.All`, `offline_access`, `User.Read`. Once selected click `Add permissions` at the bottom.
+7. Select Authentication, click 'Add a platform' and select 'Web'. Enter the Redirect URI value as http://localhost:53682/ the click 'Configure'.
 
 Now the application is complete. Run `rclone config` to create or edit a OneDrive remote.
 Supply the app ID and password as Client ID and Secret, respectively. rclone will walk you through the remaining steps.
