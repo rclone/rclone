@@ -68,12 +68,14 @@ type RcloneRPCResult struct { //nolint:deadcode
 // to the rclone API as described in https://rclone.org/rc/
 //
 //   method is a string, eg "operations/list"
-//   input should be a serialized JSON object
-//   result.Output will be returned as a serialized JSON object
+//   input should be a string with a serialized JSON object
+//   result.Output will be returned as a string with a serialized JSON object
 //   result.Status is a HTTP status return (200=OK anything else fail)
 //
-// Caller is responsible for freeing the memory for result.Output,
-// result itself is passed on the stack.
+// All strings are UTF-8 encoded, on all platforms.
+//
+// Caller is responsible for freeing the memory for result.Output
+// (see RcloneFreeString), result itself is passed on the stack.
 //
 //export RcloneRPC
 func RcloneRPC(method *C.char, input *C.char) (result C.struct_RcloneRPCResult) { //nolint:golint
