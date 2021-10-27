@@ -1,10 +1,13 @@
 package http
 
 import (
+	"crypto/tls"
 	"net"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/net/nettest"
 
@@ -356,9 +359,28 @@ func Test_server_Shutdown(t *testing.T) {
 }
 
 func Test_start(t *testing.T) {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	sslServerOptions := defaultServerOptions
+	sslServerOptions.SslCertBody = []byte(`-----BEGIN CERTIFICATE-----
+MIIBhTCCASugAwIBAgIQIRi6zePL6mKjOipn+dNuaTAKBggqhkjOPQQDAjASMRAw
+DgYDVQQKEwdBY21lIENvMB4XDTE3MTAyMDE5NDMwNloXDTE4MTAyMDE5NDMwNlow
+EjEQMA4GA1UEChMHQWNtZSBDbzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABD0d
+7VNhbWvZLWPuj/RtHFjvtJBEwOkhbN/BnnE8rnZR8+sbwnc/KhCk3FhnpHZnQz7B
+5aETbbIgmuvewdjvSBSjYzBhMA4GA1UdDwEB/wQEAwICpDATBgNVHSUEDDAKBggr
+BgEFBQcDATAPBgNVHRMBAf8EBTADAQH/MCkGA1UdEQQiMCCCDmxvY2FsaG9zdDo1
+NDUzgg4xMjcuMC4wLjE6NTQ1MzAKBggqhkjOPQQDAgNIADBFAiEA2zpJEPQyz6/l
+Wf86aX6PepsntZv2GYlA5UpabfT2EZICICpJ5h/iI+i341gBmLiAFQOyTDT+/wQc
+6MF9+Yw1Yy0t
+-----END CERTIFICATE-----`)
+	sslServerOptions.SslKeyBody = []byte(`-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIIrYSSNQFaA2Hwf1duRSxKtLYX5CB04fSeQ6tF1aY/PuoAoGCCqGSM49
+AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
+EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
+-----END EC PRIVATE KEY-----`)
 	tests := []struct {
 		name    string
 		opt     Options
+		ssl     bool
 		wantErr bool
 	}{
 		{
@@ -366,20 +388,55 @@ func Test_start(t *testing.T) {
 			opt:     defaultServerOptions,
 			wantErr: false,
 		},
+		{
+			name:    "ssl",
+			opt:     sslServerOptions,
+			ssl:     true,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			defer func() {
+				err := Shutdown()
+				if err != nil {
+					t.Fatal("couldn't shutdown server")
+				}
+			}()
 			SetOptions(tt.opt)
 			if err := start(); (err != nil) != tt.wantErr {
 				t.Errorf("start() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			s := defaultServer
-			if useSSL(tt.opt) {
+			router := s.Router()
+			router.Head("/", func(writer http.ResponseWriter, request *http.Request) {
+				writer.WriteHeader(201)
+			})
+			testURL := URL()
+			if tt.ssl {
+				assert.True(t, useSSL(tt.opt))
 				assert.Equal(t, tt.opt.ListenAddr, s.tlsAddrs[0].String())
+				assert.True(t, strings.HasPrefix(testURL, "https://"))
 			} else {
+				assert.True(t, strings.HasPrefix(testURL, "http://"))
 				assert.Equal(t, tt.opt.ListenAddr, s.addrs[0].String())
 			}
+
+			// try to connect to the test server
+			pause := time.Millisecond
+			for i := 0; i < 10; i++ {
+				resp, err := http.Head(testURL)
+				if err == nil {
+					_ = resp.Body.Close()
+					return
+				}
+				// t.Logf("couldn't connect, sleeping for %v: %v", pause, err)
+				time.Sleep(pause)
+				pause *= 2
+			}
+			t.Fatal("couldn't connect to server")
+
 			/* accessing s.httpServer.* can't be done synchronously and is a race condition
 			assert.Equal(t, tt.opt.ServerReadTimeout, defaultServer.httpServer.ReadTimeout)
 			assert.Equal(t, tt.opt.ServerWriteTimeout, defaultServer.httpServer.WriteTimeout)
@@ -424,6 +481,16 @@ func Test_useSSL(t *testing.T) {
 				SslCert:  "",
 				SslKey:   "test",
 				ClientCA: "",
+			}},
+			want: true,
+		},
+		{
+			name: "body",
+			args: args{opt: Options{
+				SslCert:    "",
+				SslKey:     "",
+				SslKeyBody: []byte(`test`),
+				ClientCA:   "",
 			}},
 			want: true,
 		},
