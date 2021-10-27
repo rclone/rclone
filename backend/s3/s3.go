@@ -1603,6 +1603,9 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 		awsSessionOpts.SharedConfigState = session.SharedConfigEnable
 		// Set the name of the profile if supplied
 		awsSessionOpts.Profile = opt.Profile
+		// The session constructor (aws/session/mergeConfigSrcs) will only use the user's preferred credential source
+		// (from the shared config file) if the passed-in Options.Config.Credentials is nil.
+		awsSessionOpts.Config.Credentials = nil
 	}
 	ses, err := session.NewSessionWithOptions(awsSessionOpts)
 	if err != nil {
