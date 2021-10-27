@@ -71,8 +71,10 @@ type Options struct {
 	ServerReadTimeout  time.Duration // Timeout for server reading data
 	ServerWriteTimeout time.Duration // Timeout for server writing data
 	MaxHeaderBytes     int           // Maximum size of request header
-	SslCert            string        // SSL PEM key (concatenation of certificate and CA certificate)
-	SslKey             string        // SSL PEM Private key
+	SslCert            string        // Path to SSL PEM key (concatenation of certificate and CA certificate)
+	SslKey             string        // Path to SSL PEM Private key
+	SslCertBody        []byte        // SSL PEM key (concatenation of certificate and CA certificate) body, ignores SslCert
+	SslKeyBody         []byte        // SSL PEM Private key body, ignores SslKey
 	ClientCA           string        // Client certificate authority to verify clients with
 }
 
@@ -110,7 +112,7 @@ var (
 )
 
 func useSSL(opt Options) bool {
-	return opt.SslKey != ""
+	return opt.SslKey != "" || len(opt.SslKeyBody) > 0
 }
 
 // NewServer instantiates a new http server using provided listeners and options
@@ -127,15 +129,31 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 	var tlsConfig *tls.Config
 
 	useSSL := useSSL(opt)
-	if (opt.SslCert != "") != useSSL {
+	if (len(opt.SslCertBody) > 0) != (len(opt.SslKeyBody) > 0) {
+		err := errors.New("Need both SslCertBody and SslKeyBody to use SSL")
+		log.Fatalf(err.Error())
+		return nil, err
+	}
+	if (opt.SslCert != "") != (opt.SslKey != "") {
 		err := errors.New("Need both -cert and -key to use SSL")
 		log.Fatalf(err.Error())
 		return nil, err
 	}
 
 	if useSSL {
+		var cert tls.Certificate
+		var err error
+		if len(opt.SslCertBody) > 0 {
+			cert, err = tls.X509KeyPair(opt.SslCertBody, opt.SslKeyBody)
+		} else {
+			cert, err = tls.LoadX509KeyPair(opt.SslCert, opt.SslKey)
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
 		tlsConfig = &tls.Config{
-			MinVersion: tls.VersionTLS10, // disable SSL v3.0 and earlier
+			MinVersion:   tls.VersionTLS10, // disable SSL v3.0 and earlier
+			Certificates: []tls.Certificate{cert},
 		}
 	} else if len(listeners) == 0 && len(tlsListeners) != 0 {
 		return nil, errors.New("No SslKey or non-tlsListeners")
@@ -211,22 +229,28 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 }
 
 func (s *server) Serve() {
-	serve := func(l net.Listener) {
+	serve := func(l net.Listener, tls bool) {
 		defer s.closing.Done()
-		if err := s.httpServer.Serve(l); err != http.ErrServerClosed && err != nil {
+		var err error
+		if tls {
+			err = s.httpServer.ServeTLS(l, "", "")
+		} else {
+			err = s.httpServer.Serve(l)
+		}
+		if err != http.ErrServerClosed && err != nil {
 			log.Fatalf(err.Error())
 		}
 	}
 
 	s.closing.Add(len(s.listeners))
 	for _, l := range s.listeners {
-		go serve(l)
+		go serve(l, false)
 	}
 
 	if s.useSSL {
 		s.closing.Add(len(s.tlsListeners))
 		for _, l := range s.tlsListeners {
-			go serve(l)
+			go serve(l, true)
 		}
 	}
 }
