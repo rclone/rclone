@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestShellEscape(t *testing.T) {
+func TestShellEscapeUnix(t *testing.T) {
 	for i, test := range []struct {
 		unescaped, escaped string
 	}{
@@ -20,7 +20,44 @@ func TestShellEscape(t *testing.T) {
 		{"/test/\n", "/test/'\n'"},
 		{":\"'", ":\\\"\\'"},
 	} {
-		got := shellEscape(test.unescaped)
+		got, err := quoteOrEscapeShellPath("unix", test.unescaped)
+		assert.NoError(t, err)
+		assert.Equal(t, test.escaped, got, fmt.Sprintf("Test %d unescaped = %q", i, test.unescaped))
+	}
+}
+
+func TestShellEscapeCmd(t *testing.T) {
+	for i, test := range []struct {
+		unescaped, escaped string
+		ok                 bool
+	}{
+		{"", "\"\"", true},
+		{"c:/this/is/harmless", "\"c:/this/is/harmless\"", true},
+		{"c:/test&notepad", "\"c:/test&notepad\"", true},
+		{"c:/test\"&\"notepad", "", false},
+	} {
+		got, err := quoteOrEscapeShellPath("cmd", test.unescaped)
+		if test.ok {
+			assert.NoError(t, err)
+			assert.Equal(t, test.escaped, got, fmt.Sprintf("Test %d unescaped = %q", i, test.unescaped))
+		} else {
+			assert.Error(t, err)
+		}
+	}
+}
+
+func TestShellEscapePowerShell(t *testing.T) {
+	for i, test := range []struct {
+		unescaped, escaped string
+	}{
+		{"", "''"},
+		{"c:/this/is/harmless", "'c:/this/is/harmless'"},
+		{"c:/test&notepad", "'c:/test&notepad'"},
+		{"c:/test\"&\"notepad", "'c:/test\"&\"notepad'"},
+		{"c:/test'&'notepad", "'c:/test''&''notepad'"},
+	} {
+		got, err := quoteOrEscapeShellPath("powershell", test.unescaped)
+		assert.NoError(t, err)
 		assert.Equal(t, test.escaped, got, fmt.Sprintf("Test %d unescaped = %q", i, test.unescaped))
 	}
 }
