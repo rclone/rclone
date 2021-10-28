@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/union/upstream"

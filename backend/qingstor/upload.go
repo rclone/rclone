@@ -13,7 +13,7 @@ import (
 	"hash"
 	"io"
 	"sort"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/atexit"

@@ -14,7 +14,7 @@ import (
 	"os"
 	"os/user"
 	"strconv"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/rclone/rclone/cmd"

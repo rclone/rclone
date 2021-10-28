@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"

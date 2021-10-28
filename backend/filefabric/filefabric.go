@@ -25,7 +25,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"sync/atomic"
 	"time"
 

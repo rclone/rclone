@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 
 	_ "github.com/rclone/rclone/backend/local"

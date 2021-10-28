@@ -3,7 +3,7 @@ package rcd
 import (
 	"context"
 	"log"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
 	"github.com/rclone/rclone/cmd"

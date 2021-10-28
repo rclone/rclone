@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 	"time"
 

@@ -4,7 +4,7 @@ package cache
 import (
 	"context"
 	"runtime"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"

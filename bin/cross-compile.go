@@ -19,7 +19,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"text/template"
 	"time"
 

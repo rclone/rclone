@@ -18,7 +18,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"sync/atomic"
 	"time"
 

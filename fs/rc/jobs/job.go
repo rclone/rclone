@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"sync/atomic"
 	"time"
 

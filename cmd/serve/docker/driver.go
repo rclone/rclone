@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"

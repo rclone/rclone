@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/Unknwon/goconfig"
 	"github.com/rclone/rclone/fs"

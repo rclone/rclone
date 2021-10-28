@@ -2,7 +2,7 @@
 package pacer
 
 import (
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	liberrors "github.com/rclone/rclone/lib/errors"

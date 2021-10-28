@@ -13,7 +13,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 	"unicode/utf8"
 

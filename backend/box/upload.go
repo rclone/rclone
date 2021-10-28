@@ -13,7 +13,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/box/api"

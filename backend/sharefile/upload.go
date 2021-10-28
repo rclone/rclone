@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/backend/sharefile/api"
 	"github.com/rclone/rclone/fs"

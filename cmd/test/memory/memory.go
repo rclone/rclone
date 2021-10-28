@@ -3,7 +3,7 @@ package memory
 import (
 	"context"
 	"runtime"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/test"

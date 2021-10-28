@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"

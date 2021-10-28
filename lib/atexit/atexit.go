@@ -7,7 +7,7 @@ package atexit
 import (
 	"os"
 	"os/signal"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"sync/atomic"
 
 	"github.com/rclone/rclone/fs"

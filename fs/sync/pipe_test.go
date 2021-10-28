@@ -3,7 +3,7 @@ package sync
 import (
 	"container/heap"
 	"context"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"sync/atomic"
 	"testing"
 

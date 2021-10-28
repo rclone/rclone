@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 	"runtime"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	colorable "github.com/mattn/go-colorable"
 )

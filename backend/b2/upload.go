@@ -13,7 +13,7 @@ import (
 	gohash "hash"
 	"io"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"

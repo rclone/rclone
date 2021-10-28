@@ -12,7 +12,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"

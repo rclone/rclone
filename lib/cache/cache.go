@@ -4,7 +4,7 @@ package cache
 
 import (
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 )
 

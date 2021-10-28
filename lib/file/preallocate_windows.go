@@ -6,7 +6,7 @@ package file
 import (
 	"fmt"
 	"os"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"syscall"
 	"unsafe"
 

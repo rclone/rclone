@@ -5,7 +5,7 @@ package googlephotos
 import (
 	"path"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/backend/googlephotos/api"
 )

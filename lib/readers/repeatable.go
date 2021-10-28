@@ -3,7 +3,8 @@ package readers
 import (
 	"errors"
 	"io"
-	"sync"
+
+	"github.com/rclone/rclone/lib/sync"
 )
 
 // A RepeatableReader implements the io.ReadSeeker it allow to seek cached data

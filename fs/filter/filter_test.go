@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 	"time"
 

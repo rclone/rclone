@@ -6,7 +6,7 @@ import (
 	"context"
 	"sort"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 )
 
 // Func defines a type for a remote control function

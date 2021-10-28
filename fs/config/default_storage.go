@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 )
 
 // defaultStorage implements config.Storage, providing in-memory config.

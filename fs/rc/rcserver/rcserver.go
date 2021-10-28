@@ -15,7 +15,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/lib/sync"
 	"golang.org/x/time/rate"
 )
 

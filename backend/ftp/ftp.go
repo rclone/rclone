@@ -12,7 +12,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/jlaffaye/ftp"

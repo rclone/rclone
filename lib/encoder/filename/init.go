@@ -2,7 +2,7 @@ package filename
 
 import (
 	"encoding/base64"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/klauspost/compress/huff0"
 )

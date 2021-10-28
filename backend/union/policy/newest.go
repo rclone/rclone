@@ -3,7 +3,7 @@ package policy
 import (
 	"context"
 	"path"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/union/upstream"

@@ -10,7 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/async"

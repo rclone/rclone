@@ -5,7 +5,7 @@ package restic
 
 import (
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 )

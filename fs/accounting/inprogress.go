@@ -2,7 +2,7 @@ package accounting
 
 import (
 	"context"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 )

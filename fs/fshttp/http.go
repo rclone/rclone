@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httputil"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"

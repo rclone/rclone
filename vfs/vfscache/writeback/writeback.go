@@ -6,11 +6,11 @@ import (
 	"container/heap"
 	"context"
 	"errors"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/sync"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 

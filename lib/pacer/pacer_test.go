@@ -2,10 +2,10 @@ package pacer
 
 import (
 	"errors"
-	"sync"
 	"testing"
 	"time"
 
+	"github.com/rclone/rclone/lib/sync"
 	"github.com/stretchr/testify/assert"
 )
 

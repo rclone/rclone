@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"

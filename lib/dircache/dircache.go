@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 )

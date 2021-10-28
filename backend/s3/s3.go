@@ -19,7 +19,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"

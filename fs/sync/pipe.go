@@ -6,7 +6,7 @@ import (
 	"math/bits"
 	"strconv"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/aalpar/deheap"
 	"github.com/rclone/rclone/fs"

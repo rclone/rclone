@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -13,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fs/chunkedreader"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/ranges"
+	"github.com/rclone/rclone/lib/sync"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 

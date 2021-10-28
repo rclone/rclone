@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 )
 

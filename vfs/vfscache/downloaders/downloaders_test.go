@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 	"time"
 

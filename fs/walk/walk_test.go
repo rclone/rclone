@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 
 	"github.com/rclone/rclone/fs"

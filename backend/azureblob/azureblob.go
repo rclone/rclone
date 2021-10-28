@@ -19,7 +19,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"

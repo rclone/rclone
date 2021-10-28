@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"errors"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/dop251/scsu"
 	"github.com/klauspost/compress/huff0"

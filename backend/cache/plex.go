@@ -12,7 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	cache "github.com/patrickmn/go-cache"

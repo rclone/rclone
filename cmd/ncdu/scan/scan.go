@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"path"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"

@@ -17,7 +17,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"sync/atomic"
 	"time"
 

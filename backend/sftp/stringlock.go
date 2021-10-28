@@ -3,7 +3,7 @@
 
 package sftp
 
-import "sync"
+import "github.com/rclone/rclone/lib/sync"
 
 // stringLock locks for string IDs passed in
 type stringLock struct {

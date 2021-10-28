@@ -5,7 +5,7 @@ package file
 
 import (
 	"os"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"sync/atomic"
 	"syscall"
 

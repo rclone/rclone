@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"

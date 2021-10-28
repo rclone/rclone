@@ -7,7 +7,7 @@ import (
 	"path"
 	"sort"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"sync/atomic"
 	"time"
 

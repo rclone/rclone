@@ -5,7 +5,7 @@ package pool
 import (
 	"fmt"
 	"log"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/rclone/rclone/lib/mmap"

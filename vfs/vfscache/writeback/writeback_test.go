@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 	"time"
 

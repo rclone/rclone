@@ -3,7 +3,7 @@ package local
 import (
 	"io/ioutil"
 	"os"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 	"time"
 

@@ -15,7 +15,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/readers"

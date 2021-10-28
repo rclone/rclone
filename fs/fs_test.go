@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 	"time"
 

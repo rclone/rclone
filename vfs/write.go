@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 	"os"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"

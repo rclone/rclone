@@ -5,7 +5,7 @@ package sftp
 
 import (
 	"fmt"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 	"time"
 

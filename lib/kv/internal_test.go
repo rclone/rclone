@@ -6,7 +6,7 @@ package kv
 import (
 	"context"
 	"fmt"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

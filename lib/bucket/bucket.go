@@ -4,7 +4,7 @@ package bucket
 import (
 	"errors"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 )
 
 var (

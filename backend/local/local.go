@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 	"unicode/utf8"
 

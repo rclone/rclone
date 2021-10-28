@@ -21,7 +21,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/webdav/api"

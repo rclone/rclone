@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"strings"
-	"sync"
+	"github.com/rclone/rclone/lib/sync"
 	"testing"
 	"testing/iotest"
 	"time"
