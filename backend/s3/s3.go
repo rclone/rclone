@@ -2892,14 +2892,12 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 }
 
 func (o *Object) setMetaData(etag *string, contentLength *int64, lastModified *time.Time, meta map[string]*string, mimeType *string, storageClass *string) {
-	var size int64
 	// Ignore missing Content-Length assuming it is 0
 	// Some versions of ceph do this due their apache proxies
 	if contentLength != nil {
-		size = *contentLength
+		o.bytes = *contentLength
 	}
 	o.setMD5FromEtag(aws.StringValue(etag))
-	o.bytes = size
 	o.meta = meta
 	if o.meta == nil {
 		o.meta = map[string]*string{}
