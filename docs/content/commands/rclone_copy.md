@@ -16,32 +16,46 @@ Copy the source to the destination.  Doesn't transfer
 unchanged files, testing by size and modification time or
 MD5SUM.  Doesn't delete files from the destination.
 
-Note that it is always the contents of the directory that is synced,
-not the directory so when source:path is a directory, it's the
-contents of source:path that are copied, not the directory name and
-contents.
+Note that when the source is a directory, it is always the contents
+of the directory that is copied, not the directory itself.
 
-If dest:path doesn't exist, it is created and the source:path contents
-go there.
-
-For example
+For example, given the following command:
 
     rclone copy source:sourcepath dest:destpath
 
-Let's say there are two files in sourcepath
+Let's say there are two files in source:
 
     sourcepath/one.txt
     sourcepath/two.txt
 
-This copies them to
+The command will copy them to:
 
     destpath/one.txt
     destpath/two.txt
 
-Not to
+Not to:
 
     destpath/sourcepath/one.txt
     destpath/sourcepath/two.txt
+
+Also note that the destination is always a directory. If the path
+does not exist, it will be created as a directory and the contents of
+the source will be copied into it. This is the case even if the source
+path points to a file. If you want to copy a single file to a different
+name you must use [copyto](commands/rclone_copyto/) instead.
+
+For example, given the command:
+
+    rclone copy source:sourcepath/one.txt dest:destpath/one.txt
+
+Rclone will create a directory `dest:destpath/one.txt` and put the source file in there:
+
+    dest:destpath/one.txt/one.txt
+
+Not copy the single source file as a file with the given destination path,
+which would be the result if copyto had been used instead:
+
+    dest:destpath/one.txt
 
 If you are familiar with `rsync`, rclone always works as if you had
 written a trailing `/` - meaning "copy the contents of this directory".
