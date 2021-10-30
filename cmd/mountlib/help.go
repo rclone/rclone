@@ -158,11 +158,16 @@ By default, the owner and group will be taken from the current user, and the bui
 group "Everyone" will be used to represent others. The user/group can be customized
 with FUSE options "UserName" and "GroupName",
 e.g. |-o UserName=user123 -o GroupName="Authenticated Users"|.
+The permissions on each entry will be set according to [options](#options)
+|--dir-perms| and |--file-perms|, which takes a value in traditional
+[numeric notation](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation).
 
-The permissions on each entry will be set according to
-[options](#options) |--dir-perms| and |--file-perms|,
-which takes a value in traditional [numeric notation](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation),
-where the default corresponds to |--file-perms 0666 --dir-perms 0777|.
+The default permissions corresponds to |--file-perms 0666 --dir-perms 0777|,
+i.e. read and write permissions to everyone. This means you will not be able
+to start any programs from the the mount. To be able to do that you must add
+execute permissions, e.g. |--file-perms 0777 --dir-perms 0777| to add it
+to everyone. If the program needs to write files, chances are you will have
+to enable [VFS File Caching](#vfs-file-caching) as well (see also [limitations](#limitations)).
 
 Note that the mapping of permissions is not always trivial, and the result
 you see in Windows Explorer may not be exactly like you expected.
