@@ -401,7 +401,9 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		Path:       "/folder/list",
 		Parameters: f.baseParams(),
 	}
-	opts.Parameters.Set("id", dirID)
+	if dirID != rootID {
+		opts.Parameters.Set("id", dirID)
+	}
 	opts.Parameters.Set("includebreadcrumbs", "false")
 
 	var result api.FolderListResponse
