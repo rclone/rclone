@@ -653,10 +653,11 @@ func (f *Fs) move(ctx context.Context, isFile bool, id, oldLeaf, newLeaf, oldDir
 				"id": {newDirectoryID},
 			},
 		}
+		opts.MultipartParams.Set("items[0][id]", id)
 		if isFile {
-			opts.MultipartParams.Set("files[]", id)
+			opts.MultipartParams.Set("items[0][type]", "file")
 		} else {
-			opts.MultipartParams.Set("folders[]", id)
+			opts.MultipartParams.Set("items[0][type]", "folder")
 		}
 		//replacedLeaf := enc.FromStandardName(leaf)
 		var resp *http.Response
