@@ -307,7 +307,6 @@ backends:
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
-   oneonly:  true
  - backend:  "putio"
    remote:   "TestPutio:"
    fastlist: false
