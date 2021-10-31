@@ -193,7 +193,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string, directoriesOn
 	}
 
 	lcLeaf := strings.ToLower(leaf)
-	found, err := f.listAll(ctx, directoryID, directoriesOnly, filesOnly, func(item *api.Item) bool {
+	_, found, err := f.listAll(ctx, directoryID, directoriesOnly, filesOnly, func(item *api.Item) bool {
 		if strings.ToLower(item.Name) == lcLeaf {
 			info = item
 			return true
@@ -345,13 +345,18 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
+	var newDirID string
+	newDirID, found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
 		if strings.EqualFold(item.Name, leaf) {
 			pathIDOut = item.ID
 			return true
 		}
 		return false
 	})
+	// Update the Root directory ID to its actual value
+	if pathID == rootID {
+		f.dirCache.SetRootIDAlias(newDirID)
+	}
 	return pathIDOut, found, err
 }
 
@@ -395,7 +400,9 @@ type listAllFn func(*api.Item) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+//
+// It returns a newDirID which is what the system returned as the directory ID
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (newDirID string, found bool, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       "/folder/list",
@@ -413,11 +420,12 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return found, errors.Wrap(err, "couldn't list files")
+		return newDirID, found, errors.Wrap(err, "couldn't list files")
 	}
 	if err = result.AsErr(); err != nil {
-		return found, errors.Wrap(err, "error while listing")
+		return newDirID, found, errors.Wrap(err, "error while listing")
 	}
+	newDirID = result.FolderID
 	for i := range result.Content {
 		item := &result.Content[i]
 		if item.Type == api.ItemTypeFolder {
@@ -438,7 +446,6 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			break
 		}
 	}
-
 	return
 }
 
@@ -457,7 +464,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 	var iErr error
-	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
+	_, _, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
 		remote := path.Join(dir, info.Name)
 		if info.Type == api.ItemTypeFolder {
 			// cache the directory ID for later lookups
@@ -561,7 +568,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 
 	// need to check if empty as it will delete recursively by default
 	if check {
-		found, err := f.listAll(ctx, rootID, false, false, func(item *api.Item) bool {
+		_, found, err := f.listAll(ctx, rootID, false, false, func(item *api.Item) bool {
 			return true
 		})
 		if err != nil {
