@@ -1324,6 +1324,42 @@ func (f *Fs) Hashes() hash.Set {
 
 // About gets usage stats
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
+	// If server implements the vendor-specific VFS statistics extension prefer that
+	// (OpenSSH implements it on using syscall.Statfs on Linux and API function GetDiskFreeSpace on Windows)
+	c, err := f.getSftpConnection(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var vfsStats *sftp.StatVFS
+	if _, found := c.sftpClient.HasExtension("statvfs@openssh.com"); found {
+		fs.Debugf(f, "Server has VFS statistics extension")
+		aboutPath := f.absRoot
+		if aboutPath == "" {
+			aboutPath = "/"
+		}
+		fs.Debugf(f, "About path %q", aboutPath)
+		vfsStats, err = c.sftpClient.StatVFS(aboutPath)
+	}
+	f.putSftpConnection(&c, err) // Return to pool asap, if running shell command below it will be re-used
+	if vfsStats != nil {
+		total := vfsStats.TotalSpace()
+		free := vfsStats.FreeSpace()
+		used := total - free
+		return &fs.Usage{
+			Total: fs.NewUsageValue(int64(total)),
+			Used:  fs.NewUsageValue(int64(used)),
+			Free:  fs.NewUsageValue(int64(free)),
+		}, nil
+	} else if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+		fs.Debugf(f, "Failed to retrieve VFS statistics, trying shell command instead: %v", err)
+	} else {
+		fs.Debugf(f, "Server does not have the VFS statistics extension, trying shell command instead")
+	}
+
+	// Fall back to shell command method if possible
 	if f.shellType == shellTypeNotSupported || f.shellType == "cmd" {
 		fs.Debugf(f, "About shell command is not available for shell type %q (set option shell_type to override)", f.shellType)
 		return nil, fmt.Errorf("not supported with shell type %q", f.shellType)
