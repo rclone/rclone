@@ -126,6 +126,20 @@ func (dc *DirCache) Flush() {
 	dc.cacheMu.Unlock()
 }
 
+// SetRootIDAlias sets the rootID to that passed in. This assumes that
+// the new ID is just an alias for the old ID so does not flush
+// anything.
+//
+// This should be called from FindLeaf (and only from FindLeaf) if it
+// is discovered that the root ID is incorrect. For example some
+// backends use "0" as a root ID, but it has a real ID which is needed
+// for some operations.
+func (dc *DirCache) SetRootIDAlias(rootID string) {
+	// No locking as this is called from FindLeaf
+	dc.rootID = rootID
+	dc.Put("", dc.rootID)
+}
+
 // FlushDir flushes the map of all data starting with with the path
 // dir.
 //
