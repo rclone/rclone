@@ -339,7 +339,6 @@ func (r *Run) Init() {
 		r.CmdLine = []string{"./" + r.BinaryName()}
 	}
 	testTimeout := *timeout
-	log.Printf("extra time: %f", r.ExtraTime)
 	if r.ExtraTime > 0 {
 		testTimeout = time.Duration(float64(testTimeout) * r.ExtraTime)
 	}
