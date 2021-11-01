@@ -18,7 +18,7 @@ You can configure it as a remote like this with `rclone config` too if
 you want to:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config

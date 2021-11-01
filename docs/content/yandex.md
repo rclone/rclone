@@ -16,7 +16,7 @@ Here is an example of making a yandex configuration.  First run
 This will guide you through an interactive setup process:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 n/s> n

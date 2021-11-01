@@ -25,7 +25,7 @@ This will guide you through an interactive setup process:
 ### Setup with access grant
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -67,7 +67,7 @@ y/e/d> y
 ### Setup with API key and passphrase
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config

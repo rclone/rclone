@@ -27,7 +27,7 @@ For an anonymous FTP server, use `anonymous` as username and your email
 address as password.
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 r) Rename remote
 c) Copy remote

@@ -611,7 +611,7 @@ func EditConfig(ctx context.Context) (err error) {
 			ShowRemotes()
 			fmt.Printf("\n")
 		} else {
-			fmt.Printf("No remotes found - make a new one\n")
+			fmt.Printf("No remotes found, make a new one?\n")
 			// take 2nd item and last 2 items of menu list
 			what = append(what[1:2], what[len(what)-2:]...)
 		}
