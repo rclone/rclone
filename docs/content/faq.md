@@ -209,3 +209,21 @@ The most common cause of rclone using lots of memory is a single
 directory with thousands or millions of files in.  Rclone has to load
 this entirely into memory as rclone objects.  Each rclone object takes
 0.5k-1k of memory.
+
+### Rclone changes fullwidth Unicode punctuation marks in file names
+
+For example: On a Windows system, you have a file with name `Test：1.jpg`,
+where `：` is the Unicode fullwidth colon symbol. When using rclone
+to copy this to your Google Drive, you will notice that the file
+gets renamed to `Test:1.jpg`, where `:` is the regular (halfwidth) colon.
+
+The reason for such renames is the way rclone handles different
+[restricted filenames](/overview/#restricted-filenames) on different
+cloud storage systems. It tries to avoid ambiguous file names as
+much and allow moving files between many cloud storage systems
+transparently, by replacing invalid characters with similar looking
+Unicode characters when transferring to one storage system, and replacing
+back again when transferring to a different storage system where the
+original characters are supported. When the same Unicode characters
+are intentionally used in file names, this replacement strategy leads
+to unwanted renames. Read more [here](/overview/#restricted-filenames-caveats).
