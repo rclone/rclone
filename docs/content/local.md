@@ -46,6 +46,10 @@ Local file system at .: Replacing invalid UTF-8 characters in "gro\xdf"
 
 #### Restricted characters
 
+With the local backend, restrictions on the characters that are usable in
+file or directory names depend on the operating system. To check what
+rclone will replace by default on your system, run `rclone help flags local-encoding`.
+
 On non Windows platforms the following characters are replaced when
 handling file names.
 
