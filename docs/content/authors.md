@@ -534,3 +534,4 @@ put them back in again.` >}}
   * Ian Levesque <ian@ianlevesque.org>
   * Thomas Stachl <thomas@stachl.me>
   * Dmitry Bogatov <git#v1@kaction.cc>
+  * thomae <4493560+thomae@users.noreply.github.com>
