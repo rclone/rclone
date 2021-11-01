@@ -28,7 +28,7 @@ Now proceed to interactive or manual configuration.
 
 Run `rclone config`:
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config

@@ -34,7 +34,7 @@ Here is an example of how to make a remote called `test-cache`.  First run:
 This will guide you through an interactive setup process:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 r) Rename remote
 c) Copy remote

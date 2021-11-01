@@ -69,7 +69,7 @@ Here is an example of how to make a remote called `remote` with the default setu
 This will guide you through an interactive setup process:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config

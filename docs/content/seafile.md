@@ -29,7 +29,7 @@ This will guide you through an interactive setup process. To authenticate
 you will need the URL of your server, your email (or username) and your password.
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -118,7 +118,7 @@ excess files in the library.
 Here's an example of a configuration in library mode with a user that has the two-factor authentication enabled. Your 2FA code will be asked at the end of the configuration, and will attempt to authenticate you:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config

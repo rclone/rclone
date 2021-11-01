@@ -86,7 +86,7 @@ configure a dedicated path for encrypted content, and access it
 exclusively through a crypt remote.
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config
