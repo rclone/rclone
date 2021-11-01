@@ -2091,7 +2091,7 @@ func testSyncConcurrent(t *testing.T, subtest string) {
 	fstest.CheckItems(t, r.Fremote, itemsBefore...)
 	stats.ResetErrors()
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
-	if err == fs.ErrorCantUploadEmptyFiles {
+	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
 		t.Skipf("Skip test because remote cannot upload empty files")
 	}
 	assert.NoError(t, err, "Sync must not return a error")
