@@ -230,7 +230,7 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 	// Wait for either subsystem "sftp" or "exec" request
 	if <-isSFTP {
 		if err := serveChannel(channel, c.handlers, c.what); err != nil {
-			fs.Errorf(c.what, "Failed to serve SFPT: %v", err)
+			fs.Errorf(c.what, "Failed to serve SFTP: %v", err)
 		}
 	} else {
 		var rc = uint32(0)
