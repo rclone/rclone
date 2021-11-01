@@ -535,3 +535,4 @@ put them back in again.` >}}
   * Thomas Stachl <thomas@stachl.me>
   * Dmitry Bogatov <git#v1@kaction.cc>
   * thomae <4493560+thomae@users.noreply.github.com>
+  * trevyn <trevyn-git@protonmail.com>
