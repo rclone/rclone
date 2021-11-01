@@ -10,7 +10,7 @@ Rclone is single executable (`rclone`, or `rclone.exe` on Windows) that you can
 simply download as a zip archive and extract into a location of your choosing.
 See the [install](https://rclone.org/install/) documentation for more details.
 
-## Release {{< version >}}
+## Release {{% version %}} {#release}
 
 | Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
 |:-------:|:-------:|:-----:|:-----:|:----:|:----:|:-------:|:------:|:-------:|:-----:|:-------:|
