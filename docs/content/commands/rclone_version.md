@@ -57,7 +57,7 @@ rclone version [flags]
 ## Options
 
 ```
-      --check   Check for new version.
+      --check   Check for new version
   -h, --help    help for version
 ```
 

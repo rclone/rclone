@@ -53,7 +53,7 @@ rclone checksum <hash> sumfile src:path [flags]
 ```
       --combined string         Make a combined report of changes to this file
       --differ string           Report all non-matching files to this file
-      --download                Check by hashing the contents.
+      --download                Check by hashing the contents
       --error string            Report all files with errors (hashing or reading) to this file
   -h, --help                    help for checksum
       --match string            Report all matching files to this file

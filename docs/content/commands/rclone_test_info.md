@@ -26,14 +26,14 @@ rclone test info [remote:path]+ [flags]
 ## Options
 
 ```
-      --all                    Run all tests.
-      --check-control          Check control characters.
-      --check-length           Check max filename length.
-      --check-normalization    Check UTF-8 Normalization.
-      --check-streaming        Check uploads with indeterminate file size.
+      --all                    Run all tests
+      --check-control          Check control characters
+      --check-length           Check max filename length
+      --check-normalization    Check UTF-8 Normalization
+      --check-streaming        Check uploads with indeterminate file size
   -h, --help                   help for info
-      --upload-wait duration   Wait after writing a file.
-      --write-json string      Write results to file.
+      --upload-wait duration   Wait after writing a file
+      --write-json string      Write results to file
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

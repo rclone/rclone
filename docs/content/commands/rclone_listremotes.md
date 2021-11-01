@@ -25,7 +25,7 @@ rclone listremotes [flags]
 
 ```
   -h, --help   help for listremotes
-      --long   Show the type as well as names.
+      --long   Show the type as well as names
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

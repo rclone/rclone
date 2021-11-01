@@ -67,8 +67,8 @@ rclone selfupdate [flags]
 ## Options
 
 ```
-      --beta             Install beta release.
-      --check            Check for latest release, do not download.
+      --beta             Install beta release
+      --check            Check for latest release, do not download
   -h, --help             help for selfupdate
       --output string    Save the downloaded binary at a given path (default: replace running binary)
       --package string   Package format: zip|deb|rpm (default: zip)
