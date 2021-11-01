@@ -72,8 +72,8 @@ directory should be considered up to date and not refreshed from the
 backend. Changes made through the mount will appear immediately or
 invalidate the cache.
 
-    --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
-    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 
 However, changes made directly on the cloud storage by the web
 interface or a different copy of rclone will only be picked up once
@@ -127,10 +127,10 @@ find that you need one or the other or both.
 
     --cache-dir string                   Directory rclone will use for caching.
     --vfs-cache-mode CacheMode           Cache mode off|minimal|writes|full (default off)
-    --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
-    --vfs-cache-max-size SizeSuffix      Max total size of objects in the cache. (default off)
-    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
-    --vfs-write-back duration            Time to writeback files after last use when using cache. (default 5s)
+    --vfs-cache-max-age duration         Max age of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix      Max total size of objects in the cache (default off)
+    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration            Time to writeback files after last use when using cache (default 5s)
 
 If run with `-vv` rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
@@ -142,8 +142,8 @@ The higher the cache mode the more compatible rclone becomes at the
 cost of using disk space.
 
 Note that files are written back to the remote only when they are
-closed and if they haven't been accessed for --vfs-write-back
-second. If rclone is quit or dies with files that haven't been
+closed and if they haven't been accessed for `--vfs-write-back`
+seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
@@ -212,27 +212,55 @@ their full size in the cache, but they will be sparse files with only
 the data that has been downloaded present in them.
 
 This mode should support all normal file system operations and is
-otherwise identical to --vfs-cache-mode writes.
+otherwise identical to `--vfs-cache-mode` writes.
 
-When reading a file rclone will read --buffer-size plus
---vfs-read-ahead bytes ahead.  The --buffer-size is buffered in memory
-whereas the --vfs-read-ahead is buffered on disk.
+When reading a file rclone will read `--buffer-size` plus
+`--vfs-read-ahead` bytes ahead.  The `--buffer-size` is buffered in memory
+whereas the `--vfs-read-ahead` is buffered on disk.
 
-When using this mode it is recommended that --buffer-size is not set
-too big and --vfs-read-ahead is set large if required.
+When using this mode it is recommended that `--buffer-size` is not set
+too large and `--vfs-read-ahead` is set large if required.
 
 **IMPORTANT** not all file systems support sparse files. In particular
 FAT/exFAT do not. Rclone will perform very badly if the cache
 directory is on a filesystem which doesn't support sparse files and it
 will log an ERROR message if one is detected.
 
+## VFS Chunked Reading
+
+When rclone reads files from a remote it reads them in chunks. This
+means that rather than requesting the whole file rclone reads the
+chunk specified.  This can reduce the used download quota for some
+remotes by requesting only chunks from the remote that are actually
+read, at the cost of an increased number of requests.
+
+These flags control the chunking:
+
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+
+Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
+and then double the size for each read. When `--vfs-read-chunk-size-limit` is
+specified, and greater than `--vfs-read-chunk-size`, the chunk size for each
+open file will get doubled only until the specified value is reached. If the
+value is "off", which is the default, the limit is disabled and the chunk size
+will grow indefinitely.
+
+With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
+the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
+When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
+0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
+
+Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
+
 ## VFS Performance
 
 These flags may be used to enable/disable features of the VFS for
-performance or other reasons.
+performance or other reasons. See also the [chunked reading](#vfs-chunked-reading)
+feature.
 
-In particular S3 and Swift benefit hugely from the --no-modtime flag
-(or use --use-server-modtime for a slightly different effect) as each
+In particular S3 and Swift benefit hugely from the `--no-modtime` flag
+(or use `--use-server-modtime` for a slightly different effect) as each
 read of the modification time takes a transaction.
 
     --no-checksum     Don't compare checksums on up/download.
@@ -240,32 +268,19 @@ read of the modification time takes a transaction.
     --no-seek         Don't allow seeking in files.
     --read-only       Mount read-only.
 
-When rclone reads files from a remote it reads them in chunks. This
-means that rather than requesting the whole file rclone reads the
-chunk specified. This is advantageous because some cloud providers
-account for reads being all the data requested, not all the data
-delivered.
-
-Rclone will keep doubling the chunk size requested starting at
---vfs-read-chunk-size with a maximum of --vfs-read-chunk-size-limit
-unless it is set to "off" in which case there will be no limit.
-
-    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks. (default 128M)
-    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default "off")
-
 Sometimes rclone is delivered reads or writes out of order. Rather
 than seeking rclone will wait a short time for the in sequence read or
 write to come in. These flags only come into effect when not using an
 on disk cache file.
 
-    --vfs-read-wait duration   Time to wait for in-sequence read before seeking. (default 20ms)
-    --vfs-write-wait duration  Time to wait for in-sequence write before giving error. (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 
-When using VFS write caching (--vfs-cache-mode with value writes or full),
-the global flag --transfers can be set to adjust the number of parallel uploads of
-modified files from cache (the related global flag --checkers have no effect on mount).
+When using VFS write caching (`--vfs-cache-mode` with value writes or full),
+the global flag `--transfers` can be set to adjust the number of parallel uploads of
+modified files from cache (the related global flag `--checkers` have no effect on mount).
 
-    --transfers int  Number of file transfers to run in parallel. (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 
 ## VFS Case Sensitivity
 
@@ -278,7 +293,7 @@ to create the file is preserved and available for programs to query.
 It is not allowed for two files in the same directory to differ only by case.
 
 Usually file systems on macOS are case-insensitive. It is possible to make macOS
-file systems case-sensitive but that is not the default
+file systems case-sensitive but that is not the default.
 
 The `--vfs-case-insensitive` mount flag controls how rclone handles these
 two cases. If its value is "false", rclone passes file names to the mounted
@@ -323,52 +338,53 @@ rclone serve docker [flags]
 ## Options
 
 ```
-      --allow-non-empty                        Allow mounting over a non-empty directory. Not supported on Windows.
-      --allow-other                            Allow access to other users. Not supported on Windows.
-      --allow-root                             Allow access to root user. Not supported on Windows.
-      --async-read                             Use asynchronous reads. Not supported on Windows. (default true)
-      --attr-timeout duration                  Time for which file/directory attributes are cached. (default 1s)
-      --base-dir string                        base directory for volumes (default "/var/lib/docker-volumes/rclone")
-      --daemon                                 Run mount as a daemon (background mode). Not supported on Windows.
-      --daemon-timeout duration                Time limit for rclone to respond to kernel. Not supported on Windows.
-      --debug-fuse                             Debug the FUSE internals - needs -v.
-      --default-permissions                    Makes kernel enforce access control based on the file mode. Not supported on Windows.
-      --dir-cache-time duration                Time to cache directory entries for. (default 5m0s)
+      --allow-non-empty                        Allow mounting over a non-empty directory (not supported on Windows)
+      --allow-other                            Allow access to other users (not supported on Windows)
+      --allow-root                             Allow access to root user (not supported on Windows)
+      --async-read                             Use asynchronous reads (not supported on Windows) (default true)
+      --attr-timeout duration                  Time for which file/directory attributes are cached (default 1s)
+      --base-dir string                        Base directory for volumes (default "/var/lib/docker-volumes/rclone")
+      --daemon                                 Run mount in background and exit parent process (as background output is suppressed, use --log-file with --log-format=pid,... to monitor) (not supported on Windows)
+      --daemon-timeout duration                Time limit for rclone to respond to kernel (not supported on Windows)
+      --daemon-wait duration                   Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD) (not supported on Windows) (default 1m0s)
+      --debug-fuse                             Debug the FUSE internals - needs -v
+      --default-permissions                    Makes kernel enforce access control based on the file mode (not supported on Windows)
+      --dir-cache-time duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 0777)
       --file-perms FileMode                    File permissions (default 0666)
-      --forget-state                           skip restoring previous state
-      --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.
-      --gid uint32                             Override the gid field set by the filesystem. Not supported on Windows. (default 1000)
+      --forget-state                           Skip restoring previous state
+      --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp (repeat if required)
+      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for docker
-      --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads. Not supported on Windows. (default 128Ki)
-      --network-mode                           Mount as remote network drive, instead of fixed disk drive. Supported on Windows only
-      --no-checksum                            Don't compare checksums on up/download.
-      --no-modtime                             Don't read/write the modification time (can speed things up).
-      --no-seek                                Don't allow seeking in files.
-      --no-spec                                do not write spec file
-      --noappledouble                          Ignore Apple Double (._) and .DS_Store files. Supported on OSX only. (default true)
-      --noapplexattr                           Ignore all "com.apple.*" extended attributes. Supported on OSX only.
-  -o, --option stringArray                     Option for libfuse/WinFsp. Repeat if required.
-      --poll-interval duration                 Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
-      --read-only                              Mount read-only.
-      --socket-addr string                     <host:port> or absolute path (default: /run/docker/plugins/rclone.sock)
+      --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads (not supported on Windows) (default 128Ki)
+      --network-mode                           Mount as remote network drive, instead of fixed disk drive (supported on Windows only)
+      --no-checksum                            Don't compare checksums on up/download
+      --no-modtime                             Don't read/write the modification time (can speed things up)
+      --no-seek                                Don't allow seeking in files
+      --no-spec                                Do not write spec file
+      --noappledouble                          Ignore Apple Double (._) and .DS_Store files (supported on OSX only) (default true)
+      --noapplexattr                           Ignore all "com.apple.*" extended attributes (supported on OSX only)
+  -o, --option stringArray                     Option for libfuse/WinFsp (repeat if required)
+      --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
+      --read-only                              Mount read-only
+      --socket-addr string                     Address <host:port> or absolute path (default: /run/docker/plugins/rclone.sock)
       --socket-gid int                         GID for unix socket (default: current process GID) (default 1000)
-      --uid uint32                             Override the uid field set by the filesystem. Not supported on Windows. (default 1000)
-      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows. (default 2)
-      --vfs-cache-max-age duration             Max age of objects in the cache. (default 1h0m0s)
-      --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache. (default off)
+      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
+      --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
+      --vfs-cache-max-age duration             Max age of objects in the cache (default 1h0m0s)
+      --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
-      --vfs-cache-poll-interval duration       Interval to poll the cache for stale objects. (default 1m0s)
-      --vfs-case-insensitive                   If a file name not found, find a case insensitive match.
-      --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full.
-      --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks. (default 128Mi)
-      --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached. 'off' is unlimited. (default off)
-      --vfs-read-wait duration                 Time to wait for in-sequence read before seeking. (default 20ms)
-      --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size.
-      --vfs-write-back duration                Time to writeback files after last use when using cache. (default 5s)
-      --vfs-write-wait duration                Time to wait for in-sequence write before giving error. (default 1s)
-      --volname string                         Set the volume name. Supported on Windows and OSX only.
-      --write-back-cache                       Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used. Not supported on Windows.
+      --vfs-cache-poll-interval duration       Interval to poll the cache for stale objects (default 1m0s)
+      --vfs-case-insensitive                   If a file name not found, find a case insensitive match
+      --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
+      --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
+      --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
+      --vfs-read-wait duration                 Time to wait for in-sequence read before seeking (default 20ms)
+      --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
+      --vfs-write-back duration                Time to writeback files after last use when using cache (default 5s)
+      --vfs-write-wait duration                Time to wait for in-sequence write before giving error (default 1s)
+      --volname string                         Set the volume name (supported on Windows and OSX only)
+      --write-back-cache                       Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
