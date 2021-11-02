@@ -658,6 +658,7 @@ func Run(t *testing.T, opt *Opt) {
 				{"trailing VT", "trailing VT\v"},
 				{"trailing dot", "trailing dot."},
 				{"invalid UTF-8", "invalid utf-8\xfe"},
+				{"URL encoding", "test%46.txt"},
 			} {
 				t.Run(test.name, func(t *testing.T) {
 					if opt.SkipInvalidUTF8 && test.name == "invalid UTF-8" {
