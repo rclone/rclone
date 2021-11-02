@@ -2,7 +2,6 @@ package hashsum
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 
@@ -26,11 +25,11 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	AddHashFlags(cmdFlags)
+	AddHashsumFlags(cmdFlags)
 }
 
-// AddHashFlags is a convenience function to add the command flags OutputBase64 and DownloadFlag to hashsum, md5sum, sha1sum
-func AddHashFlags(cmdFlags *pflag.FlagSet) {
+// AddHashsumFlags is a convenience function to add the command flags OutputBase64 and DownloadFlag to hashsum, md5sum, sha1sum
+func AddHashsumFlags(cmdFlags *pflag.FlagSet) {
 	flags.BoolVarP(cmdFlags, &OutputBase64, "base64", "", OutputBase64, "Output base64 encoded hashsum")
 	flags.StringVarP(cmdFlags, &HashsumOutfile, "output-file", "", HashsumOutfile, "Output hashsums to a file rather than the terminal")
 	flags.StringVarP(cmdFlags, &ChecksumFile, "checkfile", "C", ChecksumFile, "Validate hashes against a given SUM file instead of printing them")
@@ -41,7 +40,7 @@ func AddHashFlags(cmdFlags *pflag.FlagSet) {
 func GetHashsumOutput(filename string) (out *os.File, close func(), err error) {
 	out, err = os.Create(filename)
 	if err != nil {
-		err = fmt.Errorf("Failed to open output file %v: %w", filename, err)
+		err = fmt.Errorf("failed to open output file %v: %w", filename, err)
 		return nil, nil, err
 	}
 
@@ -53,6 +52,32 @@ func GetHashsumOutput(filename string) (out *os.File, close func(), err error) {
 	}
 
 	return out, close, nil
+}
+
+// CreateFromStdinArg checks args and produces hashsum from standard input if it is requested
+func CreateFromStdinArg(ht hash.Type, args []string, startArg int) (bool, error) {
+	var stdinArg bool
+	if len(args) == startArg {
+		// Missing arg: Always read from stdin
+		stdinArg = true
+	} else if len(args) > startArg && args[startArg] == "-" {
+		// Special arg: Read from stdin only if there is data available
+		if fi, _ := os.Stdin.Stat(); fi.Mode()&os.ModeCharDevice == 0 {
+			stdinArg = true
+		}
+	}
+	if !stdinArg {
+		return false, nil
+	}
+	if HashsumOutfile == "" {
+		return true, operations.HashSumStream(ht, OutputBase64, os.Stdin, nil)
+	}
+	output, close, err := GetHashsumOutput(HashsumOutfile)
+	if err != nil {
+		return true, err
+	}
+	defer close()
+	return true, operations.HashSumStream(ht, OutputBase64, os.Stdin, output)
 }
 
 var commandDefinition = &cobra.Command{
@@ -67,6 +92,11 @@ By default, the hash is requested from the remote.  If the hash is
 not supported by the remote, no hash will be returned.  With the
 download flag, the file will be downloaded from the remote and
 hashed locally enabling any hash for any remote.
+
+This command can also hash data received on standard input (stdin),
+by not passing a remote:path, or by passing a hyphen as remote:path
+when there is data to read (if not, the hypen will be treated literaly,
+as a relative path).
 
 Run without a hash to see the list of all supported hashes, e.g.
 
@@ -83,8 +113,6 @@ Note that hash names are case insensitive and values are output in lower case.
 		if len(args) == 0 {
 			fmt.Print(hash.HelpString(0))
 			return nil
-		} else if len(args) == 1 {
-			return errors.New("need hash type and remote")
 		}
 		var ht hash.Type
 		err := ht.Set(args[0])
@@ -92,8 +120,10 @@ Note that hash names are case insensitive and values are output in lower case.
 			fmt.Println(hash.HelpString(0))
 			return err
 		}
+		if found, err := CreateFromStdinArg(ht, args, 1); found {
+			return err
+		}
 		fsrc := cmd.NewFsSrc(args[1:])
-
 		cmd.Run(false, false, command, func() error {
 			if ChecksumFile != "" {
 				fsum, sumFile := cmd.NewFsFile(ChecksumFile)

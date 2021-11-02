@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -92,8 +93,11 @@ func Supported() Set {
 }
 
 // Width returns the width in characters for any HashType
-func Width(hashType Type) int {
+func Width(hashType Type, base64Encoded bool) int {
 	if hash := type2hash[hashType]; hash != nil {
+		if base64Encoded {
+			return base64.URLEncoding.EncodedLen(hash.width / 2)
+		}
 		return hash.width
 	}
 	return 0
@@ -241,6 +245,18 @@ func (m *MultiHasher) Sum(hashType Type) ([]byte, error) {
 		return nil, ErrUnsupported
 	}
 	return h.Sum(nil), nil
+}
+
+// SumString returns the specified hash from the multihasher as a hex or base64 encoded string
+func (m *MultiHasher) SumString(hashType Type, base64Encoded bool) (string, error) {
+	sum, err := m.Sum(hashType)
+	if err != nil {
+		return "", err
+	}
+	if base64Encoded {
+		return base64.URLEncoding.EncodeToString(sum), nil
+	}
+	return hex.EncodeToString(sum), nil
 }
 
 // Size returns the number of bytes written

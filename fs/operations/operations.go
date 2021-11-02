@@ -946,7 +946,7 @@ func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
 // hashSum returns the human-readable hash for ht passed in.  This may
 // be UNSUPPORTED or ERROR. If it isn't returning a valid hash it will
 // return an error.
-func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) (string, error) {
+func hashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag bool, o fs.Object) (string, error) {
 	var sum string
 	var err error
 
@@ -968,7 +968,7 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 		}
 		in, err := NewReOpen(ctx, o, fs.GetConfig(ctx).LowLevelRetries, options...)
 		if err != nil {
-			return "ERROR", fmt.Errorf("Failed to open file %v: %w", o, err)
+			return "ERROR", fmt.Errorf("failed to open file %v: %w", o, err)
 		}
 
 		// Account and buffer the transfer
@@ -977,21 +977,20 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 		// Setup hasher
 		hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
 		if err != nil {
-			return "UNSUPPORTED", fmt.Errorf("Hash unsupported: %w", err)
+			return "UNSUPPORTED", fmt.Errorf("hash unsupported: %w", err)
 		}
 
 		// Copy to hasher, downloading the file and passing directly to hash
 		_, err = io.Copy(hasher, in)
 		if err != nil {
-			return "ERROR", fmt.Errorf("Failed to copy file to hasher: %w", err)
+			return "ERROR", fmt.Errorf("failed to copy file to hasher: %w", err)
 		}
 
-		// Get hash and encode as hex
-		byteSum, err := hasher.Sum(ht)
+		// Get hash as hex or base64 encoded string
+		sum, err = hasher.SumString(ht, base64Encoded)
 		if err != nil {
-			return "ERROR", fmt.Errorf("Hasher returned an error: %w", err)
+			return "ERROR", fmt.Errorf("hasher returned an error: %w", err)
 		}
-		sum = hex.EncodeToString(byteSum)
 	} else {
 		tr := accounting.Stats(ctx).NewCheckingTransfer(o)
 		defer func() {
@@ -999,11 +998,15 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 		}()
 
 		sum, err = o.Hash(ctx, ht)
+		if base64Encoded {
+			hexBytes, _ := hex.DecodeString(sum)
+			sum = base64.URLEncoding.EncodeToString(hexBytes)
+		}
 		if err == hash.ErrUnsupported {
-			return "", fmt.Errorf("Hash unsupported: %w", err)
+			return "", fmt.Errorf("hash unsupported: %w", err)
 		}
 		if err != nil {
-			return "", fmt.Errorf("Failed to get hash %v from backend: %v: %w", ht, err, err)
+			return "", fmt.Errorf("failed to get hash %v from backend: %v: %w", ht, err, err)
 		}
 	}
 
@@ -1014,10 +1017,7 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 // Updated to handle both standard hex encoding and base64
 // Updated to perform multiple hashes concurrently
 func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFlag bool, f fs.Fs, w io.Writer) error {
-	width := hash.Width(ht)
-	if outputBase64 {
-		width = base64.URLEncoding.EncodedLen(width / 2)
-	}
+	width := hash.Width(ht, outputBase64)
 	concurrencyControl := make(chan struct{}, fs.GetConfig(ctx).Transfers)
 	var wg sync.WaitGroup
 	err := ListFn(ctx, f, func(o fs.Object) {
@@ -1028,20 +1028,38 @@ func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFl
 				<-concurrencyControl
 				wg.Done()
 			}()
-			sum, err := hashSum(ctx, ht, downloadFlag, o)
+			sum, err := hashSum(ctx, ht, outputBase64, downloadFlag, o)
 			if err != nil {
 				fs.Errorf(o, "%v", fs.CountError(err))
 				return
-			}
-			if outputBase64 {
-				hexBytes, _ := hex.DecodeString(sum)
-				sum = base64.URLEncoding.EncodeToString(hexBytes)
 			}
 			syncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
 		}()
 	})
 	wg.Wait()
 	return err
+}
+
+// HashSumStream outputs a line compatible with md5sum to w based on the
+// input stream in and the hash type ht passed in. If outputBase64 is
+// set then the hash will be base64 instead of hexadecimal.
+func HashSumStream(ht hash.Type, outputBase64 bool, in io.ReadCloser, w io.Writer) error {
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+	if err != nil {
+		return fmt.Errorf("hash unsupported: %w", err)
+	}
+	written, err := io.Copy(hasher, in)
+	fs.Debugf(nil, "Creating %s hash of %d bytes read from input stream", ht, written)
+	if err != nil {
+		return fmt.Errorf("failed to copy input to hasher: %w", err)
+	}
+	sum, err := hasher.SumString(ht, outputBase64)
+	if err != nil {
+		return fmt.Errorf("hasher returned an error: %w", err)
+	}
+	width := hash.Width(ht, outputBase64)
+	syncFprintf(w, "%*s  -\n", width, sum)
+	return nil
 }
 
 // Count counts the objects and their sizes in the Fs
