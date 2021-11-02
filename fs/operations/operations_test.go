@@ -316,6 +316,52 @@ func TestHashSumsWithErrors(t *testing.T) {
 	// TODO mock an unreadable file
 }
 
+func TestHashStream(t *testing.T) {
+	reader := strings.NewReader("")
+	in := ioutil.NopCloser(reader)
+	out := &bytes.Buffer{}
+	for _, test := range []struct {
+		input      string
+		ht         hash.Type
+		wantHex    string
+		wantBase64 string
+	}{
+		{
+			input:      "",
+			ht:         hash.MD5,
+			wantHex:    "d41d8cd98f00b204e9800998ecf8427e  -\n",
+			wantBase64: "1B2M2Y8AsgTpgAmY7PhCfg==  -\n",
+		},
+		{
+			input:      "",
+			ht:         hash.SHA1,
+			wantHex:    "da39a3ee5e6b4b0d3255bfef95601890afd80709  -\n",
+			wantBase64: "2jmj7l5rSw0yVb_vlWAYkK_YBwk=  -\n",
+		},
+		{
+			input:      "Hello world!",
+			ht:         hash.MD5,
+			wantHex:    "86fb269d190d2c85f6e0468ceca42a20  -\n",
+			wantBase64: "hvsmnRkNLIX24EaM7KQqIA==  -\n",
+		},
+		{
+			input:      "Hello world!",
+			ht:         hash.SHA1,
+			wantHex:    "d3486ae9136e7856bc42212385ea797094475802  -\n",
+			wantBase64: "00hq6RNueFa8QiEjhep5cJRHWAI=  -\n",
+		},
+	} {
+		reader.Reset(test.input)
+		require.NoError(t, operations.HashSumStream(test.ht, false, in, out))
+		assert.Equal(t, test.wantHex, out.String())
+		_, _ = reader.Seek(0, io.SeekStart)
+		out.Reset()
+		require.NoError(t, operations.HashSumStream(test.ht, true, in, out))
+		assert.Equal(t, test.wantBase64, out.String())
+		out.Reset()
+	}
+}
+
 func TestSuffixName(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)

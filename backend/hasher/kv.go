@@ -294,7 +294,7 @@ func (f *Fs) dumpLine(r *hashRecord, path string, include bool, err error) strin
 		if hashVal == "" || err != nil {
 			hashVal = "-"
 		}
-		hashVal = fmt.Sprintf("%-*s", hash.Width(hashType), hashVal)
+		hashVal = fmt.Sprintf("%-*s", hash.Width(hashType, false), hashVal)
 		hashes = append(hashes, hashName+":"+hashVal)
 	}
 	hashesStr := strings.Join(hashes, " ")
