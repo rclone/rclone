@@ -64,6 +64,7 @@ func init() {
 		Options: []fs.Option{{
 			Name: fs.ConfigProvider,
 			Help: "Choose your S3 provider.",
+			// NB if you add a new provider here, then add it in the setQuirks function
 			Examples: []fs.OptionExample{{
 				Value: "AWS",
 				Help:  "Amazon Web Services (AWS) S3",
@@ -1204,6 +1205,22 @@ In Ceph, this can be increased with the "rgw list buckets max chunk" option.
 			Default:  1000,
 			Advanced: true,
 		}, {
+			Name: "list_version",
+			Help: `Version of ListObjects to use: 1,2 or 0 for auto.
+
+When S3 originally launched it only provided the ListObjects call to
+enumerate objects in a bucket.
+
+However in May 2016 the ListObjectsV2 call was introduced. This is
+much higher performance and should be used if at all possible.
+
+If set to the default, 0, rclone will guess according to the provider
+set which list objects method to call. If it guesses wrong, then it
+may be set manually here.
+`,
+			Default:  0,
+			Advanced: true,
+		}, {
 			Name: "no_check_bucket",
 			Help: `If set, don't attempt to check the bucket exists or create it.
 
@@ -1357,6 +1374,7 @@ type Options struct {
 	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int64                `config:"list_chunk"`
+	ListVersion           int                  `config:"list_version"`
 	NoCheckBucket         bool                 `config:"no_check_bucket"`
 	NoHead                bool                 `config:"no_head"`
 	NoHeadObject          bool                 `config:"no_head_object"`
@@ -1579,6 +1597,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	if opt.Provider == "Scaleway" && opt.MaxUploadParts > 1000 {
 		opt.MaxUploadParts = 1000
 	}
+	setQuirks(opt)
 	awsConfig := aws.NewConfig().
 		WithMaxRetries(ci.LowLevelRetries).
 		WithCredentials(cred).
@@ -1660,6 +1679,48 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 		old, f.opt.UploadCutoff = f.opt.UploadCutoff, cs
 	}
 	return
+}
+
+// Set the provider quirks
+//
+// These should be differences from AWS S3
+func setQuirks(opt *Options) {
+	var (
+		listObjectsV2NotSupported bool
+	)
+	switch opt.Provider {
+	case "AWS":
+		// No quirks
+	case "Alibaba":
+	case "Ceph":
+		listObjectsV2NotSupported = true
+	case "DigitalOcean":
+	case "Dreamhost":
+	case "IBMCOS":
+		listObjectsV2NotSupported = true // untested
+	case "Minio":
+	case "Netease":
+		listObjectsV2NotSupported = true // untested
+	case "Scaleway":
+	case "SeaweedFS":
+		listObjectsV2NotSupported = true // untested
+	case "StackPath":
+		listObjectsV2NotSupported = true // untested
+	case "TencentCOS":
+		listObjectsV2NotSupported = true // untested
+	case "Wasabi":
+	default: // including "Other"
+		listObjectsV2NotSupported = true
+	}
+
+	// Set the correct list version if not manually set
+	if opt.ListVersion == 0 {
+		if listObjectsV2NotSupported {
+			opt.ListVersion = 1
+		} else {
+			opt.ListVersion = 2
+		}
+	}
 }
 
 // setRoot changes the root of the Fs
@@ -1853,6 +1914,7 @@ type listFn func(remote string, object *s3.Object, isDirectory bool) error
 //
 // Set recurse to read sub directories
 func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, fn listFn) error {
+	v1 := f.opt.ListVersion == 1
 	if prefix != "" {
 		prefix += "/"
 	}
@@ -1899,7 +1961,25 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		var resp *s3.ListObjectsV2Output
 		var err error
 		err = f.pacer.Call(func() (bool, error) {
-			resp, err = f.c.ListObjectsV2WithContext(ctx, &req)
+			if v1 {
+				// Convert v2 req into v1 req
+				var reqv1 s3.ListObjectsInput
+				structs.SetFrom(&reqv1, &req)
+				reqv1.Marker = continuationToken
+				if startAfter != nil {
+					reqv1.Marker = startAfter
+				}
+				var respv1 *s3.ListObjectsOutput
+				respv1, err = f.c.ListObjectsWithContext(ctx, &reqv1)
+				if err == nil && respv1 != nil {
+					// convert v1 resp into v2 resp
+					resp = new(s3.ListObjectsV2Output)
+					structs.SetFrom(resp, respv1)
+					resp.NextContinuationToken = respv1.NextMarker
+				}
+			} else {
+				resp, err = f.c.ListObjectsV2WithContext(ctx, &req)
+			}
 			if err != nil && !urlEncodeListings {
 				if awsErr, ok := err.(awserr.RequestFailure); ok {
 					if origErr := awsErr.OrigErr(); origErr != nil {
@@ -2000,7 +2080,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		// Use NextContinuationToken if set, otherwise use last Key for StartAfter
 		if resp.NextContinuationToken == nil || *resp.NextContinuationToken == "" {
 			if len(resp.Contents) == 0 {
-				return errors.New("s3 protocol error: received listing with IsTruncated set, no NextContinuationToken found")
+				return errors.New("s3 protocol error: received listing with IsTruncated set, no NextContinuationToken/NextMarker and no Contents")
 			}
 			continuationToken = nil
 			startAfter = resp.Contents[len(resp.Contents)-1].Key
@@ -2011,7 +2091,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		if startAfter != nil && urlEncodeListings {
 			*startAfter, err = url.QueryUnescape(*startAfter)
 			if err != nil {
-				return errors.Wrapf(err, "failed to URL decode StartAfter %q", *startAfter)
+				return errors.Wrapf(err, "failed to URL decode StartAfter/NextMarker %q", *continuationToken)
 			}
 		}
 	}
