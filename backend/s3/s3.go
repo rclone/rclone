@@ -64,7 +64,8 @@ func init() {
 		Options: []fs.Option{{
 			Name: fs.ConfigProvider,
 			Help: "Choose your S3 provider.",
-			// NB if you add a new provider here, then add it in the setQuirks function
+			// NB if you add a new provider here, then add it in the
+			// setQuirks function and set the correct quirks
 			Examples: []fs.OptionExample{{
 				Value: "AWS",
 				Help:  "Amazon Web Services (AWS) S3",
@@ -1221,6 +1222,18 @@ may be set manually here.
 			Default:  0,
 			Advanced: true,
 		}, {
+			Name: "list_url_encode",
+			Help: `Whether to url encode listings: true/false/unset
+
+Some providers support URL encoding listings and where this is
+available this is more reliable when using control characters in file
+names. If this is set to unset (the default) then rclone will choose
+according to the provider setting what to apply, but you can override
+rclone's choice here.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name: "no_check_bucket",
 			Help: `If set, don't attempt to check the bucket exists or create it.
 
@@ -1375,6 +1388,7 @@ type Options struct {
 	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
 	ListChunk             int64                `config:"list_chunk"`
 	ListVersion           int                  `config:"list_version"`
+	ListURLEncode         fs.Tristate          `config:"list_url_encode"`
 	NoCheckBucket         bool                 `config:"no_check_bucket"`
 	NoHead                bool                 `config:"no_head"`
 	NoHeadObject          bool                 `config:"no_head_object"`
@@ -1591,12 +1605,6 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	if opt.Region == "" {
 		opt.Region = "us-east-1"
 	}
-	if opt.Provider == "AWS" || opt.Provider == "Alibaba" || opt.Provider == "Netease" || opt.Provider == "Scaleway" || opt.Provider == "TencentCOS" || opt.UseAccelerateEndpoint {
-		opt.ForcePathStyle = false
-	}
-	if opt.Provider == "Scaleway" && opt.MaxUploadParts > 1000 {
-		opt.MaxUploadParts = 1000
-	}
 	setQuirks(opt)
 	awsConfig := aws.NewConfig().
 		WithMaxRetries(ci.LowLevelRetries).
@@ -1683,42 +1691,84 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 
 // Set the provider quirks
 //
+// There should be no testing against opt.Provider anywhere in the
+// code except in here to localise the setting of the quirks.
+//
 // These should be differences from AWS S3
 func setQuirks(opt *Options) {
 	var (
-		listObjectsV2NotSupported bool
+		listObjectsV2     = true
+		virtualHostStyle  = true
+		urlEncodeListings = true
 	)
 	switch opt.Provider {
 	case "AWS":
 		// No quirks
 	case "Alibaba":
+		// No quirks
 	case "Ceph":
-		listObjectsV2NotSupported = true
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
 	case "DigitalOcean":
+		urlEncodeListings = false
 	case "Dreamhost":
+		urlEncodeListings = false
 	case "IBMCOS":
-		listObjectsV2NotSupported = true // untested
+		listObjectsV2 = false // untested
+		virtualHostStyle = false
+		urlEncodeListings = false
 	case "Minio":
+		virtualHostStyle = false
 	case "Netease":
-		listObjectsV2NotSupported = true // untested
+		listObjectsV2 = false // untested
+		urlEncodeListings = false
 	case "Scaleway":
+		// Scaleway can only have 1000 parts in an upload
+		if opt.MaxUploadParts > 1000 {
+			opt.MaxUploadParts = 1000
+		}
+		urlEncodeListings = false
 	case "SeaweedFS":
-		listObjectsV2NotSupported = true // untested
+		listObjectsV2 = false // untested
+		virtualHostStyle = false
+		urlEncodeListings = false
 	case "StackPath":
-		listObjectsV2NotSupported = true // untested
+		listObjectsV2 = false // untested
+		virtualHostStyle = false
+		urlEncodeListings = false
 	case "TencentCOS":
-		listObjectsV2NotSupported = true // untested
+		listObjectsV2 = false // untested
 	case "Wasabi":
-	default: // including "Other"
-		listObjectsV2NotSupported = true
+		// No quirks
+	case "Other":
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+	default:
+		fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+	}
+
+	// Path Style vs Virtual Host style
+	if virtualHostStyle || opt.UseAccelerateEndpoint {
+		opt.ForcePathStyle = false
+	}
+
+	// Set to see if we need to URL encode listings
+	if !opt.ListURLEncode.Valid {
+		opt.ListURLEncode.Valid = true
+		opt.ListURLEncode.Value = urlEncodeListings
 	}
 
 	// Set the correct list version if not manually set
 	if opt.ListVersion == 0 {
-		if listObjectsV2NotSupported {
-			opt.ListVersion = 1
-		} else {
+		if listObjectsV2 {
 			opt.ListVersion = 2
+		} else {
+			opt.ListVersion = 1
 		}
 	}
 }
@@ -1941,7 +1991,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	//
 	// So we enable only on providers we know supports it properly, all others can retry when a
 	// XML Syntax error is detected.
-	var urlEncodeListings = (f.opt.Provider == "AWS" || f.opt.Provider == "Wasabi" || f.opt.Provider == "Alibaba" || f.opt.Provider == "Minio" || f.opt.Provider == "TencentCOS")
+	urlEncodeListings := f.opt.ListURLEncode.Value
 	for {
 		// FIXME need to implement ALL loop
 		req := s3.ListObjectsV2Input{
