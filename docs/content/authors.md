@@ -538,3 +538,4 @@ put them back in again.` >}}
   * trevyn <trevyn-git@protonmail.com>
   * David Liu <david.yx.liu@oracle.com>
   * Chris Nelson <stuff@cjnaz.com>
+  * Felix Bünemann <felix.buenemann@gmail.com>
