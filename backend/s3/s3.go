@@ -106,7 +106,7 @@ func init() {
 			}, {
 				Value: "Other",
 				Help:  "Any other S3 compatible provider",
-				}, {
+			}, {
 				Value: "RackCorp",
 				Help:  "RackCorp Object Storage",
 			}},
@@ -211,67 +211,67 @@ func init() {
 				Help:  "AWS GovCloud (US) Region.\nNeeds location constraint us-gov-west-1.",
 			}},
 		}, {
-				Name:     "region",
-				Help:     "region - the location where your bucket will be created and your data stored.\n",
-				Provider: "RackCorp",
-				Examples: []fs.OptionExample{{
-					 Value: "global",
-					 	Help: "Global CDN (All locations) Region",
-					}, {
-						Value: "au",
-						Help:  "Australia (All states)",
-					}, {
-						Value: "au-nsw",
-						Help:  "NSW (Australia) Region",
-					}, {
-						Value: "au-qld",
-						Help:  "QLD (Australia) Region",
-					}, {
-						Value: "au-vic",
-						Help:  "VIC (Australia) Region",
-					}, {
-						Value: "au-wa",
-						Help:  "Perth (Australia) Region",
-					}, {
-						Value: "ph",
-						Help:  "Manila (Philippines) Region",
-					}, {
-						Value: "th",
-						Help:  "Bangkok (Thailand) Region",
-					}, {
-						Value: "hk",
-						Help:  "HK (Hong Kong) Region",
-          }, {
-						Value: "mn",
-						Help:  "Ulaanbaatar (Mongolia) Region",
-					}, {
-						Value: "kg",
-						Help:  "Bishkek (Kyrgyzstan) Region",
-					}, {
-						Value: "id",
-						Help:  "Jakarta (Indonesia) Region",
-					}, {
-						Value: "jp",
-						Help:  "Tokyo (Japan) Region",
-	  			}, {
-						Value: "sg",
-						Help:  "SG (Singapore) Region",
-				  }, {
-						Value: "de",
-						Help:  "Frankfurt (Germany) Region",
-			  	}, {
-				  	Value: "us",
-						Help:  "USA (AnyCast) Region",
-					}, {
-				  	Value: "us-east-1",
-						Help:  "New York (USA) Region",
-					}, {
-						Value: "us-west-1",
-						Help:  "Freemont (USA) Region",
-					}, {
-						Value: "nz",
-						Help:  "Auckland (New Zealand) Region",
-					}},
+			Name:     "region",
+			Help:     "region - the location where your bucket will be created and your data stored.\n",
+			Provider: "RackCorp",
+			Examples: []fs.OptionExample{{
+				Value: "global",
+				Help:  "Global CDN (All locations) Region",
+			}, {
+				Value: "au",
+				Help:  "Australia (All states)",
+			}, {
+				Value: "au-nsw",
+				Help:  "NSW (Australia) Region",
+			}, {
+				Value: "au-qld",
+				Help:  "QLD (Australia) Region",
+			}, {
+				Value: "au-vic",
+				Help:  "VIC (Australia) Region",
+			}, {
+				Value: "au-wa",
+				Help:  "Perth (Australia) Region",
+			}, {
+				Value: "ph",
+				Help:  "Manila (Philippines) Region",
+			}, {
+				Value: "th",
+				Help:  "Bangkok (Thailand) Region",
+			}, {
+				Value: "hk",
+				Help:  "HK (Hong Kong) Region",
+			}, {
+				Value: "mn",
+				Help:  "Ulaanbaatar (Mongolia) Region",
+			}, {
+				Value: "kg",
+				Help:  "Bishkek (Kyrgyzstan) Region",
+			}, {
+				Value: "id",
+				Help:  "Jakarta (Indonesia) Region",
+			}, {
+				Value: "jp",
+				Help:  "Tokyo (Japan) Region",
+			}, {
+				Value: "sg",
+				Help:  "SG (Singapore) Region",
+			}, {
+				Value: "de",
+				Help:  "Frankfurt (Germany) Region",
+			}, {
+				Value: "us",
+				Help:  "USA (AnyCast) Region",
+			}, {
+				Value: "us-east-1",
+				Help:  "New York (USA) Region",
+			}, {
+				Value: "us-west-1",
+				Help:  "Freemont (USA) Region",
+			}, {
+				Value: "nz",
+				Help:  "Auckland (New Zealand) Region",
+			}},
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.",
@@ -658,69 +658,69 @@ func init() {
 				Value: "cos.accelerate.myqcloud.com",
 				Help:  "Use Tencent COS Accelerate Endpoint",
 			}},
+		}, {
+			// RackCorp endpoints: https://www.rackcorp.com/storage/s3storage
+			Name:     "endpoint",
+			Help:     "Endpoint for RackCorp Object Storage.",
+			Provider: "RackCorp",
+			Examples: []fs.OptionExample{{
+				Value: "s3.rackcorp.com",
+				Help:  "Global (AnyCast) Endpoint",
 			}, {
-				// RackCorp endpoints: https://www.rackcorp.com/storage/s3storage
-				Name:     "endpoint",
-				Help:     "Endpoint for RackCorp Object Storage.",
-				Provider: "RackCorp",
-				Examples: []fs.OptionExample{{
-					Value: "s3.rackcorp.com",
-					Help:  "Global (AnyCast) Endpoint",
-				}, {
-					Value: "au.s3.rackcorp.com",
-					Help:  "Australia (Anycast) Endpoint",
-				}, {
-					Value: "au-nsw.s3.rackcorp.com",
-					Help:  "Sydney (Australia) Endpoint",
-				}, {
-					Value: "au-qld.s3.rackcorp.com",
-					Help:  "Brisbane (Australia) Endpoint",
-				}, {
-					Value: "au-vic.s3.rackcorp.com",
-					Help:  "Melbourne (Australia) Endpoint",
-				}, {
-					Value: "au-wa.s3.rackcorp.com",
-					Help:  "Perth (Australia) Endpoint",
-				}, {
-					Value: "ph.s3.rackcorp.com",
-					Help:  "Manila (Philippines) Endpoint",
-				}, {
-					Value: "th.s3.rackcorp.com",
-					Help:  "Bangkok (Thailand) Endpoint",
-				}, {
-					Value: "hk.s3.rackcorp.com",
-					Help:  "HK (Hong Kong) Endpoint",
-				}, {
-					Value: "mn.s3.rackcorp.com",
-					Help:  "Ulaanbaatar (Mongolia) Endpoint",
-				}, {
-					Value: "kg.s3.rackcorp.com",
-					Help:  "Bishkek (Kyrgyzstan) Endpoint",
-				}, {
-					Value: "id.s3.rackcorp.com",
-					Help:  "Jakarta (Indonesia) Endpoint",
-				}, {
-					Value: "jp.s3.rackcorp.com",
-					Help:  "Tokyo (Japan) Endpoint",
-  			}, {
-					Value: "sg.s3.rackcorp.com",
-					Help:  "SG (Singapore) Endpoint",
-			  }, {
-					Value: "de.s3.rackcorp.com",
-					Help:  "Frankfurt (Germany) Endpoint",
-		  	}, {
-			  	Value: "us.s3.rackcorp.com",
-					Help:  "USA (AnyCast) Endpoint",
-				}, {
-			  	Value: "us-east-1.s3.rackcorp.com",
-					Help:  "New York (USA) Endpoint",
-				}, {
-					Value: "us-west-1.s3.rackcorp.com",
-					Help:  "Freemont (USA) Endpoint",
-				}, {
-					Value: "nz.s3.rackcorp.com",
-					Help:  "Auckland (New Zealand) Endpoint",
-				}},
+				Value: "au.s3.rackcorp.com",
+				Help:  "Australia (Anycast) Endpoint",
+			}, {
+				Value: "au-nsw.s3.rackcorp.com",
+				Help:  "Sydney (Australia) Endpoint",
+			}, {
+				Value: "au-qld.s3.rackcorp.com",
+				Help:  "Brisbane (Australia) Endpoint",
+			}, {
+				Value: "au-vic.s3.rackcorp.com",
+				Help:  "Melbourne (Australia) Endpoint",
+			}, {
+				Value: "au-wa.s3.rackcorp.com",
+				Help:  "Perth (Australia) Endpoint",
+			}, {
+				Value: "ph.s3.rackcorp.com",
+				Help:  "Manila (Philippines) Endpoint",
+			}, {
+				Value: "th.s3.rackcorp.com",
+				Help:  "Bangkok (Thailand) Endpoint",
+			}, {
+				Value: "hk.s3.rackcorp.com",
+				Help:  "HK (Hong Kong) Endpoint",
+			}, {
+				Value: "mn.s3.rackcorp.com",
+				Help:  "Ulaanbaatar (Mongolia) Endpoint",
+			}, {
+				Value: "kg.s3.rackcorp.com",
+				Help:  "Bishkek (Kyrgyzstan) Endpoint",
+			}, {
+				Value: "id.s3.rackcorp.com",
+				Help:  "Jakarta (Indonesia) Endpoint",
+			}, {
+				Value: "jp.s3.rackcorp.com",
+				Help:  "Tokyo (Japan) Endpoint",
+			}, {
+				Value: "sg.s3.rackcorp.com",
+				Help:  "SG (Singapore) Endpoint",
+			}, {
+				Value: "de.s3.rackcorp.com",
+				Help:  "Frankfurt (Germany) Endpoint",
+			}, {
+				Value: "us.s3.rackcorp.com",
+				Help:  "USA (AnyCast) Endpoint",
+			}, {
+				Value: "us-east-1.s3.rackcorp.com",
+				Help:  "New York (USA) Endpoint",
+			}, {
+				Value: "us-west-1.s3.rackcorp.com",
+				Help:  "Freemont (USA) Endpoint",
+			}, {
+				Value: "nz.s3.rackcorp.com",
+				Help:  "Auckland (New Zealand) Endpoint",
+			}},
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
@@ -943,68 +943,68 @@ func init() {
 				Value: "tor01-flex",
 				Help:  "Toronto Flex",
 			}},
-  	}, {
-				Name:     "location_constraint",
-				Help:     "Location constraint - the location where your bucket will be located and your data stored.\n",
-				Provider: "RackCorp",
-				Examples: []fs.OptionExample{{
-					 Value: "global",
-					 	Help: "Global CDN Region",
-					}, {
-						Value: "au",
-						Help:  "Australia (All locations)",
-					}, {
-						Value: "au-nsw",
-						Help:  "NSW (Australia) Region",
-					}, {
-						Value: "au-qld",
-						Help:  "QLD (Australia) Region",
-					}, {
-						Value: "au-vic",
-						Help:  "VIC (Australia) Region",
-					}, {
-						Value: "au-wa",
-						Help:  "Perth (Australia) Region",
-					}, {
-						Value: "ph",
-						Help:  "Manila (Philippines) Region",
-					}, {
-						Value: "th",
-						Help:  "Bangkok (Thailand) Region",
-					}, {
-						Value: "hk",
-						Help:  "HK (Hong Kong) Region",
-          }, {
-						Value: "mn",
-						Help:  "Ulaanbaatar (Mongolia) Region",
-					}, {
-						Value: "kg",
-						Help:  "Bishkek (Kyrgyzstan) Region",
-					}, {
-						Value: "id",
-						Help:  "Jakarta (Indonesia) Region",
-					}, {
-						Value: "jp",
-						Help:  "Tokyo (Japan) Region",
-	  			}, {
-						Value: "sg",
-						Help:  "SG (Singapore) Region",
-				  }, {
-						Value: "de",
-						Help:  "Frankfurt (Germany) Region",
-			  	}, {
-				  	Value: "us",
-						Help:  "USA (AnyCast) Region",
-					}, {
-				  	Value: "us-east-1",
-						Help:  "New York (USA) Region",
-					}, {
-						Value: "us-west-1",
-						Help:  "Freemont (USA) Region",
-					}, {
-						Value: "nz",
-						Help:  "Auckland (New Zealand) Region",
-					}},
+		}, {
+			Name:     "location_constraint",
+			Help:     "Location constraint - the location where your bucket will be located and your data stored.\n",
+			Provider: "RackCorp",
+			Examples: []fs.OptionExample{{
+				Value: "global",
+				Help:  "Global CDN Region",
+			}, {
+				Value: "au",
+				Help:  "Australia (All locations)",
+			}, {
+				Value: "au-nsw",
+				Help:  "NSW (Australia) Region",
+			}, {
+				Value: "au-qld",
+				Help:  "QLD (Australia) Region",
+			}, {
+				Value: "au-vic",
+				Help:  "VIC (Australia) Region",
+			}, {
+				Value: "au-wa",
+				Help:  "Perth (Australia) Region",
+			}, {
+				Value: "ph",
+				Help:  "Manila (Philippines) Region",
+			}, {
+				Value: "th",
+				Help:  "Bangkok (Thailand) Region",
+			}, {
+				Value: "hk",
+				Help:  "HK (Hong Kong) Region",
+			}, {
+				Value: "mn",
+				Help:  "Ulaanbaatar (Mongolia) Region",
+			}, {
+				Value: "kg",
+				Help:  "Bishkek (Kyrgyzstan) Region",
+			}, {
+				Value: "id",
+				Help:  "Jakarta (Indonesia) Region",
+			}, {
+				Value: "jp",
+				Help:  "Tokyo (Japan) Region",
+			}, {
+				Value: "sg",
+				Help:  "SG (Singapore) Region",
+			}, {
+				Value: "de",
+				Help:  "Frankfurt (Germany) Region",
+			}, {
+				Value: "us",
+				Help:  "USA (AnyCast) Region",
+			}, {
+				Value: "us-east-1",
+				Help:  "New York (USA) Region",
+			}, {
+				Value: "us-west-1",
+				Help:  "Freemont (USA) Region",
+			}, {
+				Value: "nz",
+				Help:  "Auckland (New Zealand) Region",
+			}},
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
