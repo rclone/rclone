@@ -1155,8 +1155,8 @@ func (f *Fs) Hashes() hash.Set {
 	}
 
 	changed := false
-	md5Works := checkHash([]string{"md5sum", "md5 -r"}, "d41d8cd98f00b204e9800998ecf8427e", &f.opt.Md5sumCommand, &changed)
-	sha1Works := checkHash([]string{"sha1sum", "sha1 -r"}, "da39a3ee5e6b4b0d3255bfef95601890afd80709", &f.opt.Sha1sumCommand, &changed)
+	md5Works := checkHash([]string{"md5sum", "md5 -r", "rclone md5sum"}, "d41d8cd98f00b204e9800998ecf8427e", &f.opt.Md5sumCommand, &changed)
+	sha1Works := checkHash([]string{"sha1sum", "sha1 -r", "rclone sha1sum"}, "da39a3ee5e6b4b0d3255bfef95601890afd80709", &f.opt.Sha1sumCommand, &changed)
 
 	if changed {
 		f.m.Set("md5sum_command", f.opt.Md5sumCommand)
