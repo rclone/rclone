@@ -1632,7 +1632,7 @@ parameters or by supplying "Content-Type: application/json" and a JSON
 blob in the body.  There are examples of these below using `curl`.
 
 The response will be a JSON blob in the body of the response.  This is
-formatted to be reasonably human readable.
+formatted to be reasonably human-readable.
 
 ### Error returns
 

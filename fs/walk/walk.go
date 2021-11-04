@@ -124,7 +124,7 @@ func (l ListType) Filter(in *fs.DirEntries) {
 // If maxLevel is < 0 then it will recurse indefinitely, else it will
 // only do maxLevel levels.
 //
-// If synthesizeDirs is set then for bucket based remotes it will
+// If synthesizeDirs is set then for bucket-based remotes it will
 // synthesize directories from the file structure.  This uses extra
 // memory so don't set this if you don't need directories, likewise do
 // set this if you are interested in directories.
@@ -182,7 +182,7 @@ func listRwalk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLe
 	return walkErr
 }
 
-// dirMap keeps track of directories made for bucket based remotes.
+// dirMap keeps track of directories made for bucket-based remotes.
 // true => directory has been sent
 // false => directory has been seen but not sent
 type dirMap struct {

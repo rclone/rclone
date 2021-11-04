@@ -406,7 +406,7 @@ remote itself may assign the MIME type.
 ## Optional Features ##
 
 All rclone remotes support a base command set. Other features depend
-upon backend specific capabilities.
+upon backend-specific capabilities.
 
 | Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing  | About | EmptyDir |
 | ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|:--------:|
@@ -428,7 +428,7 @@ upon backend specific capabilities.
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
 | Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
-| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       | 
+| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
@@ -529,4 +529,4 @@ See [rclone about command](https://rclone.org/commands/rclone_about/)
 ### EmptyDir ###
 
 The remote supports empty directories. See [Limitations](/bugs/#limitations)
- for details. Most Object/Bucket based remotes do not support this.
+ for details. Most Object/Bucket-based remotes do not support this.

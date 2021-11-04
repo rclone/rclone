@@ -943,7 +943,7 @@ func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
 	})
 }
 
-// hashSum returns the human readable hash for ht passed in.  This may
+// hashSum returns the human-readable hash for ht passed in.  This may
 // be UNSUPPORTED or ERROR. If it isn't returning a valid hash it will
 // return an error.
 func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) (string, error) {

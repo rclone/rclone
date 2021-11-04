@@ -376,7 +376,7 @@ description: "Rclone Changelog"
 * New Features
     * [Connection strings](/docs/#connection-strings)
         * Config parameters can now be passed as part of the remote name as a connection string.
-        * For example to do the equivalent of `--drive-shared-with-me` use `drive,shared_with_me:`
+        * For example, to do the equivalent of `--drive-shared-with-me` use `drive,shared_with_me:`
         * Make sure we don't save on the fly remote config to the config file (Nick Craig-Wood)
         * Make sure backends with additional config have a different name for caching (Nick Craig-Wood)
         * This work was sponsored by CERN, through the [CS3MESH4EOSC Project](https://cs3mesh4eosc.eu/).
@@ -629,7 +629,7 @@ description: "Rclone Changelog"
     * And thanks to these people for many doc fixes too numerous to list
         * Ameer Dawood, Antoine GIRARD, Bob Bagwill, Christopher Stewart
         * CokeMine, David, Dov Murik, Durval Menezes, Evan Harris, gtorelly
-        * Ilyess Bachiri, Janne Johansson, Kerry Su, Marcin Zelent, 
+        * Ilyess Bachiri, Janne Johansson, Kerry Su, Marcin Zelent,
         * Martin Michlmayr, Milly, Sơn Trần-Nguyễn
 * Mount
     * Update systemd status with cache stats (Hekmon)
@@ -1174,7 +1174,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * [Union](/union/) re-write to have multiple writable remotes (Max Sum)
     * [Seafile](/seafile) for Seafile server (Fred @creativeprojects)
 * New commands
-    * backend: command for backend specific commands (see backends) (Nick Craig-Wood)
+    * backend: command for backend-specific commands (see backends) (Nick Craig-Wood)
     * cachestats: Deprecate in favour of `rclone backend stats cache:` (Nick Craig-Wood)
     * dbhashsum: Deprecate in favour of `rclone hashsum DropboxHash` (Nick Craig-Wood)
 * New Features
@@ -1211,7 +1211,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * lsjson: Add `--hash-type` parameter and use it in lsf to speed up hashing (Nick Craig-Wood)
     * rc
         * Add `-o`/`--opt` and `-a`/`--arg` for more structured input (Nick Craig-Wood)
-        * Implement `backend/command` for running backend specific commands remotely (Nick Craig-Wood)
+        * Implement `backend/command` for running backend-specific commands remotely (Nick Craig-Wood)
         * Add `mount/mount` command for starting `rclone mount` via the API (Chaitanya)
     * rcd: Add Prometheus metrics support (Gary Kim)
     * serve http
@@ -1638,7 +1638,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Add flag `--vfs-case-insensitive` for windows/macOS mounts (Ivan Andreev)
     * Make objects of unknown size readable through the VFS (Nick Craig-Wood)
     * Move writeback of dirty data out of close() method into its own method (FlushWrites) and remove close() call from Flush() (Brett Dutro)
-    * Stop empty dirs disappearing when renamed on bucket based remotes (Nick Craig-Wood)
+    * Stop empty dirs disappearing when renamed on bucket-based remotes (Nick Craig-Wood)
     * Stop change notify polling clearing so much of the directory cache (Nick Craig-Wood)
 * Azure Blob
     * Disable logging to the Windows event log (Nick Craig-Wood)
@@ -1791,7 +1791,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * rcd: Fix permissions problems on cache directory with web gui download (Nick Craig-Wood)
 * Mount
     * Default `--daemon-timout` to 15 minutes on macOS and FreeBSD (Nick Craig-Wood)
-    * Update docs to show mounting from root OK for bucket based (Nick Craig-Wood)
+    * Update docs to show mounting from root OK for bucket-based (Nick Craig-Wood)
     * Remove nonseekable flag from write files (Nick Craig-Wood)
 * VFS
     * Make write without cache more efficient (Nick Craig-Wood)
@@ -1858,7 +1858,7 @@ all the docs and Edward Barker for helping re-write the front page.
         * controlled with `--multi-thread-cutoff` and `--multi-thread-streams`
     * Use rclone.conf from rclone executable directory to enable portable use (albertony)
     * Allow sync of a file and a directory with the same name (forgems)
-        * this is common on bucket based remotes, e.g. s3, gcs
+        * this is common on bucket-based remotes, e.g. s3, gcs
     * Add `--ignore-case-sync` for forced case insensitivity (garry415)
     * Implement `--stats-one-line-date` and `--stats-one-line-date-format` (Peter Berbec)
     * Log an ERROR for all commands which exit with non-zero status (Nick Craig-Wood)
@@ -1872,7 +1872,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * lsjson
         * Added EncryptedPath to output (calisro)
         * Support showing the Tier of the object (Nick Craig-Wood)
-        * Add IsBucket field for bucket based remote listing of the root (Nick Craig-Wood)
+        * Add IsBucket field for bucket-based remote listing of the root (Nick Craig-Wood)
     * rc
         * Add `--loopback` flag to run commands directly without a server (Nick Craig-Wood)
         * Add operations/fsinfo: Return information about the remote (Nick Craig-Wood)
@@ -1888,7 +1888,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Make move and copy individual files obey `--backup-dir` (Nick Craig-Wood)
     * If `--ignore-checksum` is in effect, don't calculate checksum (Nick Craig-Wood)
     * moveto: Fix case-insensitive same remote move (Gary Kim)
-    * rc: Fix serving bucket based objects with `--rc-serve` (Nick Craig-Wood)
+    * rc: Fix serving bucket-based objects with `--rc-serve` (Nick Craig-Wood)
     * serve webdav: Fix serveDir not being updated with changes from webdav (Gary Kim)
 * Mount
     * Fix poll interval documentation (Animosity022)
@@ -2573,7 +2573,7 @@ Point release to fix hubic and azureblob backends.
     * Always forget parent dir for notifications
     * Integrate with Plex websocket
     * Add rc cache/stats (seuffert)
-    * Add info log on notification 
+    * Add info log on notification
 * Box
     * Fix failure reading large directories - parse file/directory size as float
 * Dropbox
@@ -2754,7 +2754,7 @@ Point release to fix hubic and azureblob backends.
     * Fix following of symlinks
     * Fix reading config file outside of Fs setup
     * Fix reading $USER in username fallback not $HOME
-    * Fix running under crontab - Use correct OS way of reading username 
+    * Fix running under crontab - Use correct OS way of reading username
 * Swift
     * Fix refresh of authentication token
         * in v1.39 a bug was introduced which ignored new tokens - this fixes it
@@ -2917,7 +2917,7 @@ Point release to fix hubic and azureblob backends.
     * HTTP - thanks to Vasiliy Tolstov
 * New commands
     * rclone ncdu - for exploring a remote with a text based user interface.
-    * rclone lsjson - for listing with a machine readable output
+    * rclone lsjson - for listing with a machine-readable output
     * rclone dbhashsum - to show Dropbox style hashes of files (local or Dropbox)
 * New Features
     * Implement --fast-list flag
@@ -3181,7 +3181,7 @@ Point release to fix hubic and azureblob backends.
     * Unix: implement `-x`/`--one-file-system` to stay on a single file system
         * thanks Durval Menezes and Luiz Carlos Rumbelsperger Viana
     * Windows: ignore the symlink bit on files
-    * Windows: Ignore directory based junction points
+    * Windows: Ignore directory-based junction points
 * B2
     * Make sure each upload has at least one upload slot - fixes strange upload stats
     * Fix uploads when using crypt
@@ -3284,7 +3284,7 @@ Point release to fix hubic and azureblob backends.
     * Retry more errors
     * Add --ignore-size flag - for uploading images to onedrive
     * Log -v output to stdout by default
-    * Display the transfer stats in more human readable form
+    * Display the transfer stats in more human-readable form
     * Make 0 size files specifiable with `--max-size 0b`
     * Add `b` suffix so we can specify bytes in --bwlimit, --min-size, etc.
     * Use "password:" instead of "password>" prompt - thanks Klaus Post and Leigh Klotz

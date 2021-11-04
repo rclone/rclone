@@ -99,7 +99,7 @@ func NewNameEncryptionMode(s string) (mode NameEncryptionMode, err error) {
 	return mode, err
 }
 
-// String turns mode into a human readable string
+// String turns mode into a human-readable string
 func (mode NameEncryptionMode) String() (out string) {
 	switch mode {
 	case NameEncryptionOff:

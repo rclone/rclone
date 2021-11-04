@@ -107,7 +107,7 @@ Choose a number from below, or type in an existing value
  1 > Archive
  2 > Links
  3 > Sync
- 
+
 Mountpoints> 1
 --------------------
 [jotta]
@@ -200,7 +200,7 @@ as they can't be used in XML strings.
 
 ### Deleting files
 
-By default rclone will send all files to the trash when deleting files. They will be permanently
+By default, rclone will send all files to the trash when deleting files. They will be permanently
 deleted automatically after 30 days. You may bypass the trash and permanently delete files immediately
 by using the [--jottacloud-hard-delete](#jottacloud-hard-delete) flag, or set the equivalent environment variable.
 Emptying the trash is supported by the [cleanup](/commands/rclone_cleanup/) command.

@@ -51,7 +51,7 @@ var Command = &cobra.Command{
 over HTTP.  This allows restic to use rclone as a data storage
 mechanism for cloud providers that restic does not support directly.
 
-[Restic](https://restic.net/) is a command line program for doing
+[Restic](https://restic.net/) is a command-line program for doing
 backups.
 
 The server will log errors.  Use -v to see access logs.

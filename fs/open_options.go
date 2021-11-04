@@ -99,7 +99,7 @@ func ParseRangeOption(s string) (po *RangeOption, err error) {
 	return &o, nil
 }
 
-// String formats the option into human readable form
+// String formats the option into human-readable form
 func (o *RangeOption) String() string {
 	return fmt.Sprintf("RangeOption(%d,%d)", o.Start, o.End)
 }
@@ -178,7 +178,7 @@ func (o *SeekOption) Header() (key string, value string) {
 	return key, value
 }
 
-// String formats the option into human readable form
+// String formats the option into human-readable form
 func (o *SeekOption) String() string {
 	return fmt.Sprintf("SeekOption(%d)", o.Offset)
 }
@@ -199,7 +199,7 @@ func (o *HTTPOption) Header() (key string, value string) {
 	return o.Key, o.Value
 }
 
-// String formats the option into human readable form
+// String formats the option into human-readable form
 func (o *HTTPOption) String() string {
 	return fmt.Sprintf("HTTPOption(%q,%q)", o.Key, o.Value)
 }
@@ -220,7 +220,7 @@ func (o *HashesOption) Header() (key string, value string) {
 	return "", ""
 }
 
-// String formats the option into human readable form
+// String formats the option into human-readable form
 func (o *HashesOption) String() string {
 	return fmt.Sprintf("HashesOption(%v)", o.Hashes)
 }
@@ -239,7 +239,7 @@ func (o NullOption) Header() (key string, value string) {
 	return "", ""
 }
 
-// String formats the option into human readable form
+// String formats the option into human-readable form
 func (o NullOption) String() string {
 	return fmt.Sprintf("NullOption()")
 }

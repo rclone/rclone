@@ -49,7 +49,7 @@ Use this to set additional HTTP headers for all transactions.
 The input format is comma separated list of key,value pairs.  Standard
 [CSV encoding](https://godoc.org/encoding/csv) may be used.
 
-For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
+For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
 You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
 `,

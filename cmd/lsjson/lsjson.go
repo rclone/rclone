@@ -93,7 +93,7 @@ If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
 When used without --recursive the Path will always be the same as Name.
 
-If the directory is a bucket in a bucket based backend, then
+If the directory is a bucket in a bucket-based backend, then
 "IsBucket" will be set to true. This key won't be present unless it is
 "true".
 

@@ -131,7 +131,7 @@ func newListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOp
 	features := fsrc.Features()
 	lj.canGetTier = features.GetTier
 	lj.format = formatForPrecision(fsrc.Precision())
-	lj.isBucket = features.BucketBased && remote == "" && fsrc.Root() == "" // if bucket based remote listing the root mark directories as buckets
+	lj.isBucket = features.BucketBased && remote == "" && fsrc.Root() == "" // if bucket-based remote listing the root mark directories as buckets
 	lj.showHash = opt.ShowHash
 	lj.hashTypes = fsrc.Hashes().Array()
 	if len(opt.HashTypes) != 0 {

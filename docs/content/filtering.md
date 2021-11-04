@@ -386,7 +386,7 @@ statement. For more flexibility use the `--filter-from` flag.
 ### `--filter` - Add a file-filtering rule
 
 Specifies path/file names to an rclone command, based on a single
-include or exclude rule, in `+` or `-` format. 
+include or exclude rule, in `+` or `-` format.
 
 This flag can be repeated. See above for the order filter flags are
 processed in.
@@ -555,7 +555,7 @@ input to `--files-from-raw`.
 
 ### `--ignore-case` - make searches case insensitive
 
-By default rclone filter patterns are case sensitive. The `--ignore-case`
+By default, rclone filter patterns are case sensitive. The `--ignore-case`
 flag makes all of the filters patterns on the command line case
 insensitive.
 

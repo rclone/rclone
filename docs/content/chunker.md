@@ -18,7 +18,7 @@ a remote.
 
 First check your chosen remote is working - we'll call it `remote:path` here.
 Note that anything inside `remote:path` will be chunked and anything outside
-won't. This means that if you are using a bucket based remote (e.g. S3, B2, swift)
+won't. This means that if you are using a bucket-based remote (e.g. S3, B2, swift)
 then you should probably put the bucket in the remote `s3:bucket`.
 
 Now configure `chunker` using `rclone config`. We will call this one `overlay`

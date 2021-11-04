@@ -19,8 +19,8 @@ notoc: true
 
 ## About rclone {#about}
 
-Rclone is a command line program to manage files on cloud storage. It
-is a feature rich alternative to cloud vendors' web storage
+Rclone is a command-line program to manage files on cloud storage. It
+is a feature-rich alternative to cloud vendors' web storage
 interfaces. [Over 40 cloud storage products](#providers) support
 rclone including S3 object stores, business & consumer file storage
 services, as well as standard transfer protocols.
@@ -43,7 +43,7 @@ bandwidth use and transfers from one provider to another without
 using local disk.
 
 Virtual backends wrap local and cloud file systems to apply
-[encryption](/crypt/), 
+[encryption](/crypt/),
 [compression](/compress/),
 [chunking](/chunker/),
 [hashing](/hasher/) and
@@ -58,13 +58,13 @@ macOS, linux and FreeBSD, and also serves these over
 [FTP](/commands/rclone_serve_ftp/) and
 [DLNA](/commands/rclone_serve_dlna/).
 
-Rclone is mature, open source software originally inspired by rsync
+Rclone is mature, open-source software originally inspired by rsync
 and written in [Go](https://golang.org). The friendly support
-community are familiar with varied use cases. Official Ubuntu, Debian,
+community is familiar with varied use cases. Official Ubuntu, Debian,
 Fedora, Brew and Chocolatey repos. include rclone. For the latest
 version [downloading from rclone.org](/downloads/) is recommended.
 
-Rclone is widely used on Linux, Windows and Mac. Third party
+Rclone is widely used on Linux, Windows and Mac. Third-party
 developers create innovative backup, restore, GUI and business
 process solutions using the rclone command line or API.
 
@@ -77,7 +77,7 @@ Rclone helps you:
 - Backup (and encrypt) files to cloud storage
 - Restore (and decrypt) files from cloud storage
 - Mirror cloud data to other cloud services or locally
-- Migrate data to cloud, or between cloud storage vendors
+- Migrate data to the cloud, or between cloud storage vendors
 - Mount multiple, encrypted, cached or diverse cloud storage as a disk
 - Analyse and account for data held on cloud storage using [lsf](/commands/rclone_lsf/), [ljson](/commands/rclone_lsjson/), [size](/commands/rclone_size/), [ncdu](/commands/rclone_ncdu/)
 - [Union](/union/) file systems together to present multiple local and/or cloud file systems as one

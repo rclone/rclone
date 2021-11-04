@@ -214,7 +214,7 @@ var configCreateCommand = &cobra.Command{
 Create a new remote of |name| with |type| and options.  The options
 should be passed in pairs of |key| |value| or as |key=value|.
 
-For example to make a swift remote of name myremote using auto config
+For example, to make a swift remote of name myremote using auto config
 you would do:
 
     rclone config create myremote swift env_auth true
@@ -277,7 +277,7 @@ var configUpdateCommand = &cobra.Command{
 Update an existing remote's options. The options should be passed in
 pairs of |key| |value| or as |key=value|.
 
-For example to update the env_auth field of a remote of name myremote
+For example, to update the env_auth field of a remote of name myremote
 you would do:
 
     rclone config update myremote env_auth true
@@ -317,7 +317,7 @@ Update an existing remote's password. The password
 should be passed in pairs of |key| |password| or as |key=password|.
 The |password| should be passed in in clear (unobscured).
 
-For example to set password of a remote of name myremote you would do:
+For example, to set password of a remote of name myremote you would do:
 
     rclone config password myremote fieldname mypassword
     rclone config password myremote fieldname=mypassword

@@ -261,7 +261,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // splitNodePath splits nodePath into / separated parts, returning nil if it
 // should refer to the root.
-// It also encodes the parts into backend specific encoding
+// It also encodes the parts into backend-specific encoding
 func (f *Fs) splitNodePath(nodePath string) (parts []string) {
 	nodePath = path.Clean(nodePath)
 	if nodePath == "." || nodePath == "/" {
@@ -354,7 +354,7 @@ func (f *Fs) mkdir(ctx context.Context, rootNode *mega.Node, dir string) (node *
 		}
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "internal error: mkdir called with non existent root node")
+		return nil, errors.Wrap(err, "internal error: mkdir called with non-existent root node")
 	}
 	// i is number of directories to create (may be 0)
 	// node is directory to create them from

@@ -141,7 +141,7 @@ Note that the chunks will be buffered into memory.`,
 			Name: "expose_onenote_files",
 			Help: `Set to make OneNote files show up in directory listings.
 
-By default rclone will hide OneNote files in directory listings because
+By default, rclone will hide OneNote files in directory listings because
 operations like "Open" and "Update" won't work on them.  But this
 behaviour may also prevent you from deleting them.  If you want to
 delete OneNote files or otherwise want them to show up in directory

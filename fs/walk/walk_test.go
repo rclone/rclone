@@ -783,7 +783,7 @@ func TestListR(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/b"}, got)
 
-	// Now bucket based
+	// Now bucket-based
 	objects = fs.DirEntries{
 		mockobject.Object("a"),
 		mockobject.Object("b"),

@@ -82,7 +82,7 @@ For example
     └── subdir
         ├── file4
         └── file5
-    
+
     1 directories, 5 files
 
 You can use any of the filtering options with the tree command (e.g.
