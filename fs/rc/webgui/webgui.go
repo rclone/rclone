@@ -5,6 +5,7 @@ package webgui
 import (
 	"archive/zip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/file"
 )
@@ -24,15 +24,15 @@ import (
 func GetLatestReleaseURL(fetchURL string) (string, string, int, error) {
 	resp, err := http.Get(fetchURL)
 	if err != nil {
-		return "", "", 0, errors.Wrap(err, "failed getting latest release of rclone-webui")
+		return "", "", 0, fmt.Errorf("failed getting latest release of rclone-webui: %w", err)
 	}
 	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode != http.StatusOK {
-		return "", "", 0, errors.Errorf("bad HTTP status %d (%s) when fetching %s", resp.StatusCode, resp.Status, fetchURL)
+		return "", "", 0, fmt.Errorf("bad HTTP status %d (%s) when fetching %s", resp.StatusCode, resp.Status, fetchURL)
 	}
 	results := gitHubRequest{}
 	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
-		return "", "", 0, errors.Wrap(err, "could not decode results from http request")
+		return "", "", 0, fmt.Errorf("could not decode results from http request: %w", err)
 	}
 	if len(results.Assets) < 1 {
 		return "", "", 0, errors.New("could not find an asset in the release. " +
@@ -63,7 +63,7 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	// Get the latest release details
 	WebUIURL, tag, size, err := GetLatestReleaseURL(fetchURL)
 	if err != nil {
-		return errors.Wrap(err, "Error checking for web gui release update, skipping update")
+		return fmt.Errorf("Error checking for web gui release update, skipping update: %w", err)
 	}
 	dat, err := ioutil.ReadFile(tagPath)
 	tagsMatch := false
@@ -150,7 +150,7 @@ func DownloadFile(filepath string, url string) (err error) {
 	}
 	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode != http.StatusOK {
-		return errors.Errorf("bad HTTP status %d (%s) when fetching %s", resp.StatusCode, resp.Status, url)
+		return fmt.Errorf("bad HTTP status %d (%s) when fetching %s", resp.StatusCode, resp.Status, url)
 	}
 
 	// Create the file

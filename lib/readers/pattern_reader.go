@@ -1,9 +1,8 @@
 package readers
 
 import (
+	"errors"
 	"io"
-
-	"github.com/pkg/errors"
 )
 
 // This is the smallest prime less than 256

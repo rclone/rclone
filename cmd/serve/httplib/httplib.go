@@ -18,7 +18,6 @@ import (
 	"time"
 
 	auth "github.com/abbot/go-http-auth"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/serve/http/data"
 	"github.com/rclone/rclone/fs"
 )
@@ -322,7 +321,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 func (s *Server) Serve() error {
 	ln, err := net.Listen("tcp", s.httpServer.Addr)
 	if err != nil {
-		return errors.Wrapf(err, "start server failed")
+		return fmt.Errorf("start server failed: %w", err)
 	}
 	s.listener = ln
 	s.waitChan = make(chan struct{})

@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/hash"
@@ -237,7 +236,7 @@ func (x *DeduplicateMode) Set(s string) error {
 	case "list":
 		*x = DeduplicateList
 	default:
-		return errors.Errorf("Unknown mode for dedupe %q.", s)
+		return fmt.Errorf("unknown mode for dedupe %q", s)
 	}
 	return nil
 }
@@ -319,7 +318,7 @@ func dedupeFindDuplicateDirs(ctx context.Context, f fs.Fs) (duplicateDirs [][]*d
 		return nil
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "find duplicate dirs")
+		return nil, fmt.Errorf("find duplicate dirs: %w", err)
 	}
 
 	// Make sure parents are before children
@@ -341,11 +340,11 @@ func dedupeFindDuplicateDirs(ctx context.Context, f fs.Fs) (duplicateDirs [][]*d
 func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]*dedupeDir) error {
 	mergeDirs := f.Features().MergeDirs
 	if mergeDirs == nil {
-		return errors.Errorf("%v: can't merge directories", f)
+		return fmt.Errorf("%v: can't merge directories", f)
 	}
 	dirCacheFlush := f.Features().DirCacheFlush
 	if dirCacheFlush == nil {
-		return errors.Errorf("%v: can't flush dir cache", f)
+		return fmt.Errorf("%v: can't flush dir cache", f)
 	}
 	for _, dedupeDirs := range duplicateDirs {
 		if SkipDestructive(ctx, dedupeDirs[0].dir, "merge duplicate directories") {
@@ -400,7 +399,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 	what := "names"
 	if byHash {
 		if ht == hash.None {
-			return errors.Errorf("%v has no hashes", f)
+			return fmt.Errorf("%v has no hashes", f)
 		}
 		what = ht.String() + " hashes"
 	}

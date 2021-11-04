@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
-	"github.com/pkg/errors"
 )
 
 // FileMode is a command line friendly os.FileMode
@@ -22,7 +20,7 @@ func (x *FileMode) String() string {
 func (x *FileMode) Set(s string) error {
 	i, err := strconv.ParseInt(s, 8, 64)
 	if err != nil {
-		return errors.Wrap(err, "Bad FileMode - must be octal digits")
+		return fmt.Errorf("Bad FileMode - must be octal digits: %w", err)
 	}
 	*x.Mode = (os.FileMode)(i)
 	return nil

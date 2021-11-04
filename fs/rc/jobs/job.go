@@ -4,13 +4,13 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -88,7 +88,7 @@ func (job *Job) removeListener(fn *func()) {
 func (job *Job) run(ctx context.Context, fn rc.Func, in rc.Params) {
 	defer func() {
 		if r := recover(); r != nil {
-			job.finish(nil, errors.Errorf("panic received: %v \n%s", r, string(debug.Stack())))
+			job.finish(nil, fmt.Errorf("panic received: %v \n%s", r, string(debug.Stack())))
 		}
 	}()
 	job.finish(fn(ctx, in))
@@ -352,7 +352,7 @@ func rcJobStatus(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = make(rc.Params)
 	err = rc.Reshape(&out, job)
 	if err != nil {
-		return nil, errors.Wrap(err, "reshape failed in job status")
+		return nil, fmt.Errorf("reshape failed in job status: %w", err)
 	}
 	return out, nil
 }

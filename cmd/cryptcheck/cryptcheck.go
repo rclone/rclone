@@ -2,8 +2,8 @@ package cryptcheck
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/check"
@@ -60,13 +60,13 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 	// Check to see fcrypt is a crypt
 	fcrypt, ok := fdst.(*crypt.Fs)
 	if !ok {
-		return errors.Errorf("%s:%s is not a crypt remote", fdst.Name(), fdst.Root())
+		return fmt.Errorf("%s:%s is not a crypt remote", fdst.Name(), fdst.Root())
 	}
 	// Find a hash to use
 	funderlying := fcrypt.UnWrap()
 	hashType := funderlying.Hashes().GetOne()
 	if hashType == hash.None {
-		return errors.Errorf("%s:%s does not support any hashes", funderlying.Name(), funderlying.Root())
+		return fmt.Errorf("%s:%s does not support any hashes", funderlying.Name(), funderlying.Root())
 	}
 	fs.Infof(nil, "Using %v for hash comparisons", hashType)
 
@@ -85,20 +85,20 @@ func cryptCheck(ctx context.Context, fdst, fsrc fs.Fs) error {
 		underlyingDst := cryptDst.UnWrap()
 		underlyingHash, err := underlyingDst.Hash(ctx, hashType)
 		if err != nil {
-			return true, false, errors.Wrapf(err, "error reading hash from underlying %v", underlyingDst)
+			return true, false, fmt.Errorf("error reading hash from underlying %v: %w", underlyingDst, err)
 		}
 		if underlyingHash == "" {
 			return false, true, nil
 		}
 		cryptHash, err := fcrypt.ComputeHash(ctx, cryptDst, src, hashType)
 		if err != nil {
-			return true, false, errors.Wrap(err, "error computing hash")
+			return true, false, fmt.Errorf("error computing hash: %w", err)
 		}
 		if cryptHash == "" {
 			return false, true, nil
 		}
 		if cryptHash != underlyingHash {
-			err = errors.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
+			err = fmt.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
 			fs.Errorf(src, err.Error())
 			return true, false, nil
 		}

@@ -3,10 +3,10 @@ package about
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -98,11 +98,11 @@ see complete list in [documentation](https://rclone.org/overview/#optional-featu
 		cmd.Run(false, false, command, func() error {
 			doAbout := f.Features().About
 			if doAbout == nil {
-				return errors.Errorf("%v doesn't support about", f)
+				return fmt.Errorf("%v doesn't support about", f)
 			}
 			u, err := doAbout(context.Background())
 			if err != nil {
-				return errors.Wrap(err, "About call failed")
+				return fmt.Errorf("About call failed: %w", err)
 			}
 			if u == nil {
 				return errors.New("nil usage returned")

@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -19,7 +20,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/jottacloud/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -146,12 +146,12 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		srv := rest.NewClient(fshttp.NewClient(ctx))
 		token, tokenEndpoint, err := doTokenAuth(ctx, srv, loginToken)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get oauth token")
+			return nil, fmt.Errorf("failed to get oauth token: %w", err)
 		}
 		m.Set(configTokenURL, tokenEndpoint)
 		err = oauthutil.PutToken(name, m, &token, true)
 		if err != nil {
-			return nil, errors.Wrap(err, "error while saving token")
+			return nil, fmt.Errorf("error while saving token: %w", err)
 		}
 		return fs.ConfigGoto("choose_device")
 	case "legacy": // configure a jottacloud backend using legacy authentication
@@ -168,7 +168,7 @@ machines.`)
 		if config.Result == "true" {
 			deviceRegistration, err := registerDevice(ctx, srv)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to register device")
+				return nil, fmt.Errorf("failed to register device: %w", err)
 			}
 			m.Set(configClientID, deviceRegistration.ClientID)
 			m.Set(configClientSecret, obscure.MustObscure(deviceRegistration.ClientSecret))
@@ -216,11 +216,11 @@ machines.`)
 		m.Set("password", "")
 		m.Set("auth_code", "")
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get oauth token")
+			return nil, fmt.Errorf("failed to get oauth token: %w", err)
 		}
 		err = oauthutil.PutToken(name, m, &token, true)
 		if err != nil {
-			return nil, errors.Wrap(err, "error while saving token")
+			return nil, fmt.Errorf("error while saving token: %w", err)
 		}
 		return fs.ConfigGoto("choose_device")
 	case "telia": // telia cloud config
@@ -529,7 +529,7 @@ func getCustomerInfo(ctx context.Context, apiSrv *rest.Client) (info *api.Custom
 
 	_, err = apiSrv.CallJSON(ctx, &opts, nil, &info)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't get customer info")
+		return nil, fmt.Errorf("couldn't get customer info: %w", err)
 	}
 
 	return info, nil
@@ -544,7 +544,7 @@ func getDriveInfo(ctx context.Context, srv *rest.Client, username string) (info 
 
 	_, err = srv.CallXML(ctx, &opts, nil, &info)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't get drive info")
+		return nil, fmt.Errorf("couldn't get drive info: %w", err)
 	}
 
 	return info, nil
@@ -559,7 +559,7 @@ func getDeviceInfo(ctx context.Context, srv *rest.Client, path string) (info *ap
 
 	_, err = srv.CallXML(ctx, &opts, nil, &info)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't get device info")
+		return nil, fmt.Errorf("couldn't get device info: %w", err)
 	}
 
 	return info, nil
@@ -597,7 +597,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Jo
 	}
 
 	if err != nil {
-		return nil, errors.Wrap(err, "read metadata failed")
+		return nil, fmt.Errorf("read metadata failed: %w", err)
 	}
 	if result.XMLName.Local == "folder" {
 		return nil, fs.ErrorIsDir
@@ -720,7 +720,7 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 	// Create OAuth Client
 	oAuthClient, ts, err = oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Failed to configure Jottacloud oauth client")
+		return nil, nil, fmt.Errorf("Failed to configure Jottacloud oauth client: %w", err)
 	}
 	return oAuthClient, ts, nil
 }
@@ -786,7 +786,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		_, err := f.NewObject(context.TODO(), remote)
 		if err != nil {
-			if uErr := errors.Cause(err); uErr == fs.ErrorObjectNotFound || uErr == fs.ErrorNotAFile || uErr == fs.ErrorIsDir {
+			if errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, fs.ErrorNotAFile) || errors.Is(err, fs.ErrorIsDir) {
 				// File doesn't exist so return old f
 				f.root = root
 				return f, nil
@@ -881,7 +881,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				return nil, fs.ErrorDirNotFound
 			}
 		}
-		return nil, errors.Wrap(err, "couldn't list files")
+		return nil, fmt.Errorf("couldn't list files: %w", err)
 	}
 
 	if !f.validFolder(&result) {
@@ -981,7 +981,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 				return fs.ErrorDirNotFound
 			}
 		}
-		return errors.Wrap(err, "couldn't list files")
+		return fmt.Errorf("couldn't list files: %w", err)
 	}
 	list := walk.NewListRHelper(callback)
 	err = f.listFileDir(ctx, dir, &result, func(entry fs.DirEntry) error {
@@ -1081,7 +1081,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "couldn't purge directory")
+		return fmt.Errorf("couldn't purge directory: %w", err)
 	}
 
 	return nil
@@ -1148,7 +1148,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't copy file")
+		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
 
 	return f.newObjectWithInfo(ctx, remote, info)
@@ -1178,7 +1178,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	info, err := f.copyOrMove(ctx, "mv", srcObj.filePath(), remote)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't move file")
+		return nil, fmt.Errorf("couldn't move file: %w", err)
 	}
 
 	return f.newObjectWithInfo(ctx, remote, info)
@@ -1222,7 +1222,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(srcPath))+"/", dstRemote)
 
 	if err != nil {
-		return errors.Wrap(err, "couldn't move directory")
+		return fmt.Errorf("couldn't move directory: %w", err)
 	}
 	return nil
 }
@@ -1256,13 +1256,13 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	if err != nil {
 		if unlink {
-			return "", errors.Wrap(err, "couldn't remove public link")
+			return "", fmt.Errorf("couldn't remove public link: %w", err)
 		}
-		return "", errors.Wrap(err, "couldn't create public link")
+		return "", fmt.Errorf("couldn't create public link: %w", err)
 	}
 	if unlink {
 		if result.PublicURI != "" {
-			return "", errors.Errorf("couldn't remove public link - %q", result.PublicURI)
+			return "", fmt.Errorf("couldn't remove public link - %q", result.PublicURI)
 		}
 		return "", nil
 	}
@@ -1322,7 +1322,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	var info api.TrashResponse
 	_, err := f.apiSrv.CallJSON(ctx, &opts, nil, &info)
 	if err != nil {
-		return errors.Wrap(err, "couldn't empty trash")
+		return fmt.Errorf("couldn't empty trash: %w", err)
 	}
 
 	return nil
@@ -1584,7 +1584,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			// if the object exists delete it
 			err = o.remove(ctx, true)
 			if err != nil {
-				return errors.Wrap(err, "failed to remove old object")
+				return fmt.Errorf("failed to remove old object: %w", err)
 			}
 		}
 		// if the object does not exist we can just continue but if the error is something different we should report that
@@ -1605,7 +1605,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		md5String, in, cleanup, err = readMD5(in, size, int64(o.fs.opt.MD5MemoryThreshold))
 		defer cleanup()
 		if err != nil {
-			return errors.Wrap(err, "failed to calculate MD5")
+			return fmt.Errorf("failed to calculate MD5: %w", err)
 		}
 		// Wrap the accounting back onto the stream
 		in = wrap(in)

@@ -1,11 +1,11 @@
 package mountlib
 
 import (
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -42,7 +42,7 @@ func (m *MountPoint) CheckOverlap() error {
 	mountpointAbs := absPath(m.MountPoint)
 	if strings.HasPrefix(rootAbs, mountpointAbs) || strings.HasPrefix(mountpointAbs, rootAbs) {
 		const msg = "mount point %q and directory to be mounted %q mustn't overlap"
-		return errors.Errorf(msg, m.MountPoint, m.Fs.Root())
+		return fmt.Errorf(msg, m.MountPoint, m.Fs.Root())
 	}
 	return nil
 }

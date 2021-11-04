@@ -4,10 +4,10 @@ package bisync
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"sort"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
@@ -201,7 +201,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 				b.indent("!WARNING", file, "New or changed in both paths")
 				b.indent("!Path1", p1+"..path1", "Renaming Path1 copy")
 				if err = operations.MoveFile(ctxMove, b.fs1, b.fs1, file+"..path1", file); err != nil {
-					err = errors.Wrapf(err, "path1 rename failed for %s", p1)
+					err = fmt.Errorf("path1 rename failed for %s: %w", p1, err)
 					b.critical = true
 					return
 				}
@@ -210,7 +210,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 
 				b.indent("!Path2", p2+"..path2", "Renaming Path2 copy")
 				if err = operations.MoveFile(ctxMove, b.fs2, b.fs2, file+"..path2", file); err != nil {
-					err = errors.Wrapf(err, "path2 rename failed for %s", file)
+					err = fmt.Errorf("path2 rename failed for %s: %w", file, err)
 					return
 				}
 				b.indent("!Path2", p1+"..path2", "Queue copy to Path1")

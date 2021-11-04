@@ -2,11 +2,11 @@ package union
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
 )
@@ -82,7 +82,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			err := o.Update(ctx, readers[i], src, options...)
-			errs[i] = errors.Wrap(err, o.UpstreamFs().Name())
+			errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}
@@ -101,7 +101,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			err := o.Remove(ctx)
-			errs[i] = errors.Wrap(err, o.UpstreamFs().Name())
+			errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}
@@ -120,7 +120,7 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			err := o.SetModTime(ctx, t)
-			errs[i] = errors.Wrap(err, o.UpstreamFs().Name())
+			errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}

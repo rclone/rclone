@@ -6,11 +6,11 @@ package fs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs/config/configmap"
 )
 
@@ -188,7 +188,7 @@ func ConfigConfirm(state string, Default bool, name string, help string) (*Confi
 // If there is only one item it will short cut to the next state
 func ConfigChooseFixed(state string, name string, help string, items []OptionExample) (*ConfigOut, error) {
 	if len(items) == 0 {
-		return nil, errors.Errorf("no items found in: %s", help)
+		return nil, fmt.Errorf("no items found in: %s", help)
 	}
 	choose := &ConfigOut{
 		State: state,
@@ -323,7 +323,7 @@ func configAll(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo
 	if stateNumber != "" {
 		optionNumber, err = strconv.Atoi(stateNumber)
 		if err != nil {
-			return nil, errors.Wrap(err, "internal error: bad state number")
+			return nil, fmt.Errorf("internal error: bad state number: %w", err)
 		}
 	}
 
@@ -393,7 +393,7 @@ func configAll(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo
 		}
 		return ConfigGoto("*postconfig")
 	}
-	return nil, errors.Errorf("internal error: bad state %q", state)
+	return nil, fmt.Errorf("internal error: bad state %q", state)
 }
 
 func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo, choices configmap.Getter, in ConfigIn) (out *ConfigOut, err error) {
@@ -415,7 +415,7 @@ func backendConfigStep(ctx context.Context, name string, m configmap.Mapper, ri 
 		in.State = ""
 		return backendConfigStep(ctx, name, m, ri, choices, in)
 	case strings.HasPrefix(in.State, "*"):
-		err = errors.Errorf("unknown internal state %q", in.State)
+		err = fmt.Errorf("unknown internal state %q", in.State)
 	default:
 		// Otherwise pass to backend
 		if ri.Config == nil {

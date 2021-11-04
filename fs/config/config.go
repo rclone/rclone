@@ -4,6 +4,7 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	mathrand "math/rand"
@@ -15,7 +16,6 @@ import (
 	"time"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/pkg/errors"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -447,7 +447,7 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 
 	ri, err := fs.Find(fsType)
 	if err != nil {
-		return nil, errors.Errorf("couldn't find backend for type %q", fsType)
+		return nil, fmt.Errorf("couldn't find backend for type %q", fsType)
 	}
 
 	// Work out which options need to be obscured
@@ -474,7 +474,7 @@ func updateRemote(ctx context.Context, name string, keyValues rc.Params, opt Upd
 				// or we are forced to obscure
 				vStr, err = obscure.Obscure(vStr)
 				if err != nil {
-					return nil, errors.Wrap(err, "UpdateRemote: obscure failed")
+					return nil, fmt.Errorf("UpdateRemote: obscure failed: %w", err)
 				}
 			}
 		}
@@ -558,11 +558,11 @@ func PasswordRemote(ctx context.Context, name string, keyValues rc.Params) error
 func JSONListProviders() error {
 	b, err := json.MarshalIndent(fs.Registry, "", "    ")
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal examples")
+		return fmt.Errorf("failed to marshal examples: %w", err)
 	}
 	_, err = os.Stdout.Write(b)
 	if err != nil {
-		return errors.Wrap(err, "failed to write providers list")
+		return fmt.Errorf("failed to write providers list: %w", err)
 	}
 	return nil
 }
@@ -660,11 +660,11 @@ func Dump() error {
 	dump := DumpRcBlob()
 	b, err := json.MarshalIndent(dump, "", "    ")
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal config dump")
+		return fmt.Errorf("failed to marshal config dump: %w", err)
 	}
 	_, err = os.Stdout.Write(b)
 	if err != nil {
-		return errors.Wrap(err, "failed to write config dump")
+		return fmt.Errorf("failed to write config dump: %w", err)
 	}
 	return nil
 }

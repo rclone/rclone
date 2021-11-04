@@ -5,11 +5,11 @@ package tardigrade
 
 import (
 	"context"
+	"errors"
 	"io"
 	"path"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/bucket"

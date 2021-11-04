@@ -7,6 +7,7 @@ import (
 	gocipher "crypto/cipher"
 	"crypto/rand"
 	"encoding/base32"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -15,7 +16,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -94,7 +94,7 @@ func NewNameEncryptionMode(s string) (mode NameEncryptionMode, err error) {
 	case "obfuscate":
 		mode = NameEncryptionObfuscated
 	default:
-		err = errors.Errorf("Unknown file name encryption mode %q", s)
+		err = fmt.Errorf("Unknown file name encryption mode %q", s)
 	}
 	return mode, err
 }
@@ -580,7 +580,7 @@ func (n *nonce) pointer() *[fileNonceSize]byte {
 func (n *nonce) fromReader(in io.Reader) error {
 	read, err := io.ReadFull(in, (*n)[:])
 	if read != fileNonceSize {
-		return errors.Wrap(err, "short read of nonce")
+		return fmt.Errorf("short read of nonce: %w", err)
 	}
 	return nil
 }
@@ -956,7 +956,7 @@ func (fh *decrypter) RangeSeek(ctx context.Context, offset int64, whence int, li
 		// Re-open the underlying object with the offset given
 		rc, err := fh.open(ctx, underlyingOffset, underlyingLimit)
 		if err != nil {
-			return 0, fh.finish(errors.Wrap(err, "couldn't reopen file with offset and limit"))
+			return 0, fh.finish(fmt.Errorf("couldn't reopen file with offset and limit: %w", err))
 		}
 
 		// Set the file handle

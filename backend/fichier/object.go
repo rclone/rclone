@@ -2,11 +2,12 @@ package fichier
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/rest"
@@ -122,7 +123,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Delete duplicate after successful upload
 	err = o.Remove(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to remove old version")
+		return fmt.Errorf("failed to remove old version: %w", err)
 	}
 
 	// Replace guts of old object with new one

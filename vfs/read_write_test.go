@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -9,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
@@ -398,7 +398,7 @@ func TestRWFileHandleWriteNoWrite(t *testing.T) {
 
 	// Close the file without writing to it
 	err := fh.Close()
-	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
+	if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		t.Logf("skipping test: %v", err)
 		return
 	}

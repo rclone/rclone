@@ -5,6 +5,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -19,7 +20,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -356,7 +356,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		return nil, err
 	}
 	if opt.ChunkTotalSize < opt.ChunkSize*fs.SizeSuffix(opt.TotalWorkers) {
-		return nil, errors.Errorf("don't set cache-chunk-total-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
+		return nil, fmt.Errorf("don't set cache-chunk-total-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
 			opt.ChunkTotalSize, opt.ChunkSize, opt.TotalWorkers)
 	}
 
@@ -366,13 +366,13 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 
 	rpath, err := parseRootPath(rootPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to clean root path %q", rootPath)
+		return nil, fmt.Errorf("failed to clean root path %q: %w", rootPath, err)
 	}
 
 	remotePath := fspath.JoinRootPath(opt.Remote, rootPath)
 	wrappedFs, wrapErr := cache.Get(ctx, remotePath)
 	if wrapErr != nil && wrapErr != fs.ErrorIsFile {
-		return nil, errors.Wrapf(wrapErr, "failed to make remote %q to wrap", remotePath)
+		return nil, fmt.Errorf("failed to make remote %q to wrap: %w", remotePath, wrapErr)
 	}
 	var fsErr error
 	fs.Debugf(name, "wrapped %v:%v at root %v", wrappedFs.Name(), wrappedFs.Root(), rpath)
@@ -401,7 +401,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		if opt.PlexToken != "" {
 			f.plexConnector, err = newPlexConnectorWithToken(f, opt.PlexURL, opt.PlexToken, opt.PlexInsecure)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", opt.PlexURL)
+				return nil, fmt.Errorf("failed to connect to the Plex API %v: %w", opt.PlexURL, err)
 			}
 		} else {
 			if opt.PlexPassword != "" && opt.PlexUsername != "" {
@@ -413,7 +413,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 					m.Set("plex_token", token)
 				})
 				if err != nil {
-					return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", opt.PlexURL)
+					return nil, fmt.Errorf("failed to connect to the Plex API %v: %w", opt.PlexURL, err)
 				}
 			}
 		}
@@ -434,11 +434,11 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 	}
 	err = os.MkdirAll(dbPath, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create cache directory %v", dbPath)
+		return nil, fmt.Errorf("failed to create cache directory %v: %w", dbPath, err)
 	}
 	err = os.MkdirAll(chunkPath, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create cache directory %v", chunkPath)
+		return nil, fmt.Errorf("failed to create cache directory %v: %w", chunkPath, err)
 	}
 
 	dbPath = filepath.Join(dbPath, name+".db")
@@ -450,7 +450,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		DbWaitTime: time.Duration(opt.DbWaitTime),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to start cache db")
+		return nil, fmt.Errorf("failed to start cache db: %w", err)
 	}
 	// Trap SIGINT and SIGTERM to close the DB handle gracefully
 	c := make(chan os.Signal, 1)
@@ -484,12 +484,12 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 	if f.opt.TempWritePath != "" {
 		err = os.MkdirAll(f.opt.TempWritePath, os.ModePerm)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create cache directory %v", f.opt.TempWritePath)
+			return nil, fmt.Errorf("failed to create cache directory %v: %w", f.opt.TempWritePath, err)
 		}
 		f.opt.TempWritePath = filepath.ToSlash(f.opt.TempWritePath)
 		f.tempFs, err = cache.Get(ctx, f.opt.TempWritePath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create temp fs: %v", err)
+			return nil, fmt.Errorf("failed to create temp fs: %v: %w", err, err)
 		}
 		fs.Infof(name, "Upload Temp Rest Time: %v", f.opt.TempWaitTime)
 		fs.Infof(name, "Upload Temp FS: %v", f.opt.TempWritePath)
@@ -606,7 +606,7 @@ func (f *Fs) httpStats(ctx context.Context, in rc.Params) (out rc.Params, err er
 	out = make(rc.Params)
 	m, err := f.Stats()
 	if err != nil {
-		return out, errors.Errorf("error while getting cache stats")
+		return out, fmt.Errorf("error while getting cache stats")
 	}
 	out["status"] = "ok"
 	out["stats"] = m
@@ -633,7 +633,7 @@ func (f *Fs) httpExpireRemote(ctx context.Context, in rc.Params) (out rc.Params,
 	out = make(rc.Params)
 	remoteInt, ok := in["remote"]
 	if !ok {
-		return out, errors.Errorf("remote is needed")
+		return out, fmt.Errorf("remote is needed")
 	}
 	remote := remoteInt.(string)
 	withData := false
@@ -644,7 +644,7 @@ func (f *Fs) httpExpireRemote(ctx context.Context, in rc.Params) (out rc.Params,
 
 	remote = f.unwrapRemote(remote)
 	if !f.cache.HasEntry(path.Join(f.Root(), remote)) {
-		return out, errors.Errorf("%s doesn't exist in cache", remote)
+		return out, fmt.Errorf("%s doesn't exist in cache", remote)
 	}
 
 	co := NewObject(f, remote)
@@ -653,7 +653,7 @@ func (f *Fs) httpExpireRemote(ctx context.Context, in rc.Params) (out rc.Params,
 		cd := NewDirectory(f, remote)
 		err := f.cache.ExpireDir(cd)
 		if err != nil {
-			return out, errors.WithMessage(err, "error expiring directory")
+			return out, fmt.Errorf("error expiring directory: %w", err)
 		}
 		// notify vfs too
 		f.notifyChangeUpstream(cd.Remote(), fs.EntryDirectory)
@@ -664,7 +664,7 @@ func (f *Fs) httpExpireRemote(ctx context.Context, in rc.Params) (out rc.Params,
 	// expire the entry
 	err = f.cache.ExpireObject(co, withData)
 	if err != nil {
-		return out, errors.WithMessage(err, "error expiring file")
+		return out, fmt.Errorf("error expiring file: %w", err)
 	}
 	// notify vfs too
 	f.notifyChangeUpstream(co.Remote(), fs.EntryObject)
@@ -685,24 +685,24 @@ func (f *Fs) rcFetch(ctx context.Context, in rc.Params) (rc.Params, error) {
 			case 1:
 				start, err = strconv.ParseInt(ints[0], 10, 64)
 				if err != nil {
-					return nil, errors.Errorf("invalid range: %q", part)
+					return nil, fmt.Errorf("invalid range: %q", part)
 				}
 				end = start + 1
 			case 2:
 				if ints[0] != "" {
 					start, err = strconv.ParseInt(ints[0], 10, 64)
 					if err != nil {
-						return nil, errors.Errorf("invalid range: %q", part)
+						return nil, fmt.Errorf("invalid range: %q", part)
 					}
 				}
 				if ints[1] != "" {
 					end, err = strconv.ParseInt(ints[1], 10, 64)
 					if err != nil {
-						return nil, errors.Errorf("invalid range: %q", part)
+						return nil, fmt.Errorf("invalid range: %q", part)
 					}
 				}
 			default:
-				return nil, errors.Errorf("invalid range: %q", part)
+				return nil, fmt.Errorf("invalid range: %q", part)
 			}
 			crs = append(crs, chunkRange{start: start, end: end})
 		}
@@ -757,18 +757,18 @@ func (f *Fs) rcFetch(ctx context.Context, in rc.Params) (rc.Params, error) {
 	delete(in, "chunks")
 	crs, err := parseChunks(s)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid chunks parameter")
+		return nil, fmt.Errorf("invalid chunks parameter: %w", err)
 	}
 	var files [][2]string
 	for k, v := range in {
 		if !strings.HasPrefix(k, "file") {
-			return nil, errors.Errorf("invalid parameter %s=%s", k, v)
+			return nil, fmt.Errorf("invalid parameter %s=%s", k, v)
 		}
 		switch v := v.(type) {
 		case string:
 			files = append(files, [2]string{v, f.unwrapRemote(v)})
 		default:
-			return nil, errors.Errorf("invalid parameter %s=%s", k, v)
+			return nil, fmt.Errorf("invalid parameter %s=%s", k, v)
 		}
 	}
 	type fileStatus struct {
@@ -1124,7 +1124,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 				case fs.Directory:
 					_ = f.cache.AddDir(DirectoryFromOriginal(ctx, f, o))
 				default:
-					return errors.Errorf("Unknown object type %T", entry)
+					return fmt.Errorf("Unknown object type %T", entry)
 				}
 			}
 

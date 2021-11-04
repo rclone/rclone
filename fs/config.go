@@ -2,13 +2,12 @@ package fs
 
 import (
 	"context"
+	"errors"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Global

@@ -2,10 +2,9 @@ package api
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const (

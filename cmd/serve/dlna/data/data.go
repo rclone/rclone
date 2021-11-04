@@ -4,10 +4,10 @@
 package data
 
 import (
+	"fmt"
 	"io/ioutil"
 	"text/template"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -15,21 +15,21 @@ import (
 func GetTemplate() (tpl *template.Template, err error) {
 	templateFile, err := Assets.Open("rootDesc.xml.tmpl")
 	if err != nil {
-		return nil, errors.Wrap(err, "get template open")
+		return nil, fmt.Errorf("get template open: %w", err)
 	}
 
 	defer fs.CheckClose(templateFile, &err)
 
 	templateBytes, err := ioutil.ReadAll(templateFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "get template read")
+		return nil, fmt.Errorf("get template read: %w", err)
 	}
 
 	var templateString = string(templateBytes)
 
 	tpl, err = template.New("rootDesc").Parse(templateString)
 	if err != nil {
-		return nil, errors.Wrap(err, "get template parse")
+		return nil, fmt.Errorf("get template parse: %w", err)
 	}
 
 	return

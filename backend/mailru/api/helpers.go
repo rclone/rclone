@@ -6,11 +6,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/lib/readers"
 )
 

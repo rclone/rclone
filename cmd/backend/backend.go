@@ -7,7 +7,6 @@ import (
 	"os"
 	"sort"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/rc"
 	"github.com/rclone/rclone/fs"
@@ -88,14 +87,14 @@ Note to run these commands on a running backend then see
 			default:
 				doCommand := f.Features().Command
 				if doCommand == nil {
-					return errors.Errorf("%v: doesn't support backend commands", f)
+					return fmt.Errorf("%v: doesn't support backend commands", f)
 				}
 				arg := args[2:]
 				opt := rc.ParseOptions(options)
 				out, err = doCommand(context.Background(), name, arg, opt)
 			}
 			if err != nil {
-				return errors.Wrapf(err, "command %q failed", name)
+				return fmt.Errorf("command %q failed: %w", name, err)
 
 			}
 			// Output the result
@@ -121,7 +120,7 @@ Note to run these commands on a running backend then see
 				enc.SetIndent("", "\t")
 				err = enc.Encode(out)
 				if err != nil {
-					return errors.Wrap(err, "failed to write JSON")
+					return fmt.Errorf("failed to write JSON: %w", err)
 				}
 			}
 			return nil
@@ -135,7 +134,7 @@ func showHelp(fsInfo *fs.RegInfo) error {
 	cmds := fsInfo.CommandHelp
 	name := fsInfo.Name
 	if len(cmds) == 0 {
-		return errors.Errorf("%s backend has no commands", name)
+		return fmt.Errorf("%s backend has no commands", name)
 	}
 	fmt.Printf("## Backend commands\n\n")
 	fmt.Printf(`Here are the commands specific to the %s backend.

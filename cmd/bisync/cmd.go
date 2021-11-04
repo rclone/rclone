@@ -6,6 +6,8 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -21,7 +23,6 @@ import (
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/hash"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -82,7 +83,7 @@ func (x *CheckSyncMode) Set(s string) error {
 	case "only":
 		*x = CheckSyncOnly
 	default:
-		return errors.Errorf("unknown check-sync mode for bisync: %q", s)
+		return fmt.Errorf("unknown check-sync mode for bisync: %q", s)
 	}
 	return nil
 }
@@ -184,7 +185,7 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 
 	f, err := os.Open(filtersFile)
 	if err != nil {
-		return ctx, errors.Errorf("specified filters file does not exist: %s", filtersFile)
+		return ctx, fmt.Errorf("specified filters file does not exist: %s", filtersFile)
 	}
 
 	fs.Infof(nil, "Using filters file %s", filtersFile)
@@ -199,11 +200,11 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 	hashFile := filtersFile + ".md5"
 	wantHash, err := ioutil.ReadFile(hashFile)
 	if err != nil && !opt.Resync {
-		return ctx, errors.Errorf("filters file md5 hash not found (must run --resync): %s", filtersFile)
+		return ctx, fmt.Errorf("filters file md5 hash not found (must run --resync): %s", filtersFile)
 	}
 
 	if gotHash != string(wantHash) && !opt.Resync {
-		return ctx, errors.Errorf("filters file has changed (must run --resync): %s", filtersFile)
+		return ctx, fmt.Errorf("filters file has changed (must run --resync): %s", filtersFile)
 	}
 
 	if opt.Resync {
@@ -218,7 +219,7 @@ func (opt *Options) applyFilters(ctx context.Context) (context.Context, error) {
 	filterOpt.FilterFrom = append([]string{filtersFile}, filterOpt.FilterFrom...)
 	newFilter, err := filter.NewFilter(&filterOpt)
 	if err != nil {
-		return ctx, errors.Wrapf(err, "invalid filters file: %s", filtersFile)
+		return ctx, fmt.Errorf("invalid filters file: %s: %w", filtersFile, err)
 	}
 
 	return filter.ReplaceConfig(ctx, newFilter), nil

@@ -7,6 +7,7 @@ package bisync_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -36,7 +37,6 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/random"
 
-	"github.com/pkg/errors"
 	"github.com/pmezard/go-difflib/difflib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -541,7 +541,7 @@ func (b *bisyncTest) runTestStep(ctx context.Context, line string) (err error) {
 	case "bisync":
 		return b.runBisync(ctx, args[1:])
 	default:
-		return errors.Errorf("unknown command: %q", args[0])
+		return fmt.Errorf("unknown command: %q", args[0])
 	}
 }
 
@@ -635,7 +635,7 @@ func (b *bisyncTest) runBisync(ctx context.Context, args []string) (err error) {
 			fs1 = addSubdir(b.path1, val)
 			fs2 = addSubdir(b.path2, val)
 		default:
-			return errors.Errorf("invalid bisync option %q", arg)
+			return fmt.Errorf("invalid bisync option %q", arg)
 		}
 	}
 
@@ -793,12 +793,12 @@ func touchFiles(ctx context.Context, dateStr string, f fs.Fs, dir, glob string) 
 
 	date, err := time.ParseInLocation(touchDateFormat, dateStr, bisync.TZ)
 	if err != nil {
-		return files, errors.Wrapf(err, "invalid date %q", dateStr)
+		return files, fmt.Errorf("invalid date %q: %w", dateStr, err)
 	}
 
 	matcher, firstErr := filter.GlobToRegexp(glob, false)
 	if firstErr != nil {
-		return files, errors.Errorf("invalid glob %q", glob)
+		return files, fmt.Errorf("invalid glob %q", glob)
 	}
 
 	entries, firstErr := f.List(ctx, "")

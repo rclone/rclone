@@ -20,7 +20,6 @@ import (
 
 	"github.com/rclone/rclone/fs/rc/webgui"
 
-	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/skratchdot/open-golang/open"
@@ -138,7 +137,7 @@ func (s *Server) Serve() error {
 	if s.files != nil {
 		openURL, err := url.Parse(s.URL())
 		if err != nil {
-			return errors.Wrap(err, "invalid serving URL")
+			return fmt.Errorf("invalid serving URL: %w", err)
 		}
 		// Add username, password into the URL if they are set
 		user, pass := s.opt.HTTPOptions.BasicUser, s.opt.HTTPOptions.BasicPass
@@ -211,7 +210,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	case "GET", "HEAD":
 		s.handleGet(w, r, path)
 	default:
-		writeError(path, nil, w, errors.Errorf("method %q not allowed", r.Method), http.StatusMethodNotAllowed)
+		writeError(path, nil, w, fmt.Errorf("method %q not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 }
@@ -225,7 +224,7 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 		// Parse the POST and URL parameters into r.Form, for others r.Form will be empty value
 		err := r.ParseForm()
 		if err != nil {
-			writeError(path, nil, w, errors.Wrap(err, "failed to parse form/URL parameters"), http.StatusBadRequest)
+			writeError(path, nil, w, fmt.Errorf("failed to parse form/URL parameters: %w", err), http.StatusBadRequest)
 			return
 		}
 		values = r.Form
@@ -243,20 +242,20 @@ func (s *Server) handlePost(w http.ResponseWriter, r *http.Request, path string)
 	if contentType == "application/json" {
 		err := json.NewDecoder(r.Body).Decode(&in)
 		if err != nil {
-			writeError(path, in, w, errors.Wrap(err, "failed to read input JSON"), http.StatusBadRequest)
+			writeError(path, in, w, fmt.Errorf("failed to read input JSON: %w", err), http.StatusBadRequest)
 			return
 		}
 	}
 	// Find the call
 	call := rc.Calls.Get(path)
 	if call == nil {
-		writeError(path, in, w, errors.Errorf("couldn't find method %q", path), http.StatusNotFound)
+		writeError(path, in, w, fmt.Errorf("couldn't find method %q", path), http.StatusNotFound)
 		return
 	}
 
 	// Check to see if it requires authorisation
 	if !s.opt.NoAuth && call.AuthRequired && !s.UsingAuth() {
-		writeError(path, in, w, errors.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
+		writeError(path, in, w, fmt.Errorf("authentication must be set up on the rc server to use %q or the --rc-no-auth flag must be in use", path), http.StatusForbidden)
 		return
 	}
 
@@ -317,14 +316,14 @@ func (s *Server) serveRoot(w http.ResponseWriter, r *http.Request) {
 func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string, fsName string) {
 	f, err := cache.Get(s.ctx, fsName)
 	if err != nil {
-		writeError(path, nil, w, errors.Wrap(err, "failed to make Fs"), http.StatusInternalServerError)
+		writeError(path, nil, w, fmt.Errorf("failed to make Fs: %w", err), http.StatusInternalServerError)
 		return
 	}
 	if path == "" || strings.HasSuffix(path, "/") {
 		path = strings.Trim(path, "/")
 		entries, err := list.DirSorted(r.Context(), f, false, path)
 		if err != nil {
-			writeError(path, nil, w, errors.Wrap(err, "failed to list directory"), http.StatusInternalServerError)
+			writeError(path, nil, w, fmt.Errorf("failed to list directory: %w", err), http.StatusInternalServerError)
 			return
 		}
 		// Make the entries for display
@@ -343,7 +342,7 @@ func (s *Server) serveRemote(w http.ResponseWriter, r *http.Request, path string
 		path = strings.Trim(path, "/")
 		o, err := f.NewObject(r.Context(), path)
 		if err != nil {
-			writeError(path, nil, w, errors.Wrap(err, "failed to find object"), http.StatusInternalServerError)
+			writeError(path, nil, w, fmt.Errorf("failed to find object: %w", err), http.StatusInternalServerError)
 			return
 		}
 		serve.Object(w, r, o)

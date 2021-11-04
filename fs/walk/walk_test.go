@@ -2,13 +2,13 @@ package walk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 	"sync"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	_ "github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"

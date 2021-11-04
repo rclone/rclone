@@ -9,6 +9,7 @@ package fstests
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -23,7 +24,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -874,7 +874,7 @@ func Run(t *testing.T, opt *Opt) {
 					var objNames, dirNames []string
 					for i := 1; i <= *fstest.ListRetries; i++ {
 						objs, dirs, err := walk.GetAll(ctx, f, dir, true, 1)
-						if errors.Cause(err) == fs.ErrorDirNotFound {
+						if errors.Is(err, fs.ErrorDirNotFound) {
 							objs, dirs, err = walk.GetAll(ctx, f, dir, true, 1)
 						}
 						require.NoError(t, err)
@@ -1223,7 +1223,7 @@ func Run(t *testing.T, opt *Opt) {
 				// check remotes
 				// remote should not exist here
 				_, err = f.List(ctx, "")
-				assert.Equal(t, fs.ErrorDirNotFound, errors.Cause(err))
+				assert.True(t, errors.Is(err, fs.ErrorDirNotFound))
 				//fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, remote.Precision())
 				file1Copy := file1
 				file1Copy.Path = path.Join(newName, file1.Path)
@@ -1618,7 +1618,7 @@ func Run(t *testing.T, opt *Opt) {
 				// sharing directory for the first time
 				path := path.Dir(file2.Path)
 				link3, err := doPublicLink(ctx, path, expiry, false)
-				if err != nil && (errors.Cause(err) == fs.ErrorCantShareDirectories || errors.Cause(err) == fs.ErrorObjectNotFound) {
+				if err != nil && (errors.Is(err, fs.ErrorCantShareDirectories) || errors.Is(err, fs.ErrorObjectNotFound)) {
 					t.Log("skipping directory tests as not supported on this backend")
 				} else {
 					require.NoError(t, err)
@@ -1953,7 +1953,7 @@ func Run(t *testing.T, opt *Opt) {
 
 		// Purge the folder
 		err = operations.Purge(ctx, f, "")
-		if errors.Cause(err) != fs.ErrorDirNotFound {
+		if !errors.Is(err, fs.ErrorDirNotFound) {
 			require.NoError(t, err)
 		}
 		purged = true
@@ -1963,7 +1963,7 @@ func Run(t *testing.T, opt *Opt) {
 		if !isBucketBasedButNotRoot(f) {
 			err = operations.Purge(ctx, f, "")
 			assert.Error(t, err, "Expecting error after on second purge")
-			if errors.Cause(err) != fs.ErrorDirNotFound {
+			if !errors.Is(err, fs.ErrorDirNotFound) {
 				t.Log("Warning: this should produce fs.ErrorDirNotFound")
 			}
 		}

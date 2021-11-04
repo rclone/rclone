@@ -2,13 +2,13 @@ package docker
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
@@ -155,7 +155,7 @@ func (vol *Volume) checkMountpoint() error {
 	_, err := os.Lstat(path)
 	if os.IsNotExist(err) {
 		if err = file.MkdirAll(path, 0700); err != nil {
-			return errors.Wrapf(err, "failed to create mountpoint: %s", path)
+			return fmt.Errorf("failed to create mountpoint: %s: %w", path, err)
 		}
 	} else if err != nil {
 		return err
@@ -182,7 +182,7 @@ func (vol *Volume) setup(ctx context.Context) error {
 	_, mountFn := mountlib.ResolveMountMethod(vol.mountType)
 	if mountFn == nil {
 		if vol.mountType != "" {
-			return errors.Errorf("unsupported mount type %q", vol.mountType)
+			return fmt.Errorf("unsupported mount type %q", vol.mountType)
 		}
 		return errors.New("mount command unsupported by this build")
 	}
@@ -242,7 +242,7 @@ func (vol *Volume) clearCache() error {
 	}
 	root, err := VFS.Root()
 	if err != nil {
-		return errors.Wrapf(err, "error reading root: %v", VFS.Fs())
+		return fmt.Errorf("error reading root: %v: %w", VFS.Fs(), err)
 	}
 	root.ForgetAll()
 	return nil

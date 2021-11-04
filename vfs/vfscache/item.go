@@ -3,13 +3,13 @@ package vfscache
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/operations"
@@ -199,13 +199,13 @@ func (item *Item) load() (exists bool, err error) {
 		if os.IsNotExist(err) {
 			return false, err
 		}
-		return true, errors.Wrap(err, "vfs cache item: failed to read metadata")
+		return true, fmt.Errorf("vfs cache item: failed to read metadata: %w", err)
 	}
 	defer fs.CheckClose(in, &err)
 	decoder := json.NewDecoder(in)
 	err = decoder.Decode(&item.info)
 	if err != nil {
-		return true, errors.Wrap(err, "vfs cache item: corrupt metadata")
+		return true, fmt.Errorf("vfs cache item: corrupt metadata: %w", err)
 	}
 	return true, nil
 }
@@ -217,14 +217,14 @@ func (item *Item) _save() (err error) {
 	osPathMeta := item.c.toOSPathMeta(item.name) // No locking in Cache
 	out, err := os.Create(osPathMeta)
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item: failed to write metadata")
+		return fmt.Errorf("vfs cache item: failed to write metadata: %w", err)
 	}
 	defer fs.CheckClose(out, &err)
 	encoder := json.NewEncoder(out)
 	encoder.SetIndent("", "\t")
 	err = encoder.Encode(item.info)
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item: failed to encode metadata")
+		return fmt.Errorf("vfs cache item: failed to encode metadata: %w", err)
 	}
 	return nil
 }
@@ -261,7 +261,7 @@ func (item *Item) _truncate(size int64) (err error) {
 			fd, err = file.OpenFile(osPath, os.O_CREATE|os.O_WRONLY, 0600)
 		}
 		if err != nil {
-			return errors.Wrap(err, "vfs cache: truncate: failed to open cache file")
+			return fmt.Errorf("vfs cache: truncate: failed to open cache file: %w", err)
 		}
 
 		defer fs.CheckClose(fd, &err)
@@ -276,7 +276,7 @@ func (item *Item) _truncate(size int64) (err error) {
 
 	err = fd.Truncate(size)
 	if err != nil {
-		return errors.Wrap(err, "vfs cache: truncate")
+		return fmt.Errorf("vfs cache: truncate: %w", err)
 	}
 
 	item.info.Size = size
@@ -291,8 +291,8 @@ func (item *Item) _truncate(size int64) (err error) {
 // call with the lock held
 func (item *Item) _truncateToCurrentSize() (err error) {
 	size, err := item._getSize()
-	if err != nil && !os.IsNotExist(errors.Cause(err)) {
-		return errors.Wrap(err, "truncate to current size")
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("truncate to current size: %w", err)
 	}
 	if size < 0 {
 		// FIXME ignore unknown length files
@@ -326,8 +326,8 @@ func (item *Item) Truncate(size int64) (err error) {
 	// Read old size
 	oldSize, err := item._getSize()
 	if err != nil {
-		if !os.IsNotExist(errors.Cause(err)) {
-			return errors.Wrap(err, "truncate failed to read size")
+		if !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("truncate failed to read size: %w", err)
 		}
 		oldSize = 0
 	}
@@ -462,7 +462,7 @@ func (item *Item) _createFile(osPath string) (err error) {
 	item.modified = false
 	fd, err := file.OpenFile(osPath, os.O_RDWR, 0600)
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item: open failed")
+		return fmt.Errorf("vfs cache item: open failed: %w", err)
 	}
 	err = file.SetSparse(fd)
 	if err != nil {
@@ -477,7 +477,7 @@ func (item *Item) _createFile(osPath string) (err error) {
 			fs.Errorf(item.name, "vfs cache: item.fd.Close: closeErr: %v", err)
 		}
 		item.fd = nil
-		return errors.Wrap(err, "vfs cache item: _save failed")
+		return fmt.Errorf("vfs cache item: _save failed: %w", err)
 	}
 	return err
 }
@@ -513,12 +513,12 @@ func (item *Item) open(o fs.Object) (err error) {
 
 	osPath, err := item.c.createItemDir(item.name) // No locking in Cache
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item: createItemDir failed")
+		return fmt.Errorf("vfs cache item: createItemDir failed: %w", err)
 	}
 
 	err = item._checkObject(o)
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item: check object failed")
+		return fmt.Errorf("vfs cache item: check object failed: %w", err)
 	}
 
 	item.opens++
@@ -531,7 +531,7 @@ func (item *Item) open(o fs.Object) (err error) {
 		item._remove("item.open failed on _createFile, remove cache data/metadata files")
 		item.fd = nil
 		item.opens--
-		return errors.Wrap(err, "vfs cache item: create cache file failed")
+		return fmt.Errorf("vfs cache item: create cache file failed: %w", err)
 	}
 	// Unlock the Item.mu so we can call some methods which take Cache.mu
 	item.mu.Unlock()
@@ -548,7 +548,7 @@ func (item *Item) open(o fs.Object) (err error) {
 		if oldItem.opens != 0 {
 			// Put the item back and return an error
 			item.c.put(item.name, oldItem) // LOCKING in Cache method
-			err = errors.Errorf("internal error: item %q already open in the cache", item.name)
+			err = fmt.Errorf("internal error: item %q already open in the cache", item.name)
 		}
 		oldItem.mu.Unlock()
 	}
@@ -574,7 +574,7 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 	// Transfer the temp file to the remote
 	cacheObj, err := item.c.fcache.NewObject(ctx, item.name)
 	if err != nil && err != fs.ErrorObjectNotFound {
-		return errors.Wrap(err, "vfs cache: failed to find cache file")
+		return fmt.Errorf("vfs cache: failed to find cache file: %w", err)
 	}
 
 	// Object has disappeared if cacheObj == nil
@@ -584,7 +584,7 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		o, err := operations.Copy(ctx, item.c.fremote, o, name, cacheObj)
 		item.mu.Lock()
 		if err != nil {
-			return errors.Wrap(err, "vfs cache: failed to transfer file from cache to remote")
+			return fmt.Errorf("vfs cache: failed to transfer file from cache to remote: %w", err)
 		}
 		item.o = o
 		item._updateFingerprint()
@@ -648,7 +648,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 	if item.info.Dirty && item.o != nil {
 		err = item._ensure(0, item.info.Size)
 		if err != nil {
-			return errors.Wrap(err, "vfs cache: failed to download missing parts of cache file")
+			return fmt.Errorf("vfs cache: failed to download missing parts of cache file: %w", err)
 		}
 	}
 
@@ -751,11 +751,11 @@ func (item *Item) reload(ctx context.Context) error {
 	// put the file into the directory listings
 	size, err := item._getSize()
 	if err != nil {
-		return errors.Wrap(err, "reload: failed to read size")
+		return fmt.Errorf("reload: failed to read size: %w", err)
 	}
 	err = item.c.AddVirtual(item.name, size, false)
 	if err != nil {
-		return errors.Wrap(err, "reload: failed to add virtual dir entry")
+		return fmt.Errorf("reload: failed to add virtual dir entry: %w", err)
 	}
 	return nil
 }
@@ -807,7 +807,7 @@ func (item *Item) _checkObject(o fs.Object) error {
 
 	err := item._truncateToCurrentSize()
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item: open truncate failed")
+		return fmt.Errorf("vfs cache item: open truncate failed: %w", err)
 	}
 
 	return nil
@@ -1265,7 +1265,7 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 	// Do the writing with Item.mu unlocked
 	n, err = item.fd.WriteAt(b, off)
 	if err == nil && n != len(b) {
-		err = errors.Errorf("short write: tried to write %d but only %d written", len(b), n)
+		err = fmt.Errorf("short write: tried to write %d but only %d written", len(b), n)
 	}
 	item.mu.Lock()
 	item._written(off, int64(n))
@@ -1327,7 +1327,7 @@ func (item *Item) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped int, e
 			// fs.Debugf(item.name, "write chunk offset=%d size=%d", off, size)
 			nn, err = item.fd.WriteAt(b[:size], off)
 			if err == nil && nn != size {
-				err = errors.Errorf("downloader: short write: tried to write %d but only %d written", size, nn)
+				err = fmt.Errorf("downloader: short write: tried to write %d but only %d written", size, nn)
 			}
 			item._written(off, int64(nn))
 		}
@@ -1356,11 +1356,11 @@ func (item *Item) Sync() (err error) {
 	// sync the file and the metadata to disk
 	err = item.fd.Sync()
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item sync: failed to sync file")
+		return fmt.Errorf("vfs cache item sync: failed to sync file: %w", err)
 	}
 	err = item._save()
 	if err != nil {
-		return errors.Wrap(err, "vfs cache item sync: failed to sync metadata")
+		return fmt.Errorf("vfs cache item sync: failed to sync metadata: %w", err)
 	}
 	return nil
 }

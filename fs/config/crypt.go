@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/nacl/secretbox"
 
 	"github.com/rclone/rclone/fs"
@@ -95,12 +95,12 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 				if ers := strings.TrimSpace(stderr.String()); ers != "" {
 					fs.Errorf(nil, "--password-command stderr: %s", ers)
 				}
-				return nil, errors.Wrap(err, "password command failed")
+				return nil, fmt.Errorf("password command failed: %w", err)
 			}
 			if pass := strings.Trim(stdout.String(), "\r\n"); pass != "" {
 				err := SetConfigPassword(pass)
 				if err != nil {
-					return nil, errors.Wrap(err, "incorrect password")
+					return nil, fmt.Errorf("incorrect password: %w", err)
 				}
 			} else {
 				return nil, errors.New("password-command returned empty string")
@@ -130,7 +130,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 	dec := base64.NewDecoder(base64.StdEncoding, r)
 	box, err := ioutil.ReadAll(dec)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load base64 encoded data")
+		return nil, fmt.Errorf("failed to load base64 encoded data: %w", err)
 	}
 	if len(box) < 24+secretbox.Overhead {
 		return nil, errors.New("Configuration data too short")
@@ -144,13 +144,13 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 			if err != nil {
 				errRemove := os.Remove(envKeyFile)
 				if errRemove != nil {
-					return nil, errors.Wrap(err, "unable to read obscured config key and unable to delete the temp file")
+					return nil, fmt.Errorf("unable to read obscured config key and unable to delete the temp file: %w", err)
 				}
-				return nil, errors.Wrap(err, "unable to read obscured config key")
+				return nil, fmt.Errorf("unable to read obscured config key: %w", err)
 			}
 			errRemove := os.Remove(envKeyFile)
 			if errRemove != nil {
-				return nil, errors.Wrap(errRemove, "unable to delete temp file with configKey")
+				return nil, fmt.Errorf("unable to delete temp file with configKey: %w", errRemove)
 			}
 			configKey = []byte(obscure.MustReveal(string(obscuredKey)))
 			fs.Debugf(nil, "using _RCLONE_CONFIG_KEY_FILE for configKey")
@@ -201,12 +201,12 @@ func Encrypt(src io.Reader, dst io.Writer) error {
 	var nonce [24]byte
 	n, _ := rand.Read(nonce[:])
 	if n != 24 {
-		return errors.Errorf("nonce short read: %d", n)
+		return fmt.Errorf("nonce short read: %d", n)
 	}
 	enc := base64.NewEncoder(base64.StdEncoding, dst)
 	_, err := enc.Write(nonce[:])
 	if err != nil {
-		return errors.Errorf("Failed to write config file: %v", err)
+		return fmt.Errorf("Failed to write config file: %v", err)
 	}
 
 	var key [32]byte
@@ -219,7 +219,7 @@ func Encrypt(src io.Reader, dst io.Writer) error {
 	b := secretbox.Seal(nil, data, &nonce, &key)
 	_, err = enc.Write(b)
 	if err != nil {
-		return errors.Errorf("Failed to write config file: %v", err)
+		return fmt.Errorf("Failed to write config file: %v", err)
 	}
 	return enc.Close()
 }
@@ -258,32 +258,32 @@ func SetConfigPassword(password string) error {
 	if PassConfigKeyForDaemonization {
 		tempFile, err := ioutil.TempFile("", "rclone")
 		if err != nil {
-			return errors.Wrap(err, "cannot create temp file to store configKey")
+			return fmt.Errorf("cannot create temp file to store configKey: %w", err)
 		}
 		_, err = tempFile.WriteString(obscure.MustObscure(string(configKey)))
 		if err != nil {
 			errRemove := os.Remove(tempFile.Name())
 			if errRemove != nil {
-				return errors.Wrap(err, "error writing configKey to temp file and also error deleting it")
+				return fmt.Errorf("error writing configKey to temp file and also error deleting it: %w", err)
 			}
-			return errors.Wrap(err, "error writing configKey to temp file")
+			return fmt.Errorf("error writing configKey to temp file: %w", err)
 		}
 		err = tempFile.Close()
 		if err != nil {
 			errRemove := os.Remove(tempFile.Name())
 			if errRemove != nil {
-				return errors.Wrap(err, "error closing temp file with configKey and also error deleting it")
+				return fmt.Errorf("error closing temp file with configKey and also error deleting it: %w", err)
 			}
-			return errors.Wrap(err, "error closing temp file with configKey")
+			return fmt.Errorf("error closing temp file with configKey: %w", err)
 		}
 		fs.Debugf(nil, "saving configKey to temp file")
 		err = os.Setenv("_RCLONE_CONFIG_KEY_FILE", tempFile.Name())
 		if err != nil {
 			errRemove := os.Remove(tempFile.Name())
 			if errRemove != nil {
-				return errors.Wrap(err, "unable to set environment variable _RCLONE_CONFIG_KEY_FILE and unable to delete the temp file")
+				return fmt.Errorf("unable to set environment variable _RCLONE_CONFIG_KEY_FILE and unable to delete the temp file: %w", err)
 			}
-			return errors.Wrap(err, "unable to set environment variable _RCLONE_CONFIG_KEY_FILE")
+			return fmt.Errorf("unable to set environment variable _RCLONE_CONFIG_KEY_FILE: %w", err)
 		}
 	}
 	return nil

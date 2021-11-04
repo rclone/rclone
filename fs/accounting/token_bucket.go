@@ -2,10 +2,11 @@ package accounting
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"golang.org/x/time/rate"
@@ -201,7 +202,7 @@ func (tb *tokenBucket) rcBwlimit(ctx context.Context, in rc.Params) (out rc.Para
 		var bws fs.BwTimetable
 		err = bws.Set(bwlimit)
 		if err != nil {
-			return out, errors.Wrap(err, "bad bwlimit")
+			return out, fmt.Errorf("bad bwlimit: %w", err)
 		}
 		if len(bws) != 1 {
 			return out, errors.New("need exactly 1 bandwidth setting")

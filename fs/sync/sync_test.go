@@ -4,13 +4,13 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	_ "github.com/rclone/rclone/backend/all" // import all backends
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -1059,7 +1059,7 @@ func TestSyncWithMaxDuration(t *testing.T) {
 	accounting.GlobalStats().ResetCounters()
 	startTime := time.Now()
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
-	require.Equal(t, context.DeadlineExceeded, errors.Cause(err))
+	require.True(t, errors.Is(err, context.DeadlineExceeded))
 
 	elapsed := time.Since(startTime)
 	maxTransferTime := (time.Duration(len(testFiles)) * 60 * time.Second) / time.Duration(bytesPerSecond)
@@ -2091,7 +2091,7 @@ func testSyncConcurrent(t *testing.T, subtest string) {
 	fstest.CheckItems(t, r.Fremote, itemsBefore...)
 	stats.ResetErrors()
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
-	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
+	if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		t.Skipf("Skip test because remote cannot upload empty files")
 	}
 	assert.NoError(t, err, "Sync must not return a error")

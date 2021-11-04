@@ -3,12 +3,12 @@
 package fs
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs/hash"
 )
 

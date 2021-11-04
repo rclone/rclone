@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
 	"github.com/rclone/rclone/fs"
@@ -125,11 +124,11 @@ can be processed line by line as each item is written one to a line.
 				}
 				out, err := json.MarshalIndent(item, "", "\t")
 				if err != nil {
-					return errors.Wrap(err, "failed to marshal list object")
+					return fmt.Errorf("failed to marshal list object: %w", err)
 				}
 				_, err = os.Stdout.Write(out)
 				if err != nil {
-					return errors.Wrap(err, "failed to write to output")
+					return fmt.Errorf("failed to write to output: %w", err)
 				}
 				fmt.Println()
 			} else {
@@ -138,7 +137,7 @@ can be processed line by line as each item is written one to a line.
 				err := operations.ListJSON(context.Background(), fsrc, remote, &opt, func(item *operations.ListJSONItem) error {
 					out, err := json.Marshal(item)
 					if err != nil {
-						return errors.Wrap(err, "failed to marshal list object")
+						return fmt.Errorf("failed to marshal list object: %w", err)
 					}
 					if first {
 						first = false
@@ -147,7 +146,7 @@ can be processed line by line as each item is written one to a line.
 					}
 					_, err = os.Stdout.Write(out)
 					if err != nil {
-						return errors.Wrap(err, "failed to write to output")
+						return fmt.Errorf("failed to write to output: %w", err)
 					}
 					return nil
 				})

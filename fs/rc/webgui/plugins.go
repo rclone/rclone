@@ -2,6 +2,7 @@ package webgui
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/rc/rcflags"
-	"github.com/rclone/rclone/lib/errors"
 )
 
 // PackageJSON is the structure of package.json of a plugin

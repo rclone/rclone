@@ -2,11 +2,12 @@ package operations
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
@@ -118,14 +119,14 @@ func newListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOp
 	if opt.ShowEncrypted {
 		fsInfo, _, _, config, err := fs.ConfigFs(fsrc.Name() + ":" + fsrc.Root())
 		if err != nil {
-			return nil, errors.Wrap(err, "ListJSON failed to load config for crypt remote")
+			return nil, fmt.Errorf("ListJSON failed to load config for crypt remote: %w", err)
 		}
 		if fsInfo.Name != "crypt" {
 			return nil, errors.New("The remote needs to be of type \"crypt\"")
 		}
 		lj.cipher, err = crypt.NewCipher(config)
 		if err != nil {
-			return nil, errors.Wrap(err, "ListJSON failed to make new crypt remote")
+			return nil, fmt.Errorf("ListJSON failed to make new crypt remote: %w", err)
 		}
 	}
 	features := fsrc.Features()
@@ -237,19 +238,19 @@ func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, 
 		for _, entry := range entries {
 			item, err := lj.entry(ctx, entry)
 			if err != nil {
-				return errors.Wrap(err, "creating entry failed in ListJSON")
+				return fmt.Errorf("creating entry failed in ListJSON: %w", err)
 			}
 			if item != nil {
 				err = callback(item)
 				if err != nil {
-					return errors.Wrap(err, "callback failed in ListJSON")
+					return fmt.Errorf("callback failed in ListJSON: %w", err)
 				}
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "error in ListJSON")
+		return fmt.Errorf("error in ListJSON: %w", err)
 	}
 	return nil
 }

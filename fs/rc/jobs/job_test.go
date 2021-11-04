@@ -2,11 +2,11 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"runtime"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"

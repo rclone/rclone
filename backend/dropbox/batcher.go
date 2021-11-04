@@ -8,13 +8,13 @@ package dropbox
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/async"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/atexit"
@@ -66,7 +66,7 @@ type batcherResponse struct {
 func newBatcher(ctx context.Context, f *Fs, mode string, size int, timeout time.Duration) (*batcher, error) {
 	// fs.Debugf(f, "Creating batcher with mode %q, size %d, timeout %v", mode, size, timeout)
 	if size > maxBatchSize || size < 0 {
-		return nil, errors.Errorf("dropbox: batch size must be < %d and >= 0 - it is currently %d", maxBatchSize, size)
+		return nil, fmt.Errorf("dropbox: batch size must be < %d and >= 0 - it is currently %d", maxBatchSize, size)
 	}
 
 	async := false
@@ -91,7 +91,7 @@ func newBatcher(ctx context.Context, f *Fs, mode string, size int, timeout time.
 	case "off":
 		size = 0
 	default:
-		return nil, errors.Errorf("dropbox: batch mode must be sync|async|off not %q", mode)
+		return nil, fmt.Errorf("dropbox: batch mode must be sync|async|off not %q", mode)
 	}
 
 	b := &batcher{
@@ -135,7 +135,7 @@ func (b *batcher) finishBatch(ctx context.Context, items []*files.UploadSessionF
 		return err != nil, err
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "batch commit failed")
+		return nil, fmt.Errorf("batch commit failed: %w", err)
 	}
 	return batchStatus, nil
 }
@@ -180,7 +180,7 @@ func (b *batcher) finishBatchJobStatus(ctx context.Context, launchBatchStatus *f
 	if err == nil {
 		err = errors.New("batch didn't complete")
 	}
-	return nil, errors.Wrapf(err, "wait for batch failed after %d tries in %v", try, time.Since(startTime))
+	return nil, fmt.Errorf("wait for batch failed after %d tries in %v: %w", try, time.Since(startTime), err)
 }
 
 // commit a batch
@@ -216,13 +216,13 @@ func (b *batcher) commitBatch(ctx context.Context, items []*files.UploadSessionF
 	case "complete":
 		complete = batchStatus.Complete
 	default:
-		return errors.Errorf("batch returned unknown status %q", batchStatus.Tag)
+		return fmt.Errorf("batch returned unknown status %q", batchStatus.Tag)
 	}
 
 	// Check we got the right number of entries
 	entries := complete.Entries
 	if len(entries) != len(results) {
-		return errors.Errorf("expecting %d items in batch but got %d", len(results), len(entries))
+		return fmt.Errorf("expecting %d items in batch but got %d", len(results), len(entries))
 	}
 
 	// Report results to clients
@@ -250,7 +250,7 @@ func (b *batcher) commitBatch(ctx context.Context, items []*files.UploadSessionF
 					errorTag += "/" + item.Failure.PropertiesError.Tag
 				}
 			}
-			resp.err = errors.Errorf("batch upload failed: %s", errorTag)
+			resp.err = fmt.Errorf("batch upload failed: %s", errorTag)
 		}
 		if !b.async {
 			results[i] <- resp
@@ -261,7 +261,7 @@ func (b *batcher) commitBatch(ctx context.Context, items []*files.UploadSessionF
 
 	// Report an error if any failed in the batch
 	if errorTag != "" {
-		return errors.Errorf("batch had %d errors: last error: %s", errorCount, errorTag)
+		return fmt.Errorf("batch had %d errors: last error: %s", errorCount, errorTag)
 	}
 
 	fs.Debugf(b.f, "Committed %s", desc)

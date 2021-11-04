@@ -4,11 +4,10 @@ package configmap
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 	"unicode"
-
-	"github.com/pkg/errors"
 )
 
 // Priority of getters
@@ -172,7 +171,7 @@ func (c Simple) Encode() (string, error) {
 	}
 	buf, err := json.Marshal(c)
 	if err != nil {
-		return "", errors.Wrap(err, "encode simple map")
+		return "", fmt.Errorf("encode simple map: %w", err)
 	}
 	return base64.RawStdEncoding.EncodeToString(buf), nil
 }
@@ -191,11 +190,11 @@ func (c Simple) Decode(in string) error {
 	}
 	decodedM, err := base64.RawStdEncoding.DecodeString(in)
 	if err != nil {
-		return errors.Wrap(err, "decode simple map")
+		return fmt.Errorf("decode simple map: %w", err)
 	}
 	err = json.Unmarshal(decodedM, &c)
 	if err != nil {
-		return errors.Wrap(err, "parse simple map")
+		return fmt.Errorf("parse simple map: %w", err)
 	}
 	return nil
 }

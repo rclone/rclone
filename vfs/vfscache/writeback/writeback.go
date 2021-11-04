@@ -5,12 +5,12 @@ package writeback
 import (
 	"container/heap"
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/vfs/vfscommon"
 )
 
@@ -365,7 +365,7 @@ func (wb *WriteBack) upload(ctx context.Context, wbItem *writeBackItem) {
 		if wbItem.delay > maxUploadDelay {
 			wbItem.delay = maxUploadDelay
 		}
-		if _, uerr := fserrors.Cause(err); uerr == context.Canceled {
+		if errors.Is(err, context.Canceled) {
 			fs.Infof(wbItem.name, "vfs cache: upload canceled")
 			// Upload was cancelled so reset timer
 			wbItem.delay = wb.opt.WriteBack
