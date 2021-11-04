@@ -50,7 +50,6 @@ require (
 	github.com/ncw/swift/v2 v2.0.1
 	github.com/nsf/termbox-go v1.1.1
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.2
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.11.0

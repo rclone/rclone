@@ -2,6 +2,8 @@ package fichier
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -10,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/rest"
@@ -81,7 +82,7 @@ func (f *Fs) readFileInfo(ctx context.Context, url string) (*File, error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't read file info")
+		return nil, fmt.Errorf("couldn't read file info: %w", err)
 	}
 
 	return &file, err
@@ -110,7 +111,7 @@ func (f *Fs) getDownloadToken(ctx context.Context, url string) (*GetTokenRespons
 		return doretry || !validToken(&token), err
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't list files")
+		return nil, fmt.Errorf("couldn't list files: %w", err)
 	}
 
 	return &token, nil
@@ -144,7 +145,7 @@ func (f *Fs) listSharedFiles(ctx context.Context, id string) (entries fs.DirEntr
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't list files")
+		return nil, fmt.Errorf("couldn't list files: %w", err)
 	}
 
 	entries = make([]fs.DirEntry, len(sharedFiles))
@@ -173,7 +174,7 @@ func (f *Fs) listFiles(ctx context.Context, directoryID int) (filesList *FilesLi
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't list files")
+		return nil, fmt.Errorf("couldn't list files: %w", err)
 	}
 	for i := range filesList.Items {
 		item := &filesList.Items[i]
@@ -201,7 +202,7 @@ func (f *Fs) listFolders(ctx context.Context, directoryID int) (foldersList *Fol
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't list folders")
+		return nil, fmt.Errorf("couldn't list folders: %w", err)
 	}
 	foldersList.Name = f.opt.Enc.ToStandardName(foldersList.Name)
 	for i := range foldersList.SubFolders {
@@ -295,7 +296,7 @@ func (f *Fs) makeFolder(ctx context.Context, leaf string, folderID int) (respons
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't create folder")
+		return nil, fmt.Errorf("couldn't create folder: %w", err)
 	}
 
 	// fs.Debugf(f, "Created Folder `%s` in id `%s`", name, directoryID)
@@ -322,10 +323,10 @@ func (f *Fs) removeFolder(ctx context.Context, name string, folderID int) (respo
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't remove folder")
+		return nil, fmt.Errorf("couldn't remove folder: %w", err)
 	}
 	if response.Status != "OK" {
-		return nil, errors.Errorf("can't remove folder: %s", response.Message)
+		return nil, fmt.Errorf("can't remove folder: %s", response.Message)
 	}
 
 	// fs.Debugf(f, "Removed Folder with id `%s`", directoryID)
@@ -352,7 +353,7 @@ func (f *Fs) deleteFile(ctx context.Context, url string) (response *GenericOKRes
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't remove file")
+		return nil, fmt.Errorf("couldn't remove file: %w", err)
 	}
 
 	// fs.Debugf(f, "Removed file with url `%s`", url)
@@ -379,7 +380,7 @@ func (f *Fs) moveFile(ctx context.Context, url string, folderID int, rename stri
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't copy file")
+		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
 
 	return response, nil
@@ -404,7 +405,7 @@ func (f *Fs) copyFile(ctx context.Context, url string, folderID int, rename stri
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't copy file")
+		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
 
 	return response, nil
@@ -432,7 +433,7 @@ func (f *Fs) renameFile(ctx context.Context, url string, newName string) (respon
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't rename file")
+		return nil, fmt.Errorf("couldn't rename file: %w", err)
 	}
 
 	return response, nil
@@ -453,7 +454,7 @@ func (f *Fs) getUploadNode(ctx context.Context) (response *GetUploadNodeResponse
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "didnt got an upload node")
+		return nil, fmt.Errorf("didnt got an upload node: %w", err)
 	}
 
 	// fs.Debugf(f, "Got Upload node")
@@ -497,7 +498,7 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName,
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't upload file")
+		return nil, fmt.Errorf("couldn't upload file: %w", err)
 	}
 
 	// fs.Debugf(f, "Uploaded File `%s`", fileName)
@@ -531,7 +532,7 @@ func (f *Fs) endUpload(ctx context.Context, uploadID string, nodeurl string) (re
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't finish file upload")
+		return nil, fmt.Errorf("couldn't finish file upload: %w", err)
 	}
 
 	return response, err

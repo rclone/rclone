@@ -9,6 +9,7 @@ package hubic
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"time"
 
 	swiftLib "github.com/ncw/swift/v2"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/swift"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -120,7 +120,7 @@ func (f *Fs) getCredentials(ctx context.Context) (err error) {
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		body, _ := ioutil.ReadAll(resp.Body)
 		bodyStr := strings.TrimSpace(strings.Replace(string(body), "\n", " ", -1))
-		return errors.Errorf("failed to get credentials: %s: %s", resp.Status, bodyStr)
+		return fmt.Errorf("failed to get credentials: %s: %s", resp.Status, bodyStr)
 	}
 	decoder := json.NewDecoder(resp.Body)
 	var result credentials
@@ -146,7 +146,7 @@ func (f *Fs) getCredentials(ctx context.Context) (err error) {
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	client, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure Hubic")
+		return nil, fmt.Errorf("failed to configure Hubic: %w", err)
 	}
 
 	f := &Fs{
@@ -163,7 +163,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = c.Authenticate(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "error authenticating swift connection")
+		return nil, fmt.Errorf("error authenticating swift connection: %w", err)
 	}
 
 	// Parse config into swift.Options struct

@@ -3,11 +3,11 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"path"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -112,12 +112,12 @@ type Config struct {
 func NewConfig(configFile string) (*Config, error) {
 	d, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read config file")
+		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 	config := &Config{}
 	err = yaml.Unmarshal(d, &config)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse config file")
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 	// d, err = yaml.Marshal(&config)
 	// if err != nil {

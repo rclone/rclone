@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
@@ -246,7 +245,7 @@ func parseHash(str string) (string, string, error) {
 			return name, val, nil
 		}
 	}
-	return "", "", errors.Errorf("invalid hash %q", str)
+	return "", "", fmt.Errorf("invalid hash %q", str)
 }
 
 // makeListing will produce listing from directory tree and write it to a file
@@ -301,5 +300,5 @@ func (b *bisyncRun) checkListing(ls *fileList, listing, msg string) error {
 	}
 	fs.Errorf(nil, "Empty %s listing. Cannot sync to an empty directory: %s", msg, listing)
 	b.critical = true
-	return errors.Errorf("empty %s listing: %s", msg, listing)
+	return fmt.Errorf("empty %s listing: %s", msg, listing)
 }

@@ -1,21 +1,8 @@
 package errors
 
 import (
-	"errors"
-	"fmt"
 	"reflect"
 )
-
-// New returns an error that formats as the given text.
-func New(text string) error {
-	return errors.New(text)
-}
-
-// Errorf formats according to a format specifier and returns the string
-// as a value that satisfies error.
-func Errorf(format string, a ...interface{}) error {
-	return fmt.Errorf(format, a...)
-}
 
 // WalkFunc is the signature of the Walk callback function. The function gets the
 // current error in the chain and should return true if the chain processing
@@ -27,7 +14,6 @@ type WalkFunc func(error) bool
 // is stopped and no further calls will be made.
 //
 // The next error in the chain is determined by the following rules:
-// - If the current error has a `Cause() error` method (github.com/pkg/errors),
 //   the return value of this method is used.
 // - If the current error has a `Unwrap() error` method (golang.org/x/xerrors),
 //   the return value of this method is used.

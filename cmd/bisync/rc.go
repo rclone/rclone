@@ -2,9 +2,9 @@ package bisync
 
 import (
 	"context"
+	"errors"
 	"log"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"

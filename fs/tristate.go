@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // Tristate is a boolean that can has the states, true, false and
@@ -36,7 +34,7 @@ func (t *Tristate) Set(s string) error {
 	}
 	value, err := strconv.ParseBool(s)
 	if err != nil {
-		return errors.Wrapf(err, "failed to parse Tristate %q", s)
+		return fmt.Errorf("failed to parse Tristate %q: %w", s, err)
 	}
 	t.Value = value
 	t.Valid = true

@@ -3,13 +3,14 @@ package walk
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"path"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/filter"
@@ -244,7 +245,7 @@ func (dm *dirMap) addEntries(entries fs.DirEntries) error {
 		case fs.Directory:
 			dm.add(x.Remote(), true)
 		default:
-			return errors.Errorf("unknown object type %T", entry)
+			return fmt.Errorf("unknown object type %T", entry)
 		}
 	}
 	return nil
@@ -315,7 +316,7 @@ func listR(ctx context.Context, f fs.Fs, path string, includeAll bool, listType 
 						return err
 					}
 				default:
-					return errors.Errorf("unknown object type %T", entry)
+					return fmt.Errorf("unknown object type %T", entry)
 				}
 				if include {
 					filteredEntries = append(filteredEntries, entry)
@@ -514,7 +515,7 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 					fs.Debugf(x, "Excluded from sync (and deletion)")
 				}
 			default:
-				return errors.Errorf("unknown object type %T", entry)
+				return fmt.Errorf("unknown object type %T", entry)
 			}
 		}
 		return nil

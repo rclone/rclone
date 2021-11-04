@@ -10,6 +10,7 @@ package pcloud
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,7 +19,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/pcloud/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -290,7 +290,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure Pcloud")
+		return nil, fmt.Errorf("failed to configure Pcloud: %w", err)
 	}
 	updateTokenURL(oauthConfig, opt.Hostname)
 
@@ -463,7 +463,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return found, errors.Wrap(err, "couldn't list files")
+		return found, fmt.Errorf("couldn't list files: %w", err)
 	}
 	for i := range result.Metadata.Contents {
 		item := &result.Metadata.Contents[i]
@@ -600,7 +600,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "rmdir failed")
+		return fmt.Errorf("rmdir failed: %w", err)
 	}
 	f.dirCache.FlushDir(dir)
 	if err != nil {
@@ -872,7 +872,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "about failed")
+		return nil, fmt.Errorf("about failed: %w", err)
 	}
 	usage = &fs.Usage{
 		Total: fs.NewUsageValue(q.Quota),               // quota of bytes that can be used
@@ -952,7 +952,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if o.md5 == "" && o.sha1 == "" && o.sha256 == "" {
 		err := o.getHashes(ctx)
 		if err != nil {
-			return "", errors.Wrap(err, "failed to get hash")
+			return "", fmt.Errorf("failed to get hash: %w", err)
 		}
 	}
 	return *pHash, nil
@@ -971,7 +971,7 @@ func (o *Object) Size() int64 {
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.IsFolder {
-		return errors.Wrapf(fs.ErrorNotAFile, "%q is a folder", o.remote)
+		return fmt.Errorf("%q is a folder: %w", o.remote, fs.ErrorNotAFile)
 	}
 	o.hasMetaData = true
 	o.size = info.Size
@@ -1058,7 +1058,7 @@ func (o *Object) downloadURL(ctx context.Context) (URL string, err error) {
 		return "", err
 	}
 	if !result.IsValid() {
-		return "", errors.Errorf("fetched invalid link %+v", result)
+		return "", fmt.Errorf("fetched invalid link %+v", result)
 	}
 	o.link = &result
 	return o.link.URL(), nil
@@ -1146,7 +1146,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if size == 0 {
 		formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, opts.Parameters, "content", leaf)
 		if err != nil {
-			return errors.Wrap(err, "failed to make multipart upload for 0 length file")
+			return fmt.Errorf("failed to make multipart upload for 0 length file: %w", err)
 		}
 
 		contentLength := overhead + size
@@ -1177,7 +1177,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	if len(result.Items) != 1 {
-		return errors.Errorf("failed to upload %v - not sure why", o)
+		return fmt.Errorf("failed to upload %v - not sure why", o)
 	}
 	o.setHashes(&result.Checksums[0])
 	return o.setMetaData(&result.Items[0])

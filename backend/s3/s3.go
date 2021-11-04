@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -33,7 +34,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/ncw/swift/v2"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -1557,7 +1557,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 	// start a new AWS session
 	awsSession, err := session.NewSession()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "NewSession")
+		return nil, nil, fmt.Errorf("NewSession: %w", err)
 	}
 
 	// first provider to supply a credential set "wins"
@@ -1661,7 +1661,7 @@ func s3Connection(ctx context.Context, opt *Options, client *http.Client) (*s3.S
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	return nil
 }
@@ -1676,7 +1676,7 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 
 func checkUploadCutoff(cs fs.SizeSuffix) error {
 	if cs > maxUploadCutoff {
-		return errors.Errorf("%s is greater than %s", cs, maxUploadCutoff)
+		return fmt.Errorf("%s is greater than %s", cs, maxUploadCutoff)
 	}
 	return nil
 }
@@ -1789,11 +1789,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "s3: chunk size")
+		return nil, fmt.Errorf("s3: chunk size: %w", err)
 	}
 	err = checkUploadCutoff(opt.UploadCutoff)
 	if err != nil {
-		return nil, errors.Wrap(err, "s3: upload cutoff")
+		return nil, fmt.Errorf("s3: upload cutoff: %w", err)
 	}
 	if opt.ACL == "" {
 		opt.ACL = "private"
@@ -1931,13 +1931,13 @@ func (f *Fs) getBucketLocation(ctx context.Context, bucket string) (string, erro
 func (f *Fs) updateRegionForBucket(ctx context.Context, bucket string) error {
 	region, err := f.getBucketLocation(ctx, bucket)
 	if err != nil {
-		return errors.Wrap(err, "reading bucket location failed")
+		return fmt.Errorf("reading bucket location failed: %w", err)
 	}
 	if aws.StringValue(f.c.Config.Endpoint) != "" {
-		return errors.Errorf("can't set region to %q as endpoint is set", region)
+		return fmt.Errorf("can't set region to %q as endpoint is set", region)
 	}
 	if aws.StringValue(f.c.Config.Region) == region {
-		return errors.Errorf("region is already %q - not updating", region)
+		return fmt.Errorf("region is already %q - not updating", region)
 	}
 
 	// Make a new session with the new region
@@ -1945,7 +1945,7 @@ func (f *Fs) updateRegionForBucket(ctx context.Context, bucket string) error {
 	f.opt.Region = region
 	c, ses, err := s3Connection(f.ctx, &f.opt, f.srv)
 	if err != nil {
-		return errors.Wrap(err, "creating new session failed")
+		return fmt.Errorf("creating new session failed: %w", err)
 	}
 	f.c = c
 	f.ses = ses
@@ -2141,7 +2141,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		if startAfter != nil && urlEncodeListings {
 			*startAfter, err = url.QueryUnescape(*startAfter)
 			if err != nil {
-				return errors.Wrapf(err, "failed to URL decode StartAfter/NextMarker %q", *continuationToken)
+				return fmt.Errorf("failed to URL decode StartAfter/NextMarker %q: %w", *continuationToken, err)
 			}
 		}
 	}
@@ -2727,7 +2727,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if lifetime := opt["lifetime"]; lifetime != "" {
 			ilifetime, err := strconv.ParseInt(lifetime, 10, 64)
 			if err != nil {
-				return nil, errors.Wrap(err, "bad lifetime")
+				return nil, fmt.Errorf("bad lifetime: %w", err)
 			}
 			req.RestoreRequest.Days = &ilifetime
 		}
@@ -2786,7 +2786,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if opt["max-age"] != "" {
 			maxAge, err = fs.ParseDuration(opt["max-age"])
 			if err != nil {
-				return nil, errors.Wrap(err, "bad max-age")
+				return nil, fmt.Errorf("bad max-age: %w", err)
 			}
 		}
 		return nil, f.cleanUp(ctx, maxAge)
@@ -2820,7 +2820,7 @@ func (f *Fs) listMultipartUploads(ctx context.Context, bucket, key string) (uplo
 			return f.shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return nil, errors.Wrapf(err, "list multipart uploads bucket %q key %q", bucket, key)
+			return nil, fmt.Errorf("list multipart uploads bucket %q key %q: %w", bucket, key, err)
 		}
 		uploads = append(uploads, resp.Uploads...)
 		if !aws.BoolValue(resp.IsTruncated) {
@@ -2878,7 +2878,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string, maxAge time.Durat
 				}
 				_, abortErr := f.c.AbortMultipartUpload(&req)
 				if abortErr != nil {
-					err = errors.Wrapf(abortErr, "failed to remove %s", what)
+					err = fmt.Errorf("failed to remove %s: %w", what, abortErr)
 					fs.Errorf(f, "%v", err)
 				}
 			} else {
@@ -3218,7 +3218,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	})
 	if err, ok := err.(awserr.RequestFailure); ok {
 		if err.Code() == "InvalidObjectState" {
-			return nil, errors.Errorf("Object in GLACIER, restore first: bucket=%q, key=%q", bucket, bucketPath)
+			return nil, fmt.Errorf("Object in GLACIER, restore first: bucket=%q, key=%q", bucket, bucketPath)
 		}
 	}
 	if err != nil {
@@ -3296,7 +3296,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "multipart upload failed to initialise")
+		return fmt.Errorf("multipart upload failed to initialise: %w", err)
 	}
 	uid := cout.UploadId
 
@@ -3356,7 +3356,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			finished = true
 		} else if err != nil {
 			free()
-			return errors.Wrap(err, "multipart upload failed to read source")
+			return fmt.Errorf("multipart upload failed to read source: %w", err)
 		}
 		buf = buf[:n]
 
@@ -3403,7 +3403,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 				return false, nil
 			})
 			if err != nil {
-				return errors.Wrap(err, "multipart upload failed to upload part")
+				return fmt.Errorf("multipart upload failed to upload part: %w", err)
 			}
 			return nil
 		})
@@ -3431,7 +3431,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "multipart upload failed to finalise")
+		return fmt.Errorf("multipart upload failed to finalise: %w", err)
 	}
 	return nil
 }
@@ -3557,7 +3557,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// PutObject so we'll use this work-around.
 		url, headers, err := putObj.PresignRequest(15 * time.Minute)
 		if err != nil {
-			return errors.Wrap(err, "s3 upload: sign request")
+			return fmt.Errorf("s3 upload: sign request: %w", err)
 		}
 
 		if o.fs.opt.V2Auth && headers == nil {
@@ -3572,7 +3572,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// create the vanilla http request
 		httpReq, err := http.NewRequestWithContext(ctx, "PUT", url, in)
 		if err != nil {
-			return errors.Wrap(err, "s3 upload: new request")
+			return fmt.Errorf("s3 upload: new request: %w", err)
 		}
 
 		// set the headers we signed and the length
@@ -3592,7 +3592,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			if resp.StatusCode >= 200 && resp.StatusCode < 299 {
 				return false, nil
 			}
-			err = errors.Errorf("s3 upload: %s: %s", resp.Status, body)
+			err = fmt.Errorf("s3 upload: %s: %s", resp.Status, body)
 			return fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 		})
 		if err != nil {

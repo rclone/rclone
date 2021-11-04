@@ -2,8 +2,8 @@ package settier
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
@@ -47,7 +47,7 @@ Or just provide remote directory and all files in directory will be tiered
 		cmd.Run(false, false, command, func() error {
 			isSupported := fsrc.Features().SetTier
 			if !isSupported {
-				return errors.Errorf("Remote %s does not support settier", fsrc.Name())
+				return fmt.Errorf("Remote %s does not support settier", fsrc.Name())
 			}
 
 			return operations.SetTier(context.Background(), fsrc, tier)

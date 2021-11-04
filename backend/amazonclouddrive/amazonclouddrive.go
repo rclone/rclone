@@ -14,6 +14,7 @@ we ignore assets completely!
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -22,7 +23,6 @@ import (
 	"time"
 
 	acd "github.com/ncw/go-acd"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -259,7 +259,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, acdConfig, baseClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure Amazon Drive")
+		return nil, fmt.Errorf("failed to configure Amazon Drive: %w", err)
 	}
 
 	c := acd.NewClient(oAuthClient)
@@ -292,13 +292,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get endpoints")
+		return nil, fmt.Errorf("failed to get endpoints: %w", err)
 	}
 
 	// Get rootID
 	rootInfo, err := f.getRootInfo(ctx)
 	if err != nil || rootInfo.Id == nil {
-		return nil, errors.Wrap(err, "failed to get root")
+		return nil, fmt.Errorf("failed to get root: %w", err)
 	}
 	f.trueRootID = *rootInfo.Id
 

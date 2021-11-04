@@ -7,10 +7,10 @@
 package mmap
 
 import (
+	"fmt"
 	"reflect"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 )
 
@@ -20,7 +20,7 @@ import (
 func Alloc(size int) ([]byte, error) {
 	p, err := windows.VirtualAlloc(0, uintptr(size), windows.MEM_COMMIT, windows.PAGE_READWRITE)
 	if err != nil {
-		return nil, errors.Wrap(err, "mmap: failed to allocate memory for buffer")
+		return nil, fmt.Errorf("mmap: failed to allocate memory for buffer: %w", err)
 	}
 	var mem []byte
 	sh := (*reflect.SliceHeader)(unsafe.Pointer(&mem))
@@ -37,7 +37,7 @@ func Free(mem []byte) error {
 	sh := (*reflect.SliceHeader)(unsafe.Pointer(&mem))
 	err := windows.VirtualFree(sh.Data, 0, windows.MEM_RELEASE)
 	if err != nil {
-		return errors.Wrap(err, "mmap: failed to unmap memory")
+		return fmt.Errorf("mmap: failed to unmap memory: %w", err)
 	}
 	return nil
 }

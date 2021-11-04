@@ -19,7 +19,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/test"
 	"github.com/rclone/rclone/cmd/test/info/internal"
@@ -441,7 +440,7 @@ func (r *results) checkStreaming() {
 func readInfo(ctx context.Context, f fs.Fs) error {
 	err := f.Mkdir(ctx, "")
 	if err != nil {
-		return errors.Wrap(err, "couldn't mkdir")
+		return fmt.Errorf("couldn't mkdir: %w", err)
 	}
 	r := newResults(ctx, f)
 	if checkControl {

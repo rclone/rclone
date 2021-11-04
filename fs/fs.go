@@ -3,11 +3,10 @@ package fs
 
 import (
 	"context"
+	"errors"
 	"io"
 	"math"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Constants

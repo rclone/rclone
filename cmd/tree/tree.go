@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/a8m/tree"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -100,7 +99,7 @@ short options as they conflict with rclone's short options.
 			var err error
 			outFile, err = os.Create(outFileName)
 			if err != nil {
-				return errors.Errorf("failed to create output file: %v", err)
+				return fmt.Errorf("failed to create output file: %v", err)
 			}
 		}
 		opts.VerSort = opts.VerSort || sort == "version"
@@ -207,7 +206,7 @@ func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 	}
 	_, entry := dirtree.DirTree(dirs).Find(filePath)
 	if entry == nil {
-		return nil, errors.Errorf("Couldn't find %q in directory cache", filePath)
+		return nil, fmt.Errorf("Couldn't find %q in directory cache", filePath)
 	}
 	return &FileInfo{entry}, nil
 }
@@ -219,7 +218,7 @@ func (dirs Fs) ReadDir(dir string) (names []string, err error) {
 	dir = strings.TrimLeft(dir, "/")
 	entries, ok := dirs[dir]
 	if !ok {
-		return nil, errors.Errorf("Couldn't find directory %q", dir)
+		return nil, fmt.Errorf("Couldn't find directory %q", dir)
 	}
 	for _, entry := range entries {
 		names = append(names, path.Base(entry.Remote()))

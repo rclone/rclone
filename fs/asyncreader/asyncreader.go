@@ -4,11 +4,11 @@ package asyncreader
 
 import (
 	"context"
+	"errors"
 	"io"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"

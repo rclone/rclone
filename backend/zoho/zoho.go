@@ -4,6 +4,7 @@ package zoho
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
@@ -81,7 +81,7 @@ func init() {
 			getSrvs := func() (authSrv, apiSrv *rest.Client, err error) {
 				oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 				if err != nil {
-					return nil, nil, errors.Wrap(err, "failed to load oAuthClient")
+					return nil, nil, fmt.Errorf("failed to load oAuthClient: %w", err)
 				}
 				authSrv = rest.NewClient(oAuthClient).SetRoot(accountsURL)
 				apiSrv = rest.NewClient(oAuthClient).SetRoot(rootURL)
@@ -100,13 +100,13 @@ func init() {
 				// it's own custom type
 				token, err := oauthutil.GetToken(name, m)
 				if err != nil {
-					return nil, errors.Wrap(err, "failed to read token")
+					return nil, fmt.Errorf("failed to read token: %w", err)
 				}
 				if token.TokenType != "Zoho-oauthtoken" {
 					token.TokenType = "Zoho-oauthtoken"
 					err = oauthutil.PutToken(name, m, token, false)
 					if err != nil {
-						return nil, errors.Wrap(err, "failed to configure token")
+						return nil, fmt.Errorf("failed to configure token: %w", err)
 					}
 				}
 
@@ -478,7 +478,7 @@ OUTER:
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return found, errors.Wrap(err, "couldn't list files")
+			return found, fmt.Errorf("couldn't list files: %w", err)
 		}
 		if len(result.Items) == 0 {
 			break
@@ -670,7 +670,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	params.Set("override-name-exist", strconv.FormatBool(true))
 	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, nil, "content", name)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to make multipart upload")
+		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
 	}
 
 	contentLength := overhead + size
@@ -692,7 +692,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "upload error")
+		return nil, fmt.Errorf("upload error: %w", err)
 	}
 	if len(uploadResponse.Uploads) != 1 {
 		return nil, errors.New("upload: invalid response")
@@ -774,7 +774,7 @@ func (f *Fs) deleteObject(ctx context.Context, id string) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "delete object failed")
+		return fmt.Errorf("delete object failed: %w", err)
 	}
 	return nil
 }
@@ -801,7 +801,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 
 	err = f.deleteObject(ctx, rootID)
 	if err != nil {
-		return errors.Wrap(err, "rmdir failed")
+		return fmt.Errorf("rmdir failed: %w", err)
 	}
 	f.dirCache.FlushDir(dir)
 	return nil
@@ -844,7 +844,7 @@ func (f *Fs) rename(ctx context.Context, id, name string) (item *api.Item, err e
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "rename failed")
+		return nil, fmt.Errorf("rename failed: %w", err)
 	}
 	return &result.Item, nil
 }
@@ -897,7 +897,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't copy file")
+		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
 	// Server acts weird some times make sure we actually got
 	// an item
@@ -911,7 +911,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// the correct name after copy
 	if f.opt.Enc.ToStandardName(result.Items[0].Attributes.Name) != leaf {
 		if err = dstObject.rename(ctx, leaf); err != nil {
-			return nil, errors.Wrap(err, "copy: couldn't rename copied file")
+			return nil, fmt.Errorf("copy: couldn't rename copied file: %w", err)
 		}
 	}
 	return dstObject, nil
@@ -942,7 +942,7 @@ func (f *Fs) move(ctx context.Context, srcID, parentID string) (item *api.Item, 
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "move failed")
+		return nil, fmt.Errorf("move failed: %w", err)
 	}
 	// Server acts weird some times make sure our array actually contains
 	// a file
@@ -992,7 +992,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if needRename && needMove {
 		tmpLeaf := "rcloneTemp" + random.String(8)
 		if err = srcObj.rename(ctx, tmpLeaf); err != nil {
-			return nil, errors.Wrap(err, "move: pre move rename failed")
+			return nil, fmt.Errorf("move: pre move rename failed: %w", err)
 		}
 	}
 
@@ -1012,7 +1012,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// rename the leaf to its final name
 	if needRename {
 		if err = dstObject.rename(ctx, dstLeaf); err != nil {
-			return nil, errors.Wrap(err, "move: couldn't rename moved file")
+			return nil, fmt.Errorf("move: couldn't rename moved file: %w", err)
 		}
 	}
 	return dstObject, nil
@@ -1046,7 +1046,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// do the move
 	_, err = f.move(ctx, srcID, dstDirectoryID)
 	if err != nil {
-		return errors.Wrap(err, "couldn't dir move")
+		return fmt.Errorf("couldn't dir move: %w", err)
 	}
 
 	// Can't copy and change name in one step so we have to check if we have
@@ -1054,7 +1054,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if srcLeaf != dstLeaf {
 		_, err = f.rename(ctx, srcID, dstLeaf)
 		if err != nil {
-			return errors.Wrap(err, "dirmove: couldn't rename moved dir")
+			return fmt.Errorf("dirmove: couldn't rename moved dir: %w", err)
 		}
 	}
 	srcFs.dirCache.FlushDir(srcRemote)
@@ -1261,7 +1261,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// upload was successfull, need to delete old object before rename
 	if err = o.Remove(ctx); err != nil {
-		return errors.Wrap(err, "failed to remove old object")
+		return fmt.Errorf("failed to remove old object: %w", err)
 	}
 	if err = o.setMetaData(info); err != nil {
 		return err

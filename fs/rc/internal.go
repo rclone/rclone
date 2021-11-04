@@ -4,6 +4,7 @@ package rc
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/pkg/errors"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -60,7 +60,7 @@ Useful for testing error handling.`,
 
 // Return an error regardless
 func rcError(ctx context.Context, in Params) (out Params, err error) {
-	return nil, errors.Errorf("arbitrary error on input %+v", in)
+	return nil, fmt.Errorf("arbitrary error on input %+v", in)
 }
 
 func init() {
@@ -422,7 +422,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 	var httpResponse http.ResponseWriter
 	httpResponse, err = in.GetHTTPResponseWriter()
 	if err != nil {
-		return nil, errors.Errorf("response object is required\n" + err.Error())
+		return nil, fmt.Errorf("response object is required\n" + err.Error())
 	}
 
 	var allArgs = []string{}
@@ -475,7 +475,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 		cmd.Stdout = httpResponse
 		cmd.Stderr = httpResponse
 	} else {
-		return nil, errors.Errorf("Unknown returnType %q", returnType)
+		return nil, fmt.Errorf("Unknown returnType %q", returnType)
 	}
 
 	err = cmd.Run()

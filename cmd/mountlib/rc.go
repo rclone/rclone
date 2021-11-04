@@ -2,12 +2,12 @@ package mountlib
 
 import (
 	"context"
+	"errors"
 	"log"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/vfs"

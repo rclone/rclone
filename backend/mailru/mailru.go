@@ -3,6 +3,7 @@ package mailru
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	gohash "hash"
 	"io"
@@ -40,7 +41,6 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 
-	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -438,7 +438,7 @@ func (f *Fs) authorize(ctx context.Context, force bool) (err error) {
 		err = errors.New("Invalid token")
 	}
 	if err != nil {
-		return errors.Wrap(err, "Failed to authorize")
+		return fmt.Errorf("Failed to authorize: %w", err)
 	}
 
 	if err = oauthutil.PutToken(f.name, f.m, t, false); err != nil {
@@ -507,7 +507,7 @@ func (f *Fs) reAuthorize(opts *rest.Opts, origErr error) error {
 func (f *Fs) accessToken() (string, error) {
 	token, err := f.source.Token()
 	if err != nil {
-		return "", errors.Wrap(err, "cannot refresh access token")
+		return "", fmt.Errorf("cannot refresh access token: %w", err)
 	}
 	return token.AccessToken, nil
 }
@@ -1196,7 +1196,7 @@ func (f *Fs) purgeWithCheck(ctx context.Context, dir string, check bool, opName 
 
 	_, dirSize, err := f.readItemMetaData(ctx, path)
 	if err != nil {
-		return errors.Wrapf(err, "%s failed", opName)
+		return fmt.Errorf("%s failed: %w", opName, err)
 	}
 	if check && dirSize > 0 {
 		return fs.ErrorDirectoryNotEmpty
@@ -1300,7 +1300,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't copy file")
+		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
 	if response.Status != 200 {
 		return nil, fmt.Errorf("copy failed with code %d", response.Status)
@@ -1684,7 +1684,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 			spoolFile, mrHash, err := makeTempFile(ctx, tmpFs, wrapIn, src)
 			if err != nil {
-				return errors.Wrap(err, "Failed to create spool file")
+				return fmt.Errorf("Failed to create spool file: %w", err)
 			}
 			if o.putByHash(ctx, mrHash, src, "spool") {
 				// If put by hash is successful, ignore transitive error
@@ -2318,7 +2318,7 @@ func (p *serverPool) Dispatch(ctx context.Context, current string) (string, erro
 	})
 	if err != nil || url == "" {
 		closeBody(res)
-		return "", errors.Wrap(err, "Failed to request file server")
+		return "", fmt.Errorf("Failed to request file server: %w", err)
 	}
 
 	p.addServer(url, now)

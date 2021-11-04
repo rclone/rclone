@@ -2,10 +2,10 @@ package hashsum
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -41,7 +41,7 @@ func AddHashFlags(cmdFlags *pflag.FlagSet) {
 func GetHashsumOutput(filename string) (out *os.File, close func(), err error) {
 	out, err = os.Create(filename)
 	if err != nil {
-		err = errors.Wrapf(err, "Failed to open output file %v", filename)
+		err = fmt.Errorf("Failed to open output file %v: %w", filename, err)
 		return nil, nil, err
 	}
 

@@ -2,8 +2,7 @@ package kv
 
 import (
 	"context"
-
-	"github.com/pkg/errors"
+	"errors"
 )
 
 // package errors

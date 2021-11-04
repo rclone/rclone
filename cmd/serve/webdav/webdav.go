@@ -3,6 +3,8 @@ package webdav
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -16,7 +18,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/lib/errors"
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
@@ -157,7 +158,7 @@ func (w *WebDAV) getVFS(ctx context.Context) (VFS *vfs.VFS, err error) {
 	}
 	VFS, ok := value.(*vfs.VFS)
 	if !ok {
-		return nil, errors.Errorf("context value is not VFS: %#v", value)
+		return nil, fmt.Errorf("context value is not VFS: %#v", value)
 	}
 	return VFS, nil
 }

@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
 	"github.com/rclone/rclone/fs"
@@ -200,7 +199,7 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 		case 'T':
 			list.AddTier()
 		default:
-			return errors.Errorf("Unknown format character %q", char)
+			return fmt.Errorf("Unknown format character %q", char)
 		}
 	}
 

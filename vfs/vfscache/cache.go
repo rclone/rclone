@@ -3,6 +3,7 @@ package vfscache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -14,7 +15,6 @@ import (
 	"time"
 
 	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	fscache "github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
@@ -130,7 +130,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	// load in the cache and metadata off disk
 	err = c.reload(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load cache")
+		return nil, fmt.Errorf("failed to load cache: %w", err)
 	}
 
 	// Remove any empty directories
@@ -160,9 +160,9 @@ func createRootDir(parentOSPath string, name string, relativeDirOSPath string) (
 // createRootDirs creates all cache root directories
 func createRootDirs(parentOSPath string, relativeDirOSPath string) (dataOSPath string, metaOSPath string, err error) {
 	if dataOSPath, err = createRootDir(parentOSPath, "vfs", relativeDirOSPath); err != nil {
-		err = errors.Wrap(err, "failed to create data cache directory")
+		err = fmt.Errorf("failed to create data cache directory: %w", err)
 	} else if metaOSPath, err = createRootDir(parentOSPath, "vfsMeta", relativeDirOSPath); err != nil {
-		err = errors.Wrap(err, "failed to create metadata cache directory")
+		err = fmt.Errorf("failed to create metadata cache directory: %w", err)
 	}
 	return
 }
@@ -176,12 +176,12 @@ func (c *Cache) createItemDir(name string) (string, error) {
 	parentPath := c.toOSPath(parent)
 	err := createDir(parentPath)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to create data cache item directory")
+		return "", fmt.Errorf("failed to create data cache item directory: %w", err)
 	}
 	parentPathMeta := c.toOSPathMeta(parent)
 	err = createDir(parentPathMeta)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to create metadata cache item directory")
+		return "", fmt.Errorf("failed to create metadata cache item directory: %w", err)
 	}
 	return filepath.Join(parentPath, leaf), nil
 }
@@ -195,9 +195,9 @@ func getBackend(ctx context.Context, parentPath string, name string, relativeDir
 // getBackends gets backends for all cache root dirs
 func getBackends(ctx context.Context, parentPath string, relativeDirPath string) (fdata fs.Fs, fmeta fs.Fs, err error) {
 	if fdata, err = getBackend(ctx, parentPath, "vfs", relativeDirPath); err != nil {
-		err = errors.Wrap(err, "failed to get data cache backend")
+		err = fmt.Errorf("failed to get data cache backend: %w", err)
 	} else if fmeta, err = getBackend(ctx, parentPath, "vfsMeta", relativeDirPath); err != nil {
-		err = errors.Wrap(err, "failed to get metadata cache backend")
+		err = fmt.Errorf("failed to get metadata cache backend: %w", err)
 	}
 	return
 }
@@ -342,32 +342,32 @@ func rename(osOldPath, osNewPath string) error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return errors.Wrapf(err, "Failed to stat source: %s", osOldPath)
+		return fmt.Errorf("Failed to stat source: %s: %w", osOldPath, err)
 	}
 	if !sfi.Mode().IsRegular() {
 		// cannot copy non-regular files (e.g., directories, symlinks, devices, etc.)
-		return errors.Errorf("Non-regular source file: %s (%q)", sfi.Name(), sfi.Mode().String())
+		return fmt.Errorf("Non-regular source file: %s (%q)", sfi.Name(), sfi.Mode().String())
 	}
 	dfi, err := os.Stat(osNewPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return errors.Wrapf(err, "Failed to stat destination: %s", osNewPath)
+			return fmt.Errorf("Failed to stat destination: %s: %w", osNewPath, err)
 		}
 		parent := vfscommon.OsFindParent(osNewPath)
 		err = createDir(parent)
 		if err != nil {
-			return errors.Wrapf(err, "Failed to create parent dir: %s", parent)
+			return fmt.Errorf("Failed to create parent dir: %s: %w", parent, err)
 		}
 	} else {
 		if !(dfi.Mode().IsRegular()) {
-			return errors.Errorf("Non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
+			return fmt.Errorf("Non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
 		}
 		if os.SameFile(sfi, dfi) {
 			return nil
 		}
 	}
 	if err = os.Rename(osOldPath, osNewPath); err != nil {
-		return errors.Wrapf(err, "Failed to rename in cache: %s to %s", osOldPath, osNewPath)
+		return fmt.Errorf("Failed to rename in cache: %s to %s: %w", osOldPath, osNewPath, err)
 	}
 	return nil
 }
@@ -478,7 +478,7 @@ func (c *Cache) walk(dir string, fn func(osPath string, fi os.FileInfo, name str
 		// Find path relative to the cache root
 		name, err := filepath.Rel(dir, osPath)
 		if err != nil {
-			return errors.Wrap(err, "filepath.Rel failed in walk")
+			return fmt.Errorf("filepath.Rel failed in walk: %w", err)
 		}
 		if name == "." {
 			name = ""
@@ -511,7 +511,7 @@ func (c *Cache) reload(ctx context.Context) error {
 			return nil
 		})
 		if err != nil {
-			return errors.Wrapf(err, "failed to walk cache %q", dir)
+			return fmt.Errorf("failed to walk cache %q: %w", dir, err)
 		}
 	}
 	return nil

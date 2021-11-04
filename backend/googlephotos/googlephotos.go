@@ -6,6 +6,7 @@ package googlephotos
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/googlephotos/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -85,7 +85,7 @@ func init() {
 			opt := new(Options)
 			err := configstruct.Set(m, opt)
 			if err != nil {
-				return nil, errors.Wrap(err, "couldn't parse config into struct")
+				return nil, fmt.Errorf("couldn't parse config into struct: %w", err)
 			}
 
 			switch config.State {
@@ -292,7 +292,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	baseClient := fshttp.NewClient(ctx)
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure Box")
+		return nil, fmt.Errorf("failed to configure Box: %w", err)
 	}
 
 	root = strings.Trim(path.Clean(root), "/")
@@ -345,13 +345,13 @@ func (f *Fs) fetchEndpoint(ctx context.Context, name string) (endpoint string, e
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return "", errors.Wrap(err, "couldn't read openID config")
+		return "", fmt.Errorf("couldn't read openID config: %w", err)
 	}
 
 	// Find userinfo endpoint
 	endpoint, ok := openIDconfig[name].(string)
 	if !ok {
-		return "", errors.Errorf("couldn't find %q from openID config", name)
+		return "", fmt.Errorf("couldn't find %q from openID config", name)
 	}
 
 	return endpoint, nil
@@ -374,7 +374,7 @@ func (f *Fs) UserInfo(ctx context.Context) (userInfo map[string]string, err erro
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't read user info")
+		return nil, fmt.Errorf("couldn't read user info: %w", err)
 	}
 	return userInfo, nil
 }
@@ -405,7 +405,7 @@ func (f *Fs) Disconnect(ctx context.Context) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "couldn't revoke token")
+		return fmt.Errorf("couldn't revoke token: %w", err)
 	}
 	fs.Infof(f, "res = %+v", res)
 	return nil
@@ -492,7 +492,7 @@ func (f *Fs) listAlbums(ctx context.Context, shared bool) (all *albums, err erro
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't list albums")
+			return nil, fmt.Errorf("couldn't list albums: %w", err)
 		}
 		newAlbums := result.Albums
 		if shared {
@@ -549,7 +549,7 @@ func (f *Fs) list(ctx context.Context, filter api.SearchFilter, fn listFn) (err 
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "couldn't list files")
+			return fmt.Errorf("couldn't list files: %w", err)
 		}
 		items := result.MediaItems
 		if len(items) > 0 && items[0].ID == lastID {
@@ -693,7 +693,7 @@ func (f *Fs) createAlbum(ctx context.Context, albumTitle string) (album *api.Alb
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't create album")
+		return nil, fmt.Errorf("couldn't create album: %w", err)
 	}
 	f.albums[false].add(&result)
 	return &result, nil
@@ -879,7 +879,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "couldn't get media item")
+			return fmt.Errorf("couldn't get media item: %w", err)
 		}
 		o.setMetaData(&item)
 		return nil
@@ -1014,7 +1014,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "couldn't upload file")
+		return fmt.Errorf("couldn't upload file: %w", err)
 	}
 	uploadToken := strings.TrimSpace(string(token))
 	if uploadToken == "" {
@@ -1042,14 +1042,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to create media item")
+		return fmt.Errorf("failed to create media item: %w", err)
 	}
 	if len(result.NewMediaItemResults) != 1 {
 		return errors.New("bad response to BatchCreate wrong number of items")
 	}
 	mediaItemResult := result.NewMediaItemResults[0]
 	if mediaItemResult.Status.Code != 0 {
-		return errors.Errorf("upload failed: %s (%d)", mediaItemResult.Status.Message, mediaItemResult.Status.Code)
+		return fmt.Errorf("upload failed: %s (%d)", mediaItemResult.Status.Message, mediaItemResult.Status.Code)
 	}
 	o.setMetaData(&mediaItemResult.MediaItem)
 
@@ -1071,7 +1071,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	albumTitle, fileName := match[1], match[2]
 	album, ok := o.fs.albums[false].get(albumTitle)
 	if !ok {
-		return errors.Errorf("couldn't file %q in album %q for delete", fileName, albumTitle)
+		return fmt.Errorf("couldn't file %q in album %q for delete", fileName, albumTitle)
 	}
 	opts := rest.Opts{
 		Method:     "POST",
@@ -1087,7 +1087,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "couldn't delete item from album")
+		return fmt.Errorf("couldn't delete item from album: %w", err)
 	}
 	return nil
 }

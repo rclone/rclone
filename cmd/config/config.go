@@ -3,12 +3,12 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -398,11 +398,11 @@ To reconnect use "rclone config reconnect".
 		f := cmd.NewFsSrc(args)
 		doDisconnect := f.Features().Disconnect
 		if doDisconnect == nil {
-			return errors.Errorf("%v doesn't support Disconnect", f)
+			return fmt.Errorf("%v doesn't support Disconnect", f)
 		}
 		err := doDisconnect(context.Background())
 		if err != nil {
-			return errors.Wrap(err, "Disconnect call failed")
+			return fmt.Errorf("Disconnect call failed: %w", err)
 		}
 		return nil
 	},
@@ -428,11 +428,11 @@ system.
 		f := cmd.NewFsSrc(args)
 		doUserInfo := f.Features().UserInfo
 		if doUserInfo == nil {
-			return errors.Errorf("%v doesn't support UserInfo", f)
+			return fmt.Errorf("%v doesn't support UserInfo", f)
 		}
 		u, err := doUserInfo(context.Background())
 		if err != nil {
-			return errors.Wrap(err, "UserInfo call failed")
+			return fmt.Errorf("UserInfo call failed: %w", err)
 		}
 		if jsonOutput {
 			out := json.NewEncoder(os.Stdout)

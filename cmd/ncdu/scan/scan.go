@@ -3,10 +3,10 @@ package scan
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"sync"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
 )
@@ -185,7 +185,7 @@ func Scan(ctx context.Context, f fs.Fs) (chan *Dir, chan error, chan struct{}) {
 				var ok bool
 				parent, ok = parents[parentPath]
 				if !ok {
-					errChan <- errors.Errorf("couldn't find parent for %q", dirPath)
+					errChan <- fmt.Errorf("couldn't find parent for %q", dirPath)
 				}
 			}
 			d := newDir(parent, dirPath, entries, err)
@@ -202,7 +202,7 @@ func Scan(ctx context.Context, f fs.Fs) (chan *Dir, chan error, chan struct{}) {
 			return nil
 		})
 		if err != nil {
-			errChan <- errors.Wrap(err, "ncdu listing failed")
+			errChan <- fmt.Errorf("ncdu listing failed: %w", err)
 		}
 		errChan <- nil
 	}()

@@ -18,7 +18,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/http/serve"
@@ -386,8 +385,7 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request, remote stri
 		return nil
 	})
 	if err != nil {
-		_, err = fserrors.Cause(err)
-		if err != fs.ErrorDirNotFound {
+		if !errors.Is(err, fs.ErrorDirNotFound) {
 			fs.Errorf(remote, "list failed: %#v %T", err, err)
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return

@@ -4,6 +4,8 @@ package ftp
 import (
 	"context"
 	"crypto/tls"
+	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/textproto"
@@ -14,7 +16,6 @@ import (
 	"time"
 
 	"github.com/jlaffaye/ftp"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -349,7 +350,7 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 		return false, nil
 	})
 	if err != nil {
-		err = errors.Wrapf(err, "failed to make FTP connection to %q", f.dialAddr)
+		err = fmt.Errorf("failed to make FTP connection to %q: %w", f.dialAddr, err)
 	}
 	return c, err
 }
@@ -396,8 +397,8 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 	*pc = nil
 	if err != nil {
 		// If not a regular FTP error code then check the connection
-		_, isRegularError := errors.Cause(err).(*textproto.Error)
-		if !isRegularError {
+		var tpErr *textproto.Error
+		if !errors.As(err, &tpErr) {
 			nopErr := c.NoOp()
 			if nopErr != nil {
 				fs.Debugf(f, "Connection failed, closing: %v", nopErr)
@@ -445,7 +446,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	}
 	pass, err := obscure.Reveal(opt.Pass)
 	if err != nil {
-		return nil, errors.Wrap(err, "NewFS decrypt password")
+		return nil, fmt.Errorf("NewFS decrypt password: %w", err)
 	}
 	user := opt.User
 	if user == "" {
@@ -502,7 +503,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	// Make a connection and pool it to return errors early
 	c, err := f.getFtpConnection(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "NewFs")
+		return nil, fmt.Errorf("NewFs: %w", err)
 	}
 	f.fGetTime = c.IsGetTimeSupported()
 	f.fSetTime = c.IsSetTimeSupported()
@@ -520,7 +521,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		}
 		_, err := f.NewObject(ctx, remote)
 		if err != nil {
-			if err == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
+			if err == fs.ErrorObjectNotFound || errors.Is(err, fs.ErrorNotAFile) {
 				// File doesn't exist so return old f
 				f.root = root
 				return f, nil
@@ -599,7 +600,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 
 	c, err := f.getFtpConnection(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "findItem")
+		return nil, fmt.Errorf("findItem: %w", err)
 	}
 	files, err := c.List(f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
@@ -643,7 +644,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err err
 func (f *Fs) dirExists(ctx context.Context, remote string) (exists bool, err error) {
 	entry, err := f.findItem(ctx, remote)
 	if err != nil {
-		return false, errors.Wrap(err, "dirExists")
+		return false, fmt.Errorf("dirExists: %w", err)
 	}
 	if entry != nil && entry.Type == ftp.EntryTypeFolder {
 		return true, nil
@@ -664,7 +665,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	// defer log.Trace(dir, "dir=%q", dir)("entries=%v, err=%v", &entries, &err)
 	c, err := f.getFtpConnection(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "list")
+		return nil, fmt.Errorf("list: %w", err)
 	}
 
 	var listErr error
@@ -702,7 +703,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if len(files) == 0 {
 		exists, err := f.dirExists(ctx, dir)
 		if err != nil {
-			return nil, errors.Wrap(err, "list")
+			return nil, fmt.Errorf("list: %w", err)
 		}
 		if !exists {
 			return nil, fs.ErrorDirNotFound
@@ -766,7 +767,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	// fs.Debugf(f, "Trying to put file %s", src.Remote())
 	err := f.mkParentDir(ctx, src.Remote())
 	if err != nil {
-		return nil, errors.Wrap(err, "Put mkParentDir failed")
+		return nil, fmt.Errorf("Put mkParentDir failed: %w", err)
 	}
 	o := &Object{
 		fs:     f,
@@ -789,7 +790,7 @@ func (f *Fs) getInfo(ctx context.Context, remote string) (fi *FileInfo, err erro
 
 	c, err := f.getFtpConnection(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "getInfo")
+		return nil, fmt.Errorf("getInfo: %w", err)
 	}
 	files, err := c.List(f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
@@ -827,7 +828,7 @@ func (f *Fs) mkdir(ctx context.Context, abspath string) error {
 		}
 		return fs.ErrorIsFile
 	} else if err != fs.ErrorObjectNotFound {
-		return errors.Wrapf(err, "mkdir %q failed", abspath)
+		return fmt.Errorf("mkdir %q failed: %w", abspath, err)
 	}
 	parent := path.Dir(abspath)
 	err = f.mkdir(ctx, parent)
@@ -836,7 +837,7 @@ func (f *Fs) mkdir(ctx context.Context, abspath string) error {
 	}
 	c, connErr := f.getFtpConnection(ctx)
 	if connErr != nil {
-		return errors.Wrap(connErr, "mkdir")
+		return fmt.Errorf("mkdir: %w", connErr)
 	}
 	err = c.MakeDir(f.dirFromStandardPath(abspath))
 	f.putFtpConnection(&c, err)
@@ -872,7 +873,7 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	c, err := f.getFtpConnection(ctx)
 	if err != nil {
-		return errors.Wrap(translateErrorFile(err), "Rmdir")
+		return fmt.Errorf("Rmdir: %w", translateErrorFile(err))
 	}
 	err = c.RemoveDir(f.dirFromStandardPath(path.Join(f.root, dir)))
 	f.putFtpConnection(&c, err)
@@ -888,11 +889,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	err := f.mkParentDir(ctx, remote)
 	if err != nil {
-		return nil, errors.Wrap(err, "Move mkParentDir failed")
+		return nil, fmt.Errorf("Move mkParentDir failed: %w", err)
 	}
 	c, err := f.getFtpConnection(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "Move")
+		return nil, fmt.Errorf("Move: %w", err)
 	}
 	err = c.Rename(
 		f.opt.Enc.FromStandardPath(path.Join(srcObj.fs.root, srcObj.remote)),
@@ -900,11 +901,11 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	)
 	f.putFtpConnection(&c, err)
 	if err != nil {
-		return nil, errors.Wrap(err, "Move Rename failed")
+		return nil, fmt.Errorf("Move Rename failed: %w", err)
 	}
 	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
-		return nil, errors.Wrap(err, "Move NewObject failed")
+		return nil, fmt.Errorf("Move NewObject failed: %w", err)
 	}
 	return dstObj, nil
 }
@@ -934,19 +935,19 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		}
 		return fs.ErrorIsFile
 	} else if err != fs.ErrorObjectNotFound {
-		return errors.Wrapf(err, "DirMove getInfo failed")
+		return fmt.Errorf("DirMove getInfo failed: %w", err)
 	}
 
 	// Make sure the parent directory exists
 	err = f.mkdir(ctx, path.Dir(dstPath))
 	if err != nil {
-		return errors.Wrap(err, "DirMove mkParentDir dst failed")
+		return fmt.Errorf("DirMove mkParentDir dst failed: %w", err)
 	}
 
 	// Do the move
 	c, err := f.getFtpConnection(ctx)
 	if err != nil {
-		return errors.Wrap(err, "DirMove")
+		return fmt.Errorf("DirMove: %w", err)
 	}
 	err = c.Rename(
 		f.dirFromStandardPath(srcPath),
@@ -954,7 +955,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	)
 	f.putFtpConnection(&c, err)
 	if err != nil {
-		return errors.Wrapf(err, "DirMove Rename(%q,%q) failed", srcPath, dstPath)
+		return fmt.Errorf("DirMove Rename(%q,%q) failed: %w", srcPath, dstPath, err)
 	}
 	return nil
 }
@@ -1111,12 +1112,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 	}
 	c, err := o.fs.getFtpConnection(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "open")
+		return nil, fmt.Errorf("open: %w", err)
 	}
 	fd, err := c.RetrFrom(o.fs.opt.Enc.FromStandardPath(path), uint64(offset))
 	if err != nil {
 		o.fs.putFtpConnection(&c, err)
-		return nil, errors.Wrap(err, "open")
+		return nil, fmt.Errorf("open: %w", err)
 	}
 	rc = &ftpReadCloser{rc: readers.NewLimitedReadCloser(fd, limit), c: c, f: o.fs}
 	return rc, nil
@@ -1146,7 +1147,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	c, err := o.fs.getFtpConnection(ctx)
 	if err != nil {
-		return errors.Wrap(err, "Update")
+		return fmt.Errorf("Update: %w", err)
 	}
 	err = c.Stor(o.fs.opt.Enc.FromStandardPath(path), in)
 	// Ignore error 250 here - send by some servers
@@ -1164,15 +1165,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// recycle connection in advance to let remove() find free token
 		o.fs.putFtpConnection(nil, err)
 		remove()
-		return errors.Wrap(err, "update stor")
+		return fmt.Errorf("update stor: %w", err)
 	}
 	o.fs.putFtpConnection(&c, nil)
 	if err = o.SetModTime(ctx, src.ModTime(ctx)); err != nil {
-		return errors.Wrap(err, "SetModTime")
+		return fmt.Errorf("SetModTime: %w", err)
 	}
 	o.info, err = o.fs.getInfo(ctx, path)
 	if err != nil {
-		return errors.Wrap(err, "update getinfo")
+		return fmt.Errorf("update getinfo: %w", err)
 	}
 	return nil
 }
@@ -1191,7 +1192,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	} else {
 		c, err := o.fs.getFtpConnection(ctx)
 		if err != nil {
-			return errors.Wrap(err, "Remove")
+			return fmt.Errorf("Remove: %w", err)
 		}
 		err = c.Delete(o.fs.opt.Enc.FromStandardPath(path))
 		o.fs.putFtpConnection(&c, err)

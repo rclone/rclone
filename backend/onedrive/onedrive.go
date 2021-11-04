@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,7 +19,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/onedrive/api"
 	"github.com/rclone/rclone/backend/onedrive/quickxorhash"
 	"github.com/rclone/rclone/fs"
@@ -385,7 +385,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure OneDrive")
+		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
 	}
 	srv := rest.NewClient(oAuthClient)
 
@@ -754,10 +754,10 @@ func errorHandler(resp *http.Response) error {
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	const minChunkSize = fs.SizeSuffixBase
 	if cs%chunkSizeMultiple != 0 {
-		return errors.Errorf("%s is not a multiple of %s", cs, chunkSizeMultiple)
+		return fmt.Errorf("%s is not a multiple of %s", cs, chunkSizeMultiple)
 	}
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	return nil
 }
@@ -781,7 +781,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "onedrive: chunk size")
+		return nil, fmt.Errorf("onedrive: chunk size: %w", err)
 	}
 
 	if opt.DriveID == "" || opt.DriveType == "" {
@@ -797,7 +797,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure OneDrive")
+		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
 	}
 
 	ci := fs.GetConfig(ctx)
@@ -828,7 +828,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	// Get rootID
 	rootInfo, _, err := f.readMetaDataForPath(ctx, "")
 	if err != nil || rootInfo.GetID() == "" {
-		return nil, errors.Wrap(err, "failed to get root")
+		return nil, fmt.Errorf("failed to get root: %w", err)
 	}
 
 	f.dirCache = dircache.New(root, rootInfo.GetID(), f)
@@ -971,7 +971,7 @@ OUTER:
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return found, errors.Wrap(err, "couldn't list files")
+			return found, fmt.Errorf("couldn't list files: %w", err)
 		}
 		if len(result.Value) == 0 {
 			break
@@ -1175,7 +1175,7 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 		var status api.AsyncOperationStatus
 		err = json.Unmarshal(body, &status)
 		if err != nil {
-			return errors.Wrapf(err, "async status result not JSON: %q", body)
+			return fmt.Errorf("async status result not JSON: %q: %w", body, err)
 		}
 
 		switch status.Status {
@@ -1185,15 +1185,15 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 			}
 			fallthrough
 		case "deleteFailed":
-			return errors.Errorf("%s: async operation returned %q", o.remote, status.Status)
+			return fmt.Errorf("%s: async operation returned %q", o.remote, status.Status)
 		case "completed":
 			err = o.readMetaData(ctx)
-			return errors.Wrapf(err, "async operation completed but readMetaData failed")
+			return fmt.Errorf("async operation completed but readMetaData failed: %w", err)
 		}
 
 		time.Sleep(1 * time.Second)
 	}
-	return errors.Errorf("async operation didn't complete after %v", f.ci.TimeoutOrInfinite())
+	return fmt.Errorf("async operation didn't complete after %v", f.ci.TimeoutOrInfinite())
 }
 
 // Copy src to this remote using server-side copy operations.
@@ -1232,7 +1232,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		srcPath := srcObj.rootPath()
 		dstPath := f.rootPath(remote)
 		if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
-			return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
+			return nil, fmt.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 		}
 	}
 
@@ -1450,7 +1450,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "about failed")
+		return nil, fmt.Errorf("about failed: %w", err)
 	}
 	q := drive.Quota
 	// On (some?) Onedrive sharepoints these are all 0 so return unknown in that case
@@ -1501,7 +1501,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	})
 	if err != nil {
 		if resp != nil && resp.StatusCode == 400 && f.driveType != driveTypePersonal {
-			return "", errors.Errorf("%v (is making public links permitted by the org admin?)", err)
+			return "", fmt.Errorf("%v (is making public links permitted by the org admin?)", err)
 		}
 		return "", err
 	}
@@ -1886,17 +1886,17 @@ func (o *Object) getPosition(ctx context.Context, url string) (pos int64, err er
 		return 0, err
 	}
 	if len(info.NextExpectedRanges) != 1 {
-		return 0, errors.Errorf("bad number of ranges in upload position: %v", info.NextExpectedRanges)
+		return 0, fmt.Errorf("bad number of ranges in upload position: %v", info.NextExpectedRanges)
 	}
 	position := info.NextExpectedRanges[0]
 	i := strings.IndexByte(position, '-')
 	if i < 0 {
-		return 0, errors.Errorf("no '-' in next expected range: %q", position)
+		return 0, fmt.Errorf("no '-' in next expected range: %q", position)
 	}
 	position = position[:i]
 	pos, err = strconv.ParseInt(position, 10, 64)
 	if err != nil {
-		return 0, errors.Wrapf(err, "bad expected range: %q", position)
+		return 0, fmt.Errorf("bad expected range: %q: %w", position, err)
 	}
 	return pos, nil
 }
@@ -1930,14 +1930,14 @@ func (o *Object) uploadFragment(ctx context.Context, url string, start int64, to
 			fs.Debugf(o, "Read position %d, chunk is %d..%d, bytes to skip = %d", pos, start, start+chunkSize, skip)
 			switch {
 			case skip < 0:
-				return false, errors.Wrapf(err, "sent block already (skip %d < 0), can't rewind", skip)
+				return false, fmt.Errorf("sent block already (skip %d < 0), can't rewind: %w", skip, err)
 			case skip > chunkSize:
-				return false, errors.Wrapf(err, "position is in the future (skip %d > chunkSize %d), can't skip forward", skip, chunkSize)
+				return false, fmt.Errorf("position is in the future (skip %d > chunkSize %d), can't skip forward: %w", skip, chunkSize, err)
 			case skip == chunkSize:
 				fs.Debugf(o, "Skipping chunk as already sent (skip %d == chunkSize %d)", skip, chunkSize)
 				return false, nil
 			}
-			return true, errors.Wrapf(err, "retry this chunk skipping %d bytes", skip)
+			return true, fmt.Errorf("retry this chunk skipping %d bytes: %w", skip, err)
 		}
 		if err != nil {
 			return shouldRetry(ctx, resp, err)

@@ -4,6 +4,7 @@ package filter
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"golang.org/x/sync/errgroup"
 )
@@ -318,7 +318,7 @@ func (f *Filter) AddRule(rule string) error {
 	case strings.HasPrefix(rule, "+ "):
 		return f.Add(true, rule[2:])
 	}
-	return errors.Errorf("malformed rule %q", rule)
+	return fmt.Errorf("malformed rule %q", rule)
 }
 
 // initAddFile creates f.files and f.dirs

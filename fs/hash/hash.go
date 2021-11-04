@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash"
 	"hash/crc32"
@@ -12,7 +13,6 @@ import (
 	"strings"
 
 	"github.com/jzelinskie/whirlpool"
-	"github.com/pkg/errors"
 )
 
 // Type indicates a standard hashing algorithm
@@ -149,7 +149,7 @@ func (h *Type) Set(s string) error {
 		*h = hash.hashType
 		return nil
 	}
-	return errors.Errorf("Unknown hash type %q", s)
+	return fmt.Errorf("Unknown hash type %q", s)
 }
 
 // Type of the value
@@ -162,7 +162,7 @@ func (h Type) Type() string {
 // and this function must support all types.
 func fromTypes(set Set) (map[Type]hash.Hash, error) {
 	if !set.SubsetOf(Supported()) {
-		return nil, errors.Errorf("requested set %08x contains unknown hash types", int(set))
+		return nil, fmt.Errorf("requested set %08x contains unknown hash types", int(set))
 	}
 	hashers := map[Type]hash.Hash{}
 

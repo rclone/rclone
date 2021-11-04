@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	goflag "flag"
 	"fmt"
 	"io"
@@ -22,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/cache"
 	"github.com/rclone/rclone/backend/crypt"
 	_ "github.com/rclone/rclone/backend/drive"
@@ -446,7 +446,7 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 				return err
 			}
 			if coSize != expectedSize {
-				return errors.Errorf("%v <> %v", coSize, expectedSize)
+				return fmt.Errorf("%v <> %v", coSize, expectedSize)
 			}
 			return nil
 		}, 12, time.Second*10)
@@ -502,7 +502,7 @@ func TestInternalMoveWithNotify(t *testing.T) {
 		}
 		if len(li) != 2 {
 			log.Printf("not expected listing /test: %v", li)
-			return errors.Errorf("not expected listing /test: %v", li)
+			return fmt.Errorf("not expected listing /test: %v", li)
 		}
 
 		li, err = runInstance.list(t, rootFs, "test/one")
@@ -512,7 +512,7 @@ func TestInternalMoveWithNotify(t *testing.T) {
 		}
 		if len(li) != 0 {
 			log.Printf("not expected listing /test/one: %v", li)
-			return errors.Errorf("not expected listing /test/one: %v", li)
+			return fmt.Errorf("not expected listing /test/one: %v", li)
 		}
 
 		li, err = runInstance.list(t, rootFs, "test/second")
@@ -522,21 +522,21 @@ func TestInternalMoveWithNotify(t *testing.T) {
 		}
 		if len(li) != 1 {
 			log.Printf("not expected listing /test/second: %v", li)
-			return errors.Errorf("not expected listing /test/second: %v", li)
+			return fmt.Errorf("not expected listing /test/second: %v", li)
 		}
 		if fi, ok := li[0].(os.FileInfo); ok {
 			if fi.Name() != "data.bin" {
 				log.Printf("not expected name: %v", fi.Name())
-				return errors.Errorf("not expected name: %v", fi.Name())
+				return fmt.Errorf("not expected name: %v", fi.Name())
 			}
 		} else if di, ok := li[0].(fs.DirEntry); ok {
 			if di.Remote() != "test/second/data.bin" {
 				log.Printf("not expected remote: %v", di.Remote())
-				return errors.Errorf("not expected remote: %v", di.Remote())
+				return fmt.Errorf("not expected remote: %v", di.Remote())
 			}
 		} else {
 			log.Printf("unexpected listing: %v", li)
-			return errors.Errorf("unexpected listing: %v", li)
+			return fmt.Errorf("unexpected listing: %v", li)
 		}
 
 		log.Printf("complete listing: %v", li)
@@ -591,17 +591,17 @@ func TestInternalNotifyCreatesEmptyParts(t *testing.T) {
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test")))
 		if !found {
 			log.Printf("not found /test")
-			return errors.Errorf("not found /test")
+			return fmt.Errorf("not found /test")
 		}
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test"), runInstance.encryptRemoteIfNeeded(t, "one")))
 		if !found {
 			log.Printf("not found /test/one")
-			return errors.Errorf("not found /test/one")
+			return fmt.Errorf("not found /test/one")
 		}
 		found = boltDb.HasEntry(path.Join(cfs.Root(), runInstance.encryptRemoteIfNeeded(t, "test"), runInstance.encryptRemoteIfNeeded(t, "one"), runInstance.encryptRemoteIfNeeded(t, "test2")))
 		if !found {
 			log.Printf("not found /test/one/test2")
-			return errors.Errorf("not found /test/one/test2")
+			return fmt.Errorf("not found /test/one/test2")
 		}
 		li, err := runInstance.list(t, rootFs, "test/one")
 		if err != nil {
@@ -610,21 +610,21 @@ func TestInternalNotifyCreatesEmptyParts(t *testing.T) {
 		}
 		if len(li) != 1 {
 			log.Printf("not expected listing /test/one: %v", li)
-			return errors.Errorf("not expected listing /test/one: %v", li)
+			return fmt.Errorf("not expected listing /test/one: %v", li)
 		}
 		if fi, ok := li[0].(os.FileInfo); ok {
 			if fi.Name() != "test2" {
 				log.Printf("not expected name: %v", fi.Name())
-				return errors.Errorf("not expected name: %v", fi.Name())
+				return fmt.Errorf("not expected name: %v", fi.Name())
 			}
 		} else if di, ok := li[0].(fs.DirEntry); ok {
 			if di.Remote() != "test/one/test2" {
 				log.Printf("not expected remote: %v", di.Remote())
-				return errors.Errorf("not expected remote: %v", di.Remote())
+				return fmt.Errorf("not expected remote: %v", di.Remote())
 			}
 		} else {
 			log.Printf("unexpected listing: %v", li)
-			return errors.Errorf("unexpected listing: %v", li)
+			return fmt.Errorf("unexpected listing: %v", li)
 		}
 		log.Printf("complete listing /test/one/test2")
 		return nil
@@ -1062,7 +1062,7 @@ func (r *run) readDataFromRemote(t *testing.T, f fs.Fs, remote string, offset, e
 	checkSample = r.readDataFromObj(t, co, offset, end, noLengthCheck)
 
 	if !noLengthCheck && size != int64(len(checkSample)) {
-		return checkSample, errors.Errorf("read size doesn't match expected: %v <> %v", len(checkSample), size)
+		return checkSample, fmt.Errorf("read size doesn't match expected: %v <> %v", len(checkSample), size)
 	}
 	return checkSample, nil
 }
@@ -1257,7 +1257,7 @@ func (r *run) listenForBackgroundUpload(t *testing.T, f fs.Fs, remote string) ch
 			case state = <-buCh:
 				// continue
 			case <-time.After(maxDuration):
-				waitCh <- errors.Errorf("Timed out waiting for background upload: %v", remote)
+				waitCh <- fmt.Errorf("Timed out waiting for background upload: %v", remote)
 				return
 			}
 			checkRemote := state.Remote
@@ -1274,7 +1274,7 @@ func (r *run) listenForBackgroundUpload(t *testing.T, f fs.Fs, remote string) ch
 				return
 			}
 		}
-		waitCh <- errors.Errorf("Too many attempts to wait for the background upload: %v", remote)
+		waitCh <- fmt.Errorf("Too many attempts to wait for the background upload: %v", remote)
 	}()
 	return waitCh
 }

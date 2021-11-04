@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -32,7 +33,6 @@ import (
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/random"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/filefabric/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -267,7 +267,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, rootID string, path string
 		"pid":  rootID,
 	}, &resp, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to check path exists")
+		return nil, fmt.Errorf("failed to check path exists: %w", err)
 	}
 	if resp.Exists != "y" {
 		return nil, fs.ErrorObjectNotFound
@@ -308,7 +308,7 @@ func (f *Fs) getApplianceInfo(ctx context.Context) error {
 		"token": "*",
 	}, &applianceInfo, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to read appliance version")
+		return fmt.Errorf("failed to read appliance version: %w", err)
 	}
 	f.opt.Version = applianceInfo.SoftwareVersionLabel
 	f.m.Set("version", f.opt.Version)
@@ -349,7 +349,7 @@ func (f *Fs) getToken(ctx context.Context) (token string, err error) {
 		"authtoken": f.opt.PermanentToken,
 	}, &info, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get session token")
+		return "", fmt.Errorf("failed to get session token: %w", err)
 	}
 	refreshed = true
 	now = now.Add(tokenLifeTime)
@@ -562,7 +562,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		"fi_name": f.opt.Enc.FromStandardName(leaf),
 	}, &info, nil)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to create directory")
+		return "", fmt.Errorf("failed to create directory: %w", err)
 	}
 	// fmt.Printf("...Id %q\n", *info.Id)
 	return info.Item.ID, nil
@@ -595,7 +595,7 @@ OUTER:
 		var info api.GetFolderContentsResponse
 		_, err = f.rpc(ctx, "getFolderContents", p, &info, nil)
 		if err != nil {
-			return false, errors.Wrap(err, "failed to list directory")
+			return false, fmt.Errorf("failed to list directory: %w", err)
 		}
 		for i := range info.Items {
 			item := &info.Items[i]
@@ -726,7 +726,7 @@ func (f *Fs) deleteObject(ctx context.Context, id string) (err error) {
 		"completedeletion": "n",
 	}, &info, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to delete file")
+		return fmt.Errorf("failed to delete file: %w", err)
 	}
 	return nil
 }
@@ -763,7 +763,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	}, &info, nil)
 	f.dirCache.FlushDir(dir)
 	if err != nil {
-		return errors.Wrap(err, "failed to remove directory")
+		return fmt.Errorf("failed to remove directory: %w", err)
 	}
 	return nil
 }
@@ -825,7 +825,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	_, err = f.rpc(ctx, "doCopyFile", p, &info, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to copy file")
+		return nil, fmt.Errorf("failed to copy file: %w", err)
 	}
 	err = dstObj.setMetaData(&info.Item)
 	if err != nil {
@@ -857,7 +857,7 @@ func (f *Fs) waitForBackgroundTask(ctx context.Context, taskID api.String) (err 
 			"taskid": taskID,
 		}, &info, nil)
 		if err != nil {
-			return errors.Wrapf(err, "failed to wait for task %s to complete", taskID)
+			return fmt.Errorf("failed to wait for task %s to complete: %w", taskID, err)
 		}
 		if len(info.Tasks) == 0 {
 			// task has finished
@@ -890,7 +890,7 @@ func (f *Fs) renameLeaf(ctx context.Context, isDir bool, id string, newLeaf stri
 		"fi_name": newLeaf,
 	}, &info, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to rename leaf")
+		return nil, fmt.Errorf("failed to rename leaf: %w", err)
 	}
 	err = f.waitForBackgroundTask(ctx, info.Status.TaskID)
 	if err != nil {
@@ -934,7 +934,7 @@ func (f *Fs) move(ctx context.Context, isDir bool, id, oldLeaf, newLeaf, oldDire
 			"dir_id": newDirectoryID,
 		}, &info, nil)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to move file to new directory")
+			return nil, fmt.Errorf("failed to move file to new directory: %w", err)
 		}
 		item = &info.Item
 		err = f.waitForBackgroundTask(ctx, info.Status.TaskID)
@@ -1037,7 +1037,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	var info api.EmptyResponse
 	_, err = f.rpc(ctx, "emptyTrashInBackground", params{}, &info, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to empty trash")
+		return fmt.Errorf("failed to empty trash: %w", err)
 	}
 	return nil
 }
@@ -1164,7 +1164,7 @@ func (o *Object) modifyFile(ctx context.Context, keyValues [][2]string) error {
 		"data":  data.String(),
 	}, &info, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to update metadata")
+		return fmt.Errorf("failed to update metadata: %w", err)
 	}
 	return o.setMetaData(&info.Item)
 }
@@ -1247,7 +1247,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	_, err = o.fs.rpc(ctx, "doInitUpload", p, &upload, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to initialize upload")
+		return fmt.Errorf("failed to initialize upload: %w", err)
 	}
 
 	// Cancel the upload if aborted or it fails
@@ -1290,13 +1290,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return o.fs.shouldRetry(ctx, resp, err, nil, try)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to upload")
+		return fmt.Errorf("failed to upload: %w", err)
 	}
 	if uploader.Success != "y" {
-		return errors.Errorf("upload failed")
+		return fmt.Errorf("upload failed")
 	}
 	if size > 0 && uploader.FileSize != size {
-		return errors.Errorf("upload failed: size mismatch: want %d got %d", size, uploader.FileSize)
+		return fmt.Errorf("upload failed: size mismatch: want %d got %d", size, uploader.FileSize)
 	}
 
 	// Now finalize the file
@@ -1308,7 +1308,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	_, err = o.fs.rpc(ctx, "doCompleteUpload", p, &finalize, nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to finalize upload")
+		return fmt.Errorf("failed to finalize upload: %w", err)
 	}
 	finalized = true
 

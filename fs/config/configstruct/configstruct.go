@@ -2,12 +2,12 @@
 package configstruct
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs/config/configmap"
 )
 
@@ -35,7 +35,7 @@ func StringToInterface(def interface{}, in string) (newValue interface{}, err er
 	o := reflect.New(typ)
 	n, err := fmt.Sscanln(in, o.Interface())
 	if err != nil {
-		return newValue, errors.Wrapf(err, "parsing %q as %T failed", in, def)
+		return newValue, fmt.Errorf("parsing %q as %T failed: %w", in, def, err)
 	}
 	if n != 1 {
 		return newValue, errors.New("no items parsed")
@@ -115,7 +115,7 @@ func Set(config configmap.Getter, opt interface{}) (err error) {
 				// it isn't valid for all types.  This makes
 				// empty string be the equivalent of unset.
 				if configValue != "" {
-					return errors.Wrapf(err, "couldn't parse config item %q = %q as %T", defaultItem.Name, configValue, defaultItem.Value)
+					return fmt.Errorf("couldn't parse config item %q = %q as %T: %w", defaultItem.Name, configValue, defaultItem.Value, err)
 				}
 			} else {
 				newValue = newNewValue

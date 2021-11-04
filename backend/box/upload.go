@@ -8,6 +8,7 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -140,7 +140,7 @@ outer:
 					}
 				}
 			default:
-				return nil, errors.Errorf("unknown HTTP status return %q (%d)", resp.Status, resp.StatusCode)
+				return nil, fmt.Errorf("unknown HTTP status return %q (%d)", resp.Status, resp.StatusCode)
 			}
 		}
 		fs.Debugf(o, "commit multipart upload failed %d/%d - trying again in %d seconds (%s)", tries+1, maxTries, delay, why)
@@ -151,7 +151,7 @@ outer:
 	}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return nil, errors.Wrapf(err, "couldn't decode commit response: %q", body)
+		return nil, fmt.Errorf("couldn't decode commit response: %q: %w", body, err)
 	}
 	return result, nil
 }
@@ -177,7 +177,7 @@ func (o *Object) uploadMultipart(ctx context.Context, in io.Reader, leaf, direct
 	// Create upload session
 	session, err := o.createUploadSession(ctx, leaf, directoryID, size)
 	if err != nil {
-		return errors.Wrap(err, "multipart upload create session failed")
+		return fmt.Errorf("multipart upload create session failed: %w", err)
 	}
 	chunkSize := session.PartSize
 	fs.Debugf(o, "Multipart upload session started for %d parts of size %v", session.TotalParts, fs.SizeSuffix(chunkSize))
@@ -222,7 +222,7 @@ outer:
 		// Read the chunk
 		_, err = io.ReadFull(in, buf)
 		if err != nil {
-			err = errors.Wrap(err, "multipart upload failed to read source")
+			err = fmt.Errorf("multipart upload failed to read source: %w", err)
 			break outer
 		}
 
@@ -238,7 +238,7 @@ outer:
 			fs.Debugf(o, "Uploading part %d/%d offset %v/%v part size %v", part+1, session.TotalParts, fs.SizeSuffix(position), fs.SizeSuffix(size), fs.SizeSuffix(chunkSize))
 			partResponse, err := o.uploadPart(ctx, session.ID, position, size, buf, wrap, options...)
 			if err != nil {
-				err = errors.Wrap(err, "multipart upload failed to upload part")
+				err = fmt.Errorf("multipart upload failed to upload part: %w", err)
 				select {
 				case errs <- err:
 				default:
@@ -266,11 +266,11 @@ outer:
 	// Finalise the upload session
 	result, err := o.commitUpload(ctx, session.ID, parts, modTime, hash.Sum(nil))
 	if err != nil {
-		return errors.Wrap(err, "multipart upload failed to finalize")
+		return fmt.Errorf("multipart upload failed to finalize: %w", err)
 	}
 
 	if result.TotalCount != 1 || len(result.Entries) != 1 {
-		return errors.Errorf("multipart upload failed %v - not sure why", o)
+		return fmt.Errorf("multipart upload failed %v - not sure why", o)
 	}
 	return o.setMetaData(&result.Entries[0])
 }

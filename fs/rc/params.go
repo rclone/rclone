@@ -4,13 +4,12 @@ package rc
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/rclone/rclone/fs"
 )
@@ -75,11 +74,11 @@ func IsErrParamInvalid(err error) bool {
 func Reshape(out interface{}, in interface{}) error {
 	b, err := json.Marshal(in)
 	if err != nil {
-		return errors.Wrapf(err, "Reshape failed to Marshal")
+		return fmt.Errorf("Reshape failed to Marshal: %w", err)
 	}
 	err = json.Unmarshal(b, out)
 	if err != nil {
-		return errors.Wrapf(err, "Reshape failed to Unmarshal")
+		return fmt.Errorf("Reshape failed to Unmarshal: %w", err)
 	}
 	return nil
 }
@@ -117,7 +116,7 @@ func (p Params) GetHTTPRequest() (*http.Request, error) {
 	}
 	request, ok := value.(*http.Request)
 	if !ok {
-		return nil, ErrParamInvalid{errors.Errorf("expecting http.request value for key %q (was %T)", key, value)}
+		return nil, ErrParamInvalid{fmt.Errorf("expecting http.request value for key %q (was %T)", key, value)}
 	}
 	return request, nil
 }
@@ -134,7 +133,7 @@ func (p Params) GetHTTPResponseWriter() (http.ResponseWriter, error) {
 	}
 	request, ok := value.(http.ResponseWriter)
 	if !ok {
-		return nil, ErrParamInvalid{errors.Errorf("expecting http.ResponseWriter value for key %q (was %T)", key, value)}
+		return nil, ErrParamInvalid{fmt.Errorf("expecting http.ResponseWriter value for key %q (was %T)", key, value)}
 	}
 	return request, nil
 }
@@ -150,7 +149,7 @@ func (p Params) GetString(key string) (string, error) {
 	}
 	str, ok := value.(string)
 	if !ok {
-		return "", ErrParamInvalid{errors.Errorf("expecting string value for key %q (was %T)", key, value)}
+		return "", ErrParamInvalid{fmt.Errorf("expecting string value for key %q (was %T)", key, value)}
 	}
 	return str, nil
 }
@@ -171,17 +170,17 @@ func (p Params) GetInt64(key string) (int64, error) {
 		return x, nil
 	case float64:
 		if x > math.MaxInt64 || x < math.MinInt64 {
-			return 0, ErrParamInvalid{errors.Errorf("key %q (%v) overflows int64 ", key, value)}
+			return 0, ErrParamInvalid{fmt.Errorf("key %q (%v) overflows int64 ", key, value)}
 		}
 		return int64(x), nil
 	case string:
 		i, err := strconv.ParseInt(x, 10, 0)
 		if err != nil {
-			return 0, ErrParamInvalid{errors.Wrapf(err, "couldn't parse key %q (%v) as int64", key, value)}
+			return 0, ErrParamInvalid{fmt.Errorf("couldn't parse key %q (%v) as int64: %w", key, value, err)}
 		}
 		return i, nil
 	}
-	return 0, ErrParamInvalid{errors.Errorf("expecting int64 value for key %q (was %T)", key, value)}
+	return 0, ErrParamInvalid{fmt.Errorf("expecting int64 value for key %q (was %T)", key, value)}
 }
 
 // GetFloat64 gets a float64 parameter from the input
@@ -203,11 +202,11 @@ func (p Params) GetFloat64(key string) (float64, error) {
 	case string:
 		f, err := strconv.ParseFloat(x, 64)
 		if err != nil {
-			return 0, ErrParamInvalid{errors.Wrapf(err, "couldn't parse key %q (%v) as float64", key, value)}
+			return 0, ErrParamInvalid{fmt.Errorf("couldn't parse key %q (%v) as float64: %w", key, value, err)}
 		}
 		return f, nil
 	}
-	return 0, ErrParamInvalid{errors.Errorf("expecting float64 value for key %q (was %T)", key, value)}
+	return 0, ErrParamInvalid{fmt.Errorf("expecting float64 value for key %q (was %T)", key, value)}
 }
 
 // GetBool gets a boolean parameter from the input
@@ -231,11 +230,11 @@ func (p Params) GetBool(key string) (bool, error) {
 	case string:
 		b, err := strconv.ParseBool(x)
 		if err != nil {
-			return false, ErrParamInvalid{errors.Wrapf(err, "couldn't parse key %q (%v) as bool", key, value)}
+			return false, ErrParamInvalid{fmt.Errorf("couldn't parse key %q (%v) as bool: %w", key, value, err)}
 		}
 		return b, nil
 	}
-	return false, ErrParamInvalid{errors.Errorf("expecting bool value for key %q (was %T)", key, value)}
+	return false, ErrParamInvalid{fmt.Errorf("expecting bool value for key %q (was %T)", key, value)}
 }
 
 // GetStruct gets a struct from key from the input into the struct
@@ -257,7 +256,7 @@ func (p Params) GetStruct(key string, out interface{}) error {
 				return nil
 			}
 		}
-		return ErrParamInvalid{errors.Wrapf(err, "key %q", key)}
+		return ErrParamInvalid{fmt.Errorf("key %q: %w", key, err)}
 	}
 	return nil
 }
@@ -280,7 +279,7 @@ func (p Params) GetDuration(key string) (time.Duration, error) {
 	}
 	duration, err := fs.ParseDuration(s)
 	if err != nil {
-		return 0, ErrParamInvalid{errors.Wrap(err, "parse duration")}
+		return 0, ErrParamInvalid{fmt.Errorf("parse duration: %w", err)}
 	}
 	return duration, nil
 }
@@ -292,9 +291,8 @@ func (p Params) GetDuration(key string) (time.Duration, error) {
 // It returns a Params and an updated status code
 func Error(path string, in Params, err error, status int) (Params, int) {
 	// Adjust the status code for some well known errors
-	errOrig := errors.Cause(err)
 	switch {
-	case errOrig == fs.ErrorDirNotFound || errOrig == fs.ErrorObjectNotFound:
+	case errors.Is(err, fs.ErrorDirNotFound) || errors.Is(err, fs.ErrorObjectNotFound):
 		status = http.StatusNotFound
 	case IsErrParamInvalid(err) || IsErrParamNotFound(err):
 		status = http.StatusBadRequest

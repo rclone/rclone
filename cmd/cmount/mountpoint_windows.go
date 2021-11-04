@@ -4,11 +4,12 @@
 package cmount
 
 import (
+	"fmt"
 	"os"
+	"errors"
 	"path/filepath"
 	"regexp"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/file"
@@ -100,7 +101,7 @@ func handleLocalMountpath(mountpath string, opt *mountlib.Options) (string, erro
 	if _, err := os.Stat(mountpath); err == nil {
 		return "", errors.New("mountpoint path already exists: " + mountpath)
 	} else if !os.IsNotExist(err) {
-		return "", errors.Wrap(err, "failed to retrieve mountpoint path information")
+		return "", fmt.Errorf("failed to retrieve mountpoint path information: %w", err)
 	}
 	if isDriveRootPath(mountpath) { // Assume intention with "X:\" was "X:"
 		mountpath = mountpath[:len(mountpath)-1] // WinFsp needs drive mountpoints without trailing path separator
@@ -115,14 +116,14 @@ func handleLocalMountpath(mountpath string, opt *mountlib.Options) (string, erro
 		}
 		var err error
 		if mountpath, err = filepath.Abs(mountpath); err != nil { // Ensures parent is found but also more informative log messages
-			return "", errors.Wrap(err, "mountpoint path is not valid: "+mountpath)
+			return "", fmt.Errorf("mountpoint path is not valid: %s: %w", mountpath, err)
 		}
 		parent := filepath.Join(mountpath, "..")
 		if _, err = os.Stat(parent); err != nil {
 			if os.IsNotExist(err) {
 				return "", errors.New("parent of mountpoint directory does not exist: " + parent)
 			}
-			return "", errors.Wrap(err, "failed to retrieve mountpoint directory parent information")
+			return "", fmt.Errorf("failed to retrieve mountpoint directory parent information: %w", err)
 		}
 	}
 	return mountpath, nil

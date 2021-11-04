@@ -382,7 +382,7 @@ and `go.sum` in the same commit as your other changes.
 
 If you need to update a dependency then run
 
-    GO111MODULE=on go get -u github.com/pkg/errors
+    GO111MODULE=on go get -u golang.org/x/crypto
 
 Check in a single commit as above.
 

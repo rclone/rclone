@@ -5,13 +5,14 @@ package bisync
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
 	gosync "sync"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/bisync/bilib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
@@ -60,10 +61,10 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	}
 
 	if b.workDir, err = filepath.Abs(opt.Workdir); err != nil {
-		return errors.Wrap(err, "failed to make workdir absolute")
+		return fmt.Errorf("failed to make workdir absolute: %w", err)
 	}
 	if err = os.MkdirAll(b.workDir, os.ModePerm); err != nil {
-		return errors.Wrap(err, "failed to create workdir")
+		return fmt.Errorf("failed to create workdir: %w", err)
 	}
 
 	// Produce a unique name for the sync operation
@@ -76,12 +77,12 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 	if !opt.DryRun {
 		lockFile = b.basePath + ".lck"
 		if bilib.FileExists(lockFile) {
-			return errors.Errorf("prior lock file found: %s", lockFile)
+			return fmt.Errorf("prior lock file found: %s", lockFile)
 		}
 
 		pidStr := []byte(strconv.Itoa(os.Getpid()))
 		if err = ioutil.WriteFile(lockFile, pidStr, bilib.PermSecure); err != nil {
-			return errors.Wrapf(err, "cannot create lock file: %s", lockFile)
+			return fmt.Errorf("cannot create lock file: %s: %w", lockFile, err)
 		}
 		fs.Debugf(nil, "Lock file created: %s", lockFile)
 	}
@@ -394,11 +395,11 @@ func (b *bisyncRun) resync(octx, fctx context.Context, listing1, listing2 string
 func (b *bisyncRun) checkSync(listing1, listing2 string) error {
 	files1, err := b.loadListing(listing1)
 	if err != nil {
-		return errors.Wrap(err, "cannot read prior listing of Path1")
+		return fmt.Errorf("cannot read prior listing of Path1: %w", err)
 	}
 	files2, err := b.loadListing(listing2)
 	if err != nil {
-		return errors.Wrap(err, "cannot read prior listing of Path2")
+		return fmt.Errorf("cannot read prior listing of Path2: %w", err)
 	}
 
 	ok := true

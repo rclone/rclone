@@ -2,12 +2,11 @@ package fs
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // BwPair represents an upload and a download bandwidth
@@ -84,21 +83,21 @@ func (x BwTimetable) String() string {
 // Basic hour format checking
 func validateHour(HHMM string) error {
 	if len(HHMM) != 5 {
-		return errors.Errorf("invalid time specification (hh:mm): %q", HHMM)
+		return fmt.Errorf("invalid time specification (hh:mm): %q", HHMM)
 	}
 	hh, err := strconv.Atoi(HHMM[0:2])
 	if err != nil {
-		return errors.Errorf("invalid hour in time specification %q: %v", HHMM, err)
+		return fmt.Errorf("invalid hour in time specification %q: %v", HHMM, err)
 	}
 	if hh < 0 || hh > 23 {
-		return errors.Errorf("invalid hour (must be between 00 and 23): %q", hh)
+		return fmt.Errorf("invalid hour (must be between 00 and 23): %q", hh)
 	}
 	mm, err := strconv.Atoi(HHMM[3:])
 	if err != nil {
-		return errors.Errorf("invalid minute in time specification: %q: %v", HHMM, err)
+		return fmt.Errorf("invalid minute in time specification: %q: %v", HHMM, err)
 	}
 	if mm < 0 || mm > 59 {
-		return errors.Errorf("invalid minute (must be between 00 and 59): %q", hh)
+		return fmt.Errorf("invalid minute (must be between 00 and 59): %q", hh)
 	}
 	return nil
 }
@@ -127,7 +126,7 @@ func parseWeekday(dayOfWeek string) (int, error) {
 	if dayOfWeek == "sat" || dayOfWeek == "saturday" {
 		return 6, nil
 	}
-	return 0, errors.Errorf("invalid weekday: %q", dayOfWeek)
+	return 0, fmt.Errorf("invalid weekday: %q", dayOfWeek)
 }
 
 // Set the bandwidth timetable.
@@ -156,7 +155,7 @@ func (x *BwTimetable) Set(s string) error {
 
 		// Format must be dayOfWeek-HH:MM,BW
 		if len(tv) != 2 {
-			return errors.Errorf("invalid time/bandwidth specification: %q", tok)
+			return fmt.Errorf("invalid time/bandwidth specification: %q", tok)
 		}
 
 		weekday := 0
@@ -181,7 +180,7 @@ func (x *BwTimetable) Set(s string) error {
 		} else {
 			timespec := strings.Split(tv[0], "-")
 			if len(timespec) != 2 {
-				return errors.Errorf("invalid time specification: %q", tv[0])
+				return fmt.Errorf("invalid time specification: %q", tv[0])
 			}
 			var err error
 			weekday, err = parseWeekday(timespec[0])
