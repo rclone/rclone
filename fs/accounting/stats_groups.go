@@ -359,23 +359,31 @@ func (sg *statsGroups) sum(ctx context.Context) *StatsInfo {
 		{
 			sum.bytes += stats.bytes
 			sum.errors += stats.errors
-			sum.fatalError = sum.fatalError || stats.fatalError
-			sum.retryError = sum.retryError || stats.retryError
-			sum.checks += stats.checks
-			sum.transfers += stats.transfers
-			sum.deletes += stats.deletes
-			sum.deletedDirs += stats.deletedDirs
-			sum.renames += stats.renames
-			sum.checking.merge(stats.checking)
-			sum.transferring.merge(stats.transferring)
-			sum.inProgress.merge(stats.inProgress)
 			if sum.lastError == nil && stats.lastError != nil {
 				sum.lastError = stats.lastError
 			}
-			sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
+			sum.fatalError = sum.fatalError || stats.fatalError
+			sum.retryError = sum.retryError || stats.retryError
+			if stats.retryAfter.After(sum.retryAfter) {
+				// Update the retryAfter field only if it is a later date than the current one in the sum
+				sum.retryAfter = stats.retryAfter
+			}
+			sum.checks += stats.checks
+			sum.checking.merge(stats.checking)
+			sum.checkQueue += stats.checkQueue
+			sum.checkQueueSize += stats.checkQueueSize
+			sum.transfers += stats.transfers
+			sum.transferring.merge(stats.transferring)
 			sum.transferQueueSize += stats.transferQueueSize
-			sum.oldDuration += stats.oldDuration
+			sum.renames += stats.renames
+			sum.renameQueue += stats.renameQueue
+			sum.renameQueueSize += stats.renameQueueSize
+			sum.deletes += stats.deletes
+			sum.deletedDirs += stats.deletedDirs
+			sum.inProgress.merge(stats.inProgress)
+			sum.startedTransfers = append(sum.startedTransfers, stats.startedTransfers...)
 			sum.oldTimeRanges = append(sum.oldTimeRanges, stats.oldTimeRanges...)
+			sum.oldDuration += stats.oldDuration
 			stats.average.mu.Lock()
 			sum.average.speed += stats.average.speed
 			stats.average.mu.Unlock()
