@@ -758,7 +758,7 @@ can read it. Rclone tries to ensure this when it writes the file.
 You may also choose to [encrypt](#configuration-encryption) the file. 
 Alternately, you can use [Mozilla SOPS](https://github.com/mozilla/sops) to
 encrypt the configuration file, and pass it in with decryption being transparently
-handled by SOPS, thus not needing password input - useful for cron.
+handled by SOPS, thus not needing password input.
 See [SOPS](#sops) for more information.
 
 When token-based authentication are used, the configuration file
