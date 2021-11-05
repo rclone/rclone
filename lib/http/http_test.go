@@ -2,6 +2,7 @@ package http
 
 import (
 	"crypto/tls"
+	"io"
 	"net"
 	"net/http"
 	"reflect"
@@ -378,10 +379,12 @@ AwEHoUQDQgAEPR3tU2Fta9ktY+6P9G0cWO+0kETA6SFs38GecTyudlHz6xvCdz8q
 EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
 -----END EC PRIVATE KEY-----`)
 	tests := []struct {
-		name    string
-		opt     Options
-		ssl     bool
-		wantErr bool
+		name       string
+		opt        Options
+		ssl        bool
+		compressed bool
+		wantErr    bool
+		headers    map[string]string
 	}{
 		{
 			name:    "basic",
@@ -393,6 +396,12 @@ EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
 			opt:     sslServerOptions,
 			ssl:     true,
 			wantErr: false,
+		},
+		{
+			name:       "compress",
+			opt:        defaultServerOptions,
+			compressed: true,
+			wantErr:    false,
 		},
 	}
 	for _, tt := range tests {
@@ -409,9 +418,14 @@ EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
 				return
 			}
 			s := defaultServer
+			body := []byte("foo")
 			router := s.Router()
-			router.Head("/", func(writer http.ResponseWriter, request *http.Request) {
-				writer.WriteHeader(201)
+			router.Get("/", func(writer http.ResponseWriter, request *http.Request) {
+				if tt.compressed {
+					writer.Header().Set("Content-Type", http.DetectContentType(body))
+				}
+				_, err := writer.Write(body)
+				assert.NoError(t, err, "failed to write body")
 			})
 			testURL := URL()
 			if tt.ssl {
@@ -425,9 +439,22 @@ EKTcWGekdmdDPsHloRNtsiCa697B2O9IFA==
 
 			// try to connect to the test server
 			pause := time.Millisecond
+			req, err := http.NewRequest("GET", testURL, nil)
+			assert.NoError(t, err)
+			for k, v := range tt.headers {
+				req.Header.Set(k, v)
+			}
+
 			for i := 0; i < 10; i++ {
-				resp, err := http.Head(testURL)
+				resp, err := http.DefaultClient.Do(req)
 				if err == nil {
+					b := make([]byte, 3)
+					_, err := resp.Body.Read(b)
+					if err != nil && err != io.EOF {
+						t.Errorf("failed to read body %v", err)
+					}
+					assert.Equal(t, tt.compressed, resp.Uncompressed, "expected a compressed stream but did not get one")
+					assert.Equal(t, body, b)
 					_ = resp.Body.Close()
 					return
 				}

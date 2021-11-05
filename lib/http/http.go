@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/spf13/pflag"
@@ -353,6 +354,7 @@ func start() error {
 	}
 	defaultServer = s.(*server)
 	defaultServer.Serve()
+	defaultServer.Router().Use(middleware.Compress(5, CompressibleTypes...))
 	return nil
 }
 
