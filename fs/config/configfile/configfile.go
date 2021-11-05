@@ -24,10 +24,10 @@ func Install() {
 // Storage implements config.Storage for saving and loading config
 // data in a simple INI based file.
 type Storage struct {
-	lf *bytes.Reader        // contents of config file before decryption
-	gc *goconfig.ConfigFile // config file loaded - thread safe
-	mu sync.Mutex           // to protect the following variables
-	fi os.FileInfo          // stat of the file when last loaded
+	dataReader *bytes.Reader        // contents of config file before decryption
+	gc         *goconfig.ConfigFile // config file loaded - thread safe
+	mu         sync.Mutex           // to protect the following variables
+	fi         os.FileInfo          // stat of the file when last loaded
 }
 
 // Check to see if we need to reload the config
@@ -42,14 +42,13 @@ func (s *Storage) check() {
 			// If this was received via a named pipe, we can't reload it
 			if (fi.Mode() & os.ModeNamedPipe) != 0 {
 				return
-			} else {
-				// check to see if config file has changed and if it has, reload it
-				if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
-					fs.Debugf(nil, "Config file has changed externaly - reloading")
-					err := s._load()
-					if err != nil {
-						fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)
-					}
+			}
+			// check to see if config file has changed and if it has, reload it
+			if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
+				fs.Debugf(nil, "Config file has changed externaly - reloading")
+				err := s._load()
+				if err != nil {
+					fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)
 				}
 			}
 		}
@@ -57,9 +56,11 @@ func (s *Storage) check() {
 }
 
 func (s *Storage) _loadFIFO(configPath string) (err error) {
-	fd, _ := ioutil.ReadFile(configPath)
-	defer ioutil.NopCloser(bytes.NewReader(fd))
-	s.lf = bytes.NewReader(fd)
+	fd, _ := os.OpenFile(configPath, os.O_RDONLY, os.ModeNamedPipe)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(fd)
+	defer fs.CheckClose(fd, &err)
+	s.dataReader = bytes.NewReader(buf.Bytes())
 	return nil
 }
 
@@ -67,7 +68,7 @@ func (s *Storage) _loadFile(configPath string) (err error) {
 	fd, _ := os.Open(configPath)
 	defer fs.CheckClose(fd, &err)
 	fdBytes, _ := ioutil.ReadAll(fd)
-	s.lf = bytes.NewReader(fdBytes)
+	s.dataReader = bytes.NewReader(fdBytes)
 	return nil
 }
 
@@ -98,15 +99,18 @@ func (s *Storage) _load() (err error) {
 	// Named pipes can't be read with os.Open, so we need to fall back
 	// to the previously-used ioutil.ReadFile method
 	if (fileStat.Mode() & os.ModeNamedPipe) != 0 {
-		s._loadFIFO(configPath)
+		err = s._loadFIFO(configPath)
 	} else {
-		s._loadFile(configPath)
+		err = s._loadFile(configPath)
+	}
+	if err != nil {
+		return err
 	}
 
 	// Update s.fi with the current file info
 	s.fi = fileStat
 
-	cryptReader, err := config.Decrypt(s.lf)
+	cryptReader, err := config.Decrypt(s.dataReader)
 	if err != nil {
 		return err
 	}
