@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/rclone/rclone/fs/config"
@@ -242,4 +243,34 @@ func TestConfigFileNoConfig(t *testing.T) {
 	t.Run("NotFound", func(t *testing.T) {
 		testConfigFileNoConfig(t, "/notfound")
 	})
+}
+
+func TestConfigFileFIFO(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Named pipes are not supported on Windows")
+	}
+
+	fifoName := config.GetConfigPath() + ".fifo"
+	syscall.Mkfifo(fifoName, 0666)
+	ch := make(chan byte, 1)
+
+	defer func() {
+		assert.NoError(t, os.Remove(fifoName))
+	}()
+
+	go func() {
+		f, err := os.OpenFile(fifoName, os.O_WRONLY, os.ModeNamedPipe)
+		require.NoError(t, err)
+		f.Write([]byte(configData))
+		defer f.Close()
+	}()
+
+	go func() {
+		f, _ := os.OpenFile(fifoName, os.O_RDONLY, os.ModeNamedPipe)
+		b, _ := ioutil.ReadAll(f)
+		assert.Equal(t, configData, string(b))
+		f.Close()
+		ch <- 1
+	}()
+	<-ch
 }

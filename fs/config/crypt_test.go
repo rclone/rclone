@@ -103,7 +103,7 @@ func TestConfigLoadEncryptedFailures(t *testing.T) {
 	err = config.Data().Load()
 	require.Error(t, err)
 
-	// This file contains invalid base64 characters.
+	// This file's header starts with RCLONE_ENCRYPT_V1 instead of V0.
 	assert.NoError(t, config.SetConfigPath("./testdata/enc-too-new.conf"))
 	err = config.Data().Load()
 	require.Error(t, err)
