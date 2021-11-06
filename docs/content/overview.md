@@ -25,7 +25,7 @@ Here is an overview of the major features of each cloud storage system.
 | Citrix ShareFile             | MD5         | R/W     | Yes              | No              | -         |
 | Dropbox                      | DBHASH ¹    | R       | Yes              | No              | -         |
 | Enterprise File Fabric       | -           | R/W     | Yes              | No              | R/W       |
-| FTP                          | -           | -       | No               | No              | -         |
+| FTP                          | -           | R/W ¹⁰  | No               | No              | -         |
 | Google Cloud Storage         | MD5         | R/W     | No               | No              | R/W       |
 | Google Drive                 | MD5         | R/W     | No               | Yes             | R/W       |
 | Google Photos                | -           | -       | No               | Yes             | R         |
@@ -85,6 +85,10 @@ is possible to create them with `rclone`.  It may be that this is a
 mistake or an unsupported feature.
 
 ⁹ QingStor does not support SetModTime for objects bigger than 5 GiB.
+
+¹⁰ FTP supports modtimes for the major FTP servers, and also others
+if they advertised required protocol extensions. See [this](/ftp/#modified-time)
+for more details.
 
 ### Hash ###
 
