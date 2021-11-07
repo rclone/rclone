@@ -1913,6 +1913,8 @@ func setQuirks(opt *Options) {
 	case "Netease":
 		listObjectsV2 = false // untested
 		urlEncodeListings = false
+	case "RackCorp":
+		// No quirks
 	case "Scaleway":
 		// Scaleway can only have 1000 parts in an upload
 		if opt.MaxUploadParts > 1000 {
