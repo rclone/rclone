@@ -1,0 +1,36 @@
+(01)  : test filters
+
+
+(02)  : copy-file {datadir/}filtersfile.flt {workdir/}
+
+(03)  : test resync to force building of the filters md5 hash
+(04)  : bisync filters-file={workdir/}filtersfile.flt resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}filtersfile.flt
+INFO  : Storing filters file hash to {workdir/}filtersfile.flt.md5
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(05)  : copy-listings resync
+
+(06)  : test place new files on the remote
+(07)  : touch-glob 2001-01-02 {datadir/} fileZ.txt
+(08)  : copy-as {datadir/}fileZ.txt {path2/} fileZ.txt
+(09)  : copy-as {datadir/}fileZ.txt {path1/}subdir fileZ.txt
+
+(10)  : test bisync with filters-file. path2-side fileZ.txt will be filtered.
+(11)  : bisync filters-file={workdir/}filtersfile.flt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}filtersfile.flt
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is new                         - subdir/fileZ.txt
+INFO  : Path1:    1 changes:    1 new,    0 newer,    0 older,    0 deleted
+INFO  : Path2 checking for diffs
+INFO  : Applying changes
+INFO  : - Path1    Queue copy to Path2                 - {path2/}subdir/fileZ.txt
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful

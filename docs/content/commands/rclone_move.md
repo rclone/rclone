@@ -26,25 +26,6 @@ move will be used, otherwise it will copy it (server-side if possible)
 into `dest:path` then delete the original (if no errors on copy) in
 `source:path`.
 
-Note that the destination is always a directory. If the path
-does not exist, it will be created as a directory and the contents of
-the source will be moved into it. This is the case even if the source
-path points to a file. If you want to move a single file to a different
-name you must use [moveto](commands/rclone_moveto/) instead.
-
-For example, given the command:
-
-    rclone move source:sourcepath/one.txt dest:destpath/one.txt
-
-Rclone will create a directory `dest:destpath/one.txt` and put the source file in there:
-
-    dest:destpath/one.txt/one.txt
-
-Not move the single source file into the given destination path,
-which would be the result if moveto had been used instead:
-
-    dest:destpath/one.txt
-
 If you want to delete empty source directories after move, use the --delete-empty-src-dirs flag.
 
 See the [--no-traverse](/docs/#no-traverse) option for controlling

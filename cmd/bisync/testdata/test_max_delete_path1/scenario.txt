@@ -1,0 +1,21 @@
+test max-delete-path1
+# - Set up with 9 files.
+# - Delete 5 files from Path1, causing max-delete error.
+# - Run with --max-delete=60% to allow sync.
+
+test initial bisync
+bisync resync
+
+test delete >50% of local files
+delete-file {path1/}file1.txt
+delete-file {path1/}file2.txt
+delete-file {path1/}file3.txt
+delete-file {path1/}file4.txt
+delete-file {path1/}file5.txt
+
+test sync should fail due to too many local deletes
+bisync
+copy-listings initial-fail
+
+test change max-delete limit to 60%. sync should run.
+bisync max-delete=60

@@ -4,16 +4,17 @@
 package cmount
 
 import (
+	"errors"
+	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/mountlib"
 )
 
 func getMountpoint(mountPath string, opt *mountlib.Options) (string, error) {
 	fi, err := os.Stat(mountPath)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to retrieve mount path information")
+		return "", fmt.Errorf("failed to retrieve mount path information: %w", err)
 	}
 	if !fi.IsDir() {
 		return "", errors.New("mount path is not a directory")

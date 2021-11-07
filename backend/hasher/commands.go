@@ -2,9 +2,10 @@ package hasher
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"path"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -118,18 +119,18 @@ func (f *Fs) dbImport(ctx context.Context, hashName, sumRemote string, sticky bo
 	case fs.ErrorIsFile:
 		// ok
 	case nil:
-		return errors.Errorf("not a file: %s", sumRemote)
+		return fmt.Errorf("not a file: %s", sumRemote)
 	default:
 		return err
 	}
 
 	sumObj, err := sumFs.NewObject(ctx, path.Base(sumPath))
 	if err != nil {
-		return errors.Wrap(err, "cannot open sum file")
+		return fmt.Errorf("cannot open sum file: %w", err)
 	}
 	hashes, err := operations.ParseSumFile(ctx, sumObj)
 	if err != nil {
-		return errors.Wrap(err, "failed to parse sum file")
+		return fmt.Errorf("failed to parse sum file: %w", err)
 	}
 
 	if sticky {

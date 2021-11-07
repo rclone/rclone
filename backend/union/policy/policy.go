@@ -2,12 +2,12 @@ package policy
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
 )
@@ -44,7 +44,7 @@ func registerPolicy(name string, p Policy) {
 func Get(name string) (Policy, error) {
 	p, ok := policies[strings.ToLower(name)]
 	if !ok {
-		return nil, errors.Errorf("didn't find policy called %q", name)
+		return nil, fmt.Errorf("didn't find policy called %q", name)
 	}
 	return p, nil
 }

@@ -123,7 +123,7 @@ func (r *Report) RecordResult(t *Run) {
 	}
 }
 
-// Title returns a human readable summary title for the Report
+// Title returns a human-readable summary title for the Report
 func (r *Report) Title() string {
 	if r.AllPassed() {
 		return fmt.Sprintf("PASS: All tests finished OK in %v", r.Duration)

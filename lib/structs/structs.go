@@ -15,7 +15,7 @@ import (
 // and b will be set.
 //
 // This is useful for copying between almost identical structures that
-// are frequently present in auto generated code for cloud storage
+// are frequently present in auto-generated code for cloud storage
 // interfaces.
 func SetFrom(a, b interface{}) {
 	ta := reflect.TypeOf(a).Elem()

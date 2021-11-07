@@ -4,6 +4,7 @@ package hasher
 import (
 	"context"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -11,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -102,7 +102,7 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 	remotePath := fspath.JoinRootPath(opt.Remote, rpath)
 	baseFs, err := cache.Get(ctx, remotePath)
 	if err != nil && err != fs.ErrorIsFile {
-		return nil, errors.Wrapf(err, "failed to derive base remote %q", opt.Remote)
+		return nil, fmt.Errorf("failed to derive base remote %q: %w", opt.Remote, err)
 	}
 
 	f := &Fs{
@@ -127,7 +127,7 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 	for _, hashName := range opt.Hashes {
 		var ht hash.Type
 		if err := ht.Set(hashName); err != nil {
-			return nil, errors.Errorf("invalid token %q in hash string %q", hashName, opt.Hashes.String())
+			return nil, fmt.Errorf("invalid token %q in hash string %q", hashName, opt.Hashes.String())
 		}
 		if !f.slowHashes.Contains(ht) {
 			f.autoHashes.Add(ht)

@@ -8,6 +8,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	gohash "hash"
 	"io"
@@ -21,7 +22,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -290,13 +290,13 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 
 	baseName, basePath, err := fspath.SplitFs(remote)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", remote)
+		return nil, fmt.Errorf("failed to parse remote %q to wrap: %w", remote, err)
 	}
 	// Look for a file first
 	remotePath := fspath.JoinRootPath(basePath, rpath)
 	baseFs, err := cache.Get(ctx, baseName+remotePath)
 	if err != fs.ErrorIsFile && err != nil {
-		return nil, errors.Wrapf(err, "failed to make remote %q to wrap", baseName+remotePath)
+		return nil, fmt.Errorf("failed to make remote %q to wrap: %w", baseName+remotePath, err)
 	}
 	if !operations.CanServerSideMove(baseFs) {
 		return nil, errors.New("can't use chunker on a backend which doesn't support server-side move or copy")
@@ -386,7 +386,7 @@ type Fs struct {
 // configure must be called only from NewFs or by unit tests.
 func (f *Fs) configure(nameFormat, metaFormat, hashType, transactionMode string) error {
 	if err := f.setChunkNameFormat(nameFormat); err != nil {
-		return errors.Wrapf(err, "invalid name format '%s'", nameFormat)
+		return fmt.Errorf("invalid name format '%s': %w", nameFormat, err)
 	}
 	if err := f.setMetaFormat(metaFormat); err != nil {
 		return err
@@ -878,7 +878,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // ignores non-chunked objects and skips chunk size checks.
 func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.Object, error) {
 	if err := f.forbidChunk(false, remote); err != nil {
-		return nil, errors.Wrap(err, "can't access")
+		return nil, fmt.Errorf("can't access: %w", err)
 	}
 
 	var (
@@ -927,7 +927,7 @@ func (f *Fs) scanObject(ctx context.Context, remote string, quickScan bool) (fs.
 	case fs.ErrorDirNotFound:
 		entries = nil
 	default:
-		return nil, errors.Wrap(err, "can't detect composite file")
+		return nil, fmt.Errorf("can't detect composite file: %w", err)
 	}
 
 	if f.useNoRename {
@@ -1067,7 +1067,7 @@ func (o *Object) readMetadata(ctx context.Context) error {
 		case ErrMetaTooBig, ErrMetaUnknown:
 			return err // return these errors unwrapped for unit tests
 		default:
-			return errors.Wrap(err, "invalid metadata")
+			return fmt.Errorf("invalid metadata: %w", err)
 		}
 		if o.size != metaInfo.Size() || len(o.chunks) != metaInfo.nChunks {
 			return errors.New("metadata doesn't match file size")
@@ -1132,7 +1132,7 @@ func (f *Fs) put(
 
 	// Perform consistency checks
 	if err := f.forbidChunk(src, remote); err != nil {
-		return nil, errors.Wrap(err, action+" refused")
+		return nil, fmt.Errorf("%s refused: %w", action, err)
 	}
 	if target == nil {
 		// Get target object with a quick directory scan
@@ -1146,7 +1146,7 @@ func (f *Fs) put(
 		obj := target.(*Object)
 		if err := obj.readMetadata(ctx); err == ErrMetaUnknown {
 			// refuse to update a file of unsupported format
-			return nil, errors.Wrap(err, "refusing to "+action)
+			return nil, fmt.Errorf("refusing to %s: %w", action, err)
 		}
 	}
 
@@ -1564,7 +1564,7 @@ func (f *Fs) Hashes() hash.Set {
 // Shouldn't return an error if it already exists
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	if err := f.forbidChunk(dir, dir); err != nil {
-		return errors.Wrap(err, "can't mkdir")
+		return fmt.Errorf("can't mkdir: %w", err)
 	}
 	return f.base.Mkdir(ctx, dir)
 }
@@ -1633,7 +1633,7 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 	if err := o.f.forbidChunk(o, o.Remote()); err != nil {
 		// operations.Move can still call Remove if chunker's Move refuses
 		// to corrupt file in hard mode. Hence, refuse to Remove, too.
-		return errors.Wrap(err, "refuse to corrupt")
+		return fmt.Errorf("refuse to corrupt: %w", err)
 	}
 	if err := o.readMetadata(ctx); err == ErrMetaUnknown {
 		// Proceed but warn user that unexpected things can happen.
@@ -1661,12 +1661,12 @@ func (o *Object) Remove(ctx context.Context) (err error) {
 // copyOrMove implements copy or move
 func (f *Fs) copyOrMove(ctx context.Context, o *Object, remote string, do copyMoveFn, md5, sha1, opName string) (fs.Object, error) {
 	if err := f.forbidChunk(o, remote); err != nil {
-		return nil, errors.Wrapf(err, "can't %s", opName)
+		return nil, fmt.Errorf("can't %s: %w", opName, err)
 	}
 	if err := o.readMetadata(ctx); err != nil {
 		// Refuse to copy/move composite files with invalid or future
 		// metadata format which might involve unsupported chunk types.
-		return nil, errors.Wrapf(err, "can't %s this file", opName)
+		return nil, fmt.Errorf("can't %s this file: %w", opName, err)
 	}
 	if !o.isComposite() {
 		fs.Debugf(o, "%s non-chunked object...", opName)
@@ -2163,7 +2163,7 @@ func (o *Object) UnWrap() fs.Object {
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	if err := o.readMetadata(ctx); err != nil {
 		// refuse to open unsupported format
-		return nil, errors.Wrap(err, "can't open")
+		return nil, fmt.Errorf("can't open: %w", err)
 	}
 	if !o.isComposite() {
 		return o.mainChunk().Open(ctx, options...) // chain to wrapped non-chunked file

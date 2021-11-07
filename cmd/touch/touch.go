@@ -3,9 +3,10 @@ package touch
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -89,7 +90,7 @@ func timeOfTouch() (time.Time, error) {
 	if timeAsArgument != "" {
 		var err error
 		if t, err = parseTimeArgument(timeAsArgument); err != nil {
-			return t, errors.Wrap(err, "failed to parse timestamp argument")
+			return t, fmt.Errorf("failed to parse timestamp argument: %w", err)
 		}
 	} else {
 		t = time.Now()
@@ -114,7 +115,7 @@ func Touch(ctx context.Context, f fs.Fs, fileName string) error {
 	fs.Debugf(nil, "Touch time %v", t)
 	file, err := f.NewObject(ctx, fileName)
 	if err != nil {
-		if errors.Cause(err) == fs.ErrorObjectNotFound {
+		if errors.Is(err, fs.ErrorObjectNotFound) {
 			// Touch single non-existent file
 			if notCreateNewFile {
 				fs.Logf(f, "Not touching non-existent file due to --no-create")
@@ -129,10 +130,10 @@ func Touch(ctx context.Context, f fs.Fs, fileName string) error {
 			}
 			fs.Debugf(f, "Touching (creating)")
 			if err = createEmptyObject(ctx, fileName, t, f); err != nil {
-				return errors.Wrap(err, "failed to touch (create)")
+				return fmt.Errorf("failed to touch (create): %w", err)
 			}
 		}
-		if errors.Cause(err) == fs.ErrorIsDir {
+		if errors.Is(err, fs.ErrorIsDir) {
 			if recursive {
 				// Touch existing directory, recursive
 				fs.Debugf(nil, "Touching files in directory recursively")
@@ -149,7 +150,7 @@ func Touch(ctx context.Context, f fs.Fs, fileName string) error {
 		fs.Debugf(f, "Touching %q", fileName)
 		err = file.SetModTime(ctx, t)
 		if err != nil {
-			return errors.Wrap(err, "failed to touch")
+			return fmt.Errorf("failed to touch: %w", err)
 		}
 	}
 	return nil

@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -24,7 +25,6 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/adal"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -414,10 +414,10 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	const minChunkSize = fs.SizeSuffixBase
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	if cs > maxChunkSize {
-		return errors.Errorf("%s is greater than %s", cs, maxChunkSize)
+		return fmt.Errorf("%s is greater than %s", cs, maxChunkSize)
 	}
 	return nil
 }
@@ -459,11 +459,11 @@ const azureStorageEndpoint = "https://storage.azure.com/"
 func newServicePrincipalTokenRefresher(ctx context.Context, credentialsData []byte) (azblob.TokenRefresher, error) {
 	var spCredentials servicePrincipalCredentials
 	if err := json.Unmarshal(credentialsData, &spCredentials); err != nil {
-		return nil, errors.Wrap(err, "error parsing credentials from JSON file")
+		return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
 	}
 	oauthConfig, err := adal.NewOAuthConfig(azureActiveDirectoryEndpoint, spCredentials.Tenant)
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating oauth config")
+		return nil, fmt.Errorf("error creating oauth config: %w", err)
 	}
 
 	// Create service principal token for Azure Storage.
@@ -473,7 +473,7 @@ func newServicePrincipalTokenRefresher(ctx context.Context, credentialsData []by
 		spCredentials.Password,
 		azureStorageEndpoint)
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating service principal token")
+		return nil, fmt.Errorf("error creating service principal token: %w", err)
 	}
 
 	// Wrap token inside a refresher closure.
@@ -526,10 +526,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "azure: chunk size")
+		return nil, fmt.Errorf("azure: chunk size: %w", err)
 	}
 	if opt.ListChunkSize > maxListChunkSize {
-		return nil, errors.Errorf("azure: blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
+		return nil, fmt.Errorf("azure: blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
 	}
 	if opt.Endpoint == "" {
 		opt.Endpoint = storageDefaultBaseURL
@@ -538,12 +538,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
 	} else if !validateAccessTier(opt.AccessTier) {
-		return nil, errors.Errorf("Azure Blob: Supported access tiers are %s, %s and %s",
+		return nil, fmt.Errorf("Azure Blob: Supported access tiers are %s, %s and %s",
 			string(azblob.AccessTierHot), string(azblob.AccessTierCool), string(azblob.AccessTierArchive))
 	}
 
 	if !validatePublicAccess((opt.PublicAccess)) {
-		return nil, errors.Errorf("Azure Blob: Supported public access level are %s and %s",
+		return nil, fmt.Errorf("Azure Blob: Supported public access level are %s and %s",
 			string(azblob.PublicAccessBlob), string(azblob.PublicAccessContainer))
 	}
 
@@ -585,11 +585,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case opt.UseEmulator:
 		credential, err := azblob.NewSharedKeyCredential(emulatorAccount, emulatorAccountKey)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to parse credentials")
+			return nil, fmt.Errorf("Failed to parse credentials: %w", err)
 		}
 		u, err = url.Parse(emulatorBlobEndpoint)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
@@ -631,12 +631,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		})
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to acquire MSI token")
+			return nil, fmt.Errorf("Failed to acquire MSI token: %w", err)
 		}
 
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		credential := azblob.NewTokenCredential(token.AccessToken, func(credential azblob.TokenCredential) time.Duration {
 			fs.Debugf(f, "Token refresher called.")
@@ -666,19 +666,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case opt.Account != "" && opt.Key != "":
 		credential, err := azblob.NewSharedKeyCredential(opt.Account, opt.Key)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to parse credentials")
+			return nil, fmt.Errorf("Failed to parse credentials: %w", err)
 		}
 
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
 	case opt.SASURL != "":
 		u, err = url.Parse(opt.SASURL)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse SAS URL")
+			return nil, fmt.Errorf("failed to parse SAS URL: %w", err)
 		}
 		// use anonymous credentials in case of sas url
 		pipeline := f.newPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
@@ -698,17 +698,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Create a standard URL.
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		// Try loading service principal credentials from file.
 		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
 		if err != nil {
-			return nil, errors.Wrap(err, "error opening service principal credentials file")
+			return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
 		}
 		// Create a token refresher from service principal credentials.
 		tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, loadedCreds)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create a service principal token")
+			return nil, fmt.Errorf("failed to create a service principal token: %w", err)
 		}
 		options := azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}}
 		pipe := f.newPipeline(azblob.NewTokenCredential("", tokenRefresher), options)
@@ -1324,7 +1324,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 	data, err := base64.StdEncoding.DecodeString(o.md5)
 	if err != nil {
-		return "", errors.Wrapf(err, "Failed to decode Content-MD5: %q", o.md5)
+		return "", fmt.Errorf("Failed to decode Content-MD5: %q: %w", o.md5, err)
 	}
 	return hex.EncodeToString(data), nil
 }
@@ -1510,7 +1510,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var offset int64
 	var count int64
 	if o.AccessTier() == azblob.AccessTierArchive {
-		return nil, errors.Errorf("Blob in archive tier, you need to set tier to hot or cool first")
+		return nil, fmt.Errorf("Blob in archive tier, you need to set tier to hot or cool first")
 	}
 	fs.FixRangeOption(options, o.size)
 	for _, option := range options {
@@ -1536,11 +1536,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return o.fs.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to open for download")
+		return nil, fmt.Errorf("failed to open for download: %w", err)
 	}
 	err = o.decodeMetaDataFromDownloadResponse(downloadResponse)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to decode metadata for download")
+		return nil, fmt.Errorf("failed to decode metadata for download: %w", err)
 	}
 	in = downloadResponse.Body(azblob.RetryReaderOptions{})
 	return in, nil
@@ -1630,7 +1630,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(o, "deleting archive tier blob before updating")
 			err = o.Remove(ctx)
 			if err != nil {
-				return errors.Wrap(err, "failed to delete archive blob before updating")
+				return fmt.Errorf("failed to delete archive blob before updating: %w", err)
 			}
 		} else {
 			return errCantUpdateArchiveTierBlobs
@@ -1723,7 +1723,7 @@ func (o *Object) AccessTier() azblob.AccessTierType {
 // SetTier performs changing object tier
 func (o *Object) SetTier(tier string) error {
 	if !validateAccessTier(tier) {
-		return errors.Errorf("Tier %s not supported by Azure Blob Storage", tier)
+		return fmt.Errorf("Tier %s not supported by Azure Blob Storage", tier)
 	}
 
 	// Check if current tier already matches with desired tier
@@ -1739,7 +1739,7 @@ func (o *Object) SetTier(tier string) error {
 	})
 
 	if err != nil {
-		return errors.Wrap(err, "Failed to set Blob Tier")
+		return fmt.Errorf("Failed to set Blob Tier: %w", err)
 	}
 
 	// Set access tier on local object also, this typically

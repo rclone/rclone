@@ -1,0 +1,9 @@
+# INCLUDE OTHER Filters file for Check Access filtering testing
+  # another comment
+	# and another
+			
+	- /subdir/subdirA/
+#	 + /subdir/**
+- /subdir-not/
+#+ /*
+#- **

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/putdotio/go-putio/putio"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -80,7 +80,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (f fs.Fs,
 	httpClient := fshttp.NewClient(ctx)
 	oAuthClient, _, err := oauthutil.NewClientWithBaseClient(ctx, name, m, putioConfig, httpClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure putio")
+		return nil, fmt.Errorf("failed to configure putio: %w", err)
 	}
 	p := &Fs{
 		name:        name,
@@ -469,7 +469,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 	// check directory exists
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
-		return errors.Wrap(err, "Rmdir")
+		return fmt.Errorf("Rmdir: %w", err)
 	}
 	dirID := atoi(directoryID)
 
@@ -482,7 +482,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "Rmdir")
+			return fmt.Errorf("Rmdir: %w", err)
 		}
 		if len(children) != 0 {
 			return errors.New("directory not empty")
@@ -647,7 +647,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "about failed")
+		return nil, fmt.Errorf("about failed: %w", err)
 	}
 	return &fs.Usage{
 		Total: fs.NewUsageValue(ai.Disk.Size),  // quota of bytes that can be used

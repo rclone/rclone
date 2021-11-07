@@ -12,21 +12,25 @@ Create new file or change file modification time.
 ## Synopsis
 
 
-Set the modification time on object(s) as specified by remote:path to
+Set the modification time on file(s) as specified by remote:path to
 have the current time.
 
-If remote:path does not exist then a zero sized object will be created
-unless the --no-create flag is provided.
+If remote:path does not exist then a zero sized file will be created,
+unless `--no-create` or `--recursive` is provided.
 
-If --timestamp is used then it will set the modification time to that
+If `--recursive` is used then recursively sets the modification
+time on all existing files that is found under the path. Filters are supported,
+and you can test with the `--dry-run` or the `--interactive` flag.
+
+If `--timestamp` is used then sets the modification time to that
 time instead of the current time. Times may be specified as one of:
 
 - 'YYMMDD' - e.g. 17.10.30
 - 'YYYY-MM-DDTHH:MM:SS' - e.g. 2006-01-02T15:04:05
 - 'YYYY-MM-DDTHH:MM:SS.SSS' - e.g. 2006-01-02T15:04:05.123456789
 
-Note that --timestamp is in UTC if you want local time then add the
---localtime flag.
+Note that value of `--timestamp` is in UTC. If you want local time
+then add the `--localtime` flag.
 
 
 ```
@@ -37,9 +41,10 @@ rclone touch remote:path [flags]
 
 ```
   -h, --help               help for touch
-      --localtime          Use localtime for timestamp, not UTC.
-  -C, --no-create          Do not create the file if it does not exist.
-  -t, --timestamp string   Use specified time instead of the current time of day.
+      --localtime          Use localtime for timestamp, not UTC
+  -C, --no-create          Do not create the file if it does not exist (implied with --recursive)
+  -R, --recursive          Recursively touch all files
+  -t, --timestamp string   Use specified time instead of the current time of day
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

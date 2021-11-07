@@ -3,6 +3,7 @@ package dlna
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/anacrolix/dms/dlna"
 	"github.com/anacrolix/dms/upnp"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/serve/dlna/upnpav"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/vfs"

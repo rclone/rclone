@@ -8,6 +8,8 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -15,7 +17,6 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/readers"
 )
@@ -51,9 +52,9 @@ func ReadBody(resp *http.Response) (result []byte, err error) {
 func defaultErrorHandler(resp *http.Response) (err error) {
 	body, err := ReadBody(resp)
 	if err != nil {
-		return errors.Wrap(err, "error reading error out of body")
+		return fmt.Errorf("error reading error out of body: %w", err)
 	}
-	return errors.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
+	return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 }
 
 // SetErrorHandler sets the handler to decode an error response when
@@ -272,7 +273,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		err = api.signer(req)
 		api.mu.RLock()
 		if err != nil {
-			return nil, errors.Wrap(err, "signer failed")
+			return nil, fmt.Errorf("signer failed: %w", err)
 		}
 	}
 	api.mu.RUnlock()
@@ -286,7 +287,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 			err = api.errorHandler(resp)
 			if err.Error() == "" {
 				// replace empty errors with something
-				err = errors.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
+				err = fmt.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
 			}
 			return resp, err
 		}
@@ -364,7 +365,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 			for _, val := range vals {
 				err = writer.WriteField(key, val)
 				if err != nil {
-					_ = bodyWriter.CloseWithError(errors.Wrap(err, "create metadata part"))
+					_ = bodyWriter.CloseWithError(fmt.Errorf("create metadata part: %w", err))
 					return
 				}
 			}
@@ -373,20 +374,20 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 		if in != nil {
 			part, err := writer.CreateFormFile(contentName, fileName)
 			if err != nil {
-				_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to create form file"))
+				_ = bodyWriter.CloseWithError(fmt.Errorf("failed to create form file: %w", err))
 				return
 			}
 
 			_, err = io.Copy(part, in)
 			if err != nil {
-				_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to copy data"))
+				_ = bodyWriter.CloseWithError(fmt.Errorf("failed to copy data: %w", err))
 				return
 			}
 		}
 
 		err = writer.Close()
 		if err != nil {
-			_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to close form"))
+			_ = bodyWriter.CloseWithError(fmt.Errorf("failed to close form: %w", err))
 			return
 		}
 

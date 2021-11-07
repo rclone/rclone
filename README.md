@@ -2,7 +2,7 @@
 
 [Website](https://rclone.org) |
 [Documentation](https://rclone.org/docs/) |
-[Download](https://rclone.org/downloads/) | 
+[Download](https://rclone.org/downloads/) |
 [Contributing](CONTRIBUTING.md) |
 [Changelog](https://rclone.org/changelog/) |
 [Installation](https://rclone.org/install/) |
@@ -10,12 +10,12 @@
 
 [![Build Status](https://github.com/rclone/rclone/workflows/build/badge.svg)](https://github.com/rclone/rclone/actions?query=workflow%3Abuild)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rclone/rclone)](https://goreportcard.com/report/github.com/rclone/rclone)
-[![GoDoc](https://godoc.org/github.com/rclone/rclone?status.svg)](https://godoc.org/github.com/rclone/rclone) 
+[![GoDoc](https://godoc.org/github.com/rclone/rclone?status.svg)](https://godoc.org/github.com/rclone/rclone)
 [![Docker Pulls](https://img.shields.io/docker/pulls/rclone/rclone)](https://hub.docker.com/r/rclone/rclone)
 
 # Rclone
 
-Rclone *("rsync for cloud storage")* is a command line program to sync files and directories to and from different cloud storage providers.
+Rclone *("rsync for cloud storage")* is a command-line program to sync files and directories to and from different cloud storage providers.
 
 ## Storage providers
 
@@ -32,7 +32,6 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
   * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
   * FTP [:page_facing_up:](https://rclone.org/ftp/)
-  * GetSky [:page_facing_up:](https://rclone.org/jottacloud/)
   * Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)
   * Google Drive [:page_facing_up:](https://rclone.org/drive/)
   * Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)
@@ -74,7 +73,7 @@ Rclone *("rsync for cloud storage")* is a command line program to sync files and
   * Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)
   * Zoho WorkDrive [:page_facing_up:](https://rclone.org/zoho/)
   * The local filesystem [:page_facing_up:](https://rclone.org/local/)
-  
+
 Please see [the full list of all storage providers and their features](https://rclone.org/overview/)
 
 ## Features

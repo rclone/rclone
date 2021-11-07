@@ -18,7 +18,7 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "obscure password",
 	Short: `Obscure password for use in the rclone config file.`,
-	Long: `In the rclone config file, human readable passwords are
+	Long: `In the rclone config file, human-readable passwords are
 obscured. Obscuring them is done by encrypting them and writing them
 out in base64. This is **not** a secure way of encrypting these
 passwords as rclone can decrypt them - it is to prevent "eyedropping"

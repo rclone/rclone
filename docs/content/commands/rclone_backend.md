@@ -47,8 +47,8 @@ rclone backend <command> remote:path [opts] <args> [flags]
 
 ```
   -h, --help                 help for backend
-      --json                 Always output in JSON format.
-  -o, --option stringArray   Option in the form name=value or name.
+      --json                 Always output in JSON format
+  -o, --option stringArray   Option in the form name=value or name
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

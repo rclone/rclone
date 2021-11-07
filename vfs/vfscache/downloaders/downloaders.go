@@ -2,10 +2,11 @@ package downloaders
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/asyncreader"
@@ -182,7 +183,7 @@ func (dls *Downloaders) _newDownloader(r ranges.Range) (dl *downloader, err erro
 	err = dl.open(dl.offset)
 	if err != nil {
 		_ = dl.close(err)
-		return nil, errors.Wrap(err, "failed to open downloader")
+		return nil, fmt.Errorf("failed to open downloader: %w", err)
 	}
 
 	dls.dls = append(dls.dls, dl)
@@ -361,7 +362,7 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	dl, err = dls._newDownloader(r)
 	if err != nil {
 		dls._countErrors(0, err)
-		return errors.Wrap(err, "failed to start downloader")
+		return fmt.Errorf("failed to start downloader: %w", err)
 	}
 	return err
 }
@@ -534,7 +535,7 @@ func (dl *downloader) open(offset int64) (err error) {
 	in0 := chunkedreader.New(context.TODO(), dl.dls.src, int64(dl.dls.opt.ChunkSize), int64(dl.dls.opt.ChunkSizeLimit))
 	_, err = in0.Seek(offset, 0)
 	if err != nil {
-		return errors.Wrap(err, "vfs reader: failed to open source file")
+		return fmt.Errorf("vfs reader: failed to open source file: %w", err)
 	}
 	dl.in = dl.tr.Account(dl.dls.ctx, in0).WithBuffer() // account and buffer the transfer
 
@@ -550,7 +551,7 @@ func (dl *downloader) open(offset int64) (err error) {
 func (dl *downloader) close(inErr error) (err error) {
 	// defer log.Trace(dl.dls.src, "inErr=%v", err)("err=%v", &err)
 	checkErr := func(e error) {
-		if e == nil || errors.Cause(err) == asyncreader.ErrorStreamAbandoned {
+		if e == nil || errors.Is(err, asyncreader.ErrorStreamAbandoned) {
 			return
 		}
 		err = e
@@ -617,8 +618,8 @@ func (dl *downloader) stopAndClose(inErr error) (err error) {
 func (dl *downloader) download() (n int64, err error) {
 	// defer log.Trace(dl.dls.src, "")("err=%v", &err)
 	n, err = dl.in.WriteTo(dl)
-	if err != nil && errors.Cause(err) != asyncreader.ErrorStreamAbandoned {
-		return n, errors.Wrap(err, "vfs reader: failed to write to cache file")
+	if err != nil && !errors.Is(err, asyncreader.ErrorStreamAbandoned) {
+		return n, fmt.Errorf("vfs reader: failed to write to cache file: %w", err)
 	}
 
 	return n, nil

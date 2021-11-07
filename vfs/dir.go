@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
 	"github.com/rclone/rclone/fs/list"
@@ -651,7 +650,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 				}
 			}
 		default:
-			err = errors.Errorf("unknown type %T", item)
+			err = fmt.Errorf("unknown type %T", item)
 			fs.Errorf(d, "readDir error: %v", err)
 			return err
 		}
@@ -712,7 +711,7 @@ func (d *Dir) stat(leaf string) (Node, error) {
 			if strings.ToLower(name) == leafLower {
 				if ok {
 					// duplicate case insensitive match is an error
-					return nil, errors.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
+					return nil, fmt.Errorf("duplicate filename %q detected with --vfs-case-insensitive set", leaf)
 				}
 				// found a case insensitive match
 				ok = true
@@ -1003,14 +1002,14 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 				return err
 			}
 		} else {
-			err := errors.Errorf("Fs %q can't rename file that is not a vfs.File", d.f)
+			err := fmt.Errorf("Fs %q can't rename file that is not a vfs.File", d.f)
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
 	case fs.Directory:
 		features := d.f.Features()
 		if features.DirMove == nil && features.Move == nil && features.Copy == nil {
-			err := errors.Errorf("Fs %q can't rename directories (no DirMove, Move or Copy)", d.f)
+			err := fmt.Errorf("Fs %q can't rename directories (no DirMove, Move or Copy)", d.f)
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
@@ -1030,7 +1029,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			}
 		}
 	default:
-		err = errors.Errorf("unknown type %T", oldNode)
+		err = fmt.Errorf("unknown type %T", oldNode)
 		fs.Errorf(d.path, "Dir.Rename error: %v", err)
 		return err
 	}

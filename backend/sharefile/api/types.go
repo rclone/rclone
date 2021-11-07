@@ -2,10 +2,9 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // ListRequestSelect should be used in $select for Items/Children
@@ -122,7 +121,7 @@ type UploadFinishResponse struct {
 // ID returns the ID of the first response if available
 func (finish *UploadFinishResponse) ID() (string, error) {
 	if finish.Error {
-		return "", errors.Errorf("upload failed: %s (%d)", finish.ErrorMessage, finish.ErrorCode)
+		return "", fmt.Errorf("upload failed: %s (%d)", finish.ErrorMessage, finish.ErrorCode)
 	}
 	if len(finish.Value) == 0 {
 		return "", errors.New("upload failed: no results returned")

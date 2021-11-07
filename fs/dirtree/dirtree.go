@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/errors"
 )
 
 // DirTree is a map of directories to entries
@@ -153,7 +152,7 @@ func (dt DirTree) Prune(dirNames map[string]bool) error {
 			case fs.Object:
 				// do nothing
 			default:
-				return errors.Errorf("unknown object type %T", entry)
+				return fmt.Errorf("unknown object type %T", entry)
 
 			}
 		}
@@ -179,7 +178,7 @@ func (dt DirTree) Prune(dirNames map[string]bool) error {
 				case fs.Object:
 					// do nothing
 				default:
-					return errors.Errorf("unknown object type %T", entry)
+					return fmt.Errorf("unknown object type %T", entry)
 
 				}
 			}

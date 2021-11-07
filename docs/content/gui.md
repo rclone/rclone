@@ -17,7 +17,7 @@ rclone rcd --rc-web-gui
 ```
 
 This will produce logs like this and rclone needs to continue to run to serve the GUI:
-    
+
 ```
 2019/08/25 11:40:14 NOTICE: A new release for gui is present at https://github.com/rclone/rclone-webui-react/releases/download/v0.0.6/currentbuild.zip
 2019/08/25 11:40:14 NOTICE: Downloading webgui binary. Please wait. [Size: 3813937, Path :  /home/USER/.cache/rclone/webgui/v0.0.6.zip]
@@ -28,12 +28,12 @@ This will produce logs like this and rclone needs to continue to run to serve th
 This assumes you are running rclone locally on your machine.  It is
 possible to separate the rclone and the GUI - see below for details.
 
-If you wish to check for updates then you can add `--rc-web-gui-update` 
+If you wish to check for updates then you can add `--rc-web-gui-update`
 to the command line.
 
 If you find your GUI broken, you may force it to update by add `--rc-web-gui-force-update`.
 
-By default, rclone will open your browser. Add `--rc-web-gui-no-open-browser` 
+By default, rclone will open your browser. Add `--rc-web-gui-no-open-browser`
 to disable this feature.
 
 ## Using the GUI
@@ -55,7 +55,7 @@ On the left hand side you will see a series of view buttons you can click on:
 When you run the `rclone rcd --rc-web-gui` this is what happens
 
 - Rclone starts but only runs the remote control API ("rc").
-- The API is bound to localhost with an auto generated username and password.
+- The API is bound to localhost with an auto-generated username and password.
 - If the API bundle is missing then rclone will download it.
 - rclone will start serving the files from the API bundle over the same port as the API
 - rclone will open the browser with a `login_token` so it can log straight in.

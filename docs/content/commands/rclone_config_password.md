@@ -26,7 +26,7 @@ both support obscuring passwords directly.
 
 
 ```
-rclone config password `name` [`key` `value`]+ [flags]
+rclone config password name [key value]+ [flags]
 ```
 
 ## Options

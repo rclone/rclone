@@ -10,6 +10,7 @@
 package cmount
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -18,7 +19,6 @@ import (
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/atexit"
@@ -176,7 +176,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				errChan <- errors.Errorf("mount failed: %v", r)
+				errChan <- fmt.Errorf("mount failed: %v", r)
 			}
 		}()
 		var err error
@@ -224,7 +224,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	// system didn't blow up before starting
 	select {
 	case err := <-errChan:
-		err = errors.Wrap(err, "mount stopped before calling Init")
+		err = fmt.Errorf("mount stopped before calling Init: %w", err)
 		return nil, nil, err
 	case <-fsys.ready:
 	}

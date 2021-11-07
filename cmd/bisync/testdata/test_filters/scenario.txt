@@ -1,0 +1,21 @@
+test filters
+# Tests operation of bisync --filters-file flag.
+# Note that this test checks for bisync's access to and usage of the
+# filters file, not an extensive test of rclone's filter capability.
+
+# Exclude fileZ.txt in root only.
+# The copy in the subdir should be found and synched.
+copy-file {datadir/}filtersfile.flt {workdir/}
+
+test resync to force building of the filters md5 hash
+bisync filters-file={workdir/}filtersfile.flt resync
+# copy-listings will copy listings, queues (.que) and filters (.flt)
+copy-listings resync
+
+test place new files on the remote
+touch-glob 2001-01-02 {datadir/} fileZ.txt
+copy-as {datadir/}fileZ.txt {path2/} fileZ.txt
+copy-as {datadir/}fileZ.txt {path1/}subdir fileZ.txt
+
+test bisync with filters-file. path2-side fileZ.txt will be filtered.
+bisync filters-file={workdir/}filtersfile.flt

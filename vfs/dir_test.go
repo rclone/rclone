@@ -585,7 +585,7 @@ func TestDirRename(t *testing.T) {
 		"renamed empty directory,0,true",
 	})
 	// ...we don't check the underlying f.Fremote because on
-	// bucket based remotes the directory won't be there
+	// bucket-based remotes the directory won't be there
 
 	// read only check
 	vfs.Opt.ReadOnly = true

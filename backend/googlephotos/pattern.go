@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/googlephotos/api"
 	"github.com/rclone/rclone/fs"
 )
@@ -270,7 +269,7 @@ func days(ctx context.Context, f lister, prefix string, match []string) (entries
 	year := match[1]
 	current, err := time.Parse("2006", year)
 	if err != nil {
-		return nil, errors.Errorf("bad year %q", match[1])
+		return nil, fmt.Errorf("bad year %q", match[1])
 	}
 	currentYear := current.Year()
 	for current.Year() == currentYear {
@@ -284,7 +283,7 @@ func days(ctx context.Context, f lister, prefix string, match []string) (entries
 func yearMonthDayFilter(ctx context.Context, f lister, match []string) (sf api.SearchFilter, err error) {
 	year, err := strconv.Atoi(match[1])
 	if err != nil || year < 1000 || year > 3000 {
-		return sf, errors.Errorf("bad year %q", match[1])
+		return sf, fmt.Errorf("bad year %q", match[1])
 	}
 	sf = api.SearchFilter{
 		Filters: &api.Filters{
@@ -300,14 +299,14 @@ func yearMonthDayFilter(ctx context.Context, f lister, match []string) (sf api.S
 	if len(match) >= 3 {
 		month, err := strconv.Atoi(match[2])
 		if err != nil || month < 1 || month > 12 {
-			return sf, errors.Errorf("bad month %q", match[2])
+			return sf, fmt.Errorf("bad month %q", match[2])
 		}
 		sf.Filters.DateFilter.Dates[0].Month = month
 	}
 	if len(match) >= 4 {
 		day, err := strconv.Atoi(match[3])
 		if err != nil || day < 1 || day > 31 {
-			return sf, errors.Errorf("bad day %q", match[3])
+			return sf, fmt.Errorf("bad day %q", match[3])
 		}
 		sf.Filters.DateFilter.Dates[0].Day = day
 	}

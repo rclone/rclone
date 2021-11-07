@@ -2,12 +2,13 @@ package vfs
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/chunkedreader"
@@ -353,7 +354,7 @@ func (fh *ReadFileHandle) checkHash() error {
 	for hashType, dstSum := range fh.hash.Sums() {
 		srcSum, err := o.Hash(context.TODO(), hashType)
 		if err != nil {
-			if os.IsNotExist(errors.Cause(err)) {
+			if errors.Is(err, os.ErrNotExist) {
 				// if it was file not found then at
 				// this point we don't care any more
 				continue
@@ -361,7 +362,7 @@ func (fh *ReadFileHandle) checkHash() error {
 			return err
 		}
 		if !hash.Equals(dstSum, srcSum) {
-			return errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, dstSum, srcSum)
+			return fmt.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, dstSum, srcSum)
 		}
 	}
 

@@ -7,7 +7,8 @@
 package mmap
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
+
 	"golang.org/x/sys/unix"
 )
 
@@ -17,7 +18,7 @@ import (
 func Alloc(size int) ([]byte, error) {
 	mem, err := unix.Mmap(-1, 0, size, unix.PROT_READ|unix.PROT_WRITE, unix.MAP_PRIVATE|unix.MAP_ANON)
 	if err != nil {
-		return nil, errors.Wrap(err, "mmap: failed to allocate memory for buffer")
+		return nil, fmt.Errorf("mmap: failed to allocate memory for buffer: %w", err)
 	}
 	return mem, nil
 }
@@ -28,7 +29,7 @@ func Alloc(size int) ([]byte, error) {
 func Free(mem []byte) error {
 	err := unix.Munmap(mem)
 	if err != nil {
-		return errors.Wrap(err, "mmap: failed to unmap memory")
+		return fmt.Errorf("mmap: failed to unmap memory: %w", err)
 	}
 	return nil
 }

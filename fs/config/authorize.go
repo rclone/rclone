@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 )
@@ -22,7 +21,7 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 	switch len(args) {
 	case 1, 2, 3:
 	default:
-		return errors.Errorf("invalid number of arguments: %d", len(args))
+		return fmt.Errorf("invalid number of arguments: %d", len(args))
 	}
 	Type := args[0] // FIXME could read this from input
 	ri, err := fs.Find(Type)
@@ -30,7 +29,7 @@ func Authorize(ctx context.Context, args []string, noAutoBrowser bool) error {
 		return err
 	}
 	if ri.Config == nil {
-		return errors.Errorf("can't authorize fs %q", Type)
+		return fmt.Errorf("can't authorize fs %q", Type)
 	}
 
 	// Config map for remote

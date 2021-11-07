@@ -65,7 +65,7 @@ at all, then 1 PiB is set as both the total and the free size.
 To run rclone @ on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
 
-[WinFsp](https://github.com/billziss-gh/winfsp) is an open source
+[WinFsp](https://github.com/billziss-gh/winfsp) is an open-source
 Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
 uses combination with [cgofuse](https://github.com/billziss-gh/cgofuse).
@@ -235,7 +235,7 @@ applications won't work with their files on an rclone mount without
 |--vfs-cache-mode writes| or |--vfs-cache-mode full|.
 See the [VFS File Caching](#vfs-file-caching) section for more info.
 
-The bucket based remotes (e.g. Swift, S3, Google Compute Storage, B2,
+The bucket-based remotes (e.g. Swift, S3, Google Compute Storage, B2,
 Hubic) do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.

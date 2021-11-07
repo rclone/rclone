@@ -5,10 +5,10 @@ package local
 
 import (
 	"context"
+	"fmt"
 	"syscall"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -24,7 +24,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		uintptr(unsafe.Pointer(&free)),      // lpTotalNumberOfFreeBytes
 	)
 	if e1 != syscall.Errno(0) {
-		return nil, errors.Wrap(e1, "failed to read disk usage")
+		return nil, fmt.Errorf("failed to read disk usage: %w", e1)
 	}
 	usage := &fs.Usage{
 		Total: fs.NewUsageValue(total),        // quota of bytes that can be used

@@ -65,7 +65,7 @@ rclone lsd remote:path [flags]
 
 ```
   -h, --help        help for lsd
-  -R, --recursive   Recurse into the listing.
+  -R, --recursive   Recurse into the listing
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

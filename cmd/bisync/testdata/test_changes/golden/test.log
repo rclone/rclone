@@ -1,0 +1,90 @@
+(01)  : test changes
+
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test make modifications on both paths
+(05)  : test new on path2 - file10
+(06)  : touch-copy 2001-01-02 {datadir/}file10.txt {path2/}
+
+(07)  : test newer on path2 - file1
+(08)  : touch-copy 2001-01-02 {datadir/}file1.txt {path2/}
+
+(09)  : test new on path1 - file11
+(10)  : touch-copy 2001-01-02 {datadir/}file11.txt {path1/}
+
+(11)  : test newer on path1 - file2
+(12)  : touch-copy 2001-01-02 {datadir/}file2.txt {path1/}
+
+(13)  : test deleted on path2 - file3
+(14)  : delete-file {path2/}file3.txt
+
+(15)  : test deleted on path1 - file4
+(16)  : delete-file {path1/}file4.txt
+
+(17)  : test deleted on both paths - file8
+(18)  : delete-file {path1/}file8.txt
+(19)  : delete-file {path2/}file8.txt
+
+(20)  : test changed on both paths - file5 (file5R, file5L)
+(21)  : touch-glob 2001-01-02 {datadir/} file5R.txt
+(22)  : copy-as {datadir/}file5R.txt {path2/} file5.txt
+(23)  : touch-glob 2001-03-04 {datadir/} file5L.txt
+(24)  : copy-as {datadir/}file5L.txt {path1/} file5.txt
+
+(25)  : test newer on path2 and deleted on path1 - file6
+(26)  : touch-copy 2001-01-02 {datadir/}file6.txt {path2/}
+(27)  : delete-file {path1/}file6.txt
+
+(28)  : test newer on path1 and deleted on path2 - file7
+(29)  : touch-copy 2001-01-02 {datadir/}file7.txt {path1/}
+(30)  : delete-file {path2/}file7.txt
+
+(31)  : test bisync run
+(32)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File is new                         - file11.txt
+INFO  : - Path1    File is newer                       - file2.txt
+INFO  : - Path1    File is newer                       - file5.txt
+INFO  : - Path1    File is newer                       - file7.txt
+INFO  : - Path1    File was deleted                    - file4.txt
+INFO  : - Path1    File was deleted                    - file6.txt
+INFO  : - Path1    File was deleted                    - file8.txt
+INFO  : Path1:    7 changes:    1 new,    3 newer,    0 older,    3 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File is new                         - file10.txt
+INFO  : - Path2    File is newer                       - file1.txt
+INFO  : - Path2    File is newer                       - file5.txt
+INFO  : - Path2    File is newer                       - file6.txt
+INFO  : - Path2    File was deleted                    - file3.txt
+INFO  : - Path2    File was deleted                    - file7.txt
+INFO  : - Path2    File was deleted                    - file8.txt
+INFO  : Path2:    7 changes:    1 new,    3 newer,    0 older,    3 deleted
+INFO  : Applying changes
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file11.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file2.txt
+INFO  : - Path2    Queue delete                        - {path2/}file4.txt
+NOTICE: - WARNING  New or changed in both paths        - file5.txt
+NOTICE: - Path1    Renaming Path1 copy                 - {path1/}file5.txt..path1
+NOTICE: - Path1    Queue copy to Path2                 - {path2/}file5.txt..path1
+NOTICE: - Path2    Renaming Path2 copy                 - {path2/}file5.txt..path2
+NOTICE: - Path2    Queue copy to Path1                 - {path1/}file5.txt..path2
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file6.txt
+INFO  : - Path1    Queue copy to Path2                 - {path2/}file7.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file1.txt
+INFO  : - Path2    Queue copy to Path1                 - {path1/}file10.txt
+INFO  : - Path1    Queue delete                        - {path1/}file3.txt
+INFO  : - Path2    Do queued copies to                 - Path1
+INFO  : - Path1    Do queued copies to                 - Path2
+INFO  : -          Do queued deletes on                - Path1
+INFO  : -          Do queued deletes on                - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful

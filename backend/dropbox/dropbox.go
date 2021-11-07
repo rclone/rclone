@@ -23,6 +23,7 @@ of path_display and all will be well.
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -38,7 +39,6 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/sharing"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/team"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/users"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/dropbox/dbhash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -363,24 +363,24 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	if err == nil {
 		return false, err
 	}
-	baseErrString := errors.Cause(err).Error()
+	errString := err.Error()
 	// First check for specific errors
-	if strings.Contains(baseErrString, "insufficient_space") {
+	if strings.Contains(errString, "insufficient_space") {
 		return false, fserrors.FatalError(err)
-	} else if strings.Contains(baseErrString, "malformed_path") {
+	} else if strings.Contains(errString, "malformed_path") {
 		return false, fserrors.NoRetryError(err)
 	}
 	// Then handle any official Retry-After header from Dropbox's SDK
 	switch e := err.(type) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
-			fs.Logf(baseErrString, "Too many requests or write operations. Trying again in %d seconds.", e.RateLimitError.RetryAfter)
+			fs.Logf(errString, "Too many requests or write operations. Trying again in %d seconds.", e.RateLimitError.RetryAfter)
 			err = pacer.RetryAfterError(err, time.Duration(e.RateLimitError.RetryAfter)*time.Second)
 		}
 		return true, err
 	}
 	// Keep old behavior for backward compatibility
-	if strings.Contains(baseErrString, "too_many_write_operations") || strings.Contains(baseErrString, "too_many_requests") || baseErrString == "" {
+	if strings.Contains(errString, "too_many_write_operations") || strings.Contains(errString, "too_many_requests") || errString == "" {
 		return true, err
 	}
 	return fserrors.ShouldRetry(err), err
@@ -389,10 +389,10 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	const minChunkSize = fs.SizeSuffixBase
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	if cs > maxChunkSize {
-		return errors.Errorf("%s is greater than %s", cs, maxChunkSize)
+		return fmt.Errorf("%s is greater than %s", cs, maxChunkSize)
 	}
 	return nil
 }
@@ -415,7 +415,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "dropbox: chunk size")
+		return nil, fmt.Errorf("dropbox: chunk size: %w", err)
 	}
 
 	// Convert the old token if it exists.  The old token was just
@@ -427,13 +427,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newToken := fmt.Sprintf(`{"access_token":"%s","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
 		err := config.SetValueAndSave(name, config.ConfigToken, newToken)
 		if err != nil {
-			return nil, errors.Wrap(err, "NewFS convert token")
+			return nil, fmt.Errorf("NewFS convert token: %w", err)
 		}
 	}
 
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, getOauthConfig(m))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure dropbox")
+		return nil, fmt.Errorf("failed to configure dropbox: %w", err)
 	}
 
 	ci := fs.GetConfig(ctx)
@@ -474,7 +474,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		memberIds, err := f.team.MembersGetInfo(args)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid dropbox team member: %q", opt.Impersonate)
+			return nil, fmt.Errorf("invalid dropbox team member: %q: %w", opt.Impersonate, err)
 		}
 
 		cfg.AsMemberID = memberIds[0].MemberInfo.Profile.MemberProfile.TeamMemberId
@@ -551,7 +551,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "get current account failed")
+			return nil, fmt.Errorf("get current account failed: %w", err)
 		}
 		switch x := acc.RootInfo.(type) {
 		case *common.TeamRootInfo:
@@ -559,7 +559,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		case *common.UserRootInfo:
 			f.ns = x.RootNamespaceId
 		default:
-			return nil, errors.Errorf("unknown RootInfo type %v %T", acc.RootInfo, acc.RootInfo)
+			return nil, fmt.Errorf("unknown RootInfo type %v %T", acc.RootInfo, acc.RootInfo)
 		}
 		fs.Debugf(f, "Using root namespace %q", f.ns)
 	}
@@ -710,7 +710,7 @@ func (f *Fs) listSharedFolders(ctx context.Context) (entries fs.DirEntries, err 
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "list continue")
+				return nil, fmt.Errorf("list continue: %w", err)
 			}
 		}
 		for _, entry := range res.Entries {
@@ -784,7 +784,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context) (entries fs.DirEntries, err 
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "list continue")
+				return nil, fmt.Errorf("list continue: %w", err)
 			}
 		}
 		for _, entry := range res.Entries {
@@ -877,7 +877,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "list continue")
+				return nil, fmt.Errorf("list continue: %w", err)
 			}
 		}
 		for _, entry := range res.Entries {
@@ -989,7 +989,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		// check directory exists
 		_, err = f.getDirMetadata(ctx, root)
 		if err != nil {
-			return errors.Wrap(err, "Rmdir")
+			return fmt.Errorf("Rmdir: %w", err)
 		}
 
 		root = f.opt.Enc.FromStandardPath(root)
@@ -1007,7 +1007,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "Rmdir")
+			return fmt.Errorf("Rmdir: %w", err)
 		}
 		if len(res.Entries) != 0 {
 			return errors.New("directory not empty")
@@ -1073,7 +1073,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "copy failed")
+		return nil, fmt.Errorf("copy failed: %w", err)
 	}
 
 	// Set the metadata
@@ -1083,7 +1083,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	err = dstObj.setMetadataFromEntry(fileInfo)
 	if err != nil {
-		return nil, errors.Wrap(err, "copy failed")
+		return nil, fmt.Errorf("copy failed: %w", err)
 	}
 
 	return dstObj, nil
@@ -1134,7 +1134,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "move failed")
+		return nil, fmt.Errorf("move failed: %w", err)
 	}
 
 	// Set the metadata
@@ -1144,7 +1144,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	err = dstObj.setMetadataFromEntry(fileInfo)
 	if err != nil {
-		return nil, errors.Wrap(err, "move failed")
+		return nil, fmt.Errorf("move failed: %w", err)
 	}
 	return dstObj, nil
 }
@@ -1252,7 +1252,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "MoveDir failed")
+		return fmt.Errorf("MoveDir failed: %w", err)
 	}
 
 	return nil
@@ -1266,7 +1266,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "about failed")
+		return nil, fmt.Errorf("about failed: %w", err)
 	}
 	var total uint64
 	if q.Allocation != nil {
@@ -1406,7 +1406,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return "", errors.Wrap(err, "list continue")
+			return "", fmt.Errorf("list continue: %w", err)
 		}
 		cursor = changeList.Cursor
 		var entryType fs.EntryType
@@ -1485,7 +1485,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 	err := o.readMetaData(ctx)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read hash from metadata")
+		return "", fmt.Errorf("failed to read hash from metadata: %w", err)
 	}
 	return o.hash, nil
 }
@@ -1738,7 +1738,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
-		return fserrors.NoRetryError(errors.Errorf("file name %q is disallowed - not uploading", path.Base(remote)))
+		return fserrors.NoRetryError(fmt.Errorf("file name %q is disallowed - not uploading", path.Base(remote)))
 	}
 	commitInfo := files.NewCommitInfo(o.fs.opt.Enc.FromStandardPath(o.remotePath()))
 	commitInfo.Mode.Tag = "overwrite"
@@ -1762,7 +1762,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		})
 	}
 	if err != nil {
-		return errors.Wrap(err, "upload failed")
+		return fmt.Errorf("upload failed: %w", err)
 	}
 	// If we haven't received data back from batch upload then fake it
 	//

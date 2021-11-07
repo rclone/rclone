@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -34,7 +35,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	_ "github.com/rclone/rclone/backend/all" // import all backends
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -1593,8 +1593,8 @@ func TestTouchDir(t *testing.T) {
 	err := operations.TouchDir(ctx, r.Fremote, timeValue, true)
 	require.NoError(t, err)
 	if accounting.Stats(ctx).GetErrors() != 0 {
-		err = errors.Cause(accounting.Stats(ctx).GetLastError())
-		require.True(t, err == fs.ErrorCantSetModTime || err == fs.ErrorCantSetModTimeWithoutDelete)
+		err = accounting.Stats(ctx).GetLastError()
+		require.True(t, errors.Is(err, fs.ErrorCantSetModTime) || errors.Is(err, fs.ErrorCantSetModTimeWithoutDelete))
 	} else {
 		file1.ModTime = timeValue
 		file2.ModTime = timeValue

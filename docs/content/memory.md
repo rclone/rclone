@@ -8,7 +8,7 @@ description: "Rclone docs for Memory backend"
 The memory backend is an in RAM backend. It does not persist its
 data - use the local backend for that.
 
-The memory backend behaves like a bucket based remote (e.g. like
+The memory backend behaves like a bucket-based remote (e.g. like
 s3). Because it has no parameters you can just use it with the
 `:memory:` remote name.
 

@@ -5,13 +5,13 @@ package kv
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/encoder"
@@ -101,7 +101,7 @@ func Start(ctx context.Context, facility string, f fs.Fs) (*DB, error) {
 	}
 
 	if err = db.open(ctx, false); err != nil && err != ErrEmpty {
-		return nil, errors.Wrapf(err, "cannot open db: %s", db.path)
+		return nil, fmt.Errorf("cannot open db: %s: %w", db.path, err)
 	}
 
 	dbMap[name] = db

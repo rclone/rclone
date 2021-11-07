@@ -1,0 +1,68 @@
+(01)  : test check-sync
+
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test 1. run check-sync-only on a clean sync
+(05)  : bisync check-sync-only
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(06)  : test 2. inject modified listings into the workdir
+(07)  : copy-as {datadir/}_testdir_path1.._testdir_path2.path1.lst {workdir/} {session}.path1.lst
+(08)  : copy-as {datadir/}_testdir_path1.._testdir_path2.path2.lst {workdir/} {session}.path2.lst
+
+(09)  : test 3. run check-sync-only on modified listings
+(10)  : bisync check-sync-only
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+ERROR : -          Path1 file not found in Path2       - file2.txt
+ERROR : -          Path2 file not found in Path1       - file1.txt
+ERROR : Bisync critical error: path1 and path2 are out of sync, run --resync to recover
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+(11)  : copy-listings check-sync-only
+
+(12)  : test 4. run normal sync to check that it aborts
+(13)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+ERROR : Bisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+
+(14)  : test 5. prune failure listings after critical abort
+(15)  : delete-glob {workdir/} *.lst
+(16)  : delete-glob {workdir/} *.lst-err
+(17)  : delete-glob {workdir/} *.lst-new
+
+(18)  : test 6. run resync
+(19)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(20)  : test 7. run normal sync with check-sync enabled (default)
+(21)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(22)  : test 8. run normal sync with no-check-sync
+(23)  : bisync no-check-sync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Bisync successful

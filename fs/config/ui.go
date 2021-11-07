@@ -5,6 +5,7 @@ package config
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -281,7 +281,7 @@ func backendConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.
 				if value != "" {
 					err := out.Option.Set(value)
 					if err != nil {
-						return errors.Wrap(err, "failed to set option")
+						return fmt.Errorf("failed to set option: %w", err)
 					}
 				}
 				in.Result = out.Option.String()

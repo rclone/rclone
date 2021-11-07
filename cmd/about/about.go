@@ -3,10 +3,10 @@ package about
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -76,7 +76,7 @@ Applying a ` + "`--full`" + ` flag to the command prints the bytes in full, e.g.
     Trashed: 104857602
     Other:   8849156022
 
-A ` + "`--json`" + ` flag generates conveniently computer readable output, e.g.
+A ` + "`--json`" + ` flag generates conveniently machine-readable output, e.g.
 
     {
         "total": 18253611008,
@@ -98,11 +98,11 @@ see complete list in [documentation](https://rclone.org/overview/#optional-featu
 		cmd.Run(false, false, command, func() error {
 			doAbout := f.Features().About
 			if doAbout == nil {
-				return errors.Errorf("%v doesn't support about", f)
+				return fmt.Errorf("%v doesn't support about", f)
 			}
 			u, err := doAbout(context.Background())
 			if err != nil {
-				return errors.Wrap(err, "About call failed")
+				return fmt.Errorf("About call failed: %w", err)
 			}
 			if u == nil {
 				return errors.New("nil usage returned")
