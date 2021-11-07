@@ -3,6 +3,7 @@ package sia
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,18 +12,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/lib/encoder"
-
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/sia/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -460,7 +459,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.APIPassword != "" {
 		opt.APIPassword, err = obscure.Reveal(opt.APIPassword)
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't decrypt API password")
+			return nil, fmt.Errorf("couldn't decrypt API password: %w", err)
 		}
 		f.srv.SetUserPass("", opt.APIPassword)
 	}
@@ -474,7 +473,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		_, err := f.NewObject(ctx, remote)
 		if err != nil {
-			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
+			if errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, fs.ErrorNotAFile) {
 				// File doesn't exist so return old f
 				f.root = root
 				return f, nil
@@ -493,7 +492,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 func errorHandler(resp *http.Response) error {
 	body, err := rest.ReadBody(resp)
 	if err != nil {
-		return errors.Wrap(err, "error when trying to read error body")
+		return fmt.Errorf("error when trying to read error body: %w", err)
 	}
 	// Decode error response
 	errResponse := new(api.Error)

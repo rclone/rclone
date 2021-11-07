@@ -1,14 +1,13 @@
 package fs
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 func init() {
@@ -83,7 +82,7 @@ func convertMountHelperArgs(origArgs []string) ([]string, error) {
 				args = append(args, "--help")
 			default:
 				if strings.HasPrefix(arg, "-") {
-					return nil, errors.Errorf("flag %q is not supported in mount mode", arg)
+					return nil, fmt.Errorf("flag %q is not supported in mount mode", arg)
 				}
 				args = append(args, arg)
 			}
@@ -149,7 +148,7 @@ func convertMountHelperArgs(origArgs []string) ([]string, error) {
 		}
 	}
 	if parseOpts {
-		return nil, errors.Errorf("dangling -o without argument")
+		return nil, fmt.Errorf("dangling -o without argument")
 	}
 
 	if vCount > 0 && !gotVerbose {

@@ -137,16 +137,16 @@ rclone lsf remote:path [flags]
 ## Options
 
 ```
-      --absolute           Put a leading / in front of path names.
-      --csv                Output in CSV format.
-  -d, --dir-slash          Append a slash to directory names. (default true)
-      --dirs-only          Only list directories.
-      --files-only         Only list files.
+      --absolute           Put a leading / in front of path names
+      --csv                Output in CSV format
+  -d, --dir-slash          Append a slash to directory names (default true)
+      --dirs-only          Only list directories
+      --files-only         Only list files
   -F, --format string      Output format - see  help for details (default "p")
       --hash h             Use this hash when h is used in the format MD5|SHA-1|DropboxHash (default "md5")
   -h, --help               help for lsf
-  -R, --recursive          Recurse into the listing.
-  -s, --separator string   Separator for the items in the format. (default ";")
+  -R, --recursive          Recurse into the listing
+  -s, --separator string   Separator for the items in the format (default ";")
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

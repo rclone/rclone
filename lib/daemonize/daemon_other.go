@@ -6,13 +6,12 @@
 package daemonize
 
 import (
+	"fmt"
 	"os"
 	"runtime"
-
-	"github.com/pkg/errors"
 )
 
 // StartDaemon runs background twin of current process.
 func StartDaemon(args []string) (*os.Process, error) {
-	return nil, errors.Errorf("background mode is not supported on %s platform", runtime.GOOS)
+	return nil, fmt.Errorf("background mode is not supported on %s platform", runtime.GOOS)
 }

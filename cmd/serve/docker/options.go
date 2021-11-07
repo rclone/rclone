@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/rclone/rclone/vfs/vfscommon"
 	"github.com/rclone/rclone/vfs/vfsflags"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 )
 
@@ -62,7 +62,7 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 		case "remote", "fs":
 			p, err := fspath.Parse(str)
 			if err != nil || p.Name == ":" {
-				return errors.Wrapf(err, "cannot parse path %q", str)
+				return fmt.Errorf("cannot parse path %q: %w", str, err)
 			}
 			fsName, fsPath, fsOpt = p.Name, p.Path, p.Config
 			vol.Fs = str
@@ -100,7 +100,7 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 	}
 	fsInfo, err := fs.Find(fsType)
 	if err != nil {
-		return errors.Errorf("unknown filesystem type %q", fsType)
+		return fmt.Errorf("unknown filesystem type %q", fsType)
 	}
 
 	// handle remaining options, override fsOpt
@@ -124,21 +124,21 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 			ok = true
 		}
 		if err != nil {
-			return errors.Wrapf(err, "cannot parse option %q", key)
+			return fmt.Errorf("cannot parse option %q: %w", key, err)
 		}
 
 		if !ok {
 			// try to use as a mount option in mntOpt
 			ok, err = getMountOption(mntOpt, opt, key)
 			if ok && err != nil {
-				return errors.Wrapf(err, "cannot parse mount option %q", key)
+				return fmt.Errorf("cannot parse mount option %q: %w", key, err)
 			}
 		}
 		if !ok {
 			// try as a vfs option in vfsOpt
 			ok, err = getVFSOption(vfsOpt, opt, key)
 			if ok && err != nil {
-				return errors.Wrapf(err, "cannot parse vfs option %q", key)
+				return fmt.Errorf("cannot parse vfs option %q: %w", key, err)
 			}
 		}
 
@@ -149,11 +149,11 @@ func (vol *Volume) applyOptions(volOpt VolOpts) error {
 			hasFsPrefix := optWithPrefix != fsOptName
 			if !hasFsPrefix || fsInfo.Options.Get(fsOptName) == nil {
 				fs.Logf(nil, "Option %q is not supported by backend %q", key, fsType)
-				return errors.Errorf("unsupported backend option %q", key)
+				return fmt.Errorf("unsupported backend option %q", key)
 			}
 			fsOpt[fsOptName], err = opt.GetString(key)
 			if err != nil {
-				return errors.Wrapf(err, "cannot parse backend option %q", key)
+				return fmt.Errorf("cannot parse backend option %q: %w", key, err)
 			}
 		}
 	}

@@ -137,6 +137,7 @@ Here are the standard options specific to sia (Sia Decentralized Cloud).
 #### --sia-api-url
 
 Sia daemon API URL, like http://sia.daemon.host:9980.
+
 Note that siad must run with --disable-api-security to open API port for other hosts (not recommended).
 Keep default if Sia daemon runs on localhost.
 
@@ -148,6 +149,7 @@ Keep default if Sia daemon runs on localhost.
 #### --sia-api-password
 
 Sia Daemon API Password.
+
 Can be found in the apipassword file located in HOME/.sia/ or in the daemon directory.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
@@ -164,6 +166,7 @@ Here are the advanced options specific to sia (Sia Decentralized Cloud).
 #### --sia-user-agent
 
 Siad User Agent
+
 Sia daemon requires the 'Sia-Agent' user agent by default for security
 
 - Config:      user_agent
@@ -175,7 +178,7 @@ Sia daemon requires the 'Sia-Agent' user agent by default for security
 
 This sets the encoding for the backend.
 
-See: the [encoding section in the overview](/overview/#encoding) for more info.
+See the [encoding section in the overview](/overview/#encoding) for more info.
 
 - Config:      encoding
 - Env Var:     RCLONE_SIA_ENCODING

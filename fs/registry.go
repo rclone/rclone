@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 )
@@ -260,7 +259,7 @@ func Find(name string) (*RegInfo, error) {
 			return item, nil
 		}
 	}
-	return nil, errors.Errorf("didn't find backend called %q", name)
+	return nil, fmt.Errorf("didn't find backend called %q", name)
 }
 
 // MustFind looks for an Info object for the type name passed in

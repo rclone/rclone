@@ -1,0 +1,55 @@
+(01)  : test max-delete-path2-force
+
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test delete >50% of remote files
+(05)  : delete-file {path2/}file1.txt
+(06)  : delete-file {path2/}file2.txt
+(07)  : delete-file {path2/}file3.txt
+(08)  : delete-file {path2/}file4.txt
+(09)  : delete-file {path2/}file5.txt
+
+(10)  : test sync should fail due to too many path2 deletes
+(11)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File was deleted                    - file1.txt
+INFO  : - Path2    File was deleted                    - file2.txt
+INFO  : - Path2    File was deleted                    - file3.txt
+INFO  : - Path2    File was deleted                    - file4.txt
+INFO  : - Path2    File was deleted                    - file5.txt
+INFO  : Path2:    5 changes:    0 new,    0 newer,    0 older,    5 deleted
+ERROR : Safety abort: too many deletes (>50%, 5 of 9) on Path2 "{path2/}". Run with --force if desired.
+NOTICE: Bisync aborted. Please try again.
+Bisync error: too many deletes
+(12)  : copy-listings initial-fail
+
+(13)  : test apply force option. sync should run.
+(14)  : bisync force
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File was deleted                    - file1.txt
+INFO  : - Path2    File was deleted                    - file2.txt
+INFO  : - Path2    File was deleted                    - file3.txt
+INFO  : - Path2    File was deleted                    - file4.txt
+INFO  : - Path2    File was deleted                    - file5.txt
+INFO  : Path2:    5 changes:    0 new,    0 newer,    0 older,    5 deleted
+INFO  : Applying changes
+INFO  : - Path1    Queue delete                        - {path1/}file1.txt
+INFO  : - Path1    Queue delete                        - {path1/}file2.txt
+INFO  : - Path1    Queue delete                        - {path1/}file3.txt
+INFO  : - Path1    Queue delete                        - {path1/}file4.txt
+INFO  : - Path1    Queue delete                        - {path1/}file5.txt
+INFO  : -          Do queued deletes on                - Path1
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful

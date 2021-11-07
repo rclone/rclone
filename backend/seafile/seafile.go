@@ -2,6 +2,7 @@ package seafile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/seafile/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -171,14 +171,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		var err error
 		opt.Password, err = obscure.Reveal(opt.Password)
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't decrypt user password")
+			return nil, fmt.Errorf("couldn't decrypt user password: %w", err)
 		}
 	}
 	if opt.LibraryKey != "" {
 		var err error
 		opt.LibraryKey, err = obscure.Reveal(opt.LibraryKey)
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't decrypt library password")
+			return nil, fmt.Errorf("couldn't decrypt library password: %w", err)
 		}
 	}
 
@@ -282,7 +282,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		_, err := f.NewObject(ctx, remote)
 		if err != nil {
-			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
+			if errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, fs.ErrorNotAFile) {
 				// File doesn't exist so return the original f
 				f.rootDirectory = rootDirectory
 				return f, nil
@@ -305,7 +305,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 	u, err := url.Parse(serverURL)
 	if err != nil {
-		return nil, errors.Errorf("invalid server URL %s", serverURL)
+		return nil, fmt.Errorf("invalid server URL %s", serverURL)
 	}
 
 	is2faEnabled, _ := m.Get(config2FA)
@@ -886,7 +886,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// 1- rename source
 	err = srcFs.renameDir(ctx, srcLibraryID, srcPath, tempName)
 	if err != nil {
-		return errors.Wrap(err, "Cannot rename source directory to a temporary name")
+		return fmt.Errorf("Cannot rename source directory to a temporary name: %w", err)
 	}
 
 	// 2- move source to destination
@@ -900,7 +900,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// 3- rename destination back to source name
 	err = f.renameDir(ctx, dstLibraryID, path.Join(dstDir, tempName), dstName)
 	if err != nil {
-		return errors.Wrap(err, "Cannot rename temporary directory to destination name")
+		return fmt.Errorf("Cannot rename temporary directory to destination name: %w", err)
 	}
 
 	return nil

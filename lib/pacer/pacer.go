@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/lib/errors"
+	liberrors "github.com/rclone/rclone/lib/errors"
 )
 
 // State represents the public Pacer state that will be passed to the
@@ -253,7 +253,7 @@ func RetryAfterError(err error, retryAfter time.Duration) error {
 // IsRetryAfter returns true if the error or any of it's Cause's is an error
 // returned by RetryAfterError. It also returns the associated Duration if possible.
 func IsRetryAfter(err error) (retryAfter time.Duration, isRetryAfter bool) {
-	errors.Walk(err, func(err error) bool {
+	liberrors.Walk(err, func(err error) bool {
 		if r, ok := err.(*retryAfterError); ok {
 			retryAfter, isRetryAfter = r.retryAfter, true
 			return true

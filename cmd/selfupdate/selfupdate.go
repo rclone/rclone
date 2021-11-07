@@ -10,6 +10,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -22,7 +23,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/cmount"
 	"github.com/rclone/rclone/fs"
@@ -125,7 +125,7 @@ func GetVersion(ctx context.Context, beta bool, version string) (newVersion, sit
 	if strings.Count(newVersion, ".") == 1 {
 		html, err := downloadFile(ctx, siteURL)
 		if err != nil {
-			return "", siteURL, errors.Wrap(err, "failed to get list of releases")
+			return "", siteURL, fmt.Errorf("failed to get list of releases: %w", err)
 		}
 		reSubver := fmt.Sprintf(`href="\./%s\.\d+/"`, regexp.QuoteMeta(newVersion))
 		allSubvers := regexp.MustCompile(reSubver).FindAllString(string(html), -1)
@@ -154,7 +154,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 
 	newVersion, siteURL, err := GetVersion(ctx, opt.Beta, opt.Version)
 	if err != nil {
-		return errors.Wrap(err, "unable to detect new version")
+		return fmt.Errorf("unable to detect new version: %w", err)
 	}
 
 	oldVersion := fs.Version
@@ -179,7 +179,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 	// Get the current executable path
 	executable, err := os.Executable()
 	if err != nil {
-		return errors.Wrap(err, "unable to find executable")
+		return fmt.Errorf("unable to find executable: %w", err)
 	}
 
 	targetFile := opt.Output
@@ -217,7 +217,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 	// Download the update as a temporary file
 	err = downloadUpdate(ctx, opt.Beta, newVersion, siteURL, newFile, "zip")
 	if err != nil {
-		return errors.Wrap(err, "failed to update rclone")
+		return fmt.Errorf("failed to update rclone: %w", err)
 	}
 
 	err = replaceExecutable(targetFile, newFile, savedFile)
@@ -230,7 +230,7 @@ func InstallUpdate(ctx context.Context, opt *Options) error {
 func installPackage(ctx context.Context, beta bool, version, siteURL, packageFormat string) error {
 	tempFile, err := ioutil.TempFile("", "rclone.*."+packageFormat)
 	if err != nil {
-		return errors.Wrap(err, "unable to write temporary package")
+		return fmt.Errorf("unable to write temporary package: %w", err)
 	}
 	packageFile := tempFile.Name()
 	_ = tempFile.Close()
@@ -262,7 +262,7 @@ func replaceExecutable(targetFile, newFile, savedFile string) error {
 	fileInfo, err := os.Lstat(targetFile)
 	if err == nil {
 		if err = os.Chmod(newFile, fileInfo.Mode()); err != nil {
-			return errors.Wrap(err, "failed to set permission")
+			return fmt.Errorf("failed to set permission: %w", err)
 		}
 	}
 
@@ -361,7 +361,7 @@ func downloadUpdate(ctx context.Context, beta bool, version, siteURL, newFile, p
 
 	if packageFormat == "deb" || packageFormat == "rpm" {
 		if err := ioutil.WriteFile(newFile, archiveBuf, 0644); err != nil {
-			return errors.Wrap(err, "cannot write temporary ."+packageFormat)
+			return fmt.Errorf("cannot write temporary .%s: %w", packageFormat, err)
 		}
 		return nil
 	}

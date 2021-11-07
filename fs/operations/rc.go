@@ -2,6 +2,7 @@ package operations
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -10,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
 )
@@ -140,15 +140,15 @@ func rcAbout(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	doAbout := f.Features().About
 	if doAbout == nil {
-		return nil, errors.Errorf("%v doesn't support about", f)
+		return nil, fmt.Errorf("%v doesn't support about", f)
 	}
 	u, err := doAbout(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "about call failed")
+		return nil, fmt.Errorf("about call failed: %w", err)
 	}
 	err = rc.Reshape(&out, u)
 	if err != nil {
-		return nil, errors.Wrap(err, "about Reshape failed")
+		return nil, fmt.Errorf("about Reshape failed: %w", err)
 	}
 	return out, nil
 }
@@ -469,7 +469,7 @@ func rcFsInfo(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	info := GetFsInfo(f)
 	err = rc.Reshape(&out, info)
 	if err != nil {
-		return nil, errors.Wrap(err, "fsinfo Reshape failed")
+		return nil, fmt.Errorf("fsinfo Reshape failed: %w", err)
 	}
 	return out, nil
 }
@@ -533,7 +533,7 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	doCommand := f.Features().Command
 	if doCommand == nil {
-		return nil, errors.Errorf("%v: doesn't support backend commands", f)
+		return nil, fmt.Errorf("%v: doesn't support backend commands", f)
 	}
 	command, err := in.GetString("command")
 	if err != nil {
@@ -551,7 +551,7 @@ func rcBackend(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	}
 	result, err := doCommand(context.Background(), command, arg, opt)
 	if err != nil {
-		return nil, errors.Wrapf(err, "command %q failed", command)
+		return nil, fmt.Errorf("command %q failed: %w", command, err)
 
 	}
 	out = make(rc.Params)

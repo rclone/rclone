@@ -3,12 +3,11 @@ package march
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"sort"
 	"strings"
 	"sync"
-
-	"github.com/pkg/errors"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/dirtree"
@@ -216,7 +215,7 @@ func (m *March) Run(ctx context.Context) error {
 	wg.Wait()
 
 	if errCount > 1 {
-		return errors.Wrapf(jobError, "march failed with %d error(s): first error", errCount)
+		return fmt.Errorf("march failed with %d error(s): first error: %w", errCount, jobError)
 	}
 	return jobError
 }

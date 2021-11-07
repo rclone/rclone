@@ -8,6 +8,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -21,7 +22,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -117,7 +117,7 @@ func newFsFileAddFilter(remote string) (fs.Fs, string) {
 	f, fileName := NewFsFile(remote)
 	if fileName != "" {
 		if !fi.InActive() {
-			err := errors.Errorf("Can't limit to single files when using filters: %v", remote)
+			err := fmt.Errorf("Can't limit to single files when using filters: %v", remote)
 			err = fs.CountError(err)
 			log.Fatalf(err.Error())
 		}
@@ -478,16 +478,14 @@ func resolveExitCode(err error) {
 		os.Exit(exitcode.Success)
 	}
 
-	_, unwrapped := fserrors.Cause(err)
-
 	switch {
-	case unwrapped == fs.ErrorDirNotFound:
+	case errors.Is(err, fs.ErrorDirNotFound):
 		os.Exit(exitcode.DirNotFound)
-	case unwrapped == fs.ErrorObjectNotFound:
+	case errors.Is(err, fs.ErrorObjectNotFound):
 		os.Exit(exitcode.FileNotFound)
-	case unwrapped == errorUncategorized:
+	case errors.Is(err, errorUncategorized):
 		os.Exit(exitcode.UncategorizedError)
-	case unwrapped == accounting.ErrorMaxTransferLimitReached:
+	case errors.Is(err, accounting.ErrorMaxTransferLimitReached):
 		os.Exit(exitcode.TransferExceeded)
 	case fserrors.ShouldRetry(err):
 		os.Exit(exitcode.RetryError)

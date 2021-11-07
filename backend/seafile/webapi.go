@@ -3,6 +3,7 @@ package seafile
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -11,7 +12,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/seafile/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/readers"
@@ -61,7 +61,7 @@ func getAuthorizationToken(ctx context.Context, srv *rest.Client, user, password
 	_, err := srv.CallJSON(ctx, &opts, &request, &result)
 	if err != nil {
 		// This is only going to be http errors here
-		return "", errors.Wrap(err, "failed to authenticate")
+		return "", fmt.Errorf("failed to authenticate: %w", err)
 	}
 	if result.Errors != nil && len(result.Errors) > 0 {
 		return "", errors.New(strings.Join(result.Errors, ", "))
@@ -94,7 +94,7 @@ func (f *Fs) getServerInfo(ctx context.Context) (account *api.ServerInfo, err er
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
-		return nil, errors.Wrap(err, "failed to get server info")
+		return nil, fmt.Errorf("failed to get server info: %w", err)
 	}
 	return &result, nil
 }
@@ -120,7 +120,7 @@ func (f *Fs) getUserAccountInfo(ctx context.Context) (account *api.AccountInfo, 
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
-		return nil, errors.Wrap(err, "failed to get account info")
+		return nil, fmt.Errorf("failed to get account info: %w", err)
 	}
 	return &result, nil
 }
@@ -147,7 +147,7 @@ func (f *Fs) getLibraries(ctx context.Context) ([]api.Library, error) {
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
-		return nil, errors.Wrap(err, "failed to get libraries")
+		return nil, fmt.Errorf("failed to get libraries: %w", err)
 	}
 	return result, nil
 }
@@ -178,7 +178,7 @@ func (f *Fs) createLibrary(ctx context.Context, libraryName, password string) (l
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
-		return nil, errors.Wrap(err, "failed to create library")
+		return nil, fmt.Errorf("failed to create library: %w", err)
 	}
 	return result, nil
 }
@@ -205,7 +205,7 @@ func (f *Fs) deleteLibrary(ctx context.Context, libraryID string) error {
 				return fs.ErrorPermissionDenied
 			}
 		}
-		return errors.Wrap(err, "failed to delete library")
+		return fmt.Errorf("failed to delete library: %w", err)
 	}
 	return nil
 }
@@ -240,7 +240,7 @@ func (f *Fs) decryptLibrary(ctx context.Context, libraryID, password string) err
 				return nil
 			}
 		}
-		return errors.Wrap(err, "failed to decrypt library")
+		return fmt.Errorf("failed to decrypt library: %w", err)
 	}
 	return nil
 }
@@ -286,7 +286,7 @@ func (f *Fs) getDirectoryEntriesAPIv21(ctx context.Context, libraryID, dirPath s
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
-		return nil, errors.Wrap(err, "failed to get directory contents")
+		return nil, fmt.Errorf("failed to get directory contents: %w", err)
 	}
 
 	// Clean up encoded names
@@ -327,7 +327,7 @@ func (f *Fs) getDirectoryDetails(ctx context.Context, libraryID, dirPath string)
 				return nil, fs.ErrorDirNotFound
 			}
 		}
-		return nil, errors.Wrap(err, "failed to get directory details")
+		return nil, fmt.Errorf("failed to get directory details: %w", err)
 	}
 	result.Name = f.opt.Enc.ToStandardName(result.Name)
 	result.Path = f.opt.Enc.ToStandardPath(result.Path)
@@ -366,7 +366,7 @@ func (f *Fs) createDir(ctx context.Context, libraryID, dirPath string) error {
 				return fs.ErrorPermissionDenied
 			}
 		}
-		return errors.Wrap(err, "failed to create directory")
+		return fmt.Errorf("failed to create directory: %w", err)
 	}
 	return nil
 }
@@ -406,7 +406,7 @@ func (f *Fs) renameDir(ctx context.Context, libraryID, dirPath, newName string) 
 				return fs.ErrorPermissionDenied
 			}
 		}
-		return errors.Wrap(err, "failed to rename directory")
+		return fmt.Errorf("failed to rename directory: %w", err)
 	}
 	return nil
 }
@@ -449,7 +449,7 @@ func (f *Fs) moveDir(ctx context.Context, srcLibraryID, srcDir, srcName, dstLibr
 				return fs.ErrorObjectNotFound
 			}
 		}
-		return errors.Wrap(err, fmt.Sprintf("failed to move directory '%s' from '%s' to '%s'", srcName, srcDir, dstPath))
+		return fmt.Errorf("failed to move directory '%s' from '%s' to '%s': %w", srcName, srcDir, dstPath, err)
 	}
 
 	return nil
@@ -482,7 +482,7 @@ func (f *Fs) deleteDir(ctx context.Context, libraryID, filePath string) error {
 				return fs.ErrorPermissionDenied
 			}
 		}
-		return errors.Wrap(err, "failed to delete directory")
+		return fmt.Errorf("failed to delete directory: %w", err)
 	}
 	return nil
 }
@@ -516,7 +516,7 @@ func (f *Fs) getFileDetails(ctx context.Context, libraryID, filePath string) (*a
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
-		return nil, errors.Wrap(err, "failed to get file details")
+		return nil, fmt.Errorf("failed to get file details: %w", err)
 	}
 	result.Name = f.opt.Enc.ToStandardName(result.Name)
 	result.Parent = f.opt.Enc.ToStandardPath(result.Parent)
@@ -542,7 +542,7 @@ func (f *Fs) deleteFile(ctx context.Context, libraryID, filePath string) error {
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to delete file")
+		return fmt.Errorf("failed to delete file: %w", err)
 	}
 	return nil
 }
@@ -573,7 +573,7 @@ func (f *Fs) getDownloadLink(ctx context.Context, libraryID, filePath string) (s
 				return "", fs.ErrorObjectNotFound
 			}
 		}
-		return "", errors.Wrap(err, "failed to get download link")
+		return "", fmt.Errorf("failed to get download link: %w", err)
 	}
 	return result, nil
 }
@@ -667,7 +667,7 @@ func (f *Fs) getUploadLink(ctx context.Context, libraryID string) (string, error
 				return "", fs.ErrorPermissionDenied
 			}
 		}
-		return "", errors.Wrap(err, "failed to get upload link")
+		return "", fmt.Errorf("failed to get upload link: %w", err)
 	}
 	return result, nil
 }
@@ -684,7 +684,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 	}
 	formReader, contentType, _, err := rest.MultipartUpload(ctx, in, parameters, "file", f.opt.Enc.FromStandardName(filename))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to make multipart upload")
+		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
 	}
 
 	opts := rest.Opts{
@@ -711,7 +711,7 @@ func (f *Fs) upload(ctx context.Context, in io.Reader, uploadLink, filePath stri
 				return nil, ErrorInternalDuringUpload
 			}
 		}
-		return nil, errors.Wrap(err, "failed to upload file")
+		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}
 	if len(result) > 0 {
 		result[0].Parent = f.opt.Enc.ToStandardPath(result[0].Parent)
@@ -750,7 +750,7 @@ func (f *Fs) listShareLinks(ctx context.Context, libraryID, remote string) ([]ap
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
-		return nil, errors.Wrap(err, "failed to list shared links")
+		return nil, fmt.Errorf("failed to list shared links: %w", err)
 	}
 	return result, nil
 }
@@ -788,7 +788,7 @@ func (f *Fs) createShareLink(ctx context.Context, libraryID, remote string) (*ap
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
-		return nil, errors.Wrap(err, "failed to create a shared link")
+		return nil, fmt.Errorf("failed to create a shared link: %w", err)
 	}
 	return result, nil
 }
@@ -830,7 +830,7 @@ func (f *Fs) copyFile(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, 
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to copy file %s:'%s' to %s:'%s'", srcLibraryID, srcPath, dstLibraryID, dstPath))
+		return nil, fmt.Errorf("failed to copy file %s:'%s' to %s:'%s': %w", srcLibraryID, srcPath, dstLibraryID, dstPath, err)
 	}
 	return f.decodeFileInfo(result), nil
 }
@@ -872,7 +872,7 @@ func (f *Fs) moveFile(ctx context.Context, srcLibraryID, srcPath, dstLibraryID, 
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to move file %s:'%s' to %s:'%s'", srcLibraryID, srcPath, dstLibraryID, dstPath))
+		return nil, fmt.Errorf("failed to move file %s:'%s' to %s:'%s': %w", srcLibraryID, srcPath, dstLibraryID, dstPath, err)
 	}
 	return f.decodeFileInfo(result), nil
 }
@@ -912,7 +912,7 @@ func (f *Fs) renameFile(ctx context.Context, libraryID, filePath, newname string
 				return nil, fs.ErrorObjectNotFound
 			}
 		}
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to rename file '%s' to '%s'", filePath, newname))
+		return nil, fmt.Errorf("failed to rename file '%s' to '%s': %w", filePath, newname, err)
 	}
 	return f.decodeFileInfo(result), nil
 }
@@ -949,7 +949,7 @@ func (f *Fs) emptyLibraryTrash(ctx context.Context, libraryID string) error {
 				return fs.ErrorObjectNotFound
 			}
 		}
-		return errors.Wrap(err, "failed empty the library trash")
+		return fmt.Errorf("failed empty the library trash: %w", err)
 	}
 	return nil
 }
@@ -991,7 +991,7 @@ func (f *Fs) getDirectoryEntriesAPIv2(ctx context.Context, libraryID, dirPath st
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
-		return nil, errors.Wrap(err, "failed to get directory contents")
+		return nil, fmt.Errorf("failed to get directory contents: %w", err)
 	}
 
 	// Clean up encoded names
@@ -1038,7 +1038,7 @@ func (f *Fs) copyFileAPIv2(ctx context.Context, srcLibraryID, srcPath, dstLibrar
 				return nil, fs.ErrorPermissionDenied
 			}
 		}
-		return nil, errors.Wrap(err, fmt.Sprintf("failed to copy file %s:'%s' to %s:'%s'", srcLibraryID, srcPath, dstLibraryID, dstPath))
+		return nil, fmt.Errorf("failed to copy file %s:'%s' to %s:'%s': %w", srcLibraryID, srcPath, dstLibraryID, dstPath, err)
 	}
 	err = rest.DecodeJSON(resp, &result)
 	if err != nil {
@@ -1090,7 +1090,7 @@ func (f *Fs) renameFileAPIv2(ctx context.Context, libraryID, filePath, newname s
 				return fs.ErrorObjectNotFound
 			}
 		}
-		return errors.Wrap(err, "failed to rename file")
+		return fmt.Errorf("failed to rename file: %w", err)
 	}
 	return nil
 }

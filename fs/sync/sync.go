@@ -3,6 +3,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"sort"
@@ -10,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -645,7 +645,7 @@ func parseTrackRenamesStrategy(strategies string) (strategy trackRenamesStrategy
 		case "size":
 			// ignore
 		default:
-			return strategy, errors.Errorf("unknown track renames strategy %q", s)
+			return strategy, fmt.Errorf("unknown track renames strategy %q", s)
 		}
 	}
 	return strategy, nil

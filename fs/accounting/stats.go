@@ -24,6 +24,8 @@ const (
 var MaxCompletedTransfers = 100
 
 // StatsInfo accounts all transfers
+// N.B.: if this struct is modified, please remember to also update sum() function in stats_groups
+// to correctly count the updated fields
 type StatsInfo struct {
 	mu                sync.RWMutex
 	ctx               context.Context

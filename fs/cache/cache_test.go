@@ -154,7 +154,7 @@ func TestPin(t *testing.T) {
 	cleanup, create := mockNewFs(t)
 	defer cleanup()
 
-	// Test pinning and unpinning non existent
+	// Test pinning and unpinning non-existent
 	f := mockfs.NewFs(context.Background(), "mock", "/alien")
 	Pin(f)
 	Unpin(f)

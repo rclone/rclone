@@ -2,6 +2,7 @@ package fserrors
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -11,9 +12,32 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
+
+// withMessage wraps an error with a message
+//
+// This is for backwards compatibility with the now removed github.com/pkg/errors
+type withMessage struct {
+	cause error
+	msg   string
+}
+
+func (w *withMessage) Error() string { return w.msg + ": " + w.cause.Error() }
+func (w *withMessage) Cause() error  { return w.cause }
+
+// wrap returns an error annotating err with a stack trace
+// at the point Wrap is called, and the supplied message.
+// If err is nil, Wrap returns nil.
+func wrap(err error, message string) error {
+	if err == nil {
+		return nil
+	}
+	return &withMessage{
+		cause: err,
+		msg:   message,
+	}
+}
 
 var errUseOfClosedNetworkConnection = errors.New("use of closed network connection")
 
@@ -94,8 +118,8 @@ func TestCause(t *testing.T) {
 	}{
 		{nil, false, nil},
 		{errPotato, false, errPotato},
-		{errors.Wrap(errPotato, "potato"), false, errPotato},
-		{errors.Wrap(errors.Wrap(errPotato, "potato2"), "potato"), false, errPotato},
+		{fmt.Errorf("potato: %w", errPotato), false, errPotato},
+		{fmt.Errorf("potato2: %w", wrap(errPotato, "potato")), false, errPotato},
 		{errUseOfClosedNetworkConnection, false, errUseOfClosedNetworkConnection},
 		{makeNetErr(syscall.EAGAIN), true, syscall.EAGAIN},
 		{makeNetErr(syscall.Errno(123123123)), false, syscall.Errno(123123123)},
@@ -124,7 +148,7 @@ func TestShouldRetry(t *testing.T) {
 	}{
 		{nil, false},
 		{errors.New("potato"), false},
-		{errors.Wrap(errUseOfClosedNetworkConnection, "connection"), true},
+		{fmt.Errorf("connection: %w", errUseOfClosedNetworkConnection), true},
 		{io.EOF, true},
 		{io.ErrUnexpectedEOF, true},
 		{makeNetErr(syscall.EAGAIN), true},
@@ -133,7 +157,7 @@ func TestShouldRetry(t *testing.T) {
 		{&url.Error{Op: "post", URL: "/", Err: errUseOfClosedNetworkConnection}, true},
 		{&url.Error{Op: "post", URL: "/", Err: fmt.Errorf("net/http: HTTP/1.x transport connection broken: %v", fmt.Errorf("http: ContentLength=%d with Body length %d", 100663336, 99590598))}, true},
 		{
-			errors.Wrap(&url.Error{
+			wrap(&url.Error{
 				Op:  "post",
 				URL: "http://localhost/",
 				Err: makeNetErr(syscall.EPIPE),
@@ -141,7 +165,7 @@ func TestShouldRetry(t *testing.T) {
 			true,
 		},
 		{
-			errors.Wrap(&url.Error{
+			wrap(&url.Error{
 				Op:  "post",
 				URL: "http://localhost/",
 				Err: makeNetErr(syscall.Errno(123123123)),
@@ -166,7 +190,7 @@ func TestRetryAfter(t *testing.T) {
 	assert.Contains(t, e.Error(), "try again after")
 
 	t0 := time.Now()
-	err := errors.Wrap(ErrorRetryAfter(t0), "potato")
+	err := fmt.Errorf("potato: %w", ErrorRetryAfter(t0))
 	assert.Equal(t, t0, RetryAfterErrorTime(err))
 	assert.True(t, IsRetryAfterError(err))
 	assert.Contains(t, e.Error(), "try again after")

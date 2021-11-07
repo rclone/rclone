@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/base32"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
@@ -637,7 +637,7 @@ func (r *randomSource) Read(p []byte) (n int, err error) {
 func (r *randomSource) Write(p []byte) (n int, err error) {
 	for i := range p {
 		if p[i] != r.next() {
-			return 0, errors.Errorf("Error in stream at %d", r.counter)
+			return 0, fmt.Errorf("Error in stream at %d", r.counter)
 		}
 	}
 	return len(p), nil

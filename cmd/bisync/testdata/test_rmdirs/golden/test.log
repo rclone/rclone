@@ -1,0 +1,50 @@
+(01)  : test rmdirs
+
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test 1. delete path1 subdir file
+(05)  : delete-file {path1/}subdir/file20.txt
+
+(06)  : test 2. run bisync without remove-empty-dirs
+(07)  : bisync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File was deleted                    - subdir/file20.txt
+INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Path2 checking for diffs
+INFO  : Applying changes
+INFO  : - Path2    Queue delete                        - {path2/}subdir/file20.txt
+INFO  : -          Do queued deletes on                - Path2
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(08)  : test 3. confirm the subdir still exists on both paths
+(09)  : list-dirs {path1/}
+subdir/
+(10)  : list-dirs {path2/}
+subdir/
+
+(11)  : test 4. run bisync with remove-empty-dirs
+(12)  : bisync remove-empty-dirs
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Removing empty directories
+INFO  : subdir: Removing directory
+INFO  : subdir: Removing directory
+INFO  : Bisync successful
+
+(13)  : test 5. confirm the subdir has been removed on both paths
+(14)  : list-dirs {path1/}
+(15)  : list-dirs {path2/}

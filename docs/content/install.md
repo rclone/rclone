@@ -48,12 +48,12 @@ Copy binary file
     sudo cp rclone /usr/bin/
     sudo chown root:root /usr/bin/rclone
     sudo chmod 755 /usr/bin/rclone
-    
+
 Install manpage
 
     sudo mkdir -p /usr/local/share/man/man1
     sudo cp rclone.1 /usr/local/share/man/man1/
-    sudo mandb 
+    sudo mandb
 
 Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
@@ -229,7 +229,7 @@ Instructions
 
   1. `git clone https://github.com/stefangweichinger/ansible-rclone.git` into your local roles-directory
   2. add the role to the hosts you want rclone installed to:
-    
+
 ```
     - hosts: rclone-hosts
       roles:
@@ -346,7 +346,7 @@ your rclone command, as an alternative to scheduled task configured to run at st
 
 ##### Mount command built-in service integration ####
 
-For mount commands, Rclone has a built-in Windows service integration via the third party
+For mount commands, Rclone has a built-in Windows service integration via the third-party
 WinFsp library it uses. Registering as a regular Windows service easy, as you just have to
 execute the built-in PowerShell command `New-Service` (requires administrative privileges).
 
@@ -366,9 +366,9 @@ Windows standard methods for managing network drives. This is currently not
 officially supported by Rclone, but with WinFsp version 2019.3 B2 / v1.5B2 or later
 it should be possible through path rewriting as described [here](https://github.com/rclone/rclone/issues/3340).
 
-##### Third party service integration ####
+##### Third-party service integration #####
 
-To Windows service running any rclone command, the excellent third party utility
+To Windows service running any rclone command, the excellent third-party utility
 [NSSM](http://nssm.cc), the "Non-Sucking Service Manager", can be used.
 It includes some advanced features such as adjusting process periority, defining
 process environment variables, redirect to file anything written to stdout, and

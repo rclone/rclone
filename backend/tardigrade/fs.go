@@ -6,13 +6,13 @@ package tardigrade
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -64,12 +64,12 @@ func init() {
 
 				access, err := uplink.RequestAccessWithPassphrase(context.TODO(), satellite, apiKey, passphrase)
 				if err != nil {
-					return nil, errors.Wrap(err, "couldn't create access grant")
+					return nil, fmt.Errorf("couldn't create access grant: %w", err)
 				}
 
 				serializedAccess, err := access.Serialize()
 				if err != nil {
-					return nil, errors.Wrap(err, "couldn't serialize access grant")
+					return nil, fmt.Errorf("couldn't serialize access grant: %w", err)
 				}
 				m.Set("satellite_address", satellite)
 				m.Set("access_grant", serializedAccess)
@@ -78,7 +78,7 @@ func init() {
 				config.FileDeleteKey(name, "api_key")
 				config.FileDeleteKey(name, "passphrase")
 			} else {
-				return nil, errors.Errorf("invalid provider type: %s", provider)
+				return nil, fmt.Errorf("invalid provider type: %s", provider)
 			}
 			return nil, nil
 		},
@@ -188,24 +188,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs,
 	if f.opts.Access != "" {
 		access, err = uplink.ParseAccess(f.opts.Access)
 		if err != nil {
-			return nil, errors.Wrap(err, "tardigrade: access")
+			return nil, fmt.Errorf("tardigrade: access: %w", err)
 		}
 	}
 
 	if access == nil && f.opts.SatelliteAddress != "" && f.opts.APIKey != "" && f.opts.Passphrase != "" {
 		access, err = uplink.RequestAccessWithPassphrase(ctx, f.opts.SatelliteAddress, f.opts.APIKey, f.opts.Passphrase)
 		if err != nil {
-			return nil, errors.Wrap(err, "tardigrade: access")
+			return nil, fmt.Errorf("tardigrade: access: %w", err)
 		}
 
 		serializedAccess, err := access.Serialize()
 		if err != nil {
-			return nil, errors.Wrap(err, "tardigrade: access")
+			return nil, fmt.Errorf("tardigrade: access: %w", err)
 		}
 
 		err = config.SetValueAndSave(f.name, "access_grant", serializedAccess)
 		if err != nil {
-			return nil, errors.Wrap(err, "tardigrade: access")
+			return nil, fmt.Errorf("tardigrade: access: %w", err)
 		}
 	}
 
@@ -237,7 +237,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs,
 		if bucketName != "" && bucketPath != "" {
 			_, err = project.StatBucket(ctx, bucketName)
 			if err != nil {
-				return f, errors.Wrap(err, "tardigrade: bucket")
+				return f, fmt.Errorf("tardigrade: bucket: %w", err)
 			}
 
 			object, err := project.StatObject(ctx, bucketName, bucketPath)
@@ -274,7 +274,7 @@ func (f *Fs) connect(ctx context.Context) (project *uplink.Project, err error) {
 
 	project, err = cfg.OpenProject(ctx, f.access)
 	if err != nil {
-		return nil, errors.Wrap(err, "tardigrade: project")
+		return nil, fmt.Errorf("tardigrade: project: %w", err)
 	}
 
 	return

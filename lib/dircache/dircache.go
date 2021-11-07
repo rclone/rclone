@@ -7,12 +7,12 @@ package dircache
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"strings"
 	"sync"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -241,7 +241,7 @@ func (dc *DirCache) _findDir(ctx context.Context, path string, create bool) (pat
 		if create {
 			pathID, err = dc.fs.CreateDir(ctx, parentPathID, leaf)
 			if err != nil {
-				return "", errors.Wrap(err, "failed to make directory")
+				return "", fmt.Errorf("failed to make directory: %w", err)
 			}
 		} else {
 			return "", fs.ErrorDirNotFound

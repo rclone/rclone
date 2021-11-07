@@ -127,7 +127,7 @@ rclone dedupe [mode] remote:path [flags]
 
 ```
       --by-hash              Find indentical hashes rather than names
-      --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|largest|smallest|rename. (default "interactive")
+      --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|largest|smallest|rename (default "interactive")
   -h, --help                 help for dedupe
 ```
 

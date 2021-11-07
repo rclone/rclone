@@ -55,7 +55,7 @@ This website may use social sharing buttons which help share web content directl
 
 ## Use of Cloud API User Data ##
 
-Rclone is a command line program to manage files on cloud storage. Its sole purpose is to access and manipulate user content in the [supported](/overview/) cloud storage systems from a local machine of the end user. For accessing the user content via the cloud provider API, Rclone uses authentication mechanisms, such as OAuth or HTTP Cookies, depending on the particular cloud provider offerings. Use of these authentication mechanisms and user data is governed by the privacy policies mentioned in the [Resources & Further Information](/privacy/#resources-further-information) section and followed by the privacy policy of Rclone.
+Rclone is a command-line program to manage files on cloud storage. Its sole purpose is to access and manipulate user content in the [supported](/overview/) cloud storage systems from a local machine of the end user. For accessing the user content via the cloud provider API, Rclone uses authentication mechanisms, such as OAuth or HTTP Cookies, depending on the particular cloud provider offerings. Use of these authentication mechanisms and user data is governed by the privacy policies mentioned in the [Resources & Further Information](/privacy/#resources-further-information) section and followed by the privacy policy of Rclone.
 
 * Rclone provides the end user with access to their files available in a storage system associated by the authentication credentials via the publicly exposed API of the storage system.
 * Rclone allows storing the authentication credentials on the user machine in the local configuration file.

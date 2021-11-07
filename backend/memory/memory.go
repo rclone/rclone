@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -586,7 +585,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	bucket, bucketPath := o.split()
 	data, err := ioutil.ReadAll(in)
 	if err != nil {
-		return errors.Wrap(err, "failed to update memory object")
+		return fmt.Errorf("failed to update memory object: %w", err)
 	}
 	o.od = &objectData{
 		data:     data,

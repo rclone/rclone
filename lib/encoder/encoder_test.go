@@ -266,54 +266,111 @@ const oneDrive = (Standard |
 	EncodeRightPeriod)
 
 var benchTests = []struct {
-	in  string
-	out string
+	in     string
+	outOld string
+	outNew string
 }{
-	{"", ""},
-	{"abc 123", "abc 123"},
-	{`\*<>?:|#%".~`, `＼＊＜＞？：｜＃％＂.~`},
-	{`\*<>?:|#%".~/\*<>?:|#%".~`, `＼＊＜＞？：｜＃％＂.~/＼＊＜＞？：｜＃％＂.~`},
-	{" leading space", " leading space"},
-	{"~leading tilde", "～leading tilde"},
-	{"trailing dot.", "trailing dot．"},
-	{" leading space/ leading space/ leading space", " leading space/ leading space/ leading space"},
-	{"~leading tilde/~leading tilde/~leading tilde", "～leading tilde/～leading tilde/～leading tilde"},
-	{"leading tilde/~leading tilde", "leading tilde/～leading tilde"},
-	{"trailing dot./trailing dot./trailing dot.", "trailing dot．/trailing dot．/trailing dot．"},
+	{
+		"",
+		"",
+		"",
+	},
+	{
+		"abc 123",
+		"abc 123",
+		"abc 123",
+	},
+	{
+		`\*<>?:|#%".~`,
+		`＼＊＜＞？：｜＃％＂.~`,
+		`＼＊＜＞？：｜＃％＂.~`,
+	},
+	{
+		`\*<>?:|#%".~/\*<>?:|#%".~`,
+		`＼＊＜＞？：｜＃％＂.~/＼＊＜＞？：｜＃％＂.~`,
+		`＼＊＜＞？：｜＃％＂.~／＼＊＜＞？：｜＃％＂.~`,
+	},
+	{
+		" leading space",
+		" leading space",
+		" leading space",
+	},
+	{
+		"~leading tilde",
+		"～leading tilde",
+		"～leading tilde",
+	},
+	{
+		"trailing dot.",
+		"trailing dot．",
+		"trailing dot．",
+	},
+	{
+		" leading space/ leading space/ leading space",
+		" leading space/ leading space/ leading space",
+		" leading space／ leading space／ leading space",
+	},
+	{
+		"~leading tilde/~leading tilde/~leading tilde",
+		"～leading tilde/～leading tilde/～leading tilde",
+		"～leading tilde／~leading tilde／~leading tilde",
+	},
+	{
+		"leading tilde/~leading tilde",
+		"leading tilde/～leading tilde",
+		"leading tilde／~leading tilde",
+	},
+	{
+		"trailing dot./trailing dot./trailing dot.",
+		"trailing dot．/trailing dot．/trailing dot．",
+		"trailing dot.／trailing dot.／trailing dot．",
+	},
 }
 
-func benchReplace(b *testing.B, f func(string) string) {
+func benchReplace(b *testing.B, f func(string) string, old bool) {
 	for range make([]struct{}, b.N) {
 		for _, test := range benchTests {
 			got := f(test.in)
-			if got != test.out {
-				b.Errorf("Encode(%q) want %q got %q", test.in, test.out, got)
+			out := test.outNew
+			if old {
+				out = test.outOld
+			}
+			if got != out {
+				b.Errorf("Encode(%q) want %q got %q", test.in, out, got)
 			}
 		}
 	}
 }
 
-func benchRestore(b *testing.B, f func(string) string) {
+func benchRestore(b *testing.B, f func(string) string, old bool) {
 	for range make([]struct{}, b.N) {
 		for _, test := range benchTests {
-			got := f(test.out)
+			out := test.outNew
+			if old {
+				out = test.outOld
+			}
+			got := f(out)
 			if got != test.in {
-				b.Errorf("Decode(%q) want %q got %q", got, test.in, got)
+				b.Errorf("Decode(%q) want %q got %q", out, test.in, got)
 			}
 		}
 	}
 }
+
 func BenchmarkOneDriveReplaceNew(b *testing.B) {
-	benchReplace(b, oneDrive.Encode)
+	benchReplace(b, oneDrive.Encode, false)
 }
+
 func BenchmarkOneDriveReplaceOld(b *testing.B) {
-	benchReplace(b, replaceReservedChars)
+	benchReplace(b, replaceReservedChars, true)
 }
+
 func BenchmarkOneDriveRestoreNew(b *testing.B) {
-	benchRestore(b, oneDrive.Decode)
+	benchRestore(b, oneDrive.Decode, false)
 }
+
 func BenchmarkOneDriveRestoreOld(b *testing.B) {
-	benchRestore(b, restoreReservedChars)
+	benchRestore(b, restoreReservedChars, true)
 }
 
 var (

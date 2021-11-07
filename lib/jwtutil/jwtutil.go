@@ -6,13 +6,14 @@ import (
 	"crypto/rsa"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -34,11 +35,11 @@ func RandomHex(n int) (string, error) {
 func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryParams map[string]string, privateKey *rsa.PrivateKey, m configmap.Mapper, client *http.Client) (err error) {
 	payload, err := jws.Encode(header, claims, privateKey)
 	if err != nil {
-		return errors.Wrap(err, "jwtutil: failed to encode payload")
+		return fmt.Errorf("jwtutil: failed to encode payload: %w", err)
 	}
 	req, err := http.NewRequest("POST", claims.Aud, nil)
 	if err != nil {
-		return errors.Wrap(err, "jwtutil: failed to create new request")
+		return fmt.Errorf("jwtutil: failed to create new request: %w", err)
 	}
 	q := req.URL.Query()
 	q.Add("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
@@ -50,13 +51,13 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 
 	req, err = http.NewRequest("POST", claims.Aud, bytes.NewBuffer([]byte(queryString)))
 	if err != nil {
-		return errors.Wrap(err, "jwtutil: failed to create new request")
+		return fmt.Errorf("jwtutil: failed to create new request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "jwtutil: failed making auth request")
+		return fmt.Errorf("jwtutil: failed making auth request: %w", err)
 	}
 
 	s, err := bodyToString(resp.Body)
@@ -65,12 +66,12 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 	}
 	if resp.StatusCode != 200 {
 		err = errors.New(resp.Status)
-		return errors.Wrap(err, "jwtutil: failed making auth request")
+		return fmt.Errorf("jwtutil: failed making auth request: %w", err)
 	}
 	defer func() {
 		deferedErr := resp.Body.Close()
 		if deferedErr != nil {
-			err = errors.Wrap(err, "jwtutil: failed to close resp.Body")
+			err = fmt.Errorf("jwtutil: failed to close resp.Body: %w", err)
 		}
 	}()
 
@@ -80,7 +81,7 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 		err = errors.New("No AccessToken in Response")
 	}
 	if err != nil {
-		return errors.Wrap(err, "jwtutil: failed to get token")
+		return fmt.Errorf("jwtutil: failed to get token: %w", err)
 	}
 	token := &oauth2.Token{
 		AccessToken: result.AccessToken,

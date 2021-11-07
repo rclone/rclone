@@ -3,10 +3,10 @@ package list
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
 )
@@ -67,7 +67,7 @@ func filterAndSortDir(ctx context.Context, entries fs.DirEntries, includeAll boo
 				}
 			}
 		default:
-			return nil, errors.Errorf("unknown object type %T", entry)
+			return nil, fmt.Errorf("unknown object type %T", entry)
 		}
 		// check remote name belongs in this directory
 		remote := entry.Remote()

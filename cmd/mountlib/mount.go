@@ -2,6 +2,7 @@ package mountlib
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"runtime"
@@ -21,7 +22,6 @@ import (
 	"github.com/rclone/rclone/vfs/vfsflags"
 
 	sysdnotify "github.com/iguanesolutions/go-systemd/v5/notify"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -248,7 +248,7 @@ func (m *MountPoint) Mount() (daemon *os.Process, err error) {
 
 	m.ErrChan, m.UnmountFn, err = m.MountFn(m.VFS, m.MountPoint, &m.MountOpt)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to mount FUSE fs")
+		return nil, fmt.Errorf("failed to mount FUSE fs: %w", err)
 	}
 	return nil, nil
 }
@@ -277,7 +277,7 @@ func (m *MountPoint) Wait() error {
 
 	// Notify systemd
 	if err := sysdnotify.Ready(); err != nil {
-		return errors.Wrap(err, "failed to notify systemd")
+		return fmt.Errorf("failed to notify systemd: %w", err)
 	}
 
 	// Reload VFS cache on SIGHUP
@@ -305,7 +305,7 @@ func (m *MountPoint) Wait() error {
 	finalise()
 
 	if err != nil {
-		return errors.Wrap(err, "failed to umount FUSE fs")
+		return fmt.Errorf("failed to umount FUSE fs: %w", err)
 	}
 	return nil
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
 	"github.com/rclone/rclone/fs"
@@ -93,7 +92,7 @@ If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
 When used without --recursive the Path will always be the same as Name.
 
-If the directory is a bucket in a bucket based backend, then
+If the directory is a bucket in a bucket-based backend, then
 "IsBucket" will be set to true. This key won't be present unless it is
 "true".
 
@@ -125,11 +124,11 @@ can be processed line by line as each item is written one to a line.
 				}
 				out, err := json.MarshalIndent(item, "", "\t")
 				if err != nil {
-					return errors.Wrap(err, "failed to marshal list object")
+					return fmt.Errorf("failed to marshal list object: %w", err)
 				}
 				_, err = os.Stdout.Write(out)
 				if err != nil {
-					return errors.Wrap(err, "failed to write to output")
+					return fmt.Errorf("failed to write to output: %w", err)
 				}
 				fmt.Println()
 			} else {
@@ -138,7 +137,7 @@ can be processed line by line as each item is written one to a line.
 				err := operations.ListJSON(context.Background(), fsrc, remote, &opt, func(item *operations.ListJSONItem) error {
 					out, err := json.Marshal(item)
 					if err != nil {
-						return errors.Wrap(err, "failed to marshal list object")
+						return fmt.Errorf("failed to marshal list object: %w", err)
 					}
 					if first {
 						first = false
@@ -147,7 +146,7 @@ can be processed line by line as each item is written one to a line.
 					}
 					_, err = os.Stdout.Write(out)
 					if err != nil {
-						return errors.Wrap(err, "failed to write to output")
+						return fmt.Errorf("failed to write to output: %w", err)
 					}
 					return nil
 				})

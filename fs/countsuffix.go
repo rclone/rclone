@@ -2,13 +2,12 @@ package fs
 
 // CountSuffix is parsed by flag with k/M/G decimal suffixes
 import (
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // CountSuffix is an int64 with a friendly way of printing setting
@@ -138,7 +137,7 @@ func (x *CountSuffix) Set(s string) error {
 		}
 	default:
 		if multiplierFound, multiplier = x.multiplierFromSymbol(suffix); !multiplierFound {
-			return errors.Errorf("bad suffix %q", suffix)
+			return fmt.Errorf("bad suffix %q", suffix)
 		}
 	}
 	s = s[:len(s)-suffixLen]
@@ -147,7 +146,7 @@ func (x *CountSuffix) Set(s string) error {
 		return err
 	}
 	if value < 0 {
-		return errors.Errorf("size can't be negative %q", s)
+		return fmt.Errorf("size can't be negative %q", s)
 	}
 	value *= multiplier
 	*x = CountSuffix(value)

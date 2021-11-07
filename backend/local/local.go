@@ -4,6 +4,7 @@ package local
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,7 +17,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -432,7 +432,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	fd, err := os.Open(fsDirPath)
 	if err != nil {
 		isPerm := os.IsPermission(err)
-		err = errors.Wrapf(err, "failed to open directory %q", dir)
+		err = fmt.Errorf("failed to open directory %q: %w", dir, err)
 		fs.Errorf(dir, "%v", err)
 		if isPerm {
 			_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(err))
@@ -443,7 +443,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	defer func() {
 		cerr := fd.Close()
 		if cerr != nil && err == nil {
-			err = errors.Wrapf(cerr, "failed to close directory %q:", dir)
+			err = fmt.Errorf("failed to close directory %q:: %w", dir, cerr)
 		}
 	}()
 
@@ -473,7 +473,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 						continue
 					}
 					if fierr != nil {
-						err = errors.Wrapf(err, "failed to read directory %q", namepath)
+						err = fmt.Errorf("failed to read directory %q: %w", namepath, err)
 						fs.Errorf(dir, "%v", fierr)
 						_ = accounting.Stats(ctx).Error(fserrors.NoRetryError(fierr)) // fail the sync
 						continue
@@ -483,7 +483,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			}
 		}
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to read directory entry")
+			return nil, fmt.Errorf("failed to read directory entry: %w", err)
 		}
 
 		for _, fi := range fis {
@@ -496,7 +496,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				fi, err = os.Stat(localPath)
 				if os.IsNotExist(err) || isCircularSymlinkError(err) {
 					// Skip bad symlinks and circular symlinks
-					err = fserrors.NoRetryError(errors.Wrap(err, "symlink"))
+					err = fserrors.NoRetryError(fmt.Errorf("symlink: %w", err))
 					fs.Errorf(newRemote, "Listing error: %v", err)
 					err = accounting.Stats(ctx).Error(err)
 					continue
@@ -672,7 +672,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		return err
 	}
 	if !fi.Mode().IsDir() {
-		return errors.Errorf("can't purge non directory: %q", dir)
+		return fmt.Errorf("can't purge non directory: %q", dir)
 	}
 	return os.RemoveAll(dir)
 }
@@ -866,12 +866,12 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 	err := o.lstat()
 	var changed bool
 	if err != nil {
-		if os.IsNotExist(errors.Cause(err)) {
+		if errors.Is(err, os.ErrNotExist) {
 			// If file not found then we assume any accumulated
 			// hashes are OK - this will error on Open
 			changed = true
 		} else {
-			return "", errors.Wrap(err, "hash: failed to stat")
+			return "", fmt.Errorf("hash: failed to stat: %w", err)
 		}
 	} else {
 		o.fs.objectMetaMu.RLock()
@@ -900,16 +900,16 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 			in = readers.NewLimitedReadCloser(in, o.size)
 		}
 		if err != nil {
-			return "", errors.Wrap(err, "hash: failed to open")
+			return "", fmt.Errorf("hash: failed to open: %w", err)
 		}
 		var hashes map[hash.Type]string
 		hashes, err = hash.StreamTypes(in, hash.NewHashSet(r))
 		closeErr := in.Close()
 		if err != nil {
-			return "", errors.Wrap(err, "hash: failed to read")
+			return "", fmt.Errorf("hash: failed to read: %w", err)
 		}
 		if closeErr != nil {
-			return "", errors.Wrap(closeErr, "hash: failed to close")
+			return "", fmt.Errorf("hash: failed to close: %w", closeErr)
 		}
 		hashValue = hashes[r]
 		o.fs.objectMetaMu.Lock()
@@ -990,17 +990,17 @@ func (file *localOpenFile) Read(p []byte) (n int, err error) {
 		// Check if file has the same size and modTime
 		fi, err := file.fd.Stat()
 		if err != nil {
-			return 0, errors.Wrap(err, "can't read status of source file while transferring")
+			return 0, fmt.Errorf("can't read status of source file while transferring: %w", err)
 		}
 		file.o.fs.objectMetaMu.RLock()
 		oldtime := file.o.modTime
 		oldsize := file.o.size
 		file.o.fs.objectMetaMu.RUnlock()
 		if oldsize != fi.Size() {
-			return 0, fserrors.NoLowLevelRetryError(errors.Errorf("can't copy - source file is being updated (size changed from %d to %d)", oldsize, fi.Size()))
+			return 0, fserrors.NoLowLevelRetryError(fmt.Errorf("can't copy - source file is being updated (size changed from %d to %d)", oldsize, fi.Size()))
 		}
 		if !oldtime.Equal(fi.ModTime()) {
-			return 0, fserrors.NoLowLevelRetryError(errors.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", oldtime, fi.ModTime()))
+			return 0, fserrors.NoLowLevelRetryError(fmt.Errorf("can't copy - source file is being updated (mod time changed from %v to %v)", oldtime, fi.ModTime()))
 		}
 	}
 

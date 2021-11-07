@@ -8,6 +8,7 @@ package qingstor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -285,7 +285,7 @@ func qsServiceConnection(ctx context.Context, opt *Options) (*qs.Service, error)
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	return nil
 }
@@ -300,7 +300,7 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 
 func checkUploadCutoff(cs fs.SizeSuffix) error {
 	if cs > maxUploadCutoff {
-		return errors.Errorf("%s is greater than %s", cs, maxUploadCutoff)
+		return fmt.Errorf("%s is greater than %s", cs, maxUploadCutoff)
 	}
 	return nil
 }
@@ -329,11 +329,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "qingstor: chunk size")
+		return nil, fmt.Errorf("qingstor: chunk size: %w", err)
 	}
 	err = checkUploadCutoff(opt.UploadCutoff)
 	if err != nil {
-		return nil, errors.Wrap(err, "qingstor: upload cutoff")
+		return nil, fmt.Errorf("qingstor: upload cutoff: %w", err)
 	}
 	svc, err := qsServiceConnection(ctx, opt)
 	if err != nil {
@@ -884,7 +884,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
 		var resp *qs.ListMultipartUploadsOutput
 		resp, err = bucketInit.ListMultipartUploads(&req)
 		if err != nil {
-			return errors.Wrap(err, "clean up bucket list multipart uploads")
+			return fmt.Errorf("clean up bucket list multipart uploads: %w", err)
 		}
 		for _, upload := range resp.Uploads {
 			if upload.Created != nil && upload.Key != nil && upload.UploadID != nil {
@@ -896,7 +896,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
 					}
 					_, abortErr := bucketInit.AbortMultipartUpload(*upload.Key, &req)
 					if abortErr != nil {
-						err = errors.Wrapf(abortErr, "failed to remove multipart upload for %q", *upload.Key)
+						err = fmt.Errorf("failed to remove multipart upload for %q: %w", *upload.Key, abortErr)
 						fs.Errorf(f, "%v", err)
 					}
 				} else {

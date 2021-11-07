@@ -3,13 +3,12 @@ package fs
 // SizeSuffix is parsed by flag with K/M/G binary suffixes
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // SizeSuffix is an int64 with a friendly way of printing setting
@@ -153,7 +152,7 @@ func (x *SizeSuffix) Set(s string) error {
 			suffix = s[len(s)-3]
 			suffixLen = 3
 			if multiplierFound, multiplier = x.multiplierFromSymbol(suffix); !multiplierFound {
-				return errors.Errorf("bad suffix %q", suffix)
+				return fmt.Errorf("bad suffix %q", suffix)
 			}
 			// Could also support SI form MB, and treat it equivalent to MiB, but perhaps better to reserve it for CountSuffix?
 			//} else if len(s) > 1 {
@@ -172,11 +171,11 @@ func (x *SizeSuffix) Set(s string) error {
 			multiplierFound, multiplier = x.multiplierFromSymbol(suffix)
 		}
 		if !multiplierFound {
-			return errors.Errorf("bad suffix %q", suffix)
+			return fmt.Errorf("bad suffix %q", suffix)
 		}
 	default:
 		if multiplierFound, multiplier = x.multiplierFromSymbol(suffix); !multiplierFound {
-			return errors.Errorf("bad suffix %q", suffix)
+			return fmt.Errorf("bad suffix %q", suffix)
 		}
 	}
 	s = s[:len(s)-suffixLen]
@@ -185,7 +184,7 @@ func (x *SizeSuffix) Set(s string) error {
 		return err
 	}
 	if value < 0 {
-		return errors.Errorf("size can't be negative %q", s)
+		return fmt.Errorf("size can't be negative %q", s)
 	}
 	value *= multiplier
 	*x = SizeSuffix(value)

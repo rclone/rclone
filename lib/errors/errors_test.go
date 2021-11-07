@@ -1,12 +1,13 @@
 package errors_test
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/rclone/rclone/lib/errors"
+	liberrors "github.com/rclone/rclone/lib/errors"
 )
 
 func TestWalk(t *testing.T) {
@@ -43,7 +44,7 @@ func TestWalk(t *testing.T) {
 	} {
 		var last error
 		calls := 0
-		errors.Walk(test.err, func(err error) bool {
+		liberrors.Walk(test.err, func(err error) bool {
 			calls++
 			last = err
 			_, stop := err.(stopError)

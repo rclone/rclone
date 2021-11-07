@@ -9,7 +9,7 @@ We understand you are having a problem with rclone; we want to help you with tha
 
 **STOP and READ**
 **YOUR POST WILL BE REMOVED IF IT IS LOW QUALITY**:
-Please show the effort you've put in to solving the problem and please be specific.
+Please show the effort you've put into solving the problem and please be specific.
 People are volunteering their time to help! Low effort posts are not likely to get good answers!
 
 If you think you might have found a bug, try to replicate it with the latest beta (or stable).

@@ -158,7 +158,7 @@ func TestCachePin(t *testing.T) {
 	_, err := c.Get("/", create)
 	require.NoError(t, err)
 
-	// Pin a non existent item to show nothing happens
+	// Pin a non-existent item to show nothing happens
 	c.Pin("notfound")
 
 	c.mu.Lock()
@@ -312,7 +312,7 @@ func TestCacheRename(t *testing.T) {
 
 	assert.Equal(t, 2, c.Entries())
 
-	// rename to non existent
+	// rename to non-existent
 	value, found := c.Rename("existing1", "EXISTING1")
 	assert.Equal(t, true, found)
 	assert.Equal(t, existing1, value)
@@ -326,7 +326,7 @@ func TestCacheRename(t *testing.T) {
 
 	assert.Equal(t, 1, c.Entries())
 
-	// rename non existent
+	// rename non-existent
 	value, found = c.Rename("notfound", "NOTFOUND")
 	assert.Equal(t, false, found)
 	assert.Nil(t, value)

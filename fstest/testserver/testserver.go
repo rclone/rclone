@@ -3,6 +3,7 @@ package testserver
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -13,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fspath"
 )
@@ -52,7 +52,7 @@ func run(name, command string) (out []byte, err error) {
 	cmd := exec.Command(cmdPath, command)
 	out, err = cmd.CombinedOutput()
 	if err != nil {
-		err = errors.Wrapf(err, "failed to run %s %s\n%s", cmdPath, command, string(out))
+		err = fmt.Errorf("failed to run %s %s\n%s: %w", cmdPath, command, string(out), err)
 	}
 	return out, err
 }
@@ -112,7 +112,7 @@ func start(name string) error {
 		}
 		time.Sleep(time.Second)
 	}
-	return errors.Errorf("failed to connect to %q on %q", name, connect)
+	return fmt.Errorf("failed to connect to %q on %q", name, connect)
 }
 
 // Start starts the named test server which can be stopped by the

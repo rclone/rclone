@@ -182,24 +182,24 @@ rclone serve restic remote:path [flags]
 ## Options
 
 ```
-      --addr string                     IPaddress:Port or :Port to bind server to. (default "localhost:8080")
-      --append-only                     disallow deletion of repository data
-      --baseurl string                  Prefix for URLs - leave blank for root.
-      --cache-objects                   cache listed objects (default true)
+      --addr string                     IPaddress:Port or :Port to bind server to (default "localhost:8080")
+      --append-only                     Disallow deletion of repository data
+      --baseurl string                  Prefix for URLs - leave blank for root
+      --cache-objects                   Cache listed objects (default true)
       --cert string                     SSL PEM key (concatenation of certificate and CA certificate)
       --client-ca string                Client certificate authority to verify clients with
   -h, --help                            help for restic
       --htpasswd string                 htpasswd file - if not provided no authentication is done
       --key string                      SSL PEM Private key
       --max-header-bytes int            Maximum size of request header (default 4096)
-      --pass string                     Password for authentication.
-      --private-repos                   users can only access their private repo
+      --pass string                     Password for authentication
+      --private-repos                   Users can only access their private repo
       --realm string                    realm for authentication (default "rclone")
       --server-read-timeout duration    Timeout for server reading data (default 1h0m0s)
       --server-write-timeout duration   Timeout for server writing data (default 1h0m0s)
-      --stdio                           run an HTTP2 server on stdin/stdout
-      --template string                 User Specified Template.
-      --user string                     User name for authentication.
+      --stdio                           Run an HTTP2 server on stdin/stdout
+      --template string                 User-specified template
+      --user string                     User name for authentication
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

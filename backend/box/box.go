@@ -14,6 +14,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,13 +27,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/rclone/rclone/lib/encoder"
-	"github.com/rclone/rclone/lib/env"
-	"github.com/rclone/rclone/lib/jwtutil"
-
-	"github.com/youmark/pkcs8"
-
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -43,9 +37,13 @@ import (
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/dircache"
+	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/env"
+	"github.com/rclone/rclone/lib/jwtutil"
 	"github.com/rclone/rclone/lib/oauthutil"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
+	"github.com/youmark/pkcs8"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jws"
 )
@@ -93,7 +91,7 @@ func init() {
 			if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
 				err = refreshJWTToken(ctx, jsonFile, boxSubType, name, m)
 				if err != nil {
-					return nil, errors.Wrap(err, "failed to configure token with jwt authentication")
+					return nil, fmt.Errorf("failed to configure token with jwt authentication: %w", err)
 				}
 				// Else, if not using an access token, use oauth2
 			} else if boxAccessToken == "" || !boxAccessTokenOk {
@@ -167,15 +165,15 @@ func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, na
 	jsonFile = env.ShellExpand(jsonFile)
 	boxConfig, err := getBoxConfig(jsonFile)
 	if err != nil {
-		return errors.Wrap(err, "get box config")
+		return fmt.Errorf("get box config: %w", err)
 	}
 	privateKey, err := getDecryptedPrivateKey(boxConfig)
 	if err != nil {
-		return errors.Wrap(err, "get decrypted private key")
+		return fmt.Errorf("get decrypted private key: %w", err)
 	}
 	claims, err := getClaims(boxConfig, boxSubType)
 	if err != nil {
-		return errors.Wrap(err, "get claims")
+		return fmt.Errorf("get claims: %w", err)
 	}
 	signingHeaders := getSigningHeaders(boxConfig)
 	queryParams := getQueryParams(boxConfig)
@@ -187,11 +185,11 @@ func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, na
 func getBoxConfig(configFile string) (boxConfig *api.ConfigJSON, err error) {
 	file, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "box: failed to read Box config")
+		return nil, fmt.Errorf("box: failed to read Box config: %w", err)
 	}
 	err = json.Unmarshal(file, &boxConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "box: failed to parse Box config")
+		return nil, fmt.Errorf("box: failed to parse Box config: %w", err)
 	}
 	return boxConfig, nil
 }
@@ -199,7 +197,7 @@ func getBoxConfig(configFile string) (boxConfig *api.ConfigJSON, err error) {
 func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *jws.ClaimSet, err error) {
 	val, err := jwtutil.RandomHex(20)
 	if err != nil {
-		return nil, errors.Wrap(err, "box: failed to generate random string for jti")
+		return nil, fmt.Errorf("box: failed to generate random string for jti: %w", err)
 	}
 
 	claims = &jws.ClaimSet{
@@ -240,12 +238,12 @@ func getDecryptedPrivateKey(boxConfig *api.ConfigJSON) (key *rsa.PrivateKey, err
 
 	block, rest := pem.Decode([]byte(boxConfig.BoxAppSettings.AppAuth.PrivateKey))
 	if len(rest) > 0 {
-		return nil, errors.Wrap(err, "box: extra data included in private key")
+		return nil, fmt.Errorf("box: extra data included in private key: %w", err)
 	}
 
 	rsaKey, err := pkcs8.ParsePKCS8PrivateKey(block.Bytes, []byte(boxConfig.BoxAppSettings.AppAuth.Passphrase))
 	if err != nil {
-		return nil, errors.Wrap(err, "box: failed to decrypt private key")
+		return nil, fmt.Errorf("box: failed to decrypt private key: %w", err)
 	}
 
 	return rsaKey.(*rsa.PrivateKey), nil
@@ -403,7 +401,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	if opt.UploadCutoff < minUploadCutoff {
-		return nil, errors.Errorf("box: upload cutoff (%v) must be greater than equal to %v", opt.UploadCutoff, fs.SizeSuffix(minUploadCutoff))
+		return nil, fmt.Errorf("box: upload cutoff (%v) must be greater than equal to %v", opt.UploadCutoff, fs.SizeSuffix(minUploadCutoff))
 	}
 
 	root = parsePath(root)
@@ -414,7 +412,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.AccessToken == "" {
 		client, ts, err = oauthutil.NewClient(ctx, name, m, oauthConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to configure Box")
+			return nil, fmt.Errorf("failed to configure Box: %w", err)
 		}
 	}
 
@@ -613,7 +611,7 @@ OUTER:
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return found, errors.Wrap(err, "couldn't list files")
+			return found, fmt.Errorf("couldn't list files: %w", err)
 		}
 		for i := range result.Entries {
 			item := &result.Entries[i]
@@ -740,14 +738,14 @@ func (f *Fs) preUploadCheck(ctx context.Context, leaf, directoryID string, size 
 			var conflict api.PreUploadCheckConflict
 			err = json.Unmarshal(apiErr.ContextInfo, &conflict)
 			if err != nil {
-				return "", errors.Wrap(err, "pre-upload check: JSON decode failed")
+				return "", fmt.Errorf("pre-upload check: JSON decode failed: %w", err)
 			}
 			if conflict.Conflicts.Type != api.ItemTypeFile {
-				return "", errors.Wrap(err, "pre-upload check: can't overwrite non file with file")
+				return "", fmt.Errorf("pre-upload check: can't overwrite non file with file: %w", err)
 			}
 			return conflict.Conflicts.ID, nil
 		}
-		return "", errors.Wrap(err, "pre-upload check")
+		return "", fmt.Errorf("pre-upload check: %w", err)
 	}
 	return "", nil
 }
@@ -856,7 +854,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "rmdir failed")
+		return fmt.Errorf("rmdir failed: %w", err)
 	}
 	f.dirCache.FlushDir(dir)
 	if err != nil {
@@ -900,7 +898,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcPath := srcObj.fs.rootSlash() + srcObj.remote
 	dstPath := f.rootSlash() + remote
 	if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
-		return nil, errors.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
+		return nil, fmt.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 	}
 
 	// Create temporary object
@@ -984,7 +982,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read user info")
+		return nil, fmt.Errorf("failed to read user info: %w", err)
 	}
 	// FIXME max upload size would be useful to use in Update
 	usage = &fs.Usage{
@@ -1145,7 +1143,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 	})
 	wg.Wait()
 	if deleteErrors != 0 {
-		return errors.Errorf("failed to delete %d trash items", deleteErrors)
+		return fmt.Errorf("failed to delete %d trash items", deleteErrors)
 	}
 	return err
 }
@@ -1205,7 +1203,7 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 		return fs.ErrorIsDir
 	}
 	if info.Type != api.ItemTypeFile {
-		return errors.Wrapf(fs.ErrorNotAFile, "%q is %q", o.remote, info.Type)
+		return fmt.Errorf("%q is %q: %w", o.remote, info.Type, fs.ErrorNotAFile)
 	}
 	o.hasMetaData = true
 	o.size = int64(info.Size)
@@ -1341,7 +1339,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 		return err
 	}
 	if result.TotalCount != 1 || len(result.Entries) != 1 {
-		return errors.Errorf("failed to upload %v - not sure why", o)
+		return fmt.Errorf("failed to upload %v - not sure why", o)
 	}
 	return o.setMetaData(&result.Entries[0])
 }

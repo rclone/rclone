@@ -15,6 +15,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -22,7 +23,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
 	"github.com/rclone/rclone/fs"
@@ -237,7 +237,7 @@ func (s *server) serve() (err error) {
 			// If loading a cached key failed, make the keys and retry
 			err = file.MkdirAll(cachePath, 0700)
 			if err != nil {
-				return errors.Wrap(err, "failed to create cache path")
+				return fmt.Errorf("failed to create cache path: %w", err)
 			}
 			if strings.HasSuffix(keyPath, string(os.PathSeparator)+"id_rsa") {
 				const bits = 2048
@@ -250,10 +250,10 @@ func (s *server) serve() (err error) {
 				fs.Logf(nil, "Generating Ed25519 key pair at %q", keyPath)
 				err = makeEd25519SSHKeyPair(keyPath+".pub", keyPath)
 			} else {
-				return errors.Errorf("don't know how to generate key pair %q", keyPath)
+				return fmt.Errorf("don't know how to generate key pair %q", keyPath)
 			}
 			if err != nil {
-				return errors.Wrap(err, "failed to create SSH key pair")
+				return fmt.Errorf("failed to create SSH key pair: %w", err)
 			}
 			// reload the new key
 			private, err = loadPrivateKey(keyPath)
@@ -270,7 +270,7 @@ func (s *server) serve() (err error) {
 	// accepted.
 	s.listener, err = net.Listen("tcp", s.opt.ListenAddr)
 	if err != nil {
-		return errors.Wrap(err, "failed to listen for connection")
+		return fmt.Errorf("failed to listen for connection: %w", err)
 	}
 	fs.Logf(nil, "SFTP server listening on %v\n", s.listener.Addr())
 
@@ -313,11 +313,11 @@ func (s *server) Close() {
 func loadPrivateKey(keyPath string) (ssh.Signer, error) {
 	privateBytes, err := ioutil.ReadFile(keyPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load private key")
+		return nil, fmt.Errorf("failed to load private key: %w", err)
 	}
 	private, err := ssh.ParsePrivateKey(privateBytes)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse private key")
+		return nil, fmt.Errorf("failed to parse private key: %w", err)
 	}
 	return private, nil
 }
@@ -328,13 +328,13 @@ func loadPrivateKey(keyPath string) (ssh.Signer, error) {
 func loadAuthorizedKeys(authorizedKeysPath string) (authorizedKeysMap map[string]struct{}, err error) {
 	authorizedKeysBytes, err := ioutil.ReadFile(authorizedKeysPath)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load authorized keys")
+		return nil, fmt.Errorf("failed to load authorized keys: %w", err)
 	}
 	authorizedKeysMap = make(map[string]struct{})
 	for len(authorizedKeysBytes) > 0 {
 		pubKey, _, _, rest, err := ssh.ParseAuthorizedKey(authorizedKeysBytes)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse authorized keys")
+			return nil, fmt.Errorf("failed to parse authorized keys: %w", err)
 		}
 		authorizedKeysMap[string(pubKey.Marshal())] = struct{}{}
 		authorizedKeysBytes = bytes.TrimSpace(rest)

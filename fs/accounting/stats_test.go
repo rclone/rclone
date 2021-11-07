@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/stretchr/testify/assert"
@@ -104,7 +103,7 @@ func TestStatsError(t *testing.T) {
 	assert.Equal(t, t0, s.RetryAfter())
 	assert.Equal(t, e, s.GetLastError())
 
-	err := errors.Wrap(fserrors.ErrorRetryAfter(t1), "potato")
+	err := fmt.Errorf("potato: %w", fserrors.ErrorRetryAfter(t1))
 	err = s.Error(err)
 	assert.Equal(t, int64(3), s.GetErrors())
 	assert.False(t, s.HadFatalError())

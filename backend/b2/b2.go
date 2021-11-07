@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	gohash "hash"
 	"io"
@@ -19,7 +20,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -366,7 +366,7 @@ func errorHandler(resp *http.Response) error {
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	return nil
 }
@@ -381,7 +381,7 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 
 func checkUploadCutoff(opt *Options, cs fs.SizeSuffix) error {
 	if cs < opt.ChunkSize {
-		return errors.Errorf("%v is less than chunk size %v", cs, opt.ChunkSize)
+		return fmt.Errorf("%v is less than chunk size %v", cs, opt.ChunkSize)
 	}
 	return nil
 }
@@ -414,11 +414,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = checkUploadCutoff(opt, opt.UploadCutoff)
 	if err != nil {
-		return nil, errors.Wrap(err, "b2: upload cutoff")
+		return nil, fmt.Errorf("b2: upload cutoff: %w", err)
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "b2: chunk size")
+		return nil, fmt.Errorf("b2: chunk size: %w", err)
 	}
 	if opt.Account == "" {
 		return nil, errors.New("account not found")
@@ -463,7 +463,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = f.authorizeAccount(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to authorize account")
+		return nil, fmt.Errorf("failed to authorize account: %w", err)
 	}
 	// If this is a key limited to a single bucket, it must exist already
 	if f.rootBucket != "" && f.info.Allowed.BucketID != "" {
@@ -472,7 +472,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, errors.New("bucket that application key is restricted to no longer exists")
 		}
 		if allowedBucket != f.rootBucket {
-			return nil, errors.Errorf("you must use bucket %q with this application key", allowedBucket)
+			return nil, fmt.Errorf("you must use bucket %q with this application key", allowedBucket)
 		}
 		f.cache.MarkOK(f.rootBucket)
 		f.setBucketID(f.rootBucket, f.info.Allowed.BucketID)
@@ -512,7 +512,7 @@ func (f *Fs) authorizeAccount(ctx context.Context) error {
 		return f.shouldRetryNoReauth(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to authenticate")
+		return fmt.Errorf("failed to authenticate: %w", err)
 	}
 	f.srv.SetRoot(f.info.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
 	return nil
@@ -558,7 +558,7 @@ func (f *Fs) getUploadURL(ctx context.Context, bucket string) (upload *api.GetUp
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get upload URL")
+		return nil, fmt.Errorf("failed to get upload URL: %w", err)
 	}
 	return upload, nil
 }
@@ -1048,7 +1048,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 					}
 				}
 			}
-			return errors.Wrap(err, "failed to create bucket")
+			return fmt.Errorf("failed to create bucket: %w", err)
 		}
 		f.setBucketID(bucket, response.ID)
 		f.setBucketType(bucket, response.Type)
@@ -1083,7 +1083,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			return f.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "failed to delete bucket")
+			return fmt.Errorf("failed to delete bucket: %w", err)
 		}
 		f.clearBucketID(bucket)
 		f.clearBucketType(bucket)
@@ -1124,7 +1124,7 @@ func (f *Fs) hide(ctx context.Context, bucket, bucketPath string) error {
 				return nil
 			}
 		}
-		return errors.Wrapf(err, "failed to hide %q", bucketPath)
+		return fmt.Errorf("failed to hide %q: %w", bucketPath, err)
 	}
 	return nil
 }
@@ -1145,7 +1145,7 @@ func (f *Fs) deleteByID(ctx context.Context, ID, Name string) error {
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete %q", Name)
+		return fmt.Errorf("failed to delete %q: %w", Name, err)
 	}
 	return nil
 }
@@ -1364,7 +1364,7 @@ func (f *Fs) getDownloadAuthorization(ctx context.Context, bucket, remote string
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get download authorization")
+		return "", fmt.Errorf("failed to get download authorization: %w", err)
 	}
 	return response.AuthorizationToken, nil
 }
@@ -1669,14 +1669,14 @@ func (file *openFile) Close() (err error) {
 
 	// Check to see we read the correct number of bytes
 	if file.o.Size() != file.bytes {
-		return errors.Errorf("object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
+		return fmt.Errorf("object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
 	}
 
 	// Check the SHA1
 	receivedSHA1 := file.o.sha1
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
 	if receivedSHA1 != "" && receivedSHA1 != calculatedSHA1 {
-		return errors.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
+		return fmt.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
 	}
 
 	return nil
@@ -1716,7 +1716,7 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 		if resp != nil && (resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusBadRequest) {
 			return nil, nil, fs.ErrorObjectNotFound
 		}
-		return nil, nil, errors.Wrapf(err, "failed to %s for download", method)
+		return nil, nil, fmt.Errorf("failed to %s for download: %w", method, err)
 	}
 
 	// NB resp may be Open here - don't return err != nil without closing

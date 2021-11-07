@@ -2,6 +2,7 @@ package opendrive
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -210,7 +210,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create session")
+		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 	fs.Debugf(nil, "Starting OpenDrive session with ID: %s", f.session.SessionID)
 
@@ -362,7 +362,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcPath := srcObj.fs.rootSlash() + srcObj.remote
 	dstPath := f.rootSlash() + remote
 	if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
-		return nil, errors.Errorf("Can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
+		return nil, fmt.Errorf("Can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 	}
 
 	// Create temporary object
@@ -636,7 +636,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 			return o.fs.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create file")
+			return nil, fmt.Errorf("failed to create file: %w", err)
 		}
 
 		o.id = response.FileID
@@ -719,7 +719,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return "", false, errors.Wrap(err, "failed to get folder list")
+		return "", false, fmt.Errorf("failed to get folder list: %w", err)
 	}
 
 	leaf = f.opt.Enc.FromStandardName(leaf)
@@ -762,7 +762,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get folder list")
+		return nil, fmt.Errorf("failed to get folder list: %w", err)
 	}
 
 	for _, folder := range folderList.Folders {
@@ -871,7 +871,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to open file)")
+		return nil, fmt.Errorf("failed to open file): %w", err)
 	}
 
 	return resp.Body, nil
@@ -919,7 +919,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to create file")
+		return fmt.Errorf("failed to create file: %w", err)
 	}
 	// resp.Body.Close()
 	// fs.Debugf(nil, "PostOpen: %#v", openResponse)
@@ -963,10 +963,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return o.fs.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "failed to create file")
+			return fmt.Errorf("failed to create file: %w", err)
 		}
 		if reply.TotalWritten != currentChunkSize {
-			return errors.Errorf("failed to create file: incomplete write of %d/%d bytes", reply.TotalWritten, currentChunkSize)
+			return fmt.Errorf("failed to create file: incomplete write of %d/%d bytes", reply.TotalWritten, currentChunkSize)
 		}
 
 		chunkCounter++
@@ -986,7 +986,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to create file")
+		return fmt.Errorf("failed to create file: %w", err)
 	}
 	// fs.Debugf(nil, "PostClose: %#v", closeResponse)
 
@@ -1038,7 +1038,7 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to get folder list")
+		return fmt.Errorf("failed to get folder list: %w", err)
 	}
 
 	if len(folderList.Files) == 0 {

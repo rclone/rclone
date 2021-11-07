@@ -1,0 +1,61 @@
+test resync
+# 1. Resync with empty Path1, resulting in copying all content FROM Path2
+# 2. Resync with empty Path2, resulting in synching all content TO Path2
+# 3. Exercise all of the various file difference scenarios during a resync:
+#    File       Path1       Path2           Expected action     Who wins
+#  - file1.txt  Exists      Missing         Sync Path1 >Path2   Path1
+#  - file2.txt  Missing     Exists          Copy Path2 >Path1   Path2
+#  - file3.txt  Exists      Newer date      Sync Path1 >Path2   Path1
+#  - file4.txt  Missing     Newer date      Copy Path2 >Path1   Path2
+#  - file5.txt  Exists      Older date      Sync Path1 >Path2   Path1
+#  - file6.txt  Older date  Newer date      Sync Path1 >Path2   Path1
+#  - file7.txt  Exists      Exists (same)   None                Same
+# 4. Confirm critical error on a normal sync of empty path
+
+test 1. resync with empty path1, resulting in copying all content from path2.
+purge-children {path1/}
+bisync resync
+move-listings empty-path1
+
+test 2. resync with empty path2, resulting in synching all content to path2.
+purge-children {path2/}
+bisync resync
+move-listings empty-path2
+
+test 3. exercise all of the various file difference scenarios during a resync.
+touch-glob 2002-02-02 {datadir/} fileA.txt
+touch-glob 1999-09-09 {datadir/} fileB.txt
+
+test = file      - path1      - path2      - expected action    - who wins
+test - file1.txt - exists     - missing    - sync path1 > path2 - path1
+delete-file {path2/}file1.txt
+
+test - file2.txt - missing    - exists     - copy path2 > path1 - path2
+delete-file {path1/}file2.txt
+
+test - file3.txt - exists     - newer date - sync path1 > path2 - path1
+copy-as {datadir/}fileA.txt {path2/} file3.txt
+
+test - file4.txt - missing    - newer date - copy path2 > path1 - path2
+delete-file {path1/}file4.txt
+copy-as {datadir/}fileA.txt {path2/} file4.txt
+
+test - file5.txt - exists     - older date - sync path1 > path2 - path1
+copy-as {datadir/}fileB.txt {path2/} file5.txt
+
+test - file6.txt - older date - newer date - sync path1 > path2	- path1
+copy-as {datadir/}fileB.txt {path1/} file6.txt
+copy-as {datadir/}fileA.txt {path2/} file6.txt
+
+test - file7.txt - exists     - exists (same) - none            - same
+
+test run bisync with resync
+bisync resync
+copy-listings mixed-diffs
+
+test run normal bisync
+bisync
+
+test 4. confirm critical error on normal sync of empty path.
+purge-children {path2/}
+bisync

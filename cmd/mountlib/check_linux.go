@@ -4,12 +4,13 @@
 package mountlib
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/artyom/mtab"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -25,16 +26,16 @@ func CheckMountEmpty(mountpoint string) error {
 
 	mountpointAbs, err := filepath.Abs(mountpoint)
 	if err != nil {
-		return errors.Wrapf(err, "cannot get absolute path: %s", mountpoint)
+		return fmt.Errorf("cannot get absolute path: %s: %w", mountpoint, err)
 	}
 
 	entries, err := mtab.Entries(mtabPath)
 	if err != nil {
-		return errors.Wrapf(err, "cannot read %s", mtabPath)
+		return fmt.Errorf("cannot read %s: %w", mtabPath, err)
 	}
 	for _, entry := range entries {
 		if entry.Dir == mountpointAbs && entry.Type != "autofs" {
-			return errors.Errorf(msg, mountpointAbs)
+			return fmt.Errorf(msg, mountpointAbs)
 		}
 	}
 	return nil
@@ -45,11 +46,11 @@ func CheckMountEmpty(mountpoint string) error {
 func CheckMountReady(mountpoint string) error {
 	mountpointAbs, err := filepath.Abs(mountpoint)
 	if err != nil {
-		return errors.Wrapf(err, "cannot get absolute path: %s", mountpoint)
+		return fmt.Errorf("cannot get absolute path: %s: %w", mountpoint, err)
 	}
 	entries, err := mtab.Entries(mtabPath)
 	if err != nil {
-		return errors.Wrapf(err, "cannot read %s", mtabPath)
+		return fmt.Errorf("cannot read %s: %w", mtabPath, err)
 	}
 	for _, entry := range entries {
 		if entry.Dir == mountpointAbs && strings.Contains(entry.Type, "rclone") {

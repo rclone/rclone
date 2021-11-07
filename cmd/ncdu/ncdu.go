@@ -16,7 +16,6 @@ import (
 	"github.com/atotto/clipboard"
 	runewidth "github.com/mattn/go-runewidth"
 	termbox "github.com/nsf/termbox-go"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ncdu/scan"
 	"github.com/rclone/rclone/fs"
@@ -314,7 +313,7 @@ func (u *UI) Draw() error {
 	// Plot
 	err := termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 	if err != nil {
-		return errors.Wrap(err, "failed to clear screen")
+		return fmt.Errorf("failed to clear screen: %w", err)
 	}
 
 	// Header line
@@ -432,7 +431,7 @@ func (u *UI) Draw() error {
 	}
 	err = termbox.Flush()
 	if err != nil {
-		return errors.Wrap(err, "failed to flush screen")
+		return fmt.Errorf("failed to flush screen: %w", err)
 	}
 	return nil
 }
@@ -742,7 +741,7 @@ func NewUI(f fs.Fs) *UI {
 func (u *UI) Show() error {
 	err := termbox.Init()
 	if err != nil {
-		return errors.Wrap(err, "termbox init")
+		return fmt.Errorf("termbox init: %w", err)
 	}
 	defer termbox.Close()
 
@@ -766,7 +765,7 @@ outer:
 		//Reset()
 		err := u.Draw()
 		if err != nil {
-			return errors.Wrap(err, "draw failed")
+			return fmt.Errorf("draw failed: %w", err)
 		}
 		var root *scan.Dir
 		select {
@@ -775,7 +774,7 @@ outer:
 			u.setCurrentDir(root)
 		case err := <-errChan:
 			if err != nil {
-				return errors.Wrap(err, "ncdu directory listing")
+				return fmt.Errorf("ncdu directory listing: %w", err)
 			}
 			u.listing = false
 		case <-updated:
