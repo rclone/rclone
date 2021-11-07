@@ -1,5 +1,34 @@
 package http
 
+import (
+	"io"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/klauspost/compress/flate"
+	"github.com/klauspost/compress/gzip"
+)
+
+// DefaultCompressor returns a new instance of go-chi Compress middleware,
+// configured with optimised 3rd party compressors for gzip and deflate
+func DefaultCompressor() Middleware {
+	compressor := middleware.NewCompressor(5, CompressibleTypes...)
+	compressor.SetEncoder("gzip", func(w io.Writer, level int) io.Writer {
+		gw, err := gzip.NewWriterLevel(w, level)
+		if err != nil {
+			return nil
+		}
+		return gw
+	})
+	compressor.SetEncoder("deflate", func(w io.Writer, level int) io.Writer {
+		dw, err := flate.NewWriter(w, level)
+		if err != nil {
+			return nil
+		}
+		return dw
+	})
+	return compressor.Handler
+}
+
 // CompressibleTypes contains a list of MIME types that can be compressed.
 // Compressing an already compressed file will yield a larger file and performance hit.
 var CompressibleTypes = []string{
