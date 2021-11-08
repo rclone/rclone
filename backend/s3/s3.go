@@ -91,6 +91,9 @@ func init() {
 				Value: "Netease",
 				Help:  "Netease Object Storage (NOS)",
 			}, {
+				Value: "RackCorp",
+				Help:  "RackCorp Object Storage",
+			}, {
 				Value: "Scaleway",
 				Help:  "Scaleway Object Storage",
 			}, {
@@ -108,9 +111,6 @@ func init() {
 			}, {
 				Value: "Other",
 				Help:  "Any other S3 compatible provider",
-			}, {
-				Value: "RackCorp",
-				Help:  "RackCorp Object Storage",
 			}},
 		}, {
 			Name:    "env_auth",
