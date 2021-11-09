@@ -58,7 +58,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, SeaweedFS, and Tencent COS",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, RackCorp, SeaweedFS, and Tencent COS",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
@@ -90,6 +90,9 @@ func init() {
 			}, {
 				Value: "Netease",
 				Help:  "Netease Object Storage (NOS)",
+			}, {
+				Value: "RackCorp",
+				Help:  "RackCorp Object Storage",
 			}, {
 				Value: "Scaleway",
 				Help:  "Scaleway Object Storage",
@@ -211,6 +214,68 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "region - the location where your bucket will be created and your data stored.\n",
+			Provider: "RackCorp",
+			Examples: []fs.OptionExample{{
+				Value: "global",
+				Help:  "Global CDN (All locations) Region",
+			}, {
+				Value: "au",
+				Help:  "Australia (All states)",
+			}, {
+				Value: "au-nsw",
+				Help:  "NSW (Australia) Region",
+			}, {
+				Value: "au-qld",
+				Help:  "QLD (Australia) Region",
+			}, {
+				Value: "au-vic",
+				Help:  "VIC (Australia) Region",
+			}, {
+				Value: "au-wa",
+				Help:  "Perth (Australia) Region",
+			}, {
+				Value: "ph",
+				Help:  "Manila (Philippines) Region",
+			}, {
+				Value: "th",
+				Help:  "Bangkok (Thailand) Region",
+			}, {
+				Value: "hk",
+				Help:  "HK (Hong Kong) Region",
+			}, {
+				Value: "mn",
+				Help:  "Ulaanbaatar (Mongolia) Region",
+			}, {
+				Value: "kg",
+				Help:  "Bishkek (Kyrgyzstan) Region",
+			}, {
+				Value: "id",
+				Help:  "Jakarta (Indonesia) Region",
+			}, {
+				Value: "jp",
+				Help:  "Tokyo (Japan) Region",
+			}, {
+				Value: "sg",
+				Help:  "SG (Singapore) Region",
+			}, {
+				Value: "de",
+				Help:  "Frankfurt (Germany) Region",
+			}, {
+				Value: "us",
+				Help:  "USA (AnyCast) Region",
+			}, {
+				Value: "us-east-1",
+				Help:  "New York (USA) Region",
+			}, {
+				Value: "us-west-1",
+				Help:  "Freemont (USA) Region",
+			}, {
+				Value: "nz",
+				Help:  "Auckland (New Zealand) Region",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "Region to connect to.",
 			Provider: "Scaleway",
 			Examples: []fs.OptionExample{{
@@ -223,7 +288,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,Scaleway,TencentCOS",
+			Provider: "!AWS,Alibaba,RackCorp,Scaleway,TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -596,9 +661,72 @@ func init() {
 				Help:  "Use Tencent COS Accelerate Endpoint",
 			}},
 		}, {
+			// RackCorp endpoints: https://www.rackcorp.com/storage/s3storage
+			Name:     "endpoint",
+			Help:     "Endpoint for RackCorp Object Storage.",
+			Provider: "RackCorp",
+			Examples: []fs.OptionExample{{
+				Value: "s3.rackcorp.com",
+				Help:  "Global (AnyCast) Endpoint",
+			}, {
+				Value: "au.s3.rackcorp.com",
+				Help:  "Australia (Anycast) Endpoint",
+			}, {
+				Value: "au-nsw.s3.rackcorp.com",
+				Help:  "Sydney (Australia) Endpoint",
+			}, {
+				Value: "au-qld.s3.rackcorp.com",
+				Help:  "Brisbane (Australia) Endpoint",
+			}, {
+				Value: "au-vic.s3.rackcorp.com",
+				Help:  "Melbourne (Australia) Endpoint",
+			}, {
+				Value: "au-wa.s3.rackcorp.com",
+				Help:  "Perth (Australia) Endpoint",
+			}, {
+				Value: "ph.s3.rackcorp.com",
+				Help:  "Manila (Philippines) Endpoint",
+			}, {
+				Value: "th.s3.rackcorp.com",
+				Help:  "Bangkok (Thailand) Endpoint",
+			}, {
+				Value: "hk.s3.rackcorp.com",
+				Help:  "HK (Hong Kong) Endpoint",
+			}, {
+				Value: "mn.s3.rackcorp.com",
+				Help:  "Ulaanbaatar (Mongolia) Endpoint",
+			}, {
+				Value: "kg.s3.rackcorp.com",
+				Help:  "Bishkek (Kyrgyzstan) Endpoint",
+			}, {
+				Value: "id.s3.rackcorp.com",
+				Help:  "Jakarta (Indonesia) Endpoint",
+			}, {
+				Value: "jp.s3.rackcorp.com",
+				Help:  "Tokyo (Japan) Endpoint",
+			}, {
+				Value: "sg.s3.rackcorp.com",
+				Help:  "SG (Singapore) Endpoint",
+			}, {
+				Value: "de.s3.rackcorp.com",
+				Help:  "Frankfurt (Germany) Endpoint",
+			}, {
+				Value: "us.s3.rackcorp.com",
+				Help:  "USA (AnyCast) Endpoint",
+			}, {
+				Value: "us-east-1.s3.rackcorp.com",
+				Help:  "New York (USA) Endpoint",
+			}, {
+				Value: "us-west-1.s3.rackcorp.com",
+				Help:  "Freemont (USA) Endpoint",
+			}, {
+				Value: "nz.s3.rackcorp.com",
+				Help:  "Auckland (New Zealand) Endpoint",
+			}},
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath",
+			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -819,8 +947,70 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
+			Help:     "Location constraint - the location where your bucket will be located and your data stored.\n",
+			Provider: "RackCorp",
+			Examples: []fs.OptionExample{{
+				Value: "global",
+				Help:  "Global CDN Region",
+			}, {
+				Value: "au",
+				Help:  "Australia (All locations)",
+			}, {
+				Value: "au-nsw",
+				Help:  "NSW (Australia) Region",
+			}, {
+				Value: "au-qld",
+				Help:  "QLD (Australia) Region",
+			}, {
+				Value: "au-vic",
+				Help:  "VIC (Australia) Region",
+			}, {
+				Value: "au-wa",
+				Help:  "Perth (Australia) Region",
+			}, {
+				Value: "ph",
+				Help:  "Manila (Philippines) Region",
+			}, {
+				Value: "th",
+				Help:  "Bangkok (Thailand) Region",
+			}, {
+				Value: "hk",
+				Help:  "HK (Hong Kong) Region",
+			}, {
+				Value: "mn",
+				Help:  "Ulaanbaatar (Mongolia) Region",
+			}, {
+				Value: "kg",
+				Help:  "Bishkek (Kyrgyzstan) Region",
+			}, {
+				Value: "id",
+				Help:  "Jakarta (Indonesia) Region",
+			}, {
+				Value: "jp",
+				Help:  "Tokyo (Japan) Region",
+			}, {
+				Value: "sg",
+				Help:  "SG (Singapore) Region",
+			}, {
+				Value: "de",
+				Help:  "Frankfurt (Germany) Region",
+			}, {
+				Value: "us",
+				Help:  "USA (AnyCast) Region",
+			}, {
+				Value: "us-east-1",
+				Help:  "New York (USA) Region",
+			}, {
+				Value: "us-west-1",
+				Help:  "Freemont (USA) Region",
+			}, {
+				Value: "nz",
+				Help:  "Auckland (New Zealand) Region",
+			}},
+		}, {
+			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,Scaleway,StackPath,TencentCOS",
+			Provider: "!AWS,IBMCOS,Alibaba,RackCorp,Scaleway,StackPath,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1723,6 +1913,8 @@ func setQuirks(opt *Options) {
 	case "Netease":
 		listObjectsV2 = false // untested
 		urlEncodeListings = false
+	case "RackCorp":
+		// No quirks
 	case "Scaleway":
 		// Scaleway can only have 1000 parts in an upload
 		if opt.MaxUploadParts > 1000 {
