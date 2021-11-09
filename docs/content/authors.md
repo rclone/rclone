@@ -542,3 +542,4 @@ put them back in again.` >}}
   * Atílio Antônio <atiliodadalto@hotmail.com>
   * Roberto Ricci <ricci@disroot.org>
   * Carlo Mion <mion00@gmail.com>
+  * Chris Lu <chris.lu@gmail.com>
