@@ -827,8 +827,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Get rootID
 	rootInfo, _, err := f.readMetaDataForPath(ctx, "")
-	if err != nil || rootInfo.GetID() == "" {
+	if err != nil {
 		return nil, fmt.Errorf("failed to get root: %w", err)
+	}
+	if rootInfo.GetID() == "" {
+		return nil, errors.New("failed to get root: ID was empty")
 	}
 
 	f.dirCache = dircache.New(root, rootInfo.GetID(), f)
@@ -1188,7 +1191,10 @@ func (f *Fs) waitForJob(ctx context.Context, location string, o *Object) error {
 			return fmt.Errorf("%s: async operation returned %q", o.remote, status.Status)
 		case "completed":
 			err = o.readMetaData(ctx)
-			return fmt.Errorf("async operation completed but readMetaData failed: %w", err)
+			if err != nil {
+				return fmt.Errorf("async operation completed but readMetaData failed: %w", err)
+			}
+			return nil
 		}
 
 		time.Sleep(1 * time.Second)
