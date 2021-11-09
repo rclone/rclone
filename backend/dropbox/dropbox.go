@@ -852,6 +852,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			arg := files.ListFolderArg{
 				Path:      f.opt.Enc.FromStandardPath(root),
 				Recursive: false,
+				Limit:     1000,
 			}
 			if root == "/" {
 				arg.Path = "" // Specify root folder as empty string
