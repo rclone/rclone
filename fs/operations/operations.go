@@ -62,36 +62,50 @@ func CheckHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object) (equal b
 	return equal, ht, err
 }
 
+var errNoHash = errors.New("no hash available")
+
 // checkHashes does the work of CheckHashes but takes a hash.Type and
 // returns the effective hash type used.
 func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.Type) (equal bool, htOut hash.Type, srcHash, dstHash string, err error) {
 	// Calculate hashes in parallel
 	g, ctx := errgroup.WithContext(ctx)
+	var srcErr, dstErr error
 	g.Go(func() (err error) {
-		srcHash, err = src.Hash(ctx, ht)
-		if err != nil {
-			err = fs.CountError(err)
-			fs.Errorf(src, "Failed to calculate src hash: %v", err)
+		srcHash, srcErr = src.Hash(ctx, ht)
+		if srcErr != nil {
+			return srcErr
 		}
-		return err
+		if srcHash == "" {
+			fs.Debugf(src, "Src hash empty - aborting Dst hash check")
+			return errNoHash
+		}
+		return nil
 	})
 	g.Go(func() (err error) {
-		dstHash, err = dst.Hash(ctx, ht)
-		if err != nil {
-			err = fs.CountError(err)
-			fs.Errorf(dst, "Failed to calculate dst hash: %v", err)
+		dstHash, dstErr = dst.Hash(ctx, ht)
+		if dstErr != nil {
+			return dstErr
 		}
-		return err
+		if dstHash == "" {
+			fs.Debugf(src, "Dst hash empty - aborting Src hash check")
+			return errNoHash
+		}
+		return nil
 	})
 	err = g.Wait()
+	if err == errNoHash {
+		return true, hash.None, srcHash, dstHash, nil
+	}
+	if srcErr != nil {
+		err = fs.CountError(srcErr)
+		fs.Errorf(dst, "Failed to calculate src hash: %v", err)
+	}
+	if dstErr != nil {
+		err = fs.CountError(dstErr)
+		fs.Errorf(src, "Failed to calculate dst hash: %v", err)
+	}
 	if err != nil {
 		return false, ht, srcHash, dstHash, err
-	}
-	if srcHash == "" {
-		return true, hash.None, srcHash, dstHash, nil
-	}
-	if dstHash == "" {
-		return true, hash.None, srcHash, dstHash, nil
 	}
 	if srcHash != dstHash {
 		fs.Debugf(src, "%v = %s (%v)", ht, srcHash, src.Fs())
