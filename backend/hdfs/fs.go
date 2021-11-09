@@ -293,7 +293,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Do the move
 	// Note that the underlying HDFS library hard-codes Overwrite=True, but this is expected rclone behaviour.
-	err := f.client.Rename(sourcePath, targetPath)
+	err = f.client.Rename(sourcePath, targetPath)
 	if err != nil {
 		return nil, err
 	}
