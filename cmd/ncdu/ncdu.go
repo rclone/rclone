@@ -19,6 +19,7 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ncdu/scan"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -512,7 +513,7 @@ func (u *UI) delete() {
 		}
 		u.popupBox([]string{
 			"Delete this file?",
-			u.fsName + dirEntry.String()})
+			fspath.JoinRootPath(u.fsName, dirEntry.String())})
 	} else {
 		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
 			if o != 1 {
@@ -531,7 +532,7 @@ func (u *UI) delete() {
 		u.popupBox([]string{
 			"Purge this directory?",
 			"ALL files in it will be deleted",
-			u.fsName + dirEntry.String()})
+			fspath.JoinRootPath(u.fsName, dirEntry.String())})
 	}
 }
 
@@ -642,7 +643,7 @@ func (u *UI) sortCurrentDir() {
 func (u *UI) setCurrentDir(d *scan.Dir) {
 	u.d = d
 	u.entries = d.Entries()
-	u.path = path.Join(u.fsName, d.Path())
+	u.path = fspath.JoinRootPath(u.fsName, d.Path())
 	u.sortCurrentDir()
 }
 
@@ -725,7 +726,7 @@ func NewUI(f fs.Fs) *UI {
 		f:                  f,
 		path:               "Waiting for root...",
 		dirListHeight:      20, // updated in Draw
-		fsName:             f.Name() + ":" + f.Root(),
+		fsName:             fs.ConfigString(f),
 		showGraph:          true,
 		showCounts:         false,
 		showDirAverageSize: false,
