@@ -384,7 +384,9 @@ func rcPublicLink(ctx context.Context, in rc.Params) (out rc.Params, err error) 
 	}
 	unlink, _ := in.GetBool("unlink")
 	expire, err := in.GetDuration("expire")
-	if err != nil && !rc.IsErrParamNotFound(err) {
+	if rc.IsErrParamNotFound(err) {
+		expire = time.Duration(fs.DurationOff)
+	} else if err != nil {
 		return nil, err
 	}
 	url, err := PublicLink(ctx, f, remote, fs.Duration(expire), unlink)
