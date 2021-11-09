@@ -903,7 +903,7 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 			return "", fmt.Errorf("hash: failed to open: %w", err)
 		}
 		var hashes map[hash.Type]string
-		hashes, err = hash.StreamTypes(in, hash.NewHashSet(r))
+		hashes, err = hash.StreamTypes(readers.NewContextReader(ctx, in), hash.NewHashSet(r))
 		closeErr := in.Close()
 		if err != nil {
 			return "", fmt.Errorf("hash: failed to read: %w", err)
