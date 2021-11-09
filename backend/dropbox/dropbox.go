@@ -566,15 +566,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.setRoot(root)
 
 	// See if the root is actually an object
-	_, err = f.getFileMetadata(ctx, f.slashRoot)
-	if err == nil {
-		newRoot := path.Dir(f.root)
-		if newRoot == "." {
-			newRoot = ""
+	if f.root != "" {
+		_, err = f.getFileMetadata(ctx, f.slashRoot)
+		if err == nil {
+			newRoot := path.Dir(f.root)
+			if newRoot == "." {
+				newRoot = ""
+			}
+			f.setRoot(newRoot)
+			// return an error with an fs which points to the parent
+			return f, fs.ErrorIsFile
 		}
-		f.setRoot(newRoot)
-		// return an error with an fs which points to the parent
-		return f, fs.ErrorIsFile
 	}
 	return f, nil
 }
