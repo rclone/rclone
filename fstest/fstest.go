@@ -345,6 +345,12 @@ func CheckListing(t *testing.T, f fs.Fs, items []Item) {
 	CheckListingWithPrecision(t, f, items, nil, precision)
 }
 
+// CheckItemsWithPrecision checks the fs with the specified precision
+// to see if it has the expected items.
+func CheckItemsWithPrecision(t *testing.T, f fs.Fs, precision time.Duration, items ...Item) {
+	CheckListingWithPrecision(t, f, items, nil, precision)
+}
+
 // CheckItems checks the fs to see if it has only the items passed in
 // using a precision of fs.Config.ModifyWindow
 func CheckItems(t *testing.T, f fs.Fs, items ...Item) {

@@ -57,7 +57,7 @@ func TestDeduplicateInteractive(t *testing.T) {
 	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateInteractive, false)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 }
 
 func TestDeduplicateSkip(t *testing.T) {
@@ -148,7 +148,7 @@ func TestDeduplicateNewest(t *testing.T) {
 	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateNewest, false)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file3)
+	r.CheckRemoteItems(t, file3)
 }
 
 func TestDeduplicateNewestByHash(t *testing.T) {
@@ -162,12 +162,12 @@ func TestDeduplicateNewestByHash(t *testing.T) {
 	file2 := r.WriteObject(context.Background(), "also/one", contents, t2)
 	file3 := r.WriteObject(context.Background(), "another", contents, t3)
 	file4 := r.WriteObject(context.Background(), "not-one", "stuff", t3)
-	fstest.CheckItems(t, r.Fremote, file1, file2, file3, file4)
+	r.CheckRemoteItems(t, file1, file2, file3, file4)
 
 	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateNewest, true)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file3, file4)
+	r.CheckRemoteItems(t, file3, file4)
 }
 
 func TestDeduplicateOldest(t *testing.T) {
@@ -183,7 +183,7 @@ func TestDeduplicateOldest(t *testing.T) {
 	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateOldest, false)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 }
 
 func TestDeduplicateLargest(t *testing.T) {
@@ -199,7 +199,7 @@ func TestDeduplicateLargest(t *testing.T) {
 	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateLargest, false)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file3)
+	r.CheckRemoteItems(t, file3)
 }
 
 func TestDeduplicateSmallest(t *testing.T) {
@@ -215,7 +215,7 @@ func TestDeduplicateSmallest(t *testing.T) {
 	err := operations.Deduplicate(context.Background(), r.Fremote, operations.DeduplicateSmallest, false)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 }
 
 func TestDeduplicateRename(t *testing.T) {
@@ -281,7 +281,7 @@ func TestMergeDirs(t *testing.T) {
 
 	file2.Path = "dupe1/two.txt"
 	file3.Path = "dupe1/three.txt"
-	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+	r.CheckRemoteItems(t, file1, file2, file3)
 
 	objs, dirs, err = walk.GetAll(context.Background(), r.Fremote, "", true, 1)
 	require.NoError(t, err)

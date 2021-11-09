@@ -41,7 +41,7 @@ func TestListJSON(t *testing.T) {
 	file1 := r.WriteBoth(ctx, "file1", "file1", t1)
 	file2 := r.WriteBoth(ctx, "sub/file2", "sub/file2", t2)
 
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 	precision := fs.GetModifyWindow(ctx, r.Fremote)
 
 	for _, test := range []struct {
@@ -236,7 +236,7 @@ func TestStatJSON(t *testing.T) {
 	file1 := r.WriteBoth(ctx, "file1", "file1", t1)
 	file2 := r.WriteBoth(ctx, "sub/file2", "sub/file2", t2)
 
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 	precision := fs.GetModifyWindow(ctx, r.Fremote)
 
 	for _, test := range []struct {
