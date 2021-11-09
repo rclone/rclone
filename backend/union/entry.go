@@ -82,7 +82,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			err := o.Update(ctx, readers[i], src, options...)
-			errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
+			}
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}
@@ -101,7 +103,9 @@ func (o *Object) Remove(ctx context.Context) error {
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			err := o.Remove(ctx)
-			errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
+			}
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}
@@ -120,7 +124,9 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) error {
 	multithread(len(entries), func(i int) {
 		if o, ok := entries[i].(*upstream.Object); ok {
 			err := o.SetModTime(ctx, t)
-			errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
+			}
 		} else {
 			errs[i] = fs.ErrorNotAFile
 		}

@@ -132,7 +132,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
 		err := upstreams[i].Rmdir(ctx, dir)
-		errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		}
 	})
 	return errs.Err()
 }
@@ -162,7 +164,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
 		err := upstreams[i].Mkdir(ctx, dir)
-		errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		}
 	})
 	return errs.Err()
 }
@@ -189,7 +193,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		if errors.Is(err, fs.ErrorDirNotFound) {
 			err = nil
 		}
-		errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		}
 	})
 	return errs.Err()
 }
@@ -285,8 +291,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		}
 		// Do the Move or Copy
 		dstObj, err := do(ctx, srcObj, remote)
-		if err != nil || dstObj == nil {
+		if err != nil {
 			errs[i] = fmt.Errorf("%s: %w", su.Name(), err)
+			return
+		}
+		if dstObj == nil {
+			errs[i] = fmt.Errorf("%s: destination object not found", su.Name())
 			return
 		}
 		objs[i] = du.WrapObject(dstObj)
@@ -349,7 +359,9 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			return
 		}
 		err := du.Features().DirMove(ctx, su.Fs, srcRemote, dstRemote)
-		errs[i] = fmt.Errorf("%s: %w", du.Name()+":"+du.Root(), err)
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", du.Name()+":"+du.Root(), err)
+		}
 	})
 	errs = errs.FilterNil()
 	if len(errs) == 0 {
@@ -777,7 +789,9 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 		u := f.upstreams[i]
 		if do := u.Features().Shutdown; do != nil {
 			err := do(ctx)
-			errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
+			}
 		}
 	})
 	return errs.Err()
