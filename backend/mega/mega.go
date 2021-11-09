@@ -602,7 +602,10 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return err
 	}
 	_, err = f.mkdir(ctx, rootNode, dir)
-	return fmt.Errorf("Mkdir failed: %w", err)
+	if err != nil {
+		return fmt.Errorf("Mkdir failed: %w", err)
+	}
+	return nil
 }
 
 // deleteNode removes a file or directory, observing useTrash
