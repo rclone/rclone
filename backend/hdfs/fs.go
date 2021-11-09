@@ -310,6 +310,48 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}, nil
 }
 
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) (err error) {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		return fs.ErrorCantDirMove
+	}
+
+	// Get the real paths from the remote specs:
+	sourcePath := srcFs.realpath(srcRemote)
+	targetPath := f.realpath(dstRemote)
+	fs.Debugf(f, "rename [%s] to [%s]", sourcePath, targetPath)
+
+	// Check if the destination exists:
+	info, err := f.client.Stat(targetPath)
+	if err == nil {
+		fs.Debugf(f, "target directory already exits, IsDir = [%t]", info.IsDir())
+		return fs.ErrorDirExists
+	}
+
+	// Make sure the targets parent folder exists:
+	dirname := path.Dir(targetPath)
+	err = f.client.MkdirAll(dirname, 0755)
+	if err != nil {
+		return err
+	}
+
+	// Do the move
+	err = f.client.Rename(sourcePath, targetPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // About gets quota information from the Fs
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	info, err := f.client.StatFs()
@@ -365,4 +407,6 @@ var (
 	_ fs.Purger      = (*Fs)(nil)
 	_ fs.PutStreamer = (*Fs)(nil)
 	_ fs.Abouter     = (*Fs)(nil)
+	_ fs.Mover       = (*Fs)(nil)
+	_ fs.DirMover    = (*Fs)(nil)
 )
