@@ -69,6 +69,10 @@ const (
 	teliaCloudTokenURL = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/token"
 	teliaCloudAuthURL  = "https://cloud-auth.telia.se/auth/realms/telia_se/protocol/openid-connect/auth"
 	teliaCloudClientID = "desktop"
+
+	tele2CloudTokenURL = "https://mittcloud-auth.tele2.se/auth/realms/comhem/protocol/openid-connect/token"
+	tele2CloudAuthURL  = "https://mittcloud-auth.tele2.se/auth/realms/comhem/protocol/openid-connect/auth"
+	tele2CloudClientID = "desktop"
 )
 
 // Register with Fs
@@ -131,6 +135,9 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		}, {
 			Value: "telia",
 			Help:  "Telia Cloud authentication.\nUse this if you are using Telia Cloud.",
+		}, {
+			Value: "tele2",
+			Help:  "Tele2 Cloud authentication.\nUse this if you are using Tele2 Cloud.",
 		}})
 	case "auth_type_done":
 		// Jump to next state according to config chosen
@@ -234,6 +241,21 @@ machines.`)
 					TokenURL: teliaCloudTokenURL,
 				},
 				ClientID:    teliaCloudClientID,
+				Scopes:      []string{"openid", "jotta-default", "offline_access"},
+				RedirectURL: oauthutil.RedirectLocalhostURL,
+			},
+		})
+	case "tele2": // tele2 cloud config
+		m.Set("configVersion", fmt.Sprint(configVersion))
+		m.Set(configClientID, tele2CloudClientID)
+		m.Set(configTokenURL, tele2CloudTokenURL)
+		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
+			OAuth2Config: &oauth2.Config{
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  tele2CloudAuthURL,
+					TokenURL: tele2CloudTokenURL,
+				},
+				ClientID:    tele2CloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
 			},
