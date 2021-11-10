@@ -41,8 +41,8 @@ Note that the web interface may refer to this token as a JottaCli token.
 
 ### Legacy authentication
 
-If you are using one of the whitelabel versions (e.g. from Elkjøp or Tele2) you may not have the option
-to generate a CLI token. In this case you'll have to use the legacy authentication. To to this select
+If you are using one of the whitelabel versions (e.g. from Elkjøp) you may not have the option
+to generate a CLI token. In this case you'll have to use the legacy authentication. To do this select
 yes when the setup asks for legacy authentication and enter your username and password.
 The rest of the setup is identical to the default setup.
 
@@ -52,6 +52,13 @@ Similar to other whitelabel versions Telia Cloud doesn't offer the option of cre
 additionally uses a separate authentication flow where the username is generated internally. To setup
 rclone to use Telia Cloud, choose Telia Cloud authentication in the setup. The rest of the setup is
 identical to the default setup.
+
+### Tele2 Cloud authentication
+
+As Tele2-Com Hem merger was completed this authentication can be used for former Com Hem Cloud and
+Tele2 Cloud customers as no support for creating a CLI token exists, and additionally uses a separate
+authentication flow where the username is generated internally. To setup rclone to use Tele2 Cloud,
+choose Tele2 Cloud authentication in the setup. The rest of the setup is identical to the default setup.
 
 ## Configuration
 
