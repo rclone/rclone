@@ -615,10 +615,6 @@ func (f *File) Remove() (err error) {
 		wasWriting = d.vfs.cache.Remove(f.Path())
 	}
 
-	// Remove the item from the directory listing
-	// called with File.mu released
-	d.delObject(f.Name())
-
 	f.muRW.Lock() // muRW must be locked before mu to avoid
 	f.mu.Lock()   // deadlock in RWFileHandle.openPending and .close
 	if f.o != nil {
@@ -634,6 +630,12 @@ func (f *File) Remove() (err error) {
 		} else {
 			fs.Debugf(f._path(), "File.Remove file error: %v", err)
 		}
+	}
+
+	// Remove the item from the directory listing
+	// called with File.mu released when there is no error removing the underlying file
+	if err == nil {
+		d.delObject(f.Name())
 	}
 	return err
 }

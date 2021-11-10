@@ -203,6 +203,11 @@ func (fh *WriteFileHandle) close() (err error) {
 	if err == nil {
 		fh.file.setObject(fh.o)
 		err = writeCloseErr
+	} else {
+		// Remove vfs file entry when no object is present
+		if fh.file.getObject() == nil {
+			_ = fh.file.Remove()
+		}
 	}
 	return err
 }
