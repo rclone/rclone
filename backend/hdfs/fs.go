@@ -300,6 +300,9 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// Look up the resulting object
 	info, err := f.client.Stat(targetPath)
+	if err != nil {
+		return nil, err
+	}
 
 	// And return it:
 	return &Object{
