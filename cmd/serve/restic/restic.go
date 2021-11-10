@@ -1,4 +1,8 @@
 // Package restic serves a remote suitable for use with restic
+
+//go:build go1.17
+// +build go1.17
+
 package restic
 
 import (
