@@ -104,10 +104,14 @@ showupdates:
 	@echo "*** Direct dependencies that could be updated ***"
 	@GO111MODULE=on go list -u -f '{{if (and (not (or .Main .Indirect)) .Update)}}{{.Path}}: {{.Version}} -> {{.Update.Version}}{{end}}' -m all 2> /dev/null
 
+# Update direct dependencies only
+updatedirect:
+	GO111MODULE=on go get -d $$(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all)
+	GO111MODULE=on go mod tidy
+
 # Update direct and indirect dependencies and test dependencies
 update:
-	GO111MODULE=on go get -u -t ./...
-	-#GO111MODULE=on go get -d $(go list -m -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' all)
+	GO111MODULE=on go get -d -u -t ./...
 	GO111MODULE=on go mod tidy
 
 # Tidy the module dependencies
