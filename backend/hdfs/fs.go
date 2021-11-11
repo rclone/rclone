@@ -263,6 +263,98 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.client.RemoveAll(realpath)
 }
 
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// Get the real paths from the remote specs:
+	sourcePath := srcObj.fs.realpath(srcObj.remote)
+	targetPath := f.realpath(remote)
+	fs.Debugf(f, "rename [%s] to [%s]", sourcePath, targetPath)
+
+	// Make sure the target folder exists:
+	dirname := path.Dir(targetPath)
+	err := f.client.MkdirAll(dirname, 0755)
+	if err != nil {
+		return nil, err
+	}
+
+	// Do the move
+	// Note that the underlying HDFS library hard-codes Overwrite=True, but this is expected rclone behaviour.
+	err = f.client.Rename(sourcePath, targetPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Look up the resulting object
+	info, err := f.client.Stat(targetPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// And return it:
+	return &Object{
+		fs:      f,
+		remote:  remote,
+		size:    info.Size(),
+		modTime: info.ModTime(),
+	}, nil
+}
+
+// DirMove moves src, srcRemote to this remote at dstRemote
+// using server-side move operations.
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantDirMove
+//
+// If destination exists then return fs.ErrorDirExists
+func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string) (err error) {
+	srcFs, ok := src.(*Fs)
+	if !ok {
+		return fs.ErrorCantDirMove
+	}
+
+	// Get the real paths from the remote specs:
+	sourcePath := srcFs.realpath(srcRemote)
+	targetPath := f.realpath(dstRemote)
+	fs.Debugf(f, "rename [%s] to [%s]", sourcePath, targetPath)
+
+	// Check if the destination exists:
+	info, err := f.client.Stat(targetPath)
+	if err == nil {
+		fs.Debugf(f, "target directory already exits, IsDir = [%t]", info.IsDir())
+		return fs.ErrorDirExists
+	}
+
+	// Make sure the targets parent folder exists:
+	dirname := path.Dir(targetPath)
+	err = f.client.MkdirAll(dirname, 0755)
+	if err != nil {
+		return err
+	}
+
+	// Do the move
+	err = f.client.Rename(sourcePath, targetPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // About gets quota information from the Fs
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	info, err := f.client.StatFs()
@@ -318,4 +410,6 @@ var (
 	_ fs.Purger      = (*Fs)(nil)
 	_ fs.PutStreamer = (*Fs)(nil)
 	_ fs.Abouter     = (*Fs)(nil)
+	_ fs.Mover       = (*Fs)(nil)
+	_ fs.DirMover    = (*Fs)(nil)
 )
