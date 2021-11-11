@@ -546,3 +546,4 @@ put them back in again.` >}}
   * Vitor Arruda <vitor.pimenta.arruda@gmail.com>
   * bbabich <bbabich@datamossa.com>
   * David <dp.davide.palma@gmail.com>
+  * Borna Butkovic <borna@favicode.net>
