@@ -152,11 +152,11 @@ different. This issue affects among others Synology NAS boxes.
 
 Shared folders can be found in directories representing volumes
 
-    rclone sync /home/local/directory remote:/directory --ssh-path-override /volume2/directory
+    rclone sync /home/local/directory remote:/directory --sftp-path-override /volume2/directory
 
 Home directory can be found in a shared folder called "home"
 
-    rclone sync /home/local/directory remote:/home/directory --ssh-path-override /volume1/homes/USER/directory`,
+    rclone sync /home/local/directory remote:/home/directory --sftp-path-override /volume1/homes/USER/directory`,
 			Advanced: true,
 		}, {
 			Name:     "set_modtime",
