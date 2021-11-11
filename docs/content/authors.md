@@ -545,3 +545,4 @@ put them back in again.` >}}
   * Chris Lu <chris.lu@gmail.com>
   * Vitor Arruda <vitor.pimenta.arruda@gmail.com>
   * bbabich <bbabich@datamossa.com>
+  * David <dp.davide.palma@gmail.com>
