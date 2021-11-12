@@ -51,7 +51,6 @@ const (
 	storageDefaultBaseURL = "blob.core.windows.net"
 	defaultChunkSize      = 4 * fs.Mebi
 	maxChunkSize          = 100 * fs.Mebi
-	uploadConcurrency     = 4
 	defaultAccessTier     = azblob.AccessTierNone
 	maxTryTimeout         = time.Hour * 24 * 365 //max time of an azure web request response window (whether or not data is flowing)
 	// Default storage account, key and blob endpoint for emulator support,
@@ -137,8 +136,29 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Help: `Upload chunk size (<= 100 MiB).
 
 Note that this is stored in memory and there may be up to
-"--transfers" chunks stored at once in memory.`,
+"--transfers" * "--azureblob-upload-concurrency" chunks stored at once
+in memory.`,
 			Default:  defaultChunkSize,
+			Advanced: true,
+		}, {
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently.
+
+If you are uploading small numbers of large files over high-speed
+links and these uploads do not fully utilize your bandwidth, then
+increasing this may help to speed up the transfers.
+
+In tests, upload speed increases almost linearly with upload
+concurrency. For example to fill a gigabit pipe it may be necessary to
+raise this to 64. Note that this will use more memory.
+
+Note that chunks are stored in memory and there may be up to
+"--transfers" * "--azureblob-upload-concurrency" chunks stored at once
+in memory.`,
+			Default:  4,
 			Advanced: true,
 		}, {
 			Name: "list_chunk",
@@ -257,6 +277,7 @@ type Options struct {
 	Endpoint             string               `config:"endpoint"`
 	SASURL               string               `config:"sas_url"`
 	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency    int                  `config:"upload_concurrency"`
 	ListChunkSize        uint                 `config:"list_chunk"`
 	AccessTier           string               `config:"access_tier"`
 	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
@@ -1667,10 +1688,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
 		BufferSize:      int(o.fs.opt.ChunkSize),
-		MaxBuffers:      uploadConcurrency,
+		MaxBuffers:      o.fs.opt.UploadConcurrency,
 		Metadata:        o.meta,
 		BlobHTTPHeaders: httpHeaders,
-		TransferManager: o.fs.newPoolWrapper(uploadConcurrency),
+		TransferManager: o.fs.newPoolWrapper(o.fs.opt.UploadConcurrency),
 	}
 
 	// Don't retry, return a retry error instead
