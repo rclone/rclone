@@ -13,6 +13,7 @@ import (
 	"net"
 	"os"
 	"os/user"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -128,6 +129,8 @@ type server struct {
 	useTLS bool
 }
 
+var passivePortsRe = regexp.MustCompile(`^\s*\d+\s*-\s*\d+\s*$`)
+
 // Make a new FTP to serve the remote
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
@@ -150,6 +153,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 		s.vfs = vfs.New(f, &vfsflags.Opt)
 	}
 	s.useTLS = s.opt.TLSKey != ""
+
+	// Check PassivePorts format since the the server library doesn't!
+	if !passivePortsRe.MatchString(opt.PassivePorts) {
+		return nil, fmt.Errorf("invalid format for passive ports %q", opt.PassivePorts)
+	}
 
 	ftpopt := &ftp.ServerOpts{
 		Name:           "Rclone FTP Server",
