@@ -50,7 +50,6 @@ const (
 	timeFormatOut         = "2006-01-02T15:04:05.000000000Z07:00"
 	storageDefaultBaseURL = "blob.core.windows.net"
 	defaultChunkSize      = 4 * fs.Mebi
-	maxChunkSize          = 100 * fs.Mebi
 	defaultAccessTier     = azblob.AccessTierNone
 	maxTryTimeout         = time.Hour * 24 * 365 //max time of an azure web request response window (whether or not data is flowing)
 	// Default storage account, key and blob endpoint for emulator support,
@@ -133,7 +132,7 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
-			Help: `Upload chunk size (<= 100 MiB).
+			Help: `Upload chunk size.
 
 Note that this is stored in memory and there may be up to
 "--transfers" * "--azureblob-upload-concurrency" chunks stored at once
@@ -436,9 +435,6 @@ func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	const minChunkSize = fs.SizeSuffixBase
 	if cs < minChunkSize {
 		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
-	}
-	if cs > maxChunkSize {
-		return fmt.Errorf("%s is greater than %s", cs, maxChunkSize)
 	}
 	return nil
 }
