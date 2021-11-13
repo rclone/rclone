@@ -373,6 +373,14 @@ total path length which rclone is more likely to breach using
 characters in length issues should not be encountered, irrespective of
 cloud storage provider.
 
+An experimental advanced option `filename_encoding` is now provided to
+address this problem to a certain degree.
+For cloud storage systems with case sensitive file names (e.g. Google Drive),
+`base64` can be used to reduce file name length. 
+For cloud storage systems using UTF-16 to store file names internally
+(e.g. OneDrive), `base32768` can be used to drastically reduce
+file name length. 
+
 An alternative, future rclone file name encryption mode may tolerate
 backend provider path length limits.
 
