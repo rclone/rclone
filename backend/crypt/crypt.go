@@ -116,6 +116,29 @@ names, or for debugging purposes.`,
 					Help:  "Encrypt file data.",
 				},
 			},
+		}, {
+			Name: "filename_encoding",
+			Help: `How to encode the encrypted filename to text string.
+
+This option could help with shortening the encrypted filename. The 
+suitable option would depend on the way your remote count the filename
+length and if it's case sensitve.`,
+			Default: "base32",
+			Examples: []fs.OptionExample{
+				{
+					Value: "base32",
+					Help:  "Encode using base32. Suitable for all remote.",
+				},
+				{
+					Value: "base64",
+					Help:  "Encode using base64. Suitable for case sensitive remote.",
+				},
+				{
+					Value: "base32768",
+					Help:  "Encode using base32768. Suitable if your remote counts UTF-16 or\nUnicode codepoint instead of UTF-8 byte length. (Eg. Onedrive)",
+				},
+			},
+			Advanced: true,
 		}},
 	})
 }
@@ -140,7 +163,11 @@ func newCipherForConfig(opt *Options) (*Cipher, error) {
 			return nil, fmt.Errorf("failed to decrypt password2: %w", err)
 		}
 	}
-	cipher, err := newCipher(mode, password, salt, opt.DirectoryNameEncryption)
+	enc, err := NewNameEncoding(opt.FilenameEncoding)
+	if err != nil {
+		return nil, err
+	}
+	cipher, err := newCipher(mode, password, salt, opt.DirectoryNameEncryption, enc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make cipher: %w", err)
 	}
@@ -229,6 +256,7 @@ type Options struct {
 	Password2               string `config:"password2"`
 	ServerSideAcrossConfigs bool   `config:"server_side_across_configs"`
 	ShowMapping             bool   `config:"show_mapping"`
+	FilenameEncoding        string `config:"filename_encoding"`
 }
 
 // Fs represents a wrapped fs.Fs
