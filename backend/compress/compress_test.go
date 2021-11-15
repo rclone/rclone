@@ -16,6 +16,9 @@ import (
 
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
+	if *fstest.RemoteName == "" {
+		t.Skip("Skipping as -remote not set")
+	}
 	opt := fstests.Opt{
 		RemoteName: *fstest.RemoteName,
 		NilObject:  (*Object)(nil),
@@ -61,5 +64,6 @@ func TestRemoteGzip(t *testing.T) {
 			{Name: name, Key: "remote", Value: tempdir},
 			{Name: name, Key: "compression_mode", Value: "gzip"},
 		},
+		QuickTestOK: true,
 	})
 }

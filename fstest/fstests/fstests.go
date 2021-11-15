@@ -295,6 +295,7 @@ type Opt struct {
 	SkipFsCheckWrap              bool     // if set skip FsCheckWrap
 	SkipObjectCheckWrap          bool     // if set skip ObjectCheckWrap
 	SkipInvalidUTF8              bool     // if set skip invalid UTF-8 checks
+	QuickTestOK                  bool     // OK to run this test in "make quicktest"
 }
 
 // returns true if x is found in ss
@@ -359,7 +360,7 @@ func Run(t *testing.T, opt *Opt) {
 		unwrappableFsMethods = []string{"Command"} // these Fs methods don't need to be wrapped ever
 	)
 
-	if strings.HasSuffix(os.Getenv("RCLONE_CONFIG"), "/notfound") && *fstest.RemoteName == "" {
+	if !opt.QuickTestOK && strings.HasSuffix(os.Getenv("RCLONE_CONFIG"), "/notfound") && *fstest.RemoteName == "" {
 		t.Skip("quicktest only")
 	}
 

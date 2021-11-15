@@ -25,6 +25,7 @@ func TestIntegration(t *testing.T) {
 			"OpenWriterAt",
 		},
 		UnimplementableObjectMethods: []string{},
+		QuickTestOK:                  true,
 	}
 	if *fstest.RemoteName == "" {
 		tempDir := filepath.Join(os.TempDir(), "rclone-hasher-test")

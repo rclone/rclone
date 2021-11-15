@@ -46,6 +46,7 @@ func TestStandardBase32(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -67,6 +68,7 @@ func TestStandardBase64(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -88,6 +90,7 @@ func TestStandardBase32768(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -109,6 +112,7 @@ func TestOff(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -131,6 +135,7 @@ func TestObfuscate(t *testing.T) {
 		SkipBadWindowsCharacters:     true,
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -154,5 +159,6 @@ func TestNoDataObfuscate(t *testing.T) {
 		SkipBadWindowsCharacters:     true,
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }

@@ -44,6 +44,7 @@ func TestIntegration(t *testing.T) {
 			"UserInfo",
 			"Disconnect",
 		},
+		QuickTestOK: true,
 	}
 	if *fstest.RemoteName == "" {
 		name := "TestChunker"
