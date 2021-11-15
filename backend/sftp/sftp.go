@@ -42,7 +42,8 @@ const (
 	hashCommandNotSupported = "none"
 	minSleep                = 100 * time.Millisecond
 	maxSleep                = 2 * time.Second
-	decayConstant           = 2 // bigger for slower decay, exponential
+	decayConstant           = 2           // bigger for slower decay, exponential
+	keepAliveInterval       = time.Minute // send keepalives every this long while running commands
 )
 
 var (
@@ -337,6 +338,32 @@ type conn struct {
 // Wait for connection to close
 func (c *conn) wait() {
 	c.err <- c.sshClient.Conn.Wait()
+}
+
+// Send a keepalive over the ssh connection
+func (c *conn) sendKeepAlive() {
+	_, _, err := c.sshClient.SendRequest("keepalive@openssh.com", true, nil)
+	if err != nil {
+		fs.Debugf(nil, "Failed to send keep alive: %v", err)
+	}
+}
+
+// Send keepalives every interval over the ssh connection until done is closed
+func (c *conn) sendKeepAlives(interval time.Duration) (done chan struct{}) {
+	done = make(chan struct{})
+	go func() {
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-t.C:
+				c.sendKeepAlive()
+			case <-done:
+				return
+			}
+		}
+	}()
+	return done
 }
 
 // Closes the connection
@@ -1097,6 +1124,9 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 		return nil, fmt.Errorf("run: get SFTP connection: %w", err)
 	}
 	defer f.putSftpConnection(&c, err)
+
+	// Send keepalives while the connection is open
+	defer close(c.sendKeepAlives(keepAliveInterval))
 
 	session, err := c.sshClient.NewSession()
 	if err != nil {

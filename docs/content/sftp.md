@@ -620,7 +620,7 @@ issue](https://github.com/pkg/sftp/issues/156) is fixed.
 Note that since SFTP isn't HTTP based the following flags don't work
 with it: `--dump-headers`, `--dump-bodies`, `--dump-auth`
 
-Note that `--timeout` isn't supported (but `--contimeout` is).
+Note that `--timeout` and `--contimeout` are both supported.
 
 
 ## C14 {#c14}
