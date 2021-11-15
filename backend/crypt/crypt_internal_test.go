@@ -77,7 +77,11 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 	enc, err := f.cipher.newEncrypter(inBuf, nil)
 	require.NoError(t, err)
 	nonce := enc.nonce // read the nonce at the start
-	_, err = io.Copy(&outBuf, enc)
+	if f.opt.NoDataEncryption {
+		_, err = outBuf.WriteString(contents)
+	} else {
+		_, err = io.Copy(&outBuf, enc)
+	}
 	require.NoError(t, err)
 
 	var oi fs.ObjectInfo = obj
@@ -96,7 +100,12 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 	assert.NotEqual(t, path, src.Remote())
 
 	// Test ObjectInfo.Hash
-	wantHash := md5.Sum(outBuf.Bytes())
+	var wantHash [md5.Size]byte
+	if f.opt.NoDataEncryption {
+		wantHash = md5.Sum([]byte(contents))
+	} else {
+		wantHash = md5.Sum(outBuf.Bytes())
+	}
 	gotHash, err := src.Hash(ctx, hash.MD5)
 	require.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("%x", wantHash), gotHash)
