@@ -549,3 +549,4 @@ put them back in again.` >}}
   * Borna Butkovic <borna@favicode.net>
   * Fredric Arklid <fredric.arklid@consid.se>
   * Andy Jackson <Andrew.Jackson@bl.uk>
+  * Sinan Tan <i@tinytangent.com>
