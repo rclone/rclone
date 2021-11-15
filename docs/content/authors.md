@@ -547,3 +547,4 @@ put them back in again.` >}}
   * bbabich <bbabich@datamossa.com>
   * David <dp.davide.palma@gmail.com>
   * Borna Butkovic <borna@favicode.net>
+  * Fredric Arklid <fredric.arklid@consid.se>
