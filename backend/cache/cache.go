@@ -489,7 +489,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		f.opt.TempWritePath = filepath.ToSlash(f.opt.TempWritePath)
 		f.tempFs, err = cache.Get(ctx, f.opt.TempWritePath)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create temp fs: %v: %w", err, err)
+			return nil, fmt.Errorf("failed to create temp fs: %w", err)
 		}
 		fs.Infof(name, "Upload Temp Rest Time: %v", f.opt.TempWaitTime)
 		fs.Infof(name, "Upload Temp FS: %v", f.opt.TempWritePath)

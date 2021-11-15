@@ -1006,7 +1006,7 @@ func hashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag
 			return "", fmt.Errorf("hash unsupported: %w", err)
 		}
 		if err != nil {
-			return "", fmt.Errorf("failed to get hash %v from backend: %v: %w", ht, err, err)
+			return "", fmt.Errorf("failed to get hash %v from backend: %w", ht, err)
 		}
 	}
 
