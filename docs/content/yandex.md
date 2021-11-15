@@ -175,6 +175,15 @@ Leave blank to use the provider defaults.
 - Type:        string
 - Default:     ""
 
+#### --yandex-hard-delete
+
+Delete files permanently rather than putting them into the trash.
+
+- Config:      hard_delete
+- Env Var:     RCLONE_YANDEX_HARD_DELETE
+- Type:        bool
+- Default:     false
+
 #### --yandex-encoding
 
 This sets the encoding for the backend.
