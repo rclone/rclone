@@ -160,7 +160,15 @@ free egress for data downloaded through the Cloudflare network.
 Rclone works with private buckets by sending an "Authorization" header.
 If the custom endpoint rewrites the requests for authentication,
 e.g., in Cloudflare Workers, this header needs to be handled properly.
-Leave blank if you want to use the endpoint provided by Backblaze.`,
+Leave blank if you want to use the endpoint provided by Backblaze.
+
+The URL provided here SHOULD have the protocol and SHOULD NOT have
+a trailing slash or specify the /file/bucket subpath as rclone will
+request files with "{download_url}/file/{bucket_name}/{path}".
+
+Example:
+> https://mysubdomain.mydomain.tld
+(No trailing "/", "file" or "bucket")`,
 			Advanced: true,
 		}, {
 			Name: "download_auth_duration",
