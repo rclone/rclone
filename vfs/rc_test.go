@@ -119,3 +119,15 @@ func TestRcList(t *testing.T) {
 		},
 	}, out)
 }
+
+func TestRcStats(t *testing.T) {
+	r, vfs, cleanup, call := rcNewRun(t, "vfs/stats")
+	defer cleanup()
+	out, err := call.Fn(context.Background(), nil)
+	require.NoError(t, err)
+	assert.Equal(t, fs.ConfigString(r.Fremote), out["fs"])
+	assert.Equal(t, int32(1), out["inUse"])
+	assert.Equal(t, 0, out["metadataCache"].(rc.Params)["files"])
+	assert.Equal(t, 1, out["metadataCache"].(rc.Params)["dirs"])
+	assert.Equal(t, vfs.Opt, out["opt"].(vfscommon.Options))
+}
