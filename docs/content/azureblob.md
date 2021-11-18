@@ -81,6 +81,14 @@ key.  It is stored using RFC3339 Format time with nanosecond
 precision.  The metadata is supplied during directory listings so
 there is no overhead to using it.
 
+### Performance
+
+When uploading large files, increasing the value of
+`--azureblob-upload-concurrency` will increase performance at the cost
+of using more memory. The default of 16 is set quite conservatively to
+use less memory. It maybe be necessary raise it to 64 or higher to
+fully utilize a 1 GBit/s link with a single file transfer.
+
 ### Restricted filename characters
 
 In addition to the [default restricted characters set](/overview/#restricted-characters)

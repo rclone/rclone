@@ -157,7 +157,7 @@ raise this to 64. Note that this will use more memory.
 Note that chunks are stored in memory and there may be up to
 "--transfers" * "--azureblob-upload-concurrency" chunks stored at once
 in memory.`,
-			Default:  4,
+			Default:  16,
 			Advanced: true,
 		}, {
 			Name: "list_chunk",
