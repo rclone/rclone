@@ -80,7 +80,7 @@ List all the files in your pCloud
 
     rclone ls remote:
 
-To copy a local directory to an pCloud directory called backup
+To copy a local directory to a pCloud directory called backup
 
     rclone copy /home/source remote:backup
 
