@@ -551,3 +551,5 @@ put them back in again.` >}}
   * Andy Jackson <Andrew.Jackson@bl.uk>
   * Sinan Tan <i@tinytangent.com>
   * deinferno <14363193+deinferno@users.noreply.github.com>
+  * rsapkf <rsapkfff@pm.me>
+  * Will Holtz <wholtz@gmail.com>
