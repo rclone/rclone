@@ -761,7 +761,11 @@ func init() {
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.ap-northeast-1.wasabisys.com",
-				Help:     "Wasabi AP Northeast endpoint",
+				Help:     "Wasabi AP Northeast 1 (Tokyo) endpoint",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ap-northeast-2.wasabisys.com",
+				Help:     "Wasabi AP Northeast 2 (Osaka) endpoint",
 				Provider: "Wasabi",
 			}},
 		}, {
