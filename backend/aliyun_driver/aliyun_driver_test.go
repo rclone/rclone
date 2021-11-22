@@ -3,9 +3,10 @@ package aliyun_driver
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
-	"testing"
 )
 
 func TestNewFs(t *testing.T) {
@@ -20,7 +21,10 @@ func TestFs_GetAccessToken(t *testing.T) {
 	config.FileSet(remoteName, "type", "aliyun-driver")
 	config.FileSet(remoteName, "refresh_token", token)
 
-	f, err := fs.NewFs(context.Background(), remoteName+":")
+	ctx := context.Background()
+	f, err := fs.NewFs(ctx, remoteName+":")
 
-	fmt.Println(f, err)
+	fmt.Println(err)
+
+	f.List(ctx, "root")
 }
