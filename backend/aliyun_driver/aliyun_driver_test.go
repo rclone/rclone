@@ -14,7 +14,7 @@ func TestNewFs(t *testing.T) {
 }
 
 var remoteName = "ali"
-var token = "bf7744a65ef0451886e78fbda6b94f96"
+var token = "c5354c51ee3c43099b4b9ae9ec2f0129"
 
 func TestFs_GetAccessToken(t *testing.T) {
 
@@ -22,9 +22,7 @@ func TestFs_GetAccessToken(t *testing.T) {
 	config.FileSet(remoteName, "refresh_token", token)
 
 	ctx := context.Background()
-	f, err := fs.NewFs(ctx, remoteName+":")
+	f, _ := fs.NewFs(ctx, remoteName+":")
 
-	fmt.Println(err)
-
-	f.List(ctx, "root")
+	fmt.Println(f.List(ctx, "root"))
 }

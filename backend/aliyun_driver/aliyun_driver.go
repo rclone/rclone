@@ -2,6 +2,8 @@ package aliyun_driver
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -71,12 +73,12 @@ func (f *Fs) Hashes() hash.Set {
 
 // List
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	for _, info := range f.listAll(ctx, dir) {
+	list, err := f.listAll(ctx, dir)
+	for _, info := range list {
 		if info.Type == ItemTypeFolder {
 			d := fs.NewDir(info.Name, info.UpdatedAt).SetID(info.FileId).SetParentID(dir)
 			entries = append(entries, d)
 		} else {
-			//
 			o := f.newObjectWithInfo(ctx, info.Name, &info)
 			entries = append(entries, o)
 		}
@@ -85,7 +87,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 // listAll 获取目录下全部文件
-func (f *Fs) listAll(ctx context.Context, dir string) []entity.ItemsOut {
+func (f *Fs) listAll(ctx context.Context, dir string) ([]entity.ItemsOut, error) {
 	request := entity.ListIn{
 		Limit:        200,
 		DriveId:      f.driveId,
@@ -101,17 +103,18 @@ func (f *Fs) listAll(ctx context.Context, dir string) []entity.ItemsOut {
 	var out []entity.ItemsOut
 	for {
 		resp := entity.ListOut{}
-		_, err := f.srv.CallJSON(f.ctx, &opts, request, &resp)
-		if err == nil {
-			out = append(out, resp.Items...)
+		err := f.callJSON(&opts, request, &resp)
+		if err != nil {
+			return out, errors.New(resp.Code)
 		}
+		out = append(out, resp.Items...)
 		if resp.NextMarker == "" {
 			break
 		} else {
 			request.Marker = resp.NextMarker
 		}
 	}
-	return out
+	return out, nil
 }
 
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
@@ -156,28 +159,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ctx:  ctx,
 	}
 	f.features = (&fs.Features{}).Fill(ctx, f)
-	f.getAccessToken()
-	f.getDriveId()
-	return f, nil
-}
-
-func (f *Fs) getDriveId() {
-	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/user/get",
-		RootURL: url,
-	}
-
-	resp := struct {
-		DefaultDriveId string `json:"default_drive_id"`
-	}{}
-
-	r, e := f.srv.CallJSON(f.ctx, &opts, struct{}{}, &resp)
-	fmt.Println(r, e, resp)
+	err = f.getAccessToken()
+	return f, err
 }
 
 // getAccessToken 获取getAccessToken
-func (f *Fs) getAccessToken() {
+func (f *Fs) getAccessToken() error {
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/token/refresh",
@@ -186,10 +173,9 @@ func (f *Fs) getAccessToken() {
 	request := entity.AccessTokenIn{RefreshToken: f.opt.RefreshToken}
 	response := entity.AccessTokenOut{}
 
-	_, err := f.srv.CallJSON(f.ctx, &opts, request, &response)
+	err := f.callJSON(&opts, request, &response)
 	if err != nil {
-		//TODO
-		fmt.Println("")
+		return err
 	}
 	fmt.Println("-------------------- accessToken end --------------------")
 	fmt.Println(response.AccessToken)
@@ -197,6 +183,30 @@ func (f *Fs) getAccessToken() {
 	f.srv.SetHeader("authorization", response.AccessToken)
 	f.driveId = response.DefaultDriveId
 	f.accessToken = response.AccessToken
+	return nil
+}
+
+func (f *Fs) callJSON(opts *rest.Opts, request interface{}, response interface{}) error {
+	resp, err := f.srv.CallJSON(f.ctx, opts, request, response)
+	if err != nil {
+		errResponse := entity.ErrorResponse{}
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(body, &errResponse)
+		if err != nil {
+			return err
+		}
+		if errResponse.Code != "" {
+			if errResponse.Code == "AccessTokenInvalid" {
+				f.getAccessToken()
+			}
+			return errors.New(errResponse.Code)
+		}
+		return err
+	}
+	return nil
 }
 
 // Options defines the configuration for this backend

@@ -2,6 +2,11 @@ package entity
 
 import "time"
 
+type ErrorResponse struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
 // AccessTokenOut 获取accessToken 的返回数据
 type AccessTokenOut struct {
 	DefaultSboxDriveId string        `json:"default_sbox_drive_id"`
@@ -32,6 +37,7 @@ type ListOut struct {
 	Items             []ItemsOut `json:"items"`
 	NextMarker        string     `json:"next_marker"`
 	PunishedFileCount int        `json:"punished_file_count"`
+	Code              string     `json:"code"`
 }
 type CroppingBoundary struct {
 	Width  int `json:"width"`
