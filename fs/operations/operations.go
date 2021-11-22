@@ -33,6 +33,7 @@ import (
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/atexit"
+	"github.com/rclone/rclone/lib/cacheroot"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/readers"
@@ -364,6 +365,11 @@ func CommonHash(ctx context.Context, fa, fb fs.Info) (hash.Type, *fs.HashesOptio
 // be nil.
 func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
 	ci := fs.GetConfig(ctx)
+	var resumeOpt *fs.OptionResume
+	if f.Features().Resume != nil {
+		resumeOpt = createResumeOpt(ctx, f, remote, src)
+	}
+
 	tr := accounting.Stats(ctx).NewTransfer(src)
 	defer func() {
 		tr.Done(ctx, err)
@@ -461,6 +467,10 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 							wrappedSrc = NewOverrideRemote(src, remote)
 						}
 						options := []fs.OpenOption{hashOption}
+						// Appends OptionResume if it was set
+						if resumeOpt != nil {
+							options = append(options, resumeOpt)
+						}
 						for _, option := range ci.UploadHeaders {
 							options = append(options, option)
 						}
@@ -475,6 +485,17 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						if err == nil {
 							newDst = dst
 							err = closeErr
+							cacheParent := config.GetCacheDir()
+							// Remove resume cache file (if one was created) when Put/Upload is successful
+							cacheDir, _, err := cacheroot.CreateCacheRoot(cacheParent, f.Name(), f.Root(), "resume")
+							if err != nil {
+								return nil, err
+							}
+							cacheFile := filepath.Join(cacheDir, remote)
+							removeErr := os.Remove(cacheFile)
+							if err != nil && !os.IsNotExist(removeErr) {
+								return nil, fmt.Errorf("failed to remove resume cache file after upload: %w", err)
+							}
 						}
 					}
 				}

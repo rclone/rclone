@@ -3,13 +3,19 @@
 package fs
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/cacheroot"
 )
 
 // OpenOption is an interface describing options for Open
@@ -227,6 +233,145 @@ func (o *HashesOption) String() string {
 
 // Mandatory returns whether the option must be parsed or can be ignored
 func (o *HashesOption) Mandatory() bool {
+	return false
+}
+
+// OptionResume defines a Put/Upload for doing resumes
+type OptionResume struct {
+	ID           string // resume this ID if set
+	Pos          int64  // and resume from this position
+	Hash         string
+	Src          Object
+	F            Fs
+	Remote       string
+	CacheCleaned bool
+	CacheDir     string
+}
+
+// SetID will be called by backend's Put/Update function if the object's upload
+// could be resumed upon failure
+//
+// SetID takes the passed resume ID, hash state, hash name and Fingerprint of the object and stores it in
+// --cache-dir so that future Copy operations can resume the upload if it fails
+func (o *OptionResume) SetID(ctx context.Context, ID, hashName, hashState string) error {
+	ci := GetConfig(ctx)
+	// Get the Fingerprint of the src object so that future Copy operations can ensure the
+	// object hasn't changed before resuming an upload
+	fingerprint := Fingerprint(ctx, o.Src, true)
+	data, err := marshalResumeJSON(ctx, fingerprint, ID, hashName, hashState)
+	if err != nil {
+		return fmt.Errorf("failed to marshal data JSON: %w", err)
+	}
+	if len(data) < int(ci.MaxResumeCacheSize) {
+		// Each remote will have its own directory for cached resume files
+		dirPath, _, err := cacheroot.CreateCacheRoot(o.CacheDir, o.F.Name(), o.F.Root(), "resume")
+		if err != nil {
+			return err
+		}
+		err = os.MkdirAll(dirPath, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create cache directory %v: %w", dirPath, err)
+		}
+		// Write resume data to disk
+		cachePath := filepath.Join(dirPath, o.Remote)
+		cacheFile, err := os.Create(cachePath)
+		if err != nil {
+			return fmt.Errorf("failed to create cache file %v: %w", cachePath, err)
+		}
+		defer func() {
+			_ = cacheFile.Close()
+		}()
+		_, errWrite := cacheFile.Write(data)
+		if errWrite != nil {
+			return fmt.Errorf("failed to write JSON to file: %w", errWrite)
+		}
+	}
+	if !o.CacheCleaned {
+		rootCacheDir := filepath.Join(o.CacheDir, "resume")
+		if err := cleanResumeCache(ctx, rootCacheDir); err != nil {
+			return fmt.Errorf("failed to clean resume cache: %w", err)
+		}
+	}
+	o.CacheCleaned = true
+	return nil
+}
+
+// ResumeJSON is a struct for storing resume info in cache
+type ResumeJSON struct {
+	Fingerprint string `json:"fprint"`
+	ID          string `json:"id"`
+	HashName    string `json:"hname"`
+	HashState   string `json:"hstate"`
+}
+
+func marshalResumeJSON(ctx context.Context, fprint, id, hashName, hashState string) ([]byte, error) {
+	resumedata := ResumeJSON{
+		Fingerprint: fprint,
+		ID:          id,
+		HashName:    hashName,
+		HashState:   hashState,
+	}
+	data, err := json.Marshal(&resumedata)
+	return data, err
+}
+
+// cleanCache checks the size of the resume cache and removes the oldest resume files if more than limit
+func cleanResumeCache(ctx context.Context, rootCacheDir string) error {
+	ci := GetConfig(ctx)
+	var paths []string
+	pathsWithInfo := make(map[string]os.FileInfo)
+	totalCacheSize := int64(0)
+	walkErr := filepath.Walk(rootCacheDir,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				// Empty subdirectories in the resume cache dir can be removed
+				removeErr := os.Remove(path)
+				if err != nil && !os.IsNotExist(removeErr) {
+					return fmt.Errorf("failed to remove empty subdirectory: %s: %w", path, err)
+				}
+				return nil
+			}
+			paths = append(paths, path)
+			pathsWithInfo[path] = info
+			totalCacheSize += info.Size()
+			return nil
+		})
+	if walkErr != nil {
+		return fmt.Errorf("error walking through cache when cleaning cache dir: %w", walkErr)
+	}
+	if totalCacheSize > int64(ci.MaxResumeCacheSize) {
+		sort.Slice(paths, func(i, j int) bool {
+			return pathsWithInfo[paths[i]].ModTime().Before(pathsWithInfo[paths[j]].ModTime())
+		})
+		for _, p := range paths {
+			if totalCacheSize < int64(ci.MaxResumeCacheSize) {
+				break
+			}
+			if err := os.Remove(p); err != nil {
+				return fmt.Errorf("error removing oldest cache file: %s: %w", p, err)
+			}
+			totalCacheSize -= pathsWithInfo[p].Size()
+			Debugf(p, "Successfully removed oldest cache file")
+		}
+	}
+	return nil
+}
+
+// Header formats the option as an http header
+func (o *OptionResume) Header() (key string, value string) {
+	return "", ""
+}
+
+// String formats the option into human readable form
+func (o *OptionResume) String() string {
+	return fmt.Sprintf("OptionResume(ID:%v, Pos:%v)", o.ID, o.Pos)
+}
+
+// Mandatory returns whether the option must be parsed or can be ignored
+func (o *OptionResume) Mandatory() bool {
 	return false
 }
 

@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
+	"encoding"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -228,6 +229,14 @@ func (m *MultiHasher) Write(p []byte) (n int, err error) {
 	return n, err
 }
 
+// Hashes returns accumulated hash types.
+func (m *MultiHasher) Hashes() (set Set) {
+	for ht := range m.h {
+		set.Add(ht)
+	}
+	return
+}
+
 // Sums returns the sums of all accumulated hashes as hex encoded
 // strings.
 func (m *MultiHasher) Sums() map[Type]string {
@@ -262,6 +271,67 @@ func (m *MultiHasher) SumString(hashType Type, base64Encoded bool) (string, erro
 // Size returns the number of bytes written
 func (m *MultiHasher) Size() int64 {
 	return m.size
+}
+
+// GetHashState returns the partial hash state for the given hash type encoded as a string
+func (m *MultiHasher) GetHashState(hashType Type) (string, error) {
+	h, ok := m.h[hashType]
+	if !ok {
+		return "", ErrUnsupported
+	}
+	marshaler, ok := h.(encoding.BinaryMarshaler)
+	if !ok {
+		return "", errors.New(hashType.String() + " does not implement encoding.BinaryMarshaler")
+	}
+	data, err := marshaler.MarshalBinary()
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
+}
+
+// RestoreHashState restores the partial hash state for the passed hash type
+func (m *MultiHasher) RestoreHashState(hashType Type, hashState string) error {
+	partialHashState, err := base64.StdEncoding.DecodeString(hashState)
+	if err != nil {
+		return err
+	}
+	unmarshaler, ok := m.h[hashType].(encoding.BinaryUnmarshaler)
+	if ok {
+		if err := unmarshaler.UnmarshalBinary(partialHashState); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SumPartialHash returns the hash of the partial hash state
+func SumPartialHash(hashName, hashState string) (string, error) {
+	partialHashDef, ok := name2hash[hashName]
+	if !ok {
+		return "", ErrUnsupported
+	}
+	partialHash := partialHashDef.newFunc()
+	partialHashState, err := base64.StdEncoding.DecodeString(hashState)
+	if err != nil {
+		return "", err
+	}
+	unmarshaler, ok := partialHash.(encoding.BinaryUnmarshaler)
+	if ok {
+		if err := unmarshaler.UnmarshalBinary(partialHashState); err != nil {
+			return "", err
+		}
+	}
+	return hex.EncodeToString(partialHash.Sum(nil)), nil
+}
+
+// NameToType returns the requested hash type or None if the hash type isn't supported
+func NameToType(hashName string) Type {
+	hashDef, ok := name2hash[hashName]
+	if !ok {
+		return None
+	}
+	return hashDef.hashType
 }
 
 // A Set Indicates one or more hash types.
