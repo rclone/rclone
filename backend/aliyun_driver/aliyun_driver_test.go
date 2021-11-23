@@ -3,6 +3,7 @@ package aliyun_driver
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
@@ -24,7 +25,7 @@ func TestFs_List(t *testing.T) {
 	ctx := context.Background()
 	f, _ := fs.NewFs(ctx, remoteName+":")
 
-	fmt.Println(f.List(ctx, "root"))
+	fmt.Println(f.List(ctx, ""))
 }
 
 func TestFs_Mkdir(t *testing.T) {
@@ -47,4 +48,20 @@ func TestFs_Rmdir(t *testing.T) {
 	f, _ := fs.NewFs(ctx, remoteName+":")
 
 	fmt.Println(f.Rmdir(ctx, "619ca4f22700c18a76814a3a8be95a215793c473"))
+}
+
+func Test_a(t *testing.T) {
+	fmt.Println(SplitPath("a/b/c/d"))
+}
+
+func SplitPath(path string) (directory, leaf string) {
+	lastSlash := strings.LastIndex(path, "/")
+	if lastSlash >= 0 {
+		directory = path[:lastSlash]
+		leaf = path[lastSlash+1:]
+	} else {
+		directory = ""
+		leaf = path
+	}
+	return
 }

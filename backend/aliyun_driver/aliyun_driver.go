@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"time"
 
 	"github.com/rclone/rclone/backend/aliyun_driver/entity"
@@ -23,6 +24,7 @@ import (
 const (
 	ItemTypeFolder = "folder"
 	ItemTypeFile   = "file"
+	rootId         = "root"
 
 	url = "https://api.aliyundrive.com/v2"
 	ua  = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
@@ -73,10 +75,18 @@ func (f *Fs) Hashes() hash.Set {
 
 // List
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	list, err := f.listAll(ctx, dir)
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return nil, err
+	}
+
+	list, err := f.listAll(ctx, directoryID)
 	for _, info := range list {
+		remote := path.Join(dir, info.Name)
 		if info.Type == ItemTypeFolder {
-			d := fs.NewDir(info.Name, info.UpdatedAt).SetID(info.FileId).SetParentID(dir)
+			fmt.Println(info)
+			f.dirCache.Put(remote, info.FileId)
+			d := fs.NewDir(remote, info.UpdatedAt).SetID(info.FileId).SetParentID(dir)
 			entries = append(entries, d)
 		} else {
 			o := f.newObjectWithInfo(ctx, info.Name, &info)
@@ -87,11 +97,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 }
 
 // listAll 获取目录下全部文件
-func (f *Fs) listAll(ctx context.Context, dir string) ([]entity.ItemsOut, error) {
+func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOut, error) {
 	request := entity.ListIn{
 		Limit:        200,
 		DriveId:      f.driveId,
-		ParentFileId: dir,
+		ParentFileId: parentFileId,
 	}
 
 	opts := rest.Opts{
@@ -117,6 +127,26 @@ func (f *Fs) listAll(ctx context.Context, dir string) ([]entity.ItemsOut, error)
 	return out, nil
 }
 
+// isDirEmpty 判断目录是否为空
+func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
+	request := entity.ListIn{
+		Limit:        1,
+		DriveId:      f.driveId,
+		ParentFileId: parentFileId,
+	}
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/file/list",
+		RootURL: url,
+	}
+	resp := entity.ListOut{}
+	err := f.callJSON(&opts, request, &resp)
+	if err != nil {
+		return false
+	}
+	return len(resp.Items) == 0
+}
+
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 	return nil, nil
@@ -128,28 +158,27 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 }
 
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
-	request := entity.MakeDirIn{
-		CheckNameMode: "refuse",
-		DriveId:       f.driveId,
-		Type:          ItemTypeFolder,
-		Name:          dir,
-		ParentFileId:  "root", //
-	}
-
-	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/file/create_with_proof",
-		RootURL: url,
-	}
-	var response entity.MkdirOut
-	err := f.callJSON(&opts, request, &response)
+	_, err := f.dirCache.FindDir(ctx, dir, true)
 	return err
 }
 
+// Rmdir 删除空目录
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	if directoryID == rootId {
+		return errors.New("the root directory cannot be deleted")
+	}
+
+	if !f.isDirEmpty(ctx, directoryID) {
+		return errors.New("directory is not be empty")
+	}
+
 	request := entity.RmDirIn{
 		DriveId: f.driveId,
-		FileId:  dir, //
+		FileId:  directoryID,
 	}
 
 	opts := rest.Opts{
@@ -158,7 +187,74 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		RootURL: url,
 	}
 	var response entity.RmdirOut
-	return f.callJSON(&opts, request, &response)
+	err = f.callJSON(&opts, request, &response)
+	if err != nil {
+		f.dirCache.FlushDir(dir)
+	}
+	return err
+}
+
+// Purge deletes all the files and the container
+//
+// Optional interface: Only implement this if you have a way of
+// deleting all the files quicker than just running Remove() on the
+// result of List()
+func (f *Fs) Purge(ctx context.Context, dir string) error {
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	request := entity.RmDirIn{
+		DriveId: f.driveId,
+		FileId:  directoryID,
+	}
+
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/recyclebin/trash",
+		RootURL: url,
+	}
+	var response entity.RmdirOut
+	err = f.callJSON(&opts, request, &response)
+	if err != nil {
+		f.dirCache.FlushDir(dir)
+	}
+	return err
+}
+
+// FindLeaf finds a directory of name leaf in the folder with ID pathID
+func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
+	// Find the leaf in pathID
+	items, err := f.listAll(f.ctx, pathID)
+	if err != nil {
+		return
+	}
+	for _, item := range items {
+		if item.Name == leaf {
+			pathIDOut = item.FileId
+			found = true
+		}
+	}
+	return
+}
+
+// CreateDir makes a directory with pathID as parent and name leaf
+func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
+	request := entity.MakeDirIn{
+		CheckNameMode: "refuse",
+		DriveId:       f.driveId,
+		Type:          ItemTypeFolder,
+		Name:          leaf,
+		ParentFileId:  pathID, //
+	}
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/file/create_with_proof",
+		RootURL: url,
+	}
+	var response entity.MkdirOut
+	err = f.callJSON(&opts, request, &response)
+	return response.FileId, err
 }
 
 // NewFs constructs an Fs from the path, bucket:path
@@ -184,6 +280,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.features = (&fs.Features{}).Fill(ctx, f)
 	err = f.getAccessToken()
+	f.dirCache = dircache.New(root, rootId, f)
 	return f, err
 }
 
@@ -231,6 +328,7 @@ func (f *Fs) callJSON(opts *rest.Opts, request interface{}, response interface{}
 		if errResponse.Code != "" {
 			if errResponse.Code == "AccessTokenInvalid" {
 				f.getAccessToken()
+				return f.callJSON(opts, request, response)
 			}
 			return errors.New(errResponse.Code)
 		}
