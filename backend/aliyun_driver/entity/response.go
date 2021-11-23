@@ -100,3 +100,20 @@ type ItemsOut struct {
 	// StreamsInfo        StreamsInfo        `json:"streams_info,omitempty"`
 	// ImageMediaMetadata ImageMediaMetadata `json:"image_media_metadata,omitempty"`
 }
+
+type MkdirOut struct {
+	DomainId     string `json:"domain_id"`
+	DriveId      string `json:"drive_id"`
+	EncryptMode  string `json:"encrypt_mode"`
+	FileId       string `json:"file_id"`
+	FileName     string `json:"file_name"`
+	ParentFileId string `json:"parent_file_id"`
+	Type         string `json:"type"`
+}
+
+type RmdirOut struct {
+	AsyncTaskId string `json:"async_task_id"`
+	DriveId     string `json:"drive_id"`
+	DomainId    string `json:"domain_id"`
+	FileId      string `json:"file_id"`
+}

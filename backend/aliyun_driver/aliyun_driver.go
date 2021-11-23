@@ -128,13 +128,37 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 }
 
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
+	request := entity.MakeDirIn{
+		CheckNameMode: "refuse",
+		DriveId:       f.driveId,
+		Type:          ItemTypeFolder,
+		Name:          dir,
+		ParentFileId:  "root", //
+	}
 
-	return nil
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/file/create_with_proof",
+		RootURL: url,
+	}
+	var response entity.MkdirOut
+	err := f.callJSON(&opts, request, &response)
+	return err
 }
 
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
+	request := entity.RmDirIn{
+		DriveId: f.driveId,
+		FileId:  dir, //
+	}
 
-	return nil
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/recyclebin/trash",
+		RootURL: url,
+	}
+	var response entity.RmdirOut
+	return f.callJSON(&opts, request, &response)
 }
 
 // NewFs constructs an Fs from the path, bucket:path
@@ -180,6 +204,11 @@ func (f *Fs) getAccessToken() error {
 	fmt.Println("-------------------- accessToken end --------------------")
 	fmt.Println(response.AccessToken)
 	fmt.Println("-------------------- accessToken begin --------------------")
+
+	fmt.Println("-------------------- refreshToken end --------------------")
+	fmt.Println(response.RefreshToken)
+	fmt.Println("-------------------- refreshToken begin --------------------")
+
 	f.srv.SetHeader("authorization", response.AccessToken)
 	f.driveId = response.DefaultDriveId
 	f.accessToken = response.AccessToken
@@ -188,6 +217,7 @@ func (f *Fs) getAccessToken() error {
 
 func (f *Fs) callJSON(opts *rest.Opts, request interface{}, response interface{}) error {
 	resp, err := f.srv.CallJSON(f.ctx, opts, request, response)
+	fmt.Println(resp)
 	if err != nil {
 		errResponse := entity.ErrorResponse{}
 		body, err := io.ReadAll(resp.Body)
