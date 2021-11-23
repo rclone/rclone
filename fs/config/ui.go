@@ -24,9 +24,11 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
+const inputBufferSize = 16 * 1024
+
 // ReadLine reads some input
 var ReadLine = func() string {
-	buf := bufio.NewReader(os.Stdin)
+	buf := bufio.NewReaderSize(os.Stdin, inputBufferSize)
 	line, err := buf.ReadString('\n')
 	if err != nil {
 		log.Fatalf("Failed to read line: %v", err)
