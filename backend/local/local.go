@@ -1133,6 +1133,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	// Wipe hashes before update
+	o.clearHashCache()
+
 	var symlinkData bytes.Buffer
 	// If the object is a regular file, create it.
 	// If it is a translated link, just read in the contents, and
@@ -1295,6 +1298,13 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	}
 }
 
+// clearHashCache wipes any cached hashes for the object
+func (o *Object) clearHashCache() {
+	o.fs.objectMetaMu.Lock()
+	o.hashes = nil
+	o.fs.objectMetaMu.Unlock()
+}
+
 // Stat an Object into info
 func (o *Object) lstat() error {
 	info, err := o.fs.lstat(o.path)
@@ -1306,6 +1316,7 @@ func (o *Object) lstat() error {
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
+	o.clearHashCache()
 	return remove(o.path)
 }
 
