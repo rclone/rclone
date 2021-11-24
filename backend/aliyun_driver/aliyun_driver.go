@@ -113,7 +113,7 @@ func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOu
 	var out []entity.ItemsOut
 	for {
 		resp := entity.ListOut{}
-		err := f.callJSON(&opts, request, &resp)
+		err := f.callJSON(ctx, &opts, request, &resp)
 		if err != nil {
 			return out, errors.New(resp.Code)
 		}
@@ -140,7 +140,7 @@ func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
 		RootURL: url,
 	}
 	resp := entity.ListOut{}
-	err := f.callJSON(&opts, request, &resp)
+	err := f.callJSON(ctx, &opts, request, &resp)
 	if err != nil {
 		return false
 	}
@@ -187,7 +187,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		RootURL: url,
 	}
 	var response entity.RmdirOut
-	err = f.callJSON(&opts, request, &response)
+	err = f.callJSON(ctx, &opts, request, &response)
 	if err != nil {
 		f.dirCache.FlushDir(dir)
 	}
@@ -215,7 +215,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 		RootURL: url,
 	}
 	var response entity.RmdirOut
-	err = f.callJSON(&opts, request, &response)
+	err = f.callJSON(ctx, &opts, request, &response)
 	if err != nil {
 		f.dirCache.FlushDir(dir)
 	}
@@ -253,7 +253,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		RootURL: url,
 	}
 	var response entity.MkdirOut
-	err = f.callJSON(&opts, request, &response)
+	err = f.callJSON(ctx, &opts, request, &response)
 	return response.FileId, err
 }
 
@@ -294,7 +294,7 @@ func (f *Fs) getAccessToken() error {
 	request := entity.AccessTokenIn{RefreshToken: f.opt.RefreshToken}
 	response := entity.AccessTokenOut{}
 
-	err := f.callJSON(&opts, request, &response)
+	err := f.callJSON(f.ctx,&opts, request, &response)
 	if err != nil {
 		return err
 	}
@@ -312,8 +312,8 @@ func (f *Fs) getAccessToken() error {
 	return nil
 }
 
-func (f *Fs) callJSON(opts *rest.Opts, request interface{}, response interface{}) error {
-	resp, err := f.srv.CallJSON(f.ctx, opts, request, response)
+func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request interface{}, response interface{}) error {
+	resp, err := f.srv.CallJSON(ctx, opts, request, response)
 	fmt.Println(resp)
 	if err != nil {
 		errResponse := entity.ErrorResponse{}
@@ -328,7 +328,7 @@ func (f *Fs) callJSON(opts *rest.Opts, request interface{}, response interface{}
 		if errResponse.Code != "" {
 			if errResponse.Code == "AccessTokenInvalid" {
 				f.getAccessToken()
-				return f.callJSON(opts, request, response)
+				return f.callJSON(ctx, opts, request, response)
 			}
 			return errors.New(errResponse.Code)
 		}
