@@ -2121,6 +2121,10 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 		if fserrors.ShouldRetry(awsError.OrigErr()) {
 			return true, err
 		}
+		// If it is a timeout then we want to retry that
+		if awsError.Code() == "RequestTimeout" {
+			return true, err
+		}
 		// Failing that, if it's a RequestFailure it's probably got an http status code we can check
 		if reqErr, ok := err.(awserr.RequestFailure); ok {
 			// 301 if wrong region for bucket - can only update if running from a bucket
