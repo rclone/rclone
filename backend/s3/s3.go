@@ -3325,11 +3325,7 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 		return nil, err
 	}
 
-	size, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
-	if err != nil {
-		fs.Debugf(o, "Failed to parse content length from string %s, %v", resp.Header.Get("Content-Length"), err)
-	}
-	contentLength := &size
+	contentLength := &resp.ContentLength
 	if resp.Header.Get("Content-Range") != "" {
 		var contentRange = resp.Header.Get("Content-Range")
 		slash := strings.IndexRune(contentRange, '/')
