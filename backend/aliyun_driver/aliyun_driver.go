@@ -278,7 +278,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root: root,
 		ctx:  ctx,
 	}
-	f.features = (&fs.Features{}).Fill(ctx, f)
+
+	f.features = (&fs.Features{
+		CanHaveEmptyDirectories: true,
+	}).Fill(ctx, f)
 	err = f.getAccessToken()
 	f.dirCache = dircache.New(root, rootId, f)
 	return f, err
@@ -294,17 +297,17 @@ func (f *Fs) getAccessToken() error {
 	request := entity.AccessTokenIn{RefreshToken: f.opt.RefreshToken}
 	response := entity.AccessTokenOut{}
 
-	err := f.callJSON(f.ctx,&opts, request, &response)
+	err := f.callJSON(f.ctx, &opts, request, &response)
 	if err != nil {
 		return err
 	}
-	fmt.Println("-------------------- accessToken end --------------------")
-	fmt.Println(response.AccessToken)
-	fmt.Println("-------------------- accessToken begin --------------------")
 
-	fmt.Println("-------------------- refreshToken end --------------------")
-	fmt.Println(response.RefreshToken)
-	fmt.Println("-------------------- refreshToken begin --------------------")
+	//未获取到正常的值返回异常
+	if response.AccessToken == "" || response.RefreshToken == "" {
+		return errors.New("get accessToken or refreshToken error")
+	}
+	fs.Debugf("Aliyun Driver", "GetAccessToken accessToken: %s", response.AccessToken)
+	fs.Debugf("Aliyun Driver", "GetAccessToken refreshToken: %s", response.RefreshToken)
 
 	f.srv.SetHeader("authorization", response.AccessToken)
 	f.driveId = response.DefaultDriveId
@@ -314,7 +317,6 @@ func (f *Fs) getAccessToken() error {
 
 func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request interface{}, response interface{}) error {
 	resp, err := f.srv.CallJSON(ctx, opts, request, response)
-	fmt.Println(resp)
 	if err != nil {
 		errResponse := entity.ErrorResponse{}
 		body, err := io.ReadAll(resp.Body)
