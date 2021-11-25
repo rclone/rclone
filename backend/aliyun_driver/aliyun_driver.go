@@ -264,7 +264,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		RootURL: url,
 	}
 	var resp entity.PersonalInfoOut
-	err = f.callJSON(ctx, &opts, struct{}{}, &resp)
+	err = f.callJSON(ctx, &opts, nil, &resp)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read user info: %w", err)
 	}
@@ -274,6 +274,12 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		Free:  fs.NewUsageValue(resp.PersonalSpaceInfo.TotalSize - resp.PersonalSpaceInfo.UsedSize), // bytes free
 	}
 	return usage, nil
+}
+
+// DirCacheFlush resets the directory cache - used in testing as an
+// optional interface
+func (f *Fs) DirCacheFlush() {
+	f.dirCache.ResetRoot()
 }
 
 // NewFs constructs an Fs from the path, bucket:path
