@@ -84,7 +84,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for _, info := range list {
 		remote := path.Join(dir, info.Name)
 		if info.Type == ItemTypeFolder {
-			fmt.Println(info)
 			f.dirCache.Put(remote, info.FileId)
 			d := fs.NewDir(remote, info.UpdatedAt).SetID(info.FileId).SetParentID(dir)
 			entries = append(entries, d)
@@ -257,6 +256,26 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	return response.FileId, err
 }
 
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/databox/get_personal_info",
+		RootURL: url,
+	}
+	var resp entity.PersonalInfoOut
+	err = f.callJSON(ctx, &opts, struct{}{}, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read user info: %w", err)
+	}
+	usage = &fs.Usage{
+		Used:  fs.NewUsageValue(resp.PersonalSpaceInfo.UsedSize),                                    // bytes in use
+		Total: fs.NewUsageValue(resp.PersonalSpaceInfo.TotalSize),                                   // bytes total
+		Free:  fs.NewUsageValue(resp.PersonalSpaceInfo.TotalSize - resp.PersonalSpaceInfo.UsedSize), // bytes free
+	}
+	return usage, nil
+}
+
 // NewFs constructs an Fs from the path, bucket:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	ci := fs.GetConfig(ctx)
@@ -306,8 +325,13 @@ func (f *Fs) getAccessToken() error {
 	if response.AccessToken == "" || response.RefreshToken == "" {
 		return errors.New("get accessToken or refreshToken error")
 	}
-	fs.Debugf("Aliyun Driver", "GetAccessToken accessToken: %s", response.AccessToken)
-	fs.Debugf("Aliyun Driver", "GetAccessToken refreshToken: %s", response.RefreshToken)
+	fmt.Println("-------------------- accessToken end --------------------")
+	fmt.Println(response.AccessToken)
+	fmt.Println("-------------------- accessToken begin --------------------")
+
+	fmt.Println("-------------------- refreshToken end --------------------")
+	fmt.Println(response.RefreshToken)
+	fmt.Println("-------------------- refreshToken begin --------------------")
 
 	f.srv.SetHeader("authorization", response.AccessToken)
 	f.driveId = response.DefaultDriveId

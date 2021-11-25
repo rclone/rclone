@@ -117,3 +117,20 @@ type RmdirOut struct {
 	DomainId    string `json:"domain_id"`
 	FileId      string `json:"file_id"`
 }
+
+type PersonalInfoOut struct {
+	PersonalRightsInfo struct {
+		SpuID      string `json:"spu_id"`
+		Name       string `json:"name"`
+		IsExpires  bool   `json:"is_expires"`
+		Privileges []struct {
+			FeatureID     string `json:"feature_id"`
+			FeatureAttrID string `json:"feature_attr_id"`
+			Quota         int    `json:"quota"`
+		} `json:"privileges"`
+	} `json:"personal_rights_info"`
+	PersonalSpaceInfo struct {
+		UsedSize  int64 `json:"used_size"`
+		TotalSize int64 `json:"total_size"`
+	} `json:"personal_space_info"`
+}
