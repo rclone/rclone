@@ -2,8 +2,6 @@
 // object storage system.
 package pcloud
 
-// FIXME implement ListR? /listfolder can do recursive lists
-
 // FIXME cleanup returns login required?
 
 // FIXME mime type? Fix overview if implement.
@@ -27,6 +25,7 @@ import (
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/oauthutil"
@@ -246,7 +245,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 		return nil, err
 	}
 
-	found, err := f.listAll(ctx, directoryID, false, true, func(item *api.Item) bool {
+	found, err := f.listAll(ctx, directoryID, false, true, false, func(item *api.Item) bool {
 		if item.Name == leaf {
 			info = item
 			return true
@@ -380,7 +379,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
+	found, err = f.listAll(ctx, pathID, true, false, false, func(item *api.Item) bool {
 		if item.Name == leaf {
 			pathIDOut = item.ID
 			return true
@@ -446,14 +445,16 @@ type listAllFn func(*api.Item) bool
 // Lists the directory required calling the user function on each item found
 //
 // If the user fn ever returns true then it early exits with found = true
-func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (found bool, err error) {
+func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, recursive bool, fn listAllFn) (found bool, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
 		Path:       "/listfolder",
 		Parameters: url.Values{},
 	}
+	if recursive {
+		opts.Parameters.Set("recursive", "1")
+	}
 	opts.Parameters.Set("folderid", dirIDtoNumber(dirID))
-	// FIXME can do recursive
 
 	var result api.ItemResult
 	var resp *http.Response
@@ -465,24 +466,69 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	if err != nil {
 		return found, fmt.Errorf("couldn't list files: %w", err)
 	}
-	for i := range result.Metadata.Contents {
-		item := &result.Metadata.Contents[i]
-		if item.IsFolder {
-			if filesOnly {
-				continue
+	var recursiveContents func(is []api.Item, path string)
+	recursiveContents = func(is []api.Item, path string) {
+		for i := range is {
+			item := &is[i]
+			if item.IsFolder {
+				if filesOnly {
+					continue
+				}
+			} else {
+				if directoriesOnly {
+					continue
+				}
 			}
-		} else {
-			if directoriesOnly {
-				continue
+			item.Name = path + f.opt.Enc.ToStandardName(item.Name)
+			if fn(item) {
+				found = true
+				break
 			}
-		}
-		item.Name = f.opt.Enc.ToStandardName(item.Name)
-		if fn(item) {
-			found = true
-			break
+			if recursive {
+				recursiveContents(item.Contents, item.Name+"/")
+			}
 		}
 	}
+	recursiveContents(result.Metadata.Contents, "")
 	return
+}
+
+// listHelper iterates over all items from the directory
+// and calls the callback for each element.
+func (f *Fs) listHelper(ctx context.Context, dir string, recursive bool, callback func(entries fs.DirEntry) error) (err error) {
+	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+	var iErr error
+	_, err = f.listAll(ctx, directoryID, false, false, recursive, func(info *api.Item) bool {
+		remote := path.Join(dir, info.Name)
+		if info.IsFolder {
+			// cache the directory ID for later lookups
+			f.dirCache.Put(remote, info.ID)
+			d := fs.NewDir(remote, info.ModTime()).SetID(info.ID)
+			// FIXME more info from dir?
+			iErr = callback(d)
+		} else {
+			o, err := f.newObjectWithInfo(ctx, remote, info)
+			if err != nil {
+				iErr = err
+				return true
+			}
+			iErr = callback(o)
+		}
+		if iErr != nil {
+			return true
+		}
+		return false
+	})
+	if err != nil {
+		return err
+	}
+	if iErr != nil {
+		return iErr
+	}
+	return nil
 }
 
 // List the objects and directories in dir into entries.  The
@@ -495,36 +541,24 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
-	if err != nil {
-		return nil, err
-	}
-	var iErr error
-	_, err = f.listAll(ctx, directoryID, false, false, func(info *api.Item) bool {
-		remote := path.Join(dir, info.Name)
-		if info.IsFolder {
-			// cache the directory ID for later lookups
-			f.dirCache.Put(remote, info.ID)
-			d := fs.NewDir(remote, info.ModTime()).SetID(info.ID)
-			// FIXME more info from dir?
-			entries = append(entries, d)
-		} else {
-			o, err := f.newObjectWithInfo(ctx, remote, info)
-			if err != nil {
-				iErr = err
-				return true
-			}
-			entries = append(entries, o)
-		}
-		return false
+	err = f.listHelper(ctx, dir, false, func(o fs.DirEntry) error {
+		entries = append(entries, o)
+		return nil
+	})
+	return entries, err
+}
+
+// ListR lists the objects and directories of the Fs starting
+// from dir recursively into out.
+func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
+	list := walk.NewListRHelper(callback)
+	err = f.listHelper(ctx, dir, true, func(o fs.DirEntry) error {
+		return list.Add(o)
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if iErr != nil {
-		return nil, iErr
-	}
-	return entries, nil
+	return list.Flush()
 }
 
 // Creates from the parameters passed in a half finished Object which

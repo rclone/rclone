@@ -264,7 +264,7 @@ backends:
    fastlist: true
  - backend:  "pcloud"
    remote:   "TestPcloud:"
-   fastlist: false
+   fastlist: true
  - backend:  "webdav"
    remote:   "TestWebdavNextcloud:"
    ignore:
