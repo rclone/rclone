@@ -1461,6 +1461,10 @@ func (o *Object) clearMetaData() {
 //  o.size
 //  o.md5
 func (o *Object) readMetaData() (err error) {
+	container, _ := o.split()
+	if !o.fs.containerOK(container) {
+		return fs.ErrorObjectNotFound
+	}
 	if !o.modTime.IsZero() {
 		return nil
 	}
@@ -1653,7 +1657,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return errCantUpdateArchiveTierBlobs
 		}
 	}
-	container, _ := o.split()
+	container, containerPath := o.split()
+	if container == "" || containerPath == "" {
+		return fmt.Errorf("can't upload to root - need a container")
+	}
 	err = o.fs.makeContainer(ctx, container)
 	if err != nil {
 		return err
