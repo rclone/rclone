@@ -1002,7 +1002,7 @@ func TestSyncWithUpdateOlder(t *testing.T) {
 }
 
 // Test with a max transfer duration
-func TestSyncWithMaxDuration(t *testing.T) {
+func testSyncWithMaxDuration(t *testing.T, cutoffMode fs.CutoffMode) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	if *fstest.RemoteName != "" {
@@ -1013,32 +1013,49 @@ func TestSyncWithMaxDuration(t *testing.T) {
 
 	maxDuration := 250 * time.Millisecond
 	ci.MaxDuration = maxDuration
-	bytesPerSecond := 300
-	accounting.TokenBucket.SetBwLimit(fs.BwPair{Tx: fs.SizeSuffix(bytesPerSecond), Rx: fs.SizeSuffix(bytesPerSecond)})
+	ci.CutoffMode = cutoffMode
+	ci.CheckFirst = true
+	ci.OrderBy = "size"
 	ci.Transfers = 1
+	ci.Checkers = 1
+	bytesPerSecond := 10 * 1024
+	accounting.TokenBucket.SetBwLimit(fs.BwPair{Tx: fs.SizeSuffix(bytesPerSecond), Rx: fs.SizeSuffix(bytesPerSecond)})
 	defer accounting.TokenBucket.SetBwLimit(fs.BwPair{Tx: -1, Rx: -1})
 
-	// 5 files of 60 bytes at 60 Byte/s 5 seconds
-	testFiles := make([]fstest.Item, 5)
-	for i := 0; i < len(testFiles); i++ {
-		testFiles[i] = r.WriteFile(fmt.Sprintf("file%d", i), "------------------------------------------------------------", t1)
-	}
-
-	fstest.CheckListing(t, r.Flocal, testFiles)
+	// write one small file which we expect to transfer and one big one which we don't
+	file1 := r.WriteFile("file1", string(make([]byte, 16)), t1)
+	file2 := r.WriteFile("file2", string(make([]byte, 50*1024)), t1)
+	r.CheckLocalItems(t, file1, file2)
+	r.CheckRemoteItems(t)
 
 	accounting.GlobalStats().ResetCounters()
 	startTime := time.Now()
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
 	require.True(t, errors.Is(err, errorMaxDurationReached))
 
+	if cutoffMode == fs.CutoffModeHard {
+		r.CheckRemoteItems(t, file1)
+		assert.Equal(t, int64(1), accounting.GlobalStats().GetTransfers())
+	} else {
+		r.CheckRemoteItems(t, file1, file2)
+		assert.Equal(t, int64(2), accounting.GlobalStats().GetTransfers())
+	}
+
 	elapsed := time.Since(startTime)
-	maxTransferTime := (time.Duration(len(testFiles)) * 60 * time.Second) / time.Duration(bytesPerSecond)
+	const maxTransferTime = 20 * time.Second
 
 	what := fmt.Sprintf("expecting elapsed time %v between %v and %v", elapsed, maxDuration, maxTransferTime)
-	require.True(t, elapsed >= maxDuration, what)
-	require.True(t, elapsed < 5*time.Second, what)
-	// we must not have transferred all files during the session
-	require.True(t, accounting.GlobalStats().GetTransfers() < int64(len(testFiles)))
+	assert.True(t, elapsed >= maxDuration, what)
+	assert.True(t, elapsed < maxTransferTime, what)
+}
+
+func TestSyncWithMaxDuration(t *testing.T) {
+	t.Run("Hard", func(t *testing.T) {
+		testSyncWithMaxDuration(t, fs.CutoffModeHard)
+	})
+	t.Run("Soft", func(t *testing.T) {
+		testSyncWithMaxDuration(t, fs.CutoffModeSoft)
+	})
 }
 
 // Test with TrackRenames set
