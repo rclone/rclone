@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -931,48 +932,120 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return entries, nil
 }
 
-// listFileDirFn is called from listFileDir to handle an object.
-type listFileDirFn func(fs.DirEntry) error
+type listStreamTime time.Time
 
-// List the objects and directories into entries, from a
-// special kind of JottaFolder representing a FileDirLis
-func (f *Fs) listFileDir(ctx context.Context, remoteStartPath string, startFolder *api.JottaFolder, fn listFileDirFn) error {
-	pathPrefix := "/" + f.filePathRaw("") // Non-escaped prefix of API paths to be cut off, to be left with the remote path including the remoteStartPath
-	pathPrefixLength := len(pathPrefix)
-	startPath := path.Join(pathPrefix, remoteStartPath) // Non-escaped API path up to and including remoteStartPath, to decide if it should be created as a new dir object
-	startPathLength := len(startPath)
-	for i := range startFolder.Folders {
-		folder := &startFolder.Folders[i]
-		if !f.validFolder(folder) {
-			return nil
+func (c *listStreamTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var v string
+	if err := d.DecodeElement(&v, &start); err != nil {
+		return err
+	}
+	t, err := time.Parse(time.RFC3339, v)
+	if err != nil {
+		return err
+	}
+	*c = listStreamTime(t)
+	return nil
+}
+
+func (c listStreamTime) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", time.Time(c).Format(time.RFC3339))), nil
+}
+
+func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, filesystem *Fs, callback func(fs.DirEntry) error) error {
+
+	type stats struct {
+		Folders int `xml:"folders"`
+		Files   int `xml:"files"`
+	}
+	var expected, actual stats
+
+	type xmlFile struct {
+		Path     string         `xml:"path"`
+		Name     string         `xml:"filename"`
+		Checksum string         `xml:"md5"`
+		Size     int64          `xml:"size"`
+		Modified listStreamTime `xml:"modified"`
+		Created  listStreamTime `xml:"created"`
+	}
+
+	type xmlFolder struct {
+		Path string `xml:"path"`
+	}
+
+	addFolder := func(path string) error {
+		return callback(fs.NewDir(filesystem.opt.Enc.ToStandardPath(path), time.Time{}))
+	}
+
+	addFile := func(f *xmlFile) error {
+		return callback(&Object{
+			hasMetaData: true,
+			fs:          filesystem,
+			remote:      filesystem.opt.Enc.ToStandardPath(path.Join(f.Path, f.Name)),
+			size:        f.Size,
+			md5:         f.Checksum,
+			modTime:     time.Time(f.Modified),
+		})
+	}
+
+	trimPathPrefix := func(p string) string {
+		p = strings.TrimPrefix(p, trimPrefix)
+		p = strings.TrimPrefix(p, "/")
+		return p
+	}
+
+	uniqueFolders := map[string]bool{}
+	decoder := xml.NewDecoder(r)
+
+	for {
+		t, err := decoder.Token()
+		if err != nil {
+			if err != io.EOF {
+				return err
+			}
+			break
 		}
-		folderPath := f.opt.Enc.ToStandardPath(path.Join(folder.Path, folder.Name))
-		folderPathLength := len(folderPath)
-		var remoteDir string
-		if folderPathLength > pathPrefixLength {
-			remoteDir = folderPath[pathPrefixLength+1:]
-			if folderPathLength > startPathLength {
-				d := fs.NewDir(remoteDir, time.Time(folder.ModifiedAt))
-				err := fn(d)
-				if err != nil {
+		switch se := t.(type) {
+		case xml.StartElement:
+			switch se.Name.Local {
+			case "file":
+				var f xmlFile
+				if err := decoder.DecodeElement(&f, &se); err != nil {
+					return err
+				}
+				f.Path = trimPathPrefix(f.Path)
+				actual.Files++
+				if !uniqueFolders[f.Path] {
+					uniqueFolders[f.Path] = true
+					actual.Folders++
+					if err := addFolder(f.Path); err != nil {
+						return err
+					}
+				}
+				if err := addFile(&f); err != nil {
+					return err
+				}
+			case "folder":
+				var f xmlFolder
+				if err := decoder.DecodeElement(&f, &se); err != nil {
+					return err
+				}
+				f.Path = trimPathPrefix(f.Path)
+				uniqueFolders[f.Path] = true
+				actual.Folders++
+				if err := addFolder(f.Path); err != nil {
+					return err
+				}
+			case "stats":
+				if err := decoder.DecodeElement(&expected, &se); err != nil {
 					return err
 				}
 			}
 		}
-		for i := range folder.Files {
-			file := &folder.Files[i]
-			if f.validFile(file) {
-				remoteFile := path.Join(remoteDir, f.opt.Enc.ToStandardName(file.Name))
-				o, err := f.newObjectWithInfo(ctx, remoteFile, file)
-				if err != nil {
-					return err
-				}
-				err = fn(o)
-				if err != nil {
-					return err
-				}
-			}
-		}
+	}
+
+	if expected.Folders != actual.Folders ||
+		expected.Files != actual.Files {
+		return fmt.Errorf("Invalid result from listStream: expected[%#v] != actual[%#v]", expected, actual)
 	}
 	return nil
 }
@@ -988,12 +1061,27 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		Path:       f.filePath(dir),
 		Parameters: url.Values{},
 	}
-	opts.Parameters.Set("mode", "list")
+	opts.Parameters.Set("mode", "liststream")
+	list := walk.NewListRHelper(callback)
 
 	var resp *http.Response
-	var result api.JottaFolder // Could be JottaFileDirList, but JottaFolder is close enough
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		resp, err = f.srv.Call(ctx, &opts)
+		if err != nil {
+			return shouldRetry(ctx, resp, err)
+		}
+
+		// liststream paths are /mountpoint/root/path
+		// so the returned paths should have /mountpoint/root/ trimmed
+		// as the caller is expecting path.
+		trimPrefix := path.Join("/", f.opt.Mountpoint, f.root)
+		err = parseListRStream(ctx, resp.Body, trimPrefix, f, func(d fs.DirEntry) error {
+			if d.Remote() == dir {
+				return nil
+			}
+			return list.Add(d)
+		})
+		_ = resp.Body.Close()
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1005,10 +1093,6 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 		}
 		return fmt.Errorf("couldn't list files: %w", err)
 	}
-	list := walk.NewListRHelper(callback)
-	err = f.listFileDir(ctx, dir, &result, func(entry fs.DirEntry) error {
-		return list.Add(entry)
-	})
 	if err != nil {
 		return err
 	}
