@@ -167,6 +167,10 @@ func DecodeJSON(resp *http.Response, result interface{}) (err error) {
 func DecodeXML(resp *http.Response, result interface{}) (err error) {
 	defer fs.CheckClose(resp.Body, &err)
 	decoder := xml.NewDecoder(resp.Body)
+	// MEGAcmd has included escaped HTML entities in its XML output, so we have to be able to
+	// decode them.
+	decoder.Strict = false
+	decoder.Entity = xml.HTMLEntity
 	return decoder.Decode(result)
 }
 
