@@ -1184,6 +1184,9 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			}, {
 				Value: "INTELLIGENT_TIERING",
 				Help:  "Intelligent-Tiering storage class",
+			}, {
+				Value: "GLACIER_IR",
+				Help:  "Glacier Instant Retrieval storage class",
 			}},
 		}, {
 			// Mapping from here: https://www.alibabacloud.com/help/doc-detail/64919.htm
