@@ -28,6 +28,12 @@ func OpenFile(path string, mode int, perm os.FileMode) (*os.File, error) {
 	if len(path) == 0 {
 		return nil, syscall.ERROR_FILE_NOT_FOUND
 	}
+	// For windows the max path length is 260 characters
+	// https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+	if len(path) >= 260 {
+		return nil, &os.PathError{Path: path, Op: "open", Err: errors.New("path length higher than 260")}
+	}
+
 	pathp, err := syscall.UTF16PtrFromString(path)
 	if err != nil {
 		return nil, err
