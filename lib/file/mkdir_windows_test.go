@@ -130,3 +130,9 @@ func TestMkdirAllOnUnusedDrive(t *testing.T) {
 	errormsg = fmt.Sprintf("mkdir \\\\?\\%s\\: The system cannot find the path specified.", path)
 	checkMkdirAllSubdirs(t, `\\?\`+path, false, errormsg)
 }
+
+func TestMkdirMaxPathLength(t *testing.T) {
+	path := `C:\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path`
+	err := MkdirAll(path, 0777)
+	assert.Error(t, err, "mkdir: Max path length can't exceed 260")
+}
