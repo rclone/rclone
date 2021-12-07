@@ -585,6 +585,7 @@ func (o *Object) preUplaod(ctx context.Context, leaf, directoryID string, modTim
 
 // 分片上传
 func (o *Object) sliceUpload(ctx context.Context, parts []entity.PartInfo, in io.Reader, size int64, chukNum int64) (err error) {
+	// 开启多个go上传
 	var wg sync.WaitGroup
 	for k, p := range parts {
 		newChunkSize := int64(chunkSize)
@@ -609,7 +610,6 @@ func (o *Object) sliceUpload(ctx context.Context, parts []entity.PartInfo, in io
 			if e != nil && err == nil {
 				err = &e
 			}
-
 		}(&err)
 	}
 	wg.Wait()
