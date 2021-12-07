@@ -1,12 +1,16 @@
 package aliyun_driver
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"math"
+	"net/url"
 	"path"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/aliyun_driver/entity"
@@ -22,12 +26,14 @@ import (
 //bf7744a65ef0451886e78fbda6b94f96
 
 const (
-	ItemTypeFolder = "folder"
-	ItemTypeFile   = "file"
+	itemTypeFolder = "folder"
+	itemTypeFile   = "file"
 	rootId         = "root"
 
-	url = "https://api.aliyundrive.com/v2"
-	ua  = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
+	rootUrl = "https://api.aliyundrive.com/v2"
+	uA      = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
+
+	chunkSize = 10485760
 )
 
 type Fs struct {
@@ -83,7 +89,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	list, err := f.listAll(ctx, directoryID)
 	for _, info := range list {
 		remote := path.Join(dir, info.Name)
-		if info.Type == ItemTypeFolder {
+		if info.Type == itemTypeFolder {
 			f.dirCache.Put(remote, info.FileId)
 			d := fs.NewDir(remote, info.UpdatedAt).SetID(info.FileId).SetParentID(dir)
 			entries = append(entries, d)
@@ -106,7 +112,7 @@ func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOu
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/file/list",
-		RootURL: url,
+		RootURL: rootUrl,
 	}
 
 	var out []entity.ItemsOut
@@ -136,7 +142,7 @@ func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/file/list",
-		RootURL: url,
+		RootURL: rootUrl,
 	}
 	resp := entity.ListOut{}
 	err := f.callJSON(ctx, &opts, request, &resp)
@@ -152,8 +158,57 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 }
 
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	remote := src.Remote()
+	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, false)
+	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			return f.PutUnchecked(ctx, in, src, options...)
+		}
+		return nil, err
+	}
+
+	fmt.Println(leaf, directoryID)
 
 	return nil, nil
+}
+
+// PutUnchecked the object into the container
+//
+// This will produce an error if the object already exists
+//
+// Copy the reader in to the new object which is returned
+//
+// The new object may have been created if an error is returned
+func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	remote := src.Remote()
+	size := src.Size()
+	modTime := src.ModTime(ctx)
+
+	o, _, _, err := f.createObject(ctx, remote, modTime, size)
+	if err != nil {
+		return nil, err
+	}
+	return o, o.Update(ctx, in, src, options...)
+}
+
+// Creates from the parameters passed in a half finished Object which
+// must have setMetaData called on it
+//
+// Returns the object, leaf, directoryID and error
+//
+// Used to create new objects
+func (f *Fs) createObject(ctx context.Context, remote string, modTime time.Time, size int64) (o *Object, leaf string, directoryID string, err error) {
+	// Create the directory for the object if it doesn't exist
+	leaf, directoryID, err = f.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return
+	}
+	// Temporary Object under construction
+	o = &Object{
+		fs:     f,
+		remote: remote,
+	}
+	return o, leaf, directoryID, nil
 }
 
 func (f *Fs) Mkdir(ctx context.Context, dir string) error {
@@ -183,7 +238,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/recyclebin/trash",
-		RootURL: url,
+		RootURL: rootUrl,
 	}
 	var response entity.RmdirOut
 	err = f.callJSON(ctx, &opts, request, &response)
@@ -211,7 +266,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/recyclebin/trash",
-		RootURL: url,
+		RootURL: rootUrl,
 	}
 	var response entity.RmdirOut
 	err = f.callJSON(ctx, &opts, request, &response)
@@ -242,14 +297,14 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	request := entity.MakeDirIn{
 		CheckNameMode: "refuse",
 		DriveId:       f.driveId,
-		Type:          ItemTypeFolder,
+		Type:          itemTypeFolder,
 		Name:          leaf,
 		ParentFileId:  pathID, //
 	}
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/file/create_with_proof",
-		RootURL: url,
+		RootURL: rootUrl,
 	}
 	var response entity.MkdirOut
 	err = f.callJSON(ctx, &opts, request, &response)
@@ -261,7 +316,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/databox/get_personal_info",
-		RootURL: url,
+		RootURL: rootUrl,
 	}
 	var resp entity.PersonalInfoOut
 	err = f.callJSON(ctx, &opts, nil, &resp)
@@ -294,7 +349,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	cli := rest.NewClient(fshttp.NewClient(ctx))
-	cli.SetHeader("User-Agent", ua)
+	cli.SetHeader("User-Agent", uA)
 	f := &Fs{
 		name: name,
 		ci:   ci,
@@ -331,13 +386,13 @@ func (f *Fs) getAccessToken() error {
 	if response.AccessToken == "" || response.RefreshToken == "" {
 		return errors.New("get accessToken or refreshToken error")
 	}
-	fmt.Println("-------------------- accessToken end --------------------")
-	fmt.Println(response.AccessToken)
 	fmt.Println("-------------------- accessToken begin --------------------")
+	fmt.Println(response.AccessToken)
+	fmt.Println("-------------------- accessToken end --------------------")
 
-	fmt.Println("-------------------- refreshToken end --------------------")
-	fmt.Println(response.RefreshToken)
 	fmt.Println("-------------------- refreshToken begin --------------------")
+	fmt.Println(response.RefreshToken)
+	fmt.Println("-------------------- refreshToken end --------------------")
 
 	f.srv.SetHeader("authorization", response.AccessToken)
 	f.driveId = response.DefaultDriveId
@@ -472,7 +527,108 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	size := src.Size()
+	modTime := src.ModTime(ctx)
+	remote := o.Remote()
+
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return err
+	}
+	return o.upload(ctx, in, leaf, directoryID, modTime, size)
+}
+
+//上传
+func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time, size int64) (err error) {
+	chunkNum := int(math.Ceil(float64(size) / chunkSize))
+	resp, err := o.preUplaod(ctx, leaf, directoryID, modTime, size, chunkNum)
+	if err != nil {
+		return err
+	}
+	if len(resp.PartInfoList) != chunkNum {
+		return errors.New("预上传数量和分片数不一致")
+	}
+	//分片上传
+	err = o.sliceUpload(ctx, resp.PartInfoList, in, size, int64(chunkNum))
+	if err != nil {
+		return err
+	}
+	//上传完成
+	return o.complete(ctx, resp.FileId, resp.UploadId)
+}
+
+//预上传
+func (o *Object) preUplaod(ctx context.Context, leaf, directoryID string, modTime time.Time, size int64, chunkNum int) (entity.PreUploadOut, error) {
+	req := entity.PreUploadIn{
+		DriveId:         o.fs.driveId,
+		Name:            leaf,
+		ParentFileId:    directoryID,
+		Size:            size,
+		CheckNameMode:   "refuse",
+		ContentHashName: "none",
+		ProofVersion:    "v1",
+		Type:            "file",
+		PartInfoList:    make([]entity.PartInfo, 0),
+	}
+	for i := 0; i < chunkNum; i++ {
+		req.PartInfoList = append(req.PartInfoList, entity.PartInfo{PartNumber: i + 1})
+	}
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/file/create_with_proof",
+		RootURL: rootUrl,
+	}
+	resp := entity.PreUploadOut{}
+	err := o.fs.callJSON(ctx, &opts, req, &resp)
+	return resp, err
+}
+
+// 分片上传
+func (o *Object) sliceUpload(ctx context.Context, parts []entity.PartInfo, in io.Reader, size int64, chukNum int64) (err error) {
+	var wg sync.WaitGroup
+	for k, p := range parts {
+		newChunkSize := int64(chunkSize)
+		if k == int(chukNum-1) {
+			newChunkSize = size - chunkSize*int64(chukNum-1)
+		}
+		buf := make([]byte, newChunkSize)
+		io.ReadFull(in, buf)
+		u, _ := url.Parse(p.UploadUrl)
+		wg.Add(1)
+		go func(err *error) {
+			defer wg.Done()
+			opts := rest.Opts{
+				Method:     "PUT",
+				RootURL:    u.Host,
+				Path:       u.Path,
+				Parameters: u.Query(),
+				Body:       bytes.NewReader(buf),
+			}
+			e := o.fs.callJSON(ctx, &opts, nil, nil)
+			// 不考虑竞争情况
+			if e != nil && err == nil {
+				err = &e
+			}
+
+		}(&err)
+	}
+	wg.Wait()
 	return err
+}
+
+// 完成上传
+func (o *Object) complete(ctx context.Context, fileId, uploadId string) error {
+	repC := entity.CompleteUploadIn{
+		DriveId:  o.fs.driveId,
+		FileId:   fileId,
+		UploadId: uploadId,
+	}
+	optsC := rest.Opts{
+		Method:  "POST",
+		Path:    "/file/complete",
+		RootURL: rootUrl,
+	}
+	return o.fs.callJSON(ctx, &optsC, repC, nil)
 }
 
 // Remove an object

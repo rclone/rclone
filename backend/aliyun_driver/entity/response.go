@@ -134,3 +134,13 @@ type PersonalInfoOut struct {
 		TotalSize int64 `json:"total_size"`
 	} `json:"personal_space_info"`
 }
+
+type PreUploadOut struct {
+	FileId       string     `json:"file_id"`
+	FileName     string     `json:"file_name"`
+	Location     string     `json:"location"`
+	RapidUpload  bool       `json:"rapid_upload"`
+	Type         string     `json:"type"`
+	UploadId     string     `json:"upload_id"`
+	PartInfoList []PartInfo `json:"part_info_list"`
+}

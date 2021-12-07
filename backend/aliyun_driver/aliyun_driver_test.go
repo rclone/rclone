@@ -18,9 +18,11 @@ func TestNewFs(t *testing.T) {
 
 }
 
-var remoteName = "ali"
-var token = "746d6cc7dd8e4f96b5df458d7df99dd5"
-var ctx = context.Background()
+var (
+	remoteName = "ali"
+	token      = "3b906b06c0104c1ebf32d74ae5647b19"
+	ctx        = context.Background()
+)
 
 func TestFs_List(t *testing.T) {
 	f, _ := fs.NewFs(ctx, remoteName+":")
