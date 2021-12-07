@@ -19,8 +19,9 @@ import (
 // (https://github.com/golang/go/blob/master/src/os/path.go)
 func MkdirAll(path string, perm os.FileMode) error {
 	// For windows the max path length is 260 characters
+	// if the LongPathsEnabled is not set
 	// https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-	if len(path) >= 260 {
+	if !IsLongPathsEnabled() && len(path) >= 260 {
 		return &os.PathError{Path: path, Op: "open", Err: errors.New("path length higher than 260")}
 	}
 

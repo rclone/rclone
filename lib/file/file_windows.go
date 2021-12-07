@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"syscall"
+
+	"golang.org/x/sys/windows/registry"
 )
 
 // OpenFile is the generalized open call; most users will use Open or Create
@@ -28,9 +30,11 @@ func OpenFile(path string, mode int, perm os.FileMode) (*os.File, error) {
 	if len(path) == 0 {
 		return nil, syscall.ERROR_FILE_NOT_FOUND
 	}
+
 	// For windows the max path length is 260 characters
+	// if the LongPathsEnabled is not set
 	// https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-	if len(path) >= 260 {
+	if !IsLongPathsEnabled() && len(path) >= 260 {
 		return nil, &os.PathError{Path: path, Op: "open", Err: errors.New("path length higher than 260")}
 	}
 
@@ -106,4 +110,25 @@ func IsReserved(path string) error {
 		return errors.New("base file name is reserved windows device name (CON, PRN, AUX, NUL, COM[1-9], LPT[1-9])")
 	}
 	return nil
+}
+
+// IsLongPathsEnabled checks if the current have the LongPathsEnabled enabled
+func IsLongPathsEnabled() bool {
+	// Read registry
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Control\FileSystem`, registry.QUERY_VALUE)
+	if err != nil {
+		return false
+	}
+	defer k.Close()
+
+	s, _, err := k.GetIntegerValue("LongPathsEnabled")
+	if err != nil {
+		return false
+	}
+
+	if s == 0x00000001 {
+		return true
+	} else {
+		return false
+	}
 }

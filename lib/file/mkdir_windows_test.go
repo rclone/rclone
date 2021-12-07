@@ -132,6 +132,11 @@ func TestMkdirAllOnUnusedDrive(t *testing.T) {
 }
 
 func TestMkdirMaxPathLength(t *testing.T) {
+	// Skip if the long path is enabled
+	if IsLongPathsEnabled() {
+		t.Skip()
+	}
+
 	path := `C:\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path\my\path`
 	err := MkdirAll(path, 0777)
 	assert.Error(t, err, "mkdir: Max path length can't exceed 260")
