@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"syscall"
 
 	"golang.org/x/sys/windows/registry"
@@ -34,8 +35,8 @@ func OpenFile(path string, mode int, perm os.FileMode) (*os.File, error) {
 	// For windows the max path length is 260 characters
 	// if the LongPathsEnabled is not set
 	// https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-	if !IsLongPathsEnabled() && len(path) >= 260 {
-		return nil, &os.PathError{Path: path, Op: "open", Err: errors.New("path length higher than 260")}
+	if !strings.HasPrefix(path, `\\?\`) && !IsLongPathsEnabled() && len(path) >= 260 {
+		return nil, &os.PathError{Path: path, Op: "open", Err: errors.New("path length 260 or higher")}
 	}
 
 	pathp, err := syscall.UTF16PtrFromString(path)
