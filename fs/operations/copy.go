@@ -331,7 +331,7 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 		}
 	}
 	if err != nil {
-		err = fs.CountError(err)
+		err = fs.CountError(ctx, err)
 		fs.Errorf(c.src, "Failed to copy: %v", err)
 		if !c.inplace {
 			c.removeFailedPartialCopy(ctx, c.f, c.remoteForCopy)
@@ -343,7 +343,7 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 	err = c.verify(ctx, newDst)
 	if err != nil {
 		fs.Errorf(newDst, "%v", err)
-		err = fs.CountError(err)
+		err = fs.CountError(ctx, err)
 		c.removeFailedCopy(ctx, newDst)
 		return nil, err
 	}
@@ -353,7 +353,7 @@ func (c *copy) copy(ctx context.Context) (newDst fs.Object, err error) {
 		movedNewDst, err := c.dstFeatures.Move(ctx, newDst, c.remote)
 		if err != nil {
 			fs.Errorf(newDst, "partial file rename failed: %v", err)
-			err = fs.CountError(err)
+			err = fs.CountError(ctx, err)
 			c.removeFailedCopy(ctx, newDst)
 			return nil, err
 		}

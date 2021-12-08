@@ -186,6 +186,7 @@ func (s *HTTP) handler(w http.ResponseWriter, r *http.Request) {
 
 // serveDir serves a directory index at dirRemote
 func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
+	ctx := r.Context()
 	VFS, err := s.getVFS(r.Context())
 	if err != nil {
 		http.Error(w, "Root directory not found", http.StatusNotFound)
@@ -198,7 +199,7 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 		http.Error(w, "Directory not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		serve.Error(dirRemote, w, "Failed to list directory", err)
+		serve.Error(ctx, dirRemote, w, "Failed to list directory", err)
 		return
 	}
 	if !node.IsDir() {
@@ -208,7 +209,7 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 	dir := node.(*vfs.Dir)
 	dirEntries, err := dir.ReadDirAll()
 	if err != nil {
-		serve.Error(dirRemote, w, "Failed to list directory", err)
+		serve.Error(ctx, dirRemote, w, "Failed to list directory", err)
 		return
 	}
 
@@ -234,6 +235,7 @@ func (s *HTTP) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string
 
 // serveFile serves a file object at remote
 func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) {
+	ctx := r.Context()
 	VFS, err := s.getVFS(r.Context())
 	if err != nil {
 		http.Error(w, "File not found", http.StatusNotFound)
@@ -247,7 +249,7 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		serve.Error(remote, w, "Failed to find file", err)
+		serve.Error(ctx, remote, w, "Failed to find file", err)
 		return
 	}
 	if !node.IsFile() {
@@ -287,7 +289,7 @@ func (s *HTTP) serveFile(w http.ResponseWriter, r *http.Request, remote string) 
 	// open the object
 	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
-		serve.Error(remote, w, "Failed to open file", err)
+		serve.Error(ctx, remote, w, "Failed to open file", err)
 		return
 	}
 	defer func() {

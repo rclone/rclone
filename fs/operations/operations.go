@@ -101,11 +101,11 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 		return true, hash.None, srcHash, dstHash, nil
 	}
 	if srcErr != nil {
-		err = fs.CountError(srcErr)
+		err = fs.CountError(ctx, srcErr)
 		fs.Errorf(src, "Failed to calculate src hash: %v", err)
 	}
 	if dstErr != nil {
-		err = fs.CountError(dstErr)
+		err = fs.CountError(ctx, dstErr)
 		fs.Errorf(dst, "Failed to calculate dst hash: %v", err)
 	}
 	if err != nil {
@@ -340,7 +340,7 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 				logger(ctx, Differ, src, dst, nil)
 				return false
 			} else if err != nil {
-				err = fs.CountError(err)
+				err = fs.CountError(ctx, err)
 				fs.Errorf(dst, "Failed to set modification time: %v", err)
 			} else {
 				fs.Infof(src, "Updated modification time in destination")
@@ -481,7 +481,7 @@ func move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			fs.Debugf(src, "Can't move, switching to copy")
 			_ = in.Close()
 		default:
-			err = fs.CountError(err)
+			err = fs.CountError(ctx, err)
 			fs.Errorf(src, "Couldn't move: %v", err)
 			_ = in.Close()
 			return newDst, err
@@ -566,7 +566,7 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	}
 	if err != nil {
 		fs.Errorf(dst, "Couldn't %s: %v", action, err)
-		err = fs.CountError(err)
+		err = fs.CountError(ctx, err)
 	} else if !skip {
 		fs.Infof(dst, "%s", actioned)
 	}
@@ -974,7 +974,7 @@ func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFl
 			}()
 			sum, err := HashSum(ctx, ht, outputBase64, downloadFlag, o)
 			if err != nil {
-				fs.Errorf(o, "%v", fs.CountError(err))
+				fs.Errorf(o, "%v", fs.CountError(ctx, err))
 				return
 			}
 			SyncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
@@ -1053,7 +1053,7 @@ func Mkdir(ctx context.Context, f fs.Fs, dir string) error {
 	fs.Debugf(fs.LogDirName(f, dir), "Making directory")
 	err := f.Mkdir(ctx, dir)
 	if err != nil {
-		err = fs.CountError(err)
+		err = fs.CountError(ctx, err)
 		return err
 	}
 	return nil
@@ -1075,7 +1075,7 @@ func MkdirMetadata(ctx context.Context, f fs.Fs, dir string, metadata fs.Metadat
 	fs.Debugf(fs.LogDirName(f, dir), "Making directory with metadata")
 	newDst, err = do(ctx, dir, metadata)
 	if err != nil {
-		err = fs.CountError(err)
+		err = fs.CountError(ctx, err)
 		return nil, err
 	}
 	if mtime, ok := metadata["mtime"]; ok {
@@ -1133,7 +1133,7 @@ func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
 func Rmdir(ctx context.Context, f fs.Fs, dir string) error {
 	err := TryRmdir(ctx, f, dir)
 	if err != nil {
-		err = fs.CountError(err)
+		err = fs.CountError(ctx, err)
 		return err
 	}
 	return err
@@ -1162,7 +1162,7 @@ func Purge(ctx context.Context, f fs.Fs, dir string) (err error) {
 		err = Rmdirs(ctx, f, dir, false)
 	}
 	if err != nil {
-		err = fs.CountError(err)
+		err = fs.CountError(ctx, err)
 		return err
 	}
 	return nil
@@ -1207,7 +1207,7 @@ func listToChan(ctx context.Context, f fs.Fs, dir string) fs.ObjectsChan {
 		})
 		if err != nil && err != fs.ErrorDirNotFound {
 			err = fmt.Errorf("failed to list: %w", err)
-			err = fs.CountError(err)
+			err = fs.CountError(ctx, err)
 			fs.Errorf(nil, "%v", err)
 		}
 	}()
@@ -1267,7 +1267,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 		var in io.ReadCloser
 		in, err = Open(ctx, o, options...)
 		if err != nil {
-			err = fs.CountError(err)
+			err = fs.CountError(ctx, err)
 			fs.Errorf(o, "Failed to open: %v", err)
 			return
 		}
@@ -1280,13 +1280,13 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64, sep []b
 		defer mu.Unlock()
 		_, err = io.Copy(w, in)
 		if err != nil {
-			err = fs.CountError(err)
+			err = fs.CountError(ctx, err)
 			fs.Errorf(o, "Failed to send to output: %v", err)
 		}
 		if len(sep) > 0 {
 			_, err = w.Write(sep)
 			if err != nil {
-				err = fs.CountError(err)
+				err = fs.CountError(ctx, err)
 				fs.Errorf(o, "Failed to send separator to output: %v", err)
 			}
 		}
@@ -1423,7 +1423,7 @@ func rcatSrc(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClos
 	src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, sums, fdst).WithMetadata(meta)
 	if !equal(ctx, src, dst, opt) {
 		err = fmt.Errorf("corrupted on transfer")
-		err = fs.CountError(err)
+		err = fs.CountError(ctx, err)
 		fs.Errorf(dst, "%v", err)
 		return dst, err
 	}
@@ -1450,7 +1450,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 	dirEmpty[dir] = !leaveRoot
 	err := walk.Walk(ctx, f, dir, false, ci.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
 		if err != nil {
-			err = fs.CountError(err)
+			err = fs.CountError(ctx, err)
 			fs.Errorf(f, "Failed to list %q: %v", dirPath, err)
 			return nil
 		}
@@ -1526,7 +1526,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 			g.Go(func() error {
 				err := TryRmdir(gCtx, f, dir)
 				if err != nil {
-					err = fs.CountError(err)
+					err = fs.CountError(ctx, err)
 					fs.Errorf(dir, "Failed to rmdir: %v", err)
 					errCount.Add(err)
 				}
@@ -2096,7 +2096,7 @@ func TouchDir(ctx context.Context, f fs.Fs, remote string, t time.Time, recursiv
 				err := o.SetModTime(ctx, t)
 				if err != nil {
 					err = fmt.Errorf("failed to touch: %w", err)
-					err = fs.CountError(err)
+					err = fs.CountError(ctx, err)
 					fs.Errorf(o, "%v", err)
 				}
 			}

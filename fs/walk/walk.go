@@ -170,7 +170,7 @@ func listRwalk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLe
 		// Carry on listing but return the error at the end
 		if err != nil {
 			listErr = err
-			err = fs.CountError(err)
+			err = fs.CountError(ctx, err)
 			fs.Errorf(path, "error listing: %v", err)
 			return nil
 		}
@@ -415,7 +415,7 @@ func walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel i
 					// NB once we have passed entries to fn we mustn't touch it again
 					if err != nil && err != ErrorSkipDir {
 						traversing.Done()
-						err = fs.CountError(err)
+						err = fs.CountError(ctx, err)
 						fs.Errorf(job.remote, "error listing: %v", err)
 						closeQuit()
 						// Send error to error channel if space
