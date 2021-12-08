@@ -111,7 +111,7 @@ type MkdirOut struct {
 	Type         string `json:"type"`
 }
 
-type RmdirOut struct {
+type DeleteOut struct {
 	AsyncTaskId string `json:"async_task_id"`
 	DriveId     string `json:"drive_id"`
 	DomainId    string `json:"domain_id"`

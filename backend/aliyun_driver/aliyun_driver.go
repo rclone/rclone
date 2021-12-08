@@ -10,10 +10,12 @@ import (
 	"math"
 	"net/url"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/aliyun_driver/entity"
+	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -75,7 +77,6 @@ func (f *Fs) Precision() time.Duration {
 }
 
 func (f *Fs) Hashes() hash.Set {
-
 	return 0
 }
 
@@ -94,8 +95,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			d := fs.NewDir(remote, info.UpdatedAt).SetID(info.FileId).SetParentID(dir)
 			entries = append(entries, d)
 		} else {
-			o := f.newObjectWithInfo(ctx, info.Name, &info)
-			entries = append(entries, o)
+			o, err := f.newObjectWithInfo(ctx, info.Name, &info)
+			if err == nil {
+				entries = append(entries, o)
+			}
 		}
 	}
 	return
@@ -153,8 +156,7 @@ func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
 }
 
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-
-	return nil, nil
+	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -191,6 +193,23 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 	return o, o.Update(ctx, in, src, options...)
 }
 
+// setMetaData sets the metadata from info
+func (o *Object) setMetaData(info *entity.ItemsOut) (err error) {
+	if info.Type == itemTypeFolder {
+		return fs.ErrorIsDir
+	}
+	if info.Type != api.ItemTypeFile {
+		return fmt.Errorf("%q is %q: %w", o.remote, info.Type, fs.ErrorNotAFile)
+	}
+	o.hasMetaData = true
+	o.size = int64(info.Size)
+	o.sha1 = info.ContentHash
+	o.modTime = info.CreatedAt
+	o.id = info.FileId
+	o.downloadUrl = info.DownloadURL
+	return nil
+}
+
 // Creates from the parameters passed in a half finished Object which
 // must have setMetaData called on it
 //
@@ -225,14 +244,21 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	if directoryID == rootId {
 		return errors.New("the root directory cannot be deleted")
 	}
-
 	if !f.isDirEmpty(ctx, directoryID) {
 		return errors.New("directory is not be empty")
 	}
+	err = f.deleteObject(ctx, directoryID)
+	if err == nil {
+		f.dirCache.FlushDir(dir)
+	}
+	return err
+}
 
-	request := entity.RmDirIn{
+// 删除操作
+func (f *Fs) deleteObject(ctx context.Context, fileId string) error {
+	request := entity.DeleteIn{
 		DriveId: f.driveId,
-		FileId:  directoryID,
+		FileId:  fileId,
 	}
 
 	opts := rest.Opts{
@@ -240,11 +266,8 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 		Path:    "/recyclebin/trash",
 		RootURL: rootUrl,
 	}
-	var response entity.RmdirOut
-	err = f.callJSON(ctx, &opts, request, &response)
-	if err != nil {
-		f.dirCache.FlushDir(dir)
-	}
+	var response entity.DeleteOut
+	err := f.callJSON(ctx, &opts, request, &response)
 	return err
 }
 
@@ -258,19 +281,8 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	request := entity.RmDirIn{
-		DriveId: f.driveId,
-		FileId:  directoryID,
-	}
-
-	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/recyclebin/trash",
-		RootURL: rootUrl,
-	}
-	var response entity.RmdirOut
-	err = f.callJSON(ctx, &opts, request, &response)
-	if err != nil {
+	err = f.deleteObject(ctx, directoryID)
+	if err == nil {
 		f.dirCache.FlushDir(dir)
 	}
 	return err
@@ -343,7 +355,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
-
 	if err != nil {
 		return nil, err
 	}
@@ -444,25 +455,55 @@ func init() {
 }
 
 type Object struct {
-	fs      *Fs       // what this object is part of
-	remote  string    // The remote path
-	size    int64     // size of the object
-	modTime time.Time // modification time of the object
-	id      string    // ID of the object
-	sha1    string    // SHA-1 of the object content
+	fs          *Fs       // what this object is part of
+	remote      string    // The remote path
+	size        int64     // size of the object
+	modTime     time.Time // modification time of the object
+	id          string    // ID of the object
+	sha1        string    // SHA-1 of the object content
+	hasMetaData bool      //
+	downloadUrl string    //
 }
 
 // If it can't be found it returns the error fs.ErrorObjectNotFound.
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *entity.ItemsOut) fs.Object {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *entity.ItemsOut) (fs.Object, error) {
 	o := &Object{
-		fs:      f,
-		remote:  remote,
-		size:    int64(info.Size),
-		sha1:    info.ContentHash,
-		modTime: info.UpdatedAt,
-		id:      info.FileId,
+		fs:     f,
+		remote: remote,
 	}
-	return o
+	var err error
+	if info != nil {
+		err = o.setMetaData(info)
+	} else {
+		err = o.readMetaData(ctx)
+	}
+	return o, err
+}
+
+func (o *Object) readMetaData(ctx context.Context) (err error) {
+	if o.hasMetaData {
+		return nil
+	}
+	leaf, directoryID, err := o.fs.dirCache.FindPath(ctx, o.remote, false)
+	if err != nil {
+		if err == fs.ErrorDirNotFound {
+			return fs.ErrorObjectNotFound
+		}
+		return err
+	}
+
+	list, err := o.fs.listAll(ctx, directoryID)
+	if err != nil {
+		return err
+	}
+	var info entity.ItemsOut
+	for _, v := range list {
+		if v.Type == itemTypeFile && strings.EqualFold(v.Name, leaf) {
+			info = v
+			break
+		}
+	}
+	return o.setMetaData(&info)
 }
 
 // Fs returns the parent Fs
@@ -517,7 +558,6 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-
 	return nil, err
 }
 
@@ -548,6 +588,8 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 	if len(resp.PartInfoList) != chunkNum {
 		return errors.New("预上传数量和分片数不一致")
 	}
+	//设置file_id
+	o.id = resp.FileId
 	//分片上传
 	err = o.sliceUpload(ctx, resp.PartInfoList, in, size, int64(chunkNum))
 	if err != nil {
@@ -618,22 +660,22 @@ func (o *Object) sliceUpload(ctx context.Context, parts []entity.PartInfo, in io
 
 // 完成上传
 func (o *Object) complete(ctx context.Context, fileId, uploadId string) error {
-	repC := entity.CompleteUploadIn{
+	rep := entity.CompleteUploadIn{
 		DriveId:  o.fs.driveId,
 		FileId:   fileId,
 		UploadId: uploadId,
 	}
-	optsC := rest.Opts{
+	opts := rest.Opts{
 		Method:  "POST",
 		Path:    "/file/complete",
 		RootURL: rootUrl,
 	}
-	return o.fs.callJSON(ctx, &optsC, repC, nil)
+	return o.fs.callJSON(ctx, &opts, rep, nil)
 }
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	return nil
+	return o.fs.deleteObject(ctx, o.id)
 }
 
 // ID returns the ID of the Object if known, or "" if not

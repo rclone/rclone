@@ -23,7 +23,7 @@ type MakeDirIn struct {
 	CheckNameMode string `json:"check_name_mode"`
 }
 
-type RmDirIn struct {
+type DeleteIn struct {
 	DriveId string `json:"drive_id"`
 	FileId  string `json:"file_id"`
 }
