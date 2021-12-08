@@ -946,7 +946,7 @@ func TestSyncIgnoreErrors(t *testing.T) {
 
 	accounting.GlobalStats().ResetCounters()
 	ctx = predictDstFromLogger(ctx)
-	_ = fs.CountError(errors.New("boom"))
+	_ = fs.CountError(ctx, errors.New("boom"))
 	assert.NoError(t, Sync(ctx, r.Fremote, r.Flocal, false))
 	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)
 
@@ -1267,7 +1267,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 
 	ctx = predictDstFromLogger(ctx)
 	accounting.GlobalStats().ResetCounters()
-	_ = fs.CountError(errors.New("boom"))
+	_ = fs.CountError(ctx, errors.New("boom"))
 	err := Sync(ctx, r.Fremote, r.Flocal, false)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 	testLoggerVsLsf(ctx, r.Fremote, operations.GetLoggerOpt(ctx).JSON, t)

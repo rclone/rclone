@@ -1,6 +1,7 @@
 package serve
 
 import (
+	"context"
 	"errors"
 	"html/template"
 	"io"
@@ -88,9 +89,10 @@ func TestAddEntry(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
+	ctx := context.Background()
 	w := httptest.NewRecorder()
 	err := errors.New("help")
-	Error("potato", w, "sausage", err)
+	Error(ctx, "potato", w, "sausage", err)
 	resp := w.Result()
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	body, _ := io.ReadAll(resp.Body)

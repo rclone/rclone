@@ -29,7 +29,7 @@ func createOnFirstUse() {
 		c.SetExpireInterval(ci.FsCacheExpireInterval)
 		c.SetFinalizer(func(value interface{}) {
 			if s, ok := value.(fs.Shutdowner); ok {
-				_ = fs.CountError(s.Shutdown(context.Background()))
+				_ = fs.CountError(context.Background(), s.Shutdown(context.Background()))
 			}
 		})
 	})
