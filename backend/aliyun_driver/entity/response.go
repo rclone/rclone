@@ -144,3 +144,21 @@ type PreUploadOut struct {
 	UploadId     string     `json:"upload_id"`
 	PartInfoList []PartInfo `json:"part_info_list"`
 }
+
+type DownloadInfo struct {
+	Method          string    `json:"method"`
+	URL             string    `json:"url"`
+	InternalURL     string    `json:"internal_url"`
+	Expiration      time.Time `json:"expiration"`
+	Size            int       `json:"size"`
+	ContentHash     string    `json:"content_hash"`
+	ContentHashName string    `json:"content_hash_name"`
+	StreamsURL      struct {
+		Heic string `json:"heic"`
+		Mov  string `json:"mov"`
+	} `json:"streams_url"`
+	Ratelimit struct {
+		PartSpeed int `json:"part_speed"`
+		PartSize  int `json:"part_size"`
+	} `json:"ratelimit"`
+}

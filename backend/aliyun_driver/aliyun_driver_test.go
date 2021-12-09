@@ -20,7 +20,7 @@ func TestNewFs(t *testing.T) {
 
 var (
 	remoteName = "ali"
-	token      = "3b906b06c0104c1ebf32d74ae5647b19"
+	token      = "1aea1489472b4eb799af34e94f14e44e"
 	ctx        = context.Background()
 )
 
@@ -49,4 +49,10 @@ func Test_About(t *testing.T) {
 func Test_T(t *testing.T) {
 	f, _ := fs.NewFs(ctx, remoteName+":")
 	fmt.Println(f.(fs.Abouter))
+}
+
+func Test_Open(t *testing.T) {
+	f, _ := fs.NewFs(ctx, remoteName+":")
+	o, _ := f.NewObject(ctx, "IMG_8351.livp")
+	fmt.Println(o.Open(ctx))
 }

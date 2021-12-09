@@ -52,3 +52,9 @@ type CompleteUploadIn struct {
 	FileId   string `json:"file_id"`
 	UploadId string `json:"upload_id"`
 }
+
+type DownloadIn struct {
+	DriveId   string `json:"drive_id"`
+	FileId    string `json:"file_id"`
+	ExpireSec int64  `json:"expire_sec"`
+}

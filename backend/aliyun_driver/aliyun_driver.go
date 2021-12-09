@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net/url"
+	"net/http"
 	"path"
 	"strings"
 	"sync"
@@ -32,9 +32,9 @@ const (
 	itemTypeFile   = "file"
 	rootId         = "root"
 
-	rootUrl = "https://api.aliyundrive.com/v2"
-	uA      = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
-
+	rootUrl   = "https://api.aliyundrive.com/v2"
+	uA        = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
+	referer   = "https://www.aliyundrive.com/"
 	chunkSize = 10485760
 )
 
@@ -170,7 +170,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 	}
 
 	fmt.Println(leaf, directoryID)
-
+	//TODO
 	return nil, nil
 }
 
@@ -558,7 +558,51 @@ func (o *Object) Storable() bool {
 
 // Open an object for read
 func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	return nil, err
+	req := entity.DownloadIn{
+		DriveId:   o.fs.driveId,
+		FileId:    o.id,
+		ExpireSec: 115200,
+	}
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    "/file/get_download_url",
+		RootURL: rootUrl,
+	}
+	resp := entity.DownloadInfo{}
+	err = o.fs.callJSON(ctx, &opts, req, &resp)
+	if err != nil {
+		return nil, err
+	}
+	return o.download(ctx, resp, options...)
+}
+
+func (o *Object) download(ctx context.Context, info entity.DownloadInfo, options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	if info.URL == "" && info.StreamsURL.Mov == "" && info.StreamsURL.Heic != "" {
+		return nil, errors.New("empty download url ")
+	}
+	var downloadUrl string
+	if info.URL != "" {
+		downloadUrl = info.URL
+	} else {
+		if info.StreamsURL.Mov != "" {
+			downloadUrl = info.StreamsURL.Mov
+		} else {
+			downloadUrl = info.StreamsURL.Heic
+		}
+	}
+
+	var resp *http.Response
+	opts := rest.Opts{
+		Method:  info.Method,
+		RootURL: downloadUrl,
+		Options: options,
+	}
+	o.fs.srv.SetHeader("referer", referer)
+	resp, err = o.fs.srv.Call(ctx, &opts)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, err
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -636,16 +680,14 @@ func (o *Object) sliceUpload(ctx context.Context, parts []entity.PartInfo, in io
 		}
 		buf := make([]byte, newChunkSize)
 		io.ReadFull(in, buf)
-		u, _ := url.Parse(p.UploadUrl)
+		uploadUrl := p.UploadUrl
 		wg.Add(1)
 		go func(err *error) {
 			defer wg.Done()
 			opts := rest.Opts{
-				Method:     "PUT",
-				RootURL:    u.Host,
-				Path:       u.Path,
-				Parameters: u.Query(),
-				Body:       bytes.NewReader(buf),
+				Method:  "PUT",
+				RootURL: uploadUrl,
+				Body:    bytes.NewReader(buf),
 			}
 			e := o.fs.callJSON(ctx, &opts, nil, nil)
 			// 不考虑竞争情况
