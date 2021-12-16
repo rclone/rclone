@@ -31,6 +31,7 @@ import (
 	_ "github.com/rclone/rclone/backend/mailru"
 	_ "github.com/rclone/rclone/backend/mega"
 	_ "github.com/rclone/rclone/backend/memory"
+	_ "github.com/rclone/rclone/backend/neofs"
 	_ "github.com/rclone/rclone/backend/netstorage"
 	_ "github.com/rclone/rclone/backend/onedrive"
 	_ "github.com/rclone/rclone/backend/opendrive"
