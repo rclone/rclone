@@ -165,7 +165,7 @@ func runRoot(cmd *cobra.Command, args []string) {
 // setupRootCommand sets default usage, help, and error handling for
 // the root command.
 //
-// Helpful example: http://rtfcode.com/xref/moby-17.03.2-ce/cli/cobra.go
+// Helpful example: https://github.com/moby/moby/blob/master/cli/cobra.go
 func setupRootCommand(rootCmd *cobra.Command) {
 	ci := fs.GetConfig(context.Background())
 	// Add global flags
