@@ -158,12 +158,13 @@ func dedupeList(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs 
 }
 
 // dedupeInteractive interactively dedupes the slice of objects
-func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool) {
+func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool) bool {
 	dedupeList(ctx, f, ht, remote, objs, byHash)
 	commands := []string{"sSkip and do nothing", "kKeep just one (choose which in next step)"}
 	if !byHash {
 		commands = append(commands, "rRename all to be different (by changing file.jpg to file-1.jpg)")
 	}
+	commands = append(commands, "qQuit")
 	switch config.Command(commands) {
 	case 's':
 	case 'k':
@@ -171,7 +172,10 @@ func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string
 		dedupeDeleteAllButOne(ctx, keep-1, remote, objs)
 	case 'r':
 		dedupeRename(ctx, f, remote, objs)
+	case 'q':
+		return false
 	}
+	return true
 }
 
 // DeduplicateMode is how the dedupe command chooses what to do
@@ -465,7 +469,9 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 		}
 		switch mode {
 		case DeduplicateInteractive:
-			dedupeInteractive(ctx, f, ht, remote, objs, byHash)
+			if !dedupeInteractive(ctx, f, ht, remote, objs, byHash) {
+				return nil
+			}
 		case DeduplicateFirst:
 			dedupeDeleteAllButOne(ctx, 0, remote, objs)
 		case DeduplicateNewest:
