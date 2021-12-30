@@ -112,13 +112,13 @@ These flags are available for every command.
       --rc-enable-metrics                    Enable prometheus metrics on /metrics
       --rc-files string                      Path to local files to serve on the HTTP server
       --rc-htpasswd string                   htpasswd file - if not provided no authentication is done
-      --rc-job-expire-duration duration      expire finished async jobs older than this value (default 1m0s)
-      --rc-job-expire-interval duration      interval to check for expired async jobs (default 10s)
+      --rc-job-expire-duration duration      Expire finished async jobs older than this value (default 1m0s)
+      --rc-job-expire-interval duration      Interval to check for expired async jobs (default 10s)
       --rc-key string                        SSL PEM Private key
       --rc-max-header-bytes int              Maximum size of request header (default 4096)
       --rc-no-auth                           Don't require auth for certain methods
       --rc-pass string                       Password for authentication
-      --rc-realm string                      realm for authentication (default "rclone")
+      --rc-realm string                      Realm for authentication (default "rclone")
       --rc-serve                             Enable the serving of remote objects
       --rc-server-read-timeout duration      Timeout for server reading data (default 1h0m0s)
       --rc-server-write-timeout duration     Timeout for server writing data (default 1h0m0s)
