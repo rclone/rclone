@@ -294,7 +294,7 @@ Any config parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
 
 Note that it is possible to set some values as strings or integers -
-see [data types](/#data-types) for more info. Here is an example
+see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
     "_config":{"BufferSize": "42M"}
@@ -327,7 +327,7 @@ Any filter parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
 
 Note that it is possible to set some values as strings or integers -
-see [data types](/#data-types) for more info. Here is an example
+see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
     "_filter":{"MinSize": "42M"}
