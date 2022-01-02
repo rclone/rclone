@@ -148,9 +148,11 @@ To copy a local directory to an Jottacloud directory called backup
 The official Jottacloud client registers a device for each computer you install it on,
 and then creates a mountpoint for each folder you select for Backup.
 The web interface uses a special device called Jotta for the Archive and Sync mountpoints.
-In most cases you'll want to use the Jotta/Archive device/mountpoint, however if you want to access
-files uploaded by any of the official clients rclone provides the option to select other devices
-and mountpoints during config.
+
+With rclone you'll want to use the Jotta/Archive device/mountpoint in most cases, however if you
+want to access files uploaded by any of the official clients rclone provides the option to select
+other devices and mountpoints during config. Note that uploading files is currently not supported
+to other devices than Jotta.
 
 The built-in Jotta device may also contain several other mountpoints, such as: Latest, Links, Shared and Trash.
 These are special mountpoints with a different internal representation than the "regular" mountpoints.
