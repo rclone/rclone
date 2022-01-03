@@ -369,7 +369,7 @@ Obfuscation cannot be relied upon for strong protection.
 
 Cloud storage systems have limits on file name length and
 total path length which rclone is more likely to breach using
-"Standard" file name encryption.  Where file names are less thn 156
+"Standard" file name encryption.  Where file names are less than 156
 characters in length issues should not be encountered, irrespective of
 cloud storage provider.
 
