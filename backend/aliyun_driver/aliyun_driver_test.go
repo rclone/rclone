@@ -15,17 +15,22 @@ func init() {
 }
 
 func TestNewFs(t *testing.T) {
-
+	i := 1
+	fmt.Println(i)
+	i = 2
+	fmt.Println("11111111111")
+	fmt.Println(i)
 }
 
 var (
 	remoteName = "ali"
-	token      = "5d52ed2999df4584ad16070fc9ccfe60"
+	token      = "d4171f81dbf449b5a09e46de0fbc34d8"
 	ctx        = context.Background()
 )
 
 func TestFs_List(t *testing.T) {
-	f, _ := fs.NewFs(ctx, remoteName+":")
+	f, err := fs.NewFs(ctx, remoteName+":")
+	fmt.Println(err)
 	fmt.Println(f.List(ctx, ""))
 }
 

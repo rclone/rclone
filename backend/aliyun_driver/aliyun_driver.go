@@ -113,9 +113,10 @@ func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOu
 	}
 
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/file/list",
-		RootURL: rootUrl,
+		Method:       "POST",
+		Path:         "/file/list",
+		RootURL:      rootUrl,
+		IgnoreStatus: true,
 	}
 
 	var out []entity.ItemsOut
@@ -142,10 +143,12 @@ func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
 		DriveId:      f.driveId,
 		ParentFileId: parentFileId,
 	}
+
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/file/list",
-		RootURL: rootUrl,
+		Method:       "POST",
+		Path:         "/file/list",
+		RootURL:      rootUrl,
+		IgnoreStatus: true,
 	}
 	resp := entity.ListOut{}
 	err := f.callJSON(ctx, &opts, request, &resp)
@@ -262,9 +265,10 @@ func (f *Fs) deleteObject(ctx context.Context, fileId string) error {
 	}
 
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/recyclebin/trash",
-		RootURL: rootUrl,
+		Method:       "POST",
+		Path:         "/recyclebin/trash",
+		RootURL:      rootUrl,
+		IgnoreStatus: true,
 	}
 	var response entity.DeleteOut
 	err := f.callJSON(ctx, &opts, request, &response)
@@ -314,9 +318,10 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		ParentFileId:  pathID, //
 	}
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/file/create_with_proof",
-		RootURL: rootUrl,
+		Method:       "POST",
+		Path:         "/file/create_with_proof",
+		RootURL:      rootUrl,
+		IgnoreStatus: true,
 	}
 	var response entity.MkdirOut
 	err = f.callJSON(ctx, &opts, request, &response)
@@ -326,9 +331,10 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/databox/get_personal_info",
-		RootURL: rootUrl,
+		Method:       "POST",
+		Path:         "/databox/get_personal_info",
+		RootURL:      rootUrl,
+		IgnoreStatus: true,
 	}
 	var resp entity.PersonalInfoOut
 	err = f.callJSON(ctx, &opts, nil, &resp)
@@ -381,9 +387,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // getAccessToken 获取getAccessToken
 func (f *Fs) getAccessToken() error {
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/token/refresh",
-		RootURL: "https://websv.aliyundrive.com",
+		Method:       "POST",
+		Path:         "/token/refresh",
+		RootURL:      "https://websv.aliyundrive.com",
+		IgnoreStatus: true,
 	}
 	request := entity.AccessTokenIn{RefreshToken: f.opt.RefreshToken}
 	response := entity.AccessTokenOut{}
@@ -412,25 +419,20 @@ func (f *Fs) getAccessToken() error {
 }
 
 func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request interface{}, response interface{}) error {
-	resp, err := f.srv.CallJSON(ctx, opts, request, response)
+	_, err := f.srv.CallJSON(ctx, opts, request, response)
 	if err != nil {
-		errResponse := entity.ErrorResponse{}
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(body, &errResponse)
-		if err != nil {
-			return err
-		}
-		if errResponse.Code != "" {
-			if errResponse.Code == "AccessTokenInvalid" {
-				f.getAccessToken()
-				return f.callJSON(ctx, opts, request, response)
-			}
-			return errors.New(errResponse.Code)
-		}
 		return err
+	}
+	resp := entity.ErrorResponse{}
+	b, _ := json.Marshal(response)
+	json.Unmarshal(b, &resp)
+
+	if resp.Code != "" {
+		if resp.Code == "AccessTokenInvalid" {
+			f.getAccessToken()
+			return f.callJSON(ctx, opts, request, response)
+		}
+		return errors.New(resp.Code)
 	}
 	return nil
 }
@@ -564,9 +566,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		ExpireSec: 115200,
 	}
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/file/get_download_url",
-		RootURL: rootUrl,
+		Method:       "POST",
+		Path:         "/file/get_download_url",
+		RootURL:      rootUrl,
+		IgnoreStatus: true,
 	}
 	resp := entity.DownloadInfo{}
 	err = o.fs.callJSON(ctx, &opts, req, &resp)
@@ -660,9 +663,10 @@ func (o *Object) preUplaod(ctx context.Context, leaf, directoryID string, modTim
 		req.PartInfoList = append(req.PartInfoList, entity.PartInfo{PartNumber: i + 1})
 	}
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/file/create_with_proof",
-		RootURL: rootUrl,
+		Method:       "POST",
+		Path:         "/file/create_with_proof",
+		RootURL:      rootUrl,
+		IgnoreStatus: true,
 	}
 	resp := entity.PreUploadOut{}
 	err := o.fs.callJSON(ctx, &opts, req, &resp)
@@ -708,9 +712,10 @@ func (o *Object) complete(ctx context.Context, fileId, uploadId string) error {
 		UploadId: uploadId,
 	}
 	opts := rest.Opts{
-		Method:  "POST",
-		Path:    "/file/complete",
-		RootURL: rootUrl,
+		Method:       "POST",
+		Path:         "/file/complete",
+		RootURL:      rootUrl,
+		IgnoreStatus: true,
 	}
 	return o.fs.callJSON(ctx, &opts, rep, nil)
 }

@@ -9,6 +9,7 @@ type ErrorResponse struct {
 
 // AccessTokenOut 获取accessToken 的返回数据
 type AccessTokenOut struct {
+	ErrorResponse
 	DefaultSboxDriveId string        `json:"default_sbox_drive_id"`
 	Role               string        `json:"role"`
 	DeviceId           string        `json:"device_id"`
@@ -34,10 +35,10 @@ type AccessTokenOut struct {
 
 // 返回输出
 type ListOut struct {
+	ErrorResponse
 	Items             []ItemsOut `json:"items"`
 	NextMarker        string     `json:"next_marker"`
 	PunishedFileCount int        `json:"punished_file_count"`
-	Code              string     `json:"code"`
 }
 type CroppingBoundary struct {
 	Width  int `json:"width"`
@@ -73,6 +74,7 @@ type StreamsInfo struct {
 	Mov  Mov  `json:"mov"`
 }
 type ItemsOut struct {
+	ErrorResponse
 	DriveId         string    `json:"drive_id"`
 	DomainId        string    `json:"domain_id"`
 	FileId          string    `json:"file_id"`
@@ -102,6 +104,7 @@ type ItemsOut struct {
 }
 
 type MkdirOut struct {
+	ErrorResponse
 	DomainId     string `json:"domain_id"`
 	DriveId      string `json:"drive_id"`
 	EncryptMode  string `json:"encrypt_mode"`
@@ -112,6 +115,7 @@ type MkdirOut struct {
 }
 
 type DeleteOut struct {
+	ErrorResponse
 	AsyncTaskId string `json:"async_task_id"`
 	DriveId     string `json:"drive_id"`
 	DomainId    string `json:"domain_id"`
@@ -119,6 +123,7 @@ type DeleteOut struct {
 }
 
 type PersonalInfoOut struct {
+	ErrorResponse
 	PersonalRightsInfo struct {
 		SpuID      string `json:"spu_id"`
 		Name       string `json:"name"`
@@ -136,6 +141,7 @@ type PersonalInfoOut struct {
 }
 
 type PreUploadOut struct {
+	ErrorResponse
 	FileId       string     `json:"file_id"`
 	FileName     string     `json:"file_name"`
 	Location     string     `json:"location"`
