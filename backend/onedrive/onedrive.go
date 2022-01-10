@@ -144,9 +144,9 @@ Note that the chunks will be buffered into memory.`,
 			Name: "disable_site_permission",
 			Help: `Disable the request for Sites.Read.All permission.
 
-If enabled, you will no longer be able to search for a SharePoint site
-when configuring drive ID.
-Enable if your organization didn't assign Sites.Read.All permission to the
+If set to true, you will no longer be able to search for a SharePoint site when
+configuring drive ID, because rclone will not request Sites.Read.All permission.
+Set it to true if your organization didn't assign Sites.Read.All permission to the
 application, and your organization disallows users to consent app permission
 request on their own.`,
 			Default:  false,
@@ -388,8 +388,8 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	region, graphURL := getRegionURL(m)
 
 	if config.State == "" {
-		disableSitePermission, ok := m.Get("disable_site_permission")
-		if disableSitePermission == "true" && ok {
+		disableSitePermission, _ := m.Get("disable_site_permission")
+		if disableSitePermission == "true" {
 			oauthConfig.Scopes = scopesWithoutSitePermission
 		} else {
 			oauthConfig.Scopes = scopesWithSitePermission
