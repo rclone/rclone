@@ -24,7 +24,7 @@ func TestNewFs(t *testing.T) {
 
 var (
 	remoteName = "ali"
-	token      = "d4171f81dbf449b5a09e46de0fbc34d8"
+	token      = "9c537ad5063d499a8a37eb61f9b098ac"
 	ctx        = context.Background()
 )
 

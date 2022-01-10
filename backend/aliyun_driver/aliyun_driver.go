@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"net/http"
 	"path"
@@ -113,10 +114,9 @@ func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOu
 	}
 
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/file/list",
-		RootURL:      rootUrl,
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/file/list",
+		RootURL: rootUrl,
 	}
 
 	var out []entity.ItemsOut
@@ -124,7 +124,7 @@ func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOu
 		resp := entity.ListOut{}
 		err := f.callJSON(ctx, &opts, request, &resp)
 		if err != nil {
-			return out, errors.New(resp.Code)
+			return out, err
 		}
 		out = append(out, resp.Items...)
 		if resp.NextMarker == "" {
@@ -145,10 +145,9 @@ func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
 	}
 
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/file/list",
-		RootURL:      rootUrl,
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/file/list",
+		RootURL: rootUrl,
 	}
 	resp := entity.ListOut{}
 	err := f.callJSON(ctx, &opts, request, &resp)
@@ -265,10 +264,9 @@ func (f *Fs) deleteObject(ctx context.Context, fileId string) error {
 	}
 
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/recyclebin/trash",
-		RootURL:      rootUrl,
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/recyclebin/trash",
+		RootURL: rootUrl,
 	}
 	var response entity.DeleteOut
 	err := f.callJSON(ctx, &opts, request, &response)
@@ -318,10 +316,9 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		ParentFileId:  pathID, //
 	}
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/file/create_with_proof",
-		RootURL:      rootUrl,
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/file/create_with_proof",
+		RootURL: rootUrl,
 	}
 	var response entity.MkdirOut
 	err = f.callJSON(ctx, &opts, request, &response)
@@ -331,10 +328,9 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/databox/get_personal_info",
-		RootURL:      rootUrl,
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/databox/get_personal_info",
+		RootURL: rootUrl,
 	}
 	var resp entity.PersonalInfoOut
 	err = f.callJSON(ctx, &opts, nil, &resp)
@@ -387,10 +383,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 // getAccessToken 获取getAccessToken
 func (f *Fs) getAccessToken() error {
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/token/refresh",
-		RootURL:      "https://websv.aliyundrive.com",
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/token/refresh",
+		RootURL: "https://websv.aliyundrive.com",
 	}
 	request := entity.AccessTokenIn{RefreshToken: f.opt.RefreshToken}
 	response := entity.AccessTokenOut{}
@@ -419,20 +414,25 @@ func (f *Fs) getAccessToken() error {
 }
 
 func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request interface{}, response interface{}) error {
-	_, err := f.srv.CallJSON(ctx, opts, request, response)
-	if err != nil {
-		return err
+	if opts != nil {
+		opts.OriginResponse = true
 	}
-	resp := entity.ErrorResponse{}
-	b, _ := json.Marshal(response)
-	json.Unmarshal(b, &resp)
-
-	if resp.Code != "" {
-		if resp.Code == "AccessTokenInvalid" {
-			f.getAccessToken()
-			return f.callJSON(ctx, opts, request, response)
+	if !f.srv.IsSetHeader("authorization") && opts.Path != "/token/refresh" {
+		return errors.New("header authorization is not set")
+	}
+	resp, err := f.srv.CallJSON(ctx, opts, request, response)
+	if err != nil {
+		respError := entity.ErrorResponse{}
+		b, _ := ioutil.ReadAll(resp.Body)
+		json.Unmarshal(b, &respError)
+		if respError.Code != "" {
+			if respError.Code == "AccessTokenInvalid" {
+				f.getAccessToken()
+				return f.callJSON(ctx, opts, request, response)
+			}
+			return errors.New(respError.Code)
 		}
-		return errors.New(resp.Code)
+		return err
 	}
 	return nil
 }
@@ -566,10 +566,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		ExpireSec: 115200,
 	}
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/file/get_download_url",
-		RootURL:      rootUrl,
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/file/get_download_url",
+		RootURL: rootUrl,
 	}
 	resp := entity.DownloadInfo{}
 	err = o.fs.callJSON(ctx, &opts, req, &resp)
@@ -663,10 +662,9 @@ func (o *Object) preUplaod(ctx context.Context, leaf, directoryID string, modTim
 		req.PartInfoList = append(req.PartInfoList, entity.PartInfo{PartNumber: i + 1})
 	}
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/file/create_with_proof",
-		RootURL:      rootUrl,
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/file/create_with_proof",
+		RootURL: rootUrl,
 	}
 	resp := entity.PreUploadOut{}
 	err := o.fs.callJSON(ctx, &opts, req, &resp)
@@ -712,10 +710,9 @@ func (o *Object) complete(ctx context.Context, fileId, uploadId string) error {
 		UploadId: uploadId,
 	}
 	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "/file/complete",
-		RootURL:      rootUrl,
-		IgnoreStatus: true,
+		Method:  "POST",
+		Path:    "/file/complete",
+		RootURL: rootUrl,
 	}
 	return o.fs.callJSON(ctx, &opts, rep, nil)
 }

@@ -92,6 +92,14 @@ func (api *Client) RemoveHeader(key string) *Client {
 	return api
 }
 
+// IsSetHeader isset header
+func (api *Client) IsSetHeader(key string) bool {
+	api.mu.Lock()
+	defer api.mu.Unlock()
+	_, ok := api.headers[key]
+	return ok
+}
+
 // SignerFn is used to sign an outgoing request
 type SignerFn func(*http.Request) error
 
@@ -140,6 +148,7 @@ type Opts struct {
 	Password              string            // password for Basic Auth
 	Options               []fs.OpenOption
 	IgnoreStatus          bool       // if set then we don't check error status or parse error body
+	OriginResponse        bool       // if set
 	MultipartParams       url.Values // if set do multipart form upload with attached file
 	MultipartMetadataName string     // ..this is used for the name of the metadata form part if set
 	MultipartContentName  string     // ..name of the parameter which is the attached file
@@ -284,10 +293,15 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	}
 	if !opts.IgnoreStatus {
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
-			err = api.errorHandler(resp)
-			if err.Error() == "" {
+			if opts.OriginResponse {
 				// replace empty errors with something
 				err = fmt.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
+			} else {
+				err = api.errorHandler(resp)
+				if err.Error() == "" {
+					// replace empty errors with something
+					err = fmt.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
+				}
 			}
 			return resp, err
 		}
