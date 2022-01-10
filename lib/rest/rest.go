@@ -92,12 +92,12 @@ func (api *Client) RemoveHeader(key string) *Client {
 	return api
 }
 
-// IsSetHeader isset header
-func (api *Client) IsSetHeader(key string) bool {
+// GetHeader get header
+func (api *Client) GetHeader(key string) (string, bool) {
 	api.mu.Lock()
 	defer api.mu.Unlock()
-	_, ok := api.headers[key]
-	return ok
+	v, ok := api.headers[key]
+	return v, ok
 }
 
 // SignerFn is used to sign an outgoing request

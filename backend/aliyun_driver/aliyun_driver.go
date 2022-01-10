@@ -32,11 +32,19 @@ const (
 	itemTypeFolder = "folder"
 	itemTypeFile   = "file"
 	rootId         = "root"
+	authorization  = "authorization"
+	rootUrl        = "https://api.aliyundrive.com/v2"
+	uA             = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
+	referer        = "https://www.aliyundrive.com/"
+	chunkSize      = 10485760
 
-	rootUrl   = "https://api.aliyundrive.com/v2"
-	uA        = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
-	referer   = "https://www.aliyundrive.com/"
-	chunkSize = 10485760
+	uriFileList        = "/file/list"
+	uriFileTrash       = "/recyclebin/trash"
+	uriFileCreate      = "/file/create_with_proof"
+	uriFileComplete    = "/file/complete"
+	uriFileDownloadUrl = "/file/get_download_url"
+	uriPersonalInfo    = "/databox/get_personal_info"
+	uriTokenRefresh    = "/token/refresh"
 )
 
 type Fs struct {
@@ -115,7 +123,7 @@ func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOu
 
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/file/list",
+		Path:    uriFileList,
 		RootURL: rootUrl,
 	}
 
@@ -146,7 +154,7 @@ func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
 
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/file/list",
+		Path:    uriFileList,
 		RootURL: rootUrl,
 	}
 	resp := entity.ListOut{}
@@ -265,7 +273,7 @@ func (f *Fs) deleteObject(ctx context.Context, fileId string) error {
 
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/recyclebin/trash",
+		Path:    uriFileTrash,
 		RootURL: rootUrl,
 	}
 	var response entity.DeleteOut
@@ -317,7 +325,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/file/create_with_proof",
+		Path:    uriFileCreate,
 		RootURL: rootUrl,
 	}
 	var response entity.MkdirOut
@@ -329,7 +337,7 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/databox/get_personal_info",
+		Path:    uriPersonalInfo,
 		RootURL: rootUrl,
 	}
 	var resp entity.PersonalInfoOut
@@ -384,7 +392,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 func (f *Fs) getAccessToken() error {
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/token/refresh",
+		Path:    uriTokenRefresh,
 		RootURL: "https://websv.aliyundrive.com",
 	}
 	request := entity.AccessTokenIn{RefreshToken: f.opt.RefreshToken}
@@ -407,7 +415,7 @@ func (f *Fs) getAccessToken() error {
 	fmt.Println(response.RefreshToken)
 	fmt.Println("-------------------- refreshToken end --------------------")
 
-	f.srv.SetHeader("authorization", response.AccessToken)
+	f.srv.SetHeader(authorization, response.AccessToken)
 	f.driveId = response.DefaultDriveId
 	f.accessToken = response.AccessToken
 	return nil
@@ -417,7 +425,8 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request interface{},
 	if opts != nil {
 		opts.OriginResponse = true
 	}
-	if !f.srv.IsSetHeader("authorization") && opts.Path != "/token/refresh" {
+	v, ok := f.srv.GetHeader(authorization)
+	if (!ok || v == "") && opts.Path != uriTokenRefresh {
 		return errors.New("header authorization is not set")
 	}
 	resp, err := f.srv.CallJSON(ctx, opts, request, response)
@@ -567,7 +576,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/file/get_download_url",
+		Path:    uriFileDownloadUrl,
 		RootURL: rootUrl,
 	}
 	resp := entity.DownloadInfo{}
@@ -663,7 +672,7 @@ func (o *Object) preUplaod(ctx context.Context, leaf, directoryID string, modTim
 	}
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/file/create_with_proof",
+		Path:    uriFileCreate,
 		RootURL: rootUrl,
 	}
 	resp := entity.PreUploadOut{}
@@ -711,7 +720,7 @@ func (o *Object) complete(ctx context.Context, fileId, uploadId string) error {
 	}
 	opts := rest.Opts{
 		Method:  "POST",
-		Path:    "/file/complete",
+		Path:    uriFileComplete,
 		RootURL: rootUrl,
 	}
 	return o.fs.callJSON(ctx, &opts, rep, nil)
