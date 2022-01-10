@@ -65,9 +65,12 @@ var (
 	authPath  = "/common/oauth2/v2.0/authorize"
 	tokenPath = "/common/oauth2/v2.0/token"
 
+	scopesWithSitePermission    = []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"}
+	scopesWithoutSitePermission = []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
+
 	// Description of how to auth for this app for a business account
 	oauthConfig = &oauth2.Config{
-		Scopes:       []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"},
+		Scopes:       scopesWithSitePermission,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -136,6 +139,17 @@ Note that the chunks will be buffered into memory.`,
 			Name:     "drive_type",
 			Help:     "The type of the drive (" + driveTypePersonal + " | " + driveTypeBusiness + " | " + driveTypeSharepoint + ").",
 			Default:  "",
+			Advanced: true,
+		}, {
+			Name: "disable_site_permission",
+			Help: `Disable the request for Sites.Read.All permission.
+
+If set to true, you will no longer be able to search for a SharePoint site when
+configuring drive ID, because rclone will not request Sites.Read.All permission.
+Set it to true if your organization didn't assign Sites.Read.All permission to the
+application, and your organization disallows users to consent app permission
+request on their own.`,
+			Default:  false,
 			Advanced: true,
 		}, {
 			Name: "expose_onenote_files",
@@ -374,6 +388,12 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	region, graphURL := getRegionURL(m)
 
 	if config.State == "" {
+		disableSitePermission, _ := m.Get("disable_site_permission")
+		if disableSitePermission == "true" {
+			oauthConfig.Scopes = scopesWithoutSitePermission
+		} else {
+			oauthConfig.Scopes = scopesWithSitePermission
+		}
 		oauthConfig.Endpoint = oauth2.Endpoint{
 			AuthURL:  authEndpoint[region] + authPath,
 			TokenURL: authEndpoint[region] + tokenPath,
@@ -527,6 +547,7 @@ type Options struct {
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
+	DisableSitePermission   bool                 `config:"disable_site_permission"`
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
 	ListChunk               int64                `config:"list_chunk"`
@@ -789,6 +810,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
+	if opt.DisableSitePermission {
+		oauthConfig.Scopes = scopesWithoutSitePermission
+	} else {
+		oauthConfig.Scopes = scopesWithSitePermission
+	}
 	oauthConfig.Endpoint = oauth2.Endpoint{
 		AuthURL:  authEndpoint[opt.Region] + authPath,
 		TokenURL: authEndpoint[opt.Region] + tokenPath,
