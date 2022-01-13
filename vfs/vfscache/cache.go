@@ -376,7 +376,7 @@ func rename(osOldPath, osNewPath string) error {
 		if !os.IsNotExist(err) {
 			return fmt.Errorf("Failed to stat destination: %s: %w", osNewPath, err)
 		}
-		parent := vfscommon.OsFindParent(osNewPath)
+		parent := vfscommon.OSFindParent(osNewPath)
 		err = createDir(parent)
 		if err != nil {
 			return fmt.Errorf("Failed to create parent dir: %s: %w", parent, err)
