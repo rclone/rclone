@@ -278,7 +278,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 	if do := f.Fs.Features().CleanUp; do != nil {
 		return do(ctx)
 	}
-	return errors.New("CleanUp not supported")
+	return errors.New("not supported by underlying remote")
 }
 
 // About gets quota information from the Fs
@@ -286,7 +286,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	if do := f.Fs.Features().About; do != nil {
 		return do(ctx)
 	}
-	return nil, errors.New("About not supported")
+	return nil, errors.New("not supported by underlying remote")
 }
 
 // ChangeNotify calls the passed function with a path that has had changes.
