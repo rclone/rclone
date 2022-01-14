@@ -783,10 +783,10 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("CreateDir http: %w", err)
+		return nil, err
 	}
 	if err = info.AsErr(); err != nil {
-		return nil, fmt.Errorf("CreateDir: %w", err)
+		return nil, err
 	}
 	usage = &fs.Usage{
 		Used: fs.NewUsageValue(int64(info.SpaceUsed)),
