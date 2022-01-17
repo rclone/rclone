@@ -636,7 +636,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 //上传
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID string, modTime time.Time, size int64) (err error) {
 	chunkNum := int(math.Ceil(float64(size) / chunkSize))
-	resp, err := o.preUplaod(ctx, leaf, directoryID, modTime, size, chunkNum)
+	resp, err := o.preUpload(ctx, leaf, directoryID, modTime, size, chunkNum)
 	if err != nil {
 		return err
 	}
@@ -655,7 +655,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, directoryID str
 }
 
 //预上传
-func (o *Object) preUplaod(ctx context.Context, leaf, directoryID string, modTime time.Time, size int64, chunkNum int) (entity.PreUploadOut, error) {
+func (o *Object) preUpload(ctx context.Context, leaf, directoryID string, modTime time.Time, size int64, chunkNum int) (entity.PreUploadOut, error) {
 	req := entity.PreUploadIn{
 		DriveId:         o.fs.driveId,
 		Name:            leaf,
