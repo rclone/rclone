@@ -424,17 +424,17 @@ type Options struct {
 
 // Fs represents a remote jottacloud
 type Fs struct {
-	name         string
-	root         string
-	user         string
-	opt          Options
-	features     *fs.Features
-	endpointURL  string
-	allocateURL  string
-	jfsSrv       *rest.Client
-	apiSrv       *rest.Client
-	pacer        *fs.Pacer
-	tokenRenewer *oauthutil.Renew // renew the token on expiry
+	name             string
+	root             string
+	user             string
+	opt              Options
+	features         *fs.Features
+	fileEndpoint     string
+	allocateEndpoint string
+	jfsSrv           *rest.Client
+	apiSrv           *rest.Client
+	pacer            *fs.Pacer
+	tokenRenewer     *oauthutil.Renew // renew the token on expiry
 }
 
 // Object describes a jottacloud object
@@ -712,16 +712,16 @@ func createMountPoint(ctx context.Context, srv *rest.Client, path string) (info 
 	return info, nil
 }
 
-// setEndpointURL generates the API endpoint URL
-func (f *Fs) setEndpointURL() {
+// setEndpoints generates the API endpoints
+func (f *Fs) setEndpoints() {
 	if f.opt.Device == "" {
 		f.opt.Device = defaultDevice
 	}
 	if f.opt.Mountpoint == "" {
 		f.opt.Mountpoint = defaultMountpoint
 	}
-	f.endpointURL = path.Join(f.user, f.opt.Device, f.opt.Mountpoint)
-	f.allocateURL = path.Join("/jfs", f.opt.Device, f.opt.Mountpoint)
+	f.fileEndpoint = path.Join(f.user, f.opt.Device, f.opt.Mountpoint)
+	f.allocateEndpoint = path.Join("/jfs", f.opt.Device, f.opt.Mountpoint)
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -778,18 +778,30 @@ func urlPathEscape(in string) string {
 }
 
 // filePathRaw returns an unescaped file path (f.root, file)
-func (f *Fs) filePathRaw(file string) string {
-	return path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(path.Join(f.root, file)))
+// Optionally made absolute by prefixing with "/", typically required when used
+// as request parameter instead of the path (which is relative to some root url).
+func (f *Fs) filePathRaw(file string, absolute bool) string {
+	prefix := ""
+	if absolute {
+		prefix = "/"
+	}
+	return path.Join(prefix, f.fileEndpoint, f.opt.Enc.FromStandardPath(path.Join(f.root, file)))
 }
 
 // filePath returns an escaped file path (f.root, file)
 func (f *Fs) filePath(file string) string {
-	return urlPathEscape(f.filePathRaw(file))
+	return urlPathEscape(f.filePathRaw(file, false))
 }
 
-// allocatePathRaw returns an unescaped file path (f.root, file)
-func (f *Fs) allocatePathRaw(file string) string {
-	return path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(path.Join(f.root, file)))
+// allocatePathRaw returns an unescaped allocate file path (f.root, file)
+// Optionally made absolute by prefixing with "/", typically required when used
+// as request parameter instead of the path (which is relative to some root url).
+func (f *Fs) allocatePathRaw(file string, absolute bool) string {
+	prefix := ""
+	if absolute {
+		prefix = "/"
+	}
+	return path.Join(prefix, f.allocateEndpoint, f.opt.Enc.FromStandardPath(path.Join(f.root, file)))
 }
 
 // Jottacloud requires the grant_type 'refresh_token' string
@@ -928,7 +940,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 	f.user = cust.Username
-	f.setEndpointURL()
+	f.setEndpoints()
 
 	if root != "" && !rootIsDir {
 		// Check to see if the root actually an existing file
@@ -1365,7 +1377,7 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *ap
 		Parameters: url.Values{},
 	}
 
-	opts.Parameters.Set(method, "/"+path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(path.Join(f.root, dest))))
+	opts.Parameters.Set(method, f.filePathRaw(dest, true))
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
@@ -1478,7 +1490,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return fs.ErrorDirExists
 	}
 
-	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(srcPath))+"/", dstRemote)
+	_, err = f.copyOrMove(ctx, "mvDir", path.Join(f.fileEndpoint, f.opt.Enc.FromStandardPath(srcPath))+"/", dstRemote)
 
 	if err != nil {
 		return fmt.Errorf("couldn't move directory: %w", err)
@@ -1865,7 +1877,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Created:  fileDate,
 		Modified: fileDate,
 		Md5:      md5String,
-		Path:     path.Join(o.fs.allocateURL, o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
+		Path:     o.fs.allocatePathRaw(o.remote, true),
 	}
 
 	// send it
