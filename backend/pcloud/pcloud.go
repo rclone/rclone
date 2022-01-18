@@ -690,7 +690,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	opts.Parameters.Set("fileid", fileIDtoNumber(srcObj.id))
 	opts.Parameters.Set("toname", f.opt.Enc.FromStandardName(leaf))
 	opts.Parameters.Set("tofolderid", dirIDtoNumber(directoryID))
-	opts.Parameters.Set("mtime", fmt.Sprintf("%d", srcObj.modTime.Unix()))
+	opts.Parameters.Set("mtime", fmt.Sprintf("%d", uint64(srcObj.modTime.Unix())))
 	var resp *http.Response
 	var result api.ItemResult
 	err = f.pacer.Call(func() (bool, error) {
@@ -1171,7 +1171,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	opts.Parameters.Set("filename", leaf)
 	opts.Parameters.Set("folderid", dirIDtoNumber(directoryID))
 	opts.Parameters.Set("nopartial", "1")
-	opts.Parameters.Set("mtime", fmt.Sprintf("%d", modTime.Unix()))
+	opts.Parameters.Set("mtime", fmt.Sprintf("%d", uint64(modTime.Unix())))
 
 	// Special treatment for a 0 length upload.  This doesn't work
 	// with PUT even with Content-Length set (by setting
