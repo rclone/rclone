@@ -111,14 +111,14 @@ func Choose(what string, kind string, choices, help []string, defaultValue strin
 	attributes := []string{terminal.HiRedFg, terminal.HiGreenFg}
 	for i, text := range choices {
 		var lines []string
-		if help != nil {
+		if help != nil && help[i] != "" {
 			parts := strings.Split(help[i], "\n")
 			lines = append(lines, parts...)
+			lines = append(lines, fmt.Sprintf("(%s)", text))
 		}
-		lines = append(lines, fmt.Sprintf("(%s)", text))
 		pos := i + 1
 		terminal.WriteString(attributes[i%len(attributes)])
-		if len(lines) == 1 {
+		if len(lines) == 0 {
 			fmt.Printf("%2d > %s\n", pos, text)
 		} else {
 			mid := (len(lines) - 1) / 2
