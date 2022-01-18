@@ -48,11 +48,22 @@ __rclone_custom_func() {
         else
             __rclone_init_completion -n : || return
         fi
-	local rclone=(command rclone --ask-password=false)
+        local rclone=(command rclone --ask-password=false)
         if [[ $cur != *:* ]]; then
+            local config_file=""
+            for idx in ${!words[@]}; do
+              if [[ "${words[idx]}" == "--config" && "${#words[@]}" -gt $((idx+1)) ]]; then
+                config_file="${words[idx+1]}"
+              fi
+            done
             local ifs=$IFS
             IFS=$'\n'
-            local remotes=($("${rclone[@]}" listremotes 2> /dev/null))
+            local remotes=""
+            if [[ -z "${config_file}" ]]; then
+              remotes=($("${rclone[@]}" listremotes 2> /dev/null))
+            else
+              remotes=($("${rclone[@]}" --config "${config_file}" listremotes 2> /dev/null))
+            fi
             IFS=$ifs
             local remote
             for remote in "${remotes[@]}"; do
