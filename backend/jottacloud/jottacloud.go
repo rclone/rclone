@@ -46,9 +46,9 @@ const (
 	decayConstant      = 2 // bigger for slower decay, exponential
 	defaultDevice      = "Jotta"
 	defaultMountpoint  = "Archive"
-	rootURL            = "https://jfs.jottacloud.com/jfs/"
+	jfsURL             = "https://jfs.jottacloud.com/jfs/"
 	apiURL             = "https://api.jottacloud.com/"
-	baseURL            = "https://www.jottacloud.com/"
+	wwwURL             = "https://www.jottacloud.com/"
 	cachePrefix        = "rclone-jcmd5-"
 	configDevice       = "device"
 	configMountpoint   = "mountpoint"
@@ -277,7 +277,7 @@ sync or the backup section, for example, you must choose yes.`)
 		if err != nil {
 			return nil, err
 		}
-		srv := rest.NewClient(oAuthClient).SetRoot(rootURL)
+		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
 		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
 		cust, err := getCustomerInfo(ctx, apiSrv)
@@ -286,7 +286,7 @@ sync or the backup section, for example, you must choose yes.`)
 		}
 		m.Set(configUsername, cust.Username)
 
-		acc, err := getDriveInfo(ctx, srv, cust.Username)
+		acc, err := getDriveInfo(ctx, jfsSrv, cust.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -316,11 +316,11 @@ a new by entering a unique name.`, defaultDevice)
 		if err != nil {
 			return nil, err
 		}
-		srv := rest.NewClient(oAuthClient).SetRoot(rootURL)
+		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
 
 		username, _ := m.Get(configUsername)
 
-		acc, err := getDriveInfo(ctx, srv, username)
+		acc, err := getDriveInfo(ctx, jfsSrv, username)
 		if err != nil {
 			return nil, err
 		}
@@ -335,7 +335,7 @@ a new by entering a unique name.`, defaultDevice)
 		var dev *api.JottaDevice
 		if isNew {
 			fs.Debugf(nil, "Creating new device: %s", device)
-			dev, err = createDevice(ctx, srv, path.Join(username, device))
+			dev, err = createDevice(ctx, jfsSrv, path.Join(username, device))
 			if err != nil {
 				return nil, err
 			}
@@ -343,7 +343,7 @@ a new by entering a unique name.`, defaultDevice)
 		m.Set(configDevice, device)
 
 		if !isNew {
-			dev, err = getDeviceInfo(ctx, srv, path.Join(username, device))
+			dev, err = getDeviceInfo(ctx, jfsSrv, path.Join(username, device))
 			if err != nil {
 				return nil, err
 			}
@@ -372,12 +372,12 @@ You may create a new by entering a unique name.`, device)
 		if err != nil {
 			return nil, err
 		}
-		srv := rest.NewClient(oAuthClient).SetRoot(rootURL)
+		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
 
 		username, _ := m.Get(configUsername)
 		device, _ := m.Get(configDevice)
 
-		dev, err := getDeviceInfo(ctx, srv, path.Join(username, device))
+		dev, err := getDeviceInfo(ctx, jfsSrv, path.Join(username, device))
 		if err != nil {
 			return nil, err
 		}
@@ -395,7 +395,7 @@ You may create a new by entering a unique name.`, device)
 				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device: %w", defaultDevice, err)
 			}
 			fs.Debugf(nil, "Creating new mountpoint: %s", mountpoint)
-			_, err := createMountPoint(ctx, srv, path.Join(username, device, mountpoint))
+			_, err := createMountPoint(ctx, jfsSrv, path.Join(username, device, mountpoint))
 			if err != nil {
 				return nil, err
 			}
@@ -431,7 +431,7 @@ type Fs struct {
 	features     *fs.Features
 	endpointURL  string
 	allocateURL  string
-	srv          *rest.Client
+	jfsSrv       *rest.Client
 	apiSrv       *rest.Client
 	pacer        *fs.Pacer
 	tokenRenewer *oauthutil.Renew // renew the token on expiry
@@ -733,7 +733,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.Jo
 	var result api.JottaFile
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		resp, err = f.jfsSrv.CallXML(ctx, &opts, nil, &result)
 		return shouldRetry(ctx, resp, err)
 	})
 
@@ -899,7 +899,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:   name,
 		root:   root,
 		opt:    *opt,
-		srv:    rest.NewClient(oAuthClient).SetRoot(rootURL),
+		jfsSrv: rest.NewClient(oAuthClient).SetRoot(jfsURL),
 		apiSrv: rest.NewClient(oAuthClient).SetRoot(apiURL),
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
@@ -909,7 +909,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ReadMimeType:            true,
 		WriteMimeType:           false,
 	}).Fill(ctx, f)
-	f.srv.SetErrorHandler(errorHandler)
+	f.jfsSrv.SetErrorHandler(errorHandler)
 	if opt.TrashedOnly { // we cannot support showing Trashed Files when using ListR right now
 		f.features.ListR = nil
 	}
@@ -994,7 +994,7 @@ func (f *Fs) CreateDir(ctx context.Context, path string) (jf *api.JottaFolder, e
 	opts.Parameters.Set("mkDir", "true")
 
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &jf)
+		resp, err = f.jfsSrv.CallXML(ctx, &opts, nil, &jf)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1023,7 +1023,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	var resp *http.Response
 	var result api.JottaFolder
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		resp, err = f.jfsSrv.CallXML(ctx, &opts, nil, &result)
 		return shouldRetry(ctx, resp, err)
 	})
 
@@ -1181,7 +1181,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
+		resp, err = f.jfsSrv.Call(ctx, &opts)
 		if err != nil {
 			return shouldRetry(ctx, resp, err)
 		}
@@ -1291,7 +1291,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
+		resp, err = f.jfsSrv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1344,7 +1344,7 @@ func (f *Fs) createOrUpdate(ctx context.Context, file string, modTime time.Time,
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &info)
+		resp, err = f.jfsSrv.CallXML(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 
@@ -1369,7 +1369,7 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *ap
 
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &info)
+		resp, err = f.jfsSrv.CallXML(ctx, &opts, nil, &info)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1503,7 +1503,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	var resp *http.Response
 	var result api.JottaFile
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallXML(ctx, &opts, nil, &result)
+		resp, err = f.jfsSrv.CallXML(ctx, &opts, nil, &result)
 		return shouldRetry(ctx, resp, err)
 	})
 
@@ -1529,19 +1529,19 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", errors.New("couldn't create public link - no uri received")
 	}
 	if result.PublicSharePath != "" {
-		webLink := joinPath(baseURL, result.PublicSharePath)
+		webLink := joinPath(wwwURL, result.PublicSharePath)
 		fs.Debugf(nil, "Web link: %s", webLink)
 	} else {
 		fs.Debugf(nil, "No web link received")
 	}
-	directLink := joinPath(baseURL, fmt.Sprintf("opin/io/downloadPublic/%s/%s", f.user, result.PublicURI))
+	directLink := joinPath(wwwURL, fmt.Sprintf("opin/io/downloadPublic/%s/%s", f.user, result.PublicURI))
 	fs.Debugf(nil, "Direct link: %s", directLink)
 	return directLink, nil
 }
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	info, err := getDriveInfo(ctx, f.srv, f.user)
+	info, err := getDriveInfo(ctx, f.jfsSrv, f.user)
 	if err != nil {
 		return nil, err
 	}
@@ -1744,7 +1744,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	opts.Parameters.Set("mode", "bin")
 
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
+		resp, err = o.fs.jfsSrv.Call(ctx, &opts)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -1935,7 +1935,7 @@ func (o *Object) remove(ctx context.Context, hard bool) error {
 	}
 
 	return o.fs.pacer.Call(func() (bool, error) {
-		resp, err := o.fs.srv.CallXML(ctx, &opts, nil, nil)
+		resp, err := o.fs.jfsSrv.CallXML(ctx, &opts, nil, nil)
 		return shouldRetry(ctx, resp, err)
 	})
 }
