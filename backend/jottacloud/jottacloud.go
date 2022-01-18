@@ -127,7 +127,7 @@ func init() {
 func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	switch config.State {
 	case "":
-		return fs.ConfigChooseExclusiveFixed("auth_type_done", "config_type", `Authentication type.`, []fs.OptionExample{{
+		return fs.ConfigChooseExclusiveFixed("auth_type_done", "config_type", `Select authentication type.`, []fs.OptionExample{{
 			Value: "standard",
 			Help:  "Standard authentication.\nUse this if you're a normal Jottacloud user.",
 		}, {
@@ -145,7 +145,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		return fs.ConfigGoto(config.Result)
 	case "standard": // configure a jottacloud backend using the modern JottaCli token based authentication
 		m.Set("configVersion", fmt.Sprint(configVersion))
-		return fs.ConfigInput("standard_token", "config_login_token", "Personal login token.\n\nGenerate here: https://www.jottacloud.com/web/secure")
+		return fs.ConfigInput("standard_token", "config_login_token", "Personal login token.\nGenerate here: https://www.jottacloud.com/web/secure")
 	case "standard_token":
 		loginToken := config.Result
 		m.Set(configClientID, defaultClientID)
@@ -262,7 +262,11 @@ machines.`)
 			},
 		})
 	case "choose_device":
-		return fs.ConfigConfirm("choose_device_query", false, "config_non_standard", "Use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?")
+		return fs.ConfigConfirm("choose_device_query", false, "config_non_standard", `Use a non-standard device/mountpoint?
+Choosing no, the default, will let you access the storage used for the archive
+section of the official Jottacloud client. If you instead want to access the
+sync or the backup section, for example, you must choose yes.`)
+
 	case "choose_device_query":
 		if config.Result != "true" {
 			m.Set(configDevice, "")
@@ -286,12 +290,27 @@ machines.`)
 		if err != nil {
 			return nil, err
 		}
-		return fs.ConfigChooseExclusive("choose_device_result", "config_device", `Please select the device to use. Normally this will be Jotta`, len(acc.Devices), func(i int) (string, string) {
-			return acc.Devices[i].Name, ""
+
+		deviceNames := make([]string, len(acc.Devices))
+		for i, dev := range acc.Devices {
+			if i > 0 && dev.Name == defaultDevice {
+				// Insert the special Jotta device as first entry, making it the default choice.
+				copy(deviceNames[1:i+1], deviceNames[0:i])
+				deviceNames[0] = dev.Name
+			} else {
+				deviceNames[i] = dev.Name
+			}
+		}
+
+		help := fmt.Sprintf(`The device to use. In standard setup the built-in %s device is used,
+which contains predefined mountpoints for archive, sync etc. All other devices
+are treated as backup devices by the official Jottacloud client. You may create
+a new by entering a unique name.`, defaultDevice)
+		return fs.ConfigChoose("choose_device_result", "config_device", help, len(deviceNames), func(i int) (string, string) {
+			return deviceNames[i], ""
 		})
 	case "choose_device_result":
 		device := config.Result
-		m.Set(configDevice, device)
 
 		oAuthClient, _, err := getOAuthClient(ctx, name, m)
 		if err != nil {
@@ -300,16 +319,89 @@ machines.`)
 		srv := rest.NewClient(oAuthClient).SetRoot(rootURL)
 
 		username, _ := m.Get(configUsername)
-		dev, err := getDeviceInfo(ctx, srv, path.Join(username, device))
+
+		acc, err := getDriveInfo(ctx, srv, username)
 		if err != nil {
 			return nil, err
 		}
-		return fs.ConfigChooseExclusive("choose_device_mountpoint", "config_mountpoint", `Please select the mountpoint to use. Normally this will be Archive.`, len(dev.MountPoints), func(i int) (string, string) {
+		isNew := true
+		for _, dev := range acc.Devices {
+			if strings.EqualFold(dev.Name, device) { // If device name exists with different casing we prefer the existing (not sure if and how the api handles the opposite)
+				device = dev.Name // Prefer same casing as existing, e.g. if user entered "jotta" we use the standard casing "Jotta" instead
+				isNew = false
+				break
+			}
+		}
+		var dev *api.JottaDevice
+		if isNew {
+			fs.Debugf(nil, "Creating new device: %s", device)
+			dev, err = createDevice(ctx, srv, path.Join(username, device))
+			if err != nil {
+				return nil, err
+			}
+		}
+		m.Set(configDevice, device)
+
+		if !isNew {
+			dev, err = getDeviceInfo(ctx, srv, path.Join(username, device))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		var help string
+		if device == defaultDevice {
+			// With built-in Jotta device the mountpoint choice is exclusive,
+			// we do not want to risk any problems by creating new mountpoints on it.
+			help = fmt.Sprintf(`The mountpoint to use on the built-in device %s.
+The standard setup is to use the %s mountpoint. Most other mountpoints
+have very limited support in rclone and should generally be avoided.`, defaultDevice, defaultMountpoint)
+			return fs.ConfigChooseExclusive("choose_device_mountpoint", "config_mountpoint", help, len(dev.MountPoints), func(i int) (string, string) {
+				return dev.MountPoints[i].Name, ""
+			})
+		}
+		help = fmt.Sprintf(`The mountpoint to use on the non-standard device %s.
+You may create a new by entering a unique name.`, device)
+		return fs.ConfigChoose("choose_device_mountpoint", "config_mountpoint", help, len(dev.MountPoints), func(i int) (string, string) {
 			return dev.MountPoints[i].Name, ""
 		})
 	case "choose_device_mountpoint":
 		mountpoint := config.Result
+
+		oAuthClient, _, err := getOAuthClient(ctx, name, m)
+		if err != nil {
+			return nil, err
+		}
+		srv := rest.NewClient(oAuthClient).SetRoot(rootURL)
+
+		username, _ := m.Get(configUsername)
+		device, _ := m.Get(configDevice)
+
+		dev, err := getDeviceInfo(ctx, srv, path.Join(username, device))
+		if err != nil {
+			return nil, err
+		}
+		isNew := true
+		for _, mnt := range dev.MountPoints {
+			if strings.EqualFold(mnt.Name, mountpoint) {
+				mountpoint = mnt.Name
+				isNew = false
+				break
+			}
+		}
+
+		if isNew {
+			if device == defaultDevice {
+				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device: %w", defaultDevice, err)
+			}
+			fs.Debugf(nil, "Creating new mountpoint: %s", mountpoint)
+			_, err := createMountPoint(ctx, srv, path.Join(username, device, mountpoint))
+			if err != nil {
+				return nil, err
+			}
+		}
 		m.Set(configMountpoint, mountpoint)
+
 		return fs.ConfigGoto("end")
 	case "end":
 		// All the config flows end up here in case we need to carry on with something
@@ -338,6 +430,7 @@ type Fs struct {
 	opt          Options
 	features     *fs.Features
 	endpointURL  string
+	allocateURL  string
 	srv          *rest.Client
 	apiSrv       *rest.Client
 	pacer        *fs.Pacer
@@ -588,6 +681,37 @@ func getDeviceInfo(ctx context.Context, srv *rest.Client, path string) (info *ap
 	return info, nil
 }
 
+// createDevice makes a device
+func createDevice(ctx context.Context, srv *rest.Client, path string) (info *api.JottaDevice, err error) {
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       urlPathEscape(path),
+		Parameters: url.Values{},
+	}
+
+	opts.Parameters.Set("type", "WORKSTATION")
+
+	_, err = srv.CallXML(ctx, &opts, nil, &info)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create device: %w", err)
+	}
+	return info, nil
+}
+
+// createMountPoint makes a mount point
+func createMountPoint(ctx context.Context, srv *rest.Client, path string) (info *api.JottaMountPoint, err error) {
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   urlPathEscape(path),
+	}
+
+	_, err = srv.CallXML(ctx, &opts, nil, &info)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't create mountpoint: %w", err)
+	}
+	return info, nil
+}
+
 // setEndpointURL generates the API endpoint URL
 func (f *Fs) setEndpointURL() {
 	if f.opt.Device == "" {
@@ -597,6 +721,7 @@ func (f *Fs) setEndpointURL() {
 		f.opt.Mountpoint = defaultMountpoint
 	}
 	f.endpointURL = path.Join(f.user, f.opt.Device, f.opt.Mountpoint)
+	f.allocateURL = path.Join("/jfs", f.opt.Device, f.opt.Mountpoint)
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -660,6 +785,11 @@ func (f *Fs) filePathRaw(file string) string {
 // filePath returns an escaped file path (f.root, file)
 func (f *Fs) filePath(file string) string {
 	return urlPathEscape(f.filePathRaw(file))
+}
+
+// allocatePathRaw returns an unescaped file path (f.root, file)
+func (f *Fs) allocatePathRaw(file string) string {
+	return path.Join(f.endpointURL, f.opt.Enc.FromStandardPath(path.Join(f.root, file)))
 }
 
 // Jottacloud requires the grant_type 'refresh_token' string
@@ -1101,9 +1231,6 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	if f.opt.Device != "Jotta" {
-		return nil, errors.New("upload not supported for devices other than Jotta")
-	}
 	o := f.createObject(src.Remote(), src.ModTime(ctx), src.Size())
 	return o, o.Update(ctx, in, src, options...)
 }
@@ -1738,7 +1865,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Created:  fileDate,
 		Modified: fileDate,
 		Md5:      md5String,
-		Path:     path.Join(o.fs.opt.Mountpoint, o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
+		Path:     path.Join(o.fs.allocateURL, o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
 	}
 
 	// send it
