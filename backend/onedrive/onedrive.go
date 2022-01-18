@@ -424,7 +424,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 
 	switch config.State {
 	case "choose_type":
-		return fs.ConfigChooseFixed("choose_type_done", "config_type", "Type of connection", []fs.OptionExample{{
+		return fs.ConfigChooseExclusiveFixed("choose_type_done", "config_type", "Type of connection", []fs.OptionExample{{
 			Value: "onedrive",
 			Help:  "OneDrive Personal or Business",
 		}, {
