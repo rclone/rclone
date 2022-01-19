@@ -148,8 +148,11 @@ You may try to [verify you account](https://docs.microsoft.com/en-us/azure/activ
 
 1. Make sure to create the App with your business account.
 2. Follow the steps above to create an App. However, we need a different account type here: `Accounts in this organizational directory only (*** - Single tenant)`. Note that you can also change the account type aftering creating the App.
-3. Find the [tenant ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant) of your organization
-4. In the rclone config, set `auth_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/authorize`
+3. Find the [tenant ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant) of your organization.
+4. In the rclone config, set `auth_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/authorize`.
+5. In the rclone config, set `token_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/token`.
+
+Note: if you have a special region, you may need a different host in step 4 and 5. Here are [some hints](https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86).
 
 
 ### Modification time and hashes
