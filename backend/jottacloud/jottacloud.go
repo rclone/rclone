@@ -834,12 +834,12 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 	if ok {
 		ver, err = strconv.Atoi(version)
 		if err != nil {
-			return nil, nil, errors.New("Failed to parse config version")
+			return nil, nil, errors.New("failed to parse config version")
 		}
 		ok = (ver == configVersion) || (ver == legacyConfigVersion)
 	}
 	if !ok {
-		return nil, nil, errors.New("Outdated config - please reconfigure this backend")
+		return nil, nil, errors.New("outdated config - please reconfigure this backend")
 	}
 
 	baseClient := fshttp.NewClient(ctx)
@@ -885,7 +885,7 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 	// Create OAuth Client
 	oAuthClient, ts, err = oauthutil.NewClientWithBaseClient(ctx, name, m, oauthConfig, baseClient)
 	if err != nil {
-		return nil, nil, fmt.Errorf("Failed to configure Jottacloud oauth client: %w", err)
+		return nil, nil, fmt.Errorf("failed to configure Jottacloud oauth client: %w", err)
 	}
 	return oAuthClient, ts, nil
 }
@@ -1172,7 +1172,7 @@ func parseListRStream(ctx context.Context, r io.Reader, filesystem *Fs, callback
 
 	if expected.Folders != actual.Folders ||
 		expected.Files != actual.Files {
-		return fmt.Errorf("Invalid result from listStream: expected[%#v] != actual[%#v]", expected, actual)
+		return fmt.Errorf("invalid result from listStream: expected[%#v] != actual[%#v]", expected, actual)
 	}
 	return nil
 }
