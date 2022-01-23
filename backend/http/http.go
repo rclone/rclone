@@ -129,7 +129,7 @@ func statusError(res *http.Response, err error) error {
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		_ = res.Body.Close()
-		return fmt.Errorf("HTTP Error %d: %s", res.StatusCode, res.Status)
+		return fmt.Errorf("HTTP Error: %s", res.Status)
 	}
 	return nil
 }
