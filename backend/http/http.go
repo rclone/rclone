@@ -409,7 +409,7 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 			return nil, fmt.Errorf("readDir: %w", err)
 		}
 	default:
-		return nil, fmt.Errorf("Can't parse content type %q", contentType)
+		return nil, fmt.Errorf("can't parse content type %q", contentType)
 	}
 	return names, nil
 }
