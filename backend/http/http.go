@@ -297,7 +297,7 @@ func parseName(base *url.URL, name string) (string, error) {
 	}
 	// check it doesn't have URL parameters
 	uStr := u.String()
-	if strings.Index(uStr, "?") >= 0 {
+	if strings.Contains(uStr, "?") {
 		return "", errFoundQuestionMark
 	}
 	// check that this is going back to the same host and scheme
