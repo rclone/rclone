@@ -24,16 +24,33 @@ import (
 )
 
 var (
-	remoteName = "TestHTTP"
-	testPath   = "test"
-	filesPath  = filepath.Join(testPath, "files")
-	headers    = []string{"X-Potato", "sausage", "X-Rhubarb", "cucumber"}
+	remoteName  = "TestHTTP"
+	testPath    = "test"
+	filesPath   = filepath.Join(testPath, "files")
+	headers     = []string{"X-Potato", "sausage", "X-Rhubarb", "cucumber"}
+	lineEndSize = 1
 )
 
 // prepareServer the test server and return a function to tidy it up afterwards
 func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	// file server for test/files
 	fileServer := http.FileServer(http.Dir(filesPath))
+
+	// verify the file path is correct, and also check which line endings
+	// are used to get sizes right ("\n" except on Windows, but even there
+	// we may have "\n" or "\r\n" depending on git crlf setting)
+	fileList, err := ioutil.ReadDir(filesPath)
+	require.NoError(t, err)
+	require.Greater(t, len(fileList), 0)
+	for _, file := range fileList {
+		if !file.IsDir() {
+			data, _ := ioutil.ReadFile(filepath.Join(filesPath, file.Name()))
+			if strings.HasSuffix(string(data), "\r\n") {
+				lineEndSize = 2
+			}
+			break
+		}
+	}
 
 	// test the headers are there then pass on to fileServer
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +108,7 @@ func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
 
 	e = entries[1]
 	assert.Equal(t, "one%.txt", e.Remote())
-	assert.Equal(t, int64(6), e.Size())
+	assert.Equal(t, int64(5+lineEndSize), e.Size())
 	_, ok = e.(*Object)
 	assert.True(t, ok)
 
@@ -108,7 +125,7 @@ func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
 		_, ok = e.(fs.Directory)
 		assert.True(t, ok)
 	} else {
-		assert.Equal(t, int64(41), e.Size())
+		assert.Equal(t, int64(40+lineEndSize), e.Size())
 		_, ok = e.(*Object)
 		assert.True(t, ok)
 	}
@@ -141,7 +158,7 @@ func TestListSubDir(t *testing.T) {
 
 	e := entries[0]
 	assert.Equal(t, "three/underthree.txt", e.Remote())
-	assert.Equal(t, int64(9), e.Size())
+	assert.Equal(t, int64(8+lineEndSize), e.Size())
 	_, ok := e.(*Object)
 	assert.True(t, ok)
 }
@@ -154,7 +171,7 @@ func TestNewObject(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "four/under four.txt", o.Remote())
-	assert.Equal(t, int64(9), o.Size())
+	assert.Equal(t, int64(8+lineEndSize), o.Size())
 	_, ok := o.(*Object)
 	assert.True(t, ok)
 
@@ -187,7 +204,11 @@ func TestOpen(t *testing.T) {
 	data, err := ioutil.ReadAll(fd)
 	require.NoError(t, err)
 	require.NoError(t, fd.Close())
-	assert.Equal(t, "beetroot\n", string(data))
+	if lineEndSize == 2 {
+		assert.Equal(t, "beetroot\r\n", string(data))
+	} else {
+		assert.Equal(t, "beetroot\n", string(data))
+	}
 
 	// Test with range request
 	fd, err = o.Open(context.Background(), &fs.RangeOption{Start: 1, End: 5})
@@ -236,7 +257,7 @@ func TestIsAFileSubDir(t *testing.T) {
 
 	e := entries[0]
 	assert.Equal(t, "underthree.txt", e.Remote())
-	assert.Equal(t, int64(9), e.Size())
+	assert.Equal(t, int64(8+lineEndSize), e.Size())
 	_, ok := e.(*Object)
 	assert.True(t, ok)
 }
