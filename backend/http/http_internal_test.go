@@ -8,8 +8,10 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -373,4 +375,107 @@ func TestParseCaddy(t *testing.T) {
 		"v1.36-156-ge1f0e0f5-team-driveβ/",
 		"v1.36-22-g06ea13a-ssh-agentβ/",
 	})
+}
+
+func TestFsNoSlashRoots(t *testing.T) {
+	// Test Fs with roots that does not end with '/', the logic that
+	// decides if url is to be considered a file or directory, based
+	// on result from a HEAD request.
+
+	// Handler for faking HEAD responses with different status codes
+	headCount := 0
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "HEAD" {
+			headCount++
+			responseCode, err := strconv.Atoi(path.Base(r.URL.String()))
+			require.NoError(t, err)
+			if strings.HasPrefix(r.URL.String(), "/redirect/") {
+				var redir string
+				if strings.HasPrefix(r.URL.String(), "/redirect/file/") {
+					redir = "/redirected"
+				} else if strings.HasPrefix(r.URL.String(), "/redirect/dir/") {
+					redir = "/redirected/"
+				} else {
+					require.Fail(t, "Redirect test requests must start with '/redirect/file/' or '/redirect/dir/'")
+				}
+				http.Redirect(w, r, redir, responseCode)
+			} else {
+				http.Error(w, http.StatusText(responseCode), responseCode)
+			}
+		}
+	})
+
+	// Make the test server
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
+
+	// Configure the remote
+	configfile.Install()
+	m := configmap.Simple{
+		"type": "http",
+		"url":  ts.URL,
+	}
+
+	// Test
+	for i, test := range []struct {
+		root   string
+		isFile bool
+	}{
+		// 2xx success
+		{"parent/200", true},
+		{"parent/204", true},
+
+		// 3xx redirection Redirect status 301, 302, 303, 307, 308
+		{"redirect/file/301", true}, // Request is redirected to "/redirected"
+		{"redirect/dir/301", false}, // Request is redirected to "/redirected/"
+		{"redirect/file/302", true}, // Request is redirected to "/redirected"
+		{"redirect/dir/302", false}, // Request is redirected to "/redirected/"
+		{"redirect/file/303", true}, // Request is redirected to "/redirected"
+		{"redirect/dir/303", false}, // Request is redirected to "/redirected/"
+
+		{"redirect/file/304", true}, // Not really a redirect, handled like 4xx errors (below)
+		{"redirect/file/305", true}, // Not really a redirect, handled like 4xx errors (below)
+		{"redirect/file/306", true}, // Not really a redirect, handled like 4xx errors (below)
+
+		{"redirect/file/307", true}, // Request is redirected to "/redirected"
+		{"redirect/dir/307", false}, // Request is redirected to "/redirected/"
+		{"redirect/file/308", true}, // Request is redirected to "/redirected"
+		{"redirect/dir/308", false}, // Request is redirected to "/redirected/"
+
+		// 4xx client errors
+		{"parent/403", true},  // Forbidden status (head request blocked)
+		{"parent/404", false}, // Not found status
+	} {
+		for _, noHead := range []bool{false, true} {
+			var isFile bool
+			if noHead {
+				m.Set("no_head", "true")
+				isFile = true
+			} else {
+				m.Set("no_head", "false")
+				isFile = test.isFile
+			}
+			headCount = 0
+			f, err := NewFs(context.Background(), remoteName, test.root, m)
+			if noHead {
+				assert.Equal(t, 0, headCount)
+			} else {
+				assert.Equal(t, 1, headCount)
+			}
+			if isFile {
+				assert.ErrorIs(t, err, fs.ErrorIsFile)
+			} else {
+				assert.NoError(t, err)
+			}
+			var endpoint string
+			if isFile {
+				parent, _ := path.Split(test.root)
+				endpoint = "/" + parent
+			} else {
+				endpoint = "/" + test.root + "/"
+			}
+			what := fmt.Sprintf("i=%d, root=%q, isFile=%v, noHead=%v", i, test.root, isFile, noHead)
+			assert.Equal(t, ts.URL+endpoint, f.String(), what)
+		}
+	}
 }
