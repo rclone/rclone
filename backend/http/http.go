@@ -52,8 +52,7 @@ The input format is comma separated list of key,value pairs.  Standard
 
 For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
-You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
-`,
+You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.`,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}, {
@@ -84,12 +83,9 @@ directory listing to:
 - check it really exists
 - check to see if it is a directory
 
-If you set this option, rclone will not do the HEAD request.  This will mean
-
-- directory listings are much quicker
-- rclone won't have the times or sizes of any files
-- some files that don't exist may be in the listing
-`,
+If you set this option, rclone will not do the HEAD request. This will mean
+that directory listings are much quicker, but rclone won't have the times or
+sizes of any files, and some files that don't exist may be in the listing.`,
 			Default:  false,
 			Advanced: true,
 		}},
