@@ -362,7 +362,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	srcPath := srcObj.fs.rootSlash() + srcObj.remote
 	dstPath := f.rootSlash() + remote
 	if strings.EqualFold(srcPath, dstPath) {
-		return nil, fmt.Errorf("Can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
+		return nil, fmt.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 	}
 
 	// Create temporary object
@@ -427,6 +427,12 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	dstObj, leaf, directoryID, err := f.createObject(ctx, remote, srcObj.modTime, srcObj.size)
 	if err != nil {
 		return nil, err
+	}
+
+	// move_copy will silently truncate new filenames
+	if len(leaf) > 255 {
+		fs.Debugf(src, "Can't move file: name (%q) exceeds 255 char", leaf)
+		return nil, fs.ErrorFileNameTooLong
 	}
 
 	// Copy the object
@@ -1024,30 +1030,52 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 		return err
 	}
 	var resp *http.Response
-	folderList := FolderList{}
-	err = o.fs.pacer.Call(func() (bool, error) {
+	fileInfo := File{}
+
+	// If we know the object id perform a direct lookup
+	// because the /folder/itembyname.json endpoint is unreliable:
+	// newly created objects take an arbitrary amount of time to show up
+	if o.id != "" {
 		opts := rest.Opts{
 			Method: "GET",
-			Path: fmt.Sprintf("/folder/itembyname.json/%s/%s?name=%s",
-				o.fs.session.SessionID, directoryID, url.QueryEscape(o.fs.opt.Enc.FromStandardName(leaf))),
+			Path: fmt.Sprintf("/file/info.json/%s?session_id=%s",
+				o.id, o.fs.session.SessionID),
 		}
+		err = o.fs.pacer.Call(func() (bool, error) {
+			resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &fileInfo)
+			return o.fs.shouldRetry(ctx, resp, err)
+		})
+		if err != nil {
+			return fmt.Errorf("failed to get fileinfo: %w", err)
+		}
+
+		o.id = fileInfo.FileID
+		o.modTime = time.Unix(fileInfo.DateModified, 0)
+		o.md5 = fileInfo.FileHash
+		o.size = fileInfo.Size
+		return nil
+	}
+	folderList := FolderList{}
+	opts := rest.Opts{
+		Method: "GET",
+		Path: fmt.Sprintf("/folder/itembyname.json/%s/%s?name=%s",
+			o.fs.session.SessionID, directoryID, url.QueryEscape(o.fs.opt.Enc.FromStandardName(leaf))),
+	}
+	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.CallJSON(ctx, &opts, nil, &folderList)
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("failed to get folder list: %w", err)
 	}
-
 	if len(folderList.Files) == 0 {
 		return fs.ErrorObjectNotFound
 	}
-
-	leafFile := folderList.Files[0]
-	o.id = leafFile.FileID
-	o.modTime = time.Unix(leafFile.DateModified, 0)
-	o.md5 = leafFile.FileHash
-	o.size = leafFile.Size
-
+	fileInfo = folderList.Files[0]
+	o.id = fileInfo.FileID
+	o.modTime = time.Unix(fileInfo.DateModified, 0)
+	o.md5 = fileInfo.FileHash
+	o.size = fileInfo.Size
 	return nil
 }
 
