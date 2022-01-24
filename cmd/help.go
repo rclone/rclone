@@ -329,12 +329,29 @@ func showBackend(name string) {
 			if opt.IsPassword {
 				fmt.Printf("**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).\n\n")
 			}
+			fmt.Printf("Properties:\n\n")
 			fmt.Printf("- Config:      %s\n", opt.Name)
 			fmt.Printf("- Env Var:     %s\n", opt.EnvVarName(backend.Prefix))
+			if opt.Provider != "" {
+				fmt.Printf("- Provider:    %s\n", opt.Provider)
+			}
 			fmt.Printf("- Type:        %s\n", opt.Type())
-			fmt.Printf("- Default:     %s\n", quoteString(opt.GetValue()))
+			defaultValue := opt.GetValue()
+			// Default value and Required are related: Required means option must
+			// have a value, but if there is a default then a value does not have
+			// to be explicitely set and then Required makes no difference.
+			if defaultValue != "" {
+				fmt.Printf("- Default:     %s\n", quoteString(defaultValue))
+			} else {
+				fmt.Printf("- Required:    %v\n", opt.Required)
+			}
+			// List examples / possible choices
 			if len(opt.Examples) > 0 {
-				fmt.Printf("- Examples:\n")
+				if opt.Exclusive {
+					fmt.Printf("- Choices:\n")
+				} else {
+					fmt.Printf("- Examples:\n")
+				}
 				for _, ex := range opt.Examples {
 					fmt.Printf("    - %s\n", quoteString(ex.Value))
 					for _, line := range strings.Split(ex.Help, "\n") {
