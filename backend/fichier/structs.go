@@ -183,6 +183,7 @@ type FoldersList struct {
 	SubFolders []Folder `json:"sub_folders"`
 }
 
+// AccountInfo is the structure how 1Fichier returns user info
 type AccountInfo struct {
 	StatsDate               string `json:"stats_date"`
 	MailRM                  string `json:"mail_rm"`

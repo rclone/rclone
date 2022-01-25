@@ -521,10 +521,10 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		Path:        "/user/info.cgi",
 		ContentType: "application/json",
 	}
-	var account_info AccountInfo
+	var accountInfo AccountInfo
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.rest.CallJSON(ctx, &opts, nil, &account_info)
+		resp, err = f.rest.CallJSON(ctx, &opts, nil, &accountInfo)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -533,9 +533,9 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 	// FIXME max upload size would be useful to use in Update
 	usage = &fs.Usage{
-		Used:  fs.NewUsageValue(account_info.ColdStorage),                                     // bytes in use
-		Total: fs.NewUsageValue(account_info.AvailableColdStorage),                            // bytes total
-		Free:  fs.NewUsageValue(account_info.AvailableColdStorage - account_info.ColdStorage), // bytes free
+		Used:  fs.NewUsageValue(accountInfo.ColdStorage),                                    // bytes in use
+		Total: fs.NewUsageValue(accountInfo.AvailableColdStorage),                           // bytes total
+		Free:  fs.NewUsageValue(accountInfo.AvailableColdStorage - accountInfo.ColdStorage), // bytes free
 	}
 	return usage, nil
 }
