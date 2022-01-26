@@ -52,7 +52,7 @@ jobs:
             os: macOS-latest
             go: '1.17.x'
             gotags: 'cmount'
-            build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -macos-sdk macosx11.1 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
+            build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
           - job_name: windows_amd64
