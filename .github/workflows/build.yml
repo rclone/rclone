@@ -40,7 +40,7 @@ jobs:
             deploy: true
 
           - job_name: mac_amd64
-            os: macOS-latest
+            os: macos-11
             go: '1.17.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
@@ -49,7 +49,7 @@ jobs:
             deploy: true
 
           - job_name: mac_arm64
-            os: macOS-latest
+            os: macos-11
             go: '1.17.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
@@ -134,7 +134,7 @@ jobs:
         run: |
           brew update
           brew install --cask macfuse
-        if: matrix.os == 'macOS-latest'
+        if: matrix.os == 'macos-11'
 
       - name: Install Libraries on Windows
         shell: powershell
