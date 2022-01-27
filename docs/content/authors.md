@@ -563,3 +563,4 @@ put them back in again.` >}}
   * Koopa <codingkoopa@gmail.com>
   * Yunhai Luo <yunhai-luo@hotmail.com>
   * Charlie Jiang <w@chariri.moe>
+  * Alain Nussbaumer <alain.nussbaumer@alleluia.ch>
