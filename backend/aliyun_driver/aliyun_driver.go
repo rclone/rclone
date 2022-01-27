@@ -33,18 +33,24 @@ const (
 	itemTypeFile   = "file"
 	rootId         = "root"
 	authorization  = "authorization"
-	rootUrl        = "https://api.aliyundrive.com/v2"
+	rootUrl        = "https://api.aliyundrive.com"
 	uA             = "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_0_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
 	referer        = "https://www.aliyundrive.com/"
 	chunkSize      = 10485760
 
-	uriFileList        = "/file/list"
-	uriFileTrash       = "/recyclebin/trash"
-	uriFileCreate      = "/file/create_with_proof"
-	uriFileComplete    = "/file/complete"
-	uriFileDownloadUrl = "/file/get_download_url"
-	uriPersonalInfo    = "/databox/get_personal_info"
-	uriTokenRefresh    = "/token/refresh"
+	//uri
+	uriFileList              = "/v2/file/list"                     //文件列表
+	uriFileTrash             = "/v2/recyclebin/trash"              //移动到回收站
+	uriFileCreate            = "/v2/file/create_with_proof"        //创建
+	uriFileComplete          = "/v2/file/complete"                 //完成上传
+	uriFileDownloadUrl       = "/v2/file/get_download_url"         //获取下载链接
+	uriPersonalInfo          = "/v2/databox/get_personal_info"     //获取个人信息
+	uriTokenRefresh          = "/token/refresh"                    //刷新token
+	uriFileUpdate            = "/v3/file/update"                   //文件更新
+	uriMakeDir               = "/adrive/v2/file/createWithFolders" //新建文件夹
+	uriFileDetail            = "/v2/file/get"                      //获取文件详情
+	uriFileBatch             = "/v3/batch"                         //文件批量操作
+	uriFileCreateWithFolders = "/adrive/v2/file/createWithFolders" //创建文件并创建文件夹
 )
 
 type Fs struct {
@@ -81,7 +87,6 @@ func (f *Fs) Features() *fs.Features {
 }
 
 func (f *Fs) Precision() time.Duration {
-
 	return time.Second
 }
 
@@ -175,19 +180,17 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil)
 }
 
+//TODO
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
-	leaf, directoryID, err := f.dirCache.FindPath(ctx, remote, false)
+	_, _, err := f.dirCache.FindPath(ctx, remote, false)
 	if err != nil {
 		if err == fs.ErrorDirNotFound {
 			return f.PutUnchecked(ctx, in, src, options...)
 		}
 		return nil, err
 	}
-
-	fmt.Println(leaf, directoryID)
-	//TODO
-	return nil, nil
+	return f.PutUnchecked(ctx, in, src, options...)
 }
 
 // PutUnchecked the object into the container
