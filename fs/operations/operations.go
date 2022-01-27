@@ -1929,9 +1929,9 @@ func SetTier(ctx context.Context, fsrc fs.Fs, tier string) error {
 	})
 }
 
-// TouchDir touches every file in f with time t
-func TouchDir(ctx context.Context, f fs.Fs, t time.Time, recursive bool) error {
-	return walk.ListR(ctx, f, "", false, ConfigMaxDepth(ctx, recursive), walk.ListObjects, func(entries fs.DirEntries) error {
+// TouchDir touches every file in directory with time t
+func TouchDir(ctx context.Context, f fs.Fs, remote string, t time.Time, recursive bool) error {
+	return walk.ListR(ctx, f, remote, false, ConfigMaxDepth(ctx, recursive), walk.ListObjects, func(entries fs.DirEntries) error {
 		entries.ForObject(func(o fs.Object) {
 			if !SkipDestructive(ctx, o, "touch") {
 				fs.Debugf(f, "Touching %q", o.Remote())
