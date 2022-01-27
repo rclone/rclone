@@ -567,3 +567,4 @@ put them back in again.` >}}
   * Vanessasaurus <814322+vsoch@users.noreply.github.com>
   * Isaac Levy <isaac.r.levy@gmail.com>
   * Gourav T <workflowautomation@protonmail.com>
+  * Paulo Martins <paulo.pontes.m@gmail.com>
