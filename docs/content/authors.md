@@ -565,3 +565,4 @@ put them back in again.` >}}
   * Charlie Jiang <w@chariri.moe>
   * Alain Nussbaumer <alain.nussbaumer@alleluia.ch>
   * Vanessasaurus <814322+vsoch@users.noreply.github.com>
+  * Isaac Levy <isaac.r.levy@gmail.com>
