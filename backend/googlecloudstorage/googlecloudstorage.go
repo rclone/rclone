@@ -183,14 +183,29 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Value: "asia-northeast1",
 				Help:  "Tokyo",
 			}, {
+				Value: "asia-northeast2",
+				Help:  "Osaka",
+			}, {
+				Value: "asia-northeast3",
+				Help:  "Seoul",
+			}, {
 				Value: "asia-south1",
 				Help:  "Mumbai",
+			}, {
+				Value: "asia-south2",
+				Help:  "Delhi",
 			}, {
 				Value: "asia-southeast1",
 				Help:  "Singapore",
 			}, {
+				Value: "asia-southeast2",
+				Help:  "Jakarta",
+			}, {
 				Value: "australia-southeast1",
 				Help:  "Sydney",
+			}, {
+				Value: "australia-southeast2",
+				Help:  "Melbourne",
 			}, {
 				Value: "europe-north1",
 				Help:  "Finland",
@@ -207,6 +222,12 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Value: "europe-west4",
 				Help:  "Netherlands",
 			}, {
+				Value: "europe-west6",
+				Help:  "Zürich",
+			}, {
+				Value: "europe-central2",
+				Help:  "Warsaw",
+			}, {
 				Value: "us-central1",
 				Help:  "Iowa",
 			}, {
@@ -221,6 +242,33 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 			}, {
 				Value: "us-west2",
 				Help:  "California",
+			}, {
+				Value: "us-west3",
+				Help:  "Salt Lake City",
+			}, {
+				Value: "us-west4",
+				Help:  "Las Vegas",
+			}, {
+				Value: "northamerica-northeast1",
+				Help:  "Montréal",
+			}, {
+				Value: "northamerica-northeast2",
+				Help:  "Toronto",
+			}, {
+				Value: "southamerica-east1",
+				Help:  "São Paulo",
+			}, {
+				Value: "southamerica-west1",
+				Help:  "Santiago",
+			}, {
+				Value: "asia1",
+				Help:  "Dual region: asia-northeast1 and asia-northeast2.",
+			}, {
+				Value: "eur4",
+				Help:  "Dual region: europe-north1 and europe-west4.",
+			}, {
+				Value: "nam4",
+				Help:  "Dual region: us-central1 and us-east1.",
 			}},
 		}, {
 			Name: "storage_class",
