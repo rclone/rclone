@@ -34,24 +34,14 @@
         </a>
         <div class="dropdown-menu pre-scrollable" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="/commands/"><i class="fas fa-map"></i> Overview</a>
-          <div class="dropdown-divider"></div>          
-          <a class="dropdown-item" href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a>
-          <a class="dropdown-item" href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a>
-          <a class="dropdown-item" href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a>
-          <a class="dropdown-item" href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a>
-          <a class="dropdown-item" href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a>
-          <a class="dropdown-item" href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a>
-          <a class="dropdown-item" href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a>
-          <a class="dropdown-item" href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a>
-          <a class="dropdown-item" href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a>
-          <a class="dropdown-item" href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a>
-          <a class="dropdown-item" href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a>
-          <a class="dropdown-item" href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a>
-          <a class="dropdown-item" href="/commands/rclone_mount/"><i class="fa fa-book"></i> rclone mount</a>
-          <a class="dropdown-item" href="/commands/rclone_ncdu/"><i class="fa fa-book"></i> rclone ncdu</a>
-          <a class="dropdown-item" href="/commands/rclone_cat/"><i class="fa fa-book"></i> rclone cat</a>
-          <a class="dropdown-item" href="/commands/rclone_rcat/"><i class="fa fa-book"></i> rclone rcat</a>
-          <a class="dropdown-item" href="/commands/rclone_serve/"><i class="fa fa-book"></i> rclone serve</a>
+          <div class="dropdown-divider"></div>
+          {{ with .Site.GetPage "/commands" }}
+            {{ range .Data.Pages }}
+              {{ if lt (countwords .Title) 3 }}
+                <a class="dropdown-item" href="{{ .RelPermalink }}"><i class="fa fa-book"></i> {{ .Title | markdownify }}</a>
+              {{ end }}
+            {{ end }}
+          {{ end }}
         </div>
       </li>
       <li class="nav-item active dropdown">
@@ -60,7 +50,7 @@
         </a>
         <div class="dropdown-menu pre-scrollable" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="/overview/"><i class="fas fa-map"></i> Overview</a>
-          <div class="dropdown-divider"></div>          
+          <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="/fichier/"><i class="fa fa-archive"></i> 1Fichier</a>
           <a class="dropdown-item" href="/alias/"><i class="fa fa-link"></i> Alias</a>
           <a class="dropdown-item" href="/amazonclouddrive/"><i class="fab fa-amazon"></i> Amazon Drive</a>
