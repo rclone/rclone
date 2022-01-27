@@ -1636,7 +1636,7 @@ func TestTouchDir(t *testing.T) {
 	r.CheckRemoteItems(t, file1, file2, file3)
 
 	timeValue := time.Date(2010, 9, 8, 7, 6, 5, 4, time.UTC)
-	err := operations.TouchDir(ctx, r.Fremote, timeValue, true)
+	err := operations.TouchDir(ctx, r.Fremote, "", timeValue, true)
 	require.NoError(t, err)
 	if accounting.Stats(ctx).GetErrors() != 0 {
 		err = accounting.Stats(ctx).GetLastError()
