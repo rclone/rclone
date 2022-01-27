@@ -116,9 +116,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // listAll 获取目录下全部文件
 func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOut, error) {
 	request := entity.ListIn{
-		Limit:        200,
-		DriveId:      f.driveId,
-		ParentFileId: parentFileId,
+		Limit:                 200,
+		DriveId:               f.driveId,
+		ParentFileId:          parentFileId,
+		All:                   false,
+		UrlExpireSec:          1600,
+		ImageThumbnailProcess: "image/resize,w_400/format,jpeg",
+		ImageUrlProcess:       "image/resize,w_1920/format,jpeg",
+		VideoThumbnailProcess: "video/snapshot,t_0,f_jpg,ar_auto,w_300",
+		Fields:                "*",
 	}
 
 	opts := rest.Opts{

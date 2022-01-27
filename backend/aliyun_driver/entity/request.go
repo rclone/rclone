@@ -2,12 +2,18 @@ package entity
 
 // list 查询参数
 type ListIn struct {
-	Marker         string `json:"marker"`
-	Limit          int    `json:"limit"`
-	OrderBy        string `json:"order_by"`
-	OrderDirection string `json:"order_direction"`
-	DriveId        string `json:"drive_id"`
-	ParentFileId   string `json:"parent_file_id"`
+	Marker                string `json:"marker"`                  //分页游标
+	Limit                 int    `json:"limit"`                   //单次请求返回
+	OrderBy               string `json:"order_by"`                //排序字段
+	OrderDirection        string `json:"order_direction"`         //排序方式
+	DriveId               string `json:"drive_id"`                // 驱动Id
+	ParentFileId          string `json:"parent_file_id"`          //父目录 Id
+	Fields                string `json:"fields"`                  //获取的字段，默认 *
+	UrlExpireSec          int64  `json:"url_expire_sec"`          //过期时间 默认 1600
+	All                   bool   `json:"all"`                     //是否全部 ，默认 false
+	ImageThumbnailProcess string `json:"image_thumbnail_process"` //
+	ImageUrlProcess       string `json:"image_url_process"`       //
+	VideoThumbnailProcess string `json:"video_thumbnail_process"` //
 }
 
 // 获取accessToken 的入参
