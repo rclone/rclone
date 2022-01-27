@@ -16,11 +16,16 @@ import (
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRc(t *testing.T) {
+	// Disable tests under macOS and the CI since they are locking up
+	if runtime.GOOS == "darwin" {
+		testy.SkipUnreliable(t)
+	}
 	ctx := context.Background()
 	configfile.Install()
 	mount := rc.Calls.Get("mount/mount")
