@@ -558,3 +558,4 @@ put them back in again.` >}}
   * Lu Wang <coolwanglu@gmail.com>
   * Bumsu Hyeon <ksitht@gmail.com>
   * Shmz Ozggrn <98463324+ShmzOzggrn@users.noreply.github.com>
+  * Kim <kim@jotta.no>
