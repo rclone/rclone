@@ -415,14 +415,6 @@ func (f *Fs) getAccessToken() error {
 	if response.AccessToken == "" || response.RefreshToken == "" {
 		return errors.New("get accessToken or refreshToken error")
 	}
-	fmt.Println("-------------------- accessToken begin --------------------")
-	fmt.Println(response.AccessToken)
-	fmt.Println("-------------------- accessToken end --------------------")
-
-	fmt.Println("-------------------- refreshToken begin --------------------")
-	fmt.Println(response.RefreshToken)
-	fmt.Println("-------------------- refreshToken end --------------------")
-
 	f.srv.SetHeader(authorization, response.AccessToken)
 	f.driveId = response.DefaultDriveId
 	f.accessToken = response.AccessToken
