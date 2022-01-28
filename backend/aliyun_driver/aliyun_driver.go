@@ -160,6 +160,12 @@ func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
 		Limit:        1,
 		DriveId:      f.driveId,
 		ParentFileId: parentFileId,
+		All:                   false,
+		UrlExpireSec:          1600,
+		ImageThumbnailProcess: "image/resize,w_400/format,jpeg",
+		ImageUrlProcess:       "image/resize,w_1920/format,jpeg",
+		VideoThumbnailProcess: "video/snapshot,t_0,f_jpg,ar_auto,w_300",
+		Fields:                "*",
 	}
 
 	opts := rest.Opts{
