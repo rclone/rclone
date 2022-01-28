@@ -14,6 +14,7 @@ import (
 	_ "github.com/rclone/rclone/backend/crypt"
 	_ "github.com/rclone/rclone/backend/drive"
 	_ "github.com/rclone/rclone/backend/dropbox"
+	_ "github.com/rclone/rclone/backend/estuary"
 	_ "github.com/rclone/rclone/backend/fichier"
 	_ "github.com/rclone/rclone/backend/filefabric"
 	_ "github.com/rclone/rclone/backend/ftp"
