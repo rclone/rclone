@@ -15,4 +15,4 @@ fuzz-build.zip
 *.rej
 Thumbs.db
 __pycache__
-.vscode/launch.json
+.vscode/
