@@ -141,6 +141,15 @@ Note that the chunks will be buffered into memory.`,
 			Default:  "",
 			Advanced: true,
 		}, {
+			Name: "root_folder_id",
+			Help: `ID of the root folder.
+
+This isn't normally needed, but in special circumstances you might
+know the folder ID that you wish to access but not be able to get
+there through a path traversal.
+`,
+			Advanced: true,
+		}, {
 			Name: "disable_site_permission",
 			Help: `Disable the request for Sites.Read.All permission.
 
@@ -547,6 +556,7 @@ type Options struct {
 	ChunkSize               fs.SizeSuffix        `config:"chunk_size"`
 	DriveID                 string               `config:"drive_id"`
 	DriveType               string               `config:"drive_type"`
+	RootFolderID            string               `config:"root_folder_id"`
 	DisableSitePermission   bool                 `config:"disable_site_permission"`
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
@@ -852,15 +862,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	})
 
 	// Get rootID
-	rootInfo, _, err := f.readMetaDataForPath(ctx, "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get root: %w", err)
+	var rootID = opt.RootFolderID
+	if rootID == "" {
+		rootInfo, _, err := f.readMetaDataForPath(ctx, "")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get root: %w", err)
+		}
+		rootID = rootInfo.GetID()
 	}
-	if rootInfo.GetID() == "" {
+	if rootID == "" {
 		return nil, errors.New("failed to get root: ID was empty")
 	}
 
-	f.dirCache = dircache.New(root, rootInfo.GetID(), f)
+	f.dirCache = dircache.New(root, rootID, f)
 
 	// Find the current root
 	err = f.dirCache.FindRoot(ctx, false)
@@ -868,7 +882,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Assume it is a file
 		newRoot, remote := dircache.SplitPath(root)
 		tempF := *f
-		tempF.dirCache = dircache.New(newRoot, rootInfo.ID, &tempF)
+		tempF.dirCache = dircache.New(newRoot, rootID, &tempF)
 		tempF.root = newRoot
 		// Make new Fs which is the parent
 		err = tempF.dirCache.FindRoot(ctx, false)
