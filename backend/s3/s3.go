@@ -3654,19 +3654,20 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	//    - so we can add the md5sum in the metadata as metaMD5Hash if using SSE/SSE-C
 	// - for multipart provided checksums aren't disabled
 	//    - so we can add the md5sum in the metadata as metaMD5Hash
-	var md5sum string
+	var md5sumBase64 string
+	var md5sumHex string
 	if !multipart || !o.fs.opt.DisableChecksum {
-		hash, err := src.Hash(ctx, hash.MD5)
-		if err == nil && matchMd5.MatchString(hash) {
-			hashBytes, err := hex.DecodeString(hash)
+		md5sumHex, err = src.Hash(ctx, hash.MD5)
+		if err == nil && matchMd5.MatchString(md5sumHex) {
+			hashBytes, err := hex.DecodeString(md5sumHex)
 			if err == nil {
-				md5sum = base64.StdEncoding.EncodeToString(hashBytes)
+				md5sumBase64 = base64.StdEncoding.EncodeToString(hashBytes)
 				if (multipart || o.fs.etagIsNotMD5) && !o.fs.opt.DisableChecksum {
 					// Set the md5sum as metadata on the object if
 					// - a multipart upload
 					// - the Etag is not an MD5, eg when using SSE/SSE-C
 					// provided checksums aren't disabled
-					metadata[metaMD5Hash] = &md5sum
+					metadata[metaMD5Hash] = &md5sumBase64
 				}
 			}
 		}
@@ -3681,8 +3682,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		ContentType: &mimeType,
 		Metadata:    metadata,
 	}
-	if md5sum != "" {
-		req.ContentMD5 = &md5sum
+	if md5sumBase64 != "" {
+		req.ContentMD5 = &md5sumBase64
 	}
 	if o.fs.opt.RequesterPays {
 		req.RequestPayer = aws.String(s3.RequestPayerRequester)
@@ -3799,7 +3800,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// so make up the object as best we can assuming it got
 	// uploaded properly. If size < 0 then we need to do the HEAD.
 	if o.fs.opt.NoHead && size >= 0 {
-		o.md5 = md5sum
+		o.md5 = md5sumHex
 		o.bytes = size
 		o.lastModified = time.Now()
 		o.meta = req.Metadata
