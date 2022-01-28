@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"path"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/rclone/rclone/backend/aliyun_driver/entity"
@@ -694,8 +693,7 @@ func (o *Object) preUpload(ctx context.Context, leaf, directoryID string, modTim
 
 // 分片上传
 func (o *Object) sliceUpload(ctx context.Context, parts []entity.PartInfo, in io.Reader, size int64, chukNum int64) (err error) {
-	// 开启多个go上传
-	var wg sync.WaitGroup
+	// 先串行上传，后期改成并行
 	for k, p := range parts {
 		newChunkSize := int64(chunkSize)
 		if k == int(chukNum-1) {
@@ -704,22 +702,17 @@ func (o *Object) sliceUpload(ctx context.Context, parts []entity.PartInfo, in io
 		buf := make([]byte, newChunkSize)
 		io.ReadFull(in, buf)
 		uploadUrl := p.UploadUrl
-		wg.Add(1)
-		go func(err *error) {
-			defer wg.Done()
-			opts := rest.Opts{
-				Method:  "PUT",
-				RootURL: uploadUrl,
-				Body:    bytes.NewReader(buf),
-			}
-			e := o.fs.callJSON(ctx, &opts, nil, nil)
-			// 不考虑竞争情况
-			if e != nil && err == nil {
-				err = &e
-			}
-		}(&err)
+
+		opts := rest.Opts{
+			Method:  "PUT",
+			RootURL: uploadUrl,
+			Body:    bytes.NewReader(buf),
+		}
+		err = o.fs.callJSON(ctx, &opts, nil, nil)
+		if err != nil {
+			return err
+		}
 	}
-	wg.Wait()
 	return err
 }
 
