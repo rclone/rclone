@@ -11,7 +11,7 @@ import (
 
 func init() {
 	config.FileSet(remoteName, "type", "aliyun-driver")
-	config.FileSet(remoteName, "refresh_token", token)
+	config.FileSet(remoteName, "refresh-token", token)
 }
 
 func TestNewFs(t *testing.T) {
@@ -24,7 +24,7 @@ func TestNewFs(t *testing.T) {
 
 var (
 	remoteName = "ali"
-	token      = "f24c895fbfb748c78415a2092cffda84"
+	token      = "a7816d7f853842bea263c699c54351aa"
 	ctx        = context.Background()
 )
 
@@ -60,4 +60,11 @@ func Test_Open(t *testing.T) {
 	f, _ := fs.NewFs(ctx, remoteName+":")
 	o, _ := f.NewObject(ctx, "IMG_8351.livp")
 	fmt.Println(o.Open(ctx))
+}
+
+func Test_INFO(t *testing.T) {
+	f, _ := fs.NewFs(ctx, remoteName+":")
+	fmt.Println(f)
+	o, _ := f.NewObject(ctx, "IMG_0328.JPG")
+	fmt.Println(o.(*Object).GetFileInfo(ctx))
 }

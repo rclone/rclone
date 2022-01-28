@@ -64,3 +64,8 @@ type DownloadIn struct {
 	FileId    string `json:"file_id"`
 	ExpireSec int64  `json:"expire_sec"`
 }
+
+type FileInfoIn struct {
+	DriveId string `json:"drive_id"`
+	FileId  string `json:"file_id"`
+}

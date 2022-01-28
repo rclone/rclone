@@ -109,7 +109,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			d := fs.NewDir(remote, info.UpdatedAt).SetID(info.FileId).SetParentID(dir)
 			entries = append(entries, d)
 		} else {
-			o, err := f.newObjectWithInfo(ctx, info.Name, &info)
+			o, err := f.newObjectWithInfo(ctx, remote, &info)
 			if err == nil {
 				entries = append(entries, o)
 			}
@@ -440,6 +440,9 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request interface{},
 	}
 	resp, err := f.srv.CallJSON(ctx, opts, request, response)
 	if err != nil {
+		if opts.Path == uriFileTrash && resp.StatusCode == http.StatusNoContent {
+			return nil
+		}
 		respError := entity.ErrorResponse{}
 		b, _ := ioutil.ReadAll(resp.Body)
 		json.Unmarshal(b, &respError)
@@ -457,7 +460,7 @@ func (f *Fs) callJSON(ctx context.Context, opts *rest.Opts, request interface{},
 
 // Options defines the configuration for this backend
 type Options struct {
-	RefreshToken string `config:"refresh_token"`
+	RefreshToken string `config:"refresh-token"`
 }
 
 // Register with Fs
@@ -732,7 +735,34 @@ func (o *Object) complete(ctx context.Context, fileId, uploadId string) error {
 		Path:    uriFileComplete,
 		RootURL: rootUrl,
 	}
-	return o.fs.callJSON(ctx, &opts, rep, nil)
+
+	err := o.fs.callJSON(ctx, &opts, rep, nil)
+	if err != nil {
+		return err
+	}
+	return o.GetFileInfo(ctx)
+}
+
+func (o *Object) GetFileInfo(ctx context.Context) error {
+	in := entity.FileInfoIn{
+		DriveId: o.fs.driveId,
+		FileId:  o.id,
+	}
+
+	opts := rest.Opts{
+		Method:  "POST",
+		Path:    uriFileDetail,
+		RootURL: rootUrl,
+	}
+
+	out := entity.ItemsOut{}
+
+	err := o.fs.callJSON(ctx, &opts, in, &out)
+	if err != nil {
+		return err
+	}
+	return o.setMetaData(&out)
+
 }
 
 // Remove an object
