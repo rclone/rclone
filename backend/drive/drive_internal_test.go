@@ -422,11 +422,7 @@ func (f *Fs) InternalTestCopyID(t *testing.T) {
 	require.NoError(t, err)
 	o := obj.(*Object)
 
-	dir, err := ioutil.TempDir("", "rclone-drive-copyid-test")
-	require.NoError(t, err)
-	defer func() {
-		_ = os.RemoveAll(dir)
-	}()
+	dir := t.TempDir()
 
 	checkFile := func(name string) {
 		filePath := filepath.Join(dir, name)
@@ -491,19 +487,11 @@ func (f *Fs) InternalTestAgeQuery(t *testing.T) {
 	subFs, isDriveFs := subFsResult.(*Fs)
 	require.True(t, isDriveFs)
 
-	tempDir1, err := ioutil.TempDir("", "rclone-drive-agequery1-test")
-	require.NoError(t, err)
-	defer func() {
-		_ = os.RemoveAll(tempDir1)
-	}()
+	tempDir1 := t.TempDir()
 	tempFs1, err := fs.NewFs(defCtx, tempDir1)
 	require.NoError(t, err)
 
-	tempDir2, err := ioutil.TempDir("", "rclone-drive-agequery2-test")
-	require.NoError(t, err)
-	defer func() {
-		_ = os.RemoveAll(tempDir2)
-	}()
+	tempDir2 := t.TempDir()
 	tempFs2, err := fs.NewFs(defCtx, tempDir2)
 	require.NoError(t, err)
 

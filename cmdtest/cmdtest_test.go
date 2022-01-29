@@ -102,8 +102,7 @@ var envInitial []string
 // sets testConfig to testFolder/rclone.config.
 func createTestEnvironment(t *testing.T) {
 	//Set temporary folder for config and test data
-	tempFolder, err := ioutil.TempDir("", "rclone_cmdtest_")
-	require.NoError(t, err)
+	tempFolder := t.TempDir()
 	testFolder = filepath.ToSlash(tempFolder)
 
 	// Set path to temporary config file
