@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -20,19 +18,12 @@ import (
 )
 
 // MakeTestDirs makes directories in /tmp for testing
-func MakeTestDirs(t *testing.T, n int) (dirs []string, clean func()) {
+func MakeTestDirs(t *testing.T, n int) (dirs []string) {
 	for i := 1; i <= n; i++ {
-		dir, err := ioutil.TempDir("", fmt.Sprintf("rclone-union-test-%d", n))
-		require.NoError(t, err)
+		dir := t.TempDir()
 		dirs = append(dirs, dir)
 	}
-	clean = func() {
-		for _, dir := range dirs {
-			err := os.RemoveAll(dir)
-			assert.NoError(t, err)
-		}
-	}
-	return dirs, clean
+	return dirs
 }
 
 func (f *Fs) TestInternalReadOnly(t *testing.T) {
@@ -95,8 +86,7 @@ func TestMoveCopy(t *testing.T) {
 		t.Skip("Skipping as -remote set")
 	}
 	ctx := context.Background()
-	dirs, clean := MakeTestDirs(t, 1)
-	defer clean()
+	dirs := MakeTestDirs(t, 1)
 	fsString := fmt.Sprintf(":union,upstreams='%s :memory:bucket':", dirs[0])
 	f, err := fs.NewFs(ctx, fsString)
 	require.NoError(t, err)

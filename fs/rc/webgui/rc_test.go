@@ -2,7 +2,6 @@ package webgui
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,13 +23,12 @@ func init() {
 }
 
 func setCacheDir(t *testing.T) string {
-	cacheDir, err := ioutil.TempDir("", "rclone-cache-dir")
-	assert.Nil(t, err)
+	cacheDir := t.TempDir()
 	PluginsPath = filepath.Join(cacheDir, "plugins")
 	pluginsConfigPath = filepath.Join(cacheDir, "config")
 
 	loadedPlugins = newPlugins(availablePluginsJSONPath)
-	err = loadedPlugins.readFromFile()
+	err := loadedPlugins.readFromFile()
 	assert.Nil(t, err)
 	return cacheDir
 }
