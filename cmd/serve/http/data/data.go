@@ -16,7 +16,10 @@ import (
 )
 
 // Help describes the options for the serve package
-var Help = `--template allows a user to specify a custom markup template for http
+var Help = `
+#### Template
+
+--template allows a user to specify a custom markup template for http
 and webdav serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
