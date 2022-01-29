@@ -370,16 +370,19 @@ func (o *Object) split() (container, containerPath string) {
 }
 
 // validateAccessTier checks if azureblob supports user supplied tier
+// by comparing tier to the azblob.AccessTier* constants in a case-insensitive
+// manner
 func validateAccessTier(tier string) bool {
-	switch tier {
-	case string(azblob.AccessTierHot),
-		string(azblob.AccessTierCool),
-		string(azblob.AccessTierArchive):
-		// valid cases
+
+	if strings.EqualFold(tier, string(azblob.AccessTierHot)) ||
+		strings.EqualFold(tier, string(azblob.AccessTierCool)) ||
+		strings.EqualFold(tier, string(azblob.AccessTierArchive)) {
+
 		return true
-	default:
-		return false
 	}
+
+	// else...
+	return false
 }
 
 // validatePublicAccess checks if azureblob supports use supplied public access level
@@ -555,7 +558,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
 	} else if !validateAccessTier(opt.AccessTier) {
-		return nil, fmt.Errorf("Azure Blob: Supported access tiers are %s, %s and %s",
+		return nil, fmt.Errorf("Azure Blob: Specified access tier '%s' is unsupported.  Supported access tiers are %s, %s and %s",
+			opt.AccessTier,
 			string(azblob.AccessTierHot), string(azblob.AccessTierCool), string(azblob.AccessTierArchive))
 	}
 
