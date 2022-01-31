@@ -1339,7 +1339,8 @@ credentials", which opens the wizard), then "Create credentials"
 to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 
 (near the top right corner of the right panel), then select "External"
 and click on "CREATE"; on the next screen, enter an "Application name"
-("rclone" is OK) then click on "Save" (all other data is optional). 
+("rclone" is OK); enter "User Support Email" (your own email is OK); 
+enter "Developer Contact Email" (your own email is OK); then click on "Save" (all other data is optional). 
 Click again on "Credentials" on the left panel to go back to the 
 "Credentials" screen.
 
