@@ -1791,24 +1791,30 @@ The default is to run 4 file transfers in parallel.
 This forces rclone to skip any files which exist on the destination
 and have a modified time that is newer than the source file.
 
-This can be useful when transferring to a remote which doesn't support
-mod times directly (or when using `--use-server-modtime` to avoid extra
-API calls) as it is more accurate than a `--size-only` check and faster
-than using `--checksum`.
+This can be useful in avoiding needless transfers when transferring to
+a remote which doesn't support modification times directly (or when
+using `--use-server-modtime` to avoid extra API calls) as it is more
+accurate than a `--size-only` check and faster than using
+`--checksum`. On such remotes (or when using `--use-server-modtime`)
+the time checked will be the uploaded time.
+
+If an existing destination file has a modification time older than the
+source file's, it will be updated if the sizes are different. If the
+sizes are the same, it will be updated if the checksum is different or
+not available.
 
 If an existing destination file has a modification time equal (within
-the computed modify window precision) to the source file's, it will be
-updated if the sizes are different.  If `--checksum` is set then
-rclone will update the destination if the checksums differ too.
+the computed modify window) to the source file's, it will be updated
+if the sizes are different. The checksum will not be checked in this
+case unless the `--checksum` flag is provided.
 
-If an existing destination file is older than the source file then
-it will be updated if the size or checksum differs from the source file.
+In all other cases the file will not be updated.
 
-On remotes which don't support mod time directly (or when using
-`--use-server-modtime`) the time checked will be the uploaded time.
-This means that if uploading to one of these remotes, rclone will skip
-any files which exist on the destination and have an uploaded time that
-is newer than the modification time of the source file.
+Consider using the `--modify-window` flag to compensate for time skews
+between the source and the backend, for backends that do not support
+mod times, and instead use uploaded times. However, if the backend
+does not support checksums, note that sync'ing or copying within the
+time skew window may still result in additional transfers for safety.
 
 ### --use-mmap ###
 
