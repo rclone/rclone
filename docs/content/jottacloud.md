@@ -169,6 +169,9 @@ Note that the implementation in Jottacloud always uses only a single
 API request to get the entire list, so for large folders this could
 lead to long wait time before the first results are shown.
 
+Note also that with rclone version 1.58 and newer information about
+[MIME types](/overview/#mime-type) are not available when using `--fast-list`.
+
 ### Modified time and hashes
 
 Jottacloud allows modification times to be set on objects accurate to 1
