@@ -85,6 +85,13 @@ var archFlags = map[string][]string{
 	"arm-v7": {"GOARM=7"},
 }
 
+// Map Go architectures to NFPM architectures
+// Any missing are passed straight through
+var goarchToNfpm = map[string]string{
+	"arm":    "arm6",
+	"arm-v7": "arm7",
+}
+
 // runEnv - run a shell command with env
 func runEnv(args, env []string) error {
 	if *debug {
@@ -167,11 +174,15 @@ func buildDebAndRpm(dir, version, goarch string) []string {
 	pkgVersion := version[1:]
 	pkgVersion = strings.Replace(pkgVersion, "β", "-beta", -1)
 	pkgVersion = strings.Replace(pkgVersion, "-", ".", -1)
+	nfpmArch, ok := goarchToNfpm[goarch]
+	if !ok {
+		nfpmArch = goarch
+	}
 
 	// Make nfpm.yaml from the template
 	substitute("../bin/nfpm.yaml", path.Join(dir, "nfpm.yaml"), map[string]string{
 		"Version": pkgVersion,
-		"Arch":    goarch,
+		"Arch":    nfpmArch,
 	})
 
 	// build them
@@ -377,7 +388,7 @@ func compileArch(version, goos, goarch, dir string) bool {
 			artifacts := []string{buildZip(dir)}
 			// build a .deb and .rpm if appropriate
 			if goos == "linux" {
-				artifacts = append(artifacts, buildDebAndRpm(dir, version, stripVersion(goarch))...)
+				artifacts = append(artifacts, buildDebAndRpm(dir, version, goarch)...)
 			}
 			if *copyAs != "" {
 				for _, artifact := range artifacts {
