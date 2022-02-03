@@ -300,9 +300,15 @@ a non root folder as its starting point.
 			Help:     "Send files to the trash instead of deleting permanently.\n\nDefaults to true, namely sending files to the trash.\nUse `--drive-use-trash=false` to delete files permanently instead.",
 			Advanced: true,
 		}, {
-			Name:     "copy_shortcut_content",
-			Default:  false,
-			Help:     "Copy the files instead of just shortcuts when performing a server-side transfer.\nUse `--drive-copy-shortcut-content=true` to enable it. ",
+			Name:    "copy_shortcut_content",
+			Default: false,
+			Help: `Server side copy contents of shortcuts instead of the shortcut.
+
+When doing server side copies, normally rclone will copy shortcuts as
+shortcuts.
+
+If this flag is used then rclone will copy the contents of shortcuts
+rather than shortcuts themselves when doing server side copies.`,
 			Advanced: true,
 		}, {
 			Name:     "skip_gdocs",
@@ -2380,7 +2386,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		createInfo.Description = ""
 	}
 
-	// get the ID of the thing to copy - this is the shortcut if available
+	// get the ID of the thing to copy
+	// copy the contents if CopyShortcutContent
+	// copy the shortcut only
 
 	id := shortcutID(srcObj.id)
 
