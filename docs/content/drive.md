@@ -708,6 +708,17 @@ Use `--drive-use-trash=false` to delete files permanently instead.
 - Type:        bool
 - Default:     true
 
+#### --drive-copy-shortcut-content
+
+Copy the files instead of just shortcuts when performing a server-side transfer.
+
+Defaults to false, creating another shortcut instead of copying content.
+Use `--drive-copy-shortcut-content=true` to enable it. 
+- Config:		copy_shortcut_content
+- Env Var:		CopyShortcutContent
+- Type:			bool
+- Default:		false
+
 #### --drive-skip-gdocs
 
 Skip google documents in all listings.

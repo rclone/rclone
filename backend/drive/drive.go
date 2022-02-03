@@ -300,6 +300,11 @@ a non root folder as its starting point.
 			Help:     "Send files to the trash instead of deleting permanently.\n\nDefaults to true, namely sending files to the trash.\nUse `--drive-use-trash=false` to delete files permanently instead.",
 			Advanced: true,
 		}, {
+			Name:     "copy_shortcut_content",
+			Default:  false,
+			Help:     "Copy the files instead of just shortcuts when performing a server-side transfer.\nUse `--drive-copy-shortcut-content=true` to enable it. ",
+			Advanced: true,
+		}, {
 			Name:     "skip_gdocs",
 			Default:  false,
 			Help:     "Skip google documents in all listings.\n\nIf given, gdocs practically become invisible to rclone.",
@@ -578,6 +583,7 @@ type Options struct {
 	TeamDriveID               string               `config:"team_drive"`
 	AuthOwnerOnly             bool                 `config:"auth_owner_only"`
 	UseTrash                  bool                 `config:"use_trash"`
+	CopyShortcutContent       bool                 `config:"copy_shortcut_content"`
 	SkipGdocs                 bool                 `config:"skip_gdocs"`
 	SkipChecksumGphotos       bool                 `config:"skip_checksum_gphotos"`
 	SharedWithMe              bool                 `config:"shared_with_me"`
@@ -2375,7 +2381,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// get the ID of the thing to copy - this is the shortcut if available
+
 	id := shortcutID(srcObj.id)
+
+	if f.opt.CopyShortcutContent {
+		id = actualID(srcObj.id)
+	}
 
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
