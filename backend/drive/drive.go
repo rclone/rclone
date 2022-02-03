@@ -2388,7 +2388,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	// get the ID of the thing to copy
 	// copy the contents if CopyShortcutContent
-	// copy the shortcut only
+	// else copy the shortcut only
 
 	id := shortcutID(srcObj.id)
 
