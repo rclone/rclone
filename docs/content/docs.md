@@ -808,6 +808,12 @@ This flag can be useful for debugging and in exceptional circumstances
 (e.g. Google Drive limiting the total volume of Server Side Copies to
 100 GiB/day).
 
+### --disable-http2
+
+This stops rclone from trying to use HTTP/2 if available. This can
+sometimes speed up transfers due to a
+[problem in the Go standard library](https://github.com/golang/go/issues/37373).
+
 ### --dscp VALUE ###
 
 Specify a DSCP value or name to use in connections. This could help QoS
