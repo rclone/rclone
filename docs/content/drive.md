@@ -410,7 +410,7 @@ For shortcuts pointing to files:
 - When downloading the contents of the destination file is downloaded.
 - When updating shortcut file with a non shortcut file, the shortcut is removed then a new file is uploaded in place of the shortcut.
 - When server-side moving (renaming) the shortcut is renamed, not the destination file.
-- When server-side copying the shortcut is copied, not the contents of the shortcut.
+- When server-side copying the shortcut is copied, not the contents of the shortcut. (unless `--drive-copy-shortcut-content` is in use in which case the contents of the shortcut gets copied).
 - When deleting the shortcut is deleted not the linked file.
 - When setting the modification time, the modification time of the linked file will be set.
 
