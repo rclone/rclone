@@ -48,7 +48,7 @@ Here is an overview of the major features of each cloud storage system.
 | SFTP                         | MD5, SHA1 ² | Yes     | Depends          | No              | -         |
 | Sia                          | -           | No      | No               | No              | -         |
 | SugarSync                    | -           | No      | No               | No              | -         |
-| Tardigrade                   | -           | Yes     | No               | No              | -         |
+| Storj                        | -           | Yes     | No               | No              | -         |
 | Uptobox                      | -           | No      | No               | Yes             | -         |
 | WebDAV                       | MD5, SHA1 ³ | Yes ⁴   | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R         |
@@ -440,7 +440,7 @@ upon backend-specific capabilities.
 | Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 | SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
-| Tardigrade                   | Yes † | No   | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
+| Storj                        | Yes † | No   | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | No       |
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No           | Yes   | Yes      |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes          | Yes   | Yes      |
@@ -452,7 +452,7 @@ upon backend-specific capabilities.
 This deletes a directory quicker than just deleting all the files in
 the directory.
 
-† Note Swift, Hubic, and Tardigrade implement this in order to delete
+† Note Swift, Hubic, and Storj implement this in order to delete
 directory markers but they don't actually have a quicker way of deleting
 files other than deleting them individually.
 

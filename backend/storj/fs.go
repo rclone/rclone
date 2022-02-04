@@ -1,8 +1,8 @@
 //go:build !plan9
 // +build !plan9
 
-// Package tardigrade provides an interface to Tardigrade decentralized object storage.
-package tardigrade
+// Package storj provides an interface to Storj decentralized object storage.
+package storj
 
 import (
 	"context"
@@ -31,16 +31,17 @@ const (
 )
 
 var satMap = map[string]string{
-	"us-central-1.tardigrade.io":  "12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us-central-1.tardigrade.io:7777",
-	"europe-west-1.tardigrade.io": "12L9ZFwhzVpuEKMUNUqkaTLGzwY9G24tbiigLiXpmZWKwmcNDDs@europe-west-1.tardigrade.io:7777",
-	"asia-east-1.tardigrade.io":   "121RTSDpyNZVcEU84Ticf2L1ntiuUimbWgfATz21tuvgk3vzoA6@asia-east-1.tardigrade.io:7777",
+	"us-central-1.storj.io":  "12EayRS2V1kEsWESU9QMRseFhdxYxKicsiFmxrsLZHeLUtdps3S@us-central-1.tardigrade.io:7777",
+	"europe-west-1.storj.io": "12L9ZFwhzVpuEKMUNUqkaTLGzwY9G24tbiigLiXpmZWKwmcNDDs@europe-west-1.tardigrade.io:7777",
+	"asia-east-1.storj.io":   "121RTSDpyNZVcEU84Ticf2L1ntiuUimbWgfATz21tuvgk3vzoA6@asia-east-1.tardigrade.io:7777",
 }
 
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
-		Name:        "tardigrade",
-		Description: "Tardigrade Decentralized Cloud Storage",
+		Name:        "storj",
+		Description: "Storj Decentralized Cloud Storage",
+		Aliases:     []string{"tardigrade"},
 		NewFs:       NewFs,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
 			provider, _ := m.Get(fs.ConfigProvider)
@@ -104,15 +105,15 @@ func init() {
 				Name:     "satellite_address",
 				Help:     "Satellite address.\n\nCustom satellite address should match the format: `<nodeid>@<address>:<port>`.",
 				Provider: newProvider,
-				Default:  "us-central-1.tardigrade.io",
+				Default:  "us-central-1.storj.io",
 				Examples: []fs.OptionExample{{
-					Value: "us-central-1.tardigrade.io",
+					Value: "us-central-1.storj.io",
 					Help:  "US Central 1",
 				}, {
-					Value: "europe-west-1.tardigrade.io",
+					Value: "europe-west-1.storj.io",
 					Help:  "Europe West 1",
 				}, {
-					Value: "asia-east-1.tardigrade.io",
+					Value: "asia-east-1.storj.io",
 					Help:  "Asia East 1",
 				},
 				},
@@ -140,7 +141,7 @@ type Options struct {
 	Passphrase       string `config:"passphrase"`
 }
 
-// Fs represents a remote to Tardigrade
+// Fs represents a remote to Storj
 type Fs struct {
 	name string // the name of the remote
 	root string // root of the filesystem
@@ -160,9 +161,9 @@ var (
 	_ fs.PutStreamer = &Fs{}
 )
 
-// NewFs creates a filesystem backed by Tardigrade.
+// NewFs creates a filesystem backed by Storj.
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs, err error) {
-	// Setup filesystem and connection to Tardigrade
+	// Setup filesystem and connection to Storj
 	root = norm.NFC.String(root)
 	root = strings.Trim(root, "/")
 
@@ -183,24 +184,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs,
 	if f.opts.Access != "" {
 		access, err = uplink.ParseAccess(f.opts.Access)
 		if err != nil {
-			return nil, fmt.Errorf("tardigrade: access: %w", err)
+			return nil, fmt.Errorf("storj: access: %w", err)
 		}
 	}
 
 	if access == nil && f.opts.SatelliteAddress != "" && f.opts.APIKey != "" && f.opts.Passphrase != "" {
 		access, err = uplink.RequestAccessWithPassphrase(ctx, f.opts.SatelliteAddress, f.opts.APIKey, f.opts.Passphrase)
 		if err != nil {
-			return nil, fmt.Errorf("tardigrade: access: %w", err)
+			return nil, fmt.Errorf("storj: access: %w", err)
 		}
 
 		serializedAccess, err := access.Serialize()
 		if err != nil {
-			return nil, fmt.Errorf("tardigrade: access: %w", err)
+			return nil, fmt.Errorf("storj: access: %w", err)
 		}
 
 		err = config.SetValueAndSave(f.name, "access_grant", serializedAccess)
 		if err != nil {
-			return nil, fmt.Errorf("tardigrade: access: %w", err)
+			return nil, fmt.Errorf("storj: access: %w", err)
 		}
 	}
 
@@ -232,7 +233,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs,
 		if bucketName != "" && bucketPath != "" {
 			_, err = project.StatBucket(ctx, bucketName)
 			if err != nil {
-				return f, fmt.Errorf("tardigrade: bucket: %w", err)
+				return f, fmt.Errorf("storj: bucket: %w", err)
 			}
 
 			object, err := project.StatObject(ctx, bucketName, bucketPath)
@@ -258,7 +259,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs,
 	return f, nil
 }
 
-// connect opens a connection to Tardigrade.
+// connect opens a connection to Storj.
 func (f *Fs) connect(ctx context.Context) (project *uplink.Project, err error) {
 	fs.Debugf(f, "connecting...")
 	defer fs.Debugf(f, "connected: %+v", err)
@@ -269,7 +270,7 @@ func (f *Fs) connect(ctx context.Context) (project *uplink.Project, err error) {
 
 	project, err = cfg.OpenProject(ctx, f.access)
 	if err != nil {
-		return nil, fmt.Errorf("tardigrade: project: %w", err)
+		return nil, fmt.Errorf("storj: project: %w", err)
 	}
 
 	return

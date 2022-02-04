@@ -335,8 +335,8 @@ backends:
  - backend:  "sia"
    remote:   "TestSia:"
    fastlist: false
- - backend:  "tardigrade"
-   remote:   "TestTardigrade:"
+ - backend:  "storj"
+   remote:   "TestStorj:"
    fastlist: true
  - backend:  "zoho"
    remote:   "TestZoho:"

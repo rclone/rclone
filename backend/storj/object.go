@@ -1,7 +1,7 @@
 //go:build !plan9
 // +build !plan9
 
-package tardigrade
+package storj
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 	"storj.io/uplink"
 )
 
-// Object describes a Tardigrade object
+// Object describes a Storj object
 type Object struct {
 	fs *Fs
 
@@ -32,7 +32,7 @@ type Object struct {
 // Check the interfaces are satisfied.
 var _ fs.Object = &Object{}
 
-// newObjectFromUplink creates a new object from a Tardigrade uplink object.
+// newObjectFromUplink creates a new object from a Storj uplink object.
 func newObjectFromUplink(f *Fs, relative string, object *uplink.Object) *Object {
 	// Attempt to use the modified time from the metadata. Otherwise
 	// fallback to the server time.
