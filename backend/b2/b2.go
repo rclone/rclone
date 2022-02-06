@@ -1763,14 +1763,14 @@ func (file *openFile) Close() (err error) {
 
 	// Check to see we read the correct number of bytes
 	if file.o.Size() != file.bytes {
-		return fmt.Errorf("object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
+		return fmt.Errorf("corrupted on transfer: lengths differ want %d vs got %d", file.o.Size(), file.bytes)
 	}
 
 	// Check the SHA1
 	receivedSHA1 := file.o.sha1
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
 	if receivedSHA1 != "" && receivedSHA1 != calculatedSHA1 {
-		return fmt.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
+		return fmt.Errorf("corrupted on transfer: SHA1 hashes differ want %q vs got %q", receivedSHA1, calculatedSHA1)
 	}
 
 	return nil
