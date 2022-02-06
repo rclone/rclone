@@ -455,7 +455,7 @@ func (f *Fs) verifyObjectHash(ctx context.Context, o fs.Object, hasher *hash.Mul
 		if err != nil {
 			fs.Errorf(o, "Failed to remove corrupted object: %v", err)
 		}
-		return fmt.Errorf("corrupted on transfer: %v compressed hashes differ %q vs %q", ht, srcHash, dstHash)
+		return fmt.Errorf("corrupted on transfer: %v compressed hashes differ src(%s) %q vs dst(%s) %q", ht, f.Fs, srcHash, o.Fs(), dstHash)
 	}
 	return nil
 }
