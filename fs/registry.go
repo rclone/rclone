@@ -36,6 +36,10 @@ type RegInfo struct {
 	Options Options
 	// The command help, if any
 	CommandHelp []CommandHelp
+	// Aliases - other names this backend is known by
+	Aliases []string
+	// Hide - if set don't show in the configurator
+	Hide bool
 }
 
 // FileName returns the on disk file name for this backend
@@ -256,6 +260,18 @@ func Register(info *RegInfo) {
 		info.Prefix = info.Name
 	}
 	Registry = append(Registry, info)
+	for _, alias := range info.Aliases {
+		// Copy the info block and rename and hide the alias and options
+		aliasInfo := *info
+		aliasInfo.Name = alias
+		aliasInfo.Prefix = alias
+		aliasInfo.Hide = true
+		aliasInfo.Options = append(Options(nil), info.Options...)
+		for i := range aliasInfo.Options {
+			aliasInfo.Options[i].Hide = OptionHideBoth
+		}
+		Registry = append(Registry, &aliasInfo)
+	}
 }
 
 // Find looks for a RegInfo object for the name passed in.  The name

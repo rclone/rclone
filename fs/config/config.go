@@ -576,6 +576,9 @@ func fsOption() *fs.Option {
 		Required: true,
 	}
 	for _, item := range fs.Registry {
+		if item.Hide {
+			continue
+		}
 		example := fs.OptionExample{
 			Value: item.Name,
 			Help:  item.Description,
