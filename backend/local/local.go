@@ -262,6 +262,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
+	return NewFsWithOptions(ctx, name, root, opt)
+}
+
+// NewFsWithOptions constructs an Fs from the path
+func NewFsWithOptions(ctx context.Context, name, root string, opt *Options) (*Fs, error) {
 	if opt.TranslateSymlinks && opt.FollowSymlinks {
 		return nil, errLinksAndCopyLinks
 	}
