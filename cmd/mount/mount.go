@@ -86,7 +86,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 
 	f := VFS.Fs()
 	fs.Debugf(f, "Mounting on %q", mountpoint)
-	c, err := fuse.Mount(mountpoint, mountOptions(VFS, f.Name()+":"+f.Root(), opt)...)
+	c, err := fuse.Mount(mountpoint, mountOptions(VFS, opt.DeviceName, opt)...)
 	if err != nil {
 		return nil, nil, err
 	}
