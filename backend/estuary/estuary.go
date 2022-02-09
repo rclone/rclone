@@ -2,6 +2,7 @@ package estuary
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -35,6 +36,8 @@ var (
 	errorMkdirOnlyCollections    = errors.New("mkdir only implemented for root collections")
 	errorFindLeafOnlyCollections = errors.New("find leaf only implemented for root collections")
 	errNoCID                     = errors.New("no CID for object")
+	errNoUploadEndpoint          = errors.New("No upload endpoint for object")
+	errAllEndpointsFailed        = errors.New("All upload endpoints failed")
 	minSleep                     = 10 * time.Millisecond
 	maxSleep                     = 2 * time.Second
 	decayConstant                = 2
@@ -56,6 +59,7 @@ type Fs struct {
 	client         *rest.Client
 	pacer          *fs.Pacer
 	dirCache       *dircache.DirCache
+	viewer         *util.ViewerResponse
 }
 
 type Object struct {
@@ -65,6 +69,11 @@ type Object struct {
 	cid       string // CID of the object
 	estuaryId string // estuary ID of the object
 	modTime   time.Time
+}
+
+type ApiError struct {
+	Message string `json:"error"`
+	Details string `json:"details"`
 }
 
 type Content struct {
@@ -78,8 +87,10 @@ type Content struct {
 }
 
 type ContentAdd struct {
-	ID  uint       `json:"estuaryId"`
-	Cid util.DbCID `json:"cid"`
+	ID      uint        `json:"estuaryId"`
+	Cid     *util.DbCID `json:"cid,omitempty"`
+	Error   string      `json:"error"`
+	Details string      `json:"details"`
 }
 
 type ContentByCID struct {
@@ -131,10 +142,25 @@ func init() {
 			Default: "https://api.estuary.tech",
 		}},
 	})
+
 }
 
 var retryErrorCodes = []int{
 	429, // Too Many Requests
+}
+
+func errorHandler(resp *http.Response) error {
+	body, err := rest.ReadBody(resp)
+	if err != nil {
+		return fmt.Errorf("error reading error out of body: %w", err)
+	}
+
+	var apiErr ApiError
+	if err = json.Unmarshal(body, &apiErr); err != nil {
+		return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
+	}
+
+	return &apiErr
 }
 
 func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
@@ -143,6 +169,18 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+}
+
+func shouldTryNextEndpoint(response *http.Response, err error) bool {
+	if response.StatusCode == 400 {
+		if apiErr := err.(*ApiError); apiErr != nil {
+			if apiErr.Error() == "ERR_CONTENT_ADDING_DISABLED" {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func splitDir(dir string) (uuid string, path string) {
@@ -163,10 +201,13 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 	f := &Fs{
 		name:   name,
 		opt:    *opt,
-		client: rest.NewClient(httpClient).SetRoot(opt.Url),
+		client: rest.NewClient(httpClient),
 		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.setRoot(root)
+	f.client.
+		SetRoot(opt.Url).
+		SetErrorHandler(errorHandler)
 
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -176,6 +217,13 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 		f.client.SetHeader("Authorization", "Bearer "+f.opt.Token)
 	}
 
+	var viewer util.ViewerResponse
+	if viewer, err = f.fetchViewer(ctx); err != nil {
+		fs.Errorf(f, "Can't fetch viewer information for this user")
+		return nil, err
+	}
+
+	f.viewer = &viewer
 	f.dirCache = dircache.New(root, "", f)
 
 	err = f.dirCache.FindRoot(ctx, false)
@@ -211,6 +259,10 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 	return f, nil
 }
 
+func (err *ApiError) Error() string {
+	return err.Message
+}
+
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
 	return f.name
@@ -244,6 +296,16 @@ func (f *Fs) Features() *fs.Features {
 func (f *Fs) setRoot(root string) {
 	f.root = strings.Trim(root, "/")
 	f.rootCollection, f.rootDirectory = bucket.Split(f.root)
+}
+
+func (f *Fs) fetchViewer(ctx context.Context) (response util.ViewerResponse, err error) {
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   "/viewer",
+	}
+
+	_, err = f.client.CallJSON(ctx, &opts, nil, &response)
+	return
 }
 
 // Command the backend to run a named command
@@ -690,20 +752,43 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		params.Set("collectionPath", absPath)
 	}
 
+	endpoints := o.fs.viewer.Settings.UploadEndpoints
+	if len(endpoints) == 0 {
+		return errNoUploadEndpoint
+	}
+
+	endpoint := 0
+	// Note: "Path" is actually embedded in the upload endpoint, which we use as the RootURL
 	opts := rest.Opts{
 		Method:               "POST",
 		Body:                 in,
 		MultipartContentName: "data",
 		MultipartFileName:    leaf,
-		Path:                 "/content/add",
 		Options:              options,
 		Parameters:           params,
 	}
-	_, err = o.fs.client.CallJSON(ctx, &opts, nil, &result)
+
+	var response *http.Response
+	err = o.fs.pacer.Call(func() (bool, error) {
+		if endpoint == len(endpoints) {
+			return false, errAllEndpointsFailed
+		}
+
+		opts.RootURL = endpoints[endpoint]
+		response, err = o.fs.client.CallJSON(ctx, &opts, nil, &result)
+		if shouldTryNextEndpoint(response, err) {
+			fs.Debugf(o, "failed upload, retry w/ next upload endpoint")
+			endpoint += 1
+			return true, err
+		}
+
+		return shouldRetry(ctx, response, err)
+	})
 
 	if err != nil {
 		return err
 	}
+
 	o.cid = result.Cid.CID.String()
 	o.estuaryId = strconv.FormatUint(uint64(result.ID), 10)
 	o.size = size
@@ -715,6 +800,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	remote := src.Remote()
 
 	leaf, dirID, err := o.fs.dirCache.FindPath(ctx, remote, true)
+	if err != nil {
+		return err
+	}
+
 	err = o.upload(ctx, in, leaf, dirID, size, options...)
 	return err
 }
