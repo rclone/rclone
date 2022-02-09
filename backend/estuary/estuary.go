@@ -110,6 +110,9 @@ type CollectionFsItem struct {
 var commandHelp = []fs.CommandHelp{{
 	Name:  "lscid",
 	Short: "List files along with their CIDs",
+	Opts: map[string]string{
+		"format": "format for CIDs. one of plain, url, gateway. default is plain",
+	},
 }}
 
 func init() {
@@ -117,6 +120,7 @@ func init() {
 		Name:        "estuary",
 		Description: "Estuary based Filecoin/IPFS storage",
 		NewFs:       NewFs,
+		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "token",
 			Help:     "Estuary API token",
@@ -254,6 +258,11 @@ func (f *Fs) setRoot(root string) {
 func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[string]string) (out interface{}, err error) {
 	switch name {
 	case "lscid":
+		cidFormat, found := opt["format"]
+		if !found {
+			cidFormat = "plain"
+		}
+
 		var list operations.ListFormat
 		list.AddSize()
 		list.AddModTime()
@@ -264,10 +273,20 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			for _, entry := range entries {
 				fmt.Fprintf(&out, "%s %s",
 					operations.SizeStringField(entry.Size(), false, 9),
-					entry.ModTime(ctx).Local().Format("2006-01-02 15:04:05.000"))
+					entry.ModTime(ctx).Local().Format(time.Stamp))
 
 				if obj, ok := entry.(*Object); ok {
-					fmt.Fprintf(&out, " %s", obj.cid)
+					var prefix string
+					switch cidFormat {
+					case "url":
+						prefix = "ipfs://"
+					case "gateway":
+						prefix = "https://dweb.link/ipfs/"
+					}
+
+					cidWidth := 60 + len(prefix)
+					cid := prefix + obj.cid
+					fmt.Fprintf(&out, " %*s", cidWidth, cid)
 				}
 				fmt.Fprintf(&out, " %s\n", entry.Remote())
 			}
