@@ -157,9 +157,9 @@ func (f *Fs) listAll(ctx context.Context, parentFileId string) ([]entity.ItemsOu
 // isDirEmpty 判断目录是否为空
 func (f *Fs) isDirEmpty(ctx context.Context, parentFileId string) bool {
 	request := entity.ListIn{
-		Limit:        1,
-		DriveId:      f.driveId,
-		ParentFileId: parentFileId,
+		Limit:                 1,
+		DriveId:               f.driveId,
+		ParentFileId:          parentFileId,
 		All:                   false,
 		UrlExpireSec:          1600,
 		ImageThumbnailProcess: "image/resize,w_400/format,jpeg",

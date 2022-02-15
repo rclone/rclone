@@ -7,6 +7,7 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/rc"
 )
 
 func init() {
@@ -15,16 +16,19 @@ func init() {
 }
 
 func TestNewFs(t *testing.T) {
-	i := 1
-	fmt.Println(i)
-	i = 2
-	fmt.Println("11111111111")
-	fmt.Println(i)
+
+	p := rc.Params{
+		"keyyy": "aaaaa",
+	}
+
+	config.UpdateRemote(context.Background(), remoteName, p, config.UpdateRemoteOpt{
+		NoObscure: true,
+	})
 }
 
 var (
-	remoteName = "ali"
-	token      = "a7816d7f853842bea263c699c54351aa"
+	remoteName = "aliyun"
+	token      = "a7816d7f853842bea263c699c54351aa1"
 	ctx        = context.Background()
 )
 
