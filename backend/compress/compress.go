@@ -626,9 +626,11 @@ func (f *Fs) putMetadata(ctx context.Context, meta *ObjectMetadata, src fs.Objec
 	// Put the data
 	mo, err = put(ctx, metaReader, f.wrapInfo(src, makeMetadataName(src.Remote()), int64(len(data))), options...)
 	if err != nil {
-		removeErr := mo.Remove(ctx)
-		if removeErr != nil {
-			fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+		if mo != nil {
+			removeErr := mo.Remove(ctx)
+			if removeErr != nil {
+				fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+			}
 		}
 		return nil, err
 	}
