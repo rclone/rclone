@@ -754,22 +754,34 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 }
 
 // About gets quota information
-func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	var containers []swift.Container
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		containers, err = f.c.ContainersAll(ctx, nil)
-		return shouldRetry(ctx, err)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("container listing failed: %w", err)
-	}
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	var total, objects int64
-	for _, c := range containers {
-		total += c.Bytes
-		objects += c.Count
+	if f.rootContainer != "" {
+		var container swift.Container
+		err = f.pacer.Call(func() (bool, error) {
+			container, _, err = f.c.Container(ctx, f.rootContainer)
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("container info failed: %w", err)
+		}
+		total = container.Bytes
+		objects = container.Count
+	} else {
+		var containers []swift.Container
+		err = f.pacer.Call(func() (bool, error) {
+			containers, err = f.c.ContainersAll(ctx, nil)
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("container listing failed: %w", err)
+		}
+		for _, c := range containers {
+			total += c.Bytes
+			objects += c.Count
+		}
 	}
-	usage := &fs.Usage{
+	usage = &fs.Usage{
 		Used:    fs.NewUsageValue(total),   // bytes in use
 		Objects: fs.NewUsageValue(objects), // objects in use
 	}
