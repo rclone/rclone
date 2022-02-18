@@ -1128,7 +1128,10 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 		return item.downloaders.EnsureDownloader(r)
 	}
 	if item.downloaders == nil {
-		return errors.New("internal error: downloaders is nil")
+		// Downloaders can be nil here if the file has been
+		// renamed, so need to make some more downloaders
+		// OK to call downloaders constructor with item.mu held
+		item.downloaders = downloaders.New(item, item.c.opt, item.name, item.o)
 	}
 	return item.downloaders.Download(r)
 }
