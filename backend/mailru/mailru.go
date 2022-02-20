@@ -1572,7 +1572,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 
 	total := info.Body.Cloud.Space.BytesTotal
-	used := int64(info.Body.Cloud.Space.BytesUsed)
+	used := info.Body.Cloud.Space.BytesUsed
 
 	usage := &fs.Usage{
 		Total: fs.NewUsageValue(total),
