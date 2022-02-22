@@ -187,7 +187,7 @@ Host key matching, using standard `known_hosts` files can be turned on by
 enabling the `known_hosts_file` option.  This can point to the file maintained
 by `OpenSSH` or can point to a unique file.
 
-e.g.
+e.g. using the OpenSSH `known_hosts` file:
 
 ```
 [remote]
@@ -198,15 +198,18 @@ pass =
 known_hosts_file = ~/.ssh/known_hosts
 ````
 
+Alternatively you can create your own known hosts file like this:
+
+```
+ssh-keyscan -t dsa,rsa,ecdsa,ed25519 example.com >> known_hosts
+```
+
 There are some limitations:
 
 * `rclone` will not _manage_ this file for you.  If the key is missing or
 wrong then the connection will be refused.
 * If the server is set up for a certificate host key then the entry in
 the `known_hosts` file _must_ be the `@cert-authority` entry for the CA
-* Unlike `OpenSSH`, the libraries used by `rclone` do not permit (at time
-of writing) multiple host keys to be listed for a server.  Only the first
-entry is used.
 
 If the host key provided by the server does not match the one in the
 file (or is missing) then the connection will be aborted and an error
