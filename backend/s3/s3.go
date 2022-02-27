@@ -1548,6 +1548,14 @@ See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rcl
 This is usually set to a CloudFront CDN URL as AWS S3 offers
 cheaper egress for data downloaded through the CloudFront network.`,
 			Advanced: true,
+		}, {
+			Name: "use_multipart_etag",
+			Help: `Whether to use ETag in multipart uploads for verification
+
+This should be true, false or left unset to use the default for the provider.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
 		},
 		}})
 }
@@ -1612,6 +1620,7 @@ type Options struct {
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
 	DisableHTTP2          bool                 `config:"disable_http2"`
 	DownloadURL           string               `config:"download_url"`
+	UseMultipartEtag      fs.Tristate          `config:"use_multipart_etag"`
 }
 
 // Fs represents a remote s3 server
@@ -1915,12 +1924,13 @@ func setQuirks(opt *Options) {
 		listObjectsV2     = true
 		virtualHostStyle  = true
 		urlEncodeListings = true
+		useMultipartEtag  = true
 	)
 	switch opt.Provider {
 	case "AWS":
 		// No quirks
 	case "Alibaba":
-		// No quirks
+		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 	case "Ceph":
 		listObjectsV2 = false
 		virtualHostStyle = false
@@ -1933,13 +1943,16 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useMultipartEtag = false // untested
 	case "Minio":
 		virtualHostStyle = false
 	case "Netease":
 		listObjectsV2 = false // untested
 		urlEncodeListings = false
+		useMultipartEtag = false // untested
 	case "RackCorp":
 		// No quirks
+		useMultipartEtag = false // untested
 	case "Scaleway":
 		// Scaleway can only have 1000 parts in an upload
 		if opt.MaxUploadParts > 1000 {
@@ -1950,6 +1963,7 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useMultipartEtag = false // untested
 	case "StackPath":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
@@ -1960,18 +1974,21 @@ func setQuirks(opt *Options) {
 			opt.ChunkSize = 64 * fs.Mebi
 		}
 	case "TencentCOS":
-		listObjectsV2 = false // untested
+		listObjectsV2 = false    // untested
+		useMultipartEtag = false // untested
 	case "Wasabi":
 		// No quirks
 	case "Other":
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useMultipartEtag = false
 	default:
 		fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useMultipartEtag = false
 	}
 
 	// Path Style vs Virtual Host style
@@ -1992,6 +2009,12 @@ func setQuirks(opt *Options) {
 		} else {
 			opt.ListVersion = 1
 		}
+	}
+
+	// Set the correct use multipart Etag for error checking if not manually set
+	if !opt.UseMultipartEtag.Valid {
+		opt.UseMultipartEtag.Valid = true
+		opt.UseMultipartEtag.Value = useMultipartEtag
 	}
 }
 
@@ -3864,7 +3887,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 	o.setMetaData(head.ETag, head.ContentLength, head.LastModified, head.Metadata, head.ContentType, head.StorageClass)
-	if !o.fs.etagIsNotMD5 && wantETag != "" && head.ETag != nil && *head.ETag != "" {
+	if o.fs.opt.UseMultipartEtag.Value && !o.fs.etagIsNotMD5 && wantETag != "" && head.ETag != nil && *head.ETag != "" {
 		gotETag := strings.Trim(strings.ToLower(*head.ETag), `"`)
 		if wantETag != gotETag {
 			return fmt.Errorf("multipart upload corrupted: Etag differ: expecting %s but got %s", wantETag, gotETag)
