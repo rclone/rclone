@@ -304,8 +304,8 @@ func (a *APIClient) request(path string, in, out interface{}, wantErr bool) {
 }
 
 func testMountAPI(t *testing.T, sockAddr string) {
-	// Disable tests under macOS and the CI since they are locking up
-	if runtime.GOOS == "darwin" {
+	// Disable tests under macOS and linux in the CI since they are locking up
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
 		testy.SkipUnreliable(t)
 	}
 	if _, mountFn := mountlib.ResolveMountMethod(""); mountFn == nil {
