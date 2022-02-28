@@ -401,6 +401,10 @@ func isCompressible(r io.Reader) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	err = w.Close()
+	if err != nil {
+		return false, err
+	}
 	ratio := float64(n) / float64(b.Len())
 	return ratio > minCompressionRatio, nil
 }
