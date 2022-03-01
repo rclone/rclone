@@ -251,13 +251,18 @@ func (f *Fs) fullPath(part string) string {
 	return f.opt.Enc.FromStandardPath(path.Join("/", f.root, part))
 }
 
-// NewFs constructs a new filesystem given a root path and configuration options
+// NewFs constructs a new filesystem given a root path and rclone configuration options
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs, err error) {
 	opt := new(Options)
 	err = configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
 	}
+	return NewFsFromOptions(ctx, name, root, opt)
+}
+
+// NewFsFromOptions constructs a new filesystem given a root path and internal configuration options
+func NewFsFromOptions(ctx context.Context, name, root string, opt *Options) (ff fs.Fs, err error) {
 	pass, err := obscure.Reveal(opt.Password)
 	if err != nil {
 		return nil, err
