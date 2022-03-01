@@ -258,6 +258,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 	if err != nil {
 		return nil, err
 	}
+	return NewFsFromOptions(ctx, name, root, opt)
+}
+
+func NewFsFromOptions(ctx context.Context, name, root string, opt *Options) (ff fs.Fs, err error) {
 	pass, err := obscure.Reveal(opt.Password)
 	if err != nil {
 		return nil, err

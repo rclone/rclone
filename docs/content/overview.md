@@ -22,6 +22,7 @@ Here is an overview of the major features of each cloud storage system.
 | Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
 | Box                          | SHA1        | Yes     | Yes              | No              | -         |
 | Citrix ShareFile             | MD5         | Yes     | Yes              | No              | -         |
+| Digi Storage                 | MD5         | No      | Yes              | No              | -         |
 | Dropbox                      | DBHASH ¹    | Yes     | Yes              | No              | -         |
 | Enterprise File Fabric       | -           | Yes     | Yes              | No              | R/W       |
 | FTP                          | -           | No      | No               | No              | -         |
