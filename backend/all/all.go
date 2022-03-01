@@ -11,6 +11,7 @@ import (
 	_ "github.com/rclone/rclone/backend/chunker"
 	_ "github.com/rclone/rclone/backend/compress"
 	_ "github.com/rclone/rclone/backend/crypt"
+	_ "github.com/rclone/rclone/backend/digistorage"
 	_ "github.com/rclone/rclone/backend/drive"
 	_ "github.com/rclone/rclone/backend/dropbox"
 	_ "github.com/rclone/rclone/backend/fichier"
