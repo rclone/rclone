@@ -11,8 +11,15 @@ import (
 )
 
 func init() {
-	config.FileSet(remoteName, "type", "aliyun-driver")
-	config.FileSet(remoteName, "refresh-token", token)
+	// config.FileSet(remoteName, "type", "aliyun-driver")
+	// config.FileSet(remoteName, "refresh-token", token)
+}
+
+func TestConfig(t *testing.T) {
+	param := rc.Params{"refresh-token": "11"}
+
+	opt := config.UpdateRemoteOpt{}
+	config.UpdateRemote(context.Background(), "aliyun", param, opt)
 }
 
 func TestNewFs(t *testing.T) {

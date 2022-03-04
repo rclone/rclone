@@ -17,10 +17,12 @@ import (
 	"github.com/rclone/rclone/backend/aliyun_driver/entity"
 	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/rest"
 )
@@ -398,8 +400,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
 	err = f.getAccessToken()
+	f.reWriteConfig(ctx, name)
 	f.dirCache = dircache.New(root, rootId, f)
 	return f, err
+}
+
+func (f *Fs) reWriteConfig(ctx context.Context, name string) {
+	// 创建一个计时器
+	timeTickerChan := time.Tick(time.Minute * 10)
+	go func() {
+		for {
+			config.UpdateRemote(ctx, name, rc.Params{"refresh-token": f.opt.RefreshToken}, config.UpdateRemoteOpt{})
+			<-timeTickerChan
+			f.getAccessToken()
+		}
+	}()
 }
 
 // getAccessToken 获取getAccessToken
@@ -424,6 +439,7 @@ func (f *Fs) getAccessToken() error {
 	f.srv.SetHeader(authorization, response.AccessToken)
 	f.driveId = response.DefaultDriveId
 	f.accessToken = response.AccessToken
+	f.opt.RefreshToken = response.RefreshToken
 	return nil
 }
 
