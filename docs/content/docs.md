@@ -64,8 +64,8 @@ See the following for detailed instructions for
   * [Seafile](/seafile/)
   * [SFTP](/sftp/)
   * [Sia](/sia/)
+  * [Storj](/storj/)
   * [SugarSync](/sugarsync/)
-  * [Tardigrade](/tardigrade/)
   * [Union](/union/)
   * [Uptobox](/uptobox/)
   * [WebDAV](/webdav/)
@@ -550,7 +550,7 @@ Is equivalent to this:
 
 Bandwidth limit apply to the data transfer for all backends. For most
 backends the directory listing bandwidth is also included (exceptions
-being the non HTTP backends, `ftp`, `sftp` and `tardigrade`).
+being the non HTTP backends, `ftp`, `sftp` and `storj`).
 
 Note that the units are **Byte/s**, not **bit/s**. Typically
 connections are measured in bit/s - to convert divide by 8. For
@@ -807,6 +807,12 @@ which feature does what.
 This flag can be useful for debugging and in exceptional circumstances
 (e.g. Google Drive limiting the total volume of Server Side Copies to
 100 GiB/day).
+
+### --disable-http2
+
+This stops rclone from trying to use HTTP/2 if available. This can
+sometimes speed up transfers due to a
+[problem in the Go standard library](https://github.com/golang/go/issues/37373).
 
 ### --dscp VALUE ###
 
@@ -1645,8 +1651,7 @@ This can be very useful for `rclone mount` to control the behaviour of
 applications using it.
 
 This limit applies to all HTTP based backends and to the FTP and SFTP
-backends. It does not apply to the local backend or the Tardigrade
-backend.
+backends. It does not apply to the local backend or the Storj backend.
 
 See also `--tpslimit-burst`.
 
@@ -1791,24 +1796,30 @@ The default is to run 4 file transfers in parallel.
 This forces rclone to skip any files which exist on the destination
 and have a modified time that is newer than the source file.
 
-This can be useful when transferring to a remote which doesn't support
-mod times directly (or when using `--use-server-modtime` to avoid extra
-API calls) as it is more accurate than a `--size-only` check and faster
-than using `--checksum`.
+This can be useful in avoiding needless transfers when transferring to
+a remote which doesn't support modification times directly (or when
+using `--use-server-modtime` to avoid extra API calls) as it is more
+accurate than a `--size-only` check and faster than using
+`--checksum`. On such remotes (or when using `--use-server-modtime`)
+the time checked will be the uploaded time.
+
+If an existing destination file has a modification time older than the
+source file's, it will be updated if the sizes are different. If the
+sizes are the same, it will be updated if the checksum is different or
+not available.
 
 If an existing destination file has a modification time equal (within
-the computed modify window precision) to the source file's, it will be
-updated if the sizes are different.  If `--checksum` is set then
-rclone will update the destination if the checksums differ too.
+the computed modify window) to the source file's, it will be updated
+if the sizes are different. The checksum will not be checked in this
+case unless the `--checksum` flag is provided.
 
-If an existing destination file is older than the source file then
-it will be updated if the size or checksum differs from the source file.
+In all other cases the file will not be updated.
 
-On remotes which don't support mod time directly (or when using
-`--use-server-modtime`) the time checked will be the uploaded time.
-This means that if uploading to one of these remotes, rclone will skip
-any files which exist on the destination and have an uploaded time that
-is newer than the modification time of the source file.
+Consider using the `--modify-window` flag to compensate for time skews
+between the source and the backend, for backends that do not support
+mod times, and instead use uploaded times. However, if the backend
+does not support checksums, note that sync'ing or copying within the
+time skew window may still result in additional transfers for safety.
 
 ### --use-mmap ###
 

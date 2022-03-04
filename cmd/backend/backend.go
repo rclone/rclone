@@ -41,7 +41,7 @@ You can discover what commands a backend implements by using
     rclone backend help <backendname>
 
 You can also discover information about the backend using (see
-[operations/fsinfo](/rc/#operations/fsinfo) in the remote control docs
+[operations/fsinfo](/rc/#operations-fsinfo) in the remote control docs
 for more info).
 
     rclone backend features remote:
@@ -55,7 +55,7 @@ Pass arguments to the backend by placing them on the end of the line
     rclone backend cleanup remote:path file1 file2 file3
 
 Note to run these commands on a running backend then see
-[backend/command](/rc/#backend/command) in the rc docs.
+[backend/command](/rc/#backend-command) in the rc docs.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 1e6, command, args)
@@ -149,7 +149,7 @@ See [the "rclone backend" command](/commands/rclone_backend/) for more
 info on how to pass options and arguments.
 
 These can be run on a running backend using the rc command
-[backend/command](/rc/#backend/command).
+[backend/command](/rc/#backend-command).
 
 `, name)
 	for _, cmd := range cmds {

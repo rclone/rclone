@@ -66,6 +66,11 @@ func init() {
 			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
+			Name:     "hard_delete",
+			Help:     "Delete files permanently rather than putting them into the trash.",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -79,8 +84,9 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	Token string               `config:"token"`
-	Enc   encoder.MultiEncoder `config:"encoding"`
+	Token      string               `config:"token"`
+	HardDelete bool                 `config:"hard_delete"`
+	Enc        encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote yandex
@@ -630,7 +636,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		}
 	}
 	//delete directory
-	return f.delete(ctx, root, false)
+	return f.delete(ctx, root, f.opt.HardDelete)
 }
 
 // Rmdir deletes the container
@@ -1141,7 +1147,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // Remove an object
 func (o *Object) Remove(ctx context.Context) error {
-	return o.fs.delete(ctx, o.filePath(), false)
+	return o.fs.delete(ctx, o.filePath(), o.fs.opt.HardDelete)
 }
 
 // MimeType of an Object if known, "" otherwise

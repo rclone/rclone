@@ -182,3 +182,34 @@ type FoldersList struct {
 	Status     string   `json:"Status"`
 	SubFolders []Folder `json:"sub_folders"`
 }
+
+// AccountInfo is the structure how 1Fichier returns user info
+type AccountInfo struct {
+	StatsDate               string `json:"stats_date"`
+	MailRM                  string `json:"mail_rm"`
+	DefaultQuota            int64  `json:"default_quota"`
+	UploadForbidden         string `json:"upload_forbidden"`
+	PageLimit               int    `json:"page_limit"`
+	ColdStorage             int64  `json:"cold_storage"`
+	Status                  string `json:"status"`
+	UseCDN                  string `json:"use_cdn"`
+	AvailableColdStorage    int64  `json:"available_cold_storage"`
+	DefaultPort             string `json:"default_port"`
+	DefaultDomain           int    `json:"default_domain"`
+	Email                   string `json:"email"`
+	DownloadMenu            string `json:"download_menu"`
+	FTPDID                  int    `json:"ftp_did"`
+	DefaultPortFiles        string `json:"default_port_files"`
+	FTPReport               string `json:"ftp_report"`
+	OverQuota               int64  `json:"overquota"`
+	AvailableStorage        int64  `json:"available_storage"`
+	CDN                     string `json:"cdn"`
+	Offer                   string `json:"offer"`
+	SubscriptionEnd         string `json:"subscription_end"`
+	TFA                     string `json:"2fa"`
+	AllowedColdStorage      int64  `json:"allowed_cold_storage"`
+	HotStorage              int64  `json:"hot_storage"`
+	DefaultColdStorageQuota int64  `json:"default_cold_storage_quota"`
+	FTPMode                 string `json:"ftp_mode"`
+	RUReport                string `json:"ru_report"`
+}

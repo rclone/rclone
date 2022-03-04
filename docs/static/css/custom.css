@@ -148,6 +148,12 @@ h5 {
     text-align: center;
 }
 
+/* Align menu items when icons have different sizes */
+.menu .fa, .fab, .fad, .fal, .far, .fas {
+    width: 18px;
+    text-align: center;
+}
+
 /* Make primary buttons rclone colours. Should learn sass and do this the proper way! */
 .btn-primary {
     background-color: #3f79ad;

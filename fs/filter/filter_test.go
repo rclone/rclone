@@ -503,6 +503,31 @@ func TestNewFilterMatchesIgnoreCase(t *testing.T) {
 	assert.False(t, f.InActive())
 }
 
+func TestNewFilterMatchesRegexp(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+	add := func(s string) {
+		err := f.AddRule(s)
+		require.NoError(t, err)
+	}
+	add(`+ /{{file\d+\.png}}`)
+	add(`+ *.{{(?i)jpg}}`)
+	add(`- *`)
+	testInclude(t, f, []includeTest{
+		{"file2.png", 100, 0, true},
+		{"sub/file2.png", 100, 0, false},
+		{"file123.png", 100, 0, true},
+		{"File123.png", 100, 0, false},
+		{"something.jpg", 100, 0, true},
+		{"deep/path/something.JPG", 100, 0, true},
+		{"something.gif", 100, 0, false},
+	})
+	testDirInclude(t, f, []includeDirTest{
+		{"anything at all", true},
+	})
+	assert.False(t, f.InActive())
+}
+
 func TestFilterAddDirRuleOrFileRule(t *testing.T) {
 	for _, test := range []struct {
 		included bool

@@ -19,7 +19,7 @@ configuration.  For a remote called `remote`.  First run:
 This will guide you through an interactive setup process:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -80,6 +80,14 @@ The modified time is stored as metadata on the object with the `mtime`
 key.  It is stored using RFC3339 Format time with nanosecond
 precision.  The metadata is supplied during directory listings so
 there is no overhead to using it.
+
+### Performance
+
+When uploading large files, increasing the value of
+`--azureblob-upload-concurrency` will increase performance at the cost
+of using more memory. The default of 16 is set quite conservatively to
+use less memory. It maybe be necessary raise it to 64 or higher to
+fully utilize a 1 GBit/s link with a single file transfer.
 
 ### Restricted filename characters
 

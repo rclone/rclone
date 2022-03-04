@@ -18,23 +18,22 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/fs/rc/webgui"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/skratchdot/open-golang/open"
-
 	"github.com/rclone/rclone/cmd/serve/httplib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/list"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/fs/rc/jobs"
 	"github.com/rclone/rclone/fs/rc/rcflags"
+	"github.com/rclone/rclone/fs/rc/webgui"
 	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/skratchdot/open-golang/open"
 )
 
 var promHandler http.Handler
@@ -43,6 +42,13 @@ var onlyOnceWarningAllowOrigin sync.Once
 func init() {
 	rcloneCollector := accounting.NewRcloneCollector(context.Background())
 	prometheus.MustRegister(rcloneCollector)
+
+	m := fshttp.NewMetrics("rclone")
+	for _, c := range m.Collectors() {
+		prometheus.MustRegister(c)
+	}
+	fshttp.DefaultMetrics = m
+
 	promHandler = promhttp.Handler()
 }
 
@@ -89,20 +95,20 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) *Server
 			fs.Errorf(nil, "Error while fetching the latest release of Web GUI: %v", err)
 		}
 		if opt.NoAuth {
-			opt.NoAuth = false
-			fs.Infof(nil, "Cannot run Web GUI without authentication, using default auth")
-		}
-		if opt.HTTPOptions.BasicUser == "" {
-			opt.HTTPOptions.BasicUser = "gui"
-			fs.Infof(nil, "No username specified. Using default username: %s \n", rcflags.Opt.HTTPOptions.BasicUser)
-		}
-		if opt.HTTPOptions.BasicPass == "" {
-			randomPass, err := random.Password(128)
-			if err != nil {
-				log.Fatalf("Failed to make password: %v", err)
+			fs.Logf(nil, "It is recommended to use web gui with auth.")
+		} else {
+			if opt.HTTPOptions.BasicUser == "" {
+				opt.HTTPOptions.BasicUser = "gui"
+				fs.Infof(nil, "No username specified. Using default username: %s \n", rcflags.Opt.HTTPOptions.BasicUser)
 			}
-			opt.HTTPOptions.BasicPass = randomPass
-			fs.Infof(nil, "No password specified. Using random password: %s \n", randomPass)
+			if opt.HTTPOptions.BasicPass == "" {
+				randomPass, err := random.Password(128)
+				if err != nil {
+					log.Fatalf("Failed to make password: %v", err)
+				}
+				opt.HTTPOptions.BasicPass = randomPass
+				fs.Infof(nil, "No password specified. Using random password: %s \n", randomPass)
+			}
 		}
 		opt.Serve = true
 

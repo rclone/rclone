@@ -43,7 +43,6 @@ func init() {
 	flags.StringVarP(cmdFlags, &outFileName, "output", "o", "", "Output to file instead of stdout")
 	// Files
 	flags.BoolVarP(cmdFlags, &opts.ByteSize, "size", "s", false, "Print the size in bytes of each file.")
-	flags.BoolVarP(cmdFlags, &opts.UnitSize, "human", "", false, "Print the size in a more human readable way.")
 	flags.BoolVarP(cmdFlags, &opts.FileMode, "protections", "p", false, "Print the protections for each file.")
 	// flags.BoolVarP(cmdFlags, &opts.ShowUid, "uid", "", false, "Displays file owner or UID number.")
 	// flags.BoolVarP(cmdFlags, &opts.ShowGid, "gid", "", false, "Displays file group owner or GID number.")

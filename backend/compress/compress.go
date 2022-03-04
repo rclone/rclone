@@ -401,6 +401,10 @@ func isCompressible(r io.Reader) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	err = w.Close()
+	if err != nil {
+		return false, err
+	}
 	ratio := float64(n) / float64(b.Len())
 	return ratio > minCompressionRatio, nil
 }
@@ -626,9 +630,11 @@ func (f *Fs) putMetadata(ctx context.Context, meta *ObjectMetadata, src fs.Objec
 	// Put the data
 	mo, err = put(ctx, metaReader, f.wrapInfo(src, makeMetadataName(src.Remote()), int64(len(data))), options...)
 	if err != nil {
-		removeErr := mo.Remove(ctx)
-		if removeErr != nil {
-			fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+		if mo != nil {
+			removeErr := mo.Remove(ctx)
+			if removeErr != nil {
+				fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+			}
 		}
 		return nil, err
 	}

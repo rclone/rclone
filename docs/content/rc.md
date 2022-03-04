@@ -294,7 +294,7 @@ Any config parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
 
 Note that it is possible to set some values as strings or integers -
-see [data types](/#data-types) for more info. Here is an example
+see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
     "_config":{"BufferSize": "42M"}
@@ -327,7 +327,7 @@ Any filter parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
 
 Note that it is possible to set some values as strings or integers -
-see [data types](/#data-types) for more info. Here is an example
+see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
     "_filter":{"MinSize": "42M"}
@@ -1824,10 +1824,10 @@ Here is how to use some of them:
 - 30-second CPU profile: `go tool pprof http://localhost:5572/debug/pprof/profile`
 - 5-second execution trace: `wget http://localhost:5572/debug/pprof/trace?seconds=5`
 - Goroutine blocking profile
-    - Enable first with: `rclone rc debug/set-block-profile-rate rate=1` ([docs](#debug/set-block-profile-rate))
+    - Enable first with: `rclone rc debug/set-block-profile-rate rate=1` ([docs](#debug-set-block-profile-rate))
     - `go tool pprof http://localhost:5572/debug/pprof/block`
 - Contended mutexes:
-    - Enable first with: `rclone rc debug/set-mutex-profile-fraction rate=1` ([docs](#debug/set-mutex-profile-fraction))
+    - Enable first with: `rclone rc debug/set-mutex-profile-fraction rate=1` ([docs](#debug-set-mutex-profile-fraction))
     - `go tool pprof http://localhost:5572/debug/pprof/mutex`
 
 See the [net/http/pprof docs](https://golang.org/pkg/net/http/pprof/)

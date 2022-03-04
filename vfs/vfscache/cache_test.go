@@ -701,3 +701,15 @@ func TestCacheDump(t *testing.T) {
 	out = c.Dump()
 	assert.Equal(t, "Cache{\n}\n", out)
 }
+
+func TestCacheStats(t *testing.T) {
+	_, c, cleanup := newTestCache(t)
+	defer cleanup()
+
+	out := c.Stats()
+	assert.Equal(t, int64(0), out["bytesUsed"])
+	assert.Equal(t, 0, out["erroredFiles"])
+	assert.Equal(t, 0, out["files"])
+	assert.Equal(t, 0, out["uploadsInProgress"])
+	assert.Equal(t, 0, out["uploadsQueued"])
+}

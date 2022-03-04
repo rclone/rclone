@@ -86,7 +86,7 @@ configure a dedicated path for encrypted content, and access it
 exclusively through a crypt remote.
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -369,9 +369,17 @@ Obfuscation cannot be relied upon for strong protection.
 
 Cloud storage systems have limits on file name length and
 total path length which rclone is more likely to breach using
-"Standard" file name encryption.  Where file names are less thn 156
+"Standard" file name encryption.  Where file names are less than 156
 characters in length issues should not be encountered, irrespective of
 cloud storage provider.
+
+An experimental advanced option `filename_encoding` is now provided to
+address this problem to a certain degree.
+For cloud storage systems with case sensitive file names (e.g. Google Drive),
+`base64` can be used to reduce file name length. 
+For cloud storage systems using UTF-16 to store file names internally
+(e.g. OneDrive), `base32768` can be used to drastically reduce
+file name length. 
 
 An alternative, future rclone file name encryption mode may tolerate
 backend provider path length limits.

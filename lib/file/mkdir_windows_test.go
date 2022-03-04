@@ -15,8 +15,7 @@ import (
 
 // Basic test from golang's os/path_test.go
 func TestMkdirAll(t *testing.T) {
-	tmpDir, tidy := testDir(t)
-	defer tidy()
+	tmpDir := t.TempDir()
 
 	path := tmpDir + "/dir/./dir2"
 	err := MkdirAll(path, 0777)
@@ -99,8 +98,7 @@ func checkMkdirAllSubdirs(t *testing.T, path string, valid bool, errormsg string
 
 // Testing paths on existing drive
 func TestMkdirAllOnDrive(t *testing.T) {
-	path, tidy := testDir(t)
-	defer tidy()
+	path := t.TempDir()
 
 	dir, err := os.Stat(path)
 	require.NoError(t, err)

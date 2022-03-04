@@ -136,7 +136,8 @@ func (q *quickXorHash) Write(p []byte) (n int, err error) {
 func (q *quickXorHash) checkSum() (h [Size]byte) {
 	// Output the data as little endian bytes
 	ph := 0
-	for _, d := range q.data[:len(q.data)-1] {
+	for i := 0; i < len(q.data)-1; i++ {
+		d := q.data[i]
 		_ = h[ph+7] // bounds check
 		h[ph+0] = byte(d >> (8 * 0))
 		h[ph+1] = byte(d >> (8 * 1))

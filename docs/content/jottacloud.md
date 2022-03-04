@@ -69,7 +69,7 @@ Here is an example of how to make a remote called `remote` with the default setu
 This will guide you through an interactive setup process:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -148,9 +148,11 @@ To copy a local directory to an Jottacloud directory called backup
 The official Jottacloud client registers a device for each computer you install it on,
 and then creates a mountpoint for each folder you select for Backup.
 The web interface uses a special device called Jotta for the Archive and Sync mountpoints.
-In most cases you'll want to use the Jotta/Archive device/mountpoint, however if you want to access
-files uploaded by any of the official clients rclone provides the option to select other devices
-and mountpoints during config.
+
+With rclone you'll want to use the Jotta/Archive device/mountpoint in most cases, however if you
+want to access files uploaded by any of the official clients rclone provides the option to select
+other devices and mountpoints during config. Note that uploading files is currently not supported
+to other devices than Jotta.
 
 The built-in Jotta device may also contain several other mountpoints, such as: Latest, Links, Shared and Trash.
 These are special mountpoints with a different internal representation than the "regular" mountpoints.
@@ -167,6 +169,9 @@ Note that the implementation in Jottacloud always uses only a single
 API request to get the entire list, so for large folders this could
 lead to long wait time before the first results are shown.
 
+Note also that with rclone version 1.58 and newer information about
+[MIME types](/overview/#mime-type) are not available when using `--fast-list`.
+
 ### Modified time and hashes
 
 Jottacloud allows modification times to be set on objects accurate to 1
@@ -178,9 +183,10 @@ flag.
 
 Note that Jottacloud requires the MD5 hash before upload so if the
 source does not have an MD5 checksum then the file will be cached
-temporarily on disk (wherever the `TMPDIR` environment variable points
-to) before it is uploaded. Small files will be cached in memory - see
-the [--jottacloud-md5-memory-limit](#jottacloud-md5-memory-limit) flag.
+temporarily on disk (in location given by
+[--temp-dir](/docs/#temp-dir-dir)) before it is uploaded.
+Small files will be cached in memory - see the
+[--jottacloud-md5-memory-limit](#jottacloud-md5-memory-limit) flag.
 When uploading from local disk the source checksum is always available,
 so this does not apply. Starting with rclone version 1.52 the same is
 true for crypted remotes (in older versions the crypt backend would not

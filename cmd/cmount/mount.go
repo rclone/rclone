@@ -168,7 +168,7 @@ func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error,
 	host.SetCapCaseInsensitive(f.Features().CaseInsensitive)
 
 	// Create options
-	options := mountOptions(VFS, f.Name()+":"+f.Root(), mountpoint, opt)
+	options := mountOptions(VFS, opt.DeviceName, mountpoint, opt)
 	fs.Debugf(f, "Mounting with options: %q", options)
 
 	// Serve the mount point in the background returning error to errChan

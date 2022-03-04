@@ -32,7 +32,7 @@ func TestGlobToRegexp(t *testing.T) {
 		{`***`, `(^|/)`, `too many stars`},
 		{`ab]c`, `(^|/)`, `mismatched ']'`},
 		{`ab[c`, `(^|/)`, `mismatched '[' and ']'`},
-		{`ab{{cd`, `(^|/)`, `can't nest`},
+		{`ab{x{cd`, `(^|/)`, `can't nest`},
 		{`ab{}}cd`, `(^|/)`, `mismatched '{' and '}'`},
 		{`ab}c`, `(^|/)`, `mismatched '{' and '}'`},
 		{`ab{c`, `(^|/)`, `mismatched '{' and '}'`},
@@ -40,16 +40,24 @@ func TestGlobToRegexp(t *testing.T) {
 		{`[a--b]`, `(^|/)`, `bad glob pattern`},
 		{`a\*b`, `(^|/)a\*b$`, ``},
 		{`a\\b`, `(^|/)a\\b$`, ``},
+		{`a{{.*}}b`, `(^|/)a(.*)b$`, ``},
+		{`a{{.*}`, `(^|/)a(.*)b$`, `mismatched '{{' and '}}'`},
+		{`{{regexp}}`, `(^|/)(regexp)$`, ``},
+		{`\{{{regexp}}`, `(^|/)\{(regexp)$`, ``},
+		{`/{{regexp}}`, `^(regexp)$`, ``},
+		{`/{{\d{8}}}`, `^(\d{8})$`, ``},
+		{`/{{\}}}`, `^(\})$`, ``},
+		{`{{(?i)regexp}}`, `(^|/)((?i)regexp)$`, ``},
 	} {
 		for _, ignoreCase := range []bool{false, true} {
 			gotRe, err := GlobToRegexp(test.in, ignoreCase)
 			if test.error == "" {
+				require.NoError(t, err, test.in)
 				prefix := ""
 				if ignoreCase {
 					prefix = "(?i)"
 				}
 				got := gotRe.String()
-				require.NoError(t, err, test.in)
 				assert.Equal(t, prefix+test.want, got, test.in)
 			} else {
 				require.Error(t, err, test.in)
@@ -84,6 +92,7 @@ func TestGlobToDirGlobs(t *testing.T) {
 		{`/a/{jpg,png,gif}/*.{jpg,png,gif}`, []string{"/a/{jpg,png,gif}/", "/a/", "/"}},
 		{`a/{a,a*b,a**c}/d/`, []string{"/**"}},
 		{`/a/{a,a*b,a/c,d}/d/`, []string{"/**"}},
+		{`/a/{{.*}}/d/`, []string{"/**"}},
 		{`**`, []string{"**/"}},
 		{`a**`, []string{"a**/"}},
 		{`a**b`, []string{"a**/"}},

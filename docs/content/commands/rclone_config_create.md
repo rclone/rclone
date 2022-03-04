@@ -107,8 +107,9 @@ At the end of the non interactive process, rclone will return a result
 with `State` as empty string.
 
 If `--all` is passed then rclone will ask all the config questions,
-not just the post config questions. Any parameters are used as
-defaults for questions as usual.
+not just the post config questions. Parameters that are supplied on
+the command line or from environment variables are used as defaults
+for questions as usual.
 
 Note that `bin/config.py` in the rclone source implements this protocol
 as a readable demonstration.

@@ -22,7 +22,7 @@ Here is an example of how to make a remote called `remote`.  First run:
 This will guide you through an interactive setup process:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 r) Rename remote
 c) Copy remote
@@ -95,8 +95,8 @@ y/e/d> y
 Note that rclone runs a webserver on your local machine to collect the
 token as returned from Google if you use auto config mode. This only
 runs from the moment it opens your browser to the moment you get back
-the verification code.  This is on `http://127.0.0.1:53682/` and this
-it may require you to unblock it temporarily if you are running a host
+the verification code.  This is on `http://127.0.0.1:53682/` and it
+may require you to unblock it temporarily if you are running a host
 firewall, or use manual mode.
 
 You can then use it like this,
@@ -410,7 +410,7 @@ For shortcuts pointing to files:
 - When downloading the contents of the destination file is downloaded.
 - When updating shortcut file with a non shortcut file, the shortcut is removed then a new file is uploaded in place of the shortcut.
 - When server-side moving (renaming) the shortcut is renamed, not the destination file.
-- When server-side copying the shortcut is copied, not the contents of the shortcut.
+- When server-side copying the shortcut is copied, not the contents of the shortcut. (unless `--drive-copy-shortcut-content` is in use in which case the contents of the shortcut gets copied).
 - When deleting the shortcut is deleted not the linked file.
 - When setting the modification time, the modification time of the linked file will be set.
 
@@ -1339,7 +1339,8 @@ credentials", which opens the wizard), then "Create credentials"
 to the next step; if not, click on "CONFIGURE CONSENT SCREEN" button 
 (near the top right corner of the right panel), then select "External"
 and click on "CREATE"; on the next screen, enter an "Application name"
-("rclone" is OK) then click on "Save" (all other data is optional). 
+("rclone" is OK); enter "User Support Email" (your own email is OK); 
+enter "Developer Contact Email" (your own email is OK); then click on "Save" (all other data is optional). 
 Click again on "Credentials" on the left panel to go back to the 
 "Credentials" screen.
 

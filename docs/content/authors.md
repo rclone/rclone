@@ -547,3 +547,29 @@ put them back in again.` >}}
   * bbabich <bbabich@datamossa.com>
   * David <dp.davide.palma@gmail.com>
   * Borna Butkovic <borna@favicode.net>
+  * Fredric Arklid <fredric.arklid@consid.se>
+  * Andy Jackson <Andrew.Jackson@bl.uk>
+  * Sinan Tan <i@tinytangent.com>
+  * deinferno <14363193+deinferno@users.noreply.github.com>
+  * rsapkf <rsapkfff@pm.me>
+  * Will Holtz <wholtz@gmail.com>
+  * GGG KILLER <gggkiller2@gmail.com>
+  * Logeshwaran Murugesan <logeshwaran@testpress.in>
+  * Lu Wang <coolwanglu@gmail.com>
+  * Bumsu Hyeon <ksitht@gmail.com>
+  * Shmz Ozggrn <98463324+ShmzOzggrn@users.noreply.github.com>
+  * Kim <kim@jotta.no>
+  * Niels van de Weem <n.van.de.weem@smile.nl>
+  * Koopa <codingkoopa@gmail.com>
+  * Yunhai Luo <yunhai-luo@hotmail.com>
+  * Charlie Jiang <w@chariri.moe>
+  * Alain Nussbaumer <alain.nussbaumer@alleluia.ch>
+  * Vanessasaurus <814322+vsoch@users.noreply.github.com>
+  * Isaac Levy <isaac.r.levy@gmail.com>
+  * Gourav T <workflowautomation@protonmail.com>
+  * Paulo Martins <paulo.pontes.m@gmail.com>
+  * viveknathani <viveknathani2402@gmail.com>
+  * Eng Zer Jun <engzerjun@gmail.com>
+  * Abhiraj <abhiraj.official15@gmail.com>
+  * Márton Elek <elek@apache.org> <elek@users.noreply.github.com>
+  * Vincent Murphy <vdm@vdm.ie>

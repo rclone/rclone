@@ -21,6 +21,7 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rclone/rclone/fs/rc"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/vfs/vfscache/writeback"
@@ -145,6 +146,29 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 	return c, nil
 }
 
+// Stats returns info about the Cache
+func (c *Cache) Stats() (out rc.Params) {
+	out = make(rc.Params)
+	// read only - no locking needed to read these
+	out["path"] = c.root
+	out["pathMeta"] = c.metaRoot
+	out["hashType"] = c.hashType
+
+	uploadsInProgress, uploadsQueued := c.writeback.Stats()
+	out["uploadsInProgress"] = uploadsInProgress
+	out["uploadsQueued"] = uploadsQueued
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	out["files"] = len(c.item)
+	out["erroredFiles"] = len(c.errItems)
+	out["bytesUsed"] = c.used
+	out["outOfSpace"] = c.outOfSpace
+
+	return out
+}
+
 // createDir creates a directory path, along with any necessary parents
 func createDir(dir string) error {
 	return file.MkdirAll(dir, 0700)
@@ -172,7 +196,6 @@ func createRootDirs(parentOSPath string, relativeDirOSPath string) (dataOSPath s
 // Returns an os path for the data cache file.
 func (c *Cache) createItemDir(name string) (string, error) {
 	parent := vfscommon.FindParent(name)
-	leaf := filepath.Base(name)
 	parentPath := c.toOSPath(parent)
 	err := createDir(parentPath)
 	if err != nil {
@@ -183,7 +206,7 @@ func (c *Cache) createItemDir(name string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create metadata cache item directory: %w", err)
 	}
-	return filepath.Join(parentPath, leaf), nil
+	return c.toOSPath(name), nil
 }
 
 // getBackend gets a backend for a cache root dir

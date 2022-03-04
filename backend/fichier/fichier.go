@@ -42,18 +42,15 @@ func init() {
 		}, {
 			Help:     "If you want to download a shared folder, add this parameter.",
 			Name:     "shared_folder",
-			Required: false,
 			Advanced: true,
 		}, {
 			Help:       "If you want to download a shared file that is password protected, add this parameter.",
 			Name:       "file_password",
-			Required:   false,
 			Advanced:   true,
 			IsPassword: true,
 		}, {
 			Help:       "If you want to list the files in a shared folder that is password protected, add this parameter.",
 			Name:       "folder_password",
-			Required:   false,
 			Advanced:   true,
 			IsPassword: true,
 		}, {
@@ -515,6 +512,32 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	dstObj.setMetaData(*file)
 	return dstObj, nil
+}
+
+// About gets quota information
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
+	opts := rest.Opts{
+		Method:      "POST",
+		Path:        "/user/info.cgi",
+		ContentType: "application/json",
+	}
+	var accountInfo AccountInfo
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.rest.CallJSON(ctx, &opts, nil, &accountInfo)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to read user info: %w", err)
+	}
+
+	// FIXME max upload size would be useful to use in Update
+	usage = &fs.Usage{
+		Used:  fs.NewUsageValue(accountInfo.ColdStorage),                                    // bytes in use
+		Total: fs.NewUsageValue(accountInfo.AvailableColdStorage),                           // bytes total
+		Free:  fs.NewUsageValue(accountInfo.AvailableColdStorage - accountInfo.ColdStorage), // bytes free
+	}
+	return usage, nil
 }
 
 // PublicLink adds a "readable by anyone with link" permission on the given file or folder.

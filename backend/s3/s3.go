@@ -103,6 +103,9 @@ func init() {
 				Value: "StackPath",
 				Help:  "StackPath Object Storage",
 			}, {
+				Value: "Storj",
+				Help:  "Storj (S3 Compatible Gateway)",
+			}, {
 				Value: "TencentCOS",
 				Help:  "Tencent Cloud Object Storage (COS)",
 			}, {
@@ -288,7 +291,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,RackCorp,Scaleway,TencentCOS",
+			Provider: "!AWS,Alibaba,RackCorp,Scaleway,Storj,TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -598,6 +601,20 @@ func init() {
 				Help:  "EU Endpoint",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint of the Shared Gateway.",
+			Provider: "Storj",
+			Examples: []fs.OptionExample{{
+				Value: "gateway.eu1.storjshare.io",
+				Help:  "EU1 Shared Gateway",
+			}, {
+				Value: "gateway.us1.storjshare.io",
+				Help:  "US1 Shared Gateway",
+			}, {
+				Value: "gateway.ap1.storjshare.io",
+				Help:  "Asia-Pacific Shared Gateway",
+			}},
+		}, {
 			// cos endpoints: https://intl.cloud.tencent.com/document/product/436/6224
 			Name:     "endpoint",
 			Help:     "Endpoint for Tencent COS API.",
@@ -726,7 +743,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath,RackCorp",
+			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -761,7 +778,11 @@ func init() {
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.ap-northeast-1.wasabisys.com",
-				Help:     "Wasabi AP Northeast endpoint",
+				Help:     "Wasabi AP Northeast 1 (Tokyo) endpoint",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ap-northeast-2.wasabisys.com",
+				Help:     "Wasabi AP Northeast 2 (Osaka) endpoint",
 				Provider: "Wasabi",
 			}},
 		}, {
@@ -1010,7 +1031,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,RackCorp,Scaleway,StackPath,TencentCOS",
+			Provider: "!AWS,IBMCOS,Alibaba,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1021,6 +1042,7 @@ For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview
 
 Note that this ACL is applied when server-side copying objects as S3
 doesn't copy the ACL from the source but rather writes a fresh one.`,
+			Provider: "!Storj",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -1180,6 +1202,9 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			}, {
 				Value: "INTELLIGENT_TIERING",
 				Help:  "Intelligent-Tiering storage class",
+			}, {
+				Value: "GLACIER_IR",
+				Help:  "Glacier Instant Retrieval storage class",
 			}},
 		}, {
 			// Mapping from here: https://www.alibabacloud.com/help/doc-detail/64919.htm
@@ -1523,6 +1548,14 @@ See: https://github.com/rclone/rclone/issues/4673, https://github.com/rclone/rcl
 This is usually set to a CloudFront CDN URL as AWS S3 offers
 cheaper egress for data downloaded through the CloudFront network.`,
 			Advanced: true,
+		}, {
+			Name: "use_multipart_etag",
+			Help: `Whether to use ETag in multipart uploads for verification
+
+This should be true, false or left unset to use the default for the provider.
+`,
+			Default:  fs.Tristate{},
+			Advanced: true,
 		},
 		}})
 }
@@ -1587,6 +1620,7 @@ type Options struct {
 	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
 	DisableHTTP2          bool                 `config:"disable_http2"`
 	DownloadURL           string               `config:"download_url"`
+	UseMultipartEtag      fs.Tristate          `config:"use_multipart_etag"`
 }
 
 // Fs represents a remote s3 server
@@ -1890,12 +1924,13 @@ func setQuirks(opt *Options) {
 		listObjectsV2     = true
 		virtualHostStyle  = true
 		urlEncodeListings = true
+		useMultipartEtag  = true
 	)
 	switch opt.Provider {
 	case "AWS":
 		// No quirks
 	case "Alibaba":
-		// No quirks
+		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 	case "Ceph":
 		listObjectsV2 = false
 		virtualHostStyle = false
@@ -1908,13 +1943,16 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useMultipartEtag = false // untested
 	case "Minio":
 		virtualHostStyle = false
 	case "Netease":
 		listObjectsV2 = false // untested
 		urlEncodeListings = false
+		useMultipartEtag = false // untested
 	case "RackCorp":
 		// No quirks
+		useMultipartEtag = false // untested
 	case "Scaleway":
 		// Scaleway can only have 1000 parts in an upload
 		if opt.MaxUploadParts > 1000 {
@@ -1925,23 +1963,32 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useMultipartEtag = false // untested
 	case "StackPath":
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
+	case "Storj":
+		// Force chunk size to >= 64 MiB
+		if opt.ChunkSize < 64*fs.Mebi {
+			opt.ChunkSize = 64 * fs.Mebi
+		}
 	case "TencentCOS":
-		listObjectsV2 = false // untested
+		listObjectsV2 = false    // untested
+		useMultipartEtag = false // untested
 	case "Wasabi":
 		// No quirks
 	case "Other":
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useMultipartEtag = false
 	default:
 		fs.Logf("s3", "s3 provider %q not known - please set correctly", opt.Provider)
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
+		useMultipartEtag = false
 	}
 
 	// Path Style vs Virtual Host style
@@ -1962,6 +2009,12 @@ func setQuirks(opt *Options) {
 		} else {
 			opt.ListVersion = 1
 		}
+	}
+
+	// Set the correct use multipart Etag for error checking if not manually set
+	if !opt.UseMultipartEtag.Valid {
+		opt.UseMultipartEtag.Valid = true
+		opt.UseMultipartEtag.Value = useMultipartEtag
 	}
 }
 
@@ -2062,6 +2115,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
+	}
+	if opt.Provider == "Storj" {
+		f.features.Copy = nil
+		f.features.SetTier = false
+		f.features.GetTier = false
 	}
 	// f.listMultipartUploads()
 	return f, nil
@@ -3209,9 +3267,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	if resp.LastModified == nil {
-		fs.Logf(o, "Failed to read last modified from HEAD: %v", err)
-	}
 	o.setMetaData(resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
 	return nil
 }
@@ -3241,6 +3296,7 @@ func (o *Object) setMetaData(etag *string, contentLength *int64, lastModified *t
 	o.storageClass = aws.StringValue(storageClass)
 	if lastModified == nil {
 		o.lastModified = time.Now()
+		fs.Logf(o, "Failed to read last modified")
 	} else {
 		o.lastModified = *lastModified
 	}
@@ -3321,11 +3377,7 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 		return nil, err
 	}
 
-	size, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
-	if err != nil {
-		fs.Debugf(o, "Failed to parse content length from string %s, %v", resp.Header.Get("Content-Length"), err)
-	}
-	contentLength := &size
+	contentLength := &resp.ContentLength
 	if resp.Header.Get("Content-Range") != "" {
 		var contentRange = resp.Header.Get("Content-Range")
 		slash := strings.IndexRune(contentRange, '/')
@@ -3416,9 +3468,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, err
 	}
-	if resp.LastModified == nil {
-		fs.Logf(o, "Failed to read last modified: %v", err)
-	}
+
 	// read size from ContentLength or ContentRange
 	size := resp.ContentLength
 	if resp.ContentRange != nil {
@@ -3441,7 +3491,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 var warnStreamUpload sync.Once
 
-func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (err error) {
+func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, err error) {
 	f := o.fs
 
 	// make concurrency machinery
@@ -3488,7 +3538,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return fmt.Errorf("multipart upload failed to initialise: %w", err)
+		return etag, fmt.Errorf("multipart upload failed to initialise: %w", err)
 	}
 	uid := cout.UploadId
 
@@ -3517,7 +3567,20 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 		partsMu  sync.Mutex // to protect parts
 		parts    []*s3.CompletedPart
 		off      int64
+		md5sMu   sync.Mutex
+		md5s     []byte
 	)
+
+	addMd5 := func(md5binary *[md5.Size]byte, partNum int64) {
+		md5sMu.Lock()
+		defer md5sMu.Unlock()
+		start := partNum * md5.Size
+		end := start + md5.Size
+		if extend := end - int64(len(md5s)); extend > 0 {
+			md5s = append(md5s, make([]byte, extend)...)
+		}
+		copy(md5s[start:end], (*md5binary)[:])
+	}
 
 	for partNum := int64(1); !finished; partNum++ {
 		// Get a block of memory from the pool and token which limits concurrency.
@@ -3548,7 +3611,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 			finished = true
 		} else if err != nil {
 			free()
-			return fmt.Errorf("multipart upload failed to read source: %w", err)
+			return etag, fmt.Errorf("multipart upload failed to read source: %w", err)
 		}
 		buf = buf[:n]
 
@@ -3561,6 +3624,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 
 			// create checksum of buffer for integrity checking
 			md5sumBinary := md5.Sum(buf)
+			addMd5(&md5sumBinary, partNum-1)
 			md5sum := base64.StdEncoding.EncodeToString(md5sumBinary[:])
 
 			err = f.pacer.Call(func() (bool, error) {
@@ -3602,7 +3666,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	}
 	err = g.Wait()
 	if err != nil {
-		return err
+		return etag, err
 	}
 
 	// sort the completed parts by part number
@@ -3623,9 +3687,11 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return fmt.Errorf("multipart upload failed to finalise: %w", err)
+		return etag, fmt.Errorf("multipart upload failed to finalise: %w", err)
 	}
-	return nil
+	hashOfHashes := md5.Sum(md5s)
+	etag = fmt.Sprintf("%s-%d", hex.EncodeToString(hashOfHashes[:]), len(parts))
+	return etag, nil
 }
 
 // Update the Object from in with modTime and size
@@ -3651,19 +3717,20 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	//    - so we can add the md5sum in the metadata as metaMD5Hash if using SSE/SSE-C
 	// - for multipart provided checksums aren't disabled
 	//    - so we can add the md5sum in the metadata as metaMD5Hash
-	var md5sum string
+	var md5sumBase64 string
+	var md5sumHex string
 	if !multipart || !o.fs.opt.DisableChecksum {
-		hash, err := src.Hash(ctx, hash.MD5)
-		if err == nil && matchMd5.MatchString(hash) {
-			hashBytes, err := hex.DecodeString(hash)
+		md5sumHex, err = src.Hash(ctx, hash.MD5)
+		if err == nil && matchMd5.MatchString(md5sumHex) {
+			hashBytes, err := hex.DecodeString(md5sumHex)
 			if err == nil {
-				md5sum = base64.StdEncoding.EncodeToString(hashBytes)
+				md5sumBase64 = base64.StdEncoding.EncodeToString(hashBytes)
 				if (multipart || o.fs.etagIsNotMD5) && !o.fs.opt.DisableChecksum {
 					// Set the md5sum as metadata on the object if
 					// - a multipart upload
 					// - the Etag is not an MD5, eg when using SSE/SSE-C
 					// provided checksums aren't disabled
-					metadata[metaMD5Hash] = &md5sum
+					metadata[metaMD5Hash] = &md5sumBase64
 				}
 			}
 		}
@@ -3678,8 +3745,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		ContentType: &mimeType,
 		Metadata:    metadata,
 	}
-	if md5sum != "" {
-		req.ContentMD5 = &md5sum
+	if md5sumBase64 != "" {
+		req.ContentMD5 = &md5sumBase64
 	}
 	if o.fs.opt.RequesterPays {
 		req.RequestPayer = aws.String(s3.RequestPayerRequester)
@@ -3733,8 +3800,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 
 	var resp *http.Response // response from PUT
+	var wantETag string     // Multipart upload Etag to check
 	if multipart {
-		err = o.uploadMultipart(ctx, &req, size, in)
+		wantETag, err = o.uploadMultipart(ctx, &req, size, in)
 		if err != nil {
 			return err
 		}
@@ -3796,7 +3864,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// so make up the object as best we can assuming it got
 	// uploaded properly. If size < 0 then we need to do the HEAD.
 	if o.fs.opt.NoHead && size >= 0 {
-		o.md5 = md5sum
+		o.md5 = md5sumHex
 		o.bytes = size
 		o.lastModified = time.Now()
 		o.meta = req.Metadata
@@ -3814,7 +3882,18 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// Read the metadata from the newly created object
 	o.meta = nil // wipe old metadata
-	err = o.readMetaData(ctx)
+	head, err := o.headObject(ctx)
+	if err != nil {
+		return err
+	}
+	o.setMetaData(head.ETag, head.ContentLength, head.LastModified, head.Metadata, head.ContentType, head.StorageClass)
+	if o.fs.opt.UseMultipartEtag.Value && !o.fs.etagIsNotMD5 && wantETag != "" && head.ETag != nil && *head.ETag != "" {
+		gotETag := strings.Trim(strings.ToLower(*head.ETag), `"`)
+		if wantETag != gotETag {
+			return fmt.Errorf("multipart upload corrupted: Etag differ: expecting %s but got %s", wantETag, gotETag)
+		}
+		fs.Debugf(o, "Multipart upload Etag: %s OK", wantETag)
+	}
 	return err
 }
 

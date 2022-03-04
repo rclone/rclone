@@ -17,12 +17,10 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:  "TestAzureBlob:",
-		NilObject:   (*Object)(nil),
-		TiersToTest: []string{"Hot", "Cool"},
-		ChunkedUpload: fstests.ChunkedUploadConfig{
-			MaxChunkSize: maxChunkSize,
-		},
+		RemoteName:    "TestAzureBlob:",
+		NilObject:     (*Object)(nil),
+		TiersToTest:   []string{"Hot", "Cool"},
+		ChunkedUpload: fstests.ChunkedUploadConfig{},
 	})
 }
 

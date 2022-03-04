@@ -74,7 +74,8 @@ Now the `dedupe` session
     s) Skip and do nothing
     k) Keep just one (choose which in next step)
     r) Rename all to be different (by changing file.jpg to file-1.jpg)
-    s/k/r> k
+    q) Quit
+    s/k/r/q> k
     Enter the number of the file to keep> 1
     one.txt: Deleted 1 extra copies
     two.txt: Found 3 files with duplicate names
@@ -85,7 +86,8 @@ Now the `dedupe` session
     s) Skip and do nothing
     k) Keep just one (choose which in next step)
     r) Rename all to be different (by changing file.jpg to file-1.jpg)
-    s/k/r> r
+    q) Quit
+    s/k/r/q> r
     two-1.txt: renamed from: two.txt
     two-2.txt: renamed from: two.txt
     two-3.txt: renamed from: two.txt

@@ -42,7 +42,8 @@ const (
 	hashCommandNotSupported = "none"
 	minSleep                = 100 * time.Millisecond
 	maxSleep                = 2 * time.Second
-	decayConstant           = 2 // bigger for slower decay, exponential
+	decayConstant           = 2           // bigger for slower decay, exponential
+	keepAliveInterval       = time.Minute // send keepalives every this long while running commands
 )
 
 var (
@@ -59,11 +60,13 @@ func init() {
 			Help:     "SSH host to connect to.\n\nE.g. \"example.com\".",
 			Required: true,
 		}, {
-			Name: "user",
-			Help: "SSH username, leave blank for current username, " + currentUser + ".",
+			Name:    "user",
+			Help:    "SSH username.",
+			Default: currentUser,
 		}, {
-			Name: "port",
-			Help: "SSH port, leave blank to use default (22).",
+			Name:    "port",
+			Help:    "SSH port number.",
+			Default: 22,
 		}, {
 			Name:       "pass",
 			Help:       "SSH password, leave blank to use ssh-agent.",
@@ -337,6 +340,32 @@ type conn struct {
 // Wait for connection to close
 func (c *conn) wait() {
 	c.err <- c.sshClient.Conn.Wait()
+}
+
+// Send a keepalive over the ssh connection
+func (c *conn) sendKeepAlive() {
+	_, _, err := c.sshClient.SendRequest("keepalive@openssh.com", true, nil)
+	if err != nil {
+		fs.Debugf(nil, "Failed to send keep alive: %v", err)
+	}
+}
+
+// Send keepalives every interval over the ssh connection until done is closed
+func (c *conn) sendKeepAlives(interval time.Duration) (done chan struct{}) {
+	done = make(chan struct{})
+	go func() {
+		t := time.NewTicker(interval)
+		defer t.Stop()
+		for {
+			select {
+			case <-t.C:
+				c.sendKeepAlive()
+			case <-done:
+				return
+			}
+		}
+	}()
+	return done
 }
 
 // Closes the connection
@@ -1098,6 +1127,9 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 	}
 	defer f.putSftpConnection(&c, err)
 
+	// Send keepalives while the connection is open
+	defer close(c.sendKeepAlives(keepAliveInterval))
+
 	session, err := c.sshClient.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("run: get SFTP session: %w", err)
@@ -1110,10 +1142,12 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 	session.Stdout = &stdout
 	session.Stderr = &stderr
 
+	fs.Debugf(f, "Running remote command: %s", cmd)
 	err = session.Run(cmd)
 	if err != nil {
-		return nil, fmt.Errorf("failed to run %q: %s: %w", cmd, stderr.Bytes(), err)
+		return nil, fmt.Errorf("failed to run %q: %s: %w", cmd, bytes.TrimSpace(stderr.Bytes()), err)
 	}
+	fs.Debugf(f, "Remote command result: %s", bytes.TrimSpace(stdout.Bytes()))
 
 	return stdout.Bytes(), nil
 }
@@ -1230,8 +1264,6 @@ func (o *Object) Remote() string {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
-	o.fs.addSession() // Show session in use
-	defer o.fs.removeSession()
 	if o.fs.opt.DisableHashCheck {
 		return "", nil
 	}
@@ -1255,36 +1287,16 @@ func (o *Object) Hash(ctx context.Context, r hash.Type) (string, error) {
 		return "", hash.ErrUnsupported
 	}
 
-	c, err := o.fs.getSftpConnection(ctx)
-	if err != nil {
-		return "", fmt.Errorf("Hash get SFTP connection: %w", err)
-	}
-	session, err := c.sshClient.NewSession()
-	o.fs.putSftpConnection(&c, err)
-	if err != nil {
-		return "", fmt.Errorf("Hash put SFTP connection: %w", err)
-	}
-
-	var stdout, stderr bytes.Buffer
-	session.Stdout = &stdout
-	session.Stderr = &stderr
 	escapedPath := shellEscape(o.path())
 	if o.fs.opt.PathOverride != "" {
 		escapedPath = shellEscape(path.Join(o.fs.opt.PathOverride, o.remote))
 	}
-	err = session.Run(hashCmd + " " + escapedPath)
-	fs.Debugf(nil, "sftp cmd = %s", escapedPath)
+	b, err := o.fs.run(ctx, hashCmd+" "+escapedPath)
 	if err != nil {
-		_ = session.Close()
-		fs.Debugf(o, "Failed to calculate %v hash: %v (%s)", r, err, bytes.TrimSpace(stderr.Bytes()))
-		return "", nil
+		return "", fmt.Errorf("failed to calculate %v hash: %w", r, err)
 	}
 
-	_ = session.Close()
-	b := stdout.Bytes()
-	fs.Debugf(nil, "sftp output = %q", b)
 	str := parseHash(b)
-	fs.Debugf(nil, "sftp hash = %q", str)
 	if r == hash.MD5 {
 		o.md5sum = &str
 	} else if r == hash.SHA1 {

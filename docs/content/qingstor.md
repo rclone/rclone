@@ -17,7 +17,7 @@ Here is an example of making an QingStor configuration.  First run
 This will guide you through an interactive setup process.
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 r) Rename remote
 c) Copy remote

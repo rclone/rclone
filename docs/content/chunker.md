@@ -25,7 +25,7 @@ Now configure `chunker` using `rclone config`. We will call this one `overlay`
 to separate it from the `remote` itself.
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config

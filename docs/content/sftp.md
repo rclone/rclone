@@ -38,7 +38,7 @@ Here is an example of making an SFTP configuration.  First run
 This will guide you through an interactive setup process.
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 q) Quit config
@@ -56,9 +56,11 @@ Choose a number from below, or type in your own value
  1 / Connect to example.com
    \ "example.com"
 host> example.com
-SSH username, leave blank for current username, $USER
+SSH username
+Enter a string value. Press Enter for the default ("$USER").
 user> sftpuser
-SSH port, leave blank to use default (22)
+SSH port number
+Enter a signed integer. Press Enter for the default (22).
 port>
 SSH password, leave blank to use ssh-agent.
 y) Yes type in my own password
@@ -185,7 +187,7 @@ Host key matching, using standard `known_hosts` files can be turned on by
 enabling the `known_hosts_file` option.  This can point to the file maintained
 by `OpenSSH` or can point to a unique file.
 
-e.g.
+e.g. using the OpenSSH `known_hosts` file:
 
 ```
 [remote]
@@ -196,15 +198,18 @@ pass =
 known_hosts_file = ~/.ssh/known_hosts
 ````
 
+Alternatively you can create your own known hosts file like this:
+
+```
+ssh-keyscan -t dsa,rsa,ecdsa,ed25519 example.com >> known_hosts
+```
+
 There are some limitations:
 
 * `rclone` will not _manage_ this file for you.  If the key is missing or
 wrong then the connection will be refused.
 * If the server is set up for a certificate host key then the entry in
 the `known_hosts` file _must_ be the `@cert-authority` entry for the CA
-* Unlike `OpenSSH`, the libraries used by `rclone` do not permit (at time
-of writing) multiple host keys to be listed for a server.  Only the first
-entry is used.
 
 If the host key provided by the server does not match the one in the
 file (or is missing) then the connection will be aborted and an error
@@ -620,7 +625,7 @@ issue](https://github.com/pkg/sftp/issues/156) is fixed.
 Note that since SFTP isn't HTTP based the following flags don't work
 with it: `--dump-headers`, `--dump-bodies`, `--dump-auth`
 
-Note that `--timeout` isn't supported (but `--contimeout` is).
+Note that `--timeout` and `--contimeout` are both supported.
 
 
 ## C14 {#c14}

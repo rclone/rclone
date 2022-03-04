@@ -16,7 +16,7 @@ Here is an example of making a yandex configuration.  First run
 This will guide you through an interactive setup process:
 
 ```
-No remotes found - make a new one
+No remotes found, make a new one?
 n) New remote
 s) Set configuration password
 n/s> n
@@ -174,6 +174,15 @@ Leave blank to use the provider defaults.
 - Env Var:     RCLONE_YANDEX_TOKEN_URL
 - Type:        string
 - Default:     ""
+
+#### --yandex-hard-delete
+
+Delete files permanently rather than putting them into the trash.
+
+- Config:      hard_delete
+- Env Var:     RCLONE_YANDEX_HARD_DELETE
+- Type:        bool
+- Default:     false
 
 #### --yandex-encoding
 

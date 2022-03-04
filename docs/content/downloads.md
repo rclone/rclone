@@ -18,7 +18,7 @@ See the [install](https://rclone.org/install/) documentation for more details.
 | Intel/AMD - 32 Bit | {{< download windows 386 >}} | - | {{< download linux 386 >}} | {{< download linux 386 deb >}} | {{< download linux 386 rpm >}} | {{< download freebsd 386 >}} | {{< download netbsd 386 >}} | {{< download openbsd 386 >}} | {{< download plan9 386 >}} | - |
 | ARMv6 - 32 Bit | - | - | {{< download linux arm >}} | {{< download linux arm deb >}} | {{< download linux arm rpm >}} | {{< download freebsd arm >}} | {{< download netbsd arm >}} | - | - | - |
 | ARMv7 - 32 Bit | - | - | {{< download linux arm-v7 >}} | {{< download linux arm-v7 deb >}} | {{< download linux arm-v7 rpm >}} | {{< download freebsd arm-v7 >}} | {{< download netbsd arm-v7 >}} | - | - | - |
-| ARM - 64 Bit | - | {{< download osx arm64 >}} | {{< download linux arm64 >}} | {{< download linux arm64 deb >}} | {{< download linux arm64 rpm >}} | - | - | - | - | - |
+| ARM - 64 Bit | {{< download windows arm64 >}} | {{< download osx arm64 >}} | {{< download linux arm64 >}} | {{< download linux arm64 deb >}} | {{< download linux arm64 rpm >}} | - | - | - | - | - |
 | MIPS - Big Endian | - | - | {{< download linux mips >}} | {{< download linux mips deb >}} | {{< download linux mips rpm >}} | - | - | - | - | - |
 | MIPS - Little Endian | - | - | {{< download linux mipsle >}} | {{< download linux mipsle deb >}} | {{< download linux mipsle rpm >}} | - | - | - | - | - |
 

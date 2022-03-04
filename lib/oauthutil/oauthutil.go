@@ -691,6 +691,11 @@ func newAuthServer(opt *Options, bindAddress, state, authURL string) *authServer
 
 // Receive the auth request
 func (s *authServer) handleAuth(w http.ResponseWriter, req *http.Request) {
+	if req.URL.Path != "/" {
+		fs.Debugf(nil, "Ignoring %s request on auth server to %q", req.Method, req.URL.Path)
+		http.NotFound(w, req)
+		return
+	}
 	fs.Debugf(nil, "Received %s request on auth server to %q", req.Method, req.URL.Path)
 
 	// Reply with the response to the user and to the channel
@@ -752,10 +757,6 @@ func (s *authServer) Init() error {
 	}
 	s.server.SetKeepAlivesEnabled(false)
 
-	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, req *http.Request) {
-		http.Error(w, "", http.StatusNotFound)
-		return
-	})
 	mux.HandleFunc("/auth", func(w http.ResponseWriter, req *http.Request) {
 		state := req.FormValue("state")
 		if state != s.state {

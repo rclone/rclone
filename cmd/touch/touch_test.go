@@ -113,6 +113,15 @@ func TestTouchCreateMultipleDirAndFile(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{"a", "a/b"}, fs.ModTimeNotSupported)
 }
 
+func TestTouchEmptyName(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	err := Touch(context.Background(), r.Fremote, "")
+	require.NoError(t, err)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{}, []string{}, fs.ModTimeNotSupported)
+}
+
 func TestTouchEmptyDir(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()

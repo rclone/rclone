@@ -389,3 +389,51 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out["vfses"] = names
 	return out, nil
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/stats",
+		Title: "Stats for a VFS.",
+		Help: `
+This returns stats for the selected VFS.
+
+    {
+        // Status of the disk cache - only present if --vfs-cache-mode > off
+        "diskCache": {
+            "bytesUsed": 0,
+            "erroredFiles": 0,
+            "files": 0,
+            "hashType": 1,
+            "outOfSpace": false,
+            "path": "/home/user/.cache/rclone/vfs/local/mnt/a",
+            "pathMeta": "/home/user/.cache/rclone/vfsMeta/local/mnt/a",
+            "uploadsInProgress": 0,
+            "uploadsQueued": 0
+        },
+        "fs": "/mnt/a",
+        "inUse": 1,
+        // Status of the in memory metadata cache
+        "metadataCache": {
+            "dirs": 1,
+            "files": 0
+        },
+        // Options as returned by options/get
+        "opt": {
+            "CacheMaxAge": 3600000000000,
+            // ...
+            "WriteWait": 1000000000
+        }
+    }
+
+` + getVFSHelp,
+		Fn: rcStats,
+	})
+}
+
+func rcStats(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	return vfs.Stats(), nil
+}

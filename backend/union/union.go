@@ -33,25 +33,21 @@ func init() {
 			Help:     "List of space separated upstreams.\n\nCan be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.",
 			Required: true,
 		}, {
-			Name:     "action_policy",
-			Help:     "Policy to choose upstream on ACTION category.",
-			Required: true,
-			Default:  "epall",
+			Name:    "action_policy",
+			Help:    "Policy to choose upstream on ACTION category.",
+			Default: "epall",
 		}, {
-			Name:     "create_policy",
-			Help:     "Policy to choose upstream on CREATE category.",
-			Required: true,
-			Default:  "epmfs",
+			Name:    "create_policy",
+			Help:    "Policy to choose upstream on CREATE category.",
+			Default: "epmfs",
 		}, {
-			Name:     "search_policy",
-			Help:     "Policy to choose upstream on SEARCH category.",
-			Required: true,
-			Default:  "ff",
+			Name:    "search_policy",
+			Help:    "Policy to choose upstream on SEARCH category.",
+			Default: "ff",
 		}, {
-			Name:     "cache_time",
-			Help:     "Cache time of usage and free space (in seconds).\n\nThis option is only useful when a path preserving policy is used.",
-			Required: true,
-			Default:  120,
+			Name:    "cache_time",
+			Help:    "Cache time of usage and free space (in seconds).\n\nThis option is only useful when a path preserving policy is used.",
+			Default: 120,
 		}},
 	}
 	fs.Register(fsi)

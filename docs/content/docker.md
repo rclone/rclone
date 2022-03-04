@@ -164,8 +164,8 @@ Volumes can be created with [docker volume create](https://docs.docker.com/engin
 Here are a few examples:
 ```
 docker volume create vol1 -d rclone -o remote=storj: -o vfs-cache-mode=full
-docker volume create vol2 -d rclone -o remote=:tardigrade,access_grant=xxx:heimdall
-docker volume create vol3 -d rclone -o type=tardigrade -o path=heimdall -o tardigrade-access-grant=xxx -o poll-interval=0
+docker volume create vol2 -d rclone -o remote=:storj,access_grant=xxx:heimdall
+docker volume create vol3 -d rclone -o type=storj -o path=heimdall -o storj-access-grant=xxx -o poll-interval=0
 ```
 
 Note the `-d rclone` flag that tells docker to request volume from the

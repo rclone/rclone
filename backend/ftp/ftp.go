@@ -52,11 +52,13 @@ func init() {
 			Help:     "FTP host to connect to.\n\nE.g. \"ftp.example.com\".",
 			Required: true,
 		}, {
-			Name: "user",
-			Help: "FTP username, leave blank for current username, " + currentUser + ".",
+			Name:    "user",
+			Help:    "FTP username.",
+			Default: currentUser,
 		}, {
-			Name: "port",
-			Help: "FTP port, leave blank to use default (21).",
+			Name:    "port",
+			Help:    "FTP port number.",
+			Default: 21,
 		}, {
 			Name:       "pass",
 			Help:       "FTP password.",

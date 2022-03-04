@@ -7,9 +7,7 @@ import (
 	"context"
 	"crypto/rand"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 
@@ -35,14 +33,7 @@ func TestResticPrivateRepositories(t *testing.T) {
 	require.NoError(t, err)
 
 	// setup rclone with a local backend in a temporary directory
-	tempdir, err := ioutil.TempDir("", "rclone-restic-test-")
-	require.NoError(t, err)
-
-	// make sure the tempdir is properly removed
-	defer func() {
-		err := os.RemoveAll(tempdir)
-		require.NoError(t, err)
-	}()
+	tempdir := t.TempDir()
 
 	// globally set private-repos mode & test user
 	prev := privateRepos

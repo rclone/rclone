@@ -16,11 +16,16 @@ import (
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRc(t *testing.T) {
+	// Disable tests under macOS and the CI since they are locking up
+	if runtime.GOOS == "darwin" {
+		testy.SkipUnreliable(t)
+	}
 	ctx := context.Background()
 	configfile.Install()
 	mount := rc.Calls.Get("mount/mount")
@@ -30,19 +35,14 @@ func TestRc(t *testing.T) {
 	getMountTypes := rc.Calls.Get("mount/types")
 	assert.NotNil(t, getMountTypes)
 
-	localDir, err := ioutil.TempDir("", "rclone-mountlib-localDir")
-	require.NoError(t, err)
-	defer func() { _ = os.RemoveAll(localDir) }()
-	err = ioutil.WriteFile(filepath.Join(localDir, "file.txt"), []byte("hello"), 0666)
+	localDir := t.TempDir()
+	err := ioutil.WriteFile(filepath.Join(localDir, "file.txt"), []byte("hello"), 0666)
 	require.NoError(t, err)
 
-	mountPoint, err := ioutil.TempDir("", "rclone-mountlib-mountPoint")
-	require.NoError(t, err)
+	mountPoint := t.TempDir()
 	if runtime.GOOS == "windows" {
 		// Windows requires the mount point not to exist
 		require.NoError(t, os.RemoveAll(mountPoint))
-	} else {
-		defer func() { _ = os.RemoveAll(mountPoint) }()
 	}
 
 	out, err := getMountTypes.Fn(ctx, nil)

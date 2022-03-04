@@ -1,6 +1,7 @@
 package local
 
 import (
+	"bytes"
 	"context"
 	"io/ioutil"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/readers"
@@ -165,4 +167,65 @@ func TestSymlinkError(t *testing.T) {
 	}
 	_, err := NewFs(context.Background(), "local", "/", m)
 	assert.Equal(t, errLinksAndCopyLinks, err)
+}
+
+// Test hashes on updating an object
+func TestHashOnUpdate(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	const filePath = "file.txt"
+	when := time.Now()
+	r.WriteFile(filePath, "content", when)
+	f := r.Flocal.(*Fs)
+
+	// Get the object
+	o, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+
+	// Test the hash is as we expect
+	md5, err := o.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, "9a0364b9e99bb480dd25e1f0284c8555", md5)
+
+	// Reupload it with diferent contents but same size and timestamp
+	var b = bytes.NewBufferString("CONTENT")
+	src := object.NewStaticObjectInfo(filePath, when, int64(b.Len()), true, nil, f)
+	err = o.Update(ctx, b, src)
+	require.NoError(t, err)
+
+	// Check the hash is as expected
+	md5, err = o.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, "45685e95985e20822fb2538a522a5ccf", md5)
+}
+
+// Test hashes on deleting an object
+func TestHashOnDelete(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	const filePath = "file.txt"
+	when := time.Now()
+	r.WriteFile(filePath, "content", when)
+	f := r.Flocal.(*Fs)
+
+	// Get the object
+	o, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+
+	// Test the hash is as we expect
+	md5, err := o.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, "9a0364b9e99bb480dd25e1f0284c8555", md5)
+
+	// Delete the object
+	require.NoError(t, o.Remove(ctx))
+
+	// Test the hash cache is empty
+	require.Nil(t, o.(*Object).hashes)
+
+	// Test the hash returns an error
+	_, err = o.Hash(ctx, hash.MD5)
+	require.Error(t, err)
 }

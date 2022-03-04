@@ -88,9 +88,11 @@ func RPC(method string, input string) (output string, status int) {
 	}()
 
 	// create a buffer to capture the output
-	err := json.NewDecoder(strings.NewReader(input)).Decode(&in)
-	if err != nil {
-		return writeError(method, in, fmt.Errorf("failed to read input JSON: %w", err), http.StatusBadRequest)
+	if input != "" {
+		err := json.NewDecoder(strings.NewReader(input)).Decode(&in)
+		if err != nil {
+			return writeError(method, in, fmt.Errorf("failed to read input JSON: %w", err), http.StatusBadRequest)
+		}
 	}
 
 	// Find the call
