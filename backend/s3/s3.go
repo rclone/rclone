@@ -85,6 +85,9 @@ func init() {
 				Value: "IBMCOS",
 				Help:  "IBM COS S3",
 			}, {
+				Value: "Lyve",
+				Help:  "Seagate Lyve Cloud",
+			}, {
 				Value: "Minio",
 				Help:  "Minio Object Storage",
 			}, {
@@ -764,6 +767,10 @@ func init() {
 				Value:    "localhost:8333",
 				Help:     "SeaweedFS S3 localhost",
 				Provider: "SeaweedFS",
+			}, {
+				Value:    "s3.us-east-1.lyvecloud.seagate.com",
+				Help:     "Seagate Lyve Cloud US East 1",
+				Provider: "Lyve",
 			}, {
 				Value:    "s3.wasabisys.com",
 				Help:     "Wasabi US East endpoint",
@@ -1944,6 +1951,8 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
+	case "Lyve":
+		useMultipartEtag = false // Lyve seems to calculate multipart Etags differently from AWS
 	case "Minio":
 		virtualHostStyle = false
 	case "Netease":
