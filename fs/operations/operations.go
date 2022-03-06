@@ -796,6 +796,53 @@ func Overlapping(fdst, fsrc fs.Info) bool {
 	return strings.HasPrefix(fdstRoot, fsrcRoot) || strings.HasPrefix(fsrcRoot, fdstRoot)
 }
 
+// OverlappingFilterCheck returns true if fdst and fsrc point to the same
+// underlying Fs and they overlap without fdst being excluded by any filter rule.
+func OverlappingFilterCheck(ctx context.Context, fdst fs.Fs, fsrc fs.Fs) bool {
+	if !SameConfig(fdst, fsrc) {
+		return false
+	}
+	fdstRoot := fixRoot(fdst)
+	fsrcRoot := fixRoot(fsrc)
+	if strings.HasPrefix(fdstRoot, fsrcRoot) {
+		fdstRelative := strings.ReplaceAll(fdstRoot, fsrcRoot, "")
+		return FilterCheckR(ctx, fdstRelative, "", fsrc)
+	}
+	return strings.HasPrefix(fsrcRoot, fdstRoot)
+}
+
+// FilterCheckR checks if fdst would be included in the sync
+func FilterCheckR(ctx context.Context, fdstRelative string, inputPath string, fsrc fs.Fs) bool {
+	include := true
+	fi := filter.GetConfig(ctx)
+	includeDirectory := fi.IncludeDirectory(ctx, fsrc)
+	entries, _ := fsrc.List(ctx, inputPath)
+	for _, entry := range entries {
+		switch x := entry.(type) {
+		case fs.Directory:
+			currentPath := x.Remote()
+			if !strings.HasSuffix(currentPath, "/") {
+				currentPath += "/"
+			}
+			if strings.HasPrefix(fdstRelative, currentPath) {
+				include, _ = includeDirectory(currentPath)
+				if include {
+					if currentPath == fdstRelative {
+						return true
+					}
+					include = FilterCheckR(ctx, fdstRelative, currentPath, fsrc)
+				}
+			}
+		case fs.Object:
+			basename := path.Base(x.Remote())
+			if basename == fi.Opt.ExcludeFile {
+				return false
+			}
+		}
+	}
+	return include
+}
+
 // SameDir returns true if fdst and fsrc point to the same
 // underlying Fs and they are the same directory.
 func SameDir(fdst, fsrc fs.Info) bool {

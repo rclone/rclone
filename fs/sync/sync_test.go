@@ -1442,6 +1442,38 @@ func TestSyncOverlap(t *testing.T) {
 	checkErr(Sync(ctx, FremoteSync, FremoteSync, false))
 }
 
+// Test a sync with filtered overlap
+func TestSyncOverlapWithFilter(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.Add(false, "/rclone-sync-test/"))
+	ctx = filter.ReplaceConfig(ctx, fi)
+
+	subRemoteName := r.FremoteName + "/rclone-sync-test"
+	FremoteSync, err := fs.NewFs(ctx, subRemoteName)
+	FremoteSync.Mkdir(ctx, "")
+	require.NoError(t, err)
+
+	checkErr := func(err error) {
+		require.Error(t, err)
+		assert.True(t, fserrors.IsFatalError(err))
+		assert.Equal(t, fs.ErrorOverlapping.Error(), err.Error())
+	}
+
+	checkNoErr := func(err error) {
+		require.NoError(t, err)
+	}
+
+	checkNoErr(Sync(ctx, FremoteSync, r.Fremote, false))
+	checkErr(Sync(ctx, r.Fremote, FremoteSync, false))
+	checkErr(Sync(ctx, r.Fremote, r.Fremote, false))
+	checkErr(Sync(ctx, FremoteSync, FremoteSync, false))
+}
+
 // Test with CompareDest set
 func TestSyncCompareDest(t *testing.T) {
 	ctx := context.Background()
