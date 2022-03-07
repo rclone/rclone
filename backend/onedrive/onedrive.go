@@ -649,6 +649,12 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	retry := false
 	if resp != nil {
 		switch resp.StatusCode {
+		case 400:
+			if apiErr, ok := err.(*api.Error); ok {
+				if apiErr.ErrorInfo.InnerError.Code == "pathIsTooLong" {
+					return false, fserrors.NoRetryError(err)
+				}
+			}
 		case 401:
 			if len(resp.Header["Www-Authenticate"]) == 1 && strings.Index(resp.Header["Www-Authenticate"][0], "expired_token") >= 0 {
 				retry = true
