@@ -304,6 +304,9 @@ backends:
  - backend:  "koofr"
    remote:   "TestKoofr:"
    fastlist: false
+ - backend:  "koofr"
+   remote:   "TestDigiStorageRo:"
+   fastlist: false
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
