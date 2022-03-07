@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"sync"
 	"time"
 
@@ -84,6 +85,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			err := o.Update(ctx, readers[i], src, options...)
 			if err != nil {
 				errs[i] = fmt.Errorf("%s: %w", o.UpstreamFs().Name(), err)
+				if len(entries) > 1 {
+					// Drain the input buffer to allow other uploads to continue
+					_, _ = io.Copy(ioutil.Discard, readers[i])
+				}
 			}
 		} else {
 			errs[i] = fs.ErrorNotAFile
