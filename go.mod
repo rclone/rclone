@@ -2,8 +2,6 @@ module github.com/rclone/rclone
 
 go 1.17
 
-replace github.com/jlaffaye/ftp => github.com/rclone/ftp v1.0.0-210902f
-
 require (
 	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
 	github.com/Azure/azure-pipeline-go v0.2.3
@@ -32,7 +30,6 @@ require (
 	github.com/hanwen/go-fuse/v2 v2.1.0
 	github.com/iguanesolutions/go-systemd/v5 v5.1.0
 	github.com/jcmturner/gokrb5/v8 v8.4.2
-	github.com/jlaffaye/ftp v0.0.0-20211029032751-b1140299f4df
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
 	github.com/klauspost/compress v1.13.6
 	github.com/koofr/go-httpclient v0.0.0-20200420163713-93aa7c75b348
@@ -48,6 +45,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
+	github.com/rclone/ftp v1.0.0-210902h
 	github.com/rfjakob/eme v1.1.2
 	github.com/shirou/gopsutil/v3 v3.21.10
 	github.com/sirupsen/logrus v1.8.1
