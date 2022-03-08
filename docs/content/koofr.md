@@ -43,8 +43,8 @@ Choose a number from below, or type in your own value.
 Press Enter to leave empty.
  1 / Koofr, https://app.koofr.net/
    \ (koofr)
- 2 / Digi Storage Romania, https://storage.rcs-rds.ro/
-   \ (digistoragero)
+ 2 / Digi Storage, https://storage.rcs-rds.ro/
+   \ (digistorage)
  3 / Any other Koofr API compatible storage service
    \ (other)
 provider> 1    
@@ -66,6 +66,7 @@ Edit advanced config?
 y) Yes
 n) No (default)
 y/n> n
+Remote config
 --------------------
 [koofr]
 type = koofr
@@ -127,8 +128,8 @@ Properties:
 - Examples:
     - "koofr"
         - Koofr, https://app.koofr.net/
-    - "digistoragero"
-        - Digi Storage Romania, https://storage.rcs-rds.ro/
+    - "digistorage"
+        - Digi Storage, https://storage.rcs-rds.ro/
     - "other"
         - Any other Koofr API compatible storage service
 
@@ -179,7 +180,7 @@ Properties:
 
 - Config:      password
 - Env Var:     RCLONE_KOOFR_PASSWORD
-- Provider:    digistoragero
+- Provider:    digistorage
 - Type:        string
 - Required:    true
 
@@ -253,9 +254,9 @@ Note that Koofr is case insensitive so you can't have a file called
 
 This is the original [Koofr](https://koofr.eu) storage provider used as main example and described in the [configuration](#configuration) section above.
 
-### Digi Storage România 
+### Digi Storage 
 
-[Digi Storage România](https://www.digi.ro/servicii/online/digi-storage) is a cloud storage service run by [Digi.ro](https://www.digi.ro/) that
+[Digi Storage](https://www.digi.ro/servicii/online/digi-storage) is a cloud storage service run by [Digi.ro](https://www.digi.ro/) that
 provides a Koofr API.
 
 Here is an example of how to make a remote called `ds`.  First run:
@@ -285,8 +286,8 @@ Choose a number from below, or type in your own value.
 Press Enter to leave empty.
  1 / Koofr, https://app.koofr.net/
    \ (koofr)
- 2 / Digi Storage Romania, https://storage.rcs-rds.ro/
-   \ (digistoragero)
+ 2 / Digi Storage, https://storage.rcs-rds.ro/
+   \ (digistorage)
  3 / Any other Koofr API compatible storage service
    \ (other)
 provider> 2
@@ -311,7 +312,7 @@ y/n> n
 --------------------
 [ds]
 type = koofr
-provider = digistoragero
+provider = digistorage
 user = USERNAME
 password = *** ENCRYPTED ***
 --------------------
@@ -320,6 +321,7 @@ e) Edit this remote
 d) Delete this remote
 y/e/d> y
 ```
+
 ### Other
 
 You may also want to use another, public or private storage provider that runs a Koofr API compatible service, by simply providing the base URL to connect to.
@@ -351,8 +353,8 @@ Choose a number from below, or type in your own value.
 Press Enter to leave empty.
  1 / Koofr, https://app.koofr.net/
    \ (koofr)
- 2 / Digi Storage Romania, https://storage.rcs-rds.ro/
-   \ (digistoragero)
+ 2 / Digi Storage, https://storage.rcs-rds.ro/
+   \ (digistorage)
  3 / Any other Koofr API compatible storage service
    \ (other)
 provider> 3

@@ -39,8 +39,8 @@ func init() {
 				Value: "koofr",
 				Help:  "Koofr, https://app.koofr.net/",
 			}, {
-				Value: "digistoragero",
-				Help:  "Digi Storage Romania, https://storage.rcs-rds.ro/",
+				Value: "digistorage",
+				Help:  "Digi Storage, https://storage.rcs-rds.ro/",
 			}, {
 				Value: "other",
 				Help:  "Any other Koofr API compatible storage service",
@@ -72,7 +72,7 @@ func init() {
 		}, {
 			Name:       "password",
 			Help:       "Your password for rclone (generate one at https://storage.rcs-rds.ro/app/admin/preferences/password).",
-			Provider:   "digistoragero",
+			Provider:   "digistorage",
 			IsPassword: true,
 			Required:   true,
 		}, {
@@ -286,7 +286,7 @@ func setProviderDefaults(opt *Options) {
 		if opt.Endpoint == "" || strings.HasPrefix(opt.Endpoint, "https://app.koofr.net") {
 			opt.Provider = "koofr"
 		} else if strings.HasPrefix(opt.Endpoint, "https://storage.rcs-rds.ro") {
-			opt.Provider = "digistoragero"
+			opt.Provider = "digistorage"
 		} else {
 			opt.Provider = "other"
 		}
@@ -294,7 +294,7 @@ func setProviderDefaults(opt *Options) {
 	// now assign an endpoint
 	if opt.Provider == "koofr" {
 		opt.Endpoint = "https://app.koofr.net"
-	} else if opt.Provider == "digistoragero" {
+	} else if opt.Provider == "digistorage" {
 		opt.Endpoint = "https://storage.rcs-rds.ro"
 	}
 }
