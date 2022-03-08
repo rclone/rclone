@@ -38,7 +38,7 @@ See the following for detailed instructions for
   * [Compress](/compress/)
   * [Crypt](/crypt/) - to encrypt other remotes
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
-  * [Digi Storage România](/koofr/#digi-storage-românia)
+  * [Digi Storage](/koofr/#digi-storage)
   * [Dropbox](/dropbox/)
   * [Enterprise File Fabric](/filefabric/)
   * [FTP](/ftp/)
