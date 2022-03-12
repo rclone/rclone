@@ -210,8 +210,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	_ = f.pruneHash(src.Remote())
 	oResult, err := f.Fs.Put(ctx, wrapIn, src, options...)
-	o = f.wrapObject(oResult, err)
-	if o == nil {
+	o, err = f.wrapObject(oResult, err)
+	if err != nil {
 		return nil, err
 	}
 
