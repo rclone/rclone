@@ -159,6 +159,7 @@ var (
 	_ fs.Fs          = &Fs{}
 	_ fs.ListRer     = &Fs{}
 	_ fs.PutStreamer = &Fs{}
+	_ fs.Mover       = &Fs{}
 )
 
 // NewFs creates a filesystem backed by Storj.
@@ -678,4 +679,35 @@ func newPrefix(prefix string) string {
 	}
 
 	return prefix + "/"
+}
+
+// Move src to this remote using server-side move operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantMove
+func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	srcObj, ok := src.(*Object)
+	if !ok {
+		fs.Debugf(src, "Can't move - not same remote type")
+		return nil, fs.ErrorCantMove
+	}
+
+	// Move parameters
+	srcBucket, srcKey := bucket.Split(srcObj.absolute)
+	dstBucket, dstKey := f.absolute(remote)
+	options := uplink.MoveObjectOptions{}
+
+	// Do the move
+	err := f.project.MoveObject(ctx, srcBucket, srcKey, dstBucket, dstKey, &options)
+	if err != nil {
+		return nil, fmt.Errorf("rename object failed: %w", err)
+	}
+
+	// Read the new object
+	return f.NewObject(ctx, remote)
 }
