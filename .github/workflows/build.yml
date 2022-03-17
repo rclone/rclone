@@ -110,6 +110,7 @@ jobs:
         with:
           stable: 'false'
           go-version: ${{ matrix.go }}
+          check-latest: true
 
       - name: Set environment variables
         shell: bash
