@@ -25,7 +25,7 @@ For example
     └── subdir
         ├── file4
         └── file5
-    
+
     1 directories, 5 files
 
 You can use any of the filtering options with the tree command (e.g.
@@ -49,7 +49,6 @@ rclone tree remote:path [flags]
       --dirsfirst       List directories before files (-U disables)
       --full-path       Print the full path prefix for each file
   -h, --help            help for tree
-      --human           Print the size in a more human readable way.
       --level int       Descend only level directories deep
   -D, --modtime         Print the date of last modification.
       --noindent        Don't print indentation lines

@@ -501,7 +501,7 @@ rclone serve webdav remote:path [flags]
       --pass string                            Password for authentication
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
       --read-only                              Mount read-only
-      --realm string                           realm for authentication (default "rclone")
+      --realm string                           Realm for authentication (default "rclone")
       --server-read-timeout duration           Timeout for server reading data (default 1h0m0s)
       --server-write-timeout duration          Timeout for server writing data (default 1h0m0s)
       --template string                        User-specified template

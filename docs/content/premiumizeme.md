@@ -113,10 +113,12 @@ API Key.
 This is not normally used - use oauth instead.
 
 
+Properties:
+
 - Config:      api_key
 - Env Var:     RCLONE_PREMIUMIZEME_API_KEY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -124,9 +126,11 @@ Here are the advanced options specific to premiumizeme (premiumize.me).
 
 #### --premiumizeme-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_PREMIUMIZEME_ENCODING

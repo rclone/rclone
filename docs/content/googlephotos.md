@@ -232,10 +232,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_GPHOTOS_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gphotos-client-secret
 
@@ -243,10 +245,12 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_GPHOTOS_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gphotos-read-only
 
@@ -254,6 +258,8 @@ Set to make the Google Photos backend read only.
 
 If you choose read only then rclone will only request read only access
 to your photos, otherwise rclone will request full access.
+
+Properties:
 
 - Config:      read_only
 - Env Var:     RCLONE_GPHOTOS_READ_ONLY
@@ -268,10 +274,12 @@ Here are the advanced options specific to google photos (Google Photos).
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_GPHOTOS_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gphotos-auth-url
 
@@ -279,10 +287,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_GPHOTOS_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gphotos-token-url
 
@@ -290,10 +300,12 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_GPHOTOS_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gphotos-read-size
 
@@ -305,6 +317,8 @@ rclone mount needs to know the size of files in advance of reading
 them, so setting this flag when using rclone mount is recommended if
 you want to read the media.
 
+Properties:
+
 - Config:      read_size
 - Env Var:     RCLONE_GPHOTOS_READ_SIZE
 - Type:        bool
@@ -313,6 +327,8 @@ you want to read the media.
 #### --gphotos-start-year
 
 Year limits the photos to be downloaded to those which are uploaded after the given year.
+
+Properties:
 
 - Config:      start_year
 - Env Var:     RCLONE_GPHOTOS_START_YEAR
@@ -323,7 +339,7 @@ Year limits the photos to be downloaded to those which are uploaded after the gi
 
 Also view and download archived media.
 
-By default rclone does not request archived media. Thus, when syncing,
+By default, rclone does not request archived media. Thus, when syncing,
 archived media is not visible in directory listings or transferred.
 
 Note that media in albums is always visible and synced, no matter
@@ -335,6 +351,8 @@ listings and transferred.
 Without this flag, archived media will not be visible in directory
 listings and won't be transferred.
 
+Properties:
+
 - Config:      include_archived
 - Env Var:     RCLONE_GPHOTOS_INCLUDE_ARCHIVED
 - Type:        bool
@@ -342,9 +360,11 @@ listings and won't be transferred.
 
 #### --gphotos-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_GPHOTOS_ENCODING

@@ -281,10 +281,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_GCS_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gcs-client-secret
 
@@ -292,10 +294,12 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_GCS_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gcs-project-number
 
@@ -303,10 +307,12 @@ Project number.
 
 Optional - needed only for list/create/delete buckets - see your developer console.
 
+Properties:
+
 - Config:      project_number
 - Env Var:     RCLONE_GCS_PROJECT_NUMBER
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gcs-service-account-file
 
@@ -317,10 +323,12 @@ Needed only if you want use SA instead of interactive login.
 
 Leading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.
 
+Properties:
+
 - Config:      service_account_file
 - Env Var:     RCLONE_GCS_SERVICE_ACCOUNT_FILE
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gcs-service-account-credentials
 
@@ -329,16 +337,20 @@ Service Account Credentials JSON blob.
 Leave blank normally.
 Needed only if you want use SA instead of interactive login.
 
+Properties:
+
 - Config:      service_account_credentials
 - Env Var:     RCLONE_GCS_SERVICE_ACCOUNT_CREDENTIALS
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gcs-anonymous
 
 Access public buckets and objects without credentials.
 
 Set to 'true' if you just want to download files and don't configure credentials.
+
+Properties:
 
 - Config:      anonymous
 - Env Var:     RCLONE_GCS_ANONYMOUS
@@ -349,10 +361,12 @@ Set to 'true' if you just want to download files and don't configure credentials
 
 Access Control List for new objects.
 
+Properties:
+
 - Config:      object_acl
 - Env Var:     RCLONE_GCS_OBJECT_ACL
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "authenticatedRead"
         - Object owner gets OWNER access.
@@ -377,10 +391,12 @@ Access Control List for new objects.
 
 Access Control List for new buckets.
 
+Properties:
+
 - Config:      bucket_acl
 - Env Var:     RCLONE_GCS_BUCKET_ACL
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "authenticatedRead"
         - Project team owners get OWNER access.
@@ -413,6 +429,8 @@ When it is set, rclone:
 Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 
 
+Properties:
+
 - Config:      bucket_policy_only
 - Env Var:     RCLONE_GCS_BUCKET_POLICY_ONLY
 - Type:        bool
@@ -422,10 +440,12 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 
 Location for the newly created buckets.
 
+Properties:
+
 - Config:      location
 - Env Var:     RCLONE_GCS_LOCATION
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - ""
         - Empty for default location (US)
@@ -441,12 +461,22 @@ Location for the newly created buckets.
         - Hong Kong
     - "asia-northeast1"
         - Tokyo
+    - "asia-northeast2"
+        - Osaka
+    - "asia-northeast3"
+        - Seoul
     - "asia-south1"
         - Mumbai
+    - "asia-south2"
+        - Delhi
     - "asia-southeast1"
         - Singapore
+    - "asia-southeast2"
+        - Jakarta
     - "australia-southeast1"
         - Sydney
+    - "australia-southeast2"
+        - Melbourne
     - "europe-north1"
         - Finland
     - "europe-west1"
@@ -457,6 +487,10 @@ Location for the newly created buckets.
         - Frankfurt
     - "europe-west4"
         - Netherlands
+    - "europe-west6"
+        - Zürich
+    - "europe-central2"
+        - Warsaw
     - "us-central1"
         - Iowa
     - "us-east1"
@@ -467,15 +501,35 @@ Location for the newly created buckets.
         - Oregon
     - "us-west2"
         - California
+    - "us-west3"
+        - Salt Lake City
+    - "us-west4"
+        - Las Vegas
+    - "northamerica-northeast1"
+        - Montréal
+    - "northamerica-northeast2"
+        - Toronto
+    - "southamerica-east1"
+        - São Paulo
+    - "southamerica-west1"
+        - Santiago
+    - "asia1"
+        - Dual region: asia-northeast1 and asia-northeast2.
+    - "eur4"
+        - Dual region: europe-north1 and europe-west4.
+    - "nam4"
+        - Dual region: us-central1 and us-east1.
 
 #### --gcs-storage-class
 
 The storage class to use when storing objects in Google Cloud Storage.
 
+Properties:
+
 - Config:      storage_class
 - Env Var:     RCLONE_GCS_STORAGE_CLASS
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - ""
         - Default
@@ -500,10 +554,12 @@ Here are the advanced options specific to google cloud storage (Google Cloud Sto
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_GCS_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gcs-auth-url
 
@@ -511,10 +567,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_GCS_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gcs-token-url
 
@@ -522,16 +580,20 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_GCS_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --gcs-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_GCS_ENCODING

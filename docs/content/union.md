@@ -182,14 +182,18 @@ List of space separated upstreams.
 
 Can be 'upstreama:test/dir upstreamb:', '"upstreama:test/space:ro dir" upstreamb:', etc.
 
+Properties:
+
 - Config:      upstreams
 - Env Var:     RCLONE_UNION_UPSTREAMS
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --union-action-policy
 
 Policy to choose upstream on ACTION category.
+
+Properties:
 
 - Config:      action_policy
 - Env Var:     RCLONE_UNION_ACTION_POLICY
@@ -200,6 +204,8 @@ Policy to choose upstream on ACTION category.
 
 Policy to choose upstream on CREATE category.
 
+Properties:
+
 - Config:      create_policy
 - Env Var:     RCLONE_UNION_CREATE_POLICY
 - Type:        string
@@ -208,6 +214,8 @@ Policy to choose upstream on CREATE category.
 #### --union-search-policy
 
 Policy to choose upstream on SEARCH category.
+
+Properties:
 
 - Config:      search_policy
 - Env Var:     RCLONE_UNION_SEARCH_POLICY
@@ -219,6 +227,8 @@ Policy to choose upstream on SEARCH category.
 Cache time of usage and free space (in seconds).
 
 This option is only useful when a path preserving policy is used.
+
+Properties:
 
 - Config:      cache_time
 - Env Var:     RCLONE_UNION_CACHE_TIME

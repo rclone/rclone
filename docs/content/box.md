@@ -275,10 +275,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_BOX_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --box-client-secret
 
@@ -286,10 +288,12 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_BOX_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --box-box-config-file
 
@@ -299,10 +303,12 @@ Leave blank normally.
 
 Leading `~` will be expanded in the file name as will environment variables such as `${RCLONE_CONFIG_DIR}`.
 
+Properties:
+
 - Config:      box_config_file
 - Env Var:     RCLONE_BOX_BOX_CONFIG_FILE
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --box-access-token
 
@@ -310,14 +316,18 @@ Box App Primary Access Token
 
 Leave blank normally.
 
+Properties:
+
 - Config:      access_token
 - Env Var:     RCLONE_BOX_ACCESS_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --box-box-sub-type
 
 
+
+Properties:
 
 - Config:      box_sub_type
 - Env Var:     RCLONE_BOX_BOX_SUB_TYPE
@@ -337,10 +347,12 @@ Here are the advanced options specific to box (Box).
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_BOX_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --box-auth-url
 
@@ -348,10 +360,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_BOX_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --box-token-url
 
@@ -359,14 +373,18 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_BOX_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --box-root-folder-id
 
 Fill in for rclone to use a non root folder as its starting point.
+
+Properties:
 
 - Config:      root_folder_id
 - Env Var:     RCLONE_BOX_ROOT_FOLDER_ID
@@ -377,6 +395,8 @@ Fill in for rclone to use a non root folder as its starting point.
 
 Cutoff for switching to multipart upload (>= 50 MiB).
 
+Properties:
+
 - Config:      upload_cutoff
 - Env Var:     RCLONE_BOX_UPLOAD_CUTOFF
 - Type:        SizeSuffix
@@ -385,6 +405,8 @@ Cutoff for switching to multipart upload (>= 50 MiB).
 #### --box-commit-retries
 
 Max number of times to try committing a multipart file.
+
+Properties:
 
 - Config:      commit_retries
 - Env Var:     RCLONE_BOX_COMMIT_RETRIES
@@ -395,6 +417,8 @@ Max number of times to try committing a multipart file.
 
 Size of listing chunk 1-1000.
 
+Properties:
+
 - Config:      list_chunk
 - Env Var:     RCLONE_BOX_LIST_CHUNK
 - Type:        int
@@ -404,16 +428,20 @@ Size of listing chunk 1-1000.
 
 Only show items owned by the login (email address) passed in.
 
+Properties:
+
 - Config:      owned_by
 - Env Var:     RCLONE_BOX_OWNED_BY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --box-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_BOX_ENCODING

@@ -135,10 +135,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_ZOHO_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --zoho-client-secret
 
@@ -146,10 +148,12 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_ZOHO_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --zoho-region
 
@@ -159,10 +163,12 @@ You'll have to use the region your organization is registered in. If
 not sure use the same top level domain as you connect to in your
 browser.
 
+Properties:
+
 - Config:      region
 - Env Var:     RCLONE_ZOHO_REGION
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "com"
         - United states / Global
@@ -181,10 +187,12 @@ Here are the advanced options specific to zoho (Zoho).
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_ZOHO_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --zoho-auth-url
 
@@ -192,10 +200,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_ZOHO_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --zoho-token-url
 
@@ -203,16 +213,20 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_ZOHO_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --zoho-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_ZOHO_ENCODING

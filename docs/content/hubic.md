@@ -117,10 +117,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_HUBIC_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --hubic-client-secret
 
@@ -128,10 +130,12 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_HUBIC_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -141,10 +145,12 @@ Here are the advanced options specific to hubic (Hubic).
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_HUBIC_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --hubic-auth-url
 
@@ -152,10 +158,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_HUBIC_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --hubic-token-url
 
@@ -163,10 +171,12 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_HUBIC_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --hubic-chunk-size
 
@@ -174,6 +184,8 @@ Above this size files will be chunked into a _segments container.
 
 Above this size files will be chunked into a _segments container.  The
 default for this is 5 GiB which is its maximum value.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_HUBIC_CHUNK_SIZE
@@ -193,6 +205,8 @@ files are easier to deal with and have an MD5SUM.
 Rclone will still chunk files bigger than chunk_size when doing normal
 copy operations.
 
+Properties:
+
 - Config:      no_chunk
 - Env Var:     RCLONE_HUBIC_NO_CHUNK
 - Type:        bool
@@ -200,9 +214,11 @@ copy operations.
 
 #### --hubic-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_HUBIC_ENCODING

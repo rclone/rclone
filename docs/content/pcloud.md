@@ -145,10 +145,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_PCLOUD_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --pcloud-client-secret
 
@@ -156,10 +158,12 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_PCLOUD_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -169,10 +173,12 @@ Here are the advanced options specific to pcloud (Pcloud).
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_PCLOUD_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --pcloud-auth-url
 
@@ -180,10 +186,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_PCLOUD_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --pcloud-token-url
 
@@ -191,16 +199,20 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_PCLOUD_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --pcloud-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_PCLOUD_ENCODING
@@ -210,6 +222,8 @@ See the [encoding section in the overview](/overview/#encoding) for more info.
 #### --pcloud-root-folder-id
 
 Fill in for rclone to use a non root folder as its starting point.
+
+Properties:
 
 - Config:      root_folder_id
 - Env Var:     RCLONE_PCLOUD_ROOT_FOLDER_ID
@@ -224,6 +238,8 @@ This is normally set when rclone initially does the oauth connection,
 however you will need to set it by hand if you are using remote config
 with rclone authorize.
 
+
+Properties:
 
 - Config:      hostname
 - Env Var:     RCLONE_PCLOUD_HOSTNAME

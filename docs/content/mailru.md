@@ -162,10 +162,12 @@ Here are the standard options specific to mailru (Mail.ru Cloud).
 
 User name (usually email).
 
+Properties:
+
 - Config:      user
 - Env Var:     RCLONE_MAILRU_USER
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --mailru-pass
 
@@ -173,10 +175,12 @@ Password.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      pass
 - Env Var:     RCLONE_MAILRU_PASS
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --mailru-speedup-enable
 
@@ -190,6 +194,8 @@ Please note that rclone may need local memory and disk space to calculate
 content hash in advance and decide whether full upload is required.
 Also, if rclone does not know file size in advance (e.g. in case of
 streaming or partial uploads), it will not even try this optimization.
+
+Properties:
 
 - Config:      speedup_enable
 - Env Var:     RCLONE_MAILRU_SPEEDUP_ENABLE
@@ -211,6 +217,8 @@ Comma separated list of file name patterns eligible for speedup (put by hash).
 
 Patterns are case insensitive and can contain '*' or '?' meta characters.
 
+Properties:
+
 - Config:      speedup_file_patterns
 - Env Var:     RCLONE_MAILRU_SPEEDUP_FILE_PATTERNS
 - Type:        string
@@ -231,6 +239,8 @@ This option allows you to disable speedup (put by hash) for large files.
 
 Reason is that preliminary hashing can exhaust your RAM or disk space.
 
+Properties:
+
 - Config:      speedup_max_disk
 - Env Var:     RCLONE_MAILRU_SPEEDUP_MAX_DISK
 - Type:        SizeSuffix
@@ -246,6 +256,8 @@ Reason is that preliminary hashing can exhaust your RAM or disk space.
 #### --mailru-speedup-max-memory
 
 Files larger than the size given below will always be hashed on disk.
+
+Properties:
 
 - Config:      speedup_max_memory
 - Env Var:     RCLONE_MAILRU_SPEEDUP_MAX_MEMORY
@@ -263,6 +275,8 @@ Files larger than the size given below will always be hashed on disk.
 
 What should copy do if file checksum is mismatched or invalid.
 
+Properties:
+
 - Config:      check_hash
 - Env Var:     RCLONE_MAILRU_CHECK_HASH
 - Type:        bool
@@ -279,10 +293,12 @@ HTTP user agent used internally by client.
 
 Defaults to "rclone/VERSION" or "--user-agent" provided on command line.
 
+Properties:
+
 - Config:      user_agent
 - Env Var:     RCLONE_MAILRU_USER_AGENT
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --mailru-quirks
 
@@ -294,16 +310,20 @@ flags is not documented and not guaranteed to persist between releases.
 Quirks will be removed when the backend grows stable.
 Supported quirks: atomicmkdir binlist unknowndirs
 
+Properties:
+
 - Config:      quirks
 - Env Var:     RCLONE_MAILRU_QUIRKS
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --mailru-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_MAILRU_ENCODING

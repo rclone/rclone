@@ -316,28 +316,34 @@ Remote to cache.
 Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 
+Properties:
+
 - Config:      remote
 - Env Var:     RCLONE_CACHE_REMOTE
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --cache-plex-url
 
 The URL of the Plex server.
 
+Properties:
+
 - Config:      plex_url
 - Env Var:     RCLONE_CACHE_PLEX_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --cache-plex-username
 
 The username of the Plex user.
 
+Properties:
+
 - Config:      plex_username
 - Env Var:     RCLONE_CACHE_PLEX_USERNAME
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --cache-plex-password
 
@@ -345,10 +351,12 @@ The password of the Plex user.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      plex_password
 - Env Var:     RCLONE_CACHE_PLEX_PASSWORD
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --cache-chunk-size
 
@@ -357,6 +365,8 @@ The size of a chunk (partial file data).
 Use lower numbers for slower connections. If the chunk size is
 changed, any downloaded chunks will be invalid and cache-chunk-path
 will need to be cleared or unexpected EOF errors will occur.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_CACHE_CHUNK_SIZE
@@ -376,6 +386,8 @@ How long to cache file structure information (directory listings, file size, tim
 If all write operations are done through the cache then you can safely make
 this value very large as the cache store will also be updated in real time.
 
+Properties:
+
 - Config:      info_age
 - Env Var:     RCLONE_CACHE_INFO_AGE
 - Type:        Duration
@@ -394,6 +406,8 @@ The total size that the chunks can take up on the local disk.
 
 If the cache exceeds this value then it will start to delete the
 oldest chunks until it goes under this value.
+
+Properties:
 
 - Config:      chunk_total_size
 - Env Var:     RCLONE_CACHE_CHUNK_TOTAL_SIZE
@@ -415,25 +429,31 @@ Here are the advanced options specific to cache (Cache a remote).
 
 The plex token for authentication - auto set normally.
 
+Properties:
+
 - Config:      plex_token
 - Env Var:     RCLONE_CACHE_PLEX_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --cache-plex-insecure
 
 Skip all certificate verification when connecting to the Plex server.
 
+Properties:
+
 - Config:      plex_insecure
 - Env Var:     RCLONE_CACHE_PLEX_INSECURE
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --cache-db-path
 
 Directory to store file structure metadata DB.
 
 The remote name is used as the DB file name.
+
+Properties:
 
 - Config:      db_path
 - Env Var:     RCLONE_CACHE_DB_PATH
@@ -451,6 +471,8 @@ This config follows the "--cache-db-path". If you specify a custom
 location for "--cache-db-path" and don't specify one for "--cache-chunk-path"
 then "--cache-chunk-path" will use the same path as "--cache-db-path".
 
+Properties:
+
 - Config:      chunk_path
 - Env Var:     RCLONE_CACHE_CHUNK_PATH
 - Type:        string
@@ -459,6 +481,8 @@ then "--cache-chunk-path" will use the same path as "--cache-db-path".
 #### --cache-db-purge
 
 Clear all the cached data for this remote on start.
+
+Properties:
 
 - Config:      db_purge
 - Env Var:     RCLONE_CACHE_DB_PURGE
@@ -472,6 +496,8 @@ How often should the cache perform cleanups of the chunk storage.
 The default value should be ok for most people. If you find that the
 cache goes over "cache-chunk-total-size" too often then try to lower
 this value to force it to perform cleanups more often.
+
+Properties:
 
 - Config:      chunk_clean_interval
 - Env Var:     RCLONE_CACHE_CHUNK_CLEAN_INTERVAL
@@ -489,6 +515,8 @@ cache isn't able to provide file data anymore.
 
 For really slow connections, increase this to a point where the stream is
 able to provide data but your experience will be very stuttering.
+
+Properties:
 
 - Config:      read_retries
 - Env Var:     RCLONE_CACHE_READ_RETRIES
@@ -508,6 +536,8 @@ more fluid and data will be available much more faster to readers.
 **Note**: If the optional Plex integration is enabled then this
 setting will adapt to the type of reading performed and the value
 specified here will be used as a maximum number of workers to use.
+
+Properties:
 
 - Config:      workers
 - Env Var:     RCLONE_CACHE_WORKERS
@@ -530,6 +560,8 @@ at the same time).
 If the hardware permits it, use this feature to provide an overall better
 performance during streaming but it can also be disabled if RAM is not
 available on the local machine.
+
+Properties:
 
 - Config:      chunk_no_memory
 - Env Var:     RCLONE_CACHE_CHUNK_NO_MEMORY
@@ -556,6 +588,8 @@ useless but it is available to set for more special cases.
 other API calls to the cloud provider like directory listings will
 still pass.
 
+Properties:
+
 - Config:      rps
 - Env Var:     RCLONE_CACHE_RPS
 - Type:        int
@@ -568,6 +602,8 @@ Cache file data on writes through the FS.
 If you need to read files immediately after you upload them through
 cache you can enable this flag to have their data stored in the
 cache store at the same time during upload.
+
+Properties:
 
 - Config:      writes
 - Env Var:     RCLONE_CACHE_WRITES
@@ -585,10 +621,12 @@ Specifying a value will enable this feature. Without it, it is
 completely disabled and files will be uploaded directly to the cloud
 provider
 
+Properties:
+
 - Config:      tmp_upload_path
 - Env Var:     RCLONE_CACHE_TMP_UPLOAD_PATH
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --cache-tmp-wait-time
 
@@ -599,6 +637,8 @@ _cache-tmp-upload-path_ before it is selected for upload.
 
 Note that only one file is uploaded at a time and it can take longer
 to start the upload if a queue formed for this purpose.
+
+Properties:
 
 - Config:      tmp_wait_time
 - Env Var:     RCLONE_CACHE_TMP_WAIT_TIME
@@ -614,6 +654,8 @@ for this duration for the DB to become available before it gives an
 error.
 
 If you set it to 0 then it will wait forever.
+
+Properties:
 
 - Config:      db_wait_time
 - Env Var:     RCLONE_CACHE_DB_WAIT_TIME
@@ -634,7 +676,7 @@ See [the "rclone backend" command](/commands/rclone_backend/) for more
 info on how to pass options and arguments.
 
 These can be run on a running backend using the rc command
-[backend/command](/rc/#backend/command).
+[backend/command](/rc/#backend-command).
 
 ### stats
 

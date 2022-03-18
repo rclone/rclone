@@ -428,14 +428,18 @@ Remote to encrypt/decrypt.
 Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 
+Properties:
+
 - Config:      remote
 - Env Var:     RCLONE_CRYPT_REMOTE
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --crypt-filename-encryption
 
 How to encrypt the filenames.
+
+Properties:
 
 - Config:      filename_encryption
 - Env Var:     RCLONE_CRYPT_FILENAME_ENCRYPTION
@@ -457,6 +461,8 @@ Option to either encrypt directory names or leave them intact.
 
 NB If filename_encryption is "off" then this option will do nothing.
 
+Properties:
+
 - Config:      directory_name_encryption
 - Env Var:     RCLONE_CRYPT_DIRECTORY_NAME_ENCRYPTION
 - Type:        bool
@@ -473,10 +479,12 @@ Password or pass phrase for encryption.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      password
 - Env Var:     RCLONE_CRYPT_PASSWORD
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --crypt-password2
 
@@ -487,10 +495,12 @@ Should be different to the previous password.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      password2
 - Env Var:     RCLONE_CRYPT_PASSWORD2
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -509,6 +519,8 @@ pointing to two different directories with the single changed
 parameter and use rclone move to move the files between the crypt
 remotes.
 
+Properties:
+
 - Config:      server_side_across_configs
 - Env Var:     RCLONE_CRYPT_SERVER_SIDE_ACROSS_CONFIGS
 - Type:        bool
@@ -526,6 +538,8 @@ This is so you can work out which encrypted names are which decrypted
 names just in case you need to do something with the encrypted file
 names, or for debugging purposes.
 
+Properties:
+
 - Config:      show_mapping
 - Env Var:     RCLONE_CRYPT_SHOW_MAPPING
 - Type:        bool
@@ -534,6 +548,8 @@ names, or for debugging purposes.
 #### --crypt-no-data-encryption
 
 Option to either encrypt file data or leave it unencrypted.
+
+Properties:
 
 - Config:      no_data_encryption
 - Env Var:     RCLONE_CRYPT_NO_DATA_ENCRYPTION
@@ -544,6 +560,29 @@ Option to either encrypt file data or leave it unencrypted.
         - Don't encrypt file data, leave it unencrypted.
     - "false"
         - Encrypt file data.
+
+#### --crypt-filename-encoding
+
+How to encode the encrypted filename to text string.
+
+This option could help with shortening the encrypted filename. The 
+suitable option would depend on the way your remote count the filename
+length and if it's case sensitve.
+
+Properties:
+
+- Config:      filename_encoding
+- Env Var:     RCLONE_CRYPT_FILENAME_ENCODING
+- Type:        string
+- Default:     "base32"
+- Examples:
+    - "base32"
+        - Encode using base32. Suitable for all remote.
+    - "base64"
+        - Encode using base64. Suitable for case sensitive remote.
+    - "base32768"
+        - Encode using base32768. Suitable if your remote counts UTF-16 or
+        - Unicode codepoint instead of UTF-8 byte length. (Eg. Onedrive)
 
 ## Backend commands
 
@@ -559,7 +598,7 @@ See [the "rclone backend" command](/commands/rclone_backend/) for more
 info on how to pass options and arguments.
 
 These can be run on a running backend using the rc command
-[backend/command](/rc/#backend/command).
+[backend/command](/rc/#backend-command).
 
 ### encode
 

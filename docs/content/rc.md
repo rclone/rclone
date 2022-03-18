@@ -663,7 +663,7 @@ If the rate parameter is not supplied then the bandwidth is queried
 The format of the parameter is exactly the same as passed to --bwlimit
 except only one bandwidth may be specified.
 
-In either case "rate" is returned as a human readable string, and
+In either case "rate" is returned as a human-readable string, and
 "bytesPerSecond" is returned as a number.
 
 ### core/command: Run a rclone terminal command over rc. {#core-command}
@@ -1497,6 +1497,32 @@ check that parameter passing is working properly.
 
 **Authentication is required for this call.**
 
+### sync/bisync: Perform bidirectonal synchronization between two paths. {#sync-bisync}
+
+This takes the following parameters
+
+- path1 - a remote directory string e.g. `drive:path1`
+- path2 - a remote directory string e.g. `drive:path2`
+- dryRun - dry-run mode
+- resync - performs the resync run
+- checkAccess - abort if RCLONE_TEST files are not found on both filesystems
+- checkFilename - file name for checkAccess (default: RCLONE_TEST)
+- maxDelete - abort sync if percentage of deleted files is above
+  this threshold (default: 50)
+- force - maxDelete safety check and run the sync
+- checkSync - `true` by default, `false` disables comparison of final listings,
+              `only` will skip sync, only compare listings from the last run
+- removeEmptyDirs - remove empty directories at the final cleanup step
+- filtersFile - read filtering patterns from a file
+- workdir - server directory for history files (default: /home/ncw/.cache/rclone/bisync)
+- noCleanup - retain working files
+
+See [bisync command help](https://rclone.org/commands/rclone_bisync/)
+and [full bisync description](https://rclone.org/bisync/)
+for more information.
+
+**Authentication is required for this call.**
+
 ### sync/copy: copy a directory from source remote to destination remote {#sync-copy}
 
 This takes the following parameters:
@@ -1609,6 +1635,44 @@ starting with dir will refresh that directory, e.g.
 
 If the parameter recursive=true is given the whole directory tree
 will get refreshed. This refresh will use --fast-list if enabled.
+ 
+This command takes an "fs" parameter. If this parameter is not
+supplied and if there is only one VFS in use then that VFS will be
+used. If there is more than one VFS in use then the "fs" parameter
+must be supplied.
+
+### vfs/stats: Stats for a VFS. {#vfs-stats}
+
+This returns stats for the selected VFS.
+
+    {
+        // Status of the disk cache - only present if --vfs-cache-mode > off
+        "diskCache": {
+            "bytesUsed": 0,
+            "erroredFiles": 0,
+            "files": 0,
+            "hashType": 1,
+            "outOfSpace": false,
+            "path": "/home/user/.cache/rclone/vfs/local/mnt/a",
+            "pathMeta": "/home/user/.cache/rclone/vfsMeta/local/mnt/a",
+            "uploadsInProgress": 0,
+            "uploadsQueued": 0
+        },
+        "fs": "/mnt/a",
+        "inUse": 1,
+        // Status of the in memory metadata cache
+        "metadataCache": {
+            "dirs": 1,
+            "files": 0
+        },
+        // Options as returned by options/get
+        "opt": {
+            "CacheMaxAge": 3600000000000,
+            // ...
+            "WriteWait": 1000000000
+        }
+    }
+
  
 This command takes an "fs" parameter. If this parameter is not
 supplied and if there is only one VFS in use then that VFS will be

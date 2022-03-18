@@ -131,10 +131,12 @@ Sugarsync App ID.
 
 Leave blank to use rclone's.
 
+Properties:
+
 - Config:      app_id
 - Env Var:     RCLONE_SUGARSYNC_APP_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-access-key-id
 
@@ -142,10 +144,12 @@ Sugarsync Access Key ID.
 
 Leave blank to use rclone's.
 
+Properties:
+
 - Config:      access_key_id
 - Env Var:     RCLONE_SUGARSYNC_ACCESS_KEY_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-private-access-key
 
@@ -153,15 +157,19 @@ Sugarsync Private Access Key.
 
 Leave blank to use rclone's.
 
+Properties:
+
 - Config:      private_access_key
 - Env Var:     RCLONE_SUGARSYNC_PRIVATE_ACCESS_KEY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-hard-delete
 
 Permanently delete files if true
 otherwise put them in the deleted files.
+
+Properties:
 
 - Config:      hard_delete
 - Env Var:     RCLONE_SUGARSYNC_HARD_DELETE
@@ -178,10 +186,12 @@ Sugarsync refresh token.
 
 Leave blank normally, will be auto configured by rclone.
 
+Properties:
+
 - Config:      refresh_token
 - Env Var:     RCLONE_SUGARSYNC_REFRESH_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-authorization
 
@@ -189,10 +199,12 @@ Sugarsync authorization.
 
 Leave blank normally, will be auto configured by rclone.
 
+Properties:
+
 - Config:      authorization
 - Env Var:     RCLONE_SUGARSYNC_AUTHORIZATION
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-authorization-expiry
 
@@ -200,10 +212,12 @@ Sugarsync authorization expiry.
 
 Leave blank normally, will be auto configured by rclone.
 
+Properties:
+
 - Config:      authorization_expiry
 - Env Var:     RCLONE_SUGARSYNC_AUTHORIZATION_EXPIRY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-user
 
@@ -211,10 +225,12 @@ Sugarsync user.
 
 Leave blank normally, will be auto configured by rclone.
 
+Properties:
+
 - Config:      user
 - Env Var:     RCLONE_SUGARSYNC_USER
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-root-id
 
@@ -222,10 +238,12 @@ Sugarsync root id.
 
 Leave blank normally, will be auto configured by rclone.
 
+Properties:
+
 - Config:      root_id
 - Env Var:     RCLONE_SUGARSYNC_ROOT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-deleted-id
 
@@ -233,16 +251,20 @@ Sugarsync deleted folder id.
 
 Leave blank normally, will be auto configured by rclone.
 
+Properties:
+
 - Config:      deleted_id
 - Env Var:     RCLONE_SUGARSYNC_DELETED_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sugarsync-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_SUGARSYNC_ENCODING

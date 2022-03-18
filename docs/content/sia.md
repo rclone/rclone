@@ -141,6 +141,8 @@ Sia daemon API URL, like http://sia.daemon.host:9980.
 Note that siad must run with --disable-api-security to open API port for other hosts (not recommended).
 Keep default if Sia daemon runs on localhost.
 
+Properties:
+
 - Config:      api_url
 - Env Var:     RCLONE_SIA_API_URL
 - Type:        string
@@ -154,10 +156,12 @@ Can be found in the apipassword file located in HOME/.sia/ or in the daemon dire
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      api_password
 - Env Var:     RCLONE_SIA_API_PASSWORD
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -169,6 +173,8 @@ Siad User Agent
 
 Sia daemon requires the 'Sia-Agent' user agent by default for security
 
+Properties:
+
 - Config:      user_agent
 - Env Var:     RCLONE_SIA_USER_AGENT
 - Type:        string
@@ -176,9 +182,11 @@ Sia daemon requires the 'Sia-Agent' user agent by default for security
 
 #### --sia-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_SIA_ENCODING

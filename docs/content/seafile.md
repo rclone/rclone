@@ -272,10 +272,12 @@ Here are the standard options specific to seafile (seafile).
 
 URL of seafile host to connect to.
 
+Properties:
+
 - Config:      url
 - Env Var:     RCLONE_SEAFILE_URL
 - Type:        string
-- Default:     ""
+- Required:    true
 - Examples:
     - "https://cloud.seafile.com/"
         - Connect to cloud.seafile.com.
@@ -284,10 +286,12 @@ URL of seafile host to connect to.
 
 User name (usually email address).
 
+Properties:
+
 - Config:      user
 - Env Var:     RCLONE_SEAFILE_USER
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --seafile-pass
 
@@ -295,14 +299,18 @@ Password.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      pass
 - Env Var:     RCLONE_SEAFILE_PASS
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --seafile-2fa
 
 Two-factor authentication ('true' if the account has 2FA enabled).
+
+Properties:
 
 - Config:      2fa
 - Env Var:     RCLONE_SEAFILE_2FA
@@ -315,10 +323,12 @@ Name of the library.
 
 Leave blank to access all non-encrypted libraries.
 
+Properties:
+
 - Config:      library
 - Env Var:     RCLONE_SEAFILE_LIBRARY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --seafile-library-key
 
@@ -328,19 +338,23 @@ Leave blank if you pass it through the command line.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      library_key
 - Env Var:     RCLONE_SEAFILE_LIBRARY_KEY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --seafile-auth-token
 
 Authentication token.
 
+Properties:
+
 - Config:      auth_token
 - Env Var:     RCLONE_SEAFILE_AUTH_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -350,6 +364,8 @@ Here are the advanced options specific to seafile (seafile).
 
 Should rclone create a library if it doesn't exist.
 
+Properties:
+
 - Config:      create_library
 - Env Var:     RCLONE_SEAFILE_CREATE_LIBRARY
 - Type:        bool
@@ -357,9 +373,11 @@ Should rclone create a library if it doesn't exist.
 
 #### --seafile-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_SEAFILE_ENCODING

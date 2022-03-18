@@ -251,6 +251,8 @@ Here are the standard options specific to swift (OpenStack Swift (Rackspace Clou
 
 Get swift credentials from environment variables in standard OpenStack form.
 
+Properties:
+
 - Config:      env_auth
 - Env Var:     RCLONE_SWIFT_ENV_AUTH
 - Type:        bool
@@ -266,28 +268,34 @@ Get swift credentials from environment variables in standard OpenStack form.
 
 User name to log in (OS_USERNAME).
 
+Properties:
+
 - Config:      user
 - Env Var:     RCLONE_SWIFT_USER
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-key
 
 API key or password (OS_PASSWORD).
 
+Properties:
+
 - Config:      key
 - Env Var:     RCLONE_SWIFT_KEY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-auth
 
 Authentication URL for server (OS_AUTH_URL).
 
+Properties:
+
 - Config:      auth
 - Env Var:     RCLONE_SWIFT_AUTH
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "https://auth.api.rackspacecloud.com/v1.0"
         - Rackspace US
@@ -306,104 +314,128 @@ Authentication URL for server (OS_AUTH_URL).
 
 User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).
 
+Properties:
+
 - Config:      user_id
 - Env Var:     RCLONE_SWIFT_USER_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-domain
 
 User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)
 
+Properties:
+
 - Config:      domain
 - Env Var:     RCLONE_SWIFT_DOMAIN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-tenant
 
 Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME).
 
+Properties:
+
 - Config:      tenant
 - Env Var:     RCLONE_SWIFT_TENANT
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-tenant-id
 
 Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID).
 
+Properties:
+
 - Config:      tenant_id
 - Env Var:     RCLONE_SWIFT_TENANT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-tenant-domain
 
 Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME).
 
+Properties:
+
 - Config:      tenant_domain
 - Env Var:     RCLONE_SWIFT_TENANT_DOMAIN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-region
 
 Region name - optional (OS_REGION_NAME).
 
+Properties:
+
 - Config:      region
 - Env Var:     RCLONE_SWIFT_REGION
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-storage-url
 
 Storage URL - optional (OS_STORAGE_URL).
 
+Properties:
+
 - Config:      storage_url
 - Env Var:     RCLONE_SWIFT_STORAGE_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-auth-token
 
 Auth Token from alternate authentication - optional (OS_AUTH_TOKEN).
 
+Properties:
+
 - Config:      auth_token
 - Env Var:     RCLONE_SWIFT_AUTH_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-application-credential-id
 
 Application Credential ID (OS_APPLICATION_CREDENTIAL_ID).
 
+Properties:
+
 - Config:      application_credential_id
 - Env Var:     RCLONE_SWIFT_APPLICATION_CREDENTIAL_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-application-credential-name
 
 Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME).
 
+Properties:
+
 - Config:      application_credential_name
 - Env Var:     RCLONE_SWIFT_APPLICATION_CREDENTIAL_NAME
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-application-credential-secret
 
 Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET).
 
+Properties:
+
 - Config:      application_credential_secret
 - Env Var:     RCLONE_SWIFT_APPLICATION_CREDENTIAL_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --swift-auth-version
 
 AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION).
+
+Properties:
 
 - Config:      auth_version
 - Env Var:     RCLONE_SWIFT_AUTH_VERSION
@@ -413,6 +445,8 @@ AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH
 #### --swift-endpoint-type
 
 Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE).
+
+Properties:
 
 - Config:      endpoint_type
 - Env Var:     RCLONE_SWIFT_ENDPOINT_TYPE
@@ -435,10 +469,12 @@ container. The policy cannot be changed afterwards. The allowed
 configuration values and their meaning depend on your Swift storage
 provider.
 
+Properties:
+
 - Config:      storage_policy
 - Env Var:     RCLONE_SWIFT_STORAGE_POLICY
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - ""
         - Default
@@ -457,6 +493,8 @@ If true avoid calling abort upload on a failure.
 
 It should be set to true for resuming uploads across different sessions.
 
+Properties:
+
 - Config:      leave_parts_on_error
 - Env Var:     RCLONE_SWIFT_LEAVE_PARTS_ON_ERROR
 - Type:        bool
@@ -468,6 +506,8 @@ Above this size files will be chunked into a _segments container.
 
 Above this size files will be chunked into a _segments container.  The
 default for this is 5 GiB which is its maximum value.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_SWIFT_CHUNK_SIZE
@@ -487,6 +527,8 @@ files are easier to deal with and have an MD5SUM.
 Rclone will still chunk files bigger than chunk_size when doing normal
 copy operations.
 
+Properties:
+
 - Config:      no_chunk
 - Env Var:     RCLONE_SWIFT_NO_CHUNK
 - Type:        bool
@@ -494,9 +536,11 @@ copy operations.
 
 #### --swift-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_SWIFT_ENCODING

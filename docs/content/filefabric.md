@@ -160,10 +160,12 @@ Here are the standard options specific to filefabric (Enterprise File Fabric).
 
 URL of the Enterprise File Fabric to connect to.
 
+Properties:
+
 - Config:      url
 - Env Var:     RCLONE_FILEFABRIC_URL
 - Type:        string
-- Default:     ""
+- Required:    true
 - Examples:
     - "https://storagemadeeasy.com"
         - Storage Made Easy US
@@ -181,10 +183,12 @@ Leave blank normally.
 Fill in to make rclone start with directory of a given ID.
 
 
+Properties:
+
 - Config:      root_folder_id
 - Env Var:     RCLONE_FILEFABRIC_ROOT_FOLDER_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --filefabric-permanent-token
 
@@ -200,10 +204,12 @@ These tokens are normally valid for several years.
 For more info see: https://docs.storagemadeeasy.com/organisationcloud/api-tokens
 
 
+Properties:
+
 - Config:      permanent_token
 - Env Var:     RCLONE_FILEFABRIC_PERMANENT_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -219,10 +225,12 @@ usually valid for 1 hour.
 Don't set this value - rclone will set it automatically.
 
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_FILEFABRIC_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --filefabric-token-expiry
 
@@ -231,10 +239,12 @@ Token expiry time.
 Don't set this value - rclone will set it automatically.
 
 
+Properties:
+
 - Config:      token_expiry
 - Env Var:     RCLONE_FILEFABRIC_TOKEN_EXPIRY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --filefabric-version
 
@@ -243,16 +253,20 @@ Version read from the file fabric.
 Don't set this value - rclone will set it automatically.
 
 
+Properties:
+
 - Config:      version
 - Env Var:     RCLONE_FILEFABRIC_VERSION
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --filefabric-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_FILEFABRIC_ENCODING

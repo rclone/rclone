@@ -96,14 +96,18 @@ Here are the standard options specific to compress (Compress a remote).
 
 Remote to compress.
 
+Properties:
+
 - Config:      remote
 - Env Var:     RCLONE_COMPRESS_REMOTE
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --compress-mode
 
 Compression mode.
+
+Properties:
 
 - Config:      mode
 - Env Var:     RCLONE_COMPRESS_MODE
@@ -129,6 +133,8 @@ Level -2 uses Huffmann encoding only. Only use if you know what you
 are doing.
 Level 0 turns off compression.
 
+Properties:
+
 - Config:      level
 - Env Var:     RCLONE_COMPRESS_LEVEL
 - Type:        int
@@ -142,6 +148,8 @@ it's size.
 
 Files smaller than this limit will be cached in RAM, files larger than 
 this limit will be cached on disk.
+
+Properties:
 
 - Config:      ram_cache_limit
 - Env Var:     RCLONE_COMPRESS_RAM_CACHE_LIMIT

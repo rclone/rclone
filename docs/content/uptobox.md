@@ -109,10 +109,12 @@ Your access token.
 
 Get it from https://uptobox.com/my_account.
 
+Properties:
+
 - Config:      access_token
 - Env Var:     RCLONE_UPTOBOX_ACCESS_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -120,9 +122,11 @@ Here are the advanced options specific to uptobox (Uptobox).
 
 #### --uptobox-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_UPTOBOX_ENCODING

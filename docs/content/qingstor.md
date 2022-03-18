@@ -152,6 +152,8 @@ Get QingStor credentials from runtime.
 
 Only applies if access_key_id and secret_access_key is blank.
 
+Properties:
+
 - Config:      env_auth
 - Env Var:     RCLONE_QINGSTOR_ENV_AUTH
 - Type:        bool
@@ -168,10 +170,12 @@ QingStor Access Key ID.
 
 Leave blank for anonymous access or runtime credentials.
 
+Properties:
+
 - Config:      access_key_id
 - Env Var:     RCLONE_QINGSTOR_ACCESS_KEY_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --qingstor-secret-access-key
 
@@ -179,10 +183,12 @@ QingStor Secret Access Key (password).
 
 Leave blank for anonymous access or runtime credentials.
 
+Properties:
+
 - Config:      secret_access_key
 - Env Var:     RCLONE_QINGSTOR_SECRET_ACCESS_KEY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --qingstor-endpoint
 
@@ -190,10 +196,12 @@ Enter an endpoint URL to connection QingStor API.
 
 Leave blank will use the default value "https://qingstor.com:443".
 
+Properties:
+
 - Config:      endpoint
 - Env Var:     RCLONE_QINGSTOR_ENDPOINT
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --qingstor-zone
 
@@ -201,10 +209,12 @@ Zone to connect to.
 
 Default is "pek3a".
 
+Properties:
+
 - Config:      zone
 - Env Var:     RCLONE_QINGSTOR_ZONE
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "pek3a"
         - The Beijing (China) Three Zone.
@@ -224,6 +234,8 @@ Here are the advanced options specific to qingstor (QingCloud Object Storage).
 
 Number of connection retries.
 
+Properties:
+
 - Config:      connection_retries
 - Env Var:     RCLONE_QINGSTOR_CONNECTION_RETRIES
 - Type:        int
@@ -235,6 +247,8 @@ Cutoff for switching to chunked upload.
 
 Any files larger than this will be uploaded in chunks of chunk_size.
 The minimum is 0 and the maximum is 5 GiB.
+
+Properties:
 
 - Config:      upload_cutoff
 - Env Var:     RCLONE_QINGSTOR_UPLOAD_CUTOFF
@@ -253,6 +267,8 @@ in memory per transfer.
 
 If you are transferring large files over high-speed links and you have
 enough memory, then increasing this will speed up the transfers.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_QINGSTOR_CHUNK_SIZE
@@ -273,6 +289,8 @@ If you are uploading small numbers of large files over high-speed links
 and these uploads do not fully utilize your bandwidth, then increasing
 this may help to speed up the transfers.
 
+Properties:
+
 - Config:      upload_concurrency
 - Env Var:     RCLONE_QINGSTOR_UPLOAD_CONCURRENCY
 - Type:        int
@@ -280,9 +298,11 @@ this may help to speed up the transfers.
 
 #### --qingstor-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_QINGSTOR_ENCODING

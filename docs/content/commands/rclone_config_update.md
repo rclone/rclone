@@ -15,7 +15,7 @@ Update options in an existing remote.
 Update an existing remote's options. The options should be passed in
 pairs of `key` `value` or as `key=value`.
 
-For example to update the env_auth field of a remote of name myremote
+For example, to update the env_auth field of a remote of name myremote
 you would do:
 
     rclone config update myremote env_auth true

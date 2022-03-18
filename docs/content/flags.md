@@ -157,7 +157,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.57.0")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.58.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -170,7 +170,7 @@ and may be set in the config file.
       --acd-auth-url string                          Auth server URL
       --acd-client-id string                         OAuth Client Id
       --acd-client-secret string                     OAuth Client Secret
-      --acd-encoding MultiEncoder                    This sets the encoding for the backend (default Slash,InvalidUtf8,Dot)
+      --acd-encoding MultiEncoder                    The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --acd-templink-threshold SizeSuffix            Files >= this size will be downloaded via their tempLink (default 9Gi)
       --acd-token string                             OAuth Access Token as a JSON blob
       --acd-token-url string                         Token server url
@@ -179,9 +179,9 @@ and may be set in the config file.
       --azureblob-access-tier string                 Access tier of blob: hot, cool or archive
       --azureblob-account string                     Storage Account Name
       --azureblob-archive-tier-delete                Delete archive tier blobs before overwriting
-      --azureblob-chunk-size SizeSuffix              Upload chunk size (<= 100 MiB) (default 4Mi)
+      --azureblob-chunk-size SizeSuffix              Upload chunk size (default 4Mi)
       --azureblob-disable-checksum                   Don't store MD5 checksum with object metadata
-      --azureblob-encoding MultiEncoder              This sets the encoding for the backend (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
+      --azureblob-encoding MultiEncoder              The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightPeriod,InvalidUtf8)
       --azureblob-endpoint string                    Endpoint for the service
       --azureblob-key string                         Storage Account Key
       --azureblob-list-chunk int                     Size of blob list (default 5000)
@@ -194,6 +194,7 @@ and may be set in the config file.
       --azureblob-public-access string               Public access level of a container: blob or container
       --azureblob-sas-url string                     SAS URL for container level access only
       --azureblob-service-principal-file string      Path to file containing credentials for use with a service principal
+      --azureblob-upload-concurrency int             Concurrency for multipart uploads (default 16)
       --azureblob-upload-cutoff string               Cutoff for switching to chunked upload (<= 256 MiB) (deprecated)
       --azureblob-use-emulator                       Uses local storage emulator if provided as 'true'
       --azureblob-use-msi                            Use a managed service identity to authenticate (only works in Azure)
@@ -203,7 +204,7 @@ and may be set in the config file.
       --b2-disable-checksum                          Disable checksums for large (> upload cutoff) files
       --b2-download-auth-duration Duration           Time before the authorization token will expire in s or suffix ms|s|m|h|d (default 1w)
       --b2-download-url string                       Custom endpoint for downloads
-      --b2-encoding MultiEncoder                     This sets the encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --b2-encoding MultiEncoder                     The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --b2-endpoint string                           Endpoint for the service
       --b2-hard-delete                               Permanently delete files on remote removal, otherwise hide files
       --b2-key string                                Application Key
@@ -219,7 +220,7 @@ and may be set in the config file.
       --box-client-id string                         OAuth Client Id
       --box-client-secret string                     OAuth Client Secret
       --box-commit-retries int                       Max number of times to try committing a multipart file (default 100)
-      --box-encoding MultiEncoder                    This sets the encoding for the backend (default Slash,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot)
+      --box-encoding MultiEncoder                    The encoding for the backend (default Slash,BackSlash,Del,Ctl,RightSpace,InvalidUtf8,Dot)
       --box-list-chunk int                           Size of listing chunk 1-1000 (default 1000)
       --box-owned-by string                          Only show items owned by the login (email address) passed in
       --box-root-folder-id string                    Fill in for rclone to use a non root folder as its starting point
@@ -256,6 +257,7 @@ and may be set in the config file.
       --compress-remote string                       Remote to compress
   -L, --copy-links                                   Follow symlinks and copy the pointed to item
       --crypt-directory-name-encryption              Option to either encrypt directory names or leave them intact (default true)
+      --crypt-filename-encoding string               How to encode the encrypted filename to text string (default "base32")
       --crypt-filename-encryption string             How to encrypt the filenames (default "standard")
       --crypt-no-data-encryption                     Option to either encrypt file data or leave it unencrypted
       --crypt-password string                        Password or pass phrase for encryption (obscured)
@@ -270,8 +272,9 @@ and may be set in the config file.
       --drive-chunk-size SizeSuffix                  Upload chunk size (default 8Mi)
       --drive-client-id string                       Google Application Client Id
       --drive-client-secret string                   OAuth Client Secret
+      --drive-copy-shortcut-content                  Server side copy contents of shortcuts instead of the shortcut
       --drive-disable-http2                          Disable drive using http2 (default true)
-      --drive-encoding MultiEncoder                  This sets the encoding for the backend (default InvalidUtf8)
+      --drive-encoding MultiEncoder                  The encoding for the backend (default InvalidUtf8)
       --drive-export-formats string                  Comma separated list of preferred formats for downloading Google docs (default "docx,xlsx,pptx,svg")
       --drive-formats string                         Deprecated: See export_formats
       --drive-impersonate string                     Impersonate this user when using a service account
@@ -288,6 +291,7 @@ and may be set in the config file.
       --drive-shared-with-me                         Only show files that are shared with me
       --drive-size-as-quota                          Show sizes as storage quota usage, not actual size
       --drive-skip-checksum-gphotos                  Skip MD5 checksum on Google photos and videos only
+      --drive-skip-dangling-shortcuts                If set skip dangling shortcut files
       --drive-skip-gdocs                             Skip google documents in all listings
       --drive-skip-shortcuts                         If set skip shortcut files
       --drive-starred-only                           Only show files that are starred
@@ -310,40 +314,41 @@ and may be set in the config file.
       --dropbox-chunk-size SizeSuffix                Upload chunk size (< 150Mi) (default 48Mi)
       --dropbox-client-id string                     OAuth Client Id
       --dropbox-client-secret string                 OAuth Client Secret
-      --dropbox-encoding MultiEncoder                This sets the encoding for the backend (default Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot)
+      --dropbox-encoding MultiEncoder                The encoding for the backend (default Slash,BackSlash,Del,RightSpace,InvalidUtf8,Dot)
       --dropbox-impersonate string                   Impersonate this user when using a business account
       --dropbox-shared-files                         Instructs rclone to work on individual shared files
       --dropbox-shared-folders                       Instructs rclone to work on shared folders
       --dropbox-token string                         OAuth Access Token as a JSON blob
       --dropbox-token-url string                     Token server url
       --fichier-api-key string                       Your API Key, get it from https://1fichier.com/console/params.pl
-      --fichier-encoding MultiEncoder                This sets the encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
+      --fichier-encoding MultiEncoder                The encoding for the backend (default Slash,LtGt,DoubleQuote,SingleQuote,BackQuote,Dollar,BackSlash,Del,Ctl,LeftSpace,RightSpace,InvalidUtf8,Dot)
       --fichier-file-password string                 If you want to download a shared file that is password protected, add this parameter (obscured)
       --fichier-folder-password string               If you want to list the files in a shared folder that is password protected, add this parameter (obscured)
       --fichier-shared-folder string                 If you want to download a shared folder, add this parameter
-      --filefabric-encoding MultiEncoder             This sets the encoding for the backend (default Slash,Del,Ctl,InvalidUtf8,Dot)
+      --filefabric-encoding MultiEncoder             The encoding for the backend (default Slash,Del,Ctl,InvalidUtf8,Dot)
       --filefabric-permanent-token string            Permanent Authentication Token
       --filefabric-root-folder-id string             ID of the root folder
       --filefabric-token string                      Session Token
       --filefabric-token-expiry string               Token expiry time
       --filefabric-url string                        URL of the Enterprise File Fabric to connect to
       --filefabric-version string                    Version read from the file fabric
+      --ftp-ask-password                             Allow asking for FTP password when needed
       --ftp-close-timeout Duration                   Maximum time to wait for a response to close (default 1m0s)
       --ftp-concurrency int                          Maximum number of FTP simultaneous connections, 0 for unlimited
       --ftp-disable-epsv                             Disable using EPSV even if server advertises support
       --ftp-disable-mlsd                             Disable using MLSD even if server advertises support
       --ftp-disable-tls13                            Disable TLS 1.3 (workaround for FTP servers with buggy TLS)
-      --ftp-encoding MultiEncoder                    This sets the encoding for the backend (default Slash,Del,Ctl,RightSpace,Dot)
+      --ftp-encoding MultiEncoder                    The encoding for the backend (default Slash,Del,Ctl,RightSpace,Dot)
       --ftp-explicit-tls                             Use Explicit FTPS (FTP over TLS)
       --ftp-host string                              FTP host to connect to
       --ftp-idle-timeout Duration                    Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                     Do not verify the TLS certificate of the server
       --ftp-pass string                              FTP password (obscured)
-      --ftp-port string                              FTP port number (default 21)
+      --ftp-port int                                 FTP port number (default 21)
       --ftp-shut-timeout Duration                    Maximum time to wait for data connection closing status (default 1m0s)
       --ftp-tls                                      Use Implicit FTPS (FTP over TLS)
       --ftp-tls-cache-size int                       Size of TLS session cache for all control and data connections (default 32)
-      --ftp-user string                              FTP username, leave blank for current username, $USER
+      --ftp-user string                              FTP username (default "$USER")
       --ftp-writing-mdtm                             Use MDTM to set modification time (VsFtpd quirk)
       --gcs-anonymous                                Access public buckets and objects without credentials
       --gcs-auth-url string                          Auth server URL
@@ -351,7 +356,7 @@ and may be set in the config file.
       --gcs-bucket-policy-only                       Access checks should use bucket-level IAM policies
       --gcs-client-id string                         OAuth Client Id
       --gcs-client-secret string                     OAuth Client Secret
-      --gcs-encoding MultiEncoder                    This sets the encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
+      --gcs-encoding MultiEncoder                    The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --gcs-location string                          Location for the newly created buckets
       --gcs-object-acl string                        Access Control List for new objects
       --gcs-project-number string                    Project number
@@ -362,7 +367,7 @@ and may be set in the config file.
       --gphotos-auth-url string                      Auth server URL
       --gphotos-client-id string                     OAuth Client Id
       --gphotos-client-secret string                 OAuth Client Secret
-      --gphotos-encoding MultiEncoder                This sets the encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
+      --gphotos-encoding MultiEncoder                The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --gphotos-include-archived                     Also view and download archived media
       --gphotos-read-only                            Set to make the Google Photos backend read only
       --gphotos-read-size                            Set to read the size of media items
@@ -374,38 +379,39 @@ and may be set in the config file.
       --hasher-max-age Duration                      Maximum time to keep checksums in cache (0 = no cache, off = cache forever) (default off)
       --hasher-remote string                         Remote to cache checksums for (e.g. myRemote:path)
       --hdfs-data-transfer-protection string         Kerberos data transfer protection: authentication|integrity|privacy
-      --hdfs-encoding MultiEncoder                   This sets the encoding for the backend (default Slash,Colon,Del,Ctl,InvalidUtf8,Dot)
+      --hdfs-encoding MultiEncoder                   The encoding for the backend (default Slash,Colon,Del,Ctl,InvalidUtf8,Dot)
       --hdfs-namenode string                         Hadoop name node and port
       --hdfs-service-principal-name string           Kerberos service principal name for the namenode
       --hdfs-username string                         Hadoop user name
       --http-headers CommaSepList                    Set HTTP headers for all transactions
-      --http-no-head                                 Don't use HEAD requests to find file sizes in dir listing
+      --http-no-head                                 Don't use HEAD requests
       --http-no-slash                                Set this if the site doesn't end directories with /
       --http-url string                              URL of http host to connect to
       --hubic-auth-url string                        Auth server URL
       --hubic-chunk-size SizeSuffix                  Above this size files will be chunked into a _segments container (default 5Gi)
       --hubic-client-id string                       OAuth Client Id
       --hubic-client-secret string                   OAuth Client Secret
-      --hubic-encoding MultiEncoder                  This sets the encoding for the backend (default Slash,InvalidUtf8)
+      --hubic-encoding MultiEncoder                  The encoding for the backend (default Slash,InvalidUtf8)
       --hubic-no-chunk                               Don't chunk files during streaming upload
       --hubic-token string                           OAuth Access Token as a JSON blob
       --hubic-token-url string                       Token server url
-      --jottacloud-encoding MultiEncoder             This sets the encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
+      --jottacloud-encoding MultiEncoder             The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
       --jottacloud-hard-delete                       Delete files permanently rather than putting them into the trash
       --jottacloud-md5-memory-limit SizeSuffix       Files bigger than this will be cached on disk to calculate the MD5 if required (default 10Mi)
       --jottacloud-no-versions                       Avoid server side versioning by deleting files and recreating files instead of overwriting them
       --jottacloud-trashed-only                      Only show files that are in the trash
       --jottacloud-upload-resume-limit SizeSuffix    Files bigger than this can be resumed if the upload fail's (default 10Mi)
-      --koofr-encoding MultiEncoder                  This sets the encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
-      --koofr-endpoint string                        The Koofr API endpoint to use (default "https://app.koofr.net")
+      --koofr-encoding MultiEncoder                  The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --koofr-endpoint string                        The Koofr API endpoint to use
       --koofr-mountid string                         Mount ID of the mount to use
-      --koofr-password string                        Your Koofr password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password) (obscured)
+      --koofr-password string                        Your password for rclone (generate one at https://app.koofr.net/app/admin/preferences/password) (obscured)
+      --koofr-provider string                        Choose your storage provider
       --koofr-setmtime                               Does the backend support setting modification time (default true)
-      --koofr-user string                            Your Koofr user name
+      --koofr-user string                            Your user name
   -l, --links                                        Translate symlinks to/from regular files with a '.rclonelink' extension
       --local-case-insensitive                       Force the filesystem to report itself as case insensitive
       --local-case-sensitive                         Force the filesystem to report itself as case sensitive
-      --local-encoding MultiEncoder                  This sets the encoding for the backend (default Slash,Dot)
+      --local-encoding MultiEncoder                  The encoding for the backend (default Slash,Dot)
       --local-no-check-updated                       Don't check to see if the files change during upload
       --local-no-preallocate                         Disable preallocation of disk space for transferred files
       --local-no-set-modtime                         Disable setting modtime
@@ -414,7 +420,7 @@ and may be set in the config file.
       --local-unicode-normalization                  Apply unicode NFC normalization to paths and filenames
       --local-zero-size-links                        Assume the Stat size of links is zero (and read them instead) (deprecated)
       --mailru-check-hash                            What should copy do if file checksum is mismatched or invalid (default true)
-      --mailru-encoding MultiEncoder                 This sets the encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --mailru-encoding MultiEncoder                 The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --mailru-pass string                           Password (obscured)
       --mailru-speedup-enable                        Skip full upload if there is another file with same data hash (default true)
       --mailru-speedup-file-patterns string          Comma separated list of file name patterns eligible for speedup (put by hash) (default "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf")
@@ -422,18 +428,23 @@ and may be set in the config file.
       --mailru-speedup-max-memory SizeSuffix         Files larger than the size given below will always be hashed on disk (default 32Mi)
       --mailru-user string                           User name (usually email)
       --mega-debug                                   Output more debug from Mega
-      --mega-encoding MultiEncoder                   This sets the encoding for the backend (default Slash,InvalidUtf8,Dot)
+      --mega-encoding MultiEncoder                   The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --mega-hard-delete                             Delete files permanently rather than putting them into the trash
       --mega-pass string                             Password (obscured)
       --mega-user string                             User name
+      --netstorage-account string                    Set the NetStorage account name
+      --netstorage-host string                       Domain+path of NetStorage host to connect to
+      --netstorage-protocol string                   Select between HTTP or HTTPS protocol (default "https")
+      --netstorage-secret string                     Set the NetStorage account secret/G2O key for authentication (obscured)
   -x, --one-file-system                              Don't cross filesystem boundaries (unix/macOS only)
       --onedrive-auth-url string                     Auth server URL
       --onedrive-chunk-size SizeSuffix               Chunk size to upload files with - must be multiple of 320k (327,680 bytes) (default 10Mi)
       --onedrive-client-id string                    OAuth Client Id
       --onedrive-client-secret string                OAuth Client Secret
+      --onedrive-disable-site-permission             Disable the request for Sites.Read.All permission
       --onedrive-drive-id string                     The ID of the drive to use
       --onedrive-drive-type string                   The type of the drive (personal | business | documentLibrary)
-      --onedrive-encoding MultiEncoder               This sets the encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
+      --onedrive-encoding MultiEncoder               The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --onedrive-expose-onenote-files                Set to make OneNote files show up in directory listings
       --onedrive-link-password string                Set the password for links created by the link command
       --onedrive-link-scope string                   Set the scope of the links created by the link command (default "anonymous")
@@ -441,27 +452,28 @@ and may be set in the config file.
       --onedrive-list-chunk int                      Size of listing chunk (default 1000)
       --onedrive-no-versions                         Remove all versions on modifying operations
       --onedrive-region string                       Choose national cloud region for OneDrive (default "global")
+      --onedrive-root-folder-id string               ID of the root folder
       --onedrive-server-side-across-configs          Allow server-side operations (e.g. copy) to work across different onedrive configs
       --onedrive-token string                        OAuth Access Token as a JSON blob
       --onedrive-token-url string                    Token server url
       --opendrive-chunk-size SizeSuffix              Files will be uploaded in chunks this size (default 10Mi)
-      --opendrive-encoding MultiEncoder              This sets the encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
+      --opendrive-encoding MultiEncoder              The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
       --opendrive-password string                    Password (obscured)
       --opendrive-username string                    Username
       --pcloud-auth-url string                       Auth server URL
       --pcloud-client-id string                      OAuth Client Id
       --pcloud-client-secret string                  OAuth Client Secret
-      --pcloud-encoding MultiEncoder                 This sets the encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --pcloud-encoding MultiEncoder                 The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --pcloud-hostname string                       Hostname to connect to (default "api.pcloud.com")
       --pcloud-root-folder-id string                 Fill in for rclone to use a non root folder as its starting point (default "d0")
       --pcloud-token string                          OAuth Access Token as a JSON blob
       --pcloud-token-url string                      Token server url
-      --premiumizeme-encoding MultiEncoder           This sets the encoding for the backend (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
-      --putio-encoding MultiEncoder                  This sets the encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --premiumizeme-encoding MultiEncoder           The encoding for the backend (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
+      --putio-encoding MultiEncoder                  The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --qingstor-access-key-id string                QingStor Access Key ID
       --qingstor-chunk-size SizeSuffix               Chunk size to use for uploading (default 4Mi)
       --qingstor-connection-retries int              Number of connection retries (default 3)
-      --qingstor-encoding MultiEncoder               This sets the encoding for the backend (default Slash,Ctl,InvalidUtf8)
+      --qingstor-encoding MultiEncoder               The encoding for the backend (default Slash,Ctl,InvalidUtf8)
       --qingstor-endpoint string                     Enter an endpoint URL to connection QingStor API
       --qingstor-env-auth                            Get QingStor credentials from runtime
       --qingstor-secret-access-key string            QingStor Secret Access Key (password)
@@ -476,12 +488,14 @@ and may be set in the config file.
       --s3-disable-checksum                          Don't store MD5 checksum with object metadata
       --s3-disable-http2                             Disable usage of http2 for S3 backends
       --s3-download-url string                       Custom endpoint for downloads
-      --s3-encoding MultiEncoder                     This sets the encoding for the backend (default Slash,InvalidUtf8,Dot)
+      --s3-encoding MultiEncoder                     The encoding for the backend (default Slash,InvalidUtf8,Dot)
       --s3-endpoint string                           Endpoint for S3 API
       --s3-env-auth                                  Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars)
       --s3-force-path-style                          If true use path style access if false use virtual hosted style (default true)
       --s3-leave-parts-on-error                      If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery
       --s3-list-chunk int                            Size of listing chunk (response list for each ListObject S3 request) (default 1000)
+      --s3-list-url-encode Tristate                  Whether to url encode listings: true/false/unset (default unset)
+      --s3-list-version int                          Version of ListObjects to use: 1,2 or 0 for auto
       --s3-location-constraint string                Location constraint - must be set to match the Region
       --s3-max-upload-parts int                      Maximum number of parts in a multipart upload (default 10000)
       --s3-memory-pool-flush-time Duration           How often internal memory buffer pools will be flushed (default 1m0s)
@@ -505,10 +519,11 @@ and may be set in the config file.
       --s3-upload-concurrency int                    Concurrency for multipart uploads (default 4)
       --s3-upload-cutoff SizeSuffix                  Cutoff for switching to chunked upload (default 200Mi)
       --s3-use-accelerate-endpoint                   If true use the AWS S3 accelerated endpoint
+      --s3-use-multipart-etag Tristate               Whether to use ETag in multipart uploads for verification (default unset)
       --s3-v2-auth                                   If true use v2 authentication
       --seafile-2fa                                  Two-factor authentication ('true' if the account has 2FA enabled)
       --seafile-create-library                       Should rclone create a library if it doesn't exist
-      --seafile-encoding MultiEncoder                This sets the encoding for the backend (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
+      --seafile-encoding MultiEncoder                The encoding for the backend (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
       --seafile-library string                       Name of the library
       --seafile-library-key string                   Library password (for encrypted libraries only) (obscured)
       --seafile-pass string                          Password (obscured)
@@ -528,7 +543,7 @@ and may be set in the config file.
       --sftp-md5sum-command string                   The command used to read md5 hashes
       --sftp-pass string                             SSH password, leave blank to use ssh-agent (obscured)
       --sftp-path-override string                    Override path used by SSH connection
-      --sftp-port string                             SSH port number (default 22)
+      --sftp-port int                                SSH port number (default 22)
       --sftp-pubkey-file string                      Optional path to public key file
       --sftp-server-command string                   Specifies the path or command to run a sftp server on the remote host
       --sftp-set-modtime                             Set the modified time on the remote if set (default true)
@@ -537,23 +552,28 @@ and may be set in the config file.
       --sftp-subsystem string                        Specifies the SSH2 subsystem on the remote host (default "sftp")
       --sftp-use-fstat                               If set use fstat instead of stat
       --sftp-use-insecure-cipher                     Enable the use of insecure ciphers and key exchange methods
-      --sftp-user string                             SSH username, leave blank for current username, $USER
+      --sftp-user string                             SSH username (default "$USER")
       --sharefile-chunk-size SizeSuffix              Upload chunk size (default 64Mi)
-      --sharefile-encoding MultiEncoder              This sets the encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,LeftPeriod,RightSpace,RightPeriod,InvalidUtf8,Dot)
+      --sharefile-encoding MultiEncoder              The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,LeftSpace,LeftPeriod,RightSpace,RightPeriod,InvalidUtf8,Dot)
       --sharefile-endpoint string                    Endpoint for API calls
       --sharefile-root-folder-id string              ID of the root folder
       --sharefile-upload-cutoff SizeSuffix           Cutoff for switching to multipart upload (default 128Mi)
       --sia-api-password string                      Sia Daemon API Password (obscured)
       --sia-api-url string                           Sia daemon API URL, like http://sia.daemon.host:9980 (default "http://127.0.0.1:9980")
-      --sia-encoding MultiEncoder                    This sets the encoding for the backend (default Slash,Question,Hash,Percent,Del,Ctl,InvalidUtf8,Dot)
+      --sia-encoding MultiEncoder                    The encoding for the backend (default Slash,Question,Hash,Percent,Del,Ctl,InvalidUtf8,Dot)
       --sia-user-agent string                        Siad User Agent (default "Sia-Agent")
       --skip-links                                   Don't warn about skipped symlinks
+      --storj-access-grant string                    Access grant
+      --storj-api-key string                         API key
+      --storj-passphrase string                      Encryption passphrase
+      --storj-provider string                        Choose an authentication method (default "existing")
+      --storj-satellite-address string               Satellite address (default "us-central-1.storj.io")
       --sugarsync-access-key-id string               Sugarsync Access Key ID
       --sugarsync-app-id string                      Sugarsync App ID
       --sugarsync-authorization string               Sugarsync authorization
       --sugarsync-authorization-expiry string        Sugarsync authorization expiry
       --sugarsync-deleted-id string                  Sugarsync deleted folder id
-      --sugarsync-encoding MultiEncoder              This sets the encoding for the backend (default Slash,Ctl,InvalidUtf8,Dot)
+      --sugarsync-encoding MultiEncoder              The encoding for the backend (default Slash,Ctl,InvalidUtf8,Dot)
       --sugarsync-hard-delete                        Permanently delete files if true
       --sugarsync-private-access-key string          Sugarsync Private Access Key
       --sugarsync-refresh-token string               Sugarsync refresh token
@@ -567,7 +587,7 @@ and may be set in the config file.
       --swift-auth-version int                       AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)
       --swift-chunk-size SizeSuffix                  Above this size files will be chunked into a _segments container (default 5Gi)
       --swift-domain string                          User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)
-      --swift-encoding MultiEncoder                  This sets the encoding for the backend (default Slash,InvalidUtf8)
+      --swift-encoding MultiEncoder                  The encoding for the backend (default Slash,InvalidUtf8)
       --swift-endpoint-type string                   Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE) (default "public")
       --swift-env-auth                               Get swift credentials from environment variables in standard OpenStack form
       --swift-key string                             API key or password (OS_PASSWORD)
@@ -581,21 +601,16 @@ and may be set in the config file.
       --swift-tenant-id string                       Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)
       --swift-user string                            User name to log in (OS_USERNAME)
       --swift-user-id string                         User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID)
-      --tardigrade-access-grant string               Access grant
-      --tardigrade-api-key string                    API key
-      --tardigrade-passphrase string                 Encryption passphrase
-      --tardigrade-provider string                   Choose an authentication method (default "existing")
-      --tardigrade-satellite-address string          Satellite address (default "us-central-1.tardigrade.io")
       --union-action-policy string                   Policy to choose upstream on ACTION category (default "epall")
       --union-cache-time int                         Cache time of usage and free space (in seconds) (default 120)
       --union-create-policy string                   Policy to choose upstream on CREATE category (default "epmfs")
       --union-search-policy string                   Policy to choose upstream on SEARCH category (default "ff")
       --union-upstreams string                       List of space separated upstreams
       --uptobox-access-token string                  Your access token
-      --uptobox-encoding MultiEncoder                This sets the encoding for the backend (default Slash,LtGt,DoubleQuote,BackQuote,Del,Ctl,LeftSpace,InvalidUtf8,Dot)
+      --uptobox-encoding MultiEncoder                The encoding for the backend (default Slash,LtGt,DoubleQuote,BackQuote,Del,Ctl,LeftSpace,InvalidUtf8,Dot)
       --webdav-bearer-token string                   Bearer token instead of user/pass (e.g. a Macaroon)
       --webdav-bearer-token-command string           Command to run to get a bearer token
-      --webdav-encoding string                       This sets the encoding for the backend
+      --webdav-encoding string                       The encoding for the backend
       --webdav-headers CommaSepList                  Set HTTP headers for all transactions
       --webdav-pass string                           Password (obscured)
       --webdav-url string                            URL of http host to connect to
@@ -604,13 +619,14 @@ and may be set in the config file.
       --yandex-auth-url string                       Auth server URL
       --yandex-client-id string                      OAuth Client Id
       --yandex-client-secret string                  OAuth Client Secret
-      --yandex-encoding MultiEncoder                 This sets the encoding for the backend (default Slash,Del,Ctl,InvalidUtf8,Dot)
+      --yandex-encoding MultiEncoder                 The encoding for the backend (default Slash,Del,Ctl,InvalidUtf8,Dot)
+      --yandex-hard-delete                           Delete files permanently rather than putting them into the trash
       --yandex-token string                          OAuth Access Token as a JSON blob
       --yandex-token-url string                      Token server url
       --zoho-auth-url string                         Auth server URL
       --zoho-client-id string                        OAuth Client Id
       --zoho-client-secret string                    OAuth Client Secret
-      --zoho-encoding MultiEncoder                   This sets the encoding for the backend (default Del,Ctl,InvalidUtf8)
+      --zoho-encoding MultiEncoder                   The encoding for the backend (default Del,Ctl,InvalidUtf8)
       --zoho-region string                           Zoho region to connect to
       --zoho-token string                            OAuth Access Token as a JSON blob
       --zoho-token-url string                        Token server url

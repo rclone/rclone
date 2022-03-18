@@ -59,13 +59,13 @@ can be returned as an empty string if it isn't available on the object
 the object and "UNSUPPORTED" if that object does not support that hash
 type.
 
-For example to emulate the md5sum command you can use
+For example, to emulate the md5sum command you can use
 
     rclone lsf -R --hash MD5 --format hp --separator "  " --files-only .
 
 Eg
 
-    $ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket 
+    $ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket
     7908e352297f0f530b84a756f188baa3  bevajer5jef
     cd65ac234e6fea5925974a51cdd865cc  canole
     03b5341b4f234b9d984d03ad076bae91  diwogej7
@@ -100,7 +100,7 @@ Eg
 Note that the --absolute parameter is useful for making lists of files
 to pass to an rclone copy with the --files-from-raw flag.
 
-For example to find all the files modified within one day and copy
+For example, to find all the files modified within one day and copy
 those only (without traversing the whole directory structure):
 
     rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
@@ -117,17 +117,17 @@ There are several related list commands
   * `lsf` to list objects and directories in easy to parse format
   * `lsjson` to list objects and directories in JSON format
 
-`ls`,`lsl`,`lsd` are designed to be human readable.
-`lsf` is designed to be human and machine readable.
-`lsjson` is designed to be machine readable.
+`ls`,`lsl`,`lsd` are designed to be human-readable.
+`lsf` is designed to be human and machine-readable.
+`lsjson` is designed to be machine-readable.
 
 Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the recursion.
 
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use `-R` to make them recurse.
 
-Listing a non existent directory will produce an error except for
+Listing a non-existent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
-the bucket based remotes).
+the bucket-based remotes).
 
 
 ```

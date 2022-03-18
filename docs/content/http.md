@@ -134,10 +134,12 @@ URL of http host to connect to.
 
 E.g. "https://example.com", or "https://user:pass@example.com" to use a username and password.
 
+Properties:
+
 - Config:      url
 - Env Var:     RCLONE_HTTP_URL
 - Type:        string
-- Default:     ""
+- Required:    true
 
 ### Advanced options
 
@@ -152,10 +154,11 @@ Use this to set additional HTTP headers for all transactions.
 The input format is comma separated list of key,value pairs.  Standard
 [CSV encoding](https://godoc.org/encoding/csv) may be used.
 
-For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
+For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
 You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
 
+Properties:
 
 - Config:      headers
 - Env Var:     RCLONE_HTTP_HEADERS
@@ -177,6 +180,8 @@ URLs from them rather than downloading them.
 Note that this may cause rclone to confuse genuine HTML files with
 directories.
 
+Properties:
+
 - Config:      no_slash
 - Env Var:     RCLONE_HTTP_NO_SLASH
 - Type:        bool
@@ -184,8 +189,9 @@ directories.
 
 #### --http-no-head
 
-Don't use HEAD requests to find file sizes in dir listing.
+Don't use HEAD requests.
 
+HEAD requests are mainly used to find file sizes in dir listing.
 If your site is being very slow to load then you can try this option.
 Normally rclone does a HEAD request for each potential file in a
 directory listing to:
@@ -194,12 +200,11 @@ directory listing to:
 - check it really exists
 - check to see if it is a directory
 
-If you set this option, rclone will not do the HEAD request.  This will mean
+If you set this option, rclone will not do the HEAD request. This will mean
+that directory listings are much quicker, but rclone won't have the times or
+sizes of any files, and some files that don't exist may be in the listing.
 
-- directory listings are much quicker
-- rclone won't have the times or sizes of any files
-- some files that don't exist may be in the listing
-
+Properties:
 
 - Config:      no_head
 - Env Var:     RCLONE_HTTP_NO_HEAD

@@ -36,7 +36,8 @@ See the [global flags page](/flags/) for global options not listed here.
 
 * [rclone about](/commands/rclone_about/)	 - Get quota information from the remote.
 * [rclone authorize](/commands/rclone_authorize/)	 - Remote authorization.
-* [rclone backend](/commands/rclone_backend/)	 - Run a backend specific command.
+* [rclone backend](/commands/rclone_backend/)	 - Run a backend-specific command.
+* [rclone bisync](/commands/rclone_bisync/)	 - Perform bidirectonal synchronization between two paths.
 * [rclone cat](/commands/rclone_cat/)	 - Concatenates any files and sends them to stdout.
 * [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
 * [rclone checksum](/commands/rclone_checksum/)	 - Checks the files in the source against a SUM file.

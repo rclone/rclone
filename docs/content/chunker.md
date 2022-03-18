@@ -322,14 +322,18 @@ Remote to chunk/unchunk.
 Normally should contain a ':' and a path, e.g. "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 
+Properties:
+
 - Config:      remote
 - Env Var:     RCLONE_CHUNKER_REMOTE
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --chunker-chunk-size
 
 Files larger than chunk size will be split in chunks.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_CHUNKER_CHUNK_SIZE
@@ -341,6 +345,8 @@ Files larger than chunk size will be split in chunks.
 Choose how chunker handles hash sums.
 
 All modes but "none" require metadata.
+
+Properties:
 
 - Config:      hash_type
 - Env Var:     RCLONE_CHUNKER_HASH_TYPE
@@ -378,6 +384,8 @@ If chunk number has less digits than the number of hashes, it is left-padded by 
 If there are more digits in the number, they are left as is.
 Possible chunk files are ignored if their name does not match given format.
 
+Properties:
+
 - Config:      name_format
 - Env Var:     RCLONE_CHUNKER_NAME_FORMAT
 - Type:        string
@@ -388,6 +396,8 @@ Possible chunk files are ignored if their name does not match given format.
 Minimum valid chunk number. Usually 0 or 1.
 
 By default chunk numbers start from 1.
+
+Properties:
 
 - Config:      start_from
 - Env Var:     RCLONE_CHUNKER_START_FROM
@@ -400,6 +410,8 @@ Format of the metadata object or "none".
 
 By default "simplejson".
 Metadata is a small JSON file named after the composite file.
+
+Properties:
 
 - Config:      meta_format
 - Env Var:     RCLONE_CHUNKER_META_FORMAT
@@ -418,6 +430,8 @@ Metadata is a small JSON file named after the composite file.
 
 Choose how chunker should handle files with missing or invalid chunks.
 
+Properties:
+
 - Config:      fail_hard
 - Env Var:     RCLONE_CHUNKER_FAIL_HARD
 - Type:        bool
@@ -431,6 +445,8 @@ Choose how chunker should handle files with missing or invalid chunks.
 #### --chunker-transactions
 
 Choose how chunker should handle temporary files during transactions.
+
+Properties:
 
 - Config:      transactions
 - Env Var:     RCLONE_CHUNKER_TRANSACTIONS

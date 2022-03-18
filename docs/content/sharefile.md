@@ -159,10 +159,12 @@ ID of the root folder.
 Leave blank to access "Personal Folders".  You can use one of the
 standard values here or any folder ID (long hex number ID).
 
+Properties:
+
 - Config:      root_folder_id
 - Env Var:     RCLONE_SHAREFILE_ROOT_FOLDER_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - ""
         - Access the Personal Folders (default).
@@ -183,6 +185,8 @@ Here are the advanced options specific to sharefile (Citrix Sharefile).
 
 Cutoff for switching to multipart upload.
 
+Properties:
+
 - Config:      upload_cutoff
 - Env Var:     RCLONE_SHAREFILE_UPLOAD_CUTOFF
 - Type:        SizeSuffix
@@ -199,6 +203,8 @@ is buffered in memory one per transfer.
 
 Reducing this will reduce memory usage but decrease performance.
 
+Properties:
+
 - Config:      chunk_size
 - Env Var:     RCLONE_SHAREFILE_CHUNK_SIZE
 - Type:        SizeSuffix
@@ -212,16 +218,20 @@ This is usually auto discovered as part of the oauth process, but can
 be set manually to something like: https://XXX.sharefile.com
 
 
+Properties:
+
 - Config:      endpoint
 - Env Var:     RCLONE_SHAREFILE_ENDPOINT
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --sharefile-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_SHAREFILE_ENCODING

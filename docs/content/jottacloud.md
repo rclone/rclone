@@ -241,6 +241,8 @@ Here are the advanced options specific to jottacloud (Jottacloud).
 
 Files bigger than this will be cached on disk to calculate the MD5 if required.
 
+Properties:
+
 - Config:      md5_memory_limit
 - Env Var:     RCLONE_JOTTACLOUD_MD5_MEMORY_LIMIT
 - Type:        SizeSuffix
@@ -252,6 +254,8 @@ Only show files that are in the trash.
 
 This will show trashed files in their original directory structure.
 
+Properties:
+
 - Config:      trashed_only
 - Env Var:     RCLONE_JOTTACLOUD_TRASHED_ONLY
 - Type:        bool
@@ -260,6 +264,8 @@ This will show trashed files in their original directory structure.
 #### --jottacloud-hard-delete
 
 Delete files permanently rather than putting them into the trash.
+
+Properties:
 
 - Config:      hard_delete
 - Env Var:     RCLONE_JOTTACLOUD_HARD_DELETE
@@ -270,6 +276,8 @@ Delete files permanently rather than putting them into the trash.
 
 Files bigger than this can be resumed if the upload fail's.
 
+Properties:
+
 - Config:      upload_resume_limit
 - Env Var:     RCLONE_JOTTACLOUD_UPLOAD_RESUME_LIMIT
 - Type:        SizeSuffix
@@ -279,6 +287,8 @@ Files bigger than this can be resumed if the upload fail's.
 
 Avoid server side versioning by deleting files and recreating files instead of overwriting them.
 
+Properties:
+
 - Config:      no_versions
 - Env Var:     RCLONE_JOTTACLOUD_NO_VERSIONS
 - Type:        bool
@@ -286,9 +296,11 @@ Avoid server side versioning by deleting files and recreating files instead of o
 
 #### --jottacloud-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_JOTTACLOUD_ENCODING

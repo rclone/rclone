@@ -349,6 +349,7 @@ rclone serve docker [flags]
       --daemon-wait duration                   Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD) (not supported on Windows) (default 1m0s)
       --debug-fuse                             Debug the FUSE internals - needs -v
       --default-permissions                    Makes kernel enforce access control based on the file mode (not supported on Windows)
+      --devname string                         Set the device name - default is remote:path
       --dir-cache-time duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 0777)
       --file-perms FileMode                    File permissions (default 0666)

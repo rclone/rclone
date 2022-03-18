@@ -15,7 +15,7 @@ rclone serve restic implements restic's REST backend API
 over HTTP.  This allows restic to use rclone as a data storage
 mechanism for cloud providers that restic does not support directly.
 
-[Restic](https://restic.net/) is a command line program for doing
+[Restic](https://restic.net/) is a command-line program for doing
 backups.
 
 The server will log errors.  Use -v to see access logs.
@@ -194,7 +194,7 @@ rclone serve restic remote:path [flags]
       --max-header-bytes int            Maximum size of request header (default 4096)
       --pass string                     Password for authentication
       --private-repos                   Users can only access their private repo
-      --realm string                    realm for authentication (default "rclone")
+      --realm string                    Realm for authentication (default "rclone")
       --server-read-timeout duration    Timeout for server reading data (default 1h0m0s)
       --server-write-timeout duration   Timeout for server writing data (default 1h0m0s)
       --stdio                           Run an HTTP2 server on stdin/stdout

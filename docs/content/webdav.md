@@ -118,19 +118,23 @@ URL of http host to connect to.
 
 E.g. https://example.com.
 
+Properties:
+
 - Config:      url
 - Env Var:     RCLONE_WEBDAV_URL
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --webdav-vendor
 
 Name of the Webdav site/service/software you are using.
 
+Properties:
+
 - Config:      vendor
 - Env Var:     RCLONE_WEBDAV_VENDOR
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "nextcloud"
         - Nextcloud
@@ -149,10 +153,12 @@ User name.
 
 In case NTLM authentication is used, the username should be in the format 'Domain\User'.
 
+Properties:
+
 - Config:      user
 - Env Var:     RCLONE_WEBDAV_USER
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --webdav-pass
 
@@ -160,19 +166,23 @@ Password.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      pass
 - Env Var:     RCLONE_WEBDAV_PASS
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --webdav-bearer-token
 
 Bearer token instead of user/pass (e.g. a Macaroon).
 
+Properties:
+
 - Config:      bearer_token
 - Env Var:     RCLONE_WEBDAV_BEARER_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -182,23 +192,27 @@ Here are the advanced options specific to webdav (Webdav).
 
 Command to run to get a bearer token.
 
+Properties:
+
 - Config:      bearer_token_command
 - Env Var:     RCLONE_WEBDAV_BEARER_TOKEN_COMMAND
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --webdav-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
 
 Default encoding is Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Hash,Percent,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8 for sharepoint-ntlm or identity otherwise.
 
+Properties:
+
 - Config:      encoding
 - Env Var:     RCLONE_WEBDAV_ENCODING
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --webdav-headers
 
@@ -209,10 +223,12 @@ Use this to set additional HTTP headers for all transactions
 The input format is comma separated list of key,value pairs.  Standard
 [CSV encoding](https://godoc.org/encoding/csv) may be used.
 
-For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
+For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
 You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
 
+
+Properties:
 
 - Config:      headers
 - Env Var:     RCLONE_WEBDAV_HEADERS

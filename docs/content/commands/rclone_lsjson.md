@@ -66,7 +66,7 @@ If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
 When used without --recursive the Path will always be the same as Name.
 
-If the directory is a bucket in a bucket based backend, then
+If the directory is a bucket in a bucket-based backend, then
 "IsBucket" will be set to true. This key won't be present unless it is
 "true".
 
@@ -91,17 +91,17 @@ There are several related list commands
   * `lsf` to list objects and directories in easy to parse format
   * `lsjson` to list objects and directories in JSON format
 
-`ls`,`lsl`,`lsd` are designed to be human readable.
-`lsf` is designed to be human and machine readable.
-`lsjson` is designed to be machine readable.
+`ls`,`lsl`,`lsd` are designed to be human-readable.
+`lsf` is designed to be human and machine-readable.
+`lsjson` is designed to be machine-readable.
 
 Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the recursion.
 
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use `-R` to make them recurse.
 
-Listing a non existent directory will produce an error except for
+Listing a non-existent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
-the bucket based remotes).
+the bucket-based remotes).
 
 
 ```

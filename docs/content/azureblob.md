@@ -166,10 +166,12 @@ Storage Account Name.
 
 Leave blank to use SAS URL or Emulator.
 
+Properties:
+
 - Config:      account
 - Env Var:     RCLONE_AZUREBLOB_ACCOUNT
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-service-principal-file
 
@@ -185,10 +187,12 @@ Leave blank normally. Needed only if you want to use a service principal instead
 See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 
 
+Properties:
+
 - Config:      service_principal_file
 - Env Var:     RCLONE_AZUREBLOB_SERVICE_PRINCIPAL_FILE
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-key
 
@@ -196,10 +200,12 @@ Storage Account Key.
 
 Leave blank to use SAS URL or Emulator.
 
+Properties:
+
 - Config:      key
 - Env Var:     RCLONE_AZUREBLOB_KEY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-sas-url
 
@@ -207,10 +213,12 @@ SAS URL for container level access only.
 
 Leave blank if using account/key or Emulator.
 
+Properties:
+
 - Config:      sas_url
 - Env Var:     RCLONE_AZUREBLOB_SAS_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-use-msi
 
@@ -225,6 +233,8 @@ the user-assigned identity will be used by default. If the resource has multiple
 identities, the identity to use must be explicitly specified using exactly one of the msi_object_id,
 msi_client_id, or msi_mi_res_id parameters.
 
+Properties:
+
 - Config:      use_msi
 - Env Var:     RCLONE_AZUREBLOB_USE_MSI
 - Type:        bool
@@ -235,6 +245,8 @@ msi_client_id, or msi_mi_res_id parameters.
 Uses local storage emulator if provided as 'true'.
 
 Leave blank if using real azure storage endpoint.
+
+Properties:
 
 - Config:      use_emulator
 - Env Var:     RCLONE_AZUREBLOB_USE_EMULATOR
@@ -251,10 +263,12 @@ Object ID of the user-assigned MSI to use, if any.
 
 Leave blank if msi_client_id or msi_mi_res_id specified.
 
+Properties:
+
 - Config:      msi_object_id
 - Env Var:     RCLONE_AZUREBLOB_MSI_OBJECT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-msi-client-id
 
@@ -262,10 +276,12 @@ Object ID of the user-assigned MSI to use, if any.
 
 Leave blank if msi_object_id or msi_mi_res_id specified.
 
+Properties:
+
 - Config:      msi_client_id
 - Env Var:     RCLONE_AZUREBLOB_MSI_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-msi-mi-res-id
 
@@ -273,10 +289,12 @@ Azure resource ID of the user-assigned MSI to use, if any.
 
 Leave blank if msi_client_id or msi_object_id specified.
 
+Properties:
+
 - Config:      msi_mi_res_id
 - Env Var:     RCLONE_AZUREBLOB_MSI_MI_RES_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-endpoint
 
@@ -284,31 +302,64 @@ Endpoint for the service.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      endpoint
 - Env Var:     RCLONE_AZUREBLOB_ENDPOINT
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-upload-cutoff
 
 Cutoff for switching to chunked upload (<= 256 MiB) (deprecated).
 
+Properties:
+
 - Config:      upload_cutoff
 - Env Var:     RCLONE_AZUREBLOB_UPLOAD_CUTOFF
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-chunk-size
 
-Upload chunk size (<= 100 MiB).
+Upload chunk size.
 
 Note that this is stored in memory and there may be up to
-"--transfers" chunks stored at once in memory.
+"--transfers" * "--azureblob-upload-concurrency" chunks stored at once
+in memory.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_AZUREBLOB_CHUNK_SIZE
 - Type:        SizeSuffix
 - Default:     4Mi
+
+#### --azureblob-upload-concurrency
+
+Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently.
+
+If you are uploading small numbers of large files over high-speed
+links and these uploads do not fully utilize your bandwidth, then
+increasing this may help to speed up the transfers.
+
+In tests, upload speed increases almost linearly with upload
+concurrency. For example to fill a gigabit pipe it may be necessary to
+raise this to 64. Note that this will use more memory.
+
+Note that chunks are stored in memory and there may be up to
+"--transfers" * "--azureblob-upload-concurrency" chunks stored at once
+in memory.
+
+Properties:
+
+- Config:      upload_concurrency
+- Env Var:     RCLONE_AZUREBLOB_UPLOAD_CONCURRENCY
+- Type:        int
+- Default:     16
 
 #### --azureblob-list-chunk
 
@@ -321,6 +372,8 @@ minutes per megabyte on average, it will time out (
 [source](https://docs.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations#exceptions-to-default-timeout-interval)
 ). This can be used to limit the number of blobs items to return, to
 avoid the time out.
+
+Properties:
 
 - Config:      list_chunk
 - Env Var:     RCLONE_AZUREBLOB_LIST_CHUNK
@@ -342,10 +395,12 @@ If blobs are in "archive tier" at remote, trying to perform data transfer
 operations from remote will not be allowed. User should first restore by
 tiering blob to "Hot" or "Cool".
 
+Properties:
+
 - Config:      access_tier
 - Env Var:     RCLONE_AZUREBLOB_ACCESS_TIER
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --azureblob-archive-tier-delete
 
@@ -364,6 +419,8 @@ replacement.  This has the potential for data loss if the upload fails
 archive tier blobs early may be chargable.
 
 
+Properties:
+
 - Config:      archive_tier_delete
 - Env Var:     RCLONE_AZUREBLOB_ARCHIVE_TIER_DELETE
 - Type:        bool
@@ -378,6 +435,8 @@ uploading it so it can add it to metadata on the object. This is great
 for data integrity checking but can cause long delays for large files
 to start uploading.
 
+Properties:
+
 - Config:      disable_checksum
 - Env Var:     RCLONE_AZUREBLOB_DISABLE_CHECKSUM
 - Type:        bool
@@ -390,6 +449,8 @@ How often internal memory buffer pools will be flushed.
 Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
 This option controls how often unused buffers will be removed from the pool.
 
+Properties:
+
 - Config:      memory_pool_flush_time
 - Env Var:     RCLONE_AZUREBLOB_MEMORY_POOL_FLUSH_TIME
 - Type:        Duration
@@ -399,6 +460,8 @@ This option controls how often unused buffers will be removed from the pool.
 
 Whether to use mmap buffers in internal memory pool.
 
+Properties:
+
 - Config:      memory_pool_use_mmap
 - Env Var:     RCLONE_AZUREBLOB_MEMORY_POOL_USE_MMAP
 - Type:        bool
@@ -406,9 +469,11 @@ Whether to use mmap buffers in internal memory pool.
 
 #### --azureblob-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_AZUREBLOB_ENCODING
@@ -419,10 +484,12 @@ See the [encoding section in the overview](/overview/#encoding) for more info.
 
 Public access level of a container: blob or container.
 
+Properties:
+
 - Config:      public_access
 - Env Var:     RCLONE_AZUREBLOB_PUBLIC_ACCESS
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - ""
         - The container and its blobs can be accessed only with an authorized request.
@@ -435,6 +502,8 @@ Public access level of a container: blob or container.
 #### --azureblob-no-head-object
 
 If set, do not do HEAD before GET when getting objects.
+
+Properties:
 
 - Config:      no_head_object
 - Env Var:     RCLONE_AZUREBLOB_NO_HEAD_OBJECT

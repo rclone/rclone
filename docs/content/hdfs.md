@@ -159,19 +159,23 @@ Hadoop name node and port.
 
 E.g. "namenode:8020" to connect to host namenode at port 8020.
 
+Properties:
+
 - Config:      namenode
 - Env Var:     RCLONE_HDFS_NAMENODE
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --hdfs-username
 
 Hadoop user name.
 
+Properties:
+
 - Config:      username
 - Env Var:     RCLONE_HDFS_USERNAME
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "root"
         - Connect to hdfs as root.
@@ -188,10 +192,12 @@ Enables KERBEROS authentication. Specifies the Service Principal Name
 (SERVICE/FQDN) for the namenode. E.g. \"hdfs/namenode.hadoop.docker\"
 for namenode running as service 'hdfs' with FQDN 'namenode.hadoop.docker'.
 
+Properties:
+
 - Config:      service_principal_name
 - Env Var:     RCLONE_HDFS_SERVICE_PRINCIPAL_NAME
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --hdfs-data-transfer-protection
 
@@ -202,19 +208,23 @@ checks, and wire encryption is required when communicating the the
 datanodes. Possible values are 'authentication', 'integrity' and
 'privacy'. Used only with KERBEROS enabled.
 
+Properties:
+
 - Config:      data_transfer_protection
 - Env Var:     RCLONE_HDFS_DATA_TRANSFER_PROTECTION
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "privacy"
         - Ensure authentication, integrity and encryption enabled.
 
 #### --hdfs-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_HDFS_ENCODING

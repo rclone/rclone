@@ -160,10 +160,12 @@ Here are the standard options specific to mega (Mega).
 
 User name.
 
+Properties:
+
 - Config:      user
 - Env Var:     RCLONE_MEGA_USER
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --mega-pass
 
@@ -171,10 +173,12 @@ Password.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      pass
 - Env Var:     RCLONE_MEGA_PASS
 - Type:        string
-- Default:     ""
+- Required:    true
 
 ### Advanced options
 
@@ -186,6 +190,8 @@ Output more debug from Mega.
 
 If this flag is set (along with -vv) it will print further debugging
 information from the mega backend.
+
+Properties:
 
 - Config:      debug
 - Env Var:     RCLONE_MEGA_DEBUG
@@ -200,6 +206,8 @@ Normally the mega backend will put all deletions into the trash rather
 than permanently deleting them.  If you specify this then rclone will
 permanently delete objects instead.
 
+Properties:
+
 - Config:      hard_delete
 - Env Var:     RCLONE_MEGA_HARD_DELETE
 - Type:        bool
@@ -207,9 +215,11 @@ permanently delete objects instead.
 
 #### --mega-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_MEGA_ENCODING

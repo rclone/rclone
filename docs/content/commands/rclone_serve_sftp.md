@@ -49,6 +49,17 @@ be used with sshd via ~/.ssh/authorized_keys, for example:
 
     restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
 
+On the client you need to set "--transfers 1" when using --stdio.
+Otherwise multiple instances of the rclone server are started by OpenSSH
+which can lead to "corrupted on transfer" errors. This is the case because
+the client chooses indiscriminately which server to send commands to while
+the servers all have different views of the state of the filing system.
+
+The "restrict" in authorized_keys prevents SHA1SUMs and MD5SUMs from beeing
+used. Omitting "restrict" and using --sftp-path-override to enable
+checksumming is possible but less secure and you could use the SFTP server
+provided by OpenSSH in this case.
+
 
 ## VFS - Virtual File System
 
@@ -341,7 +352,7 @@ together, if `--auth-proxy` is set the authorized keys option will be
 ignored.
 
 There is an example program
-[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/bin/test_proxy.py)
+[bin/test_proxy.py](https://github.com/rclone/rclone/blob/master/test_proxy.py)
 in the rclone source code.
 
 The program's job is to take a `user` and `pass` on the input and turn

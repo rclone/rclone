@@ -178,14 +178,18 @@ Here are the standard options specific to hasher (Better checksums for other rem
 
 Remote to cache checksums for (e.g. myRemote:path).
 
+Properties:
+
 - Config:      remote
 - Env Var:     RCLONE_HASHER_REMOTE
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --hasher-hashes
 
 Comma separated list of supported checksum types.
+
+Properties:
 
 - Config:      hashes
 - Env Var:     RCLONE_HASHER_HASHES
@@ -195,6 +199,8 @@ Comma separated list of supported checksum types.
 #### --hasher-max-age
 
 Maximum time to keep checksums in cache (0 = no cache, off = cache forever).
+
+Properties:
 
 - Config:      max_age
 - Env Var:     RCLONE_HASHER_MAX_AGE
@@ -208,6 +214,8 @@ Here are the advanced options specific to hasher (Better checksums for other rem
 #### --hasher-auto-size
 
 Auto-update checksum for files smaller than this size (disabled by default).
+
+Properties:
 
 - Config:      auto_size
 - Env Var:     RCLONE_HASHER_AUTO_SIZE
@@ -228,7 +236,7 @@ See [the "rclone backend" command](/commands/rclone_backend/) for more
 info on how to pass options and arguments.
 
 These can be run on a running backend using the rc command
-[backend/command](/rc/#backend/command).
+[backend/command](/rc/#backend-command).
 
 ### drop
 

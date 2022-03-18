@@ -115,9 +115,11 @@ Here are the advanced options specific to putio (Put.io).
 
 #### --putio-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_PUTIO_ENCODING

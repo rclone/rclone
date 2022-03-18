@@ -333,10 +333,12 @@ Here are the advanced options specific to local (Local Disk).
 
 Disable UNC (long path names) conversion on Windows.
 
+Properties:
+
 - Config:      nounc
 - Env Var:     RCLONE_LOCAL_NOUNC
 - Type:        string
-- Default:     ""
+- Required:    false
 - Examples:
     - "true"
         - Disables long file names.
@@ -344,6 +346,8 @@ Disable UNC (long path names) conversion on Windows.
 #### --copy-links / -L
 
 Follow symlinks and copy the pointed to item.
+
+Properties:
 
 - Config:      copy_links
 - Env Var:     RCLONE_LOCAL_COPY_LINKS
@@ -353,6 +357,8 @@ Follow symlinks and copy the pointed to item.
 #### --links / -l
 
 Translate symlinks to/from regular files with a '.rclonelink' extension.
+
+Properties:
 
 - Config:      links
 - Env Var:     RCLONE_LOCAL_LINKS
@@ -365,6 +371,8 @@ Don't warn about skipped symlinks.
 
 This flag disables warning messages on skipped symlinks or junction
 points, as you explicitly acknowledge that they should be skipped.
+
+Properties:
 
 - Config:      skip_links
 - Env Var:     RCLONE_LOCAL_SKIP_LINKS
@@ -383,6 +391,8 @@ Rclone used to use the Stat size of links as the link size, but this fails in qu
 
 So rclone now always reads the link.
 
+
+Properties:
 
 - Config:      zero_size_links
 - Env Var:     RCLONE_LOCAL_ZERO_SIZE_LINKS
@@ -405,6 +415,8 @@ some OSes.
 
 Note that rclone compares filenames with unicode normalization in the sync
 routine so this flag shouldn't normally be used.
+
+Properties:
 
 - Config:      unicode_normalization
 - Env Var:     RCLONE_LOCAL_UNICODE_NORMALIZATION
@@ -440,6 +452,8 @@ time we:
 
 
 
+Properties:
+
 - Config:      no_check_updated
 - Env Var:     RCLONE_LOCAL_NO_CHECK_UPDATED
 - Type:        bool
@@ -448,6 +462,8 @@ time we:
 #### --one-file-system / -x
 
 Don't cross filesystem boundaries (unix/macOS only).
+
+Properties:
 
 - Config:      one_file_system
 - Env Var:     RCLONE_LOCAL_ONE_FILE_SYSTEM
@@ -462,6 +478,8 @@ Normally the local backend declares itself as case insensitive on
 Windows/macOS and case sensitive for everything else.  Use this flag
 to override the default choice.
 
+Properties:
+
 - Config:      case_sensitive
 - Env Var:     RCLONE_LOCAL_CASE_SENSITIVE
 - Type:        bool
@@ -474,6 +492,8 @@ Force the filesystem to report itself as case insensitive.
 Normally the local backend declares itself as case insensitive on
 Windows/macOS and case sensitive for everything else.  Use this flag
 to override the default choice.
+
+Properties:
 
 - Config:      case_insensitive
 - Env Var:     RCLONE_LOCAL_CASE_INSENSITIVE
@@ -490,6 +510,8 @@ Stream) may incorrectly set the actual file size equal to the
 preallocated space, causing checksum and file size checks to fail.
 Use this flag to disable preallocation.
 
+Properties:
+
 - Config:      no_preallocate
 - Env Var:     RCLONE_LOCAL_NO_PREALLOCATE
 - Type:        bool
@@ -503,6 +525,8 @@ On Windows platforms rclone will make sparse files when doing
 multi-thread downloads. This avoids long pauses on large files where
 the OS zeros the file. However sparse files may be undesirable as they
 cause disk fragmentation and can be slow to work with.
+
+Properties:
 
 - Config:      no_sparse
 - Env Var:     RCLONE_LOCAL_NO_SPARSE
@@ -519,6 +543,8 @@ the user rclone is running as does not own the file uploaded, such as
 when copying to a CIFS mount owned by another user. If this option is 
 enabled, rclone will no longer update the modtime after copying a file.
 
+Properties:
+
 - Config:      no_set_modtime
 - Env Var:     RCLONE_LOCAL_NO_SET_MODTIME
 - Type:        bool
@@ -526,9 +552,11 @@ enabled, rclone will no longer update the modtime after copying a file.
 
 #### --local-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_LOCAL_ENCODING
@@ -549,7 +577,7 @@ See [the "rclone backend" command](/commands/rclone_backend/) for more
 info on how to pass options and arguments.
 
 These can be run on a running backend using the rc command
-[backend/command](/rc/#backend/command).
+[backend/command](/rc/#backend-command).
 
 ### noop
 

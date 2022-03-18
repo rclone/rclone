@@ -122,10 +122,12 @@ Here are the standard options specific to fichier (1Fichier).
 
 Your API Key, get it from https://1fichier.com/console/params.pl.
 
+Properties:
+
 - Config:      api_key
 - Env Var:     RCLONE_FICHIER_API_KEY
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -135,10 +137,12 @@ Here are the advanced options specific to fichier (1Fichier).
 
 If you want to download a shared folder, add this parameter.
 
+Properties:
+
 - Config:      shared_folder
 - Env Var:     RCLONE_FICHIER_SHARED_FOLDER
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --fichier-file-password
 
@@ -146,10 +150,12 @@ If you want to download a shared file that is password protected, add this param
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      file_password
 - Env Var:     RCLONE_FICHIER_FILE_PASSWORD
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --fichier-folder-password
 
@@ -157,16 +163,20 @@ If you want to list the files in a shared folder that is password protected, add
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      folder_password
 - Env Var:     RCLONE_FICHIER_FOLDER_PASSWORD
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --fichier-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_FICHIER_ENCODING

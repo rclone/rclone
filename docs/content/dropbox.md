@@ -190,10 +190,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_DROPBOX_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --dropbox-client-secret
 
@@ -201,10 +203,12 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_DROPBOX_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -214,10 +218,12 @@ Here are the advanced options specific to dropbox (Dropbox).
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_DROPBOX_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --dropbox-auth-url
 
@@ -225,10 +231,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_DROPBOX_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --dropbox-token-url
 
@@ -236,10 +244,12 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_DROPBOX_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --dropbox-chunk-size
 
@@ -251,6 +261,8 @@ Note that chunks are buffered in memory (one at a time) so rclone can
 deal with retries.  Setting this larger will increase the speed
 slightly (at most 10% for 128 MiB in tests) at the cost of using more
 memory.  It can be set smaller if you are tight on memory.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_DROPBOX_CHUNK_SIZE
@@ -276,10 +288,12 @@ permissions doesn't include "members.read". This can be added once
 v1.55 or later is in use everywhere.
 
 
+Properties:
+
 - Config:      impersonate
 - Env Var:     RCLONE_DROPBOX_IMPERSONATE
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --dropbox-shared-files
 
@@ -288,6 +302,8 @@ Instructs rclone to work on individual shared files.
 In this mode rclone's features are extremely limited - only list (ls, lsl, etc.) 
 operations and read operations (e.g. downloading) are supported in this mode.
 All other operations will be disabled.
+
+Properties:
 
 - Config:      shared_files
 - Env Var:     RCLONE_DROPBOX_SHARED_FILES
@@ -308,6 +324,8 @@ are supported.
 Note that we don't unmount the shared folder afterwards so the 
 --dropbox-shared-folders can be omitted after the first use of a particular 
 shared folder.
+
+Properties:
 
 - Config:      shared_folders
 - Env Var:     RCLONE_DROPBOX_SHARED_FOLDERS
@@ -331,6 +349,8 @@ This has 3 possible values
 Rclone will close any outstanding batches when it exits which may make
 a delay on quit.
 
+
+Properties:
 
 - Config:      batch_mode
 - Env Var:     RCLONE_DROPBOX_BATCH_MODE
@@ -358,6 +378,8 @@ as it will make them a lot quicker. You can use --transfers 32 to
 maximise throughput.
 
 
+Properties:
+
 - Config:      batch_size
 - Env Var:     RCLONE_DROPBOX_BATCH_SIZE
 - Type:        int
@@ -378,6 +400,8 @@ default based on the batch_mode in use.
 - batch_mode: off - not in use
 
 
+Properties:
+
 - Config:      batch_timeout
 - Env Var:     RCLONE_DROPBOX_BATCH_TIMEOUT
 - Type:        Duration
@@ -387,6 +411,8 @@ default based on the batch_mode in use.
 
 Max time to wait for a batch to finish comitting
 
+Properties:
+
 - Config:      batch_commit_timeout
 - Env Var:     RCLONE_DROPBOX_BATCH_COMMIT_TIMEOUT
 - Type:        Duration
@@ -394,9 +420,11 @@ Max time to wait for a batch to finish comitting
 
 #### --dropbox-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_DROPBOX_ENCODING

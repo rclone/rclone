@@ -204,10 +204,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_ONEDRIVE_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --onedrive-client-secret
 
@@ -215,14 +217,18 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_ONEDRIVE_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --onedrive-region
 
 Choose national cloud region for OneDrive.
+
+Properties:
 
 - Config:      region
 - Env Var:     RCLONE_ONEDRIVE_REGION
@@ -246,10 +252,12 @@ Here are the advanced options specific to onedrive (Microsoft OneDrive).
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_ONEDRIVE_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --onedrive-auth-url
 
@@ -257,10 +265,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_ONEDRIVE_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --onedrive-token-url
 
@@ -268,10 +278,12 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_ONEDRIVE_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --onedrive-chunk-size
 
@@ -280,6 +292,8 @@ Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
 Above this size files will be chunked - must be multiple of 320k (327,680 bytes) and
 should not exceed 250M (262,144,000 bytes) else you may encounter \"Microsoft.SharePoint.Client.InvalidClientQueryException: The request message is too big.\"
 Note that the chunks will be buffered into memory.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_ONEDRIVE_CHUNK_SIZE
@@ -290,29 +304,68 @@ Note that the chunks will be buffered into memory.
 
 The ID of the drive to use.
 
+Properties:
+
 - Config:      drive_id
 - Env Var:     RCLONE_ONEDRIVE_DRIVE_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --onedrive-drive-type
 
 The type of the drive (personal | business | documentLibrary).
 
+Properties:
+
 - Config:      drive_type
 - Env Var:     RCLONE_ONEDRIVE_DRIVE_TYPE
 - Type:        string
-- Default:     ""
+- Required:    false
+
+#### --onedrive-root-folder-id
+
+ID of the root folder.
+
+This isn't normally needed, but in special circumstances you might
+know the folder ID that you wish to access but not be able to get
+there through a path traversal.
+
+
+Properties:
+
+- Config:      root_folder_id
+- Env Var:     RCLONE_ONEDRIVE_ROOT_FOLDER_ID
+- Type:        string
+- Required:    false
+
+#### --onedrive-disable-site-permission
+
+Disable the request for Sites.Read.All permission.
+
+If set to true, you will no longer be able to search for a SharePoint site when
+configuring drive ID, because rclone will not request Sites.Read.All permission.
+Set it to true if your organization didn't assign Sites.Read.All permission to the
+application, and your organization disallows users to consent app permission
+request on their own.
+
+Properties:
+
+- Config:      disable_site_permission
+- Env Var:     RCLONE_ONEDRIVE_DISABLE_SITE_PERMISSION
+- Type:        bool
+- Default:     false
 
 #### --onedrive-expose-onenote-files
 
 Set to make OneNote files show up in directory listings.
 
-By default rclone will hide OneNote files in directory listings because
+By default, rclone will hide OneNote files in directory listings because
 operations like "Open" and "Update" won't work on them.  But this
 behaviour may also prevent you from deleting them.  If you want to
 delete OneNote files or otherwise want them to show up in directory
 listing, set this option.
+
+Properties:
 
 - Config:      expose_onenote_files
 - Env Var:     RCLONE_ONEDRIVE_EXPOSE_ONENOTE_FILES
@@ -327,6 +380,8 @@ This will only work if you are copying between two OneDrive *Personal* drives AN
 the files to copy are already shared between them.  In other cases, rclone will
 fall back to normal copy (which will be slightly slower).
 
+Properties:
+
 - Config:      server_side_across_configs
 - Env Var:     RCLONE_ONEDRIVE_SERVER_SIDE_ACROSS_CONFIGS
 - Type:        bool
@@ -335,6 +390,8 @@ fall back to normal copy (which will be slightly slower).
 #### --onedrive-list-chunk
 
 Size of listing chunk.
+
+Properties:
 
 - Config:      list_chunk
 - Env Var:     RCLONE_ONEDRIVE_LIST_CHUNK
@@ -357,6 +414,8 @@ modification time and removes all but the last version.
 this flag there.
 
 
+Properties:
+
 - Config:      no_versions
 - Env Var:     RCLONE_ONEDRIVE_NO_VERSIONS
 - Type:        bool
@@ -365,6 +424,8 @@ this flag there.
 #### --onedrive-link-scope
 
 Set the scope of the links created by the link command.
+
+Properties:
 
 - Config:      link_scope
 - Env Var:     RCLONE_ONEDRIVE_LINK_SCOPE
@@ -382,6 +443,8 @@ Set the scope of the links created by the link command.
 #### --onedrive-link-type
 
 Set the type of the links created by the link command.
+
+Properties:
 
 - Config:      link_type
 - Env Var:     RCLONE_ONEDRIVE_LINK_TYPE
@@ -402,16 +465,20 @@ Set the password for links created by the link command.
 At the time of writing this only works with OneDrive personal paid accounts.
 
 
+Properties:
+
 - Config:      link_password
 - Env Var:     RCLONE_ONEDRIVE_LINK_PASSWORD
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --onedrive-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_ONEDRIVE_ENCODING

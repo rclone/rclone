@@ -108,10 +108,12 @@ Here are the standard options specific to opendrive (OpenDrive).
 
 Username.
 
+Properties:
+
 - Config:      username
 - Env Var:     RCLONE_OPENDRIVE_USERNAME
 - Type:        string
-- Default:     ""
+- Required:    true
 
 #### --opendrive-password
 
@@ -119,10 +121,12 @@ Password.
 
 **NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
 
+Properties:
+
 - Config:      password
 - Env Var:     RCLONE_OPENDRIVE_PASSWORD
 - Type:        string
-- Default:     ""
+- Required:    true
 
 ### Advanced options
 
@@ -130,9 +134,11 @@ Here are the advanced options specific to opendrive (OpenDrive).
 
 #### --opendrive-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_OPENDRIVE_ENCODING
@@ -145,6 +151,8 @@ Files will be uploaded in chunks this size.
 
 Note that these chunks are buffered in memory so increasing them will
 increase memory use.
+
+Properties:
 
 - Config:      chunk_size
 - Env Var:     RCLONE_OPENDRIVE_CHUNK_SIZE

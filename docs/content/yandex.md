@@ -124,10 +124,12 @@ OAuth Client Id.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_id
 - Env Var:     RCLONE_YANDEX_CLIENT_ID
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --yandex-client-secret
 
@@ -135,10 +137,12 @@ OAuth Client Secret.
 
 Leave blank normally.
 
+Properties:
+
 - Config:      client_secret
 - Env Var:     RCLONE_YANDEX_CLIENT_SECRET
 - Type:        string
-- Default:     ""
+- Required:    false
 
 ### Advanced options
 
@@ -148,10 +152,12 @@ Here are the advanced options specific to yandex (Yandex Disk).
 
 OAuth Access Token as a JSON blob.
 
+Properties:
+
 - Config:      token
 - Env Var:     RCLONE_YANDEX_TOKEN
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --yandex-auth-url
 
@@ -159,10 +165,12 @@ Auth server URL.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      auth_url
 - Env Var:     RCLONE_YANDEX_AUTH_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --yandex-token-url
 
@@ -170,14 +178,18 @@ Token server url.
 
 Leave blank to use the provider defaults.
 
+Properties:
+
 - Config:      token_url
 - Env Var:     RCLONE_YANDEX_TOKEN_URL
 - Type:        string
-- Default:     ""
+- Required:    false
 
 #### --yandex-hard-delete
 
 Delete files permanently rather than putting them into the trash.
+
+Properties:
 
 - Config:      hard_delete
 - Env Var:     RCLONE_YANDEX_HARD_DELETE
@@ -186,9 +198,11 @@ Delete files permanently rather than putting them into the trash.
 
 #### --yandex-encoding
 
-This sets the encoding for the backend.
+The encoding for the backend.
 
 See the [encoding section in the overview](/overview/#encoding) for more info.
+
+Properties:
 
 - Config:      encoding
 - Env Var:     RCLONE_YANDEX_ENCODING
