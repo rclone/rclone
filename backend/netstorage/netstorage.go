@@ -65,7 +65,7 @@ HTTP is provided primarily for debugging purposes.`,
 			Name: "host",
 			Help: `Domain+path of NetStorage host to connect to.
 
-Format should be <domain>/<internal folders>`,
+Format should be ` + "`<domain>/<internal folders>`",
 			Required: true,
 		}, {
 			Name:     "account",
@@ -94,7 +94,7 @@ files stored in any sub-directories that may exist.`,
 	Long: `The desired path location (including applicable sub-directories) ending in
 the object that will be the target of the symlink (for example, /links/mylink).
 Include the file extension for the object, if applicable.
-rclone backend symlink <src> <path>`,
+` + "`rclone backend symlink <src> <path>`",
 },
 }
 

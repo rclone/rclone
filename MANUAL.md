@@ -29340,7 +29340,7 @@ Here are the standard options specific to netstorage (Akamai NetStorage).
 
 Domain+path of NetStorage host to connect to.
 
-Format should be <domain>/<internal folders>
+Format should be `<domain>/<internal folders>`
 
 Properties:
 
@@ -29432,7 +29432,7 @@ You can create a symbolic link in ObjectStore with the symlink action.
 The desired path location (including applicable sub-directories) ending in
 the object that will be the target of the symlink (for example, /links/mylink).
 Include the file extension for the object, if applicable.
-rclone backend symlink <src> <path>
+`rclone backend symlink <src> <path>`
 
 
 
