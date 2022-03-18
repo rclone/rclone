@@ -39645,7 +39645,7 @@ NetStorage).
 .PP
 Domain+path of NetStorage host to connect to.
 .PP
-Format should be /
+Format should be \f[C]<domain>/<internal folders>\f[R]
 .PP
 Properties:
 .IP \[bu] 2
@@ -39770,7 +39770,7 @@ The desired path location (including applicable sub-directories) ending
 in the object that will be the target of the symlink (for example,
 /links/mylink).
 Include the file extension for the object, if applicable.
-rclone backend symlink
+\f[C]rclone backend symlink <src> <path>\f[R]
 .SH Microsoft Azure Blob Storage
 .PP
 Paths are specified as \f[C]remote:container\f[R] (or \f[C]remote:\f[R]

@@ -19720,7 +19720,7 @@ y/e/d&gt; y</code></pre>
 <p>Here are the standard options specific to netstorage (Akamai NetStorage).</p>
 <h4 id="netstorage-host">--netstorage-host</h4>
 <p>Domain+path of NetStorage host to connect to.</p>
-<p>Format should be <domain>/<internal folders></p>
+<p>Format should be <code>&lt;domain&gt;/&lt;internal folders&gt;</code></p>
 <p>Properties:</p>
 <ul>
 <li>Config: host</li>
@@ -19785,7 +19785,7 @@ y/e/d&gt; y</code></pre>
 <h3 id="symlink">symlink</h3>
 <p>You can create a symbolic link in ObjectStore with the symlink action.</p>
 <pre><code>rclone backend symlink remote: [options] [&lt;arguments&gt;+]</code></pre>
-<p>The desired path location (including applicable sub-directories) ending in the object that will be the target of the symlink (for example, /links/mylink). Include the file extension for the object, if applicable. rclone backend symlink <src> <path></p>
+<p>The desired path location (including applicable sub-directories) ending in the object that will be the target of the symlink (for example, /links/mylink). Include the file extension for the object, if applicable. <code>rclone backend symlink &lt;src&gt; &lt;path&gt;</code></p>
 <h1 id="microsoft-azure-blob-storage">Microsoft Azure Blob Storage</h1>
 <p>Paths are specified as <code>remote:container</code> (or <code>remote:</code> for the <code>lsd</code> command.) You may put subdirectories in too, e.g. <code>remote:container/path/to/dir</code>.</p>
 <h2 id="configuration-25">Configuration</h2>
