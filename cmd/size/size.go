@@ -30,9 +30,13 @@ var commandDefinition = &cobra.Command{
 		cmd.Run(false, false, command, func() error {
 			var err error
 			var results struct {
-				Count int64 `json:"count"`
-				Bytes int64 `json:"bytes"`
+				Count   int64  `json:"count"`
+				Bytes   int64  `json:"bytes"`
+				DriveID string `json:"drive_id"`
+				Path    string `json:"path"`
 			}
+			results.DriveID = fsrc.Name()
+			results.Path = fmt.Sprintf("/%s", fsrc.Root())
 
 			results.Count, results.Bytes, err = operations.Count(context.Background(), fsrc)
 			if err != nil {
@@ -42,6 +46,8 @@ var commandDefinition = &cobra.Command{
 			if jsonOutput {
 				return json.NewEncoder(os.Stdout).Encode(results)
 			}
+			fmt.Printf("DriveID: %s\n", results.DriveID)
+			fmt.Printf("Path: %s\n", results.Path)
 			fmt.Printf("Total objects: %s (%d)\n", fs.CountSuffix(results.Count), results.Count)
 			fmt.Printf("Total size: %s (%d Byte)\n", fs.SizeSuffix(results.Bytes).ByteUnit(), results.Bytes)
 			return nil
