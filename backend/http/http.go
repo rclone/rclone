@@ -305,7 +305,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		fs:     f,
 		remote: remote,
 	}
-	err := o.stat(ctx)
+	err := o.head(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -500,7 +500,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					fs:     f,
 					remote: remote,
 				}
-				switch err := file.stat(ctx); err {
+				switch err := file.head(ctx); err {
 				case nil:
 					add(file)
 				case fs.ErrorNotAFile:
@@ -579,8 +579,8 @@ func (o *Object) url() string {
 	return o.fs.url(o.remote)
 }
 
-// stat updates the info field in the Object
-func (o *Object) stat(ctx context.Context) error {
+// head sends a HEAD request to update info fields in the Object
+func (o *Object) head(ctx context.Context) error {
 	if o.fs.opt.NoHead {
 		o.size = -1
 		o.modTime = timeUnset
@@ -601,6 +601,11 @@ func (o *Object) stat(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to stat: %w", err)
 	}
+	return o.stat(ctx, res)
+}
+
+// stat updates info fields in the Object according to HTTP response headers
+func (o *Object) stat(ctx context.Context, res *http.Response) error {
 	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
 	if err != nil {
 		t = timeUnset
@@ -652,6 +657,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	err = statusError(res, err)
 	if err != nil {
 		return nil, fmt.Errorf("Open failed: %w", err)
+	}
+
+	if o.fs.opt.NoHead {
+		if err = o.stat(ctx, res); err != nil {
+			return nil, fmt.Errorf("Stat failed: %w", err)
+		}
 	}
 	return res.Body, nil
 }
