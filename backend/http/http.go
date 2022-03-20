@@ -601,18 +601,24 @@ func (o *Object) head(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to stat: %w", err)
 	}
-	return o.stat(ctx, res)
+	return o.stat(ctx, res, true)
 }
 
 // stat updates info fields in the Object according to HTTP response headers
-func (o *Object) stat(ctx context.Context, res *http.Response) error {
+func (o *Object) stat(ctx context.Context, res *http.Response, isRangeRequest bool) error {
 	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
 	if err != nil {
 		t = timeUnset
 	}
-	o.size = parseInt64(res.Header.Get("Content-Length"), -1)
 	o.modTime = t
-	o.contentType = res.Header.Get("Content-Type")
+
+	// TODO: parse Content-Range for total size
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests
+	if !isRangeRequest {
+		o.size = parseInt64(res.Header.Get("Content-Length"), -1)
+		o.contentType = res.Header.Get("Content-Type")
+	}
+
 	// If NoSlash is set then check ContentType to see if it is a directory
 	if o.fs.opt.NoSlash {
 		mediaType, _, err := mime.ParseMediaType(o.contentType)
@@ -660,7 +666,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 
 	if o.fs.opt.NoHead {
-		if err = o.stat(ctx, res); err != nil {
+		isRangeRequest := len(req.Header.Get("Range")) > 0
+		if err = o.stat(ctx, res, isRangeRequest); err != nil {
 			return nil, fmt.Errorf("Stat failed: %w", err)
 		}
 	}
