@@ -4761,23 +4761,12 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 		return nil, err
 	}
 
-	contentLength := &resp.ContentLength
-	if resp.Header.Get("Content-Range") != "" {
-		var contentRange = resp.Header.Get("Content-Range")
-		slash := strings.IndexRune(contentRange, '/')
-		if slash >= 0 {
-			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
-			if err == nil {
-				contentLength = &i
-			} else {
-				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
-			}
-		} else {
-			fs.Debugf(o, "Failed to find length in %q", contentRange)
-		}
+	contentLength := rest.ParseSizeFromHeaders(resp.Header)
+	if contentLength < 0 {
+		fs.Debugf(o, "Failed to parse file size from headers")
 	}
 
-	lastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
+	lastModified, err := http.ParseTime(resp.Header.Get("Last-Modified"))
 	if err != nil {
 		fs.Debugf(o, "Failed to parse last modified from string %s, %v", resp.Header.Get("Last-Modified"), err)
 	}
@@ -4801,7 +4790,7 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 
 	var head = s3.HeadObjectOutput{
 		ETag:               header("Etag"),
-		ContentLength:      contentLength,
+		ContentLength:      &contentLength,
 		LastModified:       &lastModified,
 		Metadata:           metaData,
 		CacheControl:       header("Cache-Control"),

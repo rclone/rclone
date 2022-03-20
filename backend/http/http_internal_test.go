@@ -194,31 +194,66 @@ func TestNewObject(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
-	f, tidy := prepare(t)
+	m, tidy := prepareServer(t)
 	defer tidy()
 
-	o, err := f.NewObject(context.Background(), "four/under four.txt")
-	require.NoError(t, err)
+	for _, head := range []bool{false, true} {
+		if !head {
+			m.Set("no_head", "true")
+		}
+		f, err := NewFs(context.Background(), remoteName, "", m)
+		require.NoError(t, err)
 
-	// Test normal read
-	fd, err := o.Open(context.Background())
-	require.NoError(t, err)
-	data, err := io.ReadAll(fd)
-	require.NoError(t, err)
-	require.NoError(t, fd.Close())
-	if lineEndSize == 2 {
-		assert.Equal(t, "beetroot\r\n", string(data))
-	} else {
-		assert.Equal(t, "beetroot\n", string(data))
+		for _, rangeRead := range []bool{false, true} {
+			o, err := f.NewObject(context.Background(), "four/under four.txt")
+			require.NoError(t, err)
+
+			if !head {
+				// Test mod time is still indeterminate
+				tObj := o.ModTime(context.Background())
+				assert.Equal(t, time.Duration(0), time.Unix(0, 0).Sub(tObj))
+
+				// Test file size is still indeterminate
+				assert.Equal(t, int64(-1), o.Size())
+			}
+
+			var data []byte
+			if !rangeRead {
+				// Test normal read
+				fd, err := o.Open(context.Background())
+				require.NoError(t, err)
+				data, err = io.ReadAll(fd)
+				require.NoError(t, err)
+				require.NoError(t, fd.Close())
+				if lineEndSize == 2 {
+					assert.Equal(t, "beetroot\r\n", string(data))
+				} else {
+					assert.Equal(t, "beetroot\n", string(data))
+				}
+			} else {
+				// Test with range request
+				fd, err := o.Open(context.Background(), &fs.RangeOption{Start: 1, End: 5})
+				require.NoError(t, err)
+				data, err = io.ReadAll(fd)
+				require.NoError(t, err)
+				require.NoError(t, fd.Close())
+				assert.Equal(t, "eetro", string(data))
+			}
+
+			fi, err := os.Stat(filepath.Join(filesPath, "four", "under four.txt"))
+			require.NoError(t, err)
+			tFile := fi.ModTime()
+
+			// Test the time is always correct on the object after file open
+			tObj := o.ModTime(context.Background())
+			fstest.AssertTimeEqualWithPrecision(t, o.Remote(), tFile, tObj, time.Second)
+
+			if !rangeRead {
+				// Test the file size
+				assert.Equal(t, int64(len(data)), o.Size())
+			}
+		}
 	}
-
-	// Test with range request
-	fd, err = o.Open(context.Background(), &fs.RangeOption{Start: 1, End: 5})
-	require.NoError(t, err)
-	data, err = io.ReadAll(fd)
-	require.NoError(t, err)
-	require.NoError(t, fd.Close())
-	assert.Equal(t, "eetro", string(data))
 }
 
 func TestMimeType(t *testing.T) {
