@@ -1650,13 +1650,37 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 		}
 
 		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+		skip := int64(0)
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
-			if _, err = chunk.Seek(0, io.SeekStart); err != nil {
-				return false, nil
+			if _, err = chunk.Seek(skip, io.SeekStart); err != nil {
+				return false, err
 			}
 			err = o.fs.srv.UploadSessionAppendV2(&appendArg, chunk)
 			// after session is started, we retry everything
+			if err != nil {
+				// Check for incorrect offset error and retry with new offset
+				if uErr, ok := err.(files.UploadSessionAppendV2APIError); ok {
+					if uErr.EndpointError != nil && uErr.EndpointError.IncorrectOffset != nil {
+						correctOffset := uErr.EndpointError.IncorrectOffset.CorrectOffset
+						delta := int64(correctOffset) - int64(cursor.Offset)
+						skip += delta
+						what := fmt.Sprintf("incorrect offset error receved: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
+						if skip < 0 {
+							return false, fmt.Errorf("can't seek backwards to correct offset: %s", what)
+						} else if skip == chunkSize {
+							fs.Debugf(o, "%s: chunk received OK - continuing", what)
+							return false, nil
+						} else if skip > chunkSize {
+							// This error should never happen
+							return false, fmt.Errorf("can't seek forwards by more than a chunk to correct offset: %s", what)
+						}
+						// Skip the sent data on next retry
+						cursor.Offset = uint64(int64(cursor.Offset) + delta)
+						fs.Debugf(o, "%s: skipping bytes on retry to fix offset", what)
+					}
+				}
+			}
 			return err != nil, err
 		})
 		if err != nil {
