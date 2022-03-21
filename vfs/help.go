@@ -184,6 +184,38 @@ FAT/exFAT do not. Rclone will perform very badly if the cache
 directory is on a filesystem which doesn't support sparse files and it
 will log an ERROR message if one is detected.
 
+#### Fingerprinting
+
+Various parts of the VFS use fingerprinting to see if a local file
+copy has changed relative to a remote file. Fingerprints are made
+from:
+
+- size
+- modification time
+- hash
+
+where available on an object.
+
+On some backends some of these attributes are slow to read (they take
+an extra API call per object, or extra work per object).
+
+For example !hash! is slow with the !local! and !sftp! backends as
+they have to read the entire file and hash it, and !modtime! is slow
+with the !s3!, !swift!, !ftp! and !qinqstor! backends because they
+need to do an extra API call to fetch it.
+
+If you use the !--vfs-fast-fingerprint! flag then rclone will not
+include the slow operations in the fingerprint. This makes the
+fingerprinting less accurate but much faster and will improve the
+opening time of cached files.
+
+If you are running a vfs cache over !local!, !s3! or !swift! backends
+then using this flag is recommended.
+
+Note that if you change the value of this flag, the fingerprints of
+the files in the cache may be invalidated and the files will need to
+be downloaded again.
+
 ### VFS Chunked Reading
 
 When rclone reads files from a remote it reads them in chunks. This

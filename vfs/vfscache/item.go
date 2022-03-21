@@ -784,7 +784,7 @@ func (item *Item) _checkObject(o fs.Object) error {
 			// OK
 		}
 	} else {
-		remoteFingerprint := fs.Fingerprint(context.TODO(), o, false)
+		remoteFingerprint := fs.Fingerprint(context.TODO(), o, item.c.opt.FastFingerprint)
 		fs.Debugf(item.name, "vfs cache: checking remote fingerprint %q against cached fingerprint %q", remoteFingerprint, item.info.Fingerprint)
 		if item.info.Fingerprint != "" {
 			// remote object && local object
@@ -1159,7 +1159,7 @@ func (item *Item) _updateFingerprint() {
 		return
 	}
 	oldFingerprint := item.info.Fingerprint
-	item.info.Fingerprint = fs.Fingerprint(context.TODO(), item.o, false)
+	item.info.Fingerprint = fs.Fingerprint(context.TODO(), item.o, item.c.opt.FastFingerprint)
 	if oldFingerprint != item.info.Fingerprint {
 		fs.Debugf(item.o, "vfs cache: fingerprint now %q", item.info.Fingerprint)
 	}

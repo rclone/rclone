@@ -33,6 +33,7 @@ type Options struct {
 	WriteBack         time.Duration // time to wait before writing back dirty files
 	ReadAhead         fs.SizeSuffix // bytes to read ahead in cache mode "full"
 	UsedIsSize        bool          // if true, use the `rclone size` algorithm for Used size
+	FastFingerprint   bool          // if set use fast fingerprints
 }
 
 // DefaultOpt is the default values uses for Opt
