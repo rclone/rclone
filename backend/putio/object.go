@@ -241,7 +241,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 		// fs.Debugf(o, "opening file: id=%d", o.file.ID)
 		resp, err = o.fs.httpClient.Do(req)
-		return shouldRetry(ctx, err)
+		if err != nil {
+			return shouldRetry(ctx, err)
+		}
+		if err := checkStatusCode(resp, 200); err != nil {
+			return shouldRetry(ctx, err)
+		}
+		return false, nil
 	})
 	if perr, ok := err.(*putio.ErrorResponse); ok && perr.Response.StatusCode >= 400 && perr.Response.StatusCode <= 499 {
 		_ = resp.Body.Close()
