@@ -302,8 +302,8 @@ func (f *Fs) createUpload(ctx context.Context, name string, size int64, parentID
 		if err != nil {
 			return false, err
 		}
-		if resp.StatusCode != 201 {
-			return false, fmt.Errorf("unexpected status code from upload create: %d", resp.StatusCode)
+		if err := checkStatusCode(resp, 201); err != nil {
+			return shouldRetry(ctx, err)
 		}
 		location = resp.Header.Get("location")
 		if location == "" {
