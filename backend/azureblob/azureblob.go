@@ -612,7 +612,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
 	case opt.UseMSI:
 		var token adal.Token
-		var userMSI *userMSI = &userMSI{}
+		var userMSI = &userMSI{}
 		if len(opt.MSIClientID) > 0 || len(opt.MSIObjectID) > 0 || len(opt.MSIResourceID) > 0 {
 			// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
 			// Validate and ensure exactly one is set. (To do: better validation.)
