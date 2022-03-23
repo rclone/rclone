@@ -1,7 +1,7 @@
 //go:build !plan9 && !js && !race
 // +build !plan9,!js,!race
 
-package cache_test
+package cache
 
 import (
 	"bytes"
@@ -23,7 +23,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/backend/cache"
 	"github.com/rclone/rclone/backend/crypt"
 	_ "github.com/rclone/rclone/backend/drive"
 	"github.com/rclone/rclone/backend/local"
@@ -702,7 +701,7 @@ func TestInternalMaxChunkSizeRespected(t *testing.T) {
 	runInstance.writeRemoteBytes(t, rootFs, "data.bin", testData)
 	o, err := cfs.NewObject(context.Background(), runInstance.encryptRemoteIfNeeded(t, "data.bin"))
 	require.NoError(t, err)
-	co, ok := o.(*cache.Object)
+	co, ok := o.(*Object)
 	require.True(t, ok)
 
 	for i := 0; i < 4; i++ { // read first 4
@@ -866,7 +865,7 @@ func (r *run) encryptRemoteIfNeeded(t *testing.T, remote string) string {
 	return enc
 }
 
-func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool, cfg map[string]string, flags map[string]string) (fs.Fs, *cache.Persistent) {
+func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool, cfg map[string]string, flags map[string]string) (fs.Fs, *Persistent) {
 	fstest.Initialise()
 	remoteExists := false
 	for _, s := range config.FileSections() {
@@ -929,7 +928,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	runInstance.dbPath = filepath.Join(config.GetCacheDir(), "cache-backend", cacheRemote+".db")
 	runInstance.chunkPath = filepath.Join(config.GetCacheDir(), "cache-backend", cacheRemote)
 	runInstance.vfsCachePath = filepath.Join(config.GetCacheDir(), "vfs", remote)
-	boltDb, err := cache.GetPersistent(runInstance.dbPath, runInstance.chunkPath, &cache.Features{PurgeDb: true})
+	boltDb, err := GetPersistent(runInstance.dbPath, runInstance.chunkPath, &Features{PurgeDb: true})
 	require.NoError(t, err)
 
 	ci := fs.GetConfig(context.Background())
@@ -940,11 +939,11 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 		boltDb.PurgeTempUploads()
 		_ = os.RemoveAll(path.Join(runInstance.tmpUploadDir, id))
 	}
-	f, err := cache.NewFs(context.Background(), remote, id, m)
+	f, err := NewFs(context.Background(), remote, id, m)
 	require.NoError(t, err)
 	cfs, err := r.getCacheFs(f)
 	require.NoError(t, err)
-	_, isCache := cfs.Features().UnWrap().(*cache.Fs)
+	_, isCache := cfs.Features().UnWrap().(*Fs)
 	_, isCrypt := cfs.Features().UnWrap().(*crypt.Fs)
 	_, isLocal := cfs.Features().UnWrap().(*local.Fs)
 	if isCache || isCrypt || isLocal {
@@ -962,7 +961,7 @@ func (r *run) newCacheFs(t *testing.T, remote, id string, needRemote, purge bool
 	return f, boltDb
 }
 
-func (r *run) cleanupFs(t *testing.T, f fs.Fs, b *cache.Persistent) {
+func (r *run) cleanupFs(t *testing.T, f fs.Fs, b *Persistent) {
 	err := f.Features().Purge(context.Background(), "")
 	require.NoError(t, err)
 	cfs, err := r.getCacheFs(f)
@@ -1250,7 +1249,7 @@ func (r *run) listenForBackgroundUpload(t *testing.T, f fs.Fs, remote string) ch
 	waitCh := make(chan error)
 	go func() {
 		var err error
-		var state cache.BackgroundUploadState
+		var state BackgroundUploadState
 
 		for i := 0; i < 2; i++ {
 			select {
@@ -1269,7 +1268,7 @@ func (r *run) listenForBackgroundUpload(t *testing.T, f fs.Fs, remote string) ch
 					return
 				}
 			}
-			if checkRemote == remote && cache.BackgroundUploadStarted != state.Status {
+			if checkRemote == remote && BackgroundUploadStarted != state.Status {
 				waitCh <- state.Error
 				return
 			}
@@ -1296,7 +1295,7 @@ func (r *run) completeBackgroundUpload(t *testing.T, remote string, waitCh chan 
 }
 
 func (r *run) completeAllBackgroundUploads(t *testing.T, f fs.Fs, lastRemote string) {
-	var state cache.BackgroundUploadState
+	var state BackgroundUploadState
 	var err error
 
 	maxDuration := time.Minute * 5
@@ -1317,7 +1316,7 @@ func (r *run) completeAllBackgroundUploads(t *testing.T, f fs.Fs, lastRemote str
 				checkRemote, err = cryptFs.DecryptFileName(checkRemote)
 				require.NoError(t, err)
 			}
-			if checkRemote == lastRemote && cache.BackgroundUploadCompleted == state.Status {
+			if checkRemote == lastRemote && BackgroundUploadCompleted == state.Status {
 				require.NoError(t, state.Error)
 				return
 			}
@@ -1326,6 +1325,29 @@ func (r *run) completeAllBackgroundUploads(t *testing.T, f fs.Fs, lastRemote str
 			return
 		}
 	}
+}
+
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionComplete = "description_complete"
+		newDescription      = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionComplete,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionComplete, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }
 
 func (r *run) retryBlock(block func() error, maxRetries int, rate time.Duration) error {
@@ -1340,13 +1362,13 @@ func (r *run) retryBlock(block func() error, maxRetries int, rate time.Duration)
 	return err
 }
 
-func (r *run) getCacheFs(f fs.Fs) (*cache.Fs, error) {
-	cfs, ok := f.(*cache.Fs)
+func (r *run) getCacheFs(f fs.Fs) (*Fs, error) {
+	cfs, ok := f.(*Fs)
 	if ok {
 		return cfs, nil
 	}
 	if f.Features().UnWrap != nil {
-		cfs, ok := f.Features().UnWrap().(*cache.Fs)
+		cfs, ok := f.Features().UnWrap().(*Fs)
 		if ok {
 			return cfs, nil
 		}
@@ -1363,6 +1385,6 @@ func randStringBytes(n int) []byte {
 }
 
 var (
-	_ fs.Fs = (*cache.Fs)(nil)
+	_ fs.Fs = (*Fs)(nil)
 	_ fs.Fs = (*local.Fs)(nil)
 )

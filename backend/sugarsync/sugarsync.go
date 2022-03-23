@@ -75,63 +75,8 @@ func init() {
 		Name:        "sugarsync",
 		Description: "Sugarsync",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			opt := new(Options)
-			err := configstruct.Set(m, opt)
-			if err != nil {
-				return nil, fmt.Errorf("failed to read options: %w", err)
-			}
-
-			switch config.State {
-			case "":
-				if opt.RefreshToken == "" {
-					return fs.ConfigGoto("username")
-				}
-				return fs.ConfigConfirm("refresh", true, "config_refresh", "Already have a token - refresh?")
-			case "refresh":
-				if config.Result == "false" {
-					return nil, nil
-				}
-				return fs.ConfigGoto("username")
-			case "username":
-				return fs.ConfigInput("password", "config_username", "username (email address)")
-			case "password":
-				m.Set("username", config.Result)
-				return fs.ConfigPassword("auth", "config_password", "Your Sugarsync password.\n\nOnly required during setup and will not be stored.")
-			case "auth":
-				username, _ := m.Get("username")
-				m.Set("username", "")
-				password := config.Result
-
-				authRequest := api.AppAuthorization{
-					Username:         username,
-					Password:         obscure.MustReveal(password),
-					Application:      withDefault(opt.AppID, appID),
-					AccessKeyID:      withDefault(opt.AccessKeyID, accessKeyID),
-					PrivateAccessKey: withDefault(opt.PrivateAccessKey, obscure.MustReveal(encryptedPrivateAccessKey)),
-				}
-
-				var resp *http.Response
-				opts := rest.Opts{
-					Method: "POST",
-					Path:   "/app-authorization",
-				}
-				srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(rootURL) //  FIXME
-
-				// FIXME
-				//err = f.pacer.Call(func() (bool, error) {
-				resp, err = srv.CallXML(context.Background(), &opts, &authRequest, nil)
-				//	return shouldRetry(ctx, resp, err)
-				//})
-				if err != nil {
-					return nil, fmt.Errorf("failed to get token: %w", err)
-				}
-				opt.RefreshToken = resp.Header.Get("Location")
-				m.Set("refresh_token", opt.RefreshToken)
-				return nil, nil
-			}
-			return nil, fmt.Errorf("unknown state %q", config.State)
-		}, Options: []fs.Option{{
+		Config:      riConfig,
+		Options: []fs.Option{{
 			Name: "app_id",
 			Help: "Sugarsync App ID.\n\nLeave blank to use rclone's.",
 		}, {
@@ -486,6 +431,72 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// riConfig configure additional items for the backend.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read options: %w", err)
+	}
+
+	switch config.State {
+	case "":
+		if opt.RefreshToken == "" {
+			return fs.ConfigGoto("username")
+		}
+		return fs.ConfigConfirm("refresh", true, "config_refresh", "Already have a token - refresh?")
+	case "refresh":
+		if config.Result == "false" {
+			return nil, nil
+		}
+		return fs.ConfigGoto("username")
+	case "username":
+		return fs.ConfigInput("password", "config_username", "username (email address)")
+	case "password":
+		m.Set("username", config.Result)
+		return fs.ConfigPassword("auth", "config_password", "Your Sugarsync password.\n\nOnly required during setup and will not be stored.")
+	case "auth":
+		username, _ := m.Get("username")
+		m.Set("username", "")
+		password := config.Result
+
+		authRequest := api.AppAuthorization{
+			Username:         username,
+			Password:         obscure.MustReveal(password),
+			Application:      withDefault(opt.AppID, appID),
+			AccessKeyID:      withDefault(opt.AccessKeyID, accessKeyID),
+			PrivateAccessKey: withDefault(opt.PrivateAccessKey, obscure.MustReveal(encryptedPrivateAccessKey)),
+		}
+
+		var resp *http.Response
+		opts := rest.Opts{
+			Method: "POST",
+			Path:   "/app-authorization",
+		}
+		srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(rootURL) //  FIXME
+
+		// FIXME
+		//err = f.pacer.Call(func() (bool, error) {
+		resp, err = srv.CallXML(context.Background(), &opts, &authRequest, nil)
+		//	return shouldRetry(ctx, resp, err)
+		//})
+		if err != nil {
+			return nil, fmt.Errorf("failed to get token: %w", err)
+		}
+		opt.RefreshToken = resp.Header.Get("Location")
+		m.Set("refresh_token", opt.RefreshToken)
+		return fs.ConfigGoto("description")
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	}
+	return nil, fmt.Errorf("unknown state %q", config.State)
 }
 
 var findError = regexp.MustCompile(`<h3>(.*?)</h3>`)

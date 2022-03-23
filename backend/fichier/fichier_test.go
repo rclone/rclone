@@ -1,5 +1,5 @@
 // Test 1Fichier filesystem interface
-package fichier
+package fichier_test
 
 import (
 	"testing"

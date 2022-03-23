@@ -83,7 +83,7 @@ func init() {
 		Name:        "jottacloud",
 		Description: "Jottacloud",
 		NewFs:       NewFs,
-		Config:      Config,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "md5_memory_limit",
 			Help:     "Files bigger than this will be cached on disk to calculate the MD5 if required.",
@@ -123,8 +123,8 @@ func init() {
 	})
 }
 
-// Config runs the backend configuration protocol
-func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+// riConfig configure additional items for the backend.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	switch config.State {
 	case "":
 		return fs.ConfigChooseFixed("auth_type_done", "config_type", `Authentication type.`, []fs.OptionExample{{
@@ -313,6 +313,11 @@ machines.`)
 		return fs.ConfigGoto("end")
 	case "end":
 		// All the config flows end up here in case we need to carry on with something
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
 		return nil, nil
 	}
 	return nil, fmt.Errorf("unknown state %q", config.State)

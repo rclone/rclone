@@ -42,6 +42,7 @@ func init() {
 		Name:        "uptobox",
 		Description: "Uptobox",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Help: "Your access token.\n\nGet it from https://uptobox.com/my_account.",
 			Name: "access_token",
@@ -229,6 +230,21 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 	}
 
 	return f, nil
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unknown state %q", config.State)
+	}
 }
 
 func (f *Fs) decodeError(resp *http.Response, response interface{}) (err error) {

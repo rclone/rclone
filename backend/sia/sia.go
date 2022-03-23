@@ -38,6 +38,7 @@ func init() {
 		Name:        "sia",
 		Description: "Sia Decentralized Cloud",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name: "api_url",
 			Help: `Sia daemon API URL, like http://sia.daemon.host:9980.
@@ -485,6 +486,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	return f, nil
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to sia Config. state: %s", config.State)
+	}
 }
 
 // errorHandler translates Siad errors into native rclone filesystem errors.

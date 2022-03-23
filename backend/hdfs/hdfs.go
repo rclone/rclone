@@ -4,11 +4,14 @@
 package hdfs
 
 import (
+	"context"
+	"fmt"
 	"path"
 	"strings"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/lib/encoder"
 )
 
@@ -17,6 +20,7 @@ func init() {
 		Name:        "hdfs",
 		Description: "Hadoop distributed file system",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "namenode",
 			Help:     "Hadoop name node and port.\n\nE.g. \"namenode:8020\" to connect to host namenode at port 8020.",
@@ -57,6 +61,21 @@ datanodes. Possible values are 'authentication', 'integrity' and
 		}},
 	}
 	fs.Register(fsi)
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to hdfs Config. state: %s", config.State)
+	}
 }
 
 // Options for this backend

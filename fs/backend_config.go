@@ -20,6 +20,13 @@ const (
 
 	// ConfigKeyEphemeralPrefix marks config keys which shouldn't be stored in the config file
 	ConfigKeyEphemeralPrefix = "config_"
+
+	// ConfigDescription is the description of the configuration
+	ConfigDescription = "description"
+
+	// ConfigDescriptionHelp is the help for the ConfigDescription
+	ConfigDescriptionHelp = "The description for the backend."
+
 )
 
 // ConfigOAuth should be called to do the OAuth
@@ -107,6 +114,13 @@ func ConfigInput(state string, name string, help string) (*ConfigOut, error) {
 	out, _ := ConfigInputOptional(state, name, help)
 	out.Option.Required = true
 	return out, nil
+}
+
+// ConfigBackendDescription asks the user for a description of the backend.
+//
+// state the next state required
+func ConfigBackendDescription(state string) (*ConfigOut, error) {
+	return ConfigInputOptional(state, ConfigDescription, ConfigDescriptionHelp)
 }
 
 // ConfigPassword asks the user for a password
@@ -345,6 +359,15 @@ func configAll(ctx context.Context, name string, m configmap.Mapper, ri *RegInfo
 	// Find the current option
 	option := &ri.Options[optionNumber]
 
+	// return &ConfigOut{
+	// 	State: "oauth",
+	// 	Option: &Option{
+	// 		Name:     "description",
+	// 		Help:     "The description for the configuration",
+	// 		Advanced: true,
+	// 		Required: false,
+	// 	},
+	// }, nil
 	switch state {
 	case "*all":
 		// If option is hidden or doesn't match advanced setting then skip it

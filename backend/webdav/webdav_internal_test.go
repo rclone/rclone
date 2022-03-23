@@ -1,4 +1,4 @@
-package webdav_test
+package webdav
 
 import (
 	"context"
@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rclone/rclone/backend/webdav"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -57,7 +57,7 @@ func prepare(t *testing.T) (fs.Fs, func()) {
 	m, tidy := prepareServer(t)
 
 	// Instantiate the WebDAV server
-	f, err := webdav.NewFs(context.Background(), remoteName, "", m)
+	f, err := NewFs(context.Background(), remoteName, "", m)
 	require.NoError(t, err)
 
 	return f, tidy
@@ -71,4 +71,27 @@ func TestHeaders(t *testing.T) {
 	// any request will do
 	_, err := f.Features().About(context.Background())
 	require.NoError(t, err)
+}
+
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionCompleteState = "description_complete"
+		newDescription           = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionCompleteState,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionCompleteState, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }

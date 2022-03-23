@@ -36,6 +36,7 @@ func init() {
 		Name:        "fichier",
 		Description: "1Fichier",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Help: "Your API Key, get it from https://1fichier.com/console/params.pl.",
 			Name: "api_key",
@@ -101,6 +102,21 @@ type Fs struct {
 	baseClient *http.Client
 	pacer      *fs.Pacer
 	rest       *rest.Client
+}
+
+// riConfig configure additional items for the backend.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to fichier Config. state: %s", config.State)
+	}
 }
 
 // FindLeaf finds a directory of name leaf in the folder with ID pathID

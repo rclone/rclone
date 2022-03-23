@@ -1,7 +1,7 @@
 //go:build !plan9 && !js && !race
 // +build !plan9,!js,!race
 
-package cache_test
+package cache
 
 import (
 	"context"
@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rclone/rclone/backend/cache"
 	_ "github.com/rclone/rclone/backend/drive"
 	"github.com/rclone/rclone/fs"
 	"github.com/stretchr/testify/require"
@@ -30,7 +29,7 @@ func TestInternalUploadTempDirCreated(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func testInternalUploadQueueOneFile(t *testing.T, id string, rootFs fs.Fs, boltDb *cache.Persistent) {
+func testInternalUploadQueueOneFile(t *testing.T, id string, rootFs fs.Fs, boltDb *Persistent) {
 	// create some rand test data
 	testSize := int64(524288000)
 	testReader := runInstance.randomReader(t, testSize)

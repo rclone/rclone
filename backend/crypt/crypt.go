@@ -28,6 +28,7 @@ func init() {
 		Description: "Encrypt/Decrypt a remote",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to encrypt/decrypt.\n\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
@@ -244,6 +245,21 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
 	return f, err
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to crypt Config. state: %s", config.State)
+	}
 }
 
 // Options defines the configuration for this backend

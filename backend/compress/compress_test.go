@@ -1,11 +1,12 @@
-// Test Crypt filesystem interface
-package compress
+// Test Compress filesystem interface
+package compress_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/rclone/rclone/backend/compress"
 	_ "github.com/rclone/rclone/backend/drive"
 	_ "github.com/rclone/rclone/backend/local"
 	_ "github.com/rclone/rclone/backend/s3"
@@ -18,7 +19,7 @@ import (
 func TestIntegration(t *testing.T) {
 	opt := fstests.Opt{
 		RemoteName: *fstest.RemoteName,
-		NilObject:  (*Object)(nil),
+		NilObject:  (*compress.Object)(nil),
 		UnimplementableFsMethods: []string{
 			"OpenWriterAt",
 			"MergeDirs",
@@ -42,7 +43,7 @@ func TestRemoteGzip(t *testing.T) {
 	name := "TestCompressGzip"
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: name + ":",
-		NilObject:  (*Object)(nil),
+		NilObject:  (*compress.Object)(nil),
 		UnimplementableFsMethods: []string{
 			"OpenWriterAt",
 			"MergeDirs",

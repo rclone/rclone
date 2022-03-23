@@ -82,25 +82,7 @@ func init() {
 		Name:        "box",
 		Description: "Box",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			jsonFile, ok := m.Get("box_config_file")
-			boxSubType, boxSubTypeOk := m.Get("box_sub_type")
-			boxAccessToken, boxAccessTokenOk := m.Get("access_token")
-			var err error
-			// If using box config.json, use JWT auth
-			if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
-				err = refreshJWTToken(ctx, jsonFile, boxSubType, name, m)
-				if err != nil {
-					return nil, fmt.Errorf("failed to configure token with jwt authentication: %w", err)
-				}
-				// Else, if not using an access token, use oauth2
-			} else if boxAccessToken == "" || !boxAccessTokenOk {
-				return oauthutil.ConfigOut("", &oauthutil.Options{
-					OAuth2Config: oauthConfig,
-				})
-			}
-			return nil, nil
-		},
+		Config:      riConfig,
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     "root_folder_id",
 			Help:     "Fill in for rclone to use a non root folder as its starting point.",
@@ -288,6 +270,39 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		jsonFile, ok := m.Get("box_config_file")
+		boxSubType, boxSubTypeOk := m.Get("box_sub_type")
+		boxAccessToken, boxAccessTokenOk := m.Get("access_token")
+		var err error
+		// If using box config.json, use JWT auth
+		if ok && boxSubTypeOk && jsonFile != "" && boxSubType != "" {
+			err = refreshJWTToken(ctx, jsonFile, boxSubType, name, m)
+			if err != nil {
+				return nil, fmt.Errorf("failed to configure token with jwt authentication: %w", err)
+			}
+			// Else, if not using an access token, use oauth2
+		} else if boxAccessToken == "" || !boxAccessTokenOk {
+			return oauthutil.ConfigOut("description", &oauthutil.Options{
+				OAuth2Config: oauthConfig,
+			})
+		}
+		return fs.ConfigGoto("description")
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to box Config. state: %s", config.State)
+	}
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

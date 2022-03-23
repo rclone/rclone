@@ -29,6 +29,7 @@ func init() {
 		Name:        "union",
 		Description: "Union merges the contents of several upstream fs",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "upstreams",
 			Help:     "List of space separated upstreams.\n\nCan be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.",
@@ -913,6 +914,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.hashSet = hashSet
 
 	return f, fserr
+}
+
+// riConfig query the user for additional configuration items.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unknown state %q", config.State)
+	}
 }
 
 func parentDir(absPath string) string {

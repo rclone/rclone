@@ -67,6 +67,7 @@ func init() {
 		Description: "Cache a remote",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to cache.\n\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
@@ -342,6 +343,21 @@ func parseRootPath(path string) (string, error) {
 }
 
 var warnDeprecated sync.Once
+
+// riConfig query the user for additional backend configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to cache Config. state: %s", config.State)
+	}
+}
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.Fs, error) {

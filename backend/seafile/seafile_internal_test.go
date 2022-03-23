@@ -1,15 +1,14 @@
 package seafile
 
 import (
-	"context"
 	"path"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type pathData struct {
@@ -127,102 +126,83 @@ func TestSplitPathIntoSlice(t *testing.T) {
 	}
 }
 
-func Test2FAStateMachine(t *testing.T) {
-	fixtures := []struct {
-		name               string
-		mapper             configmap.Mapper
-		input              fs.ConfigIn
-		expectState        string
-		expectErrorMessage string
-		expectResult       string
-		expectFail         bool
-		expectNil          bool
-	}{
+func TestRiConfig(t *testing.T) {
+	states := []fstest.ConfigStateTestFixture{
 		{
-			name:       "no url",
-			mapper:     configmap.Simple{},
-			input:      fs.ConfigIn{State: ""},
-			expectFail: true,
+			Name:       "no url",
+			Mapper:     configmap.Simple{},
+			Input:      fs.ConfigIn{State: ""},
+			ExpectFail: true,
 		},
 		{
-			name:       "unknown state",
-			mapper:     configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
-			input:      fs.ConfigIn{State: "unknown"},
-			expectFail: true,
+			Name:       "unknown state",
+			Mapper:     configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:      fs.ConfigIn{State: "unknown"},
+			ExpectFail: true,
 		},
 		{
-			name:      "2fa not set",
-			mapper:    configmap.Simple{"url": "http://localhost/"},
-			input:     fs.ConfigIn{State: ""},
-			expectNil: true,
+			Name:        "2fa not set",
+			Mapper:      configmap.Simple{"url": "http://localhost/"},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: "description_complete",
 		},
 		{
-			name:        "no password in config",
-			mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
-			input:       fs.ConfigIn{State: ""},
-			expectState: "password",
+			Name:        "no password in config",
+			Mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: "password",
 		},
 		{
-			name:        "config ready for 2fa token",
-			mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username", "pass": obscure.MustObscure("password")},
-			input:       fs.ConfigIn{State: ""},
-			expectState: "2fa",
+			Name:        "config ready for 2fa token",
+			Mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName", "pass": obscure.MustObscure("password")},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: "2fa",
 		},
 		{
-			name:               "password not entered",
-			mapper:             configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
-			input:              fs.ConfigIn{State: "password"},
-			expectState:        "",
-			expectErrorMessage: "Password can't be blank",
+			Name:               "password not entered",
+			Mapper:             configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:              fs.ConfigIn{State: "password"},
+			ExpectState:        "",
+			ExpectErrorMessage: "Password can't be blank",
 		},
 		{
-			name:        "password entered",
-			mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
-			input:       fs.ConfigIn{State: "password", Result: "password"},
-			expectState: "2fa",
+			Name:        "password entered",
+			Mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:       fs.ConfigIn{State: "password", Result: "password"},
+			ExpectState: "2fa",
 		},
 		{
-			name:        "ask for a 2fa code",
-			mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
-			input:       fs.ConfigIn{State: "2fa"},
-			expectState: "2fa_do",
+			Name:        "ask for a 2fa code",
+			Mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:       fs.ConfigIn{State: "2fa"},
+			ExpectState: "2fa_do",
 		},
 		{
-			name:               "no 2fa code entered",
-			mapper:             configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
-			input:              fs.ConfigIn{State: "2fa_do"},
-			expectState:        "2fa", // ask for a code again
-			expectErrorMessage: "2FA codes can't be blank",
+			Name:               "no 2fa code entered",
+			Mapper:             configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:              fs.ConfigIn{State: "2fa_do"},
+			ExpectState:        "2fa", // ask for a code again
+			ExpectErrorMessage: "2FA codes can't be blank",
 		},
 		{
-			name:        "2fa error and retry",
-			mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
-			input:       fs.ConfigIn{State: "2fa_error", Result: "true"},
-			expectState: "2fa", // ask for a code again
+			Name:        "2fa error and retry",
+			Mapper:      configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:       fs.ConfigIn{State: "2fa_error", Result: "true"},
+			ExpectState: "2fa", // ask for a code again
 		},
 		{
-			name:       "2fa error and fail",
-			mapper:     configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "username"},
-			input:      fs.ConfigIn{State: "2fa_error"},
-			expectFail: true,
+			Name:       "2fa error and fail",
+			Mapper:     configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:      fs.ConfigIn{State: "2fa_error"},
+			ExpectFail: true,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{"url": "http://localhost/", "2fa": "true", "user": "userName"},
+			Input:           fs.ConfigIn{State: "description_complete", Result: "new description"},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: "new description", "url": "http://localhost/", "2fa": "true", "user": "userName"},
+			ExpectNilOutput: true,
 		},
 	}
-
-	for _, fixture := range fixtures {
-		t.Run(fixture.name, func(t *testing.T) {
-			output, err := Config(context.Background(), "test", fixture.mapper, fixture.input)
-			if fixture.expectFail {
-				require.Error(t, err)
-				t.Log(err)
-				return
-			}
-			if fixture.expectNil {
-				require.Nil(t, output)
-				return
-			}
-			assert.Equal(t, fixture.expectState, output.State)
-			assert.Equal(t, fixture.expectErrorMessage, output.Error)
-			assert.Equal(t, fixture.expectResult, output.Result)
-		})
-	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }

@@ -146,6 +146,7 @@ func init() {
 		Name:        "chunker",
 		Description: "Transparently chunk/split large files",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "remote",
 			Required: true,
@@ -345,6 +346,21 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 	f.features.Disable("ListR") // Recursive listing may cause chunker skip files
 
 	return f, err
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to chunker Config. state: %s", config.State)
+	}
 }
 
 // Options defines the configuration for this backend

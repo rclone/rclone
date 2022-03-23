@@ -349,6 +349,48 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		optc := new(Options)
+		err := configstruct.Set(m, optc)
+		if err != nil {
+			fs.Errorf(nil, "Failed to read config: %v", err)
+		}
+		updateTokenURL(oauthConfig, optc.Hostname)
+		checkAuth := func(oauthConfig *oauth2.Config, auth *oauthutil.AuthResult) error {
+			if auth == nil || auth.Form == nil {
+				return errors.New("form not found in response")
+			}
+			hostname := auth.Form.Get("hostname")
+			if hostname == "" {
+				hostname = defaultHostname
+			}
+			// Save the hostname in the config
+			m.Set("hostname", hostname)
+			// Update the token URL
+			updateTokenURL(oauthConfig, hostname)
+			fs.Debugf(nil, "pcloud: got hostname %q", hostname)
+			return nil
+		}
+		return oauthutil.ConfigOut("description", &oauthutil.Options{
+			OAuth2Config: oauthConfig,
+			CheckAuth:    checkAuth,
+			StateBlankOK: true, // pCloud seems to drop the state parameter now - see #4210
+		})
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to opendrive Config. state: %s", config.State)
+	}
+}
+
 // Return an Object from a path
 //
 // If it can't be found it returns the error fs.ErrorObjectNotFound.

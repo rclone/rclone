@@ -143,15 +143,7 @@ func init() {
 		Name:        "dropbox",
 		Description: "Dropbox",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			return oauthutil.ConfigOut("", &oauthutil.Options{
-				OAuth2Config: getOauthConfig(m),
-				NoOffline:    true,
-				OAuth2Opts: []oauth2.AuthCodeOption{
-					oauth2.SetAuthURLParam("token_access_type", "offline"),
-				},
-			})
-		},
+		Config:      riConfig,
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",
 			Help: fmt.Sprintf(`Upload chunk size (< %v).
@@ -579,6 +571,29 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 	return f, nil
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return oauthutil.ConfigOut("description", &oauthutil.Options{
+			OAuth2Config: getOauthConfig(m),
+			NoOffline:    true,
+			OAuth2Opts: []oauth2.AuthCodeOption{
+				oauth2.SetAuthURLParam("token_access_type", "offline"),
+			},
+		})
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to dropbox Config. state: %s", config.State)
+	}
 }
 
 // headerGenerator for dropbox sdk

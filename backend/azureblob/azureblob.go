@@ -71,6 +71,7 @@ func init() {
 		Name:        "azureblob",
 		Description: "Microsoft Azure Blob Storage",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name: "account",
 			Help: "Storage Account Name.\n\nLeave blank to use SAS URL or Emulator.",
@@ -324,6 +325,21 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to azureblob Config. state: %s", config.State)
+	}
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

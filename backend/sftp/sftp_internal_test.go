@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,4 +52,27 @@ func TestParseUsage(t *testing.T) {
 		gotSpaceTotal, gotSpaceUsed, gotSpaceAvail := parseUsage([]byte(test.sshOutput))
 		assert.Equal(t, test.usage, [3]int64{gotSpaceTotal, gotSpaceUsed, gotSpaceAvail}, fmt.Sprintf("Test %d sshOutput = %q", i, test.sshOutput))
 	}
+}
+
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionCompleteState = "description_complete"
+		newDescription           = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionCompleteState,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionCompleteState, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }

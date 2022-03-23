@@ -1,13 +1,11 @@
 package putio
 
 import (
-	"context"
 	"regexp"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
-	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/encoder"
@@ -59,12 +57,7 @@ func init() {
 		Name:        "putio",
 		Description: "Put.io",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			return oauthutil.ConfigOut("", &oauthutil.Options{
-				OAuth2Config: putioConfig,
-				NoOffline:    true,
-			})
-		},
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,

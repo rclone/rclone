@@ -12,6 +12,8 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configfile"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -104,4 +106,27 @@ func TestNewFSInvalidRemote(t *testing.T) {
 
 	require.Error(t, err)
 	require.Nil(t, f)
+}
+
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionComplete = "description_complete"
+		newDescription      = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionComplete,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionComplete, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }

@@ -77,11 +77,7 @@ func init() {
 		Name:        "premiumizeme",
 		Description: "premiumize.me",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			return oauthutil.ConfigOut("", &oauthutil.Options{
-				OAuth2Config: oauthConfig,
-			})
-		},
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name: "api_key",
 			Help: `API Key.
@@ -313,6 +309,24 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return oauthutil.ConfigOut("description", &oauthutil.Options{
+			OAuth2Config: oauthConfig,
+		})
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to premiumizeme Config. state: %s", config.State)
+	}
 }
 
 // Return an Object from a path

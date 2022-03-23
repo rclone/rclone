@@ -332,6 +332,45 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
+// riConfig configure additional items for the backend.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse config into struct: %w", err)
+	}
+
+	switch config.State {
+	case "":
+		// Fill in the scopes
+		if opt.ReadOnly {
+			oauthConfig.Scopes[scopeAccess] = scopeReadOnly
+		} else {
+			oauthConfig.Scopes[scopeAccess] = scopeReadWrite
+		}
+		return oauthutil.ConfigOut("warning", &oauthutil.Options{
+			OAuth2Config: oauthConfig,
+		})
+	case "warning":
+		// Warn the user as required by google photos integration
+		return fs.ConfigConfirm("description", true, "config_warning", `Warning
+
+IMPORTANT: All media items uploaded to Google Photos with rclone
+are stored in full resolution at original quality.  These uploads
+will count towards storage in your Google Account.`)
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unknown state %q", config.State)
+	}
+}
+
 // fetchEndpoint gets the openid endpoint named from the Google config
 func (f *Fs) fetchEndpoint(ctx context.Context, name string) (endpoint string, err error) {
 	// Get openID config without auth

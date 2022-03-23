@@ -101,7 +101,7 @@ func init() {
 		Name:        "onedrive",
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
-		Config:      Config,
+		Config:      riConfig,
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:    "region",
 			Help:    "Choose national cloud region for OneDrive.",
@@ -392,11 +392,16 @@ func chooseDrive(ctx context.Context, name string, m configmap.Mapper, srv *rest
 	})
 }
 
-// Config the backend
-func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+// riConfig the backend
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	region, graphURL := getRegionURL(m)
-
-	if config.State == "" {
+	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
+	}
+	srv := rest.NewClient(oAuthClient)
+	switch config.State {
+	case "":
 		disableSitePermission, _ := m.Get("disable_site_permission")
 		if disableSitePermission == "true" {
 			oauthConfig.Scopes = scopesWithoutSitePermission
@@ -410,15 +415,6 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		return oauthutil.ConfigOut("choose_type", &oauthutil.Options{
 			OAuth2Config: oauthConfig,
 		})
-	}
-
-	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to configure OneDrive: %w", err)
-	}
-	srv := rest.NewClient(oAuthClient)
-
-	switch config.State {
 	case "choose_type":
 		return fs.ConfigChooseFixed("choose_type_done", "config_type", "Type of connection", []fs.OptionExample{{
 			Value: "onedrive",
@@ -543,9 +539,14 @@ Example: "https://contoso.sharepoint.com/sites/mysite" or "mysite"
 		return fs.ConfigConfirm("driveid_final_end", true, "config_drive_ok", fmt.Sprintf("Drive OK?\n\nFound drive %q of type %q\nURL: %s\n", rootItem.Name, rootItem.ParentReference.DriveType, rootItem.WebURL))
 	case "driveid_final_end":
 		if config.Result == "true" {
-			return nil, nil
+			return fs.ConfigBackendDescription("description_complete")
 		}
 		return fs.ConfigGoto("choose_type")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
 	}
 	return nil, fmt.Errorf("unknown state %q", config.State)
 }

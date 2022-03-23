@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/ncw/swift/v2"
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,4 +68,27 @@ func TestInternalShouldRetryHeaders(t *testing.T) {
 	dt = after.Sub(start)
 	assert.True(t, dt >= time.Hour-time.Second && dt <= time.Hour+time.Second)
 
+}
+
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionCompleteState = "description_complete"
+		newDescription           = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionCompleteState,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionCompleteState, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }

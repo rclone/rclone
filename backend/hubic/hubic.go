@@ -55,12 +55,8 @@ func init() {
 		Name:        "hubic",
 		Description: "Hubic",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			return oauthutil.ConfigOut("", &oauthutil.Options{
-				OAuth2Config: oauthConfig,
-			})
-		},
-		Options: append(oauthutil.SharedOptions, swift.SharedOptions...),
+		Config:      riConfig,
+		Options:     append(oauthutil.SharedOptions, swift.SharedOptions...),
 	})
 }
 
@@ -181,6 +177,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.Fs = swiftFs
 	f.features = f.Fs.Features().Wrap(f)
 	return f, err
+}
+
+// riConfig configure additional items for the backend.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return oauthutil.ConfigOut("description", &oauthutil.Options{
+			OAuth2Config: oauthConfig,
+		})
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to hubic Config. state: %s", config.State)
+	}
 }
 
 // Features returns the optional features of this Fs

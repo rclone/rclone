@@ -26,6 +26,7 @@ import (
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configfile"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/random"
@@ -525,5 +526,41 @@ func Purge(f fs.Fs) {
 	}
 	if err != nil {
 		log.Printf("purge failed: %v", err)
+	}
+}
+
+type ConfigStateTestFixture struct {
+	Name               string
+	Mapper             configmap.Mapper
+	Input              fs.ConfigIn
+	ExpectState        string
+	ExpectErrorMessage string
+	ExpectResult       string
+	ExpectMapper       configmap.Mapper
+	ExpectFail         bool
+	ExpectNilOutput    bool
+}
+
+// AssertConfigStates test that the RegisterInfo Config callback function handles state input as expected.
+func AssertConfigStates(t *testing.T, configStates []ConfigStateTestFixture, configRi func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error)) {
+	for _, fixture := range configStates {
+		t.Run(fixture.Name, func(t *testing.T) {
+			output, err := configRi(context.Background(), "test", fixture.Mapper, fixture.Input)
+			if fixture.ExpectFail {
+				require.Error(t, err)
+				t.Log(err)
+				return
+			}
+			if fixture.ExpectNilOutput {
+				require.Nil(t, output)
+			} else {
+				assert.Equal(t, fixture.ExpectState, output.State)
+				assert.Equal(t, fixture.ExpectErrorMessage, output.Error)
+				assert.Equal(t, fixture.ExpectResult, output.Result)
+			}
+			if fixture.ExpectMapper != nil {
+				assert.Equal(t, fixture.ExpectMapper, fixture.Mapper)
+			}
+		})
 	}
 }

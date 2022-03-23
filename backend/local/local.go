@@ -41,6 +41,7 @@ func init() {
 		Name:        "local",
 		Description: "Local Disk",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "nounc",
@@ -296,6 +297,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to local Config. state: %s", config.State)
+	}
 }
 
 // Determine whether a file is a 'regular' file,

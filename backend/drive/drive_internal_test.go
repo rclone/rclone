@@ -18,6 +18,7 @@ import (
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
@@ -458,6 +459,35 @@ func (f *Fs) InternalTestCopyID(t *testing.T) {
 		require.NoError(t, err)
 		checkFile("potato.txt")
 	})
+}
+
+// TODO: Test states other than just "description" states
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionCompleteState = "description_complete"
+		newDescription           = "New drive description."
+		driveIdResult            = "driveIdResult"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: "teamdrive_final", Result: driveIdResult},
+			ExpectState: descriptionCompleteState,
+			ExpectMapper: configmap.Simple{
+				"team_drive":     driveIdResult,
+				"root_folder_id": "",
+			},
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionCompleteState, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }
 
 // TestIntegration/FsMkdir/FsPutFiles/Internal/AgeQuery

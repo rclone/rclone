@@ -6,6 +6,9 @@ import (
 	"io"
 	"testing"
 
+	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -39,4 +42,29 @@ func TestReadMD5(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TODO: test all ConfigIn states, not just "description" states
+func TestRiConfig(t *testing.T) {
+	const (
+		endState                 = "end"
+		descriptionCompleteState = "description_complete"
+		newDescription           = "New description."
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "end state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: endState},
+			ExpectState: descriptionCompleteState,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionCompleteState, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }

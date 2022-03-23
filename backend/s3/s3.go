@@ -60,6 +60,7 @@ func init() {
 		Name:        "s3",
 		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, RackCorp, SeaweedFS, and Tencent COS",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name: fs.ConfigProvider,
@@ -2140,6 +2141,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	// f.listMultipartUploads()
 	return f, nil
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to s3 Config. state: %s", config.State)
+	}
 }
 
 // Return an Object from a path

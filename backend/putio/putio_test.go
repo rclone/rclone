@@ -1,9 +1,10 @@
 // Test Put.io filesystem interface
-package putio
+package putio_test
 
 import (
 	"testing"
 
+	"github.com/rclone/rclone/backend/putio"
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
@@ -11,6 +12,6 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestPutio:",
-		NilObject:  (*Object)(nil),
+		NilObject:  (*putio.Object)(nil),
 	})
 }

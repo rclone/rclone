@@ -57,7 +57,7 @@ func init() {
 		Name:        "seafile",
 		Description: "seafile",
 		NewFs:       NewFs,
-		Config:      Config,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     configURL,
 			Help:     "URL of seafile host to connect to.",
@@ -295,8 +295,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	return f, nil
 }
 
-// Config callback for 2FA
-func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+// riConfig callback for 2FA
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	serverURL, ok := m.Get(configURL)
 	if !ok || serverURL == "" {
 		// If there's no server URL, it means we're trying an operation at the backend level, like a "rclone authorize seafile"
@@ -311,7 +311,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	is2faEnabled, _ := m.Get(config2FA)
 	if is2faEnabled != "true" {
 		// no need to do anything here
-		return nil, nil
+		return fs.ConfigBackendDescription("description_complete")
 	}
 
 	username, _ := m.Get(configUser)
@@ -372,12 +372,17 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		// And delete any previous entry for password
 		m.Set(configPassword, "")
 		// And we're done here
-		return nil, nil
+		return fs.ConfigBackendDescription("description_complete")
 	case "2fa_error":
 		if config.Result == "true" {
 			return fs.ConfigGoto("2fa")
 		}
 		return nil, errors.New("2fa authentication failed")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
 	}
 	return nil, fmt.Errorf("unknown state %q", config.State)
 }

@@ -183,72 +183,7 @@ func init() {
 		Description: "Google Drive",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			// Parse config into Options struct
-			opt := new(Options)
-			err := configstruct.Set(m, opt)
-			if err != nil {
-				return nil, fmt.Errorf("couldn't parse config into struct: %w", err)
-			}
-
-			switch config.State {
-			case "":
-				// Fill in the scopes
-				driveConfig.Scopes = driveScopes(opt.Scope)
-
-				// Set the root_folder_id if using drive.appfolder
-				if driveScopesContainsAppFolder(driveConfig.Scopes) {
-					m.Set("root_folder_id", "appDataFolder")
-				}
-
-				if opt.ServiceAccountFile == "" && opt.ServiceAccountCredentials == "" {
-					return oauthutil.ConfigOut("teamdrive", &oauthutil.Options{
-						OAuth2Config: driveConfig,
-					})
-				}
-				return fs.ConfigGoto("teamdrive")
-			case "teamdrive":
-				if opt.TeamDriveID == "" {
-					return fs.ConfigConfirm("teamdrive_ok", false, "config_change_team_drive", "Configure this as a Shared Drive (Team Drive)?\n")
-				}
-				return fs.ConfigConfirm("teamdrive_change", false, "config_change_team_drive", fmt.Sprintf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID))
-			case "teamdrive_ok":
-				if config.Result == "false" {
-					m.Set("team_drive", "")
-					return nil, nil
-				}
-				return fs.ConfigGoto("teamdrive_config")
-			case "teamdrive_change":
-				if config.Result == "false" {
-					return nil, nil
-				}
-				return fs.ConfigGoto("teamdrive_config")
-			case "teamdrive_config":
-				f, err := newFs(ctx, name, "", m)
-				if err != nil {
-					return nil, fmt.Errorf("failed to make Fs to list Shared Drives: %w", err)
-				}
-				teamDrives, err := f.listTeamDrives(ctx)
-				if err != nil {
-					return nil, err
-				}
-				if len(teamDrives) == 0 {
-					return fs.ConfigError("", "No Shared Drives found in your account")
-				}
-				return fs.ConfigChoose("teamdrive_final", "config_team_drive", "Shared Drive", len(teamDrives), func(i int) (string, string) {
-					teamDrive := teamDrives[i]
-					return teamDrive.Id, teamDrive.Name
-				})
-			case "teamdrive_final":
-				driveID := config.Result
-				m.Set("team_drive", driveID)
-				m.Set("root_folder_id", "")
-				opt.TeamDriveID = driveID
-				opt.RootFolderID = ""
-				return nil, nil
-			}
-			return nil, fmt.Errorf("unknown state %q", config.State)
-		},
+		Config:      riConfig,
 		Options: append(driveOAuthOptions(), []fs.Option{{
 			Name: "scope",
 			Help: "Scope that rclone should use when requesting access from drive.",
@@ -1266,6 +1201,79 @@ func NewFs(ctx context.Context, name, path string, m configmap.Mapper) (fs.Fs, e
 	}
 	// fmt.Printf("Root id %s", f.dirCache.RootID())
 	return f, nil
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	// Parse config into Options struct
+	opt := new(Options)
+	err := configstruct.Set(m, opt)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't parse config into struct: %w", err)
+	}
+
+	switch config.State {
+	case "":
+		// Fill in the scopes
+		driveConfig.Scopes = driveScopes(opt.Scope)
+
+		// Set the root_folder_id if using drive.appfolder
+		if driveScopesContainsAppFolder(driveConfig.Scopes) {
+			m.Set("root_folder_id", "appDataFolder")
+		}
+
+		if opt.ServiceAccountFile == "" && opt.ServiceAccountCredentials == "" {
+			return oauthutil.ConfigOut("teamdrive", &oauthutil.Options{
+				OAuth2Config: driveConfig,
+			})
+		}
+		return fs.ConfigGoto("teamdrive")
+	case "teamdrive":
+		if opt.TeamDriveID == "" {
+			return fs.ConfigConfirm("teamdrive_ok", false, "config_change_team_drive", "Configure this as a Shared Drive (Team Drive)?\n")
+		}
+		return fs.ConfigConfirm("teamdrive_change", false, "config_change_team_drive", fmt.Sprintf("Change current Shared Drive (Team Drive) ID %q?\n", opt.TeamDriveID))
+	case "teamdrive_ok":
+		if config.Result == "false" {
+			m.Set("team_drive", "")
+			return fs.ConfigBackendDescription("teamdrive_description")
+		}
+		return fs.ConfigGoto("teamdrive_config")
+	case "teamdrive_change":
+		if config.Result == "false" {
+			return fs.ConfigBackendDescription("teamdrive_description")
+		}
+		return fs.ConfigGoto("teamdrive_config")
+	case "teamdrive_config":
+		f, err := newFs(ctx, name, "", m)
+		if err != nil {
+			return nil, fmt.Errorf("failed to make Fs to list Shared Drives: %w", err)
+		}
+		teamDrives, err := f.listTeamDrives(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if len(teamDrives) == 0 {
+			return fs.ConfigError("", "No Shared Drives found in your account")
+		}
+		return fs.ConfigChoose("teamdrive_final", "config_team_drive", "Shared Drive", len(teamDrives), func(i int) (string, string) {
+			teamDrive := teamDrives[i]
+			return teamDrive.Id, teamDrive.Name
+		})
+	case "teamdrive_final":
+		driveID := config.Result
+		m.Set("team_drive", driveID)
+		m.Set("root_folder_id", "")
+		opt.TeamDriveID = driveID
+		opt.RootFolderID = ""
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	}
+	return nil, fmt.Errorf("unknown state %q", config.State)
 }
 
 func (f *Fs) newBaseObject(remote string, info *drive.File) baseObject {

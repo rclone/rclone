@@ -127,6 +127,26 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (f fs.Fs,
 	return p, nil
 }
 
+// riConfig configure additional items for the backend.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return oauthutil.ConfigOut("description", &oauthutil.Options{
+			OAuth2Config: putioConfig,
+			NoOffline:    true,
+		})
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to putio Config. state: %s", config.State)
+	}
+}
+
 func itoa(i int64) string {
 	return strconv.FormatInt(i, 10)
 }

@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/object"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -135,9 +137,33 @@ func testComputeHash(t *testing.T, f *Fs) {
 	assert.Equal(t, remoteObjHash, computedHash)
 }
 
+func testRiConfig(t *testing.T) {
+	const (
+		descriptionComplete = "description_complete"
+		newDescription      = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionComplete,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionComplete, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
+}
+
 // InternalTest is called by fstests.Run to extra tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("ObjectInfo", func(t *testing.T) { testObjectInfo(t, f, false) })
 	t.Run("ObjectInfoWrap", func(t *testing.T) { testObjectInfo(t, f, true) })
 	t.Run("ComputeHash", func(t *testing.T) { testComputeHash(t, f) })
+	t.Run("ConfigRi", func(t *testing.T) { testRiConfig(t) })
 }

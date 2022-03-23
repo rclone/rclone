@@ -112,4 +112,27 @@ func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("TimePrecision", f.testTimePrecision)
 }
 
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionCompleteState = "description_complete"
+		newDescription           = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionCompleteState,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionCompleteState, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
+}
+
 var _ fstests.InternalTester = (*Fs)(nil)

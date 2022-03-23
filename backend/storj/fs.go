@@ -43,46 +43,7 @@ func init() {
 		Description: "Storj Decentralized Cloud Storage",
 		Aliases:     []string{"tardigrade"},
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
-			provider, _ := m.Get(fs.ConfigProvider)
-
-			config.FileDeleteKey(name, fs.ConfigProvider)
-
-			if provider == newProvider {
-				satelliteString, _ := m.Get("satellite_address")
-				apiKey, _ := m.Get("api_key")
-				passphrase, _ := m.Get("passphrase")
-
-				// satelliteString contains always default and passphrase can be empty
-				if apiKey == "" {
-					return nil, nil
-				}
-
-				satellite, found := satMap[satelliteString]
-				if !found {
-					satellite = satelliteString
-				}
-
-				access, err := uplink.RequestAccessWithPassphrase(context.TODO(), satellite, apiKey, passphrase)
-				if err != nil {
-					return nil, fmt.Errorf("couldn't create access grant: %w", err)
-				}
-
-				serializedAccess, err := access.Serialize()
-				if err != nil {
-					return nil, fmt.Errorf("couldn't serialize access grant: %w", err)
-				}
-				m.Set("satellite_address", satellite)
-				m.Set("access_grant", serializedAccess)
-			} else if provider == existingProvider {
-				config.FileDeleteKey(name, "satellite_address")
-				config.FileDeleteKey(name, "api_key")
-				config.FileDeleteKey(name, "passphrase")
-			} else {
-				return nil, fmt.Errorf("invalid provider type: %s", provider)
-			}
-			return nil, nil
-		},
+		Config:      riConfig,
 		Options: []fs.Option{
 			{
 				Name:    fs.ConfigProvider,
@@ -258,6 +219,59 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (_ fs.Fs,
 	}
 
 	return f, nil
+}
+
+func riConfig(ctx context.Context, name string, m configmap.Mapper, configIn fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch configIn.State {
+	case "":
+		provider, _ := m.Get(fs.ConfigProvider)
+
+		config.FileDeleteKey(name, fs.ConfigProvider)
+
+		if provider == newProvider {
+			satelliteString, _ := m.Get("satellite_address")
+			apiKey, _ := m.Get("api_key")
+			passphrase, _ := m.Get("passphrase")
+
+			// satelliteString contains always default and passphrase can be empty
+			if apiKey == "" {
+				return fs.ConfigGoto("description")
+			}
+
+			satellite, found := satMap[satelliteString]
+			if !found {
+				satellite = satelliteString
+			}
+
+			access, err := uplink.RequestAccessWithPassphrase(context.TODO(), satellite, apiKey, passphrase)
+			if err != nil {
+				return nil, fmt.Errorf("couldn't create access grant: %w", err)
+			}
+
+			serializedAccess, err := access.Serialize()
+			if err != nil {
+				return nil, fmt.Errorf("couldn't serialize access grant: %w", err)
+			}
+			m.Set("satellite_address", satellite)
+			m.Set("access_grant", serializedAccess)
+		} else if provider == existingProvider {
+			config.FileDeleteKey(name, "satellite_address")
+			config.FileDeleteKey(name, "api_key")
+			config.FileDeleteKey(name, "passphrase")
+		} else {
+			return nil, fmt.Errorf("invalid provider type: %s", provider)
+		}
+		return fs.ConfigGoto("description")
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if configIn.Result != "" {
+			m.Set(fs.ConfigDescription, configIn.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to storj Config. state: %s", configIn.State)
+	}
 }
 
 // connect opens a connection to Storj.

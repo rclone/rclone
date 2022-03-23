@@ -899,6 +899,29 @@ func testMD5AllSlow(t *testing.T, f *Fs) {
 	require.NoError(t, operations.Purge(ctx, baseFs, ""))
 }
 
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionComplete = "description_complete"
+		newDescription      = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionComplete,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionComplete, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
+}
+
 // InternalTest dispatches all internal tests
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("PutLarge", func(t *testing.T) {

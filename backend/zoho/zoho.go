@@ -22,7 +22,6 @@ import (
 
 	"github.com/rclone/rclone/backend/zoho/api"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -72,90 +71,7 @@ func init() {
 		Name:        "zoho",
 		Description: "Zoho",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			// Need to setup region before configuring oauth
-			err := setupRegion(m)
-			if err != nil {
-				return nil, err
-			}
-			getSrvs := func() (authSrv, apiSrv *rest.Client, err error) {
-				oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
-				if err != nil {
-					return nil, nil, fmt.Errorf("failed to load oAuthClient: %w", err)
-				}
-				authSrv = rest.NewClient(oAuthClient).SetRoot(accountsURL)
-				apiSrv = rest.NewClient(oAuthClient).SetRoot(rootURL)
-				return authSrv, apiSrv, nil
-			}
-
-			switch config.State {
-			case "":
-				return oauthutil.ConfigOut("teams", &oauthutil.Options{
-					OAuth2Config: oauthConfig,
-					// No refresh token unless ApprovalForce is set
-					OAuth2Opts: []oauth2.AuthCodeOption{oauth2.ApprovalForce},
-				})
-			case "teams":
-				// We need to rewrite the token type to "Zoho-oauthtoken" because Zoho wants
-				// it's own custom type
-				token, err := oauthutil.GetToken(name, m)
-				if err != nil {
-					return nil, fmt.Errorf("failed to read token: %w", err)
-				}
-				if token.TokenType != "Zoho-oauthtoken" {
-					token.TokenType = "Zoho-oauthtoken"
-					err = oauthutil.PutToken(name, m, token, false)
-					if err != nil {
-						return nil, fmt.Errorf("failed to configure token: %w", err)
-					}
-				}
-
-				authSrv, apiSrv, err := getSrvs()
-				if err != nil {
-					return nil, err
-				}
-
-				// Get the user Info
-				opts := rest.Opts{
-					Method: "GET",
-					Path:   "/oauth/user/info",
-				}
-				var user api.User
-				_, err = authSrv.CallJSON(ctx, &opts, nil, &user)
-				if err != nil {
-					return nil, err
-				}
-
-				// Get the teams
-				teams, err := listTeams(ctx, user.ZUID, apiSrv)
-				if err != nil {
-					return nil, err
-				}
-				return fs.ConfigChoose("workspace", "config_team_drive_id", "Team Drive ID", len(teams), func(i int) (string, string) {
-					team := teams[i]
-					return team.ID, team.Attributes.Name
-				})
-			case "workspace":
-				_, apiSrv, err := getSrvs()
-				if err != nil {
-					return nil, err
-				}
-				teamID := config.Result
-				workspaces, err := listWorkspaces(ctx, teamID, apiSrv)
-				if err != nil {
-					return nil, err
-				}
-				return fs.ConfigChoose("workspace_end", "config_workspace", "Workspace ID", len(workspaces), func(i int) (string, string) {
-					workspace := workspaces[i]
-					return workspace.ID, workspace.Attributes.Name
-				})
-			case "workspace_end":
-				worksspaceID := config.Result
-				m.Set(configRootID, worksspaceID)
-				return nil, nil
-			}
-			return nil, fmt.Errorf("unknown state %q", config.State)
-		},
+		Config:      riConfig,
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "region",
 			Help: `Zoho region to connect to.
@@ -175,14 +91,7 @@ browser.`,
 			}, {
 				Value: "com.au",
 				Help:  "Australia",
-			}}}, {
-			Name:     config.ConfigEncoding,
-			Help:     config.ConfigEncodingHelp,
-			Advanced: true,
-			Default: (encoder.EncodeZero |
-				encoder.EncodeCtl |
-				encoder.EncodeDel |
-				encoder.EncodeInvalidUtf8),
+			}},
 		}}...),
 	})
 }
@@ -445,6 +354,98 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	return f, nil
+}
+
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	// Need to setup region before configuring oauth
+	err := setupRegion(m)
+	if err != nil {
+		return nil, err
+	}
+	getSrvs := func() (authSrv, apiSrv *rest.Client, err error) {
+		oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to load oAuthClient: %w", err)
+		}
+		authSrv = rest.NewClient(oAuthClient).SetRoot(accountsURL)
+		apiSrv = rest.NewClient(oAuthClient).SetRoot(rootURL)
+		return authSrv, apiSrv, nil
+	}
+
+	switch config.State {
+	case "":
+		return oauthutil.ConfigOut("teams", &oauthutil.Options{
+			OAuth2Config: oauthConfig,
+			// No refresh token unless ApprovalForce is set
+			OAuth2Opts: []oauth2.AuthCodeOption{oauth2.ApprovalForce},
+		})
+	case "teams":
+		// We need to rewrite the token type to "Zoho-oauthtoken" because Zoho wants
+		// it's own custom type
+		token, err := oauthutil.GetToken(name, m)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read token: %w", err)
+		}
+		if token.TokenType != "Zoho-oauthtoken" {
+			token.TokenType = "Zoho-oauthtoken"
+			err = oauthutil.PutToken(name, m, token, false)
+			if err != nil {
+				return nil, fmt.Errorf("failed to configure token: %w", err)
+			}
+		}
+
+		authSrv, apiSrv, err := getSrvs()
+		if err != nil {
+			return nil, err
+		}
+
+		// Get the user Info
+		opts := rest.Opts{
+			Method: "GET",
+			Path:   "/oauth/user/info",
+		}
+		var user api.User
+		_, err = authSrv.CallJSON(ctx, &opts, nil, &user)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get the teams
+		teams, err := listTeams(ctx, user.ZUID, apiSrv)
+		if err != nil {
+			return nil, err
+		}
+		return fs.ConfigChoose("workspace", "config_team_drive_id", "Team Drive ID", len(teams), func(i int) (string, string) {
+			team := teams[i]
+			return team.ID, team.Attributes.Name
+		})
+	case "workspace":
+		_, apiSrv, err := getSrvs()
+		if err != nil {
+			return nil, err
+		}
+		teamID := config.Result
+		workspaces, err := listWorkspaces(ctx, teamID, apiSrv)
+		if err != nil {
+			return nil, err
+		}
+		return fs.ConfigChoose("workspace_end", "config_workspace", "Workspace ID", len(workspaces), func(i int) (string, string) {
+			workspace := workspaces[i]
+			return workspace.ID, workspace.Attributes.Name
+		})
+	case "workspace_end":
+		worksspaceID := config.Result
+		m.Set(configRootID, worksspaceID)
+		return fs.ConfigGoto("description")
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	}
+	return nil, fmt.Errorf("unknown state %q", config.State)
 }
 
 // list the objects into the function supplied

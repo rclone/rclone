@@ -73,6 +73,7 @@ func init() {
 		Name:        "b2",
 		Description: "Backblaze B2",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "account",
 			Help:     "Account ID or Application Key ID.",
@@ -259,6 +260,21 @@ type Object struct {
 }
 
 // ------------------------------------------------------------
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unknown state %q", config.State)
+	}
+}
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {

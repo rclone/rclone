@@ -3,6 +3,7 @@ package alias
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/rclone/rclone/fs"
@@ -18,6 +19,7 @@ func init() {
 		Name:        "alias",
 		Description: "Alias for an existing remote",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote or path to alias.\n\nCan be \"myremote:path/to/dir\", \"myremote:bucket\", \"myremote:\" or \"/local/path\".",
@@ -49,4 +51,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, errors.New("can't point alias remote at itself - check the value of the remote setting")
 	}
 	return cache.Get(ctx, fspath.JoinRootPath(opt.Remote, root))
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to alias Config. state: %s", config.State)
+	}
 }

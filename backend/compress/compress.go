@@ -70,6 +70,7 @@ func init() {
 		Name:        "compress",
 		Description: "Compress a remote",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to compress.",
@@ -115,6 +116,21 @@ type Options struct {
 }
 
 /*** FILESYSTEM FUNCTIONS ***/
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to compress Config. state: %s", config.State)
+	}
+}
 
 // Fs represents a wrapped fs.Fs
 type Fs struct {

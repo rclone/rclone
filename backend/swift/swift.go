@@ -77,6 +77,7 @@ func init() {
 		Name:        "swift",
 		Description: "OpenStack Swift (Rackspace Cloud Files, Memset Memstore, OVH)",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: append([]fs.Option{{
 			Name:    "env_auth",
 			Help:    "Get swift credentials from environment variables in standard OpenStack form.",
@@ -507,6 +508,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 	return NewFsWithConnection(ctx, opt, name, root, c, false)
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("unknown state %q", config.State)
+	}
 }
 
 // Return an Object from a path

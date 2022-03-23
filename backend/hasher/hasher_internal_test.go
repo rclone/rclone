@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
@@ -73,6 +74,29 @@ func (f *Fs) InternalTest(t *testing.T) {
 		t.Skip("hasher is not supported on this OS")
 	}
 	t.Run("UploadFromCrypt", f.testUploadFromCrypt)
+}
+
+func TestRiConfig(t *testing.T) {
+	const (
+		descriptionCompleteState = "description_complete"
+		newDescription           = "New description"
+	)
+	states := []fstest.ConfigStateTestFixture{
+		{
+			Name:        "empty state",
+			Mapper:      configmap.Simple{},
+			Input:       fs.ConfigIn{State: ""},
+			ExpectState: descriptionCompleteState,
+		},
+		{
+			Name:            "description complete",
+			Mapper:          configmap.Simple{},
+			Input:           fs.ConfigIn{State: descriptionCompleteState, Result: newDescription},
+			ExpectMapper:    configmap.Simple{fs.ConfigDescription: newDescription},
+			ExpectNilOutput: true,
+		},
+	}
+	fstest.AssertConfigStates(t, states, riConfig)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)

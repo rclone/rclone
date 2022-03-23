@@ -30,6 +30,7 @@ func init() {
 		Name:        "koofr",
 		Description: "Koofr, Digi Storage and other Koofr-compatible storage providers",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name: fs.ConfigProvider,
 			Help: "Choose your storage provider.",
@@ -363,6 +364,21 @@ func NewFsFromOptions(ctx context.Context, name, root string, opt *Options) (ff 
 		err = nil
 	}
 	return f, err
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to koofr Config. state: %s", config.State)
+	}
 }
 
 // List returns a list of items in a directory

@@ -55,6 +55,7 @@ func init() {
 		Name:        "sftp",
 		Description: "SSH/SFTP Connection",
 		NewFs:       NewFs,
+		Config:      riConfig,
 		Options: []fs.Option{{
 			Name:     "host",
 			Help:     "SSH host to connect to.\n\nE.g. \"example.com\".",
@@ -733,6 +734,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	return NewFsWithConnection(ctx, f, name, root, m, opt, sshConfig)
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to sftp Config. state: %s", config.State)
+	}
 }
 
 // Do the keyboard interactive challenge

@@ -33,6 +33,7 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "memory",
 		Description: "In memory object storage system.",
+		Config:      riConfig,
 		NewFs:       NewFs,
 		Options:     []fs.Option{},
 	})
@@ -254,6 +255,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 	return f, err
+}
+
+// riConfig query the user for additional configurations.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to memory Config. state: %s", config.State)
+	}
 }
 
 // newObject makes an object from a remote and an objectData

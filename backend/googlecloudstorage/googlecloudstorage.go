@@ -76,17 +76,7 @@ func init() {
 		Prefix:      "gcs",
 		Description: "Google Cloud Storage (this is not Google Drive)",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			saFile, _ := m.Get("service_account_file")
-			saCreds, _ := m.Get("service_account_credentials")
-			anonymous, _ := m.Get("anonymous")
-			if saFile != "" || saCreds != "" || anonymous == "true" {
-				return nil, nil
-			}
-			return oauthutil.ConfigOut("", &oauthutil.Options{
-				OAuth2Config: storageConfig,
-			})
-		},
+		Config:      riConfig,
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "project_number",
 			Help: "Project number.\n\nOptional - needed only for list/create/delete buckets - see your developer console.",
@@ -518,6 +508,31 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 	return f, nil
+}
+
+// riConfig configure additional items for the backend.
+func riConfig(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+	switch config.State {
+	case "":
+		saFile, _ := m.Get("service_account_file")
+		saCreds, _ := m.Get("service_account_credentials")
+		anonymous, _ := m.Get("anonymous")
+		if saFile != "" || saCreds != "" || anonymous == "true" {
+			return fs.ConfigGoto("description")
+		}
+		return oauthutil.ConfigOut("description", &oauthutil.Options{
+			OAuth2Config: storageConfig,
+		})
+	case "description":
+		return fs.ConfigBackendDescription("description_complete")
+	case "description_complete":
+		if config.Result != "" {
+			m.Set(fs.ConfigDescription, config.Result)
+		}
+		return nil, nil
+	default:
+		return nil, fmt.Errorf("Invalid config state provided to googlecloudstorage Config. state: %s", config.State)
+	}
 }
 
 // Return an Object from a path
