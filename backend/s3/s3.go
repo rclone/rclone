@@ -58,7 +58,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, RackCorp, SeaweedFS, and Tencent COS",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, ChinaMobile, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, RackCorp, SeaweedFS, and Tencent COS",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
@@ -75,6 +75,9 @@ func init() {
 			}, {
 				Value: "Ceph",
 				Help:  "Ceph Object Storage",
+			}, {
+				Value: "ChinaMobile",
+				Help:  "China Mobile Ecloud Elastic Object Storage (EOS)",
 			}, {
 				Value: "DigitalOcean",
 				Help:  "Digital Ocean Spaces",
@@ -294,7 +297,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,RackCorp,Scaleway,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ChinaMobile,RackCorp,Scaleway,Storj,TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -306,6 +309,102 @@ func init() {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nLeave blank if using AWS to use the default endpoint for the region.",
 			Provider: "AWS",
+		}, {
+			// ChinaMobile endpoints: https://ecloud.10086.cn/op-help-center/doc/article/24534
+			Name:     "endpoint",
+			Help:     "Endpoint for China Mobile Ecloud Elastic Object Storage (EOS) API.",
+			Provider: "ChinaMobile",
+			Examples: []fs.OptionExample{{
+				Value: "eos-wuxi-1.cmecloud.cn",
+				Help:  "The default endpoint - a good choice if you are unsure.\nEast China (Suzhou)",
+			}, {
+				Value: "eos-jinan-1.cmecloud.cn",
+				Help:  "East China (Jinan)",
+			}, {
+				Value: "eos-ningbo-1.cmecloud.cn",
+				Help:  "East China (Hangzhou)",
+			}, {
+				Value: "eos-shanghai-1.cmecloud.cn",
+				Help:  "East China (Shanghai-1)",
+			}, {
+				Value: "eos-zhengzhou-1.cmecloud.cn",
+				Help:  "Central China (Zhengzhou)",
+			}, {
+				Value: "eos-hunan-1.cmecloud.cn",
+				Help:  "Central China (Changsha-1)",
+			}, {
+				Value: "eos-zhuzhou-1.cmecloud.cn",
+				Help:  "Central China (Changsha-2)",
+			}, {
+				Value: "eos-guangzhou-1.cmecloud.cn",
+				Help:  "South China (Guangzhou-2)",
+			}, {
+				Value: "eos-dongguan-1.cmecloud.cn",
+				Help:  "South China (Guangzhou-3)",
+			}, {
+				Value: "eos-beijing-1.cmecloud.cn",
+				Help:  "North China (Beijing-1)",
+			}, {
+				Value: "eos-beijing-2.cmecloud.cn",
+				Help:  "North China (Beijing-2)",
+			}, {
+				Value: "eos-beijing-4.cmecloud.cn",
+				Help:  "North China (Beijing-3)",
+			}, {
+				Value: "eos-huhehaote-1.cmecloud.cn",
+				Help:  "North China (Huhehaote)",
+			}, {
+				Value: "eos-chengdu-1.cmecloud.cn",
+				Help:  "Southwest China (Chengdu)",
+			}, {
+				Value: "eos-chongqing-1.cmecloud.cn",
+				Help:  "Southwest China (Chongqing)",
+			}, {
+				Value: "eos-guiyang-1.cmecloud.cn",
+				Help:  "Southwest China (Guiyang)",
+			}, {
+				Value: "eos-xian-1.cmecloud.cn",
+				Help:  "Nouthwest China (Xian)",
+			}, {
+				Value: "eos-yunnan.cmecloud.cn",
+				Help:  "Yunnan China (Kunming)",
+			}, {
+				Value: "eos-yunnan-2.cmecloud.cn",
+				Help:  "Yunnan China (Kunming-2)",
+			}, {
+				Value: "eos-tianjin-1.cmecloud.cn",
+				Help:  "Tianjin China (Tianjin)",
+			}, {
+				Value: "eos-jilin-1.cmecloud.cn",
+				Help:  "Jilin China (Changchun)",
+			}, {
+				Value: "eos-hubei-1.cmecloud.cn",
+				Help:  "Hubei China (Xiangyan)",
+			}, {
+				Value: "eos-jiangxi-1.cmecloud.cn",
+				Help:  "Jiangxi China (Nanchang)",
+			}, {
+				Value: "eos-gansu-1.cmecloud.cn",
+				Help:  "Gansu China (Lanzhou)",
+			}, {
+				Value: "eos-shanxi-1.cmecloud.cn",
+				Help:  "Shanxi China (Taiyuan)",
+			}, {
+				Value: "eos-liaoning-1.cmecloud.cn",
+				Help:  "Liaoning China (Shenyang)",
+			}, {
+				Value: "eos-hebei-1.cmecloud.cn",
+				Help:  "Hebei China (Shijiazhuang)",
+			}, {
+				Value: "eos-fujian-1.cmecloud.cn",
+				Help:  "Fujian China (Xiamen)",
+			}, {
+				Value: "eos-guangxi-1.cmecloud.cn",
+				Help:  "Guangxi China (Nanning)",
+			}, {
+				Value: "eos-anhui-1.cmecloud.cn",
+				Help:  "Anhui China (Huainan)",
+			}},
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for IBM COS S3 API.\n\nSpecify if using an IBM COS On Premise.",
@@ -746,7 +845,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath,Storj,RackCorp",
+			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,ChinaMobile,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -879,6 +978,101 @@ func init() {
 			}, {
 				Value: "us-gov-west-1",
 				Help:  "AWS GovCloud (US) Region",
+			}},
+		}, {
+			Name:     "location_constraint",
+			Help:     "Location constraint - must match endpoint.\n\nUsed when creating buckets only.",
+			Provider: "ChinaMobile",
+			Examples: []fs.OptionExample{{
+				Value: "wuxi1",
+				Help:  "East China (Suzhou)",
+			}, {
+				Value: "jinan1",
+				Help:  "East China (Jinan)",
+			}, {
+				Value: "ningbo1",
+				Help:  "East China (Hangzhou)",
+			}, {
+				Value: "shanghai1",
+				Help:  "East China (Shanghai-1)",
+			}, {
+				Value: "zhengzhou1",
+				Help:  "Central China (Zhengzhou)",
+			}, {
+				Value: "hunan1",
+				Help:  "Central China (Changsha-1)",
+			}, {
+				Value: "zhuzhou1",
+				Help:  "Central China (Changsha-2)",
+			}, {
+				Value: "guangzhou1",
+				Help:  "South China (Guangzhou-2)",
+			}, {
+				Value: "dongguan1",
+				Help:  "South China (Guangzhou-3)",
+			}, {
+				Value: "beijing1",
+				Help:  "North China (Beijing-1)",
+			}, {
+				Value: "beijing2",
+				Help:  "North China (Beijing-2)",
+			}, {
+				Value: "beijing4",
+				Help:  "North China (Beijing-3)",
+			}, {
+				Value: "huhehaote1",
+				Help:  "North China (Huhehaote)",
+			}, {
+				Value: "chengdu1",
+				Help:  "Southwest China (Chengdu)",
+			}, {
+				Value: "chongqing1",
+				Help:  "Southwest China (Chongqing)",
+			}, {
+				Value: "guiyang1",
+				Help:  "Southwest China (Guiyang)",
+			}, {
+				Value: "xian1",
+				Help:  "Nouthwest China (Xian)",
+			}, {
+				Value: "yunnan",
+				Help:  "Yunnan China (Kunming)",
+			}, {
+				Value: "yunnan2",
+				Help:  "Yunnan China (Kunming-2)",
+			}, {
+				Value: "tianjin1",
+				Help:  "Tianjin China (Tianjin)",
+			}, {
+				Value: "jilin1",
+				Help:  "Jilin China (Changchun)",
+			}, {
+				Value: "hubei1",
+				Help:  "Hubei China (Xiangyan)",
+			}, {
+				Value: "jiangxi1",
+				Help:  "Jiangxi China (Nanchang)",
+			}, {
+				Value: "gansu1",
+				Help:  "Gansu China (Lanzhou)",
+			}, {
+				Value: "shanxi1",
+				Help:  "Shanxi China (Taiyuan)",
+			}, {
+				Value: "liaoning1",
+				Help:  "Liaoning China (Shenyang)",
+			}, {
+				Value: "hebei1",
+				Help:  "Hebei China (Shijiazhuang)",
+			}, {
+				Value: "fujian1",
+				Help:  "Fujian China (Xiamen)",
+			}, {
+				Value: "guangxi1",
+				Help:  "Guangxi China (Nanning)",
+			}, {
+				Value: "anhui1",
+				Help:  "Anhui China (Huainan)",
 			}},
 		}, {
 			Name:     "location_constraint",
@@ -1046,7 +1240,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,IBMCOS,Alibaba,ChinaMobile,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1081,11 +1275,11 @@ doesn't copy the ACL from the source but rather writes a fresh one.`,
 			}, {
 				Value:    "bucket-owner-read",
 				Help:     "Object owner gets FULL_CONTROL.\nBucket owner gets READ access.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-				Provider: "!IBMCOS",
+				Provider: "!IBMCOS,ChinaMobile",
 			}, {
 				Value:    "bucket-owner-full-control",
 				Help:     "Both the object owner and the bucket owner get FULL_CONTROL over the object.\nIf you specify this canned ACL when creating a bucket, Amazon S3 ignores it.",
-				Provider: "!IBMCOS",
+				Provider: "!IBMCOS,ChinaMobile",
 			}, {
 				Value:    "private",
 				Help:     "Owner gets FULL_CONTROL.\nNo one else has access rights (default).\nThis acl is available on IBM Cloud (Infra), IBM Cloud (Storage), On-Premise COS.",
@@ -1134,7 +1328,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "server_side_encryption",
 			Help:     "The server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS,Ceph,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
@@ -1142,13 +1336,14 @@ isn't set then "acl" is used instead.`,
 				Value: "AES256",
 				Help:  "AES256",
 			}, {
-				Value: "aws:kms",
-				Help:  "aws:kms",
+				Value:    "aws:kms",
+				Help:     "aws:kms",
+				Provider: "!ChinaMobile",
 			}},
 		}, {
 			Name:     "sse_customer_algorithm",
 			Help:     "If using SSE-C, the server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS,Ceph,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1171,7 +1366,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "sse_customer_key",
 			Help:     "If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data.",
-			Provider: "AWS,Ceph,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1183,7 +1378,7 @@ isn't set then "acl" is used instead.`,
 
 If you leave it blank, this is calculated automatically from the sse_customer_key provided.
 `,
-			Provider: "AWS,Ceph,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1226,6 +1421,24 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in OSS.",
 			Provider: "Alibaba",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "STANDARD",
+				Help:  "Standard storage class",
+			}, {
+				Value: "GLACIER",
+				Help:  "Archive storage mode",
+			}, {
+				Value: "STANDARD_IA",
+				Help:  "Infrequent access storage mode",
+			}},
+		}, {
+			// Mapping from here: https://ecloud.10086.cn/op-help-center/doc/article/24495
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in ChinaMobile.",
+			Provider: "ChinaMobile",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Default",
@@ -1947,6 +2160,10 @@ func setQuirks(opt *Options) {
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 	case "Ceph":
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+	case "ChinaMobile":
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
