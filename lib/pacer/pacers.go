@@ -219,7 +219,7 @@ type GoogleDriveOption interface {
 func NewGoogleDrive(opts ...GoogleDriveOption) *GoogleDrive {
 	c := &GoogleDrive{
 		minSleep: 10 * time.Millisecond,
-		burst:    1,
+		burst:    100,
 	}
 	c.Update(opts...)
 	return c
