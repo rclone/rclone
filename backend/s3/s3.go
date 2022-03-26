@@ -3247,6 +3247,10 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 				st.Status = "Not an S3 object"
 				return
 			}
+			if o.storageClass != "GLACIER" && o.storageClass != "DEEP_ARCHIVE" {
+				st.Status = "Not GLACIER or DEEP_ARCHIVE storage class"
+				return
+			}
 			bucket, bucketPath := o.split()
 			reqCopy := req
 			reqCopy.Bucket = &bucket
