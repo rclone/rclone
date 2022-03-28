@@ -80,7 +80,7 @@ var timeFormats = []string{
 func parseDurationDates(age string, epoch time.Time) (t time.Duration, err error) {
 	var instant time.Time
 	for _, timeFormat := range timeFormats {
-		instant, err = time.Parse(timeFormat, age)
+		instant, err = time.ParseInLocation(timeFormat, age, time.Local)
 		if err == nil {
 			return epoch.Sub(instant), nil
 		}
