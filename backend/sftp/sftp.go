@@ -272,6 +272,26 @@ given, rclone will empty the connection pool.
 Set to 0 to keep connections indefinitely.
 `,
 			Advanced: true,
+		}, {
+			Name: "chunk_size",
+			Help: `Upload and download chunk size.
+
+This controls the maximum packet size used in the SFTP protocol. The
+RFC limits this to 32768 bytes (32k), however a lot of servers
+support larger sizes and setting it larger will increase transfer
+speed dramatically on high latency links.
+
+Only use a setting higher than 32k if you always connect to the same
+server or after sufficiently broad testing.
+
+For example using the value of 252k with OpenSSH works well with its
+maximum packet size of 256k.
+
+If you get the error "failed to send packet header: EOF" when copying
+a large file, try lowering this number.
+`,
+			Default:  32 * fs.Kibi,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -279,31 +299,32 @@ Set to 0 to keep connections indefinitely.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host                    string      `config:"host"`
-	User                    string      `config:"user"`
-	Port                    string      `config:"port"`
-	Pass                    string      `config:"pass"`
-	KeyPem                  string      `config:"key_pem"`
-	KeyFile                 string      `config:"key_file"`
-	KeyFilePass             string      `config:"key_file_pass"`
-	PubKeyFile              string      `config:"pubkey_file"`
-	KnownHostsFile          string      `config:"known_hosts_file"`
-	KeyUseAgent             bool        `config:"key_use_agent"`
-	UseInsecureCipher       bool        `config:"use_insecure_cipher"`
-	DisableHashCheck        bool        `config:"disable_hashcheck"`
-	AskPassword             bool        `config:"ask_password"`
-	PathOverride            string      `config:"path_override"`
-	SetModTime              bool        `config:"set_modtime"`
-	ShellType               string      `config:"shell_type"`
-	Md5sumCommand           string      `config:"md5sum_command"`
-	Sha1sumCommand          string      `config:"sha1sum_command"`
-	SkipLinks               bool        `config:"skip_links"`
-	Subsystem               string      `config:"subsystem"`
-	ServerCommand           string      `config:"server_command"`
-	UseFstat                bool        `config:"use_fstat"`
-	DisableConcurrentReads  bool        `config:"disable_concurrent_reads"`
-	DisableConcurrentWrites bool        `config:"disable_concurrent_writes"`
-	IdleTimeout             fs.Duration `config:"idle_timeout"`
+	Host                    string        `config:"host"`
+	User                    string        `config:"user"`
+	Port                    string        `config:"port"`
+	Pass                    string        `config:"pass"`
+	KeyPem                  string        `config:"key_pem"`
+	KeyFile                 string        `config:"key_file"`
+	KeyFilePass             string        `config:"key_file_pass"`
+	PubKeyFile              string        `config:"pubkey_file"`
+	KnownHostsFile          string        `config:"known_hosts_file"`
+	KeyUseAgent             bool          `config:"key_use_agent"`
+	UseInsecureCipher       bool          `config:"use_insecure_cipher"`
+	DisableHashCheck        bool          `config:"disable_hashcheck"`
+	AskPassword             bool          `config:"ask_password"`
+	PathOverride            string        `config:"path_override"`
+	SetModTime              bool          `config:"set_modtime"`
+	ShellType               string        `config:"shell_type"`
+	Md5sumCommand           string        `config:"md5sum_command"`
+	Sha1sumCommand          string        `config:"sha1sum_command"`
+	SkipLinks               bool          `config:"skip_links"`
+	Subsystem               string        `config:"subsystem"`
+	ServerCommand           string        `config:"server_command"`
+	UseFstat                bool          `config:"use_fstat"`
+	DisableConcurrentReads  bool          `config:"disable_concurrent_reads"`
+	DisableConcurrentWrites bool          `config:"disable_concurrent_writes"`
+	IdleTimeout             fs.Duration   `config:"idle_timeout"`
+	ChunkSize               fs.SizeSuffix `config:"chunk_size"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -481,6 +502,7 @@ func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.C
 		sftp.UseFstat(f.opt.UseFstat),
 		sftp.UseConcurrentReads(!f.opt.DisableConcurrentReads),
 		sftp.UseConcurrentWrites(!f.opt.DisableConcurrentWrites),
+		sftp.MaxPacketUnchecked(int(f.opt.ChunkSize)),
 	)
 	return sftp.NewClientPipe(pr, pw, opts...)
 }
