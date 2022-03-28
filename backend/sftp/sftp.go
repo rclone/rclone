@@ -292,6 +292,16 @@ a large file, try lowering this number.
 `,
 			Default:  32 * fs.Kibi,
 			Advanced: true,
+		}, {
+			Name: "concurrency",
+			Help: `The maximum number of outstanding requests for one file
+
+This controls the maximum number of outstanding requests for one file.
+Increasing it will increase throughput on high latency links at the
+cost of using more memory.
+`,
+			Default:  64,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -325,6 +335,7 @@ type Options struct {
 	DisableConcurrentWrites bool          `config:"disable_concurrent_writes"`
 	IdleTimeout             fs.Duration   `config:"idle_timeout"`
 	ChunkSize               fs.SizeSuffix `config:"chunk_size"`
+	Concurrency             int           `config:"concurrency"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -503,6 +514,7 @@ func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.C
 		sftp.UseConcurrentReads(!f.opt.DisableConcurrentReads),
 		sftp.UseConcurrentWrites(!f.opt.DisableConcurrentWrites),
 		sftp.MaxPacketUnchecked(int(f.opt.ChunkSize)),
+		sftp.MaxConcurrentRequestsPerFile(f.opt.Concurrency),
 	)
 	return sftp.NewClientPipe(pr, pw, opts...)
 }
