@@ -11,7 +11,6 @@ Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol).
 The SFTP backend can be used with a number of different providers:
 
 {{< provider_list >}}
-{{< provider name="C14" home="https://www.online.net/en/storage/c14-cold-storage" config="/sftp/#c14">}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net">}}
 {{< /provider_list >}}
 
@@ -675,12 +674,6 @@ with it: `--dump-headers`, `--dump-bodies`, `--dump-auth`
 
 Note that `--timeout` and `--contimeout` are both supported.
 
-
-## C14 {#c14}
-
-C14 is supported through the SFTP backend.
-
-See [C14's documentation](https://www.online.net/en/storage/c14-cold-storage)
 
 ## rsync.net {#rsync-net}
 
