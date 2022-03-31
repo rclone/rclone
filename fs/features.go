@@ -229,11 +229,18 @@ func (ft *Features) DisableList(list []string) *Features {
 // optional interfaces.  It returns the original updated Features
 // struct passed in.
 func (ft *Features) Fill(ctx context.Context, f Fs) *Features {
+	ci := GetConfig(ctx)
 	if do, ok := f.(Purger); ok {
 		ft.Purge = do.Purge
 	}
-	if do, ok := f.(Copier); ok {
-		ft.Copy = do.Copy
+	if ci.CompareACL {
+		if do, ok := f.(CopyWithACLer); ok {
+			ft.Copy = do.CopyWithACL
+		}
+	} else {
+		if do, ok := f.(Copier); ok {
+			ft.Copy = do.Copy
+		}
 	}
 	if do, ok := f.(Mover); ok {
 		ft.Move = do.Move
@@ -423,6 +430,20 @@ type Copier interface {
 	//
 	// If it isn't possible then return fs.ErrorCantCopy
 	Copy(ctx context.Context, src Object, remote string) (Object, error)
+}
+
+// CopyWithACLer is an optional interface for Fs, primarily for S3 storages
+type CopyWithACLer interface {
+	// CopyWithACL copies src with ACL to this remote using server-side copy operations.
+	//
+	// This is stored with the remote path given
+	//
+	// It returns the destination Object and a possible error
+	//
+	// Will only be called if src.Fs().Name() == f.Name()
+	//
+	// If it isn't possible then return fs.ErrorCantCopy
+	CopyWithACL(ctx context.Context, src Object, remote string) (Object, error)
 }
 
 // Mover is an optional interface for Fs

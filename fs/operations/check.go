@@ -132,6 +132,19 @@ func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (di
 	if ci.SizeOnly {
 		return false, false, nil
 	}
+	if ci.CompareACL {
+		var srcACL, dstACL string
+		same, err := CheckACL(ctx, src, dst, &srcACL, &dstACL)
+		if err != nil {
+			fs.Errorf(fmt.Sprintf("SRC: %v, DST: %v", src, dst), "%v", err)
+			return true, false, nil
+		}
+		if !same {
+			err = errors.New(fmt.Sprintf("ACL differs: SRC ACL: %v, DST ACL: %v", srcACL, dstACL))
+			fs.Errorf(fmt.Sprintf("SRC: %v, DST: %v", src, dst), "%v", err)
+			return true, false, nil
+		}
+	}
 	return c.opt.Check(ctx, dst, src)
 }
 

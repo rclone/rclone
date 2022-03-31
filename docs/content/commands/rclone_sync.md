@@ -47,6 +47,8 @@ rclone sync source:path dest:path [flags]
 
 ## Options
 
+If you supply the `--compare-acl` flag, it will synchronize ACLs of objects as well.
+
 ```
       --create-empty-src-dirs   Create empty source dirs on destination after sync
   -h, --help                    help for sync

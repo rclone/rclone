@@ -53,6 +53,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.StringVarP(flagSet, &tempDir, "temp-dir", "", os.TempDir(), "Directory rclone will use for temporary files")
 	flags.BoolVarP(flagSet, &ci.CheckSum, "checksum", "c", ci.CheckSum, "Skip based on checksum (if available) & size, not mod-time & size")
 	flags.BoolVarP(flagSet, &ci.SizeOnly, "size-only", "", ci.SizeOnly, "Skip based on size only, not mod-time or checksum")
+	flags.BoolVarP(flagSet, &ci.CompareACL, "compare-acl", "", ci.CompareACL, "Checks ACL as well")
 	flags.BoolVarP(flagSet, &ci.IgnoreTimes, "ignore-times", "I", ci.IgnoreTimes, "Don't skip files that match size and time - transfer all files")
 	flags.BoolVarP(flagSet, &ci.IgnoreExisting, "ignore-existing", "", ci.IgnoreExisting, "Skip all files that exist on destination")
 	flags.BoolVarP(flagSet, &ci.IgnoreErrors, "ignore-errors", "", ci.IgnoreErrors, "Delete even if there are I/O errors")

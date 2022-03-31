@@ -62,6 +62,30 @@ func CheckHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object) (equal b
 	return equal, ht, err
 }
 
+// CheckACL checks the two files' ACLs
+//
+// Returns
+//
+// same - equals true if ACLs are equal
+//
+// err - if it was unable to read file's ACL or to marshal it then the respective error is stored here
+func CheckACL(_ context.Context, src fs.Object, dst fs.Object, srcACL, dstACL *string) (same bool, err error) {
+	srcWithACL, ok := src.(fs.ObjectWithACL)
+	if !ok {
+		return true, nil
+	}
+	dstWithACL, ok := dst.(fs.ObjectWithACL)
+	if !ok {
+		return true, nil
+	}
+
+	same, err = srcWithACL.IsEqualToACL(&dstWithACL, srcACL, dstACL)
+	if err != nil {
+		return false, err
+	}
+	return same, nil
+}
+
 // checkHashes does the work of CheckHashes but takes a hash.Type and
 // returns the effective hash type used.
 func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.Type) (equal bool, htOut hash.Type, srcHash, dstHash string, err error) {
@@ -142,6 +166,7 @@ type equalOpt struct {
 	checkSum          bool // if set check checksum+size instead of modtime+size
 	updateModTime     bool // if set update the modtime if hashes identical and checking with modtime+size
 	forceModTimeMatch bool // if set assume modtimes match
+	compareACL        bool // if set assume ACL match
 }
 
 // default set of options for equal()
@@ -152,6 +177,7 @@ func defaultEqualOpt(ctx context.Context) equalOpt {
 		checkSum:          ci.CheckSum,
 		updateModTime:     !ci.NoUpdateModTime,
 		forceModTimeMatch: false,
+		compareACL:        ci.CompareACL,
 	}
 }
 
@@ -176,6 +202,32 @@ func equal(ctx context.Context, src fs.ObjectInfo, dst fs.Object, opt equalOpt) 
 	}
 
 	// Assert: Size is equal or being ignored
+
+	// If checking ACLs, for example, for S3 storages
+	if opt.compareACL {
+		srcWithACL, ok := src.(fs.ObjectWithACL)
+		if !ok {
+			fs.Errorf(src, "Failed to convert to an object with ACL")
+			return false
+		}
+
+		dstWithACL, ok := dst.(fs.ObjectWithACL)
+		if !ok {
+			fs.Errorf(dst, "Failed to convert to an object with ACL")
+			return false
+		}
+
+		var srcACL, dstACL string
+		same, err := dstWithACL.IsEqualToACL(&srcWithACL, &dstACL, &srcACL)
+		if err != nil {
+			fs.Errorf(src, "Failed to check ACLs equality", err)
+			return false
+		}
+		if !same {
+			fs.Debugf(src, "ACL differs: SRC ACL: %v, DST ACL: %v", srcACL, dstACL)
+			return false
+		}
+	}
 
 	// If checking checksum and not modtime
 	if opt.checkSum {

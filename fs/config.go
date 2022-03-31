@@ -52,6 +52,7 @@ type ConfigInfo struct {
 	Interactive            bool
 	CheckSum               bool
 	SizeOnly               bool
+	CompareACL             bool
 	IgnoreTimes            bool
 	IgnoreExisting         bool
 	IgnoreErrors           bool

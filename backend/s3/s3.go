@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -32,7 +33,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudfront"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/google/go-cmp/cmp"
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -1877,14 +1880,15 @@ type Object struct {
 	//
 	// List will read everything but meta & mimeType - to fill
 	// that in you need to call readMetaData
-	fs           *Fs                // what this object is part of
-	remote       string             // The remote path
-	md5          string             // md5sum of the object
-	bytes        int64              // size of the object
-	lastModified time.Time          // Last modified
-	meta         map[string]*string // The object metadata if known - may be nil
-	mimeType     string             // MimeType of object - may be ""
-	storageClass string             // e.g. GLACIER
+	fs           *Fs                     // what this object is part of
+	remote       string                  // The remote path
+	md5          string                  // md5sum of the object
+	bytes        int64                   // size of the object
+	lastModified time.Time               // Last modified
+	meta         map[string]*string      // The object metadata if known - may be nil
+	mimeType     string                  // MimeType of object - may be ""
+	acl          *s3.AccessControlPolicy // ACL
+	storageClass string                  // e.g. GLACIER
 }
 
 // ------------------------------------------------------------
@@ -2774,6 +2778,14 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		fs:     f,
 		remote: src.Remote(),
 	}
+
+	// if passed src is S3 object then we can get metadata out of it
+	s3Obj, ok := src.(*Object)
+	if ok {
+		fs.meta = s3Obj.meta
+		fs.acl = s3Obj.acl
+	}
+
 	return fs, fs.Update(ctx, in, src, options...)
 }
 
@@ -2921,6 +2933,78 @@ func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPa
 	})
 }
 
+// srcOwnerToDstOwner maps source bucket owner ID to target bucket owner ID
+// otherwise returns ID itself
+func srcOwnerToDstOwner(owner, srcBucketOwner, dstBucketOwner *string) *string {
+	if owner == nil || *owner != *srcBucketOwner {
+		return owner
+	}
+	return dstBucketOwner
+}
+
+// mappedOwnersACL maps every owner ID to target bucket owner ID if it equals to source bucket owner ID
+// using srcOwnerToDstOwner
+func mappedOwnersACL(acl *s3.GetObjectAclOutput, srcBucketOwner, dstBucketOwner *string) *s3.GetObjectAclOutput {
+	grants := make([]*s3.Grant, len(acl.Grants))
+	for i, grant := range acl.Grants {
+		grants[i] = &s3.Grant{
+			Grantee: &s3.Grantee{
+				ID:           srcOwnerToDstOwner(grant.Grantee.ID, srcBucketOwner, dstBucketOwner),
+				DisplayName:  grant.Grantee.DisplayName,
+				EmailAddress: grant.Grantee.EmailAddress,
+				Type:         grant.Grantee.Type,
+				URI:          grant.Grantee.URI,
+			},
+			Permission: grant.Permission,
+		}
+	}
+
+	return &s3.GetObjectAclOutput{
+		Owner: &s3.Owner{
+			ID:          srcOwnerToDstOwner(acl.Owner.ID, srcBucketOwner, dstBucketOwner),
+			DisplayName: acl.Owner.DisplayName,
+		},
+		Grants: grants,
+	}
+}
+
+// copyWithACL calls copy, but also updates ACLs
+// it first saves current object's ACL from source and then sets it to target object
+// this order is important, because copy can change source object's ACL if it's equal
+// to target object, for example, SetModTime copies object to itself to update metadata
+// and rewrites ACL to one of the canned ACLs or "private" if not specified
+func (f *Fs) copyWithACL(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPath, srcBucket, srcPath string, src *Object) error {
+	dst := &Object{
+		fs:     f,
+		remote: dstPath,
+	}
+
+	srcACL, err := src.getACL()
+	if err != nil {
+		return err
+	}
+
+	if err := f.copy(ctx, req, dstBucket, dstPath, srcBucket, srcPath, src); err != nil {
+		return err
+	}
+
+	srcBucketOwner, err := src.getBucketOwner()
+	if err != nil {
+		return err
+	}
+	dstBucketOwner, err := dst.getBucketOwner()
+	if err != nil {
+		return err
+	}
+
+	updatedACL := mappedOwnersACL(srcACL, srcBucketOwner, dstBucketOwner)
+	if err := dst.setACL(updatedACL); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func calculateRange(partSize, partIndex, numParts, totalSize int64) string {
 	start := partIndex * partSize
 	var ends string
@@ -3026,16 +3110,7 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	})
 }
 
-// Copy src to this remote using server-side copy operations.
-//
-// This is stored with the remote path given
-//
-// It returns the destination Object and a possible error
-//
-// Will only be called if src.Fs().Name() == f.Name()
-//
-// If it isn't possible then return fs.ErrorCantCopy
-func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+func (f *Fs) copyCommon(ctx context.Context, src fs.Object, remote string, withACL bool) (fs.Object, error) {
 	dstBucket, dstPath := f.split(remote)
 	err := f.makeBucket(ctx, dstBucket)
 	if err != nil {
@@ -3050,11 +3125,41 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	req := s3.CopyObjectInput{
 		MetadataDirective: aws.String(s3.MetadataDirectiveCopy),
 	}
-	err = f.copy(ctx, &req, dstBucket, dstPath, srcBucket, srcPath, srcObj)
+	if withACL {
+		err = f.copyWithACL(ctx, &req, dstBucket, dstPath, srcBucket, srcPath, srcObj)
+	} else {
+		err = f.copy(ctx, &req, dstBucket, dstPath, srcBucket, srcPath, srcObj)
+	}
 	if err != nil {
 		return nil, err
 	}
 	return f.NewObject(ctx, remote)
+}
+
+// Copy src to this remote using server-side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	return f.copyCommon(ctx, src, remote, false)
+}
+
+// CopyWithACL copies src with ACL to this remote using server-side copy operations.
+//
+// This is stored with the remote path given
+//
+// It returns the destination Object and a possible error
+//
+// Will only be called if src.Fs().Name() == f.Name()
+//
+// If it isn't possible then return fs.ErrorCantCopy
+func (f *Fs) CopyWithACL(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
+	return f.copyCommon(ctx, src, remote, true)
 }
 
 // Hashes returns the supported hash sets.
@@ -3455,6 +3560,184 @@ func (o *Object) Size() int64 {
 	return o.bytes
 }
 
+// getACL returns receiver object's ACL
+func (o *Object) getACL() (*s3.GetObjectAclOutput, error) {
+	bucket, bucketPath := o.split()
+	objACL, err := o.fs.c.GetObjectAcl(&s3.GetObjectAclInput{
+		Bucket: &bucket,
+		Key:    &bucketPath,
+	})
+	if err != nil {
+		fs.LogLevelPrintf(
+			fs.LogLevelNotice, o, "Failed to get ACL for bucket=%s, key=%s: %v", bucket, bucketPath, err,
+		)
+		return nil, err
+	}
+	return objACL, nil
+}
+
+func (o *Object) setACL(acl *s3.GetObjectAclOutput) error {
+	bucket, bucketPath := o.split()
+	_, err := o.fs.c.PutObjectAcl(&s3.PutObjectAclInput{
+		AccessControlPolicy: &s3.AccessControlPolicy{
+			Grants: acl.Grants,
+			Owner:  acl.Owner,
+		},
+		Bucket: &bucket,
+		Key:    &bucketPath,
+	})
+	if err != nil {
+		fs.LogLevelPrintf(
+			fs.LogLevelNotice, o, "Failed to set ACL=%v to bucket=%s, key=%s: %v", acl, bucket, bucketPath, err,
+		)
+	}
+	return err
+}
+
+// getBucketOwner returns object's bucket owner ID
+func (o *Object) getBucketOwner() (*string, error) {
+	bucket, _ := o.split()
+	bucketACL, err := o.fs.c.GetBucketAcl(&s3.GetBucketAclInput{
+		Bucket: &bucket,
+	})
+	if err != nil {
+		fs.LogLevelPrintf(fs.LogLevelNotice, o, "Failed to get object's bucket ACL: %v", err)
+		return nil, err
+	}
+	return bucketACL.Owner.ID, nil
+}
+
+func sameOwners(srcOwner, dstOwner, srcBucketOwner, dstBucketOwner *string) bool {
+	// for URIs like 'http://acs.amazonaws.com/groups/global/AllUsers' there is no owner
+	if srcOwner == nil && dstOwner == nil {
+		return true
+	} else if srcOwner == nil || dstOwner == nil {
+		return false
+	}
+
+	// owners could be considered the same if their IDs are equal
+	if *srcOwner == *dstOwner {
+		return true
+	}
+
+	// if buckets' owner IDs are different, to consider these owners the same
+	// the source object owner ID should be equal to source bucket owner ID
+	// and destination object owner ID should be equal to destination bucket owner ID
+	if *srcOwner == *srcBucketOwner && *dstOwner == *dstBucketOwner {
+		return true
+	}
+
+	return false
+}
+
+func sameGrant(src, dst *s3.Grant, srcBucketOwner, dstBucketOwner *string) bool {
+	if !sameOwners(src.Grantee.ID, dst.Grantee.ID, srcBucketOwner, dstBucketOwner) {
+		return false
+	}
+
+	var toCompare = [][]interface{}{
+		{src.Permission, dst.Permission},
+		{src.Grantee.Type, dst.Grantee.Type},
+	}
+
+	for _, pair := range toCompare {
+		exp, act := pair[0], pair[1]
+		if !cmp.Equal(exp, act) {
+			return false
+		}
+	}
+
+	return true
+}
+
+type ByPermissionAndGranteeType []*s3.Grant
+
+func (g ByPermissionAndGranteeType) Len() int {
+	return len(g)
+}
+func (g ByPermissionAndGranteeType) Less(i, j int) bool {
+	a, b := g[i], g[j]
+
+	if *a.Permission == *b.Permission {
+		if *a.Grantee.Type == *b.Grantee.Type {
+			return *a.Grantee.ID < *b.Grantee.ID
+		} else {
+			return *a.Grantee.Type < *b.Grantee.Type
+		}
+	} else {
+		return *a.Permission < *b.Permission
+	}
+}
+func (g ByPermissionAndGranteeType) Swap(i, j int) {
+	g[i], g[j] = g[j], g[i]
+}
+
+func sameGrants(src, dst []*s3.Grant, srcBucketOwner, dstBucketOwner *string) bool {
+	if len(src) != len(dst) {
+		return false
+	}
+
+	sort.Sort(ByPermissionAndGranteeType(src))
+	sort.Sort(ByPermissionAndGranteeType(dst))
+
+	for i := 0; i < len(src); i++ {
+		srcGrant := src[i]
+		dstGrant := dst[i]
+
+		if !sameGrant(srcGrant, dstGrant, srcBucketOwner, dstBucketOwner) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// IsEqualToACL returns true if object's ACL is equal to ACL of dstWithACL
+// and stores serialized ACLs to srcACL and dstACL respectively
+func (o *Object) IsEqualToACL(dstWithACL *fs.ObjectWithACL, srcACL, dstACL *string) (bool, error) {
+	dstObject, ok := (*dstWithACL).(*Object)
+	if !ok {
+		return false, nil
+	}
+
+	src, err := o.getACL()
+	if err != nil {
+		return false, err
+	}
+	dst, err := dstObject.getACL()
+	if err != nil {
+		return false, err
+	}
+
+	srcBytes, err := json.Marshal(src)
+	if err != nil {
+		return false, err
+	}
+	dstBytes, err := json.Marshal(dst)
+	if err != nil {
+		return false, err
+	}
+
+	srcBucketOwner, err := o.getBucketOwner()
+	if err != nil {
+		return false, err
+	}
+	dstBucketOwner, err := dstObject.getBucketOwner()
+	if err != nil {
+		return false, err
+	}
+
+	*srcACL, *dstACL = string(srcBytes), string(dstBytes)
+
+	if !sameOwners(src.Owner.ID, dst.Owner.ID, srcBucketOwner, dstBucketOwner) ||
+		!sameGrants(src.Grants, dst.Grants, srcBucketOwner, dstBucketOwner) ||
+		src.RequestCharged != dst.RequestCharged {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (o *Object) headObject(ctx context.Context) (resp *s3.HeadObjectOutput, err error) {
 	bucket, bucketPath := o.split()
 	req := s3.HeadObjectInput{
@@ -3720,6 +4003,17 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 	}
 	o.setMetaData(resp.ETag, size, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
+
+	objACL, err := o.getACL()
+	if err != nil {
+		return resp.Body, nil
+	}
+
+	o.acl = &s3.AccessControlPolicy{
+		Grants: objACL.Grants,
+		Owner:  objACL.Owner,
+	}
+
 	return resp.Body, nil
 }
 
@@ -4128,6 +4422,22 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		fs.Debugf(o, "Multipart upload Etag: %s OK", wantETag)
 	}
+
+	if o.acl != nil && len(o.acl.Grants) > 1 {
+		acl := &s3.GetObjectAclOutput{
+			Grants: o.acl.Grants,
+			Owner:  o.acl.Owner,
+		}
+
+		if err = o.setACL(acl); err != nil {
+			if aerr, ok := err.(awserr.Error); ok && aerr.Code() == cloudfront.ErrCodeAccessDenied {
+				fs.LogLevelPrintf(fs.LogLevelNotice, "Failed to set object ACL", "Code: %s. Bucket: %s. Key: %s. Owner: %s", aerr.Code(), bucket, bucketPath, *o.acl.Owner.DisplayName)
+				return nil
+			}
+			return fmt.Errorf("failed to set object acl: %w", err)
+		}
+	}
+
 	return err
 }
 

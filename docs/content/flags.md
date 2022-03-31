@@ -27,6 +27,7 @@ These flags are available for every command.
   -c, --checksum                             Skip based on checksum (if available) & size, not mod-time & size
       --client-cert string                   Client SSL certificate (PEM) for mutual TLS auth
       --client-key string                    Client SSL private key (PEM) for mutual TLS auth
+      --compare-acl                          Compares access control lists (ACL), for example, for S3 storages
       --compare-dest stringArray             Include additional comma separated server-side paths during comparison
       --config string                        Config file (default "$HOME/.config/rclone/rclone.conf")
       --contimeout duration                  Connect timeout (default 1m0s)
@@ -250,7 +251,7 @@ and may be set in the config file.
       --chunker-chunk-size SizeSuffix                Files larger than chunk size will be split in chunks (default 2Gi)
       --chunker-fail-hard                            Choose how chunker should handle files with missing or invalid chunks
       --chunker-hash-type string                     Choose how chunker handles hash sums (default "md5")
-      --chunker-remote string                        Remote to chunk/unchunk
+      --chunker-remote string                        Remote to chunk/unchunk                                  
       --compress-level int                           GZIP compression level (-2 to 9) (default -1)
       --compress-mode string                         Compression mode (default "gzip")
       --compress-ram-cache-limit SizeSuffix          Some remotes don't allow the upload of files with unknown size (default 20Mi)
