@@ -3,8 +3,7 @@ title: "Akamai Netstorage"
 description: "Rclone docs for Akamai NetStorage"
 ---
 
-{{< icon "fas fa-database" >}} Akamai NetStorage
--------------------------------------------------
+# {{< icon "fas fa-database" >}} Akamai NetStorage
 
 Paths are specified as `remote:`
 You may put subdirectories in too, e.g. `remote:/path/to/dir`.
@@ -18,6 +17,8 @@ For example, this is commonly configured with or without a CP code:
 See all buckets
    rclone lsd remote:
 The initial setup for Netstorage involves getting an account and secret. Use `rclone config` to walk you through the setup process.
+
+## Configuration
 
 Here's an example of how to make a remote called `ns1`.
 
@@ -110,28 +111,31 @@ y/e/d> y
 
 This remote is called `ns1` and can now be used.
 
-### Example operations
+## Example operations
+
 Get started with rclone and NetStorage with these examples. For additional rclone commands, visit https://rclone.org/commands/.
 
-##### See contents of a directory in your project
+### See contents of a directory in your project
 
     rclone lsd ns1:/974012/testing/
 
-##### Sync the contents local with remote
+### Sync the contents local with remote
 
     rclone sync . ns1:/974012/testing/
 
-##### Upload local content to remote
+### Upload local content to remote
     rclone copy notes.txt ns1:/974012/testing/
 
-##### Delete content on remote
+### Delete content on remote
     rclone delete ns1:/974012/testing/notes.txt
 
-##### Move or copy content between CP codes.
+### Move or copy content between CP codes.
+
 Your credentials must have access to two CP codes on the same remote. You can't perform operations between different remotes.
 
     rclone move ns1:/974012/testing/notes.txt ns1:/974450/testing2/
 
+## Features
 
 ### Symlink Support
 
@@ -152,7 +156,7 @@ With NetStorage, directories can exist in one of two forms:
 
 Rclone will intercept all file uploads and mkdir commands for the NetStorage remote and will explicitly issue the mkdir command for each directory in the uploading path. This will help with the interoperability with the other Akamai services such as SFTP and the Content Management Shell (CMShell). Rclone will not guarantee correctness of operations with implicit directories which might have been created as a result of using an upload API directly.
 
-### ListR Feature
+### `--fast-list` / ListR support
 
 NetStorage remote supports the ListR feature by using the "list" NetStorage API action to return a lexicographical list of all objects within the specified CP code, recursing into subdirectories as they're encountered.
 
@@ -164,7 +168,7 @@ There are pros and cons of using the ListR method, refer to [rclone documentatio
 
 **Note**: There is a known limitation that "lsf -R" will display number of files in the directory and directory size as -1 when ListR method is used. The workaround is to pass "--disable listR" flag if these numbers are important in the output.
 
-### Purge Feature
+### Purge
 
 NetStorage remote supports the purge feature by using the "quick-delete" NetStorage API action. The quick-delete action is disabled by default for security reasons and can be enabled for the account through the Akamai portal. Rclone will first try to use quick-delete action for the purge command and if this functionality is disabled then will fall back to a standard delete method.
 
