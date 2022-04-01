@@ -394,7 +394,11 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		notifiedRemotes:  make(map[string]bool),
 	}
 	cache.PinUntilFinalized(f.Fs, f)
-	f.rateLimiter = rate.NewLimiter(rate.Limit(float64(opt.Rps)), opt.TotalWorkers)
+	rps := rate.Inf
+	if opt.Rps > 0 {
+		rps = rate.Limit(float64(opt.Rps))
+	}
+	f.rateLimiter = rate.NewLimiter(rps, opt.TotalWorkers)
 
 	f.plexConnector = &plexConnector{}
 	if opt.PlexURL != "" {
