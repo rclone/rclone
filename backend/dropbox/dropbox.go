@@ -1784,7 +1784,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		entry, err = o.uploadChunked(ctx, in, commitInfo, size)
 	} else {
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			entry, err = o.fs.srv.Upload(commitInfo, in)
+			entry, err = o.fs.srv.Upload(&files.UploadArg{CommitInfo: *commitInfo}, in)
 			return shouldRetry(ctx, err)
 		})
 	}
