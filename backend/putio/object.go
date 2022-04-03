@@ -244,7 +244,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		if err != nil {
 			return shouldRetry(ctx, err)
 		}
-		if err := checkStatusCode(resp, 200); err != nil {
+		if err := checkStatusCode(resp, 200, 206); err != nil {
 			return shouldRetry(ctx, err)
 		}
 		return false, nil

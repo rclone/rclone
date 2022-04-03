@@ -12,11 +12,13 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 )
 
-func checkStatusCode(resp *http.Response, expected int) error {
-	if resp.StatusCode != expected {
-		return &statusCodeError{response: resp}
+func checkStatusCode(resp *http.Response, expected ...int) error {
+	for _, code := range expected {
+		if resp.StatusCode == code {
+			return nil
+		}
 	}
-	return nil
+	return &statusCodeError{response: resp}
 }
 
 type statusCodeError struct {
