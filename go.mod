@@ -28,6 +28,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.5
 	github.com/google/uuid v1.3.0
 	github.com/hanwen/go-fuse/v2 v2.1.0
+	github.com/icholy/digest v0.1.15
 	github.com/iguanesolutions/go-systemd/v5 v5.1.0
 	github.com/jcmturner/gokrb5/v8 v8.4.2
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004

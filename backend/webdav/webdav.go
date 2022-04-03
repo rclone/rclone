@@ -24,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/icholy/digest"
 	"github.com/rclone/rclone/backend/webdav/api"
 	"github.com/rclone/rclone/backend/webdav/odrvcookie"
 	"github.com/rclone/rclone/fs"
@@ -431,6 +432,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			rt: ntlmssp.Negotiator{RoundTripper: t},
 		}
 	}
+
+	if opt.User != "" || opt.Pass != "" {
+		client.Transport = &digest.Transport{
+			Username: opt.User,
+			Password: opt.Pass,
+			Transport: client.Transport,
+		}
+	}
+
 	f.srv = rest.NewClient(client).SetRoot(u.String())
 
 	f.features = (&fs.Features{
