@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rclone/rclone/backend/union/common"
 	"github.com/rclone/rclone/backend/union/policy"
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
@@ -54,21 +55,11 @@ func init() {
 	fs.Register(fsi)
 }
 
-// Options defines the configuration for this backend
-type Options struct {
-	Upstreams    fs.SpaceSepList `config:"upstreams"`
-	Remotes      fs.SpaceSepList `config:"remotes"` // Deprecated
-	ActionPolicy string          `config:"action_policy"`
-	CreatePolicy string          `config:"create_policy"`
-	SearchPolicy string          `config:"search_policy"`
-	CacheTime    int             `config:"cache_time"`
-}
-
 // Fs represents a union of upstreams
 type Fs struct {
 	name         string         // name of this remote
 	features     *fs.Features   // optional features
-	opt          Options        // options for this Fs
+	opt          common.Options // options for this Fs
 	root         string         // the path we are working on
 	upstreams    []*upstream.Fs // slice of upstreams
 	hashSet      hash.Set       // intersection of hash types
@@ -808,7 +799,7 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 // The returned Fs is the actual Fs, referenced by remote in the config
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
-	opt := new(Options)
+	opt := new(common.Options)
 	err := configstruct.Set(m, opt)
 	if err != nil {
 		return nil, err
@@ -836,7 +827,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	errs := Errors(make([]error, len(opt.Upstreams)))
 	multithread(len(opt.Upstreams), func(i int) {
 		u := opt.Upstreams[i]
-		upstreams[i], errs[i] = upstream.New(ctx, u, root, time.Duration(opt.CacheTime)*time.Second)
+		upstreams[i], errs[i] = upstream.New(ctx, u, root, opt)
 	})
 	var usedUpstreams []*upstream.Fs
 	var fserr error

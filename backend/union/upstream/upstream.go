@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/rclone/rclone/backend/union/common"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/fspath"
@@ -26,6 +27,7 @@ type Fs struct {
 	fs.Fs
 	RootFs      fs.Fs
 	RootPath    string
+	Opt         *common.Options
 	writable    bool
 	creatable   bool
 	usage       *fs.Usage     // Cache the usage
@@ -61,17 +63,18 @@ type Entry interface {
 
 // New creates a new Fs based on the
 // string formatted `type:root_path(:ro/:nc)`
-func New(ctx context.Context, remote, root string, cacheTime time.Duration) (*Fs, error) {
+func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, error) {
 	configName, fsPath, err := fspath.SplitFs(remote)
 	if err != nil {
 		return nil, err
 	}
 	f := &Fs{
 		RootPath:    strings.TrimRight(root, "/"),
+		Opt:         opt,
 		writable:    true,
 		creatable:   true,
 		cacheExpiry: time.Now().Unix(),
-		cacheTime:   cacheTime,
+		cacheTime:   time.Duration(opt.CacheTime) * time.Second,
 		usage:       &fs.Usage{},
 	}
 	if strings.HasSuffix(fsPath, ":ro") {
