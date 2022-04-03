@@ -150,6 +150,16 @@ use these methods.  The alternative is to use `--rc-user` and
 
 Default Off.
 
+### --rc-baseurl
+
+Prefix for URLs.
+
+Default is root
+
+### --rc-template
+
+User-specified template.
+
 ## Accessing the remote control via the rclone rc command {#api-rc}
 
 Rclone itself implements the remote control protocol in its `rclone
