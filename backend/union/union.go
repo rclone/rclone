@@ -50,6 +50,14 @@ func init() {
 			Name:    "cache_time",
 			Help:    "Cache time of usage and free space (in seconds).\n\nThis option is only useful when a path preserving policy is used.",
 			Default: 120,
+		}, {
+			Name: "min_free_space",
+			Help: `Minimum viable free space for lfs/eplfs policies.
+
+If a remote has less than this much free space then it won't be
+considered for use in lfs or eplfs policies.`,
+			Advanced: true,
+			Default:  fs.Gibi,
 		}},
 	}
 	fs.Register(fsi)

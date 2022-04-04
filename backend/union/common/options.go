@@ -13,4 +13,5 @@ type Options struct {
 	CreatePolicy string          `config:"create_policy"`
 	SearchPolicy string          `config:"search_policy"`
 	CacheTime    int             `config:"cache_time"`
+	MinFreeSpace fs.SizeSuffix   `config:"min_free_space"`
 }
