@@ -259,22 +259,30 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 }
 
 // GetFreeSpace get the free space of the fs
+//
+// This is returned as 0..math.MaxInt64-1 leaving math.MaxInt64 as a sentinel
 func (f *Fs) GetFreeSpace() (int64, error) {
 	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
 		err := f.updateUsage()
 		if err != nil {
-			return math.MaxInt64, ErrUsageFieldNotSupported
+			return math.MaxInt64 - 1, ErrUsageFieldNotSupported
 		}
 	}
 	f.cacheMutex.RLock()
 	defer f.cacheMutex.RUnlock()
 	if f.usage.Free == nil {
-		return math.MaxInt64, ErrUsageFieldNotSupported
+		return math.MaxInt64 - 1, ErrUsageFieldNotSupported
 	}
-	return *f.usage.Free, nil
+	free := *f.usage.Free
+	if free >= math.MaxInt64 {
+		free = math.MaxInt64 - 1
+	}
+	return free, nil
 }
 
 // GetUsedSpace get the used space of the fs
+//
+// This is returned as 0..math.MaxInt64-1 leaving math.MaxInt64 as a sentinel
 func (f *Fs) GetUsedSpace() (int64, error) {
 	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
 		err := f.updateUsage()
@@ -287,7 +295,11 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 	if f.usage.Used == nil {
 		return 0, ErrUsageFieldNotSupported
 	}
-	return *f.usage.Used, nil
+	used := *f.usage.Used
+	if used >= math.MaxInt64 {
+		used = math.MaxInt64 - 1
+	}
+	return used, nil
 }
 
 // GetNumObjects get the number of objects of the fs
