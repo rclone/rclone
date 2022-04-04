@@ -42,7 +42,7 @@ func (p *EpLus) lusEntries(entries []upstream.Entry) (upstream.Entry, error) {
 	var minUsedSpace int64 = math.MaxInt64
 	var lusEntry upstream.Entry
 	for _, e := range entries {
-		space, err := e.UpstreamFs().GetFreeSpace()
+		space, err := e.UpstreamFs().GetUsedSpace()
 		if err != nil {
 			fs.LogPrintf(fs.LogLevelNotice, nil,
 				"Used Space is not supported for upstream %s, treating as 0", e.UpstreamFs().Name())
