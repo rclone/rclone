@@ -42,15 +42,31 @@ builds an in memory representation.  rclone ncdu can be used during
 this scanning phase and you will see it building up the directory
 structure as it goes along.
 
-Here are the keys - press '?' to toggle the help on and off
+You can interact with the user interface using key presses,
+press '?' to toggle the help on and off. The supported keys are:
 
     ` + strings.Join(helpText()[1:], "\n    ") + `
+
+Listed files/directories may be prefixed by a one-character flag,
+some of them combined with a description in brackes at end of line.
+These flags have the following meaning:
+
+    e means this is an empty directory, i.e. contains no files (but
+      may contain empty subdirectories)
+    ~ means this is a directory where some of the files (possibly in
+      subdirectories) have unknown size, and therefore the directory
+      size may be underestimated (and average size inaccurate, as it
+      is average of the files with known sizes).
+    . means an error occurred while reading a subdirectory, and
+      therefore the directory size may be underestimated (and average
+      size inaccurate)
+    ! means an error occurred while reading this directory
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
 but is useful as it stands.
 
-Note that it might take some time to delete big files/folders. The
+Note that it might take some time to delete big files/directories. The
 UI won't respond in the meantime since the deletion is done synchronously.
 `,
 	Run: func(command *cobra.Command, args []string) {
