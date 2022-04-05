@@ -283,7 +283,7 @@ func (u *UI) biggestEntry() (biggest int64) {
 		return
 	}
 	for i := range u.entries {
-		size, _, _, _, _, _ := u.d.AttrI(u.sortPerm[i])
+		size, _, _, _, _, _, _ := u.d.AttrI(u.sortPerm[i])
 		if size > biggest {
 			biggest = size
 		}
@@ -297,7 +297,7 @@ func (u *UI) hasEmptyDir() bool {
 		return false
 	}
 	for i := range u.entries {
-		_, count, isDir, _, _, _ := u.d.AttrI(u.sortPerm[i])
+		_, count, _, isDir, _, _, _ := u.d.AttrI(u.sortPerm[i])
 		if isDir && count == 0 {
 			return true
 		}
@@ -343,7 +343,7 @@ func (u *UI) Draw() error {
 			if y >= h-1 {
 				break
 			}
-			size, count, isDir, readable, entriesHaveErrors, err := u.d.AttrI(u.sortPerm[n])
+			size, count, countUnknownSize, isDir, readable, entriesHaveErrors, err := u.d.AttrI(u.sortPerm[n])
 			fg := termbox.ColorWhite
 			if entriesHaveErrors {
 				fg = termbox.ColorYellow
@@ -364,6 +364,10 @@ func (u *UI) Draw() error {
 			if !readable {
 				message = " [not read yet]"
 			}
+			if countUnknownSize > 0 {
+				message = fmt.Sprintf(" [%d of %d files have unknown size, size may be underestimated]", countUnknownSize, count)
+				fileFlag = '~'
+			}
 			if entriesHaveErrors {
 				message = " [some subdirectories could not be read, size may be underestimated]"
 				fileFlag = '.'
@@ -383,7 +387,10 @@ func (u *UI) Draw() error {
 			}
 			var averageSize float64
 			if count > 0 {
-				averageSize = float64(size) / float64(count)
+				countForAverage := count - countUnknownSize
+				if countForAverage > 0 {
+					averageSize = float64(size) / float64(countForAverage)
+				}
 			}
 			if u.showDirAverageSize {
 				ss := operations.SizeStringField(int64(averageSize), u.humanReadable, 9) + " "
@@ -559,8 +566,8 @@ type ncduSort struct {
 // Less is part of sort.Interface.
 func (ds *ncduSort) Less(i, j int) bool {
 	var iAvgSize, jAvgSize float64
-	isize, icount, _, _, _, _ := ds.d.AttrI(ds.sortPerm[i])
-	jsize, jcount, _, _, _, _ := ds.d.AttrI(ds.sortPerm[j])
+	isize, icount, _, _, _, _, _ := ds.d.AttrI(ds.sortPerm[i])
+	jsize, jcount, _, _, _, _, _ := ds.d.AttrI(ds.sortPerm[j])
 	iname, jname := ds.entries[ds.sortPerm[i]].Remote(), ds.entries[ds.sortPerm[j]].Remote()
 	if icount > 0 {
 		iAvgSize = float64(isize / icount)
