@@ -59,6 +59,7 @@ type Item struct {
 	mu              sync.Mutex               // protect the variables
 	cond            sync.Cond                // synchronize with cache cleaner
 	name            string                   // name in the VFS
+	score           float64                  // score for likelihood of reaping from cache (bigger is more likely)
 	opens           int                      // number of times file is open
 	downloaders     *downloaders.Downloaders // a record of the downloaders in action - may be nil
 	o               fs.Object                // object we are caching - may be nil
@@ -75,6 +76,7 @@ type Info struct {
 	ModTime     time.Time     // last time file was modified
 	ATime       time.Time     // last time file was accessed
 	Size        int64         // size of the file
+	Opens       int64         // number of times the file has been opened
 	Rs          ranges.Ranges // which parts of the file are present
 	Fingerprint string        // fingerprint of remote object
 	Dirty       bool          // set if the backing file has been modified
@@ -103,6 +105,8 @@ func (rr ResetResult) String() string {
 
 func (v Items) Len() int      { return len(v) }
 func (v Items) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
+
+// Less implements the caching strategy of the VFS cache.
 func (v Items) Less(i, j int) bool {
 	if i == j {
 		return false
@@ -114,7 +118,7 @@ func (v Items) Less(i, j int) bool {
 	jItem.mu.Lock()
 	defer jItem.mu.Unlock()
 
-	return iItem.info.ATime.Before(jItem.info.ATime)
+	return iItem.score > jItem.score
 }
 
 // clean the item after its cache file has been deleted
@@ -177,6 +181,32 @@ func (item *Item) getATime() time.Time {
 	item.mu.Lock()
 	defer item.mu.Unlock()
 	return item.info.ATime
+}
+
+// update the score for the item and return it
+//
+// Bigger scores mean more likely to be reaped
+func (item *Item) updateScore(now time.Time) float64 {
+	item.mu.Lock()
+	defer item.mu.Unlock()
+	accessedAgo := now.Sub(item.info.ATime).Seconds()
+
+	// For LRU cache, score is just how long ago it was accessed
+	// item.score = accessedAgo
+
+	// For LRU-SP cache score is size * accessedAgo / opens
+	opens := float64(item.opens)
+	if opens <= 1 {
+		opens = 1
+	}
+	size := float64(item.info.Rs.Size())
+	if size < 4096 {
+		size = 4096 // minimum size is 1 disk block ish
+
+	}
+	item.score = size * accessedAgo / opens
+
+	return item.score
 }
 
 // getDiskSize returns the size on disk (approximately) of the item
@@ -526,6 +556,7 @@ func (item *Item) open(o fs.Object) (err error) {
 	defer item.mu.Unlock()
 
 	item.info.ATime = time.Now()
+	item.info.Opens++
 
 	osPath, err := item.c.createItemDir(item.name) // No locking in Cache
 	if err != nil {

@@ -618,9 +618,11 @@ func (c *Cache) purgeClean(quota int64) {
 	}
 
 	// Make a slice of clean cache files
+	now := time.Now()
 	for _, item := range c.item {
 		if !item.IsDirty() {
 			items = append(items, item)
+			item.updateScore(now)
 		}
 	}
 
@@ -709,9 +711,11 @@ func (c *Cache) purgeOverQuota(quota int64) {
 	var items Items
 
 	// Make a slice of unused files
+	now := time.Now()
 	for _, item := range c.item {
 		if !item.inUse() {
 			items = append(items, item)
+			item.updateScore(now)
 		}
 	}
 
