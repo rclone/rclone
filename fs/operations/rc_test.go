@@ -451,8 +451,9 @@ func TestRcSize(t *testing.T) {
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
 	assert.Equal(t, rc.Params{
-		"count": int64(3),
-		"bytes": int64(120),
+		"count":    int64(3),
+		"bytes":    int64(120),
+		"sizeless": int64(0),
 	}, out)
 }
 

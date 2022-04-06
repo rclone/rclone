@@ -25,7 +25,7 @@ var commandDefinition = &cobra.Command{
 		cmd.Run(false, false, command, func() error {
 			ctx := context.Background()
 			ci := fs.GetConfig(context.Background())
-			objects, _, err := operations.Count(ctx, fsrc)
+			objects, _, _, err := operations.Count(ctx, fsrc)
 			if err != nil {
 				return err
 			}
