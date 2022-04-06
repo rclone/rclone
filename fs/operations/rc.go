@@ -344,13 +344,14 @@ func rcSize(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return nil, err
 	}
-	count, bytes, err := Count(ctx, f)
+	count, bytes, sizeless, err := Count(ctx, f)
 	if err != nil {
 		return nil, err
 	}
 	out = make(rc.Params)
 	out["count"] = count
 	out["bytes"] = bytes
+	out["sizeless"] = sizeless
 	return out, nil
 }
 

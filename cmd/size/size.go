@@ -30,20 +30,26 @@ var commandDefinition = &cobra.Command{
 		cmd.Run(false, false, command, func() error {
 			var err error
 			var results struct {
-				Count int64 `json:"count"`
-				Bytes int64 `json:"bytes"`
+				Count    int64 `json:"count"`
+				Bytes    int64 `json:"bytes"`
+				Sizeless int64 `json:"sizeless"`
 			}
 
-			results.Count, results.Bytes, err = operations.Count(context.Background(), fsrc)
+			results.Count, results.Bytes, results.Sizeless, err = operations.Count(context.Background(), fsrc)
 			if err != nil {
 				return err
 			}
-
+			if results.Sizeless > 0 {
+				fs.Logf(fsrc, "Size may be underestimated due to %d objects with unknown size", results.Sizeless)
+			}
 			if jsonOutput {
 				return json.NewEncoder(os.Stdout).Encode(results)
 			}
 			fmt.Printf("Total objects: %s (%d)\n", fs.CountSuffix(results.Count), results.Count)
 			fmt.Printf("Total size: %s (%d Byte)\n", fs.SizeSuffix(results.Bytes).ByteUnit(), results.Bytes)
+			if results.Sizeless > 0 {
+				fmt.Printf("Total objects with unknown size: %s (%d)\n", fs.CountSuffix(results.Sizeless), results.Sizeless)
+			}
 			return nil
 		})
 	},

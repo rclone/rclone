@@ -1070,11 +1070,13 @@ func HashSumStream(ht hash.Type, outputBase64 bool, in io.ReadCloser, w io.Write
 // Count counts the objects and their sizes in the Fs
 //
 // Obeys includes and excludes
-func Count(ctx context.Context, f fs.Fs) (objects int64, size int64, err error) {
+func Count(ctx context.Context, f fs.Fs) (objects int64, size int64, sizelessObjects int64, err error) {
 	err = ListFn(ctx, f, func(o fs.Object) {
 		atomic.AddInt64(&objects, 1)
 		objectSize := o.Size()
-		if objectSize > 0 {
+		if objectSize < 0 {
+			atomic.AddInt64(&sizelessObjects, 1)
+		} else if objectSize > 0 {
 			atomic.AddInt64(&size, objectSize)
 		}
 	})
