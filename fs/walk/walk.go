@@ -100,18 +100,16 @@ func (l ListType) Filter(in *fs.DirEntries) {
 	if l == ListAll {
 		return
 	}
-	out := (*in)[:0]
+	var (
+		out          = (*in)[:0]
+		isObj, isDir bool
+	)
 	for _, entry := range *in {
-		switch entry.(type) {
-		case fs.Object:
-			if l.Objects() {
-				out = append(out, entry)
-			}
-		case fs.Directory:
-			if l.Dirs() {
-				out = append(out, entry)
-			}
-		default:
+		if _, isObj = entry.(fs.Object); isObj && l.Objects() {
+			out = append(out, entry)
+		} else if _, isDir = entry.(fs.Directory); isDir && l.Dirs() {
+			out = append(out, entry)
+		} else if !isObj && !isDir {
 			fs.Errorf(nil, "Unknown object type %T", entry)
 		}
 	}

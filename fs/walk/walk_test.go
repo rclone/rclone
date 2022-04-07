@@ -959,3 +959,23 @@ func TestDirMapSendEntries(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []string(nil), got)
 }
+
+// mockDirObj mocks a directory, that is also an object.
+type mockDirObj struct {
+	mockobject.Object
+}
+
+func (m mockDirObj) Items() int64 { return 0 }
+func (m mockDirObj) ID() string   { return "" }
+
+// TestDirIsAnObject covers ListType filter when a value is both a directory
+// and an object.
+func TestDirIsAnObject(t *testing.T) {
+	entries := &fs.DirEntries{
+		mockDirObj{mockobject.Object("dir/a")},
+		mockDirObj{mockobject.Object("dir/b")},
+	}
+	// Previously, this filter would filter out directories.
+	ListDirs.Filter(entries)
+	assert.Equal(t, 2, entries.Len())
+}
