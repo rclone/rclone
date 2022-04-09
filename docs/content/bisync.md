@@ -8,6 +8,7 @@ description: "Bidirectional cloud sync solution in rclone"
 - [Install rclone](/install/) and setup your remotes.
 - Bisync will create its working directory
   at `~/.cache/rclone/bisync` on Linux
+  or `~/Library/Caches/rclone/bisync` on MacOS
   or `C:\Users\MyLogin\AppData\Local\rclone\bisync` on Windows.
   Make sure that this location is writable.
 - Run bisync with the `--resync` flag, specifying the paths
@@ -97,7 +98,7 @@ Optional Flags:
       --localtime               Use local time in listings (default: UTC)
       --no-cleanup              Retain working files (useful for troubleshooting and testing).
       --workdir PATH            Use custom working directory (useful for testing).
-                                (default: `~/.cache/rclone/bisync`)
+                                (default: `~/.cache/rclone/bisync`. It varies according to the operating system.)
   -n, --dry-run                 Go through the motions - No files are copied/deleted.
   -v, --verbose                 Increases logging verbosity.
                                 May be specified more than once for more details.
@@ -123,7 +124,7 @@ Path1 and Path2 are treated equally, in that neither has priority for
 file changes, and access efficiency does not change whether a remote
 is on Path1 or Path2.
 
-The listings in bisync working directory (default: `~/.cache/rclone/bisync`)
+The listings in bisync working directory (default: `~/.cache/rclone/bisync`. It varies according to the operating system.)
 are named based on the Path1 and Path2 arguments so that separate syncs
 to individual directories within the tree may be set up, e.g.:
 `path_to_local_tree..dropbox_subdir.lst`.
