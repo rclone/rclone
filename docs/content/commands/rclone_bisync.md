@@ -41,7 +41,7 @@ rclone bisync remote1:path1 remote2:path2 [flags]
       --no-cleanup              Retain working files (useful for troubleshooting and testing).
       --remove-empty-dirs       Remove empty directories at the final cleanup step.
   -1, --resync                  Performs the resync run. Path1 files may overwrite Path2 versions. Consider using --verbose or --dry-run first.
-      --workdir string          Use custom working dir - useful for testing. (default: $HOME/.cache/rclone/bisync)
+      --workdir string          Use custom working dir - useful for testing. (default: $HOME/.cache/rclone/bisync. It varies according to operating sytem and is derived from --cache-dir)
 ```
 
 See the [global flags page](/flags/) for global options not listed here.
