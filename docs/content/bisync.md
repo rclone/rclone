@@ -6,11 +6,12 @@ description: "Bidirectional cloud sync solution in rclone"
 ## Getting started {#getting-started}
 
 - [Install rclone](/install/) and setup your remotes.
-- Bisync will create its working directory
+- Bisync will create a default working directory
   at `~/.cache/rclone/bisync` on Linux
   or `~/Library/Caches/rclone/bisync` on MacOS
   or `C:\Users\MyLogin\AppData\Local\rclone\bisync` on Windows.
   Make sure that this location is writable.
+  The default working directory is derived from [--cache-dir](https://rclone.org/docs/#cache-dir-dir) and can be specified by the `--workdir` flag.
 - Run bisync with the `--resync` flag, specifying the paths
   to the local and remote sync directory roots.
 - For successive sync runs, leave off the `--resync` flag.
