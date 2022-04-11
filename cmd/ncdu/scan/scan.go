@@ -25,6 +25,33 @@ type Dir struct {
 	entriesHaveErrors bool
 }
 
+// Attrs contains accumulated properties for a directory entry
+//
+// Files with unknown size are counted separately but also included
+// in the total count. They are not included in the size, i.e. treated
+// as empty files, which means the size may be underestimated.
+type Attrs struct {
+	Size              int64
+	Count             int64
+	CountUnknownSize  int64
+	IsDir             bool
+	Readable          bool
+	EntriesHaveErrors bool
+}
+
+// AverageSize calculates average size of files in directory
+//
+// If there are files with unknown size, this returns the average over
+// files with known sizes, which means it may be under- or
+// overestimated.
+func (a *Attrs) AverageSize() float64 {
+	countKnownSize := a.Count - a.CountUnknownSize
+	if countKnownSize > 0 {
+		return float64(a.Size) / float64(countKnownSize)
+	}
+	return 0
+}
+
 // Parent returns the directory above this one
 func (d *Dir) Parent() *Dir {
 	// no locking needed since these are write once in newDir()
@@ -167,19 +194,19 @@ func (d *Dir) Attr() (size int64, count int64) {
 }
 
 // AttrI returns the size, count and flags for the i-th directory entry
-func (d *Dir) AttrI(i int) (size int64, count int64, countUnknownSize int64, isDir bool, readable bool, entriesHaveErrors bool, err error) {
+func (d *Dir) AttrI(i int) (attrs Attrs, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	subDir, isDir := d.getDir(i)
 
 	if !isDir {
-		return d.entries[i].Size(), 0, 0, false, true, d.entriesHaveErrors, d.readError
+		return Attrs{d.entries[i].Size(), 0, 0, false, true, d.entriesHaveErrors}, d.readError
 	}
 	if subDir == nil {
-		return 0, 0, 0, true, false, false, nil
+		return Attrs{0, 0, 0, true, false, false}, nil
 	}
-	size, count = subDir.Attr()
-	return size, count, subDir.countUnknownSize, true, true, subDir.entriesHaveErrors, subDir.readError
+	size, count := subDir.Attr()
+	return Attrs{size, count, subDir.countUnknownSize, true, true, subDir.entriesHaveErrors}, subDir.readError
 }
 
 // Scan the Fs passed in, returning a root directory channel and an
