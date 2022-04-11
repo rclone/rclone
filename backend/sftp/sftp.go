@@ -302,6 +302,27 @@ cost of using more memory.
 `,
 			Default:  64,
 			Advanced: true,
+		}, {
+			Name:    "set_env",
+			Default: fs.SpaceSepList{},
+			Help: `Environment variables to pass to sftp and commands
+
+Set environment variables in the form:
+
+    VAR=value
+
+to be passed to the sftp client and to any commands run (eg md5sum).
+
+Pass multiple variables space separated, eg
+
+    VAR1=value VAR2=value
+
+and pass variables with spaces in in quotes, eg
+
+    "VAR3=value with space" "VAR4=value with space" VAR5=nospacehere
+
+`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -309,33 +330,34 @@ cost of using more memory.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host                    string        `config:"host"`
-	User                    string        `config:"user"`
-	Port                    string        `config:"port"`
-	Pass                    string        `config:"pass"`
-	KeyPem                  string        `config:"key_pem"`
-	KeyFile                 string        `config:"key_file"`
-	KeyFilePass             string        `config:"key_file_pass"`
-	PubKeyFile              string        `config:"pubkey_file"`
-	KnownHostsFile          string        `config:"known_hosts_file"`
-	KeyUseAgent             bool          `config:"key_use_agent"`
-	UseInsecureCipher       bool          `config:"use_insecure_cipher"`
-	DisableHashCheck        bool          `config:"disable_hashcheck"`
-	AskPassword             bool          `config:"ask_password"`
-	PathOverride            string        `config:"path_override"`
-	SetModTime              bool          `config:"set_modtime"`
-	ShellType               string        `config:"shell_type"`
-	Md5sumCommand           string        `config:"md5sum_command"`
-	Sha1sumCommand          string        `config:"sha1sum_command"`
-	SkipLinks               bool          `config:"skip_links"`
-	Subsystem               string        `config:"subsystem"`
-	ServerCommand           string        `config:"server_command"`
-	UseFstat                bool          `config:"use_fstat"`
-	DisableConcurrentReads  bool          `config:"disable_concurrent_reads"`
-	DisableConcurrentWrites bool          `config:"disable_concurrent_writes"`
-	IdleTimeout             fs.Duration   `config:"idle_timeout"`
-	ChunkSize               fs.SizeSuffix `config:"chunk_size"`
-	Concurrency             int           `config:"concurrency"`
+	Host                    string          `config:"host"`
+	User                    string          `config:"user"`
+	Port                    string          `config:"port"`
+	Pass                    string          `config:"pass"`
+	KeyPem                  string          `config:"key_pem"`
+	KeyFile                 string          `config:"key_file"`
+	KeyFilePass             string          `config:"key_file_pass"`
+	PubKeyFile              string          `config:"pubkey_file"`
+	KnownHostsFile          string          `config:"known_hosts_file"`
+	KeyUseAgent             bool            `config:"key_use_agent"`
+	UseInsecureCipher       bool            `config:"use_insecure_cipher"`
+	DisableHashCheck        bool            `config:"disable_hashcheck"`
+	AskPassword             bool            `config:"ask_password"`
+	PathOverride            string          `config:"path_override"`
+	SetModTime              bool            `config:"set_modtime"`
+	ShellType               string          `config:"shell_type"`
+	Md5sumCommand           string          `config:"md5sum_command"`
+	Sha1sumCommand          string          `config:"sha1sum_command"`
+	SkipLinks               bool            `config:"skip_links"`
+	Subsystem               string          `config:"subsystem"`
+	ServerCommand           string          `config:"server_command"`
+	UseFstat                bool            `config:"use_fstat"`
+	DisableConcurrentReads  bool            `config:"disable_concurrent_reads"`
+	DisableConcurrentWrites bool            `config:"disable_concurrent_writes"`
+	IdleTimeout             fs.Duration     `config:"idle_timeout"`
+	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
+	Concurrency             int             `config:"concurrency"`
+	SetEnv                  fs.SpaceSepList `config:"set_env"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -483,10 +505,30 @@ func (f *Fs) sftpConnection(ctx context.Context) (c *conn, err error) {
 	return c, nil
 }
 
+// Set any environment variables on the ssh.Session
+func (f *Fs) setEnv(s *ssh.Session) error {
+	for _, env := range f.opt.SetEnv {
+		equal := strings.IndexRune(env, '=')
+		if equal < 0 {
+			return fmt.Errorf("no = found in env var %q", env)
+		}
+		// fs.Debugf(f, "Setting env %q = %q", env[:equal], env[equal+1:])
+		err := s.Setenv(env[:equal], env[equal+1:])
+		if err != nil {
+			return fmt.Errorf("Failed to set env var %q: %w", env[:equal], err)
+		}
+	}
+	return nil
+}
+
 // Creates a new SFTP client on conn, using the specified subsystem
 // or sftp server, and zero or more option functions
 func (f *Fs) newSftpClient(conn *ssh.Client, opts ...sftp.ClientOption) (*sftp.Client, error) {
 	s, err := conn.NewSession()
+	if err != nil {
+		return nil, err
+	}
+	err = f.setEnv(s)
 	if err != nil {
 		return nil, err
 	}
@@ -1242,6 +1284,10 @@ func (f *Fs) run(ctx context.Context, cmd string) ([]byte, error) {
 	session, err := c.sshClient.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("run: get SFTP session: %w", err)
+	}
+	err = f.setEnv(session)
+	if err != nil {
+		return nil, err
 	}
 	defer func() {
 		_ = session.Close()
