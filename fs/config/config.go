@@ -674,41 +674,11 @@ func Dump() error {
 }
 
 // makeCacheDir returns a directory to use for caching.
-//
-// Code borrowed from go stdlib until it is made public
 func makeCacheDir() (dir string) {
-	// Compute default location.
-	switch runtime.GOOS {
-	case "windows":
-		dir = os.Getenv("LocalAppData")
-
-	case "darwin":
-		dir = os.Getenv("HOME")
-		if dir != "" {
-			dir += "/Library/Caches"
-		}
-
-	case "plan9":
-		dir = os.Getenv("home")
-		if dir != "" {
-			// Plan 9 has no established per-user cache directory,
-			// but $home/lib/xyz is the usual equivalent of $HOME/.xyz on Unix.
-			dir += "/lib/cache"
-		}
-
-	default: // Unix
-		// https://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
-		dir = os.Getenv("XDG_CACHE_HOME")
-		if dir == "" {
-			dir = os.Getenv("HOME")
-			if dir != "" {
-				dir += "/.cache"
-			}
-		}
-	}
-
-	// if no dir found then use TempDir - we will have a cachedir!
-	if dir == "" {
+	dir, err := os.UserCacheDir()
+	if err != nil || dir == "" {
+		fs.Debugf(nil, "Failed to find user cache dir, using temporary directory: %v", err)
+		// if no dir found then use TempDir - we will have a cachedir!
 		dir = os.TempDir()
 	}
 	return filepath.Join(dir, "rclone")
