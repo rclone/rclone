@@ -581,3 +581,4 @@ put them back in again.` >}}
   * KARBOWSKI Piotr <piotr.karbowski@gmail.com>
   * GH <geeklihui@foxmail.com>
   * rafma0 <int.main@gmail.com>
+  * Adrien Rey-Jarthon <jobs@adrienjarthon.com>
