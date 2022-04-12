@@ -133,6 +133,9 @@ backends:
  - backend:  "hubic"
    remote:   "TestHubic:"
    fastlist: false
+ - backend:  "internetarchive"
+   remote:   "TestIA:lesmi-rclone-test/"
+   fastlist: true
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
    fastlist: true
