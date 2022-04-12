@@ -296,6 +296,15 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Help:  "Durable reduced availability storage class",
 			}},
 		}, {
+			Name: "no_check_bucket",
+			Help: `If set, don't attempt to check the bucket exists or create it.
+
+This can be useful when trying to minimise the number of transactions
+rclone does if you know the bucket exists already.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -317,6 +326,7 @@ type Options struct {
 	BucketPolicyOnly          bool                 `config:"bucket_policy_only"`
 	Location                  string               `config:"location"`
 	StorageClass              string               `config:"storage_class"`
+	NoCheckBucket             bool                 `config:"no_check_bucket"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -840,6 +850,14 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) (err error) {
 	}, nil)
 }
 
+// checkBucket creates the bucket if it doesn't exist unless NoCheckBucket is true
+func (f *Fs) checkBucket(ctx context.Context, bucket string) error {
+	if f.opt.NoCheckBucket {
+		return nil
+	}
+	return f.makeBucket(ctx, bucket)
+}
+
 // Rmdir deletes the bucket if the fs is at the root
 //
 // Returns an error if it isn't empty: Error 409: The bucket you tried
@@ -873,7 +891,7 @@ func (f *Fs) Precision() time.Duration {
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstBucket, dstPath := f.split(remote)
-	err := f.makeBucket(ctx, dstBucket)
+	err := f.checkBucket(ctx, dstBucket)
 	if err != nil {
 		return nil, err
 	}
@@ -1123,7 +1141,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	bucket, bucketPath := o.split()
-	err := o.fs.makeBucket(ctx, bucket)
+	err := o.fs.checkBucket(ctx, bucket)
 	if err != nil {
 		return err
 	}
