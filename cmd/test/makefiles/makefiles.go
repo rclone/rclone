@@ -88,7 +88,10 @@ var makefilesCmd = &cobra.Command{
 		totalBytes := int64(0)
 		for i := 0; i < numberOfFiles; i++ {
 			dir := dirs[randSource.Intn(len(dirs))]
-			size := randSource.Int63n(int64(maxFileSize-minFileSize)) + int64(minFileSize)
+			size := int64(minFileSize)
+			if maxFileSize > minFileSize {
+				size += randSource.Int63n(int64(maxFileSize - minFileSize))
+			}
 			writeFile(dir, fileName(), size)
 			totalBytes += size
 		}
@@ -148,6 +151,9 @@ func commonInit() {
 		source = readers.NewPatternReader(math.MaxInt64)
 	default:
 		source = randSource
+	}
+	if minFileSize > maxFileSize {
+		maxFileSize = minFileSize
 	}
 }
 
