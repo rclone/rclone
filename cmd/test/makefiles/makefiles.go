@@ -17,6 +17,7 @@ import (
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 var (
@@ -38,28 +39,40 @@ var (
 )
 
 func init() {
-	test.Command.AddCommand(commandDefinition)
-	cmdFlags := commandDefinition.Flags()
-	flags.IntVarP(cmdFlags, &numberOfFiles, "files", "", numberOfFiles, "Number of files to create")
-	flags.IntVarP(cmdFlags, &averageFilesPerDirectory, "files-per-directory", "", averageFilesPerDirectory, "Average number of files per directory")
-	flags.IntVarP(cmdFlags, &maxDepth, "max-depth", "", maxDepth, "Maximum depth of directory hierarchy")
-	flags.FVarP(cmdFlags, &minFileSize, "min-file-size", "", "Minimum size of file to create")
-	flags.FVarP(cmdFlags, &maxFileSize, "max-file-size", "", "Maximum size of files to create")
-	flags.IntVarP(cmdFlags, &minFileNameLength, "min-name-length", "", minFileNameLength, "Minimum size of file names")
-	flags.IntVarP(cmdFlags, &maxFileNameLength, "max-name-length", "", maxFileNameLength, "Maximum size of file names")
-	flags.Int64VarP(cmdFlags, &seed, "seed", "", seed, "Seed for the random number generator (0 for random)")
+	test.Command.AddCommand(makefilesCmd)
+	makefilesFlags := makefilesCmd.Flags()
+	flags.IntVarP(makefilesFlags, &numberOfFiles, "files", "", numberOfFiles, "Number of files to create")
+	flags.IntVarP(makefilesFlags, &averageFilesPerDirectory, "files-per-directory", "", averageFilesPerDirectory, "Average number of files per directory")
+	flags.IntVarP(makefilesFlags, &maxDepth, "max-depth", "", maxDepth, "Maximum depth of directory hierarchy")
+	flags.FVarP(makefilesFlags, &minFileSize, "min-file-size", "", "Minimum size of file to create")
+	flags.FVarP(makefilesFlags, &maxFileSize, "max-file-size", "", "Maximum size of files to create")
+	flags.IntVarP(makefilesFlags, &minFileNameLength, "min-name-length", "", minFileNameLength, "Minimum size of file names")
+	flags.IntVarP(makefilesFlags, &maxFileNameLength, "max-name-length", "", maxFileNameLength, "Maximum size of file names")
+
+	test.Command.AddCommand(makefileCmd)
+	makefileFlags := makefileCmd.Flags()
+
+	// Common flags to makefiles and makefile
+	for _, f := range []*pflag.FlagSet{makefilesFlags, makefileFlags} {
+		flags.Int64VarP(f, &seed, "seed", "", seed, "Seed for the random number generator (0 for random)")
+	}
 }
 
-var commandDefinition = &cobra.Command{
+// common initialisation for makefiles and makefile
+func commonInit() {
+	if seed == 0 {
+		seed = time.Now().UnixNano()
+		fs.Logf(nil, "Using random seed = %d", seed)
+	}
+	randSource = rand.New(rand.NewSource(seed))
+}
+
+var makefilesCmd = &cobra.Command{
 	Use:   "makefiles <dir>",
 	Short: `Make a random file hierarchy in a directory`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
-		if seed == 0 {
-			seed = time.Now().UnixNano()
-			fs.Logf(nil, "Using random seed = %d", seed)
-		}
-		randSource = rand.New(rand.NewSource(seed))
+		commonInit()
 		outputDirectory := args[0]
 		directoriesToCreate = numberOfFiles / averageFilesPerDirectory
 		averageSize := (minFileSize + maxFileSize) / 2
@@ -73,10 +86,37 @@ var commandDefinition = &cobra.Command{
 		totalBytes := int64(0)
 		for i := 0; i < numberOfFiles; i++ {
 			dir := dirs[randSource.Intn(len(dirs))]
-			totalBytes += writeFile(dir, fileName())
+			size := randSource.Int63n(int64(maxFileSize-minFileSize)) + int64(minFileSize)
+			writeFile(dir, fileName(), size)
+			totalBytes += size
 		}
 		dt := time.Since(start)
-		fs.Logf(nil, "Written %viB in %v at %viB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
+		fs.Logf(nil, "Written %vB in %v at %vB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
+	},
+}
+
+var makefileCmd = &cobra.Command{
+	Use:   "makefile <size> [<file>]+",
+	Short: `Make files with random contents of the size given`,
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(1, 1e6, command, args)
+		commonInit()
+		var size fs.SizeSuffix
+		err := size.Set(args[0])
+		if err != nil {
+			log.Fatalf("Failed to parse size %q: %v", args[0], err)
+		}
+		start := time.Now()
+		fs.Logf(nil, "Creating %d files of size %v.", len(args[1:]), size)
+		totalBytes := int64(0)
+		for _, filePath := range args[1:] {
+			dir := filepath.Dir(filePath)
+			name := filepath.Base(filePath)
+			writeFile(dir, name, int64(size))
+			totalBytes += int64(size)
+		}
+		dt := time.Since(start)
+		fs.Logf(nil, "Written %vB in %v at %vB/s.", fs.SizeSuffix(totalBytes), dt.Round(time.Millisecond), fs.SizeSuffix((totalBytes*int64(time.Second))/int64(dt)))
 	},
 }
 
@@ -134,7 +174,7 @@ func (d *dir) list(path string, output []string) []string {
 }
 
 // writeFile writes a random file at dir/name
-func writeFile(dir, name string) int64 {
+func writeFile(dir, name string, size int64) {
 	err := file.MkdirAll(dir, 0777)
 	if err != nil {
 		log.Fatalf("Failed to make directory %q: %v", dir, err)
@@ -144,7 +184,6 @@ func writeFile(dir, name string) int64 {
 	if err != nil {
 		log.Fatalf("Failed to open file %q: %v", path, err)
 	}
-	size := randSource.Int63n(int64(maxFileSize-minFileSize)) + int64(minFileSize)
 	_, err = io.CopyN(fd, randSource, size)
 	if err != nil {
 		log.Fatalf("Failed to write %v bytes to file %q: %v", size, path, err)
@@ -154,5 +193,4 @@ func writeFile(dir, name string) int64 {
 		log.Fatalf("Failed to close file %q: %v", path, err)
 	}
 	fs.Infof(path, "Written file size %v", fs.SizeSuffix(size))
-	return size
 }
