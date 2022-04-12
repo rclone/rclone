@@ -42,6 +42,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * HDFS (Hadoop Distributed Filesystem) [:page_facing_up:](https://rclone.org/hdfs/)
   * HTTP [:page_facing_up:](https://rclone.org/http/)
   * Hubic [:page_facing_up:](https://rclone.org/hubic/)
+  * Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
   * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
   * IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
   * Koofr [:page_facing_up:](https://rclone.org/koofr/)

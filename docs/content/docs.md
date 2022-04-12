@@ -50,6 +50,7 @@ See the following for detailed instructions for
   * [HDFS](/hdfs/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
+  * [Internet Archive](/internetarchive/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
   * [Mail.ru Cloud](/mailru/)
