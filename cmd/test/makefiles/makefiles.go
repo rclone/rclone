@@ -36,6 +36,7 @@ var (
 	sparse                   = false
 	ascii                    = false
 	pattern                  = false
+	chargen                  = false
 
 	// Globals
 	randSource          *rand.Rand
@@ -65,7 +66,8 @@ func init() {
 		flags.BoolVarP(f, &zero, "zero", "", zero, "Fill files with ASCII 0x00")
 		flags.BoolVarP(f, &sparse, "sparse", "", sparse, "Make the files sparse (appear to be filled with ASCII 0x00)")
 		flags.BoolVarP(f, &ascii, "ascii", "", ascii, "Fill files with random ASCII printable bytes only")
-		flags.BoolVarP(f, &pattern, "pattern", "", ascii, "Fill files with a periodic pattern")
+		flags.BoolVarP(f, &pattern, "pattern", "", pattern, "Fill files with a periodic pattern")
+		flags.BoolVarP(f, &chargen, "chargen", "", chargen, "Fill files with a ASCII chargen pattern")
 	}
 }
 
@@ -139,8 +141,8 @@ func commonInit() {
 		fs.Logf(nil, "Using random seed = %d", seed)
 	}
 	randSource = rand.New(rand.NewSource(seed))
-	if bool2int(zero)+bool2int(sparse)+bool2int(ascii)+bool2int(pattern) > 1 {
-		log.Fatal("Can only supply one of --zero, --sparse, --ascii or --pattern")
+	if bool2int(zero)+bool2int(sparse)+bool2int(ascii)+bool2int(pattern)+bool2int(chargen) > 1 {
+		log.Fatal("Can only supply one of --zero, --sparse, --ascii, --pattern or --chargen")
 	}
 	switch {
 	case zero, sparse:
@@ -149,6 +151,8 @@ func commonInit() {
 		source = asciiReader{}
 	case pattern:
 		source = readers.NewPatternReader(math.MaxInt64)
+	case chargen:
+		source = &chargenReader{}
 	default:
 		source = randSource
 	}
@@ -176,6 +180,38 @@ func (asciiReader) Read(p []byte) (n int, err error) {
 		p[i] = (p[i] % (0x7F - 0x20)) + 0x20
 	}
 	return n, err
+}
+
+type chargenReader struct {
+	start   byte // offset from startChar to start line with
+	written byte // chars in line so far
+}
+
+// Read a chunk of printable ASCII characters in chargen format
+func (r *chargenReader) Read(p []byte) (n int, err error) {
+	const (
+		startChar    = 0x20 // ' '
+		endChar      = 0x7E // '~' inclusive
+		charsPerLine = 72
+	)
+	for i := range p {
+		if r.written >= charsPerLine {
+			r.start++
+			if r.start > endChar-startChar {
+				r.start = 0
+			}
+			p[i] = '\n'
+			r.written = 0
+		} else {
+			c := r.start + r.written + startChar
+			if c > endChar {
+				c -= endChar - startChar + 1
+			}
+			p[i] = c
+			r.written++
+		}
+	}
+	return len(p), err
 }
 
 // fileName creates a unique random file or directory name
