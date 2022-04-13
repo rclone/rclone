@@ -18,7 +18,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/billziss-gh/cgofuse/fuse"
+	"github.com/winfsp/cgofuse/fuse"
 	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/atexit"

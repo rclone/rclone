@@ -17,7 +17,7 @@ require (
 	github.com/artyom/mtab v1.0.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/aws/aws-sdk-go v1.43.30
-	github.com/billziss-gh/cgofuse v1.5.0
+	github.com/winfsp/cgofuse v1.5.0
 	github.com/buengese/sgzip v0.1.1
 	github.com/colinmarc/hdfs/v2 v2.3.0
 	github.com/coreos/go-semver v0.3.0
