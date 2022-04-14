@@ -53,6 +53,13 @@ inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
 --baseurl "/rclone" and --baseurl "/rclone/" are all treated
 identically.
 
+--allow-origin with a nonempty string will make rclone include the appropriate
+[Cross-Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+headers in its responses to allow websites on that domain to make requests to
+this server.  The string provided must either be a single origin e.g.
+"https://rclone.org", or a single asterisk "*", in which case all websites are
+allowed.
+
 --template allows a user to specify a custom markup template for http
 and webdav serve functions.  The server exports the following markup
 to be used within the template to server pages:
@@ -112,20 +119,21 @@ certificate authority certificate.
 
 // Options contains options for the http Server
 type Options struct {
-	ListenAddr         string        // Port to listen on
-	BaseURL            string        // prefix to strip from URLs
-	ServerReadTimeout  time.Duration // Timeout for server reading data
-	ServerWriteTimeout time.Duration // Timeout for server writing data
-	MaxHeaderBytes     int           // Maximum size of request header
-	SslCert            string        // SSL PEM key (concatenation of certificate and CA certificate)
-	SslKey             string        // SSL PEM Private key
-	ClientCA           string        // Client certificate authority to verify clients with
-	HtPasswd           string        // htpasswd file - if not provided no authentication is done
-	Realm              string        // realm for authentication
-	BasicUser          string        // single username for basic auth if not using Htpasswd
-	BasicPass          string        // password for BasicUser
-	Auth               AuthFn        `json:"-"` // custom Auth (not set by command line flags)
-	Template           string        // User specified template
+	ListenAddr               string        // Port to listen on
+	BaseURL                  string        // prefix to strip from URLs
+	ServerReadTimeout        time.Duration // Timeout for server reading data
+	ServerWriteTimeout       time.Duration // Timeout for server writing data
+	MaxHeaderBytes           int           // Maximum size of request header
+	SslCert                  string        // SSL PEM key (concatenation of certificate and CA certificate)
+	SslKey                   string        // SSL PEM Private key
+	ClientCA                 string        // Client certificate authority to verify clients with
+	HtPasswd                 string        // htpasswd file - if not provided no authentication is done
+	Realm                    string        // realm for authentication
+	BasicUser                string        // single username for basic auth if not using Htpasswd
+	BasicPass                string        // password for BasicUser
+	Auth                     AuthFn        `json:"-"` // custom Auth (not set by command line flags)
+	Template                 string        // User specified template
+	AccessControlAllowOrigin string        // Set the access control for CORS configuration
 }
 
 // AuthFn if used will be used to authenticate user, pass. If an error
@@ -263,6 +271,25 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 			oldHandler.ServeHTTP(w, r)
 		})
 		s.usingAuth = true
+	}
+
+	allowOrigin := rcflags.Opt.AccessControlAllowOrigin
+	if allowOrigin != "" {
+		if allowOrigin == "*" {
+			fs.Logf(nil, "Warning: Allow origin set to *. This can cause serious security problems.")
+		}
+
+		oldHandler := handler
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+
+			if r.Method == "OPTIONS" {
+				w.Header().Set("Access-Control-Allow-Headers", "*")
+				w.Header().Set("Access-Control-Allow-Methods", "*")
+				w.Header().Set("Access-Control-Max-Age", "86400") // 24 hours in seconds
+			}
+			oldHandler.ServeHTTP(w, r)
+		})
 	}
 
 	s.useSSL = s.Opt.SslKey != ""
