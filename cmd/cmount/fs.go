@@ -545,21 +545,25 @@ func (fsys *FS) Fsyncdir(path string, datasync bool, fh uint64) (errc int) {
 
 // Setxattr sets extended attributes.
 func (fsys *FS) Setxattr(path string, name string, value []byte, flags int) (errc int) {
+	defer log.Trace(path, "name=%q, value=%q, flags=%d", name, value, flags)("errc=%d", &errc)
 	return -fuse.ENOSYS
 }
 
 // Getxattr gets extended attributes.
 func (fsys *FS) Getxattr(path string, name string) (errc int, value []byte) {
+	defer log.Trace(path, "name=%q", name)("errc=%d, value=%q", &errc, &value)
 	return -fuse.ENOSYS, nil
 }
 
 // Removexattr removes extended attributes.
 func (fsys *FS) Removexattr(path string, name string) (errc int) {
+	defer log.Trace(path, "name=%q", name)("errc=%d", &errc)
 	return -fuse.ENOSYS
 }
 
 // Listxattr lists extended attributes.
 func (fsys *FS) Listxattr(path string, fill func(name string) bool) (errc int) {
+	defer log.Trace(path, "fill=%p", fill)("errc=%d", &errc)
 	return -fuse.ENOSYS
 }
 
