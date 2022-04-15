@@ -210,6 +210,15 @@ backends:
  - backend:  "sftp"
    remote:   "TestSFTPRsyncNet:"
    fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/trailing_space
+     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_HT
+     - TestIntegration/FsMkdir/FsEncoding/trailing_VT
+     - TestIntegration/FsMkdir/FsEncoding/trailing_dot
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+     - TestIntegration/FsMkdir/FsEncoding/URL_encoding
  - backend:  "sugarsync"
    remote:   "TestSugarSync:Test"
    fastlist: false
