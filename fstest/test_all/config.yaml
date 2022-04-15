@@ -326,6 +326,8 @@ backends:
    remote:   "TestPutio:"
    fastlist: false
    extratime: 2.0
+   ignore:
+      - TestIntegration/FsMkdir/FsEncoding/URL_encoding
  - backend:  "sharefile"
    remote:   "TestSharefile:"
    fastlist: false
