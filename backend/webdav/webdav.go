@@ -124,6 +124,11 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 `,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
+		}, {
+			Name:     "update_modtime",
+			Help:     "Adjust modification time on servers which allow DAV:getlastmodified property update",
+			Default:  false,
+			Advanced: true,
 		}},
 	})
 }
@@ -138,6 +143,7 @@ type Options struct {
 	BearerTokenCommand string               `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 	Headers            fs.CommaSepList      `config:"headers"`
+	UpdateModTime      bool                 `config:"update_modtime"`
 }
 
 // Fs represents a remote webdav
@@ -405,6 +411,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	var precision time.Duration
+	if opt.UpdateModTime {
+		precision = time.Second
+	} else {
+		precision = fs.ModTimeNotSupported
+	}
+
 	f := &Fs{
 		name:        name,
 		root:        root,
@@ -412,7 +425,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		endpoint:    u,
 		endpointURL: u.String(),
 		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
-		precision:   fs.ModTimeNotSupported,
+		precision:   precision,
 	}
 
 	client := fshttp.NewClient(ctx)
@@ -634,6 +647,16 @@ var owncloudProps = []byte(`<?xml version="1.0"?>
  </d:prop>
 </d:propfind>
 `)
+var modtimeUpdatePropStart = `<?xml version="1.0"?>
+<d:propertyupdate xmlns:d="DAV:">
+ <d:set>
+ <d:prop>
+ <d:getlastmodified>`
+var modtimeUpdatePropEnd = `</d:getlastmodified>
+ </d:prop>
+ </d:set>
+</d:propertyupdate>
+`
 
 // list the objects into the function supplied
 //
@@ -1251,7 +1274,37 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	return fs.ErrorCantSetModTime
+	if !o.fs.opt.UpdateModTime {
+		return fs.ErrorCantSetModTime
+	}
+	opts := rest.Opts{
+		Method: "PROPPATCH",
+		Path:   o.filePath(),
+	}
+	var body bytes.Buffer
+	body.WriteString(modtimeUpdatePropStart)
+	body.WriteString(modTime.Format(time.RFC1123))
+	body.WriteString(modtimeUpdatePropEnd)
+	opts.Body = &body
+
+	var result api.Multistatus
+	var resp *http.Response
+	var err error
+	err = o.fs.pacer.Call(func() (bool, error) {
+		resp, err = o.fs.srv.CallXML(ctx, &opts, nil, &result)
+		return o.fs.shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return err
+	}
+	if len(result.Responses) < 1 {
+		return fs.ErrorObjectNotFound
+	}
+	item := result.Responses[0]
+	if !item.Props.StatusOK() {
+		return fs.ErrorObjectNotFound
+	}
+	return nil
 }
 
 // Storable returns a boolean showing whether this object storable
@@ -1336,6 +1389,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		// Remove failed upload
 		_ = o.Remove(ctx)
 		return err
+	}
+	if !o.fs.useOCMtime && o.fs.opt.UpdateModTime {
+		err = o.SetModTime(ctx, src.ModTime(ctx))
+		if err != nil {
+			return fmt.Errorf("Update ModTime failed: %w", err)
+		}
 	}
 	// read metadata from remote
 	o.hasMetaData = false
