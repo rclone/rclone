@@ -9,6 +9,17 @@
 
 set -e
 
+### ++++++ Michael Tiernan <Michael.Tiernan@gMail.com> ; Mon Apr 18 07:17:32 EDT 2022
+### Handle file modes.
+# First, save the current setting in case we need to use it.
+currentModes=$(umask)
+# Now define a typical mode setting for a program users may need access to.
+# 755 = rwxr-xr-x --> 022
+looseModes=0022
+# Now set the mode so the rest of the installation gets done correctly.
+umask ${looseModes}
+### ------ Michael Tiernan <Michael.Tiernan@gMail.com> ; Mon Apr 18 07:17:32 EDT 2022
+
 #when adding a tool to the list make sure to also add its corresponding command further in the script
 unzip_tools_list=('unzip' '7z' 'busybox')
 
@@ -171,12 +182,24 @@ case "$OS" in
     ;;
   'osx')
     #binary
-    mkdir -p /usr/local/bin
+	# MCT ++++
+    if [[ ! -d /usr/local/bin ]] ; then
+		mkdir -p /usr/local/bin
+		chown root:root /usr/local/bin
+		chmod 0755 /usr/local/bin
+	fi
     cp rclone /usr/local/bin/rclone.new
     mv /usr/local/bin/rclone.new /usr/local/bin/rclone
+	chmod 0555 /usr/local/bin/rclone
     #manual
-    mkdir -p /usr/local/share/man/man1
+    if [[ ! -d /usr/local/share/man/man1 ]] ; then
+		mkdir -p /usr/local/share/man/man1
+		chown root:root /usr/local/share/man/man1
+		chmod 0755 /usr/local/binshare/man/man1
+	fi
     cp rclone.1 /usr/local/share/man/man1/    
+	chmod 0444 /usr/local/share/man/man1/rclone.1
+	# MCT ----
     ;;
   *)
     echo 'OS not supported'
