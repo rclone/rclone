@@ -81,6 +81,8 @@ case $OS in
     ;;  
   Darwin)
     OS='osx'
+	binInstall="sudo /usr/bin/install -B \"$( /bin/date +"%Y%m%dT%H%M%S" )\" -b  -m 0555 -g 0 -o 0 -S -v "
+	manInstall="sudo /usr/bin/install -B \"$( /bin/date +"%Y%m%dT%H%M%S" )\" -b  -m 0444 -g 0 -o 0 -S -v "
     ;;
   SunOS)
     OS='solaris'
@@ -171,12 +173,9 @@ case "$OS" in
     ;;
   'osx')
     #binary
-    mkdir -p /usr/local/bin
-    cp rclone /usr/local/bin/rclone.new
-    mv /usr/local/bin/rclone.new /usr/local/bin/rclone
+	${binInstall} rclone /usr/local/bin
     #manual
-    mkdir -p /usr/local/share/man/man1
-    cp rclone.1 /usr/local/share/man/man1/    
+    ${manInstall} rclone.1 /usr/local/share/man/man1/    
     ;;
   *)
     echo 'OS not supported'
