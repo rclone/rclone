@@ -1558,12 +1558,12 @@ func Run(t *testing.T, opt *Opt) {
 						}
 						return nil
 					})
-					if err != errFound && err != errTooMany {
+					if !errors.Is(err, errFound) && !errors.Is(err, errTooMany) {
 						assert.NoError(t, err)
 					}
-					if err != errTooMany {
-						assert.True(t, file1Found, "file1Root not found")
-						assert.True(t, file2Found, "file2Root not found")
+					if !errors.Is(err, errTooMany) {
+						assert.True(t, file1Found, "file1Root %q not found", file1Root.Path)
+						assert.True(t, file2Found, "file2Root %q not found", file2Root.Path)
 					} else {
 						t.Logf("Too many files to list - giving up")
 					}
