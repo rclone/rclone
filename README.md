@@ -83,6 +83,19 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
 
 Please see [the full list of all storage providers and their features](https://rclone.org/overview/)
 
+### Virtual storage providers
+
+These backends adapt or modify other storage providers
+
+  * Alias: rename existing remotes [:page_facing_up:](https://rclone.org/alias/)
+  * Cache: cache remotes (DEPRECATED) [:page_facing_up:](https://rclone.org/cache/)
+  * Chunker: split large files [:page_facing_up:](https://rclone.org/chunker/)
+  * Combine: combine multiple remotes into a directory tree [:page_facing_up:](https://rclone.org/combine/)
+  * Compress: compress files [:page_facing_up:](https://rclone.org/compress/)
+  * Crypt: encrypt files [:page_facing_up:](https://rclone.org/crypt/)
+  * Hasher: hash files [:page_facing_up:](https://rclone.org/hasher/)
+  * Union: join multiple remotes to work together [:page_facing_up:](https://rclone.org/union/)
+
 ## Features
 
   * MD5/SHA-1 hashes checked at all times for file integrity

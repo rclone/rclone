@@ -91,6 +91,9 @@ backends:
    fastlist: true
    maxfile:  1k
  ## end chunker
+ - backend:  "combine"
+   remote:   "TestCombine:dir1"
+   fastlist: false
  ## begin compress
  - backend:  "compress"
    remote:   "TestCompress:"
