@@ -301,36 +301,36 @@ list of all possible values by passing an invalid value to this
 flag, e.g. `--local-encoding "help"`. The command `rclone help flags encoding`
 will show you the defaults for the backends.
 
-| Encoding  | Characters |
-| --------- | ---------- |
-| Asterisk | `*` |
-| BackQuote | `` ` `` |
-| BackSlash | `\` |
-| Colon | `:` |
-| CrLf | CR 0x0D, LF 0x0A |
-| Ctl | All control characters 0x00-0x1F |
-| Del | DEL 0x7F |
-| Dollar | `$` |
-| Dot | `.` or `..` as entire string |
-| DoubleQuote | `"` |
-| Hash | `#` |
-| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) |
-| LeftCrLfHtVt | CR 0x0D, LF 0x0A,HT 0x09, VT 0x0B on the left of a string |
-| LeftPeriod | `.` on the left of a string |
-| LeftSpace | SPACE on the left of a string |
-| LeftTilde | `~` on the left of a string |
-| LtGt | `<`, `>` |
-| None | No characters are encoded |
-| Percent | `%` |
-| Pipe | \| |
-| Question | `?` |
-| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string |
-| RightPeriod | `.` on the right of a string |
-| RightSpace | SPACE on the right of a string |
-| Semicolon | `;` |
-| SingleQuote | `'` |
-| Slash | `/` |
-| SquareBracket | `[`, `]` |
+| Encoding  | Characters | Encoded as |
+| --------- | ---------- | ---------- |
+| Asterisk | `*` | `＊` |
+| BackQuote | `` ` `` | `｀` |
+| BackSlash | `\` | `＼` |
+| Colon | `:` | `：` |
+| CrLf | CR 0x0D, LF 0x0A | `␍`, `␊` |
+| Ctl | All control characters 0x00-0x1F | `␀␁␂␃␄␅␆␇␈␉␊␋␌␍␎␏␐␑␒␓␔␕␖␗␘␙␚␛␜␝␞␟` |
+| Del | DEL 0x7F | `␡` |
+| Dollar | `$` | `＄` |
+| Dot | `.` or `..` as entire string | `．`, `．．` |
+| DoubleQuote | `"` | `＂` |
+| Hash | `#` | `＃` |
+| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) | `�` |
+| LeftCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the left of a string | `␍`, `␊`, `␉`, `␋` |
+| LeftPeriod | `.` on the left of a string | `.` |
+| LeftSpace | SPACE on the left of a string | `␠` |
+| LeftTilde | `~` on the left of a string | `～` |
+| LtGt | `<`, `>` | `＜`, `＞` |
+| None | No characters are encoded | |
+| Percent | `%` | `％` |
+| Pipe | \| | `｜` |
+| Question | `?` | `？` |
+| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string | `␍`, `␊`, `␉`, `␋` |
+| RightPeriod | `.` on the right of a string | `.` |
+| RightSpace | SPACE on the right of a string | `␠` |
+| Semicolon | `;` | `；` |
+| SingleQuote | `'` | `＇` |
+| Slash | `/` | `／` |
+| SquareBracket | `[`, `]` | `［`, `］` |
 
 ##### Encoding example: FTP
 
