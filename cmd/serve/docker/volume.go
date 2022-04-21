@@ -274,7 +274,6 @@ func (vol *Volume) mount(id string) error {
 	if _, err := vol.mnt.Mount(); err != nil {
 		return err
 	}
-	vol.mnt.MountedOn = time.Now()
 	vol.mountReqs[id] = nil
 	vol.drv.monChan <- false // ask monitor to refresh channels
 	return nil
