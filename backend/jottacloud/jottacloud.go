@@ -1210,6 +1210,45 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, false)
 }
 
+// createOrUpdate tries to make remote file match without uploading.
+// If the remote file exists, and has matching size and md5, only
+// timestamps are updated. If the file does not exist or does does
+// not match size and md5, but matching content can be constructed
+// from deduplication, the file will be updated/created. If the file
+// is currently in trash, but can be made to match, it will be
+// restored. Returns ErrorObjectNotFound if upload will be necessary
+// to get a matching remote file.
+func (f *Fs) createOrUpdate(ctx context.Context, file string, modTime time.Time, size int64, md5 string) (info *api.JottaFile, err error) {
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         f.filePath(file),
+		Parameters:   url.Values{},
+		ExtraHeaders: make(map[string]string),
+	}
+
+	opts.Parameters.Set("cphash", "true")
+
+	fileDate := api.Time(modTime).String()
+	opts.ExtraHeaders["JSize"] = strconv.FormatInt(size, 10)
+	opts.ExtraHeaders["JMd5"] = md5
+	opts.ExtraHeaders["JCreated"] = fileDate
+	opts.ExtraHeaders["JModified"] = fileDate
+
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &info)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if apiErr, ok := err.(*api.Error); ok {
+		// does not exist, i.e. not matching size and md5, and not possible to make it by deduplication
+		if apiErr.StatusCode == http.StatusNotFound {
+			return nil, fs.ErrorObjectNotFound
+		}
+	}
+	return info, nil
+}
+
 // copyOrMoves copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
@@ -1252,6 +1291,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
+
+	// if destination was a trashed file then after a successfull copy the copied file is still in trash (bug in api?)
+	if err == nil && bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
+		fs.Debugf(src, "Server-side copied to trashed destination, restoring")
+		info, err = f.createOrUpdate(ctx, remote, srcObj.modTime, srcObj.size, srcObj.md5)
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
