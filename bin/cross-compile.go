@@ -265,8 +265,11 @@ func buildWindowsResourceSyso(goarch string, versionTag string) string {
 		"-o",
 		sysoPath,
 	}
-	if goarch == "amd64" {
+	if strings.Contains(goarch, "64") {
 		args = append(args, "-64") // Make the syso a 64-bit coff file
+	}
+	if strings.Contains(goarch, "arm") {
+		args = append(args, "-arm") // Make the syso an arm binary
 	}
 	args = append(args, jsonPath)
 	err = runEnv(args, nil)
