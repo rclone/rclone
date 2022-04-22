@@ -17,7 +17,6 @@ require (
 	github.com/artyom/mtab v1.0.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/aws/aws-sdk-go v1.43.30
-	github.com/winfsp/cgofuse v1.5.0
 	github.com/buengese/sgzip v0.1.1
 	github.com/colinmarc/hdfs/v2 v2.3.0
 	github.com/coreos/go-semver v0.3.0
@@ -54,6 +53,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.1
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
+	github.com/winfsp/cgofuse v1.5.1-0.20220421173602-ce7e5a65cac7
 	github.com/xanzy/ssh-agent v0.3.1
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
