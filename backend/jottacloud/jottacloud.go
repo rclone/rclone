@@ -1599,38 +1599,17 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return err
 	}
 
-	// prepare allocate request with existing metadata but changed timestamps
-	var resp *http.Response
-	var options []fs.OpenOption
-	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "files/v1/allocate",
-		Options:      options,
-		ExtraHeaders: make(map[string]string),
-	}
-	fileDate := api.Time(modTime).APIString()
-	var request = api.AllocateFileRequest{
-		Bytes:    o.size,
-		Created:  fileDate,
-		Modified: fileDate,
-		Md5:      o.md5,
-		Path:     path.Join(o.fs.opt.Mountpoint, o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
-	}
-
-	// send it
-	var response api.AllocateFileResponse
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.apiSrv.CallJSON(ctx, &opts, &request, &response)
-		return shouldRetry(ctx, resp, err)
-	})
+	// request check/update with existing metadata and new modtime
+	// (note that if size/md5 does not match, the file content will
+	// also be modified if deduplication is possible, i.e. it is
+	// important to use correct/latest values)
+	_, err = o.fs.createOrUpdate(ctx, o.remote, modTime, o.size, o.md5)
 	if err != nil {
+		if err == fs.ErrorObjectNotFound {
+			// file was modified (size/md5 changed) between readMetaData and createOrUpdate?
+			return errors.New("metadata did not match")
+		}
 		return err
-	}
-
-	// check response
-	if response.State != "COMPLETED" {
-		// could be the file was modified (size/md5 changed) between readMetaData and the allocate request
-		return errors.New("metadata did not match")
 	}
 
 	// update local metadata
