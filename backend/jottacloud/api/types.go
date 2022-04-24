@@ -122,16 +122,11 @@ type AllocateFileResponse struct {
 
 // UploadResponse after an upload
 type UploadResponse struct {
-	Name      string      `json:"name"`
-	Path      string      `json:"path"`
-	Kind      string      `json:"kind"`
-	ContentID string      `json:"content_id"`
-	Bytes     int64       `json:"bytes"`
-	Md5       string      `json:"md5"`
-	Created   int64       `json:"created"`
-	Modified  int64       `json:"modified"`
-	Deleted   interface{} `json:"deleted"`
-	Mime      string      `json:"mime"`
+	Path      string `json:"path"`
+	ContentID string `json:"content_id"`
+	Bytes     int64  `json:"bytes"`
+	Md5       string `json:"md5"`
+	Modified  int64  `json:"modified"`
 }
 
 // DeviceRegistrationResponse is the response to registering a device
