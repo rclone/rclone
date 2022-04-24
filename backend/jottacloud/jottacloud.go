@@ -932,25 +932,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return entries, nil
 }
 
-type listStreamTime time.Time
-
-func (c *listStreamTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var v string
-	if err := d.DecodeElement(&v, &start); err != nil {
-		return err
-	}
-	t, err := time.Parse(time.RFC3339, v)
-	if err != nil {
-		return err
-	}
-	*c = listStreamTime(t)
-	return nil
-}
-
-func (c listStreamTime) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", time.Time(c).Format(time.RFC3339))), nil
-}
-
 func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, filesystem *Fs, callback func(fs.DirEntry) error) error {
 
 	type stats struct {
@@ -960,12 +941,12 @@ func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, files
 	var expected, actual stats
 
 	type xmlFile struct {
-		Path     string         `xml:"path"`
-		Name     string         `xml:"filename"`
-		Checksum string         `xml:"md5"`
-		Size     int64          `xml:"size"`
-		Modified listStreamTime `xml:"modified"`
-		Created  listStreamTime `xml:"created"`
+		Path     string          `xml:"path"`
+		Name     string          `xml:"filename"`
+		Checksum string          `xml:"md5"`
+		Size     int64           `xml:"size"`
+		Modified api.Rfc3339Time `xml:"modified"` // Note: Liststream response includes 3 decimal milliseconds, but we ignore them since there is second precision everywhere else
+		Created  api.Rfc3339Time `xml:"created"`
 	}
 
 	type xmlFolder struct {
@@ -1228,7 +1209,7 @@ func (f *Fs) createOrUpdate(ctx context.Context, file string, modTime time.Time,
 
 	opts.Parameters.Set("cphash", "true")
 
-	fileDate := api.Time(modTime).String()
+	fileDate := api.JottaTime(modTime).String()
 	opts.ExtraHeaders["JSize"] = strconv.FormatInt(size, 10)
 	opts.ExtraHeaders["JMd5"] = md5
 	opts.ExtraHeaders["JCreated"] = fileDate
@@ -1749,7 +1730,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Options:      options,
 		ExtraHeaders: make(map[string]string),
 	}
-	fileDate := api.Time(src.ModTime(ctx)).APIString()
+	fileDate := api.Rfc3339Time(src.ModTime(ctx)).String()
 
 	// the allocate request
 	var request = api.AllocateFileRequest{
