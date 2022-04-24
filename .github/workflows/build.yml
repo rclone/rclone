@@ -178,6 +178,11 @@ jobs:
         run: |
           make
 
+      - name: Rclone version
+        shell: bash
+        run: |
+          rclone version
+
       - name: Run tests
         shell: bash
         run: |
