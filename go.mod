@@ -1,6 +1,6 @@
 module github.com/rclone/rclone
 
-go 1.18
+go 1.16
 
 require (
 	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
@@ -69,62 +69,6 @@ require (
 	google.golang.org/api v0.74.0
 	gopkg.in/yaml.v2 v2.4.0
 	storj.io/uplink v1.8.1
-)
-
-require (
-	cloud.google.com/go/compute v1.5.0 // indirect
-	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
-	github.com/Azure/go-autorest/logger v0.2.1 // indirect
-	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/anacrolix/log v0.10.1-0.20220126091220-5c1b6f3af59c // indirect
-	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/calebcase/tmpfile v1.0.3 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/googleapis/gax-go/v2 v2.2.0 // indirect
-	github.com/hashicorp/go-uuid v1.0.2 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
-	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
-	github.com/jcmturner/gofork v1.0.0 // indirect
-	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
-	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
-	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/kr/fs v0.1.0 // indirect
-	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
-	github.com/mattn/go-ieproxy v0.0.1 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/onsi/gomega v1.13.0 // indirect
-	github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14 // indirect
-	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.32.1 // indirect
-	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/spacemonkeygo/monkit/v3 v3.0.17 // indirect
-	github.com/tklauser/go-sysconf v0.3.10 // indirect
-	github.com/tklauser/numcpus v0.4.0 // indirect
-	github.com/vivint/infectious v0.0.0-20200605153912-25a574ae18a3 // indirect
-	github.com/yusufpapurcu/wmi v1.2.2 // indirect
-	github.com/zeebo/errs v1.2.2 // indirect
-	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/mobile v0.0.0-20220325161704-447654d348e3 // indirect
-	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/tools v0.1.8-0.20211022200916-316ba0b74098 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220324131243-acbaeb5b85eb // indirect
-	google.golang.org/grpc v1.45.0 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
-	storj.io/common v0.0.0-20220317162831-b0b4a044a95f // indirect
-	storj.io/drpc v0.0.29 // indirect
 )
 
 require (
