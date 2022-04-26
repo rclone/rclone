@@ -43,8 +43,9 @@ import (
 const (
 	minSleep              = 10 * time.Millisecond
 	maxSleep              = 10 * time.Second
-	decayConstant         = 1    // bigger for slower decay, exponential
-	maxListChunkSize      = 5000 // number of items to read at once
+	decayConstant         = 1     // bigger for slower decay, exponential
+	maxListChunkSize      = 5000  // number of items to read at once
+	maxUploadParts        = 50000 // maximum allowed number of parts/blocks in a multi-part upload
 	modTimeKey            = "mtime"
 	timeFormatIn          = time.RFC3339
 	timeFormatOut         = "2006-01-02T15:04:05.000000000Z07:00"
@@ -1689,8 +1690,25 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
+	// calculate size of parts/blocks
+	partSize := int(o.fs.opt.ChunkSize)
+
+	uploadParts := int64(maxUploadParts)
+	if uploadParts < 1 {
+		uploadParts = 1
+	} else if uploadParts > maxUploadParts {
+		uploadParts = maxUploadParts
+	}
+
+	// Adjust partSize until the number of parts/blocks is small enough.
+	if o.size/int64(partSize) >= uploadParts {
+		// Calculate partition size rounded up to the nearest MiB
+		partSize = int((((o.size / uploadParts) >> 20) + 1) << 20)
+		fs.Debugf(o, "Adjust partSize to %q", partSize)
+	}
+
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
-		BufferSize:      int(o.fs.opt.ChunkSize),
+		BufferSize:      partSize,
 		MaxBuffers:      o.fs.opt.UploadConcurrency,
 		Metadata:        o.meta,
 		BlobHTTPHeaders: httpHeaders,
