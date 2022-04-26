@@ -519,7 +519,7 @@ func doTokenAuth(ctx context.Context, apiSrv *rest.Client, loginTokenBase64 stri
 	values.Set("client_id", defaultClientID)
 	values.Set("grant_type", "password")
 	values.Set("password", loginToken.AuthToken)
-	values.Set("scope", "offline_access+openid")
+	values.Set("scope", "openid offline_access")
 	values.Set("username", loginToken.Username)
 	values.Encode()
 	opts = rest.Opts{
