@@ -2210,7 +2210,9 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		urlEncodeListings = false
 	case "ArvanCloud":
-		// No quirks
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
 	case "DigitalOcean":
 		urlEncodeListings = false
 	case "Dreamhost":
