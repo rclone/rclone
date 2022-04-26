@@ -43,8 +43,8 @@ import (
 const (
 	minSleep              = 10 * time.Millisecond
 	maxSleep              = 10 * time.Second
-	decayConstant         = 1    // bigger for slower decay, exponential
-	maxListChunkSize      = 5000 // number of items to read at once
+	decayConstant         = 1     // bigger for slower decay, exponential
+	maxListChunkSize      = 5000  // number of items to read at once
 	maxUploadParts        = 50000 // maximum allowed number of parts/blocks in a multi-part upload
 	modTimeKey            = "mtime"
 	timeFormatIn          = time.RFC3339
@@ -1694,14 +1694,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	partSize := int(o.fs.opt.ChunkSize)
 
 	uploadParts := int64(maxUploadParts)
-        if uploadParts < 1 {
-                uploadParts = 1
-        } else if uploadParts > maxUploadParts {
-                uploadParts = maxUploadParts
-        }
+	if uploadParts < 1 {
+		uploadParts = 1
+	} else if uploadParts > maxUploadParts {
+		uploadParts = maxUploadParts
+	}
 
 	// Adjust partSize until the number of parts/blocks is small enough.
-        if o.size/int64(partSize) >= uploadParts {
+	if o.size/int64(partSize) >= uploadParts {
 		// Calculate partition size rounded up to the nearest MiB
 		partSize = int((((o.size / uploadParts) >> 20) + 1) << 20)
 		fs.Debugf(o, "Adjust partSize to %q", partSize)
