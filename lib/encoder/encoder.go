@@ -64,6 +64,7 @@ const (
 	EncodeInvalidUtf8                            // Invalid UTF-8 bytes
 	EncodeDot                                    // . and .. names
 	EncodeSquareBracket                          // []
+	EncodeSemicolon                              // ;
 
 	// Synthetic
 	EncodeWin         = EncodeColon | EncodeQuestion | EncodeDoubleQuote | EncodeAsterisk | EncodeLtGt | EncodePipe // :?"*<>|
@@ -122,6 +123,7 @@ func init() {
 	alias("Slash", EncodeSlash)
 	alias("LtGt", EncodeLtGt)
 	alias("SquareBracket", EncodeSquareBracket)
+	alias("Semicolon", EncodeSemicolon)
 	alias("DoubleQuote", EncodeDoubleQuote)
 	alias("SingleQuote", EncodeSingleQuote)
 	alias("BackQuote", EncodeBackQuote)
@@ -324,6 +326,12 @@ func (mask MultiEncoder) Encode(in string) string {
 					return true
 				}
 			}
+			if mask.Has(EncodeSemicolon) { // ;
+				switch r {
+				case ';', '；':
+					return true
+				}
+			}
 			if mask.Has(EncodeQuestion) { // ?
 				switch r {
 				case '?',
@@ -488,6 +496,17 @@ func (mask MultiEncoder) Encode(in string) string {
 				out.WriteRune(r + fullOffset)
 				continue
 			case '［', '］':
+				out.WriteRune(QuoteRune)
+				out.WriteRune(r)
+				continue
+			}
+		}
+		if mask.Has(EncodeSemicolon) { // ;
+			switch r {
+			case ';':
+				out.WriteRune(r + fullOffset)
+				continue
+			case '；':
 				out.WriteRune(QuoteRune)
 				out.WriteRune(r)
 				continue
@@ -739,6 +758,12 @@ func (mask MultiEncoder) Decode(in string) string {
 					return true
 				}
 			}
+			if mask.Has(EncodeSemicolon) { // ;
+				switch r {
+				case '；':
+					return true
+				}
+			}
 
 			if mask.Has(EncodeQuestion) { // ?
 				switch r {
@@ -887,6 +912,17 @@ func (mask MultiEncoder) Decode(in string) string {
 		if mask.Has(EncodeSquareBracket) { // []
 			switch r {
 			case '［', '］':
+				if unquote {
+					out.WriteRune(r)
+				} else {
+					out.WriteRune(r - fullOffset)
+				}
+				continue
+			}
+		}
+		if mask.Has(EncodeSemicolon) { // ;
+			switch r {
+			case '；':
 				if unquote {
 					out.WriteRune(r)
 				} else {
