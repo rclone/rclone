@@ -219,11 +219,13 @@ func CheckFn(ctx context.Context, opt *CheckOpt) error {
 
 	// set up a march over fdst and fsrc
 	m := &march.March{
-		Ctx:      ctx,
-		Fdst:     c.opt.Fdst,
-		Fsrc:     c.opt.Fsrc,
-		Dir:      "",
-		Callback: c,
+		Ctx:                    ctx,
+		Fdst:                   c.opt.Fdst,
+		Fsrc:                   c.opt.Fsrc,
+		Dir:                    "",
+		Callback:               c,
+		NoTraverse:             ci.NoTraverse,
+		NoUnicodeNormalization: ci.NoUnicodeNormalization,
 	}
 	fs.Debugf(c.opt.Fdst, "Waiting for checks to finish")
 	err := m.Run(ctx)
