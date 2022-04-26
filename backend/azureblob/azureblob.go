@@ -174,15 +174,6 @@ avoid the time out.`,
 			Default:  maxListChunkSize,
 			Advanced: true,
 		}, {
-			Name: "max_upload_parts",
-			Help: `Size of blob list.
-
-This is the maximum number of blocks per blob. 
-[source](https://docs.microsoft.com/en-us/azure/storage/blobs/scalability-targets)
-).`,
-			Default:  maxUploadParts,
-			Advanced: true,
-		}, {
 			Name: "access_tier",
 			Help: `Access tier of blob: hot, cool or archive.
 
@@ -287,7 +278,6 @@ type Options struct {
 	SASURL               string               `config:"sas_url"`
 	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
 	UploadConcurrency    int                  `config:"upload_concurrency"`
-	MaxUploadParts       int64                `config:"max_upload_parts"`
 	ListChunkSize        uint                 `config:"list_chunk"`
 	AccessTier           string               `config:"access_tier"`
 	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
@@ -1703,7 +1693,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// calculate size of parts/blocks
 	partSize := int(o.fs.opt.ChunkSize)
 
-	uploadParts := o.fs.opt.MaxUploadParts
+	uploadParts := int64(maxUploadParts)
         if uploadParts < 1 {
                 uploadParts = 1
         } else if uploadParts > maxUploadParts {
