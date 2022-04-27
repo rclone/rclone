@@ -932,7 +932,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return entries, nil
 }
 
-func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, filesystem *Fs, callback func(fs.DirEntry) error) error {
+func parseListRStream(ctx context.Context, r io.Reader, filesystem *Fs, callback func(fs.DirEntry) error) error {
 
 	type stats struct {
 		Folders int `xml:"folders"`
@@ -968,8 +968,12 @@ func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, files
 		})
 	}
 
+	// liststream paths are /mountpoint/root/path
+	// so the returned paths should have /mountpoint/root/ trimmed
+	// as the caller is expecting path.
+	pathPrefix := filesystem.opt.Enc.FromStandardPath(path.Join("/", filesystem.opt.Mountpoint, filesystem.root))
 	trimPathPrefix := func(p string) string {
-		p = strings.TrimPrefix(p, trimPrefix)
+		p = strings.TrimPrefix(p, pathPrefix)
 		p = strings.TrimPrefix(p, "/")
 		return p
 	}
@@ -1052,11 +1056,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			return shouldRetry(ctx, resp, err)
 		}
 
-		// liststream paths are /mountpoint/root/path
-		// so the returned paths should have /mountpoint/root/ trimmed
-		// as the caller is expecting path.
-		trimPrefix := path.Join("/", f.opt.Mountpoint, f.root)
-		err = parseListRStream(ctx, resp.Body, trimPrefix, f, func(d fs.DirEntry) error {
+		err = parseListRStream(ctx, resp.Body, f, func(d fs.DirEntry) error {
 			if d.Remote() == dir {
 				return nil
 			}
