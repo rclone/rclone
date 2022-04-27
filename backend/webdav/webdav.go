@@ -125,9 +125,12 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}, {
-			Name:     "update_modtime",
-			Help:     "Adjust modification time on servers which allow DAV:getlastmodified property update",
-			Default:  false,
+			Name: "update_modtime",
+			Help: `Adjust modification time on servers which allow DAV:getlastmodified property update.
+
+Use provider's default if unset.
+`,
+			Default:  fs.Tristate{},
 			Advanced: true,
 		}},
 	})
@@ -143,7 +146,7 @@ type Options struct {
 	BearerTokenCommand string               `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 	Headers            fs.CommaSepList      `config:"headers"`
-	UpdateModTime      bool                 `config:"update_modtime"`
+	UpdateModTime      fs.Tristate          `config:"update_modtime"`
 }
 
 // Fs represents a remote webdav
@@ -412,7 +415,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	var precision time.Duration
-	if opt.UpdateModTime {
+	if opt.UpdateModTime.Valid && opt.UpdateModTime.Value {
 		precision = time.Second
 	} else {
 		precision = fs.ModTimeNotSupported
@@ -1274,7 +1277,7 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
-	if !o.fs.opt.UpdateModTime {
+	if !o.fs.opt.UpdateModTime.Valid || !o.fs.opt.UpdateModTime.Value {
 		return fs.ErrorCantSetModTime
 	}
 	opts := rest.Opts{
@@ -1390,7 +1393,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		_ = o.Remove(ctx)
 		return err
 	}
-	if !o.fs.useOCMtime && o.fs.opt.UpdateModTime {
+	if !o.fs.useOCMtime && o.fs.opt.UpdateModTime.Valid && o.fs.opt.UpdateModTime.Value {
 		err = o.SetModTime(ctx, src.ModTime(ctx))
 		if err != nil {
 			return fmt.Errorf("Update ModTime failed: %w", err)
