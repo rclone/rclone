@@ -1793,6 +1793,8 @@ of timeouts or bigger if you have lots of bandwidth and a fast remote.
 
 The default is to run 4 file transfers in parallel.
 
+Look at --multi-thread-streams if you would like to control single file transfers.
+
 ### -u, --update ###
 
 This forces rclone to skip any files which exist on the destination
