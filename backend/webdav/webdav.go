@@ -1437,7 +1437,12 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("making upload directory failed: %w", err)
+		if apiErr, ok := err.(*api.Error); ok {
+			// Upload directory already exists, so ignore
+			if apiErr.StatusCode != http.StatusMethodNotAllowed || apiErr.Message != "The resource you tried to create already exists" {
+				return fmt.Errorf("making upload directory failed: %w", err)
+			}
+		}
 	}
 	defer atexit.OnError(&err, func() {
 		// Try to abort the upload, but ignore the error.
