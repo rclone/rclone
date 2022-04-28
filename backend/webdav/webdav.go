@@ -130,12 +130,15 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 			Advanced: true,
 		}, {
 			Name: "nextcloud_chunk_size",
-			Help: `Chunk size to use for uploading (Nextcloud only)
+			Help: `Nextcloud upload chunk size.
+
+We recommend configuring your NextCloud instance to increase the max chunk size to 1 GB for better upload performances.
+See https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/big_file_upload_configuration.html#adjust-chunk-size-on-nextcloud-side
 
 Set to 0 to disable chunked uploading.
 `,
 			Advanced: true,
-			Default:  fs.SizeSuffix(10 * 1024 * 1024), // Default NextCloud `max_chunk_size` is `10 MB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
+			Default:  fs.SizeSuffix(10 * 1024 * 1024), // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
 		}},
 	})
 }
