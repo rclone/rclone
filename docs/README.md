@@ -5,7 +5,7 @@ rclone.
 
 See the `content` directory for the docs in markdown format.
 
-Note that some of the docs are auto generated - these should have a DO
+Note that some of the docs are auto-generated - these should have a DO
 NOT EDIT marker near the top.
 
 Use [hugo](https://github.com/spf13/hugo) to build the website.
@@ -28,7 +28,7 @@ so it is easy to tweak stuff.
 ├── config.json                   - hugo config file
 ├── content                       - docs and backend docs
 │   ├── _index.md                 - the front page of rclone.org
-│   ├── commands                  - auto generated command docs - DO NOT EDIT
+│   ├── commands                  - auto-generated command docs - DO NOT EDIT
 ├── i18n
 │   └── en.toml                   - hugo multilingual config
 ├── layouts                       - how the markdown gets converted into HTML

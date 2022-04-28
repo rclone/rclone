@@ -3,15 +3,16 @@ package union
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/union/policy"
 	"github.com/rclone/rclone/backend/union/upstream"
 	"github.com/rclone/rclone/fs"
@@ -30,28 +31,24 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "upstreams",
-			Help:     "List of space separated upstreams.\nCan be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.\n",
+			Help:     "List of space separated upstreams.\n\nCan be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.",
 			Required: true,
 		}, {
-			Name:     "action_policy",
-			Help:     "Policy to choose upstream on ACTION category.",
-			Required: true,
-			Default:  "epall",
+			Name:    "action_policy",
+			Help:    "Policy to choose upstream on ACTION category.",
+			Default: "epall",
 		}, {
-			Name:     "create_policy",
-			Help:     "Policy to choose upstream on CREATE category.",
-			Required: true,
-			Default:  "epmfs",
+			Name:    "create_policy",
+			Help:    "Policy to choose upstream on CREATE category.",
+			Default: "epmfs",
 		}, {
-			Name:     "search_policy",
-			Help:     "Policy to choose upstream on SEARCH category.",
-			Required: true,
-			Default:  "ff",
+			Name:    "search_policy",
+			Help:    "Policy to choose upstream on SEARCH category.",
+			Default: "ff",
 		}, {
-			Name:     "cache_time",
-			Help:     "Cache time of usage and free space (in seconds). This option is only useful when a path preserving policy is used.",
-			Required: true,
-			Default:  120,
+			Name:    "cache_time",
+			Help:    "Cache time of usage and free space (in seconds).\n\nThis option is only useful when a path preserving policy is used.",
+			Default: 120,
 		}},
 	}
 	fs.Register(fsi)
@@ -99,7 +96,7 @@ func (f *Fs) wrapEntries(entries ...upstream.Entry) (entry, error) {
 			cd:        entries,
 		}, nil
 	default:
-		return nil, errors.Errorf("unknown object type %T", e)
+		return nil, fmt.Errorf("unknown object type %T", e)
 	}
 }
 
@@ -132,7 +129,9 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
 		err := upstreams[i].Rmdir(ctx, dir)
-		errs[i] = errors.Wrap(err, upstreams[i].Name())
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		}
 	})
 	return errs.Err()
 }
@@ -162,7 +161,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
 		err := upstreams[i].Mkdir(ctx, dir)
-		errs[i] = errors.Wrap(err, upstreams[i].Name())
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		}
 	})
 	return errs.Err()
 }
@@ -186,10 +187,12 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	errs := Errors(make([]error, len(upstreams)))
 	multithread(len(upstreams), func(i int) {
 		err := upstreams[i].Features().Purge(ctx, dir)
-		if errors.Cause(err) == fs.ErrorDirNotFound {
+		if errors.Is(err, fs.ErrorDirNotFound) {
 			err = nil
 		}
-		errs[i] = errors.Wrap(err, upstreams[i].Name())
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", upstreams[i].Name(), err)
+		}
 	})
 	return errs.Err()
 }
@@ -254,7 +257,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	for _, e := range entries {
-		if e.UpstreamFs().Features().Move == nil {
+		if !operations.CanServerSideMove(e.UpstreamFs()) {
 			return nil, fs.ErrorCantMove
 		}
 	}
@@ -264,7 +267,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		su := entries[i].UpstreamFs()
 		o, ok := entries[i].(*upstream.Object)
 		if !ok {
-			errs[i] = errors.Wrap(fs.ErrorNotAFile, su.Name())
+			errs[i] = fmt.Errorf("%s: %w", su.Name(), fs.ErrorNotAFile)
 			return
 		}
 		var du *upstream.Fs
@@ -274,15 +277,34 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 			}
 		}
 		if du == nil {
-			errs[i] = errors.Wrap(fs.ErrorCantMove, su.Name()+":"+remote)
+			errs[i] = fmt.Errorf("%s: %s: %w", su.Name(), remote, fs.ErrorCantMove)
 			return
 		}
-		mo, err := du.Features().Move(ctx, o.UnWrap(), remote)
-		if err != nil || mo == nil {
-			errs[i] = errors.Wrap(err, su.Name())
+		srcObj := o.UnWrap()
+		duFeatures := du.Features()
+		do := duFeatures.Move
+		if duFeatures.Move == nil {
+			do = duFeatures.Copy
+		}
+		// Do the Move or Copy
+		dstObj, err := do(ctx, srcObj, remote)
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", su.Name(), err)
 			return
 		}
-		objs[i] = du.WrapObject(mo)
+		if dstObj == nil {
+			errs[i] = fmt.Errorf("%s: destination object not found", su.Name())
+			return
+		}
+		objs[i] = du.WrapObject(dstObj)
+		// Delete the source object if Copy
+		if duFeatures.Move == nil {
+			err = srcObj.Remove(ctx)
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", su.Name(), err)
+				return
+			}
+		}
 	})
 	var en []upstream.Entry
 	for _, o := range objs {
@@ -330,18 +352,20 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			}
 		}
 		if du == nil {
-			errs[i] = errors.Wrap(fs.ErrorCantDirMove, su.Name()+":"+su.Root())
+			errs[i] = fmt.Errorf("%s: %s: %w", su.Name(), su.Root(), fs.ErrorCantDirMove)
 			return
 		}
 		err := du.Features().DirMove(ctx, su.Fs, srcRemote, dstRemote)
-		errs[i] = errors.Wrap(err, du.Name()+":"+du.Root())
+		if err != nil {
+			errs[i] = fmt.Errorf("%s: %w", du.Name()+":"+du.Root(), err)
+		}
 	})
 	errs = errs.FilterNil()
 	if len(errs) == 0 {
 		return nil
 	}
 	for _, e := range errs {
-		if errors.Cause(e) != fs.ErrorDirExists {
+		if !errors.Is(e, fs.ErrorDirExists) {
 			return errs
 		}
 	}
@@ -462,7 +486,11 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 			o, err = u.Put(ctx, readers[i], src, options...)
 		}
 		if err != nil {
-			errs[i] = errors.Wrap(err, u.Name())
+			errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
+			if len(upstreams) > 1 {
+				// Drain the input buffer to allow other uploads to continue
+				_, _ = io.Copy(ioutil.Discard, readers[i])
+			}
 			return
 		}
 		objs[i] = u.WrapObject(o)
@@ -522,7 +550,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 	for _, u := range f.upstreams {
 		usg, err := u.About(ctx)
-		if errors.Cause(err) == fs.ErrorDirNotFound {
+		if errors.Is(err, fs.ErrorDirNotFound) {
 			continue
 		}
 		if err != nil {
@@ -578,7 +606,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		u := f.upstreams[i]
 		entries, err := u.List(ctx, dir)
 		if err != nil {
-			errs[i] = errors.Wrap(err, u.Name())
+			errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
 			return
 		}
 		uEntries := make([]upstream.Entry, len(entries))
@@ -589,7 +617,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	})
 	if len(errs) == len(errs.FilterNil()) {
 		errs = errs.Map(func(e error) error {
-			if errors.Cause(e) == fs.ErrorDirNotFound {
+			if errors.Is(e, fs.ErrorDirNotFound) {
 				return nil
 			}
 			return e
@@ -642,13 +670,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			err = walk.ListR(ctx, u, dir, true, -1, walk.ListAll, callback)
 		}
 		if err != nil {
-			errs[i] = errors.Wrap(err, u.Name())
+			errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
 			return
 		}
 	})
 	if len(errs) == len(errs.FilterNil()) {
 		errs = errs.Map(func(e error) error {
-			if errors.Cause(e) == fs.ErrorDirNotFound {
+			if errors.Is(e, fs.ErrorDirNotFound) {
 				return nil
 			}
 			return e
@@ -673,7 +701,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		u := f.upstreams[i]
 		o, err := u.NewObject(ctx, remote)
 		if err != nil && err != fs.ErrorObjectNotFound {
-			errs[i] = errors.Wrap(err, u.Name())
+			errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
 			return
 		}
 		objs[i] = u.WrapObject(o)
@@ -762,7 +790,9 @@ func (f *Fs) Shutdown(ctx context.Context) error {
 		u := f.upstreams[i]
 		if do := u.Features().Shutdown; do != nil {
 			err := do(ctx)
-			errs[i] = errors.Wrap(err, u.Name())
+			if err != nil {
+				errs[i] = fmt.Errorf("%s: %w", u.Name(), err)
+			}
 		}
 	})
 	return errs.Err()
@@ -848,8 +878,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		SetTier:                 true,
 		GetTier:                 true,
 	}).Fill(ctx, f)
+	canMove := true
 	for _, f := range upstreams {
 		features = features.Mask(ctx, f) // Mask all upstream fs
+		if !operations.CanServerSideMove(f) {
+			canMove = false
+		}
+	}
+	// We can move if all remotes support Move or Copy
+	if canMove {
+		features.Move = f.Move
 	}
 
 	// Enable ListR when upstreams either support ListR or is local

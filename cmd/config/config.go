@@ -3,12 +3,12 @@ package config
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -23,6 +23,7 @@ func init() {
 	configCommand.AddCommand(configEditCommand)
 	configCommand.AddCommand(configFileCommand)
 	configCommand.AddCommand(configTouchCommand)
+	configCommand.AddCommand(configPathsCommand)
 	configCommand.AddCommand(configShowCommand)
 	configCommand.AddCommand(configDumpCommand)
 	configCommand.AddCommand(configProvidersCommand)
@@ -42,9 +43,9 @@ var configCommand = &cobra.Command{
 remotes and manage existing ones. You may also set or remove a
 password to protect your configuration.
 `,
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 0, command, args)
-		config.EditConfig(context.Background())
+		return config.EditConfig(context.Background())
 	},
 }
 
@@ -70,6 +71,17 @@ var configTouchCommand = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		config.SaveConfig()
+	},
+}
+
+var configPathsCommand = &cobra.Command{
+	Use:   "paths",
+	Short: `Show paths used for configuration, cache, temp etc.`,
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(0, 0, command, args)
+		fmt.Printf("Config file: %s\n", config.GetConfigPath())
+		fmt.Printf("Cache dir:   %s\n", config.GetCacheDir())
+		fmt.Printf("Temp dir:    %s\n", os.TempDir())
 	},
 }
 
@@ -105,12 +117,14 @@ var configProvidersCommand = &cobra.Command{
 	},
 }
 
-var (
-	configObscure   bool
-	configNoObscure bool
-)
+var updateRemoteOpt config.UpdateRemoteOpt
 
-const configPasswordHelp = `
+var configPasswordHelp = strings.ReplaceAll(`
+Note that if the config process would normally ask a question the
+default is taken (unless |--non-interactive| is used).  Each time
+that happens rclone will print or DEBUG a message saying how to
+affect the value taken.
+
 If any of the parameters passed is a password field, then rclone will
 automatically obscure them if they aren't already obscured before
 putting them in the config file.
@@ -119,90 +133,176 @@ putting them in the config file.
 consists only of base64 characters then rclone can get confused about
 whether the password is already obscured or not and put unobscured
 passwords into the config file. If you want to be 100% certain that
-the passwords get obscured then use the "--obscure" flag, or if you
+the passwords get obscured then use the |--obscure| flag, or if you
 are 100% certain you are already passing obscured passwords then use
-"--no-obscure".  You can also set obscured passwords using the
-"rclone config password" command.
-`
+|--no-obscure|.  You can also set obscured passwords using the
+|rclone config password| command.
 
+The flag |--non-interactive| is for use by applications that wish to
+configure rclone themeselves, rather than using rclone's text based
+configuration questions. If this flag is set, and rclone needs to ask
+the user a question, a JSON blob will be returned with the question in
+it.
+
+This will look something like (some irrelevant detail removed):
+
+|||
+{
+    "State": "*oauth-islocal,teamdrive,,",
+    "Option": {
+        "Name": "config_is_local",
+        "Help": "Use auto config?\n * Say Y if not sure\n * Say N if you are working on a remote or headless machine\n",
+        "Default": true,
+        "Examples": [
+            {
+                "Value": "true",
+                "Help": "Yes"
+            },
+            {
+                "Value": "false",
+                "Help": "No"
+            }
+        ],
+        "Required": false,
+        "IsPassword": false,
+        "Type": "bool",
+        "Exclusive": true,
+    },
+    "Error": "",
+}
+|||
+
+The format of |Option| is the same as returned by |rclone config
+providers|. The question should be asked to the user and returned to
+rclone as the |--result| option along with the |--state| parameter.
+
+The keys of |Option| are used as follows:
+
+- |Name| - name of variable - show to user
+- |Help| - help text. Hard wrapped at 80 chars. Any URLs should be clicky.
+- |Default| - default value - return this if the user just wants the default.
+- |Examples| - the user should be able to choose one of these
+- |Required| - the value should be non-empty
+- |IsPassword| - the value is a password and should be edited as such
+- |Type| - type of value, eg |bool|, |string|, |int| and others
+- |Exclusive| - if set no free-form entry allowed only the |Examples|
+- Irrelevant keys |Provider|, |ShortOpt|, |Hide|, |NoPrefix|, |Advanced|
+
+If |Error| is set then it should be shown to the user at the same
+time as the question.
+
+    rclone config update name --continue --state "*oauth-islocal,teamdrive,," --result "true"
+
+Note that when using |--continue| all passwords should be passed in
+the clear (not obscured). Any default config values should be passed
+in with each invocation of |--continue|.
+
+At the end of the non interactive process, rclone will return a result
+with |State| as empty string.
+
+If |--all| is passed then rclone will ask all the config questions,
+not just the post config questions. Any parameters are used as
+defaults for questions as usual.
+
+Note that |bin/config.py| in the rclone source implements this protocol
+as a readable demonstration.
+`, "|", "`")
 var configCreateCommand = &cobra.Command{
-	Use:   "create `name` `type` [`key` `value`]*",
+	Use:   "create name type [key value]*",
 	Short: `Create a new remote with name, type and options.`,
-	Long: `
-Create a new remote of ` + "`name`" + ` with ` + "`type`" + ` and options.  The options
-should be passed in pairs of ` + "`key` `value`" + `.
+	Long: strings.ReplaceAll(`
+Create a new remote of |name| with |type| and options.  The options
+should be passed in pairs of |key| |value| or as |key=value|.
 
-For example to make a swift remote of name myremote using auto config
+For example, to make a swift remote of name myremote using auto config
 you would do:
 
     rclone config create myremote swift env_auth true
+    rclone config create myremote swift env_auth=true
 
-Note that if the config process would normally ask a question the
-default is taken.  Each time that happens rclone will print a message
-saying how to affect the value taken.
-` + configPasswordHelp + `
 So for example if you wanted to configure a Google Drive remote but
 using remote authorization you would do this:
 
-    rclone config create mydrive drive config_is_local false
-`,
+    rclone config create mydrive drive config_is_local=false
+`, "|", "`") + configPasswordHelp,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 256, command, args)
 		in, err := argsToMap(args[2:])
 		if err != nil {
 			return err
 		}
-		err = config.CreateRemote(context.Background(), args[0], args[1], in, configObscure, configNoObscure)
+		return doConfig(args[0], in, func(opts config.UpdateRemoteOpt) (*fs.ConfigOut, error) {
+			return config.CreateRemote(context.Background(), args[0], args[1], in, opts)
+		})
+	},
+}
+
+func doConfig(name string, in rc.Params, do func(config.UpdateRemoteOpt) (*fs.ConfigOut, error)) error {
+	out, err := do(updateRemoteOpt)
+	if err != nil {
+		return err
+	}
+	if !(updateRemoteOpt.NonInteractive || updateRemoteOpt.Continue) {
+		config.ShowRemote(name)
+	} else {
+		if out == nil {
+			out = &fs.ConfigOut{}
+		}
+		outBytes, err := json.MarshalIndent(out, "", "\t")
 		if err != nil {
 			return err
 		}
-		config.ShowRemote(args[0])
-		return nil
-	},
+		_, _ = os.Stdout.Write(outBytes)
+		_, _ = os.Stdout.WriteString("\n")
+	}
+	return nil
 }
 
 func init() {
 	for _, cmdFlags := range []*pflag.FlagSet{configCreateCommand.Flags(), configUpdateCommand.Flags()} {
-		flags.BoolVarP(cmdFlags, &configObscure, "obscure", "", false, "Force any passwords to be obscured.")
-		flags.BoolVarP(cmdFlags, &configNoObscure, "no-obscure", "", false, "Force any passwords not to be obscured.")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Obscure, "obscure", "", false, "Force any passwords to be obscured")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NoObscure, "no-obscure", "", false, "Force any passwords not to be obscured")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.NonInteractive, "non-interactive", "", false, "Don't interact with user and return questions")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.Continue, "continue", "", false, "Continue the configuration process with an answer")
+		flags.BoolVarP(cmdFlags, &updateRemoteOpt.All, "all", "", false, "Ask the full set of config questions")
+		flags.StringVarP(cmdFlags, &updateRemoteOpt.State, "state", "", "", "State - use with --continue")
+		flags.StringVarP(cmdFlags, &updateRemoteOpt.Result, "result", "", "", "Result - use with --continue")
 	}
 }
 
 var configUpdateCommand = &cobra.Command{
-	Use:   "update `name` [`key` `value`]+",
+	Use:   "update name [key value]+",
 	Short: `Update options in an existing remote.`,
-	Long: `
+	Long: strings.ReplaceAll(`
 Update an existing remote's options. The options should be passed in
-in pairs of ` + "`key` `value`" + `.
+pairs of |key| |value| or as |key=value|.
 
-For example to update the env_auth field of a remote of name myremote
+For example, to update the env_auth field of a remote of name myremote
 you would do:
 
-    rclone config update myremote swift env_auth true
-` + configPasswordHelp + `
+    rclone config update myremote env_auth true
+    rclone config update myremote env_auth=true
+
 If the remote uses OAuth the token will be updated, if you don't
 require this add an extra parameter thus:
 
-    rclone config update myremote swift env_auth true config_refresh_token false
-`,
+    rclone config update myremote env_auth=true config_refresh_token=false
+`, "|", "`") + configPasswordHelp,
 	RunE: func(command *cobra.Command, args []string) error {
-		cmd.CheckArgs(3, 256, command, args)
+		cmd.CheckArgs(1, 256, command, args)
 		in, err := argsToMap(args[1:])
 		if err != nil {
 			return err
 		}
-		err = config.UpdateRemote(context.Background(), args[0], in, configObscure, configNoObscure)
-		if err != nil {
-			return err
-		}
-		config.ShowRemote(args[0])
-		return nil
+		return doConfig(args[0], in, func(opts config.UpdateRemoteOpt) (*fs.ConfigOut, error) {
+			return config.UpdateRemote(context.Background(), args[0], in, opts)
+		})
 	},
 }
 
 var configDeleteCommand = &cobra.Command{
-	Use:   "delete `name`",
-	Short: "Delete an existing remote `name`.",
+	Use:   "delete name",
+	Short: "Delete an existing remote.",
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		config.DeleteRemote(args[0])
@@ -210,21 +310,23 @@ var configDeleteCommand = &cobra.Command{
 }
 
 var configPasswordCommand = &cobra.Command{
-	Use:   "password `name` [`key` `value`]+",
+	Use:   "password name [key value]+",
 	Short: `Update password in an existing remote.`,
-	Long: `
+	Long: strings.ReplaceAll(`
 Update an existing remote's password. The password
-should be passed in pairs of ` + "`key` `value`" + `.
+should be passed in pairs of |key| |password| or as |key=password|.
+The |password| should be passed in in clear (unobscured).
 
-For example to set password of a remote of name myremote you would do:
+For example, to set password of a remote of name myremote you would do:
 
     rclone config password myremote fieldname mypassword
+    rclone config password myremote fieldname=mypassword
 
 This command is obsolete now that "config update" and "config create"
 both support obscuring passwords directly.
-`,
+`, "|", "`"),
 	RunE: func(command *cobra.Command, args []string) error {
-		cmd.CheckArgs(3, 256, command, args)
+		cmd.CheckArgs(1, 256, command, args)
 		in, err := argsToMap(args[1:])
 		if err != nil {
 			return err
@@ -238,16 +340,24 @@ both support obscuring passwords directly.
 	},
 }
 
-// This takes a list of arguments in key value key value form and
-// converts it into a map
+// This takes a list of arguments in key value key value form, or
+// key=value key=value form and converts it into a map
 func argsToMap(args []string) (out rc.Params, err error) {
-	if len(args)%2 != 0 {
-		return nil, errors.New("found key without value")
-	}
 	out = rc.Params{}
-	// Set the config
-	for i := 0; i < len(args); i += 2 {
-		out[args[i]] = args[i+1]
+	for i := 0; i < len(args); i++ {
+		key := args[i]
+		equals := strings.IndexRune(key, '=')
+		var value string
+		if equals >= 0 {
+			key, value = key[:equals], key[equals+1:]
+		} else {
+			i++
+			if i >= len(args) {
+				return nil, errors.New("found key without value")
+			}
+			value = args[i]
+		}
+		out[key] = value
 	}
 	return out, nil
 }
@@ -265,15 +375,11 @@ This normally means going through the interactive oauth flow again.
 	RunE: func(command *cobra.Command, args []string) error {
 		ctx := context.Background()
 		cmd.CheckArgs(1, 1, command, args)
-		fsInfo, configName, _, config, err := fs.ConfigFs(args[0])
+		fsInfo, configName, _, m, err := fs.ConfigFs(args[0])
 		if err != nil {
 			return err
 		}
-		if fsInfo.Config == nil {
-			return errors.Errorf("%s: doesn't support Reconnect", configName)
-		}
-		fsInfo.Config(ctx, configName, config)
-		return nil
+		return config.PostConfig(ctx, configName, m, fsInfo)
 	},
 }
 
@@ -292,11 +398,11 @@ To reconnect use "rclone config reconnect".
 		f := cmd.NewFsSrc(args)
 		doDisconnect := f.Features().Disconnect
 		if doDisconnect == nil {
-			return errors.Errorf("%v doesn't support Disconnect", f)
+			return fmt.Errorf("%v doesn't support Disconnect", f)
 		}
 		err := doDisconnect(context.Background())
 		if err != nil {
-			return errors.Wrap(err, "Disconnect call failed")
+			return fmt.Errorf("Disconnect call failed: %w", err)
 		}
 		return nil
 	},
@@ -322,11 +428,11 @@ system.
 		f := cmd.NewFsSrc(args)
 		doUserInfo := f.Features().UserInfo
 		if doUserInfo == nil {
-			return errors.Errorf("%v doesn't support UserInfo", f)
+			return fmt.Errorf("%v doesn't support UserInfo", f)
 		}
 		u, err := doUserInfo(context.Background())
 		if err != nil {
-			return errors.Wrap(err, "UserInfo call failed")
+			return fmt.Errorf("UserInfo call failed: %w", err)
 		}
 		if jsonOutput {
 			out := json.NewEncoder(os.Stdout)

@@ -13,10 +13,10 @@ Make source and dest identical, modifying destination only.
 
 
 Sync the source to the destination, changing the destination
-only.  Doesn't transfer unchanged files, testing by size and
-modification time or MD5SUM.  Destination is updated to match
-source, including deleting files if necessary (except duplicate
-objects, see below).
+only.  Doesn't transfer files that are identical on source and
+destination, testing by size and modification time or MD5SUM.
+Destination is updated to match source, including deleting files
+if necessary (except duplicate objects, see below).
 
 **Important**: Since this can cause data loss, test first with the
 `--dry-run` or the `--interactive`/`-i` flag.

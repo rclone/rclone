@@ -14,16 +14,15 @@ we ignore assets completely!
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"path"
 	"strings"
 	"time"
 
 	acd "github.com/ncw/go-acd"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -70,11 +69,10 @@ func init() {
 		Prefix:      "acd",
 		Description: "Amazon Drive",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
-			err := oauthutil.Config(ctx, "amazon cloud drive", name, m, acdConfig, nil)
-			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
-			}
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: acdConfig,
+			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name:     "checkpoint",
@@ -83,16 +81,16 @@ func init() {
 			Advanced: true,
 		}, {
 			Name: "upload_wait_per_gb",
-			Help: `Additional time per GB to wait after a failed complete upload to see if it appears.
+			Help: `Additional time per GiB to wait after a failed complete upload to see if it appears.
 
 Sometimes Amazon Drive gives an error when a file has been fully
 uploaded but the file appears anyway after a little while.  This
-happens sometimes for files over 1GB in size and nearly every time for
-files bigger than 10GB. This parameter controls the time rclone waits
+happens sometimes for files over 1 GiB in size and nearly every time for
+files bigger than 10 GiB. This parameter controls the time rclone waits
 for the file to appear.
 
-The default value for this parameter is 3 minutes per GB, so by
-default it will wait 3 minutes for every GB uploaded to see if the
+The default value for this parameter is 3 minutes per GiB, so by
+default it will wait 3 minutes for every GiB uploaded to see if the
 file appears.
 
 You can disable this feature by setting it to 0. This may cause
@@ -112,7 +110,7 @@ in this situation.`,
 
 Files this size or more will be downloaded via their "tempLink". This
 is to work around a problem with Amazon Drive which blocks downloads
-of files bigger than about 10GB.  The default for this is 9GB which
+of files bigger than about 10 GiB. The default for this is 9 GiB which
 shouldn't need to be changed.
 
 To download files above this threshold, rclone requests a "tempLink"
@@ -261,7 +259,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(ctx, name, m, acdConfig, baseClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure Amazon Drive")
+		return nil, fmt.Errorf("failed to configure Amazon Drive: %w", err)
 	}
 
 	c := acd.NewClient(oAuthClient)
@@ -294,13 +292,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get endpoints")
+		return nil, fmt.Errorf("failed to get endpoints: %w", err)
 	}
 
 	// Get rootID
 	rootInfo, err := f.getRootInfo(ctx)
 	if err != nil || rootInfo.Id == nil {
-		return nil, errors.Wrap(err, "failed to get root")
+		return nil, fmt.Errorf("failed to get root: %w", err)
 	}
 	f.trueRootID = *rootInfo.Id
 

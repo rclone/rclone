@@ -4,7 +4,7 @@
 // buffers which are a multiple of an underlying crypto block size.
 package pkcs7
 
-import "github.com/pkg/errors"
+import "errors"
 
 // Errors Unpad can return
 var (

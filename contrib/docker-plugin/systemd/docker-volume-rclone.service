@@ -1,0 +1,19 @@
+[Unit]
+Description=Docker Volume Plugin for rclone
+Requires=docker.service
+Before=docker.service
+After=network.target
+Requires=docker-volume-rclone.socket
+After=docker-volume-rclone.socket
+
+[Service]
+ExecStart=/usr/bin/rclone serve docker
+ExecStartPre=/bin/mkdir -p /var/lib/docker-volumes/rclone
+ExecStartPre=/bin/mkdir -p /var/lib/docker-plugins/rclone/config
+ExecStartPre=/bin/mkdir -p /var/lib/docker-plugins/rclone/cache
+Environment=RCLONE_CONFIG=/var/lib/docker-plugins/rclone/config/rclone.conf
+Environment=RCLONE_CACHE_DIR=/var/lib/docker-plugins/rclone/cache
+Environment=RCLONE_VERBOSE=1
+
+[Install]
+WantedBy=multi-user.target

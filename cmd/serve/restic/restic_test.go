@@ -1,6 +1,9 @@
 // Serve restic tests set up a server and run the integration tests
 // for restic against it.
 
+//go:build go1.17
+// +build go1.17
+
 package restic
 
 import (

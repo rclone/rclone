@@ -1,0 +1,8 @@
+[Unit]
+Description=Docker Volume Plugin for rclone
+
+[Socket]
+ListenStream=/run/docker/plugins/rclone.sock
+
+[Install]
+WantedBy=sockets.target

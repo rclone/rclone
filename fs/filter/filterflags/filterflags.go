@@ -41,8 +41,8 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringArrayVarP(flagSet, &Opt.FilesFromRaw, "files-from-raw", "", nil, "Read list of source-file names from file without any processing of lines (use - to read from stdin)")
 	flags.FVarP(flagSet, &Opt.MinAge, "min-age", "", "Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y")
 	flags.FVarP(flagSet, &Opt.MaxAge, "max-age", "", "Only transfer files younger than this in s or suffix ms|s|m|h|d|w|M|y")
-	flags.FVarP(flagSet, &Opt.MinSize, "min-size", "", "Only transfer files bigger than this in k or suffix b|k|M|G")
-	flags.FVarP(flagSet, &Opt.MaxSize, "max-size", "", "Only transfer files smaller than this in k or suffix b|k|M|G")
+	flags.FVarP(flagSet, &Opt.MinSize, "min-size", "", "Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P")
+	flags.FVarP(flagSet, &Opt.MaxSize, "max-size", "", "Only transfer files smaller than this in KiB or suffix B|K|M|G|T|P")
 	flags.BoolVarP(flagSet, &Opt.IgnoreCase, "ignore-case", "", false, "Ignore case in filters (case insensitive)")
 	//cvsExclude     = BoolP("cvs-exclude", "C", false, "Exclude files in the same way CVS does")
 }

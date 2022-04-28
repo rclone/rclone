@@ -1,6 +1,7 @@
 // Test AzureBlob filesystem interface
 
-// +build !plan9,!solaris,!js,go1.14
+//go:build !plan9 && !solaris && !js
+// +build !plan9,!solaris,!js
 
 package azureblob
 
@@ -16,12 +17,10 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName:  "TestAzureBlob:",
-		NilObject:   (*Object)(nil),
-		TiersToTest: []string{"Hot", "Cool"},
-		ChunkedUpload: fstests.ChunkedUploadConfig{
-			MaxChunkSize: maxChunkSize,
-		},
+		RemoteName:    "TestAzureBlob:",
+		NilObject:     (*Object)(nil),
+		TiersToTest:   []string{"Hot", "Cool"},
+		ChunkedUpload: fstests.ChunkedUploadConfig{},
 	})
 }
 

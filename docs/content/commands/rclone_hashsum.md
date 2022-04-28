@@ -21,18 +21,29 @@ not supported by the remote, no hash will be returned.  With the
 download flag, the file will be downloaded from the remote and
 hashed locally enabling any hash for any remote.
 
+This command can also hash data received on standard input (stdin),
+by not passing a remote:path, or by passing a hyphen as remote:path
+when there is data to read (if not, the hypen will be treated literaly,
+as a relative path).
+
 Run without a hash to see the list of all supported hashes, e.g.
 
     $ rclone hashsum
     Supported hashes are:
-      * MD5
-      * SHA-1
-      * DropboxHash
-      * QuickXorHash
+      * md5
+      * sha1
+      * whirlpool
+      * crc32
+      * sha256
+      * dropbox
+      * mailru
+      * quickxor
 
 Then
 
     $ rclone hashsum MD5 remote:path
+
+Note that hash names are case insensitive and values are output in lower case.
 
 
 ```
@@ -43,6 +54,7 @@ rclone hashsum <hash> remote:path [flags]
 
 ```
       --base64               Output base64 encoded hashsum
+  -C, --checkfile string     Validate hashes against a given SUM file instead of printing them
       --download             Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote
   -h, --help                 help for hashsum
       --output-file string   Output hashsums to a file rather than the terminal

@@ -13,10 +13,21 @@ const versionFormat = "-v2006-01-02-150405.000"
 
 var versionRegexp = regexp.MustCompile("-v\\d{4}-\\d{2}-\\d{2}-\\d{6}-\\d{3}")
 
+// Split fileName into base and extension so that base + ext == fileName
+func splitExt(fileName string) (base, ext string) {
+	ext = path.Ext(fileName)
+	base = fileName[:len(fileName)-len(ext)]
+	// .file splits to base == "", ext == ".file"
+	// so swap ext and base in this case
+	if ext != "" && base == "" {
+		base, ext = ext, base
+	}
+	return base, ext
+}
+
 // Add returns fileName modified to include t as the version
 func Add(fileName string, t time.Time) string {
-	ext := path.Ext(fileName)
-	base := fileName[:len(fileName)-len(ext)]
+	base, ext := splitExt(fileName)
 	s := t.Format(versionFormat)
 	// Replace the '.' with a '-'
 	s = strings.Replace(s, ".", "-", -1)
@@ -27,8 +38,7 @@ func Add(fileName string, t time.Time) string {
 // If the fileName did not have a version then time.Time{} is returned along with an unmodified fileName
 func Remove(fileName string) (t time.Time, fileNameWithoutVersion string) {
 	fileNameWithoutVersion = fileName
-	ext := path.Ext(fileName)
-	base := fileName[:len(fileName)-len(ext)]
+	base, ext := splitExt(fileName)
 	if len(base) < len(versionFormat) {
 		return
 	}

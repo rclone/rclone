@@ -1,9 +1,11 @@
+//go:build !plan9 && !js
 // +build !plan9,!js
 
 package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -18,7 +20,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
@@ -68,26 +69,26 @@ func init() {
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "remote",
-			Help:     "Remote to cache.\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
+			Help:     "Remote to cache.\n\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
 			Required: true,
 		}, {
 			Name: "plex_url",
-			Help: "The URL of the Plex server",
+			Help: "The URL of the Plex server.",
 		}, {
 			Name: "plex_username",
-			Help: "The username of the Plex user",
+			Help: "The username of the Plex user.",
 		}, {
 			Name:       "plex_password",
-			Help:       "The password of the Plex user",
+			Help:       "The password of the Plex user.",
 			IsPassword: true,
 		}, {
 			Name:     "plex_token",
-			Help:     "The plex token for authentication - auto set normally",
+			Help:     "The plex token for authentication - auto set normally.",
 			Hide:     fs.OptionHideBoth,
 			Advanced: true,
 		}, {
 			Name:     "plex_insecure",
-			Help:     "Skip all certificate verification when connecting to the Plex server",
+			Help:     "Skip all certificate verification when connecting to the Plex server.",
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
@@ -98,14 +99,14 @@ changed, any downloaded chunks will be invalid and cache-chunk-path
 will need to be cleared or unexpected EOF errors will occur.`,
 			Default: DefCacheChunkSize,
 			Examples: []fs.OptionExample{{
-				Value: "1m",
-				Help:  "1MB",
+				Value: "1M",
+				Help:  "1 MiB",
 			}, {
 				Value: "5M",
-				Help:  "5 MB",
+				Help:  "5 MiB",
 			}, {
 				Value: "10M",
-				Help:  "10 MB",
+				Help:  "10 MiB",
 			}},
 		}, {
 			Name: "info_age",
@@ -132,22 +133,22 @@ oldest chunks until it goes under this value.`,
 			Default: DefCacheTotalChunkSize,
 			Examples: []fs.OptionExample{{
 				Value: "500M",
-				Help:  "500 MB",
+				Help:  "500 MiB",
 			}, {
 				Value: "1G",
-				Help:  "1 GB",
+				Help:  "1 GiB",
 			}, {
 				Value: "10G",
-				Help:  "10 GB",
+				Help:  "10 GiB",
 			}},
 		}, {
 			Name:     "db_path",
-			Default:  filepath.Join(config.CacheDir, "cache-backend"),
-			Help:     "Directory to store file structure metadata DB.\nThe remote name is used as the DB file name.",
+			Default:  filepath.Join(config.GetCacheDir(), "cache-backend"),
+			Help:     "Directory to store file structure metadata DB.\n\nThe remote name is used as the DB file name.",
 			Advanced: true,
 		}, {
 			Name:    "chunk_path",
-			Default: filepath.Join(config.CacheDir, "cache-backend"),
+			Default: filepath.Join(config.GetCacheDir(), "cache-backend"),
 			Help: `Directory to cache chunk files.
 
 Path to where partial file data (chunks) are stored locally. The remote
@@ -167,6 +168,7 @@ then "--cache-chunk-path" will use the same path as "--cache-db-path".`,
 			Name:    "chunk_clean_interval",
 			Default: DefCacheChunkCleanInterval,
 			Help: `How often should the cache perform cleanups of the chunk storage.
+
 The default value should be ok for most people. If you find that the
 cache goes over "cache-chunk-total-size" too often then try to lower
 this value to force it to perform cleanups more often.`,
@@ -220,7 +222,7 @@ available on the local machine.`,
 		}, {
 			Name:    "rps",
 			Default: int(DefCacheRps),
-			Help: `Limits the number of requests per second to the source FS (-1 to disable)
+			Help: `Limits the number of requests per second to the source FS (-1 to disable).
 
 This setting places a hard limit on the number of requests per second
 that cache will be doing to the cloud provider remote and try to
@@ -241,7 +243,7 @@ still pass.`,
 		}, {
 			Name:    "writes",
 			Default: DefCacheWrites,
-			Help: `Cache file data on writes through the FS
+			Help: `Cache file data on writes through the FS.
 
 If you need to read files immediately after you upload them through
 cache you can enable this flag to have their data stored in the
@@ -262,7 +264,7 @@ provider`,
 		}, {
 			Name:    "tmp_wait_time",
 			Default: DefCacheTmpWaitTime,
-			Help: `How long should files be stored in local cache before being uploaded
+			Help: `How long should files be stored in local cache before being uploaded.
 
 This is the duration that a file must wait in the temporary location
 _cache-tmp-upload-path_ before it is selected for upload.
@@ -273,7 +275,7 @@ to start the upload if a queue formed for this purpose.`,
 		}, {
 			Name:    "db_wait_time",
 			Default: DefCacheDbWaitTime,
-			Help: `How long to wait for the DB to be available - 0 is unlimited
+			Help: `How long to wait for the DB to be available - 0 is unlimited.
 
 Only one process can have the DB open at any one time, so rclone waits
 for this duration for the DB to become available before it gives an
@@ -339,8 +341,14 @@ func parseRootPath(path string) (string, error) {
 	return strings.Trim(path, "/"), nil
 }
 
+var warnDeprecated sync.Once
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.Fs, error) {
+	warnDeprecated.Do(func() {
+		fs.Logf(nil, "WARNING: Cache backend is deprecated and may be removed in future. Please use VFS instead.")
+	})
+
 	// Parse config into Options struct
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -348,7 +356,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		return nil, err
 	}
 	if opt.ChunkTotalSize < opt.ChunkSize*fs.SizeSuffix(opt.TotalWorkers) {
-		return nil, errors.Errorf("don't set cache-chunk-total-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
+		return nil, fmt.Errorf("don't set cache-chunk-total-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
 			opt.ChunkTotalSize, opt.ChunkSize, opt.TotalWorkers)
 	}
 
@@ -358,13 +366,13 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 
 	rpath, err := parseRootPath(rootPath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to clean root path %q", rootPath)
+		return nil, fmt.Errorf("failed to clean root path %q: %w", rootPath, err)
 	}
 
 	remotePath := fspath.JoinRootPath(opt.Remote, rootPath)
 	wrappedFs, wrapErr := cache.Get(ctx, remotePath)
 	if wrapErr != nil && wrapErr != fs.ErrorIsFile {
-		return nil, errors.Wrapf(wrapErr, "failed to make remote %q to wrap", remotePath)
+		return nil, fmt.Errorf("failed to make remote %q to wrap: %w", remotePath, wrapErr)
 	}
 	var fsErr error
 	fs.Debugf(name, "wrapped %v:%v at root %v", wrappedFs.Name(), wrappedFs.Root(), rpath)
@@ -386,14 +394,18 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		notifiedRemotes:  make(map[string]bool),
 	}
 	cache.PinUntilFinalized(f.Fs, f)
-	f.rateLimiter = rate.NewLimiter(rate.Limit(float64(opt.Rps)), opt.TotalWorkers)
+	rps := rate.Inf
+	if opt.Rps > 0 {
+		rps = rate.Limit(float64(opt.Rps))
+	}
+	f.rateLimiter = rate.NewLimiter(rps, opt.TotalWorkers)
 
 	f.plexConnector = &plexConnector{}
 	if opt.PlexURL != "" {
 		if opt.PlexToken != "" {
 			f.plexConnector, err = newPlexConnectorWithToken(f, opt.PlexURL, opt.PlexToken, opt.PlexInsecure)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", opt.PlexURL)
+				return nil, fmt.Errorf("failed to connect to the Plex API %v: %w", opt.PlexURL, err)
 			}
 		} else {
 			if opt.PlexPassword != "" && opt.PlexUsername != "" {
@@ -405,7 +417,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 					m.Set("plex_token", token)
 				})
 				if err != nil {
-					return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", opt.PlexURL)
+					return nil, fmt.Errorf("failed to connect to the Plex API %v: %w", opt.PlexURL, err)
 				}
 			}
 		}
@@ -414,8 +426,8 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 	dbPath := f.opt.DbPath
 	chunkPath := f.opt.ChunkPath
 	// if the dbPath is non default but the chunk path is default, we overwrite the last to follow the same one as dbPath
-	if dbPath != filepath.Join(config.CacheDir, "cache-backend") &&
-		chunkPath == filepath.Join(config.CacheDir, "cache-backend") {
+	if dbPath != filepath.Join(config.GetCacheDir(), "cache-backend") &&
+		chunkPath == filepath.Join(config.GetCacheDir(), "cache-backend") {
 		chunkPath = dbPath
 	}
 	if filepath.Ext(dbPath) != "" {
@@ -426,11 +438,11 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 	}
 	err = os.MkdirAll(dbPath, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create cache directory %v", dbPath)
+		return nil, fmt.Errorf("failed to create cache directory %v: %w", dbPath, err)
 	}
 	err = os.MkdirAll(chunkPath, os.ModePerm)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create cache directory %v", chunkPath)
+		return nil, fmt.Errorf("failed to create cache directory %v: %w", chunkPath, err)
 	}
 
 	dbPath = filepath.Join(dbPath, name+".db")
@@ -442,7 +454,7 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 		DbWaitTime: time.Duration(opt.DbWaitTime),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to start cache db")
+		return nil, fmt.Errorf("failed to start cache db: %w", err)
 	}
 	// Trap SIGINT and SIGTERM to close the DB handle gracefully
 	c := make(chan os.Signal, 1)
@@ -476,12 +488,12 @@ func NewFs(ctx context.Context, name, rootPath string, m configmap.Mapper) (fs.F
 	if f.opt.TempWritePath != "" {
 		err = os.MkdirAll(f.opt.TempWritePath, os.ModePerm)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create cache directory %v", f.opt.TempWritePath)
+			return nil, fmt.Errorf("failed to create cache directory %v: %w", f.opt.TempWritePath, err)
 		}
 		f.opt.TempWritePath = filepath.ToSlash(f.opt.TempWritePath)
 		f.tempFs, err = cache.Get(ctx, f.opt.TempWritePath)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create temp fs: %v", err)
+			return nil, fmt.Errorf("failed to create temp fs: %w", err)
 		}
 		fs.Infof(name, "Upload Temp Rest Time: %v", f.opt.TempWaitTime)
 		fs.Infof(name, "Upload Temp FS: %v", f.opt.TempWritePath)
@@ -598,7 +610,7 @@ func (f *Fs) httpStats(ctx context.Context, in rc.Params) (out rc.Params, err er
 	out = make(rc.Params)
 	m, err := f.Stats()
 	if err != nil {
-		return out, errors.Errorf("error while getting cache stats")
+		return out, fmt.Errorf("error while getting cache stats")
 	}
 	out["status"] = "ok"
 	out["stats"] = m
@@ -625,7 +637,7 @@ func (f *Fs) httpExpireRemote(ctx context.Context, in rc.Params) (out rc.Params,
 	out = make(rc.Params)
 	remoteInt, ok := in["remote"]
 	if !ok {
-		return out, errors.Errorf("remote is needed")
+		return out, fmt.Errorf("remote is needed")
 	}
 	remote := remoteInt.(string)
 	withData := false
@@ -636,7 +648,7 @@ func (f *Fs) httpExpireRemote(ctx context.Context, in rc.Params) (out rc.Params,
 
 	remote = f.unwrapRemote(remote)
 	if !f.cache.HasEntry(path.Join(f.Root(), remote)) {
-		return out, errors.Errorf("%s doesn't exist in cache", remote)
+		return out, fmt.Errorf("%s doesn't exist in cache", remote)
 	}
 
 	co := NewObject(f, remote)
@@ -645,7 +657,7 @@ func (f *Fs) httpExpireRemote(ctx context.Context, in rc.Params) (out rc.Params,
 		cd := NewDirectory(f, remote)
 		err := f.cache.ExpireDir(cd)
 		if err != nil {
-			return out, errors.WithMessage(err, "error expiring directory")
+			return out, fmt.Errorf("error expiring directory: %w", err)
 		}
 		// notify vfs too
 		f.notifyChangeUpstream(cd.Remote(), fs.EntryDirectory)
@@ -656,7 +668,7 @@ func (f *Fs) httpExpireRemote(ctx context.Context, in rc.Params) (out rc.Params,
 	// expire the entry
 	err = f.cache.ExpireObject(co, withData)
 	if err != nil {
-		return out, errors.WithMessage(err, "error expiring file")
+		return out, fmt.Errorf("error expiring file: %w", err)
 	}
 	// notify vfs too
 	f.notifyChangeUpstream(co.Remote(), fs.EntryObject)
@@ -677,24 +689,24 @@ func (f *Fs) rcFetch(ctx context.Context, in rc.Params) (rc.Params, error) {
 			case 1:
 				start, err = strconv.ParseInt(ints[0], 10, 64)
 				if err != nil {
-					return nil, errors.Errorf("invalid range: %q", part)
+					return nil, fmt.Errorf("invalid range: %q", part)
 				}
 				end = start + 1
 			case 2:
 				if ints[0] != "" {
 					start, err = strconv.ParseInt(ints[0], 10, 64)
 					if err != nil {
-						return nil, errors.Errorf("invalid range: %q", part)
+						return nil, fmt.Errorf("invalid range: %q", part)
 					}
 				}
 				if ints[1] != "" {
 					end, err = strconv.ParseInt(ints[1], 10, 64)
 					if err != nil {
-						return nil, errors.Errorf("invalid range: %q", part)
+						return nil, fmt.Errorf("invalid range: %q", part)
 					}
 				}
 			default:
-				return nil, errors.Errorf("invalid range: %q", part)
+				return nil, fmt.Errorf("invalid range: %q", part)
 			}
 			crs = append(crs, chunkRange{start: start, end: end})
 		}
@@ -749,18 +761,18 @@ func (f *Fs) rcFetch(ctx context.Context, in rc.Params) (rc.Params, error) {
 	delete(in, "chunks")
 	crs, err := parseChunks(s)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid chunks parameter")
+		return nil, fmt.Errorf("invalid chunks parameter: %w", err)
 	}
 	var files [][2]string
 	for k, v := range in {
 		if !strings.HasPrefix(k, "file") {
-			return nil, errors.Errorf("invalid parameter %s=%s", k, v)
+			return nil, fmt.Errorf("invalid parameter %s=%s", k, v)
 		}
 		switch v := v.(type) {
 		case string:
 			files = append(files, [2]string{v, f.unwrapRemote(v)})
 		default:
-			return nil, errors.Errorf("invalid parameter %s=%s", k, v)
+			return nil, fmt.Errorf("invalid parameter %s=%s", k, v)
 		}
 	}
 	type fileStatus struct {
@@ -1116,7 +1128,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 				case fs.Directory:
 					_ = f.cache.AddDir(DirectoryFromOriginal(ctx, f, o))
 				default:
-					return errors.Errorf("Unknown object type %T", entry)
+					return fmt.Errorf("Unknown object type %T", entry)
 				}
 			}
 

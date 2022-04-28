@@ -1,16 +1,21 @@
 package operations
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"os"
+	"regexp"
+	"strings"
 	"sync"
 	"sync/atomic"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/filter"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/march"
@@ -56,15 +61,15 @@ type checkMarch struct {
 
 // report outputs the fileName to out if required and to the combined log
 func (c *checkMarch) report(o fs.DirEntry, out io.Writer, sigil rune) {
+	c.reportFilename(o.String(), out, sigil)
+}
+
+func (c *checkMarch) reportFilename(filename string, out io.Writer, sigil rune) {
 	if out != nil {
-		c.ioMu.Lock()
-		_, _ = fmt.Fprintf(out, "%v\n", o)
-		c.ioMu.Unlock()
+		syncFprintf(out, "%s\n", filename)
 	}
 	if c.opt.Combined != nil {
-		c.ioMu.Lock()
-		_, _ = fmt.Fprintf(c.opt.Combined, "%c %v\n", sigil, o)
-		c.ioMu.Unlock()
+		syncFprintf(c.opt.Combined, "%c %s\n", sigil, filename)
 	}
 }
 
@@ -75,7 +80,7 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 		if c.opt.OneWay {
 			return false
 		}
-		err := errors.Errorf("File not in %v", c.opt.Fsrc)
+		err := fmt.Errorf("File not in %v", c.opt.Fsrc)
 		fs.Errorf(dst, "%v", err)
 		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
@@ -97,7 +102,7 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 	switch src.(type) {
 	case fs.Object:
-		err := errors.Errorf("File not in %v", c.opt.Fdst)
+		err := fmt.Errorf("File not in %v", c.opt.Fdst)
 		fs.Errorf(src, "%v", err)
 		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
@@ -120,7 +125,7 @@ func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (di
 		tr.Done(ctx, err)
 	}()
 	if sizeDiffers(ctx, src, dst) {
-		err = errors.Errorf("Sizes differ")
+		err = fmt.Errorf("Sizes differ")
 		fs.Errorf(src, "%v", err)
 		return true, false, nil
 	}
@@ -169,7 +174,7 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 				}
 			}()
 		} else {
-			err := errors.Errorf("is file on %v but directory on %v", c.opt.Fsrc, c.opt.Fdst)
+			err := fmt.Errorf("is file on %v but directory on %v", c.opt.Fsrc, c.opt.Fdst)
 			fs.Errorf(src, "%v", err)
 			_ = fs.CountError(err)
 			atomic.AddInt32(&c.differences, 1)
@@ -182,7 +187,7 @@ func (c *checkMarch) Match(ctx context.Context, dst, src fs.DirEntry) (recurse b
 		if ok {
 			return true
 		}
-		err := errors.Errorf("is file on %v but directory on %v", c.opt.Fdst, c.opt.Fsrc)
+		err := fmt.Errorf("is file on %v but directory on %v", c.opt.Fdst, c.opt.Fsrc)
 		fs.Errorf(dst, "%v", err)
 		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
@@ -224,11 +229,19 @@ func CheckFn(ctx context.Context, opt *CheckOpt) error {
 	err := m.Run(ctx)
 	c.wg.Wait() // wait for background go-routines
 
+	return c.reportResults(ctx, err)
+}
+
+func (c *checkMarch) reportResults(ctx context.Context, err error) error {
 	if c.dstFilesMissing > 0 {
 		fs.Logf(c.opt.Fdst, "%d files missing", c.dstFilesMissing)
 	}
 	if c.srcFilesMissing > 0 {
-		fs.Logf(c.opt.Fsrc, "%d files missing", c.srcFilesMissing)
+		entity := "files"
+		if c.opt.Fsrc == nil {
+			entity = "hashes"
+		}
+		fs.Logf(c.opt.Fsrc, "%d %s missing", c.srcFilesMissing, entity)
 	}
 
 	fs.Logf(c.opt.Fdst, "%d differences found", accounting.Stats(ctx).GetErrors())
@@ -246,7 +259,7 @@ func CheckFn(ctx context.Context, opt *CheckOpt) error {
 	}
 	if c.differences > 0 {
 		// Return an already counted error so we don't double count this error too
-		err = fserrors.FsError(errors.Errorf("%d differences found", c.differences))
+		err = fserrors.FsError(fmt.Errorf("%d differences found", c.differences))
 		fserrors.Count(err)
 		return err
 	}
@@ -265,7 +278,7 @@ func Check(ctx context.Context, opt *CheckOpt) error {
 			return false, true, nil
 		}
 		if !same {
-			err = errors.Errorf("%v differ", ht)
+			err = fmt.Errorf("%v differ", ht)
 			fs.Errorf(src, "%v", err)
 			return true, false, nil
 		}
@@ -322,7 +335,7 @@ func CheckIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ bool, err error) {
 	in1, err := dst.Open(ctx)
 	if err != nil {
-		return true, errors.Wrapf(err, "failed to open %q", dst)
+		return true, fmt.Errorf("failed to open %q: %w", dst, err)
 	}
 	tr1 := accounting.Stats(ctx).NewTransfer(dst)
 	defer func() {
@@ -332,7 +345,7 @@ func checkIdenticalDownload(ctx context.Context, dst, src fs.Object) (differ boo
 
 	in2, err := src.Open(ctx)
 	if err != nil {
-		return true, errors.Wrapf(err, "failed to open %q", src)
+		return true, fmt.Errorf("failed to open %q: %w", src, err)
 	}
 	tr2 := accounting.Stats(ctx).NewTransfer(dst)
 	defer func() {
@@ -352,9 +365,228 @@ func CheckDownload(ctx context.Context, opt *CheckOpt) error {
 	optCopy.Check = func(ctx context.Context, a, b fs.Object) (differ bool, noHash bool, err error) {
 		differ, err = CheckIdenticalDownload(ctx, a, b)
 		if err != nil {
-			return true, true, errors.Wrap(err, "failed to download")
+			return true, true, fmt.Errorf("failed to download: %w", err)
 		}
 		return differ, false, nil
 	}
 	return CheckFn(ctx, &optCopy)
+}
+
+// CheckSum checks filesystem hashes against a SUM file
+func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType hash.Type, opt *CheckOpt, download bool) error {
+	var options CheckOpt
+	if opt != nil {
+		options = *opt
+	} else {
+		// default options for hashsum -c
+		options.Combined = os.Stdout
+	}
+	// CheckSum treats Fsrc and Fdst specially:
+	options.Fsrc = nil  // no file system here, corresponds to the sum list
+	options.Fdst = fsrc // denotes the file system to check
+	opt = &options      // override supplied argument
+
+	if !download && (hashType == hash.None || !opt.Fdst.Hashes().Contains(hashType)) {
+		return fmt.Errorf("%s: hash type is not supported by file system: %s", hashType, opt.Fdst)
+	}
+
+	if sumFile == "" {
+		return fmt.Errorf("not a sum file: %s", fsum)
+	}
+	sumObj, err := fsum.NewObject(ctx, sumFile)
+	if err != nil {
+		return fmt.Errorf("cannot open sum file: %w", err)
+	}
+	hashes, err := ParseSumFile(ctx, sumObj)
+	if err != nil {
+		return fmt.Errorf("failed to parse sum file: %w", err)
+	}
+
+	ci := fs.GetConfig(ctx)
+	c := &checkMarch{
+		tokens: make(chan struct{}, ci.Checkers),
+		opt:    *opt,
+	}
+	lastErr := ListFn(ctx, opt.Fdst, func(obj fs.Object) {
+		c.checkSum(ctx, obj, download, hashes, hashType)
+	})
+	c.wg.Wait() // wait for background go-routines
+
+	// make census of unhandled sums
+	fi := filter.GetConfig(ctx)
+	for filename, hash := range hashes {
+		if hash == "" { // the sum has been successfully consumed
+			continue
+		}
+		if !fi.IncludeRemote(filename) { // the file was filtered out
+			continue
+		}
+		// filesystem missed the file, sum wasn't consumed
+		err := fmt.Errorf("File not in %v", opt.Fdst)
+		fs.Errorf(filename, "%v", err)
+		_ = fs.CountError(err)
+		if lastErr == nil {
+			lastErr = err
+		}
+		atomic.AddInt32(&c.dstFilesMissing, 1)
+		c.reportFilename(filename, opt.MissingOnDst, '+')
+	}
+
+	return c.reportResults(ctx, lastErr)
+}
+
+// checkSum checks single object against golden hashes
+func (c *checkMarch) checkSum(ctx context.Context, obj fs.Object, download bool, hashes HashSums, hashType hash.Type) {
+	remote := obj.Remote()
+	c.ioMu.Lock()
+	sumHash, sumFound := hashes[remote]
+	hashes[remote] = "" // mark sum as consumed
+	c.ioMu.Unlock()
+
+	if !sumFound && c.opt.OneWay {
+		return
+	}
+
+	var err error
+	tr := accounting.Stats(ctx).NewCheckingTransfer(obj)
+	defer tr.Done(ctx, err)
+
+	if !sumFound {
+		err = errors.New("sum not found")
+		_ = fs.CountError(err)
+		fs.Errorf(obj, "%v", err)
+		atomic.AddInt32(&c.differences, 1)
+		atomic.AddInt32(&c.srcFilesMissing, 1)
+		c.report(obj, c.opt.MissingOnSrc, '-')
+		return
+	}
+
+	if !download {
+		var objHash string
+		objHash, err = obj.Hash(ctx, hashType)
+		c.matchSum(ctx, sumHash, objHash, obj, err, hashType)
+		return
+	}
+
+	c.wg.Add(1)
+	c.tokens <- struct{}{} // put a token to limit concurrency
+	go func() {
+		var (
+			objHash string
+			err     error
+			in      io.ReadCloser
+		)
+		defer func() {
+			c.matchSum(ctx, sumHash, objHash, obj, err, hashType)
+			<-c.tokens // get the token back to free up a slot
+			c.wg.Done()
+		}()
+		if in, err = obj.Open(ctx); err != nil {
+			return
+		}
+		tr := accounting.Stats(ctx).NewTransfer(obj)
+		in = tr.Account(ctx, in).WithBuffer() // account and buffer the transfer
+		defer func() {
+			tr.Done(ctx, nil) // will close the stream
+		}()
+		hashVals, err2 := hash.StreamTypes(in, hash.NewHashSet(hashType))
+		if err2 != nil {
+			err = err2 // pass to matchSum
+			return
+		}
+		objHash = hashVals[hashType]
+	}()
+}
+
+// matchSum sums up the results of hashsum matching for an object
+func (c *checkMarch) matchSum(ctx context.Context, sumHash, objHash string, obj fs.Object, err error, hashType hash.Type) {
+	switch {
+	case err != nil:
+		_ = fs.CountError(err)
+		fs.Errorf(obj, "Failed to calculate hash: %v", err)
+		c.report(obj, c.opt.Error, '!')
+	case sumHash == "":
+		err = errors.New("duplicate file")
+		_ = fs.CountError(err)
+		fs.Errorf(obj, "%v", err)
+		c.report(obj, c.opt.Error, '!')
+	case objHash == "":
+		fs.Debugf(nil, "%v = %s (sum)", hashType, sumHash)
+		fs.Debugf(obj, "%v - could not check hash (%v)", hashType, c.opt.Fdst)
+		atomic.AddInt32(&c.noHashes, 1)
+		atomic.AddInt32(&c.matches, 1)
+		c.report(obj, c.opt.Match, '=')
+	case objHash == sumHash:
+		fs.Debugf(obj, "%v = %s OK", hashType, sumHash)
+		atomic.AddInt32(&c.matches, 1)
+		c.report(obj, c.opt.Match, '=')
+	default:
+		err = errors.New("files differ")
+		_ = fs.CountError(err)
+		fs.Debugf(nil, "%v = %s (sum)", hashType, sumHash)
+		fs.Debugf(obj, "%v = %s (%v)", hashType, objHash, c.opt.Fdst)
+		fs.Errorf(obj, "%v", err)
+		atomic.AddInt32(&c.differences, 1)
+		c.report(obj, c.opt.Differ, '*')
+	}
+}
+
+// HashSums represents a parsed SUM file
+type HashSums map[string]string
+
+// ParseSumFile parses a hash SUM file and returns hashes as a map
+func ParseSumFile(ctx context.Context, sumFile fs.Object) (HashSums, error) {
+	rd, err := sumFile.Open(ctx)
+	if err != nil {
+		return nil, err
+	}
+	parser := bufio.NewReader(rd)
+
+	const maxWarn = 3
+	numWarn := 0
+
+	re := regexp.MustCompile(`^([^ ]+) [ *](.+)$`)
+	hashes := HashSums{}
+	for lineNo := 0; true; lineNo++ {
+		lineBytes, _, err := parser.ReadLine()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+		line := string(lineBytes)
+		if line == "" {
+			continue
+		}
+
+		fields := re.FindStringSubmatch(line)
+		if fields == nil {
+			numWarn++
+			if numWarn <= maxWarn {
+				fs.Logf(sumFile, "improperly formatted checksum line %d", lineNo)
+			}
+			continue
+		}
+
+		sum, file := fields[1], fields[2]
+		if hashes[file] != "" {
+			numWarn++
+			if numWarn <= maxWarn {
+				fs.Logf(sumFile, "duplicate file on checksum line %d", lineNo)
+			}
+			continue
+		}
+
+		// We've standardised on lower case checksums in rclone internals.
+		hashes[file] = strings.ToLower(sum)
+	}
+
+	if numWarn > maxWarn {
+		fs.Logf(sumFile, "%d warning(s) suppressed...", numWarn-maxWarn)
+	}
+	if err = rd.Close(); err != nil {
+		return nil, err
+	}
+	return hashes, nil
 }

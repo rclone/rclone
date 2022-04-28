@@ -19,7 +19,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing.")
+	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing")
 }
 
 var commandDefinition = &cobra.Command{

@@ -3,6 +3,7 @@ package uptobox
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/uptobox/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -41,11 +41,9 @@ func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "uptobox",
 		Description: "Uptobox",
-		Config: func(ctx context.Context, name string, config configmap.Mapper) {
-		},
-		NewFs: NewFs,
+		NewFs:       NewFs,
 		Options: []fs.Option{{
-			Help: "Your access Token, get it from https://uptobox.com/my_account",
+			Help: "Your access token.\n\nGet it from https://uptobox.com/my_account.",
 			Name: "access_token",
 		}, {
 			Name:     config.ConfigEncoding,
@@ -306,7 +304,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 	var limit uint64 = 100 // max number of objects per request - 100 seems to be the maximum the api accepts
 	var page uint64 = 1
-	var offset uint64 = 0 // for the next page of requests
+	var offset uint64 // for the next page of requests
 
 	for {
 		opts := &api.MetadataRequestOptions{
@@ -410,7 +408,7 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, filename 
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't upload file")
+		return nil, fmt.Errorf("couldn't upload file: %w", err)
 	}
 	return &ul, nil
 }
@@ -440,10 +438,10 @@ func (f *Fs) move(ctx context.Context, dstPath string, fileID string) (err error
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "couldn't move file")
+		return fmt.Errorf("couldn't move file: %w", err)
 	}
 	if info.StatusCode != 0 {
-		return errors.Errorf("move: api error: %d - %s", info.StatusCode, info.Message)
+		return fmt.Errorf("move: api error: %d - %s", info.StatusCode, info.Message)
 	}
 	return err
 }
@@ -462,10 +460,10 @@ func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileIn
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "couldn't update file info")
+		return fmt.Errorf("couldn't update file info: %w", err)
 	}
 	if info.StatusCode != 0 {
-		return errors.Errorf("updateFileInfo: api error: %d - %s", info.StatusCode, info.Message)
+		return fmt.Errorf("updateFileInfo: api error: %d - %s", info.StatusCode, info.Message)
 	}
 	return err
 }
@@ -495,7 +493,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 	if info.StatusCode != 0 {
-		return nil, errors.Errorf("putUnchecked: api error: %d - %s", info.StatusCode, info.Message)
+		return nil, fmt.Errorf("putUnchecked: api error: %d - %s", info.StatusCode, info.Message)
 	}
 	// we need to have a safe name for the upload to work
 	tmpName := "rcloneTemp" + random.String(8)
@@ -683,7 +681,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if needMove {
 		err := f.mkDirs(ctx, strings.Trim(dstBase, "/"))
 		if err != nil {
-			return nil, errors.Wrap(err, "move: failed to make destination dirs")
+			return nil, fmt.Errorf("move: failed to make destination dirs: %w", err)
 		}
 
 		err = f.move(ctx, dstBase, srcObj.code)
@@ -696,7 +694,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if needRename {
 		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{Token: f.opt.AccessToken, FileCode: srcObj.code, NewName: f.opt.Enc.FromStandardName(dstLeaf)})
 		if err != nil {
-			return nil, errors.Wrap(err, "move: failed final rename")
+			return nil, fmt.Errorf("move: failed final rename: %w", err)
 		}
 	}
 
@@ -753,7 +751,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	srcPath := srcFs.dirPath(srcRemote)
 	srcInfo, err := f.readMetaDataForPath(ctx, srcPath, &api.MetadataRequestOptions{Limit: 1})
 	if err != nil {
-		return errors.Wrap(err, "dirmove: source not found")
+		return fmt.Errorf("dirmove: source not found: %w", err)
 	}
 	// check if the destination allready exists
 	dstPath := f.dirPath(dstRemote)
@@ -766,13 +764,13 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	dstBase, dstName := f.splitPathFull(dstRemote)
 	err = f.mkDirs(ctx, strings.Trim(dstBase, "/"))
 	if err != nil {
-		return errors.Wrap(err, "dirmove: failed to create dirs")
+		return fmt.Errorf("dirmove: failed to create dirs: %w", err)
 	}
 
 	// find the destination parent dir
 	dstInfo, err = f.readMetaDataForPath(ctx, dstBase, &api.MetadataRequestOptions{Limit: 1})
 	if err != nil {
-		return errors.Wrap(err, "dirmove: failed to read destination")
+		return fmt.Errorf("dirmove: failed to read destination: %w", err)
 	}
 	srcBase, srcName := srcFs.splitPathFull(srcRemote)
 
@@ -786,7 +784,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		tmpName := "rcloneTemp" + random.String(8)
 		err = f.renameDir(ctx, srcInfo.Data.CurrentFolder.FolderID, tmpName)
 		if err != nil {
-			return errors.Wrap(err, "dirmove: failed initial rename")
+			return fmt.Errorf("dirmove: failed initial rename: %w", err)
 		}
 	}
 
@@ -809,7 +807,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "dirmove: failed to move")
+			return fmt.Errorf("dirmove: failed to move: %w", err)
 		}
 		if apiErr.StatusCode != 0 {
 			return apiErr
@@ -820,7 +818,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if needRename {
 		err = f.renameDir(ctx, srcInfo.Data.CurrentFolder.FolderID, dstName)
 		if err != nil {
-			return errors.Wrap(err, "dirmove: failed final rename")
+			return fmt.Errorf("dirmove: failed final rename: %w", err)
 		}
 	}
 	return nil
@@ -850,10 +848,10 @@ func (f *Fs) copy(ctx context.Context, dstPath string, fileID string) (err error
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "couldn't copy file")
+		return fmt.Errorf("couldn't copy file: %w", err)
 	}
 	if info.StatusCode != 0 {
-		return errors.Errorf("copy: api error: %d - %s", info.StatusCode, info.Message)
+		return fmt.Errorf("copy: api error: %d - %s", info.StatusCode, info.Message)
 	}
 	return err
 }
@@ -873,7 +871,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	err := f.mkDirs(ctx, path.Join(f.root, dstBase))
 	if err != nil {
-		return nil, errors.Wrap(err, "copy: failed to make destination dirs")
+		return nil, fmt.Errorf("copy: failed to make destination dirs: %w", err)
 	}
 
 	err = f.copy(ctx, f.dirPath(dstBase), srcObj.code)
@@ -883,13 +881,13 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	newObj, err := f.NewObject(ctx, path.Join(dstBase, srcLeaf))
 	if err != nil {
-		return nil, errors.Wrap(err, "copy: couldn't find copied object")
+		return nil, fmt.Errorf("copy: couldn't find copied object: %w", err)
 	}
 
 	if needRename {
 		err := f.updateFileInformation(ctx, &api.UpdateFileInformation{Token: f.opt.AccessToken, FileCode: newObj.(*Object).code, NewName: f.opt.Enc.FromStandardName(dstLeaf)})
 		if err != nil {
-			return nil, errors.Wrap(err, "copy: failed final rename")
+			return nil, fmt.Errorf("copy: failed final rename: %w", err)
 		}
 		newObj.(*Object).remote = remote
 	}
@@ -972,7 +970,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "open: failed to get download link")
+		return nil, fmt.Errorf("open: failed to get download link: %w", err)
 	}
 
 	fs.FixRangeOption(options, o.size)
@@ -1012,7 +1010,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// delete duplicate object after successful upload
 	err = o.Remove(ctx)
 	if err != nil {
-		return errors.Wrap(err, "failed to remove old version")
+		return fmt.Errorf("failed to remove old version: %w", err)
 	}
 
 	// Replace guts of old object with new one
@@ -1040,7 +1038,7 @@ func (o *Object) Remove(ctx context.Context) error {
 		return err
 	}
 	if info.StatusCode != 0 {
-		return errors.Errorf("remove: api error: %d - %s", info.StatusCode, info.Message)
+		return fmt.Errorf("remove: api error: %d - %s", info.StatusCode, info.Message)
 	}
 	return nil
 }

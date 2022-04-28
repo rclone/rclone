@@ -132,6 +132,7 @@ func (tr *Transfer) Reset(ctx context.Context) {
 	ci := fs.GetConfig(ctx)
 
 	if acc != nil {
+		acc.Done()
 		if err := acc.Close(); err != nil {
 			fs.LogLevelPrintf(ci.StatsLogLevel, nil, "can't close account: %+v\n", err)
 		}

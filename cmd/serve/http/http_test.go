@@ -10,10 +10,10 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/httplib"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/filter"
+	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,10 +32,13 @@ const (
 func startServer(t *testing.T, f fs.Fs) {
 	opt := httplib.DefaultOpt
 	opt.ListenAddr = testBindAddress
-	opt.Template = testTemplate
-	httpServer = newServer(f, &opt)
-	assert.NoError(t, httpServer.Serve())
-	testURL = httpServer.Server.URL()
+	httpServer = newServer(f, testTemplate)
+	router, err := httplib.Router()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	httpServer.Bind(router)
+	testURL = httplib.URL()
 
 	// try to connect to the test server
 	pause := time.Millisecond
@@ -61,7 +64,7 @@ var (
 func TestInit(t *testing.T) {
 	ctx := context.Background()
 	// Configure the remote
-	configfile.LoadConfig(context.Background())
+	configfile.Install()
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true
@@ -227,6 +230,5 @@ func TestGET(t *testing.T) {
 }
 
 func TestFinalise(t *testing.T) {
-	httpServer.Close()
-	httpServer.Wait()
+	_ = httplib.Shutdown()
 }

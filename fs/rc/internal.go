@@ -4,6 +4,7 @@ package rc
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/pkg/errors"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/obscure"
@@ -60,7 +60,7 @@ Useful for testing error handling.`,
 
 // Return an error regardless
 func rcError(ctx context.Context, in Params) (out Params, err error) {
-	return nil, errors.Errorf("arbitrary error on input %+v", in)
+	return nil, fmt.Errorf("arbitrary error on input %+v", in)
 }
 
 func init() {
@@ -110,10 +110,10 @@ are explained in the go docs: https://golang.org/pkg/runtime/#MemStats
 
 The most interesting values for most people are:
 
-* HeapAlloc: This is the amount of memory rclone is actually using
-* HeapSys: This is the amount of memory rclone has obtained from the OS
-* Sys: this is the total amount of memory requested from the OS
-  * It is virtual memory so may include unused memory
+- HeapAlloc - this is the amount of memory rclone is actually using
+- HeapSys - this is the amount of memory rclone has obtained from the OS
+- Sys - this is the total amount of memory requested from the OS
+   - It is virtual memory so may include unused memory
 `,
 	})
 }
@@ -171,7 +171,7 @@ func init() {
 		Fn:    rcVersion,
 		Title: "Shows the current version of rclone and the go runtime.",
 		Help: `
-This shows the current version of go and the go runtime
+This shows the current version of go and the go runtime:
 
 - version - rclone version, e.g. "v1.53.0"
 - decomposed - version number as [major, minor, patch]
@@ -217,7 +217,7 @@ func init() {
 Pass a clear string and rclone will obscure it for the config file:
 - clear - string
 
-Returns
+Returns:
 - obscured - string
 `,
 	})
@@ -245,7 +245,7 @@ func init() {
 		Fn:    rcQuit,
 		Title: "Terminates the app.",
 		Help: `
-(optional) Pass an exit code to be used for terminating the app:
+(Optional) Pass an exit code to be used for terminating the app:
 - exitCode - int
 `,
 	})
@@ -289,11 +289,11 @@ Once this is set you can look use this to profile the mutex contention:
 
     go tool pprof http://localhost:5572/debug/pprof/mutex
 
-Parameters
+Parameters:
 
 - rate - int
 
-Results
+Results:
 
 - previousRate - int
 `,
@@ -329,7 +329,7 @@ After calling this you can use this to see the blocking profile:
 
     go tool pprof http://localhost:5572/debug/pprof/block
 
-Parameters
+Parameters:
 
 - rate - int
 `,
@@ -354,29 +354,29 @@ func init() {
 		NeedsRequest:  true,
 		NeedsResponse: true,
 		Title:         "Run a rclone terminal command over rc.",
-		Help: `This takes the following parameters
+		Help: `This takes the following parameters:
 
-- command - a string with the command name
-- arg - a list of arguments for the backend command
-- opt - a map of string to string of options
-- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
-    - defaults to "COMBINED_OUTPUT" if not set
-    - the STREAM returnTypes will write the output to the body of the HTTP message
-    - the COMBINED_OUTPUT will write the output to the "result" parameter
+- command - a string with the command name.
+- arg - a list of arguments for the backend command.
+- opt - a map of string to string of options.
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR").
+    - Defaults to "COMBINED_OUTPUT" if not set.
+    - The STREAM returnTypes will write the output to the body of the HTTP message.
+    - The COMBINED_OUTPUT will write the output to the "result" parameter.
 
-Returns
+Returns:
 
-- result - result from the backend command
-    - only set when using returnType "COMBINED_OUTPUT"
-- error	 - set if rclone exits with an error code
-- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR")
+- result - result from the backend command.
+    - Only set when using returnType "COMBINED_OUTPUT".
+- error	 - set if rclone exits with an error code.
+- returnType - one of ("COMBINED_OUTPUT", "STREAM", "STREAM_ONLY_STDOUT", "STREAM_ONLY_STDERR").
 
-For example
+Example:
 
     rclone rc core/command command=ls -a mydrive:/ -o max-depth=1
     rclone rc core/command -a ls -a mydrive:/ -o max-depth=1
 
-Returns
+Returns:
 
 ` + "```" + `
 {
@@ -422,7 +422,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 	var httpResponse http.ResponseWriter
 	httpResponse, err = in.GetHTTPResponseWriter()
 	if err != nil {
-		return nil, errors.Errorf("response object is required\n" + err.Error())
+		return nil, fmt.Errorf("response object is required\n" + err.Error())
 	}
 
 	var allArgs = []string{}
@@ -475,7 +475,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 		cmd.Stdout = httpResponse
 		cmd.Stderr = httpResponse
 	} else {
-		return nil, errors.Errorf("Unknown returnType %q", returnType)
+		return nil, fmt.Errorf("Unknown returnType %q", returnType)
 	}
 
 	err = cmd.Run()

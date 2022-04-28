@@ -4,10 +4,10 @@ package zoho
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"path"
@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/random"
@@ -73,41 +72,97 @@ func init() {
 		Name:        "zoho",
 		Description: "Zoho",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			// Need to setup region before configuring oauth
-			setupRegion(m)
-			opt := oauthutil.Options{
-				// No refresh token unless ApprovalForce is set
-				OAuth2Opts: []oauth2.AuthCodeOption{oauth2.ApprovalForce},
-			}
-			if err := oauthutil.Config(ctx, "zoho", name, m, oauthConfig, &opt); err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
-			}
-			// We need to rewrite the token type to "Zoho-oauthtoken" because Zoho wants
-			// it's own custom type
-			token, err := oauthutil.GetToken(name, m)
+			err := setupRegion(m)
 			if err != nil {
-				log.Fatalf("Failed to read token: %v", err)
+				return nil, err
 			}
-			if token.TokenType != "Zoho-oauthtoken" {
-				token.TokenType = "Zoho-oauthtoken"
-				err = oauthutil.PutToken(name, m, token, false)
+			getSrvs := func() (authSrv, apiSrv *rest.Client, err error) {
+				oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 				if err != nil {
-					log.Fatalf("Failed to configure token: %v", err)
+					return nil, nil, fmt.Errorf("failed to load oAuthClient: %w", err)
 				}
+				authSrv = rest.NewClient(oAuthClient).SetRoot(accountsURL)
+				apiSrv = rest.NewClient(oAuthClient).SetRoot(rootURL)
+				return authSrv, apiSrv, nil
 			}
 
-			if fs.GetConfig(ctx).AutoConfirm {
-				return
-			}
+			switch config.State {
+			case "":
+				return oauthutil.ConfigOut("teams", &oauthutil.Options{
+					OAuth2Config: oauthConfig,
+					// No refresh token unless ApprovalForce is set
+					OAuth2Opts: []oauth2.AuthCodeOption{oauth2.ApprovalForce},
+				})
+			case "teams":
+				// We need to rewrite the token type to "Zoho-oauthtoken" because Zoho wants
+				// it's own custom type
+				token, err := oauthutil.GetToken(name, m)
+				if err != nil {
+					return nil, fmt.Errorf("failed to read token: %w", err)
+				}
+				if token.TokenType != "Zoho-oauthtoken" {
+					token.TokenType = "Zoho-oauthtoken"
+					err = oauthutil.PutToken(name, m, token, false)
+					if err != nil {
+						return nil, fmt.Errorf("failed to configure token: %w", err)
+					}
+				}
 
-			if err = setupRoot(ctx, name, m); err != nil {
-				log.Fatalf("Failed to configure root directory: %v", err)
+				authSrv, apiSrv, err := getSrvs()
+				if err != nil {
+					return nil, err
+				}
+
+				// Get the user Info
+				opts := rest.Opts{
+					Method: "GET",
+					Path:   "/oauth/user/info",
+				}
+				var user api.User
+				_, err = authSrv.CallJSON(ctx, &opts, nil, &user)
+				if err != nil {
+					return nil, err
+				}
+
+				// Get the teams
+				teams, err := listTeams(ctx, user.ZUID, apiSrv)
+				if err != nil {
+					return nil, err
+				}
+				return fs.ConfigChoose("workspace", "config_team_drive_id", "Team Drive ID", len(teams), func(i int) (string, string) {
+					team := teams[i]
+					return team.ID, team.Attributes.Name
+				})
+			case "workspace":
+				_, apiSrv, err := getSrvs()
+				if err != nil {
+					return nil, err
+				}
+				teamID := config.Result
+				workspaces, err := listWorkspaces(ctx, teamID, apiSrv)
+				if err != nil {
+					return nil, err
+				}
+				return fs.ConfigChoose("workspace_end", "config_workspace", "Workspace ID", len(workspaces), func(i int) (string, string) {
+					workspace := workspaces[i]
+					return workspace.ID, workspace.Attributes.Name
+				})
+			case "workspace_end":
+				worksspaceID := config.Result
+				m.Set(configRootID, worksspaceID)
+				return nil, nil
 			}
+			return nil, fmt.Errorf("unknown state %q", config.State)
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "region",
-			Help: "Zoho region to connect to. You'll have to use the region you organization is registered in.",
+			Help: `Zoho region to connect to.
+
+You'll have to use the region your organization is registered in. If
+not sure use the same top level domain as you connect to in your
+browser.`,
 			Examples: []fs.OptionExample{{
 				Value: "com",
 				Help:  "United states / Global",
@@ -164,15 +219,16 @@ type Object struct {
 
 // ------------------------------------------------------------
 
-func setupRegion(m configmap.Mapper) {
+func setupRegion(m configmap.Mapper) error {
 	region, ok := m.Get("region")
 	if !ok || region == "" {
-		log.Fatalf("No region set\n")
+		return errors.New("no region set")
 	}
 	rootURL = fmt.Sprintf("https://workdrive.zoho.%s/api/v1", region)
 	accountsURL = fmt.Sprintf("https://accounts.zoho.%s", region)
 	oauthConfig.Endpoint.AuthURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/auth", region)
 	oauthConfig.Endpoint.TokenURL = fmt.Sprintf("https://accounts.zoho.%s/oauth/v2/token", region)
+	return nil
 }
 
 // ------------------------------------------------------------
@@ -203,49 +259,6 @@ func listWorkspaces(ctx context.Context, teamID string, srv *rest.Client) ([]api
 		return nil, err
 	}
 	return workspaceList.TeamWorkspace, nil
-}
-
-func setupRoot(ctx context.Context, name string, m configmap.Mapper) error {
-	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
-	if err != nil {
-		log.Fatalf("Failed to load oAuthClient: %s", err)
-	}
-	authSrv := rest.NewClient(oAuthClient).SetRoot(accountsURL)
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/oauth/user/info",
-	}
-
-	var user api.User
-	_, err = authSrv.CallJSON(ctx, &opts, nil, &user)
-	if err != nil {
-		return err
-	}
-
-	apiSrv := rest.NewClient(oAuthClient).SetRoot(rootURL)
-	teams, err := listTeams(ctx, user.ZUID, apiSrv)
-	if err != nil {
-		return err
-	}
-	var teamIDs, teamNames []string
-	for _, team := range teams {
-		teamIDs = append(teamIDs, team.ID)
-		teamNames = append(teamNames, team.Attributes.Name)
-	}
-	teamID := config.Choose("Enter a Team Drive ID", teamIDs, teamNames, true)
-
-	workspaces, err := listWorkspaces(ctx, teamID, apiSrv)
-	if err != nil {
-		return err
-	}
-	var workspaceIDs, workspaceNames []string
-	for _, workspace := range workspaces {
-		workspaceIDs = append(workspaceIDs, workspace.ID)
-		workspaceNames = append(workspaceNames, workspace.Attributes.Name)
-	}
-	worksspaceID := config.Choose("Enter a Workspace ID", workspaceIDs, workspaceNames, true)
-	m.Set(configRootID, worksspaceID)
-	return nil
 }
 
 // --------------------------------------------------------------
@@ -377,7 +390,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err := configstruct.Set(m, opt); err != nil {
 		return nil, err
 	}
-	setupRegion(m)
+	err := setupRegion(m)
+	if err != nil {
+		return nil, err
+	}
 
 	root = parsePath(root)
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
@@ -462,7 +478,7 @@ OUTER:
 			return shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return found, errors.Wrap(err, "couldn't list files")
+			return found, fmt.Errorf("couldn't list files: %w", err)
 		}
 		if len(result.Items) == 0 {
 			break
@@ -654,7 +670,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 	params.Set("override-name-exist", strconv.FormatBool(true))
 	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, nil, "content", name)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to make multipart upload")
+		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
 	}
 
 	contentLength := overhead + size
@@ -676,7 +692,7 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "upload error")
+		return nil, fmt.Errorf("upload error: %w", err)
 	}
 	if len(uploadResponse.Uploads) != 1 {
 		return nil, errors.New("upload: invalid response")
@@ -758,7 +774,7 @@ func (f *Fs) deleteObject(ctx context.Context, id string) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "delete object failed")
+		return fmt.Errorf("delete object failed: %w", err)
 	}
 	return nil
 }
@@ -785,7 +801,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 
 	err = f.deleteObject(ctx, rootID)
 	if err != nil {
-		return errors.Wrap(err, "rmdir failed")
+		return fmt.Errorf("rmdir failed: %w", err)
 	}
 	f.dirCache.FlushDir(dir)
 	return nil
@@ -828,7 +844,7 @@ func (f *Fs) rename(ctx context.Context, id, name string) (item *api.Item, err e
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "rename failed")
+		return nil, fmt.Errorf("rename failed: %w", err)
 	}
 	return &result.Item, nil
 }
@@ -881,7 +897,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't copy file")
+		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
 	// Server acts weird some times make sure we actually got
 	// an item
@@ -895,7 +911,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// the correct name after copy
 	if f.opt.Enc.ToStandardName(result.Items[0].Attributes.Name) != leaf {
 		if err = dstObject.rename(ctx, leaf); err != nil {
-			return nil, errors.Wrap(err, "copy: couldn't rename copied file")
+			return nil, fmt.Errorf("copy: couldn't rename copied file: %w", err)
 		}
 	}
 	return dstObject, nil
@@ -926,7 +942,7 @@ func (f *Fs) move(ctx context.Context, srcID, parentID string) (item *api.Item, 
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "move failed")
+		return nil, fmt.Errorf("move failed: %w", err)
 	}
 	// Server acts weird some times make sure our array actually contains
 	// a file
@@ -976,7 +992,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if needRename && needMove {
 		tmpLeaf := "rcloneTemp" + random.String(8)
 		if err = srcObj.rename(ctx, tmpLeaf); err != nil {
-			return nil, errors.Wrap(err, "move: pre move rename failed")
+			return nil, fmt.Errorf("move: pre move rename failed: %w", err)
 		}
 	}
 
@@ -996,7 +1012,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// rename the leaf to its final name
 	if needRename {
 		if err = dstObject.rename(ctx, dstLeaf); err != nil {
-			return nil, errors.Wrap(err, "move: couldn't rename moved file")
+			return nil, fmt.Errorf("move: couldn't rename moved file: %w", err)
 		}
 	}
 	return dstObject, nil
@@ -1030,7 +1046,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// do the move
 	_, err = f.move(ctx, srcID, dstDirectoryID)
 	if err != nil {
-		return errors.Wrap(err, "couldn't dir move")
+		return fmt.Errorf("couldn't dir move: %w", err)
 	}
 
 	// Can't copy and change name in one step so we have to check if we have
@@ -1038,7 +1054,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if srcLeaf != dstLeaf {
 		_, err = f.rename(ctx, srcID, dstLeaf)
 		if err != nil {
-			return errors.Wrap(err, "dirmove: couldn't rename moved dir")
+			return fmt.Errorf("dirmove: couldn't rename moved dir: %w", err)
 		}
 	}
 	srcFs.dirCache.FlushDir(srcRemote)
@@ -1105,7 +1121,7 @@ func (o *Object) Size() int64 {
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *api.Item) (err error) {
 	if info.Attributes.IsFolder {
-		return fs.ErrorNotAFile
+		return fs.ErrorIsDir
 	}
 	o.hasMetaData = true
 	o.size = info.Attributes.StorageInfo.Size
@@ -1245,7 +1261,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	// upload was successfull, need to delete old object before rename
 	if err = o.Remove(ctx); err != nil {
-		return errors.Wrap(err, "failed to remove old object")
+		return fmt.Errorf("failed to remove old object: %w", err)
 	}
 	if err = o.setMetaData(info); err != nil {
 		return err

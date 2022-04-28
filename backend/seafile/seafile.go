@@ -2,6 +2,7 @@ package seafile
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/seafile/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -60,41 +60,41 @@ func init() {
 		Config:      Config,
 		Options: []fs.Option{{
 			Name:     configURL,
-			Help:     "URL of seafile host to connect to",
+			Help:     "URL of seafile host to connect to.",
 			Required: true,
 			Examples: []fs.OptionExample{{
 				Value: "https://cloud.seafile.com/",
-				Help:  "Connect to cloud.seafile.com",
+				Help:  "Connect to cloud.seafile.com.",
 			}},
 		}, {
 			Name:     configUser,
-			Help:     "User name (usually email address)",
+			Help:     "User name (usually email address).",
 			Required: true,
 		}, {
 			// Password is not required, it will be left blank for 2FA
 			Name:       configPassword,
-			Help:       "Password",
+			Help:       "Password.",
 			IsPassword: true,
 		}, {
 			Name:    config2FA,
-			Help:    "Two-factor authentication ('true' if the account has 2FA enabled)",
+			Help:    "Two-factor authentication ('true' if the account has 2FA enabled).",
 			Default: false,
 		}, {
 			Name: configLibrary,
-			Help: "Name of the library. Leave blank to access all non-encrypted libraries.",
+			Help: "Name of the library.\n\nLeave blank to access all non-encrypted libraries.",
 		}, {
 			Name:       configLibraryKey,
-			Help:       "Library password (for encrypted libraries only). Leave blank if you pass it through the command line.",
+			Help:       "Library password (for encrypted libraries only).\n\nLeave blank if you pass it through the command line.",
 			IsPassword: true,
 		}, {
 			Name:     configCreateLibrary,
-			Help:     "Should rclone create a library if it doesn't exist",
+			Help:     "Should rclone create a library if it doesn't exist.",
 			Advanced: true,
 			Default:  false,
 		}, {
 			// Keep the authentication token after entering the 2FA code
 			Name: configAuthToken,
-			Help: "Authentication token",
+			Help: "Authentication token.",
 			Hide: fs.OptionHideBoth,
 		}, {
 			Name:     config.ConfigEncoding,
@@ -171,14 +171,14 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		var err error
 		opt.Password, err = obscure.Reveal(opt.Password)
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't decrypt user password")
+			return nil, fmt.Errorf("couldn't decrypt user password: %w", err)
 		}
 	}
 	if opt.LibraryKey != "" {
 		var err error
 		opt.LibraryKey, err = obscure.Reveal(opt.LibraryKey)
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't decrypt library password")
+			return nil, fmt.Errorf("couldn't decrypt library password: %w", err)
 		}
 	}
 
@@ -282,7 +282,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 		_, err := f.NewObject(ctx, remote)
 		if err != nil {
-			if errors.Cause(err) == fs.ErrorObjectNotFound || errors.Cause(err) == fs.ErrorNotAFile {
+			if errors.Is(err, fs.ErrorObjectNotFound) || errors.Is(err, fs.ErrorNotAFile) {
 				// File doesn't exist so return the original f
 				f.rootDirectory = rootDirectory
 				return f, nil
@@ -296,86 +296,90 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 }
 
 // Config callback for 2FA
-func Config(ctx context.Context, name string, m configmap.Mapper) {
-	ci := fs.GetConfig(ctx)
+func Config(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 	serverURL, ok := m.Get(configURL)
 	if !ok || serverURL == "" {
 		// If there's no server URL, it means we're trying an operation at the backend level, like a "rclone authorize seafile"
-		fmt.Print("\nOperation not supported on this remote.\nIf you need a 2FA code on your account, use the command:\n\nrclone config reconnect <remote name>:\n\n")
-		return
-	}
-
-	// Stop if we are running non-interactive config
-	if ci.AutoConfirm {
-		return
+		return nil, errors.New("operation not supported on this remote. If you need a 2FA code on your account, use the command: rclone config reconnect <remote name>: ")
 	}
 
 	u, err := url.Parse(serverURL)
 	if err != nil {
-		fs.Errorf(nil, "Invalid server URL %s", serverURL)
-		return
+		return nil, fmt.Errorf("invalid server URL %s", serverURL)
 	}
 
 	is2faEnabled, _ := m.Get(config2FA)
 	if is2faEnabled != "true" {
-		fmt.Println("Two-factor authentication is not enabled on this account.")
-		return
+		// no need to do anything here
+		return nil, nil
 	}
 
 	username, _ := m.Get(configUser)
 	if username == "" {
-		fs.Errorf(nil, "A username is required")
-		return
+		return nil, errors.New("a username is required")
 	}
 
 	password, _ := m.Get(configPassword)
 	if password != "" {
 		password, _ = obscure.Reveal(password)
 	}
-	// Just make sure we do have a password
-	for password == "" {
-		fmt.Print("Two-factor authentication: please enter your password (it won't be saved in the configuration)\npassword> ")
-		password = config.ReadPassword()
-	}
 
-	// Create rest client for getAuthorizationToken
-	url := u.String()
-	if !strings.HasPrefix(url, "/") {
-		url += "/"
-	}
-	srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(url)
-
-	// We loop asking for a 2FA code
-	for {
-		code := ""
-		for code == "" {
-			fmt.Print("Two-factor authentication: please enter your 2FA code\n2fa code> ")
-			code = config.ReadLine()
+	switch config.State {
+	case "":
+		// Empty state means it's the first call to the Config function
+		if password == "" {
+			return fs.ConfigPassword("password", "config_password", "Two-factor authentication: please enter your password (it won't be saved in the configuration)")
+		}
+		// password was successfully loaded from the config
+		return fs.ConfigGoto("2fa")
+	case "password":
+		// password should be coming from the previous state (entered by the user)
+		password = config.Result
+		if password == "" {
+			return fs.ConfigError("", "Password can't be blank")
+		}
+		// save it into the configuration file and keep going
+		m.Set(configPassword, obscure.MustObscure(password))
+		return fs.ConfigGoto("2fa")
+	case "2fa":
+		return fs.ConfigInput("2fa_do", "config_2fa", "Two-factor authentication: please enter your 2FA code")
+	case "2fa_do":
+		code := config.Result
+		if code == "" {
+			return fs.ConfigError("2fa", "2FA codes can't be blank")
 		}
 
+		// Create rest client for getAuthorizationToken
+		url := u.String()
+		if !strings.HasPrefix(url, "/") {
+			url += "/"
+		}
+		srv := rest.NewClient(fshttp.NewClient(ctx)).SetRoot(url)
+
+		// We loop asking for a 2FA code
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		fmt.Println("Authenticating...")
 		token, err := getAuthorizationToken(ctx, srv, username, password, code)
 		if err != nil {
-			fmt.Printf("Authentication failed: %v\n", err)
-			tryAgain := strings.ToLower(config.ReadNonEmptyLine("Do you want to try again (y/n)?"))
-			if tryAgain != "y" && tryAgain != "yes" {
-				// The user is giving up, we're done here
-				break
-			}
+			return fs.ConfigConfirm("2fa_error", true, "config_retry", fmt.Sprintf("Authentication failed: %v\n\nTry Again?", err))
 		}
-		if token != "" {
-			fmt.Println("Success!")
-			// Let's save the token into the configuration
-			m.Set(configAuthToken, token)
-			// And delete any previous entry for password
-			m.Set(configPassword, "")
-			// And we're done here
-			break
+		if token == "" {
+			return fs.ConfigConfirm("2fa_error", true, "config_retry", "Authentication failed - no token returned.\n\nTry Again?")
 		}
+		// Let's save the token into the configuration
+		m.Set(configAuthToken, token)
+		// And delete any previous entry for password
+		m.Set(configPassword, "")
+		// And we're done here
+		return nil, nil
+	case "2fa_error":
+		if config.Result == "true" {
+			return fs.ConfigGoto("2fa")
+		}
+		return nil, errors.New("2fa authentication failed")
 	}
+	return nil, fmt.Errorf("unknown state %q", config.State)
 }
 
 // sets the AuthorizationToken up
@@ -882,7 +886,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// 1- rename source
 	err = srcFs.renameDir(ctx, srcLibraryID, srcPath, tempName)
 	if err != nil {
-		return errors.Wrap(err, "Cannot rename source directory to a temporary name")
+		return fmt.Errorf("Cannot rename source directory to a temporary name: %w", err)
 	}
 
 	// 2- move source to destination
@@ -896,7 +900,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// 3- rename destination back to source name
 	err = f.renameDir(ctx, dstLibraryID, path.Join(dstDir, tempName), dstName)
 	if err != nil {
-		return errors.Wrap(err, "Cannot rename temporary directory to destination name")
+		return fmt.Errorf("Cannot rename temporary directory to destination name: %w", err)
 	}
 
 	return nil

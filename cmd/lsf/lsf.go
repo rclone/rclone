@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ls/lshelp"
 	"github.com/rclone/rclone/fs"
@@ -32,14 +31,14 @@ func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
 	flags.StringVarP(cmdFlags, &format, "format", "F", "p", "Output format - see  help for details")
-	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format.")
-	flags.BoolVarP(cmdFlags, &dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
+	flags.StringVarP(cmdFlags, &separator, "separator", "s", ";", "Separator for the items in the format")
+	flags.BoolVarP(cmdFlags, &dirSlash, "dir-slash", "d", true, "Append a slash to directory names")
 	flags.FVarP(cmdFlags, &hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
-	flags.BoolVarP(cmdFlags, &filesOnly, "files-only", "", false, "Only list files.")
-	flags.BoolVarP(cmdFlags, &dirsOnly, "dirs-only", "", false, "Only list directories.")
-	flags.BoolVarP(cmdFlags, &csv, "csv", "", false, "Output in CSV format.")
-	flags.BoolVarP(cmdFlags, &absolute, "absolute", "", false, "Put a leading / in front of path names.")
-	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing.")
+	flags.BoolVarP(cmdFlags, &filesOnly, "files-only", "", false, "Only list files")
+	flags.BoolVarP(cmdFlags, &dirsOnly, "dirs-only", "", false, "Only list directories")
+	flags.BoolVarP(cmdFlags, &csv, "csv", "", false, "Output in CSV format")
+	flags.BoolVarP(cmdFlags, &absolute, "absolute", "", false, "Put a leading / in front of path names")
+	flags.BoolVarP(cmdFlags, &recurse, "recursive", "R", false, "Recurse into the listing")
 }
 
 var commandDefinition = &cobra.Command{
@@ -93,13 +92,13 @@ can be returned as an empty string if it isn't available on the object
 the object and "UNSUPPORTED" if that object does not support that hash
 type.
 
-For example to emulate the md5sum command you can use
+For example, to emulate the md5sum command you can use
 
     rclone lsf -R --hash MD5 --format hp --separator "  " --files-only .
 
 Eg
 
-    $ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket 
+    $ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket
     7908e352297f0f530b84a756f188baa3  bevajer5jef
     cd65ac234e6fea5925974a51cdd865cc  canole
     03b5341b4f234b9d984d03ad076bae91  diwogej7
@@ -134,7 +133,7 @@ Eg
 Note that the --absolute parameter is useful for making lists of files
 to pass to an rclone copy with the --files-from-raw flag.
 
-For example to find all the files modified within one day and copy
+For example, to find all the files modified within one day and copy
 those only (without traversing the whole directory structure):
 
     rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
@@ -200,7 +199,7 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 		case 'T':
 			list.AddTier()
 		default:
-			return errors.Errorf("Unknown format character %q", char)
+			return fmt.Errorf("Unknown format character %q", char)
 		}
 	}
 

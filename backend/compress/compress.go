@@ -10,6 +10,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -21,7 +22,6 @@ import (
 	"github.com/buengese/sgzip"
 	"github.com/gabriel-vasile/mimetype"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/chunkedreader"
@@ -36,7 +36,7 @@ import (
 // Globals
 const (
 	initialChunkSize = 262144  // Initial and max sizes of chunks when reading parts of the file. Currently
-	maxChunkSize     = 8388608 // at 256KB and 8 MB.
+	maxChunkSize     = 8388608 // at 256 KiB and 8 MiB.
 
 	bufferSize          = 8388608
 	heuristicBytes      = 1048576
@@ -83,23 +83,23 @@ func init() {
 			Name: "level",
 			Help: `GZIP compression level (-2 to 9).
 
-			Generally -1 (default, equivalent to 5) is recommended.
-			Levels 1 to 9 increase compressiong at the cost of speed.. Going past 6 
-			generally offers very little return.
-			
-			Level -2 uses Huffmann encoding only. Only use if you now what you
-			are doing
-			Level 0 turns off compression.`,
+Generally -1 (default, equivalent to 5) is recommended.
+Levels 1 to 9 increase compression at the cost of speed. Going past 6 
+generally offers very little return.
+
+Level -2 uses Huffmann encoding only. Only use if you know what you
+are doing.
+Level 0 turns off compression.`,
 			Default:  sgzip.DefaultCompression,
 			Advanced: true,
 		}, {
 			Name: "ram_cache_limit",
 			Help: `Some remotes don't allow the upload of files with unknown size.
-				   In this case the compressed file will need to be cached to determine
-				   it's size.
-				   
-				   Files smaller than this limit will be cached in RAM, file larger than 
-				   this limit will be cached on disk`,
+In this case the compressed file will need to be cached to determine
+it's size.
+
+Files smaller than this limit will be cached in RAM, files larger than 
+this limit will be cached on disk.`,
 			Default:  fs.SizeSuffix(20 * 1024 * 1024),
 			Advanced: true,
 		}},
@@ -143,7 +143,7 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 
 	wInfo, wName, wPath, wConfig, err := fs.ConfigFs(remote)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse remote %q to wrap", remote)
+		return nil, fmt.Errorf("failed to parse remote %q to wrap: %w", remote, err)
 	}
 
 	// Strip trailing slashes if they exist in rpath
@@ -158,7 +158,7 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		wrappedFs, err = wInfo.NewFs(ctx, wName, remotePath, wConfig)
 	}
 	if err != nil && err != fs.ErrorIsFile {
-		return nil, errors.Wrapf(err, "failed to make remote %s:%q to wrap", wName, remotePath)
+		return nil, fmt.Errorf("failed to make remote %s:%q to wrap: %w", wName, remotePath, err)
 	}
 
 	// Create the wrapping fs
@@ -304,7 +304,7 @@ func (f *Fs) processEntries(entries fs.DirEntries) (newEntries fs.DirEntries, er
 		case fs.Directory:
 			f.addDir(&newEntries, x)
 		default:
-			return nil, errors.Errorf("Unknown object type %T", entry)
+			return nil, fmt.Errorf("Unknown object type %T", entry)
 		}
 	}
 	return newEntries, nil
@@ -401,6 +401,10 @@ func isCompressible(r io.Reader) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	err = w.Close()
+	if err != nil {
+		return false, err
+	}
 	ratio := float64(n) / float64(b.Len())
 	return ratio > minCompressionRatio, nil
 }
@@ -410,7 +414,7 @@ func (f *Fs) verifyObjectHash(ctx context.Context, o fs.Object, hasher *hash.Mul
 	srcHash := hasher.Sums()[ht]
 	dstHash, err := o.Hash(ctx, ht)
 	if err != nil {
-		return errors.Wrap(err, "failed to read destination hash")
+		return fmt.Errorf("failed to read destination hash: %w", err)
 	}
 	if srcHash != "" && dstHash != "" && srcHash != dstHash {
 		// remove object
@@ -418,7 +422,7 @@ func (f *Fs) verifyObjectHash(ctx context.Context, o fs.Object, hasher *hash.Mul
 		if err != nil {
 			fs.Errorf(o, "Failed to remove corrupted object: %v", err)
 		}
-		return errors.Errorf("corrupted on transfer: %v compressed hashes differ %q vs %q", ht, srcHash, dstHash)
+		return fmt.Errorf("corrupted on transfer: %v compressed hashes differ %q vs %q", ht, srcHash, dstHash)
 	}
 	return nil
 }
@@ -462,10 +466,10 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 		_ = os.Remove(tempFile.Name())
 	}()
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create temporary local FS to spool file")
+		return nil, fmt.Errorf("Failed to create temporary local FS to spool file: %w", err)
 	}
 	if _, err = io.Copy(tempFile, in); err != nil {
-		return nil, errors.Wrap(err, "Failed to write temporary local file")
+		return nil, fmt.Errorf("Failed to write temporary local file: %w", err)
 	}
 	if _, err = tempFile.Seek(0, 0); err != nil {
 		return nil, err
@@ -626,9 +630,11 @@ func (f *Fs) putMetadata(ctx context.Context, meta *ObjectMetadata, src fs.Objec
 	// Put the data
 	mo, err = put(ctx, metaReader, f.wrapInfo(src, makeMetadataName(src.Remote()), int64(len(data))), options...)
 	if err != nil {
-		removeErr := mo.Remove(ctx)
-		if removeErr != nil {
-			fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+		if mo != nil {
+			removeErr := mo.Remove(ctx)
+			if removeErr != nil {
+				fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+			}
 		}
 		return nil, err
 	}
@@ -714,7 +720,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if found && (oldObj.(*Object).meta.Mode != Uncompressed || compressible) {
 		err = oldObj.(*Object).Object.Remove(ctx)
 		if err != nil {
-			return nil, errors.Wrap(err, "Could remove original object")
+			return nil, fmt.Errorf("Could remove original object: %w", err)
 		}
 	}
 
@@ -723,7 +729,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if compressible {
 		wrapObj, err := operations.Move(ctx, f.Fs, nil, f.dataName(src.Remote(), newObj.size, compressible), newObj.Object)
 		if err != nil {
-			return nil, errors.Wrap(err, "Couldn't rename streamed Object.")
+			return nil, fmt.Errorf("Couldn't rename streamed Object.: %w", err)
 		}
 		newObj.Object = wrapObj
 	}
@@ -1260,7 +1266,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 		return o.Object.Open(ctx, options...)
 	}
 	// Get offset and limit from OpenOptions, pass the rest to the underlying remote
-	var openOptions []fs.OpenOption = []fs.OpenOption{&fs.SeekOption{Offset: 0}}
+	var openOptions = []fs.OpenOption{&fs.SeekOption{Offset: 0}}
 	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {

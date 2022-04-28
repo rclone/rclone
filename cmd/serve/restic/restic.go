@@ -1,4 +1,8 @@
 // Package restic serves a remote suitable for use with restic
+
+//go:build go1.17
+// +build go1.17
+
 package restic
 
 import (
@@ -15,13 +19,12 @@ import (
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/httplib"
 	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
-	"github.com/rclone/rclone/cmd/serve/httplib/serve"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config/flags"
-	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fs/walk"
+	"github.com/rclone/rclone/lib/http/serve"
 	"github.com/rclone/rclone/lib/terminal"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
@@ -37,10 +40,10 @@ var (
 func init() {
 	httpflags.AddFlags(Command.Flags())
 	flagSet := Command.Flags()
-	flags.BoolVarP(flagSet, &stdio, "stdio", "", false, "run an HTTP2 server on stdin/stdout")
-	flags.BoolVarP(flagSet, &appendOnly, "append-only", "", false, "disallow deletion of repository data")
-	flags.BoolVarP(flagSet, &privateRepos, "private-repos", "", false, "users can only access their private repo")
-	flags.BoolVarP(flagSet, &cacheObjects, "cache-objects", "", true, "cache listed objects")
+	flags.BoolVarP(flagSet, &stdio, "stdio", "", false, "Run an HTTP2 server on stdin/stdout")
+	flags.BoolVarP(flagSet, &appendOnly, "append-only", "", false, "Disallow deletion of repository data")
+	flags.BoolVarP(flagSet, &privateRepos, "private-repos", "", false, "Users can only access their private repo")
+	flags.BoolVarP(flagSet, &cacheObjects, "cache-objects", "", true, "Cache listed objects")
 }
 
 // Command definition for cobra
@@ -51,7 +54,7 @@ var Command = &cobra.Command{
 over HTTP.  This allows restic to use rclone as a data storage
 mechanism for cloud providers that restic does not support directly.
 
-[Restic](https://restic.net/) is a command line program for doing
+[Restic](https://restic.net/) is a command-line program for doing
 backups.
 
 The server will log errors.  Use -v to see access logs.
@@ -386,8 +389,7 @@ func (s *Server) listObjects(w http.ResponseWriter, r *http.Request, remote stri
 		return nil
 	})
 	if err != nil {
-		_, err = fserrors.Cause(err)
-		if err != fs.ErrorDirNotFound {
+		if !errors.Is(err, fs.ErrorDirNotFound) {
 			fs.Errorf(remote, "list failed: %#v %T", err, err)
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return

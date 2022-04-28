@@ -4,13 +4,13 @@ package vfs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	_ "github.com/rclone/rclone/backend/all" // import all the backends
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
@@ -29,7 +29,7 @@ var (
 // Constants uses in the tests
 const (
 	writeBackDelay      = 100 * time.Millisecond // A short writeback delay for testing
-	waitForWritersDelay = 10 * time.Second       // time to wait for existing writers
+	waitForWritersDelay = 30 * time.Second       // time to wait for existing writers
 )
 
 // TestMain drives the tests
@@ -194,7 +194,7 @@ func TestVFSStat(t *testing.T) {
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
 	node, err := vfs.Stat("file1")
 	require.NoError(t, err)
@@ -230,7 +230,7 @@ func TestVFSStatParent(t *testing.T) {
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
 	node, leaf, err := vfs.StatParent("file1")
 	require.NoError(t, err)
@@ -263,7 +263,7 @@ func TestVFSOpenFile(t *testing.T) {
 
 	file1 := r.WriteObject(context.Background(), "file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
 	fd, err := vfs.OpenFile("file1", os.O_RDONLY, 0777)
 	require.NoError(t, err)
@@ -283,7 +283,7 @@ func TestVFSOpenFile(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, fd)
 	err = fd.Close()
-	if errors.Cause(err) != fs.ErrorCantUploadEmptyFiles {
+	if !errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		require.NoError(t, err)
 	}
 
@@ -302,17 +302,17 @@ func TestVFSRename(t *testing.T) {
 	}
 
 	file1 := r.WriteObject(context.Background(), "dir/file2", "file2 contents", t2)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	err := vfs.Rename("dir/file2", "dir/file1")
 	require.NoError(t, err)
 	file1.Path = "dir/file1"
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	err = vfs.Rename("dir/file1", "file0")
 	require.NoError(t, err)
 	file1.Path = "file0"
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	err = vfs.Rename("not found/file0", "file0")
 	assert.Equal(t, os.ErrNotExist, err)

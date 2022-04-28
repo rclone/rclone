@@ -1,3 +1,4 @@
+//go:build !noselfupdate
 // +build !noselfupdate
 
 package selfupdate
@@ -5,10 +6,10 @@ package selfupdate
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/clearsign"

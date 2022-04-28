@@ -7,6 +7,8 @@ import (
 	gocipher "crypto/cipher"
 	"crypto/rand"
 	"encoding/base32"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -15,7 +17,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/pkg/errors"
+	"github.com/Max-Sum/base32768"
 	"github.com/rclone/rclone/backend/crypt/pkcs7"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -94,12 +96,12 @@ func NewNameEncryptionMode(s string) (mode NameEncryptionMode, err error) {
 	case "obfuscate":
 		mode = NameEncryptionObfuscated
 	default:
-		err = errors.Errorf("Unknown file name encryption mode %q", s)
+		err = fmt.Errorf("Unknown file name encryption mode %q", s)
 	}
 	return mode, err
 }
 
-// String turns mode into a human readable string
+// String turns mode into a human-readable string
 func (mode NameEncryptionMode) String() (out string) {
 	switch mode {
 	case NameEncryptionOff:
@@ -114,6 +116,57 @@ func (mode NameEncryptionMode) String() (out string) {
 	return out
 }
 
+// fileNameEncoding are the encoding methods dealing with encrypted file names
+type fileNameEncoding interface {
+	EncodeToString(src []byte) string
+	DecodeString(s string) ([]byte, error)
+}
+
+// caseInsensitiveBase32Encoding defines a file name encoding
+// using a modified version of standard base32 as described in
+// RFC4648
+//
+// The standard encoding is modified in two ways
+//  * it becomes lower case (no-one likes upper case filenames!)
+//  * we strip the padding character `=`
+type caseInsensitiveBase32Encoding struct{}
+
+// EncodeToString encodes a strign using the modified version of
+// base32 encoding.
+func (caseInsensitiveBase32Encoding) EncodeToString(src []byte) string {
+	encoded := base32.HexEncoding.EncodeToString(src)
+	encoded = strings.TrimRight(encoded, "=")
+	return strings.ToLower(encoded)
+}
+
+// DecodeString decodes a string as encoded by EncodeToString
+func (caseInsensitiveBase32Encoding) DecodeString(s string) ([]byte, error) {
+	if strings.HasSuffix(s, "=") {
+		return nil, ErrorBadBase32Encoding
+	}
+	// First figure out how many padding characters to add
+	roundUpToMultipleOf8 := (len(s) + 7) &^ 7
+	equals := roundUpToMultipleOf8 - len(s)
+	s = strings.ToUpper(s) + "========"[:equals]
+	return base32.HexEncoding.DecodeString(s)
+}
+
+// NewNameEncoding creates a NameEncoding from a string
+func NewNameEncoding(s string) (enc fileNameEncoding, err error) {
+	s = strings.ToLower(s)
+	switch s {
+	case "base32":
+		enc = caseInsensitiveBase32Encoding{}
+	case "base64":
+		enc = base64.RawURLEncoding
+	case "base32768":
+		enc = base32768.SafeEncoding
+	default:
+		err = fmt.Errorf("Unknown file name encoding mode %q", s)
+	}
+	return enc, err
+}
+
 // Cipher defines an encoding and decoding cipher for the crypt backend
 type Cipher struct {
 	dataKey        [32]byte                  // Key for secretbox
@@ -121,15 +174,17 @@ type Cipher struct {
 	nameTweak      [nameCipherBlockSize]byte // used to tweak the name crypto
 	block          gocipher.Block
 	mode           NameEncryptionMode
+	fileNameEnc    fileNameEncoding
 	buffers        sync.Pool // encrypt/decrypt buffers
 	cryptoRand     io.Reader // read crypto random numbers from here
 	dirNameEncrypt bool
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
-func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool) (*Cipher, error) {
+func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool, enc fileNameEncoding) (*Cipher, error) {
 	c := &Cipher{
 		mode:           mode,
+		fileNameEnc:    enc,
 		cryptoRand:     rand.Reader,
 		dirNameEncrypt: dirNameEncrypt,
 	}
@@ -187,30 +242,6 @@ func (c *Cipher) putBlock(buf []byte) {
 	c.buffers.Put(buf)
 }
 
-// encodeFileName encodes a filename using a modified version of
-// standard base32 as described in RFC4648
-//
-// The standard encoding is modified in two ways
-//  * it becomes lower case (no-one likes upper case filenames!)
-//  * we strip the padding character `=`
-func encodeFileName(in []byte) string {
-	encoded := base32.HexEncoding.EncodeToString(in)
-	encoded = strings.TrimRight(encoded, "=")
-	return strings.ToLower(encoded)
-}
-
-// decodeFileName decodes a filename as encoded by encodeFileName
-func decodeFileName(in string) ([]byte, error) {
-	if strings.HasSuffix(in, "=") {
-		return nil, ErrorBadBase32Encoding
-	}
-	// First figure out how many padding characters to add
-	roundUpToMultipleOf8 := (len(in) + 7) &^ 7
-	equals := roundUpToMultipleOf8 - len(in)
-	in = strings.ToUpper(in) + "========"[:equals]
-	return base32.HexEncoding.DecodeString(in)
-}
-
 // encryptSegment encrypts a path segment
 //
 // This uses EME with AES
@@ -231,7 +262,7 @@ func (c *Cipher) encryptSegment(plaintext string) string {
 	}
 	paddedPlaintext := pkcs7.Pad(nameCipherBlockSize, []byte(plaintext))
 	ciphertext := eme.Transform(c.block, c.nameTweak[:], paddedPlaintext, eme.DirectionEncrypt)
-	return encodeFileName(ciphertext)
+	return c.fileNameEnc.EncodeToString(ciphertext)
 }
 
 // decryptSegment decrypts a path segment
@@ -239,7 +270,7 @@ func (c *Cipher) decryptSegment(ciphertext string) (string, error) {
 	if ciphertext == "" {
 		return "", nil
 	}
-	rawCiphertext, err := decodeFileName(ciphertext)
+	rawCiphertext, err := c.fileNameEnc.DecodeString(ciphertext)
 	if err != nil {
 		return "", err
 	}
@@ -580,7 +611,7 @@ func (n *nonce) pointer() *[fileNonceSize]byte {
 func (n *nonce) fromReader(in io.Reader) error {
 	read, err := io.ReadFull(in, (*n)[:])
 	if read != fileNonceSize {
-		return errors.Wrap(err, "short read of nonce")
+		return fmt.Errorf("short read of nonce: %w", err)
 	}
 	return nil
 }
@@ -956,7 +987,7 @@ func (fh *decrypter) RangeSeek(ctx context.Context, offset int64, whence int, li
 		// Re-open the underlying object with the offset given
 		rc, err := fh.open(ctx, underlyingOffset, underlyingLimit)
 		if err != nil {
-			return 0, fh.finish(errors.Wrap(err, "couldn't reopen file with offset and limit"))
+			return 0, fh.finish(fmt.Errorf("couldn't reopen file with offset and limit: %w", err))
 		}
 
 		// Set the file handle

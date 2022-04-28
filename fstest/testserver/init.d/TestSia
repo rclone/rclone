@@ -1,0 +1,55 @@
+#!/bin/bash
+
+set -e
+
+NAME=Sia
+
+# shellcheck disable=SC1090
+. "$(dirname "$0")"/docker.bash
+
+# wait until Sia test network is up,
+# the Sia renter forms contracts on the blockchain
+# and the renter is upload ready
+wait_for_sia() {
+    until curl -A Sia-Agent -s "$1" | grep -q '"ready":true'
+    do
+        sleep 5
+    done
+}
+export -f wait_for_sia
+
+start() {
+    # use non-production sia port in test
+    SIA_CONN="127.0.0.1:39980"
+    # nebulouslabs/siaantfarm is stale, use uptodate image
+    ANTFARM_IMAGE=ivandeex/sia-antfarm:latest
+
+    # pull latest antfarm image (dont use local image)
+    docker pull --quiet $ANTFARM_IMAGE
+
+    # start latest antfarm with default config
+    docker run --rm --detach --name "$NAME" \
+            --publish "${SIA_CONN}:9980" \
+            $ANTFARM_IMAGE
+
+    # wait until the test network is upload ready
+    timeout 300 bash -c "wait_for_sia ${SIA_CONN}/renter/uploadready"
+
+    # confirm backend type in the generated rclone.conf
+    echo "type=sia"
+    # override keys in the Sia section of generated rclone.conf
+    echo "api_url=http://${SIA_CONN}/"
+    # hint test harness where to probe for connection
+    echo "_connect=${SIA_CONN}"
+}
+
+stop() {
+    if status ; then
+        docker logs "$NAME" >> sia-test.log 2>&1
+        docker kill "$NAME"
+        echo "${NAME} stopped"
+    fi
+}
+
+# shellcheck disable=SC1090
+. "$(dirname "$0")"/run.bash

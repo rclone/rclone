@@ -1,14 +1,15 @@
+//go:build !plan9 && !js
 // +build !plan9,!js
 
 package cache
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	cache "github.com/patrickmn/go-cache"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 )
 
@@ -52,7 +53,7 @@ func (m *Memory) GetChunk(cachedObject *Object, offset int64) ([]byte, error) {
 		return data, nil
 	}
 
-	return nil, errors.Errorf("couldn't get cached object data at offset %v", offset)
+	return nil, fmt.Errorf("couldn't get cached object data at offset %v", offset)
 }
 
 // AddChunk adds a new chunk of a cached object

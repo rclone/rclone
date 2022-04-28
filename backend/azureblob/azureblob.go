@@ -1,6 +1,7 @@
 // Package azureblob provides an interface to the Microsoft Azure blob object storage system
 
-// +build !plan9,!solaris,!js,go1.14
+//go:build !plan9 && !solaris && !js
+// +build !plan9,!solaris,!js
 
 package azureblob
 
@@ -9,12 +10,14 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -22,7 +25,6 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/adal"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -41,15 +43,14 @@ import (
 const (
 	minSleep              = 10 * time.Millisecond
 	maxSleep              = 10 * time.Second
-	decayConstant         = 1    // bigger for slower decay, exponential
-	maxListChunkSize      = 5000 // number of items to read at once
+	decayConstant         = 1     // bigger for slower decay, exponential
+	maxListChunkSize      = 5000  // number of items to read at once
+	maxUploadParts        = 50000 // maximum allowed number of parts/blocks in a multi-part upload
 	modTimeKey            = "mtime"
 	timeFormatIn          = time.RFC3339
 	timeFormatOut         = "2006-01-02T15:04:05.000000000Z07:00"
 	storageDefaultBaseURL = "blob.core.windows.net"
-	defaultChunkSize      = 4 * fs.MebiByte
-	maxChunkSize          = 100 * fs.MebiByte
-	uploadConcurrency     = 4
+	defaultChunkSize      = 4 * fs.Mebi
 	defaultAccessTier     = azblob.AccessTierNone
 	maxTryTimeout         = time.Hour * 24 * 365 //max time of an azure web request response window (whether or not data is flowing)
 	// Default storage account, key and blob endpoint for emulator support,
@@ -73,30 +74,29 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",
-			Help: "Storage Account Name (leave blank to use SAS URL or Emulator)",
+			Help: "Storage Account Name.\n\nLeave blank to use SAS URL or Emulator.",
 		}, {
 			Name: "service_principal_file",
 			Help: `Path to file containing credentials for use with a service principal.
 
 Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
 
-    $ az sp create-for-rbac --name "<name>" \
+    $ az ad sp create-for-rbac --name "<name>" \
       --role "Storage Blob Data Owner" \
       --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
       > azure-principal.json
 
-See [Use Azure CLI to assign an Azure role for access to blob and queue data](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli)
-for more details.
+See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 `,
 		}, {
 			Name: "key",
-			Help: "Storage Account Key (leave blank to use SAS URL or Emulator)",
+			Help: "Storage Account Key.\n\nLeave blank to use SAS URL or Emulator.",
 		}, {
 			Name: "sas_url",
-			Help: "SAS URL for container level access only\n(leave blank if using account/key or Emulator)",
+			Help: "SAS URL for container level access only.\n\nLeave blank if using account/key or Emulator.",
 		}, {
 			Name: "use_msi",
-			Help: `Use a managed service identity to authenticate (only works in Azure)
+			Help: `Use a managed service identity to authenticate (only works in Azure).
 
 When true, use a [managed service identity](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/)
 to authenticate to Azure Storage instead of a SAS token or account key.
@@ -109,35 +109,56 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Default: false,
 		}, {
 			Name:     "msi_object_id",
-			Help:     "Object ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_mi_res_id specified.",
+			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_mi_res_id specified.",
 			Advanced: true,
 		}, {
 			Name:     "msi_client_id",
-			Help:     "Object ID of the user-assigned MSI to use, if any. Leave blank if msi_object_id or msi_mi_res_id specified.",
+			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_object_id or msi_mi_res_id specified.",
 			Advanced: true,
 		}, {
 			Name:     "msi_mi_res_id",
-			Help:     "Azure resource ID of the user-assigned MSI to use, if any. Leave blank if msi_client_id or msi_object_id specified.",
+			Help:     "Azure resource ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_object_id specified.",
 			Advanced: true,
 		}, {
 			Name:    "use_emulator",
-			Help:    "Uses local storage emulator if provided as 'true' (leave blank if using real azure storage endpoint)",
+			Help:    "Uses local storage emulator if provided as 'true'.\n\nLeave blank if using real azure storage endpoint.",
 			Default: false,
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for the service\nLeave blank normally.",
+			Help:     "Endpoint for the service.\n\nLeave blank normally.",
 			Advanced: true,
 		}, {
 			Name:     "upload_cutoff",
-			Help:     "Cutoff for switching to chunked upload (<= 256MB). (Deprecated)",
+			Help:     "Cutoff for switching to chunked upload (<= 256 MiB) (deprecated).",
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
-			Help: `Upload chunk size (<= 100MB).
+			Help: `Upload chunk size.
 
 Note that this is stored in memory and there may be up to
-"--transfers" chunks stored at once in memory.`,
+"--transfers" * "--azureblob-upload-concurrency" chunks stored at once
+in memory.`,
 			Default:  defaultChunkSize,
+			Advanced: true,
+		}, {
+			Name: "upload_concurrency",
+			Help: `Concurrency for multipart uploads.
+
+This is the number of chunks of the same file that are uploaded
+concurrently.
+
+If you are uploading small numbers of large files over high-speed
+links and these uploads do not fully utilize your bandwidth, then
+increasing this may help to speed up the transfers.
+
+In tests, upload speed increases almost linearly with upload
+concurrency. For example to fill a gigabit pipe it may be necessary to
+raise this to 64. Note that this will use more memory.
+
+Note that chunks are stored in memory and there may be up to
+"--transfers" * "--azureblob-upload-concurrency" chunks stored at once
+in memory.`,
+			Default:  16,
 			Advanced: true,
 		}, {
 			Name: "list_chunk",
@@ -200,6 +221,7 @@ to start uploading.`,
 			Default:  memoryPoolFlushTime,
 			Advanced: true,
 			Help: `How often internal memory buffer pools will be flushed.
+
 Uploads which requires additional buffers (f.e multipart) will use memory pool for allocations.
 This option controls how often unused buffers will be removed from the pool.`,
 		}, {
@@ -219,12 +241,12 @@ This option controls how often unused buffers will be removed from the pool.`,
 				encoder.EncodeRightPeriod),
 		}, {
 			Name:    "public_access",
-			Help:    "Public access level of a container: blob, container.",
+			Help:    "Public access level of a container: blob or container.",
 			Default: string(azblob.PublicAccessNone),
 			Examples: []fs.OptionExample{
 				{
 					Value: string(azblob.PublicAccessNone),
-					Help:  "The container and its blobs can be accessed only with an authorized request. It's a default value",
+					Help:  "The container and its blobs can be accessed only with an authorized request.\nIt's a default value.",
 				}, {
 					Value: string(azblob.PublicAccessBlob),
 					Help:  "Blob data within this container can be read via anonymous request.",
@@ -233,6 +255,11 @@ This option controls how often unused buffers will be removed from the pool.`,
 					Help:  "Allow full public read access for container and blob data.",
 				},
 			},
+			Advanced: true,
+		}, {
+			Name:     "no_head_object",
+			Help:     `If set, do not do HEAD before GET when getting objects.`,
+			Default:  false,
 			Advanced: true,
 		}},
 	})
@@ -250,6 +277,7 @@ type Options struct {
 	Endpoint             string               `config:"endpoint"`
 	SASURL               string               `config:"sas_url"`
 	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency    int                  `config:"upload_concurrency"`
 	ListChunkSize        uint                 `config:"list_chunk"`
 	AccessTier           string               `config:"access_tier"`
 	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
@@ -259,6 +287,7 @@ type Options struct {
 	MemoryPoolUseMmap    bool                 `config:"memory_pool_use_mmap"`
 	Enc                  encoder.MultiEncoder `config:"encoding"`
 	PublicAccess         string               `config:"public_access"`
+	NoHeadObject         bool                 `config:"no_head_object"`
 }
 
 // Fs represents a remote azure server
@@ -404,12 +433,9 @@ func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
 }
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
-	const minChunkSize = fs.Byte
+	const minChunkSize = fs.SizeSuffixBase
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
-	}
-	if cs > maxChunkSize {
-		return errors.Errorf("%s is greater than %s", cs, maxChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	return nil
 }
@@ -451,11 +477,11 @@ const azureStorageEndpoint = "https://storage.azure.com/"
 func newServicePrincipalTokenRefresher(ctx context.Context, credentialsData []byte) (azblob.TokenRefresher, error) {
 	var spCredentials servicePrincipalCredentials
 	if err := json.Unmarshal(credentialsData, &spCredentials); err != nil {
-		return nil, errors.Wrap(err, "error parsing credentials from JSON file")
+		return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
 	}
 	oauthConfig, err := adal.NewOAuthConfig(azureActiveDirectoryEndpoint, spCredentials.Tenant)
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating oauth config")
+		return nil, fmt.Errorf("error creating oauth config: %w", err)
 	}
 
 	// Create service principal token for Azure Storage.
@@ -465,7 +491,7 @@ func newServicePrincipalTokenRefresher(ctx context.Context, credentialsData []by
 		spCredentials.Password,
 		azureStorageEndpoint)
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating service principal token")
+		return nil, fmt.Errorf("error creating service principal token: %w", err)
 	}
 
 	// Wrap token inside a refresher closure.
@@ -518,10 +544,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "azure: chunk size")
+		return nil, fmt.Errorf("azure: chunk size: %w", err)
 	}
 	if opt.ListChunkSize > maxListChunkSize {
-		return nil, errors.Errorf("azure: blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
+		return nil, fmt.Errorf("azure: blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
 	}
 	if opt.Endpoint == "" {
 		opt.Endpoint = storageDefaultBaseURL
@@ -530,12 +556,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
 	} else if !validateAccessTier(opt.AccessTier) {
-		return nil, errors.Errorf("Azure Blob: Supported access tiers are %s, %s and %s",
+		return nil, fmt.Errorf("Azure Blob: Supported access tiers are %s, %s and %s",
 			string(azblob.AccessTierHot), string(azblob.AccessTierCool), string(azblob.AccessTierArchive))
 	}
 
 	if !validatePublicAccess((opt.PublicAccess)) {
-		return nil, errors.Errorf("Azure Blob: Supported public access level are %s and %s",
+		return nil, fmt.Errorf("Azure Blob: Supported public access level are %s and %s",
 			string(azblob.PublicAccessBlob), string(azblob.PublicAccessContainer))
 	}
 
@@ -577,17 +603,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case opt.UseEmulator:
 		credential, err := azblob.NewSharedKeyCredential(emulatorAccount, emulatorAccountKey)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to parse credentials")
+			return nil, fmt.Errorf("Failed to parse credentials: %w", err)
 		}
 		u, err = url.Parse(emulatorBlobEndpoint)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
 	case opt.UseMSI:
 		var token adal.Token
-		var userMSI *userMSI = &userMSI{}
+		var userMSI = &userMSI{}
 		if len(opt.MSIClientID) > 0 || len(opt.MSIObjectID) > 0 || len(opt.MSIResourceID) > 0 {
 			// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
 			// Validate and ensure exactly one is set. (To do: better validation.)
@@ -623,12 +649,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		})
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to acquire MSI token")
+			return nil, fmt.Errorf("Failed to acquire MSI token: %w", err)
 		}
 
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		credential := azblob.NewTokenCredential(token.AccessToken, func(credential azblob.TokenCredential) time.Duration {
 			fs.Debugf(f, "Token refresher called.")
@@ -658,19 +684,19 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case opt.Account != "" && opt.Key != "":
 		credential, err := azblob.NewSharedKeyCredential(opt.Account, opt.Key)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed to parse credentials")
+			return nil, fmt.Errorf("Failed to parse credentials: %w", err)
 		}
 
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
 		serviceURL = azblob.NewServiceURL(*u, pipeline)
 	case opt.SASURL != "":
 		u, err = url.Parse(opt.SASURL)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse SAS URL")
+			return nil, fmt.Errorf("failed to parse SAS URL: %w", err)
 		}
 		// use anonymous credentials in case of sas url
 		pipeline := f.newPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
@@ -690,17 +716,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		// Create a standard URL.
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to make azure storage url from account and endpoint")
+			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		// Try loading service principal credentials from file.
 		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
 		if err != nil {
-			return nil, errors.Wrap(err, "error opening service principal credentials file")
+			return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
 		}
 		// Create a token refresher from service principal credentials.
 		tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, loadedCreds)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create a service principal token")
+			return nil, fmt.Errorf("failed to create a service principal token: %w", err)
 		}
 		options := azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}}
 		pipe := f.newPipeline(azblob.NewTokenCredential("", tokenRefresher), options)
@@ -757,7 +783,7 @@ func (f *Fs) newObjectWithInfo(remote string, info *azblob.BlobItemInternal) (fs
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData() // reads info and headers, returning an error
 		if err != nil {
 			return nil, err
@@ -1316,7 +1342,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 	data, err := base64.StdEncoding.DecodeString(o.md5)
 	if err != nil {
-		return "", errors.Wrapf(err, "Failed to decode Content-MD5: %q", o.md5)
+		return "", fmt.Errorf("Failed to decode Content-MD5: %q: %w", o.md5, err)
 	}
 	return hex.EncodeToString(data), nil
 }
@@ -1367,6 +1393,39 @@ func (o *Object) decodeMetaDataFromPropertiesResponse(info *azblob.BlobGetProper
 	return nil
 }
 
+func (o *Object) decodeMetaDataFromDownloadResponse(info *azblob.DownloadResponse) (err error) {
+	metadata := info.NewMetadata()
+	size := info.ContentLength()
+	if isDirectoryMarker(size, metadata, o.remote) {
+		return fs.ErrorNotAFile
+	}
+	// NOTE - Client library always returns MD5 as base64 decoded string, Object needs to maintain
+	// this as base64 encoded string.
+	o.md5 = base64.StdEncoding.EncodeToString(info.ContentMD5())
+	o.mimeType = info.ContentType()
+	o.size = size
+	o.modTime = info.LastModified()
+	o.accessTier = o.AccessTier()
+	o.setMetadata(metadata)
+
+	// If it was a Range request, the size is wrong, so correct it
+	if contentRange := info.ContentRange(); contentRange != "" {
+		slash := strings.IndexRune(contentRange, '/')
+		if slash >= 0 {
+			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
+			if err == nil {
+				o.size = i
+			} else {
+				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
+			}
+		} else {
+			fs.Debugf(o, "Failed to find length in %q", contentRange)
+		}
+	}
+
+	return nil
+}
+
 func (o *Object) decodeMetaDataFromBlob(info *azblob.BlobItemInternal) (err error) {
 	metadata := info.Metadata
 	size := *info.Properties.ContentLength
@@ -1403,6 +1462,10 @@ func (o *Object) clearMetaData() {
 //  o.size
 //  o.md5
 func (o *Object) readMetaData() (err error) {
+	container, _ := o.split()
+	if !o.fs.containerOK(container) {
+		return fs.ErrorObjectNotFound
+	}
 	if !o.modTime.IsZero() {
 		return nil
 	}
@@ -1469,7 +1532,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var offset int64
 	var count int64
 	if o.AccessTier() == azblob.AccessTierArchive {
-		return nil, errors.Errorf("Blob in archive tier, you need to set tier to hot or cool first")
+		return nil, fmt.Errorf("Blob in archive tier, you need to set tier to hot or cool first")
 	}
 	fs.FixRangeOption(options, o.size)
 	for _, option := range options {
@@ -1495,7 +1558,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return o.fs.shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to open for download")
+		return nil, fmt.Errorf("failed to open for download: %w", err)
+	}
+	err = o.decodeMetaDataFromDownloadResponse(downloadResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode metadata for download: %w", err)
 	}
 	in = downloadResponse.Body(azblob.RetryReaderOptions{})
 	return in, nil
@@ -1585,13 +1652,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			fs.Debugf(o, "deleting archive tier blob before updating")
 			err = o.Remove(ctx)
 			if err != nil {
-				return errors.Wrap(err, "failed to delete archive blob before updating")
+				return fmt.Errorf("failed to delete archive blob before updating: %w", err)
 			}
 		} else {
 			return errCantUpdateArchiveTierBlobs
 		}
 	}
-	container, _ := o.split()
+	container, containerPath := o.split()
+	if container == "" || containerPath == "" {
+		return fmt.Errorf("can't upload to root - need a container")
+	}
 	err = o.fs.makeContainer(ctx, container)
 	if err != nil {
 		return err
@@ -1620,12 +1690,29 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
+	// calculate size of parts/blocks
+	partSize := int(o.fs.opt.ChunkSize)
+
+	uploadParts := int64(maxUploadParts)
+	if uploadParts < 1 {
+		uploadParts = 1
+	} else if uploadParts > maxUploadParts {
+		uploadParts = maxUploadParts
+	}
+
+	// Adjust partSize until the number of parts/blocks is small enough.
+	if o.size/int64(partSize) >= uploadParts {
+		// Calculate partition size rounded up to the nearest MiB
+		partSize = int((((o.size / uploadParts) >> 20) + 1) << 20)
+		fs.Debugf(o, "Adjust partSize to %q", partSize)
+	}
+
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
-		BufferSize:      int(o.fs.opt.ChunkSize),
-		MaxBuffers:      uploadConcurrency,
+		BufferSize:      partSize,
+		MaxBuffers:      o.fs.opt.UploadConcurrency,
 		Metadata:        o.meta,
 		BlobHTTPHeaders: httpHeaders,
-		TransferManager: o.fs.newPoolWrapper(uploadConcurrency),
+		TransferManager: o.fs.newPoolWrapper(o.fs.opt.UploadConcurrency),
 	}
 
 	// Don't retry, return a retry error instead
@@ -1678,7 +1765,7 @@ func (o *Object) AccessTier() azblob.AccessTierType {
 // SetTier performs changing object tier
 func (o *Object) SetTier(tier string) error {
 	if !validateAccessTier(tier) {
-		return errors.Errorf("Tier %s not supported by Azure Blob Storage", tier)
+		return fmt.Errorf("Tier %s not supported by Azure Blob Storage", tier)
 	}
 
 	// Check if current tier already matches with desired tier
@@ -1694,7 +1781,7 @@ func (o *Object) SetTier(tier string) error {
 	})
 
 	if err != nil {
-		return errors.Wrap(err, "Failed to set Blob Tier")
+		return fmt.Errorf("Failed to set Blob Tier: %w", err)
 	}
 
 	// Set access tier on local object also, this typically

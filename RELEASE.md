@@ -34,13 +34,24 @@ This file describes how to make the various kinds of releases
   * make startdev # make startstable for stable branch
   * # announce with forum post, twitter post, patreon post
 
+## Update dependencies
+
 Early in the next release cycle update the dependencies
 
   * Review any pinned packages in go.mod and remove if possible
-  * make update
-  * git status
-  * git add new files
+  * make updatedirect
+  * make
   * git commit -a -v
+  * make update
+  * make
+  * roll back any updates which didn't compile
+  * git commit -a -v --amend
+
+Note that `make update` updates all direct and indirect dependencies
+and there can occasionally be forwards compatibility problems with
+doing that so it may be necessary to roll back dependencies to the
+version specified by `make updatedirect` in order to get rclone to
+build.
 
 ## Making a point release
 

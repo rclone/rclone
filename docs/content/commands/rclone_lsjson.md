@@ -55,12 +55,18 @@ returned
 If --files-only is not specified directories in addition to the files
 will be returned.
 
+if --stat is set then a single JSON blob will be returned about the
+item pointed to. This will return an error if the item isn't found.
+However on bucket based backends (like s3, gcs, b2, azureblob etc) if
+the item isn't found it will return an empty directory as it isn't
+possible to tell empty directories from missing directories there.
+
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
 When used without --recursive the Path will always be the same as Name.
 
-If the directory is a bucket in a bucket based backend, then
+If the directory is a bucket in a bucket-based backend, then
 "IsBucket" will be set to true. This key won't be present unless it is
 "true".
 
@@ -85,17 +91,17 @@ There are several related list commands
   * `lsf` to list objects and directories in easy to parse format
   * `lsjson` to list objects and directories in JSON format
 
-`ls`,`lsl`,`lsd` are designed to be human readable.
-`lsf` is designed to be human and machine readable.
-`lsjson` is designed to be machine readable.
+`ls`,`lsl`,`lsd` are designed to be human-readable.
+`lsf` is designed to be human and machine-readable.
+`lsjson` is designed to be machine-readable.
 
 Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the recursion.
 
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use `-R` to make them recurse.
 
-Listing a non existent directory will produce an error except for
+Listing a non-existent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
-the bucket based remotes).
+the bucket-based remotes).
 
 
 ```
@@ -105,16 +111,17 @@ rclone lsjson remote:path [flags]
 ## Options
 
 ```
-      --dirs-only               Show only directories in the listing.
-  -M, --encrypted               Show the encrypted names.
-      --files-only              Show only files in the listing.
-      --hash                    Include hashes in the output (may take longer).
-      --hash-type stringArray   Show only this hash type (may be repeated).
+      --dirs-only               Show only directories in the listing
+  -M, --encrypted               Show the encrypted names
+      --files-only              Show only files in the listing
+      --hash                    Include hashes in the output (may take longer)
+      --hash-type stringArray   Show only this hash type (may be repeated)
   -h, --help                    help for lsjson
-      --no-mimetype             Don't read the mime type (can speed things up).
-      --no-modtime              Don't read the modification time (can speed things up).
-      --original                Show the ID of the underlying Object.
-  -R, --recursive               Recurse into the listing.
+      --no-mimetype             Don't read the mime type (can speed things up)
+      --no-modtime              Don't read the modification time (can speed things up)
+      --original                Show the ID of the underlying Object
+  -R, --recursive               Recurse into the listing
+      --stat                    Just return the info for the pointed to file
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

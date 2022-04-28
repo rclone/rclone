@@ -3,8 +3,6 @@ package fs
 import (
 	"fmt"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 // DumpFlags describes the Dump options in force
@@ -80,7 +78,7 @@ func (f *DumpFlags) Set(s string) error {
 			}
 		}
 		if !found {
-			return errors.Errorf("Unknown dump flag %q", part)
+			return fmt.Errorf("Unknown dump flag %q", part)
 		}
 	}
 	*f = flags

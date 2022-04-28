@@ -17,6 +17,7 @@ Improvements:
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -24,7 +25,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -59,7 +59,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "user",
-			Help:     "User name",
+			Help:     "User name.",
 			Required: true,
 		}, {
 			Name:       "pass",
@@ -165,13 +165,6 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	}
 	// Let the mega library handle the low level retries
 	return false, err
-	/*
-		switch errors.Cause(err) {
-		case mega.EAGAIN, mega.ERATELIMIT, mega.ETEMPUNAVAIL:
-			return true, err
-		}
-		return fserrors.ShouldRetry(err), err
-	*/
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -195,7 +188,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		var err error
 		opt.Pass, err = obscure.Reveal(opt.Pass)
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't decrypt password")
+			return nil, fmt.Errorf("couldn't decrypt password: %w", err)
 		}
 	}
 	ci := fs.GetConfig(ctx)
@@ -222,7 +215,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		err := srv.Login(opt.User, opt.Pass)
 		if err != nil {
-			return nil, errors.Wrap(err, "couldn't login")
+			return nil, fmt.Errorf("couldn't login: %w", err)
 		}
 		megaCache[opt.User] = srv
 	}
@@ -261,7 +254,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // splitNodePath splits nodePath into / separated parts, returning nil if it
 // should refer to the root.
-// It also encodes the parts into backend specific encoding
+// It also encodes the parts into backend-specific encoding
 func (f *Fs) splitNodePath(nodePath string) (parts []string) {
 	nodePath = path.Clean(nodePath)
 	if nodePath == "." || nodePath == "/" {
@@ -303,7 +296,7 @@ func (f *Fs) findObject(rootNode *mega.Node, file string) (node *mega.Node, err 
 	if err == mega.ENOENT {
 		return nil, fs.ErrorObjectNotFound
 	} else if err == nil && node.GetType() != mega.FILE {
-		return nil, fs.ErrorNotAFile
+		return nil, fs.ErrorIsDir // all other node types are directories
 	}
 	return node, err
 }
@@ -350,11 +343,11 @@ func (f *Fs) mkdir(ctx context.Context, rootNode *mega.Node, dir string) (node *
 			break
 		}
 		if err != mega.ENOENT {
-			return nil, errors.Wrap(err, "mkdir lookup failed")
+			return nil, fmt.Errorf("mkdir lookup failed: %w", err)
 		}
 	}
 	if err != nil {
-		return nil, errors.Wrap(err, "internal error: mkdir called with non existent root node")
+		return nil, fmt.Errorf("internal error: mkdir called with non-existent root node: %w", err)
 	}
 	// i is number of directories to create (may be 0)
 	// node is directory to create them from
@@ -365,7 +358,7 @@ func (f *Fs) mkdir(ctx context.Context, rootNode *mega.Node, dir string) (node *
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "mkdir create node failed")
+			return nil, fmt.Errorf("mkdir create node failed: %w", err)
 		}
 	}
 	return node, nil
@@ -428,7 +421,7 @@ func (f *Fs) CleanUp(ctx context.Context) (err error) {
 		return false
 	})
 	if err != nil {
-		return errors.Wrap(err, "CleanUp failed to list items in trash")
+		return fmt.Errorf("CleanUp failed to list items in trash: %w", err)
 	}
 	fs.Infof(f, "Deleting %d items from the trash", len(items))
 	errors := 0
@@ -489,7 +482,7 @@ type listFn func(*mega.Node) bool
 func (f *Fs) list(ctx context.Context, dir *mega.Node, fn listFn) (found bool, err error) {
 	nodes, err := f.srv.FS.GetChildren(dir)
 	if err != nil {
-		return false, errors.Wrapf(err, "list failed")
+		return false, fmt.Errorf("list failed: %w", err)
 	}
 	for _, item := range nodes {
 		if fn(item) {
@@ -609,7 +602,10 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 		return err
 	}
 	_, err = f.mkdir(ctx, rootNode, dir)
-	return errors.Wrap(err, "Mkdir failed")
+	if err != nil {
+		return fmt.Errorf("Mkdir failed: %w", err)
+	}
+	return nil
 }
 
 // deleteNode removes a file or directory, observing useTrash
@@ -639,7 +635,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 	if check {
 		children, err := f.srv.FS.GetChildren(dirNode)
 		if err != nil {
-			return errors.Wrap(err, "purgeCheck GetChildren failed")
+			return fmt.Errorf("purgeCheck GetChildren failed: %w", err)
 		}
 		if len(children) > 0 {
 			return fs.ErrorDirectoryNotEmpty
@@ -650,7 +646,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 
 	err = f.deleteNode(ctx, dirNode)
 	if err != nil {
-		return errors.Wrap(err, "delete directory node failed")
+		return fmt.Errorf("delete directory node failed: %w", err)
 	}
 
 	// Remove the root node if we just deleted it
@@ -704,7 +700,7 @@ func (f *Fs) move(ctx context.Context, dstRemote string, srcFs *Fs, srcRemote st
 		dstDirNode, err = dstFs.mkdir(ctx, absRoot, dstParent)
 	}
 	if err != nil {
-		return errors.Wrap(err, "server-side move failed to make dst parent dir")
+		return fmt.Errorf("server-side move failed to make dst parent dir: %w", err)
 	}
 
 	if srcRemote != "" {
@@ -717,7 +713,7 @@ func (f *Fs) move(ctx context.Context, dstRemote string, srcFs *Fs, srcRemote st
 		srcDirNode, err = f.findDir(absRoot, srcParent)
 	}
 	if err != nil {
-		return errors.Wrap(err, "server-side move failed to lookup src parent dir")
+		return fmt.Errorf("server-side move failed to lookup src parent dir: %w", err)
 	}
 
 	// move the object into its new directory if required
@@ -728,7 +724,7 @@ func (f *Fs) move(ctx context.Context, dstRemote string, srcFs *Fs, srcRemote st
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "server-side move failed")
+			return fmt.Errorf("server-side move failed: %w", err)
 		}
 	}
 
@@ -742,7 +738,7 @@ func (f *Fs) move(ctx context.Context, dstRemote string, srcFs *Fs, srcRemote st
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "server-side rename failed")
+			return fmt.Errorf("server-side rename failed: %w", err)
 		}
 	}
 
@@ -812,7 +808,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	if err == nil {
 		return fs.ErrorDirExists
 	} else if err != fs.ErrorDirNotFound {
-		return errors.Wrap(err, "DirMove error while checking dest directory")
+		return fmt.Errorf("DirMove error while checking dest directory: %w", err)
 	}
 
 	// Do the move
@@ -844,15 +840,15 @@ func (f *Fs) Hashes() hash.Set {
 func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
 	root, err := f.findRoot(ctx, false)
 	if err != nil {
-		return "", errors.Wrap(err, "PublicLink failed to find root node")
+		return "", fmt.Errorf("PublicLink failed to find root node: %w", err)
 	}
 	node, err := f.findNode(root, remote)
 	if err != nil {
-		return "", errors.Wrap(err, "PublicLink failed to find path")
+		return "", fmt.Errorf("PublicLink failed to find path: %w", err)
 	}
 	link, err = f.srv.Link(node, true)
 	if err != nil {
-		return "", errors.Wrap(err, "PublicLink failed to create link")
+		return "", fmt.Errorf("PublicLink failed to create link: %w", err)
 	}
 	return link, nil
 }
@@ -867,13 +863,13 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 	dstDir := dirs[0]
 	dstDirNode := f.srv.FS.HashLookup(dstDir.ID())
 	if dstDirNode == nil {
-		return errors.Errorf("MergeDirs failed to find node for: %v", dstDir)
+		return fmt.Errorf("MergeDirs failed to find node for: %v", dstDir)
 	}
 	for _, srcDir := range dirs[1:] {
 		// find src directory
 		srcDirNode := f.srv.FS.HashLookup(srcDir.ID())
 		if srcDirNode == nil {
-			return errors.Errorf("MergeDirs failed to find node for: %v", srcDir)
+			return fmt.Errorf("MergeDirs failed to find node for: %v", srcDir)
 		}
 
 		// list the objects
@@ -883,7 +879,7 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 			return false
 		})
 		if err != nil {
-			return errors.Wrapf(err, "MergeDirs list failed on %v", srcDir)
+			return fmt.Errorf("MergeDirs list failed on %v: %w", srcDir, err)
 		}
 		// move them into place
 		for _, info := range infos {
@@ -893,14 +889,14 @@ func (f *Fs) MergeDirs(ctx context.Context, dirs []fs.Directory) error {
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
-				return errors.Wrapf(err, "MergeDirs move failed on %q in %v", f.opt.Enc.ToStandardName(info.GetName()), srcDir)
+				return fmt.Errorf("MergeDirs move failed on %q in %v: %w", f.opt.Enc.ToStandardName(info.GetName()), srcDir, err)
 			}
 		}
 		// rmdir (into trash) the now empty source directory
 		fs.Infof(srcDir, "removing empty directory")
 		err = f.deleteNode(ctx, srcDirNode)
 		if err != nil {
-			return errors.Wrapf(err, "MergeDirs move failed to rmdir %q", srcDir)
+			return fmt.Errorf("MergeDirs move failed to rmdir %q: %w", srcDir, err)
 		}
 	}
 	return nil
@@ -915,7 +911,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get Mega Quota")
+		return nil, fmt.Errorf("failed to get Mega Quota: %w", err)
 	}
 	usage := &fs.Usage{
 		Total: fs.NewUsageValue(int64(q.Mstrg)),           // quota of bytes that can be used
@@ -958,7 +954,7 @@ func (o *Object) Size() int64 {
 // setMetaData sets the metadata from info
 func (o *Object) setMetaData(info *mega.Node) (err error) {
 	if info.GetType() != mega.FILE {
-		return fs.ErrorNotAFile
+		return fs.ErrorIsDir // all other node types are directories
 	}
 	o.info = info
 	return nil
@@ -1076,7 +1072,7 @@ func (oo *openObject) Close() (err error) {
 		return shouldRetry(oo.ctx, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to finish download")
+		return fmt.Errorf("failed to finish download: %w", err)
 	}
 	oo.closed = true
 	return nil
@@ -1104,7 +1100,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "open download file failed")
+		return nil, fmt.Errorf("open download file failed: %w", err)
 	}
 
 	oo := &openObject{
@@ -1133,7 +1129,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// Create the parent directory
 	dirNode, leaf, err := o.fs.mkdirParent(ctx, remote)
 	if err != nil {
-		return errors.Wrap(err, "update make parent dir failed")
+		return fmt.Errorf("update make parent dir failed: %w", err)
 	}
 
 	var u *mega.Upload
@@ -1142,7 +1138,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "upload file failed to create session")
+		return fmt.Errorf("upload file failed to create session: %w", err)
 	}
 
 	// Upload the chunks
@@ -1150,12 +1146,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	for id := 0; id < u.Chunks(); id++ {
 		_, chunkSize, err := u.ChunkLocation(id)
 		if err != nil {
-			return errors.Wrap(err, "upload failed to read chunk location")
+			return fmt.Errorf("upload failed to read chunk location: %w", err)
 		}
 		chunk := make([]byte, chunkSize)
 		_, err = io.ReadFull(in, chunk)
 		if err != nil {
-			return errors.Wrap(err, "upload failed to read data")
+			return fmt.Errorf("upload failed to read data: %w", err)
 		}
 
 		err = o.fs.pacer.Call(func() (bool, error) {
@@ -1163,7 +1159,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "upload file failed to upload chunk")
+			return fmt.Errorf("upload file failed to upload chunk: %w", err)
 		}
 	}
 
@@ -1174,14 +1170,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to finish upload")
+		return fmt.Errorf("failed to finish upload: %w", err)
 	}
 
 	// If the upload succeeded and the original object existed, then delete it
 	if o.info != nil {
 		err = o.fs.deleteNode(ctx, o.info)
 		if err != nil {
-			return errors.Wrap(err, "upload failed to remove old version")
+			return fmt.Errorf("upload failed to remove old version: %w", err)
 		}
 		o.info = nil
 	}
@@ -1193,7 +1189,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 func (o *Object) Remove(ctx context.Context) error {
 	err := o.fs.deleteNode(ctx, o.info)
 	if err != nil {
-		return errors.Wrap(err, "Remove object failed")
+		return fmt.Errorf("Remove object failed: %w", err)
 	}
 	return nil
 }

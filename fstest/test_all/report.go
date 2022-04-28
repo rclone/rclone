@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/lib/file"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -75,7 +76,7 @@ func NewReport() *Report {
 
 	// Create output directory for logs and report
 	r.LogDir = path.Join(*outputDir, r.DateTime)
-	err = os.MkdirAll(r.LogDir, 0777)
+	err = file.MkdirAll(r.LogDir, 0777)
 	if err != nil {
 		log.Fatalf("Failed to make log directory: %v", err)
 	}
@@ -122,7 +123,7 @@ func (r *Report) RecordResult(t *Run) {
 	}
 }
 
-// Title returns a human readable summary title for the Report
+// Title returns a human-readable summary title for the Report
 func (r *Report) Title() string {
 	if r.AllPassed() {
 		return fmt.Sprintf("PASS: All tests finished OK in %v", r.Duration)

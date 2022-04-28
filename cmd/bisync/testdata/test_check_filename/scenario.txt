@@ -1,0 +1,27 @@
+test check-filename
+# Test for --check-filename=.chk_file
+# The test check-access is a more complete test of the check-access logic.
+#
+# 1. See that --check-access passes with the initial setup.
+# 2. Delete the remote subdir .chk_file, run sync. Should fail critical.
+# 3. Put the remote subdir .chk_file back, run resync.
+# 4. Run sync with check-access. Should pass.
+
+test initial bisync
+bisync resync
+
+test 1. see that check-access passes with the initial setup
+bisync check-access check-filename=.chk_file
+copy-listings initial-pass
+
+test 2. delete the remote subdir .chk_file, run sync. should fail critical.
+delete-file {path2/}subdir/.chk_file
+bisync check-access check-filename=.chk_file
+move-listings path2-missing
+
+test 3. put the remote subdir .chk_file back, run resync.
+copy-file {path1/}subdir/.chk_file {path2/}
+bisync check-access resync check-filename=.chk_file
+
+test 4. run sync with check-access. should pass.
+bisync check-access check-filename=.chk_file

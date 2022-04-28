@@ -1,3 +1,15 @@
+{{ if and (gt .WordCount 200 ) (not (.Params.notoc)) }}
+<div class="card">
+  <div class="card-header" style="padding: 5px 10px;">
+    Contents
+  </div>
+  <div class="card-body">
+    {{ .TableOfContents }}
+    <p></p>
+  </div>
+</div>
+{{end}}
+
 <div class="card">
   <div class="card-header" style="padding: 5px 10px;">
     Share and Enjoy

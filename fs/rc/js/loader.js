@@ -30,7 +30,7 @@ rcValid.then(() => {
   // If the output object has an "error" and a "status" then it is an
   // error (it would be nice to signal this out of band).
   console.log("core/version", rc("core/version", null))
-  console.log("core/version", rc("rc/noop", {"string":"one",number:2}))
-  console.log("core/version", rc("operations/mkdir", {"fs":":memory:","remote":"bucket"}))
-  console.log("core/version", rc("operations/list", {"fs":":memory:","remote":"bucket"}))
+  console.log("rc/noop", rc("rc/noop", {"string":"one",number:2}))
+  console.log("operations/mkdir", rc("operations/mkdir", {"fs":":memory:","remote":"bucket"}))
+  console.log("operations/list", rc("operations/list", {"fs":":memory:","remote":"bucket"}))
 })

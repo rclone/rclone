@@ -2,13 +2,13 @@ package vfs
 
 import (
 	"context"
+	"errors"
 	"io"
 	"os"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
@@ -117,7 +117,7 @@ func TestWriteFileHandleMethods(t *testing.T) {
 	h, err = vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
 	require.NoError(t, err)
 	err = h.Close()
-	if errors.Cause(err) != fs.ErrorCantUploadEmptyFiles {
+	if !errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		assert.NoError(t, err)
 		checkListing(t, root, []string{"file1,0,false"})
 	}
@@ -215,7 +215,7 @@ func TestWriteFileHandleRelease(t *testing.T) {
 
 	// Check Release closes file
 	err := fh.Release()
-	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
+	if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		t.Logf("skipping test: %v", err)
 		return
 	}
@@ -298,7 +298,7 @@ func testFileReadAt(t *testing.T, n int) {
 
 	// Close the file without writing to it if n==0
 	err := fh.Close()
-	if errors.Cause(err) == fs.ErrorCantUploadEmptyFiles {
+	if errors.Is(err, fs.ErrorCantUploadEmptyFiles) {
 		t.Logf("skipping test: %v", err)
 		return
 	}

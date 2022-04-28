@@ -16,16 +16,16 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -51,10 +51,10 @@ import (
 const (
 	rcloneClientID              = "202264815644.apps.googleusercontent.com"
 	rcloneEncryptedClientSecret = "Uj7C9jGfb9gmeaV70Lh058cNkWvepr-Es9sBm0zdgil7JaOWF1VySw"
-	timeFormatIn                = time.RFC3339
-	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
-	metaMtime                   = "mtime" // key to store mtime under in metadata
-	listChunks                  = 1000    // chunk size to read directory listings
+	timeFormat                  = time.RFC3339Nano
+	metaMtime                   = "mtime"                    // key to store mtime in metadata
+	metaMtimeGsutil             = "goog-reserved-file-mtime" // key used by GSUtil to store mtime in metadata
+	listChunks                  = 1000                       // chunk size to read directory listings
 	minSleep                    = 10 * time.Millisecond
 )
 
@@ -65,7 +65,7 @@ var (
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
-		RedirectURL:  oauthutil.TitleBarRedirectURL,
+		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
 
@@ -76,72 +76,71 @@ func init() {
 		Prefix:      "gcs",
 		Description: "Google Cloud Storage (this is not Google Drive)",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
 			saFile, _ := m.Get("service_account_file")
 			saCreds, _ := m.Get("service_account_credentials")
 			anonymous, _ := m.Get("anonymous")
 			if saFile != "" || saCreds != "" || anonymous == "true" {
-				return
+				return nil, nil
 			}
-			err := oauthutil.Config(ctx, "google cloud storage", name, m, storageConfig, nil)
-			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
-			}
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: storageConfig,
+			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "project_number",
-			Help: "Project number.\nOptional - needed only for list/create/delete buckets - see your developer console.",
+			Help: "Project number.\n\nOptional - needed only for list/create/delete buckets - see your developer console.",
 		}, {
 			Name: "service_account_file",
-			Help: "Service Account Credentials JSON file path\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
+			Help: "Service Account Credentials JSON file path.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login." + env.ShellExpandHelp,
 		}, {
 			Name: "service_account_credentials",
-			Help: "Service Account Credentials JSON blob\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
+			Help: "Service Account Credentials JSON blob.\n\nLeave blank normally.\nNeeded only if you want use SA instead of interactive login.",
 			Hide: fs.OptionHideBoth,
 		}, {
 			Name:    "anonymous",
-			Help:    "Access public buckets and objects without credentials\nSet to 'true' if you just want to download files and don't configure credentials.",
+			Help:    "Access public buckets and objects without credentials.\n\nSet to 'true' if you just want to download files and don't configure credentials.",
 			Default: false,
 		}, {
 			Name: "object_acl",
 			Help: "Access Control List for new objects.",
 			Examples: []fs.OptionExample{{
 				Value: "authenticatedRead",
-				Help:  "Object owner gets OWNER access, and all Authenticated Users get READER access.",
+				Help:  "Object owner gets OWNER access.\nAll Authenticated Users get READER access.",
 			}, {
 				Value: "bucketOwnerFullControl",
-				Help:  "Object owner gets OWNER access, and project team owners get OWNER access.",
+				Help:  "Object owner gets OWNER access.\nProject team owners get OWNER access.",
 			}, {
 				Value: "bucketOwnerRead",
-				Help:  "Object owner gets OWNER access, and project team owners get READER access.",
+				Help:  "Object owner gets OWNER access.\nProject team owners get READER access.",
 			}, {
 				Value: "private",
-				Help:  "Object owner gets OWNER access [default if left blank].",
+				Help:  "Object owner gets OWNER access.\nDefault if left blank.",
 			}, {
 				Value: "projectPrivate",
-				Help:  "Object owner gets OWNER access, and project team members get access according to their roles.",
+				Help:  "Object owner gets OWNER access.\nProject team members get access according to their roles.",
 			}, {
 				Value: "publicRead",
-				Help:  "Object owner gets OWNER access, and all Users get READER access.",
+				Help:  "Object owner gets OWNER access.\nAll Users get READER access.",
 			}},
 		}, {
 			Name: "bucket_acl",
 			Help: "Access Control List for new buckets.",
 			Examples: []fs.OptionExample{{
 				Value: "authenticatedRead",
-				Help:  "Project team owners get OWNER access, and all Authenticated Users get READER access.",
+				Help:  "Project team owners get OWNER access.\nAll Authenticated Users get READER access.",
 			}, {
 				Value: "private",
-				Help:  "Project team owners get OWNER access [default if left blank].",
+				Help:  "Project team owners get OWNER access.\nDefault if left blank.",
 			}, {
 				Value: "projectPrivate",
 				Help:  "Project team members get access according to their roles.",
 			}, {
 				Value: "publicRead",
-				Help:  "Project team owners get OWNER access, and all Users get READER access.",
+				Help:  "Project team owners get OWNER access.\nAll Users get READER access.",
 			}, {
 				Value: "publicReadWrite",
-				Help:  "Project team owners get OWNER access, and all Users get WRITER access.",
+				Help:  "Project team owners get OWNER access.\nAll Users get WRITER access.",
 			}},
 		}, {
 			Name: "bucket_policy_only",
@@ -164,64 +163,112 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 			Help: "Location for the newly created buckets.",
 			Examples: []fs.OptionExample{{
 				Value: "",
-				Help:  "Empty for default location (US).",
+				Help:  "Empty for default location (US)",
 			}, {
 				Value: "asia",
-				Help:  "Multi-regional location for Asia.",
+				Help:  "Multi-regional location for Asia",
 			}, {
 				Value: "eu",
-				Help:  "Multi-regional location for Europe.",
+				Help:  "Multi-regional location for Europe",
 			}, {
 				Value: "us",
-				Help:  "Multi-regional location for United States.",
+				Help:  "Multi-regional location for United States",
 			}, {
 				Value: "asia-east1",
-				Help:  "Taiwan.",
+				Help:  "Taiwan",
 			}, {
 				Value: "asia-east2",
-				Help:  "Hong Kong.",
+				Help:  "Hong Kong",
 			}, {
 				Value: "asia-northeast1",
-				Help:  "Tokyo.",
+				Help:  "Tokyo",
+			}, {
+				Value: "asia-northeast2",
+				Help:  "Osaka",
+			}, {
+				Value: "asia-northeast3",
+				Help:  "Seoul",
 			}, {
 				Value: "asia-south1",
-				Help:  "Mumbai.",
+				Help:  "Mumbai",
+			}, {
+				Value: "asia-south2",
+				Help:  "Delhi",
 			}, {
 				Value: "asia-southeast1",
-				Help:  "Singapore.",
+				Help:  "Singapore",
+			}, {
+				Value: "asia-southeast2",
+				Help:  "Jakarta",
 			}, {
 				Value: "australia-southeast1",
-				Help:  "Sydney.",
+				Help:  "Sydney",
+			}, {
+				Value: "australia-southeast2",
+				Help:  "Melbourne",
 			}, {
 				Value: "europe-north1",
-				Help:  "Finland.",
+				Help:  "Finland",
 			}, {
 				Value: "europe-west1",
-				Help:  "Belgium.",
+				Help:  "Belgium",
 			}, {
 				Value: "europe-west2",
-				Help:  "London.",
+				Help:  "London",
 			}, {
 				Value: "europe-west3",
-				Help:  "Frankfurt.",
+				Help:  "Frankfurt",
 			}, {
 				Value: "europe-west4",
-				Help:  "Netherlands.",
+				Help:  "Netherlands",
+			}, {
+				Value: "europe-west6",
+				Help:  "Zürich",
+			}, {
+				Value: "europe-central2",
+				Help:  "Warsaw",
 			}, {
 				Value: "us-central1",
-				Help:  "Iowa.",
+				Help:  "Iowa",
 			}, {
 				Value: "us-east1",
-				Help:  "South Carolina.",
+				Help:  "South Carolina",
 			}, {
 				Value: "us-east4",
-				Help:  "Northern Virginia.",
+				Help:  "Northern Virginia",
 			}, {
 				Value: "us-west1",
-				Help:  "Oregon.",
+				Help:  "Oregon",
 			}, {
 				Value: "us-west2",
-				Help:  "California.",
+				Help:  "California",
+			}, {
+				Value: "us-west3",
+				Help:  "Salt Lake City",
+			}, {
+				Value: "us-west4",
+				Help:  "Las Vegas",
+			}, {
+				Value: "northamerica-northeast1",
+				Help:  "Montréal",
+			}, {
+				Value: "northamerica-northeast2",
+				Help:  "Toronto",
+			}, {
+				Value: "southamerica-east1",
+				Help:  "São Paulo",
+			}, {
+				Value: "southamerica-west1",
+				Help:  "Santiago",
+			}, {
+				Value: "asia1",
+				Help:  "Dual region: asia-northeast1 and asia-northeast2.",
+			}, {
+				Value: "eur4",
+				Help:  "Dual region: europe-north1 and europe-west4.",
+			}, {
+				Value: "nam4",
+				Help:  "Dual region: us-central1 and us-east1.",
 			}},
 		}, {
 			Name: "storage_class",
@@ -249,6 +296,15 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Help:  "Durable reduced availability storage class",
 			}},
 		}, {
+			Name: "no_check_bucket",
+			Help: `If set, don't attempt to check the bucket exists or create it.
+
+This can be useful when trying to minimise the number of transactions
+rclone does if you know the bucket exists already.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -270,6 +326,7 @@ type Options struct {
 	BucketPolicyOnly          bool                 `config:"bucket_policy_only"`
 	Location                  string               `config:"location"`
 	StorageClass              string               `config:"storage_class"`
+	NoCheckBucket             bool                 `config:"no_check_bucket"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -376,7 +433,7 @@ func (o *Object) split() (bucket, bucketPath string) {
 func getServiceAccountClient(ctx context.Context, credentialsData []byte) (*http.Client, error) {
 	conf, err := google.JWTConfigFromJSON(credentialsData, storageConfig.Scopes...)
 	if err != nil {
-		return nil, errors.Wrap(err, "error processing credentials")
+		return nil, fmt.Errorf("error processing credentials: %w", err)
 	}
 	ctxWithSpecialClient := oauthutil.Context(ctx, fshttp.NewClient(ctx))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
@@ -409,7 +466,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.ServiceAccountCredentials == "" && opt.ServiceAccountFile != "" {
 		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServiceAccountFile))
 		if err != nil {
-			return nil, errors.Wrap(err, "error opening service account credentials file")
+			return nil, fmt.Errorf("error opening service account credentials file: %w", err)
 		}
 		opt.ServiceAccountCredentials = string(loadedCreds)
 	}
@@ -418,7 +475,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	} else if opt.ServiceAccountCredentials != "" {
 		oAuthClient, err = getServiceAccountClient(ctx, []byte(opt.ServiceAccountCredentials))
 		if err != nil {
-			return nil, errors.Wrap(err, "failed configuring Google Cloud Storage Service Account")
+			return nil, fmt.Errorf("failed configuring Google Cloud Storage Service Account: %w", err)
 		}
 	} else {
 		oAuthClient, _, err = oauthutil.NewClient(ctx, name, m, storageConfig)
@@ -426,7 +483,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			ctx := context.Background()
 			oAuthClient, err = google.DefaultClient(ctx, storage.DevstorageFullControlScope)
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to configure Google Cloud Storage")
+				return nil, fmt.Errorf("failed to configure Google Cloud Storage: %w", err)
 			}
 		}
 	}
@@ -435,7 +492,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		name:  name,
 		root:  root,
 		opt:   *opt,
-		pacer: fs.NewPacer(ctx, pacer.NewGoogleDrive(pacer.MinSleep(minSleep))),
+		pacer: fs.NewPacer(ctx, pacer.NewS3(pacer.MinSleep(minSleep))),
 		cache: bucket.NewCache(),
 	}
 	f.setRoot(root)
@@ -450,7 +507,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.client = oAuthClient
 	f.svc, err = storage.New(f.client)
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't create Google Cloud Storage client")
+		return nil, fmt.Errorf("couldn't create Google Cloud Storage client: %w", err)
 	}
 
 	if f.rootBucket != "" && f.rootDirectory != "" {
@@ -760,10 +817,10 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) (err error) {
 			return nil
 		} else if gErr, ok := err.(*googleapi.Error); ok {
 			if gErr.Code != http.StatusNotFound {
-				return errors.Wrap(err, "failed to get bucket")
+				return fmt.Errorf("failed to get bucket: %w", err)
 			}
 		} else {
-			return errors.Wrap(err, "failed to get bucket")
+			return fmt.Errorf("failed to get bucket: %w", err)
 		}
 
 		if f.opt.ProjectNumber == "" {
@@ -791,6 +848,14 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) (err error) {
 			return shouldRetry(ctx, err)
 		})
 	}, nil)
+}
+
+// checkBucket creates the bucket if it doesn't exist unless NoCheckBucket is true
+func (f *Fs) checkBucket(ctx context.Context, bucket string) error {
+	if f.opt.NoCheckBucket {
+		return nil
+	}
+	return f.makeBucket(ctx, bucket)
 }
 
 // Rmdir deletes the bucket if the fs is at the root
@@ -826,7 +891,7 @@ func (f *Fs) Precision() time.Duration {
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
 	dstBucket, dstPath := f.split(remote)
-	err := f.makeBucket(ctx, dstBucket)
+	err := f.checkBucket(ctx, dstBucket)
 	if err != nil {
 		return nil, err
 	}
@@ -922,7 +987,7 @@ func (o *Object) setMetaData(info *storage.Object) {
 	// read mtime out of metadata if available
 	mtimeString, ok := info.Metadata[metaMtime]
 	if ok {
-		modTime, err := time.Parse(timeFormatIn, mtimeString)
+		modTime, err := time.Parse(timeFormat, mtimeString)
 		if err == nil {
 			o.modTime = modTime
 			return
@@ -930,8 +995,19 @@ func (o *Object) setMetaData(info *storage.Object) {
 		fs.Debugf(o, "Failed to read mtime from metadata: %s", err)
 	}
 
+	// Fallback to GSUtil mtime
+	mtimeGsutilString, ok := info.Metadata[metaMtimeGsutil]
+	if ok {
+		unixTimeSec, err := strconv.ParseInt(mtimeGsutilString, 10, 64)
+		if err == nil {
+			o.modTime = time.Unix(unixTimeSec, 0)
+			return
+		}
+		fs.Debugf(o, "Failed to read GSUtil mtime from metadata: %s", err)
+	}
+
 	// Fallback to the Updated time
-	modTime, err := time.Parse(timeFormatIn, info.Updated)
+	modTime, err := time.Parse(timeFormat, info.Updated)
 	if err != nil {
 		fs.Logf(o, "Bad time decode: %v", err)
 	} else {
@@ -988,7 +1064,8 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 // Returns metadata for an object
 func metadataFromModTime(modTime time.Time) map[string]string {
 	metadata := make(map[string]string, 1)
-	metadata[metaMtime] = modTime.Format(timeFormatOut)
+	metadata[metaMtime] = modTime.Format(timeFormat)
+	metadata[metaMtimeGsutil] = strconv.FormatInt(modTime.Unix(), 10)
 	return metadata
 }
 
@@ -1000,11 +1077,11 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) (err error) 
 		return err
 	}
 	// Add the mtime to the existing metadata
-	mtime := modTime.Format(timeFormatOut)
 	if object.Metadata == nil {
 		object.Metadata = make(map[string]string, 1)
 	}
-	object.Metadata[metaMtime] = mtime
+	object.Metadata[metaMtime] = modTime.Format(timeFormat)
+	object.Metadata[metaMtimeGsutil] = strconv.FormatInt(modTime.Unix(), 10)
 	// Copy the object to itself to update the metadata
 	// Using PATCH requires too many permissions
 	bucket, bucketPath := o.split()
@@ -1054,7 +1131,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	_, isRanging := req.Header["Range"]
 	if !(res.StatusCode == http.StatusOK || (isRanging && res.StatusCode == http.StatusPartialContent)) {
 		_ = res.Body.Close() // ignore error
-		return nil, errors.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
+		return nil, fmt.Errorf("bad response: %d: %s", res.StatusCode, res.Status)
 	}
 	return res.Body, nil
 }
@@ -1064,7 +1141,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	bucket, bucketPath := o.split()
-	err := o.fs.makeBucket(ctx, bucket)
+	err := o.fs.checkBucket(ctx, bucket)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package filename
 
 import (
-	"runtime"
 	"testing"
 )
 
@@ -120,10 +119,6 @@ func TestDecode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := Decode(tt.encoded)
 			if (err != nil) != tt.wantErr {
-				if err != nil && err.Error() == scsuNotEnabled && runtime.Version() < "go1.13" {
-					t.Skip(err.Error())
-					return
-				}
 				if tt.encoded == "" && tt.want != "" {
 					proposed := Encode(tt.want)
 					table := decodeMap[proposed[0]] - 1

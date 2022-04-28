@@ -15,7 +15,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -102,7 +101,7 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 			parts++
 		}
 		if parts > maxParts {
-			return nil, errors.Errorf("%q too big (%d bytes) makes too many parts %d > %d - increase --b2-chunk-size", remote, size, parts, maxParts)
+			return nil, fmt.Errorf("%q too big (%d bytes) makes too many parts %d > %d - increase --b2-chunk-size", remote, size, parts, maxParts)
 		}
 		sha1SliceSize = parts
 	}
@@ -185,7 +184,7 @@ func (up *largeUpload) getUploadURL(ctx context.Context) (upload *api.GetUploadP
 			return up.f.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get upload URL")
+			return nil, fmt.Errorf("failed to get upload URL: %w", err)
 		}
 	} else {
 		upload, up.uploads = up.uploads[0], up.uploads[1:]
@@ -230,14 +229,14 @@ func (up *largeUpload) transferChunk(ctx context.Context, part int64, body []byt
 		//
 		// The number of bytes in the file being uploaded. Note that
 		// this header is required; you cannot leave it out and just
-		// use chunked encoding.  The minimum size of every part but
-		// the last one is 100MB.
+		// use chunked encoding. The minimum size of every part but
+		// the last one is 100 MB (100,000,000 bytes)
 		//
 		// X-Bz-Content-Sha1
 		//
 		// The SHA1 checksum of the this part of the file. B2 will
 		// check this when the part is uploaded, to make sure that the
-		// data arrived correctly.  The same SHA1 checksum must be
+		// data arrived correctly. The same SHA1 checksum must be
 		// passed to b2_finish_large_file.
 		opts := rest.Opts{
 			Method:  "POST",
@@ -406,7 +405,7 @@ func (up *largeUpload) Stream(ctx context.Context, initialUploadBlock []byte) (e
 			up.size += int64(n)
 			if part > maxParts {
 				up.f.putBuf(buf, false)
-				return errors.Errorf("%q too big (%d bytes so far) makes too many parts %d > %d - increase --b2-chunk-size", up.o, up.size, up.parts, maxParts)
+				return fmt.Errorf("%q too big (%d bytes so far) makes too many parts %d > %d - increase --b2-chunk-size", up.o, up.size, up.parts, maxParts)
 			}
 
 			part := part // for the closure

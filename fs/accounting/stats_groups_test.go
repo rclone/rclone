@@ -47,12 +47,14 @@ func TestStatsGroupOperations(t *testing.T) {
 		t.Parallel()
 		stats1 := NewStats(ctx)
 		stats1.bytes = 5
+		stats1.transferQueueSize = 10
 		stats1.errors = 6
 		stats1.oldDuration = time.Second
 		stats1.oldTimeRanges = []timeRange{{time.Now(), time.Now().Add(time.Second)}}
 		stats2 := NewStats(ctx)
 		stats2.bytes = 10
 		stats2.errors = 12
+		stats1.transferQueueSize = 20
 		stats2.oldDuration = 2 * time.Second
 		stats2.oldTimeRanges = []timeRange{{time.Now(), time.Now().Add(2 * time.Second)}}
 		sg := newStatsGroups()
@@ -60,8 +62,10 @@ func TestStatsGroupOperations(t *testing.T) {
 		sg.set(ctx, "test2", stats2)
 		sum := sg.sum(ctx)
 		assert.Equal(t, stats1.bytes+stats2.bytes, sum.bytes)
+		assert.Equal(t, stats1.transferQueueSize+stats2.transferQueueSize, sum.transferQueueSize)
 		assert.Equal(t, stats1.errors+stats2.errors, sum.errors)
 		assert.Equal(t, stats1.oldDuration+stats2.oldDuration, sum.oldDuration)
+		assert.Equal(t, stats1.average.speed+stats2.average.speed, sum.average.speed)
 		// dict can iterate in either order
 		a := timeRanges{stats1.oldTimeRanges[0], stats2.oldTimeRanges[0]}
 		b := timeRanges{stats2.oldTimeRanges[0], stats1.oldTimeRanges[0]}

@@ -1,0 +1,144 @@
+(01)  : test check-access-filters
+
+
+(02)  : test EXCLUDE - OTHER TESTS
+(03)  : copy-file {datadir/}exclude-other-filtersfile.txt {workdir/}
+
+(04)  : test resync to get the filters file md5 built.
+(05)  : bisync resync filters-file={workdir/}exclude-other-filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
+INFO  : Storing filters file hash to {workdir/}exclude-other-filtersfile.txt.md5
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(06)  : test EXCLUDE - test filters for check access
+(07)  : bisync check-access filters-file={workdir/}exclude-other-filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+INFO  : Found 3 matching "RCLONE_TEST" files on both paths
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+(08)  : copy-listings exclude-initial
+
+(09)  : test EXCLUDE - delete RCLONE_TEST files in excluded directories
+(10)  : delete-file {path2/}subdir/subdirA/RCLONE_TEST
+(11)  : delete-file {path1/}subdir-not/RCLONE_TEST
+(12)  : delete-file {path2/}subdir-not/subdir-not2/RCLONE_TEST
+(13)  : delete-file {path1/}subdirX/RCLONE_TEST
+
+(14)  : test EXCLUDE - test should PASS
+(15)  : bisync check-access filters-file={workdir/}exclude-other-filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+INFO  : Found 3 matching "RCLONE_TEST" files on both paths
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+(16)  : copy-listings exclude-pass-run
+
+(17)  : test EXCLUDE - delete RCLONE_TEST files in included directories
+(18)  : delete-file {path2/}RCLONE_TEST
+(19)  : delete-file {path1/}subdir/RCLONE_TEST
+
+(20)  : test EXCLUDE - test should ABORT
+(21)  : bisync check-access filters-file={workdir/}exclude-other-filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}exclude-other-filtersfile.txt
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File was deleted                    - subdir/RCLONE_TEST
+INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File was deleted                    - RCLONE_TEST
+INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Checking access health
+ERROR : -          Access test failed: Path1 file not found in Path2 - RCLONE_TEST
+ERROR : -          Access test failed: Path2 file not found in Path1 - subdir/RCLONE_TEST
+ERROR : Bisync critical error: check file check failed
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+(22)  : move-listings exclude-error-run
+
+(23)  : test INCLUDE - OTHER TESTS
+(24)  : test reset to the initial state
+(25)  : copy-dir {testdir/}initial {path1/}
+(26)  : sync-dir {path1/} {path2/}
+(27)  : copy-file {datadir/}include-other-filtersfile.txt {workdir/}
+(28)  : bisync resync filters-file={workdir/}include-other-filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}include-other-filtersfile.txt
+INFO  : Storing filters file hash to {workdir/}include-other-filtersfile.txt.md5
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(29)  : test INCLUDE - test include/exclude filters for check access
+(30)  : bisync check-access filters-file={workdir/}include-other-filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}include-other-filtersfile.txt
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+INFO  : Found 5 matching "RCLONE_TEST" files on both paths
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+(31)  : copy-listings include-initial
+
+(32)  : test INCLUDE - delete RCLONE_TEST files in excluded directories
+(33)  : delete-file {path2/}subdir/subdirA/RCLONE_TEST
+(34)  : delete-file {path1/}subdir-not/RCLONE_TEST
+(35)  : delete-file {path2/}subdir-not/subdir-not2/RCLONE_TEST
+
+(36)  : test INCLUDE - test should PASS
+(37)  : bisync check-access filters-file={workdir/}include-other-filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}include-other-filtersfile.txt
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+INFO  : Found 5 matching "RCLONE_TEST" files on both paths
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+(38)  : copy-listings include-pass-run
+
+(39)  : test INCLUDE - delete RCLONE_TEST files in included directories
+(40)  : delete-file {path2/}RCLONE_TEST
+(41)  : delete-file {path1/}subdir/RCLONE_TEST
+(42)  : delete-file {path1/}subdirX/subdirX1/RCLONE_TEST
+
+(43)  : test INCLUDE - test should ABORT
+(44)  : bisync check-access filters-file={workdir/}include-other-filtersfile.txt
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Using filters file {workdir/}include-other-filtersfile.txt
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File was deleted                    - subdir/RCLONE_TEST
+INFO  : - Path1    File was deleted                    - subdirX/subdirX1/RCLONE_TEST
+INFO  : Path1:    2 changes:    0 new,    0 newer,    0 older,    2 deleted
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File was deleted                    - RCLONE_TEST
+INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Checking access health
+ERROR : Access test failed: Path1 count 3, Path2 count 4 - RCLONE_TEST
+ERROR : -          Access test failed: Path1 file not found in Path2 - RCLONE_TEST
+ERROR : -          Access test failed: Path2 file not found in Path1 - subdir/RCLONE_TEST
+ERROR : -          Access test failed: Path2 file not found in Path1 - subdirX/subdirX1/RCLONE_TEST
+ERROR : Bisync critical error: check file check failed
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+(45)  : move-listings include-error-run

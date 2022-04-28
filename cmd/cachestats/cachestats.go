@@ -1,3 +1,4 @@
+//go:build !plan9 && !js
 // +build !plan9,!js
 
 package cachestats
@@ -6,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/cache"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
@@ -38,7 +38,7 @@ Print cache stats for a remote in JSON format
 					fsCache, ok = unwrap().(*cache.Fs)
 				}
 				if !ok {
-					return errors.Errorf("%s: is not a cache remote", fsrc.Name())
+					return fmt.Errorf("%s: is not a cache remote", fsrc.Name())
 				}
 			}
 			m, err := fsCache.Stats()

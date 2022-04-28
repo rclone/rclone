@@ -1,14 +1,15 @@
-//+build windows
+//go:build windows
+// +build windows
 
 package file
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"syscall"
 	"unsafe"
 
-	"github.com/pkg/errors"
 	"golang.org/x/sys/windows"
 )
 
@@ -62,13 +63,13 @@ func PreAllocate(size int64, out *os.File) error {
 		uintptr(3), // FileFsSizeInformation
 	)
 	if e1 != nil && e1 != syscall.Errno(0) {
-		return errors.Wrap(e1, "preAllocate NtQueryVolumeInformationFile failed")
+		return fmt.Errorf("preAllocate NtQueryVolumeInformationFile failed: %w", e1)
 	}
 
 	// Calculate the allocation size
 	clusterSize := uint64(fsSizeInfo.BytesPerSector) * uint64(fsSizeInfo.SectorsPerAllocationUnit)
 	if clusterSize <= 0 {
-		return errors.Errorf("preAllocate clusterSize %d <= 0", clusterSize)
+		return fmt.Errorf("preAllocate clusterSize %d <= 0", clusterSize)
 	}
 	allocInfo.AllocationSize = (1 + uint64(size-1)/clusterSize) * clusterSize
 
@@ -84,7 +85,7 @@ func PreAllocate(size int64, out *os.File) error {
 		if e1 == syscall.Errno(windows.ERROR_DISK_FULL) || e1 == syscall.Errno(windows.ERROR_HANDLE_DISK_FULL) {
 			return ErrDiskFull
 		}
-		return errors.Wrap(e1, "preAllocate NtSetInformationFile failed")
+		return fmt.Errorf("preAllocate NtSetInformationFile failed: %w", e1)
 	}
 
 	return nil
@@ -103,7 +104,7 @@ func SetSparse(out *os.File) error {
 	var bytesReturned uint32
 	err := syscall.DeviceIoControl(syscall.Handle(out.Fd()), FSCTL_SET_SPARSE, nil, 0, nil, 0, &bytesReturned, nil)
 	if err != nil {
-		return errors.Wrap(err, "DeviceIoControl FSCTL_SET_SPARSE")
+		return fmt.Errorf("DeviceIoControl FSCTL_SET_SPARSE: %w", err)
 	}
 	return nil
 }

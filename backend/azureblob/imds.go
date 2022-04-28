@@ -1,4 +1,5 @@
-// +build !plan9,!solaris,!js,go1.14
+//go:build !plan9 && !solaris && !js
+// +build !plan9,!solaris,!js
 
 package azureblob
 
@@ -12,7 +13,6 @@ import (
 	"net/http"
 
 	"github.com/Azure/go-autorest/autorest/adal"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fshttp"
 )
@@ -94,7 +94,7 @@ func GetMSIToken(ctx context.Context, identity *userMSI) (adal.Token, error) {
 	httpClient := fshttp.NewClient(ctx)
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return result, errors.Wrap(err, "MSI is not enabled on this VM")
+		return result, fmt.Errorf("MSI is not enabled on this VM: %w", err)
 	}
 	defer func() { // resp and Body should not be nil
 		_, err = io.Copy(ioutil.Discard, resp.Body)
@@ -119,7 +119,7 @@ func GetMSIToken(ctx context.Context, identity *userMSI) (adal.Token, error) {
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return result, errors.Wrap(err, "Couldn't read IMDS response")
+		return result, fmt.Errorf("Couldn't read IMDS response: %w", err)
 	}
 	// Remove BOM, if any. azcopy does this so I'm following along.
 	b = bytes.TrimPrefix(b, []byte("\xef\xbb\xbf"))
@@ -130,7 +130,7 @@ func GetMSIToken(ctx context.Context, identity *userMSI) (adal.Token, error) {
 	// storage API call.
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		return result, errors.Wrap(err, "Couldn't unmarshal IMDS response")
+		return result, fmt.Errorf("Couldn't unmarshal IMDS response: %w", err)
 	}
 
 	return result, nil

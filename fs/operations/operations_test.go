@@ -22,6 +22,8 @@ package operations_test
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -42,7 +44,7 @@ import (
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
-	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -78,7 +80,7 @@ func TestLsd(t *testing.T) {
 	defer r.Finalise()
 	file1 := r.WriteObject(ctx, "sub dir/hello world", "hello world", t1)
 
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	var buf bytes.Buffer
 	err := operations.ListDir(ctx, r.Fremote, &buf)
@@ -94,7 +96,7 @@ func TestLs(t *testing.T) {
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
 	var buf bytes.Buffer
 	err := operations.List(ctx, r.Fremote, &buf)
@@ -112,7 +114,7 @@ func TestLsWithFilesFrom(t *testing.T) {
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
 	// Set the --files-from equivalent
 	f, err := filter.NewFilter(nil)
@@ -144,7 +146,7 @@ func TestLsLong(t *testing.T) {
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
 	var buf bytes.Buffer
 	err := operations.ListLong(ctx, r.Fremote, &buf)
@@ -187,146 +189,176 @@ func TestHashSums(t *testing.T) {
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
-	// MD5 Sum without download
+	hashes := r.Fremote.Hashes()
 
-	var buf bytes.Buffer
-	err := operations.HashLister(ctx, hash.MD5, false, true, r.Fremote, &buf)
+	var quickXorHash hash.Type
+	err := quickXorHash.Set("QuickXorHash")
 	require.NoError(t, err)
-	res := buf.String()
-	if !strings.Contains(res, "336d5ebc5436534e61d16e63ddfca327  empty space\n") &&
-		!strings.Contains(res, "                     UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                  empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "d6548b156ea68a4e003e786df99eee76  potato2\n") &&
-		!strings.Contains(res, "                     UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                  potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
 
-	// MD5 Sum with download
+	for _, test := range []struct {
+		name     string
+		download bool
+		base64   bool
+		ht       hash.Type
+		want     []string
+	}{
+		{
+			ht: hash.MD5,
+			want: []string{
+				"336d5ebc5436534e61d16e63ddfca327  empty space\n",
+				"d6548b156ea68a4e003e786df99eee76  potato2\n",
+			},
+		},
+		{
+			ht:       hash.MD5,
+			download: true,
+			want: []string{
+				"336d5ebc5436534e61d16e63ddfca327  empty space\n",
+				"d6548b156ea68a4e003e786df99eee76  potato2\n",
+			},
+		},
+		{
+			ht: hash.SHA1,
+			want: []string{
+				"3bc15c8aae3e4124dd409035f32ea2fd6835efc9  empty space\n",
+				"9dc7f7d3279715991a22853f5981df582b7f9f6d  potato2\n",
+			},
+		},
+		{
+			ht:       hash.SHA1,
+			download: true,
+			want: []string{
+				"3bc15c8aae3e4124dd409035f32ea2fd6835efc9  empty space\n",
+				"9dc7f7d3279715991a22853f5981df582b7f9f6d  potato2\n",
+			},
+		},
+		{
+			ht: quickXorHash,
+			want: []string{
+				"2d00000000000000000000000100000000000000  empty space\n",
+				"4001dad296b6b4a52d6d694b67dad296b6b4a52d  potato2\n",
+			},
+		},
+		{
+			ht:       quickXorHash,
+			download: true,
+			want: []string{
+				"2d00000000000000000000000100000000000000  empty space\n",
+				"4001dad296b6b4a52d6d694b67dad296b6b4a52d  potato2\n",
+			},
+		},
+		{
+			ht:     quickXorHash,
+			base64: true,
+			want: []string{
+				"LQAAAAAAAAAAAAAAAQAAAAAAAAA=  empty space\n",
+				"QAHa0pa2tKUtbWlLZ9rSlra0pS0=  potato2\n",
+			},
+		},
+		{
+			ht:       quickXorHash,
+			base64:   true,
+			download: true,
+			want: []string{
+				"LQAAAAAAAAAAAAAAAQAAAAAAAAA=  empty space\n",
+				"QAHa0pa2tKUtbWlLZ9rSlra0pS0=  potato2\n",
+			},
+		},
+	} {
+		if !hashes.Contains(test.ht) {
+			continue
+		}
+		name := strings.Title(test.ht.String())
+		if test.download {
+			name += "Download"
+		}
+		if test.base64 {
+			name += "Base64"
+		}
+		t.Run(name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := operations.HashLister(ctx, test.ht, test.base64, test.download, r.Fremote, &buf)
+			require.NoError(t, err)
+			res := buf.String()
+			for _, line := range test.want {
+				assert.Contains(t, res, line)
+			}
+		})
+	}
+}
 
+func TestHashSumsWithErrors(t *testing.T) {
+	ctx := context.Background()
+	memFs, err := fs.NewFs(ctx, ":memory:")
+	require.NoError(t, err)
+
+	// Make a test file
+	content := "-"
+	item1 := fstest.NewItem("file1", content, t1)
+	_, _ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
+
+	// MemoryFS supports MD5
+	buf := &bytes.Buffer{}
+	err = operations.HashLister(ctx, hash.MD5, false, false, memFs, buf)
+	require.NoError(t, err)
+	assert.Contains(t, buf.String(), "336d5ebc5436534e61d16e63ddfca327  file1\n")
+
+	// MemoryFS can't do SHA1, but UNSUPPORTED must not appear in the output
 	buf.Reset()
-	err = operations.HashLister(ctx, hash.MD5, false, true, r.Fremote, &buf)
+	err = operations.HashLister(ctx, hash.SHA1, false, false, memFs, buf)
 	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "336d5ebc5436534e61d16e63ddfca327  empty space\n") &&
-		!strings.Contains(res, "                     UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                  empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "d6548b156ea68a4e003e786df99eee76  potato2\n") &&
-		!strings.Contains(res, "                     UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                  potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
+	assert.NotContains(t, buf.String(), " UNSUPPORTED ")
 
-	// SHA1 Sum without download
+	// ERROR must not appear in the output either
+	assert.NotContains(t, buf.String(), " ERROR ")
+	// TODO mock an unreadable file
+}
 
-	buf.Reset()
-	err = operations.HashLister(ctx, hash.SHA1, false, false, r.Fremote, &buf)
-	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "3bc15c8aae3e4124dd409035f32ea2fd6835efc9  empty space\n") &&
-		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                          empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "9dc7f7d3279715991a22853f5981df582b7f9f6d  potato2\n") &&
-		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                          potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
-
-	// SHA1 Sum with download
-
-	buf.Reset()
-	err = operations.HashLister(ctx, hash.SHA1, false, true, r.Fremote, &buf)
-	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "3bc15c8aae3e4124dd409035f32ea2fd6835efc9  empty space\n") &&
-		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                          empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "9dc7f7d3279715991a22853f5981df582b7f9f6d  potato2\n") &&
-		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                          potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
-
-	// QuickXorHash Sum without download
-
-	buf.Reset()
-	var ht hash.Type
-	err = ht.Set("QuickXorHash")
-	require.NoError(t, err)
-	err = operations.HashLister(ctx, ht, false, false, r.Fremote, &buf)
-	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "2d00000000000000000000000100000000000000  empty space\n") &&
-		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                          empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "4001dad296b6b4a52d6d694b67dad296b6b4a52d  potato2\n") &&
-		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                          potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
-
-	// QuickXorHash Sum with download
-
-	buf.Reset()
-	require.NoError(t, err)
-	err = operations.HashLister(ctx, ht, false, true, r.Fremote, &buf)
-	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "2d00000000000000000000000100000000000000  empty space\n") &&
-		!strings.Contains(res, "                             UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                                          empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "4001dad296b6b4a52d6d694b67dad296b6b4a52d  potato2\n") &&
-		!strings.Contains(res, "                             UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                                          potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
-
-	// QuickXorHash Sum with Base64 Encoded, without download
-
-	buf.Reset()
-	err = operations.HashLister(ctx, ht, true, false, r.Fremote, &buf)
-	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "LQAAAAAAAAAAAAAAAQAAAAAAAAA=  empty space\n") &&
-		!strings.Contains(res, "                 UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                              empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "QAHa0pa2tKUtbWlLZ9rSlra0pS0=  potato2\n") &&
-		!strings.Contains(res, "                 UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                              potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
-	}
-
-	// QuickXorHash Sum with Base64 Encoded and download
-
-	buf.Reset()
-	err = operations.HashLister(ctx, ht, true, true, r.Fremote, &buf)
-	require.NoError(t, err)
-	res = buf.String()
-	if !strings.Contains(res, "LQAAAAAAAAAAAAAAAQAAAAAAAAA=  empty space\n") &&
-		!strings.Contains(res, "                 UNSUPPORTED  empty space\n") &&
-		!strings.Contains(res, "                              empty space\n") {
-		t.Errorf("empty space missing: %q", res)
-	}
-	if !strings.Contains(res, "QAHa0pa2tKUtbWlLZ9rSlra0pS0=  potato2\n") &&
-		!strings.Contains(res, "                 UNSUPPORTED  potato2\n") &&
-		!strings.Contains(res, "                              potato2\n") {
-		t.Errorf("potato2 missing: %q", res)
+func TestHashStream(t *testing.T) {
+	reader := strings.NewReader("")
+	in := ioutil.NopCloser(reader)
+	out := &bytes.Buffer{}
+	for _, test := range []struct {
+		input      string
+		ht         hash.Type
+		wantHex    string
+		wantBase64 string
+	}{
+		{
+			input:      "",
+			ht:         hash.MD5,
+			wantHex:    "d41d8cd98f00b204e9800998ecf8427e  -\n",
+			wantBase64: "1B2M2Y8AsgTpgAmY7PhCfg==  -\n",
+		},
+		{
+			input:      "",
+			ht:         hash.SHA1,
+			wantHex:    "da39a3ee5e6b4b0d3255bfef95601890afd80709  -\n",
+			wantBase64: "2jmj7l5rSw0yVb_vlWAYkK_YBwk=  -\n",
+		},
+		{
+			input:      "Hello world!",
+			ht:         hash.MD5,
+			wantHex:    "86fb269d190d2c85f6e0468ceca42a20  -\n",
+			wantBase64: "hvsmnRkNLIX24EaM7KQqIA==  -\n",
+		},
+		{
+			input:      "Hello world!",
+			ht:         hash.SHA1,
+			wantHex:    "d3486ae9136e7856bc42212385ea797094475802  -\n",
+			wantBase64: "00hq6RNueFa8QiEjhep5cJRHWAI=  -\n",
+		},
+	} {
+		reader.Reset(test.input)
+		require.NoError(t, operations.HashSumStream(test.ht, false, in, out))
+		assert.Equal(t, test.wantHex, out.String())
+		_, _ = reader.Seek(0, io.SeekStart)
+		out.Reset()
+		require.NoError(t, operations.HashSumStream(test.ht, true, in, out))
+		assert.Equal(t, test.wantBase64, out.String())
+		out.Reset()
 	}
 }
 
@@ -364,15 +396,16 @@ func TestCount(t *testing.T) {
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 	file3 := r.WriteBoth(ctx, "sub dir/potato3", "hello", t2)
 
-	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+	r.CheckRemoteItems(t, file1, file2, file3)
 
 	// Check the MaxDepth too
 	ci.MaxDepth = 1
 
-	objects, size, err := operations.Count(ctx, r.Fremote)
+	objects, size, sizeless, err := operations.Count(ctx, r.Fremote)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), objects)
 	assert.Equal(t, int64(61), size)
+	assert.Equal(t, int64(0), sizeless)
 }
 
 func TestDelete(t *testing.T) {
@@ -386,11 +419,11 @@ func TestDelete(t *testing.T) {
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
 	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
 	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
-	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
+	r.CheckRemoteItems(t, file1, file2, file3)
 
 	err = operations.Delete(ctx, r.Fremote)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Fremote, file3)
+	r.CheckRemoteItems(t, file3)
 }
 
 func TestRetry(t *testing.T) {
@@ -427,7 +460,7 @@ func TestCat(t *testing.T) {
 	file1 := r.WriteBoth(ctx, "file1", "ABCDEFGHIJ", t1)
 	file2 := r.WriteBoth(ctx, "file2", "012345678", t2)
 
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 
 	for _, test := range []struct {
 		offset int64
@@ -692,7 +725,7 @@ func TestCopyURL(t *testing.T) {
 	file1 := r.WriteFile("file1", contents, t1)
 	file2 := r.WriteFile("file2", contents, t1)
 	r.Mkdir(ctx, r.Fremote)
-	fstest.CheckItems(t, r.Fremote)
+	r.CheckRemoteItems(t)
 
 	// check when reading from regular HTTP server
 	status := 0
@@ -713,7 +746,7 @@ func TestCopyURL(t *testing.T) {
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
 
 	// Check file clobbering
-	o, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, true)
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, true)
 	require.Error(t, err)
 
 	// Check auto file naming
@@ -725,7 +758,7 @@ func TestCopyURL(t *testing.T) {
 	assert.Equal(t, urlFileName, o.Remote())
 
 	// Check auto file naming when url without file name
-	o, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false)
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false)
 	require.Error(t, err)
 
 	// Check an error is returned for a 404
@@ -787,28 +820,54 @@ func TestMoveFile(t *testing.T) {
 	defer r.Finalise()
 
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	file2 := file1
 	file2.Path = "sub/file2"
 
 	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal)
-	fstest.CheckItems(t, r.Fremote, file2)
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, file2)
 
 	r.WriteFile("file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	err = operations.MoveFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal)
-	fstest.CheckItems(t, r.Fremote, file2)
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, file2)
 
 	err = operations.MoveFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal)
-	fstest.CheckItems(t, r.Fremote, file2)
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, file2)
+}
+
+func TestMoveFileWithIgnoreExisting(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteFile("file1", "file1 contents", t1)
+	r.CheckLocalItems(t, file1)
+
+	ci.IgnoreExisting = true
+
+	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, file1)
+
+	// Recreate file with updated content
+	file1b := r.WriteFile("file1", "file1 modified", t2)
+	r.CheckLocalItems(t, file1b)
+
+	// Ensure modified file did not transfer and was not deleted
+	err = operations.MoveFile(ctx, r.Fremote, r.Flocal, file1.Path, file1b.Path)
+	require.NoError(t, err)
+	r.CheckLocalItems(t, file1b)
+	r.CheckRemoteItems(t, file1)
 }
 
 func TestCaseInsensitiveMoveFile(t *testing.T) {
@@ -820,31 +879,31 @@ func TestCaseInsensitiveMoveFile(t *testing.T) {
 	}
 
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	file2 := file1
 	file2.Path = "sub/file2"
 
 	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal)
-	fstest.CheckItems(t, r.Fremote, file2)
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, file2)
 
 	r.WriteFile("file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	err = operations.MoveFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal)
-	fstest.CheckItems(t, r.Fremote, file2)
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, file2)
 
 	file2Capitalized := file2
 	file2Capitalized.Path = "sub/File2"
 
 	err = operations.MoveFile(ctx, r.Fremote, r.Fremote, file2Capitalized.Path, file2.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal)
-	fstest.CheckItems(t, r.Fremote, file2Capitalized)
+	r.CheckLocalItems(t)
+	r.CheckRemoteItems(t, file2Capitalized)
 }
 
 func TestMoveFileBackupDir(t *testing.T) {
@@ -859,16 +918,16 @@ func TestMoveFileBackupDir(t *testing.T) {
 	ci.BackupDir = r.FremoteName + "/backup"
 
 	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	file1old := r.WriteObject(ctx, "dst/file1", "file1 contents old", t1)
-	fstest.CheckItems(t, r.Fremote, file1old)
+	r.CheckRemoteItems(t, file1old)
 
 	err := operations.MoveFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal)
+	r.CheckLocalItems(t)
 	file1old.Path = "backup/dst/file1"
-	fstest.CheckItems(t, r.Fremote, file1old, file1)
+	r.CheckRemoteItems(t, file1old, file1)
 }
 
 func TestCopyFile(t *testing.T) {
@@ -877,25 +936,25 @@ func TestCopyFile(t *testing.T) {
 	defer r.Finalise()
 
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	file2 := file1
 	file2.Path = "sub/file2"
 
 	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal, file1)
-	fstest.CheckItems(t, r.Fremote, file2)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
 
 	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal, file1)
-	fstest.CheckItems(t, r.Fremote, file2)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
 
 	err = operations.CopyFile(ctx, r.Fremote, r.Fremote, file2.Path, file2.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal, file1)
-	fstest.CheckItems(t, r.Fremote, file2)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t, file2)
 }
 
 func TestCopyFileBackupDir(t *testing.T) {
@@ -910,16 +969,16 @@ func TestCopyFileBackupDir(t *testing.T) {
 	ci.BackupDir = r.FremoteName + "/backup"
 
 	file1 := r.WriteFile("dst/file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	file1old := r.WriteObject(ctx, "dst/file1", "file1 contents old", t1)
-	fstest.CheckItems(t, r.Fremote, file1old)
+	r.CheckRemoteItems(t, file1old)
 
 	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 	file1old.Path = "backup/dst/file1"
-	fstest.CheckItems(t, r.Fremote, file1old, file1)
+	r.CheckRemoteItems(t, file1old, file1)
 }
 
 // Test with CompareDest set
@@ -935,7 +994,7 @@ func TestCopyFileCompareDest(t *testing.T) {
 
 	// check empty dest, empty compare
 	file1 := r.WriteFile("one", "one", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file1.Path, file1.Path)
 	require.NoError(t, err)
@@ -943,12 +1002,12 @@ func TestCopyFileCompareDest(t *testing.T) {
 	file1dst := file1
 	file1dst.Path = "dst/one"
 
-	fstest.CheckItems(t, r.Fremote, file1dst)
+	r.CheckRemoteItems(t, file1dst)
 
 	// check old dest, empty compare
 	file1b := r.WriteFile("one", "onet2", t2)
-	fstest.CheckItems(t, r.Fremote, file1dst)
-	fstest.CheckItems(t, r.Flocal, file1b)
+	r.CheckRemoteItems(t, file1dst)
+	r.CheckLocalItems(t, file1b)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file1b.Path, file1b.Path)
 	require.NoError(t, err)
@@ -956,41 +1015,41 @@ func TestCopyFileCompareDest(t *testing.T) {
 	file1bdst := file1b
 	file1bdst.Path = "dst/one"
 
-	fstest.CheckItems(t, r.Fremote, file1bdst)
+	r.CheckRemoteItems(t, file1bdst)
 
 	// check old dest, new compare
 	file3 := r.WriteObject(ctx, "dst/one", "one", t1)
 	file2 := r.WriteObject(ctx, "CompareDest/one", "onet2", t2)
 	file1c := r.WriteFile("one", "onet2", t2)
-	fstest.CheckItems(t, r.Fremote, file2, file3)
-	fstest.CheckItems(t, r.Flocal, file1c)
+	r.CheckRemoteItems(t, file2, file3)
+	r.CheckLocalItems(t, file1c)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file1c.Path, file1c.Path)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file2, file3)
+	r.CheckRemoteItems(t, file2, file3)
 
 	// check empty dest, new compare
 	file4 := r.WriteObject(ctx, "CompareDest/two", "two", t2)
 	file5 := r.WriteFile("two", "two", t2)
-	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
-	fstest.CheckItems(t, r.Flocal, file1c, file5)
+	r.CheckRemoteItems(t, file2, file3, file4)
+	r.CheckLocalItems(t, file1c, file5)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+	r.CheckRemoteItems(t, file2, file3, file4)
 
 	// check new dest, new compare
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
+	r.CheckRemoteItems(t, file2, file3, file4)
 
 	// check empty dest, old compare
 	file5b := r.WriteFile("two", "twot3", t3)
-	fstest.CheckItems(t, r.Fremote, file2, file3, file4)
-	fstest.CheckItems(t, r.Flocal, file1c, file5b)
+	r.CheckRemoteItems(t, file2, file3, file4)
+	r.CheckLocalItems(t, file1c, file5b)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file5b.Path, file5b.Path)
 	require.NoError(t, err)
@@ -998,7 +1057,7 @@ func TestCopyFileCompareDest(t *testing.T) {
 	file5bdst := file5b
 	file5bdst.Path = "dst/two"
 
-	fstest.CheckItems(t, r.Fremote, file2, file3, file4, file5bdst)
+	r.CheckRemoteItems(t, file2, file3, file4, file5bdst)
 }
 
 // Test with CopyDest set
@@ -1019,7 +1078,7 @@ func TestCopyFileCopyDest(t *testing.T) {
 
 	// check empty dest, empty copy
 	file1 := r.WriteFile("one", "one", t1)
-	fstest.CheckItems(t, r.Flocal, file1)
+	r.CheckLocalItems(t, file1)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file1.Path, file1.Path)
 	require.NoError(t, err)
@@ -1027,12 +1086,12 @@ func TestCopyFileCopyDest(t *testing.T) {
 	file1dst := file1
 	file1dst.Path = "dst/one"
 
-	fstest.CheckItems(t, r.Fremote, file1dst)
+	r.CheckRemoteItems(t, file1dst)
 
 	// check old dest, empty copy
 	file1b := r.WriteFile("one", "onet2", t2)
-	fstest.CheckItems(t, r.Fremote, file1dst)
-	fstest.CheckItems(t, r.Flocal, file1b)
+	r.CheckRemoteItems(t, file1dst)
+	r.CheckLocalItems(t, file1b)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file1b.Path, file1b.Path)
 	require.NoError(t, err)
@@ -1040,7 +1099,7 @@ func TestCopyFileCopyDest(t *testing.T) {
 	file1bdst := file1b
 	file1bdst.Path = "dst/one"
 
-	fstest.CheckItems(t, r.Fremote, file1bdst)
+	r.CheckRemoteItems(t, file1bdst)
 
 	// check old dest, new copy, backup-dir
 
@@ -1049,8 +1108,8 @@ func TestCopyFileCopyDest(t *testing.T) {
 	file3 := r.WriteObject(ctx, "dst/one", "one", t1)
 	file2 := r.WriteObject(ctx, "CopyDest/one", "onet2", t2)
 	file1c := r.WriteFile("one", "onet2", t2)
-	fstest.CheckItems(t, r.Fremote, file2, file3)
-	fstest.CheckItems(t, r.Flocal, file1c)
+	r.CheckRemoteItems(t, file2, file3)
+	r.CheckLocalItems(t, file1c)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file1c.Path, file1c.Path)
 	require.NoError(t, err)
@@ -1059,14 +1118,14 @@ func TestCopyFileCopyDest(t *testing.T) {
 	file2dst.Path = "dst/one"
 	file3.Path = "BackupDir/one"
 
-	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3)
+	r.CheckRemoteItems(t, file2, file2dst, file3)
 	ci.BackupDir = ""
 
 	// check empty dest, new copy
 	file4 := r.WriteObject(ctx, "CopyDest/two", "two", t2)
 	file5 := r.WriteFile("two", "two", t2)
-	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4)
-	fstest.CheckItems(t, r.Flocal, file1c, file5)
+	r.CheckRemoteItems(t, file2, file2dst, file3, file4)
+	r.CheckLocalItems(t, file1c, file5)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
 	require.NoError(t, err)
@@ -1074,19 +1133,19 @@ func TestCopyFileCopyDest(t *testing.T) {
 	file4dst := file4
 	file4dst.Path = "dst/two"
 
-	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst)
+	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst)
 
 	// check new dest, new copy
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file5.Path, file5.Path)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst)
+	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst)
 
 	// check empty dest, old copy
 	file6 := r.WriteObject(ctx, "CopyDest/three", "three", t2)
 	file7 := r.WriteFile("three", "threet3", t3)
-	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst, file6)
-	fstest.CheckItems(t, r.Flocal, file1c, file5, file7)
+	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst, file6)
+	r.CheckLocalItems(t, file1c, file5, file7)
 
 	err = operations.CopyFile(ctx, fdst, r.Flocal, file7.Path, file7.Path)
 	require.NoError(t, err)
@@ -1094,7 +1153,7 @@ func TestCopyFileCopyDest(t *testing.T) {
 	file7dst := file7
 	file7dst.Path = "dst/three"
 
-	fstest.CheckItems(t, r.Fremote, file2, file2dst, file3, file4, file4dst, file6, file7dst)
+	r.CheckRemoteItems(t, file2, file2dst, file3, file4, file4dst, file6, file7dst)
 }
 
 // testFsInfo is for unit testing fs.Info
@@ -1206,10 +1265,10 @@ func TestListFormat(t *testing.T) {
 			Format: "2006-01-02T15:04:05.000000000Z07:00"},
 		IsDir: false,
 		Hashes: map[string]string{
-			"MD5":          "0cc175b9c0f1b6a831c399e269772661",
-			"SHA-1":        "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8",
-			"DropboxHash":  "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8",
-			"QuickXorHash": "6100000000000000000000000100000000000000"},
+			"md5":      "0cc175b9c0f1b6a831c399e269772661",
+			"sha1":     "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8",
+			"dropbox":  "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8",
+			"quickxor": "6100000000000000000000000100000000000000"},
 		ID:     "fileID",
 		OrigID: "fileOrigID",
 	}
@@ -1456,7 +1515,7 @@ func TestRcat(t *testing.T) {
 
 		file1 := fstest.NewItem(path1, data1, t1)
 		file2 := fstest.NewItem(path2, data2, t2)
-		fstest.CheckItems(t, r.Fremote, file1, file2)
+		r.CheckRemoteItems(t, file1, file2)
 	}
 
 	for i := 0; i < 4; i++ {
@@ -1492,7 +1551,7 @@ func TestRcatSize(t *testing.T) {
 	assert.Equal(t, file2.Path, obj.Remote())
 
 	// Check files exist
-	fstest.CheckItems(t, r.Fremote, file1, file2)
+	r.CheckRemoteItems(t, file1, file2)
 }
 
 func TestCopyFileMaxTransfer(t *testing.T) {
@@ -1503,10 +1562,17 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	defer accounting.Stats(ctx).ResetCounters()
 
 	const sizeCutoff = 2048
+
+	// Make random incompressible data
+	randomData := make([]byte, sizeCutoff)
+	_, err := rand.Read(randomData)
+	require.NoError(t, err)
+	randomString := string(randomData)
+
 	file1 := r.WriteFile("TestCopyFileMaxTransfer/file1", "file1 contents", t1)
-	file2 := r.WriteFile("TestCopyFileMaxTransfer/file2", "file2 contents"+random.String(sizeCutoff), t2)
-	file3 := r.WriteFile("TestCopyFileMaxTransfer/file3", "file3 contents"+random.String(sizeCutoff), t2)
-	file4 := r.WriteFile("TestCopyFileMaxTransfer/file4", "file4 contents"+random.String(sizeCutoff), t2)
+	file2 := r.WriteFile("TestCopyFileMaxTransfer/file2", "file2 contents"+randomString, t2)
+	file3 := r.WriteFile("TestCopyFileMaxTransfer/file3", "file3 contents"+randomString, t2)
+	file4 := r.WriteFile("TestCopyFileMaxTransfer/file4", "file4 contents"+randomString, t2)
 
 	// Cutoff mode: Hard
 	ci.MaxTransfer = sizeCutoff
@@ -1514,10 +1580,10 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 
 	// file1: Show a small file gets transferred OK
 	accounting.Stats(ctx).ResetCounters()
-	err := operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
+	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file1.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckLocalItems(t, file1, file2, file3, file4)
+	r.CheckRemoteItems(t, file1)
 
 	// file2: show a large file does not get transferred
 	accounting.Stats(ctx).ResetCounters()
@@ -1525,8 +1591,8 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	require.NotNil(t, err, "Did not get expected max transfer limit error")
 	assert.Contains(t, err.Error(), "Max transfer limit reached")
 	assert.True(t, fserrors.IsFatalError(err), fmt.Sprintf("Not fatal error: %v: %#v:", err, err))
-	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckLocalItems(t, file1, file2, file3, file4)
+	r.CheckRemoteItems(t, file1)
 
 	// Cutoff mode: Cautious
 	ci.CutoffMode = fs.CutoffModeCautious
@@ -1537,8 +1603,8 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	require.NotNil(t, err)
 	assert.Contains(t, err.Error(), "Max transfer limit reached")
 	assert.True(t, fserrors.IsNoRetryError(err))
-	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckLocalItems(t, file1, file2, file3, file4)
+	r.CheckRemoteItems(t, file1)
 
 	if strings.HasPrefix(r.Fremote.Name(), "TestChunker") {
 		t.Log("skipping remainder of test for chunker as it involves multiple transfers")
@@ -1552,6 +1618,34 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	accounting.Stats(ctx).ResetCounters()
 	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file4.Path, file4.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.Flocal, file1, file2, file3, file4)
-	fstest.CheckItems(t, r.Fremote, file1, file4)
+	r.CheckLocalItems(t, file1, file2, file3, file4)
+	r.CheckRemoteItems(t, file1, file4)
+}
+
+func TestTouchDir(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	if r.Fremote.Precision() == fs.ModTimeNotSupported {
+		t.Skip("Skipping test as remote does not support modtime")
+	}
+
+	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
+	file3 := r.WriteBoth(ctx, "sub dir/potato3", "hello", t2)
+	r.CheckRemoteItems(t, file1, file2, file3)
+
+	timeValue := time.Date(2010, 9, 8, 7, 6, 5, 4, time.UTC)
+	err := operations.TouchDir(ctx, r.Fremote, "", timeValue, true)
+	require.NoError(t, err)
+	if accounting.Stats(ctx).GetErrors() != 0 {
+		err = accounting.Stats(ctx).GetLastError()
+		require.True(t, errors.Is(err, fs.ErrorCantSetModTime) || errors.Is(err, fs.ErrorCantSetModTimeWithoutDelete))
+	} else {
+		file1.ModTime = timeValue
+		file2.ModTime = timeValue
+		file3.ModTime = timeValue
+		r.CheckRemoteItems(t, file1, file2, file3)
+	}
 }

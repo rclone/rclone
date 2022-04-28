@@ -121,8 +121,8 @@ func TestCacheNew(t *testing.T) {
 	assert.Contains(t, c.fcache.Root(), filepath.Base(r.Fremote.Root()))
 	assert.Equal(t, []string(nil), itemAsString(c))
 
-	// mkdir
-	p, err := c.mkdir("potato")
+	// createItemDir
+	p, err := c.createItemDir("potato")
 	require.NoError(t, err)
 	assert.Equal(t, "potato", filepath.Base(p))
 	assert.Equal(t, []string(nil), itemAsString(c))
@@ -238,7 +238,7 @@ func TestCacheOpens(t *testing.T) {
 	}, itemAsString(c))
 }
 
-// test the open, mkdir, purge, close, purge sequence
+// test the open, createItemDir, purge, close, purge sequence
 func TestCacheOpenMkdir(t *testing.T) {
 	_, c, cleanup := newTestCache(t)
 	defer cleanup()
@@ -251,8 +251,8 @@ func TestCacheOpenMkdir(t *testing.T) {
 		`name="sub/potato" opens=1 size=0`,
 	}, itemAsString(c))
 
-	// mkdir
-	p, err := c.mkdir("sub/potato")
+	// createItemDir
+	p, err := c.createItemDir("sub/potato")
 	require.NoError(t, err)
 	assert.Equal(t, "potato", filepath.Base(p))
 	assert.Equal(t, []string{
@@ -603,7 +603,7 @@ func TestCacheRename(t *testing.T) {
 	assertPathNotExist(t, osPathMeta)
 	assert.False(t, c.Exists("sub/newPotato"))
 
-	// non existent file - is ignored
+	// non-existent file - is ignored
 	assert.NoError(t, c.Rename("nonexist", "nonexist2", nil))
 }
 
@@ -700,4 +700,16 @@ func TestCacheDump(t *testing.T) {
 
 	out = c.Dump()
 	assert.Equal(t, "Cache{\n}\n", out)
+}
+
+func TestCacheStats(t *testing.T) {
+	_, c, cleanup := newTestCache(t)
+	defer cleanup()
+
+	out := c.Stats()
+	assert.Equal(t, int64(0), out["bytesUsed"])
+	assert.Equal(t, 0, out["erroredFiles"])
+	assert.Equal(t, 0, out["files"])
+	assert.Equal(t, 0, out["uploadsInProgress"])
+	assert.Equal(t, 0, out["uploadsQueued"])
 }

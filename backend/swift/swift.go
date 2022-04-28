@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ncw/swift/v2"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -36,7 +36,7 @@ import (
 const (
 	directoryMarkerContentType = "application/directory" // content type of directory marker objects
 	listChunks                 = 1000                    // chunk size to read directory listings
-	defaultChunkSize           = 5 * fs.GibiByte
+	defaultChunkSize           = 5 * fs.Gibi
 	minSleep                   = 10 * time.Millisecond // In case of error, start at 10ms sleep.
 )
 
@@ -46,7 +46,7 @@ var SharedOptions = []fs.Option{{
 	Help: `Above this size files will be chunked into a _segments container.
 
 Above this size files will be chunked into a _segments container.  The
-default for this is 5GB which is its maximum value.`,
+default for this is 5 GiB which is its maximum value.`,
 	Default:  defaultChunkSize,
 	Advanced: true,
 }, {
@@ -56,7 +56,7 @@ default for this is 5GB which is its maximum value.`,
 When doing streaming uploads (e.g. using rcat or mount) setting this
 flag will cause the swift backend to not upload chunked files.
 
-This will limit the maximum upload size to 5GB. However non chunked
+This will limit the maximum upload size to 5 GiB. However non chunked
 files are easier to deal with and have an MD5SUM.
 
 Rclone will still chunk files bigger than chunk_size when doing normal
@@ -84,10 +84,10 @@ func init() {
 			Examples: []fs.OptionExample{
 				{
 					Value: "false",
-					Help:  "Enter swift credentials in the next step",
+					Help:  "Enter swift credentials in the next step.",
 				}, {
 					Value: "true",
-					Help:  "Get swift credentials from environment vars. Leave other fields blank if using this.",
+					Help:  "Get swift credentials from environment vars.\nLeave other fields blank if using this.",
 				},
 			},
 		}, {
@@ -100,23 +100,23 @@ func init() {
 			Name: "auth",
 			Help: "Authentication URL for server (OS_AUTH_URL).",
 			Examples: []fs.OptionExample{{
-				Help:  "Rackspace US",
 				Value: "https://auth.api.rackspacecloud.com/v1.0",
+				Help:  "Rackspace US",
 			}, {
-				Help:  "Rackspace UK",
 				Value: "https://lon.auth.api.rackspacecloud.com/v1.0",
+				Help:  "Rackspace UK",
 			}, {
-				Help:  "Rackspace v2",
 				Value: "https://identity.api.rackspacecloud.com/v2.0",
+				Help:  "Rackspace v2",
 			}, {
-				Help:  "Memset Memstore UK",
 				Value: "https://auth.storage.memset.com/v1.0",
+				Help:  "Memset Memstore UK",
 			}, {
-				Help:  "Memset Memstore UK v2",
 				Value: "https://auth.storage.memset.com/v2.0",
+				Help:  "Memset Memstore UK v2",
 			}, {
-				Help:  "OVH",
 				Value: "https://auth.cloud.ovh.net/v3",
+				Help:  "OVH",
 			}},
 		}, {
 			Name: "user_id",
@@ -126,57 +126,59 @@ func init() {
 			Help: "User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)",
 		}, {
 			Name: "tenant",
-			Help: "Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME)",
+			Help: "Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME).",
 		}, {
 			Name: "tenant_id",
-			Help: "Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)",
+			Help: "Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID).",
 		}, {
 			Name: "tenant_domain",
-			Help: "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME)",
+			Help: "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME).",
 		}, {
 			Name: "region",
-			Help: "Region name - optional (OS_REGION_NAME)",
+			Help: "Region name - optional (OS_REGION_NAME).",
 		}, {
 			Name: "storage_url",
-			Help: "Storage URL - optional (OS_STORAGE_URL)",
+			Help: "Storage URL - optional (OS_STORAGE_URL).",
 		}, {
 			Name: "auth_token",
-			Help: "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)",
+			Help: "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN).",
 		}, {
 			Name: "application_credential_id",
-			Help: "Application Credential ID (OS_APPLICATION_CREDENTIAL_ID)",
+			Help: "Application Credential ID (OS_APPLICATION_CREDENTIAL_ID).",
 		}, {
 			Name: "application_credential_name",
-			Help: "Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME)",
+			Help: "Application Credential Name (OS_APPLICATION_CREDENTIAL_NAME).",
 		}, {
 			Name: "application_credential_secret",
-			Help: "Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET)",
+			Help: "Application Credential Secret (OS_APPLICATION_CREDENTIAL_SECRET).",
 		}, {
 			Name:    "auth_version",
-			Help:    "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)",
+			Help:    "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION).",
 			Default: 0,
 		}, {
 			Name:    "endpoint_type",
-			Help:    "Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE)",
+			Help:    "Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE).",
 			Default: "public",
 			Examples: []fs.OptionExample{{
-				Help:  "Public (default, choose this if not sure)",
 				Value: "public",
+				Help:  "Public (default, choose this if not sure)",
 			}, {
-				Help:  "Internal (use internal service net)",
 				Value: "internal",
+				Help:  "Internal (use internal service net)",
 			}, {
-				Help:  "Admin",
 				Value: "admin",
+				Help:  "Admin",
 			}},
 		}, {
-			Name:     "leave_parts_on_error",
-			Help:     `If true avoid calling abort upload on a failure. It should be set to true for resuming uploads across different sessions.`,
+			Name: "leave_parts_on_error",
+			Help: `If true avoid calling abort upload on a failure.
+
+It should be set to true for resuming uploads across different sessions.`,
 			Default:  false,
 			Advanced: true,
 		}, {
 			Name: "storage_policy",
-			Help: `The storage policy to use when creating a new container
+			Help: `The storage policy to use when creating a new container.
 
 This applies the specified storage policy when creating a new
 container. The policy cannot be changed afterwards. The allowed
@@ -184,14 +186,14 @@ configuration values and their meaning depend on your Swift storage
 provider.`,
 			Default: "",
 			Examples: []fs.OptionExample{{
-				Help:  "Default",
 				Value: "",
+				Help:  "Default",
 			}, {
-				Help:  "OVH Public Cloud Storage",
 				Value: "pcs",
+				Help:  "OVH Public Cloud Storage",
 			}, {
-				Help:  "OVH Public Cloud Archive",
 				Value: "pca",
+				Help:  "OVH Public Cloud Archive",
 			}},
 		}}, SharedOptions...),
 	})
@@ -379,7 +381,7 @@ func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Con
 	if opt.EnvAuth {
 		err := c.ApplyEnvironment()
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to read environment variables")
+			return nil, fmt.Errorf("failed to read environment variables: %w", err)
 		}
 	}
 	StorageUrl, AuthToken := c.StorageUrl, c.AuthToken // nolint
@@ -419,9 +421,9 @@ func swiftConnection(ctx context.Context, opt *Options, name string) (*swift.Con
 }
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
-	const minChunkSize = fs.Byte
+	const minChunkSize = fs.SizeSuffixBase
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	return nil
 }
@@ -497,7 +499,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "swift: chunk size")
+		return nil, fmt.Errorf("swift: chunk size: %w", err)
 	}
 
 	c, err := swiftConnection(ctx, opt, name)
@@ -668,7 +670,7 @@ func (f *Fs) listContainers(ctx context.Context) (entries fs.DirEntries, err err
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "container listing failed")
+		return nil, fmt.Errorf("container listing failed: %w", err)
 	}
 	for _, container := range containers {
 		f.cache.MarkOK(container.Name)
@@ -752,22 +754,34 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 }
 
 // About gets quota information
-func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
-	var containers []swift.Container
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		containers, err = f.c.ContainersAll(ctx, nil)
-		return shouldRetry(ctx, err)
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "container listing failed")
-	}
+func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 	var total, objects int64
-	for _, c := range containers {
-		total += c.Bytes
-		objects += c.Count
+	if f.rootContainer != "" {
+		var container swift.Container
+		err = f.pacer.Call(func() (bool, error) {
+			container, _, err = f.c.Container(ctx, f.rootContainer)
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("container info failed: %w", err)
+		}
+		total = container.Bytes
+		objects = container.Count
+	} else {
+		var containers []swift.Container
+		err = f.pacer.Call(func() (bool, error) {
+			containers, err = f.c.ContainersAll(ctx, nil)
+			return shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return nil, fmt.Errorf("container listing failed: %w", err)
+		}
+		for _, c := range containers {
+			total += c.Bytes
+			objects += c.Count
+		}
 	}
-	usage := &fs.Usage{
+	usage = &fs.Usage{
 		Used:    fs.NewUsageValue(total),   // bytes in use
 		Objects: fs.NewUsageValue(objects), // objects in use
 	}

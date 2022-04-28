@@ -32,7 +32,7 @@ func NewRcloneCollector(ctx context.Context) *RcloneCollector {
 			nil, nil,
 		),
 		transferSpeed: prometheus.NewDesc(namespace+"speed",
-			"Average speed in bytes/sec since the start of the Rclone process",
+			"Average speed in bytes per second since the start of the Rclone process",
 			nil, nil,
 		),
 		numOfErrors: prometheus.NewDesc(namespace+"errors_total",

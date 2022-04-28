@@ -12,28 +12,27 @@ Get quota information from the remote.
 ## Synopsis
 
 
-`rclone about`prints quota information about a remote to standard
+`rclone about` prints quota information about a remote to standard
 output. The output is typically used, free, quota and trash contents.
 
-E.g. Typical output from`rclone about remote:`is:
+E.g. Typical output from `rclone about remote:` is:
 
-    Total:   17G
-    Used:    7.444G
-    Free:    1.315G
-    Trashed: 100.000M
-    Other:   8.241G
+    Total:   17 GiB
+    Used:    7.444 GiB
+    Free:    1.315 GiB
+    Trashed: 100.000 MiB
+    Other:   8.241 GiB
 
 Where the fields are:
 
-  * Total: total size available.
-  * Used: total size used
-  * Free: total space available to this user.
-  * Trashed: total space used by trash
-  * Other: total amount in other storage (e.g. Gmail, Google Photos)
-  * Objects: total number of objects in the storage
+  * Total: Total size available.
+  * Used: Total size used.
+  * Free: Total space available to this user.
+  * Trashed: Total space used by trash.
+  * Other: Total amount in other storage (e.g. Gmail, Google Photos).
+  * Objects: Total number of objects in the storage.
 
-Not all backends print all fields. Information is not included if it is not
-provided by a backend. Where the value is unlimited it is omitted.
+All sizes are in number of bytes.
 
 Applying a `--full` flag to the command prints the bytes in full, e.g.
 
@@ -43,7 +42,7 @@ Applying a `--full` flag to the command prints the bytes in full, e.g.
     Trashed: 104857602
     Other:   8849156022
 
-A `--json`flag generates conveniently computer readable output, e.g.
+A `--json` flag generates conveniently machine-readable output, e.g.
 
     {
         "total": 18253611008,
@@ -53,9 +52,11 @@ A `--json`flag generates conveniently computer readable output, e.g.
         "free": 1411001220
     }
 
-Not all backends support the `rclone about` command.
+Not all backends print all fields. Information is not included if it is not
+provided by a backend. Where the value is unlimited it is omitted.
 
-See [List of backends that do not support about](https://rclone.org/overview/#optional-features)
+Some backends does not support the `rclone about` command at all,
+see complete list in [documentation](https://rclone.org/overview/#optional-features).
 
 
 ```
@@ -65,7 +66,7 @@ rclone about remote: [flags]
 ## Options
 
 ```
-      --full   Full numbers instead of SI units
+      --full   Full numbers instead of human-readable
   -h, --help   help for about
       --json   Format output as JSON
 ```

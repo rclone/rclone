@@ -22,11 +22,11 @@ Millions of files in a directory tends to occur on bucket-based remotes
 (e.g. S3 buckets) since those remotes do not segregate subdirectories within
 the bucket.
 
-### Bucket based remotes and folders
+### Bucket-based remotes and folders
 
-Bucket based remotes (e.g. S3/GCS/Swift/B2) do not have a concept of
+Bucket-based remotes (e.g. S3/GCS/Swift/B2) do not have a concept of
 directories.  Rclone therefore cannot create directories in them which
-means that empty directories on a bucket based remote will tend to
+means that empty directories on a bucket-based remote will tend to
 disappear.
 
 Some software creates empty keys ending in `/` as directory markers.

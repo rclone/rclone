@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/csv"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -21,7 +22,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/cache"
@@ -405,7 +405,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 			if err == nil {
 				dst = newDst
 				in.ServerSideCopyEnd(dst.Size()) // account the bytes for the server-side transfer
-				err = in.Close()
+				_ = in.Close()
 			} else {
 				_ = in.Close()
 			}
@@ -441,7 +441,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				}
 				in0, err = NewReOpen(ctx, src, ci.LowLevelRetries, options...)
 				if err != nil {
-					err = errors.Wrap(err, "failed to open source object")
+					err = fmt.Errorf("failed to open source object: %w", err)
 				} else {
 					if src.Size() == -1 {
 						// -1 indicates unknown size. Use Rcat to handle both remotes supporting and not supporting PutStream.
@@ -512,7 +512,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 
 	// Verify sizes are the same after transfer
 	if sizeDiffers(ctx, src, dst) {
-		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
+		err = fmt.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
 		fs.Errorf(dst, "%v", err)
 		err = fs.CountError(err)
 		removeFailedCopy(ctx, dst)
@@ -524,7 +524,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 		// checkHashes has logged and counted errors
 		equal, _, srcSum, dstSum, _ := checkHashes(ctx, src, dst, hashType)
 		if !equal {
-			err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
+			err = fmt.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
 			fs.Errorf(dst, "%v", err)
 			err = fs.CountError(err)
 			removeFailedCopy(ctx, dst)
@@ -598,6 +598,8 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			}
 		}
 		// Move dst <- src
+		in := tr.Account(ctx, nil) // account the transfer
+		in.ServerSideCopyStart()
 		newDst, err = doMove(ctx, src, remote)
 		switch err {
 		case nil:
@@ -606,13 +608,16 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			} else {
 				fs.Infof(src, "Moved (server-side)")
 			}
-
+			in.ServerSideCopyEnd(newDst.Size()) // account the bytes for the server-side transfer
+			_ = in.Close()
 			return newDst, nil
 		case fs.ErrorCantMove:
 			fs.Debugf(src, "Can't move, switching to copy")
+			_ = in.Close()
 		default:
 			err = fs.CountError(err)
 			fs.Errorf(src, "Couldn't move: %v", err)
+			_ = in.Close()
 			return newDst, err
 		}
 	}
@@ -727,7 +732,7 @@ func DeleteFilesWithBackupDir(ctx context.Context, toBeDeleted fs.ObjectsChan, b
 	fs.Debugf(nil, "Waiting for deletions to finish")
 	wg.Wait()
 	if errorCount > 0 {
-		err := errors.Errorf("failed to delete %d files", errorCount)
+		err := fmt.Errorf("failed to delete %d files", errorCount)
 		if fatalErrorCount > 0 {
 			return fserrors.FatalError(err)
 		}
@@ -853,11 +858,65 @@ var SyncPrintf = func(format string, a ...interface{}) {
 func syncFprintf(w io.Writer, format string, a ...interface{}) {
 	outMutex.Lock()
 	defer outMutex.Unlock()
-	if w == nil {
+	if w == nil || w == os.Stdout {
 		SyncPrintf(format, a...)
 	} else {
 		_, _ = fmt.Fprintf(w, format, a...)
 	}
+}
+
+// SizeString make string representation of size for output
+//
+// Optional human-readable format including a binary suffix
+func SizeString(size int64, humanReadable bool) string {
+	if humanReadable {
+		if size < 0 {
+			return "-" + fs.SizeSuffix(-size).String()
+		}
+		return fs.SizeSuffix(size).String()
+	}
+	return strconv.FormatInt(size, 10)
+}
+
+// SizeStringField make string representation of size for output in fixed width field
+//
+// Optional human-readable format including a binary suffix
+// Argument rawWidth is used to format field with of raw value. When humanReadable
+// option the width is hard coded to 9, since SizeSuffix strings have precision 3
+// and longest value will be "999.999Ei". This way the width can be optimized
+// depending to the humanReadable option. To always use a longer width the return
+// value can always be fed into another format string with a specific field with.
+func SizeStringField(size int64, humanReadable bool, rawWidth int) string {
+	str := SizeString(size, humanReadable)
+	if humanReadable {
+		return fmt.Sprintf("%9s", str)
+	}
+	return fmt.Sprintf("%[2]*[1]s", str, rawWidth)
+}
+
+// CountString make string representation of count for output
+//
+// Optional human-readable format including a decimal suffix
+func CountString(count int64, humanReadable bool) string {
+	if humanReadable {
+		if count < 0 {
+			return "-" + fs.CountSuffix(-count).String()
+		}
+		return fs.CountSuffix(count).String()
+	}
+	return strconv.FormatInt(count, 10)
+}
+
+// CountStringField make string representation of count for output in fixed width field
+//
+// Similar to SizeStringField, but human readable with decimal prefix and field width 8
+// since there is no 'i' in the decimal prefix symbols (e.g. "999.999E")
+func CountStringField(count int64, humanReadable bool, rawWidth int) string {
+	str := CountString(count, humanReadable)
+	if humanReadable {
+		return fmt.Sprintf("%8s", str)
+	}
+	return fmt.Sprintf("%[2]*[1]s", str, rawWidth)
 }
 
 // List the Fs to the supplied writer
@@ -866,8 +925,9 @@ func syncFprintf(w io.Writer, format string, a ...interface{}) {
 //
 // Lists in parallel which may get them out of order
 func List(ctx context.Context, f fs.Fs, w io.Writer) error {
+	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
-		syncFprintf(w, "%9d %s\n", o.Size(), o.Remote())
+		syncFprintf(w, "%s %s\n", SizeStringField(o.Size(), ci.HumanReadable, 9), o.Remote())
 	})
 }
 
@@ -877,20 +937,21 @@ func List(ctx context.Context, f fs.Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func ListLong(ctx context.Context, f fs.Fs, w io.Writer) error {
+	ci := fs.GetConfig(ctx)
 	return ListFn(ctx, f, func(o fs.Object) {
 		tr := accounting.Stats(ctx).NewCheckingTransfer(o)
 		defer func() {
 			tr.Done(ctx, nil)
 		}()
 		modTime := o.ModTime(ctx)
-		syncFprintf(w, "%9d %s %s\n", o.Size(), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
+		syncFprintf(w, "%s %s %s\n", SizeStringField(o.Size(), ci.HumanReadable, 9), modTime.Local().Format("2006-01-02 15:04:05.000000000"), o.Remote())
 	})
 }
 
-// hashSum returns the human readable hash for ht passed in.  This may
+// hashSum returns the human-readable hash for ht passed in.  This may
 // be UNSUPPORTED or ERROR. If it isn't returning a valid hash it will
 // return an error.
-func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) (string, error) {
+func hashSum(ctx context.Context, ht hash.Type, base64Encoded bool, downloadFlag bool, o fs.Object) (string, error) {
 	var sum string
 	var err error
 
@@ -912,7 +973,7 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 		}
 		in, err := NewReOpen(ctx, o, fs.GetConfig(ctx).LowLevelRetries, options...)
 		if err != nil {
-			return "ERROR", errors.Wrapf(err, "Failed to open file %v", o)
+			return "ERROR", fmt.Errorf("failed to open file %v: %w", o, err)
 		}
 
 		// Account and buffer the transfer
@@ -921,21 +982,20 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 		// Setup hasher
 		hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
 		if err != nil {
-			return "UNSUPPORTED", errors.Wrap(err, "Hash unsupported")
+			return "UNSUPPORTED", fmt.Errorf("hash unsupported: %w", err)
 		}
 
 		// Copy to hasher, downloading the file and passing directly to hash
 		_, err = io.Copy(hasher, in)
 		if err != nil {
-			return "ERROR", errors.Wrap(err, "Failed to copy file to hasher")
+			return "ERROR", fmt.Errorf("failed to copy file to hasher: %w", err)
 		}
 
-		// Get hash and encode as hex
-		byteSum, err := hasher.Sum(ht)
+		// Get hash as hex or base64 encoded string
+		sum, err = hasher.SumString(ht, base64Encoded)
 		if err != nil {
-			return "ERROR", errors.Wrap(err, "Hasher returned an error")
+			return "ERROR", fmt.Errorf("hasher returned an error: %w", err)
 		}
-		sum = hex.EncodeToString(byteSum)
 	} else {
 		tr := accounting.Stats(ctx).NewCheckingTransfer(o)
 		defer func() {
@@ -943,10 +1003,15 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 		}()
 
 		sum, err = o.Hash(ctx, ht)
+		if base64Encoded {
+			hexBytes, _ := hex.DecodeString(sum)
+			sum = base64.URLEncoding.EncodeToString(hexBytes)
+		}
 		if err == hash.ErrUnsupported {
-			return "UNSUPPORTED", errors.Wrap(err, "Hash unsupported")
-		} else if err != nil {
-			return "ERROR", errors.Wrapf(err, "Failed to get hash %v from backed: %v", ht, err)
+			return "", fmt.Errorf("hash unsupported: %w", err)
+		}
+		if err != nil {
+			return "", fmt.Errorf("failed to get hash %v from backend: %w", ht, err)
 		}
 	}
 
@@ -957,6 +1022,7 @@ func hashSum(ctx context.Context, ht hash.Type, downloadFlag bool, o fs.Object) 
 // Updated to handle both standard hex encoding and base64
 // Updated to perform multiple hashes concurrently
 func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFlag bool, f fs.Fs, w io.Writer) error {
+	width := hash.Width(ht, outputBase64)
 	concurrencyControl := make(chan struct{}, fs.GetConfig(ctx).Transfers)
 	var wg sync.WaitGroup
 	err := ListFn(ctx, f, func(o fs.Object) {
@@ -967,33 +1033,50 @@ func HashLister(ctx context.Context, ht hash.Type, outputBase64 bool, downloadFl
 				<-concurrencyControl
 				wg.Done()
 			}()
-			sum, err := hashSum(ctx, ht, downloadFlag, o)
-			if outputBase64 && err == nil {
-				hexBytes, _ := hex.DecodeString(sum)
-				sum = base64.URLEncoding.EncodeToString(hexBytes)
-				width := base64.URLEncoding.EncodedLen(hash.Width(ht) / 2)
-				syncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
-			} else {
-				syncFprintf(w, "%*s  %s\n", hash.Width(ht), sum, o.Remote())
-			}
+			sum, err := hashSum(ctx, ht, outputBase64, downloadFlag, o)
 			if err != nil {
-				err = fs.CountError(err)
-				fs.Errorf(o, "%v", err)
+				fs.Errorf(o, "%v", fs.CountError(err))
+				return
 			}
+			syncFprintf(w, "%*s  %s\n", width, sum, o.Remote())
 		}()
 	})
 	wg.Wait()
 	return err
 }
 
+// HashSumStream outputs a line compatible with md5sum to w based on the
+// input stream in and the hash type ht passed in. If outputBase64 is
+// set then the hash will be base64 instead of hexadecimal.
+func HashSumStream(ht hash.Type, outputBase64 bool, in io.ReadCloser, w io.Writer) error {
+	hasher, err := hash.NewMultiHasherTypes(hash.NewHashSet(ht))
+	if err != nil {
+		return fmt.Errorf("hash unsupported: %w", err)
+	}
+	written, err := io.Copy(hasher, in)
+	fs.Debugf(nil, "Creating %s hash of %d bytes read from input stream", ht, written)
+	if err != nil {
+		return fmt.Errorf("failed to copy input to hasher: %w", err)
+	}
+	sum, err := hasher.SumString(ht, outputBase64)
+	if err != nil {
+		return fmt.Errorf("hasher returned an error: %w", err)
+	}
+	width := hash.Width(ht, outputBase64)
+	syncFprintf(w, "%*s  -\n", width, sum)
+	return nil
+}
+
 // Count counts the objects and their sizes in the Fs
 //
 // Obeys includes and excludes
-func Count(ctx context.Context, f fs.Fs) (objects int64, size int64, err error) {
+func Count(ctx context.Context, f fs.Fs) (objects int64, size int64, sizelessObjects int64, err error) {
 	err = ListFn(ctx, f, func(o fs.Object) {
 		atomic.AddInt64(&objects, 1)
 		objectSize := o.Size()
-		if objectSize > 0 {
+		if objectSize < 0 {
+			atomic.AddInt64(&sizelessObjects, 1)
+		} else if objectSize > 0 {
 			atomic.AddInt64(&size, objectSize)
 		}
 	})
@@ -1012,10 +1095,11 @@ func ConfigMaxDepth(ctx context.Context, recursive bool) int {
 
 // ListDir lists the directories/buckets/containers in the Fs to the supplied writer
 func ListDir(ctx context.Context, f fs.Fs, w io.Writer) error {
+	ci := fs.GetConfig(ctx)
 	return walk.ListR(ctx, f, "", false, ConfigMaxDepth(ctx, false), walk.ListDirs, func(entries fs.DirEntries) error {
 		entries.ForDir(func(dir fs.Directory) {
 			if dir != nil {
-				syncFprintf(w, "%12d %13s %9d %s\n", dir.Size(), dir.ModTime(ctx).Local().Format("2006-01-02 15:04:05"), dir.Items(), dir.Remote())
+				syncFprintf(w, "%s %13s %s %s\n", SizeStringField(dir.Size(), ci.HumanReadable, 12), dir.ModTime(ctx).Local().Format("2006-01-02 15:04:05"), CountStringField(dir.Items(), ci.HumanReadable, 9), dir.Remote())
 			}
 		})
 		return nil
@@ -1043,7 +1127,7 @@ func TryRmdir(ctx context.Context, f fs.Fs, dir string) error {
 	if SkipDestructive(ctx, fs.LogDirName(f, dir), "remove directory") {
 		return nil
 	}
-	fs.Debugf(fs.LogDirName(f, dir), "Removing directory")
+	fs.Infof(fs.LogDirName(f, dir), "Removing directory")
 	return f.Rmdir(ctx, dir)
 }
 
@@ -1124,7 +1208,7 @@ func listToChan(ctx context.Context, f fs.Fs, dir string) fs.ObjectsChan {
 			return nil
 		})
 		if err != nil && err != fs.ErrorDirNotFound {
-			err = errors.Wrap(err, "failed to list")
+			err = fmt.Errorf("failed to list: %w", err)
 			err = fs.CountError(err)
 			fs.Errorf(nil, "%v", err)
 		}
@@ -1136,7 +1220,7 @@ func listToChan(ctx context.Context, f fs.Fs, dir string) fs.ObjectsChan {
 func CleanUp(ctx context.Context, f fs.Fs) error {
 	doCleanUp := f.Features().CleanUp
 	if doCleanUp == nil {
-		return errors.Errorf("%v doesn't support cleanup", f)
+		return fmt.Errorf("%v doesn't support cleanup", f)
 	}
 	if SkipDestructive(ctx, f, "clean up old files") {
 		return nil
@@ -1239,7 +1323,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 		}
 		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, sums, fdst)
 		if !Equal(ctx, src, dst) {
-			err = errors.Errorf("corrupted on transfer")
+			err = fmt.Errorf("corrupted on transfer")
 			err = fs.CountError(err)
 			fs.Errorf(dst, "%v", err)
 			return err
@@ -1267,7 +1351,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 		fs.Debugf(fdst, "Target remote doesn't support streaming uploads, creating temporary local FS to spool file")
 		tmpLocalFs, err := fs.TemporaryLocalFs(ctx)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to create temporary local FS to spool file")
+			return nil, fmt.Errorf("Failed to create temporary local FS to spool file: %w", err)
 		}
 		defer func() {
 			err := Purge(ctx, tmpLocalFs, "")
@@ -1302,7 +1386,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 func PublicLink(ctx context.Context, f fs.Fs, remote string, expire fs.Duration, unlink bool) (string, error) {
 	doPublicLink := f.Features().PublicLink
 	if doPublicLink == nil {
-		return "", errors.Errorf("%v doesn't support public links", f)
+		return "", fmt.Errorf("%v doesn't support public links", f)
 	}
 	return doPublicLink(ctx, remote, expire, unlink)
 }
@@ -1351,7 +1435,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 		return nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to rmdirs")
+		return fmt.Errorf("failed to rmdirs: %w", err)
 	}
 	// Now delete the empty directories, starting from the longest path
 	var toDelete []string
@@ -1383,7 +1467,7 @@ func GetCompareDest(ctx context.Context) (CompareDest []fs.Fs, err error) {
 	ci := fs.GetConfig(ctx)
 	CompareDest, err = cache.GetArr(ctx, ci.CompareDest)
 	if err != nil {
-		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --compare-dest %q: %v", ci.CompareDest, err))
+		return nil, fserrors.FatalError(fmt.Errorf("Failed to make fs for --compare-dest %q: %v", ci.CompareDest, err))
 	}
 	return CompareDest, nil
 }
@@ -1408,7 +1492,9 @@ func compareDest(ctx context.Context, dst, src fs.Object, CompareDest fs.Fs) (No
 	default:
 		return false, err
 	}
-	if Equal(ctx, src, CompareDestFile) {
+	opt := defaultEqualOpt(ctx)
+	opt.updateModTime = false
+	if equal(ctx, src, CompareDestFile, opt) {
 		fs.Debugf(src, "Destination found in --compare-dest, skipping")
 		return true, nil
 	}
@@ -1420,7 +1506,7 @@ func GetCopyDest(ctx context.Context, fdst fs.Fs) (CopyDest []fs.Fs, err error) 
 	ci := fs.GetConfig(ctx)
 	CopyDest, err = cache.GetArr(ctx, ci.CopyDest)
 	if err != nil {
-		return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --copy-dest %q: %v", ci.CopyDest, err))
+		return nil, fserrors.FatalError(fmt.Errorf("Failed to make fs for --copy-dest %q: %v", ci.CopyDest, err))
 	}
 	if !SameConfigArr(fdst, CopyDest) {
 		return nil, fserrors.FatalError(errors.New("parameter to --copy-dest has to be on the same remote as destination"))
@@ -1461,7 +1547,7 @@ func copyDest(ctx context.Context, fdst fs.Fs, dst, src fs.Object, CopyDest, bac
 			if dst != nil && backupDir != nil {
 				err = MoveBackupDir(ctx, backupDir, dst)
 				if err != nil {
-					return false, errors.Wrap(err, "moving to --backup-dir failed")
+					return false, fmt.Errorf("moving to --backup-dir failed: %w", err)
 				}
 				// If successful zero out the dstObj as it is no longer there
 				dst = nil
@@ -1624,7 +1710,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameF
 	}
 	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return errors.Errorf("CopyURL failed: %s", resp.Status)
+		return fmt.Errorf("CopyURL failed: %s", resp.Status)
 	}
 	modTime, err := http.ParseTime(resp.Header.Get("Last-Modified"))
 	if err != nil {
@@ -1633,7 +1719,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, dstFileNameF
 	if dstFileNameFromURL {
 		dstFileName = path.Base(resp.Request.URL.Path)
 		if dstFileName == "." || dstFileName == "/" {
-			return errors.Errorf("CopyURL failed: file name wasn't found in url")
+			return fmt.Errorf("CopyURL failed: file name wasn't found in url")
 		}
 		fs.Debugf(dstFileName, "File name found in url")
 	}
@@ -1670,7 +1756,7 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 	if ci.BackupDir != "" {
 		backupDir, err = cache.Get(ctx, ci.BackupDir)
 		if err != nil {
-			return nil, fserrors.FatalError(errors.Errorf("Failed to make fs for --backup-dir %q: %v", ci.BackupDir, err))
+			return nil, fserrors.FatalError(fmt.Errorf("Failed to make fs for --backup-dir %q: %v", ci.BackupDir, err))
 		}
 		if !SameConfig(fdst, backupDir) {
 			return nil, fserrors.FatalError(errors.New("parameter to --backup-dir has to be on the same remote as destination"))
@@ -1749,7 +1835,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	// This will move the file to a temporary name then
 	// move it back to the intended destination. This is required
 	// to avoid issues with certain remotes and avoid file deletion.
-	if !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.ToLower(dstFilePath) == strings.ToLower(srcFilePath) {
+	if !cp && fdst.Name() == fsrc.Name() && fdst.Features().CaseInsensitive && dstFileName != srcFileName && strings.EqualFold(dstFilePath, srcFilePath) {
 		// Create random name to temporarily move file to
 		tmpObjName := dstFileName + "-rclone-move-" + random.String(8)
 		_, err := fdst.NewObject(ctx, tmpObjName)
@@ -1757,7 +1843,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 			if err == nil {
 				return errors.New("found an already existing file with a randomly generated name. Try the operation again")
 			}
-			return errors.Wrap(err, "error while attempting to move file to a temporary location")
+			return fmt.Errorf("error while attempting to move file to a temporary location: %w", err)
 		}
 		tr := accounting.Stats(ctx).NewTransfer(srcObj)
 		defer func() {
@@ -1765,7 +1851,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		}()
 		tmpObj, err := Op(ctx, fdst, nil, tmpObjName, srcObj)
 		if err != nil {
-			return errors.Wrap(err, "error while moving file to temporary location")
+			return fmt.Errorf("error while moving file to temporary location: %w", err)
 		}
 		_, err = Op(ctx, fdst, nil, dstFileName, tmpObj)
 		return err
@@ -1776,7 +1862,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	if ci.BackupDir != "" || ci.Suffix != "" {
 		backupDir, err = BackupDir(ctx, fdst, fsrc, srcFileName)
 		if err != nil {
-			return errors.Wrap(err, "creating Fs for --backup-dir failed")
+			return fmt.Errorf("creating Fs for --backup-dir failed: %w", err)
 		}
 	}
 	if len(ci.CompareDest) > 0 {
@@ -1799,7 +1885,7 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 		if dstObj != nil && backupDir != nil {
 			err = MoveBackupDir(ctx, backupDir, dstObj)
 			if err != nil {
-				return errors.Wrap(err, "moving to --backup-dir failed")
+				return fmt.Errorf("moving to --backup-dir failed: %w", err)
 			}
 			// If successful zero out the dstObj as it is no longer there
 			dstObj = nil
@@ -1809,7 +1895,11 @@ func moveOrCopyFile(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, dstFileName str
 	} else {
 		tr := accounting.Stats(ctx).NewCheckingTransfer(srcObj)
 		if !cp {
-			err = DeleteFile(ctx, srcObj)
+			if ci.IgnoreExisting {
+				fs.Debugf(srcObj, "Not removing source file as destination file exists and --ignore-existing is set")
+			} else {
+				err = DeleteFile(ctx, srcObj)
+			}
 		}
 		tr.Done(ctx, err)
 	}
@@ -1838,6 +1928,24 @@ func SetTier(ctx context.Context, fsrc fs.Fs, tier string) error {
 		if err != nil {
 			fs.Errorf(fsrc, "Failed to do SetTier, %v", err)
 		}
+	})
+}
+
+// TouchDir touches every file in directory with time t
+func TouchDir(ctx context.Context, f fs.Fs, remote string, t time.Time, recursive bool) error {
+	return walk.ListR(ctx, f, remote, false, ConfigMaxDepth(ctx, recursive), walk.ListObjects, func(entries fs.DirEntries) error {
+		entries.ForObject(func(o fs.Object) {
+			if !SkipDestructive(ctx, o, "touch") {
+				fs.Debugf(f, "Touching %q", o.Remote())
+				err := o.SetModTime(ctx, t)
+				if err != nil {
+					err = fmt.Errorf("failed to touch: %w", err)
+					err = fs.CountError(err)
+					fs.Errorf(o, "%v", err)
+				}
+			}
+		})
+		return nil
 	})
 }
 
@@ -2010,7 +2118,7 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 	// Load the directory tree into memory
 	tree, err := walk.NewDirTree(ctx, f, srcRemote, true, -1)
 	if err != nil {
-		return errors.Wrap(err, "RenameDir tree walk")
+		return fmt.Errorf("RenameDir tree walk: %w", err)
 	}
 
 	// Get the directories in sorted order
@@ -2021,7 +2129,7 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 		dstPath := dstRemote + dir[len(srcRemote):]
 		err := f.Mkdir(ctx, dstPath)
 		if err != nil {
-			return errors.Wrap(err, "RenameDir mkdir")
+			return fmt.Errorf("RenameDir mkdir: %w", err)
 		}
 	}
 
@@ -2061,14 +2169,14 @@ func DirMove(ctx context.Context, f fs.Fs, srcRemote, dstRemote string) (err err
 	close(renames)
 	err = g.Wait()
 	if err != nil {
-		return errors.Wrap(err, "RenameDir renames")
+		return fmt.Errorf("RenameDir renames: %w", err)
 	}
 
 	// Remove the source directories in reverse order
 	for i := len(dirs) - 1; i >= 0; i-- {
 		err := f.Rmdir(ctx, dirs[i])
 		if err != nil {
-			return errors.Wrap(err, "RenameDir rmdir")
+			return fmt.Errorf("RenameDir rmdir: %w", err)
 		}
 	}
 

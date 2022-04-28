@@ -103,7 +103,7 @@ type testRun struct {
 // Run a suite of tests
 func testServer(t *testing.T, tests []testRun, opt *rc.Options) {
 	ctx := context.Background()
-	configfile.LoadConfig(ctx)
+	configfile.Install()
 	mux := http.NewServeMux()
 	opt.HTTPOptions.Template = testTemplate
 	rcServer := newServer(ctx, opt, mux)

@@ -6,8 +6,8 @@ package rc
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/filter"
 )
@@ -34,7 +34,7 @@ func init() {
 		Path:  "options/blocks",
 		Fn:    rcOptionsBlocks,
 		Title: "List all the option blocks",
-		Help: `Returns
+		Help: `Returns:
 - options - a list of the options block names`,
 	})
 }
@@ -112,7 +112,7 @@ func init() {
 		Path:  "options/set",
 		Fn:    rcOptionsSet,
 		Title: "Set an option",
-		Help: `Parameters
+		Help: `Parameters:
 
 - option block name containing an object with
   - key: value
@@ -146,16 +146,16 @@ func rcOptionsSet(ctx context.Context, in Params) (out Params, err error) {
 	for name, options := range in {
 		current := optionBlock[name]
 		if current == nil {
-			return nil, errors.Errorf("unknown option block %q", name)
+			return nil, fmt.Errorf("unknown option block %q", name)
 		}
 		err := Reshape(current, options)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to write options from block %q", name)
+			return nil, fmt.Errorf("failed to write options from block %q: %w", name, err)
 		}
 		if reload := optionReload[name]; reload != nil {
 			err = reload(ctx)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to reload options from block %q", name)
+				return nil, fmt.Errorf("failed to reload options from block %q: %w", name, err)
 			}
 		}
 	}

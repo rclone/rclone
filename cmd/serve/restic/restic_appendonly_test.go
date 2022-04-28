@@ -1,13 +1,13 @@
+//go:build go1.17
+// +build go1.17
+
 package restic
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"io"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 
@@ -65,8 +65,7 @@ func createOverwriteDeleteSeq(t testing.TB, path string) []TestRequest {
 
 // TestResticHandler runs tests on the restic handler code, especially in append-only mode.
 func TestResticHandler(t *testing.T) {
-	ctx := context.Background()
-	configfile.LoadConfig(ctx)
+	configfile.Install()
 	buf := make([]byte, 32)
 	_, err := io.ReadFull(rand.Reader, buf)
 	require.NoError(t, err)
@@ -112,14 +111,7 @@ func TestResticHandler(t *testing.T) {
 	}
 
 	// setup rclone with a local backend in a temporary directory
-	tempdir, err := ioutil.TempDir("", "rclone-restic-test-")
-	require.NoError(t, err)
-
-	// make sure the tempdir is properly removed
-	defer func() {
-		err := os.RemoveAll(tempdir)
-		require.NoError(t, err)
-	}()
+	tempdir := t.TempDir()
 
 	// globally set append-only mode
 	prev := appendOnly

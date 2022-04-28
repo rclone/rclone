@@ -24,7 +24,7 @@ func TestRcBwLimit(t *testing.T) {
 		"bytesPerSecond":   int64(1048576),
 		"bytesPerSecondTx": int64(1048576),
 		"bytesPerSecondRx": int64(1048576),
-		"rate":             "1M",
+		"rate":             "1Mi",
 	}, out)
 	assert.Equal(t, rate.Limit(1048576), TokenBucket.curr[0].Limit())
 
@@ -36,7 +36,7 @@ func TestRcBwLimit(t *testing.T) {
 		"bytesPerSecond":   int64(1048576),
 		"bytesPerSecondTx": int64(1048576),
 		"bytesPerSecondRx": int64(1048576),
-		"rate":             "1M",
+		"rate":             "1Mi",
 	}, out)
 
 	// Set
@@ -49,7 +49,7 @@ func TestRcBwLimit(t *testing.T) {
 		"bytesPerSecond":   int64(10485760),
 		"bytesPerSecondTx": int64(10485760),
 		"bytesPerSecondRx": int64(1048576),
-		"rate":             "10M:1M",
+		"rate":             "10Mi:1Mi",
 	}, out)
 	assert.Equal(t, rate.Limit(10485760), TokenBucket.curr[0].Limit())
 
@@ -61,7 +61,7 @@ func TestRcBwLimit(t *testing.T) {
 		"bytesPerSecond":   int64(10485760),
 		"bytesPerSecondTx": int64(10485760),
 		"bytesPerSecondRx": int64(1048576),
-		"rate":             "10M:1M",
+		"rate":             "10Mi:1Mi",
 	}, out)
 
 	// Reset

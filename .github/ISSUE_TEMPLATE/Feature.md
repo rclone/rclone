@@ -26,7 +26,6 @@ The Rclone Developers
 
 -->
 
-
 #### The associated forum post URL from `https://forum.rclone.org`
 
 
@@ -42,3 +41,11 @@ The Rclone Developers
 #### How do you think rclone should be changed to solve that?
 
 
+
+<!--- Please keep the note below for others who read your feature request. -->
+
+#### How to use GitHub
+
+* Please use the 👍 [reaction](https://blog.github.com/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/) to show that you are affected by the same issue.
+* Please don't comment if you have no relevant information to add. It's just extra noise for everyone subscribed to this issue.
+* Subscribe to receive notifications on status change and new comments.

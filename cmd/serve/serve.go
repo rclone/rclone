@@ -5,6 +5,7 @@ import (
 
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/dlna"
+	"github.com/rclone/rclone/cmd/serve/docker"
 	"github.com/rclone/rclone/cmd/serve/ftp"
 	"github.com/rclone/rclone/cmd/serve/http"
 	"github.com/rclone/rclone/cmd/serve/restic"
@@ -29,6 +30,9 @@ func init() {
 	}
 	if sftp.Command != nil {
 		Command.AddCommand(sftp.Command)
+	}
+	if docker.Command != nil {
+		Command.AddCommand(docker.Command)
 	}
 	cmd.Root.AddCommand(Command)
 }

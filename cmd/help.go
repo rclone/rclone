@@ -165,7 +165,7 @@ func runRoot(cmd *cobra.Command, args []string) {
 // setupRootCommand sets default usage, help, and error handling for
 // the root command.
 //
-// Helpful example: http://rtfcode.com/xref/moby-17.03.2-ce/cli/cobra.go
+// Helpful example: https://github.com/moby/moby/blob/master/cli/cobra.go
 func setupRootCommand(rootCmd *cobra.Command) {
 	ci := fs.GetConfig(context.Background())
 	// Add global flags
@@ -315,7 +315,7 @@ func showBackend(name string) {
 			optionsType = "advanced"
 			continue
 		}
-		fmt.Printf("### %s Options\n\n", strings.Title(optionsType))
+		fmt.Printf("### %s options\n\n", strings.Title(optionsType))
 		fmt.Printf("Here are the %s options specific to %s (%s).\n\n", optionsType, backend.Name, backend.Description)
 		optionsType = "advanced"
 		for _, opt := range opts {
@@ -329,12 +329,29 @@ func showBackend(name string) {
 			if opt.IsPassword {
 				fmt.Printf("**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).\n\n")
 			}
+			fmt.Printf("Properties:\n\n")
 			fmt.Printf("- Config:      %s\n", opt.Name)
 			fmt.Printf("- Env Var:     %s\n", opt.EnvVarName(backend.Prefix))
+			if opt.Provider != "" {
+				fmt.Printf("- Provider:    %s\n", opt.Provider)
+			}
 			fmt.Printf("- Type:        %s\n", opt.Type())
-			fmt.Printf("- Default:     %s\n", quoteString(opt.GetValue()))
+			defaultValue := opt.GetValue()
+			// Default value and Required are related: Required means option must
+			// have a value, but if there is a default then a value does not have
+			// to be explicitely set and then Required makes no difference.
+			if defaultValue != "" {
+				fmt.Printf("- Default:     %s\n", quoteString(defaultValue))
+			} else {
+				fmt.Printf("- Required:    %v\n", opt.Required)
+			}
+			// List examples / possible choices
 			if len(opt.Examples) > 0 {
-				fmt.Printf("- Examples:\n")
+				if opt.Exclusive {
+					fmt.Printf("- Choices:\n")
+				} else {
+					fmt.Printf("- Examples:\n")
+				}
 				for _, ex := range opt.Examples {
 					fmt.Printf("    - %s\n", quoteString(ex.Value))
 					for _, line := range strings.Split(ex.Help, "\n") {

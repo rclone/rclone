@@ -7,6 +7,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/dop251/scsu"
 	"github.com/klauspost/compress/huff0"
 )
 
@@ -50,7 +51,7 @@ func DecodeBytes(table byte, data []byte) (string, error) {
 	case tableReserved:
 		return "", ErrUnsupported
 	case tableSCSUPlain:
-		return scsuDecode(data)
+		return scsu.Decode(data)
 	case tableRLE:
 		if len(data) < 2 {
 			return "", ErrCorrupted
@@ -87,7 +88,7 @@ func DecodeBytes(table byte, data []byte) (string, error) {
 			return "", ErrCorrupted
 		}
 		if table == tableSCSU {
-			return scsuDecode(name)
+			return scsu.Decode(name)
 		}
 		return string(name), nil
 	}

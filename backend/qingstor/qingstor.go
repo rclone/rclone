@@ -1,12 +1,14 @@
 // Package qingstor provides an interface to QingStor object storage
 // Home: https://www.qingcloud.com/
 
+//go:build !plan9 && !js
 // +build !plan9,!js
 
 package qingstor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -39,36 +40,36 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:    "env_auth",
-			Help:    "Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.",
+			Help:    "Get QingStor credentials from runtime.\n\nOnly applies if access_key_id and secret_access_key is blank.",
 			Default: false,
 			Examples: []fs.OptionExample{{
 				Value: "false",
-				Help:  "Enter QingStor credentials in the next step",
+				Help:  "Enter QingStor credentials in the next step.",
 			}, {
 				Value: "true",
-				Help:  "Get QingStor credentials from the environment (env vars or IAM)",
+				Help:  "Get QingStor credentials from the environment (env vars or IAM).",
 			}},
 		}, {
 			Name: "access_key_id",
-			Help: "QingStor Access Key ID\nLeave blank for anonymous access or runtime credentials.",
+			Help: "QingStor Access Key ID.\n\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "secret_access_key",
-			Help: "QingStor Secret Access Key (password)\nLeave blank for anonymous access or runtime credentials.",
+			Help: "QingStor Secret Access Key (password).\n\nLeave blank for anonymous access or runtime credentials.",
 		}, {
 			Name: "endpoint",
-			Help: "Enter an endpoint URL to connection QingStor API.\nLeave blank will use the default value \"https://qingstor.com:443\"",
+			Help: "Enter an endpoint URL to connection QingStor API.\n\nLeave blank will use the default value \"https://qingstor.com:443\".",
 		}, {
 			Name: "zone",
-			Help: "Zone to connect to.\nDefault is \"pek3a\".",
+			Help: "Zone to connect to.\n\nDefault is \"pek3a\".",
 			Examples: []fs.OptionExample{{
 				Value: "pek3a",
-				Help:  "The Beijing (China) Three Zone\nNeeds location constraint pek3a.",
+				Help:  "The Beijing (China) Three Zone.\nNeeds location constraint pek3a.",
 			}, {
 				Value: "sh1a",
-				Help:  "The Shanghai (China) First Zone\nNeeds location constraint sh1a.",
+				Help:  "The Shanghai (China) First Zone.\nNeeds location constraint sh1a.",
 			}, {
 				Value: "gd2a",
-				Help:  "The Guangdong (China) Second Zone\nNeeds location constraint gd2a.",
+				Help:  "The Guangdong (China) Second Zone.\nNeeds location constraint gd2a.",
 			}},
 		}, {
 			Name:     "connection_retries",
@@ -77,10 +78,10 @@ func init() {
 			Advanced: true,
 		}, {
 			Name: "upload_cutoff",
-			Help: `Cutoff for switching to chunked upload
+			Help: `Cutoff for switching to chunked upload.
 
 Any files larger than this will be uploaded in chunks of chunk_size.
-The minimum is 0 and the maximum is 5GB.`,
+The minimum is 0 and the maximum is 5 GiB.`,
 			Default:  defaultUploadCutoff,
 			Advanced: true,
 		}, {
@@ -284,7 +285,7 @@ func qsServiceConnection(ctx context.Context, opt *Options) (*qs.Service, error)
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	return nil
 }
@@ -299,7 +300,7 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 
 func checkUploadCutoff(cs fs.SizeSuffix) error {
 	if cs > maxUploadCutoff {
-		return errors.Errorf("%s is greater than %s", cs, maxUploadCutoff)
+		return fmt.Errorf("%s is greater than %s", cs, maxUploadCutoff)
 	}
 	return nil
 }
@@ -328,11 +329,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "qingstor: chunk size")
+		return nil, fmt.Errorf("qingstor: chunk size: %w", err)
 	}
 	err = checkUploadCutoff(opt.UploadCutoff)
 	if err != nil {
-		return nil, errors.Wrap(err, "qingstor: upload cutoff")
+		return nil, fmt.Errorf("qingstor: upload cutoff: %w", err)
 	}
 	svc, err := qsServiceConnection(ctx, opt)
 	if err != nil {
@@ -883,7 +884,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
 		var resp *qs.ListMultipartUploadsOutput
 		resp, err = bucketInit.ListMultipartUploads(&req)
 		if err != nil {
-			return errors.Wrap(err, "clean up bucket list multipart uploads")
+			return fmt.Errorf("clean up bucket list multipart uploads: %w", err)
 		}
 		for _, upload := range resp.Uploads {
 			if upload.Created != nil && upload.Key != nil && upload.UploadID != nil {
@@ -895,7 +896,7 @@ func (f *Fs) cleanUpBucket(ctx context.Context, bucket string) (err error) {
 					}
 					_, abortErr := bucketInit.AbortMultipartUpload(*upload.Key, &req)
 					if abortErr != nil {
-						err = errors.Wrapf(abortErr, "failed to remove multipart upload for %q", *upload.Key)
+						err = fmt.Errorf("failed to remove multipart upload for %q: %w", *upload.Key, abortErr)
 						fs.Errorf(f, "%v", err)
 					}
 				} else {

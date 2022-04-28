@@ -9,7 +9,7 @@ We understand you are having a problem with rclone; we want to help you with tha
 
 **STOP and READ**
 **YOUR POST WILL BE REMOVED IF IT IS LOW QUALITY**:
-Please show the effort you've put in to solving the problem and please be specific.
+Please show the effort you've put into solving the problem and please be specific.
 People are volunteering their time to help! Low effort posts are not likely to get good answers!
 
 If you think you might have found a bug, try to replicate it with the latest beta (or stable).
@@ -36,7 +36,6 @@ Thank you
 The Rclone Developers
 
 -->
-
 
 #### The associated forum post URL from `https://forum.rclone.org`
 
@@ -65,3 +64,11 @@ The Rclone Developers
 #### A log from the command with the `-vv` flag (e.g. output from `rclone -vv copy /tmp remote:tmp`)
 
 
+
+<!--- Please keep the note below for others who read your bug report. -->
+
+#### How to use GitHub
+
+* Please use the 👍 [reaction](https://blog.github.com/2016-03-10-add-reactions-to-pull-requests-issues-and-comments/) to show that you are affected by the same issue.
+* Please don't comment if you have no relevant information to add. It's just extra noise for everyone subscribed to this issue.
+* Subscribe to receive notifications on status change and new comments.

@@ -42,10 +42,12 @@ func TestParseDuration(t *testing.T) {
 		{"1x", 0, true},
 		{"off", time.Duration(DurationOff), false},
 		{"1h2m3s", time.Hour + 2*time.Minute + 3*time.Second, false},
-		{"2001-02-03", now.Sub(time.Date(2001, 2, 3, 0, 0, 0, 0, time.UTC)), false},
-		{"2001-02-03 10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.UTC)), false},
-		{"2001-02-03T10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.UTC)), false},
+		{"2001-02-03", now.Sub(time.Date(2001, 2, 3, 0, 0, 0, 0, time.Local)), false},
+		{"2001-02-03 10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.Local)), false},
+		{"2001-08-03 10:11:12", now.Sub(time.Date(2001, 8, 3, 10, 11, 12, 0, time.Local)), false},
+		{"2001-02-03T10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.Local)), false},
 		{"2001-02-03T10:11:12.123Z", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 123, time.UTC)), false},
+		{"2001-02-03T10:11:12.123+00:00", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 123, time.UTC)), false},
 	} {
 		duration, err := parseDurationFromNow(test.in, getNow)
 		if test.err {

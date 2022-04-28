@@ -1,5 +1,6 @@
 // Test AmazonCloudDrive filesystem interface
 
+//go:build acd
 // +build acd
 
 package amazonclouddrive_test

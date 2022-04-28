@@ -13,7 +13,7 @@ Checks the files in the source and destination match.
 
 
 Checks the files in the source and destination match.  It compares
-sizes and hashes (MD5 or SHA1) and logs a report of files which don't
+sizes and hashes (MD5 or SHA1) and logs a report of files that don't
 match.  It doesn't alter the source or destination.
 
 If you supply the `--size-only` flag, it will only compare the sizes not
@@ -23,6 +23,9 @@ If you supply the `--download` flag, it will download the data from
 both remotes and check them against each other on the fly.  This can
 be useful for remotes that don't support hashes or if you really want
 to check all the data.
+
+If you supply the `--checkfile HASH` flag with a valid hash name,
+the `source:path` must point to a text file in the SUM format.
 
 If you supply the `--one-way` flag, it will only check that files in
 the source match the files in the destination, not the other way
@@ -53,9 +56,10 @@ rclone check source:path dest:path [flags]
 ## Options
 
 ```
+  -C, --checkfile string        Treat source:path as a SUM file with hashes of given type
       --combined string         Make a combined report of changes to this file
       --differ string           Report all non-matching files to this file
-      --download                Check by downloading rather than with hash.
+      --download                Check by downloading rather than with hash
       --error string            Report all files with errors (hashing or reading) to this file
   -h, --help                    help for check
       --match string            Report all matching files to this file

@@ -58,6 +58,7 @@ type FolderListResponse struct {
 	Content  []Item `json:"content"`
 	Name     string `json:"name,omitempty"`
 	ParentID string `json:"parent_id,omitempty"`
+	FolderID string `json:"folder_id,omitempty"`
 }
 
 // FolderCreateResponse is the response to folder/create
