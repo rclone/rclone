@@ -1486,7 +1486,7 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("finalize chunked upload failed: %w", err)
+		return fmt.Errorf("finalize chunked upload failed, destinationURL: \"%s\": %w", destinationURL, err)
 	}
 	return nil
 }
