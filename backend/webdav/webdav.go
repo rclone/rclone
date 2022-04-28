@@ -215,6 +215,7 @@ func (f *Fs) Features() *fs.Features {
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
+	404, // Not found. Can be returned by NextCloud when merging chunks of an upload if done too fast.
 	423, // Locked
 	429, // Too Many Requests.
 	500, // Internal Server Error
@@ -1481,7 +1482,7 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 	}
 	opts.ExtraHeaders = o.extraHeaders(ctx, src)
 	opts.ExtraHeaders["Destination"] = destinationURL.String()
-	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
