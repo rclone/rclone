@@ -129,13 +129,13 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}, {
-			Name: "chunk_size",
+			Name: "nextcloud_chunk_size",
 			Help: `Chunk size to use for uploading (Nextcloud only)
 
 Set to 0 to disable chunked uploading.
 `,
 			Advanced: true,
-			Default:  fs.SizeSuffix(0), // off by default
+			Default:  fs.SizeSuffix(10 * 1024 * 1024), // Default NextCloud `max_chunk_size` is `10 MB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
 		}},
 	})
 }
@@ -150,7 +150,7 @@ type Options struct {
 	BearerTokenCommand string               `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 	Headers            fs.CommaSepList      `config:"headers"`
-	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
+	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
 }
 
 // Fs represents a remote webdav
@@ -172,7 +172,7 @@ type Fs struct {
 	hasMD5             bool          // set if can use owncloud style checksums for MD5
 	hasSHA1            bool          // set if can use owncloud style checksums for SHA1
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
-	canChunk           bool          // set if nextcloud and chunk_size is set
+	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
 }
 
 // Object describes a webdav object
