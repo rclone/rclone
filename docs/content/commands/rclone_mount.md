@@ -18,9 +18,15 @@ FUSE.
 
 First set up your remote using `rclone config`.  Check it works with `rclone ls` etc.
 
-On Linux and OSX, you can either run mount in foreground mode or background (daemon) mode.
-Mount runs in foreground mode by default, use the `--daemon` flag to specify background mode.
-You can only run mount in foreground mode on Windows.
+On Linux and macOS, you can run mount in either foreground or background (aka
+daemon) mode. Mount runs in foreground mode by default. Use the `--daemon` flag
+to force background mode. On Windows you can run mount in foreground only,
+the flag is ignored.
+
+In background mode rclone acts as a generic Unix mount program: the main
+program starts, spawns background rclone process to setup and maintain the
+mount, waits until success or timeout and exits with appropriate code
+(killing the child process if it fails).
 
 On Linux/macOS/FreeBSD start the mount like this, where `/path/to/local/mount`
 is an **empty** **existing** directory:
@@ -28,7 +34,11 @@ is an **empty** **existing** directory:
     rclone mount remote:path/to/files /path/to/local/mount
 
 On Windows you can start a mount in different ways. See [below](#mounting-modes-on-windows)
-for details. The following examples will mount to an automatically assigned drive,
+for details. If foreground mount is used interactively from a console window,
+rclone will serve the mount and occupy the console so another window should be
+used to work with the mount until rclone is interrupted e.g. by pressing Ctrl-C.
+
+The following examples will mount to an automatically assigned drive,
 to specific drive letter `X:`, to path `C:\path\parent\mount`
 (where parent directory or drive must exist, and mount must **not** exist,
 and is not supported when [mounting as a network drive](#mounting-modes-on-windows)), and
@@ -56,19 +66,16 @@ When that happens, it is the user's responsibility to stop the mount manually.
 The size of the mounted file system will be set according to information retrieved
 from the remote, the same as returned by the [rclone about](https://rclone.org/commands/rclone_about/)
 command. Remotes with unlimited storage may report the used size only,
-then an additional 1PB of free space is assumed. If the remote does not
+then an additional 1 PiB of free space is assumed. If the remote does not
 [support](https://rclone.org/overview/#optional-features) the about feature
-at all, then 1PB is set as both the total and the free size.
-
-**Note**: As of `rclone` 1.52.2, `rclone mount` now requires Go version 1.13
-or newer on some platforms depending on the underlying FUSE library in use.
+at all, then 1 PiB is set as both the total and the free size.
 
 ## Installing on Windows
 
 To run rclone mount on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
 
-[WinFsp](https://github.com/billziss-gh/winfsp) is an open source
+[WinFsp](https://github.com/billziss-gh/winfsp) is an open-source
 Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
 uses combination with [cgofuse](https://github.com/billziss-gh/cgofuse).
@@ -161,11 +168,16 @@ By default, the owner and group will be taken from the current user, and the bui
 group "Everyone" will be used to represent others. The user/group can be customized
 with FUSE options "UserName" and "GroupName",
 e.g. `-o UserName=user123 -o GroupName="Authenticated Users"`.
+The permissions on each entry will be set according to [options](#options)
+`--dir-perms` and `--file-perms`, which takes a value in traditional
+[numeric notation](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation).
 
-The permissions on each entry will be set according to
-[options](#options) `--dir-perms` and `--file-perms`,
-which takes a value in traditional [numeric notation](https://en.wikipedia.org/wiki/File-system_permissions#Numeric_notation),
-where the default corresponds to `--file-perms 0666 --dir-perms 0777`.
+The default permissions corresponds to `--file-perms 0666 --dir-perms 0777`,
+i.e. read and write permissions to everyone. This means you will not be able
+to start any programs from the the mount. To be able to do that you must add
+execute permissions, e.g. `--file-perms 0777 --dir-perms 0777` to add it
+to everyone. If the program needs to write files, chances are you will have
+to enable [VFS File Caching](#vfs-file-caching) as well (see also [limitations](#limitations)).
 
 Note that the mapping of permissions is not always trivial, and the result
 you see in Windows Explorer may not be exactly like you expected.
@@ -184,7 +196,7 @@ metadata about files like in UNIX. One case that may arise is that other program
 (incorrectly) interprets this as the file being accessible by everyone. For example
 an SSH client may warn about "unprotected private key file".
 
-WinFsp 2021 (version 1.9, still in beta) introduces a new FUSE option "FileSecurity",
+WinFsp 2021 (version 1.9) introduces a new FUSE option "FileSecurity",
 that allows the complete specification of file security descriptors using
 [SDDL](https://docs.microsoft.com/en-us/windows/win32/secauthz/security-descriptor-string-format).
 With this you can work around issues such as the mentioned "unprotected private key file"
@@ -192,19 +204,38 @@ by specifying `-o FileSecurity="D:P(A;;FA;;;OW)"`, for file all access (FA) to t
 
 ### Windows caveats
 
-Note that drives created as Administrator are not visible by other
-accounts (including the account that was elevated as
-Administrator). So if you start a Windows drive from an Administrative
-Command Prompt and then try to access the same drive from Explorer
-(which does not run as Administrator), you will not be able to see the
-new drive.
+Drives created as Administrator are not visible to other accounts,
+not even an account that was elevated to Administrator with the
+User Account Control (UAC) feature. A result of this is that if you mount
+to a drive letter from a Command Prompt run as Administrator, and then try
+to access the same drive from Windows Explorer (which does not run as
+Administrator), you will not be able to see the mounted drive.
 
-The easiest way around this is to start the drive from a normal
-command prompt. It is also possible to start a drive from the SYSTEM
-account (using [the WinFsp.Launcher
-infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
-which creates drives accessible for everyone on the system or
-alternatively using [the nssm service manager](https://nssm.cc/usage).
+If you don't need to access the drive from applications running with
+administrative privileges, the easiest way around this is to always
+create the mount from a non-elevated command prompt.
+
+To make mapped drives available to the user account that created them
+regardless if elevated or not, there is a special Windows setting called
+[linked connections](https://docs.microsoft.com/en-us/troubleshoot/windows-client/networking/mapped-drives-not-available-from-elevated-command#detail-to-configure-the-enablelinkedconnections-registry-entry)
+that can be enabled.
+
+It is also possible to make a drive mount available to everyone on the system,
+by running the process creating it as the built-in SYSTEM account.
+There are several ways to do this: One is to use the command-line
+utility [PsExec](https://docs.microsoft.com/en-us/sysinternals/downloads/psexec),
+from Microsoft's Sysinternals suite, which has option `-s` to start
+processes as the SYSTEM account. Another alternative is to run the mount
+command from a Windows Scheduled Task, or a Windows Service, configured
+to run as the SYSTEM account. A third alternative is to use the
+[WinFsp.Launcher infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture)).
+Note that when running rclone as another user, it will not use
+the configuration file from your profile unless you tell it to
+with the [`--config`](https://rclone.org/docs/#config-config-file) option.
+Read more in the [install documentation](https://rclone.org/install/).
+
+Note that mapping to a directory path, instead of a drive letter,
+does not suffer from the same limitations.
 
 ## Limitations
 
@@ -214,10 +245,17 @@ applications won't work with their files on an rclone mount without
 `--vfs-cache-mode writes` or `--vfs-cache-mode full`.
 See the [VFS File Caching](#vfs-file-caching) section for more info.
 
-The bucket based remotes (e.g. Swift, S3, Google Compute Storage, B2,
+The bucket-based remotes (e.g. Swift, S3, Google Compute Storage, B2,
 Hubic) do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.
+
+When `rclone mount` is invoked on Unix with `--daemon` flag, the main rclone
+program will wait for the background mount to become ready or until the timeout
+specified by the `--daemon-wait` flag. On Linux it can check mount status using
+ProcFS so the flag in fact sets **maximum** time to wait, while the real wait
+can be less. On macOS / BSD the time to wait is constant and the check is
+performed only at the end. We advise you to set wait time on macOS reasonably.
 
 Only supported on Linux, FreeBSD, OS X and Windows at the moment.
 
@@ -275,21 +313,84 @@ after the mountpoint has been successfully set up.
 Units having the rclone mount service specified as a requirement
 will see all files and folders immediately in this mode.
 
-## chunked reading
+Note that systemd runs mount units without any environment variables including
+`PATH` or `HOME`. This means that tilde (`~`) expansion will not work
+and you should provide `--config` and `--cache-dir` explicitly as absolute
+paths via rclone arguments.
+Since mounting requires the `fusermount` program, rclone will use the fallback
+PATH of `/bin:/usr/bin` in this scenario. Please ensure that `fusermount`
+is present on this PATH.
 
-`--vfs-read-chunk-size` will enable reading the source objects in parts.
-This can reduce the used download quota for some remotes by requesting only chunks
-from the remote that are actually read at the cost of an increased number of requests.
+## Rclone as Unix mount helper
 
-When `--vfs-read-chunk-size-limit` is also specified and greater than
-`--vfs-read-chunk-size`, the chunk size for each open file will get doubled
-for each chunk read, until the specified value is reached. A value of `-1` will disable
-the limit and the chunk size will grow indefinitely.
+The core Unix program `/bin/mount` normally takes the `-t FSTYPE` argument
+then runs the `/sbin/mount.FSTYPE` helper program passing it mount options
+as `-o key=val,...` or `--opt=...`. Automount (classic or systemd) behaves
+in a similar way.
 
-With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
-the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
-0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
+rclone by default expects GNU-style flags `--key val`. To run it as a mount
+helper you should symlink rclone binary to `/sbin/mount.rclone` and optionally
+`/usr/bin/rclonefs`, e.g. `ln -s /usr/bin/rclone /sbin/mount.rclone`.
+rclone will detect it and translate command-line arguments appropriately.
+
+Now you can run classic mounts like this:
+```
+mount sftp1:subdir /mnt/data -t rclone -o vfs_cache_mode=writes,sftp_key_file=/path/to/pem
+```
+
+or create systemd mount units:
+```
+# /etc/systemd/system/mnt-data.mount
+[Unit]
+After=network-online.target
+[Mount]
+Type=rclone
+What=sftp1:subdir
+Where=/mnt/data
+Options=rw,allow_other,args2env,vfs-cache-mode=writes,config=/etc/rclone.conf,cache-dir=/var/rclone
+```
+
+optionally accompanied by systemd automount unit
+```
+# /etc/systemd/system/mnt-data.automount
+[Unit]
+After=network-online.target
+Before=remote-fs.target
+[Automount]
+Where=/mnt/data
+TimeoutIdleSec=600
+[Install]
+WantedBy=multi-user.target
+```
+
+or add in `/etc/fstab` a line like
+```
+sftp1:subdir /mnt/data rclone rw,noauto,nofail,_netdev,x-systemd.automount,args2env,vfs_cache_mode=writes,config=/etc/rclone.conf,cache_dir=/var/cache/rclone 0 0
+```
+
+or use classic Automountd.
+Remember to provide explicit `config=...,cache-dir=...` as a workaround for
+mount units being run without `HOME`.
+
+Rclone in the mount helper mode will split `-o` argument(s) by comma, replace `_`
+by `-` and prepend `--` to get the command-line flags. Options containing commas
+or spaces can be wrapped in single or double quotes. Any inner quotes inside outer
+quotes of the same type should be doubled.
+
+Mount option syntax includes a few extra options treated specially:
+
+- `env.NAME=VALUE` will set an environment variable for the mount process.
+  This helps with Automountd and Systemd.mount which don't allow setting
+  custom environment for mount helpers.
+  Typically you will use `env.HTTPS_PROXY=proxy.host:3128` or `env.HOME=/root`
+- `command=cmount` can be used to run `cmount` or any other rclone command
+  rather than the default `mount`.
+- `args2env` will pass mount options to the mount helper running in background
+  via environment variables instead of command line arguments. This allows to
+  hide secrets from such commands as `ps` or `pgrep`.
+- `vv...` will be transformed into appropriate `--verbose=N`
+- standard mount options like `x-systemd.automount`, `_netdev`, `nosuid` and alike
+  are intended only for Automountd and ignored by rclone.
 
 ## VFS - Virtual File System
 
@@ -312,8 +413,8 @@ directory should be considered up to date and not refreshed from the
 backend. Changes made through the mount will appear immediately or
 invalidate the cache.
 
-    --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
-    --poll-interval duration    Time to wait between polling for changes.
+    --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
+    --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)
 
 However, changes made directly on the cloud storage by the web
 interface or a different copy of rclone will only be picked up once
@@ -367,10 +468,10 @@ find that you need one or the other or both.
 
     --cache-dir string                   Directory rclone will use for caching.
     --vfs-cache-mode CacheMode           Cache mode off|minimal|writes|full (default off)
-    --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
-    --vfs-cache-max-size SizeSuffix      Max total size of objects in the cache. (default off)
-    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
-    --vfs-write-back duration            Time to writeback files after last use when using cache. (default 5s)
+    --vfs-cache-max-age duration         Max age of objects in the cache (default 1h0m0s)
+    --vfs-cache-max-size SizeSuffix      Max total size of objects in the cache (default off)
+    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects (default 1m0s)
+    --vfs-write-back duration            Time to writeback files after last use when using cache (default 5s)
 
 If run with `-vv` rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
@@ -382,8 +483,8 @@ The higher the cache mode the more compatible rclone becomes at the
 cost of using disk space.
 
 Note that files are written back to the remote only when they are
-closed and if they haven't been accessed for --vfs-write-back
-second. If rclone is quit or dies with files that haven't been
+closed and if they haven't been accessed for `--vfs-write-back`
+seconds. If rclone is quit or dies with files that haven't been
 uploaded, these will be uploaded next time rclone is run with the same
 flags.
 
@@ -452,27 +553,55 @@ their full size in the cache, but they will be sparse files with only
 the data that has been downloaded present in them.
 
 This mode should support all normal file system operations and is
-otherwise identical to --vfs-cache-mode writes.
+otherwise identical to `--vfs-cache-mode` writes.
 
-When reading a file rclone will read --buffer-size plus
---vfs-read-ahead bytes ahead.  The --buffer-size is buffered in memory
-whereas the --vfs-read-ahead is buffered on disk.
+When reading a file rclone will read `--buffer-size` plus
+`--vfs-read-ahead` bytes ahead.  The `--buffer-size` is buffered in memory
+whereas the `--vfs-read-ahead` is buffered on disk.
 
-When using this mode it is recommended that --buffer-size is not set
-too big and --vfs-read-ahead is set large if required.
+When using this mode it is recommended that `--buffer-size` is not set
+too large and `--vfs-read-ahead` is set large if required.
 
 **IMPORTANT** not all file systems support sparse files. In particular
 FAT/exFAT do not. Rclone will perform very badly if the cache
 directory is on a filesystem which doesn't support sparse files and it
 will log an ERROR message if one is detected.
 
+## VFS Chunked Reading
+
+When rclone reads files from a remote it reads them in chunks. This
+means that rather than requesting the whole file rclone reads the
+chunk specified.  This can reduce the used download quota for some
+remotes by requesting only chunks from the remote that are actually
+read, at the cost of an increased number of requests.
+
+These flags control the chunking:
+
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
+
+Rclone will start reading a chunk of size `--vfs-read-chunk-size`,
+and then double the size for each read. When `--vfs-read-chunk-size-limit` is
+specified, and greater than `--vfs-read-chunk-size`, the chunk size for each
+open file will get doubled only until the specified value is reached. If the
+value is "off", which is the default, the limit is disabled and the chunk size
+will grow indefinitely.
+
+With `--vfs-read-chunk-size 100M` and `--vfs-read-chunk-size-limit 0`
+the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
+When `--vfs-read-chunk-size-limit 500M` is specified, the result would be
+0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
+
+Setting `--vfs-read-chunk-size` to `0` or "off" disables chunked reading.
+
 ## VFS Performance
 
 These flags may be used to enable/disable features of the VFS for
-performance or other reasons.
+performance or other reasons. See also the [chunked reading](#vfs-chunked-reading)
+feature.
 
-In particular S3 and Swift benefit hugely from the --no-modtime flag
-(or use --use-server-modtime for a slightly different effect) as each
+In particular S3 and Swift benefit hugely from the `--no-modtime` flag
+(or use `--use-server-modtime` for a slightly different effect) as each
 read of the modification time takes a transaction.
 
     --no-checksum     Don't compare checksums on up/download.
@@ -480,32 +609,19 @@ read of the modification time takes a transaction.
     --no-seek         Don't allow seeking in files.
     --read-only       Mount read-only.
 
-When rclone reads files from a remote it reads them in chunks. This
-means that rather than requesting the whole file rclone reads the
-chunk specified. This is advantageous because some cloud providers
-account for reads being all the data requested, not all the data
-delivered.
-
-Rclone will keep doubling the chunk size requested starting at
---vfs-read-chunk-size with a maximum of --vfs-read-chunk-size-limit
-unless it is set to "off" in which case there will be no limit.
-
-    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks. (default 128M)
-    --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default "off")
-
 Sometimes rclone is delivered reads or writes out of order. Rather
 than seeking rclone will wait a short time for the in sequence read or
 write to come in. These flags only come into effect when not using an
 on disk cache file.
 
-    --vfs-read-wait duration   Time to wait for in-sequence read before seeking. (default 20ms)
-    --vfs-write-wait duration  Time to wait for in-sequence write before giving error. (default 1s)
+    --vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
+    --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)
 
-When using VFS write caching (--vfs-cache-mode with value writes or full),
-the global flag --transfers can be set to adjust the number of parallel uploads of
-modified files from cache (the related global flag --checkers have no effect on mount).
+When using VFS write caching (`--vfs-cache-mode` with value writes or full),
+the global flag `--transfers` can be set to adjust the number of parallel uploads of
+modified files from cache (the related global flag `--checkers` have no effect on mount).
 
-    --transfers int  Number of file transfers to run in parallel. (default 4)
+    --transfers int  Number of file transfers to run in parallel (default 4)
 
 ## VFS Case Sensitivity
 
@@ -518,7 +634,7 @@ to create the file is preserved and available for programs to query.
 It is not allowed for two files in the same directory to differ only by case.
 
 Usually file systems on macOS are case-insensitive. It is possible to make macOS
-file systems case-sensitive but that is not the default
+file systems case-sensitive but that is not the default.
 
 The `--vfs-case-insensitive` mount flag controls how rclone handles these
 two cases. If its value is "false", rclone passes file names to the mounted
@@ -563,47 +679,49 @@ rclone mount remote:path /path/to/mountpoint [flags]
 ## Options
 
 ```
-      --allow-non-empty                        Allow mounting over a non-empty directory. Not supported on Windows.
-      --allow-other                            Allow access to other users. Not supported on Windows.
-      --allow-root                             Allow access to root user. Not supported on Windows.
-      --async-read                             Use asynchronous reads. Not supported on Windows. (default true)
-      --attr-timeout duration                  Time for which file/directory attributes are cached. (default 1s)
-      --daemon                                 Run mount as a daemon (background mode). Not supported on Windows.
-      --daemon-timeout duration                Time limit for rclone to respond to kernel. Not supported on Windows.
-      --debug-fuse                             Debug the FUSE internals - needs -v.
-      --default-permissions                    Makes kernel enforce access control based on the file mode. Not supported on Windows.
-      --dir-cache-time duration                Time to cache directory entries for. (default 5m0s)
+      --allow-non-empty                        Allow mounting over a non-empty directory (not supported on Windows)
+      --allow-other                            Allow access to other users (not supported on Windows)
+      --allow-root                             Allow access to root user (not supported on Windows)
+      --async-read                             Use asynchronous reads (not supported on Windows) (default true)
+      --attr-timeout duration                  Time for which file/directory attributes are cached (default 1s)
+      --daemon                                 Run mount in background and exit parent process (as background output is suppressed, use --log-file with --log-format=pid,... to monitor) (not supported on Windows)
+      --daemon-timeout duration                Time limit for rclone to respond to kernel (not supported on Windows)
+      --daemon-wait duration                   Time to wait for ready mount from daemon (maximum time on Linux, constant sleep time on OSX/BSD) (not supported on Windows) (default 1m0s)
+      --debug-fuse                             Debug the FUSE internals - needs -v
+      --default-permissions                    Makes kernel enforce access control based on the file mode (not supported on Windows)
+      --devname string                         Set the device name - default is remote:path
+      --dir-cache-time duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 0777)
       --file-perms FileMode                    File permissions (default 0666)
-      --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.
-      --gid uint32                             Override the gid field set by the filesystem. Not supported on Windows. (default 1000)
+      --fuse-flag stringArray                  Flags or arguments to be passed direct to libfuse/WinFsp (repeat if required)
+      --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for mount
-      --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads. Not supported on Windows. (default 128k)
-      --network-mode                           Mount as remote network drive, instead of fixed disk drive. Supported on Windows only
-      --no-checksum                            Don't compare checksums on up/download.
-      --no-modtime                             Don't read/write the modification time (can speed things up).
-      --no-seek                                Don't allow seeking in files.
-      --noappledouble                          Ignore Apple Double (._) and .DS_Store files. Supported on OSX only. (default true)
-      --noapplexattr                           Ignore all "com.apple.*" extended attributes. Supported on OSX only.
-  -o, --option stringArray                     Option for libfuse/WinFsp. Repeat if required.
-      --poll-interval duration                 Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
-      --read-only                              Mount read-only.
-      --uid uint32                             Override the uid field set by the filesystem. Not supported on Windows. (default 1000)
-      --umask int                              Override the permission bits set by the filesystem. Not supported on Windows.
-      --vfs-cache-max-age duration             Max age of objects in the cache. (default 1h0m0s)
-      --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache. (default off)
+      --max-read-ahead SizeSuffix              The number of bytes that can be prefetched for sequential reads (not supported on Windows) (default 128Ki)
+      --network-mode                           Mount as remote network drive, instead of fixed disk drive (supported on Windows only)
+      --no-checksum                            Don't compare checksums on up/download
+      --no-modtime                             Don't read/write the modification time (can speed things up)
+      --no-seek                                Don't allow seeking in files
+      --noappledouble                          Ignore Apple Double (._) and .DS_Store files (supported on OSX only) (default true)
+      --noapplexattr                           Ignore all "com.apple.*" extended attributes (supported on OSX only)
+  -o, --option stringArray                     Option for libfuse/WinFsp (repeat if required)
+      --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
+      --read-only                              Mount read-only
+      --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
+      --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
+      --vfs-cache-max-age duration             Max age of objects in the cache (default 1h0m0s)
+      --vfs-cache-max-size SizeSuffix          Max total size of objects in the cache (default off)
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
-      --vfs-cache-poll-interval duration       Interval to poll the cache for stale objects. (default 1m0s)
-      --vfs-case-insensitive                   If a file name not found, find a case insensitive match.
-      --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full.
-      --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks. (default 128M)
-      --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached. 'off' is unlimited. (default off)
-      --vfs-read-wait duration                 Time to wait for in-sequence read before seeking. (default 20ms)
-      --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size.
-      --vfs-write-back duration                Time to writeback files after last use when using cache. (default 5s)
-      --vfs-write-wait duration                Time to wait for in-sequence write before giving error. (default 1s)
-      --volname string                         Set the volume name. Supported on Windows and OSX only.
-      --write-back-cache                       Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used. Not supported on Windows.
+      --vfs-cache-poll-interval duration       Interval to poll the cache for stale objects (default 1m0s)
+      --vfs-case-insensitive                   If a file name not found, find a case insensitive match
+      --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
+      --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
+      --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)
+      --vfs-read-wait duration                 Time to wait for in-sequence read before seeking (default 20ms)
+      --vfs-used-is-size rclone size           Use the rclone size algorithm for Used size
+      --vfs-write-back duration                Time to writeback files after last use when using cache (default 5s)
+      --vfs-write-wait duration                Time to wait for in-sequence write before giving error (default 1s)
+      --volname string                         Set the volume name (supported on Windows and OSX only)
+      --write-back-cache                       Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

@@ -23,23 +23,22 @@ of path_display and all will be well.
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"path"
 	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
 
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/auth"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/common"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/sharing"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
-	"github.com/pkg/errors"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/auth"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/common"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/files"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/sharing"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/team"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/v6/dropbox/users"
 	"github.com/rclone/rclone/backend/dropbox/dbhash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -65,9 +64,9 @@ const (
 	// Upload chunk size - setting too small makes uploads slow.
 	// Chunks are buffered into memory for retries.
 	//
-	// Speed vs chunk size uploading a 1 GB file on 2017-11-22
+	// Speed vs chunk size uploading a 1 GiB file on 2017-11-22
 	//
-	// Chunk Size MB, Speed Mbyte/s, % of max
+	// Chunk Size MiB, Speed MiB/s, % of max
 	// 1	1.364	11%
 	// 2	2.443	19%
 	// 4	4.288	33%
@@ -82,11 +81,11 @@ const (
 	// 96	12.302	95%
 	// 128	12.945	100%
 	//
-	// Choose 48MB which is 91% of Maximum speed.  rclone by
-	// default does 4 transfers so this should use 4*48MB = 192MB
+	// Choose 48 MiB which is 91% of Maximum speed.  rclone by
+	// default does 4 transfers so this should use 4*48 MiB = 192 MiB
 	// by default.
-	defaultChunkSize = 48 * fs.MebiByte
-	maxChunkSize     = 150 * fs.MebiByte
+	defaultChunkSize = 48 * fs.Mebi
+	maxChunkSize     = 150 * fs.Mebi
 	// Max length of filename parts: https://help.dropbox.com/installs-integrations/sync-uploads/files-not-syncing
 	maxFileNameLength = 255
 )
@@ -139,32 +138,29 @@ func getOauthConfig(m configmap.Mapper) *oauth2.Config {
 
 // Register with Fs
 func init() {
-	DbHashType = hash.RegisterHash("DropboxHash", 64, dbhash.New)
+	DbHashType = hash.RegisterHash("dropbox", "DropboxHash", 64, dbhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "dropbox",
 		Description: "Dropbox",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
-			opt := oauthutil.Options{
-				NoOffline: true,
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: getOauthConfig(m),
+				NoOffline:    true,
 				OAuth2Opts: []oauth2.AuthCodeOption{
 					oauth2.SetAuthURLParam("token_access_type", "offline"),
 				},
-			}
-			err := oauthutil.Config(ctx, "dropbox", name, m, getOauthConfig(m), &opt)
-			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
-			}
+			})
 		},
 		Options: append(oauthutil.SharedOptions, []fs.Option{{
 			Name: "chunk_size",
-			Help: fmt.Sprintf(`Upload chunk size. (< %v).
+			Help: fmt.Sprintf(`Upload chunk size (< %v).
 
 Any files larger than this will be uploaded in chunks of this size.
 
 Note that chunks are buffered in memory (one at a time) so rclone can
 deal with retries.  Setting this larger will increase the speed
-slightly (at most 10%% for 128MB in tests) at the cost of using more
+slightly (at most 10%% for 128 MiB in tests) at the cost of using more
 memory.  It can be set smaller if you are tight on memory.`, maxChunkSize),
 			Default:  defaultChunkSize,
 			Advanced: true,
@@ -214,6 +210,68 @@ shared folder.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "batch_mode",
+			Help: `Upload file batching sync|async|off.
+
+This sets the batch mode used by rclone.
+
+For full info see [the main docs](https://rclone.org/dropbox/#batch-mode)
+
+This has 3 possible values
+
+- off - no batching
+- sync - batch uploads and check completion (default)
+- async - batch upload and don't check completion
+
+Rclone will close any outstanding batches when it exits which may make
+a delay on quit.
+`,
+			Default:  "sync",
+			Advanced: true,
+		}, {
+			Name: "batch_size",
+			Help: `Max number of files in upload batch.
+
+This sets the batch size of files to upload. It has to be less than 1000.
+
+By default this is 0 which means rclone which calculate the batch size
+depending on the setting of batch_mode.
+
+- batch_mode: async - default batch_size is 100
+- batch_mode: sync - default batch_size is the same as --transfers
+- batch_mode: off - not in use
+
+Rclone will close any outstanding batches when it exits which may make
+a delay on quit.
+
+Setting this is a great idea if you are uploading lots of small files
+as it will make them a lot quicker. You can use --transfers 32 to
+maximise throughput.
+`,
+			Default:  0,
+			Advanced: true,
+		}, {
+			Name: "batch_timeout",
+			Help: `Max time to allow an idle upload batch before uploading.
+
+If an upload batch is idle for more than this long then it will be
+uploaded.
+
+The default for this is 0 which means rclone will choose a sensible
+default based on the batch_mode in use.
+
+- batch_mode: async - default batch_timeout is 500ms
+- batch_mode: sync - default batch_timeout is 10s
+- batch_mode: off - not in use
+`,
+			Default:  fs.Duration(0),
+			Advanced: true,
+		}, {
+			Name:     "batch_commit_timeout",
+			Help:     `Max time to wait for a batch to finish comitting`,
+			Default:  fs.Duration(10 * time.Minute),
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -232,11 +290,16 @@ shared folder.`,
 
 // Options defines the configuration for this backend
 type Options struct {
-	ChunkSize     fs.SizeSuffix        `config:"chunk_size"`
-	Impersonate   string               `config:"impersonate"`
-	SharedFiles   bool                 `config:"shared_files"`
-	SharedFolders bool                 `config:"shared_folders"`
-	Enc           encoder.MultiEncoder `config:"encoding"`
+	ChunkSize          fs.SizeSuffix        `config:"chunk_size"`
+	Impersonate        string               `config:"impersonate"`
+	SharedFiles        bool                 `config:"shared_files"`
+	SharedFolders      bool                 `config:"shared_folders"`
+	BatchMode          string               `config:"batch_mode"`
+	BatchSize          int                  `config:"batch_size"`
+	BatchTimeout       fs.Duration          `config:"batch_timeout"`
+	BatchCommitTimeout fs.Duration          `config:"batch_commit_timeout"`
+	AsyncBatch         bool                 `config:"async_batch"`
+	Enc                encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote dropbox server
@@ -255,6 +318,7 @@ type Fs struct {
 	slashRootSlash string         // root with "/" prefix and postfix, lowercase
 	pacer          *fs.Pacer      // To pace the API calls
 	ns             string         // The namespace we are using or "" for none
+	batcher        *batcher       // batch builder
 }
 
 // Object describes a dropbox object
@@ -269,8 +333,6 @@ type Object struct {
 	modTime time.Time // time it was last modified
 	hash    string    // content_hash of the object
 }
-
-// ------------------------------------------------------------
 
 // Name of the remote (as passed into NewFs)
 func (f *Fs) Name() string {
@@ -301,36 +363,36 @@ func shouldRetry(ctx context.Context, err error) (bool, error) {
 	if err == nil {
 		return false, err
 	}
-	baseErrString := errors.Cause(err).Error()
+	errString := err.Error()
 	// First check for specific errors
-	if strings.Contains(baseErrString, "insufficient_space") {
+	if strings.Contains(errString, "insufficient_space") {
 		return false, fserrors.FatalError(err)
-	} else if strings.Contains(baseErrString, "malformed_path") {
+	} else if strings.Contains(errString, "malformed_path") {
 		return false, fserrors.NoRetryError(err)
 	}
 	// Then handle any official Retry-After header from Dropbox's SDK
 	switch e := err.(type) {
 	case auth.RateLimitAPIError:
 		if e.RateLimitError.RetryAfter > 0 {
-			fs.Logf(baseErrString, "Too many requests or write operations. Trying again in %d seconds.", e.RateLimitError.RetryAfter)
+			fs.Logf(errString, "Too many requests or write operations. Trying again in %d seconds.", e.RateLimitError.RetryAfter)
 			err = pacer.RetryAfterError(err, time.Duration(e.RateLimitError.RetryAfter)*time.Second)
 		}
 		return true, err
 	}
 	// Keep old behavior for backward compatibility
-	if strings.Contains(baseErrString, "too_many_write_operations") || strings.Contains(baseErrString, "too_many_requests") || baseErrString == "" {
+	if strings.Contains(errString, "too_many_write_operations") || strings.Contains(errString, "too_many_requests") || errString == "" {
 		return true, err
 	}
 	return fserrors.ShouldRetry(err), err
 }
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
-	const minChunkSize = fs.Byte
+	const minChunkSize = fs.SizeSuffixBase
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	if cs > maxChunkSize {
-		return errors.Errorf("%s is greater than %s", cs, maxChunkSize)
+		return fmt.Errorf("%s is greater than %s", cs, maxChunkSize)
 	}
 	return nil
 }
@@ -353,7 +415,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "dropbox: chunk size")
+		return nil, fmt.Errorf("dropbox: chunk size: %w", err)
 	}
 
 	// Convert the old token if it exists.  The old token was just
@@ -365,13 +427,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		newToken := fmt.Sprintf(`{"access_token":"%s","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
 		err := config.SetValueAndSave(name, config.ConfigToken, newToken)
 		if err != nil {
-			return nil, errors.Wrap(err, "NewFS convert token")
+			return nil, fmt.Errorf("NewFS convert token: %w", err)
 		}
 	}
 
 	oAuthClient, _, err := oauthutil.NewClient(ctx, name, m, getOauthConfig(m))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure dropbox")
+		return nil, fmt.Errorf("failed to configure dropbox: %w", err)
 	}
 
 	ci := fs.GetConfig(ctx)
@@ -381,6 +443,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		opt:   *opt,
 		ci:    ci,
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+	}
+	f.batcher, err = newBatcher(ctx, f, f.opt.BatchMode, f.opt.BatchSize, time.Duration(f.opt.BatchTimeout))
+	if err != nil {
+		return nil, err
 	}
 	cfg := dropbox.Config{
 		LogLevel:        dropbox.LogOff, // logging in the SDK: LogOff, LogDebug, LogInfo
@@ -408,7 +474,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		memberIds, err := f.team.MembersGetInfo(args)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "invalid dropbox team member: %q", opt.Impersonate)
+			return nil, fmt.Errorf("invalid dropbox team member: %q: %w", opt.Impersonate, err)
 		}
 
 		cfg.AsMemberID = memberIds[0].MemberInfo.Profile.MemberProfile.TeamMemberId
@@ -485,7 +551,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return nil, errors.Wrap(err, "get current account failed")
+			return nil, fmt.Errorf("get current account failed: %w", err)
 		}
 		switch x := acc.RootInfo.(type) {
 		case *common.TeamRootInfo:
@@ -493,28 +559,30 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		case *common.UserRootInfo:
 			f.ns = x.RootNamespaceId
 		default:
-			return nil, errors.Errorf("unknown RootInfo type %v %T", acc.RootInfo, acc.RootInfo)
+			return nil, fmt.Errorf("unknown RootInfo type %v %T", acc.RootInfo, acc.RootInfo)
 		}
 		fs.Debugf(f, "Using root namespace %q", f.ns)
 	}
 	f.setRoot(root)
 
 	// See if the root is actually an object
-	_, err = f.getFileMetadata(ctx, f.slashRoot)
-	if err == nil {
-		newRoot := path.Dir(f.root)
-		if newRoot == "." {
-			newRoot = ""
+	if f.root != "" {
+		_, err = f.getFileMetadata(ctx, f.slashRoot)
+		if err == nil {
+			newRoot := path.Dir(f.root)
+			if newRoot == "." {
+				newRoot = ""
+			}
+			f.setRoot(newRoot)
+			// return an error with an fs which points to the parent
+			return f, fs.ErrorIsFile
 		}
-		f.setRoot(newRoot)
-		// return an error with an fs which points to the parent
-		return f, fs.ErrorIsFile
 	}
 	return f, nil
 }
 
 // headerGenerator for dropbox sdk
-func (f *Fs) headerGenerator(hostType string, style string, namespace string, route string) map[string]string {
+func (f *Fs) headerGenerator(hostType string, namespace string, route string) map[string]string {
 	if f.ns == "" {
 		return map[string]string{}
 	}
@@ -564,6 +632,9 @@ func (f *Fs) getFileMetadata(ctx context.Context, filePath string) (fileInfo *fi
 	}
 	fileInfo, ok := entry.(*files.FileMetadata)
 	if !ok {
+		if _, ok = entry.(*files.FolderMetadata); ok {
+			return nil, fs.ErrorIsDir
+		}
 		return nil, fs.ErrorNotAFile
 	}
 	return fileInfo, nil
@@ -641,7 +712,7 @@ func (f *Fs) listSharedFolders(ctx context.Context) (entries fs.DirEntries, err 
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "list continue")
+				return nil, fmt.Errorf("list continue: %w", err)
 			}
 		}
 		for _, entry := range res.Entries {
@@ -715,7 +786,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context) (entries fs.DirEntries, err 
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "list continue")
+				return nil, fmt.Errorf("list continue: %w", err)
 			}
 		}
 		for _, entry := range res.Entries {
@@ -725,7 +796,7 @@ func (f *Fs) listReceivedFiles(ctx context.Context) (entries fs.DirEntries, err 
 				fs:      f,
 				url:     entry.PreviewUrl,
 				remote:  entryPath,
-				modTime: entry.TimeInvited,
+				modTime: *entry.TimeInvited,
 			}
 			if err != nil {
 				return nil, err
@@ -781,6 +852,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			arg := files.ListFolderArg{
 				Path:      f.opt.Enc.FromStandardPath(root),
 				Recursive: false,
+				Limit:     1000,
 			}
 			if root == "/" {
 				arg.Path = "" // Specify root folder as empty string
@@ -808,7 +880,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 				return shouldRetry(ctx, err)
 			})
 			if err != nil {
-				return nil, errors.Wrap(err, "list continue")
+				return nil, fmt.Errorf("list continue: %w", err)
 			}
 		}
 		for _, entry := range res.Entries {
@@ -920,7 +992,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 		// check directory exists
 		_, err = f.getDirMetadata(ctx, root)
 		if err != nil {
-			return errors.Wrap(err, "Rmdir")
+			return fmt.Errorf("Rmdir: %w", err)
 		}
 
 		root = f.opt.Enc.FromStandardPath(root)
@@ -938,7 +1010,7 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) (err error)
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "Rmdir")
+			return fmt.Errorf("Rmdir: %w", err)
 		}
 		if len(res.Entries) != 0 {
 			return errors.New("directory not empty")
@@ -1004,7 +1076,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "copy failed")
+		return nil, fmt.Errorf("copy failed: %w", err)
 	}
 
 	// Set the metadata
@@ -1014,7 +1086,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	err = dstObj.setMetadataFromEntry(fileInfo)
 	if err != nil {
-		return nil, errors.Wrap(err, "copy failed")
+		return nil, fmt.Errorf("copy failed: %w", err)
 	}
 
 	return dstObj, nil
@@ -1065,7 +1137,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "move failed")
+		return nil, fmt.Errorf("move failed: %w", err)
 	}
 
 	// Set the metadata
@@ -1075,7 +1147,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	err = dstObj.setMetadataFromEntry(fileInfo)
 	if err != nil {
-		return nil, errors.Wrap(err, "move failed")
+		return nil, fmt.Errorf("move failed: %w", err)
 	}
 	return dstObj, nil
 }
@@ -1100,14 +1172,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	}
 	if expire < fs.DurationOff {
 		expiryTime := time.Now().Add(time.Duration(expire)).UTC().Round(time.Second)
-		createArg.Settings.Expires = expiryTime
-	}
-	// FIXME note we can't set Settings for non enterprise dropbox
-	// because of https://github.com/dropbox/dropbox-sdk-go-unofficial/issues/75
-	// however this only goes wrong when we set Expires, so as a
-	// work-around remove Settings unless expire is set.
-	if expire == fs.DurationOff {
-		createArg.Settings = nil
+		createArg.Settings.Expires = &expiryTime
 	}
 
 	var linkRes sharing.IsSharedLinkMetadata
@@ -1190,7 +1255,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "MoveDir failed")
+		return fmt.Errorf("MoveDir failed: %w", err)
 	}
 
 	return nil
@@ -1204,7 +1269,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "about failed")
+		return nil, fmt.Errorf("about failed: %w", err)
 	}
 	var total uint64
 	if q.Allocation != nil {
@@ -1344,7 +1409,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			return shouldRetry(ctx, err)
 		})
 		if err != nil {
-			return "", errors.Wrap(err, "list continue")
+			return "", fmt.Errorf("list continue: %w", err)
 		}
 		cursor = changeList.Cursor
 		var entryType fs.EntryType
@@ -1379,6 +1444,13 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
 	return hash.Set(DbHashType)
+}
+
+// Shutdown the backend, closing any background tasks and any
+// cached connections.
+func (f *Fs) Shutdown(ctx context.Context) error {
+	f.batcher.Shutdown()
+	return nil
 }
 
 // ------------------------------------------------------------
@@ -1416,7 +1488,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 	err := o.readMetaData(ctx)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read hash from metadata")
+		return "", fmt.Errorf("failed to read hash from metadata: %w", err)
 	}
 	return o.hash, nil
 }
@@ -1540,97 +1612,107 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // uploadChunked uploads the object in parts
 //
-// Will work optimally if size is >= uploadChunkSize. If the size is either
-// unknown (i.e. -1) or smaller than uploadChunkSize, the method incurs an
-// avoidable request to the Dropbox API that does not carry payload.
+// Will introduce two additional network requests to start and finish the session.
+// If the size is unknown (i.e. -1) the method incurs one additional
+// request to the Dropbox API that does not carry a payload to close the append session.
 func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *files.CommitInfo, size int64) (entry *files.FileMetadata, err error) {
-	chunkSize := int64(o.fs.opt.ChunkSize)
-	chunks := 0
-	if size != -1 {
-		chunks = int(size/chunkSize) + 1
-	}
-	in := readers.NewCountingReader(in0)
-	buf := make([]byte, int(chunkSize))
-
-	fmtChunk := func(cur int, last bool) {
-		if chunks == 0 && last {
-			fs.Debugf(o, "Streaming chunk %d/%d", cur, cur)
-		} else if chunks == 0 {
-			fs.Debugf(o, "Streaming chunk %d/unknown", cur)
-		} else {
-			fs.Debugf(o, "Uploading chunk %d/%d", cur, chunks)
-		}
-	}
-
-	// write the first chunk
-	fmtChunk(1, false)
+	// start upload
 	var res *files.UploadSessionStartResult
-	chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 	err = o.fs.pacer.Call(func() (bool, error) {
-		// seek to the start in case this is a retry
-		if _, err = chunk.Seek(0, io.SeekStart); err != nil {
-			return false, nil
-		}
-		res, err = o.fs.srv.UploadSessionStart(&files.UploadSessionStartArg{}, chunk)
+		res, err = o.fs.srv.UploadSessionStart(&files.UploadSessionStartArg{}, nil)
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	chunkSize := int64(o.fs.opt.ChunkSize)
+	chunks, remainder := size/chunkSize, size%chunkSize
+	if remainder > 0 {
+		chunks++
+	}
+
+	// write chunks
+	in := readers.NewCountingReader(in0)
+	buf := make([]byte, int(chunkSize))
 	cursor := files.UploadSessionCursor{
 		SessionId: res.SessionId,
 		Offset:    0,
 	}
-	appendArg := files.UploadSessionAppendArg{
-		Cursor: &cursor,
-		Close:  false,
-	}
-
-	// write more whole chunks (if any)
-	currentChunk := 2
-	for {
-		if chunks > 0 && currentChunk >= chunks {
-			// if the size is known, only upload full chunks. Remaining bytes are uploaded with
-			// the UploadSessionFinish request.
-			break
-		} else if chunks == 0 && in.BytesRead()-cursor.Offset < uint64(chunkSize) {
-			// if the size is unknown, upload as long as we can read full chunks from the reader.
-			// The UploadSessionFinish request will not contain any payload.
-			break
-		}
+	appendArg := files.UploadSessionAppendArg{Cursor: &cursor}
+	for currentChunk := 1; ; currentChunk++ {
 		cursor.Offset = in.BytesRead()
-		fmtChunk(currentChunk, false)
-		chunk = readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+
+		if chunks < 0 {
+			fs.Debugf(o, "Streaming chunk %d/unknown", currentChunk)
+		} else {
+			fs.Debugf(o, "Uploading chunk %d/%d", currentChunk, chunks)
+		}
+
+		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+		skip := int64(0)
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
-			if _, err = chunk.Seek(0, io.SeekStart); err != nil {
-				return false, nil
+			if _, err = chunk.Seek(skip, io.SeekStart); err != nil {
+				return false, err
 			}
 			err = o.fs.srv.UploadSessionAppendV2(&appendArg, chunk)
-			// after the first chunk is uploaded, we retry everything
+			// after session is started, we retry everything
+			if err != nil {
+				// Check for incorrect offset error and retry with new offset
+				if uErr, ok := err.(files.UploadSessionAppendV2APIError); ok {
+					if uErr.EndpointError != nil && uErr.EndpointError.IncorrectOffset != nil {
+						correctOffset := uErr.EndpointError.IncorrectOffset.CorrectOffset
+						delta := int64(correctOffset) - int64(cursor.Offset)
+						skip += delta
+						what := fmt.Sprintf("incorrect offset error receved: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
+						if skip < 0 {
+							return false, fmt.Errorf("can't seek backwards to correct offset: %s", what)
+						} else if skip == chunkSize {
+							fs.Debugf(o, "%s: chunk received OK - continuing", what)
+							return false, nil
+						} else if skip > chunkSize {
+							// This error should never happen
+							return false, fmt.Errorf("can't seek forwards by more than a chunk to correct offset: %s", what)
+						}
+						// Skip the sent data on next retry
+						cursor.Offset = uint64(int64(cursor.Offset) + delta)
+						fs.Debugf(o, "%s: skipping bytes on retry to fix offset", what)
+					}
+				}
+			}
 			return err != nil, err
 		})
 		if err != nil {
 			return nil, err
 		}
-		currentChunk++
+		if appendArg.Close {
+			break
+		}
+
+		if size > 0 {
+			// if size is known, check if next chunk is final
+			appendArg.Close = uint64(size)-in.BytesRead() <= uint64(chunkSize)
+		} else {
+			// if size is unknown, upload as long as we can read full chunks from the reader
+			appendArg.Close = in.BytesRead()-cursor.Offset < uint64(chunkSize)
+		}
 	}
 
-	// write the remains
+	// finish upload
 	cursor.Offset = in.BytesRead()
 	args := &files.UploadSessionFinishArg{
 		Cursor: &cursor,
 		Commit: commitInfo,
 	}
-	fmtChunk(currentChunk, true)
-	chunk = readers.NewRepeatableReaderBuffer(in, buf)
+	// If we are batching then we should have written all the data now
+	// store the commit info now for a batch commit
+	if o.fs.batcher.Batching() {
+		return o.fs.batcher.Commit(ctx, args)
+	}
+
 	err = o.fs.pacer.Call(func() (bool, error) {
-		// seek to the start in case this is a retry
-		if _, err = chunk.Seek(0, io.SeekStart); err != nil {
-			return false, nil
-		}
-		entry, err = o.fs.srv.UploadSessionFinish(args, chunk)
+		entry, err = o.fs.srv.UploadSessionFinish(args, nil)
 		// If error is insufficient space then don't retry
 		if e, ok := err.(files.UploadSessionFinishAPIError); ok {
 			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.WriteErrorInsufficientSpace {
@@ -1683,12 +1765,13 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	remote := o.remotePath()
 	if ignoredFiles.MatchString(remote) {
-		return fserrors.NoRetryError(errors.Errorf("file name %q is disallowed - not uploading", path.Base(remote)))
+		return fserrors.NoRetryError(fmt.Errorf("file name %q is disallowed - not uploading", path.Base(remote)))
 	}
 	commitInfo := files.NewCommitInfo(o.fs.opt.Enc.FromStandardPath(o.remotePath()))
 	commitInfo.Mode.Tag = "overwrite"
 	// The Dropbox API only accepts timestamps in UTC with second precision.
-	commitInfo.ClientModified = src.ModTime(ctx).UTC().Round(time.Second)
+	clientModified := src.ModTime(ctx).UTC().Round(time.Second)
+	commitInfo.ClientModified = &clientModified
 	// Don't attempt to create filenames that are too long
 	if cErr := checkPathLength(commitInfo.Path); cErr != nil {
 		return cErr
@@ -1697,16 +1780,25 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	size := src.Size()
 	var err error
 	var entry *files.FileMetadata
-	if size > int64(o.fs.opt.ChunkSize) || size == -1 {
+	if size > int64(o.fs.opt.ChunkSize) || size < 0 || o.fs.batcher.Batching() {
 		entry, err = o.uploadChunked(ctx, in, commitInfo, size)
 	} else {
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			entry, err = o.fs.srv.Upload(commitInfo, in)
+			entry, err = o.fs.srv.Upload(&files.UploadArg{CommitInfo: *commitInfo}, in)
 			return shouldRetry(ctx, err)
 		})
 	}
 	if err != nil {
-		return errors.Wrap(err, "upload failed")
+		return fmt.Errorf("upload failed: %w", err)
+	}
+	// If we haven't received data back from batch upload then fake it
+	//
+	// This will only happen if we are uploading async batches
+	if entry == nil {
+		o.bytes = size
+		o.modTime = *commitInfo.ClientModified
+		o.hash = "" // we don't have this
+		return nil
 	}
 	return o.setMetadataFromEntry(entry)
 }
@@ -1735,6 +1827,7 @@ var (
 	_ fs.PublicLinker = (*Fs)(nil)
 	_ fs.DirMover     = (*Fs)(nil)
 	_ fs.Abouter      = (*Fs)(nil)
+	_ fs.Shutdowner   = &Fs{}
 	_ fs.Object       = (*Object)(nil)
 	_ fs.IDer         = (*Object)(nil)
 )

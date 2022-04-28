@@ -1,5 +1,3 @@
-// +build !openbsd !windows
-
 package buildinfo
 
 import (
@@ -41,9 +39,18 @@ func GetOSVersion() (osVersion, osKernel string) {
 		}
 	}
 
-	friendlyName := getRegistryVersionString("ReleaseId")
-	if osVersion != "" && friendlyName != "" {
-		osVersion += " " + friendlyName
+	if osVersion != "" {
+		// Include the friendly-name of the version, which is typically what is referred to.
+		// Until Windows 10 version 2004 (May 2020) this can be found from registry entry
+		// ReleaseID, after that we must use entry DisplayVersion (ReleaseId is stuck at 2009).
+		// Source: https://ss64.com/nt/ver.html
+		friendlyName := getRegistryVersionString("DisplayVersion")
+		if friendlyName == "" {
+			friendlyName = getRegistryVersionString("ReleaseId")
+		}
+		if friendlyName != "" {
+			osVersion += " " + friendlyName
+		}
 	}
 
 	updateRevision := getRegistryVersionInt("UBR")

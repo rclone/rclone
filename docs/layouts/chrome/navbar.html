@@ -34,24 +34,14 @@
         </a>
         <div class="dropdown-menu pre-scrollable" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="/commands/"><i class="fas fa-map"></i> Overview</a>
-          <div class="dropdown-divider"></div>          
-          <a class="dropdown-item" href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a>
-          <a class="dropdown-item" href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a>
-          <a class="dropdown-item" href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a>
-          <a class="dropdown-item" href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a>
-          <a class="dropdown-item" href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a>
-          <a class="dropdown-item" href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a>
-          <a class="dropdown-item" href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a>
-          <a class="dropdown-item" href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a>
-          <a class="dropdown-item" href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a>
-          <a class="dropdown-item" href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a>
-          <a class="dropdown-item" href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a>
-          <a class="dropdown-item" href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a>
-          <a class="dropdown-item" href="/commands/rclone_mount/"><i class="fa fa-book"></i> rclone mount</a>
-          <a class="dropdown-item" href="/commands/rclone_ncdu/"><i class="fa fa-book"></i> rclone ncdu</a>
-          <a class="dropdown-item" href="/commands/rclone_cat/"><i class="fa fa-book"></i> rclone cat</a>
-          <a class="dropdown-item" href="/commands/rclone_rcat/"><i class="fa fa-book"></i> rclone rcat</a>
-          <a class="dropdown-item" href="/commands/rclone_serve/"><i class="fa fa-book"></i> rclone serve</a>
+          <div class="dropdown-divider"></div>
+          {{ with .Site.GetPage "/commands" }}
+            {{ range .Data.Pages }}
+              {{ if lt (countwords .Title) 3 }}
+                <a class="dropdown-item" href="{{ .RelPermalink }}"><i class="fa fa-book"></i> {{ .Title | markdownify }}</a>
+              {{ end }}
+            {{ end }}
+          {{ end }}
         </div>
       </li>
       <li class="nav-item active dropdown">
@@ -60,27 +50,30 @@
         </a>
         <div class="dropdown-menu pre-scrollable" aria-labelledby="navbarDropdown">
           <a class="dropdown-item" href="/overview/"><i class="fas fa-map"></i> Overview</a>
-          <div class="dropdown-divider"></div>          
+          <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="/fichier/"><i class="fa fa-archive"></i> 1Fichier</a>
+          <a class="dropdown-item" href="/netstorage/"><i class="fas fa-database"></i> Akamai NetStorage</a>
           <a class="dropdown-item" href="/alias/"><i class="fa fa-link"></i> Alias</a>
           <a class="dropdown-item" href="/amazonclouddrive/"><i class="fab fa-amazon"></i> Amazon Drive</a>
           <a class="dropdown-item" href="/s3/"><i class="fab fa-amazon"></i> Amazon S3</a>
           <a class="dropdown-item" href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a>
           <a class="dropdown-item" href="/box/"><i class="fa fa-archive"></i> Box</a>
-          <a class="dropdown-item" href="/cache/"><i class="fa fa-archive"></i> Cache</a>
           <a class="dropdown-item" href="/chunker/"><i class="fa fa-cut"></i> Chunker (splits large files)</a>
           <a class="dropdown-item" href="/compress/"><i class="fas fa-compress"></i> Compress (transparent gzip compression)</a>
           <a class="dropdown-item" href="/sharefile/"><i class="fas fa-share-square"></i> Citrix ShareFile</a>
           <a class="dropdown-item" href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a>
+          <a class="dropdown-item" href="/koofr/#digi-storage"><i class="fa fa-cloud"></i> Digi Storage</a>
           <a class="dropdown-item" href="/dropbox/"><i class="fab fa-dropbox"></i> Dropbox</a>
           <a class="dropdown-item" href="/filefabric/"><i class="fa fa-cloud"></i> Enterprise File Fabric</a>
           <a class="dropdown-item" href="/ftp/"><i class="fa fa-file"></i> FTP</a>
           <a class="dropdown-item" href="/googlecloudstorage/"><i class="fab fa-google"></i> Google Cloud Storage</a>
           <a class="dropdown-item" href="/drive/"><i class="fab fa-google"></i> Google Drive</a>
           <a class="dropdown-item" href="/googlephotos/"><i class="fas fa-images"></i> Google Photos</a>
+          <a class="dropdown-item" href="/hasher/"><i class="fa fa-check-double"></i> Hasher (better checksums for others)</a>
           <a class="dropdown-item" href="/hdfs/"><i class="fa fa-globe"></i> HDFS (Hadoop Distributed Filesystem)</a>
           <a class="dropdown-item" href="/http/"><i class="fa fa-globe"></i> HTTP</a>
           <a class="dropdown-item" href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a>
+          <a class="dropdown-item" href="/internetarchive/"><i class="fa fa-archive"></i> Internet Archive</a>
           <a class="dropdown-item" href="/jottacloud/"><i class="fa fa-cloud"></i> Jottacloud</a>
           <a class="dropdown-item" href="/koofr/"><i class="fa fa-suitcase"></i> Koofr</a>
           <a class="dropdown-item" href="/mailru/"><i class="fa fa-at"></i> Mail.ru Cloud</a>
@@ -96,8 +89,9 @@
           <a class="dropdown-item" href="/putio/"><i class="fas fa-parking"></i> put.io</a>
           <a class="dropdown-item" href="/seafile/"><i class="fa fa-server"></i> Seafile</a>
           <a class="dropdown-item" href="/sftp/"><i class="fa fa-server"></i> SFTP</a>
+          <a class="dropdown-item" href="/sia/"><i class="fa fa-globe"></i> Sia</a>
+          <a class="dropdown-item" href="/storj/"><i class="fas fa-dove"></i> Storj</a>
           <a class="dropdown-item" href="/sugarsync/"><i class="fas fa-dove"></i> SugarSync</a>
-          <a class="dropdown-item" href="/tardigrade/"><i class="fas fa-dove"></i> Tardigrade</a>
           <a class="dropdown-item" href="/uptobox/"><i class="fa fa-archive"></i> Uptobox</a>
           <a class="dropdown-item" href="/union/"><i class="fa fa-link"></i> Union (merge backends)</a>
           <a class="dropdown-item" href="/webdav/"><i class="fa fa-server"></i> WebDAV</a>
@@ -114,5 +108,10 @@
         <a class="nav-link" href="/donate/"><i class="fa fa-heart heart"></i> Donate</a>
       </li>
     </ul>
+    <form class="form-inline" name="search_form" action="https://google.com/search" target="_blank" onsubmit="on_search();">
+      <input name="words" value="" type="search" placeholder="search..." class="form-control form-control-sm">
+      <input name="q" value="" type="hidden">
+      <input name="as_sitesearch" value="https://rclone.org/" type="hidden">
+    </form>
   </div>
 </nav>

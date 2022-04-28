@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -35,14 +35,14 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &noOutput, "no-output", "", noOutput, "If set, don't output the JSON result.")
-	flags.StringVarP(cmdFlags, &url, "url", "", url, "URL to connect to rclone remote control.")
-	flags.StringVarP(cmdFlags, &jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args.")
-	flags.StringVarP(cmdFlags, &authUser, "user", "", "", "Username to use to rclone remote control.")
-	flags.StringVarP(cmdFlags, &authPass, "pass", "", "", "Password to use to connect to rclone remote control.")
-	flags.BoolVarP(cmdFlags, &loopback, "loopback", "", false, "If set connect to this rclone instance not via HTTP.")
-	flags.StringArrayVarP(cmdFlags, &options, "opt", "o", options, "Option in the form name=value or name placed in the \"opt\" array.")
-	flags.StringArrayVarP(cmdFlags, &arguments, "arg", "a", arguments, "Argument placed in the \"arg\" array.")
+	flags.BoolVarP(cmdFlags, &noOutput, "no-output", "", noOutput, "If set, don't output the JSON result")
+	flags.StringVarP(cmdFlags, &url, "url", "", url, "URL to connect to rclone remote control")
+	flags.StringVarP(cmdFlags, &jsonInput, "json", "", jsonInput, "Input JSON - use instead of key=value args")
+	flags.StringVarP(cmdFlags, &authUser, "user", "", "", "Username to use to rclone remote control")
+	flags.StringVarP(cmdFlags, &authPass, "pass", "", "", "Password to use to connect to rclone remote control")
+	flags.BoolVarP(cmdFlags, &loopback, "loopback", "", false, "If set connect to this rclone instance not via HTTP")
+	flags.StringArrayVarP(cmdFlags, &options, "opt", "o", options, "Option in the form name=value or name placed in the \"opt\" array")
+	flags.StringArrayVarP(cmdFlags, &arguments, "arg", "a", arguments, "Argument placed in the \"arg\" array")
 }
 
 var commandDefinition = &cobra.Command{
@@ -163,16 +163,16 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 	if loopback {
 		call := rc.Calls.Get(path)
 		if call == nil {
-			return nil, errors.Errorf("method %q not found", path)
+			return nil, fmt.Errorf("method %q not found", path)
 		}
 		_, out, err := jobs.NewJob(ctx, call.Fn, in)
 		if err != nil {
-			return nil, errors.Wrap(err, "loopback call failed")
+			return nil, fmt.Errorf("loopback call failed: %w", err)
 		}
 		// Reshape (serialize then deserialize) the data so it is in the form expected
 		err = rc.Reshape(&out, out)
 		if err != nil {
-			return nil, errors.Wrap(err, "loopback reshape failed")
+			return nil, fmt.Errorf("loopback reshape failed: %w", err)
 		}
 		return out, nil
 	}
@@ -182,12 +182,12 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 	url += path
 	data, err := json.Marshal(in)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to encode JSON")
+		return nil, fmt.Errorf("failed to encode JSON: %w", err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to make request")
+		return nil, fmt.Errorf("failed to make request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -197,7 +197,7 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "connection failed")
+		return nil, fmt.Errorf("connection failed: %w", err)
 	}
 	defer fs.CheckClose(resp.Body, &err)
 
@@ -211,19 +211,19 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 			bodyString = err.Error()
 		}
 		bodyString = strings.TrimSpace(bodyString)
-		return nil, errors.Errorf("Failed to read rc response: %s: %s", resp.Status, bodyString)
+		return nil, fmt.Errorf("Failed to read rc response: %s: %s", resp.Status, bodyString)
 	}
 
 	// Parse output
 	out = make(rc.Params)
 	err = json.NewDecoder(resp.Body).Decode(&out)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to decode JSON")
+		return nil, fmt.Errorf("failed to decode JSON: %w", err)
 	}
 
 	// Check we got 200 OK
 	if resp.StatusCode != http.StatusOK {
-		err = errors.Errorf("operation %q failed: %v", path, out["error"])
+		err = fmt.Errorf("operation %q failed: %v", path, out["error"])
 	}
 
 	return out, err
@@ -240,7 +240,7 @@ func run(ctx context.Context, args []string) (err error) {
 		for _, param := range params {
 			equals := strings.IndexRune(param, '=')
 			if equals < 0 {
-				return errors.Errorf("no '=' found in parameter %q", param)
+				return fmt.Errorf("no '=' found in parameter %q", param)
 			}
 			key, value := param[:equals], param[equals+1:]
 			in[key] = value
@@ -251,7 +251,7 @@ func run(ctx context.Context, args []string) (err error) {
 		}
 		err = json.Unmarshal([]byte(jsonInput), &in)
 		if err != nil {
-			return errors.Wrap(err, "bad --json input")
+			return fmt.Errorf("bad --json input: %w", err)
 		}
 	}
 	if len(options) > 0 {
@@ -268,7 +268,7 @@ func run(ctx context.Context, args []string) (err error) {
 	if out != nil && !noOutput {
 		err := rc.WriteJSON(os.Stdout, out)
 		if err != nil {
-			return errors.Wrap(err, "failed to output JSON")
+			return fmt.Errorf("failed to output JSON: %w", err)
 		}
 	}
 
@@ -279,7 +279,7 @@ func run(ctx context.Context, args []string) (err error) {
 func list(ctx context.Context) error {
 	list, err := doCall(ctx, "rc/list", nil)
 	if err != nil {
-		return errors.Wrap(err, "failed to list")
+		return fmt.Errorf("failed to list: %w", err)
 	}
 	commands, ok := list["commands"].([]interface{})
 	if !ok {

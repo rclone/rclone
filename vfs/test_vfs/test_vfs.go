@@ -296,7 +296,7 @@ func main() {
 		log.Fatalf("%s: Syntax [opts] <directory>", os.Args[0])
 	}
 	dir := args[0]
-	_ = os.MkdirAll(dir, 0777)
+	_ = file.MkdirAll(dir, 0777)
 
 	var (
 		wg   sync.WaitGroup

@@ -113,6 +113,8 @@ func InitLogging() {
 	}
 	log.SetFlags(flags)
 
+	fs.LogPrintPid = strings.Contains(flagsStr, ",pid,")
+
 	// Log file output
 	if Opt.File != "" {
 		f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)

@@ -8,6 +8,8 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -15,7 +17,6 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/lib/readers"
 )
@@ -51,9 +52,9 @@ func ReadBody(resp *http.Response) (result []byte, err error) {
 func defaultErrorHandler(resp *http.Response) (err error) {
 	body, err := ReadBody(resp)
 	if err != nil {
-		return errors.Wrap(err, "error reading error out of body")
+		return fmt.Errorf("error reading error out of body: %w", err)
 	}
-	return errors.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
+	return fmt.Errorf("HTTP error %v (%v) returned body: %q", resp.StatusCode, resp.Status, body)
 }
 
 // SetErrorHandler sets the handler to decode an error response when
@@ -138,15 +139,16 @@ type Opts struct {
 	UserName              string            // username for Basic Auth
 	Password              string            // password for Basic Auth
 	Options               []fs.OpenOption
-	IgnoreStatus          bool       // if set then we don't check error status or parse error body
-	MultipartParams       url.Values // if set do multipart form upload with attached file
-	MultipartMetadataName string     // ..this is used for the name of the metadata form part if set
-	MultipartContentName  string     // ..name of the parameter which is the attached file
-	MultipartFileName     string     // ..name of the file for the attached file
-	Parameters            url.Values // any parameters for the final URL
-	TransferEncoding      []string   // transfer encoding, set to "identity" to disable chunked encoding
-	Close                 bool       // set to close the connection after this transaction
-	NoRedirect            bool       // if this is set then the client won't follow redirects
+	IgnoreStatus          bool         // if set then we don't check error status or parse error body
+	MultipartParams       url.Values   // if set do multipart form upload with attached file
+	MultipartMetadataName string       // ..this is used for the name of the metadata form part if set
+	MultipartContentName  string       // ..name of the parameter which is the attached file
+	MultipartFileName     string       // ..name of the file for the attached file
+	Parameters            url.Values   // any parameters for the final URL
+	TransferEncoding      []string     // transfer encoding, set to "identity" to disable chunked encoding
+	Trailer               *http.Header // set the request trailer
+	Close                 bool         // set to close the connection after this transaction
+	NoRedirect            bool         // if this is set then the client won't follow redirects
 }
 
 // Copy creates a copy of the options
@@ -166,6 +168,10 @@ func DecodeJSON(resp *http.Response, result interface{}) (err error) {
 func DecodeXML(resp *http.Response, result interface{}) (err error) {
 	defer fs.CheckClose(resp.Body, &err)
 	decoder := xml.NewDecoder(resp.Body)
+	// MEGAcmd has included escaped HTML entities in its XML output, so we have to be able to
+	// decode them.
+	decoder.Strict = false
+	decoder.Entity = xml.HTMLEntity
 	return decoder.Decode(result)
 }
 
@@ -234,6 +240,9 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	if len(opts.TransferEncoding) != 0 {
 		req.TransferEncoding = opts.TransferEncoding
 	}
+	if opts.Trailer != nil {
+		req.Trailer = *opts.Trailer
+	}
 	if opts.Close {
 		req.Close = true
 	}
@@ -272,7 +281,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 		err = api.signer(req)
 		api.mu.RLock()
 		if err != nil {
-			return nil, errors.Wrap(err, "signer failed")
+			return nil, fmt.Errorf("signer failed: %w", err)
 		}
 	}
 	api.mu.RUnlock()
@@ -286,7 +295,7 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 			err = api.errorHandler(resp)
 			if err.Error() == "" {
 				// replace empty errors with something
-				err = errors.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
+				err = fmt.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
 			}
 			return resp, err
 		}
@@ -364,7 +373,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 			for _, val := range vals {
 				err = writer.WriteField(key, val)
 				if err != nil {
-					_ = bodyWriter.CloseWithError(errors.Wrap(err, "create metadata part"))
+					_ = bodyWriter.CloseWithError(fmt.Errorf("create metadata part: %w", err))
 					return
 				}
 			}
@@ -373,20 +382,20 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 		if in != nil {
 			part, err := writer.CreateFormFile(contentName, fileName)
 			if err != nil {
-				_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to create form file"))
+				_ = bodyWriter.CloseWithError(fmt.Errorf("failed to create form file: %w", err))
 				return
 			}
 
 			_, err = io.Copy(part, in)
 			if err != nil {
-				_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to copy data"))
+				_ = bodyWriter.CloseWithError(fmt.Errorf("failed to copy data: %w", err))
 				return
 			}
 		}
 
 		err = writer.Close()
 		if err != nil {
-			_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to close form"))
+			_ = bodyWriter.CloseWithError(fmt.Errorf("failed to close form: %w", err))
 			return
 		}
 

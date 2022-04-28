@@ -29,7 +29,7 @@ func TestIntegration(t *testing.T) {
 }
 
 // TestStandard runs integration tests against the remote
-func TestStandard(t *testing.T) {
+func TestStandardBase32(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
 	}
@@ -43,6 +43,48 @@ func TestStandard(t *testing.T) {
 			{Name: name, Key: "remote", Value: tempdir},
 			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
 			{Name: name, Key: "filename_encryption", Value: "standard"},
+		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableObjectMethods: []string{"MimeType"},
+	})
+}
+
+func TestStandardBase64(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-standard")
+	name := "TestCrypt"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		NilObject:  (*crypt.Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "remote", Value: tempdir},
+			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
+			{Name: name, Key: "filename_encryption", Value: "standard"},
+			{Name: name, Key: "filename_encoding", Value: "base64"},
+		},
+		UnimplementableFsMethods:     []string{"OpenWriterAt"},
+		UnimplementableObjectMethods: []string{"MimeType"},
+	})
+}
+
+func TestStandardBase32768(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("Skipping as -remote set")
+	}
+	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-standard")
+	name := "TestCrypt"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: name + ":",
+		NilObject:  (*crypt.Object)(nil),
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "type", Value: "crypt"},
+			{Name: name, Key: "remote", Value: tempdir},
+			{Name: name, Key: "password", Value: obscure.MustObscure("potato")},
+			{Name: name, Key: "filename_encryption", Value: "standard"},
+			{Name: name, Key: "filename_encoding", Value: "base32768"},
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},

@@ -1,5 +1,6 @@
 // Package sftp implements an SFTP server to serve an rclone VFS
 
+//go:build !plan9
 // +build !plan9
 
 package sftp
@@ -27,6 +28,7 @@ type Options struct {
 	User           string   // single username
 	Pass           string   // password for user
 	NoAuth         bool     // allow no authentication on connections
+	Stdio          bool     // serve on stdio
 }
 
 // DefaultOpt is the default values used for Options
@@ -41,12 +43,13 @@ var Opt = DefaultOpt
 // AddFlags adds flags for the sftp
 func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
 	rc.AddOption("sftp", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to.")
+	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to")
 	flags.StringArrayVarP(flagSet, &Opt.HostKeys, "key", "", Opt.HostKeys, "SSH private host key file (Can be multi-valued, leave blank to auto generate)")
 	flags.StringVarP(flagSet, &Opt.AuthorizedKeys, "authorized-keys", "", Opt.AuthorizedKeys, "Authorized keys file")
-	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication.")
-	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication.")
-	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set.")
+	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication")
+	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication")
+	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set")
+	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on run stdin/stdout")
 }
 
 func init() {
@@ -81,14 +84,32 @@ that it can provide md5sum/sha1sum/df information for the rclone sftp
 backend.  This means that is can support SHA1SUMs, MD5SUMs and the
 about command when paired with the rclone sftp backend.
 
-If you don't supply a --key then rclone will generate one and cache it
-for later use.
+If you don't supply a host --key then rclone will generate rsa, ecdsa
+and ed25519 variants, and cache them for later use in rclone's cache
+directory (see "rclone help flags cache-dir") in the "serve-sftp"
+directory.
 
 By default the server binds to localhost:2022 - if you want it to be
 reachable externally then supply "--addr :2022" for example.
 
 Note that the default of "--vfs-cache-mode off" is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
+
+If --stdio is specified, rclone will serve SFTP over stdio, which can
+be used with sshd via ~/.ssh/authorized_keys, for example:
+
+    restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
+
+On the client you need to set "--transfers 1" when using --stdio.
+Otherwise multiple instances of the rclone server are started by OpenSSH
+which can lead to "corrupted on transfer" errors. This is the case because
+the client chooses indiscriminately which server to send commands to while
+the servers all have different views of the state of the filing system.
+
+The "restrict" in authorized_keys prevents SHA1SUMs and MD5SUMs from beeing
+used. Omitting "restrict" and using --sftp-path-override to enable
+checksumming is possible but less secure and you could use the SFTP server
+provided by OpenSSH in this case.
 
 ` + vfs.Help + proxy.Help,
 	Run: func(command *cobra.Command, args []string) {
@@ -100,6 +121,9 @@ sftp backend, but it may not be with other SFTP clients.
 			cmd.CheckArgs(0, 0, command, args)
 		}
 		cmd.Run(false, true, command, func() error {
+			if Opt.Stdio {
+				return serveStdio(f)
+			}
 			s := newServer(context.Background(), f, &Opt)
 			err := s.Serve()
 			if err != nil {

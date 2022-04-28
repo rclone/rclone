@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/hash"
@@ -159,12 +158,13 @@ func dedupeList(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs 
 }
 
 // dedupeInteractive interactively dedupes the slice of objects
-func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool) {
+func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string, objs []fs.Object, byHash bool) bool {
 	dedupeList(ctx, f, ht, remote, objs, byHash)
 	commands := []string{"sSkip and do nothing", "kKeep just one (choose which in next step)"}
 	if !byHash {
 		commands = append(commands, "rRename all to be different (by changing file.jpg to file-1.jpg)")
 	}
+	commands = append(commands, "qQuit")
 	switch config.Command(commands) {
 	case 's':
 	case 'k':
@@ -172,7 +172,10 @@ func dedupeInteractive(ctx context.Context, f fs.Fs, ht hash.Type, remote string
 		dedupeDeleteAllButOne(ctx, keep-1, remote, objs)
 	case 'r':
 		dedupeRename(ctx, f, remote, objs)
+	case 'q':
+		return false
 	}
+	return true
 }
 
 // DeduplicateMode is how the dedupe command chooses what to do
@@ -237,7 +240,7 @@ func (x *DeduplicateMode) Set(s string) error {
 	case "list":
 		*x = DeduplicateList
 	default:
-		return errors.Errorf("Unknown mode for dedupe %q.", s)
+		return fmt.Errorf("unknown mode for dedupe %q", s)
 	}
 	return nil
 }
@@ -319,7 +322,7 @@ func dedupeFindDuplicateDirs(ctx context.Context, f fs.Fs) (duplicateDirs [][]*d
 		return nil
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "find duplicate dirs")
+		return nil, fmt.Errorf("find duplicate dirs: %w", err)
 	}
 
 	// Make sure parents are before children
@@ -341,11 +344,11 @@ func dedupeFindDuplicateDirs(ctx context.Context, f fs.Fs) (duplicateDirs [][]*d
 func dedupeMergeDuplicateDirs(ctx context.Context, f fs.Fs, duplicateDirs [][]*dedupeDir) error {
 	mergeDirs := f.Features().MergeDirs
 	if mergeDirs == nil {
-		return errors.Errorf("%v: can't merge directories", f)
+		return fmt.Errorf("%v: can't merge directories", f)
 	}
 	dirCacheFlush := f.Features().DirCacheFlush
 	if dirCacheFlush == nil {
-		return errors.Errorf("%v: can't flush dir cache", f)
+		return fmt.Errorf("%v: can't flush dir cache", f)
 	}
 	for _, dedupeDirs := range duplicateDirs {
 		if SkipDestructive(ctx, dedupeDirs[0].dir, "merge duplicate directories") {
@@ -400,7 +403,7 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 	what := "names"
 	if byHash {
 		if ht == hash.None {
-			return errors.Errorf("%v has no hashes", f)
+			return fmt.Errorf("%v has no hashes", f)
 		}
 		what = ht.String() + " hashes"
 	}
@@ -466,7 +469,9 @@ func Deduplicate(ctx context.Context, f fs.Fs, mode DeduplicateMode, byHash bool
 		}
 		switch mode {
 		case DeduplicateInteractive:
-			dedupeInteractive(ctx, f, ht, remote, objs, byHash)
+			if !dedupeInteractive(ctx, f, ht, remote, objs, byHash) {
+				return nil
+			}
 		case DeduplicateFirst:
 			dedupeDeleteAllButOne(ctx, 0, remote, objs)
 		case DeduplicateNewest:

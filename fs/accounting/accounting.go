@@ -3,6 +3,7 @@ package accounting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/rclone/rclone/fs/rc"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/asyncreader"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -74,7 +74,7 @@ type accountValues struct {
 	start   time.Time  // Start time of first read
 	lpTime  time.Time  // Time of last average measurement
 	lpBytes int        // Number of bytes read since last measurement
-	avg     float64    // Moving average of last few measurements in bytes/s
+	avg     float64    // Moving average of last few measurements in Byte/s
 }
 
 const averagePeriod = 16 // period to do exponentially weighted averages over

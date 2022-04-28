@@ -34,7 +34,7 @@ func TestListDirSorted(t *testing.T) {
 		r.WriteObject(context.Background(), "sub dir/ignore dir/should be ignored", "to ignore", t1),
 		r.WriteObject(context.Background(), "sub dir/sub sub dir/hello world3", "hello world", t1),
 	}
-	fstest.CheckItems(t, r.Fremote, files...)
+	r.CheckRemoteItems(t, files...)
 	var items fs.DirEntries
 	var err error
 

@@ -33,34 +33,43 @@ you expect. Instead use a `--filter...` flag.
 
 ### Pattern syntax
 
+Here is a formal definition of the pattern syntax,
+[examples](#examples) are below.
+
 Rclone matching rules follow a glob style:
 
-    `*`         matches any sequence of non-separator (`/`) characters
-    `**`        matches any sequence of characters including `/` separators
-    `?`         matches any single non-separator (`/`) character
-    `[` [ `!` ] { character-range } `]`
-                character class (must be non-empty)
-    `{` pattern-list `}`
-                pattern alternatives
-    c           matches character c (c != `*`, `**`, `?`, `\`, `[`, `{`, `}`)
-    `\` c       matches character c
+    *         matches any sequence of non-separator (/) characters
+    **        matches any sequence of characters including / separators
+    ?         matches any single non-separator (/) character
+    [ [ ! ] { character-range } ]
+              character class (must be non-empty)
+    { pattern-list }
+              pattern alternatives
+    {{ regexp }}
+              regular expression to match
+    c         matches character c (c != *, **, ?, \, [, {, })
+    \c        matches reserved character c (c = *, **, ?, \, [, {, }) or character class
 
 character-range:
 
-    c           matches character c (c != `\\`, `-`, `]`)
-    `\` c       matches character c
-    lo `-` hi   matches character c for lo <= c <= hi
+    c         matches character c (c != \, -, ])
+    \c        matches reserved character c (c = \, -, ])
+    lo - hi   matches character c for lo <= c <= hi
 
 pattern-list:
 
-    pattern { `,` pattern }
-                comma-separated (without spaces) patterns
+    pattern { , pattern }
+              comma-separated (without spaces) patterns
 
 character classes (see [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)) include:
 
     Named character classes (e.g. [\d], [^\d], [\D], [^\D])
     Perl character classes (e.g. \s, \S, \w, \W)
     ASCII character classes (e.g. [[:alnum:]], [[:alpha:]], [[:punct:]], [[:xdigit:]])
+
+regexp for advanced users to insert a regular expression - see [below](#regexp) for more info:
+
+    Any re2 regular expression not containing `}}`
 
 If the filter pattern starts with a `/` then it only matches
 at the top level of the directory tree,
@@ -110,6 +119,75 @@ With `--ignore-case`
 
     potato - matches "potato"
            - matches "POTATO"
+
+## Using regular expressions in filter patterns {#regexp}
+
+The syntax of filter patterns is glob style matching (like `bash`
+uses) to make things easy for users. However this does not provide
+absolute control over the matching, so for advanced users rclone also
+provides a regular expression syntax.
+
+The regular expressions used are as defined in the [Go regular
+expression reference](https://golang.org/pkg/regexp/syntax/). Regular
+expressions should be enclosed in `{{` `}}`. They will match only the
+last path segment if the glob doesn't start with `/` or the whole path
+name if it does.
+
+Here is how the `{{regexp}}` is transformed into an full regular
+expression to match the entire path:
+
+    {{regexp}}  becomes (^|/)(regexp)$
+    /{{regexp}} becomes ^(regexp)$
+
+Regexp syntax can be mixed with glob syntax, for example
+
+    *.{{jpe?g}} to match file.jpg, file.jpeg but not file.png
+
+You can also use regexp flags - to set case insensitive, for example
+
+    *.{{(?i)jpg}} to match file.jpg, file.JPG but not file.png
+
+Be careful with wildcards in regular expressions - you don't want them
+to match path separators normally. To match any file name starting
+with `start` and ending with `end` write
+
+    {{start[^/]*end\.jpg}}
+
+Not
+
+    {{start.*end\.jpg}}
+
+Which will match a directory called `start` with a file called
+`end.jpg` in it as the `.*` will match `/` characters.
+
+Note that you can use `-vv --dump filters` to show the filter patterns
+in regexp format - rclone implements the glob patters by transforming
+them into regular expressions.
+
+## Filter pattern examples {#examples}
+
+| Description | Pattern | Matches | Does not match |
+| ----------- |-------- | ------- | -------------- |
+| Wildcard    | `*.jpg` | `/file.jpg`     | `/file.png`    |
+|             |         | `/dir/file.jpg` | `/dir/file.png` |
+| Rooted      | `/*.jpg` | `/file.jpg`    | `/file.png`    |
+|             |          | `/file2.jpg`    | `/dir/file.jpg` |
+| Alternates  | `*.{jpg,png}` | `/file.jpg`     | `/file.gif`    |
+|             |         | `/dir/file.gif` | `/dir/file.gif` |
+| Path Wildcard | `dir/**` | `/dir/anyfile`     | `file.png`    |
+|             |          | `/subdir/dir/subsubdir/anyfile` | `/subdir/file.png` |
+| Any Char    | `*.t?t` | `/file.txt`     | `/file.qxt`    |
+|             |         | `/dir/file.tzt` | `/dir/file.png` |
+| Range       | `*.[a-z]` | `/file.a`     | `/file.0`    |
+|             |         | `/dir/file.b` | `/dir/file.1` |
+| Escape      | `*.\?\?\?` | `/file.???`     | `/file.abc`    |
+|             |         | `/dir/file.???` | `/dir/file.def` |
+| Class       | `*.\d\d\d` | `/file.012`     | `/file.abc`    |
+|             |         | `/dir/file.345` | `/dir/file.def` |
+| Regexp      | `*.{{jpe?g}}` | `/file.jpeg`     | `/file.png`    |
+|             |         | `/dir/file.jpg` | `/dir/file.jpeeg` |
+| Rooted Regexp | `/{{.*\.jpe?g}}` | `/file.jpeg`  | `/file.png`    |
+|             |                  | `/file.jpg`   | `/dir/file.jpg` |
 
 ## How filter rules are applied to files
 
@@ -386,7 +464,7 @@ statement. For more flexibility use the `--filter-from` flag.
 ### `--filter` - Add a file-filtering rule
 
 Specifies path/file names to an rclone command, based on a single
-include or exclude rule, in `+` or `-` format. 
+include or exclude rule, in `+` or `-` format.
 
 This flag can be repeated. See above for the order filter flags are
 processed in.
@@ -555,7 +633,7 @@ input to `--files-from-raw`.
 
 ### `--ignore-case` - make searches case insensitive
 
-By default rclone filter patterns are case sensitive. The `--ignore-case`
+By default, rclone filter patterns are case sensitive. The `--ignore-case`
 flag makes all of the filters patterns on the command line case
 insensitive.
 
@@ -586,17 +664,17 @@ remote or flag value. The fix then is to quote values containing spaces.
 ### `--min-size` - Don't transfer any file smaller than this
 
 Controls the minimum size file within the scope of an rclone command.
-Default units are `kBytes` but abbreviations `k`, `M`, or `G` are valid.
+Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
 
-E.g. `rclone ls remote: --min-size 50k` lists files on `remote:` of 50kByte
+E.g. `rclone ls remote: --min-size 50k` lists files on `remote:` of 50 KiB
 size or larger.
 
 ### `--max-size` - Don't transfer any file larger than this
 
 Controls the maximum size file within the scope of an rclone command.
-Default units are `kBytes` but abbreviations `k`, `M`, or `G` are valid.
+Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
 
-E.g. `rclone ls remote: --max-size 1G` lists files on `remote:` of 1GByte
+E.g. `rclone ls remote: --max-size 1G` lists files on `remote:` of 1 GiB
 size or smaller.
 
 ### `--max-age` - Don't transfer any file older than this
@@ -650,8 +728,8 @@ E.g. the scope of `rclone sync -i A: B:` can be restricted:
 
     rclone --min-size 50k --delete-excluded sync A: B:
 
-All files on `B:` which are less than 50 kBytes are deleted
-because they are excluded from the rclone sync command. 
+All files on `B:` which are less than 50 KiB are deleted
+because they are excluded from the rclone sync command.
 
 ### `--dump filters` - dump the filters to the output
 

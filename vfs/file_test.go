@@ -24,7 +24,7 @@ func fileCreate(t *testing.T, mode vfscommon.CacheMode) (r *fstest.Run, vfs *VFS
 	r, vfs, cleanup = newTestVFSOpt(t, &opt)
 
 	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	node, err := vfs.Stat("dir/file1")
 	require.NoError(t, err)
@@ -137,7 +137,7 @@ func testFileSetModTime(t *testing.T, cacheMode vfscommon.CacheMode, open bool, 
 	}
 
 	file1 = fstest.NewItem(file1.Path, contents, t2)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	vfs.Opt.ReadOnly = true
 	err = file.SetModTime(t2)
@@ -255,7 +255,7 @@ func TestFileRemove(t *testing.T) {
 	err := file.Remove()
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote)
+	r.CheckRemoteItems(t)
 
 	vfs.Opt.ReadOnly = true
 	err = file.Remove()
@@ -269,7 +269,7 @@ func TestFileRemoveAll(t *testing.T) {
 	err := file.RemoveAll()
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.Fremote)
+	r.CheckRemoteItems(t)
 
 	vfs.Opt.ReadOnly = true
 	err = file.RemoveAll()
@@ -340,14 +340,14 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode, inCache bool, forceC
 	dir := file.Dir()
 
 	// start with "dir/file1"
-	fstest.CheckItems(t, r.Fremote, item)
+	r.CheckRemoteItems(t, item)
 
 	// rename file to "newLeaf"
 	err = dir.Rename("file1", "newLeaf", rootDir)
 	require.NoError(t, err)
 
 	item.Path = "newLeaf"
-	fstest.CheckItems(t, r.Fremote, item)
+	r.CheckRemoteItems(t, item)
 
 	// check file in cache
 	if inCache {
@@ -363,7 +363,7 @@ func testFileRename(t *testing.T, mode vfscommon.CacheMode, inCache bool, forceC
 	require.NoError(t, err)
 
 	item.Path = "dir/file1"
-	fstest.CheckItems(t, r.Fremote, item)
+	r.CheckRemoteItems(t, item)
 
 	// check file in cache
 	if inCache {

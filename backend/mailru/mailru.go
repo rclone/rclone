@@ -3,6 +3,7 @@ package mailru
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	gohash "hash"
 	"io"
@@ -40,7 +41,6 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 
-	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
 
@@ -80,18 +80,18 @@ var oauthConfig = &oauth2.Config{
 
 // Register with Fs
 func init() {
-	MrHashType = hash.RegisterHash("MailruHash", 40, mrhash.New)
+	MrHashType = hash.RegisterHash("mailru", "MailruHash", 40, mrhash.New)
 	fs.Register(&fs.RegInfo{
 		Name:        "mailru",
 		Description: "Mail.ru Cloud",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "user",
-			Help:     "User name (usually email)",
+			Help:     "User name (usually email).",
 			Required: true,
 		}, {
 			Name:       "pass",
-			Help:       "Password",
+			Help:       "Password.",
 			Required:   true,
 			IsPassword: true,
 		}, {
@@ -99,6 +99,7 @@ func init() {
 			Default:  true,
 			Advanced: false,
 			Help: `Skip full upload if there is another file with same data hash.
+
 This feature is called "speedup" or "put by hash". It is especially efficient
 in case of generally available files like popular books, video or audio clips,
 because files are searched by hash in all accounts of all mailru users.
@@ -119,6 +120,7 @@ streaming or partial uploads), it will not even try this optimization.`,
 			Default:  "*.mkv,*.avi,*.mp4,*.mp3,*.zip,*.gz,*.rar,*.pdf",
 			Advanced: true,
 			Help: `Comma separated list of file name patterns eligible for speedup (put by hash).
+
 Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -137,8 +139,9 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Name:     "speedup_max_disk",
 			Default:  fs.SizeSuffix(3 * 1024 * 1024 * 1024),
 			Advanced: true,
-			Help: `This option allows you to disable speedup (put by hash) for large files
-(because preliminary hashing can exhaust you RAM or disk space)`,
+			Help: `This option allows you to disable speedup (put by hash) for large files.
+
+Reason is that preliminary hashing can exhaust your RAM or disk space.`,
 			Examples: []fs.OptionExample{{
 				Value: "0",
 				Help:  "Completely disable speedup (put by hash).",
@@ -168,7 +171,7 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Name:     "check_hash",
 			Default:  true,
 			Advanced: true,
-			Help:     "What should copy do if file checksum is mismatched or invalid",
+			Help:     "What should copy do if file checksum is mismatched or invalid.",
 			Examples: []fs.OptionExample{{
 				Value: "true",
 				Help:  "Fail with error.",
@@ -182,6 +185,7 @@ Patterns are case insensitive and can contain '*' or '?' meta characters.`,
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
 			Help: `HTTP user agent used internally by client.
+
 Defaults to "rclone/VERSION" or "--user-agent" provided on command line.`,
 		}, {
 			Name:     "quirks",
@@ -189,6 +193,7 @@ Defaults to "rclone/VERSION" or "--user-agent" provided on command line.`,
 			Advanced: true,
 			Hide:     fs.OptionHideBoth,
 			Help: `Comma separated list of internal maintenance flags.
+
 This option must not be used by an ordinary user. It is intended only to
 facilitate remote troubleshooting of backend issues. Strict meaning of
 flags is not documented and not guaranteed to persist between releases.
@@ -264,7 +269,7 @@ func errorHandler(res *http.Response) (err error) {
 	}
 	serverError.Message = string(data)
 	if serverError.Message == "" || strings.HasPrefix(serverError.Message, "{") {
-		// Replace empty or JSON response with a human readable text.
+		// Replace empty or JSON response with a human-readable text.
 		serverError.Message = res.Status
 	}
 	serverError.Status = res.StatusCode
@@ -433,7 +438,7 @@ func (f *Fs) authorize(ctx context.Context, force bool) (err error) {
 		err = errors.New("Invalid token")
 	}
 	if err != nil {
-		return errors.Wrap(err, "Failed to authorize")
+		return fmt.Errorf("Failed to authorize: %w", err)
 	}
 
 	if err = oauthutil.PutToken(f.name, f.m, t, false); err != nil {
@@ -502,7 +507,7 @@ func (f *Fs) reAuthorize(opts *rest.Opts, origErr error) error {
 func (f *Fs) accessToken() (string, error) {
 	token, err := f.source.Token()
 	if err != nil {
-		return "", errors.Wrap(err, "cannot refresh access token")
+		return "", fmt.Errorf("cannot refresh access token: %w", err)
 	}
 	return token.AccessToken, nil
 }
@@ -1191,7 +1196,7 @@ func (f *Fs) purgeWithCheck(ctx context.Context, dir string, check bool, opName 
 
 	_, dirSize, err := f.readItemMetaData(ctx, path)
 	if err != nil {
-		return errors.Wrapf(err, "%s failed", opName)
+		return fmt.Errorf("%s failed: %w", opName, err)
 	}
 	if check && dirSize > 0 {
 		return fs.ErrorDirectoryNotEmpty
@@ -1295,7 +1300,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	})
 
 	if err != nil {
-		return nil, errors.Wrap(err, "couldn't copy file")
+		return nil, fmt.Errorf("couldn't copy file: %w", err)
 	}
 	if response.Status != 200 {
 		return nil, fmt.Errorf("copy failed with code %d", response.Status)
@@ -1567,7 +1572,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 
 	total := info.Body.Cloud.Space.BytesTotal
-	used := int64(info.Body.Cloud.Space.BytesUsed)
+	used := info.Body.Cloud.Space.BytesUsed
 
 	usage := &fs.Usage{
 		Total: fs.NewUsageValue(total),
@@ -1679,7 +1684,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 			spoolFile, mrHash, err := makeTempFile(ctx, tmpFs, wrapIn, src)
 			if err != nil {
-				return errors.Wrap(err, "Failed to create spool file")
+				return fmt.Errorf("Failed to create spool file: %w", err)
 			}
 			if o.putByHash(ctx, mrHash, src, "spool") {
 				// If put by hash is successful, ignore transitive error
@@ -1958,7 +1963,7 @@ func (o *Object) readMetaData(ctx context.Context, force bool) error {
 	}
 	newObj, ok := entry.(*Object)
 	if !ok || dirSize >= 0 {
-		return fs.ErrorNotAFile
+		return fs.ErrorIsDir
 	}
 	if newObj.remote != o.remote {
 		return fmt.Errorf("File %q path has changed to %q", o.remote, newObj.remote)
@@ -2313,7 +2318,7 @@ func (p *serverPool) Dispatch(ctx context.Context, current string) (string, erro
 	})
 	if err != nil || url == "" {
 		closeBody(res)
-		return "", errors.Wrap(err, "Failed to request file server")
+		return "", fmt.Errorf("Failed to request file server: %w", err)
 	}
 
 	p.addServer(url, now)

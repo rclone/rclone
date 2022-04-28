@@ -2,16 +2,15 @@ package upstream
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"math"
-	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/fspath"
@@ -90,7 +89,7 @@ func New(ctx context.Context, remote, root string, cacheTime time.Duration) (*Fs
 		return nil, err
 	}
 	f.RootFs = rFs
-	rootString := path.Join(remote, filepath.ToSlash(root))
+	rootString := fspath.JoinRootPath(remote, root)
 	myFs, err := cache.Get(ctx, rootString)
 	if err != nil && err != fs.ErrorIsFile {
 		return nil, err
@@ -133,7 +132,7 @@ func (f *Fs) WrapEntry(e fs.DirEntry) (Entry, error) {
 	case fs.Directory:
 		return f.WrapDirectory(e.(fs.Directory)), nil
 	default:
-		return nil, errors.Errorf("unknown object type %T", e)
+		return nil, fmt.Errorf("unknown object type %T", e)
 	}
 }
 
@@ -335,7 +334,7 @@ func (f *Fs) updateUsageCore(lock bool) error {
 	usage, err := f.RootFs.Features().About(ctx)
 	if err != nil {
 		f.cacheUpdate = false
-		if errors.Cause(err) == fs.ErrorDirNotFound {
+		if errors.Is(err, fs.ErrorDirNotFound) {
 			err = nil
 		}
 		return err

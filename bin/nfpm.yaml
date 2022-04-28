@@ -9,7 +9,7 @@ provides:
 maintainer: "Nick Craig-Wood <nick@craig-wood.com>"
 description: |
   Rclone - "rsync for cloud storage"
-    is a command line program to sync files and directories to and
+    is a command-line program to sync files and directories to and
     from most cloud providers. It can also mount, tree, ncdu and lots
     of other useful things.
 vendor: "rclone"

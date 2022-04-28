@@ -2,12 +2,12 @@ package vfs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/cache"
 	"github.com/rclone/rclone/fs/rc"
@@ -44,9 +44,9 @@ func getVFS(in rc.Params) (vfs *VFS, err error) {
 	fsString = cache.Canonicalize(fsString)
 	activeVFS := active[fsString]
 	if len(activeVFS) == 0 {
-		return nil, errors.Errorf("no VFS found with name %q", fsString)
+		return nil, fmt.Errorf("no VFS found with name %q", fsString)
 	} else if len(activeVFS) > 1 {
-		return nil, errors.Errorf("more than one VFS active with name %q", fsString)
+		return nil, fmt.Errorf("more than one VFS active with name %q", fsString)
 	}
 	delete(in, "fs") // delete the fs parameter
 	return activeVFS[0], nil
@@ -111,11 +111,11 @@ func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		if v, ok := in[k]; ok {
 			s, ok := v.(string)
 			if !ok {
-				return out, errors.Errorf("value must be string %q=%v", k, v)
+				return out, fmt.Errorf("value must be string %q=%v", k, v)
 			}
 			recursive, err = strconv.ParseBool(s)
 			if err != nil {
-				return out, errors.Errorf("invalid value %q=%v", k, v)
+				return out, fmt.Errorf("invalid value %q=%v", k, v)
 			}
 			delete(in, k)
 		}
@@ -137,7 +137,7 @@ func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		for k, v := range in {
 			path, ok := v.(string)
 			if !ok {
-				return out, errors.Errorf("value must be string %q=%v", k, v)
+				return out, fmt.Errorf("value must be string %q=%v", k, v)
 			}
 			if strings.HasPrefix(k, "dir") {
 				dir, err := getDir(path)
@@ -156,7 +156,7 @@ func rcRefresh(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 					}
 				}
 			} else {
-				return out, errors.Errorf("unknown key %q", k)
+				return out, fmt.Errorf("unknown key %q", k)
 			}
 		}
 	}
@@ -208,7 +208,7 @@ func rcForget(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		for k, v := range in {
 			path, ok := v.(string)
 			if !ok {
-				return out, errors.Errorf("value must be string %q=%v", k, v)
+				return out, fmt.Errorf("value must be string %q=%v", k, v)
 			}
 			path = strings.Trim(path, "/")
 			if strings.HasPrefix(k, "file") {
@@ -216,7 +216,7 @@ func rcForget(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			} else if strings.HasPrefix(k, "dir") {
 				root.ForgetPath(path, fs.EntryDirectory)
 			} else {
-				return out, errors.Errorf("unknown key %q", k)
+				return out, fmt.Errorf("unknown key %q", k)
 			}
 			forgotten = append(forgotten, path)
 		}
@@ -230,11 +230,11 @@ func rcForget(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 func getDuration(k string, v interface{}) (time.Duration, error) {
 	s, ok := v.(string)
 	if !ok {
-		return 0, errors.Errorf("value must be string %q=%v", k, v)
+		return 0, fmt.Errorf("value must be string %q=%v", k, v)
 	}
 	interval, err := fs.ParseDuration(s)
 	if err != nil {
-		return 0, errors.Wrap(err, "parse duration")
+		return 0, fmt.Errorf("parse duration: %w", err)
 	}
 	return interval, nil
 }
@@ -272,7 +272,7 @@ func getTimeout(in rc.Params) (time.Duration, error) {
 
 func getStatus(vfs *VFS, in rc.Params) (out rc.Params, err error) {
 	for k, v := range in {
-		return nil, errors.Errorf("invalid parameter: %s=%s", k, v)
+		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
 	}
 	return rc.Params{
 		"enabled":   vfs.Opt.PollInterval != 0,
@@ -329,7 +329,7 @@ func rcPollInterval(ctx context.Context, in rc.Params) (out rc.Params, err error
 		return nil, err
 	}
 	for k, v := range in {
-		return nil, errors.Errorf("invalid parameter: %s=%s", k, v)
+		return nil, fmt.Errorf("invalid parameter: %s=%s", k, v)
 	}
 	if vfs.pollChan == nil {
 		return nil, errors.New("poll-interval is not supported by this remote")
@@ -388,4 +388,52 @@ func rcList(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	out = rc.Params{}
 	out["vfses"] = names
 	return out, nil
+}
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "vfs/stats",
+		Title: "Stats for a VFS.",
+		Help: `
+This returns stats for the selected VFS.
+
+    {
+        // Status of the disk cache - only present if --vfs-cache-mode > off
+        "diskCache": {
+            "bytesUsed": 0,
+            "erroredFiles": 0,
+            "files": 0,
+            "hashType": 1,
+            "outOfSpace": false,
+            "path": "/home/user/.cache/rclone/vfs/local/mnt/a",
+            "pathMeta": "/home/user/.cache/rclone/vfsMeta/local/mnt/a",
+            "uploadsInProgress": 0,
+            "uploadsQueued": 0
+        },
+        "fs": "/mnt/a",
+        "inUse": 1,
+        // Status of the in memory metadata cache
+        "metadataCache": {
+            "dirs": 1,
+            "files": 0
+        },
+        // Options as returned by options/get
+        "opt": {
+            "CacheMaxAge": 3600000000000,
+            // ...
+            "WriteWait": 1000000000
+        }
+    }
+
+` + getVFSHelp,
+		Fn: rcStats,
+	})
+}
+
+func rcStats(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	vfs, err := getVFS(in)
+	if err != nil {
+		return nil, err
+	}
+	return vfs.Stats(), nil
 }

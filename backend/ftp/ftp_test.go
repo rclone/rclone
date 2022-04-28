@@ -9,25 +9,27 @@ import (
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
-// TestIntegration runs integration tests against the remote
+// TestIntegration runs integration tests against rclone FTP server
 func TestIntegration(t *testing.T) {
-	fstests.Run(t, &fstests.Opt{
-		RemoteName: "TestFTPProftpd:",
-		NilObject:  (*ftp.Object)(nil),
-	})
-}
-
-func TestIntegration2(t *testing.T) {
-	if *fstest.RemoteName != "" {
-		t.Skip("skipping as -remote is set")
-	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestFTPRclone:",
 		NilObject:  (*ftp.Object)(nil),
 	})
 }
 
-func TestIntegration3(t *testing.T) {
+// TestIntegrationProftpd runs integration tests against proFTPd
+func TestIntegrationProftpd(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("skipping as -remote is set")
+	}
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: "TestFTPProftpd:",
+		NilObject:  (*ftp.Object)(nil),
+	})
+}
+
+// TestIntegrationPureftpd runs integration tests against pureFTPd
+func TestIntegrationPureftpd(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("skipping as -remote is set")
 	}
@@ -37,12 +39,13 @@ func TestIntegration3(t *testing.T) {
 	})
 }
 
-// func TestIntegration4(t *testing.T) {
-// 	if *fstest.RemoteName != "" {
-// 		t.Skip("skipping as -remote is set")
-// 	}
-// 	fstests.Run(t, &fstests.Opt{
-// 		RemoteName: "TestFTPVsftpd:",
-// 		NilObject:  (*ftp.Object)(nil),
-// 	})
-// }
+// TestIntegrationVsftpd runs integration tests against vsFTPd
+func TestIntegrationVsftpd(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("skipping as -remote is set")
+	}
+	fstests.Run(t, &fstests.Opt{
+		RemoteName: "TestFTPVsftpd:",
+		NilObject:  (*ftp.Object)(nil),
+	})
+}

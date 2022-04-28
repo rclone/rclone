@@ -39,7 +39,7 @@ func (p *EpLus) lus(upstreams []*upstream.Fs) (*upstream.Fs, error) {
 }
 
 func (p *EpLus) lusEntries(entries []upstream.Entry) (upstream.Entry, error) {
-	var minUsedSpace int64
+	var minUsedSpace int64 = math.MaxInt64
 	var lusEntry upstream.Entry
 	for _, e := range entries {
 		space, err := e.UpstreamFs().GetFreeSpace()

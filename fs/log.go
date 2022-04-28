@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,7 +61,7 @@ func (l *LogLevel) Set(s string) error {
 			return nil
 		}
 	}
-	return errors.Errorf("Unknown log level %q", s)
+	return fmt.Errorf("Unknown log level %q", s)
 }
 
 // Type of the value
@@ -73,16 +73,22 @@ func (l *LogLevel) Type() string {
 func (l *LogLevel) UnmarshalJSON(in []byte) error {
 	return UnmarshalJSONFlag(in, l, func(i int64) error {
 		if i < 0 || i >= int64(LogLevel(len(logLevelToString))) {
-			return errors.Errorf("Unknown log level %d", i)
+			return fmt.Errorf("Unknown log level %d", i)
 		}
 		*l = (LogLevel)(i)
 		return nil
 	})
 }
 
+// LogPrintPid enables process pid in log
+var LogPrintPid = false
+
 // LogPrint sends the text to the logger of level
 var LogPrint = func(level LogLevel, text string) {
 	text = fmt.Sprintf("%-6s: %s", level, text)
+	if LogPrintPid {
+		text = fmt.Sprintf("[%d] %s", os.Getpid(), text)
+	}
 	_ = log.Output(4, text)
 }
 
@@ -180,8 +186,8 @@ func Errorf(o interface{}, text string, args ...interface{}) {
 }
 
 // Logf writes log output for this Object or Fs.  This should be
-// considered to be Info level logging.  It is the default level.  By
-// default rclone should not log very much so only use this for
+// considered to be Notice level logging.  It is the default level.
+// By default rclone should not log very much so only use this for
 // important things the user should see.  The user can filter these
 // out with the -q flag.
 func Logf(o interface{}, text string, args ...interface{}) {

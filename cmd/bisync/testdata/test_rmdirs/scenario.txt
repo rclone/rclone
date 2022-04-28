@@ -1,0 +1,31 @@
+test rmdirs
+# Test the --remove-empty-dirs logic.
+# Without this flag the subdir should not be deleted when empty,
+# and deleted with the flag.
+#
+# After the initial setup sync:
+#  1. Delete Path1 subdir/file20.txt
+#  2. Run bisync without --remove-empty-dirs
+#  3. Confirm the subdir still exists on both paths
+#  4. Run bisync WITH --remove-empty-dirs
+#  5. Confirm the subdir has been removed on both paths
+
+test initial bisync
+bisync resync
+
+test 1. delete path1 subdir file
+delete-file {path1/}subdir/file20.txt
+
+test 2. run bisync without remove-empty-dirs
+bisync
+
+test 3. confirm the subdir still exists on both paths
+list-dirs {path1/}
+list-dirs {path2/}
+
+test 4. run bisync with remove-empty-dirs
+bisync remove-empty-dirs
+
+test 5. confirm the subdir has been removed on both paths
+list-dirs {path1/}
+list-dirs {path2/}

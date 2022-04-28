@@ -1,0 +1,81 @@
+{
+    "description": "Rclone volume plugin for Docker",
+    "documentation": "https://rclone.org/docker",
+    "interface": {
+        "socket": "rclone.sock",
+        "types": ["docker.volumedriver/1.0"]
+    },
+    "linux": {
+        "capabilities": [
+            "CAP_SYS_ADMIN"
+        ],
+        "devices": [
+            {
+                "path": "/dev/fuse"
+            }
+        ]
+    },
+    "network": {
+        "type": "host"
+    },
+    "entrypoint": ["rclone", "serve", "docker"],
+    "workdir": "/data",
+    "args": {
+        "name": "args",
+        "value": [],
+        "settable": ["value"]
+    },
+    "env": [
+        {
+            "name": "RCLONE_VERBOSE",
+            "value": "0",
+            "settable": ["value"]
+        },
+        {
+            "name": "RCLONE_CONFIG",
+            "value": "/data/config/rclone.conf"
+        },
+        {
+            "name": "RCLONE_CACHE_DIR",
+            "value": "/data/cache"
+        },
+        {
+            "name": "RCLONE_BASE_DIR",
+            "value": "/mnt"
+        },
+        {
+            "name": "HTTP_PROXY",
+            "value": "",
+            "settable": ["value"]
+        },
+        {
+            "name": "HTTPS_PROXY",
+            "value": "",
+            "settable": ["value"]
+        },
+        {
+            "name": "NO_PROXY",
+            "value": "",
+            "settable": ["value"]
+        }
+    ],
+    "mounts": [
+        {
+            "name": "config",
+            "source": "/var/lib/docker-plugins/rclone/config",
+            "destination": "/data/config",
+            "type": "bind",
+            "options": ["rbind"],
+            "settable": ["source"]
+        },
+        {
+            "name": "cache",
+            "source": "/var/lib/docker-plugins/rclone/cache",
+            "destination": "/data/cache",
+            "type": "bind",
+            "options": ["rbind"],
+            "settable": ["source"]
+        }
+    ],
+    "propagatedMount": "/mnt"
+}

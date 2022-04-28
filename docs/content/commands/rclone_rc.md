@@ -69,15 +69,15 @@ rclone rc commands parameter [flags]
 ## Options
 
 ```
-  -a, --arg stringArray   Argument placed in the "arg" array.
+  -a, --arg stringArray   Argument placed in the "arg" array
   -h, --help              help for rc
-      --json string       Input JSON - use instead of key=value args.
-      --loopback          If set connect to this rclone instance not via HTTP.
-      --no-output         If set, don't output the JSON result.
-  -o, --opt stringArray   Option in the form name=value or name placed in the "opt" array.
-      --pass string       Password to use to connect to rclone remote control.
-      --url string        URL to connect to rclone remote control. (default "http://localhost:5572/")
-      --user string       Username to use to rclone remote control.
+      --json string       Input JSON - use instead of key=value args
+      --loopback          If set connect to this rclone instance not via HTTP
+      --no-output         If set, don't output the JSON result
+  -o, --opt stringArray   Option in the form name=value or name placed in the "opt" array
+      --pass string       Password to use to connect to rclone remote control
+      --url string        URL to connect to rclone remote control (default "http://localhost:5572/")
+      --user string       Username to use to rclone remote control
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

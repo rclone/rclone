@@ -3,11 +3,11 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"path"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -25,7 +25,7 @@ type Test struct {
 
 // Backend describes a backend test
 //
-// FIXME make bucket based remotes set sub-dir automatically???
+// FIXME make bucket-based remotes set sub-dir automatically???
 type Backend struct {
 	Backend     string   // name of the backend directory
 	Remote      string   // name of the test remote
@@ -37,6 +37,7 @@ type Backend struct {
 	Ignore      []string // test names to ignore the failure of
 	Tests       []string // paths of tests to run, blank for all
 	ListRetries int      // -list-retries if > 0
+	ExtraTime   float64  // factor to multiply the timeout by
 }
 
 // includeTest returns true if this backend should be included in this
@@ -91,6 +92,7 @@ func (b *Backend) MakeRuns(t *Test) (runs []*Run) {
 			SizeLimit:   int64(maxSize),
 			Ignore:      ignore,
 			ListRetries: b.ListRetries,
+			ExtraTime:   b.ExtraTime,
 		}
 		if t.AddBackend {
 			run.Path = path.Join(run.Path, b.Backend)
@@ -110,12 +112,12 @@ type Config struct {
 func NewConfig(configFile string) (*Config, error) {
 	d, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read config file")
+		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 	config := &Config{}
 	err = yaml.Unmarshal(d, &config)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse config file")
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 	// d, err = yaml.Marshal(&config)
 	// if err != nil {

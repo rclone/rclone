@@ -1,6 +1,7 @@
 package version
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -8,7 +9,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-semver/semver"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -22,7 +22,7 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.BoolVarP(cmdFlags, &check, "check", "", false, "Check for new version.")
+	flags.BoolVarP(cmdFlags, &check, "check", "", false, "Check for new version")
 }
 
 var commandDefinition = &cobra.Command{

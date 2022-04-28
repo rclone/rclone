@@ -39,9 +39,9 @@ This will:
         move it to dst, overwriting existing files if they exist
         see move command for full details
 
-This doesn't transfer unchanged files, testing by size and
-modification time or MD5SUM.  src will be deleted on successful
-transfer.
+This doesn't transfer files that are identical on src and dst, testing
+by size and modification time or MD5SUM.  src will be deleted on
+successful transfer.
 
 **Important**: Since this can cause data loss, test first with the
 ` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.

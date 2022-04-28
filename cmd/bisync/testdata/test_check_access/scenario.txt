@@ -1,0 +1,44 @@
+test check-access
+# RCLONE_TEST files in the top level and subdir
+#
+# 1. See that check-access passes with the initial setup.
+# 2. Delete the Path2 subdir RCLONE_TEST, run sync. Should fail critical.
+# 3. Put the Path2 subdir RCLONE_TEST back, resync.
+# 4. Run sync with check-access. Should pass.
+# 5. Delete Path1 top level RCLONE_TEST, run sync. Should fail critical.
+# 6. Run again. Should fail critical due to missing listings.
+# 7. Run resync, which will copy the Path2 top level back to Path1.
+# 8. Run sync with check-access. Should pass.
+
+test initial bisync
+bisync resync
+
+test 1. see that check-access passes with the initial setup
+bisync check-access
+
+test 2. delete the path2 subdir RCLONE_TEST and run sync. should fail critical.
+delete-file {path2/}subdir{/}RCLONE_TEST
+bisync check-access
+copy-listings path2-missing
+
+test 3. put the path2 subdir RCLONE_TEST back, resync.
+copy-file {path1/}subdir/RCLONE_TEST {path2/}
+bisync resync
+
+test 4. run sync with check-access. should pass.
+bisync check-access
+
+test 5. delete path1 top level RCLONE_TEST, run sync. should fail critical.
+delete-file {path1/}RCLONE_TEST
+bisync check-access
+copy-listings path1-missing
+
+test 6. run again. should fail critical due to missing listings.
+bisync check-access
+move-listings missing-listings
+
+test 7. run resync, which will copy the path2 top level back to path1.
+bisync resync
+
+test 8. run sync with --check-access. should pass.
+bisync check-access

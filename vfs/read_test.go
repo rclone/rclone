@@ -16,7 +16,7 @@ func readHandleCreate(t *testing.T) (r *fstest.Run, vfs *VFS, fh *ReadFileHandle
 	r, vfs, cleanup = newTestVFS(t)
 
 	file1 := r.WriteObject(context.Background(), "dir/file1", "0123456789abcdef", t1)
-	fstest.CheckItems(t, r.Fremote, file1)
+	r.CheckRemoteItems(t, file1)
 
 	h, err := vfs.OpenFile("dir/file1", os.O_RDONLY, 0777)
 	require.NoError(t, err)

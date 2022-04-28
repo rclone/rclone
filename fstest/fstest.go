@@ -71,7 +71,7 @@ func Initialise() {
 	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
 		_ = config.SetConfigPath(envConfig)
 	}
-	configfile.LoadConfig(ctx)
+	configfile.Install()
 	accounting.Start(ctx)
 	if *Verbose {
 		ci.LogLevel = fs.LogLevelDebug
@@ -342,6 +342,12 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 // CheckListing checks the fs to see if it has the expected contents
 func CheckListing(t *testing.T, f fs.Fs, items []Item) {
 	precision := f.Precision()
+	CheckListingWithPrecision(t, f, items, nil, precision)
+}
+
+// CheckItemsWithPrecision checks the fs with the specified precision
+// to see if it has the expected items.
+func CheckItemsWithPrecision(t *testing.T, f fs.Fs, precision time.Duration, items ...Item) {
 	CheckListingWithPrecision(t, f, items, nil, precision)
 }
 

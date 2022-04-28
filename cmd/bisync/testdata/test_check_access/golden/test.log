@@ -1,0 +1,105 @@
+(01)  : test check-access
+
+
+(02)  : test initial bisync
+(03)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(04)  : test 1. see that check-access passes with the initial setup
+(05)  : bisync check-access
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+INFO  : Found 2 matching "RCLONE_TEST" files on both paths
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(06)  : test 2. delete the path2 subdir RCLONE_TEST and run sync. should fail critical.
+(07)  : delete-file {path2/}subdir/RCLONE_TEST
+(08)  : bisync check-access
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : - Path2    File was deleted                    - subdir/RCLONE_TEST
+INFO  : Path2:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Checking access health
+ERROR : Access test failed: Path1 count 2, Path2 count 1 - RCLONE_TEST
+ERROR : -          Access test failed: Path1 file not found in Path2 - subdir/RCLONE_TEST
+ERROR : Bisync critical error: check file check failed
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+(09)  : copy-listings path2-missing
+
+(10)  : test 3. put the path2 subdir RCLONE_TEST back, resync.
+(11)  : copy-file {path1/}subdir/RCLONE_TEST {path2/}
+(12)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(13)  : test 4. run sync with check-access. should pass.
+(14)  : bisync check-access
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+INFO  : Found 2 matching "RCLONE_TEST" files on both paths
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful
+
+(15)  : test 5. delete path1 top level RCLONE_TEST, run sync. should fail critical.
+(16)  : delete-file {path1/}RCLONE_TEST
+(17)  : bisync check-access
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : - Path1    File was deleted                    - RCLONE_TEST
+INFO  : Path1:    1 changes:    0 new,    0 newer,    0 older,    1 deleted
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+ERROR : Access test failed: Path1 count 1, Path2 count 2 - RCLONE_TEST
+ERROR : -          Access test failed: Path2 file not found in Path1 - RCLONE_TEST
+ERROR : Bisync critical error: check file check failed
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+(18)  : copy-listings path1-missing
+
+(19)  : test 6. run again. should fail critical due to missing listings.
+(20)  : bisync check-access
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+ERROR : Bisync critical error: cannot find prior Path1 or Path2 listings, likely due to critical error on prior run
+ERROR : Bisync aborted. Must run --resync to recover.
+Bisync error: bisync aborted
+(21)  : move-listings missing-listings
+
+(22)  : test 7. run resync, which will copy the path2 top level back to path1.
+(23)  : bisync resync
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Copying unique Path2 files to Path1
+INFO  : - Path2    Resync will copy to Path1           - RCLONE_TEST
+INFO  : - Path2    Resync is doing queued copies to    - Path1
+INFO  : Resynching Path1 to Path2
+INFO  : Resync updating listings
+INFO  : Bisync successful
+
+(24)  : test 8. run sync with --check-access. should pass.
+(25)  : bisync check-access
+INFO  : Synching Path1 "{path1/}" with Path2 "{path2/}"
+INFO  : Path1 checking for diffs
+INFO  : Path2 checking for diffs
+INFO  : Checking access health
+INFO  : Found 2 matching "RCLONE_TEST" files on both paths
+INFO  : No changes found
+INFO  : Updating listings
+INFO  : Validating listings for Path1 "{path1/}" vs Path2 "{path2/}"
+INFO  : Bisync successful

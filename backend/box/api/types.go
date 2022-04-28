@@ -61,7 +61,7 @@ func (e *Error) Error() string {
 var _ error = (*Error)(nil)
 
 // ItemFields are the fields needed for FileInfo
-var ItemFields = "type,id,sequence_id,etag,sha1,name,size,created_at,modified_at,content_created_at,content_modified_at,item_status,shared_link"
+var ItemFields = "type,id,sequence_id,etag,sha1,name,size,created_at,modified_at,content_created_at,content_modified_at,item_status,shared_link,owned_by"
 
 // Types of things in Item
 const (
@@ -90,6 +90,12 @@ type Item struct {
 		URL    string `json:"url,omitempty"`
 		Access string `json:"access,omitempty"`
 	} `json:"shared_link"`
+	OwnedBy struct {
+		Type  string `json:"type"`
+		ID    string `json:"id"`
+		Name  string `json:"name"`
+		Login string `json:"login"`
+	} `json:"owned_by"`
 }
 
 // ModTime returns the modification time of the item
@@ -103,10 +109,11 @@ func (i *Item) ModTime() (t time.Time) {
 
 // FolderItems is returned from the GetFolderItems call
 type FolderItems struct {
-	TotalCount int    `json:"total_count"`
-	Entries    []Item `json:"entries"`
-	Offset     int    `json:"offset"`
-	Limit      int    `json:"limit"`
+	TotalCount int     `json:"total_count"`
+	Entries    []Item  `json:"entries"`
+	Offset     int     `json:"offset"`
+	Limit      int     `json:"limit"`
+	NextMarker *string `json:"next_marker,omitempty"`
 	Order      []struct {
 		By        string `json:"by"`
 		Direction string `json:"direction"`

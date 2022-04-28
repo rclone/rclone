@@ -32,6 +32,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	waitForWritersDelay = 30 * time.Second // time to wait for existing writers
+)
+
 var (
 	mountFn mountlib.MountFn
 )
@@ -98,16 +102,15 @@ func RunTests(t *testing.T, useVFS bool, fn mountlib.MountFn) {
 
 // Run holds the remotes for a test run
 type Run struct {
-	os           Oser
-	vfs          *vfs.VFS
-	useVFS       bool // set if we are testing a VFS not a mount
-	mountPath    string
-	fremote      fs.Fs
-	fremoteName  string
-	cleanRemote  func()
-	umountResult <-chan error
-	umountFn     mountlib.UnmountFn
-	skip         bool
+	os          Oser
+	vfs         *vfs.VFS
+	useVFS      bool // set if we are testing a VFS not a mount
+	mnt         *mountlib.MountPoint
+	mountPath   string
+	fremote     fs.Fs
+	fremoteName string
+	cleanRemote func()
+	skip        bool
 }
 
 // run holds the master Run data
@@ -121,8 +124,7 @@ var run *Run
 // Finalise() will tidy them away when done.
 func newRun(useVFS bool) *Run {
 	r := &Run{
-		useVFS:       useVFS,
-		umountResult: make(chan error, 1),
+		useVFS: useVFS,
 	}
 	fstest.Initialise()
 
@@ -169,14 +171,16 @@ func findMountPath() string {
 func (r *Run) mount() {
 	log.Printf("mount %q %q", r.fremote, r.mountPath)
 	var err error
-	r.vfs = vfs.New(r.fremote, &vfsflags.Opt)
-	r.umountResult, r.umountFn, err = mountFn(r.vfs, r.mountPath, &mountlib.Opt)
+	r.mnt = mountlib.NewMountPoint(mountFn, r.mountPath, r.fremote, &mountlib.Opt, &vfsflags.Opt)
+
+	_, err = r.mnt.Mount()
 	if err != nil {
 		log.Printf("mount FAILED: %v", err)
 		r.skip = true
 	} else {
 		log.Printf("mount OK")
 	}
+	r.vfs = r.mnt.VFS
 	if r.useVFS {
 		r.os = vfsOs{r.vfs}
 	} else {
@@ -198,17 +202,17 @@ func (r *Run) umount() {
 		}
 	*/
 	log.Printf("Unmounting %q", r.mountPath)
-	err := r.umountFn()
+	err := r.mnt.Unmount()
 	if err != nil {
 		log.Printf("signal to umount failed - retrying: %v", err)
 		time.Sleep(3 * time.Second)
-		err = r.umountFn()
+		err = r.mnt.Unmount()
 	}
 	if err != nil {
 		log.Fatalf("signal to umount failed: %v", err)
 	}
 	log.Printf("Waiting for umount")
-	err = <-r.umountResult
+	err = <-r.mnt.ErrChan
 	if err != nil {
 		log.Fatalf("umount failed: %v", err)
 	}
@@ -227,7 +231,7 @@ func (r *Run) cacheMode(cacheMode vfscommon.CacheMode, writeBack time.Duration) 
 		return
 	}
 	// Wait for writers to finish
-	r.vfs.WaitForWriters(30 * time.Second)
+	r.vfs.WaitForWriters(waitForWritersDelay)
 	// Empty and remake the remote
 	r.cleanRemote()
 	err := r.fremote.Mkdir(context.Background(), "")
@@ -372,7 +376,7 @@ func (r *Run) checkDir(t *testing.T, dirString string) {
 
 // wait for any files being written to be released by fuse
 func (r *Run) waitForWriters() {
-	run.vfs.WaitForWriters(10 * time.Second)
+	run.vfs.WaitForWriters(waitForWritersDelay)
 }
 
 // writeFile writes data to a file named by filename.

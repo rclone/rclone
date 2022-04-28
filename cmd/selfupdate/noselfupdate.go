@@ -1,3 +1,4 @@
+//go:build noselfupdate
 // +build noselfupdate
 
 package selfupdate

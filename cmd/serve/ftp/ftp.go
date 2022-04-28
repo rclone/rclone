@@ -1,11 +1,13 @@
 // Package ftp implements an FTP server for rclone
 
-//+build !plan9
+//go:build !plan9
+// +build !plan9
 
 package ftp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -13,8 +15,8 @@ import (
 	"os/user"
 	"strconv"
 	"sync"
+	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/proxy"
 	"github.com/rclone/rclone/cmd/serve/proxy/proxyflags"
@@ -57,11 +59,11 @@ var Opt = DefaultOpt
 // AddFlags adds flags for ftp
 func AddFlags(flagSet *pflag.FlagSet) {
 	rc.AddOption("ftp", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to.")
-	flags.StringVarP(flagSet, &Opt.PublicIP, "public-ip", "", Opt.PublicIP, "Public IP address to advertise for passive connections.")
-	flags.StringVarP(flagSet, &Opt.PassivePorts, "passive-port", "", Opt.PassivePorts, "Passive port range to use.")
-	flags.StringVarP(flagSet, &Opt.BasicUser, "user", "", Opt.BasicUser, "User name for authentication.")
-	flags.StringVarP(flagSet, &Opt.BasicPass, "pass", "", Opt.BasicPass, "Password for authentication. (empty value allow every password)")
+	flags.StringVarP(flagSet, &Opt.ListenAddr, "addr", "", Opt.ListenAddr, "IPaddress:Port or :Port to bind server to")
+	flags.StringVarP(flagSet, &Opt.PublicIP, "public-ip", "", Opt.PublicIP, "Public IP address to advertise for passive connections")
+	flags.StringVarP(flagSet, &Opt.PassivePorts, "passive-port", "", Opt.PassivePorts, "Passive port range to use")
+	flags.StringVarP(flagSet, &Opt.BasicUser, "user", "", Opt.BasicUser, "User name for authentication")
+	flags.StringVarP(flagSet, &Opt.BasicPass, "pass", "", Opt.BasicPass, "Password for authentication (empty value allow every password)")
 	flags.StringVarP(flagSet, &Opt.TLSCert, "cert", "", Opt.TLSCert, "TLS PEM key (concatenation of certificate and CA certificate)")
 	flags.StringVarP(flagSet, &Opt.TLSKey, "key", "", Opt.TLSKey, "TLS PEM Private key")
 }
@@ -500,6 +502,11 @@ func (f *FileInfo) Group() string {
 		return str //Group not found default to numerical value
 	}
 	return g.Name
+}
+
+// ModTime returns the time in UTC
+func (f *FileInfo) ModTime() time.Time {
+	return f.FileInfo.ModTime().UTC()
 }
 
 func closeIO(path string, c io.Closer) {

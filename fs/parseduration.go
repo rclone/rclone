@@ -80,7 +80,7 @@ var timeFormats = []string{
 func parseDurationDates(age string, epoch time.Time) (t time.Duration, err error) {
 	var instant time.Time
 	for _, timeFormat := range timeFormats {
-		instant, err = time.Parse(timeFormat, age)
+		instant, err = time.ParseInLocation(timeFormat, age, time.Local)
 		if err == nil {
 			return epoch.Sub(instant), nil
 		}
@@ -119,7 +119,7 @@ func ParseDuration(age string) (time.Duration, error) {
 	return parseDurationFromNow(age, time.Now)
 }
 
-// ReadableString parses d into a human readable duration.
+// ReadableString parses d into a human-readable duration.
 // Based on https://github.com/hako/durafmt
 func (d Duration) ReadableString() string {
 	switch d {

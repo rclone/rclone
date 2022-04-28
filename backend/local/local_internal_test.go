@@ -1,6 +1,7 @@
 package local
 
 import (
+	"bytes"
 	"context"
 	"io/ioutil"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/file"
 	"github.com/rclone/rclone/lib/readers"
@@ -93,16 +95,16 @@ func TestSymlink(t *testing.T) {
 	file2d := fstest.NewItem("symlink.txt", "hello", modTime1)
 
 	// Check with no symlink flags
-	fstest.CheckItems(t, r.Flocal, file1)
-	fstest.CheckItems(t, r.Fremote)
+	r.CheckLocalItems(t, file1)
+	r.CheckRemoteItems(t)
 
 	// Set fs into "-L" mode
 	f.opt.FollowSymlinks = true
 	f.opt.TranslateSymlinks = false
 	f.lstat = os.Stat
 
-	fstest.CheckItems(t, r.Flocal, file1, file2d)
-	fstest.CheckItems(t, r.Fremote)
+	r.CheckLocalItems(t, file1, file2d)
+	r.CheckRemoteItems(t)
 
 	// Set fs into "-l" mode
 	f.opt.FollowSymlinks = false
@@ -111,7 +113,7 @@ func TestSymlink(t *testing.T) {
 
 	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2}, nil, fs.ModTimeNotSupported)
 	if haveLChtimes {
-		fstest.CheckItems(t, r.Flocal, file1, file2)
+		r.CheckLocalItems(t, file1, file2)
 	}
 
 	// Create a symlink
@@ -119,7 +121,7 @@ func TestSymlink(t *testing.T) {
 	file3 := r.WriteObjectTo(ctx, r.Flocal, "symlink2.txt"+linkSuffix, "file.txt", modTime3, false)
 	fstest.CheckListingWithPrecision(t, r.Flocal, []fstest.Item{file1, file2, file3}, nil, fs.ModTimeNotSupported)
 	if haveLChtimes {
-		fstest.CheckItems(t, r.Flocal, file1, file2, file3)
+		r.CheckLocalItems(t, file1, file2, file3)
 	}
 
 	// Check it got the correct contents
@@ -165,4 +167,65 @@ func TestSymlinkError(t *testing.T) {
 	}
 	_, err := NewFs(context.Background(), "local", "/", m)
 	assert.Equal(t, errLinksAndCopyLinks, err)
+}
+
+// Test hashes on updating an object
+func TestHashOnUpdate(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	const filePath = "file.txt"
+	when := time.Now()
+	r.WriteFile(filePath, "content", when)
+	f := r.Flocal.(*Fs)
+
+	// Get the object
+	o, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+
+	// Test the hash is as we expect
+	md5, err := o.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, "9a0364b9e99bb480dd25e1f0284c8555", md5)
+
+	// Reupload it with diferent contents but same size and timestamp
+	var b = bytes.NewBufferString("CONTENT")
+	src := object.NewStaticObjectInfo(filePath, when, int64(b.Len()), true, nil, f)
+	err = o.Update(ctx, b, src)
+	require.NoError(t, err)
+
+	// Check the hash is as expected
+	md5, err = o.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, "45685e95985e20822fb2538a522a5ccf", md5)
+}
+
+// Test hashes on deleting an object
+func TestHashOnDelete(t *testing.T) {
+	ctx := context.Background()
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	const filePath = "file.txt"
+	when := time.Now()
+	r.WriteFile(filePath, "content", when)
+	f := r.Flocal.(*Fs)
+
+	// Get the object
+	o, err := f.NewObject(ctx, filePath)
+	require.NoError(t, err)
+
+	// Test the hash is as we expect
+	md5, err := o.Hash(ctx, hash.MD5)
+	require.NoError(t, err)
+	assert.Equal(t, "9a0364b9e99bb480dd25e1f0284c8555", md5)
+
+	// Delete the object
+	require.NoError(t, o.Remove(ctx))
+
+	// Test the hash cache is empty
+	require.Nil(t, o.(*Object).hashes)
+
+	// Test the hash returns an error
+	_, err = o.Hash(ctx, hash.MD5)
+	require.Error(t, err)
 }

@@ -2,13 +2,13 @@ package walk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 	"sync"
 	"testing"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	_ "github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -783,7 +783,7 @@ func TestListR(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"dir/b"}, got)
 
-	// Now bucket based
+	// Now bucket-based
 	objects = fs.DirEntries{
 		mockobject.Object("a"),
 		mockobject.Object("b"),

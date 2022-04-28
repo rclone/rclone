@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/flags"
@@ -15,23 +14,25 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// Global hashsum flags for reuse in md5sum, sha1sum, and dbhashsum
+// Global hashsum flags for reuse in hashsum, md5sum, sha1sum
 var (
 	OutputBase64   = false
 	DownloadFlag   = false
 	HashsumOutfile = ""
+	ChecksumFile   = ""
 )
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	AddHashFlags(cmdFlags)
+	AddHashsumFlags(cmdFlags)
 }
 
-// AddHashFlags is a convenience function to add the command flags OutputBase64 and DownloadFlag to hashsum, md5sum, sha1sum, and dbhashsum
-func AddHashFlags(cmdFlags *pflag.FlagSet) {
+// AddHashsumFlags is a convenience function to add the command flags OutputBase64 and DownloadFlag to hashsum, md5sum, sha1sum
+func AddHashsumFlags(cmdFlags *pflag.FlagSet) {
 	flags.BoolVarP(cmdFlags, &OutputBase64, "base64", "", OutputBase64, "Output base64 encoded hashsum")
 	flags.StringVarP(cmdFlags, &HashsumOutfile, "output-file", "", HashsumOutfile, "Output hashsums to a file rather than the terminal")
+	flags.StringVarP(cmdFlags, &ChecksumFile, "checkfile", "C", ChecksumFile, "Validate hashes against a given SUM file instead of printing them")
 	flags.BoolVarP(cmdFlags, &DownloadFlag, "download", "", DownloadFlag, "Download the file and hash it locally; if this flag is not specified, the hash is requested from the remote")
 }
 
@@ -39,7 +40,7 @@ func AddHashFlags(cmdFlags *pflag.FlagSet) {
 func GetHashsumOutput(filename string) (out *os.File, close func(), err error) {
 	out, err = os.Create(filename)
 	if err != nil {
-		err = errors.Wrapf(err, "Failed to open output file %v", filename)
+		err = fmt.Errorf("failed to open output file %v: %w", filename, err)
 		return nil, nil, err
 	}
 
@@ -51,6 +52,32 @@ func GetHashsumOutput(filename string) (out *os.File, close func(), err error) {
 	}
 
 	return out, close, nil
+}
+
+// CreateFromStdinArg checks args and produces hashsum from standard input if it is requested
+func CreateFromStdinArg(ht hash.Type, args []string, startArg int) (bool, error) {
+	var stdinArg bool
+	if len(args) == startArg {
+		// Missing arg: Always read from stdin
+		stdinArg = true
+	} else if len(args) > startArg && args[startArg] == "-" {
+		// Special arg: Read from stdin only if there is data available
+		if fi, _ := os.Stdin.Stat(); fi.Mode()&os.ModeCharDevice == 0 {
+			stdinArg = true
+		}
+	}
+	if !stdinArg {
+		return false, nil
+	}
+	if HashsumOutfile == "" {
+		return true, operations.HashSumStream(ht, OutputBase64, os.Stdin, nil)
+	}
+	output, close, err := GetHashsumOutput(HashsumOutfile)
+	if err != nil {
+		return true, err
+	}
+	defer close()
+	return true, operations.HashSumStream(ht, OutputBase64, os.Stdin, output)
 }
 
 var commandDefinition = &cobra.Command{
@@ -66,38 +93,42 @@ not supported by the remote, no hash will be returned.  With the
 download flag, the file will be downloaded from the remote and
 hashed locally enabling any hash for any remote.
 
+This command can also hash data received on standard input (stdin),
+by not passing a remote:path, or by passing a hyphen as remote:path
+when there is data to read (if not, the hypen will be treated literaly,
+as a relative path).
+
 Run without a hash to see the list of all supported hashes, e.g.
 
     $ rclone hashsum
-    Supported hashes are:
-      * MD5
-      * SHA-1
-      * DropboxHash
-      * QuickXorHash
-
+` + hash.HelpString(4) + `
 Then
 
     $ rclone hashsum MD5 remote:path
+
+Note that hash names are case insensitive and values are output in lower case.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 2, command, args)
 		if len(args) == 0 {
-			fmt.Printf("Supported hashes are:\n")
-			for _, ht := range hash.Supported().Array() {
-				fmt.Printf("  * %v\n", ht)
-			}
+			fmt.Print(hash.HelpString(0))
 			return nil
-		} else if len(args) == 1 {
-			return errors.New("need hash type and remote")
 		}
 		var ht hash.Type
 		err := ht.Set(args[0])
 		if err != nil {
+			fmt.Println(hash.HelpString(0))
+			return err
+		}
+		if found, err := CreateFromStdinArg(ht, args, 1); found {
 			return err
 		}
 		fsrc := cmd.NewFsSrc(args[1:])
-
 		cmd.Run(false, false, command, func() error {
+			if ChecksumFile != "" {
+				fsum, sumFile := cmd.NewFsFile(ChecksumFile)
+				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, ht, nil, DownloadFlag)
+			}
 			if HashsumOutfile == "" {
 				return operations.HashLister(context.Background(), ht, OutputBase64, DownloadFlag, fsrc, nil)
 			}

@@ -6,6 +6,8 @@ package http
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"mime"
 	"net/http"
@@ -16,7 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -38,33 +39,25 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",
-			Help:     "URL of http host to connect to",
+			Help:     "URL of http host to connect to.\n\nE.g. \"https://example.com\", or \"https://user:pass@example.com\" to use a username and password.",
 			Required: true,
-			Examples: []fs.OptionExample{{
-				Value: "https://example.com",
-				Help:  "Connect to example.com",
-			}, {
-				Value: "https://user:pass@example.com",
-				Help:  "Connect to example.com using a username and password",
-			}},
 		}, {
 			Name: "headers",
-			Help: `Set HTTP headers for all transactions
+			Help: `Set HTTP headers for all transactions.
 
-Use this to set additional HTTP headers for all transactions
+Use this to set additional HTTP headers for all transactions.
 
 The input format is comma separated list of key,value pairs.  Standard
 [CSV encoding](https://godoc.org/encoding/csv) may be used.
 
-For example to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
+For example, to set a Cookie use 'Cookie,name=value', or '"Cookie","name=value"'.
 
-You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.
-`,
+You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'.`,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
 		}, {
 			Name: "no_slash",
-			Help: `Set this if the site doesn't end directories with /
+			Help: `Set this if the site doesn't end directories with /.
 
 Use this if your target website does not use / on the end of
 directories.
@@ -80,8 +73,9 @@ directories.`,
 			Advanced: true,
 		}, {
 			Name: "no_head",
-			Help: `Don't use HEAD requests to find file sizes in dir listing
+			Help: `Don't use HEAD requests.
 
+HEAD requests are mainly used to find file sizes in dir listing.
 If your site is being very slow to load then you can try this option.
 Normally rclone does a HEAD request for each potential file in a
 directory listing to:
@@ -90,12 +84,9 @@ directory listing to:
 - check it really exists
 - check to see if it is a directory
 
-If you set this option, rclone will not do the HEAD request.  This will mean
-
-- directory listings are much quicker
-- rclone won't have the times or sizes of any files
-- some files that don't exist may be in the listing
-`,
+If you set this option, rclone will not do the HEAD request. This will mean
+that directory listings are much quicker, but rclone won't have the times or
+sizes of any files, and some files that don't exist may be in the listing.`,
 			Default:  false,
 			Advanced: true,
 		}},
@@ -139,9 +130,85 @@ func statusError(res *http.Response, err error) error {
 	}
 	if res.StatusCode < 200 || res.StatusCode > 299 {
 		_ = res.Body.Close()
-		return errors.Errorf("HTTP Error %d: %s", res.StatusCode, res.Status)
+		return fmt.Errorf("HTTP Error: %s", res.Status)
 	}
 	return nil
+}
+
+// getFsEndpoint decides if url is to be considered a file or directory,
+// and returns a proper endpoint url to use for the fs.
+func getFsEndpoint(ctx context.Context, client *http.Client, url string, opt *Options) (string, bool) {
+	// If url ends with '/' it is already a proper url always assumed to be a directory.
+	if url[len(url)-1] == '/' {
+		return url, false
+	}
+
+	// If url does not end with '/' we send a HEAD request to decide
+	// if it is directory or file, and if directory appends the missing
+	// '/', or if file returns the directory url to parent instead.
+	createFileResult := func() (string, bool) {
+		fs.Debugf(nil, "If path is a directory you must add a trailing '/'")
+		parent, _ := path.Split(url)
+		return parent, true
+	}
+	createDirResult := func() (string, bool) {
+		fs.Debugf(nil, "To avoid the initial HEAD request add a trailing '/' to the path")
+		return url + "/", false
+	}
+
+	// If HEAD requests are not allowed we just have to assume it is a file.
+	if opt.NoHead {
+		fs.Debugf(nil, "Assuming path is a file as --http-no-head is set")
+		return createFileResult()
+	}
+
+	// Use a client which doesn't follow redirects so the server
+	// doesn't redirect http://host/dir to http://host/dir/
+	noRedir := *client
+	noRedir.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
+	if err != nil {
+		fs.Debugf(nil, "Assuming path is a file as HEAD request could not be created: %v", err)
+		return createFileResult()
+	}
+	addHeaders(req, opt)
+	res, err := noRedir.Do(req)
+
+	if err != nil {
+		fs.Debugf(nil, "Assuming path is a file as HEAD request could not be sent: %v", err)
+		return createFileResult()
+	}
+	if res.StatusCode == http.StatusNotFound {
+		fs.Debugf(nil, "Assuming path is a directory as HEAD response is it does not exist as a file (%s)", res.Status)
+		return createDirResult()
+	}
+	if res.StatusCode == http.StatusMovedPermanently ||
+		res.StatusCode == http.StatusFound ||
+		res.StatusCode == http.StatusSeeOther ||
+		res.StatusCode == http.StatusTemporaryRedirect ||
+		res.StatusCode == http.StatusPermanentRedirect {
+		redir := res.Header.Get("Location")
+		if redir != "" {
+			if redir[len(redir)-1] == '/' {
+				fs.Debugf(nil, "Assuming path is a directory as HEAD response is redirect (%s) to a path that ends with '/': %s", res.Status, redir)
+				return createDirResult()
+			}
+			fs.Debugf(nil, "Assuming path is a file as HEAD response is redirect (%s) to a path that does not end with '/': %s", res.Status, redir)
+			return createFileResult()
+		}
+		fs.Debugf(nil, "Assuming path is a file as HEAD response is redirect (%s) but no location header", res.Status)
+		return createFileResult()
+	}
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		// Example is 403 (http.StatusForbidden) for servers not allowing HEAD requests.
+		fs.Debugf(nil, "Assuming path is a file as HEAD response is an error (%s)", res.Status)
+		return createFileResult()
+	}
+
+	fs.Debugf(nil, "Assuming path is a file as HEAD response is success (%s)", res.Status)
+	return createFileResult()
 }
 
 // NewFs creates a new Fs object from the name and root. It connects to
@@ -174,37 +241,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	client := fshttp.NewClient(ctx)
 
-	var isFile = false
-	if !strings.HasSuffix(u.String(), "/") {
-		// Make a client which doesn't follow redirects so the server
-		// doesn't redirect http://host/dir to http://host/dir/
-		noRedir := *client
-		noRedir.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}
-		// check to see if points to a file
-		req, err := http.NewRequestWithContext(ctx, "HEAD", u.String(), nil)
-		if err == nil {
-			addHeaders(req, opt)
-			res, err := noRedir.Do(req)
-			err = statusError(res, err)
-			if err == nil {
-				isFile = true
-			}
-		}
-	}
-
-	newRoot := u.String()
-	if isFile {
-		// Point to the parent if this is a file
-		newRoot, _ = path.Split(u.String())
-	} else {
-		if !strings.HasSuffix(newRoot, "/") {
-			newRoot += "/"
-		}
-	}
-
-	u, err = url.Parse(newRoot)
+	endpoint, isFile := getFsEndpoint(ctx, client, u.String(), opt)
+	fs.Debugf(nil, "Root: %s", endpoint)
+	u, err = url.Parse(endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -222,12 +261,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
+
 	if isFile {
+		// return an error with an fs which points to the parent
 		return f, fs.ErrorIsFile
 	}
+
 	if !strings.HasSuffix(f.endpointURL, "/") {
 		return nil, errors.New("internal error: url doesn't end with /")
 	}
+
 	return f, nil
 }
 
@@ -303,7 +346,7 @@ func parseName(base *url.URL, name string) (string, error) {
 	}
 	// check it doesn't have URL parameters
 	uStr := u.String()
-	if strings.Index(uStr, "?") >= 0 {
+	if strings.Contains(uStr, "?") {
 		return "", errFoundQuestionMark
 	}
 	// check that this is going back to the same host and scheme
@@ -384,15 +427,15 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 	URL := f.url(dir)
 	u, err := url.Parse(URL)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to readDir")
+		return nil, fmt.Errorf("failed to readDir: %w", err)
 	}
 	if !strings.HasSuffix(URL, "/") {
-		return nil, errors.Errorf("internal error: readDir URL %q didn't end in /", URL)
+		return nil, fmt.Errorf("internal error: readDir URL %q didn't end in /", URL)
 	}
 	// Do the request
 	req, err := http.NewRequestWithContext(ctx, "GET", URL, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "readDir failed")
+		return nil, fmt.Errorf("readDir failed: %w", err)
 	}
 	f.addHeaders(req)
 	res, err := f.httpClient.Do(req)
@@ -404,7 +447,7 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 	}
 	err = statusError(res, err)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to readDir")
+		return nil, fmt.Errorf("failed to readDir: %w", err)
 	}
 
 	contentType := strings.SplitN(res.Header.Get("Content-Type"), ";", 2)[0]
@@ -412,10 +455,10 @@ func (f *Fs) readDir(ctx context.Context, dir string) (names []string, err error
 	case "text/html":
 		names, err = parse(u, res.Body)
 		if err != nil {
-			return nil, errors.Wrap(err, "readDir")
+			return nil, fmt.Errorf("readDir: %w", err)
 		}
 	default:
-		return nil, errors.Errorf("Can't parse content type %q", contentType)
+		return nil, fmt.Errorf("can't parse content type %q", contentType)
 	}
 	return names, nil
 }
@@ -435,7 +478,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 	names, err := f.readDir(ctx, dir)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error listing %q", dir)
+		return nil, fmt.Errorf("error listing %q: %w", dir, err)
 	}
 	var (
 		entriesMu sync.Mutex // to protect entries
@@ -547,7 +590,7 @@ func (o *Object) stat(ctx context.Context) error {
 	url := o.url()
 	req, err := http.NewRequestWithContext(ctx, "HEAD", url, nil)
 	if err != nil {
-		return errors.Wrap(err, "stat failed")
+		return fmt.Errorf("stat failed: %w", err)
 	}
 	o.fs.addHeaders(req)
 	res, err := o.fs.httpClient.Do(req)
@@ -556,7 +599,7 @@ func (o *Object) stat(ctx context.Context) error {
 	}
 	err = statusError(res, err)
 	if err != nil {
-		return errors.Wrap(err, "failed to stat")
+		return fmt.Errorf("failed to stat: %w", err)
 	}
 	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
 	if err != nil {
@@ -569,7 +612,7 @@ func (o *Object) stat(ctx context.Context) error {
 	if o.fs.opt.NoSlash {
 		mediaType, _, err := mime.ParseMediaType(o.contentType)
 		if err != nil {
-			return errors.Wrapf(err, "failed to parse Content-Type: %q", o.contentType)
+			return fmt.Errorf("failed to parse Content-Type: %q: %w", o.contentType, err)
 		}
 		if mediaType == "text/html" {
 			return fs.ErrorNotAFile
@@ -595,7 +638,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	url := o.url()
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "Open failed")
+		return nil, fmt.Errorf("Open failed: %w", err)
 	}
 
 	// Add optional headers
@@ -608,7 +651,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	res, err := o.fs.httpClient.Do(req)
 	err = statusError(res, err)
 	if err != nil {
-		return nil, errors.Wrap(err, "Open failed")
+		return nil, fmt.Errorf("Open failed: %w", err)
 	}
 	return res.Body, nil
 }

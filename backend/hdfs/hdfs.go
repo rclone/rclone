@@ -1,3 +1,4 @@
+//go:build !plan9
 // +build !plan9
 
 package hdfs
@@ -18,41 +19,31 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "namenode",
-			Help:     "hadoop name node and port",
+			Help:     "Hadoop name node and port.\n\nE.g. \"namenode:8020\" to connect to host namenode at port 8020.",
 			Required: true,
-			Examples: []fs.OptionExample{{
-				Value: "namenode:8020",
-				Help:  "Connect to host namenode at port 8020",
-			}},
 		}, {
-			Name:     "username",
-			Help:     "hadoop user name",
-			Required: false,
+			Name: "username",
+			Help: "Hadoop user name.",
 			Examples: []fs.OptionExample{{
 				Value: "root",
-				Help:  "Connect to hdfs as root",
+				Help:  "Connect to hdfs as root.",
 			}},
 		}, {
 			Name: "service_principal_name",
-			Help: `Kerberos service principal name for the namenode
+			Help: `Kerberos service principal name for the namenode.
 
 Enables KERBEROS authentication. Specifies the Service Principal Name
-(<SERVICE>/<FQDN>) for the namenode.`,
-			Required: false,
-			Examples: []fs.OptionExample{{
-				Value: "hdfs/namenode.hadoop.docker",
-				Help:  "Namenode running as service 'hdfs' with FQDN 'namenode.hadoop.docker'.",
-			}},
+(SERVICE/FQDN) for the namenode. E.g. \"hdfs/namenode.hadoop.docker\"
+for namenode running as service 'hdfs' with FQDN 'namenode.hadoop.docker'.`,
 			Advanced: true,
 		}, {
 			Name: "data_transfer_protection",
-			Help: `Kerberos data transfer protection: authentication|integrity|privacy
+			Help: `Kerberos data transfer protection: authentication|integrity|privacy.
 
 Specifies whether or not authentication, data signature integrity
 checks, and wire encryption is required when communicating the the
 datanodes. Possible values are 'authentication', 'integrity' and
 'privacy'. Used only with KERBEROS enabled.`,
-			Required: false,
 			Examples: []fs.OptionExample{{
 				Value: "privacy",
 				Help:  "Ensure authentication, integrity and encryption enabled.",

@@ -1,20 +1,24 @@
+//go:build !plan9
 // +build !plan9
 
 package sftp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"regexp"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/lib/terminal"
 	"github.com/rclone/rclone/vfs"
+	"github.com/rclone/rclone/vfs/vfsflags"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -70,7 +74,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		}
 		usage, err := about(ctx)
 		if err != nil {
-			return errors.Wrap(err, "About failed")
+			return fmt.Errorf("About failed: %w", err)
 		}
 		total, used, free := int64(-1), int64(-1), int64(-1)
 		if usage.Total != nil {
@@ -90,7 +94,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 /dev/root %d %d  %d  %d%% /
 `, total, used, free, perc)
 		if err != nil {
-			return errors.Wrap(err, "send output failed")
+			return fmt.Errorf("send output failed: %w", err)
 		}
 	case "md5sum", "sha1sum":
 		ht := hash.MD5
@@ -109,7 +113,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		} else {
 			node, err := c.vfs.Stat(args)
 			if err != nil {
-				return errors.Wrapf(err, "hash failed finding file %q", args)
+				return fmt.Errorf("hash failed finding file %q: %w", args, err)
 			}
 			if node.IsDir() {
 				return errors.New("can't hash directory")
@@ -120,12 +124,12 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 			}
 			hashSum, err = o.Hash(ctx, ht)
 			if err != nil {
-				return errors.Wrap(err, "hash failed")
+				return fmt.Errorf("hash failed: %w", err)
 			}
 		}
 		_, err = fmt.Fprintf(out, "%s  %s\n", hashSum, args)
 		if err != nil {
-			return errors.Wrap(err, "send output failed")
+			return fmt.Errorf("send output failed: %w", err)
 		}
 	case "echo":
 		// special cases for rclone command detection
@@ -134,7 +138,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 			if c.vfs.Fs().Hashes().Contains(hash.MD5) {
 				_, err = fmt.Fprintf(out, "0bee89b07a248e27c83fc3d5951213c1  -\n")
 				if err != nil {
-					return errors.Wrap(err, "send output failed")
+					return fmt.Errorf("send output failed: %w", err)
 				}
 			} else {
 				return errors.New("md5 hash not supported")
@@ -143,7 +147,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 			if c.vfs.Fs().Hashes().Contains(hash.SHA1) {
 				_, err = fmt.Fprintf(out, "03cfd743661f07975fa2f1220c5194cbaff48451  -\n")
 				if err != nil {
-					return errors.Wrap(err, "send output failed")
+					return fmt.Errorf("send output failed: %w", err)
 				}
 			} else {
 				return errors.New("sha1 hash not supported")
@@ -151,11 +155,11 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		default:
 			_, err = fmt.Fprintf(out, "%s\n", args)
 			if err != nil {
-				return errors.Wrap(err, "send output failed")
+				return fmt.Errorf("send output failed: %w", err)
 			}
 		}
 	default:
-		return errors.Errorf("%q not implemented\n", command)
+		return fmt.Errorf("%q not implemented", command)
 	}
 	return nil
 }
@@ -225,19 +229,8 @@ func (c *conn) handleChannel(newChannel ssh.NewChannel) {
 
 	// Wait for either subsystem "sftp" or "exec" request
 	if <-isSFTP {
-		fs.Debugf(c.what, "Starting SFTP server")
-		server := sftp.NewRequestServer(channel, c.handlers)
-		defer func() {
-			err := server.Close()
-			if err != nil && err != io.EOF {
-				fs.Debugf(c.what, "Failed to close server: %v", err)
-			}
-		}()
-		err = server.Serve()
-		if err == io.EOF || err == nil {
-			fs.Debugf(c.what, "exited session")
-		} else {
-			fs.Errorf(c.what, "completed with error: %v", err)
+		if err := serveChannel(channel, c.handlers, c.what); err != nil {
+			fs.Errorf(c.what, "Failed to serve SFTP: %v", err)
 		}
 	} else {
 		var rc = uint32(0)
@@ -262,4 +255,55 @@ func (c *conn) handleChannels(chans <-chan ssh.NewChannel) {
 	for newChannel := range chans {
 		go c.handleChannel(newChannel)
 	}
+}
+
+func serveChannel(rwc io.ReadWriteCloser, h sftp.Handlers, what string) error {
+	fs.Debugf(what, "Starting SFTP server")
+	server := sftp.NewRequestServer(rwc, h)
+	defer func() {
+		err := server.Close()
+		if err != nil && err != io.EOF {
+			fs.Debugf(what, "Failed to close server: %v", err)
+		}
+	}()
+	err := server.Serve()
+	if err != nil && err != io.EOF {
+		return fmt.Errorf("completed with error: %w", err)
+	}
+	fs.Debugf(what, "exited session")
+	return nil
+}
+
+func serveStdio(f fs.Fs) error {
+	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+		return errors.New("refusing to run SFTP server directly on a terminal. Please let sshd start rclone, by connecting with sftp or sshfs")
+	}
+	sshChannel := &stdioChannel{
+		stdin:  os.Stdin,
+		stdout: os.Stdout,
+	}
+	handlers := newVFSHandler(vfs.New(f, &vfsflags.Opt))
+	return serveChannel(sshChannel, handlers, "stdio")
+}
+
+type stdioChannel struct {
+	stdin  *os.File
+	stdout *os.File
+}
+
+func (c *stdioChannel) Read(data []byte) (int, error) {
+	return c.stdin.Read(data)
+}
+
+func (c *stdioChannel) Write(data []byte) (int, error) {
+	return c.stdout.Write(data)
+}
+
+func (c *stdioChannel) Close() error {
+	err1 := c.stdin.Close()
+	err2 := c.stdout.Close()
+	if err1 != nil {
+		return err1
+	}
+	return err2
 }

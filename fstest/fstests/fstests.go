@@ -9,6 +9,7 @@ package fstests
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -23,7 +24,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -443,6 +443,10 @@ func Run(t *testing.T, opt *Opt) {
 	}
 	require.NoError(t, err, fmt.Sprintf("unexpected error: %v", err))
 
+	// Get fsInfo which contains type, etc. of the fs
+	fsInfo, _, _, _, err := fs.ConfigFs(subRemoteName)
+	require.NoError(t, err, fmt.Sprintf("unexpected error: %v", err))
+
 	// Skip the rest if it failed
 	skipIfNotOk(t)
 
@@ -493,14 +497,14 @@ func Run(t *testing.T, opt *Opt) {
 		assert.True(t, len(fsInfo.CommandHelp) > 0, "Command is declared, must return some help in CommandHelp")
 	})
 
-	// TestFsRmdirNotFound tests deleting a non existent directory
+	// TestFsRmdirNotFound tests deleting a non-existent directory
 	t.Run("FsRmdirNotFound", func(t *testing.T) {
 		skipIfNotOk(t)
 		if isBucketBasedButNotRoot(f) {
-			t.Skip("Skipping test as non root bucket based remote")
+			t.Skip("Skipping test as non root bucket-based remote")
 		}
 		err := f.Rmdir(ctx, "")
-		assert.Error(t, err, "Expecting error on Rmdir non existent")
+		assert.Error(t, err, "Expecting error on Rmdir non-existent")
 	})
 
 	// Make the directory
@@ -660,6 +664,7 @@ func Run(t *testing.T, opt *Opt) {
 				{"trailing VT", "trailing VT\v"},
 				{"trailing dot", "trailing dot."},
 				{"invalid UTF-8", "invalid utf-8\xfe"},
+				{"URL encoding", "test%46.txt"},
 			} {
 				t.Run(test.name, func(t *testing.T) {
 					if opt.SkipInvalidUTF8 && test.name == "invalid UTF-8" {
@@ -875,7 +880,7 @@ func Run(t *testing.T, opt *Opt) {
 					var objNames, dirNames []string
 					for i := 1; i <= *fstest.ListRetries; i++ {
 						objs, dirs, err := walk.GetAll(ctx, f, dir, true, 1)
-						if errors.Cause(err) == fs.ErrorDirNotFound {
+						if errors.Is(err, fs.ErrorDirNotFound) {
 							objs, dirs, err = walk.GetAll(ctx, f, dir, true, 1)
 						}
 						require.NoError(t, err)
@@ -1046,13 +1051,13 @@ func Run(t *testing.T, opt *Opt) {
 				fstest.CheckListing(t, f, []fstest.Item{file1, file2})
 			})
 
-			// TestFsNewObjectDir tests NewObject on a directory which should produce an error
+			// TestFsNewObjectDir tests NewObject on a directory which should produce fs.ErrorIsDir if possible or fs.ErrorObjectNotFound if not
 			t.Run("FsNewObjectDir", func(t *testing.T) {
 				skipIfNotOk(t)
 				dir := path.Dir(file2.Path)
 				obj, err := f.NewObject(ctx, dir)
 				assert.Nil(t, obj)
-				assert.NotNil(t, err)
+				assert.True(t, err == fs.ErrorIsDir || err == fs.ErrorObjectNotFound, fmt.Sprintf("Wrong error: expecting fs.ErrorIsDir or fs.ErrorObjectNotFound but got: %#v", err))
 			})
 
 			// TestFsPurge tests Purge
@@ -1224,7 +1229,7 @@ func Run(t *testing.T, opt *Opt) {
 				// check remotes
 				// remote should not exist here
 				_, err = f.List(ctx, "")
-				assert.Equal(t, fs.ErrorDirNotFound, errors.Cause(err))
+				assert.True(t, errors.Is(err, fs.ErrorDirNotFound))
 				//fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, remote.Precision())
 				file1Copy := file1
 				file1Copy.Path = path.Join(newName, file1.Path)
@@ -1259,7 +1264,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("FsRmdirFull", func(t *testing.T) {
 				skipIfNotOk(t)
 				if isBucketBasedButNotRoot(f) {
-					t.Skip("Skipping test as non root bucket based remote")
+					t.Skip("Skipping test as non root bucket-based remote")
 				}
 				err := f.Rmdir(ctx, "")
 				require.Error(t, err, "Expecting error on RMdir on non empty remote")
@@ -1335,12 +1340,14 @@ func Run(t *testing.T, opt *Opt) {
 				features := f.Features()
 				obj := findObject(ctx, t, f, file1.Path)
 				do, ok := obj.(fs.MimeTyper)
-				require.Equal(t, features.ReadMimeType, ok, "mismatch between Object.MimeType and Features.ReadMimeType")
 				if !ok {
+					require.False(t, features.ReadMimeType, "Features.ReadMimeType is set but Object.MimeType method not found")
 					t.Skip("MimeType method not supported")
 				}
 				mimeType := do.MimeType(ctx)
-				if features.WriteMimeType {
+				if !features.ReadMimeType {
+					require.Equal(t, "", mimeType, "Features.ReadMimeType is not set but Object.MimeType returned a non-empty MimeType")
+				} else if features.WriteMimeType {
 					assert.Equal(t, file1MimeType, mimeType, "can read and write mime types but failed")
 				} else {
 					if strings.ContainsRune(mimeType, ';') {
@@ -1586,12 +1593,30 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("PublicLink", func(t *testing.T) {
 				skipIfNotOk(t)
 
-				doPublicLink := f.Features().PublicLink
-				if doPublicLink == nil {
+				publicLinkFunc := f.Features().PublicLink
+				if publicLinkFunc == nil {
 					t.Skip("FS has no PublicLinker interface")
 				}
 
+				type PublicLinkFunc func(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error)
+				wrapPublicLinkFunc := func(f PublicLinkFunc) PublicLinkFunc {
+					return func(ctx context.Context, remote string, expire fs.Duration, unlink bool) (link string, err error) {
+						link, err = publicLinkFunc(ctx, remote, expire, unlink)
+						if err == nil {
+							return
+						}
+						// For OneDrive Personal, link expiry is a premium feature
+						// Don't let it fail the test (https://github.com/rclone/rclone/issues/5420)
+						if fsInfo.Name == "onedrive" && strings.Contains(err.Error(), "accountUpgradeRequired") {
+							t.Log("treating accountUpgradeRequired as success for PublicLink")
+							link, err = "bogus link to "+remote, nil
+						}
+						return
+					}
+				}
+
 				expiry := fs.Duration(60 * time.Second)
+				doPublicLink := wrapPublicLinkFunc(publicLinkFunc)
 
 				// if object not found
 				link, err := doPublicLink(ctx, file1.Path+"_does_not_exist", expiry, false)
@@ -1617,7 +1642,7 @@ func Run(t *testing.T, opt *Opt) {
 				// sharing directory for the first time
 				path := path.Dir(file2.Path)
 				link3, err := doPublicLink(ctx, path, expiry, false)
-				if err != nil && (errors.Cause(err) == fs.ErrorCantShareDirectories || errors.Cause(err) == fs.ErrorObjectNotFound) {
+				if err != nil && (errors.Is(err, fs.ErrorCantShareDirectories) || errors.Is(err, fs.ErrorObjectNotFound)) {
 					t.Log("skipping directory tests as not supported on this backend")
 				} else {
 					require.NoError(t, err)
@@ -1638,7 +1663,7 @@ func Run(t *testing.T, opt *Opt) {
 					_, err = subRemote.Put(ctx, buf, obji)
 					require.NoError(t, err)
 
-					link4, err := subRemote.Features().PublicLink(ctx, "", expiry, false)
+					link4, err := wrapPublicLinkFunc(subRemote.Features().PublicLink)(ctx, "", expiry, false)
 					require.NoError(t, err, "Sharing root in a sub-remote should work")
 					require.NotEqual(t, "", link4, "Link should not be empty")
 				}
@@ -1798,7 +1823,7 @@ func Run(t *testing.T, opt *Opt) {
 				minChunkSize = opt.ChunkedUpload.CeilChunkSize(minChunkSize)
 			}
 
-			maxChunkSize := 2 * fs.MebiByte
+			maxChunkSize := 2 * fs.Mebi
 			if maxChunkSize < 2*minChunkSize {
 				maxChunkSize = 2 * minChunkSize
 			}
@@ -1956,17 +1981,17 @@ func Run(t *testing.T, opt *Opt) {
 
 		// Purge the folder
 		err = operations.Purge(ctx, f, "")
-		if errors.Cause(err) != fs.ErrorDirNotFound {
+		if !errors.Is(err, fs.ErrorDirNotFound) {
 			require.NoError(t, err)
 		}
 		purged = true
 		fstest.CheckListing(t, f, []fstest.Item{})
 
-		// Check purging again if not bucket based
+		// Check purging again if not bucket-based
 		if !isBucketBasedButNotRoot(f) {
 			err = operations.Purge(ctx, f, "")
 			assert.Error(t, err, "Expecting error after on second purge")
-			if errors.Cause(err) != fs.ErrorDirNotFound {
+			if !errors.Is(err, fs.ErrorDirNotFound) {
 				t.Log("Warning: this should produce fs.ErrorDirNotFound")
 			}
 		}

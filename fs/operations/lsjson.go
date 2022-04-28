@@ -2,10 +2,12 @@ package operations
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"path"
+	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/crypt"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
@@ -81,120 +83,250 @@ type ListJSONOpt struct {
 	HashTypes     []string `json:"hashTypes"` // hash types to show if ShowHash is set, e.g. "MD5", "SHA-1"
 }
 
-// ListJSON lists fsrc using the options in opt calling callback for each item
-func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJSONItem) error) error {
-	var cipher *crypt.Cipher
+// state for ListJson
+type listJSON struct {
+	fsrc       fs.Fs
+	remote     string
+	format     string
+	opt        *ListJSONOpt
+	cipher     *crypt.Cipher
+	hashTypes  []hash.Type
+	dirs       bool
+	files      bool
+	canGetTier bool
+	isBucket   bool
+	showHash   bool
+}
+
+func newListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) (*listJSON, error) {
+	lj := &listJSON{
+		fsrc:   fsrc,
+		remote: remote,
+		opt:    opt,
+		dirs:   true,
+		files:  true,
+	}
+	//                       Dirs    Files
+	// !FilesOnly,!DirsOnly  true    true
+	// !FilesOnly,DirsOnly   true    false
+	// FilesOnly,!DirsOnly   false   true
+	// FilesOnly,DirsOnly    true    true
+	if !opt.FilesOnly && opt.DirsOnly {
+		lj.files = false
+	} else if opt.FilesOnly && !opt.DirsOnly {
+		lj.dirs = false
+	}
 	if opt.ShowEncrypted {
 		fsInfo, _, _, config, err := fs.ConfigFs(fsrc.Name() + ":" + fsrc.Root())
 		if err != nil {
-			return errors.Wrap(err, "ListJSON failed to load config for crypt remote")
+			return nil, fmt.Errorf("ListJSON failed to load config for crypt remote: %w", err)
 		}
 		if fsInfo.Name != "crypt" {
-			return errors.New("The remote needs to be of type \"crypt\"")
+			return nil, errors.New("The remote needs to be of type \"crypt\"")
 		}
-		cipher, err = crypt.NewCipher(config)
+		lj.cipher, err = crypt.NewCipher(config)
 		if err != nil {
-			return errors.Wrap(err, "ListJSON failed to make new crypt remote")
+			return nil, fmt.Errorf("ListJSON failed to make new crypt remote: %w", err)
 		}
 	}
 	features := fsrc.Features()
-	canGetTier := features.GetTier
-	format := formatForPrecision(fsrc.Precision())
-	isBucket := features.BucketBased && remote == "" && fsrc.Root() == "" // if bucket based remote listing the root mark directories as buckets
-	showHash := opt.ShowHash
-	hashTypes := fsrc.Hashes().Array()
+	lj.canGetTier = features.GetTier
+	lj.format = formatForPrecision(fsrc.Precision())
+	lj.isBucket = features.BucketBased && remote == "" && fsrc.Root() == "" // if bucket-based remote listing the root mark directories as buckets
+	lj.showHash = opt.ShowHash
+	lj.hashTypes = fsrc.Hashes().Array()
 	if len(opt.HashTypes) != 0 {
-		showHash = true
-		hashTypes = []hash.Type{}
+		lj.showHash = true
+		lj.hashTypes = []hash.Type{}
 		for _, hashType := range opt.HashTypes {
 			var ht hash.Type
 			err := ht.Set(hashType)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			hashTypes = append(hashTypes, ht)
+			lj.hashTypes = append(lj.hashTypes, ht)
 		}
 	}
-	err := walk.ListR(ctx, fsrc, remote, false, ConfigMaxDepth(ctx, opt.Recurse), walk.ListAll, func(entries fs.DirEntries) (err error) {
+	return lj, nil
+}
+
+// Convert a single entry to JSON
+//
+// It may return nil if there is no entry to return
+func (lj *listJSON) entry(ctx context.Context, entry fs.DirEntry) (*ListJSONItem, error) {
+	switch entry.(type) {
+	case fs.Directory:
+		if lj.opt.FilesOnly {
+			return nil, nil
+		}
+	case fs.Object:
+		if lj.opt.DirsOnly {
+			return nil, nil
+		}
+	default:
+		fs.Errorf(nil, "Unknown type %T in listing", entry)
+	}
+
+	item := &ListJSONItem{
+		Path: entry.Remote(),
+		Name: path.Base(entry.Remote()),
+		Size: entry.Size(),
+	}
+	if entry.Remote() == "" {
+		item.Name = ""
+	}
+	if !lj.opt.NoModTime {
+		item.ModTime = Timestamp{When: entry.ModTime(ctx), Format: lj.format}
+	}
+	if !lj.opt.NoMimeType {
+		item.MimeType = fs.MimeTypeDirEntry(ctx, entry)
+	}
+	if lj.cipher != nil {
+		switch entry.(type) {
+		case fs.Directory:
+			item.EncryptedPath = lj.cipher.EncryptDirName(entry.Remote())
+		case fs.Object:
+			item.EncryptedPath = lj.cipher.EncryptFileName(entry.Remote())
+		default:
+			fs.Errorf(nil, "Unknown type %T in listing", entry)
+		}
+		item.Encrypted = path.Base(item.EncryptedPath)
+	}
+	if do, ok := entry.(fs.IDer); ok {
+		item.ID = do.ID()
+	}
+	if o, ok := entry.(fs.Object); lj.opt.ShowOrigIDs && ok {
+		if do, ok := fs.UnWrapObject(o).(fs.IDer); ok {
+			item.OrigID = do.ID()
+		}
+	}
+	switch x := entry.(type) {
+	case fs.Directory:
+		item.IsDir = true
+		item.IsBucket = lj.isBucket
+	case fs.Object:
+		item.IsDir = false
+		if lj.showHash {
+			item.Hashes = make(map[string]string)
+			for _, hashType := range lj.hashTypes {
+				hash, err := x.Hash(ctx, hashType)
+				if err != nil {
+					fs.Errorf(x, "Failed to read hash: %v", err)
+				} else if hash != "" {
+					item.Hashes[hashType.String()] = hash
+				}
+			}
+		}
+		if lj.canGetTier {
+			if do, ok := x.(fs.GetTierer); ok {
+				item.Tier = do.GetTier()
+			}
+		}
+	default:
+		fs.Errorf(nil, "Unknown type %T in listing in ListJSON", entry)
+	}
+	return item, nil
+}
+
+// ListJSON lists fsrc using the options in opt calling callback for each item
+func ListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt, callback func(*ListJSONItem) error) error {
+	lj, err := newListJSON(ctx, fsrc, remote, opt)
+	if err != nil {
+		return err
+	}
+	err = walk.ListR(ctx, fsrc, remote, false, ConfigMaxDepth(ctx, lj.opt.Recurse), walk.ListAll, func(entries fs.DirEntries) (err error) {
 		for _, entry := range entries {
-			switch entry.(type) {
-			case fs.Directory:
-				if opt.FilesOnly {
-					continue
-				}
-			case fs.Object:
-				if opt.DirsOnly {
-					continue
-				}
-			default:
-				fs.Errorf(nil, "Unknown type %T in listing", entry)
-			}
-
-			item := ListJSONItem{
-				Path: entry.Remote(),
-				Name: path.Base(entry.Remote()),
-				Size: entry.Size(),
-			}
-			if !opt.NoModTime {
-				item.ModTime = Timestamp{When: entry.ModTime(ctx), Format: format}
-			}
-			if !opt.NoMimeType {
-				item.MimeType = fs.MimeTypeDirEntry(ctx, entry)
-			}
-			if cipher != nil {
-				switch entry.(type) {
-				case fs.Directory:
-					item.EncryptedPath = cipher.EncryptDirName(entry.Remote())
-				case fs.Object:
-					item.EncryptedPath = cipher.EncryptFileName(entry.Remote())
-				default:
-					fs.Errorf(nil, "Unknown type %T in listing", entry)
-				}
-				item.Encrypted = path.Base(item.EncryptedPath)
-			}
-			if do, ok := entry.(fs.IDer); ok {
-				item.ID = do.ID()
-			}
-			if o, ok := entry.(fs.Object); opt.ShowOrigIDs && ok {
-				if do, ok := fs.UnWrapObject(o).(fs.IDer); ok {
-					item.OrigID = do.ID()
-				}
-			}
-			switch x := entry.(type) {
-			case fs.Directory:
-				item.IsDir = true
-				item.IsBucket = isBucket
-			case fs.Object:
-				item.IsDir = false
-				if showHash {
-					item.Hashes = make(map[string]string)
-					for _, hashType := range hashTypes {
-						hash, err := x.Hash(ctx, hashType)
-						if err != nil {
-							fs.Errorf(x, "Failed to read hash: %v", err)
-						} else if hash != "" {
-							item.Hashes[hashType.String()] = hash
-						}
-					}
-				}
-				if canGetTier {
-					if do, ok := x.(fs.GetTierer); ok {
-						item.Tier = do.GetTier()
-					}
-				}
-			default:
-				fs.Errorf(nil, "Unknown type %T in listing in ListJSON", entry)
-			}
-			err = callback(&item)
+			item, err := lj.entry(ctx, entry)
 			if err != nil {
-				return errors.Wrap(err, "callback failed in ListJSON")
+				return fmt.Errorf("creating entry failed in ListJSON: %w", err)
 			}
-
+			if item != nil {
+				err = callback(item)
+				if err != nil {
+					return fmt.Errorf("callback failed in ListJSON: %w", err)
+				}
+			}
 		}
 		return nil
 	})
 	if err != nil {
-		return errors.Wrap(err, "error in ListJSON")
+		return fmt.Errorf("error in ListJSON: %w", err)
 	}
 	return nil
+}
+
+// StatJSON returns a single JSON stat entry for the fsrc, remote path
+//
+// The item returned may be nil if it is not found or excluded with DirsOnly/FilesOnly
+func StatJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOpt) (item *ListJSONItem, err error) {
+	// FIXME this could me more efficient we had a new primitive
+	// NewDirEntry() which returned an Object or a Directory
+	lj, err := newListJSON(ctx, fsrc, remote, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	// Root is always a directory. When we have a NewDirEntry
+	// primitive we need to call it, but for now this will do.
+	if remote == "" {
+		if !lj.dirs {
+			return nil, nil
+		}
+		// Check the root directory exists
+		_, err := fsrc.List(ctx, "")
+		if err != nil {
+			return nil, err
+		}
+		return lj.entry(ctx, fs.NewDir("", time.Now()))
+	}
+
+	// Could be a file or a directory here
+	if lj.files {
+		// NewObject can return the sentinel errors ErrorObjectNotFound or ErrorIsDir
+		// ErrorObjectNotFound can mean the source is a directory or not found
+		obj, err := fsrc.NewObject(ctx, remote)
+		if err == fs.ErrorObjectNotFound {
+			if !lj.dirs {
+				return nil, nil
+			}
+		} else if err == fs.ErrorIsDir {
+			if !lj.dirs {
+				return nil, nil
+			}
+			// This could return a made up ListJSONItem here
+			// but that wouldn't have the IDs etc in
+		} else if err != nil {
+			if !lj.dirs {
+				return nil, err
+			}
+		} else {
+			return lj.entry(ctx, obj)
+		}
+	}
+	// Must be a directory here
+	parent := path.Dir(remote)
+	if parent == "." || parent == "/" {
+		parent = ""
+	}
+	entries, err := fsrc.List(ctx, parent)
+	if err == fs.ErrorDirNotFound {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	equal := func(a, b string) bool { return a == b }
+	if fsrc.Features().CaseInsensitive {
+		equal = strings.EqualFold
+	}
+	var foundEntry fs.DirEntry
+	for _, entry := range entries {
+		if equal(entry.Remote(), remote) {
+			foundEntry = entry
+			break
+		}
+	}
+	if foundEntry == nil {
+		return nil, nil
+	}
+	return lj.entry(ctx, foundEntry)
 }

@@ -19,7 +19,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/test"
 	"github.com/rclone/rclone/cmd/test/info/internal"
@@ -47,13 +46,13 @@ var (
 func init() {
 	test.Command.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file.")
-	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization.")
-	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters.")
-	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file.")
-	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length.")
-	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size.")
-	flags.BoolVarP(cmdFlags, &all, "all", "", false, "Run all tests.")
+	flags.StringVarP(cmdFlags, &writeJSON, "write-json", "", "", "Write results to file")
+	flags.BoolVarP(cmdFlags, &checkNormalization, "check-normalization", "", false, "Check UTF-8 Normalization")
+	flags.BoolVarP(cmdFlags, &checkControl, "check-control", "", false, "Check control characters")
+	flags.DurationVarP(cmdFlags, &uploadWait, "upload-wait", "", 0, "Wait after writing a file")
+	flags.BoolVarP(cmdFlags, &checkLength, "check-length", "", false, "Check max filename length")
+	flags.BoolVarP(cmdFlags, &checkStreaming, "check-streaming", "", false, "Check uploads with indeterminate file size")
+	flags.BoolVarP(cmdFlags, &all, "all", "", false, "Run all tests")
 }
 
 var commandDefinition = &cobra.Command{
@@ -441,7 +440,7 @@ func (r *results) checkStreaming() {
 func readInfo(ctx context.Context, f fs.Fs) error {
 	err := f.Mkdir(ctx, "")
 	if err != nil {
-		return errors.Wrap(err, "couldn't mkdir")
+		return fmt.Errorf("couldn't mkdir: %w", err)
 	}
 	r := newResults(ctx, f)
 	if checkControl {

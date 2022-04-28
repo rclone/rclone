@@ -3,6 +3,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"sort"
@@ -10,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/filter"
@@ -73,6 +73,7 @@ type syncCopyMove struct {
 	compareCopyDest        []fs.Fs                // place to check for files to server side copy
 	backupDir              fs.Fs                  // place to store overwrites/deletes
 	checkFirst             bool                   // if set run all the checkers before starting transfers
+	maxDurationEndTime     time.Time              // end time if --max-duration is set
 }
 
 type trackRenamesStrategy byte
@@ -146,9 +147,9 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	}
 	// If a max session duration has been defined add a deadline to the context
 	if ci.MaxDuration > 0 {
-		endTime := time.Now().Add(ci.MaxDuration)
-		fs.Infof(s.fdst, "Transfer session deadline: %s", endTime.Format("2006/01/02 15:04:05"))
-		s.ctx, s.cancel = context.WithDeadline(ctx, endTime)
+		s.maxDurationEndTime = time.Now().Add(ci.MaxDuration)
+		fs.Infof(s.fdst, "Transfer session deadline: %s", s.maxDurationEndTime.Format("2006/01/02 15:04:05"))
+		s.ctx, s.cancel = context.WithDeadline(ctx, s.maxDurationEndTime)
 	} else {
 		s.ctx, s.cancel = context.WithCancel(ctx)
 	}
@@ -354,6 +355,8 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 					// Delete src if no error on copy
 					if operations.SameObject(src, pair.Dst) {
 						fs.Logf(src, "Not removing source file as it is the same file as the destination")
+					} else if s.ci.IgnoreExisting {
+						fs.Debugf(src, "Not removing source file as destination file exists and --ignore-existing is set")
 					} else {
 						s.processError(operations.DeleteFile(s.ctx, src))
 					}
@@ -624,9 +627,7 @@ func (s *syncCopyMove) srcParentDirCheck(entry fs.DirEntry) {
 	if parentDir == "." {
 		parentDir = ""
 	}
-	if _, ok := s.srcEmptyDirs[parentDir]; ok {
-		delete(s.srcEmptyDirs, parentDir)
-	}
+	delete(s.srcEmptyDirs, parentDir)
 }
 
 // parseTrackRenamesStrategy turns a config string into a trackRenamesStrategy
@@ -645,7 +646,7 @@ func parseTrackRenamesStrategy(strategies string) (strategy trackRenamesStrategy
 		case "size":
 			// ignore
 		default:
-			return strategy, errors.Errorf("unknown track renames strategy %q", s)
+			return strategy, fmt.Errorf("unknown track renames strategy %q", s)
 		}
 	}
 	return strategy, nil
@@ -809,6 +810,10 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	return true
 }
 
+// errorMaxDurationReached defines error when transfer duration is reached
+// Used for checking on exit and matching to correct exit code.
+var errorMaxDurationReached = fserrors.FatalError(errors.New("Max transfer duration reached as set by --max-duration"))
+
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
@@ -901,6 +906,12 @@ func (s *syncCopyMove) run() error {
 
 	// Read the error out of the context if there is one
 	s.processError(s.ctx.Err())
+
+	// If the duration was exceeded then add a Fatal Error so we don't retry
+	if !s.maxDurationEndTime.IsZero() && time.Since(s.maxDurationEndTime) > 0 {
+		fs.Errorf(s.fdst, "%v", errorMaxDurationReached)
+		s.processError(errorMaxDurationReached)
+	}
 
 	// Print nothing to transfer message if there were no transfers and no errors
 	if s.deleteMode != fs.DeleteModeOnly && accounting.Stats(s.ctx).GetTransfers() == 0 && s.currentError() == nil {

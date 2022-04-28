@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	gohash "hash"
 	"io"
@@ -19,7 +20,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -54,10 +54,10 @@ const (
 	decayConstant       = 1 // bigger for slower decay, exponential
 	maxParts            = 10000
 	maxVersions         = 100 // maximum number of versions we search in --b2-versions mode
-	minChunkSize        = 5 * fs.MebiByte
-	defaultChunkSize    = 96 * fs.MebiByte
-	defaultUploadCutoff = 200 * fs.MebiByte
-	largeFileCopyCutoff = 4 * fs.GibiByte          // 5E9 is the max
+	minChunkSize        = 5 * fs.Mebi
+	defaultChunkSize    = 96 * fs.Mebi
+	defaultUploadCutoff = 200 * fs.Mebi
+	largeFileCopyCutoff = 4 * fs.Gibi              // 5E9 is the max
 	memoryPoolFlushTime = fs.Duration(time.Minute) // flush the cached buffers after this long
 	memoryPoolUseMmap   = false
 )
@@ -75,15 +75,15 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "account",
-			Help:     "Account ID or Application Key ID",
+			Help:     "Account ID or Application Key ID.",
 			Required: true,
 		}, {
 			Name:     "key",
-			Help:     "Application Key",
+			Help:     "Application Key.",
 			Required: true,
 		}, {
 			Name:     "endpoint",
-			Help:     "Endpoint for the service.\nLeave blank normally.",
+			Help:     "Endpoint for the service.\n\nLeave blank normally.",
 			Advanced: true,
 		}, {
 			Name: "test_mode",
@@ -103,7 +103,7 @@ in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration
 			Advanced: true,
 		}, {
 			Name:     "versions",
-			Help:     "Include old versions in directory listings.\nNote that when using this no file write operations are permitted,\nso you can't upload files or delete them.",
+			Help:     "Include old versions in directory listings.\n\nNote that when using this no file write operations are permitted,\nso you can't upload files or delete them.",
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -116,32 +116,34 @@ in the [b2 integrations checklist](https://www.backblaze.com/b2/docs/integration
 
 Files above this size will be uploaded in chunks of "--b2-chunk-size".
 
-This value should be set no larger than 4.657GiB (== 5GB).`,
+This value should be set no larger than 4.657 GiB (== 5 GB).`,
 			Default:  defaultUploadCutoff,
 			Advanced: true,
 		}, {
 			Name: "copy_cutoff",
-			Help: `Cutoff for switching to multipart copy
+			Help: `Cutoff for switching to multipart copy.
 
 Any files larger than this that need to be server-side copied will be
 copied in chunks of this size.
 
-The minimum is 0 and the maximum is 4.6GB.`,
+The minimum is 0 and the maximum is 4.6 GiB.`,
 			Default:  largeFileCopyCutoff,
 			Advanced: true,
 		}, {
 			Name: "chunk_size",
-			Help: `Upload chunk size. Must fit in memory.
+			Help: `Upload chunk size.
 
-When uploading large files, chunk the file into this size.  Note that
-these chunks are buffered in memory and there might a maximum of
-"--transfers" chunks in progress at once.  5,000,000 Bytes is the
-minimum size.`,
+When uploading large files, chunk the file into this size.
+
+Must fit in memory. These chunks are buffered in memory and there
+might a maximum of "--transfers" chunks in progress at once.
+
+5,000,000 Bytes is the minimum size.`,
 			Default:  defaultChunkSize,
 			Advanced: true,
 		}, {
 			Name: "disable_checksum",
-			Help: `Disable checksums for large (> upload cutoff) files
+			Help: `Disable checksums for large (> upload cutoff) files.
 
 Normally rclone will calculate the SHA1 checksum of the input before
 uploading it so it can add it to metadata on the object. This is great
@@ -158,7 +160,15 @@ free egress for data downloaded through the Cloudflare network.
 Rclone works with private buckets by sending an "Authorization" header.
 If the custom endpoint rewrites the requests for authentication,
 e.g., in Cloudflare Workers, this header needs to be handled properly.
-Leave blank if you want to use the endpoint provided by Backblaze.`,
+Leave blank if you want to use the endpoint provided by Backblaze.
+
+The URL provided here SHOULD have the protocol and SHOULD NOT have
+a trailing slash or specify the /file/bucket subpath as rclone will
+request files with "{download_url}/file/{bucket_name}/{path}".
+
+Example:
+> https://mysubdomain.mydomain.tld
+(No trailing "/", "file" or "bucket")`,
 			Advanced: true,
 		}, {
 			Name: "download_auth_duration",
@@ -364,7 +374,7 @@ func errorHandler(resp *http.Response) error {
 
 func checkUploadChunkSize(cs fs.SizeSuffix) error {
 	if cs < minChunkSize {
-		return errors.Errorf("%s is less than %s", cs, minChunkSize)
+		return fmt.Errorf("%s is less than %s", cs, minChunkSize)
 	}
 	return nil
 }
@@ -379,7 +389,7 @@ func (f *Fs) setUploadChunkSize(cs fs.SizeSuffix) (old fs.SizeSuffix, err error)
 
 func checkUploadCutoff(opt *Options, cs fs.SizeSuffix) error {
 	if cs < opt.ChunkSize {
-		return errors.Errorf("%v is less than chunk size %v", cs, opt.ChunkSize)
+		return fmt.Errorf("%v is less than chunk size %v", cs, opt.ChunkSize)
 	}
 	return nil
 }
@@ -412,11 +422,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = checkUploadCutoff(opt, opt.UploadCutoff)
 	if err != nil {
-		return nil, errors.Wrap(err, "b2: upload cutoff")
+		return nil, fmt.Errorf("b2: upload cutoff: %w", err)
 	}
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, errors.Wrap(err, "b2: chunk size")
+		return nil, fmt.Errorf("b2: chunk size: %w", err)
 	}
 	if opt.Account == "" {
 		return nil, errors.New("account not found")
@@ -461,7 +471,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = f.authorizeAccount(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to authorize account")
+		return nil, fmt.Errorf("failed to authorize account: %w", err)
 	}
 	// If this is a key limited to a single bucket, it must exist already
 	if f.rootBucket != "" && f.info.Allowed.BucketID != "" {
@@ -470,7 +480,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, errors.New("bucket that application key is restricted to no longer exists")
 		}
 		if allowedBucket != f.rootBucket {
-			return nil, errors.Errorf("you must use bucket %q with this application key", allowedBucket)
+			return nil, fmt.Errorf("you must use bucket %q with this application key", allowedBucket)
 		}
 		f.cache.MarkOK(f.rootBucket)
 		f.setBucketID(f.rootBucket, f.info.Allowed.BucketID)
@@ -510,7 +520,7 @@ func (f *Fs) authorizeAccount(ctx context.Context) error {
 		return f.shouldRetryNoReauth(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to authenticate")
+		return fmt.Errorf("failed to authenticate: %w", err)
 	}
 	f.srv.SetRoot(f.info.APIURL+"/b2api/v1").SetHeader("Authorization", f.info.AuthorizationToken)
 	return nil
@@ -556,7 +566,7 @@ func (f *Fs) getUploadURL(ctx context.Context, bucket string) (upload *api.GetUp
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get upload URL")
+		return nil, fmt.Errorf("failed to get upload URL: %w", err)
 	}
 	return upload, nil
 }
@@ -1046,7 +1056,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 					}
 				}
 			}
-			return errors.Wrap(err, "failed to create bucket")
+			return fmt.Errorf("failed to create bucket: %w", err)
 		}
 		f.setBucketID(bucket, response.ID)
 		f.setBucketType(bucket, response.Type)
@@ -1081,7 +1091,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 			return f.shouldRetry(ctx, resp, err)
 		})
 		if err != nil {
-			return errors.Wrap(err, "failed to delete bucket")
+			return fmt.Errorf("failed to delete bucket: %w", err)
 		}
 		f.clearBucketID(bucket)
 		f.clearBucketType(bucket)
@@ -1122,7 +1132,7 @@ func (f *Fs) hide(ctx context.Context, bucket, bucketPath string) error {
 				return nil
 			}
 		}
-		return errors.Wrapf(err, "failed to hide %q", bucketPath)
+		return fmt.Errorf("failed to hide %q: %w", bucketPath, err)
 	}
 	return nil
 }
@@ -1143,7 +1153,7 @@ func (f *Fs) deleteByID(ctx context.Context, ID, Name string) error {
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return errors.Wrapf(err, "failed to delete %q", Name)
+		return fmt.Errorf("failed to delete %q: %w", Name, err)
 	}
 	return nil
 }
@@ -1362,7 +1372,7 @@ func (f *Fs) getDownloadAuthorization(ctx context.Context, bucket, remote string
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return "", errors.Wrap(err, "failed to get download authorization")
+		return "", fmt.Errorf("failed to get download authorization: %w", err)
 	}
 	return response.AuthorizationToken, nil
 }
@@ -1667,14 +1677,14 @@ func (file *openFile) Close() (err error) {
 
 	// Check to see we read the correct number of bytes
 	if file.o.Size() != file.bytes {
-		return errors.Errorf("object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
+		return fmt.Errorf("object corrupted on transfer - length mismatch (want %d got %d)", file.o.Size(), file.bytes)
 	}
 
 	// Check the SHA1
 	receivedSHA1 := file.o.sha1
 	calculatedSHA1 := fmt.Sprintf("%x", file.hash.Sum(nil))
 	if receivedSHA1 != "" && receivedSHA1 != calculatedSHA1 {
-		return errors.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
+		return fmt.Errorf("object corrupted on transfer - SHA1 mismatch (want %q got %q)", receivedSHA1, calculatedSHA1)
 	}
 
 	return nil
@@ -1714,7 +1724,7 @@ func (o *Object) getOrHead(ctx context.Context, method string, options []fs.Open
 		if resp != nil && (resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusBadRequest) {
 			return nil, nil, fs.ErrorObjectNotFound
 		}
-		return nil, nil, errors.Wrapf(err, "failed to %s for download", method)
+		return nil, nil, fmt.Errorf("failed to %s for download: %w", method, err)
 	}
 
 	// NB resp may be Open here - don't return err != nil without closing

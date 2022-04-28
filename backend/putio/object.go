@@ -2,6 +2,7 @@ package putio
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -9,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/putdotio/go-putio/putio"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fserrors"
@@ -82,7 +82,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 	err := o.readEntryAndSetMetadata(ctx)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read hash from metadata")
+		return "", fmt.Errorf("failed to read hash from metadata: %w", err)
 	}
 	return o.file.CRC32, nil
 }
@@ -151,7 +151,7 @@ func (o *Object) readEntry(ctx context.Context) (f *putio.File, err error) {
 		return nil, err
 	}
 	if resp.File.IsDir() {
-		return nil, fs.ErrorNotAFile
+		return nil, fs.ErrorIsDir
 	}
 	return &resp.File, err
 }
@@ -241,7 +241,13 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 		// fs.Debugf(o, "opening file: id=%d", o.file.ID)
 		resp, err = o.fs.httpClient.Do(req)
-		return shouldRetry(ctx, err)
+		if err != nil {
+			return shouldRetry(ctx, err)
+		}
+		if err := checkStatusCode(resp, 200, 206); err != nil {
+			return shouldRetry(ctx, err)
+		}
+		return false, nil
 	})
 	if perr, ok := err.(*putio.ErrorResponse); ok && perr.Response.StatusCode >= 400 && perr.Response.StatusCode <= 499 {
 		_ = resp.Body.Close()

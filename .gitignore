@@ -11,3 +11,7 @@ rclone.iml
 *.log
 *.iml
 fuzz-build.zip
+*.orig
+*.rej
+Thumbs.db
+__pycache__

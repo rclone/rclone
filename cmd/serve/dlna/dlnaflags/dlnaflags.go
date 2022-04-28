@@ -42,9 +42,9 @@ var (
 
 func addFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
 	rc.AddOption("dlna", &Opt)
-	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "ip:port or :port to bind the DLNA http server to.")
-	flags.StringVarP(flagSet, &Opt.FriendlyName, prefix+"name", "", Opt.FriendlyName, "name of DLNA server")
-	flags.BoolVarP(flagSet, &Opt.LogTrace, prefix+"log-trace", "", Opt.LogTrace, "enable trace logging of SOAP traffic")
+	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "The ip:port or :port to bind the DLNA http server to")
+	flags.StringVarP(flagSet, &Opt.FriendlyName, prefix+"name", "", Opt.FriendlyName, "Name of DLNA server")
+	flags.BoolVarP(flagSet, &Opt.LogTrace, prefix+"log-trace", "", Opt.LogTrace, "Enable trace logging of SOAP traffic")
 }
 
 // AddFlags add the command line flags for DLNA serving.

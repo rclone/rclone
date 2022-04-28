@@ -13,7 +13,7 @@ import (
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
 	cmdFlags := commandDefinition.Flags()
-	hashsum.AddHashFlags(cmdFlags)
+	hashsum.AddHashsumFlags(cmdFlags)
 }
 
 var commandDefinition = &cobra.Command{
@@ -27,11 +27,23 @@ By default, the hash is requested from the remote.  If MD5 is
 not supported by the remote, no hash will be returned.  With the
 download flag, the file will be downloaded from the remote and
 hashed locally enabling MD5 for any remote.
+
+This command can also hash data received on standard input (stdin),
+by not passing a remote:path, or by passing a hyphen as remote:path
+when there is data to read (if not, the hypen will be treated literaly,
+as a relative path).
 `,
-	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(1, 1, command, args)
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 1, command, args)
+		if found, err := hashsum.CreateFromStdinArg(hash.MD5, args, 0); found {
+			return err
+		}
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
+			if hashsum.ChecksumFile != "" {
+				fsum, sumFile := cmd.NewFsFile(hashsum.ChecksumFile)
+				return operations.CheckSum(context.Background(), fsrc, fsum, sumFile, hash.MD5, nil, hashsum.DownloadFlag)
+			}
 			if hashsum.HashsumOutfile == "" {
 				return operations.HashLister(context.Background(), hash.MD5, hashsum.OutputBase64, hashsum.DownloadFlag, fsrc, nil)
 			}
@@ -42,5 +54,6 @@ hashed locally enabling MD5 for any remote.
 			defer close()
 			return operations.HashLister(context.Background(), hash.MD5, hashsum.OutputBase64, hashsum.DownloadFlag, fsrc, output)
 		})
+		return nil
 	},
 }

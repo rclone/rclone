@@ -35,6 +35,7 @@ See the [global flags page](/flags/) for global options not listed here.
 
 * [rclone](/commands/rclone/)	 - Show help for rclone commands, flags and backends.
 * [rclone serve dlna](/commands/rclone_serve_dlna/)	 - Serve remote:path over DLNA
+* [rclone serve docker](/commands/rclone_serve_docker/)	 - Serve any remote on docker's volume plugin API.
 * [rclone serve ftp](/commands/rclone_serve_ftp/)	 - Serve remote:path over FTP.
 * [rclone serve http](/commands/rclone_serve_http/)	 - Serve the remote over HTTP.
 * [rclone serve restic](/commands/rclone_serve_restic/)	 - Serve the remote for restic's REST API.

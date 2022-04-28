@@ -13,15 +13,21 @@ import (
 	_ "github.com/rclone/rclone/cmd/cmount"
 	_ "github.com/rclone/rclone/cmd/mount"
 	_ "github.com/rclone/rclone/cmd/mount2"
+	"github.com/rclone/rclone/cmd/mountlib"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/rc"
+	"github.com/rclone/rclone/fstest/testy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRc(t *testing.T) {
+	// Disable tests under macOS and the CI since they are locking up
+	if runtime.GOOS == "darwin" {
+		testy.SkipUnreliable(t)
+	}
 	ctx := context.Background()
-	configfile.LoadConfig(ctx)
+	configfile.Install()
 	mount := rc.Calls.Get("mount/mount")
 	assert.NotNil(t, mount)
 	unmount := rc.Calls.Get("mount/unmount")
@@ -29,19 +35,14 @@ func TestRc(t *testing.T) {
 	getMountTypes := rc.Calls.Get("mount/types")
 	assert.NotNil(t, getMountTypes)
 
-	localDir, err := ioutil.TempDir("", "rclone-mountlib-localDir")
-	require.NoError(t, err)
-	defer func() { _ = os.RemoveAll(localDir) }()
-	err = ioutil.WriteFile(filepath.Join(localDir, "file.txt"), []byte("hello"), 0666)
+	localDir := t.TempDir()
+	err := ioutil.WriteFile(filepath.Join(localDir, "file.txt"), []byte("hello"), 0666)
 	require.NoError(t, err)
 
-	mountPoint, err := ioutil.TempDir("", "rclone-mountlib-mountPoint")
-	require.NoError(t, err)
+	mountPoint := t.TempDir()
 	if runtime.GOOS == "windows" {
 		// Windows requires the mount point not to exist
 		require.NoError(t, os.RemoveAll(mountPoint))
-	} else {
-		defer func() { _ = os.RemoveAll(mountPoint) }()
 	}
 
 	out, err := getMountTypes.Fn(ctx, nil)
@@ -95,6 +96,22 @@ func TestRc(t *testing.T) {
 			assert.Equal(t, os.FileMode(0400), fi.Mode())
 		}
 
+		// check mount point list
+		checkMountList := func() []mountlib.MountInfo {
+			listCall := rc.Calls.Get("mount/listmounts")
+			require.NotNil(t, listCall)
+			listReply, err := listCall.Fn(ctx, rc.Params{})
+			require.NoError(t, err)
+			mountPointsReply, err := listReply.Get("mountPoints")
+			require.NoError(t, err)
+			mountPoints, ok := mountPointsReply.([]mountlib.MountInfo)
+			require.True(t, ok)
+			return mountPoints
+		}
+		mountPoints := checkMountList()
+		require.Equal(t, 1, len(mountPoints))
+		require.Equal(t, mountPoint, mountPoints[0].MountPoint)
+
 		// FIXME the OS sometimes appears to be using the mount
 		// immediately after it appears so wait a moment
 		time.Sleep(100 * time.Millisecond)
@@ -102,6 +119,7 @@ func TestRc(t *testing.T) {
 		t.Run("Unmount", func(t *testing.T) {
 			_, err := unmount.Fn(ctx, in)
 			require.NoError(t, err)
+			assert.Equal(t, 0, len(checkMountList()))
 		})
 	})
 }

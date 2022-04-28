@@ -9,15 +9,14 @@ package hubic
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	swiftLib "github.com/ncw/swift/v2"
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/backend/swift"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -56,11 +55,10 @@ func init() {
 		Name:        "hubic",
 		Description: "Hubic",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper) {
-			err := oauthutil.Config(ctx, "hubic", name, m, oauthConfig, nil)
-			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
-			}
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: oauthConfig,
+			})
 		},
 		Options: append(oauthutil.SharedOptions, swift.SharedOptions...),
 	})
@@ -122,7 +120,7 @@ func (f *Fs) getCredentials(ctx context.Context) (err error) {
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		body, _ := ioutil.ReadAll(resp.Body)
 		bodyStr := strings.TrimSpace(strings.Replace(string(body), "\n", " ", -1))
-		return errors.Errorf("failed to get credentials: %s: %s", resp.Status, bodyStr)
+		return fmt.Errorf("failed to get credentials: %s: %s", resp.Status, bodyStr)
 	}
 	decoder := json.NewDecoder(resp.Body)
 	var result credentials
@@ -148,7 +146,7 @@ func (f *Fs) getCredentials(ctx context.Context) (err error) {
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	client, _, err := oauthutil.NewClient(ctx, name, m, oauthConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to configure Hubic")
+		return nil, fmt.Errorf("failed to configure Hubic: %w", err)
 	}
 
 	f := &Fs{
@@ -165,7 +163,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	err = c.Authenticate(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "error authenticating swift connection")
+		return nil, fmt.Errorf("error authenticating swift connection: %w", err)
 	}
 
 	// Parse config into swift.Options struct

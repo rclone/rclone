@@ -3,6 +3,7 @@ package fs
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/lib/pacer"
@@ -99,7 +99,7 @@ func TestOption(t *testing.T) {
 		Name:  "potato",
 		Value: SizeSuffix(17 << 20),
 	}
-	assert.Equal(t, "17M", d.String())
+	assert.Equal(t, "17Mi", d.String())
 	assert.Equal(t, "SizeSuffix", d.Type())
 	err := d.Set("18M")
 	assert.NoError(t, err)
@@ -242,6 +242,7 @@ func TestOptionMarshalJSON(t *testing.T) {
 "IsPassword": false,
 "NoPrefix": false,
 "Advanced": true,
+"Exclusive": false,
 "DefaultStr": "false",
 "ValueStr": "true",
 "Type": "bool"

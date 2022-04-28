@@ -17,8 +17,9 @@ Here is an overview of the major features of each cloud storage system.
 | Name                         | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type |
 | ---------------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|
 | 1Fichier                     | Whirlpool   | No      | No               | Yes             | R         |
+| Akamai Netstorage            | MD5, SHA256 | Yes     | No               | No              | R         |
 | Amazon Drive                 | MD5         | No      | Yes              | No              | R         |
-| Amazon S3                    | MD5         | Yes     | No               | No              | R/W       |
+| Amazon S3 (or S3 compatible) | MD5         | Yes     | No               | No              | R/W       |
 | Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
 | Box                          | SHA1        | Yes     | Yes              | No              | -         |
 | Citrix ShareFile             | MD5         | Yes     | Yes              | No              | -         |
@@ -31,6 +32,7 @@ Here is an overview of the major features of each cloud storage system.
 | HDFS                         | -           | Yes     | No               | No              | -         |
 | HTTP                         | -           | No      | No               | No              | R         |
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
+| Internet Archive             | MD5, SHA1, CRC32 | Yes | No              | No              | -         |
 | Jottacloud                   | MD5         | Yes     | Yes              | No              | R         |
 | Koofr                        | MD5         | No      | Yes              | No              | -         |
 | Mail.ru Cloud                | Mailru ⁶    | Yes     | Yes              | No              | -         |
@@ -46,8 +48,9 @@ Here is an overview of the major features of each cloud storage system.
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
 | Seafile                      | -           | No      | No               | No              | -         |
 | SFTP                         | MD5, SHA1 ² | Yes     | Depends          | No              | -         |
+| Sia                          | -           | No      | No               | No              | -         |
 | SugarSync                    | -           | No      | No               | No              | -         |
-| Tardigrade                   | -           | Yes     | No               | No              | -         |
+| Storj                        | -           | Yes     | No               | No              | -         |
 | Uptobox                      | -           | No      | No               | Yes             | -         |
 | WebDAV                       | MD5, SHA1 ³ | Yes ⁴   | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R         |
@@ -58,7 +61,7 @@ Here is an overview of the major features of each cloud storage system.
 
 ¹ Dropbox supports [its own custom
 hash](https://www.dropbox.com/developers/reference/content-hash).
-This is an SHA256 sum of all the 4MB block SHA256s.
+This is an SHA256 sum of all the 4 MiB block SHA256s.
 
 ² SFTP supports checksums if the same login has shell access and
 `md5sum` or `sha1sum` as well as `echo` are in the remote's PATH.
@@ -137,7 +140,8 @@ Some cloud storage systems might have restrictions on the characters
 that are usable in file or directory names.
 When `rclone` detects such a name during a file upload, it will
 transparently replace the restricted characters with similar looking
-Unicode characters.
+Unicode characters. To handle the different sets of restricted characters
+for different backends, rclone uses something it calls [encoding](#encoding).
 
 This process is designed to avoid ambiguous file names as much as
 possible and allow to move files between many cloud storage systems
@@ -149,14 +153,60 @@ to ensure correct formatting and not necessarily the actual name used
 on the cloud storage.
 
 This transformation is reversed when downloading a file or parsing
-`rclone` arguments.
-For example, when uploading a file named `my file?.txt` to Onedrive
-will be displayed as `my file?.txt` on the console, but stored as
-`my file？.txt` (the `?` gets replaced by the similar looking `？`
-character) to Onedrive.
-The reverse transformation allows to read a file`unusual/name.txt`
-from Google Drive, by passing the name `unusual／name.txt` (the `/` needs
-to be replaced by the similar looking `／` character) on the command line.
+`rclone` arguments. For example, when uploading a file named `my file?.txt`
+to Onedrive, it will be displayed as `my file?.txt` on the console, but
+stored as `my file？.txt` to Onedrive (the `?` gets replaced by the similar
+looking `？` character, the so-called "fullwidth question mark").
+The reverse transformation allows to read a file `unusual/name.txt`
+from Google Drive, by passing the name `unusual／name.txt` on the command line
+(the `/` needs to be replaced by the similar looking `／` character).
+
+#### Caveats {#restricted-filenames-caveats}
+
+The filename encoding system works well in most cases, at least
+where file names are written in English or similar languages.
+You might not even notice it: It just works. In some cases it may
+lead to issues, though. E.g. when file names are written in Chinese,
+or Japanese, where it is always the Unicode fullwidth variants of the
+punctuation marks that are used.
+
+On Windows, the characters `:`, `*` and `?` are examples of restricted
+characters. If these are used in filenames on a remote that supports it,
+Rclone will transparently convert them to their fullwidth Unicode
+variants `＊`, `？` and `：` when downloading to Windows, and back again
+when uploading. This way files with names that are not allowed on Windows
+can still be stored.
+
+However, if you have files on your Windows system originally with these same
+Unicode characters in their names, they will be included in the same conversion
+process. E.g. if you create a file in your Windows filesystem with name
+`Test：1.jpg`, where `：` is the Unicode fullwidth colon symbol, and use
+rclone to upload it to Google Drive, which supports regular `:` (halfwidth
+question mark), rclone will replace the fullwidth `:` with the
+halfwidth `:` and store the file as `Test:1.jpg` in Google Drive. Since
+both Windows and Google Drive allows the name `Test：1.jpg`, it would
+probably be better if rclone just kept the name as is in this case.
+
+With the opposite situation; if you have a file named `Test:1.jpg`,
+in your Google Drive, e.g. uploaded from a Linux system where `:` is valid
+in file names. Then later use rclone to copy this file to your Windows
+computer you will notice that on your local disk it gets renamed
+to `Test：1.jpg`. The original filename is not legal on Windows, due to
+the `:`, and rclone therefore renames it to make the copy possible.
+That is all good. However, this can also lead to an issue: If you already
+had a *different* file named `Test：1.jpg` on Windows, and then use rclone
+to copy either way. Rclone will then treat the file originally named
+`Test:1.jpg` on Google Drive and the file originally named `Test：1.jpg`
+on Windows as the same file, and replace the contents from one with the other.
+
+Its virtually impossible to handle all cases like these correctly in all
+situations, but by customizing the [encoding option](#encoding), changing the
+set of characters that rclone should convert, you should be able to
+create a configuration that works well for your specific situation.
+See also the [example](/overview/#encoding-example-windows) below.
+
+(Windows was used as an example of a file system with many restricted
+characters, and Google drive a storage system with few.)
 
 #### Default restricted characters {#restricted-characters}
 
@@ -229,7 +279,7 @@ names in a different encoding than UTF-8 or UTF-16, like latin1. See the
 
 #### Encoding option {#encoding}
 
-Most backends have an encoding options, specified as a flag
+Most backends have an encoding option, specified as a flag
 `--backend-encoding` where `backend` is the name of the backend, or as
 a config parameter `encoding` (you'll need to select the Advanced
 config in `rclone config` to see it).
@@ -239,47 +289,51 @@ such a way as to preserve the maximum number of characters (see
 above).
 
 However this can be incorrect in some scenarios, for example if you
-have a Windows file system with characters such as `＊` and `？` that
-you want to remain as those characters on the remote rather than being
-translated to `*` and `?`.
+have a Windows file system with Unicode fullwidth characters
+`＊`, `？` or `：`, that you want to remain as those characters on the
+remote rather than being translated to regular (halfwidth) `*`, `?` and `:`.
 
 The `--backend-encoding` flags allow you to change that. You can
 disable the encoding completely with `--backend-encoding None` or set
 `encoding = None` in the config file.
 
 Encoding takes a comma separated list of encodings. You can see the
-list of all available characters by passing an invalid value to this
-flag, e.g. `--local-encoding "help"` and `rclone help flags encoding`
+list of all possible values by passing an invalid value to this
+flag, e.g. `--local-encoding "help"`. The command `rclone help flags encoding`
 will show you the defaults for the backends.
 
-| Encoding  | Characters |
-| --------- | ---------- |
-| Asterisk | `*` |
-| BackQuote | `` ` `` |
-| BackSlash | `\` |
-| Colon | `:` |
-| CrLf | CR 0x0D, LF 0x0A |
-| Ctl | All control characters 0x00-0x1F |
-| Del | DEL 0x7F |
-| Dollar | `$` |
-| Dot | `.` |
-| DoubleQuote | `"` |
-| Hash | `#` |
-| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) |
-| LeftCrLfHtVt | CR 0x0D, LF 0x0A,HT 0x09, VT 0x0B on the left of a string |
-| LeftPeriod | `.` on the left of a string |
-| LeftSpace | SPACE on the left of a string |
-| LeftTilde | `~` on the left of a string |
-| LtGt | `<`, `>` |
-| None | No characters are encoded |
-| Percent | `%` |
-| Pipe | \| |
-| Question | `?` |
-| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string |
-| RightPeriod | `.` on the right of a string |
-| RightSpace | SPACE on the right of a string |
-| SingleQuote | `'` |
-| Slash | `/` |
+| Encoding  | Characters | Encoded as |
+| --------- | ---------- | ---------- |
+| Asterisk | `*` | `＊` |
+| BackQuote | `` ` `` | `｀` |
+| BackSlash | `\` | `＼` |
+| Colon | `:` | `：` |
+| CrLf | CR 0x0D, LF 0x0A | `␍`, `␊` |
+| Ctl | All control characters 0x00-0x1F | `␀␁␂␃␄␅␆␇␈␉␊␋␌␍␎␏␐␑␒␓␔␕␖␗␘␙␚␛␜␝␞␟` |
+| Del | DEL 0x7F | `␡` |
+| Dollar | `$` | `＄` |
+| Dot | `.` or `..` as entire string | `．`, `．．` |
+| DoubleQuote | `"` | `＂` |
+| Hash | `#` | `＃` |
+| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) | `�` |
+| LeftCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the left of a string | `␍`, `␊`, `␉`, `␋` |
+| LeftPeriod | `.` on the left of a string | `.` |
+| LeftSpace | SPACE on the left of a string | `␠` |
+| LeftTilde | `~` on the left of a string | `～` |
+| LtGt | `<`, `>` | `＜`, `＞` |
+| None | No characters are encoded | |
+| Percent | `%` | `％` |
+| Pipe | \| | `｜` |
+| Question | `?` | `？` |
+| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string | `␍`, `␊`, `␉`, `␋` |
+| RightPeriod | `.` on the right of a string | `.` |
+| RightSpace | SPACE on the right of a string | `␠` |
+| Semicolon | `;` | `；` |
+| SingleQuote | `'` | `＇` |
+| Slash | `/` | `／` |
+| SquareBracket | `[`, `]` | `［`, `］` |
+
+##### Encoding example: FTP
 
 To take a specific example, the FTP backend's default encoding is
 
@@ -298,14 +352,42 @@ to the existing ones, giving:
 
 This can be specified using the `--ftp-encoding` flag or using an `encoding` parameter in the config file.
 
-Or let's say you have a Windows server but you want to preserve `＊`
-and `？`, you would then have this as the encoding (the Windows
-encoding minus `Asterisk` and `Question`).
+##### Encoding example: Windows
 
-    Slash,LtGt,DoubleQuote,Colon,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot
+As a nother example, take a Windows system where there is a file with
+name `Test：1.jpg`, where `：` is the Unicode fullwidth colon symbol.
+When using rclone to copy this to a remote which supports `:`,
+the regular (halfwidth) colon (such as Google Drive), you will notice
+that the file gets renamed to `Test:1.jpg`.
 
-This can be specified using the `--local-encoding` flag or using an
-`encoding` parameter in the config file.
+To avoid this you can change the set of characters rclone should convert
+for the local filesystem, using command-line argument `--local-encoding`.
+Rclone's default behavior on Windows corresponds to
+
+```
+--local-encoding "Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
+```
+
+If you want to use fullwidth characters `：`, `＊` and `？` in your filenames
+without rclone changing them when uploading to a remote, then set the same as
+the default value but without `Colon,Question,Asterisk`:
+
+```
+--local-encoding "Slash,LtGt,DoubleQuote,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot"
+```
+
+Alternatively, you can disable the conversion of any characters with `--local-encoding None`.
+
+Instead of using command-line argument `--local-encoding`, you may also set it
+as [environment variable](/docs/#environment-variables) `RCLONE_LOCAL_ENCODING`,
+or [configure](/docs/#configure) a remote of type `local` in your config,
+and set the `encoding` option there.
+
+The risk by doing this is that if you have a filename with the regular (halfwidth)
+`:`, `*` and `?` in your cloud storage, and you try to download
+it to your Windows filesystem, this will fail. These characters are not
+valid in filenames on Windows, and you have told rclone not to work around
+this by converting them to valid fullwidth variants.
 
 ### MIME Type ###
 
@@ -327,7 +409,7 @@ remote itself may assign the MIME type.
 ## Optional Features ##
 
 All rclone remotes support a base command set. Other features depend
-upon backend specific capabilities.
+upon backend-specific capabilities.
 
 | Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing  | About | EmptyDir |
 | ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|:--------:|
@@ -343,13 +425,14 @@ upon backend specific capabilities.
 | Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | Google Photos                | No    | No   | No   | No      | No      | No    | No           | No           | No    | No       |
-| HDFS                         | Yes   | No   | No   | No      | No      | No    | Yes          | No           | Yes   | Yes      |
+| HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
+| Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
 | Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
-| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       | 
+| Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
@@ -361,7 +444,7 @@ upon backend specific capabilities.
 | Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 | SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
-| Tardigrade                   | Yes † | No   | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
+| Storj                        | Yes † | No   | Yes  | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | No       |
 | WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No           | Yes   | Yes      |
 | Yandex Disk                  | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes          | Yes   | Yes      |
@@ -373,7 +456,7 @@ upon backend specific capabilities.
 This deletes a directory quicker than just deleting all the files in
 the directory.
 
-† Note Swift, Hubic, and Tardigrade implement this in order to delete
+† Note Swift, Hubic, and Storj implement this in order to delete
 directory markers but they don't actually have a quicker way of deleting
 files other than deleting them individually.
 
@@ -450,4 +533,4 @@ See [rclone about command](https://rclone.org/commands/rclone_about/)
 ### EmptyDir ###
 
 The remote supports empty directories. See [Limitations](/bugs/#limitations)
- for details. Most Object/Bucket based remotes do not support this.
+ for details. Most Object/Bucket-based remotes do not support this.

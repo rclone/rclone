@@ -2,9 +2,10 @@ package operations
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"golang.org/x/sync/errgroup"
@@ -76,7 +77,7 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 
 	rc, err := NewReOpen(ctx, mc.src, ci.LowLevelRetries, &fs.RangeOption{Start: start, End: end - 1})
 	if err != nil {
-		return errors.Wrap(err, "multipart copy: failed to open source")
+		return fmt.Errorf("multipart copy: failed to open source: %w", err)
 	}
 	defer fs.CheckClose(rc, &err)
 
@@ -92,29 +93,29 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 		if nr > 0 {
 			err = mc.acc.AccountRead(nr)
 			if err != nil {
-				return errors.Wrap(err, "multipart copy: accounting failed")
+				return fmt.Errorf("multipart copy: accounting failed: %w", err)
 			}
 			nw, ew := mc.wc.WriteAt(buf[0:nr], offset)
 			if nw > 0 {
 				offset += int64(nw)
 			}
 			if ew != nil {
-				return errors.Wrap(ew, "multipart copy: write failed")
+				return fmt.Errorf("multipart copy: write failed: %w", ew)
 			}
 			if nr != nw {
-				return errors.Wrap(io.ErrShortWrite, "multipart copy")
+				return fmt.Errorf("multipart copy: %w", io.ErrShortWrite)
 			}
 		}
 		if er != nil {
 			if er != io.EOF {
-				return errors.Wrap(er, "multipart copy: read failed")
+				return fmt.Errorf("multipart copy: read failed: %w", er)
 			}
 			break
 		}
 	}
 
 	if offset != end {
-		return errors.Errorf("multipart copy: wrote %d bytes but expected to write %d", offset-start, end-start)
+		return fmt.Errorf("multipart copy: wrote %d bytes but expected to write %d", offset-start, end-start)
 	}
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v finished", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
@@ -166,7 +167,7 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 	// create write file handle
 	mc.wc, err = openWriterAt(gCtx, remote, mc.size)
 	if err != nil {
-		return nil, errors.Wrap(err, "multipart copy: failed to open destination")
+		return nil, fmt.Errorf("multipart copy: failed to open destination: %w", err)
 	}
 
 	fs.Debugf(src, "Starting multi-thread copy with %d parts of size %v", mc.streams, fs.SizeSuffix(mc.partSize))
@@ -182,19 +183,19 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		return nil, err
 	}
 	if closeErr != nil {
-		return nil, errors.Wrap(closeErr, "multi-thread copy: failed to close object after copy")
+		return nil, fmt.Errorf("multi-thread copy: failed to close object after copy: %w", closeErr)
 	}
 
 	obj, err := f.NewObject(ctx, remote)
 	if err != nil {
-		return nil, errors.Wrap(err, "multi-thread copy: failed to find object after copy")
+		return nil, fmt.Errorf("multi-thread copy: failed to find object after copy: %w", err)
 	}
 
 	err = obj.SetModTime(ctx, src.ModTime(ctx))
 	switch err {
 	case nil, fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
 	default:
-		return nil, errors.Wrap(err, "multi-thread copy: failed to set modification time")
+		return nil, fmt.Errorf("multi-thread copy: failed to set modification time: %w", err)
 	}
 
 	fs.Debugf(src, "Finished multi-thread copy with %d parts of size %v", mc.streams, fs.SizeSuffix(mc.partSize))

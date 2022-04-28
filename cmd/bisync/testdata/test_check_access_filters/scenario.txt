@@ -1,0 +1,68 @@
+test check-access-filters
+# Test Check Access construction of select/exclude filters for the RCLONE_TEST files.
+# NOTE: Include Other tests may result in listing diffs due to rclone processing order change. False fail.
+#
+# Tests are done in two phases:
+#  - EXCLUDE OTHER tests check that RCLONE_TEST files are only found in the explicity included directories
+#  - INCLUDE OTHER tesss check that RCLONE_TEST files are found in all directories not explicity excluded
+#
+# Each phase checks that:
+#  - missing RCLONE_TEST files in don't care directories don't cause failures
+#  - missing RCLONE_TEST files in care directories do cause failures
+
+test EXCLUDE - OTHER TESTS
+copy-file {datadir/}exclude-other-filtersfile.txt {workdir/}
+
+test resync to get the filters file md5 built.
+bisync resync filters-file={workdir/}exclude-other-filtersfile.txt
+
+test EXCLUDE - test filters for check access
+bisync check-access filters-file={workdir/}exclude-other-filtersfile.txt
+copy-listings exclude-initial
+
+test EXCLUDE - delete RCLONE_TEST files in excluded directories
+delete-file {path2/}subdir/subdirA/RCLONE_TEST
+delete-file {path1/}subdir-not/RCLONE_TEST
+delete-file {path2/}subdir-not/subdir-not2/RCLONE_TEST
+delete-file {path1/}subdirX/RCLONE_TEST
+
+test EXCLUDE - test should PASS
+bisync check-access filters-file={workdir/}exclude-other-filtersfile.txt
+copy-listings exclude-pass-run
+
+test EXCLUDE - delete RCLONE_TEST files in included directories
+delete-file {path2/}RCLONE_TEST
+delete-file {path1/}subdir/RCLONE_TEST
+
+test EXCLUDE - test should ABORT
+bisync check-access filters-file={workdir/}exclude-other-filtersfile.txt
+move-listings exclude-error-run
+
+test INCLUDE - OTHER TESTS
+test reset to the initial state
+copy-dir {testdir/}initial {path1/}
+sync-dir {path1/} {path2/}
+copy-file {datadir/}include-other-filtersfile.txt {workdir/}
+bisync resync filters-file={workdir/}include-other-filtersfile.txt
+
+test INCLUDE - test include/exclude filters for check access
+bisync check-access filters-file={workdir/}include-other-filtersfile.txt
+copy-listings include-initial
+
+test INCLUDE - delete RCLONE_TEST files in excluded directories
+delete-file {path2/}subdir/subdirA/RCLONE_TEST
+delete-file {path1/}subdir-not/RCLONE_TEST
+delete-file {path2/}subdir-not/subdir-not2/RCLONE_TEST
+
+test INCLUDE - test should PASS
+bisync check-access filters-file={workdir/}include-other-filtersfile.txt
+copy-listings include-pass-run
+
+test INCLUDE - delete RCLONE_TEST files in included directories
+delete-file {path2/}RCLONE_TEST
+delete-file {path1/}subdir/RCLONE_TEST
+delete-file {path1/}subdirX/subdirX1/RCLONE_TEST
+
+test INCLUDE - test should ABORT
+bisync check-access filters-file={workdir/}include-other-filtersfile.txt
+move-listings include-error-run

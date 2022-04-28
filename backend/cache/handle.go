@@ -1,9 +1,11 @@
+//go:build !plan9 && !js
 // +build !plan9,!js
 
 package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -12,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/operations"
 )
@@ -242,7 +243,7 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 			return nil, io.ErrUnexpectedEOF
 		}
 
-		return nil, errors.Errorf("chunk not found %v", chunkStart)
+		return nil, fmt.Errorf("chunk not found %v", chunkStart)
 	}
 
 	// first chunk will be aligned with the start
@@ -322,7 +323,7 @@ func (r *Handle) Seek(offset int64, whence int) (int64, error) {
 		fs.Debugf(r, "moving offset end (%v) from %v to %v", r.cachedObject.Size(), r.offset, r.cachedObject.Size()+offset)
 		r.offset = r.cachedObject.Size() + offset
 	default:
-		err = errors.Errorf("cache: unimplemented seek whence %v", whence)
+		err = fmt.Errorf("cache: unimplemented seek whence %v", whence)
 	}
 
 	chunkStart := r.offset - (r.offset % int64(r.cacheFs().opt.ChunkSize))

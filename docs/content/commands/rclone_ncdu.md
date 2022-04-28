@@ -31,6 +31,7 @@ Here are the keys - press '?' to toggle the help on and off
      c toggle counts
      g toggle graph
      a toggle average size in directory
+     u toggle human-readable format
      n,s,C,A sort by name,size,count,average size
      d delete file/directory
      y copy current path to clipboard

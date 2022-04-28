@@ -33,7 +33,7 @@ def alter_doc(backend):
         raise ValueError("Didn't find doc file %s" % (doc_file,))
     new_file = doc_file+"~new~"
     altered = False
-    with open(doc_file, "r") as in_file, open(new_file, "w") as out_file:
+    with open(doc_file, "r", encoding="utf_8") as in_file, open(new_file, "w", encoding="utf_8") as out_file:
         in_docs = False
         for line in in_file:
             if not in_docs:
