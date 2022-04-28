@@ -58,7 +58,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, ArvanCloud, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
@@ -78,6 +78,9 @@ func init() {
 			}, {
 				Value: "ChinaMobile",
 				Help:  "China Mobile Ecloud Elastic Object Storage (EOS)",
+			}, {
+				Value: "ArvanCloud",
+				Help:  "Arvan Cloud Object Storage (AOS)",
 			}, {
 				Value: "DigitalOcean",
 				Help:  "Digital Ocean Spaces",
@@ -297,7 +300,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ChinaMobile,RackCorp,Scaleway,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ChinaMobile,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -404,6 +407,18 @@ func init() {
 			}, {
 				Value: "eos-anhui-1.cmecloud.cn",
 				Help:  "Anhui China (Huainan)",
+			}},
+		}, {
+			// ArvanCloud endpoints: https://www.arvancloud.com/en/products/cloud-storage
+			Name:     "endpoint",
+			Help:     "Endpoint for Arvan Cloud Object Storage (AOS) API.",
+			Provider: "ArvanCloud",
+			Examples: []fs.OptionExample{{
+				Value: "s3.ir-thr-at1.arvanstorage.com",
+				Help:  "The default endpoint - a good choice if you are unsure.\nTehran Iran (Asiatech)",
+			}, {
+				Value: "s3.ir-tbz-sh1.arvanstorage.com",
+				Help:  "Tabriz Iran (Shahriar)",
 			}},
 		}, {
 			Name:     "endpoint",
@@ -845,7 +860,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,ChinaMobile,Scaleway,StackPath,Storj,RackCorp",
+			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -898,6 +913,10 @@ func init() {
 				Value:    "s3.ap-northeast-2.wasabisys.com",
 				Help:     "Wasabi AP Northeast 2 (Osaka) endpoint",
 				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ir-thr-at1.arvanstorage.com",
+				Help:     "ArvanCloud Tehran Iran (Asiatech) endpoint",
+				Provider: "ArvanCloud",
 			}},
 		}, {
 			Name:     "location_constraint",
@@ -1076,6 +1095,17 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
+			Help:     "Location constraint - must match endpoint.\n\nUsed when creating buckets only.",
+			Provider: "ArvanCloud",
+			Examples: []fs.OptionExample{{
+				Value: "ir-thr-at1",
+				Help:  "Tehran Iran (Asiatech)",
+			}, {
+				Value: "ir-tbz-sh1",
+				Help:  "Tabriz Iran (Shahriar)",
+			}},
+		}, {
+			Name:     "location_constraint",
 			Help:     "Location constraint - must match endpoint when using IBM Cloud Public.\n\nFor on-prem COS, do not make a selection from this list, hit enter.",
 			Provider: "IBMCOS",
 			Examples: []fs.OptionExample{{
@@ -1240,7 +1270,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,ChinaMobile,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,IBMCOS,Alibaba,ChinaMobile,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1328,7 +1358,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "server_side_encryption",
 			Help:     "The server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,ArvanCloud,Minio",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
@@ -1343,7 +1373,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "sse_customer_algorithm",
 			Help:     "If using SSE-C, the server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,ArvanCloud,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1355,7 +1385,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "sse_kms_key_id",
 			Help:     "If using KMS ID you must provide the ARN of Key.",
-			Provider: "AWS,Ceph,Minio",
+			Provider: "AWS,Ceph,ArvanCloud,Minio",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
@@ -1366,7 +1396,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "sse_customer_key",
 			Help:     "If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data.",
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,ArvanCloud,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1378,7 +1408,7 @@ isn't set then "acl" is used instead.`,
 
 If you leave it blank, this is calculated automatically from the sse_customer_key provided.
 `,
-			Provider: "AWS,Ceph,ChinaMobile,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,ArvanCloud,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1451,6 +1481,18 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			}, {
 				Value: "STANDARD_IA",
 				Help:  "Infrequent access storage mode",
+			}},
+		}, {
+			// Mapping from here: https://www.arvancloud.com/en/products/cloud-storage
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in ArvanCloud.",
+			Provider: "ArvanCloud",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "STANDARD",
+				Help:  "Standard storage class",
 			}},
 		}, {
 			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
@@ -2164,6 +2206,10 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		urlEncodeListings = false
 	case "ChinaMobile":
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+	case "ArvanCloud":
 		listObjectsV2 = false
 		virtualHostStyle = false
 		urlEncodeListings = false
