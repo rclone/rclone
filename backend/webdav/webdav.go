@@ -588,7 +588,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 			return errors.New("chunked upload with nextcloud must use /dav/files/USER endpoint not /webdav")
 		}
 		f.uploadURL = strings.Replace(f.endpointURL, "/dav/files/", "/dav/uploads/", 1)
-		fs.Logf(nil, f.uploadURL)
+		fs.Logf(nil, "Chunks temporary upload directory: %w", f.uploadURL)
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
 		// They have to be set instead of BasicAuth
