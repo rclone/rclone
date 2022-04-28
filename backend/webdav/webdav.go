@@ -588,7 +588,7 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 			return errors.New("chunked upload with nextcloud must use /dav/files/USER endpoint not /webdav")
 		}
 		f.uploadURL = strings.Replace(f.endpointURL, "/dav/files/", "/dav/uploads/", 1)
-		fs.Logf(nil, "Chunks temporary upload directory: %w", f.uploadURL)
+		fs.Logf(nil, "Chunks temporary upload directory: %s", f.uploadURL)
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
 		// They have to be set instead of BasicAuth
@@ -1465,6 +1465,8 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 		}
 		partObj.remote = fmt.Sprintf("%s/%015d-%015d", uploadDir, uploadedSize, uploadedSize+contentLength)
 		extraHeaders := map[string]string{}
+		// TODO: Fix broken retries. I suspect io.LimitReader() is the culprit here because it prevents it from being rewound.
+		// 2022-04-28 15:59:06 ERROR : stuff/video.avi: Failed to copy: uploading chunk failed: Put "https://censored.com/remote.php/dav/uploads/Admin/rclone-chunked-upload-censored/000006113198080-000006123683840": http2: Transport: cannot retry err [http2: Transport received Server's graceful shutdown GOAWAY] after Request.Body was written; define Request.GetBody to avoid this error
 		err = partObj.updateSimple(ctx, io.LimitReader(in, int64(partObj.fs.opt.ChunkSize)), partObj.remote, contentLength, "application/x-www-form-urlencoded", extraHeaders, o.fs.uploadURL, options...)
 		if err != nil {
 			return fmt.Errorf("uploading chunk failed: %w", err)
