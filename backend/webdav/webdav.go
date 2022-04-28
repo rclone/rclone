@@ -1459,7 +1459,7 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 		}
 		partObj.remote = fmt.Sprintf("%s/%015d-%015d", uploadDir, uploadedSize, uploadedSize+contentLength)
 		extraHeaders := map[string]string{}
-		err = partObj.updateSimple(ctx, io.LimitReader(in, int64(partObj.fs.opt.ChunkSize)), partObj.remote, contentLength, "", extraHeaders, o.fs.uploadURL, options...)
+		err = partObj.updateSimple(ctx, io.LimitReader(in, int64(partObj.fs.opt.ChunkSize)), partObj.remote, contentLength, "application/x-www-form-urlencoded", extraHeaders, o.fs.uploadURL, options...)
 		if err != nil {
 			return fmt.Errorf("uploading chunk failed: %w", err)
 		}
