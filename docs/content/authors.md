@@ -584,3 +584,4 @@ put them back in again.` >}}
   * Adrien Rey-Jarthon <jobs@adrienjarthon.com>
   * Nick Gooding <73336146+nickgooding@users.noreply.github.com>
   * Leroy van Logchem <lr.vanlogchem@gmail.com>
+  * Zsolt Ero <zsolt.ero@gmail.com>
