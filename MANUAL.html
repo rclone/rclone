@@ -81,7 +81,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Mar 18, 2022</p>
+<p class="date">Apr 29, 2022</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -144,6 +144,7 @@
 <li>Backblaze B2</li>
 <li>Box</li>
 <li>Ceph</li>
+<li>China Mobile Ecloud Elastic Object Storage (EOS)</li>
 <li>Citrix ShareFile</li>
 <li>C14</li>
 <li>DigitalOcean Spaces</li>
@@ -1839,7 +1840,7 @@ umount /path/to/local/mount</code></pre>
 <p>The size of the mounted file system will be set according to information retrieved from the remote, the same as returned by the <a href="https://rclone.org/commands/rclone_about/">rclone about</a> command. Remotes with unlimited storage may report the used size only, then an additional 1 PiB of free space is assumed. If the remote does not <a href="https://rclone.org/overview/#optional-features">support</a> the about feature at all, then 1 PiB is set as both the total and the free size.</p>
 <h2 id="installing-on-windows">Installing on Windows</h2>
 <p>To run rclone mount on Windows, you will need to download and install <a href="http://www.secfs.net/winfsp/">WinFsp</a>.</p>
-<p><a href="https://github.com/billziss-gh/winfsp">WinFsp</a> is an open-source Windows File System Proxy which makes it easy to write user space file systems for Windows. It provides a FUSE emulation layer which rclone uses combination with <a href="https://github.com/billziss-gh/cgofuse">cgofuse</a>. Both of these packages are by Bill Zissimopoulos who was very helpful during the implementation of rclone mount for Windows.</p>
+<p><a href="https://github.com/winfsp/winfsp">WinFsp</a> is an open-source Windows File System Proxy which makes it easy to write user space file systems for Windows. It provides a FUSE emulation layer which rclone uses combination with <a href="https://github.com/winfsp/cgofuse">cgofuse</a>. Both of these packages are by Bill Zissimopoulos who was very helpful during the implementation of rclone mount for Windows.</p>
 <h3 id="mounting-modes-on-windows">Mounting modes on windows</h3>
 <p>Unlike other operating systems, Microsoft Windows provides a different filesystem type for network and fixed drives. It optimises access on the assumption fixed disk drives are fast and reliable, while network drives have relatively high latency and less reliability. Some settings can also be differentiated between the two types, for example that Windows Explorer should just display icons and not create preview thumbnails for image and video files on network drives.</p>
 <p>In most cases, rclone will mount the remote as a normal, fixed disk drive by default. However, you can also choose to mount it as a remote network drive, often described as a network share. If you mount an rclone remote using the default, fixed drive mode and experience unexpected program errors, freezes or other issues, consider mounting as a network drive instead.</p>
@@ -1873,7 +1874,7 @@ rclone mount remote:path/to/files * --volname \\cloud\remote</code></pre>
 <p>Drives created as Administrator are not visible to other accounts, not even an account that was elevated to Administrator with the User Account Control (UAC) feature. A result of this is that if you mount to a drive letter from a Command Prompt run as Administrator, and then try to access the same drive from Windows Explorer (which does not run as Administrator), you will not be able to see the mounted drive.</p>
 <p>If you don't need to access the drive from applications running with administrative privileges, the easiest way around this is to always create the mount from a non-elevated command prompt.</p>
 <p>To make mapped drives available to the user account that created them regardless if elevated or not, there is a special Windows setting called <a href="https://docs.microsoft.com/en-us/troubleshoot/windows-client/networking/mapped-drives-not-available-from-elevated-command#detail-to-configure-the-enablelinkedconnections-registry-entry">linked connections</a> that can be enabled.</p>
-<p>It is also possible to make a drive mount available to everyone on the system, by running the process creating it as the built-in SYSTEM account. There are several ways to do this: One is to use the command-line utility <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/psexec">PsExec</a>, from Microsoft's Sysinternals suite, which has option <code>-s</code> to start processes as the SYSTEM account. Another alternative is to run the mount command from a Windows Scheduled Task, or a Windows Service, configured to run as the SYSTEM account. A third alternative is to use the <a href="https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture">WinFsp.Launcher infrastructure</a>). Note that when running rclone as another user, it will not use the configuration file from your profile unless you tell it to with the <a href="https://rclone.org/docs/#config-config-file"><code>--config</code></a> option. Read more in the <a href="https://rclone.org/install/">install documentation</a>.</p>
+<p>It is also possible to make a drive mount available to everyone on the system, by running the process creating it as the built-in SYSTEM account. There are several ways to do this: One is to use the command-line utility <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/psexec">PsExec</a>, from Microsoft's Sysinternals suite, which has option <code>-s</code> to start processes as the SYSTEM account. Another alternative is to run the mount command from a Windows Scheduled Task, or a Windows Service, configured to run as the SYSTEM account. A third alternative is to use the <a href="https://github.com/winfsp/winfsp/wiki/WinFsp-Service-Architecture">WinFsp.Launcher infrastructure</a>). Note that when running rclone as another user, it will not use the configuration file from your profile unless you tell it to with the <a href="https://rclone.org/docs/#config-config-file"><code>--config</code></a> option. Read more in the <a href="https://rclone.org/install/">install documentation</a>.</p>
 <p>Note that mapping to a directory path, instead of a drive letter, does not suffer from the same limitations.</p>
 <h2 id="limitations">Limitations</h2>
 <p>Without the use of <code>--vfs-cache-mode</code> this can only write files sequentially, it can only seek when reading. This means that many applications won't work with their files on an rclone mount without <code>--vfs-cache-mode writes</code> or <code>--vfs-cache-mode full</code>. See the <a href="#vfs-file-caching">VFS File Caching</a> section for more info.</p>
@@ -1936,7 +1937,7 @@ WantedBy=multi-user.target</code></pre>
 <p>Cloud storage objects have lots of properties which aren't like disk files - you can't extend them or write to the middle of them, so the VFS layer has to deal with that. Because there is no one right way of doing this there are various options explained below.</p>
 <p>The VFS layer also implements a directory cache - this caches info about files and directories (but not the data) in memory.</p>
 <h2 id="vfs-directory-cache">VFS Directory Cache</h2>
-<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the mount will appear immediately or invalidate the cache.</p>
+<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the VFS will appear immediately or invalidate the cache.</p>
 <pre><code>--dir-cache-time duration   Time to cache directory entries for (default 5m0s)
 --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)</code></pre>
 <p>However, changes made directly on the cloud storage by the web interface or a different copy of rclone will only be picked up once the directory cache expires if the backend configured does not support polling for changes. If the backend supports polling, changes will be picked up within the polling interval.</p>
@@ -2013,19 +2014,19 @@ WantedBy=multi-user.target</code></pre>
 <pre><code>--no-checksum     Don&#39;t compare checksums on up/download.
 --no-modtime      Don&#39;t read/write the modification time (can speed things up).
 --no-seek         Don&#39;t allow seeking in files.
---read-only       Mount read-only.</code></pre>
+--read-only       Only allow read-only access.</code></pre>
 <p>Sometimes rclone is delivered reads or writes out of order. Rather than seeking rclone will wait a short time for the in sequence read or write to come in. These flags only come into effect when not using an on disk cache file.</p>
 <pre><code>--vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
 --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)</code></pre>
-<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from cache (the related global flag <code>--checkers</code> have no effect on mount).</p>
+<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from the cache (the related global flag <code>--checkers</code> has no effect on the VFS).</p>
 <pre><code>--transfers int  Number of file transfers to run in parallel (default 4)</code></pre>
 <h2 id="vfs-case-sensitivity">VFS Case Sensitivity</h2>
 <p>Linux file systems are case-sensitive: two files can differ only by case, and the exact case must be used when opening a file.</p>
 <p>File systems in modern Windows are case-insensitive but case-preserving: although existing files can be opened using any case, the exact case used to create the file is preserved and available for programs to query. It is not allowed for two files in the same directory to differ only by case.</p>
 <p>Usually file systems on macOS are case-insensitive. It is possible to make macOS file systems case-sensitive but that is not the default.</p>
-<p>The <code>--vfs-case-insensitive</code> mount flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the mounted file system as-is. If the flag is "true" (or appears without a value on command line), rclone may perform a "fixup" as explained below.</p>
-<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on mounted file system. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by an underlying mounted file system.</p>
-<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system mounted by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
+<p>The <code>--vfs-case-insensitive</code> VFS flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the remote as-is. If the flag is "true" (or appears without a value on the command line), rclone may perform a "fixup" as explained below.</p>
+<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on the remote. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by the underlying remote.</p>
+<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system presented by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
 <p>If the flag is not provided on the command line, then its default value depends on the operating system where rclone runs: "true" on Windows and macOS, "false" otherwise. If the flag is provided without a value, then it is "true".</p>
 <h2 id="alternate-report-of-used-bytes">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
@@ -2058,7 +2059,7 @@ WantedBy=multi-user.target</code></pre>
       --noapplexattr                           Ignore all &quot;com.apple.*&quot; extended attributes (supported on OSX only)
   -o, --option stringArray                     Option for libfuse/WinFsp (repeat if required)
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                              Mount read-only
+      --read-only                              Only allow read-only access
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
       --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
       --vfs-cache-max-age duration             Max age of objects in the cache (default 1h0m0s)
@@ -2299,7 +2300,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <p>Cloud storage objects have lots of properties which aren't like disk files - you can't extend them or write to the middle of them, so the VFS layer has to deal with that. Because there is no one right way of doing this there are various options explained below.</p>
 <p>The VFS layer also implements a directory cache - this caches info about files and directories (but not the data) in memory.</p>
 <h2 id="vfs-directory-cache-1">VFS Directory Cache</h2>
-<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the mount will appear immediately or invalidate the cache.</p>
+<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the VFS will appear immediately or invalidate the cache.</p>
 <pre><code>--dir-cache-time duration   Time to cache directory entries for (default 5m0s)
 --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)</code></pre>
 <p>However, changes made directly on the cloud storage by the web interface or a different copy of rclone will only be picked up once the directory cache expires if the backend configured does not support polling for changes. If the backend supports polling, changes will be picked up within the polling interval.</p>
@@ -2376,19 +2377,19 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <pre><code>--no-checksum     Don&#39;t compare checksums on up/download.
 --no-modtime      Don&#39;t read/write the modification time (can speed things up).
 --no-seek         Don&#39;t allow seeking in files.
---read-only       Mount read-only.</code></pre>
+--read-only       Only allow read-only access.</code></pre>
 <p>Sometimes rclone is delivered reads or writes out of order. Rather than seeking rclone will wait a short time for the in sequence read or write to come in. These flags only come into effect when not using an on disk cache file.</p>
 <pre><code>--vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
 --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)</code></pre>
-<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from cache (the related global flag <code>--checkers</code> have no effect on mount).</p>
+<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from the cache (the related global flag <code>--checkers</code> has no effect on the VFS).</p>
 <pre><code>--transfers int  Number of file transfers to run in parallel (default 4)</code></pre>
 <h2 id="vfs-case-sensitivity-1">VFS Case Sensitivity</h2>
 <p>Linux file systems are case-sensitive: two files can differ only by case, and the exact case must be used when opening a file.</p>
 <p>File systems in modern Windows are case-insensitive but case-preserving: although existing files can be opened using any case, the exact case used to create the file is preserved and available for programs to query. It is not allowed for two files in the same directory to differ only by case.</p>
 <p>Usually file systems on macOS are case-insensitive. It is possible to make macOS file systems case-sensitive but that is not the default.</p>
-<p>The <code>--vfs-case-insensitive</code> mount flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the mounted file system as-is. If the flag is "true" (or appears without a value on command line), rclone may perform a "fixup" as explained below.</p>
-<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on mounted file system. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by an underlying mounted file system.</p>
-<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system mounted by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
+<p>The <code>--vfs-case-insensitive</code> VFS flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the remote as-is. If the flag is "true" (or appears without a value on the command line), rclone may perform a "fixup" as explained below.</p>
+<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on the remote. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by the underlying remote.</p>
+<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system presented by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
 <p>If the flag is not provided on the command line, then its default value depends on the operating system where rclone runs: "true" on Windows and macOS, "false" otherwise. If the flag is provided without a value, then it is "true".</p>
 <h2 id="alternate-report-of-used-bytes-1">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
@@ -2407,7 +2408,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
       --no-modtime                             Don&#39;t read/write the modification time (can speed things up)
       --no-seek                                Don&#39;t allow seeking in files
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                              Mount read-only
+      --read-only                              Only allow read-only access
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
       --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
       --vfs-cache-max-age duration             Max age of objects in the cache (default 1h0m0s)
@@ -2442,7 +2443,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <p>Cloud storage objects have lots of properties which aren't like disk files - you can't extend them or write to the middle of them, so the VFS layer has to deal with that. Because there is no one right way of doing this there are various options explained below.</p>
 <p>The VFS layer also implements a directory cache - this caches info about files and directories (but not the data) in memory.</p>
 <h2 id="vfs-directory-cache-2">VFS Directory Cache</h2>
-<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the mount will appear immediately or invalidate the cache.</p>
+<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the VFS will appear immediately or invalidate the cache.</p>
 <pre><code>--dir-cache-time duration   Time to cache directory entries for (default 5m0s)
 --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)</code></pre>
 <p>However, changes made directly on the cloud storage by the web interface or a different copy of rclone will only be picked up once the directory cache expires if the backend configured does not support polling for changes. If the backend supports polling, changes will be picked up within the polling interval.</p>
@@ -2519,19 +2520,19 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <pre><code>--no-checksum     Don&#39;t compare checksums on up/download.
 --no-modtime      Don&#39;t read/write the modification time (can speed things up).
 --no-seek         Don&#39;t allow seeking in files.
---read-only       Mount read-only.</code></pre>
+--read-only       Only allow read-only access.</code></pre>
 <p>Sometimes rclone is delivered reads or writes out of order. Rather than seeking rclone will wait a short time for the in sequence read or write to come in. These flags only come into effect when not using an on disk cache file.</p>
 <pre><code>--vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
 --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)</code></pre>
-<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from cache (the related global flag <code>--checkers</code> have no effect on mount).</p>
+<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from the cache (the related global flag <code>--checkers</code> has no effect on the VFS).</p>
 <pre><code>--transfers int  Number of file transfers to run in parallel (default 4)</code></pre>
 <h2 id="vfs-case-sensitivity-2">VFS Case Sensitivity</h2>
 <p>Linux file systems are case-sensitive: two files can differ only by case, and the exact case must be used when opening a file.</p>
 <p>File systems in modern Windows are case-insensitive but case-preserving: although existing files can be opened using any case, the exact case used to create the file is preserved and available for programs to query. It is not allowed for two files in the same directory to differ only by case.</p>
 <p>Usually file systems on macOS are case-insensitive. It is possible to make macOS file systems case-sensitive but that is not the default.</p>
-<p>The <code>--vfs-case-insensitive</code> mount flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the mounted file system as-is. If the flag is "true" (or appears without a value on command line), rclone may perform a "fixup" as explained below.</p>
-<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on mounted file system. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by an underlying mounted file system.</p>
-<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system mounted by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
+<p>The <code>--vfs-case-insensitive</code> VFS flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the remote as-is. If the flag is "true" (or appears without a value on the command line), rclone may perform a "fixup" as explained below.</p>
+<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on the remote. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by the underlying remote.</p>
+<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system presented by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
 <p>If the flag is not provided on the command line, then its default value depends on the operating system where rclone runs: "true" on Windows and macOS, "false" otherwise. If the flag is provided without a value, then it is "true".</p>
 <h2 id="alternate-report-of-used-bytes-2">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
@@ -2567,7 +2568,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
       --noapplexattr                           Ignore all &quot;com.apple.*&quot; extended attributes (supported on OSX only)
   -o, --option stringArray                     Option for libfuse/WinFsp (repeat if required)
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                              Mount read-only
+      --read-only                              Only allow read-only access
       --socket-addr string                     Address &lt;host:port&gt; or absolute path (default: /run/docker/plugins/rclone.sock)
       --socket-gid int                         GID for unix socket (default: current process GID) (default 1000)
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
@@ -2606,7 +2607,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <p>Cloud storage objects have lots of properties which aren't like disk files - you can't extend them or write to the middle of them, so the VFS layer has to deal with that. Because there is no one right way of doing this there are various options explained below.</p>
 <p>The VFS layer also implements a directory cache - this caches info about files and directories (but not the data) in memory.</p>
 <h2 id="vfs-directory-cache-3">VFS Directory Cache</h2>
-<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the mount will appear immediately or invalidate the cache.</p>
+<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the VFS will appear immediately or invalidate the cache.</p>
 <pre><code>--dir-cache-time duration   Time to cache directory entries for (default 5m0s)
 --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)</code></pre>
 <p>However, changes made directly on the cloud storage by the web interface or a different copy of rclone will only be picked up once the directory cache expires if the backend configured does not support polling for changes. If the backend supports polling, changes will be picked up within the polling interval.</p>
@@ -2683,19 +2684,19 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
 <pre><code>--no-checksum     Don&#39;t compare checksums on up/download.
 --no-modtime      Don&#39;t read/write the modification time (can speed things up).
 --no-seek         Don&#39;t allow seeking in files.
---read-only       Mount read-only.</code></pre>
+--read-only       Only allow read-only access.</code></pre>
 <p>Sometimes rclone is delivered reads or writes out of order. Rather than seeking rclone will wait a short time for the in sequence read or write to come in. These flags only come into effect when not using an on disk cache file.</p>
 <pre><code>--vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
 --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)</code></pre>
-<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from cache (the related global flag <code>--checkers</code> have no effect on mount).</p>
+<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from the cache (the related global flag <code>--checkers</code> has no effect on the VFS).</p>
 <pre><code>--transfers int  Number of file transfers to run in parallel (default 4)</code></pre>
 <h2 id="vfs-case-sensitivity-3">VFS Case Sensitivity</h2>
 <p>Linux file systems are case-sensitive: two files can differ only by case, and the exact case must be used when opening a file.</p>
 <p>File systems in modern Windows are case-insensitive but case-preserving: although existing files can be opened using any case, the exact case used to create the file is preserved and available for programs to query. It is not allowed for two files in the same directory to differ only by case.</p>
 <p>Usually file systems on macOS are case-insensitive. It is possible to make macOS file systems case-sensitive but that is not the default.</p>
-<p>The <code>--vfs-case-insensitive</code> mount flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the mounted file system as-is. If the flag is "true" (or appears without a value on command line), rclone may perform a "fixup" as explained below.</p>
-<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on mounted file system. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by an underlying mounted file system.</p>
-<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system mounted by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
+<p>The <code>--vfs-case-insensitive</code> VFS flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the remote as-is. If the flag is "true" (or appears without a value on the command line), rclone may perform a "fixup" as explained below.</p>
+<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on the remote. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by the underlying remote.</p>
+<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system presented by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
 <p>If the flag is not provided on the command line, then its default value depends on the operating system where rclone runs: "true" on Windows and macOS, "false" otherwise. If the flag is provided without a value, then it is "true".</p>
 <h2 id="alternate-report-of-used-bytes-3">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
@@ -2748,7 +2749,7 @@ ffmpeg - | rclone rcat remote:path/to/file</code></pre>
       --passive-port string                    Passive port range to use (default &quot;30000-32000&quot;)
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
       --public-ip string                       Public IP address to advertise for passive connections
-      --read-only                              Mount read-only
+      --read-only                              Only allow read-only access
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
       --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
       --user string                            User name for authentication (default &quot;anonymous&quot;)
@@ -2881,7 +2882,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Cloud storage objects have lots of properties which aren't like disk files - you can't extend them or write to the middle of them, so the VFS layer has to deal with that. Because there is no one right way of doing this there are various options explained below.</p>
 <p>The VFS layer also implements a directory cache - this caches info about files and directories (but not the data) in memory.</p>
 <h2 id="vfs-directory-cache-4">VFS Directory Cache</h2>
-<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the mount will appear immediately or invalidate the cache.</p>
+<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the VFS will appear immediately or invalidate the cache.</p>
 <pre><code>--dir-cache-time duration   Time to cache directory entries for (default 5m0s)
 --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)</code></pre>
 <p>However, changes made directly on the cloud storage by the web interface or a different copy of rclone will only be picked up once the directory cache expires if the backend configured does not support polling for changes. If the backend supports polling, changes will be picked up within the polling interval.</p>
@@ -2958,19 +2959,19 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <pre><code>--no-checksum     Don&#39;t compare checksums on up/download.
 --no-modtime      Don&#39;t read/write the modification time (can speed things up).
 --no-seek         Don&#39;t allow seeking in files.
---read-only       Mount read-only.</code></pre>
+--read-only       Only allow read-only access.</code></pre>
 <p>Sometimes rclone is delivered reads or writes out of order. Rather than seeking rclone will wait a short time for the in sequence read or write to come in. These flags only come into effect when not using an on disk cache file.</p>
 <pre><code>--vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
 --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)</code></pre>
-<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from cache (the related global flag <code>--checkers</code> have no effect on mount).</p>
+<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from the cache (the related global flag <code>--checkers</code> has no effect on the VFS).</p>
 <pre><code>--transfers int  Number of file transfers to run in parallel (default 4)</code></pre>
 <h2 id="vfs-case-sensitivity-4">VFS Case Sensitivity</h2>
 <p>Linux file systems are case-sensitive: two files can differ only by case, and the exact case must be used when opening a file.</p>
 <p>File systems in modern Windows are case-insensitive but case-preserving: although existing files can be opened using any case, the exact case used to create the file is preserved and available for programs to query. It is not allowed for two files in the same directory to differ only by case.</p>
 <p>Usually file systems on macOS are case-insensitive. It is possible to make macOS file systems case-sensitive but that is not the default.</p>
-<p>The <code>--vfs-case-insensitive</code> mount flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the mounted file system as-is. If the flag is "true" (or appears without a value on command line), rclone may perform a "fixup" as explained below.</p>
-<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on mounted file system. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by an underlying mounted file system.</p>
-<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system mounted by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
+<p>The <code>--vfs-case-insensitive</code> VFS flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the remote as-is. If the flag is "true" (or appears without a value on the command line), rclone may perform a "fixup" as explained below.</p>
+<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on the remote. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by the underlying remote.</p>
+<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system presented by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
 <p>If the flag is not provided on the command line, then its default value depends on the operating system where rclone runs: "true" on Windows and macOS, "false" otherwise. If the flag is provided without a value, then it is "true".</p>
 <h2 id="alternate-report-of-used-bytes-4">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
@@ -2994,7 +2995,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --no-seek                                Don&#39;t allow seeking in files
       --pass string                            Password for authentication
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                              Mount read-only
+      --read-only                              Only allow read-only access
       --realm string                           Realm for authentication
       --salt string                            Password hashing salt (default &quot;dlPL2MqE&quot;)
       --server-read-timeout duration           Timeout for server reading data (default 1h0m0s)
@@ -3207,7 +3208,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Cloud storage objects have lots of properties which aren't like disk files - you can't extend them or write to the middle of them, so the VFS layer has to deal with that. Because there is no one right way of doing this there are various options explained below.</p>
 <p>The VFS layer also implements a directory cache - this caches info about files and directories (but not the data) in memory.</p>
 <h2 id="vfs-directory-cache-5">VFS Directory Cache</h2>
-<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the mount will appear immediately or invalidate the cache.</p>
+<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the VFS will appear immediately or invalidate the cache.</p>
 <pre><code>--dir-cache-time duration   Time to cache directory entries for (default 5m0s)
 --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)</code></pre>
 <p>However, changes made directly on the cloud storage by the web interface or a different copy of rclone will only be picked up once the directory cache expires if the backend configured does not support polling for changes. If the backend supports polling, changes will be picked up within the polling interval.</p>
@@ -3284,19 +3285,19 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <pre><code>--no-checksum     Don&#39;t compare checksums on up/download.
 --no-modtime      Don&#39;t read/write the modification time (can speed things up).
 --no-seek         Don&#39;t allow seeking in files.
---read-only       Mount read-only.</code></pre>
+--read-only       Only allow read-only access.</code></pre>
 <p>Sometimes rclone is delivered reads or writes out of order. Rather than seeking rclone will wait a short time for the in sequence read or write to come in. These flags only come into effect when not using an on disk cache file.</p>
 <pre><code>--vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
 --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)</code></pre>
-<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from cache (the related global flag <code>--checkers</code> have no effect on mount).</p>
+<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from the cache (the related global flag <code>--checkers</code> has no effect on the VFS).</p>
 <pre><code>--transfers int  Number of file transfers to run in parallel (default 4)</code></pre>
 <h2 id="vfs-case-sensitivity-5">VFS Case Sensitivity</h2>
 <p>Linux file systems are case-sensitive: two files can differ only by case, and the exact case must be used when opening a file.</p>
 <p>File systems in modern Windows are case-insensitive but case-preserving: although existing files can be opened using any case, the exact case used to create the file is preserved and available for programs to query. It is not allowed for two files in the same directory to differ only by case.</p>
 <p>Usually file systems on macOS are case-insensitive. It is possible to make macOS file systems case-sensitive but that is not the default.</p>
-<p>The <code>--vfs-case-insensitive</code> mount flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the mounted file system as-is. If the flag is "true" (or appears without a value on command line), rclone may perform a "fixup" as explained below.</p>
-<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on mounted file system. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by an underlying mounted file system.</p>
-<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system mounted by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
+<p>The <code>--vfs-case-insensitive</code> VFS flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the remote as-is. If the flag is "true" (or appears without a value on the command line), rclone may perform a "fixup" as explained below.</p>
+<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on the remote. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by the underlying remote.</p>
+<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system presented by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
 <p>If the flag is not provided on the command line, then its default value depends on the operating system where rclone runs: "true" on Windows and macOS, "false" otherwise. If the flag is provided without a value, then it is "true".</p>
 <h2 id="alternate-report-of-used-bytes-5">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
@@ -3348,7 +3349,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --no-seek                                Don&#39;t allow seeking in files
       --pass string                            Password for authentication
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                              Mount read-only
+      --read-only                              Only allow read-only access
       --stdio                                  Run an sftp server on run stdin/stdout
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
       --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
@@ -3482,7 +3483,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <p>Cloud storage objects have lots of properties which aren't like disk files - you can't extend them or write to the middle of them, so the VFS layer has to deal with that. Because there is no one right way of doing this there are various options explained below.</p>
 <p>The VFS layer also implements a directory cache - this caches info about files and directories (but not the data) in memory.</p>
 <h2 id="vfs-directory-cache-6">VFS Directory Cache</h2>
-<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the mount will appear immediately or invalidate the cache.</p>
+<p>Using the <code>--dir-cache-time</code> flag, you can control how long a directory should be considered up to date and not refreshed from the backend. Changes made through the VFS will appear immediately or invalidate the cache.</p>
 <pre><code>--dir-cache-time duration   Time to cache directory entries for (default 5m0s)
 --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable (default 1m0s)</code></pre>
 <p>However, changes made directly on the cloud storage by the web interface or a different copy of rclone will only be picked up once the directory cache expires if the backend configured does not support polling for changes. If the backend supports polling, changes will be picked up within the polling interval.</p>
@@ -3559,19 +3560,19 @@ htpasswd -B htpasswd anotherUser</code></pre>
 <pre><code>--no-checksum     Don&#39;t compare checksums on up/download.
 --no-modtime      Don&#39;t read/write the modification time (can speed things up).
 --no-seek         Don&#39;t allow seeking in files.
---read-only       Mount read-only.</code></pre>
+--read-only       Only allow read-only access.</code></pre>
 <p>Sometimes rclone is delivered reads or writes out of order. Rather than seeking rclone will wait a short time for the in sequence read or write to come in. These flags only come into effect when not using an on disk cache file.</p>
 <pre><code>--vfs-read-wait duration   Time to wait for in-sequence read before seeking (default 20ms)
 --vfs-write-wait duration  Time to wait for in-sequence write before giving error (default 1s)</code></pre>
-<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from cache (the related global flag <code>--checkers</code> have no effect on mount).</p>
+<p>When using VFS write caching (<code>--vfs-cache-mode</code> with value writes or full), the global flag <code>--transfers</code> can be set to adjust the number of parallel uploads of modified files from the cache (the related global flag <code>--checkers</code> has no effect on the VFS).</p>
 <pre><code>--transfers int  Number of file transfers to run in parallel (default 4)</code></pre>
 <h2 id="vfs-case-sensitivity-6">VFS Case Sensitivity</h2>
 <p>Linux file systems are case-sensitive: two files can differ only by case, and the exact case must be used when opening a file.</p>
 <p>File systems in modern Windows are case-insensitive but case-preserving: although existing files can be opened using any case, the exact case used to create the file is preserved and available for programs to query. It is not allowed for two files in the same directory to differ only by case.</p>
 <p>Usually file systems on macOS are case-insensitive. It is possible to make macOS file systems case-sensitive but that is not the default.</p>
-<p>The <code>--vfs-case-insensitive</code> mount flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the mounted file system as-is. If the flag is "true" (or appears without a value on command line), rclone may perform a "fixup" as explained below.</p>
-<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on mounted file system. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by an underlying mounted file system.</p>
-<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system mounted by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
+<p>The <code>--vfs-case-insensitive</code> VFS flag controls how rclone handles these two cases. If its value is "false", rclone passes file names to the remote as-is. If the flag is "true" (or appears without a value on the command line), rclone may perform a "fixup" as explained below.</p>
+<p>The user may specify a file name to open/delete/rename/etc with a case different than what is stored on the remote. If an argument refers to an existing file with exactly the same name, then the case of the existing file on the disk will be used. However, if a file name with exactly the same name is not found but a name differing only by case exists, rclone will transparently fixup the name. This fixup happens only when an existing file is requested. Case sensitivity of file names created anew by rclone is controlled by the underlying remote.</p>
+<p>Note that case sensitivity of the operating system running rclone (the target) may differ from case sensitivity of a file system presented by rclone (the source). The flag controls whether "fixup" is performed to satisfy the target.</p>
 <p>If the flag is not provided on the command line, then its default value depends on the operating system where rclone runs: "true" on Windows and macOS, "false" otherwise. If the flag is provided without a value, then it is "true".</p>
 <h2 id="alternate-report-of-used-bytes-6">Alternate report of used bytes</h2>
 <p>Some backends, most notably S3, do not report the amount of bytes used. If you need this information to be available when running <code>df</code> on the filesystem, then pass the flag <code>--vfs-used-is-size</code> to rclone. With this flag set, instead of relying on the backend to report this information, rclone will scan the whole remote similar to <code>rclone size</code> and compute the total used space itself.</p>
@@ -3628,7 +3629,7 @@ htpasswd -B htpasswd anotherUser</code></pre>
       --no-seek                                Don&#39;t allow seeking in files
       --pass string                            Password for authentication
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                              Mount read-only
+      --read-only                              Only allow read-only access
       --realm string                           Realm for authentication (default &quot;rclone&quot;)
       --server-read-timeout duration           Timeout for server reading data (default 1h0m0s)
       --server-write-timeout duration          Timeout for server writing data (default 1h0m0s)
@@ -4118,11 +4119,11 @@ pass = PDPcQVVjVtzFY-GTdDFozqBhTdsPg3qH</code></pre>
 <h3 id="human-readable">--human-readable</h3>
 <p>Rclone commands output values for sizes (e.g. number of bytes) and counts (e.g. number of files) either as <em>raw</em> numbers, or in <em>human-readable</em> format.</p>
 <p>In human-readable format the values are scaled to larger units, indicated with a suffix shown after the value, and rounded to three decimals. Rclone consistently uses binary units (powers of 2) for sizes and decimal units (powers of 10) for counts. The unit prefix for size is according to IEC standard notation, e.g. <code>Ki</code> for kibi. Used with byte unit, <code>1 KiB</code> means 1024 Byte. In list type of output, only the unit prefix appended to the value (e.g. <code>9.762Ki</code>), while in more textual output the full unit is shown (e.g. <code>9.762 KiB</code>). For counts the SI standard notation is used, e.g. prefix <code>k</code> for kilo. Used with file counts, <code>1k</code> means 1000 files.</p>
-<p>The various <a href="commands/rclone_ls/">list</a> commands output raw numbers by default. Option <code>--human-readable</code> will make them output values in human-readable format instead (with the short unit prefix).</p>
-<p>The <a href="commands/rclone_about/">about</a> command outputs human-readable by default, with a command-specific option <code>--full</code> to output the raw numbers instead.</p>
-<p>Command <a href="commands/rclone_size/">size</a> outputs both human-readable and raw numbers in the same output.</p>
-<p>The <a href="commands/rclone_tree/">tree</a> command also considers <code>--human-readable</code>, but it will not use the exact same notation as the other commands: It rounds to one decimal, and uses single letter suffix, e.g. <code>K</code> instead of <code>Ki</code>. The reason for this is that it relies on an external library.</p>
-<p>The interactive command <a href="commands/rclone_ncdu/">ncdu</a> shows human-readable by default, and responds to key <code>u</code> for toggling human-readable format.</p>
+<p>The various <a href="https://rclone.org/commands/rclone_ls/">list</a> commands output raw numbers by default. Option <code>--human-readable</code> will make them output values in human-readable format instead (with the short unit prefix).</p>
+<p>The <a href="https://rclone.org/commands/rclone_about/">about</a> command outputs human-readable by default, with a command-specific option <code>--full</code> to output the raw numbers instead.</p>
+<p>Command <a href="https://rclone.org/commands/rclone_size/">size</a> outputs both human-readable and raw numbers in the same output.</p>
+<p>The <a href="https://rclone.org/commands/rclone_tree/">tree</a> command also considers <code>--human-readable</code>, but it will not use the exact same notation as the other commands: It rounds to one decimal, and uses single letter suffix, e.g. <code>K</code> instead of <code>Ki</code>. The reason for this is that it relies on an external library.</p>
+<p>The interactive command <a href="https://rclone.org/commands/rclone_ncdu/">ncdu</a> shows human-readable by default, and responds to key <code>u</code> for toggling human-readable format.</p>
 <h3 id="ignore-case-sync">--ignore-case-sync</h3>
 <p>Using this option will cause rclone to ignore the case of the files when synchronizing so files will not be copied/synced when the existing filenames are the same, even if the casing is different.</p>
 <h3 id="ignore-checksum">--ignore-checksum</h3>
@@ -4434,6 +4435,7 @@ y/n/s/!/q&gt; n</code></pre>
 <h3 id="transfersn">--transfers=N</h3>
 <p>The number of file transfers to run in parallel. It can sometimes be useful to set this to a smaller number if the remote is giving a lot of timeouts or bigger if you have lots of bandwidth and a fast remote.</p>
 <p>The default is to run 4 file transfers in parallel.</p>
+<p>Look at --multi-thread-streams if you would like to control single file transfers.</p>
 <h3 id="u---update">-u, --update</h3>
 <p>This forces rclone to skip any files which exist on the destination and have a modified time that is newer than the source file.</p>
 <p>This can be useful in avoiding needless transfers when transferring to a remote which doesn't support modification times directly (or when using <code>--use-server-modtime</code> to avoid extra API calls) as it is more accurate than a <code>--size-only</code> check and faster than using <code>--checksum</code>. On such remotes (or when using <code>--use-server-modtime</code>) the time checked will be the uploaded time.</p>
@@ -7805,7 +7807,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.58.0&quot;)
+      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.58.1&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -9556,6 +9558,7 @@ y/e/d&gt; y</code></pre>
 <li>AWS S3</li>
 <li>Alibaba Cloud (Aliyun) Object Storage System (OSS)</li>
 <li>Ceph</li>
+<li>China Mobile Ecloud Elastic Object Storage (EOS)</li>
 <li>DigitalOcean Spaces</li>
 <li>Dreamhost</li>
 <li>IBM COS S3</li>
@@ -9593,7 +9596,7 @@ name&gt; remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-XX / Amazon S3 Compliant Storage Providers including AWS, Ceph, Dreamhost, IBM COS, Minio, and Tencent COS
+XX / Amazon S3 Compliant Storage Providers including AWS, Ceph, ChinaMobile, Dreamhost, IBM COS, Minio, and Tencent COS
    \ &quot;s3&quot;
 [snip]
 Storage&gt; s3
@@ -9979,7 +9982,7 @@ y/e/d&gt;</code></pre>
 </blockquote>
 <p>As mentioned in the <a href="#hashes">Hashes</a> section, small files that are not uploaded as multipart, use a different tag, causing the upload to fail. A simple solution is to set the <code>--s3-upload-cutoff 0</code> and force all the files to be uploaded as multipart.</p>
 <h3 id="standard-options-3">Standard options</h3>
-<p>Here are the standard options specific to s3 (Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, RackCorp, SeaweedFS, and Tencent COS).</p>
+<p>Here are the standard options specific to s3 (Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi).</p>
 <h4 id="s3-provider">--s3-provider</h4>
 <p>Choose your S3 provider.</p>
 <p>Properties:</p>
@@ -10001,6 +10004,10 @@ y/e/d&gt;</code></pre>
 <li>"Ceph"
 <ul>
 <li>Ceph Object Storage</li>
+</ul></li>
+<li>"ChinaMobile"
+<ul>
+<li>China Mobile Ecloud Elastic Object Storage (EOS)</li>
 </ul></li>
 <li>"DigitalOcean"
 <ul>
@@ -10357,7 +10364,7 @@ y/e/d&gt;</code></pre>
 <ul>
 <li>Config: region</li>
 <li>Env Var: RCLONE_S3_REGION</li>
-<li>Provider: !AWS,Alibaba,RackCorp,Scaleway,Storj,TencentCOS</li>
+<li>Provider: !AWS,Alibaba,ChinaMobile,RackCorp,Scaleway,Storj,TencentCOS</li>
 <li>Type: string</li>
 <li>Required: false</li>
 <li>Examples:
@@ -10386,6 +10393,140 @@ y/e/d&gt;</code></pre>
 <li>Required: false</li>
 </ul>
 <h4 id="s3-endpoint-1">--s3-endpoint</h4>
+<p>Endpoint for China Mobile Ecloud Elastic Object Storage (EOS) API.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: endpoint</li>
+<li>Env Var: RCLONE_S3_ENDPOINT</li>
+<li>Provider: ChinaMobile</li>
+<li>Type: string</li>
+<li>Required: false</li>
+<li>Examples:
+<ul>
+<li>"eos-wuxi-1.cmecloud.cn"
+<ul>
+<li>The default endpoint - a good choice if you are unsure.</li>
+<li>East China (Suzhou)</li>
+</ul></li>
+<li>"eos-jinan-1.cmecloud.cn"
+<ul>
+<li>East China (Jinan)</li>
+</ul></li>
+<li>"eos-ningbo-1.cmecloud.cn"
+<ul>
+<li>East China (Hangzhou)</li>
+</ul></li>
+<li>"eos-shanghai-1.cmecloud.cn"
+<ul>
+<li>East China (Shanghai-1)</li>
+</ul></li>
+<li>"eos-zhengzhou-1.cmecloud.cn"
+<ul>
+<li>Central China (Zhengzhou)</li>
+</ul></li>
+<li>"eos-hunan-1.cmecloud.cn"
+<ul>
+<li>Central China (Changsha-1)</li>
+</ul></li>
+<li>"eos-zhuzhou-1.cmecloud.cn"
+<ul>
+<li>Central China (Changsha-2)</li>
+</ul></li>
+<li>"eos-guangzhou-1.cmecloud.cn"
+<ul>
+<li>South China (Guangzhou-2)</li>
+</ul></li>
+<li>"eos-dongguan-1.cmecloud.cn"
+<ul>
+<li>South China (Guangzhou-3)</li>
+</ul></li>
+<li>"eos-beijing-1.cmecloud.cn"
+<ul>
+<li>North China (Beijing-1)</li>
+</ul></li>
+<li>"eos-beijing-2.cmecloud.cn"
+<ul>
+<li>North China (Beijing-2)</li>
+</ul></li>
+<li>"eos-beijing-4.cmecloud.cn"
+<ul>
+<li>North China (Beijing-3)</li>
+</ul></li>
+<li>"eos-huhehaote-1.cmecloud.cn"
+<ul>
+<li>North China (Huhehaote)</li>
+</ul></li>
+<li>"eos-chengdu-1.cmecloud.cn"
+<ul>
+<li>Southwest China (Chengdu)</li>
+</ul></li>
+<li>"eos-chongqing-1.cmecloud.cn"
+<ul>
+<li>Southwest China (Chongqing)</li>
+</ul></li>
+<li>"eos-guiyang-1.cmecloud.cn"
+<ul>
+<li>Southwest China (Guiyang)</li>
+</ul></li>
+<li>"eos-xian-1.cmecloud.cn"
+<ul>
+<li>Nouthwest China (Xian)</li>
+</ul></li>
+<li>"eos-yunnan.cmecloud.cn"
+<ul>
+<li>Yunnan China (Kunming)</li>
+</ul></li>
+<li>"eos-yunnan-2.cmecloud.cn"
+<ul>
+<li>Yunnan China (Kunming-2)</li>
+</ul></li>
+<li>"eos-tianjin-1.cmecloud.cn"
+<ul>
+<li>Tianjin China (Tianjin)</li>
+</ul></li>
+<li>"eos-jilin-1.cmecloud.cn"
+<ul>
+<li>Jilin China (Changchun)</li>
+</ul></li>
+<li>"eos-hubei-1.cmecloud.cn"
+<ul>
+<li>Hubei China (Xiangyan)</li>
+</ul></li>
+<li>"eos-jiangxi-1.cmecloud.cn"
+<ul>
+<li>Jiangxi China (Nanchang)</li>
+</ul></li>
+<li>"eos-gansu-1.cmecloud.cn"
+<ul>
+<li>Gansu China (Lanzhou)</li>
+</ul></li>
+<li>"eos-shanxi-1.cmecloud.cn"
+<ul>
+<li>Shanxi China (Taiyuan)</li>
+</ul></li>
+<li>"eos-liaoning-1.cmecloud.cn"
+<ul>
+<li>Liaoning China (Shenyang)</li>
+</ul></li>
+<li>"eos-hebei-1.cmecloud.cn"
+<ul>
+<li>Hebei China (Shijiazhuang)</li>
+</ul></li>
+<li>"eos-fujian-1.cmecloud.cn"
+<ul>
+<li>Fujian China (Xiamen)</li>
+</ul></li>
+<li>"eos-guangxi-1.cmecloud.cn"
+<ul>
+<li>Guangxi China (Nanning)</li>
+</ul></li>
+<li>"eos-anhui-1.cmecloud.cn"
+<ul>
+<li>Anhui China (Huainan)</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="s3-endpoint-2">--s3-endpoint</h4>
 <p>Endpoint for IBM COS S3 API.</p>
 <p>Specify if using an IBM COS On Premise.</p>
 <p>Properties:</p>
@@ -10647,7 +10788,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-endpoint-2">--s3-endpoint</h4>
+<h4 id="s3-endpoint-3">--s3-endpoint</h4>
 <p>Endpoint for OSS API.</p>
 <p>Properties:</p>
 <ul>
@@ -10760,7 +10901,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-endpoint-3">--s3-endpoint</h4>
+<h4 id="s3-endpoint-4">--s3-endpoint</h4>
 <p>Endpoint for Scaleway Object Storage.</p>
 <p>Properties:</p>
 <ul>
@@ -10781,7 +10922,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-endpoint-4">--s3-endpoint</h4>
+<h4 id="s3-endpoint-5">--s3-endpoint</h4>
 <p>Endpoint for StackPath Object Storage.</p>
 <p>Properties:</p>
 <ul>
@@ -10806,7 +10947,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-endpoint-5">--s3-endpoint</h4>
+<h4 id="s3-endpoint-6">--s3-endpoint</h4>
 <p>Endpoint of the Shared Gateway.</p>
 <p>Properties:</p>
 <ul>
@@ -10831,7 +10972,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-endpoint-6">--s3-endpoint</h4>
+<h4 id="s3-endpoint-7">--s3-endpoint</h4>
 <p>Endpoint for Tencent COS API.</p>
 <p>Properties:</p>
 <ul>
@@ -10920,7 +11061,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-endpoint-7">--s3-endpoint</h4>
+<h4 id="s3-endpoint-8">--s3-endpoint</h4>
 <p>Endpoint for RackCorp Object Storage.</p>
 <p>Properties:</p>
 <ul>
@@ -11009,14 +11150,14 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-endpoint-8">--s3-endpoint</h4>
+<h4 id="s3-endpoint-9">--s3-endpoint</h4>
 <p>Endpoint for S3 API.</p>
 <p>Required when using an S3 clone.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: endpoint</li>
 <li>Env Var: RCLONE_S3_ENDPOINT</li>
-<li>Provider: !AWS,IBMCOS,TencentCOS,Alibaba,Scaleway,StackPath,Storj,RackCorp</li>
+<li>Provider: !AWS,IBMCOS,TencentCOS,Alibaba,ChinaMobile,Scaleway,StackPath,Storj,RackCorp</li>
 <li>Type: string</li>
 <li>Required: false</li>
 <li>Examples:
@@ -11190,6 +11331,140 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul>
 <h4 id="s3-location-constraint-1">--s3-location-constraint</h4>
+<p>Location constraint - must match endpoint.</p>
+<p>Used when creating buckets only.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: location_constraint</li>
+<li>Env Var: RCLONE_S3_LOCATION_CONSTRAINT</li>
+<li>Provider: ChinaMobile</li>
+<li>Type: string</li>
+<li>Required: false</li>
+<li>Examples:
+<ul>
+<li>"wuxi1"
+<ul>
+<li>East China (Suzhou)</li>
+</ul></li>
+<li>"jinan1"
+<ul>
+<li>East China (Jinan)</li>
+</ul></li>
+<li>"ningbo1"
+<ul>
+<li>East China (Hangzhou)</li>
+</ul></li>
+<li>"shanghai1"
+<ul>
+<li>East China (Shanghai-1)</li>
+</ul></li>
+<li>"zhengzhou1"
+<ul>
+<li>Central China (Zhengzhou)</li>
+</ul></li>
+<li>"hunan1"
+<ul>
+<li>Central China (Changsha-1)</li>
+</ul></li>
+<li>"zhuzhou1"
+<ul>
+<li>Central China (Changsha-2)</li>
+</ul></li>
+<li>"guangzhou1"
+<ul>
+<li>South China (Guangzhou-2)</li>
+</ul></li>
+<li>"dongguan1"
+<ul>
+<li>South China (Guangzhou-3)</li>
+</ul></li>
+<li>"beijing1"
+<ul>
+<li>North China (Beijing-1)</li>
+</ul></li>
+<li>"beijing2"
+<ul>
+<li>North China (Beijing-2)</li>
+</ul></li>
+<li>"beijing4"
+<ul>
+<li>North China (Beijing-3)</li>
+</ul></li>
+<li>"huhehaote1"
+<ul>
+<li>North China (Huhehaote)</li>
+</ul></li>
+<li>"chengdu1"
+<ul>
+<li>Southwest China (Chengdu)</li>
+</ul></li>
+<li>"chongqing1"
+<ul>
+<li>Southwest China (Chongqing)</li>
+</ul></li>
+<li>"guiyang1"
+<ul>
+<li>Southwest China (Guiyang)</li>
+</ul></li>
+<li>"xian1"
+<ul>
+<li>Nouthwest China (Xian)</li>
+</ul></li>
+<li>"yunnan"
+<ul>
+<li>Yunnan China (Kunming)</li>
+</ul></li>
+<li>"yunnan2"
+<ul>
+<li>Yunnan China (Kunming-2)</li>
+</ul></li>
+<li>"tianjin1"
+<ul>
+<li>Tianjin China (Tianjin)</li>
+</ul></li>
+<li>"jilin1"
+<ul>
+<li>Jilin China (Changchun)</li>
+</ul></li>
+<li>"hubei1"
+<ul>
+<li>Hubei China (Xiangyan)</li>
+</ul></li>
+<li>"jiangxi1"
+<ul>
+<li>Jiangxi China (Nanchang)</li>
+</ul></li>
+<li>"gansu1"
+<ul>
+<li>Gansu China (Lanzhou)</li>
+</ul></li>
+<li>"shanxi1"
+<ul>
+<li>Shanxi China (Taiyuan)</li>
+</ul></li>
+<li>"liaoning1"
+<ul>
+<li>Liaoning China (Shenyang)</li>
+</ul></li>
+<li>"hebei1"
+<ul>
+<li>Hebei China (Shijiazhuang)</li>
+</ul></li>
+<li>"fujian1"
+<ul>
+<li>Fujian China (Xiamen)</li>
+</ul></li>
+<li>"guangxi1"
+<ul>
+<li>Guangxi China (Nanning)</li>
+</ul></li>
+<li>"anhui1"
+<ul>
+<li>Anhui China (Huainan)</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="s3-location-constraint-2">--s3-location-constraint</h4>
 <p>Location constraint - must match endpoint when using IBM Cloud Public.</p>
 <p>For on-prem COS, do not make a selection from this list, hit enter.</p>
 <p>Properties:</p>
@@ -11331,7 +11606,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-location-constraint-2">--s3-location-constraint</h4>
+<h4 id="s3-location-constraint-3">--s3-location-constraint</h4>
 <p>Location constraint - the location where your bucket will be located and your data stored.</p>
 <p>Properties:</p>
 <ul>
@@ -11420,14 +11695,14 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-location-constraint-3">--s3-location-constraint</h4>
+<h4 id="s3-location-constraint-4">--s3-location-constraint</h4>
 <p>Location constraint - must be set to match the Region.</p>
 <p>Leave blank if not sure. Used when creating buckets only.</p>
 <p>Properties:</p>
 <ul>
 <li>Config: location_constraint</li>
 <li>Env Var: RCLONE_S3_LOCATION_CONSTRAINT</li>
-<li>Provider: !AWS,IBMCOS,Alibaba,RackCorp,Scaleway,StackPath,Storj,TencentCOS</li>
+<li>Provider: !AWS,IBMCOS,Alibaba,ChinaMobile,RackCorp,Scaleway,StackPath,Storj,TencentCOS</li>
 <li>Type: string</li>
 <li>Required: false</li>
 </ul>
@@ -11515,7 +11790,7 @@ y/e/d&gt;</code></pre>
 <ul>
 <li>Config: server_side_encryption</li>
 <li>Env Var: RCLONE_S3_SERVER_SIDE_ENCRYPTION</li>
-<li>Provider: AWS,Ceph,Minio</li>
+<li>Provider: AWS,Ceph,ChinaMobile,Minio</li>
 <li>Type: string</li>
 <li>Required: false</li>
 <li>Examples:
@@ -11634,6 +11909,35 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul>
 <h4 id="s3-storage-class-2">--s3-storage-class</h4>
+<p>The storage class to use when storing new objects in ChinaMobile.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: storage_class</li>
+<li>Env Var: RCLONE_S3_STORAGE_CLASS</li>
+<li>Provider: ChinaMobile</li>
+<li>Type: string</li>
+<li>Required: false</li>
+<li>Examples:
+<ul>
+<li>""
+<ul>
+<li>Default</li>
+</ul></li>
+<li>"STANDARD"
+<ul>
+<li>Standard storage class</li>
+</ul></li>
+<li>"GLACIER"
+<ul>
+<li>Archive storage mode</li>
+</ul></li>
+<li>"STANDARD_IA"
+<ul>
+<li>Infrequent access storage mode</li>
+</ul></li>
+</ul></li>
+</ul>
+<h4 id="s3-storage-class-3">--s3-storage-class</h4>
 <p>The storage class to use when storing new objects in Tencent COS.</p>
 <p>Properties:</p>
 <ul>
@@ -11662,7 +11966,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul></li>
 </ul>
-<h4 id="s3-storage-class-3">--s3-storage-class</h4>
+<h4 id="s3-storage-class-4">--s3-storage-class</h4>
 <p>The storage class to use when storing new objects in S3.</p>
 <p>Properties:</p>
 <ul>
@@ -11690,7 +11994,7 @@ y/e/d&gt;</code></pre>
 </ul></li>
 </ul>
 <h3 id="advanced-options-2">Advanced options</h3>
-<p>Here are the advanced options specific to s3 (Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, RackCorp, SeaweedFS, and Tencent COS).</p>
+<p>Here are the advanced options specific to s3 (Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi).</p>
 <h4 id="s3-bucket-acl">--s3-bucket-acl</h4>
 <p>Canned ACL used when creating buckets.</p>
 <p>For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl</p>
@@ -11742,7 +12046,7 @@ y/e/d&gt;</code></pre>
 <ul>
 <li>Config: sse_customer_algorithm</li>
 <li>Env Var: RCLONE_S3_SSE_CUSTOMER_ALGORITHM</li>
-<li>Provider: AWS,Ceph,Minio</li>
+<li>Provider: AWS,Ceph,ChinaMobile,Minio</li>
 <li>Type: string</li>
 <li>Required: false</li>
 <li>Examples:
@@ -11763,7 +12067,7 @@ y/e/d&gt;</code></pre>
 <ul>
 <li>Config: sse_customer_key</li>
 <li>Env Var: RCLONE_S3_SSE_CUSTOMER_KEY</li>
-<li>Provider: AWS,Ceph,Minio</li>
+<li>Provider: AWS,Ceph,ChinaMobile,Minio</li>
 <li>Type: string</li>
 <li>Required: false</li>
 <li>Examples:
@@ -11781,7 +12085,7 @@ y/e/d&gt;</code></pre>
 <ul>
 <li>Config: sse_customer_key_md5</li>
 <li>Env Var: RCLONE_S3_SSE_CUSTOMER_KEY_MD5</li>
-<li>Provider: AWS,Ceph,Minio</li>
+<li>Provider: AWS,Ceph,ChinaMobile,Minio</li>
 <li>Type: string</li>
 <li>Required: false</li>
 <li>Examples:
@@ -12278,7 +12582,7 @@ rclone copy /path/to/files spaces:my-new-space</code></pre>
     \ &quot;alias&quot;
     2 / Amazon Drive
     \ &quot;amazon cloud drive&quot;
-    3 / Amazon S3 Complaint Storage Providers (Dreamhost, Ceph, Minio, IBM COS)
+    3 / Amazon S3 Complaint Storage Providers (Dreamhost, Ceph, ChinaMobile, Minio, IBM COS)
     \ &quot;s3&quot;
     4 / Backblaze B2
     \ &quot;b2&quot;
@@ -12485,6 +12789,7 @@ location_constraint =
 acl = private
 server_side_encryption =
 storage_class =</code></pre>
+<p><a href="https://www.online.net/en/storage/c14-cold-storage">C14 Cold Storage</a> is the low-cost S3 Glacier alternative from Scaleway and it works the same way as on S3 by accepting the "GLACIER" <code>storage_class</code>. So you can configure your remote with the <code>storage_class = GLACIER</code> option to upload directly to C14. Don't forget that in this state you can't read files back after, you will need to restore them to "STANDARD" storage_class first before being able to read them (see "restore" section above)</p>
 <h3 id="lyve">Seagate Lyve Cloud</h3>
 <p><a href="https://www.seagate.com/gb/en/services/cloud/storage/">Seagate Lyve Cloud</a> is an S3 compatible object storage platform from <a href="https://seagate.com/">Seagate</a> intended for enterprise use.</p>
 <p>Here is a config run through for a remote called <code>remote</code> - you may choose a different name of course. Note that to create an access key and secret key you will need to create a service account first.</p>
@@ -12499,7 +12804,7 @@ name&gt; remote</code></pre>
 <pre><code>Type of storage to configure.
 Choose a number from below, or type in your own value.
 [snip]
-XX / Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, RackCorp, SeaweedFS, and Tencent COS
+XX / Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, ChinaMobile, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, RackCorp, SeaweedFS, and Tencent COS
    \ (s3)
 [snip]
 Storage&gt; s3</code></pre>
@@ -12624,7 +12929,7 @@ name&gt; wasabi
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-XX / Amazon S3 (also Dreamhost, Ceph, Minio)
+XX / Amazon S3 (also Dreamhost, Ceph, ChinaMobile, Minio)
    \ &quot;s3&quot;
 [snip]
 Storage&gt; s3
@@ -12726,7 +13031,7 @@ Type of storage to configure.
 Enter a string value. Press Enter for the default (&quot;&quot;).
 Choose a number from below, or type in your own value
 [snip]
- 4 / Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, and Tencent COS
+ 4 / Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, ChinaMobile, Digital Ocean, Dreamhost, IBM COS, Minio, and Tencent COS
    \ &quot;s3&quot;
 [snip]
 Storage&gt; s3
@@ -12814,6 +13119,248 @@ y) Yes this is OK
 e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
+<h3 id="china-mobile-ecloud-eos">China Mobile Ecloud Elastic Object Storage (EOS)</h3>
+<p>Here is an example of making an <a href="https:///ecloud.10086.cn/home/product-introduction/eos/">China Mobile Ecloud Elastic Object Storage (EOS)</a> configuration. First run:</p>
+<pre><code>rclone config</code></pre>
+<p>This will guide you through an interactive setup process.</p>
+<pre><code>No remotes found, make a new one?
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q&gt; n
+name&gt; ChinaMobile
+Option Storage.
+Type of storage to configure.
+Choose a number from below, or type in your own value.
+ ...
+ 5 / Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, ChinaMobile, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, RackCorp, SeaweedFS, and Tencent COS
+   \ (s3)
+ ...
+Storage&gt; s3
+Option provider.
+Choose your S3 provider.
+Choose a number from below, or type in your own value.
+Press Enter to leave empty.
+ ...
+ 4 / China Mobile Ecloud Elastic Object Storage (EOS)
+   \ (ChinaMobile)
+ ...
+provider&gt; ChinaMobile
+Option env_auth.
+Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars).
+Only applies if access_key_id and secret_access_key is blank.
+Choose a number from below, or type in your own boolean value (true or false).
+Press Enter for the default (false).
+ 1 / Enter AWS credentials in the next step.
+   \ (false)
+ 2 / Get AWS credentials from the environment (env vars or IAM).
+   \ (true)
+env_auth&gt;
+Option access_key_id.
+AWS Access Key ID.
+Leave blank for anonymous access or runtime credentials.
+Enter a value. Press Enter to leave empty.
+access_key_id&gt; accesskeyid
+Option secret_access_key.
+AWS Secret Access Key (password).
+Leave blank for anonymous access or runtime credentials.
+Enter a value. Press Enter to leave empty.
+secret_access_key&gt; secretaccesskey
+Option endpoint.
+Endpoint for China Mobile Ecloud Elastic Object Storage (EOS) API.
+Choose a number from below, or type in your own value.
+Press Enter to leave empty.
+   / The default endpoint - a good choice if you are unsure.
+ 1 | East China (Suzhou)
+   \ (eos-wuxi-1.cmecloud.cn)
+ 2 / East China (Jinan)
+   \ (eos-jinan-1.cmecloud.cn)
+ 3 / East China (Hangzhou)
+   \ (eos-ningbo-1.cmecloud.cn)
+ 4 / East China (Shanghai-1)
+   \ (eos-shanghai-1.cmecloud.cn)
+ 5 / Central China (Zhengzhou)
+   \ (eos-zhengzhou-1.cmecloud.cn)
+ 6 / Central China (Changsha-1)
+   \ (eos-hunan-1.cmecloud.cn)
+ 7 / Central China (Changsha-2)
+   \ (eos-zhuzhou-1.cmecloud.cn)
+ 8 / South China (Guangzhou-2)
+   \ (eos-guangzhou-1.cmecloud.cn)
+ 9 / South China (Guangzhou-3)
+   \ (eos-dongguan-1.cmecloud.cn)
+10 / North China (Beijing-1)
+   \ (eos-beijing-1.cmecloud.cn)
+11 / North China (Beijing-2)
+   \ (eos-beijing-2.cmecloud.cn)
+12 / North China (Beijing-3)
+   \ (eos-beijing-4.cmecloud.cn)
+13 / North China (Huhehaote)
+   \ (eos-huhehaote-1.cmecloud.cn)
+14 / Southwest China (Chengdu)
+   \ (eos-chengdu-1.cmecloud.cn)
+15 / Southwest China (Chongqing)
+   \ (eos-chongqing-1.cmecloud.cn)
+16 / Southwest China (Guiyang)
+   \ (eos-guiyang-1.cmecloud.cn)
+17 / Nouthwest China (Xian)
+   \ (eos-xian-1.cmecloud.cn)
+18 / Yunnan China (Kunming)
+   \ (eos-yunnan.cmecloud.cn)
+19 / Yunnan China (Kunming-2)
+   \ (eos-yunnan-2.cmecloud.cn)
+20 / Tianjin China (Tianjin)
+   \ (eos-tianjin-1.cmecloud.cn)
+21 / Jilin China (Changchun)
+   \ (eos-jilin-1.cmecloud.cn)
+22 / Hubei China (Xiangyan)
+   \ (eos-hubei-1.cmecloud.cn)
+23 / Jiangxi China (Nanchang)
+   \ (eos-jiangxi-1.cmecloud.cn)
+24 / Gansu China (Lanzhou)
+   \ (eos-gansu-1.cmecloud.cn)
+25 / Shanxi China (Taiyuan)
+   \ (eos-shanxi-1.cmecloud.cn)
+26 / Liaoning China (Shenyang)
+   \ (eos-liaoning-1.cmecloud.cn)
+27 / Hebei China (Shijiazhuang)
+   \ (eos-hebei-1.cmecloud.cn)
+28 / Fujian China (Xiamen)
+   \ (eos-fujian-1.cmecloud.cn)
+29 / Guangxi China (Nanning)
+   \ (eos-guangxi-1.cmecloud.cn)
+30 / Anhui China (Huainan)
+   \ (eos-anhui-1.cmecloud.cn)
+endpoint&gt; 1
+Option location_constraint.
+Location constraint - must match endpoint.
+Used when creating buckets only.
+Choose a number from below, or type in your own value.
+Press Enter to leave empty.
+ 1 / East China (Suzhou)
+   \ (wuxi1)
+ 2 / East China (Jinan)
+   \ (jinan1)
+ 3 / East China (Hangzhou)
+   \ (ningbo1)
+ 4 / East China (Shanghai-1)
+   \ (shanghai1)
+ 5 / Central China (Zhengzhou)
+   \ (zhengzhou1)
+ 6 / Central China (Changsha-1)
+   \ (hunan1)
+ 7 / Central China (Changsha-2)
+   \ (zhuzhou1)
+ 8 / South China (Guangzhou-2)
+   \ (guangzhou1)
+ 9 / South China (Guangzhou-3)
+   \ (dongguan1)
+10 / North China (Beijing-1)
+   \ (beijing1)
+11 / North China (Beijing-2)
+   \ (beijing2)
+12 / North China (Beijing-3)
+   \ (beijing4)
+13 / North China (Huhehaote)
+   \ (huhehaote1)
+14 / Southwest China (Chengdu)
+   \ (chengdu1)
+15 / Southwest China (Chongqing)
+   \ (chongqing1)
+16 / Southwest China (Guiyang)
+   \ (guiyang1)
+17 / Nouthwest China (Xian)
+   \ (xian1)
+18 / Yunnan China (Kunming)
+   \ (yunnan)
+19 / Yunnan China (Kunming-2)
+   \ (yunnan2)
+20 / Tianjin China (Tianjin)
+   \ (tianjin1)
+21 / Jilin China (Changchun)
+   \ (jilin1)
+22 / Hubei China (Xiangyan)
+   \ (hubei1)
+23 / Jiangxi China (Nanchang)
+   \ (jiangxi1)
+24 / Gansu China (Lanzhou)
+   \ (gansu1)
+25 / Shanxi China (Taiyuan)
+   \ (shanxi1)
+26 / Liaoning China (Shenyang)
+   \ (liaoning1)
+27 / Hebei China (Shijiazhuang)
+   \ (hebei1)
+28 / Fujian China (Xiamen)
+   \ (fujian1)
+29 / Guangxi China (Nanning)
+   \ (guangxi1)
+30 / Anhui China (Huainan)
+   \ (anhui1)
+location_constraint&gt; 1
+Option acl.
+Canned ACL used when creating buckets and storing or copying objects.
+This ACL is used for creating objects and if bucket_acl isn&#39;t set, for creating buckets too.
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+Note that this ACL is applied when server-side copying objects as S3
+doesn&#39;t copy the ACL from the source but rather writes a fresh one.
+Choose a number from below, or type in your own value.
+Press Enter to leave empty.
+   / Owner gets FULL_CONTROL.
+ 1 | No one else has access rights (default).
+   \ (private)
+   / Owner gets FULL_CONTROL.
+ 2 | The AllUsers group gets READ access.
+   \ (public-read)
+   / Owner gets FULL_CONTROL.
+ 3 | The AllUsers group gets READ and WRITE access.
+   | Granting this on a bucket is generally not recommended.
+   \ (public-read-write)
+   / Owner gets FULL_CONTROL.
+ 4 | The AuthenticatedUsers group gets READ access.
+   \ (authenticated-read)
+   / Object owner gets FULL_CONTROL.
+acl&gt; private
+Option server_side_encryption.
+The server-side encryption algorithm used when storing this object in S3.
+Choose a number from below, or type in your own value.
+Press Enter to leave empty.
+ 1 / None
+   \ ()
+ 2 / AES256
+   \ (AES256)
+server_side_encryption&gt;
+Option storage_class.
+The storage class to use when storing new objects in ChinaMobile.
+Choose a number from below, or type in your own value.
+Press Enter to leave empty.
+ 1 / Default
+   \ ()
+ 2 / Standard storage class
+   \ (STANDARD)
+ 3 / Archive storage mode
+   \ (GLACIER)
+ 4 / Infrequent access storage mode
+   \ (STANDARD_IA)
+storage_class&gt;
+Edit advanced config?
+y) Yes
+n) No (default)
+y/n&gt; n
+--------------------
+[ChinaMobile]
+type = s3
+provider = ChinaMobile
+access_key_id = accesskeyid
+secret_access_key = secretaccesskey
+endpoint = eos-wuxi-1.cmecloud.cn
+location_constraint = wuxi1
+acl = private
+--------------------
+y) Yes this is OK (default)
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y</code></pre>
 <h3 id="tencent-cos">Tencent COS</h3>
 <p><a href="https://intl.cloud.tencent.com/product/cos">Tencent Cloud Object Storage (COS)</a> is a distributed storage service offered by Tencent Cloud for unstructured data. It is secure, stable, massive, convenient, low-delay and low-cost.</p>
 <p>To configure access to Tencent COS, follow the steps below:</p>
@@ -12840,7 +13387,7 @@ n/s/q&gt; n</code></pre>
    \ &quot;alias&quot;
  3 / Amazon Drive
    \ &quot;amazon cloud drive&quot;
- 4 / Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, Digital Ocean, Dreamhost, IBM COS, Minio, and Tencent COS
+ 4 / Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, ChinaMobile, Digital Ocean, Dreamhost, IBM COS, Minio, and Tencent COS
    \ &quot;s3&quot;
 [snip]
 Storage&gt; s3</code></pre>
@@ -19606,10 +20153,11 @@ rclone serve sftp :memory:</code></pre>
 <p>The memory backend supports MD5 hashes and modification times accurate to 1 nS.</p>
 <h3 id="restricted-filename-characters-16">Restricted filename characters</h3>
 <p>The memory backend replaces the <a href="https://rclone.org/overview/#restricted-characters">default restricted characters set</a>.</p>
-<h2 id="akamai-netstorage">Akamai NetStorage</h2>
+<h1 id="akamai-netstorage">Akamai NetStorage</h1>
 <p>Paths are specified as <code>remote:</code> You may put subdirectories in too, e.g. <code>remote:/path/to/dir</code>. If you have a CP code you can use that as the folder after the domain such as &lt;domain&gt;/&lt;cpcode&gt;/&lt;internal directories within cpcode&gt;.</p>
 <p>For example, this is commonly configured with or without a CP code: * <strong>With a CP code</strong>. <code>[your-domain-prefix]-nsu.akamaihd.net/123456/subdirectory/</code> * <strong>Without a CP code</strong>. <code>[your-domain-prefix]-nsu.akamaihd.net</code></p>
 <p>See all buckets rclone lsd remote: The initial setup for Netstorage involves getting an account and secret. Use <code>rclone config</code> to walk you through the setup process.</p>
+<h2 id="configuration-25">Configuration</h2>
 <p>Here's an example of how to make a remote called <code>ns1</code>.</p>
 <ol type="1">
 <li>To begin the interactive configuration process, enter this command:</li>
@@ -19680,19 +20228,20 @@ e) Edit this remote
 d) Delete this remote
 y/e/d&gt; y</code></pre>
 <p>This remote is called <code>ns1</code> and can now be used.</p>
-<h3 id="example-operations">Example operations</h3>
+<h2 id="example-operations">Example operations</h2>
 <p>Get started with rclone and NetStorage with these examples. For additional rclone commands, visit https://rclone.org/commands/.</p>
-<h5 id="see-contents-of-a-directory-in-your-project">See contents of a directory in your project</h5>
+<h3 id="see-contents-of-a-directory-in-your-project">See contents of a directory in your project</h3>
 <pre><code>rclone lsd ns1:/974012/testing/</code></pre>
-<h5 id="sync-the-contents-local-with-remote">Sync the contents local with remote</h5>
+<h3 id="sync-the-contents-local-with-remote">Sync the contents local with remote</h3>
 <pre><code>rclone sync . ns1:/974012/testing/</code></pre>
-<h5 id="upload-local-content-to-remote">Upload local content to remote</h5>
+<h3 id="upload-local-content-to-remote">Upload local content to remote</h3>
 <pre><code>rclone copy notes.txt ns1:/974012/testing/</code></pre>
-<h5 id="delete-content-on-remote">Delete content on remote</h5>
+<h3 id="delete-content-on-remote">Delete content on remote</h3>
 <pre><code>rclone delete ns1:/974012/testing/notes.txt</code></pre>
-<h5 id="move-or-copy-content-between-cp-codes.">Move or copy content between CP codes.</h5>
+<h3 id="move-or-copy-content-between-cp-codes.">Move or copy content between CP codes.</h3>
 <p>Your credentials must have access to two CP codes on the same remote. You can't perform operations between different remotes.</p>
 <pre><code>rclone move ns1:/974012/testing/notes.txt ns1:/974450/testing2/</code></pre>
+<h2 id="features-2">Features</h2>
 <h3 id="symlink-support">Symlink Support</h3>
 <p>The Netstorage backend changes the rclone <code>--links, -l</code> behavior. When uploading, instead of creating the .rclonelink file, use the "symlink" API in order to create the corresponding symlink on the remote. The .rclonelink file will not be created, the upload will be intercepted and only the symlink file that matches the source file name with no suffix will be created on the remote.</p>
 <p>This will effectively allow commands like copy/copyto, move/moveto and sync to upload from local to remote and download from remote to local directories with symlinks. Due to internal rclone limitations, it is not possible to upload an individual symlink file to any remote backend. You can always use the "backend symlink" command to create a symlink on the NetStorage server, refer to "symlink" section below.</p>
@@ -19705,7 +20254,7 @@ y/e/d&gt; y</code></pre>
 <li><strong>Implicit Directory</strong>. This refers to a directory within a path that has not been physically created. For example, during upload of a file, non-existent subdirectories can be specified in the target path. NetStorage creates these as "implicit." While the directories aren't physically created, they exist implicitly and the noted path is connected with the uploaded file.</li>
 </ol>
 <p>Rclone will intercept all file uploads and mkdir commands for the NetStorage remote and will explicitly issue the mkdir command for each directory in the uploading path. This will help with the interoperability with the other Akamai services such as SFTP and the Content Management Shell (CMShell). Rclone will not guarantee correctness of operations with implicit directories which might have been created as a result of using an upload API directly.</p>
-<h3 id="listr-feature">ListR Feature</h3>
+<h3 id="fast-list-listr-support"><code>--fast-list</code> / ListR support</h3>
 <p>NetStorage remote supports the ListR feature by using the "list" NetStorage API action to return a lexicographical list of all objects within the specified CP code, recursing into subdirectories as they're encountered.</p>
 <ul>
 <li><p><strong>Rclone will use the ListR method for some commands by default</strong>. Commands such as <code>lsf -R</code> will use ListR by default. To disable this, include the <code>--disable listR</code> option to use the non-recursive method of listing objects.</p></li>
@@ -19713,7 +20262,7 @@ y/e/d&gt; y</code></pre>
 </ul>
 <p>There are pros and cons of using the ListR method, refer to <a href="https://rclone.org/docs/#fast-list">rclone documentation</a>. In general, the sync command over an existing deep tree on the remote will run faster with the "--fast-list" flag but with extra memory usage as a side effect. It might also result in higher CPU utilization but the whole task can be completed faster.</p>
 <p><strong>Note</strong>: There is a known limitation that "lsf -R" will display number of files in the directory and directory size as -1 when ListR method is used. The workaround is to pass "--disable listR" flag if these numbers are important in the output.</p>
-<h3 id="purge-feature">Purge Feature</h3>
+<h3 id="purge-1">Purge</h3>
 <p>NetStorage remote supports the purge feature by using the "quick-delete" NetStorage API action. The quick-delete action is disabled by default for security reasons and can be enabled for the account through the Akamai portal. Rclone will first try to use quick-delete action for the purge command and if this functionality is disabled then will fall back to a standard delete method.</p>
 <p><strong>Note</strong>: Read the <a href="https://learn.akamai.com/en-us/webhelp/netstorage/netstorage-http-api-developer-guide/GUID-15836617-9F50-405A-833C-EA2556756A30.html">NetStorage Usage API</a> for considerations when using "quick-delete". In general, using quick-delete method will not delete the tree immediately and objects targeted for quick-delete may still be accessible.</p>
 <h3 id="standard-options-24">Standard options</h3>
@@ -19788,7 +20337,7 @@ y/e/d&gt; y</code></pre>
 <p>The desired path location (including applicable sub-directories) ending in the object that will be the target of the symlink (for example, /links/mylink). Include the file extension for the object, if applicable. <code>rclone backend symlink &lt;src&gt; &lt;path&gt;</code></p>
 <h1 id="microsoft-azure-blob-storage">Microsoft Azure Blob Storage</h1>
 <p>Paths are specified as <code>remote:container</code> (or <code>remote:</code> for the <code>lsd</code> command.) You may put subdirectories in too, e.g. <code>remote:container/path/to/dir</code>.</p>
-<h2 id="configuration-25">Configuration</h2>
+<h2 id="configuration-26">Configuration</h2>
 <p>Here is an example of making a Microsoft Azure Blob Storage configuration. For a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
@@ -20152,7 +20701,7 @@ container/</code></pre>
 <h1 id="microsoft-onedrive">Microsoft OneDrive</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
-<h2 id="configuration-26">Configuration</h2>
+<h2 id="configuration-27">Configuration</h2>
 <p>The initial setup for OneDrive involves getting a token from Microsoft which you need to do in your browser. <code>rclone config</code> walks you through it.</p>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
@@ -20645,7 +21194,7 @@ rclone cleanup remote:path/subdir    # unconditionally remove all old version fo
 <pre><code>--ignore-checksum --ignore-size</code></pre>
 <p>Alternatively, if you have write access to the OneDrive files, it may be possible to fix this problem for certain files, by attempting the steps below. Open the web interface for <a href="https://onedrive.live.com">OneDrive</a> and find the affected files (which will be in the error messages/log for rclone). Simply click on each of these files, causing OneDrive to open them on the web. This will cause each file to be converted in place to a format that is functionally equivalent but which will no longer trigger the size discrepancy. Once all problematic files are converted you will no longer need the ignore options above.</p>
 <h3 id="replacingdeleting-existing-files-on-sharepoint-gets-item-not-found">Replacing/deleting existing files on Sharepoint gets "item not found"</h3>
-<p>It is a <a href="https://github.com/OneDrive/onedrive-api-docs/issues/1068">known</a> issue that Sharepoint (not OneDrive or OneDrive for Business) may return "item not found" errors when users try to replace or delete uploaded files; this seems to mainly affect Office files (.docx, .xlsx, etc.). As a workaround, you may use the <code>--backup-dir &lt;BACKUP_DIR&gt;</code> command line argument so rclone moves the files to be replaced/deleted into a given backup directory (instead of directly replacing/deleting them). For example, to instruct rclone to move the files into the directory <code>rclone-backup-dir</code> on backend <code>mysharepoint</code>, you may use:</p>
+<p>It is a <a href="https://github.com/OneDrive/onedrive-api-docs/issues/1068">known</a> issue that Sharepoint (not OneDrive or OneDrive for Business) may return "item not found" errors when users try to replace or delete uploaded files; this seems to mainly affect Office files (.docx, .xlsx, etc.) and web files (.html, .aspx, etc.). As a workaround, you may use the <code>--backup-dir &lt;BACKUP_DIR&gt;</code> command line argument so rclone moves the files to be replaced/deleted into a given backup directory (instead of directly replacing/deleting them). For example, to instruct rclone to move the files into the directory <code>rclone-backup-dir</code> on backend <code>mysharepoint</code>, you may use:</p>
 <pre><code>--backup-dir mysharepoint:rclone-backup-dir</code></pre>
 <h3 id="access_denied-aadsts65005">access_denied (AADSTS65005)</h3>
 <pre><code>Error: access_denied
@@ -20663,7 +21212,7 @@ Description: Due to a configuration change made by your administrator, or becaus
 <h1 id="opendrive">OpenDrive</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
-<h2 id="configuration-27">Configuration</h2>
+<h2 id="configuration-28">Configuration</h2>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
@@ -20856,7 +21405,7 @@ y/e/d&gt; y</code></pre>
 <p>See <a href="https://rclone.org/overview/#optional-features">List of backends that do not support rclone about</a> See <a href="https://rclone.org/commands/rclone_about/">rclone about</a></p>
 <h1 id="qingstor">QingStor</h1>
 <p>Paths are specified as <code>remote:bucket</code> (or <code>remote:</code> for the <code>lsd</code> command.) You may put subdirectories in too, e.g. <code>remote:bucket/path/to/dir</code>.</p>
-<h2 id="configuration-28">Configuration</h2>
+<h2 id="configuration-29">Configuration</h2>
 <p>Here is an example of making an QingStor configuration. First run</p>
 <pre><code>rclone config</code></pre>
 <p>This will guide you through an interactive setup process.</p>
@@ -21097,7 +21646,7 @@ y/e/d&gt; y</code></pre>
 <p>rclone interacts with Sia network by talking to the Sia daemon via <a href="https://sia.tech/docs/">HTTP API</a> which is usually available on port <em>9980</em>. By default you will run the daemon locally on the same computer so it's safe to leave the API password blank (the API URL will be <code>http://127.0.0.1:9980</code> making external access impossible).</p>
 <p>However, if you want to access Sia daemon running on another node, for example due to memory constraints or because you want to share single daemon between several rclone and Sia-UI instances, you'll need to make a few more provisions: - Ensure you have <em>Sia daemon</em> installed directly or in a <a href="https://github.com/SiaFoundation/siad/pkgs/container/siad">docker container</a> because Sia-UI does not support this mode natively. - Run it on externally accessible port, for example provide <code>--api-addr :9980</code> and <code>--disable-api-security</code> arguments on the daemon command line. - Enforce API password for the <code>siad</code> daemon via environment variable <code>SIA_API_PASSWORD</code> or text file named <code>apipassword</code> in the daemon directory. - Set rclone backend option <code>api_password</code> taking it from above locations.</p>
 <p>Notes: 1. If your wallet is locked, rclone cannot unlock it automatically. You should either unlock it in advance by using Sia-UI or via command line <code>siac wallet unlock</code>. Alternatively you can make <code>siad</code> unlock your wallet automatically upon startup by running it with environment variable <code>SIA_WALLET_PASSWORD</code>. 2. If <code>siad</code> cannot find the <code>SIA_API_PASSWORD</code> variable or the <code>apipassword</code> file in the <code>SIA_DIR</code> directory, it will generate a random password and store in the text file named <code>apipassword</code> under <code>YOUR_HOME/.sia/</code> directory on Unix or <code>C:\Users\YOUR_HOME\AppData\Local\Sia\apipassword</code> on Windows. Remember this when you configure password in rclone. 3. The only way to use <code>siad</code> without API password is to run it <strong>on localhost</strong> with command line argument <code>--authorize-api=false</code>, but this is insecure and <strong>strongly discouraged</strong>.</p>
-<h2 id="configuration-29">Configuration</h2>
+<h2 id="configuration-30">Configuration</h2>
 <p>Here is an example of how to make a <code>sia</code> remote called <code>mySia</code>. First, run:</p>
 <pre><code> rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
@@ -21220,7 +21769,7 @@ y/e/d&gt; y</code></pre>
 <li><a href="https://console.bluemix.net/docs/infrastructure/objectstorage-swift/index.html">IBM Bluemix Cloud ObjectStorage Swift</a></li>
 </ul>
 <p>Paths are specified as <code>remote:container</code> (or <code>remote:</code> for the <code>lsd</code> command.) You may put subdirectories in too, e.g. <code>remote:container/path/to/dir</code>.</p>
-<h2 id="configuration-30">Configuration</h2>
+<h2 id="configuration-31">Configuration</h2>
 <p>Here is an example of making a swift configuration. First run</p>
 <pre><code>rclone config</code></pre>
 <p>This will guide you through an interactive setup process.</p>
@@ -21681,7 +22230,7 @@ rclone lsd myremote:</code></pre>
 <h1 id="pcloud">pCloud</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
-<h2 id="configuration-31">Configuration</h2>
+<h2 id="configuration-32">Configuration</h2>
 <p>The initial setup for pCloud involves getting a token from pCloud which you need to do in your browser. <code>rclone config</code> walks you through it.</p>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
@@ -21859,7 +22408,7 @@ y/e/d&gt; y</code></pre>
 <h1 id="premiumize.me">premiumize.me</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
-<h2 id="configuration-32">Configuration</h2>
+<h2 id="configuration-33">Configuration</h2>
 <p>The initial setup for <a href="https://premiumize.me/">premiumize.me</a> involves getting a token from premiumize.me which you need to do in your browser. <code>rclone config</code> walks you through it.</p>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
@@ -21966,7 +22515,7 @@ y/e/d&gt; </code></pre>
 <h1 id="put.io">put.io</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>put.io paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
-<h2 id="configuration-33">Configuration</h2>
+<h2 id="configuration-34">Configuration</h2>
 <p>The initial setup for put.io involves getting a token from put.io which you need to do in your browser. <code>rclone config</code> walks you through it.</p>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
@@ -22060,9 +22609,12 @@ e/n/d/r/c/s/q&gt; q</code></pre>
 <li>Type: MultiEncoder</li>
 <li>Default: Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot</li>
 </ul>
+<h2 id="limitations-28">Limitations</h2>
+<p>put.io has rate limiting. When you hit a limit, rclone automatically retries after waiting the amount of time requested by the server.</p>
+<p>If you want to avoid ever hitting these limits, you may use the <code>--tpslimit</code> flag with a low number. Note that the imposed limits may be different for different operations, and may change over time.</p>
 <h1 id="seafile">Seafile</h1>
 <p>This is a backend for the <a href="https://www.seafile.com/">Seafile</a> storage service: - It works with both the free community edition or the professional edition. - Seafile versions 6.x and 7.x are all supported. - Encrypted libraries are also supported. - It supports 2FA enabled users</p>
-<h2 id="configuration-34">Configuration</h2>
+<h2 id="configuration-35">Configuration</h2>
 <p>There are two distinct modes you can setup your remote: - you point your remote to the <strong>root of the server</strong>, meaning you don't specify a library during the configuration: Paths are specified as <code>remote:library</code>. You may put subdirectories in too, e.g. <code>remote:library/path/to/dir</code>. - you point your remote to a specific library during the configuration: Paths are specified as <code>remote:path/to/dir</code>. <strong>This is the recommended mode when using encrypted libraries</strong>. (<em>This mode is possibly slightly faster than the root mode</em>)</p>
 <h3 id="configuration-in-root-mode">Configuration in root mode</h3>
 <p>Here is an example of making a seafile configuration for a user with <strong>no</strong> two-factor authentication. First run</p>
@@ -22363,13 +22915,12 @@ http://my.seafile.server/d/9ea2455f6f55478bbb0d/</code></pre>
 <p>SFTP is the <a href="https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol">Secure (or SSH) File Transfer Protocol</a>.</p>
 <p>The SFTP backend can be used with a number of different providers:</p>
 <ul>
-<li>C14</li>
 <li>rsync.net</li>
 </ul>
 <p>SFTP runs over SSH v2 and is installed as standard with most modern SSH installations.</p>
 <p>Paths are specified as <code>remote:path</code>. If the path does not begin with a <code>/</code> it is relative to the home directory of the user. An empty path <code>remote:</code> refers to the user's home directory. For example, <code>rclone lsd remote:</code> would list the home directory of the user cofigured in the rclone remote config (<code>i.e /home/sftpuser</code>). However, <code>rclone lsd remote:/</code> would list the root directory for remote machine (i.e. <code>/</code>)</p>
 <p>Note that some SFTP servers will need the leading / - Synology is a good example of this. rsync.net, on the other hand, requires users to OMIT the leading /.</p>
-<h2 id="configuration-35">Configuration</h2>
+<h2 id="configuration-36">Configuration</h2>
 <p>Here is an example of making an SFTP configuration. First run</p>
 <pre><code>rclone config</code></pre>
 <p>This will guide you through an interactive setup process.</p>
@@ -22775,7 +23326,7 @@ known_hosts_file = ~/.ssh/known_hosts</code></pre>
 <li>Type: Duration</li>
 <li>Default: 1m0s</li>
 </ul>
-<h2 id="limitations-28">Limitations</h2>
+<h2 id="limitations-29">Limitations</h2>
 <p>SFTP supports checksums if the same login has shell access and <code>md5sum</code> or <code>sha1sum</code> as well as <code>echo</code> are in the remote's PATH. This remote checksumming (file hashing) is recommended and enabled by default. Disabling the checksumming may be required if you are connecting to SFTP servers which are not under your control, and to which the execution of remote commands is prohibited. Set the configuration option <code>disable_hashcheck</code> to <code>true</code> to disable checksumming.</p>
 <p>SFTP also supports <code>about</code> if the same login has shell access and <code>df</code> are in the remote's PATH. <code>about</code> will return the total space, free space, and used space on the remote for the disk of the specified path on the remote or, if not set, the disk of the root on the remote. <code>about</code> will fail if it does not have shell access or if <code>df</code> is not in the remote's PATH.</p>
 <p>Note that some SFTP servers (e.g. Synology) the paths are different for SSH and SFTP so the hashes can't be calculated properly. For them using <code>disable_hashcheck</code> is a good idea.</p>
@@ -22784,9 +23335,6 @@ known_hosts_file = ~/.ssh/known_hosts</code></pre>
 <p>SFTP isn't supported under plan9 until <a href="https://github.com/pkg/sftp/issues/156">this issue</a> is fixed.</p>
 <p>Note that since SFTP isn't HTTP based the following flags don't work with it: <code>--dump-headers</code>, <code>--dump-bodies</code>, <code>--dump-auth</code></p>
 <p>Note that <code>--timeout</code> and <code>--contimeout</code> are both supported.</p>
-<h2 id="c14">C14</h2>
-<p>C14 is supported through the SFTP backend.</p>
-<p>See <a href="https://www.online.net/en/storage/c14-cold-storage">C14's documentation</a></p>
 <h2 id="rsync-net">rsync.net</h2>
 <p>rsync.net is supported through the SFTP backend.</p>
 <p>See <a href="https://www.rsync.net/products/rclone.html">rsync.net's documentation of rclone examples</a>.</p>
@@ -22849,7 +23397,7 @@ known_hosts_file = ~/.ssh/known_hosts</code></pre>
 <li><em>S3 backend</em>: secret encryption key is shared with the gateway</li>
 </ul></li>
 </ul>
-<h2 id="configuration-36">Configuration</h2>
+<h2 id="configuration-37">Configuration</h2>
 <p>To make a new Storj configuration you need one of the following: * Access Grant that someone else shared with you. * <a href="https://documentation.storj.io/getting-started/uploading-your-first-object/create-an-api-key">API Key</a> of a Storj project you are a member of.</p>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
@@ -23079,7 +23627,7 @@ y/e/d&gt; y</code></pre>
 <pre><code>rclone sync -i --progress remote-us:bucket/path/to/dir/ remote-europe:bucket/path/to/dir/</code></pre>
 <p>Or even between another cloud storage and Storj.</p>
 <pre><code>rclone sync -i --progress s3:bucket/path/to/dir/ storj:bucket/path/to/dir/</code></pre>
-<h2 id="limitations-29">Limitations</h2>
+<h2 id="limitations-30">Limitations</h2>
 <p><code>rclone about</code> is not supported by the rclone Storj backend. Backends without this capability cannot determine free space for an rclone mount or use policy <code>mfs</code> (most free space) as a member of an rclone union remote.</p>
 <p>See <a href="https://rclone.org/overview/#optional-features">List of backends that do not support rclone about</a> See <a href="https://rclone.org/commands/rclone_about/">rclone about</a></p>
 <h2 id="known-issues-1">Known issues</h2>
@@ -23087,7 +23635,7 @@ y/e/d&gt; y</code></pre>
 <p>To fix these, please raise your system limits. You can do this issuing a <code>ulimit -n 65536</code> just before you run rclone. To change the limits more permanently you can add this to your shell startup script, e.g. <code>$HOME/.bashrc</code>, or change the system-wide configuration, usually <code>/etc/sysctl.conf</code> and/or <code>/etc/security/limits.conf</code>, but please refer to your operating system manual.</p>
 <h1 id="sugarsync">SugarSync</h1>
 <p><a href="https://sugarsync.com">SugarSync</a> is a cloud service that enables active synchronization of files across computers and other devices for file backup, access, syncing, and sharing.</p>
-<h2 id="configuration-37">Configuration</h2>
+<h2 id="configuration-38">Configuration</h2>
 <p>The initial setup for SugarSync involves getting a token from SugarSync which you can do with rclone. <code>rclone config</code> walks you through it.</p>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
@@ -23273,7 +23821,7 @@ y/e/d&gt; y</code></pre>
 <li>Type: MultiEncoder</li>
 <li>Default: Slash,Ctl,InvalidUtf8,Dot</li>
 </ul>
-<h2 id="limitations-30">Limitations</h2>
+<h2 id="limitations-31">Limitations</h2>
 <p><code>rclone about</code> is not supported by the SugarSync backend. Backends without this capability cannot determine free space for an rclone mount or use policy <code>mfs</code> (most free space) as a member of an rclone union remote.</p>
 <p>See <a href="https://rclone.org/overview/#optional-features">List of backends that do not support rclone about</a> See <a href="https://rclone.org/commands/rclone_about/">rclone about</a></p>
 <h1 id="tardigrade">Tardigrade</h1>
@@ -23282,7 +23830,7 @@ y/e/d&gt; y</code></pre>
 <p>This is a Backend for Uptobox file storage service. Uptobox is closer to a one-click hoster than a traditional cloud storage provider and therefore not suitable for long term storage.</p>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
-<h2 id="configuration-38">Configuration</h2>
+<h2 id="configuration-39">Configuration</h2>
 <p>To configure an Uptobox backend you'll need your personal api token. You'll find it in your <a href="https://uptobox.com/my_account">account settings</a></p>
 <p>Here is an example of how to make a remote called <code>remote</code> with the default setup. First run:</p>
 <pre><code>rclone config</code></pre>
@@ -23386,7 +23934,7 @@ y/e/d&gt; </code></pre>
 <li>Type: MultiEncoder</li>
 <li>Default: Slash,LtGt,DoubleQuote,BackQuote,Del,Ctl,LeftSpace,InvalidUtf8,Dot</li>
 </ul>
-<h2 id="limitations-31">Limitations</h2>
+<h2 id="limitations-32">Limitations</h2>
 <p>Uptobox will delete inactive files that have not been accessed in 60 days.</p>
 <p><code>rclone about</code> is not supported by this backend an overview of used space can however been seen in the uptobox web interface.</p>
 <h1 id="union">Union</h1>
@@ -23396,7 +23944,7 @@ y/e/d&gt; </code></pre>
 <p>Attribute <code>:ro</code> and <code>:nc</code> can be attach to the end of path to tag the remote as <strong>read only</strong> or <strong>no create</strong>, e.g. <code>remote:directory/subdirectory:ro</code> or <code>remote:directory/subdirectory:nc</code>.</p>
 <p>Subfolders can be used in upstream remotes. Assume a union remote named <code>backup</code> with the remotes <code>mydrive:private/backup</code>. Invoking <code>rclone mkdir backup:desktop</code> is exactly the same as invoking <code>rclone mkdir mydrive:private/backup/desktop</code>.</p>
 <p>There will be no special handling of paths containing <code>..</code> segments. Invoking <code>rclone mkdir backup:../desktop</code> is exactly the same as invoking <code>rclone mkdir mydrive:private/backup/../desktop</code>.</p>
-<h2 id="configuration-39">Configuration</h2>
+<h2 id="configuration-40">Configuration</h2>
 <p>Here is an example of how to make a union called <code>remote</code> for local folders. First run:</p>
 <pre><code> rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
@@ -23669,7 +24217,7 @@ e/n/d/r/c/s/q&gt; q</code></pre>
 <h1 id="webdav">WebDAV</h1>
 <p>Paths are specified as <code>remote:path</code></p>
 <p>Paths may be as deep as required, e.g. <code>remote:directory/subdirectory</code>.</p>
-<h2 id="configuration-40">Configuration</h2>
+<h2 id="configuration-41">Configuration</h2>
 <p>To configure the WebDAV remote you will need to have a URL for it, and a username and password. If you know what kind of system you are connecting to then rclone can enable extra features.</p>
 <p>Here is an example of how to make a remote called <code>remote</code>. First run:</p>
 <pre><code> rclone config</code></pre>
@@ -23922,7 +24470,7 @@ vendor = other
 bearer_token_command = oidc-token XDC</code></pre>
 <h1 id="yandex-disk">Yandex Disk</h1>
 <p><a href="https://disk.yandex.com">Yandex Disk</a> is a cloud storage solution created by <a href="https://yandex.com">Yandex</a>.</p>
-<h2 id="configuration-41">Configuration</h2>
+<h2 id="configuration-42">Configuration</h2>
 <p>Here is an example of making a yandex configuration. First run</p>
 <pre><code>rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
@@ -24058,13 +24606,13 @@ y/e/d&gt; y</code></pre>
 <li>Type: MultiEncoder</li>
 <li>Default: Slash,Del,Ctl,InvalidUtf8,Dot</li>
 </ul>
-<h2 id="limitations-32">Limitations</h2>
+<h2 id="limitations-33">Limitations</h2>
 <p>When uploading very large files (bigger than about 5 GiB) you will need to increase the <code>--timeout</code> parameter. This is because Yandex pauses (perhaps to calculate the MD5SUM for the entire file) before returning confirmation that the file has been uploaded. The default handling of timeouts in rclone is to assume a 5 minute pause is an error and close the connection - you'll see <code>net/http: timeout awaiting response headers</code> errors in the logs if this is happening. Setting the timeout to twice the max size of file in GiB should be enough, so if you want to upload a 30 GiB file set a timeout of <code>2 * 30 = 60m</code>, that is <code>--timeout 60m</code>.</p>
 <p>Having a Yandex Mail account is mandatory to use the Yandex.Disk subscription. Token generation will work without a mail account, but Rclone won't be able to complete any actions.</p>
 <pre><code>[403 - DiskUnsupportedUserAccountTypeError] User account type is not supported.</code></pre>
 <h1 id="zoho-workdrive">Zoho Workdrive</h1>
 <p><a href="https://www.zoho.com/workdrive/">Zoho WorkDrive</a> is a cloud storage solution created by <a href="https://zoho.com">Zoho</a>.</p>
-<h2 id="configuration-42">Configuration</h2>
+<h2 id="configuration-43">Configuration</h2>
 <p>Here is an example of making a zoho configuration. First run</p>
 <pre><code>rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
@@ -24240,7 +24788,7 @@ y/e/d&gt; </code></pre>
 <p>Local paths are specified as normal filesystem paths, e.g. <code>/path/to/wherever</code>, so</p>
 <pre><code>rclone sync -i /home/source /tmp/destination</code></pre>
 <p>Will sync <code>/home/source</code> to <code>/tmp/destination</code>.</p>
-<h2 id="configuration-43">Configuration</h2>
+<h2 id="configuration-44">Configuration</h2>
 <p>For consistencies sake one can also configure a remote of type <code>local</code> in the config file, and access the local filesystem using rclone remote paths, e.g. <code>remote:path/to/wherever</code>, but it is probably easier not to.</p>
 <h3 id="modified-time-15">Modified time</h3>
 <p>Rclone reads and writes the modified time using an accuracy determined by the OS. Typically this is 1ns on Linux, 10 ns on Windows and 1 Second on OS X.</p>
@@ -24791,6 +25339,75 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.58.1---2022-04-29">v1.58.1 - 2022-04-29</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.58.0...v1.58.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>build: Update github.com/billziss-gh to github.com/winfsp (Nick Craig-Wood)</li>
+<li>filter: Fix timezone of <code>--min-age</code>/<code>-max-age</code> from UTC to local as documented (Nick Craig-Wood)</li>
+<li>rc/js: Correct RC method names (Sơn Trần-Nguyễn)</li>
+<li>docs
+<ul>
+<li>Fix some links to command pages (albertony)</li>
+<li>Add <code>--multi-thread-streams</code> note to <code>--transfers</code>. (Zsolt Ero)</li>
+</ul></li>
+</ul></li>
+<li>Mount
+<ul>
+<li>Fix <code>--devname</code> and fusermount: unknown option 'fsname' when mounting via rc (Nick Craig-Wood)</li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Remove wording which suggests VFS is only for mounting (Nick Craig-Wood)</li>
+</ul></li>
+<li>Dropbox
+<ul>
+<li>Fix retries of multipart uploads with incorrect_offset error (Nick Craig-Wood)</li>
+</ul></li>
+<li>Google Cloud Storage
+<ul>
+<li>Use the s3 pacer to speed up transactions (Nick Craig-Wood)</li>
+<li>pacer: Default the Google pacer to a burst of 100 to fix gcs pacing (Nick Craig-Wood)</li>
+</ul></li>
+<li>Jottacloud
+<ul>
+<li>Fix scope in token request (albertony)</li>
+</ul></li>
+<li>Netstorage
+<ul>
+<li>Fix unescaped HTML in documentation (Nick Craig-Wood)</li>
+<li>Make levels of headings consistent (Nick Craig-Wood)</li>
+<li>Add support contacts to netstorage doc (Nil Alexandrov)</li>
+</ul></li>
+<li>Onedrive
+<ul>
+<li>Note that sharepoint also changes web files (.html, .aspx) (GH)</li>
+</ul></li>
+<li>Putio
+<ul>
+<li>Handle rate limit errors (Berkan Teber)</li>
+<li>Fix multithread download and other ranged requests (rafma0)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Add ChinaMobile EOS to provider list (GuoXingbin)</li>
+<li>Sync providers in config description with providers (Nick Craig-Wood)</li>
+</ul></li>
+<li>SFTP
+<ul>
+<li>Fix OpenSSH 8.8+ RSA keys incompatibility (KARBOWSKI Piotr)</li>
+<li>Note that Scaleway C14 is deprecating SFTP in favor of S3 (Adrien Rey-Jarthon)</li>
+</ul></li>
+<li>Storj
+<ul>
+<li>Fix bucket creation on Move (Nick Craig-Wood)</li>
+</ul></li>
+<li>WebDAV
+<ul>
+<li>Don't override Referer if user sets it (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.58.0---2022-03-18">v1.58.0 - 2022-03-18</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.57.0...v1.58.0">See commits</a></p>
 <ul>
@@ -30447,7 +31064,7 @@ $ tree /tmp/b
 <li>Project started</li>
 </ul>
 <h1 id="bugs-and-limitations">Bugs and Limitations</h1>
-<h2 id="limitations-33">Limitations</h2>
+<h2 id="limitations-34">Limitations</h2>
 <h3 id="directory-timestamps-arent-preserved">Directory timestamps aren't preserved</h3>
 <p>Rclone doesn't currently preserve the timestamps of directories. This is because rclone only really considers objects when syncing.</p>
 <h3 id="rclone-struggles-with-millions-of-files-in-a-directorybucket">Rclone struggles with millions of files in a directory/bucket</h3>
