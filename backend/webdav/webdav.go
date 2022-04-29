@@ -16,6 +16,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/rclone/rclone/lib/readers"
 	"io"
 	"net/http"
 	"net/url"
@@ -138,7 +139,7 @@ See https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/bi
 Set to 0 to disable chunked uploading.
 `,
 			Advanced: true,
-			Default:  fs.SizeSuffix(10 * 1024 * 1024), // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
+			Default:  10 * fs.Mebi, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
 		}},
 	})
 }
@@ -1348,7 +1349,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		contentType := fs.MimeType(ctx, src)
 		filePath := o.filePath()
 		extraHeaders := o.extraHeaders(ctx, src)
-		err = o.updateSimple(ctx, in, filePath, size, contentType, extraHeaders, o.fs.endpointURL, options...)
+		err = o.updateSimple(ctx, in, nil, filePath, size, contentType, extraHeaders, o.fs.endpointURL, options...)
 		if err != nil {
 			return err
 		}
@@ -1383,12 +1384,13 @@ func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string
 }
 
 // Standard update
-func (o *Object) updateSimple(ctx context.Context, in io.Reader, filePath string, size int64, contentType string, extraHeaders map[string]string, rootURL string, options ...fs.OpenOption) (err error) {
+func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func() (io.ReadCloser, error), filePath string, size int64, contentType string, extraHeaders map[string]string, rootURL string, options ...fs.OpenOption) (err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:        "PUT",
 		Path:          filePath,
-		Body:          in,
+		GetBody:       getBody,
+		Body:          body,
 		NoResponse:    true,
 		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
 		ContentType:   contentType,
@@ -1396,7 +1398,7 @@ func (o *Object) updateSimple(ctx context.Context, in io.Reader, filePath string
 		ExtraHeaders:  extraHeaders,
 		RootURL:       rootURL,
 	}
-	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
@@ -1417,7 +1419,7 @@ func (o *Object) updateSimple(ctx context.Context, in io.Reader, filePath string
 
 // Chunked update for Nextcloud (see
 // https://docs.nextcloud.com/server/20/developer_manual/client_apis/WebDAV/chunking.html)
-func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
 	hasher := md5.New()
 	_, err = hasher.Write([]byte(o.filePath()))
 	if err != nil {
@@ -1467,7 +1469,20 @@ func (o *Object) updateChunked(ctx context.Context, in io.Reader, src fs.ObjectI
 		extraHeaders := map[string]string{}
 		// TODO: Fix broken retries. I suspect io.LimitReader() is the culprit here because it prevents it from being rewound.
 		// 2022-04-28 15:59:06 ERROR : stuff/video.avi: Failed to copy: uploading chunk failed: Put "https://censored.com/remote.php/dav/uploads/Admin/rclone-chunked-upload-censored/000006113198080-000006123683840": http2: Transport: cannot retry err [http2: Transport received Server's graceful shutdown GOAWAY] after Request.Body was written; define Request.GetBody to avoid this error
-		err = partObj.updateSimple(ctx, io.LimitReader(in, int64(partObj.fs.opt.ChunkSize)), partObj.remote, contentLength, "application/x-www-form-urlencoded", extraHeaders, o.fs.uploadURL, options...)
+
+		// TODO: support chunk upload retries.
+		// Problem: the mem usage can be too big if user configures it to a big value.
+		buf := make([]byte, partObj.fs.opt.ChunkSize)
+		in := readers.NewRepeatableLimitReaderBuffer(in0, buf, int64(partObj.fs.opt.ChunkSize))
+		//getBody := func() (io.ReadCloser, error) {
+		fs.Logf(nil, "body type: %T", in0)
+		// May need to do that in error callback: in.Seek(uploadedSize, io.SeekStart)
+		//return in, nil
+		//}
+
+		//body, _ := getBody()
+
+		err = partObj.updateSimple(ctx, in, nil, partObj.remote, contentLength, "application/x-www-form-urlencoded", extraHeaders, o.fs.uploadURL, options...)
 		if err != nil {
 			return fmt.Errorf("uploading chunk failed: %w", err)
 		}

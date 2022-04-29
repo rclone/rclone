@@ -130,6 +130,7 @@ type Opts struct {
 	Method                string // GET, POST, etc.
 	Path                  string // relative to RootURL
 	RootURL               string // override RootURL passed into SetRoot()
+	GetBody               func() (io.ReadCloser, error)
 	Body                  io.Reader
 	NoResponse            bool // set to close Body
 	ContentType           string
@@ -239,6 +240,9 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	}
 	if len(opts.TransferEncoding) != 0 {
 		req.TransferEncoding = opts.TransferEncoding
+	}
+	if opts.GetBody != nil {
+		req.GetBody = opts.GetBody
 	}
 	if opts.Trailer != nil {
 		req.Trailer = *opts.Trailer
