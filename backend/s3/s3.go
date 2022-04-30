@@ -1358,7 +1358,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "server_side_encryption",
 			Help:     "The server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS,Ceph,ChinaMobile,ArvanCloud,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
@@ -1373,7 +1373,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "sse_customer_algorithm",
 			Help:     "If using SSE-C, the server-side encryption algorithm used when storing this object in S3.",
-			Provider: "AWS,Ceph,ChinaMobile,ArvanCloud,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1385,7 +1385,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "sse_kms_key_id",
 			Help:     "If using KMS ID you must provide the ARN of Key.",
-			Provider: "AWS,Ceph,ArvanCloud,Minio",
+			Provider: "AWS,Ceph,Minio",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "None",
@@ -1396,7 +1396,7 @@ isn't set then "acl" is used instead.`,
 		}, {
 			Name:     "sse_customer_key",
 			Help:     "If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data.",
-			Provider: "AWS,Ceph,ChinaMobile,ArvanCloud,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1408,7 +1408,7 @@ isn't set then "acl" is used instead.`,
 
 If you leave it blank, this is calculated automatically from the sse_customer_key provided.
 `,
-			Provider: "AWS,Ceph,ChinaMobile,ArvanCloud,Minio",
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "",
@@ -1488,9 +1488,6 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			Help:     "The storage class to use when storing new objects in ArvanCloud.",
 			Provider: "ArvanCloud",
 			Examples: []fs.OptionExample{{
-				Value: "",
-				Help:  "Default",
-			}, {
 				Value: "STANDARD",
 				Help:  "Standard storage class",
 			}},
