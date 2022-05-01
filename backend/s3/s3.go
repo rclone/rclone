@@ -4104,6 +4104,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			headers = putObj.HTTPRequest.Header
 		}
 
+		if !o.fs.opt.V2Auth {
+			if headers == nil {
+				headers = putObj.HTTPRequest.Header
+			}
+
+			if headers.Get("x-amz-content-sha256") == "" {
+				headers.Set("x-amz-content-sha256", "UNSIGNED-PAYLOAD")
+			}
+		}
+
 		// Set request to nil if empty so as not to make chunked encoding
 		if size == 0 {
 			in = nil
