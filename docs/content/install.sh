@@ -81,8 +81,8 @@ case $OS in
     ;;  
   Darwin)
     OS='osx'
-	binInstall="sudo /usr/bin/install -B \"$( /bin/date +"%Y%m%dT%H%M%S" )\" -b  -m 0555 -g 0 -o 0 -S -v "
-	manInstall="sudo /usr/bin/install -B \"$( /bin/date +"%Y%m%dT%H%M%S" )\" -b  -m 0444 -g 0 -o 0 -S -v "
+ binInstall="sudo /usr/bin/install -B \"$( /bin/date +"%Y%m%dT%H%M%S" )\" -b  -m 0555 -g 0 -o 0 -S -v "
+ manInstall="sudo /usr/bin/install -B \"$( /bin/date +"%Y%m%dT%H%M%S" )\" -b  -m 0444 -g 0 -o 0 -S -v "
     ;;
   SunOS)
     OS='solaris'
@@ -173,7 +173,7 @@ case "$OS" in
     ;;
   'osx')
     #binary
-	${binInstall} rclone /usr/local/bin
+ ${binInstall} rclone /usr/local/bin
     #manual
     ${manInstall} rclone.1 /usr/local/share/man/man1/    
     ;;
