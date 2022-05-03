@@ -1285,6 +1285,7 @@ Returns:
 
 - count - number of files
 - bytes - number of bytes in those files
+- sizeless - number of files with unknown size, included in count but not accounted for in bytes
 
 See the [size command](/commands/rclone_size/) command for more information on the above.
 

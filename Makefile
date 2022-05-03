@@ -97,7 +97,7 @@ release_dep_linux:
 
 # Get the release dependencies we only install on Windows
 release_dep_windows:
-	GO111MODULE=off GOOS="" GOARCH="" go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
+	GOOS="" GOARCH="" go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
 
 # Update dependencies
 showupdates:

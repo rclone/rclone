@@ -50,6 +50,7 @@ See the following for detailed instructions for
   * [HDFS](/hdfs/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
+  * [Internet Archive](/internetarchive/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
   * [Mail.ru Cloud](/mailru/)
@@ -1792,6 +1793,8 @@ useful to set this to a smaller number if the remote is giving a lot
 of timeouts or bigger if you have lots of bandwidth and a fast remote.
 
 The default is to run 4 file transfers in parallel.
+
+Look at --multi-thread-streams if you would like to control single file transfers.
 
 ### -u, --update ###
 

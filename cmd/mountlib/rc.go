@@ -10,7 +10,6 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
@@ -117,23 +116,15 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
-	VFS := vfs.New(fdst, &vfsOpt)
-	_, unmountFn, err := mountFn(VFS, mountPoint, &mountOpt)
+	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
+	_, err = mnt.Mount()
 	if err != nil {
 		log.Printf("mount FAILED: %v", err)
 		return nil, err
 	}
 
 	// Add mount to list if mount point was successfully created
-	liveMounts[mountPoint] = &MountPoint{
-		MountPoint: mountPoint,
-		MountedOn:  time.Now(),
-		MountFn:    mountFn,
-		UnmountFn:  unmountFn,
-		MountOpt:   mountOpt,
-		VFSOpt:     vfsOpt,
-		Fs:         fdst,
-	}
+	liveMounts[mountPoint] = mnt
 
 	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), mountPoint, mountType)
 	return nil, nil

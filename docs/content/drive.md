@@ -1375,8 +1375,11 @@ and upload the files if you prefer.
 
 ### Limitations of Google Docs
 
-Google docs will appear as size -1 in `rclone ls` and as size 0 in
-anything which uses the VFS layer, e.g. `rclone mount`, `rclone serve`.
+Google docs will appear as size -1 in `rclone ls`, `rclone ncdu` etc,
+and as size 0 in anything which uses the VFS layer, e.g. `rclone mount`
+and `rclone serve`. When calculating directory totals, e.g. in
+`rclone size` and `rclone ncdu`, they will be counted in as empty
+files.
 
 This is because rclone can't find out the size of the Google docs
 without downloading them.

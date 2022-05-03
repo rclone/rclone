@@ -32,6 +32,7 @@ Here is an overview of the major features of each cloud storage system.
 | HDFS                         | -           | Yes     | No               | No              | -         |
 | HTTP                         | -           | No      | No               | No              | R         |
 | Hubic                        | MD5         | Yes     | No               | No              | R/W       |
+| Internet Archive             | MD5, SHA1, CRC32 | Yes | No              | No              | -         |
 | Jottacloud                   | MD5         | Yes     | Yes              | No              | R         |
 | Koofr                        | MD5         | No      | Yes              | No              | -         |
 | Mail.ru Cloud                | Mailru ⁶    | Yes     | Yes              | No              | -         |
@@ -301,35 +302,36 @@ list of all possible values by passing an invalid value to this
 flag, e.g. `--local-encoding "help"`. The command `rclone help flags encoding`
 will show you the defaults for the backends.
 
-| Encoding  | Characters |
-| --------- | ---------- |
-| Asterisk | `*` |
-| BackQuote | `` ` `` |
-| BackSlash | `\` |
-| Colon | `:` |
-| CrLf | CR 0x0D, LF 0x0A |
-| Ctl | All control characters 0x00-0x1F |
-| Del | DEL 0x7F |
-| Dollar | `$` |
-| Dot | `.` or `..` as entire string |
-| DoubleQuote | `"` |
-| Hash | `#` |
-| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) |
-| LeftCrLfHtVt | CR 0x0D, LF 0x0A,HT 0x09, VT 0x0B on the left of a string |
-| LeftPeriod | `.` on the left of a string |
-| LeftSpace | SPACE on the left of a string |
-| LeftTilde | `~` on the left of a string |
-| LtGt | `<`, `>` |
-| None | No characters are encoded |
-| Percent | `%` |
-| Pipe | \| |
-| Question | `?` |
-| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string |
-| RightPeriod | `.` on the right of a string |
-| RightSpace | SPACE on the right of a string |
-| SingleQuote | `'` |
-| Slash | `/` |
-| SquareBracket | `[`, `]` |
+| Encoding  | Characters | Encoded as |
+| --------- | ---------- | ---------- |
+| Asterisk | `*` | `＊` |
+| BackQuote | `` ` `` | `｀` |
+| BackSlash | `\` | `＼` |
+| Colon | `:` | `：` |
+| CrLf | CR 0x0D, LF 0x0A | `␍`, `␊` |
+| Ctl | All control characters 0x00-0x1F | `␀␁␂␃␄␅␆␇␈␉␊␋␌␍␎␏␐␑␒␓␔␕␖␗␘␙␚␛␜␝␞␟` |
+| Del | DEL 0x7F | `␡` |
+| Dollar | `$` | `＄` |
+| Dot | `.` or `..` as entire string | `．`, `．．` |
+| DoubleQuote | `"` | `＂` |
+| Hash | `#` | `＃` |
+| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) | `�` |
+| LeftCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the left of a string | `␍`, `␊`, `␉`, `␋` |
+| LeftPeriod | `.` on the left of a string | `.` |
+| LeftSpace | SPACE on the left of a string | `␠` |
+| LeftTilde | `~` on the left of a string | `～` |
+| LtGt | `<`, `>` | `＜`, `＞` |
+| None | No characters are encoded | |
+| Percent | `%` | `％` |
+| Pipe | \| | `｜` |
+| Question | `?` | `？` |
+| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string | `␍`, `␊`, `␉`, `␋` |
+| RightPeriod | `.` on the right of a string | `.` |
+| RightSpace | SPACE on the right of a string | `␠` |
+| Semicolon | `;` | `；` |
+| SingleQuote | `'` | `＇` |
+| Slash | `/` | `／` |
+| SquareBracket | `[`, `]` | `［`, `］` |
 
 ##### Encoding example: FTP
 
@@ -426,6 +428,7 @@ upon backend-specific capabilities.
 | HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
+| Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
 | Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |

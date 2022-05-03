@@ -519,7 +519,7 @@ func doTokenAuth(ctx context.Context, apiSrv *rest.Client, loginTokenBase64 stri
 	values.Set("client_id", defaultClientID)
 	values.Set("grant_type", "password")
 	values.Set("password", loginToken.AuthToken)
-	values.Set("scope", "offline_access+openid")
+	values.Set("scope", "openid offline_access")
 	values.Set("username", loginToken.Username)
 	values.Encode()
 	opts = rest.Opts{
@@ -932,25 +932,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return entries, nil
 }
 
-type listStreamTime time.Time
-
-func (c *listStreamTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	var v string
-	if err := d.DecodeElement(&v, &start); err != nil {
-		return err
-	}
-	t, err := time.Parse(time.RFC3339, v)
-	if err != nil {
-		return err
-	}
-	*c = listStreamTime(t)
-	return nil
-}
-
-func (c listStreamTime) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", time.Time(c).Format(time.RFC3339))), nil
-}
-
 func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, filesystem *Fs, callback func(fs.DirEntry) error) error {
 
 	type stats struct {
@@ -960,12 +941,12 @@ func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, files
 	var expected, actual stats
 
 	type xmlFile struct {
-		Path     string         `xml:"path"`
-		Name     string         `xml:"filename"`
-		Checksum string         `xml:"md5"`
-		Size     int64          `xml:"size"`
-		Modified listStreamTime `xml:"modified"`
-		Created  listStreamTime `xml:"created"`
+		Path     string          `xml:"path"`
+		Name     string          `xml:"filename"`
+		Checksum string          `xml:"md5"`
+		Size     int64           `xml:"size"`
+		Modified api.Rfc3339Time `xml:"modified"` // Note: Liststream response includes 3 decimal milliseconds, but we ignore them since there is second precision everywhere else
+		Created  api.Rfc3339Time `xml:"created"`
 	}
 
 	type xmlFolder struct {
@@ -1210,6 +1191,45 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, false)
 }
 
+// createOrUpdate tries to make remote file match without uploading.
+// If the remote file exists, and has matching size and md5, only
+// timestamps are updated. If the file does not exist or does does
+// not match size and md5, but matching content can be constructed
+// from deduplication, the file will be updated/created. If the file
+// is currently in trash, but can be made to match, it will be
+// restored. Returns ErrorObjectNotFound if upload will be necessary
+// to get a matching remote file.
+func (f *Fs) createOrUpdate(ctx context.Context, file string, modTime time.Time, size int64, md5 string) (info *api.JottaFile, err error) {
+	opts := rest.Opts{
+		Method:       "POST",
+		Path:         f.filePath(file),
+		Parameters:   url.Values{},
+		ExtraHeaders: make(map[string]string),
+	}
+
+	opts.Parameters.Set("cphash", "true")
+
+	fileDate := api.JottaTime(modTime).String()
+	opts.ExtraHeaders["JSize"] = strconv.FormatInt(size, 10)
+	opts.ExtraHeaders["JMd5"] = md5
+	opts.ExtraHeaders["JCreated"] = fileDate
+	opts.ExtraHeaders["JModified"] = fileDate
+
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallXML(ctx, &opts, nil, &info)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	if apiErr, ok := err.(*api.Error); ok {
+		// does not exist, i.e. not matching size and md5, and not possible to make it by deduplication
+		if apiErr.StatusCode == http.StatusNotFound {
+			return nil, fs.ErrorObjectNotFound
+		}
+	}
+	return info, nil
+}
+
 // copyOrMoves copies or moves directories or files depending on the method parameter
 func (f *Fs) copyOrMove(ctx context.Context, method, src, dest string) (info *api.JottaFile, err error) {
 	opts := rest.Opts{
@@ -1252,6 +1272,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return nil, err
 	}
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
+
+	// if destination was a trashed file then after a successfull copy the copied file is still in trash (bug in api?)
+	if err == nil && bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
+		fs.Debugf(src, "Server-side copied to trashed destination, restoring")
+		info, err = f.createOrUpdate(ctx, remote, srcObj.modTime, srcObj.size, srcObj.md5)
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("couldn't copy file: %w", err)
@@ -1554,38 +1580,17 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 		return err
 	}
 
-	// prepare allocate request with existing metadata but changed timestamps
-	var resp *http.Response
-	var options []fs.OpenOption
-	opts := rest.Opts{
-		Method:       "POST",
-		Path:         "files/v1/allocate",
-		Options:      options,
-		ExtraHeaders: make(map[string]string),
-	}
-	fileDate := api.Time(modTime).APIString()
-	var request = api.AllocateFileRequest{
-		Bytes:    o.size,
-		Created:  fileDate,
-		Modified: fileDate,
-		Md5:      o.md5,
-		Path:     path.Join(o.fs.opt.Mountpoint, o.fs.opt.Enc.FromStandardPath(path.Join(o.fs.root, o.remote))),
-	}
-
-	// send it
-	var response api.AllocateFileResponse
-	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.apiSrv.CallJSON(ctx, &opts, &request, &response)
-		return shouldRetry(ctx, resp, err)
-	})
+	// request check/update with existing metadata and new modtime
+	// (note that if size/md5 does not match, the file content will
+	// also be modified if deduplication is possible, i.e. it is
+	// important to use correct/latest values)
+	_, err = o.fs.createOrUpdate(ctx, o.remote, modTime, o.size, o.md5)
 	if err != nil {
+		if err == fs.ErrorObjectNotFound {
+			// file was modified (size/md5 changed) between readMetaData and createOrUpdate?
+			return errors.New("metadata did not match")
+		}
 		return err
-	}
-
-	// check response
-	if response.State != "COMPLETED" {
-		// could be the file was modified (size/md5 changed) between readMetaData and the allocate request
-		return errors.New("metadata did not match")
 	}
 
 	// update local metadata
@@ -1725,7 +1730,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		Options:      options,
 		ExtraHeaders: make(map[string]string),
 	}
-	fileDate := api.Time(src.ModTime(ctx)).APIString()
+	fileDate := api.Rfc3339Time(src.ModTime(ctx)).String()
 
 	// the allocate request
 	var request = api.AllocateFileRequest{
