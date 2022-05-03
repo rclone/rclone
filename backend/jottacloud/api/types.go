@@ -8,42 +8,69 @@ import (
 )
 
 const (
-	// default time format for almost all request and responses
-	timeFormat = "2006-01-02-T15:04:05Z0700"
-	// the API server seems to use a different format
-	apiTimeFormat = "2006-01-02T15:04:05Z07:00"
+	// default time format historically used for all request and responses.
+	// Similar to time.RFC3339, but with an extra '-' in front of 'T',
+	// and no ':' separator in timezone offset. Some newer endpoints have
+	// moved to proper time.RFC3339 conformant format instead.
+	jottaTimeFormat = "2006-01-02-T15:04:05Z0700"
 )
 
-// Time represents time values in the Jottacloud API. It uses a custom RFC3339 like format.
-type Time time.Time
-
-// UnmarshalXML turns XML into a Time
-func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+// unmarshalXML turns XML into a Time
+func unmarshalXMLTime(d *xml.Decoder, start xml.StartElement, timeFormat string) (time.Time, error) {
 	var v string
 	if err := d.DecodeElement(&v, &start); err != nil {
-		return err
+		return time.Time{}, err
 	}
 	if v == "" {
-		*t = Time(time.Time{})
-		return nil
+		return time.Time{}, nil
 	}
 	newTime, err := time.Parse(timeFormat, v)
 	if err == nil {
-		*t = Time(newTime)
+		return newTime, nil
 	}
+	return time.Time{}, err
+}
+
+// JottaTime represents time values in the classic API using a custom RFC3339 like format
+type JottaTime time.Time
+
+// String returns JottaTime string in Jottacloud classic format
+func (t JottaTime) String() string { return time.Time(t).Format(jottaTimeFormat) }
+
+// UnmarshalXML turns XML into a JottaTime
+func (t *JottaTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	tm, err := unmarshalXMLTime(d, start, jottaTimeFormat)
+	*t = JottaTime(tm)
 	return err
 }
 
-// MarshalXML turns a Time into XML
-func (t *Time) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+// MarshalXML turns a JottaTime into XML
+func (t *JottaTime) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(t.String(), start)
 }
 
-// Return Time string in Jottacloud format
-func (t Time) String() string { return time.Time(t).Format(timeFormat) }
+// Rfc3339Time represents time values in the newer APIs using standard RFC3339 format
+type Rfc3339Time time.Time
 
-// APIString returns Time string in Jottacloud API format
-func (t Time) APIString() string { return time.Time(t).Format(apiTimeFormat) }
+// String returns Rfc3339Time string in Jottacloud RFC3339 format
+func (t Rfc3339Time) String() string { return time.Time(t).Format(time.RFC3339) }
+
+// UnmarshalXML turns XML into a Rfc3339Time
+func (t *Rfc3339Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	tm, err := unmarshalXMLTime(d, start, time.RFC3339)
+	*t = Rfc3339Time(tm)
+	return err
+}
+
+// MarshalXML turns a Rfc3339Time into XML
+func (t *Rfc3339Time) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	return e.EncodeElement(t.String(), start)
+}
+
+// MarshalJSON turns a Rfc3339Time into JSON
+func (t *Rfc3339Time) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("\"%s\"", t.String())), nil
+}
 
 // LoginToken is struct representing the login token generated in the WebUI
 type LoginToken struct {
@@ -122,16 +149,11 @@ type AllocateFileResponse struct {
 
 // UploadResponse after an upload
 type UploadResponse struct {
-	Name      string      `json:"name"`
-	Path      string      `json:"path"`
-	Kind      string      `json:"kind"`
-	ContentID string      `json:"content_id"`
-	Bytes     int64       `json:"bytes"`
-	Md5       string      `json:"md5"`
-	Created   int64       `json:"created"`
-	Modified  int64       `json:"modified"`
-	Deleted   interface{} `json:"deleted"`
-	Mime      string      `json:"mime"`
+	Path      string `json:"path"`
+	ContentID string `json:"content_id"`
+	Bytes     int64  `json:"bytes"`
+	Md5       string `json:"md5"`
+	Modified  int64  `json:"modified"`
 }
 
 // DeviceRegistrationResponse is the response to registering a device
@@ -338,9 +360,9 @@ type JottaFolder struct {
 	Name       string        `xml:"name,attr"`
 	Deleted    Flag          `xml:"deleted,attr"`
 	Path       string        `xml:"path"`
-	CreatedAt  Time          `xml:"created"`
-	ModifiedAt Time          `xml:"modified"`
-	Updated    Time          `xml:"updated"`
+	CreatedAt  JottaTime     `xml:"created"`
+	ModifiedAt JottaTime     `xml:"modified"`
+	Updated    JottaTime     `xml:"updated"`
 	Folders    []JottaFolder `xml:"folders>folder"`
 	Files      []JottaFile   `xml:"files>file"`
 }
@@ -365,17 +387,17 @@ GET http://www.jottacloud.com/JFS/<account>/<device>/<mountpoint>/.../<file>
 // JottaFile represents a Jottacloud file
 type JottaFile struct {
 	XMLName         xml.Name
-	Name            string `xml:"name,attr"`
-	Deleted         Flag   `xml:"deleted,attr"`
-	PublicURI       string `xml:"publicURI"`
-	PublicSharePath string `xml:"publicSharePath"`
-	State           string `xml:"currentRevision>state"`
-	CreatedAt       Time   `xml:"currentRevision>created"`
-	ModifiedAt      Time   `xml:"currentRevision>modified"`
-	Updated         Time   `xml:"currentRevision>updated"`
-	Size            int64  `xml:"currentRevision>size"`
-	MimeType        string `xml:"currentRevision>mime"`
-	MD5             string `xml:"currentRevision>md5"`
+	Name            string    `xml:"name,attr"`
+	Deleted         Flag      `xml:"deleted,attr"`
+	PublicURI       string    `xml:"publicURI"`
+	PublicSharePath string    `xml:"publicSharePath"`
+	State           string    `xml:"currentRevision>state"`
+	CreatedAt       JottaTime `xml:"currentRevision>created"`
+	ModifiedAt      JottaTime `xml:"currentRevision>modified"`
+	Updated         JottaTime `xml:"currentRevision>updated"`
+	Size            int64     `xml:"currentRevision>size"`
+	MimeType        string    `xml:"currentRevision>mime"`
+	MD5             string    `xml:"currentRevision>md5"`
 }
 
 // Error is a custom Error for wrapping Jottacloud error responses

@@ -401,10 +401,11 @@ func TestCount(t *testing.T) {
 	// Check the MaxDepth too
 	ci.MaxDepth = 1
 
-	objects, size, err := operations.Count(ctx, r.Fremote)
+	objects, size, sizeless, err := operations.Count(ctx, r.Fremote)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), objects)
 	assert.Equal(t, int64(61), size)
+	assert.Equal(t, int64(0), sizeless)
 }
 
 func TestDelete(t *testing.T) {

@@ -121,7 +121,7 @@ func TestDeduplicateFirst(t *testing.T) {
 	// list until we get one object
 	var objects, size int64
 	for try := 1; try <= *fstest.ListRetries; try++ {
-		objects, size, err = operations.Count(context.Background(), r.Fremote)
+		objects, size, _, err = operations.Count(context.Background(), r.Fremote)
 		require.NoError(t, err)
 		if objects == 1 {
 			break

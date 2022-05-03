@@ -42,15 +42,31 @@ builds an in memory representation.  rclone ncdu can be used during
 this scanning phase and you will see it building up the directory
 structure as it goes along.
 
-Here are the keys - press '?' to toggle the help on and off
+You can interact with the user interface using key presses,
+press '?' to toggle the help on and off. The supported keys are:
 
     ` + strings.Join(helpText()[1:], "\n    ") + `
+
+Listed files/directories may be prefixed by a one-character flag,
+some of them combined with a description in brackes at end of line.
+These flags have the following meaning:
+
+    e means this is an empty directory, i.e. contains no files (but
+      may contain empty subdirectories)
+    ~ means this is a directory where some of the files (possibly in
+      subdirectories) have unknown size, and therefore the directory
+      size may be underestimated (and average size inaccurate, as it
+      is average of the files with known sizes).
+    . means an error occurred while reading a subdirectory, and
+      therefore the directory size may be underestimated (and average
+      size inaccurate)
+    ! means an error occurred while reading this directory
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
 but is useful as it stands.
 
-Note that it might take some time to delete big files/folders. The
+Note that it might take some time to delete big files/directories. The
 UI won't respond in the meantime since the deletion is done synchronously.
 `,
 	Run: func(command *cobra.Command, args []string) {
@@ -283,9 +299,9 @@ func (u *UI) biggestEntry() (biggest int64) {
 		return
 	}
 	for i := range u.entries {
-		size, _, _, _, _, _ := u.d.AttrI(u.sortPerm[i])
-		if size > biggest {
-			biggest = size
+		attrs, _ := u.d.AttrI(u.sortPerm[i])
+		if attrs.Size > biggest {
+			biggest = attrs.Size
 		}
 	}
 	return
@@ -297,8 +313,8 @@ func (u *UI) hasEmptyDir() bool {
 		return false
 	}
 	for i := range u.entries {
-		_, count, isDir, _, _, _ := u.d.AttrI(u.sortPerm[i])
-		if isDir && count == 0 {
+		attrs, _ := u.d.AttrI(u.sortPerm[i])
+		if attrs.IsDir && attrs.Count == 0 {
 			return true
 		}
 	}
@@ -343,9 +359,9 @@ func (u *UI) Draw() error {
 			if y >= h-1 {
 				break
 			}
-			size, count, isDir, readable, entriesHaveErrors, err := u.d.AttrI(u.sortPerm[n])
+			attrs, err := u.d.AttrI(u.sortPerm[n])
 			fg := termbox.ColorWhite
-			if entriesHaveErrors {
+			if attrs.EntriesHaveErrors {
 				fg = termbox.ColorYellow
 			}
 			if err != nil {
@@ -356,15 +372,19 @@ func (u *UI) Draw() error {
 				fg, bg = bg, fg
 			}
 			mark := ' '
-			if isDir {
+			if attrs.IsDir {
 				mark = '/'
 			}
 			fileFlag := ' '
 			message := ""
-			if !readable {
+			if !attrs.Readable {
 				message = " [not read yet]"
 			}
-			if entriesHaveErrors {
+			if attrs.CountUnknownSize > 0 {
+				message = fmt.Sprintf(" [%d of %d files have unknown size, size may be underestimated]", attrs.CountUnknownSize, attrs.Count)
+				fileFlag = '~'
+			}
+			if attrs.EntriesHaveErrors {
 				message = " [some subdirectories could not be read, size may be underestimated]"
 				fileFlag = '.'
 			}
@@ -374,32 +394,29 @@ func (u *UI) Draw() error {
 			}
 			extras := ""
 			if u.showCounts {
-				ss := operations.CountStringField(count, u.humanReadable, 9) + " "
-				if count > 0 {
+				ss := operations.CountStringField(attrs.Count, u.humanReadable, 9) + " "
+				if attrs.Count > 0 {
 					extras += ss
 				} else {
 					extras += strings.Repeat(" ", len(ss))
 				}
 			}
-			var averageSize float64
-			if count > 0 {
-				averageSize = float64(size) / float64(count)
-			}
 			if u.showDirAverageSize {
-				ss := operations.SizeStringField(int64(averageSize), u.humanReadable, 9) + " "
-				if averageSize > 0 {
+				avg := attrs.AverageSize()
+				ss := operations.SizeStringField(int64(avg), u.humanReadable, 9) + " "
+				if avg > 0 {
 					extras += ss
 				} else {
 					extras += strings.Repeat(" ", len(ss))
 				}
 			}
 			if showEmptyDir {
-				if isDir && count == 0 && fileFlag == ' ' {
+				if attrs.IsDir && attrs.Count == 0 && fileFlag == ' ' {
 					fileFlag = 'e'
 				}
 			}
 			if u.showGraph {
-				bars := (size + perBar/2 - 1) / perBar
+				bars := (attrs.Size + perBar/2 - 1) / perBar
 				// clip if necessary - only happens during startup
 				if bars > 10 {
 					bars = 10
@@ -408,7 +425,7 @@ func (u *UI) Draw() error {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			Linef(0, y, w, fg, bg, ' ', "%c %s %s%c%s%s", fileFlag, operations.SizeStringField(size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
+			Linef(0, y, w, fg, bg, ' ', "%c %s %s%c%s%s", fileFlag, operations.SizeStringField(attrs.Size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
 	}
@@ -559,14 +576,14 @@ type ncduSort struct {
 // Less is part of sort.Interface.
 func (ds *ncduSort) Less(i, j int) bool {
 	var iAvgSize, jAvgSize float64
-	isize, icount, _, _, _, _ := ds.d.AttrI(ds.sortPerm[i])
-	jsize, jcount, _, _, _, _ := ds.d.AttrI(ds.sortPerm[j])
+	iattrs, _ := ds.d.AttrI(ds.sortPerm[i])
+	jattrs, _ := ds.d.AttrI(ds.sortPerm[j])
 	iname, jname := ds.entries[ds.sortPerm[i]].Remote(), ds.entries[ds.sortPerm[j]].Remote()
-	if icount > 0 {
-		iAvgSize = float64(isize / icount)
+	if iattrs.Count > 0 {
+		iAvgSize = iattrs.AverageSize()
 	}
-	if jcount > 0 {
-		jAvgSize = float64(jsize / jcount)
+	if jattrs.Count > 0 {
+		jAvgSize = jattrs.AverageSize()
 	}
 
 	switch {
@@ -575,33 +592,33 @@ func (ds *ncduSort) Less(i, j int) bool {
 	case ds.u.sortByName > 0:
 		break
 	case ds.u.sortBySize < 0:
-		if isize != jsize {
-			return isize < jsize
+		if iattrs.Size != jattrs.Size {
+			return iattrs.Size < jattrs.Size
 		}
 	case ds.u.sortBySize > 0:
-		if isize != jsize {
-			return isize > jsize
+		if iattrs.Size != jattrs.Size {
+			return iattrs.Size > jattrs.Size
 		}
 	case ds.u.sortByCount < 0:
-		if icount != jcount {
-			return icount < jcount
+		if iattrs.Count != jattrs.Count {
+			return iattrs.Count < jattrs.Count
 		}
 	case ds.u.sortByCount > 0:
-		if icount != jcount {
-			return icount > jcount
+		if iattrs.Count != jattrs.Count {
+			return iattrs.Count > jattrs.Count
 		}
 	case ds.u.sortByAverageSize < 0:
 		if iAvgSize != jAvgSize {
 			return iAvgSize < jAvgSize
 		}
 		// if avgSize is equal, sort by size
-		return isize < jsize
+		return iattrs.Size < jattrs.Size
 	case ds.u.sortByAverageSize > 0:
 		if iAvgSize != jAvgSize {
 			return iAvgSize > jAvgSize
 		}
 		// if avgSize is equal, sort by size
-		return isize > jsize
+		return iattrs.Size > jattrs.Size
 	}
 	// if everything equal, sort by name
 	return iname < jname
