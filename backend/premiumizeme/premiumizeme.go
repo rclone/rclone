@@ -53,7 +53,7 @@ const (
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2   // bigger for slower decay, exponential
 	rootID                      = "0" // ID of root folder is always this
-	rootURL                     = "https://www.premiumize.me/api"
+	rootURL                     = "https://api.real-debrid.com/rest/1.0"
 )
 
 // Globals
@@ -229,7 +229,7 @@ func errorHandler(resp *http.Response) error {
 func (f *Fs) baseParams() url.Values {
 	params := url.Values{}
 	if f.opt.APIKey != "" {
-		params.Add("apikey", f.opt.APIKey)
+		params.Add("authorization", "Bearer "+f.opt.APIKey)
 	}
 	return params
 }
