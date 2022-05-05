@@ -47,7 +47,7 @@ import (
 )
 
 const (
-	rcloneClientID              = "658922194"
+	rcloneClientID              = "X245A4XAIBGVM"
 	rcloneEncryptedClientSecret = "B5YIvQoRIhcpAYs8HYeyjb9gK-ftmZEbqdh_gNfc4RgO9Q"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
@@ -62,8 +62,8 @@ var (
 	oauthConfig = &oauth2.Config{
 		Scopes: nil,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://www.premiumize.me/authorize",
-			TokenURL: "https://www.premiumize.me/token",
+			AuthURL:  "https://api.real-debrid.com/oauth/v2/auth",
+			TokenURL: "https://api.real-debrid.com/oauth/v2/token",
 		},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -89,7 +89,7 @@ func init() {
 This is not normally used - use oauth instead.
 `,
 			Hide:    fs.OptionHideBoth,
-			Default: "",
+			Default: "YOUR-API-KEY-HERE",
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -229,7 +229,7 @@ func errorHandler(resp *http.Response) error {
 func (f *Fs) baseParams() url.Values {
 	params := url.Values{}
 	if f.opt.APIKey != "" {
-		params.Add("authorization", "Bearer "+f.opt.APIKey)
+		params.Add("auth_token", f.opt.APIKey)
 	}
 	return params
 }
@@ -405,7 +405,7 @@ type listAllFn func(*api.Item) bool
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (newDirID string, found bool, err error) {
 	opts := rest.Opts{
 		Method:     "GET",
-		Path:       "/folder/list",
+		Path:       "/downloads", //"/folder/list",
 		Parameters: f.baseParams(),
 	}
 	if dirID != rootID {
@@ -413,7 +413,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	}
 	opts.Parameters.Set("includebreadcrumbs", "false")
 
-	var result api.FolderListResponse
+	var result []api.Item
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
@@ -422,12 +422,13 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	if err != nil {
 		return newDirID, found, fmt.Errorf("couldn't list files: %w", err)
 	}
-	if err = result.AsErr(); err != nil {
-		return newDirID, found, fmt.Errorf("error while listing: %w", err)
-	}
-	newDirID = result.FolderID
-	for i := range result.Content {
-		item := &result.Content[i]
+	//if err = result.AsErr(); err != nil {
+	//	return newDirID, found, fmt.Errorf("error while listing: %w", err)
+	//}
+	//newDirID = result.FolderID
+	for i := range result {
+		item := &result[i]
+		item.Type = "file"
 		if item.Type == api.ItemTypeFolder {
 			if filesOnly {
 				continue
