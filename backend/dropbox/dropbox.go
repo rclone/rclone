@@ -472,9 +472,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		args := team.NewMembersGetInfoArgs(members)
 
 		memberIds, err := f.team.MembersGetInfo(args)
-
 		if err != nil {
 			return nil, fmt.Errorf("invalid dropbox team member: %q: %w", opt.Impersonate, err)
+		}
+		if len(memberIds) == 0 || memberIds[0].MemberInfo == nil || memberIds[0].MemberInfo.Profile == nil {
+			return nil, fmt.Errorf("dropbox team member not found: %q", opt.Impersonate)
 		}
 
 		cfg.AsMemberID = memberIds[0].MemberInfo.Profile.MemberProfile.TeamMemberId
