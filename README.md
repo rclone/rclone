@@ -1,7 +1,7 @@
 This RClone Fork contains a rudementary implementation of Real-Debrid.
 Using this version, The RealDebrid /downloads "history" directory can be served as a read-only virtual drive. 
 
-A potential use-case for this is serving the /downloads directory over plex, allowing you to build a media library truly unlimted(\*) in size. Since all traffic will be routed through the host running rclone, an unlimited(\*\*) amount of people in different locations can access the files.
+A potential use-case for this is serving the /downloads directory over plex, allowing you to build a media library truly unlimted(\*) in size. Since all traffic will be routed through the host running rclone, an unlimited(\*\*) amount of people in different locations can access the files while only needing one account.
 
 - (\*) There are no server-side traffic limitations.
 - (\*) At the moment only the first page of the download history is served.
