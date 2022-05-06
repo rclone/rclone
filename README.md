@@ -4,7 +4,7 @@ Using this version, the entire RealDebrid /downloads "history" directory can be 
 A potential use-case for this is serving the /downloads directory over plex, allowing you to build a media library truly unlimted(\*) in size.
 
 - (\*) There are no server-side traffic limitations.
-- (\*) Very old downloads may not work, since realdebrid seems to deactivate the generated direct links after some (yet to be determined) amount of time.
+- (\*) Very old downloads may not work, since realdebrid seems to deactivate the generated direct links after some (yet to be determined) amount of time. This might be fixable by catching the error and re-generate the link, look for future versions.
 - (\*) There is a server-side connection limit, which I believe is 16 parallel connections.
 - (\*) The amount of people able to stream in parallel is obviously limited by your network connection.
 
