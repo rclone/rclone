@@ -1493,7 +1493,7 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	var resp *http.Response
 	opts = rest.Opts{
 		Method:     "MOVE",
-		Path:       o.fs.filePath(path.Join(uploadDir, ".file")),
+		Path:       path.Join(uploadDir, ".file"),
 		NoResponse: true,
 		Options:    options,
 		RootURL:    o.fs.uploadURL,
