@@ -26,7 +26,7 @@ The realdebrid backend is implemented by overwriting the premiumize backend (for
 
 1. create a new remote using: 'rclone config'
 2. choose 'premiumizeme' ('46')
-3. enter your realdebrid api key ()
+3. enter your realdebrid api key (https://real-debrid.com/apitoken)
 4. choose 'no advanced config'
 6. your RealDebrid remote is now set up.
 7. Mount the remote 'rclone cmount your-remote: your-destination:'
