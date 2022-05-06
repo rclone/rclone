@@ -207,6 +207,20 @@ func TestFixRangeOptions(t *testing.T) {
 			},
 			size: 100,
 		},
+		{
+			name: "SeekOption",
+			in: []OpenOption{
+				&HTTPOption{Key: "a", Value: "1"},
+				&SeekOption{Offset: 10},
+				&HTTPOption{Key: "b", Value: "2"},
+			},
+			want: []OpenOption{
+				&HTTPOption{Key: "a", Value: "1"},
+				&RangeOption{Start: 10, End: 99},
+				&HTTPOption{Key: "b", Value: "2"},
+			},
+			size: 100,
+		},
 	} {
 		FixRangeOption(test.in, test.size)
 		assert.Equal(t, test.want, test.in, test.name)
