@@ -871,7 +871,6 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath, tracker string, newSiz
 		}
 		return ret, nil
 	}
-	fs.Debugf("ias3", "waiting")
 
 	retC := make(chan struct {
 		*Object
