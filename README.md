@@ -14,13 +14,9 @@ Capabilities are limited to reading files and deleting them.
 
 **Installation:**
 
-Download the project files. Build the project using 'go build -tags cmount'
+download the latest pre-built release from here: https://github.com/itsToggle/rclone_RD/releases/tag/v1.58.1-rd.1
 
--or-
-
-download the latest built release
-
-****Setting up the remote:****
+**Setting up the remote:**
 
 The realdebrid backend is implemented by overwriting the premiumize backend (for now).
 
@@ -31,3 +27,18 @@ The realdebrid backend is implemented by overwriting the premiumize backend (for
 6. your RealDebrid remote is now set up.
 7. Mount the remote 'rclone cmount your-remote: your-destination:'
 8. Enjoy
+
+**Building it yourself**
+
+I really do suggest downloading the pre-built release. But if you want to tinker a bit and built it yourself, here are the steps:
+- Download the project files. 
+- To build the project, you need to have MinGW or a different gcc adaptation installed.
+- install WinFsp.
+- If you dont want to mount the remote as a virtual drive but rather as a dlna server or silimar, use 'go build' to build the project.
+- If you do want to mount the remote as a virtual drive, continue:
+- Build the project using 'go build -tags cmount'. 
+- if that fails on 'fatal error: fuse_common.h missing', you need to do the following steps:
+- Locate this folder: C:\Program Files (x86)\WinFsp\inc\fuse - inside you will find the missing files.
+- Copy all files to the directory that they are missing from. For me that was: C:\Users\BigSchlong\go\pkg\mod\github.com\winfsp\cgofuse@v1.5.1-0.20220421173602-ce7e5a65cac7\fuse
+- Try to build it again
+
