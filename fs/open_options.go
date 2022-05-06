@@ -158,7 +158,8 @@ func FixRangeOption(options []OpenOption, size int64) {
 				x = &RangeOption{Start: size - x.End, End: -1}
 				options[i] = x
 			}
-			if x.End > size {
+			// If end is too big or undefined, fetch to the end
+			if x.End > size || x.End < 0 {
 				x = &RangeOption{Start: x.Start, End: size - 1}
 				options[i] = x
 			}

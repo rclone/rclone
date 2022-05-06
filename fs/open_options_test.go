@@ -183,7 +183,7 @@ func TestFixRangeOptions(t *testing.T) {
 				&RangeOption{Start: 1, End: -1},
 			},
 			want: []OpenOption{
-				&RangeOption{Start: 1, End: -1},
+				&RangeOption{Start: 1, End: 99},
 			},
 			size: 100,
 		},
@@ -193,7 +193,7 @@ func TestFixRangeOptions(t *testing.T) {
 				&RangeOption{Start: -1, End: 10},
 			},
 			want: []OpenOption{
-				&RangeOption{Start: 90, End: -1},
+				&RangeOption{Start: 90, End: 99},
 			},
 			size: 100,
 		},
