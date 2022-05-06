@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -77,19 +78,16 @@ func init() {
 		Name:        "premiumizeme",
 		Description: "premiumize.me",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			return oauthutil.ConfigOut("", &oauthutil.Options{
-				OAuth2Config: oauthConfig,
-			})
-		},
+		//Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+		//	return oauthutil.ConfigOut("", &oauthutil.Options{
+		//		OAuth2Config: oauthConfig,
+		//	})
+		//},
 		Options: []fs.Option{{
 			Name: "api_key",
-			Help: `API Key.
-
-This is not normally used - use oauth instead.
-`,
-			Hide:    fs.OptionHideBoth,
-			Default: "YOUR-API-KEY-HERE",
+			Help: `please provide your RealDebrid API key.`,
+			//Hide:    fs.OptionHideBoth,
+			Default: "",
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -363,30 +361,30 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
 	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
-	var resp *http.Response
-	var info api.FolderCreateResponse
-	opts := rest.Opts{
-		Method:     "POST",
-		Path:       "/folder/create",
-		Parameters: f.baseParams(),
-		MultipartParams: url.Values{
-			"name":      {f.opt.Enc.FromStandardName(leaf)},
-			"parent_id": {pathID},
-		},
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		//fmt.Printf("...Error %v\n", err)
-		return "", fmt.Errorf("CreateDir http: %w", err)
-	}
-	if err = info.AsErr(); err != nil {
-		return "", fmt.Errorf("CreateDir: %w", err)
-	}
+	//var resp *http.Response
+	//var info api.FolderCreateResponse
+	//opts := rest.Opts{
+	//	Method:     "POST",
+	//	Path:       "/folder/create",
+	//	Parameters: f.baseParams(),
+	//	MultipartParams: url.Values{
+	//		"name":      {f.opt.Enc.FromStandardName(leaf)},
+	//		"parent_id": {pathID},
+	//	},
+	//}
+	//err = f.pacer.Call(func() (bool, error) {
+	//	resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+	//	return shouldRetry(ctx, resp, err)
+	//})
+	//if err != nil {
+	//	//fmt.Printf("...Error %v\n", err)
+	//	return "", fmt.Errorf("CreateDir http: %w", err)
+	//}
+	//if err = info.AsErr(); err != nil {
+	//	return "", fmt.Errorf("CreateDir: %w", err)
+	//}
 	// fmt.Printf("...Id %q\n", *info.Id)
-	return info.ID, nil
+	return "", nil //return info.ID, nil
 }
 
 // list the objects into the function supplied
@@ -412,11 +410,26 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		opts.Parameters.Set("id", dirID)
 	}
 	opts.Parameters.Set("includebreadcrumbs", "false")
-
+	var partialresult []api.Item
 	var result []api.Item
 	var resp *http.Response
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		var totalcount int
+		totalcount = 1
+		for len(result) < totalcount {
+			resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
+			if err == nil {
+				totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+				if err == nil {
+					result = append(result, partialresult...)
+					opts.Parameters.Set("offset", strconv.Itoa(len(result)))
+				} else {
+					break
+				}
+			} else {
+				break
+			}
+		}
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
@@ -772,26 +785,26 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
-	var resp *http.Response
-	var info api.AccountInfoResponse
-	opts := rest.Opts{
-		Method:     "POST",
-		Path:       "/account/info",
-		Parameters: f.baseParams(),
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return nil, fmt.Errorf("CreateDir http: %w", err)
-	}
-	if err = info.AsErr(); err != nil {
-		return nil, fmt.Errorf("CreateDir: %w", err)
-	}
-	usage = &fs.Usage{
-		Used: fs.NewUsageValue(int64(info.SpaceUsed)),
-	}
+	//var resp *http.Response
+	//var info api.AccountInfoResponse
+	//opts := rest.Opts{
+	//	Method:     "POST",
+	//	Path:       "/account/info",
+	//	Parameters: f.baseParams(),
+	//}
+	//err = f.pacer.Call(func() (bool, error) {
+	//	resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+	//	return shouldRetry(ctx, resp, err)
+	//})
+	//if err != nil {
+	//	return nil, fmt.Errorf("CreateDir http: %w", err)
+	//}
+	//if err = info.AsErr(); err != nil {
+	//	return nil, fmt.Errorf("CreateDir: %w", err)
+	//}
+	//usage = &fs.Usage{
+	//	Used: fs.NewUsageValue(int64(info.SpaceUsed)),
+	//}
 	return usage, nil
 }
 
@@ -1061,11 +1074,8 @@ func (f *Fs) renameLeaf(ctx context.Context, isFile bool, id string, newLeaf str
 // Remove an object by ID
 func (f *Fs) remove(ctx context.Context, id string) (err error) {
 	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/item/delete",
-		MultipartParams: url.Values{
-			"id": {id},
-		},
+		Method:     "DELETE",
+		Path:       "/downloads/delete/" + id,
 		Parameters: f.baseParams(),
 	}
 	var resp *http.Response
