@@ -26,6 +26,7 @@ import (
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/adal"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -1690,25 +1691,17 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
-	// calculate size of parts/blocks
-	partSize := int(o.fs.opt.ChunkSize)
-
 	uploadParts := int64(maxUploadParts)
 	if uploadParts < 1 {
 		uploadParts = 1
 	} else if uploadParts > maxUploadParts {
 		uploadParts = maxUploadParts
 	}
-
-	// Adjust partSize until the number of parts/blocks is small enough.
-	if o.size/int64(partSize) >= uploadParts {
-		// Calculate partition size rounded up to the nearest MiB
-		partSize = int((((o.size / uploadParts) >> 20) + 1) << 20)
-		fs.Debugf(o, "Adjust partSize to %q", partSize)
-	}
+	// calculate size of parts/blocks
+	partSize := chunksize.Calculator(o, int(uploadParts), o.fs.opt.ChunkSize)
 
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
-		BufferSize:      partSize,
+		BufferSize:      int(partSize),
 		MaxBuffers:      o.fs.opt.UploadConcurrency,
 		Metadata:        o.meta,
 		BlobHTTPHeaders: httpHeaders,
