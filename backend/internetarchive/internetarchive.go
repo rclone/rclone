@@ -497,8 +497,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 		"x-archive-filemeta-crc32":   srcObj.crc32,
 		"x-archive-filemeta-size":    fmt.Sprint(srcObj.size),
 		// add this too for sure
-		"x-archive-filemeta-rclone-mtime":    srcObj.modTime.Format(time.RFC3339Nano),
-		"x-amz-filemeta-rclone-update-track": updateTracker,
+		"x-archive-filemeta-rclone-mtime":        srcObj.modTime.Format(time.RFC3339Nano),
+		"x-archive-filemeta-rclone-update-track": updateTracker,
 	}
 
 	// make a PUT request at (IAS3)/:item/:path without body
