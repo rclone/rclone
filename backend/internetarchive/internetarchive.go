@@ -869,10 +869,15 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath string, newHashes map[h
 			ret2, ok := ret2.(*Object)
 			if ok {
 				ret = ret2
+				ret.crc32 = ""
+				ret.md5 = ""
+				ret.sha1 = ""
+				ret.size = -1
 			}
 		}
 		return ret, nil
 	}
+	fs.Debugf("ias3", "waiting")
 
 	retC := make(chan struct {
 		*Object
