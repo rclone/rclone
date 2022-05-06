@@ -216,7 +216,7 @@ func (f *Fs) Features() *fs.Features {
 
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
-	404, // Not found. Can be returned by NextCloud when merging chunks of an upload if done too fast.
+	//404, // Not found. Can be returned by NextCloud when merging chunks of an upload if done too fast.
 	423, // Locked
 	429, // Too Many Requests.
 	500, // Internal Server Error
