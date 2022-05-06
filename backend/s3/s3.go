@@ -2212,6 +2212,7 @@ func setQuirks(opt *Options) {
 		urlEncodeListings = false
 	case "DigitalOcean":
 		urlEncodeListings = false
+		virtualHostStyle = false
 	case "Dreamhost":
 		urlEncodeListings = false
 	case "IBMCOS":
