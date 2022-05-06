@@ -28,6 +28,7 @@ import (
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
+	"github.com/rclone/rclone/lib/random"
 	"github.com/rclone/rclone/lib/rest"
 )
 
@@ -129,6 +130,7 @@ type IAFile struct {
 	// Source     string `json:"source"`
 	Mtime       string          `json:"mtime"`
 	RcloneMtime json.RawMessage `json:"rclone-mtime"`
+	UpdateTrack string          `json:"rclone-update-track"`
 	Size        string          `json:"size"`
 	Md5         string          `json:"md5"`
 	Crc32       string          `json:"crc32"`
@@ -660,12 +662,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	bucket, bucketPath := o.split()
 	modTime := src.ModTime(ctx)
 	size := src.Size()
+	updateTracker := random.String(32)
 
 	// Set the mtime in the metadata
 	// internetarchive backend builds at header level as IAS3 has extension outside X-Amz-
 	headers := map[string]string{
 		// https://github.com/jjjake/internetarchive/blob/2456376533251df9d05e0a14d796ec1ced4959f5/internetarchive/iarequest.py#L158
-		"x-amz-filemeta-rclone-mtime": modTime.Format(time.RFC3339Nano),
+		"x-amz-filemeta-rclone-mtime":        modTime.Format(time.RFC3339Nano),
+		"x-amz-filemeta-rclone-update-track": updateTracker,
 
 		// we add some more headers for intuitive actions
 		"x-amz-auto-make-bucket":     "1",    // create an item if does not exist, do nothing if already
@@ -712,7 +716,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// or we have to wait for finish? (needs polling (frontend)/metadata/:item or scraping (frontend)/history/:item)
 	var newObj *Object
 	if err == nil {
-		newObj, err = o.fs.waitFileUpload(ctx, o.remote, o.fs.getHashes(ctx, src), size)
+		newObj, err = o.fs.waitFileUpload(ctx, o.remote, updateTracker, size)
 	} else {
 		newObj = &Object{}
 	}
@@ -852,7 +856,7 @@ func (f *Fs) listAllUnconstrained(ctx context.Context, bucket string) (entries f
 	return entries, nil
 }
 
-func (f *Fs) waitFileUpload(ctx context.Context, reqPath string, newHashes map[hash.Type]string, newSize int64) (ret *Object, err error) {
+func (f *Fs) waitFileUpload(ctx context.Context, reqPath, tracker string, newSize int64) (ret *Object, err error) {
 	bucket, bucketPath := f.split(reqPath)
 
 	ret = &Object{
@@ -930,22 +934,7 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath string, newHashes map[h
 				return
 			}
 
-			hashMatched := true
-			for tt, sum := range newHashes {
-				if tt == hash.MD5 && !hash.Equals(iaFile.Md5, sum) {
-					hashMatched = false
-					break
-				}
-				if tt == hash.SHA1 && !hash.Equals(iaFile.Sha1, sum) {
-					hashMatched = false
-					break
-				}
-				if tt == hash.CRC32 && !hash.Equals(iaFile.Crc32, sum) {
-					hashMatched = false
-					break
-				}
-			}
-			if !hashMatched {
+			if iaFile.UpdateTrack != tracker {
 				continue
 			}
 			if !compareSize(parseSize(iaFile.Size), newSize) {
