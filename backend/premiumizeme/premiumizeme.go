@@ -410,6 +410,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 		opts.Parameters.Set("id", dirID)
 	}
 	opts.Parameters.Set("includebreadcrumbs", "false")
+	opts.Parameters.Set("limit", "100")
 	var partialresult []api.Item
 	var result []api.Item
 	var resp *http.Response
