@@ -36,6 +36,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -3838,7 +3839,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	}
 
 	// calculate size of parts
-	partSize := int(f.opt.ChunkSize)
+	partSize := f.opt.ChunkSize
 
 	// size can be -1 here meaning we don't know the size of the incoming file. We use ChunkSize
 	// buffers here (default 5 MiB). With a maximum number of parts (10,000) this will be a file of
@@ -3849,11 +3850,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 				f.opt.ChunkSize, fs.SizeSuffix(int64(partSize)*uploadParts))
 		})
 	} else {
-		// Adjust partSize until the number of parts is small enough.
-		if size/int64(partSize) >= uploadParts {
-			// Calculate partition size rounded up to the nearest MiB
-			partSize = int((((size / uploadParts) >> 20) + 1) << 20)
-		}
+		partSize = chunksize.Calculator(o, int(uploadParts), f.opt.ChunkSize)
 	}
 
 	memPool := f.getMemoryPool(int64(partSize))
