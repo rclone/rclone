@@ -485,6 +485,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 		return nil, fs.ErrorCantCopy
 	}
 
+	updateTracker := random.String(32)
 	headers := map[string]string{
 		"x-archive-auto-make-bucket": "1",
 		"x-archive-queue-derive":     "0",
@@ -496,7 +497,8 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 		"x-archive-filemeta-crc32":   srcObj.crc32,
 		"x-archive-filemeta-size":    fmt.Sprint(srcObj.size),
 		// add this too for sure
-		"x-archive-filemeta-rclone-mtime": srcObj.modTime.Format(time.RFC3339Nano),
+		"x-archive-filemeta-rclone-mtime":    srcObj.modTime.Format(time.RFC3339Nano),
+		"x-amz-filemeta-rclone-update-track": updateTracker,
 	}
 
 	// make a PUT request at (IAS3)/:item/:path without body
@@ -517,7 +519,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (_ fs.Objec
 
 	// we can't update/find metadata here as IA will also
 	// queue server-side copy as well as upload/delete.
-	return f.waitFileUpload(ctx, trimPathPrefix(path.Join(dstBucket, dstPath), f.root, f.opt.Enc), f.getHashes(ctx, src), srcObj.size)
+	return f.waitFileUpload(ctx, trimPathPrefix(path.Join(dstBucket, dstPath), f.root, f.opt.Enc), updateTracker, srcObj.size)
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -784,18 +786,6 @@ func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
 // split returns bucket and bucketPath from the object
 func (o *Object) split() (bucket, bucketPath string) {
 	return o.fs.split(o.remote)
-}
-
-func (f *Fs) getHashes(ctx context.Context, src fs.ObjectInfo) map[hash.Type]string {
-	hashMap := map[hash.Type]string{}
-	for _, ty := range f.Hashes().Array() {
-		sum, err := src.Hash(ctx, ty)
-		if err != nil || sum == "" {
-			continue
-		}
-		hashMap[ty] = sum
-	}
-	return hashMap
 }
 
 func (f *Fs) requestMetadata(ctx context.Context, bucket string) (result MetadataResponse, err error) {
