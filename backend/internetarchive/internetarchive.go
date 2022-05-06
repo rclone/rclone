@@ -880,9 +880,6 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath, tracker string, newSiz
 	go func() {
 		isFirstTime := true
 		existed := false
-		oldMtime := ""
-		oldCrc32 := ""
-		unreliablePassCount := 0
 		for {
 			if !isFirstTime {
 				// depending on the queue, it takes time
@@ -907,10 +904,6 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath, tracker string, newSiz
 			if isFirstTime {
 				isFirstTime = false
 				existed = iaFile != nil
-				if iaFile != nil {
-					oldMtime = iaFile.Mtime
-					oldCrc32 = iaFile.Crc32
-				}
 			}
 			if iaFile == nil {
 				continue
@@ -928,17 +921,6 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath, tracker string, newSiz
 				continue
 			}
 			if !compareSize(parseSize(iaFile.Size), newSize) {
-				continue
-			}
-			if hash.Equals(oldCrc32, iaFile.Crc32) && unreliablePassCount < 60 {
-				// the following two are based on a sort of "bad" assumption;
-				// what if the file is updated immediately, before polling?
-				// by limiting hits of these tests, avoid infinite loop
-				unreliablePassCount++
-				continue
-			}
-			if hash.Equals(iaFile.Mtime, oldMtime) && unreliablePassCount < 60 {
-				unreliablePassCount++
 				continue
 			}
 
