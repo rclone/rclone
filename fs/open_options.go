@@ -142,7 +142,10 @@ func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 // It also adjusts any SeekOption~s, turning them into absolute
 // RangeOption~s instead.
 func FixRangeOption(options []OpenOption, size int64) {
-	if size == 0 {
+	if size < 0 {
+		// Can't do anything for unknown length objects
+		return
+	} else if size == 0 {
 		// if size 0 then remove RangeOption~s
 		// replacing with a NullOptions~s which won't be rendered
 		for i := range options {
