@@ -204,6 +204,11 @@ backends:
  - backend:  "s3"
    remote:   "TestS3Alibaba:"
    fastlist: true
+ - backend:  "s3"
+   remote:   "TestS3R2:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "sftp"
    remote:   "TestSFTPOpenssh:"
    fastlist: false
