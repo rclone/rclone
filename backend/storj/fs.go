@@ -579,7 +579,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	return newObjectFromUplink(f, "", upload.Info()), nil
+	return newObjectFromUplink(f, src.Remote(), upload.Info()), nil
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate
