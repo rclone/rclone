@@ -296,7 +296,7 @@ func (o *Object) Storable() bool {
 	return true
 }
 
-// SetModTime is not supported
+// SetModTime sets modTime on a particular file
 func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	bucket, reqDir := o.split()
 	if bucket == "" {
