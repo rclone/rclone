@@ -14,7 +14,7 @@ Capabilities are limited to reading files and deleting them.
 
 **Installation:**
 
-download the latest pre-built release from here: https://github.com/itsToggle/rclone_RD/releases/tag/v1.58.1-rd.1
+download the latest pre-built release from here: https://github.com/itsToggle/rclone_RD/releases
 
 **Setting up the remote:**
 
