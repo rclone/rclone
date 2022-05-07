@@ -28,10 +28,11 @@ The realdebrid backend is implemented by overwriting the premiumize backend (for
 7. Mount the remote 'rclone cmount your-remote: your-destination:'
 8. Enjoy
 
-**Building it yourself**
+**Building it yourself (Windows)**
 
 I really do suggest downloading the pre-built release. But if you want to tinker a bit and built it yourself, here are the steps:
 - Download the project files. 
+- Install Golang
 - To build the project, you need to have MinGW or a different gcc adaptation installed.
 - install WinFsp.
 - If you dont want to mount the remote as a virtual drive but rather as a dlna server or silimar, use 'go build' to build the project.
@@ -41,4 +42,13 @@ I really do suggest downloading the pre-built release. But if you want to tinker
 - Locate this folder: C:\Program Files (x86)\WinFsp\inc\fuse - inside you will find the missing files.
 - Copy all files to the directory that they are missing from. For me that was: C:\Users\BigSchlong\go\pkg\mod\github.com\winfsp\cgofuse@v1.5.1-0.20220421173602-ce7e5a65cac7\fuse
 - Try to build it again
+
+**Building it yourself (Mac/Linux)**
+
+I don't have the means to compile a release for Mac or Linux, so you will have to build it yourself.
+- Download the project files
+- Install Golang 
+- Run a terminal in the root directory of the project files
+- use 'go build -tags cmount' to build the project
+- If anything fails, Check the official rclone Channels for Help.
 
