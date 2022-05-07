@@ -3,18 +3,16 @@
 This RClone Fork contains a rudementary implementation of Real-Debrid.
 Using this version, the entire RealDebrid /downloads "history" directory can be served as a read-only virtual drive. 
 
-A potential use-case for this is serving the /downloads directory over plex, allowing you to build a media library truly unlimted in size.
+A potential use-case for this is serving the /downloads directory over plex, allowing you to build a media library truly unlimted in size. Im working on a project that would allow plex to function the same way that Wako,Syncler and other streaming apps do. Keep an eye out for that ;)
 
+### Capabilities and Limitations:
+
+- Read/Write capabilities are limited to reading files and deleting them. 
 - There are no server-side traffic limitations.
 - Very old downloads may not work, since realdebrid seems to deactivate the generated direct links after some (yet to be determined) amount of time. This might be fixable by catching the error and re-generate the link, look for future versions.
 - There is a server-side connection limit, which I believe is 16 parallel connections.
-- The amount of people able to stream in parallel is obviously limited by your network connection.
 
-Capabilities are limited to reading files and deleting them. 
-
-
-
-## Installation:
+## Installation (Windows):
 
 download the latest pre-built release from here: https://github.com/itsToggle/rclone_RD/releases
 
