@@ -27,7 +27,8 @@ The realdebrid backend is implemented by overwriting the premiumize backend (for
 5. choose 'no advanced config'
 6. your RealDebrid remote is now set up.
 7. Mount the remote 'rclone cmount your-remote: your-destination:' - replace 'your-remote' with your remotes name. replace 'your-destination:' with a drive letter, e.g. 'X:'
-8. Enjoy
+8. It is recommended to use the tag '--dir-cache-time 30s' when mounting, to regulary refresh the directory.
+9. Enjoy
 
 **Building it yourself (Windows)**
 
