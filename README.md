@@ -21,11 +21,12 @@ download the latest pre-built release from here: https://github.com/itsToggle/rc
 The realdebrid backend is implemented by overwriting the premiumize backend (for now).
 
 1. create a new remote using: 'rclone config'
-2. choose 'premiumizeme' ('46')
-3. enter your realdebrid api key (https://real-debrid.com/apitoken)
-4. choose 'no advanced config'
+2. choose a name for your remote e.g. 'your-remote'
+3. choose 'premiumizeme' ('46')
+4. enter your realdebrid api key (https://real-debrid.com/apitoken)
+5. choose 'no advanced config'
 6. your RealDebrid remote is now set up.
-7. Mount the remote 'rclone cmount your-remote: your-destination:'
+7. Mount the remote 'rclone cmount your-remote: your-destination:' - replace 'your-remote' with your remotes name. replace 'your-destination:' with a drive letter, e.g. 'X:'
 8. Enjoy
 
 **Building it yourself (Windows)**
