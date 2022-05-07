@@ -43,7 +43,7 @@ an example mounting command would look like this: 'rclone cmount rdtest: X: --di
 I really do suggest downloading the pre-built release. But if you want to tinker a bit and built it yourself, here are the steps:
 - Download the project files. 
 - Install Golang
-- To build the project, you need to have MinGW or a different gcc adaptation installed.
+- To build the project, you need to have MinGW or a different cgo adaptation installed.
 - install WinFsp.
 - If you dont want to mount the remote as a virtual drive but rather as a dlna server or silimar, use 'go build' to build the project.
 - If you do want to mount the remote as a virtual drive, continue:
