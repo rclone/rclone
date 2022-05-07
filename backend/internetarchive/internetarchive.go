@@ -130,7 +130,7 @@ type IAFile struct {
 	// Source     string `json:"source"`
 	Mtime       string          `json:"mtime"`
 	RcloneMtime json.RawMessage `json:"rclone-mtime"`
-	UpdateTrack string          `json:"rclone-update-track"`
+	UpdateTrack json.RawMessage `json:"rclone-update-track"`
 	Size        string          `json:"size"`
 	Md5         string          `json:"md5"`
 	Crc32       string          `json:"crc32"`
@@ -916,7 +916,15 @@ func (f *Fs) waitFileUpload(ctx context.Context, reqPath, tracker string, newSiz
 				return
 			}
 
-			if iaFile.UpdateTrack != tracker {
+			fileTrackers, _ := listOrString(iaFile.UpdateTrack)
+			trackerMatch := false
+			for _, v := range fileTrackers {
+				if v == tracker {
+					trackerMatch = true
+					break
+				}
+			}
+			if !trackerMatch {
 				continue
 			}
 			if !compareSize(parseSize(iaFile.Size), newSize) {
@@ -1001,20 +1009,24 @@ func makeValidObject2(f *Fs, file IAFile, bucket string) *Object {
 	return makeValidObject(f, trimPathPrefix(path.Join(bucket, file.Name), f.root, f.opt.Enc), file, mtimeTime, size)
 }
 
-func (file IAFile) parseMtime() (mtime time.Time) {
-	// method 1: use metadata added by rclone
-	var rmArray []string
+func listOrString(jm json.RawMessage) (rmArray []string, err error) {
 	// rclone-metadata can be an array or string
 	// try to deserialize it as array first
-	err := json.Unmarshal(file.RcloneMtime, &rmArray)
+	err = json.Unmarshal(jm, &rmArray)
 	if err != nil {
 		// if not, it's a string
 		dst := new(string)
-		err = json.Unmarshal(file.RcloneMtime, dst)
+		err = json.Unmarshal(jm, dst)
 		if err == nil {
 			rmArray = []string{*dst}
 		}
 	}
+	return
+}
+
+func (file IAFile) parseMtime() (mtime time.Time) {
+	// method 1: use metadata added by rclone
+	rmArray, err := listOrString(file.RcloneMtime)
 	// let's take the first value we can deserialize
 	for _, value := range rmArray {
 		mtime, err = time.Parse(time.RFC3339Nano, value)
