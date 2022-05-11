@@ -2,10 +2,9 @@
 //
 // This uses the cgo based cgofuse library
 
-//go:build cmount && cgo && (linux || darwin || freebsd || windows)
+//go:build cmount && ((linux && cgo) || (darwin && cgo) || (freebsd && cgo) || windows)
 // +build cmount
-// +build cgo
-// +build linux darwin freebsd windows
+// +build linux,cgo darwin,cgo freebsd,cgo windows
 
 package cmount
 
