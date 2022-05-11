@@ -168,16 +168,22 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		return false, err
 	}
 
-	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return fserrors.ShouldRetry(err) && fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
-func shouldTryNextEndpoint(response *http.Response, err error) bool {
-	if response.StatusCode == 400 {
-		if apiErr := err.(*ApiError); apiErr != nil {
-			if apiErr.Error() == "ERR_CONTENT_ADDING_DISABLED" {
-				return true
-			}
-		}
+// returns true if response has a StatusCode of 400 and
+// if the error returned by the API is ERR_CONTENT_ADDING_DISABLED
+func contentAddingDisabled(response *http.Response, err error) bool {
+	if response == nil || err == nil {
+		return false
+	}
+	apiErr := err.(*ApiError)
+	if apiErr == nil {
+		return false
+	}
+
+	if response.StatusCode == 400 && apiErr.Error() == "ERR_CONTENT_ADDING_DISABLED" {
+		return true
 	}
 
 	return false
@@ -776,7 +782,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 
 		opts.RootURL = endpoints[endpoint]
 		response, err = o.fs.client.CallJSON(ctx, &opts, nil, &result)
-		if shouldTryNextEndpoint(response, err) {
+		if contentAddingDisabled(response, err) {
 			fs.Debugf(o, "failed upload, retry w/ next upload endpoint")
 			endpoint += 1
 			return true, err
