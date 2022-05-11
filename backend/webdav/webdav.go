@@ -244,6 +244,15 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
+func (f *Fs) shouldRetryChunkMerge(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	// Not found. Can be returned by NextCloud when merging chunks of an upload.
+	if resp.StatusCode == 404 {
+		return true, err
+	}
+
+	return f.shouldRetry(ctx, resp, err)
+}
+
 // safeRoundTripper is a wrapper for http.RoundTripper that serializes
 // http roundtrips. NTLM authentication sequence can involve up to four
 // rounds of negotiations and might fail due to concurrency.
@@ -1386,6 +1395,7 @@ func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string
 // Standard update
 func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func() (io.ReadCloser, error), filePath string, size int64, contentType string, extraHeaders map[string]string, rootURL string, options ...fs.OpenOption) (err error) {
 	var resp *http.Response
+
 	opts := rest.Opts{
 		Method:        "PUT",
 		Path:          filePath,
@@ -1398,7 +1408,7 @@ func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func(
 		ExtraHeaders:  extraHeaders,
 		RootURL:       rootURL,
 	}
-	err = o.fs.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
@@ -1428,20 +1438,26 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	uploadDir := "rclone-chunked-upload-" + hex.EncodeToString(hasher.Sum(nil))
 	fs.Debugf(src, "Starting multipart upload to temp dir %q", uploadDir)
 
+	// Clean the upload directory if it exists (this means that a previous try didn't clean up properly).
+	//errPurge := o.fs.Purge(ctx, uploadDir)
+	//fs.Debugf(src, "Failed purge of '%s', error: %w", uploadDir, errPurge)
+
 	opts := rest.Opts{
 		Method:     "MKCOL",
 		Path:       uploadDir + "/",
 		NoResponse: true,
 		RootURL:    o.fs.uploadURL,
 	}
-	err = o.fs.pacer.Call(func() (bool, error) {
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err := o.fs.srv.Call(ctx, &opts)
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		if apiErr, ok := err.(*api.Error); ok {
+			fs.Debugf(src, "big test")
+			fs.Debugf(src, "YOOO, status: %d, error: %w", apiErr.StatusCode, apiErr)
 			// Upload directory already exists, so ignore
-			if apiErr.StatusCode != http.StatusMethodNotAllowed || apiErr.Message != "The resource you tried to create already exists" {
+			if apiErr.StatusCode != http.StatusMethodNotAllowed {
 				return fmt.Errorf("making upload directory failed: %w", err)
 			}
 		}
@@ -1467,22 +1483,21 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 		}
 		partObj.remote = fmt.Sprintf("%s/%015d-%015d", uploadDir, uploadedSize, uploadedSize+contentLength)
 		extraHeaders := map[string]string{}
-		// TODO: Fix broken retries. I suspect io.LimitReader() is the culprit here because it prevents it from being rewound.
+		// Fix low-level HTTP 2 retries.
 		// 2022-04-28 15:59:06 ERROR : stuff/video.avi: Failed to copy: uploading chunk failed: Put "https://censored.com/remote.php/dav/uploads/Admin/rclone-chunked-upload-censored/000006113198080-000006123683840": http2: Transport: cannot retry err [http2: Transport received Server's graceful shutdown GOAWAY] after Request.Body was written; define Request.GetBody to avoid this error
-
-		// TODO: support chunk upload retries.
-		// Problem: the mem usage can be too big if user configures it to a big value.
+		// Problem: the mem usage can be too big if user configures it to a big value?
 		buf := make([]byte, partObj.fs.opt.ChunkSize)
 		in := readers.NewRepeatableLimitReaderBuffer(in0, buf, int64(partObj.fs.opt.ChunkSize))
-		//getBody := func() (io.ReadCloser, error) {
-		fs.Logf(nil, "body type: %T", in0)
-		// May need to do that in error callback: in.Seek(uploadedSize, io.SeekStart)
-		//return in, nil
-		//}
 
-		//body, _ := getBody()
+		getBody := func() (io.ReadCloser, error) {
+			if _, err = in.Seek(0, io.SeekStart); err != nil {
+				return io.NopCloser(in), nil
+			}
 
-		err = partObj.updateSimple(ctx, in, nil, partObj.remote, contentLength, "application/x-www-form-urlencoded", extraHeaders, o.fs.uploadURL, options...)
+			return nil, err
+		}
+
+		err = partObj.updateSimple(ctx, in, getBody, partObj.remote, contentLength, "application/x-www-form-urlencoded", extraHeaders, o.fs.uploadURL, options...)
 		if err != nil {
 			return fmt.Errorf("uploading chunk failed: %w", err)
 		}
@@ -1506,7 +1521,7 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	opts.ExtraHeaders["Destination"] = destinationURL.String()
 	err = o.fs.pacer.Call(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
-		return o.fs.shouldRetry(ctx, resp, err)
+		return o.fs.shouldRetryChunkMerge(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("finalize chunked upload failed, destinationURL: \"%s\": %w", destinationURL, err)
