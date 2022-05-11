@@ -1438,9 +1438,10 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	uploadDir := "rclone-chunked-upload-" + hex.EncodeToString(hasher.Sum(nil))
 	fs.Debugf(src, "Starting multipart upload to temp dir %q", uploadDir)
 
-	// Clean the upload directory if it exists (this means that a previous try didn't clean up properly).
-	//errPurge := o.fs.Purge(ctx, uploadDir)
-	//fs.Debugf(src, "Failed purge of '%s', error: %w", uploadDir, errPurge)
+	err = o.purgeChunkedUpload(ctx, uploadDir)
+	if err != nil {
+		return fmt.Errorf("chunked upload couldn't purge upload directory: %w", err)
+	}
 
 	opts := rest.Opts{
 		Method:     "MKCOL",
@@ -1453,14 +1454,7 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 		return o.fs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		if apiErr, ok := err.(*api.Error); ok {
-			fs.Debugf(src, "big test")
-			fs.Debugf(src, "YOOO, status: %d, error: %w", apiErr.StatusCode, apiErr)
-			// Upload directory already exists, so ignore
-			if apiErr.StatusCode != http.StatusMethodNotAllowed {
-				return fmt.Errorf("making upload directory failed: %w", err)
-			}
-		}
+		return fmt.Errorf("making upload directory failed: %w", err)
 	}
 	defer atexit.OnError(&err, func() {
 		// Try to abort the upload, but ignore the error.
@@ -1527,6 +1521,29 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 		return fmt.Errorf("finalize chunked upload failed, destinationURL: \"%s\": %w", destinationURL, err)
 	}
 	return nil
+}
+
+func (o *Object) purgeChunkedUpload(ctx context.Context, uploadDir string) error {
+	// Clean the upload directory if it exists (this means that a previous try didn't clean up properly).
+	opts := rest.Opts{
+		Method:     "DELETE",
+		Path:       uploadDir + "/",
+		NoResponse: true,
+		RootURL:    o.fs.uploadURL,
+	}
+
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.srv.CallXML(ctx, &opts, nil, nil)
+
+		// Directory doesn't exist, no need to purge.
+		if resp.StatusCode == http.StatusNotFound {
+			return false, nil
+		}
+
+		return o.fs.shouldRetry(ctx, resp, err)
+	})
+
+	return err
 }
 
 // Remove an object
