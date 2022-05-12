@@ -12,9 +12,23 @@ A potential use-case for this is serving the /downloads directory over plex, all
 - Very old downloads may not work, since realdebrid seems to deactivate the generated direct links after some (yet to be determined) amount of time. This might be fixable by catching the error and re-generate the link, look for future versions.
 - There is a server-side connection limit, which I believe is 16 parallel connections.
 
-## Installation (Windows):
+## Installation:
 
-download the latest pre-built release from here: https://github.com/itsToggle/rclone_RD/releases
+I only have the means to provide a pre-built release for Windows. 
+
+For Linux and Mac OSX, I will be providing **comunity-built** releases, which I **cannot verify** - **use these at your own risk**.
+
+### Windows:
+
+download the latest pre-built 'rclone.exe' file from here: https://github.com/itsToggle/rclone_RD/releases
+
+### Mac OSX (comunity build):
+
+download the latest pre-built 'rclone' file from here: https://github.com/itsToggle/rclone_RD/releases
+
+### Linux (comunity build):
+
+No comunity build has been provided yet.
 
 ## Setting up the remote:
 
