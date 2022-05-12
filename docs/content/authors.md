@@ -592,3 +592,4 @@ put them back in again.` >}}
   * Michael C Tiernan - MIT-Research Computing Project <mtiernan@mit.edu>
   * Kaspian <34658474+KaspianDev@users.noreply.github.com>
   * Werner <EvilOlaf@users.noreply.github.com>
+  * Hugal31 <hugo.laloge@gmail.com>
