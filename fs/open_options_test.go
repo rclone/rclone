@@ -150,6 +150,16 @@ func TestFixRangeOptions(t *testing.T) {
 			want: []OpenOption{},
 		},
 		{
+			name: "Unknown size -1",
+			in: []OpenOption{
+				&RangeOption{Start: 1, End: -1},
+			},
+			want: []OpenOption{
+				&RangeOption{Start: 1, End: -1},
+			},
+			size: -1,
+		},
+		{
 			name: "Fetch a range with size=0",
 			in: []OpenOption{
 				&HTTPOption{Key: "a", Value: "1"},
@@ -183,7 +193,7 @@ func TestFixRangeOptions(t *testing.T) {
 				&RangeOption{Start: 1, End: -1},
 			},
 			want: []OpenOption{
-				&RangeOption{Start: 1, End: -1},
+				&RangeOption{Start: 1, End: 99},
 			},
 			size: 100,
 		},
@@ -193,7 +203,7 @@ func TestFixRangeOptions(t *testing.T) {
 				&RangeOption{Start: -1, End: 10},
 			},
 			want: []OpenOption{
-				&RangeOption{Start: 90, End: -1},
+				&RangeOption{Start: 90, End: 99},
 			},
 			size: 100,
 		},
@@ -204,6 +214,20 @@ func TestFixRangeOptions(t *testing.T) {
 			},
 			want: []OpenOption{
 				&RangeOption{Start: 10, End: 99},
+			},
+			size: 100,
+		},
+		{
+			name: "SeekOption",
+			in: []OpenOption{
+				&HTTPOption{Key: "a", Value: "1"},
+				&SeekOption{Offset: 10},
+				&HTTPOption{Key: "b", Value: "2"},
+			},
+			want: []OpenOption{
+				&HTTPOption{Key: "a", Value: "1"},
+				&RangeOption{Start: 10, End: 99},
+				&HTTPOption{Key: "b", Value: "2"},
 			},
 			size: 100,
 		},
