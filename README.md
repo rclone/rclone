@@ -34,7 +34,7 @@ No comunity build has been provided yet.
 
 The realdebrid backend is implemented by overwriting the premiumize backend (for now).
 
-1. create a new remote using: 'rclone config'
+1. create a new remote using: 'rclone config' - Depending on your OS this command might have to be '.\rclone config'
 2. choose a name for your remote e.g. 'your-remote'
 3. choose 'premiumizeme' ('46')
 4. enter your realdebrid api key (https://real-debrid.com/apitoken)
