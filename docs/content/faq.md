@@ -31,7 +31,7 @@ the node running rclone would need to have lots of bandwidth.
 
 The syncs would be incremental (on a file by file basis).
 
-Eg
+e.g.
 
     rclone sync -i drive:Folder s3:bucket
 
