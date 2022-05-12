@@ -246,7 +246,7 @@ func (f *Fs) shouldRetry(ctx context.Context, resp *http.Response, err error) (b
 
 func (f *Fs) shouldRetryChunkMerge(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	// Not found. Can be returned by NextCloud when merging chunks of an upload.
-	if resp.StatusCode == 404 {
+	if resp != nil && resp.StatusCode == 404 {
 		return true, err
 	}
 
@@ -1469,6 +1469,8 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 			fs: o.fs,
 		}
 	)
+
+	// TODO: upload chunks in parallel for faster transfer speeds.
 	for uploadedSize < size {
 		// Upload chunk
 		contentLength := int64(partObj.fs.opt.ChunkSize)
