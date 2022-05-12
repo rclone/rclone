@@ -134,7 +134,7 @@ backends:
    remote:   "TestHubic:"
    fastlist: false
  - backend:  "internetarchive"
-   remote:   "TestIA:lesmi-rclone-test/"
+   remote:   "TestIA:rclone-integration-test"
    fastlist: true
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
