@@ -1895,7 +1895,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) CleanUp(ctx context.Context) error {
 	do := f.base.Features().CleanUp
 	if do == nil {
-		return errors.New("can't CleanUp")
+		return errors.New("not supported by underlying remote")
 	}
 	return do(ctx)
 }
@@ -1904,7 +1904,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	do := f.base.Features().About
 	if do == nil {
-		return nil, errors.New("About not supported")
+		return nil, errors.New("not supported by underlying remote")
 	}
 	return do(ctx)
 }

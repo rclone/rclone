@@ -1220,7 +1220,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	}
 	stdout, err := f.run(ctx, "df -k "+escapedPath)
 	if err != nil {
-		return nil, fmt.Errorf("your remote may not support About: %w", err)
+		return nil, fmt.Errorf("your remote may not have the required df utility: %w", err)
 	}
 
 	usageTotal, usageUsed, usageAvail := parseUsage(stdout)

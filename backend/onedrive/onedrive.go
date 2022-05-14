@@ -1502,7 +1502,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("about failed: %w", err)
+		return nil, err
 	}
 	q := drive.Quota
 	// On (some?) Onedrive sharepoints these are all 0 so return unknown in that case

@@ -170,7 +170,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="The local filesystem" home="/local/" config="/local/" end="true">}}
 {{< /provider_list >}}
 
-Links
+## Links
 
   * {{< icon "fa fa-home" >}} [Home page](https://rclone.org/)
   * {{< icon "fab fa-github" >}} [GitHub project page for source and bug tracker](https://github.com/rclone/rclone)

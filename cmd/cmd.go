@@ -489,7 +489,7 @@ func resolveExitCode(err error) {
 		os.Exit(exitcode.TransferExceeded)
 	case fserrors.ShouldRetry(err):
 		os.Exit(exitcode.RetryError)
-	case fserrors.IsNoRetryError(err):
+	case fserrors.IsNoRetryError(err), fserrors.IsNoLowLevelRetryError(err):
 		os.Exit(exitcode.NoRetryError)
 	case fserrors.IsFatalError(err):
 		os.Exit(exitcode.FatalError)

@@ -700,7 +700,7 @@ consider using the flag
 
 Google docs exist as virtual files on Google Drive and cannot be transferred
 to other filesystems natively. While it is possible to export a Google doc to
-a normal file (with `.xlsx` extension, for example), it's not possible
+a normal file (with `.xlsx` extension, for example), it is not possible
 to import a normal file back into a Google document.
 
 Bisync's handling of Google Doc files is to flag them in the run log output
