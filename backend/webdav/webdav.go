@@ -16,7 +16,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/lib/readers"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"net/http"
 	"net/url"
@@ -159,24 +159,25 @@ type Options struct {
 
 // Fs represents a remote webdav
 type Fs struct {
-	name               string        // name of this remote
-	root               string        // the path we are working on
-	opt                Options       // parsed options
-	features           *fs.Features  // optional features
-	endpoint           *url.URL      // URL of the host
-	endpointURL        string        // endpoint as a string
-	uploadURL          string        // upload URL for nextcloud chunked
-	srv                *rest.Client  // the connection to the one drive server
-	pacer              *fs.Pacer     // pacer for API calls
-	precision          time.Duration // mod time precision
-	canStream          bool          // set if can stream
-	useOCMtime         bool          // set if can use X-OC-Mtime
-	retryWithZeroDepth bool          // some vendors (sharepoint) won't list files when Depth is 1 (our default)
-	checkBeforePurge   bool          // enables extra check that directory to purge really exists
-	hasMD5             bool          // set if can use owncloud style checksums for MD5
-	hasSHA1            bool          // set if can use owncloud style checksums for SHA1
-	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
-	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
+	name               string         // name of this remote
+	root               string         // the path we are working on
+	opt                Options        // parsed options
+	ci                 *fs.ConfigInfo // global config
+	features           *fs.Features   // optional features
+	endpoint           *url.URL       // URL of the host
+	endpointURL        string         // endpoint as a string
+	uploadURL          string         // upload URL for nextcloud chunked
+	srv                *rest.Client   // the connection to the one drive server
+	pacer              *fs.Pacer      // pacer for API calls
+	precision          time.Duration  // mod time precision
+	canStream          bool           // set if can stream
+	useOCMtime         bool           // set if can use X-OC-Mtime
+	retryWithZeroDepth bool           // some vendors (sharepoint) won't list files when Depth is 1 (our default)
+	checkBeforePurge   bool           // enables extra check that directory to purge really exists
+	hasMD5             bool           // set if can use owncloud style checksums for MD5
+	hasSHA1            bool           // set if can use owncloud style checksums for SHA1
+	ntlmAuthMu         sync.Mutex     // mutex to serialize NTLM auth roundtrips
+	canChunk           bool           // set if nextcloud and nextcloud_chunk_size is set
 }
 
 // Object describes a webdav object
@@ -434,10 +435,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
+	ci := fs.GetConfig(ctx)
 	f := &Fs{
 		name:        name,
 		root:        root,
 		opt:         *opt,
+		ci:          ci,
 		endpoint:    u,
 		endpointURL: u.String(),
 		pacer:       fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
@@ -1427,14 +1430,59 @@ func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func(
 
 }
 
+type workerArgs struct {
+	ctx           context.Context
+	chunkPath     string
+	offset        int64
+	chunkBuf      []byte
+	contentLength int64
+	options       []fs.OpenOption
+}
+
+func (o *Object) chunkUploadWorker(jobs <-chan *workerArgs) error {
+	for jobArg := range jobs {
+
+		buf := jobArg.chunkBuf
+		ctx := jobArg.ctx
+		contentLength := jobArg.contentLength
+		options := jobArg.options
+
+		// Fixes low-level HTTP 2 retries.
+		// 2022-04-28 15:59:06 ERROR : stuff/video.avi: Failed to copy: uploading chunk failed: Put "https://censored.com/remote.php/dav/uploads/Admin/rclone-chunked-upload-censored/000006113198080-000006123683840": http2: Transport: cannot retry err [http2: Transport received Server's graceful shutdown GOAWAY] after Request.Body was written; define Request.GetBody to avoid this error
+		// Problem: the mem usage can be too big if user configures the chunk size / number of workers to a big value?
+		getBody := func() (io.ReadCloser, error) {
+			r := bytes.NewReader(buf)
+			return io.NopCloser(r), nil
+		}
+
+		in, _ := getBody()
+
+		chunkObj := &Object{
+			fs: o.fs,
+		}
+
+		chunkObj.remote = jobArg.chunkPath
+		extraHeaders := map[string]string{}
+
+		err := chunkObj.updateSimple(ctx, in, getBody, chunkObj.remote, contentLength, "application/x-www-form-urlencoded", extraHeaders, o.fs.uploadURL, options...)
+		if err != nil {
+			return fmt.Errorf("uploading chunk failed: %w", err)
+		}
+	}
+	return nil
+}
+
 // Chunked update for Nextcloud (see
 // https://docs.nextcloud.com/server/20/developer_manual/client_apis/WebDAV/chunking.html)
 func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	g, ctx := errgroup.WithContext(ctx)
+
 	hasher := md5.New()
 	_, err = hasher.Write([]byte(o.filePath()))
 	if err != nil {
 		return fmt.Errorf("chunked upload couldn't hash URL: %w", err)
 	}
+
 	uploadDir := "rclone-chunked-upload-" + hex.EncodeToString(hasher.Sum(nil))
 	fs.Debugf(src, "Starting multipart upload to temp dir %q", uploadDir)
 
@@ -1456,51 +1504,73 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	if err != nil {
 		return fmt.Errorf("making upload directory failed: %w", err)
 	}
+
+	// TODO: is this still correct wrt the newly introduced errgroup ctx?
 	defer atexit.OnError(&err, func() {
 		// Try to abort the upload, but ignore the error.
 		fs.Debugf(src, "Cancelling chunked upload")
 		_ = o.fs.Purge(ctx, uploadDir)
 	})()
 
-	var (
-		size         = src.Size()
-		uploadedSize = int64(0)
-		partObj      = &Object{
-			fs: o.fs,
-		}
-	)
+	var chunkSize = int64(o.fs.opt.ChunkSize)
 
-	// TODO: upload chunks in parallel for faster transfer speeds.
-	for uploadedSize < size {
-		// Upload chunk
-		contentLength := int64(partObj.fs.opt.ChunkSize)
-		if size-uploadedSize < contentLength {
-			contentLength = size - uploadedSize
-		}
-		partObj.remote = fmt.Sprintf("%s/%015d-%015d", uploadDir, uploadedSize, uploadedSize+contentLength)
-		extraHeaders := map[string]string{}
-		// Fix low-level HTTP 2 retries.
-		// 2022-04-28 15:59:06 ERROR : stuff/video.avi: Failed to copy: uploading chunk failed: Put "https://censored.com/remote.php/dav/uploads/Admin/rclone-chunked-upload-censored/000006113198080-000006123683840": http2: Transport: cannot retry err [http2: Transport received Server's graceful shutdown GOAWAY] after Request.Body was written; define Request.GetBody to avoid this error
-		// Problem: the mem usage can be too big if user configures it to a big value?
-		buf := make([]byte, partObj.fs.opt.ChunkSize)
-		in := readers.NewRepeatableLimitReaderBuffer(in0, buf, int64(partObj.fs.opt.ChunkSize))
+	totalSize := src.Size()
+	numChunks := totalSize / chunkSize
 
-		getBody := func() (io.ReadCloser, error) {
-			if _, err = in.Seek(0, io.SeekStart); err != nil {
-				return io.NopCloser(in), nil
-			}
-
-			return nil, err
-		}
-
-		err = partObj.updateSimple(ctx, in, getBody, partObj.remote, contentLength, "application/x-www-form-urlencoded", extraHeaders, o.fs.uploadURL, options...)
-		if err != nil {
-			return fmt.Errorf("uploading chunk failed: %w", err)
-		}
-		uploadedSize += contentLength
+	// Add a partial chunk at the end if needed
+	if totalSize%chunkSize != 0 {
+		numChunks += 1
 	}
 
-	// Finish
+	chunkUploadJobs := make(chan *workerArgs, numChunks)
+
+	// Asynchronously download the chunks as needed and forward them to upload workers
+	g.Go(func() error {
+		defer close(chunkUploadJobs)
+
+		for offset := int64(0); offset < totalSize-1; offset += chunkSize {
+			contentLength := chunkSize
+
+			// Last chunk may be smaller.
+			var remaining = totalSize - offset
+			if remaining < contentLength {
+				contentLength = remaining
+			}
+
+			offsetEnd := offset + contentLength - 1
+
+			chunkBuf := make([]byte, contentLength)
+
+			// Read the chunk
+			_, err = io.ReadFull(in0, chunkBuf)
+			if err != nil {
+				return fmt.Errorf("downloading chunk failed: %w", err)
+			}
+
+			chunkPath := fmt.Sprintf("%s/%015d-%015d", uploadDir, offset, offsetEnd)
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case chunkUploadJobs <- &workerArgs{ctx, chunkPath, offset, chunkBuf, contentLength, options}:
+			}
+		}
+
+		return nil
+	})
+
+	var numParallelUploads = o.fs.ci.Transfers
+	for i := 1; i <= numParallelUploads; i++ {
+		g.Go(func() error { return o.chunkUploadWorker(chunkUploadJobs) })
+	}
+
+	close(chunkUploadJobs)
+	err = g.Wait()
+	if err != nil {
+		return fmt.Errorf("failure while uploading a chunk by a worker: %w", err)
+	}
+
+	// Merge the uploaded chunks
 	var resp *http.Response
 	opts = rest.Opts{
 		Method:     "MOVE",
