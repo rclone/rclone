@@ -1451,11 +1451,17 @@ func TestSyncOverlapWithFilter(t *testing.T) {
 	fi, err := filter.NewFilter(nil)
 	require.NoError(t, err)
 	require.NoError(t, fi.Add(false, "/rclone-sync-test/"))
+	require.NoError(t, fi.Add(false, "*/layer2/"))
 	ctx = filter.ReplaceConfig(ctx, fi)
 
 	subRemoteName := r.FremoteName + "/rclone-sync-test"
 	FremoteSync, err := fs.NewFs(ctx, subRemoteName)
-	FremoteSync.Mkdir(ctx, "")
+	require.NoError(t, FremoteSync.Mkdir(ctx, ""))
+	require.NoError(t, err)
+
+	subRemoteName2 := r.FremoteName + "/rclone-sync-test-include/layer2"
+	FremoteSync2, err := fs.NewFs(ctx, subRemoteName2)
+	require.NoError(t, FremoteSync2.Mkdir(ctx, ""))
 	require.NoError(t, err)
 
 	checkErr := func(err error) {
@@ -1472,6 +1478,11 @@ func TestSyncOverlapWithFilter(t *testing.T) {
 	checkErr(Sync(ctx, r.Fremote, FremoteSync, false))
 	checkErr(Sync(ctx, r.Fremote, r.Fremote, false))
 	checkErr(Sync(ctx, FremoteSync, FremoteSync, false))
+
+	checkNoErr(Sync(ctx, FremoteSync2, r.Fremote, false))
+	checkErr(Sync(ctx, r.Fremote, FremoteSync2, false))
+	checkErr(Sync(ctx, r.Fremote, r.Fremote, false))
+	checkErr(Sync(ctx, FremoteSync2, FremoteSync2, false))
 }
 
 // Test with CompareDest set

@@ -806,40 +806,44 @@ func OverlappingFilterCheck(ctx context.Context, fdst fs.Fs, fsrc fs.Fs) bool {
 	fsrcRoot := fixRoot(fsrc)
 	if strings.HasPrefix(fdstRoot, fsrcRoot) {
 		fdstRelative := strings.ReplaceAll(fdstRoot, fsrcRoot, "")
-		return FilterCheckR(ctx, fdstRelative, "", fsrc)
+		return FilterCheckR(ctx, fdstRelative, 0, fsrc)
 	}
 	return strings.HasPrefix(fsrcRoot, fdstRoot)
 }
 
 // FilterCheckR checks if fdst would be included in the sync
-func FilterCheckR(ctx context.Context, fdstRelative string, inputPath string, fsrc fs.Fs) bool {
+func FilterCheckR(ctx context.Context, fdstRelative string, pos int, fsrc fs.Fs) bool {
 	include := true
 	fi := filter.GetConfig(ctx)
 	includeDirectory := fi.IncludeDirectory(ctx, fsrc)
-	entries, _ := fsrc.List(ctx, inputPath)
-	for _, entry := range entries {
-		switch x := entry.(type) {
-		case fs.Directory:
-			currentPath := x.Remote()
-			if !strings.HasSuffix(currentPath, "/") {
-				currentPath += "/"
+	dirs := strings.SplitAfterN(fdstRelative, "/", pos+2)
+	newPath := ""
+	for i := 0; i <= pos; i++ {
+		newPath += dirs[i]
+	}
+	dir := fs.NewDir(newPath, time.Now())
+	currentPath := dir.Remote()
+	if !strings.HasSuffix(currentPath, "/") {
+		currentPath += "/"
+	}
+	if strings.HasPrefix(fdstRelative, currentPath) {
+		include, _ = includeDirectory(currentPath)
+		if include {
+			if currentPath == fdstRelative {
+				return true
 			}
-			if strings.HasPrefix(fdstRelative, currentPath) {
-				include, _ = includeDirectory(currentPath)
-				if include {
-					if currentPath == fdstRelative {
-						return true
-					}
-					include = FilterCheckR(ctx, fdstRelative, currentPath, fsrc)
-				}
-			}
-		case fs.Object:
-			basename := path.Base(x.Remote())
-			if basename == fi.Opt.ExcludeFile {
-				return false
-			}
+			pos++
+			include = FilterCheckR(ctx, fdstRelative, pos, fsrc)
 		}
 	}
+
+	if !include {
+		err := fsrc.Mkdir(ctx, fdstRelative)
+		if err != nil {
+			return true
+		}
+	}
+
 	return include
 }
 
