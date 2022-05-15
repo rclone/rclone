@@ -16,6 +16,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/rclone/rclone/lib/atexit"
 	"golang.org/x/sync/errgroup"
 	"io"
 	"net/http"
@@ -38,7 +39,6 @@ import (
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
@@ -1447,6 +1447,12 @@ func (o *Object) chunkUploadWorker(jobs <-chan *workerArgs) error {
 		contentLength := jobArg.contentLength
 		options := jobArg.options
 
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		fs.Debugf(nil, "starting uploading chunk (%s)", jobArg.chunkPath)
+
 		// Fixes low-level HTTP 2 retries.
 		// 2022-04-28 15:59:06 ERROR : stuff/video.avi: Failed to copy: uploading chunk failed: Put "https://censored.com/remote.php/dav/uploads/Admin/rclone-chunked-upload-censored/000006113198080-000006123683840": http2: Transport: cannot retry err [http2: Transport received Server's graceful shutdown GOAWAY] after Request.Body was written; define Request.GetBody to avoid this error
 		// Problem: the mem usage can be too big if user configures the chunk size / number of workers to a big value?
@@ -1468,14 +1474,18 @@ func (o *Object) chunkUploadWorker(jobs <-chan *workerArgs) error {
 		if err != nil {
 			return fmt.Errorf("uploading chunk failed: %w", err)
 		}
+
+		fs.Debugf(nil, "finished uploading chunk (%s)", jobArg.chunkPath)
 	}
 	return nil
 }
 
 // Chunked update for Nextcloud (see
 // https://docs.nextcloud.com/server/20/developer_manual/client_apis/WebDAV/chunking.html)
-func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
-	g, ctx := errgroup.WithContext(ctx)
+func (o *Object) updateChunked(ctx0 context.Context, in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
+	g, ctx := errgroup.WithContext(ctx0)
+	ctx, cancelUpdate := context.WithCancel(ctx)
+	defer cancelUpdate()
 
 	hasher := md5.New()
 	_, err = hasher.Write([]byte(o.filePath()))
@@ -1484,12 +1494,23 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	}
 
 	uploadDir := "rclone-chunked-upload-" + hex.EncodeToString(hasher.Sum(nil))
+
+	err = o.purgeChunkedUpload(ctx0, uploadDir)
+	if err != nil {
+		return fmt.Errorf("can't purge the upload directory: %w", err)
+	}
+
 	fs.Debugf(src, "Starting multipart upload to temp dir %q", uploadDir)
 
-	err = o.purgeChunkedUpload(ctx, uploadDir)
-	if err != nil {
-		return fmt.Errorf("chunked upload couldn't purge upload directory: %w", err)
-	}
+	// TODO: is this still correct wrt the newly introduced errgroup ctx?
+	atexit.OnError(&err, func() {
+		cancelUpdate()
+		// Try to abort the upload, but ignore the error.
+		fs.Errorf(src, "Cancelling chunked upload: %w", err)
+
+		err = g.Wait()
+		_ = o.purgeChunkedUpload(ctx0, uploadDir)
+	})()
 
 	opts := rest.Opts{
 		Method:     "MKCOL",
@@ -1504,13 +1525,6 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	if err != nil {
 		return fmt.Errorf("making upload directory failed: %w", err)
 	}
-
-	// TODO: is this still correct wrt the newly introduced errgroup ctx?
-	defer atexit.OnError(&err, func() {
-		// Try to abort the upload, but ignore the error.
-		fs.Debugf(src, "Cancelling chunked upload")
-		_ = o.fs.Purge(ctx, uploadDir)
-	})()
 
 	var chunkSize = int64(o.fs.opt.ChunkSize)
 
@@ -1541,11 +1555,20 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 
 			chunkBuf := make([]byte, contentLength)
 
+			ctxErr := ctx.Err()
+			if ctxErr != nil {
+				return ctxErr
+			}
+
+			fs.Debugf(src, "starting downloading chunk (%d-%d)", offset, offsetEnd)
+
 			// Read the chunk
 			_, err = io.ReadFull(in0, chunkBuf)
 			if err != nil {
-				return fmt.Errorf("downloading chunk failed: %w", err)
+				return fmt.Errorf("downloading chunk (%d-%d) failed: %w", offset, offsetEnd, err)
 			}
+
+			fs.Debugf(src, "finished downloading chunk (%d-%d) successfully", offset, offsetEnd)
 
 			chunkPath := fmt.Sprintf("%s/%015d-%015d", uploadDir, offset, offsetEnd)
 
@@ -1559,18 +1582,34 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 		return nil
 	})
 
-	var numParallelUploads = o.fs.ci.Transfers
-	for i := 1; i <= numParallelUploads; i++ {
+	var numParallelUploads = int64(o.fs.ci.Transfers)
+	if numChunks < numParallelUploads {
+		numParallelUploads = numChunks
+	}
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	fs.Debugf(src, "starting %d chunk uploader workers", numParallelUploads)
+	for i := int64(1); i <= numParallelUploads; i++ {
 		g.Go(func() error { return o.chunkUploadWorker(chunkUploadJobs) })
 	}
 
-	close(chunkUploadJobs)
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
 	err = g.Wait()
 	if err != nil {
 		return fmt.Errorf("failure while uploading a chunk by a worker: %w", err)
 	}
 
+	fs.Debugf(src, "the %d chunk uploader workers finished successfully", numParallelUploads)
+
 	// Merge the uploaded chunks
+	fs.Debugf(src, "start the merge of the %d uploaded chunks", numChunks)
+
 	var resp *http.Response
 	opts = rest.Opts{
 		Method:     "MOVE",
@@ -1581,17 +1620,20 @@ func (o *Object) updateChunked(ctx context.Context, in0 io.Reader, src fs.Object
 	}
 	destinationURL, err := rest.URLJoin(o.fs.endpoint, o.filePath())
 	if err != nil {
-		return fmt.Errorf("finalize chunked upload couldn't join URL: %w", err)
+		return fmt.Errorf("merging chunked upload couldn't join URL: %w", err)
 	}
-	opts.ExtraHeaders = o.extraHeaders(ctx, src)
+	opts.ExtraHeaders = o.extraHeaders(ctx0, src)
 	opts.ExtraHeaders["Destination"] = destinationURL.String()
 	err = o.fs.pacer.Call(func() (bool, error) {
-		resp, err = o.fs.srv.Call(ctx, &opts)
-		return o.fs.shouldRetryChunkMerge(ctx, resp, err)
+		resp, err = o.fs.srv.Call(ctx0, &opts)
+		return o.fs.shouldRetryChunkMerge(ctx0, resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("finalize chunked upload failed, destinationURL: \"%s\": %w", destinationURL, err)
+		return fmt.Errorf("merging chunked upload failed, destinationURL: \"%s\": %w", destinationURL, err)
 	}
+
+	fs.Debugf(src, "finished the merge of the %d uploaded chunks successfully", numChunks)
+
 	return nil
 }
 
