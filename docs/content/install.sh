@@ -69,6 +69,13 @@ OS="$(uname)"
 case $OS in
   Linux)
     OS='linux'
+    # Define values specifically for this platform/OS.
+		# Notice, this is different from the original.
+		# Original used "/usr/bin" and "/usr/local/share/man" when I believe it should be either
+		# /usr/ or /usr/local/ for both. This note is my reminder to discuss it before committing it.
+		# Which is why I prefer this approach, define variable, *once* then use it when needed.
+    binTgtDir=/usr/bin
+    man1TgtDir=/usr/share/man/man1
     ;;
   FreeBSD)
     OS='freebsd'
@@ -147,18 +154,27 @@ cd $unzip_dir/*
 
 case "$OS" in
   'linux')
+    # - - - - - - - - - - - - - - - - - - - - 
     #binary
-    cp rclone /usr/bin/rclone.new
-    chmod 755 /usr/bin/rclone.new
-    chown root:root /usr/bin/rclone.new
-    mv /usr/bin/rclone.new /usr/bin/rclone
+	sudo -v
+	sudo -s <<-EOT
+		cp rclone ${binTgtDir}/rclone.new
+		chmod 755 ${binTgtDir}/rclone.new
+		chown root:root ${binTgtDir}/rclone.new
+		mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone
+	EOT
+    # - - - - - - - - - - - - - - - - - - - - 
     #manual
     if ! [ -x "$(command -v mandb)" ]; then
         echo 'mandb not found. The rclone man docs will not be installed.'
-    else 
-        mkdir -p /usr/local/share/man/man1
-        cp rclone.1 /usr/local/share/man/man1/
+    else
+	sudo -v
+	sudo -s <<-EOT
+		mkdir -p ${man1TgtDir}/man1
+		cp rclone.1 ${man1TgtDir}/man1/
         mandb
+	EOT
+    # - - - - - - - - - - - - - - - - - - - - 
     fi
     ;;
   'freebsd'|'openbsd'|'netbsd')
