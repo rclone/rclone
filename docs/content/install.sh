@@ -12,7 +12,7 @@ set -e
 #when adding a tool to the list make sure to also add its corresponding command further in the script
 unzip_tools_list=('unzip' '7z' 'busybox')
 
-usage() { echo "Usage: sudo -v ; curl https://rclone.org/install.sh | sudo bash [-s beta]" 1>&2; exit 1; }
+usage() { echo "Usage: curl https://rclone.org/install.sh | sudo bash [-s beta]" 1>&2; exit 1; }
 
 #check for beta flag
 if [ -n "$1" ] && [ "$1" != "beta" ]; then
@@ -172,16 +172,25 @@ case "$OS" in
     makewhatis
     ;;
   'osx')
+	### - - - - - - - - - - - - - - - - - - - -
     #binary
-    mkdir -m 0555 -p ${binTgtDir}
-    cp rclone ${binTgtDir}/rclone.new
-    mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone
-    chmod a=x ${binTgtDir}/rclone
+	sudo -v
+	sudo -s -- <<-EOT
+		mkdir -m 0555 -p ${binTgtDir}
+		cp rclone ${binTgtDir}/rclone.new
+		mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone
+		chmod a=x ${binTgtDir}/rclone
+	EOT
+	### - - - - - - - - - - - - - - - - - - - -
     #manual
-    mkdir -m 0555 -p ${man1TgtDir}
-    cp rclone.1 ${man1TgtDir}    
-    chmod a=r ${man1TgtDir}/rclone.1
+	sudo -v
+	sudo -s -- <<-EOT
+		mkdir -m 0555 -p ${man1TgtDir}
+		cp rclone.1 ${man1TgtDir}    
+		chmod a=r ${man1TgtDir}/rclone.1
+	EOT
     ;;
+	### - - - - - - - - - - - - - - - - - - - -
   *)
     echo 'OS not supported'
     exit 2
