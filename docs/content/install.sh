@@ -37,7 +37,7 @@ for tool in ${unzip_tools_list[*]}; do
         unzip_tool="$tool"
         break
     fi
-done  
+done
 set -e
 
 # exit if no unzip tools available
@@ -78,7 +78,7 @@ case $OS in
     ;;
   OpenBSD)
     OS='openbsd'
-    ;;  
+    ;;
   Darwin)
     OS='osx'
     binTgtDir=/usr/local/bin
@@ -155,7 +155,7 @@ case "$OS" in
     #manual
     if ! [ -x "$(command -v mandb)" ]; then
         echo 'mandb not found. The rclone man docs will not be installed.'
-    else 
+    else
         mkdir -p /usr/local/share/man/man1
         cp rclone.1 /usr/local/share/man/man1/
         mandb
@@ -172,25 +172,25 @@ case "$OS" in
     makewhatis
     ;;
   'osx')
-	### - - - - - - - - - - - - - - - - - - - -
+    ### - - - - - - - - - - - - - - - - - - - -
     #binary
-	sudo -v
-	sudo -s -- <<-EOT
-		mkdir -m 0555 -p ${binTgtDir}
-		cp rclone ${binTgtDir}/rclone.new
-		mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone
-		chmod a=x ${binTgtDir}/rclone
-	EOT
-	### - - - - - - - - - - - - - - - - - - - -
+    sudo -v
+    sudo -s -- <<-EOT
+        mkdir -m 0555 -p ${binTgtDir}
+        cp rclone ${binTgtDir}/rclone.new
+        mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone
+        chmod a=x ${binTgtDir}/rclone
+    EOT
+    ### - - - - - - - - - - - - - - - - - - - -
     #manual
-	sudo -v
-	sudo -s -- <<-EOT
-		mkdir -m 0555 -p ${man1TgtDir}
-		cp rclone.1 ${man1TgtDir}    
-		chmod a=r ${man1TgtDir}/rclone.1
-	EOT
+    sudo -v
+    sudo -s -- <<-EOT
+        mkdir -m 0555 -p ${man1TgtDir}
+        cp rclone.1 ${man1TgtDir}
+        chmod a=r ${man1TgtDir}/rclone.1
+    EOT
     ;;
-	### - - - - - - - - - - - - - - - - - - - -
+    ### - - - - - - - - - - - - - - - - - - - -
   *)
     echo 'OS not supported'
     exit 2
