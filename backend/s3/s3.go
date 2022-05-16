@@ -2966,7 +2966,7 @@ func (f *Fs) Precision() time.Duration {
 // pathEscape escapes s as for a URL path.  It uses rest.URLPathEscape
 // but also escapes '+' for S3 and Digital Ocean spaces compatibility
 func pathEscape(s string) string {
-	return strings.Replace(rest.URLPathEscape(s), "+", "%2B", -1)
+	return strings.ReplaceAll(rest.URLPathEscape(s), "+", "%2B")
 }
 
 // copy does a server-side copy

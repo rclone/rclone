@@ -208,7 +208,7 @@ loop:
 				value := path[prev : i-1]
 				// replace any doubled quotes if there were any
 				if doubled {
-					value = strings.Replace(value, string(quote)+string(quote), string(quote), -1)
+					value = strings.ReplaceAll(value, string(quote)+string(quote), string(quote))
 				}
 				prev = i + 1
 				parsed.Config[param] = value

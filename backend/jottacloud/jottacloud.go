@@ -191,7 +191,7 @@ machines.`)
 		m.Set("auth_code", "")
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_auth_code":
-		authCode := strings.Replace(config.Result, "-", "", -1) // remove any "-" contained in the code so we have a 6 digit number
+		authCode := strings.ReplaceAll(config.Result, "-", "") // remove any "-" contained in the code so we have a 6 digit number
 		m.Set("auth_code", authCode)
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_do_auth":
@@ -649,7 +649,7 @@ func errorHandler(resp *http.Response) error {
 
 // Jottacloud wants '+' to be URL encoded even though the RFC states it's not reserved
 func urlPathEscape(in string) string {
-	return strings.Replace(rest.URLPathEscape(in), "+", "%2B", -1)
+	return strings.ReplaceAll(rest.URLPathEscape(in), "+", "%2B")
 }
 
 // filePathRaw returns an unescaped file path (f.root, file)

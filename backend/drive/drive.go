@@ -829,8 +829,8 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	if title != "" {
 		searchTitle := f.opt.Enc.FromStandardName(title)
 		// Escaping the backslash isn't documented but seems to work
-		searchTitle = strings.Replace(searchTitle, `\`, `\\`, -1)
-		searchTitle = strings.Replace(searchTitle, `'`, `\'`, -1)
+		searchTitle = strings.ReplaceAll(searchTitle, `\`, `\\`)
+		searchTitle = strings.ReplaceAll(searchTitle, `'`, `\'`)
 
 		var titleQuery bytes.Buffer
 		_, _ = fmt.Fprintf(&titleQuery, "(name='%s'", searchTitle)
