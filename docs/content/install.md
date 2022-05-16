@@ -102,7 +102,7 @@ When downloading a binary with a web browser, the browser will set the macOS
 gatekeeper quarantine attribute. Starting from Catalina, when attempting to run
 `rclone`, a pop-up will appear saying:
 
-    “rclone” cannot be opened because the developer cannot be verified.
+    "rclone" cannot be opened because the developer cannot be verified.
     macOS cannot verify that this app is free from malware.
 
 The simplest fix is to run
