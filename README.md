@@ -1,15 +1,16 @@
 # RClone_RD
 
 This RClone Fork contains a rudementary implementation of Real-Debrid.
-Using this version, the entire RealDebrid /downloads "history" directory can be served as a read-only virtual drive. 
+Using this version, the entire RealDebrid /downloads "history" directory or the /torrents directory can be served as a read-only virtual drive. 
 
-A potential use-case for this is serving the /downloads directory over plex, allowing you to build a media library truly unlimted in size. Im working on a project that would allow plex to function the same way that Wako,Syncler and other streaming apps do. Check it out on https://github.com/itsToggle/plex_rd
+A potential use-case for this is serving the /torrent directory over plex, allowing you to build a media library truly unlimted in size. Im working on a project that allows plex to function the same way that Wako,Syncler and other streaming apps do. Check it out on https://github.com/itsToggle/plex_rd
 
 ### Capabilities and Limitations:
 
 - Read/Write capabilities are limited to reading files and deleting them. 
 - There are no server-side traffic limitations.
-- Very old downloads may not work, since realdebrid seems to deactivate the generated direct links after some (yet to be determined) amount of time. This might be fixable by catching the error and re-generate the link, look for future versions.
+- ~~Very old downloads may not work, since realdebrid seems to deactivate the generated direct links after some (yet to be determined) amount of time. This might be fixable by catching the error and re-generate the link, look for future versions.
+- Downloads in the /downloads directory are only there for 1 week. To make downloads available forever (yet to be determined), choose the /torrents mode when setting up the remote.
 - There is a server-side connection limit, which I believe is 16 parallel connections.
 
 ## Installation:
@@ -24,7 +25,7 @@ download the latest pre-built 'rclone.exe' file from here: https://github.com/it
 
 ### Mac OSX (comunity build):
 
-download the latest pre-built 'rclone' file from here: https://github.com/itsToggle/rclone_RD/releases
+No comunity build has been provided yet.
 
 ### Linux (comunity build):
 
@@ -38,10 +39,11 @@ The realdebrid backend is implemented by overwriting the premiumize backend (for
 2. choose a name for your remote e.g. 'your-remote'
 3. choose 'premiumizeme' ('46')
 4. enter your realdebrid api key (https://real-debrid.com/apitoken)
-5. choose 'no advanced config'
-6. your RealDebrid remote is now set up.
-7. Mount the remote 'rclone cmount your-remote: your-destination:' - replace 'your-remote' with your remotes name. replace 'your-destination:' with a drive letter, e.g. 'X:'
-8. Enjoy!
+5. choose which directory you want to serve. I highly recommend using the "torrents" directory, since out-dated links are refreshed automatically. Using the "downloads" directory means that files older than a week will disappear.
+6. choose 'no advanced config'
+7. your RealDebrid remote is now set up.
+8. Mount the remote 'rclone cmount your-remote: your-destination:' - replace 'your-remote' with your remotes name. replace 'your-destination:' with a drive letter, e.g. 'X:'
+9. Enjoy!
 
 ### Recommended Tags when mounting:
 
@@ -73,4 +75,5 @@ I don't have the means to compile a release for Mac or Linux, so you will have t
 - Run a terminal in the root directory of the project files
 - use 'go build -tags cmount' to build the project
 - If anything fails, Check the official rclone Channels for Help.
+- Please feel free to contact me if you have compiled a version, so I can provide it as a comunity build for others :)
 
