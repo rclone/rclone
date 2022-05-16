@@ -72,6 +72,9 @@ var (
 	}
 )
 
+var cached []api.Item
+var torrents []api.Item
+
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -89,6 +92,11 @@ func init() {
 			//Hide:    fs.OptionHideBoth,
 			Default: "",
 		}, {
+			Name: "download_mode",
+			Help: `please choose which RealDebrid directory to serve: For the /downloads page, type "downloads". For the /torrents page, type "torrents". `,
+			//Hide:    fs.OptionHideBoth,
+			Default: "",
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -103,8 +111,9 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	APIKey string               `config:"api_key"`
-	Enc    encoder.MultiEncoder `config:"encoding"`
+	RootFolderID string               `config:"download_mode"`
+	APIKey       string               `config:"api_key"`
+	Enc          encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote cloud storage system
@@ -127,7 +136,7 @@ type Object struct {
 	size        int64     // size of the object
 	modTime     time.Time // modification time of the object
 	id          string    // ID of the object
-	parentID    string    // ID of parent directory
+	ParentID    string    // ID of parent directory
 	mimeType    string    // Mime type of object
 	url         string    // URL to download file
 }
@@ -401,47 +410,148 @@ type listAllFn func(*api.Item) bool
 //
 // It returns a newDirID which is what the system returned as the directory ID
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (newDirID string, found bool, err error) {
-	opts := rest.Opts{
-		Method:     "GET",
-		Path:       "/downloads", //"/folder/list",
-		Parameters: f.baseParams(),
-	}
-	if dirID != rootID {
-		opts.Parameters.Set("id", dirID)
-	}
-	opts.Parameters.Set("includebreadcrumbs", "false")
-	opts.Parameters.Set("limit", "100")
+	path := "/downloads"
+	method := "GET"
 	var partialresult []api.Item
 	var result []api.Item
 	var resp *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		var totalcount int
-		totalcount = 1
-		for len(result) < totalcount {
-			resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
-			if err == nil {
-				totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+	if f.opt.RootFolderID == "torrents" {
+		//update global cached list
+		opts := rest.Opts{
+			Method:     method,
+			Path:       path,
+			Parameters: f.baseParams(),
+		}
+		opts.Parameters.Set("includebreadcrumbs", "false")
+		opts.Parameters.Set("limit", "1")
+		var newcached []api.Item
+		err = f.pacer.Call(func() (bool, error) {
+			var totalcount int
+			totalcount = 2
+			for len(newcached) < totalcount {
+				partialresult = nil
+				resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
 				if err == nil {
-					result = append(result, partialresult...)
-					opts.Parameters.Set("offset", strconv.Itoa(len(result)))
+					totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+					if err == nil {
+						if totalcount != len(cached) {
+							newcached = append(newcached, partialresult...)
+							opts.Parameters.Set("offset", strconv.Itoa(len(newcached)))
+							opts.Parameters.Set("limit", "100")
+						} else {
+							newcached = cached
+						}
+					} else {
+						break
+					}
 				} else {
 					break
 				}
-			} else {
-				break
+			}
+			return shouldRetry(ctx, resp, err)
+		})
+		cached = newcached
+		//get torrents
+		path = "/torrents"
+		opts = rest.Opts{
+			Method:     method,
+			Path:       path,
+			Parameters: f.baseParams(),
+		}
+		opts.Parameters.Set("limit", "1")
+		var newtorrents []api.Item
+		err = f.pacer.Call(func() (bool, error) {
+			var totalcount int
+			totalcount = 2
+			for len(newtorrents) < totalcount {
+				partialresult = nil
+				resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
+				if err == nil {
+					totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+					if err == nil {
+						if totalcount != len(torrents) {
+							newtorrents = append(newtorrents, partialresult...)
+							opts.Parameters.Set("offset", strconv.Itoa(len(newtorrents)))
+							opts.Parameters.Set("limit", "100")
+						} else {
+							newtorrents = torrents
+						}
+					} else {
+						break
+					}
+				} else {
+					break
+				}
+			}
+			return shouldRetry(ctx, resp, err)
+		})
+		torrents = newtorrents
+		for _, torrent := range torrents {
+			for _, link := range torrent.Links {
+				var ItemFile api.Item
+				for _, cachedfile := range cached {
+					if cachedfile.OriginalLink == link {
+						ItemFile = cachedfile
+						break
+					}
+				}
+				if ItemFile.Link == "" {
+					fmt.Printf("Creating new unrestricted direct link for: '%s'\n", torrent.Name)
+					path = "/unrestrict/link"
+					method = "POST"
+					opts := rest.Opts{
+						Method: method,
+						Path:   path,
+						MultipartParams: url.Values{
+							"link": {link},
+						},
+						Parameters: f.baseParams(),
+					}
+					resp, err = f.srv.CallJSON(ctx, &opts, nil, &ItemFile)
+				}
+				ItemFile.ParentID = torrent.ID
+				result = append(result, ItemFile)
 			}
 		}
-		return shouldRetry(ctx, resp, err)
-	})
+	} else {
+		opts := rest.Opts{
+			Method:     method,
+			Path:       path,
+			Parameters: f.baseParams(),
+		}
+		err = f.pacer.Call(func() (bool, error) {
+			var totalcount int
+			totalcount = 1
+			for len(result) < totalcount {
+				resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
+				if err == nil {
+					totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+					if err == nil {
+						result = append(result, partialresult...)
+						opts.Parameters.Set("offset", strconv.Itoa(len(result)))
+					} else {
+						break
+					}
+				} else {
+					break
+				}
+			}
+			return shouldRetry(ctx, resp, err)
+		})
+	}
 	if err != nil {
 		return newDirID, found, fmt.Errorf("couldn't list files: %w", err)
 	}
-	//if err = result.AsErr(); err != nil {
-	//	return newDirID, found, fmt.Errorf("error while listing: %w", err)
-	//}
-	//newDirID = result.FolderID
 	for i := range result {
 		item := &result[i]
+		layout := "2006-01-02T15:04:05.000Z"
+		if item.Generated != "" {
+			t, _ := time.Parse(layout, item.Generated)
+			item.CreatedAt = t.Unix()
+		} else if item.Ended != "" {
+			t, _ := time.Parse(layout, item.Ended)
+			item.CreatedAt = t.Unix()
+		}
 		item.Type = "file"
 		if item.Type == api.ItemTypeFolder {
 			if filesOnly {
@@ -730,7 +840,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Do the move
-	err = f.move(ctx, true, srcObj.id, path.Base(srcObj.remote), leaf, srcObj.parentID, directoryID)
+	err = f.move(ctx, true, srcObj.id, path.Base(srcObj.remote), leaf, srcObj.ParentID, directoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -866,6 +976,7 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	o.id = info.ID
 	o.mimeType = info.MimeType
 	o.url = info.Link
+	o.ParentID = info.ParentID
 	return nil
 }
 
@@ -1074,9 +1185,13 @@ func (f *Fs) renameLeaf(ctx context.Context, isFile bool, id string, newLeaf str
 
 // Remove an object by ID
 func (f *Fs) remove(ctx context.Context, id string) (err error) {
+	path := "/downloads/delete/" + id
+	if f.opt.RootFolderID == "torrents" {
+		path = "/torrents/delete/" + id
+	}
 	opts := rest.Opts{
 		Method:     "DELETE",
-		Path:       "/downloads/delete/" + id,
+		Path:       path,
 		Parameters: f.baseParams(),
 	}
 	var resp *http.Response
@@ -1086,10 +1201,10 @@ func (f *Fs) remove(ctx context.Context, id string) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return fmt.Errorf("remove http: %w", err)
+		return nil //fmt.Errorf("remove http: %w", err)
 	}
 	if err = result.AsErr(); err != nil {
-		return fmt.Errorf("remove: %w", err)
+		return nil //fmt.Errorf("remove: %w", err)
 	}
 	return nil
 }
@@ -1100,7 +1215,11 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("Remove: Failed to read metadata: %w", err)
 	}
-	return o.fs.remove(ctx, o.id)
+	if o.ParentID != "" {
+		return o.fs.remove(ctx, o.ParentID)
+	} else {
+		return o.fs.remove(ctx, o.id)
+	}
 }
 
 // MimeType of an Object if known, "" otherwise
