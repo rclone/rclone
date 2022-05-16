@@ -95,7 +95,7 @@ func init() {
 			Name: "download_mode",
 			Help: `please choose which RealDebrid directory to serve: For the /downloads page, type "downloads". For the /torrents page, type "torrents". `,
 			//Hide:    fs.OptionHideBoth,
-			Default: "",
+			Default: "torrents",
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
