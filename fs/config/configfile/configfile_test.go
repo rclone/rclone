@@ -50,7 +50,7 @@ func setConfigFile(t *testing.T, data string) func() {
 // toUnix converts \r\n to \n in buf
 func toUnix(buf string) string {
 	if runtime.GOOS == "windows" {
-		return strings.Replace(buf, "\r\n", "\n", -1)
+		return strings.ReplaceAll(buf, "\r\n", "\n")
 	}
 	return buf
 }
