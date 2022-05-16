@@ -11,6 +11,7 @@ A potential use-case for this is serving the /torrent directory over plex, allow
 - There are no server-side traffic limitations.
 - ~~Very old downloads may not work, since realdebrid seems to deactivate the generated direct links after some (yet to be determined) amount of time. This might be fixable by catching the error and re-generate the link, look for future versions.~~
 - The unrestriced direct links in the /downloads directory are usually deleted after 1 week. This rclone fork will automatically re-activate direct links whenever they are deleted, if you choose the "torrents" mode while setting up the remote.
+- Torrents mode will display all files of all torrents in the root directory. Adding a directory for each torrent slows down rclone. Perhaps I will make this optional in a future release.
 - There is a server-side connection limit, which I believe is 16 parallel connections.
 
 ## Installation:
