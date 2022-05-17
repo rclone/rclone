@@ -1,7 +1,7 @@
 # RClone_RD
 
 This RClone Fork contains a rudementary implementation of Real-Debrid.
-Using this version, the entire RealDebrid /downloads "history" directory or the /torrents directory can be served as a read-only virtual drive. 
+Using this version, the entire RealDebrid /torrents directory can be served as a read-only virtual drive. 
 
 A potential use-case for this is serving the /torrent directory over plex, allowing you to build a media library truly unlimted in size. Im working on a project that allows plex to function the same way that Wako,Syncler and other streaming apps do. Check it out on https://github.com/itsToggle/plex_rd
 
@@ -9,9 +9,7 @@ A potential use-case for this is serving the /torrent directory over plex, allow
 
 - Read/Write capabilities are limited to reading files and deleting them. 
 - There are no server-side traffic limitations.
-- ~~Very old downloads may not work, since realdebrid seems to deactivate the generated direct links after some (yet to be determined) amount of time. This might be fixable by catching the error and re-generate the link, look for future versions.~~
-- The unrestriced direct links in the /downloads directory are usually deleted after 1 week. This rclone fork will automatically re-activate direct links whenever they are deleted, if you choose the "torrents" mode while setting up the remote.
-- Torrents mode will display all files of all torrents in the root directory. Adding a directory for each torrent slows down rclone. Perhaps I will make this optional in a future release.
+- This rclone fork will automatically re-activate direct links when they expire after 1 week.
 - There is a server-side connection limit, which I believe is 16 parallel connections.
 
 ## Installation:
@@ -40,18 +38,18 @@ The realdebrid backend is implemented by overwriting the premiumize backend (for
 2. choose a name for your remote e.g. 'your-remote'
 3. choose 'premiumizeme' ('46')
 4. enter your realdebrid api key (https://real-debrid.com/apitoken)
-5. choose which directory you want to serve. I highly recommend using the "torrents" directory, since out-dated links are refreshed automatically. Using the "downloads" directory means that files older than a week will disappear.
 6. choose 'no advanced config'
 7. your RealDebrid remote is now set up.
-8. Mount the remote 'rclone cmount your-remote: your-destination:' - replace 'your-remote' with your remotes name. replace 'your-destination:' with a drive letter, e.g. 'X:'
+8. Mount the remote 'rclone cmount your-remote: your-destination:' - replace 'your-remote' with your remotes name. replace 'your-destination:' with a drive letter, e.g. 'X:' See the recommended tags section to speed up rclone!
 9. Enjoy!
 
 ### Recommended Tags when mounting:
 
-1. It is recommended to use the tag '--dir-cache-time 30s' when mounting, to regulary refresh the directory.
-2. It is recommended to use the tag '--vfs-cache-mode full' when mounting. Apperantly this speeds things up a bit.
+It is recommended to use the tags in this example mounting command: 
 
-an example mounting command would look like this: 'rclone cmount rdtest: X: --dir-cache-time 10s --vfs-cache-mode full'
+'rclone cmount torrents: Y: --dir-cache-time=10s --vfs-cache-mode=full --read-only'
+
+This will significantly speed up the mounted drive and detect changes faster.
 
 ## Building it yourself (Windows)
 
