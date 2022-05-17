@@ -1294,7 +1294,7 @@ For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview
 
 Note that this ACL is applied when server-side copying objects as S3
 doesn't copy the ACL from the source but rather writes a fresh one.`,
-			Provider: "!Storj",
+			Provider: "!Storj,Cloudflare",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
