@@ -595,3 +595,4 @@ put them back in again.` >}}
   * Hugal31 <hugo.laloge@gmail.com>
   * Christian Galo <36752715+cgalo5758@users.noreply.github.com>
   * Erik van Velzen <erik@evanv.nl>
+  * Derek Battams <derek@battams.ca>
