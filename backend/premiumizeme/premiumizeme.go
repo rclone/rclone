@@ -92,10 +92,15 @@ func init() {
 			//Hide:    fs.OptionHideBoth,
 			Default: "",
 		}, {
-			Name: "download_mode",
-			Help: `please choose which RealDebrid directory to serve: For the /downloads page, type "downloads". For the /torrents page, type "torrents". `,
-			//Hide:    fs.OptionHideBoth,
-			Default: "torrents",
+			Name:     "download_mode",
+			Help:     `please choose which RealDebrid directory to serve: For the /downloads page, type "downloads". For the /torrents page, type "torrents". Default: "torrents"`,
+			Advanced: true,
+			Default:  "torrents",
+		}, {
+			Name:     "folder_mode",
+			Help:     `please choose wether files should be grouped in torrent folders, or all files should be displayed in the root directory. For all files in root type "files", for folder structure type "folders". Default: "folders"`,
+			Advanced: true,
+			Default:  "folders",
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -111,6 +116,7 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
+	SharedFolder string               `config:"folder_mode"`
 	RootFolderID string               `config:"download_mode"`
 	APIKey       string               `config:"api_key"`
 	Enc          encoder.MultiEncoder `config:"encoding"`
@@ -352,6 +358,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
+	fmt.Println("Finding Leaf ... ")
 	var newDirID string
 	newDirID, found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
 		if strings.EqualFold(item.Name, leaf) {
@@ -364,6 +371,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	if pathID == rootID {
 		f.dirCache.SetRootIDAlias(newDirID)
 	}
+	fmt.Println("Done Finding Leaf.")
 	return pathIDOut, found, err
 }
 
@@ -416,102 +424,122 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 	var result []api.Item
 	var resp *http.Response
 	if f.opt.RootFolderID == "torrents" {
-		//update global cached list
-		opts := rest.Opts{
-			Method:     method,
-			Path:       path,
-			Parameters: f.baseParams(),
-		}
-		opts.Parameters.Set("includebreadcrumbs", "false")
-		opts.Parameters.Set("limit", "1")
-		var newcached []api.Item
-		err = f.pacer.Call(func() (bool, error) {
-			var totalcount int
-			totalcount = 2
-			for len(newcached) < totalcount {
-				partialresult = nil
-				resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
-				if err == nil {
-					totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+		if dirID == rootID {
+			//update global cached list
+			//fmt.Printf("Updating RealDebrid Direct Links ... ")
+			opts := rest.Opts{
+				Method:     method,
+				Path:       path,
+				Parameters: f.baseParams(),
+			}
+			opts.Parameters.Set("includebreadcrumbs", "false")
+			opts.Parameters.Set("limit", "1")
+			var newcached []api.Item
+			err = f.pacer.Call(func() (bool, error) {
+				var totalcount int
+				totalcount = 2
+				for len(newcached) < totalcount {
+					partialresult = nil
+					resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
 					if err == nil {
-						if totalcount != len(cached) {
-							newcached = append(newcached, partialresult...)
-							opts.Parameters.Set("offset", strconv.Itoa(len(newcached)))
-							opts.Parameters.Set("limit", "100")
+						totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+						if err == nil {
+							if totalcount != len(cached) {
+								newcached = append(newcached, partialresult...)
+								opts.Parameters.Set("offset", strconv.Itoa(len(newcached)))
+								opts.Parameters.Set("limit", "100")
+							} else {
+								newcached = cached
+							}
 						} else {
-							newcached = cached
+							break
 						}
 					} else {
 						break
 					}
-				} else {
-					break
 				}
+				return shouldRetry(ctx, resp, err)
+			})
+			//fmt.Printf("Done.\n")
+			//fmt.Printf("Updating RealDebrid Torrents ... ")
+			cached = newcached
+			//get torrents
+			path = "/torrents"
+			opts = rest.Opts{
+				Method:     method,
+				Path:       path,
+				Parameters: f.baseParams(),
 			}
-			return shouldRetry(ctx, resp, err)
-		})
-		cached = newcached
-		//get torrents
-		path = "/torrents"
-		opts = rest.Opts{
-			Method:     method,
-			Path:       path,
-			Parameters: f.baseParams(),
-		}
-		opts.Parameters.Set("limit", "1")
-		var newtorrents []api.Item
-		err = f.pacer.Call(func() (bool, error) {
-			var totalcount int
-			totalcount = 2
-			for len(newtorrents) < totalcount {
-				partialresult = nil
-				resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
-				if err == nil {
-					totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+			opts.Parameters.Set("limit", "1")
+			var newtorrents []api.Item
+			err = f.pacer.Call(func() (bool, error) {
+				var totalcount int
+				totalcount = 2
+				for len(newtorrents) < totalcount {
+					partialresult = nil
+					resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
 					if err == nil {
-						if totalcount != len(torrents) {
-							newtorrents = append(newtorrents, partialresult...)
-							opts.Parameters.Set("offset", strconv.Itoa(len(newtorrents)))
-							opts.Parameters.Set("limit", "100")
+						totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
+						if err == nil {
+							if totalcount != len(torrents) {
+								newtorrents = append(newtorrents, partialresult...)
+								opts.Parameters.Set("offset", strconv.Itoa(len(newtorrents)))
+								opts.Parameters.Set("limit", "100")
+							} else {
+								newtorrents = torrents
+							}
 						} else {
-							newtorrents = torrents
+							break
 						}
 					} else {
 						break
 					}
-				} else {
+				}
+				return shouldRetry(ctx, resp, err)
+			})
+			//fmt.Printf("Done.\n")
+			torrents = newtorrents
+			if f.opt.SharedFolder == "folders" {
+				result = torrents
+			}
+		} else if f.opt.SharedFolder != "folders" || dirID != rootID {
+			//fmt.Printf("Matching Torrents to Direct Links ... ")
+			for _, torrent := range torrents {
+				if f.opt.SharedFolder == "folders" {
+					if dirID != torrent.ID {
+						continue
+					}
+				}
+				for _, link := range torrent.Links {
+					var ItemFile api.Item
+					for _, cachedfile := range cached {
+						if cachedfile.OriginalLink == link {
+							ItemFile = cachedfile
+							break
+						}
+					}
+					if ItemFile.Link == "" {
+						fmt.Printf("Creating new unrestricted direct link for: '%s'\n", torrent.Name)
+						path = "/unrestrict/link"
+						method = "POST"
+						opts := rest.Opts{
+							Method: method,
+							Path:   path,
+							MultipartParams: url.Values{
+								"link": {link},
+							},
+							Parameters: f.baseParams(),
+						}
+						resp, err = f.srv.CallJSON(ctx, &opts, nil, &ItemFile)
+					}
+					ItemFile.ParentID = torrent.ID
+					result = append(result, ItemFile)
+				}
+				if f.opt.SharedFolder == "folders" {
 					break
 				}
 			}
-			return shouldRetry(ctx, resp, err)
-		})
-		torrents = newtorrents
-		for _, torrent := range torrents {
-			for _, link := range torrent.Links {
-				var ItemFile api.Item
-				for _, cachedfile := range cached {
-					if cachedfile.OriginalLink == link {
-						ItemFile = cachedfile
-						break
-					}
-				}
-				if ItemFile.Link == "" {
-					fmt.Printf("Creating new unrestricted direct link for: '%s'\n", torrent.Name)
-					path = "/unrestrict/link"
-					method = "POST"
-					opts := rest.Opts{
-						Method: method,
-						Path:   path,
-						MultipartParams: url.Values{
-							"link": {link},
-						},
-						Parameters: f.baseParams(),
-					}
-					resp, err = f.srv.CallJSON(ctx, &opts, nil, &ItemFile)
-				}
-				ItemFile.ParentID = torrent.ID
-				result = append(result, ItemFile)
-			}
+			//fmt.Printf("Done.\n")
 		}
 	} else {
 		opts := rest.Opts{
@@ -552,7 +580,11 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 			t, _ := time.Parse(layout, item.Ended)
 			item.CreatedAt = t.Unix()
 		}
-		item.Type = "file"
+		if f.opt.SharedFolder == "folders" && dirID == rootID {
+			item.Type = "folder"
+		} else {
+			item.Type = "file"
+		}
 		if item.Type == api.ItemTypeFolder {
 			if filesOnly {
 				continue
@@ -584,6 +616,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	//fmt.Println("Listing Items ... ")
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -612,6 +645,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if iErr != nil {
 		return nil, iErr
 	}
+	//fmt.Println("Done Listing Items.")
 	return entries, nil
 }
 
