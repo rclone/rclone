@@ -301,6 +301,9 @@ func init() {
 			}, {
 				Value: "fr-par",
 				Help:  "Paris, France",
+			}, {
+				Value: "pl-waw",
+				Help:  "Warsaw, Poland",
 			}},
 		}, {
 			Name:     "region",
@@ -715,6 +718,9 @@ func init() {
 			}, {
 				Value: "s3.fr-par.scw.cloud",
 				Help:  "Paris Endpoint",
+			}, {
+				Value: "s3.pl-waw.scw.cloud",
+				Help:  "Warsaw Endpoint",
 			}},
 		}, {
 			Name:     "endpoint",
