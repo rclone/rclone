@@ -805,7 +805,7 @@ func OverlappingFilterCheck(ctx context.Context, fdst fs.Fs, fsrc fs.Fs) bool {
 	fdstRoot := fixRoot(fdst)
 	fsrcRoot := fixRoot(fsrc)
 	if strings.HasPrefix(fdstRoot, fsrcRoot) {
-		fdstRelative := strings.ReplaceAll(fdstRoot, fsrcRoot, "")
+		fdstRelative := fdstRoot[len(fsrcRoot):]
 		return FilterCheckR(ctx, fdstRelative, 0, fsrc)
 	}
 	return strings.HasPrefix(fsrcRoot, fdstRoot)
@@ -821,29 +821,19 @@ func FilterCheckR(ctx context.Context, fdstRelative string, pos int, fsrc fs.Fs)
 	for i := 0; i <= pos; i++ {
 		newPath += dirs[i]
 	}
-	dir := fs.NewDir(newPath, time.Now())
-	currentPath := dir.Remote()
-	if !strings.HasSuffix(currentPath, "/") {
-		currentPath += "/"
+	if !strings.HasSuffix(newPath, "/") {
+		newPath += "/"
 	}
-	if strings.HasPrefix(fdstRelative, currentPath) {
-		include, _ = includeDirectory(currentPath)
+	if strings.HasPrefix(fdstRelative, newPath) {
+		include, _ = includeDirectory(newPath)
 		if include {
-			if currentPath == fdstRelative {
+			if newPath == fdstRelative {
 				return true
 			}
 			pos++
 			include = FilterCheckR(ctx, fdstRelative, pos, fsrc)
 		}
 	}
-
-	if !include {
-		err := fsrc.Mkdir(ctx, fdstRelative)
-		if err != nil {
-			return true
-		}
-	}
-
 	return include
 }
 
