@@ -1294,7 +1294,7 @@ For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview
 
 Note that this ACL is applied when server-side copying objects as S3
 doesn't copy the ACL from the source but rather writes a fresh one.`,
-			Provider: "!Storj",
+			Provider: "!Storj,Cloudflare",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
 				Help:     "Owner gets Full_CONTROL.\nNo one else has access rights (default).",
@@ -2966,7 +2966,7 @@ func (f *Fs) Precision() time.Duration {
 // pathEscape escapes s as for a URL path.  It uses rest.URLPathEscape
 // but also escapes '+' for S3 and Digital Ocean spaces compatibility
 func pathEscape(s string) string {
-	return strings.Replace(rest.URLPathEscape(s), "+", "%2B", -1)
+	return strings.ReplaceAll(rest.URLPathEscape(s), "+", "%2B")
 }
 
 // copy does a server-side copy

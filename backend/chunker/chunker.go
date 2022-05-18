@@ -515,7 +515,7 @@ func (f *Fs) setChunkNameFormat(pattern string) error {
 
 	strRegex := regexp.QuoteMeta(pattern)
 	strRegex = reHashes.ReplaceAllLiteralString(strRegex, reDataOrCtrl)
-	strRegex = strings.Replace(strRegex, "\\*", mainNameRegStr, -1)
+	strRegex = strings.ReplaceAll(strRegex, "\\*", mainNameRegStr)
 	strRegex = fmt.Sprintf("^%s(?:%s|%s)?$", strRegex, tempSuffixRegStr, tempSuffixRegOld)
 	f.nameRegexp = regexp.MustCompile(strRegex)
 
@@ -524,7 +524,7 @@ func (f *Fs) setChunkNameFormat(pattern string) error {
 	if numDigits > 1 {
 		fmtDigits = fmt.Sprintf("%%0%dd", numDigits)
 	}
-	strFmt := strings.Replace(pattern, "%", "%%", -1)
+	strFmt := strings.ReplaceAll(pattern, "%", "%%")
 	strFmt = strings.Replace(strFmt, "*", "%s", 1)
 	f.dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
 	f.ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
