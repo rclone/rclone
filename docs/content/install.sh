@@ -175,20 +175,19 @@ case "$OS" in
     ### - - - - - - - - - - - - - - - - - - - -
     #binary
     sudo -v
-    sudo -s -- <<-EOT
-        mkdir -m 0555 -p ${binTgtDir}
-        cp rclone ${binTgtDir}/rclone.new
-        mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone
-        chmod a=x ${binTgtDir}/rclone
-    EOT
+    sudo -u root -- bash -c "\
+        mkdir -m 0755 -p ${binTgtDir} && \
+        cp rclone ${binTgtDir}/rclone.new && \
+        mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone && \
+        chmod a=x ${binTgtDir}/rclone && \
+		chown root:root ${binTgtDir}/rclone"
     ### - - - - - - - - - - - - - - - - - - - -
     #manual
     sudo -v
-    sudo -s -- <<-EOT
-        mkdir -m 0555 -p ${man1TgtDir}
-        cp rclone.1 ${man1TgtDir}
-        chmod a=r ${man1TgtDir}/rclone.1
-    EOT
+    sudo -u root -- bash -c "\
+        mkdir -m 0555 -p ${man1TgtDir} && \
+        cp rclone.1 ${man1TgtDir} && \
+        chmod a=r ${man1TgtDir}/rclone.1"
     ;;
     ### - - - - - - - - - - - - - - - - - - - -
   *)
