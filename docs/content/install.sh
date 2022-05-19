@@ -180,7 +180,7 @@ case "$OS" in
         cp rclone ${binTgtDir}/rclone.new && \
         mv ${binTgtDir}/rclone.new ${binTgtDir}/rclone && \
         chmod a=x ${binTgtDir}/rclone && \
-		chown root:root ${binTgtDir}/rclone"
+        chown root:root ${binTgtDir}/rclone"
     ### - - - - - - - - - - - - - - - - - - - -
     #manual
     sudo -v
