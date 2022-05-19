@@ -70,10 +70,6 @@ case $OS in
   Linux)
     OS='linux'
     # Define values specifically for this platform/OS.
-        # Notice, this is different from the original.
-        # Original used "/usr/bin" and "/usr/local/share/man" when I believe it should be either
-        # /usr/ or /usr/local/ for both. This note is my reminder to discuss it before committing it.
-        # Which is why I prefer this approach, define variable, *once* then use it when needed.
     binTgtDir=/usr/bin
     man1TgtDir=/usr/share/man/man1
     ;;
