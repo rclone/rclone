@@ -806,13 +806,13 @@ func OverlappingFilterCheck(ctx context.Context, fdst fs.Fs, fsrc fs.Fs) bool {
 	fsrcRoot := fixRoot(fsrc)
 	if strings.HasPrefix(fdstRoot, fsrcRoot) {
 		fdstRelative := fdstRoot[len(fsrcRoot):]
-		return FilterCheckR(ctx, fdstRelative, 0, fsrc)
+		return filterCheckR(ctx, fdstRelative, 0, fsrc)
 	}
 	return strings.HasPrefix(fsrcRoot, fdstRoot)
 }
 
-// FilterCheckR checks if fdst would be included in the sync
-func FilterCheckR(ctx context.Context, fdstRelative string, pos int, fsrc fs.Fs) bool {
+// filterCheckR checks if fdst would be included in the sync
+func filterCheckR(ctx context.Context, fdstRelative string, pos int, fsrc fs.Fs) bool {
 	include := true
 	fi := filter.GetConfig(ctx)
 	includeDirectory := fi.IncludeDirectory(ctx, fsrc)
@@ -831,7 +831,7 @@ func FilterCheckR(ctx context.Context, fdstRelative string, pos int, fsrc fs.Fs)
 				return true
 			}
 			pos++
-			include = FilterCheckR(ctx, fdstRelative, pos, fsrc)
+			include = filterCheckR(ctx, fdstRelative, pos, fsrc)
 		}
 	}
 	return include
