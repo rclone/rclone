@@ -47,7 +47,7 @@ The realdebrid backend is implemented by overwriting the premiumize backend (for
 
 It is recommended to use the tags in this example mounting command: 
 
-'rclone cmount torrents: Y: --dir-cache-time=10s --vfs-cache-mode=full --read-only'
+'rclone cmount torrents: Y: --dir-cache-time=10s --vfs-cache-mode=full'
 
 This will significantly speed up the mounted drive and detect changes faster.
 
