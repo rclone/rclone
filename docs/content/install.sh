@@ -156,13 +156,13 @@ case "$OS" in
   'linux')
     # - - - - - - - - - - - - - - - - - - - -
     #binary
-	# First verify our sudo ability. If we pass that then execute the steps
-	# requested but make sure we're doing it as root and not as any other user.
-	# (If sudo was run before this, the user may be set to something *other*
-	# than 'root', this makes sure.
+    # First verify our sudo ability. If we pass that then execute the steps
+    # requested but make sure we're doing it as root and not as any other user.
+    # (If sudo was run before this, the user may be set to something *other*
+    # than 'root', this makes sure.
     sudo -v
     sudo -u root -- bash -c "\
-		mkdir -m 0755 ${binTgtDir} && \
+        mkdir -m 0755 ${binTgtDir} && \
         cp rclone ${binTgtDir}/rclone.new && \
         chmod 0755 ${binTgtDir}/rclone.new && \
         chown root:root ${binTgtDir}/rclone.new && \
@@ -172,13 +172,13 @@ case "$OS" in
     if ! [ -x "$(command -v mandb)" ]; then
         echo 'mandb not found. The rclone man docs will not be installed.'
     else
-		# See sudo note above.
-		sudo -v
-		sudo -u root -- bash -c "\
-			mkdir -m 0755 -p ${man1TgtDir} && \
-			cp rclone.1 ${man1TgtDir} && \
-			chmod 0644 ${man1TgtDir}/rclone.1" && \
-			mandb --quiet --filename=${man1TgtDir}/rclone.1"
+        # See sudo note above.
+        sudo -v
+        sudo -u root -- bash -c "\
+            mkdir -m 0755 -p ${man1TgtDir} && \
+            cp rclone.1 ${man1TgtDir} && \
+            chmod 0644 ${man1TgtDir}/rclone.1" && \
+            mandb --quiet --filename=${man1TgtDir}/rclone.1"
     # - - - - - - - - - - - - - - - - - - - -
     fi
     ;;
