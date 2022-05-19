@@ -70,7 +70,7 @@ const (
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	minChunkSize     = fs.SizeSuffix(googleapi.MinUploadChunkSize)
 	defaultChunkSize = 8 * fs.Mebi
-	partialFields    = "id,name,size,md5Checksum,trashed,explicitlyTrashed,modifiedTime,createdTime,mimeType,parents,webViewLink,shortcutDetails,exportLinks"
+	partialFields    = "id,name,size,md5Checksum,trashed,explicitlyTrashed,modifiedTime,createdTime,mimeType,parents,webViewLink,shortcutDetails,exportLinks,resourceKey"
 	listRGrouping    = 50   // number of IDs to search at once when using ListR
 	listRInputBuffer = 1000 // size of input buffer when using ListR
 	defaultXDGIcon   = "text-html"
@@ -660,6 +660,7 @@ type baseObject struct {
 	mimeType     string   // The object MIME type
 	bytes        int64    // size of the object
 	parents      []string // IDs of the parent directories
+	resourceKey  *string  // resourceKey is needed for link shared objects
 }
 type documentObject struct {
 	baseObject
@@ -829,8 +830,8 @@ func (f *Fs) list(ctx context.Context, dirIDs []string, title string, directorie
 	if title != "" {
 		searchTitle := f.opt.Enc.FromStandardName(title)
 		// Escaping the backslash isn't documented but seems to work
-		searchTitle = strings.Replace(searchTitle, `\`, `\\`, -1)
-		searchTitle = strings.Replace(searchTitle, `'`, `\'`, -1)
+		searchTitle = strings.ReplaceAll(searchTitle, `\`, `\\`)
+		searchTitle = strings.ReplaceAll(searchTitle, `'`, `\'`)
 
 		var titleQuery bytes.Buffer
 		_, _ = fmt.Fprintf(&titleQuery, "(name='%s'", searchTitle)
@@ -1319,12 +1320,16 @@ func (f *Fs) newRegularObject(remote string, info *drive.File) fs.Object {
 			}
 		}
 	}
-	return &Object{
+	o := &Object{
 		baseObject: f.newBaseObject(remote, info),
 		url:        fmt.Sprintf("%sfiles/%s?alt=media", f.svc.BasePath, actualID(info.Id)),
 		md5sum:     strings.ToLower(info.Md5Checksum),
 		v2Download: f.opt.V2DownloadMinSize != -1 && info.Size >= int64(f.opt.V2DownloadMinSize),
 	}
+	if info.ResourceKey != "" {
+		o.resourceKey = &info.ResourceKey
+	}
+	return o
 }
 
 // newDocumentObject creates an fs.Object for a google docs drive.File
@@ -2429,11 +2434,12 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	var info *drive.File
 	err = f.pacer.Call(func() (bool, error) {
-		info, err = f.svc.Files.Copy(id, createInfo).
+		copy := f.svc.Files.Copy(id, createInfo).
 			Fields(partialFields).
 			SupportsAllDrives(true).
-			KeepRevisionForever(f.opt.KeepRevisionForever).
-			Context(ctx).Do()
+			KeepRevisionForever(f.opt.KeepRevisionForever)
+		srcObj.addResourceKey(copy.Header())
+		info, err = copy.Context(ctx).Do()
 		return f.shouldRetry(ctx, err)
 	})
 	if err != nil {
@@ -3530,6 +3536,14 @@ func (o *baseObject) Storable() bool {
 	return true
 }
 
+// addResourceKey adds a X-Goog-Drive-Resource-Keys header for this
+// object if required.
+func (o *baseObject) addResourceKey(header http.Header) {
+	if o.resourceKey != nil {
+		header.Add("X-Goog-Drive-Resource-Keys", fmt.Sprintf("%s/%s", o.id, *o.resourceKey))
+	}
+}
+
 // httpResponse gets an http.Response object for the object
 // using the url and method passed in
 func (o *baseObject) httpResponse(ctx context.Context, url, method string, options []fs.OpenOption) (req *http.Request, res *http.Response, err error) {
@@ -3545,6 +3559,7 @@ func (o *baseObject) httpResponse(ctx context.Context, url, method string, optio
 		// Don't supply range requests for 0 length objects as they always fail
 		delete(req.Header, "Range")
 	}
+	o.addResourceKey(req.Header)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		res, err = o.fs.client.Do(req)
 		if err == nil {

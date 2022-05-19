@@ -417,7 +417,7 @@ func ChooseOption(o *fs.Option, name string) string {
 	fmt.Printf("Option %s.\n", o.Name)
 	if o.Help != "" {
 		// Show help string without empty lines.
-		help := strings.Replace(strings.TrimSpace(o.Help), "\n\n", "\n", -1)
+		help := strings.ReplaceAll(strings.TrimSpace(o.Help), "\n\n", "\n")
 		fmt.Println(help)
 	}
 

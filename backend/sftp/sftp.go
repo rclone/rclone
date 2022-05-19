@@ -109,7 +109,7 @@ when the ssh-agent contains many keys.`,
 			Default: false,
 		}, {
 			Name: "use_insecure_cipher",
-			Help: `Enable the use of insecure ciphers and key exchange methods. 
+			Help: `Enable the use of insecure ciphers and key exchange methods.
 
 This enables the use of the following insecure ciphers and key exchange methods:
 
@@ -1311,7 +1311,7 @@ var shellEscapeRegex = regexp.MustCompile("[^A-Za-z0-9_.,:/\\@\u0080-\uFFFFFFFF\
 // when sending it to a shell.
 func shellEscape(str string) string {
 	safe := shellEscapeRegex.ReplaceAllString(str, `\$0`)
-	return strings.Replace(safe, "\n", "'\n'", -1)
+	return strings.ReplaceAll(safe, "\n", "'\n'")
 }
 
 // Converts a byte array from the SSH session returned by

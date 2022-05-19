@@ -3,11 +3,11 @@ title: "Install"
 description: "Rclone Installation"
 ---
 
-# Install #
+# Install
 
 Rclone is a Go program and comes as a single binary file.
 
-## Quickstart ##
+## Quickstart
 
   * [Download](/downloads/) the relevant binary.
   * Extract the `rclone` executable, `rclone.exe` on Windows, from the archive.
@@ -22,7 +22,7 @@ run `rclone -h`.
 Already installed rclone can be easily updated to the latest version
 using the [rclone selfupdate](/commands/rclone_selfupdate/) command.
 
-## Script installation ##
+## Script installation
 
 To install rclone on Linux/macOS/BSD systems, run:
 
@@ -35,7 +35,7 @@ For beta installation, run:
 Note that this script checks the version of rclone installed first and
 won't re-download if not needed.
 
-## Linux installation from precompiled binary ##
+## Linux installation from precompiled binary
 
 Fetch and unpack
 
@@ -59,7 +59,7 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
-## macOS installation with brew ##
+## macOS installation with brew
 
     brew install rclone
 
@@ -68,7 +68,7 @@ NOTE: This version of rclone will not support `mount` any more (see
 on macOS, either install a precompiled binary or enable the relevant option
 when [installing from source](#install-from-source).
 
-## macOS installation from precompiled binary, using curl ##
+## macOS installation from precompiled binary, using curl
 
 To avoid problems with macOS gatekeeper enforcing the binary to be signed and
 notarized it is enough to download with `curl`.
@@ -96,20 +96,20 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
-## macOS installation from precompiled binary, using a web browser ##
+## macOS installation from precompiled binary, using a web browser
 
 When downloading a binary with a web browser, the browser will set the macOS
 gatekeeper quarantine attribute. Starting from Catalina, when attempting to run
 `rclone`, a pop-up will appear saying:
 
-    “rclone” cannot be opened because the developer cannot be verified.
+    "rclone" cannot be opened because the developer cannot be verified.
     macOS cannot verify that this app is free from malware.
 
 The simplest fix is to run
 
     xattr -d com.apple.quarantine rclone
 
-## Install with docker ##
+## Install with docker
 
 The rclone maintains a [docker image for rclone](https://hub.docker.com/r/rclone/rclone).
 These images are autobuilt by docker hub from the rclone source based
@@ -188,39 +188,93 @@ ls ~/data/mount
 kill %1
 ```
 
-## Install from source ##
+## Install from source
 
-Make sure you have at least [Go](https://golang.org/) go1.16
-installed.  [Download go](https://golang.org/dl/) if necessary.  The
-latest release is recommended. Then
+Make sure you have git and [Go](https://golang.org/) installed.
+Go version 1.16 or newer is required, latest release is recommended.
+You can get it from your package manager, or download it from
+[golang.org/dl](https://golang.org/dl/). Then you can run the following:
 
-```sh
+```
 git clone https://github.com/rclone/rclone.git
 cd rclone
 go build
-# If on macOS and mount is wanted, instead run: make GOTAGS=cmount
-./rclone version
 ```
 
-This will leave you a checked out version of rclone you can modify and
-send pull requests with. If you use `make` instead of `go build` then
-the rclone build will have the correct version information in it.
+This will check out the rclone source in subfolder rclone, which you can later
+modify and send pull requests with. Then it will build the rclone executable
+in the same folder. As an initial check you can now run `./rclone version`
+(`.\rclone version` on Windows).
 
-You can also build the latest stable rclone with:
+Note that on macOS and Windows the [mount](https://rclone.org/commands/rclone_mount/)
+command will not be available unless you specify additional build tag `cmount`.
 
-    go get github.com/rclone/rclone
+```
+go build -tags cmount
+```
 
-or the latest version (equivalent to the beta) with
+This assumes you have a GCC compatible C compiler (GCC or Clang) in your PATH,
+as it uses [cgo](https://pkg.go.dev/cmd/cgo). But on Windows, the
+[cgofuse](https://github.com/winfsp/cgofuse) library that the cmount
+implementation is based on, also supports building
+[without cgo](https://github.com/golang/go/wiki/WindowsDLLs), i.e. by setting
+environment variable CGO_ENABLED to value 0 (static linking). This is how the
+official Windows release of rclone is being built, starting with version 1.59.
+It is still possible to build with cgo on Windows as well, by using the MinGW
+port of GCC, e.g. by installing it in a [MSYS2](https://www.msys2.org)
+distribution (make sure you install it in the classic mingw64 subsystem, the
+ucrt64 version is not compatible).
 
-    go get github.com/rclone/rclone@master
+Additionally, on Windows, you must install the third party utility
+[WinFsp](http://www.secfs.net/winfsp/), with the "Developer" feature selected.
+If building with cgo, you must also set environment variable CPATH pointing to
+the fuse include directory within the WinFsp installation
+(normally `C:\Program Files (x86)\WinFsp\inc\fuse`).
 
-These will build the binary in `$(go env GOPATH)/bin`
-(`~/go/bin/rclone` by default) after downloading the source to the go
-module cache. Note - do **not** use the `-u` flag here. This causes go
-to try to update the dependencies that rclone uses and sometimes these
-don't work with the current version of rclone.
+You may also add arguments `-ldflags -s` (with or without `-tags cmount`),
+to omit symbol table and debug information, making the executable file smaller,
+and `-trimpath` to remove references to local file system paths. This is how
+the official rclone releases are built.
 
-## Installation with Ansible ##
+```
+go build -trimpath -ldflags -s -tags cmount
+```
+
+Instead of executing the `go build` command directly, you can run it via the
+Makefile, which also sets version information and copies the resulting rclone
+executable into your GOPATH bin folder (`$(go env GOPATH)/bin`, which
+corresponds to `~/go/bin/rclone` by default).
+
+```
+make
+```
+
+To include mount command on macOS and Windows with Makefile build:
+
+```
+make GOTAGS=cmount
+```
+
+As an alternative you can download the source, build and install rclone in one
+operation, as a regular Go package. The source will be stored it in the Go
+module cache, and the resulting executable will be in your GOPATH bin folder
+(`$(go env GOPATH)/bin`, which corresponds to `~/go/bin/rclone` by default).
+
+With Go version 1.17 or newer:
+
+```
+go install github.com/rclone/rclone@latest
+```
+
+With Go versions older than 1.17 (do **not** use the `-u` flag, it causes Go to
+try to update the dependencies that rclone uses and sometimes these don't work
+with the current version):
+
+```
+go get github.com/rclone/rclone
+```
+
+## Installation with Ansible
 
 This can be done with [Stefan Weichinger's ansible
 role](https://github.com/stefangweichinger/ansible-rclone).
@@ -236,7 +290,7 @@ Instructions
           - rclone
 ```
 
-## Portable installation ##
+## Portable installation
 
 As mentioned [above](https://rclone.org/install/#quickstart), rclone is single
 executable (`rclone`, or `rclone.exe` on Windows) that you can download as a
@@ -314,7 +368,7 @@ the [PsExec](https://docs.microsoft.com/en-us/sysinternals/downloads/psexec)
 utility from Microsoft's Sysinternals suite, which takes option `-s` to
 execute commands as the `SYSTEM` user.
 
-#### Start from Startup folder ###
+#### Start from Startup folder
 
 To quickly execute an rclone command you can simply create a standard
 Windows Explorer shortcut for the complete rclone command you want to run. If you
@@ -329,7 +383,7 @@ functionality to set it to run as different user, or to set conditions or
 actions on certain events. Setting up a scheduled task as described below
 will often give you better results.
 
-#### Start from Task Scheduler ###
+#### Start from Task Scheduler
 
 Task Scheduler is an administrative tool built into Windows, and it can be used to
 configure rclone to be started automatically in a highly configurable way, e.g.
@@ -339,14 +393,14 @@ be available to all users it can run as the `SYSTEM` user.
 For technical information, see
 https://docs.microsoft.com/windows/win32/taskschd/task-scheduler-start-page.
 
-#### Run as service ###
+#### Run as service
 
 For running rclone at system startup, you can create a Windows service that executes
 your rclone command, as an alternative to scheduled task configured to run at startup.
 
-##### Mount command built-in service integration ####
+##### Mount command built-in service integration
 
-For mount commands, Rclone has a built-in Windows service integration via the third-party
+For mount commands, rclone has a built-in Windows service integration via the third-party
 WinFsp library it uses. Registering as a regular Windows service easy, as you just have to
 execute the built-in PowerShell command `New-Service` (requires administrative privileges).
 
@@ -366,7 +420,7 @@ Windows standard methods for managing network drives. This is currently not
 officially supported by Rclone, but with WinFsp version 2019.3 B2 / v1.5B2 or later
 it should be possible through path rewriting as described [here](https://github.com/rclone/rclone/issues/3340).
 
-##### Third-party service integration #####
+##### Third-party service integration
 
 To Windows service running any rclone command, the excellent third-party utility
 [NSSM](http://nssm.cc), the "Non-Sucking Service Manager", can be used.

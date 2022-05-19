@@ -43,7 +43,7 @@ var shellUnEscapeRegex = regexp.MustCompile(`\\(.)`)
 
 // Unescape a string that was escaped by rclone
 func shellUnEscape(str string) string {
-	str = strings.Replace(str, "'\n'", "\n", -1)
+	str = strings.ReplaceAll(str, "'\n'", "\n")
 	str = shellUnEscapeRegex.ReplaceAllString(str, `$1`)
 	return str
 }

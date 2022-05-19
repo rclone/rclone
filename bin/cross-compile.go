@@ -173,8 +173,8 @@ func buildZip(dir string) string {
 func buildDebAndRpm(dir, version, goarch string) []string {
 	// Make internal version number acceptable to .deb and .rpm
 	pkgVersion := version[1:]
-	pkgVersion = strings.Replace(pkgVersion, "β", "-beta", -1)
-	pkgVersion = strings.Replace(pkgVersion, "-", ".", -1)
+	pkgVersion = strings.ReplaceAll(pkgVersion, "β", "-beta")
+	pkgVersion = strings.ReplaceAll(pkgVersion, "-", ".")
 	nfpmArch, ok := goarchToNfpm[goarch]
 	if !ok {
 		nfpmArch = goarch
