@@ -130,7 +130,8 @@ type Opts struct {
 	Path                  string // relative to RootURL
 	RootURL               string // override RootURL passed into SetRoot()
 	Body                  io.Reader
-	NoResponse            bool // set to close Body
+	GetBody               func() (io.ReadCloser, error) // body builder, needed to enable low-level HTTP/2 retries
+	NoResponse            bool                          // set to close Body
 	ContentType           string
 	ContentLength         *int64
 	ContentRange          string
@@ -238,6 +239,9 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	}
 	if len(opts.TransferEncoding) != 0 {
 		req.TransferEncoding = opts.TransferEncoding
+	}
+	if opts.GetBody != nil {
+		req.GetBody = opts.GetBody
 	}
 	if opts.Trailer != nil {
 		req.Trailer = *opts.Trailer
