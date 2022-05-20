@@ -1,10 +1,10 @@
 // Test Webdav filesystem interface
-package webdav_test
+package webdav
 
 import (
 	"testing"
 
-	"github.com/rclone/rclone/backend/webdav"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 )
@@ -13,7 +13,10 @@ import (
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestWebdavNextcloud:",
-		NilObject:  (*webdav.Object)(nil),
+		NilObject:  (*Object)(nil),
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			MinChunkSize: 1 * fs.Mebi,
+		},
 	})
 }
 
@@ -24,7 +27,10 @@ func TestIntegration2(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestWebdavOwncloud:",
-		NilObject:  (*webdav.Object)(nil),
+		NilObject:  (*Object)(nil),
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			Skip: true,
+		},
 	})
 }
 
@@ -35,7 +41,10 @@ func TestIntegration3(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestWebdavRclone:",
-		NilObject:  (*webdav.Object)(nil),
+		NilObject:  (*Object)(nil),
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			Skip: true,
+		},
 	})
 }
 
@@ -46,6 +55,10 @@ func TestIntegration4(t *testing.T) {
 	}
 	fstests.Run(t, &fstests.Opt{
 		RemoteName: "TestWebdavNTLM:",
-		NilObject:  (*webdav.Object)(nil),
+		NilObject:  (*Object)(nil),
 	})
+}
+
+func (f *Fs) SetUploadChunkSize(cs fs.SizeSuffix) (fs.SizeSuffix, error) {
+	return f.setUploadChunkSize(cs)
 }

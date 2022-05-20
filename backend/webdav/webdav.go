@@ -19,6 +19,7 @@ import (
 	"net/url"
 	"os/exec"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -127,6 +128,17 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 `,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
+		}, {
+			Name: "nextcloud_chunk_size",
+			Help: `Nextcloud upload chunk size.
+
+We recommend configuring your NextCloud instance to increase the max chunk size to 1 GB for better upload performances.
+See https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/big_file_upload_configuration.html#adjust-chunk-size-on-nextcloud-side
+
+Set to 0 to disable chunked uploading.
+`,
+			Advanced: true,
+			Default:  10 * fs.Mebi, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
 		}},
 	})
 }
@@ -141,6 +153,7 @@ type Options struct {
 	BearerTokenCommand string               `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 	Headers            fs.CommaSepList      `config:"headers"`
+	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
 }
 
 // Fs represents a remote webdav
@@ -162,6 +175,8 @@ type Fs struct {
 	hasOCSHA1          bool          // set if can use owncloud style checksums for SHA1
 	hasMESHA1          bool          // set if can use fastmail style checksums for SHA1
 	ntlmAuthMu         sync.Mutex    // mutex to serialize NTLM auth roundtrips
+	chunksUploadURL    string        // upload URL for nextcloud chunked
+	canChunk           bool          // set if nextcloud and nextcloud_chunk_size is set
 }
 
 // Object describes a webdav object
@@ -547,6 +562,8 @@ func (f *Fs) fetchAndSetBearerToken() error {
 	return nil
 }
 
+var validateNextCloudChunkedURL = regexp.MustCompile(`^.*/dav/files/[^/]+/?$`)
+
 // setQuirks adjusts the Fs for the vendor passed in
 func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 	switch vendor {
@@ -565,6 +582,12 @@ func (f *Fs) setQuirks(ctx context.Context, vendor string) error {
 		f.precision = time.Second
 		f.useOCMtime = true
 		f.hasOCSHA1 = true
+		f.canChunk = true
+		if err := f.verifyChunkConfig(); err != nil {
+			return err
+		}
+		f.chunksUploadURL = f.getChunksUploadURL()
+		fs.Logf(nil, "Chunks temporary upload directory: %s", f.chunksUploadURL)
 	case "sharepoint":
 		// To mount sharepoint, two Cookies are required
 		// They have to be set instead of BasicAuth
@@ -1005,7 +1028,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 	dstPath := f.filePath(remote)
 	err := f.mkParentDir(ctx, dstPath)
 	if err != nil {
-		return nil, fmt.Errorf("Copy mkParentDir failed: %w", err)
+		return nil, fmt.Errorf("copy mkParentDir failed: %w", err)
 	}
 	destinationURL, err := rest.URLJoin(f.endpoint, dstPath)
 	if err != nil {
@@ -1030,11 +1053,11 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		return srcFs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Copy call failed: %w", err)
+		return nil, fmt.Errorf("copy call failed: %w", err)
 	}
 	dstObj, err := f.NewObject(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("Copy NewObject failed: %w", err)
+		return nil, fmt.Errorf("copy NewObject failed: %w", err)
 	}
 	return dstObj, nil
 }
@@ -1313,35 +1336,71 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return fmt.Errorf("Update mkParentDir failed: %w", err)
 	}
 
-	size := src.Size()
-	var resp *http.Response
-	opts := rest.Opts{
-		Method:        "PUT",
-		Path:          o.filePath(),
-		Body:          in,
-		NoResponse:    true,
-		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
-		ContentType:   fs.MimeType(ctx, src),
-		Options:       options,
+	if o.shouldUseChunkedUpload(src) {
+		fs.Debugf(src, "Update will use the chunked upload strategy")
+		err = o.updateChunked(ctx, in, src, options...)
+		if err != nil {
+			return err
+		}
+	} else {
+		fs.Debugf(src, "Update will use the normal upload strategy (no chunks)")
+		contentType := fs.MimeType(ctx, src)
+		filePath := o.filePath()
+		extraHeaders := o.extraHeaders(ctx, src)
+		// TODO: define getBody() to enable low-level HTTP/2 retries
+		err = o.updateSimple(ctx, in, nil, filePath, src.Size(), contentType, extraHeaders, o.fs.endpointURL, options...)
+		if err != nil {
+			return err
+		}
 	}
+
+	// read metadata from remote
+	o.hasMetaData = false
+	return o.readMetaData(ctx)
+}
+
+func (o *Object) extraHeaders(ctx context.Context, src fs.ObjectInfo) map[string]string {
+	extraHeaders := map[string]string{}
 	if o.fs.useOCMtime || o.fs.hasOCMD5 || o.fs.hasOCSHA1 {
-		opts.ExtraHeaders = map[string]string{}
 		if o.fs.useOCMtime {
-			opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
+			extraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
 		}
 		// Set one upload checksum
 		// Owncloud uses one checksum only to check the upload and stores its own SHA1 and MD5
 		// Nextcloud stores the checksum you supply (SHA1 or MD5) but only stores one
 		if o.fs.hasOCSHA1 {
 			if sha1, _ := src.Hash(ctx, hash.SHA1); sha1 != "" {
-				opts.ExtraHeaders["OC-Checksum"] = "SHA1:" + sha1
+				extraHeaders["OC-Checksum"] = "SHA1:" + sha1
 			}
 		}
-		if o.fs.hasOCMD5 && opts.ExtraHeaders["OC-Checksum"] == "" {
+		if o.fs.hasOCMD5 && extraHeaders["OC-Checksum"] == "" {
 			if md5, _ := src.Hash(ctx, hash.MD5); md5 != "" {
-				opts.ExtraHeaders["OC-Checksum"] = "MD5:" + md5
+				extraHeaders["OC-Checksum"] = "MD5:" + md5
 			}
 		}
+	}
+	return extraHeaders
+}
+
+// Standard update in one request (no chunks)
+func (o *Object) updateSimple(ctx context.Context, body io.Reader, getBody func() (io.ReadCloser, error), filePath string, size int64, contentType string, extraHeaders map[string]string, rootURL string, options ...fs.OpenOption) (err error) {
+	var resp *http.Response
+
+	if extraHeaders == nil {
+		extraHeaders = map[string]string{}
+	}
+
+	opts := rest.Opts{
+		Method:        "PUT",
+		Path:          filePath,
+		GetBody:       getBody,
+		Body:          body,
+		NoResponse:    true,
+		ContentLength: &size, // FIXME this isn't necessary with owncloud - See https://github.com/nextcloud/nextcloud-snap/issues/365
+		ContentType:   contentType,
+		Options:       options,
+		ExtraHeaders:  extraHeaders,
+		RootURL:       rootURL,
 	}
 	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
 		resp, err = o.fs.srv.Call(ctx, &opts)
@@ -1358,9 +1417,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		_ = o.Remove(ctx)
 		return err
 	}
-	// read metadata from remote
-	o.hasMetaData = false
-	return o.readMetaData(ctx)
+	return nil
+
 }
 
 // Remove an object
