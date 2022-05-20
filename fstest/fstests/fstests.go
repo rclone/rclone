@@ -60,6 +60,8 @@ type ChunkedUploadConfig struct {
 	CeilChunkSize func(fs.SizeSuffix) fs.SizeSuffix
 	// More than one chunk is required on upload
 	NeedMultipleChunks bool
+	// Skip this particular remote
+	Skip bool
 }
 
 // SetUploadChunkSizer is a test only interface to change the upload chunk size at runtime
@@ -1883,6 +1885,10 @@ func Run(t *testing.T, opt *Opt) {
 			skipIfNotOk(t)
 			if testing.Short() {
 				t.Skip("not running with -short")
+			}
+
+			if opt.ChunkedUpload.Skip {
+				t.Skip("skipping as ChunkedUpload.Skip is set")
 			}
 
 			setUploadChunkSizer, _ := f.(SetUploadChunkSizer)
