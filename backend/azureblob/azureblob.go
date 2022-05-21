@@ -373,15 +373,9 @@ func (o *Object) split() (container, containerPath string) {
 
 // validateAccessTier checks if azureblob supports user supplied tier
 func validateAccessTier(tier string) bool {
-	switch tier {
-	case string(azblob.AccessTierHot),
-		string(azblob.AccessTierCool),
-		string(azblob.AccessTierArchive):
-		// valid cases
-		return true
-	default:
-		return false
-	}
+	return strings.EqualFold(tier, string(azblob.AccessTierHot)) ||
+		strings.EqualFold(tier, string(azblob.AccessTierCool)) ||
+		strings.EqualFold(tier, string(azblob.AccessTierArchive))
 }
 
 // validatePublicAccess checks if azureblob supports use supplied public access level
