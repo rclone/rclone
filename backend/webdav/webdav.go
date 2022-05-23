@@ -16,8 +16,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/lib/atexit"
-	"golang.org/x/sync/errgroup"
 	"io"
 	"net/http"
 	"net/url"
@@ -28,6 +26,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/rclone/rclone/backend/webdav/api"
 	"github.com/rclone/rclone/backend/webdav/odrvcookie"
@@ -133,28 +133,37 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 			Name: "nextcloud_chunk_size",
 			Help: `Nextcloud upload chunk size.
 
-We recommend configuring your NextCloud instance to increase the max chunk size to 1 GB for better upload performances.
+We recommend configuring your NextCloud instance to increase the max chunk size to 50 MB for better upload performances.
 See https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/big_file_upload_configuration.html#adjust-chunk-size-on-nextcloud-side
 
 Set to 0 to disable chunked uploading.
 `,
 			Advanced: true,
-			Default:  10 * fs.Mebi, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
+			Default:  4, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
+		}, {
+			Name: "nextcloud_chunk_parallel_transfers",
+			Help: `Nextcloud count of chunks to transfer in parallel for a given file upload. A high number with a big chunk size will lead to very high memory usage.
+
+Set to 1 to upload chunks one by one. This is the method that uses the least memory.
+`,
+			Advanced: true,
+			Default:  4,
 		}},
 	})
 }
 
 // Options defines the configuration for this backend
 type Options struct {
-	URL                string               `config:"url"`
-	Vendor             string               `config:"vendor"`
-	User               string               `config:"user"`
-	Pass               string               `config:"pass"`
-	BearerToken        string               `config:"bearer_token"`
-	BearerTokenCommand string               `config:"bearer_token_command"`
-	Enc                encoder.MultiEncoder `config:"encoding"`
-	Headers            fs.CommaSepList      `config:"headers"`
-	ChunkSize          fs.SizeSuffix        `config:"nextcloud_chunk_size"`
+	URL                    string               `config:"url"`
+	Vendor                 string               `config:"vendor"`
+	User                   string               `config:"user"`
+	Pass                   string               `config:"pass"`
+	BearerToken            string               `config:"bearer_token"`
+	BearerTokenCommand     string               `config:"bearer_token_command"`
+	Enc                    encoder.MultiEncoder `config:"encoding"`
+	Headers                fs.CommaSepList      `config:"headers"`
+	ChunkSize              fs.SizeSuffix        `config:"nextcloud_chunk_size"`
+	ChunkParallelTransfers fs.SizeSuffix        `config:"nextcloud_parallel_transfers"`
 }
 
 // Fs represents a remote webdav
@@ -1503,14 +1512,14 @@ func (o *Object) updateChunked(ctx0 context.Context, in0 io.Reader, src fs.Objec
 	fs.Debugf(src, "Starting multipart upload to temp dir %q", uploadDir)
 
 	// TODO: is this still correct wrt the newly introduced errgroup ctx?
-	atexit.OnError(&err, func() {
-		cancelUpdate()
-		// Try to abort the upload, but ignore the error.
-		fs.Errorf(src, "Cancelling chunked upload: %w", err)
-
-		err = g.Wait()
-		_ = o.purgeChunkedUpload(ctx0, uploadDir)
-	})()
+	//atexit.OnError(&err, func() {
+	//	cancelUpdate()
+	//	// Try to abort the upload, but ignore the error.
+	//	fs.Errorf(src, "Cancelling chunked upload: %w", err)
+	//
+	//	err = g.Wait()
+	//	_ = o.purgeChunkedUpload(ctx0, uploadDir)
+	//})()
 
 	opts := rest.Opts{
 		Method:     "MKCOL",
@@ -1536,7 +1545,10 @@ func (o *Object) updateChunked(ctx0 context.Context, in0 io.Reader, src fs.Objec
 		numChunks += 1
 	}
 
-	chunkUploadJobs := make(chan *workerArgs, numChunks)
+	var numParallelUploads = int64(o.fs.opt.ChunkParallelTransfers)
+
+	// Store in advance at most numParallelUploads chunks in the buffer given to the uploading workers
+	chunkUploadJobs := make(chan *workerArgs, numParallelUploads)
 
 	// Asynchronously download the chunks as needed and forward them to upload workers
 	g.Go(func() error {
@@ -1582,7 +1594,6 @@ func (o *Object) updateChunked(ctx0 context.Context, in0 io.Reader, src fs.Objec
 		return nil
 	})
 
-	var numParallelUploads = int64(o.fs.ci.Transfers)
 	if numChunks < numParallelUploads {
 		numParallelUploads = numChunks
 	}
