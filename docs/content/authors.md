@@ -597,3 +597,4 @@ put them back in again.` >}}
   * Erik van Velzen <erik@evanv.nl>
   * Derek Battams <derek@battams.ca>
   * SimonLiu <simonliu009@users.noreply.github.com>
+  * Hugo Laloge <hla@lescompanions.com>
