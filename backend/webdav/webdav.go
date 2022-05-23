@@ -139,7 +139,7 @@ See https://docs.nextcloud.com/server/latest/admin_manual/configuration_files/bi
 Set to 0 to disable chunked uploading.
 `,
 			Advanced: true,
-			Default:  4, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
+			Default:  10 * fs.Mebi, // Default NextCloud `max_chunk_size` is `10 MiB`. See https://github.com/nextcloud/server/blob/0447b53bda9fe95ea0cbed765aa332584605d652/apps/files/lib/App.php#L57
 		}, {
 			Name: "nextcloud_chunk_parallel_transfers",
 			Help: `Nextcloud count of chunks to transfer in parallel for a given file upload. A high number with a big chunk size will lead to very high memory usage.
@@ -163,7 +163,7 @@ type Options struct {
 	Enc                    encoder.MultiEncoder `config:"encoding"`
 	Headers                fs.CommaSepList      `config:"headers"`
 	ChunkSize              fs.SizeSuffix        `config:"nextcloud_chunk_size"`
-	ChunkParallelTransfers fs.SizeSuffix        `config:"nextcloud_parallel_transfers"`
+	ChunkParallelTransfers int64                `config:"nextcloud_chunk_parallel_transfers"`
 }
 
 // Fs represents a remote webdav
