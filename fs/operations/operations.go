@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/csv"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -2151,6 +2152,21 @@ func (l *ListFormat) AddTier() {
 func (l *ListFormat) AddMimeType() {
 	l.AppendOutput(func(entry *ListJSONItem) string {
 		return entry.MimeType
+	})
+}
+
+// AddMetadata adds file's Metadata to the output if known
+func (l *ListFormat) AddMetadata() {
+	l.AppendOutput(func(entry *ListJSONItem) string {
+		metadata := entry.Metadata
+		if metadata == nil {
+			metadata = make(fs.Metadata)
+		}
+		out, err := json.Marshal(metadata)
+		if err != nil {
+			return fmt.Sprintf("Failed to read metadata: %v", err.Error())
+		}
+		return string(out)
 	})
 }
 
