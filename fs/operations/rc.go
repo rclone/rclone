@@ -34,6 +34,7 @@ func init() {
     - noMimeType - If set don't show mime types
     - dirsOnly - If set only show directories
     - filesOnly - If set only show files
+    - metadata - If set return metadata of objects also
     - hashTypes - array of strings of hash types to show if showHash set
 
 Returns:

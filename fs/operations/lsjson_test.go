@@ -172,6 +172,19 @@ func TestListJSON(t *testing.T) {
 				ModTime: operations.Timestamp{When: t1},
 				IsDir:   false,
 			}},
+		}, {
+			name: "Metadata",
+			opt: operations.ListJSONOpt{
+				FilesOnly: true,
+				Metadata:  true,
+			},
+			want: []*operations.ListJSONItem{{
+				Path:    "file1",
+				Name:    "file1",
+				Size:    5,
+				ModTime: operations.Timestamp{When: t1},
+				IsDir:   false,
+			}},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
