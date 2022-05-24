@@ -260,6 +260,11 @@ func (f *Fs) shouldRetryChunkMerge(ctx context.Context, resp *http.Response, err
 		return true, err
 	}
 
+	// 423 LOCKED
+	if resp != nil && resp.StatusCode == 423 {
+		return false, fmt.Errorf("merging the uploaded chunks failed with 423 LOCKED. This usually happens when the chunks merging is still in progress on NextCloud (it can take up to 10 mins for big files). Ignoring the error: %w", err)
+	}
+
 	return f.shouldRetry(ctx, resp, err)
 }
 
@@ -1639,13 +1644,19 @@ func (o *Object) updateChunked(ctx0 context.Context, in0 io.Reader, src fs.Objec
 		resp, err = o.fs.srv.Call(ctx0, &opts)
 		return o.fs.shouldRetryChunkMerge(ctx0, resp, err)
 	})
-	if err != nil {
-		return fmt.Errorf("merging chunked upload failed, destinationURL: \"%s\": %w", destinationURL, err)
+
+	if err == nil {
+		fs.Debugf(src, "finished the merge of the %d uploaded chunks successfully", numChunks)
+		return nil
 	}
 
-	fs.Debugf(src, "finished the merge of the %d uploaded chunks successfully", numChunks)
+	// 423 LOCKED, usually happens when the chunk merging is still in progress. It can be a very long operation (>10 mins for big files) so we assume it's successful in order not to block a transfer thread.
+	if resp.StatusCode == 423 {
+		fs.Errorf(src, "merging the uploaded chunks failed with 423 LOCKED. This usually happens when the chunks merging is still in progress on NextCloud (it can take up to 10 mins for big files). Ignoring the error: %w", err)
+		return nil
+	}
 
-	return nil
+	return fmt.Errorf("merging chunked upload failed, destinationURL: \"%s\": %w", destinationURL, err)
 }
 
 func (o *Object) purgeChunkedUpload(ctx context.Context, uploadDir string) error {
