@@ -425,6 +425,126 @@ This can be used when scripting to make aged backups efficiently, e.g.
     rclone sync -i remote:current-backup remote:previous-backup
     rclone sync -i /path/to/files remote:current-backup
 
+## Metadata support {#metadata}
+
+Metadata is data about a file which isn't the contents of the file.
+Normally rclone only preserves the modification time and the content
+(MIME) type where possible.
+
+Rclone supports preserving all the available metadata on files (not
+directories) when using the `--metadata` or `-M` flag.
+
+Exactly what metadata is supported and what that support means depends
+on the backend. Backends that support metadata have a metadata section
+in their docs and are listed in the [features table](/overview/#features)
+(Eg [local](/local/#metadata), [s3](/s3/#metadata))
+
+Rclone only supports a one-time sync of metadata. This means that
+metadata will be synced from the source object to the destination
+object only when the source object has changed and needs to be
+re-uploaded. If the metadata subsequently changes on the source object
+without changing the object itself then it won't be synced to the
+destination object. This is in line with the way rclone syncs
+`Content-Type` without the `--metadata` flag.
+
+Using `--metadata` when syncing from local to local will preserve file
+attributes such as file mode, owner, extended attributes (not
+Windows).
+
+Note that arbitrary metadata may be added to objects using the
+`--upload-metadata key=value` flag when the object is first uploaded.
+This flag can be repeated as many times as necessary.
+
+### Types of metadata
+
+Metadata is divided into two type. System metadata and User metadata.
+
+Metadata which the backend uses itself is called system metadata. For
+example on the local backend the system metadata `uid` will store the
+user ID of the file when used on a unix based platform.
+
+Arbitrary metadata is called user metadata and this can be set however
+is desired.
+
+When objects are copied from backend to backend, they will attempt to
+interpret system metadata if it is supplied. Metadata may change from
+being user metadata to system metadata as objects are copied between
+different backends. For example copying an object from s3 sets the
+`content-type` metadata. In a backend which understands this (like
+`azureblob`) this will become the Content-Type of the object. In a
+backend which doesn't understand this (like the `local` backend) this
+will become user metadata. However should the local object be copied
+back to s3, the Content-Type will be set correctly.
+
+### Metadata framework
+
+Rclone implements a metadata framework which can read metadata from an
+object and write it to the object when (and only when) it is being
+uploaded.
+
+This metadata is stored as a dictionary with string keys and string
+values.
+
+There are some limits on the names of the keys (these may be clarified
+further in the future).
+
+- must be lower case
+- may be `a-z` `0-9` containing `.` `-` or `_`
+- length is backend dependent
+
+Each backend can provide system metadata that it understands. Some
+backends can also store arbitrary user metadata.
+
+Where possible the key names are standardized, so, for example, it is
+possible to copy object metadata from s3 to azureblob for example and
+metadata will be translated apropriately.
+
+Some backends have limits on the size of the metadata and rclone will
+give errors on upload if they are exceeded.
+
+### Metadata preservation
+
+The goal of the implementation is to
+
+1. Preserve metadata if at all possible
+2. Interpret metadata if at all possible
+
+The consequences of 1 is that you can copy an S3 object to a local
+disk then back to S3 losslessly. Likewise you can copy a local file
+with file attributes and xattrs from local disk to s3 and back again
+losslessly.
+
+The consequence of 2 is that you can copy an S3 object with metadata
+to Azureblob (say) and have the metadata appear on the Azureblob
+object also.
+
+### Standard system metadata
+
+Here is a table of standard system metadata which, if appropriate, a
+backend may implement.
+
+| key                 | description | example |
+|---------------------|-------------|---------|
+| mode                | File type and mode: octal, unix style | 0100664 |
+| uid                 | User ID of owner: decimal number | 500 |
+| gid                 | Group ID of owner: decimal number | 500 |
+| rdev                | Device ID (if special file)  => hexadecimal | 0 |
+| atime               | Time of last access:  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
+| mtime               | Time of last modification:  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
+| btime               | Time of file creation (birth):  RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 |
+| cache-control       | Cache-Control header | no-cache |
+| content-disposition | Content-Disposition header | inline |
+| content-encoding    | Content-Encoding header | gzip |
+| content-language    | Content-Language header | en-US |
+| content-type        | Content-Type header | text/plain |
+
+The metadata keys `mtime` and `content-type` will take precedence if
+supplied in the metadata over reading the `Content-Type` or
+modification time of the source object.
+
+Hashes are not included in system metadata as there is a well defined
+way of reading those already.
+
 Options
 -------
 
@@ -1205,6 +1325,12 @@ Defaults to off.
 When the limit is reached all transfers will stop immediately.
 
 Rclone will exit with exit code 8 if the transfer limit is reached.
+
+## --metadata / -M
+
+Setting this flag enables rclone to copy the metadata from the source
+to the destination. For local backends this is ownership, permissions,
+xattr etc. See the [#metadata](metadata section) for more info.
 
 ### --cutoff-mode=hard|soft|cautious ###
 

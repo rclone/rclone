@@ -352,6 +352,16 @@ func (o *OverrideRemote) GetTier() string {
 	return ""
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *OverrideRemote) Metadata(ctx context.Context) (fs.Metadata, error) {
+	if do, ok := o.ObjectInfo.(fs.Metadataer); ok {
+		return do.Metadata(ctx)
+	}
+	return nil, nil
+}
+
 // Check all optional interfaces satisfied
 var _ fs.FullObjectInfo = (*OverrideRemote)(nil)
 
