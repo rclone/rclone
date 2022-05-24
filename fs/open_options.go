@@ -258,6 +258,24 @@ func (o NullOption) Mandatory() bool {
 	return false
 }
 
+// MetadataOption defines an Option which does nothing
+type MetadataOption Metadata
+
+// Header formats the option as an http header
+func (o MetadataOption) Header() (key string, value string) {
+	return "", ""
+}
+
+// String formats the option into human-readable form
+func (o MetadataOption) String() string {
+	return fmt.Sprintf("MetadataOption(%v)", Metadata(o))
+}
+
+// Mandatory returns whether the option must be parsed or can be ignored
+func (o MetadataOption) Mandatory() bool {
+	return false
+}
+
 // OpenOptionAddHeaders adds each header found in options to the
 // headers map provided the key was non empty.
 func OpenOptionAddHeaders(options []OpenOption, headers map[string]string) {

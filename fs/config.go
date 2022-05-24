@@ -124,6 +124,7 @@ type ConfigInfo struct {
 	UploadHeaders          []*HTTPOption
 	DownloadHeaders        []*HTTPOption
 	Headers                []*HTTPOption
+	MetadataSet            Metadata // extra metadata to write when uploading
 	RefreshTimes           bool
 	NoConsole              bool
 	TrafficClass           uint8
