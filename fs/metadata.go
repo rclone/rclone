@@ -68,8 +68,14 @@ func GetMetadata(ctx context.Context, o ObjectInfo) (metadata Metadata, err erro
 
 // GetMetadataOptions from an ObjectInfo and merge it with any in options
 //
+// If --metadata isn't in use it will return nil
+//
 // If the object has no metadata then metadata will be nil
 func GetMetadataOptions(ctx context.Context, o ObjectInfo, options []OpenOption) (metadata Metadata, err error) {
+	ci := GetConfig(ctx)
+	if !ci.Metadata {
+		return nil, nil
+	}
 	metadata, err = GetMetadata(ctx, o)
 	if err != nil {
 		return nil, err

@@ -206,6 +206,15 @@ func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *f
 		file.Size = int64(buf.Len())
 		obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 		if mimeType != "" || metadata != nil {
+			// force the --metadata flag on temporarily
+			if metadata != nil {
+				ci := fs.GetConfig(ctx)
+				previousMetadata := ci.Metadata
+				ci.Metadata = true
+				defer func() {
+					ci.Metadata = previousMetadata
+				}()
+			}
 			obji = overrideMimeType(obji, mimeType, metadata)
 		}
 		obj, err = f.Put(ctx, in, obji)

@@ -140,6 +140,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.HumanReadable, "human-readable", "", ci.HumanReadable, "Print numbers in a human-readable format, sizes with suffix Ki|Mi|Gi|Ti|Pi")
 	flags.DurationVarP(flagSet, &ci.KvLockTime, "kv-lock-time", "", ci.KvLockTime, "Maximum time to keep key-value database locked by process")
 	flags.BoolVarP(flagSet, &ci.DisableHTTPKeepAlives, "disable-http-keep-alives", "", ci.DisableHTTPKeepAlives, "Disable HTTP keep-alives and use each connection once.")
+	flags.BoolVarP(flagSet, &ci.Metadata, "metadata", "M", ci.Metadata, "If set, preserve metadata when copying objects")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions
