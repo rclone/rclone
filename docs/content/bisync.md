@@ -106,7 +106,7 @@ Optional Flags:
 
 Arbitrary rclone flags may be specified on the
 [bisync command line](/commands/rclone_bisync/), for example
-`rclone bsync ./testdir/path1/ gdrive:testdir/path2/ --drive-skip-gdocs -v -v --timeout 10s`
+`rclone bisync ./testdir/path1/ gdrive:testdir/path2/ --drive-skip-gdocs -v -v --timeout 10s`
 Note that interactions of various rclone flags with bisync process flow
 has not been fully tested yet.
 
