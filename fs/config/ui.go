@@ -298,10 +298,8 @@ func mustFindByName(name string) *fs.RegInfo {
 	return fs.MustFind(fsType)
 }
 
-// ShowRemote shows the contents of the remote
-func ShowRemote(name string) {
-	fmt.Printf("--------------------\n")
-	fmt.Printf("[%s]\n", name)
+// printRemoteOptions prints the options of the remote
+func printRemoteOptions(name string, prefix string, sep string) {
 	fs := mustFindByName(name)
 	for _, key := range LoadedData().GetKeyList(name) {
 		isPassword := false
@@ -313,17 +311,28 @@ func ShowRemote(name string) {
 		}
 		value := FileGet(name, key)
 		if isPassword && value != "" {
-			fmt.Printf("%s = *** ENCRYPTED ***\n", key)
+			fmt.Printf("%s%s%s*** ENCRYPTED ***\n", prefix, key, sep)
 		} else {
-			fmt.Printf("%s = %s\n", key, value)
+			fmt.Printf("%s%s%s%s\n", prefix, key, sep, value)
 		}
 	}
-	fmt.Printf("--------------------\n")
+}
+
+// listRemoteOptions lists the options of the remote
+func listRemoteOptions(name string) {
+	printRemoteOptions(name, "- ", ": ")
+}
+
+// ShowRemote shows the contents of the remote in config file format
+func ShowRemote(name string) {
+	fmt.Printf("[%s]\n", name)
+	printRemoteOptions(name, "", " = ")
 }
 
 // OkRemote prints the contents of the remote and ask if it is OK
 func OkRemote(name string) bool {
-	ShowRemote(name)
+	fmt.Printf("Configuration of %q remote:\n", name)
+	listRemoteOptions(name)
 	switch i := CommandDefault([]string{"yYes this is OK", "eEdit this remote", "dDelete this remote"}, 0); i {
 	case 'y':
 		return true
@@ -539,8 +548,8 @@ func NewRemote(ctx context.Context, name string) error {
 
 // EditRemote gets the user to edit a remote
 func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) error {
-	fmt.Printf("Edit remote\n")
-	ShowRemote(name)
+	fmt.Printf("Edit existing %q remote with options:\n", name)
+	listRemoteOptions(name)
 	newSection()
 	for {
 		_, err := UpdateRemote(ctx, name, nil, UpdateRemoteOpt{
