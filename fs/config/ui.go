@@ -338,6 +338,11 @@ func OkRemote(name string) bool {
 	return false
 }
 
+// newSection prints an empty line to separate sections
+func newSection() {
+	fmt.Println()
+}
+
 // backendConfig configures the backend starting from the state passed in
 //
 // The is the user interface loop that drives the post configuration backend config.
@@ -387,6 +392,7 @@ func backendConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.
 		if out.State == "" {
 			break
 		}
+		newSection()
 	}
 	return nil
 }
@@ -516,7 +522,7 @@ func NewRemote(ctx context.Context, name string) error {
 		break
 	}
 	LoadedData().SetValue(name, "type", newType)
-
+	newSection()
 	_, err = CreateRemote(ctx, name, newType, nil, UpdateRemoteOpt{
 		All: true,
 	})
@@ -527,13 +533,15 @@ func NewRemote(ctx context.Context, name string) error {
 		SaveConfig()
 		return nil
 	}
+	newSection()
 	return EditRemote(ctx, ri, name)
 }
 
 // EditRemote gets the user to edit a remote
 func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) error {
-	ShowRemote(name)
 	fmt.Printf("Edit remote\n")
+	ShowRemote(name)
+	newSection()
 	for {
 		_, err := UpdateRemote(ctx, name, nil, UpdateRemoteOpt{
 			All: true,
@@ -626,29 +634,44 @@ func EditConfig(ctx context.Context) (err error) {
 		}
 		switch i := Command(what); i {
 		case 'e':
+			newSection()
 			name := ChooseRemote()
+			newSection()
 			fs := mustFindByName(name)
 			err = EditRemote(ctx, fs, name)
 			if err != nil {
 				return err
 			}
 		case 'n':
-			err = NewRemote(ctx, NewRemoteName())
+			newSection()
+			name := NewRemoteName()
+			newSection()
+			err = NewRemote(ctx, name)
 			if err != nil {
 				return err
 			}
 		case 'd':
+			newSection()
 			name := ChooseRemote()
+			newSection()
 			DeleteRemote(name)
 		case 'r':
-			RenameRemote(ChooseRemote())
+			newSection()
+			name := ChooseRemote()
+			newSection()
+			RenameRemote(name)
 		case 'c':
-			CopyRemote(ChooseRemote())
+			newSection()
+			name := ChooseRemote()
+			newSection()
+			CopyRemote(name)
 		case 's':
+			newSection()
 			SetPassword()
 		case 'q':
 			return nil
 		}
+		newSection()
 	}
 }
 
