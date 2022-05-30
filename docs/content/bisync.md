@@ -363,6 +363,7 @@ Bisync is considered _BETA_ and has been tested with the following backends:
 - OneDrive
 - S3
 - SFTP
+- Yandex Disk
 
 It has not been fully tested with other services yet.
 If it works, or sorta works, please let us know and we'll update the list.
