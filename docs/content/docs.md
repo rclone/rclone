@@ -2234,7 +2234,7 @@ override the environment variable setting.
 Or to always use the trash in drive `--drive-use-trash`, set
 `RCLONE_DRIVE_USE_TRASH=true`.
 
-Verbosity is slightly different, the environment variable equivalent if `--verbose` or `-v` is `RCLONE_VERBOSE=1` or for `-vv`, `RCLONE_VERBOSE=2`
+Verbosity is slightly different, the environment variable equivalent of `--verbose` or `-v` is `RCLONE_VERBOSE=1`, or for `-vv`, `RCLONE_VERBOSE=2`
 
 The same parser is used for the options and the environment variables
 so they take exactly the same form.
