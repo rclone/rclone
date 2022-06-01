@@ -267,6 +267,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --ftp-disable-utf8
+
+Disable using UTF-8 even if server advertises support.
+
+Properties:
+
+- Config:      disable_utf8
+- Env Var:     RCLONE_FTP_DISABLE_UTF8
+- Type:        bool
+- Default:     false
+
 #### --ftp-writing-mdtm
 
 Use MDTM to set modification time (VsFtpd quirk)
