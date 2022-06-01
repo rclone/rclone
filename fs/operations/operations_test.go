@@ -1253,6 +1253,93 @@ func TestOverlapping(t *testing.T) {
 	}
 }
 
+// testFs is for unit testing fs.Fs
+type testFs struct {
+	testFsInfo
+}
+
+func (i *testFs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return nil, nil
+}
+
+func (i *testFs) NewObject(ctx context.Context, remote string) (fs.Object, error) { return nil, nil }
+
+func (i *testFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return nil, nil
+}
+
+func (i *testFs) Mkdir(ctx context.Context, dir string) error { return nil }
+
+func (i *testFs) Rmdir(ctx context.Context, dir string) error { return nil }
+
+// copied from TestOverlapping because the behavior of OverlappingFilterCheck should be identical to Overlapping
+// when no filters are set
+func TestOverlappingFilterCheckWithoutFilter(t *testing.T) {
+	ctx := context.Background()
+	src := &testFs{testFsInfo{name: "name", root: "root"}}
+	slash := string(os.PathSeparator) // native path separator
+	for _, test := range []struct {
+		name     string
+		root     string
+		expected bool
+	}{
+		{"name", "root", true},
+		{"namey", "root", false},
+		{"name", "rooty", false},
+		{"namey", "rooty", false},
+		{"name", "roo", false},
+		{"name", "root/toot", true},
+		{"name", "root/toot/", true},
+		{"name", "root" + slash + "toot", true},
+		{"name", "root" + slash + "toot" + slash, true},
+		{"name", "", true},
+		{"name", "/", true},
+	} {
+		dst := &testFs{testFsInfo{name: test.name, root: test.root}}
+		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", src.name, src.root, dst.name, dst.root)
+		actual := operations.OverlappingFilterCheck(ctx, src, dst)
+		assert.Equal(t, test.expected, actual, what)
+		actual = operations.OverlappingFilterCheck(ctx, dst, src)
+		assert.Equal(t, test.expected, actual, what)
+	}
+}
+
+func TestOverlappingFilterCheckWithFilter(t *testing.T) {
+	ctx := context.Background()
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.Add(false, "*/exclude/"))
+	fi.Opt.ExcludeFile = ".ignore"
+	ctx = filter.ReplaceConfig(ctx, fi)
+
+	src := &testFs{testFsInfo{name: "name", root: "root"}}
+	slash := string(os.PathSeparator) // native path separator
+	for _, test := range []struct {
+		name     string
+		root     string
+		expected bool
+	}{
+		{"name", "root", true},
+		{"name", "root/", true},
+		{"name", "root" + slash, true},
+		{"name", "root/exclude", false},
+		{"name", "root/exclude/", false},
+		{"name", "root" + slash + "exclude", false},
+		{"name", "root" + slash + "exclude" + slash, false},
+		{"name", "root/.ignore", false},
+		{"name", "root" + slash + ".ignore", false},
+		{"namey", "root/include", false},
+		{"namey", "root/include/", false},
+		{"namey", "root" + slash + "include", false},
+		{"namey", "root" + slash + "include" + slash, false},
+	} {
+		dst := &testFs{testFsInfo{name: test.name, root: test.root}}
+		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", src.name, src.root, dst.name, dst.root)
+		actual := operations.OverlappingFilterCheck(ctx, dst, src)
+		assert.Equal(t, test.expected, actual, what)
+	}
+}
+
 func TestListFormat(t *testing.T) {
 	item0 := &operations.ListJSONItem{
 		Path:      "a",
