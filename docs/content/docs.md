@@ -788,7 +788,9 @@ See `--compare-dest` and `--backup-dir`.
 
 ### --dedupe-mode MODE ###
 
-Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, `newest`, `oldest`, `rename`.  The default is `interactive`.  See the dedupe command for more information as to what these options mean.
+Mode to run dedupe command in.  One of `interactive`, `skip`, `first`, 
+`newest`, `oldest`, `rename`.  The default is `interactive`.  
+See the dedupe command for more information as to what these options mean.
 
 ### --disable FEATURE,FEATURE,... ###
 
@@ -1086,7 +1088,12 @@ have a signal to rotate logs.
 
 ### --log-format LIST ###
 
-Comma separated list of log format options. Accepted options are `date`, `time`, `microseconds`, `pid`, `longfile`, `shortfile`, `UTC`. Any other keywords will be silently ignored. `pid` will tag log messages with process identifier which useful with `rclone mount --daemon`. Other accepted options are explained in the [go documentation](https://pkg.go.dev/log#pkg-constants). The default log format is "`date`,`time`".
+Comma separated list of log format options. Accepted options are `date`, 
+`time`, `microseconds`, `pid`, `longfile`, `shortfile`, `UTC`. Any other 
+keywords will be silently ignored. `pid` will tag log messages with process
+identifier which useful with `rclone mount --daemon`. Other accepted
+options are explained in the [go documentation](https://pkg.go.dev/log#pkg-constants).
+The default log format is "`date`,`time`".
 
 ### --log-level LEVEL ###
 
@@ -1867,6 +1874,9 @@ With `-vv` rclone will become very verbose telling you about every
 file it considers and transfers.  Please send bug reports with a log
 with this setting.
 
+When setting verbosity as an environment variable, use
+`RCLONE_VERBOSE=1` or `RCLONE_VERBOSE=2` for `-v` and `-vv` respectively.
+
 ### -V, --version ###
 
 Prints the version number
@@ -2231,6 +2241,10 @@ override the environment variable setting.
 
 Or to always use the trash in drive `--drive-use-trash`, set
 `RCLONE_DRIVE_USE_TRASH=true`.
+
+Verbosity is slightly different, the environment variable 
+equivalent of `--verbose` or `-v` is `RCLONE_VERBOSE=1`, 
+or for `-vv`, `RCLONE_VERBOSE=2`.
 
 The same parser is used for the options and the environment variables
 so they take exactly the same form.
