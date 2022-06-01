@@ -285,6 +285,7 @@ func ShowRemotes() {
 func ChooseRemote() string {
 	remotes := LoadedData().GetSectionList()
 	sort.Strings(remotes)
+	fmt.Println("Select remote.")
 	return Choose("remote", "value", remotes, nil, "", true, false)
 }
 
@@ -331,8 +332,10 @@ func ShowRemote(name string) {
 
 // OkRemote prints the contents of the remote and ask if it is OK
 func OkRemote(name string) bool {
-	fmt.Printf("Configuration of %q remote:\n", name)
+	fmt.Println("Configuration complete.")
+	fmt.Println("Options:")
 	listRemoteOptions(name)
+	fmt.Printf("Keep this %q remote?\n", name)
 	switch i := CommandDefault([]string{"yYes this is OK", "eEdit this remote", "dDelete this remote"}, 0); i {
 	case 'y':
 		return true
@@ -492,6 +495,7 @@ func ChooseOption(o *fs.Option, name string) string {
 // NewRemoteName asks the user for a name for a new remote
 func NewRemoteName() (name string) {
 	for {
+		fmt.Println("Enter name for new remote.")
 		fmt.Printf("name> ")
 		name = ReadLine()
 		if LoadedData().HasSection(name) {
@@ -548,7 +552,7 @@ func NewRemote(ctx context.Context, name string) error {
 
 // EditRemote gets the user to edit a remote
 func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) error {
-	fmt.Printf("Edit existing %q remote with options:\n", name)
+	fmt.Printf("Editing existing %q remote with options:\n", name)
 	listRemoteOptions(name)
 	newSection()
 	for {
