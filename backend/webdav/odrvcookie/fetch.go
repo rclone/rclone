@@ -74,7 +74,7 @@ xmlns:u="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-util
 <a:ReplyTo>
 <a:Address>http://www.w3.org/2005/08/addressing/anonymous</a:Address>
 </a:ReplyTo>
-<a:To s:mustUnderstand="1">{{ .SPTokenUrl }}</a:To>
+<a:To s:mustUnderstand="1">{{ .SPTokenURL }}</a:To>
 <o:Security s:mustUnderstand="1"
  xmlns:o="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
 <o:UsernameToken>
@@ -159,29 +159,29 @@ func (ca *CookieAuth) getSPCookie(conf *SharepointSuccessResponse) (*CookieRespo
 	return &cookieResponse, nil
 }
 
-var spTokenUrlMap = map[string]string{
+var spTokenURLMap = map[string]string{
 	"com": "https://login.microsoftonline.com",
 	"cn":  "https://login.chinacloudapi.cn",
 	"us":  "https://login.microsoftonline.us",
 	"de":  "https://login.microsoftonline.de",
 }
 
-func getSPTokenUrl(endpoint string) (string, error) {
+func getSPTokenURL(endpoint string) (string, error) {
 	spRoot, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("error while parse endpoint: %w", err)
 	}
 	domains := strings.Split(spRoot.Host, ".")
 	tld := domains[len(domains)-1]
-	spTokenUrl, ok := spTokenUrlMap[tld]
+	spTokenURL, ok := spTokenURLMap[tld]
 	if !ok {
 		return "", fmt.Errorf("error while get SPToken url, unsupported tld: %s", tld)
 	}
-	return spTokenUrl + "/extSTS.srf", nil
+	return spTokenURL + "/extSTS.srf", nil
 }
 
 func (ca *CookieAuth) getSPToken(ctx context.Context) (conf *SharepointSuccessResponse, err error) {
-	spTokenUrl, err := getSPTokenUrl(ca.endpoint)
+	spTokenURL, err := getSPTokenURL(ca.endpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (ca *CookieAuth) getSPToken(ctx context.Context) (conf *SharepointSuccessRe
 		"Username":   ca.user,
 		"Password":   ca.pass,
 		"Address":    ca.endpoint,
-		"SPTokenUrl": spTokenUrl,
+		"SPTokenURL": spTokenURL,
 	}
 
 	t := template.Must(template.New("authXML").Parse(reqString))
@@ -201,7 +201,7 @@ func (ca *CookieAuth) getSPToken(ctx context.Context) (conf *SharepointSuccessRe
 
 	// Create and execute the first request which returns an auth token for the sharepoint service
 	// With this token we can authenticate on the login page and save the returned cookies
-	req, err := http.NewRequestWithContext(ctx, "POST", spTokenUrl, buf)
+	req, err := http.NewRequestWithContext(ctx, "POST", spTokenURL, buf)
 	if err != nil {
 		return nil, err
 	}
