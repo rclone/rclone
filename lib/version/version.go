@@ -30,7 +30,7 @@ func Add(fileName string, t time.Time) string {
 	base, ext := splitExt(fileName)
 	s := t.Format(versionFormat)
 	// Replace the '.' with a '-'
-	s = strings.Replace(s, ".", "-", -1)
+	s = strings.ReplaceAll(s, ".", "-")
 	return base + s + ext
 }
 

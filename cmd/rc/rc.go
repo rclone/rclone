@@ -290,7 +290,7 @@ func list(ctx context.Context) error {
 		if !ok {
 			return errors.New("bad JSON")
 		}
-		fmt.Printf("### %s: %s {#%s}\n\n", info["Path"], info["Title"], strings.Replace(info["Path"].(string), "/", "-", -1))
+		fmt.Printf("### %s: %s {#%s}\n\n", info["Path"], info["Title"], strings.ReplaceAll(info["Path"].(string), "/", "-"))
 		fmt.Printf("%s\n\n", info["Help"])
 		if authRequired := info["AuthRequired"]; authRequired != nil {
 			if authRequired.(bool) {

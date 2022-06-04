@@ -28,7 +28,7 @@ jobs:
               with:
                 tag: latest,${{ steps.actual_patch_version.outputs.ACTUAL_PATCH_VERSION }},${{ steps.actual_minor_version.outputs.ACTUAL_MINOR_VERSION }},${{ steps.actual_major_version.outputs.ACTUAL_MAJOR_VERSION }}
                 imageName: rclone/rclone
-                platform: linux/amd64,linux/386,linux/arm64,linux/arm/v7
+                platform: linux/amd64,linux/386,linux/arm64,linux/arm/v7,linux/arm/v6
                 publish: true
                 dockerHubUser: ${{ secrets.DOCKER_HUB_USER }}
                 dockerHubPassword: ${{ secrets.DOCKER_HUB_PASSWORD }}
@@ -50,7 +50,7 @@ jobs:
                 PLUGIN_USER=rclone
                 docker login --username ${{ secrets.DOCKER_HUB_USER }} \
                              --password-stdin <<< "${{ secrets.DOCKER_HUB_PASSWORD }}"
-                for PLUGIN_ARCH in amd64 arm64 arm/v7 ;do
+                for PLUGIN_ARCH in amd64 arm64 arm/v7 arm/v6 ;do
                     export PLUGIN_USER PLUGIN_ARCH
                     make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}
                     make docker-plugin PLUGIN_TAG=${PLUGIN_ARCH/\//-}-${VER#v}

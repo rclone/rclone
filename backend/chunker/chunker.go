@@ -515,7 +515,7 @@ func (f *Fs) setChunkNameFormat(pattern string) error {
 
 	strRegex := regexp.QuoteMeta(pattern)
 	strRegex = reHashes.ReplaceAllLiteralString(strRegex, reDataOrCtrl)
-	strRegex = strings.Replace(strRegex, "\\*", mainNameRegStr, -1)
+	strRegex = strings.ReplaceAll(strRegex, "\\*", mainNameRegStr)
 	strRegex = fmt.Sprintf("^%s(?:%s|%s)?$", strRegex, tempSuffixRegStr, tempSuffixRegOld)
 	f.nameRegexp = regexp.MustCompile(strRegex)
 
@@ -524,7 +524,7 @@ func (f *Fs) setChunkNameFormat(pattern string) error {
 	if numDigits > 1 {
 		fmtDigits = fmt.Sprintf("%%0%dd", numDigits)
 	}
-	strFmt := strings.Replace(pattern, "%", "%%", -1)
+	strFmt := strings.ReplaceAll(pattern, "%", "%%")
 	strFmt = strings.Replace(strFmt, "*", "%s", 1)
 	f.dataNameFmt = reHashes.ReplaceAllLiteralString(strFmt, fmtDigits)
 	f.ctrlNameFmt = reHashes.ReplaceAllLiteralString(strFmt, "_%s")
@@ -1895,7 +1895,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) CleanUp(ctx context.Context) error {
 	do := f.base.Features().CleanUp
 	if do == nil {
-		return errors.New("can't CleanUp")
+		return errors.New("not supported by underlying remote")
 	}
 	return do(ctx)
 }
@@ -1904,7 +1904,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	do := f.base.Features().About
 	if do == nil {
-		return nil, errors.New("About not supported")
+		return nil, errors.New("not supported by underlying remote")
 	}
 	return do(ctx)
 }

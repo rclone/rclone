@@ -337,6 +337,7 @@ and may be set in the config file.
       --ftp-concurrency int                          Maximum number of FTP simultaneous connections, 0 for unlimited
       --ftp-disable-epsv                             Disable using EPSV even if server advertises support
       --ftp-disable-mlsd                             Disable using MLSD even if server advertises support
+      --ftp-disable-utf8                             Disable using UTF-8 even if server advertises support
       --ftp-disable-tls13                            Disable TLS 1.3 (workaround for FTP servers with buggy TLS)
       --ftp-encoding MultiEncoder                    The encoding for the backend (default Slash,Del,Ctl,RightSpace,Dot)
       --ftp-explicit-tls                             Use Explicit FTPS (FTP over TLS)

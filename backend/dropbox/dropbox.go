@@ -1269,7 +1269,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("about failed: %w", err)
+		return nil, err
 	}
 	var total uint64
 	if q.Allocation != nil {
@@ -1370,10 +1370,12 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 	if timeout < 30 {
 		timeout = 30
+		fs.Debugf(f, "Increasing poll interval to minimum 30s")
 	}
 
 	if timeout > 480 {
 		timeout = 480
+		fs.Debugf(f, "Decreasing poll interval to maximum 480s")
 	}
 
 	err = f.pacer.Call(func() (bool, error) {

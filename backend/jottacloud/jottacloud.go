@@ -191,7 +191,7 @@ machines.`)
 		m.Set("auth_code", "")
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_auth_code":
-		authCode := strings.Replace(config.Result, "-", "", -1) // remove any "-" contained in the code so we have a 6 digit number
+		authCode := strings.ReplaceAll(config.Result, "-", "") // remove any "-" contained in the code so we have a 6 digit number
 		m.Set("auth_code", authCode)
 		return fs.ConfigGoto("legacy_do_auth")
 	case "legacy_do_auth":
@@ -649,7 +649,7 @@ func errorHandler(resp *http.Response) error {
 
 // Jottacloud wants '+' to be URL encoded even though the RFC states it's not reserved
 func urlPathEscape(in string) string {
-	return strings.Replace(rest.URLPathEscape(in), "+", "%2B", -1)
+	return strings.ReplaceAll(rest.URLPathEscape(in), "+", "%2B")
 }
 
 // filePathRaw returns an unescaped file path (f.root, file)
@@ -932,7 +932,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	return entries, nil
 }
 
-func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, filesystem *Fs, callback func(fs.DirEntry) error) error {
+func parseListRStream(ctx context.Context, r io.Reader, filesystem *Fs, callback func(fs.DirEntry) error) error {
 
 	type stats struct {
 		Folders int `xml:"folders"`
@@ -968,8 +968,12 @@ func parseListRStream(ctx context.Context, r io.Reader, trimPrefix string, files
 		})
 	}
 
+	// liststream paths are /mountpoint/root/path
+	// so the returned paths should have /mountpoint/root/ trimmed
+	// as the caller is expecting path.
+	pathPrefix := filesystem.opt.Enc.FromStandardPath(path.Join("/", filesystem.opt.Mountpoint, filesystem.root))
 	trimPathPrefix := func(p string) string {
-		p = strings.TrimPrefix(p, trimPrefix)
+		p = strings.TrimPrefix(p, pathPrefix)
 		p = strings.TrimPrefix(p, "/")
 		return p
 	}
@@ -1052,11 +1056,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 			return shouldRetry(ctx, resp, err)
 		}
 
-		// liststream paths are /mountpoint/root/path
-		// so the returned paths should have /mountpoint/root/ trimmed
-		// as the caller is expecting path.
-		trimPrefix := path.Join("/", f.opt.Mountpoint, f.root)
-		err = parseListRStream(ctx, resp.Body, trimPrefix, f, func(d fs.DirEntry) error {
+		err = parseListRStream(ctx, resp.Body, f, func(d fs.DirEntry) error {
 			if d.Remote() == dir {
 				return nil
 			}

@@ -267,6 +267,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --ftp-disable-utf8
+
+Disable using UTF-8 even if server advertises support.
+
+Properties:
+
+- Config:      disable_utf8
+- Env Var:     RCLONE_FTP_DISABLE_UTF8
+- Type:        bool
+- Default:     false
+
 #### --ftp-writing-mdtm
 
 Use MDTM to set modification time (VsFtpd quirk)
@@ -395,8 +406,7 @@ this capability cannot determine free space for an rclone mount or
 use policy `mfs` (most free space) as a member of an rclone union
 remote.
 
-See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features)
-See [rclone about](https://rclone.org/commands/rclone_about/)
+See [List of backends that do not support rclone about](https://rclone.org/overview/#optional-features) and [rclone about](https://rclone.org/commands/rclone_about/)
 
 The implementation of : `--dump headers`,
 `--dump bodies`, `--dump auth` for debugging isn't the same as

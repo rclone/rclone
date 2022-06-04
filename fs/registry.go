@@ -44,7 +44,7 @@ type RegInfo struct {
 
 // FileName returns the on disk file name for this backend
 func (ri *RegInfo) FileName() string {
-	return strings.Replace(ri.Name, " ", "", -1)
+	return strings.ReplaceAll(ri.Name, " ", "")
 }
 
 // Options is a slice of configuration Option for a backend
@@ -210,7 +210,7 @@ func (o *Option) Type() string {
 
 // FlagName for the option
 func (o *Option) FlagName(prefix string) string {
-	name := strings.Replace(o.Name, "_", "-", -1) // convert snake_case to kebab-case
+	name := strings.ReplaceAll(o.Name, "_", "-") // convert snake_case to kebab-case
 	if !o.NoPrefix {
 		name = prefix + "-" + name
 	}

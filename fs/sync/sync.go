@@ -97,7 +97,7 @@ func (strategy trackRenamesStrategy) leaf() bool {
 }
 
 func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) (*syncCopyMove, error) {
-	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.Overlapping(fdst, fsrc) {
+	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.OverlappingFilterCheck(ctx, fdst, fsrc) {
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
 	ci := fs.GetConfig(ctx)

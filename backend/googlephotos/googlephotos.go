@@ -562,7 +562,7 @@ func (f *Fs) list(ctx context.Context, filter api.SearchFilter, fn listFn) (err 
 		for i := range items {
 			item := &result.MediaItems[i]
 			remote := item.Filename
-			remote = strings.Replace(remote, "/", "／", -1)
+			remote = strings.ReplaceAll(remote, "/", "／")
 			err = fn(remote, item, false)
 			if err != nil {
 				return err

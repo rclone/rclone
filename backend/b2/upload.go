@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/backend/b2/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/rclone/rclone/lib/rest"
@@ -88,20 +89,18 @@ type largeUpload struct {
 // newLargeUpload starts an upload of object o from in with metadata in src
 //
 // If newInfo is set then metadata from that will be used instead of reading it from src
-func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs.ObjectInfo, chunkSize fs.SizeSuffix, doCopy bool, newInfo *api.File) (up *largeUpload, err error) {
-	remote := o.remote
+func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs.ObjectInfo, defaultChunkSize fs.SizeSuffix, doCopy bool, newInfo *api.File) (up *largeUpload, err error) {
 	size := src.Size()
 	parts := int64(0)
 	sha1SliceSize := int64(maxParts)
+	chunkSize := defaultChunkSize
 	if size == -1 {
 		fs.Debugf(o, "Streaming upload with --b2-chunk-size %s allows uploads of up to %s and will fail only when that limit is reached.", f.opt.ChunkSize, maxParts*f.opt.ChunkSize)
 	} else {
+		chunkSize = chunksize.Calculator(src, maxParts, defaultChunkSize)
 		parts = size / int64(chunkSize)
 		if size%int64(chunkSize) != 0 {
 			parts++
-		}
-		if parts > maxParts {
-			return nil, fmt.Errorf("%q too big (%d bytes) makes too many parts %d > %d - increase --b2-chunk-size", remote, size, parts, maxParts)
 		}
 		sha1SliceSize = parts
 	}

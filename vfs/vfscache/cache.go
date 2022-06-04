@@ -365,32 +365,32 @@ func rename(osOldPath, osNewPath string) error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return fmt.Errorf("Failed to stat source: %s: %w", osOldPath, err)
+		return fmt.Errorf("failed to stat source: %s: %w", osOldPath, err)
 	}
 	if !sfi.Mode().IsRegular() {
 		// cannot copy non-regular files (e.g., directories, symlinks, devices, etc.)
-		return fmt.Errorf("Non-regular source file: %s (%q)", sfi.Name(), sfi.Mode().String())
+		return fmt.Errorf("non-regular source file: %s (%q)", sfi.Name(), sfi.Mode().String())
 	}
 	dfi, err := os.Stat(osNewPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return fmt.Errorf("Failed to stat destination: %s: %w", osNewPath, err)
+			return fmt.Errorf("failed to stat destination: %s: %w", osNewPath, err)
 		}
-		parent := vfscommon.OsFindParent(osNewPath)
+		parent := vfscommon.OSFindParent(osNewPath)
 		err = createDir(parent)
 		if err != nil {
-			return fmt.Errorf("Failed to create parent dir: %s: %w", parent, err)
+			return fmt.Errorf("failed to create parent dir: %s: %w", parent, err)
 		}
 	} else {
 		if !(dfi.Mode().IsRegular()) {
-			return fmt.Errorf("Non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
+			return fmt.Errorf("non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
 		}
 		if os.SameFile(sfi, dfi) {
 			return nil
 		}
 	}
 	if err = os.Rename(osOldPath, osNewPath); err != nil {
-		return fmt.Errorf("Failed to rename in cache: %s to %s: %w", osOldPath, osNewPath, err)
+		return fmt.Errorf("failed to rename in cache: %s to %s: %w", osOldPath, osNewPath, err)
 	}
 	return nil
 }

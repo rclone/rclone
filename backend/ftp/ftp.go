@@ -101,6 +101,11 @@ to an encrypted one. Cannot be used in combination with implicit FTP.`,
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "disable_utf8",
+			Help:     "Disable using UTF-8 even if server advertises support.",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "writing_mdtm",
 			Help:     "Use MDTM to set modification time (VsFtpd quirk)",
 			Default:  false,
@@ -184,6 +189,7 @@ type Options struct {
 	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
 	DisableEPSV       bool                 `config:"disable_epsv"`
 	DisableMLSD       bool                 `config:"disable_mlsd"`
+	DisableUTF8       bool                 `config:"disable_utf8"`
 	WritingMDTM       bool                 `config:"writing_mdtm"`
 	IdleTimeout       fs.Duration          `config:"idle_timeout"`
 	CloseTimeout      fs.Duration          `config:"close_timeout"`
@@ -337,6 +343,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	}
 	if f.opt.DisableMLSD {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledMLSD(true))
+	}
+	if f.opt.DisableUTF8 {
+		ftpConfig = append(ftpConfig, ftp.DialWithDisabledUTF8(true))
 	}
 	if f.opt.ShutTimeout != 0 && f.opt.ShutTimeout != fs.DurationOff {
 		ftpConfig = append(ftpConfig, ftp.DialWithShutTimeout(time.Duration(f.opt.ShutTimeout)))

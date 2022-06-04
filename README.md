@@ -1,78 +1,122 @@
-# RClone_RD
+[<img src="https://rclone.org/img/logo_on_light__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-light-mode-only)
+[<img src="https://rclone.org/img/logo_on_dark__horizontal_color.svg" width="50%" alt="rclone logo">](https://rclone.org/#gh-dark-mode-only)
 
-This RClone Fork contains a rudementary implementation of Real-Debrid.
-Using this version, the entire RealDebrid /torrents directory can be served as a read-only virtual drive. 
+[Website](https://rclone.org) |
+[Documentation](https://rclone.org/docs/) |
+[Download](https://rclone.org/downloads/) |
+[Contributing](CONTRIBUTING.md) |
+[Changelog](https://rclone.org/changelog/) |
+[Installation](https://rclone.org/install/) |
+[Forum](https://forum.rclone.org/)
 
-A potential use-case for this is serving the /torrent directory over plex, allowing you to build a media library truly unlimted in size. Im working on a project that allows plex to function the same way that Wako,Syncler and other streaming apps do. Check it out on https://github.com/itsToggle/plex_rd
+[![Build Status](https://github.com/rclone/rclone/workflows/build/badge.svg)](https://github.com/rclone/rclone/actions?query=workflow%3Abuild)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rclone/rclone)](https://goreportcard.com/report/github.com/rclone/rclone)
+[![GoDoc](https://godoc.org/github.com/rclone/rclone?status.svg)](https://godoc.org/github.com/rclone/rclone)
+[![Docker Pulls](https://img.shields.io/docker/pulls/rclone/rclone)](https://hub.docker.com/r/rclone/rclone)
 
-### Capabilities and Limitations:
+# Rclone
 
-- Read/Write capabilities are limited to reading files and deleting them. 
-- There are no server-side traffic limitations.
-- This rclone fork will automatically re-activate direct links when they expire after 1 week.
-- There is a server-side connection limit, which I believe is 16 parallel connections.
+Rclone *("rsync for cloud storage")* is a command-line program to sync files and directories to and from different cloud storage providers.
 
-## Installation:
+## Storage providers
 
-I only have the means to provide a pre-built release for Windows. 
+  * 1Fichier [:page_facing_up:](https://rclone.org/fichier/)
+  * Akamai Netstorage [:page_facing_up:](https://rclone.org/netstorage/)
+  * Alibaba Cloud (Aliyun) Object Storage System (OSS) [:page_facing_up:](https://rclone.org/s3/#alibaba-oss)
+  * Amazon Drive [:page_facing_up:](https://rclone.org/amazonclouddrive/) ([See note](https://rclone.org/amazonclouddrive/#status))
+  * Amazon S3 [:page_facing_up:](https://rclone.org/s3/)
+  * Backblaze B2 [:page_facing_up:](https://rclone.org/b2/)
+  * Box [:page_facing_up:](https://rclone.org/box/)
+  * Ceph [:page_facing_up:](https://rclone.org/s3/#ceph)
+  * China Mobile Ecloud Elastic Object Storage (EOS) [:page_facing_up:](https://rclone.org/s3/#china-mobile-ecloud-eos)
+  * Cloudflare R2 [:page_facing_up:](https://rclone.org/s3/#cloudflare-r2)
+  * Arvan Cloud Object Storage (AOS) [:page_facing_up:](https://rclone.org/s3/#arvan-cloud-object-storage-aos)
+  * Citrix ShareFile [:page_facing_up:](https://rclone.org/sharefile/)
+  * DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
+  * Digi Storage [:page_facing_up:](https://rclone.org/koofr/#digi-storage)
+  * Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
+  * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
+  * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)
+  * FTP [:page_facing_up:](https://rclone.org/ftp/)
+  * Google Cloud Storage [:page_facing_up:](https://rclone.org/googlecloudstorage/)
+  * Google Drive [:page_facing_up:](https://rclone.org/drive/)
+  * Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)
+  * HDFS (Hadoop Distributed Filesystem) [:page_facing_up:](https://rclone.org/hdfs/)
+  * HTTP [:page_facing_up:](https://rclone.org/http/)
+  * Hubic [:page_facing_up:](https://rclone.org/hubic/)
+  * Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
+  * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
+  * IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
+  * Koofr [:page_facing_up:](https://rclone.org/koofr/)
+  * Mail.ru Cloud [:page_facing_up:](https://rclone.org/mailru/)
+  * Memset Memstore [:page_facing_up:](https://rclone.org/swift/)
+  * Mega [:page_facing_up:](https://rclone.org/mega/)
+  * Memory [:page_facing_up:](https://rclone.org/memory/)
+  * Microsoft Azure Blob Storage [:page_facing_up:](https://rclone.org/azureblob/)
+  * Microsoft OneDrive [:page_facing_up:](https://rclone.org/onedrive/)
+  * Minio [:page_facing_up:](https://rclone.org/s3/#minio)
+  * Nextcloud [:page_facing_up:](https://rclone.org/webdav/#nextcloud)
+  * OVH [:page_facing_up:](https://rclone.org/swift/)
+  * OpenDrive [:page_facing_up:](https://rclone.org/opendrive/)
+  * OpenStack Swift [:page_facing_up:](https://rclone.org/swift/)
+  * Oracle Cloud Storage [:page_facing_up:](https://rclone.org/swift/)
+  * ownCloud [:page_facing_up:](https://rclone.org/webdav/#owncloud)
+  * pCloud [:page_facing_up:](https://rclone.org/pcloud/)
+  * premiumize.me [:page_facing_up:](https://rclone.org/premiumizeme/)
+  * put.io [:page_facing_up:](https://rclone.org/putio/)
+  * QingStor [:page_facing_up:](https://rclone.org/qingstor/)
+  * Rackspace Cloud Files [:page_facing_up:](https://rclone.org/swift/)
+  * RackCorp Object Storage [:page_facing_up:](https://rclone.org/s3/#RackCorp)
+  * Scaleway [:page_facing_up:](https://rclone.org/s3/#scaleway)
+  * Seafile [:page_facing_up:](https://rclone.org/seafile/)
+  * SeaweedFS [:page_facing_up:](https://rclone.org/s3/#seaweedfs)
+  * SFTP [:page_facing_up:](https://rclone.org/sftp/)
+  * StackPath [:page_facing_up:](https://rclone.org/s3/#stackpath)
+  * Storj [:page_facing_up:](https://rclone.org/storj/)
+  * SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)
+  * Tencent Cloud Object Storage (COS) [:page_facing_up:](https://rclone.org/s3/#tencent-cos)
+  * Wasabi [:page_facing_up:](https://rclone.org/s3/#wasabi)
+  * WebDAV [:page_facing_up:](https://rclone.org/webdav/)
+  * Yandex Disk [:page_facing_up:](https://rclone.org/yandex/)
+  * Zoho WorkDrive [:page_facing_up:](https://rclone.org/zoho/)
+  * The local filesystem [:page_facing_up:](https://rclone.org/local/)
 
-For Linux and Mac OSX, I will be providing **comunity-built** releases, which I **cannot verify** - **use these at your own risk**.
+Please see [the full list of all storage providers and their features](https://rclone.org/overview/)
 
-### Windows:
+## Features
 
-download the latest pre-built 'rclone.exe' file from here: https://github.com/itsToggle/rclone_RD/releases
+  * MD5/SHA-1 hashes checked at all times for file integrity
+  * Timestamps preserved on files
+  * Partial syncs supported on a whole file basis
+  * [Copy](https://rclone.org/commands/rclone_copy/) mode to just copy new/changed files
+  * [Sync](https://rclone.org/commands/rclone_sync/) (one way) mode to make a directory identical
+  * [Check](https://rclone.org/commands/rclone_check/) mode to check for file hash equality
+  * Can sync to and from network, e.g. two different cloud accounts
+  * Optional large file chunking ([Chunker](https://rclone.org/chunker/))
+  * Optional transparent compression ([Compress](https://rclone.org/compress/))
+  * Optional encryption ([Crypt](https://rclone.org/crypt/))
+  * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
+  * Multi-threaded downloads to local disk
+  * Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files over HTTP/WebDav/FTP/SFTP/dlna
 
-### Mac OSX (comunity build):
+## Installation & documentation
 
-No comunity build has been provided yet.
+Please see the [rclone website](https://rclone.org/) for:
 
-### Linux (comunity build):
+  * [Installation](https://rclone.org/install/)
+  * [Documentation & configuration](https://rclone.org/docs/)
+  * [Changelog](https://rclone.org/changelog/)
+  * [FAQ](https://rclone.org/faq/)
+  * [Storage providers](https://rclone.org/overview/)
+  * [Forum](https://forum.rclone.org/)
+  * ...and more
 
-No comunity build has been provided yet.
+## Downloads
 
-## Setting up the remote:
+  * https://rclone.org/downloads/
 
-The realdebrid backend is implemented by overwriting the premiumize backend (for now).
+License
+-------
 
-1. create a new remote using: 'rclone config' - Depending on your OS this command might have to be '.\rclone config'
-2. choose a name for your remote e.g. 'your-remote'
-3. choose 'premiumizeme' ('46')
-4. enter your realdebrid api key (https://real-debrid.com/apitoken)
-6. choose 'no advanced config'
-7. your RealDebrid remote is now set up.
-8. Mount the remote 'rclone cmount your-remote: your-destination:' - replace 'your-remote' with your remotes name. replace 'your-destination:' with a drive letter, e.g. 'X:' See the recommended tags section to speed up rclone!
-9. Enjoy!
-
-### Recommended Tags when mounting:
-
-It is recommended to use the tags in this example mounting command: 
-
-'rclone cmount torrents: Y: --dir-cache-time=10s --vfs-cache-mode=full'
-
-This will significantly speed up the mounted drive and detect changes faster.
-
-## Building it yourself (Windows)
-
-I really do suggest downloading the pre-built release. But if you want to tinker a bit and built it yourself, here are the steps:
-- Download the project files. 
-- Install Golang
-- To build the project, you need to have MinGW or a different cgo adaptation installed.
-- install WinFsp.
-- If you dont want to mount the remote as a virtual drive but rather as a dlna server or silimar, use 'go build' to build the project.
-- If you do want to mount the remote as a virtual drive, continue:
-- Build the project using 'go build -tags cmount'. 
-- if that fails on 'fatal error: fuse_common.h missing', you need to do the following steps:
-- Locate this folder: C:\Program Files (x86)\WinFsp\inc\fuse - inside you will find the missing files.
-- Copy all files to the directory that they are missing from. For me that was: C:\Users\BigSchlong\go\pkg\mod\github.com\winfsp\cgofuse@v1.5.1-0.20220421173602-ce7e5a65cac7\fuse
-- Try to build it again
-
-## Building it yourself (Mac/Linux)
-
-I don't have the means to compile a release for Mac or Linux, so you will have to build it yourself.
-- Download the project files
-- Install Golang 
-- Run a terminal in the root directory of the project files
-- use 'go build -tags cmount' to build the project
-- If anything fails, Check the official rclone Channels for Help.
-- Please feel free to contact me if you have compiled a version, so I can provide it as a comunity build for others :)
-
+This is free software under the terms of MIT the license (check the
+[COPYING file](/COPYING) included in this package).
