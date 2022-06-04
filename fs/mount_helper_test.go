@@ -20,7 +20,7 @@ func TestMountHelperArgs(t *testing.T) {
 		src: []string{},
 		dst: []string{"mount", "--daemon"},
 	}, {
-		src: []string{"-o", `x-systemd.automount,vvv,env.HTTPS_PROXY="a b;c,d?EF",ro,rw,args2env`},
+		src: []string{"-o", `x-systemd.automount,vvv,env.HTTPS_PROXY="a b;c,d?EF",ro,rw,args2env,_netdev`},
 		dst: []string{"mount", "--read-only", "--verbose=3", "--daemon"},
 		env: "HTTPS_PROXY=a b;c,d?EF",
 	}}

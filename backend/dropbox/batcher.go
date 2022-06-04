@@ -118,12 +118,12 @@ func (b *batcher) Batching() bool {
 }
 
 // finishBatch commits the batch, returning a batch status to poll or maybe complete
-func (b *batcher) finishBatch(ctx context.Context, items []*files.UploadSessionFinishArg) (batchStatus *files.UploadSessionFinishBatchLaunch, err error) {
+func (b *batcher) finishBatch(ctx context.Context, items []*files.UploadSessionFinishArg) (complete *files.UploadSessionFinishBatchResult, err error) {
 	var arg = &files.UploadSessionFinishBatchArg{
 		Entries: items,
 	}
 	err = b.f.pacer.Call(func() (bool, error) {
-		batchStatus, err = b.f.srv.UploadSessionFinishBatch(arg)
+		complete, err = b.f.srv.UploadSessionFinishBatchV2(arg)
 		// If error is insufficient space then don't retry
 		if e, ok := err.(files.UploadSessionFinishAPIError); ok {
 			if e.EndpointError != nil && e.EndpointError.Path != nil && e.EndpointError.Path.Tag == files.WriteErrorInsufficientSpace {
@@ -137,7 +137,7 @@ func (b *batcher) finishBatch(ctx context.Context, items []*files.UploadSessionF
 	if err != nil {
 		return nil, fmt.Errorf("batch commit failed: %w", err)
 	}
-	return batchStatus, nil
+	return complete, nil
 }
 
 // finishBatchJobStatus waits for the batch to complete returning completed entries
@@ -199,24 +199,9 @@ func (b *batcher) commitBatch(ctx context.Context, items []*files.UploadSessionF
 	fs.Debugf(b.f, "Committing %s", desc)
 
 	// finalise the batch getting either a result or a job id to poll
-	batchStatus, err := b.finishBatch(ctx, items)
+	complete, err := b.finishBatch(ctx, items)
 	if err != nil {
 		return err
-	}
-
-	// check whether batch is complete
-	var complete *files.UploadSessionFinishBatchResult
-	switch batchStatus.Tag {
-	case "async_job_id":
-		// wait for batch to complete
-		complete, err = b.finishBatchJobStatus(ctx, batchStatus)
-		if err != nil {
-			return err
-		}
-	case "complete":
-		complete = batchStatus.Complete
-	default:
-		return fmt.Errorf("batch returned unknown status %q", batchStatus.Tag)
 	}
 
 	// Check we got the right number of entries

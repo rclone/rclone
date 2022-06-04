@@ -138,8 +138,14 @@ func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 // absolute fetch using the size passed in and makes sure the range does
 // not exceed filesize. Some remotes (e.g. Onedrive, Box) don't support
 // range requests which index from the end.
+//
+// It also adjusts any SeekOption~s, turning them into absolute
+// RangeOption~s instead.
 func FixRangeOption(options []OpenOption, size int64) {
-	if size == 0 {
+	if size < 0 {
+		// Can't do anything for unknown length objects
+		return
+	} else if size == 0 {
 		// if size 0 then remove RangeOption~s
 		// replacing with a NullOptions~s which won't be rendered
 		for i := range options {
@@ -150,18 +156,21 @@ func FixRangeOption(options []OpenOption, size int64) {
 		}
 		return
 	}
-	for i := range options {
-		option := options[i]
-		if x, ok := option.(*RangeOption); ok {
+	for i, option := range options {
+		switch x := option.(type) {
+		case *RangeOption:
 			// If start is < 0 then fetch from the end
 			if x.Start < 0 {
 				x = &RangeOption{Start: size - x.End, End: -1}
 				options[i] = x
 			}
-			if x.End > size {
+			// If end is too big or undefined, fetch to the end
+			if x.End > size || x.End < 0 {
 				x = &RangeOption{Start: x.Start, End: size - 1}
 				options[i] = x
 			}
+		case *SeekOption:
+			options[i] = &RangeOption{Start: x.Offset, End: size - 1}
 		}
 	}
 }

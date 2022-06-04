@@ -471,22 +471,38 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 		defer mu.Unlock()
 		for _, entry := range entries {
 			slashes := strings.Count(entry.Remote(), "/")
+			excluded := true
 			switch x := entry.(type) {
 			case fs.Object:
 				// Make sure we don't delete excluded files if not required
 				if includeAll || fi.IncludeObject(ctx, x) {
 					if maxLevel < 0 || slashes <= maxLevel-1 {
 						dirs.Add(x)
-					} else {
-						// Make sure we include any parent directories of excluded objects
-						dirPath := x.Remote()
-						for ; slashes > maxLevel-1; slashes-- {
-							dirPath = parentDir(dirPath)
-						}
-						dirs.CheckParent(startPath, dirPath)
+						excluded = false
 					}
 				} else {
 					fs.Debugf(x, "Excluded from sync (and deletion)")
+				}
+				// Make sure we include any parent directories of excluded objects
+				if excluded {
+					dirPath := parentDir(x.Remote())
+					slashes--
+					if maxLevel >= 0 {
+						for ; slashes > maxLevel-1; slashes-- {
+							dirPath = parentDir(dirPath)
+						}
+					}
+					inc, err := includeDirectory(dirPath)
+					if err != nil {
+						return err
+					}
+					if inc || includeAll {
+						// If the directory doesn't exist already, create it
+						_, obj := dirs.Find(dirPath)
+						if obj == nil {
+							dirs.AddDir(fs.NewDir(dirPath, time.Now()))
+						}
+					}
 				}
 				// Check if we need to prune a directory later.
 				if !includeAll && len(fi.Opt.ExcludeFile) > 0 {

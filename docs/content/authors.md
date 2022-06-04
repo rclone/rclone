@@ -588,3 +588,17 @@ put them back in again.` >}}
   * Lesmiscore <nao20010128@gmail.com>
   * ehsantdy <ehsan.tadayon@arvancloud.com>
   * SwazRGB <65694696+swazrgb@users.noreply.github.com>
+  * Mateusz Puczyński <mati6095@gmail.com>
+  * Michael C Tiernan - MIT-Research Computing Project <mtiernan@mit.edu>
+  * Kaspian <34658474+KaspianDev@users.noreply.github.com>
+  * Werner <EvilOlaf@users.noreply.github.com>
+  * Hugal31 <hugo.laloge@gmail.com>
+  * Christian Galo <36752715+cgalo5758@users.noreply.github.com>
+  * Erik van Velzen <erik@evanv.nl>
+  * Derek Battams <derek@battams.ca>
+  * SimonLiu <simonliu009@users.noreply.github.com>
+  * Hugo Laloge <hla@lescompanions.com>
+  * Mr-Kanister <68117355+Mr-Kanister@users.noreply.github.com>
+  * Rob Pickerill <r.pickerill@gmail.com>
+  * Andrey <to.merge@gmail.com>
+  * Eric Wolf <19wolf@gmail.com>

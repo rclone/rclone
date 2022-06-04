@@ -906,7 +906,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("about failed: %w", err)
+		return nil, err
 	}
 	usage = &fs.Usage{
 		Total: fs.NewUsageValue(q.Quota),               // quota of bytes that can be used

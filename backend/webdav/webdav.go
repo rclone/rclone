@@ -1161,7 +1161,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("about call failed: %w", err)
+		return nil, err
 	}
 	usage := &fs.Usage{}
 	if i, err := strconv.ParseInt(q.Used, 10, 64); err == nil && i >= 0 {

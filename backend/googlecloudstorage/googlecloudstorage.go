@@ -24,6 +24,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -305,6 +306,21 @@ rclone does if you know the bucket exists already.
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name: "download_compressed",
+			Help: `If set this will download compressed objects as-is.
+
+It is possible to upload objects to GCS with "Content-Encoding: gzip"
+set. Normally rclone will transparently decompress these files on
+download. This means that rclone can't check the hash or the size of
+the file as both of these refer to the compressed object.
+
+If this flag is set then rclone will download files with
+"Content-Encoding: gzip" as they are received. This means that rclone
+can check the size and hash but the file contents will be compressed.
+`,
+			Advanced: true,
+			Default:  false,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -327,21 +343,23 @@ type Options struct {
 	Location                  string               `config:"location"`
 	StorageClass              string               `config:"storage_class"`
 	NoCheckBucket             bool                 `config:"no_check_bucket"`
+	DownloadCompressed        bool                 `config:"download_compressed"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote storage server
 type Fs struct {
-	name          string           // name of this remote
-	root          string           // the path we are working on if any
-	opt           Options          // parsed options
-	features      *fs.Features     // optional features
-	svc           *storage.Service // the connection to the storage server
-	client        *http.Client     // authorized client
-	rootBucket    string           // bucket part of root (if any)
-	rootDirectory string           // directory part of root (if any)
-	cache         *bucket.Cache    // cache of bucket status
-	pacer         *fs.Pacer        // To pace the API calls
+	name           string           // name of this remote
+	root           string           // the path we are working on if any
+	opt            Options          // parsed options
+	features       *fs.Features     // optional features
+	svc            *storage.Service // the connection to the storage server
+	client         *http.Client     // authorized client
+	rootBucket     string           // bucket part of root (if any)
+	rootDirectory  string           // directory part of root (if any)
+	cache          *bucket.Cache    // cache of bucket status
+	pacer          *fs.Pacer        // To pace the API calls
+	warnCompressed sync.Once        // warn once about compressed files
 }
 
 // Object describes a storage object
@@ -355,6 +373,7 @@ type Object struct {
 	bytes    int64     // Bytes in the object
 	modTime  time.Time // Modified time of the object
 	mimeType string
+	gzipped  bool // set if object has Content-Encoding: gzip
 }
 
 // ------------------------------------------------------------
@@ -975,6 +994,7 @@ func (o *Object) setMetaData(info *storage.Object) {
 	o.url = info.MediaLink
 	o.bytes = int64(info.Size)
 	o.mimeType = info.ContentType
+	o.gzipped = info.ContentEncoding == "gzip"
 
 	// Read md5sum
 	md5sumData, err := base64.StdEncoding.DecodeString(info.Md5Hash)
@@ -1012,6 +1032,15 @@ func (o *Object) setMetaData(info *storage.Object) {
 		fs.Logf(o, "Bad time decode: %v", err)
 	} else {
 		o.modTime = modTime
+	}
+
+	// If gunzipping then size and md5sum are unknown
+	if o.gzipped && !o.fs.opt.DownloadCompressed {
+		o.bytes = -1
+		o.md5sum = ""
+		o.fs.warnCompressed.Do(func() {
+			fs.Logf(o.fs, "Decompressing 'Content-Encoding: gzip' compressed file. Use --gcs-download-compressed to override")
+		})
 	}
 }
 
@@ -1113,6 +1142,15 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, err
 	}
 	fs.FixRangeOption(options, o.bytes)
+	if o.gzipped && o.fs.opt.DownloadCompressed {
+		// Allow files which are stored on the cloud storage system
+		// compressed to be downloaded without being decompressed.  Note
+		// that setting this here overrides the automatic decompression
+		// in the Transport.
+		//
+		// See: https://cloud.google.com/storage/docs/transcoding
+		req.Header.Set("Accept-Encoding", "gzip")
+	}
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	var res *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {

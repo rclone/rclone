@@ -230,7 +230,7 @@ func ConfigChoose(state string, name string, help string, n int, getItem func(i 
 // StatePush pushes a new values onto the front of the config string
 func StatePush(state string, values ...string) string {
 	for i := range values {
-		values[i] = strings.Replace(values[i], ",", "，", -1) // replace comma with unicode wide version
+		values[i] = strings.ReplaceAll(values[i], ",", "，") // replace comma with unicode wide version
 	}
 	if state != "" {
 		values = append(values[:len(values):len(values)], state)
@@ -262,7 +262,7 @@ func StatePop(state string) (newState string, value string) {
 		return "", state
 	}
 	value, newState = state[:comma], state[comma+1:]
-	value = strings.Replace(value, "，", ",", -1) // replace unicode wide comma with comma
+	value = strings.ReplaceAll(value, "，", ",") // replace unicode wide comma with comma
 	return newState, value
 }
 

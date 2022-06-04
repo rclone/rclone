@@ -134,7 +134,7 @@ backends:
    remote:   "TestHubic:"
    fastlist: false
  - backend:  "internetarchive"
-   remote:   "TestIA:lesmi-rclone-test/"
+   remote:   "TestIA:rclone-integration-test"
    fastlist: true
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
@@ -204,6 +204,11 @@ backends:
  - backend:  "s3"
    remote:   "TestS3Alibaba:"
    fastlist: true
+ - backend:  "s3"
+   remote:   "TestS3R2:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "sftp"
    remote:   "TestSFTPOpenssh:"
    fastlist: false
