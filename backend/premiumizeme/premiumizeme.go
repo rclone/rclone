@@ -25,7 +25,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -48,13 +47,13 @@ import (
 )
 
 const (
-	rcloneClientID              = "X245A4XAIBGVM"
+	rcloneClientID              = "658922194"
 	rcloneEncryptedClientSecret = "B5YIvQoRIhcpAYs8HYeyjb9gK-ftmZEbqdh_gNfc4RgO9Q"
 	minSleep                    = 10 * time.Millisecond
 	maxSleep                    = 2 * time.Second
 	decayConstant               = 2   // bigger for slower decay, exponential
 	rootID                      = "0" // ID of root folder is always this
-	rootURL                     = "https://api.real-debrid.com/rest/1.0"
+	rootURL                     = "https://www.premiumize.me/api"
 )
 
 // Globals
@@ -63,8 +62,8 @@ var (
 	oauthConfig = &oauth2.Config{
 		Scopes: nil,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://api.real-debrid.com/oauth/v2/auth",
-			TokenURL: "https://api.real-debrid.com/oauth/v2/token",
+			AuthURL:  "https://www.premiumize.me/authorize",
+			TokenURL: "https://www.premiumize.me/token",
 		},
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -72,35 +71,25 @@ var (
 	}
 )
 
-var cached []api.Item
-var torrents []api.Item
-
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "premiumizeme",
 		Description: "premiumize.me",
 		NewFs:       NewFs,
-		//Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-		//	return oauthutil.ConfigOut("", &oauthutil.Options{
-		//		OAuth2Config: oauthConfig,
-		//	})
-		//},
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			return oauthutil.ConfigOut("", &oauthutil.Options{
+				OAuth2Config: oauthConfig,
+			})
+		},
 		Options: []fs.Option{{
 			Name: "api_key",
-			Help: `please provide your RealDebrid API key.`,
-			//Hide:    fs.OptionHideBoth,
+			Help: `API Key.
+
+This is not normally used - use oauth instead.
+`,
+			Hide:    fs.OptionHideBoth,
 			Default: "",
-		}, {
-			Name:     "download_mode",
-			Help:     `please choose which RealDebrid directory to serve: For the /downloads page, type "downloads". For the /torrents page, type "torrents". Default: "torrents"`,
-			Advanced: true,
-			Default:  "torrents",
-		}, {
-			Name:     "folder_mode",
-			Help:     `please choose wether files should be grouped in torrent folders, or all files should be displayed in the root directory. For all files in root type "files", for folder structure type "folders". Default: "folders"`,
-			Advanced: true,
-			Default:  "folders",
 		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
@@ -116,10 +105,8 @@ func init() {
 
 // Options defines the configuration for this backend
 type Options struct {
-	SharedFolder string               `config:"folder_mode"`
-	RootFolderID string               `config:"download_mode"`
-	APIKey       string               `config:"api_key"`
-	Enc          encoder.MultiEncoder `config:"encoding"`
+	APIKey string               `config:"api_key"`
+	Enc    encoder.MultiEncoder `config:"encoding"`
 }
 
 // Fs represents a remote cloud storage system
@@ -142,7 +129,7 @@ type Object struct {
 	size        int64     // size of the object
 	modTime     time.Time // modification time of the object
 	id          string    // ID of the object
-	ParentID    string    // ID of parent directory
+	parentID    string    // ID of parent directory
 	mimeType    string    // Mime type of object
 	url         string    // URL to download file
 }
@@ -242,7 +229,7 @@ func errorHandler(resp *http.Response) error {
 func (f *Fs) baseParams() url.Values {
 	params := url.Values{}
 	if f.opt.APIKey != "" {
-		params.Add("auth_token", f.opt.APIKey)
+		params.Add("apikey", f.opt.APIKey)
 	}
 	return params
 }
@@ -358,7 +345,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // FindLeaf finds a directory of name leaf in the folder with ID pathID
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut string, found bool, err error) {
 	// Find the leaf in pathID
-	fmt.Println("Finding Leaf ... ")
 	var newDirID string
 	newDirID, found, err = f.listAll(ctx, pathID, true, false, func(item *api.Item) bool {
 		if strings.EqualFold(item.Name, leaf) {
@@ -371,37 +357,36 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 	if pathID == rootID {
 		f.dirCache.SetRootIDAlias(newDirID)
 	}
-	fmt.Println("Done Finding Leaf.")
 	return pathIDOut, found, err
 }
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
 	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
-	//var resp *http.Response
-	//var info api.FolderCreateResponse
-	//opts := rest.Opts{
-	//	Method:     "POST",
-	//	Path:       "/folder/create",
-	//	Parameters: f.baseParams(),
-	//	MultipartParams: url.Values{
-	//		"name":      {f.opt.Enc.FromStandardName(leaf)},
-	//		"parent_id": {pathID},
-	//	},
-	//}
-	//err = f.pacer.Call(func() (bool, error) {
-	//	resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-	//	return shouldRetry(ctx, resp, err)
-	//})
-	//if err != nil {
-	//	//fmt.Printf("...Error %v\n", err)
-	//	return "", fmt.Errorf("CreateDir http: %w", err)
-	//}
-	//if err = info.AsErr(); err != nil {
-	//	return "", fmt.Errorf("CreateDir: %w", err)
-	//}
+	var resp *http.Response
+	var info api.FolderCreateResponse
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/folder/create",
+		Parameters: f.baseParams(),
+		MultipartParams: url.Values{
+			"name":      {f.opt.Enc.FromStandardName(leaf)},
+			"parent_id": {pathID},
+		},
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		//fmt.Printf("...Error %v\n", err)
+		return "", fmt.Errorf("CreateDir http: %w", err)
+	}
+	if err = info.AsErr(); err != nil {
+		return "", fmt.Errorf("CreateDir: %w", err)
+	}
 	// fmt.Printf("...Id %q\n", *info.Id)
-	return "", nil //return info.ID, nil
+	return info.ID, nil
 }
 
 // list the objects into the function supplied
@@ -418,173 +403,31 @@ type listAllFn func(*api.Item) bool
 //
 // It returns a newDirID which is what the system returned as the directory ID
 func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, filesOnly bool, fn listAllFn) (newDirID string, found bool, err error) {
-	path := "/downloads"
-	method := "GET"
-	var partialresult []api.Item
-	var result []api.Item
-	var resp *http.Response
-	if f.opt.RootFolderID == "torrents" {
-		if dirID == rootID {
-			//update global cached list
-			//fmt.Printf("Updating RealDebrid Direct Links ... ")
-			opts := rest.Opts{
-				Method:     method,
-				Path:       path,
-				Parameters: f.baseParams(),
-			}
-			opts.Parameters.Set("includebreadcrumbs", "false")
-			opts.Parameters.Set("limit", "1")
-			var newcached []api.Item
-			err = f.pacer.Call(func() (bool, error) {
-				var totalcount int
-				totalcount = 2
-				for len(newcached) < totalcount {
-					partialresult = nil
-					resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
-					if err == nil {
-						totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
-						if err == nil {
-							if totalcount != len(cached) {
-								newcached = append(newcached, partialresult...)
-								opts.Parameters.Set("offset", strconv.Itoa(len(newcached)))
-								opts.Parameters.Set("limit", "100")
-							} else {
-								newcached = cached
-							}
-						} else {
-							break
-						}
-					} else {
-						break
-					}
-				}
-				return shouldRetry(ctx, resp, err)
-			})
-			//fmt.Printf("Done.\n")
-			//fmt.Printf("Updating RealDebrid Torrents ... ")
-			cached = newcached
-			//get torrents
-			path = "/torrents"
-			opts = rest.Opts{
-				Method:     method,
-				Path:       path,
-				Parameters: f.baseParams(),
-			}
-			opts.Parameters.Set("limit", "1")
-			var newtorrents []api.Item
-			err = f.pacer.Call(func() (bool, error) {
-				var totalcount int
-				totalcount = 2
-				for len(newtorrents) < totalcount {
-					partialresult = nil
-					resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
-					if err == nil {
-						totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
-						if err == nil {
-							if totalcount != len(torrents) {
-								newtorrents = append(newtorrents, partialresult...)
-								opts.Parameters.Set("offset", strconv.Itoa(len(newtorrents)))
-								opts.Parameters.Set("limit", "100")
-							} else {
-								newtorrents = torrents
-							}
-						} else {
-							break
-						}
-					} else {
-						break
-					}
-				}
-				return shouldRetry(ctx, resp, err)
-			})
-			//fmt.Printf("Done.\n")
-			torrents = newtorrents
-			if f.opt.SharedFolder == "folders" {
-				result = torrents
-			}
-		} else if f.opt.SharedFolder != "folders" || dirID != rootID {
-			//fmt.Printf("Matching Torrents to Direct Links ... ")
-			for _, torrent := range torrents {
-				if f.opt.SharedFolder == "folders" {
-					if dirID != torrent.ID {
-						continue
-					}
-				}
-				for _, link := range torrent.Links {
-					var ItemFile api.Item
-					for _, cachedfile := range cached {
-						if cachedfile.OriginalLink == link {
-							ItemFile = cachedfile
-							break
-						}
-					}
-					if ItemFile.Link == "" {
-						fmt.Printf("Creating new unrestricted direct link for: '%s'\n", torrent.Name)
-						path = "/unrestrict/link"
-						method = "POST"
-						opts := rest.Opts{
-							Method: method,
-							Path:   path,
-							MultipartParams: url.Values{
-								"link": {link},
-							},
-							Parameters: f.baseParams(),
-						}
-						resp, err = f.srv.CallJSON(ctx, &opts, nil, &ItemFile)
-					}
-					ItemFile.ParentID = torrent.ID
-					result = append(result, ItemFile)
-				}
-				if f.opt.SharedFolder == "folders" {
-					break
-				}
-			}
-			//fmt.Printf("Done.\n")
-		}
-	} else {
-		opts := rest.Opts{
-			Method:     method,
-			Path:       path,
-			Parameters: f.baseParams(),
-		}
-		err = f.pacer.Call(func() (bool, error) {
-			var totalcount int
-			totalcount = 1
-			for len(result) < totalcount {
-				resp, err = f.srv.CallJSON(ctx, &opts, nil, &partialresult)
-				if err == nil {
-					totalcount, err = strconv.Atoi(resp.Header["X-Total-Count"][0])
-					if err == nil {
-						result = append(result, partialresult...)
-						opts.Parameters.Set("offset", strconv.Itoa(len(result)))
-					} else {
-						break
-					}
-				} else {
-					break
-				}
-			}
-			return shouldRetry(ctx, resp, err)
-		})
+	opts := rest.Opts{
+		Method:     "GET",
+		Path:       "/folder/list",
+		Parameters: f.baseParams(),
 	}
+	if dirID != rootID {
+		opts.Parameters.Set("id", dirID)
+	}
+	opts.Parameters.Set("includebreadcrumbs", "false")
+
+	var result api.FolderListResponse
+	var resp *http.Response
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
 	if err != nil {
 		return newDirID, found, fmt.Errorf("couldn't list files: %w", err)
 	}
-	for i := range result {
-		item := &result[i]
-		layout := "2006-01-02T15:04:05.000Z"
-		if item.Generated != "" {
-			t, _ := time.Parse(layout, item.Generated)
-			item.CreatedAt = t.Unix()
-		} else if item.Ended != "" {
-			t, _ := time.Parse(layout, item.Ended)
-			item.CreatedAt = t.Unix()
-		}
-		if f.opt.SharedFolder == "folders" && dirID == rootID {
-			item.Type = "folder"
-		} else {
-			item.Type = "file"
-		}
+	if err = result.AsErr(); err != nil {
+		return newDirID, found, fmt.Errorf("error while listing: %w", err)
+	}
+	newDirID = result.FolderID
+	for i := range result.Content {
+		item := &result.Content[i]
 		if item.Type == api.ItemTypeFolder {
 			if filesOnly {
 				continue
@@ -616,7 +459,6 @@ func (f *Fs) listAll(ctx context.Context, dirID string, directoriesOnly bool, fi
 // This should return ErrDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	//fmt.Println("Listing Items ... ")
 	directoryID, err := f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
@@ -645,7 +487,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	if iErr != nil {
 		return nil, iErr
 	}
-	//fmt.Println("Done Listing Items.")
 	return entries, nil
 }
 
@@ -874,7 +715,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// Do the move
-	err = f.move(ctx, true, srcObj.id, path.Base(srcObj.remote), leaf, srcObj.ParentID, directoryID)
+	err = f.move(ctx, true, srcObj.id, path.Base(srcObj.remote), leaf, srcObj.parentID, directoryID)
 	if err != nil {
 		return nil, err
 	}
@@ -930,26 +771,26 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
-	//var resp *http.Response
-	//var info api.AccountInfoResponse
-	//opts := rest.Opts{
-	//	Method:     "POST",
-	//	Path:       "/account/info",
-	//	Parameters: f.baseParams(),
-	//}
-	//err = f.pacer.Call(func() (bool, error) {
-	//	resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-	//	return shouldRetry(ctx, resp, err)
-	//})
-	//if err != nil {
-	//	return nil, fmt.Errorf("CreateDir http: %w", err)
-	//}
-	//if err = info.AsErr(); err != nil {
-	//	return nil, fmt.Errorf("CreateDir: %w", err)
-	//}
-	//usage = &fs.Usage{
-	//	Used: fs.NewUsageValue(int64(info.SpaceUsed)),
-	//}
+	var resp *http.Response
+	var info api.AccountInfoResponse
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       "/account/info",
+		Parameters: f.baseParams(),
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
+		return shouldRetry(ctx, resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err = info.AsErr(); err != nil {
+		return nil, err
+	}
+	usage = &fs.Usage{
+		Used: fs.NewUsageValue(int64(info.SpaceUsed)),
+	}
 	return usage, nil
 }
 
@@ -1010,7 +851,6 @@ func (o *Object) setMetaData(info *api.Item) (err error) {
 	o.id = info.ID
 	o.mimeType = info.MimeType
 	o.url = info.Link
-	o.ParentID = info.ParentID
 	return nil
 }
 
@@ -1219,13 +1059,12 @@ func (f *Fs) renameLeaf(ctx context.Context, isFile bool, id string, newLeaf str
 
 // Remove an object by ID
 func (f *Fs) remove(ctx context.Context, id string) (err error) {
-	path := "/downloads/delete/" + id
-	if f.opt.RootFolderID == "torrents" {
-		path = "/torrents/delete/" + id
-	}
 	opts := rest.Opts{
-		Method:     "DELETE",
-		Path:       path,
+		Method: "POST",
+		Path:   "/item/delete",
+		MultipartParams: url.Values{
+			"id": {id},
+		},
 		Parameters: f.baseParams(),
 	}
 	var resp *http.Response
@@ -1235,10 +1074,10 @@ func (f *Fs) remove(ctx context.Context, id string) (err error) {
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil //fmt.Errorf("remove http: %w", err)
+		return fmt.Errorf("remove http: %w", err)
 	}
 	if err = result.AsErr(); err != nil {
-		return nil //fmt.Errorf("remove: %w", err)
+		return fmt.Errorf("remove: %w", err)
 	}
 	return nil
 }
@@ -1249,11 +1088,7 @@ func (o *Object) Remove(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("Remove: Failed to read metadata: %w", err)
 	}
-	if o.ParentID != "" {
-		return o.fs.remove(ctx, o.ParentID)
-	} else {
-		return o.fs.remove(ctx, o.id)
-	}
+	return o.fs.remove(ctx, o.id)
 }
 
 // MimeType of an Object if known, "" otherwise
