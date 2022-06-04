@@ -18,7 +18,7 @@ I only have the means to provide a pre-built release for Windows.
 
 For Linux and Mac OSX, I will be providing **comunity-built** releases, which I **cannot verify** - **use these at your own risk**.
 
-I will contact the rclone team to merge my fork.
+I have contacted the rclone team to merge my fork. If you want to show some love, react to my pull request on https://github.com/rclone/rclone/pull/6215 :)
 
 ### Windows:
 
