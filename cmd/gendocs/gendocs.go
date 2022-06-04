@@ -79,7 +79,7 @@ rclone.org website.`,
 		var description = map[string]string{}
 		var addDescription func(root *cobra.Command)
 		addDescription = func(root *cobra.Command) {
-			name := strings.Replace(root.CommandPath(), " ", "_", -1) + ".md"
+			name := strings.ReplaceAll(root.CommandPath(), " ", "_") + ".md"
 			description[name] = root.Short
 			for _, c := range root.Commands() {
 				addDescription(c)
@@ -93,11 +93,11 @@ rclone.org website.`,
 			base := strings.TrimSuffix(name, path.Ext(name))
 			data := frontmatter{
 				Date:        now,
-				Title:       strings.Replace(base, "_", " ", -1),
+				Title:       strings.ReplaceAll(base, "_", " "),
 				Description: description[name],
 				Slug:        base,
 				URL:         "/commands/" + strings.ToLower(base) + "/",
-				Source:      strings.Replace(strings.Replace(base, "rclone", "cmd", -1), "_", "/", -1) + "/",
+				Source:      strings.ReplaceAll(strings.ReplaceAll(base, "rclone", "cmd"), "_", "/") + "/",
 			}
 			var buf bytes.Buffer
 			err := frontmatterTemplate.Execute(&buf, data)
