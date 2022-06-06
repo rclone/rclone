@@ -209,7 +209,7 @@ jobs:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
         # working-directory: '$(modulePath)'
         # Deploy binaries if enabled in config && not a PR && not a fork
-        if: matrix.deploy && github.head_ref == '' && github.repository == 'rclone/rclone'
+        if: matrix.deploy && github.head_ref == '' #&& github.repository == 'rclone/rclone'
 
   lint:
     if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
@@ -333,4 +333,4 @@ jobs:
         env:
           RCLONE_CONFIG_PASS: ${{ secrets.RCLONE_CONFIG_PASS }}
         # Upload artifacts if not a PR && not a fork
-        if: github.head_ref == '' && github.repository == 'rclone/rclone'
+        if: github.head_ref == '' #&& github.repository == 'rclone/rclone'
