@@ -22,7 +22,8 @@ I have contacted the rclone team to merge my fork. If you want to show some love
 
 ### Windows:
 
-download the latest pre-built 'rclone.exe' file from here: https://github.com/itsToggle/rclone_RD/releases
+- install winfsp (https://winfsp.dev/)
+- download the latest pre-built 'rclone.exe' file from here: https://github.com/itsToggle/rclone_RD/releases
 
 ### Mac OSX (comunity build):
 
