@@ -14,24 +14,20 @@ A potential use-case for this is serving the /torrent directory over plex, allow
 
 ## Installation:
 
-I only have the means to provide a pre-built release for Windows. 
-
-For Linux and Mac OSX, I will be providing **comunity-built** releases, which I **cannot verify** - **use these at your own risk**.
-
-I have contacted the rclone team to merge my fork. If you want to show some love, react to my pull request on https://github.com/rclone/rclone/pull/6215 :)
+For Linux and Mac OSX, I will be providing cross-compiled releases, which I **cannot test**. Please feel free to test them out.
 
 ### Windows:
 
 - install winfsp (https://winfsp.dev/)
 - download the latest pre-built 'rclone.exe' file from here: https://github.com/itsToggle/rclone_RD/releases
 
-### Mac OSX (comunity build):
+### Mac OSX (untested build):
 
-No comunity build has been provided yet.
+- download the latest pre-built 'rclone-darwin' file from here: https://github.com/itsToggle/rclone_RD/releases
 
-### Linux (comunity build):
+### Linux (untested build):
 
-No comunity build has been provided yet.
+- download the latest pre-built 'rclone-linux' file from here: https://github.com/itsToggle/rclone_RD/releases
 
 ## Setting up the remote:
 
@@ -69,7 +65,6 @@ I really do suggest downloading the pre-built release. But if you want to tinker
 
 ## Building it yourself (Mac/Linux)
 
-I don't have the means to compile a release for Mac or Linux, so you will have to build it yourself.
 - Download the project files
 - Install Golang 
 - Run a terminal in the root directory of the project files
