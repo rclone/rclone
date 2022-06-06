@@ -1,0 +1,19 @@
+on:
+  release:
+    types: [created]
+name: Handle Release
+jobs:
+  generate:
+    name: Create release-artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@master
+      - name: Generate the artifacts
+        uses: skx/github-action-build@master
+      - name: Upload the artifacts
+        uses: skx/github-action-publish-binaries@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: 'example-*'
