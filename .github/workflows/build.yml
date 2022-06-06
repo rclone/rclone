@@ -212,7 +212,7 @@ jobs:
         if: matrix.deploy && github.head_ref == '' #&& github.repository == 'rclone/rclone'
 
   lint:
-    if: ${{ github.repository == 'rclone/rclone' || github.event.inputs.manual }}
+    if: ${{ github.repository == 'rclone/rclone' }} #|| github.event.inputs.manual }}
     timeout-minutes: 30
     name: "lint"
     runs-on: ubuntu-latest
