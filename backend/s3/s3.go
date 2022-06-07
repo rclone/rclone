@@ -60,7 +60,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
@@ -92,6 +92,9 @@ func init() {
 			}, {
 				Value: "Dreamhost",
 				Help:  "Dreamhost DreamObjects",
+			}, {
+				Value: "HuaweiOBS",
+				Help:  "Huawei Object Storage Service",
 			}, {
 				Value: "IBMCOS",
 				Help:  "IBM COS S3",
@@ -307,6 +310,56 @@ func init() {
 			}},
 		}, {
 			Name:     "region",
+			Help:     "Region to connect to. - the location where your bucket will be created and your data stored. Need bo be same with your endpoint.\n",
+			Provider: "HuaweiOBS",
+			Examples: []fs.OptionExample{{
+				Value: "af-south-1",
+				Help:  "AF-Johannesburg",
+			}, {
+				Value: "ap-southeast-2",
+				Help:  "AP-Bangkok",
+			}, {
+				Value: "ap-southeast-3",
+				Help:  "AP-Singapore",
+			}, {
+				Value: "cn-east-3",
+				Help:  "CN East-Shanghai1",
+			}, {
+				Value: "cn-east-2",
+				Help:  "CN East-Shanghai2",
+			}, {
+				Value: "cn-north-1",
+				Help:  "CN North-Beijing1",
+			}, {
+				Value: "cn-north-4",
+				Help:  "CN North-Beijing4",
+			}, {
+				Value: "cn-south-1",
+				Help:  "CN South-Guangzhou",
+			}, {
+				Value: "ap-southeast-1",
+				Help:  "CN-Hong Kong",
+			}, {
+				Value: "sa-argentina-1",
+				Help:  "LA-Buenos Aires1",
+			}, {
+				Value: "sa-peru-1",
+				Help:  "LA-Lima1",
+			}, {
+				Value: "na-mexico-1",
+				Help:  "LA-Mexico City1",
+			}, {
+				Value: "sa-chile-1",
+				Help:  "LA-Santiago2",
+			}, {
+				Value: "sa-brazil-1",
+				Help:  "LA-Sao Paulo1",
+			}, {
+				Value: "ru-northwest-2",
+				Help:  "RU-Moscow2",
+			}},
+		}, {
+			Name:     "region",
 			Help:     "Region to connect to.",
 			Provider: "Cloudflare",
 			Examples: []fs.OptionExample{{
@@ -316,7 +369,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -709,6 +762,57 @@ func init() {
 				Help:  "Middle East 1 (Dubai)",
 			}},
 		}, {
+			// obs endpoints: https://developer.huaweicloud.com/intl/en-us/endpoint?OBS
+			Name:     "endpoint",
+			Help:     "Endpoint for OBS API.",
+			Provider: "HuaweiOBS",
+			Examples: []fs.OptionExample{{
+				Value: "obs.af-south-1.myhuaweicloud.com",
+				Help:  "AF-Johannesburg",
+			}, {
+				Value: "obs.ap-southeast-2.myhuaweicloud.com",
+				Help:  "AP-Bangkok",
+			}, {
+				Value: "obs.ap-southeast-3.myhuaweicloud.com",
+				Help:  "AP-Singapore",
+			}, {
+				Value: "obs.cn-east-3.myhuaweicloud.com",
+				Help:  "CN East-Shanghai1",
+			}, {
+				Value: "obs.cn-east-2.myhuaweicloud.com",
+				Help:  "CN East-Shanghai2",
+			}, {
+				Value: "obs.cn-north-1.myhuaweicloud.com",
+				Help:  "CN North-Beijing1",
+			}, {
+				Value: "obs.cn-north-4.myhuaweicloud.com",
+				Help:  "CN North-Beijing4",
+			}, {
+				Value: "obs.cn-south-1.myhuaweicloud.com",
+				Help:  "CN South-Guangzhou",
+			}, {
+				Value: "obs.ap-southeast-1.myhuaweicloud.com",
+				Help:  "CN-Hong Kong",
+			}, {
+				Value: "obs.sa-argentina-1.myhuaweicloud.com",
+				Help:  "LA-Buenos Aires1",
+			}, {
+				Value: "obs.sa-peru-1.myhuaweicloud.com",
+				Help:  "LA-Lima1",
+			}, {
+				Value: "obs.na-mexico-1.myhuaweicloud.com",
+				Help:  "LA-Mexico City1",
+			}, {
+				Value: "obs.sa-chile-1.myhuaweicloud.com",
+				Help:  "LA-Santiago2",
+			}, {
+				Value: "obs.sa-brazil-1.myhuaweicloud.com",
+				Help:  "LA-Sao Paulo1",
+			}, {
+				Value: "obs.ru-northwest-2.myhuaweicloud.com",
+				Help:  "RU-Moscow2",
+			}},
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for Scaleway Object Storage.",
 			Provider: "Scaleway",
@@ -879,7 +983,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
+			Provider: "!AWS,IBMCOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1289,7 +1393,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,IBMCOS,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2248,6 +2352,10 @@ func setQuirks(opt *Options) {
 		// No quirks
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
+	case "HuaweiOBS":
+		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
+		urlEncodeListings = false
+		listObjectsV2 = false
 	case "Ceph":
 		listObjectsV2 = false
 		virtualHostStyle = false
