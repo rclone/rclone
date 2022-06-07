@@ -139,6 +139,9 @@ Supply the app ID and password as Client ID and Secret, respectively. rclone wil
 
 The `Sites.Read.All` permission is required if you need to [search SharePoint sites when configuring the remote](https://github.com/rclone/rclone/pull/5883). However, if that permission is not assigned, you need to set `disable_site_permission` option to true in the advanced options.
 
+If you want to make the remote readonly, the `Files.ReadWrite` and `Files.ReadWrite.All` permissons are not required.
+In that case you need to set `read_only` option to true in the advanced options.
+
 ### Modification time and hashes
 
 OneDrive allows modification times to be set on objects accurate to 1

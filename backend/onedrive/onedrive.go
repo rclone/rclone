@@ -65,12 +65,13 @@ var (
 	authPath  = "/common/oauth2/v2.0/authorize"
 	tokenPath = "/common/oauth2/v2.0/token"
 
-	scopesWithSitePermission    = []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"}
-	scopesWithoutSitePermission = []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
+	scopesFullAccess		= []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
+	scopesReadOnlyAccess		= []string{"Files.Read", "Files.Read.All", "offline_access"}
+	scopeReadSites			= []string{"Sites.Read.All"}
 
 	// Description of how to auth for this app for a business account
 	oauthConfig = &oauth2.Config{
-		Scopes:       scopesWithSitePermission,
+		Scopes:       scopesFullAccess,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -158,6 +159,14 @@ configuring drive ID, because rclone will not request Sites.Read.All permission.
 Set it to true if your organization didn't assign Sites.Read.All permission to the
 application, and your organization disallows users to consent app permission
 request on their own.`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "read_only",
+			Help: `Set to make the remote readonly.
+
+If set to true, rclone will not request Files.ReadWrite and Files.ReadWrite.All permissions.
+`,
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -401,11 +410,15 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	region, graphURL := getRegionURL(m)
 
 	if config.State == "" {
-		disableSitePermission, _ := m.Get("disable_site_permission")
-		if disableSitePermission == "true" {
-			oauthConfig.Scopes = scopesWithoutSitePermission
+		readOnly, _ := m.Get("read_only")
+		if readOnly == "true" {
+			oauthConfig.Scopes = scopesReadOnlyAccess
 		} else {
-			oauthConfig.Scopes = scopesWithSitePermission
+			oauthConfig.Scopes = scopesFullAccess
+		}
+		disableSitePermission, _ := m.Get("disable_site_permission")
+		if disableSitePermission == "false" {
+			oauthConfig.Scopes = append(oauthConfig.Scopes, scopeReadSites...)
 		}
 		oauthConfig.Endpoint = oauth2.Endpoint{
 			AuthURL:  authEndpoint[region] + authPath,
@@ -562,6 +575,7 @@ type Options struct {
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
 	DisableSitePermission   bool                 `config:"disable_site_permission"`
+	ReadOnly                bool                 `config:"read_only"`
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
 	ListChunk               int64                `config:"list_chunk"`
@@ -830,10 +844,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
-	if opt.DisableSitePermission {
-		oauthConfig.Scopes = scopesWithoutSitePermission
+	if opt.ReadOnly {
+		oauthConfig.Scopes = scopesReadOnlyAccess
 	} else {
-		oauthConfig.Scopes = scopesWithSitePermission
+		oauthConfig.Scopes = scopesFullAccess
+	}
+	if !opt.DisableSitePermission {
+		oauthConfig.Scopes = append(oauthConfig.Scopes, scopeReadSites...)
 	}
 	oauthConfig.Endpoint = oauth2.Endpoint{
 		AuthURL:  authEndpoint[opt.Region] + authPath,
