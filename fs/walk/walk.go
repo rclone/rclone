@@ -507,10 +507,12 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 				// Check if we need to prune a directory later.
 				if !includeAll && len(fi.Opt.ExcludeFile) > 0 {
 					basename := path.Base(x.Remote())
-					if basename == fi.Opt.ExcludeFile {
-						excludeDir := parentDir(x.Remote())
-						toPrune[excludeDir] = true
-						fs.Debugf(basename, "Excluded from sync (and deletion) based on exclude file")
+					for _, excludeFile := range fi.Opt.ExcludeFile {
+						if basename == excludeFile {
+							excludeDir := parentDir(x.Remote())
+							toPrune[excludeDir] = true
+							fs.Debugf(basename, "Excluded from sync (and deletion) based on exclude file")
+						}
 					}
 				}
 			case fs.Directory:

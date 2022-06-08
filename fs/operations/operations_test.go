@@ -1309,7 +1309,7 @@ func TestOverlappingFilterCheckWithFilter(t *testing.T) {
 	fi, err := filter.NewFilter(nil)
 	require.NoError(t, err)
 	require.NoError(t, fi.Add(false, "*/exclude/"))
-	fi.Opt.ExcludeFile = ".ignore"
+	fi.Opt.ExcludeFile = []string{".ignore"}
 	ctx = filter.ReplaceConfig(ctx, fi)
 
 	src := &testFs{testFsInfo{name: "name", root: "root"}}

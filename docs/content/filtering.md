@@ -750,7 +750,9 @@ Useful for debugging.
 
 The `--exclude-if-present` flag controls whether a directory is
 within the scope of an rclone command based on the presence of a
-named file within it.
+named file within it. The flag can be repeated to check for
+multiple file names, presence of any of them will exclude the
+directory.
 
 This flag has a priority over other filter flags.
 
@@ -763,8 +765,6 @@ E.g. for the following directory structure:
 
 The command `rclone ls --exclude-if-present .ignore dir1` does
 not list `dir3`, `file3` or `.ignore`.
-
-`--exclude-if-present` can only be used once in an rclone command.
 
 ## Common pitfalls
 

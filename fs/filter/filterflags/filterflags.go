@@ -34,7 +34,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.StringArrayVarP(flagSet, &Opt.FilterFrom, "filter-from", "", nil, "Read filtering patterns from a file (use - to read from stdin)")
 	flags.StringArrayVarP(flagSet, &Opt.ExcludeRule, "exclude", "", nil, "Exclude files matching pattern")
 	flags.StringArrayVarP(flagSet, &Opt.ExcludeFrom, "exclude-from", "", nil, "Read exclude patterns from file (use - to read from stdin)")
-	flags.StringVarP(flagSet, &Opt.ExcludeFile, "exclude-if-present", "", "", "Exclude directories if filename is present")
+	flags.StringArrayVarP(flagSet, &Opt.ExcludeFile, "exclude-if-present", "", nil, "Exclude directories if filename is present")
 	flags.StringArrayVarP(flagSet, &Opt.IncludeRule, "include", "", nil, "Include files matching pattern")
 	flags.StringArrayVarP(flagSet, &Opt.IncludeFrom, "include-from", "", nil, "Read include patterns from file (use - to read from stdin)")
 	flags.StringArrayVarP(flagSet, &Opt.FilesFrom, "files-from", "", nil, "Read list of source-file names from file (use - to read from stdin)")

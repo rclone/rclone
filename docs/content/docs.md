@@ -2136,6 +2136,7 @@ For the filtering options
   * `--filter-from`
   * `--exclude`
   * `--exclude-from`
+  * `--exclude-if-present`
   * `--include`
   * `--include-from`
   * `--files-from`
