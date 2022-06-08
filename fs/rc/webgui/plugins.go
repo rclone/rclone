@@ -293,7 +293,7 @@ func ServePluginOK(w http.ResponseWriter, r *http.Request, pluginsMatchResult []
 	return true
 }
 
-var referrerPathReg = regexp.MustCompile("^(https?):\\/\\/(.+):([0-9]+)?\\/(.*)\\/?\\?(.*)$")
+var referrerPathReg = regexp.MustCompile(`^(https?):\/\/(.+):([0-9]+)?\/(.*)\/?\?(.*)$`)
 
 // ServePluginWithReferrerOK check if redirectReferrer is set for the referred a plugin, if yes,
 // sends a redirect to actual url. This function is useful for plugins to refer to absolute paths when
@@ -306,9 +306,9 @@ func ServePluginWithReferrerOK(w http.ResponseWriter, r *http.Request, path stri
 	referrer := r.Referer()
 	referrerPathMatch := referrerPathReg.FindStringSubmatch(referrer)
 
-	if referrerPathMatch != nil && len(referrerPathMatch) > 3 {
+	if len(referrerPathMatch) > 3 {
 		referrerPluginMatch := PluginsMatch.FindStringSubmatch(referrerPathMatch[4])
-		if referrerPluginMatch != nil && len(referrerPluginMatch) > 2 {
+		if len(referrerPluginMatch) > 2 {
 			pluginKey := fmt.Sprintf("%s/%s", referrerPluginMatch[1], referrerPluginMatch[2])
 			currentPlugin, err := loadedPlugins.GetPluginByName(pluginKey)
 			if err != nil {

@@ -391,7 +391,7 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.rootBucket == "" {
-		return fmt.Sprintf("GCS root")
+		return "GCS root"
 	}
 	if f.rootDirectory == "" {
 		return fmt.Sprintf("GCS bucket %s", f.rootBucket)

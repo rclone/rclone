@@ -195,7 +195,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 			if remote == "" {
 				return fmt.Errorf("empty remote in upstream definition %q", upstream)
 			}
-			if strings.IndexRune(dir, '/') >= 0 {
+			if strings.ContainsRune(dir, '/') {
 				return fmt.Errorf("dirs can't contain / (yet): %q", dir)
 			}
 			u, err := f.newUpstream(gCtx, dir, remote)

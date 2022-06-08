@@ -111,9 +111,9 @@ func TestStatsGroupOperations(t *testing.T) {
 		runtime.GC()
 		runtime.ReadMemStats(&end)
 
-		t.Log(fmt.Sprintf("%+v\n%+v", start, end))
+		t.Logf("%+v\n%+v", start, end)
 		diff := percentDiff(start.HeapObjects, end.HeapObjects)
-		if diff > 1 || diff < 0 {
+		if diff > 1 {
 			t.Errorf("HeapObjects = %d, expected %d", end.HeapObjects, start.HeapObjects)
 		}
 	})

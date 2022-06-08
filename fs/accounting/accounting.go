@@ -444,7 +444,7 @@ func (acc *Account) speed() (bps, current float64) {
 		return 0, 0
 	}
 	// Calculate speed from first read.
-	total := float64(time.Now().Sub(acc.values.start)) / float64(time.Second)
+	total := float64(time.Since(acc.values.start)) / float64(time.Second)
 	if total > 0 {
 		bps = float64(acc.values.bytes) / total
 	} else {

@@ -68,8 +68,8 @@ func (a *AsyncReader) init(rd io.ReadCloser, buffers int) {
 	a.in = rd
 	a.ready = make(chan *buffer, buffers)
 	a.token = make(chan struct{}, buffers)
-	a.exit = make(chan struct{}, 0)
-	a.exited = make(chan struct{}, 0)
+	a.exit = make(chan struct{})
+	a.exited = make(chan struct{})
 	a.buffers = buffers
 	a.cur = nil
 	a.size = softStartInitial

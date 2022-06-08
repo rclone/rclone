@@ -99,7 +99,7 @@ func Parse(path string) (parsed Parsed, err error) {
 		return parsed, errCantBeEmpty
 	}
 	// If path has no `:` in, it must be a local path
-	if strings.IndexRune(path, ':') < 0 {
+	if !strings.ContainsRune(path, ':') {
 		return parsed, nil
 	}
 	// States for parser

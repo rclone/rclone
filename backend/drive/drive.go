@@ -2020,7 +2020,7 @@ func splitID(compositeID string) (actualID, shortcutID string) {
 
 // isShortcutID returns true if compositeID refers to a shortcut
 func isShortcutID(compositeID string) bool {
-	return strings.IndexRune(compositeID, shortcutSeparator) >= 0
+	return strings.ContainsRune(compositeID, shortcutSeparator)
 }
 
 // actualID returns an actual ID from a composite ID
@@ -3327,7 +3327,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			out["service_account_file"] = f.opt.ServiceAccountFile
 		}
 		if _, ok := opt["chunk_size"]; ok {
-			out["chunk_size"] = fmt.Sprintf("%s", f.opt.ChunkSize)
+			out["chunk_size"] = f.opt.ChunkSize.String()
 		}
 		return out, nil
 	case "set":
@@ -3344,11 +3344,11 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		}
 		if chunkSize, ok := opt["chunk_size"]; ok {
 			chunkSizeMap := make(map[string]string)
-			chunkSizeMap["previous"] = fmt.Sprintf("%s", f.opt.ChunkSize)
+			chunkSizeMap["previous"] = f.opt.ChunkSize.String()
 			if err = f.changeChunkSize(chunkSize); err != nil {
 				return out, err
 			}
-			chunkSizeString := fmt.Sprintf("%s", f.opt.ChunkSize)
+			chunkSizeString := f.opt.ChunkSize.String()
 			f.m.Set("chunk_size", chunkSizeString)
 			chunkSizeMap["current"] = chunkSizeString
 			out["chunk_size"] = chunkSizeMap
@@ -3392,13 +3392,13 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 				names[name] = struct{}{}
 				lines = append(lines, "")
 				lines = append(lines, fmt.Sprintf("[%s]", name))
-				lines = append(lines, fmt.Sprintf("type = alias"))
+				lines = append(lines, "type = alias")
 				lines = append(lines, fmt.Sprintf("remote = %s,team_drive=%s,root_folder_id=:", f.name, drive.Id))
 				upstreams = append(upstreams, fmt.Sprintf(`"%s=%s:"`, name, name))
 			}
 			lines = append(lines, "")
-			lines = append(lines, fmt.Sprintf("[AllDrives]"))
-			lines = append(lines, fmt.Sprintf("type = combine"))
+			lines = append(lines, "[AllDrives]")
+			lines = append(lines, "type = combine")
 			lines = append(lines, fmt.Sprintf("upstreams = %s", strings.Join(upstreams, " ")))
 			return lines, nil
 		}

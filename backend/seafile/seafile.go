@@ -453,7 +453,7 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.libraryName == "" {
-		return fmt.Sprintf("seafile root")
+		return "seafile root"
 	}
 	library := "library"
 	if f.encrypted {
@@ -984,9 +984,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	if err != nil {
 		return "", err
 	}
-	if shareLinks != nil && len(shareLinks) > 0 {
+	if len(shareLinks) > 0 {
 		for _, shareLink := range shareLinks {
-			if shareLink.IsExpired == false {
+			if !shareLink.IsExpired {
 				return shareLink.Link, nil
 			}
 		}
@@ -1053,7 +1053,7 @@ func (f *Fs) isLibraryInCache(libraryName string) bool {
 		return false
 	}
 	value, found := f.libraries.GetMaybe(librariesCacheKey)
-	if found == false {
+	if !found {
 		return false
 	}
 	libraries := value.([]api.Library)
@@ -1130,7 +1130,7 @@ func (f *Fs) mkLibrary(ctx context.Context, libraryName, password string) error 
 	}
 	// Stores the library details into the cache
 	value, found := f.libraries.GetMaybe(librariesCacheKey)
-	if found == false {
+	if !found {
 		// Don't update the cache at that point
 		return nil
 	}

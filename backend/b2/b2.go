@@ -280,7 +280,7 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.rootBucket == "" {
-		return fmt.Sprintf("B2 root")
+		return "B2 root"
 	}
 	if f.rootDirectory == "" {
 		return fmt.Sprintf("B2 bucket %s", f.rootBucket)
@@ -1205,10 +1205,7 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 		}
 	}
 	var isUnfinishedUploadStale = func(timestamp api.Timestamp) bool {
-		if time.Since(time.Time(timestamp)).Hours() > 24 {
-			return true
-		}
-		return false
+		return time.Since(time.Time(timestamp)).Hours() > 24
 	}
 
 	// Delete Config.Transfers in parallel
@@ -1485,13 +1482,9 @@ func (o *Object) Size() int64 {
 //
 // Remove unverified prefix - see https://www.backblaze.com/b2/docs/uploading.html
 // Some tools (e.g. Cyberduck) use this
-func cleanSHA1(sha1 string) (out string) {
-	out = strings.ToLower(sha1)
+func cleanSHA1(sha1 string) string {
 	const unverified = "unverified:"
-	if strings.HasPrefix(out, unverified) {
-		out = out[len(unverified):]
-	}
-	return out
+	return strings.TrimPrefix(strings.ToLower(sha1), unverified)
 }
 
 // decodeMetaDataRaw sets the metadata from the data passed in

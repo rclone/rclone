@@ -435,7 +435,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, title string, directorie
 		query += " AND kind:" + folderKind
 	} else if filesOnly {
 		query += " AND kind:" + fileKind
-	} else {
+		//} else {
 		// FIXME none of these work
 		//query += " AND kind:(" + fileKind + " OR " + folderKind + ")"
 		//query += " AND (kind:" + fileKind + " OR kind:" + folderKind + ")"

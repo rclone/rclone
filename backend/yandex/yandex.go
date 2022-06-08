@@ -468,7 +468,7 @@ func (f *Fs) CreateDir(ctx context.Context, path string) (err error) {
 	}
 
 	// If creating a directory with a : use (undocumented) disk: prefix
-	if strings.IndexRune(path, ':') >= 0 {
+	if strings.ContainsRune(path, ':') {
 		path = "disk:" + path
 	}
 	opts.Parameters.Set("path", f.opt.Enc.FromStandardPath(path))
@@ -506,10 +506,8 @@ func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 				var mkdirpath = "/"                   //path separator /
 				for _, element := range dirs {
 					if element != "" {
-						mkdirpath += element + "/" //path separator /
-						if err = f.CreateDir(ctx, mkdirpath); err != nil {
-							// ignore errors while creating dirs
-						}
+						mkdirpath += element + "/"      //path separator /
+						_ = f.CreateDir(ctx, mkdirpath) // ignore errors while creating dirs
 					}
 				}
 			}
@@ -522,10 +520,7 @@ func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 func (f *Fs) mkParentDirs(ctx context.Context, resPath string) error {
 	// defer log.Trace(dirPath, "")("")
 	// chop off trailing / if it exists
-	if strings.HasSuffix(resPath, "/") {
-		resPath = resPath[:len(resPath)-1]
-	}
-	parent := path.Dir(resPath)
+	parent := path.Dir(strings.TrimSuffix(resPath, "/"))
 	if parent == "." {
 		parent = ""
 	}

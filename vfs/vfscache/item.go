@@ -779,7 +779,7 @@ func (item *Item) _checkObject(o fs.Object) error {
 			} else {
 				fs.Debugf(item.name, "vfs cache: remote object has gone but local object modified - keeping it")
 			}
-		} else {
+			//} else {
 			// no remote object && no local object
 			// OK
 		}
@@ -946,7 +946,7 @@ func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
 
 	/* Do not need to reset an empty cache file unless it was being reset and the reset failed.
 	   Some thread(s) may be waiting on the reset's succesful completion in that case. */
-	if item.info.Rs.Size() == 0 && item.beingReset == false {
+	if item.info.Rs.Size() == 0 && !item.beingReset {
 		return SkippedEmpty, 0, nil
 	}
 

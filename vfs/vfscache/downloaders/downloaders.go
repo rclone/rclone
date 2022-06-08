@@ -359,7 +359,7 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 		return nil
 	}
 	// Downloader not found so start a new one
-	dl, err = dls._newDownloader(r)
+	_, err = dls._newDownloader(r)
 	if err != nil {
 		dls._countErrors(0, err)
 		return fmt.Errorf("failed to start downloader: %w", err)

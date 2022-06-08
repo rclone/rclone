@@ -22,7 +22,6 @@ func NewTokenDispenser(n int) *TokenDispenser {
 // Get gets a token from the pool - don't forget to return it with Put
 func (td *TokenDispenser) Get() {
 	<-td.tokens
-	return
 }
 
 // Put returns a token

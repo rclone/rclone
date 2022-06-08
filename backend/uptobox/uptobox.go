@@ -703,8 +703,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// copy the old object and apply the changes
-	var newObj Object
-	newObj = *srcObj
+	newObj := *srcObj
 	newObj.remote = remote
 	newObj.fs = f
 	return &newObj, nil
@@ -759,7 +758,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	// check if the destination allready exists
 	dstPath := f.dirPath(dstRemote)
-	dstInfo, err := f.readMetaDataForPath(ctx, dstPath, &api.MetadataRequestOptions{Limit: 1})
+	_, err = f.readMetaDataForPath(ctx, dstPath, &api.MetadataRequestOptions{Limit: 1})
 	if err == nil {
 		return fs.ErrorDirExists
 	}
@@ -772,7 +771,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// find the destination parent dir
-	dstInfo, err = f.readMetaDataForPath(ctx, dstBase, &api.MetadataRequestOptions{Limit: 1})
+	dstInfo, err := f.readMetaDataForPath(ctx, dstBase, &api.MetadataRequestOptions{Limit: 1})
 	if err != nil {
 		return fmt.Errorf("dirmove: failed to read destination: %w", err)
 	}

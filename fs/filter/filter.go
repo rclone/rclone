@@ -596,7 +596,7 @@ func (f *Filter) UsesDirectoryFilters() bool {
 	}
 	rule := f.dirRules.rules[0]
 	re := rule.Regexp.String()
-	if rule.Include == true && re == "^.*$" {
+	if rule.Include && re == "^.*$" {
 		return false
 	}
 	return true

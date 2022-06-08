@@ -181,7 +181,7 @@ func TestShouldRetry(t *testing.T) {
 func TestRetryAfter(t *testing.T) {
 	e := NewErrorRetryAfter(time.Second)
 	after := e.RetryAfter()
-	dt := after.Sub(time.Now())
+	dt := time.Until(after)
 	assert.True(t, dt >= 900*time.Millisecond && dt <= 1100*time.Millisecond)
 	assert.True(t, IsRetryAfterError(e))
 	assert.False(t, IsRetryAfterError(io.EOF))

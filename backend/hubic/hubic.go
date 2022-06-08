@@ -138,7 +138,7 @@ func (f *Fs) getCredentials(ctx context.Context) (err error) {
 		return err
 	}
 	f.expires = expires
-	fs.Debugf(f, "Got swift credentials (expiry %v in %v)", f.expires, f.expires.Sub(time.Now()))
+	fs.Debugf(f, "Got swift credentials (expiry %v in %v)", f.expires, time.Until(f.expires))
 	return nil
 }
 

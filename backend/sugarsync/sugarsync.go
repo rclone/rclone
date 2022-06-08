@@ -872,7 +872,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 	srcPath := srcObj.fs.rootSlash() + srcObj.remote
 	dstPath := f.rootSlash() + remote
-	if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
+	if strings.EqualFold(srcPath, dstPath) {
 		return nil, fmt.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 	}
 

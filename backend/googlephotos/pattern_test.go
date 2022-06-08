@@ -50,7 +50,7 @@ func (f *testLister) listAlbums(ctx context.Context, shared bool) (all *albums, 
 
 // mock listUploads for testing
 func (f *testLister) listUploads(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	entries, _ = f.uploaded[dir]
+	entries = f.uploaded[dir]
 	return entries, nil
 }
 

@@ -903,22 +903,20 @@ func (f *Fs) netStorageStatRequest(ctx context.Context, URL string, directory bo
 		files = statResp.Files
 		f.setStatCache(URL, files)
 	}
-	if files != nil {
-		// Multiple objects can be returned with the "slash=both" option,
-		// when file/symlink/directory has the same name
-		for i := range files {
-			if files[i].Type == "symlink" {
-				// Add .rclonelink suffix to allow local backend code to convert to a symlink.
-				files[i].Name += ".rclonelink"
-				fs.Infof(nil, "Converting a symlink to the rclonelink on the stat request %s", files[i].Name)
-			}
-			entrywanted := (directory && files[i].Type == "dir") ||
-				(!directory && files[i].Type != "dir")
-			if entrywanted {
-				filestamp := files[0]
-				files[0] = files[i]
-				files[i] = filestamp
-			}
+	// Multiple objects can be returned with the "slash=both" option,
+	// when file/symlink/directory has the same name
+	for i := range files {
+		if files[i].Type == "symlink" {
+			// Add .rclonelink suffix to allow local backend code to convert to a symlink.
+			files[i].Name += ".rclonelink"
+			fs.Infof(nil, "Converting a symlink to the rclonelink on the stat request %s", files[i].Name)
+		}
+		entrywanted := (directory && files[i].Type == "dir") ||
+			(!directory && files[i].Type != "dir")
+		if entrywanted {
+			filestamp := files[0]
+			files[0] = files[i]
+			files[i] = filestamp
 		}
 	}
 	return files, nil

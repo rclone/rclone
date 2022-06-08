@@ -131,7 +131,7 @@ func (m *SortMode) String() string {
 
 // UnmarshalJSON sort mode
 func (m *SortMode) UnmarshalJSON(value []byte) error {
-	if value == nil || len(value) == 0 {
+	if len(value) == 0 {
 		m.mode = ""
 		return nil
 	}

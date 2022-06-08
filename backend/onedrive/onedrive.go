@@ -660,7 +660,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 				}
 			}
 		case 401:
-			if len(resp.Header["Www-Authenticate"]) == 1 && strings.Index(resp.Header["Www-Authenticate"][0], "expired_token") >= 0 {
+			if len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
 				retry = true
 				fs.Debugf(nil, "Should retry: %v", err)
 			} else if err != nil && strings.Contains(err.Error(), "Unable to initialize RPS") {
@@ -716,8 +716,7 @@ func (f *Fs) readMetaDataForPath(ctx context.Context, path string) (info *api.It
 	firstSlashIndex := strings.IndexRune(path, '/')
 
 	if f.driveType != driveTypePersonal || firstSlashIndex == -1 {
-		var opts rest.Opts
-		opts = f.newOptsCallWithPath(ctx, path, "GET", "")
+		opts := f.newOptsCallWithPath(ctx, path, "GET", "")
 		opts.Path = strings.TrimSuffix(opts.Path, ":")
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
@@ -1287,7 +1286,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if srcObj.fs == f {
 		srcPath := srcObj.rootPath()
 		dstPath := f.rootPath(remote)
-		if strings.ToLower(srcPath) == strings.ToLower(dstPath) {
+		if strings.EqualFold(srcPath, dstPath) {
 			return nil, fmt.Errorf("can't copy %q -> %q as are same name when lowercase", srcPath, dstPath)
 		}
 	}
@@ -2185,7 +2184,7 @@ func (o *Object) ID() string {
 // Such a normalized ID can come from (*Item).GetID()
 func (f *Fs) parseNormalizedID(ID string) (string, string, string) {
 	rootURL := graphAPIEndpoint[f.opt.Region] + "/v1.0/drives"
-	if strings.Index(ID, "#") >= 0 {
+	if strings.Contains(ID, "#") {
 		s := strings.Split(ID, "#")
 		return s[1], s[0], rootURL
 	}
@@ -2359,6 +2358,9 @@ func (f *Fs) ChangeNotify(ctx context.Context, notifyFunc func(string, fs.EntryT
 
 func (f *Fs) changeNotifyStartPageToken(ctx context.Context) (nextDeltaToken string, err error) {
 	delta, err := f.changeNotifyNextChange(ctx, "latest")
+	if err != nil {
+		return
+	}
 	parsedURL, err := url.Parse(delta.DeltaLink)
 	if err != nil {
 		return
@@ -2388,6 +2390,9 @@ func (f *Fs) buildDriveDeltaOpts(token string) rest.Opts {
 
 func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.EntryType), deltaToken string) (nextDeltaToken string, err error) {
 	delta, err := f.changeNotifyNextChange(ctx, deltaToken)
+	if err != nil {
+		return
+	}
 	parsedURL, err := url.Parse(delta.DeltaLink)
 	if err != nil {
 		return
