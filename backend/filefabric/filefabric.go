@@ -490,7 +490,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 				// Root is a dir - cache its ID
 				f.dirCache.Put(f.root, info.ID)
 			}
-		} else {
+			//} else {
 			// Root is not found so a directory
 		}
 	}

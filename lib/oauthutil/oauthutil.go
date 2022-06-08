@@ -280,7 +280,7 @@ func (ts *TokenSource) timeToExpiry() time.Duration {
 	if t.Expiry.IsZero() {
 		return 3e9 * time.Second // ~95 years
 	}
-	return t.Expiry.Sub(time.Now())
+	return time.Until(t.Expiry)
 }
 
 // OnExpiry returns a channel which has the time written to it when
@@ -766,7 +766,6 @@ func (s *authServer) Init() error {
 		}
 		fs.Debugf(nil, "Redirecting browser to: %s", s.authURL)
 		http.Redirect(w, req, s.authURL, http.StatusTemporaryRedirect)
-		return
 	})
 	mux.HandleFunc("/", s.handleAuth)
 

@@ -1976,7 +1976,7 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.rootBucket == "" {
-		return fmt.Sprintf("S3 root")
+		return "S3 root"
 	}
 	if f.rootDirectory == "" {
 		return fmt.Sprintf("S3 bucket %s", f.rootBucket)
@@ -2669,9 +2669,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				if addBucket {
 					remote = path.Join(bucket, remote)
 				}
-				if strings.HasSuffix(remote, "/") {
-					remote = remote[:len(remote)-1]
-				}
+				remote = strings.TrimSuffix(remote, "/")
 				err = fn(remote, &s3.Object{Key: &remote}, true)
 				if err != nil {
 					return err

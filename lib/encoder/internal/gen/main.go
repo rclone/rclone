@@ -465,17 +465,13 @@ func getMapping(mask encoder.MultiEncoder) mapping {
 }
 func collectEncodables(m []mapping) (out []rune) {
 	for _, s := range m {
-		for _, r := range s.src {
-			out = append(out, r)
-		}
+		out = append(out, s.src...)
 	}
 	return
 }
 func collectEncoded(m []mapping) (out []rune) {
 	for _, s := range m {
-		for _, r := range s.dst {
-			out = append(out, r)
-		}
+		out = append(out, s.dst...)
 	}
 	return
 }

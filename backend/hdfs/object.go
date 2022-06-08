@@ -115,7 +115,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	info, err := o.fs.client.Stat(realpath)
+	_, err = o.fs.client.Stat(realpath)
 	if err == nil {
 		err = o.fs.client.Remove(realpath)
 		if err != nil {
@@ -147,7 +147,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	info, err = o.fs.client.Stat(realpath)
+	info, err := o.fs.client.Stat(realpath)
 	if err != nil {
 		return err
 	}

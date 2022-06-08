@@ -254,7 +254,6 @@ func (d *dir) createDirectories() {
 			return
 		}
 	}
-	return
 }
 
 // list the directory hierarchy

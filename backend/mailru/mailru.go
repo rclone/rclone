@@ -1723,7 +1723,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	if bytes.Compare(fileHash, newHash) != 0 {
+	if !bytes.Equal(fileHash, newHash) {
 		if o.fs.opt.CheckHash {
 			return mrhash.ErrorInvalidHash
 		}
@@ -2262,7 +2262,7 @@ func (e *endHandler) handle(err error) error {
 	}
 
 	newHash := e.hasher.Sum(nil)
-	if bytes.Compare(o.mrHash, newHash) == 0 {
+	if bytes.Equal(o.mrHash, newHash) {
 		return io.EOF
 	}
 	if o.fs.opt.CheckHash {

@@ -477,7 +477,7 @@ func (fh *ReadFileHandle) Release() error {
 	err := fh.close()
 	if err != nil {
 		fs.Errorf(fh.remote, "ReadFileHandle.Release error: %v", err)
-	} else {
+		//} else {
 		// fs.Debugf(fh.remote, "ReadFileHandle.Release OK")
 	}
 	return err

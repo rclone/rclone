@@ -387,8 +387,7 @@ func Run(t *testing.T, opt *Opt) {
 	// Skip if remote is not SetTier and GetTier capable
 	skipIfNotSetTier := func(t *testing.T) {
 		skipIfNotOk(t)
-		if f.Features().SetTier == false ||
-			f.Features().GetTier == false {
+		if !f.Features().SetTier || !f.Features().GetTier {
 			t.Skip("FS has no SetTier & GetTier interfaces")
 		}
 	}
@@ -735,7 +734,7 @@ func Run(t *testing.T, opt *Opt) {
 
 			TestPutLarge(ctx, t, f, &fstest.Item{
 				ModTime: fstest.Time("2001-02-03T04:05:06.499999999Z"),
-				Path:    fmt.Sprintf("zero-length-file"),
+				Path:    "zero-length-file",
 				Size:    int64(0),
 			})
 		})

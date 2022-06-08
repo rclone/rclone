@@ -716,9 +716,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			subPath = f.opt.Enc.ToStandardPath(subPath)
 		}
 		remote := path.Join(dir, subPath)
-		if strings.HasSuffix(remote, "/") {
-			remote = remote[:len(remote)-1]
-		}
+		remote = strings.TrimSuffix(remote, "/")
 
 		// the listing contains info about itself which we ignore
 		if remote == dir {
@@ -820,10 +818,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 func (f *Fs) mkParentDir(ctx context.Context, dirPath string) (err error) {
 	// defer log.Trace(dirPath, "")("err=%v", &err)
 	// chop off trailing / if it exists
-	if strings.HasSuffix(dirPath, "/") {
-		dirPath = dirPath[:len(dirPath)-1]
-	}
-	parent := path.Dir(dirPath)
+	parent := path.Dir(strings.TrimSuffix(dirPath, "/"))
 	if parent == "." {
 		parent = ""
 	}

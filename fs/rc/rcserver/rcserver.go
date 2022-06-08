@@ -378,7 +378,7 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request, path string) 
 		if s.opt.WebUI {
 			pluginsMatchResult := webgui.PluginsMatch.FindStringSubmatch(path)
 
-			if pluginsMatchResult != nil && len(pluginsMatchResult) > 2 {
+			if len(pluginsMatchResult) > 2 {
 				ok := webgui.ServePluginOK(w, r, pluginsMatchResult)
 				if !ok {
 					r.URL.Path = fmt.Sprintf("/%s/%s/app/build/%s", pluginsMatchResult[1], pluginsMatchResult[2], pluginsMatchResult[3])

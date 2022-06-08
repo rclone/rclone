@@ -273,7 +273,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			break
 		}
 		if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
-			d := retryAfter.Sub(time.Now())
+			d := time.Until(retryAfter)
 			if d > 0 {
 				fs.Logf(nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
 				time.Sleep(d)
@@ -458,7 +458,7 @@ func initConfig() {
 		})
 	}
 
-	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); m == false {
+	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); !m {
 		fs.Errorf(nil, "Invalid unit passed to --stats-unit. Defaulting to bytes.")
 		ci.DataRateUnit = "bytes"
 	} else {

@@ -75,7 +75,7 @@ func ParseRangeOption(s string) (po *RangeOption, err error) {
 		return nil, errors.New("Range: header invalid: doesn't start with " + preamble)
 	}
 	s = s[len(preamble):]
-	if strings.IndexRune(s, ',') >= 0 {
+	if strings.ContainsRune(s, ',') {
 		return nil, errors.New("Range: header invalid: contains multiple ranges which isn't supported")
 	}
 	dash := strings.IndexRune(s, '-')
@@ -250,7 +250,7 @@ func (o NullOption) Header() (key string, value string) {
 
 // String formats the option into human-readable form
 func (o NullOption) String() string {
-	return fmt.Sprintf("NullOption()")
+	return "NullOption()"
 }
 
 // Mandatory returns whether the option must be parsed or can be ignored

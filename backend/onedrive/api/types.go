@@ -292,7 +292,7 @@ type AsyncOperationStatus struct {
 func (i *Item) GetID() string {
 	if i.IsRemote() && i.RemoteItem.ID != "" {
 		return i.RemoteItem.ParentReference.DriveID + "#" + i.RemoteItem.ID
-	} else if i.ParentReference != nil && strings.Index(i.ID, "#") == -1 {
+	} else if i.ParentReference != nil && !strings.Contains(i.ID, "#") {
 		return i.ParentReference.DriveID + "#" + i.ID
 	}
 	return i.ID

@@ -20,7 +20,7 @@ var (
 	pluginName  = "rclone"
 	pluginScope = "local"
 	baseDir     = "/var/lib/docker-volumes/rclone"
-	sockDir     = "/run/docker/plugins"
+	sockDir     = "/run/docker/plugins" // location of unix sockets (only relevant on Linux and FreeBSD)
 	defSpecDir  = "/etc/docker/plugins"
 	stateFile   = "docker-plugin.state"
 	socketAddr  = "" // TCP listening address or empty string for Unix socket

@@ -187,10 +187,7 @@ func (s *Storage) Serialize() (string, error) {
 func (s *Storage) HasSection(section string) bool {
 	s.check()
 	_, err := s.gc.GetSection(section)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // DeleteSection removes the named section and all config from the

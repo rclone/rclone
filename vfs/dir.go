@@ -506,7 +506,7 @@ func (d *Dir) _purgeVirtual() {
 				// if remote can have empty directories then a
 				// new dir will be read in the listing
 				d._deleteVirtual(name)
-			} else {
+				//} else {
 				// leave the empty directory marker
 			}
 		case vAddFile:

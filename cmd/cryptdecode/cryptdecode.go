@@ -75,7 +75,7 @@ func cryptDecode(cipher *crypt.Cipher, args []string) error {
 		}
 	}
 
-	fmt.Printf(output)
+	fmt.Print(output)
 
 	return nil
 }
@@ -89,7 +89,7 @@ func cryptEncode(cipher *crypt.Cipher, args []string) error {
 		output += fmt.Sprintln(fileName, "\t", encryptedFileName)
 	}
 
-	fmt.Printf(output)
+	fmt.Print(output)
 
 	return nil
 }

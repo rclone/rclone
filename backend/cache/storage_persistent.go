@@ -456,10 +456,7 @@ func (b *Persistent) HasEntry(remote string) bool {
 
 		return fmt.Errorf("couldn't find object (%v)", remote)
 	})
-	if err == nil {
-		return true
-	}
-	return false
+	return err == nil
 }
 
 // HasChunk confirms the existence of a single chunk of an object
