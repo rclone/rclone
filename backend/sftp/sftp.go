@@ -515,7 +515,7 @@ func (f *Fs) setEnv(s *ssh.Session) error {
 		// fs.Debugf(f, "Setting env %q = %q", env[:equal], env[equal+1:])
 		err := s.Setenv(env[:equal], env[equal+1:])
 		if err != nil {
-			return fmt.Errorf("Failed to set env var %q: %w", env[:equal], err)
+			return fmt.Errorf("failed to set env var %q: %w", env[:equal], err)
 		}
 	}
 	return nil

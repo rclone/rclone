@@ -122,7 +122,7 @@ func newListJSON(ctx context.Context, fsrc fs.Fs, remote string, opt *ListJSONOp
 			return nil, fmt.Errorf("ListJSON failed to load config for crypt remote: %w", err)
 		}
 		if fsInfo.Name != "crypt" {
-			return nil, errors.New("The remote needs to be of type \"crypt\"")
+			return nil, errors.New("the remote needs to be of type \"crypt\"")
 		}
 		lj.cipher, err = crypt.NewCipher(config)
 		if err != nil {

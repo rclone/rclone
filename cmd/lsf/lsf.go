@@ -199,7 +199,7 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 		case 'T':
 			list.AddTier()
 		default:
-			return fmt.Errorf("Unknown format character %q", char)
+			return fmt.Errorf("unknown format character %q", char)
 		}
 	}
 

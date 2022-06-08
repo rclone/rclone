@@ -2218,10 +2218,10 @@ func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, 
 
 			exportExt, _, _ = f.findExportFormatByMimeType(ctx, importMimeType)
 			if exportExt == "" {
-				return nil, fmt.Errorf("No export format found for %q", importMimeType)
+				return nil, fmt.Errorf("no export format found for %q", importMimeType)
 			}
 			if exportExt != srcExt && !f.opt.AllowImportNameChange {
-				return nil, fmt.Errorf("Can't convert %q to a document with a different export filetype (%q)", srcExt, exportExt)
+				return nil, fmt.Errorf("can't convert %q to a document with a different export filetype (%q)", srcExt, exportExt)
 			}
 		}
 	}
@@ -2526,7 +2526,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 // result of List()
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	if f.opt.TrashedOnly {
-		return errors.New("Can't purge with --drive-trashed-only. Use delete if you want to selectively delete files")
+		return errors.New("can't purge with --drive-trashed-only, use delete if you want to selectively delete files")
 	}
 	return f.purgeCheck(ctx, dir, false)
 }
@@ -3715,7 +3715,7 @@ func (o *baseObject) open(ctx context.Context, url string, options ...fs.OpenOpt
 				url += "acknowledgeAbuse=true"
 				_, res, err = o.httpResponse(ctx, url, "GET", options)
 			} else {
-				err = fmt.Errorf("Use the --drive-acknowledge-abuse flag to download this file: %w", err)
+				err = fmt.Errorf("use the --drive-acknowledge-abuse flag to download this file: %w", err)
 			}
 		}
 		if err != nil {

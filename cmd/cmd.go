@@ -117,7 +117,7 @@ func newFsFileAddFilter(remote string) (fs.Fs, string) {
 	f, fileName := NewFsFile(remote)
 	if fileName != "" {
 		if !fi.InActive() {
-			err := fmt.Errorf("Can't limit to single files when using filters: %v", remote)
+			err := fmt.Errorf("can't limit to single files when using filters: %v", remote)
 			err = fs.CountError(err)
 			log.Fatalf(err.Error())
 		}

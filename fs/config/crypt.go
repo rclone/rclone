@@ -133,7 +133,7 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 		return nil, fmt.Errorf("failed to load base64 encoded data: %w", err)
 	}
 	if len(box) < 24+secretbox.Overhead {
-		return nil, errors.New("Configuration data too short")
+		return nil, errors.New("configuration data too short")
 	}
 
 	var out []byte
@@ -206,7 +206,7 @@ func Encrypt(src io.Reader, dst io.Writer) error {
 	enc := base64.NewEncoder(base64.StdEncoding, dst)
 	_, err := enc.Write(nonce[:])
 	if err != nil {
-		return fmt.Errorf("Failed to write config file: %v", err)
+		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
 	var key [32]byte
@@ -219,7 +219,7 @@ func Encrypt(src io.Reader, dst io.Writer) error {
 	b := secretbox.Seal(nil, data, &nonce, &key)
 	_, err = enc.Write(b)
 	if err != nil {
-		return fmt.Errorf("Failed to write config file: %v", err)
+		return fmt.Errorf("failed to write config file: %w", err)
 	}
 	return enc.Close()
 }

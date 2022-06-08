@@ -61,7 +61,7 @@ func (l *LogLevel) Set(s string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Unknown log level %q", s)
+	return fmt.Errorf("unknown log level %q", s)
 }
 
 // Type of the value
@@ -73,7 +73,7 @@ func (l *LogLevel) Type() string {
 func (l *LogLevel) UnmarshalJSON(in []byte) error {
 	return UnmarshalJSONFlag(in, l, func(i int64) error {
 		if i < 0 || i >= int64(LogLevel(len(logLevelToString))) {
-			return fmt.Errorf("Unknown log level %d", i)
+			return fmt.Errorf("unknown log level %d", i)
 		}
 		*l = (LogLevel)(i)
 		return nil

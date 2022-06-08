@@ -487,7 +487,7 @@ func (f *Fs) uploadFile(ctx context.Context, in io.Reader, size int64, fileName,
 	fileName = f.opt.Enc.FromStandardName(fileName)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
-		return nil, errors.New("Invalid UploadID")
+		return nil, errors.New("invalid UploadID")
 	}
 
 	opts := rest.Opts{
@@ -529,7 +529,7 @@ func (f *Fs) endUpload(ctx context.Context, uploadID string, nodeurl string) (re
 	// fs.Debugf(f, "Ending File Upload `%s`", uploadID)
 
 	if len(uploadID) > 10 || !isAlphaNumeric(uploadID) {
-		return nil, errors.New("Invalid UploadID")
+		return nil, errors.New("invalid UploadID")
 	}
 
 	opts := rest.Opts{

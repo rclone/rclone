@@ -199,7 +199,7 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 	defer log.Trace(d, "oldName=%q, newName=%q, newDir=%+v", req.OldName, req.NewName, newDir)("err=%v", &err)
 	destDir, ok := newDir.(*Dir)
 	if !ok {
-		return fmt.Errorf("Unknown Dir type %T", newDir)
+		return fmt.Errorf("unknown Dir type %T", newDir)
 	}
 
 	err = d.Dir.Rename(req.OldName, req.NewName, destDir.Dir)

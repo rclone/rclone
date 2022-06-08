@@ -19,7 +19,7 @@ import (
 
 // ErrorMaxTransferLimitReached defines error when transfer limit is reached.
 // Used for checking on exit and matching to correct exit code.
-var ErrorMaxTransferLimitReached = errors.New("Max transfer limit reached as set by --max-transfer")
+var ErrorMaxTransferLimitReached = errors.New("max transfer limit reached as set by --max-transfer")
 
 // ErrorMaxTransferLimitReachedFatal is returned from Read when the max
 // transfer limit is reached.

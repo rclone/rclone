@@ -328,7 +328,7 @@ func (f *Fs) encryptEntries(ctx context.Context, entries fs.DirEntries) (newEntr
 		case fs.Directory:
 			f.addDir(ctx, &newEntries, x)
 		default:
-			return nil, fmt.Errorf("Unknown object type %T", entry)
+			return nil, fmt.Errorf("unknown object type %T", entry)
 		}
 	}
 	return newEntries, nil

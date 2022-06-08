@@ -474,7 +474,7 @@ func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileIn
 
 func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size int64, options ...fs.OpenOption) (fs.Object, error) {
 	if size > int64(200e9) { // max size 200GB
-		return nil, errors.New("File too big, cant upload")
+		return nil, errors.New("file too big, can't upload")
 	} else if size == 0 {
 		return nil, fs.ErrorCantUploadEmptyFiles
 	}
@@ -497,7 +497,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 	if info.StatusCode != 0 {
-		return nil, fmt.Errorf("putUnchecked: api error: %d - %s", info.StatusCode, info.Message)
+		return nil, fmt.Errorf("putUnchecked api error: %d - %s", info.StatusCode, info.Message)
 	}
 	// we need to have a safe name for the upload to work
 	tmpName := "rcloneTemp" + random.String(8)
@@ -506,7 +506,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 	if len(upload.Files) != 1 {
-		return nil, errors.New("Upload: unexpected response")
+		return nil, errors.New("upload unexpected response")
 	}
 	match := f.IDRegexp.FindStringSubmatch(upload.Files[0].URL)
 

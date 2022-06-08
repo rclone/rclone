@@ -78,7 +78,7 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 	result := &response{}
 	err = json.NewDecoder(strings.NewReader(s)).Decode(result)
 	if result.AccessToken == "" && err == nil {
-		err = errors.New("No AccessToken in Response")
+		err = errors.New("no AccessToken in Response")
 	}
 	if err != nil {
 		return fmt.Errorf("jwtutil: failed to get token: %w", err)

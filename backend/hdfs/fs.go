@@ -92,7 +92,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.ServicePrincipalName != "" {
 		options.KerberosClient, err = getKerberosClient()
 		if err != nil {
-			return nil, fmt.Errorf("Problem with kerberos authentication: %s", err)
+			return nil, fmt.Errorf("problem with kerberos authentication: %w", err)
 		}
 		options.KerberosServicePrincipleName = opt.ServicePrincipalName
 

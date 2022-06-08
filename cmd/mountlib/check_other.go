@@ -17,7 +17,7 @@ import (
 func CheckMountEmpty(mountpoint string) error {
 	fp, err := os.Open(mountpoint)
 	if err != nil {
-		return fmt.Errorf("Can not open: %s: %w", mountpoint, err)
+		return fmt.Errorf("cannot open: %s: %w", mountpoint, err)
 	}
 	defer fs.CheckClose(fp, &err)
 
@@ -26,7 +26,7 @@ func CheckMountEmpty(mountpoint string) error {
 		return nil
 	}
 
-	const msg = "Directory is not empty, use --allow-non-empty to mount anyway: %s"
+	const msg = "directory is not empty, use --allow-non-empty to mount anyway: %s"
 	if err == nil {
 		return fmt.Errorf(msg, mountpoint)
 	}

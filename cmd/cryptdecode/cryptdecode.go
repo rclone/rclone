@@ -48,7 +48,7 @@ See the documentation on the [crypt](/crypt/) overlay for more info.
 				return err
 			}
 			if fsInfo.Name != "crypt" {
-				return errors.New("The remote needs to be of type \"crypt\"")
+				return errors.New("the remote needs to be of type \"crypt\"")
 			}
 			cipher, err := crypt.NewCipher(config)
 			if err != nil {

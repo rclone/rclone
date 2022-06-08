@@ -222,7 +222,7 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	// Separate the filename and size from the extension
 	extensionPos := strings.LastIndex(compressedFileName, ".")
 	if extensionPos == -1 {
-		return "", "", 0, errors.New("File name has no extension")
+		return "", "", 0, errors.New("file name has no extension")
 	}
 	extension = compressedFileName[extensionPos:]
 	nameWithSize := compressedFileName[:extensionPos]
@@ -231,11 +231,11 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	}
 	match := nameRegexp.FindStringSubmatch(nameWithSize)
 	if match == nil || len(match) != 3 {
-		return "", "", 0, errors.New("Invalid filename")
+		return "", "", 0, errors.New("invalid filename")
 	}
 	size, err := base64ToInt64(match[2])
 	if err != nil {
-		return "", "", 0, errors.New("Could not decode size")
+		return "", "", 0, errors.New("could not decode size")
 	}
 	return match[1], gzFileExt, size, nil
 }
@@ -304,7 +304,7 @@ func (f *Fs) processEntries(entries fs.DirEntries) (newEntries fs.DirEntries, er
 		case fs.Directory:
 			f.addDir(&newEntries, x)
 		default:
-			return nil, fmt.Errorf("Unknown object type %T", entry)
+			return nil, fmt.Errorf("unknown object type %T", entry)
 		}
 	}
 	return newEntries, nil
@@ -466,10 +466,10 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 		_ = os.Remove(tempFile.Name())
 	}()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create temporary local FS to spool file: %w", err)
+		return nil, fmt.Errorf("failed to create temporary local FS to spool file: %w", err)
 	}
 	if _, err = io.Copy(tempFile, in); err != nil {
-		return nil, fmt.Errorf("Failed to write temporary local file: %w", err)
+		return nil, fmt.Errorf("failed to write temporary local file: %w", err)
 	}
 	if _, err = tempFile.Seek(0, 0); err != nil {
 		return nil, err
@@ -720,7 +720,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if found && (oldObj.(*Object).meta.Mode != Uncompressed || compressible) {
 		err = oldObj.(*Object).Object.Remove(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("Could remove original object: %w", err)
+			return nil, fmt.Errorf("couldn't remove original object: %w", err)
 		}
 	}
 
@@ -729,7 +729,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if compressible {
 		wrapObj, err := operations.Move(ctx, f.Fs, nil, f.dataName(src.Remote(), newObj.size, compressible), newObj.Object)
 		if err != nil {
-			return nil, fmt.Errorf("Couldn't rename streamed Object.: %w", err)
+			return nil, fmt.Errorf("couldn't rename streamed object: %w", err)
 		}
 		newObj.Object = wrapObj
 	}

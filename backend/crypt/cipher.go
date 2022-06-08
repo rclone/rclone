@@ -96,7 +96,7 @@ func NewNameEncryptionMode(s string) (mode NameEncryptionMode, err error) {
 	case "obfuscate":
 		mode = NameEncryptionObfuscated
 	default:
-		err = fmt.Errorf("Unknown file name encryption mode %q", s)
+		err = fmt.Errorf("unknown file name encryption mode %q", s)
 	}
 	return mode, err
 }
@@ -162,7 +162,7 @@ func NewNameEncoding(s string) (enc fileNameEncoding, err error) {
 	case "base32768":
 		enc = base32768.SafeEncoding
 	default:
-		err = fmt.Errorf("Unknown file name encoding mode %q", s)
+		err = fmt.Errorf("unknown file name encoding mode %q", s)
 	}
 	return enc, err
 }

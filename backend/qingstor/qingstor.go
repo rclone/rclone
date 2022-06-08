@@ -253,7 +253,7 @@ func qsServiceConnection(ctx context.Context, opt *Options) (*qs.Service, error)
 		_protocol, _host, _port, err := qsParseEndpoint(endpoint)
 
 		if err != nil {
-			return nil, fmt.Errorf("The endpoint \"%s\" format error", endpoint)
+			return nil, fmt.Errorf("the endpoint \"%s\" format error", endpoint)
 		}
 
 		if _protocol != "" {
