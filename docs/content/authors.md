@@ -602,3 +602,4 @@ put them back in again.` >}}
   * Rob Pickerill <r.pickerill@gmail.com>
   * Andrey <to.merge@gmail.com>
   * Eric Wolf <19wolf@gmail.com>
+  * Nick <nick.naumann@mailbox.tu-dresden.de>
