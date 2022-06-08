@@ -604,3 +604,4 @@ put them back in again.` >}}
   * Eric Wolf <19wolf@gmail.com>
   * Nick <nick.naumann@mailbox.tu-dresden.de>
   * Jason Zheng <jszheng17@gmail.com>
+  * Matthew Vernon <mvernon@wikimedia.org>
