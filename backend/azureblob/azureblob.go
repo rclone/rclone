@@ -1763,7 +1763,7 @@ func (o *Object) SetTier(tier string) error {
 	blob := o.getBlobReference()
 	ctx := context.Background()
 	err := o.fs.pacer.Call(func() (bool, error) {
-		_, err := blob.SetTier(ctx, desiredAccessTier, azblob.LeaseAccessConditions{})
+		_, err := blob.SetTier(ctx, desiredAccessTier, azblob.LeaseAccessConditions{}, azblob.RehydratePriorityStandard)
 		return o.fs.shouldRetry(ctx, err)
 	})
 

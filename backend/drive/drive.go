@@ -18,6 +18,7 @@ import (
 	"mime"
 	"net/http"
 	"path"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -3241,7 +3242,7 @@ This will return a JSON list of objects like this
 
 With the -o config parameter it will output the list in a format
 suitable for adding to a config file to make aliases for all the
-drives found.
+drives found and a combined drive.
 
     [My Drive]
     type = alias
@@ -3251,10 +3252,15 @@ drives found.
     type = alias
     remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
 
-Adding this to the rclone config file will cause those team drives to
-be accessible with the aliases shown. This may require manual editing
-of the names.
+    [AllDrives]
+    type = combine
+    remote = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
+Adding this to the rclone config file will cause those team drives to
+be accessible with the aliases shown. Any illegal charactes will be
+substituted with "_" and duplicate names will have numbers suffixed.
+It will also add a remote called AllDrives which shows all the shared
+drives combined into one directory tree.
 `,
 }, {
 	Name:  "untrash",
@@ -3370,14 +3376,30 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if err != nil {
 			return nil, err
 		}
+		re := regexp.MustCompile(`[^\w_. -]+`)
 		if _, ok := opt["config"]; ok {
 			lines := []string{}
-			for _, drive := range drives {
+			upstreams := []string{}
+			names := make(map[string]struct{}, len(drives))
+			for i, drive := range drives {
+				name := re.ReplaceAllString(drive.Name, "_")
+				for {
+					if _, found := names[name]; !found {
+						break
+					}
+					name += fmt.Sprintf("-%d", i)
+				}
+				names[name] = struct{}{}
 				lines = append(lines, "")
-				lines = append(lines, fmt.Sprintf("[%s]", drive.Name))
+				lines = append(lines, fmt.Sprintf("[%s]", name))
 				lines = append(lines, fmt.Sprintf("type = alias"))
 				lines = append(lines, fmt.Sprintf("remote = %s,team_drive=%s,root_folder_id=:", f.name, drive.Id))
+				upstreams = append(upstreams, fmt.Sprintf(`"%s=%s:"`, name, name))
 			}
+			lines = append(lines, "")
+			lines = append(lines, fmt.Sprintf("[AllDrives]"))
+			lines = append(lines, fmt.Sprintf("type = combine"))
+			lines = append(lines, fmt.Sprintf("upstreams = %s", strings.Join(upstreams, " ")))
 			return lines, nil
 		}
 		return drives, nil

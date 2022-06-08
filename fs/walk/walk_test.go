@@ -736,13 +736,13 @@ b/c/d/
   e
 `, nil, "", -1, "ign", true},
 	} {
-		fi.Opt.ExcludeFile = test.excludeFile
+		fi.Opt.ExcludeFile = []string{test.excludeFile}
 		r, err := walkRDirTree(context.Background(), nil, test.root, test.includeAll, test.level, makeListRCallback(test.entries, test.err))
 		assert.Equal(t, test.err, err, fmt.Sprintf("%+v", test))
 		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
 	}
 	// Set to default value, to avoid side effects
-	fi.Opt.ExcludeFile = ""
+	fi.Opt.ExcludeFile = nil
 }
 
 func TestListType(t *testing.T) {

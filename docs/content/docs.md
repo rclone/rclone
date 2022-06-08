@@ -37,6 +37,7 @@ See the following for detailed instructions for
   * [Chunker](/chunker/) - transparently splits large files for other remotes
   * [Citrix ShareFile](/sharefile/)
   * [Compress](/compress/)
+  * [Combine](/combine/)
   * [Crypt](/crypt/) - to encrypt other remotes
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
   * [Digi Storage](/koofr/#digi-storage)
@@ -2135,6 +2136,7 @@ For the filtering options
   * `--filter-from`
   * `--exclude`
   * `--exclude-from`
+  * `--exclude-if-present`
   * `--include`
   * `--include-from`
   * `--files-from`
