@@ -72,28 +72,28 @@ func (o *RangeOption) Header() (key string, value string) {
 func ParseRangeOption(s string) (po *RangeOption, err error) {
 	const preamble = "bytes="
 	if !strings.HasPrefix(s, preamble) {
-		return nil, errors.New("Range: header invalid: doesn't start with " + preamble)
+		return nil, errors.New("range: header invalid: doesn't start with " + preamble)
 	}
 	s = s[len(preamble):]
 	if strings.ContainsRune(s, ',') {
-		return nil, errors.New("Range: header invalid: contains multiple ranges which isn't supported")
+		return nil, errors.New("range: header invalid: contains multiple ranges which isn't supported")
 	}
 	dash := strings.IndexRune(s, '-')
 	if dash < 0 {
-		return nil, errors.New("Range: header invalid: contains no '-'")
+		return nil, errors.New("range: header invalid: contains no '-'")
 	}
 	start, end := strings.TrimSpace(s[:dash]), strings.TrimSpace(s[dash+1:])
 	o := RangeOption{Start: -1, End: -1}
 	if start != "" {
 		o.Start, err = strconv.ParseInt(start, 10, 64)
 		if err != nil || o.Start < 0 {
-			return nil, errors.New("Range: header invalid: bad start")
+			return nil, errors.New("range: header invalid: bad start")
 		}
 	}
 	if end != "" {
 		o.End, err = strconv.ParseInt(end, 10, 64)
 		if err != nil || o.End < 0 {
-			return nil, errors.New("Range: header invalid: bad end")
+			return nil, errors.New("range: header invalid: bad end")
 		}
 	}
 	return &o, nil

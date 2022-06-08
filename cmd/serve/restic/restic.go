@@ -139,7 +139,7 @@ with a path of ` + "`/<username>/`" + `.
 			s := NewServer(f, &httpflags.Opt)
 			if stdio {
 				if terminal.IsTerminal(int(os.Stdout.Fd())) {
-					return errors.New("Refusing to run HTTP2 server directly on a terminal, please let restic start rclone")
+					return errors.New("refusing to run HTTP2 server directly on a terminal, please let restic start rclone")
 				}
 
 				conn := &StdioConn{

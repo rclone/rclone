@@ -487,7 +487,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		protocol = "ftps://"
 	}
 	if opt.TLS && opt.ExplicitTLS {
-		return nil, errors.New("Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
+		return nil, errors.New("implicit TLS and explicit TLS are mutually incompatible, please revise your config")
 	}
 	var tlsConfig *tls.Config
 	if opt.TLS || opt.ExplicitTLS {
@@ -718,7 +718,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	case <-timer.C:
 		// if timer fired assume no error but connection dead
 		fs.Errorf(f, "Timeout when waiting for List")
-		return nil, errors.New("Timeout when waiting for List")
+		return nil, errors.New("timeout when waiting for List")
 	}
 
 	// Annoyingly FTP returns success for a directory which

@@ -62,7 +62,7 @@ func TestNewFilterForbiddenMixOfFilesFromAndFilterRule(t *testing.T) {
 
 	_, err := NewFilter(&Opt)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "The usage of --files-from overrides all other filters")
+	require.Contains(t, err.Error(), "the usage of --files-from overrides all other filters")
 }
 
 func TestNewFilterForbiddenMixOfFilesFromRawAndFilterRule(t *testing.T) {
@@ -85,7 +85,7 @@ func TestNewFilterForbiddenMixOfFilesFromRawAndFilterRule(t *testing.T) {
 
 	_, err := NewFilter(&Opt)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "The usage of --files-from-raw overrides all other filters")
+	require.Contains(t, err.Error(), "the usage of --files-from-raw overrides all other filters")
 }
 
 func TestNewFilterWithFilesFromAlone(t *testing.T) {

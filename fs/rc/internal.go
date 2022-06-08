@@ -475,7 +475,7 @@ func rcRunCommand(ctx context.Context, in Params) (out Params, err error) {
 		cmd.Stdout = httpResponse
 		cmd.Stderr = httpResponse
 	} else {
-		return nil, fmt.Errorf("Unknown returnType %q", returnType)
+		return nil, fmt.Errorf("unknown returnType %q", returnType)
 	}
 
 	err = cmd.Run()

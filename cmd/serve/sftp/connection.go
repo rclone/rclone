@@ -74,7 +74,7 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		}
 		usage, err := about(ctx)
 		if err != nil {
-			return fmt.Errorf("About failed: %w", err)
+			return fmt.Errorf("about failed: %w", err)
 		}
 		total, used, free := int64(-1), int64(-1), int64(-1)
 		if usage.Total != nil {

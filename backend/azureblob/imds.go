@@ -119,7 +119,7 @@ func GetMSIToken(ctx context.Context, identity *userMSI) (adal.Token, error) {
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return result, fmt.Errorf("Couldn't read IMDS response: %w", err)
+		return result, fmt.Errorf("couldn't read IMDS response: %w", err)
 	}
 	// Remove BOM, if any. azcopy does this so I'm following along.
 	b = bytes.TrimPrefix(b, []byte("\xef\xbb\xbf"))
@@ -130,7 +130,7 @@ func GetMSIToken(ctx context.Context, identity *userMSI) (adal.Token, error) {
 	// storage API call.
 	err = json.Unmarshal(b, &result)
 	if err != nil {
-		return result, fmt.Errorf("Couldn't unmarshal IMDS response: %w", err)
+		return result, fmt.Errorf("couldn't unmarshal IMDS response: %w", err)
 	}
 
 	return result, nil

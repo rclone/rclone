@@ -1303,7 +1303,7 @@ func (o *Object) getSegmentsDlo(ctx context.Context) (segmentsContainer string, 
 	}
 	delimiter := strings.Index(dirManifest, "/")
 	if len(dirManifest) == 0 || delimiter < 0 {
-		err = errors.New("Missing or wrong structure of manifest of Dynamic large object")
+		err = errors.New("missing or wrong structure of manifest of Dynamic large object")
 		return
 	}
 	return dirManifest[:delimiter], dirManifest[delimiter+1:], nil

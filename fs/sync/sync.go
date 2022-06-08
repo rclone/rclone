@@ -825,7 +825,7 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 
 // errorMaxDurationReached defines error when transfer duration is reached
 // Used for checking on exit and matching to correct exit code.
-var errorMaxDurationReached = fserrors.FatalError(errors.New("Max transfer duration reached as set by --max-duration"))
+var errorMaxDurationReached = fserrors.FatalError(errors.New("max transfer duration reached as set by --max-duration"))
 
 // Syncs fsrc into fdst
 //

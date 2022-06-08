@@ -211,7 +211,7 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 			bodyString = err.Error()
 		}
 		bodyString = strings.TrimSpace(bodyString)
-		return nil, fmt.Errorf("Failed to read rc response: %s: %s", resp.Status, bodyString)
+		return nil, fmt.Errorf("failed to read rc response: %s: %s", resp.Status, bodyString)
 	}
 
 	// Parse output

@@ -886,7 +886,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// 1- rename source
 	err = srcFs.renameDir(ctx, srcLibraryID, srcPath, tempName)
 	if err != nil {
-		return fmt.Errorf("Cannot rename source directory to a temporary name: %w", err)
+		return fmt.Errorf("cannot rename source directory to a temporary name: %w", err)
 	}
 
 	// 2- move source to destination
@@ -900,7 +900,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	// 3- rename destination back to source name
 	err = f.renameDir(ctx, dstLibraryID, path.Join(dstDir, tempName), dstName)
 	if err != nil {
-		return fmt.Errorf("Cannot rename temporary directory to destination name: %w", err)
+		return fmt.Errorf("cannot rename temporary directory to destination name: %w", err)
 	}
 
 	return nil
@@ -923,7 +923,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // CleanUp the trash in the Fs
 func (f *Fs) CleanUp(ctx context.Context) error {
 	if f.libraryName == "" {
-		return errors.New("Cannot clean up at the root of the seafile server: please select a library to clean up")
+		return errors.New("cannot clean up at the root of the seafile server, please select a library to clean up")
 	}
 	libraryID, err := f.getLibraryID(ctx, f.libraryName)
 	if err != nil {
@@ -972,7 +972,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	libraryName, filePath := f.splitPath(remote)
 	if libraryName == "" {
 		// We cannot share the whole seafile server, we need at least a library
-		return "", errors.New("Cannot share the root of the seafile server. Please select a library to share")
+		return "", errors.New("cannot share the root of the seafile server, please select a library to share")
 	}
 	libraryID, err := f.getLibraryID(ctx, libraryName)
 	if err != nil {

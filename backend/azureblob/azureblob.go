@@ -539,10 +539,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	err = checkUploadChunkSize(opt.ChunkSize)
 	if err != nil {
-		return nil, fmt.Errorf("azure: chunk size: %w", err)
+		return nil, fmt.Errorf("chunk size: %w", err)
 	}
 	if opt.ListChunkSize > maxListChunkSize {
-		return nil, fmt.Errorf("azure: blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
+		return nil, fmt.Errorf("blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
 	}
 	if opt.Endpoint == "" {
 		opt.Endpoint = storageDefaultBaseURL
@@ -551,12 +551,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.AccessTier == "" {
 		opt.AccessTier = string(defaultAccessTier)
 	} else if !validateAccessTier(opt.AccessTier) {
-		return nil, fmt.Errorf("Azure Blob: Supported access tiers are %s, %s and %s",
+		return nil, fmt.Errorf("supported access tiers are %s, %s and %s",
 			string(azblob.AccessTierHot), string(azblob.AccessTierCool), string(azblob.AccessTierArchive))
 	}
 
 	if !validatePublicAccess((opt.PublicAccess)) {
-		return nil, fmt.Errorf("Azure Blob: Supported public access level are %s and %s",
+		return nil, fmt.Errorf("supported public access level are %s and %s",
 			string(azblob.PublicAccessBlob), string(azblob.PublicAccessContainer))
 	}
 
@@ -598,7 +598,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case opt.UseEmulator:
 		credential, err := azblob.NewSharedKeyCredential(emulatorAccount, emulatorAccountKey)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to parse credentials: %w", err)
+			return nil, fmt.Errorf("failed to parse credentials: %w", err)
 		}
 		u, err = url.Parse(emulatorBlobEndpoint)
 		if err != nil {
@@ -644,7 +644,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		})
 
 		if err != nil {
-			return nil, fmt.Errorf("Failed to acquire MSI token: %w", err)
+			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
 		}
 
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
@@ -679,7 +679,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case opt.Account != "" && opt.Key != "":
 		credential, err := azblob.NewSharedKeyCredential(opt.Account, opt.Key)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to parse credentials: %w", err)
+			return nil, fmt.Errorf("failed to parse credentials: %w", err)
 		}
 
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
@@ -699,7 +699,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		parts := azblob.NewBlobURLParts(*u)
 		if parts.ContainerName != "" {
 			if f.rootContainer != "" && parts.ContainerName != f.rootContainer {
-				return nil, errors.New("Container name in SAS URL and container provided in command do not match")
+				return nil, errors.New("container name in SAS URL and container provided in command do not match")
 			}
 			containerURL := azblob.NewContainerURL(*u, pipeline)
 			f.cntURLcache[parts.ContainerName] = &containerURL
@@ -727,7 +727,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		pipe := f.newPipeline(azblob.NewTokenCredential("", tokenRefresher), options)
 		serviceURL = azblob.NewServiceURL(*u, pipe)
 	default:
-		return nil, errors.New("No authentication method configured")
+		return nil, errors.New("no authentication method configured")
 	}
 	f.svcURL = &serviceURL
 
@@ -1337,7 +1337,7 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	}
 	data, err := base64.StdEncoding.DecodeString(o.md5)
 	if err != nil {
-		return "", fmt.Errorf("Failed to decode Content-MD5: %q: %w", o.md5, err)
+		return "", fmt.Errorf("failed to decode Content-MD5: %q: %w", o.md5, err)
 	}
 	return hex.EncodeToString(data), nil
 }
@@ -1527,7 +1527,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var offset int64
 	var count int64
 	if o.AccessTier() == azblob.AccessTierArchive {
-		return nil, fmt.Errorf("Blob in archive tier, you need to set tier to hot or cool first")
+		return nil, fmt.Errorf("blob in archive tier, you need to set tier to hot or cool first")
 	}
 	fs.FixRangeOption(options, o.size)
 	for _, option := range options {
@@ -1752,7 +1752,7 @@ func (o *Object) AccessTier() azblob.AccessTierType {
 // SetTier performs changing object tier
 func (o *Object) SetTier(tier string) error {
 	if !validateAccessTier(tier) {
-		return fmt.Errorf("Tier %s not supported by Azure Blob Storage", tier)
+		return fmt.Errorf("tier %s not supported by Azure Blob Storage", tier)
 	}
 
 	// Check if current tier already matches with desired tier
@@ -1768,7 +1768,7 @@ func (o *Object) SetTier(tier string) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("Failed to set Blob Tier: %w", err)
+		return fmt.Errorf("failed to set Blob Tier: %w", err)
 	}
 
 	// Set access tier on local object also, this typically

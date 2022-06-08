@@ -294,7 +294,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 			path, ok := f.dirCache.GetInv(directoryID)
 
 			if !ok {
-				return nil, errors.New("Cannot find dir in dircache")
+				return nil, errors.New("cannot find dir in dircache")
 			}
 
 			return f.newObjectFromFile(ctx, path, file), nil

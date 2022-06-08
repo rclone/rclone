@@ -1199,7 +1199,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			return
 		}
 		if len(listRes.Links) == 0 {
-			err = errors.New("Dropbox says the sharing link already exists, but list came back empty")
+			err = errors.New("sharing link already exists, but list came back empty")
 			return
 		}
 		linkRes = listRes.Links[0]
@@ -1211,7 +1211,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		case *sharing.FolderLinkMetadata:
 			link = res.Url
 		default:
-			err = fmt.Errorf("Don't know how to extract link, response has unknown format: %T", res)
+			err = fmt.Errorf("don't know how to extract link, response has unknown format: %T", res)
 		}
 	}
 	return

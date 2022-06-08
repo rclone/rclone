@@ -56,7 +56,7 @@ func cleanFs(ctx context.Context, remote string, cleanup bool) error {
 			}
 			err = operations.Purge(ctx, dir, "")
 			if err != nil {
-				err = fmt.Errorf("Purge failed: %w", err)
+				err = fmt.Errorf("purge failed: %w", err)
 				lastErr = err
 				fs.Errorf(dir, "%v", err)
 				return nil

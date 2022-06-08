@@ -351,9 +351,9 @@ func NewFsFromOptions(ctx context.Context, name, root string, opt *Options) (ff 
 	}
 	if f.mountID == "" {
 		if opt.MountID == "" {
-			return nil, errors.New("Failed to find primary mount")
+			return nil, errors.New("failed to find primary mount")
 		}
-		return nil, errors.New("Failed to find mount " + opt.MountID)
+		return nil, errors.New("failed to find mount " + opt.MountID)
 	}
 	rootFile, err := f.client.FilesInfo(f.mountID, f.opt.Enc.FromStandardPath("/"+f.root))
 	if err == nil && rootFile.Type != "dir" {

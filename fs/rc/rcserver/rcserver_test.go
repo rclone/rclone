@@ -497,7 +497,7 @@ func TestRCWithAuth(t *testing.T) {
 		ContentType: "application/x-www-form-urlencoded",
 		Status:      http.StatusInternalServerError,
 		Expected: `{
-	"error": "Unknown returnType \"POTATO\"",
+	"error": "unknown returnType \"POTATO\"",
 	"input": {
 		"command": "version",
 		"returnType": "POTATO"

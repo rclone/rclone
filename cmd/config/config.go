@@ -402,7 +402,7 @@ To reconnect use "rclone config reconnect".
 		}
 		err := doDisconnect(context.Background())
 		if err != nil {
-			return fmt.Errorf("Disconnect call failed: %w", err)
+			return fmt.Errorf("disconnect call failed: %w", err)
 		}
 		return nil
 	},

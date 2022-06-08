@@ -184,7 +184,7 @@ func (u *uploader) upload() error {
 		fs.Debugf(u, "Uploading as single part object to QingStor")
 		return u.singlePartUpload(reader, u.readerPos)
 	} else if err != nil {
-		return fmt.Errorf("read upload data failed: %s", err)
+		return fmt.Errorf("read upload data failed: %w", err)
 	}
 
 	fs.Debugf(u, "Uploading as multi-part object to QingStor")

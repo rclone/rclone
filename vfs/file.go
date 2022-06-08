@@ -400,7 +400,7 @@ func (f *File) _applyPendingModTime() error {
 	defer func() { f.pendingModTime = time.Time{} }()
 
 	if f.o == nil {
-		return errors.New("Cannot apply ModTime, file object is not available")
+		return errors.New("cannot apply ModTime, file object is not available")
 	}
 
 	dt := f.pendingModTime.Sub(f.o.ModTime(context.Background()))

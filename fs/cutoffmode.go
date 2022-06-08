@@ -38,7 +38,7 @@ func (m *CutoffMode) Set(s string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("Unknown cutoff mode %q", s)
+	return fmt.Errorf("unknown cutoff mode %q", s)
 }
 
 // Type of the value
@@ -50,7 +50,7 @@ func (m *CutoffMode) Type() string {
 func (m *CutoffMode) UnmarshalJSON(in []byte) error {
 	return UnmarshalJSONFlag(in, m, func(i int64) error {
 		if i < 0 || i >= int64(len(cutoffModeToString)) {
-			return fmt.Errorf("Out of range cutoff mode %d", i)
+			return fmt.Errorf("out of range cutoff mode %d", i)
 		}
 		*m = (CutoffMode)(i)
 		return nil
