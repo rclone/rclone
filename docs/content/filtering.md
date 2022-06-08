@@ -131,7 +131,11 @@ The regular expressions used are as defined in the [Go regular
 expression reference](https://golang.org/pkg/regexp/syntax/). Regular
 expressions should be enclosed in `{{` `}}`. They will match only the
 last path segment if the glob doesn't start with `/` or the whole path
-name if it does.
+name if it does. Note that rclone does not attempt to parse the
+supplied regular expression, meaning that using any regular expression
+filter will prevent rclone from using [directory filter rules](#directory_filter),
+as it will instead check every path against
+the supplied regular expression(s).
 
 Here is how the `{{regexp}}` is transformed into an full regular
 expression to match the entire path:
@@ -247,7 +251,7 @@ currently a means provided to pass regular expression filter options into
 rclone directly though character class filter rules contain character
 classes. [Go regular expression reference](https://golang.org/pkg/regexp/syntax/)
 
-### How filter rules are applied to directories
+### How filter rules are applied to directories {#directory_filter}
 
 Rclone commands are applied to path/file names not
 directories. The entire contents of a directory can be matched
@@ -262,6 +266,10 @@ Rclone commands can use directory filter rules to determine whether they
 recurse into subdirectories. This potentially optimises access to a remote
 by avoiding listing unnecessary directories. Whether optimisation is
 desirable depends on the specific filter rules and source remote content.
+
+If any [regular expression filters](#regexp) are in use, then no
+directory recursion optimisation is possible, as rclone must check
+every path against the supplied regular expression(s).
 
 Directory recursion optimisation occurs if either:
 
