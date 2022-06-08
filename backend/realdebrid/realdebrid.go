@@ -72,6 +72,9 @@ var (
 	}
 )
 
+//Global lists of recieved content.
+//Realdebrid content is provided in pages with 100 items per page.
+//To limit api calls all pages are stored here and are only updated on changes in the total length
 var cached []api.Item
 var torrents []api.Item
 
@@ -81,15 +84,9 @@ func init() {
 		Name:        "realdebrid",
 		Description: "real-debrid.com",
 		NewFs:       NewFs,
-		//Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-		//	return oauthutil.ConfigOut("", &oauthutil.Options{
-		//		OAuth2Config: oauthConfig,
-		//	})
-		//},
 		Options: []fs.Option{{
-			Name: "api_key",
-			Help: `please provide your RealDebrid API key.`,
-			//Hide:    fs.OptionHideBoth,
+			Name:    "api_key",
+			Help:    `please provide your RealDebrid API key.`,
 			Default: "",
 		}, {
 			Name:     "download_mode",
@@ -376,30 +373,6 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (pathIDOut strin
 
 // CreateDir makes a directory with pathID as parent and name leaf
 func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, err error) {
-	// fs.Debugf(f, "CreateDir(%q, %q)\n", pathID, leaf)
-	//var resp *http.Response
-	//var info api.FolderCreateResponse
-	//opts := rest.Opts{
-	//	Method:     "POST",
-	//	Path:       "/folder/create",
-	//	Parameters: f.baseParams(),
-	//	MultipartParams: url.Values{
-	//		"name":      {f.opt.Enc.FromStandardName(leaf)},
-	//		"parent_id": {pathID},
-	//	},
-	//}
-	//err = f.pacer.Call(func() (bool, error) {
-	//	resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-	//	return shouldRetry(ctx, resp, err)
-	//})
-	//if err != nil {
-	//	//fmt.Printf("...Error %v\n", err)
-	//	return "", fmt.Errorf("CreateDir http: %w", err)
-	//}
-	//if err = info.AsErr(); err != nil {
-	//	return "", fmt.Errorf("CreateDir: %w", err)
-	//}
-	// fmt.Printf("...Id %q\n", *info.Id)
 	return "", nil //return info.ID, nil
 }
 
@@ -929,26 +902,6 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
-	//var resp *http.Response
-	//var info api.AccountInfoResponse
-	//opts := rest.Opts{
-	//	Method:     "POST",
-	//	Path:       "/account/info",
-	//	Parameters: f.baseParams(),
-	//}
-	//err = f.pacer.Call(func() (bool, error) {
-	//	resp, err = f.srv.CallJSON(ctx, &opts, nil, &info)
-	//	return shouldRetry(ctx, resp, err)
-	//})
-	//if err != nil {
-	//	return nil, fmt.Errorf("CreateDir http: %w", err)
-	//}
-	//if err = info.AsErr(); err != nil {
-	//	return nil, fmt.Errorf("CreateDir: %w", err)
-	//}
-	//usage = &fs.Usage{
-	//	Used: fs.NewUsageValue(int64(info.SpaceUsed)),
-	//}
 	return usage, nil
 }
 
