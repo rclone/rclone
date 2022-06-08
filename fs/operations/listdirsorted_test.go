@@ -81,7 +81,7 @@ func TestListDirSorted(t *testing.T) {
 	assert.Equal(t, "sub dir/sub sub dir/", str(1))
 
 	// testing ignore file
-	fi.Opt.ExcludeFile = ".ignore"
+	fi.Opt.ExcludeFile = []string{".ignore"}
 
 	items, err = list.DirSorted(context.Background(), r.Fremote, false, "sub dir")
 	require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestListDirSorted(t *testing.T) {
 	assert.Equal(t, "sub dir/ignore dir/.ignore", str(0))
 	assert.Equal(t, "sub dir/ignore dir/should be ignored", str(1))
 
-	fi.Opt.ExcludeFile = ""
+	fi.Opt.ExcludeFile = nil
 	items, err = list.DirSorted(context.Background(), r.Fremote, false, "sub dir/ignore dir")
 	require.NoError(t, err)
 	require.Len(t, items, 2)

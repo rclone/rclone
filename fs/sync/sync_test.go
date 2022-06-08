@@ -1452,7 +1452,7 @@ func TestSyncOverlapWithFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, fi.Add(false, "/rclone-sync-test/"))
 	require.NoError(t, fi.Add(false, "*/layer2/"))
-	fi.Opt.ExcludeFile = ".ignore"
+	fi.Opt.ExcludeFile = []string{".ignore"}
 	ctx = filter.ReplaceConfig(ctx, fi)
 
 	subRemoteName := r.FremoteName + "/rclone-sync-test"

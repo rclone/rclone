@@ -47,7 +47,7 @@ These flags are available for every command.
       --error-on-no-transfer                 Sets exit code 9 if no files are transferred, useful in scripts
       --exclude stringArray                  Exclude files matching pattern
       --exclude-from stringArray             Read exclude patterns from file (use - to read from stdin)
-      --exclude-if-present string            Exclude directories if filename is present
+      --exclude-if-present stringArray       Exclude directories if filename is present
       --expect-continue-timeout duration     Timeout when using expect / 100-continue in HTTP (default 1s)
       --fast-list                            Use recursive list if available; uses more memory but fewer transactions
       --files-from stringArray               Read list of source-file names from file (use - to read from stdin)
