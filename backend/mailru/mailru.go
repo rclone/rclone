@@ -2277,7 +2277,7 @@ type serverPool struct {
 	pool      pendingServerMap
 	mu        sync.Mutex
 	path      string
-	expirySec time.Duration
+	expirySec int
 	fs        *Fs
 }
 
@@ -2384,7 +2384,7 @@ func (p *serverPool) addServer(url string, now time.Time) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	expiry := now.Add(p.expirySec * time.Second)
+	expiry := now.Add(time.Duration(p.expirySec) * time.Second)
 
 	expiryStr := []byte("-")
 	if p.fs.ci.LogLevel >= fs.LogLevelInfo {
