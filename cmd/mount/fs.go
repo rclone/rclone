@@ -102,5 +102,6 @@ func translateError(err error) error {
 	case vfs.EINVAL:
 		return fuse.Errno(syscall.EINVAL)
 	}
+	fs.Errorf(nil, "IO error: %v", err)
 	return err
 }
