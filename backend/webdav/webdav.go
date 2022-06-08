@@ -124,6 +124,22 @@ You can set multiple headers, e.g. '"Cookie","name=value","Authorization","xxx"'
 `,
 			Default:  fs.CommaSepList{},
 			Advanced: true,
+		}, {
+			Name: "base_path",
+			Help: `Base path of expected replies
+
+Normally WebDAV servers return the files they are listing under the
+url path as specified above. However some WebDAV servers return files
+with URLs that are not under the endpoint URL. This causes rclone to
+get confused and return errors like
+
+    Item with unknown path received: "/remote.php/webdav/folder1/", "/elsewhere/remote.php/webdav/folder1/"
+
+errors. If that is the case, then set "base_path" to the path
+specified in the error message up to the first item, in the above
+example "/elsewhere/remote.php/webdav/".
+`,
+			Advanced: true,
 		}},
 	})
 }
@@ -138,6 +154,7 @@ type Options struct {
 	BearerTokenCommand string               `config:"bearer_token_command"`
 	Enc                encoder.MultiEncoder `config:"encoding"`
 	Headers            fs.CommaSepList      `config:"headers"`
+	BasePath           string               `config:"base_path"`
 }
 
 // Fs represents a remote webdav
@@ -693,6 +710,10 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 	if err != nil {
 		return false, fmt.Errorf("couldn't join URL: %w", err)
 	}
+	basePath := baseURL.Path
+	if f.opt.BasePath != "" {
+		basePath = f.opt.BasePath
+	}
 	for i := range result.Responses {
 		item := &result.Responses[i]
 		isDir := itemIsDir(item)
@@ -707,11 +728,11 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 		if isDir {
 			u.Path = addSlash(u.Path)
 		}
-		if !strings.HasPrefix(u.Path, baseURL.Path) {
-			fs.Debugf(nil, "Item with unknown path received: %q, %q", u.Path, baseURL.Path)
+		if !strings.HasPrefix(u.Path, basePath) {
+			fs.Debugf(nil, "Item with unknown path received: %q, %q", u.Path, basePath)
 			continue
 		}
-		subPath := u.Path[len(baseURL.Path):]
+		subPath := u.Path[len(basePath):]
 		if f.opt.Enc != encoder.EncodeZero {
 			subPath = f.opt.Enc.ToStandardPath(subPath)
 		}
