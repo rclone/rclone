@@ -50,14 +50,6 @@ type Item struct {
 	TorrentHash     string       `json:"hash,omitempty"`
 }
 
-type RestrictedItem struct {
-	ID       int    `json:"id"`                 //`json:"id"`
-	Link     string `json:"download,omitempty"` //`json:"link,omitempty"`
-	Name     string `json:"path"`               //`json:"name"`
-	Size     int64  `json:"bytes"`              //`json:"size,omitempty"`
-	Selected int    `json:"selected"`
-}
-
 // Breadcrumb is part the breadcrumb trail for a file or folder.  It
 // is returned as part of folder/list if required
 type Breadcrumb struct {
