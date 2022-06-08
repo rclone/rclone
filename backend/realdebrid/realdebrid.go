@@ -1220,9 +1220,9 @@ func (o *Object) Remove(ctx context.Context) error {
 	}
 	if o.ParentID != "" {
 		return o.fs.remove(ctx, o.id, o.ParentID)
-	} else {
-		return o.fs.remove(ctx, o.id)
 	}
+	return o.fs.remove(ctx, o.id)
+	
 }
 
 // MimeType of an Object if known, "" otherwise
