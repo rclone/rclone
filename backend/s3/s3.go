@@ -60,7 +60,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, IBM COS, Lyve Cloud, Minio, Netease, Qiniu Cloud, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
@@ -107,6 +107,9 @@ func init() {
 			}, {
 				Value: "RackCorp",
 				Help:  "RackCorp Object Storage",
+			}, {
+				Value: "QiniuCloud",
+				Help:  "Qiniu Cloud Object Storage (KODO)",
 			}, {
 				Value: "Scaleway",
 				Help:  "Scaleway Object Storage",
@@ -230,6 +233,30 @@ func init() {
 				Help:  "AWS GovCloud (US) Region.\nNeeds location constraint us-gov-west-1.",
 			}},
 		}, {
+			// QiniuCloud regions: https://developer.qiniu.com/kodo/4088/s3-access-domainname
+			Name:     "region",
+			Help:     "Region to connect to. - the location where your bucket will be created and your data stored.\n",
+			Provider: "QiniuCloud",
+			Examples: []fs.OptionExample{{
+				Value: "cn-east-1",
+				Help:  "China East 1",
+			}, {
+				Value: "cn-east-2",
+				Help:  "China East 2 (Zhejiang)",
+			}, {
+				Value: "cn-north-1",
+				Help:  "China North 1",
+			}, {
+				Value: "cn-south-1",
+				Help:  "China South 1",
+			}, {
+				Value: "us-north-1",
+				Help:  "US North 1",
+			}, {
+				Value: "ap-southeast-1",
+				Help:  "Southeast Asia 1 (Singapore)",
+			}},
+		}, {
 			Name:     "region",
 			Help:     "region - the location where your bucket will be created and your data stored.\n",
 			Provider: "RackCorp",
@@ -316,7 +343,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,QiniuCloud,RackCorp,Scaleway,Storj,TencentCOS",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -709,6 +736,30 @@ func init() {
 				Help:  "Middle East 1 (Dubai)",
 			}},
 		}, {
+			// QiniuCloud endpoints: https://developer.qiniu.com/kodo/4088/s3-access-domainname
+			Name:     "endpoint",
+			Help:     "Endpoint for Qiniu Cloud Object Storage (KODO).",
+			Provider: "QiniuCloud",
+			Examples: []fs.OptionExample{{
+				Value: "s3-cn-east-1.qiniucs.com",
+				Help:  "China East 1 Endpoint",
+			}, {
+				Value: "s3-cn-east-2.qiniucs.com",
+				Help:  "China East 2 (Zhejiang) Endpoint",
+			}, {
+				Value: "s3-cn-north-1.qiniucs.com",
+				Help:  "China North 1 Endpoint",
+			}, {
+				Value: "s3-cn-south-1.qiniucs.com",
+				Help:  "China South 1 Endpoint",
+			}, {
+				Value: "s3-us-north-1.qiniucs.com",
+				Help:  "US North 1 Endpoint",
+			}, {
+				Value: "s3-ap-southeast-1.qiniucs.com",
+				Help:  "Southeast Asia 1 (Singapore) Endpoint",
+			}},
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for Scaleway Object Storage.",
 			Provider: "Scaleway",
@@ -879,7 +930,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
+			Provider: "!AWS,IBMCOS,TencentCOS,Alibaba,ChinaMobile,ArvanCloud,QiniuCloud,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1509,6 +1560,27 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			Examples: []fs.OptionExample{{
 				Value: "STANDARD",
 				Help:  "Standard storage class",
+			}},
+		}, {
+			// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in Qiniu Cloud Object Storage (KODO).",
+			Provider: "QiniuCloud",
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "Default",
+			}, {
+				Value: "STANDARD",
+				Help:  "Standard storage class",
+			}, {
+				Value: "LINE",
+				Help:  "Low frequency storage mode",
+			}, {
+				Value: "GLACIER",
+				Help:  "Archive storage mode",
+			}, {
+				Value: "DEEP_ARCHIVE",
+				Help:  "Deep archive storage storage mode",
 			}},
 		}, {
 			// Mapping from here: https://intl.cloud.tencent.com/document/product/436/30925
@@ -2280,6 +2352,11 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false // untested
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
+	case "QiniuCloud":
+		listObjectsV2 = false
+		virtualHostStyle = false
+		urlEncodeListings = false
+		useMultipartEtag = false
 	case "RackCorp":
 		// No quirks
 		useMultipartEtag = false // untested

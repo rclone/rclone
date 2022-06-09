@@ -152,6 +152,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net" >}}
+{{< provider name="QiniuCloud" home="https://www.qiniu.com/en/products/kodo" config="/s3/#qiniu-cloud" >}}
 {{< provider name="Scaleway" home="https://www.scaleway.com/object-storage/" config="/s3/#scaleway" >}}
 {{< provider name="Seafile" home="https://www.seafile.com/" config="/seafile/" >}}
 {{< provider name="Seagate Lyve Cloud" home="https://www.seagate.com/gb/en/services/cloud/storage/" config="/s3/#lyve" >}}
