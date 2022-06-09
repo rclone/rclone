@@ -206,7 +206,19 @@ backends:
  #     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "s3"
    remote:   "TestS3Alibaba:"
+   fastlist: true 
+ - backend:  "s3"
+   remote:   "TestS3QiniuCloud:"
    fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/control_chars
+     - TestIntegration/FsMkdir/FsEncoding/punctuation
+     - TestIntegration/FsMkdir/FsEncoding/leading_VT
+     - TestIntegration/FsMkdir/FsEncoding/trailing_VT
+     - TestIntegration/FsMkdir/FsPutFiles/FsRmdirFull
+     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListR
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
+     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
  - backend:  "s3"
    remote:   "TestS3R2:"
    fastlist: true
