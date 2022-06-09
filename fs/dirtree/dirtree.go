@@ -40,9 +40,12 @@ func (dt DirTree) Add(entry fs.DirEntry) {
 // this creates the directory itself if required
 // it doesn't create parents
 func (dt DirTree) AddDir(entry fs.DirEntry) {
+	dirPath := entry.Remote()
+	if dirPath == "" {
+		return
+	}
 	dt.Add(entry)
 	// create the directory itself if it doesn't exist already
-	dirPath := entry.Remote()
 	if _, ok := dt[dirPath]; !ok {
 		dt[dirPath] = nil
 	}
