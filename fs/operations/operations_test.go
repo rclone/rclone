@@ -1284,6 +1284,7 @@ func TestOverlappingFilterCheckWithoutFilter(t *testing.T) {
 		expected bool
 	}{
 		{"name", "root", true},
+		{"name", "/root", true},
 		{"namey", "root", false},
 		{"name", "rooty", false},
 		{"namey", "rooty", false},
@@ -1320,10 +1321,12 @@ func TestOverlappingFilterCheckWithFilter(t *testing.T) {
 		expected bool
 	}{
 		{"name", "root", true},
+		{"name", "/root", true},
 		{"name", "root/", true},
 		{"name", "root" + slash, true},
 		{"name", "root/exclude", false},
 		{"name", "root/exclude/", false},
+		{"name", "/root/exclude/", false},
 		{"name", "root" + slash + "exclude", false},
 		{"name", "root" + slash + "exclude" + slash, false},
 		{"name", "root/.ignore", false},

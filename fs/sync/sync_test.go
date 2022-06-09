@@ -1469,18 +1469,20 @@ func TestSyncOverlapWithFilter(t *testing.T) {
 	FremoteSync3, err := fs.NewFs(ctx, subRemoteName3)
 	require.NoError(t, FremoteSync3.Mkdir(ctx, ""))
 	require.NoError(t, err)
-	r.WriteObject(context.Background(), "/rclone-sync-test-ignore-file/.ignore", "-", t1)
+	r.WriteObject(context.Background(), "rclone-sync-test-ignore-file/.ignore", "-", t1)
 
 	checkErr := func(err error) {
 		require.Error(t, err)
 		assert.True(t, fserrors.IsFatalError(err))
 		assert.Equal(t, fs.ErrorOverlapping.Error(), err.Error())
+		accounting.GlobalStats().ResetCounters()
 	}
 
 	checkNoErr := func(err error) {
 		require.NoError(t, err)
 	}
 
+	accounting.GlobalStats().ResetCounters()
 	checkNoErr(Sync(ctx, FremoteSync, r.Fremote, false))
 	checkErr(Sync(ctx, r.Fremote, FremoteSync, false))
 	checkErr(Sync(ctx, r.Fremote, r.Fremote, false))
