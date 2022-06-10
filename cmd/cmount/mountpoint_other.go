@@ -26,5 +26,6 @@ func getMountpoint(f fs.Fs, mountPath string, opt *mountlib.Options) (string, er
 	if err = mountlib.CheckAllowNonEmpty(mountPath, opt); err != nil {
 		return "", err
 	}
+	opt.VolumeName = mountlib.MakeVolumeNameValidOnUnix(opt.VolumeName)
 	return mountPath, nil
 }

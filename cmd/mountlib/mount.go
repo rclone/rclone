@@ -240,8 +240,12 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 func (m *MountPoint) Mount() (daemon *os.Process, err error) {
 
 	// Ensure sensible defaults
-	m.SetVolumeName(m.MountOpt.VolumeName)
-	m.SetDeviceName(m.MountOpt.DeviceName)
+	if m.MountOpt.VolumeName == "" {
+		m.MountOpt.VolumeName = fs.ConfigString(m.Fs)
+	}
+	if m.MountOpt.DeviceName == "" {
+		m.MountOpt.DeviceName = fs.ConfigString(m.Fs)
+	}
 
 	// Start background task if --daemon is specified
 	if m.MountOpt.Daemon {
