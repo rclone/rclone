@@ -111,18 +111,7 @@ func (m *MountPoint) SetVolumeName(vol string) {
 	if vol == "" {
 		vol = fs.ConfigString(m.Fs)
 	}
-	m.MountOpt.SetVolumeName(vol)
-}
-
-// SetVolumeName removes special characters from volume name if necessary
-func (o *Options) SetVolumeName(vol string) {
-	vol = strings.ReplaceAll(vol, ":", " ")
-	vol = strings.ReplaceAll(vol, "/", " ")
-	vol = strings.TrimSpace(vol)
-	if runtime.GOOS == "windows" && len(vol) > 32 {
-		vol = vol[:32]
-	}
-	o.VolumeName = vol
+	m.MountOpt.VolumeName = vol
 }
 
 // SetDeviceName with sensible default
