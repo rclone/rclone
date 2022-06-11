@@ -18,13 +18,13 @@ import (
 var isDriveRegex = regexp.MustCompile(`^[a-zA-Z]\:$`)
 var isDriveRootPathRegex = regexp.MustCompile(`^[a-zA-Z]\:\\$`)
 var isDriveOrRootPathRegex = regexp.MustCompile(`^[a-zA-Z]\:\\?$`)
-var isNetworkSharePathRegex = regexp.MustCompile(`^\\\\[^\\]+\\[^\\]`)
+var isNetworkSharePathRegex = regexp.MustCompile(`^\\\\[^\\\?]+\\[^\\]`)
 
 // isNetworkSharePath returns true if the given string is a valid network share path,
 // in the basic UNC format "\\Server\Share\Path", where the first two path components
 // are required ("\\Server\Share", which represents the volume).
 // Extended-length UNC format "\\?\UNC\Server\Share\Path" is not considered, as it is
-// not supported by cgofuse/winfsp.
+// not supported by cgofuse/winfsp, so returns false for any paths with prefix "\\?\".
 // Note: There is a UNCPath function in lib/file, but it refers to any extended-length
 // paths using prefix "\\?\", and not necessarily network resource UNC paths.
 func isNetworkSharePath(l string) bool {
