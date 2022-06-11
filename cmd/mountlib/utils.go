@@ -34,22 +34,22 @@ func ClipBlocks(b *uint64) {
 	}
 }
 
-// CheckOverlap checks that root doesn't overlap with mountpoint
-func (m *MountPoint) CheckOverlap() error {
-	name := m.Fs.Name()
+// CheckOverlap checks that root doesn't overlap with a mountpoint
+func CheckOverlap(f fs.Fs, mountpoint string) error {
+	name := f.Name()
 	if name != "" && name != "local" {
 		return nil
 	}
-	rootAbs := absPath(m.Fs.Root())
-	mountpointAbs := absPath(m.MountPoint)
+	rootAbs := absPath(f.Root())
+	mountpointAbs := absPath(mountpoint)
 	if strings.HasPrefix(rootAbs, mountpointAbs) || strings.HasPrefix(mountpointAbs, rootAbs) {
-		const msg = "mount point %q and directory to be mounted %q mustn't overlap"
-		return fmt.Errorf(msg, m.MountPoint, m.Fs.Root())
+		const msg = "mount point %q (%q) and directory to be mounted %q (%q) mustn't overlap"
+		return fmt.Errorf(msg, mountpoint, mountpointAbs, f.Root(), rootAbs)
 	}
 	return nil
 }
 
-// absPath is a helper function for MountPoint.CheckOverlap
+// absPath is a helper function for CheckOverlap
 func absPath(path string) string {
 	if abs, err := filepath.EvalSymlinks(path); err == nil {
 		path = abs
@@ -58,30 +58,21 @@ func absPath(path string) string {
 		path = abs
 	}
 	path = filepath.ToSlash(path)
+	if runtime.GOOS == "windows" {
+		// Removes any UNC long path prefix to make sure a simple HasPrefix test
+		// in CheckOverlap works when one is UNC (root) and one is not (mountpoint).
+		path = strings.TrimPrefix(path, `//?/`)
+	}
 	if !strings.HasSuffix(path, "/") {
 		path += "/"
 	}
 	return path
 }
 
-// CheckAllowed informs about ignored flags on Windows. If not on Windows
-// and not --allow-non-empty flag is used, verify that mountpoint is empty.
-func (m *MountPoint) CheckAllowed() error {
-	opt := &m.MountOpt
-	if runtime.GOOS == "windows" {
-		if opt.AllowNonEmpty {
-			fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
-		}
-		if opt.AllowRoot {
-			fs.Logf(nil, "--allow-root flag does nothing on Windows")
-		}
-		if opt.AllowOther {
-			fs.Logf(nil, "--allow-other flag does nothing on Windows")
-		}
-		return nil
-	}
+// CheckAllowNonEmpty checks --allow-non-empty flag, and if not used verifies that mountpoint is empty.
+func CheckAllowNonEmpty(mountpoint string, opt *Options) error {
 	if !opt.AllowNonEmpty {
-		return CheckMountEmpty(m.MountPoint)
+		return CheckMountEmpty(mountpoint)
 	}
 	return nil
 }
