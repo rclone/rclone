@@ -99,7 +99,7 @@ func handleNetworkShareMountpath(mountpath string, opt *mountlib.Options) (strin
 }
 
 // handleLocalMountpath handles the case where mount path is a local file system path.
-func handleLocalMountpath(mountpath string, opt *mountlib.Options) (string, error) {
+func handleLocalMountpath(f fs.Fs, mountpath string, opt *mountlib.Options) (string, error) {
 	// Assuming path is drive letter or directory path, not network share (UNC) path.
 	// If drive letter: Must be given as a single character followed by ":" and nothing else.
 	// Else, assume directory path: Directory must not exist, but its parent must.
@@ -129,6 +129,9 @@ func handleLocalMountpath(mountpath string, opt *mountlib.Options) (string, erro
 				return "", errors.New("parent of mountpoint directory does not exist: " + parent)
 			}
 			return "", fmt.Errorf("failed to retrieve mountpoint directory parent information: %w", err)
+		}
+		if err = mountlib.CheckOverlap(f, mountpath); err != nil {
+			return "", err
 		}
 	}
 	return mountpath, nil
@@ -180,9 +183,19 @@ func handleVolumeName(opt *mountlib.Options) {
 
 // getMountpoint handles mounting details on Windows,
 // where disk and network based file systems are treated different.
-func getMountpoint(mountpath string, opt *mountlib.Options) (mountpoint string, err error) {
+func getMountpoint(f fs.Fs, mountpath string, opt *mountlib.Options) (mountpoint string, err error) {
+	// Inform about some options not relevant in this mode
+	if opt.AllowNonEmpty {
+		fs.Logf(nil, "--allow-non-empty flag does nothing on Windows")
+	}
+	if opt.AllowRoot {
+		fs.Logf(nil, "--allow-root flag does nothing on Windows")
+	}
+	if opt.AllowOther {
+		fs.Logf(nil, "--allow-other flag does nothing on Windows")
+	}
 
-	// First handle mountpath
+	// Handle mountpath
 	if isDefaultPath(mountpath) {
 		// Mount path indicates defaults, which will automatically pick an unused drive letter.
 		if mountpoint, err = handleDefaultMountpath(); err != nil {
@@ -197,12 +210,12 @@ func getMountpoint(mountpath string, opt *mountlib.Options) (mountpoint string, 
 		opt.VolumeName = mountpath
 	} else {
 		// Mount path is drive letter or directory path.
-		if mountpoint, err = handleLocalMountpath(mountpath, opt); err != nil {
+		if mountpoint, err = handleLocalMountpath(f, mountpath, opt); err != nil {
 			return
 		}
 	}
 
-	// Second handle volume name
+	// Handle volume name
 	handleVolumeName(opt)
 
 	// Done, return mountpoint to be used, together with updated mount options.

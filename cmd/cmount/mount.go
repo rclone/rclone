@@ -149,14 +149,14 @@ func waitFor(fn func() bool) (ok bool) {
 // report an error when fusermount is called.
 func mount(VFS *vfs.VFS, mountPath string, opt *mountlib.Options) (<-chan error, func() error, error) {
 	// Get mountpoint using OS specific logic
-	mountpoint, err := getMountpoint(mountPath, opt)
+	f := VFS.Fs()
+	mountpoint, err := getMountpoint(f, mountPath, opt)
 	if err != nil {
 		return nil, nil, err
 	}
 	fs.Debugf(nil, "Mounting on %q (%q)", mountpoint, opt.VolumeName)
 
 	// Create underlying FS
-	f := VFS.Fs()
 	fsys := NewFS(VFS)
 	host := fuse.NewFileSystemHost(fsys)
 	host.SetCapReaddirPlus(true) // only works on Windows
