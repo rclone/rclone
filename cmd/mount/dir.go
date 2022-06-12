@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"syscall"
 	"time"
 
 	"bazil.org/fuse"
@@ -237,7 +238,7 @@ var _ fusefs.NodeLinker = (*Dir)(nil)
 // existing Node. Receiver must be a directory.
 func (d *Dir) Link(ctx context.Context, req *fuse.LinkRequest, old fusefs.Node) (newNode fusefs.Node, err error) {
 	defer log.Trace(d, "req=%v, old=%v", req, old)("new=%v, err=%v", &newNode, &err)
-	return nil, fuse.ENOSYS
+	return nil, syscall.ENOSYS
 }
 
 // Check interface satisfied
