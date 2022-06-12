@@ -173,6 +173,12 @@ browser.`,
 				Value: "in",
 				Help:  "India",
 			}, {
+				Value: "jp",
+				Help:  "Japan",
+			}, {
+				Value: "com.cn",
+				Help:  "China",
+			}, {
 				Value: "com.au",
 				Help:  "Australia",
 			}}}, {
