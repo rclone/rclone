@@ -163,7 +163,7 @@ func (f *Fs) splitPathFull(pth string) (string, string) {
 }
 
 // splitPath is modified splitPath version that doesn't include the seperator
-// in the base part
+// in the base path
 func (f *Fs) splitPath(pth string) (string, string) {
 	// chop of any leading or trailing '/'
 	pth = strings.Trim(pth, "/")
@@ -201,7 +201,11 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		opt:   *opt,
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
 	}
-	f.root = root
+	if root == "/" || root == "." {
+		f.root = ""
+	} else {
+		f.root = root
+	}
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
 		CanHaveEmptyDirectories: true,
