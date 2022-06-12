@@ -37,7 +37,6 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	a.Atime = modTime
 	a.Mtime = modTime
 	a.Ctime = modTime
-	a.Crtime = modTime
 	a.Blocks = Blocks
 	return nil
 }
