@@ -52,7 +52,16 @@ var warnDSCPFail, warnDSCPWindows sync.Once
 
 // DialContext connects to the network address using the provided context.
 func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
-	c, err := d.Dialer.DialContext(ctx, network, address)
+	var c net.Conn
+	var err error
+	ci := fs.GetConfig(ctx)
+	if ci.PreferIPv4 {
+		c, err = d.Dialer.DialContext(ctx, "tcp4", address)
+	} else if ci.PreferIPv6 {
+		c, err = d.Dialer.DialContext(ctx, "tcp6", address)
+	} else {
+		c, err = d.Dialer.DialContext(ctx, network, address)
+	}
 	if err != nil {
 		return c, err
 	}

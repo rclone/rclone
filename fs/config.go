@@ -55,6 +55,8 @@ type ConfigInfo struct {
 	IgnoreTimes            bool
 	IgnoreExisting         bool
 	IgnoreErrors           bool
+	PreferIPv4             bool
+	PreferIPv6             bool
 	ModifyWindow           time.Duration
 	Checkers               int
 	Transfers              int

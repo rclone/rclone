@@ -137,6 +137,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.DisableHTTP2, "disable-http2", "", ci.DisableHTTP2, "Disable HTTP/2 in the global transport")
 	flags.BoolVarP(flagSet, &ci.HumanReadable, "human-readable", "", ci.HumanReadable, "Print numbers in a human-readable format, sizes with suffix Ki|Mi|Gi|Ti|Pi")
 	flags.DurationVarP(flagSet, &ci.KvLockTime, "kv-lock-time", "", ci.KvLockTime, "Maximum time to keep key-value database locked by process")
+	flags.BoolVarP(flagSet, &ci.PreferIPv4, "prefer-ipv4", "", ci.PreferIPv4, "Force rclone to prefer IPv4 connections for all backends")
+	flags.BoolVarP(flagSet, &ci.PreferIPv6, "prefer-ipv6", "", ci.PreferIPv6, "Force rclone to prefer IPv6 connections for all backends")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions
@@ -178,6 +180,9 @@ func SetFlags(ci *fs.ConfigInfo) {
 	}
 	if (ci.DryRun || ci.Interactive) && ci.StatsLogLevel > fs.LogLevelNotice {
 		ci.StatsLogLevel = fs.LogLevelNotice
+	}
+	if ci.PreferIPv4 && ci.PreferIPv6 {
+		log.Fatalf("Cant force IPv4 and IPv6 at the same time")
 	}
 	if quiet {
 		if verbose > 0 {
