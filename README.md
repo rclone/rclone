@@ -34,6 +34,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Citrix ShareFile [:page_facing_up:](https://rclone.org/sharefile/)
   * DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
   * Digi Storage [:page_facing_up:](https://rclone.org/koofr/#digi-storage)
+  * Discord [:page_facing_up:](https://rclone.org/discord/)
   * Dreamhost [:page_facing_up:](https://rclone.org/s3/#dreamhost)
   * Dropbox [:page_facing_up:](https://rclone.org/dropbox/)
   * Enterprise File Fabric [:page_facing_up:](https://rclone.org/filefabric/)

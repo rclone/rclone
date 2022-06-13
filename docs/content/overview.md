@@ -23,6 +23,7 @@ Here is an overview of the major features of each cloud storage system.
 | Backblaze B2                 | SHA1             | R/W     | No               | No              | R/W       | -        |
 | Box                          | SHA1             | R/W     | Yes              | No              | -         | -        |
 | Citrix ShareFile             | MD5              | R/W     | Yes              | No              | -         | -        |
+| Discord                      | MD5, SHA256, SHA1 | R/W    | No               | No              | -         | -        |
 | Dropbox                      | DBHASH ¹         | R       | Yes              | No              | -         | -        |
 | Enterprise File Fabric       | -                | R/W     | Yes              | No              | R/W       | -        |
 | FTP                          | -                | R/W ¹⁰  | No               | No              | -         | -        |
@@ -468,6 +469,7 @@ upon backend-specific capabilities.
 | Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
 | Box                          | Yes   | Yes  | Yes  | Yes     | Yes ‡‡  | No    | Yes          | Yes          | Yes   | Yes      |
 | Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
+| Discord                      | No    | No   | Yes  | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Dropbox                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | Yes   | Yes      |
 | Enterprise File Fabric       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No           | No    | Yes      |
 | FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
