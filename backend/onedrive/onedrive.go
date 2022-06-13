@@ -160,15 +160,15 @@ Choose or manually enter a custom space separated list with all scopes, that rcl
 			Examples: []fs.OptionExample{
 				{
 					Value: "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All Sites.Read.All offline_access",
-					Help:  "Read and write access to all ressources",
+					Help:  "Read and write access to all resources",
 				},
 				{
 					Value: "Files.Read Files.Read.All Sites.Read.All offline_access",
-					Help:  "Read only access to all ressources",
+					Help:  "Read only access to all resources",
 				},
 				{
 					Value: "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All offline_access",
-					Help:  "Read and write access to all ressources, without the ability to browse SharePoint sites. \nSame as if disable_site_permission was set to true",
+					Help:  "Read and write access to all resources, without the ability to browse SharePoint sites. \nSame as if disable_site_permission was set to true",
 				},
 			}}, {
 			Name: "disable_site_permission",
@@ -423,8 +423,13 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	region, graphURL := getRegionURL(m)
 
 	if config.State == "" {
-		accessScopes, _ := m.Get("access_scopes")
-		oauthConfig.Scopes = []string{accessScopes}
+		var accessScopes fs.SpaceSepList
+		accessScopesString, _ := m.Get("access_scopes")
+		err := accessScopes.Set(accessScopesString)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse access_scopes: %w", err)
+		}
+		oauthConfig.Scopes = []string(accessScopes)
 		disableSitePermission, _ := m.Get("disable_site_permission")
 		if disableSitePermission == "true" {
 			oauthConfig.Scopes = scopeAccessWithoutSites
