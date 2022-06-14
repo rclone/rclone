@@ -65,12 +65,12 @@ var (
 	authPath  = "/common/oauth2/v2.0/authorize"
 	tokenPath = "/common/oauth2/v2.0/token"
 
-	scopesWithSitePermission    = []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access", "Sites.Read.All"}
-	scopesWithoutSitePermission = []string{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
+	scopeAccess             = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "Sites.Read.All", "offline_access"}
+	scopeAccessWithoutSites = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
 
 	// Description of how to auth for this app for a business account
 	oauthConfig = &oauth2.Config{
-		Scopes:       scopesWithSitePermission,
+		Scopes:       scopeAccess,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -150,6 +150,27 @@ there through a path traversal.
 `,
 			Advanced: true,
 		}, {
+			Name: "access_scopes",
+			Help: `Set scopes to be requested by rclone.
+
+Choose or manually enter a custom space separated list with all scopes, that rclone should request.
+`,
+			Default:  scopeAccess,
+			Advanced: true,
+			Examples: []fs.OptionExample{
+				{
+					Value: "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All Sites.Read.All offline_access",
+					Help:  "Read and write access to all resources",
+				},
+				{
+					Value: "Files.Read Files.Read.All Sites.Read.All offline_access",
+					Help:  "Read only access to all resources",
+				},
+				{
+					Value: "Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All offline_access",
+					Help:  "Read and write access to all resources, without the ability to browse SharePoint sites. \nSame as if disable_site_permission was set to true",
+				},
+			}}, {
 			Name: "disable_site_permission",
 			Help: `Disable the request for Sites.Read.All permission.
 
@@ -160,6 +181,7 @@ application, and your organization disallows users to consent app permission
 request on their own.`,
 			Default:  false,
 			Advanced: true,
+			Hide:     fs.OptionHideBoth,
 		}, {
 			Name: "expose_onenote_files",
 			Help: `Set to make OneNote files show up in directory listings.
@@ -401,11 +423,16 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 	region, graphURL := getRegionURL(m)
 
 	if config.State == "" {
+		var accessScopes fs.SpaceSepList
+		accessScopesString, _ := m.Get("access_scopes")
+		err := accessScopes.Set(accessScopesString)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse access_scopes: %w", err)
+		}
+		oauthConfig.Scopes = []string(accessScopes)
 		disableSitePermission, _ := m.Get("disable_site_permission")
 		if disableSitePermission == "true" {
-			oauthConfig.Scopes = scopesWithoutSitePermission
-		} else {
-			oauthConfig.Scopes = scopesWithSitePermission
+			oauthConfig.Scopes = scopeAccessWithoutSites
 		}
 		oauthConfig.Endpoint = oauth2.Endpoint{
 			AuthURL:  authEndpoint[region] + authPath,
@@ -562,6 +589,7 @@ type Options struct {
 	DriveType               string               `config:"drive_type"`
 	RootFolderID            string               `config:"root_folder_id"`
 	DisableSitePermission   bool                 `config:"disable_site_permission"`
+	AccessScopes            fs.SpaceSepList      `config:"access_scopes"`
 	ExposeOneNoteFiles      bool                 `config:"expose_onenote_files"`
 	ServerSideAcrossConfigs bool                 `config:"server_side_across_configs"`
 	ListChunk               int64                `config:"list_chunk"`
@@ -829,10 +857,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
 	rootURL := graphAPIEndpoint[opt.Region] + "/v1.0" + "/drives/" + opt.DriveID
+	oauthConfig.Scopes = opt.AccessScopes
 	if opt.DisableSitePermission {
-		oauthConfig.Scopes = scopesWithoutSitePermission
-	} else {
-		oauthConfig.Scopes = scopesWithSitePermission
+		oauthConfig.Scopes = scopeAccessWithoutSites
 	}
 	oauthConfig.Endpoint = oauth2.Endpoint{
 		AuthURL:  authEndpoint[opt.Region] + authPath,
