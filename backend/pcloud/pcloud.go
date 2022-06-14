@@ -24,6 +24,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
+	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/dircache"
@@ -130,6 +131,19 @@ with rclone authorize.
 				Value: "eapi.pcloud.com",
 				Help:  "EU region",
 			}},
+		}, {
+			Name: "username",
+			Help: `Your pcloud username.
+			
+This is only required when you want to use the cleanup command. Due to a bug
+in the pcloud API the required API does not support OAuth authentication so
+we have to rely on user password authentication for it.`,
+			Advanced: true,
+		}, {
+			Name:       "password",
+			Help:       "Your pcloud password.",
+			IsPassword: true,
+			Advanced:   true,
 		}}...),
 	})
 }
@@ -139,6 +153,8 @@ type Options struct {
 	Enc          encoder.MultiEncoder `config:"encoding"`
 	RootFolderID string               `config:"root_folder_id"`
 	Hostname     string               `config:"hostname"`
+	Username     string               `config:"username"`
+	Password     string               `config:"password"`
 }
 
 // Fs represents a remote pcloud
@@ -148,6 +164,7 @@ type Fs struct {
 	opt          Options            // parsed options
 	features     *fs.Features       // optional features
 	srv          *rest.Client       // the connection to the server
+	cleanupSrv   *rest.Client       // the connection used for the cleanup method
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
@@ -293,6 +310,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	updateTokenURL(oauthConfig, opt.Hostname)
 
+	canCleanup := opt.Username != "" && opt.Password != ""
 	f := &Fs{
 		name:  name,
 		root:  root,
@@ -300,10 +318,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		srv:   rest.NewClient(oAuthClient).SetRoot("https://" + opt.Hostname),
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
+	if canCleanup {
+		f.cleanupSrv = rest.NewClient(fshttp.NewClient(ctx)).SetRoot("https://" + opt.Hostname)
+	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
 		CanHaveEmptyDirectories: true,
 	}).Fill(ctx, f)
+	if !canCleanup {
+		f.features.CleanUp = nil
+	}
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
@@ -729,10 +753,12 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 		Parameters: url.Values{},
 	}
 	opts.Parameters.Set("folderid", dirIDtoNumber(rootID))
+	opts.Parameters.Set("username", f.opt.Username)
+	opts.Parameters.Set("password", obscure.MustReveal(f.opt.Password))
 	var resp *http.Response
 	var result api.Error
 	return f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.CallJSON(ctx, &opts, nil, &result)
+		resp, err = f.cleanupSrv.CallJSON(ctx, &opts, nil, &result)
 		err = result.Update(err)
 		return shouldRetry(ctx, resp, err)
 	})
