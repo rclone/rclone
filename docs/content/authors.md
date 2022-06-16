@@ -610,3 +610,4 @@ put them back in again.` >}}
   * Art M. Gallagher <artmg50@gmail.com>
   * Sven Gerber <49589423+svengerber@users.noreply.github.com>
   * CrossR <r.cross@lancaster.ac.uk>
+  * Maciej Radzikowski <maciej@radzikowski.com.pl>
