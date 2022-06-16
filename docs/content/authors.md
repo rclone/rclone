@@ -607,3 +607,4 @@ put them back in again.` >}}
   * Matthew Vernon <mvernon@wikimedia.org>
   * Noah Hsu <i@nn.ci>
   * m00594701 <mengpengbo@huawei.com>
+  * Art M. Gallagher <artmg50@gmail.com>
