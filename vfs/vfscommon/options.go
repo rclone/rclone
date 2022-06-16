@@ -62,3 +62,14 @@ var DefaultOpt = Options{
 	ReadAhead:         0 * fs.Mebi,
 	UsedIsSize:        false,
 }
+
+// Init the options, making sure everything is withing range
+func (opt *Options) Init() {
+	// Mask the permissions with the umask
+	opt.DirPerms &= ^os.FileMode(opt.Umask)
+	opt.FilePerms &= ^os.FileMode(opt.Umask)
+
+	// Make sure directories are returned as directories
+	opt.DirPerms |= os.ModeDir
+
+}

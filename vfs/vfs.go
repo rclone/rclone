@@ -193,12 +193,8 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		vfs.Opt = vfscommon.DefaultOpt
 	}
 
-	// Mask the permissions with the umask
-	vfs.Opt.DirPerms &= ^os.FileMode(vfs.Opt.Umask)
-	vfs.Opt.FilePerms &= ^os.FileMode(vfs.Opt.Umask)
-
-	// Make sure directories are returned as directories
-	vfs.Opt.DirPerms |= os.ModeDir
+	// Fill out anything else
+	vfs.Opt.Init()
 
 	// Find a VFS with the same name and options and return it if possible
 	activeMu.Lock()
