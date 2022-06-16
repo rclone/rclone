@@ -91,7 +91,7 @@ func TestWriteFileDup(t *testing.T) {
 	run.skipIfVFS(t)
 	run.skipIfNoFUSE(t)
 
-	if run.vfs.Opt.CacheMode < vfscommon.CacheModeWrites {
+	if run.vfsOpt.CacheMode < vfscommon.CacheModeWrites {
 		t.Skip("not supported on vfs-cache-mode < writes")
 		return
 	}
@@ -136,7 +136,7 @@ func TestWriteFileDup(t *testing.T) {
 func TestWriteFileAppend(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
-	if run.vfs.Opt.CacheMode < vfscommon.CacheModeWrites {
+	if run.vfsOpt.CacheMode < vfscommon.CacheModeWrites {
 		t.Skip("not supported on vfs-cache-mode < writes")
 		return
 	}
