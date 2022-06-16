@@ -128,6 +128,8 @@ For example, you might see throtting.
 
 #### Creating Client ID for OneDrive Personal
 
+To create your own Client ID, please follow these steps:
+
 1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click `New registration`.
 2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI`, then type (do not copy and paste) `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
 3. Under `manage` select `Certificates & secrets`, click `New client secret`. Enter a description (can be anything) and set `Expires` to 24 months. Copy and keep that secret _Value_ for later use (you _won't_ be able to see this value afterwards).
@@ -152,7 +154,7 @@ You may try to [verify you account](https://docs.microsoft.com/en-us/azure/activ
 4. In the rclone config, set `auth_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/authorize`.
 5. In the rclone config, set `token_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/token`.
 
-Note: if you have a special region, you may need a different host in step 4 and 5. Here are [some hints](https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86).
+Note: If you have a special region, you may need a different host in step 4 and 5. Here are [some hints](https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86).
 
 
 ### Modification time and hashes
