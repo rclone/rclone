@@ -1677,7 +1677,14 @@ Files of unknown size are uploaded with the configured
 chunk_size. Since the default chunk size is 5 MiB and there can be at
 most 10,000 chunks, this means that by default the maximum size of
 a file you can stream upload is 48 GiB.  If you wish to stream upload
-larger files then you will need to increase chunk_size.`,
+larger files then you will need to increase chunk_size.
+
+Increasing the chunk size decreases the accuracy of the progress
+statistics displayed with "-P" flag. Rclone treats chunk as sent when
+it's buffered by the AWS SDK, when in fact it may still be uploading.
+A bigger chunk size means a bigger AWS SDK buffer and progress
+reporting more deviating from the truth.
+`,
 			Default:  minChunkSize,
 			Advanced: true,
 		}, {
