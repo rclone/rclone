@@ -45,6 +45,7 @@ func init() {
 		Options: []fs.Option{{
 			Name:     "nounc",
 			Help:     "Disable UNC (long path names) conversion on Windows.",
+			Default:  false,
 			Advanced: runtime.GOOS != "windows",
 			Examples: []fs.OptionExample{{
 				Value: "true",
