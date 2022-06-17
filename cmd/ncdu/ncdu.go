@@ -8,6 +8,7 @@ package ncdu
 import (
 	"context"
 	"fmt"
+	"log"
 	"path"
 	"reflect"
 	"sort"
@@ -21,6 +22,7 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -74,6 +76,14 @@ UI won't respond in the meantime since the deletion is done synchronously.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
+			var buf strings.Builder
+			logSave := log.Writer()
+			defer log.SetOutput(logSave)
+			logrusSave := logrus.StandardLogger().Writer()
+			defer logrus.SetOutput(logrusSave)
+			log.SetOutput(&buf)
+			logrus.SetOutput(&buf)
+			defer fmt.Fprint(logSave, &buf)
 			return NewUI(fsrc).Show()
 		})
 	},
