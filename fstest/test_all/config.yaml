@@ -139,6 +139,8 @@ backends:
  - backend:  "internetarchive"
    remote:   "TestIA:rclone-integration-test"
    fastlist: true
+   tests:
+     - backend
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
    fastlist: true
