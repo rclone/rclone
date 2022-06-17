@@ -1,7 +1,7 @@
 // Package ncdu implements a text based user interface for exploring a remote
 
-//go:build !plan9 && !solaris && !js
-// +build !plan9,!solaris,!js
+//go:build !plan9 && !js
+// +build !plan9,!js
 
 package ncdu
 
@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"github.com/atotto/clipboard"
+	"github.com/gdamore/tcell/v2/termbox"
 	runewidth "github.com/mattn/go-runewidth"
-	termbox "github.com/nsf/termbox-go"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ncdu/scan"
 	"github.com/rclone/rclone/fs"
@@ -333,10 +333,7 @@ func (u *UI) Draw() error {
 	u.dirListHeight = h - 3
 
 	// Plot
-	err := termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	if err != nil {
-		return fmt.Errorf("failed to clear screen: %w", err)
-	}
+	termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
 
 	// Header line
 	Linef(0, 0, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "rclone ncdu %s - use the arrow keys to navigate, press ? for help", fs.Version)
@@ -374,8 +371,9 @@ func (u *UI) Draw() error {
 			if err != nil {
 				fg = termbox.ColorRed
 			}
+			const colorLightYellow = termbox.ColorYellow + 8
 			if isSelected {
-				fg = termbox.ColorLightYellow
+				fg = colorLightYellow
 			}
 			bg := termbox.ColorBlack
 			if n == dirPos.entry {
@@ -456,7 +454,7 @@ func (u *UI) Draw() error {
 	if u.showBox {
 		u.Box()
 	}
-	err = termbox.Flush()
+	err := termbox.Flush()
 	if err != nil {
 		return fmt.Errorf("failed to flush screen: %w", err)
 	}
