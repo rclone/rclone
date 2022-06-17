@@ -120,13 +120,15 @@ To copy a local directory to an OneDrive directory called backup
 
 ### Getting your own Client ID and Key
 
-You can use your own Client ID if the default (`client_id` left blank)
-one doesn't work for you or you see lots of throttling. The default
-Client ID and Key is shared by all rclone users when performing
-requests.
+rclone uses a default Client ID when talking to OneDrive, unless a custom `client_id` is specified in the config.
+The default Client ID and Key are shared by all rclone users when performing requests.
 
-If you are having problems with them (E.g., seeing a lot of throttling), you can get your own
-Client ID and Key by following the steps below:
+You may choose to create and use your own Client ID, in case the default one does not work well for you. 
+For example, you might see throtting.
+
+#### Creating Client ID for OneDrive Personal
+
+To create your own Client ID, please follow these steps:
 
 1. Open https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade and then click `New registration`.
 2. Enter a name for your app, choose account type `Accounts in any organizational directory (Any Azure AD directory - Multitenant) and personal Microsoft accounts (e.g. Skype, Xbox)`, select `Web` in `Redirect URI`, then type (do not copy and paste) `http://localhost:53682/` and click Register. Copy and keep the `Application (client) ID` under the app name for later use.
@@ -141,6 +143,22 @@ The access_scopes option allows you to configure the permissions requested by rc
 See [Microsoft Docs](https://docs.microsoft.com/en-us/graph/permissions-reference#files-permissions) for more information about the different scopes.
 
 The `Sites.Read.All` permission is required if you need to [search SharePoint sites when configuring the remote](https://github.com/rclone/rclone/pull/5883). However, if that permission is not assigned, you need to exclude `Sites.Read.All` from your access scopes or set `disable_site_permission` option to true in the advanced options.
+
+#### Creating Client ID for OneDrive Business
+
+The steps for OneDrive Personal may or may not work for OneDrive Business, depending on the security settings of the organization.
+A common error is that the publisher of the App is not verified.
+
+You may try to [verify you account](https://docs.microsoft.com/en-us/azure/active-directory/develop/publisher-verification-overview), or try to limit the App to your organization only, as shown below.
+
+1. Make sure to create the App with your business account.
+2. Follow the steps above to create an App. However, we need a different account type here: `Accounts in this organizational directory only (*** - Single tenant)`. Note that you can also change the account type aftering creating the App.
+3. Find the [tenant ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant) of your organization.
+4. In the rclone config, set `auth_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/authorize`.
+5. In the rclone config, set `token_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/token`.
+
+Note: If you have a special region, you may need a different host in step 4 and 5. Here are [some hints](https://github.com/rclone/rclone/blob/bc23bf11db1c78c6ebbf8ea538fbebf7058b4176/backend/onedrive/onedrive.go#L86).
+
 
 ### Modification time and hashes
 
