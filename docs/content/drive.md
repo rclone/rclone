@@ -1458,8 +1458,9 @@ enter "Developer Contact Email" (your own email is OK); then click on "Save" (al
 Click again on "Credentials" on the left panel to go back to the 
 "Credentials" screen.
 
-(PS: if you are a GSuite user, you could also select "Internal" instead
-of "External" above, but this has not been tested/documented so far). 
+   (PS: if you are a GSuite user, you could also select "Internal" instead
+of "External" above, but this will restrict API use to Google Workspace 
+users in your organisation). 
 
 6.  Click on the "+ CREATE CREDENTIALS" button at the top of the screen,
 then select "OAuth client ID".
@@ -1467,13 +1468,17 @@ then select "OAuth client ID".
 7. Choose an application type of "Desktop app" and click "Create". (the default name is fine)
 
 8. It will show you a client ID and client secret. Make a note of these.
+   
+   (If you selected "External" at Step 5 continue to "Publish App" in the Steps 9 and 10. 
+   If you chose "Internal" you don't need to publish and can skip straight to
+   Step 11.)
 
 9. Go to "Oauth consent screen" and press "Publish App"
 
-10. Provide the noted client ID and client secret to rclone.
-
-11. Click "OAuth consent screen", then click "PUBLISH APP" button and 
+10. Click "OAuth consent screen", then click "PUBLISH APP" button and 
 confirm, or add your account under "Test users".
+
+11. Provide the noted client ID and client secret to rclone.
 
 Be aware that, due to the "enhanced security" recently introduced by
 Google, you are theoretically expected to "submit your app for verification"
