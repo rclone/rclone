@@ -4125,6 +4125,29 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	return etag, nil
 }
 
+// unWrapAwsError unwraps AWS errors, looking for a non AWS error
+//
+// It returns true if one was found and the error, or false and the
+// error passed in.
+func unWrapAwsError(err error) (found bool, outErr error) {
+	if awsErr, ok := err.(awserr.Error); ok {
+		var origErrs []error
+		if batchErr, ok := awsErr.(awserr.BatchError); ok {
+			origErrs = batchErr.OrigErrs()
+		} else {
+			origErrs = []error{awsErr.OrigErr()}
+		}
+		for _, origErr := range origErrs {
+			found, newErr := unWrapAwsError(origErr)
+			if found {
+				return found, newErr
+			}
+		}
+		return false, err
+	}
+	return true, err
+}
+
 // Upload a single part using PutObject
 func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjectInput, size int64, in io.Reader) (etag string, lastModified time.Time, err error) {
 	r, resp := o.fs.c.PutObjectRequest(req)
@@ -4142,6 +4165,17 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 		return o.fs.shouldRetry(ctx, err)
 	})
 	if err != nil {
+		// Return the underlying error if we have a
+		// Serialization or RequestError error if possible
+		//
+		// These errors are synthesized locally in the SDK
+		// (not returned from the server) and we'd rather have
+		// the underlying error if there is one.
+		if do, ok := err.(awserr.Error); ok && (do.Code() == request.ErrCodeSerialization || do.Code() == request.ErrCodeRequestError) {
+			if found, newErr := unWrapAwsError(err); found {
+				err = newErr
+			}
+		}
 		return etag, lastModified, err
 	}
 	lastModified = time.Now()
