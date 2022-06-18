@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -60,9 +61,16 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			switch config.State {
+			case "":
+				return nil, setEndpointValueForIDriveE2(m)
+			}
+			return nil, fmt.Errorf("unknown state %q", config.State)
+		},
 		Options: []fs.Option{{
 			Name: fs.ConfigProvider,
 			Help: "Choose your S3 provider.",
@@ -98,6 +106,9 @@ func init() {
 			}, {
 				Value: "IBMCOS",
 				Help:  "IBM COS S3",
+			}, {
+				Value: "IDrive",
+				Help:  "IDrive e2",
 			}, {
 				Value: "LyveCloud",
 				Help:  "Seagate Lyve Cloud",
@@ -369,7 +380,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS",
+			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -983,7 +994,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
+			Provider: "!AWS,IBMCOS,IDrive,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1393,7 +1404,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,IBMCOS,IDrive,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2329,6 +2340,37 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	return
 }
 
+// setEndpointValueForIDriveE2 gets user region endpoint against the Access Key details by calling the API
+func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
+	value, ok := m.Get(fs.ConfigProvider)
+	if !ok || value != "IDrive" {
+		return
+	}
+	value, ok = m.Get("access_key_id")
+	if !ok || value == "" {
+		return
+	}
+	client := &http.Client{Timeout: time.Second * 3}
+	// API to get user region endpoint against the Access Key details: https://www.idrive.com/e2/guides/get_region_endpoint
+	resp, err := client.Post("https://api.idrivee2.com/api/service/get_region_end_point",
+		"application/json",
+		strings.NewReader(`{"access_key": "`+value+`"}`))
+	if err != nil {
+		return
+	}
+	defer fs.CheckClose(resp.Body, &err)
+	decoder := json.NewDecoder(resp.Body)
+	var data = &struct {
+		RespCode   int    `json:"resp_code"`
+		RespMsg    string `json:"resp_msg"`
+		DomainName string `json:"domain_name"`
+	}{}
+	if err = decoder.Decode(data); err == nil && data.RespCode == 0 {
+		m.Set("endpoint", data.DomainName)
+	}
+	return
+}
+
 // Set the provider quirks
 //
 // There should be no testing against opt.Provider anywhere in the
@@ -2375,6 +2417,8 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
+	case "IDrive":
+		virtualHostStyle = false
 	case "LyveCloud":
 		useMultipartEtag = false // LyveCloud seems to calculate multipart Etags differently from AWS
 	case "Minio":
@@ -2553,6 +2597,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.Copy = nil
 		f.features.SetTier = false
 		f.features.GetTier = false
+	}
+	if opt.Provider == "IDrive" {
+		f.features.SetTier = false
 	}
 	// f.listMultipartUploads()
 	return f, nil
