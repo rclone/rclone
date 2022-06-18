@@ -141,6 +141,7 @@ backends:
    fastlist: true
    tests:
      - backend
+   extratime: 2.0
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
    fastlist: true
