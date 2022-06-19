@@ -34,14 +34,16 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "dlna remote:path",
 	Short: `Serve remote:path over DLNA`,
-	Long: `rclone serve dlna is a DLNA media server for media stored in an rclone remote. Many
-devices, such as the Xbox and PlayStation, can automatically discover this server in the LAN
-and play audio/video from it. VLC is also supported. Service discovery uses UDP multicast
-packets (SSDP) and will thus only work on LANs.
+	Long: `Run a DLNA media server for media stored in an rclone remote. Many
+devices, such as the Xbox and PlayStation, can automatically discover
+this server in the LAN and play audio/video from it. VLC is also
+supported. Service discovery uses UDP multicast packets (SSDP) and
+will thus only work on LANs.
 
-Rclone will list all files present in the remote, without filtering based on media formats or
-file extensions. Additionally, there is no media transcoding support. This means that some
-players might show files that they are not able to play back correctly.
+Rclone will list all files present in the remote, without filtering
+based on media formats or file extensions. Additionally, there is no
+media transcoding support. This means that some players might show
+files that they are not able to play back correctly.
 
 ` + dlnaflags.Help + vfs.Help,
 	Run: func(command *cobra.Command, args []string) {

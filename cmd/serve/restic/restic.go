@@ -50,8 +50,8 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "restic remote:path",
 	Short: `Serve the remote for restic's REST API.`,
-	Long: `rclone serve restic implements restic's REST backend API
-over HTTP.  This allows restic to use rclone as a data storage
+	Long: `Run a basic web server to serve a remove over restic's REST backend
+API over HTTP.  This allows restic to use rclone as a data storage
 mechanism for cloud providers that restic does not support directly.
 
 [Restic](https://restic.net/) is a command-line program for doing

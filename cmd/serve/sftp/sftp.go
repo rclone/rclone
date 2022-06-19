@@ -62,9 +62,8 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "sftp remote:path",
 	Short: `Serve the remote over SFTP.`,
-	Long: `rclone serve sftp implements an SFTP server to serve the remote
-over SFTP.  This can be used with an SFTP client or you can make a
-remote of type sftp to use with it.
+	Long: `Run a SFTP server to serve a remote over SFTP. This can be used
+with an SFTP client or you can make a remote of type sftp to use with it.
 
 You can use the filter flags (e.g. --include, --exclude) to control what
 is served.
