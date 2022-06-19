@@ -38,7 +38,7 @@ use it like this
 	rclone cryptdecode --reverse encryptedremote: filename1 filename2
 
 Another way to accomplish this is by using the ` + "`rclone backend encode` (or `decode`)" + `command.
-See the documentation on the ` + "`crypt`" + ` overlay for more info.
+See the documentation on the [crypt](/crypt/) overlay for more info.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 11, command, args)

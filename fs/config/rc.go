@@ -20,7 +20,7 @@ Returns a JSON object:
 
 Where keys are remote names and values are the config parameters.
 
-See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.
+See the [config dump](/commands/rclone_config_dump/) command for more information on the above.
 `,
 	})
 }
@@ -41,7 +41,7 @@ Parameters:
 
 - name - name of remote to get
 
-See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.
+See the [config dump](/commands/rclone_config_dump/) command for more information on the above.
 `,
 	})
 }
@@ -65,7 +65,7 @@ func init() {
 Returns
 - remotes - array of remote names
 
-See the [listremotes command](/commands/rclone_listremotes/) command for more information on the above.
+See the [listremotes](/commands/rclone_listremotes/) command for more information on the above.
 `,
 	})
 }
@@ -89,7 +89,7 @@ func init() {
 Returns a JSON object:
 - providers - array of objects
 
-See the [config providers command](/commands/rclone_config_providers/) command for more information on the above.
+See the [config providers](/commands/rclone_config_providers/) command for more information on the above.
 `,
 	})
 }
@@ -133,7 +133,7 @@ func init() {
 - parameters - a map of \{ "key": "value" \} pairs
 ` + extraHelp + `
 
-See the [config ` + name + ` command](/commands/rclone_config_` + name + `/) command for more information on the above.`,
+See the [config ` + name + `](/commands/rclone_config_` + name + `/) command for more information on the above.`,
 		})
 	}
 }
@@ -203,7 +203,7 @@ Parameters:
 
 - name - name of remote to delete
 
-See the [config delete command](/commands/rclone_config_delete/) command for more information on the above.
+See the [config delete](/commands/rclone_config_delete/) command for more information on the above.
 `,
 	})
 }

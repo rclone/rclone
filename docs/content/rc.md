@@ -8,10 +8,10 @@ description: "Remote controlling rclone with its API"
 If rclone is run with the `--rc` flag then it starts an HTTP server
 which can be used to remote control rclone using its API.
 
-You can either use the [rclone rc](#api-rc) command to access the API
+You can either use the [rc](#api-rc) command to access the API
 or [use HTTP directly](#api-http).
 
-If you just want to run a remote control then see the [rcd command](/commands/rclone_rcd/).
+If you just want to run a remote control then see the [rcd](/commands/rclone_rcd/) command.
 
 ## Supported parameters
 
@@ -544,8 +544,7 @@ This takes the following parameters:
     - state - state to restart with - used with continue
     - result - result to restart with - used with continue
 
-
-See the [config create command](/commands/rclone_config_create/) command for more information on the above.
+See the [config create](/commands/rclone_config_create/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -555,7 +554,7 @@ Parameters:
 
 - name - name of remote to delete
 
-See the [config delete command](/commands/rclone_config_delete/) command for more information on the above.
+See the [config delete](/commands/rclone_config_delete/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -566,7 +565,7 @@ Returns a JSON object:
 
 Where keys are remote names and values are the config parameters.
 
-See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.
+See the [config dump](/commands/rclone_config_dump/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -576,7 +575,7 @@ Parameters:
 
 - name - name of remote to get
 
-See the [config dump command](/commands/rclone_config_dump/) command for more information on the above.
+See the [config dump](/commands/rclone_config_dump/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -585,7 +584,7 @@ See the [config dump command](/commands/rclone_config_dump/) command for more in
 Returns
 - remotes - array of remote names
 
-See the [listremotes command](/commands/rclone_listremotes/) command for more information on the above.
+See the [listremotes](/commands/rclone_listremotes/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -596,8 +595,7 @@ This takes the following parameters:
 - name - name of remote
 - parameters - a map of \{ "key": "value" \} pairs
 
-
-See the [config password command](/commands/rclone_config_password/) command for more information on the above.
+See the [config password](/commands/rclone_config_password/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -606,7 +604,7 @@ See the [config password command](/commands/rclone_config_password/) command for
 Returns a JSON object:
 - providers - array of objects
 
-See the [config providers command](/commands/rclone_config_providers/) command for more information on the above.
+See the [config providers](/commands/rclone_config_providers/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -625,8 +623,7 @@ This takes the following parameters:
     - state - state to restart with - used with continue
     - result - result to restart with - used with continue
 
-
-See the [config update command](/commands/rclone_config_update/) command for more information on the above.
+See the [config update](/commands/rclone_config_update/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1072,7 +1069,7 @@ This takes the following parameters:
 
 The result is as returned from rclone about --json
 
-See the [about command](/commands/rclone_size/) command for more information on the above.
+See the [about](/commands/rclone_size/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1082,7 +1079,7 @@ This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
 
-See the [cleanup command](/commands/rclone_cleanup/) command for more information on the above.
+See the [cleanup](/commands/rclone_cleanup/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1104,8 +1101,9 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - url - string, URL to read from
- - autoFilename - boolean, set to true to retrieve destination file name from url
-See the [copyurl command](/commands/rclone_copyurl/) command for more information on the above.
+- autoFilename - boolean, set to true to retrieve destination file name from url
+
+See the [copyurl](/commands/rclone_copyurl/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1115,7 +1113,7 @@ This takes the following parameters:
 
 - fs - a remote name string e.g. "drive:"
 
-See the [delete command](/commands/rclone_delete/) command for more information on the above.
+See the [delete](/commands/rclone_delete/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1126,7 +1124,7 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 
-See the [deletefile command](/commands/rclone_deletefile/) command for more information on the above.
+See the [deletefile](/commands/rclone_deletefile/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1209,7 +1207,7 @@ Returns:
 - list
     - This is an array of objects as described in the lsjson command
 
-See the [lsjson command](/commands/rclone_lsjson/) for more information on the above and examples.
+See the [lsjson](/commands/rclone_lsjson/) for more information on the above and examples.
 
 **Authentication is required for this call.**
 
@@ -1220,7 +1218,7 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 
-See the [mkdir command](/commands/rclone_mkdir/) command for more information on the above.
+See the [mkdir](/commands/rclone_mkdir/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1248,7 +1246,7 @@ Returns:
 
 - url - URL of the resource
 
-See the [link command](/commands/rclone_link/) command for more information on the above.
+See the [link](/commands/rclone_link/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1259,7 +1257,7 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 
-See the [purge command](/commands/rclone_purge/) command for more information on the above.
+See the [purge](/commands/rclone_purge/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1270,7 +1268,7 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 
-See the [rmdir command](/commands/rclone_rmdir/) command for more information on the above.
+See the [rmdir](/commands/rclone_rmdir/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1281,7 +1279,8 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - leaveRoot - boolean, set to true not to delete the root
-See the [rmdirs command](/commands/rclone_rmdirs/) command for more information on the above.
+
+See the [rmdirs](/commands/rclone_rmdirs/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1297,7 +1296,7 @@ Returns:
 - bytes - number of bytes in those files
 - sizeless - number of files with unknown size, included in count but not accounted for in bytes
 
-See the [size command](/commands/rclone_size/) command for more information on the above.
+See the [size](/commands/rclone_size/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1317,7 +1316,7 @@ The result is
 Note that if you are only interested in files then it is much more
 efficient to set the filesOnly flag in the options.
 
-See the [lsjson command](/commands/rclone_lsjson/) for more information on the above and examples.
+See the [lsjson](/commands/rclone_lsjson/) for more information on the above and examples.
 
 **Authentication is required for this call.**
 
@@ -1328,7 +1327,8 @@ This takes the following parameters:
 - fs - a remote name string e.g. "drive:"
 - remote - a path within that remote e.g. "dir"
 - each part in body represents a file to be uploaded
-See the [uploadfile command](/commands/rclone_uploadfile/) command for more information on the above.
+
+See the [uploadfile](/commands/rclone_uploadfile/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1542,8 +1542,7 @@ This takes the following parameters:
 - dstFs - a remote name string e.g. "drive:dst" for the destination
 - createEmptySrcDirs - create empty src directories on destination if set
 
-
-See the [copy command](/commands/rclone_copy/) command for more information on the above.
+See the [copy](/commands/rclone_copy/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1556,8 +1555,7 @@ This takes the following parameters:
 - createEmptySrcDirs - create empty src directories on destination if set
 - deleteEmptySrcDirs - delete empty src directories if set
 
-
-See the [move command](/commands/rclone_move/) command for more information on the above.
+See the [move](/commands/rclone_move/) command for more information on the above.
 
 **Authentication is required for this call.**
 
@@ -1570,7 +1568,7 @@ This takes the following parameters:
 - createEmptySrcDirs - create empty src directories on destination if set
 
 
-See the [sync command](/commands/rclone_sync/) command for more information on the above.
+See the [sync](/commands/rclone_sync/) command for more information on the above.
 
 **Authentication is required for this call.**
 

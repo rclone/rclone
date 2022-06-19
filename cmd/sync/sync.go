@@ -28,7 +28,9 @@ Sync the source to the destination, changing the destination
 only.  Doesn't transfer files that are identical on source and
 destination, testing by size and modification time or MD5SUM.
 Destination is updated to match source, including deleting files
-if necessary (except duplicate objects, see below).
+if necessary (except duplicate objects, see below). If you don't
+want to delete files from destination, use the
+[copy](/commands/rclone_copy/) command instead.
 
 **Important**: Since this can cause data loss, test first with the
 ` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
@@ -42,7 +44,7 @@ those providers that support it) are also not yet handled.
 It is always the contents of the directory that is synced, not the
 directory itself. So when source:path is a directory, it's the contents of
 source:path that are copied, not the directory name and contents.  See
-extended explanation in the ` + "`" + `copy` + "`" + ` command above if unsure.
+extended explanation in the [copy](/commands/rclone_copy/) command if unsure.
 
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
