@@ -41,7 +41,7 @@ var commandDefinition = &cobra.Command{
 
 The output is an array of Items, where each Item looks like this
 
-   {
+    {
       "Hashes" : {
          "SHA-1" : "f572d396fae9206628714fb2ce00f72e94f2258f",
          "MD5" : "b1946ac92492d2347c6235b4d2611184",
@@ -59,7 +59,7 @@ The output is an array of Items, where each Item looks like this
       "Path" : "full/path/goes/here/file.txt",
       "Size" : 6,
       "Tier" : "hot",
-   }
+    }
 
 If --hash is not specified the Hashes property won't be emitted. The
 types of hash can be specified with the --hash-type parameter (which
