@@ -274,7 +274,7 @@ every path against the supplied regular expression(s).
 Directory recursion optimisation occurs if either:
 
 * A source remote does not support the rclone `ListR` primitive. local,
-sftp, Microsoft OneDrive and WebDav do not support `ListR`. Google
+sftp, Microsoft OneDrive and WebDAV do not support `ListR`. Google
 Drive and most bucket type storage do. [Full list](https://rclone.org/overview/#optional-features)
 
 * On other remotes (those that support `ListR`), if the rclone command is not naturally recursive, and

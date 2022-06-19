@@ -52,7 +52,7 @@ name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-XX / http Connection
+XX / HTTP Connection
    \ "http"
 [snip]
 Storage> http

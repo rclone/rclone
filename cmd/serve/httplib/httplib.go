@@ -53,8 +53,8 @@ inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
 --baseurl "/rclone" and --baseurl "/rclone/" are all treated
 identically.
 
---template allows a user to specify a custom markup template for http
-and webdav serve functions.  The server exports the following markup
+--template allows a user to specify a custom markup template for HTTP
+and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
 | Parameter   | Description |
@@ -99,8 +99,8 @@ Use --realm to set the authentication realm.
 
 #### SSL/TLS
 
-By default this will serve over http.  If you want you can serve over
-https.  You will need to supply the --cert and --key flags.  If you
+By default this will serve over HTTP.  If you want you can serve over
+HTTPS.  You will need to supply the --cert and --key flags.  If you
 wish to do client side certificate validation then you will need to
 supply --client-ca also.
 

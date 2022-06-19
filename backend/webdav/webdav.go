@@ -66,7 +66,7 @@ func init() {
 
 	fs.Register(&fs.RegInfo{
 		Name:        "webdav",
-		Description: "Webdav",
+		Description: "WebDAV",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",
@@ -74,7 +74,7 @@ func init() {
 			Required: true,
 		}, {
 			Name: "vendor",
-			Help: "Name of the Webdav site/service/software you are using.",
+			Help: "Name of the WebDAV site/service/software you are using.",
 			Examples: []fs.OptionExample{{
 				Value: "nextcloud",
 				Help:  "Nextcloud",

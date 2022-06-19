@@ -43,14 +43,14 @@ func init() {
 // Command definition for cobra
 var Command = &cobra.Command{
 	Use:   "webdav remote:path",
-	Short: `Serve remote:path over webdav.`,
+	Short: `Serve remote:path over WebDAV.`,
 	Long: `
-rclone serve webdav implements a basic webdav server to serve the
-remote over HTTP via the webdav protocol. This can be viewed with a
-webdav client, through a web browser, or you can make a remote of
-type webdav to read and write it.
+rclone serve webdav implements a basic WebDAV server to serve the
+remote over HTTP via the WebDAV protocol. This can be viewed with a
+WebDAV client, through a web browser, or you can make a remote of
+type WebDAV to read and write it.
 
-### Webdav options
+### WebDAV options
 
 #### --etag-hash 
 
