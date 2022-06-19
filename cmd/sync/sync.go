@@ -40,7 +40,7 @@ errors at any point.  Duplicate objects (files with the same name, on
 those providers that support it) are also not yet handled.
 
 It is always the contents of the directory that is synced, not the
-directory so when source:path is a directory, it's the contents of
+directory itself. So when source:path is a directory, it's the contents of
 source:path that are copied, not the directory name and contents.  See
 extended explanation in the ` + "`" + `copy` + "`" + ` command above if unsure.
 
