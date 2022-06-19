@@ -107,7 +107,7 @@ func helpText() (tr []string) {
 		" Y display current path",
 		" ^L refresh screen",
 		" ? to toggle help on and off",
-		" q/ESC/c-C to quit",
+		" q/ESC/^c to quit",
 	}...)
 	return
 }
