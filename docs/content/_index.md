@@ -174,14 +174,14 @@ WebDAV or S3, that work out of the box.)
 
 These backends adapt or modify other storage providers:
 
-{{< provider name="Alias: rename existing remotes" home="/alias/" config="/alias/" >}}
-{{< provider name="Cache: cache remotes (DEPRECATED)" home="/cache/" config="/cache/" >}}
-{{< provider name="Chunker: split large files" home="/chunker/" config="/chunker/" >}}
-{{< provider name="Combine: combine multiple remotes into a directory tree" home="/combine/" config="/combine/" >}}
-{{< provider name="Compress: compress files" home="/compress/" config="/compress/" >}}
-{{< provider name="Crypt: encrypt files" home="/crypt/" config="/crypt/" >}}
-{{< provider name="Hasher: hash files" home="/hasher/" config="/hasher/" >}}
-{{< provider name="Union: join multiple remotes to work together" home="/union/" config="/union/" >}}
+{{< provider name="Alias: Rename existing remotes" home="/alias/" config="/alias/" >}}
+{{< provider name="Cache: Cache remotes (DEPRECATED)" home="/cache/" config="/cache/" >}}
+{{< provider name="Chunker: Split large files" home="/chunker/" config="/chunker/" >}}
+{{< provider name="Combine: Combine multiple remotes into a directory tree" home="/combine/" config="/combine/" >}}
+{{< provider name="Compress: Compress files" home="/compress/" config="/compress/" >}}
+{{< provider name="Crypt: Encrypt files" home="/crypt/" config="/crypt/" >}}
+{{< provider name="Hasher: Hash files" home="/hasher/" config="/hasher/" >}}
+{{< provider name="Union: Join multiple remotes to work together" home="/union/" config="/union/" >}}
 
 
 ## Links
