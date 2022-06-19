@@ -39,7 +39,7 @@ Type of storage to configure.
 Enter a string value. Press Enter for the default ("").
 Choose a number from below, or type in your own value
 [snip]
-XX / FTP Connection
+XX / FTP
    \ "ftp"
 [snip]
 Storage> ftp

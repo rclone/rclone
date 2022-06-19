@@ -45,7 +45,7 @@ const (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "ftp",
-		Description: "FTP Connection",
+		Description: "FTP",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "host",
