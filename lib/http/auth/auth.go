@@ -14,9 +14,9 @@ var Help = `
 By default this will serve files without needing a login.
 
 You can either use an htpasswd file which can take lots of users, or
-set a single username and password with the --user and --pass flags.
+set a single username and password with the ` + "`--user` and `--pass`" + ` flags.
 
-Use --htpasswd /path/to/htpasswd to provide an htpasswd file.  This is
+Use ` + "`--htpasswd /path/to/htpasswd`" + ` to provide an htpasswd file.  This is
 in standard apache format and supports MD5, SHA1 and BCrypt for basic
 authentication.  Bcrypt is recommended.
 
@@ -28,9 +28,9 @@ To create an htpasswd file:
 
 The password file can be updated while rclone is running.
 
-Use --realm to set the authentication realm.
+Use ` + "`--realm`" + ` to set the authentication realm.
 
-Use --salt to change the password hashing salt from the default.
+Use ` + "`--salt`" + ` to change the password hashing salt from the default.
 `
 
 // CustomAuthFn if used will be used to authenticate user, pass. If an error
