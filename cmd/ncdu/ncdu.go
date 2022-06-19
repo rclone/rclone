@@ -105,7 +105,7 @@ func helpText() (tr []string) {
 	}
 	tr = append(tr, []string{
 		" Y display current path",
-		" ^L refresh screen",
+		" ^L refresh screen (fix screen corruption)",
 		" ? to toggle help on and off",
 		" q/ESC/^c to quit",
 	}...)
