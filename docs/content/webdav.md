@@ -31,7 +31,7 @@ name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-XX / Webdav
+XX / WebDAV
    \ "webdav"
 [snip]
 Storage> webdav
@@ -40,7 +40,7 @@ Choose a number from below, or type in your own value
  1 / Connect to example.com
    \ "https://example.com"
 url> https://example.com/remote.php/webdav/
-Name of the Webdav site/service/software you are using
+Name of the WebDAV site/service/software you are using
 Choose a number from below, or type in your own value
  1 / Nextcloud
    \ "nextcloud"

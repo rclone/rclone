@@ -118,7 +118,7 @@ e.g.
     export no_proxy=localhost,127.0.0.0/8,my.host.name
     export NO_PROXY=$no_proxy
 
-Note that the ftp backend does not support `ftp_proxy` yet.
+Note that the FTP backend does not support `ftp_proxy` yet.
 
 ### Rclone gives x509: failed to load system roots and no roots provided error ###
 

@@ -111,7 +111,7 @@ These backends adapt or modify other storage providers
   * Optional encryption ([Crypt](https://rclone.org/crypt/))
   * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
   * Multi-threaded downloads to local disk
-  * Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files over HTTP/WebDav/FTP/SFTP/dlna
+  * Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files over HTTP/WebDAV/FTP/SFTP/DLNA
 
 ## Installation & documentation
 
