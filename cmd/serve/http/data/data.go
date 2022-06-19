@@ -19,7 +19,7 @@ import (
 var Help = `
 #### Template
 
---template allows a user to specify a custom markup template for HTTP
+` + "`--template`" + ` allows a user to specify a custom markup template for HTTP
 and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 

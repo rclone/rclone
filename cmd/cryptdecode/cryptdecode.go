@@ -29,7 +29,7 @@ var commandDefinition = &cobra.Command{
 rclone cryptdecode returns unencrypted file names when provided with
 a list of encrypted file names. List limit is 10 items.
 
-If you supply the --reverse flag, it will return encrypted file names.
+If you supply the ` + "`--reverse`" + ` flag, it will return encrypted file names.
 
 use it like this
 
@@ -37,7 +37,7 @@ use it like this
 
 	rclone cryptdecode --reverse encryptedremote: filename1 filename2
 
-Another way to accomplish this is by using the ` + "`rclone backend encode` (or `decode`)" + `command.
+Another way to accomplish this is by using the ` + "`rclone backend encode` (or `decode`)" + ` command.
 See the documentation on the [crypt](/crypt/) overlay for more info.
 `,
 	Run: func(command *cobra.Command, args []string) {

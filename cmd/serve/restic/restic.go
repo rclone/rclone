@@ -59,8 +59,8 @@ backups.
 
 The server will log errors.  Use -v to see access logs.
 
---bwlimit will be respected for file transfers.  Use --stats to
-control the stats printing.
+` + "`--bwlimit`" + ` will be respected for file transfers.
+Use ` + "`--stats`" + ` to control the stats printing.
 
 ### Setting up rclone for use by restic ###
 
@@ -79,11 +79,11 @@ Where you can replace "backup" in the above by whatever path in the
 remote you wish to use.
 
 By default this will serve on "localhost:8080" you can change this
-with use of the "--addr" flag.
+with use of the ` + "`--addr`" + ` flag.
 
 You might wish to start this server on boot.
 
-Adding --cache-objects=false will cause rclone to stop caching objects
+Adding ` + "`--cache-objects=false`" + ` will cause rclone to stop caching objects
 returned from the List call. Caching is normally desirable as it speeds
 up downloading objects, saves transactions and uses very little memory.
 
@@ -129,7 +129,7 @@ these **must** end with /.  Eg
 
 #### Private repositories ####
 
-The "--private-repos" flag can be used to limit users to repositories starting
+The` + "`--private-repos`" + ` flag can be used to limit users to repositories starting
 with a path of ` + "`/<username>/`" + `.
 ` + httplib.Help,
 	Run: func(command *cobra.Command, args []string) {
