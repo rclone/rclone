@@ -44,11 +44,9 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "webdav remote:path",
 	Short: `Serve remote:path over WebDAV.`,
-	Long: `
-rclone serve webdav implements a basic WebDAV server to serve the
-remote over HTTP via the WebDAV protocol. This can be viewed with a
-WebDAV client, through a web browser, or you can make a remote of
-type WebDAV to read and write it.
+	Long: `Run a basic WebDAV server to serve a remote over HTTP via the
+WebDAV protocol. This can be viewed with a WebDAV client, through a web
+browser, or you can make a remote of type WebDAV to read and write it.
 
 ### WebDAV options
 

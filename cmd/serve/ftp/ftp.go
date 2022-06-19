@@ -80,9 +80,9 @@ var Command = &cobra.Command{
 	Use:   "ftp remote:path",
 	Short: `Serve remote:path over FTP.`,
 	Long: `
-rclone serve ftp implements a basic ftp server to serve the
-remote over FTP protocol. This can be viewed with a ftp client
-or you can make a remote of type ftp to read and write it.
+Run a basic FTP server to serve a remote over FTP protocol.
+This can be viewed with a FTP client or you can make a remote of
+type FTP to read and write it.
 
 ### Server options
 
