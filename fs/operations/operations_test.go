@@ -729,9 +729,14 @@ func TestCopyURL(t *testing.T) {
 
 	// check when reading from regular HTTP server
 	status := 0
+	nameHeader := false
+	headerFilename := "headerfilename.txt"
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if status != 0 {
 			http.Error(w, "an error ocurred", status)
+		}
+		if nameHeader {
+			w.Header().Set("Content-Disposition", `attachment; filename="folder\`+headerFilename+`"`)
 		}
 		_, err := w.Write([]byte(contents))
 		assert.NoError(t, err)
@@ -757,8 +762,20 @@ func TestCopyURL(t *testing.T) {
 	assert.Equal(t, int64(len(contents)), o.Size())
 	assert.Equal(t, urlFileName, o.Remote())
 
+	// Check header file naming
+	nameHeader = true
+	o, err = operations.CopyURL(ctx, r.Fremote, "", ts.URL, true, true, false)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), o.Size())
+	assert.Equal(t, headerFilename, o.Remote())
+
 	// Check auto file naming when url without file name
 	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false, false)
+	require.Error(t, err)
+
+	// Check header file naming without header set
+	nameHeader = false
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, true, false)
 	require.Error(t, err)
 
 	// Check an error is returned for a 404
@@ -779,7 +796,7 @@ func TestCopyURL(t *testing.T) {
 	o, err = operations.CopyURL(ctx, r.Fremote, "file2", tss.URL, false, false, false)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(contents)), o.Size())
-	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1)}, nil, fs.ModTimeNotSupported)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1), fstest.NewItem(headerFilename, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
 func TestCopyURLToWriter(t *testing.T) {
