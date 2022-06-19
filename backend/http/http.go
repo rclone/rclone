@@ -35,7 +35,7 @@ var (
 func init() {
 	fsi := &fs.RegInfo{
 		Name:        "http",
-		Description: "HTTP Connection",
+		Description: "HTTP",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",

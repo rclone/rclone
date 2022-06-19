@@ -49,7 +49,7 @@ name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
 [snip]
-XX / SSH/SFTP Connection
+XX / SSH/SFTP
    \ "sftp"
 [snip]
 Storage> sftp
