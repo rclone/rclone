@@ -59,9 +59,8 @@ based on the ModTime and Size of the object.
 
 If this flag is set to "auto" then rclone will choose the first
 supported hash on the backend or you can use a named hash such as
-"MD5" or "SHA-1".
-
-Use "rclone hashsum" to see the full list.
+"MD5" or "SHA-1". Use the [hashsum](/commands/rclone_hashsum/) command
+to see the full list.
 
 ` + httplib.Help + vfs.Help + proxy.Help,
 	RunE: func(command *cobra.Command, args []string) error {

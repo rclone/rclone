@@ -145,7 +145,7 @@ Run them with
 
 The help below will explain what arguments each command takes.
 
-See [the "rclone backend" command](/commands/rclone_backend/) for more
+See the [backend](/commands/rclone_backend/) command for more
 info on how to pass options and arguments.
 
 These can be run on a running backend using the rc command
