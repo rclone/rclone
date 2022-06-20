@@ -112,7 +112,7 @@ func PinUntilFinalized(f fs.Fs, x interface{}) {
 // Unpin f from the cache
 func Unpin(f fs.Fs) {
 	createOnFirstUse()
-	c.Pin(fs.ConfigString(f))
+	c.Unpin(fs.ConfigString(f))
 }
 
 // Get gets an fs.Fs named fsString either from the cache or creates it afresh
