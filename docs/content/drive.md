@@ -509,23 +509,28 @@ represent the currently available conversions.
 
 | Extension | Mime Type | Description |
 | --------- |-----------| ------------|
+| bmp  | image/bmp | Windows Bitmap format |
 | csv  | text/csv | Standard CSV format for Spreadsheets |
+| doc  | application/msword | Classic Word file |
 | docx | application/vnd.openxmlformats-officedocument.wordprocessingml.document | Microsoft Office Document |
 | epub | application/epub+zip | E-book format |
 | html | text/html | An HTML Document |
 | jpg  | image/jpeg | A JPEG Image File |
-| json | application/vnd.google-apps.script+json | JSON Text Format |
+| json | application/vnd.google-apps.script+json | JSON Text Format for Google Apps scripts |
 | odp  | application/vnd.oasis.opendocument.presentation | Openoffice Presentation |
 | ods  | application/vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
 | ods  | application/x-vnd.oasis.opendocument.spreadsheet | Openoffice Spreadsheet |
 | odt  | application/vnd.oasis.opendocument.text | Openoffice Document |
 | pdf  | application/pdf | Adobe PDF Format |
+| pjpeg | image/pjpeg | Progressive JPEG Image |
 | png  | image/png | PNG Image Format|
 | pptx | application/vnd.openxmlformats-officedocument.presentationml.presentation | Microsoft Office Powerpoint |
 | rtf  | application/rtf | Rich Text Format |
 | svg  | image/svg+xml | Scalable Vector Graphics Format |
 | tsv  | text/tab-separated-values | Standard TSV format for spreadsheets |
 | txt  | text/plain | Plain Text |
+| wmf  | application/x-msmetafile | Windows Meta File |
+| xls  | application/vnd.ms-excel | Classic Excel file |
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
