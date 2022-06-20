@@ -3351,6 +3351,12 @@ attempted if possible.
 
 Use the -i flag to see what would be copied before copying.
 `,
+}, {
+	Name:  "exportformats",
+	Short: "Dump the export formats for debug purposes",
+}, {
+	Name:  "importformats",
+	Short: "Dump the import formats for debug purposes",
 }}
 
 // Command the backend to run a named command
@@ -3465,6 +3471,10 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			}
 		}
 		return nil, nil
+	case "exportformats":
+		return f.exportFormats(ctx), nil
+	case "importformats":
+		return f.importFormats(ctx), nil
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
