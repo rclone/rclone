@@ -152,7 +152,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		m.Set(configClientSecret, "")
 
 		srv := rest.NewClient(fshttp.NewClient(ctx))
-		token, tokenEndpoint, err := doTokenAuth(ctx, srv, loginToken)
+		token, tokenEndpoint, username, err := doTokenAuth(ctx, srv, loginToken)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get oauth token: %w", err)
 		}
@@ -161,6 +161,7 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		if err != nil {
 			return nil, fmt.Errorf("error while saving token: %w", err)
 		}
+		m.Set(configUsername, username)
 		return fs.ConfigGoto("choose_device")
 	case "legacy": // configure a jottacloud backend using legacy authentication
 		m.Set("configVersion", fmt.Sprint(legacyConfigVersion))
@@ -271,22 +272,30 @@ sync or the backup section, for example, you must choose yes.`)
 		if config.Result != "true" {
 			m.Set(configDevice, "")
 			m.Set(configMountpoint, "")
+		}
+		username, userOk := m.Get(configUsername)
+		if userOk && config.Result != "true" {
 			return fs.ConfigGoto("end")
 		}
 		oAuthClient, _, err := getOAuthClient(ctx, name, m)
 		if err != nil {
 			return nil, err
 		}
-		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
-		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
-
-		cust, err := getCustomerInfo(ctx, apiSrv)
-		if err != nil {
-			return nil, err
+		if !userOk {
+			apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
+			cust, err := getCustomerInfo(ctx, apiSrv)
+			if err != nil {
+				return nil, err
+			}
+			username = cust.Username
+			m.Set(configUsername, username)
+			if config.Result != "true" {
+				return fs.ConfigGoto("end")
+			}
 		}
-		m.Set(configUsername, cust.Username)
 
-		acc, err := getDriveInfo(ctx, jfsSrv, cust.Username)
+		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
+		acc, err := getDriveInfo(ctx, jfsSrv, username)
 		if err != nil {
 			return nil, err
 		}
@@ -582,10 +591,10 @@ func doLegacyAuth(ctx context.Context, srv *rest.Client, oauthConfig *oauth2.Con
 }
 
 // doTokenAuth runs the actual token request for V2 authentication
-func doTokenAuth(ctx context.Context, apiSrv *rest.Client, loginTokenBase64 string) (token oauth2.Token, tokenEndpoint string, err error) {
+func doTokenAuth(ctx context.Context, apiSrv *rest.Client, loginTokenBase64 string) (token oauth2.Token, tokenEndpoint string, username string, err error) {
 	loginTokenBytes, err := base64.RawURLEncoding.DecodeString(loginTokenBase64)
 	if err != nil {
-		return token, "", err
+		return token, "", "", err
 	}
 
 	// decode login token
@@ -593,7 +602,7 @@ func doTokenAuth(ctx context.Context, apiSrv *rest.Client, loginTokenBase64 stri
 	decoder := json.NewDecoder(bytes.NewReader(loginTokenBytes))
 	err = decoder.Decode(&loginToken)
 	if err != nil {
-		return token, "", err
+		return token, "", "", err
 	}
 
 	// retrieve endpoint urls
@@ -604,7 +613,7 @@ func doTokenAuth(ctx context.Context, apiSrv *rest.Client, loginTokenBase64 stri
 	var wellKnown api.WellKnown
 	_, err = apiSrv.CallJSON(ctx, &opts, nil, &wellKnown)
 	if err != nil {
-		return token, "", err
+		return token, "", "", err
 	}
 
 	// prepare out token request with username and password
@@ -626,14 +635,14 @@ func doTokenAuth(ctx context.Context, apiSrv *rest.Client, loginTokenBase64 stri
 	var jsonToken api.TokenJSON
 	_, err = apiSrv.CallJSON(ctx, &opts, nil, &jsonToken)
 	if err != nil {
-		return token, "", err
+		return token, "", "", err
 	}
 
 	token.AccessToken = jsonToken.AccessToken
 	token.RefreshToken = jsonToken.RefreshToken
 	token.TokenType = jsonToken.TokenType
 	token.Expiry = time.Now().Add(time.Duration(jsonToken.ExpiresIn) * time.Second)
-	return token, wellKnown.TokenEndpoint, err
+	return token, wellKnown.TokenEndpoint, loginToken.Username, err
 }
 
 // getCustomerInfo queries general information about the account
@@ -935,11 +944,17 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return err
 	})
 
-	cust, err := getCustomerInfo(ctx, f.apiSrv)
-	if err != nil {
-		return nil, err
+	user, userOk := m.Get(configUsername)
+	if userOk {
+		f.user = user
+	} else {
+		fs.Infof(nil, "Username not found in config and must be looked up, reconfigure to avoid the extra request")
+		cust, err := getCustomerInfo(ctx, f.apiSrv)
+		if err != nil {
+			return nil, err
+		}
+		f.user = cust.Username
 	}
-	f.user = cust.Username
 	f.setEndpoints()
 
 	if root != "" && !rootIsDir {
