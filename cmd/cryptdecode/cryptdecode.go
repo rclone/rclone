@@ -48,7 +48,14 @@ See the documentation on the ` + "`crypt`" + ` overlay for more info.
 				return err
 			}
 			if fsInfo.Name != "crypt" {
-				return errors.New("The remote needs to be of type \"crypt\"")
+				fsrc := cmd.NewFsSrc(args)
+				fsInfo, _, _, config, err = fs.ConfigFs(fs.ConfigString(fsrc))
+				if err != nil {
+					return err
+				}
+				if fsInfo.Name != "crypt" {
+					return errors.New("The remote needs to be of type \"crypt\"")
+				}
 			}
 			cipher, err := crypt.NewCipher(config)
 			if err != nil {
