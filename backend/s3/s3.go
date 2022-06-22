@@ -2072,14 +2072,14 @@ type Object struct {
 	//
 	// List will read everything but meta & mimeType - to fill
 	// that in you need to call readMetaData
-	fs           *Fs                // what this object is part of
-	remote       string             // The remote path
-	md5          string             // md5sum of the object
-	bytes        int64              // size of the object
-	lastModified time.Time          // Last modified
-	meta         map[string]*string // The object metadata if known - may be nil
-	mimeType     string             // MimeType of object - may be ""
-	storageClass string             // e.g. GLACIER
+	fs           *Fs               // what this object is part of
+	remote       string            // The remote path
+	md5          string            // md5sum of the object
+	bytes        int64             // size of the object
+	lastModified time.Time         // Last modified
+	meta         map[string]string // The object metadata if known - may be nil - with lower case keys
+	mimeType     string            // MimeType of object - may be ""
+	storageClass string            // e.g. GLACIER
 }
 
 // ------------------------------------------------------------
@@ -3753,6 +3753,27 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	return nil
 }
 
+// Convert S3 metadata with pointers into a map[string]string
+// while lowercasing the keys
+func s3MetadataToMap(s3Meta map[string]*string) map[string]string {
+	meta := make(map[string]string, len(s3Meta))
+	for k, v := range s3Meta {
+		if v != nil {
+			meta[strings.ToLower(k)] = *v
+		}
+	}
+	return meta
+}
+
+// Convert our metadata back into S3 metadata
+func mapToS3Metadata(meta map[string]string) map[string]*string {
+	s3Meta := make(map[string]*string, len(meta))
+	for k, v := range meta {
+		s3Meta[k] = aws.String(v)
+	}
+	return s3Meta
+}
+
 func (o *Object) setMetaData(etag *string, contentLength *int64, lastModified *time.Time, meta map[string]*string, mimeType *string, storageClass *string) {
 	// Ignore missing Content-Length assuming it is 0
 	// Some versions of ceph do this due their apache proxies
@@ -3760,17 +3781,14 @@ func (o *Object) setMetaData(etag *string, contentLength *int64, lastModified *t
 		o.bytes = *contentLength
 	}
 	o.setMD5FromEtag(aws.StringValue(etag))
-	o.meta = meta
-	if o.meta == nil {
-		o.meta = map[string]*string{}
-	}
+	o.meta = s3MetadataToMap(meta)
 	// Read MD5 from metadata if present
 	if md5sumBase64, ok := o.meta[metaMD5Hash]; ok {
-		md5sumBytes, err := base64.StdEncoding.DecodeString(*md5sumBase64)
+		md5sumBytes, err := base64.StdEncoding.DecodeString(md5sumBase64)
 		if err != nil {
-			fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", *md5sumBase64, err)
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", md5sumBase64, err)
 		} else if len(md5sumBytes) != 16 {
-			fs.Debugf(o, "Failed to read md5sum from metadata %q: wrong length", *md5sumBase64)
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: wrong length", md5sumBase64)
 		} else {
 			o.md5 = hex.EncodeToString(md5sumBytes)
 		}
@@ -3800,11 +3818,11 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	}
 	// read mtime out of metadata if available
 	d, ok := o.meta[metaMtime]
-	if !ok || d == nil {
+	if !ok {
 		// fs.Debugf(o, "No metadata")
 		return o.lastModified
 	}
-	modTime, err := swift.FloatStringToTime(*d)
+	modTime, err := swift.FloatStringToTime(d)
 	if err != nil {
 		fs.Logf(o, "Failed to read mtime from object: %v", err)
 		return o.lastModified
@@ -3818,7 +3836,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if err != nil {
 		return err
 	}
-	o.meta[metaMtime] = aws.String(swift.TimeToFloatString(modTime))
+	o.meta[metaMtime] = swift.TimeToFloatString(modTime)
 
 	// Can't update metadata here, so return this error to force a recopy
 	if o.storageClass == "GLACIER" || o.storageClass == "DEEP_ARCHIVE" {
@@ -3829,7 +3847,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	bucket, bucketPath := o.split()
 	req := s3.CopyObjectInput{
 		ContentType:       aws.String(fs.MimeType(ctx, o)), // Guess the content type
-		Metadata:          o.meta,
+		Metadata:          mapToS3Metadata(o.meta),
 		MetadataDirective: aws.String(s3.MetadataDirectiveReplace), // replace metadata with that passed in
 	}
 	if o.fs.opt.RequesterPays {
@@ -4423,7 +4441,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		o.md5 = md5sumHex
 		o.bytes = size
 		o.lastModified = time.Now()
-		o.meta = req.Metadata
+		o.meta = s3MetadataToMap(req.Metadata)
 		o.mimeType = aws.StringValue(req.ContentType)
 		o.storageClass = aws.StringValue(req.StorageClass)
 		// If we have done a single part PUT request then we can read these
