@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/rclone/rclone/fs"
@@ -361,5 +362,29 @@ func showBackend(name string) {
 			}
 			fmt.Printf("\n")
 		}
+	}
+	if backend.MetadataInfo != nil {
+		fmt.Printf("### Metadata\n\n")
+		fmt.Printf("%s\n\n", strings.TrimSpace(backend.MetadataInfo.Help))
+		if len(backend.MetadataInfo.System) > 0 {
+			fmt.Printf("Here are the possible system metadata items for the %s backend.\n\n", backend.Name)
+			keys := []string{}
+			for k := range backend.MetadataInfo.System {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			fmt.Printf("| Name | Help | Type | Example | Read Only |\n")
+			fmt.Printf("|------|------|------|---------|-----------|\n")
+			for _, k := range keys {
+				v := backend.MetadataInfo.System[k]
+				ro := "N"
+				if v.ReadOnly {
+					ro = "**Y**"
+				}
+				fmt.Printf("| %s | %s | %s | %s | %s |\n", k, v.Help, v.Type, v.Example, ro)
+			}
+			fmt.Printf("\n")
+		}
+		fmt.Printf("See the [metadata](/docs/#metadata) docs for more info.\n\n")
 	}
 }

@@ -413,46 +413,103 @@ This returns info about the remote passed in;
 
 ` + "```" + `
 {
-	// optional features and whether they are available or not
-	"Features": {
-		"About": true,
-		"BucketBased": false,
-		"CanHaveEmptyDirectories": true,
-		"CaseInsensitive": false,
-		"ChangeNotify": false,
-		"CleanUp": false,
-		"Copy": false,
-		"DirCacheFlush": false,
-		"DirMove": true,
-		"DuplicateFiles": false,
-		"GetTier": false,
-		"ListR": false,
-		"MergeDirs": false,
-		"Move": true,
-		"OpenWriterAt": true,
-		"PublicLink": false,
-		"Purge": true,
-		"PutStream": true,
-		"PutUnchecked": false,
-		"ReadMimeType": false,
-		"ServerSideAcrossConfigs": false,
-		"SetTier": false,
-		"SetWrapper": false,
-		"UnWrap": false,
-		"WrapFs": false,
-		"WriteMimeType": false
-	},
-	// Names of hashes available
-	"Hashes": [
-		"MD5",
-		"SHA-1",
-		"DropboxHash",
-		"QuickXorHash"
-	],
-	"Name": "local",	// Name as created
-	"Precision": 1,		// Precision of timestamps in ns
-	"Root": "/",		// Path as created
-	"String": "Local file system at /" // how the remote will appear in logs
+        // optional features and whether they are available or not
+        "Features": {
+                "About": true,
+                "BucketBased": false,
+                "BucketBasedRootOK": false,
+                "CanHaveEmptyDirectories": true,
+                "CaseInsensitive": false,
+                "ChangeNotify": false,
+                "CleanUp": false,
+                "Command": true,
+                "Copy": false,
+                "DirCacheFlush": false,
+                "DirMove": true,
+                "Disconnect": false,
+                "DuplicateFiles": false,
+                "GetTier": false,
+                "IsLocal": true,
+                "ListR": false,
+                "MergeDirs": false,
+                "MetadataInfo": true,
+                "Move": true,
+                "OpenWriterAt": true,
+                "PublicLink": false,
+                "Purge": true,
+                "PutStream": true,
+                "PutUnchecked": false,
+                "ReadMetadata": true,
+                "ReadMimeType": false,
+                "ServerSideAcrossConfigs": false,
+                "SetTier": false,
+                "SetWrapper": false,
+                "Shutdown": false,
+                "SlowHash": true,
+                "SlowModTime": false,
+                "UnWrap": false,
+                "UserInfo": false,
+                "UserMetadata": true,
+                "WrapFs": false,
+                "WriteMetadata": true,
+                "WriteMimeType": false
+        },
+        // Names of hashes available
+        "Hashes": [
+                "md5",
+                "sha1",
+                "whirlpool",
+                "crc32",
+                "sha256",
+                "dropbox",
+                "mailru",
+                "quickxor"
+        ],
+        "Name": "local",        // Name as created
+        "Precision": 1,         // Precision of timestamps in ns
+        "Root": "/",            // Path as created
+        "String": "Local file system at /", // how the remote will appear in logs
+        // Information about the system metadata for this backend
+        "MetadataInfo": {
+                "System": {
+                        "atime": {
+                                "Help": "Time of last access",
+                                "Type": "RFC 3339",
+                                "Example": "2006-01-02T15:04:05.999999999Z07:00"
+                        },
+                        "btime": {
+                                "Help": "Time of file birth (creation)",
+                                "Type": "RFC 3339",
+                                "Example": "2006-01-02T15:04:05.999999999Z07:00"
+                        },
+                        "gid": {
+                                "Help": "Group ID of owner",
+                                "Type": "decimal number",
+                                "Example": "500"
+                        },
+                        "mode": {
+                                "Help": "File type and mode",
+                                "Type": "octal, unix style",
+                                "Example": "0100664"
+                        },
+                        "mtime": {
+                                "Help": "Time of last modification",
+                                "Type": "RFC 3339",
+                                "Example": "2006-01-02T15:04:05.999999999Z07:00"
+                        },
+                        "rdev": {
+                                "Help": "Device ID (if special file)",
+                                "Type": "hexadecimal",
+                                "Example": "1abc"
+                        },
+                        "uid": {
+                                "Help": "User ID of owner",
+                                "Type": "decimal number",
+                                "Example": "500"
+                        }
+                },
+                "Help": "Textual help string\n"
+        }
 }
 ` + "```" + `
 

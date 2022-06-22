@@ -2278,20 +2278,29 @@ type FsInfo struct {
 
 	// Features returns the optional features of this Fs
 	Features map[string]bool
+
+	// MetadataInfo returns info about the metadata for this backend
+	MetadataInfo *fs.MetadataInfo
 }
 
 // GetFsInfo gets the information (FsInfo) about a given Fs
 func GetFsInfo(f fs.Fs) *FsInfo {
+	features := f.Features()
 	info := &FsInfo{
-		Name:      f.Name(),
-		Root:      f.Root(),
-		String:    f.String(),
-		Precision: f.Precision(),
-		Hashes:    make([]string, 0, 4),
-		Features:  f.Features().Enabled(),
+		Name:         f.Name(),
+		Root:         f.Root(),
+		String:       f.String(),
+		Precision:    f.Precision(),
+		Hashes:       make([]string, 0, 4),
+		Features:     features.Enabled(),
+		MetadataInfo: nil,
 	}
 	for _, hashType := range f.Hashes().Array() {
 		info.Hashes = append(info.Hashes, hashType.String())
+	}
+	fsInfo, _, _, _, err := fs.ParseRemote(fs.ConfigString(f))
+	if err == nil && fsInfo != nil && fsInfo.MetadataInfo != nil {
+		info.MetadataInfo = fsInfo.MetadataInfo
 	}
 	return info
 }

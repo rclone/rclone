@@ -7,6 +7,20 @@ import "context"
 // See docs/content/metadata.md for the interpretation of the keys
 type Metadata map[string]string
 
+// MetadataHelp represents help for a bit of system metadata
+type MetadataHelp struct {
+	Help     string
+	Type     string
+	Example  string
+	ReadOnly bool
+}
+
+// MetadataInfo is help for the whole metadata for this backend.
+type MetadataInfo struct {
+	System map[string]MetadataHelp
+	Help   string
+}
+
 // Set k to v on m
 //
 // If m is nil, then it will get made

@@ -40,6 +40,8 @@ type RegInfo struct {
 	Aliases []string
 	// Hide - if set don't show in the configurator
 	Hide bool
+	// MetadataInfo help about the metadata in use in this backend
+	MetadataInfo *MetadataInfo
 }
 
 // FileName returns the on disk file name for this backend
