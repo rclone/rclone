@@ -714,10 +714,10 @@ func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
 
 // DoneTransferring removes a transfer from the stats
 //
-// if ok is true then it increments the transfers count
+// if ok is true and it was in the transfermap (to avoid incrementing in case of nested calls, #6213) then it increments the transfers count
 func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
-	s.transferring.del(remote)
-	if ok {
+	existed := s.transferring.del(remote)
+	if ok && existed {
 		s.mu.Lock()
 		s.transfers++
 		s.mu.Unlock()
