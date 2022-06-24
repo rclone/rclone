@@ -17,6 +17,8 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Root is the main rclone command
@@ -316,7 +318,8 @@ func showBackend(name string) {
 			optionsType = "advanced"
 			continue
 		}
-		fmt.Printf("### %s options\n\n", strings.Title(optionsType))
+		optionsType = cases.Title(language.Und, cases.NoLower).String(optionsType)
+		fmt.Printf("### %s options\n\n", optionsType)
 		fmt.Printf("Here are the %s options specific to %s (%s).\n\n", optionsType, backend.Name, backend.Description)
 		optionsType = "advanced"
 		for _, opt := range opts {
