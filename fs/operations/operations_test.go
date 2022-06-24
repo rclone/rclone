@@ -47,6 +47,8 @@ import (
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Some times used in the tests
@@ -270,7 +272,7 @@ func TestHashSums(t *testing.T) {
 		if !hashes.Contains(test.ht) {
 			continue
 		}
-		name := strings.Title(test.ht.String())
+		name := cases.Title(language.Und, cases.NoLower).String(test.ht.String())
 		if test.download {
 			name += "Download"
 		}
