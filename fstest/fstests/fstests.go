@@ -1459,9 +1459,7 @@ func Run(t *testing.T, opt *Opt) {
 							assert.Equal(t, metaMimeType, gotMimeType)
 						}
 					})
-				} else {
-					// Have some metadata here we didn't write - can't really check it!
-				}
+				} // else: Have some metadata here we didn't write - can't really check it!
 			})
 
 			// TestObjectSetModTime tests that SetModTime works

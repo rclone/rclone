@@ -782,11 +782,11 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	_, err = f.readMetaDataForPath(ctx, dstPath, &api.ResourceInfoRequestOptions{})
-	if apiErr, ok := err.(*api.ErrorResponse); ok {
+	if _, ok := err.(*api.ErrorResponse); ok {
 		// does not exist
-		if apiErr.ErrorName == "DiskNotFoundError" {
-			// OK
-		}
+		//if apiErr.ErrorName == "DiskNotFoundError" {
+		//	// OK
+		//}
 	} else if err != nil {
 		return err
 	} else {
