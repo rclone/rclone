@@ -44,6 +44,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
+	option "google.golang.org/api/option"
 
 	// NOTE: This API is deprecated
 	storage "google.golang.org/api/storage/v1"
@@ -524,7 +525,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
-	f.svc, err = storage.New(f.client)
+	f.svc, err = storage.NewService(context.Background(), option.WithHTTPClient(f.client))
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create Google Cloud Storage client: %w", err)
 	}
