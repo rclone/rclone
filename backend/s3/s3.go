@@ -4288,7 +4288,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 func unWrapAwsError(err error) (found bool, outErr error) {
 	if awsErr, ok := err.(awserr.Error); ok {
 		var origErrs []error
-		if batchErr, ok := awsErr.(awserr.BatchError); ok {
+		if batchErr, ok := awsErr.(awserr.BatchedErrors); ok {
 			origErrs = batchErr.OrigErrs()
 		} else {
 			origErrs = []error{awsErr.OrigErr()}
