@@ -320,11 +320,7 @@ func (f *Fs) GetFreeSpace() (int64, error) {
 	if f.usage.Free == nil {
 		return math.MaxInt64 - 1, ErrUsageFieldNotSupported
 	}
-	free := *f.usage.Free
-	if free >= math.MaxInt64 {
-		free = math.MaxInt64 - 1
-	}
-	return free, nil
+	return *f.usage.Free, nil
 }
 
 // GetUsedSpace get the used space of the fs
@@ -342,11 +338,7 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 	if f.usage.Used == nil {
 		return 0, ErrUsageFieldNotSupported
 	}
-	used := *f.usage.Used
-	if used >= math.MaxInt64 {
-		used = math.MaxInt64 - 1
-	}
-	return used, nil
+	return *f.usage.Used, nil
 }
 
 // GetNumObjects get the number of objects of the fs
