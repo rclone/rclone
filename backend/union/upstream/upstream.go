@@ -129,11 +129,11 @@ func (f *Fs) WrapObject(o fs.Object) *Object {
 // WrapEntry wraps an fs.DirEntry to include the info
 // of the upstream Fs
 func (f *Fs) WrapEntry(e fs.DirEntry) (Entry, error) {
-	switch e.(type) {
+	switch e := e.(type) {
 	case fs.Object:
-		return f.WrapObject(e.(fs.Object)), nil
+		return f.WrapObject(e), nil
 	case fs.Directory:
-		return f.WrapDirectory(e.(fs.Directory)), nil
+		return f.WrapDirectory(e), nil
 	default:
 		return nil, fmt.Errorf("unknown object type %T", e)
 	}

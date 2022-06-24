@@ -85,16 +85,16 @@ func (f *Fs) wrapEntries(entries ...upstream.Entry) (entry, error) {
 	if err != nil {
 		return nil, err
 	}
-	switch e.(type) {
+	switch e := e.(type) {
 	case *upstream.Object:
 		return &Object{
-			Object: e.(*upstream.Object),
+			Object: e,
 			fs:     f,
 			co:     entries,
 		}, nil
 	case *upstream.Directory:
 		return &Directory{
-			Directory: e.(*upstream.Directory),
+			Directory: e,
 			cd:        entries,
 		}, nil
 	default:

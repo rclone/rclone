@@ -59,11 +59,11 @@ func (h *ReOpen) open() error {
 	var hashOption *fs.HashesOption
 	var rangeOption *fs.RangeOption
 	for _, option := range h.options {
-		switch option.(type) {
+		switch option := option.(type) {
 		case *fs.HashesOption:
-			hashOption = option.(*fs.HashesOption)
+			hashOption = option
 		case *fs.RangeOption:
-			rangeOption = option.(*fs.RangeOption)
+			rangeOption = option
 		case *fs.HTTPOption:
 			opts = append(opts, option)
 		default:
