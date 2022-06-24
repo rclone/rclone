@@ -1760,16 +1760,6 @@ func (o *Object) rootPath() string {
 	return o.fs.rootPath(o.remote)
 }
 
-// srvPath returns a path for use in server given a remote
-func (f *Fs) srvPath(remote string) string {
-	return f.opt.Enc.FromStandardPath(f.rootSlash() + remote)
-}
-
-// srvPath returns a path for use in server
-func (o *Object) srvPath() string {
-	return o.fs.srvPath(o.remote)
-}
-
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if o.fs.driveType == driveTypePersonal {

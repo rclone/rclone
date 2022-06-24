@@ -1293,19 +1293,6 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	return f.NewObject(ctx, remote)
 }
 
-func (f *Fs) getMemoryPool(size int64) *pool.Pool {
-	if size == int64(f.opt.ChunkSize) {
-		return f.pool
-	}
-
-	return pool.New(
-		time.Duration(f.opt.MemoryPoolFlushTime),
-		int(size),
-		f.ci.Transfers,
-		f.opt.MemoryPoolUseMmap,
-	)
-}
-
 // ------------------------------------------------------------
 
 // Fs returns the parent Fs

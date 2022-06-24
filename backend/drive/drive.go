@@ -3525,12 +3525,6 @@ func (o *baseObject) Size() int64 {
 	return o.bytes
 }
 
-// getRemoteInfo returns a drive.File for the remote
-func (f *Fs) getRemoteInfo(ctx context.Context, remote string) (info *drive.File, err error) {
-	info, _, _, _, _, err = f.getRemoteInfoWithExport(ctx, remote)
-	return
-}
-
 // getRemoteInfoWithExport returns a drive.File and the export settings for the remote
 func (f *Fs) getRemoteInfoWithExport(ctx context.Context, remote string) (
 	info *drive.File, extension, exportName, exportMimeType string, isDocument bool, err error) {
