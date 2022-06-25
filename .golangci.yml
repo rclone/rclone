@@ -33,11 +33,6 @@ issues:
       - staticcheck
       text: 'SA1019: "github.com/rclone/rclone/cmd/serve/httplib" is deprecated'
 
-    # TODO: Remove if/when this is fixed by merging PR #6277.
-    - linters:
-      - staticcheck
-      text: 'SA1019: "golang.org/x/oauth2/jws" is deprecated'
-
 run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
