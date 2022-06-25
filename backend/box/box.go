@@ -27,6 +27,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/rclone/rclone/backend/box/api"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
@@ -45,7 +46,6 @@ import (
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/youmark/pkcs8"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/jws"
 )
 
 const (
@@ -75,6 +75,11 @@ var (
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
+
+type boxCustomClaims struct {
+	jwt.RegisteredClaims
+	BoxSubType string `json:"box_sub_type,omitempty"`
+}
 
 // Register with Fs
 func init() {
@@ -178,7 +183,7 @@ func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, na
 	signingHeaders := getSigningHeaders(boxConfig)
 	queryParams := getQueryParams(boxConfig)
 	client := fshttp.NewClient(ctx)
-	err = jwtutil.Config("box", name, claims, signingHeaders, queryParams, privateKey, m, client)
+	err = jwtutil.Config("box", name, tokenURL, *claims, signingHeaders, queryParams, privateKey, m, client)
 	return err
 }
 
@@ -194,34 +199,29 @@ func getBoxConfig(configFile string) (boxConfig *api.ConfigJSON, err error) {
 	return boxConfig, nil
 }
 
-func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *jws.ClaimSet, err error) {
+func getClaims(boxConfig *api.ConfigJSON, boxSubType string) (claims *boxCustomClaims, err error) {
 	val, err := jwtutil.RandomHex(20)
 	if err != nil {
 		return nil, fmt.Errorf("box: failed to generate random string for jti: %w", err)
 	}
 
-	claims = &jws.ClaimSet{
-		Iss: boxConfig.BoxAppSettings.ClientID,
-		Sub: boxConfig.EnterpriseID,
-		Aud: tokenURL,
-		Exp: time.Now().Add(time.Second * 45).Unix(),
-		PrivateClaims: map[string]interface{}{
-			"box_sub_type": boxSubType,
-			"aud":          tokenURL,
-			"jti":          val,
+	claims = &boxCustomClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        val,
+			Issuer:    boxConfig.BoxAppSettings.ClientID,
+			Subject:   boxConfig.EnterpriseID,
+			Audience:  jwt.ClaimStrings{tokenURL},
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 45)),
 		},
+		BoxSubType: boxSubType,
 	}
-
 	return claims, nil
 }
 
-func getSigningHeaders(boxConfig *api.ConfigJSON) *jws.Header {
-	signingHeaders := &jws.Header{
-		Algorithm: "RS256",
-		Typ:       "JWT",
-		KeyID:     boxConfig.BoxAppSettings.AppAuth.PublicKeyID,
+func getSigningHeaders(boxConfig *api.ConfigJSON) map[string]interface{} {
+	signingHeaders := map[string]interface{}{
+		"kid": boxConfig.BoxAppSettings.AppAuth.PublicKeyID,
 	}
-
 	return signingHeaders
 }
 
