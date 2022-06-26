@@ -1,10 +1,11 @@
 // Build for cmount for unsupported platforms to stop go complaining
 // about "no buildable Go source files "
 
-//go:build !((linux && cgo && cmount) || (darwin && cgo && cmount) || (freebsd && cgo && cmount) || (windows && cmount))
+//go:build !((linux && cgo && cmount) || (darwin && cgo && cmount) || (freebsd && cgo && cmount) || (openbsd && cgo && cmount) || (windows && cmount))
 // +build !linux !cgo !cmount
 // +build !darwin !cgo !cmount
 // +build !freebsd !cgo !cmount
+// +build !openbsd !cgo !cmount
 // +build !windows !cmount
 
 package cmount
