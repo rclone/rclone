@@ -297,7 +297,7 @@ func TestHashSumsWithErrors(t *testing.T) {
 	// Make a test file
 	content := "-"
 	item1 := fstest.NewItem("file1", content, t1)
-	_, _ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
+	_ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
 
 	// MemoryFS supports MD5
 	buf := &bytes.Buffer{}

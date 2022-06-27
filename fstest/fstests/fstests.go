@@ -178,7 +178,7 @@ var _ fs.MimeTyper = (*objectInfoWithMimeType)(nil)
 // putTestContentsMimeType puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
 //
 // it uploads the object with the mimeType passed in if set
-func putTestContentsMimeType(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, contents string, check bool, mimeType string) (string, fs.Object) {
+func putTestContentsMimeType(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, contents string, check bool, mimeType string) fs.Object {
 	var (
 		err        error
 		obj        fs.Object
@@ -204,22 +204,24 @@ func putTestContentsMimeType(ctx context.Context, t *testing.T, f fs.Fs, file *f
 		obj = findObject(ctx, t, f, file.Path)
 		file.Check(t, obj, f.Precision())
 	}
-	return contents, obj
+	return obj
 }
 
 // PutTestContents puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
-func PutTestContents(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, contents string, check bool) (string, fs.Object) {
+func PutTestContents(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, contents string, check bool) fs.Object {
 	return putTestContentsMimeType(ctx, t, f, file, contents, check, "")
 }
 
 // testPut puts file with random contents to the remote
 func testPut(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item) (string, fs.Object) {
-	return PutTestContents(ctx, t, f, file, random.String(100), true)
+	contents := random.String(100)
+	return contents, PutTestContents(ctx, t, f, file, contents, true)
 }
 
 // testPutMimeType puts file with random contents to the remote and the mime type given
 func testPutMimeType(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, mimeType string) (string, fs.Object) {
-	return putTestContentsMimeType(ctx, t, f, file, random.String(100), true, mimeType)
+	contents := random.String(100)
+	return contents, putTestContentsMimeType(ctx, t, f, file, contents, true, mimeType)
 }
 
 // TestPutLarge puts file to the remote, checks it and removes it on success.

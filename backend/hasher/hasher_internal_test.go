@@ -19,7 +19,7 @@ import (
 func putFile(ctx context.Context, t *testing.T, f fs.Fs, name, data string) fs.Object {
 	mtime1 := fstest.Time("2001-02-03T04:05:06.499999999Z")
 	item := fstest.Item{Path: name, ModTime: mtime1}
-	_, o := fstests.PutTestContents(ctx, t, f, &item, data, true)
+	o := fstests.PutTestContents(ctx, t, f, &item, data, true)
 	require.NotNil(t, o)
 	return o
 }
