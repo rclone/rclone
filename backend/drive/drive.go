@@ -1086,15 +1086,12 @@ func getClient(ctx context.Context, opt *Options) *http.Client {
 
 func getServiceAccountClient(ctx context.Context, opt *Options, credentialsData []byte) (*http.Client, error) {
 	scopes := driveScopes(opt.Scope)
-	conf, err := google.JWTConfigFromJSON(credentialsData, scopes...)
+	credentials, err := google.CredentialsFromJSON(ctx, credentialsData, scopes...)
 	if err != nil {
 		return nil, fmt.Errorf("error processing credentials: %w", err)
 	}
-	if opt.Impersonate != "" {
-		conf.Subject = opt.Impersonate
-	}
 	ctxWithSpecialClient := oauthutil.Context(ctx, getClient(ctx, opt))
-	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
+	return oauth2.NewClient(ctxWithSpecialClient, credentials.TokenSource), nil
 }
 
 func createOAuthClient(ctx context.Context, opt *Options, name string, m configmap.Mapper) (*http.Client, error) {
