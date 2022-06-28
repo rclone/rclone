@@ -529,14 +529,14 @@ func Run(t *testing.T, opt *Opt) {
 	})
 
 	// TestFsRmdirNotFound tests deleting a non-existent directory
-	//t.Run("FsRmdirNotFound", func(t *testing.T) {
-	//	skipIfNotOk(t)
-	//	if isBucketBasedButNotRoot(f) {
-	//		t.Skip("Skipping test as non root bucket-based remote")
-	//	}
-	//	err := f.Rmdir(ctx, "")
-	//	assert.Error(t, err, "Expecting error on Rmdir non-existent")
-	//})
+	t.Run("FsRmdirNotFound", func(t *testing.T) {
+		skipIfNotOk(t)
+		if isBucketBasedButNotRoot(f) {
+			t.Skip("Skipping test as non root bucket-based remote")
+		}
+		err := f.Rmdir(ctx, "")
+		assert.Error(t, err, "Expecting error on Rmdir non-existent")
+	})
 
 	// Make the directory
 	err = f.Mkdir(ctx, "")
