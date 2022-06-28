@@ -69,8 +69,9 @@ func (mc *multiThreadCopyState) copyStream(ctx context.Context, stream int) (err
 		return nil
 	}
 	end := start + mc.partSize
-	if end > mc.size {
-		end = mc.size
+	if end >= mc.size {
+		// Withhold last byte until all streams finish to prevent --size-only skip
+		end = mc.size - 1
 	}
 
 	fs.Debugf(mc.src, "multi-thread copy: stream %d/%d (%d-%d) size %v starting", stream+1, mc.streams, start, end, fs.SizeSuffix(end-start))
@@ -178,10 +179,25 @@ func multiThreadCopy(ctx context.Context, f fs.Fs, remote string, src fs.Object,
 		})
 	}
 	err = g.Wait()
-	closeErr := mc.wc.Close()
 	if err != nil {
 		return nil, err
 	}
+
+	// Copy last withheld byte
+	rc, err := mc.src.Open(ctx, &fs.SeekOption{Offset: mc.size - 1})
+	if err != nil {
+		return nil, fmt.Errorf("multipart copy: failed to open source: %w", err)
+	}
+	defer fs.CheckClose(rc, &err)
+	lastByte := make([]byte, 1)
+	if _, er := io.ReadFull(rc, lastByte); er != nil {
+		return nil, fmt.Errorf("multipart copy: failed to read last byte: %w", er)
+	}
+	if _, ew := mc.wc.WriteAt(lastByte, mc.size-1); ew != nil {
+		return nil, fmt.Errorf("multipart copy: failed to write last byte: %w", ew)
+	}
+
+	closeErr := mc.wc.Close()
 	if closeErr != nil {
 		return nil, fmt.Errorf("multi-thread copy: failed to close object after copy: %w", closeErr)
 	}
