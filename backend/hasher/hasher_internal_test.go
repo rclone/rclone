@@ -35,7 +35,7 @@ func (f *Fs) testUploadFromCrypt(t *testing.T) {
 	// make a temporary crypt remote
 	ctx := context.Background()
 	pass := obscure.MustObscure("crypt")
-	remote := fmt.Sprintf(":crypt,remote=%s,password=%s:", tempRoot, pass)
+	remote := fmt.Sprintf(`:crypt,remote="%s",password="%s":`, tempRoot, pass)
 	cryptFs, err := fs.NewFs(ctx, remote)
 	require.NoError(t, err)
 
