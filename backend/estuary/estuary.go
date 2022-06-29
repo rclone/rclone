@@ -168,7 +168,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		return false, err
 	}
 
-	if resp.StatusCode == 404 {
+	if resp != nil && resp.StatusCode == 404 {
 		err = fs.ErrorDirNotFound
 	}
 	return fserrors.ShouldRetry(err) && fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
@@ -425,14 +425,14 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 		absPath = "/" + absPath
 
 		params := url.Values{}
-		params.Set("col", uuid)
-		params.Set("dir", absPath)
+		params.Set("coluuid", uuid)
+		params.Set("colpath", absPath)
 
 		var items []CollectionFsItem
 		if err := f.pacer.Call(func() (bool, error) {
 			response, err := f.client.CallJSON(ctx, &rest.Opts{
 				Method:     "GET",
-				Path:       "/collections/fs/list",
+				Path:       "/collections/content",
 				Parameters: params,
 			}, nil, &items)
 			return shouldRetry(ctx, response, err)
@@ -501,33 +501,25 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	uuid, collectionDir := splitDir(dirID)
 	var collectionContent []Content
 	var response *http.Response
-	err = f.pacer.Call(func() (bool, error) {
-		response, err = f.client.CallJSON(ctx, &rest.Opts{
-			Method: "GET",
-			Path:   "/collections/content/" + uuid,
-		}, nil, &collectionContent)
-
-		return shouldRetry(ctx, response, err)
-	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	params := url.Values{}
-	params.Set("col", uuid)
-	params.Set("dir", collectionDir)
+	params.Set("coluuid", uuid)
+	params.Set("colpath", collectionDir)
 
 	var items []CollectionFsItem
 	if err := f.pacer.Call(func() (bool, error) {
-		response, err := f.client.CallJSON(ctx, &rest.Opts{
+		response, err = f.client.CallJSON(ctx, &rest.Opts{
 			Method:     "GET",
-			Path:       "/collections/fs/list",
+			Path:       "/collections/content",
 			Parameters: params,
 		}, nil, &items)
 		return shouldRetry(ctx, response, err)
 	}); err != nil {
 		return nil, err
+	}
+
+	if entries == nil {
+		return fs.DirEntries{}, nil
 	}
 
 	for _, item := range items {
@@ -683,14 +675,14 @@ func (o *Object) readStats(ctx context.Context) error {
 		uuid, collectionDir := splitDir(dirID)
 
 		params := url.Values{}
-		params.Set("col", uuid)
-		params.Set("dir", collectionDir)
+		params.Set("coluuid", uuid)
+		params.Set("colpath", collectionDir)
 
 		var items []CollectionFsItem
 		if err = o.fs.pacer.Call(func() (bool, error) {
 			response, err := o.fs.client.CallJSON(ctx, &rest.Opts{
 				Method:     "GET",
-				Path:       "/collections/fs/list",
+				Path:       "/collections/content",
 				Parameters: params,
 			}, nil, &items)
 			return shouldRetry(ctx, response, err)
