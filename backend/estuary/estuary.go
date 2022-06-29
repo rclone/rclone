@@ -168,6 +168,9 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 		return false, err
 	}
 
+	if resp.StatusCode == 404 {
+		err = fs.ErrorDirNotFound
+	}
 	return fserrors.ShouldRetry(err) && fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
@@ -481,7 +484,7 @@ func (f *Fs) listRoot(ctx context.Context, dir string) (entries fs.DirEntries, e
 // dir should be "" to list the root, and should not have
 // trailing slashes.
 //
-// This should return ErrDirNotFound if the directory isn't
+// This should return ErrorDirNotFound if the directory isn't
 // found.
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	fs.Debugf(f, "List %v", dir)
@@ -622,7 +625,8 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	return errorNotImpl
+	_, err := f.dirCache.FindDir(ctx, dir, false) // rmdir is a NOP
+	return err
 }
 
 // Fs returns the parent Fs
