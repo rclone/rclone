@@ -639,12 +639,22 @@ objects to transfer is held in memory before the transfers start.
 
 ### --checkers=N ###
 
-The number of checkers to run in parallel.  Checkers do the equality
-checking of files during a sync.  For some storage systems (e.g. S3,
-Swift, Dropbox) this can take a significant amount of time so they are
-run in parallel.
+Originally controlling just the number of file checkers to run in parallel, 
+e.g. by `rclone copy`. Now a fairly universal parallelism control 
+used by `rclone` in several places. 
 
-The default is to run 8 checkers in parallel.
+Note: checkers do the equality checking of files during a sync. 
+For some storage systems (e.g. S3, Swift, Dropbox) this can take 
+a significant amount of time so they are run in parallel.
+
+The default is to run 8 checkers in parallel. However, in case 
+of slow-reacting backends you may need to lower (rather than increase)
+this default by setting `--checkers` to 4 or less threads. This is 
+especially advised if you are experiencing backend server crashes 
+during file checking phase (e.g. on subsequent or top-up backups 
+where little or no file copying is done and checking takes up 
+most of the time). Increase this setting only with utmost care, 
+while monitoring your server health and file checking throughput.
 
 ### -c, --checksum ###
 
