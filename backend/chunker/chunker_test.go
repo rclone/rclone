@@ -35,6 +35,7 @@ func TestIntegration(t *testing.T) {
 			"MimeType",
 			"GetTier",
 			"SetTier",
+			"Metadata",
 		},
 		UnimplementableFsMethods: []string{
 			"PublicLink",
