@@ -30,6 +30,9 @@ func init() {
 		Name:        "union",
 		Description: "Union merges the contents of several upstream fs",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.`,
+		},
 		Options: []fs.Option{{
 			Name:     "upstreams",
 			Help:     "List of space separated upstreams.\n\nCan be 'upstreama:test/dir upstreamb:', '\"upstreama:test/space:ro dir\" upstreamb:', etc.",
@@ -219,7 +222,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		fs.Debugf(src, "Can't copy - not same remote type")
 		return nil, fs.ErrorCantCopy
 	}
-	o := srcObj.UnWrap()
+	o := srcObj.UnWrapUpstream()
 	su := o.UpstreamFs()
 	if su.Features().Copy == nil {
 		return nil, fs.ErrorCantCopy
@@ -881,6 +884,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		BucketBased:             true,
 		SetTier:                 true,
 		GetTier:                 true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}).Fill(ctx, f)
 	canMove := true
 	for _, f := range upstreams {

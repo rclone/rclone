@@ -245,6 +245,53 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
+// GetTier returns storage tier or class of the Object
+func (o *Object) GetTier() string {
+	do, ok := o.Object.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	do, ok := o.Object.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// MimeType returns the content type of the Object if known
+func (o *Object) MimeType(ctx context.Context) (mimeType string) {
+	if do, ok := o.Object.(fs.MimeTyper); ok {
+		mimeType = do.MimeType(ctx)
+	}
+	return mimeType
+}
+
+// SetTier performs changing storage tier of the Object if
+// multiple storage classes supported
+func (o *Object) SetTier(tier string) error {
+	do, ok := o.Object.(fs.SetTierer)
+	if !ok {
+		return errors.New("underlying remote does not support SetTier")
+	}
+	return do.SetTier(tier)
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.Object.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
 // About gets quota information from the Fs
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
@@ -363,3 +410,8 @@ func (f *Fs) updateUsageCore(lock bool) error {
 	f.usage = usage
 	return nil
 }
+
+// Check the interfaces are satisfied
+var (
+	_ fs.FullObject = (*Object)(nil)
+)
