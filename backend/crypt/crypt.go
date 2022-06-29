@@ -28,6 +28,9 @@ func init() {
 		Description: "Encrypt/Decrypt a remote",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.`,
+		},
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to encrypt/decrypt.\n\nNormally should contain a ':' and a path, e.g. \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\" (not recommended).",
@@ -241,6 +244,9 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		SetTier:                 true,
 		GetTier:                 true,
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 
 	return f, err
@@ -1056,6 +1062,50 @@ func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
 	return "", nil
 }
 
+// GetTier returns storage tier or class of the Object
+func (o *ObjectInfo) GetTier() string {
+	do, ok := o.ObjectInfo.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
+// ID returns the ID of the Object if known, or "" if not
+func (o *ObjectInfo) ID() string {
+	do, ok := o.ObjectInfo.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *ObjectInfo) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.ObjectInfo.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
+// MimeType returns the content type of the Object if
+// known, or "" if not
+//
+// This is deliberately unsupported so we don't leak mime type info by
+// default.
+func (o *ObjectInfo) MimeType(ctx context.Context) string {
+	return ""
+}
+
+// UnWrap returns the Object that this Object is wrapping or
+// nil if it isn't wrapping anything
+func (o *ObjectInfo) UnWrap() fs.Object {
+	return fs.UnWrapObjectInfo(o.ObjectInfo)
+}
+
 // ID returns the ID of the Object if known, or "" if not
 func (o *Object) ID() string {
 	do, ok := o.Object.(fs.IDer)
@@ -1084,6 +1134,26 @@ func (o *Object) GetTier() string {
 	return do.GetTier()
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.Object.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
+// MimeType returns the content type of the Object if
+// known, or "" if not
+//
+// This is deliberately unsupported so we don't leak mime type info by
+// default.
+func (o *Object) MimeType(ctx context.Context) string {
+	return ""
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -1106,10 +1176,6 @@ var (
 	_ fs.UserInfoer      = (*Fs)(nil)
 	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
-	_ fs.Object          = (*Object)(nil)
-	_ fs.ObjectUnWrapper = (*Object)(nil)
-	_ fs.IDer            = (*Object)(nil)
-	_ fs.SetTierer       = (*Object)(nil)
-	_ fs.GetTierer       = (*Object)(nil)
+	_ fs.FullObjectInfo  = (*ObjectInfo)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )
