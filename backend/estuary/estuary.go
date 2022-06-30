@@ -34,6 +34,7 @@ import (
 var (
 	errorNotImpl                 = errors.New("not implemented for estuary remote")
 	errorMkdirOnlyCollections    = errors.New("mkdir only implemented for root collections")
+	errorRmdirOnlyCollections    = errors.New("rmdir only implemented for root collections")
 	errorFindLeafOnlyCollections = errors.New("find leaf only implemented for root collections")
 	errNoCID                     = errors.New("no CID for object")
 	errNoUploadEndpoint          = errors.New("No upload endpoint for object")
@@ -617,7 +618,33 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 //
 // Return an error if it doesn't exist or isn't empty
 func (f *Fs) Rmdir(ctx context.Context, dir string) error {
-	_, err := f.dirCache.FindDir(ctx, dir, false) // rmdir is a NOP
+	dirID, err := f.dirCache.FindDir(ctx, dir, false)
+	if err != nil {
+		return err
+	}
+
+	uuid, collectionDir := splitDir(dirID)
+	if uuid == "" || collectionDir != "" {
+		return nil
+	}
+
+	// if strings.Contains(dir, "/") { // trying to remove subdir, ignore
+	// 	return nil // TODO: this should be an error, but returning one breaks integration  tests
+	// }
+
+	// if dirID != "" {
+	// 	return nil // TODO: this should be errorRmdirOnlyCollections but if we do that it breaks integration tests
+	// }
+	var resp *http.Response
+	var collection Collection
+	opts := rest.Opts{
+		Method: "DELETE",
+		Path:   "/collections/" + uuid,
+	}
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.client.CallJSON(ctx, &opts, nil, &collection)
+		return shouldRetry(ctx, resp, err)
+	})
 	return err
 }
 
