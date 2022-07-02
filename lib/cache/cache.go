@@ -236,7 +236,6 @@ func (c *Cache) Clear() {
 		delete(c.cache, key)
 	}
 	c.mu.Unlock()
-	return
 }
 
 // Entries returns the number of entries in the cache
