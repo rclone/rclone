@@ -89,7 +89,7 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 			return dstErr
 		}
 		if dstHash == "" {
-			fs.Debugf(src, "Dst hash empty - aborting Src hash check")
+			fs.Debugf(dst, "Dst hash empty - aborting Src hash check")
 			return errNoHash
 		}
 		return nil
@@ -100,11 +100,11 @@ func checkHashes(ctx context.Context, src fs.ObjectInfo, dst fs.Object, ht hash.
 	}
 	if srcErr != nil {
 		err = fs.CountError(srcErr)
-		fs.Errorf(dst, "Failed to calculate src hash: %v", err)
+		fs.Errorf(src, "Failed to calculate src hash: %v", err)
 	}
 	if dstErr != nil {
 		err = fs.CountError(dstErr)
-		fs.Errorf(src, "Failed to calculate dst hash: %v", err)
+		fs.Errorf(dst, "Failed to calculate dst hash: %v", err)
 	}
 	if err != nil {
 		return false, ht, srcHash, dstHash, err
