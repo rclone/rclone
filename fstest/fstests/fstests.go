@@ -1396,8 +1396,8 @@ func Run(t *testing.T, opt *Opt) {
 				obj := findObject(ctx, t, f, file1.Path)
 				do, objectHasMetadata := obj.(fs.Metadataer)
 				if objectHasMetadata || features.ReadMetadata || features.WriteMetadata || features.UserMetadata {
-					fsInfo, _, _, _, err := fs.ParseRemote(fs.ConfigString(f))
-					require.NoError(t, err)
+					fsInfo := fs.FindFromFs(f)
+					require.NotNil(t, fsInfo)
 					require.NotNil(t, fsInfo.MetadataInfo, "Object declares metadata support but no MetadataInfo in RegInfo")
 				}
 				if !objectHasMetadata {
