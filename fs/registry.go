@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
@@ -300,4 +301,34 @@ func MustFind(name string) *RegInfo {
 		log.Fatalf("Failed to find remote: %v", err)
 	}
 	return fs
+}
+
+// Type returns a textual string to identify the type of the remote
+func Type(f Fs) string {
+	typeName := fmt.Sprintf("%T", f)
+	typeName = strings.TrimPrefix(typeName, "*")
+	typeName = strings.TrimSuffix(typeName, ".Fs")
+	return typeName
+}
+
+var (
+	typeToRegInfoMu sync.Mutex
+	typeToRegInfo   = map[string]*RegInfo{}
+)
+
+// Add the RegInfo to the reverse map
+func addReverse(f Fs, fsInfo *RegInfo) {
+	typeToRegInfoMu.Lock()
+	defer typeToRegInfoMu.Unlock()
+	typeToRegInfo[Type(f)] = fsInfo
+}
+
+// FindFromFs finds the *RegInfo used to create this Fs, provided
+// it was created by fs.NewFs or cache.Get
+//
+// It returns nil if not found
+func FindFromFs(f Fs) *RegInfo {
+	typeToRegInfoMu.Lock()
+	defer typeToRegInfoMu.Unlock()
+	return typeToRegInfo[Type(f)]
 }
