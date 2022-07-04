@@ -11,6 +11,7 @@ Protocol](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol).
 The SFTP backend can be used with a number of different providers:
 
 {{< provider_list >}}
+{{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box">}}
 {{< provider name="rsync.net" home="https://rsync.net/products/rclone.html" config="/sftp/#rsync-net">}}
 {{< /provider_list >}}
 
@@ -25,7 +26,7 @@ would list the home directory of the user cofigured in the rclone remote config
 directory for remote machine (i.e. `/`)
 
 Note that some SFTP servers will need the leading / - Synology is a
-good example of this. rsync.net, on the other hand, requires users to
+good example of this. rsync.net and Hetzner, on the other hand, requires users to
 OMIT the leading /.
 
 Note that by default rclone will try to execute shell commands on
@@ -792,3 +793,9 @@ Note that `--timeout` and `--contimeout` are both supported.
 rsync.net is supported through the SFTP backend.
 
 See [rsync.net's documentation of rclone examples](https://www.rsync.net/products/rclone.html).
+
+## Hetzner Storage Box {#hetzner-storage-box}
+
+Hetzner Storage Boxes are supported through the SFTP backend on port 23.
+
+See [Hetzner's documentation for details](https://docs.hetzner.com/robot/storage-box/access/access-ssh-rsync-borg#rclone)
