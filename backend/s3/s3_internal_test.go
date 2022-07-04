@@ -1,6 +1,8 @@
 package s3
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"testing"
@@ -14,9 +16,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func gz(t *testing.T, s string) string {
+	var buf bytes.Buffer
+	zw := gzip.NewWriter(&buf)
+	_, err := zw.Write([]byte(s))
+	require.NoError(t, err)
+	err = zw.Close()
+	require.NoError(t, err)
+	return buf.String()
+}
+
 func (f *Fs) InternalTestMetadata(t *testing.T) {
 	ctx := context.Background()
-	contents := random.String(100)
+	contents := gz(t, random.String(1000))
+
 	item := fstest.NewItem("test-metadata", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
 	btime := time.Now()
 	metadata := fs.Metadata{
