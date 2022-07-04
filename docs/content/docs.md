@@ -1643,6 +1643,18 @@ This sets the interval between each retry specified by `--retries`
 
 The default is `0`. Use `0` to disable.
 
+### --server-side-across-configs ###
+
+Allow server-side operations (e.g. copy or move) to work across
+different configurations.
+
+This can be useful if you wish to do a server-side copy or move
+between two remotes which use the same backend but are configured
+differently.
+
+Note that this isn't enabled by default because it isn't easy for
+rclone to tell if it will work between any two configurations.
+
 ### --size-only ###
 
 Normally rclone will look at modification time and size of files to
