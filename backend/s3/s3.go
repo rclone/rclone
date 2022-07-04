@@ -11,6 +11,8 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/rclone/rclone/backend/s3/s3hash"
+	gohash "hash"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -55,6 +57,9 @@ import (
 	"github.com/rclone/rclone/lib/structs"
 	"golang.org/x/sync/errgroup"
 )
+
+// S3HashType is the hash.Type for AWS S3 Multiparted hash
+var S3HashType hash.Type
 
 // Register with Fs
 func init() {
@@ -2053,6 +2058,7 @@ type Fs struct {
 	srvRest       *rest.Client     // the rest connection to the server
 	pool          *pool.Pool       // memory pool
 	etagIsNotMD5  bool             // if set ETags are not MD5s
+	hash          hash.Set         // which hash function we should use
 }
 
 // Object describes a s3 object
@@ -2554,6 +2560,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.SetTier = false
 		f.features.GetTier = false
 	}
+
+	if f.opt.UseMultipartEtag.Value && f.opt.ChunkSize > 0 {
+		S3HashType = hash.RegisterHash("s3hash", "S3MultipartHash", 32, func() gohash.Hash {
+			return s3hash.New(int(f.opt.ChunkSize))
+		})
+		f.hash = hash.Set(S3HashType)
+	} else {
+		f.hash = hash.Set(hash.MD5)
+	}
+
 	// f.listMultipartUploads()
 	return f, nil
 }
@@ -3256,7 +3272,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.MD5)
+	return f.hash
 }
 
 func (f *Fs) getMemoryPool(size int64) *pool.Pool {
@@ -3616,6 +3632,7 @@ func (o *Object) Remote() string {
 }
 
 var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
+var matchS3Md5 = regexp.MustCompile(`^([0-9a-f]{32})-\d+$`)
 
 // Set the MD5 from the etag
 func (o *Object) setMD5FromEtag(etag string) {
@@ -3630,15 +3647,25 @@ func (o *Object) setMD5FromEtag(etag string) {
 	hash := strings.Trim(strings.ToLower(etag), `"`)
 	// Check the etag is a valid md5sum
 	if !matchMd5.MatchString(hash) {
-		o.md5 = ""
+		// If we use multipart Etag we have to cut suffix (hyphen and after)
+		if o.fs.opt.UseMultipartEtag.Value {
+			// 52f...0e1-33 -> 52f...0e1
+			md5hash := matchS3Md5.FindStringSubmatch(hash)
+			if md5hash != nil {
+				o.md5 = md5hash[1]
+			}
+		} else {
+			o.md5 = ""
+		}
 		return
 	}
+
 	o.md5 = hash
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
-	if t != hash.MD5 {
+	if t != hash.MD5 && !o.fs.opt.UseMultipartEtag.Value {
 		return "", hash.ErrUnsupported
 	}
 	// If we haven't got an MD5, then check the metadata
