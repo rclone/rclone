@@ -252,7 +252,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	entryChan := make(chan fs.DirEntry)
-	go func(){
+	go func() {
 		err = f.streamAllObjects(entryChan)
 	}()
 	for ent := range entryChan {
@@ -300,7 +300,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (ret fs.Object, err e
 	grandparent := strings.TrimRight(path.Join(f.root, remote), "/")
 
 	entryChan := make(chan fs.DirEntry)
-	go func(){
+	go func() {
 		err = f.streamAllObjects(entryChan)
 	}()
 	for ent := range entryChan {
@@ -346,8 +346,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 // exists.
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	o := &Object{
-		fs:      f,
-		remote:  src.Remote(),
+		fs:     f,
+		remote: src.Remote(),
 		// Update() will fill missing fields
 	}
 
@@ -447,7 +447,7 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	}
 
 	entryChan := make(chan fs.DirEntry)
-	go func(){
+	go func() {
 		err = f.streamAllObjects(entryChan)
 	}()
 	for ent := range entryChan {
