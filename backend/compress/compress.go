@@ -70,6 +70,9 @@ func init() {
 		Name:        "compress",
 		Description: "Compress a remote",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.`,
+		},
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to compress.",
@@ -180,6 +183,9 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		SetTier:                 true,
 		BucketBased:             true,
 		CanHaveEmptyDirectories: true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 	// We support reading MIME types no matter the wrapped fs
 	f.features.ReadMimeType = true
@@ -1214,6 +1220,21 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.meta.MimeType
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	err := o.loadMetadataIfNotLoaded(ctx)
+	if err != nil {
+		return nil, err
+	}
+	do, ok := o.mo.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
@@ -1361,6 +1382,51 @@ func (o *ObjectInfo) Hash(ctx context.Context, ht hash.Type) (string, error) {
 }
 
 // ID returns the ID of the Object if known, or "" if not
+func (o *ObjectInfo) ID() string {
+	do, ok := o.src.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// MimeType returns the content type of the Object if
+// known, or "" if not
+func (o *ObjectInfo) MimeType(ctx context.Context) string {
+	do, ok := o.src.(fs.MimeTyper)
+	if !ok {
+		return ""
+	}
+	return do.MimeType(ctx)
+}
+
+// UnWrap returns the Object that this Object is wrapping or
+// nil if it isn't wrapping anything
+func (o *ObjectInfo) UnWrap() fs.Object {
+	return fs.UnWrapObjectInfo(o.src)
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *ObjectInfo) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.src.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
+// GetTier returns storage tier or class of the Object
+func (o *ObjectInfo) GetTier() string {
+	do, ok := o.src.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
+// ID returns the ID of the Object if known, or "" if not
 func (o *Object) ID() string {
 	do, ok := o.Object.(fs.IDer)
 	if !ok {
@@ -1412,11 +1478,6 @@ var (
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
-	_ fs.GetTierer       = (*Object)(nil)
-	_ fs.SetTierer       = (*Object)(nil)
-	_ fs.Object          = (*Object)(nil)
-	_ fs.ObjectUnWrapper = (*Object)(nil)
-	_ fs.IDer            = (*Object)(nil)
-	_ fs.MimeTyper       = (*Object)(nil)
+	_ fs.FullObjectInfo  = (*ObjectInfo)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )

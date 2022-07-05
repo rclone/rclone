@@ -72,6 +72,7 @@ output:
     m - MimeType of object if known
     e - encrypted name
     T - tier of storage if known, e.g. "Hot" or "Cool"
+    M - Metadata of object in JSON blob format, eg {"key":"value"}
 
 So if you wanted the path, size and modification time, you would use
 ` + "`--format \"pst\"`, or maybe `--format \"tsp\"`" + ` to put the path last.
@@ -198,6 +199,9 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 			opt.ShowOrigIDs = true
 		case 'T':
 			list.AddTier()
+		case 'M':
+			list.AddMetadata()
+			opt.Metadata = true
 		default:
 			return fmt.Errorf("unknown format character %q", char)
 		}

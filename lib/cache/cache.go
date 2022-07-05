@@ -16,6 +16,7 @@ type Cache struct {
 	expireRunning  bool
 	expireDuration time.Duration // expire the cache entry when it is older than this
 	expireInterval time.Duration // interval to run the cache expire
+	finalize       func(value interface{})
 }
 
 // New creates a new cache with the default expire duration and interval
@@ -25,6 +26,7 @@ func New() *Cache {
 		expireRunning:  false,
 		expireDuration: 300 * time.Second,
 		expireInterval: 60 * time.Second,
+		finalize:       func(_ interface{}) {},
 	}
 }
 
@@ -154,7 +156,10 @@ func (c *Cache) GetMaybe(key string) (value interface{}, found bool) {
 // Returns true if the entry was found
 func (c *Cache) Delete(key string) bool {
 	c.mu.Lock()
-	_, found := c.cache[key]
+	entry, found := c.cache[key]
+	if found {
+		c.finalize(entry.value)
+	}
 	delete(c.cache, key)
 	c.mu.Unlock()
 	return found
@@ -165,11 +170,13 @@ func (c *Cache) Delete(key string) bool {
 // Returns number of entries deleted
 func (c *Cache) DeletePrefix(prefix string) (deleted int) {
 	c.mu.Lock()
-	for k := range c.cache {
-		if strings.HasPrefix(k, prefix) {
-			delete(c.cache, k)
-			deleted++
+	for key, entry := range c.cache {
+		if !strings.HasPrefix(key, prefix) {
+			continue
 		}
+		c.finalize(entry.value)
+		delete(c.cache, key)
+		deleted++
 	}
 	c.mu.Unlock()
 	return deleted
@@ -183,12 +190,17 @@ func (c *Cache) Rename(oldKey, newKey string) (value interface{}, found bool) {
 	c.mu.Lock()
 	if newEntry, newFound := c.cache[newKey]; newFound {
 		// If new entry is found use that
+		if _, oldFound := c.cache[oldKey]; oldFound {
+			// If there's an old entry, we drop it and also try shutdown.
+			c.finalize(c.cache[oldKey].value)
+		}
 		delete(c.cache, oldKey)
 		value, found = newEntry.value, newFound
 		c.used(newEntry)
 	} else if oldEntry, oldFound := c.cache[oldKey]; oldFound {
 		// If old entry is found rename it to new and use that
 		c.cache[newKey] = oldEntry
+		// No need to shutdown here, as value lives on under newKey
 		delete(c.cache, oldKey)
 		c.used(oldEntry)
 		value, found = oldEntry.value, oldFound
@@ -204,6 +216,7 @@ func (c *Cache) cacheExpire() {
 	now := time.Now()
 	for key, entry := range c.cache {
 		if entry.pinCount <= 0 && now.Sub(entry.lastUsed) > c.expireDuration {
+			c.finalize(entry.value)
 			delete(c.cache, key)
 		}
 	}
@@ -218,8 +231,9 @@ func (c *Cache) cacheExpire() {
 // Clear removes everything from the cache
 func (c *Cache) Clear() {
 	c.mu.Lock()
-	for k := range c.cache {
-		delete(c.cache, k)
+	for key, entry := range c.cache {
+		c.finalize(entry.value)
+		delete(c.cache, key)
 	}
 	c.mu.Unlock()
 }
@@ -230,4 +244,11 @@ func (c *Cache) Entries() int {
 	entries := len(c.cache)
 	c.mu.Unlock()
 	return entries
+}
+
+// SetFinalizer sets a function to be called when a value drops out of the cache
+func (c *Cache) SetFinalizer(finalize func(interface{})) {
+	c.mu.Lock()
+	c.finalize = finalize
+	c.mu.Unlock()
 }

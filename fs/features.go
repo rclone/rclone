@@ -26,6 +26,9 @@ type Features struct {
 	IsLocal                 bool // is the local backend
 	SlowModTime             bool // if calling ModTime() generally takes an extra transaction
 	SlowHash                bool // if calling Hash() generally takes an extra transaction
+	ReadMetadata            bool // can read metadata from objects
+	WriteMetadata           bool // can write metadata to objects
+	UserMetadata            bool // can read/write general purpose metadata
 
 	// Purge all files in the directory specified
 	//
@@ -305,6 +308,9 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	ft.DuplicateFiles = ft.DuplicateFiles && mask.DuplicateFiles
 	ft.ReadMimeType = ft.ReadMimeType && mask.ReadMimeType
 	ft.WriteMimeType = ft.WriteMimeType && mask.WriteMimeType
+	ft.ReadMetadata = ft.ReadMetadata && mask.ReadMetadata
+	ft.WriteMetadata = ft.WriteMetadata && mask.WriteMetadata
+	ft.UserMetadata = ft.UserMetadata && mask.UserMetadata
 	ft.CanHaveEmptyDirectories = ft.CanHaveEmptyDirectories && mask.CanHaveEmptyDirectories
 	ft.BucketBased = ft.BucketBased && mask.BucketBased
 	ft.BucketBasedRootOK = ft.BucketBasedRootOK && mask.BucketBasedRootOK

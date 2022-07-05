@@ -35,6 +35,7 @@ func TestLocal(t *testing.T) {
 			{Name: name, Key: "type", Value: "combine"},
 			{Name: name, Key: "upstreams", Value: upstreams},
 		},
+		QuickTestOK: true,
 	})
 }
 
@@ -50,6 +51,7 @@ func TestMemory(t *testing.T) {
 			{Name: name, Key: "type", Value: "combine"},
 			{Name: name, Key: "upstreams", Value: upstreams},
 		},
+		QuickTestOK: true,
 	})
 }
 

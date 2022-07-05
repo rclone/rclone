@@ -107,21 +107,17 @@ var shortFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
 }
 
 var ctxFn = func(ctx context.Context, in rc.Params) (rc.Params, error) {
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
+	<-ctx.Done()
+	return nil, ctx.Err()
 }
 
 var ctxParmFn = func(paramCtx context.Context, returnError bool) func(ctx context.Context, in rc.Params) (rc.Params, error) {
 	return func(ctx context.Context, in rc.Params) (rc.Params, error) {
-		select {
-		case <-paramCtx.Done():
-			if returnError {
-				return nil, ctx.Err()
-			}
-			return rc.Params{}, nil
+		<-paramCtx.Done()
+		if returnError {
+			return nil, ctx.Err()
 		}
+		return rc.Params{}, nil
 	}
 }
 

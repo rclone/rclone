@@ -127,11 +127,13 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
 {{< provider name="Google Photos" home="https://www.google.com/photos/about/" config="/googlephotos/" >}}
 {{< provider name="HDFS" home="https://hadoop.apache.org/" config="/hdfs/" >}}
+{{< provider name="Hetzner Storage Box" home="https://www.hetzner.com/storage/storage-box" config="/sftp/#hetzner-storage-box" >}}
 {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
 {{< provider name="Hubic" home="https://hubic.com/" config="/hubic/" >}}
 {{< provider name="Internet Archive" home="https://archive.org/" config="/internetarchive/" >}}
 {{< provider name="Jottacloud" home="https://www.jottacloud.com/en/" config="/jottacloud/" >}}
 {{< provider name="IBM COS S3" home="http://www.ibm.com/cloud/object-storage" config="/s3/#ibm-cos-s3" >}}
+{{< provider name="IDrive e2" home="https://www.idrive.com/e2/" config="/s3/#idrive-e2" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
 {{< provider name="Mail.ru Cloud" home="https://cloud.mail.ru/" config="/mailru/" >}}
 {{< provider name="Memset Memstore" home="https://www.memset.com/cloud/storage/" config="/swift/" >}}

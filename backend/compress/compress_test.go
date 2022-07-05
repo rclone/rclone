@@ -61,5 +61,6 @@ func TestRemoteGzip(t *testing.T) {
 			{Name: name, Key: "remote", Value: tempdir},
 			{Name: name, Key: "compression_mode", Value: "gzip"},
 		},
+		QuickTestOK: true,
 	})
 }

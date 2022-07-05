@@ -47,6 +47,8 @@ import (
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Some times used in the tests
@@ -270,7 +272,7 @@ func TestHashSums(t *testing.T) {
 		if !hashes.Contains(test.ht) {
 			continue
 		}
-		name := strings.Title(test.ht.String())
+		name := cases.Title(language.Und, cases.NoLower).String(test.ht.String())
 		if test.download {
 			name += "Download"
 		}
@@ -297,7 +299,7 @@ func TestHashSumsWithErrors(t *testing.T) {
 	// Make a test file
 	content := "-"
 	item1 := fstest.NewItem("file1", content, t1)
-	_, _ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
+	_ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
 
 	// MemoryFS supports MD5
 	buf := &bytes.Buffer{}
@@ -1427,6 +1429,11 @@ func TestListFormat(t *testing.T) {
 	list.AddMimeType()
 	assert.Contains(t, list.Format(item0), "/")
 	assert.Equal(t, "inode/directory", list.Format(item1))
+
+	list.SetOutput(nil)
+	list.AddMetadata()
+	assert.Equal(t, "{}", list.Format(item0))
+	assert.Equal(t, "{}", list.Format(item1))
 
 	list.SetOutput(nil)
 	list.AddPath()

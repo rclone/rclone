@@ -124,6 +124,7 @@ type ConfigInfo struct {
 	UploadHeaders          []*HTTPOption
 	DownloadHeaders        []*HTTPOption
 	Headers                []*HTTPOption
+	MetadataSet            Metadata // extra metadata to write when uploading
 	RefreshTimes           bool
 	NoConsole              bool
 	TrafficClass           uint8
@@ -133,6 +134,7 @@ type ConfigInfo struct {
 	HumanReadable          bool
 	KvLockTime             time.Duration // maximum time to keep key-value database locked by process
 	DisableHTTPKeepAlives  bool
+	Metadata               bool
 }
 
 // NewConfig creates a new config with everything set to the default

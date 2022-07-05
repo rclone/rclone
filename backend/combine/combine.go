@@ -31,6 +31,9 @@ func init() {
 		Name:        "combine",
 		Description: "Combine several remotes into one",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.`,
+		},
 		Options: []fs.Option{{
 			Name: "upstreams",
 			Help: `Upstreams for combining
@@ -222,6 +225,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 		BucketBased:             true,
 		SetTier:                 true,
 		GetTier:                 true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}).Fill(ctx, f)
 	canMove := true
 	for _, u := range f.upstreams {
@@ -925,6 +931,45 @@ func (o *Object) UnWrap() fs.Object {
 	return o.Object
 }
 
+// GetTier returns storage tier or class of the Object
+func (o *Object) GetTier() string {
+	do, ok := o.Object.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	do, ok := o.Object.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.Object.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
+// SetTier performs changing storage tier of the Object if
+// multiple storage classes supported
+func (o *Object) SetTier(tier string) error {
+	do, ok := o.Object.(fs.SetTierer)
+	if !ok {
+		return errors.New("underlying remote does not support SetTier")
+	}
+	return do.SetTier(tier)
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -938,4 +983,5 @@ var (
 	_ fs.Abouter         = (*Fs)(nil)
 	_ fs.ListRer         = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )

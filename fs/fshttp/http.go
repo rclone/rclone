@@ -70,7 +70,6 @@ func NewTransportCustom(ctx context.Context, customize func(*http.Transport)) ht
 			log.Fatalf("Failed to load --client-cert/--client-key pair: %v", err)
 		}
 		t.TLSClientConfig.Certificates = []tls.Certificate{cert}
-		t.TLSClientConfig.BuildNameToCertificate()
 	}
 
 	// Load CA cert

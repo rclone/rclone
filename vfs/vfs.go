@@ -369,7 +369,6 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 		tick.Reset(tickTime)
 		select {
 		case <-tick.C:
-			break
 		case <-deadline.C:
 			fs.Errorf(nil, "Exiting even though %d writers active and %d cache items in use after %v\n%s", writers, cacheInUse, timeout, vfs.cache.Dump())
 			return

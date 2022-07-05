@@ -27,6 +27,9 @@ func init() {
 		Name:        "hasher",
 		Description: "Better checksums for other remotes",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.`,
+		},
 		CommandHelp: commandHelp,
 		Options: []fs.Option{{
 			Name:     "remote",
@@ -158,6 +161,11 @@ func NewFs(ctx context.Context, fsname, rpath string, cmap configmap.Mapper) (fs
 		IsLocal:                 true,
 		ReadMimeType:            true,
 		WriteMimeType:           true,
+		SetTier:                 true,
+		GetTier:                 true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}
 	f.features = stubFeatures.Fill(ctx, f).Mask(ctx, f.Fs).WrapsFs(f, f.Fs)
 
@@ -485,6 +493,17 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return ""
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.Object.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
 // Check the interfaces are satisfied
 var (
 	_ fs.Fs              = (*Fs)(nil)
@@ -507,10 +526,5 @@ var (
 	_ fs.UserInfoer      = (*Fs)(nil)
 	_ fs.Disconnecter    = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.Object          = (*Object)(nil)
-	_ fs.ObjectUnWrapper = (*Object)(nil)
-	_ fs.IDer            = (*Object)(nil)
-	_ fs.SetTierer       = (*Object)(nil)
-	_ fs.GetTierer       = (*Object)(nil)
-	_ fs.MimeTyper       = (*Object)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )

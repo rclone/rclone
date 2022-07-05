@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/ProtonMail/go-crypto/openpgp/clearsign"
 	"github.com/rclone/rclone/fs"
-	"golang.org/x/crypto/openpgp"
-	"golang.org/x/crypto/openpgp/clearsign"
 )
 
 var ncwPublicKeyPGP = `-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -59,7 +59,7 @@ func verifyHashsum(ctx context.Context, siteURL, version, archive string, hash [
 	}
 	block, rest := clearsign.Decode(sumsBuf)
 	// block.Bytes = block.Bytes[1:] // uncomment to test invalid signature
-	_, err = openpgp.CheckDetachedSignature(keyRing, bytes.NewReader(block.Bytes), block.ArmoredSignature.Body)
+	_, err = openpgp.CheckDetachedSignature(keyRing, bytes.NewReader(block.Bytes), block.ArmoredSignature.Body, nil)
 	if err != nil || len(rest) > 0 {
 		return errors.New("invalid hashsum signature")
 	}

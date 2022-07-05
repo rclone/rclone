@@ -798,7 +798,7 @@ func TestGetConfig(t *testing.T) {
 	ctx := context.Background()
 
 	// Check nil
-	config := GetConfig(nil)
+	config := GetConfig(nil) //lint:ignore SA1012 we want to test passing a nil Context and therefore ignore lint suggestion of using context.TODO
 	assert.Equal(t, globalConfig, config)
 
 	// Check empty config

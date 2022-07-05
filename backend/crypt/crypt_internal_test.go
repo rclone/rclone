@@ -91,7 +91,9 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 	src := f.newObjectInfo(oi, nonce)
 
 	// Test ObjectInfo methods
-	assert.Equal(t, int64(outBuf.Len()), src.Size())
+	if !f.opt.NoDataEncryption {
+		assert.Equal(t, int64(outBuf.Len()), src.Size())
+	}
 	assert.Equal(t, f, src.Fs())
 	assert.NotEqual(t, path, src.Remote())
 

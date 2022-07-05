@@ -26,10 +26,11 @@ func init() {
 	flags.BoolVarP(cmdFlags, &opt.ShowHash, "hash", "", false, "Include hashes in the output (may take longer)")
 	flags.BoolVarP(cmdFlags, &opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up)")
 	flags.BoolVarP(cmdFlags, &opt.NoMimeType, "no-mimetype", "", false, "Don't read the mime type (can speed things up)")
-	flags.BoolVarP(cmdFlags, &opt.ShowEncrypted, "encrypted", "M", false, "Show the encrypted names")
+	flags.BoolVarP(cmdFlags, &opt.ShowEncrypted, "encrypted", "", false, "Show the encrypted names")
 	flags.BoolVarP(cmdFlags, &opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object")
 	flags.BoolVarP(cmdFlags, &opt.FilesOnly, "files-only", "", false, "Show only files in the listing")
 	flags.BoolVarP(cmdFlags, &opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing")
+	flags.BoolVarP(cmdFlags, &opt.Metadata, "metadata", "M", false, "Add metadata to the listing")
 	flags.StringArrayVarP(cmdFlags, &opt.HashTypes, "hash-type", "", nil, "Show only this hash type (may be repeated)")
 	flags.BoolVarP(cmdFlags, &statOnly, "stat", "", false, "Just return the info for the pointed to file")
 }
@@ -80,6 +81,9 @@ returned
 
 If ` + "`--files-only`" + ` is not specified directories in addition to the files
 will be returned.
+
+If ` + "`--metadata`" + ` is set then an additional Metadata key will be returned.
+This will have metdata in rclone standard format as a JSON object.
 
 if ` + "`--stat`" + ` is set then a single JSON blob will be returned about the
 item pointed to. This will return an error if the item isn't found.
