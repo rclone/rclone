@@ -604,6 +604,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 			return
 		}
 	}
+
 	if u := vfs.usage; u != nil {
 		if u.Total != nil {
 			total = *u.Total
@@ -615,6 +616,11 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 			used = *u.Used
 		}
 	}
+
+	if int64(vfs.Opt.DiskSpaceTotalSize) >= 0 {
+		total = int64(vfs.Opt.DiskSpaceTotalSize)
+	}
+
 	total, used, free = fillInMissingSizes(total, used, free, unknownFreeBytes)
 	return
 }
