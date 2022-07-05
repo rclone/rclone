@@ -129,11 +129,11 @@ func (f *Fs) WrapObject(o fs.Object) *Object {
 // WrapEntry wraps an fs.DirEntry to include the info
 // of the upstream Fs
 func (f *Fs) WrapEntry(e fs.DirEntry) (Entry, error) {
-	switch e.(type) {
+	switch e := e.(type) {
 	case fs.Object:
-		return f.WrapObject(e.(fs.Object)), nil
+		return f.WrapObject(e), nil
 	case fs.Directory:
-		return f.WrapDirectory(e.(fs.Directory)), nil
+		return f.WrapDirectory(e), nil
 	default:
 		return nil, fmt.Errorf("unknown object type %T", e)
 	}
@@ -245,6 +245,53 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	return nil
 }
 
+// GetTier returns storage tier or class of the Object
+func (o *Object) GetTier() string {
+	do, ok := o.Object.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
+// ID returns the ID of the Object if known, or "" if not
+func (o *Object) ID() string {
+	do, ok := o.Object.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// MimeType returns the content type of the Object if known
+func (o *Object) MimeType(ctx context.Context) (mimeType string) {
+	if do, ok := o.Object.(fs.MimeTyper); ok {
+		mimeType = do.MimeType(ctx)
+	}
+	return mimeType
+}
+
+// SetTier performs changing storage tier of the Object if
+// multiple storage classes supported
+func (o *Object) SetTier(tier string) error {
+	do, ok := o.Object.(fs.SetTierer)
+	if !ok {
+		return errors.New("underlying remote does not support SetTier")
+	}
+	return do.SetTier(tier)
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.Object.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
 // About gets quota information from the Fs
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	if atomic.LoadInt64(&f.cacheExpiry) <= time.Now().Unix() {
@@ -273,11 +320,7 @@ func (f *Fs) GetFreeSpace() (int64, error) {
 	if f.usage.Free == nil {
 		return math.MaxInt64 - 1, ErrUsageFieldNotSupported
 	}
-	free := *f.usage.Free
-	if free >= math.MaxInt64 {
-		free = math.MaxInt64 - 1
-	}
-	return free, nil
+	return *f.usage.Free, nil
 }
 
 // GetUsedSpace get the used space of the fs
@@ -295,11 +338,7 @@ func (f *Fs) GetUsedSpace() (int64, error) {
 	if f.usage.Used == nil {
 		return 0, ErrUsageFieldNotSupported
 	}
-	used := *f.usage.Used
-	if used >= math.MaxInt64 {
-		used = math.MaxInt64 - 1
-	}
-	return used, nil
+	return *f.usage.Used, nil
 }
 
 // GetNumObjects get the number of objects of the fs
@@ -363,3 +402,8 @@ func (f *Fs) updateUsageCore(lock bool) error {
 	f.usage = usage
 	return nil
 }
+
+// Check the interfaces are satisfied
+var (
+	_ fs.FullObject = (*Object)(nil)
+)

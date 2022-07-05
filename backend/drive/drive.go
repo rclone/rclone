@@ -51,6 +51,7 @@ import (
 	drive_v2 "google.golang.org/api/drive/v2"
 	drive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 )
 
 // Constants
@@ -1210,13 +1211,13 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
-	f.svc, err = drive.New(f.client)
+	f.svc, err = drive.NewService(context.Background(), option.WithHTTPClient(f.client))
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create Drive client: %w", err)
 	}
 
 	if f.opt.V2DownloadMinSize >= 0 {
-		f.v2Svc, err = drive_v2.New(f.client)
+		f.v2Svc, err = drive_v2.NewService(context.Background(), option.WithHTTPClient(f.client))
 		if err != nil {
 			return nil, fmt.Errorf("couldn't create Drive v2 client: %w", err)
 		}
@@ -2992,12 +2993,12 @@ func (f *Fs) changeServiceAccountFile(ctx context.Context, file string) (err err
 		return fmt.Errorf("drive: failed when making oauth client: %w", err)
 	}
 	f.client = oAuthClient
-	f.svc, err = drive.New(f.client)
+	f.svc, err = drive.NewService(context.Background(), option.WithHTTPClient(f.client))
 	if err != nil {
 		return fmt.Errorf("couldn't create Drive client: %w", err)
 	}
 	if f.opt.V2DownloadMinSize >= 0 {
-		f.v2Svc, err = drive_v2.New(f.client)
+		f.v2Svc, err = drive_v2.NewService(context.Background(), option.WithHTTPClient(f.client))
 		if err != nil {
 			return fmt.Errorf("couldn't create Drive v2 client: %w", err)
 		}
@@ -3523,12 +3524,6 @@ func (o *baseObject) Hash(ctx context.Context, t hash.Type) (string, error) {
 // Size returns the size of an object in bytes
 func (o *baseObject) Size() int64 {
 	return o.bytes
-}
-
-// getRemoteInfo returns a drive.File for the remote
-func (f *Fs) getRemoteInfo(ctx context.Context, remote string) (info *drive.File, err error) {
-	info, _, _, _, _, err = f.getRemoteInfoWithExport(ctx, remote)
-	return
 }
 
 // getRemoteInfoWithExport returns a drive.File and the export settings for the remote

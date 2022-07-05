@@ -563,6 +563,32 @@ Properties:
 - Type:        MultiEncoder
 - Default:     Slash,Dot
 
+### Metadata
+
+Depending on which OS is in use the local backend may return only some
+of the system metadata. Setting system metadata is supported on all
+OSes but setting user metadata is only supported on linux, freebsd,
+netbsd, macOS and Solaris. It is **not** supported on Windows yet
+([see pkg/attrs#47](https://github.com/pkg/xattr/issues/47)).
+
+User metadata is stored as extended attributes (which may not be
+supported by all file systems) under the "user.*" prefix.
+
+Here are the possible system metadata items for the local backend.
+
+| Name | Help | Type | Example | Read Only |
+|------|------|------|---------|-----------|
+| atime | Time of last access | RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 | N |
+| btime | Time of file birth (creation) | RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 | N |
+| gid | Group ID of owner | decimal number | 500 | N |
+| mode | File type and mode | octal, unix style | 0100664 | N |
+| mtime | Time of last modification | RFC 3339 | 2006-01-02T15:04:05.999999999Z07:00 | N |
+| rdev | Device ID (if special file) | hexadecimal | 1abc | N |
+| uid | User ID of owner | decimal number | 500 | N |
+
+
+See the [metadata](/docs/#metadata) docs for more info.
+
 ## Backend commands
 
 Here are the commands specific to the local backend.

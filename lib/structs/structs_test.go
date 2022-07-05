@@ -22,8 +22,8 @@ func TestSetDefaults(t *testing.T) {
 	assert.Equal(t, ptr(old.Proxy), ptr(newT.Proxy), "when checking .Proxy")
 	assert.Equal(t, ptr(old.DialContext), ptr(newT.DialContext), "when checking .DialContext")
 	// Check the other public fields
-	assert.Equal(t, ptr(old.Dial), ptr(newT.Dial), "when checking .Dial")
-	assert.Equal(t, ptr(old.DialTLS), ptr(newT.DialTLS), "when checking .DialTLS")
+	assert.Equal(t, ptr(old.Dial), ptr(newT.Dial), "when checking .Dial")          //lint:ignore SA1019 newT.Dial has been deprecated since Go 1.7: Use DialContext instead, which allows the transport to cancel dials as soon as they are no longer needed. If both are set, DialContext takes priority.
+	assert.Equal(t, ptr(old.DialTLS), ptr(newT.DialTLS), "when checking .DialTLS") //lint:ignore SA1019 old.DialTLS has been deprecated since Go 1.14: Use DialTLSContext instead, which allows the transport to cancel dials as soon as they are no longer needed. If both are set, DialTLSContext takes priority.
 	assert.Equal(t, old.TLSClientConfig, newT.TLSClientConfig, "when checking .TLSClientConfig")
 	assert.Equal(t, old.TLSHandshakeTimeout, newT.TLSHandshakeTimeout, "when checking .TLSHandshakeTimeout")
 	assert.Equal(t, old.DisableKeepAlives, newT.DisableKeepAlives, "when checking .DisableKeepAlives")

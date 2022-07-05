@@ -72,10 +72,12 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20220623141421-5afb4c282135
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/jlaffaye/ftp v0.0.0-20220524001917-dfa1e758f3af
+	github.com/pkg/xattr v0.4.7
 	golang.org/x/mobile v0.0.0-20220518205345-8578da9835fd
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
 )

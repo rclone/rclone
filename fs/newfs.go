@@ -48,7 +48,11 @@ func NewFs(ctx context.Context, path string) (Fs, error) {
 		// These need to work as filesystem names as the VFS cache will use them
 		configName += suffix
 	}
-	return fsInfo.NewFs(ctx, configName, fsPath, config)
+	f, err := fsInfo.NewFs(ctx, configName, fsPath, config)
+	if f != nil && (err == nil || err == ErrorIsFile) {
+		addReverse(f, fsInfo)
+	}
+	return f, err
 }
 
 // ConfigFs makes the config for calling NewFs with.

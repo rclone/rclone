@@ -10,7 +10,8 @@ import (
 // TestIntegration runs integration tests against the remote
 func TestIntegration(t *testing.T) {
 	fstests.Run(t, &fstests.Opt{
-		RemoteName: ":memory:",
-		NilObject:  (*Object)(nil),
+		RemoteName:  ":memory:",
+		NilObject:   (*Object)(nil),
+		QuickTestOK: true,
 	})
 }

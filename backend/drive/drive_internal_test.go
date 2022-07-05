@@ -378,9 +378,9 @@ func (f *Fs) InternalTestUnTrash(t *testing.T) {
 	// Make some objects, one in a subdir
 	contents := random.String(100)
 	file1 := fstest.NewItem("trashDir/toBeTrashed", contents, time.Now())
-	_, obj1 := fstests.PutTestContents(ctx, t, f, &file1, contents, false)
+	obj1 := fstests.PutTestContents(ctx, t, f, &file1, contents, false)
 	file2 := fstest.NewItem("trashDir/subdir/toBeTrashed", contents, time.Now())
-	_, _ = fstests.PutTestContents(ctx, t, f, &file2, contents, false)
+	_ = fstests.PutTestContents(ctx, t, f, &file2, contents, false)
 
 	// Check objects
 	checkObjects := func() {
@@ -496,7 +496,7 @@ func (f *Fs) InternalTestAgeQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	file1 := fstest.Item{ModTime: time.Now(), Path: "agequery.txt"}
-	_, _ = fstests.PutTestContents(defCtx, t, tempFs1, &file1, "abcxyz", true)
+	_ = fstests.PutTestContents(defCtx, t, tempFs1, &file1, "abcxyz", true)
 
 	// validate sync/copy
 	const timeQuery = "(modifiedTime >= '"

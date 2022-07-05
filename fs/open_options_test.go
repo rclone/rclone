@@ -132,6 +132,16 @@ func TestNullOption(t *testing.T) {
 	assert.Equal(t, false, opt.Mandatory())
 }
 
+func TestMetadataOption(t *testing.T) {
+	opt := MetadataOption{"onion": "ice cream"}
+	var _ OpenOption = opt // check interface
+	assert.Equal(t, "MetadataOption(map[onion:ice cream])", opt.String())
+	key, value := opt.Header()
+	assert.Equal(t, "", key)
+	assert.Equal(t, "", value)
+	assert.Equal(t, false, opt.Mandatory())
+}
+
 func TestFixRangeOptions(t *testing.T) {
 	for _, test := range []struct {
 		name string

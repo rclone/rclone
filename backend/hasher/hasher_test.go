@@ -33,6 +33,7 @@ func TestIntegration(t *testing.T) {
 			{Name: "TestHasher", Key: "remote", Value: tempDir},
 		}
 		opt.RemoteName = "TestHasher:"
+		opt.QuickTestOK = true
 	}
 	fstests.Run(t, &opt)
 }

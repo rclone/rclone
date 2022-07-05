@@ -918,11 +918,6 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Returns the full remote path for the object
-func (o *Object) filePath() string {
-	return o.fs.dirPath(o.remote)
-}
-
 // ModTime returns the modification time of the object
 //
 // It attempts to read the objects mtime and if that isn't present the

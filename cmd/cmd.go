@@ -321,6 +321,12 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		}
 	}
 
+	// clear cache and shutdown backends
+	cache.Clear()
+	if lastErr := accounting.GlobalStats().GetLastError(); cmdErr == nil {
+		cmdErr = lastErr
+	}
+
 	// Log the final error message and exit
 	if cmdErr != nil {
 		nerrs := accounting.GlobalStats().GetErrors()

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/rclone/rclone/fs"
@@ -16,6 +17,8 @@ import (
 	"github.com/rclone/rclone/lib/atexit"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Root is the main rclone command
@@ -315,7 +318,8 @@ func showBackend(name string) {
 			optionsType = "advanced"
 			continue
 		}
-		fmt.Printf("### %s options\n\n", strings.Title(optionsType))
+		optionsType = cases.Title(language.Und, cases.NoLower).String(optionsType)
+		fmt.Printf("### %s options\n\n", optionsType)
 		fmt.Printf("Here are the %s options specific to %s (%s).\n\n", optionsType, backend.Name, backend.Description)
 		optionsType = "advanced"
 		for _, opt := range opts {
@@ -361,5 +365,29 @@ func showBackend(name string) {
 			}
 			fmt.Printf("\n")
 		}
+	}
+	if backend.MetadataInfo != nil {
+		fmt.Printf("### Metadata\n\n")
+		fmt.Printf("%s\n\n", strings.TrimSpace(backend.MetadataInfo.Help))
+		if len(backend.MetadataInfo.System) > 0 {
+			fmt.Printf("Here are the possible system metadata items for the %s backend.\n\n", backend.Name)
+			keys := []string{}
+			for k := range backend.MetadataInfo.System {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			fmt.Printf("| Name | Help | Type | Example | Read Only |\n")
+			fmt.Printf("|------|------|------|---------|-----------|\n")
+			for _, k := range keys {
+				v := backend.MetadataInfo.System[k]
+				ro := "N"
+				if v.ReadOnly {
+					ro = "**Y**"
+				}
+				fmt.Printf("| %s | %s | %s | %s | %s |\n", k, v.Help, v.Type, v.Example, ro)
+			}
+			fmt.Printf("\n")
+		}
+		fmt.Printf("See the [metadata](/docs/#metadata) docs for more info.\n\n")
 	}
 }

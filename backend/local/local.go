@@ -42,6 +42,18 @@ func init() {
 		Description: "Local Disk",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help: `Depending on which OS is in use the local backend may return only some
+of the system metadata. Setting system metadata is supported on all
+OSes but setting user metadata is only supported on linux, freebsd,
+netbsd, macOS and Solaris. It is **not** supported on Windows yet
+([see pkg/attrs#47](https://github.com/pkg/xattr/issues/47)).
+
+User metadata is stored as extended attributes (which may not be
+supported by all file systems) under the "user.*" prefix.
+`,
+		},
 		Options: []fs.Option{{
 			Name:     "nounc",
 			Help:     "Disable UNC (long path names) conversion on Windows.",
@@ -280,6 +292,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		CanHaveEmptyDirectories: true,
 		IsLocal:                 true,
 		SlowHash:                true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            xattrSupported, // can only R/W general purpose metadata if xattrs are supported
 	}).Fill(ctx, f)
 	if opt.FollowSymlinks {
 		f.lstat = os.Stat
@@ -938,17 +953,22 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	return o.modTime
 }
 
+// Set the atime and ltime of the object
+func (o *Object) setTimes(atime, mtime time.Time) (err error) {
+	if o.translatedLink {
+		err = lChtimes(o.path, atime, mtime)
+	} else {
+		err = os.Chtimes(o.path, atime, mtime)
+	}
+	return err
+}
+
 // SetModTime sets the modification time of the local fs object
 func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if o.fs.opt.NoSetModTime {
 		return nil
 	}
-	var err error
-	if o.translatedLink {
-		err = lChtimes(o.path, modTime, modTime)
-	} else {
-		err = os.Chtimes(o.path, modTime, modTime)
-	}
+	err := o.setTimes(modTime, modTime)
 	if err != nil {
 		return err
 	}
@@ -1223,6 +1243,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
+	// Fetch and set metadata if --metadata is in use
+	meta, err := fs.GetMetadataOptions(ctx, src, options)
+	if err != nil {
+		return fmt.Errorf("failed to read metadata from source object: %w", err)
+	}
+	err = o.writeMetadata(meta)
+	if err != nil {
+		return fmt.Errorf("failed to set metadata: %w", err)
+	}
+
 	// ReRead info now that we have finished
 	return o.lstat()
 }
@@ -1321,6 +1351,34 @@ func (o *Object) Remove(ctx context.Context) error {
 	return remove(o.path)
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	metadata, err = o.getXattr()
+	if err != nil {
+		return nil, err
+	}
+	err = o.readMetadataFromFile(&metadata)
+	if err != nil {
+		return nil, err
+	}
+	return metadata, nil
+}
+
+// Write the metadata on the object
+func (o *Object) writeMetadata(metadata fs.Metadata) (err error) {
+	err = o.setXattr(metadata)
+	if err != nil {
+		return err
+	}
+	err = o.writeMetadataToFile(metadata)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	if runtime.GOOS == "windows" {
 		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
@@ -1360,4 +1418,5 @@ var (
 	_ fs.Commander      = &Fs{}
 	_ fs.OpenWriterAter = &Fs{}
 	_ fs.Object         = &Object{}
+	_ fs.Metadataer     = &Object{}
 )

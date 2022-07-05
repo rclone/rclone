@@ -184,7 +184,8 @@ func (s *server) serve() error {
 	return s.srv.ListenAndServe()
 }
 
-// serve runs the ftp server
+// close stops the ftp server
+//lint:ignore U1000 unused when not building linux
 func (s *server) close() error {
 	fs.Logf(s.f, "Stopping FTP on %s", s.srv.Hostname+":"+strconv.Itoa(s.srv.Port))
 	return s.srv.Shutdown()

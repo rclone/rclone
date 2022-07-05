@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -65,9 +66,20 @@ var S3HashType hash.Type
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			switch config.State {
+			case "":
+				return nil, setEndpointValueForIDriveE2(m)
+			}
+			return nil, fmt.Errorf("unknown state %q", config.State)
+		},
+		MetadataInfo: &fs.MetadataInfo{
+			System: systemMetadataInfo,
+			Help:   `User metadata is stored as x-amz-meta- keys. S3 metadata keys are case insensitive and are always returned in lower case.`,
+		},
 		Options: []fs.Option{{
 			Name: fs.ConfigProvider,
 			Help: "Choose your S3 provider.",
@@ -103,6 +115,9 @@ func init() {
 			}, {
 				Value: "IBMCOS",
 				Help:  "IBM COS S3",
+			}, {
+				Value: "IDrive",
+				Help:  "IDrive e2",
 			}, {
 				Value: "LyveCloud",
 				Help:  "Seagate Lyve Cloud",
@@ -374,7 +389,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS",
+			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -988,7 +1003,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
+			Provider: "!AWS,IBMCOS,IDrive,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1398,7 +1413,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,IBMCOS,IDrive,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1978,8 +1993,8 @@ circumstances or for testing.
 
 // Constants
 const (
-	metaMtime   = "Mtime"     // the meta key to store mtime in - e.g. X-Amz-Meta-Mtime
-	metaMD5Hash = "Md5chksum" // the meta key to store md5hash in
+	metaMtime   = "mtime"     // the meta key to store mtime in - e.g. X-Amz-Meta-Mtime
+	metaMD5Hash = "md5chksum" // the meta key to store md5hash in
 	// The maximum size of object we can COPY - this should be 5 GiB but is < 5 GB for b2 compatibility
 	// See https://forum.rclone.org/t/copying-files-within-a-b2-bucket/16680/76
 	maxSizeForCopy      = 4768 * 1024 * 1024
@@ -1993,6 +2008,57 @@ const (
 	memoryPoolUseMmap   = false
 	maxExpireDuration   = fs.Duration(7 * 24 * time.Hour) // max expiry is 1 week
 )
+
+// system metadata keys which this backend owns
+var systemMetadataInfo = map[string]fs.MetadataHelp{
+	"cache-control": {
+		Help:    "Cache-Control header",
+		Type:    "string",
+		Example: "no-cache",
+	},
+	"content-disposition": {
+		Help:    "Content-Disposition header",
+		Type:    "string",
+		Example: "inline",
+	},
+	"content-encoding": {
+		Help:    "Content-Encoding header",
+		Type:    "string",
+		Example: "gzip",
+	},
+	"content-language": {
+		Help:    "Content-Language header",
+		Type:    "string",
+		Example: "en-US",
+	},
+	"content-type": {
+		Help:    "Content-Type header",
+		Type:    "string",
+		Example: "text/plain",
+	},
+	// "tagging": {
+	// 	Help:    "x-amz-tagging header",
+	// 	Type:    "string",
+	// 	Example: "tag1=value1&tag2=value2",
+	// },
+	"tier": {
+		Help:     "Tier of the object",
+		Type:     "string",
+		Example:  "GLACIER",
+		ReadOnly: true,
+	},
+	"mtime": {
+		Help:    "Time of last modification, read from rclone metadata",
+		Type:    "RFC 3339",
+		Example: "2006-01-02T15:04:05.999999999Z07:00",
+	},
+	"btime": {
+		Help:     "Time of file birth (creation) read from Last-Modified header",
+		Type:     "RFC 3339",
+		Example:  "2006-01-02T15:04:05.999999999Z07:00",
+		ReadOnly: true,
+	},
+}
 
 // Options defines the configuration for this backend
 type Options struct {
@@ -2067,14 +2133,20 @@ type Object struct {
 	//
 	// List will read everything but meta & mimeType - to fill
 	// that in you need to call readMetaData
-	fs           *Fs                // what this object is part of
-	remote       string             // The remote path
-	md5          string             // md5sum of the object
-	bytes        int64              // size of the object
-	lastModified time.Time          // Last modified
-	meta         map[string]*string // The object metadata if known - may be nil
-	mimeType     string             // MimeType of object - may be ""
-	storageClass string             // e.g. GLACIER
+	fs           *Fs               // what this object is part of
+	remote       string            // The remote path
+	md5          string            // md5sum of the object
+	bytes        int64             // size of the object
+	lastModified time.Time         // Last modified
+	meta         map[string]string // The object metadata if known - may be nil - with lower case keys
+	mimeType     string            // MimeType of object - may be ""
+
+	// Metadata as pointers to strings as they often won't be present
+	storageClass       *string // e.g. GLACIER
+	cacheControl       *string // Cache-Control: header
+	contentDisposition *string // Content-Disposition: header
+	contentEncoding    *string // Content-Encoding: header
+	contentLanguage    *string // Content-Language: header
 }
 
 // ------------------------------------------------------------
@@ -2335,6 +2407,37 @@ func (f *Fs) setUploadCutoff(cs fs.SizeSuffix) (old fs.SizeSuffix, err error) {
 	return
 }
 
+// setEndpointValueForIDriveE2 gets user region endpoint against the Access Key details by calling the API
+func setEndpointValueForIDriveE2(m configmap.Mapper) (err error) {
+	value, ok := m.Get(fs.ConfigProvider)
+	if !ok || value != "IDrive" {
+		return
+	}
+	value, ok = m.Get("access_key_id")
+	if !ok || value == "" {
+		return
+	}
+	client := &http.Client{Timeout: time.Second * 3}
+	// API to get user region endpoint against the Access Key details: https://www.idrive.com/e2/guides/get_region_endpoint
+	resp, err := client.Post("https://api.idrivee2.com/api/service/get_region_end_point",
+		"application/json",
+		strings.NewReader(`{"access_key": "`+value+`"}`))
+	if err != nil {
+		return
+	}
+	defer fs.CheckClose(resp.Body, &err)
+	decoder := json.NewDecoder(resp.Body)
+	var data = &struct {
+		RespCode   int    `json:"resp_code"`
+		RespMsg    string `json:"resp_msg"`
+		DomainName string `json:"domain_name"`
+	}{}
+	if err = decoder.Decode(data); err == nil && data.RespCode == 0 {
+		m.Set("endpoint", data.DomainName)
+	}
+	return
+}
+
 // Set the provider quirks
 //
 // There should be no testing against opt.Provider anywhere in the
@@ -2381,6 +2484,8 @@ func setQuirks(opt *Options) {
 		virtualHostStyle = false
 		urlEncodeListings = false
 		useMultipartEtag = false // untested
+	case "IDrive":
+		virtualHostStyle = false
 	case "LyveCloud":
 		useMultipartEtag = false // LyveCloud seems to calculate multipart Etags differently from AWS
 	case "Minio":
@@ -2535,6 +2640,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	f.features = (&fs.Features{
 		ReadMimeType:      true,
 		WriteMimeType:     true,
+		ReadMetadata:      true,
+		WriteMetadata:     true,
+		UserMetadata:      true,
 		BucketBased:       true,
 		BucketBasedRootOK: true,
 		SetTier:           true,
@@ -2560,7 +2668,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.SetTier = false
 		f.features.GetTier = false
 	}
-
+	if opt.Provider == "IDrive" {
+		f.features.SetTier = false
+	}
 	if f.opt.UseMultipartEtag.Value && f.opt.ChunkSize > 0 {
 		S3HashType = hash.RegisterHash("s3hash", "S3MultipartHash", 32, func() gohash.Hash {
 			return s3hash.New(int(f.opt.ChunkSize))
@@ -2569,7 +2679,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	} else {
 		f.hash = hash.Set(hash.MD5)
 	}
-
 	// f.listMultipartUploads()
 	return f, nil
 }
@@ -2592,7 +2701,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		}
 		o.setMD5FromEtag(aws.StringValue(info.ETag))
 		o.bytes = aws.Int64Value(info.Size)
-		o.storageClass = aws.StringValue(info.StorageClass)
+		o.storageClass = info.StorageClass
 	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData(ctx) // reads info and meta, returning an error
 		if err != nil {
@@ -3460,7 +3569,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 				st.Status = "Not an S3 object"
 				return
 			}
-			if o.storageClass != "GLACIER" && o.storageClass != "DEEP_ARCHIVE" {
+			if o.storageClass == nil || (*o.storageClass != "GLACIER" && *o.storageClass != "DEEP_ARCHIVE") {
 				st.Status = "Not GLACIER or DEEP_ARCHIVE storage class"
 				return
 			}
@@ -3729,40 +3838,65 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 	if err != nil {
 		return err
 	}
-	o.setMetaData(resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
+	o.setMetaData(resp)
+	// resp.ETag, resp.ContentLength, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
 	return nil
 }
 
-func (o *Object) setMetaData(etag *string, contentLength *int64, lastModified *time.Time, meta map[string]*string, mimeType *string, storageClass *string) {
+// Convert S3 metadata with pointers into a map[string]string
+// while lowercasing the keys
+func s3MetadataToMap(s3Meta map[string]*string) map[string]string {
+	meta := make(map[string]string, len(s3Meta))
+	for k, v := range s3Meta {
+		if v != nil {
+			meta[strings.ToLower(k)] = *v
+		}
+	}
+	return meta
+}
+
+// Convert our metadata back into S3 metadata
+func mapToS3Metadata(meta map[string]string) map[string]*string {
+	s3Meta := make(map[string]*string, len(meta))
+	for k, v := range meta {
+		s3Meta[k] = aws.String(v)
+	}
+	return s3Meta
+}
+
+func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 	// Ignore missing Content-Length assuming it is 0
 	// Some versions of ceph do this due their apache proxies
-	if contentLength != nil {
-		o.bytes = *contentLength
+	if resp.ContentLength != nil {
+		o.bytes = *resp.ContentLength
 	}
-	o.setMD5FromEtag(aws.StringValue(etag))
-	o.meta = meta
-	if o.meta == nil {
-		o.meta = map[string]*string{}
-	}
+	o.setMD5FromEtag(aws.StringValue(resp.ETag))
+	o.meta = s3MetadataToMap(resp.Metadata)
 	// Read MD5 from metadata if present
 	if md5sumBase64, ok := o.meta[metaMD5Hash]; ok {
-		md5sumBytes, err := base64.StdEncoding.DecodeString(*md5sumBase64)
+		md5sumBytes, err := base64.StdEncoding.DecodeString(md5sumBase64)
 		if err != nil {
-			fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", *md5sumBase64, err)
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: %v", md5sumBase64, err)
 		} else if len(md5sumBytes) != 16 {
-			fs.Debugf(o, "Failed to read md5sum from metadata %q: wrong length", *md5sumBase64)
+			fs.Debugf(o, "Failed to read md5sum from metadata %q: wrong length", md5sumBase64)
 		} else {
 			o.md5 = hex.EncodeToString(md5sumBytes)
 		}
 	}
-	o.storageClass = aws.StringValue(storageClass)
-	if lastModified == nil {
+	if resp.LastModified == nil {
 		o.lastModified = time.Now()
 		fs.Logf(o, "Failed to read last modified")
 	} else {
-		o.lastModified = *lastModified
+		o.lastModified = *resp.LastModified
 	}
-	o.mimeType = aws.StringValue(mimeType)
+	o.mimeType = aws.StringValue(resp.ContentType)
+
+	// Set system metadata
+	o.storageClass = resp.StorageClass
+	o.cacheControl = resp.CacheControl
+	o.contentDisposition = resp.ContentDisposition
+	o.contentEncoding = resp.ContentEncoding
+	o.contentLanguage = resp.ContentLanguage
 }
 
 // ModTime returns the modification time of the object
@@ -3780,11 +3914,11 @@ func (o *Object) ModTime(ctx context.Context) time.Time {
 	}
 	// read mtime out of metadata if available
 	d, ok := o.meta[metaMtime]
-	if !ok || d == nil {
+	if !ok {
 		// fs.Debugf(o, "No metadata")
 		return o.lastModified
 	}
-	modTime, err := swift.FloatStringToTime(*d)
+	modTime, err := swift.FloatStringToTime(d)
 	if err != nil {
 		fs.Logf(o, "Failed to read mtime from object: %v", err)
 		return o.lastModified
@@ -3798,10 +3932,10 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	if err != nil {
 		return err
 	}
-	o.meta[metaMtime] = aws.String(swift.TimeToFloatString(modTime))
+	o.meta[metaMtime] = swift.TimeToFloatString(modTime)
 
 	// Can't update metadata here, so return this error to force a recopy
-	if o.storageClass == "GLACIER" || o.storageClass == "DEEP_ARCHIVE" {
+	if o.storageClass != nil && (*o.storageClass == "GLACIER" || *o.storageClass == "DEEP_ARCHIVE") {
 		return fs.ErrorCantSetModTime
 	}
 
@@ -3809,7 +3943,7 @@ func (o *Object) SetModTime(ctx context.Context, modTime time.Time) error {
 	bucket, bucketPath := o.split()
 	req := s3.CopyObjectInput{
 		ContentType:       aws.String(fs.MimeType(ctx, o)), // Guess the content type
-		Metadata:          o.meta,
+		Metadata:          mapToS3Metadata(o.meta),
 		MetadataDirective: aws.String(s3.MetadataDirectiveReplace), // replace metadata with that passed in
 	}
 	if o.fs.opt.RequesterPays {
@@ -3862,17 +3996,34 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 
 	metaData := make(map[string]*string)
 	for key, value := range resp.Header {
-		if strings.HasPrefix(key, "x-amz-meta") {
+		key = strings.ToLower(key)
+		if strings.HasPrefix(key, "x-amz-meta-") {
 			metaKey := strings.TrimPrefix(key, "x-amz-meta-")
-			metaData[strings.Title(metaKey)] = &value[0]
+			metaData[metaKey] = &value[0]
 		}
 	}
 
-	storageClass := resp.Header.Get("X-Amz-Storage-Class")
-	contentType := resp.Header.Get("Content-Type")
-	etag := resp.Header.Get("Etag")
+	header := func(k string) *string {
+		v := resp.Header.Get(k)
+		if v == "" {
+			return nil
+		}
+		return &v
+	}
 
-	o.setMetaData(&etag, contentLength, &lastModified, metaData, &contentType, &storageClass)
+	var head = s3.HeadObjectOutput{
+		ETag:               header("Etag"),
+		ContentLength:      contentLength,
+		LastModified:       &lastModified,
+		Metadata:           metaData,
+		CacheControl:       header("Cache-Control"),
+		ContentDisposition: header("Content-Disposition"),
+		ContentEncoding:    header("Content-Encoding"),
+		ContentLanguage:    header("Content-Language"),
+		ContentType:        header("Content-Type"),
+		StorageClass:       header("X-Amz-Storage-Class"),
+	}
+	o.setMetaData(&head)
 	return resp.Body, err
 }
 
@@ -3947,7 +4098,10 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 			fs.Debugf(o, "Failed to find length in %q", contentRange)
 		}
 	}
-	o.setMetaData(resp.ETag, size, resp.LastModified, resp.Metadata, resp.ContentType, resp.StorageClass)
+	var head s3.HeadObjectOutput
+	structs.SetFrom(&head, resp)
+	head.ContentLength = size
+	o.setMetaData(&head)
 	return resp.Body, nil
 }
 
@@ -4159,7 +4313,7 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 func unWrapAwsError(err error) (found bool, outErr error) {
 	if awsErr, ok := err.(awserr.Error); ok {
 		var origErrs []error
-		if batchErr, ok := awsErr.(awserr.BatchError); ok {
+		if batchErr, ok := awsErr.(awserr.BatchedErrors); ok {
 			origErrs = batchErr.OrigErrs()
 		} else {
 			origErrs = []error{awsErr.OrigErr()}
@@ -4284,10 +4438,55 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	multipart := size < 0 || size >= int64(o.fs.opt.UploadCutoff)
 
-	// Set the mtime in the meta data
-	metadata := map[string]*string{
-		metaMtime: aws.String(swift.TimeToFloatString(modTime)),
+	req := s3.PutObjectInput{
+		Bucket: &bucket,
+		ACL:    &o.fs.opt.ACL,
+		Key:    &bucketPath,
 	}
+
+	// Fetch metadata if --metadata is in use
+	meta, err := fs.GetMetadataOptions(ctx, src, options)
+	if err != nil {
+		return fmt.Errorf("failed to read metadata from source object: %w", err)
+	}
+	req.Metadata = make(map[string]*string, len(meta)+2)
+	// merge metadata into request and user metadata
+	for k, v := range meta {
+		pv := aws.String(v)
+		k = strings.ToLower(k)
+		switch k {
+		case "cache-control":
+			req.CacheControl = pv
+		case "content-disposition":
+			req.ContentDisposition = pv
+		case "content-encoding":
+			req.ContentEncoding = pv
+		case "content-language":
+			req.ContentLanguage = pv
+		case "content-type":
+			req.ContentType = pv
+		case "x-amz-tagging":
+			req.Tagging = pv
+		case "tier":
+			// ignore
+		case "mtime":
+			// mtime in meta overrides source ModTime
+			metaModTime, err := time.Parse(time.RFC3339Nano, v)
+			if err != nil {
+				fs.Debugf(o, "failed to parse metadata %s: %q: %v", k, v, err)
+			} else {
+				modTime = metaModTime
+			}
+		case "btime":
+			// write as metadata since we can't set it
+			req.Metadata[k] = pv
+		default:
+			req.Metadata[k] = pv
+		}
+	}
+
+	// Set the mtime in the meta data
+	req.Metadata[metaMtime] = aws.String(swift.TimeToFloatString(modTime))
 
 	// read the md5sum if available
 	// - for non multipart
@@ -4308,20 +4507,15 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 					// - a multipart upload
 					// - the Etag is not an MD5, eg when using SSE/SSE-C
 					// provided checksums aren't disabled
-					metadata[metaMD5Hash] = &md5sumBase64
+					req.Metadata[metaMD5Hash] = &md5sumBase64
 				}
 			}
 		}
 	}
 
-	// Guess the content type
-	mimeType := fs.MimeType(ctx, src)
-	req := s3.PutObjectInput{
-		Bucket:      &bucket,
-		ACL:         &o.fs.opt.ACL,
-		Key:         &bucketPath,
-		ContentType: &mimeType,
-		Metadata:    metadata,
+	// Set the content type it it isn't set already
+	if req.ContentType == nil {
+		req.ContentType = aws.String(fs.MimeType(ctx, src))
 	}
 	if size >= 0 {
 		req.ContentLength = &size
@@ -4400,19 +4594,19 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// so make up the object as best we can assuming it got
 	// uploaded properly. If size < 0 then we need to do the HEAD.
 	if o.fs.opt.NoHead && size >= 0 {
-		o.md5 = md5sumHex
-		o.bytes = size
-		o.lastModified = time.Now()
-		o.meta = req.Metadata
-		o.mimeType = aws.StringValue(req.ContentType)
-		o.storageClass = aws.StringValue(req.StorageClass)
+		var head s3.HeadObjectOutput
+		structs.SetFrom(&head, req)
+		head.ETag = &md5sumHex // doesn't matter quotes are misssing
+		head.ContentLength = &size
 		// If we have done a single part PUT request then we can read these
 		if gotEtag != "" {
-			o.setMD5FromEtag(gotEtag)
+			head.ETag = &gotEtag
 		}
-		if !o.lastModified.IsZero() {
-			o.lastModified = lastModified
+		if lastModified.IsZero() {
+			lastModified = time.Now()
 		}
+		head.LastModified = &lastModified
+		o.setMetaData(&head)
 		return nil
 	}
 
@@ -4422,7 +4616,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	o.setMetaData(head.ETag, head.ContentLength, head.LastModified, head.Metadata, head.ContentType, head.StorageClass)
+	o.setMetaData(head)
 	if o.fs.opt.UseMultipartEtag.Value && !o.fs.etagIsNotMD5 && wantETag != "" && head.ETag != nil && *head.ETag != "" {
 		gotETag := strings.Trim(strings.ToLower(*head.ETag), `"`)
 		if wantETag != gotETag {
@@ -4473,16 +4667,61 @@ func (o *Object) SetTier(tier string) (err error) {
 	if err != nil {
 		return err
 	}
-	o.storageClass = tier
+	o.storageClass = &tier
 	return err
 }
 
 // GetTier returns storage class as string
 func (o *Object) GetTier() string {
-	if o.storageClass == "" {
+	if o.storageClass == nil || *o.storageClass == "" {
 		return "STANDARD"
 	}
-	return o.storageClass
+	return *o.storageClass
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error) {
+	err = o.readMetaData(ctx)
+	if err != nil {
+		return nil, err
+	}
+	metadata = make(fs.Metadata, len(o.meta)+7)
+	for k, v := range o.meta {
+		switch k {
+		case metaMtime:
+			if modTime, err := swift.FloatStringToTime(v); err == nil {
+				metadata["mtime"] = modTime.Format(time.RFC3339Nano)
+			}
+		case metaMD5Hash:
+			// don't write hash metadata
+		default:
+			metadata[k] = v
+		}
+	}
+	if o.mimeType != "" {
+		metadata["content-type"] = o.mimeType
+	}
+	// metadata["x-amz-tagging"] = ""
+	if !o.lastModified.IsZero() {
+		metadata["btime"] = o.lastModified.Format(time.RFC3339Nano)
+	}
+
+	// Set system metadata
+	setMetadata := func(k string, v *string) {
+		if v == nil || *v == "" {
+			return
+		}
+		metadata[k] = *v
+	}
+	setMetadata("cache-control", o.cacheControl)
+	setMetadata("content-disposition", o.contentDisposition)
+	setMetadata("content-encoding", o.contentEncoding)
+	setMetadata("content-language", o.contentLanguage)
+	setMetadata("tier", o.storageClass)
+
+	return metadata, nil
 }
 
 // Check the interfaces are satisfied
@@ -4497,4 +4736,5 @@ var (
 	_ fs.MimeTyper   = &Object{}
 	_ fs.GetTierer   = &Object{}
 	_ fs.SetTierer   = &Object{}
+	_ fs.Metadataer  = &Object{}
 )

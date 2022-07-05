@@ -59,7 +59,7 @@ var mtime1 = fstest.Time("2001-02-03T04:05:06.499999999Z")
 
 func testPutFile(ctx context.Context, t *testing.T, f fs.Fs, name, contents, message string, check bool) fs.Object {
 	item := fstest.Item{Path: name, ModTime: mtime1}
-	_, obj := fstests.PutTestContents(ctx, t, f, &item, contents, check)
+	obj := fstests.PutTestContents(ctx, t, f, &item, contents, check)
 	assert.NotNil(t, obj, message)
 	return obj
 }
@@ -440,7 +440,7 @@ func testSmallFileInternals(t *testing.T, f *Fs) {
 	checkSmallFile := func(name, contents string) {
 		filename := path.Join(dir, name)
 		item := fstest.Item{Path: filename, ModTime: modTime}
-		_, put := fstests.PutTestContents(ctx, t, f, &item, contents, false)
+		put := fstests.PutTestContents(ctx, t, f, &item, contents, false)
 		assert.NotNil(t, put)
 		checkSmallFileInternals(put)
 		checkContents(put, contents)
@@ -489,7 +489,7 @@ func testPreventCorruption(t *testing.T, f *Fs) {
 
 	newFile := func(name string) fs.Object {
 		item := fstest.Item{Path: path.Join(dir, name), ModTime: modTime}
-		_, obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
 		require.NotNil(t, obj)
 		return obj
 	}
@@ -599,7 +599,7 @@ func testChunkNumberOverflow(t *testing.T, f *Fs) {
 	newFile := func(f fs.Fs, name string) (obj fs.Object, filename string, txnID string) {
 		filename = path.Join(dir, name)
 		item := fstest.Item{Path: filename, ModTime: modTime}
-		_, obj = fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		obj = fstests.PutTestContents(ctx, t, f, &item, contents, true)
 		require.NotNil(t, obj)
 		if chunkObj, isChunkObj := obj.(*Object); isChunkObj {
 			txnID = chunkObj.xactID
@@ -716,7 +716,7 @@ func testFutureProof(t *testing.T, f *Fs) {
 			name = f.makeChunkName(name, part-1, "", "")
 		}
 		item := fstest.Item{Path: name, ModTime: modTime}
-		_, obj := fstests.PutTestContents(ctx, t, f.base, &item, data, true)
+		obj := fstests.PutTestContents(ctx, t, f.base, &item, data, true)
 		assert.NotNil(t, obj, msg)
 	}
 
@@ -790,7 +790,7 @@ func testBackwardsCompatibility(t *testing.T, f *Fs) {
 	newFile := func(f fs.Fs, name string) (fs.Object, string) {
 		filename := path.Join(dir, name)
 		item := fstest.Item{Path: filename, ModTime: modTime}
-		_, obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+		obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
 		require.NotNil(t, obj)
 		return obj, filename
 	}
@@ -844,7 +844,7 @@ func testChunkerServerSideMove(t *testing.T, f *Fs) {
 	modTime := fstest.Time("2001-02-03T04:05:06.499999999Z")
 	item := fstest.Item{Path: "movefile", ModTime: modTime}
 	contents := "abcdef"
-	_, file := fstests.PutTestContents(ctx, t, fs1, &item, contents, true)
+	file := fstests.PutTestContents(ctx, t, fs1, &item, contents, true)
 
 	dstOverwritten, _ := fs2.NewObject(ctx, "movefile")
 	dstFile, err := operations.Move(ctx, fs2, dstOverwritten, "movefile", file)
