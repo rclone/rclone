@@ -95,7 +95,7 @@ func init() {
 				"rclone-mtime": {
 					Help:    "Time of last modification, managed by Rclone",
 					Type:    "RFC 3339",
-					Example: "2006-01-02T15:04:05.999999999Z07:00",
+					Example: "2006-01-02T15:04:05.999999999Z",
 				},
 				"rclone-update-track": {
 					Help:    "Random value used by Rclone for tracking changes inside Internet Archive",
