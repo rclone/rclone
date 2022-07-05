@@ -9,10 +9,10 @@
 // When that's done, add a hyphen and the number of parts to get the ETag.
 //
 // For example, a multipart Etag can be built with the code below.
-// 		hs := s3hash.New(8 * Mi)
-// 		for {
-// 			hs.Write(data)
-//		}
+// 	    hs := s3hash.New(8 * Mi)
+// 	    for {
+// 	        hs.Write(data)
+//      }
 //      Etag := hex.EncodeToString(hs.Sum(nil)) + "-" + strconv.Itoa(hs.GetPartsCount())
 //      // result be like — 60b725f10c9c85c70d97880dfe8191b3-33
 package s3hash
@@ -24,7 +24,7 @@ import (
 )
 
 type S3Hash struct {
-	partSizeHashed int       // bytes of the part written into hash
+	partSizeHashed int       // bytes (of single part) written into hash
 	partsCount     int       // number hashed parts
 	partSize       int       // configured part size
 	digest         hash.Hash // underlying MD5
@@ -77,7 +77,7 @@ func (s *S3Hash) Write(p []byte) (n int, err error) {
 			n += k
 			s.final().Write(s.digest.Sum(nil))
 			s.partsCount++
-			s.digest = md5.New()
+			s.digest.Reset()
 			k, _ = s.digest.Write(p2[s.partSize-s.partSizeHashed:])
 			n += k
 			s.partSizeHashed = k
@@ -90,7 +90,7 @@ func (s *S3Hash) Write(p []byte) (n int, err error) {
 		// write to primary digest, primary digest write to final digest and recreate primary digest
 		n, _ = s.digest.Write(p)
 		s.final().Write(s.digest.Sum(nil))
-		s.digest = md5.New()
+		s.digest.Reset()
 		s.partSizeHashed = 0
 		s.partsCount++
 	}
@@ -121,7 +121,7 @@ func (s *S3Hash) Sum(b []byte) []byte {
 // Reset resets the Hash to its initial state.
 func (s *S3Hash) Reset() {
 	s.finalDigest = nil
-	s.digest = md5.New()
+	s.digest.Reset()
 	s.partSizeHashed = 0
 	s.partsCount = 0
 }

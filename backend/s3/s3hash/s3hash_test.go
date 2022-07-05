@@ -94,7 +94,7 @@ func TestPartedHash(t *testing.T) {
 			h.Write(chunk)
 		}
 		require.Equalf(t, expectedHash, h.Sum(nil), "data size %d, part size %d", p[0], p[1])
-		// we check what Sum() don't reset state of the S3Hash.
+		// checks what Sum() don't reset state of the S3Hash.
 		require.Equalf(t, expectedHash, h.Sum(nil), "data size %d, part size %d (second)", p[0], p[1])
 	}
 }

@@ -2672,12 +2672,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.features.SetTier = false
 	}
 	if f.opt.UseMultipartEtag.Value && f.opt.ChunkSize > 0 {
-		S3HashType = hash.RegisterHash("s3hash", "S3MultipartHash", 32, func() gohash.Hash {
-			return s3hash.New(int(f.opt.ChunkSize))
-		})
-		f.hash = hash.Set(S3HashType)
+		// We have to check what another s3 backend didn't define similar hash.
+		hashName := "s3hash" + strings.ToLower(f.opt.ChunkSize.String())
+		var hashDefined hash.Type
+		for _, h := range hash.Supported().Array() {
+			if h.String() == hashName {
+				hashDefined = h
+				break
+			}
+		}
+		if hashDefined == hash.None {
+			S3HashType = hash.RegisterHash(hashName, "S3HashBy"+f.opt.ChunkSize.String(), 32, func() gohash.Hash {
+				return s3hash.New(int(f.opt.ChunkSize))
+			})
+			f.hash = hash.NewHashSet(S3HashType)
+		} else {
+			f.hash = hash.NewHashSet(hashDefined)
+		}
 	} else {
-		f.hash = hash.Set(hash.MD5)
+		f.hash = hash.NewHashSet(hash.MD5)
 	}
 	// f.listMultipartUploads()
 	return f, nil
