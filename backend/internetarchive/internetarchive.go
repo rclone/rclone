@@ -38,6 +38,79 @@ func init() {
 		Name:        "internetarchive",
 		Description: "Internet Archive",
 		NewFs:       NewFs,
+
+		MetadataInfo: &fs.MetadataInfo{
+			System: map[string]fs.MetadataHelp{
+				"name": {
+					Help:    "Full file path, without the bucket part",
+					Type:    "filename",
+					Example: "backend/internetarchive/internetarchive.go",
+				},
+				"source": {
+					Help:    "The source of the file",
+					Type:    "string",
+					Example: "original",
+				},
+				"mtime": {
+					Help:    "Time of last modification, managed by Internet Archive",
+					Type:    "unixtime",
+					Example: "1530211123",
+				},
+				"size": {
+					Help:    "File size in bytes",
+					Type:    "decimal number",
+					Example: "123456",
+				},
+				"md5": {
+					Help:    "MD5 hash calculated by Internet Archive",
+					Type:    "string",
+					Example: "01234567012345670123456701234567",
+				},
+				"crc32": {
+					Help:    "CRC32 calculated by Internet Archive",
+					Type:    "string",
+					Example: "01234567",
+				},
+				"sha1": {
+					Help:    "SHA1 hash calculated by Internet Archive",
+					Type:    "string",
+					Example: "0123456701234567012345670123456701234567",
+				},
+				"format": {
+					Help:    "Name of format identified by Internet Archive",
+					Type:    "string",
+					Example: "Comma-Separated Values",
+				},
+				"old_version": {
+					Help:    "Whether the file was replaced and moved by keep-old-version flag",
+					Type:    "boolean",
+					Example: "true",
+				},
+				"viruscheck": {
+					Help:    "The last time viruscheck process was run for the file (?)",
+					Type:    "unixtime",
+					Example: "1654191352",
+				},
+
+				"rclone-mtime": {
+					Help:    "Time of last modification, managed by Rclone",
+					Type:    "RFC 3339",
+					Example: "2006-01-02T15:04:05.999999999Z07:00",
+				},
+				"rclone-update-track": {
+					Help:    "Random value used by Rclone for tracking changes inside Internet Archive",
+					Type:    "string",
+					Example: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				},
+			},
+			Help: `Metadata fields provided by Internet Archive.
+If there are multiple values for a key, only the first one is returned.
+This is a limitation of Rclone, that supports one value per one key.
+
+Owner is able to add custom keys. Metadata feature grabs all the keys including them.
+`,
+		},
+
 		Options: []fs.Option{{
 			Name: "access_key_id",
 			Help: "IAS3 Access Key.\n\nLeave blank for anonymous access.\nYou can find one here: https://archive.org/account/s3.php",
@@ -122,6 +195,7 @@ type Object struct {
 	md5     string    // md5 hash of the file presented by the server
 	sha1    string    // sha1 hash of the file presented by the server
 	crc32   string    // crc32 of the file presented by the server
+	rawData json.RawMessage
 }
 
 // IAFile reprensents a subset of object in MetadataResponse.Files
@@ -135,12 +209,20 @@ type IAFile struct {
 	Md5         string          `json:"md5"`
 	Crc32       string          `json:"crc32"`
 	Sha1        string          `json:"sha1"`
+
+	rawData json.RawMessage
 }
 
 // MetadataResponse reprensents subset of the JSON object returned by (frontend)/metadata/
 type MetadataResponse struct {
 	Files    []IAFile `json:"files"`
 	ItemSize int64    `json:"item_size"`
+}
+
+// MetadataResponseRaw is the form of MetadataResponse to deal with metadata
+type MetadataResponseRaw struct {
+	Files    []json.RawMessage `json:"files"`
+	ItemSize int64             `json:"item_size"`
 }
 
 // ModMetadataResponse represents response for amending metadata
@@ -226,7 +308,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	f.setRoot(root)
 	f.features = (&fs.Features{
-		BucketBased: true,
+		BucketBased:   true,
+		ReadMetadata:  true,
+		WriteMetadata: true,
+		UserMetadata:  true,
 	}).Fill(ctx, f)
 
 	f.srv = rest.NewClient(fshttp.NewClient(ctx))
@@ -762,6 +847,28 @@ func (o *Object) String() string {
 	return o.remote
 }
 
+// Metadata returns all file metadata provided by Internet Archive
+func (o *Object) Metadata(ctx context.Context) (m fs.Metadata, err error) {
+	if o.rawData == nil {
+		return nil, nil
+	}
+	raw := make(map[string]json.RawMessage)
+	err = json.Unmarshal(o.rawData, &raw)
+	if err != nil {
+		// fatal: json parsing failed
+		return
+	}
+	for k, v := range raw {
+		items, err := listOrString(v)
+		if len(items) == 0 || err != nil {
+			// skip: an entry failed to parse
+			continue
+		}
+		m.Set(k, items[0])
+	}
+	return
+}
+
 func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 	if resp != nil {
 		for _, e := range retryErrorCodes {
@@ -788,7 +895,7 @@ func (o *Object) split() (bucket, bucketPath string) {
 	return o.fs.split(o.remote)
 }
 
-func (f *Fs) requestMetadata(ctx context.Context, bucket string) (result MetadataResponse, err error) {
+func (f *Fs) requestMetadata(ctx context.Context, bucket string) (result *MetadataResponse, err error) {
 	var resp *http.Response
 	// make a GET request to (frontend)/metadata/:item/
 	opts := rest.Opts{
@@ -796,12 +903,15 @@ func (f *Fs) requestMetadata(ctx context.Context, bucket string) (result Metadat
 		Path:   path.Join("/metadata/", bucket),
 	}
 
+	var temp MetadataResponseRaw
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.front.CallJSON(ctx, &opts, nil, &result)
+		resp, err = f.front.CallJSON(ctx, &opts, nil, &temp)
 		return f.shouldRetry(resp, err)
 	})
-
-	return result, err
+	if err != nil {
+		return
+	}
+	return temp.unraw()
 }
 
 // list up all files/directories without any filters
@@ -998,6 +1108,7 @@ func makeValidObject(f *Fs, remote string, file IAFile, mtime time.Time, size in
 		md5:     file.Md5,
 		crc32:   file.Crc32,
 		sha1:    file.Sha1,
+		rawData: file.rawData,
 	}
 }
 
@@ -1043,6 +1154,23 @@ func (file IAFile) parseMtime() (mtime time.Time) {
 		mtime = time.Unix(0, 0)
 	}
 	return mtime
+}
+
+func (mrr *MetadataResponseRaw) unraw() (_ *MetadataResponse, err error) {
+	var files []IAFile
+	for _, raw := range mrr.Files {
+		var parsed IAFile
+		err = json.Unmarshal(raw, &parsed)
+		if err != nil {
+			return nil, err
+		}
+		parsed.rawData = raw
+		files = append(files, parsed)
+	}
+	return &MetadataResponse{
+		Files:    files,
+		ItemSize: mrr.ItemSize,
+	}, nil
 }
 
 func compareSize(a, b int64) bool {
@@ -1106,4 +1234,5 @@ var (
 	_ fs.PublicLinker = &Fs{}
 	_ fs.Abouter      = &Fs{}
 	_ fs.Object       = &Object{}
+	_ fs.Metadataer   = &Object{}
 )
