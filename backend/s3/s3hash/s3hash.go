@@ -9,11 +9,12 @@
 // When that's done, add a hyphen and the number of parts to get the ETag.
 //
 // For example, a multipart Etag can be built with the code below.
-// 		hs := New(8 * Mi)
+// 		hs := s3hash.New(8 * Mi)
 // 		for {
 // 			hs.Write(data)
 //		}
 //      Etag := hex.EncodeToString(hs.Sum(nil)) + "-" + strconv.Itoa(hs.GetPartsCount())
+//      // result be like — 60b725f10c9c85c70d97880dfe8191b3-33
 package s3hash
 
 import (
