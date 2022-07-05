@@ -716,8 +716,7 @@ func betterPathClean(p string) string {
 
 func trimPathPrefix(s, prefix string, enc encoder.MultiEncoder) string {
 	// we need to clean the paths to make tests pass!
-	s = betterPathClean(s)
-	prefix = betterPathClean(prefix)
+	s, prefix = betterPathClean(s), betterPathClean(prefix)
 	if s == prefix || s == prefix+"/" {
 		return ""
 	}
