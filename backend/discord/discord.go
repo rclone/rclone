@@ -538,6 +538,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		if r, err = io.ReadFull(c, buf); err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
 			return err
 		}
+		if r == 0 {
+			// do not upload empty file, hopefully c.done == true
+			continue
+		}
 		buf = buf[:r]
 		err = retry(func() (err error) {
 			message, err = o.fs.bot.ChannelMessageSendComplex(newChannelID, &discordgo.MessageSend{
