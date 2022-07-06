@@ -259,8 +259,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	for ent := range entryChan {
 		obj, ok := ent.(*Object)
 		if ok && strings.HasPrefix(obj.remote, grandparent) {
-			path := trimPathPrefix(obj.remote, grandparent, f.opt.Enc)
-			newRemote := trimPathPrefix(obj.remote, f.root, f.opt.Enc)
+			path := trimPathPrefix(obj.remote, grandparent)
+			newRemote := trimPathPrefix(obj.remote, f.root)
 			if !strings.Contains(path, "/") && newRemote != "" {
 				obj.remote = newRemote
 				entries = append(entries, obj)
@@ -269,8 +269,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		}
 		dire, ok := ent.(*fs.Dir)
 		if ok && strings.HasPrefix(dire.Remote(), grandparent) {
-			path := trimPathPrefix(dire.Remote(), grandparent, f.opt.Enc)
-			newRemote := trimPathPrefix(dire.Remote(), f.root, f.opt.Enc)
+			path := trimPathPrefix(dire.Remote(), grandparent)
+			newRemote := trimPathPrefix(dire.Remote(), f.root)
 			if !strings.Contains(path, "/") && newRemote != "" {
 				dire.SetRemote(newRemote)
 				entries = append(entries, dire)
@@ -307,7 +307,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (ret fs.Object, err e
 	for ent := range entryChan {
 		obj, ok := ent.(*Object)
 		if ok && obj.remote == grandparent {
-			obj.remote = trimPathPrefix(obj.remote, f.root, f.opt.Enc)
+			obj.remote = trimPathPrefix(obj.remote, f.root)
 			f.insertObjectCache(obj)
 			return obj, nil
 		}
@@ -454,13 +454,13 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	for ent := range entryChan {
 		obj, ok := ent.(*Object)
 		if ok && strings.HasPrefix(obj.remote, grandparent) && obj.remote != f.root {
-			obj.remote = trimPathPrefix(obj.remote, f.root, f.opt.Enc)
+			obj.remote = trimPathPrefix(obj.remote, f.root)
 			entries = append(entries, obj)
 			f.insertObjectCache(obj)
 		}
 		dire, ok := ent.(*fs.Dir)
 		if ok && strings.HasPrefix(dire.Remote(), grandparent) && dire.Remote() != f.root {
-			dire.SetRemote(trimPathPrefix(dire.Remote(), f.root, f.opt.Enc))
+			dire.SetRemote(trimPathPrefix(dire.Remote(), f.root))
 			entries = append(entries, dire)
 		}
 	}
@@ -618,7 +618,7 @@ func (f *Fs) streamAllObjects(entryChan chan fs.DirEntry) (err error) {
 		timeoutChan = time.After(time.Duration(f.opt.ListTimeout))
 	}
 
-	knownDirs := map[string]*interface{}{
+	knownDirs := map[string]interface{}{
 		"": nil,
 	}
 
@@ -715,7 +715,7 @@ func betterPathClean(p string) string {
 	return d
 }
 
-func trimPathPrefix(s, prefix string, enc encoder.MultiEncoder) string {
+func trimPathPrefix(s, prefix string) string {
 	// we need to clean the paths to make tests pass!
 	s, prefix = betterPathClean(s), betterPathClean(prefix)
 	if s == prefix || s == prefix+"/" {
