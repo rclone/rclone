@@ -169,9 +169,11 @@ Only enable if you need to be guaranteed to be reflected after write operations.
 const iaItemMaxSize int64 = 1099511627776
 
 // metadata keys that are not writeable
-var roMetadataKey []string = []string{
-	// do not add mtime
-	"name", "source", "size", "md5", "crc32", "sha1", "format", "old_version", "viruscheck",
+var roMetadataKey map[string]interface{} = map[string]interface{} {
+	// do not add mtime here, it's a documented exception
+	"name": nil, "source": nil, "size": nil, "md5": nil,
+	"crc32": nil, "sha1": nil, "format": nil, "old_version": nil,
+	"viruscheck": nil,
 }
 
 // Options defines the configuration for this backend
@@ -783,15 +785,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	}
 	mdata, err := fs.GetMetadataOptions(ctx, src, options)
 	if err == nil && mdata != nil {
-		badkeys := make(map[string]interface{})
-		for _, bk := range roMetadataKey {
-			badkeys[bk] = nil
-		}
 		for mk, mv := range mdata {
 			mk = strings.ToLower(mk)
 			if strings.HasPrefix(mk, "rclone-") {
 				fs.LogPrintf(fs.LogLevelWarning, o, "the reserved metadata key %s is about to set", mk)
-			} else if _, ok := badkeys[mk]; ok {
+			} else if _, ok := roMetadataKey[mk]; ok {
 				return fmt.Errorf("setting or modifying read-only key %s is requested", mk)
 			} else if mk == "mtime" {
 				// redirect to make it work
