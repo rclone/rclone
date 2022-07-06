@@ -171,7 +171,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 	f.features = (&fs.Features{
-		BucketBased: true,
+		BucketBased:       true,
+		BucketBasedRootOK: true, // there are no limit for path as long as json accepts it
 	}).Fill(ctx, f)
 
 	f.chunkChannels, err = fetchChannels(f.bot, opt.ChunksChannel)
@@ -241,7 +242,7 @@ func (o *Object) Storable() bool {
 func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	o.modTime = t
 	o.meta.ModTime = t.Format(time.RFC3339Nano)
-	return o.amendMetadata(*o.meta)
+	return o.amendMetadata(*o.meta, true)
 }
 
 // List files and directories in a directory
@@ -420,7 +421,7 @@ func (f *Fs) copyOrMove(src fs.Object, remote string, copy bool) (_ fs.Object, e
 	newMeta := *ret.meta
 	newMeta.FileName = dstPath
 	ret.remote = remote
-	return &ret, ret.amendMetadata(newMeta)
+	return &ret, ret.amendMetadata(newMeta, !copy)
 }
 
 // ListR lists the objects and directories of the Fs starting
@@ -572,7 +573,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.meta.Sha256, _ = mher.SumString(hash.SHA256, false)
 	o.meta.Md5, _ = mher.SumString(hash.MD5, false)
 	// amend or create metadata with new journal
-	err = o.amendMetadata(*o.meta)
+	err = o.amendMetadata(*o.meta, true)
 	if err == nil {
 		o.fs.insertObjectCache(o)
 	}
@@ -782,7 +783,7 @@ func crawlMessages(f *Fs, channelID string, messageChan chan *discordgo.Message,
 	finOrErrorChan <- nil
 }
 
-func (o *Object) amendMetadata(jm JournalMetadata) error {
+func (o *Object) amendMetadata(jm JournalMetadata, deleteOld bool) error {
 	bot := o.fs.bot
 	f := o.fs
 	newChannelID := randomPick(f.journalChannels).ID
@@ -804,7 +805,7 @@ func (o *Object) amendMetadata(jm JournalMetadata) error {
 	if err != nil {
 		return err
 	}
-	if o.metadataChannelID != "" && o.messageID != "" {
+	if o.metadataChannelID != "" && o.messageID != "" && deleteOld {
 		err := bot.ChannelMessageDelete(o.metadataChannelID, o.messageID)
 		if err != nil {
 			fs.LogPrintf(fs.LogLevelError, f, "failed to delete old message for amending: %v", err)
