@@ -169,7 +169,7 @@ Only enable if you need to be guaranteed to be reflected after write operations.
 const iaItemMaxSize int64 = 1099511627776
 
 // metadata keys that are not writeable
-var roMetadataKey map[string]interface{} = map[string]interface{} {
+var roMetadataKey map[string]interface{} = map[string]interface{}{
 	// do not add mtime here, it's a documented exception
 	"name": nil, "source": nil, "size": nil, "md5": nil,
 	"crc32": nil, "sha1": nil, "format": nil, "old_version": nil,
