@@ -30541,7 +30541,7 @@ dig www.googleapis.com @8.8.8.8 # resolve with Google&#39;s DNS server</code></p
 <p>For example: On a Windows system, you have a file with name <code>Test：1.jpg</code>, where <code>：</code> is the Unicode fullwidth colon symbol. When using rclone to copy this to your Google Drive, you will notice that the file gets renamed to <code>Test:1.jpg</code>, where <code>:</code> is the regular (halfwidth) colon.</p>
 <p>The reason for such renames is the way rclone handles different <a href="https://rclone.org/overview/#restricted-filenames">restricted filenames</a> on different cloud storage systems. It tries to avoid ambiguous file names as much and allow moving files between many cloud storage systems transparently, by replacing invalid characters with similar looking Unicode characters when transferring to one storage system, and replacing back again when transferring to a different storage system where the original characters are supported. When the same Unicode characters are intentionally used in file names, this replacement strategy leads to unwanted renames. Read more <a href="https://rclone.org/overview/#restricted-filenames-caveats">here</a>.</p>
 <h1 id="license">License</h1>
-<p>This is free software under the terms of MIT the license (check the COPYING file included with the source code).</p>
+<p>This is free software under the terms of the MIT license (check the COPYING file included with the source code).</p>
 <pre><code>Copyright (C) 2019 by Nick Craig-Wood https://www.craig-wood.com/nick/
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
