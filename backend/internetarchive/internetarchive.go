@@ -781,25 +781,23 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		headers["Content-Length"] = fmt.Sprintf("%d", size)
 		headers["x-archive-size-hint"] = fmt.Sprintf("%d", size)
 	}
-	if mdater, ok := src.(fs.Metadataer); ok {
-		mdata, err := mdater.Metadata(ctx)
-		if err == nil && mdata != nil{
-			badkeys := make(map[string]interface{})
-			for _, bk := range roMetadataKey {
-				badkeys[bk] = nil
+	mdata, err := fs.GetMetadataOptions(ctx, src, options)
+	if err == nil && mdata != nil {
+		badkeys := make(map[string]interface{})
+		for _, bk := range roMetadataKey {
+			badkeys[bk] = nil
+		}
+		for mk, mv := range mdata {
+			mk = strings.ToLower(mk)
+			if strings.HasPrefix(mk, "rclone-") {
+				fs.LogPrintf(fs.LogLevelWarning, o, "the reserved metadata key %s is about to set", mk)
+			} else if _, ok := badkeys[mk]; ok {
+				return fmt.Errorf("setting or modifying read-only key %s is requested", mk)
+			} else if mk == "mtime" {
+				// redirect to make it work
+				mk = "rclone-mtime"
 			}
-			for mk, mv := range mdata {
-				mk = strings.ToLower(mk)
-				if strings.HasPrefix(mk, "rclone-") {
-					fs.LogPrintf(fs.LogLevelWarning, o, "the reserved metadata key %s is about to set", mk)
-				} else if _, ok := badkeys[mk]; ok {
-					return fmt.Errorf("setting or modifying read-only key %s is requested", mk)
-				} else if mk == "mtime" {
-					// redirect to make it work
-					mk = "rclone-mtime"
-				}
-				headers[fmt.Sprintf("x-amz-filemeta-%s", mk)] = mv
-			}
+			headers[fmt.Sprintf("x-amz-filemeta-%s", mk)] = mv
 		}
 	}
 
