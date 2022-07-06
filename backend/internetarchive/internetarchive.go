@@ -52,9 +52,9 @@ func init() {
 					Example: "original",
 				},
 				"mtime": {
-					Help:    "Time of last modification, managed by Internet Archive",
-					Type:    "unixtime",
-					Example: "1530211123",
+					Help:    "Time of last modification, managed by Rclone",
+					Type:    "RFC 3339",
+					Example: "2006-01-02T15:04:05.999999999Z",
 				},
 				"size": {
 					Help:    "File size in bytes",
@@ -92,6 +92,11 @@ func init() {
 					Example: "1654191352",
 				},
 
+				"rclone-ia-mtime": {
+					Help:    "Time of last modification, managed by Internet Archive",
+					Type:    "RFC 3339",
+					Example: "2006-01-02T15:04:05.999999999Z",
+				},
 				"rclone-mtime": {
 					Help:    "Time of last modification, managed by Rclone",
 					Type:    "RFC 3339",
@@ -162,6 +167,12 @@ Only enable if you need to be guaranteed to be reflected after write operations.
 
 // maximum size of an item. this is constant across all items
 const iaItemMaxSize int64 = 1099511627776
+
+// metadata keys that are not writeable
+var roMetadataKey []string = []string{
+	// do not add mtime
+	"name", "source", "size", "md5", "crc32", "sha1", "format", "old_version", "viruscheck",
+}
 
 // Options defines the configuration for this backend
 type Options struct {
@@ -770,6 +781,27 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		headers["Content-Length"] = fmt.Sprintf("%d", size)
 		headers["x-archive-size-hint"] = fmt.Sprintf("%d", size)
 	}
+	if mdater, ok := src.(fs.Metadataer); ok {
+		mdata, err := mdater.Metadata(ctx)
+		if err == nil && mdata != nil{
+			badkeys := make(map[string]interface{})
+			for _, bk := range roMetadataKey {
+				badkeys[bk] = nil
+			}
+			for mk, mv := range mdata {
+				mk = strings.ToLower(mk)
+				if strings.HasPrefix(mk, "rclone-") {
+					fs.LogPrintf(fs.LogLevelWarning, o, "the reserved metadata key %s is about to set", mk)
+				} else if _, ok := badkeys[mk]; ok {
+					return fmt.Errorf("setting or modifying read-only key %s is requested", mk)
+				} else if mk == "mtime" {
+					// redirect to make it work
+					mk = "rclone-mtime"
+				}
+				headers[fmt.Sprintf("x-amz-filemeta-%s", mk)] = mv
+			}
+		}
+	}
 
 	// read the md5sum if available
 	var md5sumHex string
@@ -866,6 +898,12 @@ func (o *Object) Metadata(ctx context.Context) (m fs.Metadata, err error) {
 		}
 		m.Set(k, items[0])
 	}
+	// move the old mtime to an another key
+	if v, ok := m["mtime"]; ok {
+		m["rclone-ia-mtime"] = v
+	}
+	// overwrite with a correct mtime
+	m["mtime"] = o.modTime.Format(time.RFC3339Nano)
 	return
 }
 
