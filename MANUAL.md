@@ -40150,7 +40150,7 @@ to unwanted renames. Read more [here](https://rclone.org/overview/#restricted-fi
 
 # License
 
-This is free software under the terms of MIT the license (check the
+This is free software under the terms of the MIT license (check the
 COPYING file included with the source code).
 
 ```
