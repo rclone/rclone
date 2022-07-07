@@ -133,6 +133,9 @@ backends:
    remote:   "TestGooglePhotos:"
    tests:
      - backend
+ - backend: "hidrive"
+   remote:   "TestHiDrive:"
+   fastlist: false
  - backend:  "hubic"
    remote:   "TestHubic:"
    fastlist: false
