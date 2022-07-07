@@ -1391,11 +1391,14 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 
 	compare := func(dst fs.Object) error {
 		var sums map[hash.Type]string
+		opt := defaultEqualOpt(ctx)
 		if hasher != nil {
+			// force --checksum on if we have hashes
+			opt.checkSum = true
 			sums = hasher.Sums()
 		}
 		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, sums, fdst)
-		if !Equal(ctx, src, dst) {
+		if !equal(ctx, src, dst, opt) {
 			err = fmt.Errorf("corrupted on transfer")
 			err = fs.CountError(err)
 			fs.Errorf(dst, "%v", err)
