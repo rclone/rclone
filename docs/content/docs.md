@@ -49,6 +49,7 @@ See the following for detailed instructions for
   * [Google Photos](/googlephotos/)
   * [Hasher](/hasher/) - to handle checksums for other remotes
   * [HDFS](/hdfs/)
+  * [HiDrive](/hidrive/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
   * [Internet Archive](/internetarchive/)

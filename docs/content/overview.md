@@ -30,6 +30,7 @@ Here is an overview of the major features of each cloud storage system.
 | Google Drive                 | MD5              | R/W     | No               | Yes             | R/W       | -        |
 | Google Photos                | -                | -       | No               | Yes             | R         | -        |
 | HDFS                         | -                | R/W     | No               | No              | -         | -        |
+| HiDrive                      | HiDrive ¹²       | R/W     | No               | No              | -         | -        |
 | HTTP                         | -                | R       | No               | No              | R         | -        |
 | Hubic                        | MD5              | R/W     | No               | No              | R/W       | -        |
 | Internet Archive             | MD5, SHA1, CRC32 | R/W ¹¹  | No               | No              | -         | -        |
@@ -92,6 +93,11 @@ for more details.
 
 ¹¹ Internet Archive requires option `wait_archive` to be set to a non-zero value
 for full modtime support.
+
+¹² HiDrive supports [its own custom
+hash](https://static.hidrive.com/dev/0001).
+It combines SHA1 sums for each 4 KiB block hierarchically to a single
+top-level sum.
 
 ### Hash ###
 
@@ -475,6 +481,7 @@ upon backend-specific capabilities.
 | Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | Google Photos                | No    | No   | No   | No      | No      | No    | No           | No           | No    | No       |
 | HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
+| HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
 | Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | Yes          | Yes   | No       |
