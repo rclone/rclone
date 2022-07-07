@@ -40,6 +40,7 @@ Make sure to set a large enough value (e.g. `30m0s` for smaller files) as it can
 
 ## About metadata
 This backend supports setting, updating and reading metadata of each file.
+The metadata will appear as file metadata on Internet Archive.
 However, some fields are reserved by both Internet Archive and rclone.
 
 The following are reserved by Internet Archive:
