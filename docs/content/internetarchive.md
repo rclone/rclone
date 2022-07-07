@@ -54,7 +54,7 @@ The following are reserved by Internet Archive:
 - `old_version`
 - `viruscheck`
 
-Trying to set values to these keys results in a fatal error.
+Trying to set values to these keys is ignored with a warning.
 Only setting `mtime` is an exception. Doing so make it the identical behavior as setting ModTime.
 
 rclone reserves all the keys starting with `rclone-`. Setting value for these keys will give you warnings, but values are set according to request.

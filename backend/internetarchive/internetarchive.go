@@ -790,7 +790,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			if strings.HasPrefix(mk, "rclone-") {
 				fs.LogPrintf(fs.LogLevelWarning, o, "reserved metadata key %s is about to set", mk)
 			} else if _, ok := roMetadataKey[mk]; ok {
-				return fmt.Errorf("setting or modifying read-only key %s is requested", mk)
+				fs.LogPrintf(fs.LogLevelWarning, o, "setting or modifying read-only key %s is requested, skipping", mk)
+				continue
 			} else if mk == "mtime" {
 				// redirect to make it work
 				mk = "rclone-mtime"
