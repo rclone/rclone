@@ -405,18 +405,17 @@ func (o *Object) SetModTime(ctx context.Context, t time.Time) (err error) {
 	}
 
 	// https://archive.org/services/docs/api/md-write.html
-	var patch = []interface{}{
+	// the following code might be useful for modifying metadata of an uploaded file
+	patch := []map[string]string{
 		// we should drop it first to clear all rclone-provided mtimes
-		struct {
-			Op   string `json:"op"`
-			Path string `json:"path"`
-		}{"remove", "/rclone-mtime"},
-		struct {
-			Op    string `json:"op"`
-			Path  string `json:"path"`
-			Value string `json:"value"`
-		}{"add", "/rclone-mtime", t.Format(time.RFC3339Nano)},
-	}
+		{
+			"op":   "remove",
+			"path": "/rclone-mtime",
+		}, {
+			"op":    "add",
+			"path":  "/rclone-mtime",
+			"value": t.Format(time.RFC3339Nano),
+		}}
 	res, err := json.Marshal(patch)
 	if err != nil {
 		return err
@@ -789,7 +788,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		for mk, mv := range mdata {
 			mk = strings.ToLower(mk)
 			if strings.HasPrefix(mk, "rclone-") {
-				fs.LogPrintf(fs.LogLevelWarning, o, "the reserved metadata key %s is about to set", mk)
+				fs.LogPrintf(fs.LogLevelWarning, o, "reserved metadata key %s is about to set", mk)
 			} else if _, ok := roMetadataKey[mk]; ok {
 				return fmt.Errorf("setting or modifying read-only key %s is requested", mk)
 			} else if mk == "mtime" {
