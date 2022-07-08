@@ -38,6 +38,33 @@ You can optionally wait for the server's processing to finish, by setting non-ze
 By making it wait, rclone can do normal file comparison.
 Make sure to set a large enough value (e.g. `30m0s` for smaller files) as it can take a long time depending on server's queue.
 
+## About metadata
+This backend supports setting, updating and reading metadata of each file.
+The metadata will appear as file metadata on Internet Archive.
+However, some fields are reserved by both Internet Archive and rclone.
+
+The following are reserved by Internet Archive:
+- `name`
+- `source`
+- `size`
+- `md5`
+- `crc32`
+- `sha1`
+- `format`
+- `old_version`
+- `viruscheck`
+
+Trying to set values to these keys is ignored with a warning.
+Only setting `mtime` is an exception. Doing so make it the identical behavior as setting ModTime.
+
+rclone reserves all the keys starting with `rclone-`. Setting value for these keys will give you warnings, but values are set according to request.
+
+If there are multiple values for a key, only the first one is returned.
+This is a limitation of rclone, that supports one value per one key.
+It can be triggered when you did a server-side copy.
+
+Reading metadata will also provide custom (non-standard nor reserved) ones.
+
 ## Configuration
 
 Here is an example of making an internetarchive configuration.
