@@ -52,6 +52,11 @@ func init() {
 			Help:     "Timeout for listing up metadata messages. 0 for no timeout.",
 			Advanced: true,
 		}, {
+			Name:     "quick_delete",
+			Help:     "Enabling this will make it not to delete messages with attached files. Metadata message is always deleted.",
+			Advanced: true,
+			Default:  false,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -72,6 +77,7 @@ type Options struct {
 	ChunksChannel  string               `config:"chunks_channel"`
 	JournalChannel string               `config:"journal_channel"`
 	ListTimeout    fs.Duration          `config:"list_timeout"`
+	QuickDelete    bool                 `config:"quick_delete"`
 	Enc            encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -511,7 +517,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	o.modTime = src.ModTime(ctx)
 	o.meta.ModTime = o.modTime.Format(time.RFC3339Nano)
 	// we're always overwriting it, removing previous data
-	o.massiveDeleteChunkMessages() //nolint:errcheck
+	if !o.fs.opt.QuickDelete {
+		o.massiveDeleteChunkMessages() //nolint:errcheck
+	}
 	o.metaMu.Lock()
 	o.meta.Urls = nil
 	o.meta.MessageIDs = make(map[string][]string)
@@ -587,14 +595,16 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 // Remove an object
 func (o *Object) Remove(ctx context.Context) (err error) {
 	// remove metadata first
-	bot := o.fs.bot
 	if o.metadataChannelID != "" && o.messageID != "" {
-		err = bot.ChannelMessageDelete(o.metadataChannelID, o.messageID)
+		err = o.fs.bot.ChannelMessageDelete(o.metadataChannelID, o.messageID)
 	}
 	if err != nil {
 		return
 	}
 	// delete all involving messages
+	if o.fs.opt.QuickDelete {
+		return nil
+	}
 	return o.massiveDeleteChunkMessages()
 }
 
