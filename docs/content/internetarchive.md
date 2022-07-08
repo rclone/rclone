@@ -59,6 +59,12 @@ Only setting `mtime` is an exception. Doing so make it the identical behavior as
 
 rclone reserves all the keys starting with `rclone-`. Setting value for these keys will give you warnings, but values are set according to request.
 
+If there are multiple values for a key, only the first one is returned.
+This is a limitation of rclone, that supports one value per one key.
+It can be triggered when you did a server-side copy.
+
+Reading metadata will also provide custom (non-standard nor reserved) ones.
+
 ## Configuration
 
 Here is an example of making an internetarchive configuration.
