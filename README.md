@@ -62,6 +62,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * OpenDrive [:page_facing_up:](https://rclone.org/opendrive/)
   * OpenStack Swift [:page_facing_up:](https://rclone.org/swift/)
   * Oracle Cloud Storage [:page_facing_up:](https://rclone.org/swift/)
+  * Oracle Object Storage [:page_facing_up:](https://rclone.org/oracleobjectstorage/)
   * ownCloud [:page_facing_up:](https://rclone.org/webdav/#owncloud)
   * pCloud [:page_facing_up:](https://rclone.org/pcloud/)
   * premiumize.me [:page_facing_up:](https://rclone.org/premiumizeme/)

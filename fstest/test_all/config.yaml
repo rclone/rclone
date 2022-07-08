@@ -385,3 +385,13 @@ backends:
    fastlist: false
    ignore:
      - TestRWFileHandleWriteNoWrite
+ - backend: "oracleobjectstorage"
+   remote: "TestOracleObjectStorage:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/control_chars
+     - TestIntegration/FsMkdir/FsEncoding/leading_CR
+     - TestIntegration/FsMkdir/FsEncoding/leading_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsEncoding/leading_HT
