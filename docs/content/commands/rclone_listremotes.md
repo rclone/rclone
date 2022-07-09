@@ -14,7 +14,7 @@ List all the remotes in the config file.
 
 rclone listremotes lists all the available remotes from the config file.
 
-When uses with the -l flag it lists the types too.
+When used with the `--long` flag it lists the types too.
 
 
 ```

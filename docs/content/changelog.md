@@ -5,6 +5,165 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.59.0 - 2022-07-09
+
+[See commits](https://github.com/rclone/rclone/compare/v1.58.0...v1.59.0)
+
+* New backends
+    * [Combine](/combine) multiple remotes in one directory tree (Nick Craig-Wood)
+    * [Hidrive](/hidrive/) (Ovidiu Victor Tatar)
+    * [Internet Archive](/internetarchive/) (Lesmiscore (Naoya Ozaki))
+    * New S3 providers
+        * [ArvanCloud AOS](/s3/#arvan-cloud) (ehsantdy)
+        * [Cloudflare R2](/s3/#cloudflare-r2) (Nick Craig-Wood)
+        * [Huawei OBS](/s3/#huawei-obs) (m00594701)
+        * [IDrive e2](/s3/#idrive-e2) (vyloy)
+* New commands
+    * [test makefile](/commands/rclone_test_makefile/): Create a single file for testing (Nick Craig-Wood)
+* New Features
+    * [Metadata framework](/docs/#metadata) to read and write system and user metadata on backends (Nick Craig-Wood)
+        * Implemented initially for `local`, `s3` and `internetarchive` backends
+        * `--metadata`/`-M` flag to control whether metadata is copied
+        * `--metadata-set` flag to specify metadata for uploads
+        * Thanks to [Manz Solutions](https://manz-solutions.at/) for sponsoring this work.
+    * build
+        * Update to go1.18 and make go1.16 the minimum required version (Nick Craig-Wood)
+        * Update android go build to 1.18.x and NDK to 23.1.7779620 (Nick Craig-Wood)
+        * All windows binaries now no longer CGO (Nick Craig-Wood)
+        * Add `linux/arm/v6` to docker images (Nick Craig-Wood)
+        * A huge number of fixes found with [staticcheck](https://staticcheck.io/) (albertony)
+        * Configurable version suffix independent of version number (albertony)
+    * check: Implement `--no-traverse` and `--no-unicode-normalization` (Nick Craig-Wood)
+    * config: Readability improvements (albertony)
+    * copyurl: Add `--header-filename` to honor the HTTP header filename directive (J-P Treen)
+    * filter: Allow multiple `--exclude-if-present` flags (albertony)
+    * fshttp: Add `--disable-http-keep-alives` to disable HTTP Keep Alives (Nick Craig-Wood)
+    * install.sh
+        * Set the modes on the files and/or directories on macOS (Michael C Tiernan - MIT-Research Computing Project)
+        * Pre verify sudo authorization `-v` before calling curl. (Michael C Tiernan - MIT-Research Computing Project)
+    * lib/encoder: Add Semicolon encoding (Nick Craig-Wood)
+    * lsf: Add metadata support with `M` flag (Nick Craig-Wood)
+    * lsjson: Add `--metadata`/`-M` flag (Nick Craig-Wood)
+    * ncdu
+        * Implement multi selection (CrossR)
+        * Replace termbox with tcell's termbox wrapper (eNV25)
+        * Display correct path in delete confirmation dialog (Roberto Ricci)
+    * operations
+        * Speed up hash checking by aborting the other hash if first returns nothing (Nick Craig-Wood)
+        * Use correct src/dst in some log messages (zzr93)
+    * rcat: Check checksums by default like copy does (Nick Craig-Wood)
+    * selfupdate: Replace deprecated `x/crypto/openpgp` package with `ProtonMail/go-crypto` (albertony)
+    * serve ftp: Check `--passive-port` arguments are correct (Nick Craig-Wood)
+    * size: Warn about inaccurate results when objects with unknown size (albertony)
+    * sync: Overlap check is now filter-sensitive so `--backup-dir` can be in the root provided it is filtered (Nick)
+    * test info: Check file name lengths using 1,2,3,4 byte unicode characters (Nick Craig-Wood)
+    * test makefile(s): `--sparse`, `--zero`, `--pattern`, `--ascii`, `--chargen` flags to control file contents (Nick Craig-Wood)
+    * Make sure we call the `Shutdown` method on backends (Martin Czygan)
+* Bug Fixes
+    * accounting: Fix unknown length file transfers counting 3 transfers each (buda)
+    * ncdu: Fix issue where dir size is summed when file sizes are -1 (albertony)
+    * sync/copy/move
+        * Fix `--fast-list` `--create-empty-src-dirs` and `--exclude` (Nick Craig-Wood)
+        * Fix `--max-duration` and `--cutoff-mode soft` (Nick Craig-Wood)
+    * Fix fs cache unpin (Martin Czygan)
+    * Set proper exit code for errors that are not low-level retried (e.g. size/timestamp changing) (albertony)
+* Mount
+    * Support `windows/arm64` (may still be problems - see [#5828](https://github.com/rclone/rclone/issues/5828)) (Nick Craig-Wood)
+    * Log IO errors at ERROR level (Nick Craig-Wood)
+    * Ignore `_netdev` mount argument (Hugal31)
+* VFS
+    * Add `--vfs-fast-fingerprint` for less accurate but faster fingerprints (Nick Craig-Wood)
+    * Add `--vfs-disk-space-total-size` option to manually set the total disk space (Claudio Maradonna)
+    * vfscache: Fix fatal error: sync: unlock of unlocked mutex error (Nick Craig-Wood)
+* Local
+    * Fix parsing of `--local-nounc` flag (Nick Craig-Wood)
+    * Add Metadata support (Nick Craig-Wood)
+* Crypt
+    * Support metadata (Nick Craig-Wood)
+* Azure Blob
+    * Calculate Chunksize/blocksize to stay below maxUploadParts (Leroy van Logchem)
+    * Use chunksize lib to determine chunksize dynamically (Derek Battams)
+    * Case insensitive access tier (Rob Pickerill)
+    * Allow remote emulator (azurite) (Lorenzo Maiorfi)
+* B2
+    * Add `--b2-version-at` flag to show file versions at time specified (SwazRGB)
+    * Use chunksize lib to determine chunksize dynamically (Derek Battams)
+* Chunker
+    * Mark as not supporting metadata (Nick Craig-Wood)
+* Compress
+    * Support metadata (Nick Craig-Wood)
+* Drive
+    * Make `backend config -o config` add a combined `AllDrives:` remote (Nick Craig-Wood)
+    * Make `--drive-shared-with-me` work with shared drives (Nick Craig-Wood)
+    * Add `--drive-resource-key` for accessing link-shared files (Nick Craig-Wood)
+    * Add backend commands `exportformats` and `importformats` for debugging (Nick Craig-Wood)
+    * Fix 404 errors on copy/server side copy objects from public folder (Nick Craig-Wood)
+    * Update Internal OAuth consent screen docs (Phil Shackleton)
+    * Moved `root_folder_id` to advanced section (Abhiraj)
+* Dropbox
+    * Migrate from deprecated api (m8rge)
+    * Add logs to show when poll interval limits are exceeded (Nick Craig-Wood)
+    * Fix nil pointer exception on dropbox impersonate user not found (Nick Craig-Wood)
+* Fichier
+    * Parse api error codes and them accordingly (buengese)
+* FTP
+    * Add support for `disable_utf8` option (Jason Zheng)
+    * Revert to upstream `github.com/jlaffaye/ftp` from our fork (Nick Craig-Wood)
+* Google Cloud Storage
+    * Add `--gcs-no-check-bucket` to minimise transactions and perms (Nick Gooding)
+    * Add `--gcs-decompress` flag to decompress gzip-encoded files (Nick Craig-Wood)
+        * by default these will be downloaded compressed (which previously failed)
+* Hasher
+    * Support metadata (Nick Craig-Wood)
+* HTTP
+    * Fix missing response when using custom auth handler (albertony)
+* Jottacloud
+    * Add support for upload to custom device and mountpoint (albertony)
+    * Always store username in config and use it to avoid initial API request (albertony)
+    * Fix issue with server-side copy when destination is in trash (albertony)
+    * Fix listing output of remote with special characters (albertony)
+* Mailru
+    * Fix timeout by using int instead of time.Duration for keeping number of seconds (albertony)
+* Mega
+    * Document using MEGAcmd to help with login failures (Art M. Gallagher)
+* Onedrive
+    * Implement `--poll-interval` for onedrive (Hugo Laloge)
+    * Add access scopes option (Sven Gerber)
+* Opendrive
+    * Resolve lag and truncate bugs (Scott Grimes)
+* Pcloud
+    * Fix about with no free space left (buengese)
+    * Fix cleanup (buengese)
+* S3
+    * Use PUT Object instead of presigned URLs to upload single part objects (Nick Craig-Wood)
+    * Backend restore command to skip non-GLACIER objects (Vincent Murphy)
+    * Use chunksize lib to determine chunksize dynamically (Derek Battams)
+    * Retry RequestTimeout errors (Nick Craig-Wood)
+    * Implement reading and writing of metadata (Nick Craig-Wood)
+* SFTP
+    * Add support for about and hashsum on windows server (albertony)
+    * Use vendor-specific VFS statistics extension for about if available (albertony)
+    * Add `--sftp-chunk-size` to control packets sizes for high latency links (Nick Craig-Wood)
+    * Add `--sftp-concurrency` to improve high latency transfers (Nick Craig-Wood)
+    * Add `--sftp-set-env` option to set environment variables (Nick Craig-Wood)
+    * Add Hetzner Storage Boxes to supported sftp backends (Anthrazz)
+* Storj
+    * Fix put which lead to the file being unreadable when using mount (Erik van Velzen)
+* Union
+    * Add `min_free_space` option for `lfs`/`eplfs` policies (Nick Craig-Wood)
+    * Fix uploading files to union of all bucket based remotes (Nick Craig-Wood)
+    * Fix get free space for remotes which don't support it (Nick Craig-Wood)
+    * Fix `eplus` policy to select correct entry for existing files (Nick Craig-Wood)
+    * Support metadata (Nick Craig-Wood)
+* Uptobox
+    * Fix root path handling (buengese)
+* WebDAV
+    * Add SharePoint in other specific regions support (Noah Hsu)
+* Yandex
+    * Handle api error on server-side move (albertony)
+* Zoho
+    * Add Japan and China regions (buengese)
+
 ## v1.58.1 - 2022-04-29
 
 [See commits](https://github.com/rclone/rclone/compare/v1.58.0...v1.58.1)
