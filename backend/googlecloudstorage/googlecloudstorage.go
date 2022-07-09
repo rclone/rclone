@@ -307,17 +307,15 @@ rclone does if you know the bucket exists already.
 			Default:  false,
 			Advanced: true,
 		}, {
-			Name: "download_compressed",
-			Help: `If set this will download compressed objects as-is.
+			Name: "decompress",
+			Help: `If set this will decompress gzip encoded objects.
 
 It is possible to upload objects to GCS with "Content-Encoding: gzip"
-set. Normally rclone will transparently decompress these files on
-download. This means that rclone can't check the hash or the size of
-the file as both of these refer to the compressed object.
+set. Normally rclone will download these files files as compressed objects.
 
-If this flag is set then rclone will download files with
+If this flag is set then rclone will decompress these files with
 "Content-Encoding: gzip" as they are received. This means that rclone
-can check the size and hash but the file contents will be compressed.
+can't check the size and hash but the file contents will be decompressed.
 `,
 			Advanced: true,
 			Default:  false,
@@ -344,7 +342,7 @@ type Options struct {
 	Location                  string               `config:"location"`
 	StorageClass              string               `config:"storage_class"`
 	NoCheckBucket             bool                 `config:"no_check_bucket"`
-	DownloadCompressed        bool                 `config:"download_compressed"`
+	Decompress                bool                 `config:"decompress"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -1036,12 +1034,9 @@ func (o *Object) setMetaData(info *storage.Object) {
 	}
 
 	// If gunzipping then size and md5sum are unknown
-	if o.gzipped && !o.fs.opt.DownloadCompressed {
+	if o.gzipped && o.fs.opt.Decompress {
 		o.bytes = -1
 		o.md5sum = ""
-		o.fs.warnCompressed.Do(func() {
-			fs.Logf(o.fs, "Decompressing 'Content-Encoding: gzip' compressed file. Use --gcs-download-compressed to override")
-		})
 	}
 }
 
@@ -1143,7 +1138,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, err
 	}
 	fs.FixRangeOption(options, o.bytes)
-	if o.gzipped && o.fs.opt.DownloadCompressed {
+	if o.gzipped && !o.fs.opt.Decompress {
 		// Allow files which are stored on the cloud storage system
 		// compressed to be downloaded without being decompressed.  Note
 		// that setting this here overrides the automatic decompression
@@ -1151,6 +1146,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		//
 		// See: https://cloud.google.com/storage/docs/transcoding
 		req.Header.Set("Accept-Encoding", "gzip")
+		o.fs.warnCompressed.Do(func() {
+			fs.Logf(o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --gcs-decompress to override")
+		})
 	}
 	fs.OpenOptionAddHTTPHeaders(req.Header, options)
 	var res *http.Response
