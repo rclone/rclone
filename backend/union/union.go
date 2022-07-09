@@ -834,6 +834,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		}
 	}
 
+	root = strings.Trim(root, "/")
 	upstreams := make([]*upstream.Fs, len(opt.Upstreams))
 	errs := Errors(make([]error, len(opt.Upstreams)))
 	multithread(len(opt.Upstreams), func(i int) {
