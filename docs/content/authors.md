@@ -625,3 +625,4 @@ put them back in again.` >}}
   * Paul Norman <penorman@mac.com>
   * Lorenzo Maiorfi <maiorfi@gmail.com>
   * Claudio Maradonna <penguyman@stronzi.org>
+  * Ovidiu Victor Tatar <ovi.tatar@googlemail.com>
