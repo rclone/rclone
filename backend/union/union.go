@@ -169,7 +169,11 @@ func (f *Fs) mkdir(ctx context.Context, dir string) ([]*upstream.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	return upstreams, nil
+	// If created roots then choose one
+	if dir == "" {
+		upstreams, err = f.create(ctx, dir)
+	}
+	return upstreams, err
 }
 
 // Mkdir makes the root directory of the Fs object
