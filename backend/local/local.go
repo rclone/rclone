@@ -34,7 +34,6 @@ import (
 // Constants
 const (
 	devUnset   = 0xdeadbeefcafebabe                                     // a device id meaning it is unset
-	linkSuffix = ".rclonelink"                                          // The suffix added to a translated symbolic link
 	useReadDir = (runtime.GOOS == "windows" || runtime.GOOS == "plan9") // these OSes read FileInfos directly
 )
 
@@ -101,7 +100,7 @@ Metadata is supported on files and directories.
 			},
 			{
 				Name:     "links",
-				Help:     "Translate symlinks to/from regular files with a '" + linkSuffix + "' extension.",
+				Help:     "Translate symlinks to/from regular files with a '" + fs.LinkSuffix + "' extension.",
 				Default:  false,
 				NoPrefix: true,
 				ShortOpt: "l",
@@ -379,7 +378,7 @@ type Directory struct {
 
 var (
 	errLinksAndCopyLinks = errors.New("can't use -l/--links with -L/--copy-links")
-	errLinksNeedsSuffix  = errors.New("need \"" + linkSuffix + "\" suffix to refer to symlink when using -l/--links")
+	errLinksNeedsSuffix  = errors.New("need \"" + fs.LinkSuffix + "\" suffix to refer to symlink when using -l/--links")
 )
 
 // NewFs constructs an Fs from the path
@@ -435,9 +434,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.dev = readDevice(fi, f.opt.OneFileSystem)
 	}
 	// Check to see if this is a .rclonelink if not found
-	hasLinkSuffix := strings.HasSuffix(f.root, linkSuffix)
+	hasLinkSuffix := strings.HasSuffix(f.root, fs.LinkSuffix)
 	if hasLinkSuffix && opt.TranslateSymlinks && os.IsNotExist(err) {
-		fi, err = f.lstat(strings.TrimSuffix(f.root, linkSuffix))
+		fi, err = f.lstat(strings.TrimSuffix(f.root, fs.LinkSuffix))
 	}
 	if err == nil && f.isRegular(fi.Mode()) {
 		// Handle the odd case, that a symlink was specified by name without the link suffix
@@ -508,8 +507,8 @@ func (f *Fs) caseInsensitive() bool {
 //
 // for regular files, localPath is returned unchanged
 func translateLink(remote, localPath string) (newLocalPath string, isTranslatedLink bool) {
-	isTranslatedLink = strings.HasSuffix(remote, linkSuffix)
-	newLocalPath = strings.TrimSuffix(localPath, linkSuffix)
+	isTranslatedLink = strings.HasSuffix(remote, fs.LinkSuffix)
+	newLocalPath = strings.TrimSuffix(localPath, fs.LinkSuffix)
 	return newLocalPath, isTranslatedLink
 }
 
@@ -692,7 +691,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			} else {
 				// Check whether this link should be translated
 				if f.opt.TranslateSymlinks && fi.Mode()&os.ModeSymlink != 0 {
-					newRemote += linkSuffix
+					newRemote += fs.LinkSuffix
 				}
 				// Don't include non directory if not included
 				// we leave directory filtering to the layer above
