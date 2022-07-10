@@ -1332,7 +1332,7 @@ drives found and a combined drive.
 
     [AllDrives]
     type = combine
-    remote = "My Drive=My Drive:" "Test Drive=Test Drive:"
+    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
 Adding this to the rclone config file will cause those team drives to
 be accessible with the aliases shown. Any illegal charactes will be

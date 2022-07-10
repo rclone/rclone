@@ -116,7 +116,7 @@ This would produce something like this:
 
     [AllDrives]
     type = combine
-    remote = "My Drive=My Drive:" "Test Drive=Test Drive:"
+    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
 If you then add that config to your config file (find it with `rclone
 config file`) then you can access all the shared drives in one place
