@@ -452,6 +452,48 @@ func TestRcSyncJobStop(t *testing.T) {
 	assert.Equal(t, false, out["success"])
 }
 
+func TestRcJobStopGroup(t *testing.T) {
+	ctx := context.Background()
+	jobID = 0
+	_, _, err := NewJob(ctx, ctxFn, rc.Params{
+		"_async": true,
+		"_group": "myparty",
+	})
+	require.NoError(t, err)
+	_, _, err = NewJob(ctx, ctxFn, rc.Params{
+		"_async": true,
+		"_group": "myparty",
+	})
+	require.NoError(t, err)
+
+	call := rc.Calls.Get("job/stopgroup")
+	assert.NotNil(t, call)
+	in := rc.Params{"group": "myparty"}
+	out, err := call.Fn(context.Background(), in)
+	require.NoError(t, err)
+	require.Empty(t, out)
+
+	in = rc.Params{}
+	_, err = call.Fn(context.Background(), in)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "Didn't find key")
+
+	time.Sleep(10 * time.Millisecond)
+
+	call = rc.Calls.Get("job/status")
+	assert.NotNil(t, call)
+	for i := 1; i <= 2; i++ {
+		in = rc.Params{"jobid": i}
+		out, err = call.Fn(context.Background(), in)
+		require.NoError(t, err)
+		require.NotNil(t, out)
+		assert.Equal(t, "myparty", out["group"])
+		assert.Equal(t, "context canceled", out["error"])
+		assert.Equal(t, true, out["finished"])
+		assert.Equal(t, false, out["success"])
+	}
+}
+
 func TestOnFinish(t *testing.T) {
 	jobID = 0
 	done := make(chan struct{})
