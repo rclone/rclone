@@ -16,6 +16,8 @@ const (
 	ModTimeNotSupported = 100 * 365 * 24 * time.Hour
 	// MaxLevel is a sentinel representing an infinite depth for listings
 	MaxLevel = math.MaxInt32
+	// The suffix added to a translated symbolic link
+	LinkSuffix = ".rclonelink"
 )
 
 // Globals
