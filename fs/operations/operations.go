@@ -814,17 +814,6 @@ func fixRoot(f fs.Info) string {
 	return s
 }
 
-// Overlapping returns true if fdst and fsrc point to the same
-// underlying Fs and they overlap.
-func Overlapping(fdst, fsrc fs.Info) bool {
-	if !SameConfig(fdst, fsrc) {
-		return false
-	}
-	fdstRoot := fixRoot(fdst)
-	fsrcRoot := fixRoot(fsrc)
-	return strings.HasPrefix(fdstRoot, fsrcRoot) || strings.HasPrefix(fsrcRoot, fdstRoot)
-}
-
 // OverlappingFilterCheck returns true if fdst and fsrc point to the same
 // underlying Fs and they overlap without fdst being excluded by any filter rule.
 func OverlappingFilterCheck(ctx context.Context, fdst fs.Fs, fsrc fs.Fs) bool {
@@ -1848,10 +1837,10 @@ func BackupDir(ctx context.Context, fdst fs.Fs, fsrc fs.Fs, srcFileName string) 
 			return nil, fserrors.FatalError(errors.New("parameter to --backup-dir has to be on the same remote as destination"))
 		}
 		if srcFileName == "" {
-			if Overlapping(fdst, backupDir) {
+			if OverlappingFilterCheck(ctx, backupDir, fdst) {
 				return nil, fserrors.FatalError(errors.New("destination and parameter to --backup-dir mustn't overlap"))
 			}
-			if Overlapping(fsrc, backupDir) {
+			if OverlappingFilterCheck(ctx, backupDir, fsrc) {
 				return nil, fserrors.FatalError(errors.New("source and parameter to --backup-dir mustn't overlap"))
 			}
 		} else {
