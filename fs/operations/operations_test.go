@@ -1243,35 +1243,6 @@ func TestSame(t *testing.T) {
 	}
 }
 
-func TestOverlapping(t *testing.T) {
-	a := &testFsInfo{name: "name", root: "root"}
-	slash := string(os.PathSeparator) // native path separator
-	for _, test := range []struct {
-		name     string
-		root     string
-		expected bool
-	}{
-		{"name", "root", true},
-		{"namey", "root", false},
-		{"name", "rooty", false},
-		{"namey", "rooty", false},
-		{"name", "roo", false},
-		{"name", "root/toot", true},
-		{"name", "root/toot/", true},
-		{"name", "root" + slash + "toot", true},
-		{"name", "root" + slash + "toot" + slash, true},
-		{"name", "", true},
-		{"name", "/", true},
-	} {
-		b := &testFsInfo{name: test.name, root: test.root}
-		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", a.name, a.root, b.name, b.root)
-		actual := operations.Overlapping(a, b)
-		assert.Equal(t, test.expected, actual, what)
-		actual = operations.Overlapping(b, a)
-		assert.Equal(t, test.expected, actual, what)
-	}
-}
-
 // testFs is for unit testing fs.Fs
 type testFs struct {
 	testFsInfo
