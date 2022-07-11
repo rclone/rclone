@@ -582,7 +582,8 @@ been added) in DIR, then it will be overwritten.
 
 The remote in use must support server-side move or copy and you must
 use the same remote as the destination of the sync.  The backup
-directory must not overlap the destination directory.
+directory must not overlap the destination directory without it being
+excluded by a filter rule.
 
 For example
 
