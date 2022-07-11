@@ -24,6 +24,10 @@ var (
 
 // Fs is a wrap of any fs and its configs
 type Fs struct {
+	// In order to ensure memory alignment on 32-bit architectures
+	// when this field is accessed through sync/atomic functions,
+	// it must be the first entry in the struct
+	cacheExpiry int64 // usage cache expiry time
 	fs.Fs
 	RootFs      fs.Fs
 	RootPath    string
@@ -32,7 +36,6 @@ type Fs struct {
 	creatable   bool
 	usage       *fs.Usage     // Cache the usage
 	cacheTime   time.Duration // cache duration
-	cacheExpiry int64         // usage cache expiry time
 	cacheMutex  sync.RWMutex
 	cacheOnce   sync.Once
 	cacheUpdate bool // if the cache is updating
