@@ -304,6 +304,9 @@ outer:
 //
 // Can be called from atexit handler
 func (b *batcher) Shutdown() {
+	if !b.Batching() {
+		return
+	}
 	b.shutOnce.Do(func() {
 		atexit.Unregister(b.atexit)
 		fs.Infof(b.f, "Commiting uploads - please wait...")
