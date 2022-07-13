@@ -7,19 +7,11 @@ replace github.com/filecoin-project/filecoin-ffi => ../estuary/extern/filecoin-f
 require (
 	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
 	github.com/Azure/azure-pipeline-go v0.2.3
-<<<<<<< HEAD
-	github.com/Azure/azure-storage-blob-go v0.15.0
-	github.com/Azure/go-autorest/autorest/adal v0.9.20
-	github.com/Azure/go-ntlmssp v0.0.0-20211209120228-48547f28849e
-	github.com/Max-Sum/base32768 v0.0.0-20191205131208-7937843c71d5
-	github.com/Unknwon/goconfig v1.0.0
-=======
 	github.com/Azure/azure-storage-blob-go v0.14.0
 	github.com/Azure/go-autorest/autorest/adal v0.9.17
 	github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c
 	github.com/Max-Sum/base32768 v0.0.0-20191205131208-7937843c71d5
 	github.com/Unknwon/goconfig v0.0.0-20200908083735-df7de6a44db8
->>>>>>> 0b77ed211 (estuary: initial dependency updates)
 	github.com/a8m/tree v0.0.0-20210414114729-ce3525c5c2ef
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
 	github.com/abbot/go-http-auth v0.4.0
@@ -68,19 +60,11 @@ require (
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
 	go.etcd.io/bbolt v1.3.6
 	goftp.io/server v0.4.1
-<<<<<<< HEAD
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
-	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
-	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
-=======
 	golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20211209171907-798191bca915
->>>>>>> 0b77ed211 (estuary: initial dependency updates)
 	golang.org/x/text v0.3.7
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	google.golang.org/api v0.83.0
@@ -91,9 +75,6 @@ require (
 require github.com/application-research/estuary v0.0.0-20220114021636-5b2b5ab727e5
 
 require (
-<<<<<<< HEAD
-	github.com/Microsoft/go-winio v0.5.1 // indirect
-=======
 	cloud.google.com/go v0.97.0 // indirect
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
@@ -170,17 +151,9 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
->>>>>>> 0b77ed211 (estuary: initial dependency updates)
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-<<<<<<< HEAD
-	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/jlaffaye/ftp v0.0.0-20220524001917-dfa1e758f3af
-	github.com/pkg/xattr v0.4.7 // indirect
-	golang.org/x/mobile v0.0.0-20220518205345-8578da9835fd
-	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
-=======
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
@@ -354,5 +327,4 @@ require (
 	modernc.org/xc v1.0.0 // indirect
 	storj.io/common v0.0.0-20210916151047-6aaeb34bb916 // indirect
 	storj.io/drpc v0.0.26 // indirect
->>>>>>> 0b77ed211 (estuary: initial dependency updates)
 )
