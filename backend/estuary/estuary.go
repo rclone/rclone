@@ -27,8 +27,7 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-
-	util "github.com/application-research/estuary/util"
+	//util "github.com/application-research/estuary/util"
 )
 
 var (
@@ -59,7 +58,7 @@ type Fs struct {
 	client         *rest.Client
 	pacer          *fs.Pacer
 	dirCache       *dircache.DirCache
-	viewer         *util.ViewerResponse
+	viewer         *ViewerResponse
 }
 
 type Object struct {
@@ -77,20 +76,20 @@ type ApiError struct {
 }
 
 type Content struct {
-	ID          uint       `json:"id"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
-	Cid         util.DbCID `json:"cid"`
-	Name        string     `json:"name"`
-	UserID      uint       `json:"userId"`
-	Description string     `json:"description"`
-	Size        int64      `json:"size"`
+	ID          uint      `json:"id"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+	Cid         DbCID     `json:"cid"`
+	Name        string    `json:"name"`
+	UserID      uint      `json:"userId"`
+	Description string    `json:"description"`
+	Size        int64     `json:"size"`
 }
 
 type ContentAdd struct {
-	ID      uint        `json:"estuaryId"`
-	Cid     *util.DbCID `json:"cid,omitempty"`
-	Error   string      `json:"error"`
-	Details string      `json:"details"`
+	ID      uint   `json:"estuaryId"`
+	Cid     *DbCID `json:"cid,omitempty"`
+	Error   string `json:"error"`
+	Details string `json:"details"`
 }
 
 type ContentByCID struct {
@@ -111,11 +110,11 @@ type CollectionCreate struct {
 }
 
 type CollectionFsItem struct {
-	Name      string      `json:"name"`
-	IsDir     bool        `json:"dir"`
-	Size      int64       `json:"size"`
-	ContentID uint        `json:"contId"`
-	Cid       *util.DbCID `json:"cid,omitempty"`
+	Name      string `json:"name"`
+	IsDir     bool   `json:"dir"`
+	Size      int64  `json:"size"`
+	ContentID uint   `json:"contId"`
+	Cid       *DbCID `json:"cid,omitempty"`
 }
 
 var commandHelp = []fs.CommandHelp{{
@@ -223,7 +222,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 		f.client.SetHeader("Authorization", "Bearer "+f.opt.Token)
 	}
 
-	var viewer util.ViewerResponse
+	var viewer ViewerResponse
 	if viewer, err = f.fetchViewer(ctx); err != nil {
 		fs.Errorf(f, "Can't fetch viewer information for this user")
 		return nil, err
@@ -304,7 +303,7 @@ func (f *Fs) setRoot(root string) {
 	f.rootCollection, f.rootDirectory = bucket.Split(f.root)
 }
 
-func (f *Fs) fetchViewer(ctx context.Context) (response util.ViewerResponse, err error) {
+func (f *Fs) fetchViewer(ctx context.Context) (response ViewerResponse, err error) {
 	opts := rest.Opts{
 		Method: "GET",
 		Path:   "/viewer",
