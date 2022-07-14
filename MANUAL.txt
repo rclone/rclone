@@ -32754,7 +32754,7 @@ Properties:
     -   "de"
         -   Microsoft Cloud Germany
     -   "cn"
-        -   Azure and Office 365 operated by 21Vianet in China
+        -   Azure and Office 365 operated by Vnet Group in China
 
 Advanced options
 
@@ -40340,7 +40340,7 @@ See commits
 -   Memory
     -   Fix setting of mime types (Nick Craig-Wood)
 -   Onedrive
-    -   Add support for China region operated by 21vianet and other
+    -   Add support for China region operated by Vnet Group and other
         regional suppliers (NyaMisty)
     -   Warn on gateway timeout errors (Nick Craig-Wood)
     -   Fall back to normal copy if server-side copy unavailable (Alex
