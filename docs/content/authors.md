@@ -626,3 +626,4 @@ put them back in again.` >}}
   * Lorenzo Maiorfi <maiorfi@gmail.com>
   * Claudio Maradonna <penguyman@stronzi.org>
   * Ovidiu Victor Tatar <ovi.tatar@googlemail.com>
+  * Evan Spensley <epspensley@gmail.com>
