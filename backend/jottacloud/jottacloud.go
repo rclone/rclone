@@ -284,7 +284,6 @@ sync or the backup section, for example, you must choose yes.`)
 		if err != nil {
 			return nil, err
 		}
-		m.Set(configUsername, cust.Username)
 
 		acc, err := getDriveInfo(ctx, jfsSrv, cust.Username)
 		if err != nil {
@@ -317,10 +316,14 @@ a new by entering a unique name.`, defaultDevice)
 			return nil, err
 		}
 		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
+		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
-		username, _ := m.Get(configUsername)
+		cust, err := getCustomerInfo(ctx, apiSrv)
+		if err != nil {
+			return nil, err
+		}
 
-		acc, err := getDriveInfo(ctx, jfsSrv, username)
+		acc, err := getDriveInfo(ctx, jfsSrv, cust.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -335,7 +338,7 @@ a new by entering a unique name.`, defaultDevice)
 		var dev *api.JottaDevice
 		if isNew {
 			fs.Debugf(nil, "Creating new device: %s", device)
-			dev, err = createDevice(ctx, jfsSrv, path.Join(username, device))
+			dev, err = createDevice(ctx, jfsSrv, path.Join(cust.Username, device))
 			if err != nil {
 				return nil, err
 			}
@@ -343,7 +346,7 @@ a new by entering a unique name.`, defaultDevice)
 		m.Set(configDevice, device)
 
 		if !isNew {
-			dev, err = getDeviceInfo(ctx, jfsSrv, path.Join(username, device))
+			dev, err = getDeviceInfo(ctx, jfsSrv, path.Join(cust.Username, device))
 			if err != nil {
 				return nil, err
 			}
@@ -373,11 +376,16 @@ You may create a new by entering a unique name.`, device)
 			return nil, err
 		}
 		jfsSrv := rest.NewClient(oAuthClient).SetRoot(jfsURL)
+		apiSrv := rest.NewClient(oAuthClient).SetRoot(apiURL)
 
-		username, _ := m.Get(configUsername)
+		cust, err := getCustomerInfo(ctx, apiSrv)
+		if err != nil {
+			return nil, err
+		}
+
 		device, _ := m.Get(configDevice)
 
-		dev, err := getDeviceInfo(ctx, jfsSrv, path.Join(username, device))
+		dev, err := getDeviceInfo(ctx, jfsSrv, path.Join(cust.Username, device))
 		if err != nil {
 			return nil, err
 		}
@@ -395,7 +403,7 @@ You may create a new by entering a unique name.`, device)
 				return nil, fmt.Errorf("custom mountpoints not supported on built-in %s device: %w", defaultDevice, err)
 			}
 			fs.Debugf(nil, "Creating new mountpoint: %s", mountpoint)
-			_, err := createMountPoint(ctx, jfsSrv, path.Join(username, device, mountpoint))
+			_, err := createMountPoint(ctx, jfsSrv, path.Join(cust.Username, device, mountpoint))
 			if err != nil {
 				return nil, err
 			}
