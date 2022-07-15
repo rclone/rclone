@@ -33239,7 +33239,7 @@ Properties:
     - "de"
         - Microsoft Cloud Germany
     - "cn"
-        - Azure and Office 365 operated by Vnet Group in China
+        - Azure and Office 365 operated by 21Vianet in China
 
 ### Advanced options
 
@@ -40449,7 +40449,7 @@ Options:
 * Memory
     * Fix setting of mime types (Nick Craig-Wood)
 * Onedrive
-    * Add support for China region operated by Vnet Group and other regional suppliers (NyaMisty)
+    * Add support for China region operated by 21vianet and other regional suppliers (NyaMisty)
     * Warn on gateway timeout errors (Nick Craig-Wood)
     * Fall back to normal copy if server-side copy unavailable (Alex Chen)
     * Fix server-side copy completely disabled on OneDrive for Business (Cnly)
@@ -44393,3 +44393,4 @@ Or if all else fails or you want to ask something private or
 confidential email [Nick Craig-Wood](mailto:nick@craig-wood.com).
 Please don't email me requests for help - those are better directed to
 the forum. Thanks!
+
