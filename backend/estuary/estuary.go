@@ -79,7 +79,7 @@ type ApiError struct {
 type Content struct {
 	ID          uint      `json:"id"`
 	UpdatedAt   time.Time `json:"updatedAt"`
-	Cid         DbCID     `json:"cid"`
+	Cid         string    `json:"cid"`
 	Name        string    `json:"name"`
 	UserID      uint      `json:"userId"`
 	Description string    `json:"description"`
@@ -88,7 +88,7 @@ type Content struct {
 
 type ContentAdd struct {
 	ID      uint   `json:"estuaryId"`
-	Cid     *DbCID `json:"cid,omitempty"`
+	Cid     string `json:"cid,omitempty"`
 	Error   string `json:"error"`
 	Details string `json:"details"`
 }
@@ -115,7 +115,7 @@ type CollectionFsItem struct {
 	IsDir     bool   `json:"dir"`
 	Size      int64  `json:"size"`
 	ContentID uint   `json:"contId"`
-	Cid       *DbCID `json:"cid,omitempty"`
+	Cid       string `json:"cid,omitempty"`
 }
 
 var commandHelp = []fs.CommandHelp{{
@@ -566,7 +566,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, content *Cont
 	if content != nil {
 		// Set info
 		o.estuaryId = strconv.FormatUint(uint64(content.ID), 10)
-		o.cid = content.Cid.CID.String()
+		o.cid = content.Cid
 		o.size = content.Size
 		o.modTime = content.UpdatedAt
 	} else {
@@ -722,7 +722,7 @@ func (o *Object) readStats(ctx context.Context) error {
 			if item.Name == o.Remote() {
 				o.estuaryId = strconv.FormatUint(uint64(item.ContentID), 10)
 				o.size = item.Size
-				o.cid = item.Cid.CID.String()
+				o.cid = item.Cid
 				return nil
 			}
 		}
@@ -778,7 +778,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		absPath = path.Join("/"+absPath, leaf)
 		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
 
-		params.Set("collection", uuid)
+		params.Set("collection", uuid) // TODO: will need to update later
 		params.Set("collectionPath", absPath)
 	}
 
@@ -819,7 +819,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		return err
 	}
 
-	o.cid = result.Cid.CID.String()
+	o.cid = result.Cid
 	o.estuaryId = strconv.FormatUint(uint64(result.ID), 10)
 	o.size = size
 	return nil

@@ -1,7 +1,6 @@
 package estuary
 
 import (
-	"github.com/ipfs/go-cid"
 	"time"
 )
 
@@ -25,8 +24,4 @@ type ViewerResponse struct {
 	Miners     []string     `json:"miners,omitempty"`
 	AuthExpiry time.Time    `json:"auth_expiry,omitempty"`
 	Settings   UserSettings `json:"settings"`
-}
-
-type DbCID struct {
-	CID cid.Cid
 }
