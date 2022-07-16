@@ -57,6 +57,16 @@ func init() {
 			Advanced: true,
 			Default:  false,
 		}, {
+			Name:     "chunk_message",
+			Help:     "Message for posting chunk message.",
+			Advanced: true,
+			Default:  "Hello! This is a chunk message posted by rclone.",
+		}, {
+			Name:     "journal_message",
+			Help:     "Message for posting chunk message.",
+			Advanced: true,
+			Default:  "Hello! This is a metadata message posted by rclone.",
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -78,6 +88,8 @@ type Options struct {
 	JournalChannel string               `config:"journal_channel"`
 	ListTimeout    fs.Duration          `config:"list_timeout"`
 	QuickDelete    bool                 `config:"quick_delete"`
+	ChunksMessage  string               `config:"chunks_message"`
+	JournalMessage string               `config:"journal_message"`
 	Enc            encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -553,7 +565,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		buf = buf[:r]
 		err = retry(func() (err error) {
 			message, err = o.fs.bot.ChannelMessageSendComplex(newChannelID, &discordgo.MessageSend{
-				Content: "Hello! This is a chunk message posted by rclone.",
+				Content: o.fs.opt.ChunksMessage,
 				Files: []*discordgo.File{{
 					Name:   random.String(32),
 					Reader: bytes.NewReader(buf),
@@ -808,7 +820,7 @@ func (o *Object) amendMetadata(jm JournalMetadata, deleteOld bool) error {
 	var message *discordgo.Message
 	err = retry(func() (err error) {
 		message, err = o.fs.bot.ChannelMessageSendComplex(newChannelID, &discordgo.MessageSend{
-			Content: "Hello! This is a metadata message posted by rclone.",
+			Content: o.fs.opt.JournalMessage,
 			Files: []*discordgo.File{{
 				Name:   "file-metadata.json",
 				Reader: bytes.NewReader(encoded),
