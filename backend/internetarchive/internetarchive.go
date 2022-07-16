@@ -42,54 +42,70 @@ func init() {
 		MetadataInfo: &fs.MetadataInfo{
 			System: map[string]fs.MetadataHelp{
 				"name": {
-					Help:    "Full file path, without the bucket part",
-					Type:    "filename",
-					Example: "backend/internetarchive/internetarchive.go",
+					Help:     "Full file path, without the bucket part",
+					Type:     "filename",
+					Example:  "backend/internetarchive/internetarchive.go",
+					ReadOnly: true,
 				},
 				"source": {
-					Help:    "The source of the file",
-					Type:    "string",
-					Example: "original",
+					Help:     "The source of the file",
+					Type:     "string",
+					Example:  "original",
+					ReadOnly: true,
 				},
 				"mtime": {
-					Help:    "Time of last modification, managed by Rclone",
-					Type:    "RFC 3339",
-					Example: "2006-01-02T15:04:05.999999999Z",
+					Help:     "Time of last modification, managed by Rclone",
+					Type:     "RFC 3339",
+					Example:  "2006-01-02T15:04:05.999999999Z",
+					ReadOnly: true,
 				},
 				"size": {
-					Help:    "File size in bytes",
-					Type:    "decimal number",
-					Example: "123456",
+					Help:     "File size in bytes",
+					Type:     "decimal number",
+					Example:  "123456",
+					ReadOnly: true,
 				},
 				"md5": {
-					Help:    "MD5 hash calculated by Internet Archive",
-					Type:    "string",
-					Example: "01234567012345670123456701234567",
+					Help:     "MD5 hash calculated by Internet Archive",
+					Type:     "string",
+					Example:  "01234567012345670123456701234567",
+					ReadOnly: true,
 				},
 				"crc32": {
-					Help:    "CRC32 calculated by Internet Archive",
-					Type:    "string",
-					Example: "01234567",
+					Help:     "CRC32 calculated by Internet Archive",
+					Type:     "string",
+					Example:  "01234567",
+					ReadOnly: true,
 				},
 				"sha1": {
-					Help:    "SHA1 hash calculated by Internet Archive",
-					Type:    "string",
-					Example: "0123456701234567012345670123456701234567",
+					Help:     "SHA1 hash calculated by Internet Archive",
+					Type:     "string",
+					Example:  "0123456701234567012345670123456701234567",
+					ReadOnly: true,
 				},
 				"format": {
-					Help:    "Name of format identified by Internet Archive",
-					Type:    "string",
-					Example: "Comma-Separated Values",
+					Help:     "Name of format identified by Internet Archive",
+					Type:     "string",
+					Example:  "Comma-Separated Values",
+					ReadOnly: true,
 				},
 				"old_version": {
-					Help:    "Whether the file was replaced and moved by keep-old-version flag",
-					Type:    "boolean",
-					Example: "true",
+					Help:     "Whether the file was replaced and moved by keep-old-version flag",
+					Type:     "boolean",
+					Example:  "true",
+					ReadOnly: true,
 				},
 				"viruscheck": {
-					Help:    "The last time viruscheck process was run for the file (?)",
-					Type:    "unixtime",
-					Example: "1654191352",
+					Help:     "The last time viruscheck process was run for the file (?)",
+					Type:     "unixtime",
+					Example:  "1654191352",
+					ReadOnly: true,
+				},
+				"summation": {
+					Help:     "Check https://forum.rclone.org/t/31922 for how it is used",
+					Type:     "string",
+					Example:  "md5",
+					ReadOnly: true,
 				},
 
 				"rclone-ia-mtime": {
@@ -173,7 +189,7 @@ var roMetadataKey = map[string]interface{}{
 	// do not add mtime here, it's a documented exception
 	"name": nil, "source": nil, "size": nil, "md5": nil,
 	"crc32": nil, "sha1": nil, "format": nil, "old_version": nil,
-	"viruscheck": nil,
+	"viruscheck": nil, "summation": nil,
 }
 
 // Options defines the configuration for this backend
@@ -222,6 +238,7 @@ type IAFile struct {
 	Md5         string          `json:"md5"`
 	Crc32       string          `json:"crc32"`
 	Sha1        string          `json:"sha1"`
+	Summation   string          `json:"summation"`
 
 	rawData json.RawMessage
 }
@@ -1135,16 +1152,21 @@ func (f *Fs) waitDelete(ctx context.Context, bucket, bucketPath string) (err err
 }
 
 func makeValidObject(f *Fs, remote string, file IAFile, mtime time.Time, size int64) *Object {
-	return &Object{
+	ret := &Object{
 		fs:      f,
 		remote:  remote,
 		modTime: mtime,
 		size:    size,
-		md5:     file.Md5,
-		crc32:   file.Crc32,
-		sha1:    file.Sha1,
 		rawData: file.rawData,
 	}
+	// hashes from _files.xml (where summation != "") is different from one in other files
+	// https://forum.rclone.org/t/internet-archive-md5-tag-in-id-files-xml-interpreted-incorrectly/31922
+	if file.Summation == "" {
+		ret.md5 = file.Md5
+		ret.crc32 = file.Crc32
+		ret.sha1 = file.Sha1
+	}
+	return ret
 }
 
 func makeValidObject2(f *Fs, file IAFile, bucket string) *Object {

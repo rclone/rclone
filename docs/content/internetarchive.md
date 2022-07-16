@@ -12,10 +12,9 @@ Refer to [IAS3 API documentation](https://archive.org/services/docs/api/ias3.htm
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g. `remote:item/path/to/dir`.
 
-Once you have made a remote (see the provider specific section above)
-you can use it like this:
-
 Unlike S3, listing up all items uploaded by you isn't supported.
+
+Once you have made a remote, you can use it like this:
 
 Make a new item
 
@@ -53,6 +52,7 @@ The following are reserved by Internet Archive:
 - `format`
 - `old_version`
 - `viruscheck`
+- `summation`
 
 Trying to set values to these keys is ignored with a warning.
 Only setting `mtime` is an exception. Doing so make it the identical behavior as setting ModTime.
@@ -258,19 +258,20 @@ Here are the possible system metadata items for the internetarchive backend.
 
 | Name | Help | Type | Example | Read Only |
 |------|------|------|---------|-----------|
-| crc32 | CRC32 calculated by Internet Archive | string | 01234567 | N |
-| format | Name of format identified by Internet Archive | string | Comma-Separated Values | N |
-| md5 | MD5 hash calculated by Internet Archive | string | 01234567012345670123456701234567 | N |
-| mtime | Time of last modification, managed by Rclone | RFC 3339 | 2006-01-02T15:04:05.999999999Z | N |
-| name | Full file path, without the bucket part | filename | backend/internetarchive/internetarchive.go | N |
-| old_version | Whether the file was replaced and moved by keep-old-version flag | boolean | true | N |
+| crc32 | CRC32 calculated by Internet Archive | string | 01234567 | **Y** |
+| format | Name of format identified by Internet Archive | string | Comma-Separated Values | **Y** |
+| md5 | MD5 hash calculated by Internet Archive | string | 01234567012345670123456701234567 | **Y** |
+| mtime | Time of last modification, managed by Rclone | RFC 3339 | 2006-01-02T15:04:05.999999999Z | **Y** |
+| name | Full file path, without the bucket part | filename | backend/internetarchive/internetarchive.go | **Y** |
+| old_version | Whether the file was replaced and moved by keep-old-version flag | boolean | true | **Y** |
 | rclone-ia-mtime | Time of last modification, managed by Internet Archive | RFC 3339 | 2006-01-02T15:04:05.999999999Z | N |
 | rclone-mtime | Time of last modification, managed by Rclone | RFC 3339 | 2006-01-02T15:04:05.999999999Z | N |
 | rclone-update-track | Random value used by Rclone for tracking changes inside Internet Archive | string | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | N |
-| sha1 | SHA1 hash calculated by Internet Archive | string | 0123456701234567012345670123456701234567 | N |
-| size | File size in bytes | decimal number | 123456 | N |
-| source | The source of the file | string | original | N |
-| viruscheck | The last time viruscheck process was run for the file (?) | unixtime | 1654191352 | N |
+| sha1 | SHA1 hash calculated by Internet Archive | string | 0123456701234567012345670123456701234567 | **Y** |
+| size | File size in bytes | decimal number | 123456 | **Y** |
+| source | The source of the file | string | original | **Y** |
+| summation | Check https://forum.rclone.org/t/31922 for how it is used | string | md5 | **Y** |
+| viruscheck | The last time viruscheck process was run for the file (?) | unixtime | 1654191352 | **Y** |
 
 See the [metadata](/docs/#metadata) docs for more info.
 
