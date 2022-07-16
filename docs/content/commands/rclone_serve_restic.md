@@ -11,8 +11,8 @@ Serve the remote for restic's REST API.
 
 ## Synopsis
 
-rclone serve restic implements restic's REST backend API
-over HTTP.  This allows restic to use rclone as a data storage
+Run a basic web server to serve a remove over restic's REST backend
+API over HTTP.  This allows restic to use rclone as a data storage
 mechanism for cloud providers that restic does not support directly.
 
 [Restic](https://restic.net/) is a command-line program for doing
@@ -20,8 +20,8 @@ backups.
 
 The server will log errors.  Use -v to see access logs.
 
---bwlimit will be respected for file transfers.  Use --stats to
-control the stats printing.
+`--bwlimit` will be respected for file transfers.
+Use `--stats` to control the stats printing.
 
 ## Setting up rclone for use by restic ###
 
@@ -40,11 +40,11 @@ Where you can replace "backup" in the above by whatever path in the
 remote you wish to use.
 
 By default this will serve on "localhost:8080" you can change this
-with use of the "--addr" flag.
+with use of the `--addr` flag.
 
 You might wish to start this server on boot.
 
-Adding --cache-objects=false will cause rclone to stop caching objects
+Adding `--cache-objects=false` will cause rclone to stop caching objects
 returned from the List call. Caching is normally desirable as it speeds
 up downloading objects, saves transactions and uses very little memory.
 
@@ -90,36 +90,36 @@ these **must** end with /.  Eg
 
 ### Private repositories ####
 
-The "--private-repos" flag can be used to limit users to repositories starting
+The`--private-repos` flag can be used to limit users to repositories starting
 with a path of `/<username>/`.
 
 ## Server options
 
-Use --addr to specify which IP address and port the server should
-listen on, e.g. --addr 1.2.3.4:8000 or --addr :8080 to listen to all
-IPs.  By default it only listens on localhost.  You can use port
+Use `--addr` to specify which IP address and port the server should
+listen on, e.g. `--addr 1.2.3.4:8000` or `--addr :8080` to
+listen to all IPs.  By default it only listens on localhost.  You can use port
 :0 to let the OS choose an available port.
 
-If you set --addr to listen on a public or LAN accessible IP address
+If you set `--addr` to listen on a public or LAN accessible IP address
 then using Authentication is advised - see the next section for info.
 
---server-read-timeout and --server-write-timeout can be used to
+`--server-read-timeout` and `--server-write-timeout` can be used to
 control the timeouts on the server.  Note that this is the total time
 for a transfer.
 
---max-header-bytes controls the maximum number of bytes the server will
+`--max-header-bytes` controls the maximum number of bytes the server will
 accept in the HTTP header.
 
---baseurl controls the URL prefix that rclone serves from.  By default
-rclone will serve from the root.  If you used --baseurl "/rclone" then
+`--baseurl` controls the URL prefix that rclone serves from.  By default
+rclone will serve from the root.  If you used `--baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
 useful if you wish to proxy rclone serve.  Rclone automatically
-inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
---baseurl "/rclone" and --baseurl "/rclone/" are all treated
+inserts leading and trailing "/" on `--baseurl`, so `--baseurl "rclone"`,
+`--baseurl "/rclone"` and `--baseurl "/rclone/"` are all treated
 identically.
 
---template allows a user to specify a custom markup template for http
-and webdav serve functions.  The server exports the following markup
+`--template` allows a user to specify a custom markup template for HTTP
+and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
 | Parameter   | Description |
@@ -146,9 +146,9 @@ to be used within the template to server pages:
 By default this will serve files without needing a login.
 
 You can either use an htpasswd file which can take lots of users, or
-set a single username and password with the --user and --pass flags.
+set a single username and password with the `--user` and `--pass` flags.
 
-Use --htpasswd /path/to/htpasswd to provide an htpasswd file.  This is
+Use `--htpasswd /path/to/htpasswd` to provide an htpasswd file.  This is
 in standard apache format and supports MD5, SHA1 and BCrypt for basic
 authentication.  Bcrypt is recommended.
 
@@ -160,18 +160,18 @@ To create an htpasswd file:
 
 The password file can be updated while rclone is running.
 
-Use --realm to set the authentication realm.
+Use `--realm` to set the authentication realm.
 
 ### SSL/TLS
 
-By default this will serve over http.  If you want you can serve over
-https.  You will need to supply the --cert and --key flags.  If you
-wish to do client side certificate validation then you will need to
-supply --client-ca also.
+By default this will serve over HTTP.  If you want you can serve over
+HTTPS.  You will need to supply the `--cert` and `--key` flags.
+If you wish to do client side certificate validation then you will need to
+supply `--client-ca` also.
 
---cert should be either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  --key should be the PEM encoded
-private key and --client-ca should be the PEM encoded client
+`--cert` should be either a PEM encoded certificate or a concatenation
+of that with the CA certificate.  `--key` should be the PEM encoded
+private key and `--client-ca` should be the PEM encoded client
 certificate authority certificate.
 
 

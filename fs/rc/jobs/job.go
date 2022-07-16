@@ -406,3 +406,34 @@ func rcJobStop(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	job.Stop()
 	return out, nil
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:  "job/stopgroup",
+		Fn:    rcGroupStop,
+		Title: "Stop all running jobs in a group",
+		Help: `Parameters:
+
+- group - name of the group (string).
+`,
+	})
+}
+
+// Stops all running jobs in a group
+func rcGroupStop(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	group, err := in.GetString("group")
+	if err != nil {
+		return nil, err
+	}
+	running.mu.RLock()
+	defer running.mu.RUnlock()
+	for _, job := range running.jobs {
+		if job.Group == group {
+			job.mu.Lock()
+			job.Stop()
+			job.mu.Unlock()
+		}
+	}
+	out = make(rc.Params)
+	return out, nil
+}

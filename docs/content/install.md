@@ -318,7 +318,7 @@ such as a regular [sync](https://rclone.org/commands/rclone_sync/), you will pro
 to configure your rclone command in your operating system's scheduler. If you need to
 expose *service*-like features, such as [remote control](https://rclone.org/rc/),
 [GUI](https://rclone.org/gui/), [serve](https://rclone.org/commands/rclone_serve/)
-or [mount](https://rclone.org/commands/rclone_move/), you will often want an rclone
+or [mount](https://rclone.org/commands/rclone_mount/), you will often want an rclone
 command always running in the background, and configuring it to run in a service infrastructure
 may be a better option. Below are some alternatives on how to achieve this on
 different operating systems.
@@ -351,7 +351,7 @@ c:\rclone\rclone.exe sync c:\files remote:/files --no-console --log-file c:\rclo
 
 #### User account
 
-As mentioned in the [mount](https://rclone.org/commands/rclone_move/) documentation,
+As mentioned in the [mount](https://rclone.org/commands/rclone_mount/) documentation,
 mounted drives created as Administrator are not visible to other accounts, not even the
 account that was elevated as Administrator. By running the mount command as the
 built-in `SYSTEM` user account, it will create drives accessible for everyone on

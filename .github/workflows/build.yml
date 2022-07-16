@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.16', 'go1.17']
+        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.16', 'go1.17']
 
         include:
           - job_name: linux
@@ -38,6 +38,13 @@ jobs:
             racequicktest: true
             librclonetest: true
             deploy: true
+
+          - job_name: linux_386
+            os: ubuntu-latest
+            go: '1.18.x'
+            goarch: 386
+            gotags: cmount
+            quicktest: true
 
           - job_name: mac_amd64
             os: macos-11

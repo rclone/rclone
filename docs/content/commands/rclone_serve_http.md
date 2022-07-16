@@ -11,59 +11,59 @@ Serve the remote over HTTP.
 
 ## Synopsis
 
-rclone serve http implements a basic web server to serve the remote
-over HTTP.  This can be viewed in a web browser or you can make a
-remote of type http read from it.
+Run a basic web server to serve a remote over HTTP.
+This can be viewed in a web browser or you can make a remote of type
+http read from it.
 
-You can use the filter flags (e.g. --include, --exclude) to control what
+You can use the filter flags (e.g. `--include`, `--exclude`) to control what
 is served.
 
-The server will log errors.  Use -v to see access logs.
+The server will log errors.  Use `-v` to see access logs.
 
---bwlimit will be respected for file transfers.  Use --stats to
+`--bwlimit` will be respected for file transfers.  Use `--stats` to
 control the stats printing.
 
 ## Server options
 
-Use --addr to specify which IP address and port the server should
-listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
+Use `--addr` to specify which IP address and port the server should
+listen on, eg `--addr 1.2.3.4:8000` or `--addr :8080` to listen to all
 IPs.  By default it only listens on localhost.  You can use port
 :0 to let the OS choose an available port.
 
-If you set --addr to listen on a public or LAN accessible IP address
+If you set `--addr` to listen on a public or LAN accessible IP address
 then using Authentication is advised - see the next section for info.
 
---server-read-timeout and --server-write-timeout can be used to
+`--server-read-timeout` and `--server-write-timeout` can be used to
 control the timeouts on the server.  Note that this is the total time
 for a transfer.
 
---max-header-bytes controls the maximum number of bytes the server will
+`--max-header-bytes` controls the maximum number of bytes the server will
 accept in the HTTP header.
 
---baseurl controls the URL prefix that rclone serves from.  By default
-rclone will serve from the root.  If you used --baseurl "/rclone" then
+`--baseurl` controls the URL prefix that rclone serves from.  By default
+rclone will serve from the root.  If you used `--baseurl "/rclone"` then
 rclone would serve from a URL starting with "/rclone/".  This is
 useful if you wish to proxy rclone serve.  Rclone automatically
-inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
---baseurl "/rclone" and --baseurl "/rclone/" are all treated
+inserts leading and trailing "/" on `--baseurl`, so `--baseurl "rclone"`,
+`--baseurl "/rclone"` and `--baseurl "/rclone/"` are all treated
 identically.
 
 ### SSL/TLS
 
 By default this will serve over http.  If you want you can serve over
-https.  You will need to supply the --cert and --key flags.  If you
-wish to do client side certificate validation then you will need to
-supply --client-ca also.
+https.  You will need to supply the `--cert` and `--key` flags.
+If you wish to do client side certificate validation then you will need to
+supply `--client-ca` also.
 
---cert should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  --key should be the PEM encoded
-private key and --client-ca should be the PEM encoded client
+`--cert` should be a either a PEM encoded certificate or a concatenation
+of that with the CA certificate.  `--key` should be the PEM encoded
+private key and `--client-ca` should be the PEM encoded client
 certificate authority certificate.
 
 ### Template
 
---template allows a user to specify a custom markup template for http
-and webdav serve functions.  The server exports the following markup
+`--template` allows a user to specify a custom markup template for HTTP
+and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
 | Parameter   | Description |
@@ -90,9 +90,9 @@ to be used within the template to server pages:
 By default this will serve files without needing a login.
 
 You can either use an htpasswd file which can take lots of users, or
-set a single username and password with the --user and --pass flags.
+set a single username and password with the `--user` and `--pass` flags.
 
-Use --htpasswd /path/to/htpasswd to provide an htpasswd file.  This is
+Use `--htpasswd /path/to/htpasswd` to provide an htpasswd file.  This is
 in standard apache format and supports MD5, SHA1 and BCrypt for basic
 authentication.  Bcrypt is recommended.
 
@@ -104,9 +104,9 @@ To create an htpasswd file:
 
 The password file can be updated while rclone is running.
 
-Use --realm to set the authentication realm.
+Use `--realm` to set the authentication realm.
 
-Use --salt to change the password hashing salt from the default.
+Use `--salt` to change the password hashing salt from the default.
 
 ## VFS - Virtual File System
 
@@ -126,7 +126,7 @@ about files and directories (but not the data) in memory.
 
 Using the `--dir-cache-time` flag, you can control how long a
 directory should be considered up to date and not refreshed from the
-backend. Changes made through the mount will appear immediately or
+backend. Changes made through the VFS will appear immediately or
 invalidate the cache.
 
     --dir-cache-time duration   Time to cache directory entries for (default 5m0s)
@@ -283,6 +283,38 @@ FAT/exFAT do not. Rclone will perform very badly if the cache
 directory is on a filesystem which doesn't support sparse files and it
 will log an ERROR message if one is detected.
 
+### Fingerprinting
+
+Various parts of the VFS use fingerprinting to see if a local file
+copy has changed relative to a remote file. Fingerprints are made
+from:
+
+- size
+- modification time
+- hash
+
+where available on an object.
+
+On some backends some of these attributes are slow to read (they take
+an extra API call per object, or extra work per object).
+
+For example `hash` is slow with the `local` and `sftp` backends as
+they have to read the entire file and hash it, and `modtime` is slow
+with the `s3`, `swift`, `ftp` and `qinqstor` backends because they
+need to do an extra API call to fetch it.
+
+If you use the `--vfs-fast-fingerprint` flag then rclone will not
+include the slow operations in the fingerprint. This makes the
+fingerprinting less accurate but much faster and will improve the
+opening time of cached files.
+
+If you are running a vfs cache over `local`, `s3` or `swift` backends
+then using this flag is recommended.
+
+Note that if you change the value of this flag, the fingerprints of
+the files in the cache may be invalidated and the files will need to
+be downloaded again.
+
 ## VFS Chunked Reading
 
 When rclone reads files from a remote it reads them in chunks. This
@@ -323,7 +355,7 @@ read of the modification time takes a transaction.
     --no-checksum     Don't compare checksums on up/download.
     --no-modtime      Don't read/write the modification time (can speed things up).
     --no-seek         Don't allow seeking in files.
-    --read-only       Mount read-only.
+    --read-only       Only allow read-only access.
 
 Sometimes rclone is delivered reads or writes out of order. Rather
 than seeking rclone will wait a short time for the in sequence read or
@@ -335,7 +367,7 @@ on disk cache file.
 
 When using VFS write caching (`--vfs-cache-mode` with value writes or full),
 the global flag `--transfers` can be set to adjust the number of parallel uploads of
-modified files from cache (the related global flag `--checkers` have no effect on mount).
+modified files from the cache (the related global flag `--checkers` has no effect on the VFS).
 
     --transfers int  Number of file transfers to run in parallel (default 4)
 
@@ -352,27 +384,34 @@ It is not allowed for two files in the same directory to differ only by case.
 Usually file systems on macOS are case-insensitive. It is possible to make macOS
 file systems case-sensitive but that is not the default.
 
-The `--vfs-case-insensitive` mount flag controls how rclone handles these
-two cases. If its value is "false", rclone passes file names to the mounted
-file system as-is. If the flag is "true" (or appears without a value on
+The `--vfs-case-insensitive` VFS flag controls how rclone handles these
+two cases. If its value is "false", rclone passes file names to the remote
+as-is. If the flag is "true" (or appears without a value on the
 command line), rclone may perform a "fixup" as explained below.
 
 The user may specify a file name to open/delete/rename/etc with a case
-different than what is stored on mounted file system. If an argument refers
+different than what is stored on the remote. If an argument refers
 to an existing file with exactly the same name, then the case of the existing
 file on the disk will be used. However, if a file name with exactly the same
 name is not found but a name differing only by case exists, rclone will
 transparently fixup the name. This fixup happens only when an existing file
 is requested. Case sensitivity of file names created anew by rclone is
-controlled by an underlying mounted file system.
+controlled by the underlying remote.
 
 Note that case sensitivity of the operating system running rclone (the target)
-may differ from case sensitivity of a file system mounted by rclone (the source).
+may differ from case sensitivity of a file system presented by rclone (the source).
 The flag controls whether "fixup" is performed to satisfy the target.
 
 If the flag is not provided on the command line, then its default value depends
 on the operating system where rclone runs: "true" on Windows and macOS, "false"
 otherwise. If the flag is provided without a value, then it is "true".
+
+## VFS Disk Options
+
+This flag allows you to manually set the statistics about the filing system.
+It can be useful when those statistics cannot be read correctly automatically.
+
+    --vfs-disk-space-total-size    Manually set the total disk space size (example: 256G, default: -1)
 
 ## Alternate report of used bytes
 
@@ -412,7 +451,7 @@ rclone serve http remote:path [flags]
       --no-seek                                Don't allow seeking in files
       --pass string                            Password for authentication
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
-      --read-only                              Mount read-only
+      --read-only                              Only allow read-only access
       --realm string                           Realm for authentication
       --salt string                            Password hashing salt (default "dlPL2MqE")
       --server-read-timeout duration           Timeout for server reading data (default 1h0m0s)
@@ -426,6 +465,8 @@ rclone serve http remote:path [flags]
       --vfs-cache-mode CacheMode               Cache mode off|minimal|writes|full (default off)
       --vfs-cache-poll-interval duration       Interval to poll the cache for stale objects (default 1m0s)
       --vfs-case-insensitive                   If a file name not found, find a case insensitive match
+      --vfs-disk-space-total-size SizeSuffix   Specify the total space of disk (default off)
+      --vfs-fast-fingerprint                   Use fast (less accurate) fingerprints for change detection
       --vfs-read-ahead SizeSuffix              Extra read ahead over --buffer-size when using cache-mode full
       --vfs-read-chunk-size SizeSuffix         Read the source objects in chunks (default 128Mi)
       --vfs-read-chunk-size-limit SizeSuffix   If greater than --vfs-read-chunk-size, double the chunk size after each chunk read, until the limit is reached ('off' is unlimited) (default off)

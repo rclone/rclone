@@ -620,3 +620,10 @@ put them back in again.` >}}
   * buda <sandrojijavadze@protonmail.com>
   * mirekphd <36706320+mirekphd@users.noreply.github.com>
   * vyloy <vyloy@qq.com>
+  * Anthrazz <25553648+Anthrazz@users.noreply.github.com>
+  * zzr93 <34027824+zzr93@users.noreply.github.com>
+  * Paul Norman <penorman@mac.com>
+  * Lorenzo Maiorfi <maiorfi@gmail.com>
+  * Claudio Maradonna <penguyman@stronzi.org>
+  * Ovidiu Victor Tatar <ovi.tatar@googlemail.com>
+  * Evan Spensley <epspensley@gmail.com>

@@ -43,6 +43,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Google Drive [:page_facing_up:](https://rclone.org/drive/)
   * Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)
   * HDFS (Hadoop Distributed Filesystem) [:page_facing_up:](https://rclone.org/hdfs/)
+  * HiDrive [:page_facing_up:](https://rclone.org/hidrive/)
   * HTTP [:page_facing_up:](https://rclone.org/http/)
   * Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)
   * Hubic [:page_facing_up:](https://rclone.org/hubic/)
@@ -133,5 +134,5 @@ Please see the [rclone website](https://rclone.org/) for:
 License
 -------
 
-This is free software under the terms of MIT the license (check the
+This is free software under the terms of the MIT license (check the
 [COPYING file](/COPYING) included in this package).

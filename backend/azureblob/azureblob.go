@@ -600,7 +600,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse credentials: %w", err)
 		}
-		u, err = url.Parse(emulatorBlobEndpoint)
+		var actualEmulatorEndpoint = emulatorBlobEndpoint
+		if opt.Endpoint != "" {
+			actualEmulatorEndpoint = opt.Endpoint
+		}
+		u, err = url.Parse(actualEmulatorEndpoint)
 		if err != nil {
 			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}

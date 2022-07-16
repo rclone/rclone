@@ -206,9 +206,13 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (outFs fs
 				return err
 			}
 			mu.Lock()
-			f.upstreams[dir] = u
+			if _, found := f.upstreams[dir]; found {
+				err = fmt.Errorf("duplicate directory name %q", dir)
+			} else {
+				f.upstreams[dir] = u
+			}
 			mu.Unlock()
-			return nil
+			return err
 		})
 	}
 	err = g.Wait()

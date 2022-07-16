@@ -48,6 +48,7 @@ docs = [
     "googlephotos.md",
     "hasher.md",
     "hdfs.md",
+    "hidrive.md",
     "http.md",
     "hubic.md",
     "internetarchive.md",

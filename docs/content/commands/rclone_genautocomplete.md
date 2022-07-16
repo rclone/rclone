@@ -13,7 +13,7 @@ Output completion script for a given shell.
 
 
 Generates a shell completion script for rclone.
-Run with --help to list the supported shells.
+Run with `--help` to list the supported shells.
 
 
 ## Options

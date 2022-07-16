@@ -11,8 +11,8 @@ Serve a remote over a protocol.
 
 ## Synopsis
 
-rclone serve is used to serve a remote over a given protocol. This
-command requires the use of a subcommand to specify the protocol, e.g.
+Serve a remote over a given protocol. Requires the use of a
+subcommand to specify the protocol, e.g.
 
     rclone serve http remote:
 
@@ -40,5 +40,5 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone serve http](/commands/rclone_serve_http/)	 - Serve the remote over HTTP.
 * [rclone serve restic](/commands/rclone_serve_restic/)	 - Serve the remote for restic's REST API.
 * [rclone serve sftp](/commands/rclone_serve_sftp/)	 - Serve the remote over SFTP.
-* [rclone serve webdav](/commands/rclone_serve_webdav/)	 - Serve remote:path over webdav.
+* [rclone serve webdav](/commands/rclone_serve_webdav/)	 - Serve remote:path over WebDAV.
 

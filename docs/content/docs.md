@@ -50,6 +50,7 @@ See the following for detailed instructions for
   * [Google Photos](/googlephotos/)
   * [Hasher](/hasher/) - to handle checksums for other remotes
   * [HDFS](/hdfs/)
+  * [HiDrive](/hidrive/)
   * [HTTP](/http/)
   * [Hubic](/hubic/)
   * [Internet Archive](/internetarchive/)
@@ -582,7 +583,8 @@ been added) in DIR, then it will be overwritten.
 
 The remote in use must support server-side move or copy and you must
 use the same remote as the destination of the sync.  The backup
-directory must not overlap the destination directory.
+directory must not overlap the destination directory without it being
+excluded by a filter rule.
 
 For example
 
@@ -1642,6 +1644,18 @@ Disable retries with `--retries 1`.
 This sets the interval between each retry specified by `--retries`
 
 The default is `0`. Use `0` to disable.
+
+### --server-side-across-configs ###
+
+Allow server-side operations (e.g. copy or move) to work across
+different configurations.
+
+This can be useful if you wish to do a server-side copy or move
+between two remotes which use the same backend but are configured
+differently.
+
+Note that this isn't enabled by default because it isn't easy for
+rclone to tell if it will work between any two configurations.
 
 ### --size-only ###
 
