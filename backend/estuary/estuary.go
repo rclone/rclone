@@ -219,13 +219,15 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 		SetErrorHandler(errorHandler)
 
 	f.features = (&fs.Features{
-		CanHaveEmptyDirectories: true,
+		CanHaveEmptyDirectories: false,
+		BucketBased:             true,
+		BucketBasedRootOK:       true,
 	}).Fill(ctx, f)
 
 	if f.opt.Token != "" {
 		f.client.SetHeader("Authorization", "Bearer "+f.opt.Token)
 	}
-  
+
 	var viewer ViewerResponse
 
 	if viewer, err = f.fetchViewer(ctx); err != nil {
@@ -307,7 +309,6 @@ func (f *Fs) setRoot(root string) {
 	f.root = strings.Trim(root, "/")
 	f.rootCollection, f.rootDirectory = bucket.Split(f.root)
 }
-
 
 func (f *Fs) fetchViewer(ctx context.Context) (response ViewerResponse, err error) {
 	opts := rest.Opts{
@@ -578,11 +579,13 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, content *Cont
 	return o, nil
 }
 
-func (f *Fs) createObject(ctx context.Context, remote string, size int64) (o *Object, err error) {
+func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTime time.Time) (o *Object, err error) {
 	// Temporary Object under construction
 	o = &Object{
-		fs:     f,
-		remote: remote,
+		fs:      f,
+		remote:  remote,
+		size:    size,
+		modTime: modTime,
 	}
 	return o, nil
 }
@@ -599,8 +602,9 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64) (o *Ob
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	remote := src.Remote()
 	size := src.Size()
+	modTime := src.ModTime(ctx)
 
-	o, err := f.createObject(ctx, remote, size)
+	o, err := f.createObject(ctx, remote, size, modTime)
 	if err != nil {
 		return nil, err
 	}
