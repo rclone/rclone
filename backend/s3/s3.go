@@ -4570,7 +4570,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// uploaded properly. If size < 0 then we need to do the HEAD.
 	if o.fs.opt.NoHead && size >= 0 {
 		var head s3.HeadObjectOutput
-		structs.SetFrom(&head, req)
+		structs.SetFrom(&head, &req)
 		head.ETag = &md5sumHex // doesn't matter quotes are misssing
 		head.ContentLength = &size
 		// If we have done a single part PUT request then we can read these

@@ -67,8 +67,26 @@ func (f *Fs) InternalTestMetadata(t *testing.T) {
 	}
 }
 
+func (f *Fs) InternalTestNoHead(t *testing.T) {
+	ctx := context.Background()
+	// Set NoHead for this test
+	f.opt.NoHead = true
+	defer func() {
+		f.opt.NoHead = false
+	}()
+	contents := random.String(1000)
+	item := fstest.NewItem("test-no-head", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	defer func() {
+		assert.NoError(t, obj.Remove(ctx))
+	}()
+	// PutTestcontests checks the received object
+
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
+	t.Run("NoHead", f.InternalTestNoHead)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
