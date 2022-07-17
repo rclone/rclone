@@ -1435,7 +1435,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			}
 
 			if entryPath != "" {
-				notifyFunc(entryPath, entryType)
+				notifyFunc(f.opt.Enc.ToStandardPath(entryPath), entryType)
 			}
 		}
 		if !changeList.HasMore {
