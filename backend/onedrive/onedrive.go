@@ -118,7 +118,7 @@ func init() {
 					Help:  "Microsoft Cloud Germany",
 				}, {
 					Value: regionCN,
-					Help:  "Azure and Office 365 operated by 21Vianet in China",
+					Help:  "Azure and Office 365 operated by Vnet Group in China",
 				},
 			},
 		}, {
@@ -2184,7 +2184,7 @@ func (o *Object) ID() string {
  *       3. To avoid region-related issues, please don't manually build rest.Opts from scratch.
  *          Instead, use these helper function, and customize the URL afterwards if needed.
  *
- *       currently, the 21ViaNet's API differs in the following places:
+ *       currently, the Vnet Group's API differs in the following places:
  *       - https://{Endpoint}/drives/{driveID}/items/{leaf}:/{route}
  *           - this API doesn't work (gives invalid request)
  *           - can be replaced with the following API:
@@ -2233,7 +2233,7 @@ func escapeSingleQuote(str string) string {
 // newOptsCallWithIDPath build the rest.Opts structure with *a normalizedID (driveID#fileID, or simply fileID) and leaf*
 // using url template https://{Endpoint}/drives/{driveID}/items/{leaf}:/{route} (for international OneDrive)
 // or https://{Endpoint}/drives/{driveID}/items/children('{leaf}')/{route}
-// and https://{Endpoint}/drives/{driveID}/items/children('@a1')/{route}?@a1=URLEncode("'{leaf}'") (for 21ViaNet)
+// and https://{Endpoint}/drives/{driveID}/items/children('@a1')/{route}?@a1=URLEncode("'{leaf}'") (for Vnet Group)
 // if isPath is false, this function will only work when the leaf is "" or a child name (i.e. it doesn't accept multi-level leaf)
 // if isPath is true, multi-level leaf like a/b/c can be passed
 func (f *Fs) newOptsCallWithIDPath(normalizedID string, leaf string, isPath bool, method string, route string) (opts rest.Opts, ok bool) {

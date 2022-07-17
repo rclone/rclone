@@ -263,7 +263,7 @@ Properties:
     - "de"
         - Microsoft Cloud Germany
     - "cn"
-        - Azure and Office 365 operated by 21Vianet in China
+        - Azure and Office 365 operated by Vnet Group in China
 
 ### Advanced options
 
