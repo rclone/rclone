@@ -782,8 +782,8 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		absPath = path.Join("/"+absPath, leaf)
 		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
 
-		params.Set("collection", uuid) // TODO: will need to update later
-		params.Set("collectionPath", absPath)
+		params.Set("coluuid", uuid)
+		params.Set("colpath", absPath)
 	}
 
 	endpoints := o.fs.viewer.Settings.UploadEndpoints
