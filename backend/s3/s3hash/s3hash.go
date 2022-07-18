@@ -72,19 +72,24 @@ func (s *S3Hash) Write(p []byte) (n int, err error) {
 		// We have to write primary digest to final digest and recreate primary digest each part.
 		// Read p by parts and do some stuff.
 		var p2 = p
-		for {
-			k, _ := s.digest.Write(p2[:s.partSize-s.partSizeHashed])
-			n += k
-			s.final().Write(s.digest.Sum(nil))
-			s.partsCount++
-			s.digest.Reset()
-			k, _ = s.digest.Write(p2[s.partSize-s.partSizeHashed:])
-			n += k
-			s.partSizeHashed = k
-			if len(p2) < s.partSize {
-				break
+		for p2 != nil {
+			if len(p2) > s.partSize-s.partSizeHashed {
+				k, _ := s.digest.Write(p2[:s.partSize-s.partSizeHashed])
+				n += k
+				s.partSizeHashed += k
+				p2 = p2[k:]
+			} else {
+				k, _ := s.digest.Write(p2)
+				s.partSizeHashed += k
+				n += k
+				p2 = nil
 			}
-			p2 = p2[s.partSize:]
+			if s.partSizeHashed == s.partSize {
+				s.final().Write(s.digest.Sum(nil))
+				s.partsCount++
+				s.digest.Reset()
+				s.partSizeHashed = 0
+			}
 		}
 	} else { // s.partSizeHashed+len(p) == s.partSize
 		// write to primary digest, primary digest write to final digest and recreate primary digest

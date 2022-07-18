@@ -75,26 +75,32 @@ func TestPlainMd5Mode(t *testing.T) {
 }
 
 var parts = [][]int{
-	// {dataSize, partSize}
-	{50, 100},
-	{200, 100},
-	{150, 100},
-	{350, 105},
-	{10002, 100},
+	// {dataSize, hashPartSize, writeSize}
+	{50, 100, 50},
+	{50, 100, 30},
+	{200, 100, 300},
+	{200, 100, 100},
+	{200, 100, 150},
+	{200, 100, 50},
+	{150, 100, 100},
+	{350, 105, 400},
+	{350, 105, 105},
+	{350, 105, 53},
+	{10002, 100, 100},
 }
 
 func TestPartedHash(t *testing.T) {
 	for _, p := range parts {
 		data := generateData(p[0])
 		expectedHash := generateHash(data, p[1])
-		chunks := split(data, p[1])
+		chunks := split(data, p[2])
 
 		h := New(p[1])
 		for _, chunk := range chunks {
 			h.Write(chunk)
 		}
-		require.Equalf(t, expectedHash, h.Sum(nil), "data size %d, part size %d", p[0], p[1])
+		require.Equalf(t, expectedHash, h.Sum(nil), "data size: %d, hash part size: %d, write size: %d", p[0], p[1], p[2])
 		// checks what Sum() don't reset state of the S3Hash.
-		require.Equalf(t, expectedHash, h.Sum(nil), "data size %d, part size %d (second)", p[0], p[1])
+		require.Equalf(t, expectedHash, h.Sum(nil), "data size: %d, hash part size: %d, write size: %d (second)", p[0], p[1], p[2])
 	}
 }

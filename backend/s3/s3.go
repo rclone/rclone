@@ -59,9 +59,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// S3HashType is the hash.Type for AWS S3 Multiparted hash
-var S3HashType hash.Type
-
 // Register with Fs
 func init() {
 	fs.Register(&fs.RegInfo{
@@ -1973,9 +1970,20 @@ This should be true, false or left unset to use the default for the provider.
 `,
 			Default:  fs.Tristate{},
 			Advanced: true,
-		}, {
-			Name: "use_presigned_request",
-			Help: `Whether to use a presigned request or PutObject for single part uploads
+		},
+			{
+				Name: "multipart_etag_chunk_size",
+				Help: `Chunk size for calculating Etag in multipart uploads for verification
+
+The parameter must be equal to the size of the chunk that was specified when the object was uploaded. 
+If the chunk sizes of the parameter and Etag do not match, there will be a verification error.
+`,
+				Default:  fs.SizeSuffix(0),
+				Advanced: true,
+			},
+			{
+				Name: "use_presigned_request",
+				Help: `Whether to use a presigned request or PutObject for single part uploads
 
 If this is false rclone will use PutObject from the AWS SDK to upload
 an object.
@@ -1985,9 +1993,9 @@ part object and setting this flag to true will re-enable that
 functionality. This shouldn't be necessary except in exceptional
 circumstances or for testing.
 `,
-			Default:  false,
-			Advanced: true,
-		},
+				Default:  false,
+				Advanced: true,
+			},
 		}})
 }
 
@@ -2062,48 +2070,49 @@ var systemMetadataInfo = map[string]fs.MetadataHelp{
 
 // Options defines the configuration for this backend
 type Options struct {
-	Provider              string               `config:"provider"`
-	EnvAuth               bool                 `config:"env_auth"`
-	AccessKeyID           string               `config:"access_key_id"`
-	SecretAccessKey       string               `config:"secret_access_key"`
-	Region                string               `config:"region"`
-	Endpoint              string               `config:"endpoint"`
-	LocationConstraint    string               `config:"location_constraint"`
-	ACL                   string               `config:"acl"`
-	BucketACL             string               `config:"bucket_acl"`
-	RequesterPays         bool                 `config:"requester_pays"`
-	ServerSideEncryption  string               `config:"server_side_encryption"`
-	SSEKMSKeyID           string               `config:"sse_kms_key_id"`
-	SSECustomerAlgorithm  string               `config:"sse_customer_algorithm"`
-	SSECustomerKey        string               `config:"sse_customer_key"`
-	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
-	StorageClass          string               `config:"storage_class"`
-	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
-	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
-	ChunkSize             fs.SizeSuffix        `config:"chunk_size"`
-	MaxUploadParts        int64                `config:"max_upload_parts"`
-	DisableChecksum       bool                 `config:"disable_checksum"`
-	SharedCredentialsFile string               `config:"shared_credentials_file"`
-	Profile               string               `config:"profile"`
-	SessionToken          string               `config:"session_token"`
-	UploadConcurrency     int                  `config:"upload_concurrency"`
-	ForcePathStyle        bool                 `config:"force_path_style"`
-	V2Auth                bool                 `config:"v2_auth"`
-	UseAccelerateEndpoint bool                 `config:"use_accelerate_endpoint"`
-	LeavePartsOnError     bool                 `config:"leave_parts_on_error"`
-	ListChunk             int64                `config:"list_chunk"`
-	ListVersion           int                  `config:"list_version"`
-	ListURLEncode         fs.Tristate          `config:"list_url_encode"`
-	NoCheckBucket         bool                 `config:"no_check_bucket"`
-	NoHead                bool                 `config:"no_head"`
-	NoHeadObject          bool                 `config:"no_head_object"`
-	Enc                   encoder.MultiEncoder `config:"encoding"`
-	MemoryPoolFlushTime   fs.Duration          `config:"memory_pool_flush_time"`
-	MemoryPoolUseMmap     bool                 `config:"memory_pool_use_mmap"`
-	DisableHTTP2          bool                 `config:"disable_http2"`
-	DownloadURL           string               `config:"download_url"`
-	UseMultipartEtag      fs.Tristate          `config:"use_multipart_etag"`
-	UsePresignedRequest   bool                 `config:"use_presigned_request"`
+	Provider               string               `config:"provider"`
+	EnvAuth                bool                 `config:"env_auth"`
+	AccessKeyID            string               `config:"access_key_id"`
+	SecretAccessKey        string               `config:"secret_access_key"`
+	Region                 string               `config:"region"`
+	Endpoint               string               `config:"endpoint"`
+	LocationConstraint     string               `config:"location_constraint"`
+	ACL                    string               `config:"acl"`
+	BucketACL              string               `config:"bucket_acl"`
+	RequesterPays          bool                 `config:"requester_pays"`
+	ServerSideEncryption   string               `config:"server_side_encryption"`
+	SSEKMSKeyID            string               `config:"sse_kms_key_id"`
+	SSECustomerAlgorithm   string               `config:"sse_customer_algorithm"`
+	SSECustomerKey         string               `config:"sse_customer_key"`
+	SSECustomerKeyMD5      string               `config:"sse_customer_key_md5"`
+	StorageClass           string               `config:"storage_class"`
+	UploadCutoff           fs.SizeSuffix        `config:"upload_cutoff"`
+	CopyCutoff             fs.SizeSuffix        `config:"copy_cutoff"`
+	ChunkSize              fs.SizeSuffix        `config:"chunk_size"`
+	MaxUploadParts         int64                `config:"max_upload_parts"`
+	DisableChecksum        bool                 `config:"disable_checksum"`
+	SharedCredentialsFile  string               `config:"shared_credentials_file"`
+	Profile                string               `config:"profile"`
+	SessionToken           string               `config:"session_token"`
+	UploadConcurrency      int                  `config:"upload_concurrency"`
+	ForcePathStyle         bool                 `config:"force_path_style"`
+	V2Auth                 bool                 `config:"v2_auth"`
+	UseAccelerateEndpoint  bool                 `config:"use_accelerate_endpoint"`
+	LeavePartsOnError      bool                 `config:"leave_parts_on_error"`
+	ListChunk              int64                `config:"list_chunk"`
+	ListVersion            int                  `config:"list_version"`
+	ListURLEncode          fs.Tristate          `config:"list_url_encode"`
+	NoCheckBucket          bool                 `config:"no_check_bucket"`
+	NoHead                 bool                 `config:"no_head"`
+	NoHeadObject           bool                 `config:"no_head_object"`
+	Enc                    encoder.MultiEncoder `config:"encoding"`
+	MemoryPoolFlushTime    fs.Duration          `config:"memory_pool_flush_time"`
+	MemoryPoolUseMmap      bool                 `config:"memory_pool_use_mmap"`
+	DisableHTTP2           bool                 `config:"disable_http2"`
+	DownloadURL            string               `config:"download_url"`
+	UseMultipartEtag       fs.Tristate          `config:"use_multipart_etag"`
+	MultipartEtagChunkSize fs.SizeSuffix        `config:"multipart_etag_chunk_size"`
+	UsePresignedRequest    bool                 `config:"use_presigned_request"`
 }
 
 // Fs represents a remote s3 server
@@ -2125,6 +2134,7 @@ type Fs struct {
 	pool          *pool.Pool       // memory pool
 	etagIsNotMD5  bool             // if set ETags are not MD5s
 	hash          hash.Set         // which hash function we should use
+	hashMu        sync.Mutex       // lock for Hashes()
 }
 
 // Object describes a s3 object
@@ -2671,27 +2681,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Provider == "IDrive" {
 		f.features.SetTier = false
 	}
-	if f.opt.UseMultipartEtag.Value && f.opt.ChunkSize > 0 {
-		// We have to check what another s3 backend didn't define similar hash.
-		hashName := "s3hash" + strings.ToLower(f.opt.ChunkSize.String())
-		var hashDefined hash.Type
-		for _, h := range hash.Supported().Array() {
-			if h.String() == hashName {
-				hashDefined = h
-				break
-			}
-		}
-		if hashDefined == hash.None {
-			S3HashType = hash.RegisterHash(hashName, "S3HashBy"+f.opt.ChunkSize.String(), 32, func() gohash.Hash {
-				return s3hash.New(int(f.opt.ChunkSize))
-			})
-			f.hash = hash.NewHashSet(S3HashType)
-		} else {
-			f.hash = hash.NewHashSet(hashDefined)
-		}
-	} else {
-		f.hash = hash.NewHashSet(hash.MD5)
-	}
+
 	// f.listMultipartUploads()
 	return f, nil
 }
@@ -2712,8 +2702,8 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		} else {
 			o.lastModified = *info.LastModified
 		}
+		o.bytes = aws.Int64Value(info.Size) // important to set bytes before setMD5FromEtag
 		o.setMD5FromEtag(aws.StringValue(info.ETag))
-		o.bytes = aws.Int64Value(info.Size)
 		o.storageClass = info.StorageClass
 	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData(ctx) // reads info and meta, returning an error
@@ -3394,7 +3384,32 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return f.hash
+	if f.opt.UseMultipartEtag.Value && f.opt.MultipartEtagChunkSize > 0 {
+		fs.Debugf(f, "Use s3hash hash function for multipart Etag.")
+		f.hashMu.Lock()
+		defer f.hashMu.Unlock()
+		// We have to check what another s3 backend didn't define similar hash.
+		hashName := "s3hash" + strings.ToLower(f.opt.MultipartEtagChunkSize.String())
+		var hashDefined hash.Type
+		for _, h := range hash.Supported().Array() {
+			if h.String() == hashName {
+				hashDefined = h
+				break
+			}
+		}
+		if hashDefined == hash.None {
+			var h = func() gohash.Hash {
+				return s3hash.New(int(f.opt.MultipartEtagChunkSize))
+			}
+			var s3HashType = hash.RegisterHash(hashName, "S3HashBy"+f.opt.MultipartEtagChunkSize.String(), 32, h)
+			f.hash = hash.NewHashSet(s3HashType)
+		} else {
+			f.hash = hash.NewHashSet(hashDefined)
+		}
+		return f.hash
+	} else {
+		return hash.NewHashSet(hash.MD5)
+	}
 }
 
 func (f *Fs) getMemoryPool(size int64) *pool.Pool {
@@ -3754,7 +3769,6 @@ func (o *Object) Remote() string {
 }
 
 var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
-var matchS3Md5 = regexp.MustCompile(`^([0-9a-f]{32})-\d+$`)
 
 // Set the MD5 from the etag
 func (o *Object) setMD5FromEtag(etag string) {
@@ -3769,16 +3783,22 @@ func (o *Object) setMD5FromEtag(etag string) {
 	hash := strings.Trim(strings.ToLower(etag), `"`)
 	// Check the etag is a valid md5sum
 	if !matchMd5.MatchString(hash) {
-		// If we use multipart Etag we have to cut suffix (hyphen and after)
-		if o.fs.opt.UseMultipartEtag.Value {
-			// 52f...0e1-33 -> 52f...0e1
-			md5hash := matchS3Md5.FindStringSubmatch(hash)
-			if md5hash != nil {
-				o.md5 = md5hash[1]
+		// If we use multipart Etag we have to cut suffix (by hyphen)
+		if o.fs.opt.UseMultipartEtag.Value && o.fs.opt.MultipartEtagChunkSize > 0 {
+			parts := strings.SplitN(hash, "-", 2)
+			if len(parts) == 2 && matchMd5.MatchString(parts[0]) {
+				chunks, err := strconv.ParseInt(parts[1], 10, 0)
+				if err == nil {
+					lte := int64(o.fs.opt.MultipartEtagChunkSize) * (chunks - 1)
+					gt := int64(o.fs.opt.MultipartEtagChunkSize) * chunks
+					if lte <= o.bytes && gt > o.bytes {
+						o.md5 = parts[0]
+						return
+					}
+				}
 			}
-		} else {
-			o.md5 = ""
 		}
+		o.md5 = ""
 		return
 	}
 
