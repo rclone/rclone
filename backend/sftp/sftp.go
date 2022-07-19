@@ -935,11 +935,22 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 	// It appears that WS FTP doesn't like relative paths,
 	// and the openssh sftp tool also uses absolute paths.
 	if !path.IsAbs(f.root) {
-		path, err := c.sftpClient.RealPath(f.root)
+		// Trying RealPath first, to perform proper server-side canonicalize.
+		// It may fail (SSH_FX_FAILURE reported on WS FTP) and will then resort
+		// to simple path join with current directory from Getwd (which can work
+		// on WS FTP, even though it is also based on RealPath).
+		absRoot, err := c.sftpClient.RealPath(f.root)
 		if err != nil {
-			fs.Debugf(f, "Failed to resolve path - using relative paths: %v", err)
+			fs.Debugf(f, "Failed to resolve path using RealPath: %v", err)
+			cwd, err := c.sftpClient.Getwd()
+			if err != nil {
+				fs.Debugf(f, "Failed to to read current directory - using relative paths: %v", err)
+			} else {
+				f.absRoot = path.Join(cwd, f.root)
+				fs.Debugf(f, "Relative path joined with current directory to get absolute path %q", f.absRoot)
+			}
 		} else {
-			f.absRoot = path
+			f.absRoot = absRoot
 			fs.Debugf(f, "Relative path resolved to %q", f.absRoot)
 		}
 	}
