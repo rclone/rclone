@@ -8,7 +8,7 @@ $rc = new Rclone( __DIR__ . '/librclone.so' );
 
 Then call rpc calls on it
 
-    $rc->rcp( "config/listremotes", "{}" );
+    $rc->rpc( "config/listremotes", "{}" );
 
 When finished, close it
 
@@ -34,7 +34,7 @@ class Rclone {
         $this->rclone->RcloneInitialize();
     }
 
-    function rcp($method, $input ): array
+    function rpc($method, $input ): array
     {
         $out = $this->rclone->RcloneRPC( $method, $input );
         $response = [

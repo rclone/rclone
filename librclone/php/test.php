@@ -11,17 +11,17 @@ const FILE      = "testFile.txt";
 
 $rc = new Rclone( __DIR__ . '/librclone.so' );
 
-$response = $rc->rcp( "config/listremotes", "{}" );
+$response = $rc->rpc( "config/listremotes", "{}" );
 print_r( $response );
 
-$response = $rc->rcp("operations/mkdir",
+$response = $rc->rpc("operations/mkdir",
     json_encode( [
         'fs' => REMOTE,
         'remote'=> FOLDER
     ]));
 print_r( $response );
 
-$response = $rc->rcp("operations/list",
+$response = $rc->rpc("operations/list",
     json_encode( [
         'fs' => REMOTE,
         'remote'=> ''
@@ -29,7 +29,7 @@ $response = $rc->rcp("operations/list",
 print_r( $response );
 
 file_put_contents("./" . FILE, "Success!!!");
-$response = $rc->rcp("operations/copyfile",
+$response = $rc->rpc("operations/copyfile",
     json_encode( [
         'srcFs' => getcwd(),
         'srcRemote'=> FILE,
@@ -38,7 +38,7 @@ $response = $rc->rcp("operations/copyfile",
     ]));
 print_r( $response );
 
-$response = $rc->rcp("operations/list",
+$response = $rc->rpc("operations/list",
     json_encode( [
         'fs' => REMOTE . FOLDER,
         'remote'=> ''
