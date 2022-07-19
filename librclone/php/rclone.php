@@ -18,6 +18,7 @@ When finished, close it
 class Rclone {
 
     protected $rclone;
+    private $out;
 
     function __construct( $libshared )
     {
@@ -36,12 +37,12 @@ class Rclone {
 
     function rpc($method, $input ): array
     {
-        $out = $this->rclone->RcloneRPC( $method, $input );
+        $this->out = $this->rclone->RcloneRPC( $method, $input );
         $response = [
-            'output' => FFI::string( $out->Output ),
-            'status' => $out->Status
+            'output' => \FFI::string( $this->out->Output ),
+            'status' => $this->out->Status
         ];
-        $this->rclone->RcloneFreeString( $out->Output );
+        $this->rclone->RcloneFreeString( $this->out->Output );
         return $response;
     }
 
