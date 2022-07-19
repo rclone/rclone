@@ -20,9 +20,9 @@ class Rclone {
     protected $rclone;
     private $out;
 
-    function __construct( $libshared )
+    public function __construct( $libshared )
     {
-        $this->rclone = FFI::cdef("
+        $this->rclone = \FFI::cdef("
         struct RcloneRPCResult {
             char* Output;
             int	Status;
@@ -35,7 +35,7 @@ class Rclone {
         $this->rclone->RcloneInitialize();
     }
 
-    function rpc($method, $input ): array
+    public function rpc( $method, $input ): array
     {
         $this->out = $this->rclone->RcloneRPC( $method, $input );
         $response = [
@@ -46,7 +46,7 @@ class Rclone {
         return $response;
     }
 
-    function close( ): void
+    public function close( ): void
     {
         $this->rclone->RcloneFinalize();
     }
