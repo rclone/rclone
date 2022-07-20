@@ -629,3 +629,4 @@ put them back in again.` >}}
   * Evan Spensley <epspensley@gmail.com>
   * Yen Hu <61753151+0x59656e@users.noreply.github.com>
   * Steve Kowalik <steven@wedontsleep.org>
+  * Jordi Gonzalez Muñoz <jordigonzm@gmail.com>
