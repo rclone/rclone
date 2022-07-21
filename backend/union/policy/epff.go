@@ -16,11 +16,14 @@ func init() {
 // Given the order of the candidates, act on the first one found where the relative path exists.
 type EpFF struct{}
 
-func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, filePath string) (*upstream.Fs, error) {
+func (p *EpFF) epffIsLocal(ctx context.Context, upstreams []*upstream.Fs, filePath string, isLocal bool) (*upstream.Fs, error) {
 	ch := make(chan *upstream.Fs, len(upstreams))
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	for _, u := range upstreams {
+		if u.IsLocal() != isLocal {
+			continue
+		}
 		u := u // Closure
 		go func() {
 			rfs := u.RootFs
@@ -32,7 +35,10 @@ func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, filePath stri
 		}()
 	}
 	var u *upstream.Fs
-	for range upstreams {
+	for _, upstream := range upstreams {
+		if upstream.IsLocal() != isLocal {
+			continue
+		}
 		u = <-ch
 		if u != nil {
 			break
@@ -42,6 +48,15 @@ func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, filePath stri
 		return nil, fs.ErrorObjectNotFound
 	}
 	return u, nil
+}
+
+func (p *EpFF) epff(ctx context.Context, upstreams []*upstream.Fs, filePath string) (*upstream.Fs, error) {
+	// search local disks first
+	u, err := p.epffIsLocal(ctx, upstreams, filePath, true)
+	if err == fs.ErrorObjectNotFound {
+		u, err = p.epffIsLocal(ctx, upstreams, filePath, false)
+	}
+	return u, err
 }
 
 // Action category policy, governing the modification of files and directories

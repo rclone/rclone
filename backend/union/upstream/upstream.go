@@ -34,6 +34,7 @@ type Fs struct {
 	Opt         *common.Options
 	writable    bool
 	creatable   bool
+	isLocal     bool
 	usage       *fs.Usage     // Cache the usage
 	cacheTime   time.Duration // cache duration
 	cacheMutex  sync.RWMutex
@@ -95,6 +96,7 @@ func New(ctx context.Context, remote, root string, opt *common.Options) (*Fs, er
 		return nil, err
 	}
 	f.RootFs = rFs
+	f.isLocal = rFs.Features().IsLocal
 	rootString := fspath.JoinRootPath(remote, root)
 	myFs, err := cache.Get(ctx, rootString)
 	if err != nil && err != fs.ErrorIsFile {
@@ -140,6 +142,11 @@ func (f *Fs) WrapEntry(e fs.DirEntry) (Entry, error) {
 	default:
 		return nil, fmt.Errorf("unknown object type %T", e)
 	}
+}
+
+// IsLocal true if the upstream Fs is a local disk
+func (f *Fs) IsLocal() bool {
+	return f.isLocal
 }
 
 // UpstreamFs get the upstream Fs the entry is stored in
