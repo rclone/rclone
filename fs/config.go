@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// Global
+// Global.
 var (
 	// globalConfig for rclone
 	globalConfig = NewConfig()
