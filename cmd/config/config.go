@@ -69,15 +69,22 @@ var configEncrypt = &cobra.Command{
 	pass your password directly as an argument. After encryption you will be 
 	asked to enter a password when using Rclone. Passwords are not recoverable.
 `,
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			passwd := config.ChangePassword("NEW configuration")
-			config.SetConfigPassword(passwd)
+			err := config.SetConfigPassword(passwd)
+			if err != nil {
+				return err
+			}
 		} else {
 			cmd.CheckArgs(1, 1, command, args)
-			config.SetConfigPassword(args[0])
+			err := config.SetConfigPassword(args[0])
+			if err != nil {
+				return err
+			}
 		}
 		config.SaveConfig()
+		return nil
 	},
 }
 

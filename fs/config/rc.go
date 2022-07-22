@@ -79,7 +79,10 @@ func rcEncrypt(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 			"error": "password paramater not supplied",
 		}
 	} else {
-		SetConfigPassword(passwd)
+		err := SetConfigPassword(passwd)
+		if err != nil {
+			return nil, err
+		}
 		SaveConfig()
 		out = nil
 	}
