@@ -2,6 +2,8 @@ module github.com/rclone/rclone
 
 go 1.16
 
+replace github.com/filecoin-project/filecoin-ffi => ../estuary/extern/filecoin-ffi
+
 require (
 	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
 	github.com/Azure/azure-pipeline-go v0.2.3
@@ -72,12 +74,19 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
 	github.com/ipfs/go-cid v0.2.0
 	github.com/jlaffaye/ftp v0.0.0-20220524001917-dfa1e758f3af
+	github.com/multiformats/go-base32 v0.0.4 // indirect
+	github.com/multiformats/go-multihash v0.1.0 // indirect
 	github.com/pkg/xattr v0.4.7
+	github.com/smartystreets/assertions v1.0.1 // indirect
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	golang.org/x/mobile v0.0.0-20220518205345-8578da9835fd
 	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
+	lukechampine.com/blake3 v1.1.7 // indirect
 )
