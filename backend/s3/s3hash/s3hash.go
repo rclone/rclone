@@ -23,6 +23,8 @@ import (
 	"hash"
 )
 
+// S3Hash multipart hash
+// MD5 is calculated for each chunk. The final MD5 calculates from MD5s of chunks.
 type S3Hash struct {
 	partSizeHashed int       // bytes (of single part) written into hash
 	partsCount     int       // number hashed parts
@@ -31,6 +33,7 @@ type S3Hash struct {
 	finalDigest    hash.Hash // underlying MD5 of MD5 hashes
 }
 
+// New creates new S3Hash hash
 func New(partSize int) hash.Hash {
 	return &S3Hash{
 		partSize:    partSize,
@@ -43,9 +46,8 @@ func New(partSize int) hash.Hash {
 func (s *S3Hash) GetPartsCount() int {
 	if s.partSizeHashed == 0 {
 		return s.partsCount
-	} else {
-		return s.partsCount + 1
 	}
+	return s.partsCount + 1
 }
 
 func (s *S3Hash) final() hash.Hash {

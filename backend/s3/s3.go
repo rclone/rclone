@@ -12,7 +12,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/rclone/rclone/backend/s3/s3hash"
 	gohash "hash"
 	"io"
 	"io/ioutil"
@@ -38,6 +37,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/ncw/swift/v2"
+	"github.com/rclone/rclone/backend/s3/s3hash"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/chunksize"
 	"github.com/rclone/rclone/fs/config"
@@ -3407,9 +3407,8 @@ func (f *Fs) Hashes() hash.Set {
 			f.hash = hash.NewHashSet(hashDefined)
 		}
 		return f.hash
-	} else {
-		return hash.NewHashSet(hash.MD5)
 	}
+	return hash.NewHashSet(hash.MD5)
 }
 
 func (f *Fs) getMemoryPool(size int64) *pool.Pool {

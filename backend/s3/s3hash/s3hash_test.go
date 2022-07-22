@@ -2,8 +2,9 @@ package s3hash
 
 import (
 	"crypto/md5"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func generateData(size int) (d []byte) {
