@@ -572,7 +572,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		return "", err
 	}
 	bucket, bucketPath := f.split(remote)
-	return path.Join(f.opt.FrontEndpoint, "/download/", bucket, bucketPath), nil
+	return path.Join(f.opt.FrontEndpoint, "/download/", bucket, quotePath(bucketPath)), nil
 }
 
 // Copy src to this remote using server-side copy operations.
@@ -760,7 +760,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	// make a GET request to (frontend)/download/:item/:path
 	opts := rest.Opts{
 		Method:  "GET",
-		Path:    path.Join("/download/", o.fs.root, o.fs.opt.Enc.FromStandardPath(o.remote)),
+		Path:    path.Join("/download/", o.fs.root, quotePath(o.fs.opt.Enc.FromStandardPath(o.remote))),
 		Options: optionsFixed,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
