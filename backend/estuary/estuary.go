@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	//"net/http"
 	"path"
 	"time"
 
@@ -41,6 +40,11 @@ var (
 	minSleep                     = 10 * time.Millisecond
 	maxSleep                     = 2 * time.Second
 	decayConstant                = 2
+)
+
+const (
+	colUuid = "coluuid"
+	colDir  = "dir"
 )
 
 // config options for our backend
@@ -111,11 +115,14 @@ type CollectionCreate struct {
 }
 
 type CollectionFsItem struct {
-	Name      string `json:"name"`
-	IsDir     bool   `json:"dir"`
-	Size      int64  `json:"size"`
-	ContentID uint   `json:"contId"`
-	Cid       string `json:"cid,omitempty"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`
+	Size      int64     `json:"size"`
+	ContentID uint      `json:"contId"`
+	Cid       string    `json:"cid,omitempty"`
+	Dir       string    `json:"dir"`
+	ColUuid   string    `json:"coluuid"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 var commandHelp = []fs.CommandHelp{{
@@ -424,12 +431,11 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 
 		return "", false, nil
 	} else { // subdir, these are lazy created and we construct a path out of the collection ID + root path in the collection
-		uuid, absPath := bucket.Split(pathID)
-		absPath = "/" + absPath
+		uuid, absPath := splitDir(pathID)
 
 		params := url.Values{}
-		params.Set("coluuid", uuid)
-		params.Set("colpath", absPath)
+		params.Set(colUuid, uuid)
+		params.Set(colDir, absPath)
 
 		var items []CollectionFsItem
 		if err := f.pacer.Call(func() (bool, error) {
@@ -445,7 +451,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 
 		for _, item := range items {
 			if item.Name == leaf {
-				if item.IsDir {
+				if item.isDir() {
 					return path.Join(pathID, leaf), true, nil
 				} else {
 					return "", false, nil
@@ -454,6 +460,10 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 		}
 		return path.Join(pathID, leaf), true, nil
 	}
+}
+
+func (item *CollectionFsItem) isDir() bool {
+	return item.Type == "directory"
 }
 
 func (f *Fs) listRoot(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
@@ -506,8 +516,8 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	var response *http.Response
 
 	params := url.Values{}
-	params.Set("coluuid", uuid)
-	params.Set("colpath", collectionDir)
+	params.Set(colUuid, uuid)
+	params.Set(colDir, collectionDir)
 
 	var items []CollectionFsItem
 	if err := f.pacer.Call(func() (bool, error) {
@@ -526,7 +536,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	for _, item := range items {
-		if item.IsDir {
+		if item.isDir() {
 			remote := path.Join(dir, item.Name)
 			id := path.Join(uuid, item.Name)
 			f.dirCache.Put(remote, id)
@@ -704,12 +714,12 @@ func (o *Object) readStats(ctx context.Context) error {
 			return fs.ErrorObjectNotFound
 		}
 
-		uuid, collectionDir := splitDir(dirID)
+		_, file := path.Split(o.Remote())
+		collectionDir := "/" + o.Remote()
 
 		params := url.Values{}
-		params.Set("coluuid", uuid)
-		params.Set("colpath", collectionDir)
-
+		params.Set(colUuid, dirID)
+		params.Set(colDir, collectionDir)
 		var items []CollectionFsItem
 		if err = o.fs.pacer.Call(func() (bool, error) {
 			response, err := o.fs.client.CallJSON(ctx, &rest.Opts{
@@ -723,10 +733,11 @@ func (o *Object) readStats(ctx context.Context) error {
 		}
 
 		for _, item := range items {
-			if item.Name == o.Remote() {
+			if item.Name == file {
 				o.estuaryId = strconv.FormatUint(uint64(item.ContentID), 10)
 				o.size = item.Size
 				o.cid = item.Cid
+				o.modTime = item.UpdatedAt
 				return nil
 			}
 		}
@@ -758,7 +769,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: "https://dweb.link",
+		RootURL: "https://dweb.link", // TODO: let users configure gateway
 		Path:    "/ipfs/" + o.cid,
 		Options: options,
 	}
@@ -778,12 +789,12 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 
 	params := url.Values{}
 	if dirID != "" {
-		uuid, absPath := bucket.Split(dirID)
-		absPath = path.Join("/"+absPath, leaf)
+		uuid, absPath := splitDir(dirID)
+		absPath = path.Join(absPath, leaf)
 		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
 
-		params.Set("coluuid", uuid)
-		params.Set("colpath", absPath)
+		params.Set(colUuid, uuid)
+		params.Set(colDir, absPath)
 	}
 
 	endpoints := o.fs.viewer.Settings.UploadEndpoints
