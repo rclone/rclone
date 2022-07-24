@@ -15,3 +15,4 @@ fuzz-build.zip
 *.rej
 Thumbs.db
 __pycache__
+*.kate-swp
