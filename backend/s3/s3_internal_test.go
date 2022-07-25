@@ -12,6 +12,7 @@ import (
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/random"
+	"github.com/rclone/rclone/lib/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -84,9 +85,85 @@ func (f *Fs) InternalTestNoHead(t *testing.T) {
 
 }
 
+func (f *Fs) InternalTestVersions(t *testing.T) {
+	ctx := context.Background()
+
+	// Enable versioning for this bucket during this test
+	_, err := f.setGetVersioning(ctx, "Enabled")
+	if err != nil {
+		t.Skipf("Couldn't enable versioning: %v", err)
+	}
+	defer func() {
+		// Disable versioning for this bucket
+		_, err := f.setGetVersioning(ctx, "Suspended")
+		assert.NoError(t, err)
+	}()
+
+	// Create an object
+	const fileName = "test-versions.txt"
+	contents := random.String(100)
+	item := fstest.NewItem(fileName, contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
+	obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
+	defer func() {
+		assert.NoError(t, obj.Remove(ctx))
+	}()
+
+	// Remove it
+	assert.NoError(t, obj.Remove(ctx))
+
+	// And create it with different size and contents
+	newContents := random.String(101)
+	newItem := fstest.NewItem(fileName, newContents, fstest.Time("2002-05-06T04:05:06.499999999Z"))
+	_ = fstests.PutTestContents(ctx, t, f, &newItem, newContents, true)
+
+	// Add the expected version suffix to the old version
+	item.Path = version.Add(item.Path, obj.(*Object).lastModified)
+
+	t.Run("S3Version", func(t *testing.T) {
+		// Set --s3-versions for this test
+		f.opt.Versions = true
+		defer func() {
+			f.opt.Versions = false
+		}()
+
+		// Check listing
+		items := append([]fstest.Item{item, newItem}, fstests.InternalTestFiles...)
+		fstest.CheckListing(t, f, items)
+
+		// Read the contents
+		entries, err := f.List(ctx, "")
+		require.NoError(t, err)
+		tests := 0
+		for _, entry := range entries {
+			switch entry.Remote() {
+			case newItem.Path:
+				t.Run("ReadCurrent", func(t *testing.T) {
+					assert.Equal(t, newContents, fstests.ReadObject(ctx, t, entry.(fs.Object), -1))
+				})
+				tests++
+			case item.Path:
+				t.Run("ReadVersion", func(t *testing.T) {
+					assert.Equal(t, contents, fstests.ReadObject(ctx, t, entry.(fs.Object), -1))
+				})
+				tests++
+			}
+		}
+		assert.Equal(t, 2, tests)
+
+		// Check we can read the object with a version suffix
+		t.Run("NewObject", func(t *testing.T) {
+			o, err := f.NewObject(ctx, item.Path)
+			require.NoError(t, err)
+			require.NotNil(t, o)
+			assert.Equal(t, int64(100), o.Size(), o.Remote())
+		})
+	})
+}
+
 func (f *Fs) InternalTest(t *testing.T) {
 	t.Run("Metadata", f.InternalTestMetadata)
 	t.Run("NoHead", f.InternalTestNoHead)
+	t.Run("Versions", f.InternalTestVersions)
 }
 
 var _ fstests.InternalTester = (*Fs)(nil)
