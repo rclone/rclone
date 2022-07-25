@@ -2119,6 +2119,8 @@ type Fs struct {
 	srvRest       *rest.Client     // the rest connection to the server
 	pool          *pool.Pool       // memory pool
 	etagIsNotMD5  bool             // if set ETags are not MD5s
+	versioningMu  sync.Mutex
+	versioning    fs.Tristate // if set bucket is using versions
 }
 
 // Object describes a s3 object
@@ -3497,6 +3499,20 @@ Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
 	Opts: map[string]string{
 		"max-age": "Max age of upload to delete",
 	},
+}, {
+	Name:  "versioning",
+	Short: "Set/get versioning support for a bucket.",
+	Long: `This command sets versioning support if a parameter is
+passed and then returns the current versioning status for the bucket
+supplied.
+
+    rclone backend versioning s3:bucket # read status only
+    rclone backend versioning s3:bucket Enabled
+    rclone backend versioning s3:bucket Suspended
+
+It may return "Enabled", "Suspended" or "Unversioned". Note that once versioning
+has been enabled the status can't be set back to "Unversioned".
+`,
 }}
 
 // Command the backend to run a named command
@@ -3586,6 +3602,8 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 			}
 		}
 		return nil, f.cleanUp(ctx, maxAge)
+	case "versioning":
+		return f.setGetVersioning(ctx, arg...)
 	default:
 		return nil, fs.ErrorCommandNotFound
 	}
@@ -3699,6 +3717,70 @@ func (f *Fs) cleanUp(ctx context.Context, maxAge time.Duration) (err error) {
 		}
 	}
 	return err
+}
+
+// Read whether the bucket is versioned or not
+func (f *Fs) isVersioned(ctx context.Context) bool {
+	f.versioningMu.Lock()
+	defer f.versioningMu.Unlock()
+	if !f.versioning.Valid {
+		_, _ = f.setGetVersioning(ctx)
+		fs.Debugf(f, "bucket is versioned: %v", f.versioning.Value)
+	}
+	return f.versioning.Value
+}
+
+// Set or get bucket versioning.
+//
+// Pass no arguments to get, or pass "Enabled" or "Suspended"
+//
+// Updates f.versioning
+func (f *Fs) setGetVersioning(ctx context.Context, arg ...string) (status string, err error) {
+	if len(arg) > 1 {
+		return "", errors.New("too many arguments")
+	}
+	if f.rootBucket == "" {
+		return "", errors.New("need a bucket")
+	}
+	if len(arg) == 1 {
+		var versioning = s3.VersioningConfiguration{
+			Status: aws.String(arg[0]),
+		}
+		// Disabled is indicated by the parameter missing
+		if *versioning.Status == "Disabled" {
+			versioning.Status = aws.String("")
+		}
+		req := s3.PutBucketVersioningInput{
+			Bucket:                  &f.rootBucket,
+			VersioningConfiguration: &versioning,
+		}
+		err := f.pacer.Call(func() (bool, error) {
+			_, err = f.c.PutBucketVersioningWithContext(ctx, &req)
+			return f.shouldRetry(ctx, err)
+		})
+		if err != nil {
+			return "", err
+		}
+	}
+	req := s3.GetBucketVersioningInput{
+		Bucket: &f.rootBucket,
+	}
+	var resp *s3.GetBucketVersioningOutput
+	err = f.pacer.Call(func() (bool, error) {
+		resp, err = f.c.GetBucketVersioningWithContext(ctx, &req)
+		return f.shouldRetry(ctx, err)
+	})
+	f.versioning.Valid = true
+	f.versioning.Value = false
+	if err != nil {
+		fs.Errorf(f, "Failed to read versioning status, assuming unversioned: %v", err)
+		return "", err
+	}
+	if resp.Status == nil {
+		return "Unversioned", err
+	}
+	f.versioning.Value = true
+	return *resp.Status, err
 }
 
 // CleanUp removes all pending multipart uploads older than 24 hours
