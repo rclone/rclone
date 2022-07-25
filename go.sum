@@ -593,6 +593,8 @@ github.com/stretchr/testify v1.7.2 h1:4jaiDzPyXQvSd7D0EjG45355tLlV3VOECpq10pLC+8
 github.com/stretchr/testify v1.7.2/go.mod h1:R6va5+xMeoiuVRoj+gSkQ7d3FALtqAAGI1FQKckRals=
 github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8 h1:IGJQmLBLYBdAknj21W3JsVof0yjEXfy1Q0K3YZebDOg=
 github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8/go.mod h1:XWL4vDyd3JKmJx+hZWUVgCNmmhZ2dTBcaNDcxH465s0=
+github.com/t3rm1n4l/go-mega v0.0.0-20220725095014-c4e0c2b5debf h1:Y43S3e9P1NPs/QF4R5/SdlXj2d31540hP4Gk8VKNvDg=
+github.com/t3rm1n4l/go-mega v0.0.0-20220725095014-c4e0c2b5debf/go.mod h1:c+cGNU1qi9bO7ZF4IRMYk+KaZTNiQ/gQrSbyMmGFq1Q=
 github.com/tarm/serial v0.0.0-20180830185346-98f6abe2eb07/go.mod h1:kDXzergiv9cbyO7IOYJZWg1U88JhDg3PB6klq9Hg2pA=
 github.com/tinylib/msgp v1.0.2/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
 github.com/tklauser/go-sysconf v0.3.10 h1:IJ1AZGZRWbY8T5Vfk04D9WOA5WSejdflXxP03OUqALw=
