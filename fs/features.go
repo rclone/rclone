@@ -648,10 +648,11 @@ type ObjectsChan chan Object
 // Objects is a slice of Object~s
 type Objects []Object
 
-// ObjectPair is a pair of Objects used to describe a potential copy
+// ObjectPair is a pair of Objects used to describe a potential copy or local deletion
 // operation.
 type ObjectPair struct {
-	Src, Dst Object
+	Src, Dst      Object
+	LocalDeletion bool
 }
 
 // UnWrapFs unwraps f as much as possible and returns the base Fs

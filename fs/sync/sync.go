@@ -363,6 +363,7 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 					}
 				}
 			} else {
+				ci := fs.GetConfig(s.inCtx)
 				// If moving need to delete the files we don't need to copy
 				if s.DoMove {
 					// Delete src if no error on copy
@@ -370,6 +371,9 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 						fs.Logf(src, "Not removing source file as it is the same file as the destination")
 					} else if s.ci.IgnoreExisting {
 						fs.Debugf(src, "Not removing source file as destination file exists and --ignore-existing is set")
+					} else if s.checkFirst && ci.OrderBy != "" {
+						pair.LocalDeletion = true // transfer deletion (ensure perfect ordering)
+						ok = out.Put(s.ctx, pair)
 					} else {
 						s.processError(operations.DeleteFile(s.ctx, src))
 					}
@@ -411,7 +415,7 @@ func (s *syncCopyMove) pairCopyOrMove(ctx context.Context, in *pipe, fdst fs.Fs,
 		}
 		src := pair.Src
 		if s.DoMove {
-			_, err = operations.Move(ctx, fdst, pair.Dst, src.Remote(), src)
+			_, err = operations.MoveAndLocalDeletion(ctx, fdst, pair.Dst, src.Remote(), src, pair.LocalDeletion)
 		} else {
 			_, err = operations.Copy(ctx, fdst, pair.Dst, src.Remote(), src)
 		}

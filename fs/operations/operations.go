@@ -593,8 +593,8 @@ func SameObject(src, dst fs.Object) bool {
 	return srcPath == dstPath
 }
 
-// Move src object to dst or fdst if nil.  If dst is nil then it uses
-// remote as the name of the new object.
+// MoveAndLocalDeletion src object to dst or fdst if nil.  If dst is nil then it uses
+// remote as the name of the new object. Also, delete the local files marked in the checking process.
 //
 // Note that you must check the destination does not exist before
 // calling this and pass it as dst.  If you pass dst=nil and the
@@ -603,7 +603,7 @@ func SameObject(src, dst fs.Object) bool {
 //
 // It returns the destination object if possible.  Note that this may
 // be nil.
-func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+func MoveAndLocalDeletion(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object, localDeletion bool) (newDst fs.Object, err error) {
 	ci := fs.GetConfig(ctx)
 	tr := accounting.Stats(ctx).NewCheckingTransfer(src)
 	defer func() {
@@ -651,14 +651,30 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 			return newDst, err
 		}
 	}
-	// Move not found or didn't work so copy dst <- src
-	newDst, err = Copy(ctx, fdst, dst, remote, src)
-	if err != nil {
-		fs.Errorf(src, "Not deleting source as copy failed: %v", err)
-		return newDst, err
+	if !localDeletion {
+		// Move not found or didn't work so copy dst <- src
+		newDst, err = Copy(ctx, fdst, dst, remote, src)
+		if err != nil {
+			fs.Errorf(src, "Not deleting source as copy failed: %v", err)
+			return newDst, err
+		}
 	}
-	// Delete src if no error on copy
+	// Delete src if no error on copy or marked to deletion
 	return newDst, DeleteFile(ctx, src)
+}
+
+// Move src object to dst or fdst if nil.  If dst is nil then it uses
+// remote as the name of the new object.
+//
+// Note that you must check the destination does not exist before
+// calling this and pass it as dst.  If you pass dst=nil and the
+// destination does exist then this may create duplicates or return
+// errors.
+//
+// It returns the destination object if possible.  Note that this may
+// be nil.
+func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+	return MoveAndLocalDeletion(ctx, fdst, dst, remote, src, false)
 }
 
 // CanServerSideMove returns true if fdst support server-side moves or
