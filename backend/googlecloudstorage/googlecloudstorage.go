@@ -60,14 +60,17 @@ const (
 	minSleep                    = 10 * time.Millisecond
 )
 
-// Description of how to auth for this app
-var storageConfig = &oauth2.Config{
-	Scopes:       []string{storage.DevstorageReadWriteScope},
-	Endpoint:     google.Endpoint,
-	ClientID:     rcloneClientID,
-	ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
-	RedirectURL:  oauthutil.RedirectURL,
-}
+var (
+	// Description of how to auth for this app
+	storageConfig = &oauthutil.Config{
+		Scopes:       []string{storage.DevstorageReadWriteScope},
+		AuthURL:      google.Endpoint.AuthURL,
+		TokenURL:     google.Endpoint.TokenURL,
+		ClientID:     rcloneClientID,
+		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
+		RedirectURL:  oauthutil.RedirectURL,
+	}
+)
 
 // Register with Fs
 func init() {

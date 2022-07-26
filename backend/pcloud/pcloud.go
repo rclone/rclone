@@ -48,12 +48,10 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Scopes: nil,
-		Endpoint: oauth2.Endpoint{
-			AuthURL: "https://my.pcloud.com/oauth2/authorize",
-			// TokenURL: "https://api.pcloud.com/oauth2_token", set by updateTokenURL
-		},
+	oauthConfig = &oauthutil.Config{
+		Scopes:  nil,
+		AuthURL: "https://my.pcloud.com/oauth2/authorize",
+		// TokenURL: "https://api.pcloud.com/oauth2_token", set by updateTokenURL
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
@@ -61,8 +59,8 @@ var (
 )
 
 // Update the TokenURL with the actual hostname
-func updateTokenURL(oauthConfig *oauth2.Config, hostname string) {
-	oauthConfig.Endpoint.TokenURL = "https://" + hostname + "/oauth2_token"
+func updateTokenURL(oauthConfig *oauthutil.Config, hostname string) {
+	oauthConfig.TokenURL = "https://" + hostname + "/oauth2_token"
 }
 
 // Register with Fs
@@ -79,7 +77,7 @@ func init() {
 				fs.Errorf(nil, "Failed to read config: %v", err)
 			}
 			updateTokenURL(oauthConfig, optc.Hostname)
-			checkAuth := func(oauthConfig *oauth2.Config, auth *oauthutil.AuthResult) error {
+			checkAuth := func(oauthConfig *oauthutil.Config, auth *oauthutil.AuthResult) error {
 				if auth == nil || auth.Form == nil {
 					return errors.New("form not found in response")
 				}
