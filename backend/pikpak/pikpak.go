@@ -82,13 +82,11 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
-		Scopes: nil,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:   "https://user.mypikpak.com/v1/auth/signin",
-			TokenURL:  "https://user.mypikpak.com/v1/auth/token",
-			AuthStyle: oauth2.AuthStyleInParams,
-		},
+	oauthConfig = &oauthutil.Config{
+		Scopes:      nil,
+		AuthURL:     "https://user.mypikpak.com/v1/auth/signin",
+		TokenURL:    "https://user.mypikpak.com/v1/auth/token",
+		AuthStyle:   oauth2.AuthStyleInParams,
 		ClientID:    clientID,
 		RedirectURL: oauthutil.RedirectURL,
 	}

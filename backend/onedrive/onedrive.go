@@ -40,7 +40,6 @@ import (
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -72,7 +71,7 @@ var (
 	scopeAccessWithoutSites = fs.SpaceSepList{"Files.Read", "Files.ReadWrite", "Files.Read.All", "Files.ReadWrite.All", "offline_access"}
 
 	// Description of how to auth for this app for a business account
-	oauthConfig = &oauth2.Config{
+	oauthConfig = &oauthutil.Config{
 		Scopes:       scopeAccess,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -543,10 +542,9 @@ func Config(ctx context.Context, name string, m configmap.Mapper, config fs.Conf
 		if disableSitePermission == "true" {
 			oauthConfig.Scopes = scopeAccessWithoutSites
 		}
-		oauthConfig.Endpoint = oauth2.Endpoint{
-			AuthURL:  authEndpoint[region] + authPath,
-			TokenURL: authEndpoint[region] + tokenPath,
-		}
+		oauthConfig.TokenURL = authEndpoint[region] + tokenPath
+		oauthConfig.AuthURL = authEndpoint[region] + authPath
+
 		return oauthutil.ConfigOut("choose_type", &oauthutil.Options{
 			OAuth2Config: oauthConfig,
 		})
@@ -994,10 +992,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.DisableSitePermission {
 		oauthConfig.Scopes = scopeAccessWithoutSites
 	}
-	oauthConfig.Endpoint = oauth2.Endpoint{
-		AuthURL:  authEndpoint[opt.Region] + authPath,
-		TokenURL: authEndpoint[opt.Region] + tokenPath,
-	}
+	oauthConfig.AuthURL = authEndpoint[opt.Region] + authPath
+	oauthConfig.TokenURL = authEndpoint[opt.Region] + tokenPath
 
 	client := fshttp.NewClient(ctx)
 	root = parsePath(root)
