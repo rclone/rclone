@@ -362,6 +362,9 @@ func removeConfigID(s string) string {
 	return s
 }
 
+// InternalTestFiles is the state of the remote at the moment the internal tests are called
+var InternalTestFiles []fstest.Item
+
 // Run runs the basic integration tests for a remote using the options passed in.
 //
 // They are structured in a hierarchical way so that dependencies for the tests can be created.
@@ -1813,6 +1816,9 @@ func Run(t *testing.T, opt *Opt) {
 				}
 			})
 
+			// State of remote at the moment the internal tests are called
+			InternalTestFiles = []fstest.Item{file1, file2}
+
 			// TestObjectRemove tests Remove
 			t.Run("ObjectRemove", func(t *testing.T) {
 				skipIfNotOk(t)
@@ -1822,6 +1828,8 @@ func Run(t *testing.T, opt *Opt) {
 				require.NoError(t, err)
 				// check listing without modtime as TestPublicLink may change the modtime
 				fstest.CheckListingWithPrecision(t, f, []fstest.Item{file2}, nil, fs.ModTimeNotSupported)
+				// Show the internal tests file2 is gone
+				InternalTestFiles = []fstest.Item{file2}
 			})
 
 			// TestAbout tests the About optional interface
