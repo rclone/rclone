@@ -46,6 +46,9 @@ const (
 	// ConfigTokenURL is the config key used to store the token server endpoint
 	ConfigTokenURL = "token_url"
 
+	// ConfigClientCredentials - use OAUTH2 client credentials
+	ConfigClientCredentials = "client_credentials"
+
 	// ConfigEncoding is the config key to change the encoding for a backend
 	ConfigEncoding = "encoding"
 

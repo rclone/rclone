@@ -277,11 +277,9 @@ machines.`)
 		m.Set(configClientID, teliaseCloudClientID)
 		m.Set(configTokenURL, teliaseCloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauth2.Config{
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  teliaseCloudAuthURL,
-					TokenURL: teliaseCloudTokenURL,
-				},
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     teliaseCloudAuthURL,
+				TokenURL:    teliaseCloudTokenURL,
 				ClientID:    teliaseCloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
@@ -292,11 +290,9 @@ machines.`)
 		m.Set(configClientID, telianoCloudClientID)
 		m.Set(configTokenURL, telianoCloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauth2.Config{
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  telianoCloudAuthURL,
-					TokenURL: telianoCloudTokenURL,
-				},
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     telianoCloudAuthURL,
+				TokenURL:    telianoCloudTokenURL,
 				ClientID:    telianoCloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
@@ -307,11 +303,9 @@ machines.`)
 		m.Set(configClientID, tele2CloudClientID)
 		m.Set(configTokenURL, tele2CloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauth2.Config{
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  tele2CloudAuthURL,
-					TokenURL: tele2CloudTokenURL,
-				},
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     tele2CloudAuthURL,
+				TokenURL:    tele2CloudTokenURL,
 				ClientID:    tele2CloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
@@ -322,11 +316,9 @@ machines.`)
 		m.Set(configClientID, onlimeCloudClientID)
 		m.Set(configTokenURL, onlimeCloudTokenURL)
 		return oauthutil.ConfigOut("choose_device", &oauthutil.Options{
-			OAuth2Config: &oauth2.Config{
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  onlimeCloudAuthURL,
-					TokenURL: onlimeCloudTokenURL,
-				},
+			OAuth2Config: &oauthutil.Config{
+				AuthURL:     onlimeCloudAuthURL,
+				TokenURL:    onlimeCloudTokenURL,
 				ClientID:    onlimeCloudClientID,
 				Scopes:      []string{"openid", "jotta-default", "offline_access"},
 				RedirectURL: oauthutil.RedirectLocalhostURL,
@@ -924,19 +916,17 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 	}
 
 	baseClient := fshttp.NewClient(ctx)
-	oauthConfig := &oauth2.Config{
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  defaultTokenURL,
-			TokenURL: defaultTokenURL,
-		},
+	oauthConfig := &oauthutil.Config{
+		AuthURL:  defaultTokenURL,
+		TokenURL: defaultTokenURL,
 	}
 	if ver == configVersion {
 		oauthConfig.ClientID = defaultClientID
 		// if custom endpoints are set use them else stick with defaults
 		if tokenURL, ok := m.Get(configTokenURL); ok {
-			oauthConfig.Endpoint.TokenURL = tokenURL
+			oauthConfig.TokenURL = tokenURL
 			// jottacloud is weird. we need to use the tokenURL as authURL
-			oauthConfig.Endpoint.AuthURL = tokenURL
+			oauthConfig.AuthURL = tokenURL
 		}
 	} else if ver == legacyConfigVersion {
 		clientID, ok := m.Get(configClientID)
@@ -950,8 +940,8 @@ func getOAuthClient(ctx context.Context, name string, m configmap.Mapper) (oAuth
 		oauthConfig.ClientID = clientID
 		oauthConfig.ClientSecret = obscure.MustReveal(clientSecret)
 
-		oauthConfig.Endpoint.TokenURL = legacyTokenURL
-		oauthConfig.Endpoint.AuthURL = legacyTokenURL
+		oauthConfig.TokenURL = legacyTokenURL
+		oauthConfig.AuthURL = legacyTokenURL
 
 		// add the request filter to fix token refresh
 		if do, ok := baseClient.Transport.(interface {

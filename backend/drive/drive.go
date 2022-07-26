@@ -80,9 +80,10 @@ const (
 // Globals
 var (
 	// Description of how to auth for this app
-	driveConfig = &oauth2.Config{
+	driveConfig = &oauthutil.Config{
 		Scopes:       []string{scopePrefix + "drive"},
-		Endpoint:     google.Endpoint,
+		AuthURL:      google.Endpoint.AuthURL,
+		TokenURL:     google.Endpoint.TokenURL,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
