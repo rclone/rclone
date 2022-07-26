@@ -76,6 +76,7 @@ var osarches = []string{
 	"plan9/amd64",
 	"solaris/amd64",
 	"js/wasm",
+	"aix/ppc64"
 }
 
 // Special environment flags for a given arch
