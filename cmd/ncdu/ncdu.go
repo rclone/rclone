@@ -1,7 +1,7 @@
 // Package ncdu implements a text based user interface for exploring a remote
 
-//go:build !plan9 && !js
-// +build !plan9,!js
+//go:build !plan9 && !js && !aix
+// +build !plan9,!js, !aix
 
 package ncdu
 
