@@ -158,6 +158,20 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 			assert.Equal(t, int64(100), o.Size(), o.Remote())
 		})
 	})
+
+	t.Run("Cleanup", func(t *testing.T) {
+		require.NoError(t, f.CleanUpHidden(ctx))
+		items := append([]fstest.Item{newItem}, fstests.InternalTestFiles...)
+		fstest.CheckListing(t, f, items)
+		// Set --s3-versions for this test
+		f.opt.Versions = true
+		defer func() {
+			f.opt.Versions = false
+		}()
+		fstest.CheckListing(t, f, items)
+	})
+
+	// Purge gets tested later
 }
 
 func (f *Fs) InternalTest(t *testing.T) {
