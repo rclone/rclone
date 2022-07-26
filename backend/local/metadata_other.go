@@ -1,5 +1,5 @@
-//go:build plan9 || js
-// +build plan9 js
+//go:build plan9 || js || aix
+// +build plan9 js aix
 
 package local
 
