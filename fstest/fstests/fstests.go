@@ -294,8 +294,8 @@ func TestPutLarge(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item)
 	require.NoError(t, obj.Remove(ctx))
 }
 
-// read the contents of an object as a string
-func readObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
+// ReadObject reads the contents of an object as a string
+func ReadObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
 	what := fmt.Sprintf("readObject(%q) limit=%d, options=%+v", obj, limit, options)
 	in, err := obj.Open(ctx, options...)
 	require.NoError(t, err, what)
@@ -797,7 +797,7 @@ func Run(t *testing.T, opt *Opt) {
 			assert.NoError(t, out.Close())
 
 			obj := findObject(ctx, t, f, path)
-			assert.Equal(t, "abcdefghi", readObject(ctx, t, obj, -1), "contents of file differ")
+			assert.Equal(t, "abcdefghi", ReadObject(ctx, t, obj, -1), "contents of file differ")
 
 			assert.NoError(t, obj.Remove(ctx))
 			assert.NoError(t, f.Rmdir(ctx, "writer-at-subdir"))
@@ -1490,14 +1490,14 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectOpen", func(t *testing.T) {
 				skipIfNotOk(t)
 				obj := findObject(ctx, t, f, file1.Path)
-				assert.Equal(t, file1Contents, readObject(ctx, t, obj, -1), "contents of file1 differ")
+				assert.Equal(t, file1Contents, ReadObject(ctx, t, obj, -1), "contents of file1 differ")
 			})
 
 			// TestObjectOpenSeek tests that Open works with SeekOption
 			t.Run("ObjectOpenSeek", func(t *testing.T) {
 				skipIfNotOk(t)
 				obj := findObject(ctx, t, f, file1.Path)
-				assert.Equal(t, file1Contents[50:], readObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
+				assert.Equal(t, file1Contents[50:], ReadObject(ctx, t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
 			})
 
 			// TestObjectOpenRange tests that Open works with RangeOption
@@ -1516,7 +1516,7 @@ func Run(t *testing.T, opt *Opt) {
 					{fs.RangeOption{Start: -1, End: 20}, 80, 100}, // if start is omitted this means get the final bytes
 					// {fs.RangeOption{Start: -1, End: -1}, 0, 100}, - this seems to work but the RFC doesn't define it
 				} {
-					got := readObject(ctx, t, obj, -1, &test.ro)
+					got := ReadObject(ctx, t, obj, -1, &test.ro)
 					foundAt := strings.Index(file1Contents, got)
 					help := fmt.Sprintf("%#v failed want [%d:%d] got [%d:%d]", test.ro, test.wantStart, test.wantEnd, foundAt, foundAt+len(got))
 					assert.Equal(t, file1Contents[test.wantStart:test.wantEnd], got, help)
@@ -1527,7 +1527,7 @@ func Run(t *testing.T, opt *Opt) {
 			t.Run("ObjectPartialRead", func(t *testing.T) {
 				skipIfNotOk(t)
 				obj := findObject(ctx, t, f, file1.Path)
-				assert.Equal(t, file1Contents[:50], readObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
+				assert.Equal(t, file1Contents[:50], ReadObject(ctx, t, obj, 50), "contents of file1 differ after limited read")
 			})
 
 			// TestObjectUpdate tests that Update works
@@ -1553,7 +1553,7 @@ func Run(t *testing.T, opt *Opt) {
 				file1.Check(t, obj, f.Precision())
 
 				// check contents correct
-				assert.Equal(t, contents, readObject(ctx, t, obj, -1), "contents of updated file1 differ")
+				assert.Equal(t, contents, ReadObject(ctx, t, obj, -1), "contents of updated file1 differ")
 				file1Contents = contents
 			})
 
