@@ -560,10 +560,34 @@ it to `false`.  It is also possible to specify `--boolean=false` or
 parsed as `--boolean` and the `false` is parsed as an extra command
 line argument for rclone.
 
-Options which use TIME use the go time parser.  A duration string is a
-possibly signed sequence of decimal numbers, each with optional
-fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid
-time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+### Time or duration options {#time-option}
+
+TIME or DURATION options can be specified as a duration string or a
+time string.
+
+A duration string is a possibly signed sequence of decimal numbers,
+each with optional fraction and a unit suffix, such as "300ms",
+"-1.5h" or "2h45m". Default units are seconds or the following
+abbreviations are valid:
+
+  * `ms` - Milliseconds
+  * `s`  - Seconds
+  * `m`  - Minutes
+  * `h`  - Hours
+  * `d`  - Days
+  * `w`  - Weeks
+  * `M`  - Months
+  * `y`  - Years
+
+These can also be specified as an absolute time in the following
+formats:
+
+- RFC3339 - e.g. `2006-01-02T15:04:05Z` or `2006-01-02T15:04:05+07:00`
+- ISO8601 Date and time, local timezone - `2006-01-02T15:04:05`
+- ISO8601 Date and time, local timezone - `2006-01-02 15:04:05`
+- ISO8601 Date - `2006-01-02` (YYYY-MM-DD)
+
+### Size options {#size-option}
 
 Options which use SIZE use KiB (multiples of 1024 bytes) by default.
 However, a suffix of `B` for Byte, `K` for KiB, `M` for MiB,

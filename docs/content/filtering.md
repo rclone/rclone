@@ -677,6 +677,8 @@ Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
 E.g. `rclone ls remote: --min-size 50k` lists files on `remote:` of 50 KiB
 size or larger.
 
+See [the size option docs](/docs/#size-option) for more info.
+
 ### `--max-size` - Don't transfer any file larger than this
 
 Controls the maximum size file within the scope of an rclone command.
@@ -685,32 +687,18 @@ Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
 E.g. `rclone ls remote: --max-size 1G` lists files on `remote:` of 1 GiB
 size or smaller.
 
+See [the size option docs](/docs/#size-option) for more info.
+
 ### `--max-age` - Don't transfer any file older than this
 
 Controls the maximum age of files within the scope of an rclone command.
-Default units are seconds or the following abbreviations are valid:
-
-  * `ms` - Milliseconds
-  * `s`  - Seconds
-  * `m`  - Minutes
-  * `h`  - Hours
-  * `d`  - Days
-  * `w`  - Weeks
-  * `M`  - Months
-  * `y`  - Years
-
-`--max-age` can also be specified as an absolute time in the following
-formats:
-
-- RFC3339 - e.g. `2006-01-02T15:04:05Z` or `2006-01-02T15:04:05+07:00`
-- ISO8601 Date and time, local timezone - `2006-01-02T15:04:05`
-- ISO8601 Date and time, local timezone - `2006-01-02 15:04:05`
-- ISO8601 Date - `2006-01-02` (YYYY-MM-DD)
 
 `--max-age` applies only to files and not to directories.
 
 E.g. `rclone ls remote: --max-age 2d` lists files on `remote:` of 2 days
 old or less.
+
+See [the time option docs](/docs/#time-option) for valid formats.
 
 ### `--min-age` - Don't transfer any file younger than this
 
@@ -721,6 +709,8 @@ Controls the minimum age of files within the scope of an rclone command.
 
 E.g. `rclone ls remote: --min-age 2d` lists files on `remote:` of 2 days
 old or more.
+
+See [the time option docs](/docs/#time-option) for valid formats.
 
 ## Other flags
 
