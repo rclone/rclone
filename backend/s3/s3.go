@@ -2704,7 +2704,13 @@ func (f *Fs) getMetaDataListing(ctx context.Context, wantRemote string) (info *s
 		return nil, nil, nil
 	}
 
-	err = f.list(ctx, bucket, bucketPath, "", false, true, f.opt.Versions, false, true, func(gotRemote string, object *s3.Object, objectVersionID *string, isDirectory bool) error {
+	err = f.list(ctx, listOpt{
+		bucket:       bucket,
+		directory:    bucketPath,
+		recurse:      true,
+		withVersions: f.opt.Versions,
+		findFile:     true,
+	}, func(gotRemote string, object *s3.Object, objectVersionID *string, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
@@ -3007,25 +3013,31 @@ type listFn func(remote string, object *s3.Object, versionID *string, isDirector
 // listFn should return it to end the iteration with no errors.
 var errEndList = errors.New("end list")
 
-// list lists the objects into the function supplied from
-// the bucket and directory supplied.  The remote has prefix
-// removed from it and if addBucket is set then it adds the
-// bucket to the start.
-//
-// Set recurse to read sub directories
-//
-// if findFile is set it will look for files called (bucket, directory)
-func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBucket bool, recurse bool, withVersions bool, hidden bool, findFile bool, fn listFn) error {
-	if !findFile {
-		if prefix != "" {
-			prefix += "/"
+// list options
+type listOpt struct {
+	bucket       string // bucket to list
+	directory    string // directory with bucket
+	prefix       string // prefix to remove from listing
+	addBucket    bool   // if set, the bucket is added to the start of the remote
+	recurse      bool   // if set, recurse to read sub directories
+	withVersions bool   // if set, versions are produced
+	hidden       bool   // if set, return delete markers as objects with size == isDeleteMarker
+	findFile     bool   // if set, it will look for files called (bucket, directory)
+}
+
+// list lists the objects into the function supplied with the opt
+// supplied.
+func (f *Fs) list(ctx context.Context, opt listOpt, fn listFn) error {
+	if !opt.findFile {
+		if opt.prefix != "" {
+			opt.prefix += "/"
 		}
-		if directory != "" {
-			directory += "/"
+		if opt.directory != "" {
+			opt.directory += "/"
 		}
 	}
 	delimiter := ""
-	if !recurse {
+	if !opt.recurse {
 		delimiter = "/"
 	}
 	// URL encode the listings so we can use control characters in object names
@@ -3045,9 +3057,9 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	// XML Syntax error is detected.
 	urlEncodeListings := f.opt.ListURLEncode.Value
 	req := s3.ListObjectsV2Input{
-		Bucket:    &bucket,
+		Bucket:    &opt.bucket,
 		Delimiter: &delimiter,
-		Prefix:    &directory,
+		Prefix:    &opt.directory,
 		MaxKeys:   &f.opt.ListChunk,
 	}
 	if f.opt.RequesterPays {
@@ -3055,7 +3067,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 	}
 	var listBucket bucketLister
 	switch {
-	case withVersions:
+	case opt.withVersions:
 		listBucket = f.newVersionsList(&req)
 	case f.opt.ListVersion == 1:
 		listBucket = f.newV1List(&req)
@@ -3068,7 +3080,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 		var versionIDs []*string
 		err = f.pacer.Call(func() (bool, error) {
 			listBucket.URLEncodeListings(urlEncodeListings)
-			resp, versionIDs, err = listBucket.List(ctx, hidden)
+			resp, versionIDs, err = listBucket.List(ctx, opt.hidden)
 			if err != nil && !urlEncodeListings {
 				if awsErr, ok := err.(awserr.RequestFailure); ok {
 					if origErr := awsErr.OrigErr(); origErr != nil {
@@ -3095,14 +3107,14 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				if reqErr, ok := err.(awserr.RequestFailure); ok {
 					// 301 if wrong region for bucket
 					if reqErr.StatusCode() == http.StatusMovedPermanently {
-						fs.Errorf(f, "Can't change region for bucket %q with no bucket specified", bucket)
+						fs.Errorf(f, "Can't change region for bucket %q with no bucket specified", opt.bucket)
 						return nil
 					}
 				}
 			}
 			return err
 		}
-		if !recurse {
+		if !opt.recurse {
 			for _, commonPrefix := range resp.CommonPrefixes {
 				if commonPrefix.Prefix == nil {
 					fs.Logf(f, "Nil common prefix received")
@@ -3117,13 +3129,13 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 					}
 				}
 				remote = f.opt.Enc.ToStandardPath(remote)
-				if !strings.HasPrefix(remote, prefix) {
+				if !strings.HasPrefix(remote, opt.prefix) {
 					fs.Logf(f, "Odd name received %q", remote)
 					continue
 				}
-				remote = remote[len(prefix):]
-				if addBucket {
-					remote = path.Join(bucket, remote)
+				remote = remote[len(opt.prefix):]
+				if opt.addBucket {
+					remote = path.Join(opt.bucket, remote)
 				}
 				remote = strings.TrimSuffix(remote, "/")
 				err = fn(remote, &s3.Object{Key: &remote}, nil, true)
@@ -3145,14 +3157,14 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				}
 			}
 			remote = f.opt.Enc.ToStandardPath(remote)
-			if !strings.HasPrefix(remote, prefix) {
+			if !strings.HasPrefix(remote, opt.prefix) {
 				fs.Logf(f, "Odd name received %q", remote)
 				continue
 			}
-			remote = remote[len(prefix):]
+			remote = remote[len(opt.prefix):]
 			isDirectory := remote == "" || strings.HasSuffix(remote, "/")
-			if addBucket {
-				remote = path.Join(bucket, remote)
+			if opt.addBucket {
+				remote = path.Join(opt.bucket, remote)
 			}
 			// is this a directory marker?
 			if isDirectory && object.Size != nil && *object.Size == 0 {
@@ -3197,7 +3209,13 @@ func (f *Fs) itemToDirEntry(ctx context.Context, remote string, object *s3.Objec
 // listDir lists files and directories to out
 func (f *Fs) listDir(ctx context.Context, bucket, directory, prefix string, addBucket bool) (entries fs.DirEntries, err error) {
 	// List the objects and directories
-	err = f.list(ctx, bucket, directory, prefix, addBucket, false, f.opt.Versions, false, false, func(remote string, object *s3.Object, versionID *string, isDirectory bool) error {
+	err = f.list(ctx, listOpt{
+		bucket:       bucket,
+		directory:    directory,
+		prefix:       prefix,
+		addBucket:    addBucket,
+		withVersions: f.opt.Versions,
+	}, func(remote string, object *s3.Object, versionID *string, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(ctx, remote, object, versionID, isDirectory)
 		if err != nil {
 			return err
@@ -3275,7 +3293,14 @@ func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (
 	bucket, directory := f.split(dir)
 	list := walk.NewListRHelper(callback)
 	listR := func(bucket, directory, prefix string, addBucket bool) error {
-		return f.list(ctx, bucket, directory, prefix, addBucket, true, f.opt.Versions, false, false, func(remote string, object *s3.Object, versionID *string, isDirectory bool) error {
+		return f.list(ctx, listOpt{
+			bucket:       bucket,
+			directory:    directory,
+			prefix:       prefix,
+			addBucket:    addBucket,
+			recurse:      true,
+			withVersions: f.opt.Versions,
+		}, func(remote string, object *s3.Object, versionID *string, isDirectory bool) error {
 			entry, err := f.itemToDirEntry(ctx, remote, object, versionID, isDirectory)
 			if err != nil {
 				return err
@@ -4077,7 +4102,15 @@ func (f *Fs) purge(ctx context.Context, dir string, oldOnly bool) error {
 	go func() {
 		delErr <- operations.DeleteFiles(ctx, delChan)
 	}()
-	checkErr(f.list(ctx, bucket, directory, f.rootDirectory, f.rootBucket == "", true, versioned, true, false, func(remote string, object *s3.Object, versionID *string, isDirectory bool) error {
+	checkErr(f.list(ctx, listOpt{
+		bucket:       bucket,
+		directory:    directory,
+		prefix:       f.rootDirectory,
+		addBucket:    f.rootBucket == "",
+		recurse:      true,
+		withVersions: versioned,
+		hidden:       true,
+	}, func(remote string, object *s3.Object, versionID *string, isDirectory bool) error {
 		if isDirectory {
 			return nil
 		}
