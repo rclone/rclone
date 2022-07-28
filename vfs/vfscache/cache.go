@@ -739,27 +739,17 @@ func (c *Cache) clean(kicked bool) {
 	oldItems, oldUsed := len(c.item), fs.SizeSuffix(c.used)
 	c.mu.Unlock()
 
-	// loop cleaning the cache until we reach below cache quota
-	for {
-		// Remove any files that are over age
-		c.purgeOld(c.opt.CacheMaxAge)
+	// Remove any files that are over age
+	c.purgeOld(c.opt.CacheMaxAge)
 
-		if int64(c.opt.CacheMaxSize) <= 0 {
-			break
-		}
-
-		// Now remove files not in use until cache size is below quota starting from the
-		// oldest first
+	// If have a maximum cache size...
+	if int64(c.opt.CacheMaxSize) > 0 {
+		// Remove files not in use until cache size is below quota starting from the oldest first
 		c.purgeOverQuota(int64(c.opt.CacheMaxSize))
 
 		// Remove cache files that are not dirty if we are still above the max cache size
 		c.purgeClean(int64(c.opt.CacheMaxSize))
 		c.retryFailedResets()
-
-		used := c.updateUsed()
-		if used <= int64(c.opt.CacheMaxSize) && len(c.errItems) == 0 {
-			break
-		}
 	}
 
 	// Was kicked?
