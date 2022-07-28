@@ -512,9 +512,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	}
 
 	uuid, collectionDir := splitDir(dirID)
-	var collectionContent []Content
 	var response *http.Response
-
 	params := url.Values{}
 	params.Set(colUuid, uuid)
 	params.Set(colDir, collectionDir)
@@ -531,28 +529,21 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return nil, err
 	}
 
-	if entries == nil {
-		return fs.DirEntries{}, nil
-	}
-
 	for _, item := range items {
 		if item.isDir() {
 			remote := path.Join(dir, item.Name)
 			id := path.Join(uuid, item.Name)
-			f.dirCache.Put(remote, id)
+			//f.dirCache.Put(remote, id)
 			d := fs.NewDir(remote, time.Now()).SetID(id)
 			entries = append(entries, d)
 		} else {
-			for _, content := range collectionContent {
-				if content.ID == item.ContentID {
-					o, err := f.newObjectWithInfo(ctx, path.Join(dir, content.Name), &content)
-					if err != nil {
-						return nil, err
-					}
-					entries = append(entries, o)
-					break
-				}
+			dir := item.Dir[1:]
+			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), &Content{ID: item.ContentID, Cid: item.Cid, Size: item.Size, UpdatedAt: item.UpdatedAt})
+			if err != nil {
+				return nil, err
 			}
+			entries = append(entries, o)
+			break
 		}
 	}
 	return entries, nil
@@ -714,8 +705,8 @@ func (o *Object) readStats(ctx context.Context) error {
 			return fs.ErrorObjectNotFound
 		}
 
-		_, file := path.Split(o.Remote())
-		collectionDir := "/" + o.Remote()
+		dir, file := path.Split(o.Remote())
+		collectionDir := "/" + dir
 
 		params := url.Values{}
 		params.Set(colUuid, dirID)
@@ -790,7 +781,6 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 	params := url.Values{}
 	if dirID != "" {
 		uuid, absPath := splitDir(dirID)
-		absPath = path.Join(absPath, leaf)
 		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
 
 		params.Set(colUuid, uuid)
