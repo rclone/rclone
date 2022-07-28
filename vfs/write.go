@@ -16,16 +16,16 @@ type WriteFileHandle struct {
 	baseHandle
 	mu          sync.Mutex
 	cond        sync.Cond // cond lock for out of sequence writes
-	closed      bool       // set if handle has been closed
 	remote      string
 	pipeWriter  *io.PipeWriter
 	o           fs.Object
 	result      chan error
 	file        *File
-	writeCalled bool // set the first time Write() is called
 	offset      int64
-	opened      bool
 	flags       int
+	closed      bool // set if handle has been closed
+	writeCalled bool // set the first time Write() is called
+	opened      bool
 	truncated   bool
 }
 

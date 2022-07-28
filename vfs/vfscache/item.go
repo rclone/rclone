@@ -63,10 +63,10 @@ type Item struct {
 	downloaders     *downloaders.Downloaders // a record of the downloaders in action - may be nil
 	o               fs.Object                // object we are caching - may be nil
 	fd              *os.File                 // handle we are using to read and write to the file
-	modified        bool                     // set if the file has been modified since the last Open
 	info            Info                     // info about the file to persist to backing store
 	writeBackID     writeback.Handle         // id of any writebacks in progress
 	pendingAccesses int                      // number of threads - cache reset not allowed if not zero
+	modified        bool                     // set if the file has been modified since the last Open
 	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
 }
 

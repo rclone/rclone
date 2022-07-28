@@ -21,18 +21,18 @@ type ReadFileHandle struct {
 	done        func(ctx context.Context, err error)
 	mu          sync.Mutex
 	cond        sync.Cond // cond lock for out of sequence reads
-	closed      bool       // set if handle has been closed
 	r           *accounting.Account
-	readCalled  bool  // set if read has been called
 	size        int64 // size of the object (0 for unknown length)
 	offset      int64 // offset of read of o
 	roffset     int64 // offset of Read() calls
-	noSeek      bool
-	sizeUnknown bool // set if size of source is not known
 	file        *File
 	hash        *hash.MultiHasher
-	opened      bool
 	remote      string
+	closed      bool // set if handle has been closed
+	readCalled  bool // set if read has been called
+	noSeek      bool
+	sizeUnknown bool // set if size of source is not known
+	opened      bool
 }
 
 // Check interfaces
