@@ -1,6 +1,8 @@
 // Package s3 provides an interface to Amazon S3 oject storage
 package s3
 
+//go:generate go run gen_setfrom.go -o setfrom.go
+
 import (
 	"bytes"
 	"context"
@@ -54,7 +56,6 @@ import (
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
-	"github.com/rclone/rclone/lib/structs"
 	"github.com/rclone/rclone/lib/version"
 	"golang.org/x/sync/errgroup"
 )
@@ -2866,7 +2867,8 @@ func (f *Fs) newV1List(req *s3.ListObjectsV2Input) bucketLister {
 		f: f,
 	}
 	// Convert v2 req into v1 req
-	structs.SetFrom(&l.req, req)
+	//structs.SetFrom(&l.req, req)
+	setFrom_s3ListObjectsInput_s3ListObjectsV2Input(&l.req, req)
 	return l
 }
 
@@ -2898,7 +2900,8 @@ func (ls *v1List) List(ctx context.Context) (resp *s3.ListObjectsV2Output, versi
 
 	// convert v1 resp into v2 resp
 	resp = new(s3.ListObjectsV2Output)
-	structs.SetFrom(resp, respv1)
+	//structs.SetFrom(resp, respv1)
+	setFrom_s3ListObjectsV2Output_s3ListObjectsOutput(resp, respv1)
 
 	return resp, nil, nil
 }
@@ -2961,7 +2964,8 @@ func (f *Fs) newVersionsList(req *s3.ListObjectsV2Input, hidden bool, versionAt 
 		hidden:         hidden,
 	}
 	// Convert v2 req into withVersions req
-	structs.SetFrom(&l.req, req)
+	//structs.SetFrom(&l.req, req)
+	setFrom_s3ListObjectVersionsInput_s3ListObjectsV2Input(&l.req, req)
 	return l
 }
 
@@ -3011,7 +3015,8 @@ func mergeDeleteMarkers(oldVersions []*s3.ObjectVersion, deleteMarkers []*s3.Del
 	newVersions = make([]*s3.ObjectVersion, 0, len(oldVersions)+len(deleteMarkers))
 	for _, deleteMarker := range deleteMarkers {
 		var obj = new(s3.ObjectVersion)
-		structs.SetFrom(obj, deleteMarker)
+		//structs.SetFrom(obj, deleteMarker)
+		setFrom_s3ObjectVersion_s3DeleteMarkerEntry(obj, deleteMarker)
 		obj.Size = isDeleteMarker
 		for len(oldVersions) > 0 && versionLess(oldVersions[0], obj) {
 			newVersions = append(newVersions, oldVersions[0])
@@ -3045,7 +3050,8 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 
 	// convert Versions resp into v2 resp
 	resp = new(s3.ListObjectsV2Output)
-	structs.SetFrom(resp, respVersions)
+	//structs.SetFrom(resp, respVersions)
+	setFrom_s3ListObjectsV2Output_s3ListObjectVersionsOutput(resp, respVersions)
 
 	// Merge in delete Markers as s3.ObjectVersion if we need them
 	if ls.hidden || ls.usingVersionAt {
@@ -3074,7 +3080,8 @@ func (ls *versionsList) List(ctx context.Context) (resp *s3.ListObjectsV2Output,
 			continue
 		}
 		var obj = new(s3.Object)
-		structs.SetFrom(obj, objVersion)
+		//structs.SetFrom(obj, objVersion)
+		setFrom_s3Object_s3ObjectVersion(obj, objVersion)
 		// Adjust the file names
 		if !ls.usingVersionAt && !aws.BoolValue(objVersion.IsLatest) {
 			if obj.Key != nil && objVersion.LastModified != nil {
@@ -3611,7 +3618,8 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	req := &s3.CreateMultipartUploadInput{}
 
 	// Fill in the request from the head info
-	structs.SetFrom(req, info)
+	//structs.SetFrom(req, info)
+	setFrom_s3CreateMultipartUploadInput_s3HeadObjectOutput(req, info)
 
 	// If copy metadata was set then set the Metadata to that read
 	// from the head request
@@ -3620,7 +3628,8 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 	}
 
 	// Overwrite any from the copyReq
-	structs.SetFrom(req, copyReq)
+	//structs.SetFrom(req, copyReq)
+	setFrom_s3CreateMultipartUploadInput_s3CopyObjectInput(req, copyReq)
 
 	req.Bucket = &dstBucket
 	req.Key = &dstPath
@@ -3660,7 +3669,8 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 		if err := f.pacer.Call(func() (bool, error) {
 			partNum := partNum
 			uploadPartReq := &s3.UploadPartCopyInput{}
-			structs.SetFrom(uploadPartReq, copyReq)
+			//structs.SetFrom(uploadPartReq, copyReq)
+			setFrom_s3UploadPartCopyInput_s3CopyObjectInput(uploadPartReq, copyReq)
 			uploadPartReq.Bucket = &dstBucket
 			uploadPartReq.Key = &dstPath
 			uploadPartReq.PartNumber = &partNum
@@ -4632,7 +4642,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		}
 	}
 	var head s3.HeadObjectOutput
-	structs.SetFrom(&head, resp)
+	//structs.SetFrom(&head, resp)
+	setFrom_s3HeadObjectOutput_s3GetObjectOutput(&head, resp)
 	head.ContentLength = size
 	o.setMetaData(&head)
 	return resp.Body, nil
@@ -4675,7 +4686,8 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	memPool := f.getMemoryPool(int64(partSize))
 
 	var mReq s3.CreateMultipartUploadInput
-	structs.SetFrom(&mReq, req)
+	//structs.SetFrom(&mReq, req)
+	setFrom_s3CreateMultipartUploadInput_s3PutObjectInput(&mReq, req)
 	var cout *s3.CreateMultipartUploadOutput
 	err = f.pacer.Call(func() (bool, error) {
 		var err error
@@ -5144,7 +5156,8 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	// uploaded properly. If size < 0 then we need to do the HEAD.
 	if o.fs.opt.NoHead && size >= 0 {
 		var head s3.HeadObjectOutput
-		structs.SetFrom(&head, &req)
+		//structs.SetFrom(&head, &req)
+		setFrom_s3HeadObjectOutput_s3PutObjectInput(&head, &req)
 		head.ETag = &md5sumHex // doesn't matter quotes are misssing
 		head.ContentLength = &size
 		// If we have done a single part PUT request then we can read these
