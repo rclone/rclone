@@ -52,7 +52,7 @@ type Cache struct {
 	avFn       AddVirtualFn         // if set, can be called to add dir entries
 
 	mu            sync.Mutex       // protects the following variables
-	cond          *sync.Cond       // cond lock for synchronous cache cleaning
+	cond          sync.Cond        // cond lock for synchronous cache cleaning
 	item          map[string]*Item // files/directories in the cache
 	errItems      map[string]error // items in error state
 	used          int64            // total size of files in the cache
@@ -139,7 +139,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 
 	// Create a channel for cleaner to be kicked upon out of space con
 	c.kick = make(chan struct{}, 1)
-	c.cond = sync.NewCond(&c.mu)
+	c.cond = sync.Cond{L: &c.mu}
 
 	go c.cleaner(ctx)
 

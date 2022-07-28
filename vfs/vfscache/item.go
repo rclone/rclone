@@ -57,7 +57,7 @@ type Item struct {
 	// read only
 	c               *Cache                   // cache this is part of
 	mu              sync.Mutex               // protect the variables
-	cond            *sync.Cond               // synchronize with cache cleaner
+	cond            sync.Cond                // synchronize with cache cleaner
 	name            string                   // name in the VFS
 	opens           int                      // number of times file is open
 	downloaders     *downloaders.Downloaders // a record of the downloaders in action - may be nil
@@ -138,7 +138,7 @@ func newItem(c *Cache, name string) (item *Item) {
 			ATime:   now,
 		},
 	}
-	item.cond = sync.NewCond(&item.mu)
+	item.cond = sync.Cond{L: &item.mu}
 	// check the cache file exists
 	osPath := c.toOSPath(name)
 	fi, statErr := os.Stat(osPath)

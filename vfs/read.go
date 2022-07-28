@@ -20,7 +20,7 @@ type ReadFileHandle struct {
 	baseHandle
 	done        func(ctx context.Context, err error)
 	mu          sync.Mutex
-	cond        *sync.Cond // cond lock for out of sequence reads
+	cond        sync.Cond // cond lock for out of sequence reads
 	closed      bool       // set if handle has been closed
 	r           *accounting.Account
 	readCalled  bool  // set if read has been called
@@ -63,7 +63,7 @@ func newReadFileHandle(f *File) (*ReadFileHandle, error) {
 		size:        nonNegative(o.Size()),
 		sizeUnknown: o.Size() < 0,
 	}
-	fh.cond = sync.NewCond(&fh.mu)
+	fh.cond = sync.Cond{L: &fh.mu}
 	return fh, nil
 }
 
@@ -267,7 +267,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 		maxBuf = len(p)
 	}
 	if gap := off - fh.offset; gap > 0 && gap < int64(8*maxBuf) {
-		waitSequential("read", fh.remote, fh.cond, fh.file.VFS().Opt.ReadWait, &fh.offset, off)
+		waitSequential("read", fh.remote, &fh.cond, fh.file.VFS().Opt.ReadWait, &fh.offset, off)
 	}
 	doSeek := off != fh.offset
 	if doSeek && fh.noSeek {
