@@ -1697,6 +1697,9 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 		if size > 0 {
 			// if size is known, check if next chunk is final
 			appendArg.Close = uint64(size)-in.BytesRead() <= uint64(chunkSize)
+			if in.BytesRead() > uint64(size) {
+				return nil, fmt.Errorf("expected %d bytes in input, but have read %d so far", size, in.BytesRead())
+			}
 		} else {
 			// if size is unknown, upload as long as we can read full chunks from the reader
 			appendArg.Close = in.BytesRead()-cursor.Offset < uint64(chunkSize)
