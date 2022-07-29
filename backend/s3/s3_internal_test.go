@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/md5"
 	"fmt"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/rclone/rclone/lib/random"
@@ -29,9 +31,15 @@ func gz(t *testing.T, s string) string {
 	return buf.String()
 }
 
+func md5sum(t *testing.T, s string) string {
+	hash := md5.Sum([]byte(s))
+	return fmt.Sprintf("%x", hash)
+}
+
 func (f *Fs) InternalTestMetadata(t *testing.T) {
 	ctx := context.Background()
-	contents := gz(t, random.String(1000))
+	original := random.String(1000)
+	contents := gz(t, original)
 
 	item := fstest.NewItem("test-metadata", contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
 	btime := time.Now()
@@ -68,6 +76,31 @@ func (f *Fs) InternalTestMetadata(t *testing.T) {
 			assert.Equal(t, v, got, k)
 		}
 	}
+
+	t.Run("GzipEncoding", func(t *testing.T) {
+		// Test that the gziped file we uploaded can be
+		// downloaded with and without decompression
+		checkDownload := func(wantContents string, wantSize int64, wantHash string) {
+			gotContents := fstests.ReadObject(ctx, t, o, -1)
+			assert.Equal(t, wantContents, gotContents)
+			assert.Equal(t, wantSize, o.Size())
+			gotHash, err := o.Hash(ctx, hash.MD5)
+			require.NoError(t, err)
+			assert.Equal(t, wantHash, gotHash)
+		}
+
+		t.Run("NoDecompress", func(t *testing.T) {
+			checkDownload(contents, int64(len(contents)), md5sum(t, contents))
+		})
+		t.Run("Decompress", func(t *testing.T) {
+			f.opt.Decompress = true
+			defer func() {
+				f.opt.Decompress = false
+			}()
+			checkDownload(original, -1, "")
+		})
+
+	})
 }
 
 func (f *Fs) InternalTestNoHead(t *testing.T) {

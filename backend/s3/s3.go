@@ -2004,6 +2004,19 @@ See [the time option docs](/docs/#time-option) for valid formats.
 `,
 			Default:  fs.Time{},
 			Advanced: true,
+		}, {
+			Name: "decompress",
+			Help: `If set this will decompress gzip encoded objects.
+
+It is possible to upload objects to S3 with "Content-Encoding: gzip"
+set. Normally rclone will download these files files as compressed objects.
+
+If this flag is set then rclone will decompress these files with
+"Content-Encoding: gzip" as they are received. This means that rclone
+can't check the size and hash but the file contents will be decompressed.
+`,
+			Advanced: true,
+			Default:  false,
 		},
 		}})
 }
@@ -2128,28 +2141,30 @@ type Options struct {
 	UsePresignedRequest   bool                 `config:"use_presigned_request"`
 	Versions              bool                 `config:"versions"`
 	VersionAt             fs.Time              `config:"version_at"`
+	Decompress            bool                 `config:"decompress"`
 }
 
 // Fs represents a remote s3 server
 type Fs struct {
-	name          string           // the name of the remote
-	root          string           // root of the bucket - ignore all objects above this
-	opt           Options          // parsed options
-	ci            *fs.ConfigInfo   // global config
-	ctx           context.Context  // global context for reading config
-	features      *fs.Features     // optional features
-	c             *s3.S3           // the connection to the s3 server
-	ses           *session.Session // the s3 session
-	rootBucket    string           // bucket part of root (if any)
-	rootDirectory string           // directory part of root (if any)
-	cache         *bucket.Cache    // cache for bucket creation status
-	pacer         *fs.Pacer        // To pace the API calls
-	srv           *http.Client     // a plain http client
-	srvRest       *rest.Client     // the rest connection to the server
-	pool          *pool.Pool       // memory pool
-	etagIsNotMD5  bool             // if set ETags are not MD5s
-	versioningMu  sync.Mutex
-	versioning    fs.Tristate // if set bucket is using versions
+	name           string           // the name of the remote
+	root           string           // root of the bucket - ignore all objects above this
+	opt            Options          // parsed options
+	ci             *fs.ConfigInfo   // global config
+	ctx            context.Context  // global context for reading config
+	features       *fs.Features     // optional features
+	c              *s3.S3           // the connection to the s3 server
+	ses            *session.Session // the s3 session
+	rootBucket     string           // bucket part of root (if any)
+	rootDirectory  string           // directory part of root (if any)
+	cache          *bucket.Cache    // cache for bucket creation status
+	pacer          *fs.Pacer        // To pace the API calls
+	srv            *http.Client     // a plain http client
+	srvRest        *rest.Client     // the rest connection to the server
+	pool           *pool.Pool       // memory pool
+	etagIsNotMD5   bool             // if set ETags are not MD5s
+	versioningMu   sync.Mutex
+	versioning     fs.Tristate // if set bucket is using versions
+	warnCompressed sync.Once   // warn once about compressed files
 }
 
 // Object describes a s3 object
@@ -4318,6 +4333,10 @@ func (o *Object) Hash(ctx context.Context, t hash.Type) (string, error) {
 	if t != hash.MD5 {
 		return "", hash.ErrUnsupported
 	}
+	// If decompressing, erase the hash
+	if o.bytes < 0 {
+		return "", nil
+	}
 	// If we haven't got an MD5, then check the metadata
 	if o.md5 == "" {
 		err := o.readMetaData(ctx)
@@ -4439,6 +4458,12 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 	o.contentDisposition = resp.ContentDisposition
 	o.contentEncoding = resp.ContentEncoding
 	o.contentLanguage = resp.ContentLanguage
+
+	// If decompressing then size and md5sum are unknown
+	if o.fs.opt.Decompress && aws.StringValue(o.contentEncoding) == "gzip" {
+		o.bytes = -1
+		o.md5 = ""
+	}
 }
 
 // ModTime returns the modification time of the object
@@ -4596,6 +4621,11 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	}
 	httpReq, resp := o.fs.c.GetObjectRequest(&req)
 	fs.FixRangeOption(options, o.bytes)
+
+	// Override the automatic decompression in the transport to
+	// download compressed files as-is
+	httpReq.HTTPRequest.Header.Set("Accept-Encoding", "gzip")
+
 	for _, option := range options {
 		switch option.(type) {
 		case *fs.RangeOption, *fs.SeekOption:
@@ -4646,6 +4676,17 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	setFrom_s3HeadObjectOutput_s3GetObjectOutput(&head, resp)
 	head.ContentLength = size
 	o.setMetaData(&head)
+
+	// Decompress body if necessary
+	if aws.StringValue(resp.ContentEncoding) == "gzip" {
+		if o.fs.opt.Decompress {
+			return readers.NewGzipReader(resp.Body)
+		}
+		o.fs.warnCompressed.Do(func() {
+			fs.Logf(o, "Not decompressing 'Content-Encoding: gzip' compressed file. Use --s3-decompress to override")
+		})
+	}
+
 	return resp.Body, nil
 }
 
