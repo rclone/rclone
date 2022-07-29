@@ -48,6 +48,7 @@ type StatsInfo struct {
 	renameQueue       int
 	renameQueueSize   int64
 	deletes           int64
+	deletesSize       int64
 	deletedDirs       int64
 	inProgress        *inProgress
 	startedTransfers  []*Transfer   // currently active transfers
@@ -582,6 +583,14 @@ func (s *StatsInfo) Deletes(deletes int64) int64 {
 	defer s.mu.Unlock()
 	s.deletes += deletes
 	return s.deletes
+}
+
+// DeletesSize updates the stats for deletes size
+func (s *StatsInfo) DeletesSize(deletesSize int64) int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.deletesSize += deletesSize
+	return s.deletesSize
 }
 
 // DeletedDirs updates the stats for deletedDirs
