@@ -331,11 +331,17 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src)
 		// Check to see if can store this
 		if src.Storable() {
-			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
-			if err != nil {
-				s.processError(err)
+			needTransfer := operations.NeedTransfer(s.ctx, pair.Dst, pair.Src)
+			if needTransfer {
+				NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
+				if err != nil {
+					s.processError(err)
+				}
+				if NoNeedTransfer {
+					needTransfer = false
+				}
 			}
-			if !NoNeedTransfer && operations.NeedTransfer(s.ctx, pair.Dst, pair.Src) {
+			if needTransfer {
 				// If files are treated as immutable, fail if destination exists and does not match
 				if s.ci.Immutable && pair.Dst != nil {
 					err := fs.CountError(fserrors.NoRetryError(fs.ErrorImmutableModified))
