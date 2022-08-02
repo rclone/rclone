@@ -191,7 +191,7 @@ kill %1
 ## Install from source
 
 Make sure you have git and [Go](https://golang.org/) installed.
-Go version 1.16 or newer is required, latest release is recommended.
+Go version 1.17 or newer is required, latest release is recommended.
 You can get it from your package manager, or download it from
 [golang.org/dl](https://golang.org/dl/). Then you can run the following:
 

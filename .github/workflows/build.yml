@@ -25,12 +25,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.16', 'go1.17']
+        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.17', 'go1.18']
 
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '1.18.x'
+            go: '1.19.x'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -41,14 +41,14 @@ jobs:
 
           - job_name: linux_386
             os: ubuntu-latest
-            go: '1.18.x'
+            go: '1.19.x'
             goarch: 386
             gotags: cmount
             quicktest: true
 
           - job_name: mac_amd64
             os: macos-11
-            go: '1.18.x'
+            go: '1.19.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -57,14 +57,14 @@ jobs:
 
           - job_name: mac_arm64
             os: macos-11
-            go: '1.18.x'
+            go: '1.19.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
           - job_name: windows
             os: windows-latest
-            go: '1.18.x'
+            go: '1.19.x'
             gotags: cmount
             cgo: '0'
             build_flags: '-include "^windows/"'
@@ -74,20 +74,20 @@ jobs:
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '1.18.x'
+            go: '1.19.x'
             build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
 
-          - job_name: go1.16
-            os: ubuntu-latest
-            go: '1.16.x'
-            quicktest: true
-            racequicktest: true
-
           - job_name: go1.17
             os: ubuntu-latest
             go: '1.17.x'
+            quicktest: true
+            racequicktest: true
+
+          - job_name: go1.18
+            os: ubuntu-latest
+            go: '1.18.x'
             quicktest: true
             racequicktest: true
 
@@ -250,7 +250,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v1
         with:
-          go-version: 1.18.x
+          go-version: 1.19.x
 
       - name: Go module cache
         uses: actions/cache@v2
