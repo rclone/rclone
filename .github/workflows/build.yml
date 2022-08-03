@@ -252,10 +252,6 @@ jobs:
         with:
           go-version: 1.18.x
 
-      # Upgrade together with Go version. Using a GitHub-provided version saves around 2 minutes.
-      - name: Force NDK version
-        run: echo "y" | sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;23.1.7779620" | grep -v = || true
-
       - name: Go module cache
         uses: actions/cache@v2
         with:
@@ -278,27 +274,29 @@ jobs:
           go install golang.org/x/mobile/cmd/gobind@latest
           go install golang.org/x/mobile/cmd/gomobile@latest
           env PATH=$PATH:~/go/bin gomobile init
+          echo "RCLONE_NDK_VERSION=21" >> $GITHUB_ENV
 
       - name: arm-v7a gomobile build
-        run: env PATH=$PATH:~/go/bin gomobile bind -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile
+        run: env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile
 
       - name: arm-v7a Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_HOME/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=arm' >> $GITHUB_ENV
           echo 'GOARM=7' >> $GITHUB_ENV
           echo 'CGO_ENABLED=1' >> $GITHUB_ENV
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
       - name: arm-v7a build
-        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-16-armv7a .
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-armv7a .
 
       - name: arm64-v8a Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_HOME/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=arm64' >> $GITHUB_ENV
@@ -306,12 +304,12 @@ jobs:
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
       - name: arm64-v8a build
-        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-21-armv8a .
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-armv8a .
 
       - name: x86 Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_HOME/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android16-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=386' >> $GITHUB_ENV
@@ -319,12 +317,12 @@ jobs:
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
       - name: x86 build
-        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-16-x86 .
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-x86 .
 
       - name: x64 Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_HOME/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=amd64' >> $GITHUB_ENV
@@ -332,7 +330,7 @@ jobs:
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
       - name: x64 build
-        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-21-x64 .
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-x64 .
 
       - name: Upload artifacts
         run: |
