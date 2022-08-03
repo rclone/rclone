@@ -419,6 +419,62 @@ func TestDelete(t *testing.T) {
 	r.CheckRemoteItems(t, file3)
 }
 
+func TestMaxDelete(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	accounting.GlobalStats().ResetCounters()
+	ci.MaxDelete = 2
+	defer r.Finalise()
+	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
+	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
+	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	r.CheckRemoteItems(t, file1, file2, file3)
+	err := operations.Delete(ctx, r.Fremote)
+
+	require.Error(t, err)
+	objects, _, _, err := operations.Count(ctx, r.Fremote)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), objects)
+}
+
+// TestMaxDeleteSizeLargeFile one of the files is larger than allowed
+func TestMaxDeleteSizeLargeFile(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	accounting.GlobalStats().ResetCounters()
+	ci.MaxDeleteSize = 70
+	defer r.Finalise()
+	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
+	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
+	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	r.CheckRemoteItems(t, file1, file2, file3)
+
+	err := operations.Delete(ctx, r.Fremote)
+	require.Error(t, err)
+	r.CheckRemoteItems(t, file3)
+}
+
+func TestMaxDeleteSize(t *testing.T) {
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	r := fstest.NewRun(t)
+	accounting.GlobalStats().ResetCounters()
+	ci.MaxDeleteSize = 160
+	defer r.Finalise()
+	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
+	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
+	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
+	r.CheckRemoteItems(t, file1, file2, file3)
+
+	err := operations.Delete(ctx, r.Fremote)
+	require.Error(t, err)
+	objects, _, _, err := operations.Count(ctx, r.Fremote)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), objects) // 10 or 100 bytes
+}
+
 func TestRetry(t *testing.T) {
 	ctx := context.Background()
 

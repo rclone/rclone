@@ -637,6 +637,12 @@ func DeleteFileWithBackupDir(ctx context.Context, dst fs.Object, backupDir fs.Fs
 	defer func() {
 		tr.Done(ctx, err)
 	}()
+	deletesSize := accounting.Stats(ctx).DeletesSize(0) // file not yet deleted, we should not add at this time
+	size := dst.Size()
+	if int64(ci.MaxDeleteSize) != -1 && (deletesSize+size) > int64(ci.MaxDeleteSize) {
+		return fserrors.FatalError(errors.New("--max-delete-size threshold reached"))
+	}
+	_ = accounting.Stats(ctx).DeletesSize(size) // here we count
 	numDeletes := accounting.Stats(ctx).Deletes(1)
 	if ci.MaxDelete != -1 && numDeletes > ci.MaxDelete {
 		return fserrors.FatalError(errors.New("--max-delete threshold reached"))
