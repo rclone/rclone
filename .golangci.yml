@@ -5,7 +5,7 @@ linters:
     - deadcode
     - errcheck
     - goimports
-    #- revive
+    - revive
     - ineffassign
     - structcheck
     - varcheck
