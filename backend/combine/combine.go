@@ -145,6 +145,7 @@ func (f *Fs) newUpstream(ctx context.Context, dir, remote string) (*upstream, er
 		dir:            dir,
 		pathAdjustment: newAdjustment(f.root, dir),
 	}
+	cache.PinUntilFinalized(u.f, u)
 	return u, nil
 }
 
