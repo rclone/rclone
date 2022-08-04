@@ -26,6 +26,7 @@ type Opt struct {
 	ExcludeFile    []string
 	FilesFrom      []string
 	FilesFromRaw   []string
+	MetaRules      RulesOpt
 	MinAge         fs.Duration
 	MaxAge         fs.Duration
 	MinSize        fs.SizeSuffix
@@ -51,6 +52,7 @@ type Filter struct {
 	ModTimeTo   time.Time
 	fileRules   rules
 	dirRules    rules
+	metaRules   rules
 	files       FilesMap // files if filesFrom
 	dirs        FilesMap // dirs from filesFrom
 }
@@ -81,6 +83,11 @@ func NewFilter(opt *Opt) (f *Filter, err error) {
 	}
 
 	err = parseRules(&f.Opt.RulesOpt, f.Add, f.Clear)
+	if err != nil {
+		return nil, err
+	}
+
+	err = parseRules(&f.Opt.MetaRules, f.metaRules.Add, f.metaRules.clear)
 	if err != nil {
 		return nil, err
 	}
@@ -234,6 +241,7 @@ func (f *Filter) Files() FilesMap {
 func (f *Filter) Clear() {
 	f.fileRules.clear()
 	f.dirRules.clear()
+	f.metaRules.clear()
 }
 
 // InActive returns false if any filters are active
@@ -245,6 +253,7 @@ func (f *Filter) InActive() bool {
 		f.Opt.MaxSize < 0 &&
 		f.fileRules.len() == 0 &&
 		f.dirRules.len() == 0 &&
+		f.metaRules.len() == 0 &&
 		len(f.Opt.ExcludeFile) == 0)
 }
 
@@ -322,7 +331,7 @@ func (f *Filter) DirContainsExcludeFile(ctx context.Context, fremote fs.Fs, remo
 
 // Include returns whether this object should be included into the
 // sync or not
-func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
+func (f *Filter) Include(remote string, size int64, modTime time.Time, metadata fs.Metadata) bool {
 	// filesFrom takes precedence
 	if f.files != nil {
 		_, include := f.files[remote]
@@ -340,6 +349,20 @@ func (f *Filter) Include(remote string, size int64, modTime time.Time) bool {
 	if f.Opt.MaxSize >= 0 && size > int64(f.Opt.MaxSize) {
 		return false
 	}
+	if f.metaRules.len() > 0 {
+		metadatas := make([]string, 0, len(metadata)+1)
+		for key, value := range metadata {
+			metadatas = append(metadatas, fmt.Sprintf("%s=%s", key, value))
+		}
+		if len(metadata) == 0 {
+			// If there is no metadata, add a null one
+			// otherwise the default action isn't taken
+			metadatas = append(metadatas, "\x00=\x00")
+		}
+		if !f.metaRules.includeMany(metadatas) {
+			return false
+		}
+	}
 	return f.IncludeRemote(remote)
 }
 
@@ -354,7 +377,17 @@ func (f *Filter) IncludeObject(ctx context.Context, o fs.Object) bool {
 	} else {
 		modTime = time.Unix(0, 0)
 	}
-	return f.Include(o.Remote(), o.Size(), modTime)
+	var metadata fs.Metadata
+	if f.metaRules.len() > 0 {
+		var err error
+		metadata, err = fs.GetMetadata(ctx, o)
+		if err != nil {
+			fs.Errorf(o, "Failed to read metadata: %v", err)
+			metadata = nil
+		}
+
+	}
+	return f.Include(o.Remote(), o.Size(), modTime, metadata)
 }
 
 // DumpFilters dumps the filters in textual form, 1 per line
@@ -373,6 +406,12 @@ func (f *Filter) DumpFilters() string {
 	rules = append(rules, "--- Directory filter rules ---")
 	for _, dirRule := range f.dirRules.rules {
 		rules = append(rules, dirRule.String())
+	}
+	if f.metaRules.len() > 0 {
+		rules = append(rules, "--- Metadata filter rules ---")
+		for _, metaRule := range f.metaRules.rules {
+			rules = append(rules, metaRule.String())
+		}
 	}
 	return strings.Join(rules, "\n")
 }

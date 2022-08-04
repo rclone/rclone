@@ -23,6 +23,7 @@ func TestNewFilterDefault(t *testing.T) {
 	assert.Equal(t, fs.SizeSuffix(-1), f.Opt.MaxSize)
 	assert.Len(t, f.fileRules.rules, 0)
 	assert.Len(t, f.dirRules.rules, 0)
+	assert.Len(t, f.metaRules.rules, 0)
 	assert.Nil(t, f.files)
 	assert.True(t, f.InActive())
 }
@@ -207,7 +208,7 @@ type includeTest struct {
 
 func testInclude(t *testing.T, f *Filter, tests []includeTest) {
 	for _, test := range tests {
-		got := f.Include(test.in, test.size, time.Unix(test.modTime, 0))
+		got := f.Include(test.in, test.size, time.Unix(test.modTime, 0), nil)
 		assert.Equal(t, test.want, got, fmt.Sprintf("in=%q, size=%v, modTime=%v", test.in, test.size, time.Unix(test.modTime, 0)))
 	}
 }
@@ -527,6 +528,56 @@ func TestNewFilterMatchesRegexp(t *testing.T) {
 	assert.False(t, f.InActive())
 }
 
+type includeTestMetadata struct {
+	in       string
+	metadata fs.Metadata
+	want     bool
+}
+
+func testIncludeMetadata(t *testing.T, f *Filter, tests []includeTestMetadata) {
+	for _, test := range tests {
+		got := f.Include(test.in, 0, time.Time{}, test.metadata)
+		assert.Equal(t, test.want, got, fmt.Sprintf("in=%q, metadata=%+v", test.in, test.metadata))
+	}
+}
+
+func TestNewFilterMetadataInclude(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+	add := func(s string) {
+		err := f.metaRules.AddRule(s)
+		require.NoError(t, err)
+	}
+	add(`+ t*=t*`)
+	add(`- *`)
+	testIncludeMetadata(t, f, []includeTestMetadata{
+		{"nil", nil, false},
+		{"empty", fs.Metadata{}, false},
+		{"ok1", fs.Metadata{"thing": "thang"}, true},
+		{"ok2", fs.Metadata{"thing1": "thang1"}, true},
+		{"missing", fs.Metadata{"Thing1": "Thang1"}, false},
+	})
+	assert.False(t, f.InActive())
+}
+
+func TestNewFilterMetadataExclude(t *testing.T) {
+	f, err := NewFilter(nil)
+	require.NoError(t, err)
+	add := func(s string) {
+		err := f.metaRules.AddRule(s)
+		require.NoError(t, err)
+	}
+	add(`- thing=thang`)
+	add(`+ *`)
+	testIncludeMetadata(t, f, []includeTestMetadata{
+		{"nil", nil, true},
+		{"empty", fs.Metadata{}, true},
+		{"ok1", fs.Metadata{"thing": "thang"}, false},
+		{"missing1", fs.Metadata{"thing1": "thang1"}, true},
+	})
+	assert.False(t, f.InActive())
+}
+
 func TestFilterAddDirRuleOrFileRule(t *testing.T) {
 	for _, test := range []struct {
 		included bool
@@ -713,7 +764,7 @@ func TestFilterMatchesFromDocs(t *testing.T) {
 		require.NoError(t, err)
 		err = f.Add(false, "*")
 		require.NoError(t, err)
-		included := f.Include(test.file, 0, time.Unix(0, 0))
+		included := f.Include(test.file, 0, time.Unix(0, 0), nil)
 		if included != test.included {
 			t.Errorf("%q match %q: want %v got %v", test.glob, test.file, test.included, included)
 		}

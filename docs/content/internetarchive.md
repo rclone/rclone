@@ -66,6 +66,22 @@ It can be triggered when you did a server-side copy.
 
 Reading metadata will also provide custom (non-standard nor reserved) ones.
 
+## Filtering auto generated files
+
+The Internet Archive automatically creates metadata files after
+upload. These can cause problems when doing an `rclone sync` as rclone
+will try, and fail, to delete them. These metadata files are not
+changeable, as they are created by the Internet Archive automatically.
+
+These auto-created files can be excluded from the sync using [metadata
+filtering](/filtering/#metadata).
+
+    rclone sync ... --metadata-exclude "source=metadata" --metadata-exclude "format=Metadata"
+
+Which excludes from the sync any files which have the
+`source=metadata` or `format=Metadata` flags which are added to
+Internet Archive auto-created files.
+
 ## Configuration
 
 Here is an example of making an internetarchive configuration.

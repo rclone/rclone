@@ -2355,6 +2355,12 @@ For the filtering options
   * `--min-age`
   * `--max-age`
   * `--dump filters`
+  * `--metadata-include`
+  * `--metadata-include-from`
+  * `--metadata-exclude`
+  * `--metadata-exclude-from`
+  * `--metadata-filter`
+  * `--metadata-filter-from`
 
 See the [filtering section](/filtering/).
 

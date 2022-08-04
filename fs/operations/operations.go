@@ -1469,7 +1469,7 @@ func Rmdirs(ctx context.Context, f fs.Fs, dir string, leaveRoot bool) error {
 		dir := toDelete[i]
 		// If a filter matches the directory then that
 		// directory is a candidate for deletion
-		if !fi.Include(dir+"/", 0, time.Now()) {
+		if !fi.IncludeRemote(dir + "/") {
 			continue
 		}
 		err = TryRmdir(ctx, f, dir)

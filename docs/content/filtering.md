@@ -32,7 +32,7 @@ you expect. Instead use a `--filter...` flag.
 
 ## Patterns for matching path/file names
 
-### Pattern syntax
+### Pattern syntax {#patterns}
 
 Here is a formal definition of the pattern syntax,
 [examples](#examples) are below.
@@ -194,7 +194,7 @@ them into regular expressions.
 | Rooted Regexp | `/{{.*\.jpe?g}}` | `/file.jpeg`  | `/file.png`    |
 |             |                  | `/file.jpg`   | `/dir/file.jpg` |
 
-## How filter rules are applied to files
+## How filter rules are applied to files {#how-filter-rules-work}
 
 Rclone path/file name filters are made up of one or more of the following flags:
 
@@ -756,6 +756,43 @@ E.g. for the following directory structure:
 
 The command `rclone ls --exclude-if-present .ignore dir1` does
 not list `dir3`, `file3` or `.ignore`.
+
+## Metadata filters {#metadata}
+
+The metadata filters work in a very similar way to the normal file
+name filters, except they match [metadata](/docs/#metadata) on the
+object.
+
+The metadata should be specified as `key=value` patterns. This may be
+wildcarded using the normal [filter patterns](#patterns) or [regular
+expressions](#regexp).
+
+For example if you wished to list only local files with a mode of
+`100664` you could do that with:
+
+    rclone lsf -M --files-only --metadata-include "mode=100664" .
+
+Or if you wished to show files with an `atime`, `mtime` or `btime` at a given date:
+
+    rclone lsf -M --files-only --metadata-include "[abm]time=2022-12-16*" .
+
+Like file filtering, metadata filtering only applies to files not to
+directories.
+
+The filters can be applied using these flags.
+
+- `--metadata-include`      - Include metadatas matching pattern
+- `--metadata-include-from` - Read metadata include patterns from file (use - to read from stdin)
+- `--metadata-exclude`      - Exclude metadatas matching pattern
+- `--metadata-exclude-from` - Read metadata exclude patterns from file (use - to read from stdin)
+- `--metadata-filter`       - Add a metadata filtering rule
+- `--metadata-filter-from`  - Read metadata filtering patterns from a file (use - to read from stdin)
+
+Each flag can be repeated. See the section on [how filter rules are
+applied](#how-filter-rules-work) for more details - these flags work
+in an identical way to the file name filtering flags, but instead of
+file name patterns have metadata patterns.
+
 
 ## Common pitfalls
 
