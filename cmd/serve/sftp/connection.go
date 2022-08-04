@@ -101,6 +101,9 @@ func (c *conn) execCommand(ctx context.Context, out io.Writer, command string) (
 		if binary == "sha1sum" {
 			ht = hash.SHA1
 		}
+		if !c.vfs.Fs().Hashes().Contains(ht) {
+			return fmt.Errorf("%v hash not supported", ht)
+		}
 		var hashSum string
 		if args == "" {
 			// empty hash for no input
