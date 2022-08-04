@@ -208,7 +208,7 @@ type includeTest struct {
 
 func testInclude(t *testing.T, f *Filter, tests []includeTest) {
 	for _, test := range tests {
-		got := f.Include(test.in, test.size, time.Unix(test.modTime, 0))
+		got := f.Include(test.in, test.size, time.Unix(test.modTime, 0), nil)
 		assert.Equal(t, test.want, got, fmt.Sprintf("in=%q, size=%v, modTime=%v", test.in, test.size, time.Unix(test.modTime, 0)))
 	}
 }
@@ -714,7 +714,7 @@ func TestFilterMatchesFromDocs(t *testing.T) {
 		require.NoError(t, err)
 		err = f.Add(false, "*")
 		require.NoError(t, err)
-		included := f.Include(test.file, 0, time.Unix(0, 0))
+		included := f.Include(test.file, 0, time.Unix(0, 0), nil)
 		if included != test.included {
 			t.Errorf("%q match %q: want %v got %v", test.glob, test.file, test.included, included)
 		}
