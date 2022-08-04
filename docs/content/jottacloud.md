@@ -233,7 +233,7 @@ them. Generally you should avoid these, unless you know what you are doing.
 
 ### --fast-list
 
-This remote supports `--fast-list` which allows you to use fewer
+This backend supports `--fast-list` which allows you to use fewer
 transactions in exchange for more memory. See the [rclone
 docs](/docs/#fast-list) for more details.
 
@@ -241,8 +241,9 @@ Note that the implementation in Jottacloud always uses only a single
 API request to get the entire list, so for large folders this could
 lead to long wait time before the first results are shown.
 
-Note also that with rclone version 1.58 and newer information about
-[MIME types](/overview/#mime-type) are not available when using `--fast-list`.
+Note also that with rclone version 1.58 and newer, information about
+[MIME types](/overview/#mime-type) and metadata item [utime](#metadata)
+are not available when using `--fast-list`.
 
 ### Modified time and hashes
 
