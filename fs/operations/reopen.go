@@ -31,7 +31,7 @@ var (
 
 // NewReOpen makes a handle which will reopen itself and seek to where it was on errors
 //
-// If hashOption is set this will be applied when reading from the start
+// If hashOption is set this will be applied when reading from the start.
 //
 // If rangeOption is set then this will applied when reading from the
 // start, and updated on retries.

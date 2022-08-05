@@ -137,8 +137,8 @@ func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *
 //
 // It should be called with
 //
-//   n bytes downloaded
-//   err is error from download
+//	n bytes downloaded
+//	err is error from download
 //
 // call with lock held
 func (dls *Downloaders) _countErrors(n int64, err error) {

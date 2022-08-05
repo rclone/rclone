@@ -4,9 +4,9 @@
 package cmount
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"errors"
 	"path/filepath"
 	"regexp"
 

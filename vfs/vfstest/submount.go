@@ -181,9 +181,12 @@ func startMount(mountFn mountlib.MountFn, useVFS bool, opts string) {
 // line to send to stdout with an exit flag.
 //
 // The format of the lines is
-//     command \t parameter (optional)
+//
+//	command \t parameter (optional)
+//
 // The response should be
-//     OK|ERR \t result (optional)
+//
+//	OK|ERR \t result (optional)
 func doMountCommand(vfs *vfs.VFS, rx string) (tx string, exit bool) {
 	command := strings.Split(rx, "\t")
 	// log.Printf("doMountCommand: %q received", command)

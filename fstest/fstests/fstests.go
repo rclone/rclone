@@ -189,7 +189,7 @@ var (
 
 // PutTestContentsMetadata puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
 //
-// It uploads the object with the mimeType and metadata passed in if set
+// It uploads the object with the mimeType and metadata passed in if set.
 //
 // It returns the object which will have been checked if check is set
 func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *fstest.Item, contents string, check bool, mimeType string, metadata fs.Metadata) fs.Object {

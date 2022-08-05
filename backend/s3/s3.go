@@ -2179,7 +2179,7 @@ var retryErrorCodes = []int{
 	503, // Service Unavailable/Slow Down - "Reduce your request rate"
 }
 
-//S3 is pretty resilient, and the built in retry handling is probably sufficient
+// S3 is pretty resilient, and the built in retry handling is probably sufficient
 // as it should notice closed connections and timeouts which are the most likely
 // sort of failure modes
 func (f *Fs) shouldRetry(ctx context.Context, err error) (bool, error) {
@@ -2671,7 +2671,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 // Return an Object from a path
 //
-//If it can't be found it returns the error ErrorObjectNotFound.
+// If it can't be found it returns the error ErrorObjectNotFound.
 func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Object) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
@@ -3336,9 +3336,9 @@ func (f *Fs) copyMultipart(ctx context.Context, copyReq *s3.CopyObjectInput, dst
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //

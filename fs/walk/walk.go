@@ -50,7 +50,7 @@ type Func func(path string, entries fs.DirEntries, err error) error
 // Note that fn will not be called concurrently whereas the directory
 // listing will proceed concurrently.
 //
-// Parent directories are always listed before their children
+// Parent directories are always listed before their children.
 //
 // This is implemented by WalkR if Config.UseListR is true
 // and f supports it and level > 1, or WalkN otherwise.

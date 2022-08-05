@@ -32,7 +32,6 @@ import (
 	"github.com/rclone/rclone/fs/operations"
 )
 
-//
 // Chunker's composite files have one or more chunks
 // and optional metadata object. If it's present,
 // meta object is named after the original file.
@@ -79,7 +78,6 @@ import (
 // Metadata format v1 does not define any control chunk types,
 // they are currently ignored aka reserved.
 // In future they can be used to implement resumable uploads etc.
-//
 const (
 	ctrlTypeRegStr   = `[a-z][a-z0-9]{2,6}`
 	tempSuffixFormat = `_%04s`
@@ -542,7 +540,6 @@ func (f *Fs) setChunkNameFormat(pattern string) error {
 //
 // xactID is a transaction identifier. Empty xactID denotes active chunk,
 // otherwise temporary chunk name is produced.
-//
 func (f *Fs) makeChunkName(filePath string, chunkNo int, ctrlType, xactID string) string {
 	dir, parentName := path.Split(filePath)
 	var name, tempSuffix string
@@ -708,7 +705,6 @@ func (f *Fs) newXactID(ctx context.Context, filePath string) (xactID string, err
 // directory together with dead chunks.
 // In future a flag named like `--chunker-list-hidden` may be added to
 // rclone that will tell List to reveal hidden chunks.
-//
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	entries, err = f.base.List(ctx, dir)
 	if err != nil {
@@ -868,7 +864,6 @@ func (f *Fs) processEntries(ctx context.Context, origEntries fs.DirEntries, dirP
 // Note that chunker prefers analyzing file names rather than reading
 // the content of meta object assuming that directory scans are fast
 // but opening even a small file can be slow on some backends.
-//
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.scanObject(ctx, remote, false)
 }
@@ -1586,7 +1581,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 // This command will chain to `purge` from wrapped remote.
 // As a result it removes not only composite chunker files with their
 // active chunks but also all hidden temporary chunks in the directory.
-//
 func (f *Fs) Purge(ctx context.Context, dir string) error {
 	do := f.base.Features().Purge
 	if do == nil {
@@ -1628,7 +1622,6 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // Unsupported control chunks will get re-picked by a more recent
 // rclone version with unexpected results. This can be helped by
 // the `delete hidden` flag above or at least the user has been warned.
-//
 func (o *Object) Remove(ctx context.Context) (err error) {
 	if err := o.f.forbidChunk(o, o.Remote()); err != nil {
 		// operations.Move can still call Remove if chunker's Move refuses
@@ -1804,9 +1797,9 @@ func (f *Fs) okForServerSide(ctx context.Context, src fs.Object, opName string) 
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1825,9 +1818,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -2125,7 +2118,6 @@ func (o *Object) SetModTime(ctx context.Context, mtime time.Time) error {
 // file, then tries to read it from metadata. This in theory
 // handles the unusual case when a small file has been tampered
 // on the level of wrapped remote but chunker is unaware of that.
-//
 func (o *Object) Hash(ctx context.Context, hashType hash.Type) (string, error) {
 	if err := o.readMetadata(ctx); err != nil {
 		return "", err // valid metadata is required to get hash, abort
@@ -2414,7 +2406,6 @@ type metaSimpleJSON struct {
 // - for files larger than chunk size
 // - if file contents can be mistaken as meta object
 // - if consistent hashing is On but wrapped remote can't provide given hash
-//
 func marshalSimpleJSON(ctx context.Context, size int64, nChunks int, md5, sha1, xactID string) ([]byte, error) {
 	version := metadataVersion
 	if xactID == "" && version == 2 {
@@ -2447,7 +2438,6 @@ func marshalSimpleJSON(ctx context.Context, size int64, nChunks int, md5, sha1, 
 // New format will have a higher version number and cannot be correctly
 // handled by current implementation.
 // The version check below will then explicitly ask user to upgrade rclone.
-//
 func unmarshalSimpleJSON(ctx context.Context, metaObject fs.Object, data []byte) (info *ObjectInfo, madeByChunker bool, err error) {
 	// Be strict about JSON format
 	// to reduce possibility that a random small file resembles metadata.

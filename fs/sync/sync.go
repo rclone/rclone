@@ -301,9 +301,10 @@ func (s *syncCopyMove) processError(err error) {
 }
 
 // Returns the current error (if any) in the order of precedence
-//   fatalErr
-//   normal error
-//   noRetryErr
+//
+//	fatalErr
+//	normal error
+//	noRetryErr
 func (s *syncCopyMove) currentError() error {
 	s.errorMu.Lock()
 	defer s.errorMu.Unlock()
@@ -837,7 +838,7 @@ var errorMaxDurationReached = fserrors.FatalError(errors.New("max transfer durat
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
 //
-// If DoMove is true then files will be moved instead of copied
+// If DoMove is true then files will be moved instead of copied.
 //
 // dir is the start directory, "" for root
 func (s *syncCopyMove) run() error {
@@ -1083,7 +1084,7 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
 //
-// If DoMove is true then files will be moved instead of copied
+// If DoMove is true then files will be moved instead of copied.
 //
 // dir is the start directory, "" for root
 func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {

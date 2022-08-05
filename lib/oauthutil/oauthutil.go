@@ -433,10 +433,10 @@ func ConfigOut(state string, oAuth *Options) (*fs.ConfigOut, error) {
 //
 // This is called with a state which has pushed on it
 //
-//    state prefixed with "*oauth"
-//    state for oauth to return to
-//    state that returned the OAuth when we wish to recall it
-//    value that returned the OAuth
+//	state prefixed with "*oauth"
+//	state for oauth to return to
+//	state that returned the OAuth when we wish to recall it
+//	value that returned the OAuth
 func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.RegInfo, in fs.ConfigIn) (*fs.ConfigOut, error) {
 	stateParams, state := fs.StatePop(in.State)
 
@@ -624,7 +624,7 @@ func fixRedirect(oauthConfig *oauth2.Config) *oauth2.Config {
 
 // configSetup does the initial creation of the token
 //
-// If opt is nil it will use the default Options
+// If opt is nil it will use the default Options.
 //
 // It will run an internal webserver to receive the results
 func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt *Options) (string, error) {

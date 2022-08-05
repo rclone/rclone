@@ -22,8 +22,8 @@ func RcloneFinalize() {
 
 // RcloneRPCResult is returned from RcloneRPC
 //
-//   Output will be returned as a serialized JSON object
-//   Status is a HTTP status return (200=OK anything else fail)
+//	Output will be returned as a serialized JSON object
+//	Status is a HTTP status return (200=OK anything else fail)
 type RcloneRPCResult struct {
 	Output string
 	Status int

@@ -6,14 +6,14 @@ import (
 )
 
 /*
- Calculator calculates the minimum chunk size needed to fit within the maximum number of parts, rounded up to the nearest fs.Mebi
+Calculator calculates the minimum chunk size needed to fit within the maximum number of parts, rounded up to the nearest fs.Mebi
 
- For most backends, (chunk_size) * (concurrent_upload_routines) memory will be required so we want to use the smallest
- possible chunk size that's going to allow the upload to proceed. Rounding up to the nearest fs.Mebi on the assumption
- that some backends may only allow integer type parameters when specifying the chunk size.
+For most backends, (chunk_size) * (concurrent_upload_routines) memory will be required so we want to use the smallest
+possible chunk size that's going to allow the upload to proceed. Rounding up to the nearest fs.Mebi on the assumption
+that some backends may only allow integer type parameters when specifying the chunk size.
 
- Returns the default chunk size if it is sufficiently large enough to support the given file size otherwise returns the
- smallest chunk size necessary to allow the upload to proceed.
+Returns the default chunk size if it is sufficiently large enough to support the given file size otherwise returns the
+smallest chunk size necessary to allow the upload to proceed.
 */
 func Calculator(objInfo fs.ObjectInfo, maxParts int, defaultChunkSize fs.SizeSuffix) fs.SizeSuffix {
 	fileSize := fs.SizeSuffix(objInfo.Size())

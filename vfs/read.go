@@ -215,7 +215,7 @@ func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 
 // This waits for *poff to equal off or aborts after the timeout.
 //
-// Waits here potentially affect all seeks so need to keep them short
+// Waits here potentially affect all seeks so need to keep them short.
 //
 // Call with fh.mu Locked
 func waitSequential(what string, remote string, cond *sync.Cond, maxWait time.Duration, poff *int64, off int64) {

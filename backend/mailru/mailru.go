@@ -630,9 +630,10 @@ func (f *Fs) readItemMetaData(ctx context.Context, path string) (entry fs.DirEnt
 
 // itemToEntry converts API item to rclone directory entry
 // The dirSize return value is:
-//   <0 - for a file or in case of error
-//   =0 - for an empty directory
-//   >0 - for a non-empty directory
+//
+//	<0 - for a file or in case of error
+//	=0 - for an empty directory
+//	>0 - for a non-empty directory
 func (f *Fs) itemToDirEntry(ctx context.Context, item *api.ListItem) (entry fs.DirEntry, dirSize int, err error) {
 	remote, err := f.relPath(f.opt.Enc.ToStandardPath(item.Home))
 	if err != nil {

@@ -301,9 +301,9 @@ func (f *Filter) Add(Include bool, glob string) error {
 //
 // These are
 //
-//   + glob
 //   - glob
-//   !
+//   - glob
+//     !
 //
 // '+' includes the glob, '-' excludes it and '!' resets the filter list
 //

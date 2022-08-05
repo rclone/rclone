@@ -5,8 +5,8 @@ package local
 
 import (
 	"os"
-	"time"
 	"syscall"
+	"time"
 )
 
 const haveSetBTime = true

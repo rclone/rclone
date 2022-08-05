@@ -339,7 +339,7 @@ func (c *Cache) get(name string) (item *Item, found bool) {
 
 // Item gets a cache item for name
 //
-// To use it item.Open will need to be called
+// To use it item.Open will need to be called.
 //
 // name should be a remote path not an osPath
 func (c *Cache) Item(name string) (item *Item) {

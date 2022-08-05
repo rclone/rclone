@@ -15,14 +15,14 @@ type LogLevel byte
 // Log levels.  These are the syslog levels of which we only use a
 // subset.
 //
-//    LOG_EMERG      system is unusable
-//    LOG_ALERT      action must be taken immediately
-//    LOG_CRIT       critical conditions
-//    LOG_ERR        error conditions
-//    LOG_WARNING    warning conditions
-//    LOG_NOTICE     normal, but significant, condition
-//    LOG_INFO       informational message
-//    LOG_DEBUG      debug-level message
+//	LOG_EMERG      system is unusable
+//	LOG_ALERT      action must be taken immediately
+//	LOG_CRIT       critical conditions
+//	LOG_ERR        error conditions
+//	LOG_WARNING    warning conditions
+//	LOG_NOTICE     normal, but significant, condition
+//	LOG_INFO       informational message
+//	LOG_DEBUG      debug-level message
 const (
 	LogLevelEmergency LogLevel = iota
 	LogLevelAlert

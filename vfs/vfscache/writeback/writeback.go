@@ -252,7 +252,7 @@ func (wb *WriteBack) SetID(pid *Handle) {
 // If id is 0 then a new item will always be created and the new
 // Handle will be returned.
 //
-// Use SetID to create Handles in advance of calling Add
+// Use SetID to create Handles in advance of calling Add.
 //
 // If modified is false then it it doesn't cancel a pending upload if
 // there is one as there is no need.

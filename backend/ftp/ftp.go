@@ -769,11 +769,12 @@ func (f *Fs) Hashes() hash.Set {
 
 // Precision shows whether modified time is supported or not depending on the
 // FTP server capabilities, namely whether FTP server:
-// - accepts the MDTM command to get file time (fGetTime)
-//   or supports MLSD returning precise file time in the list (fLstTime)
-// - accepts the MFMT command to set file time (fSetTime)
-//   or non-standard form of the MDTM command (fSetTime, too)
-//   used by VsFtpd for the same purpose (WritingMDTM)
+//   - accepts the MDTM command to get file time (fGetTime)
+//     or supports MLSD returning precise file time in the list (fLstTime)
+//   - accepts the MFMT command to set file time (fSetTime)
+//     or non-standard form of the MDTM command (fSetTime, too)
+//     used by VsFtpd for the same purpose (WritingMDTM)
+//
 // See "mdtm_write" in https://security.appspot.com/vsftpd/vsftpd_conf.html
 func (f *Fs) Precision() time.Duration {
 	if (f.fGetTime || f.fLstTime) && f.fSetTime {
@@ -1149,7 +1150,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 
 // Update the already existing object
 //
-// Copy the reader into the object updating modTime and size
+// Copy the reader into the object updating modTime and size.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {

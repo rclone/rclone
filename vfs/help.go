@@ -7,7 +7,8 @@ import (
 // Help contains text describing file and directory caching to add to
 // the command help.
 // Warning: "!" (sic) will be replaced by backticks below,
-//          but the pipe character "|" can be used as is.
+//
+//	but the pipe character "|" can be used as is.
 var Help = strings.ReplaceAll(`
 ### VFS - Virtual File System
 

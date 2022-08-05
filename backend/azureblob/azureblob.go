@@ -1115,7 +1115,7 @@ func (f *Fs) listContainersToFn(fn listContainerFn) error {
 
 // Put the object into the container
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -1247,9 +1247,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1356,11 +1356,12 @@ func (o *Object) setMetadata(metadata azblob.Metadata) {
 // decodeMetaDataFromPropertiesResponse sets the metadata from the data passed in
 //
 // Sets
-//  o.id
-//  o.modTime
-//  o.size
-//  o.md5
-//  o.meta
+//
+//	o.id
+//	o.modTime
+//	o.size
+//	o.md5
+//	o.meta
 func (o *Object) decodeMetaDataFromPropertiesResponse(info *azblob.BlobGetPropertiesResponse) (err error) {
 	metadata := info.NewMetadata()
 	size := info.ContentLength()
@@ -1443,10 +1444,11 @@ func (o *Object) clearMetaData() {
 // readMetaData gets the metadata if it hasn't already been fetched
 //
 // Sets
-//  o.id
-//  o.modTime
-//  o.size
-//  o.md5
+//
+//	o.id
+//	o.modTime
+//	o.size
+//	o.md5
 func (o *Object) readMetaData() (err error) {
 	container, _ := o.split()
 	if !o.fs.containerOK(container) {

@@ -37,27 +37,29 @@ type Response struct {
 // This is a lazy way of decoding the multiple <s:propstat> in the
 // response.
 //
-// The response might look like this
+// The response might look like this.
 //
 // <d:response>
-//   <d:href>/remote.php/webdav/Nextcloud%20Manual.pdf</d:href>
-//   <d:propstat>
-//     <d:prop>
-//       <d:getlastmodified>Tue, 19 Dec 2017 22:02:36 GMT</d:getlastmodified>
-//       <d:getcontentlength>4143665</d:getcontentlength>
-//       <d:resourcetype/>
-//       <d:getetag>"048d7be4437ff7deeae94db50ff3e209"</d:getetag>
-//       <d:getcontenttype>application/pdf</d:getcontenttype>
-//     </d:prop>
-//     <d:status>HTTP/1.1 200 OK</d:status>
-//   </d:propstat>
-//   <d:propstat>
-//     <d:prop>
-//       <d:quota-used-bytes/>
-//       <d:quota-available-bytes/>
-//     </d:prop>
-//     <d:status>HTTP/1.1 404 Not Found</d:status>
-//   </d:propstat>
+//
+//	<d:href>/remote.php/webdav/Nextcloud%20Manual.pdf</d:href>
+//	<d:propstat>
+//	  <d:prop>
+//	    <d:getlastmodified>Tue, 19 Dec 2017 22:02:36 GMT</d:getlastmodified>
+//	    <d:getcontentlength>4143665</d:getcontentlength>
+//	    <d:resourcetype/>
+//	    <d:getetag>"048d7be4437ff7deeae94db50ff3e209"</d:getetag>
+//	    <d:getcontenttype>application/pdf</d:getcontenttype>
+//	  </d:prop>
+//	  <d:status>HTTP/1.1 200 OK</d:status>
+//	</d:propstat>
+//	<d:propstat>
+//	  <d:prop>
+//	    <d:quota-used-bytes/>
+//	    <d:quota-available-bytes/>
+//	  </d:prop>
+//	  <d:status>HTTP/1.1 404 Not Found</d:status>
+//	</d:propstat>
+//
 // </d:response>
 //
 // So we elide the array of <d:propstat> and within that the array of
@@ -127,8 +129,10 @@ type PropValue struct {
 // Error is used to describe webdav errors
 //
 // <d:error xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
-//   <s:exception>Sabre\DAV\Exception\NotFound</s:exception>
-//   <s:message>File with name Photo could not be located</s:message>
+//
+//	<s:exception>Sabre\DAV\Exception\NotFound</s:exception>
+//	<s:message>File with name Photo could not be located</s:message>
+//
 // </d:error>
 type Error struct {
 	Exception  string `xml:"exception,omitempty"`
@@ -214,16 +218,18 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 // Quota is used to read the bytes used and available
 //
 // <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
-//  <d:response>
-//   <d:href>/remote.php/webdav/</d:href>
-//   <d:propstat>
-//    <d:prop>
-//     <d:quota-available-bytes>-3</d:quota-available-bytes>
-//     <d:quota-used-bytes>376461895</d:quota-used-bytes>
-//    </d:prop>
-//    <d:status>HTTP/1.1 200 OK</d:status>
-//   </d:propstat>
-//  </d:response>
+//
+//	<d:response>
+//	 <d:href>/remote.php/webdav/</d:href>
+//	 <d:propstat>
+//	  <d:prop>
+//	   <d:quota-available-bytes>-3</d:quota-available-bytes>
+//	   <d:quota-used-bytes>376461895</d:quota-used-bytes>
+//	  </d:prop>
+//	  <d:status>HTTP/1.1 200 OK</d:status>
+//	 </d:propstat>
+//	</d:response>
+//
 // </d:multistatus>
 type Quota struct {
 	Available string `xml:"DAV: response>propstat>prop>quota-available-bytes"`

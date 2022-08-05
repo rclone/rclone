@@ -139,7 +139,7 @@ func (fh *RWFileHandle) updateSize() {
 // close the file handle returning EBADF if it has been
 // closed already.
 //
-// Must be called with fh.mu held
+// Must be called with fh.mu held.
 //
 // Note that we leave the file around in the cache on error conditions
 // to give the user a chance to recover it.

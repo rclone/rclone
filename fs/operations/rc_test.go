@@ -499,8 +499,7 @@ func TestRcFsInfo(t *testing.T) {
 
 }
 
-//operations/uploadfile : Tests if upload file succeeds
-//
+// operations/uploadfile : Tests if upload file succeeds
 func TestUploadFile(t *testing.T) {
 	r, call := rcNewRun(t, "operations/uploadfile")
 	defer r.Finalise()

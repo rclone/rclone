@@ -577,9 +577,9 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //

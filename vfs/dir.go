@@ -555,7 +555,7 @@ func (d *Dir) _newManageVirtuals() manageVirtuals {
 
 // This should be called for every entry added to the directory
 //
-// It returns true if this entry should be skipped
+// It returns true if this entry should be skipped.
 //
 // must be called with the Dir lock held
 func (mv manageVirtuals) add(d *Dir, name string) bool {

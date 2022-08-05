@@ -407,7 +407,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 
 // CallJSON runs Call and decodes the body as a JSON object into response (if not nil)
 //
-// If request is not nil then it will be JSON encoded as the body of the request
+// If request is not nil then it will be JSON encoded as the body of the request.
 //
 // If response is not nil then the response will be JSON decoded into
 // it and resp.Body will be closed.
@@ -430,7 +430,7 @@ func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}
 
 // CallXML runs Call and decodes the body as an XML object into response (if not nil)
 //
-// If request is not nil then it will be XML encoded as the body of the request
+// If request is not nil then it will be XML encoded as the body of the request.
 //
 // If response is not nil then the response will be XML decoded into
 // it and resp.Body will be closed.
@@ -438,7 +438,7 @@ func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}
 // If response is nil then the resp.Body will be closed only if
 // opts.NoResponse is set.
 //
-// See CallJSON for a description of MultipartParams and related opts
+// See CallJSON for a description of MultipartParams and related opts.
 //
 // It will return resp if at all possible, even if err is set
 func (api *Client) CallXML(ctx context.Context, opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {

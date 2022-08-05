@@ -790,7 +790,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 
 // Put the object into the container
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -902,9 +902,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1019,7 +1019,7 @@ func copyLargeObject(ctx context.Context, f *Fs, src *Object, dstContainer strin
 	return err
 }
 
-//remove copied segments when copy process failed
+// remove copied segments when copy process failed
 func handleCopyFail(ctx context.Context, f *Fs, segmentsContainer string, segments []string, err error) {
 	fs.Debugf(f, "handle copy segment fail")
 	if err == nil {
@@ -1140,10 +1140,11 @@ func (o *Object) Size() int64 {
 // decodeMetaData sets the metadata in the object from a swift.Object
 //
 // Sets
-//  o.lastModified
-//  o.size
-//  o.md5
-//  o.contentType
+//
+//	o.lastModified
+//	o.size
+//	o.md5
+//	o.contentType
 func (o *Object) decodeMetaData(info *swift.Object) (err error) {
 	o.lastModified = info.LastModified
 	o.size = info.Bytes
@@ -1183,7 +1184,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 }
 
 // ModTime returns the modification time of the object
-//
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers

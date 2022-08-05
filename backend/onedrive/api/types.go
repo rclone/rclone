@@ -250,8 +250,8 @@ type MoveItemRequest struct {
 	FileSystemInfo  *FileSystemInfoFacet `json:"fileSystemInfo,omitempty"`  // File system information on client. Read-write.
 }
 
-//CreateShareLinkRequest is the request to create a sharing link
-//Always Type:view and Scope:anonymous for public sharing
+// CreateShareLinkRequest is the request to create a sharing link
+// Always Type:view and Scope:anonymous for public sharing
 type CreateShareLinkRequest struct {
 	Type     string     `json:"type"`                         // Link type in View, Edit or Embed
 	Scope    string     `json:"scope,omitempty"`              // Scope in anonymous, organization
@@ -259,7 +259,7 @@ type CreateShareLinkRequest struct {
 	Expiry   *time.Time `json:"expirationDateTime,omitempty"` // A String with format of yyyy-MM-ddTHH:mm:ssZ of DateTime indicates the expiration time of the permission.
 }
 
-//CreateShareLinkResponse is the response from CreateShareLinkRequest
+// CreateShareLinkResponse is the response from CreateShareLinkRequest
 type CreateShareLinkResponse struct {
 	ID    string   `json:"id"`
 	Roles []string `json:"roles"`
