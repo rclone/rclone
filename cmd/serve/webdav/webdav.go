@@ -63,7 +63,7 @@ to see the full list.
 ` + httplib.Help + vfs.Help + proxy.Help,
 	RunE: func(command *cobra.Command, args []string) error {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxyflags.Opt.AuthProxy != "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {

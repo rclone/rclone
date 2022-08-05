@@ -102,7 +102,7 @@ You can set a single username and password with the --user and --pass flags.
 ` + vfs.Help + proxy.Help,
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
-		if proxyflags.Opt.AuthProxy == "" {
+		if proxyflags.Opt.AuthProxy != "" {
 			cmd.CheckArgs(1, 1, command, args)
 			f = cmd.NewFsSrc(args)
 		} else {
