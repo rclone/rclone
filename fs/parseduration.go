@@ -126,7 +126,7 @@ func parseDurationFromNow(age string, getNow func() time.Time) (d time.Duration,
 
 // ParseDuration parses a duration string. Accept ms|s|m|h|d|w|M|y suffixes. Defaults to second if not provided
 func ParseDuration(age string) (time.Duration, error) {
-	return parseDurationFromNow(age, time.Now)
+	return parseDurationFromNow(age, timeNowFunc)
 }
 
 // ReadableString parses d into a human-readable duration.
@@ -216,7 +216,7 @@ func (d *Duration) UnmarshalJSON(in []byte) error {
 
 // Scan implements the fmt.Scanner interface
 func (d *Duration) Scan(s fmt.ScanState, ch rune) error {
-	token, err := s.Token(true, nil)
+	token, err := s.Token(true, func(rune) bool { return true })
 	if err != nil {
 		return err
 	}

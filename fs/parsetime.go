@@ -83,7 +83,7 @@ func (t *Time) UnmarshalJSON(in []byte) error {
 
 // Scan implements the fmt.Scanner interface
 func (t *Time) Scan(s fmt.ScanState, ch rune) error {
-	token, err := s.Token(true, nil)
+	token, err := s.Token(true, func(rune) bool { return true })
 	if err != nil {
 		return err
 	}
