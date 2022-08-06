@@ -677,7 +677,11 @@ func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauth
 // Exchange the code for a token
 func configExchange(ctx context.Context, name string, m configmap.Mapper, oauthConfig *oauth2.Config, code string) error {
 	ctx = Context(ctx, fshttp.NewClient(ctx))
-	token, err := oauthConfig.Exchange(ctx, code)
+	var opts []oauth2.AuthCodeOption
+	if len(oauthConfig.Scopes) > 0 {
+		opts = append(opts, oauth2.SetAuthURLParam("scope", strings.Join(oauthConfig.Scopes, " ")))
+	}
+	token, err := oauthConfig.Exchange(ctx, code, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to get token: %w", err)
 	}
