@@ -186,7 +186,7 @@ func (s *server) rootDescHandler(w http.ResponseWriter, r *http.Request) {
 // Handle a service control HTTP request.
 func (s *server) serviceControlHandler(w http.ResponseWriter, r *http.Request) {
 	soapActionString := r.Header.Get("SOAPACTION")
-	soapAction, err := parseActionHTTPHeader(soapActionString)
+	soapAction, err := upnp.ParseActionHTTPHeader(soapActionString)
 	if err != nil {
 		serveError(s, w, "Could not parse SOAPACTION header", err)
 		return
