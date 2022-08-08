@@ -1,6 +1,6 @@
 % rclone(1) User Manual
 % Nick Craig-Wood
-% Jul 09, 2022
+% Aug 08, 2022
 
 # Rclone syncs your files to cloud storage
 
@@ -506,7 +506,7 @@ such as a regular [sync](https://rclone.org/commands/rclone_sync/), you will pro
 to configure your rclone command in your operating system's scheduler. If you need to
 expose *service*-like features, such as [remote control](https://rclone.org/rc/),
 [GUI](https://rclone.org/gui/), [serve](https://rclone.org/commands/rclone_serve/)
-or [mount](https://rclone.org/commands/rclone_move/), you will often want an rclone
+or [mount](https://rclone.org/commands/rclone_mount/), you will often want an rclone
 command always running in the background, and configuring it to run in a service infrastructure
 may be a better option. Below are some alternatives on how to achieve this on
 different operating systems.
@@ -539,7 +539,7 @@ c:\rclone\rclone.exe sync c:\files remote:/files --no-console --log-file c:\rclo
 
 #### User account
 
-As mentioned in the [mount](https://rclone.org/commands/rclone_move/) documentation,
+As mentioned in the [mount](https://rclone.org/commands/rclone_mount/) documentation,
 mounted drives created as Administrator are not visible to other accounts, not even the
 account that was elevated as Administrator. By running the mount command as the
 built-in `SYSTEM` user account, it will create drives accessible for everyone on
@@ -896,6 +896,11 @@ extended explanation in the [copy](https://rclone.org/commands/rclone_copy/) com
 
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
+
+It is not possible to sync overlapping remotes. However, you may exclude
+the destination from the sync with a filter rule or by putting an 
+exclude-if-present file inside the destination directory and sync to a
+destination that is inside the source directory.
 
 **Note**: Use the `-P`/`--progress` flag to view real-time transfer statistics
 
@@ -8735,7 +8740,8 @@ been added) in DIR, then it will be overwritten.
 
 The remote in use must support server-side move or copy and you must
 use the same remote as the destination of the sync.  The backup
-directory must not overlap the destination directory.
+directory must not overlap the destination directory without it being
+excluded by a filter rule.
 
 For example
 
@@ -14336,7 +14342,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.59.0")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.59.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -25136,7 +25142,7 @@ This would produce something like this:
 
     [AllDrives]
     type = combine
-    remote = "My Drive=My Drive:" "Test Drive=Test Drive:"
+    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
 If you then add that config to your config file (find it with `rclone
 config file`) then you can access all the shared drives in one place
@@ -28343,7 +28349,7 @@ drives found and a combined drive.
 
     [AllDrives]
     type = combine
-    remote = "My Drive=My Drive:" "Test Drive=Test Drive:"
+    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
 Adding this to the rclone config file will cause those team drives to
 be accessible with the aliases shown. Any illegal charactes will be
@@ -30495,10 +30501,9 @@ Refer to [IAS3 API documentation](https://archive.org/services/docs/api/ias3.htm
 Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, e.g. `remote:item/path/to/dir`.
 
-Once you have made a remote (see the provider specific section above)
-you can use it like this:
-
 Unlike S3, listing up all items uploaded by you isn't supported.
+
+Once you have made a remote, you can use it like this:
 
 Make a new item
 
@@ -30536,6 +30541,7 @@ The following are reserved by Internet Archive:
 - `format`
 - `old_version`
 - `viruscheck`
+- `summation`
 
 Trying to set values to these keys is ignored with a warning.
 Only setting `mtime` is an exception. Doing so make it the identical behavior as setting ModTime.
@@ -30741,19 +30747,20 @@ Here are the possible system metadata items for the internetarchive backend.
 
 | Name | Help | Type | Example | Read Only |
 |------|------|------|---------|-----------|
-| crc32 | CRC32 calculated by Internet Archive | string | 01234567 | N |
-| format | Name of format identified by Internet Archive | string | Comma-Separated Values | N |
-| md5 | MD5 hash calculated by Internet Archive | string | 01234567012345670123456701234567 | N |
-| mtime | Time of last modification, managed by Rclone | RFC 3339 | 2006-01-02T15:04:05.999999999Z | N |
-| name | Full file path, without the bucket part | filename | backend/internetarchive/internetarchive.go | N |
-| old_version | Whether the file was replaced and moved by keep-old-version flag | boolean | true | N |
+| crc32 | CRC32 calculated by Internet Archive | string | 01234567 | **Y** |
+| format | Name of format identified by Internet Archive | string | Comma-Separated Values | **Y** |
+| md5 | MD5 hash calculated by Internet Archive | string | 01234567012345670123456701234567 | **Y** |
+| mtime | Time of last modification, managed by Rclone | RFC 3339 | 2006-01-02T15:04:05.999999999Z | **Y** |
+| name | Full file path, without the bucket part | filename | backend/internetarchive/internetarchive.go | **Y** |
+| old_version | Whether the file was replaced and moved by keep-old-version flag | boolean | true | **Y** |
 | rclone-ia-mtime | Time of last modification, managed by Internet Archive | RFC 3339 | 2006-01-02T15:04:05.999999999Z | N |
 | rclone-mtime | Time of last modification, managed by Rclone | RFC 3339 | 2006-01-02T15:04:05.999999999Z | N |
 | rclone-update-track | Random value used by Rclone for tracking changes inside Internet Archive | string | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | N |
-| sha1 | SHA1 hash calculated by Internet Archive | string | 0123456701234567012345670123456701234567 | N |
-| size | File size in bytes | decimal number | 123456 | N |
-| source | The source of the file | string | original | N |
-| viruscheck | The last time viruscheck process was run for the file (?) | unixtime | 1654191352 | N |
+| sha1 | SHA1 hash calculated by Internet Archive | string | 0123456701234567012345670123456701234567 | **Y** |
+| size | File size in bytes | decimal number | 123456 | **Y** |
+| source | The source of the file | string | original | **Y** |
+| summation | Check https://forum.rclone.org/t/31922 for how it is used | string | md5 | **Y** |
+| viruscheck | The last time viruscheck process was run for the file (?) | unixtime | 1654191352 | **Y** |
 
 See the [metadata](https://rclone.org/docs/#metadata) docs for more info.
 
@@ -39412,6 +39419,43 @@ Options:
 
 
 # Changelog
+
+## v1.59.1 - 2022-08-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.59.0...v1.59.1)
+
+* Bug Fixes
+    * accounting: Fix panic in core/stats-reset with unknown group (Nick Craig-Wood)
+    * build: Fix android build after GitHub actions change (Nick Craig-Wood)
+    * dlna: Fix SOAP action header parsing (Joram Schrijver)
+    * docs: Fix links to mount command from install docs (albertony)
+    * dropox: Fix ChangeNotify was unable to decrypt errors (Nick Craig-Wood)
+    * fs: Fix parsing of times and durations of the form "YYYY-MM-DD HH:MM:SS" (Nick Craig-Wood)
+    * serve sftp: Fix checksum detection (Nick Craig-Wood)
+    * sync: Add accidentally missed filter-sensitivity to --backup-dir option (Nick Naumann)
+* Combine
+    * Fix docs showing `remote=` instead of `upstreams=` (Nick Craig-Wood)
+    * Throw error if duplicate directory name is specified (Nick Craig-Wood)
+    * Fix errors with backends shutting down while in use (Nick Craig-Wood)
+* Dropbox
+    * Fix hang on quit with --dropbox-batch-mode off (Nick Craig-Wood)
+    * Fix infinite loop on uploading a corrupted file (Nick Craig-Wood)
+* Internetarchive
+    * Ignore checksums for files using the different method (Lesmiscore)
+    * Handle hash symbol in the middle of filename (Lesmiscore)
+* Jottacloud
+    * Fix working with whitelabel Elgiganten Cloud
+    * Do not store username in config when using standard auth (albertony)
+* Mega
+    * Fix nil pointer exception when bad node received (Nick Craig-Wood)
+* S3
+    * Fix --s3-no-head panic: reflect: Elem of invalid type s3.PutObjectInput (Nick Craig-Wood)
+* SFTP
+    * Fix issue with WS_FTP by working around failing RealPath (albertony)
+* Union
+    * Fix duplicated files when using directories with leading / (Nick Craig-Wood)
+    * Fix multiple files being uploaded when roots don't exist (Nick Craig-Wood)
+    * Fix panic due to misalignment of struct field in 32 bit architectures (r-ricci)
 
 ## v1.59.0 - 2022-07-09
 

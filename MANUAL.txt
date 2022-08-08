@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Jul 09, 2022
+Aug 08, 2022
 
 Rclone syncs your files to cloud storage
 
@@ -856,6 +856,11 @@ extended explanation in the copy command if unsure.
 
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
+
+It is not possible to sync overlapping remotes. However, you may exclude
+the destination from the sync with a filter rule or by putting an
+exclude-if-present file inside the destination directory and sync to a
+destination that is inside the source directory.
 
 Note: Use the -P/--progress flag to view real-time transfer statistics
 
@@ -8332,7 +8337,8 @@ added) in DIR, then it will be overwritten.
 
 The remote in use must support server-side move or copy and you must use
 the same remote as the destination of the sync. The backup directory
-must not overlap the destination directory.
+must not overlap the destination directory without it being excluded by
+a filter rule.
 
 For example
 
@@ -13887,7 +13893,7 @@ These flags are available for every command.
           --use-json-log                         Use json log format
           --use-mmap                             Use mmap allocator (see docs)
           --use-server-modtime                   Use server modified time instead of object metadata
-          --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.59.0")
+          --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.59.1")
       -v, --verbose count                        Print lots more stuff (repeat for more)
 
 Backend Flags
@@ -24544,7 +24550,7 @@ This would produce something like this:
 
     [AllDrives]
     type = combine
-    remote = "My Drive=My Drive:" "Test Drive=Test Drive:"
+    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
 If you then add that config to your config file (find it with
 rclone config file) then you can access all the shared drives in one
@@ -27752,7 +27758,7 @@ found and a combined drive.
 
     [AllDrives]
     type = combine
-    remote = "My Drive=My Drive:" "Test Drive=Test Drive:"
+    upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
 Adding this to the rclone config file will cause those team drives to be
 accessible with the aliases shown. Any illegal charactes will be
@@ -29886,10 +29892,9 @@ Refer to IAS3 API documentation for the API this backend uses.
 Paths are specified as remote:bucket (or remote: for the lsd command.)
 You may put subdirectories in too, e.g. remote:item/path/to/dir.
 
-Once you have made a remote (see the provider specific section above)
-you can use it like this:
-
 Unlike S3, listing up all items uploaded by you isn't supported.
+
+Once you have made a remote, you can use it like this:
 
 Make a new item
 
@@ -29929,7 +29934,7 @@ file. The metadata will appear as file metadata on Internet Archive.
 However, some fields are reserved by both Internet Archive and rclone.
 
 The following are reserved by Internet Archive: - name - source - size -
-md5 - crc32 - sha1 - format - old_version - viruscheck
+md5 - crc32 - sha1 - format - old_version - viruscheck - summation
 
 Trying to set values to these keys is ignored with a warning. Only
 setting mtime is an exception. Doing so make it the identical behavior
@@ -30140,65 +30145,52 @@ including them.
 Here are the possible system metadata items for the internetarchive
 backend.
 
-  ----------------------------------------------------------------------------------------------------------------------
-  Name                  Help               Type        Example                                      Read Only
-  --------------------- ------------------ ----------- -------------------------------------------- --------------------
-  crc32                 CRC32 calculated   string      01234567                                     N
-                        by Internet                                                                 
-                        Archive                                                                     
+  --------------------------------------------------------------------------------------------------------------------------------------
+  Name                  Help                               Type        Example                                      Read Only
+  --------------------- ---------------------------------- ----------- -------------------------------------------- --------------------
+  crc32                 CRC32 calculated by Internet       string      01234567                                     Y
+                        Archive                                                                                     
 
-  format                Name of format     string      Comma-Separated Values                       N
-                        identified by                                                               
-                        Internet Archive                                                            
+  format                Name of format identified by       string      Comma-Separated Values                       Y
+                        Internet Archive                                                                            
 
-  md5                   MD5 hash           string      01234567012345670123456701234567             N
-                        calculated by                                                               
-                        Internet Archive                                                            
+  md5                   MD5 hash calculated by Internet    string      01234567012345670123456701234567             Y
+                        Archive                                                                                     
 
-  mtime                 Time of last       RFC 3339    2006-01-02T15:04:05.999999999Z               N
-                        modification,                                                               
-                        managed by Rclone                                                           
+  mtime                 Time of last modification, managed RFC 3339    2006-01-02T15:04:05.999999999Z               Y
+                        by Rclone                                                                                   
 
-  name                  Full file path,    filename    backend/internetarchive/internetarchive.go   N
-                        without the bucket                                                          
-                        part                                                                        
+  name                  Full file path, without the bucket filename    backend/internetarchive/internetarchive.go   Y
+                        part                                                                                        
 
-  old_version           Whether the file   boolean     true                                         N
-                        was replaced and                                                            
-                        moved by                                                                    
-                        keep-old-version                                                            
-                        flag                                                                        
+  old_version           Whether the file was replaced and  boolean     true                                         Y
+                        moved by keep-old-version flag                                                              
 
-  rclone-ia-mtime       Time of last       RFC 3339    2006-01-02T15:04:05.999999999Z               N
-                        modification,                                                               
-                        managed by                                                                  
-                        Internet Archive                                                            
+  rclone-ia-mtime       Time of last modification, managed RFC 3339    2006-01-02T15:04:05.999999999Z               N
+                        by Internet Archive                                                                         
 
-  rclone-mtime          Time of last       RFC 3339    2006-01-02T15:04:05.999999999Z               N
-                        modification,                                                               
-                        managed by Rclone                                                           
+  rclone-mtime          Time of last modification, managed RFC 3339    2006-01-02T15:04:05.999999999Z               N
+                        by Rclone                                                                                   
 
-  rclone-update-track   Random value used  string      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa             N
-                        by Rclone for                                                               
-                        tracking changes                                                            
-                        inside Internet                                                             
-                        Archive                                                                     
+  rclone-update-track   Random value used by Rclone for    string      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa             N
+                        tracking changes inside Internet                                                            
+                        Archive                                                                                     
 
-  sha1                  SHA1 hash          string      0123456701234567012345670123456701234567     N
-                        calculated by                                                               
-                        Internet Archive                                                            
+  sha1                  SHA1 hash calculated by Internet   string      0123456701234567012345670123456701234567     Y
+                        Archive                                                                                     
 
-  size                  File size in bytes decimal     123456                                       N
-                                           number                                                   
+  size                  File size in bytes                 decimal     123456                                       Y
+                                                           number                                                   
 
-  source                The source of the  string      original                                     N
-                        file                                                                        
+  source                The source of the file             string      original                                     Y
 
-  viruscheck            The last time      unixtime    1654191352                                   N
-                        viruscheck process                                                          
-                        was run for the                                                             
-                        file (?)                                                                    
-  ----------------------------------------------------------------------------------------------------------------------
+  summation             Check                              string      md5                                          Y
+                        https://forum.rclone.org/t/31922                                                            
+                        for how it is used                                                                          
+
+  viruscheck            The last time viruscheck process   unixtime    1654191352                                   Y
+                        was run for the file (?)                                                                    
+  --------------------------------------------------------------------------------------------------------------------------------------
 
 See the metadata docs for more info.
 
@@ -38938,6 +38930,59 @@ Options:
 -   "error": return an error based on option value
 
 Changelog
+
+v1.59.1 - 2022-08-08
+
+See commits
+
+-   Bug Fixes
+    -   accounting: Fix panic in core/stats-reset with unknown group
+        (Nick Craig-Wood)
+    -   build: Fix android build after GitHub actions change (Nick
+        Craig-Wood)
+    -   dlna: Fix SOAP action header parsing (Joram Schrijver)
+    -   docs: Fix links to mount command from install docs (albertony)
+    -   dropox: Fix ChangeNotify was unable to decrypt errors (Nick
+        Craig-Wood)
+    -   fs: Fix parsing of times and durations of the form "YYYY-MM-DD
+        HH:MM:SS" (Nick Craig-Wood)
+    -   serve sftp: Fix checksum detection (Nick Craig-Wood)
+    -   sync: Add accidentally missed filter-sensitivity to --backup-dir
+        option (Nick Naumann)
+-   Combine
+    -   Fix docs showing remote= instead of upstreams= (Nick Craig-Wood)
+    -   Throw error if duplicate directory name is specified (Nick
+        Craig-Wood)
+    -   Fix errors with backends shutting down while in use (Nick
+        Craig-Wood)
+-   Dropbox
+    -   Fix hang on quit with --dropbox-batch-mode off (Nick Craig-Wood)
+    -   Fix infinite loop on uploading a corrupted file (Nick
+        Craig-Wood)
+-   Internetarchive
+    -   Ignore checksums for files using the different method
+        (Lesmiscore)
+    -   Handle hash symbol in the middle of filename (Lesmiscore)
+-   Jottacloud
+    -   Fix working with whitelabel Elgiganten Cloud
+    -   Do not store username in config when using standard auth
+        (albertony)
+-   Mega
+    -   Fix nil pointer exception when bad node received (Nick
+        Craig-Wood)
+-   S3
+    -   Fix --s3-no-head panic: reflect: Elem of invalid type
+        s3.PutObjectInput (Nick Craig-Wood)
+-   SFTP
+    -   Fix issue with WS_FTP by working around failing RealPath
+        (albertony)
+-   Union
+    -   Fix duplicated files when using directories with leading / (Nick
+        Craig-Wood)
+    -   Fix multiple files being uploaded when roots don't exist (Nick
+        Craig-Wood)
+    -   Fix panic due to misalignment of struct field in 32 bit
+        architectures (r-ricci)
 
 v1.59.0 - 2022-07-09
 

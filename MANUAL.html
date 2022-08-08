@@ -19,7 +19,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Jul 09, 2022</p>
+<p class="date">Aug 08, 2022</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -300,7 +300,7 @@ go build</code></pre>
 <p>Run the <a href="https://rclone.org/commands/rclone_config_paths/">config paths</a> command to see the locations that rclone will use.</p>
 <p>To override them set the corresponding options (as command-line arguments, or as <a href="https://rclone.org/docs/#environment-variables">environment variables</a>): - <a href="https://rclone.org/docs/#config-config-file">--config</a> - <a href="https://rclone.org/docs/#cache-dir-dir">--cache-dir</a> - <a href="https://rclone.org/docs/#temp-dir-dir">--temp-dir</a></p>
 <h2 id="autostart">Autostart</h2>
-<p>After installing and configuring rclone, as described above, you are ready to use rclone as an interactive command line utility. If your goal is to perform <em>periodic</em> operations, such as a regular <a href="https://rclone.org/commands/rclone_sync/">sync</a>, you will probably want to configure your rclone command in your operating system's scheduler. If you need to expose <em>service</em>-like features, such as <a href="https://rclone.org/rc/">remote control</a>, <a href="https://rclone.org/gui/">GUI</a>, <a href="https://rclone.org/commands/rclone_serve/">serve</a> or <a href="https://rclone.org/commands/rclone_move/">mount</a>, you will often want an rclone command always running in the background, and configuring it to run in a service infrastructure may be a better option. Below are some alternatives on how to achieve this on different operating systems.</p>
+<p>After installing and configuring rclone, as described above, you are ready to use rclone as an interactive command line utility. If your goal is to perform <em>periodic</em> operations, such as a regular <a href="https://rclone.org/commands/rclone_sync/">sync</a>, you will probably want to configure your rclone command in your operating system's scheduler. If you need to expose <em>service</em>-like features, such as <a href="https://rclone.org/rc/">remote control</a>, <a href="https://rclone.org/gui/">GUI</a>, <a href="https://rclone.org/commands/rclone_serve/">serve</a> or <a href="https://rclone.org/commands/rclone_mount/">mount</a>, you will often want an rclone command always running in the background, and configuring it to run in a service infrastructure may be a better option. Below are some alternatives on how to achieve this on different operating systems.</p>
 <p>NOTE: Before setting up autorun it is highly recommended that you have tested your command manually from a Command Prompt first.</p>
 <h3 id="autostart-on-windows">Autostart on Windows</h3>
 <p>The most relevant alternatives for autostart on Windows are: - Run at user log on using the Startup folder - Run at user log on, at system startup or at schedule using Task Scheduler - Run at system startup using Windows service</p>
@@ -309,7 +309,7 @@ go build</code></pre>
 <p>Example command to run a sync in background:</p>
 <pre><code>c:\rclone\rclone.exe sync c:\files remote:/files --no-console --log-file c:\rclone\logs\sync_files.txt</code></pre>
 <h4 id="user-account">User account</h4>
-<p>As mentioned in the <a href="https://rclone.org/commands/rclone_move/">mount</a> documentation, mounted drives created as Administrator are not visible to other accounts, not even the account that was elevated as Administrator. By running the mount command as the built-in <code>SYSTEM</code> user account, it will create drives accessible for everyone on the system. Both scheduled task and Windows service can be used to achieve this.</p>
+<p>As mentioned in the <a href="https://rclone.org/commands/rclone_mount/">mount</a> documentation, mounted drives created as Administrator are not visible to other accounts, not even the account that was elevated as Administrator. By running the mount command as the built-in <code>SYSTEM</code> user account, it will create drives accessible for everyone on the system. Both scheduled task and Windows service can be used to achieve this.</p>
 <p>NOTE: Remember that when rclone runs as the <code>SYSTEM</code> user, the user profile that it sees will not be yours. This means that if you normally run rclone with configuration file in the default location, to be able to use the same configuration when running as the system user you must explicitely tell rclone where to find it with the <a href="https://rclone.org/docs/#config-config-file"><code>--config</code></a> option, or else it will look in the system users profile path (<code>C:\Windows\System32\config\systemprofile</code>). To test your command manually from a Command Prompt, you can run it with the <a href="https://docs.microsoft.com/en-us/sysinternals/downloads/psexec">PsExec</a> utility from Microsoft's Sysinternals suite, which takes option <code>-s</code> to execute commands as the <code>SYSTEM</code> user.</p>
 <h4 id="start-from-startup-folder">Start from Startup folder</h4>
 <p>To quickly execute an rclone command you can simply create a standard Windows Explorer shortcut for the complete rclone command you want to run. If you store this shortcut in the special "Startup" start-menu folder, Windows will automatically run it at login. To open this folder in Windows Explorer, enter path <code>%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup</code>, or <code>C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp</code> if you want the command to start for <em>every</em> user that logs in.</p>
@@ -469,6 +469,7 @@ destpath/sourcepath/two.txt</code></pre>
 <p>Note that files in the destination won't be deleted if there were any errors at any point. Duplicate objects (files with the same name, on those providers that support it) are also not yet handled.</p>
 <p>It is always the contents of the directory that is synced, not the directory itself. So when source:path is a directory, it's the contents of source:path that are copied, not the directory name and contents. See extended explanation in the <a href="https://rclone.org/commands/rclone_copy/">copy</a> command if unsure.</p>
 <p>If dest:path doesn't exist, it is created and the source:path contents go there.</p>
+<p>It is not possible to sync overlapping remotes. However, you may exclude the destination from the sync with a filter rule or by putting an exclude-if-present file inside the destination directory and sync to a destination that is inside the source directory.</p>
 <p><strong>Note</strong>: Use the <code>-P</code>/<code>--progress</code> flag to view real-time transfer statistics</p>
 <p><strong>Note</strong>: Use the <code>rclone dedupe</code> command to deal with "Duplicate object/directory found in source/destination - ignoring" errors. See <a href="https://forum.rclone.org/t/sync-not-clearing-duplicates/14372">this forum post</a> for more info.</p>
 <pre><code>rclone sync source:path dest:path [flags]</code></pre>
@@ -4236,7 +4237,7 @@ rclone sync -i /path/to/files remote:current-backup</code></pre>
 <h3 id="backup-dirdir">--backup-dir=DIR</h3>
 <p>When using <code>sync</code>, <code>copy</code> or <code>move</code> any files which would have been overwritten or deleted are moved in their original hierarchy into this directory.</p>
 <p>If <code>--suffix</code> is set, then the moved files will have the suffix added to them. If there is a file with the same path (after the suffix has been added) in DIR, then it will be overwritten.</p>
-<p>The remote in use must support server-side move or copy and you must use the same remote as the destination of the sync. The backup directory must not overlap the destination directory.</p>
+<p>The remote in use must support server-side move or copy and you must use the same remote as the destination of the sync. The backup directory must not overlap the destination directory without it being excluded by a filter rule.</p>
 <p>For example</p>
 <pre><code>rclone sync -i /path/to/local remote:current --backup-dir remote:old</code></pre>
 <p>will sync <code>/path/to/local</code> to <code>remote:current</code>, but for any files which would have been updated or deleted will be stored in <code>remote:old</code>.</p>
@@ -8378,7 +8379,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.59.0&quot;)
+      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.59.1&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -17156,7 +17157,7 @@ remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
 
 [AllDrives]
 type = combine
-remote = &quot;My Drive=My Drive:&quot; &quot;Test Drive=Test Drive:&quot;</code></pre>
+upstreams = &quot;My Drive=My Drive:&quot; &quot;Test Drive=Test Drive:&quot;</code></pre>
 <p>If you then add that config to your config file (find it with <code>rclone config file</code>) then you can access all the shared drives in one place with the <code>AllDrives:</code> remote.</p>
 <p>See <a href="https://rclone.org/drive/#drives">the Google Drive docs</a> for full info.</p>
 <h3 id="standard-options-11">Standard options</h3>
@@ -19657,7 +19658,7 @@ remote = drive,team_drive=0ABCDEFabcdefghijkl,root_folder_id=:
 
 [AllDrives]
 type = combine
-remote = &quot;My Drive=My Drive:&quot; &quot;Test Drive=Test Drive:&quot;</code></pre>
+upstreams = &quot;My Drive=My Drive:&quot; &quot;Test Drive=Test Drive:&quot;</code></pre>
 <p>Adding this to the rclone config file will cause those team drives to be accessible with the aliases shown. Any illegal charactes will be substituted with "_" and duplicate names will have numbers suffixed. It will also add a remote called AllDrives which shows all the shared drives combined into one directory tree.</p>
 <h3 id="untrash">untrash</h3>
 <p>Untrash files and directories</p>
@@ -20952,8 +20953,8 @@ y/e/d&gt; y</code></pre>
 <p>The Internet Archive backend utilizes Items on <a href="https://archive.org/">archive.org</a></p>
 <p>Refer to <a href="https://archive.org/services/docs/api/ias3.html">IAS3 API documentation</a> for the API this backend uses.</p>
 <p>Paths are specified as <code>remote:bucket</code> (or <code>remote:</code> for the <code>lsd</code> command.) You may put subdirectories in too, e.g. <code>remote:item/path/to/dir</code>.</p>
-<p>Once you have made a remote (see the provider specific section above) you can use it like this:</p>
 <p>Unlike S3, listing up all items uploaded by you isn't supported.</p>
+<p>Once you have made a remote, you can use it like this:</p>
 <p>Make a new item</p>
 <pre><code>rclone mkdir remote:item</code></pre>
 <p>List the contents of a item</p>
@@ -20965,7 +20966,7 @@ y/e/d&gt; y</code></pre>
 <p>You can optionally wait for the server's processing to finish, by setting non-zero value to <code>wait_archive</code> key. By making it wait, rclone can do normal file comparison. Make sure to set a large enough value (e.g. <code>30m0s</code> for smaller files) as it can take a long time depending on server's queue.</p>
 <h2 id="about-metadata">About metadata</h2>
 <p>This backend supports setting, updating and reading metadata of each file. The metadata will appear as file metadata on Internet Archive. However, some fields are reserved by both Internet Archive and rclone.</p>
-<p>The following are reserved by Internet Archive: - <code>name</code> - <code>source</code> - <code>size</code> - <code>md5</code> - <code>crc32</code> - <code>sha1</code> - <code>format</code> - <code>old_version</code> - <code>viruscheck</code></p>
+<p>The following are reserved by Internet Archive: - <code>name</code> - <code>source</code> - <code>size</code> - <code>md5</code> - <code>crc32</code> - <code>sha1</code> - <code>format</code> - <code>old_version</code> - <code>viruscheck</code> - <code>summation</code></p>
 <p>Trying to set values to these keys is ignored with a warning. Only setting <code>mtime</code> is an exception. Doing so make it the identical behavior as setting ModTime.</p>
 <p>rclone reserves all the keys starting with <code>rclone-</code>. Setting value for these keys will give you warnings, but values are set according to request.</p>
 <p>If there are multiple values for a key, only the first one is returned. This is a limitation of rclone, that supports one value per one key. It can be triggered when you did a server-side copy.</p>
@@ -21138,42 +21139,42 @@ y/e/d&gt; y</code></pre>
 <td>CRC32 calculated by Internet Archive</td>
 <td>string</td>
 <td>01234567</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="even">
 <td>format</td>
 <td>Name of format identified by Internet Archive</td>
 <td>string</td>
 <td>Comma-Separated Values</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="odd">
 <td>md5</td>
 <td>MD5 hash calculated by Internet Archive</td>
 <td>string</td>
 <td>01234567012345670123456701234567</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="even">
 <td>mtime</td>
 <td>Time of last modification, managed by Rclone</td>
 <td>RFC 3339</td>
 <td>2006-01-02T15:04:05.999999999Z</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="odd">
 <td>name</td>
 <td>Full file path, without the bucket part</td>
 <td>filename</td>
 <td>backend/internetarchive/internetarchive.go</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="even">
 <td>old_version</td>
 <td>Whether the file was replaced and moved by keep-old-version flag</td>
 <td>boolean</td>
 <td>true</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="odd">
 <td>rclone-ia-mtime</td>
@@ -21201,28 +21202,35 @@ y/e/d&gt; y</code></pre>
 <td>SHA1 hash calculated by Internet Archive</td>
 <td>string</td>
 <td>0123456701234567012345670123456701234567</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="odd">
 <td>size</td>
 <td>File size in bytes</td>
 <td>decimal number</td>
 <td>123456</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="even">
 <td>source</td>
 <td>The source of the file</td>
 <td>string</td>
 <td>original</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 <tr class="odd">
+<td>summation</td>
+<td>Check https://forum.rclone.org/t/31922 for how it is used</td>
+<td>string</td>
+<td>md5</td>
+<td><strong>Y</strong></td>
+</tr>
+<tr class="even">
 <td>viruscheck</td>
 <td>The last time viruscheck process was run for the file (?)</td>
 <td>unixtime</td>
 <td>1654191352</td>
-<td>N</td>
+<td><strong>Y</strong></td>
 </tr>
 </tbody>
 </table>
@@ -27757,6 +27765,60 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.59.1---2022-08-08">v1.59.1 - 2022-08-08</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.59.0...v1.59.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>accounting: Fix panic in core/stats-reset with unknown group (Nick Craig-Wood)</li>
+<li>build: Fix android build after GitHub actions change (Nick Craig-Wood)</li>
+<li>dlna: Fix SOAP action header parsing (Joram Schrijver)</li>
+<li>docs: Fix links to mount command from install docs (albertony)</li>
+<li>dropox: Fix ChangeNotify was unable to decrypt errors (Nick Craig-Wood)</li>
+<li>fs: Fix parsing of times and durations of the form "YYYY-MM-DD HH:MM:SS" (Nick Craig-Wood)</li>
+<li>serve sftp: Fix checksum detection (Nick Craig-Wood)</li>
+<li>sync: Add accidentally missed filter-sensitivity to --backup-dir option (Nick Naumann)</li>
+</ul></li>
+<li>Combine
+<ul>
+<li>Fix docs showing <code>remote=</code> instead of <code>upstreams=</code> (Nick Craig-Wood)</li>
+<li>Throw error if duplicate directory name is specified (Nick Craig-Wood)</li>
+<li>Fix errors with backends shutting down while in use (Nick Craig-Wood)</li>
+</ul></li>
+<li>Dropbox
+<ul>
+<li>Fix hang on quit with --dropbox-batch-mode off (Nick Craig-Wood)</li>
+<li>Fix infinite loop on uploading a corrupted file (Nick Craig-Wood)</li>
+</ul></li>
+<li>Internetarchive
+<ul>
+<li>Ignore checksums for files using the different method (Lesmiscore)</li>
+<li>Handle hash symbol in the middle of filename (Lesmiscore)</li>
+</ul></li>
+<li>Jottacloud
+<ul>
+<li>Fix working with whitelabel Elgiganten Cloud</li>
+<li>Do not store username in config when using standard auth (albertony)</li>
+</ul></li>
+<li>Mega
+<ul>
+<li>Fix nil pointer exception when bad node received (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Fix --s3-no-head panic: reflect: Elem of invalid type s3.PutObjectInput (Nick Craig-Wood)</li>
+</ul></li>
+<li>SFTP
+<ul>
+<li>Fix issue with WS_FTP by working around failing RealPath (albertony)</li>
+</ul></li>
+<li>Union
+<ul>
+<li>Fix duplicated files when using directories with leading / (Nick Craig-Wood)</li>
+<li>Fix multiple files being uploaded when roots don't exist (Nick Craig-Wood)</li>
+<li>Fix panic due to misalignment of struct field in 32 bit architectures (r-ricci)</li>
+</ul></li>
+</ul>
 <h2 id="v1.59.0---2022-07-09">v1.59.0 - 2022-07-09</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.58.0...v1.59.0">See commits</a></p>
 <ul>
