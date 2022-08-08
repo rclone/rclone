@@ -5,6 +5,43 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.59.1 - 2022-08-08
+
+[See commits](https://github.com/rclone/rclone/compare/v1.59.0...v1.59.1)
+
+* Bug Fixes
+    * accounting: Fix panic in core/stats-reset with unknown group (Nick Craig-Wood)
+    * build: Fix android build after GitHub actions change (Nick Craig-Wood)
+    * dlna: Fix SOAP action header parsing (Joram Schrijver)
+    * docs: Fix links to mount command from install docs (albertony)
+    * dropox: Fix ChangeNotify was unable to decrypt errors (Nick Craig-Wood)
+    * fs: Fix parsing of times and durations of the form "YYYY-MM-DD HH:MM:SS" (Nick Craig-Wood)
+    * serve sftp: Fix checksum detection (Nick Craig-Wood)
+    * sync: Add accidentally missed filter-sensitivity to --backup-dir option (Nick Naumann)
+* Combine
+    * Fix docs showing `remote=` instead of `upstreams=` (Nick Craig-Wood)
+    * Throw error if duplicate directory name is specified (Nick Craig-Wood)
+    * Fix errors with backends shutting down while in use (Nick Craig-Wood)
+* Dropbox
+    * Fix hang on quit with --dropbox-batch-mode off (Nick Craig-Wood)
+    * Fix infinite loop on uploading a corrupted file (Nick Craig-Wood)
+* Internetarchive
+    * Ignore checksums for files using the different method (Lesmiscore)
+    * Handle hash symbol in the middle of filename (Lesmiscore)
+* Jottacloud
+    * Fix working with whitelabel Elgiganten Cloud
+    * Do not store username in config when using standard auth (albertony)
+* Mega
+    * Fix nil pointer exception when bad node received (Nick Craig-Wood)
+* S3
+    * Fix --s3-no-head panic: reflect: Elem of invalid type s3.PutObjectInput (Nick Craig-Wood)
+* SFTP
+    * Fix issue with WS_FTP by working around failing RealPath (albertony)
+* Union
+    * Fix duplicated files when using directories with leading / (Nick Craig-Wood)
+    * Fix multiple files being uploaded when roots don't exist (Nick Craig-Wood)
+    * Fix panic due to misalignment of struct field in 32 bit architectures (r-ricci)
+
 ## v1.59.0 - 2022-07-09
 
 [See commits](https://github.com/rclone/rclone/compare/v1.58.0...v1.59.0)
