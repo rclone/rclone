@@ -23,16 +23,18 @@ logging of all UPNP traffic.
 
 // Options is the type for DLNA serving options.
 type Options struct {
-	ListenAddr   string
-	FriendlyName string
-	LogTrace     bool
+	ListenAddr     string
+	FriendlyName   string
+	LogTrace       bool
+	InterfaceNames []string
 }
 
 // DefaultOpt contains the defaults options for DLNA serving.
 var DefaultOpt = Options{
-	ListenAddr:   ":7879",
-	FriendlyName: "",
-	LogTrace:     false,
+	ListenAddr:     ":7879",
+	FriendlyName:   "",
+	LogTrace:       false,
+	InterfaceNames: []string{},
 }
 
 // Opt contains the options for DLNA serving.
@@ -45,6 +47,7 @@ func addFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
 	flags.StringVarP(flagSet, &Opt.ListenAddr, prefix+"addr", "", Opt.ListenAddr, "The ip:port or :port to bind the DLNA http server to")
 	flags.StringVarP(flagSet, &Opt.FriendlyName, prefix+"name", "", Opt.FriendlyName, "Name of DLNA server")
 	flags.BoolVarP(flagSet, &Opt.LogTrace, prefix+"log-trace", "", Opt.LogTrace, "Enable trace logging of SOAP traffic")
+	flags.StringArrayVarP(flagSet, &Opt.InterfaceNames, prefix+"interface", "", Opt.InterfaceNames, "The interface to use for SSDP (repeat as necessary)")
 }
 
 // AddFlags add the command line flags for DLNA serving.

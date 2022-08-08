@@ -35,7 +35,9 @@ const (
 func startServer(t *testing.T, f fs.Fs) {
 	opt := dlnaflags.DefaultOpt
 	opt.ListenAddr = testBindAddress
-	dlnaServer = newServer(f, &opt)
+	var err error
+	dlnaServer, err = newServer(f, &opt)
+	assert.NoError(t, err)
 	assert.NoError(t, dlnaServer.Serve())
 	baseURL = "http://" + dlnaServer.HTTPConn.Addr().String()
 }

@@ -51,7 +51,10 @@ files that they are not able to play back correctly.
 		f := cmd.NewFsSrc(args)
 
 		cmd.Run(false, false, command, func() error {
-			s := newServer(f, &dlnaflags.Opt)
+			s, err := newServer(f, &dlnaflags.Opt)
+			if err != nil {
+				return err
+			}
 			if err := s.Serve(); err != nil {
 				return err
 			}
@@ -92,17 +95,32 @@ type server struct {
 	vfs *vfs.VFS
 }
 
-func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
+func newServer(f fs.Fs, opt *dlnaflags.Options) (*server, error) {
 	friendlyName := opt.FriendlyName
 	if friendlyName == "" {
 		friendlyName = makeDefaultFriendlyName()
+	}
+	interfaces := make([]net.Interface, 0, len(opt.InterfaceNames))
+	for _, interfaceName := range opt.InterfaceNames {
+		var err error
+		intf, err := net.InterfaceByName(interfaceName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve interface name '%s': %w", interfaceName, err)
+		}
+		if !isAppropriatelyConfigured(*intf) {
+			return nil, fmt.Errorf("interface '%s' is not appropriately configured (it should be UP, MULTICAST and MTU > 0)", interfaceName)
+		}
+		interfaces = append(interfaces, *intf)
+	}
+	if len(interfaces) == 0 {
+		interfaces = listInterfaces()
 	}
 
 	s := &server{
 		AnnounceInterval: 10 * time.Second,
 		FriendlyName:     friendlyName,
 		RootDeviceUUID:   makeDeviceUUID(friendlyName),
-		Interfaces:       listInterfaces(),
+		Interfaces:       interfaces,
 
 		httpListenAddr: opt.ListenAddr,
 
@@ -138,7 +156,7 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) *server {
 			http.FileServer(data.Assets))))
 	s.handler = logging(withHeader("Server", serverField, r))
 
-	return s
+	return s, nil
 }
 
 // UPnPService is the interface for the SOAP service.
