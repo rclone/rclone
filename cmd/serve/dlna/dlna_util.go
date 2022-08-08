@@ -47,11 +47,15 @@ func listInterfaces() []net.Interface {
 
 	var active []net.Interface
 	for _, intf := range ifs {
-		if intf.Flags&net.FlagUp != 0 && intf.Flags&net.FlagMulticast != 0 && intf.MTU > 0 {
+		if isAppropriatelyConfigured(intf) {
 			active = append(active, intf)
 		}
 	}
 	return active
+}
+
+func isAppropriatelyConfigured(intf net.Interface) bool {
+	return intf.Flags&net.FlagUp != 0 && intf.Flags&net.FlagMulticast != 0 && intf.MTU > 0
 }
 
 func didlLite(chardata string) string {
