@@ -1676,14 +1676,14 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
-	uploadParts := int64(maxUploadParts)
+	uploadParts := maxUploadParts
 	if uploadParts < 1 {
 		uploadParts = 1
 	} else if uploadParts > maxUploadParts {
 		uploadParts = maxUploadParts
 	}
 	// calculate size of parts/blocks
-	partSize := chunksize.Calculator(o, int(uploadParts), o.fs.opt.ChunkSize)
+	partSize := chunksize.Calculator(o, src.Size(), uploadParts, o.fs.opt.ChunkSize)
 
 	putBlobOptions := azblob.UploadStreamToBlockBlobOptions{
 		BufferSize:      int(partSize),

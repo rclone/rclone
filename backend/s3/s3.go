@@ -2076,7 +2076,7 @@ type Options struct {
 	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
 	CopyCutoff            fs.SizeSuffix        `config:"copy_cutoff"`
 	ChunkSize             fs.SizeSuffix        `config:"chunk_size"`
-	MaxUploadParts        int64                `config:"max_upload_parts"`
+	MaxUploadParts        int                  `config:"max_upload_parts"`
 	DisableChecksum       bool                 `config:"disable_checksum"`
 	SharedCredentialsFile string               `config:"shared_credentials_file"`
 	Profile               string               `config:"profile"`
@@ -4108,10 +4108,10 @@ func (o *Object) uploadMultipart(ctx context.Context, req *s3.PutObjectInput, si
 	if size == -1 {
 		warnStreamUpload.Do(func() {
 			fs.Logf(f, "Streaming uploads using chunk size %v will have maximum file size of %v",
-				f.opt.ChunkSize, fs.SizeSuffix(int64(partSize)*uploadParts))
+				f.opt.ChunkSize, fs.SizeSuffix(int64(partSize)*int64(uploadParts)))
 		})
 	} else {
-		partSize = chunksize.Calculator(o, int(uploadParts), f.opt.ChunkSize)
+		partSize = chunksize.Calculator(o, size, uploadParts, f.opt.ChunkSize)
 	}
 
 	memPool := f.getMemoryPool(int64(partSize))

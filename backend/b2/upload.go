@@ -97,7 +97,7 @@ func (f *Fs) newLargeUpload(ctx context.Context, o *Object, in io.Reader, src fs
 	if size == -1 {
 		fs.Debugf(o, "Streaming upload with --b2-chunk-size %s allows uploads of up to %s and will fail only when that limit is reached.", f.opt.ChunkSize, maxParts*f.opt.ChunkSize)
 	} else {
-		chunkSize = chunksize.Calculator(src, maxParts, defaultChunkSize)
+		chunkSize = chunksize.Calculator(o, size, maxParts, defaultChunkSize)
 		parts = size / int64(chunkSize)
 		if size%int64(chunkSize) != 0 {
 			parts++
