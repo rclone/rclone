@@ -320,6 +320,10 @@ can't check the size and hash but the file contents will be decompressed.
 			Advanced: true,
 			Default:  false,
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for the service.\n\nLeave blank normally.",
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -343,6 +347,7 @@ type Options struct {
 	StorageClass              string               `config:"storage_class"`
 	NoCheckBucket             bool                 `config:"no_check_bucket"`
 	Decompress                bool                 `config:"decompress"`
+	Endpoint                  string               `config:"endpoint"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 }
 
@@ -523,7 +528,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 	// Create a new authorized Drive client.
 	f.client = oAuthClient
-	f.svc, err = storage.NewService(context.Background(), option.WithHTTPClient(f.client))
+	gcsOpts := []option.ClientOption{option.WithHTTPClient(f.client)}
+	if opt.Endpoint != "" {
+		gcsOpts = append(gcsOpts, option.WithEndpoint(opt.Endpoint))
+	}
+	f.svc, err = storage.NewService(context.Background(), gcsOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create Google Cloud Storage client: %w", err)
 	}
