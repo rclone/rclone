@@ -631,3 +631,4 @@ put them back in again.` >}}
   * Steve Kowalik <steven@wedontsleep.org>
   * Jordi Gonzalez Muñoz <jordigonzm@gmail.com>
   * Joram Schrijver <i@joram.io>
+  * Mark Trolley <marktrolley@gmail.com>
