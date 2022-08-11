@@ -375,6 +375,11 @@ func (f *Filter) InActive() bool {
 
 // IncludeRemote returns whether this remote passes the filter rules.
 func (f *Filter) IncludeRemote(remote string) bool {
+	// filesFrom takes precedence
+	if f.files != nil {
+		_, include := f.files[remote]
+		return include
+	}
 	for _, rule := range f.fileRules.rules {
 		if rule.Match(remote) {
 			return rule.Include
