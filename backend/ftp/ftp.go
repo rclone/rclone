@@ -81,8 +81,22 @@ security from the server in order to upgrade a plain text connection
 to an encrypted one. Cannot be used in combination with implicit FTP.`,
 			Default: false,
 		}, {
-			Name:     "concurrency",
-			Help:     "Maximum number of FTP simultaneous connections, 0 for unlimited.",
+			Name: "concurrency",
+			Help: strings.Replace(`Maximum number of FTP simultaneous connections, 0 for unlimited.
+
+Note that setting this is very likely to cause deadlocks so it should
+be used with care.
+
+If you are doing a sync or copy then make sure concurrency is one more
+than the sum of |--transfers| and |--checkers|.
+
+If you use |--check-first| then it just needs to be one more than the
+maximum of |--checkers| and |--transfers|.
+
+So for |concurrency 3| you'd use |--checkers 2 --transfers 2
+--check-first| or |--checkers 1 --transfers 1|.
+
+`, "|", "`", -1),
 			Default:  0,
 			Advanced: true,
 		}, {
