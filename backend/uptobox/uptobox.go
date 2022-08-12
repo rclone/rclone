@@ -163,7 +163,7 @@ func (f *Fs) splitPathFull(pth string) (string, string) {
 }
 
 // splitPath is modified splitPath version that doesn't include the seperator
-// in the base part
+// in the base path
 func (f *Fs) splitPath(pth string) (string, string) {
 	// chop of any leading or trailing '/'
 	pth = strings.Trim(pth, "/")
@@ -201,7 +201,11 @@ func NewFs(ctx context.Context, name string, root string, config configmap.Mappe
 		opt:   *opt,
 		pacer: fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant), pacer.AttackConstant(attackConstant))),
 	}
-	f.root = root
+	if root == "/" || root == "." {
+		f.root = ""
+	} else {
+		f.root = root
+	}
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
 		CanHaveEmptyDirectories: true,
@@ -470,7 +474,7 @@ func (f *Fs) updateFileInformation(ctx context.Context, update *api.UpdateFileIn
 
 func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size int64, options ...fs.OpenOption) (fs.Object, error) {
 	if size > int64(200e9) { // max size 200GB
-		return nil, errors.New("File too big, cant upload")
+		return nil, errors.New("file too big, can't upload")
 	} else if size == 0 {
 		return nil, fs.ErrorCantUploadEmptyFiles
 	}
@@ -493,7 +497,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 	if info.StatusCode != 0 {
-		return nil, fmt.Errorf("putUnchecked: api error: %d - %s", info.StatusCode, info.Message)
+		return nil, fmt.Errorf("putUnchecked api error: %d - %s", info.StatusCode, info.Message)
 	}
 	// we need to have a safe name for the upload to work
 	tmpName := "rcloneTemp" + random.String(8)
@@ -502,7 +506,7 @@ func (f *Fs) putUnchecked(ctx context.Context, in io.Reader, remote string, size
 		return nil, err
 	}
 	if len(upload.Files) != 1 {
-		return nil, errors.New("Upload: unexpected response")
+		return nil, errors.New("upload unexpected response")
 	}
 	match := f.IDRegexp.FindStringSubmatch(upload.Files[0].URL)
 
@@ -699,8 +703,7 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 
 	// copy the old object and apply the changes
-	var newObj Object
-	newObj = *srcObj
+	newObj := *srcObj
 	newObj.remote = remote
 	newObj.fs = f
 	return &newObj, nil
@@ -755,7 +758,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 	// check if the destination allready exists
 	dstPath := f.dirPath(dstRemote)
-	dstInfo, err := f.readMetaDataForPath(ctx, dstPath, &api.MetadataRequestOptions{Limit: 1})
+	_, err = f.readMetaDataForPath(ctx, dstPath, &api.MetadataRequestOptions{Limit: 1})
 	if err == nil {
 		return fs.ErrorDirExists
 	}
@@ -768,7 +771,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 	}
 
 	// find the destination parent dir
-	dstInfo, err = f.readMetaDataForPath(ctx, dstBase, &api.MetadataRequestOptions{Limit: 1})
+	dstInfo, err := f.readMetaDataForPath(ctx, dstBase, &api.MetadataRequestOptions{Limit: 1})
 	if err != nil {
 		return fmt.Errorf("dirmove: failed to read destination: %w", err)
 	}
@@ -915,11 +918,6 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-// Returns the full remote path for the object
-func (o *Object) filePath() string {
-	return o.fs.dirPath(o.remote)
-}
-
 // ModTime returns the modification time of the object
 //
 // It attempts to read the objects mtime and if that isn't present the
@@ -993,7 +991,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // Update the already existing object
 //
-// Copy the reader into the object updating modTime and size
+// Copy the reader into the object updating modTime and size.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {

@@ -98,9 +98,10 @@ func translateError(err error) error {
 	case vfs.EROFS:
 		return fuse.Errno(syscall.EROFS)
 	case vfs.ENOSYS, fs.ErrorNotImplemented:
-		return fuse.ENOSYS
+		return syscall.ENOSYS
 	case vfs.EINVAL:
 		return fuse.Errno(syscall.EINVAL)
 	}
+	fs.Errorf(nil, "IO error: %v", err)
 	return err
 }

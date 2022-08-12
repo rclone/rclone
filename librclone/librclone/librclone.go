@@ -72,7 +72,7 @@ func writeError(path string, in rc.Params, err error, status int) (string, int) 
 
 // RPC runs a transaction over the RC
 //
-// Calling an rc function using JSON to input parameters and output the resulted JSON
+// Calling an rc function using JSON to input parameters and output the resulted JSON.
 //
 // operations/uploadfile and core/command are not supported as they need request or response object
 // modified from handlePost in rcserver.go

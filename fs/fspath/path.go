@@ -99,7 +99,7 @@ func Parse(path string) (parsed Parsed, err error) {
 		return parsed, errCantBeEmpty
 	}
 	// If path has no `:` in, it must be a local path
-	if strings.IndexRune(path, ':') < 0 {
+	if !strings.ContainsRune(path, ':') {
 		return parsed, nil
 	}
 	// States for parser
@@ -208,7 +208,7 @@ loop:
 				value := path[prev : i-1]
 				// replace any doubled quotes if there were any
 				if doubled {
-					value = strings.Replace(value, string(quote)+string(quote), string(quote), -1)
+					value = strings.ReplaceAll(value, string(quote)+string(quote), string(quote))
 				}
 				prev = i + 1
 				parsed.Config[param] = value

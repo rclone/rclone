@@ -37,7 +37,7 @@ func TestIntegration(t *testing.T) {
 	}
 	f, err := fs.NewFs(ctx, *fstest.RemoteName)
 	if err == fs.ErrorNotFoundInConfigFile {
-		t.Skip(fmt.Sprintf("Couldn't create google photos backend - skipping tests: %v", err))
+		t.Skipf("Couldn't create google photos backend - skipping tests: %v", err)
 	}
 	require.NoError(t, err)
 

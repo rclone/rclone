@@ -5,7 +5,7 @@ description: "Rclone Licence"
 
 # License
 
-This is free software under the terms of MIT the license (check the
+This is free software under the terms of the MIT license (check the
 COPYING file included with the source code).
 
 ```

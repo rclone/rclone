@@ -120,7 +120,7 @@ func (c *Cache) Create(bucket string, create CreateFn, exists ExistsFn) (err err
 
 // Remove the bucket with f if it exists
 //
-// If f returns an error we assume the bucket was not removed
+// If f returns an error we assume the bucket was not removed.
 //
 // If the bucket has already been deleted it returns ErrAlreadyDeleted
 func (c *Cache) Remove(bucket string, f func() error) error {

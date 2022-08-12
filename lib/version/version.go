@@ -11,7 +11,7 @@ import (
 
 const versionFormat = "-v2006-01-02-150405.000"
 
-var versionRegexp = regexp.MustCompile("-v\\d{4}-\\d{2}-\\d{2}-\\d{6}-\\d{3}")
+var versionRegexp = regexp.MustCompile(`-v\d{4}-\d{2}-\d{2}-\d{6}-\d{3}`)
 
 // Split fileName into base and extension so that base + ext == fileName
 func splitExt(fileName string) (base, ext string) {
@@ -30,7 +30,7 @@ func Add(fileName string, t time.Time) string {
 	base, ext := splitExt(fileName)
 	s := t.Format(versionFormat)
 	// Replace the '.' with a '-'
-	s = strings.Replace(s, ".", "-", -1)
+	s = strings.ReplaceAll(s, ".", "-")
 	return base + s + ext
 }
 

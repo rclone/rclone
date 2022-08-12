@@ -253,7 +253,7 @@ func qsServiceConnection(ctx context.Context, opt *Options) (*qs.Service, error)
 		_protocol, _host, _port, err := qsParseEndpoint(endpoint)
 
 		if err != nil {
-			return nil, fmt.Errorf("The endpoint \"%s\" format error", endpoint)
+			return nil, fmt.Errorf("the endpoint \"%s\" format error", endpoint)
 		}
 
 		if _protocol != "" {
@@ -431,9 +431,9 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -477,7 +477,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Return an Object from a path
 //
-//If it can't be found it returns the error ErrorObjectNotFound.
+// If it can't be found it returns the error ErrorObjectNotFound.
 func (f *Fs) newObjectWithInfo(remote string, info *qs.KeyType) (fs.Object, error) {
 	o := &Object{
 		fs:     f,
@@ -573,9 +573,7 @@ func (f *Fs) list(ctx context.Context, bucket, directory, prefix string, addBuck
 				if addBucket {
 					remote = path.Join(bucket, remote)
 				}
-				if strings.HasSuffix(remote, "/") {
-					remote = remote[:len(remote)-1]
-				}
+				remote = strings.TrimSuffix(remote, "/")
 				err = fn(remote, &qs.KeyType{Key: &remote}, true)
 				if err != nil {
 					return err
@@ -775,8 +773,6 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 				retries++
 				wasDeleted = true
 				continue
-			default:
-				break
 			}
 			break
 		}
@@ -854,7 +850,6 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 						continue
 					default:
 						err = e
-						break
 					}
 				}
 			} else {

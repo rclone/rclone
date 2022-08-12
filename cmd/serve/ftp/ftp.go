@@ -13,6 +13,7 @@ import (
 	"net"
 	"os"
 	"os/user"
+	"regexp"
 	"strconv"
 	"sync"
 	"time"
@@ -79,9 +80,9 @@ var Command = &cobra.Command{
 	Use:   "ftp remote:path",
 	Short: `Serve remote:path over FTP.`,
 	Long: `
-rclone serve ftp implements a basic ftp server to serve the
-remote over FTP protocol. This can be viewed with a ftp client
-or you can make a remote of type ftp to read and write it.
+Run a basic FTP server to serve a remote over FTP protocol.
+This can be viewed with a FTP client or you can make a remote of
+type FTP to read and write it.
 
 ### Server options
 
@@ -128,15 +129,17 @@ type server struct {
 	useTLS bool
 }
 
+var passivePortsRe = regexp.MustCompile(`^\s*\d+\s*-\s*\d+\s*$`)
+
 // Make a new FTP to serve the remote
 func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 	host, port, err := net.SplitHostPort(opt.ListenAddr)
 	if err != nil {
-		return nil, errors.New("Failed to parse host:port")
+		return nil, errors.New("failed to parse host:port")
 	}
 	portNum, err := strconv.Atoi(port)
 	if err != nil {
-		return nil, errors.New("Failed to parse host:port")
+		return nil, errors.New("failed to parse host:port")
 	}
 
 	s := &server{
@@ -150,6 +153,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 		s.vfs = vfs.New(f, &vfsflags.Opt)
 	}
 	s.useTLS = s.opt.TLSKey != ""
+
+	// Check PassivePorts format since the the server library doesn't!
+	if !passivePortsRe.MatchString(opt.PassivePorts) {
+		return nil, fmt.Errorf("invalid format for passive ports %q", opt.PassivePorts)
+	}
 
 	ftpopt := &ftp.ServerOpts{
 		Name:           "Rclone FTP Server",
@@ -176,26 +184,28 @@ func (s *server) serve() error {
 	return s.srv.ListenAndServe()
 }
 
-// serve runs the ftp server
+// close stops the ftp server
+//
+//lint:ignore U1000 unused when not building linux
 func (s *server) close() error {
 	fs.Logf(s.f, "Stopping FTP on %s", s.srv.Hostname+":"+strconv.Itoa(s.srv.Port))
 	return s.srv.Shutdown()
 }
 
-//Logger ftp logger output formatted message
+// Logger ftp logger output formatted message
 type Logger struct{}
 
-//Print log simple text message
+// Print log simple text message
 func (l *Logger) Print(sessionID string, message interface{}) {
 	fs.Infof(sessionID, "%s", message)
 }
 
-//Printf log formatted text message
+// Printf log formatted text message
 func (l *Logger) Printf(sessionID string, format string, v ...interface{}) {
 	fs.Infof(sessionID, format, v...)
 }
 
-//PrintCommand log formatted command execution
+// PrintCommand log formatted command execution
 func (l *Logger) PrintCommand(sessionID string, command string, params string) {
 	if command == "PASS" {
 		fs.Infof(sessionID, "> PASS ****")
@@ -204,7 +214,7 @@ func (l *Logger) PrintCommand(sessionID string, command string, params string) {
 	}
 }
 
-//PrintResponse log responses
+// PrintResponse log responses
 func (l *Logger) PrintResponse(sessionID string, code int, message string) {
 	fs.Infof(sessionID, "< %d %s", code, message)
 }
@@ -228,7 +238,7 @@ func (s *server) NewDriver() (ftp.Driver, error) {
 	return d, nil
 }
 
-//Driver implementation of ftp server
+// Driver implementation of ftp server
 type Driver struct {
 	s    *server
 	vfs  *vfs.VFS
@@ -256,7 +266,7 @@ func (d *Driver) CheckPasswd(user, pass string) (ok bool, err error) {
 	return true, nil
 }
 
-//Stat get information on file or folder
+// Stat get information on file or folder
 func (d *Driver) Stat(path string) (fi ftp.FileInfo, err error) {
 	defer log.Trace(path, "")("fi=%+v, err = %v", &fi, &err)
 	n, err := d.vfs.Stat(path)
@@ -266,7 +276,7 @@ func (d *Driver) Stat(path string) (fi ftp.FileInfo, err error) {
 	return &FileInfo{n, n.Mode(), d.vfs.Opt.UID, d.vfs.Opt.GID}, err
 }
 
-//ChangeDir move current folder
+// ChangeDir move current folder
 func (d *Driver) ChangeDir(path string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -276,24 +286,24 @@ func (d *Driver) ChangeDir(path string) (err error) {
 		return err
 	}
 	if !n.IsDir() {
-		return errors.New("Not a directory")
+		return errors.New("not a directory")
 	}
 	return nil
 }
 
-//ListDir list content of a folder
+// ListDir list content of a folder
 func (d *Driver) ListDir(path string, callback func(ftp.FileInfo) error) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 	defer log.Trace(path, "")("err = %v", &err)
 	node, err := d.vfs.Stat(path)
 	if err == vfs.ENOENT {
-		return errors.New("Directory not found")
+		return errors.New("directory not found")
 	} else if err != nil {
 		return err
 	}
 	if !node.IsDir() {
-		return errors.New("Not a directory")
+		return errors.New("not a directory")
 	}
 
 	dir := node.(*vfs.Dir)
@@ -317,7 +327,7 @@ func (d *Driver) ListDir(path string, callback func(ftp.FileInfo) error) (err er
 	return nil
 }
 
-//DeleteDir delete a folder and his content
+// DeleteDir delete a folder and his content
 func (d *Driver) DeleteDir(path string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -327,7 +337,7 @@ func (d *Driver) DeleteDir(path string) (err error) {
 		return err
 	}
 	if !node.IsDir() {
-		return errors.New("Not a directory")
+		return errors.New("not a directory")
 	}
 	err = node.Remove()
 	if err != nil {
@@ -336,7 +346,7 @@ func (d *Driver) DeleteDir(path string) (err error) {
 	return nil
 }
 
-//DeleteFile delete a file
+// DeleteFile delete a file
 func (d *Driver) DeleteFile(path string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -346,7 +356,7 @@ func (d *Driver) DeleteFile(path string) (err error) {
 		return err
 	}
 	if !node.IsFile() {
-		return errors.New("Not a file")
+		return errors.New("not a file")
 	}
 	err = node.Remove()
 	if err != nil {
@@ -355,7 +365,7 @@ func (d *Driver) DeleteFile(path string) (err error) {
 	return nil
 }
 
-//Rename rename a file or folder
+// Rename rename a file or folder
 func (d *Driver) Rename(oldName, newName string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -363,7 +373,7 @@ func (d *Driver) Rename(oldName, newName string) (err error) {
 	return d.vfs.Rename(oldName, newName)
 }
 
-//MakeDir create a folder
+// MakeDir create a folder
 func (d *Driver) MakeDir(path string) (err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -376,7 +386,7 @@ func (d *Driver) MakeDir(path string) (err error) {
 	return err
 }
 
-//GetFile download a file
+// GetFile download a file
 func (d *Driver) GetFile(path string, offset int64) (size int64, fr io.ReadCloser, err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -384,12 +394,12 @@ func (d *Driver) GetFile(path string, offset int64) (size int64, fr io.ReadClose
 	node, err := d.vfs.Stat(path)
 	if err == vfs.ENOENT {
 		fs.Infof(path, "File not found")
-		return 0, nil, errors.New("File not found")
+		return 0, nil, errors.New("file not found")
 	} else if err != nil {
 		return 0, nil, err
 	}
 	if !node.IsFile() {
-		return 0, nil, errors.New("Not a file")
+		return 0, nil, errors.New("not a file")
 	}
 
 	handle, err := node.Open(os.O_RDONLY)
@@ -408,7 +418,7 @@ func (d *Driver) GetFile(path string, offset int64) (size int64, fr io.ReadClose
 	return node.Size(), handle, nil
 }
 
-//PutFile upload a file
+// PutFile upload a file
 func (d *Driver) PutFile(path string, data io.Reader, appendData bool) (n int64, err error) {
 	d.lock.Lock()
 	defer d.lock.Unlock()
@@ -418,7 +428,7 @@ func (d *Driver) PutFile(path string, data io.Reader, appendData bool) (n int64,
 	if err == nil {
 		isExist = true
 		if node.IsDir() {
-			return 0, errors.New("A dir has the same name")
+			return 0, errors.New("a dir has the same name")
 		}
 	} else {
 		if os.IsNotExist(err) {
@@ -470,7 +480,7 @@ func (d *Driver) PutFile(path string, data io.Reader, appendData bool) (n int64,
 	return bytes, nil
 }
 
-//FileInfo struct to hold file info for ftp server
+// FileInfo struct to hold file info for ftp server
 type FileInfo struct {
 	os.FileInfo
 
@@ -479,12 +489,12 @@ type FileInfo struct {
 	group uint32
 }
 
-//Mode return mode of file.
+// Mode return mode of file.
 func (f *FileInfo) Mode() os.FileMode {
 	return f.mode
 }
 
-//Owner return owner of file. Try to find the username if possible
+// Owner return owner of file. Try to find the username if possible
 func (f *FileInfo) Owner() string {
 	str := fmt.Sprint(f.owner)
 	u, err := user.LookupId(str)
@@ -494,7 +504,7 @@ func (f *FileInfo) Owner() string {
 	return u.Username
 }
 
-//Group return group of file. Try to find the group name if possible
+// Group return group of file. Try to find the group name if possible
 func (f *FileInfo) Group() string {
 	str := fmt.Sprint(f.group)
 	g, err := user.LookupGroupId(str)

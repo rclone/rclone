@@ -22,7 +22,7 @@ directory named dest:path.
 
 This can be used to rename files or upload single files to other than
 their existing name.  If the source is a directory then it acts exactly
-like the move command.
+like the [move](/commands/rclone_move/) command.
 
 So
 

@@ -37,7 +37,7 @@ Opendrive) that can have duplicate file names. It can be run on wrapping backend
 (e.g. crypt) if they wrap a backend which supports duplicate file
 names.
 
-However if --by-hash is passed in then dedupe will find files with
+However if ` + "`--by-hash`" + ` is passed in then dedupe will find files with
 duplicate hashes instead which will work on any backend which supports
 at least one hash. This can be used to find files with duplicate
 content. This is known as deduping by hash.

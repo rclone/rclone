@@ -61,3 +61,25 @@ func TestServicePrincipalFileFailure(t *testing.T) {
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error creating service principal token: parameter 'secret' cannot be empty")
 }
+
+func TestValidateAccessTier(t *testing.T) {
+	tests := map[string]struct {
+		accessTier string
+		want       bool
+	}{
+		"hot":     {"hot", true},
+		"HOT":     {"HOT", true},
+		"Hot":     {"Hot", true},
+		"cool":    {"cool", true},
+		"archive": {"archive", true},
+		"empty":   {"", false},
+		"unknown": {"unknown", false},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := validateAccessTier(test.accessTier)
+			assert.Equal(t, test.want, got)
+		})
+	}
+}

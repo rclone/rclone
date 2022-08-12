@@ -173,8 +173,8 @@ func buildZip(dir string) string {
 func buildDebAndRpm(dir, version, goarch string) []string {
 	// Make internal version number acceptable to .deb and .rpm
 	pkgVersion := version[1:]
-	pkgVersion = strings.Replace(pkgVersion, "β", "-beta", -1)
-	pkgVersion = strings.Replace(pkgVersion, "-", ".", -1)
+	pkgVersion = strings.ReplaceAll(pkgVersion, "β", "-beta")
+	pkgVersion = strings.ReplaceAll(pkgVersion, "-", ".")
 	nfpmArch, ok := goarchToNfpm[goarch]
 	if !ok {
 		nfpmArch = goarch
@@ -265,8 +265,11 @@ func buildWindowsResourceSyso(goarch string, versionTag string) string {
 		"-o",
 		sysoPath,
 	}
-	if goarch == "amd64" {
+	if strings.Contains(goarch, "64") {
 		args = append(args, "-64") // Make the syso a 64-bit coff file
+	}
+	if strings.Contains(goarch, "arm") {
+		args = append(args, "-arm") // Make the syso an arm binary
 	}
 	args = append(args, jsonPath)
 	err = runEnv(args, nil)

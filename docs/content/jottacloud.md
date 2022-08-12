@@ -75,60 +75,83 @@ s) Set configuration password
 q) Quit config
 n/s/q> n
 name> remote
+Option Storage.
 Type of storage to configure.
-Enter a string value. Press Enter for the default ("").
-Choose a number from below, or type in your own value
+Choose a number from below, or type in your own value.
 [snip]
 XX / Jottacloud
-   \ "jottacloud"
+   \ (jottacloud)
 [snip]
 Storage> jottacloud
-** See help for jottacloud backend at: https://rclone.org/jottacloud/ **
-
-Edit advanced config? (y/n)
-y) Yes
-n) No
-y/n> n
-Remote config
-Use legacy authentication?.
-This is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.
+Edit advanced config?
 y) Yes
 n) No (default)
 y/n> n
-
-Generate a personal login token here: https://www.jottacloud.com/web/secure
+Option config_type.
+Select authentication type.
+Choose a number from below, or type in an existing string value.
+Press Enter for the default (standard).
+   / Standard authentication.
+ 1 | Use this if you're a normal Jottacloud user.
+   \ (standard)
+   / Legacy authentication.
+ 2 | This is only required for certain whitelabel versions of Jottacloud and not recommended for normal users.
+   \ (legacy)
+   / Telia Cloud authentication.
+ 3 | Use this if you are using Telia Cloud.
+   \ (telia)
+   / Tele2 Cloud authentication.
+ 4 | Use this if you are using Tele2 Cloud.
+   \ (tele2)
+config_type> 1
+Personal login token.
+Generate here: https://www.jottacloud.com/web/secure
 Login Token> <your token here>
-
-Do you want to use a non standard device/mountpoint e.g. for accessing files uploaded using the official Jottacloud client?
-
+Use a non-standard device/mountpoint?
+Choosing no, the default, will let you access the storage used for the archive
+section of the official Jottacloud client. If you instead want to access the
+sync or the backup section, for example, you must choose yes.
 y) Yes
-n) No
+n) No (default)
 y/n> y
-Please select the device to use. Normally this will be Jotta
-Choose a number from below, or type in an existing value
+Option config_device.
+The device to use. In standard setup the built-in Jotta device is used,
+which contains predefined mountpoints for archive, sync etc. All other devices
+are treated as backup devices by the official Jottacloud client. You may create
+a new by entering a unique name.
+Choose a number from below, or type in your own string value.
+Press Enter for the default (DESKTOP-3H31129).
  1 > DESKTOP-3H31129
  2 > Jotta
-Devices> 2
-Please select the mountpoint to user. Normally this will be Archive
-Choose a number from below, or type in an existing value
+config_device> 2
+Option config_mountpoint.
+The mountpoint to use for the built-in device Jotta.
+The standard setup is to use the Archive mountpoint. Most other mountpoints
+have very limited support in rclone and should generally be avoided.
+Choose a number from below, or type in an existing string value.
+Press Enter for the default (Archive).
  1 > Archive
- 2 > Links
+ 2 > Shared
  3 > Sync
-
-Mountpoints> 1
+config_mountpoint> 1
 --------------------
-[jotta]
+[remote]
 type = jottacloud
+configVersion = 1
+client_id = jottacli
+client_secret =
+tokenURL = https://id.jottacloud.com/auth/realms/jottacloud/protocol/openid-connect/token
 token = {........}
+username = 2940e57271a93d987d6f8a21
 device = Jotta
 mountpoint = Archive
-configVersion = 1
 --------------------
-y) Yes this is OK
+y) Yes this is OK (default)
 e) Edit this remote
 d) Delete this remote
 y/e/d> y
 ```
+
 Once configured you can then use `rclone` like this,
 
 List directories in top level of your Jottacloud
@@ -145,19 +168,27 @@ To copy a local directory to an Jottacloud directory called backup
 
 ### Devices and Mountpoints
 
-The official Jottacloud client registers a device for each computer you install it on,
-and then creates a mountpoint for each folder you select for Backup.
-The web interface uses a special device called Jotta for the Archive and Sync mountpoints.
+The official Jottacloud client registers a device for each computer you install
+it on, and shows them in the backup section of the user interface. For each
+folder you select for backup it will create a mountpoint within this device.
+A built-in device called Jotta is special, and contains mountpoints Archive,
+Sync and some others, used for corresponding features in official clients.
 
-With rclone you'll want to use the Jotta/Archive device/mountpoint in most cases, however if you
-want to access files uploaded by any of the official clients rclone provides the option to select
-other devices and mountpoints during config. Note that uploading files is currently not supported
-to other devices than Jotta.
+With rclone you'll want to use the standard Jotta/Archive device/mountpoint in
+most cases. However, you may for example want to access files from the sync or
+backup functionality provided by the official clients, and rclone therefore
+provides the option to select other devices and mountpoints during config.
 
-The built-in Jotta device may also contain several other mountpoints, such as: Latest, Links, Shared and Trash.
-These are special mountpoints with a different internal representation than the "regular" mountpoints.
-Rclone will only to a very limited degree support them. Generally you should avoid these, unless you know what you
-are doing.
+You are allowed to create new devices and mountpoints. All devices except the
+built-in Jotta device are treated as backup devices by official Jottacloud
+clients, and the mountpoints on them are individual backup sets.
+
+With the built-in Jotta device, only existing, built-in, mountpoints can be
+selected. In addition to the mentioned Archive and Sync, it may contain
+several other mountpoints such as: Latest, Links, Shared and Trash. All of
+these are special mountpoints with a different internal representation than
+the "regular" mountpoints. Rclone will only to a very limited degree support
+them. Generally you should avoid these, unless you know what you are doing.
 
 ### --fast-list
 
@@ -235,7 +266,7 @@ and the current usage.
 {{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/jottacloud/jottacloud.go then run make backenddocs" >}}
 ### Advanced options
 
-Here are the advanced options specific to jottacloud (Jottacloud).
+Here are the Advanced options specific to jottacloud (Jottacloud).
 
 #### --jottacloud-md5-memory-limit
 

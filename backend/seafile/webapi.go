@@ -26,7 +26,7 @@ const (
 
 // Errors specific to seafile fs
 var (
-	ErrorInternalDuringUpload = errors.New("Internal server error during file upload")
+	ErrorInternalDuringUpload = errors.New("internal server error during file upload")
 )
 
 // ==================== Seafile API ====================

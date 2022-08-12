@@ -117,7 +117,7 @@ func newFsFileAddFilter(remote string) (fs.Fs, string) {
 	f, fileName := NewFsFile(remote)
 	if fileName != "" {
 		if !fi.InActive() {
-			err := fmt.Errorf("Can't limit to single files when using filters: %v", remote)
+			err := fmt.Errorf("can't limit to single files when using filters: %v", remote)
 			err = fs.CountError(err)
 			log.Fatalf(err.Error())
 		}
@@ -273,7 +273,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 			break
 		}
 		if retryAfter := accounting.GlobalStats().RetryAfter(); !retryAfter.IsZero() {
-			d := retryAfter.Sub(time.Now())
+			d := time.Until(retryAfter)
 			if d > 0 {
 				fs.Logf(nil, "Received retry after error - sleeping until %s (%v)", retryAfter.Format(time.RFC3339Nano), d)
 				time.Sleep(d)
@@ -319,6 +319,12 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 		if err != nil {
 			fs.Errorf(nil, "Failed to list open files: %v", err)
 		}
+	}
+
+	// clear cache and shutdown backends
+	cache.Clear()
+	if lastErr := accounting.GlobalStats().GetLastError(); cmdErr == nil {
+		cmdErr = lastErr
 	}
 
 	// Log the final error message and exit
@@ -458,7 +464,7 @@ func initConfig() {
 		})
 	}
 
-	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); m == false {
+	if m, _ := regexp.MatchString("^(bits|bytes)$", *dataRateUnit); !m {
 		fs.Errorf(nil, "Invalid unit passed to --stats-unit. Defaulting to bytes.")
 		ci.DataRateUnit = "bytes"
 	} else {
@@ -489,7 +495,7 @@ func resolveExitCode(err error) {
 		os.Exit(exitcode.TransferExceeded)
 	case fserrors.ShouldRetry(err):
 		os.Exit(exitcode.RetryError)
-	case fserrors.IsNoRetryError(err):
+	case fserrors.IsNoRetryError(err), fserrors.IsNoLowLevelRetryError(err):
 		os.Exit(exitcode.NoRetryError)
 	case fserrors.IsFatalError(err):
 		os.Exit(exitcode.FatalError)

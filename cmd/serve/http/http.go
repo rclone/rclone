@@ -47,16 +47,16 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "http remote:path",
 	Short: `Serve the remote over HTTP.`,
-	Long: `rclone serve http implements a basic web server to serve the remote
-over HTTP.  This can be viewed in a web browser or you can make a
-remote of type http read from it.
+	Long: `Run a basic web server to serve a remote over HTTP.
+This can be viewed in a web browser or you can make a remote of type
+http read from it.
 
-You can use the filter flags (e.g. --include, --exclude) to control what
+You can use the filter flags (e.g. ` + "`--include`, `--exclude`" + `) to control what
 is served.
 
-The server will log errors.  Use -v to see access logs.
+The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 
---bwlimit will be respected for file transfers.  Use --stats to
+` + "`--bwlimit`" + ` will be respected for file transfers.  Use ` + "`--stats`" + ` to
 control the stats printing.
 ` + httplib.Help + data.Help + auth.Help + vfs.Help,
 	Run: func(command *cobra.Command, args []string) {

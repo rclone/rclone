@@ -56,7 +56,8 @@ const (
 
 // logReplacements make modern test logs comparable with golden dir.
 // It is a string slice of even length with this structure:
-//    {`matching regular expression`, "mangled result string", ...}
+//
+//	{`matching regular expression`, "mangled result string", ...}
 var logReplacements = []string{
 	// skip syslog facility markers
 	`^(<[1-9]>)(INFO  |ERROR |NOTICE|DEBUG ):(.*)$`, "$2:$3",

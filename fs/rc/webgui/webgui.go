@@ -63,7 +63,7 @@ func CheckAndDownloadWebGUIRelease(checkUpdate bool, forceUpdate bool, fetchURL 
 	// Get the latest release details
 	WebUIURL, tag, size, err := GetLatestReleaseURL(fetchURL)
 	if err != nil {
-		return fmt.Errorf("Error checking for web gui release update, skipping update: %w", err)
+		return fmt.Errorf("error checking for web gui release update, skipping update: %w", err)
 	}
 	dat, err := ioutil.ReadFile(tagPath)
 	tagsMatch := false

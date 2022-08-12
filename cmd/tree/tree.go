@@ -84,11 +84,15 @@ For example
     1 directories, 5 files
 
 You can use any of the filtering options with the tree command (e.g.
---include and --exclude).  You can also use --fast-list.
+` + "`--include` and `--exclude`" + `.  You can also use ` + "`--fast-list`" + `.
 
 The tree command has many options for controlling the listing which
-are compatible with the tree command.  Note that not all of them have
+are compatible with the tree command, for example you can include file
+sizes with ` + "`--size`" + `.  Note that not all of them have
 short options as they conflict with rclone's short options.
+
+For a more interactive navigation of the remote see the
+[ncdu](/commands/rclone_ncdu/) command.
 `,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
@@ -98,7 +102,7 @@ short options as they conflict with rclone's short options.
 			var err error
 			outFile, err = os.Create(outFileName)
 			if err != nil {
-				return fmt.Errorf("failed to create output file: %v", err)
+				return fmt.Errorf("failed to create output file: %w", err)
 			}
 		}
 		opts.VerSort = opts.VerSort || sort == "version"
@@ -205,7 +209,7 @@ func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 	}
 	_, entry := dirtree.DirTree(dirs).Find(filePath)
 	if entry == nil {
-		return nil, fmt.Errorf("Couldn't find %q in directory cache", filePath)
+		return nil, fmt.Errorf("couldn't find %q in directory cache", filePath)
 	}
 	return &FileInfo{entry}, nil
 }
@@ -217,7 +221,7 @@ func (dirs Fs) ReadDir(dir string) (names []string, err error) {
 	dir = strings.TrimLeft(dir, "/")
 	entries, ok := dirs[dir]
 	if !ok {
-		return nil, fmt.Errorf("Couldn't find directory %q", dir)
+		return nil, fmt.Errorf("couldn't find directory %q", dir)
 	}
 	for _, entry := range entries {
 		names = append(names, path.Base(entry.Remote()))

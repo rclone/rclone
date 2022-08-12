@@ -43,6 +43,7 @@ var maskBits = []struct {
 	{encoder.EncodeBackQuote, "EncodeBackQuote"},
 	{encoder.EncodeLtGt, "EncodeLtGt"},
 	{encoder.EncodeSquareBracket, "EncodeSquareBracket"},
+	{encoder.EncodeSemicolon, "EncodeSemicolon"},
 	{encoder.EncodeDollar, "EncodeDollar"},
 	{encoder.EncodeDoubleQuote, "EncodeDoubleQuote"},
 	{encoder.EncodeColon, "EncodeColon"},
@@ -110,6 +111,11 @@ var allMappings = []mapping{{
 		'[', ']',
 	}, []rune{
 		'［', '］',
+	}}, {
+	encoder.EncodeSemicolon, []rune{
+		';',
+	}, []rune{
+		'；',
 	}}, {
 	encoder.EncodeDoubleQuote, []rune{
 		'"',
@@ -459,17 +465,13 @@ func getMapping(mask encoder.MultiEncoder) mapping {
 }
 func collectEncodables(m []mapping) (out []rune) {
 	for _, s := range m {
-		for _, r := range s.src {
-			out = append(out, r)
-		}
+		out = append(out, s.src...)
 	}
 	return
 }
 func collectEncoded(m []mapping) (out []rune) {
 	for _, s := range m {
-		for _, r := range s.dst {
-			out = append(out, r)
-		}
+		out = append(out, s.dst...)
 	}
 	return
 }

@@ -48,7 +48,6 @@ func NotErrParamNotFound(err error) bool {
 // ErrParamInvalid - this is returned from the Get* functions if the
 // parameter is invalid.
 //
-//
 // Returning an error of this type from an rc.Func will cause the http
 // method to return http.StatusBadRequest
 type ErrParamInvalid struct {

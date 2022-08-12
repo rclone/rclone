@@ -14,12 +14,17 @@ Copy files from source to dest, skipping identical files.
 
 Copy the source to the destination.  Does not transfer files that are
 identical on source and destination, testing by size and modification
-time or MD5SUM.  Doesn't delete files from the destination.
+time or MD5SUM.  Doesn't delete files from the destination. If you
+want to also delete files from destination, to make it match source,
+use the [sync](/commands/rclone_sync/) command instead.
 
 Note that it is always the contents of the directory that is synced,
-not the directory so when source:path is a directory, it's the
+not the directory itself. So when source:path is a directory, it's the
 contents of source:path that are copied, not the directory name and
 contents.
+
+To copy single files, use the [copyto](/commands/rclone_copyto/)
+command instead.
 
 If dest:path doesn't exist, it is created and the source:path contents
 go there.

@@ -258,7 +258,7 @@ func NewErrorRetryAfter(d time.Duration) ErrorRetryAfter {
 
 // Error returns the textual version of the error
 func (e ErrorRetryAfter) Error() string {
-	return fmt.Sprintf("try again after %v (%v)", time.Time(e).Format(time.RFC3339Nano), time.Time(e).Sub(time.Now()))
+	return fmt.Sprintf("try again after %v (%v)", time.Time(e).Format(time.RFC3339Nano), time.Until(time.Time(e)))
 }
 
 // RetryAfter returns the time the operation should be retried at or

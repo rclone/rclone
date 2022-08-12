@@ -1,7 +1,7 @@
 // Package ncdu implements a text based user interface for exploring a remote
 
-//go:build !plan9 && !solaris && !js
-// +build !plan9,!solaris,!js
+//go:build !plan9 && !js
+// +build !plan9,!js
 
 package ncdu
 
@@ -14,11 +14,12 @@ import (
 	"strings"
 
 	"github.com/atotto/clipboard"
+	"github.com/gdamore/tcell/v2/termbox"
 	runewidth "github.com/mattn/go-runewidth"
-	termbox "github.com/nsf/termbox-go"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ncdu/scan"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
@@ -42,16 +43,36 @@ builds an in memory representation.  rclone ncdu can be used during
 this scanning phase and you will see it building up the directory
 structure as it goes along.
 
-Here are the keys - press '?' to toggle the help on and off
+You can interact with the user interface using key presses,
+press '?' to toggle the help on and off. The supported keys are:
 
     ` + strings.Join(helpText()[1:], "\n    ") + `
+
+Listed files/directories may be prefixed by a one-character flag,
+some of them combined with a description in brackes at end of line.
+These flags have the following meaning:
+
+    e means this is an empty directory, i.e. contains no files (but
+      may contain empty subdirectories)
+    ~ means this is a directory where some of the files (possibly in
+      subdirectories) have unknown size, and therefore the directory
+      size may be underestimated (and average size inaccurate, as it
+      is average of the files with known sizes).
+    . means an error occurred while reading a subdirectory, and
+      therefore the directory size may be underestimated (and average
+      size inaccurate)
+    ! means an error occurred while reading this directory
 
 This an homage to the [ncdu tool](https://dev.yorhel.nl/ncdu) but for
 rclone remotes.  It is missing lots of features at the moment
 but is useful as it stands.
 
-Note that it might take some time to delete big files/folders. The
+Note that it might take some time to delete big files/directories. The
 UI won't respond in the meantime since the deletion is done synchronously.
+
+For a non-interactive listing of the remote, see the
+[tree](/commands/rclone_tree/) command. To just get the total size of
+the remote you can also use the [size](/commands/rclone_size/) command.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
@@ -75,15 +96,18 @@ func helpText() (tr []string) {
 		" u toggle human-readable format",
 		" n,s,C,A sort by name,size,count,average size",
 		" d delete file/directory",
+		" v select file/directory",
+		" V enter visual select mode",
+		" D delete selected files/directories",
 	}
 	if !clipboard.Unsupported {
 		tr = append(tr, " y copy current path to clipboard")
 	}
 	tr = append(tr, []string{
 		" Y display current path",
-		" ^L refresh screen",
+		" ^L refresh screen (fix screen corruption)",
 		" ? to toggle help on and off",
-		" q/ESC/c-C to quit",
+		" q/ESC/^c to quit",
 	}...)
 	return
 }
@@ -109,11 +133,13 @@ type UI struct {
 	showCounts         bool          // toggle showing counts
 	showDirAverageSize bool          // toggle average size
 	humanReadable      bool          // toggle human-readable format
+	visualSelectMode   bool          // toggle visual selection mode
 	sortByName         int8          // +1 for normal, 0 for off, -1 for reverse
 	sortBySize         int8
 	sortByCount        int8
 	sortByAverageSize  int8
 	dirPosMap          map[string]dirPos // store for directory positions
+	selectedEntries    map[string]dirPos // selected entries of current directory
 }
 
 // Where we have got to in the directory listing
@@ -283,9 +309,9 @@ func (u *UI) biggestEntry() (biggest int64) {
 		return
 	}
 	for i := range u.entries {
-		size, _, _, _, _, _ := u.d.AttrI(u.sortPerm[i])
-		if size > biggest {
-			biggest = size
+		attrs, _ := u.d.AttrI(u.sortPerm[i])
+		if attrs.Size > biggest {
+			biggest = attrs.Size
 		}
 	}
 	return
@@ -297,8 +323,8 @@ func (u *UI) hasEmptyDir() bool {
 		return false
 	}
 	for i := range u.entries {
-		_, count, isDir, _, _, _ := u.d.AttrI(u.sortPerm[i])
-		if isDir && count == 0 {
+		attrs, _ := u.d.AttrI(u.sortPerm[i])
+		if attrs.IsDir && attrs.Count == 0 {
 			return true
 		}
 	}
@@ -311,10 +337,7 @@ func (u *UI) Draw() error {
 	u.dirListHeight = h - 3
 
 	// Plot
-	err := termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
-	if err != nil {
-		return fmt.Errorf("failed to clear screen: %w", err)
-	}
+	termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
 
 	// Header line
 	Linef(0, 0, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "rclone ncdu %s - use the arrow keys to navigate, press ? for help", fs.Version)
@@ -343,28 +366,37 @@ func (u *UI) Draw() error {
 			if y >= h-1 {
 				break
 			}
-			size, count, isDir, readable, entriesHaveErrors, err := u.d.AttrI(u.sortPerm[n])
+			attrs, err := u.d.AttrI(u.sortPerm[n])
+			_, isSelected := u.selectedEntries[entry.String()]
 			fg := termbox.ColorWhite
-			if entriesHaveErrors {
+			if attrs.EntriesHaveErrors {
 				fg = termbox.ColorYellow
 			}
 			if err != nil {
 				fg = termbox.ColorRed
+			}
+			const colorLightYellow = termbox.ColorYellow + 8
+			if isSelected {
+				fg = colorLightYellow
 			}
 			bg := termbox.ColorBlack
 			if n == dirPos.entry {
 				fg, bg = bg, fg
 			}
 			mark := ' '
-			if isDir {
+			if attrs.IsDir {
 				mark = '/'
 			}
 			fileFlag := ' '
 			message := ""
-			if !readable {
+			if !attrs.Readable {
 				message = " [not read yet]"
 			}
-			if entriesHaveErrors {
+			if attrs.CountUnknownSize > 0 {
+				message = fmt.Sprintf(" [%d of %d files have unknown size, size may be underestimated]", attrs.CountUnknownSize, attrs.Count)
+				fileFlag = '~'
+			}
+			if attrs.EntriesHaveErrors {
 				message = " [some subdirectories could not be read, size may be underestimated]"
 				fileFlag = '.'
 			}
@@ -374,32 +406,29 @@ func (u *UI) Draw() error {
 			}
 			extras := ""
 			if u.showCounts {
-				ss := operations.CountStringField(count, u.humanReadable, 9) + " "
-				if count > 0 {
+				ss := operations.CountStringField(attrs.Count, u.humanReadable, 9) + " "
+				if attrs.Count > 0 {
 					extras += ss
 				} else {
 					extras += strings.Repeat(" ", len(ss))
 				}
 			}
-			var averageSize float64
-			if count > 0 {
-				averageSize = float64(size) / float64(count)
-			}
 			if u.showDirAverageSize {
-				ss := operations.SizeStringField(int64(averageSize), u.humanReadable, 9) + " "
-				if averageSize > 0 {
+				avg := attrs.AverageSize()
+				ss := operations.SizeStringField(int64(avg), u.humanReadable, 9) + " "
+				if avg > 0 {
 					extras += ss
 				} else {
 					extras += strings.Repeat(" ", len(ss))
 				}
 			}
 			if showEmptyDir {
-				if isDir && count == 0 && fileFlag == ' ' {
+				if attrs.IsDir && attrs.Count == 0 && fileFlag == ' ' {
 					fileFlag = 'e'
 				}
 			}
 			if u.showGraph {
-				bars := (size + perBar/2 - 1) / perBar
+				bars := (attrs.Size + perBar/2 - 1) / perBar
 				// clip if necessary - only happens during startup
 				if bars > 10 {
 					bars = 10
@@ -408,7 +437,7 @@ func (u *UI) Draw() error {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			Linef(0, y, w, fg, bg, ' ', "%c %s %s%c%s%s", fileFlag, operations.SizeStringField(size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
+			Linef(0, y, w, fg, bg, ' ', "%c %s %s%c%s%s", fileFlag, operations.SizeStringField(attrs.Size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
 	}
@@ -429,7 +458,7 @@ func (u *UI) Draw() error {
 	if u.showBox {
 		u.Box()
 	}
-	err = termbox.Flush()
+	err := termbox.Flush()
 	if err != nil {
 		return fmt.Errorf("failed to flush screen: %w", err)
 	}
@@ -476,6 +505,11 @@ func (u *UI) move(d int) {
 		dirPos.offset = entries - 1
 	}
 
+	// toggle the current file for selection in selection mode
+	if u.visualSelectMode {
+		u.toggleSelectForCursor()
+	}
+
 	// write dirPos back for later
 	u.dirPosMap[u.path] = dirPos
 }
@@ -485,11 +519,19 @@ func (u *UI) removeEntry(pos int) {
 	u.setCurrentDir(u.d)
 }
 
-// delete the entry at the current position
 func (u *UI) delete() {
 	if u.d == nil || len(u.entries) == 0 {
 		return
 	}
+	if len(u.selectedEntries) > 0 {
+		u.deleteSelected()
+	} else {
+		u.deleteSingle()
+	}
+}
+
+// delete the entry at the current position
+func (u *UI) deleteSingle() {
 	ctx := context.Background()
 	cursorPos := u.dirPosMap[u.path]
 	dirPos := u.sortPerm[cursorPos.entry]
@@ -512,7 +554,7 @@ func (u *UI) delete() {
 		}
 		u.popupBox([]string{
 			"Delete this file?",
-			u.fsName + dirEntry.String()})
+			fspath.JoinRootPath(u.fsName, dirEntry.String())})
 	} else {
 		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
 			if o != 1 {
@@ -531,8 +573,64 @@ func (u *UI) delete() {
 		u.popupBox([]string{
 			"Purge this directory?",
 			"ALL files in it will be deleted",
-			u.fsName + dirEntry.String()})
+			fspath.JoinRootPath(u.fsName, dirEntry.String())})
 	}
+}
+
+func (u *UI) deleteSelected() {
+	ctx := context.Background()
+
+	u.boxMenu = []string{"cancel", "confirm"}
+
+	u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
+		if o != 1 {
+			return "Aborted!", nil
+		}
+
+		positionsToDelete := make([]int, len(u.selectedEntries))
+		i := 0
+
+		for key, cursorPos := range u.selectedEntries {
+
+			dirPos := u.sortPerm[cursorPos.entry]
+			dirEntry := u.entries[dirPos]
+			var err error
+
+			if obj, isFile := dirEntry.(fs.Object); isFile {
+				err = operations.DeleteFile(ctx, obj)
+			} else {
+				err = operations.Purge(ctx, f, dirEntry.String())
+			}
+
+			if err != nil {
+				return "", err
+			}
+
+			delete(u.selectedEntries, key)
+			positionsToDelete[i] = dirPos
+			i++
+		}
+
+		// deleting all entries at once, as doing it during the deletions
+		// could cause issues.
+		sort.Slice(positionsToDelete, func(i, j int) bool {
+			return positionsToDelete[i] > positionsToDelete[j]
+		})
+		for _, dirPos := range positionsToDelete {
+			u.removeEntry(dirPos)
+		}
+
+		// move cursor at end if needed
+		cursorPos := u.dirPosMap[u.path]
+		if cursorPos.entry >= len(u.entries) {
+			u.move(-1)
+		}
+
+		return "Successfully deleted all items!", nil
+	}
+	u.popupBox([]string{
+		"Delete selected items?",
+		fmt.Sprintf("ALL %d items will be deleted", len(u.selectedEntries))})
 }
 
 func (u *UI) displayPath() {
@@ -559,14 +657,14 @@ type ncduSort struct {
 // Less is part of sort.Interface.
 func (ds *ncduSort) Less(i, j int) bool {
 	var iAvgSize, jAvgSize float64
-	isize, icount, _, _, _, _ := ds.d.AttrI(ds.sortPerm[i])
-	jsize, jcount, _, _, _, _ := ds.d.AttrI(ds.sortPerm[j])
+	iattrs, _ := ds.d.AttrI(ds.sortPerm[i])
+	jattrs, _ := ds.d.AttrI(ds.sortPerm[j])
 	iname, jname := ds.entries[ds.sortPerm[i]].Remote(), ds.entries[ds.sortPerm[j]].Remote()
-	if icount > 0 {
-		iAvgSize = float64(isize / icount)
+	if iattrs.Count > 0 {
+		iAvgSize = iattrs.AverageSize()
 	}
-	if jcount > 0 {
-		jAvgSize = float64(jsize / jcount)
+	if jattrs.Count > 0 {
+		jAvgSize = jattrs.AverageSize()
 	}
 
 	switch {
@@ -575,33 +673,33 @@ func (ds *ncduSort) Less(i, j int) bool {
 	case ds.u.sortByName > 0:
 		break
 	case ds.u.sortBySize < 0:
-		if isize != jsize {
-			return isize < jsize
+		if iattrs.Size != jattrs.Size {
+			return iattrs.Size < jattrs.Size
 		}
 	case ds.u.sortBySize > 0:
-		if isize != jsize {
-			return isize > jsize
+		if iattrs.Size != jattrs.Size {
+			return iattrs.Size > jattrs.Size
 		}
 	case ds.u.sortByCount < 0:
-		if icount != jcount {
-			return icount < jcount
+		if iattrs.Count != jattrs.Count {
+			return iattrs.Count < jattrs.Count
 		}
 	case ds.u.sortByCount > 0:
-		if icount != jcount {
-			return icount > jcount
+		if iattrs.Count != jattrs.Count {
+			return iattrs.Count > jattrs.Count
 		}
 	case ds.u.sortByAverageSize < 0:
 		if iAvgSize != jAvgSize {
 			return iAvgSize < jAvgSize
 		}
 		// if avgSize is equal, sort by size
-		return isize < jsize
+		return iattrs.Size < jattrs.Size
 	case ds.u.sortByAverageSize > 0:
 		if iAvgSize != jAvgSize {
 			return iAvgSize > jAvgSize
 		}
 		// if avgSize is equal, sort by size
-		return isize > jsize
+		return iattrs.Size > jattrs.Size
 	}
 	// if everything equal, sort by name
 	return iname < jname
@@ -642,7 +740,9 @@ func (u *UI) sortCurrentDir() {
 func (u *UI) setCurrentDir(d *scan.Dir) {
 	u.d = d
 	u.entries = d.Entries()
-	u.path = path.Join(u.fsName, d.Path())
+	u.path = fspath.JoinRootPath(u.fsName, d.Path())
+	u.selectedEntries = make(map[string]dirPos)
+	u.visualSelectMode = false
 	u.sortCurrentDir()
 }
 
@@ -719,13 +819,27 @@ func (u *UI) toggleSort(sortType *int8) {
 	u.sortCurrentDir()
 }
 
+func (u *UI) toggleSelectForCursor() {
+	cursorPos := u.dirPosMap[u.path]
+	dirPos := u.sortPerm[cursorPos.entry]
+	dirEntry := u.entries[dirPos]
+
+	_, present := u.selectedEntries[dirEntry.String()]
+
+	if present {
+		delete(u.selectedEntries, dirEntry.String())
+	} else {
+		u.selectedEntries[dirEntry.String()] = cursorPos
+	}
+}
+
 // NewUI creates a new user interface for ncdu on f
 func NewUI(f fs.Fs) *UI {
 	return &UI{
 		f:                  f,
 		path:               "Waiting for root...",
 		dirListHeight:      20, // updated in Draw
-		fsName:             f.Name() + ":" + f.Root(),
+		fsName:             fs.ConfigString(f),
 		showGraph:          true,
 		showCounts:         false,
 		showDirAverageSize: false,
@@ -734,6 +848,7 @@ func NewUI(f fs.Fs) *UI {
 		sortBySize:         1,
 		sortByCount:        0,
 		dirPosMap:          make(map[string]dirPos),
+		selectedEntries:    make(map[string]dirPos),
 	}
 }
 
@@ -827,6 +942,10 @@ outer:
 					u.toggleSort(&u.sortByName)
 				case 's':
 					u.toggleSort(&u.sortBySize)
+				case 'v':
+					u.toggleSelectForCursor()
+				case 'V':
+					u.visualSelectMode = !u.visualSelectMode
 				case 'C':
 					u.toggleSort(&u.sortByCount)
 				case 'A':
@@ -839,6 +958,8 @@ outer:
 					u.delete()
 				case 'u':
 					u.humanReadable = !u.humanReadable
+				case 'D':
+					u.deleteSelected()
 				case '?':
 					u.togglePopupBox(helpText())
 

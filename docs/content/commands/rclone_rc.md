@@ -13,26 +13,26 @@ Run a command against a running rclone.
 
 
 
-This runs a command against a running rclone.  Use the --url flag to
+This runs a command against a running rclone.  Use the `--url` flag to
 specify an non default URL to connect on.  This can be either a
 ":port" which is taken to mean "http://localhost:port" or a
 "host:port" which is taken to mean "http://host:port"
 
-A username and password can be passed in with --user and --pass.
+A username and password can be passed in with `--user` and `--pass`.
 
-Note that --rc-addr, --rc-user, --rc-pass will be read also for --url,
---user, --pass.
+Note that `--rc-addr`, `--rc-user`, `--rc-pass` will be read also for
+`--url`, `--user`, `--pass`.
 
 Arguments should be passed in as parameter=value.
 
 The result will be returned as a JSON object by default.
 
-The --json parameter can be used to pass in a JSON blob as an input
+The `--json` parameter can be used to pass in a JSON blob as an input
 instead of key=value arguments.  This is the only way of passing in
 more complicated values.
 
-The -o/--opt option can be used to set a key "opt" with key, value
-options in the form "-o key=value" or "-o key". It can be repeated as
+The `-o`/`--opt` option can be used to set a key "opt" with key, value
+options in the form `-o key=value` or `-o key`. It can be repeated as
 many times as required. This is useful for rc commands which take the
 "opt" parameter which by convention is a dictionary of strings.
 
@@ -43,7 +43,7 @@ Will place this in the "opt" value
     {"key":"value", "key2","")
 
 
-The -a/--arg option can be used to set strings in the "arg" value. It
+The `-a`/`--arg` option can be used to set strings in the "arg" value. It
 can be repeated as many times as required. This is useful for rc
 commands which take the "arg" parameter which by convention is a list
 of strings.
@@ -54,13 +54,13 @@ Will place this in the "arg" value
 
     ["value", "value2"]
 
-Use --loopback to connect to the rclone instance running "rclone rc".
+Use `--loopback` to connect to the rclone instance running `rclone rc`.
 This is very useful for testing commands without having to run an
 rclone rc server, e.g.:
 
     rclone rc --loopback operations/about fs=/
 
-Use "rclone rc" to see a list of all possible commands.
+Use `rclone rc` to see a list of all possible commands.
 
 ```
 rclone rc commands parameter [flags]

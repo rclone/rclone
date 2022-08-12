@@ -28,6 +28,10 @@ not supported by the remote, no hash will be returned.  With the
 download flag, the file will be downloaded from the remote and
 hashed locally enabling MD5 for any remote.
 
+For other algorithms, see the [hashsum](/commands/rclone_hashsum/)
+command. Running ` + "`rclone md5sum remote:path`" + ` is equivalent
+to running ` + "`rclone hashsum MD5 remote:path`" + `.
+
 This command can also hash data received on standard input (stdin),
 by not passing a remote:path, or by passing a hyphen as remote:path
 when there is data to read (if not, the hypen will be treated literaly,

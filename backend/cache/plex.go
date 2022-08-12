@@ -213,7 +213,7 @@ func (p *plexConnector) authenticate() error {
 	var data map[string]interface{}
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		return fmt.Errorf("failed to obtain token: %v", err)
+		return fmt.Errorf("failed to obtain token: %w", err)
 	}
 	tokenGen, ok := get(data, "user", "authToken")
 	if !ok {

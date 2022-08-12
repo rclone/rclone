@@ -97,7 +97,7 @@ release_dep_linux:
 
 # Get the release dependencies we only install on Windows
 release_dep_windows:
-	GO111MODULE=off GOOS="" GOARCH="" go get github.com/josephspurrier/goversioninfo/cmd/goversioninfo
+	GOOS="" GOARCH="" go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
 
 # Update dependencies
 showupdates:
@@ -245,18 +245,18 @@ retag:
 startdev:
 	@echo "Version is $(VERSION)"
 	@echo "Next version is $(NEXT_VERSION)"
-	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEXT_VERSION)-DEV\"\n" | gofmt > fs/version.go
+	echo -e "package fs\n\n// VersionTag of rclone\nvar VersionTag = \"$(NEXT_VERSION)\"\n" | gofmt > fs/versiontag.go
 	echo -n "$(NEXT_VERSION)" > docs/layouts/partials/version.html
 	echo "$(NEXT_VERSION)" > VERSION
-	git commit -m "Start $(NEXT_VERSION)-DEV development" fs/version.go VERSION docs/layouts/partials/version.html
+	git commit -m "Start $(NEXT_VERSION)-DEV development" fs/versiontag.go VERSION docs/layouts/partials/version.html
 
 startstable:
 	@echo "Version is $(VERSION)"
 	@echo "Next stable version is $(NEXT_PATCH_VERSION)"
-	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEXT_PATCH_VERSION)-DEV\"\n" | gofmt > fs/version.go
+	echo -e "package fs\n\n// VersionTag of rclone\nvar VersionTag = \"$(NEXT_PATCH_VERSION)\"\n" | gofmt > fs/versiontag.go
 	echo -n "$(NEXT_PATCH_VERSION)" > docs/layouts/partials/version.html
 	echo "$(NEXT_PATCH_VERSION)" > VERSION
-	git commit -m "Start $(NEXT_PATCH_VERSION)-DEV development" fs/version.go VERSION docs/layouts/partials/version.html
+	git commit -m "Start $(NEXT_PATCH_VERSION)-DEV development" fs/versiontag.go VERSION docs/layouts/partials/version.html
 
 winzip:
 	zip -9 rclone-$(TAG).zip rclone.exe

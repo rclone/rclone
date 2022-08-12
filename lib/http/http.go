@@ -25,39 +25,39 @@ import (
 var Help = `
 ### Server options
 
-Use --addr to specify which IP address and port the server should
-listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
+Use ` + "`--addr`" + ` to specify which IP address and port the server should
+listen on, eg ` + "`--addr 1.2.3.4:8000` or `--addr :8080`" + ` to listen to all
 IPs.  By default it only listens on localhost.  You can use port
 :0 to let the OS choose an available port.
 
-If you set --addr to listen on a public or LAN accessible IP address
+If you set ` + "`--addr`" + ` to listen on a public or LAN accessible IP address
 then using Authentication is advised - see the next section for info.
 
---server-read-timeout and --server-write-timeout can be used to
+` + "`--server-read-timeout` and `--server-write-timeout`" + ` can be used to
 control the timeouts on the server.  Note that this is the total time
 for a transfer.
 
---max-header-bytes controls the maximum number of bytes the server will
+` + "`--max-header-bytes`" + ` controls the maximum number of bytes the server will
 accept in the HTTP header.
 
---baseurl controls the URL prefix that rclone serves from.  By default
-rclone will serve from the root.  If you used --baseurl "/rclone" then
+` + "`--baseurl`" + ` controls the URL prefix that rclone serves from.  By default
+rclone will serve from the root.  If you used ` + "`--baseurl \"/rclone\"`" + ` then
 rclone would serve from a URL starting with "/rclone/".  This is
 useful if you wish to proxy rclone serve.  Rclone automatically
-inserts leading and trailing "/" on --baseurl, so --baseurl "rclone",
---baseurl "/rclone" and --baseurl "/rclone/" are all treated
+inserts leading and trailing "/" on ` + "`--baseurl`" + `, so ` + "`--baseurl \"rclone\"`" + `,
+` + "`--baseurl \"/rclone\"` and `--baseurl \"/rclone/\"`" + ` are all treated
 identically.
 
 #### SSL/TLS
 
 By default this will serve over http.  If you want you can serve over
-https.  You will need to supply the --cert and --key flags.  If you
-wish to do client side certificate validation then you will need to
-supply --client-ca also.
+https.  You will need to supply the ` + "`--cert` and `--key`" + ` flags.
+If you wish to do client side certificate validation then you will need to
+supply ` + "`--client-ca`" + ` also.
 
---cert should be a either a PEM encoded certificate or a concatenation
-of that with the CA certificate.  --key should be the PEM encoded
-private key and --client-ca should be the PEM encoded client
+` + "`--cert`" + ` should be a either a PEM encoded certificate or a concatenation
+of that with the CA certificate.  ` + "`--key`" + ` should be the PEM encoded
+private key and ` + "`--client-ca`" + ` should be the PEM encoded client
 certificate authority certificate.
 `
 
@@ -122,7 +122,7 @@ func useSSL(opt Options) bool {
 func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, error) {
 	// Validate input
 	if len(listeners) == 0 && len(tlsListeners) == 0 {
-		return nil, errors.New("Can't create server without listeners")
+		return nil, errors.New("can't create server without listeners")
 	}
 
 	// Prepare TLS config
@@ -130,12 +130,12 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 
 	useSSL := useSSL(opt)
 	if (len(opt.SslCertBody) > 0) != (len(opt.SslKeyBody) > 0) {
-		err := errors.New("Need both SslCertBody and SslKeyBody to use SSL")
+		err := errors.New("need both SslCertBody and SslKeyBody to use SSL")
 		log.Fatalf(err.Error())
 		return nil, err
 	}
 	if (opt.SslCert != "") != (opt.SslKey != "") {
-		err := errors.New("Need both -cert and -key to use SSL")
+		err := errors.New("need both -cert and -key to use SSL")
 		log.Fatalf(err.Error())
 		return nil, err
 	}
@@ -156,12 +156,12 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 			Certificates: []tls.Certificate{cert},
 		}
 	} else if len(listeners) == 0 && len(tlsListeners) != 0 {
-		return nil, errors.New("No SslKey or non-tlsListeners")
+		return nil, errors.New("no SslKey or non-tlsListeners")
 	}
 
 	if opt.ClientCA != "" {
 		if !useSSL {
-			err := errors.New("Can't use --client-ca without --cert and --key")
+			err := errors.New("can't use --client-ca without --cert and --key")
 			log.Fatalf(err.Error())
 			return nil, err
 		}
@@ -172,7 +172,7 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 			return nil, err
 		}
 		if !certpool.AppendCertsFromPEM(pem) {
-			err := errors.New("Can't parse client certificate authority")
+			err := errors.New("can't parse client certificate authority")
 			log.Fatalf(err.Error())
 			return nil, err
 		}

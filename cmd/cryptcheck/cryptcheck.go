@@ -23,9 +23,9 @@ var commandDefinition = &cobra.Command{
 	Use:   "cryptcheck remote:path cryptedremote:path",
 	Short: `Cryptcheck checks the integrity of a crypted remote.`,
 	Long: `
-rclone cryptcheck checks a remote against a crypted remote.  This is
-the equivalent of running rclone check, but able to check the
-checksums of the crypted remote.
+rclone cryptcheck checks a remote against a [crypted](/crypt/) remote.
+This is the equivalent of running rclone [check](/commands/rclone_check/),
+but able to check the checksums of the crypted remote.
 
 For it to work the underlying remote of the cryptedremote must support
 some kind of checksum.

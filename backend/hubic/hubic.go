@@ -119,7 +119,7 @@ func (f *Fs) getCredentials(ctx context.Context) (err error) {
 	defer fs.CheckClose(resp.Body, &err)
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		body, _ := ioutil.ReadAll(resp.Body)
-		bodyStr := strings.TrimSpace(strings.Replace(string(body), "\n", " ", -1))
+		bodyStr := strings.TrimSpace(strings.ReplaceAll(string(body), "\n", " "))
 		return fmt.Errorf("failed to get credentials: %s: %s", resp.Status, bodyStr)
 	}
 	decoder := json.NewDecoder(resp.Body)
@@ -138,7 +138,7 @@ func (f *Fs) getCredentials(ctx context.Context) (err error) {
 		return err
 	}
 	f.expires = expires
-	fs.Debugf(f, "Got swift credentials (expiry %v in %v)", f.expires, f.expires.Sub(time.Now()))
+	fs.Debugf(f, "Got swift credentials (expiry %v in %v)", f.expires, time.Until(f.expires))
 	return nil
 }
 

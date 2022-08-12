@@ -137,8 +137,8 @@ func New(item Item, opt *vfscommon.Options, remote string, src fs.Object) (dls *
 //
 // It should be called with
 //
-//   n bytes downloaded
-//   err is error from download
+//	n bytes downloaded
+//	err is error from download
 //
 // call with lock held
 func (dls *Downloaders) _countErrors(n int64, err error) {
@@ -359,7 +359,7 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 		return nil
 	}
 	// Downloader not found so start a new one
-	dl, err = dls._newDownloader(r)
+	_, err = dls._newDownloader(r)
 	if err != nil {
 		dls._countErrors(0, err)
 		return fmt.Errorf("failed to start downloader: %w", err)

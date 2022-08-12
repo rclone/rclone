@@ -34,10 +34,13 @@ func (tm *transferMap) add(tr *Transfer) {
 }
 
 // del removes a transfer from the map by name
-func (tm *transferMap) del(remote string) {
+func (tm *transferMap) del(remote string) bool {
 	tm.mu.Lock()
+	_, exists := tm.items[remote]
 	delete(tm.items, remote)
 	tm.mu.Unlock()
+
+	return exists
 }
 
 // merge adds items from another map

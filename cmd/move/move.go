@@ -33,6 +33,9 @@ Moves the contents of the source directory to the destination
 directory. Rclone will error if the source and destination overlap and
 the remote does not support a server-side directory move operation.
 
+To move single files, use the [moveto](/commands/rclone_moveto/)
+command instead.
+
 If no filters are in use and if possible this will server-side move
 |source:path| into |dest:path|. After this |source:path| will no
 longer exist.
@@ -43,7 +46,8 @@ move will be used, otherwise it will copy it (server-side if possible)
 into |dest:path| then delete the original (if no errors on copy) in
 |source:path|.
 
-If you want to delete empty source directories after move, use the --delete-empty-src-dirs flag.
+If you want to delete empty source directories after move, use the
+|--delete-empty-src-dirs| flag.
 
 See the [--no-traverse](/docs/#no-traverse) option for controlling
 whether rclone lists the destination directory or not.  Supplying this

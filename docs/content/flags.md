@@ -38,6 +38,7 @@ These flags are available for every command.
       --delete-during                        When synchronizing, delete files during transfer
       --delete-excluded                      Delete files on dest excluded from sync
       --disable string                       Disable a comma separated list of features (use --disable help to see a list)
+      --disable-http-keep-alives             Disable HTTP keep-alives and use each connection once.
       --disable-http2                        Disable HTTP/2 in the global transport
   -n, --dry-run                              Do a trial run with no permanent changes
       --dscp string                          Set DSCP value to connections, value or name, e.g. CS1, LE, DF, AF21
@@ -47,7 +48,7 @@ These flags are available for every command.
       --error-on-no-transfer                 Sets exit code 9 if no files are transferred, useful in scripts
       --exclude stringArray                  Exclude files matching pattern
       --exclude-from stringArray             Read exclude patterns from file (use - to read from stdin)
-      --exclude-if-present string            Exclude directories if filename is present
+      --exclude-if-present stringArray       Exclude directories if filename is present
       --expect-continue-timeout duration     Timeout when using expect / 100-continue in HTTP (default 1s)
       --fast-list                            Use recursive list if available; uses more memory but fewer transactions
       --files-from stringArray               Read list of source-file names from file (use - to read from stdin)
@@ -86,6 +87,8 @@ These flags are available for every command.
       --max-stats-groups int                 Maximum number of stats groups to keep in memory, on max oldest is discarded (default 1000)
       --max-transfer SizeSuffix              Maximum size of data to transfer (default off)
       --memprofile string                    Write memory profile to file
+  -M, --metadata                             If set, preserve metadata when copying objects
+      --metadata-set stringArray             Add metadata key=value when uploading
       --min-age Duration                     Only transfer files older than this in s or suffix ms|s|m|h|d|w|M|y (default off)
       --min-size SizeSuffix                  Only transfer files bigger than this in KiB or suffix B|K|M|G|T|P (default off)
       --modify-window duration               Max time diff to be considered the same (default 1ns)
@@ -157,7 +160,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.58.0")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.59.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -212,6 +215,7 @@ and may be set in the config file.
       --b2-memory-pool-use-mmap                      Whether to use mmap buffers in internal memory pool
       --b2-test-mode string                          A flag string for X-Bz-Test-Mode header for debugging
       --b2-upload-cutoff SizeSuffix                  Cutoff for switching to chunked upload (default 200Mi)
+      --b2-version-at Time                           Show file versions as they were at the specified time (default off)
       --b2-versions                                  Include old versions in directory listings
       --box-access-token string                      Box App Primary Access Token
       --box-auth-url string                          Auth server URL
@@ -251,6 +255,7 @@ and may be set in the config file.
       --chunker-fail-hard                            Choose how chunker should handle files with missing or invalid chunks
       --chunker-hash-type string                     Choose how chunker handles hash sums (default "md5")
       --chunker-remote string                        Remote to chunk/unchunk
+      --combine-upstreams SpaceSepList               Upstreams for combining
       --compress-level int                           GZIP compression level (-2 to 9) (default -1)
       --compress-mode string                         Compression mode (default "gzip")
       --compress-ram-cache-limit SizeSuffix          Some remotes don't allow the upload of files with unknown size (default 20Mi)
@@ -283,6 +288,7 @@ and may be set in the config file.
       --drive-list-chunk int                         Size of listing chunk 100-1000, 0 to disable (default 1000)
       --drive-pacer-burst int                        Number of API calls to allow without sleeping (default 100)
       --drive-pacer-min-sleep Duration               Minimum time to sleep between API calls (default 100ms)
+      --drive-resource-key string                    Resource key for accessing a link-shared file
       --drive-root-folder-id string                  ID of the root folder
       --drive-scope string                           Scope that rclone should use when requesting access from drive
       --drive-server-side-across-configs             Allow server-side operations (e.g. copy) to work across different drive configs
@@ -338,6 +344,7 @@ and may be set in the config file.
       --ftp-disable-epsv                             Disable using EPSV even if server advertises support
       --ftp-disable-mlsd                             Disable using MLSD even if server advertises support
       --ftp-disable-tls13                            Disable TLS 1.3 (workaround for FTP servers with buggy TLS)
+      --ftp-disable-utf8                             Disable using UTF-8 even if server advertises support
       --ftp-encoding MultiEncoder                    The encoding for the backend (default Slash,Del,Ctl,RightSpace,Dot)
       --ftp-explicit-tls                             Use Explicit FTPS (FTP over TLS)
       --ftp-host string                              FTP host to connect to
@@ -356,8 +363,10 @@ and may be set in the config file.
       --gcs-bucket-policy-only                       Access checks should use bucket-level IAM policies
       --gcs-client-id string                         OAuth Client Id
       --gcs-client-secret string                     OAuth Client Secret
+      --gcs-decompress                               If set this will decompress gzip encoded objects
       --gcs-encoding MultiEncoder                    The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
       --gcs-location string                          Location for the newly created buckets
+      --gcs-no-check-bucket                          If set, don't attempt to check the bucket exists or create it
       --gcs-object-acl string                        Access Control List for new objects
       --gcs-project-number string                    Project number
       --gcs-service-account-file string              Service Account Credentials JSON file path
@@ -383,10 +392,24 @@ and may be set in the config file.
       --hdfs-namenode string                         Hadoop name node and port
       --hdfs-service-principal-name string           Kerberos service principal name for the namenode
       --hdfs-username string                         Hadoop user name
+      --hidrive-auth-url string                      Auth server URL
+      --hidrive-chunk-size SizeSuffix                Chunksize for chunked uploads (default 48Mi)
+      --hidrive-client-id string                     OAuth Client Id
+      --hidrive-client-secret string                 OAuth Client Secret
+      --hidrive-disable-fetching-member-count        Do not fetch number of objects in directories unless it is absolutely necessary
+      --hidrive-encoding MultiEncoder                The encoding for the backend (default Slash,Dot)
+      --hidrive-endpoint string                      Endpoint for the service (default "https://api.hidrive.strato.com/2.1")
+      --hidrive-root-prefix string                   The root/parent folder for all paths (default "/")
+      --hidrive-scope-access string                  Access permissions that rclone should use when requesting access from HiDrive (default "rw")
+      --hidrive-scope-role string                    User-level that rclone should use when requesting access from HiDrive (default "user")
+      --hidrive-token string                         OAuth Access Token as a JSON blob
+      --hidrive-token-url string                     Token server url
+      --hidrive-upload-concurrency int               Concurrency for chunked uploads (default 4)
+      --hidrive-upload-cutoff SizeSuffix             Cutoff/Threshold for chunked uploads (default 96Mi)
       --http-headers CommaSepList                    Set HTTP headers for all transactions
       --http-no-head                                 Don't use HEAD requests
       --http-no-slash                                Set this if the site doesn't end directories with /
-      --http-url string                              URL of http host to connect to
+      --http-url string                              URL of HTTP host to connect to
       --hubic-auth-url string                        Auth server URL
       --hubic-chunk-size SizeSuffix                  Above this size files will be chunked into a _segments container (default 5Gi)
       --hubic-client-id string                       OAuth Client Id
@@ -395,6 +418,13 @@ and may be set in the config file.
       --hubic-no-chunk                               Don't chunk files during streaming upload
       --hubic-token string                           OAuth Access Token as a JSON blob
       --hubic-token-url string                       Token server url
+      --internetarchive-access-key-id string         IAS3 Access Key
+      --internetarchive-disable-checksum             Don't ask the server to test against MD5 checksum calculated by rclone (default true)
+      --internetarchive-encoding MultiEncoder        The encoding for the backend (default Slash,LtGt,CrLf,Del,Ctl,InvalidUtf8,Dot)
+      --internetarchive-endpoint string              IAS3 Endpoint (default "https://s3.us.archive.org")
+      --internetarchive-front-endpoint string        Host of InternetArchive Frontend (default "https://archive.org")
+      --internetarchive-secret-access-key string     IAS3 Secret Key (password)
+      --internetarchive-wait-archive Duration        Timeout for waiting the server's processing tasks (specifically archive and book_op) to finish (default 0s)
       --jottacloud-encoding MultiEncoder             The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,Del,Ctl,InvalidUtf8,Dot)
       --jottacloud-hard-delete                       Delete files permanently rather than putting them into the trash
       --jottacloud-md5-memory-limit SizeSuffix       Files bigger than this will be cached on disk to calculate the MD5 if required (default 10Mi)
@@ -416,7 +446,7 @@ and may be set in the config file.
       --local-no-preallocate                         Disable preallocation of disk space for transferred files
       --local-no-set-modtime                         Disable setting modtime
       --local-no-sparse                              Disable sparse files for multi-thread downloads
-      --local-nounc string                           Disable UNC (long path names) conversion on Windows
+      --local-nounc                                  Disable UNC (long path names) conversion on Windows
       --local-unicode-normalization                  Apply unicode NFC normalization to paths and filenames
       --local-zero-size-links                        Assume the Stat size of links is zero (and read them instead) (deprecated)
       --mailru-check-hash                            What should copy do if file checksum is mismatched or invalid (default true)
@@ -437,11 +467,11 @@ and may be set in the config file.
       --netstorage-protocol string                   Select between HTTP or HTTPS protocol (default "https")
       --netstorage-secret string                     Set the NetStorage account secret/G2O key for authentication (obscured)
   -x, --one-file-system                              Don't cross filesystem boundaries (unix/macOS only)
+      --onedrive-access-scopes SpaceSepList          Set scopes to be requested by rclone (default Files.Read Files.ReadWrite Files.Read.All Files.ReadWrite.All Sites.Read.All offline_access)
       --onedrive-auth-url string                     Auth server URL
       --onedrive-chunk-size SizeSuffix               Chunk size to upload files with - must be multiple of 320k (327,680 bytes) (default 10Mi)
       --onedrive-client-id string                    OAuth Client Id
       --onedrive-client-secret string                OAuth Client Secret
-      --onedrive-disable-site-permission             Disable the request for Sites.Read.All permission
       --onedrive-drive-id string                     The ID of the drive to use
       --onedrive-drive-type string                   The type of the drive (personal | business | documentLibrary)
       --onedrive-encoding MultiEncoder               The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Del,Ctl,LeftSpace,LeftTilde,RightSpace,RightPeriod,InvalidUtf8,Dot)
@@ -465,9 +495,11 @@ and may be set in the config file.
       --pcloud-client-secret string                  OAuth Client Secret
       --pcloud-encoding MultiEncoder                 The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --pcloud-hostname string                       Hostname to connect to (default "api.pcloud.com")
+      --pcloud-password string                       Your pcloud password (obscured)
       --pcloud-root-folder-id string                 Fill in for rclone to use a non root folder as its starting point (default "d0")
       --pcloud-token string                          OAuth Access Token as a JSON blob
       --pcloud-token-url string                      Token server url
+      --pcloud-username string                       Your pcloud username
       --premiumizeme-encoding MultiEncoder           The encoding for the backend (default Slash,DoubleQuote,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --putio-encoding MultiEncoder                  The encoding for the backend (default Slash,BackSlash,Del,Ctl,InvalidUtf8,Dot)
       --qingstor-access-key-id string                QingStor Access Key ID
@@ -520,6 +552,7 @@ and may be set in the config file.
       --s3-upload-cutoff SizeSuffix                  Cutoff for switching to chunked upload (default 200Mi)
       --s3-use-accelerate-endpoint                   If true use the AWS S3 accelerated endpoint
       --s3-use-multipart-etag Tristate               Whether to use ETag in multipart uploads for verification (default unset)
+      --s3-use-presigned-request                     Whether to use a presigned request or PutObject for single part uploads
       --s3-v2-auth                                   If true use v2 authentication
       --seafile-2fa                                  Two-factor authentication ('true' if the account has 2FA enabled)
       --seafile-create-library                       Should rclone create a library if it doesn't exist
@@ -530,6 +563,8 @@ and may be set in the config file.
       --seafile-url string                           URL of seafile host to connect to
       --seafile-user string                          User name (usually email address)
       --sftp-ask-password                            Allow asking for SFTP password when needed
+      --sftp-chunk-size SizeSuffix                   Upload and download chunk size (default 32Ki)
+      --sftp-concurrency int                         The maximum number of outstanding requests for one file (default 64)
       --sftp-disable-concurrent-reads                If set don't use concurrent reads
       --sftp-disable-concurrent-writes               If set don't use concurrent writes
       --sftp-disable-hashcheck                       Disable the execution of SSH commands to determine if remote file hashing is available
@@ -542,12 +577,14 @@ and may be set in the config file.
       --sftp-known-hosts-file string                 Optional path to known_hosts file
       --sftp-md5sum-command string                   The command used to read md5 hashes
       --sftp-pass string                             SSH password, leave blank to use ssh-agent (obscured)
-      --sftp-path-override string                    Override path used by SSH connection
+      --sftp-path-override string                    Override path used by SSH shell commands
       --sftp-port int                                SSH port number (default 22)
       --sftp-pubkey-file string                      Optional path to public key file
       --sftp-server-command string                   Specifies the path or command to run a sftp server on the remote host
+      --sftp-set-env SpaceSepList                    Environment variables to pass to sftp and commands
       --sftp-set-modtime                             Set the modified time on the remote if set (default true)
       --sftp-sha1sum-command string                  The command used to read sha1 hashes
+      --sftp-shell-type string                       The type of SSH shell on remote server, if any
       --sftp-skip-links                              Set to skip any symlinks and any other non regular files
       --sftp-subsystem string                        Specifies the SSH2 subsystem on the remote host (default "sftp")
       --sftp-use-fstat                               If set use fstat instead of stat
@@ -604,6 +641,7 @@ and may be set in the config file.
       --union-action-policy string                   Policy to choose upstream on ACTION category (default "epall")
       --union-cache-time int                         Cache time of usage and free space (in seconds) (default 120)
       --union-create-policy string                   Policy to choose upstream on CREATE category (default "epmfs")
+      --union-min-free-space SizeSuffix              Minimum viable free space for lfs/eplfs policies (default 1Gi)
       --union-search-policy string                   Policy to choose upstream on SEARCH category (default "ff")
       --union-upstreams string                       List of space separated upstreams
       --uptobox-access-token string                  Your access token
@@ -615,7 +653,7 @@ and may be set in the config file.
       --webdav-pass string                           Password (obscured)
       --webdav-url string                            URL of http host to connect to
       --webdav-user string                           User name
-      --webdav-vendor string                         Name of the Webdav site/service/software you are using
+      --webdav-vendor string                         Name of the WebDAV site/service/software you are using
       --yandex-auth-url string                       Auth server URL
       --yandex-client-id string                      OAuth Client Id
       --yandex-client-secret string                  OAuth Client Secret

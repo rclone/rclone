@@ -20,7 +20,7 @@ var (
 	pluginName  = "rclone"
 	pluginScope = "local"
 	baseDir     = "/var/lib/docker-volumes/rclone"
-	sockDir     = "/run/docker/plugins"
+	sockDir     = "/run/docker/plugins" //lint:ignore U1000 unused when not building linux
 	defSpecDir  = "/etc/docker/plugins"
 	stateFile   = "docker-plugin.state"
 	socketAddr  = "" // TCP listening address or empty string for Unix socket

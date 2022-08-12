@@ -62,21 +62,21 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "sftp remote:path",
 	Short: `Serve the remote over SFTP.`,
-	Long: `rclone serve sftp implements an SFTP server to serve the remote
-over SFTP.  This can be used with an SFTP client or you can make a
-remote of type sftp to use with it.
+	Long: `Run a SFTP server to serve a remote over SFTP. This can be used
+with an SFTP client or you can make a remote of type sftp to use with it.
 
-You can use the filter flags (e.g. --include, --exclude) to control what
+You can use the filter flags (e.g. ` + "`--include`, `--exclude`" + `) to control what
 is served.
 
-The server will log errors.  Use -v to see access logs.
+The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 
---bwlimit will be respected for file transfers.  Use --stats to
-control the stats printing.
+` + "`--bwlimit`" + ` will be respected for file transfers.
+Use ` + "`--stats`" + ` to control the stats printing.
 
-You must provide some means of authentication, either with --user/--pass,
-an authorized keys file (specify location with --authorized-keys - the
-default is the same as ssh), an --auth-proxy, or set the --no-auth flag for no
+You must provide some means of authentication, either with
+` + "`--user`/`--pass`" + `, an authorized keys file (specify location with
+` + "`--authorized-keys`" + ` - the default is the same as ssh), an
+` + "`--auth-proxy`" + `, or set the ` + "`--no-auth`" + ` flag for no
 authentication when logging in.
 
 Note that this also implements a small number of shell commands so
@@ -84,30 +84,30 @@ that it can provide md5sum/sha1sum/df information for the rclone sftp
 backend.  This means that is can support SHA1SUMs, MD5SUMs and the
 about command when paired with the rclone sftp backend.
 
-If you don't supply a host --key then rclone will generate rsa, ecdsa
+If you don't supply a host ` + "`--key`" + ` then rclone will generate rsa, ecdsa
 and ed25519 variants, and cache them for later use in rclone's cache
-directory (see "rclone help flags cache-dir") in the "serve-sftp"
+directory (see ` + "`rclone help flags cache-dir`" + `) in the "serve-sftp"
 directory.
 
 By default the server binds to localhost:2022 - if you want it to be
-reachable externally then supply "--addr :2022" for example.
+reachable externally then supply ` + "`--addr :2022`" + ` for example.
 
-Note that the default of "--vfs-cache-mode off" is fine for the rclone
+Note that the default of ` + "`--vfs-cache-mode off`" + ` is fine for the rclone
 sftp backend, but it may not be with other SFTP clients.
 
-If --stdio is specified, rclone will serve SFTP over stdio, which can
+If ` + "`--stdio`" + ` is specified, rclone will serve SFTP over stdio, which can
 be used with sshd via ~/.ssh/authorized_keys, for example:
 
     restrict,command="rclone serve sftp --stdio ./photos" ssh-rsa ...
 
-On the client you need to set "--transfers 1" when using --stdio.
+On the client you need to set ` + "`--transfers 1`" + ` when using ` + "`--stdio`" + `.
 Otherwise multiple instances of the rclone server are started by OpenSSH
 which can lead to "corrupted on transfer" errors. This is the case because
 the client chooses indiscriminately which server to send commands to while
 the servers all have different views of the state of the filing system.
 
 The "restrict" in authorized_keys prevents SHA1SUMs and MD5SUMs from beeing
-used. Omitting "restrict" and using --sftp-path-override to enable
+used. Omitting "restrict" and using  ` + "`--sftp-path-override`" + ` to enable
 checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
 

@@ -269,6 +269,23 @@ func (ts *TokenSource) Invalidate() {
 	ts.mu.Unlock()
 }
 
+// Expire marks the token as expired
+//
+// This also marks the token in the config file as expired, if it is the same one
+func (ts *TokenSource) Expire() error {
+	ts.mu.Lock()
+	defer ts.mu.Unlock()
+	ts.token.Expiry = time.Now().Add(time.Hour * (-1)) // expire token
+	t, err := GetToken(ts.name, ts.m)
+	if err != nil {
+		return err
+	}
+	if t.AccessToken == ts.token.AccessToken {
+		err = PutToken(ts.name, ts.m, ts.token, false)
+	}
+	return err
+}
+
 // timeToExpiry returns how long until the token expires
 //
 // Call with the lock held
@@ -280,7 +297,7 @@ func (ts *TokenSource) timeToExpiry() time.Duration {
 	if t.Expiry.IsZero() {
 		return 3e9 * time.Second // ~95 years
 	}
-	return t.Expiry.Sub(time.Now())
+	return time.Until(t.Expiry)
 }
 
 // OnExpiry returns a channel which has the time written to it when
@@ -416,10 +433,10 @@ func ConfigOut(state string, oAuth *Options) (*fs.ConfigOut, error) {
 //
 // This is called with a state which has pushed on it
 //
-//    state prefixed with "*oauth"
-//    state for oauth to return to
-//    state that returned the OAuth when we wish to recall it
-//    value that returned the OAuth
+//	state prefixed with "*oauth"
+//	state for oauth to return to
+//	state that returned the OAuth when we wish to recall it
+//	value that returned the OAuth
 func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.RegInfo, in fs.ConfigIn) (*fs.ConfigOut, error) {
 	stateParams, state := fs.StatePop(in.State)
 
@@ -607,7 +624,7 @@ func fixRedirect(oauthConfig *oauth2.Config) *oauth2.Config {
 
 // configSetup does the initial creation of the token
 //
-// If opt is nil it will use the default Options
+// If opt is nil it will use the default Options.
 //
 // It will run an internal webserver to receive the results
 func configSetup(ctx context.Context, id, name string, m configmap.Mapper, oauthConfig *oauth2.Config, opt *Options) (string, error) {
@@ -766,7 +783,6 @@ func (s *authServer) Init() error {
 		}
 		fs.Debugf(nil, "Redirecting browser to: %s", s.authURL)
 		http.Redirect(w, req, s.authURL, http.StatusTemporaryRedirect)
-		return
 	})
 	mux.HandleFunc("/", s.handleAuth)
 

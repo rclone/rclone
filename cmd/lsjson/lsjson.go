@@ -26,10 +26,11 @@ func init() {
 	flags.BoolVarP(cmdFlags, &opt.ShowHash, "hash", "", false, "Include hashes in the output (may take longer)")
 	flags.BoolVarP(cmdFlags, &opt.NoModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up)")
 	flags.BoolVarP(cmdFlags, &opt.NoMimeType, "no-mimetype", "", false, "Don't read the mime type (can speed things up)")
-	flags.BoolVarP(cmdFlags, &opt.ShowEncrypted, "encrypted", "M", false, "Show the encrypted names")
+	flags.BoolVarP(cmdFlags, &opt.ShowEncrypted, "encrypted", "", false, "Show the encrypted names")
 	flags.BoolVarP(cmdFlags, &opt.ShowOrigIDs, "original", "", false, "Show the ID of the underlying Object")
 	flags.BoolVarP(cmdFlags, &opt.FilesOnly, "files-only", "", false, "Show only files in the listing")
 	flags.BoolVarP(cmdFlags, &opt.DirsOnly, "dirs-only", "", false, "Show only directories in the listing")
+	flags.BoolVarP(cmdFlags, &opt.Metadata, "metadata", "M", false, "Add metadata to the listing")
 	flags.StringArrayVarP(cmdFlags, &opt.HashTypes, "hash-type", "", nil, "Show only this hash type (may be repeated)")
 	flags.BoolVarP(cmdFlags, &statOnly, "stat", "", false, "Just return the info for the pointed to file")
 }
@@ -41,7 +42,7 @@ var commandDefinition = &cobra.Command{
 
 The output is an array of Items, where each Item looks like this
 
-   {
+    {
       "Hashes" : {
          "SHA-1" : "f572d396fae9206628714fb2ce00f72e94f2258f",
          "MD5" : "b1946ac92492d2347c6235b4d2611184",
@@ -59,29 +60,32 @@ The output is an array of Items, where each Item looks like this
       "Path" : "full/path/goes/here/file.txt",
       "Size" : 6,
       "Tier" : "hot",
-   }
+    }
 
-If --hash is not specified the Hashes property won't be emitted. The
-types of hash can be specified with the --hash-type parameter (which
-may be repeated). If --hash-type is set then it implies --hash.
+If ` + "`--hash`" + ` is not specified the Hashes property won't be emitted. The
+types of hash can be specified with the ` + "`--hash-type`" + ` parameter (which
+may be repeated). If ` + "`--hash-type`" + ` is set then it implies ` + "`--hash`" + `.
 
-If --no-modtime is specified then ModTime will be blank. This can
+If ` + "`--no-modtime`" + ` is specified then ModTime will be blank. This can
 speed things up on remotes where reading the ModTime takes an extra
 request (e.g. s3, swift).
 
-If --no-mimetype is specified then MimeType will be blank. This can
+If ` + "`--no-mimetype`" + ` is specified then MimeType will be blank. This can
 speed things up on remotes where reading the MimeType takes an extra
 request (e.g. s3, swift).
 
-If --encrypted is not specified the Encrypted won't be emitted.
+If ` + "`--encrypted`" + ` is not specified the Encrypted won't be emitted.
 
-If --dirs-only is not specified files in addition to directories are
+If ` + "`--dirs-only`" + ` is not specified files in addition to directories are
 returned
 
-If --files-only is not specified directories in addition to the files
+If ` + "`--files-only`" + ` is not specified directories in addition to the files
 will be returned.
 
-if --stat is set then a single JSON blob will be returned about the
+If ` + "`--metadata`" + ` is set then an additional Metadata key will be returned.
+This will have metdata in rclone standard format as a JSON object.
+
+if ` + "`--stat`" + ` is set then a single JSON blob will be returned about the
 item pointed to. This will return an error if the item isn't found.
 However on bucket based backends (like s3, gcs, b2, azureblob etc) if
 the item isn't found it will return an empty directory as it isn't
@@ -90,7 +94,7 @@ possible to tell empty directories from missing directories there.
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
 will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
-When used without --recursive the Path will always be the same as Name.
+When used without ` + "`--recursive`" + ` the Path will always be the same as Name.
 
 If the directory is a bucket in a bucket-based backend, then
 "IsBucket" will be set to true. This key won't be present unless it is

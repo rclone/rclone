@@ -25,12 +25,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        job_name: ['linux', 'mac_amd64', 'mac_arm64', 'windows_amd64', 'windows_386', 'other_os', 'go1.16', 'go1.17']
+        job_name: ['linux', 'linux_386', 'mac_amd64', 'mac_arm64', 'windows', 'other_os', 'go1.17', 'go1.18']
 
         include:
           - job_name: linux
             os: ubuntu-latest
-            go: '1.18.x'
+            go: '1.19.x'
             gotags: cmount
             build_flags: '-include "^linux/"'
             check: true
@@ -39,9 +39,16 @@ jobs:
             librclonetest: true
             deploy: true
 
+          - job_name: linux_386
+            os: ubuntu-latest
+            go: '1.19.x'
+            goarch: 386
+            gotags: cmount
+            quicktest: true
+
           - job_name: mac_amd64
             os: macos-11
-            go: '1.18.x'
+            go: '1.19.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/amd64" -cgo'
             quicktest: true
@@ -50,48 +57,37 @@ jobs:
 
           - job_name: mac_arm64
             os: macos-11
-            go: '1.18.x'
+            go: '1.19.x'
             gotags: 'cmount'
             build_flags: '-include "^darwin/arm64" -cgo -macos-arch arm64 -cgo-cflags=-I/usr/local/include -cgo-ldflags=-L/usr/local/lib'
             deploy: true
 
-          - job_name: windows_amd64
+          - job_name: windows
             os: windows-latest
-            go: '1.18.x'
+            go: '1.19.x'
             gotags: cmount
-            build_flags: '-include "^windows/amd64" -cgo'
-            build_args: '-buildmode exe'
-            quicktest: true
-            racequicktest: true
-            deploy: true
-
-          - job_name: windows_386
-            os: windows-latest
-            go: '1.18.x'
-            gotags: cmount
-            goarch: '386'
-            cgo: '1'
-            build_flags: '-include "^windows/386" -cgo'
+            cgo: '0'
+            build_flags: '-include "^windows/"'
             build_args: '-buildmode exe'
             quicktest: true
             deploy: true
 
           - job_name: other_os
             os: ubuntu-latest
-            go: '1.18.x'
-            build_flags: '-exclude "^(windows/(386|amd64)|darwin/|linux/)"'
+            go: '1.19.x'
+            build_flags: '-exclude "^(windows/|darwin/|linux/)"'
             compile_all: true
             deploy: true
-
-          - job_name: go1.16
-            os: ubuntu-latest
-            go: '1.16.x'
-            quicktest: true
-            racequicktest: true
 
           - job_name: go1.17
             os: ubuntu-latest
             go: '1.17.x'
+            quicktest: true
+            racequicktest: true
+
+          - job_name: go1.18
+            os: ubuntu-latest
+            go: '1.18.x'
             quicktest: true
             racequicktest: true
 
@@ -178,6 +174,11 @@ jobs:
         run: |
           make
 
+      - name: Rclone version
+        shell: bash
+        run: |
+          rclone version
+
       - name: Run tests
         shell: bash
         run: |
@@ -228,7 +229,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Code quality test
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
           # Optional: version of golangci-lint to use in form of v1.2 or v1.2.3 or `latest` to use the latest version
           version: latest
@@ -249,11 +250,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v1
         with:
-          go-version: 1.18.x
-
-      # Upgrade together with Go version. Using a GitHub-provided version saves around 2 minutes.
-      - name: Force NDK version
-        run: echo "y" | sudo ${ANDROID_HOME}/tools/bin/sdkmanager --install "ndk;23.1.7779620" | grep -v = || true
+          go-version: 1.19.x
 
       - name: Go module cache
         uses: actions/cache@v2
@@ -277,27 +274,29 @@ jobs:
           go install golang.org/x/mobile/cmd/gobind@latest
           go install golang.org/x/mobile/cmd/gomobile@latest
           env PATH=$PATH:~/go/bin gomobile init
+          echo "RCLONE_NDK_VERSION=21" >> $GITHUB_ENV
 
       - name: arm-v7a gomobile build
-        run: env PATH=$PATH:~/go/bin gomobile bind -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile
+        run: env PATH=$PATH:~/go/bin gomobile bind -androidapi ${RCLONE_NDK_VERSION} -v -target=android/arm -javapkg=org.rclone -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} github.com/rclone/rclone/librclone/gomobile
 
       - name: arm-v7a Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_HOME/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=arm' >> $GITHUB_ENV
           echo 'GOARM=7' >> $GITHUB_ENV
           echo 'CGO_ENABLED=1' >> $GITHUB_ENV
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
+
       - name: arm-v7a build
-        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-16-armv7a .
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-armv7a .
 
       - name: arm64-v8a Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_HOME/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=arm64' >> $GITHUB_ENV
@@ -305,12 +304,12 @@ jobs:
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
       - name: arm64-v8a build
-        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-21-armv8a .
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-armv8a .
 
       - name: x86 Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_HOME/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android16-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/i686-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=386' >> $GITHUB_ENV
@@ -318,12 +317,12 @@ jobs:
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
       - name: x86 build
-        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-16-x86 .
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-x86 .
 
       - name: x64 Set environment variables
         shell: bash
         run: |
-          echo "CC=$(echo $ANDROID_HOME/ndk/23.1.7779620/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android21-clang)" >> $GITHUB_ENV
+          echo "CC=$(echo $ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android${RCLONE_NDK_VERSION}-clang)" >> $GITHUB_ENV
           echo "CC_FOR_TARGET=$CC" >> $GITHUB_ENV
           echo 'GOOS=android' >> $GITHUB_ENV
           echo 'GOARCH=amd64' >> $GITHUB_ENV
@@ -331,7 +330,7 @@ jobs:
           echo 'CGO_LDFLAGS=-fuse-ld=lld -s -w' >> $GITHUB_ENV
 
       - name: x64 build
-        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-21-x64 .
+        run: go build -v -tags android -trimpath -ldflags '-s -X github.com/rclone/rclone/fs.Version='${VERSION} -o build/rclone-android-${RCLONE_NDK_VERSION}-x64 .
 
       - name: Upload artifacts
         run: |

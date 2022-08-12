@@ -113,6 +113,7 @@ func CustomAuth(fn CustomAuthFn, realm string) httplib.Middleware {
 				if value != nil {
 					r = r.WithContext(context.WithValue(r.Context(), ContextAuthKey, value))
 				}
+				next.ServeHTTP(w, r)
 			}
 		})
 	}

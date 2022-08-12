@@ -156,11 +156,11 @@ func (p *Proxy) run(in map[string]string) (config configmap.Simple, err error) {
 	fs.Debugf(nil, "Calling proxy %v", p.cmdLine)
 	duration := time.Since(start)
 	if err != nil {
-		return nil, fmt.Errorf("proxy: failed on %v: %q: %w", p.cmdLine, strings.TrimSpace(string(stderr.Bytes())), err)
+		return nil, fmt.Errorf("proxy: failed on %v: %q: %w", p.cmdLine, strings.TrimSpace(stderr.String()), err)
 	}
 	err = json.Unmarshal(stdout.Bytes(), &config)
 	if err != nil {
-		return nil, fmt.Errorf("proxy: failed to read output: %q: %w", string(stdout.Bytes()), err)
+		return nil, fmt.Errorf("proxy: failed to read output: %q: %w", stdout.String(), err)
 	}
 	fs.Debugf(nil, "Proxy returned in %v", duration)
 

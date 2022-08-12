@@ -46,7 +46,7 @@ func TestWriteFileDoubleClose(t *testing.T) {
 
 	// write to the other dup
 	_, err = unix.Write(fd2, buf)
-	if run.vfs.Opt.CacheMode < vfscommon.CacheModeWrites {
+	if run.vfsOpt.CacheMode < vfscommon.CacheModeWrites {
 		// produces an error if cache mode < writes
 		assert.Error(t, err, "input/output error")
 	} else {

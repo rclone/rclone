@@ -217,6 +217,14 @@ This needs expanding and submitting to pypi...
 
 Rust bindings are available in the `librclone` crate: https://crates.io/crates/librclone
 
+## PHP
+
+The `php` subdirectory contains how to use the C library librclone in php through foreign 
+function interface (FFI).
+
+Useful docs:
+- [PHP / FFI](https://www.php.net/manual/en/book.ffi.php)
+
 ## TODO
 
 - Async jobs must currently be cancelled manually at the moment - RcloneFinalize doesn't do it.

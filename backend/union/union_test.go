@@ -41,6 +41,7 @@ func TestStandard(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -62,6 +63,7 @@ func TestRO(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -83,6 +85,7 @@ func TestNC(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -104,6 +107,7 @@ func TestPolicy1(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -125,6 +129,7 @@ func TestPolicy2(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -146,5 +151,6 @@ func TestPolicy3(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt", "DuplicateFiles"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }

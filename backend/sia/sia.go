@@ -423,9 +423,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, err
 	}
 
-	if strings.HasSuffix(opt.APIURL, "/") {
-		opt.APIURL = strings.TrimSuffix(opt.APIURL, "/")
-	}
+	opt.APIURL = strings.TrimSuffix(opt.APIURL, "/")
 
 	// Parse the endpoint
 	u, err := url.Parse(opt.APIURL)

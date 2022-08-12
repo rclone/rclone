@@ -78,6 +78,17 @@ type MountPoint struct {
 	ErrChan    <-chan error
 }
 
+// NewMountPoint makes a new mounting structure
+func NewMountPoint(mount MountFn, mountPoint string, f fs.Fs, mountOpt *Options, vfsOpt *vfscommon.Options) *MountPoint {
+	return &MountPoint{
+		MountFn:    mount,
+		MountPoint: mountPoint,
+		Fs:         f,
+		MountOpt:   *mountOpt,
+		VFSOpt:     *vfsOpt,
+	}
+}
+
 // Global constants
 const (
 	MaxLeafSize = 1024 // don't pass file names longer than this
@@ -167,14 +178,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				defer cmd.StartStats()()
 			}
 
-			mnt := &MountPoint{
-				MountFn:    mount,
-				MountPoint: args[1],
-				Fs:         cmd.NewFsDir(args),
-				MountOpt:   Opt,
-				VFSOpt:     vfsflags.Opt,
-			}
-
+			mnt := NewMountPoint(mount, args[1], cmd.NewFsDir(args), &Opt, &vfsflags.Opt)
 			daemon, err := mnt.Mount()
 
 			// Wait for foreground mount, if any...
@@ -253,6 +257,7 @@ func (m *MountPoint) Mount() (daemon *os.Process, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to mount FUSE fs: %w", err)
 	}
+	m.MountedOn = time.Now()
 	return nil, nil
 }
 

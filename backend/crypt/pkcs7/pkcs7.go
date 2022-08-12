@@ -8,11 +8,11 @@ import "errors"
 
 // Errors Unpad can return
 var (
-	ErrorPaddingNotFound      = errors.New("Bad PKCS#7 padding - not padded")
-	ErrorPaddingNotAMultiple  = errors.New("Bad PKCS#7 padding - not a multiple of blocksize")
-	ErrorPaddingTooLong       = errors.New("Bad PKCS#7 padding - too long")
-	ErrorPaddingTooShort      = errors.New("Bad PKCS#7 padding - too short")
-	ErrorPaddingNotAllTheSame = errors.New("Bad PKCS#7 padding - not all the same")
+	ErrorPaddingNotFound      = errors.New("bad PKCS#7 padding - not padded")
+	ErrorPaddingNotAMultiple  = errors.New("bad PKCS#7 padding - not a multiple of blocksize")
+	ErrorPaddingTooLong       = errors.New("bad PKCS#7 padding - too long")
+	ErrorPaddingTooShort      = errors.New("bad PKCS#7 padding - too short")
+	ErrorPaddingNotAllTheSame = errors.New("bad PKCS#7 padding - not all the same")
 )
 
 // Pad buf using PKCS#7 to a multiple of n.

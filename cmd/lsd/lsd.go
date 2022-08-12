@@ -27,7 +27,7 @@ var commandDefinition = &cobra.Command{
 	Short: `List all directories/containers/buckets in the path.`,
 	Long: `
 Lists the directories in the source path to standard output. Does not
-recurse by default.  Use the -R flag to recurse.
+recurse by default.  Use the ` + "`-R`" + ` flag to recurse.
 
 This command lists the total size of the directory (if known, -1 if
 not), the modification time (if known, the current time if not), the
@@ -45,7 +45,7 @@ Or
               -1 2017-01-03 14:40:54        -1 2500files
               -1 2017-07-08 14:39:28        -1 4000files
 
-If you just want the directory names use "rclone lsf --dirs-only".
+If you just want the directory names use ` + "`rclone lsf --dirs-only`" + `.
 
 ` + lshelp.Help,
 	Run: func(command *cobra.Command, args []string) {

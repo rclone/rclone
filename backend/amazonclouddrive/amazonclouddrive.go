@@ -435,7 +435,7 @@ func (f *Fs) listAll(ctx context.Context, dirID string, title string, directorie
 		query += " AND kind:" + folderKind
 	} else if filesOnly {
 		query += " AND kind:" + fileKind
-	} else {
+		//} else {
 		// FIXME none of these work
 		//query += " AND kind:(" + fileKind + " OR " + folderKind + ")"
 		//query += " AND (kind:" + fileKind + " OR kind:" + folderKind + ")"
@@ -556,9 +556,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 //
 // This is a workaround for Amazon sometimes returning
 //
-//  * 408 REQUEST_TIMEOUT
-//  * 504 GATEWAY_TIMEOUT
-//  * 500 Internal server error
+//   - 408 REQUEST_TIMEOUT
+//   - 504 GATEWAY_TIMEOUT
+//   - 500 Internal server error
 //
 // At the end of large uploads.  The speculation is that the timeout
 // is waiting for the sha1 hashing to complete and the file may well
@@ -626,7 +626,7 @@ func (f *Fs) checkUpload(ctx context.Context, resp *http.Response, in io.Reader,
 
 // Put the object into the container
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -685,9 +685,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1001,7 +1001,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 }
 
 // ModTime returns the modification time of the object
-//
 //
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers

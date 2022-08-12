@@ -27,7 +27,6 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 		fuse.MaxReadahead(uint32(opt.MaxReadAhead)),
 		fuse.Subtype("rclone"),
 		fuse.FSName(device),
-		fuse.VolumeName(opt.VolumeName),
 
 		// Options from benchmarking in the fuse module
 		//fuse.MaxReadahead(64 * 1024 * 1024),
@@ -104,12 +103,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 		}
 		errChan <- err
 	}()
-
-	// check if the mount process has an error to report
-	<-c.Ready
-	if err := c.MountError; err != nil {
-		return nil, nil, err
-	}
 
 	unmount := func() error {
 		// Shutdown the VFS

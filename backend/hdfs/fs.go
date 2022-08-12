@@ -92,7 +92,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.ServicePrincipalName != "" {
 		options.KerberosClient, err = getKerberosClient()
 		if err != nil {
-			return nil, fmt.Errorf("Problem with kerberos authentication: %s", err)
+			return nil, fmt.Errorf("problem with kerberos authentication: %w", err)
 		}
 		options.KerberosServicePrincipleName = opt.ServicePrincipalName
 
@@ -265,9 +265,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //

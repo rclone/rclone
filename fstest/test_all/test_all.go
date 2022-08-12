@@ -2,7 +2,6 @@
 // need integration testing.
 //
 // See the `test` target in the Makefile.
-//
 package main
 
 /* FIXME

@@ -16,6 +16,8 @@ rclone test makefiles <dir> [flags]
 ## Options
 
 ```
+      --ascii                      Fill files with random ASCII printable bytes only
+      --chargen                    Fill files with a ASCII chargen pattern
       --files int                  Number of files to create (default 1000)
       --files-per-directory int    Average number of files per directory (default 10)
   -h, --help                       help for makefiles
@@ -23,7 +25,10 @@ rclone test makefiles <dir> [flags]
       --max-name-length int        Maximum size of file names (default 12)
       --min-file-size SizeSuffix   Minimum size of file to create
       --min-name-length int        Minimum size of file names (default 4)
+      --pattern                    Fill files with a periodic pattern
       --seed int                   Seed for the random number generator (0 for random) (default 1)
+      --sparse                     Make the files sparse (appear to be filled with ASCII 0x00)
+      --zero                       Fill files with ASCII 0x00
 ```
 
 See the [global flags page](/flags/) for global options not listed here.

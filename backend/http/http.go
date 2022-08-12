@@ -35,11 +35,11 @@ var (
 func init() {
 	fsi := &fs.RegInfo{
 		Name:        "http",
-		Description: "http Connection",
+		Description: "HTTP",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",
-			Help:     "URL of http host to connect to.\n\nE.g. \"https://example.com\", or \"https://user:pass@example.com\" to use a username and password.",
+			Help:     "URL of HTTP host to connect to.\n\nE.g. \"https://example.com\", or \"https://user:pass@example.com\" to use a username and password.",
 			Required: true,
 		}, {
 			Name: "headers",

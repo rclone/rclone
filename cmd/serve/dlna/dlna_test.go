@@ -119,6 +119,8 @@ func TestContentDirectoryBrowseMetadata(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	body, err := ioutil.ReadAll(resp.Body)
 	require.NoError(t, err)
+	// should contain an appropriate URN
+	require.Contains(t, string(body), "urn:schemas-upnp-org:service:ContentDirectory:1")
 	// expect a <container> element
 	require.Contains(t, string(body), html.EscapeString("<container "))
 	require.NotContains(t, string(body), html.EscapeString("<item "))

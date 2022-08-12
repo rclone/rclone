@@ -59,7 +59,7 @@ Eg
     ferejej3gux/
     fubuwic
 
-Use the --format option to control what gets listed.  By default this
+Use the ` + "`--format`" + ` option to control what gets listed.  By default this
 is just the path, but you can use these parameters to control the
 output:
 
@@ -72,9 +72,10 @@ output:
     m - MimeType of object if known
     e - encrypted name
     T - tier of storage if known, e.g. "Hot" or "Cool"
+    M - Metadata of object in JSON blob format, eg {"key":"value"}
 
 So if you wanted the path, size and modification time, you would use
---format "pst", or maybe --format "tsp" to put the path last.
+` + "`--format \"pst\"`, or maybe `--format \"tsp\"`" + ` to put the path last.
 
 Eg
 
@@ -86,7 +87,7 @@ Eg
     2016-06-25 18:55:40;37600;fubuwic
 
 If you specify "h" in the format you will get the MD5 hash by default,
-use the "--hash" flag to change which hash you want.  Note that this
+use the ` + "`--hash`" + ` flag to change which hash you want.  Note that this
 can be returned as an empty string if it isn't available on the object
 (and for directories), "ERROR" if there was an error reading it from
 the object and "UNSUPPORTED" if that object does not support that hash
@@ -108,7 +109,7 @@ Eg
 (Though "rclone md5sum ." is an easier way of typing this.)
 
 By default the separator is ";" this can be changed with the
---separator flag.  Note that separators aren't escaped in the path so
+` + "`--separator`" + ` flag.  Note that separators aren't escaped in the path so
 putting it last is a good strategy.
 
 Eg
@@ -130,8 +131,8 @@ Eg
     test.sh,449
     "this file contains a comma, in the file name.txt",6
 
-Note that the --absolute parameter is useful for making lists of files
-to pass to an rclone copy with the --files-from-raw flag.
+Note that the ` + "`--absolute`" + ` parameter is useful for making lists of files
+to pass to an rclone copy with the ` + "`--files-from-raw`" + ` flag.
 
 For example, to find all the files modified within one day and copy
 those only (without traversing the whole directory structure):
@@ -198,8 +199,11 @@ func Lsf(ctx context.Context, fsrc fs.Fs, out io.Writer) error {
 			opt.ShowOrigIDs = true
 		case 'T':
 			list.AddTier()
+		case 'M':
+			list.AddMetadata()
+			opt.Metadata = true
 		default:
-			return fmt.Errorf("Unknown format character %q", char)
+			return fmt.Errorf("unknown format character %q", char)
 		}
 	}
 

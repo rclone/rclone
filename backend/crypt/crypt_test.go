@@ -4,6 +4,7 @@ package crypt_test
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/rclone/rclone/backend/crypt"
@@ -46,6 +47,7 @@ func TestStandardBase32(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -67,6 +69,7 @@ func TestStandardBase64(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -88,6 +91,7 @@ func TestStandardBase32768(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -109,6 +113,7 @@ func TestOff(t *testing.T) {
 		},
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -116,6 +121,9 @@ func TestOff(t *testing.T) {
 func TestObfuscate(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
+	}
+	if runtime.GOOS == "darwin" {
+		t.Skip("Skipping on macOS as obfuscating control characters makes filenames macOS can't cope with")
 	}
 	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-obfuscate")
 	name := "TestCrypt3"
@@ -131,6 +139,7 @@ func TestObfuscate(t *testing.T) {
 		SkipBadWindowsCharacters:     true,
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }
 
@@ -138,6 +147,9 @@ func TestObfuscate(t *testing.T) {
 func TestNoDataObfuscate(t *testing.T) {
 	if *fstest.RemoteName != "" {
 		t.Skip("Skipping as -remote set")
+	}
+	if runtime.GOOS == "darwin" {
+		t.Skip("Skipping on macOS as obfuscating control characters makes filenames macOS can't cope with")
 	}
 	tempdir := filepath.Join(os.TempDir(), "rclone-crypt-test-obfuscate")
 	name := "TestCrypt4"
@@ -154,5 +166,6 @@ func TestNoDataObfuscate(t *testing.T) {
 		SkipBadWindowsCharacters:     true,
 		UnimplementableFsMethods:     []string{"OpenWriterAt"},
 		UnimplementableObjectMethods: []string{"MimeType"},
+		QuickTestOK:                  true,
 	})
 }

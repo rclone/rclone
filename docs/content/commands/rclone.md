@@ -42,7 +42,7 @@ See the [global flags page](/flags/) for global options not listed here.
 * [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
 * [rclone checksum](/commands/rclone_checksum/)	 - Checks the files in the source against a SUM file.
 * [rclone cleanup](/commands/rclone_cleanup/)	 - Clean up the remote if possible.
-* [rclone completion](/commands/rclone_completion/)	 - generate the autocompletion script for the specified shell
+* [rclone completion](/commands/rclone_completion/)	 - Generate the autocompletion script for the specified shell
 * [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
 * [rclone copy](/commands/rclone_copy/)	 - Copy files from source to dest, skipping identical files.
 * [rclone copyto](/commands/rclone_copyto/)	 - Copy files from source to dest, skipping identical files.

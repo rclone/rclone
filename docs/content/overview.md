@@ -14,47 +14,49 @@ show through.
 
 Here is an overview of the major features of each cloud storage system.
 
-| Name                         | Hash        | ModTime | Case Insensitive | Duplicate Files | MIME Type |
-| ---------------------------- |:-----------:|:-------:|:----------------:|:---------------:|:---------:|
-| 1Fichier                     | Whirlpool   | No      | No               | Yes             | R         |
-| Akamai Netstorage            | MD5, SHA256 | Yes     | No               | No              | R         |
-| Amazon Drive                 | MD5         | No      | Yes              | No              | R         |
-| Amazon S3 (or S3 compatible) | MD5         | Yes     | No               | No              | R/W       |
-| Backblaze B2                 | SHA1        | Yes     | No               | No              | R/W       |
-| Box                          | SHA1        | Yes     | Yes              | No              | -         |
-| Citrix ShareFile             | MD5         | Yes     | Yes              | No              | -         |
-| Dropbox                      | DBHASH ¹    | Yes     | Yes              | No              | -         |
-| Enterprise File Fabric       | -           | Yes     | Yes              | No              | R/W       |
-| FTP                          | -           | No      | No               | No              | -         |
-| Google Cloud Storage         | MD5         | Yes     | No               | No              | R/W       |
-| Google Drive                 | MD5         | Yes     | No               | Yes             | R/W       |
-| Google Photos                | -           | No      | No               | Yes             | R         |
-| HDFS                         | -           | Yes     | No               | No              | -         |
-| HTTP                         | -           | No      | No               | No              | R         |
-| Hubic                        | MD5         | Yes     | No               | No              | R/W       |
-| Jottacloud                   | MD5         | Yes     | Yes              | No              | R         |
-| Koofr                        | MD5         | No      | Yes              | No              | -         |
-| Mail.ru Cloud                | Mailru ⁶    | Yes     | Yes              | No              | -         |
-| Mega                         | -           | No      | No               | Yes             | -         |
-| Memory                       | MD5         | Yes     | No               | No              | -         |
-| Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
-| Microsoft OneDrive           | SHA1 ⁵      | Yes     | Yes              | No              | R         |
-| OpenDrive                    | MD5         | Yes     | Yes              | Partial ⁸       | -         |
-| OpenStack Swift              | MD5         | Yes     | No               | No              | R/W       |
-| pCloud                       | MD5, SHA1 ⁷ | Yes     | No               | No              | W         |
-| premiumize.me                | -           | No      | Yes              | No              | R         |
-| put.io                       | CRC-32      | Yes     | No               | Yes             | R         |
-| QingStor                     | MD5         | No      | No               | No              | R/W       |
-| Seafile                      | -           | No      | No               | No              | -         |
-| SFTP                         | MD5, SHA1 ² | Yes     | Depends          | No              | -         |
-| Sia                          | -           | No      | No               | No              | -         |
-| SugarSync                    | -           | No      | No               | No              | -         |
-| Storj                        | -           | Yes     | No               | No              | -         |
-| Uptobox                      | -           | No      | No               | Yes             | -         |
-| WebDAV                       | MD5, SHA1 ³ | Yes ⁴   | Depends          | No              | -         |
-| Yandex Disk                  | MD5         | Yes     | No               | No              | R         |
-| Zoho WorkDrive               | -           | No      | No               | No              | -         |
-| The local filesystem         | All         | Yes     | Depends          | No              | -         |
+| Name                         | Hash             | ModTime | Case Insensitive | Duplicate Files | MIME Type | Metadata |
+| ---------------------------- |:----------------:|:-------:|:----------------:|:---------------:|:---------:|:--------:|
+| 1Fichier                     | Whirlpool        | -       | No               | Yes             | R         | -        |
+| Akamai Netstorage            | MD5, SHA256      | R/W     | No               | No              | R         | -        |
+| Amazon Drive                 | MD5              | -       | Yes              | No              | R         | -        |
+| Amazon S3 (or S3 compatible) | MD5              | R/W     | No               | No              | R/W       | RWU      |
+| Backblaze B2                 | SHA1             | R/W     | No               | No              | R/W       | -        |
+| Box                          | SHA1             | R/W     | Yes              | No              | -         | -        |
+| Citrix ShareFile             | MD5              | R/W     | Yes              | No              | -         | -        |
+| Dropbox                      | DBHASH ¹         | R       | Yes              | No              | -         | -        |
+| Enterprise File Fabric       | -                | R/W     | Yes              | No              | R/W       | -        |
+| FTP                          | -                | R/W ¹⁰  | No               | No              | -         | -        |
+| Google Cloud Storage         | MD5              | R/W     | No               | No              | R/W       | -        |
+| Google Drive                 | MD5              | R/W     | No               | Yes             | R/W       | -        |
+| Google Photos                | -                | -       | No               | Yes             | R         | -        |
+| HDFS                         | -                | R/W     | No               | No              | -         | -        |
+| HiDrive                      | HiDrive ¹²       | R/W     | No               | No              | -         | -        |
+| HTTP                         | -                | R       | No               | No              | R         | -        |
+| Hubic                        | MD5              | R/W     | No               | No              | R/W       | -        |
+| Internet Archive             | MD5, SHA1, CRC32 | R/W ¹¹  | No               | No              | -         | RWU      |
+| Jottacloud                   | MD5              | R/W     | Yes              | No              | R         | -        |
+| Koofr                        | MD5              | -       | Yes              | No              | -         | -        |
+| Mail.ru Cloud                | Mailru ⁶         | R/W     | Yes              | No              | -         | -        |
+| Mega                         | -                | -       | No               | Yes             | -         | -        |
+| Memory                       | MD5              | R/W     | No               | No              | -         | -        |
+| Microsoft Azure Blob Storage | MD5              | R/W     | No               | No              | R/W       | -        |
+| Microsoft OneDrive           | SHA1 ⁵           | R/W     | Yes              | No              | R         | -        |
+| OpenDrive                    | MD5              | R/W     | Yes              | Partial ⁸       | -         | -        |
+| OpenStack Swift              | MD5              | R/W     | No               | No              | R/W       | -        |
+| pCloud                       | MD5, SHA1 ⁷      | R       | No               | No              | W         | -        |
+| premiumize.me                | -                | -       | Yes              | No              | R         | -        |
+| put.io                       | CRC-32           | R/W     | No               | Yes             | R         | -        |
+| QingStor                     | MD5              | - ⁹     | No               | No              | R/W       | -        |
+| Seafile                      | -                | -       | No               | No              | -         | -        |
+| SFTP                         | MD5, SHA1 ²      | R/W     | Depends          | No              | -         | -        |
+| Sia                          | -                | -       | No               | No              | -         | -        |
+| SugarSync                    | -                | -       | No               | No              | -         | -        |
+| Storj                        | -                | R       | No               | No              | -         | -        |
+| Uptobox                      | -                | -       | No               | Yes             | -         | -        |
+| WebDAV                       | MD5, SHA1 ³      | R ⁴     | Depends          | No              | -         | -        |
+| Yandex Disk                  | MD5              | R/W     | No               | No              | R         | -        |
+| Zoho WorkDrive               | -                | -       | No               | No              | -         | -        |
+| The local filesystem         | All              | R/W     | Depends          | No              | -         | RWU      |
 
 ### Notes
 
@@ -83,6 +85,20 @@ storage platform has been determined to allow duplicate files, and it
 is possible to create them with `rclone`.  It may be that this is a
 mistake or an unsupported feature.
 
+⁹ QingStor does not support SetModTime for objects bigger than 5 GiB.
+
+¹⁰ FTP supports modtimes for the major FTP servers, and also others
+if they advertised required protocol extensions. See [this](/ftp/#modified-time)
+for more details.
+
+¹¹ Internet Archive requires option `wait_archive` to be set to a non-zero value
+for full modtime support.
+
+¹² HiDrive supports [its own custom
+hash](https://static.hidrive.com/dev/0001).
+It combines SHA1 sums for each 4 KiB block hierarchically to a single
+top-level sum.
+
 ### Hash ###
 
 The cloud storage system supports various hash types of the objects.
@@ -95,13 +111,36 @@ systems they must support a common hash type.
 
 ### ModTime ###
 
-The cloud storage system supports setting modification times on
-objects.  If it does then this enables a using the modification times
-as part of the sync.  If not then only the size will be checked by
-default, though the MD5SUM can be checked with the `--checksum` flag.
+Allmost all cloud storage systems store some sort of timestamp
+on objects, but several of them not something that is appropriate
+to use for syncing. E.g. some backends will only write a timestamp
+that represent the time of the upload. To be relevant for syncing
+it should be able to store the modification time of the source
+object. If this is not the case, rclone will only check the file
+size by default, though can be configured to check the file hash
+(with the `--checksum` flag). Ideally it should also be possible to
+change the timestamp of an existing file without having to re-upload it.
 
-All cloud storage systems support some kind of date on the object and
-these will be set when transferring from the cloud storage system.
+Storage systems with a `-` in the ModTime column, means the
+modification read on objects is not the modification time of the
+file when uploaded. It is most likely the time the file was uploaded,
+or possibly something else (like the time the picture was taken in
+Google Photos).
+
+Storage systems with a `R` (for read-only) in the ModTime column,
+means the it keeps modification times on objects, and updates them
+when uploading objects, but it does not support changing only the
+modification time (`SetModTime` operation) without re-uploading,
+possibly not even without deleting existing first. Some operations
+in rclone, such as `copy` and `sync` commands, will automatically
+check for `SetModTime` support and re-upload if necessary to keep
+the modification times in sync. Other commands will not work
+without `SetModTime` support, e.g. `touch` command on an existing
+file will fail, and changes to modification time only on a files
+in a `mount` will be silently ignored.
+
+Storage systems with `R/W` (for read/write) in the ModTime column,
+means they do also support modtime-only operations.
 
 ### Case Insensitive ###
 
@@ -301,35 +340,36 @@ list of all possible values by passing an invalid value to this
 flag, e.g. `--local-encoding "help"`. The command `rclone help flags encoding`
 will show you the defaults for the backends.
 
-| Encoding  | Characters |
-| --------- | ---------- |
-| Asterisk | `*` |
-| BackQuote | `` ` `` |
-| BackSlash | `\` |
-| Colon | `:` |
-| CrLf | CR 0x0D, LF 0x0A |
-| Ctl | All control characters 0x00-0x1F |
-| Del | DEL 0x7F |
-| Dollar | `$` |
-| Dot | `.` or `..` as entire string |
-| DoubleQuote | `"` |
-| Hash | `#` |
-| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) |
-| LeftCrLfHtVt | CR 0x0D, LF 0x0A,HT 0x09, VT 0x0B on the left of a string |
-| LeftPeriod | `.` on the left of a string |
-| LeftSpace | SPACE on the left of a string |
-| LeftTilde | `~` on the left of a string |
-| LtGt | `<`, `>` |
-| None | No characters are encoded |
-| Percent | `%` |
-| Pipe | \| |
-| Question | `?` |
-| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string |
-| RightPeriod | `.` on the right of a string |
-| RightSpace | SPACE on the right of a string |
-| SingleQuote | `'` |
-| Slash | `/` |
-| SquareBracket | `[`, `]` |
+| Encoding  | Characters | Encoded as |
+| --------- | ---------- | ---------- |
+| Asterisk | `*` | `＊` |
+| BackQuote | `` ` `` | `｀` |
+| BackSlash | `\` | `＼` |
+| Colon | `:` | `：` |
+| CrLf | CR 0x0D, LF 0x0A | `␍`, `␊` |
+| Ctl | All control characters 0x00-0x1F | `␀␁␂␃␄␅␆␇␈␉␊␋␌␍␎␏␐␑␒␓␔␕␖␗␘␙␚␛␜␝␞␟` |
+| Del | DEL 0x7F | `␡` |
+| Dollar | `$` | `＄` |
+| Dot | `.` or `..` as entire string | `．`, `．．` |
+| DoubleQuote | `"` | `＂` |
+| Hash | `#` | `＃` |
+| InvalidUtf8 | An invalid UTF-8 character (e.g. latin1) | `�` |
+| LeftCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the left of a string | `␍`, `␊`, `␉`, `␋` |
+| LeftPeriod | `.` on the left of a string | `.` |
+| LeftSpace | SPACE on the left of a string | `␠` |
+| LeftTilde | `~` on the left of a string | `～` |
+| LtGt | `<`, `>` | `＜`, `＞` |
+| None | No characters are encoded | |
+| Percent | `%` | `％` |
+| Pipe | \| | `｜` |
+| Question | `?` | `？` |
+| RightCrLfHtVt | CR 0x0D, LF 0x0A, HT 0x09, VT 0x0B on the right of a string | `␍`, `␊`, `␉`, `␋` |
+| RightPeriod | `.` on the right of a string | `.` |
+| RightSpace | SPACE on the right of a string | `␠` |
+| Semicolon | `;` | `；` |
+| SingleQuote | `'` | `＇` |
+| Slash | `/` | `／` |
+| SquareBracket | `[`, `]` | `［`, `］` |
 
 ##### Encoding example: FTP
 
@@ -404,6 +444,22 @@ remote which supports writing (`W`) then rclone will preserve the MIME
 types.  Otherwise they will be guessed from the extension, or the
 remote itself may assign the MIME type.
 
+### Metadata
+
+Backends may or may support reading or writing metadata. They may
+support reading and writing system metadata (metadata intrinsic to
+that backend) and/or user metadata (general purpose metadata).
+
+The levels of metadata support are
+
+| Key | Explanation |
+|-----|-------------|
+| `R` | Read only System Metadata |
+| `RW` | Read and write System Metadata |
+| `RWU` | Read and write System Metadata and read and write User Metadata |
+
+See [the metadata docs](/docs/#metadata) for more info.
+
 ## Optional Features ##
 
 All rclone remotes support a base command set. Other features depend
@@ -412,8 +468,9 @@ upon backend-specific capabilities.
 | Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing  | About | EmptyDir |
 | ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|:--------:|
 | 1Fichier                     | No    | Yes  | Yes  | No      | No      | No    | No           | Yes          | No    | Yes      |
+| Akamai Netstorage            | Yes   | No   | No   | No      | No      | Yes   | Yes          | No           | No    | Yes      |
 | Amazon Drive                 | Yes   | No   | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
-| Amazon S3                    | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
+| Amazon S3 (or S3 compatible) | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
 | Backblaze B2                 | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | Yes          | No    | No       |
 | Box                          | Yes   | Yes  | Yes  | Yes     | Yes ‡‡  | No    | Yes          | Yes          | Yes   | Yes      |
 | Citrix ShareFile             | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
@@ -424,9 +481,12 @@ upon backend-specific capabilities.
 | Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | Google Photos                | No    | No   | No   | No      | No      | No    | No           | No           | No    | No       |
 | HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
+| HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
 | Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
+| Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
+| Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | Yes   | Yes      |
 | Mail.ru Cloud                | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | Mega                         | Yes   | No   | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | Memory                       | No    | Yes  | No   | No      | No      | Yes   | Yes          | No           | No    | No       |
@@ -440,6 +500,7 @@ upon backend-specific capabilities.
 | QingStor                     | No    | Yes  | No   | No      | Yes     | Yes   | No           | No           | No    | No       |
 | Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
+| Sia                          | No    | No   | No   | No      | No      | No    | Yes          | No           | No    | Yes      |
 | SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
 | Storj                        | Yes † | No   | Yes  | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | No       |

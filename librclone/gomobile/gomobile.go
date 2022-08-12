@@ -6,6 +6,8 @@ import (
 
 	_ "github.com/rclone/rclone/backend/all" // import all backends
 	_ "github.com/rclone/rclone/lib/plugin"  // import plugins
+
+	_ "golang.org/x/mobile/event/key" // make go.mod add this as a dependency
 )
 
 // RcloneInitialize initializes rclone as a library
@@ -20,8 +22,8 @@ func RcloneFinalize() {
 
 // RcloneRPCResult is returned from RcloneRPC
 //
-//   Output will be returned as a serialized JSON object
-//   Status is a HTTP status return (200=OK anything else fail)
+//	Output will be returned as a serialized JSON object
+//	Status is a HTTP status return (200=OK anything else fail)
 type RcloneRPCResult struct {
 	Output string
 	Status int

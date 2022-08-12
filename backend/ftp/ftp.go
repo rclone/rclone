@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/ftp"
+	"github.com/jlaffaye/ftp"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
 	"github.com/rclone/rclone/fs/config"
@@ -45,7 +45,7 @@ const (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "ftp",
-		Description: "FTP Connection",
+		Description: "FTP",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "host",
@@ -98,6 +98,11 @@ to an encrypted one. Cannot be used in combination with implicit FTP.`,
 		}, {
 			Name:     "disable_mlsd",
 			Help:     "Disable using MLSD even if server advertises support.",
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name:     "disable_utf8",
+			Help:     "Disable using UTF-8 even if server advertises support.",
 			Default:  false,
 			Advanced: true,
 		}, {
@@ -184,6 +189,7 @@ type Options struct {
 	SkipVerifyTLSCert bool                 `config:"no_check_certificate"`
 	DisableEPSV       bool                 `config:"disable_epsv"`
 	DisableMLSD       bool                 `config:"disable_mlsd"`
+	DisableUTF8       bool                 `config:"disable_utf8"`
 	WritingMDTM       bool                 `config:"writing_mdtm"`
 	IdleTimeout       fs.Duration          `config:"idle_timeout"`
 	CloseTimeout      fs.Duration          `config:"close_timeout"`
@@ -338,6 +344,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	if f.opt.DisableMLSD {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledMLSD(true))
 	}
+	if f.opt.DisableUTF8 {
+		ftpConfig = append(ftpConfig, ftp.DialWithDisabledUTF8(true))
+	}
 	if f.opt.ShutTimeout != 0 && f.opt.ShutTimeout != fs.DurationOff {
 		ftpConfig = append(ftpConfig, ftp.DialWithShutTimeout(time.Duration(f.opt.ShutTimeout)))
 	}
@@ -478,7 +487,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (ff fs.Fs
 		protocol = "ftps://"
 	}
 	if opt.TLS && opt.ExplicitTLS {
-		return nil, errors.New("Implicit TLS and explicit TLS are mutually incompatible. Please revise your config")
+		return nil, errors.New("implicit TLS and explicit TLS are mutually incompatible, please revise your config")
 	}
 	var tlsConfig *tls.Config
 	if opt.TLS || opt.ExplicitTLS {
@@ -709,7 +718,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 	case <-timer.C:
 		// if timer fired assume no error but connection dead
 		fs.Errorf(f, "Timeout when waiting for List")
-		return nil, errors.New("Timeout when waiting for List")
+		return nil, errors.New("timeout when waiting for List")
 	}
 
 	// Annoyingly FTP returns success for a directory which
@@ -760,11 +769,12 @@ func (f *Fs) Hashes() hash.Set {
 
 // Precision shows whether modified time is supported or not depending on the
 // FTP server capabilities, namely whether FTP server:
-// - accepts the MDTM command to get file time (fGetTime)
-//   or supports MLSD returning precise file time in the list (fLstTime)
-// - accepts the MFMT command to set file time (fSetTime)
-//   or non-standard form of the MDTM command (fSetTime, too)
-//   used by VsFtpd for the same purpose (WritingMDTM)
+//   - accepts the MDTM command to get file time (fGetTime)
+//     or supports MLSD returning precise file time in the list (fLstTime)
+//   - accepts the MFMT command to set file time (fSetTime)
+//     or non-standard form of the MDTM command (fSetTime, too)
+//     used by VsFtpd for the same purpose (WritingMDTM)
+//
 // See "mdtm_write" in https://security.appspot.com/vsftpd/vsftpd_conf.html
 func (f *Fs) Precision() time.Duration {
 	if (f.fGetTime || f.fLstTime) && f.fSetTime {
@@ -1140,7 +1150,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 
 // Update the already existing object
 //
-// Copy the reader into the object updating modTime and size
+// Copy the reader into the object updating modTime and size.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {

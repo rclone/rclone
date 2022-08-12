@@ -25,6 +25,11 @@ func createOnFirstUse() {
 		c = cache.New()
 		c.SetExpireDuration(ci.FsCacheExpireDuration)
 		c.SetExpireInterval(ci.FsCacheExpireInterval)
+		c.SetFinalizer(func(value interface{}) {
+			if s, ok := value.(fs.Shutdowner); ok {
+				_ = fs.CountError(s.Shutdown(context.Background()))
+			}
+		})
 	})
 }
 
@@ -112,7 +117,7 @@ func PinUntilFinalized(f fs.Fs, x interface{}) {
 // Unpin f from the cache
 func Unpin(f fs.Fs) {
 	createOnFirstUse()
-	c.Pin(fs.ConfigString(f))
+	c.Unpin(fs.ConfigString(f))
 }
 
 // Get gets an fs.Fs named fsString either from the cache or creates it afresh

@@ -29,6 +29,8 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Box [:page_facing_up:](https://rclone.org/box/)
   * Ceph [:page_facing_up:](https://rclone.org/s3/#ceph)
   * China Mobile Ecloud Elastic Object Storage (EOS) [:page_facing_up:](https://rclone.org/s3/#china-mobile-ecloud-eos)
+  * Cloudflare R2 [:page_facing_up:](https://rclone.org/s3/#cloudflare-r2)
+  * Arvan Cloud Object Storage (AOS) [:page_facing_up:](https://rclone.org/s3/#arvan-cloud-object-storage-aos)
   * Citrix ShareFile [:page_facing_up:](https://rclone.org/sharefile/)
   * DigitalOcean Spaces [:page_facing_up:](https://rclone.org/s3/#digitalocean-spaces)
   * Digi Storage [:page_facing_up:](https://rclone.org/koofr/#digi-storage)
@@ -40,8 +42,11 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Google Drive [:page_facing_up:](https://rclone.org/drive/)
   * Google Photos [:page_facing_up:](https://rclone.org/googlephotos/)
   * HDFS (Hadoop Distributed Filesystem) [:page_facing_up:](https://rclone.org/hdfs/)
+  * HiDrive [:page_facing_up:](https://rclone.org/hidrive/)
   * HTTP [:page_facing_up:](https://rclone.org/http/)
+  * Huawei Cloud Object Storage Service(OBS) [:page_facing_up:](https://rclone.org/s3/#huawei-obs)
   * Hubic [:page_facing_up:](https://rclone.org/hubic/)
+  * Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
   * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
   * IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
   * Koofr [:page_facing_up:](https://rclone.org/koofr/)
@@ -80,6 +85,19 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
 
 Please see [the full list of all storage providers and their features](https://rclone.org/overview/)
 
+### Virtual storage providers
+
+These backends adapt or modify other storage providers
+
+  * Alias: rename existing remotes [:page_facing_up:](https://rclone.org/alias/)
+  * Cache: cache remotes (DEPRECATED) [:page_facing_up:](https://rclone.org/cache/)
+  * Chunker: split large files [:page_facing_up:](https://rclone.org/chunker/)
+  * Combine: combine multiple remotes into a directory tree [:page_facing_up:](https://rclone.org/combine/)
+  * Compress: compress files [:page_facing_up:](https://rclone.org/compress/)
+  * Crypt: encrypt files [:page_facing_up:](https://rclone.org/crypt/)
+  * Hasher: hash files [:page_facing_up:](https://rclone.org/hasher/)
+  * Union: join multiple remotes to work together [:page_facing_up:](https://rclone.org/union/)
+
 ## Features
 
   * MD5/SHA-1 hashes checked at all times for file integrity
@@ -94,7 +112,7 @@ Please see [the full list of all storage providers and their features](https://r
   * Optional encryption ([Crypt](https://rclone.org/crypt/))
   * Optional FUSE mount ([rclone mount](https://rclone.org/commands/rclone_mount/))
   * Multi-threaded downloads to local disk
-  * Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files over HTTP/WebDav/FTP/SFTP/dlna
+  * Can [serve](https://rclone.org/commands/rclone_serve/) local or remote files over HTTP/WebDAV/FTP/SFTP/DLNA
 
 ## Installation & documentation
 
@@ -115,5 +133,5 @@ Please see the [rclone website](https://rclone.org/) for:
 License
 -------
 
-This is free software under the terms of MIT the license (check the
+This is free software under the terms of the MIT license (check the
 [COPYING file](/COPYING) included in this package).

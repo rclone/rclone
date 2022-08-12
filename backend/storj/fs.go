@@ -579,7 +579,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		return nil, err
 	}
 
-	return newObjectFromUplink(f, "", upload.Info()), nil
+	return newObjectFromUplink(f, src.Remote(), upload.Info()), nil
 }
 
 // PutStream uploads to the remote path with the modTime given of indeterminate
@@ -683,9 +683,9 @@ func newPrefix(prefix string) string {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -705,7 +705,16 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	// Do the move
 	err := f.project.MoveObject(ctx, srcBucket, srcKey, dstBucket, dstKey, &options)
 	if err != nil {
-		return nil, fmt.Errorf("rename object failed: %w", err)
+		// Make sure destination bucket exists
+		_, err := f.project.EnsureBucket(ctx, dstBucket)
+		if err != nil {
+			return nil, fmt.Errorf("rename object failed to create destination bucket: %w", err)
+		}
+		// And try again
+		err = f.project.MoveObject(ctx, srcBucket, srcKey, dstBucket, dstKey, &options)
+		if err != nil {
+			return nil, fmt.Errorf("rename object failed: %w", err)
+		}
 	}
 
 	// Read the new object

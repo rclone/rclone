@@ -1,12 +1,12 @@
-//go:build cmount && cgo && windows
-// +build cmount,cgo,windows
+//go:build cmount && windows
+// +build cmount,windows
 
 package cmount
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"errors"
 	"path/filepath"
 	"regexp"
 

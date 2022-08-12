@@ -193,12 +193,8 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		vfs.Opt = vfscommon.DefaultOpt
 	}
 
-	// Mask the permissions with the umask
-	vfs.Opt.DirPerms &= ^os.FileMode(vfs.Opt.Umask)
-	vfs.Opt.FilePerms &= ^os.FileMode(vfs.Opt.Umask)
-
-	// Make sure directories are returned as directories
-	vfs.Opt.DirPerms |= os.ModeDir
+	// Fill out anything else
+	vfs.Opt.Init()
 
 	// Find a VFS with the same name and options and return it if possible
 	activeMu.Lock()
@@ -373,7 +369,6 @@ func (vfs *VFS) WaitForWriters(timeout time.Duration) {
 		tick.Reset(tickTime)
 		select {
 		case <-tick.C:
-			break
 		case <-deadline.C:
 			fs.Errorf(nil, "Exiting even though %d writers active and %d cache items in use after %v\n%s", writers, cacheInUse, timeout, vfs.cache.Dump())
 			return
@@ -609,6 +604,7 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 			return
 		}
 	}
+
 	if u := vfs.usage; u != nil {
 		if u.Total != nil {
 			total = *u.Total
@@ -620,6 +616,11 @@ func (vfs *VFS) Statfs() (total, used, free int64) {
 			used = *u.Used
 		}
 	}
+
+	if int64(vfs.Opt.DiskSpaceTotalSize) >= 0 {
+		total = int64(vfs.Opt.DiskSpaceTotalSize)
+	}
+
 	total, used, free = fillInMissingSizes(total, used, free, unknownFreeBytes)
 	return
 }

@@ -24,8 +24,8 @@ const ListingHeader = "# bisync listing v1 from"
 
 // lineRegex and lineFormat define listing line format
 //
-//   flags <- size -> <- hash -> id <------------ modtime -----------> "<----- remote"
-//   -        3009805 md5:xxxxxx -  2006-01-02T15:04:05.000000000-0700 "12 - Wait.mp3"
+//	flags <- size -> <- hash -> id <------------ modtime -----------> "<----- remote"
+//	-        3009805 md5:xxxxxx -  2006-01-02T15:04:05.000000000-0700 "12 - Wait.mp3"
 //
 // flags: "-" for a file and "d" for a directory (reserved)
 // hash: "type:value" or "-" (example: "md5:378840336ab14afa9c6b8d887e68a340")

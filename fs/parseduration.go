@@ -76,16 +76,26 @@ var timeFormats = []string{
 	"2006-01-02",
 }
 
-// parse the age as time before the epoch in various date formats
-func parseDurationDates(age string, epoch time.Time) (t time.Duration, err error) {
+// parse the date as time in various date formats
+func parseTimeDates(date string) (t time.Time, err error) {
 	var instant time.Time
 	for _, timeFormat := range timeFormats {
-		instant, err = time.ParseInLocation(timeFormat, age, time.Local)
+		instant, err = time.ParseInLocation(timeFormat, date, time.Local)
 		if err == nil {
-			return epoch.Sub(instant), nil
+			return instant, nil
 		}
 	}
 	return t, err
+}
+
+// parse the age as time before the epoch in various date formats
+func parseDurationDates(age string, epoch time.Time) (d time.Duration, err error) {
+	instant, err := parseTimeDates(age)
+	if err != nil {
+		return d, err
+	}
+
+	return epoch.Sub(instant), nil
 }
 
 // parseDurationFromNow parses a duration string. Allows ParseDuration to match the time
@@ -116,7 +126,7 @@ func parseDurationFromNow(age string, getNow func() time.Time) (d time.Duration,
 
 // ParseDuration parses a duration string. Accept ms|s|m|h|d|w|M|y suffixes. Defaults to second if not provided
 func ParseDuration(age string) (time.Duration, error) {
-	return parseDurationFromNow(age, time.Now)
+	return parseDurationFromNow(age, timeNowFunc)
 }
 
 // ReadableString parses d into a human-readable duration.
@@ -206,7 +216,7 @@ func (d *Duration) UnmarshalJSON(in []byte) error {
 
 // Scan implements the fmt.Scanner interface
 func (d *Duration) Scan(s fmt.ScanState, ch rune) error {
-	token, err := s.Token(true, nil)
+	token, err := s.Token(true, func(rune) bool { return true })
 	if err != nil {
 		return err
 	}

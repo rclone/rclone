@@ -448,17 +448,32 @@ func TestWalkRDirTree(t *testing.T) {
 		err     error
 		root    string
 		level   int
+		exclude string
 	}{
-		{fs.DirEntries{}, "/\n", nil, "", -1},
-		{fs.DirEntries{mockobject.Object("a")}, `/
+		{
+			entries: fs.DirEntries{},
+			want:    "/\n",
+			level:   -1,
+		},
+		{
+			entries: fs.DirEntries{mockobject.Object("a")},
+			want: `/
   a
-`, nil, "", -1},
-		{fs.DirEntries{mockobject.Object("a/b")}, `/
+`,
+			level: -1,
+		},
+		{
+			entries: fs.DirEntries{mockobject.Object("a/b")},
+			want: `/
   a/
 a/
   b
-`, nil, "", -1},
-		{fs.DirEntries{mockobject.Object("a/b/c/d")}, `/
+`,
+			level: -1,
+		},
+		{
+			entries: fs.DirEntries{mockobject.Object("a/b/c/d")},
+			want: `/
   a/
 a/
   b/
@@ -466,19 +481,27 @@ a/b/
   c/
 a/b/c/
   d
-`, nil, "", -1},
-		{fs.DirEntries{mockobject.Object("a")}, "", errorBoom, "", -1},
-		{fs.DirEntries{
-			mockobject.Object("0/1/2/3"),
-			mockobject.Object("4/5/6/7"),
-			mockobject.Object("8/9/a/b"),
-			mockobject.Object("c/d/e/f"),
-			mockobject.Object("g/h/i/j"),
-			mockobject.Object("k/l/m/n"),
-			mockobject.Object("o/p/q/r"),
-			mockobject.Object("s/t/u/v"),
-			mockobject.Object("w/x/y/z"),
-		}, `/
+`,
+			level: -1,
+		},
+		{
+			entries: fs.DirEntries{mockobject.Object("a")},
+			err:     errorBoom,
+			level:   -1,
+		},
+		{
+			entries: fs.DirEntries{
+				mockobject.Object("0/1/2/3"),
+				mockobject.Object("4/5/6/7"),
+				mockobject.Object("8/9/a/b"),
+				mockobject.Object("c/d/e/f"),
+				mockobject.Object("g/h/i/j"),
+				mockobject.Object("k/l/m/n"),
+				mockobject.Object("o/p/q/r"),
+				mockobject.Object("s/t/u/v"),
+				mockobject.Object("w/x/y/z"),
+			},
+			want: `/
   0/
   4/
   8/
@@ -542,12 +565,16 @@ w/x/
   y/
 w/x/y/
   z
-`, nil, "", -1},
-		{fs.DirEntries{
-			mockobject.Object("a/b/c/d/e/f1"),
-			mockobject.Object("a/b/c/d/e/f2"),
-			mockobject.Object("a/b/c/d/e/f3"),
-		}, `a/b/c/
+`,
+			level: -1,
+		},
+		{
+			entries: fs.DirEntries{
+				mockobject.Object("a/b/c/d/e/f1"),
+				mockobject.Object("a/b/c/d/e/f2"),
+				mockobject.Object("a/b/c/d/e/f3"),
+			},
+			want: `a/b/c/
   d/
 a/b/c/d/
   e/
@@ -555,32 +582,91 @@ a/b/c/d/e/
   f1
   f2
   f3
-`, nil, "a/b/c", -1},
-		{fs.DirEntries{
-			mockobject.Object("A"),
-			mockobject.Object("a/B"),
-			mockobject.Object("a/b/C"),
-			mockobject.Object("a/b/c/D"),
-			mockobject.Object("a/b/c/d/E"),
-		}, `/
+`,
+			root:  "a/b/c",
+			level: -1,
+		},
+		{
+			entries: fs.DirEntries{
+				mockobject.Object("A"),
+				mockobject.Object("a/B"),
+				mockobject.Object("a/b/C"),
+				mockobject.Object("a/b/c/D"),
+				mockobject.Object("a/b/c/d/E"),
+			},
+			want: `/
   A
   a/
 a/
   B
   b/
-`, nil, "", 2},
-		{fs.DirEntries{
-			mockobject.Object("a/b/c"),
-			mockobject.Object("a/b/c/d/e"),
-		}, `/
+a/b/
+`,
+			level: 2,
+		},
+		{
+			entries: fs.DirEntries{
+				mockobject.Object("a/b/c"),
+				mockobject.Object("a/b/c/d/e"),
+			},
+			want: `/
   a/
 a/
   b/
-`, nil, "", 2},
+a/b/
+`,
+			level: 2,
+		},
+		{
+			entries: fs.DirEntries{
+				mockobject.Object("a/.bzEmpty"),
+				mockobject.Object("a/b1/.bzEmpty"),
+				mockobject.Object("a/b2/.bzEmpty"),
+			},
+			want: `/
+  a/
+a/
+  .bzEmpty
+  b1/
+  b2/
+a/b1/
+  .bzEmpty
+a/b2/
+  .bzEmpty
+`,
+			level:   -1,
+			exclude: ""},
+		{
+			entries: fs.DirEntries{
+				mockobject.Object("a/.bzEmpty"),
+				mockobject.Object("a/b1/.bzEmpty"),
+				mockobject.Object("a/b2/.bzEmpty"),
+			},
+			want: `/
+  a/
+a/
+  b1/
+  b2/
+a/b1/
+a/b2/
+`,
+			level:   -1,
+			exclude: ".bzEmpty",
+		},
 	} {
-		r, err := walkRDirTree(context.Background(), nil, test.root, true, test.level, makeListRCallback(test.entries, test.err))
-		assert.Equal(t, test.err, err, fmt.Sprintf("%+v", test))
-		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
+		ctx := context.Background()
+		if test.exclude != "" {
+			fi, err := filter.NewFilter(nil)
+			require.NoError(t, err)
+			require.NoError(t, fi.Add(false, test.exclude))
+			// Change the active filter
+			ctx = filter.ReplaceConfig(ctx, fi)
+
+		}
+		r, err := walkRDirTree(ctx, nil, test.root, test.exclude == "", test.level, makeListRCallback(test.entries, test.err))
+		what := fmt.Sprintf("%+v", test)
+		assert.Equal(t, test.err, err, what)
+		assert.Equal(t, test.want, r.String(), what)
 	}
 }
 
@@ -650,13 +736,13 @@ b/c/d/
   e
 `, nil, "", -1, "ign", true},
 	} {
-		fi.Opt.ExcludeFile = test.excludeFile
+		fi.Opt.ExcludeFile = []string{test.excludeFile}
 		r, err := walkRDirTree(context.Background(), nil, test.root, test.includeAll, test.level, makeListRCallback(test.entries, test.err))
 		assert.Equal(t, test.err, err, fmt.Sprintf("%+v", test))
 		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
 	}
 	// Set to default value, to avoid side effects
-	fi.Opt.ExcludeFile = ""
+	fi.Opt.ExcludeFile = nil
 }
 
 func TestListType(t *testing.T) {

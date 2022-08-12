@@ -250,7 +250,7 @@ func (b *Persistent) GetDirEntries(cachedDir *Directory) (fs.DirEntries, error) 
 		if val != nil {
 			err := json.Unmarshal(val, cachedDir)
 			if err != nil {
-				return fmt.Errorf("error during unmarshalling obj: %v", err)
+				return fmt.Errorf("error during unmarshalling obj: %w", err)
 			}
 		} else {
 			return fmt.Errorf("missing cached dir: %v", cachedDir)
@@ -456,10 +456,7 @@ func (b *Persistent) HasEntry(remote string) bool {
 
 		return fmt.Errorf("couldn't find object (%v)", remote)
 	})
-	if err == nil {
-		return true
-	}
-	return false
+	return err == nil
 }
 
 // HasChunk confirms the existence of a single chunk of an object
@@ -554,7 +551,7 @@ func (b *Persistent) CleanChunksBySize(maxSize int64) {
 	err := b.db.Update(func(tx *bolt.Tx) error {
 		dataTsBucket := tx.Bucket([]byte(DataTsBucket))
 		if dataTsBucket == nil {
-			return fmt.Errorf("Couldn't open (%v) bucket", DataTsBucket)
+			return fmt.Errorf("couldn't open (%v) bucket", DataTsBucket)
 		}
 		// iterate through ts
 		c := dataTsBucket.Cursor()
@@ -904,16 +901,16 @@ func (b *Persistent) rollbackPendingUpload(remote string) error {
 		v := bucket.Get([]byte(remote))
 		err = json.Unmarshal(v, tempObj)
 		if err != nil {
-			return fmt.Errorf("pending upload (%v) not found %v", remote, err)
+			return fmt.Errorf("pending upload (%v) not found: %w", remote, err)
 		}
 		tempObj.Started = false
 		v2, err := json.Marshal(tempObj)
 		if err != nil {
-			return fmt.Errorf("pending upload not updated %v", err)
+			return fmt.Errorf("pending upload not updated: %w", err)
 		}
 		err = bucket.Put([]byte(tempObj.DestPath), v2)
 		if err != nil {
-			return fmt.Errorf("pending upload not updated %v", err)
+			return fmt.Errorf("pending upload not updated: %w", err)
 		}
 		return nil
 	})
@@ -969,11 +966,11 @@ func (b *Persistent) updatePendingUpload(remote string, fn func(item *tempUpload
 		}
 		v2, err := json.Marshal(tempObj)
 		if err != nil {
-			return fmt.Errorf("pending upload not updated %v", err)
+			return fmt.Errorf("pending upload not updated: %w", err)
 		}
 		err = bucket.Put([]byte(tempObj.DestPath), v2)
 		if err != nil {
-			return fmt.Errorf("pending upload not updated %v", err)
+			return fmt.Errorf("pending upload not updated: %w", err)
 		}
 
 		return nil

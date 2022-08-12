@@ -106,7 +106,7 @@ func (s *Storage) Save() error {
 
 	configPath := config.GetConfigPath()
 	if configPath == "" {
-		return fmt.Errorf("Failed to save config file: Path is empty")
+		return fmt.Errorf("failed to save config file, path is empty")
 	}
 
 	dir, name := filepath.Split(configPath)
@@ -116,18 +116,18 @@ func (s *Storage) Save() error {
 	}
 	f, err := ioutil.TempFile(dir, name)
 	if err != nil {
-		return fmt.Errorf("Failed to create temp file for new config: %v", err)
+		return fmt.Errorf("failed to create temp file for new config: %w", err)
 	}
 	defer func() {
 		_ = f.Close()
 		if err := os.Remove(f.Name()); err != nil && !os.IsNotExist(err) {
-			fs.Errorf(nil, "Failed to remove temp config file: %v", err)
+			fs.Errorf(nil, "failed to remove temp config file: %v", err)
 		}
 	}()
 
 	var buf bytes.Buffer
 	if err := goconfig.SaveConfigData(s.gc, &buf); err != nil {
-		return fmt.Errorf("Failed to save config file: %v", err)
+		return fmt.Errorf("failed to save config file: %w", err)
 	}
 
 	if err := config.Encrypt(&buf, f); err != nil {
@@ -137,7 +137,7 @@ func (s *Storage) Save() error {
 	_ = f.Sync()
 	err = f.Close()
 	if err != nil {
-		return fmt.Errorf("Failed to close config file: %v", err)
+		return fmt.Errorf("failed to close config file: %w", err)
 	}
 
 	var fileMode os.FileMode = 0600
@@ -157,10 +157,10 @@ func (s *Storage) Save() error {
 	}
 
 	if err = os.Rename(configPath, configPath+".old"); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("Failed to move previous config to backup location: %v", err)
+		return fmt.Errorf("failed to move previous config to backup location: %w", err)
 	}
 	if err = os.Rename(f.Name(), configPath); err != nil {
-		return fmt.Errorf("Failed to move newly written config from %s to final location: %v", f.Name(), err)
+		return fmt.Errorf("failed to move newly written config from %s to final location: %v", f.Name(), err)
 	}
 	if err := os.Remove(configPath + ".old"); err != nil && !os.IsNotExist(err) {
 		fs.Errorf(nil, "Failed to remove backup config file: %v", err)
@@ -177,7 +177,7 @@ func (s *Storage) Serialize() (string, error) {
 	s.check()
 	var buf bytes.Buffer
 	if err := goconfig.SaveConfigData(s.gc, &buf); err != nil {
-		return "", fmt.Errorf("Failed to save config file: %v", err)
+		return "", fmt.Errorf("failed to save config file: %w", err)
 	}
 
 	return buf.String(), nil
@@ -187,10 +187,7 @@ func (s *Storage) Serialize() (string, error) {
 func (s *Storage) HasSection(section string) bool {
 	s.check()
 	_, err := s.gc.GetSection(section)
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 // DeleteSection removes the named section and all config from the

@@ -52,6 +52,14 @@ dir/subdir/
   sausage/
 dir/subdir/sausage/
 `, dt.String())
+	d = mockdir.New("")
+	dt.AddDir(d)
+	assert.Equal(t, `/
+  potato/
+dir/subdir/
+  sausage/
+dir/subdir/sausage/
+`, dt.String())
 }
 
 func TestDirTreeAddEntry(t *testing.T) {

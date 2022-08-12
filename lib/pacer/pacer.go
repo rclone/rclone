@@ -148,7 +148,7 @@ func (p *Pacer) ModifyCalculator(f func(Calculator)) {
 
 // Start a call to the API
 //
-// This must be called as a pair with endCall
+// This must be called as a pair with endCall.
 //
 // This waits for the pacer token
 func (p *Pacer) beginCall() {

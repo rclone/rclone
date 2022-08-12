@@ -66,7 +66,7 @@ func init() {
 
 	fs.Register(&fs.RegInfo{
 		Name:        "webdav",
-		Description: "Webdav",
+		Description: "WebDAV",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name:     "url",
@@ -74,7 +74,7 @@ func init() {
 			Required: true,
 		}, {
 			Name: "vendor",
-			Help: "Name of the Webdav site/service/software you are using.",
+			Help: "Name of the WebDAV site/service/software you are using.",
 			Examples: []fs.OptionExample{{
 				Value: "nextcloud",
 				Help:  "Nextcloud",
@@ -454,7 +454,9 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, err
 	}
-	f.srv.SetHeader("Referer", u.String())
+	if !f.findHeader(opt.Headers, "Referer") {
+		f.srv.SetHeader("Referer", u.String())
+	}
 
 	if root != "" && !rootIsDir {
 		// Check to see if the root actually an existing file
@@ -515,6 +517,17 @@ func (f *Fs) addHeaders(headers fs.CommaSepList) {
 		value := f.opt.Headers[i+1]
 		f.srv.SetHeader(key, value)
 	}
+}
+
+// Returns true if the header was configured
+func (f *Fs) findHeader(headers fs.CommaSepList, find string) bool {
+	for i := 0; i < len(headers); i += 2 {
+		key := f.opt.Headers[i]
+		if strings.EqualFold(key, find) {
+			return true
+		}
+	}
+	return false
 }
 
 // fetch the bearer token and set it if successful
@@ -703,9 +716,7 @@ func (f *Fs) listAll(ctx context.Context, dir string, directoriesOnly bool, file
 			subPath = f.opt.Enc.ToStandardPath(subPath)
 		}
 		remote := path.Join(dir, subPath)
-		if strings.HasSuffix(remote, "/") {
-			remote = remote[:len(remote)-1]
-		}
+		remote = strings.TrimSuffix(remote, "/")
 
 		// the listing contains info about itself which we ignore
 		if remote == dir {
@@ -789,7 +800,7 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -807,10 +818,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 func (f *Fs) mkParentDir(ctx context.Context, dirPath string) (err error) {
 	// defer log.Trace(dirPath, "")("err=%v", &err)
 	// chop off trailing / if it exists
-	if strings.HasSuffix(dirPath, "/") {
-		dirPath = dirPath[:len(dirPath)-1]
-	}
-	parent := path.Dir(dirPath)
+	parent := path.Dir(strings.TrimSuffix(dirPath, "/"))
 	if parent == "." {
 		parent = ""
 	}
@@ -967,9 +975,9 @@ func (f *Fs) Precision() time.Duration {
 
 // Copy or Move src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1021,9 +1029,9 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1043,9 +1051,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1148,7 +1156,7 @@ func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 		return f.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("about call failed: %w", err)
+		return nil, err
 	}
 	usage := &fs.Usage{}
 	if i, err := strconv.ParseInt(q.Used, 10, 64); err == nil && i >= 0 {
@@ -1283,7 +1291,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // Update the object with the contents of the io.Reader, modTime and size
 //
-// If existing is set then it updates the object rather than creating a new one
+// If existing is set then it updates the object rather than creating a new one.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {

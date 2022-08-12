@@ -53,7 +53,7 @@ const (
 	Gzip         = 2
 )
 
-var nameRegexp = regexp.MustCompile("^(.+?)\\.([A-Za-z0-9-_]{11})$")
+var nameRegexp = regexp.MustCompile(`^(.+?)\.([A-Za-z0-9-_]{11})$`)
 
 // Register with Fs
 func init() {
@@ -70,6 +70,9 @@ func init() {
 		Name:        "compress",
 		Description: "Compress a remote",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.`,
+		},
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to compress.",
@@ -180,6 +183,9 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		SetTier:                 true,
 		BucketBased:             true,
 		CanHaveEmptyDirectories: true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 	// We support reading MIME types no matter the wrapped fs
 	f.features.ReadMimeType = true
@@ -222,7 +228,7 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	// Separate the filename and size from the extension
 	extensionPos := strings.LastIndex(compressedFileName, ".")
 	if extensionPos == -1 {
-		return "", "", 0, errors.New("File name has no extension")
+		return "", "", 0, errors.New("file name has no extension")
 	}
 	extension = compressedFileName[extensionPos:]
 	nameWithSize := compressedFileName[:extensionPos]
@@ -231,11 +237,11 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	}
 	match := nameRegexp.FindStringSubmatch(nameWithSize)
 	if match == nil || len(match) != 3 {
-		return "", "", 0, errors.New("Invalid filename")
+		return "", "", 0, errors.New("invalid filename")
 	}
 	size, err := base64ToInt64(match[2])
 	if err != nil {
-		return "", "", 0, errors.New("Could not decode size")
+		return "", "", 0, errors.New("could not decode size")
 	}
 	return match[1], gzFileExt, size, nil
 }
@@ -304,7 +310,7 @@ func (f *Fs) processEntries(entries fs.DirEntries) (newEntries fs.DirEntries, er
 		case fs.Directory:
 			f.addDir(&newEntries, x)
 		default:
-			return nil, fmt.Errorf("Unknown object type %T", entry)
+			return nil, fmt.Errorf("unknown object type %T", entry)
 		}
 	}
 	return newEntries, nil
@@ -466,10 +472,10 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 		_ = os.Remove(tempFile.Name())
 	}()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create temporary local FS to spool file: %w", err)
+		return nil, fmt.Errorf("failed to create temporary local FS to spool file: %w", err)
 	}
 	if _, err = io.Copy(tempFile, in); err != nil {
-		return nil, fmt.Errorf("Failed to write temporary local file: %w", err)
+		return nil, fmt.Errorf("failed to write temporary local file: %w", err)
 	}
 	if _, err = tempFile.Seek(0, 0); err != nil {
 		return nil, err
@@ -720,7 +726,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if found && (oldObj.(*Object).meta.Mode != Uncompressed || compressible) {
 		err = oldObj.(*Object).Object.Remove(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("Could remove original object: %w", err)
+			return nil, fmt.Errorf("couldn't remove original object: %w", err)
 		}
 	}
 
@@ -729,7 +735,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if compressible {
 		wrapObj, err := operations.Move(ctx, f.Fs, nil, f.dataName(src.Remote(), newObj.size, compressible), newObj.Object)
 		if err != nil {
-			return nil, fmt.Errorf("Couldn't rename streamed Object.: %w", err)
+			return nil, fmt.Errorf("couldn't rename streamed object: %w", err)
 		}
 		newObj.Object = wrapObj
 	}
@@ -779,9 +785,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Copy src to this remote using server side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -829,9 +835,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -906,7 +912,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) CleanUp(ctx context.Context) error {
 	do := f.Fs.Features().CleanUp
 	if do == nil {
-		return errors.New("can't CleanUp: not supported by underlying remote")
+		return errors.New("not supported by underlying remote")
 	}
 	return do(ctx)
 }
@@ -915,7 +921,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	do := f.Fs.Features().About
 	if do == nil {
-		return nil, errors.New("can't About: not supported by underlying remote")
+		return nil, errors.New("not supported by underlying remote")
 	}
 	return do(ctx)
 }
@@ -1214,6 +1220,21 @@ func (o *Object) MimeType(ctx context.Context) string {
 	return o.meta.MimeType
 }
 
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	err := o.loadMetadataIfNotLoaded(ctx)
+	if err != nil {
+		return nil, err
+	}
+	do, ok := o.mo.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ctx context.Context, ht hash.Type) (string, error) {
@@ -1361,6 +1382,51 @@ func (o *ObjectInfo) Hash(ctx context.Context, ht hash.Type) (string, error) {
 }
 
 // ID returns the ID of the Object if known, or "" if not
+func (o *ObjectInfo) ID() string {
+	do, ok := o.src.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// MimeType returns the content type of the Object if
+// known, or "" if not
+func (o *ObjectInfo) MimeType(ctx context.Context) string {
+	do, ok := o.src.(fs.MimeTyper)
+	if !ok {
+		return ""
+	}
+	return do.MimeType(ctx)
+}
+
+// UnWrap returns the Object that this Object is wrapping or
+// nil if it isn't wrapping anything
+func (o *ObjectInfo) UnWrap() fs.Object {
+	return fs.UnWrapObjectInfo(o.src)
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *ObjectInfo) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.src.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
+// GetTier returns storage tier or class of the Object
+func (o *ObjectInfo) GetTier() string {
+	do, ok := o.src.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
+// ID returns the ID of the Object if known, or "" if not
 func (o *Object) ID() string {
 	do, ok := o.Object.(fs.IDer)
 	if !ok {
@@ -1412,11 +1478,6 @@ var (
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
-	_ fs.GetTierer       = (*Object)(nil)
-	_ fs.SetTierer       = (*Object)(nil)
-	_ fs.Object          = (*Object)(nil)
-	_ fs.ObjectUnWrapper = (*Object)(nil)
-	_ fs.IDer            = (*Object)(nil)
-	_ fs.MimeTyper       = (*Object)(nil)
+	_ fs.FullObjectInfo  = (*ObjectInfo)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )

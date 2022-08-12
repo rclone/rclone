@@ -30,7 +30,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-//oAuth
+// oAuth
 const (
 	rcloneClientID              = "ac39b43b9eba4cae8ffb788c06d816a8"
 	rcloneEncryptedClientSecret = "EfyyNZ3YUEwXM5yAhi72G9YwKn2mkFrYwJNS7cY0TJAhFlX9K-uJFbGlpO-RYjrJ"
@@ -442,7 +442,7 @@ func (f *Fs) createObject(remote string, modTime time.Time, size int64) (o *Obje
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -468,7 +468,7 @@ func (f *Fs) CreateDir(ctx context.Context, path string) (err error) {
 	}
 
 	// If creating a directory with a : use (undocumented) disk: prefix
-	if strings.IndexRune(path, ':') >= 0 {
+	if strings.ContainsRune(path, ':') {
 		path = "disk:" + path
 	}
 	opts.Parameters.Set("path", f.opt.Enc.FromStandardPath(path))
@@ -506,10 +506,8 @@ func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 				var mkdirpath = "/"                   //path separator /
 				for _, element := range dirs {
 					if element != "" {
-						mkdirpath += element + "/" //path separator /
-						if err = f.CreateDir(ctx, mkdirpath); err != nil {
-							// ignore errors while creating dirs
-						}
+						mkdirpath += element + "/"      //path separator /
+						_ = f.CreateDir(ctx, mkdirpath) // ignore errors while creating dirs
 					}
 				}
 			}
@@ -522,10 +520,7 @@ func (f *Fs) mkDirs(ctx context.Context, path string) (err error) {
 func (f *Fs) mkParentDirs(ctx context.Context, resPath string) error {
 	// defer log.Trace(dirPath, "")("")
 	// chop off trailing / if it exists
-	if strings.HasSuffix(resPath, "/") {
-		resPath = resPath[:len(resPath)-1]
-	}
-	parent := path.Dir(resPath)
+	parent := path.Dir(strings.TrimSuffix(resPath, "/"))
 	if parent == "." {
 		parent = ""
 	}
@@ -698,9 +693,9 @@ func (f *Fs) copyOrMove(ctx context.Context, method, src, dst string, overwrite 
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -728,9 +723,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -788,9 +783,8 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 
 	_, err = f.readMetaDataForPath(ctx, dstPath, &api.ResourceInfoRequestOptions{})
 	if apiErr, ok := err.(*api.ErrorResponse); ok {
-		// does not exist
-		if apiErr.ErrorName == "DiskNotFoundError" {
-			// OK
+		if apiErr.ErrorName != "DiskNotFoundError" {
+			return err
 		}
 	} else if err != nil {
 		return err
@@ -1115,7 +1109,7 @@ func (o *Object) upload(ctx context.Context, in io.Reader, overwrite bool, mimeT
 
 // Update the already existing object
 //
-// Copy the reader into the object updating modTime and size
+// Copy the reader into the object updating modTime and size.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {

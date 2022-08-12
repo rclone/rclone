@@ -47,6 +47,8 @@ import (
 	"github.com/rclone/rclone/fstest/fstests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // Some times used in the tests
@@ -270,7 +272,7 @@ func TestHashSums(t *testing.T) {
 		if !hashes.Contains(test.ht) {
 			continue
 		}
-		name := strings.Title(test.ht.String())
+		name := cases.Title(language.Und, cases.NoLower).String(test.ht.String())
 		if test.download {
 			name += "Download"
 		}
@@ -297,7 +299,7 @@ func TestHashSumsWithErrors(t *testing.T) {
 	// Make a test file
 	content := "-"
 	item1 := fstest.NewItem("file1", content, t1)
-	_, _ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
+	_ = fstests.PutTestContents(ctx, t, memFs, &item1, content, true)
 
 	// MemoryFS supports MD5
 	buf := &bytes.Buffer{}
@@ -401,10 +403,11 @@ func TestCount(t *testing.T) {
 	// Check the MaxDepth too
 	ci.MaxDepth = 1
 
-	objects, size, err := operations.Count(ctx, r.Fremote)
+	objects, size, sizeless, err := operations.Count(ctx, r.Fremote)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), objects)
 	assert.Equal(t, int64(61), size)
+	assert.Equal(t, int64(0), sizeless)
 }
 
 func TestDelete(t *testing.T) {
@@ -728,9 +731,14 @@ func TestCopyURL(t *testing.T) {
 
 	// check when reading from regular HTTP server
 	status := 0
+	nameHeader := false
+	headerFilename := "headerfilename.txt"
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if status != 0 {
 			http.Error(w, "an error ocurred", status)
+		}
+		if nameHeader {
+			w.Header().Set("Content-Disposition", `attachment; filename="folder\`+headerFilename+`"`)
 		}
 		_, err := w.Write([]byte(contents))
 		assert.NoError(t, err)
@@ -738,31 +746,43 @@ func TestCopyURL(t *testing.T) {
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
-	o, err := operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false)
+	o, err := operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false, false)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(contents)), o.Size())
 
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, nil, fs.ModTimeNotSupported)
 
 	// Check file clobbering
-	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, true)
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false, true)
 	require.Error(t, err)
 
 	// Check auto file naming
 	status = 0
 	urlFileName := "filename.txt"
-	o, err = operations.CopyURL(ctx, r.Fremote, "", ts.URL+"/"+urlFileName, true, false)
+	o, err = operations.CopyURL(ctx, r.Fremote, "", ts.URL+"/"+urlFileName, true, false, false)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(contents)), o.Size())
 	assert.Equal(t, urlFileName, o.Remote())
 
+	// Check header file naming
+	nameHeader = true
+	o, err = operations.CopyURL(ctx, r.Fremote, "", ts.URL, true, true, false)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(contents)), o.Size())
+	assert.Equal(t, headerFilename, o.Remote())
+
 	// Check auto file naming when url without file name
-	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false)
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, false, false)
+	require.Error(t, err)
+
+	// Check header file naming without header set
+	nameHeader = false
+	_, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, true, true, false)
 	require.Error(t, err)
 
 	// Check an error is returned for a 404
 	status = http.StatusNotFound
-	o, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false)
+	o, err = operations.CopyURL(ctx, r.Fremote, "file1", ts.URL, false, false, false)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Not Found")
 	assert.Nil(t, o)
@@ -775,10 +795,10 @@ func TestCopyURL(t *testing.T) {
 	tss := httptest.NewTLSServer(handler)
 	defer tss.Close()
 
-	o, err = operations.CopyURL(ctx, r.Fremote, "file2", tss.URL, false, false)
+	o, err = operations.CopyURL(ctx, r.Fremote, "file2", tss.URL, false, false, false)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(contents)), o.Size())
-	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1)}, nil, fs.ModTimeNotSupported)
+	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1, file2, fstest.NewItem(urlFileName, contents, t1), fstest.NewItem(headerFilename, contents, t1)}, nil, fs.ModTimeNotSupported)
 }
 
 func TestCopyURLToWriter(t *testing.T) {
@@ -1223,8 +1243,30 @@ func TestSame(t *testing.T) {
 	}
 }
 
-func TestOverlapping(t *testing.T) {
-	a := &testFsInfo{name: "name", root: "root"}
+// testFs is for unit testing fs.Fs
+type testFs struct {
+	testFsInfo
+}
+
+func (i *testFs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
+	return nil, nil
+}
+
+func (i *testFs) NewObject(ctx context.Context, remote string) (fs.Object, error) { return nil, nil }
+
+func (i *testFs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return nil, nil
+}
+
+func (i *testFs) Mkdir(ctx context.Context, dir string) error { return nil }
+
+func (i *testFs) Rmdir(ctx context.Context, dir string) error { return nil }
+
+// copied from TestOverlapping because the behavior of OverlappingFilterCheck should be identical to Overlapping
+// when no filters are set
+func TestOverlappingFilterCheckWithoutFilter(t *testing.T) {
+	ctx := context.Background()
+	src := &testFs{testFsInfo{name: "name", root: "root"}}
 	slash := string(os.PathSeparator) // native path separator
 	for _, test := range []struct {
 		name     string
@@ -1232,6 +1274,7 @@ func TestOverlapping(t *testing.T) {
 		expected bool
 	}{
 		{"name", "root", true},
+		{"name", "/root", true},
 		{"namey", "root", false},
 		{"name", "rooty", false},
 		{"namey", "rooty", false},
@@ -1243,11 +1286,49 @@ func TestOverlapping(t *testing.T) {
 		{"name", "", true},
 		{"name", "/", true},
 	} {
-		b := &testFsInfo{name: test.name, root: test.root}
-		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", a.name, a.root, b.name, b.root)
-		actual := operations.Overlapping(a, b)
+		dst := &testFs{testFsInfo{name: test.name, root: test.root}}
+		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", src.name, src.root, dst.name, dst.root)
+		actual := operations.OverlappingFilterCheck(ctx, src, dst)
 		assert.Equal(t, test.expected, actual, what)
-		actual = operations.Overlapping(b, a)
+		actual = operations.OverlappingFilterCheck(ctx, dst, src)
+		assert.Equal(t, test.expected, actual, what)
+	}
+}
+
+func TestOverlappingFilterCheckWithFilter(t *testing.T) {
+	ctx := context.Background()
+	fi, err := filter.NewFilter(nil)
+	require.NoError(t, err)
+	require.NoError(t, fi.Add(false, "*/exclude/"))
+	fi.Opt.ExcludeFile = []string{".ignore"}
+	ctx = filter.ReplaceConfig(ctx, fi)
+
+	src := &testFs{testFsInfo{name: "name", root: "root"}}
+	slash := string(os.PathSeparator) // native path separator
+	for _, test := range []struct {
+		name     string
+		root     string
+		expected bool
+	}{
+		{"name", "root", true},
+		{"name", "/root", true},
+		{"name", "root/", true},
+		{"name", "root" + slash, true},
+		{"name", "root/exclude", false},
+		{"name", "root/exclude/", false},
+		{"name", "/root/exclude/", false},
+		{"name", "root" + slash + "exclude", false},
+		{"name", "root" + slash + "exclude" + slash, false},
+		{"name", "root/.ignore", false},
+		{"name", "root" + slash + ".ignore", false},
+		{"namey", "root/include", false},
+		{"namey", "root/include/", false},
+		{"namey", "root" + slash + "include", false},
+		{"namey", "root" + slash + "include" + slash, false},
+	} {
+		dst := &testFs{testFsInfo{name: test.name, root: test.root}}
+		what := fmt.Sprintf("(%q,%q) vs (%q,%q)", src.name, src.root, dst.name, dst.root)
+		actual := operations.OverlappingFilterCheck(ctx, dst, src)
 		assert.Equal(t, test.expected, actual, what)
 	}
 }
@@ -1319,6 +1400,11 @@ func TestListFormat(t *testing.T) {
 	list.AddMimeType()
 	assert.Contains(t, list.Format(item0), "/")
 	assert.Equal(t, "inode/directory", list.Format(item1))
+
+	list.SetOutput(nil)
+	list.AddMetadata()
+	assert.Equal(t, "{}", list.Format(item0))
+	assert.Equal(t, "{}", list.Format(item1))
 
 	list.SetOutput(nil)
 	list.AddPath()
@@ -1406,7 +1492,7 @@ func TestDirMove(t *testing.T) {
 	require.NoError(t, operations.DirMove(ctx, r.Fremote, "A1", "A2"))
 
 	for i := range files {
-		files[i].Path = strings.Replace(files[i].Path, "A1/", "A2/", -1)
+		files[i].Path = strings.ReplaceAll(files[i].Path, "A1/", "A2/")
 	}
 
 	fstest.CheckListingWithPrecision(
@@ -1431,7 +1517,7 @@ func TestDirMove(t *testing.T) {
 	require.NoError(t, operations.DirMove(ctx, r.Fremote, "A2", "A3"))
 
 	for i := range files {
-		files[i].Path = strings.Replace(files[i].Path, "A2/", "A3/", -1)
+		files[i].Path = strings.ReplaceAll(files[i].Path, "A2/", "A3/")
 	}
 
 	fstest.CheckListingWithPrecision(
@@ -1588,7 +1674,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	accounting.Stats(ctx).ResetCounters()
 	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file2.Path, file2.Path)
 	require.NotNil(t, err, "Did not get expected max transfer limit error")
-	assert.Contains(t, err.Error(), "Max transfer limit reached")
+	assert.Contains(t, err.Error(), "max transfer limit reached")
 	assert.True(t, fserrors.IsFatalError(err), fmt.Sprintf("Not fatal error: %v: %#v:", err, err))
 	r.CheckLocalItems(t, file1, file2, file3, file4)
 	r.CheckRemoteItems(t, file1)
@@ -1600,7 +1686,7 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	accounting.Stats(ctx).ResetCounters()
 	err = operations.CopyFile(ctx, r.Fremote, r.Flocal, file3.Path, file3.Path)
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "Max transfer limit reached")
+	assert.Contains(t, err.Error(), "max transfer limit reached")
 	assert.True(t, fserrors.IsNoRetryError(err))
 	r.CheckLocalItems(t, file1, file2, file3, file4)
 	r.CheckRemoteItems(t, file1)

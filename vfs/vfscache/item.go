@@ -57,16 +57,16 @@ type Item struct {
 	// read only
 	c               *Cache                   // cache this is part of
 	mu              sync.Mutex               // protect the variables
-	cond            *sync.Cond               // synchronize with cache cleaner
+	cond            sync.Cond                // synchronize with cache cleaner
 	name            string                   // name in the VFS
 	opens           int                      // number of times file is open
 	downloaders     *downloaders.Downloaders // a record of the downloaders in action - may be nil
 	o               fs.Object                // object we are caching - may be nil
 	fd              *os.File                 // handle we are using to read and write to the file
-	modified        bool                     // set if the file has been modified since the last Open
 	info            Info                     // info about the file to persist to backing store
 	writeBackID     writeback.Handle         // id of any writebacks in progress
 	pendingAccesses int                      // number of threads - cache reset not allowed if not zero
+	modified        bool                     // set if the file has been modified since the last Open
 	beingReset      bool                     // cache cleaner is resetting the cache file, access not allowed
 }
 
@@ -138,7 +138,7 @@ func newItem(c *Cache, name string) (item *Item) {
 			ATime:   now,
 		},
 	}
-	item.cond = sync.NewCond(&item.mu)
+	item.cond = sync.Cond{L: &item.mu}
 	// check the cache file exists
 	osPath := c.toOSPath(name)
 	fi, statErr := os.Stat(osPath)
@@ -286,7 +286,7 @@ func (item *Item) _truncate(size int64) (err error) {
 
 // Truncate the item to the current size, creating if necessary
 //
-// This does not mark the object as dirty
+// This does not mark the object as dirty.
 //
 // call with the lock held
 func (item *Item) _truncateToCurrentSize() (err error) {
@@ -725,7 +725,7 @@ func (item *Item) Close(storeFn StoreFn) (err error) {
 
 // reload is called with valid items recovered from a cache reload.
 //
-// If they are dirty then it makes sure they get uploaded
+// If they are dirty then it makes sure they get uploaded.
 //
 // it is called before the cache has started so opens will be 0 and
 // metaDirty will be false.
@@ -766,7 +766,7 @@ func (item *Item) reload(ctx context.Context) error {
 // If we have local modifications then they take precedence
 // over a change in the remote
 //
-// It ensures the file is the correct size for the object
+// It ensures the file is the correct size for the object.
 //
 // call with lock held
 func (item *Item) _checkObject(o fs.Object) error {
@@ -779,7 +779,7 @@ func (item *Item) _checkObject(o fs.Object) error {
 			} else {
 				fs.Debugf(item.name, "vfs cache: remote object has gone but local object modified - keeping it")
 			}
-		} else {
+			//} else {
 			// no remote object && no local object
 			// OK
 		}
@@ -946,7 +946,7 @@ func (item *Item) Reset() (rr ResetResult, spaceFreed int64, err error) {
 
 	/* Do not need to reset an empty cache file unless it was being reset and the reset failed.
 	   Some thread(s) may be waiting on the reset's succesful completion in that case. */
-	if item.info.Rs.Size() == 0 && item.beingReset == false {
+	if item.info.Rs.Size() == 0 && !item.beingReset {
 		return SkippedEmpty, 0, nil
 	}
 
@@ -1131,6 +1131,17 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 		// Downloaders can be nil here if the file has been
 		// renamed, so need to make some more downloaders
 		// OK to call downloaders constructor with item.mu held
+
+		// item.o can also be nil under some circumstances
+		// See: https://github.com/rclone/rclone/issues/6190
+		// See: https://github.com/rclone/rclone/issues/6235
+		if item.o == nil {
+			o, err := item.c.fremote.NewObject(context.Background(), item.name)
+			if err != nil {
+				return err
+			}
+			item.o = o
+		}
 		item.downloaders = downloaders.New(item, item.c.opt, item.name, item.o)
 	}
 	return item.downloaders.Download(r)
@@ -1294,7 +1305,7 @@ func (item *Item) WriteAt(b []byte, off int64) (n int, err error) {
 // WriteAtNoOverwrite writes b to the file, but will not overwrite
 // already present ranges.
 //
-// This is used by the downloader to write bytes to the file
+// This is used by the downloader to write bytes to the file.
 //
 // It returns n the total bytes processed and skipped the number of
 // bytes which were processed but not actually written to the file.
