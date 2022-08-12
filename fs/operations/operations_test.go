@@ -432,14 +432,18 @@ func TestMaxDelete(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
+	// reset stats
+	deletes := accounting.Stats(ctx).Deletes(0)
+	deletes = accounting.Stats(ctx).Deletes(-deletes)
+
 	ci.MaxDelete = 2
 	defer r.Finalise()
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
 	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
 	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
 	r.CheckRemoteItems(t, file1, file2, file3)
-
 	err := operations.Delete(ctx, r.Fremote)
+
 	require.Error(t, err)
 	objects, _, _, err := operations.Count(ctx, r.Fremote)
 	require.NoError(t, err)
@@ -451,6 +455,10 @@ func TestMaxDeleteSizeLargeFile(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
+	// reset stats
+	deletes := accounting.Stats(ctx).DeletesSize(0)
+	deletes = accounting.Stats(ctx).DeletesSize(-deletes)
+
 	ci.MaxDeleteSize = 70
 	defer r.Finalise()
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
@@ -467,6 +475,10 @@ func TestMaxDeleteSize(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
+	// reset stats
+	deletes := accounting.Stats(ctx).DeletesSize(0)
+	deletes = accounting.Stats(ctx).DeletesSize(-deletes)
+
 	ci.MaxDeleteSize = 160
 	defer r.Finalise()
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
