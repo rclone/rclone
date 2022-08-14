@@ -419,7 +419,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 // opts.Body are set then CallJSON will do a multipart upload with a
 // file attached.  opts.MultipartContentName is the name of the
 // parameter and opts.MultipartFileName is the name of the file.  If
-// MultpartContentName is set, and request != nil is supplied, then
+// MultipartContentName is set, and request != nil is supplied, then
 // the request will be marshalled into JSON and added to the form with
 // parameter name MultipartMetadataName.
 //

@@ -77,7 +77,7 @@ Make sure you
   * Add [documentation](#writing-documentation) for a new feature.
   * [Commit your changes](#committing-your-changes) using the [message guideline](#commit-messages).
 
-When you are done with that push your changes to Github:
+When you are done with that push your changes to GitHub:
 
     git push -u origin my-new-feature
 
@@ -88,7 +88,7 @@ Your changes will then get reviewed and you might get asked to fix some stuff. I
 
 You may sometimes be asked to [base your changes on the latest master](#basing-your-changes-on-the-latest-master) or [squash your commits](#squashing-your-commits).
 
-## Using Git and Github ##
+## Using Git and GitHub ##
 
 ### Committing your changes ###
 

@@ -360,7 +360,7 @@ the system. Both scheduled task and Windows service can be used to achieve this.
 NOTE: Remember that when rclone runs as the `SYSTEM` user, the user profile
 that it sees will not be yours. This means that if you normally run rclone with
 configuration file in the default location, to be able to use the same configuration
-when running as the system user you must explicitely tell rclone where to find
+when running as the system user you must explicitly tell rclone where to find
 it with the [`--config`](https://rclone.org/docs/#config-config-file) option,
 or else it will look in the system users profile path (`C:\Windows\System32\config\systemprofile`).
 To test your command manually from a Command Prompt, you can run it with
@@ -424,7 +424,7 @@ it should be possible through path rewriting as described [here](https://github.
 
 To Windows service running any rclone command, the excellent third-party utility
 [NSSM](http://nssm.cc), the "Non-Sucking Service Manager", can be used.
-It includes some advanced features such as adjusting process periority, defining
+It includes some advanced features such as adjusting process priority, defining
 process environment variables, redirect to file anything written to stdout, and
 customized response to different exit codes, with a GUI to configure everything from
 (although it can also be used from command line ).

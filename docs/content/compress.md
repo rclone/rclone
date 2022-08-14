@@ -129,7 +129,7 @@ Generally -1 (default, equivalent to 5) is recommended.
 Levels 1 to 9 increase compression at the cost of speed. Going past 6 
 generally offers very little return.
 
-Level -2 uses Huffmann encoding only. Only use if you know what you
+Level -2 uses Huffman encoding only. Only use if you know what you
 are doing.
 Level 0 turns off compression.
 

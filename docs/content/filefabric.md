@@ -13,7 +13,7 @@ through a global file system.
 ## Configuration
 
 The initial setup for the Enterprise File Fabric backend involves
-getting a token from the the Enterprise File Fabric which you need to
+getting a token from the Enterprise File Fabric which you need to
 do in your browser.  `rclone config` walks you through it.
 
 Here is an example of how to make a remote called `remote`.  First run:

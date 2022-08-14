@@ -19,7 +19,7 @@ const (
 	timeFormatJSON = `"` + timeFormatParameters + `"`
 )
 
-// Time represents represents date and time information for the
+// Time represents date and time information for the
 // filefabric API
 type Time time.Time
 
@@ -95,7 +95,7 @@ type Status struct {
 	// Warning string `json:"warning"` // obsolete
 }
 
-// Status statisfies the error interface
+// Status satisfies the error interface
 func (e *Status) Error() string {
 	return fmt.Sprintf("%s (%s)", e.Message, e.Code)
 }

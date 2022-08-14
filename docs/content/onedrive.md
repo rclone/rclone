@@ -568,7 +568,7 @@ An official document about the limitations for different types of OneDrive can b
 ## Versions
 
 Every change in a file OneDrive causes the service to create a new
-version of the the file.  This counts against a users quota.  For
+version of the file.  This counts against a users quota.  For
 example changing the modification time of a file creates a second
 version, so the file apparently uses twice the space.
 

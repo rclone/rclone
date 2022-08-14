@@ -397,7 +397,7 @@ The parameters can be a string as per the rest of rclone, eg
 `s3:bucket/path` or `:sftp:/my/dir`. They can also be specified as
 JSON blobs.
 
-If specifyng a JSON blob it should be a object mapping strings to
+If specifying a JSON blob it should be a object mapping strings to
 strings. These values will be used to configure the remote. There are
 3 special values which may be set:
 
@@ -1568,7 +1568,7 @@ check that parameter passing is working properly.
 
 **Authentication is required for this call.**
 
-### sync/bisync: Perform bidirectonal synchronization between two paths. {#sync-bisync}
+### sync/bisync: Perform bidirectional synchronization between two paths. {#sync-bisync}
 
 This takes the following parameters
 

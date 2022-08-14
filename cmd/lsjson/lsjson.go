@@ -84,7 +84,7 @@ If ` + "`--files-only`" + ` is not specified directories in addition to the file
 will be returned.
 
 If ` + "`--metadata`" + ` is set then an additional Metadata key will be returned.
-This will have metdata in rclone standard format as a JSON object.
+This will have metadata in rclone standard format as a JSON object.
 
 if ` + "`--stat`" + ` is set then a single JSON blob will be returned about the
 item pointed to. This will return an error if the item isn't found.

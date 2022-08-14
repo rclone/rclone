@@ -153,7 +153,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 	}
 	s.useTLS = s.opt.TLSKey != ""
 
-	// Check PassivePorts format since the the server library doesn't!
+	// Check PassivePorts format since the server library doesn't!
 	if !passivePortsRe.MatchString(opt.PassivePorts) {
 		return nil, fmt.Errorf("invalid format for passive ports %q", opt.PassivePorts)
 	}

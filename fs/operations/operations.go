@@ -1787,7 +1787,7 @@ func copyURLFn(ctx context.Context, dstFileName string, url string, autoFilename
 			_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Disposition"))
 			headerFilename := path.Base(strings.Replace(params["filename"], "\\", "/", -1))
 			if err != nil || headerFilename == "" {
-				return fmt.Errorf("CopyURL failed: filename not found in the Content-Dispoition header")
+				return fmt.Errorf("CopyURL failed: filename not found in the Content-Disposition header")
 			}
 			fs.Debugf(headerFilename, "filename found in Content-Disposition header.")
 			return fn(ctx, headerFilename, resp.Body, resp.ContentLength, modTime)

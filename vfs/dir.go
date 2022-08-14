@@ -186,7 +186,7 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 			}
 		}
 	}
-	// Purge any unecessary virtual entries
+	// Purge any unnecessary virtual entries
 	d._purgeVirtual()
 
 	d.read = time.Time{}

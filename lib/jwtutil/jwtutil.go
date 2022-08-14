@@ -70,8 +70,8 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 		return fmt.Errorf("jwtutil: failed making auth request: %w", err)
 	}
 	defer func() {
-		deferedErr := resp.Body.Close()
-		if deferedErr != nil {
+		deferredErr := resp.Body.Close()
+		if deferredErr != nil {
 			err = fmt.Errorf("jwtutil: failed to close resp.Body: %w", err)
 		}
 	}()

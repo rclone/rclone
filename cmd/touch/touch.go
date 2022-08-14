@@ -144,12 +144,12 @@ func Touch(ctx context.Context, f fs.Fs, remote string) error {
 				return nil
 			}
 			if notCreateNewFile {
-				fs.Logf(f, "Not touching non-existent file due to --no-create")
+				fs.Logf(f, "Not touching nonexistent file due to --no-create")
 				return nil
 			}
 			if recursive {
 				// For consistency, --recursive never creates new files.
-				fs.Logf(f, "Not touching non-existent file due to --recursive")
+				fs.Logf(f, "Not touching nonexistent file due to --recursive")
 				return nil
 			}
 			if operations.SkipDestructive(ctx, f, "touch (create)") {

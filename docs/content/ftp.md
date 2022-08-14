@@ -138,7 +138,7 @@ can be set with [`--ftp-port`](#ftp-port).
 In addition to the [default restricted characters set](/overview/#restricted-characters)
 the following characters are also replaced:
 
-File names cannot end with the following characters. Repacement is
+File names cannot end with the following characters. Replacement is
 limited to the last character in a file name:
 
 | Character | Value | Replacement |

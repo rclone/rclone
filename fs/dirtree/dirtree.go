@@ -1,5 +1,5 @@
 // Package dirtree contains the DirTree type which is used for
-// building filesystem heirachies in memory.
+// building filesystem hierarchies in memory.
 package dirtree
 
 import (

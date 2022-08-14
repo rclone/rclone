@@ -33,7 +33,7 @@ func NewFs(ctx context.Context, path string) (Fs, error) {
 	overridden := fsInfo.Options.Overridden(config)
 	if len(overridden) > 0 {
 		extraConfig := overridden.String()
-		//Debugf(nil, "detected overriden config %q", extraConfig)
+		//Debugf(nil, "detected overridden config %q", extraConfig)
 		md5sumBinary := md5.Sum([]byte(extraConfig))
 		suffix := base64.RawURLEncoding.EncodeToString(md5sumBinary[:])
 		// 5 characters length is 5*6 = 30 bits of base64

@@ -450,7 +450,7 @@ func TestCachePurgeClean(t *testing.T) {
 	_, err = os.Stat(potato1.c.toOSPath(potato1.name))
 	require.NoError(t, err)
 
-	// Add some potatos
+	// Add some potatoes
 	potato2 := c.Item("sub/dir/potato2")
 	require.NoError(t, potato2.Open(nil))
 	require.NoError(t, potato2.Truncate(5))
@@ -603,7 +603,7 @@ func TestCacheRename(t *testing.T) {
 	assertPathNotExist(t, osPathMeta)
 	assert.False(t, c.Exists("sub/newPotato"))
 
-	// non-existent file - is ignored
+	// nonexistent file - is ignored
 	assert.NoError(t, c.Rename("nonexist", "nonexist2", nil))
 }
 

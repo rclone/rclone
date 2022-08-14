@@ -90,7 +90,7 @@ Generally -1 (default, equivalent to 5) is recommended.
 Levels 1 to 9 increase compression at the cost of speed. Going past 6 
 generally offers very little return.
 
-Level -2 uses Huffmann encoding only. Only use if you know what you
+Level -2 uses Huffman encoding only. Only use if you know what you
 are doing.
 Level 0 turns off compression.`,
 			Default:  sgzip.DefaultCompression,
@@ -130,7 +130,7 @@ type Fs struct {
 	features *fs.Features // optional features
 }
 
-// NewFs contstructs an Fs from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
@@ -451,7 +451,7 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 		return f.Fs.Put(ctx, bytes.NewBuffer(buf[:n]), src, options...)
 	}
 
-	// Need to include what we allready read
+	// Need to include what we already read
 	in = &ReadCloserWrapper{
 		Reader: io.MultiReader(bytes.NewReader(buf), in),
 		Closer: in,
@@ -731,7 +731,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	}
 
 	// If our new object is compressed we have to rename it with the correct size.
-	// Uncompressed objects don't store the size in the name so we they'll allready have the correct name.
+	// Uncompressed objects don't store the size in the name so we they'll already have the correct name.
 	if compressible {
 		wrapObj, err := operations.Move(ctx, f.Fs, nil, f.dataName(src.Remote(), newObj.size, compressible), newObj.Object)
 		if err != nil {
@@ -742,7 +742,7 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	return newObj, nil
 }
 
-// Temporarely disabled. There might be a way to implement this correctly but with the current handling metadata duplicate objects
+// Temporarily disabled. There might be a way to implement this correctly but with the current handling metadata duplicate objects
 // will break stuff. Right no I can't think of a way to make this work.
 
 // PutUnchecked uploads the object

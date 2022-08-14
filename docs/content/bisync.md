@@ -323,7 +323,7 @@ Most of these events come up due to a error status from an internal call.
 On such a critical error the `{...}.path1.lst` and `{...}.path2.lst`
 listing files are renamed to extension `.lst-err`, which blocks any future
 bisync runs (since the normal `.lst` files are not found).
-Bisync keeps them under `bisync` subdirectory of the rclone cache direcory,
+Bisync keeps them under `bisync` subdirectory of the rclone cache directory,
 typically at `${HOME}/.cache/rclone/bisync/` on Linux.
 
 Some errors are considered temporary and re-running the bisync is not blocked.
@@ -421,7 +421,7 @@ don't have spelling case differences (`Smile.jpg` vs. `smile.jpg`).
 ## Windows support {#windows}
 
 Bisync has been tested on Windows 8.1, Windows 10 Pro 64-bit and on Windows
-Github runners.
+GitHub runners.
 
 Drive letters are allowed, including drive letters mapped to network drives
 (`rclone bisync J:\localsync GDrive:`).
@@ -929,7 +929,7 @@ test command flags can be equally prefixed by a single `-` or double dash.
   synched tree even if there are check file mismatches in the test tree.
 - Some Dropbox tests can fail, notably printing the following message:
   `src and dst identical but can't set mod time without deleting and re-uploading`
-  This is expected and happens due a way Dropbox handles modificaion times.
+  This is expected and happens due a way Dropbox handles modification times.
   You should use the `-refresh-times` test flag to make up for this.
 - If Dropbox tests hit request limit for you and print error message
   `too_many_requests/...: Too many requests or write operations.`
@@ -939,7 +939,7 @@ test command flags can be equally prefixed by a single `-` or double dash.
 ### Updating golden results
 
 Sometimes even a slight change in the bisync source can cause little changes
-spread around many log files. Updating them manually would be a nighmare.
+spread around many log files. Updating them manually would be a nightmare.
 
 The `-golden` flag will store the `test.log` and `*.lst` listings from each
 test case into respective golden directories. Golden results will

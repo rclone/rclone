@@ -1152,7 +1152,7 @@ func (item *Item) _ensure(offset, size int64) (err error) {
 // This is called by the downloader downloading file segments and the
 // vfs layer writing to the file.
 //
-// This doesn't mark the item as Dirty - that the the responsibility
+// This doesn't mark the item as Dirty - that the responsibility
 // of the caller as we don't know here whether we are adding reads or
 // writes to the cache file.
 //

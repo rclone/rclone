@@ -138,7 +138,7 @@ var testTable = []struct {
 	// pattern describes how to use data to construct the hash-input.
 	// For every entry n at even indices this repeats the data n times.
 	// For every entry m at odd indices this repeats a null-byte m times.
-	// The input-data is constructed by concatinating the results in order.
+	// The input-data is constructed by concatenating the results in order.
 	pattern []int64
 	out     []byte
 	name    string

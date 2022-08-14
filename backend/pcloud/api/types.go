@@ -13,7 +13,7 @@ const (
 	timeFormat = `"` + time.RFC1123Z + `"`
 )
 
-// Time represents represents date and time information for the
+// Time represents date and time information for the
 // pcloud API, by using RFC1123Z
 type Time time.Time
 

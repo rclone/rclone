@@ -18,7 +18,7 @@ it also provides white-label solutions to different companies, such as:
   * Elgiganten Sweden (cloud.elgiganten.se)
   * Elgiganten Denmark (cloud.elgiganten.dk)
   * Giganti Cloud  (cloud.gigantti.fi)
-  * ELKO Clouud (cloud.elko.is)
+  * ELKO Cloud (cloud.elko.is)
 
 Most of the white-label versions are supported by this backend, although may require different
 authentication setup - described below.

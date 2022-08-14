@@ -62,9 +62,9 @@ func absPath(path string) string {
 	return path
 }
 
-// CheckAllowings informs about ignored flags on Windows. If not on Windows
+// CheckAllowed informs about ignored flags on Windows. If not on Windows
 // and not --allow-non-empty flag is used, verify that mountpoint is empty.
-func (m *MountPoint) CheckAllowings() error {
+func (m *MountPoint) CheckAllowed() error {
 	opt := &m.MountOpt
 	if runtime.GOOS == "windows" {
 		if opt.AllowNonEmpty {

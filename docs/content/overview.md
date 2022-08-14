@@ -111,7 +111,7 @@ systems they must support a common hash type.
 
 ### ModTime ###
 
-Allmost all cloud storage systems store some sort of timestamp
+Almost all cloud storage systems store some sort of timestamp
 on objects, but several of them not something that is appropriate
 to use for syncing. E.g. some backends will only write a timestamp
 that represent the time of the upload. To be relevant for syncing

@@ -1418,7 +1418,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
 
-	// if destination was a trashed file then after a successfull copy the copied file is still in trash (bug in api?)
+	// if destination was a trashed file then after a successful copy the copied file is still in trash (bug in api?)
 	if err == nil && bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
 		fs.Debugf(src, "Server-side copied to trashed destination, restoring")
 		info, err = f.createOrUpdate(ctx, remote, srcObj.modTime, srcObj.size, srcObj.md5)
