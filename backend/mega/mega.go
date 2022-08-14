@@ -347,7 +347,7 @@ func (f *Fs) mkdir(ctx context.Context, rootNode *mega.Node, dir string) (node *
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("internal error: mkdir called with non-existent root node: %w", err)
+		return nil, fmt.Errorf("internal error: mkdir called with nonexistent root node: %w", err)
 	}
 	// i is number of directories to create (may be 0)
 	// node is directory to create them from
@@ -387,7 +387,7 @@ func (f *Fs) findRoot(ctx context.Context, create bool) (*mega.Node, error) {
 		return f._rootNode, nil
 	}
 
-	// Check for pre-existing root
+	// Check for preexisting root
 	absRoot := f.srv.FS.GetRoot()
 	node, err := f.findDir(absRoot, f.root)
 	//log.Printf("findRoot findDir %p %v", node, err)

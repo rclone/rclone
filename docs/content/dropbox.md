@@ -409,7 +409,7 @@ Properties:
 
 #### --dropbox-batch-commit-timeout
 
-Max time to wait for a batch to finish comitting
+Max time to wait for a batch to finish committing
 
 Properties:
 

@@ -152,7 +152,7 @@ Individual symlink files on the remote can be used with the commands like "cat" 
 With NetStorage, directories can exist in one of two forms:
 
 1. **Explicit Directory**. This is an actual, physical directory that you have created in a storage group.
-2. **Implicit Directory**. This refers to a directory within a path that has not been physically created. For example, during upload of a file, non-existent subdirectories can be specified in the target path. NetStorage creates these as "implicit." While the directories aren't physically created, they exist implicitly and the noted path is connected with the uploaded file.
+2. **Implicit Directory**. This refers to a directory within a path that has not been physically created. For example, during upload of a file, nonexistent subdirectories can be specified in the target path. NetStorage creates these as "implicit." While the directories aren't physically created, they exist implicitly and the noted path is connected with the uploaded file.
 
 Rclone will intercept all file uploads and mkdir commands for the NetStorage remote and will explicitly issue the mkdir command for each directory in the uploading path. This will help with the interoperability with the other Akamai services such as SFTP and the Content Management Shell (CMShell). Rclone will not guarantee correctness of operations with implicit directories which might have been created as a result of using an upload API directly.
 

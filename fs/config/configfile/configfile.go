@@ -40,7 +40,7 @@ func (s *Storage) check() {
 		if err == nil {
 			// check to see if config file has changed and if it has, reload it
 			if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
-				fs.Debugf(nil, "Config file has changed externaly - reloading")
+				fs.Debugf(nil, "Config file has changed externally - reloading")
 				err := s._load()
 				if err != nil {
 					fs.Errorf(nil, "Failed to read config file - using previous config: %v", err)

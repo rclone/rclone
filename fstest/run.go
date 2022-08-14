@@ -17,7 +17,7 @@ func TestMkdir(t *testing.T) {
 	// test stuff
 }
 
-This will make r.Fremote and r.Flocal for a remote remote and a local
+This will make r.Fremote and r.Flocal for a remote and a local
 remote.  The remote is determined by the -remote flag passed in.
 
 */

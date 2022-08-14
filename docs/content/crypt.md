@@ -241,7 +241,7 @@ the password configured for an existing crypt remote means you will no longer
 able to decrypt any of the previously encrypted content. The only possibility
 is to re-upload everything via a crypt remote configured with your new password.
 
-Depending on the size of your data, your bandwith, storage quota etc, there are
+Depending on the size of your data, your bandwidth, storage quota etc, there are
 different approaches you can take:
 - If you have everything in a different location, for example on your local system,
 you could remove all of the prior encrypted files, change the password for your
@@ -254,7 +254,7 @@ effectively decrypting everything on the fly using the old password and
 re-encrypting using the new password. When done, delete the original crypt
 remote directory and finally the rclone crypt configuration with the old password.
 All data will be streamed from the storage system and back, so you will
-get half the bandwith and be charged twice if you have upload and download quota
+get half the bandwidth and be charged twice if you have upload and download quota
 on the storage system.
 
 **Note**: A security problem related to the random password generator
@@ -567,7 +567,7 @@ How to encode the encrypted filename to text string.
 
 This option could help with shortening the encrypted filename. The 
 suitable option would depend on the way your remote count the filename
-length and if it's case sensitve.
+length and if it's case sensitive.
 
 Properties:
 

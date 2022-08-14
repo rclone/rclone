@@ -498,7 +498,7 @@ backends can also store arbitrary user metadata.
 
 Where possible the key names are standardized, so, for example, it is
 possible to copy object metadata from s3 to azureblob for example and
-metadata will be translated apropriately.
+metadata will be translated appropriately.
 
 Some backends have limits on the size of the metadata and rclone will
 give errors on upload if they are exceeded.
@@ -641,7 +641,7 @@ would mean limit the upload and download bandwidth to 10 MiB/s.
 single limit, specify the desired bandwidth in KiB/s, or use a
 suffix B|K|M|G|T|P. The default is `0` which means to not limit bandwidth.
 
-The upload and download bandwidth can be specified seperately, as
+The upload and download bandwidth can be specified separately, as
 `--bwlimit UP:DOWN`, so
 
     --bwlimit 10M:100k
@@ -2011,7 +2011,7 @@ In all other cases the file will not be updated.
 Consider using the `--modify-window` flag to compensate for time skews
 between the source and the backend, for backends that do not support
 mod times, and instead use uploaded times. However, if the backend
-does not support checksums, note that sync'ing or copying within the
+does not support checksums, note that syncing or copying within the
 time skew window may still result in additional transfers for safety.
 
 ### --use-mmap ###

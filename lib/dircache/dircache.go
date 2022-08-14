@@ -140,7 +140,7 @@ func (dc *DirCache) SetRootIDAlias(rootID string) {
 	dc.Put("", dc.rootID)
 }
 
-// FlushDir flushes the map of all data starting with with the path
+// FlushDir flushes the map of all data starting with the path
 // dir.
 //
 // If dir is empty string then this is equivalent to calling ResetRoot

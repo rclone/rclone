@@ -313,7 +313,7 @@ and may be set in the config file.
       --drive-use-trash                              Send files to the trash instead of deleting permanently (default true)
       --drive-v2-download-min-size SizeSuffix        If Object's are greater, use drive v2 API to download (default off)
       --dropbox-auth-url string                      Auth server URL
-      --dropbox-batch-commit-timeout Duration        Max time to wait for a batch to finish comitting (default 10m0s)
+      --dropbox-batch-commit-timeout Duration        Max time to wait for a batch to finish committing (default 10m0s)
       --dropbox-batch-mode string                    Upload file batching sync|async|off (default "sync")
       --dropbox-batch-size int                       Max number of files in upload batch
       --dropbox-batch-timeout Duration               Max time to allow an idle upload batch before uploading (default 0s)

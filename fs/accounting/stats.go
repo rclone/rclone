@@ -278,7 +278,7 @@ type transferStats struct {
 	speed          float64
 }
 
-// calculateTransferStats calculates some addtional transfer stats not
+// calculateTransferStats calculates some additional transfer stats not
 // stored directly in StatsInfo
 func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	// checking and transferring have their own locking so read

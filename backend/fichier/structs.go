@@ -84,7 +84,7 @@ type CopyFileResponse struct {
 	URLs    []FileCopy `json:"urls"`
 }
 
-// FileCopy is used in the the CopyFileResponse
+// FileCopy is used in the CopyFileResponse
 type FileCopy struct {
 	FromURL string `json:"from_url"`
 	ToURL   string `json:"to_url"`

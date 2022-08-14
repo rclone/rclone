@@ -343,7 +343,7 @@ func showBackend(name string) {
 			defaultValue := opt.GetValue()
 			// Default value and Required are related: Required means option must
 			// have a value, but if there is a default then a value does not have
-			// to be explicitely set and then Required makes no difference.
+			// to be explicitly set and then Required makes no difference.
 			if defaultValue != "" {
 				fmt.Printf("- Default:     %s\n", quoteString(defaultValue))
 			} else {

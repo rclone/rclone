@@ -125,7 +125,7 @@ names, or for debugging purposes.`,
 
 This option could help with shortening the encrypted filename. The 
 suitable option would depend on the way your remote count the filename
-length and if it's case sensitve.`,
+length and if it's case sensitive.`,
 			Default: "base32",
 			Examples: []fs.OptionExample{
 				{

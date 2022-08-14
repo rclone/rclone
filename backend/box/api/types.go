@@ -14,7 +14,7 @@ const (
 	timeFormat = `"` + time.RFC3339 + `"`
 )
 
-// Time represents represents date and time information for the
+// Time represents date and time information for the
 // box API, by using RFC3339
 type Time time.Time
 

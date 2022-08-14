@@ -2009,7 +2009,7 @@ See [the time option docs](/docs/#time-option) for valid formats.
 			Help: `If set this will decompress gzip encoded objects.
 
 It is possible to upload objects to S3 with "Content-Encoding: gzip"
-set. Normally rclone will download these files files as compressed objects.
+set. Normally rclone will download these files as compressed objects.
 
 If this flag is set then rclone will decompress these files with
 "Content-Encoding: gzip" as they are received. This means that rclone
@@ -5199,7 +5199,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		var head s3.HeadObjectOutput
 		//structs.SetFrom(&head, &req)
 		setFrom_s3HeadObjectOutput_s3PutObjectInput(&head, &req)
-		head.ETag = &md5sumHex // doesn't matter quotes are misssing
+		head.ETag = &md5sumHex // doesn't matter quotes are missing
 		head.ContentLength = &size
 		// If we have done a single part PUT request then we can read these
 		if gotEtag != "" {

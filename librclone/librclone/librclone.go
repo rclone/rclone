@@ -1,7 +1,7 @@
 // Package librclone exports shims for library use
 //
 // This is the internal implementation which is used for C and
-// Gomobile libaries which need slightly different export styles.
+// Gomobile libraries which need slightly different export styles.
 //
 // The shims are a thin wrapper over the rclone RPC.
 package librclone

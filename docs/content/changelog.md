@@ -14,7 +14,7 @@ description: "Rclone Changelog"
     * build: Fix android build after GitHub actions change (Nick Craig-Wood)
     * dlna: Fix SOAP action header parsing (Joram Schrijver)
     * docs: Fix links to mount command from install docs (albertony)
-    * dropox: Fix ChangeNotify was unable to decrypt errors (Nick Craig-Wood)
+    * dropbox: Fix ChangeNotify was unable to decrypt errors (Nick Craig-Wood)
     * fs: Fix parsing of times and durations of the form "YYYY-MM-DD HH:MM:SS" (Nick Craig-Wood)
     * serve sftp: Fix checksum detection (Nick Craig-Wood)
     * sync: Add accidentally missed filter-sensitivity to --backup-dir option (Nick Naumann)
@@ -274,7 +274,7 @@ description: "Rclone Changelog"
     * build
         * Fix ARM architecture version in .deb packages after nfpm change (Nick Craig-Wood)
         * Hard fork `github.com/jlaffaye/ftp` to fix `go get github.com/rclone/rclone` (Nick Craig-Wood)
-    * oauthutil: Fix crash when webrowser requests `/robots.txt` (Nick Craig-Wood)
+    * oauthutil: Fix crash when webbrowser requests `/robots.txt` (Nick Craig-Wood)
     * operations: Fix goroutine leak in case of copy retry (Ankur Gupta)
     * rc:
         * Fix `operations/publiclink` default for `expires` parameter (Nick Craig-Wood)
@@ -360,7 +360,7 @@ description: "Rclone Changelog"
     * Add rclone to list of supported `md5sum`/`sha1sum` commands to look for (albertony)
     * Refactor so we only have one way of running remote commands (Nick Craig-Wood)
     * Fix timeout on hashing large files by sending keepalives (Nick Craig-Wood)
-    * Fix unecessary seeking when uploading and downloading files (Nick Craig-Wood)
+    * Fix unnecessary seeking when uploading and downloading files (Nick Craig-Wood)
     * Update docs on how to create `known_hosts` file (Nick Craig-Wood)
 * Storj
     * Rename tardigrade backend to storj backend (Nick Craig-Wood)
@@ -961,8 +961,8 @@ description: "Rclone Changelog"
         * Add sort by average size in directory (Adam Plánský)
         * Add toggle option for average s3ize in directory - key 'a' (Adam Plánský)
         * Add empty folder flag into ncdu browser (Adam Plánský)
-        * Add `!` (errror) and `.` (unreadable) file flags to go with `e` (empty) (Nick Craig-Wood)
-    * obscure: Make `rclone osbcure -` ignore newline at end of line (Nick Craig-Wood)
+        * Add `!` (error) and `.` (unreadable) file flags to go with `e` (empty) (Nick Craig-Wood)
+    * obscure: Make `rclone obscure -` ignore newline at end of line (Nick Craig-Wood)
     * operations
         * Add logs when need to upload files to set mod times (Nick Craig-Wood)
         * Move and copy log name of the destination object in verbose (Adam Plánský)
@@ -987,7 +987,7 @@ description: "Rclone Changelog"
         * Make the error count match up in the log message (Nick Craig-Wood)
     * move: Fix data loss when source and destination are the same object (Nick Craig-Wood)
     * operations
-        * Fix `--cutof-mode` hard not cutting off immediately (Nick Craig-Wood)
+        * Fix `--cutoff-mode` hard not cutting off immediately (Nick Craig-Wood)
         * Fix `--immutable` error message (Nick Craig-Wood)
     * sync
         * Fix `--cutoff-mode` soft & cautious so it doesn't end the transfer early (Nick Craig-Wood)
@@ -1035,7 +1035,7 @@ description: "Rclone Changelog"
     * Fixed crash on an empty file name (lluuaapp)
 * Box
     * Fix NewObject for files that differ in case (Nick Craig-Wood)
-    * Fix finding directories in a case insentive way (Nick Craig-Wood)
+    * Fix finding directories in a case insensitive way (Nick Craig-Wood)
 * Chunker
     * Skip long local hashing, hash in-transit (fixes) (Ivan Andreev)
     * Set Features ReadMimeType to false as Object.MimeType not supported (Nick Craig-Wood)
@@ -1116,7 +1116,7 @@ description: "Rclone Changelog"
     * Implement `--sftp-use-fstat` for unusual SFTP servers (Nick Craig-Wood)
 * Sugarsync
     * Fix NewObject for files that differ in case (Nick Craig-Wood)
-    * Fix finding directories in a case insentive way (Nick Craig-Wood)
+    * Fix finding directories in a case insensitive way (Nick Craig-Wood)
 * Swift
     * Fix deletion of parts of Static Large Object (SLO) (Nguyễn Hữu Luân)
     * Ensure partially uploaded large files are uploaded unless `--swift-leave-parts-on-error` (Nguyễn Hữu Luân)
@@ -1190,7 +1190,7 @@ description: "Rclone Changelog"
 [See commits](https://github.com/rclone/rclone/compare/v1.53.1...v1.53.2)
 
 * Bug Fixes
-    * acounting
+    * accounting
         * Fix incorrect speed and transferTime in core/stats (Nick Craig-Wood)
         * Stabilize display order of transfers on Windows (Nick Craig-Wood)
     * operations
@@ -2160,7 +2160,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * rcat: Fix slowdown on systems with multiple hashes (Nick Craig-Wood)
     * rcd: Fix permissions problems on cache directory with web gui download (Nick Craig-Wood)
 * Mount
-    * Default `--daemon-timout` to 15 minutes on macOS and FreeBSD (Nick Craig-Wood)
+    * Default `--daemon-timeout` to 15 minutes on macOS and FreeBSD (Nick Craig-Wood)
     * Update docs to show mounting from root OK for bucket-based (Nick Craig-Wood)
     * Remove nonseekable flag from write files (Nick Craig-Wood)
 * VFS
@@ -2468,7 +2468,7 @@ all the docs and Edward Barker for helping re-write the front page.
     * Update google cloud storage endpoints (weetmuts)
 * HTTP
     * Add an example with username and password which is supported but wasn't documented (Nick Craig-Wood)
-    * Fix backend with `--files-from` and non-existent files (Nick Craig-Wood)
+    * Fix backend with `--files-from` and nonexistent files (Nick Craig-Wood)
 * Hubic
     * Make error message more informative if authentication fails (Nick Craig-Wood)
 * Jottacloud
@@ -2952,7 +2952,7 @@ Point release to fix hubic and azureblob backends.
 * FTP
     * Work around strange response from box FTP server
     * More workarounds for FTP servers to fix mkParentDir error
-    * Fix no error on listing non-existent directory
+    * Fix no error on listing nonexistent directory
 * Google Cloud Storage
     * Add service_account_credentials (Matt Holt)
     * Detect bucket presence by listing it - minimises permissions needed
@@ -3025,7 +3025,7 @@ Point release to fix hubic and azureblob backends.
     * Add .deb and .rpm packages as part of the build
     * Make a beta release for all branches on the main repo (but not pull requests)
 * Bug Fixes
-    * config: fixes errors on non existing config by loading config file only on first access
+    * config: fixes errors on nonexistent config by loading config file only on first access
     * config: retry saving the config after failure (Mateusz)
     * sync: when using `--backup-dir` don't delete files if we can't set their modtime
         * this fixes odd behaviour with Dropbox and `--backup-dir`
@@ -3560,7 +3560,7 @@ Point release to fix hubic and azureblob backends.
     * Update B2 docs with Data usage, and Crypt section - thanks Tomasz Mazur
 * S3
     * Command line and config file support for
-        * Setting/overriding ACL  - thanks Radek Senfeld
+        * Setting/overriding ACL  - thanks Radek Šenfeld
         * Setting storage class - thanks Asko Tamm
 * Drive
     * Make exponential backoff work exactly as per Google specification

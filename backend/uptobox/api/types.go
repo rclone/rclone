@@ -79,7 +79,7 @@ type UploadInfo struct {
 	} `json:"data"`
 }
 
-// UploadResponse is the respnse to a successful upload
+// UploadResponse is the response to a successful upload
 type UploadResponse struct {
 	Files []struct {
 		Name      string `json:"name"`

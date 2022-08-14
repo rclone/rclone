@@ -21,7 +21,7 @@ SSH installations.
 Paths are specified as `remote:path`. If the path does not begin with
 a `/` it is relative to the home directory of the user.  An empty path
 `remote:` refers to the user's home directory. For example, `rclone lsd remote:` 
-would list the home directory of the user cofigured in the rclone remote config 
+would list the home directory of the user configured in the rclone remote config 
 (`i.e /home/sftpuser`). However, `rclone lsd remote:/` would list the root 
 directory for remote machine (i.e. `/`)
 
@@ -264,7 +264,7 @@ can also run a SSH server, which is a port of OpenSSH (see official
 [installation guide](https://docs.microsoft.com/en-us/windows-server/administration/openssh/openssh_install_firstuse)). On a Windows server the shell handling is different: Although it can also
 be set up to use a Unix type shell, e.g. Cygwin bash, the default is to
 use Windows Command Prompt (cmd.exe), and PowerShell is a recommended
-alternative. All of these have bahave differently, which rclone must handle.
+alternative. All of these have behave differently, which rclone must handle.
 
 Rclone tries to auto-detect what type of shell is used on the server,
 first time you access the SFTP remote. If a remote shell session is
@@ -296,7 +296,7 @@ a new sftp remote is accessed. If you configure a sftp remote
 without a config file, e.g. an [on the fly](/docs/#backend-path-to-dir])
 remote, rclone will have nowhere to store the result, and it
 will re-run the command on every access. To avoid this you should
-explicitely set the `shell_type` option to the correct value,
+explicitly set the `shell_type` option to the correct value,
 or to `none` if you want to prevent rclone from executing any
 remote shell commands.
 
@@ -304,7 +304,7 @@ It is also important to note that, since the shell type decides
 how quoting and escaping of file paths used as command-line arguments
 are performed, configuring the wrong shell type may leave you exposed
 to command injection exploits. Make sure to confirm the auto-detected
-shell type, or explicitely set the shell type you know is correct,
+shell type, or explicitly set the shell type you know is correct,
 or disable shell access until you know.
 
 ### Checksum
