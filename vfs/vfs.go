@@ -227,6 +227,11 @@ func New(f fs.Fs, opt *vfscommon.Options) *VFS {
 		fs.Logf(f, "--vfs-cache-mode writes or full is recommended for this remote as it can't stream")
 	}
 
+	// Warn if we handle symlinks
+	if vfs.Opt.Links {
+		fs.Logf(f, "Symlinks support enabled")
+	}
+
 	vfs.SetCacheMode(vfs.Opt.CacheMode)
 
 	// Pin the Fs into the cache so that when we use cache.NewFs

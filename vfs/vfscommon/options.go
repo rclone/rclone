@@ -13,6 +13,7 @@ type Options struct {
 	NoSeek             bool          // don't allow seeking if set
 	NoChecksum         bool          // don't check checksums if set
 	ReadOnly           bool          // if set VFS is read only
+	Links              bool          // if set VFS handle symlinks
 	NoModTime          bool          // don't read mod times for files
 	DirCacheTime       time.Duration // how long to consider directory listing cache valid
 	PollInterval       time.Duration
@@ -45,6 +46,7 @@ var DefaultOpt = Options{
 	DirCacheTime:       5 * 60 * time.Second,
 	PollInterval:       time.Minute,
 	ReadOnly:           false,
+	Links:              false,
 	Umask:              0,
 	UID:                ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
 	GID:                ^uint32(0), // overridden for non windows in mount_unix.go
