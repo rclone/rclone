@@ -288,6 +288,7 @@ read of the modification time takes a transaction.
     --no-modtime      Don't read/write the modification time (can speed things up).
     --no-seek         Don't allow seeking in files.
     --read-only       Only allow read-only access.
+    --links           Translate symlinks to/from regular files with a '.rclonelink' extension.
 
 Sometimes rclone is delivered reads or writes out of order. Rather
 than seeking rclone will wait a short time for the in sequence read or
