@@ -177,7 +177,7 @@ them into regular expressions.
 | Rooted      | `/*.jpg` | `/file.jpg`    | `/file.png`    |
 |             |          | `/file2.jpg`    | `/dir/file.jpg` |
 | Alternates  | `*.{jpg,png}` | `/file.jpg`     | `/file.gif`    |
-|             |         | `/dir/file.gif` | `/dir/file.gif` |
+|             |         | `/dir/file.png` | `/dir/file.gif` |
 | Path Wildcard | `dir/**` | `/dir/anyfile`     | `file.png`    |
 |             |          | `/subdir/dir/subsubdir/anyfile` | `/subdir/file.png` |
 | Any Char    | `*.t?t` | `/file.txt`     | `/file.qxt`    |
