@@ -229,6 +229,11 @@ func (s *StatsInfo) totalDuration() time.Duration {
 	return s.oldDuration + timeRanges.total()
 }
 
+const (
+	etaMaxSeconds = (1<<63 - 1) / int64(time.Second)           // Largest possible ETA as number of seconds
+	etaMax        = time.Duration(etaMaxSeconds) * time.Second // Largest possible ETA, which is in second precision, representing "292y24w3d23h47m16s"
+)
+
 // eta returns the ETA of the current operation,
 // rounded to full seconds.
 // If the ETA cannot be determined 'ok' returns false.
@@ -240,11 +245,17 @@ func eta(size, total int64, rate float64) (eta time.Duration, ok bool) {
 	if remaining < 0 {
 		return 0, false
 	}
-	seconds := float64(remaining) / rate
+	seconds := int64(float64(remaining) / rate)
 	if seconds < 0 {
-		seconds = 0
+		// Got Int64 overflow
+		eta = etaMax
+	} else if seconds >= etaMaxSeconds {
+		// Would get Int64 overflow if converting from seconds to Duration (nanoseconds)
+		eta = etaMax
+	} else {
+		eta = time.Duration(seconds) * time.Second
 	}
-	return time.Second * time.Duration(seconds), true
+	return eta, true
 }
 
 // etaString returns the ETA of the current operation,
@@ -253,6 +264,9 @@ func eta(size, total int64, rate float64) (eta time.Duration, ok bool) {
 func etaString(done, total int64, rate float64) string {
 	d, ok := eta(done, total, rate)
 	if !ok {
+		return "-"
+	}
+	if d == etaMax {
 		return "-"
 	}
 	return fs.Duration(d).ReadableString()
