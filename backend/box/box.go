@@ -17,9 +17,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -183,7 +183,7 @@ func refreshJWTToken(ctx context.Context, jsonFile string, boxSubType string, na
 }
 
 func getBoxConfig(configFile string) (boxConfig *api.ConfigJSON, err error) {
-	file, err := ioutil.ReadFile(configFile)
+	file, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("box: failed to read Box config: %w", err)
 	}

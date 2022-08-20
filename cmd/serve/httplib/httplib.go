@@ -10,10 +10,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -315,7 +315,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 			log.Fatalf("Can't use --client-ca without --cert and --key")
 		}
 		certpool := x509.NewCertPool()
-		pem, err := ioutil.ReadFile(s.Opt.ClientCA)
+		pem, err := os.ReadFile(s.Opt.ClientCA)
 		if err != nil {
 			log.Fatalf("Failed to read client certificate authority: %v", err)
 		}

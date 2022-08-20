@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -204,7 +204,7 @@ func doCall(ctx context.Context, path string, in rc.Params) (out rc.Params, err 
 
 	if resp.StatusCode != http.StatusOK {
 		var body []byte
-		body, err = ioutil.ReadAll(resp.Body)
+		body, err = io.ReadAll(resp.Body)
 		var bodyString string
 		if err == nil {
 			bodyString = string(body)

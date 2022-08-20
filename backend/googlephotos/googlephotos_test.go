@@ -3,7 +3,7 @@ package googlephotos
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path"
 	"testing"
@@ -99,7 +99,7 @@ func TestIntegration(t *testing.T) {
 			t.Run("ObjectOpen", func(t *testing.T) {
 				in, err := dstObj.Open(ctx)
 				require.NoError(t, err)
-				buf, err := ioutil.ReadAll(in)
+				buf, err := io.ReadAll(in)
 				require.NoError(t, err)
 				require.NoError(t, in.Close())
 				assert.True(t, len(buf) > 1000)

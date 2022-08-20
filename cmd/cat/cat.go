@@ -4,7 +4,6 @@ package cat
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -77,7 +76,7 @@ Note that if offset is negative it will count from the end, so
 		fsrc := cmd.NewFsSrc(args)
 		var w io.Writer = os.Stdout
 		if discard {
-			w = ioutil.Discard
+			w = io.Discard
 		}
 		cmd.Run(false, false, command, func() error {
 			return operations.Cat(context.Background(), fsrc, w, offset, count)

@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -783,7 +782,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("couldn't read ssh agent signers: %w", err)
 		}
 		if keyFile != "" {
-			pubBytes, err := ioutil.ReadFile(keyFile + ".pub")
+			pubBytes, err := os.ReadFile(keyFile + ".pub")
 			if err != nil {
 				return nil, fmt.Errorf("failed to read public key file: %w", err)
 			}
@@ -812,7 +811,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if keyFile != "" || opt.KeyPem != "" {
 		var key []byte
 		if opt.KeyPem == "" {
-			key, err = ioutil.ReadFile(keyFile)
+			key, err = os.ReadFile(keyFile)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read private key file: %w", err)
 			}
@@ -843,7 +842,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		// If a public key has been specified then use that
 		if pubkeyFile != "" {
-			certfile, err := ioutil.ReadFile(pubkeyFile)
+			certfile, err := os.ReadFile(pubkeyFile)
 			if err != nil {
 				return nil, fmt.Errorf("unable to read cert file: %w", err)
 			}

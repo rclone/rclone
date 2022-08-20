@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"time"
 
 	"github.com/rclone/rclone/fs"
@@ -214,7 +213,7 @@ func (o *MemoryObject) Open(ctx context.Context, options ...fs.OpenOption) (io.R
 			}
 		}
 	}
-	return ioutil.NopCloser(bytes.NewBuffer(content)), nil
+	return io.NopCloser(bytes.NewBuffer(content)), nil
 }
 
 // Update in to the object with the modTime given of the given size
@@ -225,7 +224,7 @@ func (o *MemoryObject) Update(ctx context.Context, in io.Reader, src fs.ObjectIn
 	if size == 0 {
 		o.content = nil
 	} else if size < 0 || int64(cap(o.content)) < size {
-		o.content, err = ioutil.ReadAll(in)
+		o.content, err = io.ReadAll(in)
 	} else {
 		o.content = o.content[:size]
 		_, err = io.ReadFull(in, o.content)

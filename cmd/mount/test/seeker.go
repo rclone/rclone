@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"flag"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -60,11 +59,11 @@ func randomSeekTest(size int64, in1, in2 *os.File, file1, file2 string) {
 
 	if !bytes.Equal(buf1, buf2) {
 		log.Printf("Dumping different blocks")
-		err = ioutil.WriteFile("/tmp/z1", buf1, 0777)
+		err = os.WriteFile("/tmp/z1", buf1, 0777)
 		if err != nil {
 			log.Fatalf("Failed to write /tmp/z1: %v", err)
 		}
-		err = ioutil.WriteFile("/tmp/z2", buf2, 0777)
+		err = os.WriteFile("/tmp/z2", buf2, 0777)
 		if err != nil {
 			log.Fatalf("Failed to write /tmp/z2: %v", err)
 		}
