@@ -29,6 +29,45 @@ issues:
   # Maximum count of issues with the same text. Set to 0 to disable. Default is 3.
   max-same-issues: 0
 
+  exclude-rules:
+
+    - linters:
+      - staticcheck
+      text: 'SA1019: "github.com/rclone/rclone/cmd/serve/httplib" is deprecated'
+
+    # TODO: Remove if/when this is fixed by merging PR #6277.
+    - linters:
+      - staticcheck
+      text: 'SA1019: "golang.org/x/oauth2/jws" is deprecated'
+
+    # TODO: Investigate if this is a real issue. If not, i.e. it is a false
+    # positive, consider instead excluding this check using a code comment!
+    - path: ^backend[\\/]crypt[\\/]cipher\.go$
+      linters:
+      - staticcheck
+      text: 'SA6002: argument should be pointer-like to avoid allocations'
+
+    # TODO: Investigate if this is a real issue. If not, i.e. it is a false
+    # positive, consider instead excluding this check using a code comment!
+    - path: ^backend[\\/]onedrive[\\/]onedrive\.go$
+      linters:
+      - staticcheck
+      text: 'SA4009: argument err is overwritten before first use'
+
+    # TODO: Investigate if this is a real issue. If not, i.e. it is a false
+    # positive, consider instead excluding this check using a code comment!
+    - path: ^backend[\\/]onedrive[\\/]onedrive\.go$
+      linters:
+      - staticcheck
+      text: 'SA4009\(related information\): assignment to err'
+
+    # TODO: Investigate if this is a real issue. If not, i.e. it is a false
+    # positive, consider instead excluding this check using a code comment!
+    - path: ^fs[\\/]pacer\.go$
+      linters:
+      - staticcheck
+      text: 'SA5007: infinite recursive call'
+
 run:
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m
