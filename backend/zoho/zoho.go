@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -1219,7 +1218,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if partialContent && resp.StatusCode == 200 {
 		if start > 0 {
 			// We need to read and discard the beginning of the data...
-			_, err = io.CopyN(ioutil.Discard, resp.Body, start)
+			_, err = io.CopyN(io.Discard, resp.Body, start)
 			if err != nil {
 				if resp != nil {
 					_ = resp.Body.Close()

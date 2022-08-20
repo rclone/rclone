@@ -4,7 +4,6 @@ package configfile
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -113,7 +112,7 @@ func (s *Storage) Save() error {
 	if err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	f, err := ioutil.TempFile(dir, name)
+	f, err := os.CreateTemp(dir, name)
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for new config: %w", err)
 	}

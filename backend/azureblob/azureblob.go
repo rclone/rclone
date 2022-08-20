@@ -12,9 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -717,7 +717,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
 		// Try loading service principal credentials from file.
-		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
+		loadedCreds, err := os.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
 		if err != nil {
 			return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
 		}

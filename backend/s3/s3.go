@@ -15,7 +15,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -5105,7 +5104,7 @@ func (o *Object) uploadSinglepartPutObject(ctx context.Context, req *s3.PutObjec
 		// Can't upload zero length files like this for some reason
 		r.Body = bytes.NewReader([]byte{})
 	} else {
-		r.SetStreamingBody(ioutil.NopCloser(in))
+		r.SetStreamingBody(io.NopCloser(in))
 	}
 	r.SetContext(ctx)
 	r.HTTPRequest.Header.Set("X-Amz-Content-Sha256", "UNSIGNED-PAYLOAD")

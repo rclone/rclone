@@ -6,7 +6,6 @@
 package cmdtest
 
 import (
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -121,7 +120,7 @@ func removeTestEnvironment(t *testing.T) {
 
 // createTestFile creates the file testFolder/name
 func createTestFile(name string, t *testing.T) string {
-	err := ioutil.WriteFile(testFolder+"/"+name, []byte("content_of_"+name), 0666)
+	err := os.WriteFile(testFolder+"/"+name, []byte("content_of_"+name), 0666)
 	require.NoError(t, err)
 	return testFolder + "/" + name
 }

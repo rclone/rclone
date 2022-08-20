@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
 	"testing"
 	"time"
 
@@ -110,7 +109,7 @@ func TestMemoryObject(t *testing.T) {
 	assert.Equal(t, newNow, o.ModTime(context.Background()))
 
 	checkOpen := func(rc io.ReadCloser, expected string) {
-		actual, err := ioutil.ReadAll(rc)
+		actual, err := io.ReadAll(rc)
 		assert.NoError(t, err)
 		err = rc.Close()
 		assert.NoError(t, err)

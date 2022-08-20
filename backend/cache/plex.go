@@ -8,7 +8,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -167,7 +167,7 @@ func (p *plexConnector) listenWebsocket() {
 								continue
 							}
 							var data []byte
-							data, err = ioutil.ReadAll(resp.Body)
+							data, err = io.ReadAll(resp.Body)
 							if err != nil {
 								continue
 							}

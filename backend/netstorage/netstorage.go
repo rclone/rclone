@@ -12,7 +12,6 @@ import (
 	"fmt"
 	gohash "hash"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -972,7 +971,7 @@ func (o *Object) netStorageUploadRequest(ctx context.Context, in io.Reader, src 
 		URL = o.fs.url(src.Remote())
 	}
 	if strings.HasSuffix(URL, ".rclonelink") {
-		bits, err := ioutil.ReadAll(in)
+		bits, err := io.ReadAll(in)
 		if err != nil {
 			return err
 		}
@@ -1058,7 +1057,7 @@ func (o *Object) netStorageDownloadRequest(ctx context.Context, options []fs.Ope
 	if strings.HasSuffix(URL, ".rclonelink") && o.target != "" {
 		fs.Infof(nil, "Converting a symlink to the rclonelink file on download %q", URL)
 		reader := strings.NewReader(o.target)
-		readcloser := ioutil.NopCloser(reader)
+		readcloser := io.NopCloser(reader)
 		return readcloser, nil
 	}
 

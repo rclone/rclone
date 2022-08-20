@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -81,7 +80,7 @@ func Bisync(ctx context.Context, fs1, fs2 fs.Fs, optArg *Options) (err error) {
 		}
 
 		pidStr := []byte(strconv.Itoa(os.Getpid()))
-		if err = ioutil.WriteFile(lockFile, pidStr, bilib.PermSecure); err != nil {
+		if err = os.WriteFile(lockFile, pidStr, bilib.PermSecure); err != nil {
 			return fmt.Errorf("cannot create lock file: %s: %w", lockFile, err)
 		}
 		fs.Debugf(nil, "Lock file created: %s", lockFile)

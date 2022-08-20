@@ -26,7 +26,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -320,7 +319,7 @@ func TestHashSumsWithErrors(t *testing.T) {
 
 func TestHashStream(t *testing.T) {
 	reader := strings.NewReader("")
-	in := ioutil.NopCloser(reader)
+	in := io.NopCloser(reader)
 	out := &bytes.Buffer{}
 	for _, test := range []struct {
 		input      string
@@ -1590,11 +1589,11 @@ func TestRcat(t *testing.T) {
 		data2 := string(make([]byte, ci.StreamingUploadCutoff+1))
 		path2 := prefix + "big_file_from_pipe"
 
-		in := ioutil.NopCloser(strings.NewReader(data1))
+		in := io.NopCloser(strings.NewReader(data1))
 		_, err := operations.Rcat(ctx, r.Fremote, path1, in, t1)
 		require.NoError(t, err)
 
-		in = ioutil.NopCloser(strings.NewReader(data2))
+		in = io.NopCloser(strings.NewReader(data2))
 		_, err = operations.Rcat(ctx, r.Fremote, path2, in, t2)
 		require.NoError(t, err)
 
@@ -1621,15 +1620,15 @@ func TestRcatSize(t *testing.T) {
 	file1 := r.WriteFile("potato1", body, t1)
 	file2 := r.WriteFile("potato2", body, t2)
 	// Test with known length
-	bodyReader := ioutil.NopCloser(strings.NewReader(body))
+	bodyReader := io.NopCloser(strings.NewReader(body))
 	obj, err := operations.RcatSize(ctx, r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(body)), obj.Size())
 	assert.Equal(t, file1.Path, obj.Remote())
 
 	// Test with unknown length
-	bodyReader = ioutil.NopCloser(strings.NewReader(body)) // reset Reader
-	ioutil.NopCloser(strings.NewReader(body))
+	bodyReader = io.NopCloser(strings.NewReader(body)) // reset Reader
+	io.NopCloser(strings.NewReader(body))
 	obj, err = operations.RcatSize(ctx, r.Fremote, file2.Path, bodyReader, -1, file2.ModTime)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(body)), obj.Size())

@@ -3,7 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -41,12 +41,12 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 	// verify the file path is correct, and also check which line endings
 	// are used to get sizes right ("\n" except on Windows, but even there
 	// we may have "\n" or "\r\n" depending on git crlf setting)
-	fileList, err := ioutil.ReadDir(filesPath)
+	fileList, err := os.ReadDir(filesPath)
 	require.NoError(t, err)
 	require.Greater(t, len(fileList), 0)
 	for _, file := range fileList {
 		if !file.IsDir() {
-			data, _ := ioutil.ReadFile(filepath.Join(filesPath, file.Name()))
+			data, _ := os.ReadFile(filepath.Join(filesPath, file.Name()))
 			if strings.HasSuffix(string(data), "\r\n") {
 				lineEndSize = 2
 			}
@@ -203,7 +203,7 @@ func TestOpen(t *testing.T) {
 	// Test normal read
 	fd, err := o.Open(context.Background())
 	require.NoError(t, err)
-	data, err := ioutil.ReadAll(fd)
+	data, err := io.ReadAll(fd)
 	require.NoError(t, err)
 	require.NoError(t, fd.Close())
 	if lineEndSize == 2 {
@@ -215,7 +215,7 @@ func TestOpen(t *testing.T) {
 	// Test with range request
 	fd, err = o.Open(context.Background(), &fs.RangeOption{Start: 1, End: 5})
 	require.NoError(t, err)
-	data, err = ioutil.ReadAll(fd)
+	data, err = io.ReadAll(fd)
 	require.NoError(t, err)
 	require.NoError(t, fd.Close())
 	assert.Equal(t, "eetro", string(data))

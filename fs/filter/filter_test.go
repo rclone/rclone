@@ -3,7 +3,6 @@ package filter
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
@@ -30,7 +29,7 @@ func TestNewFilterDefault(t *testing.T) {
 
 // testFile creates a temp file with the contents
 func testFile(t *testing.T, contents string) string {
-	out, err := ioutil.TempFile("", "filter_test")
+	out, err := os.CreateTemp("", "filter_test")
 	require.NoError(t, err)
 	defer func() {
 		err := out.Close()

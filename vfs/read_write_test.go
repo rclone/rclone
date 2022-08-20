@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -620,7 +619,7 @@ func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 	// read the file
 	f, err = vfs.OpenFile(fileName, os.O_RDONLY, 0)
 	require.NoError(t, err)
-	buf, err := ioutil.ReadAll(f)
+	buf, err := io.ReadAll(f)
 	require.NoError(t, err)
 	err = f.Close()
 	require.NoError(t, err)

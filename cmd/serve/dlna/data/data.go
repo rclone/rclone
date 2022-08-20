@@ -6,7 +6,7 @@ package data
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"text/template"
 
 	"github.com/rclone/rclone/fs"
@@ -21,7 +21,7 @@ func GetTemplate() (tpl *template.Template, err error) {
 
 	defer fs.CheckClose(templateFile, &err)
 
-	templateBytes, err := ioutil.ReadAll(templateFile)
+	templateBytes, err := io.ReadAll(templateFile)
 	if err != nil {
 		return nil, fmt.Errorf("get template read: %w", err)
 	}
