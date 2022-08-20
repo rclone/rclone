@@ -11,6 +11,10 @@ linters:
     - varcheck
     - govet
     - unconvert
+    - staticcheck
+    - gosimple
+    - stylecheck
+    #- unused
     #- prealloc
     #- maligned
   disable-all: true
@@ -42,3 +46,7 @@ linters-settings:
         disabled: true
       - name: superfluous-else
         disabled: true
+  stylecheck:
+    # Only enable the checks performed by the staticcheck stand-alone tool,
+    # as documented here: https://staticcheck.io/docs/configuration/options/#checks
+    checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-ST1023"]
