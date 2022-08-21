@@ -338,7 +338,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("could not access root-prefix: %w", err)
 		}
 		if item.Type != api.HiDriveObjectTypeDirectory {
-			return nil, errors.New("The root-prefix needs to point to a valid directory or be empty")
+			return nil, errors.New("the root-prefix needs to point to a valid directory or be empty")
 		}
 	}
 
