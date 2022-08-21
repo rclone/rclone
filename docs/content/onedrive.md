@@ -124,7 +124,7 @@ rclone uses a default Client ID when talking to OneDrive, unless a custom `clien
 The default Client ID and Key are shared by all rclone users when performing requests.
 
 You may choose to create and use your own Client ID, in case the default one does not work well for you. 
-For example, you might see throtting.
+For example, you might see throttling.
 
 #### Creating Client ID for OneDrive Personal
 
