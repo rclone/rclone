@@ -819,6 +819,8 @@ func (f *Fs) getAuth(req *http.Request) error {
 	// Set Authorization header
 	dataHeader := generateDataHeader(f)
 	path := req.URL.RequestURI()
+	//lint:ignore SA1008 false positive when running staticcheck, the header name is according to docs even if not canonical
+	//nolint:staticcheck // Don't include staticcheck when running golangci-lint to avoid SA1008
 	actionHeader := req.Header["X-Akamai-ACS-Action"][0]
 	fs.Debugf(nil, "NetStorage API %s call %s for path %q", req.Method, actionHeader, path)
 	req.Header.Set("X-Akamai-ACS-Auth-Data", dataHeader)
