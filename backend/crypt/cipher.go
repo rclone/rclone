@@ -131,7 +131,7 @@ type fileNameEncoding interface {
 //   - we strip the padding character `=`
 type caseInsensitiveBase32Encoding struct{}
 
-// EncodeToString encodes a strign using the modified version of
+// EncodeToString encodes a string using the modified version of
 // base32 encoding.
 func (caseInsensitiveBase32Encoding) EncodeToString(src []byte) string {
 	encoded := base32.HexEncoding.EncodeToString(src)
