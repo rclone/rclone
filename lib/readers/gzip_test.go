@@ -38,7 +38,7 @@ func TestGzipReader(t *testing.T) {
 	require.NoError(t, err)
 	_, err = io.Copy(&decompressed, zr)
 	require.NoError(t, err)
-	assert.Equal(t, data, string(decompressed.Bytes()))
+	assert.Equal(t, data, decompressed.String())
 
 	// Check the underlying close gets called
 	assert.False(t, cc.closed)
