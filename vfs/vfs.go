@@ -789,3 +789,19 @@ func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
 	dir.AddVirtual(leaf, size, false)
 	return nil
 }
+
+// IsSymlink returns true if remote ends with fs.LinkSuffix when --links is enabled
+func (vfs *VFS) IsSymlink(remote string) bool {
+	return vfs.Opt.Links && strings.HasSuffix(remote, fs.LinkSuffix)
+}
+
+// TrimSymlink returns true if remote ends with fs.LinkSuffix when --links is enabled
+// Also, if it's a link, it's trimmed from its fs.LinkSuffix
+func (vfs *VFS) TrimSymlink(remote string) (string, bool) {
+	if vfs.IsSymlink(remote) {
+		remote := strings.TrimSuffix(remote, fs.LinkSuffix)
+		return remote, true
+	}
+
+	return remote, false
+}
