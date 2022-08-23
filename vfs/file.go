@@ -90,6 +90,13 @@ func (f *File) IsDir() bool {
 	return false
 }
 
+// IsSymlink returns true for symlinks when --links is enabled
+func (f *File) IsSymlink() bool {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+	return f.d.vfs.IsSymlink(f.leaf)
+}
+
 // Mode bits of the file or directory - satisfies Node interface
 func (f *File) Mode() (mode os.FileMode) {
 	f.mu.RLock()
