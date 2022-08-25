@@ -169,7 +169,6 @@ Here are some commands tested on an Ubuntu 18.04.3 host:
 # add a remote interactively
 docker run --rm -it \
     --volume ~/.config/rclone:/config/rclone \
-    --volume ~/data:/data:shared \
     --user $(id -u):$(id -g) \
     rclone/rclone \
     config
