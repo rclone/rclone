@@ -176,7 +176,6 @@ docker run --rm -it \
 # make sure the config is ok by listing the remotes
 docker run --rm \
     --volume ~/.config/rclone:/config/rclone \
-    --volume ~/data:/data:shared \
     --user $(id -u):$(id -g) \
     rclone/rclone \
     listremotes
