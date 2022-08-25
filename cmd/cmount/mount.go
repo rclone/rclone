@@ -2,7 +2,7 @@
 //
 // This uses the cgo based cgofuse library
 
-//go:build cmount && ((linux && cgo) || (darwin && cgo) || (freebsd && cgo) || windows)
+//go:build cmount && ((linux && cgo) || (darwin && cgo) || (freebsd && cgo) || (openbsd && cgo) || windows)
 // +build cmount
 // +build linux,cgo darwin,cgo freebsd,cgo windows
 
@@ -76,12 +76,16 @@ func mountOptions(VFS *vfs.VFS, device string, mountpoint string, opt *mountlib.
 	} else {
 		options = append(options, "-o", "fsname="+device)
 		options = append(options, "-o", "subtype=rclone")
-		options = append(options, "-o", fmt.Sprintf("max_readahead=%d", opt.MaxReadAhead))
+		if runtime.GOOS != "openbsd" {
+			options = append(options, "-o", fmt.Sprintf("max_readahead=%d", opt.MaxReadAhead))
+		}
 		// This causes FUSE to supply O_TRUNC with the Open
 		// call which is more efficient for cmount.  However
 		// it does not work with cgofuse on Windows with
 		// WinFSP so cmount must work with or without it.
-		options = append(options, "-o", "atomic_o_trunc")
+		if runtime.GOOS != "openbsd" {
+			options = append(options, "-o", "atomic_o_trunc")
+		}
 		if opt.DaemonTimeout != 0 {
 			options = append(options, "-o", fmt.Sprintf("daemon_timeout=%d", int(opt.DaemonTimeout.Seconds())))
 		}
