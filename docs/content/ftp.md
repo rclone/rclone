@@ -23,8 +23,7 @@ To create an FTP configuration named `remote`, run
 
 Rclone config guides you through an interactive setup process. A minimal
 rclone FTP remote definition only requires host, username and password.
-For an anonymous FTP server, use `anonymous` as username and your email
-address as password.
+For an anonymous FTP server, see [below](#anonymous-ftp).
 
 ```
 No remotes found, make a new one?
@@ -101,11 +100,33 @@ excess files in the directory.
 
     rclone sync -i /home/local/directory remote:directory
 
-### Example without a config file ###
+### Anonymous FTP
 
-    rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=`rclone obscure dummy`
+When connecting to a FTP server that allows anonymous login, you can use the
+special "anonymous" username. Traditionally, this user account accepts any
+string as a password, although it is common to use either the password
+"anonymous" or "guest". Some servers require the use of a valid e-mail
+address as password.
 
-### Implicit TLS ###
+Using [on-the-fly](#backend-path-to-dir) or
+[connection string](/docs/#connection-strings) remotes makes it easy to access
+such servers, without requiring any configuration in advance. The following
+are examples of that:
+
+    rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=$(rclone obscure dummy)
+    rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=$(rclone obscure dummy):
+
+The above examples work in Linux shells and in PowerShell, but not Windows
+Command Prompt. They execute the [rclone obscure](/commands/rclone_obscure/)
+command to create a password string in the format required by the
+[pass](#ftp-pass) option. The following examples are exactly the same, except use
+an already obscured string representation of the same password "dummy", and
+therefore works even in Windows Command Prompt:
+
+    rclone lsf :ftp: --ftp-host=speedtest.tele2.net --ftp-user=anonymous --ftp-pass=IXs2wc8OJOz7SYLBk47Ji1rHTmxM
+    rclone lsf :ftp,host=speedtest.tele2.net,user=anonymous,pass=IXs2wc8OJOz7SYLBk47Ji1rHTmxM:
+
+### Implicit TLS
 
 Rlone FTP supports implicit FTP over TLS servers (FTPS). This has to
 be enabled in the FTP backend config for the remote, or with
