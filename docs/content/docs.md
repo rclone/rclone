@@ -947,6 +947,20 @@ You may also choose to [encrypt](#configuration-encryption) the file.
 When token-based authentication are used, the configuration file
 must be writable, because rclone needs to update the tokens inside it.
 
+To reduce risk of corrupting an existing configuration file, rclone
+will not write directly to it when saving changes. Instead it will
+first write to a new, temporary, file. If a configuration file already
+existed, it will (on Unix systems) try to mirror its permissions to
+the new file. Then it will rename the existing file by adding suffix
+".old" to its name (e.g. `rclone.conf.old`), if a file with the same
+name already exists it will simply be replaced. Next, rclone will rename
+the new file to the correct name, before finally cleaning up by deleting
+the original file now which has now ".old" suffix to its name. Note that
+one side-effect of this is that if you happen to have a file in the same
+directory and with the same name as your configuration file, but with
+suffix ".old", then rclone will end up deleting this file next time it
+updates its configuration file!
+
 ### --contimeout=TIME ###
 
 Set the connection timeout. This should be in go time format which
