@@ -3,20 +3,46 @@
 package fs
 
 import (
+	"github.com/rclone/rclone/fs/config/util"
 	"os"
 
 	"github.com/rclone/rclone/fs/config/configmap"
 )
 
 // A configmap.Getter to read from the environment RCLONE_CONFIG_backend_option_name
-type configEnvVars string
+type configEnvVars struct {
+	configName string
+	fsInfo     *RegInfo
+}
+
+func (cev configEnvVars) isPassword(key string) bool {
+	if cev.fsInfo == nil {
+		return false
+	}
+
+	opt := cev.fsInfo.Options.Get(key)
+
+	if opt == nil {
+		return false
+	}
+
+	return opt.IsPassword
+}
 
 // Get a config item from the environment variables if possible
-func (configName configEnvVars) Get(key string) (value string, ok bool) {
-	envKey := ConfigToEnv(string(configName), key)
+func (cev configEnvVars) Get(key string) (value string, ok bool) {
+	envKey := ConfigToEnv(cev.configName, key)
 	value, ok = os.LookupEnv(envKey)
+	isPassword := cev.isPassword(key)
 	if ok {
-		Debugf(nil, "Setting %s=%q for %q from environment variable %s", key, value, configName, envKey)
+		Debugf(
+			nil,
+			"Setting %s=%q for %q from environment variable %s",
+			key,
+			util.SanitizeSensitiveValue(value, isPassword),
+			cev.configName,
+			envKey,
+		)
 	}
 	return value, ok
 }
@@ -112,7 +138,7 @@ func ConfigMap(fsInfo *RegInfo, configName string, connectionStringConfig config
 	}
 
 	// remote specific environment vars
-	config.AddGetter(configEnvVars(configName), configmap.PriorityNormal)
+	config.AddGetter(configEnvVars{configName: configName, fsInfo: fsInfo}, configmap.PriorityNormal)
 
 	// backend specific environment vars
 	if fsInfo != nil {

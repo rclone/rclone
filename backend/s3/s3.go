@@ -162,11 +162,13 @@ func init() {
 				Help:  "Get AWS credentials from the environment (env vars or IAM).",
 			}},
 		}, {
-			Name: "access_key_id",
-			Help: "AWS Access Key ID.\n\nLeave blank for anonymous access or runtime credentials.",
+			Name:       "access_key_id",
+			Help:       "AWS Access Key ID.\n\nLeave blank for anonymous access or runtime credentials.",
+			IsPassword: true,
 		}, {
-			Name: "secret_access_key",
-			Help: "AWS Secret Access Key (password).\n\nLeave blank for anonymous access or runtime credentials.",
+			Name:       "secret_access_key",
+			Help:       "AWS Secret Access Key (password).\n\nLeave blank for anonymous access or runtime credentials.",
+			IsPassword: true,
 		}, {
 			// References:
 			// 1. https://docs.aws.amazon.com/general/latest/gr/rande.html

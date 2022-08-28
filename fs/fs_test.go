@@ -333,7 +333,7 @@ func TestOptionGetters(t *testing.T) {
 	// set up getters
 
 	// A configmap.Getter to read from the environment RCLONE_CONFIG_backend_option_name
-	configEnvVarsGetter := configEnvVars("local")
+	configEnvVarsGetter := configEnvVars{"local", fsInfo}
 
 	// A configmap.Getter to read from the environment RCLONE_option_name
 	optionEnvVarsGetter := optionEnvVars{fsInfo}
