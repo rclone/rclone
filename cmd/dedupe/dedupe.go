@@ -1,3 +1,4 @@
+// Package dedupe provides the dedupe command.
 package dedupe
 
 import (

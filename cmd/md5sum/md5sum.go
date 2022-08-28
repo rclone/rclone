@@ -1,3 +1,4 @@
+// Package md5sum provides the md5sum command.
 package md5sum
 
 import (

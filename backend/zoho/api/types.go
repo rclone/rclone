@@ -1,3 +1,4 @@
+// Package api provides types used by the Zoho API.
 package api
 
 import (

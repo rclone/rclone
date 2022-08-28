@@ -1,3 +1,4 @@
+// Package webgui provides plugin functionality to the Web GUI.
 package webgui
 
 import (

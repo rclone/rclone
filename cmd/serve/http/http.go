@@ -1,3 +1,4 @@
+// Package http provides common functionality for http servers
 package http
 
 import (

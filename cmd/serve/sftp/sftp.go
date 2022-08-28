@@ -1,8 +1,7 @@
-// Package sftp implements an SFTP server to serve an rclone VFS
-
 //go:build !plan9
 // +build !plan9
 
+// Package sftp implements an SFTP server to serve an rclone VFS
 package sftp
 
 import (

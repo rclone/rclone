@@ -1,3 +1,4 @@
+// Package obscure provides the obscure command.
 package obscure
 
 import (

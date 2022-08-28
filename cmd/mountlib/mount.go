@@ -1,3 +1,4 @@
+// Package mountlib provides the mount command.
 package mountlib
 
 import (

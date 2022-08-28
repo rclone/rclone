@@ -1,3 +1,4 @@
+// Package vfscommon provides utilities for VFS.
 package vfscommon
 
 import (

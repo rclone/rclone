@@ -3,6 +3,8 @@
 // +build linux,cgo darwin,cgo freebsd,cgo windows
 // +build !race !windows
 
+// Package cmount implements a FUSE mounting system for rclone remotes.
+//
 // FIXME this doesn't work with the race detector under Windows either
 // hanging or producing lots of differences.
 

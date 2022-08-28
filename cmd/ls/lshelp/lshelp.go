@@ -1,3 +1,4 @@
+// Package lshelp provides common help for list commands.
 package lshelp
 
 import (

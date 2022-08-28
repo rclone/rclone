@@ -1,3 +1,4 @@
+// Package oauthutil provides OAuth utilities.
 package oauthutil
 
 import (

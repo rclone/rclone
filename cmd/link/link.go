@@ -1,3 +1,4 @@
+// Package link provides the link command.
 package link
 
 import (

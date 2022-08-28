@@ -1,3 +1,4 @@
+// Package downloaders provides utilities for the VFS layer
 package downloaders
 
 import (

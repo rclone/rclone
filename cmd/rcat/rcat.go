@@ -1,3 +1,4 @@
+// Package rcat provides the rcat command.
 package rcat
 
 import (

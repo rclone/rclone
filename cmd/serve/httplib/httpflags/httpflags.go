@@ -1,3 +1,4 @@
+// Package httpflags provides utility functionality to HTTP.
 package httpflags
 
 import (
