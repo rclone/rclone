@@ -1,3 +1,4 @@
+// Package lsjson provides the lsjson command.
 package lsjson
 
 import (

@@ -1,5 +1,4 @@
-// Define the Web GUI helpers
-
+// Package webgui defines the Web GUI helpers.
 package webgui
 
 import (

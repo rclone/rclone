@@ -1,3 +1,4 @@
+// Package info provides the info test command.
 package info
 
 // FIXME once translations are implemented will need a no-escape

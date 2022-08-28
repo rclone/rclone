@@ -1,3 +1,4 @@
+// Package touch provides the touch command.
 package touch
 
 import (

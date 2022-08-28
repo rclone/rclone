@@ -1,11 +1,10 @@
-// Package cmount implements a FUSE mounting system for rclone remotes.
-//
-// This uses the cgo based cgofuse library
-
 //go:build cmount && ((linux && cgo) || (darwin && cgo) || (freebsd && cgo) || windows)
 // +build cmount
 // +build linux,cgo darwin,cgo freebsd,cgo windows
 
+// Package cmount implements a FUSE mounting system for rclone remotes.
+//
+// This uses the cgo based cgofuse library
 package cmount
 
 import (

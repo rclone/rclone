@@ -1,3 +1,4 @@
+// Package backend provides the backend command.
 package backend
 
 import (

@@ -1,3 +1,4 @@
+// Package check provides the check command.
 package check
 
 import (

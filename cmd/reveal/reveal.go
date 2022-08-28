@@ -1,3 +1,4 @@
+// Package reveal provides the reveal command.
 package reveal
 
 import (

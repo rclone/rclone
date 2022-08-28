@@ -1,3 +1,4 @@
+// Package dlnaflags provides utility functionality to DLNA.
 package dlnaflags
 
 import (

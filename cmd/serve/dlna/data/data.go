@@ -1,6 +1,7 @@
-//go:generate go run assets_generate.go
+// Package data provides utilities for DLNA server.
 // The "go:generate" directive compiles static assets by running assets_generate.go
-
+//
+//go:generate go run assets_generate.go
 package data
 
 import (

@@ -1,3 +1,4 @@
+// Package lsl provides the lsl command.
 package lsl
 
 import (

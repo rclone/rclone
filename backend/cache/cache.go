@@ -1,6 +1,7 @@
 //go:build !plan9 && !js
 // +build !plan9,!js
 
+// Package cache implements a virtual provider to cache existing remotes.
 package cache
 
 import (

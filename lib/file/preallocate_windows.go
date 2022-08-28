@@ -92,7 +92,7 @@ func PreAllocate(size int64, out *os.File) error {
 }
 
 const (
-	FSCTL_SET_SPARSE = 0x000900c4
+	FSCTL_SET_SPARSE = 0x000900c4 // Control code to set or clears the FILE_ATTRIBUTE_SPARSE_FILE attribute of a file.
 )
 
 // SetSparseImplemented is a constant indicating whether the

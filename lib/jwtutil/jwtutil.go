@@ -1,3 +1,4 @@
+// Package jwtutil provides JWT utilities.
 package jwtutil
 
 import (

@@ -1,3 +1,4 @@
+// Package settier provides the settier command.
 package settier
 
 import (

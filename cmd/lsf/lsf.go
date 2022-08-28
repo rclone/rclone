@@ -1,3 +1,4 @@
+// Package lsf provides the lsf command.
 package lsf
 
 import (

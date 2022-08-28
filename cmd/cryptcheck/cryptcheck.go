@@ -1,3 +1,4 @@
+// Package cryptcheck provides the cryptcheck command.
 package cryptcheck
 
 import (

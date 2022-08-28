@@ -1,3 +1,4 @@
+// Package cat provides the cat command.
 package cat
 
 import (

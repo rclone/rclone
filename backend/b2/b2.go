@@ -1,4 +1,4 @@
-// Package b2 provides an interface to the Backblaze B2 object storage system
+// Package b2 provides an interface to the Backblaze B2 object storage system.
 package b2
 
 // FIXME should we remove sha1 checks from here as rclone now supports

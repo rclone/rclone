@@ -1,3 +1,4 @@
+// Package test provides the test command.
 package test
 
 import (

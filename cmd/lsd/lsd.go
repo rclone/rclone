@@ -1,3 +1,4 @@
+// Package lsd provides the lsd command.
 package lsd
 
 import (

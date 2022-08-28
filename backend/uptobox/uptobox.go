@@ -1,3 +1,4 @@
+// Package uptobox provides an interface to the Uptobox storage system.
 package uptobox
 
 import (

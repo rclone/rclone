@@ -1,3 +1,4 @@
+// Package genautocomplete provides the genautocomplete command.
 package genautocomplete
 
 import (
