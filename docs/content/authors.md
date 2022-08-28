@@ -635,3 +635,4 @@ put them back in again.` >}}
   * João Henrique Franco <joaohenrique.franco@gmail.com>
   * anonion <aman207@users.noreply.github.com>
   * Ryan Morey <4590343+rmorey@users.noreply.github.com>
+  * Simon Bos <simonbos9@gmail.com>
