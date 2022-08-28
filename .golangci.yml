@@ -2,19 +2,16 @@
 
 linters:
   enable:
-    - deadcode
     - errcheck
     - goimports
     - revive
     - ineffassign
-    - structcheck
-    - varcheck
     - govet
     - unconvert
     - staticcheck
     - gosimple
     - stylecheck
-    #- unused
+    - unused
     #- prealloc
     #- maligned
   disable-all: true
