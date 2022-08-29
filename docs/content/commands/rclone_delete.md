@@ -26,12 +26,12 @@ You can also use the separate command [rmdir](/commands/rclone_rmdir/) or
 For example, to delete all files bigger than 100 MiB, you may first want to
 check what would be deleted (use either):
 
-    rclone --min-size 100M lsl remote:path
-    rclone --dry-run --min-size 100M delete remote:path
+    rclone --min-size 100Mi lsl remote:path
+    rclone --dry-run --min-size 100Mi delete remote:path
 
 Then proceed with the actual delete:
 
-    rclone --min-size 100M delete remote:path
+    rclone --min-size 100Mi delete remote:path
 
 That reads "delete everything with a minimum size of 100 MiB", hence
 delete all files bigger than 100 MiB.

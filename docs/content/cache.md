@@ -67,14 +67,14 @@ password:
 Confirm the password:
 password:
 The size of a chunk. Lower value good for slow connections but can affect seamless reading.
-Default: 5M
+Default: 5Mi
 Choose a number from below, or type in your own value
  1 / 1 MiB
-   \ "1M"
+   \ "1Mi"
  2 / 5 MiB
-   \ "5M"
+   \ "5Mi"
  3 / 10 MiB
-   \ "10M"
+   \ "10Mi"
 chunk_size> 2
 How much time should object info (file size, file hashes, etc.) be stored in cache. Use a very high value if you don't plan on changing the source FS from outside the cache.
 Accepted units are: "s", "m", "h".
@@ -88,14 +88,14 @@ Choose a number from below, or type in your own value
    \ "48h"
 info_age> 2
 The maximum size of stored chunks. When the storage grows beyond this size, the oldest chunks will be deleted.
-Default: 10G
+Default: 10Gi
 Choose a number from below, or type in your own value
  1 / 500 MiB
-   \ "500M"
+   \ "500Mi"
  2 / 1 GiB
-   \ "1G"
+   \ "1Gi"
  3 / 10 GiB
-   \ "10G"
+   \ "10Gi"
 chunk_total_size> 3
 Remote config
 --------------------
@@ -104,9 +104,9 @@ remote = local:/test
 plex_url = http://127.0.0.1:32400
 plex_username = dummyusername
 plex_password = *** ENCRYPTED ***
-chunk_size = 5M
+chunk_size = 5Mi
 info_age = 48h
-chunk_total_size = 10G
+chunk_total_size = 10Gi
 ```
 
 You can then use it like this,

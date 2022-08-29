@@ -16,7 +16,7 @@ func TestRcBwLimit(t *testing.T) {
 
 	// Set
 	in := rc.Params{
-		"rate": "1M",
+		"rate": "1Mi",
 	}
 	out, err := call.Fn(context.Background(), in)
 	require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestRcBwLimit(t *testing.T) {
 
 	// Set
 	in = rc.Params{
-		"rate": "10M:1M",
+		"rate": "10Mi:1Mi",
 	}
 	out, err = call.Fn(context.Background(), in)
 	require.NoError(t, err)

@@ -456,7 +456,7 @@ func ChooseOption(o *fs.Option, name string) string {
 		case bool:
 			what = "boolean value (true or false)"
 		case fs.SizeSuffix:
-			what = "size with suffix K,M,G,T"
+			what = "size with suffix Ki,Mi,Gi,Ti,Pi"
 		case fs.Duration:
 			what = "duration s,m,h,d,w,M,y"
 		case int, int8, int16, int32, int64:

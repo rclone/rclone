@@ -162,11 +162,11 @@ Reason is that preliminary hashing can exhaust your RAM or disk space.`,
 				Value: "0",
 				Help:  "Preliminary hashing will always be done in a temporary disk location.",
 			}, {
-				Value: "32M",
-				Help:  "Do not dedicate more than 32Mb RAM for preliminary hashing.",
+				Value: "32Mi",
+				Help:  "Do not dedicate more than 32 MiB RAM for preliminary hashing.",
 			}, {
-				Value: "256M",
-				Help:  "You have at most 256Mb RAM free for hash calculations.",
+				Value: "256Mi",
+				Help:  "You have at most 256 MiB RAM free for hash calculations.",
 			}},
 		}, {
 			Name:     "check_hash",

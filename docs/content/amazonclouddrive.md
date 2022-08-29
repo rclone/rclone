@@ -325,7 +325,7 @@ This means that larger files are likely to fail.
 
 Unfortunately there is no way for rclone to see that this failure is
 because of file size, so it will retry the operation, as any other
-failure. To avoid this problem, use `--max-size 50000M` option to limit
+failure. To avoid this problem, use `--max-size 50000Mi` option to limit
 the maximum size of uploaded files. Note that `--max-size` does not split
 files into segments, it only ignores files over this size.
 

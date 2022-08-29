@@ -672,9 +672,10 @@ remote or flag value. The fix then is to quote values containing spaces.
 ### `--min-size` - Don't transfer any file smaller than this
 
 Controls the minimum size file within the scope of an rclone command.
-Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
+Default units are `KiB` but abbreviations `Ki`, `Mi`, `Gi`, `Ti` or `Pi`
+(as well as `K`, `M`, `G`, `T` or `P`) are valid
 
-E.g. `rclone ls remote: --min-size 50k` lists files on `remote:` of 50 KiB
+E.g. `rclone ls remote: --min-size 50Ki` lists files on `remote:` of 50 KiB
 size or larger.
 
 See [the size option docs](/docs/#size-option) for more info.
@@ -682,9 +683,10 @@ See [the size option docs](/docs/#size-option) for more info.
 ### `--max-size` - Don't transfer any file larger than this
 
 Controls the maximum size file within the scope of an rclone command.
-Default units are `KiB` but abbreviations `K`, `M`, `G`, `T` or `P` are valid.
+Default units are `KiB` but abbreviations `Ki`, `Mi`, `Gi`, `Ti` or `Pi`
+(as well as `K`, `M`, `G`, `T` or `P`) are valid.
 
-E.g. `rclone ls remote: --max-size 1G` lists files on `remote:` of 1 GiB
+E.g. `rclone ls remote: --max-size 1Gi` lists files on `remote:` of 1 GiB
 size or smaller.
 
 See [the size option docs](/docs/#size-option) for more info.
@@ -724,7 +726,7 @@ on the destination which are excluded from the command.
 
 E.g. the scope of `rclone sync -i A: B:` can be restricted:
 
-    rclone --min-size 50k --delete-excluded sync A: B:
+    rclone --min-size 50Ki --delete-excluded sync A: B:
 
 All files on `B:` which are less than 50 KiB are deleted
 because they are excluded from the rclone sync command.

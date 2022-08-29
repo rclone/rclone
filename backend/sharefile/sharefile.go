@@ -188,7 +188,7 @@ standard values here or any folder ID (long hex number ID).`,
 			Default: defaultChunkSize,
 			Help: `Upload chunk size.
 
-Must a power of 2 >= 256k.
+Must a power of 2 >= 256Ki.
 
 Making this larger will improve performance, but note that each chunk
 is buffered in memory one per transfer.

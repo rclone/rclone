@@ -227,7 +227,7 @@ read, at the cost of an increased number of requests.
 
 These flags control the chunking:
 
-    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128M)
+    --vfs-read-chunk-size SizeSuffix        Read the source objects in chunks (default 128Mi)
     --vfs-read-chunk-size-limit SizeSuffix  Max chunk doubling size (default off)
 
 Rclone will start reading a chunk of size !--vfs-read-chunk-size!,
@@ -237,10 +237,10 @@ open file will get doubled only until the specified value is reached. If the
 value is "off", which is the default, the limit is disabled and the chunk size
 will grow indefinitely.
 
-With !--vfs-read-chunk-size 100M! and !--vfs-read-chunk-size-limit 0!
-the following parts will be downloaded: 0-100M, 100M-200M, 200M-300M, 300M-400M and so on.
-When !--vfs-read-chunk-size-limit 500M! is specified, the result would be
-0-100M, 100M-300M, 300M-700M, 700M-1200M, 1200M-1700M and so on.
+With !--vfs-read-chunk-size 100Mi! and !--vfs-read-chunk-size-limit 0!
+the following parts will be downloaded: 0-100Mi, 100Mi-200Mi, 200Mi-300Mi, 300Mi-400Mi and so on.
+When !--vfs-read-chunk-size-limit 500Mi! is specified, the result would be
+0-100Mi, 100Mi-300Mi, 300Mi-700Mi, 700Mi-1200Mi, 1200Mi-1700Mi and so on.
 
 Setting !--vfs-read-chunk-size! to !0! or "off" disables chunked reading.
 
