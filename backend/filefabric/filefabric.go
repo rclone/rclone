@@ -150,7 +150,7 @@ type Fs struct {
 	opt             Options            // parsed options
 	features        *fs.Features       // optional features
 	m               configmap.Mapper   // to save config
-	srv             *rest.Client       // the connection to the one drive server
+	srv             *rest.Client       // the connection to the server
 	dirCache        *dircache.DirCache // Map of directory path to directory id
 	pacer           *fs.Pacer          // pacer for API calls
 	tokenMu         sync.Mutex         // hold when reading the token
