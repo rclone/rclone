@@ -315,7 +315,7 @@ If you supply extra configuration to a backend by command line flag,
 environment variable or connection string then rclone will add a
 suffix based on the hash of the config to the name of the remote, eg
 
-    rclone -vv lsf --s3-chunk-size 20M s3:
+    rclone -vv lsf --s3-chunk-size 20Mi s3:
 
 Has the log message
 
@@ -589,10 +589,12 @@ formats:
 
 ### Size options {#size-option}
 
-Options which use SIZE use KiB (multiples of 1024 bytes) by default.
-However, a suffix of `B` for Byte, `K` for KiB, `M` for MiB,
-`G` for GiB, `T` for TiB and `P` for PiB may be used. These are
-the binary units, e.g. 1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
+Options of type SIZE use KiB (multiples of 1024 bytes) by default.
+However, a suffix of `B` for Byte, `K` or `Ki` for KiB, `M` or `Mi`
+for MiB, `G` or `Gi` for GiB, `T` or `Ti` for TiB and `P` or `Pi`
+for PiB may be used, all case-insensitive. These are the binary units, e.g.
+1, 2\*\*10, 2\*\*20, 2\*\*30 respectively.
+See also [--human-readable](#human-readable).
 
 ### --backup-dir=DIR ###
 
@@ -639,18 +641,19 @@ This option controls the bandwidth limit. For example
 would mean limit the upload and download bandwidth to 10 MiB/s.
 **NB** this is **bytes** per second not **bits** per second. To use a
 single limit, specify the desired bandwidth in KiB/s, or use a
-suffix B|K|M|G|T|P. The default is `0` which means to not limit bandwidth.
+suffix as documented for [size options](#size-option), e.g.
+B|Ki|Mi|Gi|Ti|Pi. The default is `0` which means to not limit bandwidth.
 
 The upload and download bandwidth can be specified separately, as
 `--bwlimit UP:DOWN`, so
 
-    --bwlimit 10M:100k
+    --bwlimit 10Mi:100Ki
 
 would mean limit the upload bandwidth to 10 MiB/s and the download
 bandwidth to 100 KiB/s. Either limit can be "off" meaning no limit, so
 to just limit the upload bandwidth you would use
 
-    --bwlimit 10M:off
+    --bwlimit 10Mi:off
 
 this would limit the upload bandwidth to 10 MiB/s but the download
 bandwidth would be unlimited.
@@ -663,8 +666,8 @@ cause certain limits to be applied at certain times. To specify a
 timetable, format your entries as `WEEKDAY-HH:MM,BANDWIDTH
 WEEKDAY-HH:MM,BANDWIDTH...` where: `WEEKDAY` is optional element.
 
-- `BANDWIDTH` can be a single number, e.g.`100k` or a pair of numbers
-for upload:download, e.g.`10M:1M`.
+- `BANDWIDTH` can be a single number, e.g.`100Ki` or a pair of numbers
+for upload:download, e.g.`10Mi:1Mi`.
 - `WEEKDAY` can be written as the whole word or only using the first 3
   characters. It is optional.
 - `HH:MM` is an hour from 00:00 to 23:59.
@@ -672,7 +675,7 @@ for upload:download, e.g.`10M:1M`.
 An example of a typical timetable to avoid link saturation during daytime
 working hours could be:
 
-`--bwlimit "08:00,512k 12:00,10M 13:00,512k 18:00,30M 23:00,off"`
+`--bwlimit "08:00,512Ki 12:00,10Mi 13:00,512Ki 18:00,30Mi 23:00,off"`
 
 In this example, the transfer bandwidth will be set to 512 KiB/s
 at 8am every day. At noon, it will rise to 10 MiB/s, and drop back
@@ -682,7 +685,7 @@ Anything between 11pm and 8am will remain unlimited.
 
 An example of timetable with `WEEKDAY` could be:
 
-`--bwlimit "Mon-00:00,512 Fri-23:59,10M Sat-10:00,1M Sun-20:00,off"`
+`--bwlimit "Mon-00:00,512 Fri-23:59,10Mi Sat-10:00,1Mi Sun-20:00,off"`
 
 It means that, the transfer bandwidth will be set to 512 KiB/s on
 Monday. It will rise to 10 MiB/s before the end of Friday. At 10:00
@@ -692,11 +695,11 @@ be unlimited.
 Timeslots without `WEEKDAY` are extended to the whole week. So this
 example:
 
-`--bwlimit "Mon-00:00,512 12:00,1M Sun-20:00,off"`
+`--bwlimit "Mon-00:00,512 12:00,1Mi Sun-20:00,off"`
 
 Is equivalent to this:
 
-`--bwlimit "Mon-00:00,512Mon-12:00,1M Tue-12:00,1M Wed-12:00,1M Thu-12:00,1M Fri-12:00,1M Sat-12:00,1M Sun-12:00,1M Sun-20:00,off"`
+`--bwlimit "Mon-00:00,512Mon-12:00,1Mi Tue-12:00,1Mi Wed-12:00,1Mi Thu-12:00,1Mi Fri-12:00,1Mi Sat-12:00,1Mi Sun-12:00,1Mi Sun-20:00,off"`
 
 Bandwidth limit apply to the data transfer for all backends. For most
 backends the directory listing bandwidth is also included (exceptions
@@ -706,7 +709,7 @@ Note that the units are **Byte/s**, not **bit/s**. Typically
 connections are measured in bit/s - to convert divide by 8. For
 example, let's say you have a 10 Mbit/s connection and you wish rclone
 to use half of it - 5 Mbit/s. This is 5/8 = 0.625 MiB/s so you would
-use a `--bwlimit 0.625M` parameter for rclone.
+use a `--bwlimit 0.625Mi` parameter for rclone.
 
 On Unix systems (Linux, macOS, …) the bandwidth limiter can be toggled by
 sending a `SIGUSR2` signal to rclone. This allows to remove the limitations
@@ -728,7 +731,7 @@ This option controls per file bandwidth limit. For the options see the
 
 For example use this to allow no transfers to be faster than 1 MiB/s
 
-    --bwlimit-file 1M
+    --bwlimit-file 1Mi
 
 This can be used in conjunction with `--bwlimit`.
 
@@ -1117,6 +1120,8 @@ this is that it relies on an external library.
 The interactive command [ncdu](/commands/rclone_ncdu/) shows human-readable by
 default, and responds to key `u` for toggling human-readable format.
 
+See also [size options](#size-option).
+
 ### --ignore-case-sync ###
 
 Using this option will cause rclone to ignore the case of the files
@@ -1394,7 +1399,7 @@ This command line flag allows you to override that computed default.
 ### --multi-thread-cutoff=SIZE ###
 
 When downloading files to the local backend above this size, rclone
-will use multiple threads to download the file (default 250M).
+will use multiple threads to download the file (default 250Mi).
 
 Rclone preallocates the file (using `fallocate(FALLOC_FL_KEEP_SIZE)`
 on unix or `NTSetInformationFile` on Windows both of which takes no
@@ -1436,7 +1441,7 @@ size of the file. To calculate the number of download streams Rclone
 divides the size of the file by the `--multi-thread-cutoff` and rounds
 up, up to the maximum set with `--multi-thread-streams`.
 
-So if `--multi-thread-cutoff 250M` and `--multi-thread-streams 4` are
+So if `--multi-thread-cutoff 250Mi` and `--multi-thread-streams 4` are
 in effect (the defaults):
 
 - 0..250 MiB files will be downloaded with 1 stream

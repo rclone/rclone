@@ -253,19 +253,19 @@ Eg
         "bytesPerSecondRx": -1,
         "rate": "off"
     }
-    rclone rc core/bwlimit rate=1M
+    rclone rc core/bwlimit rate=1Mi
     {
         "bytesPerSecond": 1048576,
         "bytesPerSecondTx": 1048576,
         "bytesPerSecondRx": 1048576,
-        "rate": "1M"
+        "rate": "1Mi"
     }
-    rclone rc core/bwlimit rate=1M:100k
+    rclone rc core/bwlimit rate=1Mi:100k
     {
         "bytesPerSecond": 1048576,
         "bytesPerSecondTx": 1048576,
         "bytesPerSecondRx": 131072,
-        "rate": "1M"
+        "rate": "1Mi"
     }
 
 
@@ -276,7 +276,7 @@ If the rate parameter is not supplied then the bandwidth is queried
         "bytesPerSecond": 1048576,
         "bytesPerSecondTx": 1048576,
         "bytesPerSecondRx": 1048576,
-        "rate": "1M"
+        "rate": "1Mi"
     }
 
 The format of the parameter is exactly the same as passed to --bwlimit

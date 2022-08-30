@@ -276,15 +276,15 @@ Set to 0 to keep connections indefinitely.
 			Help: `Upload and download chunk size.
 
 This controls the maximum packet size used in the SFTP protocol. The
-RFC limits this to 32768 bytes (32k), however a lot of servers
+RFC limits this to 32768 bytes (32Ki), however a lot of servers
 support larger sizes and setting it larger will increase transfer
 speed dramatically on high latency links.
 
-Only use a setting higher than 32k if you always connect to the same
+Only use a setting higher than 32Ki if you always connect to the same
 server or after sufficiently broad testing.
 
-For example using the value of 252k with OpenSSH works well with its
-maximum packet size of 256k.
+For example using the value of 252Ki with OpenSSH works well with its
+maximum packet size of 256Ki.
 
 If you get the error "failed to send packet header: EOF" when copying
 a large file, try lowering this number.

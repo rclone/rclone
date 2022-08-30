@@ -100,13 +100,13 @@ changed, any downloaded chunks will be invalid and cache-chunk-path
 will need to be cleared or unexpected EOF errors will occur.`,
 			Default: DefCacheChunkSize,
 			Examples: []fs.OptionExample{{
-				Value: "1M",
+				Value: "1Mi",
 				Help:  "1 MiB",
 			}, {
-				Value: "5M",
+				Value: "5Mi",
 				Help:  "5 MiB",
 			}, {
-				Value: "10M",
+				Value: "10Mi",
 				Help:  "10 MiB",
 			}},
 		}, {
@@ -133,13 +133,13 @@ If the cache exceeds this value then it will start to delete the
 oldest chunks until it goes under this value.`,
 			Default: DefCacheTotalChunkSize,
 			Examples: []fs.OptionExample{{
-				Value: "500M",
+				Value: "500Mi",
 				Help:  "500 MiB",
 			}, {
-				Value: "1G",
+				Value: "1Gi",
 				Help:  "1 GiB",
 			}, {
-				Value: "10G",
+				Value: "10Gi",
 				Help:  "10 GiB",
 			}},
 		}, {

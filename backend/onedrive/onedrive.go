@@ -123,10 +123,10 @@ func init() {
 			},
 		}, {
 			Name: "chunk_size",
-			Help: `Chunk size to upload files with - must be multiple of 320k (327,680 bytes).
+			Help: `Chunk size to upload files with - must be multiple of 320Ki (327,680 bytes).
 
-Above this size files will be chunked - must be multiple of 320k (327,680 bytes) and
-should not exceed 250M (262,144,000 bytes) else you may encounter \"Microsoft.SharePoint.Client.InvalidClientQueryException: The request message is too big.\"
+Above this size files will be chunked - must be multiple of 320Ki (327,680 bytes) and
+should not exceed 250Mi (262,144,000 bytes) else you may encounter \"Microsoft.SharePoint.Client.InvalidClientQueryException: The request message is too big.\"
 Note that the chunks will be buffered into memory.`,
 			Default:  defaultChunkSize,
 			Advanced: true,

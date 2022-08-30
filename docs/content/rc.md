@@ -307,7 +307,7 @@ Note that it is possible to set some values as strings or integers -
 see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
-    "_config":{"BufferSize": "42M"}
+    "_config":{"BufferSize": "42Mi"}
     "_config":{"BufferSize": 44040192}
 
 If you wish to check the `_config` assignment has worked properly then
@@ -323,15 +323,15 @@ This should be in the same format as the `filter` key returned by
 
 For example, if you wished to run a sync with these flags
 
-    --max-size 1M --max-age 42s --include "a" --include "b"
+    --max-size 1Mi --max-age 42s --include "a" --include "b"
 
 you would pass this parameter in your JSON blob.
 
-    "_filter":{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}
+    "_filter":{"MaxSize":"1Mi", "IncludeRule":["a","b"], "MaxAge":"42s"}
 
 If using `rclone rc` this could be passed as
 
-    rclone rc ... _filter='{"MaxSize":"1M", "IncludeRule":["a","b"], "MaxAge":"42s"}'
+    rclone rc ... _filter='{"MaxSize":"1Mi", "IncludeRule":["a","b"], "MaxAge":"42s"}'
 
 Any filter parameters you don't set will inherit the global defaults
 which were set with command line flags or environment variables.
@@ -340,7 +340,7 @@ Note that it is possible to set some values as strings or integers -
 see [data types](#data-types) for more info. Here is an example
 setting the equivalent of `--buffer-size` in string or integer format.
 
-    "_filter":{"MinSize": "42M"}
+    "_filter":{"MinSize": "42Mi"}
     "_filter":{"MinSize": 44040192}
 
 If you wish to check the `_filter` assignment has worked properly then
@@ -380,13 +380,13 @@ call and taken by the [options/set](#options-set) calls as well as the
   more info.
 - `Size` - these are returned as an integer number of bytes. They may
   be set as an integer or they may be set with a size suffix string,
-  eg "10M". See the [options section](/docs/#options) for more info.
+  eg "10Mi". See the [options section](/docs/#options) for more info.
 - Enumerated type (such as `CutoffMode`, `DumpFlags`, `LogLevel`,
   `VfsCacheMode` - these will be returned as an integer and may be set
   as an integer but more conveniently they can be set as a string, eg
   "HARD" for `CutoffMode` or `DEBUG` for `LogLevel`.
 - `BandwidthSpec` - this will be set and returned as a string, eg
-  "1M".
+  "1Mi".
 
 ## Specifying remotes to work on
 
@@ -644,19 +644,19 @@ Eg
         "bytesPerSecondRx": -1,
         "rate": "off"
     }
-    rclone rc core/bwlimit rate=1M
+    rclone rc core/bwlimit rate=1Mi
     {
         "bytesPerSecond": 1048576,
         "bytesPerSecondTx": 1048576,
         "bytesPerSecondRx": 1048576,
-        "rate": "1M"
+        "rate": "1Mi"
     }
-    rclone rc core/bwlimit rate=1M:100k
+    rclone rc core/bwlimit rate=1Mi:100Ki
     {
         "bytesPerSecond": 1048576,
         "bytesPerSecondTx": 1048576,
         "bytesPerSecondRx": 131072,
-        "rate": "1M"
+        "rate": "1Mi"
     }
 
 
@@ -667,7 +667,7 @@ If the rate parameter is not supplied then the bandwidth is queried
         "bytesPerSecond": 1048576,
         "bytesPerSecondTx": 1048576,
         "bytesPerSecondRx": 1048576,
-        "rate": "1M"
+        "rate": "1Mi"
     }
 
 The format of the parameter is exactly the same as passed to --bwlimit
