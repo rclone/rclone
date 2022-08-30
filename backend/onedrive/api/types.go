@@ -13,7 +13,7 @@ const (
 	PackageTypeOneNote = "oneNote"
 )
 
-// Error is returned from one drive when things go wrong
+// Error is returned from OneDrive when things go wrong
 type Error struct {
 	ErrorInfo struct {
 		Code       string `json:"code"`

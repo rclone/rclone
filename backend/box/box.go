@@ -266,7 +266,7 @@ type Fs struct {
 	root         string                // the path we are working on
 	opt          Options               // parsed options
 	features     *fs.Features          // optional features
-	srv          *rest.Client          // the connection to the one drive server
+	srv          *rest.Client          // the connection to the server
 	dirCache     *dircache.DirCache    // Map of directory path to directory id
 	pacer        *fs.Pacer             // pacer for API calls
 	tokenRenewer *oauthutil.Renew      // renew the token on expiry

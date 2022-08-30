@@ -137,7 +137,7 @@ type Fs struct {
 	features            *fs.Features // optional features
 	endpoint            *url.URL     // URL of the host
 	endpointURL         string       // endpoint as a string
-	srv                 *rest.Client // the connection to the one drive server
+	srv                 *rest.Client // the connection to the server
 	pacer               *fs.Pacer    // pacer for API calls
 	authMu              sync.Mutex   // Mutex to protect library decryption
 	createDirMutex      sync.Mutex   // Protect creation of directories
