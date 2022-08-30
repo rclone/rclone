@@ -12,6 +12,7 @@ linters:
     - gosimple
     - stylecheck
     - unused
+    - misspell
     #- prealloc
     #- maligned
   disable-all: true
