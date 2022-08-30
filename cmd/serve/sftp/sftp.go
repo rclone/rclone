@@ -71,9 +71,9 @@ The server will respond to a small number of shell commands, mainly
 md5sum, sha1sum and df, which enable it to provide support for checksums
 and the about feature when accessed from an sftp remote.
 
-Note that this server uses fixed 32 KiB packet size, which means you must not
-configure the client to use any other values, e.g. with the
-[chunk_size](/sftp/#sftp-chunk-size) option on an sftp remote.
+Note that this server uses standard 32 KiB packet payload size, which
+means you must not configure the client to expect anything else, e.g.
+with the [chunk_size](/sftp/#sftp-chunk-size) option on an sftp remote.
 
 The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 
