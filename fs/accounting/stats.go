@@ -622,6 +622,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.checks = 0
 	s.transfers = 0
 	s.deletes = 0
+	s.deletesSize = 0
 	s.deletedDirs = 0
 	s.renames = 0
 	s.startedTransfers = nil
