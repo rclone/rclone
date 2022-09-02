@@ -227,7 +227,7 @@ type dirStream struct {
 // HasNext indicates if there are further entries. HasNext
 // might be called on already closed streams.
 func (ds *dirStream) HasNext() bool {
-	return ds.i < len(ds.nodes)
+	return ds.i < len(ds.nodes)+2
 }
 
 // Next retrieves the next entry. It is only called if HasNext
@@ -235,7 +235,22 @@ func (ds *dirStream) HasNext() bool {
 // indicate I/O errors
 func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 	// defer log.Trace(nil, "")("de=%+v, errno=%v", &de, &errno)
-	fi := ds.nodes[ds.i]
+	if ds.i == 0 {
+		ds.i++
+		return fuse.DirEntry{
+			Mode: fuse.S_IFDIR,
+			Name: ".",
+			Ino:  0, // FIXME
+		}, 0
+	} else if ds.i == 1 {
+		ds.i++
+		return fuse.DirEntry{
+			Mode: fuse.S_IFDIR,
+			Name: "..",
+			Ino:  0, // FIXME
+		}, 0
+	}
+	fi := ds.nodes[ds.i-2]
 	de = fuse.DirEntry{
 		// Mode is the file's mode. Only the high bits (e.g. S_IFDIR)
 		// are considered.
