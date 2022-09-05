@@ -518,6 +518,9 @@ func (f *Fs) InternalTestCopyID(t *testing.T) {
 
 // TestIntegration/FsMkdir/FsPutFiles/Internal/AgeQuery
 func (f *Fs) InternalTestAgeQuery(t *testing.T) {
+	// Check set up for filtering
+	assert.True(t, f.Features().FilterAware)
+
 	opt := &filter.Opt{}
 	err := opt.MaxAge.Set("1h")
 	assert.NoError(t, err)

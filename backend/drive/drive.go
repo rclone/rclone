@@ -1210,6 +1210,7 @@ func newFs(ctx context.Context, name, path string, m configmap.Mapper) (*Fs, err
 		WriteMimeType:           true,
 		CanHaveEmptyDirectories: true,
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
+		FilterAware:             true,
 	}).Fill(ctx, f)
 
 	// Create a new authorized Drive client.

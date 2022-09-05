@@ -29,6 +29,7 @@ type Features struct {
 	ReadMetadata            bool // can read metadata from objects
 	WriteMetadata           bool // can write metadata to objects
 	UserMetadata            bool // can read/write general purpose metadata
+	FilterAware             bool // can make use of filters if provided for listing
 
 	// Purge all files in the directory specified
 	//
@@ -320,6 +321,7 @@ func (ft *Features) Mask(ctx context.Context, f Fs) *Features {
 	// ft.IsLocal = ft.IsLocal && mask.IsLocal Don't propagate IsLocal
 	ft.SlowModTime = ft.SlowModTime && mask.SlowModTime
 	ft.SlowHash = ft.SlowHash && mask.SlowHash
+	ft.FilterAware = ft.FilterAware && mask.FilterAware
 
 	if mask.Purge == nil {
 		ft.Purge = nil

@@ -378,6 +378,9 @@ func TestFilter(t *testing.T) {
 	r.WriteFile("excluded", "excluded file", when)
 	f := r.Flocal.(*Fs)
 
+	// Check set up for filtering
+	assert.True(t, f.Features().FilterAware)
+
 	// Add a filter
 	ctx, fi := filter.AddConfig(ctx)
 	require.NoError(t, fi.AddRule("+ included"))
