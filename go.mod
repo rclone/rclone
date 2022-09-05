@@ -135,7 +135,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/jlaffaye/ftp v0.0.0-20220630165035-11536801d1ff
+	github.com/jlaffaye/ftp v0.0.0-20220904184306-99be0634ab9a
 	github.com/pkg/xattr v0.4.7
 	golang.org/x/mobile v0.0.0-20220722155234-aaac322e2105
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
