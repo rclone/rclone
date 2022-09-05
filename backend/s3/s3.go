@@ -2758,7 +2758,8 @@ func (f *Fs) getMetaDataListing(ctx context.Context, wantRemote string) (info *s
 		if isDirectory {
 			return nil
 		}
-		if wantRemote != gotRemote {
+		// compare the base name only since the listing will have a prefix
+		if path.Base(wantRemote) != path.Base(gotRemote) {
 			return nil
 		}
 		info = object

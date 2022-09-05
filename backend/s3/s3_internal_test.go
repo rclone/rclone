@@ -6,12 +6,16 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"path"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fs/cache"
+	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
@@ -250,7 +254,7 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Create an object
-	const fileName = "test-versions.txt"
+	const fileName = "versions/test-versions.txt"
 	contents := random.String(100)
 	item := fstest.NewItem(fileName, contents, fstest.Time("2001-05-06T04:05:06.499999999Z"))
 	obj := fstests.PutTestContents(ctx, t, f, &item, contents, true)
@@ -280,7 +284,7 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 		}()
 
 		// Read the contents
-		entries, err := f.List(ctx, "")
+		entries, err := f.List(ctx, "versions")
 		require.NoError(t, err)
 		tests := 0
 		var fileNameVersion string
@@ -295,12 +299,24 @@ func (f *Fs) InternalTestVersions(t *testing.T) {
 				t.Run("ReadVersion", func(t *testing.T) {
 					assert.Equal(t, contents, fstests.ReadObject(ctx, t, entry.(fs.Object), -1))
 				})
+				t.Run("NewFs", func(t *testing.T) {
+					// Check we can find the object with NewFs
+					fPath := fs.ConfigString(f)
+					fPath = strings.Replace(fPath, ":", ",versions=true:", 1)
+					subFPath := fspath.JoinRootPath(fPath, entry.Remote())
+					subF, err := cache.Get(ctx, subFPath)
+					require.Equal(t, fs.ErrorIsFile, err, "Remote %q didn't find a file", subFPath)
+					require.NotNil(t, subF)
+					o, err := subF.NewObject(ctx, path.Base(entry.Remote()))
+					require.NoError(t, err)
+					assert.Equal(t, contents, fstests.ReadObject(ctx, t, o, -1))
+				})
 				assert.WithinDuration(t, obj.(*Object).lastModified, versionTime, time.Second, "object time must be with 1 second of version time")
 				fileNameVersion = remote
 				tests++
 			}
 		}
-		assert.Equal(t, 2, tests, "object missing from listing")
+		assert.Equal(t, 2, tests, "object missing from listing: %v", entries)
 
 		// Check we can read the object with a version suffix
 		t.Run("NewObject", func(t *testing.T) {
