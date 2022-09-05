@@ -310,6 +310,17 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --ftp-force-list-hidden
+
+Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD.
+
+Properties:
+
+- Config:      force_list_hidden
+- Env Var:     RCLONE_FTP_FORCE_LIST_HIDDEN
+- Type:        bool
+- Default:     false
+
 #### --ftp-idle-timeout
 
 Max time before closing idle connections.

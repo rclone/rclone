@@ -125,6 +125,11 @@ So for |concurrency 3| you'd use |--checkers 2 --transfers 2
 			Default:  false,
 			Advanced: true,
 		}, {
+			Name:     "force_list_hidden",
+			Help:     "Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD.",
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:    "idle_timeout",
 			Default: fs.Duration(60 * time.Second),
 			Help: `Max time before closing idle connections.
@@ -205,6 +210,7 @@ type Options struct {
 	DisableMLSD       bool                 `config:"disable_mlsd"`
 	DisableUTF8       bool                 `config:"disable_utf8"`
 	WritingMDTM       bool                 `config:"writing_mdtm"`
+	ForceListHidden   bool                 `config:"force_list_hidden"`
 	IdleTimeout       fs.Duration          `config:"idle_timeout"`
 	CloseTimeout      fs.Duration          `config:"close_timeout"`
 	ShutTimeout       fs.Duration          `config:"shut_timeout"`
@@ -366,6 +372,9 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	}
 	if f.opt.WritingMDTM {
 		ftpConfig = append(ftpConfig, ftp.DialWithWritingMDTM(true))
+	}
+	if f.opt.ForceListHidden {
+		ftpConfig = append(ftpConfig, ftp.DialWithForceListHidden(true))
 	}
 	if f.ci.Dump&(fs.DumpHeaders|fs.DumpBodies|fs.DumpRequests|fs.DumpResponses) != 0 {
 		ftpConfig = append(ftpConfig, ftp.DialWithDebugOutput(&debugLog{auth: f.ci.Dump&fs.DumpAuth != 0}))

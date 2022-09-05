@@ -357,6 +357,7 @@ and may be set in the config file.
       --ftp-tls-cache-size int                       Size of TLS session cache for all control and data connections (default 32)
       --ftp-user string                              FTP username (default "$USER")
       --ftp-writing-mdtm                             Use MDTM to set modification time (VsFtpd quirk)
+      --ftp-force-list-hidden                        Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD.
       --gcs-anonymous                                Access public buckets and objects without credentials
       --gcs-auth-url string                          Auth server URL
       --gcs-bucket-acl string                        Access Control List for new buckets
