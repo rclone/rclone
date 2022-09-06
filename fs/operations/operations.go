@@ -383,6 +383,20 @@ func CommonHash(ctx context.Context, fa, fb fs.Info) (hash.Type, *fs.HashesOptio
 	return hashType, &fs.HashesOption{Hashes: common}
 }
 
+// Is it OK to server side move/copy from src to dst
+func serverSideOK(ci *fs.ConfigInfo, fDst, fSrc fs.Info) bool {
+	if ci.ServerSideAcrossConfigs {
+		return true
+	}
+	if SameConfig(fSrc, fDst) {
+		return true
+	}
+	if SameRemoteType(fSrc, fDst) {
+		return fDst.Features().ServerSideAcrossConfigs
+	}
+	return false
+}
+
 // Copy src object to dst or f if nil.  If dst is nil then it uses
 // remote as the name of the new object.
 //
@@ -424,7 +438,7 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 				return nil, accounting.ErrorMaxTransferLimitReachedGraceful
 			}
 		}
-		if doCopy := f.Features().Copy; doCopy != nil && (SameConfig(src.Fs(), f) || (SameRemoteType(src.Fs(), f) && (f.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
+		if doCopy := f.Features().Copy; doCopy != nil && serverSideOK(ci, f, src.Fs()) {
 			in := tr.Account(ctx, nil) // account the transfer
 			in.ServerSideCopyStart()
 			newDst, err = doCopy(ctx, src, remote)
@@ -619,7 +633,7 @@ func Move(ctx context.Context, fdst fs.Fs, dst fs.Object, remote string, src fs.
 		return newDst, nil
 	}
 	// See if we have Move available
-	if doMove := fdst.Features().Move; doMove != nil && (SameConfig(src.Fs(), fdst) || (SameRemoteType(src.Fs(), fdst) && (fdst.Features().ServerSideAcrossConfigs || ci.ServerSideAcrossConfigs))) {
+	if doMove := fdst.Features().Move; doMove != nil && serverSideOK(ci, fdst, src.Fs()) {
 		// Delete destination if it exists and is not the same file as src (could be same file while seemingly different if the remote is case insensitive)
 		if dst != nil && !SameObject(src, dst) {
 			err = DeleteFile(ctx, dst)
