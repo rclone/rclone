@@ -2801,9 +2801,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if opt.Versions && opt.VersionAt.IsSet() {
 		return nil, errors.New("s3: cant use --s3-versions and --s3-version-at at the same time")
 	}
-	if opt.ACL == "" {
-		opt.ACL = "private"
-	}
 	if opt.BucketACL == "" {
 		opt.BucketACL = opt.ACL
 	}
