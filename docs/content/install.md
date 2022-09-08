@@ -188,6 +188,15 @@ ls ~/data/mount
 kill %1
 ```
 
+## Install on Windows via Chocolateley Packet Manager
+
+Make sure you have [Choco](https://chocolatey.org/) installed
+```
+choco search rclone
+choco install rclone
+```
+This will install rclone on your windows machine
+
 ## Install from source
 
 Make sure you have git and [Go](https://golang.org/) installed.
