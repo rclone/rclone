@@ -64,7 +64,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -117,6 +117,9 @@ func init() {
 				Value: "IDrive",
 				Help:  "IDrive e2",
 			}, {
+				Value: "IONOS",
+				Help:  "IONOS Cloud",
+			}, {				
 				Value: "LyveCloud",
 				Help:  "Seagate Lyve Cloud",
 			}, {
@@ -384,10 +387,24 @@ func init() {
 				Value: "auto",
 				Help:  "R2 buckets are automatically distributed across Cloudflare's data centers for low latency.",
 			}},
+		}, {			
+			Name:     "region",
+			Help:     "Region where your bucket will be created and your data stored.\n",
+			Provider: "IONOS",
+			Examples: []fs.OptionExample{{
+				Value: "de",
+				Help:  "Frankfurt, Germany",
+			}, {
+				Value: "eu-central-2",
+				Help:  "Berlin, Germany",
+			}, {
+				Value: "eu-south-2",
+				Help:  "Logrono, Spain",
+			}},
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,IONOS,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -699,6 +716,20 @@ func init() {
 				Help:  "Singapore Single Site Private Endpoint",
 			}},
 		}, {
+			Name:     "endpoint",
+			Help:     "Endpoint for IONOS S3 Object Storage.\n\nSpecify the endpoint from the same region.",
+			Provider: "IONOS",
+			Examples: []fs.OptionExample{{
+			    Value:    "s3-eu-central-1.ionoscloud.com",
+				Help:     "Frankfurt, Germany",
+			}, {
+				Value:    "s3-eu-central-2.ionoscloud.com",
+				Help:     "Berlin, Germany",
+			}, {
+				Value:    "s3-eu-south-2.ionoscloud.com",
+				Help:     "Logrono, Spain",
+			}},
+		}, {			
 			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
 			Name:     "endpoint",
 			Help:     "Endpoint for OSS API.",
@@ -1001,7 +1032,7 @@ func init() {
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,IDrive,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
+			Provider: "!AWS,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1018,7 +1049,7 @@ func init() {
 				Value:    "sgp1.digitaloceanspaces.com",
 				Help:     "Digital Ocean Spaces Singapore 1",
 				Provider: "DigitalOcean",
-			}, {
+			}, {				
 				Value:    "localhost:8333",
 				Help:     "SeaweedFS S3 localhost",
 				Provider: "SeaweedFS",
@@ -1411,7 +1442,7 @@ func init() {
 		}, {
 			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,IBMCOS,IDrive,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -2537,6 +2568,10 @@ func setQuirks(opt *Options) {
 		useMultipartEtag = false // untested
 	case "IDrive":
 		virtualHostStyle = false
+	case "IONOS":
+		// listObjectsV2 supported - https://api.ionos.com/docs/s3/#Basic-Operations-get-Bucket-list-type-2
+		virtualHostStyle = false
+		urlEncodeListings = false
 	case "LyveCloud":
 		useMultipartEtag = false // LyveCloud seems to calculate multipart Etags differently from AWS
 	case "Minio":
