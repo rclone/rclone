@@ -1049,7 +1049,7 @@ func init() {
 				Value:    "sgp1.digitaloceanspaces.com",
 				Help:     "Digital Ocean Spaces Singapore 1",
 				Provider: "DigitalOcean",
-			}, {				
+			}, {
 				Value:    "localhost:8333",
 				Help:     "SeaweedFS S3 localhost",
 				Provider: "SeaweedFS",
