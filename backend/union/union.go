@@ -222,19 +222,19 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 //
 // If it isn't possible then return fs.ErrorCantCopy
 func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object, error) {
-	srcObj, ok := src.(*Object)
-	if !ok {
-		fs.Debugf(src, "Can't copy - not same remote type")
-		return nil, fs.ErrorCantCopy
-	}
-	o := srcObj.UnWrapUpstream()
-	su := o.UpstreamFs()
-	if su.Features().Copy == nil {
-		return nil, fs.ErrorCantCopy
+	var srcFs fs.Info
+	if srcObj, ok := src.(*Object); ok {
+		// Have a union object - unwrap
+		o := srcObj.UnWrapUpstream()
+		srcFs = o.UpstreamFs()
+		src = o
+	} else {
+		// Have a non union object - it might be compatible with a union member
+		srcFs = src.Fs()
 	}
 	var du *upstream.Fs
 	for _, u := range f.upstreams {
-		if operations.Same(u.RootFs, su.RootFs) {
+		if u.Features().Copy != nil && operations.Same(u.RootFs, srcFs) {
 			du = u
 		}
 	}
@@ -244,7 +244,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	if !du.IsCreatable() {
 		return nil, fs.ErrorPermissionDenied
 	}
-	co, err := du.Features().Copy(ctx, o, remote)
+	co, err := du.Features().Copy(ctx, src, remote)
 	if err != nil || co == nil {
 		return nil, err
 	}
