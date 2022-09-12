@@ -117,6 +117,9 @@ func init() {
 	// Set the function pointers up in fs
 	fs.ConfigFileGet = FileGetFlag
 	fs.ConfigFileSet = SetValueAndSave
+	fs.ConfigFileHasSection = func(section string) bool {
+		return LoadedData().HasSection(section)
+	}
 	configPath = makeConfigPath()
 	cacheDir = makeCacheDir() // Has fallback to tempDir, so set that first
 	data = newDefaultStorage()

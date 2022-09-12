@@ -26,6 +26,9 @@ import (
 // up with drive letters.
 func NewFs(ctx context.Context, path string) (Fs, error) {
 	Debugf(nil, "Creating backend with remote %q", path)
+	if ConfigFileHasSection(path) {
+		Logf(nil, "%q refers to a local folder, use %q to refer to your remote or %q to hide this warning", path, path+":", "./"+path)
+	}
 	fsInfo, configName, fsPath, config, err := ConfigFs(path)
 	if err != nil {
 		return nil, err
