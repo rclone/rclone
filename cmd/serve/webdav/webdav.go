@@ -377,18 +377,21 @@ func (fi FileInfo) ETag(ctx context.Context) (etag string, err error) {
 // ContentType returns a content type for the FileInfo
 func (fi FileInfo) ContentType(ctx context.Context) (contentType string, err error) {
 	// defer log.Trace(fi, "")("etag=%q, err=%v", &contentType, &err)
-	node, ok := (fi.FileInfo).(vfs.Node)
-	if !ok {
-		fs.Errorf(fi, "Expecting vfs.Node, got %T", fi.FileInfo)
-		return "application/octet-stream", nil
-	}
-	entry := node.DirEntry()
-	switch x := entry.(type) {
-	case fs.Object:
-		return fs.MimeType(ctx, x), nil
-	case fs.Directory:
+	if fi.IsDir() {
 		return "inode/directory", nil
 	}
-	fs.Errorf(fi, "Expecting fs.Object or fs.Directory, got %T", entry)
-	return "application/octet-stream", nil
+	if node, ok := (fi.FileInfo).(vfs.Node); !ok {
+		fs.Errorf(fi, "Expecting vfs.Node, got %T", fi.FileInfo)
+	} else {
+		entry := node.DirEntry()
+		switch x := entry.(type) {
+		case nil:
+			// object hasn't been uploaded yet if entry is nil
+		case fs.Object:
+			return fs.MimeType(ctx, x), nil
+		default:
+			fs.Errorf(fi, "Expecting fs.Object or nil, got %T", entry)
+		}
+	}
+	return fs.MimeTypeFromName(fi.Name()), nil
 }
