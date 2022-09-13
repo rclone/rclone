@@ -2,6 +2,8 @@ module github.com/rclone/rclone
 
 go 1.17
 
+replace github.com/jlaffaye/ftp v0.0.0-20220630165035-11536801d1ff => github.com/ncw/ftp v0.0.0-20220914071703-a2f63f63c5ce
+
 require (
 	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
 	github.com/Azure/azure-pipeline-go v0.2.3
