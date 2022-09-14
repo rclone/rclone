@@ -1171,6 +1171,10 @@ func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 	err = c.sftpClient.Mkdir(dirPath)
 	f.putSftpConnection(&c, err)
 	if err != nil {
+		if os.IsExist(err) {
+			fs.Debugf(f, "directory %q exists after Mkdir is attempted", dirPath)
+			return nil
+		}
 		return fmt.Errorf("mkdir %q failed: %w", dirPath, err)
 	}
 	return nil
