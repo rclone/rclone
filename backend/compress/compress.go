@@ -367,9 +367,9 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	meta := readMetadata(ctx, mo)
-	if meta == nil {
-		return nil, errors.New("error decoding metadata")
+	meta, err := readMetadata(ctx, mo)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding metadata: %w", err)
 	}
 	// Create our Object
 	o, err := f.Fs.NewObject(ctx, makeDataName(remote, meta.CompressionMetadata.Size, meta.Mode))
@@ -1040,24 +1040,19 @@ func newMetadata(size int64, mode int, cmeta sgzip.GzipMetadata, md5 string, mim
 }
 
 // This function will read the metadata from a metadata object.
-func readMetadata(ctx context.Context, mo fs.Object) (meta *ObjectMetadata) {
+func readMetadata(ctx context.Context, mo fs.Object) (meta *ObjectMetadata, err error) {
 	// Open our meradata object
 	rc, err := mo.Open(ctx)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	defer func() {
-		err := rc.Close()
-		if err != nil {
-			fs.Errorf(mo, "Error closing object: %v", err)
-		}
-	}()
+	defer fs.CheckClose(rc, &err)
 	jr := json.NewDecoder(rc)
 	meta = new(ObjectMetadata)
 	if err = jr.Decode(meta); err != nil {
-		return nil
+		return nil, err
 	}
-	return meta
+	return meta, nil
 }
 
 // Remove removes this object
@@ -1167,7 +1162,7 @@ func (o *Object) loadMetadataIfNotLoaded(ctx context.Context) (err error) {
 		return err
 	}
 	if o.meta == nil {
-		o.meta = readMetadata(ctx, o.mo)
+		o.meta, err = readMetadata(ctx, o.mo)
 	}
 	return err
 }
