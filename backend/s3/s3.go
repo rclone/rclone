@@ -1539,7 +1539,11 @@ This ACL is used for creating objects and if bucket_acl isn't set, for creating 
 For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 
 Note that this ACL is applied when server-side copying objects as S3
-doesn't copy the ACL from the source but rather writes a fresh one.`,
+doesn't copy the ACL from the source but rather writes a fresh one.
+
+If the acl is an empty string then no X-Amz-Acl: header is added and
+the default (private) will be used.
+`,
 			Provider: "!Storj,Cloudflare",
 			Examples: []fs.OptionExample{{
 				Value:    "default",
@@ -1593,7 +1597,11 @@ doesn't copy the ACL from the source but rather writes a fresh one.`,
 For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
 
 Note that this ACL is applied when only when creating buckets.  If it
-isn't set then "acl" is used instead.`,
+isn't set then "acl" is used instead.
+
+If the "acl" and "bucket_acl" are empty strings then no X-Amz-Acl:
+header is added and the default (private) will be used.
+`,
 			Advanced: true,
 			Examples: []fs.OptionExample{{
 				Value: "private",
@@ -2782,6 +2790,14 @@ func (f *Fs) setRoot(root string) {
 	f.rootBucket, f.rootDirectory = bucket.Split(f.root)
 }
 
+// return a pointer to the string if non empty or nil if it is empty
+func stringPointerOrNil(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 // NewFs constructs an Fs from the path, bucket:path
 func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
@@ -3669,7 +3685,7 @@ func (f *Fs) makeBucket(ctx context.Context, bucket string) error {
 	return f.cache.Create(bucket, func() error {
 		req := s3.CreateBucketInput{
 			Bucket: &bucket,
-			ACL:    &f.opt.BucketACL,
+			ACL:    stringPointerOrNil(f.opt.BucketACL),
 		}
 		if f.opt.LocationConstraint != "" {
 			req.CreateBucketConfiguration = &s3.CreateBucketConfiguration{
@@ -3734,7 +3750,7 @@ func pathEscape(s string) string {
 // method
 func (f *Fs) copy(ctx context.Context, req *s3.CopyObjectInput, dstBucket, dstPath, srcBucket, srcPath string, src *Object) error {
 	req.Bucket = &dstBucket
-	req.ACL = &f.opt.ACL
+	req.ACL = stringPointerOrNil(f.opt.ACL)
 	req.Key = &dstPath
 	source := pathEscape(path.Join(srcBucket, srcPath))
 	if src.versionID != nil {
@@ -5212,7 +5228,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 	req := s3.PutObjectInput{
 		Bucket: &bucket,
-		ACL:    &o.fs.opt.ACL,
+		ACL:    stringPointerOrNil(o.fs.opt.ACL),
 		Key:    &bucketPath,
 	}
 
