@@ -891,6 +891,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
 
+	// Disable change polling in China region
+	// See: https://github.com/rclone/rclone/issues/6444
+	if f.opt.Region == regionCN {
+		f.features.ChangeNotify = nil
+	}
+
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {
 		_, _, err := f.readMetaDataForPath(ctx, "")
