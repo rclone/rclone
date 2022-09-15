@@ -5,6 +5,21 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.59.2 - 2022-09-15
+
+[See commits](https://github.com/rclone/rclone/compare/v1.59.1...v1.59.2)
+
+* Bug Fixes
+    * config: Move locking to fix fatal error: concurrent map read and map write (Nick Craig-Wood)
+* Local
+    * Disable xattr support if the filesystems indicates it is not supported (Nick Craig-Wood)
+* Azure Blob
+    * Fix chunksize calculations producing too many parts (Nick Craig-Wood)
+* B2
+    * Fix chunksize calculations producing too many parts (Nick Craig-Wood)
+* S3
+    * Fix chunksize calculations producing too many parts (Nick Craig-Wood)
+
 ## v1.59.1 - 2022-08-08
 
 [See commits](https://github.com/rclone/rclone/compare/v1.59.0...v1.59.1)
