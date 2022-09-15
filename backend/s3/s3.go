@@ -119,7 +119,7 @@ func init() {
 			}, {
 				Value: "IONOS",
 				Help:  "IONOS Cloud",
-			}, {				
+			}, {
 				Value: "LyveCloud",
 				Help:  "Seagate Lyve Cloud",
 			}, {
@@ -387,7 +387,7 @@ func init() {
 				Value: "auto",
 				Help:  "R2 buckets are automatically distributed across Cloudflare's data centers for low latency.",
 			}},
-		}, {			
+		}, {
 			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "IONOS",
@@ -720,16 +720,16 @@ func init() {
 			Help:     "Endpoint for IONOS S3 Object Storage.\n\nSpecify the endpoint from the same region.",
 			Provider: "IONOS",
 			Examples: []fs.OptionExample{{
-			    Value:    "s3-eu-central-1.ionoscloud.com",
-				Help:     "Frankfurt, Germany",
+				Value: "s3-eu-central-1.ionoscloud.com",
+				Help:  "Frankfurt, Germany",
 			}, {
-				Value:    "s3-eu-central-2.ionoscloud.com",
-				Help:     "Berlin, Germany",
+				Value: "s3-eu-central-2.ionoscloud.com",
+				Help:  "Berlin, Germany",
 			}, {
-				Value:    "s3-eu-south-2.ionoscloud.com",
-				Help:     "Logrono, Spain",
+				Value: "s3-eu-south-2.ionoscloud.com",
+				Help:  "Logrono, Spain",
 			}},
-		}, {			
+		}, {
 			// oss endpoints: https://help.aliyun.com/document_detail/31837.html
 			Name:     "endpoint",
 			Help:     "Endpoint for OSS API.",
