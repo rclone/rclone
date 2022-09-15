@@ -49,6 +49,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Internet Archive [:page_facing_up:](https://rclone.org/internetarchive/)
   * Jottacloud [:page_facing_up:](https://rclone.org/jottacloud/)
   * IBM COS S3 [:page_facing_up:](https://rclone.org/s3/#ibm-cos-s3)
+  * IONOS Cloud [:page_facing_up:](https://rclone.org/s3/#ionos)
   * Koofr [:page_facing_up:](https://rclone.org/koofr/)
   * Mail.ru Cloud [:page_facing_up:](https://rclone.org/mailru/)
   * Memset Memstore [:page_facing_up:](https://rclone.org/swift/)
