@@ -14,7 +14,7 @@ Rclone is a Go program and comes as a single binary file.
   * Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
   * Optionally configure [automatic execution](#autostart).
 
-See below for some expanded Linux / macOS instructions.
+See below for some expanded Linux / macOS / Windows instructions.
 
 See the [usage](/docs/) docs for how to use rclone, or
 run `rclone -h`.
@@ -35,7 +35,9 @@ For beta installation, run:
 Note that this script checks the version of rclone installed first and
 won't re-download if not needed.
 
-## Linux installation from precompiled binary
+## Linux installation {#linux}
+
+### Precompiled binary {#linux-precompiled}
 
 Fetch and unpack
 
@@ -59,7 +61,9 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
-## macOS installation with brew
+## macOS installation {#macos}
+
+### Installation with brew {#macos-brew}
 
     brew install rclone
 
@@ -68,7 +72,12 @@ NOTE: This version of rclone will not support `mount` any more (see
 on macOS, either install a precompiled binary or enable the relevant option
 when [installing from source](#install-from-source).
 
-## macOS installation from precompiled binary, using curl
+Note that this is a third party installer not controlled by the rclone
+developers so it may be out of date. Its current version is as below.
+
+[![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/rclone.svg)](https://repology.org/project/rclone/versions)
+
+### Precompiled binary, using curl {#macos-precompiled}
 
 To avoid problems with macOS gatekeeper enforcing the binary to be signed and
 notarized it is enough to download with `curl`.
@@ -96,7 +105,7 @@ Run `rclone config` to setup. See [rclone config docs](/docs/) for more details.
 
     rclone config
 
-## macOS installation from precompiled binary, using a web browser
+### Precompiled binary, using a web browser  {#macos-precompiled-web}
 
 When downloading a binary with a web browser, the browser will set the macOS
 gatekeeper quarantine attribute. Starting from Catalina, when attempting to run
@@ -109,11 +118,73 @@ The simplest fix is to run
 
     xattr -d com.apple.quarantine rclone
 
-## Install with docker
+## Windows installation {#windows}
 
-The rclone maintains a [docker image for rclone](https://hub.docker.com/r/rclone/rclone).
-These images are autobuilt by docker hub from the rclone source based
-on a minimal Alpine linux image.
+### Precompiled binary {#windows-precompiled}
+
+Fetch the correct binary for your processor type by clicking on these
+links. If not sure, use the first link.
+
+- [Intel/AMD - 64 Bit](https://downloads.rclone.org/rclone-current-linux-amd64.zip)
+- [Intel/AMD - 32 Bit](https://downloads.rclone.org/rclone-current-linux-386.zip)
+- [ARM - 64 Bit](https://downloads.rclone.org/rclone-current-linux-arm64.zip)
+
+Open this file in the Explorer and extract `rclone.exe`. Rclone is a
+portable executable so you can place it wherever is convenient.
+
+Open a CMD window (or powershell) and run the binary. Note that rclone
+does not launch a GUI by default, it runs in the CMD Window.
+
+- Run `rclone.exe config` to setup. See [rclone config docs](/docs/) for more details.
+- Optionally configure [automatic execution](#autostart).
+
+If you are planning to use the [rclone mount](/commands/rclone_mount/)
+feature then you will need to install the third party utility
+[WinFsp](https://winfsp.dev/) also.
+
+### Chocolatey package manager {#windows-chocolatey}
+
+Make sure you have [Choco](https://chocolatey.org/) installed
+
+```
+choco search rclone
+choco install rclone
+```
+
+This will install rclone on your Windows machine. If you are planning
+to use [rclone mount](/commands/rclone_mount/) then
+
+```
+choco install winfsp
+```
+
+will install that too.
+
+Note that this is a third party installer not controlled by the rclone
+developers so it may be out of date. Its current version is as below.
+
+[![Chocolatey package](https://repology.org/badge/version-for-repo/chocolatey/rclone.svg)](https://repology.org/project/rclone/versions)
+
+## Package manager installation {#package-manager}
+
+Many Linux, Windows, macOS and other OS distributions package and
+distribute rclone.
+
+The distributed versions of rclone are often quite out of date and for
+this reason we recommend one of the other installation methods if
+possible.
+
+You can get an idea of how up to date or not your OS distribution's
+package is here.
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/rclone.svg?columns=3)](https://repology.org/project/rclone/versions)
+
+## Docker installation {#docker}
+
+The rclone developers maintain a [docker image for rclone](https://hub.docker.com/r/rclone/rclone).
+
+These images are built as part of the release process based on a
+minimal Alpine Linux.
 
 The `:latest` tag will always point to the latest stable release.  You
 can use the `:beta` tag to get the latest build from master.  You can
@@ -188,16 +259,7 @@ ls ~/data/mount
 kill %1
 ```
 
-## Install on Windows via Chocolateley Packet Manager
-
-Make sure you have [Choco](https://chocolatey.org/) installed
-```
-choco search rclone
-choco install rclone
-```
-This will install rclone on your windows machine
-
-## Install from source
+## Source installation {#source}
 
 Make sure you have git and [Go](https://golang.org/) installed.
 Go version 1.17 or newer is required, latest release is recommended.
@@ -216,7 +278,7 @@ in the same folder. As an initial check you can now run `./rclone version`
 (`.\rclone version` on Windows).
 
 Note that on macOS and Windows the [mount](https://rclone.org/commands/rclone_mount/)
-command will not be available unless you specify additional build tag `cmount`.
+command will not be available unless you specify an additional build tag `cmount`.
 
 ```
 go build -tags cmount
@@ -235,7 +297,7 @@ distribution (make sure you install it in the classic mingw64 subsystem, the
 ucrt64 version is not compatible).
 
 Additionally, on Windows, you must install the third party utility
-[WinFsp](http://www.secfs.net/winfsp/), with the "Developer" feature selected.
+[WinFsp](https://winfsp.dev/), with the "Developer" feature selected.
 If building with cgo, you must also set environment variable CPATH pointing to
 the fuse include directory within the WinFsp installation
 (normally `C:\Program Files (x86)\WinFsp\inc\fuse`).
@@ -283,7 +345,7 @@ with the current version):
 go get github.com/rclone/rclone
 ```
 
-## Installation with Ansible
+## Ansible installation {#ansible}
 
 This can be done with [Stefan Weichinger's ansible
 role](https://github.com/stefangweichinger/ansible-rclone).
@@ -299,7 +361,7 @@ Instructions
           - rclone
 ```
 
-## Portable installation
+## Portable installation {#portable}
 
 As mentioned [above](https://rclone.org/install/#quickstart), rclone is single
 executable (`rclone`, or `rclone.exe` on Windows) that you can download as a
