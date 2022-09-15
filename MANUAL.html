@@ -19,7 +19,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Aug 08, 2022</p>
+<p class="date">Sep 15, 2022</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -8379,7 +8379,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.59.1&quot;)
+      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.59.2&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -27765,6 +27765,30 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.59.2---2022-09-15">v1.59.2 - 2022-09-15</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.59.1...v1.59.2">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>config: Move locking to fix fatal error: concurrent map read and map write (Nick Craig-Wood)</li>
+</ul></li>
+<li>Local
+<ul>
+<li>Disable xattr support if the filesystems indicates it is not supported (Nick Craig-Wood)</li>
+</ul></li>
+<li>Azure Blob
+<ul>
+<li>Fix chunksize calculations producing too many parts (Nick Craig-Wood)</li>
+</ul></li>
+<li>B2
+<ul>
+<li>Fix chunksize calculations producing too many parts (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Fix chunksize calculations producing too many parts (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.59.1---2022-08-08">v1.59.1 - 2022-08-08</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.59.0...v1.59.1">See commits</a></p>
 <ul>
