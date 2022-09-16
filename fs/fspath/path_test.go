@@ -38,9 +38,9 @@ func TestCheckConfigName(t *testing.T) {
 		{"..", nil},
 		{".r.e.m.o.t.e.", nil},
 		{"rem ote", nil},
-		{"remote ", nil},
-		{" remote", nil},
-		{" remote ", nil},
+		{"remote ", errInvalidCharacters},
+		{" remote", errInvalidCharacters},
+		{" remote ", errInvalidCharacters},
 	} {
 		got := CheckConfigName(test.in)
 		assert.Equal(t, test.want, got, test.in)
@@ -60,9 +60,9 @@ func TestCheckRemoteName(t *testing.T) {
 		{".r.e.m.o.t.e.:", nil},
 		{"-r-emote-:", nil},
 		{"rem ote:", nil},
-		{"remote :", nil},
-		{" remote:", nil},
-		{" remote :", nil},
+		{"remote :", errInvalidCharacters},
+		{" remote:", errInvalidCharacters},
+		{" remote :", errInvalidCharacters},
 		{"", errInvalidCharacters},
 		{"rem:ote", errInvalidCharacters},
 		{"rem:ote:", errInvalidCharacters},
@@ -226,26 +226,14 @@ func TestParse(t *testing.T) {
 				Path:         "/path/to/file",
 			},
 		}, {
-			in: "remote :/path/to/file",
-			wantParsed: Parsed{
-				ConfigString: "remote ",
-				Name:         "remote ",
-				Path:         "/path/to/file",
-			},
+			in:      "remote :/path/to/file",
+			wantErr: errInvalidCharacters,
 		}, {
-			in: " remote:/path/to/file",
-			wantParsed: Parsed{
-				ConfigString: " remote",
-				Name:         " remote",
-				Path:         "/path/to/file",
-			},
+			in:      " remote:/path/to/file",
+			wantErr: errInvalidCharacters,
 		}, {
-			in: " remote :/path/to/file",
-			wantParsed: Parsed{
-				ConfigString: " remote ",
-				Name:         " remote ",
-				Path:         "/path/to/file",
-			},
+			in:      " remote :/path/to/file",
+			wantErr: errInvalidCharacters,
 		}, {
 			in:      "rem#ote:/path/to/file",
 			wantErr: errInvalidCharacters,
@@ -482,9 +470,9 @@ func TestSplitFs(t *testing.T) {
 		{"rem.ote:potato/sausage", "rem.ote:", "potato/sausage", nil},
 
 		{"rem ote:", "rem ote:", "", nil},
-		{"remote :", "remote :", "", nil},
-		{" remote:", " remote:", "", nil},
-		{" remote :", " remote :", "", nil},
+		{"remote :", "", "", errInvalidCharacters},
+		{" remote:", "", "", errInvalidCharacters},
+		{" remote :", "", "", errInvalidCharacters},
 
 		{".:", ".:", "", nil},
 		{"..:", "..:", "", nil},
@@ -539,9 +527,9 @@ func TestSplit(t *testing.T) {
 		{"rem.ote:potato/sausage", "rem.ote:potato/", "sausage", nil},
 
 		{"rem ote:", "rem ote:", "", nil},
-		{"remote :", "remote :", "", nil},
-		{" remote:", " remote:", "", nil},
-		{" remote :", " remote :", "", nil},
+		{"remote :", "", "", errInvalidCharacters},
+		{" remote:", "", "", errInvalidCharacters},
+		{" remote :", "", "", errInvalidCharacters},
 
 		{".:", ".:", "", nil},
 		{"..:", "..:", "", nil},
