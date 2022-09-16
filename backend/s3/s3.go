@@ -2660,9 +2660,8 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.SSECustomerKeyBase64 != "" && opt.SSECustomerKey != "" {
 		return nil, errors.New("s3: can't use sse_customer_key and sse_customer_key_base64 at the same time")
-	}
-	if opt.SSECustomerKeyBase64 != "" && opt.SSECustomerKey == "" {
-		// Decode the base64 key and store it in the SSECustomerKey field
+	} else if opt.SSECustomerKeyBase64 != "" {
+		// Decode the base64-encoded key and store it in the SSECustomerKey field
 		decoded, err := base64.StdEncoding.DecodeString(opt.SSECustomerKeyBase64)
 		if err != nil {
 			return nil, fmt.Errorf("s3: Could not decode sse_customer_key_base64: %w", err)
