@@ -37,6 +37,10 @@ func TestCheckConfigName(t *testing.T) {
 		{".", nil},
 		{"..", nil},
 		{".r.e.m.o.t.e.", nil},
+		{"rem ote", nil},
+		{"remote ", nil},
+		{" remote", nil},
+		{" remote ", nil},
 	} {
 		got := CheckConfigName(test.in)
 		assert.Equal(t, test.want, got, test.in)
@@ -54,6 +58,10 @@ func TestCheckRemoteName(t *testing.T) {
 		{".:", nil},
 		{"..:", nil},
 		{".r.e.m.o.t.e.:", nil},
+		{"rem ote:", nil},
+		{"remote :", nil},
+		{" remote:", nil},
+		{" remote :", nil},
 		{"", errInvalidCharacters},
 		{"rem:ote", errInvalidCharacters},
 		{"rem:ote:", errInvalidCharacters},
@@ -207,6 +215,34 @@ func TestParse(t *testing.T) {
 			wantParsed: Parsed{
 				ConfigString: "rem.ote",
 				Name:         "rem.ote",
+				Path:         "/path/to/file",
+			},
+		}, {
+			in: "rem ote:/path/to/file",
+			wantParsed: Parsed{
+				ConfigString: "rem ote",
+				Name:         "rem ote",
+				Path:         "/path/to/file",
+			},
+		}, {
+			in: "remote :/path/to/file",
+			wantParsed: Parsed{
+				ConfigString: "remote ",
+				Name:         "remote ",
+				Path:         "/path/to/file",
+			},
+		}, {
+			in: " remote:/path/to/file",
+			wantParsed: Parsed{
+				ConfigString: " remote",
+				Name:         " remote",
+				Path:         "/path/to/file",
+			},
+		}, {
+			in: " remote :/path/to/file",
+			wantParsed: Parsed{
+				ConfigString: " remote ",
+				Name:         " remote ",
 				Path:         "/path/to/file",
 			},
 		}, {
@@ -444,6 +480,11 @@ func TestSplitFs(t *testing.T) {
 		{"remote:potato/sausage", "remote:", "potato/sausage", nil},
 		{"rem.ote:potato/sausage", "rem.ote:", "potato/sausage", nil},
 
+		{"rem ote:", "rem ote:", "", nil},
+		{"remote :", "remote :", "", nil},
+		{" remote:", " remote:", "", nil},
+		{" remote :", " remote :", "", nil},
+
 		{".:", ".:", "", nil},
 		{"..:", "..:", "", nil},
 		{".:potato/sausage", ".:", "potato/sausage", nil},
@@ -495,6 +536,11 @@ func TestSplit(t *testing.T) {
 		{"remote:/potato/potato", "remote:/potato/", "potato", nil},
 		{"remote:potato/sausage", "remote:potato/", "sausage", nil},
 		{"rem.ote:potato/sausage", "rem.ote:potato/", "sausage", nil},
+
+		{"rem ote:", "rem ote:", "", nil},
+		{"remote :", "remote :", "", nil},
+		{" remote:", " remote:", "", nil},
+		{" remote :", " remote :", "", nil},
 
 		{".:", ".:", "", nil},
 		{"..:", "..:", "", nil},
