@@ -14,7 +14,6 @@ import (
 
 const (
 	configNameRe = `[\w. -]+`
-	remoteNameRe = `:?` + configNameRe
 )
 
 var (
@@ -35,7 +34,7 @@ var (
 	configNameMatcher = regexp.MustCompile(`^` + configNameRe + `$`)
 
 	// remoteNameMatcher is a pattern to match an rclone remote name at the start of a config
-	remoteNameMatcher = regexp.MustCompile(`^` + remoteNameRe + `(?::$|,)`)
+	remoteNameMatcher = regexp.MustCompile(`^:?` + configNameRe + `(?::$|,)`)
 )
 
 // CheckConfigName returns an error if configName is invalid
