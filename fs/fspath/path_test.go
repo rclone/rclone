@@ -58,6 +58,7 @@ func TestCheckRemoteName(t *testing.T) {
 		{".:", nil},
 		{"..:", nil},
 		{".r.e.m.o.t.e.:", nil},
+		{"-r-emote-:", nil},
 		{"rem ote:", nil},
 		{"remote :", nil},
 		{" remote:", nil},
