@@ -14,7 +14,7 @@ import (
 
 const (
 	configNameRe = `[\w. -]+`
-	remoteNameRe = `^(:?` + configNameRe + `)`
+	remoteNameRe = `(:?` + configNameRe + `)`
 )
 
 var (
