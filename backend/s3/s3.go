@@ -1535,8 +1535,10 @@ isn't set then "acl" is used instead.`,
 				Help:  "arn:aws:kms:*",
 			}},
 		}, {
-			Name:     "sse_customer_key",
-			Help:     "If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data. Alternatively you can provide sse_customer_key_base64.",
+			Name: "sse_customer_key",
+			Help: `To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data.
+
+Alternatively you can provide --sse-customer-key-base64.`,
 			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
@@ -1544,8 +1546,10 @@ isn't set then "acl" is used instead.`,
 				Help:  "None",
 			}},
 		}, {
-			Name:     "sse_customer_key_base64",
-			Help:     "If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data in base64 format. Alternatively you can provide sse_customer_key.",
+			Name: "sse_customer_key_base64",
+			Help: `If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data.
+
+Alternatively you can provide --sse-customer-key.`,
 			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
