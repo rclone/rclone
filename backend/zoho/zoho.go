@@ -670,27 +670,28 @@ func isSimpleName(s string) bool {
 }
 
 func (f *Fs) upload(ctx context.Context, name string, parent string, size int64, in io.Reader, options ...fs.OpenOption) (*api.Item, error) {
-	params := url.Values{}
-	params.Set("filename", name)
-	params.Set("parent_id", parent)
-	params.Set("override-name-exist", strconv.FormatBool(true))
-	formReader, contentType, overhead, err := rest.MultipartUpload(ctx, in, nil, "content", name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make multipart upload: %w", err)
-	}
-
-	contentLength := overhead + size
+	uploadID := random.String(20) // random upload ID
 	opts := rest.Opts{
-		Method:           "POST",
-		Path:             "/upload",
-		Body:             formReader,
-		ContentType:      contentType,
-		ContentLength:    &contentLength,
-		Options:          options,
-		Parameters:       params,
-		TransferEncoding: []string{"identity"},
+		Method: "POST",
+		//RootURL: "https://upload.zoho.com/workdrive-api/v1",
+		RootURL:       "https://upload.zoho.eu/workdrive-api/v1",
+		Path:          "/stream/upload",
+		Body:          in,
+		ContentType:   fs.MimeTypeFromName(name), // FIXME should read mime type of original object
+		ContentLength: &size,
+		Options:       options,
+		ExtraHeaders: map[string]string{
+			"x-filename":   name,
+			"x-parent_id":  parent,
+			"upload-id":    uploadID,
+			"x-streammode": "1",
+		},
+	}
+	if size < 0 {
+		opts.ContentLength = nil
 	}
 
+	var err error
 	var resp *http.Response
 	var uploadResponse *api.UploadResponse
 	err = f.pacer.CallNoRetry(func() (bool, error) {
