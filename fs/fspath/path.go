@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	configNameRe = `[\w_. -]+`
+	configNameRe = `[\w. -]+`
 	remoteNameRe = `^(:?` + configNameRe + `)`
 )
 
