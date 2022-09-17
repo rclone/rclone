@@ -68,6 +68,7 @@ docs = [
     "putio.md",
     "seafile.md",
     "sftp.md",
+    "smb.md",
     "storj.md",
     "sugarsync.md",
     "tardigrade.md",            # stub only to redirect to storj.md

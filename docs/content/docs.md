@@ -69,6 +69,7 @@ See the following for detailed instructions for
   * [Seafile](/seafile/)
   * [SFTP](/sftp/)
   * [Sia](/sia/)
+  * [SMB](/smb/)
   * [Storj](/storj/)
   * [SugarSync](/sugarsync/)
   * [Union](/union/)
