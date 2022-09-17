@@ -29,6 +29,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 )
@@ -1129,6 +1130,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // This will initialize the variables of a new press Object. The metadata object, mo, and metadata struct, meta, must be specified.
 func (f *Fs) newObject(o fs.Object, mo fs.Object, meta *ObjectMetadata) *Object {
+	if o == nil {
+		log.Trace(nil, "newObject(%#v, %#v, %#v) called with nil o", o, mo, meta)
+	}
 	return &Object{
 		Object: o,
 		f:      f,
@@ -1141,6 +1145,9 @@ func (f *Fs) newObject(o fs.Object, mo fs.Object, meta *ObjectMetadata) *Object 
 
 // This initializes the variables of a press Object with only the size. The metadata will be loaded later on demand.
 func (f *Fs) newObjectSizeAndNameOnly(o fs.Object, moName string, size int64) *Object {
+	if o == nil {
+		log.Trace(nil, "newObjectSizeAndNameOnly(%#v, %#v, %#v) called with nil o", o, moName, size)
+	}
 	return &Object{
 		Object: o,
 		f:      f,
