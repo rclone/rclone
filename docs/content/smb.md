@@ -21,6 +21,7 @@ You can't access to the shared printers from rclone, obviously.
 
 You can't use Anonymous access for logging in. You have to use the `guest` user with an empty password instead. (Setting empty password requires tweaking `rclone.conf` file)
 The rclone client tries to avoid 8.3 names when uploading files. If you wish to prevent it, it is highly recommended to use either [FTP](/ftp) or [SFTP](/sftp) instead.
+Alternatively, [the local backend](/local/#paths-on-windows) on Windows can access SMB servers using UNC paths, by `\\server\share`. This doesn't apply to non-Windows OSes, such as Linux and macOS.
 
 ## Configuration
 
@@ -189,6 +190,17 @@ Properties:
 - Env Var:     RCLONE_SMB_IDLE_TIMEOUT
 - Type:        Duration
 - Default:     1m0s
+
+#### --smb-hide-special-share
+
+Hide special shares (e.g. print$) which users aren't supposed to access.
+
+Properties:
+
+- Config:      hide_special_share
+- Env Var:     RCLONE_SMB_HIDE_SPECIAL_SHARE
+- Type:        bool
+- Default:     true
 
 #### --smb-encoding
 
