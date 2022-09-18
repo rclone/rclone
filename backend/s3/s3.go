@@ -1566,8 +1566,21 @@ isn't set then "acl" is used instead.`,
 				Help:  "arn:aws:kms:*",
 			}},
 		}, {
-			Name:     "sse_customer_key",
-			Help:     "If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data.",
+			Name: "sse_customer_key",
+			Help: `To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data.
+
+Alternatively you can provide --sse-customer-key-base64.`,
+			Provider: "AWS,Ceph,ChinaMobile,Minio",
+			Advanced: true,
+			Examples: []fs.OptionExample{{
+				Value: "",
+				Help:  "None",
+			}},
+		}, {
+			Name: "sse_customer_key_base64",
+			Help: `If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data.
+
+Alternatively you can provide --sse-customer-key.`,
 			Provider: "AWS,Ceph,ChinaMobile,Minio",
 			Advanced: true,
 			Examples: []fs.OptionExample{{
@@ -2142,6 +2155,7 @@ type Options struct {
 	SSEKMSKeyID           string               `config:"sse_kms_key_id"`
 	SSECustomerAlgorithm  string               `config:"sse_customer_algorithm"`
 	SSECustomerKey        string               `config:"sse_customer_key"`
+	SSECustomerKeyBase64  string               `config:"sse_customer_key_base64"`
 	SSECustomerKeyMD5     string               `config:"sse_customer_key_md5"`
 	StorageClass          string               `config:"storage_class"`
 	UploadCutoff          fs.SizeSuffix        `config:"upload_cutoff"`
@@ -2678,6 +2692,16 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.BucketACL == "" {
 		opt.BucketACL = opt.ACL
+	}
+	if opt.SSECustomerKeyBase64 != "" && opt.SSECustomerKey != "" {
+		return nil, errors.New("s3: can't use sse_customer_key and sse_customer_key_base64 at the same time")
+	} else if opt.SSECustomerKeyBase64 != "" {
+		// Decode the base64-encoded key and store it in the SSECustomerKey field
+		decoded, err := base64.StdEncoding.DecodeString(opt.SSECustomerKeyBase64)
+		if err != nil {
+			return nil, fmt.Errorf("s3: Could not decode sse_customer_key_base64: %w", err)
+		}
+		opt.SSECustomerKey = string(decoded)
 	}
 	if opt.SSECustomerKey != "" && opt.SSECustomerKeyMD5 == "" {
 		// calculate CustomerKeyMD5 if not supplied
