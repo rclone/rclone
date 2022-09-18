@@ -79,7 +79,7 @@ Set to 0 to keep connections indefinitely.
 			Advanced: true,
 		}, {
 			Name:     "case_insensitive",
-			Help:     "Whether the server is configured to be case-insensitive. Always true on Windows shares.",
+			Help:     "Whether the server is configured to be case-insensitive.\n\nAlways true on Windows shares.",
 			Default:  true,
 			Advanced: true,
 		}, {
