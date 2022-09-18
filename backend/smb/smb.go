@@ -90,9 +90,7 @@ Set to 0 to keep connections indefinitely.
 				encoder.EncodeCtl |
 				encoder.EncodeDot |
 				// the file turns into 8.3 names (and cannot be converted back)
-				encoder.EncodeLeftSpace |
 				encoder.EncodeRightSpace |
-				encoder.EncodeLeftPeriod |
 				encoder.EncodeRightPeriod |
 				//
 				encoder.EncodeInvalidUtf8,
