@@ -105,14 +105,14 @@ Set to 0 to keep connections indefinitely.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Host        string      `config:"host"`
-	Port        string      `config:"port"`
-	UserName    string      `config:"username"`
-	Password    string      `config:"password"`
-	Domain      string      `config:"domain"`
-	HideSpecial bool        `config:"hide_special_share"`
-	CaseInsensitive bool `config:"case_insensitive"`
-	IdleTimeout fs.Duration `config:"idle_timeout"`
+	Host            string      `config:"host"`
+	Port            string      `config:"port"`
+	UserName        string      `config:"username"`
+	Password        string      `config:"password"`
+	Domain          string      `config:"domain"`
+	HideSpecial     bool        `config:"hide_special_share"`
+	CaseInsensitive bool        `config:"case_insensitive"`
+	IdleTimeout     fs.Duration `config:"idle_timeout"`
 
 	Enc encoder.MultiEncoder `config:"encoding"`
 }
