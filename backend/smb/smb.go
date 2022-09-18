@@ -73,6 +73,11 @@ Set to 0 to keep connections indefinitely.
 `,
 			Advanced: true,
 		}, {
+			Name:     "hide_special_share",
+			Help:     "Hide special shares (e.g. print$) which users aren't supposed to access.",
+			Default:  true,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -102,6 +107,7 @@ type Options struct {
 	UserName    string      `config:"username"`
 	Password    string      `config:"password"`
 	Domain      string      `config:"domain"`
+	HideSpecial bool        `config:"hide_special_share"`
 	IdleTimeout fs.Duration `config:"idle_timeout"`
 
 	Enc encoder.MultiEncoder `config:"encoding"`
@@ -398,6 +404,9 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		shares, err := cn.smbSession.ListSharenames()
 		for _, shh := range shares {
 			shh = f.toNativePath(shh)
+			if strings.HasSuffix(shh, "$") && f.opt.HideSpecial {
+				continue
+			}
 			entries = append(entries, fs.NewDir(shh, time.Time{}))
 		}
 		return entries, err
