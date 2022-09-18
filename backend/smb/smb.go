@@ -78,6 +78,11 @@ Set to 0 to keep connections indefinitely.
 			Default:  true,
 			Advanced: true,
 		}, {
+			Name:     "case_insensitive",
+			Help:     "Whether the server is configured to be case-insensitive. Always true on Windows shares.",
+			Default:  true,
+			Advanced: true,
+		}, {
 			Name:     config.ConfigEncoding,
 			Help:     config.ConfigEncodingHelp,
 			Advanced: true,
@@ -106,6 +111,7 @@ type Options struct {
 	Password    string      `config:"password"`
 	Domain      string      `config:"domain"`
 	HideSpecial bool        `config:"hide_special_share"`
+	CaseInsensitive bool `config:"case_insensitive"`
 	IdleTimeout fs.Duration `config:"idle_timeout"`
 
 	Enc encoder.MultiEncoder `config:"encoding"`
@@ -152,15 +158,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		root: root,
 	}
 	f.features = (&fs.Features{
-		CaseInsensitive:         true, // even smbd on Linux does for Windows clients, so I think it's okay
+		CaseInsensitive:         opt.CaseInsensitive,
 		CanHaveEmptyDirectories: true,
 		BucketBased:             true,
 	}).Fill(ctx, f)
 
 	f.pacer = fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant)))
 	// set the pool drainer timer going
-	if f.opt.IdleTimeout > 0 {
-		f.drain = time.AfterFunc(time.Duration(f.opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
+	if opt.IdleTimeout > 0 {
+		f.drain = time.AfterFunc(time.Duration(opt.IdleTimeout), func() { _ = f.drainPool(ctx) })
 	}
 
 	// test if the root exists as a file
