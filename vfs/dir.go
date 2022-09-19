@@ -760,6 +760,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 			dir := node.(*Dir)
 			dir.mu.Lock()
 			dir.modTime = item.ModTime(context.TODO())
+			dir.entry = item
 			if dirTree != nil {
 				err = dir._readDirFromDirTree(dirTree, when)
 				if err != nil {
