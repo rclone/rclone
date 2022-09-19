@@ -5,7 +5,7 @@ description: "Rclone docs for SMB backend"
 
 # {{< icon "fa fa-server" >}} SMB
 
-SMB is the [a communication protocol to share files over network](https://en.wikipedia.org/wiki/Server_Message_Block).
+SMB is [a communication protocol to share files over network](https://en.wikipedia.org/wiki/Server_Message_Block).
 
 This relies on [go-smb2 library](https://github.com/hirochachacha/go-smb2/) for communication with SMB protocol.
 
