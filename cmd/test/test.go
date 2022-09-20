@@ -16,7 +16,7 @@ var Command = &cobra.Command{
 	Short: `Run a test command`,
 	Long: `Rclone test is used to run test commands.
 
-Select which test comand you want with the subcommand, eg
+Select which test command you want with the subcommand, eg
 
     rclone test memory remote:
 

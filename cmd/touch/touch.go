@@ -141,7 +141,7 @@ func Touch(ctx context.Context, f fs.Fs, remote string) error {
 	file, err := f.NewObject(ctx, remote)
 	if err != nil {
 		if errors.Is(err, fs.ErrorObjectNotFound) {
-			// Touching non-existant path, possibly creating it as new file
+			// Touching non-existent path, possibly creating it as new file
 			if remote == "" {
 				fs.Logf(f, "Not touching empty directory")
 				return nil
