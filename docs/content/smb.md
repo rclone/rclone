@@ -20,7 +20,7 @@ You can find shares by quering the root if you're unsure (e.g. `rclone lsd remot
 You can't access to the shared printers from rclone, obviously.
 
 You can't use Anonymous access for logging in. You have to use the `guest` user with an empty password instead.
-The rclone client tries to avoid 8.3 names when the file name ends with spaces or periods. If you wish to prevent it, it is highly recommended to use either [FTP](/ftp) or [SFTP](/sftp) instead.
+The rclone client tries to avoid 8.3 names when uploading files by encoding trailing spaces and periods.
 Alternatively, [the local backend](/local/#paths-on-windows) on Windows can access SMB servers using UNC paths, by `\\server\share`. This doesn't apply to non-Windows OSes, such as Linux and macOS.
 
 ## Configuration
