@@ -53,17 +53,17 @@ E.g. "example.com".
 Enter a value.
 host> localhost
 
-Option username.
+Option user.
 Samba username.
 Enter a string value. Press Enter for the default (lesmi).
-username> guest
+user> guest
 
 Option port.
 Samba port number.
 Enter a signed integer. Press Enter for the default (445).
 port> 
 
-Option password.
+Option pass.
 Samba password.
 Choose an alternative below. Press Enter for the default (n).
 y) Yes, type in my own password
@@ -97,8 +97,8 @@ Configuration complete.
 Options:
 - type: samba
 - host: localhost
-- username: guest
-- password: *** ENCRYPTED ***
+- user: guest
+- pass: *** ENCRYPTED ***
 Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
@@ -124,14 +124,14 @@ Properties:
 - Type:        string
 - Required:    true
 
-#### --smb-username
+#### --smb-user
 
 SMB username.
 
 Properties:
 
-- Config:      username
-- Env Var:     RCLONE_SMB_USERNAME
+- Config:      user
+- Env Var:     RCLONE_SMB_USER
 - Type:        string
 - Default:     "$USER"
 
@@ -146,7 +146,7 @@ Properties:
 - Type:        int
 - Default:     445
 
-#### --smb-password
+#### --smb-pass
 
 SMB password.
 
@@ -154,8 +154,8 @@ SMB password.
 
 Properties:
 
-- Config:      password
-- Env Var:     RCLONE_SMB_PASSWORD
+- Config:      pass
+- Env Var:     RCLONE_SMB_PASS
 - Type:        string
 - Required:    false
 
@@ -204,7 +204,9 @@ Properties:
 
 #### --smb-case-insensitive
 
-Whether the server is configured to be case-insensitive. Always true on Windows shares.
+Whether the server is configured to be case-insensitive.
+
+Always true on Windows shares.
 
 Properties:
 

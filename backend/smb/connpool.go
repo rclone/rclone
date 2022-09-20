@@ -10,6 +10,7 @@ import (
 	smb2 "github.com/hirochachacha/go-smb2"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fshttp"
 )
 
@@ -23,10 +24,18 @@ func (f *Fs) dial(ctx context.Context, network, addr string) (*conn, error) {
 		return nil, err
 	}
 
+	pass := ""
+	if f.opt.Pass != "" {
+		pass, err = obscure.Reveal(f.opt.Pass)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	d := &smb2.Dialer{
 		Initiator: &smb2.NTLMInitiator{
-			User:     f.opt.UserName,
-			Password: f.opt.Password,
+			User:     f.opt.User,
+			Password: pass,
 			Domain:   f.opt.Domain,
 		},
 	}

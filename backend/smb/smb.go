@@ -46,7 +46,7 @@ func init() {
 			Help:     "SMB server hostname to connect to.\n\nE.g. \"example.com\".",
 			Required: true,
 		}, {
-			Name:    "username",
+			Name:    "user",
 			Help:    "SMB username.",
 			Default: currentUser,
 		}, {
@@ -54,7 +54,7 @@ func init() {
 			Help:    "SMB port number.",
 			Default: 445,
 		}, {
-			Name:       "password",
+			Name:       "pass",
 			Help:       "SMB password.",
 			IsPassword: true,
 		}, {
@@ -107,8 +107,8 @@ Set to 0 to keep connections indefinitely.
 type Options struct {
 	Host            string      `config:"host"`
 	Port            string      `config:"port"`
-	UserName        string      `config:"username"`
-	Password        string      `config:"password"`
+	User            string      `config:"user"`
+	Pass            string      `config:"pass"`
 	Domain          string      `config:"domain"`
 	HideSpecial     bool        `config:"hide_special_share"`
 	CaseInsensitive bool        `config:"case_insensitive"`
@@ -205,9 +205,9 @@ func (f *Fs) Root() string {
 func (f *Fs) String() string {
 	bucket, file := f.split("")
 	if bucket == "" {
-		return fmt.Sprintf("smb://%s@%s:%s/", f.opt.UserName, f.opt.Host, f.opt.Port)
+		return fmt.Sprintf("smb://%s@%s:%s/", f.opt.User, f.opt.Host, f.opt.Port)
 	}
-	return fmt.Sprintf("smb://%s@%s:%s/%s/%s", f.opt.UserName, f.opt.Host, f.opt.Port, bucket, file)
+	return fmt.Sprintf("smb://%s@%s:%s/%s/%s", f.opt.User, f.opt.Host, f.opt.Port, bucket, file)
 }
 
 // Features returns the optional features of this Fs
