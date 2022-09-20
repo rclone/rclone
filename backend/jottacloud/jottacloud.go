@@ -1930,7 +1930,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		o.md5 = result.Md5
 		o.modTime = time.Unix(result.Modified/1000, 0)
 	} else {
-		// If the file state is COMPLETE we don't need to upload it because the file was already found but we still ned to update our metadata
+		// If the file state is COMPLETE we don't need to upload it because the file was already found but we still need to update our metadata
 		return o.readMetaData(ctx, true)
 	}
 

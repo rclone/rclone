@@ -1,4 +1,4 @@
-// Package combine implents a backend to combine multiple remotes in a directory tree
+// Package combine implements a backend to combine multiple remotes in a directory tree
 package combine
 
 /*
@@ -351,7 +351,7 @@ func (f *Fs) multithread(ctx context.Context, fn func(context.Context, *upstream
 	return g.Wait()
 }
 
-// join the elements together but unline path.Join return empty string
+// join the elements together but unlike path.Join return empty string
 func join(elem ...string) string {
 	result := path.Join(elem...)
 	if result == "." {

@@ -536,7 +536,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			default:
 				return nil, err
 			}
-			// if the moint failed we have to abort here
+			// if the mount failed we have to abort here
 		}
 		// if the mount succeeded it's now a normal folder in the users root namespace
 		// we disable shared folder mode and proceed normally

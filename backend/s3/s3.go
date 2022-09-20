@@ -1,4 +1,4 @@
-// Package s3 provides an interface to Amazon S3 oject storage
+// Package s3 provides an interface to Amazon S3 object storage
 package s3
 
 //go:generate go run gen_setfrom.go -o setfrom.go
@@ -2998,7 +2998,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return nil, fmt.Errorf("s3: upload cutoff: %w", err)
 	}
 	if opt.Versions && opt.VersionAt.IsSet() {
-		return nil, errors.New("s3: cant use --s3-versions and --s3-version-at at the same time")
+		return nil, errors.New("s3: can't use --s3-versions and --s3-version-at at the same time")
 	}
 	if opt.BucketACL == "" {
 		opt.BucketACL = opt.ACL

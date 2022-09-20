@@ -209,7 +209,7 @@ func (c *Cipher) setPassBadBlocks(passBadBlocks bool) {
 // scrypt.
 //
 // If salt is "" we use a fixed salt just to make attackers lives
-// slighty harder than using no salt.
+// slightly harder than using no salt.
 //
 // Note that empty password makes all 0x00 keys which is used in the
 // tests.
@@ -914,9 +914,8 @@ func (fh *decrypter) Read(p []byte) (n int, err error) {
 	return n, nil
 }
 
-// calculateUnderlying converts an (offset, limit) in a crypted file
-// into an (underlyingOffset, underlyingLimit) for the underlying
-// file.
+// calculateUnderlying converts an (offset, limit) in an encrypted file
+// into an (underlyingOffset, underlyingLimit) for the underlying file.
 //
 // It also returns number of bytes to discard after reading the first
 // block and number of blocks this is from the start so the nonce can
