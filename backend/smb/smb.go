@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rclone/rclone/backend/union"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
@@ -117,7 +116,7 @@ type Options struct {
 	Enc encoder.MultiEncoder `config:"encoding"`
 }
 
-// Fs represents an IAS3 remote
+// Fs represents a SMB remote
 type Fs struct {
 	name     string       // name of this remote
 	root     string       // the path we are working on if any
@@ -215,7 +214,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// Hashes returns type of hashes supported by IA
+// Hashes returns nothing as SMB itself doesn't have a way to tell checksums
 func (f *Fs) Hashes() hash.Set {
 	return hash.NewHashSet()
 }
@@ -510,7 +509,7 @@ func (o *Object) Fs() fs.Info {
 	return o.fs
 }
 
-// Hash returns the hash value presented by IA
+// Hash always returns empty value
 func (o *Object) Hash(ctx context.Context, ty hash.Type) (string, error) {
 	return "", hash.ErrUnsupported
 }
@@ -700,14 +699,14 @@ func (o *Object) String() string {
 
 /// Misc
 
-// split returns bucket and bucketPath from the rootRelativePath
+// split returns share name and path in the share from the rootRelativePath
 // relative to f.root
-func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
+func (f *Fs) split(rootRelativePath string) (shareName, filepath string) {
 	return bucket.Split(path.Join(f.root, rootRelativePath))
 }
 
-// split returns bucket and bucketPath from the object
-func (o *Object) split() (bucket, bucketPath string) {
+// split returns share name and path in the share from the object
+func (o *Object) split() (shareName, filepath string) {
 	return o.fs.split(o.remote)
 }
 
@@ -750,7 +749,7 @@ func betterPathClean(p string) string {
 }
 
 type boundReadCloser struct {
-	rc    io.Reader
+	rc    io.ReadCloser
 	close func() error
 }
 
@@ -759,12 +758,12 @@ func (r *boundReadCloser) Read(p []byte) (n int, err error) {
 }
 
 func (r *boundReadCloser) Close() error {
-	errs := union.Errors(make([]error, 2))
-	if rr, ok := r.rc.(io.Closer); ok {
-		errs[0] = rr.Close()
+	err1 := r.rc.Close()
+	err2 := r.close()
+	if err1 != nil {
+		return err1
 	}
-	errs[1] = r.close()
-	return errs.Err()
+	return err2
 }
 
 func translateError(e error, dir bool) error {
