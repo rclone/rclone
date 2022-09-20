@@ -2,7 +2,7 @@
 package hidrive
 
 // FIXME HiDrive only supports file or folder names of 255 characters or less.
-// Operations that create files oder folder with longer names will throw a HTTP error:
+// Operations that create files or folders with longer names will throw an HTTP error:
 // - 422 Unprocessable Entity
 // A more graceful way for rclone to handle this may be desirable.
 

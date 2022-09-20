@@ -1787,7 +1787,7 @@ func (f *Fs) CleanUpCache(ignoreLastTs bool) {
 	}
 }
 
-// StopBackgroundRunners will signall all the runners to stop their work
+// StopBackgroundRunners will signal all the runners to stop their work
 // can be triggered from a terminate signal or from testing between runs
 func (f *Fs) StopBackgroundRunners() {
 	f.cleanupChan <- false
