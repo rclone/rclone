@@ -3,8 +3,8 @@ test check-access-filters
 # NOTE: Include Other tests may result in listing diffs due to rclone processing order change. False fail.
 #
 # Tests are done in two phases:
-#  - EXCLUDE OTHER tests check that RCLONE_TEST files are only found in the explicity included directories
-#  - INCLUDE OTHER tesss check that RCLONE_TEST files are found in all directories not explicity excluded
+#  - EXCLUDE OTHER tests check that RCLONE_TEST files are only found in the explicitly included directories
+#  - INCLUDE OTHER tesss check that RCLONE_TEST files are found in all directories not explicitly excluded
 #
 # Each phase checks that:
 #  - missing RCLONE_TEST files in don't care directories don't cause failures
