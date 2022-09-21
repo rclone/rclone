@@ -9,6 +9,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v1.0.0
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/Max-Sum/base32768 v0.0.0-20230304063302-18e6ce5945fd
+	github.com/Mikubill/gofakes3 v0.0.3-0.20221030004050-725f2cf2bf5e
 	github.com/Unknwon/goconfig v1.0.0
 	github.com/a8m/tree v0.0.0-20230208161321-36ae24ddad15
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
@@ -17,7 +18,7 @@ require (
 	github.com/anacrolix/log v0.13.1
 	github.com/artyom/mtab v1.0.0
 	github.com/atotto/clipboard v0.1.4
-	github.com/aws/aws-sdk-go v1.44.246
+	github.com/aws/aws-sdk-go v1.44.256
 	github.com/buengese/sgzip v0.1.1
 	github.com/colinmarc/hdfs/v2 v2.3.0
 	github.com/coreos/go-semver v0.3.1
@@ -51,7 +52,7 @@ require (
 	github.com/rfjakob/eme v1.1.2
 	github.com/rivo/uniseg v0.4.4
 	github.com/shirou/gopsutil/v3 v3.23.3
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.2
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
@@ -63,12 +64,12 @@ require (
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
 	go.etcd.io/bbolt v1.3.7
 	goftp.io/server v1.0.0-rc1
-	golang.org/x/crypto v0.7.0
-	golang.org/x/net v0.8.0
+	golang.org/x/crypto v0.9.0
+	golang.org/x/net v0.10.0
 	golang.org/x/oauth2 v0.6.0
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.7.0
-	golang.org/x/text v0.8.0
+	golang.org/x/sys v0.8.0
+	golang.org/x/text v0.9.0
 	golang.org/x/time v0.3.0
 	google.golang.org/api v0.115.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -120,6 +121,8 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/ryszard/goskiplist v0.0.0-20150312221310-2dfbae5fcf46 // indirect
+	github.com/shabbyrobe/gocovmerge v0.0.0-20190829150210-3e036491d500 // indirect
 	github.com/shoenig/go-m1cpu v0.1.4 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/spacemonkeygo/monkit/v3 v3.0.19 // indirect
@@ -130,6 +133,7 @@ require (
 	github.com/zeebo/blake3 v0.2.3 // indirect
 	github.com/zeebo/errs v1.3.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
+	golang.org/x/tools v0.8.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230331144136-dcfb400f0633 // indirect
 	google.golang.org/grpc v1.54.0 // indirect
@@ -148,5 +152,5 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/pkg/xattr v0.4.9
 	golang.org/x/mobile v0.0.0-20230301163155-e0f57694e12c
-	golang.org/x/term v0.7.0
+	golang.org/x/term v0.8.0
 )
