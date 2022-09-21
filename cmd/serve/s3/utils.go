@@ -11,11 +11,7 @@ import (
 	"github.com/rclone/rclone/vfs"
 )
 
-type NoOpReadCloser struct{}
-
-type ReaderWithDummyCloser struct {
-	io.Reader
-}
+type noOpReadCloser struct{}
 
 type readerWithCloser struct {
 	io.Reader
@@ -24,15 +20,11 @@ type readerWithCloser struct {
 
 var _ io.ReadCloser = &readerWithCloser{}
 
-func (d ReaderWithDummyCloser) Close() error {
-	return nil
-}
-
-func (d NoOpReadCloser) Read(b []byte) (n int, err error) {
+func (d noOpReadCloser) Read(b []byte) (n int, err error) {
 	return 0, io.EOF
 }
 
-func (d NoOpReadCloser) Close() error {
+func (d noOpReadCloser) Close() error {
 	return nil
 }
 
@@ -94,9 +86,8 @@ func prefixParser(p *gofakes3.Prefix) (path, remaining string, ok bool) {
 	idx := strings.LastIndexByte(p.Prefix, '/')
 	if idx < 0 {
 		return "", p.Prefix, true
-	} else {
-		return p.Prefix[:idx], p.Prefix[idx+1:], true
 	}
+	return p.Prefix[:idx], p.Prefix[idx+1:], true
 }
 
 func mkdirRecursive(path string, fs *vfs.VFS) error {

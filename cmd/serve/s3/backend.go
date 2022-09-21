@@ -1,3 +1,4 @@
+// Package s3 implements a fake s3 server for rclone
 package s3
 
 import (
@@ -26,7 +27,7 @@ var (
 	timeFormat  = "Mon, 2 Jan 2006 15:04:05.999999999 GMT"
 )
 
-type SimpleBucketBackend struct {
+type S3Backend struct {
 	opt  *Options
 	lock sync.Mutex
 	fs   *vfs.VFS
@@ -34,14 +35,14 @@ type SimpleBucketBackend struct {
 
 // newBackend creates a new SimpleBucketBackend.
 func newBackend(fs *vfs.VFS, opt *Options) gofakes3.Backend {
-	return &SimpleBucketBackend{
+	return &S3Backend{
 		fs:  fs,
 		opt: opt,
 	}
 }
 
 // ListBuckets always returns the default bucket.
-func (db *SimpleBucketBackend) ListBuckets() ([]gofakes3.BucketInfo, error) {
+func (db *S3Backend) ListBuckets() ([]gofakes3.BucketInfo, error) {
 	dirEntries, err := getDirEntries(filepath.FromSlash("/"), db.fs)
 	if err != nil {
 		return nil, err
@@ -61,7 +62,7 @@ func (db *SimpleBucketBackend) ListBuckets() ([]gofakes3.BucketInfo, error) {
 }
 
 // ListBucket lists the objects in the given bucket.
-func (db *SimpleBucketBackend) ListBucket(bucket string, prefix *gofakes3.Prefix, page gofakes3.ListBucketPage) (*gofakes3.ObjectList, error) {
+func (db *S3Backend) ListBucket(bucket string, prefix *gofakes3.Prefix, page gofakes3.ListBucketPage) (*gofakes3.ObjectList, error) {
 
 	_, err := db.fs.Stat(bucket)
 	if err != nil {
@@ -91,7 +92,7 @@ func (db *SimpleBucketBackend) ListBucket(bucket string, prefix *gofakes3.Prefix
 }
 
 // getObjectsList lists the objects in the given bucket.
-func (db *SimpleBucketBackend) getObjectsList(bucket string, prefix *gofakes3.Prefix) (*gofakes3.ObjectList, error) {
+func (db *S3Backend) getObjectsList(bucket string, prefix *gofakes3.Prefix) (*gofakes3.ObjectList, error) {
 
 	prefixPath, prefixPart, delim := prefixParser(prefix)
 	if !delim {
@@ -136,9 +137,11 @@ func (db *SimpleBucketBackend) getObjectsList(bucket string, prefix *gofakes3.Pr
 }
 
 // getObjectsList lists the objects in the given bucket.
-func (db *SimpleBucketBackend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Prefix) (*gofakes3.ObjectList, error) {
+func (db *S3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Prefix) (*gofakes3.ObjectList, error) {
 	response := gofakes3.NewObjectList()
-	walk.ListR(context.Background(), db.fs.Fs(), bucket, true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+
+	// ignore error - vfs may have uncommitted updates, such as new dir etc.
+	_ = walk.ListR(context.Background(), db.fs.Fs(), bucket, true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
 			entry := entry.(fs.Object)
 			objName := charEncoder.Decode(entry.Remote())
@@ -171,7 +174,7 @@ func (db *SimpleBucketBackend) getObjectsListArbitrary(bucket string, prefix *go
 // HeadObject returns the fileinfo for the given object name.
 //
 // Note that the metadata is not supported yet.
-func (db *SimpleBucketBackend) HeadObject(bucketName, objectName string) (*gofakes3.Object, error) {
+func (db *S3Backend) HeadObject(bucketName, objectName string) (*gofakes3.Object, error) {
 
 	_, err := db.fs.Stat(bucketName)
 	if err != nil {
@@ -208,12 +211,12 @@ func (db *SimpleBucketBackend) HeadObject(bucketName, objectName string) (*gofak
 			"Content-Type":  fs.MimeType(context.Background(), fobj),
 		},
 		Size:     size,
-		Contents: NoOpReadCloser{},
+		Contents: noOpReadCloser{},
 	}, nil
 }
 
 // GetObject fetchs the object from the filesystem.
-func (db *SimpleBucketBackend) GetObject(bucketName, objectName string, rangeRequest *gofakes3.ObjectRangeRequest) (obj *gofakes3.Object, err error) {
+func (db *S3Backend) GetObject(bucketName, objectName string, rangeRequest *gofakes3.ObjectRangeRequest) (obj *gofakes3.Object, err error) {
 
 	_, err = db.fs.Stat(bucketName)
 	if err != nil {
@@ -251,7 +254,7 @@ func (db *SimpleBucketBackend) GetObject(bucketName, objectName string, rangeReq
 	defer func() {
 		// If an error occurs, the caller may not have access to Object.Body in order to close it:
 		if err != nil {
-			in.Close()
+			_ = in.Close()
 		}
 	}()
 
@@ -282,7 +285,7 @@ func (db *SimpleBucketBackend) GetObject(bucketName, objectName string, rangeReq
 }
 
 // TouchObject creates or updates meta on specified object.
-func (db *SimpleBucketBackend) TouchObject(fp string, meta map[string]string) (result gofakes3.PutObjectResult, err error) {
+func (db *S3Backend) TouchObject(fp string, meta map[string]string) (result gofakes3.PutObjectResult, err error) {
 
 	_, err = db.fs.Stat(fp)
 	if err == vfs.ENOENT {
@@ -290,7 +293,7 @@ func (db *SimpleBucketBackend) TouchObject(fp string, meta map[string]string) (r
 		if err != nil {
 			return result, err
 		}
-		f.Close()
+		_ = f.Close()
 		return db.TouchObject(fp, meta)
 	} else if err != nil {
 		return result, err
@@ -299,7 +302,7 @@ func (db *SimpleBucketBackend) TouchObject(fp string, meta map[string]string) (r
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			db.fs.Chtimes(fp, ti, ti)
+			return result, db.fs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
 	}
@@ -307,7 +310,7 @@ func (db *SimpleBucketBackend) TouchObject(fp string, meta map[string]string) (r
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			db.fs.Chtimes(fp, ti, ti)
+			return result, db.fs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
 	}
@@ -321,7 +324,7 @@ func (db *SimpleBucketBackend) TouchObject(fp string, meta map[string]string) (r
 }
 
 // PutObject creates or overwrites the object with the given name.
-func (db *SimpleBucketBackend) PutObject(
+func (db *S3Backend) PutObject(
 	bucketName, objectName string,
 	meta map[string]string,
 	input io.Reader, size int64,
@@ -363,14 +366,14 @@ func (db *SimpleBucketBackend) PutObject(
 	w := io.MultiWriter(f, hasher)
 	if _, err := io.Copy(w, input); err != nil {
 		// remove file when i/o error occured (FsPutErr)
-		f.Close()
-		db.fs.Remove(fp)
+		_ = f.Close()
+		_ = db.fs.Remove(fp)
 		return result, err
 	}
 
 	if err := f.Close(); err != nil {
 		// remove file when close error occured (FsPutErr)
-		db.fs.Remove(fp)
+		_ = db.fs.Remove(fp)
 		return result, err
 	}
 
@@ -382,7 +385,7 @@ func (db *SimpleBucketBackend) PutObject(
 	if val, ok := meta["X-Amz-Meta-Mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			db.fs.Chtimes(fp, ti, ti)
+			return result, db.fs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
 	}
@@ -390,7 +393,7 @@ func (db *SimpleBucketBackend) PutObject(
 	if val, ok := meta["mtime"]; ok {
 		ti, err := swift.FloatStringToTime(val)
 		if err == nil {
-			db.fs.Chtimes(fp, ti, ti)
+			return result, db.fs.Chtimes(fp, ti, ti)
 		}
 		// ignore error since the file is successfully created
 	}
@@ -399,7 +402,7 @@ func (db *SimpleBucketBackend) PutObject(
 }
 
 // DeleteMulti deletes multiple objects in a single request.
-func (db *SimpleBucketBackend) DeleteMulti(bucketName string, objects ...string) (result gofakes3.MultiDeleteResult, rerr error) {
+func (db *S3Backend) DeleteMulti(bucketName string, objects ...string) (result gofakes3.MultiDeleteResult, rerr error) {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
@@ -422,7 +425,7 @@ func (db *SimpleBucketBackend) DeleteMulti(bucketName string, objects ...string)
 }
 
 // DeleteObject deletes the object with the given name.
-func (db *SimpleBucketBackend) DeleteObject(bucketName, objectName string) (result gofakes3.ObjectDeleteResult, rerr error) {
+func (db *S3Backend) DeleteObject(bucketName, objectName string) (result gofakes3.ObjectDeleteResult, rerr error) {
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
@@ -430,7 +433,7 @@ func (db *SimpleBucketBackend) DeleteObject(bucketName, objectName string) (resu
 }
 
 // deleteObjectLocked deletes the object from the filesystem.
-func (db *SimpleBucketBackend) deleteObjectLocked(bucketName, objectName string) error {
+func (db *S3Backend) deleteObjectLocked(bucketName, objectName string) error {
 
 	_, err := db.fs.Stat(bucketName)
 	if err != nil {
@@ -450,7 +453,7 @@ func (db *SimpleBucketBackend) deleteObjectLocked(bucketName, objectName string)
 }
 
 // CreateBucket creates a new bucket.
-func (db *SimpleBucketBackend) CreateBucket(name string) error {
+func (db *S3Backend) CreateBucket(name string) error {
 	_, err := db.fs.Stat(name)
 	if err != nil && err != vfs.ENOENT {
 		return gofakes3.ErrInternal
@@ -467,7 +470,7 @@ func (db *SimpleBucketBackend) CreateBucket(name string) error {
 }
 
 // DeleteBucket deletes the bucket with the given name.
-func (db *SimpleBucketBackend) DeleteBucket(name string) error {
+func (db *S3Backend) DeleteBucket(name string) error {
 	_, err := db.fs.Stat(name)
 	if err != nil {
 		return gofakes3.BucketNotFound(name)
@@ -481,7 +484,7 @@ func (db *SimpleBucketBackend) DeleteBucket(name string) error {
 }
 
 // BucketExists checks if the bucket exists.
-func (db *SimpleBucketBackend) BucketExists(name string) (exists bool, err error) {
+func (db *S3Backend) BucketExists(name string) (exists bool, err error) {
 	_, err = db.fs.Stat(name)
 	if err != nil {
 		return false, nil
@@ -490,7 +493,8 @@ func (db *SimpleBucketBackend) BucketExists(name string) (exists bool, err error
 	return true, nil
 }
 
-func (db *SimpleBucketBackend) CopyObject(srcBucket, srcKey, dstBucket, dstKey string, meta map[string]string) (result gofakes3.CopyObjectResult, err error) {
+// CopyObject copy specified object from srcKey to dstKey.
+func (db *S3Backend) CopyObject(srcBucket, srcKey, dstBucket, dstKey string, meta map[string]string) (result gofakes3.CopyObjectResult, err error) {
 
 	fp := path.Join(srcBucket, srcKey)
 	if srcBucket == dstBucket && srcKey == dstKey {
@@ -505,7 +509,7 @@ func (db *SimpleBucketBackend) CopyObject(srcBucket, srcKey, dstBucket, dstKey s
 		if err != nil {
 			return result, nil
 		}
-		db.fs.Chtimes(fp, ti, ti)
+		return result, db.fs.Chtimes(fp, ti, ti)
 	}
 
 	cStat, err := db.fs.Stat(fp)
@@ -517,7 +521,9 @@ func (db *SimpleBucketBackend) CopyObject(srcBucket, srcKey, dstBucket, dstKey s
 	if err != nil {
 		return
 	}
-	defer c.Contents.Close()
+	defer func() {
+		_ = c.Contents.Close()
+	}()
 
 	for k, v := range c.Metadata {
 		if _, found := meta[k]; !found && k != "X-Amz-Acl" {

@@ -39,8 +39,8 @@ func TestS3(t *testing.T) {
 		}
 
 		w := newServer(context.Background(), f, serveropt)
-		w.Serve()
-		// assert.NoError(t, err)
+		err := w.Serve()
+		assert.NoError(t, err)
 
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{

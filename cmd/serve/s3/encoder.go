@@ -1,6 +1,5 @@
+// Package s3 implements a fake s3 server for rclone
 package s3
-
-import "strings"
 
 // From: minio/cmd/api-utils.go
 // License: AGPL-3.0
@@ -75,18 +74,4 @@ func s3URLEncode(s string) string {
 		}
 	}
 	return string(t)
-}
-
-// s3EncodeName encodes string in response when encodingType is specified in AWS S3 requests.
-func s3EncodeName(name string, encodingType string) (result string) {
-	// Quick path to exit
-	if encodingType == "" {
-		return name
-	}
-	encodingType = strings.ToLower(encodingType)
-	switch encodingType {
-	case "url":
-		return s3URLEncode(name)
-	}
-	return name
 }

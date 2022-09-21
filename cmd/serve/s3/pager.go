@@ -1,3 +1,4 @@
+// Package s3 implements a fake s3 server for rclone
 package s3
 
 import (
@@ -6,10 +7,13 @@ import (
 	"github.com/Mikubill/gofakes3"
 )
 
-func (db *SimpleBucketBackend) pager(list *gofakes3.ObjectList, page gofakes3.ListBucketPage) (*gofakes3.ObjectList, error) {
+// pager splits the object list into smulitply pages.
+func (db *S3Backend) pager(list *gofakes3.ObjectList, page gofakes3.ListBucketPage) (*gofakes3.ObjectList, error) {
+	// sort by alphabet
 	sort.Slice(list.CommonPrefixes, func(i, j int) bool {
 		return list.CommonPrefixes[i].Prefix < list.CommonPrefixes[j].Prefix
 	})
+	// sort by modtime
 	sort.Slice(list.Contents, func(i, j int) bool {
 		return list.Contents[i].LastModified.Before(list.Contents[j].LastModified.Time)
 	})

@@ -1,5 +1,4 @@
-// Package s3 implements an fake s3 server for rclone
-
+// Package s3 implements a fake s3 server for rclone
 package s3
 
 import (
@@ -99,7 +98,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *Server {
 		vfs: vfs.New(f, &vfsflags.Opt),
 	}
 
-	var newLogger Logger
+	var newLogger logger
 	w.faker = gofakes3.New(
 		newBackend(w.vfs, opt),
 		gofakes3.WithHostBucket(opt.hostBucketMode),
@@ -125,16 +124,16 @@ func (p *Server) authMiddleware(handler http.Handler) http.Handler {
 }
 
 // logger output formatted message
-type Logger struct{}
+type logger struct{}
 
 // print log message
-func (l Logger) Print(level gofakes3.LogLevel, v ...interface{}) {
+func (l logger) Print(level gofakes3.LogLevel, v ...interface{}) {
 	// fs.Infof(nil, fmt.Sprintln(v...))
 	switch level {
 	case gofakes3.LogErr:
 		fs.Errorf(nil, fmt.Sprintln(v...))
 	case gofakes3.LogWarn:
-		fs.Errorf(nil, fmt.Sprintln(v...))
+		fs.Infof(nil, fmt.Sprintln(v...))
 	case gofakes3.LogInfo:
 		fs.Debugf(nil, fmt.Sprintln(v...))
 	default:
