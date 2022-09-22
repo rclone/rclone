@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"encoding/hex"
 	"io"
 	"path"
 	"strings"
@@ -64,22 +65,33 @@ func getDirEntries(prefix string, fs *vfs.VFS) (vfs.Nodes, error) {
 	return dirEntries, nil
 }
 
-func getFileHash(node vfs.Node) string {
-	if node.IsDir() {
-		return ""
+func getFileHashByte(node interface{}) []byte {
+	b, err := hex.DecodeString(getFileHash(node))
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
+func getFileHash(node interface{}) string {
+	var o fs.Object
+
+	switch b := node.(type) {
+	case vfs.Node:
+		o = b.DirEntry().(fs.Object)
+	case fs.DirEntry:
+		o = b.(fs.Object)
 	}
 
-	o, ok := node.DirEntry().(fs.Object)
-	if !ok {
+	hash, err := o.Hash(context.Background(), Opt.hashType)
+	if err != nil {
 		return ""
 	}
-
-	hash, _ := o.Hash(context.Background(), Opt.hashType)
 	return hash
 }
 
 func prefixParser(p *gofakes3.Prefix) (path, remaining string, ok bool) {
-	if !p.HasDelimiter || p.Delimiter != "/" {
+	if !p.HasDelimiter && p.Delimiter != "/" {
 		return "", "", ok
 	}
 

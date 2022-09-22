@@ -76,7 +76,7 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/Mikubill/gofakes3 v0.0.0-20220921135343-3b04724537af // indirect
+	github.com/Mikubill/gofakes3 v0.0.0-20220922160239-dd6e44f5f33a // indirect
 	github.com/anacrolix/log v0.13.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/calebcase/tmpfile v1.0.3 // indirect

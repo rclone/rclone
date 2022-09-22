@@ -15,3 +15,5 @@ fuzz-build.zip
 *.rej
 Thumbs.db
 __pycache__
+.devcontainer
+.DS_Store

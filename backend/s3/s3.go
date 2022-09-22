@@ -132,6 +132,9 @@ func init() {
 				Value: "RackCorp",
 				Help:  "RackCorp Object Storage",
 			}, {
+				Value: "Rclone",
+				Help:  "Rclone S3 Server",
+			}, {
 				Value: "Scaleway",
 				Help:  "Scaleway Object Storage",
 			}, {
@@ -2612,6 +2615,11 @@ func setQuirks(opt *Options) {
 		listObjectsV2 = false // untested
 		virtualHostStyle = false
 		urlEncodeListings = false
+	case "Rclone":
+		listObjectsV2 = true
+		urlEncodeListings = true
+		virtualHostStyle = false
+		useMultipartEtag = false
 	case "Storj":
 		// Force chunk size to >= 64 MiB
 		if opt.ChunkSize < 64*fs.Mebi {

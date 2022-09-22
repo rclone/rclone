@@ -45,7 +45,7 @@ func TestS3(t *testing.T) {
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
 			"type":            "s3",
-			"provider":        "Other",
+			"provider":        "Rclone",
 			"endpoint":        "http://" + endpoint,
 			"list_url_encode": "true",
 		}
@@ -58,6 +58,8 @@ func TestS3(t *testing.T) {
 
 func Run(t *testing.T, name string, start servetest.StartFn) {
 	fstest.Initialise()
+	ci := fs.GetConfig(context.Background())
+	ci.DisableFeatures = append(ci.DisableFeatures, "Metadata")
 
 	fremote, _, clean, err := fstest.RandomRemote()
 	assert.NoError(t, err)
@@ -89,10 +91,8 @@ func Run(t *testing.T, name string, start servetest.StartFn) {
 		args = append(args, "-verbose")
 	}
 	remoteName := name + "test:"
-	// if *subRun != "" {
-	// 	args = append(args, "-run", *subRun)
-	// }
 	args = append(args, "-remote", remoteName)
+	args = append(args, "-run", "^TestIntegration$")
 	args = append(args, "-list-retries", fmt.Sprint(*fstest.ListRetries))
 	cmd := exec.Command("go", args...)
 

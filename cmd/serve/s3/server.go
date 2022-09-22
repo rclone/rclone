@@ -30,8 +30,8 @@ type Options struct {
 // DefaultOpt is the default values used for Options
 var DefaultOpt = Options{
 	hostBucketMode: false,
-	hashName:       "",
-	hashType:       hash.None,
+	hashName:       "MD5",
+	hashType:       hash.MD5,
 }
 
 // Opt is options set by command line flags
@@ -110,17 +110,6 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *Server {
 	w.handler = w.authMiddleware(w.faker.Server())
 	w.Server = httplib.NewServer(w.handler, &httpflags.Opt)
 	return w
-}
-
-func (p *Server) authMiddleware(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-		// var formatted, err = httputil.DumpRequest(rq, true)
-		// if err != nil {
-		// 	fmt.Fprint(w, err)
-		// }
-
-		handler.ServeHTTP(w, rq)
-	})
 }
 
 // logger output formatted message
