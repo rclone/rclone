@@ -640,3 +640,4 @@ put them back in again.` >}}
   * Øyvind Heddeland Instefjord <instefjord@outlook.com>
   * Dmitry Deniskin <110819396+ddeniskin@users.noreply.github.com>
   * Alexander Knorr <106825+opexxx@users.noreply.github.com>
+  * Richard Bateman <richard@batemansr.us>

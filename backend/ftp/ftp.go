@@ -336,14 +336,44 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 	fs.Debugf(f, "Connecting to FTP server")
 
 	// Make ftp library dial with fshttp dialer optionally using TLS
+	initialConnection := true
 	dial := func(network, address string) (conn net.Conn, err error) {
+		fs.Debugf(f, "dial(%q,%q)", network, address)
+		defer func() {
+			fs.Debugf(f, "> dial: conn=%T, err=%v", conn, err)
+		}()
 		conn, err = fshttp.NewDialer(ctx).Dial(network, address)
-		if f.tlsConf != nil && err == nil {
-			conn = tls.Client(conn, f.tlsConf)
+		if err != nil {
+			return nil, err
 		}
-		return
+		// Connect using cleartext only for non TLS
+		if f.tlsConf == nil {
+			return conn, nil
+		}
+		// Initial connection only needs to be cleartext for explicit TLS
+		if f.opt.ExplicitTLS && initialConnection {
+			initialConnection = false
+			return conn, nil
+		}
+		// Upgrade connection to TLS
+		tlsConn := tls.Client(conn, f.tlsConf)
+		// Do the initial handshake - tls.Client doesn't do it for us
+		// If we do this then connections to proftpd/pureftpd lock up
+		// See: https://github.com/rclone/rclone/issues/6426
+		// See: https://github.com/jlaffaye/ftp/issues/282
+		if false {
+			err = tlsConn.HandshakeContext(ctx)
+			if err != nil {
+				_ = conn.Close()
+				return nil, err
+			}
+		}
+		return tlsConn, nil
 	}
-	ftpConfig := []ftp.DialOption{ftp.DialWithDialFunc(dial)}
+	ftpConfig := []ftp.DialOption{
+		ftp.DialWithContext(ctx),
+		ftp.DialWithDialFunc(dial),
+	}
 
 	if f.opt.TLS {
 		// Our dialer takes care of TLS but ftp library also needs tlsConf
@@ -351,12 +381,6 @@ func (f *Fs) ftpConnection(ctx context.Context) (c *ftp.ServerConn, err error) {
 		ftpConfig = append(ftpConfig, ftp.DialWithTLS(f.tlsConf))
 	} else if f.opt.ExplicitTLS {
 		ftpConfig = append(ftpConfig, ftp.DialWithExplicitTLS(f.tlsConf))
-		// Initial connection needs to be cleartext for explicit TLS
-		conn, err := fshttp.NewDialer(ctx).Dial("tcp", f.dialAddr)
-		if err != nil {
-			return nil, err
-		}
-		ftpConfig = append(ftpConfig, ftp.DialWithNetConn(conn))
 	}
 	if f.opt.DisableEPSV {
 		ftpConfig = append(ftpConfig, ftp.DialWithDisabledEPSV(true))
