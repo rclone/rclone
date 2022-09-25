@@ -126,6 +126,7 @@ func (c *conn) mountShare(share string) (err error) {
 	}
 	if c.smbShare != nil {
 		err = c.smbShare.Umount()
+		c.smbShare = nil
 	}
 	if err != nil {
 		return
