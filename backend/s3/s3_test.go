@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/rclone/rclone/fs"
+	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/fstest/fstests"
 )
 
@@ -16,6 +17,24 @@ func TestIntegration(t *testing.T) {
 		TiersToTest: []string{"STANDARD", "STANDARD_IA"},
 		ChunkedUpload: fstests.ChunkedUploadConfig{
 			MinChunkSize: minChunkSize,
+		},
+	})
+}
+
+func TestIntegration2(t *testing.T) {
+	if *fstest.RemoteName != "" {
+		t.Skip("skipping as -remote is set")
+	}
+	name := "TestS3"
+	fstests.Run(t, &fstests.Opt{
+		RemoteName:  name + ":",
+		NilObject:   (*Object)(nil),
+		TiersToTest: []string{"STANDARD", "STANDARD_IA"},
+		ChunkedUpload: fstests.ChunkedUploadConfig{
+			MinChunkSize: minChunkSize,
+		},
+		ExtraConfig: []fstests.ExtraConfigItem{
+			{Name: name, Key: "directory_markers", Value: "true"},
 		},
 	})
 }
