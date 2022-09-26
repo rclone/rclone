@@ -354,7 +354,6 @@ optionally accompanied by systemd automount unit
 ```
 # /etc/systemd/system/mnt-data.automount
 [Unit]
-After=network-online.target
 Before=remote-fs.target
 [Automount]
 Where=/mnt/data
