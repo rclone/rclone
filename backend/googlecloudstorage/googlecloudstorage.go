@@ -302,6 +302,15 @@ Docs: https://cloud.google.com/storage/docs/bucket-policy-only
 				Help:  "Durable reduced availability storage class",
 			}},
 		}, {
+			Name:     "directory_markers",
+			Default:  false,
+			Advanced: true,
+			Help: `Upload an empty object with a trailing slash in name when new directory is created
+
+Empty folders are unsupported for bucket based remotes, this option creates an empty 
+object named "/", to persist the folder.
+`,
+		}, {
 			Name: "no_check_bucket",
 			Help: `If set, don't attempt to check the bucket exists or create it.
 
@@ -366,6 +375,7 @@ type Options struct {
 	Endpoint                  string               `config:"endpoint"`
 	Enc                       encoder.MultiEncoder `config:"encoding"`
 	EnvAuth                   bool                 `config:"env_auth"`
+	DirectoryMarkers          bool                 `config:"directory_markers"`
 }
 
 // Fs represents a remote storage server
@@ -461,7 +471,7 @@ func parsePath(path string) (root string) {
 // split returns bucket and bucketPath from the rootRelativePath
 // relative to f.root
 func (f *Fs) split(rootRelativePath string) (bucketName, bucketPath string) {
-	bucketName, bucketPath = bucket.Split(path.Join(f.root, rootRelativePath))
+	bucketName, bucketPath = bucket.Split(bucket.Join(f.root, rootRelativePath))
 	return f.opt.Enc.FromStandardName(bucketName), f.opt.Enc.FromStandardPath(bucketPath)
 }
 
@@ -859,7 +869,24 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(ctx context.Context, dir string) (err error) {
 	bucket, _ := f.split(dir)
-	return f.makeBucket(ctx, bucket)
+	e := f.makeBucket(ctx, bucket)
+	if e != nil {
+		return e
+	}
+	// Create directory marker file
+	if f.opt.DirectoryMarkers && bucket != "" && dir != "" {
+		markerFilePath := fmt.Sprintf("%s/", dir)
+		markerFileContent := io.Reader(strings.NewReader(""))
+		markerFileObject := &Object{
+			fs:     f,
+			remote: markerFilePath,
+		}
+		_, e := f.Put(ctx, markerFileContent, markerFileObject)
+		if e != nil {
+			return e
+		}
+	}
+	return nil
 }
 
 // makeBucket creates the bucket if it doesn't exist
@@ -931,6 +958,15 @@ func (f *Fs) checkBucket(ctx context.Context, bucket string) error {
 // to delete was not empty.
 func (f *Fs) Rmdir(ctx context.Context, dir string) (err error) {
 	bucket, directory := f.split(dir)
+	// Remove directory marker file
+	if f.opt.DirectoryMarkers && bucket != "" && dir != "" {
+		markerFilePath := fmt.Sprintf("%s/", dir)
+		markerFileObject := &Object{
+			fs:     f,
+			remote: markerFilePath,
+		}
+		_ = markerFileObject.Remove(ctx)
+	}
 	if bucket == "" || directory != "" {
 		return nil
 	}
