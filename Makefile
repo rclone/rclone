@@ -30,6 +30,7 @@ ifdef RELEASE_TAG
 	TAG := $(RELEASE_TAG)
 endif
 GO_VERSION := $(shell go version)
+GO_OS := $(shell go env GOOS)
 ifdef BETA_SUBDIR
 	BETA_SUBDIR := /$(BETA_SUBDIR)
 endif
@@ -46,7 +47,13 @@ endif
 .PHONY: rclone test_all vars version
 
 rclone:
+ifeq ($(GO_OS),windows)
+	go run bin/resource_windows.go -version $(TAG) -syso resource_windows_`go env GOARCH`.syso
+endif
 	go build -v --ldflags "-s -X github.com/rclone/rclone/fs.Version=$(TAG)" $(BUILDTAGS) $(BUILD_ARGS)
+ifeq ($(GO_OS),windows)
+	rm resource_windows_`go env GOARCH`.syso
+endif
 	mkdir -p `go env GOPATH`/bin/
 	cp -av rclone`go env GOEXE` `go env GOPATH`/bin/rclone`go env GOEXE`.new
 	mv -v `go env GOPATH`/bin/rclone`go env GOEXE`.new `go env GOPATH`/bin/rclone`go env GOEXE`
@@ -101,10 +108,6 @@ build_dep:
 # Get the release dependencies we only install on linux
 release_dep_linux:
 	go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
-
-# Get the release dependencies we only install on Windows
-release_dep_windows:
-	GOOS="" GOARCH="" go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
 
 # Update dependencies
 showupdates:
