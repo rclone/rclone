@@ -312,9 +312,10 @@ go build -trimpath -ldflags -s -tags cmount
 ```
 
 Instead of executing the `go build` command directly, you can run it via the
-Makefile, which also sets version information and copies the resulting rclone
-executable into your GOPATH bin folder (`$(go env GOPATH)/bin`, which
-corresponds to `~/go/bin/rclone` by default).
+Makefile. It changes the version number suffix from "-DEV" to "-beta" and
+appends commit details. It also copies the resulting rclone executable into
+your GOPATH bin folder (`$(go env GOPATH)/bin`, which corresponds to
+`~/go/bin/rclone` by default).
 
 ```
 make
@@ -326,7 +327,15 @@ To include mount command on macOS and Windows with Makefile build:
 make GOTAGS=cmount
 ```
 
-As an alternative you can download the source, build and install rclone in one
+There are other make targets that can be used for more advanced builds,
+such as cross-compiling for all supported os/architectures, embedding
+icon and version info resources into windows executable, and packaging
+results into release artifacts.
+See [Makefile](https://github.com/rclone/rclone/blob/master/Makefile)
+and [cross-compile.go](https://github.com/rclone/rclone/blob/master/bin/cross-compile.go)
+for details.
+
+Another alternative is to download the source, build and install rclone in one
 operation, as a regular Go package. The source will be stored it in the Go
 module cache, and the resulting executable will be in your GOPATH bin folder
 (`$(go env GOPATH)/bin`, which corresponds to `~/go/bin/rclone` by default).
