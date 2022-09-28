@@ -45,6 +45,14 @@ pointing to the fuse include directory within the WinFsp installation
 (typically `C:\Program Files (x86)\WinFsp\inc\fuse`). See also the
 [mount](/commands/rclone_mount/#installing-on-windows) documentation.
 
+On Windows, when you build a shared library, you can embed version information
+as binary resource. To do that you need to run the following command **before**
+the build command.
+
+```
+go run bin/resource_windows.go -binary librclone.dll -dir librclone
+```
+
 ### Documentation
 
 For documentation see the Go documentation for:
