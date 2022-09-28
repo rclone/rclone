@@ -16,3 +16,4 @@ Thumbs.db
 __pycache__
 .DS_Store
 /docs/static/img/logos/
+resource_windows_*.syso
