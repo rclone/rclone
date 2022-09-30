@@ -73,12 +73,12 @@ var (
 // Start the terminal - must be called before use
 func Start() {
 	once.Do(func() {
-		f := os.Stdout
+		f := os.Stderr
 		if !IsTerminal(int(f.Fd())) {
-			// If stdout not a tty then remove escape codes
+			// If stderr not a tty then remove escape codes
 			Out = colorable.NewNonColorable(f)
 		} else if runtime.GOOS == "windows" && os.Getenv("TERM") != "" {
-			// If TERM is set just use stdout
+			// If TERM is set just use stderr
 			Out = f
 		} else {
 			Out = colorable.NewColorable(f)
