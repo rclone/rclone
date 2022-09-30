@@ -74,6 +74,7 @@ Rclone *("rsync for cloud storage")* is a command-line program to sync files and
   * Seafile [:page_facing_up:](https://rclone.org/seafile/)
   * SeaweedFS [:page_facing_up:](https://rclone.org/s3/#seaweedfs)
   * SFTP [:page_facing_up:](https://rclone.org/sftp/)
+  * SMB / CIFS [:page_facing_up:](https://rclone.org/smb/)
   * StackPath [:page_facing_up:](https://rclone.org/s3/#stackpath)
   * Storj [:page_facing_up:](https://rclone.org/storj/)
   * SugarSync [:page_facing_up:](https://rclone.org/sugarsync/)

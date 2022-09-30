@@ -50,6 +50,7 @@ Here is an overview of the major features of each cloud storage system.
 | Seafile                      | -                | -       | No               | No              | -         | -        |
 | SFTP                         | MD5, SHA1 ²      | R/W     | Depends          | No              | -         | -        |
 | Sia                          | -                | -       | No               | No              | -         | -        |
+| SMB                          | -                | -       | Yes              | No              | -         | -        |
 | SugarSync                    | -                | -       | No               | No              | -         | -        |
 | Storj                        | -                | R       | No               | No              | -         | -        |
 | Uptobox                      | -                | -       | No               | Yes             | -         | -        |
@@ -501,6 +502,7 @@ upon backend-specific capabilities.
 | Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 | Sia                          | No    | No   | No   | No      | No      | No    | Yes          | No           | No    | Yes      |
+| SMB                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
 | Storj                        | Yes † | No   | Yes  | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | No       |
