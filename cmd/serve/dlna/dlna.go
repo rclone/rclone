@@ -279,7 +279,14 @@ func (s *server) resourceHandler(w http.ResponseWriter, r *http.Request) {
 // use s.Wait() to block on the listener indefinitely.
 func (s *server) Serve() (err error) {
 	if s.HTTPConn == nil {
-		s.HTTPConn, err = net.Listen("tcp", s.httpListenAddr)
+		// Currently, the SSDP server only listens on an IPv4 multicast address.
+		// Differentiate between two INADDR_ANY addresses,
+		// so that 0.0.0.0 can only listen on IPv4 addresses.
+		network := "tcp4"
+		if strings.Count(s.httpListenAddr, ":") > 1 {
+			network = "tcp"
+		}
+		s.HTTPConn, err = net.Listen(network, s.httpListenAddr)
 		if err != nil {
 			return
 		}
@@ -336,6 +343,30 @@ func (s *server) startSSDP() {
 
 // Run SSDP server on an interface.
 func (s *server) ssdpInterface(intf net.Interface) {
+	// Figure out whether should an ip be announced
+	ipfilterFn := func(ip net.IP) bool {
+		listenaddr := s.HTTPConn.Addr().String()
+		listenip := listenaddr[:strings.LastIndex(listenaddr, ":")]
+		switch listenip {
+		case "0.0.0.0":
+			if strings.Contains(ip.String(), ":") {
+				// Any IPv6 address should not be announced
+				// because SSDP only listen on IPv4 multicast address
+				return false
+			}
+			return true
+		case "[::]":
+			// In the @Serve() section, the default settings have been made to not listen on IPv6 addresses.
+			// If actually still listening on [::], then allow to announce any address.
+			return true
+		default:
+			if listenip == ip.String() {
+				return true
+			}
+			return false
+		}
+	}
+
 	// Figure out which HTTP location to advertise based on the interface IP.
 	advertiseLocationFn := func(ip net.IP) string {
 		url := url.URL{
@@ -349,6 +380,12 @@ func (s *server) ssdpInterface(intf net.Interface) {
 		return url.String()
 	}
 
+	_, err := intf.Addrs()
+	if err != nil {
+		panic(err)
+	}
+	fs.Logf(s, "Started SSDP on %v", intf.Name)
+
 	// Note that the devices and services advertised here via SSDP should be
 	// in agreement with the rootDesc XML descriptor that is defined above.
 	ssdpServer := ssdp.Server{
@@ -359,6 +396,7 @@ func (s *server) ssdpInterface(intf net.Interface) {
 			"urn:schemas-upnp-org:service:ContentDirectory:1",
 			"urn:schemas-upnp-org:service:ConnectionManager:1",
 			"urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1"},
+		IPFilter:       ipfilterFn,
 		Location:       advertiseLocationFn,
 		Server:         serverField,
 		UUID:           s.RootDeviceUUID,
