@@ -32,6 +32,11 @@ IPs.
 Use `--name` to choose the friendly server name, which is by
 default "rclone (hostname)".
 
+Use `--announce-interval` to specify the interval at which SSDP server
+announce devices and services. Larger active announcement intervals help
+keep the multicast domain clean, this value does not affect unicast
+responses to `M-SEARCH` requests from other devices.
+
 Use `--log-trace` in conjunction with `-vv` to enable additional debug
 logging of all UPNP traffic.
 

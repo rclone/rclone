@@ -118,7 +118,7 @@ func newServer(f fs.Fs, opt *dlnaflags.Options) (*server, error) {
 	}
 
 	s := &server{
-		AnnounceInterval: 10 * time.Second,
+		AnnounceInterval: opt.AnnounceInterval,
 		FriendlyName:     friendlyName,
 		RootDeviceUUID:   makeDeviceUUID(friendlyName),
 		Interfaces:       interfaces,
