@@ -2,6 +2,8 @@
 package dlnaflags
 
 import (
+	"time"
+
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/rc"
 	"github.com/spf13/pflag"
@@ -24,18 +26,20 @@ logging of all UPNP traffic.
 
 // Options is the type for DLNA serving options.
 type Options struct {
-	ListenAddr     string
-	FriendlyName   string
-	LogTrace       bool
-	InterfaceNames []string
+	ListenAddr       string
+	FriendlyName     string
+	LogTrace         bool
+	InterfaceNames   []string
+	AnnounceInterval time.Duration
 }
 
 // DefaultOpt contains the defaults options for DLNA serving.
 var DefaultOpt = Options{
-	ListenAddr:     ":7879",
-	FriendlyName:   "",
-	LogTrace:       false,
-	InterfaceNames: []string{},
+	ListenAddr:       ":7879",
+	FriendlyName:     "",
+	LogTrace:         false,
+	InterfaceNames:   []string{},
+	AnnounceInterval: 12 * time.Minute,
 }
 
 // Opt contains the options for DLNA serving.
@@ -49,6 +53,7 @@ func addFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
 	flags.StringVarP(flagSet, &Opt.FriendlyName, prefix+"name", "", Opt.FriendlyName, "Name of DLNA server")
 	flags.BoolVarP(flagSet, &Opt.LogTrace, prefix+"log-trace", "", Opt.LogTrace, "Enable trace logging of SOAP traffic")
 	flags.StringArrayVarP(flagSet, &Opt.InterfaceNames, prefix+"interface", "", Opt.InterfaceNames, "The interface to use for SSDP (repeat as necessary)")
+	flags.DurationVarP(flagSet, &Opt.AnnounceInterval, prefix+"announce-interval", "", Opt.AnnounceInterval, "The interval between SSDP announcements")
 }
 
 // AddFlags add the command line flags for DLNA serving.
