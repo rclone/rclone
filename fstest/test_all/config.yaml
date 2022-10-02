@@ -369,6 +369,9 @@ backends:
  - backend:  "sia"
    remote:   "TestSia:"
    fastlist: false
+ - backend:  "smb"
+   remote:   "TestSMB:rclone"
+   fastlist: false
  - backend:  "storj"
    remote:   "TestStorj:"
    fastlist: true
