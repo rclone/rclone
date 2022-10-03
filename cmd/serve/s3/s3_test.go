@@ -5,11 +5,14 @@ package s3
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
@@ -44,16 +47,29 @@ func TestS3(t *testing.T) {
 
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
-			"type":            "s3",
-			"provider":        "Rclone",
-			"endpoint":        "http://" + endpoint,
-			"list_url_encode": "true",
+			"type":              "s3",
+			"provider":          "Rclone",
+			"endpoint":          "http://" + endpoint,
+			"list_url_encode":   "true",
+			"access_key_id":     RandString(16),
+			"secret_access_key": RandString(16),
 		}
 
 		return config, func() {}
 	}
 
 	Run(t, "s3", start)
+}
+
+func RandString(n int) string {
+	src := rand.New(rand.NewSource(time.Now().UnixNano()))
+	b := make([]byte, (n+1)/2)
+
+	if _, err := src.Read(b); err != nil {
+		panic(err)
+	}
+
+	return hex.EncodeToString(b)[:n]
 }
 
 func Run(t *testing.T, name string, start servetest.StartFn) {

@@ -56,9 +56,9 @@ func (db *s3Backend) pager(list *gofakes3.ObjectList, page gofakes3.ListBucketPa
 	if len(list.CommonPrefixes)+len(list.Contents) > int(page.MaxKeys) {
 		response.IsTruncated = true
 		if len(response.Contents) > 0 {
-			response.NextMarker = list.Contents[len(list.Contents)-1].Key
+			response.NextMarker = response.Contents[len(response.Contents)-1].Key
 		} else {
-			response.NextMarker = list.CommonPrefixes[len(list.CommonPrefixes)-1].Prefix
+			response.NextMarker = response.CommonPrefixes[len(response.CommonPrefixes)-1].Prefix
 		}
 	}
 

@@ -121,16 +121,16 @@ func (db *s3Backend) getObjectsList(bucket string, prefix *gofakes3.Prefix) (*go
 			response.AddPrefix(s3URLEncode(objectPath))
 
 		} else {
-			size := entry.Size()
-			mtime := entry.ModTime()
 
-			response.Add(&gofakes3.Content{
+			item := &gofakes3.Content{
 				Key:          s3URLEncode(objectPath),
-				LastModified: gofakes3.NewContentTime(mtime),
+				LastModified: gofakes3.NewContentTime(entry.ModTime()),
 				ETag:         getFileHash(entry),
-				Size:         size,
+				Size:         entry.Size(),
 				StorageClass: gofakes3.StorageStandard,
-			})
+			}
+
+			response.Add(item)
 		}
 	}
 
@@ -152,17 +152,18 @@ func (db *s3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Pre
 			if prefix.Match(object, &matchResult) {
 				if matchResult.CommonPrefix {
 					response.AddPrefix(s3URLEncode(object))
+					continue
 				}
-				size := entry.Size()
-				mtime := entry.ModTime(context.Background())
 
-				response.Add(&gofakes3.Content{
+				item := &gofakes3.Content{
 					Key:          s3URLEncode(object),
-					LastModified: gofakes3.NewContentTime(mtime),
+					LastModified: gofakes3.NewContentTime(entry.ModTime(context.Background())),
 					ETag:         getFileHash(entry),
-					Size:         size,
+					Size:         entry.Size(),
 					StorageClass: gofakes3.StorageStandard,
-				})
+				}
+
+				response.Add(item)
 			}
 		}
 

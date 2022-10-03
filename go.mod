@@ -9,6 +9,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.21
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e
 	github.com/Max-Sum/base32768 v0.0.0-20191205131208-7937843c71d5
+	github.com/Mikubill/gofakes3 v0.0.1
 	github.com/Unknwon/goconfig v1.0.0
 	github.com/a8m/tree v0.0.0-20210414114729-ce3525c5c2ef
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
@@ -16,7 +17,7 @@ require (
 	github.com/anacrolix/dms v1.5.0
 	github.com/artyom/mtab v1.0.0
 	github.com/atotto/clipboard v0.1.4
-	github.com/aws/aws-sdk-go v1.44.100
+	github.com/aws/aws-sdk-go v1.44.104
 	github.com/buengese/sgzip v0.1.1
 	github.com/colinmarc/hdfs/v2 v2.3.0
 	github.com/coreos/go-semver v0.3.0
@@ -76,7 +77,6 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/Mikubill/gofakes3 v0.0.0-20220922160239-dd6e44f5f33a // indirect
 	github.com/anacrolix/log v0.13.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/calebcase/tmpfile v1.0.3 // indirect
@@ -106,7 +106,6 @@ require (
 	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/minio/xxml v0.0.3 // indirect
 	github.com/onsi/gomega v1.13.0 // indirect
 	github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
