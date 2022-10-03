@@ -122,7 +122,15 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		log.Printf("mount FAILED: %v", err)
 		return nil, err
 	}
-
+	go func() {
+		if err = mnt.Wait(); err != nil {
+			log.Printf("unmount FAILED: %v", err)
+			return
+		}
+		mountMu.Lock()
+		defer mountMu.Unlock()
+		delete(liveMounts, mountPoint)
+	}()
 	// Add mount to list if mount point was successfully created
 	liveMounts[mountPoint] = mnt
 
