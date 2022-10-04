@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/rclone/rclone/fs/config"
+
 	colorable "github.com/mattn/go-colorable"
 )
 
@@ -73,9 +75,9 @@ var (
 // Start the terminal - must be called before use
 func Start() {
 	once.Do(func() {
-		f := os.Stderr
+		f := config.PasswordPromptOutput
 		if !IsTerminal(int(f.Fd())) {
-			// If stderr not a tty then remove escape codes
+			// If output is not a tty then remove escape codes
 			Out = colorable.NewNonColorable(f)
 		} else if runtime.GOOS == "windows" && os.Getenv("TERM") != "" {
 			// If TERM is set just use stderr
