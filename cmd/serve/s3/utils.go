@@ -3,7 +3,6 @@ package s3
 import (
 	"context"
 	"encoding/hex"
-	"io"
 	"path"
 	"strings"
 
@@ -11,37 +10,6 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/vfs"
 )
-
-type noOpReadCloser struct{}
-
-type readerWithCloser struct {
-	io.Reader
-	closer func() error
-}
-
-var _ io.ReadCloser = &readerWithCloser{}
-
-func (d noOpReadCloser) Read(b []byte) (n int, err error) {
-	return 0, io.EOF
-}
-
-func (d noOpReadCloser) Close() error {
-	return nil
-}
-
-func limitReadCloser(rdr io.Reader, closer func() error, sz int64) io.ReadCloser {
-	return &readerWithCloser{
-		Reader: io.LimitReader(rdr, sz),
-		closer: closer,
-	}
-}
-
-func (rwc *readerWithCloser) Close() error {
-	if rwc.closer != nil {
-		return rwc.closer()
-	}
-	return nil
-}
 
 func getDirEntries(prefix string, fs *vfs.VFS) (vfs.Nodes, error) {
 	node, err := fs.Stat(prefix)
