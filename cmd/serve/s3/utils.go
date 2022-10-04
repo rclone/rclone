@@ -90,16 +90,13 @@ func getFileHash(node interface{}) string {
 	return hash
 }
 
-func prefixParser(p *gofakes3.Prefix) (path, remaining string, ok bool) {
-	if !p.HasDelimiter && p.Delimiter != "/" {
-		return "", "", ok
-	}
+func prefixParser(p *gofakes3.Prefix) (path, remaining string) {
 
 	idx := strings.LastIndexByte(p.Prefix, '/')
 	if idx < 0 {
-		return "", p.Prefix, true
+		return "", p.Prefix
 	}
-	return p.Prefix[:idx], p.Prefix[idx+1:], true
+	return p.Prefix[:idx], p.Prefix[idx+1:]
 }
 
 func mkdirRecursive(path string, fs *vfs.VFS) error {

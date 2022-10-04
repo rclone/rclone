@@ -36,12 +36,13 @@ func RandString(n int) string {
 	return hex.EncodeToString(b)[:n]
 }
 
-func TestDoesPresignedSignatureMatch(t *testing.T) {
+func TestSignatureMatch(t *testing.T) {
 
 	Body := bytes.NewReader(nil)
 
 	ak := RandString(32)
-	sk := RandString(32)
+	sk := RandString(64)
+	region := RandString(16)
 
 	credentials := credentials.NewStaticCredentials(ak, sk, "")
 	signature.LoadKeys(fmt.Sprintf("%s-%s", ak, sk))
@@ -52,7 +53,7 @@ func TestDoesPresignedSignatureMatch(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, err = signer.Sign(req, Body, serviceS3, "us-east-2", time.Now())
+	_, err = signer.Sign(req, Body, serviceS3, region, time.Now())
 	if err != nil {
 		t.Error(err)
 	}
@@ -60,5 +61,4 @@ func TestDoesPresignedSignatureMatch(t *testing.T) {
 	if result := signature.Verify(req); result != signature.ErrNone {
 		t.Error(fmt.Errorf("invalid result: expect none but got %+v", signature.GetAPIError(result)))
 	}
-
 }

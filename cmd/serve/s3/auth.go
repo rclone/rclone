@@ -8,12 +8,8 @@ import (
 
 func (p *Server) authMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, rq *http.Request) {
-		// var formatted, err = httputil.DumpRequest(rq, true)
-		// if err != nil {
-		// 	fmt.Fprint(w, err)
-		// }
 
-		// fmt.Println(rq.Header.Clone())
+		// first pass to auth handler
 		if Opt.authPair != "" {
 			if result := signature.Verify(rq); result != signature.ErrNone {
 				resp := signature.GetAPIError(result)

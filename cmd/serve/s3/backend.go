@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -44,7 +43,7 @@ func newBackend(fs *vfs.VFS, opt *Options) gofakes3.Backend {
 
 // ListBuckets always returns the default bucket.
 func (db *s3Backend) ListBuckets() ([]gofakes3.BucketInfo, error) {
-	dirEntries, err := getDirEntries(filepath.FromSlash("/"), db.fs)
+	dirEntries, err := getDirEntries("/", db.fs)
 	if err != nil {
 		return nil, err
 	}
@@ -77,51 +76,57 @@ func (db *s3Backend) ListBucket(bucket string, prefix *gofakes3.Prefix, page gof
 	defer db.lock.Unlock()
 
 	// workaround
-	if prefix.Prefix == "" {
+	if strings.TrimSpace(prefix.Prefix) == "" {
 		prefix.HasPrefix = false
 	}
-	if prefix.Delimiter == "" {
+	if strings.TrimSpace(prefix.Delimiter) == "" {
 		prefix.HasDelimiter = false
 	}
 
-	result, err := db.getObjectsList(bucket, prefix)
+	response := gofakes3.NewObjectList()
+
+	if prefix.HasDelimiter && prefix.Delimiter != "/" {
+		err = db.getObjectsListArbitrary(bucket, prefix, response)
+	} else {
+		path, remaining := prefixParser(prefix)
+		err = db.entryListR(bucket, path, remaining, prefix.HasDelimiter, response)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	return db.pager(result, page)
+	return db.pager(response, page)
 }
 
-// getObjectsList lists the objects in the given bucket.
-func (db *s3Backend) getObjectsList(bucket string, prefix *gofakes3.Prefix) (*gofakes3.ObjectList, error) {
+func (db *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix bool, response *gofakes3.ObjectList) error {
+	fp := path.Join(bucket, fdPath)
 
-	prefixPath, prefixPart, delim := prefixParser(prefix)
-	if !delim {
-		return db.getObjectsListArbitrary(bucket, prefix)
-	}
-
-	fp := filepath.Join(bucket, prefixPath)
 	dirEntries, err := getDirEntries(fp, db.fs)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	response := gofakes3.NewObjectList()
 
 	for _, entry := range dirEntries {
 		object := entry.Name()
 
-		// Workround for control-chars detect. other ways?
-		objectPath := charEncoder.Decode(path.Join(prefixPath, object))
+		// workround for control-chars detect
+		objectPath := charEncoder.Decode(path.Join(fdPath, object))
 
-		if prefixPart != "" && !strings.HasPrefix(object, prefixPart) {
+		if !strings.HasPrefix(object, name) {
 			continue
 		}
 
 		if entry.IsDir() {
-			response.AddPrefix(s3URLEncode(objectPath))
-
+			if acceptComPrefix {
+				response.AddPrefix(s3URLEncode(objectPath))
+				continue
+			}
+			err := db.entryListR(bucket, path.Join(fdPath, object), "", false, response)
+			if err != nil {
+				return err
+			}
 		} else {
-
 			item := &gofakes3.Content{
 				Key:          s3URLEncode(objectPath),
 				LastModified: gofakes3.NewContentTime(entry.ModTime()),
@@ -129,24 +134,21 @@ func (db *s3Backend) getObjectsList(bucket string, prefix *gofakes3.Prefix) (*go
 				Size:         entry.Size(),
 				StorageClass: gofakes3.StorageStandard,
 			}
-
 			response.Add(item)
 		}
 	}
-
-	return response, nil
+	return nil
 }
 
 // getObjectsList lists the objects in the given bucket.
-func (db *s3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Prefix) (*gofakes3.ObjectList, error) {
-	response := gofakes3.NewObjectList()
+func (db *s3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Prefix, response *gofakes3.ObjectList) error {
 
 	// ignore error - vfs may have uncommitted updates, such as new dir etc.
-	_ = walk.ListR(context.Background(), db.fs.Fs(), bucket, true, -1, walk.ListObjects, func(entries fs.DirEntries) error {
+	_ = walk.ListR(context.Background(), db.fs.Fs(), bucket, false, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
 			entry := entry.(fs.Object)
 			objName := charEncoder.Decode(entry.Remote())
-			object := strings.TrimPrefix(objName, bucket+"/")
+			object := strings.TrimPrefix(objName, bucket)[1:]
 
 			var matchResult gofakes3.PrefixMatch
 			if prefix.Match(object, &matchResult) {
@@ -170,7 +172,7 @@ func (db *s3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Pre
 		return nil
 	})
 
-	return response, nil
+	return nil
 }
 
 // HeadObject returns the fileinfo for the given object name.
@@ -186,7 +188,7 @@ func (db *s3Backend) HeadObject(bucketName, objectName string) (*gofakes3.Object
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
-	fp := filepath.Join(bucketName, objectName)
+	fp := path.Join(bucketName, objectName)
 	node, err := db.fs.Stat(fp)
 	if err != nil {
 		return nil, gofakes3.KeyNotFound(objectName)
@@ -237,7 +239,7 @@ func (db *s3Backend) GetObject(bucketName, objectName string, rangeRequest *gofa
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
-	fp := filepath.Join(bucketName, objectName)
+	fp := path.Join(bucketName, objectName)
 	node, err := db.fs.Stat(fp)
 	if err != nil {
 		return nil, gofakes3.KeyNotFound(objectName)
@@ -360,8 +362,8 @@ func (db *s3Backend) PutObject(
 	db.lock.Lock()
 	defer db.lock.Unlock()
 
-	fp := filepath.Join(bucketName, objectName)
-	objectDir := filepath.Dir(fp)
+	fp := path.Join(bucketName, objectName)
+	objectDir := path.Dir(fp)
 	// _, err = db.fs.Stat(objectDir)
 	// if err == vfs.ENOENT {
 	// 	fs.Errorf(objectDir, "PutObject failed: path not found")
@@ -464,7 +466,7 @@ func (db *s3Backend) deleteObjectLocked(bucketName, objectName string) error {
 		return gofakes3.BucketNotFound(bucketName)
 	}
 
-	fp := filepath.Join(bucketName, objectName)
+	fp := path.Join(bucketName, objectName)
 	// S3 does not report an error when attemping to delete a key that does not exist, so
 	// we need to skip IsNotExist errors.
 	if err := db.fs.Remove(fp); err != nil && !os.IsNotExist(err) {
