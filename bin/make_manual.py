@@ -49,7 +49,6 @@ docs = [
     "hdfs.md",
     "hidrive.md",
     "http.md",
-    "hubic.md",
     "internetarchive.md",
     "jottacloud.md",
     "koofr.md",

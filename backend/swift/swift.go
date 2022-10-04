@@ -40,7 +40,7 @@ const (
 	minSleep                   = 10 * time.Millisecond // In case of error, start at 10ms sleep.
 )
 
-// SharedOptions are shared between swift and hubic
+// SharedOptions are shared between swift and backends which depend on swift
 var SharedOptions = []fs.Option{{
 	Name: "chunk_size",
 	Help: `Above this size files will be chunked into a _segments container.

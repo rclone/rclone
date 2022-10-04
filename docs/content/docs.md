@@ -51,7 +51,6 @@ See the following for detailed instructions for
   * [HDFS](/hdfs/)
   * [HiDrive](/hidrive/)
   * [HTTP](/http/)
-  * [Hubic](/hubic/)
   * [Internet Archive](/internetarchive/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
@@ -1955,7 +1954,7 @@ quickly using the least amount of memory.
 
 However, some remotes have a way of listing all files beneath a
 directory in one (or a small number) of transactions.  These tend to
-be the bucket-based remotes (e.g. S3, B2, GCS, Swift, Hubic).
+be the bucket-based remotes (e.g. S3, B2, GCS, Swift).
 
 If you use the `--fast-list` flag then rclone will use this method for
 listing directories.  This will have the following consequences for
