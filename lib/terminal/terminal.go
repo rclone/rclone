@@ -80,8 +80,8 @@ func Start() {
 			// If output is not a tty then remove escape codes
 			Out = colorable.NewNonColorable(f)
 		} else if runtime.GOOS == "windows" && os.Getenv("TERM") != "" {
-			// If TERM is set just use stderr
-			Out = f
+			// If TERM is set just use stdout
+			Out = os.Stdout
 		} else {
 			Out = colorable.NewColorable(f)
 		}
