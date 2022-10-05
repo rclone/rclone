@@ -643,3 +643,4 @@ put them back in again.` >}}
   * Richard Bateman <richard@batemansr.us>
   * Dimitri Papadopoulos Orfanos <3234522+DimitriPapadopoulos@users.noreply.github.com>
   * Lorenzo Milesi <lorenzo.milesi@yetopen.com>
+  * Isaac Aymerich <isaac.aymerich@gmail.com>
