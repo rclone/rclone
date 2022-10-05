@@ -642,3 +642,4 @@ put them back in again.` >}}
   * Alexander Knorr <106825+opexxx@users.noreply.github.com>
   * Richard Bateman <richard@batemansr.us>
   * Dimitri Papadopoulos Orfanos <3234522+DimitriPapadopoulos@users.noreply.github.com>
+  * Lorenzo Milesi <lorenzo.milesi@yetopen.com>
