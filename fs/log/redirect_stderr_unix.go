@@ -19,7 +19,7 @@ func redirectStderr(f *os.File) {
 	if err != nil {
 		log.Fatalf("Failed to duplicate stderr: %v", err)
 	}
-	terminal.TerminalOutput = os.NewFile(uintptr(passPromptFd), "passPrompt")
+	terminal.RawOut = os.NewFile(uintptr(passPromptFd), "passPrompt")
 	err = unix.Dup2(int(f.Fd()), int(os.Stderr.Fd()))
 	if err != nil {
 		log.Fatalf("Failed to redirect stderr to file: %v", err)
