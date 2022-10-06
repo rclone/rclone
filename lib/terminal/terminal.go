@@ -69,14 +69,14 @@ var (
 	// make sure that start is only called once
 	once sync.Once
 
-	// PasswordPromptOutput is output of prompt for password
-	PasswordPromptOutput = os.Stderr
+	// TerminalOutput is for password prompt progress output
+	TerminalOutput = os.Stderr
 )
 
 // Start the terminal - must be called before use
 func Start() {
 	once.Do(func() {
-		f := PasswordPromptOutput
+		f := TerminalOutput
 		if !IsTerminal(int(f.Fd())) {
 			// If output is not a tty then remove escape codes
 			Out = colorable.NewNonColorable(f)
