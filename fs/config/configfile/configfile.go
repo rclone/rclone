@@ -3,9 +3,12 @@ package configfile
 
 import (
 	"bytes"
+	"context"
 	"fmt"
-	"io/ioutil"
+	"github.com/aws/aws-sdk-go/aws"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -53,6 +56,10 @@ func (s *Storage) _check() {
 //
 // mu must be held when calling this
 func (s *Storage) _load() (err error) {
+	ctx := context.Background()
+	ci := fs.GetConfig(ctx)
+	var fd io.ReadSeekCloser
+
 	// Make sure we have a sensible default even when we error
 	defer func() {
 		if s.gc == nil {
@@ -61,16 +68,39 @@ func (s *Storage) _load() (err error) {
 	}()
 
 	configPath := config.GetConfigPath()
-	if configPath == "" {
-		return config.ErrorConfigFileNotFound
-	}
 
-	fd, err := os.Open(configPath)
-	if err != nil {
-		if os.IsNotExist(err) {
+	if len(ci.ConfigCommandIn) != 0 {
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+
+		cmd := exec.Command(ci.ConfigCommandIn[0], ci.ConfigCommandIn[1:]...)
+
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		cmd.Stdin = os.Stdin
+
+		if err := cmd.Run(); err != nil {
+			// One does not always get the stderr returned in the wrapped error.
+			fs.Errorf(nil, "Using --config-command-in returned: %v", err)
+			if ers := strings.TrimSpace(stderr.String()); ers != "" {
+				fs.Errorf(nil, "--config-command-in stderr: %s", ers)
+			}
+			return fmt.Errorf("config command in failed: %w", err)
+		}
+		cfg := strings.Trim(stdout.String(), "\r\n")
+		fd = aws.ReadSeekCloser(strings.NewReader(cfg))
+	} else {
+		if configPath == "" {
 			return config.ErrorConfigFileNotFound
 		}
-		return err
+
+		fd, err = os.Open(configPath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				return config.ErrorConfigFileNotFound
+			}
+			return err
+		}
 	}
 	defer fs.CheckClose(fd, &err)
 
@@ -113,7 +143,7 @@ func (s *Storage) Save() error {
 	if err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	f, err := ioutil.TempFile(dir, name)
+	f, err := os.CreateTemp(dir, name)
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for new config: %w", err)
 	}
