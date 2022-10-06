@@ -209,6 +209,22 @@ func makeConfigPath() string {
 		primaryConfigDir  string
 		fallbackConfigDir string
 	)
+
+	cmdIn, cmdOut := false, false
+	for _, item := range os.Args {
+		if item == "--config-command-in" || strings.HasPrefix(item, "--config-command-in=") {
+			cmdIn = true
+			if cmdOut {
+				return ""
+			}
+		} else if item == "--config-command-out" || strings.HasPrefix(item, "--config-command-out=") {
+			cmdOut = true
+			if cmdIn {
+				return ""
+			}
+		}
+	}
+
 	// <rclone_exe_dir>/rclone.conf
 	if _, configFile = findLocalConfig(); configFile != "" {
 		return configFile
