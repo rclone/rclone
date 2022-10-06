@@ -106,6 +106,8 @@ type ConfigInfo struct {
 	StatsFileNameLength     int
 	AskPassword             bool
 	PasswordCommand         SpaceSepList
+	ConfigCommandIn         SpaceSepList
+	ConfigCommandOut        SpaceSepList
 	UseServerModTime        bool
 	MaxTransfer             SizeSuffix
 	MaxDuration             time.Duration
