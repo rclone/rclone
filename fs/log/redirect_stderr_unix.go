@@ -15,11 +15,11 @@ import (
 
 // redirectStderr to the file passed in
 func redirectStderr(f *os.File) {
-	passPromptFd, err := unix.Dup(int(os.Stderr.Fd()))
+	termFd, err := unix.Dup(int(os.Stderr.Fd()))
 	if err != nil {
 		log.Fatalf("Failed to duplicate stderr: %v", err)
 	}
-	terminal.RawOut = os.NewFile(uintptr(passPromptFd), "passPrompt")
+	terminal.RawOut = os.NewFile(uintptr(termFd), "termOut")
 	err = unix.Dup2(int(f.Fd()), int(os.Stderr.Fd()))
 	if err != nil {
 		log.Fatalf("Failed to redirect stderr to file: %v", err)
