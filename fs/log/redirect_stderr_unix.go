@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/rclone/rclone/fs/config"
+	"github.com/rclone/rclone/lib/terminal"
 	"golang.org/x/sys/unix"
 )
 
@@ -19,7 +19,7 @@ func redirectStderr(f *os.File) {
 	if err != nil {
 		log.Fatalf("Failed to duplicate stderr: %v", err)
 	}
-	config.PasswordPromptOutput = os.NewFile(uintptr(passPromptFd), "passPrompt")
+	terminal.PasswordPromptOutput = os.NewFile(uintptr(passPromptFd), "passPrompt")
 	err = unix.Dup2(int(f.Fd()), int(os.Stderr.Fd()))
 	if err != nil {
 		log.Fatalf("Failed to redirect stderr to file: %v", err)

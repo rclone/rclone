@@ -8,8 +8,6 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/rclone/rclone/fs/config"
-
 	colorable "github.com/mattn/go-colorable"
 )
 
@@ -70,12 +68,15 @@ const (
 var (
 	// make sure that start is only called once
 	once sync.Once
+
+	// PasswordPromptOutput is output of prompt for password
+	PasswordPromptOutput = os.Stderr
 )
 
 // Start the terminal - must be called before use
 func Start() {
 	once.Do(func() {
-		f := config.PasswordPromptOutput
+		f := PasswordPromptOutput
 		if !IsTerminal(int(f.Fd())) {
 			// If output is not a tty then remove escape codes
 			Out = colorable.NewNonColorable(f)

@@ -716,9 +716,9 @@ func checkPassword(password string) (string, error) {
 
 // GetPassword asks the user for a password with the prompt given.
 func GetPassword(prompt string) string {
-	_, _ = fmt.Fprintln(PasswordPromptOutput, prompt)
+	_, _ = fmt.Fprintln(terminal.PasswordPromptOutput, prompt)
 	for {
-		_, _ = fmt.Fprint(PasswordPromptOutput, "password:")
+		_, _ = fmt.Fprint(terminal.PasswordPromptOutput, "password:")
 		password := ReadPassword()
 		password, err := checkPassword(password)
 		if err == nil {
