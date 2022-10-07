@@ -69,7 +69,10 @@ func (s *Storage) _load() (err error) {
 
 	configPath := config.GetConfigPath()
 
-	if len(ci.ConfigCommandIn) != 0 {
+	if config.IsConfigCommandIn {
+		if len(ci.ConfigCommandIn) == 0 {
+			return fmt.Errorf("supply arguments to --config-command-in")
+		}
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 
@@ -85,7 +88,7 @@ func (s *Storage) _load() (err error) {
 			if ers := strings.TrimSpace(stderr.String()); ers != "" {
 				fs.Errorf(nil, "--config-command-in stderr: %s", ers)
 			}
-			return fmt.Errorf("config command in failed: %w", err)
+			return fmt.Errorf("command failed: %w", err)
 		}
 		cfg := strings.Trim(stdout.String(), "\r\n")
 		fd = aws.ReadSeekCloser(strings.NewReader(cfg))
