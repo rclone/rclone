@@ -81,8 +81,11 @@ func Start() {
 			// If output is not a tty then remove escape codes
 			Out = colorable.NewNonColorable(f)
 		} else if runtime.GOOS == "windows" && os.Getenv("TERM") != "" {
-			// If TERM is set just use stdout
-			Out = os.Stdout
+			// If TERM is set on Windows then we should just send output
+			// straight to the terminal for cygwin/git bash environments.
+			// We don't want to use NewColorable here because it will
+			// use Windows console calls which cygwin/git bash don't support.
+			Out = f
 		} else {
 			Out = colorable.NewColorable(f)
 		}
