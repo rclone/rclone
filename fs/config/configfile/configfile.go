@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Unknwon/goconfig"
 	"github.com/rclone/rclone/fs"
@@ -27,9 +28,10 @@ func Install() {
 // Storage implements config.Storage for saving and loading config
 // data in a simple INI based file.
 type Storage struct {
-	mu sync.Mutex           // to protect the following variables
-	gc *goconfig.ConfigFile // config file loaded - not thread safe
-	fi os.FileInfo          // stat of the file when last loaded
+	mu        sync.Mutex           // to protect the following variables
+	gc        *goconfig.ConfigFile // config file loaded - not thread safe
+	fiModTime time.Time            // stat of the file when last loaded
+	fiSize    int64                // stat of the file size
 }
 
 // Check to see if we need to reload the config
@@ -41,7 +43,7 @@ func (s *Storage) _check() {
 		fi, err := os.Stat(configPath)
 		if err == nil {
 			// check to see if config file has changed and if it has, reload it
-			if s.fi == nil || !fi.ModTime().Equal(s.fi.ModTime()) || fi.Size() != s.fi.Size() {
+			if fi.ModTime().After(s.fiModTime) || fi.Size() != s.fiSize {
 				fs.Debugf(nil, "Config file has changed externally - reloading")
 				err := s._load()
 				if err != nil {
@@ -56,9 +58,7 @@ func (s *Storage) _check() {
 //
 // mu must be held when calling this
 func (s *Storage) _load() (err error) {
-	ctx := context.Background()
-	ci := fs.GetConfig(ctx)
-	var fd io.ReadSeekCloser
+	var sd io.ReadSeekCloser
 
 	// Make sure we have a sensible default even when we error
 	defer func() {
@@ -70,9 +70,12 @@ func (s *Storage) _load() (err error) {
 	configPath := config.GetConfigPath()
 
 	if config.IsConfigCommandIn {
+		ctx := context.Background()
+		ci := fs.GetConfig(ctx)
 		if len(ci.ConfigCommandIn) == 0 {
 			return fmt.Errorf("supply arguments to --config-command-in")
 		}
+
 		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 
@@ -90,27 +93,34 @@ func (s *Storage) _load() (err error) {
 			}
 			return fmt.Errorf("command failed: %w", err)
 		}
+		if outs := stdout.String(); outs != "" {
+			fs.Debugf(nil, "--config-command-in stdout: %s", outs)
+		}
 		cfg := strings.Trim(stdout.String(), "\r\n")
-		fd = aws.ReadSeekCloser(strings.NewReader(cfg))
+		sd = aws.ReadSeekCloser(strings.NewReader(cfg))
+
+		// Update s.fiModTime and s.fiSize with the current data info
+		s.fiModTime, s.fiSize = time.Now(), int64(stdout.Len())
 	} else {
 		if configPath == "" {
 			return config.ErrorConfigFileNotFound
 		}
 
-		fd, err = os.Open(configPath)
+		sd, err = os.Open(configPath)
 		if err != nil {
 			if os.IsNotExist(err) {
 				return config.ErrorConfigFileNotFound
 			}
 			return err
 		}
+
+		// Update s.fiModTime and s.fiSize with the current file info
+		fi, _ := os.Stat(configPath)
+		s.fiModTime, s.fiSize = fi.ModTime(), fi.Size()
 	}
-	defer fs.CheckClose(fd, &err)
+	defer fs.CheckClose(sd, &err)
 
-	// Update s.fi with the current file info
-	s.fi, _ = os.Stat(configPath)
-
-	cryptReader, err := config.Decrypt(fd)
+	cryptReader, err := config.Decrypt(sd)
 	if err != nil {
 		return err
 	}
@@ -131,77 +141,126 @@ func (s *Storage) Load() (err error) {
 	return s._load()
 }
 
-// Save the config to permanent storage, encrypting if necessary
-func (s *Storage) Save() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	configPath := config.GetConfigPath()
-	if configPath == "" {
-		return fmt.Errorf("failed to save config file, path is empty")
-	}
-
-	dir, name := filepath.Split(configPath)
-	err := file.MkdirAll(dir, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
-	}
-	f, err := os.CreateTemp(dir, name)
-	if err != nil {
-		return fmt.Errorf("failed to create temp file for new config: %w", err)
-	}
-	defer func() {
-		_ = f.Close()
-		if err := os.Remove(f.Name()); err != nil && !os.IsNotExist(err) {
-			fs.Errorf(nil, "failed to remove temp config file: %v", err)
-		}
-	}()
-
+// _save the config from permanent storage, decrypting if necessary
+//
+// mu must be held when calling this
+func (s *Storage) _save() (err error) {
 	var buf bytes.Buffer
 	if err := goconfig.SaveConfigData(s.gc, &buf); err != nil {
 		return fmt.Errorf("failed to save config file: %w", err)
 	}
 
-	if err := config.Encrypt(&buf, f); err != nil {
-		return err
-	}
+	configPath := config.GetConfigPath()
 
-	_ = f.Sync()
-	err = f.Close()
-	if err != nil {
-		return fmt.Errorf("failed to close config file: %w", err)
-	}
+	if config.IsConfigCommandOut {
+		ctx := context.Background()
+		ci := fs.GetConfig(ctx)
+		if len(ci.ConfigCommandOut) == 0 {
+			return fmt.Errorf("supply arguments to --config-command-out")
+		}
 
-	var fileMode os.FileMode = 0600
-	info, err := os.Stat(configPath)
-	if err != nil {
-		fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
-	} else if info.Mode() != fileMode {
-		fs.Debugf(nil, "Keeping previous permissions for config file: %v", info.Mode())
-		fileMode = info.Mode()
-	}
+		var stdout bytes.Buffer
+		var stderr bytes.Buffer
+		var td bytes.Buffer
 
-	attemptCopyGroup(configPath, f.Name())
+		if err := config.Encrypt(&buf, &td); err != nil {
+			return err
+		}
+		fiSize := td.Len()
 
-	err = os.Chmod(f.Name(), fileMode)
-	if err != nil {
-		fs.Errorf(nil, "Failed to set permissions on config file: %v", err)
-	}
+		cmd := exec.Command(ci.ConfigCommandOut[0], ci.ConfigCommandOut[1:]...)
 
-	if err = os.Rename(configPath, configPath+".old"); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to move previous config to backup location: %w", err)
-	}
-	if err = os.Rename(f.Name(), configPath); err != nil {
-		return fmt.Errorf("failed to move newly written config from %s to final location: %v", f.Name(), err)
-	}
-	if err := os.Remove(configPath + ".old"); err != nil && !os.IsNotExist(err) {
-		fs.Errorf(nil, "Failed to remove backup config file: %v", err)
-	}
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+		cmd.Stdin = &td
 
-	// Update s.fi with the newly written file
-	s.fi, _ = os.Stat(configPath)
+		if err := cmd.Run(); err != nil {
+			// One does not always get the stderr returned in the wrapped error.
+			fs.Errorf(nil, "Using --config-command-out returned: %v", err)
+			if ers := strings.TrimSpace(stderr.String()); ers != "" {
+				fs.Errorf(nil, "--config-command-out stderr: %s", ers)
+			}
+			return fmt.Errorf("config-command-out failed: %w", err)
+		}
+		if outs := stdout.String(); outs != "" {
+			fs.Debugf(nil, "--config-command-out stdout: %s", outs)
+		}
+
+		// Update s.fiModTime and s.fiSize with the newly written file
+		s.fiModTime, s.fiSize = time.Now(), int64(fiSize)
+	} else {
+		if configPath == "" {
+			return fmt.Errorf("failed to save config file, path is empty")
+		}
+
+		dir, name := filepath.Split(configPath)
+		err := file.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("failed to create config directory: %w", err)
+		}
+		td, err := os.CreateTemp(dir, name)
+		if err != nil {
+			return fmt.Errorf("failed to create temp file for new config: %w", err)
+		}
+		defer func() {
+			_ = td.Close()
+			if err := os.Remove(td.Name()); err != nil && !os.IsNotExist(err) {
+				fs.Errorf(nil, "failed to remove temp config file: %v", err)
+			}
+		}()
+
+		if err := config.Encrypt(&buf, td); err != nil {
+			return err
+		}
+
+		err = td.Sync()
+		if err != nil {
+			return fmt.Errorf("failed to write config file to disk: %w", err)
+		}
+		err = td.Close()
+		if err != nil {
+			return fmt.Errorf("failed to close config file: %w", err)
+		}
+
+		var fileMode os.FileMode = 0600
+		info, err := os.Stat(configPath)
+		if err != nil {
+			fs.Debugf(nil, "Using default permissions for config file: %v", fileMode)
+		} else if info.Mode() != fileMode {
+			fs.Debugf(nil, "Keeping previous permissions for config file: %v", info.Mode())
+			fileMode = info.Mode()
+		}
+
+		attemptCopyGroup(configPath, td.Name())
+
+		err = os.Chmod(td.Name(), fileMode)
+		if err != nil {
+			fs.Errorf(nil, "Failed to set permissions on config file: %v", err)
+		}
+
+		if err = os.Rename(configPath, configPath+".old"); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to move previous config to backup location: %w", err)
+		}
+		if err = os.Rename(td.Name(), configPath); err != nil {
+			return fmt.Errorf("failed to move newly written config from %s to final location: %v", td.Name(), err)
+		}
+		if err := os.Remove(configPath + ".old"); err != nil && !os.IsNotExist(err) {
+			fs.Errorf(nil, "Failed to remove backup config file: %v", err)
+		}
+
+		// Update s.fiModTime and s.fiSize with the newly written file
+		fi, _ := os.Stat(configPath)
+		s.fiModTime, s.fiSize = fi.ModTime(), fi.Size()
+	}
 
 	return nil
+}
+
+// Save the config to permanent storage, encrypting if necessary
+func (s *Storage) Save() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s._save()
 }
 
 // Serialize the config into a string
