@@ -4507,7 +4507,15 @@ func (o *Object) setMetaData(resp *s3.HeadObjectOutput) {
 		o.lastModified = time.Now()
 		fs.Logf(o, "Failed to read last modified")
 	} else {
-		o.lastModified = *resp.LastModified
+		// Try to keep the maximum precision in lastModified. If we read
+		// it from listings then it may have millisecond precision, but
+		// if we read it from a HEAD/GET request then it will have
+		// second precision.
+		equalToWithinOneSecond := o.lastModified.Truncate(time.Second).Equal((*resp.LastModified).Truncate(time.Second))
+		newHasNs := (*resp.LastModified).Nanosecond() != 0
+		if !equalToWithinOneSecond || newHasNs {
+			o.lastModified = *resp.LastModified
+		}
 	}
 	o.mimeType = aws.StringValue(resp.ContentType)
 
