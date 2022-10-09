@@ -29,6 +29,8 @@ These flags are available for every command.
       --client-key string                    Client SSL private key (PEM) for mutual TLS auth
       --compare-dest stringArray             Include additional comma separated server-side paths during comparison
       --config string                        Config file (default "$HOME/.config/rclone/rclone.conf")
+      --config-command-in SpaceSepList       Command for supplying config data
+      --config-command-out SpaceSepList      Command for storing config data
       --contimeout duration                  Connect timeout (default 1m0s)
       --copy-dest stringArray                Implies --compare-dest but also copies files from paths into destination
       --cpuprofile string                    Write cpu profile to file
