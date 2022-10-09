@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
 	"io"
 	"os"
 	"os/exec"
@@ -15,6 +14,8 @@ import (
 	"time"
 
 	"github.com/Unknwon/goconfig"
+	"github.com/aws/aws-sdk-go/aws"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/lib/file"
