@@ -2284,6 +2284,10 @@ used with [`--config-command-in`](#--config-command-in-spaceseplist) and
 [`--config-command-out`](#--config-command-out-spaceseplist) at 
 [Examples using Termux-Keystore on Android or GPG on Windows](https://github.com/rclone/rclone/wiki/Securing-rclone-using-password-and-config-in-&-out-commands-%5BAndroid,-Windows%5D).
 
+For an even more-secure rclone, see how an encrypted config file can be
+used with [`--config-command-in`](#--config-command-in-spaceseplist) and
+[`--config-command-out`](#--config-command-out-spaceseplist) at [Examples using Termux-Keystore on Android or GPG on Windows](https://github.com/rclone/rclone/wiki/Securing-rclone-using-password-and-config-in-&-out-commands-%5BAndroid,-Windows%5D).
+
 Developer options
 -----------------
 
