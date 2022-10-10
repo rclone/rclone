@@ -13,9 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/Unknwon/goconfig"
+	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"

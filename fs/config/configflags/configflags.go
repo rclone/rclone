@@ -10,13 +10,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
 	fsLog "github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
 )
 
 var (
