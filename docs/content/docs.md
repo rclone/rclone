@@ -957,7 +957,7 @@ can be stored in the `RCLONE_CONFIG_COMMAND_OUT` environment variable.
 Examples:
 
     --config-command-out "cmd /c more /s > path/to/rclone.conf" # Mimics native rclone behaviour for Windows
-    --config-command-out "bash -c \"cat > path/to/rclone.conf\"" # Mimics native rclone behaviour for Unix
+    --config-command-out "/bin/bash -c \"cat > path/to/rclone.conf\"" # Mimics native rclone behaviour for Unix
     --config-command-out "my-keystore-program-store secured_rclone_config_name"
 
 See the [`--config-command-in`](#--config-command-in-spaceseplist) for similar behaviour and examples.
