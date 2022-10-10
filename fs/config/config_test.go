@@ -67,6 +67,7 @@ fruit = potato
 `
 	// using ci.ConfigCommandIn, different config
 	ci.ConfigCommandIn = fs.SpaceSepList{"echo", testConfigData}
+	assert.NoError(t, config.Data().Load())
 
 	sections = config.Data().GetSectionList()
 	expect = []string{"one"}
