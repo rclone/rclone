@@ -57,6 +57,7 @@ import (
 	"github.com/rclone/rclone/lib/readers"
 	"github.com/rclone/rclone/lib/rest"
 	"github.com/rclone/rclone/lib/version"
+	"golang.org/x/net/http/httpguts"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -5238,6 +5239,20 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			} else {
 				fs.Errorf(o, "Don't know how to set key %q on upload", key)
 			}
+		}
+	}
+
+	// Check metadata keys and values are valid
+	for key, value := range req.Metadata {
+		if !httpguts.ValidHeaderFieldName(key) {
+			fs.Errorf(o, "Dropping invalid metadata key %q", key)
+			delete(req.Metadata, key)
+		} else if value == nil {
+			fs.Errorf(o, "Dropping nil metadata value for key %q", key)
+			delete(req.Metadata, key)
+		} else if !httpguts.ValidHeaderFieldValue(*value) {
+			fs.Errorf(o, "Dropping invalid metadata value %q for key %q", *value, key)
+			delete(req.Metadata, key)
 		}
 	}
 
