@@ -1406,6 +1406,10 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 			if err == nil {
 				s = s2
 			}
+			s2, err = filepath.EvalSymlinks(s)
+			if err == nil {
+				s = s2
+			}
 		}
 		s = filepath.ToSlash(s)
 		vol := filepath.VolumeName(s)
@@ -1420,6 +1424,10 @@ func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
 	}
 	if !filepath.IsAbs(s) {
 		s2, err := filepath.Abs(s)
+		if err == nil {
+			s = s2
+		}
+		s2, err = filepath.EvalSymlinks(s)
 		if err == nil {
 			s = s2
 		}
