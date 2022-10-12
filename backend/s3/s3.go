@@ -2164,6 +2164,11 @@ can't check the size and hash but the file contents will be decompressed.
 `,
 			Advanced: true,
 			Default:  false,
+		}, {
+			Name:     "no_system_metadata",
+			Help:     `Suppress setting and reading of system metadata`,
+			Advanced: true,
+			Default:  false,
 		},
 		}})
 }
@@ -2290,6 +2295,7 @@ type Options struct {
 	Versions              bool                 `config:"versions"`
 	VersionAt             fs.Time              `config:"version_at"`
 	Decompress            bool                 `config:"decompress"`
+	NoSystemMetadata      bool                 `config:"no_system_metadata"`
 }
 
 // Fs represents a remote s3 server
@@ -5227,6 +5233,10 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	for k, v := range meta {
 		pv := aws.String(v)
 		k = strings.ToLower(k)
+		if o.fs.opt.NoSystemMetadata {
+			req.Metadata[k] = pv
+			continue
+		}
 		switch k {
 		case "cache-control":
 			req.CacheControl = pv
@@ -5505,6 +5515,9 @@ func (o *Object) Metadata(ctx context.Context) (metadata fs.Metadata, err error)
 
 	// Set system metadata
 	setMetadata := func(k string, v *string) {
+		if o.fs.opt.NoSystemMetadata {
+			return
+		}
 		if v == nil || *v == "" {
 			return
 		}
