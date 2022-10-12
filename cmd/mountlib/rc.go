@@ -97,6 +97,10 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
+	if mountOpt.Daemon {
+		return nil, errors.New("Daemon Option not supported over the API")
+	}
+
 	mountType, err := in.GetString("mountType")
 
 	mountMu.Lock()
