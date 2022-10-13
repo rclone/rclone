@@ -65,7 +65,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS, Qiniu and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -150,6 +150,9 @@ func init() {
 			}, {
 				Value: "Wasabi",
 				Help:  "Wasabi Object Storage",
+			}, {
+				Value: "Qiniu",
+				Help:  "Qiniu Object Storage (Kodo)",
 			}, {
 				Value: "Other",
 				Help:  "Any other S3 compatible provider",
@@ -389,6 +392,34 @@ func init() {
 				Help:  "R2 buckets are automatically distributed across Cloudflare's data centers for low latency.",
 			}},
 		}, {
+			// References:
+			// https://developer.qiniu.com/kodo/4088/s3-access-domainname
+			Name:     "region",
+			Help:     "Region to connect to.",
+			Provider: "Qiniu",
+			Examples: []fs.OptionExample{{
+				Value: "cn-east-1",
+				Help:  "The default endpoint - a good choice if you are unsure.\nEast China Region 1.\nNeeds location constraint cn-east-1.",
+			}, {
+				Value: "cn-east-2",
+				Help:  "East China Region 2.\nNeeds location constraint cn-east-2.",
+			}, {
+				Value: "cn-north-1",
+				Help:  "North China Region 1.\nNeeds location constraint cn-north-1.",
+			}, {
+				Value: "cn-south-1",
+				Help:  "South China Region 1.\nNeeds location constraint cn-south-1.",
+			}, {
+				Value: "us-north-1",
+				Help:  "North America Region.\nNeeds location constraint us-north-1.",
+			}, {
+				Value: "ap-southeast-1",
+				Help:  "Southeast Asia Region 1.\nNeeds location constraint ap-southeast-1.",
+			}, {
+				Value: "ap-northeast-1",
+				Help:  "Northeast Asia Region 1.\nNeeds location constraint ap-northeast-1.",
+			}},
+		}, {
 			Name:     "region",
 			Help:     "Region where your bucket will be created and your data stored.\n",
 			Provider: "IONOS",
@@ -405,7 +436,7 @@ func init() {
 		}, {
 			Name:     "region",
 			Help:     "Region to connect to.\n\nLeave blank if you are using an S3 clone and you don't have a region.",
-			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,IONOS,ArvanCloud,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
+			Provider: "!AWS,Alibaba,ChinaMobile,Cloudflare,IONOS,ArvanCloud,Qiniu,RackCorp,Scaleway,Storj,TencentCOS,HuaweiOBS,IDrive",
 			Examples: []fs.OptionExample{{
 				Value: "",
 				Help:  "Use this if unsure.\nWill use v4 signatures and an empty region.",
@@ -1031,9 +1062,36 @@ func init() {
 				Help:  "Auckland (New Zealand) Endpoint",
 			}},
 		}, {
+			// Qiniu endpoints: https://developer.qiniu.com/kodo/4088/s3-access-domainname
+			Name:     "endpoint",
+			Help:     "Endpoint for Qiniu Object Storage.",
+			Provider: "Qiniu",
+			Examples: []fs.OptionExample{{
+				Value: "s3-cn-east-1.qiniucs.com",
+				Help:  "East China Endpoint 1",
+			}, {
+				Value: "s3-cn-east-2.qiniucs.com",
+				Help:  "East China Endpoint 2",
+			}, {
+				Value: "s3-cn-north-1.qiniucs.com",
+				Help:  "North China Endpoint 1",
+			}, {
+				Value: "s3-cn-south-1.qiniucs.com",
+				Help:  "South China Endpoint 1",
+			}, {
+				Value: "s3-us-north-1.qiniucs.com",
+				Help:  "North America Endpoint 1",
+			}, {
+				Value: "s3-ap-southeast-1.qiniucs.com",
+				Help:  "Southeast Asia Endpoint 1",
+			}, {
+				Value: "s3-ap-northeast-1.qiniucs.com",
+				Help:  "Northeast Asia Endpoint 1",
+			}},
+		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for S3 API.\n\nRequired when using an S3 clone.",
-			Provider: "!AWS,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp",
+			Provider: "!AWS,IBMCOS,IDrive,IONOS,TencentCOS,HuaweiOBS,Alibaba,ChinaMobile,ArvanCloud,Scaleway,StackPath,Storj,RackCorp,Qiniu",
 			Examples: []fs.OptionExample{{
 				Value:    "objects-us-east-1.dream.io",
 				Help:     "Dream Objects endpoint",
@@ -1442,8 +1500,34 @@ func init() {
 			}},
 		}, {
 			Name:     "location_constraint",
+			Help:     "Location constraint - must be set to match the Region.\n\nUsed when creating buckets only.",
+			Provider: "Qiniu",
+			Examples: []fs.OptionExample{{
+				Value: "cn-east-1",
+				Help:  "East China Region 1",
+			}, {
+				Value: "cn-east-2",
+				Help:  "East China Region 2",
+			}, {
+				Value: "cn-north-1",
+				Help:  "North China Region 1",
+			}, {
+				Value: "cn-south-1",
+				Help:  "South China Region 1",
+			}, {
+				Value: "us-north-1",
+				Help:  "North America Region 1",
+			}, {
+				Value: "ap-southeast-1",
+				Help:  "Southeast Asia Region 1",
+			}, {
+				Value: "ap-northeast-1",
+				Help:  "Northeast Asia Region 1",
+			}},
+		}, {
+			Name:     "location_constraint",
 			Help:     "Location constraint - must be set to match the Region.\n\nLeave blank if not sure. Used when creating buckets only.",
-			Provider: "!AWS,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,ArvanCloud,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
+			Provider: "!AWS,Alibaba,HuaweiOBS,ChinaMobile,Cloudflare,IBMCOS,IDrive,IONOS,ArvanCloud,Qiniu,RackCorp,Scaleway,StackPath,Storj,TencentCOS",
 		}, {
 			Name: "acl",
 			Help: `Canned ACL used when creating buckets and storing or copying objects.
@@ -1709,6 +1793,24 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 			}, {
 				Value: "GLACIER",
 				Help:  "Archived storage.\nPrices are lower, but it needs to be restored first to be accessed.",
+			}},
+		}, {
+			// Mapping from here: https://developer.qiniu.com/kodo/5906/storage-type
+			Name:     "storage_class",
+			Help:     "The storage class to use when storing new objects in Qiniu.",
+			Provider: "Qiniu",
+			Examples: []fs.OptionExample{{
+				Value: "STANDARD",
+				Help:  "Standard storage class",
+			}, {
+				Value: "LINE",
+				Help:  "Infrequent access storage mode",
+			}, {
+				Value: "GLACIER",
+				Help:  "Archive storage mode",
+			}, {
+				Value: "DEEP_ARCHIVE",
+				Help:  "Deep archive storage mode",
 			}},
 		}, {
 			Name: "upload_cutoff",
@@ -2623,6 +2725,9 @@ func setQuirks(opt *Options) {
 		useMultipartEtag = false // untested
 	case "Wasabi":
 		// No quirks
+	case "Qiniu":
+		useMultipartEtag = false
+		urlEncodeListings = false
 	case "Other":
 		listObjectsV2 = false
 		virtualHostStyle = false
