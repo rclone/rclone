@@ -28,6 +28,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/google/uuid v1.3.0
 	github.com/hanwen/go-fuse/v2 v2.1.0
+	github.com/hirochachacha/go-smb2 v1.1.0
 	github.com/iguanesolutions/go-systemd/v5 v5.1.0
 	github.com/jcmturner/gokrb5/v8 v8.4.3
 	github.com/jzelinskie/whirlpool v0.0.0-20201016144138-0675e54bb004
@@ -39,6 +40,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/ncw/go-acd v0.0.0-20201019170801-fe55f33415b1
 	github.com/ncw/swift/v2 v2.0.1
+	github.com/oracle/oci-go-sdk/v65 v65.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/sftp v1.13.5
 	github.com/pmezard/go-difflib v1.0.0
@@ -86,6 +88,7 @@ require (
 	github.com/gdamore/encoding v1.0.0 // indirect
 	github.com/geoffgarside/ber v1.1.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
+	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.1.0 // indirect
@@ -93,7 +96,6 @@ require (
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
-	github.com/hirochachacha/go-smb2 v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jcmturner/aescts/v2 v2.0.0 // indirect
 	github.com/jcmturner/dnsutils/v2 v2.0.0 // indirect
@@ -115,8 +117,7 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
-	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
+	github.com/sony/gobreaker v0.5.0 // indirect
 	github.com/spacemonkeygo/monkit/v3 v3.0.17 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
