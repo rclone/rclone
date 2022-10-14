@@ -46,6 +46,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/putdotio/go-putio/putio v0.0.0-20200123120452-16d982cac2b8
+	github.com/rclone/ftp v0.0.0-20221014110213-e44dedbc76c6
 	github.com/rfjakob/eme v1.1.2
 	github.com/shirou/gopsutil/v3 v3.22.7
 	github.com/sirupsen/logrus v1.9.0
@@ -140,7 +141,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
-	github.com/jlaffaye/ftp v0.0.0-20220904184306-99be0634ab9a
 	github.com/pkg/xattr v0.4.7
 	golang.org/x/mobile v0.0.0-20220722155234-aaac322e2105
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035
