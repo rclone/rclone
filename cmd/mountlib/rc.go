@@ -274,8 +274,11 @@ func init() {
 		Path:         "mount/unmountall",
 		AuthRequired: true,
 		Fn:           unmountAll,
-		Title:        "Show current mount points",
-		Help: `This shows currently mounted points, which can be used for performing an unmount.
+		Title:        "Unmount all active mounts",
+		Help: `
+rclone allows Linux, FreeBSD, macOS and Windows to
+mount any of Rclone's cloud storage systems as a file system with
+FUSE.
 
 This takes no parameters and returns error if unmount does not succeed.
 
