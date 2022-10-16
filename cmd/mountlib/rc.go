@@ -241,6 +241,7 @@ Eg
 // MountInfo is a transitional structure for json marshaling
 type MountInfo struct {
 	Fs         string    `json:"Fs"`
+	FsRoot     string    `json:"FsRoot"`
 	MountPoint string    `json:"MountPoint"`
 	MountedOn  time.Time `json:"MountedOn"`
 }
@@ -259,6 +260,7 @@ func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 		m := liveMounts[k]
 		info := MountInfo{
 			Fs:         m.Fs.Name(),
+			FsRoot:     m.Fs.Root(),
 			MountPoint: m.MountPoint,
 			MountedOn:  m.MountedOn,
 		}
