@@ -148,12 +148,12 @@ func (f *Fs) Root() string {
 // String converts this Fs to a string
 func (f *Fs) String() string {
 	if f.rootBucket == "" {
-		return "oss:root"
+		return "oos:root"
 	}
 	if f.rootDirectory == "" {
-		return fmt.Sprintf("oss:bucket %s", f.rootBucket)
+		return fmt.Sprintf("oos:bucket %s", f.rootBucket)
 	}
-	return fmt.Sprintf("oss:bucket %s, path %s", f.rootBucket, f.rootDirectory)
+	return fmt.Sprintf("oos:bucket %s, path %s", f.rootBucket, f.rootDirectory)
 }
 
 // Features returns the optional features of this Fs
@@ -473,6 +473,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // makeBucket creates the bucket if it doesn't exist
 func (f *Fs) makeBucket(ctx context.Context, bucketName string) error {
+	if f.opt.NoCheckBucket {
+		return nil
+	}
 	return f.cache.Create(bucketName, func() error {
 		details := objectstorage.CreateBucketDetails{
 			Name:             common.String(bucketName),

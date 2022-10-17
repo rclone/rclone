@@ -63,6 +63,7 @@ type Options struct {
 	CopyTimeout       fs.Duration          `config:"copy_timeout"`
 	StorageTier       string               `config:"storage_tier"`
 	LeavePartsOnError bool                 `config:"leave_parts_on_error"`
+	NoCheckBucket     bool                 `config:"no_check_bucket"`
 }
 
 func newOptions() []fs.Option {
@@ -222,6 +223,18 @@ It should be set to true for resuming uploads across different sessions.
 
 WARNING: Storing parts of an incomplete multipart upload counts towards space usage on object storage and will add
 additional costs if not cleaned up.
+`,
+		Default:  false,
+		Advanced: true,
+	}, {
+		Name: "no_check_bucket",
+		Help: `If set, don't attempt to check the bucket exists or create it.
+
+This can be useful when trying to minimise the number of transactions
+rclone does if you know the bucket exists already.
+
+It can also be needed if the user you are using does not have bucket
+creation permissions.
 `,
 		Default:  false,
 		Advanced: true,

@@ -272,7 +272,7 @@ Properties:
 
 #### --oos-config-profile
 
-Path to OCI config file
+Profile name inside the oci config file
 
 Properties:
 
@@ -429,6 +429,24 @@ Properties:
 
 - Config:      leave_parts_on_error
 - Env Var:     RCLONE_OOS_LEAVE_PARTS_ON_ERROR
+- Type:        bool
+- Default:     false
+
+#### --oos-no-check-bucket
+
+If set, don't attempt to check the bucket exists or create it.
+
+This can be useful when trying to minimise the number of transactions
+rclone does if you know the bucket exists already.
+
+It can also be needed if the user you are using does not have bucket
+creation permissions.
+
+
+Properties:
+
+- Config:      no_check_bucket
+- Env Var:     RCLONE_OOS_NO_CHECK_BUCKET
 - Type:        bool
 - Default:     false
 

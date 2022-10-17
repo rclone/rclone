@@ -59,6 +59,7 @@ docs = [
     "azureblob.md",
     "onedrive.md",
     "opendrive.md",
+    "oracleobjectstorage.md",
     "qingstor.md",
     "sia.md",
     "swift.md",
