@@ -487,6 +487,22 @@ and may be set in the config file.
       --onedrive-server-side-across-configs          Allow server-side operations (e.g. copy) to work across different onedrive configs
       --onedrive-token string                        OAuth Access Token as a JSON blob
       --onedrive-token-url string                    Token server url
+      --oos-chunk-size SizeSuffix                    Chunk size to use for uploading (default 5Mi)
+      --oos-compartment string                       Object storage compartment OCID
+      --oos-config-file string                       Path to OCI config file (default "~/.oci/config")
+      --oos-config-profile string                    Profile name inside the oci config file (default "Default")
+      --oos-copy-cutoff SizeSuffix                   Cutoff for switching to multipart copy (default 4.656Gi)
+      --oos-copy-timeout Duration                    Timeout for copy (default 1m0s)
+      --oos-disable-checksum                         Don't store MD5 checksum with object metadata
+      --oos-encoding MultiEncoder                    The encoding for the backend (default Slash,InvalidUtf8,Dot)
+      --oos-endpoint string                          Endpoint for Object storage API
+      --oos-leave-parts-on-error                     If true avoid calling abort upload on a failure, leaving all successfully uploaded parts on S3 for manual recovery
+      --oos-namespace string                         Object storage namespace
+      --oos-no-check-bucket                          If set, don't attempt to check the bucket exists or create it
+      --oos-provider string                          Choose your Auth Provider (default "env_auth")
+      --oos-region string                            Object storage Region
+      --oos-upload-concurrency int                   Concurrency for multipart uploads (default 10)
+      --oos-upload-cutoff SizeSuffix                 Cutoff for switching to chunked upload (default 200Mi)
       --opendrive-chunk-size SizeSuffix              Files will be uploaded in chunks this size (default 10Mi)
       --opendrive-encoding MultiEncoder              The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,LeftSpace,LeftCrLfHtVt,RightSpace,RightCrLfHtVt,InvalidUtf8,Dot)
       --opendrive-password string                    Password (obscured)

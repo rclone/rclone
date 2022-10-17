@@ -31,7 +31,7 @@ var commandHelp = []fs.CommandHelp{{
 
 Usage Examples:
 
-    rclone backend rename oss:bucket relative-object-path-under-bucket object-new-name
+    rclone backend rename oos:bucket relative-object-path-under-bucket object-new-name
 `,
 	Opts: nil,
 }, {
@@ -39,7 +39,7 @@ Usage Examples:
 	Short: "List the unfinished multipart uploads",
 	Long: `This command lists the unfinished multipart uploads in JSON format.
 
-    rclone backend list-multipart-uploads oss:bucket/path/to/object
+    rclone backend list-multipart-uploads oos:bucket/path/to/object
 
 It returns a dictionary of buckets with values as lists of unfinished
 multipart uploads.
@@ -68,8 +68,8 @@ max-age which defaults to 24 hours.
 Note that you can use -i/--dry-run with this command to see what it
 would do.
 
-    rclone backend cleanup oss:bucket/path/to/object
-    rclone backend cleanup -o max-age=7w oss:bucket/path/to/object
+    rclone backend cleanup oos:bucket/path/to/object
+    rclone backend cleanup -o max-age=7w oos:bucket/path/to/object
 
 Durations are parsed as per the rest of rclone, 2h, 7d, 7w etc.
 `,
