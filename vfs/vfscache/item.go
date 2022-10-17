@@ -590,20 +590,25 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		item._updateFingerprint()
 	}
 
-	item.info.Dirty = false
-	err = item._save()
-	if err != nil {
-		fs.Errorf(item.name, "vfs cache: failed to write metadata file: %v", err)
-	}
+	// Write the object back to the VFS layer before we mark it as
+	// clean, otherwise it will become eligible for removal which
+	// can cause a deadlock
 	if storeFn != nil && item.o != nil {
 		fs.Debugf(item.name, "vfs cache: writeback object to VFS layer")
-		// Write the object back to the VFS layer as last
-		// thing we do with mutex unlocked
+		// Write the object back to the VFS layer last with mutex unlocked
 		o := item.o
 		item.mu.Unlock()
 		storeFn(o)
 		item.mu.Lock()
 	}
+
+	// Show item is clean and is elegible for cache removal
+	item.info.Dirty = false
+	err = item._save()
+	if err != nil {
+		fs.Errorf(item.name, "vfs cache: failed to write metadata file: %v", err)
+	}
+
 	return nil
 }
 
