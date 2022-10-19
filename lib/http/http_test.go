@@ -494,6 +494,16 @@ func Test_useSSL(t *testing.T) {
 			}},
 			want: true,
 		},
+		{
+			name: "basic",
+			args: args{opt: Options{
+				SslCert:       "",
+				SslKey:        "test",
+				ClientCA:      "",
+				MinTLSVersion: "tls1.2",
+			}},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

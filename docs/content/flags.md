@@ -119,6 +119,7 @@ These flags are available for every command.
       --rc-job-expire-interval duration      Interval to check for expired async jobs (default 10s)
       --rc-key string                        SSL PEM Private key
       --rc-max-header-bytes int              Maximum size of request header (default 4096)
+      --rc-min-tls-version string            Minimum TLS version that is acceptable
       --rc-no-auth                           Don't require auth for certain methods
       --rc-pass string                       Password for authentication
       --rc-realm string                      Realm for authentication (default "rclone")

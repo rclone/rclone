@@ -41,6 +41,11 @@ SSL PEM Private key
 
 Maximum size of request header (default 4096)
 
+### --rc-min-tls-version=VALUE
+
+The minimum TLS version that is acceptable. Valid values are "tls1.0",
+"tls1.1", "tls1.2" and "tls1.3" (default "tls1.0").
+
 ### --rc-user=VALUE
 
 User name for authentication.

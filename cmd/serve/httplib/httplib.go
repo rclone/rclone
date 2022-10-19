@@ -108,6 +108,10 @@ supply ` + "`--client-ca`" + ` also.
 of that with the CA certificate.  ` + "`--key`" + ` should be the PEM encoded
 private key and ` + "`--client-ca`" + ` should be the PEM encoded client
 certificate authority certificate.
+
+--min-tls-version is minimum TLS version that is acceptable. Valid
+  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
+  "tls1.0").
 `
 
 // Options contains options for the http Server
@@ -126,6 +130,7 @@ type Options struct {
 	BasicPass          string        // password for BasicUser
 	Auth               AuthFn        `json:"-"` // custom Auth (not set by command line flags)
 	Template           string        // User specified template
+	MinTLSVersion      string        // MinTLSVersion contains the minimum TLS version that is acceptable
 }
 
 // AuthFn if used will be used to authenticate user, pass. If an error
@@ -141,6 +146,7 @@ var DefaultOpt = Options{
 	ServerReadTimeout:  1 * time.Hour,
 	ServerWriteTimeout: 1 * time.Hour,
 	MaxHeaderBytes:     4096,
+	MinTLSVersion:      "tls1.0",
 }
 
 // Server contains info about the running http server
@@ -276,6 +282,20 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		s.Opt.BaseURL = "/" + s.Opt.BaseURL
 	}
 
+	var minTLSVersion uint16
+	switch opt.MinTLSVersion {
+	case "tls1.0":
+		minTLSVersion = tls.VersionTLS10
+	case "tls1.1":
+		minTLSVersion = tls.VersionTLS11
+	case "tls1.2":
+		minTLSVersion = tls.VersionTLS12
+	case "tls1.3":
+		minTLSVersion = tls.VersionTLS13
+	default:
+		log.Fatalf("Invalid value for --min-tls-version")
+	}
+
 	// FIXME make a transport?
 	s.httpServer = &http.Server{
 		Addr:              s.Opt.ListenAddr,
@@ -286,7 +306,7 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 		ReadHeaderTimeout: 10 * time.Second, // time to send the headers
 		IdleTimeout:       60 * time.Second, // time to keep idle connections open
 		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS10, // disable SSL v3.0 and earlier
+			MinVersion: minTLSVersion,
 		},
 	}
 

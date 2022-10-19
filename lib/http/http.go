@@ -59,6 +59,10 @@ supply ` + "`--client-ca`" + ` also.
 of that with the CA certificate.  ` + "`--key`" + ` should be the PEM encoded
 private key and ` + "`--client-ca`" + ` should be the PEM encoded client
 certificate authority certificate.
+
+--min-tls-version is minimum TLS version that is acceptable. Valid
+  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
+  "tls1.0").
 `
 
 // Middleware function signature required by chi.Router.Use()
@@ -76,6 +80,7 @@ type Options struct {
 	SslCertBody        []byte        // SSL PEM key (concatenation of certificate and CA certificate) body, ignores SslCert
 	SslKeyBody         []byte        // SSL PEM Private key body, ignores SslKey
 	ClientCA           string        // Client certificate authority to verify clients with
+	MinTLSVersion      string        // MinTLSVersion contains the minimum TLS version that is acceptable.
 }
 
 // DefaultOpt is the default values used for Options
@@ -84,6 +89,7 @@ var DefaultOpt = Options{
 	ServerReadTimeout:  1 * time.Hour,
 	ServerWriteTimeout: 1 * time.Hour,
 	MaxHeaderBytes:     4096,
+	MinTLSVersion:      "tls1.0",
 }
 
 // Server interface of http server
@@ -151,8 +157,23 @@ func NewServer(listeners, tlsListeners []net.Listener, opt Options) (Server, err
 		if err != nil {
 			log.Fatal(err)
 		}
+		var minTLSVersion uint16
+		switch opt.MinTLSVersion {
+		case "tls1.0":
+			minTLSVersion = tls.VersionTLS10
+		case "tls1.1":
+			minTLSVersion = tls.VersionTLS11
+		case "tls1.2":
+			minTLSVersion = tls.VersionTLS12
+		case "tls1.3":
+			minTLSVersion = tls.VersionTLS13
+		default:
+			err = errors.New("Invalid value for --min-tls-version")
+			log.Fatalf(err.Error())
+			return nil, err
+		}
 		tlsConfig = &tls.Config{
-			MinVersion:   tls.VersionTLS10, // disable SSL v3.0 and earlier
+			MinVersion:   minTLSVersion,
 			Certificates: []tls.Certificate{cert},
 		}
 	} else if len(listeners) == 0 && len(tlsListeners) != 0 {
@@ -410,6 +431,7 @@ func AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string, Opt *Options) {
 	flags.StringVarP(flagSet, &Opt.SslKey, prefix+"key", "", Opt.SslKey, "SSL PEM Private key")
 	flags.StringVarP(flagSet, &Opt.ClientCA, prefix+"client-ca", "", Opt.ClientCA, "Client certificate authority to verify clients with")
 	flags.StringVarP(flagSet, &Opt.BaseURL, prefix+"baseurl", "", Opt.BaseURL, "Prefix for URLs - leave blank for root")
+	flags.StringVarP(flagSet, &Opt.MinTLSVersion, prefix+"min-tls-version", "", Opt.MinTLSVersion, "Minimum TLS version that is acceptable")
 
 }
 
