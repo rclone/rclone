@@ -42,6 +42,7 @@ Here is an overview of the major features of each cloud storage system.
 | Microsoft OneDrive           | SHA1 ⁵           | R/W     | Yes              | No              | R         | -        |
 | OpenDrive                    | MD5              | R/W     | Yes              | Partial ⁸       | -         | -        |
 | OpenStack Swift              | MD5              | R/W     | No               | No              | R/W       | -        |
+| Oracle Object Storage        | MD5              | R/W     | No               | No              | R/W       | -        |
 | pCloud                       | MD5, SHA1 ⁷      | R       | No               | No              | W         | -        |
 | premiumize.me                | -                | -       | Yes              | No              | R         | -        |
 | put.io                       | CRC-32           | R/W     | No               | Yes             | R         | -        |
@@ -493,6 +494,7 @@ upon backend-specific capabilities.
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
 | OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
+| Oracle Object Storage        | Yes   | Yes  | No   | No      | Yes     | Yes   | No           | No           | No    | No       |
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | Yes          | Yes   | Yes      |
 | put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No           | Yes   | Yes      |

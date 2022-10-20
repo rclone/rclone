@@ -3,7 +3,7 @@ title: "Oracle Object Storage"
 description: "Rclone docs for Oracle Object Storage"
 ---
 
-# {{< icon "fa-light fa-cloud" >}} Oracle Object Storage
+# {{< icon "fa fa-cloud" >}} Oracle Object Storage
 
 [Oracle Object Storage Overview](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
 
@@ -113,8 +113,8 @@ Options:
 - compartment: ocid1.compartment.oc1..aaaaaaaapufkxc7ame3sthry5i7ujrwfc7ejnthhu6bhanm5oqfjpyasjkba
 - region: us-ashburn-1
 - provider: user_principal_auth
-- oci_config_file: /etc/oci/dev.conf
-- oci_config_profile: Test
+- config_file: /etc/oci/dev.conf
+- config_profile: Test
 Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
