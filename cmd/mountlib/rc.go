@@ -258,7 +258,7 @@ func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	for _, k := range keys {
 		m := liveMounts[k]
 		info := MountInfo{
-			Fs:         m.Fs.Name(),
+			Fs:         fs.ConfigString(m.Fs),
 			MountPoint: m.MountPoint,
 			MountedOn:  m.MountedOn,
 		}
