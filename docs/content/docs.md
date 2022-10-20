@@ -61,6 +61,7 @@ See the following for detailed instructions for
   * [Microsoft OneDrive](/onedrive/)
   * [OpenStack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [OpenDrive](/opendrive/)
+  * [Oracle Object Storage](/oracleobjectstorage/)
   * [Pcloud](/pcloud/)
   * [premiumize.me](/premiumizeme/)
   * [put.io](/putio/)
