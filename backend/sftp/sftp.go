@@ -58,6 +58,15 @@ func init() {
 		Name:        "sftp",
 		Description: "SSH/SFTP",
 		NewFs:       NewFs,
+		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
+			use_insecure_cipher, _ := m.Get("use_insecure_cipher")
+			user_defined_ciphers, _ := m.Get("user_defined_ciphers")
+			user_defined_key_exchange, _ := m.Get("user_defined_key_exchange")
+			if use_insecure_cipher == "true" && (user_defined_ciphers != "" || user_defined_key_exchange != "") {
+				return nil, fmt.Errorf("use_insecure_cipher must be false if user_defined_ciphers or user_defined_key_exchange are set.")
+			}
+			return nil, nil
+		},
 		Options: []fs.Option{{
 			Name:     "host",
 			Help:     "SSH host to connect to.\n\nE.g. \"example.com\".",
@@ -123,7 +132,10 @@ This enables the use of the following insecure ciphers and key exchange methods:
 - diffie-hellman-group-exchange-sha256
 - diffie-hellman-group-exchange-sha1
 
-Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.`,
+Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
+
+This must not be set if you use either user_defined_ciphers or user_defined_key_exchange advanced options.
+`,
 			Default: false,
 			Examples: []fs.OptionExample{
 				{
@@ -327,7 +339,47 @@ and pass variables with spaces in in quotes, eg
 
 `,
 			Advanced: true,
-		}},
+		}, {
+                        Name:    "user_defined_ciphers",
+                        Default: fs.SpaceSepList{},
+                        Help: `Space separated list of ciphers to be used for session encryption, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q cipher.
+
+This must not be set if use_insecure_cipher is true.
+
+Example:
+
+    aes128-ctr aes192-ctr aes256-ctr aes128-gcm@openssh.com aes256-gcm@openssh.com
+`,
+                        Advanced: true,
+                },{
+                        Name:    "user_defined_key_exchange",
+                        Default: fs.SpaceSepList{},
+                        Help: `Space separated list of key exchange algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q kex.
+
+This must not be set if use_insecure_cipher is true.
+
+Example:
+
+    sntrup761x25519-sha512@openssh.com curve25519-sha256,curve25519-sha256@libssh.org ecdh-sha2-nistp256
+`,
+                        Advanced: true,
+                },{
+                        Name:    "user_defined_macs",
+                        Default: fs.SpaceSepList{},
+                        Help: `Space separated list of MACs (message authentication code) algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q mac.
+
+Example:
+
+    umac-64-etm@openssh.com umac-128-etm@openssh.com hmac-sha2-256-etm@openssh.com
+`,
+                        Advanced: true,
+                }},
 	}
 	fs.Register(fsi)
 }
@@ -362,6 +414,9 @@ type Options struct {
 	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
 	Concurrency             int             `config:"concurrency"`
 	SetEnv                  fs.SpaceSepList `config:"set_env"`
+	UserDefinedCiphers      fs.SpaceSepList `config:"user_defined_ciphers"`
+	UserDefinedKeyExchange  fs.SpaceSepList `config:"user_defined_key_exchange"`
+	UserDefinedMACs         fs.SpaceSepList `config:"user_defined_macs"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -702,10 +757,21 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		sshConfig.HostKeyCallback = hostcallback
 	}
 
+	sshConfig.Config.SetDefaults()
 	if opt.UseInsecureCipher {
-		sshConfig.Config.SetDefaults()
 		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc", "aes192-cbc", "aes256-cbc", "3des-cbc")
 		sshConfig.Config.KeyExchanges = append(sshConfig.Config.KeyExchanges, "diffie-hellman-group-exchange-sha1", "diffie-hellman-group-exchange-sha256")
+	} else {
+		if opt.UserDefinedCiphers != nil {
+			sshConfig.Config.Ciphers = opt.UserDefinedCiphers
+		}
+		if opt.UserDefinedKeyExchange != nil {
+			sshConfig.Config.KeyExchanges = opt.UserDefinedKeyExchange
+		}
+        }
+
+	if opt.UserDefinedMACs != nil {
+		sshConfig.Config.MACs = opt.UserDefinedMACs
 	}
 
 	keyFile := env.ShellExpand(opt.KeyFile)
@@ -1951,3 +2017,5 @@ var (
 	_ fs.Shutdowner  = &Fs{}
 	_ fs.Object      = &Object{}
 )
+
+
