@@ -1400,29 +1400,26 @@ func (o *Object) writeMetadata(metadata fs.Metadata) (err error) {
 }
 
 func cleanRootPath(s string, noUNC bool, enc encoder.MultiEncoder) string {
-	if runtime.GOOS == "windows" {
-		if !filepath.IsAbs(s) && !strings.HasPrefix(s, "\\") {
+	if runtime.GOOS != "windows" || !strings.HasPrefix(s, "\\") {
+		if !filepath.IsAbs(s) {
 			s2, err := filepath.Abs(s)
 			if err == nil {
 				s = s2
 			}
+		} else {
+			s = filepath.Clean(s)
 		}
+	}
+	if runtime.GOOS == "windows" {
 		s = filepath.ToSlash(s)
 		vol := filepath.VolumeName(s)
 		s = vol + enc.FromStandardPath(s[len(vol):])
 		s = filepath.FromSlash(s)
-
 		if !noUNC {
 			// Convert to UNC
 			s = file.UNCPath(s)
 		}
 		return s
-	}
-	if !filepath.IsAbs(s) {
-		s2, err := filepath.Abs(s)
-		if err == nil {
-			s = s2
-		}
 	}
 	s = enc.FromStandardPath(s)
 	return s
