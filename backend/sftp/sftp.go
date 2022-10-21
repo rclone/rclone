@@ -331,9 +331,9 @@ and pass variables with spaces in in quotes, eg
 `,
 			Advanced: true,
 		}, {
-                        Name:    "ciphers",
-                        Default: fs.SpaceSepList{},
-                        Help: `Space separated list of ciphers to be used for session encryption, ordered by preference.
+			Name:    "ciphers",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of ciphers to be used for session encryption, ordered by preference.
 
 At least one must match with server configuration. This can be checked for example using ssh -Q cipher.
 
@@ -343,11 +343,11 @@ Example:
 
     aes128-ctr aes192-ctr aes256-ctr aes128-gcm@openssh.com aes256-gcm@openssh.com
 `,
-                        Advanced: true,
-                },{
-                        Name:    "key_exchange",
-                        Default: fs.SpaceSepList{},
-                        Help: `Space separated list of key exchange algorithms, ordered by preference.
+			Advanced: true,
+		}, {
+			Name:    "key_exchange",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of key exchange algorithms, ordered by preference.
 
 At least one must match with server configuration. This can be checked for example using ssh -Q kex.
 
@@ -357,11 +357,11 @@ Example:
 
     sntrup761x25519-sha512@openssh.com curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256
 `,
-                        Advanced: true,
-                },{
-                        Name:    "macs",
-                        Default: fs.SpaceSepList{},
-                        Help: `Space separated list of MACs (message authentication code) algorithms, ordered by preference.
+			Advanced: true,
+		}, {
+			Name:    "macs",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of MACs (message authentication code) algorithms, ordered by preference.
 
 At least one must match with server configuration. This can be checked for example using ssh -Q mac.
 
@@ -369,8 +369,8 @@ Example:
 
     umac-64-etm@openssh.com umac-128-etm@openssh.com hmac-sha2-256-etm@openssh.com
 `,
-                        Advanced: true,
-                }},
+			Advanced: true,
+		}},
 	}
 	fs.Register(fsi)
 }
@@ -749,7 +749,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
     if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
-        return nil, fmt.Errorf("use_insecure_cipher must be false if ciphers or key_exchange are set in advanced configuration.")   
+        return nil, fmt.Errorf("use_insecure_cipher must be false if ciphers or key_exchange are set in advanced configuration")   
     }
     
 	sshConfig.Config.SetDefaults()
