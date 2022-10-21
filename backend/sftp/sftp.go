@@ -364,7 +364,7 @@ This must not be set if use_insecure_cipher is true.
 
 Example:
 
-    sntrup761x25519-sha512@openssh.com curve25519-sha256,curve25519-sha256@libssh.org ecdh-sha2-nistp256
+    sntrup761x25519-sha512@openssh.com curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256
 `,
                         Advanced: true,
                 },{
