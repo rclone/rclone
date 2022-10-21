@@ -621,6 +621,19 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --gcs-endpoint
+
+Endpoint for the service.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      endpoint
+- Env Var:     RCLONE_GCS_ENDPOINT
+- Type:        string
+- Required:    false
+
 #### --gcs-encoding
 
 The encoding for the backend.

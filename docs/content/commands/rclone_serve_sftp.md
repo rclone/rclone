@@ -11,11 +11,19 @@ Serve the remote over SFTP.
 
 ## Synopsis
 
-Run a SFTP server to serve a remote over SFTP. This can be used
-with an SFTP client or you can make a remote of type sftp to use with it.
+Run an SFTP server to serve a remote over SFTP. This can be used
+with an SFTP client or you can make a remote of type [sftp](/sftp) to use with it.
 
-You can use the filter flags (e.g. `--include`, `--exclude`) to control what
-is served.
+You can use the [filter](/filtering) flags (e.g. `--include`, `--exclude`)
+to control what is served.
+
+The server will respond to a small number of shell commands, mainly
+md5sum, sha1sum and df, which enable it to provide support for checksums
+and the about feature when accessed from an sftp remote.
+
+Note that this server uses standard 32 KiB packet payload size, which
+means you must not configure the client to expect anything else, e.g.
+with the [chunk_size](/sftp/#sftp-chunk-size) option on an sftp remote.
 
 The server will log errors.  Use `-v` to see access logs.
 
@@ -27,11 +35,6 @@ You must provide some means of authentication, either with
 `--authorized-keys` - the default is the same as ssh), an
 `--auth-proxy`, or set the `--no-auth` flag for no
 authentication when logging in.
-
-Note that this also implements a small number of shell commands so
-that it can provide md5sum/sha1sum/df information for the rclone sftp
-backend.  This means that is can support SHA1SUMs, MD5SUMs and the
-about command when paired with the rclone sftp backend.
 
 If you don't supply a host `--key` then rclone will generate rsa, ecdsa
 and ed25519 variants, and cache them for later use in rclone's cache
@@ -484,7 +487,7 @@ rclone serve sftp remote:path [flags]
       --pass string                            Password for authentication
       --poll-interval duration                 Time to wait between polling for changes, must be smaller than dir-cache-time and only on supported remotes (set 0 to disable) (default 1m0s)
       --read-only                              Only allow read-only access
-      --stdio                                  Run an sftp server on run stdin/stdout
+      --stdio                                  Run an sftp server on stdin/stdout
       --uid uint32                             Override the uid field set by the filesystem (not supported on Windows) (default 1000)
       --umask int                              Override the permission bits set by the filesystem (not supported on Windows) (default 2)
       --user string                            User name for authentication

@@ -119,7 +119,7 @@ These flags are available for every command.
       --rc-job-expire-interval duration      Interval to check for expired async jobs (default 10s)
       --rc-key string                        SSL PEM Private key
       --rc-max-header-bytes int              Maximum size of request header (default 4096)
-      --rc-min-tls-version string            Minimum TLS version that is acceptable
+      --rc-min-tls-version string            Minimum TLS version that is acceptable (default "tls1.0")
       --rc-no-auth                           Don't require auth for certain methods
       --rc-pass string                       Password for authentication
       --rc-realm string                      Realm for authentication (default "rclone")
@@ -136,6 +136,7 @@ These flags are available for every command.
       --refresh-times                        Refresh the modtime of remote files
       --retries int                          Retry operations this many times if they fail (default 3)
       --retries-sleep duration               Interval between retrying operations if they fail, e.g. 500ms, 60s, 5m (0 to disable)
+      --server-side-across-configs           Allow server-side operations (e.g. copy) to work across different configs
       --size-only                            Skip based on size only, not mod-time or checksum
       --stats duration                       Interval between printing stats, e.g. 500ms, 60s, 5m (0 to disable) (default 1m0s)
       --stats-file-name-length int           Max file name length in stats (0 for no limit) (default 45)
@@ -161,7 +162,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.59.0")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.60.0")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -348,6 +349,7 @@ and may be set in the config file.
       --ftp-disable-utf8                             Disable using UTF-8 even if server advertises support
       --ftp-encoding MultiEncoder                    The encoding for the backend (default Slash,Del,Ctl,RightSpace,Dot)
       --ftp-explicit-tls                             Use Explicit FTPS (FTP over TLS)
+      --ftp-force-list-hidden                        Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD
       --ftp-host string                              FTP host to connect to
       --ftp-idle-timeout Duration                    Max time before closing idle connections (default 1m0s)
       --ftp-no-check-certificate                     Do not verify the TLS certificate of the server
@@ -358,7 +360,6 @@ and may be set in the config file.
       --ftp-tls-cache-size int                       Size of TLS session cache for all control and data connections (default 32)
       --ftp-user string                              FTP username (default "$USER")
       --ftp-writing-mdtm                             Use MDTM to set modification time (VsFtpd quirk)
-      --ftp-force-list-hidden                        Use LIST -a to force listing of hidden files and folders. This will disable the use of MLSD.
       --gcs-anonymous                                Access public buckets and objects without credentials
       --gcs-auth-url string                          Auth server URL
       --gcs-bucket-acl string                        Access Control List for new buckets
@@ -367,6 +368,7 @@ and may be set in the config file.
       --gcs-client-secret string                     OAuth Client Secret
       --gcs-decompress                               If set this will decompress gzip encoded objects
       --gcs-encoding MultiEncoder                    The encoding for the backend (default Slash,CrLf,InvalidUtf8,Dot)
+      --gcs-endpoint string                          Endpoint for the service
       --gcs-location string                          Location for the newly created buckets
       --gcs-no-check-bucket                          If set, don't attempt to check the bucket exists or create it
       --gcs-object-acl string                        Access Control List for new objects
@@ -412,14 +414,6 @@ and may be set in the config file.
       --http-no-head                                 Don't use HEAD requests
       --http-no-slash                                Set this if the site doesn't end directories with /
       --http-url string                              URL of HTTP host to connect to
-      --hubic-auth-url string                        Auth server URL
-      --hubic-chunk-size SizeSuffix                  Above this size files will be chunked into a _segments container (default 5Gi)
-      --hubic-client-id string                       OAuth Client Id
-      --hubic-client-secret string                   OAuth Client Secret
-      --hubic-encoding MultiEncoder                  The encoding for the backend (default Slash,InvalidUtf8)
-      --hubic-no-chunk                               Don't chunk files during streaming upload
-      --hubic-token string                           OAuth Access Token as a JSON blob
-      --hubic-token-url string                       Token server url
       --internetarchive-access-key-id string         IAS3 Access Key
       --internetarchive-disable-checksum             Don't ask the server to test against MD5 checksum calculated by rclone (default true)
       --internetarchive-encoding MultiEncoder        The encoding for the backend (default Slash,LtGt,CrLf,Del,Ctl,InvalidUtf8,Dot)
@@ -535,6 +529,7 @@ and may be set in the config file.
       --s3-bucket-acl string                         Canned ACL used when creating buckets
       --s3-chunk-size SizeSuffix                     Chunk size to use for uploading (default 5Mi)
       --s3-copy-cutoff SizeSuffix                    Cutoff for switching to multipart copy (default 4.656Gi)
+      --s3-decompress                                If set this will decompress gzip encoded objects
       --s3-disable-checksum                          Don't store MD5 checksum with object metadata
       --s3-disable-http2                             Disable usage of http2 for S3 backends
       --s3-download-url string                       Custom endpoint for downloads
@@ -553,6 +548,7 @@ and may be set in the config file.
       --s3-no-check-bucket                           If set, don't attempt to check the bucket exists or create it
       --s3-no-head                                   If set, don't HEAD uploaded objects to check integrity
       --s3-no-head-object                            If set, do not do HEAD before GET when getting objects
+      --s3-no-system-metadata                        Suppress setting and reading of system metadata
       --s3-profile string                            Profile to use in the shared credentials file
       --s3-provider string                           Choose your S3 provider
       --s3-region string                             Region to connect to
@@ -562,7 +558,8 @@ and may be set in the config file.
       --s3-session-token string                      An AWS session token
       --s3-shared-credentials-file string            Path to the shared credentials file
       --s3-sse-customer-algorithm string             If using SSE-C, the server-side encryption algorithm used when storing this object in S3
-      --s3-sse-customer-key string                   If using SSE-C you must provide the secret encryption key used to encrypt/decrypt your data
+      --s3-sse-customer-key string                   To use SSE-C you may provide the secret encryption key used to encrypt/decrypt your data
+      --s3-sse-customer-key-base64 string            If using SSE-C you must provide the secret encryption key encoded in base64 format to encrypt/decrypt your data
       --s3-sse-customer-key-md5 string               If using SSE-C you may provide the secret encryption key MD5 checksum (optional)
       --s3-sse-kms-key-id string                     If using KMS ID you must provide the ARN of Key
       --s3-storage-class string                      The storage class to use when storing new objects in S3
@@ -572,6 +569,8 @@ and may be set in the config file.
       --s3-use-multipart-etag Tristate               Whether to use ETag in multipart uploads for verification (default unset)
       --s3-use-presigned-request                     Whether to use a presigned request or PutObject for single part uploads
       --s3-v2-auth                                   If true use v2 authentication
+      --s3-version-at Time                           Show file versions as they were at the specified time (default off)
+      --s3-versions                                  Include old versions in directory listings
       --seafile-2fa                                  Two-factor authentication ('true' if the account has 2FA enabled)
       --seafile-create-library                       Should rclone create a library if it doesn't exist
       --seafile-encoding MultiEncoder                The encoding for the backend (default Slash,DoubleQuote,BackSlash,Ctl,InvalidUtf8)
@@ -618,6 +617,15 @@ and may be set in the config file.
       --sia-encoding MultiEncoder                    The encoding for the backend (default Slash,Question,Hash,Percent,Del,Ctl,InvalidUtf8,Dot)
       --sia-user-agent string                        Siad User Agent (default "Sia-Agent")
       --skip-links                                   Don't warn about skipped symlinks
+      --smb-case-insensitive                         Whether the server is configured to be case-insensitive (default true)
+      --smb-domain string                            Domain name for NTLM authentication (default "WORKGROUP")
+      --smb-encoding MultiEncoder                    The encoding for the backend (default Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot)
+      --smb-hide-special-share                       Hide special shares (e.g. print$) which users aren't supposed to access (default true)
+      --smb-host string                              SMB server hostname to connect to
+      --smb-idle-timeout Duration                    Max time before closing idle connections (default 1m0s)
+      --smb-pass string                              SMB password (obscured)
+      --smb-port int                                 SMB port number (default 445)
+      --smb-user string                              SMB username (default "$USER")
       --storj-access-grant string                    Access grant
       --storj-api-key string                         API key
       --storj-passphrase string                      Encryption passphrase
@@ -648,6 +656,7 @@ and may be set in the config file.
       --swift-key string                             API key or password (OS_PASSWORD)
       --swift-leave-parts-on-error                   If true avoid calling abort upload on a failure
       --swift-no-chunk                               Don't chunk files during streaming upload
+      --swift-no-large-objects                       Disable support for static and dynamic large objects
       --swift-region string                          Region name - optional (OS_REGION_NAME)
       --swift-storage-policy string                  The storage policy to use when creating a new container
       --swift-storage-url string                     Storage URL - optional (OS_STORAGE_URL)

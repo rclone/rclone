@@ -982,6 +982,12 @@ Parameters:
 
 - jobid - id of the job (integer).
 
+### job/stopgroup: Stop all running jobs in a group {#job-stopgroup}
+
+Parameters:
+
+- group - name of the group (string).
+
 ### mount/listmounts: Show current mount points {#mount-listmounts}
 
 This shows currently mounted points, which can be used for performing an unmount.
@@ -1057,9 +1063,11 @@ Example:
 
 **Authentication is required for this call.**
 
-### mount/unmountall: Show current mount points {#mount-unmountall}
+### mount/unmountall: Unmount all active mounts {#mount-unmountall}
 
-This shows currently mounted points, which can be used for performing an unmount.
+rclone allows Linux, FreeBSD, macOS and Windows to
+mount any of Rclone's cloud storage systems as a file system with
+FUSE.
 
 This takes no parameters and returns error if unmount does not succeed.
 

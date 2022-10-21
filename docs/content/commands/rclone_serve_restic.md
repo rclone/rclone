@@ -174,6 +174,10 @@ of that with the CA certificate.  `--key` should be the PEM encoded
 private key and `--client-ca` should be the PEM encoded client
 certificate authority certificate.
 
+--min-tls-version is minimum TLS version that is acceptable. Valid
+  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
+  "tls1.0").
+
 
 ```
 rclone serve restic remote:path [flags]
@@ -192,6 +196,7 @@ rclone serve restic remote:path [flags]
       --htpasswd string                 htpasswd file - if not provided no authentication is done
       --key string                      SSL PEM Private key
       --max-header-bytes int            Maximum size of request header (default 4096)
+      --min-tls-version string          Minimum TLS version that is acceptable (default "tls1.0")
       --pass string                     Password for authentication
       --private-repos                   Users can only access their private repo
       --realm string                    Realm for authentication (default "rclone")

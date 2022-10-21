@@ -45,7 +45,7 @@ are 100% certain you are already passing obscured passwords then use
 `rclone config password` command.
 
 The flag `--non-interactive` is for use by applications that wish to
-configure rclone themeselves, rather than using rclone's text based
+configure rclone themselves, rather than using rclone's text based
 configuration questions. If this flag is set, and rclone needs to ask
 the user a question, a JSON blob will be returned with the question in
 it.

@@ -534,6 +534,38 @@ Properties:
 - Type:        bool
 - Default:     false
 
+#### --swift-no-large-objects
+
+Disable support for static and dynamic large objects
+
+Swift cannot transparently store files bigger than 5 GiB. There are
+two schemes for doing that, static or dynamic large objects, and the
+API does not allow rclone to determine whether a file is a static or
+dynamic large object without doing a HEAD on the object. Since these
+need to be treated differently, this means rclone has to issue HEAD
+requests for objects for example when reading checksums.
+
+When `no_large_objects` is set, rclone will assume that there are no
+static or dynamic large objects stored. This means it can stop doing
+the extra HEAD calls which in turn increases performance greatly
+especially when doing a swift to swift transfer with `--checksum` set.
+
+Setting this option implies `no_chunk` and also that no files will be
+uploaded in chunks, so files bigger than 5 GiB will just fail on
+upload.
+
+If you set this option and there *are* static or dynamic large objects,
+then this will give incorrect hashes for them. Downloads will succeed,
+but other operations such as Remove and Copy will fail.
+
+
+Properties:
+
+- Config:      no_large_objects
+- Env Var:     RCLONE_SWIFT_NO_LARGE_OBJECTS
+- Type:        bool
+- Default:     false
+
 #### --swift-encoding
 
 The encoding for the backend.
