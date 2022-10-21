@@ -58,15 +58,6 @@ func init() {
 		Name:        "sftp",
 		Description: "SSH/SFTP",
 		NewFs:       NewFs,
-		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
-			use_insecure_cipher, _ := m.Get("use_insecure_cipher")
-			user_defined_ciphers, _ := m.Get("user_defined_ciphers")
-			user_defined_key_exchange, _ := m.Get("user_defined_key_exchange")
-			if use_insecure_cipher == "true" && (user_defined_ciphers != "" || user_defined_key_exchange != "") {
-				return nil, fmt.Errorf("use_insecure_cipher must be false if user_defined_ciphers or user_defined_key_exchange are set.")
-			}
-			return nil, nil
-		},
 		Options: []fs.Option{{
 			Name:     "host",
 			Help:     "SSH host to connect to.\n\nE.g. \"example.com\".",
@@ -134,7 +125,7 @@ This enables the use of the following insecure ciphers and key exchange methods:
 
 Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
 
-This must not be set if you use either user_defined_ciphers or user_defined_key_exchange advanced options.
+This must be false if you use either user_defined_ciphers or user_defined_key_exchange advanced options.
 `,
 			Default: false,
 			Examples: []fs.OptionExample{
@@ -340,7 +331,7 @@ and pass variables with spaces in in quotes, eg
 `,
 			Advanced: true,
 		}, {
-                        Name:    "user_defined_ciphers",
+                        Name:    "ciphers",
                         Default: fs.SpaceSepList{},
                         Help: `Space separated list of ciphers to be used for session encryption, ordered by preference.
 
@@ -354,7 +345,7 @@ Example:
 `,
                         Advanced: true,
                 },{
-                        Name:    "user_defined_key_exchange",
+                        Name:    "key_exchange",
                         Default: fs.SpaceSepList{},
                         Help: `Space separated list of key exchange algorithms, ordered by preference.
 
@@ -368,7 +359,7 @@ Example:
 `,
                         Advanced: true,
                 },{
-                        Name:    "user_defined_macs",
+                        Name:    "macs",
                         Default: fs.SpaceSepList{},
                         Help: `Space separated list of MACs (message authentication code) algorithms, ordered by preference.
 
@@ -414,9 +405,9 @@ type Options struct {
 	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
 	Concurrency             int             `config:"concurrency"`
 	SetEnv                  fs.SpaceSepList `config:"set_env"`
-	UserDefinedCiphers      fs.SpaceSepList `config:"user_defined_ciphers"`
-	UserDefinedKeyExchange  fs.SpaceSepList `config:"user_defined_key_exchange"`
-	UserDefinedMACs         fs.SpaceSepList `config:"user_defined_macs"`
+	Ciphers                 fs.SpaceSepList `config:"ciphers"`
+	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
+	MACs                    fs.SpaceSepList `config:"macs"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -757,21 +748,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		sshConfig.HostKeyCallback = hostcallback
 	}
 
+    if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
+        return nil, fmt.Errorf("use_insecure_cipher must be false if user_defined_ciphers or user_defined_key_exchange are set.")   
+    }
+    
 	sshConfig.Config.SetDefaults()
 	if opt.UseInsecureCipher {
 		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc", "aes192-cbc", "aes256-cbc", "3des-cbc")
 		sshConfig.Config.KeyExchanges = append(sshConfig.Config.KeyExchanges, "diffie-hellman-group-exchange-sha1", "diffie-hellman-group-exchange-sha256")
 	} else {
-		if opt.UserDefinedCiphers != nil {
-			sshConfig.Config.Ciphers = opt.UserDefinedCiphers
+		if opt.Ciphers != nil {
+			sshConfig.Config.Ciphers = opt.Ciphers
 		}
-		if opt.UserDefinedKeyExchange != nil {
-			sshConfig.Config.KeyExchanges = opt.UserDefinedKeyExchange
+		if opt.KeyExchange != nil {
+			sshConfig.Config.KeyExchanges = opt.KeyExchange
 		}
         }
 
-	if opt.UserDefinedMACs != nil {
-		sshConfig.Config.MACs = opt.UserDefinedMACs
+	if opt.MACs != nil {
+		sshConfig.Config.MACs = opt.MACs
 	}
 
 	keyFile := env.ShellExpand(opt.KeyFile)
