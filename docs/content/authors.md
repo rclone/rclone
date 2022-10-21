@@ -649,3 +649,4 @@ put them back in again.` >}}
   * Bachue Zhou <bachue.shu@gmail.com>
   * Manoj Ghosh <manoj.ghosh@oracle.com>
   * Tom Mombourquette <tom@devnode.com>
+  * Robert Newson <rnewson@apache.org>
