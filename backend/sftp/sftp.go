@@ -125,7 +125,7 @@ This enables the use of the following insecure ciphers and key exchange methods:
 
 Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
 
-This must be false if you use either user_defined_ciphers or user_defined_key_exchange advanced options.
+This must be false if you use either ciphers or key_exchange advanced options.
 `,
 			Default: false,
 			Examples: []fs.OptionExample{
