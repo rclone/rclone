@@ -749,7 +749,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 
     if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
-        return nil, fmt.Errorf("use_insecure_cipher must be false if user_defined_ciphers or user_defined_key_exchange are set.")   
+        return nil, fmt.Errorf("use_insecure_cipher must be false if ciphers or key_exchange are set in advanced configuration.")   
     }
     
 	sshConfig.Config.SetDefaults()
