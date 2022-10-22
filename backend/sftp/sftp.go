@@ -748,10 +748,10 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		sshConfig.HostKeyCallback = hostcallback
 	}
 
-    if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
-        return nil, fmt.Errorf("use_insecure_cipher must be false if ciphers or key_exchange are set in advanced configuration")   
-    }
-    
+	if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
+		return nil, fmt.Errorf("use_insecure_cipher must be false if ciphers or key_exchange are set in advanced configuration")
+	}
+
 	sshConfig.Config.SetDefaults()
 	if opt.UseInsecureCipher {
 		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc", "aes192-cbc", "aes256-cbc", "3des-cbc")
@@ -763,7 +763,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if opt.KeyExchange != nil {
 			sshConfig.Config.KeyExchanges = opt.KeyExchange
 		}
-        }
+	}
 
 	if opt.MACs != nil {
 		sshConfig.Config.MACs = opt.MACs
