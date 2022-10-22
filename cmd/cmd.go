@@ -73,11 +73,13 @@ func ShowVersion() {
 
 	linking, tagString := buildinfo.GetLinkingAndTags()
 
+	arch := buildinfo.GetArch()
+
 	fmt.Printf("rclone %s\n", fs.Version)
 	fmt.Printf("- os/version: %s\n", osVersion)
 	fmt.Printf("- os/kernel: %s\n", osKernel)
 	fmt.Printf("- os/type: %s\n", runtime.GOOS)
-	fmt.Printf("- os/arch: %s\n", runtime.GOARCH)
+	fmt.Printf("- os/arch: %s\n", arch)
 	fmt.Printf("- go/version: %s\n", runtime.Version())
 	fmt.Printf("- go/linking: %s\n", linking)
 	fmt.Printf("- go/tags: %s\n", tagString)
