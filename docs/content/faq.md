@@ -82,7 +82,7 @@ of metadata, which breaks the desired 1:1 mapping of files to objects.
 
 ### Can rclone do bi-directional sync? ###
 
-Yes, since rclone v1.58.0, experimental bidirectional cloud sync is
+Yes, since rclone v1.58.0, [bidirectional cloud sync](/bisync/) is
 available.
 
 ### Can I use rclone with an HTTP proxy? ###
