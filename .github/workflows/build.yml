@@ -104,7 +104,6 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          stable: 'false'
           go-version: ${{ matrix.go }}
           check-latest: true
 
