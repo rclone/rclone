@@ -135,6 +135,7 @@ WebDAV or S3, that work out of the box.)
 {{< provider name="IDrive e2" home="https://www.idrive.com/e2/" config="/s3/#idrive-e2" >}}
 {{< provider name="IONOS Cloud" home="https://cloud.ionos.com/storage/object-storage" config="/s3/#ionos" >}}
 {{< provider name="Koofr" home="https://koofr.eu/" config="/koofr/" >}}
+{{< provider name="Liara Object Storage (LOS)" home="https://liara.ir/landing/%D9%87%D8%A7%D8%B3%D8%AA-%D8%AF%D8%A7%D9%86%D9%84%D9%88%D8%AF-download-host" config="/s3/#liara-object-storage-los" >}}
 {{< provider name="Mail.ru Cloud" home="https://cloud.mail.ru/" config="/mailru/" >}}
 {{< provider name="Memset Memstore" home="https://www.memset.com/cloud/storage/" config="/swift/" >}}
 {{< provider name="Mega" home="https://mega.nz/" config="/mega/" >}}
