@@ -9,7 +9,7 @@ require (
 	github.com/Azure/go-autorest/autorest/adal v0.9.21
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e
 	github.com/Max-Sum/base32768 v0.0.0-20191205131208-7937843c71d5
-	github.com/Mikubill/gofakes3 v0.0.3-0.20221022061830-4a3b2e85d9ad
+	github.com/Mikubill/gofakes3 v0.0.3-0.20221027140832-137f425d67c2
 	github.com/Unknwon/goconfig v1.0.0
 	github.com/a8m/tree v0.0.0-20210414114729-ce3525c5c2ef
 	github.com/aalpar/deheap v0.0.0-20210914013432-0cc84d79dec3
@@ -17,7 +17,7 @@ require (
 	github.com/anacrolix/dms v1.5.0
 	github.com/artyom/mtab v1.0.0
 	github.com/atotto/clipboard v0.1.4
-	github.com/aws/aws-sdk-go v1.44.121
+	github.com/aws/aws-sdk-go v1.44.124
 	github.com/buengese/sgzip v0.1.1
 	github.com/colinmarc/hdfs/v2 v2.3.0
 	github.com/coreos/go-semver v0.3.0

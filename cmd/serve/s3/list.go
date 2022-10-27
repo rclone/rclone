@@ -30,7 +30,7 @@ func (db *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix boo
 
 		if entry.IsDir() {
 			if acceptComPrefix {
-				response.AddPrefix(s3URLEncode(objectPath))
+				response.AddPrefix(gofakes3.URLEncode(objectPath))
 				continue
 			}
 			err := db.entryListR(bucket, path.Join(fdPath, object), "", false, response)
@@ -39,7 +39,7 @@ func (db *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix boo
 			}
 		} else {
 			item := &gofakes3.Content{
-				Key:          s3URLEncode(objectPath),
+				Key:          gofakes3.URLEncode(objectPath),
 				LastModified: gofakes3.NewContentTime(entry.ModTime()),
 				ETag:         getFileHash(entry),
 				Size:         entry.Size(),
@@ -64,12 +64,12 @@ func (db *s3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Pre
 			var matchResult gofakes3.PrefixMatch
 			if prefix.Match(object, &matchResult) {
 				if matchResult.CommonPrefix {
-					response.AddPrefix(s3URLEncode(object))
+					response.AddPrefix(gofakes3.URLEncode(object))
 					continue
 				}
 
 				item := &gofakes3.Content{
-					Key:          s3URLEncode(object),
+					Key:          gofakes3.URLEncode(object),
 					LastModified: gofakes3.NewContentTime(entry.ModTime(context.Background())),
 					ETag:         getFileHash(entry),
 					Size:         entry.Size(),
