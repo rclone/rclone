@@ -15,12 +15,10 @@ import (
 	"github.com/Mikubill/gofakes3"
 	"github.com/ncw/swift/v2"
 	"github.com/rclone/rclone/fs"
-	"github.com/rclone/rclone/lib/encoder"
 	"github.com/rclone/rclone/vfs"
 )
 
 var (
-	charEncoder    = encoder.EncodeLeftCrLfHtVt | encoder.EncodeRightCrLfHtVt
 	emptyPrefix    = &gofakes3.Prefix{}
 	timeFormat     = "Mon, 2 Jan 2006 15:04:05.999999999 GMT"
 	tmpMetaStorage = new(sync.Map)

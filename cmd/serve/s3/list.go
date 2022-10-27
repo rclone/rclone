@@ -22,7 +22,7 @@ func (db *s3Backend) entryListR(bucket, fdPath, name string, acceptComPrefix boo
 		object := entry.Name()
 
 		// workround for control-chars detect
-		objectPath := charEncoder.Decode(path.Join(fdPath, object))
+		objectPath := path.Join(fdPath, object)
 
 		if !strings.HasPrefix(object, name) {
 			continue
@@ -58,7 +58,7 @@ func (db *s3Backend) getObjectsListArbitrary(bucket string, prefix *gofakes3.Pre
 	_ = walk.ListR(context.Background(), db.fs.Fs(), bucket, false, -1, walk.ListObjects, func(entries fs.DirEntries) error {
 		for _, entry := range entries {
 			entry := entry.(fs.Object)
-			objName := charEncoder.Decode(entry.Remote())
+			objName := entry.Remote()
 			object := strings.TrimPrefix(objName, bucket)[1:]
 
 			var matchResult gofakes3.PrefixMatch
