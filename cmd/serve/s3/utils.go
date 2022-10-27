@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"path"
 	"strings"
 
@@ -96,4 +97,17 @@ func rmdirRecursive(p string, fs *vfs.VFS) {
 		}
 		rmdirRecursive(dir, fs)
 	}
+}
+
+func authlistResolver(list []string) map[string]string {
+	authList := make(map[string]string)
+	for _, v := range list {
+		splited := strings.SplitN(v, "-", 1)
+		if len(splited) != 2 {
+			fs.Infof(nil, fmt.Sprintf("Ignored: invalid auth pair %s", v))
+			continue
+		}
+		authList[splited[0]] = splited[1]
+	}
+	return authList
 }

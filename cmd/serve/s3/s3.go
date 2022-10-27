@@ -5,10 +5,9 @@ import (
 	"strings"
 
 	"github.com/rclone/rclone/cmd"
-	"github.com/rclone/rclone/cmd/serve/httplib"
-	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
+	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -19,8 +18,8 @@ var DefaultOpt = Options{
 	hostBucketMode: false,
 	hashName:       "MD5",
 	hashType:       hash.MD5,
-	authPair:       "",
-	noCleanup:      false,
+
+	noCleanup: false,
 }
 
 // Opt is options set by command line flags
@@ -28,13 +27,12 @@ var Opt = DefaultOpt
 
 func init() {
 	flagSet := Command.Flags()
-	httpflags.AddFlags(flagSet)
+	httplib.AddFlags(flagSet)
 	vfsflags.AddFlags(flagSet)
-	flags.BoolVarP(flagSet, &Opt.hostBucketMode, "host-bucket", "", Opt.hostBucketMode, "Whether to use bucket name in hostname (such as mybucket.local)")
+	flags.BoolVarP(flagSet, &Opt.hostBucketMode, "force-path-style", "", Opt.hostBucketMode, "If true use path style access if false use virtual hosted style (default true)")
 	flags.StringVarP(flagSet, &Opt.hashName, "etag-hash", "", Opt.hashName, "Which hash to use for the ETag, or auto or blank for off")
-	flags.StringVarP(flagSet, &Opt.authPair, "s3-auth", "", Opt.authPair, "Set key pairs for authorization, split by comma. example: ak-sk,ak2-sk2")
+	flags.StringArrayVarP(flagSet, &Opt.authPair, "auth", "", Opt.authPair, "Set key pairs for v4 authorization, split by comma")
 	flags.BoolVarP(flagSet, &Opt.noCleanup, "no-cleanup", "", Opt.noCleanup, "Not to cleanup empty folder after object is deleted")
-
 }
 
 // Command definition for cobra
@@ -56,11 +54,12 @@ var Command = &cobra.Command{
 		}
 		cmd.Run(false, false, command, func() error {
 			s := newServer(context.Background(), f, &Opt)
-			err := s.Serve()
+			router, err := httplib.Router()
 			if err != nil {
 				return err
 			}
-			s.Wait()
+			s.Bind(router)
+			httplib.Wait()
 			return nil
 		})
 		return nil

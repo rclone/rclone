@@ -21,12 +21,13 @@ import (
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
+	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	endpoint = "localhost:8080"
+	endpoint = "localhost:0"
 )
 
 // TestS3 runs the s3 server then runs the unit tests for the
@@ -42,14 +43,18 @@ func TestS3(t *testing.T) {
 		}
 
 		w := newServer(context.Background(), f, serveropt)
-		err := w.Serve()
+		router, err := httplib.Router()
 		assert.NoError(t, err)
+
+		w.Bind(router)
+		assert.NoError(t, err)
+		testURL := httplib.URL()
 
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{
 			"type":              "s3",
 			"provider":          "Rclone",
-			"endpoint":          "http://" + endpoint,
+			"endpoint":          testURL,
 			"list_url_encode":   "true",
 			"access_key_id":     RandString(16),
 			"secret_access_key": RandString(16),
