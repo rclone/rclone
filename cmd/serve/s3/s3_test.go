@@ -36,10 +36,13 @@ func TestS3(t *testing.T) {
 	// Configure and start the server
 	start := func(f fs.Fs) (configmap.Simple, func()) {
 		httpflags.Opt.ListenAddr = endpoint
+		keyid := RandString(16)
+		keysec := RandString(16)
 		serveropt := &Options{
 			hostBucketMode: false,
 			hashName:       "",
 			hashType:       hash.None,
+			authPair:       []string{fmt.Sprintf("%s,%s", keyid, keysec)},
 		}
 
 		w := newServer(context.Background(), f, serveropt)
@@ -56,8 +59,8 @@ func TestS3(t *testing.T) {
 			"provider":          "Rclone",
 			"endpoint":          testURL,
 			"list_url_encode":   "true",
-			"access_key_id":     RandString(16),
-			"secret_access_key": RandString(16),
+			"access_key_id":     keyid,
+			"secret_access_key": keysec,
 		}
 
 		return config, func() {}

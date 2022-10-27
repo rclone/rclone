@@ -8,7 +8,6 @@ import (
 
 	"github.com/Mikubill/gofakes3"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/lib/http/auth"
@@ -59,13 +58,11 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *Server {
 	return w
 }
 
+// Bind register the handler to http.Router
 func (w *Server) Bind(router chi.Router) {
 	if m := auth.Auth(auth.Opt); m != nil {
 		router.Use(m)
 	}
-	router.Use(
-		middleware.SetHeader("Accept-Ranges", "bytes"),
-		middleware.SetHeader("Server", "rclone/"+fs.Version),
-	)
+
 	router.Handle("/*", w.handler)
 }

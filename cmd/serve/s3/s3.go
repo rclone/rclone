@@ -8,6 +8,7 @@ import (
 	"github.com/rclone/rclone/fs/config/flags"
 	"github.com/rclone/rclone/fs/hash"
 	httplib "github.com/rclone/rclone/lib/http"
+	"github.com/rclone/rclone/lib/http/auth"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -31,7 +32,7 @@ func init() {
 	vfsflags.AddFlags(flagSet)
 	flags.BoolVarP(flagSet, &Opt.hostBucketMode, "force-path-style", "", Opt.hostBucketMode, "If true use path style access if false use virtual hosted style (default true)")
 	flags.StringVarP(flagSet, &Opt.hashName, "etag-hash", "", Opt.hashName, "Which hash to use for the ETag, or auto or blank for off")
-	flags.StringArrayVarP(flagSet, &Opt.authPair, "auth", "", Opt.authPair, "Set key pairs for v4 authorization, split by comma")
+	flags.StringArrayVarP(flagSet, &Opt.authPair, "authkey", "", Opt.authPair, "Set key pair for v4 authorization, split by comma")
 	flags.BoolVarP(flagSet, &Opt.noCleanup, "no-cleanup", "", Opt.noCleanup, "Not to cleanup empty folder after object is deleted")
 }
 
@@ -39,7 +40,7 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "s3 remote:path",
 	Short: `Serve remote:path over s3.`,
-	Long:  strings.ReplaceAll(longHelp, "|", "`") + httplib.Help + vfs.Help,
+	Long:  strings.ReplaceAll(longHelp, "|", "`") + httplib.Help + auth.Help + vfs.Help,
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
