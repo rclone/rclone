@@ -686,6 +686,7 @@ var (
 	_ fs.PutStreamer = &Fs{}
 	_ fs.ListRer     = &Fs{}
 	_ fs.Commander   = &Fs{}
+	_ fs.CleanUpper  = &Fs{}
 
 	_ fs.Object    = &Object{}
 	_ fs.MimeTyper = &Object{}
