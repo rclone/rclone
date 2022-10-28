@@ -2175,6 +2175,31 @@ can't check the size and hash but the file contents will be decompressed.
 			Advanced: true,
 			Default:  false,
 		}, {
+			Name: "might_gzip",
+			Help: strings.ReplaceAll(`Set this if the backend might gzip objects.
+
+Normally providers will not alter objects when they are downloaded. If
+an object was not uploaded with |Content-Encoding: gzip| then it won't
+be set on download.
+
+However some providers may gzip objects even if they weren't uploaded
+with |Content-Encoding: gzip| (eg Cloudflare).
+
+A symptom of this would be receiving errors like
+
+    ERROR corrupted on transfer: sizes differ NNN vs MMM
+
+If you set this flag and rclone downloads an object with
+Content-Encoding: gzip set and chunked transfer encoding, then rclone
+will decompress the object on the fly.
+
+If this is set to unset (the default) then rclone will choose
+according to the provider setting what to apply, but you can override
+rclone's choice here.
+`, "|", "`"),
+			Default:  fs.Tristate{},
+			Advanced: true,
+		}, {
 			Name:     "no_system_metadata",
 			Help:     `Suppress setting and reading of system metadata`,
 			Advanced: true,
@@ -2305,6 +2330,7 @@ type Options struct {
 	Versions              bool                 `config:"versions"`
 	VersionAt             fs.Time              `config:"version_at"`
 	Decompress            bool                 `config:"decompress"`
+	MightGzip             fs.Tristate          `config:"might_gzip"`
 	NoSystemMetadata      bool                 `config:"no_system_metadata"`
 }
 
@@ -2665,10 +2691,12 @@ func setQuirks(opt *Options) {
 		virtualHostStyle  = true
 		urlEncodeListings = true
 		useMultipartEtag  = true
+		mightGzip         = true // assume all providers might gzip until proven otherwise
 	)
 	switch opt.Provider {
 	case "AWS":
 		// No quirks
+		mightGzip = false // Never auto gzips objects
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
 	case "HuaweiOBS":
@@ -2781,6 +2809,12 @@ func setQuirks(opt *Options) {
 	if !opt.UseMultipartEtag.Valid {
 		opt.UseMultipartEtag.Valid = true
 		opt.UseMultipartEtag.Value = useMultipartEtag
+	}
+
+	// set MightGzip if not manually set
+	if !opt.MightGzip.Valid {
+		opt.MightGzip.Valid = true
+		opt.MightGzip.Value = mightGzip
 	}
 }
 
@@ -4867,7 +4901,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 	// Decompress body if necessary
 	if aws.StringValue(resp.ContentEncoding) == "gzip" {
-		if o.fs.opt.Decompress {
+		if o.fs.opt.Decompress || (resp.ContentLength == nil && o.fs.opt.MightGzip.Value) {
 			return readers.NewGzipReader(resp.Body)
 		}
 		o.fs.warnCompressed.Do(func() {
