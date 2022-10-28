@@ -657,8 +657,7 @@ func (f *Fs) dirFromStandardPath(dir string) string {
 // findItem finds a directory entry for the name in its parent directory
 func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
-	fullPath := path.Join(f.root, remote)
-	if fullPath == "" || fullPath == "." || fullPath == "/" {
+	if remote == "" || remote == "." || remote == "/" {
 		// if root, assume exists and synthesize an entry
 		return &ftp.Entry{
 			Name: "",
@@ -674,7 +673,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 
 	// returns TRUE if MLST is supported which is required to call GetEntry
 	if c.IsTimePreciseInList() {
-		entry, err := c.GetEntry(fullPath)
+		entry, err := c.GetEntry(remote)
 		f.putFtpConnection(&c, err)
 		if err != nil {
 			return nil, translateErrorFile(err)
@@ -685,8 +684,8 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 		return entry, nil
 	}
 
-	dir := path.Dir(fullPath)
-	base := path.Base(fullPath)
+	dir := path.Dir(remote)
+	base := path.Base(remote)
 
 	files, err := c.List(f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
@@ -706,7 +705,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
-	entry, err := f.findItem(ctx, remote)
+	entry, err := f.findItem(ctx, path.Join(f.root, remote))
 	if err != nil {
 		return nil, err
 	}
@@ -728,7 +727,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err err
 
 // dirExists checks the directory pointed to by remote exists or not
 func (f *Fs) dirExists(ctx context.Context, remote string) (exists bool, err error) {
-	entry, err := f.findItem(ctx, remote)
+	entry, err := f.findItem(ctx, path.Join(f.root, remote))
 	if err != nil {
 		return false, fmt.Errorf("dirExists: %w", err)
 	}
