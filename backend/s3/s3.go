@@ -26,6 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
@@ -2992,19 +2994,13 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 
 // Gets the bucket location
 func (f *Fs) getBucketLocation(ctx context.Context, bucket string) (string, error) {
-	req := s3.GetBucketLocationInput{
-		Bucket: &bucket,
-	}
-	var resp *s3.GetBucketLocationOutput
-	var err error
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.c.GetBucketLocation(&req)
-		return f.shouldRetry(ctx, err)
+	region, err := s3manager.GetBucketRegion(ctx, f.ses, bucket, "", func(r *request.Request) {
+		r.Config.S3ForcePathStyle = aws.Bool(f.opt.ForcePathStyle)
 	})
 	if err != nil {
 		return "", err
 	}
-	return s3.NormalizeBucketLocation(aws.StringValue(resp.LocationConstraint)), nil
+	return region, nil
 }
 
 // Updates the region for the bucket by reading the region from the
