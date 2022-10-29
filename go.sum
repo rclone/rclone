@@ -100,6 +100,8 @@ github.com/Mikubill/gofakes3 v0.0.3-0.20221027113730-c88933c84ebb h1:D1VdJ/3aXMC
 github.com/Mikubill/gofakes3 v0.0.3-0.20221027113730-c88933c84ebb/go.mod h1:OSXqXEGUe9CmPiwLMMnVrbXonMf4BeLBkBdLufxxiyY=
 github.com/Mikubill/gofakes3 v0.0.3-0.20221027140832-137f425d67c2 h1:+YY81inzaUVOHUV+sV1zUBoJhXEu6UicKa+oa57RJVI=
 github.com/Mikubill/gofakes3 v0.0.3-0.20221027140832-137f425d67c2/go.mod h1:OSXqXEGUe9CmPiwLMMnVrbXonMf4BeLBkBdLufxxiyY=
+github.com/Mikubill/gofakes3 v0.0.3-0.20221029213622-68b260c3427b h1:uYpeLG2WSMYZIV2iQLl7Ip1M8Dicsq1fDR8p7VTbgmI=
+github.com/Mikubill/gofakes3 v0.0.3-0.20221029213622-68b260c3427b/go.mod h1:OSXqXEGUe9CmPiwLMMnVrbXonMf4BeLBkBdLufxxiyY=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/ProtonMail/go-crypto v0.0.0-20220730123233-d6ffb7692adf h1:aFFtnGZ6/2Qlvx80yxA2fFSYDQWTFjtKozQKB36A3/A=
 github.com/ProtonMail/go-crypto v0.0.0-20220730123233-d6ffb7692adf/go.mod h1:UBYPn8k0D56RtnR8RFQMjmh4KrZzWJ5o7Z9SYjossQ8=
