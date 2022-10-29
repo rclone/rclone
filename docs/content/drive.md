@@ -99,7 +99,7 @@ firewall, or use manual mode.
 
 You can then use it like this,
 
-To see the name of your remote name
+To see the name of your remote
 
     rclone config
 
