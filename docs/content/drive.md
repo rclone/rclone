@@ -99,17 +99,21 @@ firewall, or use manual mode.
 
 You can then use it like this,
 
+To see the name of your remote name
+
+    rclone config
+
 List directories in top level of your drive
 
-    rclone lsd remote:
+    rclone lsd <remote_name>:
 
 List all the files in your drive
 
-    rclone ls remote:
+    rclone ls <remote_name>:
 
 To copy a local directory to a drive directory called backup
 
-    rclone copy /home/source remote:backup
+    rclone copy /home/source <remote_name>:backup
 
 ### Scopes
 
