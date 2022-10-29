@@ -39,7 +39,7 @@ func TestS3(t *testing.T) {
 		keyid := RandString(16)
 		keysec := RandString(16)
 		serveropt := &Options{
-			hostBucketMode: false,
+			pathBucketMode: true,
 			hashName:       "",
 			hashType:       hash.None,
 			authPair:       []string{fmt.Sprintf("%s,%s", keyid, keysec)},

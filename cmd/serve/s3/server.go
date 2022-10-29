@@ -18,7 +18,7 @@ import (
 // Options contains options for the http Server
 type Options struct {
 	//TODO add more options
-	hostBucketMode bool
+	pathBucketMode bool
 	hashName       string
 	hashType       hash.Type
 	authPair       []string
@@ -45,7 +45,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *Server {
 	var newLogger logger
 	w.faker = gofakes3.New(
 		newBackend(w.vfs, opt),
-		gofakes3.WithHostBucket(opt.hostBucketMode),
+		gofakes3.WithHostBucket(!opt.pathBucketMode),
 		gofakes3.WithLogger(newLogger),
 		gofakes3.WithRequestID(rand.Uint64()),
 		gofakes3.WithoutVersioning(),

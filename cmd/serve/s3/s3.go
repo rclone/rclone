@@ -16,7 +16,7 @@ import (
 
 // DefaultOpt is the default values used for Options
 var DefaultOpt = Options{
-	hostBucketMode: false,
+	pathBucketMode: true,
 	hashName:       "MD5",
 	hashType:       hash.MD5,
 
@@ -30,7 +30,7 @@ func init() {
 	flagSet := Command.Flags()
 	httplib.AddFlags(flagSet)
 	vfsflags.AddFlags(flagSet)
-	flags.BoolVarP(flagSet, &Opt.hostBucketMode, "force-path-style", "", Opt.hostBucketMode, "If true use path style access if false use virtual hosted style (default true)")
+	flags.BoolVarP(flagSet, &Opt.pathBucketMode, "force-path-style", "", Opt.pathBucketMode, "If true use path style access if false use virtual hosted style (default true)")
 	flags.StringVarP(flagSet, &Opt.hashName, "etag-hash", "", Opt.hashName, "Which hash to use for the ETag, or auto or blank for off")
 	flags.StringArrayVarP(flagSet, &Opt.authPair, "s3-authkey", "", Opt.authPair, "Set key pair for v4 authorization, split by comma")
 	flags.BoolVarP(flagSet, &Opt.noCleanup, "no-cleanup", "", Opt.noCleanup, "Not to cleanup empty folder after object is deleted")

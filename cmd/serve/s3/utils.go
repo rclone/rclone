@@ -102,7 +102,7 @@ func rmdirRecursive(p string, fs *vfs.VFS) {
 func authlistResolver(list []string) map[string]string {
 	authList := make(map[string]string)
 	for _, v := range list {
-		splited := strings.SplitN(v, ",", 1)
+		splited := strings.Split(v, ",")
 		if len(splited) != 2 {
 			fs.Infof(nil, fmt.Sprintf("Ignored: invalid auth pair %s", v))
 			continue
