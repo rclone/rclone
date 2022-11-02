@@ -315,18 +315,26 @@ func (dl *debugLog) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// returns true if this FTP error should be retried
+func isRetriableFtpError(err error) bool {
+	switch errX := err.(type) {
+	case *textproto.Error:
+		switch errX.Code {
+		case ftp.StatusNotAvailable, ftp.StatusTransfertAborted:
+			return true
+		}
+	}
+	return false
+}
+
 // shouldRetry returns a boolean as to whether this err deserve to be
 // retried.  It returns the err as a convenience
 func shouldRetry(ctx context.Context, err error) (bool, error) {
 	if fserrors.ContextError(ctx, &err) {
 		return false, err
 	}
-	switch errX := err.(type) {
-	case *textproto.Error:
-		switch errX.Code {
-		case ftp.StatusNotAvailable:
-			return true, err
-		}
+	if isRetriableFtpError(err) {
+		return true, err
 	}
 	return fserrors.ShouldRetry(err), err
 }
