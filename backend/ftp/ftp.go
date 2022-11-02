@@ -1194,15 +1194,26 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (rc io.Read
 			}
 		}
 	}
-	c, err := o.fs.getFtpConnection(ctx)
+
+	var (
+		fd *ftp.Response
+		c  *ftp.ServerConn
+	)
+	err = o.fs.pacer.Call(func() (bool, error) {
+		c, err = o.fs.getFtpConnection(ctx)
+		if err != nil {
+			return false, err // getFtpConnection has retries already
+		}
+		fd, err = c.RetrFrom(o.fs.opt.Enc.FromStandardPath(path), uint64(offset))
+		if err != nil {
+			o.fs.putFtpConnection(&c, err)
+		}
+		return shouldRetry(ctx, err)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
 	}
-	fd, err := c.RetrFrom(o.fs.opt.Enc.FromStandardPath(path), uint64(offset))
-	if err != nil {
-		o.fs.putFtpConnection(&c, err)
-		return nil, fmt.Errorf("open: %w", err)
-	}
+
 	rc = &ftpReadCloser{rc: readers.NewLimitedReadCloser(fd, limit), c: c, f: o.fs}
 	return rc, nil
 }
