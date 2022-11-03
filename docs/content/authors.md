@@ -650,3 +650,4 @@ put them back in again.` >}}
   * Manoj Ghosh <manoj.ghosh@oracle.com>
   * Tom Mombourquette <tom@devnode.com>
   * Robert Newson <rnewson@apache.org>
+  * Samuel Johnson <esamueljohnson@gmail.com>
