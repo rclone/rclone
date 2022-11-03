@@ -57,6 +57,7 @@ var osarches = []string{
 	"linux/386",
 	"linux/amd64",
 	"linux/arm",
+	"linux/arm-v6",
 	"linux/arm-v7",
 	"linux/arm64",
 	"linux/mips",
@@ -64,10 +65,12 @@ var osarches = []string{
 	"freebsd/386",
 	"freebsd/amd64",
 	"freebsd/arm",
+	"freebsd/arm-v6",
 	"freebsd/arm-v7",
 	"netbsd/386",
 	"netbsd/amd64",
 	"netbsd/arm",
+	"netbsd/arm-v6",
 	"netbsd/arm-v7",
 	"openbsd/386",
 	"openbsd/amd64",
@@ -82,13 +85,16 @@ var archFlags = map[string][]string{
 	"386":    {"GO386=softfloat"},
 	"mips":   {"GOMIPS=softfloat"},
 	"mipsle": {"GOMIPS=softfloat"},
+	"arm":    {"GOARM=5"},
+	"arm-v6": {"GOARM=6"},
 	"arm-v7": {"GOARM=7"},
 }
 
 // Map Go architectures to NFPM architectures
 // Any missing are passed straight through
 var goarchToNfpm = map[string]string{
-	"arm":    "arm6",
+	"arm":    "arm5",
+	"arm-v6": "arm6",
 	"arm-v7": "arm7",
 }
 
