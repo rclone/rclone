@@ -652,3 +652,4 @@ put them back in again.` >}}
   * Robert Newson <rnewson@apache.org>
   * Samuel Johnson <esamueljohnson@gmail.com>
   * coultonluke <luke@luke.org.uk>
+  * Anthony Pessy <anthony@cogniteev.com>
