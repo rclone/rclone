@@ -123,7 +123,10 @@ This enables the use of the following insecure ciphers and key exchange methods:
 - diffie-hellman-group-exchange-sha256
 - diffie-hellman-group-exchange-sha1
 
-Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.`,
+Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
+
+This must be false if you use either ciphers or key_exchange advanced options.
+`,
 			Default: false,
 			Examples: []fs.OptionExample{
 				{
@@ -327,6 +330,46 @@ and pass variables with spaces in in quotes, eg
 
 `,
 			Advanced: true,
+		}, {
+			Name:    "ciphers",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of ciphers to be used for session encryption, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q cipher.
+
+This must not be set if use_insecure_cipher is true.
+
+Example:
+
+    aes128-ctr aes192-ctr aes256-ctr aes128-gcm@openssh.com aes256-gcm@openssh.com
+`,
+			Advanced: true,
+		}, {
+			Name:    "key_exchange",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of key exchange algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q kex.
+
+This must not be set if use_insecure_cipher is true.
+
+Example:
+
+    sntrup761x25519-sha512@openssh.com curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256
+`,
+			Advanced: true,
+		}, {
+			Name:    "macs",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of MACs (message authentication code) algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q mac.
+
+Example:
+
+    umac-64-etm@openssh.com umac-128-etm@openssh.com hmac-sha2-256-etm@openssh.com
+`,
+			Advanced: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -362,6 +405,9 @@ type Options struct {
 	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
 	Concurrency             int             `config:"concurrency"`
 	SetEnv                  fs.SpaceSepList `config:"set_env"`
+	Ciphers                 fs.SpaceSepList `config:"ciphers"`
+	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
+	MACs                    fs.SpaceSepList `config:"macs"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -702,10 +748,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		sshConfig.HostKeyCallback = hostcallback
 	}
 
+	if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
+		return nil, fmt.Errorf("use_insecure_cipher must be false if ciphers or key_exchange are set in advanced configuration")
+	}
+
+	sshConfig.Config.SetDefaults()
 	if opt.UseInsecureCipher {
-		sshConfig.Config.SetDefaults()
 		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc", "aes192-cbc", "aes256-cbc", "3des-cbc")
 		sshConfig.Config.KeyExchanges = append(sshConfig.Config.KeyExchanges, "diffie-hellman-group-exchange-sha1", "diffie-hellman-group-exchange-sha256")
+	} else {
+		if opt.Ciphers != nil {
+			sshConfig.Config.Ciphers = opt.Ciphers
+		}
+		if opt.KeyExchange != nil {
+			sshConfig.Config.KeyExchanges = opt.KeyExchange
+		}
+	}
+
+	if opt.MACs != nil {
+		sshConfig.Config.MACs = opt.MACs
 	}
 
 	keyFile := env.ShellExpand(opt.KeyFile)
