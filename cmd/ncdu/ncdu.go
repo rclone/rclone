@@ -692,13 +692,17 @@ func (ds *ncduSort) Less(i, j int) bool {
 			return iAvgSize < jAvgSize
 		}
 		// if avgSize is equal, sort by size
-		return iattrs.Size < jattrs.Size
+		if iattrs.Size != jattrs.Size {
+			return iattrs.Size < jattrs.Size
+		}
 	case ds.u.sortByAverageSize > 0:
 		if iAvgSize != jAvgSize {
 			return iAvgSize > jAvgSize
 		}
 		// if avgSize is equal, sort by size
-		return iattrs.Size > jattrs.Size
+		if iattrs.Size != jattrs.Size {
+			return iattrs.Size > jattrs.Size
+		}
 	}
 	// if everything equal, sort by name
 	return iname < jname
