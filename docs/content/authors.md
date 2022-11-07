@@ -655,3 +655,4 @@ put them back in again.` >}}
   * Anthony Pessy <anthony@cogniteev.com>
   * Philip Harvey <pharvey@battelleecology.org>
   * dgouju <dgouju@users.noreply.github.com>
+  * Clément Notin <clement.notin@gmail.com>
