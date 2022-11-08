@@ -14,14 +14,14 @@ import (
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configfile"
 	"github.com/rclone/rclone/fs/filter"
-	httplib "github.com/rclone/rclone/lib/http"
+	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
 	updateGolden = flag.Bool("updategolden", false, "update golden files for regression test")
-	httpServer   *server
+	sc           *serveCmd
 	testURL      string
 )
 
@@ -30,16 +30,25 @@ const (
 	testTemplate    = "testdata/golden/testindex.html"
 )
 
-func startServer(t *testing.T, f fs.Fs) {
-	opt := httplib.DefaultOpt
-	opt.ListenAddr = testBindAddress
-	httpServer = newServer(f, testTemplate)
-	router, err := httplib.Router()
-	if err != nil {
-		t.Fatal(err.Error())
+func start(t *testing.T, f fs.Fs) {
+	ctx := context.Background()
+
+	opts := Options{
+		HTTP: libhttp.DefaultHTTPCfg(),
+		Template: libhttp.TemplateConfig{
+			Path: testTemplate,
+		},
 	}
-	httpServer.Bind(router)
-	testURL = httplib.URL()
+	opts.HTTP.ListenAddr = []string{testBindAddress}
+
+	s, err := run(ctx, f, opts)
+	require.NoError(t, err, "failed to start server")
+	sc = s
+
+	urls := s.server.URLs()
+	require.Len(t, urls, 1, "expected one URL")
+
+	testURL = urls[0]
 
 	// try to connect to the test server
 	pause := time.Millisecond
@@ -54,7 +63,6 @@ func startServer(t *testing.T, f fs.Fs) {
 		pause *= 2
 	}
 	t.Fatal("couldn't connect to server")
-
 }
 
 var (
@@ -84,7 +92,7 @@ func TestInit(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, obj.SetModTime(context.Background(), expectedTime))
 
-	startServer(t, f)
+	start(t, f)
 }
 
 // check body against the file, or re-write body if -updategolden is
@@ -228,8 +236,4 @@ func TestGET(t *testing.T) {
 
 		checkGolden(t, test.Golden, body)
 	}
-}
-
-func TestFinalise(t *testing.T) {
-	_ = httplib.Shutdown()
 }
