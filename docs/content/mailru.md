@@ -24,8 +24,21 @@ Currently it is recommended to disable 2FA on Mail.ru accounts intended for rclo
 
 ## Configuration
 
-Here is an example of making a mailru configuration. First create a Mail.ru Cloud
-account and choose a tariff, then run
+Here is an example of making a mailru configuration.
+
+First create a Mail.ru Cloud account and choose a tariff.
+
+You will need to log in and create an app password for rclone. Rclone
+**will not work** with your normal username and password - it will
+give an error like `oauth2: server response missing access_token`.
+
+- Click on your user icon in the top right
+- Go to Security / "Пароль и безопасность"
+- Click password for apps / "Пароли для внешних приложений"
+- Add the password - give it a name - eg "rclone"
+- Copy the password and use this password below - your normal login password won't work.
+
+Now run
 
     rclone config
 
@@ -51,6 +64,10 @@ User name (usually email)
 Enter a string value. Press Enter for the default ("").
 user> username@mail.ru
 Password
+
+This must be an app password - rclone will not work with your normal
+password. See the Configuration section in the docs for how to make an
+app password.
 y) Yes type in my own password
 g) Generate random password
 y/g> y
