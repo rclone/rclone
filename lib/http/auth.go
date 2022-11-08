@@ -5,8 +5,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-// Help contains text describing the http authentication to add to the command
-// help.
+// AuthHelp contains text describing the http authentication to add to the command help.
 var AuthHelp = `
 #### Authentication
 

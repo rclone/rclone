@@ -13,14 +13,14 @@ import (
 func TestMiddlewareAuth(t *testing.T) {
 	servers := []struct {
 		name string
-		http HTTPConfig
+		http Config
 		auth AuthConfig
 		user string
 		pass string
 	}{
 		{
 			name: "Basic",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 			},
 			auth: AuthConfig{
@@ -33,7 +33,7 @@ func TestMiddlewareAuth(t *testing.T) {
 		},
 		{
 			name: "Htpasswd/MD5",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 			},
 			auth: AuthConfig{
@@ -45,7 +45,7 @@ func TestMiddlewareAuth(t *testing.T) {
 		},
 		{
 			name: "Htpasswd/SHA",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 			},
 			auth: AuthConfig{
@@ -57,7 +57,7 @@ func TestMiddlewareAuth(t *testing.T) {
 		},
 		{
 			name: "Htpasswd/Bcrypt",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 			},
 			auth: AuthConfig{
@@ -69,7 +69,7 @@ func TestMiddlewareAuth(t *testing.T) {
 		},
 		{
 			name: "Custom",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 			},
 			auth: AuthConfig{
@@ -168,19 +168,19 @@ var _testCORSHeaderKeys = []string{
 func TestMiddlewareCORS(t *testing.T) {
 	servers := []struct {
 		name   string
-		http   HTTPConfig
+		http   Config
 		origin string
 	}{
 		{
 			name: "EmptyOrigin",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 			},
 			origin: "",
 		},
 		{
 			name: "CustomOrigin",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 			},
 			origin: "http://test.rclone.org",

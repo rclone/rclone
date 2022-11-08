@@ -29,14 +29,14 @@ import (
 // Options required for http server
 type Options struct {
 	Auth     libhttp.AuthConfig
-	HTTP     libhttp.HTTPConfig
+	HTTP     libhttp.Config
 	Template libhttp.TemplateConfig
 }
 
 // DefaultOpt is the default values used for Options
 var DefaultOpt = Options{
 	Auth:     libhttp.DefaultAuthCfg(),
-	HTTP:     libhttp.DefaultHTTPCfg(),
+	HTTP:     libhttp.DefaultCfg(),
 	Template: libhttp.DefaultTemplateCfg(),
 }
 

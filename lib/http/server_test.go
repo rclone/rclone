@@ -54,7 +54,7 @@ func TestNewServerUnix(t *testing.T) {
 	tempDir := t.TempDir()
 	path := filepath.Join(tempDir, "rclone.sock")
 
-	cfg := DefaultHTTPCfg()
+	cfg := DefaultCfg()
 	cfg.ListenAddr = []string{path}
 
 	auth := AuthConfig{
@@ -97,7 +97,7 @@ func TestNewServerUnix(t *testing.T) {
 func TestNewServerHTTP(t *testing.T) {
 	ctx := context.Background()
 
-	cfg := DefaultHTTPCfg()
+	cfg := DefaultCfg()
 	cfg.ListenAddr = []string{"127.0.0.1:0"}
 
 	auth := AuthConfig{
@@ -153,12 +153,12 @@ func TestNewServerHTTP(t *testing.T) {
 func TestNewServerBaseURL(t *testing.T) {
 	servers := []struct {
 		name   string
-		http   HTTPConfig
+		cfg    Config
 		suffix string
 	}{
 		{
 			name: "Empty",
-			http: HTTPConfig{
+			cfg: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 				BaseURL:    "",
 			},
@@ -166,7 +166,7 @@ func TestNewServerBaseURL(t *testing.T) {
 		},
 		{
 			name: "Single/NoTrailingSlash",
-			http: HTTPConfig{
+			cfg: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 				BaseURL:    "/rclone",
 			},
@@ -174,7 +174,7 @@ func TestNewServerBaseURL(t *testing.T) {
 		},
 		{
 			name: "Single/TrailingSlash",
-			http: HTTPConfig{
+			cfg: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 				BaseURL:    "/rclone/",
 			},
@@ -182,7 +182,7 @@ func TestNewServerBaseURL(t *testing.T) {
 		},
 		{
 			name: "Multi/NoTrailingSlash",
-			http: HTTPConfig{
+			cfg: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 				BaseURL:    "/rclone/test/base/url",
 			},
@@ -190,7 +190,7 @@ func TestNewServerBaseURL(t *testing.T) {
 		},
 		{
 			name: "Multi/TrailingSlash",
-			http: HTTPConfig{
+			cfg: Config{
 				ListenAddr: []string{"127.0.0.1:0"},
 				BaseURL:    "/rclone/test/base/url/",
 			},
@@ -200,7 +200,7 @@ func TestNewServerBaseURL(t *testing.T) {
 
 	for _, ss := range servers {
 		t.Run(ss.name, func(t *testing.T) {
-			s, err := NewServer(context.Background(), WithConfig(ss.http))
+			s, err := NewServer(context.Background(), WithConfig(ss.cfg))
 			require.NoError(t, err)
 			defer func() {
 				require.NoError(t, s.Shutdown())
@@ -246,11 +246,11 @@ func TestNewServerTLS(t *testing.T) {
 		name    string
 		wantErr bool
 		err     error
-		http    HTTPConfig
+		http    Config
 	}{
 		{
 			name: "FromFile/Valid",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCert:       "./testdata/local.crt",
 				TLSKey:        "./testdata/local.key",
@@ -261,7 +261,7 @@ func TestNewServerTLS(t *testing.T) {
 			name:    "FromFile/NoCert",
 			wantErr: true,
 			err:     ErrTLSFileMismatch,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCert:       "",
 				TLSKey:        "./testdata/local.key",
@@ -271,7 +271,7 @@ func TestNewServerTLS(t *testing.T) {
 		{
 			name:    "FromFile/InvalidCert",
 			wantErr: true,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCert:       "./testdata/local.crt.invalid",
 				TLSKey:        "./testdata/local.key",
@@ -282,7 +282,7 @@ func TestNewServerTLS(t *testing.T) {
 			name:    "FromFile/NoKey",
 			wantErr: true,
 			err:     ErrTLSFileMismatch,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCert:       "./testdata/local.crt",
 				TLSKey:        "",
@@ -292,7 +292,7 @@ func TestNewServerTLS(t *testing.T) {
 		{
 			name:    "FromFile/InvalidKey",
 			wantErr: true,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCert:       "./testdata/local.crt",
 				TLSKey:        "./testdata/local.key.invalid",
@@ -301,7 +301,7 @@ func TestNewServerTLS(t *testing.T) {
 		},
 		{
 			name: "FromBody/Valid",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   certBytes,
 				TLSKeyBody:    keyBytes,
@@ -312,7 +312,7 @@ func TestNewServerTLS(t *testing.T) {
 			name:    "FromBody/NoCert",
 			wantErr: true,
 			err:     ErrTLSBodyMismatch,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   nil,
 				TLSKeyBody:    keyBytes,
@@ -322,7 +322,7 @@ func TestNewServerTLS(t *testing.T) {
 		{
 			name:    "FromBody/InvalidCert",
 			wantErr: true,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   []byte("JUNK DATA"),
 				TLSKeyBody:    keyBytes,
@@ -333,7 +333,7 @@ func TestNewServerTLS(t *testing.T) {
 			name:    "FromBody/NoKey",
 			wantErr: true,
 			err:     ErrTLSBodyMismatch,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   certBytes,
 				TLSKeyBody:    nil,
@@ -343,7 +343,7 @@ func TestNewServerTLS(t *testing.T) {
 		{
 			name:    "FromBody/InvalidKey",
 			wantErr: true,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   certBytes,
 				TLSKeyBody:    []byte("JUNK DATA"),
@@ -352,7 +352,7 @@ func TestNewServerTLS(t *testing.T) {
 		},
 		{
 			name: "MinTLSVersion/Valid/1.1",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   certBytes,
 				TLSKeyBody:    keyBytes,
@@ -361,7 +361,7 @@ func TestNewServerTLS(t *testing.T) {
 		},
 		{
 			name: "MinTLSVersion/Valid/1.2",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   certBytes,
 				TLSKeyBody:    keyBytes,
@@ -370,7 +370,7 @@ func TestNewServerTLS(t *testing.T) {
 		},
 		{
 			name: "MinTLSVersion/Valid/1.3",
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   certBytes,
 				TLSKeyBody:    keyBytes,
@@ -381,7 +381,7 @@ func TestNewServerTLS(t *testing.T) {
 			name:    "MinTLSVersion/Invalid",
 			wantErr: true,
 			err:     ErrInvalidMinTLSVersion,
-			http: HTTPConfig{
+			http: Config{
 				ListenAddr:    []string{"127.0.0.1:0"},
 				TLSCertBody:   certBytes,
 				TLSKeyBody:    keyBytes,

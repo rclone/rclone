@@ -34,7 +34,7 @@ func start(t *testing.T, f fs.Fs) {
 	ctx := context.Background()
 
 	opts := Options{
-		HTTP: libhttp.DefaultHTTPCfg(),
+		HTTP: libhttp.DefaultCfg(),
 		Template: libhttp.TemplateConfig{
 			Path: testTemplate,
 		},
