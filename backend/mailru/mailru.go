@@ -645,12 +645,7 @@ func (f *Fs) itemToDirEntry(ctx context.Context, item *api.ListItem) (entry fs.D
 		return nil, -1, err
 	}
 
-	mTime := int64(item.Mtime)
-	if mTime < 0 {
-		fs.Debugf(f, "Fixing invalid timestamp %d on mailru file %q", mTime, remote)
-		mTime = 0
-	}
-	modTime := time.Unix(mTime, 0)
+	modTime := time.Unix(int64(item.Mtime), 0)
 
 	isDir, err := f.isDir(item.Kind, remote)
 	if err != nil {
@@ -2062,7 +2057,7 @@ func (o *Object) addFileMetaData(ctx context.Context, overwrite bool) error {
 	req.WritePu16(0) // revision
 	req.WriteString(o.fs.opt.Enc.FromStandardPath(o.absPath()))
 	req.WritePu64(o.size)
-	req.WritePu64(o.modTime.Unix())
+	req.WriteP64(o.modTime.Unix())
 	req.WritePu32(0)
 	req.Write(o.mrHash)
 
