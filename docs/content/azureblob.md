@@ -530,6 +530,6 @@ See [List of backends that do not support rclone about](https://rclone.org/overv
 
 You can run rclone with storage emulator (usually _azurite_).
 
-To do this, just set up a new remote with `rclone config` following instructions described in introduction and set `use_emulator` config as `true`. You do not need to provide default account name neither an account key. But you can override them in the _account_ and _key_ options. (Prior to v1.60 they were hard coded to _azurite_'s `devstoreaccount1`.)
+To do this, just set up a new remote with `rclone config` following instructions described in introduction and set `use_emulator` config as `true`. You do not need to provide default account name neither an account key. But you can override them in the _account_ and _key_ options. (Prior to v1.61 they were hard coded to _azurite_'s `devstoreaccount1`.)
 
 Also, if you want to access a storage emulator instance running on a different machine, you can override _Endpoint_ parameter in advanced settings, setting it to `http(s)://<host>:<port>/devstoreaccount1` (e.g. `http://10.254.2.5:10000/devstoreaccount1`).
