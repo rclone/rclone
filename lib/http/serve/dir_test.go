@@ -3,7 +3,7 @@ package serve
 import (
 	"errors"
 	"html/template"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -94,7 +94,7 @@ func TestError(t *testing.T) {
 	Error("potato", w, "sausage", err)
 	resp := w.Result()
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 	assert.Equal(t, "sausage.\n", string(body))
 }
 
@@ -108,7 +108,7 @@ func TestServe(t *testing.T) {
 	d.Serve(w, r)
 	resp := w.Result()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 	assert.Equal(t, `<!DOCTYPE html>
 <html lang="en">
 <head>

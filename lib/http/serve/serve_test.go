@@ -1,7 +1,7 @@
 package serve
 
 import (
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,7 +17,7 @@ func TestObjectBadMethod(t *testing.T) {
 	Object(w, r, o)
 	resp := w.Result()
 	assert.Equal(t, http.StatusMethodNotAllowed, resp.StatusCode)
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 	assert.Equal(t, "Method Not Allowed\n", string(body))
 }
 
@@ -30,7 +30,7 @@ func TestObjectHEAD(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "5", resp.Header.Get("Content-Length"))
 	assert.Equal(t, "bytes", resp.Header.Get("Accept-Ranges"))
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 	assert.Equal(t, "", string(body))
 }
 
@@ -43,7 +43,7 @@ func TestObjectGET(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "5", resp.Header.Get("Content-Length"))
 	assert.Equal(t, "bytes", resp.Header.Get("Accept-Ranges"))
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 	assert.Equal(t, "hello", string(body))
 }
 
@@ -58,7 +58,7 @@ func TestObjectRange(t *testing.T) {
 	assert.Equal(t, "3", resp.Header.Get("Content-Length"))
 	assert.Equal(t, "bytes", resp.Header.Get("Accept-Ranges"))
 	assert.Equal(t, "bytes 3-5/10", resp.Header.Get("Content-Range"))
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 	assert.Equal(t, "345", string(body))
 }
 
@@ -71,6 +71,6 @@ func TestObjectBadRange(t *testing.T) {
 	resp := w.Result()
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
 	assert.Equal(t, "10", resp.Header.Get("Content-Length"))
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := ioutil.ReadAll(resp.Body)
 	assert.Equal(t, "Bad Request\n", string(body))
 }
