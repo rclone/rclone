@@ -90,8 +90,13 @@ func init() {
 			Help:     "User name (usually email).",
 			Required: true,
 		}, {
-			Name:       "pass",
-			Help:       "Password.",
+			Name: "pass",
+			Help: `Password.
+
+This must be an app password - rclone will not work with your normal
+password. See the Configuration section in the docs for how to make an
+app password.
+`,
 			Required:   true,
 			IsPassword: true,
 		}, {
