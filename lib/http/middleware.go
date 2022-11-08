@@ -33,6 +33,7 @@ func parseAuthorization(r *http.Request) (user, pass string, ok bool) {
 	return
 }
 
+// LoggedBasicAuth simply wraps the goauth.BasicAuth struct
 type LoggedBasicAuth struct {
 	goauth.BasicAuth
 }

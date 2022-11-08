@@ -76,8 +76,8 @@ certificate authority certificate.
 // Middleware function signature required by chi.Router.Use()
 type Middleware func(http.Handler) http.Handler
 
-// HTTPConfig contains options for the http Server
-type HTTPConfig struct {
+// Config contains options for the http Server
+type Config struct {
 	ListenAddr         []string      // Port to listen on
 	BaseURL            string        // prefix to strip from URLs
 	ServerReadTimeout  time.Duration // Timeout for server reading data
@@ -93,7 +93,7 @@ type HTTPConfig struct {
 }
 
 // AddFlagsPrefix adds flags for the httplib
-func (cfg *HTTPConfig) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
+func (cfg *Config) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 	flags.StringArrayVarP(flagSet, &cfg.ListenAddr, prefix+"addr", "", cfg.ListenAddr, "IPaddress:Port or :Port to bind server to")
 	flags.DurationVarP(flagSet, &cfg.ServerReadTimeout, prefix+"server-read-timeout", "", cfg.ServerReadTimeout, "Timeout for server reading data")
 	flags.DurationVarP(flagSet, &cfg.ServerWriteTimeout, prefix+"server-write-timeout", "", cfg.ServerWriteTimeout, "Timeout for server writing data")
@@ -106,13 +106,13 @@ func (cfg *HTTPConfig) AddFlagsPrefix(flagSet *pflag.FlagSet, prefix string) {
 }
 
 // AddHTTPFlagsPrefix adds flags for the httplib
-func AddHTTPFlagsPrefix(flagSet *pflag.FlagSet, prefix string, cfg *HTTPConfig) {
+func AddHTTPFlagsPrefix(flagSet *pflag.FlagSet, prefix string, cfg *Config) {
 	cfg.AddFlagsPrefix(flagSet, prefix)
 }
 
-// DefaultHTTPCfg is the default values used for Config
-func DefaultHTTPCfg() HTTPConfig {
-	return HTTPConfig{
+// DefaultCfg is the default values used for Config
+func DefaultCfg() Config {
+	return Config{
 		ListenAddr:         []string{"127.0.0.1:8080"},
 		ServerReadTimeout:  1 * time.Hour,
 		ServerWriteTimeout: 1 * time.Hour,
@@ -151,7 +151,7 @@ type server struct {
 	tlsConfig    *tls.Config
 	instances    []instance
 	auth         AuthConfig
-	cfg          HTTPConfig
+	cfg          Config
 	template     *TemplateConfig
 	htmlTemplate *template.Template
 }
@@ -166,8 +166,8 @@ func WithAuth(cfg AuthConfig) Option {
 	}
 }
 
-// WithConfig option applies the HTTPConfig to the server, overriding defaults
-func WithConfig(cfg HTTPConfig) Option {
+// WithConfig option applies the Config to the server, overriding defaults
+func WithConfig(cfg Config) Option {
 	return func(s *server) {
 		s.cfg = cfg
 	}
@@ -187,7 +187,7 @@ func WithTemplate(cfg TemplateConfig) Option {
 func NewServer(ctx context.Context, options ...Option) (*server, error) {
 	s := &server{
 		mux: chi.NewRouter(),
-		cfg: DefaultHTTPCfg(),
+		cfg: DefaultCfg(),
 	}
 
 	for _, opt := range options {
@@ -307,11 +307,14 @@ func (s *server) initTemplate() error {
 }
 
 var (
-	// hard coded errors, allowing for easier testing
+	// ErrInvalidMinTLSVersion - hard coded errors, allowing for easier testing
 	ErrInvalidMinTLSVersion = errors.New("invalid value for --min-tls-version")
-	ErrTLSBodyMismatch      = errors.New("need both TLSCertBody and TLSKeyBody to use TLS")
-	ErrTLSFileMismatch      = errors.New("need both --cert and --key to use TLS")
-	ErrTLSParseCA           = errors.New("unable to parse client certificate authority")
+	// ErrTLSBodyMismatch - hard coded errors, allowing for easier testing
+	ErrTLSBodyMismatch = errors.New("need both TLSCertBody and TLSKeyBody to use TLS")
+	// ErrTLSFileMismatch - hard coded errors, allowing for easier testing
+	ErrTLSFileMismatch = errors.New("need both --cert and --key to use TLS")
+	// ErrTLSParseCA - hard coded errors, allowing for easier testing
+	ErrTLSParseCA = errors.New("unable to parse client certificate authority")
 )
 
 func (s *server) initTLS() error {
