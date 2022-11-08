@@ -2937,7 +2937,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	if opt.Provider == "Storj" {
-		f.features.Copy = nil
 		f.features.SetTier = false
 		f.features.GetTier = false
 	}
