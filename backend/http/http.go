@@ -591,11 +591,11 @@ func (o *Object) head(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to stat: %w", err)
 	}
-	return o.stat(ctx, res)
+	return o.decodeMetadata(ctx, res)
 }
 
-// stat updates info fields in the Object according to HTTP response headers
-func (o *Object) stat(ctx context.Context, res *http.Response) error {
+// decodeMetadata updates info fields in the Object according to HTTP response headers
+func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
 	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
 	if err != nil {
 		t = timeUnset
@@ -649,11 +649,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if err != nil {
 		return nil, fmt.Errorf("Open failed: %w", err)
 	}
-
-	if o.fs.opt.NoHead {
-		if err = o.stat(ctx, res); err != nil {
-			return nil, fmt.Errorf("Stat failed: %w", err)
-		}
+	if err = o.decodeMetadata(ctx, res); err != nil {
+		return nil, fmt.Errorf("decodeMetadata failed: %w", err)
 	}
 	return res.Body, nil
 }
