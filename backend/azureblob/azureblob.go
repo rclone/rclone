@@ -595,7 +595,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	)
 	switch {
 	case opt.UseEmulator:
-		credential, err := azblob.NewSharedKeyCredential(emulatorAccount, emulatorAccountKey)
+		var actualEmulatorAccount = emulatorAccount
+		if opt.Account != "" {
+			actualEmulatorAccount = opt.Account
+		}
+		var actualEmulatorKey = emulatorAccountKey
+		if opt.Key != "" {
+			actualEmulatorKey = opt.Key
+		}
+		credential, err := azblob.NewSharedKeyCredential(actualEmulatorAccount, actualEmulatorKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse credentials: %w", err)
 		}
