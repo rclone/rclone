@@ -759,7 +759,7 @@ func testFutureProof(t *testing.T, f *Fs) {
 
 	// Rcat must fail
 	in := io.NopCloser(bytes.NewBufferString("abc"))
-	robj, err := operations.Rcat(ctx, f, file, in, modTime)
+	robj, err := operations.Rcat(ctx, f, file, in, modTime, nil)
 	assert.Nil(t, robj)
 	assert.NotNil(t, err)
 	if err != nil {

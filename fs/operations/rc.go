@@ -305,7 +305,7 @@ func rcSingleCommand(ctx context.Context, in rc.Params, name string, noRemote bo
 					return nil, err
 				}
 				if p.FileName() != "" {
-					obj, err := Rcat(ctx, f, path.Join(remote, p.FileName()), p, time.Now())
+					obj, err := Rcat(ctx, f, path.Join(remote, p.FileName()), p, time.Now(), nil)
 					if err != nil {
 						return nil, err
 					}
