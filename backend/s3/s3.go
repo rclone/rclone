@@ -3159,8 +3159,11 @@ func (f *Fs) newV2List(req *s3.ListObjectsV2Input) bucketLister {
 // Do a V2 listing
 func (ls *v2List) List(ctx context.Context) (resp *s3.ListObjectsV2Output, versionIDs []*string, err error) {
 	resp, err = ls.f.c.ListObjectsV2WithContext(ctx, &ls.req)
+	if err != nil {
+		return nil, nil, err
+	}
 	ls.req.ContinuationToken = resp.NextContinuationToken
-	return resp, nil, err
+	return resp, nil, nil
 }
 
 // URL Encode the listings
