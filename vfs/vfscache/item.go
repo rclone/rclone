@@ -272,11 +272,25 @@ func (item *Item) _truncate(size int64) (err error) {
 		}
 	}
 
-	fs.Debugf(item.name, "vfs cache: truncate to size=%d", size)
+	// Check to see what the current size is, and don't truncate
+	// if it is already the correct size.
+	//
+	// Apparently Windows Defender likes to check executables each
+	// time they are modified, and truncating a file to its
+	// existing size is enough to trigger the Windows Defender
+	// scan. This was causing a big slowdown for operations which
+	// opened and closed the file a lot, such as looking at
+	// properties on an executable.
+	fi, err := fd.Stat()
+	if err == nil && fi.Size() == size {
+		fs.Debugf(item.name, "vfs cache: truncate to size=%d (not needed as size correct)", size)
+	} else {
+		fs.Debugf(item.name, "vfs cache: truncate to size=%d", size)
 
-	err = fd.Truncate(size)
-	if err != nil {
-		return fmt.Errorf("vfs cache: truncate: %w", err)
+		err = fd.Truncate(size)
+		if err != nil {
+			return fmt.Errorf("vfs cache: truncate: %w", err)
+		}
 	}
 
 	item.info.Size = size
@@ -460,7 +474,9 @@ func (item *Item) _createFile(osPath string) (err error) {
 		return errors.New("vfs cache item: internal error: didn't Close file")
 	}
 	item.modified = false
+	// t0 := time.Now()
 	fd, err := file.OpenFile(osPath, os.O_RDWR, 0600)
+	// fs.Debugf(item.name, "OpenFile took %v", time.Since(t0))
 	if err != nil {
 		return fmt.Errorf("vfs cache item: open failed: %w", err)
 	}
