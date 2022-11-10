@@ -22,9 +22,10 @@ import (
 
 // Dir represents a directory entry
 type Dir struct {
-	vfs   *VFS   // read only
-	inode uint64 // read only: inode number
-	f     fs.Fs  // read only
+	vfs          *VFS        // read only
+	inode        uint64      // read only: inode number
+	f            fs.Fs       // read only
+	cleanupTimer *time.Timer // read only: timer to call cacheCleanup
 
 	mu      sync.RWMutex // protects the following
 	parent  *Dir         // parent, nil for root
@@ -52,7 +53,7 @@ const (
 )
 
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
-	return &Dir{
+	d := &Dir{
 		vfs:     vfs,
 		f:       f,
 		parent:  parent,
@@ -61,6 +62,25 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		modTime: fsDir.ModTime(context.TODO()),
 		inode:   newInode(),
 		items:   make(map[string]Node),
+	}
+	d.cleanupTimer = time.AfterFunc(vfs.Opt.DirCacheTime*2, d.cacheCleanup)
+	return d
+}
+
+func (d *Dir) cacheCleanup() {
+	defer func() {
+		// We should never panic here
+		_ = recover()
+	}()
+
+	when := time.Now()
+
+	d.mu.Lock()
+	_, stale := d._age(when)
+	d.mu.Unlock()
+
+	if stale {
+		d.ForgetAll()
 	}
 }
 
@@ -182,8 +202,8 @@ func (d *Dir) Node() Node {
 // so could not be forgotten. Children which didn't have virtual entries and
 // children with virtual entries will be forgotten even if true is returned.
 func (d *Dir) ForgetAll() (hasVirtual bool) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	d.mu.RLock()
+
 	fs.Debugf(d.path, "forgetting directory cache")
 	for _, node := range d.items {
 		if dir, ok := node.(*Dir); ok {
@@ -192,19 +212,29 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 			}
 		}
 	}
+
+	d.mu.RUnlock()
+
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	// Purge any unnecessary virtual entries
 	d._purgeVirtual()
 
 	d.read = time.Time{}
+
 	// Check if this dir has virtual entries
 	if len(d.virtual) != 0 {
 		hasVirtual = true
 	}
+
 	// Don't clear directory entries if there are virtual entries in this
 	// directory or any children
 	if !hasVirtual {
 		d.items = make(map[string]Node)
+		d.cleanupTimer.Stop()
 	}
+
 	return hasVirtual
 }
 
@@ -475,6 +505,8 @@ func (d *Dir) _readDir() error {
 	}
 
 	d.read = when
+	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
+
 	return nil
 }
 
@@ -654,6 +686,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 					dir.read = time.Time{}
 				} else {
 					dir.read = when
+					dir.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
 				}
 				dir.mu.Unlock()
 				if err != nil {
@@ -691,6 +724,7 @@ func (d *Dir) readDirTree() error {
 	}
 	fs.Debugf(d.path, "Reading directory tree done in %s", time.Since(when))
 	d.read = when
+	d.cleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
 	return nil
 }
 
