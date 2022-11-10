@@ -64,6 +64,27 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 	}
 }
 
+func (d *Dir) cacheCleanup() {
+	defer func() {
+		_ = recover()
+		return
+	}()
+
+	<-time.After(d.vfs.Opt.DirCacheTime * 2)
+
+	when := time.Now()
+
+	d.mu.Lock()
+	_, stale := d._age(when)
+	d.mu.Unlock()
+
+	if stale {
+		d.ForgetAll()
+	}
+
+	return
+}
+
 // String converts it to printable
 func (d *Dir) String() string {
 	if d == nil {
@@ -182,8 +203,8 @@ func (d *Dir) Node() Node {
 // so could not be forgotten. Children which didn't have virtual entries and
 // children with virtual entries will be forgotten even if true is returned.
 func (d *Dir) ForgetAll() (hasVirtual bool) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	d.mu.RLock()
+
 	fs.Debugf(d.path, "forgetting directory cache")
 	for _, node := range d.items {
 		if dir, ok := node.(*Dir); ok {
@@ -192,19 +213,28 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 			}
 		}
 	}
+
+	d.mu.RUnlock()
+
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	// Purge any unnecessary virtual entries
 	d._purgeVirtual()
 
 	d.read = time.Time{}
+
 	// Check if this dir has virtual entries
 	if len(d.virtual) != 0 {
 		hasVirtual = true
 	}
+
 	// Don't clear directory entries if there are virtual entries in this
 	// directory or any children
 	if !hasVirtual {
 		d.items = make(map[string]Node)
 	}
+
 	return hasVirtual
 }
 
@@ -474,7 +504,10 @@ func (d *Dir) _readDir() error {
 		return err
 	}
 
+	go d.cacheCleanup()
+
 	d.read = when
+
 	return nil
 }
 
