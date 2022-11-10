@@ -9,11 +9,12 @@ query-filters:
       id: go/unvalidated-url-redirection
   - exclude:
       id: go/xml/xpath-injection
-  - exclude: 
-      tags contain: 
-        - security
-  - exclude:
-      problem.severity:
-        - warning
-        - recommendation
+  #Uncomment to suppress more potential warnings
+        #- exclude: 
+        #tags contain: 
+        #- security
+        #- exclude:
+        #problem.severity:
+        #- warning
+        #- recommendation
 
