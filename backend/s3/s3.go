@@ -126,7 +126,7 @@ func init() {
 				Help:  "Seagate Lyve Cloud",
 			}, {
 				Value: "Liara",
-				Help:  "Liara Object Storage (LOS)",
+				Help:  "Liara Object Storage",
 			}, {
 				Value: "Minio",
 				Help:  "Minio Object Storage",
@@ -766,9 +766,9 @@ func init() {
 				Help:  "Logrono, Spain",
 			}},
 		}, {
-			// Liara endpoints: https://liara.ir/landing/%D9%87%D8%A7%D8%B3%D8%AA-%D8%AF%D8%A7%D9%86%D9%84%D9%88%D8%AF-download-host
+			// Liara endpoints: https://liara.ir/landing/object-storage
 			Name:     "endpoint",
-			Help:     "Endpoint for Liara Object Storage (LOS) API.",
+			Help:     "Endpoint for Liara Object Storage API.",
 			Provider: "Liara",
 			Examples: []fs.OptionExample{{
 				Value: "storage.iran.liara.space",
@@ -1810,7 +1810,7 @@ If you leave it blank, this is calculated automatically from the sse_customer_ke
 				Help:  "Infrequent access storage mode",
 			}},
 		}, {
-			// Mapping from here: https://liara.ir/landing/%D9%87%D8%A7%D8%B3%D8%AA-%D8%AF%D8%A7%D9%86%D9%84%D9%88%D8%AF-download-host
+			// Mapping from here: https://liara.ir/landing/object-storage
 			Name:     "storage_class",
 			Help:     "The storage class to use when storing new objects in Liara",
 			Provider: "Liara",
