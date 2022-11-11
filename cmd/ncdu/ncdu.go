@@ -114,35 +114,48 @@ func helpText() (tr []string) {
 
 // UI contains the state of the user interface
 type UI struct {
-	f                  fs.Fs     // fs being displayed
-	fsName             string    // human name of Fs
-	root               *scan.Dir // root directory
-	d                  *scan.Dir // current directory being displayed
-	path               string    // path of current directory
-	showBox            bool      // whether to show a box
-	boxText            []string  // text to show in box
-	boxMenu            []string  // box menu options
-	boxMenuButton      int
-	boxMenuHandler     func(fs fs.Fs, path string, option int) (string, error)
-	entries            fs.DirEntries // entries of current directory
-	sortPerm           []int         // order to display entries in after sorting
-	invSortPerm        []int         // inverse order
-	dirListHeight      int           // height of listing
-	listing            bool          // whether listing is in progress
-	showGraph          bool          // toggle showing graph
-	showCounts         bool          // toggle showing counts
-	showDirAverageSize bool          // toggle average size
-	showModTime        bool          // toggle showing timestamps
-	humanReadable      bool          // toggle human-readable format
-	visualSelectMode   bool          // toggle visual selection mode
-	sortByName         int8          // +1 for normal (lexical), 0 for off, -1 for reverse
-	sortBySize         int8          // +1 for normal (largest first), 0 for off, -1 for reverse (smallest first)
-	sortByCount        int8
-	sortByAverageSize  int8
-	sortByModTime      int8              // +1 for normal (newest first), 0 for off, -1 for reverse (oldest first)
-	dirPosMap          map[string]dirPos // store for directory positions
-	selectedEntries    map[string]dirPos // selected entries of current directory
+	fs              fs.Fs             // fs being displayed
+	fsName          string            // human name for Fs
+	root            *scan.Dir         // root directory
+	dir             *scan.Dir         // current directory being displayed
+	path            string            // path of current directory
+	entries         fs.DirEntries     // entries of current directory
+	sortPerm        []int             // order to display entries in after sorting
+	invSortPerm     []int             // inverse order
+	dirPosMap       map[string]dirPos // store for directory positions
+	selectedEntries map[string]dirPos // selected entries of current directory
+	boxMenuHandler  func(fs fs.Fs, path string, option int) (string, error)
+	boxMenu         []string // box menu options
+	boxText         []string // text to show in box
+	boxMenuButton   int      //
+	dirListHeight   int      // height of listing
+	o               uiMask   // various boolean options
 }
+
+type uiMask int16
+
+const (
+	_ uiMask = 1 << iota
+
+	isListing // whether listing is in progress
+	isHumanReadable
+	isVisualSelectMode
+
+	showBox
+	showGraph
+	showCounts
+	showDirAverageSize
+	showModTime
+
+	sortReverse
+	sortByAverageSize
+	sortByName
+	sortBySize
+	sortByCount
+	sortByModTime
+
+	sortByAll = sortByAverageSize | sortByName | sortBySize | sortByCount | sortByModTime
+)
 
 // Where we have got to in the directory listing
 type dirPos struct {
@@ -307,11 +320,11 @@ func (u *UI) moveBox(to int) {
 
 // find the biggest entry in the current listing
 func (u *UI) biggestEntry() (biggest int64) {
-	if u.d == nil {
+	if u.dir == nil {
 		return
 	}
 	for i := range u.entries {
-		attrs, _ := u.d.AttrI(u.sortPerm[i])
+		attrs, _ := u.dir.AttrI(u.sortPerm[i])
 		if attrs.Size > biggest {
 			biggest = attrs.Size
 		}
@@ -321,11 +334,11 @@ func (u *UI) biggestEntry() (biggest int64) {
 
 // hasEmptyDir returns true if there is empty folder in current listing
 func (u *UI) hasEmptyDir() bool {
-	if u.d == nil {
+	if u.dir == nil {
 		return false
 	}
 	for i := range u.entries {
-		attrs, _ := u.d.AttrI(u.sortPerm[i])
+		attrs, _ := u.dir.AttrI(u.sortPerm[i])
 		if attrs.IsDir && attrs.Count == 0 {
 			return true
 		}
@@ -355,7 +368,7 @@ func (u *UI) Draw() error {
 	)
 
 	// Directory listing
-	if u.d != nil {
+	if u.dir != nil {
 		y := 2
 		perBar := u.biggestEntry() / graphBars
 		if perBar == 0 {
@@ -371,10 +384,10 @@ func (u *UI) Draw() error {
 			}
 			var attrs scan.Attrs
 			var err error
-			if u.showModTime {
-				attrs, err = u.d.AttrWithModTimeI(ctx, u.sortPerm[n])
+			if u.o&showModTime != 0 {
+				attrs, err = u.dir.AttrWithModTimeI(ctx, u.sortPerm[n])
 			} else {
-				attrs, err = u.d.AttrI(u.sortPerm[n])
+				attrs, err = u.dir.AttrI(u.sortPerm[n])
 			}
 			_, isSelected := u.selectedEntries[entry.String()]
 			fg := termbox.ColorWhite
@@ -414,24 +427,24 @@ func (u *UI) Draw() error {
 				fileFlag = '!'
 			}
 			extras := ""
-			if u.showCounts {
-				ss := operations.CountStringField(attrs.Count, u.humanReadable, 9) + " "
+			if u.o&showCounts != 0 {
+				ss := operations.CountStringField(attrs.Count, u.o&isHumanReadable != 0, 9) + " "
 				if attrs.Count > 0 {
 					extras += ss
 				} else {
 					extras += strings.Repeat(" ", len(ss))
 				}
 			}
-			if u.showDirAverageSize {
+			if u.o&showDirAverageSize != 0 {
 				avg := attrs.AverageSize()
-				ss := operations.SizeStringField(int64(avg), u.humanReadable, 9) + " "
+				ss := operations.SizeStringField(int64(avg), u.o&isHumanReadable != 0, 9) + " "
 				if avg > 0 {
 					extras += ss
 				} else {
 					extras += strings.Repeat(" ", len(ss))
 				}
 			}
-			if u.showModTime {
+			if u.o&showModTime != 0 {
 				extras += attrs.ModTime.Local().Format("2006-01-02 15:04:05") + " "
 			}
 			if showEmptyDir {
@@ -439,7 +452,7 @@ func (u *UI) Draw() error {
 					fileFlag = 'e'
 				}
 			}
-			if u.showGraph {
+			if u.o&showGraph != 0 {
 				bars := (attrs.Size + perBar/2 - 1) / perBar
 				// clip if necessary - only happens during startup
 				if bars > 10 {
@@ -449,25 +462,27 @@ func (u *UI) Draw() error {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			Linef(0, y, w, fg, bg, ' ', "%c %s %s%c%s%s", fileFlag, operations.SizeStringField(attrs.Size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
+			Linef(0, y, w, fg, bg, ' ', "%c %s %s%c%s%s",
+				fileFlag, operations.SizeStringField(attrs.Size, u.o&isHumanReadable != 0, 12), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
 	}
 
 	// Footer
-	if u.d == nil {
+	if u.dir == nil {
 		Line(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Waiting for root directory...")
 	} else {
 		message := ""
-		if u.listing {
+		if u.o&isListing != 0 {
 			message = " [listing in progress]"
 		}
-		size, count := u.d.Attr()
-		Linef(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Total usage: %s, Objects: %s%s", operations.SizeString(size, u.humanReadable), operations.CountString(count, u.humanReadable), message)
+		size, count := u.dir.Attr()
+		Linef(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Total usage: %s, Objects: %s%s",
+			operations.SizeString(size, u.o&isHumanReadable != 0), operations.CountString(count, u.o&isHumanReadable != 0), message)
 	}
 
 	// Show the box on top if required
-	if u.showBox {
+	if u.o&showBox != 0 {
 		u.Box()
 	}
 	err := termbox.Flush()
@@ -479,7 +494,7 @@ func (u *UI) Draw() error {
 
 // Move the cursor this many spaces adjusting the viewport as necessary
 func (u *UI) move(d int) {
-	if u.d == nil {
+	if u.dir == nil {
 		return
 	}
 
@@ -518,7 +533,7 @@ func (u *UI) move(d int) {
 	}
 
 	// toggle the current file for selection in selection mode
-	if u.visualSelectMode {
+	if u.o&isVisualSelectMode != 0 {
 		u.toggleSelectForCursor()
 	}
 
@@ -527,12 +542,12 @@ func (u *UI) move(d int) {
 }
 
 func (u *UI) removeEntry(pos int) {
-	u.d.Remove(pos)
-	u.setCurrentDir(u.d)
+	u.dir.Remove(pos)
+	u.setCurrentDir(u.dir)
 }
 
 func (u *UI) delete() {
-	if u.d == nil || len(u.entries) == 0 {
+	if u.dir == nil || len(u.entries) == 0 {
 		return
 	}
 	if len(u.selectedEntries) > 0 {
@@ -550,7 +565,7 @@ func (u *UI) deleteSingle() {
 	dirEntry := u.entries[dirPos]
 	u.boxMenu = []string{"cancel", "confirm"}
 	if obj, isFile := dirEntry.(fs.Object); isFile {
-		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
+		u.boxMenuHandler = func(_ fs.Fs, _ string, o int) (string, error) {
 			if o != 1 {
 				return "Aborted!", nil
 			}
@@ -568,7 +583,7 @@ func (u *UI) deleteSingle() {
 			"Delete this file?",
 			fspath.JoinRootPath(u.fsName, dirEntry.String())})
 	} else {
-		u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
+		u.boxMenuHandler = func(f fs.Fs, _ string, o int) (string, error) {
 			if o != 1 {
 				return "Aborted!", nil
 			}
@@ -594,7 +609,7 @@ func (u *UI) deleteSelected() {
 
 	u.boxMenu = []string{"cancel", "confirm"}
 
-	u.boxMenuHandler = func(f fs.Fs, p string, o int) (string, error) {
+	u.boxMenuHandler = func(f fs.Fs, _ string, o int) (string, error) {
 		if o != 1 {
 			return "Aborted!", nil
 		}
@@ -660,79 +675,76 @@ func (u *UI) copyPath() {
 
 // Sort by the configured sort method
 type ncduSort struct {
-	sortPerm []int
-	entries  fs.DirEntries
 	d        *scan.Dir
 	u        *UI
+	entries  fs.DirEntries
+	sortPerm []int
 }
 
 // Less is part of sort.Interface.
 func (ds *ncduSort) Less(i, j int) bool {
-	var iAvgSize, jAvgSize float64
-	var iattrs, jattrs scan.Attrs
-	if ds.u.sortByModTime != 0 {
-		ctx := context.Background()
-		iattrs, _ = ds.d.AttrWithModTimeI(ctx, ds.sortPerm[i])
-		jattrs, _ = ds.d.AttrWithModTimeI(ctx, ds.sortPerm[j])
-	} else {
-		iattrs, _ = ds.d.AttrI(ds.sortPerm[i])
-		jattrs, _ = ds.d.AttrI(ds.sortPerm[j])
-	}
-	iname, jname := ds.entries[ds.sortPerm[i]].Remote(), ds.entries[ds.sortPerm[j]].Remote()
-	if iattrs.Count > 0 {
-		iAvgSize = iattrs.AverageSize()
-	}
-	if jattrs.Count > 0 {
-		jAvgSize = jattrs.AverageSize()
-	}
+	return ds.lessBy(i, j, ds.u.o)
+}
 
+func (ds *ncduSort) lessBy(i, j int, o uiMask) bool {
 	switch {
-	case ds.u.sortByName < 0:
-		return iname > jname
-	case ds.u.sortByName > 0:
-		break
-	case ds.u.sortBySize < 0:
-		if iattrs.Size != jattrs.Size {
-			return iattrs.Size < jattrs.Size
+	case o&sortByName != 0:
+	case o&sortBySize != 0:
+		iattrs, _ := ds.d.AttrI(ds.sortPerm[i])
+		jattrs, _ := ds.d.AttrI(ds.sortPerm[j])
+		if iattrs.Size == jattrs.Size {
+			break
 		}
-	case ds.u.sortBySize > 0:
-		if iattrs.Size != jattrs.Size {
+		if o&sortReverse != 0 {
 			return iattrs.Size > jattrs.Size
 		}
-	case ds.u.sortByModTime < 0:
-		if iattrs.ModTime != jattrs.ModTime {
-			return iattrs.ModTime.Before(jattrs.ModTime)
+		return iattrs.Size < jattrs.Size
+	case o&sortByModTime != 0:
+		ctx := context.Background()
+		iattrs, _ := ds.d.AttrWithModTimeI(ctx, ds.sortPerm[i])
+		jattrs, _ := ds.d.AttrWithModTimeI(ctx, ds.sortPerm[j])
+		if iattrs.ModTime == jattrs.ModTime {
+			break
 		}
-	case ds.u.sortByModTime > 0:
-		if iattrs.ModTime != jattrs.ModTime {
+		if o&sortReverse != 0 {
 			return iattrs.ModTime.After(jattrs.ModTime)
 		}
-	case ds.u.sortByCount < 0:
-		if iattrs.Count != jattrs.Count {
-			return iattrs.Count < jattrs.Count
+		return iattrs.ModTime.Before(jattrs.ModTime)
+	case o&sortByCount != 0:
+		iattrs, _ := ds.d.AttrI(ds.sortPerm[i])
+		jattrs, _ := ds.d.AttrI(ds.sortPerm[j])
+		if iattrs.Count == jattrs.Count {
+			break
 		}
-	case ds.u.sortByCount > 0:
-		if iattrs.Count != jattrs.Count {
+		if o&sortReverse != 0 {
 			return iattrs.Count > jattrs.Count
 		}
-	case ds.u.sortByAverageSize < 0:
-		if iAvgSize != jAvgSize {
-			return iAvgSize < jAvgSize
+		return iattrs.Count < jattrs.Count
+	case o&sortByAverageSize != 0:
+		iattrs, _ := ds.d.AttrI(ds.sortPerm[i])
+		jattrs, _ := ds.d.AttrI(ds.sortPerm[j])
+		var iAvgSize, jAvgSize float64
+		if iattrs.Count > 0 {
+			iAvgSize = iattrs.AverageSize()
 		}
-		// if avgSize is equal, sort by size
-		if iattrs.Size != jattrs.Size {
+		if jattrs.Count > 0 {
+			jAvgSize = jattrs.AverageSize()
+		}
+		if iAvgSize == jAvgSize { // if equal, fallback to size
+			if o&sortReverse != 0 {
+				return iattrs.Size > jattrs.Size
+			}
 			return iattrs.Size < jattrs.Size
 		}
-	case ds.u.sortByAverageSize > 0:
-		if iAvgSize != jAvgSize {
+		if o&sortReverse != 0 {
 			return iAvgSize > jAvgSize
 		}
-		// if avgSize is equal, sort by size
-		if iattrs.Size != jattrs.Size {
-			return iattrs.Size > jattrs.Size
-		}
+		return iAvgSize < jAvgSize
 	}
-	// if everything equal, sort by name
+	iname, jname := ds.entries[ds.sortPerm[i]].Remote(), ds.entries[ds.sortPerm[j]].Remote()
+	if o&sortReverse != 0 {
+		return iname > jname
+	}
 	return iname < jname
 }
 
@@ -755,7 +767,7 @@ func (u *UI) sortCurrentDir() {
 	data := ncduSort{
 		sortPerm: u.sortPerm,
 		entries:  u.entries,
-		d:        u.d,
+		d:        u.dir,
 		u:        u,
 	}
 	sort.Sort(&data)
@@ -769,21 +781,21 @@ func (u *UI) sortCurrentDir() {
 
 // setCurrentDir sets the current directory
 func (u *UI) setCurrentDir(d *scan.Dir) {
-	u.d = d
+	u.dir = d
 	u.entries = d.Entries()
 	u.path = fspath.JoinRootPath(u.fsName, d.Path())
 	u.selectedEntries = make(map[string]dirPos)
-	u.visualSelectMode = false
+	u.o &^= isVisualSelectMode
 	u.sortCurrentDir()
 }
 
 // enters the current entry
 func (u *UI) enter() {
-	if u.d == nil || len(u.entries) == 0 {
+	if u.dir == nil || len(u.entries) == 0 {
 		return
 	}
 	dirPos := u.dirPosMap[u.path]
-	d, _ := u.d.GetDir(u.sortPerm[dirPos.entry])
+	d, _ := u.dir.GetDir(u.sortPerm[dirPos.entry])
 	if d == nil {
 		return
 	}
@@ -792,7 +804,7 @@ func (u *UI) enter() {
 
 // handles a box option that was selected
 func (u *UI) handleBoxOption() {
-	msg, err := u.boxMenuHandler(u.f, u.path, u.boxMenuButton)
+	msg, err := u.boxMenuHandler(u.fs, u.path, u.boxMenuButton)
 	// reset
 	u.boxMenuButton = 0
 	u.boxMenu = []string{}
@@ -811,10 +823,10 @@ func (u *UI) handleBoxOption() {
 
 // up goes up to the parent directory
 func (u *UI) up() {
-	if u.d == nil {
+	if u.dir == nil {
 		return
 	}
-	parent := u.d.Parent()
+	parent := u.dir.Parent()
 	if parent != nil {
 		u.setCurrentDir(parent)
 	}
@@ -823,29 +835,25 @@ func (u *UI) up() {
 // popupBox shows a box with the text in
 func (u *UI) popupBox(text []string) {
 	u.boxText = text
-	u.showBox = true
+	u.o |= showBox
 }
 
 // togglePopupBox shows a box with the text in
 func (u *UI) togglePopupBox(text []string) {
-	if u.showBox && reflect.DeepEqual(u.boxText, text) {
-		u.showBox = false
+	if u.o&showBox != 0 && reflect.DeepEqual(u.boxText, text) {
+		u.o &^= showBox
 	} else {
 		u.popupBox(text)
 	}
 }
 
 // toggle the sorting for the flag passed in
-func (u *UI) toggleSort(sortType *int8) {
-	old := *sortType
-	u.sortBySize = 0
-	u.sortByCount = 0
-	u.sortByName = 0
-	u.sortByAverageSize = 0
-	if old == 0 {
-		*sortType = 1
+func (u *UI) toggleSort(o uiMask) {
+	if u.o&(o&^sortReverse) == 0 {
+		u.o &^= sortReverse | sortByAll
+		u.o |= o
 	} else {
-		*sortType = -old
+		u.o ^= sortReverse
 	}
 	u.sortCurrentDir()
 }
@@ -867,20 +875,13 @@ func (u *UI) toggleSelectForCursor() {
 // NewUI creates a new user interface for ncdu on f
 func NewUI(f fs.Fs) *UI {
 	return &UI{
-		f:                  f,
-		path:               "Waiting for root...",
-		dirListHeight:      20, // updated in Draw
-		fsName:             fs.ConfigString(f),
-		showGraph:          true,
-		showCounts:         false,
-		showDirAverageSize: false,
-		humanReadable:      true,
-		sortByName:         0,
-		sortBySize:         1, // Sort by largest first
-		sortByModTime:      0,
-		sortByCount:        0,
-		dirPosMap:          make(map[string]dirPos),
-		selectedEntries:    make(map[string]dirPos),
+		fs:              f,
+		fsName:          fs.ConfigString(f),
+		path:            "Waiting for root...",
+		dirPosMap:       make(map[string]dirPos),
+		selectedEntries: make(map[string]dirPos),
+		dirListHeight:   20,
+		o:               isHumanReadable | showGraph | sortReverse | sortBySize,
 	}
 }
 
@@ -893,8 +894,8 @@ func (u *UI) Show() error {
 	defer termbox.Close()
 
 	// scan the disk in the background
-	u.listing = true
-	rootChan, errChan, updated := scan.Scan(context.Background(), u.f)
+	u.o |= isListing
+	rootChan, errChan, updated := scan.Scan(context.Background(), u.fs)
 
 	// Poll the events into a channel
 	events := make(chan termbox.Event)
@@ -923,7 +924,7 @@ outer:
 			if err != nil {
 				return fmt.Errorf("ncdu directory listing: %w", err)
 			}
-			u.listing = false
+			u.o &^= isListing
 		case <-updated:
 			// redraw
 			// might want to limit updates per second
@@ -933,8 +934,8 @@ outer:
 			if ev.Type == termbox.EventKey {
 				switch ev.Key + termbox.Key(ev.Ch) {
 				case termbox.KeyEsc, termbox.KeyCtrlC, 'q':
-					if u.showBox {
-						u.showBox = false
+					if u.o&showBox != 0 {
+						u.o &^= showBox
 					} else {
 						break outer
 					}
@@ -947,7 +948,7 @@ outer:
 				case termbox.KeyPgup, '=', '+':
 					u.move(-u.dirListHeight)
 				case termbox.KeyArrowLeft, 'h':
-					if u.showBox {
+					if u.o&showBox != 0 {
 						u.moveBox(-1)
 						break
 					}
@@ -959,33 +960,33 @@ outer:
 					}
 					u.enter()
 				case termbox.KeyArrowRight, 'l':
-					if u.showBox {
+					if u.o&showBox != 0 {
 						u.moveBox(1)
 						break
 					}
 					u.enter()
 				case 'c':
-					u.showCounts = !u.showCounts
+					u.o ^= showCounts
 				case 'm':
-					u.showModTime = !u.showModTime
+					u.o ^= showModTime
 				case 'g':
-					u.showGraph = !u.showGraph
+					u.o ^= showGraph
 				case 'a':
-					u.showDirAverageSize = !u.showDirAverageSize
+					u.o ^= showDirAverageSize
 				case 'n':
-					u.toggleSort(&u.sortByName)
+					u.toggleSort(sortByName)
 				case 's':
-					u.toggleSort(&u.sortBySize)
+					u.toggleSort(sortBySize | sortReverse)
+				case 'C':
+					u.toggleSort(sortByCount | sortReverse)
+				case 'A':
+					u.toggleSort(sortByAverageSize | sortReverse)
 				case 'M':
-					u.toggleSort(&u.sortByModTime)
+					u.toggleSort(sortByModTime | sortReverse)
 				case 'v':
 					u.toggleSelectForCursor()
 				case 'V':
-					u.visualSelectMode = !u.visualSelectMode
-				case 'C':
-					u.toggleSort(&u.sortByCount)
-				case 'A':
-					u.toggleSort(&u.sortByAverageSize)
+					u.o ^= isVisualSelectMode
 				case 'y':
 					u.copyPath()
 				case 'Y':
@@ -993,7 +994,7 @@ outer:
 				case 'd':
 					u.delete()
 				case 'u':
-					u.humanReadable = !u.humanReadable
+					u.o ^= isHumanReadable
 				case 'D':
 					u.deleteSelected()
 				case '?':
