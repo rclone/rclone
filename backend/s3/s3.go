@@ -1127,15 +1127,39 @@ func init() {
 				Provider: "LyveCloud",
 			}, {
 				Value:    "s3.wasabisys.com",
-				Help:     "Wasabi US East endpoint",
+				Help:     "Wasabi US East 1 (N. Virginia)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.us-east-2.wasabisys.com",
+				Help:     "Wasabi US East 2 (N. Virginia)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.us-central-1.wasabisys.com",
+				Help:     "Wasabi US Central 1 (Texas)",
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.us-west-1.wasabisys.com",
-				Help:     "Wasabi US West endpoint",
+				Help:     "Wasabi US West 1 (Oregon)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ca-central-1.wasabisys.com",
+				Help:     "Wasabi CA Central 1 (Toronto)",
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.eu-central-1.wasabisys.com",
-				Help:     "Wasabi EU Central endpoint",
+				Help:     "Wasabi EU Central 1 (Amsterdam)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.eu-central-2.wasabisys.com",
+				Help:     "Wasabi EU Central 2 (Frankfurt)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.eu-west-1.wasabisys.com",
+				Help:     "Wasabi EU West 1 (London)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.eu-west-2.wasabisys.com",
+				Help:     "Wasabi EU West 2 (Paris)",
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.ap-northeast-1.wasabisys.com",
@@ -1144,6 +1168,14 @@ func init() {
 			}, {
 				Value:    "s3.ap-northeast-2.wasabisys.com",
 				Help:     "Wasabi AP Northeast 2 (Osaka) endpoint",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ap-southeast-1.wasabisys.com",
+				Help:     "Wasabi AP Southeast 1 (Singapore)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ap-southeast-2.wasabisys.com",
+				Help:     "Wasabi AP Southeast 2 (Sydney)",
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.ir-thr-at1.arvanstorage.com",
