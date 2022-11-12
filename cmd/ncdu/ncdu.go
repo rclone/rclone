@@ -13,13 +13,14 @@ import (
 	"strings"
 
 	"github.com/atotto/clipboard"
-	"github.com/gdamore/tcell/v2/termbox"
+	"github.com/gdamore/tcell/v2"
 	runewidth "github.com/mattn/go-runewidth"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/ncdu/scan"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/operations"
+	"github.com/rivo/uniseg"
 	"github.com/spf13/cobra"
 )
 
@@ -114,6 +115,7 @@ func helpText() (tr []string) {
 
 // UI contains the state of the user interface
 type UI struct {
+	s                  tcell.Screen
 	f                  fs.Fs     // fs being displayed
 	fsName             string    // human name of Fs
 	root               *scan.Dir // root directory
@@ -150,77 +152,91 @@ type dirPos struct {
 	offset int
 }
 
+// graphemeWidth returns the number of cells in rs.
+//
+// The original [runewidth.StringWidth] iterates through graphemes
+// and uses this same logic. To avoid iterating through graphemes
+// repeatedly, we separate that out into its own function.
+func graphemeWidth(rs []rune) (wd int) {
+	// copied/adapted from [runewidth.StringWidth]
+	for _, r := range rs {
+		wd = runewidth.RuneWidth(r)
+		if wd > 0 {
+			break
+		}
+	}
+	return
+}
+
 // Print a string
-func Print(x, y int, fg, bg termbox.Attribute, msg string) {
-	for _, c := range msg {
-		termbox.SetCell(x, y, c, fg, bg)
-		x++
+func (u *UI) Print(x, y int, style tcell.Style, msg string) {
+	g := uniseg.NewGraphemes(msg)
+	for g.Next() {
+		rs := g.Runes()
+		u.s.SetContent(x, y, rs[0], rs[1:], style)
+		x += graphemeWidth(rs)
 	}
 }
 
 // Printf a string
-func Printf(x, y int, fg, bg termbox.Attribute, format string, args ...interface{}) {
+func (u *UI) Printf(x, y int, style tcell.Style, format string, args ...interface{}) {
 	s := fmt.Sprintf(format, args...)
-	Print(x, y, fg, bg, s)
+	u.Print(x, y, style, s)
 }
 
 // Line prints a string to given xmax, with given space
-func Line(x, y, xmax int, fg, bg termbox.Attribute, spacer rune, msg string) {
-	for _, c := range msg {
-		termbox.SetCell(x, y, c, fg, bg)
-		x += runewidth.RuneWidth(c)
+func (u *UI) Line(x, y, xmax int, style tcell.Style, spacer rune, msg string) {
+	g := uniseg.NewGraphemes(msg)
+	for g.Next() {
+		rs := g.Runes()
+		u.s.SetContent(x, y, rs[0], rs[1:], style)
+		x += graphemeWidth(rs)
 		if x >= xmax {
 			return
 		}
 	}
 	for ; x < xmax; x++ {
-		termbox.SetCell(x, y, spacer, fg, bg)
+		u.s.SetContent(x, y, spacer, nil, style)
 	}
 }
 
 // Linef a string
-func Linef(x, y, xmax int, fg, bg termbox.Attribute, spacer rune, format string, args ...interface{}) {
+func (u *UI) Linef(x, y, xmax int, style tcell.Style, spacer rune, format string, args ...interface{}) {
 	s := fmt.Sprintf(format, args...)
-	Line(x, y, xmax, fg, bg, spacer, s)
+	u.Line(x, y, xmax, style, spacer, s)
 }
 
 // LineOptions Print line of selectable options
-func LineOptions(x, y, xmax int, fg, bg termbox.Attribute, options []string, selected int) {
-	defaultBg := bg
-	defaultFg := fg
-
-	// Print left+right whitespace to center the options
-	xoffset := ((xmax - x) - lineOptionLength(options)) / 2
-	for j := x; j < x+xoffset; j++ {
-		termbox.SetCell(j, y, ' ', fg, bg)
+func (u *UI) LineOptions(x, y, xmax int, style tcell.Style, options []string, selected int) {
+	for x := x; x < xmax; x++ {
+		u.s.SetContent(x, y, ' ', nil, style) // fill
 	}
-	for j := xmax - xoffset; j < xmax; j++ {
-		termbox.SetCell(j, y, ' ', fg, bg)
-	}
-	x += xoffset
+	x += ((xmax - x) - lineOptionLength(options)) / 2 // center
 
 	for i, o := range options {
-		termbox.SetCell(x, y, ' ', fg, bg)
+		u.s.SetContent(x, y, ' ', nil, style)
+		x++
 
+		ostyle := style
 		if i == selected {
-			bg = termbox.ColorBlack
-			fg = termbox.ColorWhite
-		}
-		termbox.SetCell(x+1, y, '<', fg, bg)
-		x += 2
-
-		// print option text
-		for _, c := range o {
-			termbox.SetCell(x, y, c, fg, bg)
-			x++
+			ostyle = tcell.StyleDefault
 		}
 
-		termbox.SetCell(x, y, '>', fg, bg)
-		bg = defaultBg
-		fg = defaultFg
+		u.s.SetContent(x, y, '<', nil, ostyle)
+		x++
 
-		termbox.SetCell(x+1, y, ' ', fg, bg)
-		x += 2
+		g := uniseg.NewGraphemes(o)
+		for g.Next() {
+			rs := g.Runes()
+			u.s.SetContent(x, y, rs[0], rs[1:], ostyle)
+			x += graphemeWidth(rs)
+		}
+
+		u.s.SetContent(x, y, '>', nil, ostyle)
+		x++
+
+		u.s.SetContent(x, y, ' ', nil, style)
+		x++
 	}
 }
 
@@ -234,7 +250,7 @@ func lineOptionLength(o []string) int {
 
 // Box the u.boxText onto the screen
 func (u *UI) Box() {
-	w, h := termbox.Size()
+	w, h := u.s.Size()
 
 	// Find dimensions of text
 	boxWidth := 10
@@ -260,31 +276,31 @@ func (u *UI) Box() {
 	ymax := y + len(u.boxText)
 
 	// draw text
-	fg, bg := termbox.ColorRed, termbox.ColorWhite
+	style := tcell.StyleDefault.Background(tcell.ColorRed).Reverse(true)
 	for i, s := range u.boxText {
-		Line(x, y+i, xmax, fg, bg, ' ', s)
-		fg = termbox.ColorBlack
+		u.Line(x, y+i, xmax, style, ' ', s)
+		style = tcell.StyleDefault.Reverse(true)
 	}
 
 	if len(u.boxMenu) != 0 {
+		u.LineOptions(x, ymax, xmax, style, u.boxMenu, u.boxMenuButton)
 		ymax++
-		LineOptions(x, ymax-1, xmax, fg, bg, u.boxMenu, u.boxMenuButton)
 	}
 
 	// draw top border
 	for i := y; i < ymax; i++ {
-		termbox.SetCell(x-1, i, '│', fg, bg)
-		termbox.SetCell(xmax, i, '│', fg, bg)
+		u.s.SetContent(x-1, i, tcell.RuneVLine, nil, style)
+		u.s.SetContent(xmax, i, tcell.RuneVLine, nil, style)
 	}
 	for j := x; j < xmax; j++ {
-		termbox.SetCell(j, y-1, '─', fg, bg)
-		termbox.SetCell(j, ymax, '─', fg, bg)
+		u.s.SetContent(j, y-1, tcell.RuneHLine, nil, style)
+		u.s.SetContent(j, ymax, tcell.RuneHLine, nil, style)
 	}
 
-	termbox.SetCell(x-1, y-1, '┌', fg, bg)
-	termbox.SetCell(xmax, y-1, '┐', fg, bg)
-	termbox.SetCell(x-1, ymax, '└', fg, bg)
-	termbox.SetCell(xmax, ymax, '┘', fg, bg)
+	u.s.SetContent(x-1, y-1, tcell.RuneULCorner, nil, style)
+	u.s.SetContent(xmax, y-1, tcell.RuneURCorner, nil, style)
+	u.s.SetContent(x-1, ymax, tcell.RuneLLCorner, nil, style)
+	u.s.SetContent(xmax, ymax, tcell.RuneLRCorner, nil, style)
 }
 
 func (u *UI) moveBox(to int) {
@@ -336,17 +352,17 @@ func (u *UI) hasEmptyDir() bool {
 // Draw the current screen
 func (u *UI) Draw() error {
 	ctx := context.Background()
-	w, h := termbox.Size()
+	w, h := u.s.Size()
 	u.dirListHeight = h - 3
 
 	// Plot
-	termbox.Clear(termbox.ColorWhite, termbox.ColorBlack)
+	u.s.Clear()
 
 	// Header line
-	Linef(0, 0, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "rclone ncdu %s - use the arrow keys to navigate, press ? for help", fs.Version)
+	u.Linef(0, 0, w, tcell.StyleDefault.Reverse(true), ' ', "rclone ncdu %s - use the arrow keys to navigate, press ? for help", fs.Version)
 
 	// Directory line
-	Linef(0, 1, w, termbox.ColorWhite, termbox.ColorBlack, '-', "-- %s ", u.path)
+	u.Linef(0, 1, w, tcell.StyleDefault, '-', "-- %s ", u.path)
 
 	// graphs
 	const (
@@ -377,20 +393,18 @@ func (u *UI) Draw() error {
 				attrs, err = u.d.AttrI(u.sortPerm[n])
 			}
 			_, isSelected := u.selectedEntries[entry.String()]
-			fg := termbox.ColorWhite
+			style := tcell.StyleDefault
 			if attrs.EntriesHaveErrors {
-				fg = termbox.ColorYellow
+				style = style.Foreground(tcell.ColorYellow)
 			}
 			if err != nil {
-				fg = termbox.ColorRed
+				style = style.Foreground(tcell.ColorRed)
 			}
-			const colorLightYellow = termbox.ColorYellow + 8
 			if isSelected {
-				fg = colorLightYellow
+				style = style.Foreground(tcell.ColorLightYellow)
 			}
-			bg := termbox.ColorBlack
 			if n == dirPos.entry {
-				fg, bg = bg, fg
+				style = style.Reverse(true)
 			}
 			mark := ' '
 			if attrs.IsDir {
@@ -449,31 +463,30 @@ func (u *UI) Draw() error {
 				}
 				extras += "[" + graph[graphBars-bars:2*graphBars-bars] + "] "
 			}
-			Linef(0, y, w, fg, bg, ' ', "%c %s %s%c%s%s", fileFlag, operations.SizeStringField(attrs.Size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
+			u.Linef(0, y, w, style, ' ', "%c %s %s%c%s%s",
+				fileFlag, operations.SizeStringField(attrs.Size, u.humanReadable, 12), extras, mark, path.Base(entry.Remote()), message)
 			y++
 		}
 	}
 
 	// Footer
 	if u.d == nil {
-		Line(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Waiting for root directory...")
+		u.Line(0, h-1, w, tcell.StyleDefault.Reverse(true), ' ', "Waiting for root directory...")
 	} else {
 		message := ""
 		if u.listing {
 			message = " [listing in progress]"
 		}
 		size, count := u.d.Attr()
-		Linef(0, h-1, w, termbox.ColorBlack, termbox.ColorWhite, ' ', "Total usage: %s, Objects: %s%s", operations.SizeString(size, u.humanReadable), operations.CountString(count, u.humanReadable), message)
+		u.Linef(0, h-1, w, tcell.StyleDefault.Reverse(true), ' ', "Total usage: %s, Objects: %s%s",
+			operations.SizeString(size, u.humanReadable), operations.CountString(count, u.humanReadable), message)
 	}
 
 	// Show the box on top if required
 	if u.showBox {
 		u.Box()
 	}
-	err := termbox.Flush()
-	if err != nil {
-		return fmt.Errorf("failed to flush screen: %w", err)
-	}
+	u.s.Show()
 	return nil
 }
 
@@ -886,37 +899,34 @@ func NewUI(f fs.Fs) *UI {
 
 // Show shows the user interface
 func (u *UI) Show() error {
-	err := termbox.Init()
+	var err error
+	u.s, err = tcell.NewScreen()
 	if err != nil {
-		return fmt.Errorf("termbox init: %w", err)
+		return fmt.Errorf("screen new: %w", err)
 	}
-	defer termbox.Close()
+	err = u.s.Init()
+	if err != nil {
+		return fmt.Errorf("screen init: %w", err)
+	}
+	defer u.s.Fini()
 
 	// scan the disk in the background
 	u.listing = true
 	rootChan, errChan, updated := scan.Scan(context.Background(), u.f)
 
 	// Poll the events into a channel
-	events := make(chan termbox.Event)
-	doneWithEvent := make(chan bool)
-	go func() {
-		for {
-			events <- termbox.PollEvent()
-			<-doneWithEvent
-		}
-	}()
+	events := make(chan tcell.Event)
+	go u.s.ChannelEvents(events, nil)
 
 	// Main loop, waiting for events and channels
 outer:
 	for {
-		//Reset()
 		err := u.Draw()
 		if err != nil {
 			return fmt.Errorf("draw failed: %w", err)
 		}
-		var root *scan.Dir
 		select {
-		case root = <-rootChan:
+		case root := <-rootChan:
 			u.root = root
 			u.setCurrentDir(root)
 		case err := <-errChan:
@@ -926,39 +936,50 @@ outer:
 			u.listing = false
 		case <-updated:
 			// redraw
-			// might want to limit updates per second
+			// TODO: might want to limit updates per second
 			u.sortCurrentDir()
 		case ev := <-events:
-			doneWithEvent <- true
-			if ev.Type == termbox.EventKey {
-				switch ev.Key + termbox.Key(ev.Ch) {
-				case termbox.KeyEsc, termbox.KeyCtrlC, 'q':
+			switch ev := ev.(type) {
+			case *tcell.EventResize:
+				if u.root != nil {
+					u.sortCurrentDir() // redraw
+				}
+				u.s.Sync()
+			case *tcell.EventKey:
+				var c rune
+				if k := ev.Key(); k == tcell.KeyRune {
+					c = ev.Rune()
+				} else {
+					c = key(k)
+				}
+				switch c {
+				case key(tcell.KeyEsc), key(tcell.KeyCtrlC), 'q':
 					if u.showBox {
 						u.showBox = false
 					} else {
 						break outer
 					}
-				case termbox.KeyArrowDown, 'j':
+				case key(tcell.KeyDown), 'j':
 					u.move(1)
-				case termbox.KeyArrowUp, 'k':
+				case key(tcell.KeyUp), 'k':
 					u.move(-1)
-				case termbox.KeyPgdn, '-', '_':
+				case key(tcell.KeyPgDn), '-', '_':
 					u.move(u.dirListHeight)
-				case termbox.KeyPgup, '=', '+':
+				case key(tcell.KeyPgUp), '=', '+':
 					u.move(-u.dirListHeight)
-				case termbox.KeyArrowLeft, 'h':
+				case key(tcell.KeyLeft), 'h':
 					if u.showBox {
 						u.moveBox(-1)
 						break
 					}
 					u.up()
-				case termbox.KeyEnter:
+				case key(tcell.KeyEnter):
 					if len(u.boxMenu) > 0 {
 						u.handleBoxOption()
 						break
 					}
 					u.enter()
-				case termbox.KeyArrowRight, 'l':
+				case key(tcell.KeyRight), 'l':
 					if u.showBox {
 						u.moveBox(1)
 						break
@@ -1001,15 +1022,18 @@ outer:
 
 				// Refresh the screen. Not obvious what key to map
 				// this onto, but ^L is a common choice.
-				case termbox.KeyCtrlL:
-					err := termbox.Sync()
-					if err != nil {
-						fs.Errorf(nil, "termbox sync returned error: %v", err)
-					}
+				case key(tcell.KeyCtrlL):
+					u.s.Sync()
 				}
 			}
 		}
 		// listen to key presses, etc.
 	}
 	return nil
+}
+
+// key returns a rune representing the key k. It is larger than the maximum Unicode code-point.
+func key(k tcell.Key) rune {
+	// This is the maximum possible Unicode code point. Anything greater fails to compile as a Go quoted rune literal.
+	return '\U0010FFFF' + rune(k)
 }
