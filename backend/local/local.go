@@ -520,11 +520,6 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			name := fi.Name()
 			mode := fi.Mode()
 			newRemote := f.cleanRemote(dir, name)
-			// Don't include non directory if not included
-			// we leave directory filtering to the layer above
-			if useFilter && !fi.IsDir() && !filter.IncludeRemote(newRemote) {
-				continue
-			}
 			// Follow symlinks if required
 			if f.opt.FollowSymlinks && (mode&os.ModeSymlink) != 0 {
 				localPath := filepath.Join(fsDirPath, name)
@@ -540,6 +535,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					return nil, err
 				}
 				mode = fi.Mode()
+			}
+			// Don't include non directory if not included
+			// we leave directory filtering to the layer above
+			if useFilter && !fi.IsDir() && !filter.IncludeRemote(newRemote) {
+				continue
 			}
 			if fi.IsDir() {
 				// Ignore directories which are symlinks.  These are junction points under windows which
