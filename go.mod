@@ -55,7 +55,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20220725095014-c4e0c2b5debf
-	github.com/winfsp/cgofuse v1.5.1-0.20220421173602-ce7e5a65cac7
+	github.com/winfsp/cgofuse v1.5.1-0.20221106144041-c23bd0f99a49
 	github.com/xanzy/ssh-agent v0.3.1
 	github.com/youmark/pkcs8 v0.0.0-20201027041543-1326539a0a0a
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
