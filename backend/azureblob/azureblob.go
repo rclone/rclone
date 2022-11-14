@@ -1685,6 +1685,26 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 	}
 
+	// Apply upload options (also allows one to overwrite content-type)
+	for _, option := range options {
+		key, value := option.Header()
+		lowerKey := strings.ToLower(key)
+		switch lowerKey {
+		case "":
+			// ignore
+		case "cache-control":
+			httpHeaders.CacheControl = value
+		case "content-disposition":
+			httpHeaders.ContentDisposition = value
+		case "content-encoding":
+			httpHeaders.ContentEncoding = value
+		case "content-language":
+			httpHeaders.ContentLanguage = value
+		case "content-type":
+			httpHeaders.ContentType = value
+		}
+	}
+
 	uploadParts := maxUploadParts
 	if uploadParts < 1 {
 		uploadParts = 1
