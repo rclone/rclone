@@ -22,19 +22,21 @@ import (
 
 // Dir represents a directory entry
 type Dir struct {
-	modTime   time.Time
-	read      time.Time // time directory entry last read
-	entry     fs.Directory
-	f         fs.Fs             // read only
-	sys       atomic.Value      // user defined info to be attached here
-	virtual   map[string]vState // virtual directory entries - may be nil
-	parent    *Dir              // parent, nil for root
-	items     map[string]Node   // directory entries - can be empty but not nil
-	vfs       *VFS              // read only
-	path      string
-	inode     uint64       // inode number: read only
-	mu        sync.RWMutex // protects the directory attributes
-	modTimeMu sync.Mutex   // protects the modTime
+	modTime           time.Time
+	read              time.Time // time directory entry last read
+	entry             fs.Directory
+	sys               atomic.Value      // user defined info to be attached here
+	hasVirtual        atomic.Value      // atomic boolean to indicate if the directory has virtual entries
+	f                 fs.Fs             // read only
+	parent            *Dir              // parent, nil for root
+	virtual           map[string]vState // virtual directory entries - may be nil
+	items             map[string]Node   // directory entries - can be empty but not nil
+	vfs               *VFS              // read only
+	cacheCleanupTimer *time.Timer       // timer to call cacheCleanup
+	path              string
+	mu                sync.RWMutex // protects the directory attributes
+	modTimeMu         sync.Mutex   // protects the modTime
+	inode             uint64       // inode number: read only
 }
 
 //go:generate stringer -type=vState
@@ -50,7 +52,7 @@ const (
 )
 
 func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
-	return &Dir{
+	d := &Dir{
 		vfs:     vfs,
 		f:       f,
 		parent:  parent,
@@ -60,15 +62,16 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		inode:   newInode(),
 		items:   make(map[string]Node),
 	}
+	d.cacheCleanupTimer = time.AfterFunc(vfs.Opt.DirCacheTime*2, d.cacheCleanup)
+	d.SetHasVirtual(false)
+	return d
 }
 
 func (d *Dir) cacheCleanup() {
 	defer func() {
+		// We should never panic here
 		_ = recover()
-		return
 	}()
-
-	<-time.After(d.vfs.Opt.DirCacheTime * 2)
 
 	when := time.Now()
 
@@ -79,8 +82,6 @@ func (d *Dir) cacheCleanup() {
 	if stale {
 		d.ForgetAll()
 	}
-
-	return
 }
 
 // String converts it to printable
@@ -193,6 +194,16 @@ func (d *Dir) Node() Node {
 	return d
 }
 
+// HasVirtual returns whether the directory has virtual entries
+func (d *Dir) HasVirtual() bool {
+	return d.hasVirtual.Load().(bool)
+}
+
+// SetHasVirtual sets the hasVirtual flag for the directory
+func (d *Dir) SetHasVirtual(hasVirtual bool) {
+	d.hasVirtual.Store(hasVirtual)
+}
+
 // ForgetAll forgets directory entries for this directory and any children.
 //
 // It does not invalidate or clear the cache of the parent directory.
@@ -207,7 +218,7 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 	for _, node := range d.items {
 		if dir, ok := node.(*Dir); ok {
 			if dir.ForgetAll() {
-				hasVirtual = true
+				d.SetHasVirtual(true)
 			}
 		}
 	}
@@ -224,16 +235,16 @@ func (d *Dir) ForgetAll() (hasVirtual bool) {
 
 	// Check if this dir has virtual entries
 	if len(d.virtual) != 0 {
-		hasVirtual = true
+		d.SetHasVirtual(true)
 	}
 
 	// Don't clear directory entries if there are virtual entries in this
 	// directory or any children
-	if !hasVirtual {
+	if !d.HasVirtual() {
 		d.items = make(map[string]Node)
 	}
 
-	return hasVirtual
+	return d.HasVirtual()
 }
 
 // forgetDirPath clears the cache for itself and all subdirectories if
@@ -420,6 +431,7 @@ func (d *Dir) addObject(node Node) {
 		vAdd = vAddDir
 	}
 	d.virtual[leaf] = vAdd
+	d.SetHasVirtual(true)
 	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vAdd, leaf)
 	d.mu.Unlock()
 }
@@ -464,6 +476,7 @@ func (d *Dir) delObject(leaf string) {
 		d.virtual = make(map[string]vState)
 	}
 	d.virtual[leaf] = vDel
+	d.SetHasVirtual(true)
 	fs.Debugf(d.path, "Added virtual directory entry %v: %q", vDel, leaf)
 	d.mu.Unlock()
 }
@@ -502,9 +515,8 @@ func (d *Dir) _readDir() error {
 		return err
 	}
 
-	go d.cacheCleanup()
-
 	d.read = when
+	d.cacheCleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
 
 	return nil
 }
@@ -524,6 +536,7 @@ func (d *Dir) _deleteVirtual(name string) {
 	delete(d.virtual, name)
 	if len(d.virtual) == 0 {
 		d.virtual = nil
+		d.SetHasVirtual(false)
 	}
 	fs.Debugf(d.path, "Removed virtual directory entry %v: %q", virtualState, name)
 }
@@ -685,6 +698,7 @@ func (d *Dir) _readDirFromEntries(entries fs.DirEntries, dirTree dirtree.DirTree
 					dir.read = time.Time{}
 				} else {
 					dir.read = when
+					dir.cacheCleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
 				}
 				dir.mu.Unlock()
 				if err != nil {
@@ -722,6 +736,7 @@ func (d *Dir) readDirTree() error {
 	}
 	fs.Debugf(d.path, "Reading directory tree done in %s", time.Since(when))
 	d.read = when
+	d.cacheCleanupTimer.Reset(d.vfs.Opt.DirCacheTime * 2)
 	return nil
 }
 
