@@ -89,6 +89,15 @@ Leave blank normally. Needed only if you want to use a service principal instead
 See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 `,
 		}, {
+			Name: "env_auth",
+			Help: `Read credentials from runtime (environment variables).
+
+Pull credentials from AZURE_TENANT_ID and AZURE_CLIENT_{ID,SECRET} environment vars.
+See EnvironmentCredential in the Azure docs for more info.
+
+Other authentication methods will, if specified, override this flag.`,
+			Default: false,
+		}, {
 			Name: "key",
 			Help: "Storage Account Key.\n\nLeave blank to use SAS URL or Emulator.",
 		}, {
@@ -270,6 +279,7 @@ type Options struct {
 	Account              string               `config:"account"`
 	ServicePrincipalFile string               `config:"service_principal_file"`
 	Key                  string               `config:"key"`
+	EnvAuth              bool                 `config:"env_auth"`
 	UseMSI               bool                 `config:"use_msi"`
 	MSIObjectID          string               `config:"msi_object_id"`
 	MSIClientID          string               `config:"msi_client_id"`
@@ -714,20 +724,29 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		} else {
 			serviceURL = azblob.NewServiceURL(*u, pipeline)
 		}
-	case opt.ServicePrincipalFile != "":
+	case opt.ServicePrincipalFile != "" || opt.EnvAuth:
 		// Create a standard URL.
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
 			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
-		// Try loading service principal credentials from file.
-		loadedCreds, err := os.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
-		if err != nil {
-			return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
-		}
 		var spCredentials servicePrincipalCredentials
-		if err := json.Unmarshal(loadedCreds, &spCredentials); err != nil {
-			return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
+		if opt.ServicePrincipalFile != "" {
+			// Try loading service principal credentials from file.
+			loadedCreds, err := os.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
+			if err != nil {
+				return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
+			}
+
+			if err := json.Unmarshal(loadedCreds, &spCredentials); err != nil {
+				return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
+			}
+		} else {
+			spCredentials = servicePrincipalCredentials{
+				Tenant:   os.Getenv("AZURE_TENANT_ID"),
+				AppID:    os.Getenv("AZURE_CLIENT_ID"),
+				Password: os.Getenv("AZURE_CLIENT_SECRET"),
+			}
 		}
 		// Create a token refresher from service principal credentials.
 		tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, spCredentials)
