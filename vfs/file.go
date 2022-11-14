@@ -36,21 +36,19 @@ import (
 
 // File represents a file
 type File struct {
-	inode uint64 // inode number - read only
-	size  int64  // size of file - read and written with atomic int64 - must be 64 bit aligned
-
-	muRW sync.Mutex // synchronize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
-
-	mu               sync.RWMutex                    // protects the following
-	d                *Dir                            // parent directory
-	dPath            string                          // path of parent directory. NB dir rename means all Files are flushed
-	o                fs.Object                       // NB o may be nil if file is being written
-	leaf             string                          // leaf name of the object
-	writers          []Handle                        // writers for this file
-	virtualModTime   *time.Time                      // modtime for backends with Precision == fs.ModTimeNotSupported
 	pendingModTime   time.Time                       // will be applied once o becomes available, i.e. after file was written
-	pendingRenameFun func(ctx context.Context) error // will be run/renamed after all writers close
+	o                fs.Object                       // NB o may be nil if file is being written
 	sys              atomic.Value                    // user defined info to be attached here
+	d                *Dir                            // parent directory
+	pendingRenameFun func(ctx context.Context) error // will be run/renamed after all writers close
+	virtualModTime   *time.Time                      // modtime for backends with Precision == fs.ModTimeNotSupported
+	leaf             string                          // leaf name of the object
+	dPath            string                          // path of parent directory. NB dir rename means all Files are flushed
+	writers          []Handle                        // writers for this file
+	inode            uint64                          // inode number - read only
+	size             int64                           // size of file - read and written with atomic int64 - must be 64 bit aligned
+	mu               sync.RWMutex                    // protects the file attributes
+	muRW             sync.Mutex                      // synchronize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
 	nwriters         int32                           // len(writers) which is read/updated with atomic
 	appendMode       bool                            // file was opened with O_APPEND
 }

@@ -22,21 +22,19 @@ import (
 
 // Dir represents a directory entry
 type Dir struct {
-	vfs   *VFS   // read only
-	inode uint64 // read only: inode number
-	f     fs.Fs  // read only
-
-	mu      sync.RWMutex // protects the following
-	parent  *Dir         // parent, nil for root
-	path    string
-	entry   fs.Directory
-	read    time.Time         // time directory entry last read
-	items   map[string]Node   // directory entries - can be empty but not nil
-	virtual map[string]vState // virtual directory entries - may be nil
-	sys     atomic.Value      // user defined info to be attached here
-
-	modTimeMu sync.Mutex // protects the following
 	modTime   time.Time
+	read      time.Time // time directory entry last read
+	entry     fs.Directory
+	f         fs.Fs             // read only
+	sys       atomic.Value      // user defined info to be attached here
+	virtual   map[string]vState // virtual directory entries - may be nil
+	parent    *Dir              // parent, nil for root
+	items     map[string]Node   // directory entries - can be empty but not nil
+	vfs       *VFS              // read only
+	path      string
+	inode     uint64       // inode number: read only
+	mu        sync.RWMutex // protects the directory attributes
+	modTimeMu sync.Mutex   // protects the modTime
 }
 
 //go:generate stringer -type=vState
