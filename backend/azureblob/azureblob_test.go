@@ -7,6 +7,7 @@ package azureblob
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/rclone/rclone/fs"
@@ -42,7 +43,11 @@ func TestServicePrincipalFileSuccess(t *testing.T) {
     "tenant": "my active directory tenant ID"
 }
 `
-	tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, []byte(credentials))
+	var spCredentials servicePrincipalCredentials
+	jerr := json.Unmarshal([]byte(credentials), &spCredentials)
+	assert.Nil(t, jerr)
+
+	tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, spCredentials)
 	if assert.NoError(t, err) {
 		assert.NotNil(t, tokenRefresher)
 	}
@@ -57,7 +62,11 @@ func TestServicePrincipalFileFailure(t *testing.T) {
     "tenant": "my active directory tenant ID"
 }
 `
-	_, err := newServicePrincipalTokenRefresher(ctx, []byte(credentials))
+	var spCredentials servicePrincipalCredentials
+	jerr := json.Unmarshal([]byte(credentials), &spCredentials)
+	assert.Nil(t, jerr)
+
+	_, err := newServicePrincipalTokenRefresher(ctx, spCredentials)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error creating service principal token: parameter 'secret' cannot be empty")
 }

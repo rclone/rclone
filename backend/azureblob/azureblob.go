@@ -467,12 +467,8 @@ type servicePrincipalCredentials struct {
 const azureActiveDirectoryEndpoint = "https://login.microsoftonline.com/"
 const azureStorageEndpoint = "https://storage.azure.com/"
 
-// newServicePrincipalTokenRefresher takes the client ID and secret, and returns a refresh-able access token.
-func newServicePrincipalTokenRefresher(ctx context.Context, credentialsData []byte) (azblob.TokenRefresher, error) {
-	var spCredentials servicePrincipalCredentials
-	if err := json.Unmarshal(credentialsData, &spCredentials); err != nil {
-		return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
-	}
+// newServicePrincipalTokenRefresher takes a servicePrincipalCredentials structure and returns a refresh-able access token.
+func newServicePrincipalTokenRefresher(ctx context.Context, spCredentials servicePrincipalCredentials) (azblob.TokenRefresher, error) {
 	oauthConfig, err := adal.NewOAuthConfig(azureActiveDirectoryEndpoint, spCredentials.Tenant)
 	if err != nil {
 		return nil, fmt.Errorf("error creating oauth config: %w", err)
@@ -729,8 +725,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
 		}
+		var spCredentials servicePrincipalCredentials
+		if err := json.Unmarshal(loadedCreds, &spCredentials); err != nil {
+			return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
+		}
 		// Create a token refresher from service principal credentials.
-		tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, loadedCreds)
+		tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, spCredentials)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create a service principal token: %w", err)
 		}
