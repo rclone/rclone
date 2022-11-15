@@ -991,6 +991,7 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 		}
 		return nil, fs.ErrorCantMove
 	}
+	srcFs := srcObj.fs
 	dstPath := f.filePath(remote)
 	err := f.mkParentDir(ctx, dstPath)
 	if err != nil {
@@ -1013,9 +1014,10 @@ func (f *Fs) copyOrMove(ctx context.Context, src fs.Object, remote string, metho
 	if f.useOCMtime {
 		opts.ExtraHeaders["X-OC-Mtime"] = fmt.Sprintf("%d", src.ModTime(ctx).Unix())
 	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+	// Direct the MOVE/COPY to the source server
+	err = srcFs.pacer.Call(func() (bool, error) {
+		resp, err = srcFs.srv.Call(ctx, &opts)
+		return srcFs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Copy call failed: %w", err)
@@ -1109,9 +1111,10 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 			"Overwrite":   "F",
 		},
 	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.srv.Call(ctx, &opts)
-		return f.shouldRetry(ctx, resp, err)
+	// Direct the MOVE/COPY to the source server
+	err = srcFs.pacer.Call(func() (bool, error) {
+		resp, err = srcFs.srv.Call(ctx, &opts)
+		return srcFs.shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return fmt.Errorf("DirMove MOVE call failed: %w", err)
