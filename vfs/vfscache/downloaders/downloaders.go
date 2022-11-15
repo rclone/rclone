@@ -288,7 +288,10 @@ func (dls *Downloaders) _ensureDownloader(r ranges.Range) (err error) {
 	// defer log.Trace(dls.src, "r=%v", r)("err=%v", &err)
 
 	// The window includes potentially unread data in the buffer
-	window := int64(fs.GetConfig(context.TODO()).BufferSize)
+	//window := int64(fs.GetConfig(context.TODO()).BufferSize)
+
+	// FIXME test disable --buffer-size window
+	window := int64(0)
 
 	// Increase the read range by the read ahead if set
 	if dls.opt.ReadAhead > 0 {
