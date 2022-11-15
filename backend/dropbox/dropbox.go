@@ -1078,6 +1078,15 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
+		switch e := err.(type) {
+		case files.CopyV2APIError:
+			// If we are doing a cross remote transfer then from_lookup/not_found indicates we
+			// don't have permission to read the source, so engage the slow path
+			if srcObj.fs != f && e.EndpointError != nil && e.EndpointError.FromLookup != nil && e.EndpointError.FromLookup.Tag == files.LookupErrorNotFound {
+				fs.Debugf(srcObj, "Copy failed attempting fallback: %v", err)
+				return nil, fs.ErrorCantCopy
+			}
+		}
 		return nil, fmt.Errorf("copy failed: %w", err)
 	}
 
@@ -1139,6 +1148,15 @@ func (f *Fs) Move(ctx context.Context, src fs.Object, remote string) (fs.Object,
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
+		switch e := err.(type) {
+		case files.MoveV2APIError:
+			// If we are doing a cross remote transfer then from_lookup/not_found indicates we
+			// don't have permission to read the source, so engage the slow path
+			if srcObj.fs != f && e.EndpointError != nil && e.EndpointError.FromLookup != nil && e.EndpointError.FromLookup.Tag == files.LookupErrorNotFound {
+				fs.Debugf(srcObj, "Move failed attempting fallback: %v", err)
+				return nil, fs.ErrorCantMove
+			}
+		}
 		return nil, fmt.Errorf("move failed: %w", err)
 	}
 
@@ -1257,6 +1275,15 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
+		switch e := err.(type) {
+		case files.MoveV2APIError:
+			// If we are doing a cross remote transfer then from_lookup/not_found indicates we
+			// don't have permission to read the source, so engage the slow path
+			if srcFs != f && e.EndpointError != nil && e.EndpointError.FromLookup != nil && e.EndpointError.FromLookup.Tag == files.LookupErrorNotFound {
+				fs.Debugf(srcFs, "DirMove failed attempting fallback: %v", err)
+				return fs.ErrorCantDirMove
+			}
+		}
 		return fmt.Errorf("MoveDir failed: %w", err)
 	}
 
