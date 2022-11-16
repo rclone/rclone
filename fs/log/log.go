@@ -13,6 +13,7 @@ import (
 	systemd "github.com/iguanesolutions/go-systemd/v5"
 	"github.com/rclone/rclone/fs"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 // Options contains options for controlling the logging
@@ -22,6 +23,12 @@ type Options struct {
 	UseSyslog         bool   // Use Syslog for logging
 	SyslogFacility    string // Facility for syslog, e.g. KERN,USER,...
 	LogSystemdSupport bool   // set if using systemd logging
+
+	Rotate           bool          // Rotate log file
+	RotateMaxSize    fs.SizeSuffix // Rotate log file when it reaches this size
+	RotateMaxAge     int           // Max age of log file
+	RotateMaxBackups int           // Max backups of log file
+	RotateCompress   bool          // Compress log file
 }
 
 // DefaultOpt is the default values used for Opt
@@ -117,17 +124,35 @@ func InitLogging() {
 
 	// Log file output
 	if Opt.File != "" {
-		f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
-		if err != nil {
-			log.Fatalf("Failed to open log file: %v", err)
+		var logWriter io.Writer
+		if Opt.Rotate {
+			logWriter = &lumberjack.Logger{
+				Filename:   Opt.File,
+				MaxSize:    int(Opt.RotateMaxSize) / 1024 / 1024, // megabytes
+				MaxAge:     Opt.RotateMaxAge,
+				MaxBackups: Opt.RotateMaxBackups,
+				LocalTime:  false,
+				Compress:   Opt.RotateCompress,
+			}
+			// Not ideal, but lumberjack doesn't support a way to get the underlying file
+			//go func() {
+			//	_, _ = io.Copy(logWriter, os.Stderr)
+			//}()
+
+		} else {
+			f, err := os.OpenFile(Opt.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
+			if err != nil {
+				log.Fatalf("Failed to open log file: %v", err)
+			}
+			_, err = f.Seek(0, io.SeekEnd)
+			if err != nil {
+				fs.Errorf(nil, "Failed to seek log file to end: %v", err)
+			}
+			logWriter = f
+			redirectStderr(f)
 		}
-		_, err = f.Seek(0, io.SeekEnd)
-		if err != nil {
-			fs.Errorf(nil, "Failed to seek log file to end: %v", err)
-		}
-		log.SetOutput(f)
-		logrus.SetOutput(f)
-		redirectStderr(f)
+		log.SetOutput(logWriter)
+		logrus.SetOutput(logWriter)
 	}
 
 	// Syslog output

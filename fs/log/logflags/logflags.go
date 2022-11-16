@@ -17,4 +17,9 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &log.Opt.UseSyslog, "syslog", "", log.Opt.UseSyslog, "Use Syslog for logging")
 	flags.StringVarP(flagSet, &log.Opt.SyslogFacility, "syslog-facility", "", log.Opt.SyslogFacility, "Facility for syslog, e.g. KERN,USER,...")
 	flags.BoolVarP(flagSet, &log.Opt.LogSystemdSupport, "log-systemd", "", log.Opt.LogSystemdSupport, "Activate systemd integration for the logger")
+	flags.BoolVarP(flagSet, &log.Opt.Rotate, "log-rotate", "", log.Opt.Rotate, "Rotate log file. This will disable stderr redirection")
+	flags.FVarP(flagSet, &log.Opt.RotateMaxSize, "log-rotate-max-size", "", "Rotate log file when it reaches this size in megabytes")
+	flags.IntVarP(flagSet, &log.Opt.RotateMaxAge, "log-rotate-max-age", "", log.Opt.RotateMaxAge, "Max age of log file before rotation")
+	flags.IntVarP(flagSet, &log.Opt.RotateMaxBackups, "log-rotate-max-backups", "", log.Opt.RotateMaxBackups, "Max backups of log file after rotation")
+	flags.BoolVarP(flagSet, &log.Opt.RotateCompress, "log-rotate-compress", "", log.Opt.RotateCompress, "Compress rotated log file")
 }
