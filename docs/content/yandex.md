@@ -1,6 +1,7 @@
 ---
 title: "Yandex"
 description: "Yandex Disk"
+versionIntroduced: "v1.26"
 ---
 
 # {{< icon "fa fa-space-shuttle" >}}Yandex Disk

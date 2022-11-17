@@ -1,6 +1,7 @@
 ---
 title: "SMB / CIFS"
 description: "Rclone docs for SMB backend"
+versionIntroduced: "v1.60.0"
 ---
 
 # {{< icon "fa fa-server" >}} SMB

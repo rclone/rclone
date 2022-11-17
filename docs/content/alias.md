@@ -1,6 +1,7 @@
 ---
 title: "Alias"
 description: "Remote Aliases"
+versionIntroduced: "v1.40"
 ---
 
 # {{< icon "fa fa-link" >}} Alias

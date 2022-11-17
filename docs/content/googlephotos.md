@@ -1,6 +1,7 @@
 ---
 title: "Google Photos"
 description: "Rclone docs for Google Photos"
+versionIntroduced: "v1.49.0"
 ---
 
 # {{< icon "fa fa-images" >}} Google Photos

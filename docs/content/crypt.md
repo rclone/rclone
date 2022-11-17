@@ -1,6 +1,7 @@
 ---
 title: "Crypt"
 description: "Encryption overlay remote"
+versionIntroduced: "v1.33"
 ---
 
 # {{< icon "fa fa-lock" >}}Crypt

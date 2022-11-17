@@ -1,6 +1,7 @@
 ---
 title: "Oracle Object Storage"
 description: "Rclone docs for Oracle Object Storage"
+versionIntroduced: "v1.60.0"
 ---
 
 # {{< icon "fa fa-cloud" >}} Oracle Object Storage

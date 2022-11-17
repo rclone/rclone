@@ -1,6 +1,7 @@
 ---
 title: "SugarSync"
 description: "Rclone docs for SugarSync"
+versionIntroduced: "v1.51.0"
 ---
 
 # {{< icon "fas fa-dove" >}} SugarSync

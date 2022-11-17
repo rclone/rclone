@@ -1,6 +1,7 @@
 ---
 title: "WebDAV"
 description: "Rclone docs for WebDAV"
+versionIntroduced: "v1.39"
 ---
 
 # {{< icon "fa fa-globe" >}} WebDAV

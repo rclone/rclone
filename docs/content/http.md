@@ -1,6 +1,7 @@
 ---
 title: "HTTP Remote"
 description: "Read only remote for HTTP servers"
+versionIntroduced: "v1.37"
 ---
 
 # {{< icon "fa fa-globe" >}} HTTP

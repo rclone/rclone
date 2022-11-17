@@ -1,6 +1,7 @@
 ---
 title: "Mailru"
 description: "Mail.ru Cloud"
+versionIntroduced: "v1.50.0"
 ---
 
 # {{< icon "fas fa-at" >}} Mail.ru Cloud

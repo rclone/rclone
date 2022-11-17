@@ -1,6 +1,7 @@
 ---
 title: "FTP"
 description: "Rclone docs for FTP backend"
+versionIntroduced: "v1.37"
 ---
 
 # {{< icon "fa fa-file" >}} FTP

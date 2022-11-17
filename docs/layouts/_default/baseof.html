@@ -26,6 +26,7 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-9">
+          {{ if .Params.versionIntroduced }}<span class="badge badge-pill badge-secondary float-right" style="margin-top: 30px; font-size: 100%" title="This feature needs Rclone {{ .Params.versionIntroduced }} or later.">{{ .Params.versionIntroduced }}</span>{{ end }}
           {{ block "main" . }}
           {{ end }}
         </div>

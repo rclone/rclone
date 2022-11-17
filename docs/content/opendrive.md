@@ -1,6 +1,7 @@
 ---
 title: "OpenDrive"
 description: "Rclone docs for OpenDrive"
+versionIntroduced: "v1.42"
 ---
 
 # {{< icon "fa fa-file" >}} OpenDrive

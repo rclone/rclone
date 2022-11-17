@@ -1,6 +1,7 @@
 ---
 title: "SFTP"
 description: "SFTP"
+versionIntroduced: "v1.36"
 ---
 
 # {{< icon "fa fa-server" >}} SFTP
