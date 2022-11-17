@@ -11,7 +11,7 @@ Serve the remote for restic's REST API.
 
 ## Synopsis
 
-Run a basic web server to serve a remote over restic's REST backend
+Run a basic web server to serve a remove over restic's REST backend
 API over HTTP.  This allows restic to use rclone as a data storage
 mechanism for cloud providers that restic does not support directly.
 

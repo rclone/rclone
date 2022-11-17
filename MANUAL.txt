@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Oct 21, 2022
+Nov 17, 2022
 
 Rclone syncs your files to cloud storage
 
@@ -13781,7 +13781,7 @@ upon backend-specific capabilities.
   Microsoft OneDrive               Yes    Yes    Yes      Yes       Yes      No          No            Yes        Yes      Yes
   OpenDrive                        Yes    Yes    Yes      Yes       No       No          No            No         No       Yes
   OpenStack Swift                 Yes †   Yes     No      No        No       Yes        Yes            No         Yes       No
-  Oracle Object Storage            Yes    Yes     No      No        Yes      Yes         No            No         No        No
+  Oracle Object Storage            No     Yes     No      No        Yes      Yes        Yes            No         No        No
   pCloud                           Yes    Yes    Yes      Yes       Yes      No          No            Yes        Yes      Yes
   premiumize.me                    Yes     No    Yes      Yes       No       No          No            Yes        Yes      Yes
   put.io                           Yes     No    Yes      Yes       Yes      No         Yes            No         Yes      Yes
@@ -14038,7 +14038,7 @@ These flags are available for every command.
           --use-json-log                         Use json log format
           --use-mmap                             Use mmap allocator (see docs)
           --use-server-modtime                   Use server modified time instead of object metadata
-          --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.60.0")
+          --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.60.1")
       -v, --verbose count                        Print lots more stuff (repeat for more)
 
 Backend Flags
@@ -14419,6 +14419,7 @@ and may be set in the config file.
           --s3-max-upload-parts int                      Maximum number of parts in a multipart upload (default 10000)
           --s3-memory-pool-flush-time Duration           How often internal memory buffer pools will be flushed (default 1m0s)
           --s3-memory-pool-use-mmap                      Whether to use mmap buffers in internal memory pool
+          --s3-might-gzip Tristate                       Set this if the backend might gzip objects (default unset)
           --s3-no-check-bucket                           If set, don't attempt to check the bucket exists or create it
           --s3-no-head                                   If set, don't HEAD uploaded objects to check integrity
           --s3-no-head-object                            If set, do not do HEAD before GET when getting objects
@@ -18425,15 +18426,31 @@ Properties:
     -   "s3.ap-southeast-1.lyvecloud.seagate.com"
         -   Seagate Lyve Cloud AP Southeast 1 (Singapore)
     -   "s3.wasabisys.com"
-        -   Wasabi US East endpoint
+        -   Wasabi US East 1 (N. Virginia)
+    -   "s3.us-east-2.wasabisys.com"
+        -   Wasabi US East 2 (N. Virginia)
+    -   "s3.us-central-1.wasabisys.com"
+        -   Wasabi US Central 1 (Texas)
     -   "s3.us-west-1.wasabisys.com"
-        -   Wasabi US West endpoint
+        -   Wasabi US West 1 (Oregon)
+    -   "s3.ca-central-1.wasabisys.com"
+        -   Wasabi CA Central 1 (Toronto)
     -   "s3.eu-central-1.wasabisys.com"
-        -   Wasabi EU Central endpoint
+        -   Wasabi EU Central 1 (Amsterdam)
+    -   "s3.eu-central-2.wasabisys.com"
+        -   Wasabi EU Central 2 (Frankfurt)
+    -   "s3.eu-west-1.wasabisys.com"
+        -   Wasabi EU West 1 (London)
+    -   "s3.eu-west-2.wasabisys.com"
+        -   Wasabi EU West 2 (Paris)
     -   "s3.ap-northeast-1.wasabisys.com"
         -   Wasabi AP Northeast 1 (Tokyo) endpoint
     -   "s3.ap-northeast-2.wasabisys.com"
         -   Wasabi AP Northeast 2 (Osaka) endpoint
+    -   "s3.ap-southeast-1.wasabisys.com"
+        -   Wasabi AP Southeast 1 (Singapore)
+    -   "s3.ap-southeast-2.wasabisys.com"
+        -   Wasabi AP Southeast 2 (Sydney)
     -   "s3.ir-thr-at1.arvanstorage.com"
         -   ArvanCloud Tehran Iran (Asiatech) endpoint
 
@@ -19664,6 +19681,36 @@ Properties:
 -   Env Var: RCLONE_S3_DECOMPRESS
 -   Type: bool
 -   Default: false
+
+--s3-might-gzip
+
+Set this if the backend might gzip objects.
+
+Normally providers will not alter objects when they are downloaded. If
+an object was not uploaded with Content-Encoding: gzip then it won't be
+set on download.
+
+However some providers may gzip objects even if they weren't uploaded
+with Content-Encoding: gzip (eg Cloudflare).
+
+A symptom of this would be receiving errors like
+
+    ERROR corrupted on transfer: sizes differ NNN vs MMM
+
+If you set this flag and rclone downloads an object with
+Content-Encoding: gzip set and chunked transfer encoding, then rclone
+will decompress the object on the fly.
+
+If this is set to unset (the default) then rclone will choose according
+to the provider setting what to apply, but you can override rclone's
+choice here.
+
+Properties:
+
+-   Config: might_gzip
+-   Env Var: RCLONE_S3_MIGHT_GZIP
+-   Type: Tristate
+-   Default: unset
 
 --s3-no-system-metadata
 
@@ -31679,8 +31726,22 @@ Features highlights
 
 Configuration
 
-Here is an example of making a mailru configuration. First create a
-Mail.ru Cloud account and choose a tariff, then run
+Here is an example of making a mailru configuration.
+
+First create a Mail.ru Cloud account and choose a tariff.
+
+You will need to log in and create an app password for rclone. Rclone
+will not work with your normal username and password - it will give an
+error like oauth2: server response missing access_token.
+
+-   Click on your user icon in the top right
+-   Go to Security / "Пароль и безопасность"
+-   Click password for apps / "Пароли для внешних приложений"
+-   Add the password - give it a name - eg "rclone"
+-   Copy the password and use this password below - your normal login
+    password won't work.
+
+Now run
 
     rclone config
 
@@ -31705,6 +31766,10 @@ This will guide you through an interactive setup process:
     Enter a string value. Press Enter for the default ("").
     user> username@mail.ru
     Password
+
+    This must be an app password - rclone will not work with your normal
+    password. See the Configuration section in the docs for how to make an
+    app password.
     y) Yes type in my own password
     g) Generate random password
     y/g> y
@@ -31825,6 +31890,10 @@ Properties:
 --mailru-pass
 
 Password.
+
+This must be an app password - rclone will not work with your normal
+password. See the Configuration section in the docs for how to make an
+app password.
 
 NB Input to this must be obscured - see rclone obscure.
 
@@ -40428,6 +40497,53 @@ Options:
 
 Changelog
 
+v1.60.1 - 2022-11-17
+
+See commits
+
+-   Bug Fixes
+    -   lib/cache: Fix alias backend shutting down too soon (Nick
+        Craig-Wood)
+    -   wasm: Fix walltime link error by adding up-to-date wasm_exec.js
+        (João Henrique Franco)
+    -   docs
+        -   Update faq.md with bisync (Samuel Johnson)
+        -   Corrected download links in windows install docs
+            (coultonluke)
+        -   Add direct download link for windows arm64 (albertony)
+        -   Remove link to rclone slack as it is no longer supported
+            (Nick Craig-Wood)
+        -   Faq: how to use a proxy server that requires a username and
+            password (asdffdsazqqq)
+        -   Oracle-object-storage: doc fix (Manoj Ghosh)
+        -   Fix typo remove in rclone_serve_restic command (Joda Stößer)
+        -   Fix character that was incorrectly interpreted as markdown
+            (Clément Notin)
+-   VFS
+    -   Fix deadlock caused by cache cleaner and upload finishing (Nick
+        Craig-Wood)
+-   Local
+    -   Clean absolute paths (albertony)
+    -   Fix -L/--copy-links with filters missing directories (Nick
+        Craig-Wood)
+-   Mailru
+    -   Note that an app password is now needed (Nick Craig-Wood)
+    -   Allow timestamps to be before the epoch 1970-01-01 (Nick
+        Craig-Wood)
+-   S3
+    -   Add provider quirk --s3-might-gzip to fix corrupted on transfer:
+        sizes differ (Nick Craig-Wood)
+    -   Allow Storj to server side copy since it seems to work now (Nick
+        Craig-Wood)
+    -   Fix for unchecked err value in s3 listv2 (Aaron Gokaslan)
+    -   Add additional Wasabi locations (techknowlogick)
+-   Smb
+    -   Fix Failed to sync: context canceled at the end of syncs (Nick
+        Craig-Wood)
+-   WebDAV
+    -   Fix Move/Copy/DirMove when using -server-side-across-configs
+        (Nick Craig-Wood)
+
 v1.60.0 - 2022-10-21
 
 See commits
@@ -45966,9 +46082,7 @@ metadata, which breaks the desired 1:1 mapping of files to objects.
 
 Can rclone do bi-directional sync?
 
-No, not at present. rclone only does uni-directional sync from A -> B.
-It may do in the future though since it has all the primitives - it just
-requires writing the algorithm to do it.
+Yes, since rclone v1.58.0, bidirectional cloud sync is available.
 
 Can I use rclone with an HTTP proxy?
 
@@ -45989,6 +46103,13 @@ libraries used by rclone will try both variations, but you may wish to
 set all possibilities. So, on Linux, you may end up with code similar to
 
     export http_proxy=http://proxyserver:12345
+    export https_proxy=$http_proxy
+    export HTTP_PROXY=$http_proxy
+    export HTTPS_PROXY=$http_proxy
+
+Note: If the proxy server requires a username and password, then use
+
+    export http_proxy=http://username:password@proxyserver:12345
     export https_proxy=$http_proxy
     export HTTP_PROXY=$http_proxy
     export HTTPS_PROXY=$http_proxy

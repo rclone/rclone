@@ -19,7 +19,7 @@
 <header id="title-block-header">
 <h1 class="title">rclone(1) User Manual</h1>
 <p class="author">Nick Craig-Wood</p>
-<p class="date">Oct 21, 2022</p>
+<p class="date">Nov 17, 2022</p>
 </header>
 <h1 id="rclone-syncs-your-files-to-cloud-storage">Rclone syncs your files to cloud storage</h1>
 <p><img width="50%" src="https://rclone.org/img/logo_on_light__horizontal_color.svg" alt="rclone logo" style="float:right; padding: 5px;" ></p>
@@ -227,9 +227,9 @@ macOS cannot verify that this app is free from malware.</code></pre>
 <h3 id="windows-precompiled">Precompiled binary</h3>
 <p>Fetch the correct binary for your processor type by clicking on these links. If not sure, use the first link.</p>
 <ul>
-<li><a href="https://downloads.rclone.org/rclone-current-linux-amd64.zip">Intel/AMD - 64 Bit</a></li>
-<li><a href="https://downloads.rclone.org/rclone-current-linux-386.zip">Intel/AMD - 32 Bit</a></li>
-<li><a href="https://downloads.rclone.org/rclone-current-linux-arm64.zip">ARM - 64 Bit</a></li>
+<li><a href="https://downloads.rclone.org/rclone-current-windows-amd64.zip">Intel/AMD - 64 Bit</a></li>
+<li><a href="https://downloads.rclone.org/rclone-current-windows-386.zip">Intel/AMD - 32 Bit</a></li>
+<li><a href="https://downloads.rclone.org/rclone-current-windows-arm64.zip">ARM - 64 Bit</a></li>
 </ul>
 <p>Open this file in the Explorer and extract <code>rclone.exe</code>. Rclone is a portable executable so you can place it wherever is convenient.</p>
 <p>Open a CMD window (or powershell) and run the binary. Note that rclone does not launch a GUI by default, it runs in the CMD Window.</p>
@@ -8081,13 +8081,13 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
 </tr>
 <tr class="odd">
 <td>Oracle Object Storage</td>
-<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">Yes</td>
 <td style="text-align: center;">Yes</td>
-<td style="text-align: center;">No</td>
+<td style="text-align: center;">Yes</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
 <td style="text-align: center;">No</td>
@@ -8471,7 +8471,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.60.0&quot;)
+      --user-agent string                    Set the user-agent to a specified string (default &quot;rclone/v1.60.1&quot;)
   -v, --verbose count                        Print lots more stuff (repeat for more)</code></pre>
 <h2 id="backend-flags">Backend Flags</h2>
 <p>These flags are available for every command. They control the backends and may be set in the config file.</p>
@@ -8848,6 +8848,7 @@ Showing nodes accounting for 1537.03kB, 100% of 1537.03kB total
       --s3-max-upload-parts int                      Maximum number of parts in a multipart upload (default 10000)
       --s3-memory-pool-flush-time Duration           How often internal memory buffer pools will be flushed (default 1m0s)
       --s3-memory-pool-use-mmap                      Whether to use mmap buffers in internal memory pool
+      --s3-might-gzip Tristate                       Set this if the backend might gzip objects (default unset)
       --s3-no-check-bucket                           If set, don&#39;t attempt to check the bucket exists or create it
       --s3-no-head                                   If set, don&#39;t HEAD uploaded objects to check integrity
       --s3-no-head-object                            If set, do not do HEAD before GET when getting objects
@@ -12315,15 +12316,39 @@ $ rclone -q --s3-versions ls s3:cleanup-test
 </ul></li>
 <li>"s3.wasabisys.com"
 <ul>
-<li>Wasabi US East endpoint</li>
+<li>Wasabi US East 1 (N. Virginia)</li>
+</ul></li>
+<li>"s3.us-east-2.wasabisys.com"
+<ul>
+<li>Wasabi US East 2 (N. Virginia)</li>
+</ul></li>
+<li>"s3.us-central-1.wasabisys.com"
+<ul>
+<li>Wasabi US Central 1 (Texas)</li>
 </ul></li>
 <li>"s3.us-west-1.wasabisys.com"
 <ul>
-<li>Wasabi US West endpoint</li>
+<li>Wasabi US West 1 (Oregon)</li>
+</ul></li>
+<li>"s3.ca-central-1.wasabisys.com"
+<ul>
+<li>Wasabi CA Central 1 (Toronto)</li>
 </ul></li>
 <li>"s3.eu-central-1.wasabisys.com"
 <ul>
-<li>Wasabi EU Central endpoint</li>
+<li>Wasabi EU Central 1 (Amsterdam)</li>
+</ul></li>
+<li>"s3.eu-central-2.wasabisys.com"
+<ul>
+<li>Wasabi EU Central 2 (Frankfurt)</li>
+</ul></li>
+<li>"s3.eu-west-1.wasabisys.com"
+<ul>
+<li>Wasabi EU West 1 (London)</li>
+</ul></li>
+<li>"s3.eu-west-2.wasabisys.com"
+<ul>
+<li>Wasabi EU West 2 (Paris)</li>
 </ul></li>
 <li>"s3.ap-northeast-1.wasabisys.com"
 <ul>
@@ -12332,6 +12357,14 @@ $ rclone -q --s3-versions ls s3:cleanup-test
 <li>"s3.ap-northeast-2.wasabisys.com"
 <ul>
 <li>Wasabi AP Northeast 2 (Osaka) endpoint</li>
+</ul></li>
+<li>"s3.ap-southeast-1.wasabisys.com"
+<ul>
+<li>Wasabi AP Southeast 1 (Singapore)</li>
+</ul></li>
+<li>"s3.ap-southeast-2.wasabisys.com"
+<ul>
+<li>Wasabi AP Southeast 2 (Sydney)</li>
 </ul></li>
 <li>"s3.ir-thr-at1.arvanstorage.com"
 <ul>
@@ -13672,6 +13705,21 @@ Windows:   &quot;%USERPROFILE%\.aws\credentials&quot;</code></pre>
 <li>Env Var: RCLONE_S3_DECOMPRESS</li>
 <li>Type: bool</li>
 <li>Default: false</li>
+</ul>
+<h4 id="s3-might-gzip">--s3-might-gzip</h4>
+<p>Set this if the backend might gzip objects.</p>
+<p>Normally providers will not alter objects when they are downloaded. If an object was not uploaded with <code>Content-Encoding: gzip</code> then it won't be set on download.</p>
+<p>However some providers may gzip objects even if they weren't uploaded with <code>Content-Encoding: gzip</code> (eg Cloudflare).</p>
+<p>A symptom of this would be receiving errors like</p>
+<pre><code>ERROR corrupted on transfer: sizes differ NNN vs MMM</code></pre>
+<p>If you set this flag and rclone downloads an object with Content-Encoding: gzip set and chunked transfer encoding, then rclone will decompress the object on the fly.</p>
+<p>If this is set to unset (the default) then rclone will choose according to the provider setting what to apply, but you can override rclone's choice here.</p>
+<p>Properties:</p>
+<ul>
+<li>Config: might_gzip</li>
+<li>Env Var: RCLONE_S3_MIGHT_GZIP</li>
+<li>Type: Tristate</li>
+<li>Default: unset</li>
 </ul>
 <h4 id="s3-no-system-metadata">--s3-no-system-metadata</h4>
 <p>Suppress setting and reading of system metadata</p>
@@ -22458,7 +22506,17 @@ y/e/d&gt; y</code></pre>
 <li>If a particular file is already present in storage, one can quickly submit file hash instead of long file upload (this optimization is supported by rclone)</li>
 </ul>
 <h2 id="configuration-24">Configuration</h2>
-<p>Here is an example of making a mailru configuration. First create a Mail.ru Cloud account and choose a tariff, then run</p>
+<p>Here is an example of making a mailru configuration.</p>
+<p>First create a Mail.ru Cloud account and choose a tariff.</p>
+<p>You will need to log in and create an app password for rclone. Rclone <strong>will not work</strong> with your normal username and password - it will give an error like <code>oauth2: server response missing access_token</code>.</p>
+<ul>
+<li>Click on your user icon in the top right</li>
+<li>Go to Security / "Пароль и безопасность"</li>
+<li>Click password for apps / "Пароли для внешних приложений"</li>
+<li>Add the password - give it a name - eg "rclone"</li>
+<li>Copy the password and use this password below - your normal login password won't work.</li>
+</ul>
+<p>Now run</p>
 <pre><code>rclone config</code></pre>
 <p>This will guide you through an interactive setup process:</p>
 <pre><code>No remotes found, make a new one?
@@ -22480,6 +22538,10 @@ User name (usually email)
 Enter a string value. Press Enter for the default (&quot;&quot;).
 user&gt; username@mail.ru
 Password
+
+This must be an app password - rclone will not work with your normal
+password. See the Configuration section in the docs for how to make an
+app password.
 y) Yes type in my own password
 g) Generate random password
 y/g&gt; y
@@ -22598,6 +22660,7 @@ y/e/d&gt; y</code></pre>
 </ul>
 <h4 id="mailru-pass">--mailru-pass</h4>
 <p>Password.</p>
+<p>This must be an app password - rclone will not work with your normal password. See the Configuration section in the docs for how to make an app password.</p>
 <p><strong>NB</strong> Input to this must be obscured - see <a href="https://rclone.org/commands/rclone_obscure/">rclone obscure</a>.</p>
 <p>Properties:</p>
 <ul>
@@ -28967,6 +29030,55 @@ $ tree /tmp/b
 <li>"error": return an error based on option value</li>
 </ul>
 <h1 id="changelog">Changelog</h1>
+<h2 id="v1.60.1---2022-11-17">v1.60.1 - 2022-11-17</h2>
+<p><a href="https://github.com/rclone/rclone/compare/v1.60.0...v1.60.1">See commits</a></p>
+<ul>
+<li>Bug Fixes
+<ul>
+<li>lib/cache: Fix alias backend shutting down too soon (Nick Craig-Wood)</li>
+<li>wasm: Fix walltime link error by adding up-to-date wasm_exec.js (João Henrique Franco)</li>
+<li>docs
+<ul>
+<li>Update faq.md with bisync (Samuel Johnson)</li>
+<li>Corrected download links in windows install docs (coultonluke)</li>
+<li>Add direct download link for windows arm64 (albertony)</li>
+<li>Remove link to rclone slack as it is no longer supported (Nick Craig-Wood)</li>
+<li>Faq: how to use a proxy server that requires a username and password (asdffdsazqqq)</li>
+<li>Oracle-object-storage: doc fix (Manoj Ghosh)</li>
+<li>Fix typo <code>remove</code> in rclone_serve_restic command (Joda Stößer)</li>
+<li>Fix character that was incorrectly interpreted as markdown (Clément Notin)</li>
+</ul></li>
+</ul></li>
+<li>VFS
+<ul>
+<li>Fix deadlock caused by cache cleaner and upload finishing (Nick Craig-Wood)</li>
+</ul></li>
+<li>Local
+<ul>
+<li>Clean absolute paths (albertony)</li>
+<li>Fix -L/--copy-links with filters missing directories (Nick Craig-Wood)</li>
+</ul></li>
+<li>Mailru
+<ul>
+<li>Note that an app password is now needed (Nick Craig-Wood)</li>
+<li>Allow timestamps to be before the epoch 1970-01-01 (Nick Craig-Wood)</li>
+</ul></li>
+<li>S3
+<ul>
+<li>Add provider quirk <code>--s3-might-gzip</code> to fix corrupted on transfer: sizes differ (Nick Craig-Wood)</li>
+<li>Allow Storj to server side copy since it seems to work now (Nick Craig-Wood)</li>
+<li>Fix for unchecked err value in s3 listv2 (Aaron Gokaslan)</li>
+<li>Add additional Wasabi locations (techknowlogick)</li>
+</ul></li>
+<li>Smb
+<ul>
+<li>Fix <code>Failed to sync: context canceled</code> at the end of syncs (Nick Craig-Wood)</li>
+</ul></li>
+<li>WebDAV
+<ul>
+<li>Fix Move/Copy/DirMove when using -server-side-across-configs (Nick Craig-Wood)</li>
+</ul></li>
+</ul>
 <h2 id="v1.60.0---2022-10-21">v1.60.0 - 2022-10-21</h2>
 <p><a href="https://github.com/rclone/rclone/compare/v1.59.0...v1.60.0">See commits</a></p>
 <ul>
@@ -35170,13 +35282,18 @@ Server B&gt; rclone copy /tmp/whatever remote:Backup</code></pre>
 <p>It would be possible to make a sync system which stored binary diffs instead of whole objects like rclone does, but that would break the 1:1 mapping of files on your hard disk to objects in the remote cloud storage system.</p>
 <p>All the cloud storage systems support partial downloads of content, so it would be possible to make partial downloads work. However to make this work efficiently this would require storing a significant amount of metadata, which breaks the desired 1:1 mapping of files to objects.</p>
 <h3 id="can-rclone-do-bi-directional-sync">Can rclone do bi-directional sync?</h3>
-<p>No, not at present. rclone only does uni-directional sync from A -&gt; B. It may do in the future though since it has all the primitives - it just requires writing the algorithm to do it.</p>
+<p>Yes, since rclone v1.58.0, <a href="https://rclone.org/bisync/">bidirectional cloud sync</a> is available.</p>
 <h3 id="can-i-use-rclone-with-an-http-proxy">Can I use rclone with an HTTP proxy?</h3>
 <p>Yes. rclone will follow the standard environment variables for proxies, similar to cURL and other programs.</p>
 <p>In general the variables are called <code>http_proxy</code> (for services reached over <code>http</code>) and <code>https_proxy</code> (for services reached over <code>https</code>). Most public services will be using <code>https</code>, but you may wish to set both.</p>
 <p>The content of the variable is <code>protocol://server:port</code>. The protocol value is the one used to talk to the proxy server, itself, and is commonly either <code>http</code> or <code>socks5</code>.</p>
 <p>Slightly annoyingly, there is no <em>standard</em> for the name; some applications may use <code>http_proxy</code> but another one <code>HTTP_PROXY</code>. The <code>Go</code> libraries used by <code>rclone</code> will try both variations, but you may wish to set all possibilities. So, on Linux, you may end up with code similar to</p>
 <pre><code>export http_proxy=http://proxyserver:12345
+export https_proxy=$http_proxy
+export HTTP_PROXY=$http_proxy
+export HTTPS_PROXY=$http_proxy</code></pre>
+<p>Note: If the proxy server requires a username and password, then use</p>
+<pre><code>export http_proxy=http://username:password@proxyserver:12345
 export https_proxy=$http_proxy
 export HTTP_PROXY=$http_proxy
 export HTTPS_PROXY=$http_proxy</code></pre>

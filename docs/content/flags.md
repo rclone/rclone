@@ -162,7 +162,7 @@ These flags are available for every command.
       --use-json-log                         Use json log format
       --use-mmap                             Use mmap allocator (see docs)
       --use-server-modtime                   Use server modified time instead of object metadata
-      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.60.0")
+      --user-agent string                    Set the user-agent to a specified string (default "rclone/v1.60.1")
   -v, --verbose count                        Print lots more stuff (repeat for more)
 ```
 
@@ -545,6 +545,7 @@ and may be set in the config file.
       --s3-max-upload-parts int                      Maximum number of parts in a multipart upload (default 10000)
       --s3-memory-pool-flush-time Duration           How often internal memory buffer pools will be flushed (default 1m0s)
       --s3-memory-pool-use-mmap                      Whether to use mmap buffers in internal memory pool
+      --s3-might-gzip Tristate                       Set this if the backend might gzip objects (default unset)
       --s3-no-check-bucket                           If set, don't attempt to check the bucket exists or create it
       --s3-no-head                                   If set, don't HEAD uploaded objects to check integrity
       --s3-no-head-object                            If set, do not do HEAD before GET when getting objects
