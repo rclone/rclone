@@ -478,11 +478,15 @@ func (f *Fs) makeEntryRelative(share, _path, relative string, stat os.FileInfo) 
 }
 
 func (f *Fs) ensureDirectory(ctx context.Context, share, _path string) error {
+	dir := path.Dir(_path)
+	if dir == "." {
+		return nil
+	}
 	cn, err := f.getConnection(ctx, share)
 	if err != nil {
 		return err
 	}
-	err = cn.smbShare.MkdirAll(f.toSambaPath(path.Dir(_path)), 0o755)
+	err = cn.smbShare.MkdirAll(f.toSambaPath(dir), 0o755)
 	f.putConnection(&cn)
 	return err
 }
