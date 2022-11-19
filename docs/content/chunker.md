@@ -4,7 +4,7 @@ description: "Split-chunking overlay remote"
 versionIntroduced: "v1.50.0"
 ---
 
-# {{< icon "fa fa-cut" >}}Chunker (BETA)
+# {{< icon "fa fa-cut" >}} Chunker (EXPERIMENTAL)
 
 The `chunker` overlay transparently splits large files into smaller chunks
 during upload to wrapped remote and transparently assembles them back
