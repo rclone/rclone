@@ -4,7 +4,7 @@ description: "Zoho WorkDrive"
 versionIntroduced: "v1.54.0"
 ---
 
-# {{< icon "fas fa-folder" >}}Zoho Workdrive
+# {{< icon "fas fa-folder" >}} Zoho Workdrive
 
 [Zoho WorkDrive](https://www.zoho.com/workdrive/) is a cloud storage solution created by [Zoho](https://zoho.com).
 
