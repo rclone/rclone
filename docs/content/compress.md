@@ -2,9 +2,10 @@
 title: "Compress"
 description: "Compression Remote"
 versionIntroduced: "v1.54.0"
+status: Experimental
 ---
 
-# {{< icon "fas fa-compress" >}} Compress (EXPERIMENTAL)
+# {{< icon "fas fa-compress" >}} Compress
 
 ## Warning
 
