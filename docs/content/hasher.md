@@ -2,9 +2,10 @@
 title: "Hasher"
 description: "Better checksums for other remotes"
 versionIntroduced: "v1.57.0"
+status: Experimental
 ---
 
-# {{< icon "fa fa-check-double" >}} Hasher (EXPERIMENTAL)
+# {{< icon "fa fa-check-double" >}} Hasher
 
 Hasher is a special overlay backend to create remotes which handle
 checksums for other remotes. It's main functions include:
