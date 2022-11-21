@@ -148,6 +148,11 @@ backends:
  - backend:  "memory"
    remote:   ":memory:"
    fastlist: true
+ - backend:  "neofs"
+   remote:   "TestNeoFS:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
  - backend:  "netstorage"
    remote:   "TestnStorage:"
    fastlist: true
