@@ -26,7 +26,7 @@ func testExpectRespBody(t *testing.T, resp *http.Response, expected []byte) {
 	require.Equal(t, expected, body)
 }
 
-func testGetServerURL(t *testing.T, s Server) string {
+func testGetServerURL(t *testing.T, s *Server) string {
 	urls := s.URLs()
 	require.GreaterOrEqual(t, len(urls), 1, "server should return at least one url")
 	return urls[0]
