@@ -103,7 +103,7 @@ control the stats printing.
 type serveCmd struct {
 	f      fs.Fs
 	vfs    *vfs.VFS
-	server libhttp.Server
+	server *libhttp.Server
 }
 
 func run(ctx context.Context, f fs.Fs, opt Options) (*serveCmd, error) {
