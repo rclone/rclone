@@ -129,6 +129,7 @@ func (s instance) serve(wg *sync.WaitGroup) {
 	}
 }
 
+// Server contains info about the running http server
 type Server struct {
 	wg           sync.WaitGroup
 	mux          chi.Router
