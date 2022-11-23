@@ -63,12 +63,12 @@ type Transfer struct {
 }
 
 // newCheckingTransfer instantiates new checking of the object.
-func newCheckingTransfer(stats *StatsInfo, obj fs.Object) *Transfer {
+func newCheckingTransfer(stats *StatsInfo, obj fs.DirEntry) *Transfer {
 	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), true)
 }
 
 // newTransfer instantiates new transfer.
-func newTransfer(stats *StatsInfo, obj fs.Object) *Transfer {
+func newTransfer(stats *StatsInfo, obj fs.DirEntry) *Transfer {
 	return newTransferRemoteSize(stats, obj.Remote(), obj.Size(), false)
 }
 

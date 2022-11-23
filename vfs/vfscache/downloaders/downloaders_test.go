@@ -85,7 +85,7 @@ func TestDownloaders(t *testing.T) {
 
 	// Write the test file
 	in := io.NopCloser(readers.NewPatternReader(size))
-	src, err := operations.RcatSize(ctx, r.Fremote, remote, in, size, time.Now())
+	src, err := operations.RcatSize(ctx, r.Fremote, remote, in, size, time.Now(), nil)
 	require.NoError(t, err)
 	assert.Equal(t, size, src.Size())
 

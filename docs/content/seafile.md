@@ -1,6 +1,7 @@
 ---
 title: "Seafile"
 description: "Seafile"
+versionIntroduced: "v1.52.0"
 ---
 
 # {{< icon "fa fa-server" >}}Seafile

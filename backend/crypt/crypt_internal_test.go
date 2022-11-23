@@ -17,19 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type testWrapper struct {
-	fs.ObjectInfo
-}
-
-// UnWrap returns the Object that this Object is wrapping or nil if it
-// isn't wrapping anything
-func (o testWrapper) UnWrap() fs.Object {
-	if o, ok := o.ObjectInfo.(fs.Object); ok {
-		return o
-	}
-	return nil
-}
-
 // Create a temporary local fs to upload things from
 
 func makeTempLocalFs(t *testing.T) (localFs fs.Fs, cleanup func()) {
@@ -83,7 +70,7 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 	var oi fs.ObjectInfo = obj
 	if wrap {
 		// wrap the object in an fs.ObjectUnwrapper if required
-		oi = testWrapper{oi}
+		oi = fs.NewOverrideRemote(oi, "new_remote")
 	}
 
 	// wrap the object in a crypt for upload using the nonce we

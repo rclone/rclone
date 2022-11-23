@@ -1,6 +1,7 @@
 ---
 title: "Google Cloud Storage"
 description: "Rclone docs for Google Cloud Storage"
+versionIntroduced: "v1.02"
 ---
 
 # {{< icon "fab fa-google" >}} Google Cloud Storage

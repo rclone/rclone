@@ -1,6 +1,7 @@
 ---
 title: "Cache"
 description: "Rclone docs for cache remote"
+versionIntroduced: "v1.39"
 ---
 
 # {{< icon "fa fa-archive" >}} Cache (DEPRECATED)

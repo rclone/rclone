@@ -1,6 +1,7 @@
 ---
 title: "Swift"
 description: "Swift"
+versionIntroduced: "v0.91"
 ---
 
 # {{< icon "fa fa-space-shuttle" >}}Swift

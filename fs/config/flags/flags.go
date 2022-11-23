@@ -146,18 +146,22 @@ func Float64VarP(flags *pflag.FlagSet, p *float64, name, shorthand string, value
 
 // DurationP defines a flag which can be set by an environment variable
 //
-// It is a thin wrapper around pflag.DurationP
+// It wraps the duration in an fs.Duration for extra suffixes and
+// passes it to pflag.VarP
 func DurationP(name, shorthand string, value time.Duration, usage string) (out *time.Duration) {
-	out = pflag.DurationP(name, shorthand, value, usage)
+	out = new(time.Duration)
+	*out = value
+	pflag.VarP((*fs.Duration)(out), name, shorthand, usage)
 	setValueFromEnv(pflag.CommandLine, name)
 	return out
 }
 
 // DurationVarP defines a flag which can be set by an environment variable
 //
-// It is a thin wrapper around pflag.DurationVarP
+// It wraps the duration in an fs.Duration for extra suffixes and
+// passes it to pflag.VarP
 func DurationVarP(flags *pflag.FlagSet, p *time.Duration, name, shorthand string, value time.Duration, usage string) {
-	flags.DurationVarP(p, name, shorthand, value, usage)
+	flags.VarP((*fs.Duration)(p), name, shorthand, usage)
 	setValueFromEnv(flags, name)
 }
 

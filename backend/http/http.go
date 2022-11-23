@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -305,7 +304,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 		fs:     f,
 		remote: remote,
 	}
-	err := o.stat(ctx)
+	err := o.head(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -315,15 +314,6 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 // Join's the remote onto the base URL
 func (f *Fs) url(remote string) string {
 	return f.endpointURL + rest.URLPathEscape(remote)
-}
-
-// parse s into an int64, on failure return def
-func parseInt64(s string, def int64) int64 {
-	n, e := strconv.ParseInt(s, 10, 64)
-	if e != nil {
-		return def
-	}
-	return n
 }
 
 // Errors returned by parseName
@@ -500,7 +490,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 					fs:     f,
 					remote: remote,
 				}
-				switch err := file.stat(ctx); err {
+				switch err := file.head(ctx); err {
 				case nil:
 					add(file)
 				case fs.ErrorNotAFile:
@@ -579,8 +569,8 @@ func (o *Object) url() string {
 	return o.fs.url(o.remote)
 }
 
-// stat updates the info field in the Object
-func (o *Object) stat(ctx context.Context) error {
+// head sends a HEAD request to update info fields in the Object
+func (o *Object) head(ctx context.Context) error {
 	if o.fs.opt.NoHead {
 		o.size = -1
 		o.modTime = timeUnset
@@ -601,13 +591,19 @@ func (o *Object) stat(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to stat: %w", err)
 	}
+	return o.decodeMetadata(ctx, res)
+}
+
+// decodeMetadata updates info fields in the Object according to HTTP response headers
+func (o *Object) decodeMetadata(ctx context.Context, res *http.Response) error {
 	t, err := http.ParseTime(res.Header.Get("Last-Modified"))
 	if err != nil {
 		t = timeUnset
 	}
-	o.size = parseInt64(res.Header.Get("Content-Length"), -1)
 	o.modTime = t
 	o.contentType = res.Header.Get("Content-Type")
+	o.size = rest.ParseSizeFromHeaders(res.Header)
+
 	// If NoSlash is set then check ContentType to see if it is a directory
 	if o.fs.opt.NoSlash {
 		mediaType, _, err := mime.ParseMediaType(o.contentType)
@@ -652,6 +648,9 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	err = statusError(res, err)
 	if err != nil {
 		return nil, fmt.Errorf("Open failed: %w", err)
+	}
+	if err = o.decodeMetadata(ctx, res); err != nil {
+		return nil, fmt.Errorf("decodeMetadata failed: %w", err)
 	}
 	return res.Body, nil
 }

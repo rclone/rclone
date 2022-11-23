@@ -1127,15 +1127,39 @@ func init() {
 				Provider: "LyveCloud",
 			}, {
 				Value:    "s3.wasabisys.com",
-				Help:     "Wasabi US East endpoint",
+				Help:     "Wasabi US East 1 (N. Virginia)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.us-east-2.wasabisys.com",
+				Help:     "Wasabi US East 2 (N. Virginia)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.us-central-1.wasabisys.com",
+				Help:     "Wasabi US Central 1 (Texas)",
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.us-west-1.wasabisys.com",
-				Help:     "Wasabi US West endpoint",
+				Help:     "Wasabi US West 1 (Oregon)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ca-central-1.wasabisys.com",
+				Help:     "Wasabi CA Central 1 (Toronto)",
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.eu-central-1.wasabisys.com",
-				Help:     "Wasabi EU Central endpoint",
+				Help:     "Wasabi EU Central 1 (Amsterdam)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.eu-central-2.wasabisys.com",
+				Help:     "Wasabi EU Central 2 (Frankfurt)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.eu-west-1.wasabisys.com",
+				Help:     "Wasabi EU West 1 (London)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.eu-west-2.wasabisys.com",
+				Help:     "Wasabi EU West 2 (Paris)",
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.ap-northeast-1.wasabisys.com",
@@ -1144,6 +1168,14 @@ func init() {
 			}, {
 				Value:    "s3.ap-northeast-2.wasabisys.com",
 				Help:     "Wasabi AP Northeast 2 (Osaka) endpoint",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ap-southeast-1.wasabisys.com",
+				Help:     "Wasabi AP Southeast 1 (Singapore)",
+				Provider: "Wasabi",
+			}, {
+				Value:    "s3.ap-southeast-2.wasabisys.com",
+				Help:     "Wasabi AP Southeast 2 (Sydney)",
 				Provider: "Wasabi",
 			}, {
 				Value:    "s3.ir-thr-at1.arvanstorage.com",
@@ -2937,7 +2969,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		return f, fs.ErrorIsFile
 	}
 	if opt.Provider == "Storj" {
-		f.features.Copy = nil
 		f.features.SetTier = false
 		f.features.GetTier = false
 	}
@@ -3160,8 +3191,11 @@ func (f *Fs) newV2List(req *s3.ListObjectsV2Input) bucketLister {
 // Do a V2 listing
 func (ls *v2List) List(ctx context.Context) (resp *s3.ListObjectsV2Output, versionIDs []*string, err error) {
 	resp, err = ls.f.c.ListObjectsV2WithContext(ctx, &ls.req)
+	if err != nil {
+		return nil, nil, err
+	}
 	ls.req.ContinuationToken = resp.NextContinuationToken
-	return resp, nil, err
+	return resp, nil, nil
 }
 
 // URL Encode the listings
@@ -4761,23 +4795,12 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 		return nil, err
 	}
 
-	contentLength := &resp.ContentLength
-	if resp.Header.Get("Content-Range") != "" {
-		var contentRange = resp.Header.Get("Content-Range")
-		slash := strings.IndexRune(contentRange, '/')
-		if slash >= 0 {
-			i, err := strconv.ParseInt(contentRange[slash+1:], 10, 64)
-			if err == nil {
-				contentLength = &i
-			} else {
-				fs.Debugf(o, "Failed to find parse integer from in %q: %v", contentRange, err)
-			}
-		} else {
-			fs.Debugf(o, "Failed to find length in %q", contentRange)
-		}
+	contentLength := rest.ParseSizeFromHeaders(resp.Header)
+	if contentLength < 0 {
+		fs.Debugf(o, "Failed to parse file size from headers")
 	}
 
-	lastModified, err := time.Parse(time.RFC1123, resp.Header.Get("Last-Modified"))
+	lastModified, err := http.ParseTime(resp.Header.Get("Last-Modified"))
 	if err != nil {
 		fs.Debugf(o, "Failed to parse last modified from string %s, %v", resp.Header.Get("Last-Modified"), err)
 	}
@@ -4801,7 +4824,7 @@ func (o *Object) downloadFromURL(ctx context.Context, bucketPath string, options
 
 	var head = s3.HeadObjectOutput{
 		ETag:               header("Etag"),
-		ContentLength:      contentLength,
+		ContentLength:      &contentLength,
 		LastModified:       &lastModified,
 		Metadata:           metaData,
 		CacheControl:       header("Cache-Control"),

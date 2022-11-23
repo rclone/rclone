@@ -12,7 +12,6 @@ import (
 	_ "github.com/rclone/rclone/backend/local"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/fs/operations"
 	"github.com/rclone/rclone/fstest"
 	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +55,7 @@ func TestIntegration(t *testing.T) {
 			require.NoError(t, err)
 			in, err := srcObj.Open(ctx)
 			require.NoError(t, err)
-			dstObj, err := f.Put(ctx, in, operations.NewOverrideRemote(srcObj, remote))
+			dstObj, err := f.Put(ctx, in, fs.NewOverrideRemote(srcObj, remote))
 			require.NoError(t, err)
 			assert.Equal(t, remote, dstObj.Remote())
 			_ = in.Close()
@@ -221,7 +220,7 @@ func TestIntegration(t *testing.T) {
 		require.NoError(t, err)
 		in, err := srcObj.Open(ctx)
 		require.NoError(t, err)
-		dstObj, err := f.Put(ctx, in, operations.NewOverrideRemote(srcObj, remote))
+		dstObj, err := f.Put(ctx, in, fs.NewOverrideRemote(srcObj, remote))
 		require.NoError(t, err)
 		assert.Equal(t, remote, dstObj.Remote())
 		_ = in.Close()

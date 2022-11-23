@@ -1590,11 +1590,11 @@ func TestRcat(t *testing.T) {
 		path2 := prefix + "big_file_from_pipe"
 
 		in := io.NopCloser(strings.NewReader(data1))
-		_, err := operations.Rcat(ctx, r.Fremote, path1, in, t1)
+		_, err := operations.Rcat(ctx, r.Fremote, path1, in, t1, nil)
 		require.NoError(t, err)
 
 		in = io.NopCloser(strings.NewReader(data2))
-		_, err = operations.Rcat(ctx, r.Fremote, path2, in, t2)
+		_, err = operations.Rcat(ctx, r.Fremote, path2, in, t2, nil)
 		require.NoError(t, err)
 
 		file1 := fstest.NewItem(path1, data1, t1)
@@ -1611,6 +1611,62 @@ func TestRcat(t *testing.T) {
 	}
 }
 
+func TestRcatMetadata(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	if !r.Fremote.Features().UserMetadata {
+		t.Skip("Skipping as destination doesn't support user metadata")
+	}
+
+	test := func(disableUploadCutoff bool) {
+		ctx := context.Background()
+		ctx, ci := fs.AddConfig(ctx)
+		ci.Metadata = true
+		data := "this is some really nice test data with metadata"
+		path := "rcat_metadata"
+
+		meta := fs.Metadata{
+			"key":     "value",
+			"sausage": "potato",
+		}
+
+		if disableUploadCutoff {
+			ci.StreamingUploadCutoff = 0
+			data += " uploadCutoff=0"
+			path += "_uploadcutoff0"
+		}
+
+		fstest.CheckListing(t, r.Fremote, []fstest.Item{})
+
+		in := io.NopCloser(strings.NewReader(data))
+		_, err := operations.Rcat(ctx, r.Fremote, path, in, t1, meta)
+		require.NoError(t, err)
+
+		file := fstest.NewItem(path, data, t1)
+		r.CheckRemoteItems(t, file)
+
+		o, err := r.Fremote.NewObject(ctx, path)
+		require.NoError(t, err)
+		gotMeta, err := fs.GetMetadata(ctx, o)
+		require.NoError(t, err)
+		// Check the specific user data we set is set
+		// Likey there will be other values
+		assert.Equal(t, "value", gotMeta["key"])
+		assert.Equal(t, "potato", gotMeta["sausage"])
+
+		// Delete the test file
+		require.NoError(t, o.Remove(ctx))
+	}
+
+	t.Run("Normal", func(t *testing.T) {
+		test(false)
+	})
+	t.Run("ViaDisk", func(t *testing.T) {
+		test(true)
+	})
+}
+
 func TestRcatSize(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
@@ -1621,7 +1677,7 @@ func TestRcatSize(t *testing.T) {
 	file2 := r.WriteFile("potato2", body, t2)
 	// Test with known length
 	bodyReader := io.NopCloser(strings.NewReader(body))
-	obj, err := operations.RcatSize(ctx, r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime)
+	obj, err := operations.RcatSize(ctx, r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime, nil)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(body)), obj.Size())
 	assert.Equal(t, file1.Path, obj.Remote())
@@ -1629,13 +1685,65 @@ func TestRcatSize(t *testing.T) {
 	// Test with unknown length
 	bodyReader = io.NopCloser(strings.NewReader(body)) // reset Reader
 	io.NopCloser(strings.NewReader(body))
-	obj, err = operations.RcatSize(ctx, r.Fremote, file2.Path, bodyReader, -1, file2.ModTime)
+	obj, err = operations.RcatSize(ctx, r.Fremote, file2.Path, bodyReader, -1, file2.ModTime, nil)
 	require.NoError(t, err)
 	assert.Equal(t, int64(len(body)), obj.Size())
 	assert.Equal(t, file2.Path, obj.Remote())
 
 	// Check files exist
 	r.CheckRemoteItems(t, file1, file2)
+}
+
+func TestRcatSizeMetadata(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	if !r.Fremote.Features().UserMetadata {
+		t.Skip("Skipping as destination doesn't support user metadata")
+	}
+
+	ctx := context.Background()
+	ctx, ci := fs.AddConfig(ctx)
+	ci.Metadata = true
+
+	meta := fs.Metadata{
+		"key":     "value",
+		"sausage": "potato",
+	}
+
+	const body = "------------------------------------------------------------"
+	file1 := r.WriteFile("potato1", body, t1)
+	file2 := r.WriteFile("potato2", body, t2)
+
+	// Test with known length
+	bodyReader := io.NopCloser(strings.NewReader(body))
+	obj, err := operations.RcatSize(ctx, r.Fremote, file1.Path, bodyReader, int64(len(body)), file1.ModTime, meta)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(body)), obj.Size())
+	assert.Equal(t, file1.Path, obj.Remote())
+
+	// Test with unknown length
+	bodyReader = io.NopCloser(strings.NewReader(body)) // reset Reader
+	io.NopCloser(strings.NewReader(body))
+	obj, err = operations.RcatSize(ctx, r.Fremote, file2.Path, bodyReader, -1, file2.ModTime, meta)
+	require.NoError(t, err)
+	assert.Equal(t, int64(len(body)), obj.Size())
+	assert.Equal(t, file2.Path, obj.Remote())
+
+	// Check files exist
+	r.CheckRemoteItems(t, file1, file2)
+
+	// Check metadata OK
+	for _, path := range []string{file1.Path, file2.Path} {
+		o, err := r.Fremote.NewObject(ctx, path)
+		require.NoError(t, err)
+		gotMeta, err := fs.GetMetadata(ctx, o)
+		require.NoError(t, err)
+		// Check the specific user data we set is set
+		// Likey there will be other values
+		assert.Equal(t, "value", gotMeta["key"])
+		assert.Equal(t, "potato", gotMeta["sausage"])
+	}
 }
 
 func TestCopyFileMaxTransfer(t *testing.T) {

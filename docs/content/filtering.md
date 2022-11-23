@@ -1,6 +1,7 @@
 ---
 title: "Rclone Filtering"
 description: "Rclone filtering, includes and excludes"
+versionIntroduced: "v1.22"
 ---
 
 # Filtering, includes and excludes

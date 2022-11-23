@@ -108,6 +108,14 @@ possibilities.  So, on Linux, you may end up with code similar to
     export HTTP_PROXY=$http_proxy
     export HTTPS_PROXY=$http_proxy
 
+
+Note: If the proxy server requires a username and password, then use
+
+    export http_proxy=http://username:password@proxyserver:12345
+    export https_proxy=$http_proxy
+    export HTTP_PROXY=$http_proxy
+    export HTTPS_PROXY=$http_proxy
+
 The `NO_PROXY` allows you to disable the proxy for specific hosts.
 Hosts must be comma separated, and can contain domains or parts.
 For instance "foo.com" also matches "bar.foo.com".

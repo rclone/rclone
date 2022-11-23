@@ -975,20 +975,24 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			fs.Debugf(f, "Running shell type detection remote command: %s", shellCmd)
 			err = session.Run(shellCmd)
 			_ = session.Close()
+			f.shellType = defaultShellType
 			if err != nil {
-				f.shellType = defaultShellType
 				fs.Debugf(f, "Remote command failed: %v (stdout=%v) (stderr=%v)", err, bytes.TrimSpace(stdout.Bytes()), bytes.TrimSpace(stderr.Bytes()))
 			} else {
 				outBytes := stdout.Bytes()
 				fs.Debugf(f, "Remote command result: %s", outBytes)
 				outString := string(bytes.TrimSpace(stdout.Bytes()))
-				if strings.HasPrefix(outString, "Microsoft.PowerShell") { // If PowerShell: "Microsoft.PowerShell%ComSpec%"
-					f.shellType = "powershell"
-				} else if !strings.HasSuffix(outString, "%ComSpec%") { // If Command Prompt: "${ShellId}C:\WINDOWS\system32\cmd.exe"
-					f.shellType = "cmd"
-				} else { // If Unix: "%ComSpec%"
-					f.shellType = "unix"
-				}
+				if outString != "" {
+					if strings.HasPrefix(outString, "Microsoft.PowerShell") { // PowerShell: "Microsoft.PowerShell%ComSpec%"
+						f.shellType = "powershell"
+					} else if !strings.HasSuffix(outString, "%ComSpec%") { // Command Prompt: "${ShellId}C:\WINDOWS\system32\cmd.exe"
+						// Additional positive test, to avoid misdetection on unpredicted Unix shell variants
+						s := strings.ToLower(outString)
+						if strings.Contains(s, ".exe") || strings.Contains(s, ".com") {
+							f.shellType = "cmd"
+						}
+					} // POSIX-based Unix shell: "%ComSpec%"
+				} // fish Unix shell: ""
 			}
 		}
 		// Save permanently in config to avoid the extra work next time

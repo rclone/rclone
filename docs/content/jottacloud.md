@@ -1,6 +1,7 @@
 ---
 title: "Jottacloud"
 description: "Rclone docs for Jottacloud"
+versionIntroduced: "v1.43"
 ---
 
 # {{< icon "fa fa-cloud" >}} Jottacloud
