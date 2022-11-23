@@ -4,9 +4,9 @@ go 1.17
 
 require (
 	bazil.org/fuse v0.0.0-20200524192727-fb710f7dfd05
-	github.com/Azure/azure-pipeline-go v0.2.3
-	github.com/Azure/azure-storage-blob-go v0.15.0
-	github.com/Azure/go-autorest/autorest/adal v0.9.21
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.1.4
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0
+	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v0.5.1
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e
 	github.com/Max-Sum/base32768 v0.0.0-20191205131208-7937843c71d5
 	github.com/Unknwon/goconfig v1.0.0
@@ -76,10 +76,8 @@ require (
 require (
 	cloud.google.com/go/compute v1.12.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
-	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
-	github.com/Azure/go-autorest/logger v0.2.1 // indirect
-	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.1 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0 // indirect
 	github.com/anacrolix/log v0.13.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/calebcase/tmpfile v1.0.3 // indirect
@@ -106,13 +104,14 @@ require (
 	github.com/jcmturner/rpc/v2 v2.0.3 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/kr/fs v0.1.0 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
-	github.com/mattn/go-ieproxy v0.0.1 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/onsi/gomega v1.13.0 // indirect
 	github.com/pengsrc/go-shared v0.2.1-0.20190131101655-1999055a4a14 // indirect
+	github.com/pkg/browser v0.0.0-20210115035449-ce105d075bb4 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
@@ -131,6 +130,7 @@ require (
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
 	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	storj.io/common v0.0.0-20220414110316-a5cb7172d6bf // indirect
 	storj.io/drpc v0.0.30 // indirect
@@ -139,7 +139,7 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20221026131551-cf6655e29de4
-	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/pkg/xattr v0.4.9
