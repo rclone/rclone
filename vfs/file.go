@@ -698,6 +698,11 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 		write = true
 	}
 
+	// If create is set then set write to force openRW
+	if flags&os.O_CREATE != 0 {
+		write = true
+	}
+
 	// Open the correct sort of handle
 	f.mu.RLock()
 	d := f.d

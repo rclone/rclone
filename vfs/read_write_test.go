@@ -642,15 +642,19 @@ func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 }
 
 func TestRWFileHandleOpenTests(t *testing.T) {
-	opt := vfscommon.DefaultOpt
-	opt.CacheMode = vfscommon.CacheModeFull
-	opt.WriteBack = writeBackDelay
-	_, vfs, cleanup := newTestVFSOpt(t, &opt)
-	defer cleanup()
+	for _, cacheMode := range []vfscommon.CacheMode{vfscommon.CacheModeWrites, vfscommon.CacheModeFull} {
+		t.Run(cacheMode.String(), func(t *testing.T) {
+			opt := vfscommon.DefaultOpt
+			opt.CacheMode = cacheMode
+			opt.WriteBack = writeBackDelay
+			_, vfs, cleanup := newTestVFSOpt(t, &opt)
+			defer cleanup()
 
-	for _, test := range openTests {
-		t.Run(test.what, func(t *testing.T) {
-			testRWFileHandleOpenTest(t, vfs, &test)
+			for _, test := range openTests {
+				t.Run(test.what, func(t *testing.T) {
+					testRWFileHandleOpenTest(t, vfs, &test)
+				})
+			}
 		})
 	}
 }
