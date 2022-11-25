@@ -103,6 +103,10 @@ func (f *Fs) getSessions() int32 {
 
 // Open a new connection to the SMB server.
 func (f *Fs) newConnection(ctx context.Context, share string) (c *conn, err error) {
+	// As we are pooling these connections we need to decouple
+	// them from the current context
+	ctx = context.Background()
+
 	c, err = f.dial(ctx, "tcp", f.opt.Host+":"+f.opt.Port)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't connect SMB: %w", err)

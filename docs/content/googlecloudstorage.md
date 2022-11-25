@@ -1,6 +1,7 @@
 ---
 title: "Google Cloud Storage"
 description: "Rclone docs for Google Cloud Storage"
+versionIntroduced: "v1.02"
 ---
 
 # {{< icon "fab fa-google" >}} Google Cloud Storage
@@ -620,6 +621,19 @@ Properties:
 - Env Var:     RCLONE_GCS_DECOMPRESS
 - Type:        bool
 - Default:     false
+
+#### --gcs-endpoint
+
+Endpoint for the service.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      endpoint
+- Env Var:     RCLONE_GCS_ENDPOINT
+- Type:        string
+- Required:    false
 
 #### --gcs-encoding
 

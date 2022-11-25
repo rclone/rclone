@@ -97,11 +97,11 @@ func newServer(ctx context.Context, opt *rc.Options, mux *http.ServeMux) *Server
 		if opt.NoAuth {
 			fs.Logf(nil, "It is recommended to use web gui with auth.")
 		} else {
-			if opt.HTTPOptions.BasicUser == "" {
+			if opt.HTTPOptions.BasicUser == "" && opt.HTTPOptions.HtPasswd == "" {
 				opt.HTTPOptions.BasicUser = "gui"
 				fs.Infof(nil, "No username specified. Using default username: %s \n", rcflags.Opt.HTTPOptions.BasicUser)
 			}
-			if opt.HTTPOptions.BasicPass == "" {
+			if opt.HTTPOptions.BasicPass == "" && opt.HTTPOptions.HtPasswd == "" {
 				randomPass, err := random.Password(128)
 				if err != nil {
 					log.Fatalf("Failed to make password: %v", err)

@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/bits"
 	"os"
 	"path"
@@ -153,38 +152,6 @@ func retry(t *testing.T, what string, f func() error) {
 	require.NoError(t, err, what)
 }
 
-// An fs.ObjectInfo that can override mime type
-type objectInfoWithMimeType struct {
-	fs.ObjectInfo
-	mimeType string
-	metadata fs.Metadata
-}
-
-// Return a wrapped fs.ObjectInfo which returns the mime type given
-func overrideMimeType(o fs.ObjectInfo, mimeType string, metadata fs.Metadata) fs.ObjectInfo {
-	return &objectInfoWithMimeType{
-		ObjectInfo: o,
-		mimeType:   mimeType,
-		metadata:   metadata,
-	}
-}
-
-// MimeType that was overridden
-func (o *objectInfoWithMimeType) MimeType(ctx context.Context) string {
-	return o.mimeType
-}
-
-// Metadata that was overridden
-func (o *objectInfoWithMimeType) Metadata(ctx context.Context) (fs.Metadata, error) {
-	return o.metadata, nil
-}
-
-// check interfaces
-var (
-	_ fs.MimeTyper  = (*objectInfoWithMimeType)(nil)
-	_ fs.Metadataer = (*objectInfoWithMimeType)(nil)
-)
-
 // check interface
 
 // PutTestContentsMetadata puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
@@ -215,7 +182,7 @@ func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *f
 					ci.Metadata = previousMetadata
 				}()
 			}
-			obji = overrideMimeType(obji, mimeType, metadata)
+			obji.WithMetadata(metadata).WithMimeType(mimeType)
 		}
 		obj, err = f.Put(ctx, in, obji)
 		return err
@@ -303,7 +270,7 @@ func ReadObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, o
 	if limit >= 0 {
 		r = &io.LimitedReader{R: r, N: limit}
 	}
-	contents, err := ioutil.ReadAll(r)
+	contents, err := io.ReadAll(r)
 	require.NoError(t, err, what)
 	err = in.Close()
 	require.NoError(t, err, what)

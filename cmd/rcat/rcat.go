@@ -66,7 +66,7 @@ a lot of data, you're better off caching locally and then
 
 		fdst, dstFileName := cmd.NewFsDstFile(args)
 		cmd.Run(false, false, command, func() error {
-			_, err := operations.RcatSize(context.Background(), fdst, dstFileName, os.Stdin, size, time.Now())
+			_, err := operations.RcatSize(context.Background(), fdst, dstFileName, os.Stdin, size, time.Now(), nil)
 			return err
 		})
 	},

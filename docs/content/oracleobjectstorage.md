@@ -1,9 +1,10 @@
 ---
 title: "Oracle Object Storage"
 description: "Rclone docs for Oracle Object Storage"
+versionIntroduced: "v1.60.0"
 ---
 
-# {{< icon "fa-light fa-cloud" >}} Oracle Object Storage
+# {{< icon "fa fa-cloud" >}} Oracle Object Storage
 
 [Oracle Object Storage Overview](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)
 
@@ -113,8 +114,8 @@ Options:
 - compartment: ocid1.compartment.oc1..aaaaaaaapufkxc7ame3sthry5i7ujrwfc7ejnthhu6bhanm5oqfjpyasjkba
 - region: us-ashburn-1
 - provider: user_principal_auth
-- oci_config_file: /etc/oci/dev.conf
-- oci_config_profile: Test
+- config_file: /etc/oci/dev.conf
+- config_profile: Test
 Keep this "remote" remote?
 y) Yes this is OK (default)
 e) Edit this remote
@@ -272,7 +273,7 @@ Properties:
 
 #### --oos-config-profile
 
-Path to OCI config file
+Profile name inside the oci config file
 
 Properties:
 
@@ -429,6 +430,24 @@ Properties:
 
 - Config:      leave_parts_on_error
 - Env Var:     RCLONE_OOS_LEAVE_PARTS_ON_ERROR
+- Type:        bool
+- Default:     false
+
+#### --oos-no-check-bucket
+
+If set, don't attempt to check the bucket exists or create it.
+
+This can be useful when trying to minimise the number of transactions
+rclone does if you know the bucket exists already.
+
+It can also be needed if the user you are using does not have bucket
+creation permissions.
+
+
+Properties:
+
+- Config:      no_check_bucket
+- Env Var:     RCLONE_OOS_NO_CHECK_BUCKET
 - Type:        bool
 - Default:     false
 

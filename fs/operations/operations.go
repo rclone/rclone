@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
@@ -298,74 +297,6 @@ func removeFailedCopy(ctx context.Context, dst fs.Object) bool {
 	return true
 }
 
-// OverrideRemote is a wrapper to override the Remote for an
-// ObjectInfo
-type OverrideRemote struct {
-	fs.ObjectInfo
-	remote string
-}
-
-// NewOverrideRemote returns an OverrideRemoteObject which will
-// return the remote specified
-func NewOverrideRemote(oi fs.ObjectInfo, remote string) *OverrideRemote {
-	return &OverrideRemote{
-		ObjectInfo: oi,
-		remote:     remote,
-	}
-}
-
-// Remote returns the overridden remote name
-func (o *OverrideRemote) Remote() string {
-	return o.remote
-}
-
-// MimeType returns the mime type of the underlying object or "" if it
-// can't be worked out
-func (o *OverrideRemote) MimeType(ctx context.Context) string {
-	if do, ok := o.ObjectInfo.(fs.MimeTyper); ok {
-		return do.MimeType(ctx)
-	}
-	return ""
-}
-
-// ID returns the ID of the Object if known, or "" if not
-func (o *OverrideRemote) ID() string {
-	if do, ok := o.ObjectInfo.(fs.IDer); ok {
-		return do.ID()
-	}
-	return ""
-}
-
-// UnWrap returns the Object that this Object is wrapping or nil if it
-// isn't wrapping anything
-func (o *OverrideRemote) UnWrap() fs.Object {
-	if o, ok := o.ObjectInfo.(fs.Object); ok {
-		return o
-	}
-	return nil
-}
-
-// GetTier returns storage tier or class of the Object
-func (o *OverrideRemote) GetTier() string {
-	if do, ok := o.ObjectInfo.(fs.GetTierer); ok {
-		return do.GetTier()
-	}
-	return ""
-}
-
-// Metadata returns metadata for an object
-//
-// It should return nil if there is no Metadata
-func (o *OverrideRemote) Metadata(ctx context.Context) (fs.Metadata, error) {
-	if do, ok := o.ObjectInfo.(fs.Metadataer); ok {
-		return do.Metadata(ctx)
-	}
-	return nil, nil
-}
-
-// Check all optional interfaces satisfied
-var _ fs.FullObjectInfo = (*OverrideRemote)(nil)
-
 // CommonHash returns a single hash.Type and a HashOption with that
 // type which is in common between the two fs.Fs.
 func CommonHash(ctx context.Context, fa, fb fs.Info) (hash.Type, *fs.HashesOption) {
@@ -476,15 +407,23 @@ func Copy(ctx context.Context, f fs.Fs, dst fs.Object, remote string, src fs.Obj
 						} else {
 							actionTaken = "Copied (Rcat, new)"
 						}
+						// Make any metadata to pass to rcat
+						var meta fs.Metadata
+						if ci.Metadata {
+							meta, err = fs.GetMetadata(ctx, src)
+							if err != nil {
+								fs.Errorf(src, "Failed to read metadata: %v", err)
+							}
+						}
 						// NB Rcat closes in0
-						dst, err = Rcat(ctx, f, remote, in0, src.ModTime(ctx))
+						dst, err = Rcat(ctx, f, remote, in0, src.ModTime(ctx), meta)
 						newDst = dst
 					} else {
 						in := tr.Account(ctx, in0).WithBuffer() // account and buffer the transfer
 						var wrappedSrc fs.ObjectInfo = src
 						// We try to pass the original object if possible
 						if src.Remote() != remote {
-							wrappedSrc = NewOverrideRemote(src, remote)
+							wrappedSrc = fs.NewOverrideRemote(src, remote)
 						}
 						options := []fs.OpenOption{hashOption}
 						for _, option := range ci.UploadHeaders {
@@ -1348,7 +1287,7 @@ func Cat(ctx context.Context, f fs.Fs, w io.Writer, offset, count int64) error {
 }
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
-func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst fs.Object, err error) {
+func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time, meta fs.Metadata) (dst fs.Object, err error) {
 	ci := fs.GetConfig(ctx)
 	tr := accounting.Stats(ctx).NewTransferRemoteSize(dstFileName, -1)
 	defer func() {
@@ -1387,7 +1326,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 			opt.checkSum = true
 			sums = hasher.Sums()
 		}
-		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, sums, fdst)
+		src := object.NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, sums, fdst).WithMetadata(meta)
 		if !equal(ctx, src, dst, opt) {
 			err = fmt.Errorf("corrupted on transfer")
 			err = fs.CountError(err)
@@ -1401,7 +1340,7 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	buf := make([]byte, ci.StreamingUploadCutoff)
 	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
 		fs.Debugf(fdst, "File to upload is small (%d bytes), uploading instead of streaming", n)
-		src := object.NewMemoryObject(dstFileName, modTime, buf[:n])
+		src := object.NewMemoryObject(dstFileName, modTime, buf[:n]).WithMetadata(meta)
 		return Copy(ctx, fdst, nil, dstFileName, src)
 	}
 
@@ -1430,11 +1369,11 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 
 	if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 		// prevents "broken pipe" errors
-		_, err = io.Copy(ioutil.Discard, in)
+		_, err = io.Copy(io.Discard, in)
 		return nil, err
 	}
 
-	objInfo := object.NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
+	objInfo := object.NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil).WithMetadata(meta)
 	if dst, err = fStreamTo.Features().PutStream(ctx, in, objInfo, options...); err != nil {
 		return dst, err
 	}
@@ -1443,7 +1382,22 @@ func Rcat(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser,
 	}
 	if !canStream {
 		// copy dst (which is the local object we have just streamed to) to the remote
-		return Copy(ctx, fdst, nil, dstFileName, dst)
+		newCtx := ctx
+		if ci.Metadata && len(meta) != 0 {
+			// If we have metadata and we are setting it then use
+			// the --metadataset mechanism to supply it to Copy
+			var newCi *fs.ConfigInfo
+			newCtx, newCi = fs.AddConfig(ctx)
+			if len(newCi.MetadataSet) == 0 {
+				newCi.MetadataSet = meta
+			} else {
+				var newMeta fs.Metadata
+				newMeta.Merge(meta)
+				newMeta.Merge(newCi.MetadataSet) // --metadata-set takes priority
+				newCi.MetadataSet = newMeta
+			}
+		}
+		return Copy(newCtx, fdst, nil, dstFileName, dst)
 	}
 	return dst, nil
 }
@@ -1725,7 +1679,7 @@ func NeedTransfer(ctx context.Context, dst, src fs.Object) bool {
 
 // RcatSize reads data from the Reader until EOF and uploads it to a file on remote.
 // Pass in size >=0 if known, <0 if not known
-func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modTime time.Time) (dst fs.Object, err error) {
+func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadCloser, size int64, modTime time.Time, meta fs.Metadata) (dst fs.Object, err error) {
 	var obj fs.Object
 
 	if size >= 0 {
@@ -1735,16 +1689,16 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		defer func() {
 			tr.Done(ctx, err)
 		}()
-		body := ioutil.NopCloser(in) // we let the server close the body
-		in := tr.Account(ctx, body)  // account the transfer (no buffering)
+		body := io.NopCloser(in)    // we let the server close the body
+		in := tr.Account(ctx, body) // account the transfer (no buffering)
 
 		if SkipDestructive(ctx, dstFileName, "upload from pipe") {
 			// prevents "broken pipe" errors
-			_, err = io.Copy(ioutil.Discard, in)
+			_, err = io.Copy(io.Discard, in)
 			return nil, err
 		}
 
-		info := object.NewStaticObjectInfo(dstFileName, modTime, size, true, nil, fdst)
+		info := object.NewStaticObjectInfo(dstFileName, modTime, size, true, nil, fdst).WithMetadata(meta)
 		obj, err = fdst.Put(ctx, in, info)
 		if err != nil {
 			fs.Errorf(dstFileName, "Post request put error: %v", err)
@@ -1753,7 +1707,7 @@ func RcatSize(ctx context.Context, fdst fs.Fs, dstFileName string, in io.ReadClo
 		}
 	} else {
 		// Size unknown use Rcat
-		obj, err = Rcat(ctx, fdst, dstFileName, in, modTime)
+		obj, err = Rcat(ctx, fdst, dstFileName, in, modTime, meta)
 		if err != nil {
 			fs.Errorf(dstFileName, "Post request rcat error: %v", err)
 
@@ -1812,7 +1766,7 @@ func CopyURL(ctx context.Context, fdst fs.Fs, dstFileName string, url string, au
 				return errors.New("CopyURL failed: file already exist")
 			}
 		}
-		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime)
+		dst, err = RcatSize(ctx, fdst, dstFileName, in, size, modTime, nil)
 		return err
 	})
 	return dst, err

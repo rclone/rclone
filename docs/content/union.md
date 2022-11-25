@@ -1,6 +1,7 @@
 ---
 title: "Union"
 description: "Remote Unification"
+versionIntroduced: "v1.44"
 ---
 
 # {{< icon "fa fa-link" >}} Union

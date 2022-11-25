@@ -272,11 +272,25 @@ func (item *Item) _truncate(size int64) (err error) {
 		}
 	}
 
-	fs.Debugf(item.name, "vfs cache: truncate to size=%d", size)
+	// Check to see what the current size is, and don't truncate
+	// if it is already the correct size.
+	//
+	// Apparently Windows Defender likes to check executables each
+	// time they are modified, and truncating a file to its
+	// existing size is enough to trigger the Windows Defender
+	// scan. This was causing a big slowdown for operations which
+	// opened and closed the file a lot, such as looking at
+	// properties on an executable.
+	fi, err := fd.Stat()
+	if err == nil && fi.Size() == size {
+		fs.Debugf(item.name, "vfs cache: truncate to size=%d (not needed as size correct)", size)
+	} else {
+		fs.Debugf(item.name, "vfs cache: truncate to size=%d", size)
 
-	err = fd.Truncate(size)
-	if err != nil {
-		return fmt.Errorf("vfs cache: truncate: %w", err)
+		err = fd.Truncate(size)
+		if err != nil {
+			return fmt.Errorf("vfs cache: truncate: %w", err)
+		}
 	}
 
 	item.info.Size = size
@@ -460,7 +474,9 @@ func (item *Item) _createFile(osPath string) (err error) {
 		return errors.New("vfs cache item: internal error: didn't Close file")
 	}
 	item.modified = false
+	// t0 := time.Now()
 	fd, err := file.OpenFile(osPath, os.O_RDWR, 0600)
+	// fs.Debugf(item.name, "OpenFile took %v", time.Since(t0))
 	if err != nil {
 		return fmt.Errorf("vfs cache item: open failed: %w", err)
 	}
@@ -590,20 +606,25 @@ func (item *Item) _store(ctx context.Context, storeFn StoreFn) (err error) {
 		item._updateFingerprint()
 	}
 
-	item.info.Dirty = false
-	err = item._save()
-	if err != nil {
-		fs.Errorf(item.name, "vfs cache: failed to write metadata file: %v", err)
-	}
+	// Write the object back to the VFS layer before we mark it as
+	// clean, otherwise it will become eligible for removal which
+	// can cause a deadlock
 	if storeFn != nil && item.o != nil {
 		fs.Debugf(item.name, "vfs cache: writeback object to VFS layer")
-		// Write the object back to the VFS layer as last
-		// thing we do with mutex unlocked
+		// Write the object back to the VFS layer last with mutex unlocked
 		o := item.o
 		item.mu.Unlock()
 		storeFn(o)
 		item.mu.Lock()
 	}
+
+	// Show item is clean and is elegible for cache removal
+	item.info.Dirty = false
+	err = item._save()
+	if err != nil {
+		fs.Errorf(item.name, "vfs cache: failed to write metadata file: %v", err)
+	}
+
 	return nil
 }
 

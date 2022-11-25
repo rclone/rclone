@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -468,7 +467,7 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 	}
 
 	fs.Debugf(f, "Target remote doesn't support streaming uploads, creating temporary local file")
-	tempFile, err := ioutil.TempFile("", "rclone-press-")
+	tempFile, err := os.CreateTemp("", "rclone-press-")
 	defer func() {
 		// these errors should be relatively uncritical and the upload should've succeeded so it's okay-ish
 		// to ignore them
@@ -546,8 +545,8 @@ func (f *Fs) putCompress(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 	}
 
 	// Transfer the data
-	o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), ioutil.NopCloser(wrappedIn), src.ModTime(ctx), options)
-	//o, err := operations.Rcat(ctx, f.Fs, makeDataName(src.Remote(), src.Size(), f.mode), ioutil.NopCloser(wrappedIn), src.ModTime(ctx))
+	o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx), options)
+	//o, err := operations.Rcat(ctx, f.Fs, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx))
 	if err != nil {
 		if o != nil {
 			removeErr := o.Remove(ctx)

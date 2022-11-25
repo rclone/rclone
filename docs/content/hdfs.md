@@ -1,6 +1,7 @@
 ---
 title: "HDFS Remote"
 description: "Remote for Hadoop Distributed Filesystem"
+versionIntroduced: "v1.54.0"
 ---
 
 # {{< icon "fa fa-globe" >}} HDFS

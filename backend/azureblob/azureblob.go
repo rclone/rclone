@@ -12,9 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -88,6 +88,15 @@ Leave blank normally. Needed only if you want to use a service principal instead
 
 See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 `,
+		}, {
+			Name: "env_auth",
+			Help: `Read credentials from runtime (environment variables).
+
+Pull credentials from AZURE_TENANT_ID and AZURE_CLIENT_{ID,SECRET} environment vars.
+See EnvironmentCredential in the Azure docs for more info.
+
+Other authentication methods will, if specified, override this flag.`,
+			Default: false,
 		}, {
 			Name: "key",
 			Help: "Storage Account Key.\n\nLeave blank to use SAS URL or Emulator.",
@@ -270,6 +279,7 @@ type Options struct {
 	Account              string               `config:"account"`
 	ServicePrincipalFile string               `config:"service_principal_file"`
 	Key                  string               `config:"key"`
+	EnvAuth              bool                 `config:"env_auth"`
 	UseMSI               bool                 `config:"use_msi"`
 	MSIObjectID          string               `config:"msi_object_id"`
 	MSIClientID          string               `config:"msi_client_id"`
@@ -467,12 +477,8 @@ type servicePrincipalCredentials struct {
 const azureActiveDirectoryEndpoint = "https://login.microsoftonline.com/"
 const azureStorageEndpoint = "https://storage.azure.com/"
 
-// newServicePrincipalTokenRefresher takes the client ID and secret, and returns a refresh-able access token.
-func newServicePrincipalTokenRefresher(ctx context.Context, credentialsData []byte) (azblob.TokenRefresher, error) {
-	var spCredentials servicePrincipalCredentials
-	if err := json.Unmarshal(credentialsData, &spCredentials); err != nil {
-		return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
-	}
+// newServicePrincipalTokenRefresher takes a servicePrincipalCredentials structure and returns a refresh-able access token.
+func newServicePrincipalTokenRefresher(ctx context.Context, spCredentials servicePrincipalCredentials) (azblob.TokenRefresher, error) {
 	oauthConfig, err := adal.NewOAuthConfig(azureActiveDirectoryEndpoint, spCredentials.Tenant)
 	if err != nil {
 		return nil, fmt.Errorf("error creating oauth config: %w", err)
@@ -595,7 +601,15 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	)
 	switch {
 	case opt.UseEmulator:
-		credential, err := azblob.NewSharedKeyCredential(emulatorAccount, emulatorAccountKey)
+		var actualEmulatorAccount = emulatorAccount
+		if opt.Account != "" {
+			actualEmulatorAccount = opt.Account
+		}
+		var actualEmulatorKey = emulatorAccountKey
+		if opt.Key != "" {
+			actualEmulatorKey = opt.Key
+		}
+		credential, err := azblob.NewSharedKeyCredential(actualEmulatorAccount, actualEmulatorKey)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse credentials: %w", err)
 		}
@@ -710,19 +724,32 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		} else {
 			serviceURL = azblob.NewServiceURL(*u, pipeline)
 		}
-	case opt.ServicePrincipalFile != "":
+	case opt.ServicePrincipalFile != "" || opt.EnvAuth:
 		// Create a standard URL.
 		u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
 		if err != nil {
 			return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
 		}
-		// Try loading service principal credentials from file.
-		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
-		if err != nil {
-			return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
+		var spCredentials servicePrincipalCredentials
+		if opt.ServicePrincipalFile != "" {
+			// Try loading service principal credentials from file.
+			loadedCreds, err := os.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
+			if err != nil {
+				return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
+			}
+
+			if err := json.Unmarshal(loadedCreds, &spCredentials); err != nil {
+				return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
+			}
+		} else {
+			spCredentials = servicePrincipalCredentials{
+				Tenant:   os.Getenv("AZURE_TENANT_ID"),
+				AppID:    os.Getenv("AZURE_CLIENT_ID"),
+				Password: os.Getenv("AZURE_CLIENT_SECRET"),
+			}
 		}
 		// Create a token refresher from service principal credentials.
-		tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, loadedCreds)
+		tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, spCredentials)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create a service principal token: %w", err)
 		}
@@ -1674,6 +1701,26 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 			} else {
 				fs.Debugf(o, "Failed to decode %q as MD5: %v", sourceMD5, err)
 			}
+		}
+	}
+
+	// Apply upload options (also allows one to overwrite content-type)
+	for _, option := range options {
+		key, value := option.Header()
+		lowerKey := strings.ToLower(key)
+		switch lowerKey {
+		case "":
+			// ignore
+		case "cache-control":
+			httpHeaders.CacheControl = value
+		case "content-disposition":
+			httpHeaders.ContentDisposition = value
+		case "content-encoding":
+			httpHeaders.ContentEncoding = value
+		case "content-language":
+			httpHeaders.ContentLanguage = value
+		case "content-type":
+			httpHeaders.ContentType = value
 		}
 	}
 

@@ -1,6 +1,7 @@
 ---
 title: "Microsoft OneDrive"
 description: "Rclone docs for Microsoft OneDrive"
+versionIntroduced: "v1.24"
 ---
 
 # {{< icon "fab fa-windows" >}} Microsoft OneDrive

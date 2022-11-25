@@ -26,7 +26,7 @@ For the MD5 and SHA1 algorithms there are also dedicated commands,
 
 This command can also hash data received on standard input (stdin),
 by not passing a remote:path, or by passing a hyphen as remote:path
-when there is data to read (if not, the hypen will be treated literaly,
+when there is data to read (if not, the hyphen will be treated literally,
 as a relative path).
 
 Run without a hash to see the list of all supported hashes, e.g.

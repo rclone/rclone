@@ -60,6 +60,10 @@ of that with the CA certificate.  `--key` should be the PEM encoded
 private key and `--client-ca` should be the PEM encoded client
 certificate authority certificate.
 
+--min-tls-version is minimum TLS version that is acceptable. Valid
+  values are "tls1.0", "tls1.1", "tls1.2" and "tls1.3" (default
+  "tls1.0").
+
 ### Template
 
 `--template` allows a user to specify a custom markup template for HTTP
@@ -446,6 +450,7 @@ rclone serve http remote:path [flags]
       --htpasswd string                        A htpasswd file - if not provided no authentication is done
       --key string                             SSL PEM Private key
       --max-header-bytes int                   Maximum size of request header (default 4096)
+      --min-tls-version string                 Minimum TLS version that is acceptable (default "tls1.0")
       --no-checksum                            Don't compare checksums on up/download
       --no-modtime                             Don't read/write the modification time (can speed things up)
       --no-seek                                Don't allow seeking in files

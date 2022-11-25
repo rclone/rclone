@@ -125,9 +125,9 @@ The simplest fix is to run
 Fetch the correct binary for your processor type by clicking on these
 links. If not sure, use the first link.
 
-- [Intel/AMD - 64 Bit](https://downloads.rclone.org/rclone-current-linux-amd64.zip)
-- [Intel/AMD - 32 Bit](https://downloads.rclone.org/rclone-current-linux-386.zip)
-- [ARM - 64 Bit](https://downloads.rclone.org/rclone-current-linux-arm64.zip)
+- [Intel/AMD - 64 Bit](https://downloads.rclone.org/rclone-current-windows-amd64.zip)
+- [Intel/AMD - 32 Bit](https://downloads.rclone.org/rclone-current-windows-386.zip)
+- [ARM - 64 Bit](https://downloads.rclone.org/rclone-current-windows-arm64.zip)
 
 Open this file in the Explorer and extract `rclone.exe`. Rclone is a
 portable executable so you can place it wherever is convenient.

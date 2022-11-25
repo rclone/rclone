@@ -631,7 +631,7 @@ func (f *Fs) put(ctx context.Context, in io.Reader, src fs.ObjectInfo, stream bo
 	if err != nil {
 		return nil, err
 	}
-	uSrc := operations.NewOverrideRemote(src, uRemote)
+	uSrc := fs.NewOverrideRemote(src, uRemote)
 	var o fs.Object
 	if stream {
 		o, err = u.f.Features().PutStream(ctx, in, uSrc, options...)

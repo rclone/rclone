@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -29,7 +28,7 @@ var (
 
 func TestNewAccountSizeName(t *testing.T) {
 	ctx := context.Background()
-	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+	in := io.NopCloser(bytes.NewBuffer([]byte{1}))
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(context.Background(), stats, in, 1, "test")
 	assert.Equal(t, in, acc.in)
@@ -44,7 +43,7 @@ func TestNewAccountSizeName(t *testing.T) {
 
 func TestAccountWithBuffer(t *testing.T) {
 	ctx := context.Background()
-	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+	in := io.NopCloser(bytes.NewBuffer([]byte{1}))
 
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(ctx, stats, in, -1, "test")
@@ -68,7 +67,7 @@ func TestAccountGetUpdateReader(t *testing.T) {
 	ctx := context.Background()
 	test := func(doClose bool) func(t *testing.T) {
 		return func(t *testing.T) {
-			in := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+			in := io.NopCloser(bytes.NewBuffer([]byte{1}))
 			stats := NewStats(ctx)
 			acc := newAccountSizeName(ctx, stats, in, 1, "test")
 
@@ -80,7 +79,7 @@ func TestAccountGetUpdateReader(t *testing.T) {
 				require.NoError(t, acc.Close())
 			}
 
-			in2 := ioutil.NopCloser(bytes.NewBuffer([]byte{1}))
+			in2 := io.NopCloser(bytes.NewBuffer([]byte{1}))
 			acc.UpdateReader(ctx, in2)
 
 			assert.Equal(t, in2, acc.GetReader())
@@ -95,7 +94,7 @@ func TestAccountGetUpdateReader(t *testing.T) {
 
 func TestAccountRead(t *testing.T) {
 	ctx := context.Background()
-	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
+	in := io.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(ctx, stats, in, 1, "test")
 
@@ -137,7 +136,7 @@ func testAccountWriteTo(t *testing.T, withBuffer bool) {
 	for i := range buf {
 		buf[i] = byte(i % 251)
 	}
-	in := ioutil.NopCloser(bytes.NewBuffer(buf))
+	in := io.NopCloser(bytes.NewBuffer(buf))
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(ctx, stats, in, int64(len(buf)), "test")
 	if withBuffer {
@@ -178,7 +177,7 @@ func TestAccountWriteToWithBuffer(t *testing.T) {
 
 func TestAccountString(t *testing.T) {
 	ctx := context.Background()
-	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
+	in := io.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(ctx, stats, in, 3, "test")
 
@@ -199,13 +198,13 @@ func TestAccountString(t *testing.T) {
 // Test the Accounter interface methods on Account and accountStream
 func TestAccountAccounter(t *testing.T) {
 	ctx := context.Background()
-	in := ioutil.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
+	in := io.NopCloser(bytes.NewBuffer([]byte{1, 2, 3}))
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(ctx, stats, in, 3, "test")
 
 	assert.True(t, in == acc.OldStream())
 
-	in2 := ioutil.NopCloser(bytes.NewBuffer([]byte{2, 3, 4}))
+	in2 := io.NopCloser(bytes.NewBuffer([]byte{2, 3, 4}))
 
 	acc.SetStream(in2)
 	assert.True(t, in2 == acc.OldStream())
@@ -228,7 +227,7 @@ func TestAccountAccounter(t *testing.T) {
 	assert.Equal(t, []byte{1, 2}, buf[:n])
 
 	// Test that we can get another accountstream out
-	in3 := ioutil.NopCloser(bytes.NewBuffer([]byte{3, 1, 2}))
+	in3 := io.NopCloser(bytes.NewBuffer([]byte{3, 1, 2}))
 	r2 := as.WrapStream(in3)
 	as2, ok := r2.(Accounter)
 	require.True(t, ok)
@@ -268,7 +267,7 @@ func TestAccountMaxTransfer(t *testing.T) {
 		ci.CutoffMode = oldMode
 	}()
 
-	in := ioutil.NopCloser(bytes.NewBuffer(make([]byte, 100)))
+	in := io.NopCloser(bytes.NewBuffer(make([]byte, 100)))
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(ctx, stats, in, 1, "test")
 
@@ -312,7 +311,7 @@ func TestAccountMaxTransferWriteTo(t *testing.T) {
 		ci.CutoffMode = oldMode
 	}()
 
-	in := ioutil.NopCloser(readers.NewPatternReader(1024))
+	in := io.NopCloser(readers.NewPatternReader(1024))
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(ctx, stats, in, 1, "test")
 
@@ -326,7 +325,7 @@ func TestAccountMaxTransferWriteTo(t *testing.T) {
 func TestAccountReadCtx(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	in := ioutil.NopCloser(bytes.NewBuffer(make([]byte, 100)))
+	in := io.NopCloser(bytes.NewBuffer(make([]byte, 100)))
 	stats := NewStats(ctx)
 	acc := newAccountSizeName(ctx, stats, in, 1, "test")
 

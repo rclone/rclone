@@ -5,6 +5,116 @@ description: "Rclone Changelog"
 
 # Changelog
 
+## v1.60.1 - 2022-11-17
+
+[See commits](https://github.com/rclone/rclone/compare/v1.60.0...v1.60.1)
+
+* Bug Fixes
+    * lib/cache: Fix alias backend shutting down too soon (Nick Craig-Wood)
+    * wasm: Fix walltime link error by adding up-to-date wasm_exec.js (João Henrique Franco)
+    * docs
+        * Update faq.md with bisync (Samuel Johnson)
+        * Corrected download links in windows install docs (coultonluke)
+        * Add direct download link for windows arm64 (albertony)
+        * Remove link to rclone slack as it is no longer supported (Nick Craig-Wood)
+        * Faq: how to use a proxy server that requires a username and password (asdffdsazqqq)
+        * Oracle-object-storage: doc fix (Manoj Ghosh)
+        * Fix typo `remove` in rclone_serve_restic command (Joda Stößer)
+        * Fix character that was incorrectly interpreted as markdown (Clément Notin)
+* VFS
+    * Fix deadlock caused by cache cleaner and upload finishing (Nick Craig-Wood)
+* Local
+    * Clean absolute paths (albertony)
+    * Fix -L/--copy-links with filters missing directories (Nick Craig-Wood)
+* Mailru
+    * Note that an app password is now needed (Nick Craig-Wood)
+    * Allow timestamps to be before the epoch 1970-01-01 (Nick Craig-Wood)
+* S3
+    * Add provider quirk `--s3-might-gzip` to fix corrupted on transfer: sizes differ (Nick Craig-Wood)
+    * Allow Storj to server side copy since it seems to work now (Nick Craig-Wood)
+    * Fix for unchecked err value in s3 listv2 (Aaron Gokaslan)
+    * Add additional Wasabi locations (techknowlogick)
+* Smb
+    * Fix `Failed to sync: context canceled` at the end of syncs (Nick Craig-Wood)
+* WebDAV
+    * Fix Move/Copy/DirMove when using -server-side-across-configs (Nick Craig-Wood)
+
+## v1.60.0 - 2022-10-21
+
+[See commits](https://github.com/rclone/rclone/compare/v1.59.0...v1.60.0)
+
+* New backends
+    * [Oracle object storage](/oracleobjectstorage/) (Manoj Ghosh)
+    * [SMB](/smb/) / CIFS (Windows file sharing) (Lesmiscore)
+    * New S3 providers
+        * [IONOS Cloud Storage](/s3/#ionos) (Dmitry Deniskin)
+        * [Qiniu KODO](/s3/#qiniu) (Bachue Zhou)
+* New Features
+    * build
+        * Update to go1.19 and make go1.17 the minimum required version (Nick Craig-Wood)
+        * Install.sh: fix arm-v7 download (Ole Frost)
+    * fs: Warn the user when using an existing remote name without a colon (Nick Craig-Wood)
+    * httplib: Add `--xxx-min-tls-version` option to select minimum TLS version for HTTP servers (Robert Newson)
+    * librclone: Add PHP bindings and test program (Jordi Gonzalez Muñoz)
+    * operations
+        * Add `--server-side-across-configs` global flag for any backend (Nick Craig-Wood)
+        * Optimise `--copy-dest` and `--compare-dest` (Nick Craig-Wood)
+    * rc: add `job/stopgroup` to stop group (Evan Spensley)
+    * serve dlna
+        * Add `--announce-interval` to control SSDP Announce Interval (YanceyChiew)
+        * Add `--interface` to Specify SSDP interface names line (Simon Bos)
+        * Add support for more external subtitles (YanceyChiew)
+        * Add verification of addresses (YanceyChiew)
+    * sync: Optimise `--copy-dest` and `--compare-dest` (Nick Craig-Wood)
+    * doc updates (albertony, Alexander Knorr, anonion, João Henrique Franco, Josh Soref, Lorenzo Milesi, Marco Molteni, Mark Trolley, Ole Frost, partev, Ryan Morey, Tom Mombourquette, YFdyh000)
+* Bug Fixes
+    * filter
+        * Fix incorrect filtering with `UseFilter` context flag and wrapping backends (Nick Craig-Wood)
+        * Make sure we check `--files-from` when looking for a single file (Nick Craig-Wood)
+    * rc
+        * Fix `mount/listmounts` not returning the full Fs entered in `mount/mount` (Tom Mombourquette)
+        * Handle external unmount when mounting (Isaac Aymerich)
+        * Validate Daemon option is not set when mounting a volume via RC (Isaac Aymerich)
+    * sync: Update docs and error messages to reflect fixes to overlap checks (Nick Naumann)
+* VFS
+    * Reduce memory use by embedding `sync.Cond` (Nick Craig-Wood)
+    * Reduce memory usage by re-ordering commonly used structures (Nick Craig-Wood)
+    * Fix excess CPU used by VFS cache cleaner looping (Nick Craig-Wood)
+* Local
+    * Obey file filters in listing to fix errors on excluded files (Nick Craig-Wood)
+    * Fix "Failed to read metadata: function not implemented" on old Linux kernels (Nick Craig-Wood)
+* Compress
+    * Fix crash due to nil metadata (Nick Craig-Wood)
+    * Fix error handling to not use or return nil objects (Nick Craig-Wood)
+* Drive
+    * Make `--drive-stop-on-upload-limit` obey quota exceeded error (Steve Kowalik)
+* FTP
+    * Add `--ftp-force-list-hidden` option to show hidden items (Øyvind Heddeland Instefjord)
+    * Fix hang when using ExplicitTLS to certain servers. (Nick Craig-Wood)
+* Google Cloud Storage
+    * Add `--gcs-endpoint` flag and config parameter (Nick Craig-Wood)
+* Hubic
+    * Remove backend as service has now shut down (Nick Craig-Wood)
+* Onedrive
+    * Rename Onedrive(cn) 21Vianet to Vnet Group (Yen Hu)
+    * Disable change notify in China region since it is not supported (Nick Craig-Wood)
+* S3
+    * Implement `--s3-versions` flag to show old versions of objects if enabled (Nick Craig-Wood)
+    * Implement `--s3-version-at` flag to show versions of objects at a particular time (Nick Craig-Wood)
+    * Implement `backend versioning` command to get/set bucket versioning (Nick Craig-Wood)
+    * Implement `Purge` to purge versions and `backend cleanup-hidden` (Nick Craig-Wood)
+    * Add `--s3-decompress` flag to decompress gzip-encoded files (Nick Craig-Wood)
+    * Add `--s3-sse-customer-key-base64` to supply keys with binary data (Richard Bateman)
+    * Try to keep the maximum precision in ModTime with `--user-server-modtime` (Nick Craig-Wood)
+    * Drop binary metadata with an ERROR message as it can't be stored (Nick Craig-Wood)
+    * Add `--s3-no-system-metadata` to suppress read and write of system metadata (Nick Craig-Wood)
+* SFTP
+    * Fix directory creation races (Lesmiscore)
+* Swift
+    * Add `--swift-no-large-objects` to reduce HEAD requests (Nick Craig-Wood)
+* Union
+    * Propagate SlowHash feature to fix hasher interaction (Lesmiscore)
+
 ## v1.59.2 - 2022-09-15
 
 [See commits](https://github.com/rclone/rclone/compare/v1.59.1...v1.59.2)

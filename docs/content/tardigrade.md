@@ -1,6 +1,7 @@
 ---
 title: "Tardigrade"
 description: "Rclone docs for Tardigrade"
+versionIntroduced: "v1.52.0"
 ---
 
 # {{< icon "fas fa-dove" >}} Tardigrade

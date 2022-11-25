@@ -45,7 +45,7 @@ press '?' to toggle the help on and off. The supported keys are:
      q/ESC/^c to quit
 
 Listed files/directories may be prefixed by a one-character flag,
-some of them combined with a description in brackes at end of line.
+some of them combined with a description in brackets at end of line.
 These flags have the following meaning:
 
     e means this is an empty directory, i.e. contains no files (but

@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -1186,7 +1185,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, errors.New("can't download - no id")
 	}
 	if o.contentType == emptyMimeType {
-		return ioutil.NopCloser(bytes.NewReader([]byte{})), nil
+		return io.NopCloser(bytes.NewReader([]byte{})), nil
 	}
 	fs.FixRangeOption(options, o.size)
 	resp, err := o.fs.rpc(ctx, "getFile", params{

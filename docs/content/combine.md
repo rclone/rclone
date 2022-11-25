@@ -1,6 +1,7 @@
 ---
 title: "Combine"
 description: "Combine several remotes into one"
+versionIntroduced: "v1.59.0"
 ---
 
 # {{< icon "fa fa-folder-plus" >}} Combine

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -93,7 +92,7 @@ func writeSpecFile(addr, proto, specDir string) (string, error) {
 	}
 	specFile := filepath.Join(specDir, "rclone.spec")
 	url := fmt.Sprintf("%s://%s", proto, addr)
-	if err := ioutil.WriteFile(specFile, []byte(url), 0644); err != nil {
+	if err := os.WriteFile(specFile, []byte(url), 0644); err != nil {
 		return "", err
 	}
 	fs.Debugf(nil, "Plugin spec has been written to %s", specFile)

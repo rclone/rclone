@@ -9,7 +9,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	pathpkg "path"
@@ -152,7 +151,7 @@ func (f *vfsgen۰CompressedFile) Read(p []byte) (n int, err error) {
 	}
 	if f.grPos < f.seekPos {
 		// Fast-forward.
-		_, err = io.CopyN(ioutil.Discard, f.gr, f.seekPos-f.grPos)
+		_, err = io.CopyN(io.Discard, f.gr, f.seekPos-f.grPos)
 		if err != nil {
 			return 0, err
 		}

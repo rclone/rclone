@@ -1,6 +1,7 @@
 ---
 title: "Dropbox"
 description: "Rclone docs for Dropbox"
+versionIntroduced: "v1.02"
 ---
 
 # {{< icon "fab fa-dropbox" >}} Dropbox

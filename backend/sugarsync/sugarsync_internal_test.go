@@ -2,7 +2,7 @@ package sugarsync
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -48,7 +48,7 @@ func TestErrorHandler(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			resp := http.Response{
-				Body:       ioutil.NopCloser(bytes.NewBufferString(test.body)),
+				Body:       io.NopCloser(bytes.NewBufferString(test.body)),
 				StatusCode: test.code,
 				Status:     test.status,
 			}

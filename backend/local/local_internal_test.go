@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -150,7 +150,7 @@ func TestSymlink(t *testing.T) {
 	// Check reading the object
 	in, err := o.Open(ctx)
 	require.NoError(t, err)
-	contents, err := ioutil.ReadAll(in)
+	contents, err := io.ReadAll(in)
 	require.NoError(t, err)
 	require.Equal(t, "file.txt", string(contents))
 	require.NoError(t, in.Close())
@@ -158,7 +158,7 @@ func TestSymlink(t *testing.T) {
 	// Check reading the object with range
 	in, err = o.Open(ctx, &fs.RangeOption{Start: 2, End: 5})
 	require.NoError(t, err)
-	contents, err = ioutil.ReadAll(in)
+	contents, err = io.ReadAll(in)
 	require.NoError(t, err)
 	require.Equal(t, "file.txt"[2:5+1], string(contents))
 	require.NoError(t, in.Close())

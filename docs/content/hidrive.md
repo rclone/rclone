@@ -1,6 +1,7 @@
 ---
 title: "HiDrive"
 description: "Rclone docs for HiDrive"
+versionIntroduced: "v1.59.0"
 ---
 
 # {{< icon "fa fa-cloud" >}} HiDrive

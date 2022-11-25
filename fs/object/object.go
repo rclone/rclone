@@ -6,27 +6,38 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
 )
 
+// StaticObjectInfo is an ObjectInfo which can be constructed from scratch
+type StaticObjectInfo struct {
+	remote   string
+	modTime  time.Time
+	size     int64
+	storable bool
+	hashes   map[hash.Type]string
+	fs       fs.Info
+	meta     fs.Metadata
+	mimeType string
+}
+
 // NewStaticObjectInfo returns a static ObjectInfo
 // If hashes is nil and fs is not nil, the hash map will be replaced with
 // empty hashes of the types supported by the fs.
-func NewStaticObjectInfo(remote string, modTime time.Time, size int64, storable bool, hashes map[hash.Type]string, fs fs.Info) fs.ObjectInfo {
-	info := &staticObjectInfo{
+func NewStaticObjectInfo(remote string, modTime time.Time, size int64, storable bool, hashes map[hash.Type]string, f fs.Info) *StaticObjectInfo {
+	info := &StaticObjectInfo{
 		remote:   remote,
 		modTime:  modTime,
 		size:     size,
 		storable: storable,
 		hashes:   hashes,
-		fs:       fs,
+		fs:       f,
 	}
-	if fs != nil && hashes == nil {
-		set := fs.Hashes().Array()
+	if f != nil && hashes == nil {
+		set := f.Hashes().Array()
 		info.hashes = make(map[hash.Type]string)
 		for _, ht := range set {
 			info.hashes[ht] = ""
@@ -35,22 +46,50 @@ func NewStaticObjectInfo(remote string, modTime time.Time, size int64, storable 
 	return info
 }
 
-type staticObjectInfo struct {
-	remote   string
-	modTime  time.Time
-	size     int64
-	storable bool
-	hashes   map[hash.Type]string
-	fs       fs.Info
+// WithMetadata adds meta to the ObjectInfo
+func (i *StaticObjectInfo) WithMetadata(meta fs.Metadata) *StaticObjectInfo {
+	i.meta = meta
+	return i
 }
 
-func (i *staticObjectInfo) Fs() fs.Info                           { return i.fs }
-func (i *staticObjectInfo) Remote() string                        { return i.remote }
-func (i *staticObjectInfo) String() string                        { return i.remote }
-func (i *staticObjectInfo) ModTime(ctx context.Context) time.Time { return i.modTime }
-func (i *staticObjectInfo) Size() int64                           { return i.size }
-func (i *staticObjectInfo) Storable() bool                        { return i.storable }
-func (i *staticObjectInfo) Hash(ctx context.Context, h hash.Type) (string, error) {
+// WithMimeType adds meta to the ObjectInfo
+func (i *StaticObjectInfo) WithMimeType(mimeType string) *StaticObjectInfo {
+	i.mimeType = mimeType
+	return i
+}
+
+// Fs returns read only access to the Fs that this object is part of
+func (i *StaticObjectInfo) Fs() fs.Info {
+	return i.fs
+}
+
+// Remote returns the remote path
+func (i *StaticObjectInfo) Remote() string {
+	return i.remote
+}
+
+// String returns a description of the Object
+func (i *StaticObjectInfo) String() string {
+	return i.remote
+}
+
+// ModTime returns the modification date of the file
+func (i *StaticObjectInfo) ModTime(ctx context.Context) time.Time {
+	return i.modTime
+}
+
+// Size returns the size of the file
+func (i *StaticObjectInfo) Size() int64 {
+	return i.size
+}
+
+// Storable says whether this object can be stored
+func (i *StaticObjectInfo) Storable() bool {
+	return i.storable
+}
+
+// Hash returns the requested hash of the contents
+func (i *StaticObjectInfo) Hash(ctx context.Context, h hash.Type) (string, error) {
 	if len(i.hashes) == 0 {
 		return "", hash.ErrUnsupported
 	}
@@ -59,6 +98,24 @@ func (i *staticObjectInfo) Hash(ctx context.Context, h hash.Type) (string, error
 	}
 	return "", hash.ErrUnsupported
 }
+
+// Metadata on the object
+func (i *StaticObjectInfo) Metadata(ctx context.Context) (fs.Metadata, error) {
+	return i.meta, nil
+}
+
+// MimeType returns the content type of the Object if
+// known, or "" if not
+func (i *StaticObjectInfo) MimeType(ctx context.Context) string {
+	return i.mimeType
+}
+
+// Check interfaces
+var (
+	_ fs.ObjectInfo = (*StaticObjectInfo)(nil)
+	_ fs.Metadataer = (*StaticObjectInfo)(nil)
+	_ fs.MimeTyper  = (*StaticObjectInfo)(nil)
+)
 
 // MemoryFs is an in memory Fs, it only supports FsInfo and Put
 var MemoryFs memoryFs
@@ -134,6 +191,7 @@ type MemoryObject struct {
 	remote  string
 	modTime time.Time
 	content []byte
+	meta    fs.Metadata
 }
 
 // NewMemoryObject returns an in memory Object with the modTime and content passed in
@@ -143,6 +201,12 @@ func NewMemoryObject(remote string, modTime time.Time, content []byte) *MemoryOb
 		modTime: modTime,
 		content: content,
 	}
+}
+
+// WithMetadata adds meta to the MemoryObject
+func (o *MemoryObject) WithMetadata(meta fs.Metadata) *MemoryObject {
+	o.meta = meta
+	return o
 }
 
 // Content returns the underlying buffer
@@ -214,7 +278,7 @@ func (o *MemoryObject) Open(ctx context.Context, options ...fs.OpenOption) (io.R
 			}
 		}
 	}
-	return ioutil.NopCloser(bytes.NewBuffer(content)), nil
+	return io.NopCloser(bytes.NewBuffer(content)), nil
 }
 
 // Update in to the object with the modTime given of the given size
@@ -225,7 +289,7 @@ func (o *MemoryObject) Update(ctx context.Context, in io.Reader, src fs.ObjectIn
 	if size == 0 {
 		o.content = nil
 	} else if size < 0 || int64(cap(o.content)) < size {
-		o.content, err = ioutil.ReadAll(in)
+		o.content, err = io.ReadAll(in)
 	} else {
 		o.content = o.content[:size]
 		_, err = io.ReadFull(in, o.content)
@@ -238,3 +302,14 @@ func (o *MemoryObject) Update(ctx context.Context, in io.Reader, src fs.ObjectIn
 func (o *MemoryObject) Remove(ctx context.Context) error {
 	return errors.New("memoryObject.Remove not supported")
 }
+
+// Metadata on the object
+func (o *MemoryObject) Metadata(ctx context.Context) (fs.Metadata, error) {
+	return o.meta, nil
+}
+
+// Check interfaces
+var (
+	_ fs.Object     = (*MemoryObject)(nil)
+	_ fs.Metadataer = (*MemoryObject)(nil)
+)

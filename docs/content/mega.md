@@ -1,6 +1,7 @@
 ---
 title: "Mega"
 description: "Rclone docs for Mega"
+versionIntroduced: "v1.41"
 ---
 
 # {{< icon "fa fa-archive" >}} Mega

@@ -77,7 +77,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -479,7 +478,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to open timezone db: %w", err)
 	}
-	tzdata, err := ioutil.ReadAll(timezone)
+	tzdata, err := io.ReadAll(timezone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read timezone: %w", err)
 	}

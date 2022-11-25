@@ -1,6 +1,7 @@
 ---
 title: "Remote Control / API"
 description: "Remote controlling rclone with its API"
+versionIntroduced: "v1.40"
 ---
 
 # Remote controlling rclone with its API
@@ -40,6 +41,11 @@ SSL PEM Private key
 ### --rc-max-header-bytes=VALUE
 
 Maximum size of request header (default 4096)
+
+### --rc-min-tls-version=VALUE
+
+The minimum TLS version that is acceptable. Valid values are "tls1.0",
+"tls1.1", "tls1.2" and "tls1.3" (default "tls1.0").
 
 ### --rc-user=VALUE
 
@@ -977,6 +983,12 @@ Parameters:
 
 - jobid - id of the job (integer).
 
+### job/stopgroup: Stop all running jobs in a group {#job-stopgroup}
+
+Parameters:
+
+- group - name of the group (string).
+
 ### mount/listmounts: Show current mount points {#mount-listmounts}
 
 This shows currently mounted points, which can be used for performing an unmount.
@@ -1052,9 +1064,11 @@ Example:
 
 **Authentication is required for this call.**
 
-### mount/unmountall: Show current mount points {#mount-unmountall}
+### mount/unmountall: Unmount all active mounts {#mount-unmountall}
 
-This shows currently mounted points, which can be used for performing an unmount.
+rclone allows Linux, FreeBSD, macOS and Windows to
+mount any of Rclone's cloud storage systems as a file system with
+FUSE.
 
 This takes no parameters and returns error if unmount does not succeed.
 

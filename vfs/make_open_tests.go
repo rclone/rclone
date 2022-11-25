@@ -17,7 +17,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -196,7 +195,7 @@ type openTest struct{
 // combination of flags.  This obeys Unix semantics even on Windows.
 var openTests = []openTest{
 `)
-	f, err := ioutil.TempFile("", "open-test")
+	f, err := os.CreateTemp("", "open-test")
 	if err != nil {
 		log.Fatal(err)
 	}
