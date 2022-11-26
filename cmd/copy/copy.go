@@ -83,6 +83,9 @@ recently very efficiently like this:
 
 **Note**: Use the |--dry-run| or the |--interactive|/|-i| flag to test without copying anything.
 `, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v0.90",
+	},
 	Run: func(command *cobra.Command, args []string) {
 
 		cmd.CheckArgs(2, 2, command, args)

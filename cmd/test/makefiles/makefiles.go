@@ -74,6 +74,9 @@ func init() {
 var makefilesCmd = &cobra.Command{
 	Use:   "makefiles <dir>",
 	Short: `Make a random file hierarchy in a directory`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.55",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		commonInit()
@@ -105,6 +108,9 @@ var makefilesCmd = &cobra.Command{
 var makefileCmd = &cobra.Command{
 	Use:   "makefile <size> [<file>]+ [flags]",
 	Short: `Make files with random contents of the size given`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.59",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1e6, command, args)
 		commonInit()

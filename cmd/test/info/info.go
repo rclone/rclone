@@ -66,6 +66,9 @@ a bit of go code for each one.
 
 **NB** this can create undeletable files and other hazards - use with care
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.55",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1e6, command, args)
 		if !checkNormalization && !checkControl && !checkLength && !checkStreaming && !all {

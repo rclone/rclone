@@ -42,6 +42,9 @@ obfuscating the hyphen itself.
 If you want to encrypt the config file then please use config file
 encryption - see [rclone config](/commands/rclone_config/) for more
 info.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.36",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		var password string

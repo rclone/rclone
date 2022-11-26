@@ -38,6 +38,9 @@ by not passing a remote:path, or by passing a hyphen as remote:path
 when there is data to read (if not, the hyphen will be treated literally,
 as a relative path).
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.02",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 1, command, args)
 		if found, err := hashsum.CreateFromStdinArg(hash.MD5, args, 0); found {

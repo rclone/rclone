@@ -26,6 +26,9 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "changenotify remote:",
 	Short: `Log any change notify requests for the remote passed in.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.56",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)

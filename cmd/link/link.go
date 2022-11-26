@@ -49,6 +49,9 @@ link. Exact capabilities depend on the remote, but the link will
 always by default be created with the least constraints – e.g. no
 expiry, no password protection, accessible without account.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.41",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc, remote := cmd.NewFsFile(args[0])

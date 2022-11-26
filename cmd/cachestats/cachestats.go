@@ -25,6 +25,10 @@ var commandDefinition = &cobra.Command{
 Print cache stats for a remote in JSON format
 `,
 	Hidden: true,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+		"status":            "Deprecated",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fs.Logf(nil, `"rclone cachestats" is deprecated, use "rclone backend stats %s" instead`, args[0])

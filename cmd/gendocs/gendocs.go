@@ -53,6 +53,9 @@ var commandDefinition = &cobra.Command{
 This produces markdown docs for the rclone commands to the directory
 supplied.  These are in a format suitable for hugo to render into the
 rclone.org website.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.33",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		now := time.Now().Format(time.RFC3339)

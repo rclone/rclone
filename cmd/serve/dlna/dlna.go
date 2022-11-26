@@ -47,6 +47,9 @@ media transcoding support. This means that some players might show
 files that they are not able to play back correctly.
 
 ` + dlnaflags.Help + vfs.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.46",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)

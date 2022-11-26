@@ -157,6 +157,9 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 		Hidden: hidden,
 		Short:  `Mount the remote as file system on a mountpoint.`,
 		Long:   strings.ReplaceAll(strings.ReplaceAll(mountHelp, "|", "`"), "@", commandName) + vfs.Help,
+		Annotations: map[string]string{
+			"versionIntroduced": "v1.33",
+		},
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
 

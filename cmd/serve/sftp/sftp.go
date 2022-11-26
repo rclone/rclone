@@ -114,6 +114,9 @@ checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
 
 ` + vfs.Help + proxy.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.48",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
 		if proxyflags.Opt.AuthProxy == "" {
