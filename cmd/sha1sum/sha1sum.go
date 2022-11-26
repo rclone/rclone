@@ -41,6 +41,9 @@ as a relative path).
 This command can also hash data received on STDIN, if not passing
 a remote:path.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.27",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 1, command, args)
 		if found, err := hashsum.CreateFromStdinArg(hash.SHA1, args, 0); found {

@@ -16,6 +16,9 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "reveal password",
 	Short: `Reveal obscured password from rclone.conf`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.43",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		cmd.Run(false, false, command, func() error {

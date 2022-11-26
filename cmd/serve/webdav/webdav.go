@@ -61,6 +61,9 @@ supported hash on the backend or you can use a named hash such as
 to see the full list.
 
 ` + httplib.Help + vfs.Help + proxy.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		var f fs.Fs
 		if proxyflags.Opt.AuthProxy == "" {

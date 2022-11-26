@@ -112,6 +112,9 @@ will be shown ("2017-05-31T16:15:57+01:00").
 The whole output can be processed as a JSON blob, or alternatively it
 can be processed line by line as each item is written one to a line.
 ` + lshelp.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.37",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		var fsrc fs.Fs

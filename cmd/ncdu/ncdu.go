@@ -74,6 +74,9 @@ For a non-interactive listing of the remote, see the
 [tree](/commands/rclone_tree/) command. To just get the total size of
 the remote you can also use the [size](/commands/rclone_size/) command.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.37",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)

@@ -64,6 +64,9 @@ var cmdSelfUpdate = &cobra.Command{
 	Aliases: []string{"self-update"},
 	Short:   `Update the rclone binary.`,
 	Long:    strings.ReplaceAll(selfUpdateHelp, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.55",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		if Opt.Package == "" {

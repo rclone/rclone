@@ -99,6 +99,9 @@ rclone rc server, e.g.:
     rclone rc --loopback operations/about fs=/
 
 Use ` + "`rclone rc`" + ` to see a list of all possible commands.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.40",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1e9, command, args)
 		cmd.Run(false, false, command, func() error {

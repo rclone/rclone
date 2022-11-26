@@ -112,6 +112,9 @@ Then
 
 Note that hash names are case insensitive and values are output in lower case.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.41",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 2, command, args)
 		if len(args) == 0 {

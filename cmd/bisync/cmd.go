@@ -115,6 +115,9 @@ var commandDefinition = &cobra.Command{
 	Use:   "bisync remote1:path1 remote2:path2",
 	Short: shortHelp,
 	Long:  longHelp,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.58",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 2, command, args)
 		fs1, file1, fs2, file2 := cmd.NewFsSrcDstFiles(args)

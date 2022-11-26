@@ -32,6 +32,9 @@ the browser when rclone is run.
 
 See the [rc documentation](/rc/) for more info on the rc flags.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.45",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 1, command, args)
 		if rcflags.Opt.Enabled {

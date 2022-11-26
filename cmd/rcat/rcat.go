@@ -56,6 +56,9 @@ Note that the upload can also not be retried because the data is
 not kept around until the upload succeeds. If you need to transfer
 a lot of data, you're better off caching locally and then
 ` + "`rclone move`" + ` it to the destination.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.38",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 

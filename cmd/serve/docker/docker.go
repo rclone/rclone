@@ -48,7 +48,9 @@ var Command = &cobra.Command{
 	Use:   "docker",
 	Short: `Serve any remote on docker's volume plugin API.`,
 	Long:  strings.ReplaceAll(longHelp, "|", "`") + vfs.Help,
-
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.56",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
 		cmd.Run(false, false, command, func() error {
