@@ -1032,8 +1032,7 @@ outer:
 	return nil
 }
 
-// key returns a rune representing the key k. It is larger than the maximum Unicode code-point.
+// key returns a rune representing the key k. It is a negative value, to not collide with Unicode code-points.
 func key(k tcell.Key) rune {
-	// This is the maximum possible Unicode code point. Anything greater fails to compile as a Go quoted rune literal.
-	return '\U0010FFFF' + rune(k)
+	return rune(-k)
 }
