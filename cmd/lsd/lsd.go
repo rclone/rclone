@@ -49,9 +49,6 @@ Or
 If you just want the directory names use ` + "`rclone lsf --dirs-only`" + `.
 
 ` + lshelp.Help,
-	Annotations: map[string]string{
-		"versionIntroduced": "v0.90",
-	},
 	Run: func(command *cobra.Command, args []string) {
 		ci := fs.GetConfig(context.Background())
 		cmd.CheckArgs(1, 1, command, args)
