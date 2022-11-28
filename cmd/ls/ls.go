@@ -31,9 +31,6 @@ Eg
         37600 fubuwic
 
 ` + lshelp.Help,
-	Annotations: map[string]string{
-		"versionIntroduced": "v0.90",
-	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)

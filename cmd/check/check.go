@@ -155,9 +155,6 @@ to check all the data.
 If you supply the |--checkfile HASH| flag with a valid hash name,
 the |source:path| must point to a text file in the SUM format.
 `, "|", "`") + FlagsHelp,
-	Annotations: map[string]string{
-		"versionIntroduced": "v0.90",
-	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(2, 2, command, args)
 		var (

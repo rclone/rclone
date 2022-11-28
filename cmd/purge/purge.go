@@ -26,9 +26,6 @@ delete files. To delete empty directories only, use command
 **Important**: Since this can cause data loss, test first with the
 ` + "`--dry-run` or the `--interactive`/`-i`" + ` flag.
 `,
-	Annotations: map[string]string{
-		"versionIntroduced": "v0.90",
-	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDir(args)
