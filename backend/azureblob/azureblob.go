@@ -1222,6 +1222,11 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 						time.Sleep(6 * time.Second) // default 10 retries will be 60 seconds
 						f.cache.MarkDeleted(container)
 						return true, err
+					case bloberror.AuthorizationFailure:
+						// Assume that the user does not have permission to
+						// create the container and carry on anyway.
+						fs.Debugf(f, "Tried to create container but got %s error - carrying on assuming container exists", storageErr.ErrorCode)
+						return false, nil
 					}
 				}
 			}
