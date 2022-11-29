@@ -315,6 +315,15 @@ This option controls how often unused buffers will be removed from the pool.`,
 			},
 			Advanced: true,
 		}, {
+			Name: "no_check_container",
+			Help: `If set, don't attempt to check the container exists or create it.
+
+This can be useful when trying to minimise the number of transactions
+rclone does if you know the container exists already.
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
 			Name:     "no_head_object",
 			Help:     `If set, do not do HEAD before GET when getting objects.`,
 			Default:  false,
@@ -346,6 +355,7 @@ type Options struct {
 	MemoryPoolUseMmap    bool                 `config:"memory_pool_use_mmap"`
 	Enc                  encoder.MultiEncoder `config:"encoding"`
 	PublicAccess         string               `config:"public_access"`
+	NoCheckContainer     bool                 `config:"no_check_container"`
 	NoHeadObject         bool                 `config:"no_head_object"`
 }
 
@@ -1191,6 +1201,9 @@ func (f *Fs) Mkdir(ctx context.Context, dir string) error {
 
 // makeContainer creates the container if it doesn't exist
 func (f *Fs) makeContainer(ctx context.Context, container string) error {
+	if f.opt.NoCheckContainer {
+		return nil
+	}
 	return f.cache.Create(container, func() error {
 		// If this is a SAS URL limited to a container then assume it is already created
 		if f.isLimited {
@@ -1225,7 +1238,7 @@ func (f *Fs) makeContainer(ctx context.Context, container string) error {
 					case bloberror.AuthorizationFailure:
 						// Assume that the user does not have permission to
 						// create the container and carry on anyway.
-						fs.Debugf(f, "Tried to create container but got %s error - carrying on assuming container exists", storageErr.ErrorCode)
+						fs.Debugf(f, "Tried to create container but got %s error - carrying on assuming container exists. Use no_check_container to stop this check..", storageErr.ErrorCode)
 						return false, nil
 					}
 				}
