@@ -36,11 +36,14 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -48,11 +51,13 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/bloberror"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/blockblob"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
+	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/sas"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/service"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
@@ -66,6 +71,7 @@ import (
 	"github.com/rclone/rclone/fs/walk"
 	"github.com/rclone/rclone/lib/bucket"
 	"github.com/rclone/rclone/lib/encoder"
+	"github.com/rclone/rclone/lib/env"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/pool"
 	"github.com/rclone/rclone/lib/readers"
@@ -104,7 +110,32 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",
-			Help: "Storage Account Name.\n\nLeave blank to use SAS URL or Emulator.",
+			Help: `Storage Account Name.
+
+Leave blank to use SAS URL or Emulator.
+
+If this is blank then if env_auth is set it will be read from the
+environment variable AZURE_CLIENT_ID.
+`,
+		}, {
+			Name: "env_auth",
+			Help: `Read credentials from runtime (environment variables).
+
+Pull credentials from AZURE_TENANT_ID and AZURE_CLIENT_{ID,SECRET} environment vars.
+See EnvironmentCredential in the Azure docs for more info.
+
+Other authentication methods will, if specified, override this flag.`,
+			Default: false,
+		}, {
+			Name: "key",
+			Help: `Storage Account Shared Key.
+
+Leave blank to use SAS URL or Emulator.`,
+		}, {
+			Name: "sas_url",
+			Help: `SAS URL for container level access only.
+
+Leave blank if using account/key or Emulator.`,
 		}, {
 			Name: "service_principal_file",
 			Help: `Path to file containing credentials for use with a service principal.
@@ -118,21 +149,7 @@ Leave blank normally. Needed only if you want to use a service principal instead
 
 See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
 `,
-		}, {
-			Name: "env_auth",
-			Help: `Read credentials from runtime (environment variables).
-
-Pull credentials from AZURE_TENANT_ID and AZURE_CLIENT_{ID,SECRET} environment vars.
-See EnvironmentCredential in the Azure docs for more info.
-
-Other authentication methods will, if specified, override this flag.`,
-			Default: false,
-		}, {
-			Name: "key",
-			Help: "Storage Account Key.\n\nLeave blank to use SAS URL or Emulator.",
-		}, {
-			Name: "sas_url",
-			Help: "SAS URL for container level access only.\n\nLeave blank if using account/key or Emulator.",
+			Advanced: true,
 		}, {
 			Name: "use_msi",
 			Help: `Use a managed service identity to authenticate (only works in Azure).
@@ -145,7 +162,8 @@ be used by default. If the resource has no system-assigned but exactly one user-
 the user-assigned identity will be used by default. If the resource has multiple user-assigned
 identities, the identity to use must be explicitly specified using exactly one of the msi_object_id,
 msi_client_id, or msi_mi_res_id parameters.`,
-			Default: false,
+			Default:  false,
+			Advanced: true,
 		}, {
 			Name:     "msi_object_id",
 			Help:     "Object ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_mi_res_id specified.",
@@ -159,9 +177,10 @@ msi_client_id, or msi_mi_res_id parameters.`,
 			Help:     "Azure resource ID of the user-assigned MSI to use, if any.\n\nLeave blank if msi_client_id or msi_object_id specified.",
 			Advanced: true,
 		}, {
-			Name:    "use_emulator",
-			Help:    "Uses local storage emulator if provided as 'true'.\n\nLeave blank if using real azure storage endpoint.",
-			Default: false,
+			Name:     "use_emulator",
+			Help:     "Uses local storage emulator if provided as 'true'.\n\nLeave blank if using real azure storage endpoint.",
+			Default:  false,
+			Advanced: true,
 		}, {
 			Name:     "endpoint",
 			Help:     "Endpoint for the service.\n\nLeave blank normally.",
@@ -307,9 +326,9 @@ This option controls how often unused buffers will be removed from the pool.`,
 // Options defines the configuration for this backend
 type Options struct {
 	Account              string               `config:"account"`
-	ServicePrincipalFile string               `config:"service_principal_file"`
 	EnvAuth              bool                 `config:"env_auth"`
 	Key                  string               `config:"key"`
+	ServicePrincipalFile string               `config:"service_principal_file"`
 	UseMSI               bool                 `config:"use_msi"`
 	MSIObjectID          string               `config:"msi_object_id"`
 	MSIClientID          string               `config:"msi_client_id"`
@@ -485,6 +504,20 @@ type servicePrincipalCredentials struct {
 	Tenant   string `json:"tenant"`
 }
 
+// parseServicePrincipalCredentials unmarshals a service principal credentials JSON file as generated by az cli.
+func parseServicePrincipalCredentials(ctx context.Context, credentialsData []byte) (*servicePrincipalCredentials, error) {
+	var spCredentials servicePrincipalCredentials
+	if err := json.Unmarshal(credentialsData, &spCredentials); err != nil {
+		return nil, fmt.Errorf("error parsing credentials from JSON file: %w", err)
+	}
+	// TODO: support certificate credentials
+	// Validate all fields present
+	if spCredentials.AppID == "" || spCredentials.Password == "" || spCredentials.Tenant == "" {
+		return nil, fmt.Errorf("missing fields in credentials file")
+	}
+	return &spCredentials, nil
+}
+
 // setRoot changes the root of the Fs
 func (f *Fs) setRoot(root string) {
 	f.root = parsePath(root)
@@ -523,9 +556,6 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	}
 	if opt.ListChunkSize > maxListChunkSize {
 		return nil, fmt.Errorf("blob list size can't be greater than %v - was %v", maxListChunkSize, opt.ListChunkSize)
-	}
-	if opt.Endpoint == "" {
-		opt.Endpoint = storageDefaultBaseURL
 	}
 
 	if opt.AccessTier == "" {
@@ -568,236 +598,150 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		GetTier:           true,
 	}).Fill(ctx, f)
 
-	// var (
-	// 	u          *url.URL
-	// 	serviceURL azblob.ServiceURL
-	// )
-	// switch {
-	// case opt.UseEmulator:
-	// 	var actualEmulatorAccount = emulatorAccount
-	// 	if opt.Account != "" {
-	// 		actualEmulatorAccount = opt.Account
-	// 	}
-	// 	var actualEmulatorKey = emulatorAccountKey
-	// 	if opt.Key != "" {
-	// 		actualEmulatorKey = opt.Key
-	// 	}
-	// 	credential, err := azblob.NewSharedKeyCredential(actualEmulatorAccount, actualEmulatorKey)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to parse credentials: %w", err)
-	// 	}
-	// 	var actualEmulatorEndpoint = emulatorBlobEndpoint
-	// 	if opt.Endpoint != "" {
-	// 		actualEmulatorEndpoint = opt.Endpoint
-	// 	}
-	// 	u, err = url.Parse(actualEmulatorEndpoint)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
-	// 	}
-	// 	pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
-	// 	serviceURL = azblob.NewServiceURL(*u, pipeline)
-	// case opt.UseMSI:
-	// 	var token adal.Token
-	// 	var userMSI = &userMSI{}
-	// 	if len(opt.MSIClientID) > 0 || len(opt.MSIObjectID) > 0 || len(opt.MSIResourceID) > 0 {
-	// 		// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
-	// 		// Validate and ensure exactly one is set. (To do: better validation.)
-	// 		if len(opt.MSIClientID) > 0 {
-	// 			if len(opt.MSIObjectID) > 0 || len(opt.MSIResourceID) > 0 {
-	// 				return nil, errors.New("more than one user-assigned identity ID is set")
-	// 			}
-	// 			userMSI.Type = msiClientID
-	// 			userMSI.Value = opt.MSIClientID
-	// 		}
-	// 		if len(opt.MSIObjectID) > 0 {
-	// 			if len(opt.MSIClientID) > 0 || len(opt.MSIResourceID) > 0 {
-	// 				return nil, errors.New("more than one user-assigned identity ID is set")
-	// 			}
-	// 			userMSI.Type = msiObjectID
-	// 			userMSI.Value = opt.MSIObjectID
-	// 		}
-	// 		if len(opt.MSIResourceID) > 0 {
-	// 			if len(opt.MSIClientID) > 0 || len(opt.MSIObjectID) > 0 {
-	// 				return nil, errors.New("more than one user-assigned identity ID is set")
-	// 			}
-	// 			userMSI.Type = msiResourceID
-	// 			userMSI.Value = opt.MSIResourceID
-	// 		}
-	// 	} else {
-	// 		userMSI = nil
-	// 	}
-	// 	err = f.imdsPacer.Call(func() (bool, error) {
-	// 		// Retry as specified by the documentation:
-	// 		// https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-to-use-vm-token#retry-guidance
-	// 		token, err = GetMSIToken(ctx, userMSI)
-	// 		return f.shouldRetry(ctx, err)
-	// 	})
-
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
-	// 	}
-
-	// 	u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
-	// 	}
-	// 	credential := azblob.NewTokenCredential(token.AccessToken, func(credential azblob.TokenCredential) time.Duration {
-	// 		fs.Debugf(f, "Token refresher called.")
-	// 		var refreshedToken adal.Token
-	// 		err := f.imdsPacer.Call(func() (bool, error) {
-	// 			refreshedToken, err = GetMSIToken(ctx, userMSI)
-	// 			return f.shouldRetry(ctx, err)
-	// 		})
-	// 		if err != nil {
-	// 			// Failed to refresh.
-	// 			return 0
-	// 		}
-	// 		credential.SetToken(refreshedToken.AccessToken)
-	// 		now := time.Now().UTC()
-	// 		// Refresh one minute before expiry.
-	// 		refreshAt := refreshedToken.Expires().UTC().Add(-1 * time.Minute)
-	// 		fs.Debugf(f, "Acquired new token that expires at %v; refreshing in %d s", refreshedToken.Expires(),
-	// 			int(refreshAt.Sub(now).Seconds()))
-	// 		if now.After(refreshAt) {
-	// 			// Acquired a causality violation.
-	// 			return 0
-	// 		}
-	// 		return refreshAt.Sub(now)
-	// 	})
-	// 	pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
-	// 	serviceURL = azblob.NewServiceURL(*u, pipeline)
-	// case opt.Account != "" && opt.Key != "":
-	// 	credential, err := azblob.NewSharedKeyCredential(opt.Account, opt.Key)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to parse credentials: %w", err)
-	// 	}
-
-	// 	u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
-	// 	}
-	// 	pipeline := f.newPipeline(credential, azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
-	// 	serviceURL = azblob.NewServiceURL(*u, pipeline)
-	// case opt.SASURL != "":
-	// 	u, err = url.Parse(opt.SASURL)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to parse SAS URL: %w", err)
-	// 	}
-	// 	// use anonymous credentials in case of sas url
-	// 	pipeline := f.newPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}})
-	// 	// Check if we have container level SAS or account level sas
-	// 	parts := azblob.NewBlobURLParts(*u)
-	// 	if parts.ContainerName != "" {
-	// 		if f.rootContainer != "" && parts.ContainerName != f.rootContainer {
-	// 			return nil, errors.New("container name in SAS URL and container provided in command do not match")
-	// 		}
-	// 		containerURL := azblob.NewContainerURL(*u, pipeline)
-	// 		f.cntSVCcache[parts.ContainerName] = &containerURL
-	// 		f.isLimited = true
-	// 	} else {
-	// 		serviceURL = azblob.NewServiceURL(*u, pipeline)
-	// 	}
-	// case opt.ServicePrincipalFile != "":
-	// 	// Create a standard URL.
-	// 	u, err = url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
-	// 	}
-	// 	// Try loading service principal credentials from file.
-	// 	loadedCreds, err := os.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
-	// 	}
-	// 	// Create a token refresher from service principal credentials.
-	// 	tokenRefresher, err := newServicePrincipalTokenRefresher(ctx, loadedCreds)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to create a service principal token: %w", err)
-	// 	}
-	// 	options := azblob.PipelineOptions{Retry: azblob.RetryOptions{TryTimeout: maxTryTimeout}}
-	// 	pipe := f.newPipeline(azblob.NewTokenCredential("", tokenRefresher), options)
-	// 	serviceURL = azblob.NewServiceURL(*u, pipe)
-	// default:
-	// 	return nil, errors.New("no authentication method configured")
-	// }
-	//f.svcURL = &serviceURL
-
-	u, err := url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, opt.Endpoint))
-	if err != nil {
-		return nil, fmt.Errorf("failed to make azure storage url from account and endpoint: %w", err)
+	// Client options specifying our own transport
+	policyClientOptions := policy.ClientOptions{
+		Transport: newTransporter(ctx),
 	}
-	serviceURL := u.String()
-	fs.Debugf(f, "Service URL = %q", serviceURL)
+	clientOpt := service.ClientOptions{
+		ClientOptions: policyClientOptions,
+	}
 
-	// FIXME Very quick and dirty auth
-
+	// Here we auth by setting one of cred, sharedKeyCred or f.svc
 	var (
 		cred          azcore.TokenCredential
 		sharedKeyCred *service.SharedKeyCredential
 	)
-
-	if opt.EnvAuth {
-		// Read credentials from the environment
-		cred, err = azidentity.NewDefaultAzureCredential(nil)
-		if err != nil {
-			return nil, fmt.Errorf("create default azure credential failed: %w", err)
+	switch {
+	case opt.EnvAuth:
+		// Read account from environment if needed
+		if opt.Account == "" {
+			opt.Account, _ = os.LookupEnv("AZURE_CLIENT_ID")
 		}
-	} else {
-
-		// Use the config file to configure
+		// Read credentials from the environment
+		options := azidentity.DefaultAzureCredentialOptions{
+			ClientOptions: policyClientOptions,
+		}
+		cred, err = azidentity.NewDefaultAzureCredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("create azure enviroment credential failed: %w", err)
+		}
+	case opt.UseEmulator:
+		if opt.Account != "" {
+			opt.Account = emulatorAccount
+		}
+		if opt.Key == "" {
+			opt.Key = emulatorAccountKey
+		}
+		if opt.Endpoint != "" {
+			opt.Endpoint = emulatorBlobEndpoint
+		}
+		sharedKeyCred, err = service.NewSharedKeyCredential(opt.Account, opt.Key)
+		if err != nil {
+			return nil, fmt.Errorf("create new shared key credential for emulator failed: %w", err)
+		}
+	case opt.UseMSI:
+		// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
+		// Validate and ensure exactly one is set. (To do: better validation.)
+		var b2i = map[bool]int{false: 0, true: 1}
+		set := b2i[opt.MSIClientID != ""] + b2i[opt.MSIObjectID != ""] + b2i[opt.MSIResourceID != ""]
+		if set > 1 {
+			return nil, errors.New("more than one user-assigned identity ID is set")
+		}
+		var options azidentity.ManagedIdentityCredentialOptions
+		switch {
+		case opt.MSIClientID != "":
+			options.ID = azidentity.ClientID(opt.MSIClientID)
+		case opt.MSIObjectID != "":
+			// FIXME this doesn't appear to be in the new SDK?
+			return nil, fmt.Errorf("MSI object ID is currently unsupported")
+		case opt.MSIResourceID != "":
+			options.ID = azidentity.ResourceID(opt.MSIResourceID)
+		}
+		cred, err = azidentity.NewManagedIdentityCredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
+	case opt.Account != "" && opt.Key != "":
 		sharedKeyCred, err = service.NewSharedKeyCredential(opt.Account, opt.Key)
 		if err != nil {
 			return nil, fmt.Errorf("create new shared key credential failed: %w", err)
 		}
+	case opt.SASURL != "":
+		parts, err := sas.ParseURL(opt.SASURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse SAS URL: %w", err)
+		}
+		endpoint := opt.SASURL
+		containerName := parts.ContainerName
+		// Check if we have container level SAS or account level SAS
+		if containerName != "" {
+			// Container level SAS
+			if f.rootContainer != "" && containerName != f.rootContainer {
+				return nil, fmt.Errorf("container name in SAS URL (%q) and container provided in command (%q) do not match", containerName, f.rootContainer)
+			}
+			// Rewrite the endpoint string to be without the container
+			parts.ContainerName = ""
+			endpoint = parts.String()
+		}
+		f.svc, err = service.NewClientWithNoCredential(endpoint, &clientOpt)
+		if err != nil {
+			return nil, fmt.Errorf("unable to create SAS URL client: %w", err)
+		}
+		// if using Container level SAS put the container client into the cache
+		if containerName != "" {
+			_ = f.cntSVC(containerName)
+			f.isLimited = true
+		}
+	case opt.ServicePrincipalFile != "":
+		// Try loading service principal credentials from file.
+		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
+		if err != nil {
+			return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
+		}
+		parsedCreds, err := parseServicePrincipalCredentials(ctx, loadedCreds)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing service principal credentials file: %w", err)
+		}
+		options := azidentity.ClientSecretCredentialOptions{
+			ClientOptions: policyClientOptions,
+		}
+		cred, err = azidentity.NewClientSecretCredential(parsedCreds.Tenant, parsedCreds.AppID, parsedCreds.Password, &options)
+		if err != nil {
+			return nil, fmt.Errorf("error creating a client secret credential: %w", err)
+		}
+	default:
+		return nil, errors.New("no authentication method configured")
 	}
 
-	// Specify our own transport
-	clientOpt := service.ClientOptions{
-		ClientOptions: azcore.ClientOptions{
-			Transport: newTransporter(ctx),
-		},
+	// Make the client if not already created
+	if f.svc == nil {
+		// Work out what the endpoint is if it is still unset
+		if opt.Endpoint == "" {
+			if opt.Account == "" {
+				return nil, fmt.Errorf("account must be set: can't make service URL")
+			}
+			u, err := url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, storageDefaultBaseURL))
+			if err != nil {
+				return nil, fmt.Errorf("failed to make azure storage URL from account and endpoint: %w", err)
+			}
+			opt.Endpoint = u.String()
+		}
+		if sharedKeyCred != nil {
+			// Shared key cred
+			f.svc, err = service.NewClientWithSharedKeyCredential(opt.Endpoint, sharedKeyCred, &clientOpt)
+			if err != nil {
+				return nil, fmt.Errorf("create client with shared key failed: %w", err)
+			}
+		} else if cred != nil {
+			// Azidentity cred
+			f.svc, err = service.NewClient(opt.Endpoint, cred, &clientOpt)
+			if err != nil {
+				return nil, fmt.Errorf("create client failed: %w", err)
+			}
+		}
 	}
-	// azClientOpt := azblob.ClientOptions{
-	// 	ClientOptions: azcore.ClientOptions{
-	// 		Transport: clientOpt.ClientOptions.Transport,
-	// 	},
-	// }
-
-	if sharedKeyCred != nil {
-		// create a client for the specified storage account
-		client, err := service.NewClientWithSharedKeyCredential(serviceURL, sharedKeyCred, &clientOpt)
-		if err != nil {
-			return nil, fmt.Errorf("create client with shared key failed: %w", err)
-		}
-		f.svc = client
-
-		// create a client for the specified storage account
-		//
-		// Annoyingly this is the same type as f.svc just wrapped in a
-		// struct, but there is no way to create one from the other.
-		// azsvc, err := azblob.NewClientWithSharedKeyCredential(serviceURL, sharedKeyCred, &azClientOpt)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("create client failed: %w", err)
-		// }
-		// f.azsvc = azsvc
-	} else {
-		// create a client for the specified storage account
-		// azblob.ClientOptions{}
-		client, err := service.NewClient(serviceURL, cred, &clientOpt)
-		if err != nil {
-			return nil, fmt.Errorf("create client failed: %w", err)
-		}
-		f.svc = client
-
-		// create a client for the specified storage account
-		// azblob.ClientOptions{}
-		//
-		// Annoyingly this is the same type as f.svc just wrapped in a
-		// struct, but there is no way to create one from the other.
-		// azsvc, err := azblob.NewClient(serviceURL, cred, &azClientOpt)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("create client failed: %w", err)
-		// }
-		// f.azsvc = azsvc
+	if f.svc == nil {
+		return nil, fmt.Errorf("internal error: auth failed to make credentials or client")
 	}
 
 	if f.rootContainer != "" && f.rootDirectory != "" {
