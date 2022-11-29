@@ -70,7 +70,7 @@ func init() {
 When using implicit FTP over TLS the client connects using TLS
 right from the start which breaks compatibility with
 non-TLS-aware servers. This is usually served over port 990 rather
-than port 21. Cannot be used in combination with explicit FTP.`,
+than port 21. Cannot be used in combination with explicit FTPS.`,
 			Default: false,
 		}, {
 			Name: "explicit_tls",
@@ -78,7 +78,7 @@ than port 21. Cannot be used in combination with explicit FTP.`,
 
 When using explicit FTP over TLS the client explicitly requests
 security from the server in order to upgrade a plain text connection
-to an encrypted one. Cannot be used in combination with implicit FTP.`,
+to an encrypted one. Cannot be used in combination with implicit FTPS.`,
 			Default: false,
 		}, {
 			Name: "concurrency",
