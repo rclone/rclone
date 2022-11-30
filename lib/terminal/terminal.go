@@ -3,12 +3,14 @@
 package terminal
 
 import (
+	"context"
 	"io"
 	"os"
 	"runtime"
 	"sync"
 
 	colorable "github.com/mattn/go-colorable"
+	"github.com/rclone/rclone/fs"
 )
 
 // VT100 codes
@@ -73,13 +75,21 @@ var (
 // Start the terminal - must be called before use
 func Start() {
 	once.Do(func() {
+		ci := fs.GetConfig(context.Background())
+
 		f := os.Stdout
 		if !IsTerminal(int(f.Fd())) {
-			// If stdout not a tty then remove escape codes
-			Out = colorable.NewNonColorable(f)
+			// If stdout is not a tty, remove escape codes EXCEPT if terminal color mode equals "ALWAYS"
+			if ci.TerminalColorMode == fs.TerminalColorModeAlways {
+				Out = colorable.NewColorable(f)
+			} else {
+				Out = colorable.NewNonColorable(f)
+			}
 		} else if runtime.GOOS == "windows" && os.Getenv("TERM") != "" {
 			// If TERM is set just use stdout
 			Out = f
+		} else if ci.TerminalColorMode == fs.TerminalColorModeNever {
+			Out = colorable.NewNonColorable(f)
 		} else {
 			Out = colorable.NewColorable(f)
 		}
