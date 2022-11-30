@@ -116,11 +116,80 @@ MD5 hashes are stored with blobs.  However blobs that were uploaded in
 chunks only have an MD5 if the source remote was capable of MD5
 hashes, e.g. the local disk.
 
-### Authenticating with Azure Blob Storage
+### Authentication {#authentication}
 
-Rclone has 3 ways of authenticating with Azure Blob Storage:
+There are a number of ways of supplying credentials for Azure Blob
+Storage. Rclone tries them in the order of the sections below.
 
-#### Account and Key
+#### Env Auth
+
+If the `env_auth` config parameter is `true` then rclone will pull
+credentials from the environment or runtime.
+
+It tries these authentication methods in this order:
+
+1. Environment Variables
+2. Managed Service Identity Credentials
+3. Azure CLI credentials (as used by the az tool)
+
+These are described in the following sections
+
+##### Env Auth: 1. Environment Variables
+
+If `env_auth` is set and environment variables are present rclone
+authenticates a service principal with a secret or certificate, or a
+user with a password, depending on which environment variable are set.
+It reads configuration from these variables, in the following order:
+
+1. Service principal with client secret
+    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its "directory" ID.
+    - `AZURE_CLIENT_ID`: the service principal's client ID
+    - `AZURE_CLIENT_SECRET`: one of the service principal's client secrets
+2. Service principal with certificate
+    - `AZURE_TENANT_ID`: ID of the service principal's tenant. Also called its "directory" ID.
+    - `AZURE_CLIENT_ID`: the service principal's client ID
+    - `AZURE_CLIENT_CERTIFICATE_PATH`: path to a PEM or PKCS12 certificate file including the private key.
+    - `AZURE_CLIENT_CERTIFICATE_PASSWORD`: (optional) password for the certificate file.
+    - `AZURE_CLIENT_SEND_CERTIFICATE_CHAIN`: (optional) Specifies whether an authentication request will include an x5c header to support subject name / issuer based authentication. When set to "true" or "1", authentication requests include the x5c header.
+3. User with username and password
+    - `AZURE_TENANT_ID`: (optional) tenant to authenticate in. Defaults to "organizations".
+    - `AZURE_CLIENT_ID`: client ID of the application the user will authenticate to
+    - `AZURE_USERNAME`: a username (usually an email address)
+    - `AZURE_PASSWORD`: the user's password
+
+##### Env Auth: 2. Managed Service Identity Credentials
+
+When using Managed Service Identity if the VM(SS) on which this
+program is running has a system-assigned identity, it will be used by
+default. If the resource has no system-assigned but exactly one
+user-assigned identity, the user-assigned identity will be used by
+default.
+
+If the resource has multiple user-assigned identities you will need to
+unset `env_auth` and set `use_msi` instead. See the [`use_msi`
+section](#use_msi).
+
+##### Env Auth: 3. Azure CLI credentials (as used by the az tool)
+
+Credentials created with the `az` tool can be picked up using `env_auth`.
+
+For example if you were to login with a service principal like this:
+
+    az login --service-principal -u XXX -p XXX --tenant XXX
+
+Then you could access rclone resources like this:
+
+    rclone lsf :azureblob,env_auth,account=ACCOUNT:CONTAINER
+
+Or
+
+    rclone lsf --azureblob-env-auth --azureblob-acccount=ACCOUNT :azureblob:CONTAINER
+
+Which is analogous to using the `az` tool:
+
+    az storage blob list --container-name CONTAINER --account-name ACCOUNT --auth-mode login
+
+#### Account and Shared Key
 
 This is the most straight forward and least flexible way.  Just fill
 in the `account` and `key` lines and leave the rest blank.
@@ -129,7 +198,7 @@ in the `account` and `key` lines and leave the rest blank.
 
 This can be an account level SAS URL or container level SAS URL.
 
-To use it leave `account`, `key` blank and fill in `sas_url`.
+To use it leave `account` and `key` blank and fill in `sas_url`.
 
 An account level SAS URL or container level SAS URL can be obtained
 from the Azure portal or the Azure Storage Explorer.  To get a
@@ -156,6 +225,60 @@ Container level SAS URLs are useful for temporarily allowing third
 parties access to a single container or putting credentials into an
 untrusted environment such as a CI build server.
 
+#### Service principal with client secret
+
+If these variables are set, rclone will authenticate with a service principal with a client secret.
+
+- `tenant`: ID of the service principal's tenant. Also called its "directory" ID.
+- `client_id`: the service principal's client ID
+- `client_secret`: one of the service principal's client secrets
+
+The credentials can also be placed in a file using the
+`service_principal_file` configuration option.
+
+#### Service principal with certificate
+
+If these variables are set, rclone will authenticate with a service principal with certificate.
+
+- `tenant`: ID of the service principal's tenant. Also called its "directory" ID.
+- `client_id`: the service principal's client ID
+- `client_certificate_path`: path to a PEM or PKCS12 certificate file including the private key.
+- `client_certificate_password`: (optional) password for the certificate file.
+- `client_send_certificate_chain`: (optional) Specifies whether an authentication request will include an x5c header to support subject name / issuer based authentication. When set to "true" or "1", authentication requests include the x5c header.
+
+**NB** `client_certificate_password` must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+#### User with username and password
+
+If these variables are set, rclone will authenticate with username and password.
+
+- `tenant`: (optional) tenant to authenticate in. Defaults to "organizations".
+- `client_id`: client ID of the application the user will authenticate to
+- `username`: a username (usually an email address)
+- `password`: the user's password
+
+Microsoft doesn't recommend this kind of authentication, because it's
+less secure than other authentication flows. This method is not
+interactive, so it isn't compatible with any form of multi-factor
+authentication, and the application must already have user or admin
+consent. This credential can only authenticate work and school
+accounts; it can't authenticate Microsoft accounts.
+
+**NB** `password` must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+#### Managed Service Identity Credentials {#use_msi}
+
+If `use_msi` is set then managed service identity credentials are
+used. This authentication only works when running in an Azure service.
+`env_auth` needs to be unset to use this.
+
+However if you have multiple user identities to choose from these must
+be explicitly specified using exactly one of the `msi_object_id`,
+`msi_client_id`, or `msi_mi_res_id` parameters.
+
+If none of `msi_object_id`, `msi_client_id`, or `msi_mi_res_id` is
+set, this is is equivalent to using `env_auth`.
+
 {{< rem autogenerated options start" - DO NOT EDIT - instead edit fs.RegInfo in backend/azureblob/azureblob.go then run make backenddocs" >}}
 ### Standard options
 
@@ -163,9 +286,15 @@ Here are the Standard options specific to azureblob (Microsoft Azure Blob Storag
 
 #### --azureblob-account
 
-Storage Account Name.
+Azure Storage Account Name.
 
-Leave blank to use SAS URL.
+Set this to the Azure Storage Account Name in use.
+
+Leave blank to use SAS URL or Emulator, otherwise it needs to be set.
+
+If this is blank and if env_auth is set it will be read from the
+environment variable `AZURE_STORAGE_ACCOUNT_NAME` if possible.
+
 
 Properties:
 
@@ -174,32 +303,24 @@ Properties:
 - Type:        string
 - Required:    false
 
-#### --azureblob-service-principal-file
+#### --azureblob-env-auth
 
-Path to file containing credentials for use with a service principal.
+Read credentials from runtime (environment variables, CLI or MSI).
 
-Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
-
-    $ az ad sp create-for-rbac --name "<name>" \
-      --role "Storage Blob Data Owner" \
-      --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
-      > azure-principal.json
-
-See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
-
+See the [authentication docs](/azureblob#authentication) for full info.
 
 Properties:
 
-- Config:      service_principal_file
-- Env Var:     RCLONE_AZUREBLOB_SERVICE_PRINCIPAL_FILE
-- Type:        string
-- Required:    false
+- Config:      env_auth
+- Env Var:     RCLONE_AZUREBLOB_ENV_AUTH
+- Type:        bool
+- Default:     false
 
 #### --azureblob-key
 
-Storage Account Key.
+Storage Account Shared Key.
 
-Leave blank to use SAS URL.
+Leave blank to use SAS URL or Emulator.
 
 Properties:
 
@@ -218,6 +339,169 @@ Properties:
 
 - Config:      sas_url
 - Env Var:     RCLONE_AZUREBLOB_SAS_URL
+- Type:        string
+- Required:    false
+
+#### --azureblob-tenant
+
+ID of the service principal's tenant. Also called its directory ID.
+
+Set this if using
+- Service principal with client secret
+- Service principal with certificate
+- User with username and password
+
+
+Properties:
+
+- Config:      tenant
+- Env Var:     RCLONE_AZUREBLOB_TENANT
+- Type:        string
+- Required:    false
+
+#### --azureblob-client-id
+
+The ID of the client in use.
+
+Set this if using
+- Service principal with client secret
+- Service principal with certificate
+- User with username and password
+
+
+Properties:
+
+- Config:      client_id
+- Env Var:     RCLONE_AZUREBLOB_CLIENT_ID
+- Type:        string
+- Required:    false
+
+#### --azureblob-client-secret
+
+One of the service principal's client secrets
+
+Set this if using
+- Service principal with client secret
+
+
+Properties:
+
+- Config:      client_secret
+- Env Var:     RCLONE_AZUREBLOB_CLIENT_SECRET
+- Type:        string
+- Required:    false
+
+#### --azureblob-client-certificate-path
+
+Path to a PEM or PKCS12 certificate file including the private key.
+
+Set this if using
+- Service principal with certificate
+
+
+Properties:
+
+- Config:      client_certificate_path
+- Env Var:     RCLONE_AZUREBLOB_CLIENT_CERTIFICATE_PATH
+- Type:        string
+- Required:    false
+
+#### --azureblob-client-certificate-password
+
+Password for the certificate file (optional).
+
+Optionally set this if using
+- Service principal with certificate
+
+And the certificate has a password.
+
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      client_certificate_password
+- Env Var:     RCLONE_AZUREBLOB_CLIENT_CERTIFICATE_PASSWORD
+- Type:        string
+- Required:    false
+
+### Advanced options
+
+Here are the Advanced options specific to azureblob (Microsoft Azure Blob Storage).
+
+#### --azureblob-client-send-certificate-chain
+
+Send the certificate chain when using certificate auth.
+
+Specifies whether an authentication request will include an x5c header
+to support subject name / issuer based authentication. When set to
+true, authentication requests include the x5c header.
+
+Optionally set this if using
+- Service principal with certificate
+
+
+Properties:
+
+- Config:      client_send_certificate_chain
+- Env Var:     RCLONE_AZUREBLOB_CLIENT_SEND_CERTIFICATE_CHAIN
+- Type:        bool
+- Default:     false
+
+#### --azureblob-username
+
+User name (usually an email address)
+
+Set this if using
+- User with username and password
+
+
+Properties:
+
+- Config:      username
+- Env Var:     RCLONE_AZUREBLOB_USERNAME
+- Type:        string
+- Required:    false
+
+#### --azureblob-password
+
+The user's password
+
+Set this if using
+- User with username and password
+
+
+**NB** Input to this must be obscured - see [rclone obscure](/commands/rclone_obscure/).
+
+Properties:
+
+- Config:      password
+- Env Var:     RCLONE_AZUREBLOB_PASSWORD
+- Type:        string
+- Required:    false
+
+#### --azureblob-service-principal-file
+
+Path to file containing credentials for use with a service principal.
+
+Leave blank normally. Needed only if you want to use a service principal instead of interactive login.
+
+    $ az ad sp create-for-rbac --name "<name>" \
+      --role "Storage Blob Data Owner" \
+      --scopes "/subscriptions/<subscription>/resourceGroups/<resource-group>/providers/Microsoft.Storage/storageAccounts/<storage-account>/blobServices/default/containers/<container>" \
+      > azure-principal.json
+
+See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
+
+It may be more convenient to put the credentials directly into the
+rclone config file under the `client_id`, `tenant` and `client_secret`
+keys instead of setting `service_principal_file`.
+
+
+Properties:
+
+- Config:      service_principal_file
+- Env Var:     RCLONE_AZUREBLOB_SERVICE_PRINCIPAL_FILE
 - Type:        string
 - Required:    false
 
@@ -240,25 +524,6 @@ Properties:
 - Env Var:     RCLONE_AZUREBLOB_USE_MSI
 - Type:        bool
 - Default:     false
-
-#### --azureblob-use-emulator
-
-Uses local storage emulator if provided as 'true'.
-
-Leave blank if using real azure storage endpoint.
-
-Provide `account`, `key`, and `endpoint` if desired to override their _azurite_ defaults.
-
-Properties:
-
-- Config:      use_emulator
-- Env Var:     RCLONE_AZUREBLOB_USE_EMULATOR
-- Type:        bool
-- Default:     false
-
-### Advanced options
-
-Here are the Advanced options specific to azureblob (Microsoft Azure Blob Storage).
 
 #### --azureblob-msi-object-id
 
@@ -298,6 +563,19 @@ Properties:
 - Env Var:     RCLONE_AZUREBLOB_MSI_MI_RES_ID
 - Type:        string
 - Required:    false
+
+#### --azureblob-use-emulator
+
+Uses local storage emulator if provided as 'true'.
+
+Leave blank if using real azure storage endpoint.
+
+Properties:
+
+- Config:      use_emulator
+- Env Var:     RCLONE_AZUREBLOB_USE_EMULATOR
+- Type:        bool
+- Default:     false
 
 #### --azureblob-endpoint
 
@@ -502,6 +780,21 @@ Properties:
     - "container"
         - Allow full public read access for container and blob data.
 
+#### --azureblob-no-check-container
+
+If set, don't attempt to check the container exists or create it.
+
+This can be useful when trying to minimise the number of transactions
+rclone does if you know the container exists already.
+
+
+Properties:
+
+- Config:      no_check_container
+- Env Var:     RCLONE_AZUREBLOB_NO_CHECK_CONTAINER
+- Type:        bool
+- Default:     false
+
 #### --azureblob-no-head-object
 
 If set, do not do HEAD before GET when getting objects.
@@ -541,8 +834,17 @@ See [List of backends that do not support rclone about](https://rclone.org/overv
 
 ## Azure Storage Emulator Support
 
-You can run rclone with storage emulator (usually _azurite_).
+You can run rclone with the storage emulator (usually _azurite_).
 
-To do this, just set up a new remote with `rclone config` following instructions described in introduction and set `use_emulator` config as `true`. You do not need to provide default account name neither an account key. But you can override them in the _account_ and _key_ options. (Prior to v1.61 they were hard coded to _azurite_'s `devstoreaccount1`.)
+To do this, just set up a new remote with `rclone config` following
+the instructions in the introduction and set `use_emulator` in the
+advanced settings as `true`. You do not need to provide a default
+account name nor an account key. But you can override them in the
+`account` and `key` options. (Prior to v1.61 they were hard coded to
+_azurite_'s `devstoreaccount1`.)
 
-Also, if you want to access a storage emulator instance running on a different machine, you can override _Endpoint_ parameter in advanced settings, setting it to `http(s)://<host>:<port>/devstoreaccount1` (e.g. `http://10.254.2.5:10000/devstoreaccount1`).
+Also, if you want to access a storage emulator instance running on a
+different machine, you can override the `endpoint` parameter in the
+advanced settings, setting it to
+`http(s)://<host>:<port>/devstoreaccount1`
+(e.g. `http://10.254.2.5:10000/devstoreaccount1`).

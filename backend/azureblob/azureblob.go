@@ -40,7 +40,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -65,6 +64,7 @@ import (
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/config/configstruct"
+	"github.com/rclone/rclone/fs/config/obscure"
 	"github.com/rclone/rclone/fs/fserrors"
 	"github.com/rclone/rclone/fs/fshttp"
 	"github.com/rclone/rclone/fs/hash"
@@ -110,21 +110,20 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "account",
-			Help: `Storage Account Name.
+			Help: `Azure Storage Account Name.
 
-Leave blank to use SAS URL or Emulator.
+Set this to the Azure Storage Account Name in use.
 
-If this is blank then if env_auth is set it will be read from the
-environment variable AZURE_CLIENT_ID.
+Leave blank to use SAS URL or Emulator, otherwise it needs to be set.
+
+If this is blank and if env_auth is set it will be read from the
+environment variable ` + "`AZURE_STORAGE_ACCOUNT_NAME`" + ` if possible.
 `,
 		}, {
 			Name: "env_auth",
-			Help: `Read credentials from runtime (environment variables).
+			Help: `Read credentials from runtime (environment variables, CLI or MSI).
 
-Pull credentials from AZURE_TENANT_ID and AZURE_CLIENT_{ID,SECRET} environment vars.
-See EnvironmentCredential in the Azure docs for more info.
-
-Other authentication methods will, if specified, override this flag.`,
+See the [authentication docs](/azureblob#authentication) for full info.`,
 			Default: false,
 		}, {
 			Name: "key",
@@ -137,6 +136,78 @@ Leave blank to use SAS URL or Emulator.`,
 
 Leave blank if using account/key or Emulator.`,
 		}, {
+			Name: "tenant",
+			Help: `ID of the service principal's tenant. Also called its directory ID.
+
+Set this if using
+- Service principal with client secret
+- Service principal with certificate
+- User with username and password
+`,
+		}, {
+			Name: "client_id",
+			Help: `The ID of the client in use.
+
+Set this if using
+- Service principal with client secret
+- Service principal with certificate
+- User with username and password
+`,
+		}, {
+			Name: "client_secret",
+			Help: `One of the service principal's client secrets
+
+Set this if using
+- Service principal with client secret
+`,
+		}, {
+			Name: "client_certificate_path",
+			Help: `Path to a PEM or PKCS12 certificate file including the private key.
+
+Set this if using
+- Service principal with certificate
+`,
+		}, {
+			Name: "client_certificate_password",
+			Help: `Password for the certificate file (optional).
+
+Optionally set this if using
+- Service principal with certificate
+
+And the certificate has a password.
+`,
+			IsPassword: true,
+		}, {
+			Name: "client_send_certificate_chain",
+			Help: `Send the certificate chain when using certificate auth.
+
+Specifies whether an authentication request will include an x5c header
+to support subject name / issuer based authentication. When set to
+true, authentication requests include the x5c header.
+
+Optionally set this if using
+- Service principal with certificate
+`,
+			Default:  false,
+			Advanced: true,
+		}, {
+			Name: "username",
+			Help: `User name (usually an email address)
+
+Set this if using
+- User with username and password
+`,
+			Advanced: true,
+		}, {
+			Name: "password",
+			Help: `The user's password
+
+Set this if using
+- User with username and password
+`,
+			IsPassword: true,
+			Advanced:   true,
+		}, {
 			Name: "service_principal_file",
 			Help: `Path to file containing credentials for use with a service principal.
 
@@ -148,6 +219,10 @@ Leave blank normally. Needed only if you want to use a service principal instead
       > azure-principal.json
 
 See ["Create an Azure service principal"](https://docs.microsoft.com/en-us/cli/azure/create-an-azure-service-principal-azure-cli) and ["Assign an Azure role for access to blob data"](https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad-rbac-cli) pages for more details.
+
+It may be more convenient to put the credentials directly into the
+rclone config file under the ` + "`client_id`, `tenant` and `client_secret`" + `
+keys instead of setting ` + "`service_principal_file`" + `.
 `,
 			Advanced: true,
 		}, {
@@ -334,29 +409,37 @@ rclone does if you know the container exists already.
 
 // Options defines the configuration for this backend
 type Options struct {
-	Account              string               `config:"account"`
-	EnvAuth              bool                 `config:"env_auth"`
-	Key                  string               `config:"key"`
-	ServicePrincipalFile string               `config:"service_principal_file"`
-	UseMSI               bool                 `config:"use_msi"`
-	MSIObjectID          string               `config:"msi_object_id"`
-	MSIClientID          string               `config:"msi_client_id"`
-	MSIResourceID        string               `config:"msi_mi_res_id"`
-	Endpoint             string               `config:"endpoint"`
-	SASURL               string               `config:"sas_url"`
-	ChunkSize            fs.SizeSuffix        `config:"chunk_size"`
-	UploadConcurrency    int                  `config:"upload_concurrency"`
-	ListChunkSize        uint                 `config:"list_chunk"`
-	AccessTier           string               `config:"access_tier"`
-	ArchiveTierDelete    bool                 `config:"archive_tier_delete"`
-	UseEmulator          bool                 `config:"use_emulator"`
-	DisableCheckSum      bool                 `config:"disable_checksum"`
-	MemoryPoolFlushTime  fs.Duration          `config:"memory_pool_flush_time"`
-	MemoryPoolUseMmap    bool                 `config:"memory_pool_use_mmap"`
-	Enc                  encoder.MultiEncoder `config:"encoding"`
-	PublicAccess         string               `config:"public_access"`
-	NoCheckContainer     bool                 `config:"no_check_container"`
-	NoHeadObject         bool                 `config:"no_head_object"`
+	Account                    string               `config:"account"`
+	EnvAuth                    bool                 `config:"env_auth"`
+	Key                        string               `config:"key"`
+	SASURL                     string               `config:"sas_url"`
+	Tenant                     string               `config:"tenant"`
+	ClientID                   string               `config:"client_id"`
+	ClientSecret               string               `config:"client_secret"`
+	ClientCertificatePath      string               `config:"client_certificate_path"`
+	ClientCertificatePassword  string               `config:"client_certificate_password"`
+	ClientSendCertificateChain bool                 `config:"client_send_certificate_chain"`
+	Username                   string               `config:"username"`
+	Password                   string               `config:"password"`
+	ServicePrincipalFile       string               `config:"service_principal_file"`
+	UseMSI                     bool                 `config:"use_msi"`
+	MSIObjectID                string               `config:"msi_object_id"`
+	MSIClientID                string               `config:"msi_client_id"`
+	MSIResourceID              string               `config:"msi_mi_res_id"`
+	Endpoint                   string               `config:"endpoint"`
+	ChunkSize                  fs.SizeSuffix        `config:"chunk_size"`
+	UploadConcurrency          int                  `config:"upload_concurrency"`
+	ListChunkSize              uint                 `config:"list_chunk"`
+	AccessTier                 string               `config:"access_tier"`
+	ArchiveTierDelete          bool                 `config:"archive_tier_delete"`
+	UseEmulator                bool                 `config:"use_emulator"`
+	DisableCheckSum            bool                 `config:"disable_checksum"`
+	MemoryPoolFlushTime        fs.Duration          `config:"memory_pool_flush_time"`
+	MemoryPoolUseMmap          bool                 `config:"memory_pool_use_mmap"`
+	Enc                        encoder.MultiEncoder `config:"encoding"`
+	PublicAccess               string               `config:"public_access"`
+	NoCheckContainer           bool                 `config:"no_check_container"`
+	NoHeadObject               bool                 `config:"no_head_object"`
 }
 
 // Fs represents a remote azure server
@@ -625,7 +708,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	case opt.EnvAuth:
 		// Read account from environment if needed
 		if opt.Account == "" {
-			opt.Account, _ = os.LookupEnv("AZURE_CLIENT_ID")
+			opt.Account, _ = os.LookupEnv("AZURE_STORAGE_ACCOUNT_NAME")
 		}
 		// Read credentials from the environment
 		options := azidentity.DefaultAzureCredentialOptions{
@@ -636,40 +719,18 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("create azure enviroment credential failed: %w", err)
 		}
 	case opt.UseEmulator:
-		if opt.Account != "" {
+		if opt.Account == "" {
 			opt.Account = emulatorAccount
 		}
 		if opt.Key == "" {
 			opt.Key = emulatorAccountKey
 		}
-		if opt.Endpoint != "" {
+		if opt.Endpoint == "" {
 			opt.Endpoint = emulatorBlobEndpoint
 		}
 		sharedKeyCred, err = service.NewSharedKeyCredential(opt.Account, opt.Key)
 		if err != nil {
 			return nil, fmt.Errorf("create new shared key credential for emulator failed: %w", err)
-		}
-	case opt.UseMSI:
-		// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
-		// Validate and ensure exactly one is set. (To do: better validation.)
-		var b2i = map[bool]int{false: 0, true: 1}
-		set := b2i[opt.MSIClientID != ""] + b2i[opt.MSIObjectID != ""] + b2i[opt.MSIResourceID != ""]
-		if set > 1 {
-			return nil, errors.New("more than one user-assigned identity ID is set")
-		}
-		var options azidentity.ManagedIdentityCredentialOptions
-		switch {
-		case opt.MSIClientID != "":
-			options.ID = azidentity.ClientID(opt.MSIClientID)
-		case opt.MSIObjectID != "":
-			// FIXME this doesn't appear to be in the new SDK?
-			return nil, fmt.Errorf("MSI object ID is currently unsupported")
-		case opt.MSIResourceID != "":
-			options.ID = azidentity.ResourceID(opt.MSIResourceID)
-		}
-		cred, err = azidentity.NewManagedIdentityCredential(&options)
-		if err != nil {
-			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
 		}
 	case opt.Account != "" && opt.Key != "":
 		sharedKeyCred, err = service.NewSharedKeyCredential(opt.Account, opt.Key)
@@ -702,9 +763,69 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			_ = f.cntSVC(containerName)
 			f.isLimited = true
 		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.ClientSecret != "":
+		// Service principal with client secret
+		options := azidentity.ClientSecretCredentialOptions{
+			ClientOptions: policyClientOptions,
+		}
+		cred, err = azidentity.NewClientSecretCredential(opt.Tenant, opt.ClientID, opt.ClientSecret, &options)
+		if err != nil {
+			return nil, fmt.Errorf("error creating a client secret credential: %w", err)
+		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.ClientCertificatePath != "":
+		// Service principal with certificate
+		//
+		// Read the certificate
+		data, err := os.ReadFile(env.ShellExpand(opt.ClientCertificatePath))
+		if err != nil {
+			return nil, fmt.Errorf("error reading client certificate file: %w", err)
+		}
+		// NewClientCertificateCredential requires at least one *x509.Certificate, and a
+		// crypto.PrivateKey.
+		//
+		// ParseCertificates returns these given certificate data in PEM or PKCS12 format.
+		// It handles common scenarios but has limitations, for example it doesn't load PEM
+		// encrypted private keys.
+		var password []byte
+		if opt.ClientCertificatePassword != "" {
+			pw, err := obscure.Reveal(opt.Password)
+			if err != nil {
+				return nil, fmt.Errorf("certificate password decode failed - did you obscure it?: %w", err)
+			}
+			password = []byte(pw)
+		}
+		certs, key, err := azidentity.ParseCertificates(data, password)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse client certificate file: %w", err)
+		}
+		options := azidentity.ClientCertificateCredentialOptions{
+			ClientOptions:        policyClientOptions,
+			SendCertificateChain: opt.ClientSendCertificateChain,
+		}
+		cred, err = azidentity.NewClientCertificateCredential(
+			opt.Tenant, opt.ClientID, certs, key, &options,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("create azure service principal with client certificate credential failed: %w", err)
+		}
+	case opt.ClientID != "" && opt.Tenant != "" && opt.Username != "" && opt.Password != "":
+		// User with username and password
+		options := azidentity.UsernamePasswordCredentialOptions{
+			ClientOptions: policyClientOptions,
+		}
+		password, err := obscure.Reveal(opt.Password)
+		if err != nil {
+			return nil, fmt.Errorf("user password decode failed - did you obscure it?: %w", err)
+		}
+		cred, err = azidentity.NewUsernamePasswordCredential(
+			opt.Tenant, opt.ClientID, opt.Username, password, &options,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("authenticate user with password failed: %w", err)
+		}
 	case opt.ServicePrincipalFile != "":
-		// Try loading service principal credentials from file.
-		loadedCreds, err := ioutil.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
+		// Loading service principal credentials from file.
+		loadedCreds, err := os.ReadFile(env.ShellExpand(opt.ServicePrincipalFile))
 		if err != nil {
 			return nil, fmt.Errorf("error opening service principal credentials file: %w", err)
 		}
@@ -719,6 +840,28 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		if err != nil {
 			return nil, fmt.Errorf("error creating a client secret credential: %w", err)
 		}
+	case opt.UseMSI:
+		// Specifying a user-assigned identity. Exactly one of the above IDs must be specified.
+		// Validate and ensure exactly one is set. (To do: better validation.)
+		var b2i = map[bool]int{false: 0, true: 1}
+		set := b2i[opt.MSIClientID != ""] + b2i[opt.MSIObjectID != ""] + b2i[opt.MSIResourceID != ""]
+		if set > 1 {
+			return nil, errors.New("more than one user-assigned identity ID is set")
+		}
+		var options azidentity.ManagedIdentityCredentialOptions
+		switch {
+		case opt.MSIClientID != "":
+			options.ID = azidentity.ClientID(opt.MSIClientID)
+		case opt.MSIObjectID != "":
+			// FIXME this doesn't appear to be in the new SDK?
+			return nil, fmt.Errorf("MSI object ID is currently unsupported")
+		case opt.MSIResourceID != "":
+			options.ID = azidentity.ResourceID(opt.MSIResourceID)
+		}
+		cred, err = azidentity.NewManagedIdentityCredential(&options)
+		if err != nil {
+			return nil, fmt.Errorf("failed to acquire MSI token: %w", err)
+		}
 	default:
 		return nil, errors.New("no authentication method configured")
 	}
@@ -732,7 +875,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			}
 			u, err := url.Parse(fmt.Sprintf("https://%s.%s", opt.Account, storageDefaultBaseURL))
 			if err != nil {
-				return nil, fmt.Errorf("failed to make azure storage URL from account and endpoint: %w", err)
+				return nil, fmt.Errorf("failed to make azure storage URL from account: %w", err)
 			}
 			opt.Endpoint = u.String()
 		}
@@ -1776,7 +1919,7 @@ func urlEncode(in string) string {
 		if noNeedToEncode[c] {
 			_ = out.WriteByte(c)
 		} else {
-			_, _ = out.WriteString(fmt.Sprintf("%%%2X", c))
+			_, _ = out.WriteString(fmt.Sprintf("%%%02X", c))
 		}
 	}
 	return out.String()
