@@ -1821,6 +1821,16 @@ and `TMP` and `TEMP` on Windows.
 You can use the [config paths](/commands/rclone_config_paths/)
 command to see the current value.
 
+### --terminal-color-mode MODE ###
+
+Specifiy how colors (and other ANSI codes) should be handled in when printing output.
+
+`AUTO` (default) only allows ANSI codes when the output is a terminal
+
+`NEVER` never allow ANSI codes
+
+`ALWAYS` always add ANSI codes, regardless of the output format (terminal or file)
+
 ### --tpslimit float ###
 
 Limit transactions per second to this number. Default is 0 which is

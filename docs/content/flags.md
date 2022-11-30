@@ -151,6 +151,7 @@ These flags are available for every command.
       --syslog                               Use Syslog for logging
       --syslog-facility string               Facility for syslog, e.g. KERN,USER,... (default "DAEMON")
       --temp-dir string                      Directory rclone will use for temporary files (default "/tmp")
+      --terminal-color-mode                  Mode for colors (and other ANSI codes) in terminal output AUTO|ALWAYS|NEVER (default AUTO)
       --timeout duration                     IO idle timeout (default 5m0s)
       --tpslimit float                       Limit HTTP transactions per second to this
       --tpslimit-burst int                   Max burst of transactions for --tpslimit (default 1)
