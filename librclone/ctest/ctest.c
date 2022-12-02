@@ -113,6 +113,9 @@ int main(int argc, char** argv) {
     /* testCopyFile(); */
     /* testListRemotes(); */
 
+    /* testRPC("config/setpath", "{\"path\":\"/tmp/rclone.conf\"}"); */
+    /* testRPC("config/listremotes", "{}"); */
+
     RcloneFinalize();
     return EXIT_SUCCESS;
 }

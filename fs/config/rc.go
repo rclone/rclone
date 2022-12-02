@@ -217,3 +217,27 @@ func rcDelete(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 	DeleteRemote(name)
 	return nil, nil
 }
+
+func init() {
+	rc.Add(rc.Call{
+		Path:         "config/setpath",
+		Fn:           rcSetPath,
+		Title:        "Set the path of the config file",
+		AuthRequired: true,
+		Help: `
+Parameters:
+
+- path - path to the config file to use
+`,
+	})
+}
+
+// Set the config file path
+func rcSetPath(ctx context.Context, in rc.Params) (out rc.Params, err error) {
+	path, err := in.GetString("path")
+	if err != nil {
+		return nil, err
+	}
+	err = SetConfigPath(path)
+	return nil, err
+}
