@@ -52,7 +52,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.8.0
 	github.com/t3rm1n4l/go-mega v0.0.0-20200416171014-ffad7fcb44b8
 	github.com/winfsp/cgofuse v1.5.1-0.20220421173602-ce7e5a65cac7
 	github.com/xanzy/ssh-agent v0.3.1
@@ -60,21 +60,23 @@ require (
 	github.com/yunify/qingstor-sdk-go/v3 v3.2.0
 	go.etcd.io/bbolt v1.3.6
 	goftp.io/server v0.4.1
-	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
-	golang.org/x/net v0.0.0-20220607020251-c690dde0001d
-	golang.org/x/oauth2 v0.0.0-20220608161450-d0670ef3b1eb
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
-	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a
-	golang.org/x/text v0.3.7
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+	golang.org/x/net v0.1.0
+	golang.org/x/oauth2 v0.1.0
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
+	golang.org/x/sys v0.1.0
+	golang.org/x/text v0.4.0
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
-	google.golang.org/api v0.83.0
+	google.golang.org/api v0.84.0
 	gopkg.in/yaml.v2 v2.4.0
 	storj.io/uplink v1.9.0
 )
 
 require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
+	github.com/application-research/estuary-clients/go v0.0.0-20221129102826-8a9f3452ad5a // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
+	github.com/go-openapi/strfmt v0.21.3 // indirect
 	github.com/golang-jwt/jwt/v4 v4.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -86,7 +88,8 @@ require (
 	github.com/pkg/xattr v0.4.7
 	github.com/smartystreets/assertions v1.0.1 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
+	go.mongodb.org/mongo-driver v1.11.0 // indirect
 	golang.org/x/mobile v0.0.0-20220518205345-8578da9835fd
-	golang.org/x/term v0.0.0-20220526004731-065cf7ba2467
+	golang.org/x/term v0.1.0
 	lukechampine.com/blake3 v1.1.7 // indirect
 )

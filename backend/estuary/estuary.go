@@ -26,7 +26,10 @@ import (
 	"github.com/rclone/rclone/lib/dircache"
 	"github.com/rclone/rclone/lib/pacer"
 	"github.com/rclone/rclone/lib/rest"
-	//util "github.com/application-research/estuary/util"
+
+	estuaryClient "github.com/application-research/estuary-clients/go"
+
+	"github.com/go-openapi/strfmt"
 )
 
 var (
@@ -61,6 +64,7 @@ type Fs struct {
 	opt            Options
 	features       *fs.Features
 	client         *rest.Client
+	estuaryClient  *estuaryClient.APIClient
 	pacer          *fs.Pacer
 	dirCache       *dircache.DirCache
 	viewer         *ViewerResponse
@@ -205,6 +209,21 @@ func splitDir(dir string) (uuid string, path string) {
 	return
 }
 
+func getEstuaryClient(url, apiKey string) *estuaryClient.APIClient {
+	config := estuaryClient.NewConfiguration()
+	config.BasePath = url
+	config.AddDefaultHeader("Authorization", "Bearer "+apiKey)
+	return estuaryClient.NewAPIClient(config)
+}
+
+func stringToTime(dateTime string) (time.Time, error) {
+	t, err := strfmt.ParseDateTime(dateTime)
+	if err != nil {
+		return time.Time(t), nil
+	}
+	return time.Time{}, err
+}
+
 func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i fs.Fs, e error) {
 	opt := new(Options)
 	err := configstruct.Set(m, opt)
@@ -215,10 +234,11 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 	root = strings.Trim(root, "/")
 	httpClient := fshttp.NewClient(ctx)
 	f := &Fs{
-		name:   name,
-		opt:    *opt,
-		client: rest.NewClient(httpClient),
-		pacer:  fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
+		name:          name,
+		opt:           *opt,
+		client:        rest.NewClient(httpClient),
+		estuaryClient: getEstuaryClient(opt.Url, opt.Token),
+		pacer:         fs.NewPacer(ctx, pacer.NewDefault(pacer.MinSleep(minSleep), pacer.MaxSleep(maxSleep), pacer.DecayConstant(decayConstant))),
 	}
 	f.setRoot(root)
 	f.client.
@@ -388,35 +408,30 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 	}
 
 	var resp *http.Response
-	var collection Collection
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/collections/create",
-	}
-	create := CollectionCreate{
+	var collection estuaryClient.CollectionsCollection
+	create := estuaryClient.MainCreateCollectionBody{
 		Name:        leaf,
 		Description: "",
 	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, &create, &collection)
+		collection, resp, err = f.estuaryClient.CollectionsApi.CollectionsPost(ctx, create)
 		return shouldRetry(ctx, resp, err)
 	})
 	if err != nil {
 		return "", err
 	}
-	return collection.UUID, nil
+	return collection.Uuid, nil
 }
 
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
 	fs.Debugf(f, "FindLeaf pathID=%v, leaf=%v, rootCollection=%v, rootDirectory=%v", pathID, leaf, f.rootCollection, f.rootDirectory)
 	if pathID == "" { // root dir, check collections
-		var collections []Collection
+		var response *http.Response
+		var collections []estuaryClient.CollectionsCollection
 		err := f.pacer.Call(func() (bool, error) {
-			response, err := f.client.CallJSON(ctx, &rest.Opts{
-				Method: "GET",
-				Path:   "/collections/list",
-			}, nil, &collections)
-			return shouldRetry(ctx, response, err)
+			var err2 error
+			collections, response, err2 = f.estuaryClient.CollectionsApi.CollectionsGet(ctx)
+			return shouldRetry(ctx, response, err2)
 		})
 
 		if err != nil {
@@ -425,7 +440,7 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 
 		for _, collection := range collections {
 			if strings.EqualFold(collection.Name, leaf) {
-				return collection.UUID, true, nil
+				return collection.Uuid, true, nil
 			}
 		}
 
@@ -468,13 +483,11 @@ func (item *CollectionFsItem) isDir() bool {
 
 func (f *Fs) listRoot(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	var response *http.Response
-	var collections []Collection
+	var collections []estuaryClient.CollectionsCollection
 	err = f.pacer.Call(func() (bool, error) {
-		response, err = f.client.CallJSON(ctx, &rest.Opts{
-			Method: "GET",
-			Path:   "/collections/list",
-		}, nil, &collections)
-		return shouldRetry(ctx, response, err)
+		var err2 error
+		collections, response, err2 = f.estuaryClient.CollectionsApi.CollectionsGet(ctx)
+		return shouldRetry(ctx, response, err2)
 	})
 
 	if err != nil {
@@ -483,8 +496,9 @@ func (f *Fs) listRoot(ctx context.Context, dir string) (entries fs.DirEntries, e
 
 	for _, collection := range collections {
 		remote := path.Join(dir, collection.Name)
-		f.dirCache.Put(remote, collection.UUID)
-		d := fs.NewDir(remote, collection.CreatedAt).SetID(collection.UUID)
+		f.dirCache.Put(remote, collection.Uuid)
+		createdAt, _ := stringToTime(collection.CreatedAt)
+		d := fs.NewDir(remote, createdAt).SetID(collection.Uuid)
 		entries = append(entries, d)
 	}
 	return entries, nil
@@ -642,13 +656,8 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// 	return nil // TODO: this should be errorRmdirOnlyCollections but if we do that it breaks integration tests
 	// }
 	var resp *http.Response
-	var collection Collection
-	opts := rest.Opts{
-		Method: "DELETE",
-		Path:   "/collections/" + uuid,
-	}
 	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, nil, &collection)
+		_, resp, err = f.estuaryClient.CollectionsApi.CollectionsColuuidDelete(ctx, uuid)
 		return shouldRetry(ctx, resp, err)
 	})
 	return err
