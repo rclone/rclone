@@ -676,7 +676,11 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 		entry, err := c.GetEntry(f.opt.Enc.FromStandardPath(remote))
 		f.putFtpConnection(&c, err)
 		if err != nil {
-			return nil, translateErrorFile(err)
+			err = translateErrorFile(err)
+			if err == fs.ErrorObjectNotFound {
+				return nil, nil
+			}
+			return nil, err
 		}
 		if entry != nil {
 			f.entryToStandard(entry)
