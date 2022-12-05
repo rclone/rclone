@@ -673,7 +673,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 
 	// returns TRUE if MLST is supported which is required to call GetEntry
 	if c.IsTimePreciseInList() {
-		entry, err := c.GetEntry(remote)
+		entry, err := c.GetEntry(f.opt.Enc.FromStandardPath(remote))
 		f.putFtpConnection(&c, err)
 		if err != nil {
 			return nil, translateErrorFile(err)
