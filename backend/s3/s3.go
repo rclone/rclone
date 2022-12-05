@@ -3052,7 +3052,8 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		}
 		o.setMD5FromEtag(aws.StringValue(info.ETag))
 		o.bytes = aws.Int64Value(info.Size)
-		o.storageClass = info.StorageClass
+		storageClass := *info.StorageClass // To prevent reference to large XML structures
+		o.storageClass = &storageClass
 		o.versionID = versionID
 	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData(ctx) // reads info and meta, returning an error
