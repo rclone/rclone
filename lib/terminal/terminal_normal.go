@@ -34,5 +34,5 @@ func ReadPassword(fd int) ([]byte, error) {
 
 // WriteTerminalTitle writes a string to the terminal title
 func WriteTerminalTitle(title string) {
-	fmt.Printf(ChangeTitle + title + BEL)
+	fmt.Fprintf(Out, ChangeTitle + title + BEL)
 }

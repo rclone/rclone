@@ -25,9 +25,6 @@ var (
 	// When nil, no encryption will be used for saving.
 	configKey []byte
 
-	// PasswordPromptOutput is output of prompt for password
-	PasswordPromptOutput = os.Stderr
-
 	// PassConfigKeyForDaemonization if set to true, the configKey
 	// is obscured with obscure.Obscure and saved to a temp file
 	// when it is calculated from the password. The path of that

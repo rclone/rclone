@@ -62,7 +62,7 @@ func startProgress() func() {
 				printProgress("")
 				fs.LogPrint = oldLogPrint
 				operations.SyncPrintf = oldSyncPrint
-				fmt.Println("")
+				fmt.Fprintln(terminal.Out, "")
 				return
 			}
 		}

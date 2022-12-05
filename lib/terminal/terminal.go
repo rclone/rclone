@@ -68,18 +68,21 @@ const (
 var (
 	// make sure that start is only called once
 	once sync.Once
+
+	// RawOut is the underlying *os.File intended for terminal output
+	RawOut = os.Stderr
 )
 
 // Start the terminal - must be called before use
 func Start() {
 	once.Do(func() {
-		f := os.Stdout
+		f := RawOut
 		if !IsTerminal(int(f.Fd())) {
-			// If stdout not a tty then remove escape codes
+			// If output is not a tty then remove escape codes
 			Out = colorable.NewNonColorable(f)
 		} else if runtime.GOOS == "windows" && os.Getenv("TERM") != "" {
 			// If TERM is set just use stdout
-			Out = f
+			Out = os.Stdout
 		} else {
 			Out = colorable.NewColorable(f)
 		}
