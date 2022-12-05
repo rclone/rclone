@@ -27,6 +27,7 @@ These flags are available for every command.
   -c, --checksum                             Skip based on checksum (if available) & size, not mod-time & size
       --client-cert string                   Client SSL certificate (PEM) for mutual TLS auth
       --client-key string                    Client SSL private key (PEM) for mutual TLS auth
+      --color                                Define when colors (and other ANSI codes) should be shown AUTO|ALWAYS|NEVER (default AUTO)
       --compare-dest stringArray             Include additional comma separated server-side paths during comparison
       --config string                        Config file (default "$HOME/.config/rclone/rclone.conf")
       --contimeout duration                  Connect timeout (default 1m0s)
@@ -151,7 +152,6 @@ These flags are available for every command.
       --syslog                               Use Syslog for logging
       --syslog-facility string               Facility for syslog, e.g. KERN,USER,... (default "DAEMON")
       --temp-dir string                      Directory rclone will use for temporary files (default "/tmp")
-      --terminal-color-mode                  Mode for colors (and other ANSI codes) in terminal output AUTO|ALWAYS|NEVER (default AUTO)
       --timeout duration                     IO idle timeout (default 5m0s)
       --tpslimit float                       Limit HTTP transactions per second to this
       --tpslimit-burst int                   Max burst of transactions for --tpslimit (default 1)
