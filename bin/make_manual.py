@@ -49,7 +49,6 @@ docs = [
     "hdfs.md",
     "hidrive.md",
     "http.md",
-    "hubic.md",
     "internetarchive.md",
     "jottacloud.md",
     "koofr.md",
@@ -60,6 +59,7 @@ docs = [
     "azureblob.md",
     "onedrive.md",
     "opendrive.md",
+    "oracleobjectstorage.md",
     "qingstor.md",
     "sia.md",
     "swift.md",
@@ -68,6 +68,7 @@ docs = [
     "putio.md",
     "seafile.md",
     "sftp.md",
+    "smb.md",
     "storj.md",
     "sugarsync.md",
     "tardigrade.md",            # stub only to redirect to storj.md

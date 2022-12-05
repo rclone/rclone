@@ -1,6 +1,7 @@
 ---
 title: "Mega"
 description: "Rclone docs for Mega"
+versionIntroduced: "v1.41"
 ---
 
 # {{< icon "fa fa-archive" >}} Mega
@@ -110,7 +111,7 @@ Use `rclone dedupe` to fix duplicated files.
 #### Object not found
 
 If you are connecting to your Mega remote for the first time, 
-to test access and syncronisation, you may receive an error such as 
+to test access and synchronization, you may receive an error such as 
 
 ```
 Failed to create file system for "my-mega-remote:": 

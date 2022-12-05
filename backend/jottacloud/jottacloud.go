@@ -1,3 +1,4 @@
+// Package jottacloud provides an interface to the Jottacloud storage system.
 package jottacloud
 
 import (
@@ -11,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -821,7 +821,7 @@ func (f *Fs) allocatePathRaw(file string, absolute bool) string {
 func grantTypeFilter(req *http.Request) {
 	if legacyTokenURL == req.URL.String() {
 		// read the entire body
-		refreshBody, err := ioutil.ReadAll(req.Body)
+		refreshBody, err := io.ReadAll(req.Body)
 		if err != nil {
 			return
 		}
@@ -831,7 +831,7 @@ func grantTypeFilter(req *http.Request) {
 		refreshBody = []byte(strings.Replace(string(refreshBody), "grant_type=refresh_token", "grant_type=REFRESH_TOKEN", 1))
 
 		// set the new ReadCloser (with a dummy Close())
-		req.Body = ioutil.NopCloser(bytes.NewReader(refreshBody))
+		req.Body = io.NopCloser(bytes.NewReader(refreshBody))
 	}
 }
 
@@ -1417,7 +1417,7 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 	}
 	info, err := f.copyOrMove(ctx, "cp", srcObj.filePath(), remote)
 
-	// if destination was a trashed file then after a successfull copy the copied file is still in trash (bug in api?)
+	// if destination was a trashed file then after a successful copy the copied file is still in trash (bug in api?)
 	if err == nil && bool(info.Deleted) && !f.opt.TrashedOnly && info.State == "COMPLETED" {
 		fs.Debugf(src, "Server-side copied to trashed destination, restoring")
 		info, err = f.createOrUpdate(ctx, remote, srcObj.modTime, srcObj.size, srcObj.md5)
@@ -1788,7 +1788,7 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 		var tempFile *os.File
 
 		// create the cache file
-		tempFile, err = ioutil.TempFile("", cachePrefix)
+		tempFile, err = os.CreateTemp("", cachePrefix)
 		if err != nil {
 			return
 		}
@@ -1816,7 +1816,7 @@ func readMD5(in io.Reader, size, threshold int64) (md5sum string, out io.Reader,
 	} else {
 		// that's a small file, just read it into memory
 		var inData []byte
-		inData, err = ioutil.ReadAll(teeReader)
+		inData, err = io.ReadAll(teeReader)
 		if err != nil {
 			return
 		}
@@ -1913,7 +1913,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 		// copy the already uploaded bytes into the trash :)
 		var result api.UploadResponse
-		_, err = io.CopyN(ioutil.Discard, in, response.ResumePos)
+		_, err = io.CopyN(io.Discard, in, response.ResumePos)
 		if err != nil {
 			return err
 		}

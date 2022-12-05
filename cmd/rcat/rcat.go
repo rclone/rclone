@@ -1,3 +1,4 @@
+// Package rcat provides the rcat command.
 package rcat
 
 import (
@@ -55,6 +56,9 @@ Note that the upload can also not be retried because the data is
 not kept around until the upload succeeds. If you need to transfer
 a lot of data, you're better off caching locally and then
 ` + "`rclone move`" + ` it to the destination.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.38",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 
@@ -65,7 +69,7 @@ a lot of data, you're better off caching locally and then
 
 		fdst, dstFileName := cmd.NewFsDstFile(args)
 		cmd.Run(false, false, command, func() error {
-			_, err := operations.RcatSize(context.Background(), fdst, dstFileName, os.Stdin, size, time.Now())
+			_, err := operations.RcatSize(context.Background(), fdst, dstFileName, os.Stdin, size, time.Now(), nil)
 			return err
 		})
 	},

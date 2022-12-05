@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -44,7 +43,7 @@ func NewClient(c *http.Client) *Client {
 // ReadBody reads resp.Body into result, closing the body
 func ReadBody(resp *http.Response) (result []byte, err error) {
 	defer fs.CheckClose(resp.Body, &err)
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 // defaultErrorHandler doesn't attempt to parse the http body, just
@@ -419,7 +418,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 // opts.Body are set then CallJSON will do a multipart upload with a
 // file attached.  opts.MultipartContentName is the name of the
 // parameter and opts.MultipartFileName is the name of the file.  If
-// MultpartContentName is set, and request != nil is supplied, then
+// MultipartContentName is set, and request != nil is supplied, then
 // the request will be marshalled into JSON and added to the form with
 // parameter name MultipartMetadataName.
 //

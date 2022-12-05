@@ -20,7 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -150,7 +149,7 @@ type Fs struct {
 	opt             Options            // parsed options
 	features        *fs.Features       // optional features
 	m               configmap.Mapper   // to save config
-	srv             *rest.Client       // the connection to the one drive server
+	srv             *rest.Client       // the connection to the server
 	dirCache        *dircache.DirCache // Map of directory path to directory id
 	pacer           *fs.Pacer          // pacer for API calls
 	tokenMu         sync.Mutex         // hold when reading the token
@@ -843,7 +842,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 	return f.purgeCheck(ctx, dir, false)
 }
 
-// Wait for the the background task to complete if necessary
+// Wait for the background task to complete if necessary
 func (f *Fs) waitForBackgroundTask(ctx context.Context, taskID api.String) (err error) {
 	if taskID == "" || taskID == "0" {
 		// No task to wait for
@@ -1186,7 +1185,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 		return nil, errors.New("can't download - no id")
 	}
 	if o.contentType == emptyMimeType {
-		return ioutil.NopCloser(bytes.NewReader([]byte{})), nil
+		return io.NopCloser(bytes.NewReader([]byte{})), nil
 	}
 	fs.FixRangeOption(options, o.size)
 	resp, err := o.fs.rpc(ctx, "getFile", params{

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"sync"
+	"time"
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/walk"
@@ -31,6 +32,7 @@ type Dir struct {
 // in the total count. They are not included in the size, i.e. treated
 // as empty files, which means the size may be underestimated.
 type Attrs struct {
+	ModTime           time.Time
 	Size              int64
 	Count             int64
 	CountUnknownSize  int64
@@ -193,20 +195,33 @@ func (d *Dir) Attr() (size int64, count int64) {
 	return d.size, d.count
 }
 
+// attrI returns the size, count and flags for the i-th directory entry
+func (d *Dir) attrI(i int) (attrs Attrs, err error) {
+	subDir, isDir := d.getDir(i)
+	if !isDir {
+		return Attrs{time.Time{}, d.entries[i].Size(), 0, 0, false, true, d.entriesHaveErrors}, d.readError
+	}
+	if subDir == nil {
+		return Attrs{time.Time{}, 0, 0, 0, true, false, false}, nil
+	}
+	size, count := subDir.Attr()
+	return Attrs{time.Time{}, size, count, subDir.countUnknownSize, true, true, subDir.entriesHaveErrors}, subDir.readError
+}
+
 // AttrI returns the size, count and flags for the i-th directory entry
 func (d *Dir) AttrI(i int) (attrs Attrs, err error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	subDir, isDir := d.getDir(i)
+	return d.attrI(i)
+}
 
-	if !isDir {
-		return Attrs{d.entries[i].Size(), 0, 0, false, true, d.entriesHaveErrors}, d.readError
-	}
-	if subDir == nil {
-		return Attrs{0, 0, 0, true, false, false}, nil
-	}
-	size, count := subDir.Attr()
-	return Attrs{size, count, subDir.countUnknownSize, true, true, subDir.entriesHaveErrors}, subDir.readError
+// AttrWithModTimeI returns the modtime, size, count and flags for the i-th directory entry
+func (d *Dir) AttrWithModTimeI(ctx context.Context, i int) (attrs Attrs, err error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	attrs, err = d.attrI(i)
+	attrs.ModTime = d.entries[i].ModTime(ctx)
+	return
 }
 
 // Scan the Fs passed in, returning a root directory channel and an

@@ -1,3 +1,4 @@
+// Package http provides common functionality for http servers
 package http
 
 import (
@@ -59,6 +60,9 @@ The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 ` + "`--bwlimit`" + ` will be respected for file transfers.  Use ` + "`--stats`" + ` to
 control the stats printing.
 ` + httplib.Help + data.Help + auth.Help + vfs.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)

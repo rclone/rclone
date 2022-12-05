@@ -1,8 +1,7 @@
-// Package ftp implements an FTP server for rclone
-
 //go:build !plan9
 // +build !plan9
 
+// Package ftp implements an FTP server for rclone
 package ftp
 
 import (
@@ -100,6 +99,9 @@ By default this will serve files without needing a login.
 
 You can set a single username and password with the --user and --pass flags.
 ` + vfs.Help + proxy.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.44",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
 		if proxyflags.Opt.AuthProxy == "" {
@@ -154,7 +156,7 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) (*server, error) {
 	}
 	s.useTLS = s.opt.TLSKey != ""
 
-	// Check PassivePorts format since the the server library doesn't!
+	// Check PassivePorts format since the server library doesn't!
 	if !passivePortsRe.MatchString(opt.PassivePorts) {
 		return nil, fmt.Errorf("invalid format for passive ports %q", opt.PassivePorts)
 	}

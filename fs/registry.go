@@ -28,7 +28,7 @@ type RegInfo struct {
 	// Prefix for command line flags for this fs - defaults to Name if not set
 	Prefix string
 	// Create a new file system.  If root refers to an existing
-	// object, then it should return an Fs which which points to
+	// object, then it should return an Fs which points to
 	// the parent of that object and ErrorIsFile.
 	NewFs func(ctx context.Context, name string, root string, config configmap.Mapper) (Fs, error) `json:"-"`
 	// Function to call to help with config - see docs for ConfigIn for more info
@@ -179,7 +179,7 @@ func (o *Option) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// GetValue gets the current current value which is the default if not set
+// GetValue gets the current value which is the default if not set
 func (o *Option) GetValue() interface{} {
 	val := o.Value
 	if val == nil {

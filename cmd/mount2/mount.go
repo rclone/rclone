@@ -1,8 +1,7 @@
-// Package mount implements a FUSE mounting system for rclone remotes.
-
 //go:build linux || (darwin && amd64)
 // +build linux darwin,amd64
 
+// Package mount2 implements a FUSE mounting system for rclone remotes.
 package mount2
 
 import (

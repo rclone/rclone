@@ -1,6 +1,7 @@
 ---
 title: "1Fichier"
 description: "Rclone docs for 1Fichier"
+versionIntroduced: "v1.49.0"
 ---
 
 # {{< icon "fa fa-archive" >}} 1Fichier

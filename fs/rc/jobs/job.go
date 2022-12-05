@@ -1,5 +1,4 @@
-// Manage background jobs that the rc is running
-
+// Package jobs manages background jobs that the rc is running.
 package jobs
 
 import (

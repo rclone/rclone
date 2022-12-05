@@ -1,6 +1,7 @@
 ---
 title: "Alias"
 description: "Remote Aliases"
+versionIntroduced: "v1.40"
 ---
 
 # {{< icon "fa fa-link" >}} Alias
@@ -22,6 +23,11 @@ Invoking `rclone mkdir backup:../desktop` is exactly the same as invoking
 `rclone mkdir mydrive:private/backup/../desktop`.
 The empty path is not allowed as a remote. To alias the current directory
 use `.` instead.
+
+The target remote can also be a [connection string](/docs/#connection-strings). 
+This can be used to modify the config of a remote for different uses, e.g.
+the alias  `myDriveTrash` with the target remote `myDrive,trashed_only:` 
+can be used to only show the trashed files in `myDrive`.
 
 ## Configuration
 

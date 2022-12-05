@@ -56,7 +56,7 @@ If `--files-only` is not specified directories in addition to the files
 will be returned.
 
 If `--metadata` is set then an additional Metadata key will be returned.
-This will have metdata in rclone standard format as a JSON object.
+This will have metadata in rclone standard format as a JSON object.
 
 if `--stat` is set then a single JSON blob will be returned about the
 item pointed to. This will return an error if the item isn't found.
@@ -102,7 +102,7 @@ Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the re
 
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use `-R` to make them recurse.
 
-Listing a non-existent directory will produce an error except for
+Listing a nonexistent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
 the bucket-based remotes).
 

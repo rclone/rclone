@@ -3,7 +3,7 @@ package vfs
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 
@@ -168,7 +168,7 @@ func fileCheckContents(t *testing.T, file *File) {
 	fd, err := file.Open(os.O_RDONLY)
 	require.NoError(t, err)
 
-	contents, err := ioutil.ReadAll(fd)
+	contents, err := io.ReadAll(fd)
 	require.NoError(t, err)
 	assert.Equal(t, "file1 contents", string(contents))
 
@@ -217,7 +217,7 @@ func TestFileOpenReadUnknownSize(t *testing.T) {
 	assert.Equal(t, int64(0), fd.Size())
 
 	// check the contents are not empty even though size is empty
-	gotContents, err := ioutil.ReadAll(fd)
+	gotContents, err := io.ReadAll(fd)
 	require.NoError(t, err)
 	assert.Equal(t, contents, gotContents)
 	t.Logf("gotContents = %q", gotContents)

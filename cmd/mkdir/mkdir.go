@@ -1,3 +1,4 @@
+// Package mkdir provides the mkdir command.
 package mkdir
 
 import (

@@ -190,9 +190,11 @@ func (c *Cache) Rename(oldKey, newKey string) (value interface{}, found bool) {
 	c.mu.Lock()
 	if newEntry, newFound := c.cache[newKey]; newFound {
 		// If new entry is found use that
-		if _, oldFound := c.cache[oldKey]; oldFound {
-			// If there's an old entry, we drop it and also try shutdown.
-			c.finalize(c.cache[oldKey].value)
+		if oldEntry, oldFound := c.cache[oldKey]; oldFound {
+			// If there's an old entry that is different we must finalize it
+			if newEntry.value != oldEntry.value {
+				c.finalize(c.cache[oldKey].value)
+			}
 		}
 		delete(c.cache, oldKey)
 		value, found = newEntry.value, newFound

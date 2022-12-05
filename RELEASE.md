@@ -53,6 +53,14 @@ doing that so it may be necessary to roll back dependencies to the
 version specified by `make updatedirect` in order to get rclone to
 build.
 
+## Tidy beta
+
+At some point after the release run
+
+    bin/tidy-beta v1.55
+
+where the version number is that of a couple ago to remove old beta binaries.
+
 ## Making a point release
 
 If rclone needs a point release due to some horrendous bug:

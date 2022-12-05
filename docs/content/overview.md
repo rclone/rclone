@@ -32,7 +32,6 @@ Here is an overview of the major features of each cloud storage system.
 | HDFS                         | -                | R/W     | No               | No              | -         | -        |
 | HiDrive                      | HiDrive ¹²       | R/W     | No               | No              | -         | -        |
 | HTTP                         | -                | R       | No               | No              | R         | -        |
-| Hubic                        | MD5              | R/W     | No               | No              | R/W       | -        |
 | Internet Archive             | MD5, SHA1, CRC32 | R/W ¹¹  | No               | No              | -         | RWU      |
 | Jottacloud                   | MD5              | R/W     | Yes              | No              | R         | -        |
 | Koofr                        | MD5              | -       | Yes              | No              | -         | -        |
@@ -43,6 +42,7 @@ Here is an overview of the major features of each cloud storage system.
 | Microsoft OneDrive           | SHA1 ⁵           | R/W     | Yes              | No              | R         | -        |
 | OpenDrive                    | MD5              | R/W     | Yes              | Partial ⁸       | -         | -        |
 | OpenStack Swift              | MD5              | R/W     | No               | No              | R/W       | -        |
+| Oracle Object Storage        | MD5              | R/W     | No               | No              | R/W       | -        |
 | pCloud                       | MD5, SHA1 ⁷      | R       | No               | No              | W         | -        |
 | premiumize.me                | -                | -       | Yes              | No              | R         | -        |
 | put.io                       | CRC-32           | R/W     | No               | Yes             | R         | -        |
@@ -50,6 +50,7 @@ Here is an overview of the major features of each cloud storage system.
 | Seafile                      | -                | -       | No               | No              | -         | -        |
 | SFTP                         | MD5, SHA1 ²      | R/W     | Depends          | No              | -         | -        |
 | Sia                          | -                | -       | No               | No              | -         | -        |
+| SMB                          | -                | -       | Yes              | No              | -         | -        |
 | SugarSync                    | -                | -       | No               | No              | -         | -        |
 | Storj                        | -                | R       | No               | No              | -         | -        |
 | Uptobox                      | -                | -       | No               | Yes             | -         | -        |
@@ -111,7 +112,7 @@ systems they must support a common hash type.
 
 ### ModTime ###
 
-Allmost all cloud storage systems store some sort of timestamp
+Almost all cloud storage systems store some sort of timestamp
 on objects, but several of them not something that is appropriate
 to use for syncing. E.g. some backends will only write a timestamp
 that represent the time of the upload. To be relevant for syncing
@@ -483,7 +484,6 @@ upon backend-specific capabilities.
 | HDFS                         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 | HiDrive                      | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | HTTP                         | No    | No   | No   | No      | No      | No    | No           | No           | No    | Yes      |
-| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
 | Internet Archive             | No    | Yes  | No   | No      | Yes     | Yes   | No           | Yes          | Yes   | No       |
 | Jottacloud                   | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | No           | Yes          | Yes   | Yes      |
 | Koofr                        | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | Yes   | Yes      |
@@ -494,6 +494,7 @@ upon backend-specific capabilities.
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | OpenDrive                    | Yes   | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | Yes      |
 | OpenStack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No           | Yes   | No       |
+| Oracle Object Storage        | No    | Yes  | No   | No      | Yes     | Yes   | Yes          | No           | No    | No       |
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | Yes          | Yes   | Yes      |
 | premiumize.me                | Yes   | No   | Yes  | Yes     | No      | No    | No           | Yes          | Yes   | Yes      |
 | put.io                       | Yes   | No   | Yes  | Yes     | Yes     | No    | Yes          | No           | Yes   | Yes      |
@@ -501,6 +502,7 @@ upon backend-specific capabilities.
 | Seafile                      | Yes   | Yes  | Yes  | Yes     | Yes     | Yes   | Yes          | Yes          | Yes   | Yes      |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | Yes   | Yes      |
 | Sia                          | No    | No   | No   | No      | No      | No    | Yes          | No           | No    | Yes      |
+| SMB                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No           | No    | Yes      |
 | SugarSync                    | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes          | Yes          | No    | Yes      |
 | Storj                        | Yes † | No   | Yes  | No      | No      | Yes   | Yes          | No           | No    | No       |
 | Uptobox                      | No    | Yes  | Yes  | Yes     | No      | No    | No           | No           | No    | No       |
@@ -514,7 +516,7 @@ upon backend-specific capabilities.
 This deletes a directory quicker than just deleting all the files in
 the directory.
 
-† Note Swift, Hubic, and Storj implement this in order to delete
+† Note Swift and Storj implement this in order to delete
 directory markers but they don't actually have a quicker way of deleting
 files other than deleting them individually.
 

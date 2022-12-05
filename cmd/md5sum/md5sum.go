@@ -1,3 +1,4 @@
+// Package md5sum provides the md5sum command.
 package md5sum
 
 import (
@@ -34,9 +35,12 @@ to running ` + "`rclone hashsum MD5 remote:path`" + `.
 
 This command can also hash data received on standard input (stdin),
 by not passing a remote:path, or by passing a hyphen as remote:path
-when there is data to read (if not, the hypen will be treated literaly,
+when there is data to read (if not, the hyphen will be treated literally,
 as a relative path).
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.02",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(0, 1, command, args)
 		if found, err := hashsum.CreateFromStdinArg(hash.MD5, args, 0); found {

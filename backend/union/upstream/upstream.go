@@ -1,3 +1,4 @@
+// Package upstream provides utility functionality to union.
 package upstream
 
 import (

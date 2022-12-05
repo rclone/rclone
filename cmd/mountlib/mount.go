@@ -1,3 +1,4 @@
+// Package mountlib provides the mount command.
 package mountlib
 
 import (
@@ -156,6 +157,9 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 		Hidden: hidden,
 		Short:  `Mount the remote as file system on a mountpoint.`,
 		Long:   strings.ReplaceAll(strings.ReplaceAll(mountHelp, "|", "`"), "@", commandName) + vfs.Help,
+		Annotations: map[string]string{
+			"versionIntroduced": "v1.33",
+		},
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
 
@@ -237,7 +241,7 @@ func (m *MountPoint) Mount() (daemon *os.Process, err error) {
 		return nil, err
 	}
 
-	if err = m.CheckAllowings(); err != nil {
+	if err = m.CheckAllowed(); err != nil {
 		return nil, err
 	}
 	m.SetVolumeName(m.MountOpt.VolumeName)

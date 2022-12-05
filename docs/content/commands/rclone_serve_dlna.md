@@ -362,11 +362,13 @@ rclone serve dlna remote:path [flags]
 
 ```
       --addr string                            The ip:port or :port to bind the DLNA http server to (default ":7879")
+      --announce-interval duration             The interval between SSDP announcements (default 12m0s)
       --dir-cache-time duration                Time to cache directory entries for (default 5m0s)
       --dir-perms FileMode                     Directory permissions (default 0777)
       --file-perms FileMode                    File permissions (default 0666)
       --gid uint32                             Override the gid field set by the filesystem (not supported on Windows) (default 1000)
   -h, --help                                   help for dlna
+      --interface stringArray                  The interface to use for SSDP (repeat as necessary)
       --log-trace                              Enable trace logging of SOAP traffic
       --name string                            Name of DLNA server
       --no-checksum                            Don't compare checksums on up/download

@@ -137,7 +137,7 @@ func (c Simple) Set(key, value string) {
 }
 
 // String the map value the same way the config parser does, but with
-// sorted keys for reproducability.
+// sorted keys for reproducibility.
 func (c Simple) String() string {
 	var ks = make([]string, 0, len(c))
 	for k := range c {

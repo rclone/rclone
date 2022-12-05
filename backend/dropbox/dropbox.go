@@ -268,7 +268,7 @@ default based on the batch_mode in use.
 			Advanced: true,
 		}, {
 			Name:     "batch_commit_timeout",
-			Help:     `Max time to wait for a batch to finish comitting`,
+			Help:     `Max time to wait for a batch to finish committing`,
 			Default:  fs.Duration(10 * time.Minute),
 			Advanced: true,
 		}, {
@@ -1669,7 +1669,7 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 						correctOffset := uErr.EndpointError.IncorrectOffset.CorrectOffset
 						delta := int64(correctOffset) - int64(cursor.Offset)
 						skip += delta
-						what := fmt.Sprintf("incorrect offset error receved: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
+						what := fmt.Sprintf("incorrect offset error received: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
 						if skip < 0 {
 							return false, fmt.Errorf("can't seek backwards to correct offset: %s", what)
 						} else if skip == chunkSize {

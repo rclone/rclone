@@ -1,3 +1,4 @@
+// Package chunkedreader provides functionality for reading in chunks.
 package chunkedreader
 
 import (

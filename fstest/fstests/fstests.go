@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/bits"
 	"os"
 	"path"
@@ -153,38 +152,6 @@ func retry(t *testing.T, what string, f func() error) {
 	require.NoError(t, err, what)
 }
 
-// An fs.ObjectInfo that can override mime type
-type objectInfoWithMimeType struct {
-	fs.ObjectInfo
-	mimeType string
-	metadata fs.Metadata
-}
-
-// Return a wrapped fs.ObjectInfo which returns the mime type given
-func overrideMimeType(o fs.ObjectInfo, mimeType string, metadata fs.Metadata) fs.ObjectInfo {
-	return &objectInfoWithMimeType{
-		ObjectInfo: o,
-		mimeType:   mimeType,
-		metadata:   metadata,
-	}
-}
-
-// MimeType that was overridden
-func (o *objectInfoWithMimeType) MimeType(ctx context.Context) string {
-	return o.mimeType
-}
-
-// Metadata that was overridden
-func (o *objectInfoWithMimeType) Metadata(ctx context.Context) (fs.Metadata, error) {
-	return o.metadata, nil
-}
-
-// check interfaces
-var (
-	_ fs.MimeTyper  = (*objectInfoWithMimeType)(nil)
-	_ fs.Metadataer = (*objectInfoWithMimeType)(nil)
-)
-
 // check interface
 
 // PutTestContentsMetadata puts file with given contents to the remote and checks it but unlike TestPutLarge doesn't remove
@@ -215,7 +182,7 @@ func PutTestContentsMetadata(ctx context.Context, t *testing.T, f fs.Fs, file *f
 					ci.Metadata = previousMetadata
 				}()
 			}
-			obji = overrideMimeType(obji, mimeType, metadata)
+			obji.WithMetadata(metadata).WithMimeType(mimeType)
 		}
 		obj, err = f.Put(ctx, in, obji)
 		return err
@@ -303,7 +270,7 @@ func ReadObject(ctx context.Context, t *testing.T, obj fs.Object, limit int64, o
 	if limit >= 0 {
 		r = &io.LimitedReader{R: r, N: limit}
 	}
-	contents, err := ioutil.ReadAll(r)
+	contents, err := io.ReadAll(r)
 	require.NoError(t, err, what)
 	err = in.Close()
 	require.NoError(t, err, what)
@@ -531,14 +498,14 @@ func Run(t *testing.T, opt *Opt) {
 		assert.True(t, len(fsInfo.CommandHelp) > 0, "Command is declared, must return some help in CommandHelp")
 	})
 
-	// TestFsRmdirNotFound tests deleting a non-existent directory
+	// TestFsRmdirNotFound tests deleting a nonexistent directory
 	t.Run("FsRmdirNotFound", func(t *testing.T) {
 		skipIfNotOk(t)
 		if isBucketBasedButNotRoot(f) {
 			t.Skip("Skipping test as non root bucket-based remote")
 		}
 		err := f.Rmdir(ctx, "")
-		assert.Error(t, err, "Expecting error on Rmdir non-existent")
+		assert.Error(t, err, "Expecting error on Rmdir nonexistent")
 	})
 
 	// Make the directory
@@ -729,7 +696,7 @@ func Run(t *testing.T, opt *Opt) {
 			o, err := f.NewObject(ctx, "potato")
 			assert.Nil(t, o)
 			assert.Equal(t, fs.ErrorObjectNotFound, err)
-			// Now try an object in a non existing directory
+			// Now try an object in a nonexistent directory
 			o, err = f.NewObject(ctx, "directory/not/found/potato")
 			assert.Nil(t, o)
 			assert.Equal(t, fs.ErrorObjectNotFound, err)
@@ -1632,7 +1599,7 @@ func Run(t *testing.T, opt *Opt) {
 					fstest.CheckListingWithRoot(t, rootRemote, configLeaf, []fstest.Item{file1Root, file2Root}, dirs, rootRemote.Precision())
 				})
 
-				// Check that that listing the entries is OK
+				// Check that listing the entries is OK
 				t.Run("ListEntries", func(t *testing.T) {
 					entries, err := rootRemote.List(context.Background(), configLeaf)
 					require.NoError(t, err)
@@ -2068,7 +2035,7 @@ func Run(t *testing.T, opt *Opt) {
 
 		// TestFsRootCollapse tests if the root of an fs "collapses" to the
 		// absolute root. It creates a new fs of the same backend type with its
-		// root set to a *non-existent* folder, and attempts to read the info of
+		// root set to a *nonexistent* folder, and attempts to read the info of
 		// an object in that folder, whose name is taken from a directory that
 		// exists in the absolute root.
 		// This test is added after

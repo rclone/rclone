@@ -15,7 +15,7 @@ func makeHelp(help string) string {
 	return replacer.Replace(help)
 }
 
-var shortHelp = `Perform bidirectonal synchronization between two paths.`
+var shortHelp = `Perform bidirectional synchronization between two paths.`
 
 var rcHelp = makeHelp(`This takes the following parameters
 

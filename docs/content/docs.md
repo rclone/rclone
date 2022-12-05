@@ -51,7 +51,6 @@ See the following for detailed instructions for
   * [HDFS](/hdfs/)
   * [HiDrive](/hidrive/)
   * [HTTP](/http/)
-  * [Hubic](/hubic/)
   * [Internet Archive](/internetarchive/)
   * [Jottacloud](/jottacloud/)
   * [Koofr](/koofr/)
@@ -62,6 +61,7 @@ See the following for detailed instructions for
   * [Microsoft OneDrive](/onedrive/)
   * [OpenStack Swift / Rackspace Cloudfiles / Memset Memstore](/swift/)
   * [OpenDrive](/opendrive/)
+  * [Oracle Object Storage](/oracleobjectstorage/)
   * [Pcloud](/pcloud/)
   * [premiumize.me](/premiumizeme/)
   * [put.io](/putio/)
@@ -69,6 +69,7 @@ See the following for detailed instructions for
   * [Seafile](/seafile/)
   * [SFTP](/sftp/)
   * [Sia](/sia/)
+  * [SMB](/smb/)
   * [Storj](/storj/)
   * [SugarSync](/sugarsync/)
   * [Union](/union/)
@@ -498,7 +499,7 @@ backends can also store arbitrary user metadata.
 
 Where possible the key names are standardized, so, for example, it is
 possible to copy object metadata from s3 to azureblob for example and
-metadata will be translated apropriately.
+metadata will be translated appropriately.
 
 Some backends have limits on the size of the metadata and rclone will
 give errors on upload if they are exceeded.
@@ -641,7 +642,7 @@ would mean limit the upload and download bandwidth to 10 MiB/s.
 single limit, specify the desired bandwidth in KiB/s, or use a
 suffix B|K|M|G|T|P. The default is `0` which means to not limit bandwidth.
 
-The upload and download bandwidth can be specified seperately, as
+The upload and download bandwidth can be specified separately, as
 `--bwlimit UP:DOWN`, so
 
     --bwlimit 10M:100k
@@ -1868,13 +1869,22 @@ By default, rclone doesn't keep track of renamed files, so if you
 rename a file locally then sync it to a remote, rclone will delete the
 old file on the remote and upload a new copy.
 
-If you use this flag, and the remote supports server-side copy or
-server-side move, and the source and destination have a compatible
-hash, then this will track renames during `sync`
-operations and perform renaming server-side.
+An rclone sync with `--track-renames` runs like a normal sync, but keeps
+track of objects which exist in the destination but not in the source
+(which would normally be deleted), and which objects exist in the
+source but not the destination (which would normally be transferred).
+These objects are then candidates for renaming.
 
-Files will be matched by size and hash - if both match then a rename
-will be considered.
+After the sync, rclone matches up the source only and destination only
+objects using the `--track-renames-strategy` specified and either
+renames the destination object or transfers the source and deletes the
+destination object. `--track-renames` is stateless like all of
+rclone's syncs.
+
+To use this flag the destination must support server-side copy or
+server-side move, and to use a hash based `--track-renames-strategy`
+(the default) the source and the destination must have a compatible
+hash.
 
 If the destination does not support server-side copy or move, rclone
 will fall back to the default behaviour and log an error level message
@@ -1892,7 +1902,7 @@ Note also that `--track-renames` is incompatible with
 
 ### --track-renames-strategy (hash,modtime,leaf,size) ###
 
-This option changes the matching criteria for `--track-renames`.
+This option changes the file matching criteria for `--track-renames`.
 
 The matching is controlled by a comma separated selection of these tokens:
 
@@ -1901,14 +1911,14 @@ The matching is controlled by a comma separated selection of these tokens:
 - `leaf` - the name of the file not including its directory name
 - `size` - the size of the file (this is always enabled)
 
-So using `--track-renames-strategy modtime,leaf` would match files
+The default option is `hash`.
+
+Using `--track-renames-strategy modtime,leaf` would match files
 based on modification time, the leaf of the file name and the size
 only.
 
 Using `--track-renames-strategy modtime` or `leaf` can enable
 `--track-renames` support for encrypted destinations.
-
-If nothing is specified, the default option is matching by `hash`es.
 
 Note that the `hash` strategy is not supported with encrypted destinations.
 
@@ -1945,7 +1955,7 @@ quickly using the least amount of memory.
 
 However, some remotes have a way of listing all files beneath a
 directory in one (or a small number) of transactions.  These tend to
-be the bucket-based remotes (e.g. S3, B2, GCS, Swift, Hubic).
+be the bucket-based remotes (e.g. S3, B2, GCS, Swift).
 
 If you use the `--fast-list` flag then rclone will use this method for
 listing directories.  This will have the following consequences for
@@ -2011,7 +2021,7 @@ In all other cases the file will not be updated.
 Consider using the `--modify-window` flag to compensate for time skews
 between the source and the backend, for backends that do not support
 mod times, and instead use uploaded times. However, if the backend
-does not support checksums, note that sync'ing or copying within the
+does not support checksums, note that syncing or copying within the
 time skew window may still result in additional transfers for safety.
 
 ### --use-mmap ###

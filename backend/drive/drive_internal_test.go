@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"os"
 	"path"
@@ -78,7 +77,7 @@ var additionalMimeTypes = map[string]string{
 // Load the example export formats into exportFormats for testing
 func TestInternalLoadExampleFormats(t *testing.T) {
 	fetchFormatsOnce.Do(func() {})
-	buf, err := ioutil.ReadFile(filepath.FromSlash("test/about.json"))
+	buf, err := os.ReadFile(filepath.FromSlash("test/about.json"))
 	var about struct {
 		ExportFormats map[string][]string `json:"exportFormats,omitempty"`
 		ImportFormats map[string][]string `json:"importFormats,omitempty"`
@@ -518,6 +517,9 @@ func (f *Fs) InternalTestCopyID(t *testing.T) {
 
 // TestIntegration/FsMkdir/FsPutFiles/Internal/AgeQuery
 func (f *Fs) InternalTestAgeQuery(t *testing.T) {
+	// Check set up for filtering
+	assert.True(t, f.Features().FilterAware)
+
 	opt := &filter.Opt{}
 	err := opt.MaxAge.Set("1h")
 	assert.NoError(t, err)

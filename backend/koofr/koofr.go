@@ -1,3 +1,4 @@
+// Package koofr provides an interface to the Koofr storage system.
 package koofr
 
 import (
@@ -667,7 +668,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 	//
 	// https://app.koofr.net/content/links/39a6cc01-3b23-477a-8059-c0fb3b0f15de/files/get?path=%2F
 	//
-	// I am not sure about meaning of "path" parameter; in my expriments
+	// I am not sure about meaning of "path" parameter; in my experiments
 	// it is always "%2F", and omitting it or putting any other value
 	// results in 404.
 	//

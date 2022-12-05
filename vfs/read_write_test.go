@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -620,7 +619,7 @@ func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 	// read the file
 	f, err = vfs.OpenFile(fileName, os.O_RDONLY, 0)
 	require.NoError(t, err)
-	buf, err := ioutil.ReadAll(f)
+	buf, err := io.ReadAll(f)
 	require.NoError(t, err)
 	err = f.Close()
 	require.NoError(t, err)
@@ -643,15 +642,19 @@ func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
 }
 
 func TestRWFileHandleOpenTests(t *testing.T) {
-	opt := vfscommon.DefaultOpt
-	opt.CacheMode = vfscommon.CacheModeFull
-	opt.WriteBack = writeBackDelay
-	_, vfs, cleanup := newTestVFSOpt(t, &opt)
-	defer cleanup()
+	for _, cacheMode := range []vfscommon.CacheMode{vfscommon.CacheModeWrites, vfscommon.CacheModeFull} {
+		t.Run(cacheMode.String(), func(t *testing.T) {
+			opt := vfscommon.DefaultOpt
+			opt.CacheMode = cacheMode
+			opt.WriteBack = writeBackDelay
+			_, vfs, cleanup := newTestVFSOpt(t, &opt)
+			defer cleanup()
 
-	for _, test := range openTests {
-		t.Run(test.what, func(t *testing.T) {
-			testRWFileHandleOpenTest(t, vfs, &test)
+			for _, test := range openTests {
+				t.Run(test.what, func(t *testing.T) {
+					testRWFileHandleOpenTest(t, vfs, &test)
+				})
+			}
 		})
 	}
 }

@@ -1,3 +1,4 @@
+// Package touch provides the touch command.
 package touch
 
 import (
@@ -63,6 +64,9 @@ time instead of the current time. Times may be specified as one of:
 Note that value of ` + "`--timestamp`" + ` is in UTC. If you want local time
 then add the ` + "`--localtime`" + ` flag.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f, remote := newFsDst(args)
@@ -143,12 +147,12 @@ func Touch(ctx context.Context, f fs.Fs, remote string) error {
 				return nil
 			}
 			if notCreateNewFile {
-				fs.Logf(f, "Not touching non-existent file due to --no-create")
+				fs.Logf(f, "Not touching nonexistent file due to --no-create")
 				return nil
 			}
 			if recursive {
 				// For consistency, --recursive never creates new files.
-				fs.Logf(f, "Not touching non-existent file due to --recursive")
+				fs.Logf(f, "Not touching nonexistent file due to --recursive")
 				return nil
 			}
 			if operations.SkipDestructive(ctx, f, "touch (create)") {

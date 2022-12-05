@@ -1,3 +1,4 @@
+// Package dedupe provides the dedupe command.
 package dedupe
 
 import (
@@ -134,6 +135,9 @@ Or
 
     rclone dedupe rename "drive:Google Photos"
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.27",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 2, command, args)
 		if len(args) > 1 {

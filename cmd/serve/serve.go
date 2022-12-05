@@ -1,3 +1,4 @@
+// Package serve provides the serve command.
 package serve
 
 import (
@@ -48,6 +49,9 @@ subcommand to specify the protocol, e.g.
 
 Each subcommand has its own options which you can see in their help.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.39",
+	},
 	RunE: func(command *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return errors.New("serve requires a protocol, e.g. 'rclone serve http remote:'")

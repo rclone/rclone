@@ -1,6 +1,7 @@
 ---
 title: "Google Cloud Storage"
 description: "Rclone docs for Google Cloud Storage"
+versionIntroduced: "v1.02"
 ---
 
 # {{< icon "fab fa-google" >}} Google Cloud Storage
@@ -607,7 +608,7 @@ Properties:
 If set this will decompress gzip encoded objects.
 
 It is possible to upload objects to GCS with "Content-Encoding: gzip"
-set. Normally rclone will download these files files as compressed objects.
+set. Normally rclone will download these files as compressed objects.
 
 If this flag is set then rclone will decompress these files with
 "Content-Encoding: gzip" as they are received. This means that rclone
@@ -620,6 +621,19 @@ Properties:
 - Env Var:     RCLONE_GCS_DECOMPRESS
 - Type:        bool
 - Default:     false
+
+#### --gcs-endpoint
+
+Endpoint for the service.
+
+Leave blank normally.
+
+Properties:
+
+- Config:      endpoint
+- Env Var:     RCLONE_GCS_ENDPOINT
+- Type:        string
+- Required:    false
 
 #### --gcs-encoding
 

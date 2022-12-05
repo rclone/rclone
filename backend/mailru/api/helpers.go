@@ -69,6 +69,11 @@ func (w *BinWriter) WritePu64(val int64) {
 	w.b.Write(w.a[:binary.PutUvarint(w.a, uint64(val))])
 }
 
+// WriteP64 writes an signed long as unsigned varint
+func (w *BinWriter) WriteP64(val int64) {
+	w.b.Write(w.a[:binary.PutUvarint(w.a, uint64(val))])
+}
+
 // WriteString writes a zero-terminated string
 func (w *BinWriter) WriteString(str string) {
 	buf := []byte(str)

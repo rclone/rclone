@@ -1,6 +1,7 @@
 ---
 title: "HiDrive"
 description: "Rclone docs for HiDrive"
+versionIntroduced: "v1.59.0"
 ---
 
 # {{< icon "fa fa-cloud" >}} HiDrive
@@ -124,7 +125,7 @@ the process is very similar to the process of initial setup exemplified before.
 HiDrive allows modification times to be set on objects accurate to 1 second.
 
 HiDrive supports [its own hash type](https://static.hidrive.com/dev/0001)
-which is used to verify the integrety of file contents after successful transfers.
+which is used to verify the integrity of file contents after successful transfers.
 
 ### Restricted filename characters
 

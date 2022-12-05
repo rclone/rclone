@@ -12,7 +12,6 @@ import (
 	"fmt"
 	gohash "hash"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -118,7 +117,7 @@ type Fs struct {
 	filetype         string            // dir, file or symlink
 	dirscreated      map[string]bool   // if implicit dir has been created already
 	dirscreatedMutex sync.Mutex        // mutex to protect dirscreated
-	statcache        map[string][]File // cache successfull stat requests
+	statcache        map[string][]File // cache successful stat requests
 	statcacheMutex   sync.RWMutex      // RWMutex to protect statcache
 }
 
@@ -424,7 +423,7 @@ func (f *Fs) getFileName(file *File) string {
 func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
 	if f.filetype == "" {
 		// This happens in two scenarios.
-		// 1. NewFs is done on a non-existent object, then later rclone attempts to List/ListR this NewFs.
+		// 1. NewFs is done on a nonexistent object, then later rclone attempts to List/ListR this NewFs.
 		// 2. List/ListR is called from the context of test_all and not the regular rclone binary.
 		err := f.initFs(ctx, dir)
 		if err != nil {
@@ -488,7 +487,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 func (f *Fs) ListR(ctx context.Context, dir string, callback fs.ListRCallback) (err error) {
 	if f.filetype == "" {
 		// This happens in two scenarios.
-		// 1. NewFs is done on a non-existent object, then later rclone attempts to List/ListR this NewFs.
+		// 1. NewFs is done on a nonexistent object, then later rclone attempts to List/ListR this NewFs.
 		// 2. List/ListR is called from the context of test_all and not the regular rclone binary.
 		err := f.initFs(ctx, dir)
 		if err != nil {
@@ -972,7 +971,7 @@ func (o *Object) netStorageUploadRequest(ctx context.Context, in io.Reader, src 
 		URL = o.fs.url(src.Remote())
 	}
 	if strings.HasSuffix(URL, ".rclonelink") {
-		bits, err := ioutil.ReadAll(in)
+		bits, err := io.ReadAll(in)
 		if err != nil {
 			return err
 		}
@@ -1058,7 +1057,7 @@ func (o *Object) netStorageDownloadRequest(ctx context.Context, options []fs.Ope
 	if strings.HasSuffix(URL, ".rclonelink") && o.target != "" {
 		fs.Infof(nil, "Converting a symlink to the rclonelink file on download %q", URL)
 		reader := strings.NewReader(o.target)
-		readcloser := ioutil.NopCloser(reader)
+		readcloser := io.NopCloser(reader)
 		return readcloser, nil
 	}
 

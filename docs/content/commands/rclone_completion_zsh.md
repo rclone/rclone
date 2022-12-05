@@ -18,6 +18,10 @@ to enable it.  You can execute the following once:
 
 	echo "autoload -U compinit; compinit" >> ~/.zshrc
 
+To load completions in your current shell session:
+
+	source <(rclone completion zsh); compdef _rclone rclone
+
 To load completions for every new session, execute once:
 
 ### Linux:
@@ -26,7 +30,7 @@ To load completions for every new session, execute once:
 
 ### macOS:
 
-	rclone completion zsh > /usr/local/share/zsh/site-functions/_rclone
+	rclone completion zsh > $(brew --prefix)/share/zsh/site-functions/_rclone
 
 You will need to start a new shell for this setup to take effect.
 

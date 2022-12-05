@@ -1,3 +1,4 @@
+// Package cryptdecode provides the cryptdecode command.
 package cryptdecode
 
 import (
@@ -40,6 +41,9 @@ use it like this
 Another way to accomplish this is by using the ` + "`rclone backend encode` (or `decode`)" + ` command.
 See the documentation on the [crypt](/crypt/) overlay for more info.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.38",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 11, command, args)
 		cmd.Run(false, false, command, func() error {

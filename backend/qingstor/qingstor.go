@@ -1,9 +1,8 @@
-// Package qingstor provides an interface to QingStor object storage
-// Home: https://www.qingcloud.com/
-
 //go:build !plan9 && !js
 // +build !plan9,!js
 
+// Package qingstor provides an interface to QingStor object storage
+// Home: https://www.qingcloud.com/
 package qingstor
 
 import (

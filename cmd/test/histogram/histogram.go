@@ -1,3 +1,4 @@
+// Package histogram provides the histogram test command.
 package histogram
 
 import (
@@ -27,6 +28,9 @@ in filenames in the remote:path specified.
 The data doesn't contain any identifying information but is useful for
 the rclone developers when developing filename compression.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.55",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsDir(args)

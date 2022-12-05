@@ -1,3 +1,4 @@
+// Package about provides the about command.
 package about
 
 import (
@@ -92,6 +93,9 @@ provided by a backend. Where the value is unlimited it is omitted.
 Some backends does not support the ` + "`rclone about`" + ` command at all,
 see complete list in [documentation](https://rclone.org/overview/#optional-features).
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.41",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)

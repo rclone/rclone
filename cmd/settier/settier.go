@@ -1,3 +1,4 @@
+// Package settier provides the settier command.
 package settier
 
 import (
@@ -39,6 +40,9 @@ Or just provide remote directory and all files in directory will be tiered
 
     rclone settier tier remote:path/dir
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.44",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		tier := args[0]

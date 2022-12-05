@@ -1,8 +1,7 @@
-// Package sftp implements an SFTP server to serve an rclone VFS
-
 //go:build !plan9
 // +build !plan9
 
+// Package sftp implements an SFTP server to serve an rclone VFS
 package sftp
 
 import (
@@ -49,7 +48,7 @@ func AddFlags(flagSet *pflag.FlagSet, Opt *Options) {
 	flags.StringVarP(flagSet, &Opt.User, "user", "", Opt.User, "User name for authentication")
 	flags.StringVarP(flagSet, &Opt.Pass, "pass", "", Opt.Pass, "Password for authentication")
 	flags.BoolVarP(flagSet, &Opt.NoAuth, "no-auth", "", Opt.NoAuth, "Allow connections with no authentication if set")
-	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on run stdin/stdout")
+	flags.BoolVarP(flagSet, &Opt.Stdio, "stdio", "", Opt.Stdio, "Run an sftp server on stdin/stdout")
 }
 
 func init() {
@@ -62,11 +61,19 @@ func init() {
 var Command = &cobra.Command{
 	Use:   "sftp remote:path",
 	Short: `Serve the remote over SFTP.`,
-	Long: `Run a SFTP server to serve a remote over SFTP. This can be used
-with an SFTP client or you can make a remote of type sftp to use with it.
+	Long: `Run an SFTP server to serve a remote over SFTP. This can be used
+with an SFTP client or you can make a remote of type [sftp](/sftp) to use with it.
 
-You can use the filter flags (e.g. ` + "`--include`, `--exclude`" + `) to control what
-is served.
+You can use the [filter](/filtering) flags (e.g. ` + "`--include`, `--exclude`" + `)
+to control what is served.
+
+The server will respond to a small number of shell commands, mainly
+md5sum, sha1sum and df, which enable it to provide support for checksums
+and the about feature when accessed from an sftp remote.
+
+Note that this server uses standard 32 KiB packet payload size, which
+means you must not configure the client to expect anything else, e.g.
+with the [chunk_size](/sftp/#sftp-chunk-size) option on an sftp remote.
 
 The server will log errors.  Use ` + "`-v`" + ` to see access logs.
 
@@ -78,11 +85,6 @@ You must provide some means of authentication, either with
 ` + "`--authorized-keys`" + ` - the default is the same as ssh), an
 ` + "`--auth-proxy`" + `, or set the ` + "`--no-auth`" + ` flag for no
 authentication when logging in.
-
-Note that this also implements a small number of shell commands so
-that it can provide md5sum/sha1sum/df information for the rclone sftp
-backend.  This means that is can support SHA1SUMs, MD5SUMs and the
-about command when paired with the rclone sftp backend.
 
 If you don't supply a host ` + "`--key`" + ` then rclone will generate rsa, ecdsa
 and ed25519 variants, and cache them for later use in rclone's cache
@@ -112,6 +114,9 @@ checksumming is possible but less secure and you could use the SFTP server
 provided by OpenSSH in this case.
 
 ` + vfs.Help + proxy.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.48",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		var f fs.Fs
 		if proxyflags.Opt.AuthProxy == "" {

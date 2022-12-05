@@ -1,6 +1,7 @@
 ---
 title: "Jottacloud"
 description: "Rclone docs for Jottacloud"
+versionIntroduced: "v1.43"
 ---
 
 # {{< icon "fa fa-cloud" >}} Jottacloud
@@ -18,7 +19,7 @@ it also provides white-label solutions to different companies, such as:
   * Elgiganten Sweden (cloud.elgiganten.se)
   * Elgiganten Denmark (cloud.elgiganten.dk)
   * Giganti Cloud  (cloud.gigantti.fi)
-  * ELKO Clouud (cloud.elko.is)
+  * ELKO Cloud (cloud.elko.is)
 
 Most of the white-label versions are supported by this backend, although may require different
 authentication setup - described below.
@@ -34,10 +35,33 @@ and you have to choose the correct one when setting up the remote.
 
 ### Standard authentication
 
-To configure Jottacloud you will need to generate a personal security token in the Jottacloud web interface.
-You will the option to do in your [account security settings](https://www.jottacloud.com/web/secure)
-(for whitelabel version you need to find this page in its web interface).
-Note that the web interface may refer to this token as a JottaCli token.
+The standard authentication method used by the official service (jottacloud.com), as well as
+some of the whitelabel services, requires you to generate a single-use personal login token
+from the account security settings in the service's web interface. Log in to your account,
+go to "Settings" and then "Security", or use the direct link presented to you by rclone when
+configuring the remote: <https://www.jottacloud.com/web/secure>. Scroll down to the section
+"Personal login token", and click the "Generate" button. Note that if you are using a
+whitelabel service you probably can't use the direct link, you need to find the same page in
+their dedicated web interface, and also it may be in a different location than described above.
+
+To access your account from multiple instances of rclone, you need to configure each of them
+with a separate personal login token. E.g. you create a Jottacloud remote with rclone in one
+location, and copy the configuration file to a second location where you also want to run
+rclone and access the same remote. Then you need to replace the token for one of them, using
+the [config reconnect](https://rclone.org/commands/rclone_config_reconnect/) command, which
+requires you to generate a new personal login token and supply as input. If you do not
+do this, the token may easily end up being invalidated, resulting in both instances failing
+with an error message something along the lines of:
+
+    oauth2: cannot fetch token: 400 Bad Request
+    Response: {"error":"invalid_grant","error_description":"Stale token"}
+
+When this happens, you need to replace the token as described above to be able to use your
+remote again.
+
+All personal login tokens you have taken into use will be listed in the web interface under
+"My logged in devices", and from the right side of that list you can click the "X" button to
+revoke individual tokens.
 
 ### Legacy authentication
 

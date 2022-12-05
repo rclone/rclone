@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/Azure/go-autorest/autorest/adal"
@@ -97,7 +96,7 @@ func GetMSIToken(ctx context.Context, identity *userMSI) (adal.Token, error) {
 		return result, fmt.Errorf("MSI is not enabled on this VM: %w", err)
 	}
 	defer func() { // resp and Body should not be nil
-		_, err = io.Copy(ioutil.Discard, resp.Body)
+		_, err = io.Copy(io.Discard, resp.Body)
 		if err != nil {
 			fs.Debugf(nil, "Unable to drain IMDS response: %v", err)
 		}
@@ -112,12 +111,12 @@ func GetMSIToken(ctx context.Context, identity *userMSI) (adal.Token, error) {
 	case 200, 201, 202:
 		break
 	default:
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		fs.Errorf(nil, "Couldn't obtain OAuth token from IMDS; server returned status code %d and body: %v", resp.StatusCode, string(body))
 		return result, httpError{Response: resp}
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return result, fmt.Errorf("couldn't read IMDS response: %w", err)
 	}

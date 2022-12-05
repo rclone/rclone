@@ -330,7 +330,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, transaction)
 	}
 
-	// Do not allow the root-prefix to be non-existent nor a directory,
+	// Do not allow the root-prefix to be nonexistent nor a directory,
 	// but it can be empty.
 	if f.opt.RootPrefix != "" {
 		item, err := f.fetchMetadataForPath(ctx, f.opt.RootPrefix, api.HiDriveObjectNoMetadataFields)
@@ -623,7 +623,7 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 // should be retried after the parent-directories of the destination have been created.
 // If so, it will create the parent-directories.
 //
-// If any errors arrise while finding the source or
+// If any errors arise while finding the source or
 // creating the parent-directory those will be returned.
 // Otherwise returns the originalError.
 func (f *Fs) shouldRetryAndCreateParents(ctx context.Context, destinationPath string, sourcePath string, originalError error) (bool, error) {
@@ -961,7 +961,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		} else {
 			_, _, err = o.fs.uploadFileChunked(ctx, resolvedPath, in, modTime, int(o.fs.opt.UploadChunkSize), o.fs.opt.UploadConcurrency)
 		}
-		// Try to check if object was updated, eitherway.
+		// Try to check if object was updated, either way.
 		// Metadata should be updated even if the upload fails.
 		info, metaErr = o.fs.fetchMetadataForPath(ctx, resolvedPath, api.HiDriveObjectWithMetadataFields)
 	} else {

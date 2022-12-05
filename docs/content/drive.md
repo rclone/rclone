@@ -1,6 +1,7 @@
 ---
 title: "Google drive"
 description: "Rclone docs for Google drive"
+versionIntroduced: "v0.91"
 ---
 
 # {{< icon "fab fa-google" >}} Google Drive
@@ -1335,7 +1336,7 @@ drives found and a combined drive.
     upstreams = "My Drive=My Drive:" "Test Drive=Test Drive:"
 
 Adding this to the rclone config file will cause those team drives to
-be accessible with the aliases shown. Any illegal charactes will be
+be accessible with the aliases shown. Any illegal characters will be
 substituted with "_" and duplicate names will have numbers suffixed.
 It will also add a remote called AllDrives which shows all the shared
 drives combined into one directory tree.

@@ -1,6 +1,7 @@
 ---
 title: "Microsoft OneDrive"
 description: "Rclone docs for Microsoft OneDrive"
+versionIntroduced: "v1.24"
 ---
 
 # {{< icon "fab fa-windows" >}} Microsoft OneDrive
@@ -124,7 +125,7 @@ rclone uses a default Client ID when talking to OneDrive, unless a custom `clien
 The default Client ID and Key are shared by all rclone users when performing requests.
 
 You may choose to create and use your own Client ID, in case the default one does not work well for you. 
-For example, you might see throtting.
+For example, you might see throttling.
 
 #### Creating Client ID for OneDrive Personal
 
@@ -152,7 +153,7 @@ A common error is that the publisher of the App is not verified.
 You may try to [verify you account](https://docs.microsoft.com/en-us/azure/active-directory/develop/publisher-verification-overview), or try to limit the App to your organization only, as shown below.
 
 1. Make sure to create the App with your business account.
-2. Follow the steps above to create an App. However, we need a different account type here: `Accounts in this organizational directory only (*** - Single tenant)`. Note that you can also change the account type aftering creating the App.
+2. Follow the steps above to create an App. However, we need a different account type here: `Accounts in this organizational directory only (*** - Single tenant)`. Note that you can also change the account type after creating the App.
 3. Find the [tenant ID](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-how-to-find-tenant) of your organization.
 4. In the rclone config, set `auth_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/authorize`.
 5. In the rclone config, set `token_url` to `https://login.microsoftonline.com/YOUR_TENANT_ID/oauth2/v2.0/token`.
@@ -568,7 +569,7 @@ An official document about the limitations for different types of OneDrive can b
 ## Versions
 
 Every change in a file OneDrive causes the service to create a new
-version of the the file.  This counts against a users quota.  For
+version of the file.  This counts against a users quota.  For
 example changing the modification time of a file creates a second
 version, so the file apparently uses twice the space.
 

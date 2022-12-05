@@ -128,6 +128,9 @@ these **must** end with /.  Eg
 The` + "`--private-repos`" + ` flag can be used to limit users to repositories starting
 with a path of ` + "`/<username>/`" + `.
 ` + httplib.Help,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.40",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
@@ -295,7 +298,7 @@ func (s *Server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 		}
 	}
 
-	o, err := operations.RcatSize(r.Context(), s.f, remote, r.Body, r.ContentLength, time.Now())
+	o, err := operations.RcatSize(r.Context(), s.f, remote, r.Body, r.ContentLength, time.Now(), nil)
 	if err != nil {
 		err = accounting.Stats(r.Context()).Error(err)
 		fs.Errorf(remote, "Post request rcat error: %v", err)

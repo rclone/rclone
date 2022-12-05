@@ -1,6 +1,7 @@
 ---
 title: "Citrix ShareFile"
 description: "Rclone docs for Citrix ShareFile"
+versionIntroduced: "v1.50.0"
 ---
 
 # {{< icon "fas fa-share-square" >}} Citrix ShareFile

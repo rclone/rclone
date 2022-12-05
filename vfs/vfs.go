@@ -10,21 +10,20 @@
 // may be referred to as "".  However Stat strips slashes so you can
 // use paths with slashes in.
 //
-// It also includes directory caching
+// # It also includes directory caching
 //
 // The vfs package returns Error values to signal precisely which
 // error conditions have ocurred.  It may also return general errors
 // it receives.  It tries to use os Error values (e.g. os.ErrExist)
 // where possible.
-
+//
 //go:generate sh -c "go run make_open_tests.go | gofmt > open_test.go"
-
 package vfs
 
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"sort"
@@ -698,7 +697,7 @@ func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
 		return nil, err
 	}
 	defer fs.CheckClose(f, &err)
-	return ioutil.ReadAll(f)
+	return io.ReadAll(f)
 }
 
 // AddVirtual adds the object (file or dir) to the directory cache

@@ -1,3 +1,4 @@
+// Package cryptcheck provides the cryptcheck command.
 package cryptcheck
 
 import (
@@ -46,6 +47,9 @@ the files in remote:path.
 
 After it has run it will log the status of the encryptedremote:.
 ` + check.FlagsHelp,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.36",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)

@@ -1,8 +1,7 @@
-// Package sftp provides a filesystem interface using github.com/pkg/sftp
-
 //go:build !plan9
 // +build !plan9
 
+// Package sftp provides a filesystem interface using github.com/pkg/sftp
 package sftp
 
 import (
@@ -11,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
@@ -124,7 +122,10 @@ This enables the use of the following insecure ciphers and key exchange methods:
 - diffie-hellman-group-exchange-sha256
 - diffie-hellman-group-exchange-sha1
 
-Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.`,
+Those algorithms are insecure and may allow plaintext data to be recovered by an attacker.
+
+This must be false if you use either ciphers or key_exchange advanced options.
+`,
 			Default: false,
 			Examples: []fs.OptionExample{
 				{
@@ -276,19 +277,24 @@ Set to 0 to keep connections indefinitely.
 			Name: "chunk_size",
 			Help: `Upload and download chunk size.
 
-This controls the maximum packet size used in the SFTP protocol. The
-RFC limits this to 32768 bytes (32k), however a lot of servers
-support larger sizes and setting it larger will increase transfer
-speed dramatically on high latency links.
+This controls the maximum size of payload in SFTP protocol packets.
+The RFC limits this to 32768 bytes (32k), which is the default. However,
+a lot of servers support larger sizes, typically limited to a maximum
+total package size of 256k, and setting it larger will increase transfer
+speed dramatically on high latency links. This includes OpenSSH, and,
+for example, using the value of 255k works well, leaving plenty of room
+for overhead while still being within a total packet size of 256k.
 
-Only use a setting higher than 32k if you always connect to the same
-server or after sufficiently broad testing.
-
-For example using the value of 252k with OpenSSH works well with its
-maximum packet size of 256k.
-
-If you get the error "failed to send packet header: EOF" when copying
-a large file, try lowering this number.
+Make sure to test thoroughly before using a value higher than 32k,
+and only use it if you always connect to the same server or after
+sufficiently broad testing. If you get errors such as
+"failed to send packet payload: EOF", lots of "connection lost",
+or "corrupted on transfer", when copying a larger file, try lowering
+the value. The server run by [rclone serve sftp](/commands/rclone_serve_sftp)
+sends packets with standard 32k maximum payload so you must not
+set a different chunk_size when downloading files, but it accepts
+packets up to the 256k total size, so for uploads the chunk_size
+can be set as for the OpenSSH example above.
 `,
 			Default:  32 * fs.Kibi,
 			Advanced: true,
@@ -321,6 +327,46 @@ and pass variables with spaces in in quotes, eg
 
     "VAR3=value with space" "VAR4=value with space" VAR5=nospacehere
 
+`,
+			Advanced: true,
+		}, {
+			Name:    "ciphers",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of ciphers to be used for session encryption, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q cipher.
+
+This must not be set if use_insecure_cipher is true.
+
+Example:
+
+    aes128-ctr aes192-ctr aes256-ctr aes128-gcm@openssh.com aes256-gcm@openssh.com
+`,
+			Advanced: true,
+		}, {
+			Name:    "key_exchange",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of key exchange algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q kex.
+
+This must not be set if use_insecure_cipher is true.
+
+Example:
+
+    sntrup761x25519-sha512@openssh.com curve25519-sha256 curve25519-sha256@libssh.org ecdh-sha2-nistp256
+`,
+			Advanced: true,
+		}, {
+			Name:    "macs",
+			Default: fs.SpaceSepList{},
+			Help: `Space separated list of MACs (message authentication code) algorithms, ordered by preference.
+
+At least one must match with server configuration. This can be checked for example using ssh -Q mac.
+
+Example:
+
+    umac-64-etm@openssh.com umac-128-etm@openssh.com hmac-sha2-256-etm@openssh.com
 `,
 			Advanced: true,
 		}},
@@ -358,6 +404,9 @@ type Options struct {
 	ChunkSize               fs.SizeSuffix   `config:"chunk_size"`
 	Concurrency             int             `config:"concurrency"`
 	SetEnv                  fs.SpaceSepList `config:"set_env"`
+	Ciphers                 fs.SpaceSepList `config:"ciphers"`
+	KeyExchange             fs.SpaceSepList `config:"key_exchange"`
+	MACs                    fs.SpaceSepList `config:"macs"`
 }
 
 // Fs stores the interface to the remote SFTP files
@@ -698,10 +747,25 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		sshConfig.HostKeyCallback = hostcallback
 	}
 
+	if opt.UseInsecureCipher && (opt.Ciphers != nil || opt.KeyExchange != nil) {
+		return nil, fmt.Errorf("use_insecure_cipher must be false if ciphers or key_exchange are set in advanced configuration")
+	}
+
+	sshConfig.Config.SetDefaults()
 	if opt.UseInsecureCipher {
-		sshConfig.Config.SetDefaults()
 		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc", "aes192-cbc", "aes256-cbc", "3des-cbc")
 		sshConfig.Config.KeyExchanges = append(sshConfig.Config.KeyExchanges, "diffie-hellman-group-exchange-sha1", "diffie-hellman-group-exchange-sha256")
+	} else {
+		if opt.Ciphers != nil {
+			sshConfig.Config.Ciphers = opt.Ciphers
+		}
+		if opt.KeyExchange != nil {
+			sshConfig.Config.KeyExchanges = opt.KeyExchange
+		}
+	}
+
+	if opt.MACs != nil {
+		sshConfig.Config.MACs = opt.MACs
 	}
 
 	keyFile := env.ShellExpand(opt.KeyFile)
@@ -718,7 +782,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 			return nil, fmt.Errorf("couldn't read ssh agent signers: %w", err)
 		}
 		if keyFile != "" {
-			pubBytes, err := ioutil.ReadFile(keyFile + ".pub")
+			pubBytes, err := os.ReadFile(keyFile + ".pub")
 			if err != nil {
 				return nil, fmt.Errorf("failed to read public key file: %w", err)
 			}
@@ -747,7 +811,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 	if keyFile != "" || opt.KeyPem != "" {
 		var key []byte
 		if opt.KeyPem == "" {
-			key, err = ioutil.ReadFile(keyFile)
+			key, err = os.ReadFile(keyFile)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read private key file: %w", err)
 			}
@@ -778,7 +842,7 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 
 		// If a public key has been specified then use that
 		if pubkeyFile != "" {
-			certfile, err := ioutil.ReadFile(pubkeyFile)
+			certfile, err := os.ReadFile(pubkeyFile)
 			if err != nil {
 				return nil, fmt.Errorf("unable to read cert file: %w", err)
 			}
@@ -911,20 +975,24 @@ func NewFsWithConnection(ctx context.Context, f *Fs, name string, root string, m
 			fs.Debugf(f, "Running shell type detection remote command: %s", shellCmd)
 			err = session.Run(shellCmd)
 			_ = session.Close()
+			f.shellType = defaultShellType
 			if err != nil {
-				f.shellType = defaultShellType
 				fs.Debugf(f, "Remote command failed: %v (stdout=%v) (stderr=%v)", err, bytes.TrimSpace(stdout.Bytes()), bytes.TrimSpace(stderr.Bytes()))
 			} else {
 				outBytes := stdout.Bytes()
 				fs.Debugf(f, "Remote command result: %s", outBytes)
 				outString := string(bytes.TrimSpace(stdout.Bytes()))
-				if strings.HasPrefix(outString, "Microsoft.PowerShell") { // If PowerShell: "Microsoft.PowerShell%ComSpec%"
-					f.shellType = "powershell"
-				} else if !strings.HasSuffix(outString, "%ComSpec%") { // If Command Prompt: "${ShellId}C:\WINDOWS\system32\cmd.exe"
-					f.shellType = "cmd"
-				} else { // If Unix: "%ComSpec%"
-					f.shellType = "unix"
-				}
+				if outString != "" {
+					if strings.HasPrefix(outString, "Microsoft.PowerShell") { // PowerShell: "Microsoft.PowerShell%ComSpec%"
+						f.shellType = "powershell"
+					} else if !strings.HasSuffix(outString, "%ComSpec%") { // Command Prompt: "${ShellId}C:\WINDOWS\system32\cmd.exe"
+						// Additional positive test, to avoid misdetection on unpredicted Unix shell variants
+						s := strings.ToLower(outString)
+						if strings.Contains(s, ".exe") || strings.Contains(s, ".com") {
+							f.shellType = "cmd"
+						}
+					} // POSIX-based Unix shell: "%ComSpec%"
+				} // fish Unix shell: ""
 			}
 		}
 		// Save permanently in config to avoid the extra work next time
@@ -1167,6 +1235,10 @@ func (f *Fs) mkdir(ctx context.Context, dirPath string) error {
 	err = c.sftpClient.Mkdir(dirPath)
 	f.putSftpConnection(&c, err)
 	if err != nil {
+		if os.IsExist(err) {
+			fs.Debugf(f, "directory %q exists after Mkdir is attempted", dirPath)
+			return nil
+		}
 		return fmt.Errorf("mkdir %q failed: %w", dirPath, err)
 	}
 	return nil

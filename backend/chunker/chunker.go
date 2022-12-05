@@ -12,7 +12,6 @@ import (
 	"fmt"
 	gohash "hash"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"path"
 	"regexp"
@@ -64,7 +63,7 @@ import (
 // length of 13 decimals it makes a 7-digit base-36 number.
 //
 // When transactions is set to the norename style, data chunks will
-// keep their temporary chunk names (with the transacion identifier
+// keep their temporary chunk names (with the transaction identifier
 // suffix). To distinguish them from temporary chunks, the txn field
 // of the metadata file is set to match the transaction identifier of
 // the data chunks.
@@ -1038,7 +1037,7 @@ func (o *Object) readMetadata(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	metadata, err := ioutil.ReadAll(reader)
+	metadata, err := io.ReadAll(reader)
 	_ = reader.Close() // ensure file handle is freed on windows
 	if err != nil {
 		return err
@@ -1079,7 +1078,7 @@ func (o *Object) readMetadata(ctx context.Context) error {
 
 // readXactID returns the transaction ID stored in the passed metadata object
 func (o *Object) readXactID(ctx context.Context) (xactID string, err error) {
-	// if xactID has already been read and cahced return it now
+	// if xactID has already been read and cached return it now
 	if o.xIDCached {
 		return o.xactID, nil
 	}
@@ -1097,7 +1096,7 @@ func (o *Object) readXactID(ctx context.Context) (xactID string, err error) {
 	if err != nil {
 		return "", err
 	}
-	data, err := ioutil.ReadAll(reader)
+	data, err := io.ReadAll(reader)
 	_ = reader.Close() // ensure file handle is freed on windows
 	if err != nil {
 		return "", err

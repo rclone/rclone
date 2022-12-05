@@ -1,3 +1,4 @@
+// Package memory provides the memory test command.
 package memory
 
 import (
@@ -19,6 +20,9 @@ func init() {
 var commandDefinition = &cobra.Command{
 	Use:   "memory remote:path",
 	Short: `Load all the objects at remote:path into memory and report memory stats.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.55",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)

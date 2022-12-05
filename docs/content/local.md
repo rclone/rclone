@@ -1,6 +1,7 @@
 ---
 title: "Local Filesystem"
 description: "Rclone docs for the local filesystem"
+versionIntroduced: "v0.91"
 ---
 
 # {{< icon "fas fa-hdd" >}} Local Filesystem
@@ -428,8 +429,8 @@ Properties:
 Don't check to see if the files change during upload.
 
 Normally rclone checks the size and modification time of files as they
-are being uploaded and aborts with a message which starts "can't copy
-- source file is being updated" if the file changes during upload.
+are being uploaded and aborts with a message which starts "can't copy - 
+source file is being updated" if the file changes during upload.
 
 However on some file systems this modification time check may fail (e.g.
 [Glusterfs #2206](https://github.com/rclone/rclone/issues/2206)) so this

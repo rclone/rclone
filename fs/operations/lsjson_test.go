@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Compare a and b in a file system idependent way
+// Compare a and b in a file system independent way
 func compareListJSONItem(t *testing.T, a, b *operations.ListJSONItem, precision time.Duration) {
 	assert.Equal(t, a.Path, b.Path, "Path")
 	assert.Equal(t, a.Name, b.Name, "Name")

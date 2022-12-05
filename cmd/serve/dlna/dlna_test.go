@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"html"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -60,7 +60,7 @@ func TestRootSCPD(t *testing.T) {
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	// Make sure that the SCPD contains a CDS service.
 	require.Contains(t, string(body),
@@ -80,7 +80,7 @@ func TestServeContent(t *testing.T) {
 	require.NoError(t, err)
 	defer fs.CheckClose(resp.Body, &err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	actualContents, err := ioutil.ReadAll(resp.Body)
+	actualContents, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 
 	// Now compare the contents with the golden file.
@@ -90,7 +90,7 @@ func TestServeContent(t *testing.T) {
 	goldenReader, err := goldenFile.Open(os.O_RDONLY)
 	assert.NoError(t, err)
 	defer fs.CheckClose(goldenReader, &err)
-	goldenContents, err := ioutil.ReadAll(goldenReader)
+	goldenContents, err := io.ReadAll(goldenReader)
 	assert.NoError(t, err)
 
 	require.Equal(t, goldenContents, actualContents)
@@ -119,7 +119,7 @@ func TestContentDirectoryBrowseMetadata(t *testing.T) {
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	// should contain an appropriate URN
 	require.Contains(t, string(body), "urn:schemas-upnp-org:service:ContentDirectory:1")
@@ -145,7 +145,7 @@ func TestMediaReceiverRegistrarService(t *testing.T) {
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	require.Contains(t, string(body), "<RegistrationRespMsg>")
 }
@@ -173,7 +173,7 @@ func TestContentDirectoryBrowseDirectChildren(t *testing.T) {
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	// expect video.mp4, video.srt, video.en.srt URLs to be in the DIDL
 	require.Contains(t, string(body), "/r/video.mp4")
@@ -201,7 +201,7 @@ func TestContentDirectoryBrowseDirectChildren(t *testing.T) {
 	resp, err = http.DefaultClient.Do(req)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	body, err = ioutil.ReadAll(resp.Body)
+	body, err = io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	// expect video.mp4, video.srt, URLs to be in the DIDL
 	require.Contains(t, string(body), "/r/subdir/video.mp4")

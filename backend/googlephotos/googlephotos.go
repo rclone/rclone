@@ -178,7 +178,7 @@ type Fs struct {
 	opt        Options                // parsed options
 	features   *fs.Features           // optional features
 	unAuth     *rest.Client           // unauthenticated http client
-	srv        *rest.Client           // the connection to the one drive server
+	srv        *rest.Client           // the connection to the server
 	ts         *oauthutil.TokenSource // token source for oauth2
 	pacer      *fs.Pacer              // To pace the API calls
 	startTime  time.Time              // time Fs was started - used for datestamps

@@ -11,8 +11,9 @@ import (
 
 // MkdirAll creates a directory named path, along with any necessary parents.
 //
-// Improves os.MkdirAll by avoiding trying to create a folder \\? when the
-// volume of a given extended length path does not exist.
+// Improves os.MkdirAll by avoiding trying to create a folder `\\?` when the
+// volume of a given extended length path does not exist, and `\\?\UNC` when
+// a network host name does not exist.
 //
 // Based on source code from golang's os.MkdirAll
 // (https://github.com/golang/go/blob/master/src/os/path.go)
@@ -37,7 +38,6 @@ func MkdirAll(path string, perm os.FileMode) error {
 	}
 	if i > 0 {
 		path = path[:i]
-
 		if path == filepath.VolumeName(path) {
 			// Make reference to a drive's root directory include the trailing slash.
 			// In extended-length form without trailing slash ("\\?\C:"), os.Stat
@@ -53,10 +53,12 @@ func MkdirAll(path string, perm os.FileMode) error {
 				j--
 			}
 			if j > 1 {
-				// Create parent.
-				err = MkdirAll(path[:j-1], perm)
-				if err != nil {
-					return err
+				if path[:j-1] != `\\?\UNC` {
+					// Create parent.
+					err = MkdirAll(path[:j-1], perm)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}

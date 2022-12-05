@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"path"
 	"time"
 
@@ -118,7 +117,7 @@ func (o *Object) updateHashes(ctx context.Context) error {
 	defer func() {
 		_ = r.Close()
 	}()
-	if _, err = io.Copy(ioutil.Discard, r); err != nil {
+	if _, err = io.Copy(io.Discard, r); err != nil {
 		fs.Infof(o, "update failed (copy): %v", err)
 		return err
 	}

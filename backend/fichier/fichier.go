@@ -1,3 +1,4 @@
+// Package fichier provides an interface to the 1Fichier storage system.
 package fichier
 
 import (

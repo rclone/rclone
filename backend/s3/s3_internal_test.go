@@ -78,7 +78,7 @@ func (f *Fs) InternalTestMetadata(t *testing.T) {
 	}
 
 	t.Run("GzipEncoding", func(t *testing.T) {
-		// Test that the gziped file we uploaded can be
+		// Test that the gzipped file we uploaded can be
 		// downloaded with and without decompression
 		checkDownload := func(wantContents string, wantSize int64, wantHash string) {
 			gotContents := fstests.ReadObject(ctx, t, o, -1)
@@ -116,7 +116,7 @@ func (f *Fs) InternalTestNoHead(t *testing.T) {
 	defer func() {
 		assert.NoError(t, obj.Remove(ctx))
 	}()
-	// PutTestcontests checks the received object
+	// PutTestcontents checks the received object
 
 }
 

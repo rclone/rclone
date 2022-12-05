@@ -290,7 +290,7 @@ func (b *bisyncRun) applyDeltas(ctx context.Context, ds1, ds2 *deltaSet) (change
 	return
 }
 
-// exccessDeletes checks whether number of deletes is within allowed range
+// excessDeletes checks whether number of deletes is within allowed range
 func (ds *deltaSet) excessDeletes() bool {
 	maxDelete := ds.opt.MaxDelete
 	maxRatio := float64(maxDelete) / 100.0

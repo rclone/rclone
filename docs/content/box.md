@@ -1,6 +1,7 @@
 ---
 title: "Box"
 description: "Rclone docs for Box"
+versionIntroduced: "v1.38"
 ---
 
 # {{< icon "fa fa-archive" >}} Box

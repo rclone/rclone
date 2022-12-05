@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -240,7 +239,7 @@ func buildWindowsResourceSyso(goarch string, versionTag string) string {
 		log.Printf("Failed to resolve path: %v", err)
 		return ""
 	}
-	err = ioutil.WriteFile(jsonPath, bs, 0644)
+	err = os.WriteFile(jsonPath, bs, 0644)
 	if err != nil {
 		log.Printf("Failed to write %s: %v", jsonPath, err)
 		return ""
@@ -476,7 +475,7 @@ func main() {
 		run("mkdir", "build")
 	}
 	chdir("build")
-	err := ioutil.WriteFile("version.txt", []byte(fmt.Sprintf("rclone %s\n", version)), 0666)
+	err := os.WriteFile("version.txt", []byte(fmt.Sprintf("rclone %s\n", version)), 0666)
 	if err != nil {
 		log.Fatalf("Couldn't write version.txt: %v", err)
 	}

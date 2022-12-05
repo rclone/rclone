@@ -1,6 +1,7 @@
 ---
 title: "put.io"
 description: "Rclone docs for put.io"
+versionIntroduced: "v1.49.0"
 ---
 
 # {{< icon "fas fa-parking" >}} put.io

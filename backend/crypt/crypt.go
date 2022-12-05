@@ -125,7 +125,7 @@ names, or for debugging purposes.`,
 
 This option could help with shortening the encrypted filename. The 
 suitable option would depend on the way your remote count the filename
-length and if it's case sensitve.`,
+length and if it's case sensitive.`,
 			Default: "base32",
 			Examples: []fs.OptionExample{
 				{
@@ -1047,10 +1047,11 @@ func (o *ObjectInfo) Hash(ctx context.Context, hash hash.Type) (string, error) {
 	// Get the underlying object if there is one
 	if srcObj, ok = o.ObjectInfo.(fs.Object); ok {
 		// Prefer direct interface assertion
-	} else if do, ok := o.ObjectInfo.(fs.ObjectUnWrapper); ok {
-		// Otherwise likely is an operations.OverrideRemote
+	} else if do, ok := o.ObjectInfo.(*fs.OverrideRemote); ok {
+		// Unwrap if it is an operations.OverrideRemote
 		srcObj = do.UnWrap()
 	} else {
+		// Otherwise don't unwrap any further
 		return "", nil
 	}
 	// if this is wrapping a local object then we work out the hash

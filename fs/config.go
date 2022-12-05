@@ -29,6 +29,12 @@ var (
 		return errors.New("no config file set handler")
 	}
 
+	// Check if the config file has the named section
+	//
+	// This is a function pointer to decouple the config
+	// implementation from the fs
+	ConfigFileHasSection = func(section string) bool { return false }
+
 	// CountError counts an error.  If any errors have been
 	// counted then rclone will exit with a non zero error code.
 	//

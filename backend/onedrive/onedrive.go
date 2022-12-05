@@ -600,14 +600,14 @@ type Options struct {
 	Enc                     encoder.MultiEncoder `config:"encoding"`
 }
 
-// Fs represents a remote one drive
+// Fs represents a remote OneDrive
 type Fs struct {
 	name         string             // name of this remote
 	root         string             // the path we are working on
 	opt          Options            // parsed options
 	ci           *fs.ConfigInfo     // global config
 	features     *fs.Features       // optional features
-	srv          *rest.Client       // the connection to the one drive server
+	srv          *rest.Client       // the connection to the OneDrive server
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *fs.Pacer          // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
@@ -615,7 +615,7 @@ type Fs struct {
 	driveType    string             // https://developer.microsoft.com/en-us/graph/docs/api-reference/v1.0/resources/drive
 }
 
-// Object describes a one drive object
+// Object describes a OneDrive object
 //
 // Will definitely have info but maybe not meta
 type Object struct {
@@ -645,7 +645,7 @@ func (f *Fs) Root() string {
 
 // String converts this Fs to a string
 func (f *Fs) String() string {
-	return fmt.Sprintf("One drive root '%s'", f.root)
+	return fmt.Sprintf("OneDrive root '%s'", f.root)
 }
 
 // Features returns the optional features of this Fs
@@ -653,7 +653,7 @@ func (f *Fs) Features() *fs.Features {
 	return f.features
 }
 
-// parsePath parses a one drive 'url'
+// parsePath parses a OneDrive 'url'
 func parsePath(path string) (root string) {
 	root = strings.Trim(path, "/")
 	return
@@ -890,6 +890,12 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		ServerSideAcrossConfigs: opt.ServerSideAcrossConfigs,
 	}).Fill(ctx, f)
 	f.srv.SetErrorHandler(errorHandler)
+
+	// Disable change polling in China region
+	// See: https://github.com/rclone/rclone/issues/6444
+	if f.opt.Region == regionCN {
+		f.features.ChangeNotify = nil
+	}
 
 	// Renew the token in the background
 	f.tokenRenewer = oauthutil.NewRenew(f.String(), ts, func() error {

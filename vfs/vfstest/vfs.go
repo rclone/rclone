@@ -1,3 +1,4 @@
+// Package vfstest provides tests for VFS.
 package vfstest
 
 import (
