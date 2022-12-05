@@ -657,8 +657,7 @@ func (f *Fs) dirFromStandardPath(dir string) string {
 // findItem finds a directory entry for the name in its parent directory
 func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
-	fullPath := path.Join(f.root, remote)
-	if fullPath == "" || fullPath == "." || fullPath == "/" {
+	if remote == "" || remote == "." || remote == "/" {
 		// if root, assume exists and synthesize an entry
 		return &ftp.Entry{
 			Name: "",
@@ -666,13 +665,32 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 			Time: time.Now(),
 		}, nil
 	}
-	dir := path.Dir(fullPath)
-	base := path.Base(fullPath)
 
 	c, err := f.getFtpConnection(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("findItem: %w", err)
 	}
+
+	// returns TRUE if MLST is supported which is required to call GetEntry
+	if c.IsTimePreciseInList() {
+		entry, err := c.GetEntry(f.opt.Enc.FromStandardPath(remote))
+		f.putFtpConnection(&c, err)
+		if err != nil {
+			err = translateErrorFile(err)
+			if err == fs.ErrorObjectNotFound {
+				return nil, nil
+			}
+			return nil, err
+		}
+		if entry != nil {
+			f.entryToStandard(entry)
+		}
+		return entry, nil
+	}
+
+	dir := path.Dir(remote)
+	base := path.Base(remote)
+
 	files, err := c.List(f.dirFromStandardPath(dir))
 	f.putFtpConnection(&c, err)
 	if err != nil {
@@ -691,7 +709,7 @@ func (f *Fs) findItem(ctx context.Context, remote string) (entry *ftp.Entry, err
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err error) {
 	// defer fs.Trace(remote, "")("o=%v, err=%v", &o, &err)
-	entry, err := f.findItem(ctx, remote)
+	entry, err := f.findItem(ctx, path.Join(f.root, remote))
 	if err != nil {
 		return nil, err
 	}
@@ -713,7 +731,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (o fs.Object, err err
 
 // dirExists checks the directory pointed to by remote exists or not
 func (f *Fs) dirExists(ctx context.Context, remote string) (exists bool, err error) {
-	entry, err := f.findItem(ctx, remote)
+	entry, err := f.findItem(ctx, path.Join(f.root, remote))
 	if err != nil {
 		return false, fmt.Errorf("dirExists: %w", err)
 	}
@@ -857,32 +875,18 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 // getInfo reads the FileInfo for a path
 func (f *Fs) getInfo(ctx context.Context, remote string) (fi *FileInfo, err error) {
 	// defer fs.Trace(remote, "")("fi=%v, err=%v", &fi, &err)
-	dir := path.Dir(remote)
-	base := path.Base(remote)
-
-	c, err := f.getFtpConnection(ctx)
+	file, err := f.findItem(ctx, remote)
 	if err != nil {
-		return nil, fmt.Errorf("getInfo: %w", err)
-	}
-	files, err := c.List(f.dirFromStandardPath(dir))
-	f.putFtpConnection(&c, err)
-	if err != nil {
-		return nil, translateErrorFile(err)
-	}
-
-	for i := range files {
-		file := files[i]
-		f.entryToStandard(file)
-		if file.Name == base {
-			info := &FileInfo{
-				Name:    remote,
-				Size:    file.Size,
-				ModTime: file.Time,
-				precise: f.fLstTime,
-				IsDir:   file.Type == ftp.EntryTypeFolder,
-			}
-			return info, nil
+		return nil, err
+	} else if file != nil {
+		info := &FileInfo{
+			Name:    remote,
+			Size:    file.Size,
+			ModTime: file.Time,
+			precise: f.fLstTime,
+			IsDir:   file.Type == ftp.EntryTypeFolder,
 		}
+		return info, nil
 	}
 	return nil, fs.ErrorObjectNotFound
 }
