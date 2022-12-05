@@ -48,7 +48,6 @@ rclone tree remote:path [flags]
 
 ```
   -a, --all             All files are listed (list . files too)
-  -C, --color           Turn colorization on always
   -d, --dirs-only       List directories only
       --dirsfirst       List directories before files (-U disables)
       --full-path       Print the full path prefix for each file
