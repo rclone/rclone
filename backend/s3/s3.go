@@ -3195,6 +3195,9 @@ func (ls *v2List) List(ctx context.Context) (resp *s3.ListObjectsV2Output, versi
 	if err != nil {
 		return nil, nil, err
 	}
+	if aws.BoolValue(resp.IsTruncated) && (resp.ContinuationToken == nil || *resp.ContinuationToken == "") {
+		return nil, nil, errors.New("s3 protocol error: received listing v2 with IsTruncated set and no ContinuationToken. Should you be using `--s3-list-version 1`?")
+	}
 	ls.req.ContinuationToken = resp.NextContinuationToken
 	return resp, nil, nil
 }
