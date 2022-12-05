@@ -2730,6 +2730,7 @@ func setQuirks(opt *Options) {
 		mightGzip = false // Never auto gzips objects
 	case "Alibaba":
 		useMultipartEtag = false // Alibaba seems to calculate multipart Etags differently from AWS
+		listObjectsV2 = false    // See #6600
 	case "HuaweiOBS":
 		// Huawei OBS PFS is not support listObjectV2, and if turn on the urlEncodeListing, marker will not work and keep list same page forever.
 		urlEncodeListings = false
