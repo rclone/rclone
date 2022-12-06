@@ -737,8 +737,17 @@ func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
 }
 
 // AddVirtual adds the object (file or dir) to the directory cache
-func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) error {
-	dir, leaf, err := vfs.StatParent(remote)
+func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
+	remote = strings.TrimRight(remote, "/")
+	var dir *Dir
+	var parent, leaf string
+	if vfs.f.Features().CanHaveEmptyDirectories {
+		dir, leaf, err = vfs.StatParent(remote)
+	} else {
+		// Create parent of virtual directory since backend can't have empty directories
+		parent, leaf = path.Split(remote)
+		dir, err = vfs.mkdirAll(parent, vfs.Opt.DirPerms)
+	}
 	if err != nil {
 		return err
 	}
