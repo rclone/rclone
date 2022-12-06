@@ -654,18 +654,49 @@ func (vfs *VFS) Chtimes(name string, atime time.Time, mtime time.Time) error {
 	return nil
 }
 
+// mkdir creates a new directory with the specified name and permission bits
+// (before umask) returning the new directory node.
+func (vfs *VFS) mkdir(name string, perm os.FileMode) (*Dir, error) {
+	dir, leaf, err := vfs.StatParent(name)
+	if err != nil {
+		return nil, err
+	}
+	return dir.Mkdir(leaf)
+}
+
 // Mkdir creates a new directory with the specified name and permission bits
 // (before umask).
 func (vfs *VFS) Mkdir(name string, perm os.FileMode) error {
-	dir, leaf, err := vfs.StatParent(name)
-	if err != nil {
-		return err
+	_, err := vfs.mkdir(name, perm)
+	return err
+}
+
+// mkdirAll creates a new directory with the specified name and
+// permission bits (before umask) and all of its parent directories up
+// to the root.
+func (vfs *VFS) mkdirAll(name string, perm os.FileMode) (dir *Dir, err error) {
+	name = strings.Trim(name, "/")
+	var parent, leaf string
+	dir, leaf, err = vfs.StatParent(name)
+	if err == ENOENT && name != "" {
+		parent, leaf = path.Split(name)
+		dir, err = vfs.mkdirAll(parent, perm)
+	} else if err != nil {
+		return nil, err
 	}
-	_, err = dir.Mkdir(leaf)
+	dir, err = dir.Mkdir(leaf)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return dir, nil
+}
+
+// MkdirAll creates a new directory with the specified name and
+// permission bits (before umask) and all of its parent directories up
+// to the root.
+func (vfs *VFS) MkdirAll(name string, perm os.FileMode) error {
+	_, err := vfs.mkdirAll(name, perm)
+	return err
 }
 
 // ReadDir reads the directory named by dirname and returns
@@ -701,8 +732,18 @@ func (vfs *VFS) ReadFile(filename string) (b []byte, err error) {
 }
 
 // AddVirtual adds the object (file or dir) to the directory cache
-func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) error {
-	dir, leaf, err := vfs.StatParent(remote)
+func (vfs *VFS) AddVirtual(remote string, size int64, isDir bool) (err error) {
+	remote = strings.Trim(remote, "/")
+	var dir *Dir
+	var parent, leaf string
+	if vfs.f.Features().CanHaveEmptyDirectories {
+		dir, leaf, err = vfs.StatParent(remote)
+	} else {
+		fs.Debugf(remote, "Creating parent of virtual directory since backend can't have empty directories")
+		remote = strings.Trim(remote, "/")
+		parent, leaf = path.Split(remote)
+		dir, err = vfs.mkdirAll(parent, vfs.Opt.DirPerms)
+	}
 	if err != nil {
 		return err
 	}
