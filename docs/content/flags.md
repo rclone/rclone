@@ -27,6 +27,7 @@ These flags are available for every command.
   -c, --checksum                             Skip based on checksum (if available) & size, not mod-time & size
       --client-cert string                   Client SSL certificate (PEM) for mutual TLS auth
       --client-key string                    Client SSL private key (PEM) for mutual TLS auth
+      --color                                Define when colors (and other ANSI codes) should be shown AUTO|ALWAYS|NEVER (default AUTO)
       --compare-dest stringArray             Include additional comma separated server-side paths during comparison
       --config string                        Config file (default "$HOME/.config/rclone/rclone.conf")
       --contimeout duration                  Connect timeout (default 1m0s)

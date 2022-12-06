@@ -142,6 +142,7 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.DisableHTTPKeepAlives, "disable-http-keep-alives", "", ci.DisableHTTPKeepAlives, "Disable HTTP keep-alives and use each connection once.")
 	flags.BoolVarP(flagSet, &ci.Metadata, "metadata", "M", ci.Metadata, "If set, preserve metadata when copying objects")
 	flags.BoolVarP(flagSet, &ci.ServerSideAcrossConfigs, "server-side-across-configs", "", ci.ServerSideAcrossConfigs, "Allow server-side operations (e.g. copy) to work across different configs")
+	flags.FVarP(flagSet, &ci.TerminalColorMode, "color", "", "When to show colors (and other ANSI codes) AUTO|NEVER|ALWAYS")
 }
 
 // ParseHeaders converts the strings passed in via the header flags into HTTPOptions

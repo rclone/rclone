@@ -61,7 +61,6 @@ func init() {
 	flags.StringVarP(cmdFlags, &sort, "sort", "", "", "Select sort: name,version,size,mtime,ctime")
 	// Graphics
 	flags.BoolVarP(cmdFlags, &opts.NoIndent, "noindent", "", false, "Don't print indentation lines")
-	flags.BoolVarP(cmdFlags, &opts.Colorize, "color", "C", false, "Turn colorization on always")
 }
 
 var commandDefinition = &cobra.Command{
@@ -116,6 +115,7 @@ For a more interactive navigation of the remote see the
 		opts.SizeSort = sort == "size"
 		ci := fs.GetConfig(context.Background())
 		opts.UnitSize = ci.HumanReadable
+		opts.Colorize = ci.TerminalColorMode != fs.TerminalColorModeNever
 		if opts.DeepLevel == 0 {
 			opts.DeepLevel = ci.MaxDepth
 		}

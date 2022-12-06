@@ -142,6 +142,7 @@ type ConfigInfo struct {
 	DisableHTTPKeepAlives   bool
 	Metadata                bool
 	ServerSideAcrossConfigs bool
+	TerminalColorMode       TerminalColorMode
 }
 
 // NewConfig creates a new config with everything set to the default

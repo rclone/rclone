@@ -823,6 +823,16 @@ quicker than without the `--checksum` flag.
 When using this flag, rclone won't update mtimes of remote files if
 they are incorrect as it would normally.
 
+### --color WHEN ###
+
+Specifiy when colors (and other ANSI codes) should be added to the output.
+
+`AUTO` (default) only allows ANSI codes when the output is a terminal
+
+`NEVER` never allow ANSI codes
+
+`ALWAYS` always add ANSI codes, regardless of the output format (terminal or file)
+
 ### --compare-dest=DIR ###
 
 When using `sync`, `copy` or `move` DIR is checked in addition to the
