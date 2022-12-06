@@ -28,7 +28,8 @@ control the stats printing.
 Use `--addr` to specify which IP address and port the server should
 listen on, eg `--addr 1.2.3.4:8000` or `--addr :8080` to listen to all
 IPs.  By default it only listens on localhost.  You can use port
-:0 to let the OS choose an available port.
+:0 to let the OS choose an available port. 
+You can prefix the address with `unix:` to listen on a unix domain (e.g. `--addr unix:/tmp/rclone.sock`).
 
 If you set `--addr` to listen on a public or LAN accessible IP address
 then using Authentication is advised - see the next section for info.

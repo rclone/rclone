@@ -358,7 +358,22 @@ func start() error {
 
 	var err error
 	var l net.Listener
-	l, err = net.Listen("tcp", defaultServerOptions.ListenAddr)
+
+	if strings.HasPrefix(defaultServerOptions.ListenAddr, "unix:") {
+		socketFile := defaultServerOptions.ListenAddr[5:]
+
+		// Cleanup socket file if already existing
+		if _, err := os.Stat(socketFile); err == nil {
+			if err := os.Remove(socketFile); err != nil {
+				return err
+			}
+		}
+
+		l, err = net.Listen("unix", socketFile)
+	} else {
+		l, err = net.Listen("tcp", defaultServerOptions.ListenAddr)
+	}
+
 	if err != nil {
 		return err
 	}

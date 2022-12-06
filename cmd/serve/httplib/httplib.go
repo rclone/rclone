@@ -339,7 +339,24 @@ func NewServer(handler http.Handler, opt *Options) *Server {
 // the listener was not started; does not block, so
 // use s.Wait() to block on the listener indefinitely.
 func (s *Server) Serve() error {
-	ln, err := net.Listen("tcp", s.httpServer.Addr)
+	var err error
+	var ln net.Listener
+
+	if strings.HasPrefix(s.httpServer.Addr, "unix:") {
+		socketFile := s.httpServer.Addr[5:]
+
+		// Cleanup socket file if already existing
+		if _, err := os.Stat(socketFile); err == nil {
+			if err := os.Remove(socketFile); err != nil {
+				return err
+			}
+		}
+
+		ln, err = net.Listen("unix", socketFile)
+	} else {
+		ln, err = net.Listen("tcp", s.httpServer.Addr)
+	}
+
 	if err != nil {
 		return fmt.Errorf("start server failed: %w", err)
 	}
@@ -395,6 +412,10 @@ func (s *Server) Close() {
 
 // URL returns the serving address of this server
 func (s *Server) URL() string {
+	if strings.HasPrefix(s.httpServer.Addr, "unix:") {
+		return s.httpServer.Addr
+	}
+
 	proto := "http"
 	if s.useSSL {
 		proto = "https"
