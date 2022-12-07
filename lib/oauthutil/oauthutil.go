@@ -480,7 +480,7 @@ func ConfigOAuth(ctx context.Context, name string, m configmap.Mapper, ri *fs.Re
 		if in.Result == "false" {
 			return fs.ConfigGoto(newState("*oauth-done"))
 		}
-		return fs.ConfigConfirm(newState("*oauth-islocal"), true, "config_is_local", "Use auto config?\n * Say Y if not sure\n * Say N if you are working on a remote or headless machine\n")
+		return fs.ConfigConfirm(newState("*oauth-islocal"), true, "config_is_local", "Use web browser to automatically authenticate rclone with remote?\n * Say Y if the machine running rclone has a web browser you can use\n * Say N if running rclone on a (remote) machine without web browser access\nIf not sure try Y. If Y failed, try N.\n")
 	case "*oauth-islocal":
 		if in.Result == "true" {
 			return fs.ConfigGoto(newState("*oauth-do"))

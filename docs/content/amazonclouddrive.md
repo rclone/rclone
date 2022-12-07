@@ -79,9 +79,10 @@ Token server url - leave blank to use Amazon's.
 token_url> Optional token URL
 Remote config
 Make sure your Redirect URL is set to "http://127.0.0.1:53682/" in your custom config.
-Use auto config?
- * Say Y if not sure
- * Say N if you are working on a remote or headless machine
+Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
 y) Yes
 n) No
 y/n> y
