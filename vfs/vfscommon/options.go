@@ -22,6 +22,7 @@ type Options struct {
 	GID                uint32
 	DirPerms           os.FileMode
 	FilePerms          os.FileMode
+	LinkPerms          os.FileMode
 	ChunkSize          fs.SizeSuffix // if > 0 read files in chunks
 	ChunkSizeLimit     fs.SizeSuffix // if > ChunkSize double the chunk size after each chunk until reached
 	CacheMode          CacheMode
@@ -52,6 +53,7 @@ var DefaultOpt = Options{
 	GID:                ^uint32(0), // overridden for non windows in mount_unix.go
 	DirPerms:           os.FileMode(0777),
 	FilePerms:          os.FileMode(0666),
+	LinkPerms:          os.ModePerm,
 	CacheMode:          CacheModeOff,
 	CacheMaxAge:        3600 * time.Second,
 	CachePollInterval:  60 * time.Second,
@@ -72,8 +74,12 @@ func (opt *Options) Init() {
 	// Mask the permissions with the umask
 	opt.DirPerms &= ^os.FileMode(opt.Umask)
 	opt.FilePerms &= ^os.FileMode(opt.Umask)
+	opt.LinkPerms &= ^os.FileMode(opt.Umask)
 
 	// Make sure directories are returned as directories
 	opt.DirPerms |= os.ModeDir
+
+	// Make sure links are returned as links
+	opt.LinkPerms |= os.ModeSymlink
 
 }

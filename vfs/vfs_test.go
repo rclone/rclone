@@ -140,6 +140,7 @@ func TestVFSNew(t *testing.T) {
 	// Check making a VFS with nil options
 	var defaultOpt = vfscommon.DefaultOpt
 	defaultOpt.DirPerms |= os.ModeDir
+	defaultOpt.LinkPerms |= os.ModeSymlink
 	assert.Equal(t, vfs.Opt, defaultOpt)
 	assert.Equal(t, vfs.f, r.Fremote)
 
