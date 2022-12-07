@@ -406,3 +406,6 @@ backends:
      - TestIntegration/FsMkdir/FsEncoding/trailing_CR
      - TestIntegration/FsMkdir/FsEncoding/trailing_LF
      - TestIntegration/FsMkdir/FsEncoding/leading_HT
+ - backend: "baidupcs"
+   remote: "TestBaiduPCS:"
+   fastlist: false
