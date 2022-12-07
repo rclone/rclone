@@ -45,7 +45,10 @@ Leave blank normally.
 scope_access>
 Edit advanced config?
 y/n> n
-Use auto config?
+Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
 y/n> y
 If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth?state=xxxxxxxxxxxxxxxxxxxxxx
 Log in and authorize rclone for access

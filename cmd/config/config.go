@@ -176,7 +176,7 @@ This will look something like (some irrelevant detail removed):
     "State": "*oauth-islocal,teamdrive,,",
     "Option": {
         "Name": "config_is_local",
-        "Help": "Use auto config?\n * Say Y if not sure\n * Say N if you are working on a remote or headless machine\n",
+        "Help": "Use web browser to automatically authenticate rclone with remote?\n * Say Y if the machine running rclone has a web browser you can use\n * Say N if running rclone on a (remote) machine without web browser access\nIf not sure try Y. If Y failed, try N.\n",
         "Default": true,
         "Examples": [
             {

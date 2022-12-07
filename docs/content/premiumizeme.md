@@ -39,9 +39,10 @@ Storage> premiumizeme
 ** See help for premiumizeme backend at: https://rclone.org/premiumizeme/ **
 
 Remote config
-Use auto config?
- * Say Y if not sure
- * Say N if you are working on a remote or headless machine
+Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
 y) Yes
 n) No
 y/n> y

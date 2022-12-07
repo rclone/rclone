@@ -56,6 +56,16 @@ d) Delete this remote
 y/e/d> y
 ```
 
+See the [remote setup docs](/remote_setup/) for how to set it up on a
+machine with no Internet browser available.
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Dropbox. This only
+runs from the moment it opens your browser to the moment you get back
+the verification code.  This is on `http://127.0.0.1:53682/` and it
+may require you to unblock it temporarily if you are running a host
+firewall, or use manual mode.
+
 You can then use it like this,
 
 List directories in top level of your dropbox

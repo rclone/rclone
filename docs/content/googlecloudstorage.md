@@ -117,9 +117,10 @@ Choose a number from below, or type in your own value
    \ "DURABLE_REDUCED_AVAILABILITY"
 storage_class> 5
 Remote config
-Use auto config?
- * Say Y if not sure
- * Say N if you are working on a remote or headless machine or Y didn't work
+Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
 y) Yes
 n) No
 y/n> y
@@ -143,8 +144,12 @@ d) Delete this remote
 y/e/d> y
 ```
 
+See the [remote setup docs](/remote_setup/) for how to set it up on a
+machine with no Internet browser available.
+
 Note that rclone runs a webserver on your local machine to collect the
-token as returned from Google if you use auto config mode. This only
+token as returned from Google if using web browser to automatically 
+authenticate. This only
 runs from the moment it opens your browser to the moment you get back
 the verification code.  This is on `http://127.0.0.1:53682/` and this
 it may require you to unblock it temporarily if you are running a host
