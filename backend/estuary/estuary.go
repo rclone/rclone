@@ -42,11 +42,6 @@ var (
 	decayConstant                = 2
 )
 
-const (
-	colUuid = "coluuid"
-	colDir  = "dir"
-)
-
 // config options for our backend
 type Options struct {
 	Token string `config:"token"`
@@ -317,16 +312,6 @@ func (f *Fs) setRoot(root string) {
 	f.rootCollection, f.rootDirectory = bucket.Split(f.root)
 }
 
-func (f *Fs) fetchViewer(ctx context.Context) (response ViewerResponse, err error) {
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/viewer",
-	}
-
-	_, err = f.client.CallJSON(ctx, &opts, nil, &response)
-	return
-}
-
 // Command the backend to run a named command
 //
 // The command run is name
@@ -387,38 +372,13 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		return "", errorMkdirOnlyCollections
 	}
 
-	var resp *http.Response
-	var collection Collection
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/collections/create",
-	}
-	create := CollectionCreate{
-		Name:        leaf,
-		Description: "",
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, &create, &collection)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return "", err
-	}
-	return collection.UUID, nil
+	return f.createCollection(ctx, leaf)
 }
 
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
 	fs.Debugf(f, "FindLeaf pathID=%v, leaf=%v, rootCollection=%v, rootDirectory=%v", pathID, leaf, f.rootCollection, f.rootDirectory)
 	if pathID == "" { // root dir, check collections
-		var collections []Collection
-		err := f.pacer.Call(func() (bool, error) {
-			response, err := f.client.CallJSON(ctx, &rest.Opts{
-				Method: "GET",
-				Path:   "/collections/list",
-			}, nil, &collections)
-			return shouldRetry(ctx, response, err)
-		})
-
+		collections, err := f.listCollections(ctx)
 		if err != nil {
 			return "", false, err
 		}
@@ -428,24 +388,11 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 				return collection.UUID, true, nil
 			}
 		}
-
 		return "", false, nil
 	} else { // subdir, these are lazy created and we construct a path out of the collection ID + root path in the collection
-		uuid, absPath := splitDir(pathID)
-
-		params := url.Values{}
-		params.Set(colUuid, uuid)
-		params.Set(colDir, absPath)
-
-		var items []CollectionFsItem
-		if err := f.pacer.Call(func() (bool, error) {
-			response, err := f.client.CallJSON(ctx, &rest.Opts{
-				Method:     "GET",
-				Path:       "/collections/content",
-				Parameters: params,
-			}, nil, &items)
-			return shouldRetry(ctx, response, err)
-		}); err != nil {
+		uuid, directoryPath := splitDir(pathID)
+		items, err := f.getCollectionContents(ctx, uuid, directoryPath)
+		if err != nil {
 			return "", false, err
 		}
 
@@ -467,20 +414,10 @@ func (item *CollectionFsItem) isDir() bool {
 }
 
 func (f *Fs) listRoot(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	var response *http.Response
-	var collections []Collection
-	err = f.pacer.Call(func() (bool, error) {
-		response, err = f.client.CallJSON(ctx, &rest.Opts{
-			Method: "GET",
-			Path:   "/collections/list",
-		}, nil, &collections)
-		return shouldRetry(ctx, response, err)
-	})
-
+	collections, err := f.listCollections(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	for _, collection := range collections {
 		remote := path.Join(dir, collection.Name)
 		f.dirCache.Put(remote, collection.UUID)
@@ -505,27 +442,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return f.listRoot(ctx, dir)
 	}
 
-	var dirID string
-	dirID, err = f.dirCache.FindDir(ctx, dir, false)
+	var pathID string
+	pathID, err = f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
 	}
 
-	uuid, collectionDir := splitDir(dirID)
-	var response *http.Response
-	params := url.Values{}
-	params.Set(colUuid, uuid)
-	params.Set(colDir, collectionDir)
-
-	var items []CollectionFsItem
-	if err := f.pacer.Call(func() (bool, error) {
-		response, err = f.client.CallJSON(ctx, &rest.Opts{
-			Method:     "GET",
-			Path:       "/collections/content",
-			Parameters: params,
-		}, nil, &items)
-		return shouldRetry(ctx, response, err)
-	}); err != nil {
+	uuid, directoryPath := splitDir(pathID)
+	items, err := f.getCollectionContents(ctx, uuid, directoryPath)
+	if err != nil {
 		return nil, err
 	}
 
@@ -641,17 +566,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// if dirID != "" {
 	// 	return nil // TODO: this should be errorRmdirOnlyCollections but if we do that it breaks integration tests
 	// }
-	var resp *http.Response
-	var collection Collection
-	opts := rest.Opts{
-		Method: "DELETE",
-		Path:   "/collections/" + uuid,
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, nil, &collection)
-		return shouldRetry(ctx, resp, err)
-	})
-	return err
+	return f.deleteCollection(ctx, uuid)
 }
 
 // Fs returns the parent Fs
@@ -708,18 +623,8 @@ func (o *Object) readStats(ctx context.Context) error {
 		dir, file := path.Split(o.Remote())
 		collectionDir := "/" + dir
 
-		params := url.Values{}
-		params.Set(colUuid, dirID)
-		params.Set(colDir, collectionDir)
-		var items []CollectionFsItem
-		if err = o.fs.pacer.Call(func() (bool, error) {
-			response, err := o.fs.client.CallJSON(ctx, &rest.Opts{
-				Method:     "GET",
-				Path:       "/collections/content",
-				Parameters: params,
-			}, nil, &items)
-			return shouldRetry(ctx, response, err)
-		}); err != nil {
+		items, err := o.fs.getCollectionContents(ctx, dirID, collectionDir)
+		if err != nil {
 			return err
 		}
 
@@ -736,12 +641,7 @@ func (o *Object) readStats(ctx context.Context) error {
 		return fs.ErrorObjectNotFound
 	}
 
-	var result []ContentByCID
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/content/by-cid/" + o.cid,
-	}
-	_, err := o.fs.client.CallJSON(ctx, &opts, nil, &result)
+	result, err := o.fs.getContentByCid(ctx, o.cid)
 	if err != nil {
 		return err
 	}
