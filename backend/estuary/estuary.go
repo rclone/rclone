@@ -347,7 +347,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 					case "url":
 						prefix = "ipfs://"
 					case "gateway":
-						prefix = "https://dweb.link/ipfs/"
+						prefix = "https://gateway.estuary.tech/gw/ipfs/"
 					}
 
 					cidWidth := 60 + len(prefix)
