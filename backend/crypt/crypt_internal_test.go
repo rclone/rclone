@@ -19,26 +19,26 @@ import (
 
 // Create a temporary local fs to upload things from
 
-func makeTempLocalFs(t *testing.T) (localFs fs.Fs, cleanup func()) {
+func makeTempLocalFs(t *testing.T) (localFs fs.Fs) {
 	localFs, err := fs.TemporaryLocalFs(context.Background())
 	require.NoError(t, err)
-	cleanup = func() {
+	t.Cleanup(func() {
 		require.NoError(t, localFs.Rmdir(context.Background(), ""))
-	}
-	return localFs, cleanup
+	})
+	return localFs
 }
 
 // Upload a file to a remote
-func uploadFile(t *testing.T, f fs.Fs, remote, contents string) (obj fs.Object, cleanup func()) {
+func uploadFile(t *testing.T, f fs.Fs, remote, contents string) (obj fs.Object) {
 	inBuf := bytes.NewBufferString(contents)
 	t1 := time.Date(2012, time.December, 17, 18, 32, 31, 0, time.UTC)
 	upSrc := object.NewStaticObjectInfo(remote, t1, int64(len(contents)), true, nil, nil)
 	obj, err := f.Put(context.Background(), inBuf, upSrc)
 	require.NoError(t, err)
-	cleanup = func() {
+	t.Cleanup(func() {
 		require.NoError(t, obj.Remove(context.Background()))
-	}
-	return obj, cleanup
+	})
+	return obj
 }
 
 // Test the ObjectInfo
@@ -52,11 +52,9 @@ func testObjectInfo(t *testing.T, f *Fs, wrap bool) {
 		path = "_wrap"
 	}
 
-	localFs, cleanupLocalFs := makeTempLocalFs(t)
-	defer cleanupLocalFs()
+	localFs := makeTempLocalFs(t)
 
-	obj, cleanupObj := uploadFile(t, localFs, path, contents)
-	defer cleanupObj()
+	obj := uploadFile(t, localFs, path, contents)
 
 	// encrypt the data
 	inBuf := bytes.NewBufferString(contents)
@@ -103,16 +101,13 @@ func testComputeHash(t *testing.T, f *Fs) {
 		t.Skipf("%v: does not support hashes", f.Fs)
 	}
 
-	localFs, cleanupLocalFs := makeTempLocalFs(t)
-	defer cleanupLocalFs()
+	localFs := makeTempLocalFs(t)
 
 	// Upload a file to localFs as a test object
-	localObj, cleanupLocalObj := uploadFile(t, localFs, path, contents)
-	defer cleanupLocalObj()
+	localObj := uploadFile(t, localFs, path, contents)
 
 	// Upload the same data to the remote Fs also
-	remoteObj, cleanupRemoteObj := uploadFile(t, f, path, contents)
-	defer cleanupRemoteObj()
+	remoteObj := uploadFile(t, f, path, contents)
 
 	// Calculate the expected Hash of the remote object
 	computedHash, err := f.ComputeHash(ctx, remoteObj.(*Object), localObj, hashType)

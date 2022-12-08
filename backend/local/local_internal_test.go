@@ -33,7 +33,6 @@ func TestMain(m *testing.M) {
 // Test copy with source file that's updating
 func TestUpdatingCheck(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	filePath := "sub dir/local test"
 	r.WriteFile(filePath, "content", time.Now())
 
@@ -78,7 +77,6 @@ func TestUpdatingCheck(t *testing.T) {
 func TestSymlink(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	f := r.Flocal.(*Fs)
 	dir := f.root
 
@@ -177,7 +175,6 @@ func TestSymlinkError(t *testing.T) {
 func TestHashOnUpdate(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	const filePath = "file.txt"
 	when := time.Now()
 	r.WriteFile(filePath, "content", when)
@@ -208,7 +205,6 @@ func TestHashOnUpdate(t *testing.T) {
 func TestHashOnDelete(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	const filePath = "file.txt"
 	when := time.Now()
 	r.WriteFile(filePath, "content", when)
@@ -237,7 +233,6 @@ func TestHashOnDelete(t *testing.T) {
 func TestMetadata(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	const filePath = "metafile.txt"
 	when := time.Now()
 	const dayLength = len("2001-01-01")
@@ -372,7 +367,6 @@ func TestMetadata(t *testing.T) {
 func TestFilter(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	when := time.Now()
 	r.WriteFile("included", "included file", when)
 	r.WriteFile("excluded", "excluded file", when)

@@ -37,7 +37,6 @@ func compareListJSONItem(t *testing.T, a, b *operations.ListJSONItem, precision 
 func TestListJSON(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "file1", "file1", t1)
 	file2 := r.WriteBoth(ctx, "sub/file2", "sub/file2", t2)
 
@@ -245,7 +244,6 @@ func TestListJSON(t *testing.T) {
 func TestStatJSON(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "file1", "file1", t1)
 	file2 := r.WriteBoth(ctx, "sub/file2", "sub/file2", t2)
 

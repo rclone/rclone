@@ -12,8 +12,8 @@ import (
 )
 
 // Open a file for write
-func readHandleCreate(t *testing.T) (r *fstest.Run, vfs *VFS, fh *ReadFileHandle, cleanup func()) {
-	r, vfs, cleanup = newTestVFS(t)
+func readHandleCreate(t *testing.T) (r *fstest.Run, vfs *VFS, fh *ReadFileHandle) {
+	r, vfs = newTestVFS(t)
 
 	file1 := r.WriteObject(context.Background(), "dir/file1", "0123456789abcdef", t1)
 	r.CheckRemoteItems(t, file1)
@@ -23,7 +23,7 @@ func readHandleCreate(t *testing.T) (r *fstest.Run, vfs *VFS, fh *ReadFileHandle
 	fh, ok := h.(*ReadFileHandle)
 	require.True(t, ok)
 
-	return r, vfs, fh, cleanup
+	return r, vfs, fh
 }
 
 // read data from the string
@@ -37,8 +37,7 @@ func readString(t *testing.T, fh *ReadFileHandle, n int) string {
 }
 
 func TestReadFileHandleMethods(t *testing.T) {
-	_, _, fh, cleanup := readHandleCreate(t)
-	defer cleanup()
+	_, _, fh := readHandleCreate(t)
 
 	// String
 	assert.Equal(t, "dir/file1 (r)", fh.String())
@@ -80,8 +79,7 @@ func TestReadFileHandleMethods(t *testing.T) {
 }
 
 func TestReadFileHandleSeek(t *testing.T) {
-	_, _, fh, cleanup := readHandleCreate(t)
-	defer cleanup()
+	_, _, fh := readHandleCreate(t)
 
 	assert.Equal(t, "0", readString(t, fh, 1))
 
@@ -123,8 +121,7 @@ func TestReadFileHandleSeek(t *testing.T) {
 }
 
 func TestReadFileHandleReadAt(t *testing.T) {
-	_, _, fh, cleanup := readHandleCreate(t)
-	defer cleanup()
+	_, _, fh := readHandleCreate(t)
 
 	// read from start
 	buf := make([]byte, 1)
@@ -179,8 +176,7 @@ func TestReadFileHandleReadAt(t *testing.T) {
 }
 
 func TestReadFileHandleFlush(t *testing.T) {
-	_, _, fh, cleanup := readHandleCreate(t)
-	defer cleanup()
+	_, _, fh := readHandleCreate(t)
 
 	// Check Flush does nothing if read not called
 	err := fh.Flush()
@@ -208,8 +204,7 @@ func TestReadFileHandleFlush(t *testing.T) {
 }
 
 func TestReadFileHandleRelease(t *testing.T) {
-	_, _, fh, cleanup := readHandleCreate(t)
-	defer cleanup()
+	_, _, fh := readHandleCreate(t)
 
 	// Check Release does nothing if file not read from
 	err := fh.Release()

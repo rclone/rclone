@@ -17,20 +17,19 @@ import (
 )
 
 // Open a file for write
-func writeHandleCreate(t *testing.T) (r *fstest.Run, vfs *VFS, fh *WriteFileHandle, cleanup func()) {
-	r, vfs, cleanup = newTestVFS(t)
+func writeHandleCreate(t *testing.T) (r *fstest.Run, vfs *VFS, fh *WriteFileHandle) {
+	r, vfs = newTestVFS(t)
 
 	h, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
 	require.NoError(t, err)
 	fh, ok := h.(*WriteFileHandle)
 	require.True(t, ok)
 
-	return r, vfs, fh, cleanup
+	return r, vfs, fh
 }
 
 func TestWriteFileHandleMethods(t *testing.T) {
-	r, vfs, fh, cleanup := writeHandleCreate(t)
-	defer cleanup()
+	r, vfs, fh := writeHandleCreate(t)
 
 	// String
 	assert.Equal(t, "file1 (w)", fh.String())
@@ -132,8 +131,7 @@ func TestWriteFileHandleMethods(t *testing.T) {
 }
 
 func TestWriteFileHandleWriteAt(t *testing.T) {
-	r, vfs, fh, cleanup := writeHandleCreate(t)
-	defer cleanup()
+	r, vfs, fh := writeHandleCreate(t)
 
 	// Preconditions
 	assert.Equal(t, int64(0), fh.offset)
@@ -177,8 +175,7 @@ func TestWriteFileHandleWriteAt(t *testing.T) {
 }
 
 func TestWriteFileHandleFlush(t *testing.T) {
-	_, vfs, fh, cleanup := writeHandleCreate(t)
-	defer cleanup()
+	_, vfs, fh := writeHandleCreate(t)
 
 	// Check Flush already creates file for unwritten handles, without closing it
 	err := fh.Flush()
@@ -210,8 +207,7 @@ func TestWriteFileHandleFlush(t *testing.T) {
 }
 
 func TestWriteFileHandleRelease(t *testing.T) {
-	_, _, fh, cleanup := writeHandleCreate(t)
-	defer cleanup()
+	_, _, fh := writeHandleCreate(t)
 
 	// Check Release closes file
 	err := fh.Release()
@@ -258,8 +254,7 @@ func canSetModTime(t *testing.T, r *fstest.Run) bool {
 
 // tests mod time on open files
 func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
-	r, vfs, fh, cleanup := writeHandleCreate(t)
-	defer cleanup()
+	r, vfs, fh := writeHandleCreate(t)
 
 	if !canSetModTime(t, r) {
 		t.Skip("can't set mod time")
@@ -286,8 +281,7 @@ func TestWriteFileModTimeWithOpenWriters(t *testing.T) {
 }
 
 func testFileReadAt(t *testing.T, n int) {
-	_, vfs, fh, cleanup := writeHandleCreate(t)
-	defer cleanup()
+	_, vfs, fh := writeHandleCreate(t)
 
 	contents := []byte(random.String(n))
 	if n != 0 {

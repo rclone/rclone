@@ -15,8 +15,6 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fstest/testy"
-	"github.com/rclone/rclone/lib/file"
-	"github.com/rclone/rclone/lib/random"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -46,20 +44,6 @@ func TestGetVersion(t *testing.T) {
 	assert.Equal(t, "v1.52.3", resultVer)
 }
 
-func makeTestDir() (testDir string, err error) {
-	const maxAttempts = 5
-	testDirBase := filepath.Join(os.TempDir(), "rclone-test-selfupdate.")
-
-	for attempt := 0; attempt < maxAttempts; attempt++ {
-		testDir = testDirBase + random.String(4)
-		err = file.MkdirAll(testDir, os.ModePerm)
-		if err == nil {
-			break
-		}
-	}
-	return
-}
-
 func TestInstallOnLinux(t *testing.T) {
 	testy.SkipUnreliable(t)
 	if runtime.GOOS != "linux" {
@@ -68,13 +52,8 @@ func TestInstallOnLinux(t *testing.T) {
 
 	// Prepare for test
 	ctx := context.Background()
-	testDir, err := makeTestDir()
-	assert.NoError(t, err)
+	testDir := t.TempDir()
 	path := filepath.Join(testDir, "rclone")
-	defer func() {
-		_ = os.Chmod(path, 0644)
-		_ = os.RemoveAll(testDir)
-	}()
 
 	regexVer := regexp.MustCompile(`v[0-9]\S+`)
 
@@ -87,6 +66,9 @@ func TestInstallOnLinux(t *testing.T) {
 	// Must fail on non-writable file
 	assert.NoError(t, os.WriteFile(path, []byte("test"), 0644))
 	assert.NoError(t, os.Chmod(path, 0000))
+	defer func() {
+		_ = os.Chmod(path, 0644)
+	}()
 	err = (InstallUpdate(ctx, &Options{Beta: true, Output: path}))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "run self-update as root")
@@ -122,11 +104,7 @@ func TestRenameOnWindows(t *testing.T) {
 	// Prepare for test
 	ctx := context.Background()
 
-	testDir, err := makeTestDir()
-	assert.NoError(t, err)
-	defer func() {
-		_ = os.RemoveAll(testDir)
-	}()
+	testDir := t.TempDir()
 
 	path := filepath.Join(testDir, "rclone.exe")
 	regexVer := regexp.MustCompile(`v[0-9]\S+`)

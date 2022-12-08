@@ -75,7 +75,6 @@ func (item *testItem) WriteAtNoOverwrite(b []byte, off int64) (n int, skipped in
 
 func TestDownloaders(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	var (
 		ctx    = context.Background()

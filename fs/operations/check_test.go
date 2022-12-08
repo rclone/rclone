@@ -24,7 +24,6 @@ import (
 
 func testCheck(t *testing.T, checkFunction func(ctx context.Context, opt *operations.CheckOpt) error) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	ctx := context.Background()
 	ci := fs.GetConfig(ctx)
 
@@ -279,7 +278,6 @@ func TestCheckEqualReaders(t *testing.T) {
 
 func TestParseSumFile(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	ctx := context.Background()
 
 	const sumFile = "test.sum"
@@ -342,7 +340,6 @@ func testCheckSum(t *testing.T, download bool) {
 
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	subRemote := r.FremoteName
 	if !strings.HasSuffix(subRemote, ":") {

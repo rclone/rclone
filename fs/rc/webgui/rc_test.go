@@ -2,7 +2,6 @@ package webgui
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -22,7 +21,7 @@ func init() {
 	rcflags.Opt.WebUI = true
 }
 
-func setCacheDir(t *testing.T) string {
+func setCacheDir(t *testing.T) {
 	cacheDir := t.TempDir()
 	PluginsPath = filepath.Join(cacheDir, "plugins")
 	pluginsConfigPath = filepath.Join(cacheDir, "config")
@@ -30,11 +29,6 @@ func setCacheDir(t *testing.T) string {
 	loadedPlugins = newPlugins(availablePluginsJSONPath)
 	err := loadedPlugins.readFromFile()
 	assert.Nil(t, err)
-	return cacheDir
-}
-
-func cleanCacheDir(t *testing.T, cacheDir string) {
-	_ = os.RemoveAll(cacheDir)
 }
 
 func addPlugin(t *testing.T) {
@@ -88,8 +82,7 @@ func removePlugin(t *testing.T) {
 //}
 
 func TestAddPlugin(t *testing.T) {
-	cacheDir := setCacheDir(t)
-	defer cleanCacheDir(t, cacheDir)
+	setCacheDir(t)
 
 	addPlugin(t)
 	_, ok := loadedPlugins.LoadedPlugins[testPluginKey]
@@ -101,8 +94,7 @@ func TestAddPlugin(t *testing.T) {
 }
 
 func TestListPlugins(t *testing.T) {
-	cacheDir := setCacheDir(t)
-	defer cleanCacheDir(t, cacheDir)
+	setCacheDir(t)
 
 	addPlugin := rc.Calls.Get("pluginsctl/listPlugins")
 	assert.NotNil(t, addPlugin)
@@ -117,8 +109,7 @@ func TestListPlugins(t *testing.T) {
 }
 
 func TestRemovePlugin(t *testing.T) {
-	cacheDir := setCacheDir(t)
-	defer cleanCacheDir(t, cacheDir)
+	setCacheDir(t)
 
 	addPlugin(t)
 	removePluginCall := rc.Calls.Get("pluginsctl/removePlugin")

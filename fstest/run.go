@@ -178,6 +178,7 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 	r.Logf = t.Logf
 	r.Fatalf = t.Fatalf
 	r.Logf("Remote %q, Local %q, Modify Window %q", r.Fremote, r.Flocal, fs.GetModifyWindow(ctx, r.Fremote))
+	t.Cleanup(r.Finalise)
 	return r
 }
 
@@ -186,8 +187,6 @@ func newRunIndividual(t *testing.T, individual bool) *Run {
 //
 // r.Flocal is an empty local Fs
 // r.Fremote is an empty remote Fs
-//
-// Finalise() will tidy them away when done.
 func NewRun(t *testing.T) *Run {
 	return newRunIndividual(t, *Individual)
 }

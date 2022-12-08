@@ -33,8 +33,9 @@ var (
 	lineEndSize = 1
 )
 
-// prepareServer the test server and return a function to tidy it up afterwards
-func prepareServer(t *testing.T) (configmap.Simple, func()) {
+// prepareServer prepares the test server and shuts it down automatically
+// when the test completes.
+func prepareServer(t *testing.T) configmap.Simple {
 	// file server for test/files
 	fileServer := http.FileServer(http.Dir(filesPath))
 
@@ -78,20 +79,21 @@ func prepareServer(t *testing.T) (configmap.Simple, func()) {
 		"url":     ts.URL,
 		"headers": strings.Join(headers, ","),
 	}
+	t.Cleanup(ts.Close)
 
-	// return a function to tidy up
-	return m, ts.Close
+	return m
 }
 
-// prepare the test server and return a function to tidy it up afterwards
-func prepare(t *testing.T) (fs.Fs, func()) {
-	m, tidy := prepareServer(t)
+// prepare prepares the test server and shuts it down automatically
+// when the test completes.
+func prepare(t *testing.T) fs.Fs {
+	m := prepareServer(t)
 
 	// Instantiate it
 	f, err := NewFs(context.Background(), remoteName, "", m)
 	require.NoError(t, err)
 
-	return f, tidy
+	return f
 }
 
 func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
@@ -134,22 +136,19 @@ func testListRoot(t *testing.T, f fs.Fs, noSlash bool) {
 }
 
 func TestListRoot(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	f := prepare(t)
 	testListRoot(t, f, false)
 }
 
 func TestListRootNoSlash(t *testing.T) {
-	f, tidy := prepare(t)
+	f := prepare(t)
 	f.(*Fs).opt.NoSlash = true
-	defer tidy()
 
 	testListRoot(t, f, true)
 }
 
 func TestListSubDir(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	f := prepare(t)
 
 	entries, err := f.List(context.Background(), "three")
 	require.NoError(t, err)
@@ -166,8 +165,7 @@ func TestListSubDir(t *testing.T) {
 }
 
 func TestNewObject(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	f := prepare(t)
 
 	o, err := f.NewObject(context.Background(), "four/under four.txt")
 	require.NoError(t, err)
@@ -194,8 +192,7 @@ func TestNewObject(t *testing.T) {
 }
 
 func TestOpen(t *testing.T) {
-	m, tidy := prepareServer(t)
-	defer tidy()
+	m := prepareServer(t)
 
 	for _, head := range []bool{false, true} {
 		if !head {
@@ -257,8 +254,7 @@ func TestOpen(t *testing.T) {
 }
 
 func TestMimeType(t *testing.T) {
-	f, tidy := prepare(t)
-	defer tidy()
+	f := prepare(t)
 
 	o, err := f.NewObject(context.Background(), "four/under four.txt")
 	require.NoError(t, err)
@@ -269,8 +265,7 @@ func TestMimeType(t *testing.T) {
 }
 
 func TestIsAFileRoot(t *testing.T) {
-	m, tidy := prepareServer(t)
-	defer tidy()
+	m := prepareServer(t)
 
 	f, err := NewFs(context.Background(), remoteName, "one%.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)
@@ -279,8 +274,7 @@ func TestIsAFileRoot(t *testing.T) {
 }
 
 func TestIsAFileSubDir(t *testing.T) {
-	m, tidy := prepareServer(t)
-	defer tidy()
+	m := prepareServer(t)
 
 	f, err := NewFs(context.Background(), remoteName, "three/underthree.txt", m)
 	assert.Equal(t, err, fs.ErrorIsFile)

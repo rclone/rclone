@@ -13,7 +13,6 @@ import (
 
 func TestCaseSensitivity(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	if r.Fremote.Features().CaseInsensitive {
 		t.Skip("Can't test case sensitivity - this remote is officially not case-sensitive")
