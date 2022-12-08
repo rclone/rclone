@@ -65,7 +65,6 @@ func TestMain(m *testing.M) {
 func TestMkdir(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	err := operations.Mkdir(ctx, r.Fremote, "")
 	require.NoError(t, err)
@@ -78,7 +77,6 @@ func TestMkdir(t *testing.T) {
 func TestLsd(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteObject(ctx, "sub dir/hello world", "hello world", t1)
 
 	r.CheckRemoteItems(t, file1)
@@ -93,7 +91,6 @@ func TestLsd(t *testing.T) {
 func TestLs(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 
@@ -111,7 +108,6 @@ func TestLsWithFilesFrom(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 
@@ -143,7 +139,6 @@ func TestLsWithFilesFrom(t *testing.T) {
 func TestLsLong(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 
@@ -186,7 +181,6 @@ func TestLsLong(t *testing.T) {
 func TestHashSums(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 
@@ -392,7 +386,6 @@ func TestCount(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth(ctx, "empty space", "-", t2)
 	file3 := r.WriteBoth(ctx, "sub dir/potato3", "hello", t2)
@@ -416,7 +409,6 @@ func TestDelete(t *testing.T) {
 	fi.Opt.MaxSize = 60
 	ctx = filter.ReplaceConfig(ctx, fi)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteObject(ctx, "small", "1234567890", t2)                                                                                           // 10 bytes
 	file2 := r.WriteObject(ctx, "medium", "------------------------------------------------------------", t1)                                        // 60 bytes
 	file3 := r.WriteObject(ctx, "large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
@@ -457,7 +449,6 @@ func TestRetry(t *testing.T) {
 func TestCat(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteBoth(ctx, "file1", "ABCDEFGHIJ", t1)
 	file2 := r.WriteBoth(ctx, "file2", "012345678", t2)
 
@@ -488,7 +479,6 @@ func TestCat(t *testing.T) {
 func TestPurge(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRunIndividual(t) // make new container (azureblob has delayed mkdir after rmdir)
-	defer r.Finalise()
 	r.Mkdir(ctx, r.Fremote)
 
 	// Make some files and dirs
@@ -561,7 +551,6 @@ func TestPurge(t *testing.T) {
 func TestRmdirsNoLeaveRoot(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	r.Mkdir(ctx, r.Fremote)
 
 	// Make some files and dirs we expect to keep
@@ -642,7 +631,6 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 func TestRmdirsLeaveRoot(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	r.Mkdir(ctx, r.Fremote)
 
 	r.ForceMkdir(ctx, r.Fremote)
@@ -682,7 +670,6 @@ func TestRmdirsWithFilter(t *testing.T) {
 	require.NoError(t, fi.AddRule("+ /A1/B1/**"))
 	require.NoError(t, fi.AddRule("- *"))
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	r.Mkdir(ctx, r.Fremote)
 
 	r.ForceMkdir(ctx, r.Fremote)
@@ -720,7 +707,6 @@ func TestCopyURL(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	contents := "file contents\n"
 	file1 := r.WriteFile("file1", contents, t1)
@@ -835,7 +821,6 @@ func TestCopyURLToWriter(t *testing.T) {
 func TestMoveFile(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	file1 := r.WriteFile("file1", "file1 contents", t1)
 	r.CheckLocalItems(t, file1)
@@ -866,7 +851,6 @@ func TestMoveFileWithIgnoreExisting(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	file1 := r.WriteFile("file1", "file1 contents", t1)
 	r.CheckLocalItems(t, file1)
 
@@ -891,7 +875,6 @@ func TestMoveFileWithIgnoreExisting(t *testing.T) {
 func TestCaseInsensitiveMoveFile(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	if !r.Fremote.Features().CaseInsensitive {
 		return
 	}
@@ -928,7 +911,6 @@ func TestMoveFileBackupDir(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	if !operations.CanServerSideMove(r.Fremote) {
 		t.Skip("Skipping test as remote does not support server-side move or copy")
 	}
@@ -951,7 +933,6 @@ func TestMoveFileBackupDir(t *testing.T) {
 func TestCopyFile(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	file1 := r.WriteFile("file1", "file1 contents", t1)
 	r.CheckLocalItems(t, file1)
@@ -979,7 +960,6 @@ func TestCopyFileBackupDir(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	if !operations.CanServerSideMove(r.Fremote) {
 		t.Skip("Skipping test as remote does not support server-side move or copy")
 	}
@@ -1004,7 +984,6 @@ func TestCopyFileCompareDest(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	ci.CompareDest = []string{r.FremoteName + "/CompareDest"}
 	fdst, err := fs.NewFs(ctx, r.FremoteName+"/dst")
@@ -1083,7 +1062,6 @@ func TestCopyFileCopyDest(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	if r.Fremote.Features().Copy == nil {
 		t.Skip("Skipping test as remote does not support server-side copy")
@@ -1457,7 +1435,6 @@ func TestListFormat(t *testing.T) {
 func TestDirMove(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	r.Mkdir(ctx, r.Fremote)
 
@@ -1538,7 +1515,6 @@ func TestDirMove(t *testing.T) {
 
 func TestGetFsInfo(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	f := r.Fremote
 	info := operations.GetFsInfo(f)
@@ -1559,7 +1535,7 @@ func TestGetFsInfo(t *testing.T) {
 func TestRcat(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
-	check := func(withChecksum, ignoreChecksum bool) {
+	check := func(t *testing.T, withChecksum, ignoreChecksum bool) {
 		ci.CheckSum, ci.IgnoreChecksum = withChecksum, ignoreChecksum
 
 		var prefix string
@@ -1573,7 +1549,6 @@ func TestRcat(t *testing.T) {
 		}
 
 		r := fstest.NewRun(t)
-		defer r.Finalise()
 
 		if *fstest.SizeLimit > 0 && int64(ci.StreamingUploadCutoff) > *fstest.SizeLimit {
 			savedCutoff := ci.StreamingUploadCutoff
@@ -1606,14 +1581,13 @@ func TestRcat(t *testing.T) {
 		withChecksum := (i & 1) != 0
 		ignoreChecksum := (i & 2) != 0
 		t.Run(fmt.Sprintf("withChecksum=%v,ignoreChecksum=%v", withChecksum, ignoreChecksum), func(t *testing.T) {
-			check(withChecksum, ignoreChecksum)
+			check(t, withChecksum, ignoreChecksum)
 		})
 	}
 }
 
 func TestRcatMetadata(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	if !r.Fremote.Features().UserMetadata {
 		t.Skip("Skipping as destination doesn't support user metadata")
@@ -1670,7 +1644,6 @@ func TestRcatMetadata(t *testing.T) {
 func TestRcatSize(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	const body = "------------------------------------------------------------"
 	file1 := r.WriteFile("potato1", body, t1)
@@ -1696,7 +1669,6 @@ func TestRcatSize(t *testing.T) {
 
 func TestRcatSizeMetadata(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	if !r.Fremote.Features().UserMetadata {
 		t.Skip("Skipping as destination doesn't support user metadata")
@@ -1750,7 +1722,6 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 	ctx := context.Background()
 	ctx, ci := fs.AddConfig(ctx)
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 	defer accounting.Stats(ctx).ResetCounters()
 
 	const sizeCutoff = 2048
@@ -1817,7 +1788,6 @@ func TestCopyFileMaxTransfer(t *testing.T) {
 func TestTouchDir(t *testing.T) {
 	ctx := context.Background()
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	if r.Fremote.Precision() == fs.ModTimeNotSupported {
 		t.Skip("Skipping test as remote does not support modtime")

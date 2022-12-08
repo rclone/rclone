@@ -11,8 +11,7 @@ import (
 )
 
 func TestDirHandleMethods(t *testing.T) {
-	_, _, dir, _, cleanup := dirCreate(t)
-	defer cleanup()
+	_, _, dir, _ := dirCreate(t)
 
 	h, err := dir.Open(os.O_RDONLY)
 	require.NoError(t, err)
@@ -38,8 +37,7 @@ func TestDirHandleMethods(t *testing.T) {
 }
 
 func TestDirHandleReaddir(t *testing.T) {
-	r, vfs, cleanup := newTestVFS(t)
-	defer cleanup()
+	r, vfs := newTestVFS(t)
 
 	file1 := r.WriteObject(context.Background(), "dir/file1", "file1 contents", t1)
 	file2 := r.WriteObject(context.Background(), "dir/file2", "file2- contents", t2)
@@ -93,8 +91,7 @@ func TestDirHandleReaddir(t *testing.T) {
 }
 
 func TestDirHandleReaddirnames(t *testing.T) {
-	_, _, dir, _, cleanup := dirCreate(t)
-	defer cleanup()
+	_, _, dir, _ := dirCreate(t)
 
 	fh, err := dir.Open(os.O_RDONLY)
 	require.NoError(t, err)

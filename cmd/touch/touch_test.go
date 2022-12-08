@@ -28,7 +28,6 @@ func TestMain(m *testing.M) {
 
 func TestTouchOneFile(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	err := Touch(context.Background(), r.Fremote, "newFile")
 	require.NoError(t, err)
@@ -38,7 +37,6 @@ func TestTouchOneFile(t *testing.T) {
 
 func TestTouchWithNoCreateFlag(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	notCreateNewFile = true
 	err := Touch(context.Background(), r.Fremote, "newFile")
@@ -50,7 +48,6 @@ func TestTouchWithNoCreateFlag(t *testing.T) {
 
 func TestTouchWithTimestamp(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	timeAsArgument = "060102"
 	srcFileName := "oldFile"
@@ -61,7 +58,6 @@ func TestTouchWithTimestamp(t *testing.T) {
 
 func TestTouchWithLongerTimestamp(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	timeAsArgument = "2006-01-02T15:04:05"
 	srcFileName := "oldFile"
@@ -72,7 +68,6 @@ func TestTouchWithLongerTimestamp(t *testing.T) {
 
 func TestTouchUpdateTimestamp(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	srcFileName := "a"
 	content := "aaa"
@@ -87,7 +82,6 @@ func TestTouchUpdateTimestamp(t *testing.T) {
 
 func TestTouchUpdateTimestampWithCFlag(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	srcFileName := "a"
 	content := "aaa"
@@ -104,7 +98,6 @@ func TestTouchUpdateTimestampWithCFlag(t *testing.T) {
 
 func TestTouchCreateMultipleDirAndFile(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	longPath := "a/b/c.txt"
 	err := Touch(context.Background(), r.Fremote, longPath)
@@ -115,7 +108,6 @@ func TestTouchCreateMultipleDirAndFile(t *testing.T) {
 
 func TestTouchEmptyName(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	err := Touch(context.Background(), r.Fremote, "")
 	require.NoError(t, err)
@@ -124,7 +116,6 @@ func TestTouchEmptyName(t *testing.T) {
 
 func TestTouchEmptyDir(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	err := r.Fremote.Mkdir(context.Background(), "a")
 	require.NoError(t, err)
@@ -135,7 +126,6 @@ func TestTouchEmptyDir(t *testing.T) {
 
 func TestTouchDirWithFiles(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	err := r.Fremote.Mkdir(context.Background(), "a")
 	require.NoError(t, err)
@@ -148,7 +138,6 @@ func TestTouchDirWithFiles(t *testing.T) {
 
 func TestRecursiveTouchDirWithFiles(t *testing.T) {
 	r := fstest.NewRun(t)
-	defer r.Finalise()
 
 	err := r.Fremote.Mkdir(context.Background(), "a/b/c")
 	require.NoError(t, err)

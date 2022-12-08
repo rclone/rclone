@@ -17,10 +17,8 @@ import (
 func TestEnvironmentVariables(t *testing.T) {
 
 	createTestEnvironment(t)
-	defer removeTestEnvironment(t)
 
 	testdataPath := createSimpleTestData(t)
-	defer removeSimpleTestData(t)
 
 	// Non backend flags
 	// =================
