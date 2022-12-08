@@ -3057,6 +3057,17 @@ func (f *Fs) getMetaDataListing(ctx context.Context, wantRemote string) (info *s
 	return info, versionID, nil
 }
 
+// stringClonePointer clones the string pointed to by sp into new
+// memory. This is useful to stop us keeping references to small
+// strings carved out of large XML responses.
+func stringClonePointer(sp *string) *string {
+	if sp == nil {
+		return nil
+	}
+	var s = *sp
+	return &s
+}
+
 // Return an Object from a path
 //
 // If it can't be found it returns the error ErrorObjectNotFound.
@@ -3082,8 +3093,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, info *s3.Obje
 		}
 		o.setMD5FromEtag(aws.StringValue(info.ETag))
 		o.bytes = aws.Int64Value(info.Size)
-		storageClass := *info.StorageClass // To prevent reference to large XML structures
-		o.storageClass = &storageClass
+		o.storageClass = stringClonePointer(info.StorageClass)
 		o.versionID = versionID
 	} else if !o.fs.opt.NoHeadObject {
 		err := o.readMetaData(ctx) // reads info and meta, returning an error
