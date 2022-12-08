@@ -13,6 +13,16 @@ const (
 	colDir  = "dir"
 )
 
+type CollectionCreate struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+type DeleteContentFromCollectionBody struct {
+	By    string `json:"by"`
+	Value string `json:"value"`
+}
+
 func (f *Fs) fetchViewer(ctx context.Context) (response ViewerResponse, err error) {
 	opts := rest.Opts{
 		Method: "GET",
@@ -79,11 +89,11 @@ func (f *Fs) getCollectionContents(ctx context.Context, collectionId, path strin
 	return items, nil
 }
 
-func (f *Fs) deleteCollection(ctx context.Context, collectiond string) error {
+func (f *Fs) deleteCollection(ctx context.Context, collectionId string) error {
 	var collection Collection
 	opts := rest.Opts{
 		Method: "DELETE",
-		Path:   "/collections/" + collectiond,
+		Path:   "/collections/" + collectionId,
 	}
 	err := f.pacer.Call(func() (bool, error) {
 		resp, err2 := f.client.CallJSON(ctx, &opts, nil, &collection)
@@ -103,4 +113,24 @@ func (f *Fs) getContentByCid(ctx context.Context, cid string) ([]ContentByCID, e
 		return nil, err
 	}
 	return result, nil
+}
+
+func (o *Object) removeContentFromCollection(ctx context.Context, collectionId string) error {
+	opts := rest.Opts{
+		Method: "DELETE",
+		Path:   fmt.Sprintf("/collections/%s/contents", collectionId),
+	}
+
+	deleteBody := DeleteContentFromCollectionBody{
+		By:    "content_id",
+		Value: o.estuaryId,
+	}
+
+	err := o.fs.pacer.Call(func() (bool, error) {
+		resp, err := o.fs.client.CallJSON(ctx, &opts, &deleteBody, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	return err
+
 }

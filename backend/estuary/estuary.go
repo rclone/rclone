@@ -37,6 +37,7 @@ var (
 	errNoCID                     = errors.New("no CID for object")
 	errNoUploadEndpoint          = errors.New("No upload endpoint for object")
 	errAllEndpointsFailed        = errors.New("All upload endpoints failed")
+	errNoRootFound               = errors.New("No root collection found")
 	minSleep                     = 10 * time.Millisecond
 	maxSleep                     = 2 * time.Second
 	decayConstant                = 2
@@ -102,11 +103,6 @@ type Collection struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	UserID      uint      `json:"userId"`
-}
-
-type CollectionCreate struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
 }
 
 type CollectionFsItem struct {
@@ -744,7 +740,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 func (o *Object) Remove(ctx context.Context) error {
-	return errorNotImpl
+	rootCollectionId, ok := o.fs.dirCache.Get("")
+	if ok {
+		return o.removeContentFromCollection(ctx, rootCollectionId)
+	}
+	return errNoRootFound
 }
 
 func (o *Object) Storable() bool {
