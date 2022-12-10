@@ -13,11 +13,11 @@ import (
 )
 
 const (
-	configNameRe = `[\w.-]+(?: +[\w.-]+)*`
+	configNameRe = `[\w\p{L}\p{N}.-]+(?: +[\w\p{L}\p{N}.-]+)*`
 )
 
 var (
-	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain `0-9`, `A-Z`, `a-z`, `_`, `-`, `.` and space, while not start or end with space")
+	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain numbers, letters, `_`, `-`, `.` and space, while not start or end with space")
 	errCantBeEmpty       = errors.New("can't use empty string as a path")
 	errCantStartWithDash = errors.New("config name starts with `-`")
 	errBadConfigParam    = errors.New("config parameters may only contain `0-9`, `A-Z`, `a-z` and `_`")

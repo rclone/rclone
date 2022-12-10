@@ -3431,7 +3431,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if err != nil {
 			return nil, err
 		}
-		re := regexp.MustCompile(`[^\w_. -]+`)
+		re := regexp.MustCompile(`[^\w\p{L}\p{N}. -]+`)
 		if _, ok := opt["config"]; ok {
 			lines := []string{}
 			upstreams := []string{}
