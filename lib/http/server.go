@@ -89,7 +89,6 @@ type Config struct {
 	TLSKeyBody         []byte        // TLS PEM Private key body, ignores TLSKey
 	ClientCA           string        // Client certificate authority to verify clients with
 	MinTLSVersion      string        // MinTLSVersion contains the minimum TLS version that is acceptable.
-	Template           string
 }
 
 // AddFlagsPrefix adds flags for the httplib
