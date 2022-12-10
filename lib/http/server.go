@@ -144,6 +144,7 @@ type Server struct {
 	cfg          Config
 	template     *TemplateConfig
 	htmlTemplate *template.Template
+	usingAuth    bool // set if we are using auth middleware
 }
 
 // Option allows customizing the server
@@ -272,19 +273,23 @@ func NewServer(ctx context.Context, options ...Option) (*Server, error) {
 
 func (s *Server) initAuth() {
 	if s.auth.CustomAuthFn != nil {
+		s.usingAuth = true
 		s.mux.Use(MiddlewareAuthCustom(s.auth.CustomAuthFn, s.auth.Realm))
 		return
 	}
 
 	if s.auth.HtPasswd != "" {
+		s.usingAuth = true
 		s.mux.Use(MiddlewareAuthHtpasswd(s.auth.HtPasswd, s.auth.Realm))
 		return
 	}
 
 	if s.auth.BasicUser != "" {
+		s.usingAuth = true
 		s.mux.Use(MiddlewareAuthBasic(s.auth.BasicUser, s.auth.BasicPass, s.auth.Realm, s.auth.Salt))
 		return
 	}
+	s.usingAuth = false
 }
 
 func (s *Server) initTemplate() error {
@@ -425,4 +430,9 @@ func (s *Server) URLs() []string {
 		out = append(out, ii.url)
 	}
 	return out
+}
+
+// UsingAuth returns true if authentication is required
+func (s *Server) UsingAuth() bool {
+	return s.usingAuth
 }
