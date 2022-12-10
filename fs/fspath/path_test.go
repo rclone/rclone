@@ -23,6 +23,7 @@ func TestCheckConfigName(t *testing.T) {
 		want error
 	}{
 		{"remote", nil},
+		{"REMOTE", nil},
 		{"", errInvalidCharacters},
 		{":remote:", errInvalidCharacters},
 		{"remote:", errInvalidCharacters},
@@ -38,6 +39,8 @@ func TestCheckConfigName(t *testing.T) {
 		{"..", nil},
 		{".r.e.m.o.t.e.", nil},
 		{"rem ote", nil},
+		{"blåbær", nil},
+		{"chữ Quốc ngữ", nil},
 		{"remote ", errInvalidCharacters},
 		{" remote", errInvalidCharacters},
 		{" remote ", errInvalidCharacters},
@@ -53,6 +56,7 @@ func TestCheckRemoteName(t *testing.T) {
 		want error
 	}{
 		{":remote:", nil},
+		{":REMOTE:", nil},
 		{":s3:", nil},
 		{"remote:", nil},
 		{".:", nil},
@@ -60,6 +64,8 @@ func TestCheckRemoteName(t *testing.T) {
 		{".r.e.m.o.t.e.:", nil},
 		{"-r-emote-:", nil},
 		{"rem ote:", nil},
+		{"blåbær:", nil},
+		{"chữ Quốc ngữ:", nil},
 		{"remote :", errInvalidCharacters},
 		{" remote:", errInvalidCharacters},
 		{" remote :", errInvalidCharacters},
