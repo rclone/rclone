@@ -374,6 +374,7 @@ func start() error {
 	}
 	defaultServer = s.(*server)
 	defaultServer.Serve()
+	defaultServer.Router().Use(DefaultCompressor())
 	return nil
 }
 
