@@ -18,6 +18,7 @@ import (
 	"github.com/rclone/rclone/cmd/serve/http/data"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/accounting"
+	"github.com/rclone/rclone/fs/config/flags"
 	httplib "github.com/rclone/rclone/lib/http"
 	"github.com/rclone/rclone/lib/http/auth"
 	"github.com/rclone/rclone/lib/http/serve"
@@ -37,11 +38,16 @@ var DefaultOpt = Options{}
 // Opt is options set by command line flags
 var Opt = DefaultOpt
 
+var (
+	disableGETDir = false
+)
+
 func init() {
 	data.AddFlags(Command.Flags(), "", &Opt.Options)
 	httplib.AddFlags(Command.Flags())
 	auth.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
+	flags.BoolVarP(Command.Flags(), &disableGETDir, "disable-dir-list", "", false, "Disable HTML directory list on GET request for a directory")
 }
 
 // Command definition for cobra
@@ -115,7 +121,7 @@ func (s *server) Bind(router chi.Router) {
 func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	isDir := strings.HasSuffix(r.URL.Path, "/")
 	remote := strings.Trim(r.URL.Path, "/")
-	if isDir {
+	if !disableGETDir && (r.Method == "GET" || r.Method == "HEAD") && isDir {
 		s.serveDir(w, r, remote)
 	} else {
 		s.serveFile(w, r, remote)
