@@ -11,6 +11,7 @@ import (
 	"github.com/rclone/rclone/fs/rc/rcflags"
 	"github.com/rclone/rclone/fs/rc/rcserver"
 	"github.com/rclone/rclone/lib/atexit"
+	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +32,7 @@ for GET requests on the URL passed in.  It will also open the URL in
 the browser when rclone is run.
 
 See the [rc documentation](/rc/) for more info on the rc flags.
-`,
+` + libhttp.Help + libhttp.TemplateHelp + libhttp.AuthHelp,
 	Annotations: map[string]string{
 		"versionIntroduced": "v1.45",
 	},
