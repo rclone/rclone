@@ -103,7 +103,9 @@ type Storage interface {
 // Global
 var (
 	// Password can be used to configure the random password generator
-	Password = random.Password
+	Password           = random.Password
+	IsConfigCommandIn  bool
+	IsConfigCommandOut bool
 )
 
 var (
@@ -209,6 +211,21 @@ func makeConfigPath() string {
 		primaryConfigDir  string
 		fallbackConfigDir string
 	)
+
+	for _, item := range os.Args {
+		if item == "--config-command-in" || strings.HasPrefix(item, "--config-command-in=") {
+			IsConfigCommandIn = true
+			if IsConfigCommandOut {
+				return ""
+			}
+		} else if item == "--config-command-out" || strings.HasPrefix(item, "--config-command-out=") {
+			IsConfigCommandOut = true
+			if IsConfigCommandIn {
+				return ""
+			}
+		}
+	}
+
 	// <rclone_exe_dir>/rclone.conf
 	if _, configFile = findLocalConfig(); configFile != "" {
 		return configFile
@@ -333,7 +350,7 @@ func SetConfigPath(path string) (err error) {
 // SetData sets new config file storage
 func SetData(newData Storage) {
 	// If no config file, use in-memory config (which is the default)
-	if configPath == "" {
+	if configPath == "" && !IsConfigCommandIn {
 		return
 	}
 	data = newData
@@ -363,7 +380,11 @@ func LoadedData() Storage {
 			}
 			dataLoaded = true
 		} else {
-			log.Fatalf("Failed to load config file %q: %v", configPath, err)
+			if IsConfigCommandIn {
+				log.Fatalf("Failed to load config from --config-command-in : %v", err)
+			} else {
+				log.Fatalf("Failed to load config file %q: %v", configPath, err)
+			}
 		}
 	}
 	return data

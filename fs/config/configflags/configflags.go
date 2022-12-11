@@ -10,13 +10,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/pflag"
+
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config"
 	"github.com/rclone/rclone/fs/config/flags"
 	fsLog "github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
 )
 
 var (
@@ -67,6 +68,8 @@ func AddFlags(ci *fs.ConfigInfo, flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &ci.InsecureSkipVerify, "no-check-certificate", "", ci.InsecureSkipVerify, "Do not verify the server SSL certificate (insecure)")
 	flags.BoolVarP(flagSet, &ci.AskPassword, "ask-password", "", ci.AskPassword, "Allow prompt for password for encrypted configuration")
 	flags.FVarP(flagSet, &ci.PasswordCommand, "password-command", "", "Command for supplying password for encrypted configuration")
+	flags.FVarP(flagSet, &ci.ConfigCommandIn, "config-command-in", "", "Command for supplying input config file for reading")
+	flags.FVarP(flagSet, &ci.ConfigCommandOut, "config-command-out", "", "Command for supplying output config file for writing")
 	flags.BoolVarP(flagSet, &deleteBefore, "delete-before", "", false, "When synchronizing, delete files on destination before transferring")
 	flags.BoolVarP(flagSet, &deleteDuring, "delete-during", "", false, "When synchronizing, delete files during transfer")
 	flags.BoolVarP(flagSet, &deleteAfter, "delete-after", "", false, "When synchronizing, delete files on destination after transferring (default)")

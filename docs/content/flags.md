@@ -30,6 +30,8 @@ These flags are available for every command.
       --color                                Define when colors (and other ANSI codes) should be shown AUTO|ALWAYS|NEVER (default AUTO)
       --compare-dest stringArray             Include additional comma separated server-side paths during comparison
       --config string                        Config file (default "$HOME/.config/rclone/rclone.conf")
+      --config-command-in SpaceSepList       Command for supplying config data
+      --config-command-out SpaceSepList      Command for storing config data
       --contimeout duration                  Connect timeout (default 1m0s)
       --copy-dest stringArray                Implies --compare-dest but also copies files from paths into destination
       --cpuprofile string                    Write cpu profile to file

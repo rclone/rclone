@@ -932,6 +932,47 @@ You may also choose to [encrypt](#configuration-encryption) the file.
 When token-based authentication are used, the configuration file
 must be writable, because rclone needs to update the tokens inside it.
 
+### --config-command-in SpaceSepList ###
+
+This flag supplies a program which should supply the input config to be
+loaded when run. This is an alternative way to load a config file that
+is not simply located at an accessible datapath, such as if it is
+encrypted behind a strongbox or located on a remote server. The command
+can be stored in the `RCLONE_CONFIG_COMMAND_IN` environment variable.
+
+The argument to this should be a command with a space separated list
+of arguments. If one of the arguments has a space in then enclose it
+in `"`, if you want a literal `"` in an argument then enclose the
+argument in `"` and double the `"`. See [CSV encoding](https://godoc.org/encoding/csv)
+for more info.
+
+Examples:
+
+    --config-command-in "more path/to/rclone.conf" # Mimics native rclone behaviour for Windows
+    --config-command-in "cat path/to/rclone.conf" # Mimics native rclone behaviour for Unix
+    --config-command-in "my-keystore-program-load secured_rclone_config_name"
+
+See the [`--password-command`](#--password-command-spaceseplist) and 
+[`--config-command-out`](#--config-command-out-spaceseplist) for similar behaviour.
+
+See [Examples using Termux-Keystore on Android or GPG on Windows](https://github.com/rclone/rclone/wiki/Securing-rclone-using-password-and-config-in-&-out-commands-%5BAndroid,-Windows%5D).
+
+### --config-command-out SpaceSepList ###
+
+This flag supplies a program which should save the output config
+when run. This is an alternative way to save a config file that
+is not simply located at an accessible datapath, such as if it is
+encrypted behind a strongbox or located on a remote server. The command
+can be stored in the `RCLONE_CONFIG_COMMAND_OUT` environment variable.
+
+Examples:
+
+    --config-command-out "cmd /c more /s > path/to/rclone.conf" # Mimics native rclone behaviour for Windows
+    --config-command-out "/bin/bash -c \"cat > path/to/rclone.conf\"" # Mimics native rclone behaviour for Unix
+    --config-command-out "my-keystore-program-store secured_rclone_config_name"
+
+See the [`--config-command-in`](#--config-command-in-spaceseplist) for similar behaviour and examples.
+
 ### --contimeout=TIME ###
 
 Set the connection timeout. This should be in go time format which
@@ -2248,6 +2289,11 @@ it will be relevant for commands that do operate on backends in
 general, but are used without referencing a stored remote, e.g.
 listing local filesystem paths, or
 [connection strings](#connection-strings): `rclone --config="" ls .`
+
+For an even more-secure rclone, see how an encrypted config file can be
+used with [`--config-command-in`](#--config-command-in-spaceseplist) and
+[`--config-command-out`](#--config-command-out-spaceseplist) at 
+[Examples using Termux-Keystore on Android or GPG on Windows](https://github.com/rclone/rclone/wiki/Securing-rclone-using-password-and-config-in-&-out-commands-%5BAndroid,-Windows%5D).
 
 Developer options
 -----------------
