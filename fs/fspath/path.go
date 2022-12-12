@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	configNameRe = `[\w\p{L}\p{N}.]+(?:[ -]+[\w\p{L}\p{N}.-]+)*` // don't allow it to start with `-` as it complicates usage (#4261)
+	configNameRe              = `[\w\p{L}\p{N}.]+(?:[ -]+[\w\p{L}\p{N}.-]+)*` // May contain Unicode numbers and letters, as well as `_`, `-`, `.` and space, but not start with `-` (it complicates usage, see #4261) or space, and not end with space
+	illegalPartOfConfigNameRe = `^[ -]+|[^\w\p{L}\p{N}. -]+|[ ]+$`
 )
 
 var (
@@ -32,6 +33,9 @@ var (
 	// configNameMatcher is a pattern to match an rclone config name
 	configNameMatcher = regexp.MustCompile(`^` + configNameRe + `$`)
 
+	// illegalPartOfConfigNameMatcher is a pattern to match a sequence of characters not allowed in an rclone config name
+	illegalPartOfConfigNameMatcher = regexp.MustCompile(illegalPartOfConfigNameRe)
+
 	// remoteNameMatcher is a pattern to match an rclone remote name at the start of a config
 	remoteNameMatcher = regexp.MustCompile(`^:?` + configNameRe + `(?::$|,)`)
 )
@@ -42,6 +46,21 @@ func CheckConfigName(configName string) error {
 		return errInvalidCharacters
 	}
 	return nil
+}
+
+// MakeConfigName makes an input into something legal to be used as a config name.
+// Returns a string where any sequences of illegal characters are replaced with
+// a single underscore. If the input is already valid as a config name, it is
+// returned unchanged. If the input is an empty string, a single underscore is
+// returned.
+func MakeConfigName(name string) string {
+	if name == "" {
+		return "_"
+	}
+	if configNameMatcher.MatchString(name) {
+		return name
+	}
+	return illegalPartOfConfigNameMatcher.ReplaceAllString(name, "_")
 }
 
 // checkRemoteName returns an error if remoteName is invalid

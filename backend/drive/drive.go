@@ -18,7 +18,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -3431,13 +3430,12 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 		if err != nil {
 			return nil, err
 		}
-		re := regexp.MustCompile(`[^\w\p{L}\p{N}. -]+`)
 		if _, ok := opt["config"]; ok {
 			lines := []string{}
 			upstreams := []string{}
 			names := make(map[string]struct{}, len(drives))
 			for i, drive := range drives {
-				name := re.ReplaceAllString(drive.Name, "_")
+				name := fspath.MakeConfigName(drive.Name)
 				for {
 					if _, found := names[name]; !found {
 						break
