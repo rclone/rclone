@@ -13,13 +13,12 @@ import (
 )
 
 const (
-	configNameRe = `[\w\p{L}\p{N}.-]+(?: +[\w\p{L}\p{N}.-]+)*`
+	configNameRe = `[\w\p{L}\p{N}.]+(?:[ -]+[\w\p{L}\p{N}.-]+)*` // don't allow it to start with `-` as it complicates usage (#4261)
 )
 
 var (
-	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain numbers, letters, `_`, `-`, `.` and space, while not start or end with space")
+	errInvalidCharacters = errors.New("config name contains invalid characters - may only contain numbers, letters, `_`, `-`, `.` and space, while not start with `-` or space, and not end with space")
 	errCantBeEmpty       = errors.New("can't use empty string as a path")
-	errCantStartWithDash = errors.New("config name starts with `-`")
 	errBadConfigParam    = errors.New("config parameters may only contain `0-9`, `A-Z`, `a-z` and `_`")
 	errEmptyConfigParam  = errors.New("config parameters can't be empty")
 	errConfigNameEmpty   = errors.New("config name can't be empty")
@@ -41,10 +40,6 @@ var (
 func CheckConfigName(configName string) error {
 	if !configNameMatcher.MatchString(configName) {
 		return errInvalidCharacters
-	}
-	// Reject configName, if it starts with -, complicates usage. (#4261)
-	if strings.HasPrefix(configName, "-") {
-		return errCantStartWithDash
 	}
 	return nil
 }
