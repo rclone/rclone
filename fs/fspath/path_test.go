@@ -19,34 +19,38 @@ var (
 
 func TestCheckConfigName(t *testing.T) {
 	for _, test := range []struct {
-		in   string
-		want error
+		in      string
+		problem error
+		fixed   string
 	}{
-		{"remote", nil},
-		{"REMOTE", nil},
-		{"", errInvalidCharacters},
-		{":remote:", errInvalidCharacters},
-		{"remote:", errInvalidCharacters},
-		{"rem:ote", errInvalidCharacters},
-		{"rem/ote", errInvalidCharacters},
-		{"rem\\ote", errInvalidCharacters},
-		{"[remote", errInvalidCharacters},
-		{"*", errInvalidCharacters},
-		{"-remote", errInvalidCharacters},
-		{"r-emote-", nil},
-		{"_rem_ote_", nil},
-		{".", nil},
-		{"..", nil},
-		{".r.e.m.o.t.e.", nil},
-		{"rem ote", nil},
-		{"blåbær", nil},
-		{"chữ Quốc ngữ", nil},
-		{"remote ", errInvalidCharacters},
-		{" remote", errInvalidCharacters},
-		{" remote ", errInvalidCharacters},
+		{"remote", nil, "remote"},
+		{"REMOTE", nil, "REMOTE"},
+		{"", errInvalidCharacters, "_"},
+		{":remote:", errInvalidCharacters, "_remote_"},
+		{"remote:", errInvalidCharacters, "remote_"},
+		{"rem:ote", errInvalidCharacters, "rem_ote"},
+		{"rem/ote", errInvalidCharacters, "rem_ote"},
+		{"rem\\ote", errInvalidCharacters, "rem_ote"},
+		{"[remote", errInvalidCharacters, "_remote"},
+		{"*", errInvalidCharacters, "_"},
+		{"-remote", errInvalidCharacters, "_remote"},
+		{"r-emote-", nil, "r-emote-"},
+		{"---rem:::ote???", errInvalidCharacters, "_rem_ote_"},
+		{"_rem_ote_", nil, "_rem_ote_"},
+		{".", nil, "."},
+		{"..", nil, ".."},
+		{".r.e.m.o.t.e.", nil, ".r.e.m.o.t.e."},
+		{"rem ote", nil, "rem ote"},
+		{"blåbær", nil, "blåbær"},
+		{"chữ Quốc ngữ", nil, "chữ Quốc ngữ"},
+		{"remote ", errInvalidCharacters, "remote_"},
+		{" remote", errInvalidCharacters, "_remote"},
+		{" remote ", errInvalidCharacters, "_remote_"},
 	} {
-		got := CheckConfigName(test.in)
-		assert.Equal(t, test.want, got, test.in)
+		problem := CheckConfigName(test.in)
+		assert.Equal(t, test.problem, problem, test.in)
+		fixed := MakeConfigName(test.in)
+		assert.Equal(t, test.fixed, fixed, test.in)
 	}
 }
 
