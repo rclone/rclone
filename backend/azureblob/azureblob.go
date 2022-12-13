@@ -988,13 +988,18 @@ func (o *Object) updateMetadataWithModTime(modTime time.Time) {
 func isDirectoryMarker(size int64, metadata map[string]string, remote string) bool {
 	// Directory markers are 0 length
 	if size == 0 {
-		// Note that metadata with hdi_isfolder = true seems to be a
-		// defacto standard for marking blobs as directories.
 		endsWithSlash := strings.HasSuffix(remote, "/")
-		if endsWithSlash || remote == "" || metadata["hdi_isfolder"] == "true" {
+		if endsWithSlash || remote == "" {
 			return true
 		}
-
+		// Note that metadata with hdi_isfolder = true seems to be a
+		// defacto standard for marking blobs as directories.
+		// Note also that the metadata hasn't been normalised to lower case yet
+		for k, v := range metadata {
+			if strings.EqualFold(k, "hdi_isfolder") && v == "true" {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -1007,13 +1012,18 @@ func isDirectoryMarker(size int64, metadata map[string]string, remote string) bo
 func isDirectoryMarkerP(size int64, metadata map[string]*string, remote string) bool {
 	// Directory markers are 0 length
 	if size == 0 {
-		// Note that metadata with hdi_isfolder = true seems to be a
-		// defacto standard for marking blobs as directories.
 		endsWithSlash := strings.HasSuffix(remote, "/")
-		if endsWithSlash || remote == "" || (metadata["hdi_isfolder"] != nil && *metadata["hdi_isfolder"] == "true") {
+		if endsWithSlash || remote == "" {
 			return true
 		}
-
+		// Note that metadata with hdi_isfolder = true seems to be a
+		// defacto standard for marking blobs as directories.
+		// Note also that the metadata hasn't been normalised to lower case yet
+		for k, pv := range metadata {
+			if strings.EqualFold(k, "hdi_isfolder") && pv != nil && *pv == "true" {
+				return true
+			}
+		}
 	}
 	return false
 }
