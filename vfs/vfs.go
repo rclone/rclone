@@ -513,6 +513,15 @@ func decodeOpenFlags(flags int) string {
 func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
 	defer log.Trace(name, "flags=%s, perm=%v", decodeOpenFlags(flags), perm)("fd=%v, err=%v", &fd, &err)
 
+	if flags&os.O_CREATE != 0 {
+		isLink := vfs.IsSymlink(name)
+		modeIsLink := perm&os.ModeSymlink != 0
+		if (isLink && !modeIsLink) || (!isLink && modeIsLink) {
+			fs.Errorf(nil, "Inconsistent leaf/mode: %v / %v", name, perm)
+			return nil, EINVAL
+		}
+	}
+
 	// http://pubs.opengroup.org/onlinepubs/7908799/xsh/open.html
 	// The result of using O_TRUNC with O_RDONLY is undefined.
 	// Linux seems to truncate the file, but we prefer to return EINVAL
@@ -542,7 +551,7 @@ func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, e
 // the returned file can be used for reading; the associated file
 // descriptor has mode O_RDONLY.
 func (vfs *VFS) Open(name string) (Handle, error) {
-	return vfs.OpenFile(name, os.O_RDONLY, 0)
+	return vfs.OpenFile(name, os.O_RDONLY, os.FileMode(vfs.Opt.FilePerms))
 }
 
 // Create creates the named file with mode 0666 (before umask), truncating
@@ -550,7 +559,7 @@ func (vfs *VFS) Open(name string) (Handle, error) {
 // File can be used for I/O; the associated file descriptor has mode
 // O_RDWR.
 func (vfs *VFS) Create(name string) (Handle, error) {
-	return vfs.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	return vfs.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.FileMode(vfs.Opt.FilePerms))
 }
 
 // Rename oldName to newName
@@ -804,4 +813,54 @@ func (vfs *VFS) TrimSymlink(remote string) (string, bool) {
 	}
 
 	return remote, false
+}
+
+// Readlink returns the destination of the named symbolic link.
+// If there is an error, it will be of type *PathError.
+func (vfs *VFS) Readlink(name string) (s string, err error) {
+	if !strings.HasSuffix(name, fs.LinkSuffix) {
+		fs.Errorf(nil, "VFS.Readlink: Invalid symlink suffix: %v", name)
+		return "", EINVAL
+	}
+
+	b, err := vfs.ReadFile(name)
+	if err != nil {
+		return "", err
+	}
+
+	return strings.ReplaceAll(string(b), "\\", "/"), nil
+}
+
+// Symlink creates newname as a symbolic link to oldname.
+// On Windows, a symlink to a non-existent oldname creates a file symlink;
+// if oldname is later created as a directory the symlink will not work.
+// If there is an error, it will be of type *LinkError.
+func (vfs *VFS) Symlink(oldname, newname string) error {
+	if !strings.HasSuffix(newname, fs.LinkSuffix) {
+		fs.Errorf(nil, "VFS.Symlink: Invalid symlink suffix: %v", newname)
+		return EINVAL
+	}
+
+	osFlags := os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+	osMode := vfs.Opt.FilePerms
+	if vfs.Opt.Links {
+		osMode = vfs.Opt.LinkPerms
+	}
+
+	fh, err := vfs.OpenFile(newname, osFlags, os.FileMode(osMode))
+	if err != nil {
+		return err
+	}
+
+	_, err = fh.Write([]byte(strings.ReplaceAll(oldname, "\\", "/")))
+	if err != nil {
+		return err
+	}
+
+	err = fh.Release()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

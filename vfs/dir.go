@@ -969,6 +969,30 @@ func (d *Dir) Create(name string, flags int) (*File, error) {
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
+	// Avoid regular and symlink identical names in same directory
+	{
+		isLink := strings.HasSuffix(name, fs.LinkSuffix)
+
+		rname := name
+		if isLink {
+			rname = strings.TrimSuffix(rname, fs.LinkSuffix)
+		} else {
+			rname += fs.LinkSuffix
+		}
+
+		_, err = d.stat(rname)
+
+		switch err {
+		case ENOENT:
+			// not found, carry on
+		case nil:
+			return nil, EEXIST
+		default:
+			// a different error - report
+			fs.Errorf(d, "Dir.Create stat failed: %v", err)
+			return nil, err
+		}
+	}
 	if err = d.SetModTime(time.Now()); err != nil {
 		fs.Errorf(d, "Dir.Create failed to set modtime on parent dir: %v", err)
 		return nil, err
@@ -997,6 +1021,22 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 		// a different error - report
 		fs.Errorf(d, "Dir.Mkdir failed to read directory: %v", err)
 		return nil, err
+	}
+	// Avoid dir and symlink identical names in same directory
+	{
+		rname := name + fs.LinkSuffix
+		_, err = d.stat(rname)
+
+		switch err {
+		case ENOENT:
+			// not found, carry on
+		case nil:
+			return nil, EEXIST
+		default:
+			// a different error - report
+			fs.Errorf(d, "Dir.Mkdir failed to read directory: %v", err)
+			return nil, err
+		}
 	}
 	// fs.Debugf(path, "Dir.Mkdir")
 	err = d.f.Mkdir(context.TODO(), path)
@@ -1102,6 +1142,35 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	if err != nil {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
+	}
+	// Ensure a link stay a link or a regular file a regular file
+	if strings.HasSuffix(oldName, fs.LinkSuffix) != strings.HasSuffix(newName, fs.LinkSuffix) {
+		fs.Errorf(d, "Dir.Rename inconsistent names: %v, %v", oldName, newName)
+		return EINVAL
+	}
+	// Avoid regular and symlink identical names in same directory
+	{
+		isLink := strings.HasSuffix(newName, fs.LinkSuffix)
+
+		rnewName := newName
+		if isLink {
+			rnewName = strings.TrimSuffix(rnewName, fs.LinkSuffix)
+		} else {
+			rnewName += fs.LinkSuffix
+		}
+
+		_, err = destDir.stat(rnewName)
+
+		switch err {
+		case ENOENT:
+			// not found, carry on
+		case nil:
+			return EEXIST
+		default:
+			// a different error - report
+			fs.Errorf(d, "Dir.Rename stat failed: %v", err)
+			return err
+		}
 	}
 	switch x := oldNode.DirEntry().(type) {
 	case nil:
