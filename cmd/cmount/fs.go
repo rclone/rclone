@@ -141,15 +141,9 @@ func (fsys *FS) stat(node vfs.Node, stat *fuse.Stat_t) (errc int) {
 	Size := uint64(node.Size())
 	Blocks := (Size + 511) / 512
 	modTime := node.ModTime()
-	Mode := node.Mode().Perm()
-	if node.IsDir() {
-		Mode |= fuse.S_IFDIR
-	} else {
-		Mode |= fuse.S_IFREG
-	}
 	//stat.Dev = 1
 	stat.Ino = node.Inode() // FIXME do we need to set the inode number?
-	stat.Mode = uint32(Mode)
+	stat.Mode = getMode(node)
 	stat.Nlink = 1
 	stat.Uid = fsys.VFS.Opt.UID
 	stat.Gid = fsys.VFS.Opt.GID
@@ -496,14 +490,15 @@ func (fsys *FS) Link(oldpath string, newpath string) (errc int) {
 
 // Symlink creates a symbolic link.
 func (fsys *FS) Symlink(target string, newpath string) (errc int) {
-	defer log.Trace(target, "newpath=%q", newpath)("errc=%d", &errc)
-	return -fuse.ENOSYS
+	defer log.Trace(target, "newpath=%q, target=%q", newpath, target)("errc=%d", &errc)
+	return translateError(fsys.VFS.Symlink(target, newpath))
 }
 
 // Readlink reads the target of a symbolic link.
 func (fsys *FS) Readlink(path string) (errc int, linkPath string) {
-	defer log.Trace(path, "")("linkPath=%q, errc=%d", &linkPath, &errc)
-	return -fuse.ENOSYS, ""
+	defer log.Trace(path, "")("errc=%v, linkPath=%q", &errc, linkPath)
+	linkPath, err := fsys.VFS.Readlink(path)
+	return translateError(err), linkPath
 }
 
 // Chmod changes the permission bits of a file.
@@ -633,6 +628,22 @@ func translateOpenFlags(inFlags int) (outFlags int) {
 	}
 	// NB O_SYNC isn't defined by fuse
 	return outFlags
+}
+
+// get the Mode from a vfs Node
+func getMode(node os.FileInfo) uint32 {
+	vfsMode := node.Mode()
+	Mode := vfsMode.Perm()
+	if vfsMode&os.ModeDir != 0 {
+		Mode |= fuse.S_IFDIR
+	} else if vfsMode&os.ModeSymlink != 0 {
+		Mode |= fuse.S_IFLNK
+	} else if vfsMode&os.ModeNamedPipe != 0 {
+		Mode |= fuse.S_IFIFO
+	} else {
+		Mode |= fuse.S_IFREG
+	}
+	return uint32(Mode)
 }
 
 // Make sure interfaces are satisfied
