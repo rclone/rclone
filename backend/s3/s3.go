@@ -66,7 +66,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "s3",
-		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, Digital Ocean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS, Qiniu and Wasabi",
+		Description: "Amazon S3 Compliant Storage Providers including AWS, Alibaba, Ceph, China Mobile, Cloudflare, ArvanCloud, DigitalOcean, Dreamhost, Huawei OBS, IBM COS, IDrive e2, IONOS Cloud, Liara, Lyve Cloud, Minio, Netease, RackCorp, Scaleway, SeaweedFS, StackPath, Storj, Tencent COS, Qiniu and Wasabi",
 		NewFs:       NewFs,
 		CommandHelp: commandHelp,
 		Config: func(ctx context.Context, name string, m configmap.Mapper, config fs.ConfigIn) (*fs.ConfigOut, error) {
@@ -105,7 +105,7 @@ func init() {
 				Help:  "Arvan Cloud Object Storage (AOS)",
 			}, {
 				Value: "DigitalOcean",
-				Help:  "Digital Ocean Spaces",
+				Help:  "DigitalOcean Spaces",
 			}, {
 				Value: "Dreamhost",
 				Help:  "Dreamhost DreamObjects",
@@ -1110,16 +1110,28 @@ func init() {
 				Help:     "Dream Objects endpoint",
 				Provider: "Dreamhost",
 			}, {
+				Value:    "syd1.digitaloceanspaces.com",
+				Help:     "DigitalOcean Spaces Sydney 1",
+				Provider: "DigitalOcean",
+			}, {
+				Value:    "sfo3.digitaloceanspaces.com",
+				Help:     "DigitalOcean Spaces San Francisco 3",
+				Provider: "DigitalOcean",
+			}, {
+				Value:    "fra1.digitaloceanspaces.com",
+				Help:     "DigitalOcean Spaces Frankfurt 1",
+				Provider: "DigitalOcean",
+			}, {
 				Value:    "nyc3.digitaloceanspaces.com",
-				Help:     "Digital Ocean Spaces New York 3",
+				Help:     "DigitalOcean Spaces New York 3",
 				Provider: "DigitalOcean",
 			}, {
 				Value:    "ams3.digitaloceanspaces.com",
-				Help:     "Digital Ocean Spaces Amsterdam 3",
+				Help:     "DigitalOcean Spaces Amsterdam 3",
 				Provider: "DigitalOcean",
 			}, {
 				Value:    "sgp1.digitaloceanspaces.com",
-				Help:     "Digital Ocean Spaces Singapore 1",
+				Help:     "DigitalOcean Spaces Singapore 1",
 				Provider: "DigitalOcean",
 			}, {
 				Value:    "localhost:8333",
