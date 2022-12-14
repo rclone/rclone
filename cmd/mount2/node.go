@@ -458,3 +458,31 @@ func (n *Node) Listxattr(ctx context.Context, dest []byte) (uint32, syscall.Errn
 }
 
 var _ fusefs.NodeListxattrer = (*Node)(nil)
+
+var _ fusefs.NodeReadlinker = (*Node)(nil)
+
+// Readlink read symbolic link target.
+func (n *Node) Readlink(ctx context.Context) (ret []byte, err syscall.Errno) {
+	defer log.Trace(n, "")("ret=%v, err=%v", &ret, &err)
+	path := n.node.Path()
+	s, serr := n.node.VFS().Readlink(path)
+	return []byte(s), translateError(serr)
+}
+
+var _ fusefs.NodeSymlinker = (*Node)(nil)
+
+// Symlink create symbolic link.
+func (n *Node) Symlink(ctx context.Context, target, name string, out *fuse.EntryOut) (node *fusefs.Inode, err syscall.Errno) {
+	defer log.Trace(n, "name=%v, target=%v", name, target)("node=%v, err=%v", &node, &err)
+	fullPath := path.Join(n.node.Path(), name)
+	vfsNode, serr := n.node.VFS().CreateSymlink(target, fullPath)
+	if serr != nil {
+		return nil, translateError(serr)
+	}
+
+	n.fsys.setEntryOut(vfsNode, out)
+	newNode := newNode(n.fsys, vfsNode)
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+
+	return newInode, 0
+}
