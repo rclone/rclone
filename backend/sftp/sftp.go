@@ -1775,11 +1775,14 @@ func (o *Object) setMetadata(info os.FileInfo) {
 
 // statRemote stats the file or directory at the remote given
 func (f *Fs) stat(ctx context.Context, remote string) (info os.FileInfo, err error) {
+	absPath := remote
+	if !strings.HasPrefix(remote, "/") {
+		absPath = path.Join(f.absRoot, remote)
+	}
 	c, err := f.getSftpConnection(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("stat: %w", err)
 	}
-	absPath := path.Join(f.absRoot, remote)
 	info, err = c.sftpClient.Stat(absPath)
 	f.putSftpConnection(&c, err)
 	return info, err
