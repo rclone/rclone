@@ -100,9 +100,14 @@ func (f *File) IsSymlink() bool {
 func (f *File) Mode() (mode os.FileMode) {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
-	mode = f.d.vfs.Opt.FilePerms
-	if f.appendMode {
-		mode |= os.ModeAppend
+	if f.IsSymlink() {
+		mode = f.d.vfs.Opt.LinkPerms
+	} else {
+		mode = f.d.vfs.Opt.FilePerms
+
+		if f.appendMode {
+			mode |= os.ModeAppend
+		}
 	}
 	return mode
 }
