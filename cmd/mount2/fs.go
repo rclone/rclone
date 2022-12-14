@@ -51,14 +51,38 @@ func (f *FS) SetDebug(debug bool) {
 
 // get the Mode from a vfs Node
 func getMode(node os.FileInfo) uint32 {
-	Mode := node.Mode().Perm()
-	if node.IsDir() {
+	vfsMode := node.Mode()
+	Mode := vfsMode.Perm()
+	if vfsMode&os.ModeDir != 0 {
 		Mode |= fuse.S_IFDIR
+	} else if vfsMode&os.ModeSymlink != 0 {
+		Mode |= fuse.S_IFLNK
+	} else if vfsMode&os.ModeNamedPipe != 0 {
+		Mode |= fuse.S_IFIFO
 	} else {
 		Mode |= fuse.S_IFREG
 	}
 	return uint32(Mode)
 }
+
+// convert fuse mode to os.FileMode
+// func getFileMode(mode uint32) os.FileMode {
+// 	osMode := os.FileMode(0)
+// 	if mode&fuse.S_IFDIR != 0 {
+// 		mode ^= fuse.S_IFDIR
+// 		osMode |= os.ModeDir
+// 	} else if mode&fuse.S_IFREG != 0 {
+// 		mode ^= fuse.S_IFREG
+// 	} else if mode&fuse.S_IFLNK != 0 {
+// 		mode ^= fuse.S_IFLNK
+// 		osMode |= os.ModeSymlink
+// 	} else if mode&fuse.S_IFIFO != 0 {
+// 		mode ^= fuse.S_IFIFO
+// 		osMode |= os.ModeNamedPipe
+// 	}
+// 	osMode |= os.FileMode(mode)
+// 	return osMode
+// }
 
 // fill in attr from node
 func setAttr(node vfs.Node, attr *fuse.Attr) {

@@ -7,6 +7,7 @@ import (
 	"context"
 	"os"
 	"path"
+	"strings"
 	"syscall"
 
 	fusefs "github.com/hanwen/go-fuse/v2/fs"
@@ -56,6 +57,9 @@ func (n *Node) lookupVfsNodeInDir(leaf string) (vfsNode vfs.Node, errno syscall.
 		return nil, syscall.ENOTDIR
 	}
 	vfsNode, err := dir.Stat(leaf)
+	if err == vfs.ENOENT && dir.VFS().Opt.Links {
+		vfsNode, err = dir.Stat(leaf + fs.LinkSuffix)
+	}
 	return vfsNode, translateError(err)
 }
 
@@ -219,6 +223,7 @@ func (n *Node) Opendir(ctx context.Context) syscall.Errno {
 var _ = (fusefs.NodeOpendirer)((*Node)(nil))
 
 type dirStream struct {
+	fsys  *FS
 	nodes []os.FileInfo
 	i     int
 }
@@ -250,13 +255,14 @@ func (ds *dirStream) Next() (de fuse.DirEntry, errno syscall.Errno) {
 		}, 0
 	}
 	fi := ds.nodes[ds.i-2]
+	name, _ := ds.fsys.VFS.TrimSymlink(path.Base(fi.Name()))
 	de = fuse.DirEntry{
 		// Mode is the file's mode. Only the high bits (e.g. S_IFDIR)
 		// are considered.
 		Mode: getMode(fi),
 
 		// Name is the basename of the file in the directory.
-		Name: path.Base(fi.Name()),
+		Name: name,
 
 		// Ino is the inode number.
 		Ino: 0, // FIXME
@@ -304,6 +310,7 @@ func (n *Node) Readdir(ctx context.Context) (ds fusefs.DirStream, errno syscall.
 	}
 	return &dirStream{
 		nodes: items,
+		fsys:  n.fsys,
 	}, 0
 }
 
@@ -341,6 +348,8 @@ func (n *Node) Create(ctx context.Context, name string, flags uint32, mode uint3
 	}
 	// translate the fuse flags to os flags
 	osFlags := int(flags) | os.O_CREATE
+	// translate the fuse mode to os mode
+	//osMode := getFileMode(mode)
 	file, err := dir.Create(name, osFlags)
 	if err != nil {
 		return nil, nil, 0, translateError(err)
@@ -416,7 +425,101 @@ func (n *Node) Rename(ctx context.Context, oldName string, newParent fusefs.Inod
 	if !ok {
 		return syscall.ENOTDIR
 	}
+	if oldDir.VFS().Opt.Links {
+		node, err := n.lookupVfsNodeInDir(oldName)
+
+		if err == 0 {
+			oldName = node.Name()
+
+			if strings.HasSuffix(oldName, fs.LinkSuffix) {
+				newName += fs.LinkSuffix
+			}
+		}
+	}
 	return translateError(oldDir.Rename(oldName, newName, newDir))
 }
 
 var _ = (fusefs.NodeRenamer)((*Node)(nil))
+
+var _ fusefs.NodeReadlinker = (*Node)(nil)
+
+// Readlink read symbolic link target.
+func (n *Node) Readlink(ctx context.Context) (ret []byte, err syscall.Errno) {
+	defer log.Trace(n, "Requested to read link")("ret=%v, err=%v", &ret, &err)
+
+	path := n.node.Path()
+
+	if n.node.VFS().Opt.Links {
+		// The user must NOT provide .rclonelink suffix
+		// if strings.HasSuffix(path, fs.LinkSuffix) {
+		// 	fs.Errorf(nil, "Invalid name suffix provided: %v", path)
+		// 	return nil, translateError(vfs.EINVAL)
+		// }
+
+		// path += fs.LinkSuffix
+	} else {
+		// The user must provide .rclonelink suffix
+		if !strings.HasSuffix(path, fs.LinkSuffix) {
+			fs.Errorf(nil, "Invalid name suffix provided: %v", path)
+			return nil, translateError(vfs.EINVAL)
+		}
+	}
+
+	s, serr := n.node.VFS().Readlink(path)
+	if serr != nil {
+		return nil, translateError(serr)
+	}
+	s, _ = n.node.VFS().TrimSymlink(s)
+	return []byte(s), 0
+}
+
+var _ fusefs.NodeSymlinker = (*Node)(nil)
+
+// Symlink create symbolic link.
+func (n *Node) Symlink(ctx context.Context, target, name string, out *fuse.EntryOut) (node *fusefs.Inode, err syscall.Errno) {
+	defer log.Trace(n, "Requested to symlink name=%v, target=%v", name, target)("node=%v, err=%v", &node, &err)
+
+	name = path.Join(n.node.Path(), name)
+
+	if n.node.VFS().Opt.Links {
+		// The user must NOT provide .rclonelink suffix
+		if strings.HasSuffix(name, fs.LinkSuffix) {
+			fs.Errorf(nil, "Invalid name suffix provided: %v", name)
+			return nil, translateError(vfs.EINVAL)
+		}
+
+		name += fs.LinkSuffix
+	} else {
+		// The user must provide .rclonelink suffix
+		if !strings.HasSuffix(name, fs.LinkSuffix) {
+			fs.Errorf(nil, "Invalid name suffix provided: %v", name)
+			return nil, translateError(vfs.EINVAL)
+		}
+	}
+
+	// Add target suffix when linking to a link
+	if !strings.HasSuffix(target, fs.LinkSuffix) {
+		vnode, err := n.lookupVfsNodeInDir(target)
+		if err == 0 && strings.HasSuffix(vnode.Name(), fs.LinkSuffix) {
+			target += fs.LinkSuffix
+		}
+	}
+
+	serr := n.node.VFS().Symlink(target, name)
+	if serr != nil {
+		return nil, translateError(serr)
+	}
+
+	// Find the created node
+	vfsNode, err := n.lookupVfsNodeInDir(path.Base(name))
+	if err != 0 {
+		return nil, err
+	}
+
+	n.fsys.setEntryOut(vfsNode, out)
+	newNode := newNode(n.fsys, vfsNode)
+	fs.Debugf(nil, "attr=%#v", out.Attr)
+	newInode := n.NewInode(ctx, newNode, fusefs.StableAttr{Mode: out.Attr.Mode})
+
+	return newInode, 0
+}

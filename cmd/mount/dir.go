@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
+	"strings"
 	"syscall"
 	"time"
 
@@ -28,13 +30,21 @@ type Dir struct {
 // Check interface satisfied
 var _ fusefs.Node = (*Dir)(nil)
 
+func fallbackStat(dir *vfs.Dir, leaf string) (node vfs.Node, err error) {
+	node, err = dir.Stat(leaf)
+	if err == vfs.ENOENT && dir.VFS().Opt.Links {
+		node, err = dir.Stat(leaf + fs.LinkSuffix)
+	}
+	return node, err
+}
+
 // Attr updates the attributes of a directory
 func (d *Dir) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer log.Trace(d, "")("attr=%+v, err=%v", a, &err)
 	a.Valid = d.fsys.opt.AttrTimeout
 	a.Gid = d.VFS().Opt.GID
 	a.Uid = d.VFS().Opt.UID
-	a.Mode = os.ModeDir | d.VFS().Opt.DirPerms
+	a.Mode = d.Mode()
 	modTime := d.ModTime()
 	a.Atime = modTime
 	a.Mtime = modTime
@@ -74,7 +84,7 @@ var _ fusefs.NodeRequestLookuper = (*Dir)(nil)
 // Lookup need not to handle the names "." and "..".
 func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.LookupResponse) (node fusefs.Node, err error) {
 	defer log.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
-	mnode, err := d.Dir.Stat(req.Name)
+	mnode, err := fallbackStat(d.Dir, req.Name)
 	if err != nil {
 		return nil, translateError(err)
 	}
@@ -117,7 +127,7 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 		Name: "..",
 	})
 	for _, node := range items {
-		name := node.Name()
+		name, isLink := d.VFS().TrimSymlink(node.Name())
 		if len(name) > mountlib.MaxLeafSize {
 			fs.Errorf(d, "Name too long (%d bytes) for FUSE, skipping: %s", len(name), name)
 			continue
@@ -127,7 +137,9 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 			Type: fuse.DT_File,
 			Name: name,
 		}
-		if node.IsDir() {
+		if isLink {
+			dirent.Type = fuse.DT_Link
+		} else if node.IsDir() {
 			dirent.Type = fuse.DT_Dir
 		}
 		dirents = append(dirents, dirent)
@@ -141,11 +153,13 @@ var _ fusefs.NodeCreater = (*Dir)(nil)
 // Create makes a new file
 func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (node fusefs.Node, handle fusefs.Handle, err error) {
 	defer log.Trace(d, "name=%q", req.Name)("node=%v, handle=%v, err=%v", &node, &handle, &err)
-	file, err := d.Dir.Create(req.Name, int(req.Flags))
+	// translate the fuse flags to os flags
+	osFlags := int(req.Flags) | os.O_CREATE
+	file, err := d.Dir.Create(req.Name, osFlags)
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
-	fh, err := file.Open(int(req.Flags) | os.O_CREATE)
+	fh, err := file.Open(osFlags)
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
@@ -175,7 +189,18 @@ var _ fusefs.NodeRemover = (*Dir)(nil)
 // may correspond to a file (unlink) or to a directory (rmdir).
 func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) (err error) {
 	defer log.Trace(d, "name=%q", req.Name)("err=%v", &err)
-	err = d.Dir.RemoveName(req.Name)
+
+	name := req.Name
+
+	if d.VFS().Opt.Links {
+		node, err := fallbackStat(d.Dir, name)
+
+		if err == nil {
+			name = node.Name()
+		}
+	}
+
+	err = d.Dir.RemoveName(name)
 	if err != nil {
 		return translateError(err)
 	}
@@ -202,7 +227,22 @@ func (d *Dir) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fusefs
 		return fmt.Errorf("unknown Dir type %T", newDir)
 	}
 
-	err = d.Dir.Rename(req.OldName, req.NewName, destDir.Dir)
+	oldName := req.OldName
+	newName := req.NewName
+
+	if d.VFS().Opt.Links {
+		node, err := fallbackStat(d.Dir, oldName)
+
+		if err == nil {
+			oldName = node.Name()
+
+			if strings.HasSuffix(oldName, fs.LinkSuffix) {
+				newName += fs.LinkSuffix
+			}
+		}
+	}
+
+	err = d.Dir.Rename(oldName, newName, destDir.Dir)
 	if err != nil {
 		return translateError(err)
 	}
@@ -238,6 +278,53 @@ var _ fusefs.NodeLinker = (*Dir)(nil)
 func (d *Dir) Link(ctx context.Context, req *fuse.LinkRequest, old fusefs.Node) (newNode fusefs.Node, err error) {
 	defer log.Trace(d, "req=%v, old=%v", req, old)("new=%v, err=%v", &newNode, &err)
 	return nil, syscall.ENOSYS
+}
+
+var _ fusefs.NodeSymlinker = (*Dir)(nil)
+
+// Symlink create a symbolic link.
+func (d *Dir) Symlink(ctx context.Context, req *fuse.SymlinkRequest) (node fusefs.Node, err error) {
+	defer log.Trace(d, "Requested to symlink newname=%v, target=%v", req.NewName, req.Target)("node=%v, err=%v", &node, &err)
+
+	newName := path.Join(d.Path(), req.NewName)
+	target := req.Target
+
+	if d.VFS().Opt.Links {
+		// The user must NOT provide .rclonelink suffix
+		if strings.HasSuffix(newName, fs.LinkSuffix) {
+			fs.Errorf(nil, "Invalid name suffix provided: %v", newName)
+			return nil, vfs.EINVAL
+		}
+
+		newName += fs.LinkSuffix
+	} else {
+		// The user must provide .rclonelink suffix
+		if !strings.HasSuffix(newName, fs.LinkSuffix) {
+			fs.Errorf(nil, "Invalid name suffix provided: %v", newName)
+			return nil, vfs.EINVAL
+		}
+	}
+
+	// Add target suffix when linking to a link
+	if !strings.HasSuffix(target, fs.LinkSuffix) {
+		vnode, err := fallbackStat(d.Dir, target)
+		if err == nil && strings.HasSuffix(vnode.Name(), fs.LinkSuffix) {
+			target += fs.LinkSuffix
+		}
+	}
+
+	err = d.VFS().Symlink(target, newName)
+	if err != nil {
+		return nil, err
+	}
+
+	n, err := d.Stat(path.Base(newName))
+	if err != nil {
+		return nil, err
+	}
+
+	node = &File{n.(*vfs.File), d.fsys}
+	return node, nil
 }
 
 // Check interface satisfied

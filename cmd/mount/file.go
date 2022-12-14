@@ -5,11 +5,14 @@ package mount
 
 import (
 	"context"
+	"os"
+	"strings"
 	"syscall"
 	"time"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
+	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/vfs"
 )
@@ -32,7 +35,7 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	Blocks := (Size + 511) / 512
 	a.Gid = f.VFS().Opt.GID
 	a.Uid = f.VFS().Opt.UID
-	a.Mode = f.VFS().Opt.FilePerms
+	a.Mode = f.File.Mode() &^ os.ModeAppend
 	a.Size = Size
 	a.Atime = modTime
 	a.Mtime = modTime
@@ -126,3 +129,32 @@ func (f *File) Removexattr(ctx context.Context, req *fuse.RemovexattrRequest) er
 }
 
 var _ fusefs.NodeRemovexattrer = (*File)(nil)
+
+var _ fusefs.NodeReadlinker = (*File)(nil)
+
+// Readlink read symbolic link target.
+func (f *File) Readlink(ctx context.Context, req *fuse.ReadlinkRequest) (ret string, err error) {
+	defer log.Trace(f, "Requested to read link")("ret=%v, err=%v", &ret, &err)
+
+	path := f.Path()
+
+	if f.VFS().Opt.Links {
+		// The user must NOT provide .rclonelink suffix
+		// if strings.HasSuffix(path, fs.LinkSuffix) {
+		// 	fs.Errorf(nil, "Invalid name suffix provided: %v", path)
+		// 	return "", vfs.EINVAL
+		// }
+
+		// path += fs.LinkSuffix
+	} else {
+		// The user must provide .rclonelink suffix
+		if !strings.HasSuffix(path, fs.LinkSuffix) {
+			fs.Errorf(nil, "Invalid name suffix provided: %v", path)
+			return "", vfs.EINVAL
+		}
+	}
+
+	ret, err = f.VFS().Readlink(path)
+	ret, _ = f.VFS().TrimSymlink(ret)
+	return ret, err
+}
