@@ -19,12 +19,9 @@ const (
 func NewBaseContext(ctx context.Context, url string) func(l net.Listener) context.Context {
 	return func(l net.Listener) context.Context {
 		if l.Addr().Network() == "unix" {
-			ctx = context.WithValue(ctx, ctxKeyUnixSock, true)
-			return ctx
+			return context.WithValue(ctx, ctxKeyUnixSock, true)
 		}
-
-		ctx = context.WithValue(ctx, ctxKeyPublicURL, url)
-		return ctx
+		return context.WithValue(ctx, ctxKeyPublicURL, url)
 	}
 }
 
