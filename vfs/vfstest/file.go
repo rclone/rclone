@@ -101,10 +101,6 @@ func TestSymlinks(t *testing.T) {
 		// fs.Logf(nil, "LINK_FILE: %v, %v <-> %v, %v", lfl.Mode(), lfl.IsDir(), lf.Mode(), lf.IsDir())
 	}
 
-	if !run.useVFS {
-		t.Skip("Requires useVFS")
-	}
-
 	suffix := ""
 
 	if run.useVFS || !run.vfsOpt.Links {
