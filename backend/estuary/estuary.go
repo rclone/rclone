@@ -35,7 +35,6 @@ var (
 	errorRmdirOnlyCollections    = errors.New("rmdir only implemented for root collections")
 	errorFindLeafOnlyCollections = errors.New("find leaf only implemented for root collections")
 	errNoCID                     = errors.New("no CID for object")
-	errNoUploadEndpoint          = errors.New("No upload endpoint for object")
 	errAllEndpointsFailed        = errors.New("All upload endpoints failed")
 	errNoRootFound               = errors.New("No root collection found")
 	minSleep                     = 10 * time.Millisecond
@@ -84,25 +83,6 @@ type Content struct {
 	UserID      uint      `json:"userId"`
 	Description string    `json:"description"`
 	Size        int64     `json:"size"`
-}
-
-type ContentAdd struct {
-	ID      uint   `json:"estuaryId"`
-	Cid     string `json:"cid,omitempty"`
-	Error   string `json:"error"`
-	Details string `json:"details"`
-}
-
-type ContentByCID struct {
-	Content Content `json:"content"`
-}
-
-type Collection struct {
-	UUID        string    `json:"uuid"`
-	CreatedAt   time.Time `json:"createdAt"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	UserID      uint      `json:"userId"`
 }
 
 type CollectionFsItem struct {
@@ -672,7 +652,6 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, size int64, options ...fs.OpenOption) (err error) {
 	fs.Debugf(o, "upload leaf=%v, dirID=%v, size=%v", leaf, dirID, size)
-	var result ContentAdd
 
 	params := url.Values{}
 	if dirID != "" {
@@ -683,13 +662,6 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		params.Set(colDir, absPath)
 	}
 
-	endpoints := o.fs.viewer.Settings.UploadEndpoints
-	if len(endpoints) == 0 {
-		return errNoUploadEndpoint
-	}
-
-	endpoint := 0
-	// Note: "Path" is actually embedded in the upload endpoint, which we use as the RootURL
 	opts := rest.Opts{
 		Method:               "POST",
 		Body:                 in,
@@ -699,26 +671,14 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		Parameters:           params,
 	}
 
-	var response *http.Response
-	err = o.fs.pacer.Call(func() (bool, error) {
-		if endpoint == len(endpoints) {
-			return false, errAllEndpointsFailed
-		}
-
-		opts.RootURL = endpoints[endpoint]
-		response, err = o.fs.client.CallJSON(ctx, &opts, nil, &result)
-		if contentAddingDisabled(response, err) {
-			fs.Debugf(o, "failed upload, retry w/ next upload endpoint")
-			endpoint += 1
-			return true, err
-		}
-
-		return shouldRetry(ctx, response, err)
-	})
-
+	result, err := o.addContent(ctx, opts)
 	if err != nil {
 		return err
 	}
+
+	estuaryId := result.ID
+
+	// TO DO: replace pin.Meta to add modtime
 
 	o.cid = result.Cid
 	o.estuaryId = strconv.FormatUint(uint64(result.ID), 10)
