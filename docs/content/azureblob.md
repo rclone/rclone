@@ -80,7 +80,13 @@ docs](/docs/#fast-list) for more details.
 The modified time is stored as metadata on the object with the `mtime`
 key.  It is stored using RFC3339 Format time with nanosecond
 precision.  The metadata is supplied during directory listings so
-there is no overhead to using it.
+there is no performance overhead to using it.
+
+If you wish to use the Azure standard `LastModified` time stored on
+the object as the modified time, then use the `--use-server-modtime`
+flag. Note that rclone can't set `LastModified`, so using the
+`--update` flag when syncing is recommended if using
+`--use-server-modtime`.
 
 ### Performance
 

@@ -1590,7 +1590,9 @@ func (o *Object) setMetadata(metadata map[string]string) {
 		for k, v := range metadata {
 			o.meta[strings.ToLower(k)] = v
 		}
-		if modTime, ok := o.meta[modTimeKey]; ok {
+		// Set o.modTime from metadata if it exists and
+		// UseServerModTime isn't in use.
+		if modTime, ok := o.meta[modTimeKey]; !o.fs.ci.UseServerModTime && ok {
 			when, err := time.Parse(timeFormatIn, modTime)
 			if err != nil {
 				fs.Debugf(o, "Couldn't parse %v = %q: %v", modTimeKey, modTime, err)
