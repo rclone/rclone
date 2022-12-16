@@ -5507,7 +5507,12 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	if err != nil {
 		return err
 	}
-	o.versionID = versionID
+	// Only record versionID if we are using --s3-versions or --s3-version-at
+	if o.fs.opt.Versions || o.fs.opt.VersionAt.IsSet() {
+		o.versionID = versionID
+	} else {
+		o.versionID = nil
+	}
 
 	// User requested we don't HEAD the object after uploading it
 	// so make up the object as best we can assuming it got
