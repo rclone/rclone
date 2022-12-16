@@ -17,6 +17,7 @@ import (
 	"github.com/anacrolix/dms/soap"
 	"github.com/anacrolix/dms/ssdp"
 	"github.com/anacrolix/dms/upnp"
+	"github.com/anacrolix/log"
 	"github.com/rclone/rclone/cmd"
 	"github.com/rclone/rclone/cmd/serve/dlna/data"
 	"github.com/rclone/rclone/cmd/serve/dlna/dlnaflags"
@@ -404,6 +405,7 @@ func (s *server) ssdpInterface(intf net.Interface) {
 		Server:         serverField,
 		UUID:           s.RootDeviceUUID,
 		NotifyInterval: s.AnnounceInterval,
+		Logger:         log.Default,
 	}
 
 	// An interface with these flags should be valid for SSDP.
