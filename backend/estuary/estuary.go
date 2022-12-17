@@ -228,7 +228,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 			// No root so return old f
 			return f, nil
 		}
-		_, err := tempF.newObjectWithInfo(ctx, remote, nil, nil)
+		_, err := tempF.newObjectWithInfo(ctx, remote, time.Time{}, nil)
 		if err != nil {
 			if err == fs.ErrorObjectNotFound {
 				// File doesn't exist so return old f
@@ -460,7 +460,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // ErrorIsDir if possible without doing any extra work,
 // otherwise ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(ctx, remote, nil, nil)
+	return f.newObjectWithInfo(ctx, remote, time.Time{}, nil)
 }
 
 func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime time.Time, content *Content) (fs.Object, error) {
@@ -475,8 +475,6 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime time.
 		o.cid = content.Cid
 		o.size = content.Size
 		o.modTime = modTime
-		if err != nil { // do nothing
-		}
 	} else {
 		err := o.readStats(ctx)
 		if err != nil {
