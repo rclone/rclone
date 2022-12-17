@@ -76,20 +76,19 @@ type ApiError struct {
 }
 
 type Content struct {
-	ID          uint      `json:"id"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	Cid         string    `json:"cid"`
-	Name        string    `json:"name"`
-	UserID      uint      `json:"userId"`
-	Description string    `json:"description"`
-	Size        int64     `json:"size"`
+	ID          uint   `json:"id"`
+	Cid         string `json:"cid"`
+	Name        string `json:"name"`
+	UserID      uint   `json:"userId"`
+	Description string `json:"description"`
+	Size        int64  `json:"size"`
 }
 
 type CollectionFsItem struct {
+	ContentID uint      `json:"contId"`
 	Name      string    `json:"name"`
 	Type      string    `json:"type"`
 	Size      int64     `json:"size"`
-	ContentID uint      `json:"contId"`
 	Cid       string    `json:"cid,omitempty"`
 	Dir       string    `json:"dir"`
 	ColUuid   string    `json:"coluuid"`
@@ -147,7 +146,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 
 	if resp != nil && resp.StatusCode == 404 {
-		err = fs.ErrorDirNotFound
+		err = fs.ErrorObjectNotFound
 	}
 	return fserrors.ShouldRetry(err) && fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -229,7 +228,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 			// No root so return old f
 			return f, nil
 		}
-		_, err := tempF.newObjectWithInfo(ctx, remote, nil)
+		_, err := tempF.newObjectWithInfo(ctx, remote, nil, nil)
 		if err != nil {
 			if err == fs.ErrorObjectNotFound {
 				// File doesn't exist so return old f
@@ -439,7 +438,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			entries = append(entries, d)
 		} else {
 			dir := item.Dir[1:]
-			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), &Content{ID: item.ContentID, Cid: item.Cid, Size: item.Size, UpdatedAt: item.UpdatedAt})
+			pin, err := f.getPin(ctx, item.ContentID)
+			if err != nil {
+				return nil, err
+			}
+			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), pin.Meta["modTime"], &Content{ID: item.ContentID, Cid: item.Cid, Size: item.Size})
 			if err != nil {
 				return nil, err
 			}
@@ -457,10 +460,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // ErrorIsDir if possible without doing any extra work,
 // otherwise ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(ctx, remote, nil)
+	return f.newObjectWithInfo(ctx, remote, nil, nil)
 }
 
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, content *Content) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime interface{}, content *Content) (fs.Object, error) {
 	fs.Debugf(f, "newObjectWithInfo %v", remote)
 	o := &Object{
 		fs:     f,
@@ -471,7 +474,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, content *Cont
 		o.estuaryId = strconv.FormatUint(uint64(content.ID), 10)
 		o.cid = content.Cid
 		o.size = content.Size
-		o.modTime = content.UpdatedAt
+		o.modTime = modTime.(time.Time)
 	} else {
 		err := o.readStats(ctx)
 		if err != nil {
@@ -636,8 +639,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: "https://dweb.link", // TODO: let users configure gateway
-		Path:    "/ipfs/" + o.cid,
+		RootURL: "https://gateway.estuary.tech", // TODO: let users configure gateway
+		Path:    "/gw/ipfs/" + o.cid,
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -676,12 +679,20 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		return err
 	}
 
-	estuaryId := result.ID
-
 	// TO DO: replace pin.Meta to add modtime
+	pin, err := o.fs.getPin(ctx, result.ID)
+	if err != nil {
+		return err
+	}
+	pin.Meta["modTime"] = o.modTime
+
+	id, err := o.fs.replacePin(ctx, result.ID, pin)
+	if err != nil {
+		return err
+	}
 
 	o.cid = result.Cid
-	o.estuaryId = strconv.FormatUint(uint64(result.ID), 10)
+	o.estuaryId = id
 	o.size = size
 	return nil
 }

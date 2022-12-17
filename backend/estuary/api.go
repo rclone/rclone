@@ -16,10 +16,6 @@ const (
 	colDir  = "dir"
 )
 
-const (
-	errNoUploadEndpoint = errors.New("No upload endpoint for object")
-)
-
 type CollectionCreate struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -42,6 +38,15 @@ type IpfsPin struct {
 	Name    string                 `json:"name"`
 	Origins []string               `json:"origins"`
 	Meta    map[string]interface{} `json:"meta"`
+}
+
+type IpfsPinStatusResponse struct {
+	RequestID string                 `json:"requestid"`
+	Status    string                 `json:"status"`
+	Created   time.Time              `json:"created"`
+	Delegates []string               `json:"delegates"`
+	Info      map[string]interface{} `json:"info"`
+	Pin       IpfsPin                `json:"pin"`
 }
 
 type ContentByCID struct {
@@ -171,7 +176,7 @@ func (o *Object) addContent(ctx context.Context, opts rest.Opts) (result Content
 	endpoints := o.fs.viewer.Settings.UploadEndpoints
 
 	if len(endpoints) == 0 {
-		return ContentAdd{}, errNoUploadEndpoint
+		return ContentAdd{}, errors.New("No upload endpoint for object")
 	}
 
 	endpoint := 0
@@ -196,6 +201,32 @@ func (o *Object) addContent(ctx context.Context, opts rest.Opts) (result Content
 	return result, err
 }
 
-func (o *Object) replacePin(ctx context.Context) {
+func (f *Fs) getPin(ctx context.Context, id uint) (IpfsPin, error) {
+	var result IpfsPinStatusResponse
+	opts := rest.Opts{
+		Method: "GET",
+		Path:   fmt.Sprintf("/pinning/pins/%v", id),
+	}
 
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.client.CallJSON(ctx, &opts, nil, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	return result.Pin, err
+}
+
+func (f *Fs) replacePin(ctx context.Context, id uint, pin IpfsPin) (string, error) {
+	var result IpfsPinStatusResponse
+	opts := rest.Opts{
+		Method: "POST",
+		Path:   fmt.Sprintf("/pinning/pins/%v", id),
+	}
+
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.client.CallJSON(ctx, &opts, &pin, &result)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	return result.RequestID, err
 }
