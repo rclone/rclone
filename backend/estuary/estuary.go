@@ -35,16 +35,11 @@ var (
 	errorRmdirOnlyCollections    = errors.New("rmdir only implemented for root collections")
 	errorFindLeafOnlyCollections = errors.New("find leaf only implemented for root collections")
 	errNoCID                     = errors.New("no CID for object")
-	errNoUploadEndpoint          = errors.New("No upload endpoint for object")
 	errAllEndpointsFailed        = errors.New("All upload endpoints failed")
+	errNoRootFound               = errors.New("No root collection found")
 	minSleep                     = 10 * time.Millisecond
 	maxSleep                     = 2 * time.Second
 	decayConstant                = 2
-)
-
-const (
-	colUuid = "coluuid"
-	colDir  = "dir"
 )
 
 // config options for our backend
@@ -81,44 +76,19 @@ type ApiError struct {
 }
 
 type Content struct {
-	ID          uint      `json:"id"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	Cid         string    `json:"cid"`
-	Name        string    `json:"name"`
-	UserID      uint      `json:"userId"`
-	Description string    `json:"description"`
-	Size        int64     `json:"size"`
-}
-
-type ContentAdd struct {
-	ID      uint   `json:"estuaryId"`
-	Cid     string `json:"cid,omitempty"`
-	Error   string `json:"error"`
-	Details string `json:"details"`
-}
-
-type ContentByCID struct {
-	Content Content `json:"content"`
-}
-
-type Collection struct {
-	UUID        string    `json:"uuid"`
-	CreatedAt   time.Time `json:"createdAt"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	UserID      uint      `json:"userId"`
-}
-
-type CollectionCreate struct {
+	ID          uint   `json:"id"`
+	Cid         string `json:"cid"`
 	Name        string `json:"name"`
+	UserID      uint   `json:"userId"`
 	Description string `json:"description"`
+	Size        int64  `json:"size"`
 }
 
 type CollectionFsItem struct {
+	ContentID uint      `json:"contId"`
 	Name      string    `json:"name"`
 	Type      string    `json:"type"`
 	Size      int64     `json:"size"`
-	ContentID uint      `json:"contId"`
 	Cid       string    `json:"cid,omitempty"`
 	Dir       string    `json:"dir"`
 	ColUuid   string    `json:"coluuid"`
@@ -176,7 +146,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 
 	if resp != nil && resp.StatusCode == 404 {
-		err = fs.ErrorDirNotFound
+		err = fs.ErrorObjectNotFound
 	}
 	return fserrors.ShouldRetry(err) && fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
@@ -258,7 +228,7 @@ func NewFs(ctx context.Context, name string, root string, m configmap.Mapper) (i
 			// No root so return old f
 			return f, nil
 		}
-		_, err := tempF.newObjectWithInfo(ctx, remote, nil)
+		_, err := tempF.newObjectWithInfo(ctx, remote, time.Time{}, nil)
 		if err != nil {
 			if err == fs.ErrorObjectNotFound {
 				// File doesn't exist so return old f
@@ -317,16 +287,6 @@ func (f *Fs) setRoot(root string) {
 	f.rootCollection, f.rootDirectory = bucket.Split(f.root)
 }
 
-func (f *Fs) fetchViewer(ctx context.Context) (response ViewerResponse, err error) {
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/viewer",
-	}
-
-	_, err = f.client.CallJSON(ctx, &opts, nil, &response)
-	return
-}
-
 // Command the backend to run a named command
 //
 // The command run is name
@@ -362,7 +322,7 @@ func (f *Fs) Command(ctx context.Context, name string, arg []string, opt map[str
 					case "url":
 						prefix = "ipfs://"
 					case "gateway":
-						prefix = "https://dweb.link/ipfs/"
+						prefix = "https://gateway.estuary.tech/gw/ipfs/"
 					}
 
 					cidWidth := 60 + len(prefix)
@@ -387,38 +347,13 @@ func (f *Fs) CreateDir(ctx context.Context, pathID, leaf string) (newID string, 
 		return "", errorMkdirOnlyCollections
 	}
 
-	var resp *http.Response
-	var collection Collection
-	opts := rest.Opts{
-		Method: "POST",
-		Path:   "/collections/create",
-	}
-	create := CollectionCreate{
-		Name:        leaf,
-		Description: "",
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, &create, &collection)
-		return shouldRetry(ctx, resp, err)
-	})
-	if err != nil {
-		return "", err
-	}
-	return collection.UUID, nil
+	return f.createCollection(ctx, leaf)
 }
 
 func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, error) {
 	fs.Debugf(f, "FindLeaf pathID=%v, leaf=%v, rootCollection=%v, rootDirectory=%v", pathID, leaf, f.rootCollection, f.rootDirectory)
 	if pathID == "" { // root dir, check collections
-		var collections []Collection
-		err := f.pacer.Call(func() (bool, error) {
-			response, err := f.client.CallJSON(ctx, &rest.Opts{
-				Method: "GET",
-				Path:   "/collections/list",
-			}, nil, &collections)
-			return shouldRetry(ctx, response, err)
-		})
-
+		collections, err := f.listCollections(ctx)
 		if err != nil {
 			return "", false, err
 		}
@@ -428,24 +363,11 @@ func (f *Fs) FindLeaf(ctx context.Context, pathID, leaf string) (string, bool, e
 				return collection.UUID, true, nil
 			}
 		}
-
 		return "", false, nil
 	} else { // subdir, these are lazy created and we construct a path out of the collection ID + root path in the collection
-		uuid, absPath := splitDir(pathID)
-
-		params := url.Values{}
-		params.Set(colUuid, uuid)
-		params.Set(colDir, absPath)
-
-		var items []CollectionFsItem
-		if err := f.pacer.Call(func() (bool, error) {
-			response, err := f.client.CallJSON(ctx, &rest.Opts{
-				Method:     "GET",
-				Path:       "/collections/content",
-				Parameters: params,
-			}, nil, &items)
-			return shouldRetry(ctx, response, err)
-		}); err != nil {
+		uuid, directoryPath := splitDir(pathID)
+		items, err := f.getCollectionContents(ctx, uuid, directoryPath)
+		if err != nil {
 			return "", false, err
 		}
 
@@ -467,20 +389,10 @@ func (item *CollectionFsItem) isDir() bool {
 }
 
 func (f *Fs) listRoot(ctx context.Context, dir string) (entries fs.DirEntries, err error) {
-	var response *http.Response
-	var collections []Collection
-	err = f.pacer.Call(func() (bool, error) {
-		response, err = f.client.CallJSON(ctx, &rest.Opts{
-			Method: "GET",
-			Path:   "/collections/list",
-		}, nil, &collections)
-		return shouldRetry(ctx, response, err)
-	})
-
+	collections, err := f.listCollections(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	for _, collection := range collections {
 		remote := path.Join(dir, collection.Name)
 		f.dirCache.Put(remote, collection.UUID)
@@ -505,27 +417,15 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 		return f.listRoot(ctx, dir)
 	}
 
-	var dirID string
-	dirID, err = f.dirCache.FindDir(ctx, dir, false)
+	var pathID string
+	pathID, err = f.dirCache.FindDir(ctx, dir, false)
 	if err != nil {
 		return nil, err
 	}
 
-	uuid, collectionDir := splitDir(dirID)
-	var response *http.Response
-	params := url.Values{}
-	params.Set(colUuid, uuid)
-	params.Set(colDir, collectionDir)
-
-	var items []CollectionFsItem
-	if err := f.pacer.Call(func() (bool, error) {
-		response, err = f.client.CallJSON(ctx, &rest.Opts{
-			Method:     "GET",
-			Path:       "/collections/content",
-			Parameters: params,
-		}, nil, &items)
-		return shouldRetry(ctx, response, err)
-	}); err != nil {
+	uuid, directoryPath := splitDir(pathID)
+	items, err := f.getCollectionContents(ctx, uuid, directoryPath)
+	if err != nil {
 		return nil, err
 	}
 
@@ -538,7 +438,11 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			entries = append(entries, d)
 		} else {
 			dir := item.Dir[1:]
-			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), &Content{ID: item.ContentID, Cid: item.Cid, Size: item.Size, UpdatedAt: item.UpdatedAt})
+			pin, err := f.getPin(ctx, item.ContentID)
+			if err != nil {
+				return nil, err
+			}
+			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), parseTimeString(pin.Meta["modTime"].(string)), &Content{ID: item.ContentID, Cid: item.Cid, Size: item.Size})
 			if err != nil {
 				return nil, err
 			}
@@ -556,10 +460,10 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 // ErrorIsDir if possible without doing any extra work,
 // otherwise ErrorObjectNotFound.
 func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
-	return f.newObjectWithInfo(ctx, remote, nil)
+	return f.newObjectWithInfo(ctx, remote, time.Time{}, nil)
 }
 
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, content *Content) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime time.Time, content *Content) (fs.Object, error) {
 	fs.Debugf(f, "newObjectWithInfo %v", remote)
 	o := &Object{
 		fs:     f,
@@ -570,7 +474,7 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, content *Cont
 		o.estuaryId = strconv.FormatUint(uint64(content.ID), 10)
 		o.cid = content.Cid
 		o.size = content.Size
-		o.modTime = content.UpdatedAt
+		o.modTime = modTime
 	} else {
 		err := o.readStats(ctx)
 		if err != nil {
@@ -641,17 +545,7 @@ func (f *Fs) Rmdir(ctx context.Context, dir string) error {
 	// if dirID != "" {
 	// 	return nil // TODO: this should be errorRmdirOnlyCollections but if we do that it breaks integration tests
 	// }
-	var resp *http.Response
-	var collection Collection
-	opts := rest.Opts{
-		Method: "DELETE",
-		Path:   "/collections/" + uuid,
-	}
-	err = f.pacer.Call(func() (bool, error) {
-		resp, err = f.client.CallJSON(ctx, &opts, nil, &collection)
-		return shouldRetry(ctx, resp, err)
-	})
-	return err
+	return f.deleteCollection(ctx, uuid)
 }
 
 // Fs returns the parent Fs
@@ -708,18 +602,8 @@ func (o *Object) readStats(ctx context.Context) error {
 		dir, file := path.Split(o.Remote())
 		collectionDir := "/" + dir
 
-		params := url.Values{}
-		params.Set(colUuid, dirID)
-		params.Set(colDir, collectionDir)
-		var items []CollectionFsItem
-		if err = o.fs.pacer.Call(func() (bool, error) {
-			response, err := o.fs.client.CallJSON(ctx, &rest.Opts{
-				Method:     "GET",
-				Path:       "/collections/content",
-				Parameters: params,
-			}, nil, &items)
-			return shouldRetry(ctx, response, err)
-		}); err != nil {
+		items, err := o.fs.getCollectionContents(ctx, dirID, collectionDir)
+		if err != nil {
 			return err
 		}
 
@@ -728,7 +612,11 @@ func (o *Object) readStats(ctx context.Context) error {
 				o.estuaryId = strconv.FormatUint(uint64(item.ContentID), 10)
 				o.size = item.Size
 				o.cid = item.Cid
-				o.modTime = item.UpdatedAt
+				pin, err := o.fs.getPin(ctx, item.ContentID)
+				if err != nil { // do nothing
+					fs.Debugf(o, "couldn't get pin for id =%v", item.ContentID)
+				}
+				o.modTime = parseTimeString(pin.Meta["modTime"].(string))
 				return nil
 			}
 		}
@@ -736,12 +624,7 @@ func (o *Object) readStats(ctx context.Context) error {
 		return fs.ErrorObjectNotFound
 	}
 
-	var result []ContentByCID
-	opts := rest.Opts{
-		Method: "GET",
-		Path:   "/content/by-cid/" + o.cid,
-	}
-	_, err := o.fs.client.CallJSON(ctx, &opts, nil, &result)
+	result, err := o.fs.getContentByCid(ctx, o.cid)
 	if err != nil {
 		return err
 	}
@@ -760,8 +643,8 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		RootURL: "https://dweb.link", // TODO: let users configure gateway
-		Path:    "/ipfs/" + o.cid,
+		RootURL: "https://gateway.estuary.tech", // TODO: let users configure gateway
+		Path:    "/gw/ipfs/" + o.cid,
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -776,56 +659,54 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, size int64, options ...fs.OpenOption) (err error) {
 	fs.Debugf(o, "upload leaf=%v, dirID=%v, size=%v", leaf, dirID, size)
-	var result ContentAdd
 
-	params := url.Values{}
-	if dirID != "" {
-		uuid, absPath := splitDir(dirID)
-		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
-
-		params.Set(colUuid, uuid)
-		params.Set(colDir, absPath)
-	}
-
-	endpoints := o.fs.viewer.Settings.UploadEndpoints
-	if len(endpoints) == 0 {
-		return errNoUploadEndpoint
-	}
-
-	endpoint := 0
-	// Note: "Path" is actually embedded in the upload endpoint, which we use as the RootURL
 	opts := rest.Opts{
 		Method:               "POST",
 		Body:                 in,
 		MultipartContentName: "data",
 		MultipartFileName:    leaf,
 		Options:              options,
-		Parameters:           params,
 	}
 
-	var response *http.Response
-	err = o.fs.pacer.Call(func() (bool, error) {
-		if endpoint == len(endpoints) {
-			return false, errAllEndpointsFailed
-		}
+	result, err := o.addContent(ctx, opts)
+	if err != nil {
+		return err
+	}
 
-		opts.RootURL = endpoints[endpoint]
-		response, err = o.fs.client.CallJSON(ctx, &opts, nil, &result)
-		if contentAddingDisabled(response, err) {
-			fs.Debugf(o, "failed upload, retry w/ next upload endpoint")
-			endpoint += 1
-			return true, err
-		}
+	pin, err := o.fs.getPin(ctx, result.ID)
+	if err != nil {
+		return err
+	}
+	pin.Meta["modTime"] = timeString(o.modTime)
 
-		return shouldRetry(ctx, response, err)
-	})
+	id, err := o.fs.replacePin(ctx, result.ID, pin)
+	if err != nil {
+		return err
+	}
 
+	integerId, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
+	params := url.Values{}
+	uuid := o.fs.root
+	absPath := "/"
+	if dirID != "" {
+		uuid, absPath = splitDir(dirID)
+		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
+	}
+	params.Set(colUuid, uuid)
+	params.Set(colDir, absPath)
+
+	contentIds := []uint{uint(integerId)}
+	err = o.fs.addContentsToCollection(ctx, uuid, absPath, contentIds)
 	if err != nil {
 		return err
 	}
 
 	o.cid = result.Cid
-	o.estuaryId = strconv.FormatUint(uint64(result.ID), 10)
+	o.estuaryId = id
 	o.size = size
 	return nil
 }
@@ -844,7 +725,11 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 }
 
 func (o *Object) Remove(ctx context.Context) error {
-	return errorNotImpl
+	rootCollectionId, ok := o.fs.dirCache.Get("")
+	if ok {
+		return o.removeContentFromCollection(ctx, rootCollectionId)
+	}
+	return errNoRootFound
 }
 
 func (o *Object) Storable() bool {
@@ -858,3 +743,23 @@ var (
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 )
+
+// timeString returns modTime as the number of milliseconds
+// elapsed since January 1, 1970 UTC as a decimal string.
+func timeString(modTime time.Time) string {
+	return strconv.FormatInt(modTime.UnixNano()/1e6, 10)
+}
+
+// parseTimeString converts a decimal string number of milliseconds
+// elapsed since January 1, 1970 UTC into a time.Time.
+func parseTimeString(timeString string) time.Time {
+	if timeString == "" {
+		return time.Time{}
+	}
+	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
+	if err != nil {
+		fs.Debugf("Failed to parse mod time string %q: %v", timeString, err)
+		return time.Time{}
+	}
+	return time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC()
+}
