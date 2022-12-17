@@ -442,7 +442,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 			if err != nil {
 				return nil, err
 			}
-			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), pin.Meta["modTime"], &Content{ID: item.ContentID, Cid: item.Cid, Size: item.Size})
+			o, err := f.newObjectWithInfo(ctx, path.Join(dir, item.Name), parseTimeString(pin.Meta["modTime"].(string)), &Content{ID: item.ContentID, Cid: item.Cid, Size: item.Size})
 			if err != nil {
 				return nil, err
 			}
@@ -463,7 +463,7 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	return f.newObjectWithInfo(ctx, remote, nil, nil)
 }
 
-func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime interface{}, content *Content) (fs.Object, error) {
+func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime time.Time, content *Content) (fs.Object, error) {
 	fs.Debugf(f, "newObjectWithInfo %v", remote)
 	o := &Object{
 		fs:     f,
@@ -474,7 +474,9 @@ func (f *Fs) newObjectWithInfo(ctx context.Context, remote string, modTime inter
 		o.estuaryId = strconv.FormatUint(uint64(content.ID), 10)
 		o.cid = content.Cid
 		o.size = content.Size
-		o.modTime = modTime.(time.Time)
+		o.modTime = modTime
+		if err != nil { // do nothing
+		}
 	} else {
 		err := o.readStats(ctx)
 		if err != nil {
@@ -612,7 +614,11 @@ func (o *Object) readStats(ctx context.Context) error {
 				o.estuaryId = strconv.FormatUint(uint64(item.ContentID), 10)
 				o.size = item.Size
 				o.cid = item.Cid
-				o.modTime = item.UpdatedAt
+				pin, err := o.fs.getPin(ctx, item.ContentID)
+				if err != nil { // do nothing
+					fs.Debugf(o, "couldn't get pin for id =%v", item.ContentID)
+				}
+				o.modTime = parseTimeString(pin.Meta["modTime"].(string))
 				return nil
 			}
 		}
@@ -656,22 +662,12 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, size int64, options ...fs.OpenOption) (err error) {
 	fs.Debugf(o, "upload leaf=%v, dirID=%v, size=%v", leaf, dirID, size)
 
-	params := url.Values{}
-	if dirID != "" {
-		uuid, absPath := splitDir(dirID)
-		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
-
-		params.Set(colUuid, uuid)
-		params.Set(colDir, absPath)
-	}
-
 	opts := rest.Opts{
 		Method:               "POST",
 		Body:                 in,
 		MultipartContentName: "data",
 		MultipartFileName:    leaf,
 		Options:              options,
-		Parameters:           params,
 	}
 
 	result, err := o.addContent(ctx, opts)
@@ -679,14 +675,34 @@ func (o *Object) upload(ctx context.Context, in io.Reader, leaf, dirID string, s
 		return err
 	}
 
-	// TO DO: replace pin.Meta to add modtime
 	pin, err := o.fs.getPin(ctx, result.ID)
 	if err != nil {
 		return err
 	}
-	pin.Meta["modTime"] = o.modTime
+	pin.Meta["modTime"] = timeString(o.modTime)
 
 	id, err := o.fs.replacePin(ctx, result.ID, pin)
+	if err != nil {
+		return err
+	}
+
+	integerId, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
+	params := url.Values{}
+	uuid := o.fs.root
+	absPath := "/"
+	if dirID != "" {
+		uuid, absPath = splitDir(dirID)
+		fs.Debugf(o, "uploading to collection %v at path %v", uuid, absPath)
+	}
+	params.Set(colUuid, uuid)
+	params.Set(colDir, absPath)
+
+	contentIds := []uint{uint(integerId)}
+	err = o.fs.addContentsToCollection(ctx, uuid, absPath, contentIds)
 	if err != nil {
 		return err
 	}
@@ -729,3 +745,23 @@ var (
 	_ fs.Object          = (*Object)(nil)
 	_ fs.IDer            = (*Object)(nil)
 )
+
+// timeString returns modTime as the number of milliseconds
+// elapsed since January 1, 1970 UTC as a decimal string.
+func timeString(modTime time.Time) string {
+	return strconv.FormatInt(modTime.UnixNano()/1e6, 10)
+}
+
+// parseTimeString converts a decimal string number of milliseconds
+// elapsed since January 1, 1970 UTC into a time.Time.
+func parseTimeString(timeString string) time.Time {
+	if timeString == "" {
+		return time.Time{}
+	}
+	unixMilliseconds, err := strconv.ParseInt(timeString, 10, 64)
+	if err != nil {
+		fs.Debugf("Failed to parse mod time string %q: %v", timeString, err)
+		return time.Time{}
+	}
+	return time.Unix(unixMilliseconds/1e3, (unixMilliseconds%1e3)*1e6).UTC()
+}

@@ -61,6 +61,10 @@ type Collection struct {
 	UserID      uint      `json:"userId"`
 }
 
+type addContentsToCollectionBody struct {
+	ContentIDs []uint `json:"contentids"`
+}
+
 func (f *Fs) fetchViewer(ctx context.Context) (response ViewerResponse, err error) {
 	opts := rest.Opts{
 		Method: "GET",
@@ -229,4 +233,22 @@ func (f *Fs) replacePin(ctx context.Context, id uint, pin IpfsPin) (string, erro
 	})
 
 	return result.RequestID, err
+}
+
+func (f *Fs) addContentsToCollection(ctx context.Context, coluuid, dir string, contentIds []uint) error {
+	params := url.Values{}
+	params.Set(colDir, dir)
+
+	opts := rest.Opts{
+		Method:     "POST",
+		Path:       fmt.Sprintf("/collections/%s", coluuid),
+		Parameters: params,
+	}
+
+	err := f.pacer.Call(func() (bool, error) {
+		resp, err := f.client.CallJSON(ctx, &opts, &contentIds, nil)
+		return shouldRetry(ctx, resp, err)
+	})
+
+	return err
 }
