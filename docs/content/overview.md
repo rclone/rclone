@@ -24,6 +24,7 @@ Here is an overview of the major features of each cloud storage system.
 | Box                          | SHA1             | R/W     | Yes              | No              | -         | -        |
 | Citrix ShareFile             | MD5              | R/W     | Yes              | No              | -         | -        |
 | Dropbox                      | DBHASH ¹         | R       | Yes              | No              | -         | -        |
+| Estuary                      | -                | R/W     |        No        | No              | R/W       | -        |
 | Enterprise File Fabric       | -                | R/W     | Yes              | No              | R/W       | -        |
 | FTP                          | -                | R/W ¹⁰  | No               | No              | -         | -        |
 | Google Cloud Storage         | MD5              | R/W     | No               | No              | R/W       | -        |

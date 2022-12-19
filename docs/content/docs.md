@@ -42,6 +42,7 @@ See the following for detailed instructions for
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
   * [Digi Storage](/koofr/#digi-storage)
   * [Dropbox](/dropbox/)
+  * [Estuary](/estuary/)
   * [Enterprise File Fabric](/filefabric/)
   * [FTP](/ftp/)
   * [Google Cloud Storage](/googlecloudstorage/)

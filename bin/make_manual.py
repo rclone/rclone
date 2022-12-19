@@ -40,6 +40,7 @@ docs = [
     "compress.md",
     "combine.md",
     "dropbox.md",
+    "estuary.md",
     "filefabric.md",
     "ftp.md",
     "googlecloudstorage.md",
