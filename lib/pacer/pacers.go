@@ -104,6 +104,15 @@ func (c *Default) Calculate(state State) time.Duration {
 	return sleepTime
 }
 
+// ZeroDelayCalculator is a Calculator that never delays.
+type ZeroDelayCalculator struct {
+}
+
+// Calculate takes the current Pacer state and return the wait time until the next try.
+func (c *ZeroDelayCalculator) Calculate(state State) time.Duration {
+	return 0
+}
+
 // AmazonCloudDrive is a specialized pacer for Amazon Drive
 //
 // It implements a truncated exponential backoff strategy with randomization.
@@ -219,7 +228,7 @@ type GoogleDriveOption interface {
 func NewGoogleDrive(opts ...GoogleDriveOption) *GoogleDrive {
 	c := &GoogleDrive{
 		minSleep: 10 * time.Millisecond,
-		burst:    1,
+		burst:    100,
 	}
 	c.Update(opts...)
 	return c

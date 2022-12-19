@@ -1,8 +1,8 @@
-//go:build !go1.15
-// +build !go1.15
+//go:build !go1.17
+// +build !go1.17
 
 package fs
 
-// Upgrade to Go version 1.15 to compile rclone - latest stable go
+// Upgrade to Go version 1.17 to compile rclone - latest stable go
 // compiler recommended.
-func init() { Go_version_1_15_required_for_compilation() }
+func init() { Go_version_1_17_required_for_compilation() }

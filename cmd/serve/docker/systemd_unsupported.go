@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+//lint:ignore U1000 unused when not building linux
 func systemdActivationFiles() []*os.File {
 	return nil
 }

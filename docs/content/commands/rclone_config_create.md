@@ -15,7 +15,7 @@ Create a new remote with name, type and options.
 Create a new remote of `name` with `type` and options.  The options
 should be passed in pairs of `key` `value` or as `key=value`.
 
-For example to make a swift remote of name myremote using auto config
+For example, to make a swift remote of name myremote using auto config
 you would do:
 
     rclone config create myremote swift env_auth true
@@ -45,7 +45,7 @@ are 100% certain you are already passing obscured passwords then use
 `rclone config password` command.
 
 The flag `--non-interactive` is for use by applications that wish to
-configure rclone themeselves, rather than using rclone's text based
+configure rclone themselves, rather than using rclone's text based
 configuration questions. If this flag is set, and rclone needs to ask
 the user a question, a JSON blob will be returned with the question in
 it.
@@ -107,9 +107,8 @@ At the end of the non interactive process, rclone will return a result
 with `State` as empty string.
 
 If `--all` is passed then rclone will ask all the config questions,
-not just the post config questions. Parameters that are supplied on
-the command line or from environment variables are used as defaults
-for questions as usual.
+not just the post config questions. Any parameters are used as
+defaults for questions as usual.
 
 Note that `bin/config.py` in the rclone source implements this protocol
 as a readable demonstration.

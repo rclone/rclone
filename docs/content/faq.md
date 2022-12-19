@@ -31,7 +31,7 @@ the node running rclone would need to have lots of bandwidth.
 
 The syncs would be incremental (on a file by file basis).
 
-Eg
+e.g.
 
     rclone sync -i drive:Folder s3:bucket
 
@@ -82,9 +82,8 @@ of metadata, which breaks the desired 1:1 mapping of files to objects.
 
 ### Can rclone do bi-directional sync? ###
 
-No, not at present.  rclone only does uni-directional sync from A ->
-B. It may do in the future though since it has all the primitives - it
-just requires writing the algorithm to do it.
+Yes, since rclone v1.58.0, [bidirectional cloud sync](/bisync/) is
+available.
 
 ### Can I use rclone with an HTTP proxy? ###
 
@@ -109,6 +108,14 @@ possibilities.  So, on Linux, you may end up with code similar to
     export HTTP_PROXY=$http_proxy
     export HTTPS_PROXY=$http_proxy
 
+
+Note: If the proxy server requires a username and password, then use
+
+    export http_proxy=http://username:password@proxyserver:12345
+    export https_proxy=$http_proxy
+    export HTTP_PROXY=$http_proxy
+    export HTTPS_PROXY=$http_proxy
+
 The `NO_PROXY` allows you to disable the proxy for specific hosts.
 Hosts must be comma separated, and can contain domains or parts.
 For instance "foo.com" also matches "bar.foo.com".
@@ -118,7 +125,7 @@ e.g.
     export no_proxy=localhost,127.0.0.0/8,my.host.name
     export NO_PROXY=$no_proxy
 
-Note that the ftp backend does not support `ftp_proxy` yet.
+Note that the FTP backend does not support `ftp_proxy` yet.
 
 ### Rclone gives x509: failed to load system roots and no roots provided error ###
 

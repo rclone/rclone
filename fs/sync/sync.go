@@ -73,6 +73,7 @@ type syncCopyMove struct {
 	compareCopyDest        []fs.Fs                // place to check for files to server side copy
 	backupDir              fs.Fs                  // place to store overwrites/deletes
 	checkFirst             bool                   // if set run all the checkers before starting transfers
+	maxDurationEndTime     time.Time              // end time if --max-duration is set
 }
 
 type trackRenamesStrategy byte
@@ -96,7 +97,7 @@ func (strategy trackRenamesStrategy) leaf() bool {
 }
 
 func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) (*syncCopyMove, error) {
-	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.Overlapping(fdst, fsrc) {
+	if (deleteMode != fs.DeleteModeOff || DoMove) && operations.OverlappingFilterCheck(ctx, fdst, fsrc) {
 		return nil, fserrors.FatalError(fs.ErrorOverlapping)
 	}
 	ci := fs.GetConfig(ctx)
@@ -144,16 +145,29 @@ func newSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.Delete
 	if err != nil {
 		return nil, err
 	}
-	// If a max session duration has been defined add a deadline to the context
 	if ci.MaxDuration > 0 {
-		endTime := time.Now().Add(ci.MaxDuration)
-		fs.Infof(s.fdst, "Transfer session deadline: %s", endTime.Format("2006/01/02 15:04:05"))
-		s.ctx, s.cancel = context.WithDeadline(ctx, endTime)
+		s.maxDurationEndTime = time.Now().Add(ci.MaxDuration)
+		fs.Infof(s.fdst, "Transfer session %v deadline: %s", ci.CutoffMode, s.maxDurationEndTime.Format("2006/01/02 15:04:05"))
+	}
+	// If a max session duration has been defined add a deadline
+	// to the main context if cutoff mode is hard. This will cut
+	// the transfers off.
+	if !s.maxDurationEndTime.IsZero() && ci.CutoffMode == fs.CutoffModeHard {
+		s.ctx, s.cancel = context.WithDeadline(ctx, s.maxDurationEndTime)
 	} else {
 		s.ctx, s.cancel = context.WithCancel(ctx)
 	}
-	// Input context - cancel this for graceful stop
-	s.inCtx, s.inCancel = context.WithCancel(s.ctx)
+	// Input context - cancel this for graceful stop.
+	//
+	// If a max session duration has been defined add a deadline
+	// to the input context if cutoff mode is graceful or soft.
+	// This won't stop the transfers but will cut the
+	// list/check/transfer pipelines.
+	if !s.maxDurationEndTime.IsZero() && ci.CutoffMode != fs.CutoffModeHard {
+		s.inCtx, s.inCancel = context.WithDeadline(s.ctx, s.maxDurationEndTime)
+	} else {
+		s.inCtx, s.inCancel = context.WithCancel(s.ctx)
+	}
 	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
 		if !fi.HaveFilesFrom() {
 			fs.Errorf(nil, "Ignoring --no-traverse with sync")
@@ -287,9 +301,10 @@ func (s *syncCopyMove) processError(err error) {
 }
 
 // Returns the current error (if any) in the order of precedence
-//   fatalErr
-//   normal error
-//   noRetryErr
+//
+//	fatalErr
+//	normal error
+//	noRetryErr
 func (s *syncCopyMove) currentError() error {
 	s.errorMu.Lock()
 	defer s.errorMu.Unlock()
@@ -317,11 +332,17 @@ func (s *syncCopyMove) pairChecker(in *pipe, out *pipe, fraction int, wg *sync.W
 		tr := accounting.Stats(s.ctx).NewCheckingTransfer(src)
 		// Check to see if can store this
 		if src.Storable() {
-			NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
-			if err != nil {
-				s.processError(err)
+			needTransfer := operations.NeedTransfer(s.ctx, pair.Dst, pair.Src)
+			if needTransfer {
+				NoNeedTransfer, err := operations.CompareOrCopyDest(s.ctx, s.fdst, pair.Dst, pair.Src, s.compareCopyDest, s.backupDir)
+				if err != nil {
+					s.processError(err)
+				}
+				if NoNeedTransfer {
+					needTransfer = false
+				}
 			}
-			if !NoNeedTransfer && operations.NeedTransfer(s.ctx, pair.Dst, pair.Src) {
+			if needTransfer {
 				// If files are treated as immutable, fail if destination exists and does not match
 				if s.ci.Immutable && pair.Dst != nil {
 					err := fs.CountError(fserrors.NoRetryError(fs.ErrorImmutableModified))
@@ -809,11 +830,15 @@ func (s *syncCopyMove) tryRename(src fs.Object) bool {
 	return true
 }
 
+// errorMaxDurationReached defines error when transfer duration is reached
+// Used for checking on exit and matching to correct exit code.
+var errorMaxDurationReached = fserrors.FatalError(errors.New("max transfer duration reached as set by --max-duration"))
+
 // Syncs fsrc into fdst
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
 //
-// If DoMove is true then files will be moved instead of copied
+// If DoMove is true then files will be moved instead of copied.
 //
 // dir is the start directory, "" for root
 func (s *syncCopyMove) run() error {
@@ -899,15 +924,23 @@ func (s *syncCopyMove) run() error {
 		s.processError(s.deleteEmptyDirectories(s.ctx, s.fsrc, s.srcEmptyDirs))
 	}
 
-	// Read the error out of the context if there is one
+	// Read the error out of the contexts if there is one
 	s.processError(s.ctx.Err())
+	s.processError(s.inCtx.Err())
+
+	// If the duration was exceeded then add a Fatal Error so we don't retry
+	if !s.maxDurationEndTime.IsZero() && time.Since(s.maxDurationEndTime) > 0 {
+		fs.Errorf(s.fdst, "%v", errorMaxDurationReached)
+		s.processError(errorMaxDurationReached)
+	}
 
 	// Print nothing to transfer message if there were no transfers and no errors
 	if s.deleteMode != fs.DeleteModeOnly && accounting.Stats(s.ctx).GetTransfers() == 0 && s.currentError() == nil {
 		fs.Infof(nil, "There was nothing to transfer")
 	}
 
-	// cancel the context to free resources
+	// cancel the contexts to free resources
+	s.inCancel()
 	s.cancel()
 	return s.currentError()
 }
@@ -1051,7 +1084,7 @@ func (s *syncCopyMove) Match(ctx context.Context, dst, src fs.DirEntry) (recurse
 //
 // If Delete is true then it deletes any files in fdst that aren't in fsrc
 //
-// If DoMove is true then files will be moved instead of copied
+// If DoMove is true then files will be moved instead of copied.
 //
 // dir is the start directory, "" for root
 func runSyncCopyMove(ctx context.Context, fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, deleteEmptySrcDirs bool, copyEmptySrcDirs bool) error {

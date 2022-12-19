@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -150,8 +149,8 @@ func init() {
 					return workspace.ID, workspace.Attributes.Name
 				})
 			case "workspace_end":
-				worksspaceID := config.Result
-				m.Set(configRootID, worksspaceID)
+				workspaceID := config.Result
+				m.Set(configRootID, workspaceID)
 				return nil, nil
 			}
 			return nil, fmt.Errorf("unknown state %q", config.State)
@@ -172,6 +171,12 @@ browser.`,
 			}, {
 				Value: "in",
 				Help:  "India",
+			}, {
+				Value: "jp",
+				Help:  "Japan",
+			}, {
+				Value: "com.cn",
+				Help:  "China",
 			}, {
 				Value: "com.au",
 				Help:  "Australia",
@@ -200,7 +205,7 @@ type Fs struct {
 	root     string             // the path we are working on
 	opt      Options            // parsed options
 	features *fs.Features       // optional features
-	srv      *rest.Client       // the connection to the one drive server
+	srv      *rest.Client       // the connection to the server
 	dirCache *dircache.DirCache // Map of directory path to directory id
 	pacer    *fs.Pacer          // pacer for API calls
 }
@@ -281,7 +286,7 @@ func shouldRetry(ctx context.Context, resp *http.Response, err error) (bool, err
 	}
 	authRetry := false
 
-	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Index(resp.Header["Www-Authenticate"][0], "expired_token") >= 0 {
+	if resp != nil && resp.StatusCode == 401 && len(resp.Header["Www-Authenticate"]) == 1 && strings.Contains(resp.Header["Www-Authenticate"][0], "expired_token") {
 		authRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
@@ -638,7 +643,7 @@ func (f *Fs) createObject(ctx context.Context, remote string, size int64, modTim
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -708,9 +713,9 @@ func (f *Fs) upload(ctx context.Context, name string, parent string, size int64,
 
 // PutUnchecked the object into the container
 //
-// This will produce an error if the object already exists
+// This will produce an error if the object already exists.
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) PutUnchecked(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -851,9 +856,9 @@ func (f *Fs) rename(ctx context.Context, id, name string) (item *api.Item, err e
 
 // Copy src to this remote using server side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -954,9 +959,9 @@ func (f *Fs) move(ctx context.Context, srcID, parentID string) (item *api.Item, 
 
 // Move src to this remote using server side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1146,7 +1151,6 @@ func (o *Object) readMetaData(ctx context.Context) (err error) {
 
 // ModTime returns the modification time of the object
 //
-//
 // It attempts to read the objects mtime and if that isn't present the
 // LastModified returned in the http headers
 func (o *Object) ModTime(ctx context.Context) time.Time {
@@ -1214,7 +1218,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 	if partialContent && resp.StatusCode == 200 {
 		if start > 0 {
 			// We need to read and discard the beginning of the data...
-			_, err = io.CopyN(ioutil.Discard, resp.Body, start)
+			_, err = io.CopyN(io.Discard, resp.Body, start)
 			if err != nil {
 				if resp != nil {
 					_ = resp.Body.Close()
@@ -1230,7 +1234,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (in io.Read
 
 // Update the object with the contents of the io.Reader, modTime and size
 //
-// If existing is set then it updates the object rather than creating a new one
+// If existing is set then it updates the object rather than creating a new one.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (err error) {
@@ -1259,7 +1263,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		return err
 	}
 
-	// upload was successfull, need to delete old object before rename
+	// upload was successful, need to delete old object before rename
 	if err = o.Remove(ctx); err != nil {
 		return fmt.Errorf("failed to remove old object: %w", err)
 	}

@@ -1,3 +1,4 @@
+// Package rcat provides the rcat command.
 package rcat
 
 import (
@@ -44,17 +45,20 @@ must fit into RAM. The cutoff needs to be small enough to adhere
 the limits of your remote, please see there. Generally speaking,
 setting this cutoff too high will decrease your performance.
 
-Use the |--size| flag to preallocate the file in advance at the remote end
+Use the ` + "`--size`" + ` flag to preallocate the file in advance at the remote end
 and actually stream it, even if remote backend doesn't support streaming.
 
-|--size| should be the exact size of the input stream in bytes. If the
-size of the stream is different in length to the |--size| passed in
+` + "`--size`" + ` should be the exact size of the input stream in bytes. If the
+size of the stream is different in length to the ` + "`--size`" + ` passed in
 then the transfer will likely fail.
 
 Note that the upload can also not be retried because the data is
 not kept around until the upload succeeds. If you need to transfer
 a lot of data, you're better off caching locally and then
 ` + "`rclone move`" + ` it to the destination.`,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.38",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 
@@ -65,7 +69,7 @@ a lot of data, you're better off caching locally and then
 
 		fdst, dstFileName := cmd.NewFsDstFile(args)
 		cmd.Run(false, false, command, func() error {
-			_, err := operations.RcatSize(context.Background(), fdst, dstFileName, os.Stdin, size, time.Now())
+			_, err := operations.RcatSize(context.Background(), fdst, dstFileName, os.Stdin, size, time.Now(), nil)
 			return err
 		})
 	},

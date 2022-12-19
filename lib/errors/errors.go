@@ -1,3 +1,4 @@
+// Package errors provides error handling utilites.
 package errors
 
 import (
@@ -14,10 +15,11 @@ type WalkFunc func(error) bool
 // is stopped and no further calls will be made.
 //
 // The next error in the chain is determined by the following rules:
-//   the return value of this method is used.
-// - If the current error has a `Unwrap() error` method (golang.org/x/xerrors),
-//   the return value of this method is used.
-// - Common errors in the Go runtime that contain an Err field will use this value.
+//
+//		the return value of this method is used.
+//	  - If the current error has a `Unwrap() error` method (golang.org/x/xerrors),
+//	    the return value of this method is used.
+//	  - Common errors in the Go runtime that contain an Err field will use this value.
 func Walk(err error, f WalkFunc) {
 	for prev := err; err != nil; prev = err {
 		if f(err) {

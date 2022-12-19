@@ -26,7 +26,6 @@ func rcNewRun(t *testing.T, method string) (*fstest.Run, *rc.Call) {
 // sync/copy: copy a directory from source remote to destination remote
 func TestRcCopy(t *testing.T) {
 	r, call := rcNewRun(t, "sync/copy")
-	defer r.Finalise()
 	r.Mkdir(context.Background(), r.Fremote)
 
 	file1 := r.WriteBoth(context.Background(), "file1", "file1 contents", t1)
@@ -51,7 +50,6 @@ func TestRcCopy(t *testing.T) {
 // sync/move: move a directory from source remote to destination remote
 func TestRcMove(t *testing.T) {
 	r, call := rcNewRun(t, "sync/move")
-	defer r.Finalise()
 	r.Mkdir(context.Background(), r.Fremote)
 
 	file1 := r.WriteBoth(context.Background(), "file1", "file1 contents", t1)
@@ -76,7 +74,6 @@ func TestRcMove(t *testing.T) {
 // sync/sync: sync a directory from source remote to destination remote
 func TestRcSync(t *testing.T) {
 	r, call := rcNewRun(t, "sync/sync")
-	defer r.Finalise()
 	r.Mkdir(context.Background(), r.Fremote)
 
 	file1 := r.WriteBoth(context.Background(), "file1", "file1 contents", t1)

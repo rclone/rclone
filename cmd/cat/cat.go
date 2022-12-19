@@ -1,9 +1,9 @@
+// Package cat provides the cat command.
 package cat
 
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -57,6 +57,9 @@ the end and |--offset| and |--count| to print a section in the middle.
 Note that if offset is negative it will count from the end, so
 |--offset -1 --count 1| is equivalent to |--tail 1|.
 `, "|", "`"),
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.33",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		usedOffset := offset != 0 || count >= 0
 		usedHead := head > 0
@@ -76,7 +79,7 @@ Note that if offset is negative it will count from the end, so
 		fsrc := cmd.NewFsSrc(args)
 		var w io.Writer = os.Stdout
 		if discard {
-			w = ioutil.Discard
+			w = io.Discard
 		}
 		cmd.Run(false, false, command, func() error {
 			return operations.Cat(context.Background(), fsrc, w, offset, count)

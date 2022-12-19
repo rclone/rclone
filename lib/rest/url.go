@@ -11,7 +11,7 @@ import (
 func URLJoin(base *url.URL, path string) (*url.URL, error) {
 	rel, err := url.Parse(path)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing %q as URL: %w", path, err)
+		return nil, fmt.Errorf("error parsing %q as URL: %w", path, err)
 	}
 	return base.ResolveReference(rel), nil
 }

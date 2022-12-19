@@ -1,7 +1,7 @@
 // Package librclone exports shims for library use
 //
 // This is the internal implementation which is used for C and
-// Gomobile libaries which need slightly different export styles.
+// Gomobile libraries which need slightly different export styles.
 //
 // The shims are a thin wrapper over the rclone RPC.
 package librclone
@@ -72,7 +72,7 @@ func writeError(path string, in rc.Params, err error, status int) (string, int) 
 
 // RPC runs a transaction over the RC
 //
-// Calling an rc function using JSON to input parameters and output the resulted JSON
+// Calling an rc function using JSON to input parameters and output the resulted JSON.
 //
 // operations/uploadfile and core/command are not supported as they need request or response object
 // modified from handlePost in rcserver.go

@@ -278,7 +278,7 @@ type transferStats struct {
 	speed          float64
 }
 
-// calculateTransferStats calculates some addtional transfer stats not
+// calculateTransferStats calculates some additional transfer stats not
 // stored directly in StatsInfo
 func (s *StatsInfo) calculateTransferStats() (ts transferStats) {
 	// checking and transferring have their own locking so read
@@ -675,7 +675,7 @@ func (s *StatsInfo) RetryAfter() time.Time {
 }
 
 // NewCheckingTransfer adds a checking transfer to the stats, from the object.
-func (s *StatsInfo) NewCheckingTransfer(obj fs.Object) *Transfer {
+func (s *StatsInfo) NewCheckingTransfer(obj fs.DirEntry) *Transfer {
 	tr := newCheckingTransfer(s, obj)
 	s.checking.add(tr)
 	return tr
@@ -697,7 +697,7 @@ func (s *StatsInfo) GetTransfers() int64 {
 }
 
 // NewTransfer adds a transfer to the stats from the object.
-func (s *StatsInfo) NewTransfer(obj fs.Object) *Transfer {
+func (s *StatsInfo) NewTransfer(obj fs.DirEntry) *Transfer {
 	tr := newTransfer(s, obj)
 	s.transferring.add(tr)
 	s.startAverageLoop()
@@ -714,10 +714,10 @@ func (s *StatsInfo) NewTransferRemoteSize(remote string, size int64) *Transfer {
 
 // DoneTransferring removes a transfer from the stats
 //
-// if ok is true then it increments the transfers count
+// if ok is true and it was in the transfermap (to avoid incrementing in case of nested calls, #6213) then it increments the transfers count
 func (s *StatsInfo) DoneTransferring(remote string, ok bool) {
-	s.transferring.del(remote)
-	if ok {
+	existed := s.transferring.del(remote)
+	if ok && existed {
 		s.mu.Lock()
 		s.transfers++
 		s.mu.Unlock()

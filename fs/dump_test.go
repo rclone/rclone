@@ -30,7 +30,7 @@ func TestDumpFlagsSet(t *testing.T) {
 		{"bodies,headers,auth", DumpBodies | DumpHeaders | DumpAuth, ""},
 		{"bodies,headers,auth", DumpBodies | DumpHeaders | DumpAuth, ""},
 		{"headers,bodies,requests,responses,auth,filters", DumpHeaders | DumpBodies | DumpRequests | DumpResponses | DumpAuth | DumpFilters, ""},
-		{"headers,bodies,unknown,auth", 0, "Unknown dump flag \"unknown\""},
+		{"headers,bodies,unknown,auth", 0, "unknown dump flag \"unknown\""},
 	} {
 		f := DumpFlags(-1)
 		initial := f
@@ -69,7 +69,7 @@ func TestDumpFlagsUnmarshallJSON(t *testing.T) {
 		{`"bodies,headers,auth"`, DumpBodies | DumpHeaders | DumpAuth, ""},
 		{`"bodies,headers,auth"`, DumpBodies | DumpHeaders | DumpAuth, ""},
 		{`"headers,bodies,requests,responses,auth,filters"`, DumpHeaders | DumpBodies | DumpRequests | DumpResponses | DumpAuth | DumpFilters, ""},
-		{`"headers,bodies,unknown,auth"`, 0, "Unknown dump flag \"unknown\""},
+		{`"headers,bodies,unknown,auth"`, 0, "unknown dump flag \"unknown\""},
 		{`0`, DumpFlags(0), ""},
 		{strconv.Itoa(int(DumpBodies)), DumpBodies, ""},
 		{strconv.Itoa(int(DumpBodies | DumpHeaders | DumpAuth)), DumpBodies | DumpHeaders | DumpAuth, ""},

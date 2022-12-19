@@ -65,10 +65,10 @@ at all, then 1 PiB is set as both the total and the free size.
 To run rclone @ on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
 
-[WinFsp](https://github.com/billziss-gh/winfsp) is an open-source
+[WinFsp](https://github.com/winfsp/winfsp) is an open-source
 Windows File System Proxy which makes it easy to write user space file
 systems for Windows.  It provides a FUSE emulation layer which rclone
-uses combination with [cgofuse](https://github.com/billziss-gh/cgofuse).
+uses combination with [cgofuse](https://github.com/winfsp/cgofuse).
 Both of these packages are by Bill Zissimopoulos who was very helpful
 during the implementation of rclone @ for Windows.
 
@@ -88,7 +88,7 @@ and experience unexpected program errors, freezes or other issues, consider moun
 as a network drive instead.
 
 When mounting as a fixed disk drive you can either mount to an unused drive letter,
-or to a path representing a **non-existent** subdirectory of an **existing** parent
+or to a path representing a **nonexistent** subdirectory of an **existing** parent
 directory or drive. Using the special value |*| will tell rclone to
 automatically assign the next available drive letter, starting with Z: and moving backward.
 Examples:
@@ -119,7 +119,7 @@ the mapped drive, shown in Windows Explorer etc, while the complete
 |\\server\share| will be reported as the remote UNC path by
 |net use| etc, just like a normal network drive mapping.
 
-If you specify a full network share UNC path with |--volname|, this will implicitely
+If you specify a full network share UNC path with |--volname|, this will implicitly
 set the |--network-mode| option, so the following two examples have same result:
 
     rclone @ remote:path/to/files X: --network-mode
@@ -128,7 +128,7 @@ set the |--network-mode| option, so the following two examples have same result:
 You may also specify the network share UNC path as the mountpoint itself. Then rclone
 will automatically assign a drive letter, same as with |*| and use that as
 mountpoint, and instead use the UNC path specified as the volume name, as if it were
-specified with the |--volname| option. This will also implicitely set
+specified with the |--volname| option. This will also implicitly set
 the |--network-mode| option. This means the following two examples have same result:
 
     rclone @ remote:path/to/files \\cloud\remote
@@ -164,7 +164,7 @@ The permissions on each entry will be set according to [options](#options)
 
 The default permissions corresponds to |--file-perms 0666 --dir-perms 0777|,
 i.e. read and write permissions to everyone. This means you will not be able
-to start any programs from the the mount. To be able to do that you must add
+to start any programs from the mount. To be able to do that you must add
 execute permissions, e.g. |--file-perms 0777 --dir-perms 0777| to add it
 to everyone. If the program needs to write files, chances are you will have
 to enable [VFS File Caching](#vfs-file-caching) as well (see also [limitations](#limitations)).
@@ -218,7 +218,7 @@ from Microsoft's Sysinternals suite, which has option |-s| to start
 processes as the SYSTEM account. Another alternative is to run the mount
 command from a Windows Scheduled Task, or a Windows Service, configured
 to run as the SYSTEM account. A third alternative is to use the
-[WinFsp.Launcher infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture)).
+[WinFsp.Launcher infrastructure](https://github.com/winfsp/winfsp/wiki/WinFsp-Service-Architecture)).
 Note that when running rclone as another user, it will not use
 the configuration file from your profile unless you tell it to
 with the [|--config|](https://rclone.org/docs/#config-config-file) option.
@@ -235,8 +235,8 @@ applications won't work with their files on an rclone mount without
 |--vfs-cache-mode writes| or |--vfs-cache-mode full|.
 See the [VFS File Caching](#vfs-file-caching) section for more info.
 
-The bucket-based remotes (e.g. Swift, S3, Google Compute Storage, B2,
-Hubic) do not support the concept of empty directories, so empty
+The bucket-based remotes (e.g. Swift, S3, Google Compute Storage, B2)
+do not support the concept of empty directories, so empty
 directories will have a tendency to disappear once they fall out of
 the directory cache.
 

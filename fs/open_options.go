@@ -40,10 +40,10 @@ type OpenOption interface {
 //
 // Examples:
 //
-//     RangeOption{Start: 0, End: 99} - fetch the first 100 bytes
-//     RangeOption{Start: 100, End: 199} - fetch the second 100 bytes
-//     RangeOption{Start: 100, End: -1} - fetch bytes from offset 100 to the end
-//     RangeOption{Start: -1, End: 100} - fetch the last 100 bytes
+//	RangeOption{Start: 0, End: 99} - fetch the first 100 bytes
+//	RangeOption{Start: 100, End: 199} - fetch the second 100 bytes
+//	RangeOption{Start: 100, End: -1} - fetch bytes from offset 100 to the end
+//	RangeOption{Start: -1, End: 100} - fetch the last 100 bytes
 //
 // A RangeOption implements a single byte-range-spec from
 // https://tools.ietf.org/html/rfc7233#section-2.1
@@ -72,28 +72,28 @@ func (o *RangeOption) Header() (key string, value string) {
 func ParseRangeOption(s string) (po *RangeOption, err error) {
 	const preamble = "bytes="
 	if !strings.HasPrefix(s, preamble) {
-		return nil, errors.New("Range: header invalid: doesn't start with " + preamble)
+		return nil, errors.New("range: header invalid: doesn't start with " + preamble)
 	}
 	s = s[len(preamble):]
-	if strings.IndexRune(s, ',') >= 0 {
-		return nil, errors.New("Range: header invalid: contains multiple ranges which isn't supported")
+	if strings.ContainsRune(s, ',') {
+		return nil, errors.New("range: header invalid: contains multiple ranges which isn't supported")
 	}
 	dash := strings.IndexRune(s, '-')
 	if dash < 0 {
-		return nil, errors.New("Range: header invalid: contains no '-'")
+		return nil, errors.New("range: header invalid: contains no '-'")
 	}
 	start, end := strings.TrimSpace(s[:dash]), strings.TrimSpace(s[dash+1:])
 	o := RangeOption{Start: -1, End: -1}
 	if start != "" {
 		o.Start, err = strconv.ParseInt(start, 10, 64)
 		if err != nil || o.Start < 0 {
-			return nil, errors.New("Range: header invalid: bad start")
+			return nil, errors.New("range: header invalid: bad start")
 		}
 	}
 	if end != "" {
 		o.End, err = strconv.ParseInt(end, 10, 64)
 		if err != nil || o.End < 0 {
-			return nil, errors.New("Range: header invalid: bad end")
+			return nil, errors.New("range: header invalid: bad end")
 		}
 	}
 	return &o, nil
@@ -138,8 +138,14 @@ func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 // absolute fetch using the size passed in and makes sure the range does
 // not exceed filesize. Some remotes (e.g. Onedrive, Box) don't support
 // range requests which index from the end.
+//
+// It also adjusts any SeekOption~s, turning them into absolute
+// RangeOption~s instead.
 func FixRangeOption(options []OpenOption, size int64) {
-	if size == 0 {
+	if size < 0 {
+		// Can't do anything for unknown length objects
+		return
+	} else if size == 0 {
 		// if size 0 then remove RangeOption~s
 		// replacing with a NullOptions~s which won't be rendered
 		for i := range options {
@@ -150,18 +156,21 @@ func FixRangeOption(options []OpenOption, size int64) {
 		}
 		return
 	}
-	for i := range options {
-		option := options[i]
-		if x, ok := option.(*RangeOption); ok {
+	for i, option := range options {
+		switch x := option.(type) {
+		case *RangeOption:
 			// If start is < 0 then fetch from the end
 			if x.Start < 0 {
 				x = &RangeOption{Start: size - x.End, End: -1}
 				options[i] = x
 			}
-			if x.End > size {
+			// If end is too big or undefined, fetch to the end
+			if x.End > size || x.End < 0 {
 				x = &RangeOption{Start: x.Start, End: size - 1}
 				options[i] = x
 			}
+		case *SeekOption:
+			options[i] = &RangeOption{Start: x.Offset, End: size - 1}
 		}
 	}
 }
@@ -241,11 +250,29 @@ func (o NullOption) Header() (key string, value string) {
 
 // String formats the option into human-readable form
 func (o NullOption) String() string {
-	return fmt.Sprintf("NullOption()")
+	return "NullOption()"
 }
 
 // Mandatory returns whether the option must be parsed or can be ignored
 func (o NullOption) Mandatory() bool {
+	return false
+}
+
+// MetadataOption defines an Option which does nothing
+type MetadataOption Metadata
+
+// Header formats the option as an http header
+func (o MetadataOption) Header() (key string, value string) {
+	return "", ""
+}
+
+// String formats the option into human-readable form
+func (o MetadataOption) String() string {
+	return fmt.Sprintf("MetadataOption(%v)", Metadata(o))
+}
+
+// Mandatory returns whether the option must be parsed or can be ignored
+func (o MetadataOption) Mandatory() bool {
 	return false
 }
 

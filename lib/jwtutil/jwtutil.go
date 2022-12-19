@@ -1,3 +1,4 @@
+// Package jwtutil provides JWT utilities.
 package jwtutil
 
 import (
@@ -9,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -69,8 +69,8 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 		return fmt.Errorf("jwtutil: failed making auth request: %w", err)
 	}
 	defer func() {
-		deferedErr := resp.Body.Close()
-		if deferedErr != nil {
+		deferredErr := resp.Body.Close()
+		if deferredErr != nil {
 			err = fmt.Errorf("jwtutil: failed to close resp.Body: %w", err)
 		}
 	}()
@@ -78,7 +78,7 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 	result := &response{}
 	err = json.NewDecoder(strings.NewReader(s)).Decode(result)
 	if result.AccessToken == "" && err == nil {
-		err = errors.New("No AccessToken in Response")
+		err = errors.New("no AccessToken in Response")
 	}
 	if err != nil {
 		return fmt.Errorf("jwtutil: failed to get token: %w", err)
@@ -95,7 +95,7 @@ func Config(id, name string, claims *jws.ClaimSet, header *jws.Header, queryPara
 }
 
 func bodyToString(responseBody io.Reader) (bodyString string, err error) {
-	bodyBytes, err := ioutil.ReadAll(responseBody)
+	bodyBytes, err := io.ReadAll(responseBody)
 	if err != nil {
 		return "", err
 	}

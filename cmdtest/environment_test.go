@@ -17,10 +17,8 @@ import (
 func TestEnvironmentVariables(t *testing.T) {
 
 	createTestEnvironment(t)
-	defer removeTestEnvironment(t)
 
 	testdataPath := createSimpleTestData(t)
-	defer removeSimpleTestData(t)
 
 	// Non backend flags
 	// =================
@@ -81,7 +79,7 @@ func TestEnvironmentVariables(t *testing.T) {
 	// Backend flags and remote name
 	// - The listremotes command includes names from environment variables,
 	//   the part between "RCLONE_CONFIG_" and "_TYPE", converted to lowercase.
-	// - When using using a remote created from env, e.g. with lsd command,
+	// - When using a remote created from env, e.g. with lsd command,
 	//   the name is case insensitive in contrast to remotes in config file
 	//   (fs.ConfigToEnv converts to uppercase before checking environment).
 	// - Previously using a remote created from env, e.g. with lsd command,

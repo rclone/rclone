@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -128,19 +127,19 @@ func Decrypt(b io.ReadSeeker) (io.Reader, error) {
 
 	// Encrypted content is base64 encoded.
 	dec := base64.NewDecoder(base64.StdEncoding, r)
-	box, err := ioutil.ReadAll(dec)
+	box, err := io.ReadAll(dec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load base64 encoded data: %w", err)
 	}
 	if len(box) < 24+secretbox.Overhead {
-		return nil, errors.New("Configuration data too short")
+		return nil, errors.New("configuration data too short")
 	}
 
 	var out []byte
 	for {
 		if envKeyFile := os.Getenv("_RCLONE_CONFIG_KEY_FILE"); len(envKeyFile) > 0 {
 			fs.Debugf(nil, "attempting to obtain configKey from temp file %s", envKeyFile)
-			obscuredKey, err := ioutil.ReadFile(envKeyFile)
+			obscuredKey, err := os.ReadFile(envKeyFile)
 			if err != nil {
 				errRemove := os.Remove(envKeyFile)
 				if errRemove != nil {
@@ -206,20 +205,20 @@ func Encrypt(src io.Reader, dst io.Writer) error {
 	enc := base64.NewEncoder(base64.StdEncoding, dst)
 	_, err := enc.Write(nonce[:])
 	if err != nil {
-		return fmt.Errorf("Failed to write config file: %v", err)
+		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
 	var key [32]byte
 	copy(key[:], configKey[:32])
 
-	data, err := ioutil.ReadAll(src)
+	data, err := io.ReadAll(src)
 	if err != nil {
 		return err
 	}
 	b := secretbox.Seal(nil, data, &nonce, &key)
 	_, err = enc.Write(b)
 	if err != nil {
-		return fmt.Errorf("Failed to write config file: %v", err)
+		return fmt.Errorf("failed to write config file: %w", err)
 	}
 	return enc.Close()
 }
@@ -256,7 +255,7 @@ func SetConfigPassword(password string) error {
 	}
 	configKey = sha.Sum(nil)
 	if PassConfigKeyForDaemonization {
-		tempFile, err := ioutil.TempFile("", "rclone")
+		tempFile, err := os.CreateTemp("", "rclone")
 		if err != nil {
 			return fmt.Errorf("cannot create temp file to store configKey: %w", err)
 		}

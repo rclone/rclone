@@ -1,6 +1,7 @@
 ---
 title: "Bisync"
 description: "Bidirectional cloud sync solution in rclone"
+versionIntroduced: "v1.58.0"
 ---
 
 ## Getting started {#getting-started}
@@ -106,7 +107,7 @@ Optional Flags:
 
 Arbitrary rclone flags may be specified on the
 [bisync command line](/commands/rclone_bisync/), for example
-`rclone bsync ./testdir/path1/ gdrive:testdir/path2/ --drive-skip-gdocs -v -v --timeout 10s`
+`rclone bisync ./testdir/path1/ gdrive:testdir/path2/ --drive-skip-gdocs -v -v --timeout 10s`
 Note that interactions of various rclone flags with bisync process flow
 has not been fully tested yet.
 
@@ -323,7 +324,7 @@ Most of these events come up due to a error status from an internal call.
 On such a critical error the `{...}.path1.lst` and `{...}.path2.lst`
 listing files are renamed to extension `.lst-err`, which blocks any future
 bisync runs (since the normal `.lst` files are not found).
-Bisync keeps them under `bisync` subdirectory of the rclone cache direcory,
+Bisync keeps them under `bisync` subdirectory of the rclone cache directory,
 typically at `${HOME}/.cache/rclone/bisync/` on Linux.
 
 Some errors are considered temporary and re-running the bisync is not blocked.
@@ -363,6 +364,7 @@ Bisync is considered _BETA_ and has been tested with the following backends:
 - OneDrive
 - S3
 - SFTP
+- Yandex Disk
 
 It has not been fully tested with other services yet.
 If it works, or sorta works, please let us know and we'll update the list.
@@ -420,7 +422,7 @@ don't have spelling case differences (`Smile.jpg` vs. `smile.jpg`).
 ## Windows support {#windows}
 
 Bisync has been tested on Windows 8.1, Windows 10 Pro 64-bit and on Windows
-Github runners.
+GitHub runners.
 
 Drive letters are allowed, including drive letters mapped to network drives
 (`rclone bisync J:\localsync GDrive:`).
@@ -700,7 +702,7 @@ consider using the flag
 
 Google docs exist as virtual files on Google Drive and cannot be transferred
 to other filesystems natively. While it is possible to export a Google doc to
-a normal file (with `.xlsx` extension, for example), it's not possible
+a normal file (with `.xlsx` extension, for example), it is not possible
 to import a normal file back into a Google document.
 
 Bisync's handling of Google Doc files is to flag them in the run log output
@@ -928,7 +930,7 @@ test command flags can be equally prefixed by a single `-` or double dash.
   synched tree even if there are check file mismatches in the test tree.
 - Some Dropbox tests can fail, notably printing the following message:
   `src and dst identical but can't set mod time without deleting and re-uploading`
-  This is expected and happens due a way Dropbox handles modificaion times.
+  This is expected and happens due a way Dropbox handles modification times.
   You should use the `-refresh-times` test flag to make up for this.
 - If Dropbox tests hit request limit for you and print error message
   `too_many_requests/...: Too many requests or write operations.`
@@ -938,7 +940,7 @@ test command flags can be equally prefixed by a single `-` or double dash.
 ### Updating golden results
 
 Sometimes even a slight change in the bisync source can cause little changes
-spread around many log files. Updating them manually would be a nighmare.
+spread around many log files. Updating them manually would be a nightmare.
 
 The `-golden` flag will store the `test.log` and `*.lst` listings from each
 test case into respective golden directories. Golden results will

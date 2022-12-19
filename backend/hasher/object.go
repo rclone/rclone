@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"path"
 	"time"
 
@@ -118,7 +117,7 @@ func (o *Object) updateHashes(ctx context.Context) error {
 	defer func() {
 		_ = r.Close()
 	}()
-	if _, err = io.Copy(ioutil.Discard, r); err != nil {
+	if _, err = io.Copy(io.Discard, r); err != nil {
 		fs.Infof(o, "update failed (copy): %v", err)
 		return err
 	}
@@ -184,7 +183,7 @@ func (o *Object) Open(ctx context.Context, options ...fs.OpenOption) (r io.ReadC
 // Put data into the remote path with given modTime and size
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	var (
-		o      *Object
+		o      fs.Object
 		common hash.Set
 		rehash bool
 		hashes hashMap
@@ -210,8 +209,8 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 
 	_ = f.pruneHash(src.Remote())
 	oResult, err := f.Fs.Put(ctx, wrapIn, src, options...)
-	o = f.wrapObject(oResult, err)
-	if o == nil {
+	o, err = f.wrapObject(oResult, err)
+	if err != nil {
 		return nil, err
 	}
 
@@ -224,7 +223,7 @@ func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options .
 		}
 	}
 	if len(hashes) > 0 {
-		err := o.putHashes(ctx, hashes)
+		err := o.(*Object).putHashes(ctx, hashes)
 		fs.Debugf(o, "Applied %d source hashes, err: %v", len(hashes), err)
 	}
 	return o, err

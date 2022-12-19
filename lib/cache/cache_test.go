@@ -158,7 +158,7 @@ func TestCachePin(t *testing.T) {
 	_, err := c.Get("/", create)
 	require.NoError(t, err)
 
-	// Pin a non-existent item to show nothing happens
+	// Pin a nonexistent item to show nothing happens
 	c.Pin("notfound")
 
 	c.mu.Lock()
@@ -312,7 +312,7 @@ func TestCacheRename(t *testing.T) {
 
 	assert.Equal(t, 2, c.Entries())
 
-	// rename to non-existent
+	// rename to nonexistent
 	value, found := c.Rename("existing1", "EXISTING1")
 	assert.Equal(t, true, found)
 	assert.Equal(t, existing1, value)
@@ -326,10 +326,44 @@ func TestCacheRename(t *testing.T) {
 
 	assert.Equal(t, 1, c.Entries())
 
-	// rename non-existent
+	// rename nonexistent
 	value, found = c.Rename("notfound", "NOTFOUND")
 	assert.Equal(t, false, found)
 	assert.Nil(t, value)
 
 	assert.Equal(t, 1, c.Entries())
+}
+
+func TestCacheFinalize(t *testing.T) {
+	c := New()
+	numCalled := 0
+	c.SetFinalizer(func(v interface{}) {
+		numCalled++
+	})
+	create := func(path string) (interface{}, bool, error) {
+		return path, true, nil
+	}
+	_, _ = c.Get("ok", create)
+	assert.Equal(t, 0, numCalled)
+	c.Clear()
+	assert.Equal(t, 1, numCalled)
+
+	_, _ = c.Get("ok", create)
+	c.Delete("ok")
+	assert.Equal(t, 2, numCalled)
+
+	_, _ = c.Get("ok", create)
+	c.DeletePrefix("ok")
+	assert.Equal(t, 3, numCalled)
+
+	_, _ = c.Get("old", create)
+	_, _ = c.Get("new", create)
+	c.Rename("old", "new")
+	assert.Equal(t, 4, numCalled)
+
+	c.expireDuration = 1 * time.Millisecond
+	_, _ = c.Get("ok", create)
+	time.Sleep(2 * time.Millisecond)
+	c.cacheExpire() // "ok" and "new" fall out of cache
+	assert.Equal(t, 6, numCalled)
 }

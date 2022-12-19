@@ -140,7 +140,7 @@ func (o *ContentMockObject) Open(ctx context.Context, options ...fs.OpenOption) 
 			offset, limit = x.Decode(size)
 		default:
 			if option.Mandatory() {
-				return nil, fmt.Errorf("Unsupported mandatory option: %v", option)
+				return nil, fmt.Errorf("unsupported mandatory option: %v", option)
 			}
 		}
 	}

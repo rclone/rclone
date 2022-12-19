@@ -1,3 +1,4 @@
+// Package api provides types used by the Mail.ru API.
 package api
 
 import (
@@ -58,7 +59,7 @@ type UserInfoResponse struct {
 				AutoProlong  bool   `json:"auto_prolong"`
 				Basequota    int64  `json:"basequota"`
 				Enabled      bool   `json:"enabled"`
-				Expires      int    `json:"expires"`
+				Expires      int64  `json:"expires"`
 				Prolong      bool   `json:"prolong"`
 				Promocodes   struct {
 				} `json:"promocodes"`
@@ -80,7 +81,7 @@ type UserInfoResponse struct {
 			FileSizeLimit int64 `json:"file_size_limit"`
 			Space         struct {
 				BytesTotal int64 `json:"bytes_total"`
-				BytesUsed  int   `json:"bytes_used"`
+				BytesUsed  int64 `json:"bytes_used"`
 				Overquota  bool  `json:"overquota"`
 			} `json:"space"`
 		} `json:"cloud"`

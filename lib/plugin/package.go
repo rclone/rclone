@@ -7,7 +7,7 @@
 // To create a plugin, write the backend package like it was in-tree
 // but set the package name to "main". Then, build the plugin with
 //
-//     go build -buildmode=plugin -o librcloneplugin_NAME.so
+//	go build -buildmode=plugin -o librcloneplugin_NAME.so
 //
 // where NAME equals the plugin's fs.RegInfo.Name.
 package plugin

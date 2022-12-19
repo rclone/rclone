@@ -1,12 +1,14 @@
-//go:generate go run assets_generate.go
+// Package data provides common functionality for http servers
 // The "go:generate" directive compiles static assets by running assets_generate.go
-
+//
+//go:generate go run assets_generate.go
 package data
 
 import (
 	"fmt"
 	"html/template"
-	"io/ioutil"
+	"io"
+	"os"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -19,8 +21,8 @@ import (
 var Help = `
 #### Template
 
---template allows a user to specify a custom markup template for http
-and webdav serve functions.  The server exports the following markup
+` + "`--template`" + ` allows a user to specify a custom markup template for HTTP
+and WebDAV serve functions.  The server exports the following markup
 to be used within the template to server pages:
 
 | Parameter   | Description |
@@ -58,7 +60,7 @@ func AfterEpoch(t time.Time) bool {
 	return t.After(time.Time{})
 }
 
-// GetTemplate returns the HTML template for serving directories via HTTP/Webdav
+// GetTemplate returns the HTML template for serving directories via HTTP/WebDAV
 func GetTemplate(tmpl string) (tpl *template.Template, err error) {
 	var templateString string
 	if tmpl == "" {
@@ -69,7 +71,7 @@ func GetTemplate(tmpl string) (tpl *template.Template, err error) {
 
 		defer fs.CheckClose(templateFile, &err)
 
-		templateBytes, err := ioutil.ReadAll(templateFile)
+		templateBytes, err := io.ReadAll(templateFile)
 		if err != nil {
 			return nil, fmt.Errorf("get template read: %w", err)
 		}
@@ -77,7 +79,7 @@ func GetTemplate(tmpl string) (tpl *template.Template, err error) {
 		templateString = string(templateBytes)
 
 	} else {
-		templateFile, err := ioutil.ReadFile(tmpl)
+		templateFile, err := os.ReadFile(tmpl)
 		if err != nil {
 			return nil, fmt.Errorf("get template open: %w", err)
 		}

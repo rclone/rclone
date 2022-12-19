@@ -16,9 +16,9 @@ import (
 
 // protocol errors
 var (
-	ErrorPrematureEOF  = errors.New("Premature EOF")
-	ErrorInvalidLength = errors.New("Invalid length")
-	ErrorZeroTerminate = errors.New("String must end with zero")
+	ErrorPrematureEOF  = errors.New("premature EOF")
+	ErrorInvalidLength = errors.New("invalid length")
+	ErrorZeroTerminate = errors.New("string must end with zero")
 )
 
 // BinWriter is a binary protocol writer
@@ -66,6 +66,11 @@ func (w *BinWriter) WritePu64(val int64) {
 	if val < 0 {
 		panic(fmt.Sprintf("Invalid UInt64 %v", val))
 	}
+	w.b.Write(w.a[:binary.PutUvarint(w.a, uint64(val))])
+}
+
+// WriteP64 writes an signed long as unsigned varint
+func (w *BinWriter) WriteP64(val int64) {
 	w.b.Write(w.a[:binary.PutUvarint(w.a, uint64(val))])
 }
 

@@ -15,8 +15,7 @@ import (
 
 // Basic test from golang's os/path_test.go
 func TestMkdirAll(t *testing.T) {
-	tmpDir, tidy := testDir(t)
-	defer tidy()
+	tmpDir := t.TempDir()
 
 	path := tmpDir + "/dir/./dir2"
 	err := MkdirAll(path, 0777)
@@ -99,8 +98,7 @@ func checkMkdirAllSubdirs(t *testing.T, path string, valid bool, errormsg string
 
 // Testing paths on existing drive
 func TestMkdirAllOnDrive(t *testing.T) {
-	path, tidy := testDir(t)
-	defer tidy()
+	path := t.TempDir()
 
 	dir, err := os.Stat(path)
 	require.NoError(t, err)
@@ -129,4 +127,22 @@ func TestMkdirAllOnUnusedDrive(t *testing.T) {
 	checkMkdirAllSubdirs(t, path, false, errormsg)
 	errormsg = fmt.Sprintf("mkdir \\\\?\\%s\\: The system cannot find the path specified.", path)
 	checkMkdirAllSubdirs(t, `\\?\`+path, false, errormsg)
+}
+
+// Testing paths on unknown network host
+// This is an additional difference from golang's os.MkdirAll. With our
+// first fix, stopping it from recursing extended-length paths down to
+// the "\\?" prefix, it would now stop at `\\?\UNC`, because that is what
+// filepath.VolumeName returns (which is wrong, that is not a volume name!),
+// and still return a nonifnromative error:
+// "mkdir \\?\UNC\\: The filename, directory name, or volume label syntax is incorrect."
+// Our version stops the recursion at level before this, and reports:
+// "mkdir \\?\UNC\0.0.0.0: The specified path is invalid."
+func TestMkdirAllOnUnusedNetworkHost(t *testing.T) {
+	path := `\\0.0.0.0\share`
+	errormsg := fmt.Sprintf("mkdir %s\\: The format of the specified network name is invalid.", path)
+	checkMkdirAllSubdirs(t, path, false, errormsg)
+	path = `\\?\UNC\0.0.0.0\share`
+	errormsg = `mkdir \\?\UNC\0.0.0.0: The specified path is invalid.`
+	checkMkdirAllSubdirs(t, path, false, errormsg)
 }

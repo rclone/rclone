@@ -50,7 +50,7 @@ type Func func(path string, entries fs.DirEntries, err error) error
 // Note that fn will not be called concurrently whereas the directory
 // listing will proceed concurrently.
 //
-// Parent directories are always listed before their children
+// Parent directories are always listed before their children.
 //
 // This is implemented by WalkR if Config.UseListR is true
 // and f supports it and level > 1, or WalkN otherwise.
@@ -64,7 +64,7 @@ type Func func(path string, entries fs.DirEntries, err error) error
 func Walk(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel int, fn Func) error {
 	ci := fs.GetConfig(ctx)
 	fi := filter.GetConfig(ctx)
-	ctx = filter.SetUseFilter(ctx, !includeAll) // make filter-aware backends constrain List
+	ctx = filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 	if ci.NoTraverse && fi.HaveFilesFrom() {
 		return walkR(ctx, f, path, includeAll, maxLevel, fn, fi.MakeListR(ctx, f.NewObject))
 	}
@@ -158,7 +158,7 @@ func ListR(ctx context.Context, f fs.Fs, path string, includeAll bool, maxLevel 
 		fi.UsesDirectoryFilters() { // ...using any directory filters
 		return listRwalk(ctx, f, path, includeAll, maxLevel, listType, fn)
 	}
-	ctx = filter.SetUseFilter(ctx, !includeAll) // make filter-aware backends constrain List
+	ctx = filter.SetUseFilter(ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 	return listR(ctx, f, path, includeAll, listType, fn, doListR, listType.Dirs() && f.Features().BucketBased)
 }
 
@@ -471,30 +471,48 @@ func walkRDirTree(ctx context.Context, f fs.Fs, startPath string, includeAll boo
 		defer mu.Unlock()
 		for _, entry := range entries {
 			slashes := strings.Count(entry.Remote(), "/")
+			excluded := true
 			switch x := entry.(type) {
 			case fs.Object:
 				// Make sure we don't delete excluded files if not required
 				if includeAll || fi.IncludeObject(ctx, x) {
 					if maxLevel < 0 || slashes <= maxLevel-1 {
 						dirs.Add(x)
-					} else {
-						// Make sure we include any parent directories of excluded objects
-						dirPath := x.Remote()
-						for ; slashes > maxLevel-1; slashes-- {
-							dirPath = parentDir(dirPath)
-						}
-						dirs.CheckParent(startPath, dirPath)
+						excluded = false
 					}
 				} else {
 					fs.Debugf(x, "Excluded from sync (and deletion)")
 				}
+				// Make sure we include any parent directories of excluded objects
+				if excluded {
+					dirPath := parentDir(x.Remote())
+					slashes--
+					if maxLevel >= 0 {
+						for ; slashes > maxLevel-1; slashes-- {
+							dirPath = parentDir(dirPath)
+						}
+					}
+					inc, err := includeDirectory(dirPath)
+					if err != nil {
+						return err
+					}
+					if inc || includeAll {
+						// If the directory doesn't exist already, create it
+						_, obj := dirs.Find(dirPath)
+						if obj == nil {
+							dirs.AddDir(fs.NewDir(dirPath, time.Now()))
+						}
+					}
+				}
 				// Check if we need to prune a directory later.
 				if !includeAll && len(fi.Opt.ExcludeFile) > 0 {
 					basename := path.Base(x.Remote())
-					if basename == fi.Opt.ExcludeFile {
-						excludeDir := parentDir(x.Remote())
-						toPrune[excludeDir] = true
-						fs.Debugf(basename, "Excluded from sync (and deletion) based on exclude file")
+					for _, excludeFile := range fi.Opt.ExcludeFile {
+						if basename == excludeFile {
+							excludeDir := parentDir(x.Remote())
+							toPrune[excludeDir] = true
+							fs.Debugf(basename, "Excluded from sync (and deletion) based on exclude file")
+						}
 					}
 				}
 			case fs.Directory:

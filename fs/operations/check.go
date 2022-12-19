@@ -80,7 +80,7 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 		if c.opt.OneWay {
 			return false
 		}
-		err := fmt.Errorf("File not in %v", c.opt.Fsrc)
+		err := fmt.Errorf("file not in %v", c.opt.Fsrc)
 		fs.Errorf(dst, "%v", err)
 		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
@@ -102,7 +102,7 @@ func (c *checkMarch) DstOnly(dst fs.DirEntry) (recurse bool) {
 func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 	switch src.(type) {
 	case fs.Object:
-		err := fmt.Errorf("File not in %v", c.opt.Fdst)
+		err := fmt.Errorf("file not in %v", c.opt.Fdst)
 		fs.Errorf(src, "%v", err)
 		_ = fs.CountError(err)
 		atomic.AddInt32(&c.differences, 1)
@@ -125,7 +125,7 @@ func (c *checkMarch) checkIdentical(ctx context.Context, dst, src fs.Object) (di
 		tr.Done(ctx, err)
 	}()
 	if sizeDiffers(ctx, src, dst) {
-		err = fmt.Errorf("Sizes differ")
+		err = fmt.Errorf("sizes differ")
 		fs.Errorf(src, "%v", err)
 		return true, false, nil
 	}
@@ -219,11 +219,13 @@ func CheckFn(ctx context.Context, opt *CheckOpt) error {
 
 	// set up a march over fdst and fsrc
 	m := &march.March{
-		Ctx:      ctx,
-		Fdst:     c.opt.Fdst,
-		Fsrc:     c.opt.Fsrc,
-		Dir:      "",
-		Callback: c,
+		Ctx:                    ctx,
+		Fdst:                   c.opt.Fdst,
+		Fsrc:                   c.opt.Fsrc,
+		Dir:                    "",
+		Callback:               c,
+		NoTraverse:             ci.NoTraverse,
+		NoUnicodeNormalization: ci.NoUnicodeNormalization,
 	}
 	fs.Debugf(c.opt.Fdst, "Waiting for checks to finish")
 	err := m.Run(ctx)
@@ -422,7 +424,7 @@ func CheckSum(ctx context.Context, fsrc, fsum fs.Fs, sumFile string, hashType ha
 			continue
 		}
 		// filesystem missed the file, sum wasn't consumed
-		err := fmt.Errorf("File not in %v", opt.Fdst)
+		err := fmt.Errorf("file not in %v", opt.Fdst)
 		fs.Errorf(filename, "%v", err)
 		_ = fs.CountError(err)
 		if lastErr == nil {

@@ -1,3 +1,4 @@
+// Package mountlib provides the mount command.
 package mountlib
 
 import (
@@ -40,6 +41,7 @@ type Options struct {
 	ExtraOptions       []string
 	ExtraFlags         []string
 	AttrTimeout        time.Duration // how long the kernel caches attribute for
+	DeviceName         string
 	VolumeName         string
 	NoAppleDouble      bool
 	NoAppleXattr       bool
@@ -75,6 +77,17 @@ type MountPoint struct {
 	MountFn    MountFn
 	UnmountFn  UnmountFn
 	ErrChan    <-chan error
+}
+
+// NewMountPoint makes a new mounting structure
+func NewMountPoint(mount MountFn, mountPoint string, f fs.Fs, mountOpt *Options, vfsOpt *vfscommon.Options) *MountPoint {
+	return &MountPoint{
+		MountFn:    mount,
+		MountPoint: mountPoint,
+		Fs:         f,
+		MountOpt:   *mountOpt,
+		VFSOpt:     *vfsOpt,
+	}
 }
 
 // Global constants
@@ -125,6 +138,7 @@ func AddFlags(flagSet *pflag.FlagSet) {
 	flags.BoolVarP(flagSet, &Opt.AsyncRead, "async-read", "", Opt.AsyncRead, "Use asynchronous reads (not supported on Windows)")
 	flags.FVarP(flagSet, &Opt.MaxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads (not supported on Windows)")
 	flags.BoolVarP(flagSet, &Opt.WritebackCache, "write-back-cache", "", Opt.WritebackCache, "Makes kernel buffer writes before sending them to rclone (without this, writethrough caching is used) (not supported on Windows)")
+	flags.StringVarP(flagSet, &Opt.DeviceName, "devname", "", Opt.DeviceName, "Set the device name - default is remote:path")
 	// Windows and OSX
 	flags.StringVarP(flagSet, &Opt.VolumeName, "volname", "", Opt.VolumeName, "Set the volume name (supported on Windows and OSX only)")
 	// OSX only
@@ -143,6 +157,9 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 		Hidden: hidden,
 		Short:  `Mount the remote as file system on a mountpoint.`,
 		Long:   strings.ReplaceAll(strings.ReplaceAll(mountHelp, "|", "`"), "@", commandName) + vfs.Help,
+		Annotations: map[string]string{
+			"versionIntroduced": "v1.33",
+		},
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
 
@@ -165,14 +182,7 @@ func NewMountCommand(commandName string, hidden bool, mount MountFn) *cobra.Comm
 				defer cmd.StartStats()()
 			}
 
-			mnt := &MountPoint{
-				MountFn:    mount,
-				MountPoint: args[1],
-				Fs:         cmd.NewFsDir(args),
-				MountOpt:   Opt,
-				VFSOpt:     vfsflags.Opt,
-			}
-
+			mnt := NewMountPoint(mount, args[1], cmd.NewFsDir(args), &Opt, &vfsflags.Opt)
 			daemon, err := mnt.Mount()
 
 			// Wait for foreground mount, if any...
@@ -231,10 +241,11 @@ func (m *MountPoint) Mount() (daemon *os.Process, err error) {
 		return nil, err
 	}
 
-	if err = m.CheckAllowings(); err != nil {
+	if err = m.CheckAllowed(); err != nil {
 		return nil, err
 	}
 	m.SetVolumeName(m.MountOpt.VolumeName)
+	m.SetDeviceName(m.MountOpt.DeviceName)
 
 	// Start background task if --daemon is specified
 	if m.MountOpt.Daemon {
@@ -250,6 +261,7 @@ func (m *MountPoint) Mount() (daemon *os.Process, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to mount FUSE fs: %w", err)
 	}
+	m.MountedOn = time.Now()
 	return nil, nil
 }
 

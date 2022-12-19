@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -1073,7 +1072,7 @@ func testEncryptDecrypt(t *testing.T, bufSize int, copySize int64) {
 	source := newRandomSource(copySize)
 	encrypted, err := c.newEncrypter(source, nil)
 	assert.NoError(t, err)
-	decrypted, err := c.newDecrypter(ioutil.NopCloser(encrypted))
+	decrypted, err := c.newDecrypter(io.NopCloser(encrypted))
 	assert.NoError(t, err)
 	sink := newRandomSource(copySize)
 	n, err := io.CopyBuffer(sink, decrypted, buf)
@@ -1144,15 +1143,15 @@ func TestEncryptData(t *testing.T) {
 		buf := bytes.NewBuffer(test.in)
 		encrypted, err := c.EncryptData(buf)
 		assert.NoError(t, err)
-		out, err := ioutil.ReadAll(encrypted)
+		out, err := io.ReadAll(encrypted)
 		assert.NoError(t, err)
 		assert.Equal(t, test.expected, out)
 
 		// Check we can decode the data properly too...
 		buf = bytes.NewBuffer(out)
-		decrypted, err := c.DecryptData(ioutil.NopCloser(buf))
+		decrypted, err := c.DecryptData(io.NopCloser(buf))
 		assert.NoError(t, err)
-		out, err = ioutil.ReadAll(decrypted)
+		out, err = io.ReadAll(decrypted)
 		assert.NoError(t, err)
 		assert.Equal(t, test.in, out)
 	}
@@ -1187,7 +1186,7 @@ func TestNewEncrypterErrUnexpectedEOF(t *testing.T) {
 	fh, err := c.newEncrypter(in, nil)
 	assert.NoError(t, err)
 
-	n, err := io.CopyN(ioutil.Discard, fh, 1e6)
+	n, err := io.CopyN(io.Discard, fh, 1e6)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 	assert.Equal(t, int64(32), n)
 }
@@ -1257,12 +1256,12 @@ func TestNewDecrypterErrUnexpectedEOF(t *testing.T) {
 
 	in2 := &readers.ErrorReader{Err: io.ErrUnexpectedEOF}
 	in1 := bytes.NewBuffer(file16)
-	in := ioutil.NopCloser(io.MultiReader(in1, in2))
+	in := io.NopCloser(io.MultiReader(in1, in2))
 
 	fh, err := c.newDecrypter(in)
 	assert.NoError(t, err)
 
-	n, err := io.CopyN(ioutil.Discard, fh, 1e6)
+	n, err := io.CopyN(io.Discard, fh, 1e6)
 	assert.Equal(t, io.ErrUnexpectedEOF, err)
 	assert.Equal(t, int64(16), n)
 }
@@ -1274,14 +1273,14 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 
 	// Make random data
 	const dataSize = 150000
-	plaintext, err := ioutil.ReadAll(newRandomSource(dataSize))
+	plaintext, err := io.ReadAll(newRandomSource(dataSize))
 	assert.NoError(t, err)
 
 	// Encrypt the data
 	buf := bytes.NewBuffer(plaintext)
 	encrypted, err := c.EncryptData(buf)
 	assert.NoError(t, err)
-	ciphertext, err := ioutil.ReadAll(encrypted)
+	ciphertext, err := io.ReadAll(encrypted)
 	assert.NoError(t, err)
 
 	trials := []int{0, 1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17, 31, 32, 33, 63, 64, 65,
@@ -1300,7 +1299,7 @@ func TestNewDecrypterSeekLimit(t *testing.T) {
 				end = len(ciphertext)
 			}
 		}
-		reader = ioutil.NopCloser(bytes.NewBuffer(ciphertext[int(underlyingOffset):end]))
+		reader = io.NopCloser(bytes.NewBuffer(ciphertext[int(underlyingOffset):end]))
 		return reader, nil
 	}
 
@@ -1490,7 +1489,7 @@ func TestDecrypterRead(t *testing.T) {
 			assert.NoError(t, err, what)
 			continue
 		}
-		_, err = ioutil.ReadAll(fh)
+		_, err = io.ReadAll(fh)
 		var expectedErr error
 		switch {
 		case i == fileHeaderSize:
@@ -1514,7 +1513,7 @@ func TestDecrypterRead(t *testing.T) {
 	cd := newCloseDetector(in)
 	fh, err := c.newDecrypter(cd)
 	assert.NoError(t, err)
-	_, err = ioutil.ReadAll(fh)
+	_, err = io.ReadAll(fh)
 	assert.Error(t, err, "potato")
 	assert.Equal(t, 0, cd.closed)
 
@@ -1524,13 +1523,13 @@ func TestDecrypterRead(t *testing.T) {
 	copy(file16copy, file16)
 	for i := range file16copy {
 		file16copy[i] ^= 0xFF
-		fh, err := c.newDecrypter(ioutil.NopCloser(bytes.NewBuffer(file16copy)))
+		fh, err := c.newDecrypter(io.NopCloser(bytes.NewBuffer(file16copy)))
 		if i < fileMagicSize {
 			assert.Error(t, err, ErrorEncryptedBadMagic.Error())
 			assert.Nil(t, fh)
 		} else {
 			assert.NoError(t, err)
-			_, err = ioutil.ReadAll(fh)
+			_, err = io.ReadAll(fh)
 			assert.Error(t, err, ErrorEncryptedFileBadHeader.Error())
 		}
 		file16copy[i] ^= 0xFF
@@ -1565,7 +1564,7 @@ func TestDecrypterClose(t *testing.T) {
 	assert.Equal(t, 0, cd.closed)
 
 	// close after reading
-	out, err := ioutil.ReadAll(fh)
+	out, err := io.ReadAll(fh)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{1}, out)
 	assert.Equal(t, io.EOF, fh.err)

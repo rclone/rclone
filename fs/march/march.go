@@ -83,7 +83,7 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listD
 	if !(ci.UseListR && f.Features().ListR != nil) && // !--fast-list active and
 		!(ci.NoTraverse && fi.HaveFilesFrom()) { // !(--files-from and --no-traverse)
 		return func(dir string) (entries fs.DirEntries, err error) {
-			dirCtx := filter.SetUseFilter(m.Ctx, !includeAll) // make filter-aware backends constrain List
+			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			return list.DirSorted(dirCtx, f, includeAll, dir)
 		}
 	}
@@ -100,7 +100,7 @@ func (m *March) makeListDir(ctx context.Context, f fs.Fs, includeAll bool) listD
 		mu.Lock()
 		defer mu.Unlock()
 		if !started {
-			dirCtx := filter.SetUseFilter(m.Ctx, !includeAll) // make filter-aware backends constrain List
+			dirCtx := filter.SetUseFilter(m.Ctx, f.Features().FilterAware && !includeAll) // make filter-aware backends constrain List
 			dirs, dirsErr = walk.NewDirTree(dirCtx, f, m.Dir, includeAll, ci.MaxDepth)
 			started = true
 		}

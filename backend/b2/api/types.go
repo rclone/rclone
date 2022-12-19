@@ -1,3 +1,4 @@
+// Package api provides types used by the Backblaze B2 API.
 package api
 
 import (
@@ -238,7 +239,7 @@ type GetFileInfoRequest struct {
 // If the original source of the file being uploaded has a last
 // modified time concept, Backblaze recommends using
 // src_last_modified_millis as the name, and a string holding the base
-// 10 number number of milliseconds since midnight, January 1, 1970
+// 10 number of milliseconds since midnight, January 1, 1970
 // UTC. This fits in a 64 bit integer such as the type "long" in the
 // programming language Java. It is intended to be compatible with
 // Java's time long. For example, it can be passed directly into the

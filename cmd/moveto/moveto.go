@@ -1,3 +1,4 @@
+// Package moveto provides the moveto command.
 package moveto
 
 import (
@@ -22,7 +23,7 @@ directory named dest:path.
 
 This can be used to rename files or upload single files to other than
 their existing name.  If the source is a directory then it acts exactly
-like the move command.
+like the [move](/commands/rclone_move/) command.
 
 So
 
@@ -48,6 +49,9 @@ successful transfer.
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.35",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst, dstFileName := cmd.NewFsSrcDstFiles(args)

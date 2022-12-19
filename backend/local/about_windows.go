@@ -17,8 +17,12 @@ var getFreeDiskSpace = syscall.NewLazyDLL("kernel32.dll").NewProc("GetDiskFreeSp
 // About gets quota information
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	var available, total, free int64
+	root, e := syscall.UTF16PtrFromString(f.root)
+	if e != nil {
+		return nil, fmt.Errorf("failed to read disk usage: %w", e)
+	}
 	_, _, e1 := getFreeDiskSpace.Call(
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(f.root))),
+		uintptr(unsafe.Pointer(root)),
 		uintptr(unsafe.Pointer(&available)), // lpFreeBytesAvailable - for this user
 		uintptr(unsafe.Pointer(&total)),     // lpTotalNumberOfBytes
 		uintptr(unsafe.Pointer(&free)),      // lpTotalNumberOfFreeBytes

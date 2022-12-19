@@ -42,10 +42,12 @@ func TestParseDuration(t *testing.T) {
 		{"1x", 0, true},
 		{"off", time.Duration(DurationOff), false},
 		{"1h2m3s", time.Hour + 2*time.Minute + 3*time.Second, false},
-		{"2001-02-03", now.Sub(time.Date(2001, 2, 3, 0, 0, 0, 0, time.UTC)), false},
-		{"2001-02-03 10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.UTC)), false},
-		{"2001-02-03T10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.UTC)), false},
+		{"2001-02-03", now.Sub(time.Date(2001, 2, 3, 0, 0, 0, 0, time.Local)), false},
+		{"2001-02-03 10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.Local)), false},
+		{"2001-08-03 10:11:12", now.Sub(time.Date(2001, 8, 3, 10, 11, 12, 0, time.Local)), false},
+		{"2001-02-03T10:11:12", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 0, time.Local)), false},
 		{"2001-02-03T10:11:12.123Z", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 123, time.UTC)), false},
+		{"2001-02-03T10:11:12.123+00:00", now.Sub(time.Date(2001, 2, 3, 10, 11, 12, 123, time.UTC)), false},
 	} {
 		duration, err := parseDurationFromNow(test.in, getNow)
 		if test.err {
@@ -143,11 +145,28 @@ func TestDurationReadableString(t *testing.T) {
 }
 
 func TestDurationScan(t *testing.T) {
-	var v Duration
-	n, err := fmt.Sscan(" 17m ", &v)
-	require.NoError(t, err)
-	assert.Equal(t, 1, n)
-	assert.Equal(t, Duration(17*60*time.Second), v)
+	now := time.Date(2020, 9, 5, 8, 15, 5, 250, time.UTC)
+	oldTimeNowFunc := timeNowFunc
+	timeNowFunc = func() time.Time { return now }
+	defer func() { timeNowFunc = oldTimeNowFunc }()
+
+	for _, test := range []struct {
+		in   string
+		want Duration
+	}{
+		{"17m", Duration(17 * time.Minute)},
+		{"-12h", Duration(-12 * time.Hour)},
+		{"0", Duration(0)},
+		{"off", DurationOff},
+		{"2022-03-26T17:48:19Z", Duration(now.Sub(time.Date(2022, 03, 26, 17, 48, 19, 0, time.UTC)))},
+		{"2022-03-26 17:48:19", Duration(now.Sub(time.Date(2022, 03, 26, 17, 48, 19, 0, time.Local)))},
+	} {
+		var got Duration
+		n, err := fmt.Sscan(test.in, &got)
+		require.NoError(t, err)
+		assert.Equal(t, 1, n)
+		assert.Equal(t, test.want, got)
+	}
 }
 
 func TestParseUnmarshalJSON(t *testing.T) {

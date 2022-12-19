@@ -62,9 +62,9 @@ func absPath(path string) string {
 	return path
 }
 
-// CheckAllowings informs about ignored flags on Windows. If not on Windows
+// CheckAllowed informs about ignored flags on Windows. If not on Windows
 // and not --allow-non-empty flag is used, verify that mountpoint is empty.
-func (m *MountPoint) CheckAllowings() error {
+func (m *MountPoint) CheckAllowed() error {
 	opt := &m.MountOpt
 	if runtime.GOOS == "windows" {
 		if opt.AllowNonEmpty {
@@ -87,7 +87,7 @@ func (m *MountPoint) CheckAllowings() error {
 // SetVolumeName with sensible default
 func (m *MountPoint) SetVolumeName(vol string) {
 	if vol == "" {
-		vol = m.Fs.Name() + ":" + m.Fs.Root()
+		vol = fs.ConfigString(m.Fs)
 	}
 	m.MountOpt.SetVolumeName(vol)
 }
@@ -101,4 +101,12 @@ func (o *Options) SetVolumeName(vol string) {
 		vol = vol[:32]
 	}
 	o.VolumeName = vol
+}
+
+// SetDeviceName with sensible default
+func (m *MountPoint) SetDeviceName(dev string) {
+	if dev == "" {
+		dev = fs.ConfigString(m.Fs)
+	}
+	m.MountOpt.DeviceName = dev
 }

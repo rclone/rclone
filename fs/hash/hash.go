@@ -1,3 +1,4 @@
+// Package hash provides hash utilities for Fs.
 package hash
 
 import (
@@ -153,7 +154,7 @@ func (h *Type) Set(s string) error {
 		*h = hash.hashType
 		return nil
 	}
-	return fmt.Errorf("Unknown hash type %q", s)
+	return fmt.Errorf("unknown hash type %q", s)
 }
 
 // Type of the value

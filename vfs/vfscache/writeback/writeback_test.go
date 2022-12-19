@@ -408,7 +408,7 @@ func TestWriteBackAddUpdateNotModified(t *testing.T) {
 	pi2 := newPutItem(t)
 	id2 := wb.Add(id, "one", false, pi2.put)
 	assert.Equal(t, id, id2)
-	checkNotOnHeap(t, wb, wbItem) // object still being transfered
+	checkNotOnHeap(t, wb, wbItem) // object still being transferred
 	checkInLookup(t, wb, wbItem)
 
 	// Because modified was false above this should not cancel the
@@ -525,7 +525,7 @@ func TestWriteBackMaxQueue(t *testing.T) {
 	assert.Equal(t, toTransfer-maxTransfers, queued)
 	assert.Equal(t, maxTransfers, inProgress)
 
-	// now finish the the first maxTransfers
+	// now finish the first maxTransfers
 	for i := 0; i < maxTransfers; i++ {
 		pis[i].finish(nil)
 	}

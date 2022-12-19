@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -69,7 +68,7 @@ func NewReport() *Report {
 	r.DateTime = r.StartTime.Format(timeFormat)
 
 	// Find previous log directory if possible
-	names, err := ioutil.ReadDir(*outputDir)
+	names, err := os.ReadDir(*outputDir)
 	if err == nil && len(names) > 0 {
 		r.Previous = names[len(names)-1].Name()
 	}
@@ -152,7 +151,7 @@ func (r *Report) LogJSON() {
 	if err != nil {
 		log.Fatalf("Failed to marshal data for index.json: %v", err)
 	}
-	err = ioutil.WriteFile(path.Join(r.LogDir, "index.json"), out, 0666)
+	err = os.WriteFile(path.Join(r.LogDir, "index.json"), out, 0666)
 	if err != nil {
 		log.Fatalf("Failed to write index.json: %v", err)
 	}

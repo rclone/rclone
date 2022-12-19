@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -26,7 +25,7 @@ const (
 
 // Errors specific to seafile fs
 var (
-	ErrorInternalDuringUpload = errors.New("Internal server error during file upload")
+	ErrorInternalDuringUpload = errors.New("internal server error during file upload")
 )
 
 // ==================== Seafile API ====================
@@ -633,7 +632,7 @@ func (f *Fs) download(ctx context.Context, url string, size int64, options ...fs
 		})
 		if start > 0 {
 			// We need to read and discard the beginning of the data...
-			_, err = io.CopyN(ioutil.Discard, resp.Body, start)
+			_, err = io.CopyN(io.Discard, resp.Body, start)
 			if err != nil {
 				return nil, err
 			}

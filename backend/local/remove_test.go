@@ -1,7 +1,6 @@
 package local
 
 import (
-	"io/ioutil"
 	"os"
 	"sync"
 	"testing"
@@ -13,7 +12,7 @@ import (
 
 // Check we can remove an open file
 func TestRemove(t *testing.T) {
-	fd, err := ioutil.TempFile("", "rclone-remove-test")
+	fd, err := os.CreateTemp("", "rclone-remove-test")
 	require.NoError(t, err)
 	name := fd.Name()
 	defer func() {

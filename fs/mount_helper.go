@@ -169,7 +169,9 @@ func convertMountHelperArgs(origArgs []string) ([]string, error) {
 // parseHelperOptionString deconstructs the -o value into slice of options
 // in a way similar to connection strings.
 // Example:
-//   param1=value,param2="qvalue",param3='item1,item2',param4="a ""b"" 'c'"
+//
+//	param1=value,param2="qvalue",param3='item1,item2',param4="a ""b"" 'c'"
+//
 // An error may be returned if the remote name has invalid characters
 // or the parameters are invalid or the path is empty.
 //
@@ -208,7 +210,7 @@ func parseHelperOptionString(optString string) (opts []string, err error) {
 				if len(param) == 0 {
 					return nil, errHelperEmptyOption
 				}
-				if param[0] == '-' || param[0] == '_' {
+				if param[0] == '-' {
 					return nil, errHelperOptionName
 				}
 				prev = i + 1

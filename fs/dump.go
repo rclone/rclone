@@ -78,7 +78,7 @@ func (f *DumpFlags) Set(s string) error {
 			}
 		}
 		if !found {
-			return fmt.Errorf("Unknown dump flag %q", part)
+			return fmt.Errorf("unknown dump flag %q", part)
 		}
 	}
 	*f = flags

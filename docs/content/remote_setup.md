@@ -15,15 +15,16 @@ two ways of doing it, described below.
 
 ## Configuring using rclone authorize ##
 
-On the headless box run `rclone` config but answer `N` to the `Use
-auto config?` question.
+On the headless box run `rclone` config but answer `N` to the `Use web browser 
+to automatically authenticate?` question.
 
 ```
 ...
 Remote config
-Use auto config?
- * Say Y if not sure
- * Say N if you are working on a remote or headless machine
+Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
 y) Yes (default)
 n) No
 y/n> n
@@ -92,3 +93,25 @@ Configuration file is stored at:
 Now transfer it to the remote box (scp, cut paste, ftp, sftp, etc.) and
 place it in the correct place (use `rclone config file` on the remote
 box to find out where).
+
+## Configuring using SSH Tunnel ##
+
+Linux and MacOS users can utilize SSH Tunnel to redirect the headless box port 53682 to local machine by using the following command:
+```
+ssh -L localhost:53682:localhost:53682 username@remote_server
+```
+Then on the headless box run `rclone` config and answer `Y` to the `Use web 
+browser to automatically authenticate?` question.
+
+```
+...
+Remote config
+Use web browser to automatically authenticate rclone with remote?
+ * Say Y if the machine running rclone has a web browser you can use
+ * Say N if running rclone on a (remote) machine without web browser access
+If not sure try Y. If Y failed, try N.
+y) Yes (default)
+n) No
+y/n> y
+```
+Then copy and paste the auth url `http://127.0.0.1:53682/auth?state=xxxxxxxxxxxx` to the browser on your local machine, complete the auth and it is done.

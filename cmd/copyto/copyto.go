@@ -1,3 +1,4 @@
+// Package copyto provides the copyto command.
 package copyto
 
 import (
@@ -21,8 +22,8 @@ If source:path is a file or directory then it copies it to a file or
 directory named dest:path.
 
 This can be used to upload single files to other than their current
-name.  If the source is a directory then it acts exactly like the copy
-command.
+name.  If the source is a directory then it acts exactly like the
+[copy](/commands/rclone_copy/) command.
 
 So
 
@@ -45,6 +46,9 @@ the destination.
 
 **Note**: Use the ` + "`-P`" + `/` + "`--progress`" + ` flag to view real-time transfer statistics
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.35",
+	},
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, srcFileName, fdst, dstFileName := cmd.NewFsSrcDstFiles(args)

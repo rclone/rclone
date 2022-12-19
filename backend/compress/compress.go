@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -29,6 +28,7 @@ import (
 	"github.com/rclone/rclone/fs/config/configstruct"
 	"github.com/rclone/rclone/fs/fspath"
 	"github.com/rclone/rclone/fs/hash"
+	"github.com/rclone/rclone/fs/log"
 	"github.com/rclone/rclone/fs/object"
 	"github.com/rclone/rclone/fs/operations"
 )
@@ -53,7 +53,7 @@ const (
 	Gzip         = 2
 )
 
-var nameRegexp = regexp.MustCompile("^(.+?)\\.([A-Za-z0-9-_]{11})$")
+var nameRegexp = regexp.MustCompile(`^(.+?)\.([A-Za-z0-9-_]{11})$`)
 
 // Register with Fs
 func init() {
@@ -70,6 +70,9 @@ func init() {
 		Name:        "compress",
 		Description: "Compress a remote",
 		NewFs:       NewFs,
+		MetadataInfo: &fs.MetadataInfo{
+			Help: `Any metadata supported by the underlying remote is read and written.`,
+		},
 		Options: []fs.Option{{
 			Name:     "remote",
 			Help:     "Remote to compress.",
@@ -87,7 +90,7 @@ Generally -1 (default, equivalent to 5) is recommended.
 Levels 1 to 9 increase compression at the cost of speed. Going past 6 
 generally offers very little return.
 
-Level -2 uses Huffmann encoding only. Only use if you know what you
+Level -2 uses Huffman encoding only. Only use if you know what you
 are doing.
 Level 0 turns off compression.`,
 			Default:  sgzip.DefaultCompression,
@@ -127,7 +130,7 @@ type Fs struct {
 	features *fs.Features // optional features
 }
 
-// NewFs contstructs an Fs from the path, container:path
+// NewFs constructs an Fs from the path, container:path
 func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, error) {
 	// Parse config into Options struct
 	opt := new(Options)
@@ -180,6 +183,9 @@ func NewFs(ctx context.Context, name, rpath string, m configmap.Mapper) (fs.Fs, 
 		SetTier:                 true,
 		BucketBased:             true,
 		CanHaveEmptyDirectories: true,
+		ReadMetadata:            true,
+		WriteMetadata:           true,
+		UserMetadata:            true,
 	}).Fill(ctx, f).Mask(ctx, wrappedFs).WrapsFs(f, wrappedFs)
 	// We support reading MIME types no matter the wrapped fs
 	f.features.ReadMimeType = true
@@ -222,7 +228,7 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	// Separate the filename and size from the extension
 	extensionPos := strings.LastIndex(compressedFileName, ".")
 	if extensionPos == -1 {
-		return "", "", 0, errors.New("File name has no extension")
+		return "", "", 0, errors.New("file name has no extension")
 	}
 	extension = compressedFileName[extensionPos:]
 	nameWithSize := compressedFileName[:extensionPos]
@@ -231,11 +237,11 @@ func processFileName(compressedFileName string) (origFileName string, extension 
 	}
 	match := nameRegexp.FindStringSubmatch(nameWithSize)
 	if match == nil || len(match) != 3 {
-		return "", "", 0, errors.New("Invalid filename")
+		return "", "", 0, errors.New("invalid filename")
 	}
 	size, err := base64ToInt64(match[2])
 	if err != nil {
-		return "", "", 0, errors.New("Could not decode size")
+		return "", "", 0, errors.New("could not decode size")
 	}
 	return match[1], gzFileExt, size, nil
 }
@@ -304,7 +310,7 @@ func (f *Fs) processEntries(entries fs.DirEntries) (newEntries fs.DirEntries, er
 		case fs.Directory:
 			f.addDir(&newEntries, x)
 		default:
-			return nil, fmt.Errorf("Unknown object type %T", entry)
+			return nil, fmt.Errorf("unknown object type %T", entry)
 		}
 	}
 	return newEntries, nil
@@ -361,13 +367,16 @@ func (f *Fs) NewObject(ctx context.Context, remote string) (fs.Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	meta := readMetadata(ctx, mo)
-	if meta == nil {
-		return nil, errors.New("error decoding metadata")
+	meta, err := readMetadata(ctx, mo)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding metadata: %w", err)
 	}
 	// Create our Object
 	o, err := f.Fs.NewObject(ctx, makeDataName(remote, meta.CompressionMetadata.Size, meta.Mode))
-	return f.newObject(o, mo, meta), err
+	if err != nil {
+		return nil, err
+	}
+	return f.newObject(o, mo, meta), nil
 }
 
 // checkCompressAndType checks if an object is compressible and determines it's mime type
@@ -398,6 +407,10 @@ func isCompressible(r io.Reader) (bool, error) {
 		return false, err
 	}
 	n, err := io.Copy(w, r)
+	if err != nil {
+		return false, err
+	}
+	err = w.Close()
 	if err != nil {
 		return false, err
 	}
@@ -441,7 +454,7 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 		return f.Fs.Put(ctx, bytes.NewBuffer(buf[:n]), src, options...)
 	}
 
-	// Need to include what we allready read
+	// Need to include what we already read
 	in = &ReadCloserWrapper{
 		Reader: io.MultiReader(bytes.NewReader(buf), in),
 		Closer: in,
@@ -454,7 +467,7 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 	}
 
 	fs.Debugf(f, "Target remote doesn't support streaming uploads, creating temporary local file")
-	tempFile, err := ioutil.TempFile("", "rclone-press-")
+	tempFile, err := os.CreateTemp("", "rclone-press-")
 	defer func() {
 		// these errors should be relatively uncritical and the upload should've succeeded so it's okay-ish
 		// to ignore them
@@ -462,10 +475,10 @@ func (f *Fs) rcat(ctx context.Context, dstFileName string, in io.ReadCloser, mod
 		_ = os.Remove(tempFile.Name())
 	}()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create temporary local FS to spool file: %w", err)
+		return nil, fmt.Errorf("failed to create temporary local FS to spool file: %w", err)
 	}
 	if _, err = io.Copy(tempFile, in); err != nil {
-		return nil, fmt.Errorf("Failed to write temporary local file: %w", err)
+		return nil, fmt.Errorf("failed to write temporary local file: %w", err)
 	}
 	if _, err = tempFile.Seek(0, 0); err != nil {
 		return nil, err
@@ -532,8 +545,8 @@ func (f *Fs) putCompress(ctx context.Context, in io.Reader, src fs.ObjectInfo, o
 	}
 
 	// Transfer the data
-	o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), ioutil.NopCloser(wrappedIn), src.ModTime(ctx), options)
-	//o, err := operations.Rcat(ctx, f.Fs, makeDataName(src.Remote(), src.Size(), f.mode), ioutil.NopCloser(wrappedIn), src.ModTime(ctx))
+	o, err := f.rcat(ctx, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx), options)
+	//o, err := operations.Rcat(ctx, f.Fs, makeDataName(src.Remote(), src.Size(), f.mode), io.NopCloser(wrappedIn), src.ModTime(ctx))
 	if err != nil {
 		if o != nil {
 			removeErr := o.Remove(ctx)
@@ -626,9 +639,11 @@ func (f *Fs) putMetadata(ctx context.Context, meta *ObjectMetadata, src fs.Objec
 	// Put the data
 	mo, err = put(ctx, metaReader, f.wrapInfo(src, makeMetadataName(src.Remote()), int64(len(data))), options...)
 	if err != nil {
-		removeErr := mo.Remove(ctx)
-		if removeErr != nil {
-			fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+		if mo != nil {
+			removeErr := mo.Remove(ctx)
+			if removeErr != nil {
+				fs.Errorf(mo, "Failed to remove partially transferred object: %v", err)
+			}
 		}
 		return nil, err
 	}
@@ -665,7 +680,7 @@ func (f *Fs) putWithCustomFunctions(ctx context.Context, in io.Reader, src fs.Ob
 		}
 		return nil, err
 	}
-	return f.newObject(dataObject, mo, meta), err
+	return f.newObject(dataObject, mo, meta), nil
 }
 
 // Put in to the remote path with the modTime given of the given size
@@ -714,23 +729,23 @@ func (f *Fs) PutStream(ctx context.Context, in io.Reader, src fs.ObjectInfo, opt
 	if found && (oldObj.(*Object).meta.Mode != Uncompressed || compressible) {
 		err = oldObj.(*Object).Object.Remove(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("Could remove original object: %w", err)
+			return nil, fmt.Errorf("couldn't remove original object: %w", err)
 		}
 	}
 
 	// If our new object is compressed we have to rename it with the correct size.
-	// Uncompressed objects don't store the size in the name so we they'll allready have the correct name.
+	// Uncompressed objects don't store the size in the name so we they'll already have the correct name.
 	if compressible {
 		wrapObj, err := operations.Move(ctx, f.Fs, nil, f.dataName(src.Remote(), newObj.size, compressible), newObj.Object)
 		if err != nil {
-			return nil, fmt.Errorf("Couldn't rename streamed Object.: %w", err)
+			return nil, fmt.Errorf("couldn't rename streamed object: %w", err)
 		}
 		newObj.Object = wrapObj
 	}
 	return newObj, nil
 }
 
-// Temporarely disabled. There might be a way to implement this correctly but with the current handling metadata duplicate objects
+// Temporarily disabled. There might be a way to implement this correctly but with the current handling metadata duplicate objects
 // will break stuff. Right no I can't think of a way to make this work.
 
 // PutUnchecked uploads the object
@@ -773,9 +788,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) error {
 
 // Copy src to this remote using server side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -823,9 +838,9 @@ func (f *Fs) Copy(ctx context.Context, src fs.Object, remote string) (fs.Object,
 
 // Move src to this remote using server side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -900,7 +915,7 @@ func (f *Fs) DirMove(ctx context.Context, src fs.Fs, srcRemote, dstRemote string
 func (f *Fs) CleanUp(ctx context.Context) error {
 	do := f.Fs.Features().CleanUp
 	if do == nil {
-		return errors.New("can't CleanUp: not supported by underlying remote")
+		return errors.New("not supported by underlying remote")
 	}
 	return do(ctx)
 }
@@ -909,7 +924,7 @@ func (f *Fs) CleanUp(ctx context.Context) error {
 func (f *Fs) About(ctx context.Context) (*fs.Usage, error) {
 	do := f.Fs.Features().About
 	if do == nil {
-		return nil, errors.New("can't About: not supported by underlying remote")
+		return nil, errors.New("not supported by underlying remote")
 	}
 	return do(ctx)
 }
@@ -1028,24 +1043,19 @@ func newMetadata(size int64, mode int, cmeta sgzip.GzipMetadata, md5 string, mim
 }
 
 // This function will read the metadata from a metadata object.
-func readMetadata(ctx context.Context, mo fs.Object) (meta *ObjectMetadata) {
+func readMetadata(ctx context.Context, mo fs.Object) (meta *ObjectMetadata, err error) {
 	// Open our meradata object
 	rc, err := mo.Open(ctx)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	defer func() {
-		err := rc.Close()
-		if err != nil {
-			fs.Errorf(mo, "Error closing object: %v", err)
-		}
-	}()
+	defer fs.CheckClose(rc, &err)
 	jr := json.NewDecoder(rc)
 	meta = new(ObjectMetadata)
 	if err = jr.Decode(meta); err != nil {
-		return nil
+		return nil, err
 	}
-	return meta
+	return meta, nil
 }
 
 // Remove removes this object
@@ -1090,6 +1100,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 	origName := o.Remote()
 	if o.meta.Mode != Uncompressed || compressible {
 		newObject, err = o.f.putWithCustomFunctions(ctx, in, o.f.wrapInfo(src, origName, src.Size()), options, o.f.Fs.Put, updateMeta, compressible, mimeType)
+		if err != nil {
+			return err
+		}
 		if newObject.Object.Remote() != o.Object.Remote() {
 			if removeErr := o.Object.Remove(ctx); removeErr != nil {
 				return removeErr
@@ -1103,9 +1116,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		}
 		// If we are, just update the object and metadata
 		newObject, err = o.f.putWithCustomFunctions(ctx, in, src, options, update, updateMeta, compressible, mimeType)
-	}
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	// Update object metadata and return
 	o.Object = newObject.Object
@@ -1116,6 +1129,9 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 
 // This will initialize the variables of a new press Object. The metadata object, mo, and metadata struct, meta, must be specified.
 func (f *Fs) newObject(o fs.Object, mo fs.Object, meta *ObjectMetadata) *Object {
+	if o == nil {
+		log.Trace(nil, "newObject(%#v, %#v, %#v) called with nil o", o, mo, meta)
+	}
 	return &Object{
 		Object: o,
 		f:      f,
@@ -1128,6 +1144,9 @@ func (f *Fs) newObject(o fs.Object, mo fs.Object, meta *ObjectMetadata) *Object 
 
 // This initializes the variables of a press Object with only the size. The metadata will be loaded later on demand.
 func (f *Fs) newObjectSizeAndNameOnly(o fs.Object, moName string, size int64) *Object {
+	if o == nil {
+		log.Trace(nil, "newObjectSizeAndNameOnly(%#v, %#v, %#v) called with nil o", o, moName, size)
+	}
 	return &Object{
 		Object: o,
 		f:      f,
@@ -1155,7 +1174,7 @@ func (o *Object) loadMetadataIfNotLoaded(ctx context.Context) (err error) {
 		return err
 	}
 	if o.meta == nil {
-		o.meta = readMetadata(ctx, o.mo)
+		o.meta, err = readMetadata(ctx, o.mo)
 	}
 	return err
 }
@@ -1206,6 +1225,21 @@ func (o *Object) MimeType(ctx context.Context) string {
 		return "error/error"
 	}
 	return o.meta.MimeType
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *Object) Metadata(ctx context.Context) (fs.Metadata, error) {
+	err := o.loadMetadataIfNotLoaded(ctx)
+	if err != nil {
+		return nil, err
+	}
+	do, ok := o.mo.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
 }
 
 // Hash returns the selected checksum of the file
@@ -1355,6 +1389,51 @@ func (o *ObjectInfo) Hash(ctx context.Context, ht hash.Type) (string, error) {
 }
 
 // ID returns the ID of the Object if known, or "" if not
+func (o *ObjectInfo) ID() string {
+	do, ok := o.src.(fs.IDer)
+	if !ok {
+		return ""
+	}
+	return do.ID()
+}
+
+// MimeType returns the content type of the Object if
+// known, or "" if not
+func (o *ObjectInfo) MimeType(ctx context.Context) string {
+	do, ok := o.src.(fs.MimeTyper)
+	if !ok {
+		return ""
+	}
+	return do.MimeType(ctx)
+}
+
+// UnWrap returns the Object that this Object is wrapping or
+// nil if it isn't wrapping anything
+func (o *ObjectInfo) UnWrap() fs.Object {
+	return fs.UnWrapObjectInfo(o.src)
+}
+
+// Metadata returns metadata for an object
+//
+// It should return nil if there is no Metadata
+func (o *ObjectInfo) Metadata(ctx context.Context) (fs.Metadata, error) {
+	do, ok := o.src.(fs.Metadataer)
+	if !ok {
+		return nil, nil
+	}
+	return do.Metadata(ctx)
+}
+
+// GetTier returns storage tier or class of the Object
+func (o *ObjectInfo) GetTier() string {
+	do, ok := o.src.(fs.GetTierer)
+	if !ok {
+		return ""
+	}
+	return do.GetTier()
+}
+
+// ID returns the ID of the Object if known, or "" if not
 func (o *Object) ID() string {
 	do, ok := o.Object.(fs.IDer)
 	if !ok {
@@ -1406,11 +1485,6 @@ var (
 	_ fs.ChangeNotifier  = (*Fs)(nil)
 	_ fs.PublicLinker    = (*Fs)(nil)
 	_ fs.Shutdowner      = (*Fs)(nil)
-	_ fs.ObjectInfo      = (*ObjectInfo)(nil)
-	_ fs.GetTierer       = (*Object)(nil)
-	_ fs.SetTierer       = (*Object)(nil)
-	_ fs.Object          = (*Object)(nil)
-	_ fs.ObjectUnWrapper = (*Object)(nil)
-	_ fs.IDer            = (*Object)(nil)
-	_ fs.MimeTyper       = (*Object)(nil)
+	_ fs.FullObjectInfo  = (*ObjectInfo)(nil)
+	_ fs.FullObject      = (*Object)(nil)
 )

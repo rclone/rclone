@@ -91,6 +91,9 @@ backends:
    fastlist: true
    maxfile:  1k
  ## end chunker
+ - backend:  "combine"
+   remote:   "TestCombine:dir1"
+   fastlist: false
  ## begin compress
  - backend:  "compress"
    remote:   "TestCompress:"
@@ -130,14 +133,23 @@ backends:
    remote:   "TestGooglePhotos:"
    tests:
      - backend
- - backend:  "hubic"
-   remote:   "TestHubic:"
+ - backend: "hidrive"
+   remote:   "TestHiDrive:"
    fastlist: false
+ - backend:  "internetarchive"
+   remote:   "TestIA:rclone-integration-test"
+   fastlist: true
+   tests:
+     - backend
+   extratime: 2.0
  - backend:  "jottacloud"
    remote:   "TestJottacloud:"
    fastlist: true
  - backend:  "memory"
    remote:   ":memory:"
+   fastlist: true
+ - backend:  "netstorage"
+   remote:   "TestnStorage:"
    fastlist: true
  - backend:  "onedrive"
    remote:   "TestOneDrive:"
@@ -149,9 +161,9 @@ backends:
  - backend:  "onedrive"
    remote:   "TestOneDriveBusiness:"
    fastlist: false
- - backend:  "onedrive"
-   remote:   "TestOneDriveCn:"
-   fastlist: false
+ # - backend:  "onedrive"
+ #   remote:   "TestOneDriveCn:"
+ #   fastlist: false
  - backend:  "s3"
    remote:   "TestS3:"
    fastlist: true
@@ -198,6 +210,22 @@ backends:
  - backend:  "s3"
    remote:   "TestS3Alibaba:"
    fastlist: true
+ # - backend:  "s3"
+ #   remote:   "TestS3Qiniu:"
+ #   fastlist: true
+ #   ignore:
+ #     - TestIntegration/FsMkdir/FsEncoding/control_chars
+ #     - TestIntegration/FsMkdir/FsEncoding/leading_VT
+ #     - TestIntegration/FsMkdir/FsEncoding/trailing_VT
+ #     - TestIntegration/FsMkdir/FsPutFiles/FromRoot/ListR
+ #     - TestIntegration/FsMkdir/FsPutFiles/SetTier
+ #     - TestIntegration/FsMkdir/FsPutFiles/FsPutStream/0
+ #     - TestIntegration/FsMkdir/FsPutFiles/Internal/Metadata
+ - backend:  "s3"
+   remote:   "TestS3R2:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsPutFiles/SetTier
  - backend:  "sftp"
    remote:   "TestSFTPOpenssh:"
    fastlist: false
@@ -207,6 +235,15 @@ backends:
  - backend:  "sftp"
    remote:   "TestSFTPRsyncNet:"
    fastlist: false
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/trailing_space
+     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_HT
+     - TestIntegration/FsMkdir/FsEncoding/trailing_VT
+     - TestIntegration/FsMkdir/FsEncoding/trailing_dot
+     - TestIntegration/FsMkdir/FsEncoding/invalid_UTF-8
+     - TestIntegration/FsMkdir/FsEncoding/URL_encoding
  - backend:  "sugarsync"
    remote:   "TestSugarSync:Test"
    fastlist: false
@@ -304,6 +341,9 @@ backends:
  - backend:  "koofr"
    remote:   "TestKoofr:"
    fastlist: false
+ # - backend:  "koofr"
+ #   remote:   "TestDigiStorage:"
+ #   fastlist: false
  - backend:  "premiumizeme"
    remote:   "TestPremiumizeMe:"
    fastlist: false
@@ -311,6 +351,8 @@ backends:
    remote:   "TestPutio:"
    fastlist: false
    extratime: 2.0
+   ignore:
+      - TestIntegration/FsMkdir/FsEncoding/URL_encoding
  - backend:  "sharefile"
    remote:   "TestSharefile:"
    fastlist: false
@@ -335,8 +377,11 @@ backends:
  - backend:  "sia"
    remote:   "TestSia:"
    fastlist: false
- - backend:  "tardigrade"
-   remote:   "TestTardigrade:"
+ - backend:  "smb"
+   remote:   "TestSMB:rclone"
+   fastlist: false
+ - backend:  "storj"
+   remote:   "TestStorj:"
    fastlist: true
  - backend:  "zoho"
    remote:   "TestZoho:"
@@ -351,3 +396,13 @@ backends:
    fastlist: false
    ignore:
      - TestRWFileHandleWriteNoWrite
+ - backend: "oracleobjectstorage"
+   remote: "TestOracleObjectStorage:"
+   fastlist: true
+   ignore:
+     - TestIntegration/FsMkdir/FsEncoding/control_chars
+     - TestIntegration/FsMkdir/FsEncoding/leading_CR
+     - TestIntegration/FsMkdir/FsEncoding/leading_LF
+     - TestIntegration/FsMkdir/FsEncoding/trailing_CR
+     - TestIntegration/FsMkdir/FsEncoding/trailing_LF
+     - TestIntegration/FsMkdir/FsEncoding/leading_HT

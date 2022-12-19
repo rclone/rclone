@@ -102,7 +102,7 @@ func rcAddPlugin(_ context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
-	author, repoName, repoBranch, err := getAuthorRepoBranchGithub(pluginURL)
+	author, repoName, repoBranch, err := getAuthorRepoBranchGitHub(pluginURL)
 	if err != nil {
 		return nil, err
 	}

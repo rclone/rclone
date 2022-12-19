@@ -208,7 +208,7 @@ func (x *BwTimetable) Set(s string) error {
 	return nil
 }
 
-//	Difference in minutes between lateDayOfWeekHHMM and earlyDayOfWeekHHMM
+// Difference in minutes between lateDayOfWeekHHMM and earlyDayOfWeekHHMM
 func timeDiff(lateDayOfWeekHHMM int, earlyDayOfWeekHHMM int) int {
 
 	lateTimeMinutes := (lateDayOfWeekHHMM / 10000) * 24 * 60

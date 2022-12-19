@@ -317,7 +317,7 @@ func (r *Run) RemoveTestBinary() {
 func (r *Run) Name() string {
 	ns := []string{
 		r.Backend,
-		strings.Replace(r.Path, "/", ".", -1),
+		strings.ReplaceAll(r.Path, "/", "."),
 		r.Remote,
 	}
 	if r.FastList {
@@ -325,7 +325,7 @@ func (r *Run) Name() string {
 	}
 	ns = append(ns, fmt.Sprintf("%d", r.Try))
 	s := strings.Join(ns, "-")
-	s = strings.Replace(s, ":", "", -1)
+	s = strings.ReplaceAll(s, ":", "")
 	return s
 }
 

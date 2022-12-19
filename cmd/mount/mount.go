@@ -1,8 +1,7 @@
-// Package mount implements a FUSE mounting system for rclone remotes.
-
 //go:build linux || freebsd
 // +build linux freebsd
 
+// Package mount implements a FUSE mounting system for rclone remotes.
 package mount
 
 import (
@@ -27,7 +26,6 @@ func mountOptions(VFS *vfs.VFS, device string, opt *mountlib.Options) (options [
 		fuse.MaxReadahead(uint32(opt.MaxReadAhead)),
 		fuse.Subtype("rclone"),
 		fuse.FSName(device),
-		fuse.VolumeName(opt.VolumeName),
 
 		// Options from benchmarking in the fuse module
 		//fuse.MaxReadahead(64 * 1024 * 1024),
@@ -86,7 +84,7 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 
 	f := VFS.Fs()
 	fs.Debugf(f, "Mounting on %q", mountpoint)
-	c, err := fuse.Mount(mountpoint, mountOptions(VFS, f.Name()+":"+f.Root(), opt)...)
+	c, err := fuse.Mount(mountpoint, mountOptions(VFS, opt.DeviceName, opt)...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -104,12 +102,6 @@ func mount(VFS *vfs.VFS, mountpoint string, opt *mountlib.Options) (<-chan error
 		}
 		errChan <- err
 	}()
-
-	// check if the mount process has an error to report
-	<-c.Ready
-	if err := c.MountError; err != nil {
-		return nil, nil, err
-	}
 
 	unmount := func() error {
 		// Shutdown the VFS

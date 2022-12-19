@@ -26,7 +26,7 @@ Eg
     ferejej3gux/
     fubuwic
 
-Use the --format option to control what gets listed.  By default this
+Use the `--format` option to control what gets listed.  By default this
 is just the path, but you can use these parameters to control the
 output:
 
@@ -39,9 +39,10 @@ output:
     m - MimeType of object if known
     e - encrypted name
     T - tier of storage if known, e.g. "Hot" or "Cool"
+    M - Metadata of object in JSON blob format, eg {"key":"value"}
 
 So if you wanted the path, size and modification time, you would use
---format "pst", or maybe --format "tsp" to put the path last.
+`--format "pst"`, or maybe `--format "tsp"` to put the path last.
 
 Eg
 
@@ -53,19 +54,19 @@ Eg
     2016-06-25 18:55:40;37600;fubuwic
 
 If you specify "h" in the format you will get the MD5 hash by default,
-use the "--hash" flag to change which hash you want.  Note that this
+use the `--hash` flag to change which hash you want.  Note that this
 can be returned as an empty string if it isn't available on the object
 (and for directories), "ERROR" if there was an error reading it from
 the object and "UNSUPPORTED" if that object does not support that hash
 type.
 
-For example to emulate the md5sum command you can use
+For example, to emulate the md5sum command you can use
 
     rclone lsf -R --hash MD5 --format hp --separator "  " --files-only .
 
 Eg
 
-    $ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket 
+    $ rclone lsf -R --hash MD5 --format hp --separator "  " --files-only swift:bucket
     7908e352297f0f530b84a756f188baa3  bevajer5jef
     cd65ac234e6fea5925974a51cdd865cc  canole
     03b5341b4f234b9d984d03ad076bae91  diwogej7
@@ -75,7 +76,7 @@ Eg
 (Though "rclone md5sum ." is an easier way of typing this.)
 
 By default the separator is ";" this can be changed with the
---separator flag.  Note that separators aren't escaped in the path so
+`--separator` flag.  Note that separators aren't escaped in the path so
 putting it last is a good strategy.
 
 Eg
@@ -97,10 +98,10 @@ Eg
     test.sh,449
     "this file contains a comma, in the file name.txt",6
 
-Note that the --absolute parameter is useful for making lists of files
-to pass to an rclone copy with the --files-from-raw flag.
+Note that the `--absolute` parameter is useful for making lists of files
+to pass to an rclone copy with the `--files-from-raw` flag.
 
-For example to find all the files modified within one day and copy
+For example, to find all the files modified within one day and copy
 those only (without traversing the whole directory structure):
 
     rclone lsf --absolute --files-only --max-age 1d /path/to/local > new_files
@@ -117,17 +118,17 @@ There are several related list commands
   * `lsf` to list objects and directories in easy to parse format
   * `lsjson` to list objects and directories in JSON format
 
-`ls`,`lsl`,`lsd` are designed to be human readable.
-`lsf` is designed to be human and machine readable.
-`lsjson` is designed to be machine readable.
+`ls`,`lsl`,`lsd` are designed to be human-readable.
+`lsf` is designed to be human and machine-readable.
+`lsjson` is designed to be machine-readable.
 
 Note that `ls` and `lsl` recurse by default - use `--max-depth 1` to stop the recursion.
 
 The other list commands `lsd`,`lsf`,`lsjson` do not recurse by default - use `-R` to make them recurse.
 
-Listing a non existent directory will produce an error except for
+Listing a nonexistent directory will produce an error except for
 remotes which can't have empty directories (e.g. s3, swift, or gcs -
-the bucket based remotes).
+the bucket-based remotes).
 
 
 ```

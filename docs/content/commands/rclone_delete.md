@@ -12,16 +12,16 @@ Remove the files in path.
 ## Synopsis
 
 
-Remove the files in path.  Unlike `purge` it obeys include/exclude
-filters so can be used to selectively delete files.
+Remove the files in path.  Unlike [purge](/commands/rclone_purge/) it
+obeys include/exclude filters so can be used to selectively delete files.
 
 `rclone delete` only deletes files but leaves the directory structure
 alone. If you want to delete a directory and all of its contents use
-the `purge` command.
+the [purge](/commands/rclone_purge/) command.
 
 If you supply the `--rmdirs` flag, it will remove all empty directories along with it.
-You can also use the separate command `rmdir` or `rmdirs` to
-delete empty directories only.
+You can also use the separate command [rmdir](/commands/rclone_rmdir/) or
+[rmdirs](/commands/rclone_rmdirs/) to delete empty directories only.
 
 For example, to delete all files bigger than 100 MiB, you may first want to
 check what would be deleted (use either):

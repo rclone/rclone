@@ -1,3 +1,4 @@
+// Package test provides the test command.
 package test
 
 import (
@@ -24,4 +25,7 @@ Each subcommand has its own options which you can see in their help.
 **NB** Be careful running these commands, they may do strange things
 so reading their documentation first is recommended.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.55",
+	},
 }

@@ -1,3 +1,4 @@
+// Package putio provides an interface to the put.io storage system.
 package putio
 
 import (
@@ -33,8 +34,9 @@ const (
 	rcloneObscuredClientSecret = "cMwrjWVmrHZp3gf1ZpCrlyGAmPpB-YY5BbVnO1fj-G9evcd8"
 	minSleep                   = 10 * time.Millisecond
 	maxSleep                   = 2 * time.Second
-	decayConstant              = 2 // bigger for slower decay, exponential
+	decayConstant              = 1 // bigger for slower decay, exponential
 	defaultChunkSize           = 48 * fs.Mebi
+	defaultRateLimitSleep      = 60 * time.Second
 )
 
 var (

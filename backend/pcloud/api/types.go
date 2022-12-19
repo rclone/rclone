@@ -13,7 +13,7 @@ const (
 	timeFormat = `"` + time.RFC1123Z + `"`
 )
 
-// Time represents represents date and time information for the
+// Time represents date and time information for the
 // pcloud API, by using RFC1123Z
 type Time time.Time
 
@@ -136,7 +136,7 @@ func (g *GetFileLinkResult) IsValid() bool {
 	if len(g.Hosts) == 0 {
 		return false
 	}
-	return time.Time(g.Expires).Sub(time.Now()) > 30*time.Second
+	return time.Until(time.Time(g.Expires)) > 30*time.Second
 }
 
 // URL returns a URL from the Path and Hosts.  Check with IsValid

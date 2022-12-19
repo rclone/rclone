@@ -22,7 +22,7 @@ const (
 // On Linux we use the OS-specific /proc/mount API so the check won't access the path.
 // Directories marked as "mounted" by autofs are considered not mounted.
 func CheckMountEmpty(mountpoint string) error {
-	const msg = "Directory already mounted, use --allow-non-empty to mount anyway: %s"
+	const msg = "directory already mounted, use --allow-non-empty to mount anyway: %s"
 
 	mountpointAbs, err := filepath.Abs(mountpoint)
 	if err != nil {

@@ -1,3 +1,4 @@
+// Package internal provides internal implementation for the info test command.
 package internal
 
 import (

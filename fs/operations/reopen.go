@@ -31,7 +31,7 @@ var (
 
 // NewReOpen makes a handle which will reopen itself and seek to where it was on errors
 //
-// If hashOption is set this will be applied when reading from the start
+// If hashOption is set this will be applied when reading from the start.
 //
 // If rangeOption is set then this will applied when reading from the
 // start, and updated on retries.
@@ -59,11 +59,11 @@ func (h *ReOpen) open() error {
 	var hashOption *fs.HashesOption
 	var rangeOption *fs.RangeOption
 	for _, option := range h.options {
-		switch option.(type) {
+		switch option := option.(type) {
 		case *fs.HashesOption:
-			hashOption = option.(*fs.HashesOption)
+			hashOption = option
 		case *fs.RangeOption:
-			rangeOption = option.(*fs.RangeOption)
+			rangeOption = option
 		case *fs.HTTPOption:
 			opts = append(opts, option)
 		default:

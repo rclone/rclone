@@ -285,6 +285,7 @@ func ShowRemotes() {
 func ChooseRemote() string {
 	remotes := LoadedData().GetSectionList()
 	sort.Strings(remotes)
+	fmt.Println("Select remote.")
 	return Choose("remote", "value", remotes, nil, "", true, false)
 }
 
@@ -298,10 +299,8 @@ func mustFindByName(name string) *fs.RegInfo {
 	return fs.MustFind(fsType)
 }
 
-// ShowRemote shows the contents of the remote
-func ShowRemote(name string) {
-	fmt.Printf("--------------------\n")
-	fmt.Printf("[%s]\n", name)
+// printRemoteOptions prints the options of the remote
+func printRemoteOptions(name string, prefix string, sep string) {
 	fs := mustFindByName(name)
 	for _, key := range LoadedData().GetKeyList(name) {
 		isPassword := false
@@ -313,17 +312,30 @@ func ShowRemote(name string) {
 		}
 		value := FileGet(name, key)
 		if isPassword && value != "" {
-			fmt.Printf("%s = *** ENCRYPTED ***\n", key)
+			fmt.Printf("%s%s%s*** ENCRYPTED ***\n", prefix, key, sep)
 		} else {
-			fmt.Printf("%s = %s\n", key, value)
+			fmt.Printf("%s%s%s%s\n", prefix, key, sep, value)
 		}
 	}
-	fmt.Printf("--------------------\n")
+}
+
+// listRemoteOptions lists the options of the remote
+func listRemoteOptions(name string) {
+	printRemoteOptions(name, "- ", ": ")
+}
+
+// ShowRemote shows the contents of the remote in config file format
+func ShowRemote(name string) {
+	fmt.Printf("[%s]\n", name)
+	printRemoteOptions(name, "", " = ")
 }
 
 // OkRemote prints the contents of the remote and ask if it is OK
 func OkRemote(name string) bool {
-	ShowRemote(name)
+	fmt.Println("Configuration complete.")
+	fmt.Println("Options:")
+	listRemoteOptions(name)
+	fmt.Printf("Keep this %q remote?\n", name)
 	switch i := CommandDefault([]string{"yYes this is OK", "eEdit this remote", "dDelete this remote"}, 0); i {
 	case 'y':
 		return true
@@ -336,6 +348,11 @@ func OkRemote(name string) bool {
 		fs.Errorf(nil, "Bad choice %c", i)
 	}
 	return false
+}
+
+// newSection prints an empty line to separate sections
+func newSection() {
+	fmt.Println()
 }
 
 // backendConfig configures the backend starting from the state passed in
@@ -387,6 +404,7 @@ func backendConfig(ctx context.Context, name string, m configmap.Mapper, ri *fs.
 		if out.State == "" {
 			break
 		}
+		newSection()
 	}
 	return nil
 }
@@ -417,7 +435,7 @@ func ChooseOption(o *fs.Option, name string) string {
 	fmt.Printf("Option %s.\n", o.Name)
 	if o.Help != "" {
 		// Show help string without empty lines.
-		help := strings.Replace(strings.TrimSpace(o.Help), "\n\n", "\n", -1)
+		help := strings.ReplaceAll(strings.TrimSpace(o.Help), "\n\n", "\n")
 		fmt.Println(help)
 	}
 
@@ -477,6 +495,7 @@ func ChooseOption(o *fs.Option, name string) string {
 // NewRemoteName asks the user for a name for a new remote
 func NewRemoteName() (name string) {
 	for {
+		fmt.Println("Enter name for new remote.")
 		fmt.Printf("name> ")
 		name = ReadLine()
 		if LoadedData().HasSection(name) {
@@ -516,7 +535,7 @@ func NewRemote(ctx context.Context, name string) error {
 		break
 	}
 	LoadedData().SetValue(name, "type", newType)
-
+	newSection()
 	_, err = CreateRemote(ctx, name, newType, nil, UpdateRemoteOpt{
 		All: true,
 	})
@@ -527,13 +546,15 @@ func NewRemote(ctx context.Context, name string) error {
 		SaveConfig()
 		return nil
 	}
+	newSection()
 	return EditRemote(ctx, ri, name)
 }
 
 // EditRemote gets the user to edit a remote
 func EditRemote(ctx context.Context, ri *fs.RegInfo, name string) error {
-	ShowRemote(name)
-	fmt.Printf("Edit remote\n")
+	fmt.Printf("Editing existing %q remote with options:\n", name)
+	listRemoteOptions(name)
+	newSection()
 	for {
 		_, err := UpdateRemote(ctx, name, nil, UpdateRemoteOpt{
 			All: true,
@@ -626,29 +647,44 @@ func EditConfig(ctx context.Context) (err error) {
 		}
 		switch i := Command(what); i {
 		case 'e':
+			newSection()
 			name := ChooseRemote()
+			newSection()
 			fs := mustFindByName(name)
 			err = EditRemote(ctx, fs, name)
 			if err != nil {
 				return err
 			}
 		case 'n':
-			err = NewRemote(ctx, NewRemoteName())
+			newSection()
+			name := NewRemoteName()
+			newSection()
+			err = NewRemote(ctx, name)
 			if err != nil {
 				return err
 			}
 		case 'd':
+			newSection()
 			name := ChooseRemote()
+			newSection()
 			DeleteRemote(name)
 		case 'r':
-			RenameRemote(ChooseRemote())
+			newSection()
+			name := ChooseRemote()
+			newSection()
+			RenameRemote(name)
 		case 'c':
-			CopyRemote(ChooseRemote())
+			newSection()
+			name := ChooseRemote()
+			newSection()
+			CopyRemote(name)
 		case 's':
+			newSection()
 			SetPassword()
 		case 'q':
 			return nil
 		}
+		newSection()
 	}
 }
 

@@ -4,8 +4,8 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"path"
 
 	"github.com/rclone/rclone/fs"
@@ -110,7 +110,7 @@ type Config struct {
 
 // NewConfig reads the config file
 func NewConfig(configFile string) (*Config, error) {
-	d, err := ioutil.ReadFile(configFile)
+	d, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}

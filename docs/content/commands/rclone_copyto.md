@@ -16,8 +16,8 @@ If source:path is a file or directory then it copies it to a file or
 directory named dest:path.
 
 This can be used to upload single files to other than their current
-name.  If the source is a directory then it acts exactly like the copy
-command.
+name.  If the source is a directory then it acts exactly like the
+[copy](/commands/rclone_copy/) command.
 
 So
 

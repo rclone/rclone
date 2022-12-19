@@ -10,7 +10,6 @@ import (
 
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/rc"
-	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
@@ -98,6 +97,10 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
+	if mountOpt.Daemon {
+		return nil, errors.New("Daemon Option not supported over the API")
+	}
+
 	mountType, err := in.GetString("mountType")
 
 	mountMu.Lock()
@@ -117,23 +120,23 @@ func mountRc(ctx context.Context, in rc.Params) (out rc.Params, err error) {
 		return nil, err
 	}
 
-	VFS := vfs.New(fdst, &vfsOpt)
-	_, unmountFn, err := mountFn(VFS, mountPoint, &mountOpt)
+	mnt := NewMountPoint(mountFn, mountPoint, fdst, &mountOpt, &vfsOpt)
+	_, err = mnt.Mount()
 	if err != nil {
 		log.Printf("mount FAILED: %v", err)
 		return nil, err
 	}
-
+	go func() {
+		if err = mnt.Wait(); err != nil {
+			log.Printf("unmount FAILED: %v", err)
+			return
+		}
+		mountMu.Lock()
+		defer mountMu.Unlock()
+		delete(liveMounts, mountPoint)
+	}()
 	// Add mount to list if mount point was successfully created
-	liveMounts[mountPoint] = &MountPoint{
-		MountPoint: mountPoint,
-		MountedOn:  time.Now(),
-		MountFn:    mountFn,
-		UnmountFn:  unmountFn,
-		MountOpt:   mountOpt,
-		VFSOpt:     vfsOpt,
-		Fs:         fdst,
-	}
+	liveMounts[mountPoint] = mnt
 
 	fs.Debugf(nil, "Mount for %s created at %s using %s", fdst.String(), mountPoint, mountType)
 	return nil, nil
@@ -255,7 +258,7 @@ func listMountsRc(_ context.Context, in rc.Params) (out rc.Params, err error) {
 	for _, k := range keys {
 		m := liveMounts[k]
 		info := MountInfo{
-			Fs:         m.Fs.Name(),
+			Fs:         fs.ConfigString(m.Fs),
 			MountPoint: m.MountPoint,
 			MountedOn:  m.MountedOn,
 		}
@@ -271,8 +274,11 @@ func init() {
 		Path:         "mount/unmountall",
 		AuthRequired: true,
 		Fn:           unmountAll,
-		Title:        "Show current mount points",
-		Help: `This shows currently mounted points, which can be used for performing an unmount.
+		Title:        "Unmount all active mounts",
+		Help: `
+rclone allows Linux, FreeBSD, macOS and Windows to
+mount any of Rclone's cloud storage systems as a file system with
+FUSE.
 
 This takes no parameters and returns error if unmount does not succeed.
 

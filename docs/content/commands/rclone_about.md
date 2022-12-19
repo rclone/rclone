@@ -42,7 +42,7 @@ Applying a `--full` flag to the command prints the bytes in full, e.g.
     Trashed: 104857602
     Other:   8849156022
 
-A `--json` flag generates conveniently computer readable output, e.g.
+A `--json` flag generates conveniently machine-readable output, e.g.
 
     {
         "total": 18253611008,

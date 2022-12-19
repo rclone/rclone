@@ -1,6 +1,3 @@
-//go:build go1.17
-// +build go1.17
-
 package restic
 
 import (
@@ -12,20 +9,22 @@ import (
 
 // cache implements a simple object cache
 type cache struct {
-	mu    sync.RWMutex         // protects the cache
-	items map[string]fs.Object // cache of objects
+	mu           sync.RWMutex         // protects the cache
+	items        map[string]fs.Object // cache of objects
+	cacheObjects bool                 // whether we are actually caching
 }
 
 // create a new cache
-func newCache() *cache {
+func newCache(cacheObjects bool) *cache {
 	return &cache{
-		items: map[string]fs.Object{},
+		items:        map[string]fs.Object{},
+		cacheObjects: cacheObjects,
 	}
 }
 
 // find the object at remote or return nil
 func (c *cache) find(remote string) fs.Object {
-	if !cacheObjects {
+	if !c.cacheObjects {
 		return nil
 	}
 	c.mu.RLock()
@@ -36,7 +35,7 @@ func (c *cache) find(remote string) fs.Object {
 
 // add the object to the cache
 func (c *cache) add(remote string, o fs.Object) {
-	if !cacheObjects {
+	if !c.cacheObjects {
 		return
 	}
 	c.mu.Lock()
@@ -46,7 +45,7 @@ func (c *cache) add(remote string, o fs.Object) {
 
 // remove the object from the cache
 func (c *cache) remove(remote string) {
-	if !cacheObjects {
+	if !c.cacheObjects {
 		return
 	}
 	c.mu.Lock()
@@ -56,7 +55,7 @@ func (c *cache) remove(remote string) {
 
 // remove all the items with prefix from the cache
 func (c *cache) removePrefix(prefix string) {
-	if !cacheObjects {
+	if !c.cacheObjects {
 		return
 	}
 

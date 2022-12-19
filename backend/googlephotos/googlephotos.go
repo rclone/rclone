@@ -69,7 +69,7 @@ var (
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
-		RedirectURL:  oauthutil.TitleBarRedirectURL,
+		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
 
@@ -178,7 +178,7 @@ type Fs struct {
 	opt        Options                // parsed options
 	features   *fs.Features           // optional features
 	unAuth     *rest.Client           // unauthenticated http client
-	srv        *rest.Client           // the connection to the one drive server
+	srv        *rest.Client           // the connection to the server
 	ts         *oauthutil.TokenSource // token source for oauth2
 	pacer      *fs.Pacer              // To pace the API calls
 	startTime  time.Time              // time Fs was started - used for datestamps
@@ -562,7 +562,7 @@ func (f *Fs) list(ctx context.Context, filter api.SearchFilter, fn listFn) (err 
 		for i := range items {
 			item := &result.MediaItems[i]
 			remote := item.Filename
-			remote = strings.Replace(remote, "/", "／", -1)
+			remote = strings.ReplaceAll(remote, "/", "／")
 			err = fn(remote, item, false)
 			if err != nil {
 				return err
@@ -661,7 +661,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // Put the object into the bucket
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {

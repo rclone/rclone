@@ -268,7 +268,7 @@ default based on the batch_mode in use.
 			Advanced: true,
 		}, {
 			Name:     "batch_commit_timeout",
-			Help:     `Max time to wait for a batch to finish comitting`,
+			Help:     `Max time to wait for a batch to finish committing`,
 			Default:  fs.Duration(10 * time.Minute),
 			Advanced: true,
 		}, {
@@ -472,9 +472,11 @@ func NewFs(ctx context.Context, name, root string, m configmap.Mapper) (fs.Fs, e
 		args := team.NewMembersGetInfoArgs(members)
 
 		memberIds, err := f.team.MembersGetInfo(args)
-
 		if err != nil {
 			return nil, fmt.Errorf("invalid dropbox team member: %q: %w", opt.Impersonate, err)
+		}
+		if len(memberIds) == 0 || memberIds[0].MemberInfo == nil || memberIds[0].MemberInfo.Profile == nil {
+			return nil, fmt.Errorf("dropbox team member not found: %q", opt.Impersonate)
 		}
 
 		cfg.AsMemberID = memberIds[0].MemberInfo.Profile.MemberProfile.TeamMemberId
@@ -923,7 +925,7 @@ func (f *Fs) List(ctx context.Context, dir string) (entries fs.DirEntries, err e
 
 // Put the object
 //
-// Copy the reader in to the new object which is returned
+// Copy the reader in to the new object which is returned.
 //
 // The new object may have been created if an error is returned
 func (f *Fs) Put(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
@@ -1042,9 +1044,9 @@ func (f *Fs) Precision() time.Duration {
 
 // Copy src to this remote using server-side copy operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1103,9 +1105,9 @@ func (f *Fs) Purge(ctx context.Context, dir string) (err error) {
 
 // Move src to this remote using server-side move operations.
 //
-// This is stored with the remote path given
+// This is stored with the remote path given.
 //
-// It returns the destination Object and a possible error
+// It returns the destination Object and a possible error.
 //
 // Will only be called if src.Fs().Name() == f.Name()
 //
@@ -1197,7 +1199,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 			return
 		}
 		if len(listRes.Links) == 0 {
-			err = errors.New("Dropbox says the sharing link already exists, but list came back empty")
+			err = errors.New("sharing link already exists, but list came back empty")
 			return
 		}
 		linkRes = listRes.Links[0]
@@ -1209,7 +1211,7 @@ func (f *Fs) PublicLink(ctx context.Context, remote string, expire fs.Duration, 
 		case *sharing.FolderLinkMetadata:
 			link = res.Url
 		default:
-			err = fmt.Errorf("Don't know how to extract link, response has unknown format: %T", res)
+			err = fmt.Errorf("don't know how to extract link, response has unknown format: %T", res)
 		}
 	}
 	return
@@ -1269,7 +1271,7 @@ func (f *Fs) About(ctx context.Context) (usage *fs.Usage, err error) {
 		return shouldRetry(ctx, err)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("about failed: %w", err)
+		return nil, err
 	}
 	var total uint64
 	if q.Allocation != nil {
@@ -1370,10 +1372,12 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 
 	if timeout < 30 {
 		timeout = 30
+		fs.Debugf(f, "Increasing poll interval to minimum 30s")
 	}
 
 	if timeout > 480 {
 		timeout = 480
+		fs.Debugf(f, "Decreasing poll interval to maximum 480s")
 	}
 
 	err = f.pacer.Call(func() (bool, error) {
@@ -1431,7 +1435,7 @@ func (f *Fs) changeNotifyRunner(ctx context.Context, notifyFunc func(string, fs.
 			}
 
 			if entryPath != "" {
-				notifyFunc(entryPath, entryType)
+				notifyFunc(f.opt.Enc.ToStandardPath(entryPath), entryType)
 			}
 		}
 		if !changeList.HasMore {
@@ -1650,13 +1654,37 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 		}
 
 		chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+		skip := int64(0)
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
-			if _, err = chunk.Seek(0, io.SeekStart); err != nil {
-				return false, nil
+			if _, err = chunk.Seek(skip, io.SeekStart); err != nil {
+				return false, err
 			}
 			err = o.fs.srv.UploadSessionAppendV2(&appendArg, chunk)
 			// after session is started, we retry everything
+			if err != nil {
+				// Check for incorrect offset error and retry with new offset
+				if uErr, ok := err.(files.UploadSessionAppendV2APIError); ok {
+					if uErr.EndpointError != nil && uErr.EndpointError.IncorrectOffset != nil {
+						correctOffset := uErr.EndpointError.IncorrectOffset.CorrectOffset
+						delta := int64(correctOffset) - int64(cursor.Offset)
+						skip += delta
+						what := fmt.Sprintf("incorrect offset error received: sent %d, need %d, skip %d", cursor.Offset, correctOffset, skip)
+						if skip < 0 {
+							return false, fmt.Errorf("can't seek backwards to correct offset: %s", what)
+						} else if skip == chunkSize {
+							fs.Debugf(o, "%s: chunk received OK - continuing", what)
+							return false, nil
+						} else if skip > chunkSize {
+							// This error should never happen
+							return false, fmt.Errorf("can't seek forwards by more than a chunk to correct offset: %s", what)
+						}
+						// Skip the sent data on next retry
+						cursor.Offset = uint64(int64(cursor.Offset) + delta)
+						fs.Debugf(o, "%s: skipping bytes on retry to fix offset", what)
+					}
+				}
+			}
 			return err != nil, err
 		})
 		if err != nil {
@@ -1669,6 +1697,9 @@ func (o *Object) uploadChunked(ctx context.Context, in0 io.Reader, commitInfo *f
 		if size > 0 {
 			// if size is known, check if next chunk is final
 			appendArg.Close = uint64(size)-in.BytesRead() <= uint64(chunkSize)
+			if in.BytesRead() > uint64(size) {
+				return nil, fmt.Errorf("expected %d bytes in input, but have read %d so far", size, in.BytesRead())
+			}
 		} else {
 			// if size is unknown, upload as long as we can read full chunks from the reader
 			appendArg.Close = in.BytesRead()-cursor.Offset < uint64(chunkSize)
@@ -1732,7 +1763,7 @@ func checkPathLength(name string) (err error) {
 
 // Update the already existing object
 //
-// Copy the reader into the object updating modTime and size
+// Copy the reader into the object updating modTime and size.
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
@@ -1760,7 +1791,7 @@ func (o *Object) Update(ctx context.Context, in io.Reader, src fs.ObjectInfo, op
 		entry, err = o.uploadChunked(ctx, in, commitInfo, size)
 	} else {
 		err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-			entry, err = o.fs.srv.Upload(commitInfo, in)
+			entry, err = o.fs.srv.Upload(&files.UploadArg{CommitInfo: *commitInfo}, in)
 			return shouldRetry(ctx, err)
 		})
 	}

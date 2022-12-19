@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -44,7 +43,7 @@ func NewClient(c *http.Client) *Client {
 // ReadBody reads resp.Body into result, closing the body
 func ReadBody(resp *http.Response) (result []byte, err error) {
 	defer fs.CheckClose(resp.Body, &err)
-	return ioutil.ReadAll(resp.Body)
+	return io.ReadAll(resp.Body)
 }
 
 // defaultErrorHandler doesn't attempt to parse the http body, just
@@ -139,15 +138,16 @@ type Opts struct {
 	UserName              string            // username for Basic Auth
 	Password              string            // password for Basic Auth
 	Options               []fs.OpenOption
-	IgnoreStatus          bool       // if set then we don't check error status or parse error body
-	MultipartParams       url.Values // if set do multipart form upload with attached file
-	MultipartMetadataName string     // ..this is used for the name of the metadata form part if set
-	MultipartContentName  string     // ..name of the parameter which is the attached file
-	MultipartFileName     string     // ..name of the file for the attached file
-	Parameters            url.Values // any parameters for the final URL
-	TransferEncoding      []string   // transfer encoding, set to "identity" to disable chunked encoding
-	Close                 bool       // set to close the connection after this transaction
-	NoRedirect            bool       // if this is set then the client won't follow redirects
+	IgnoreStatus          bool         // if set then we don't check error status or parse error body
+	MultipartParams       url.Values   // if set do multipart form upload with attached file
+	MultipartMetadataName string       // ..this is used for the name of the metadata form part if set
+	MultipartContentName  string       // ..name of the parameter which is the attached file
+	MultipartFileName     string       // ..name of the file for the attached file
+	Parameters            url.Values   // any parameters for the final URL
+	TransferEncoding      []string     // transfer encoding, set to "identity" to disable chunked encoding
+	Trailer               *http.Header // set the request trailer
+	Close                 bool         // set to close the connection after this transaction
+	NoRedirect            bool         // if this is set then the client won't follow redirects
 }
 
 // Copy creates a copy of the options
@@ -238,6 +238,9 @@ func (api *Client) Call(ctx context.Context, opts *Opts) (resp *http.Response, e
 	}
 	if len(opts.TransferEncoding) != 0 {
 		req.TransferEncoding = opts.TransferEncoding
+	}
+	if opts.Trailer != nil {
+		req.Trailer = *opts.Trailer
 	}
 	if opts.Close {
 		req.Close = true
@@ -403,7 +406,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 
 // CallJSON runs Call and decodes the body as a JSON object into response (if not nil)
 //
-// If request is not nil then it will be JSON encoded as the body of the request
+// If request is not nil then it will be JSON encoded as the body of the request.
 //
 // If response is not nil then the response will be JSON decoded into
 // it and resp.Body will be closed.
@@ -415,7 +418,7 @@ func MultipartUpload(ctx context.Context, in io.Reader, params url.Values, conte
 // opts.Body are set then CallJSON will do a multipart upload with a
 // file attached.  opts.MultipartContentName is the name of the
 // parameter and opts.MultipartFileName is the name of the file.  If
-// MultpartContentName is set, and request != nil is supplied, then
+// MultipartContentName is set, and request != nil is supplied, then
 // the request will be marshalled into JSON and added to the form with
 // parameter name MultipartMetadataName.
 //
@@ -426,7 +429,7 @@ func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}
 
 // CallXML runs Call and decodes the body as an XML object into response (if not nil)
 //
-// If request is not nil then it will be XML encoded as the body of the request
+// If request is not nil then it will be XML encoded as the body of the request.
 //
 // If response is not nil then the response will be XML decoded into
 // it and resp.Body will be closed.
@@ -434,7 +437,7 @@ func (api *Client) CallJSON(ctx context.Context, opts *Opts, request interface{}
 // If response is nil then the resp.Body will be closed only if
 // opts.NoResponse is set.
 //
-// See CallJSON for a description of MultipartParams and related opts
+// See CallJSON for a description of MultipartParams and related opts.
 //
 // It will return resp if at all possible, even if err is set
 func (api *Client) CallXML(ctx context.Context, opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {

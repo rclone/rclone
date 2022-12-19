@@ -1,4 +1,14 @@
 package fs
 
-// Version of rclone
-var Version = "v1.58.0-DEV"
+// Version of rclone containing the complete version string
+var Version string
+
+func init() {
+	if Version == "" {
+		if VersionSuffix == "" {
+			Version = VersionTag
+		} else {
+			Version = VersionTag + "-" + VersionSuffix
+		}
+	}
+}

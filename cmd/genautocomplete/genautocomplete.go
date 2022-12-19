@@ -1,3 +1,4 @@
+// Package genautocomplete provides the genautocomplete command.
 package genautocomplete
 
 import (
@@ -14,6 +15,9 @@ var completionDefinition = &cobra.Command{
 	Short: `Output completion script for a given shell.`,
 	Long: `
 Generates a shell completion script for rclone.
-Run with --help to list the supported shells.
+Run with ` + "`--help`" + ` to list the supported shells.
 `,
+	Annotations: map[string]string{
+		"versionIntroduced": "v1.33",
+	},
 }

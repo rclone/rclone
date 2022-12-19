@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -280,7 +280,7 @@ func (a *APIClient) request(path string, in, out interface{}, wantErr bool) {
 	}
 	assert.Equal(t, wantStatus, res.StatusCode)
 
-	dataOut, err = ioutil.ReadAll(res.Body)
+	dataOut, err = io.ReadAll(res.Body)
 	require.NoError(t, err)
 	err = res.Body.Close()
 	require.NoError(t, err)
@@ -304,8 +304,8 @@ func (a *APIClient) request(path string, in, out interface{}, wantErr bool) {
 }
 
 func testMountAPI(t *testing.T, sockAddr string) {
-	// Disable tests under macOS and the CI since they are locking up
-	if runtime.GOOS == "darwin" {
+	// Disable tests under macOS and linux in the CI since they are locking up
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
 		testy.SkipUnreliable(t)
 	}
 	if _, mountFn := mountlib.ResolveMountMethod(""); mountFn == nil {
@@ -389,11 +389,11 @@ func testMountAPI(t *testing.T, sockAddr string) {
 	assert.Contains(t, res, "volume is in use")
 
 	text := []byte("banana")
-	err = ioutil.WriteFile(filepath.Join(mount1, "txt"), text, 0644)
+	err = os.WriteFile(filepath.Join(mount1, "txt"), text, 0644)
 	assert.NoError(t, err)
 	time.Sleep(tempDelay)
 
-	text2, err := ioutil.ReadFile(filepath.Join(path1, "txt"))
+	text2, err := os.ReadFile(filepath.Join(path1, "txt"))
 	assert.NoError(t, err)
 	if runtime.GOOS != "windows" {
 		// this check sometimes fails on windows - ignore

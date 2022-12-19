@@ -52,7 +52,7 @@ type Cache struct {
 	avFn       AddVirtualFn         // if set, can be called to add dir entries
 
 	mu            sync.Mutex       // protects the following variables
-	cond          *sync.Cond       // cond lock for synchronous cache cleaning
+	cond          sync.Cond        // cond lock for synchronous cache cleaning
 	item          map[string]*Item // files/directories in the cache
 	errItems      map[string]error // items in error state
 	used          int64            // total size of files in the cache
@@ -139,7 +139,7 @@ func New(ctx context.Context, fremote fs.Fs, opt *vfscommon.Options, avFn AddVir
 
 	// Create a channel for cleaner to be kicked upon out of space con
 	c.kick = make(chan struct{}, 1)
-	c.cond = sync.NewCond(&c.mu)
+	c.cond = sync.Cond{L: &c.mu}
 
 	go c.cleaner(ctx)
 
@@ -339,7 +339,7 @@ func (c *Cache) get(name string) (item *Item, found bool) {
 
 // Item gets a cache item for name
 //
-// To use it item.Open will need to be called
+// To use it item.Open will need to be called.
 //
 // name should be a remote path not an osPath
 func (c *Cache) Item(name string) (item *Item) {
@@ -365,32 +365,32 @@ func rename(osOldPath, osNewPath string) error {
 		if os.IsNotExist(err) {
 			return nil
 		}
-		return fmt.Errorf("Failed to stat source: %s: %w", osOldPath, err)
+		return fmt.Errorf("failed to stat source: %s: %w", osOldPath, err)
 	}
 	if !sfi.Mode().IsRegular() {
 		// cannot copy non-regular files (e.g., directories, symlinks, devices, etc.)
-		return fmt.Errorf("Non-regular source file: %s (%q)", sfi.Name(), sfi.Mode().String())
+		return fmt.Errorf("non-regular source file: %s (%q)", sfi.Name(), sfi.Mode().String())
 	}
 	dfi, err := os.Stat(osNewPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
-			return fmt.Errorf("Failed to stat destination: %s: %w", osNewPath, err)
+			return fmt.Errorf("failed to stat destination: %s: %w", osNewPath, err)
 		}
-		parent := vfscommon.OsFindParent(osNewPath)
+		parent := vfscommon.OSFindParent(osNewPath)
 		err = createDir(parent)
 		if err != nil {
-			return fmt.Errorf("Failed to create parent dir: %s: %w", parent, err)
+			return fmt.Errorf("failed to create parent dir: %s: %w", parent, err)
 		}
 	} else {
 		if !(dfi.Mode().IsRegular()) {
-			return fmt.Errorf("Non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
+			return fmt.Errorf("non-regular destination file: %s (%q)", dfi.Name(), dfi.Mode().String())
 		}
 		if os.SameFile(sfi, dfi) {
 			return nil
 		}
 	}
 	if err = os.Rename(osOldPath, osNewPath); err != nil {
-		return fmt.Errorf("Failed to rename in cache: %s to %s: %w", osOldPath, osNewPath, err)
+		return fmt.Errorf("failed to rename in cache: %s to %s: %w", osOldPath, osNewPath, err)
 	}
 	return nil
 }
@@ -739,27 +739,17 @@ func (c *Cache) clean(kicked bool) {
 	oldItems, oldUsed := len(c.item), fs.SizeSuffix(c.used)
 	c.mu.Unlock()
 
-	// loop cleaning the cache until we reach below cache quota
-	for {
-		// Remove any files that are over age
-		c.purgeOld(c.opt.CacheMaxAge)
+	// Remove any files that are over age
+	c.purgeOld(c.opt.CacheMaxAge)
 
-		if int64(c.opt.CacheMaxSize) <= 0 {
-			break
-		}
-
-		// Now remove files not in use until cache size is below quota starting from the
-		// oldest first
+	// If have a maximum cache size...
+	if int64(c.opt.CacheMaxSize) > 0 {
+		// Remove files not in use until cache size is below quota starting from the oldest first
 		c.purgeOverQuota(int64(c.opt.CacheMaxSize))
 
 		// Remove cache files that are not dirty if we are still above the max cache size
 		c.purgeClean(int64(c.opt.CacheMaxSize))
 		c.retryFailedResets()
-
-		used := c.updateUsed()
-		if used <= int64(c.opt.CacheMaxSize) && len(c.errItems) == 0 {
-			break
-		}
 	}
 
 	// Was kicked?
