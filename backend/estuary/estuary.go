@@ -608,7 +608,7 @@ func (o *Object) readStats(ctx context.Context) error {
 		}
 
 		for _, item := range items {
-			if item.Name == file {
+			if strings.EqualFold(item.Name, file) {
 				o.estuaryId = strconv.FormatUint(uint64(item.ContentID), 10)
 				o.size = item.Size
 				o.cid = item.Cid
